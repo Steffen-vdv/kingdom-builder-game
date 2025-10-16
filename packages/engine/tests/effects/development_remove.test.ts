@@ -15,18 +15,18 @@ describe('development:remove effect', () => {
 	it('removes matching developments and passives for each iteration', () => {
 		const content = createContentFactory();
 		const development = content.development();
-		const ctx = createTestEngine(content);
-		const land = ctx.activePlayer.lands[0];
+		const engineContext = createTestEngine(content);
+		const land = engineContext.activePlayer.lands[0];
 		land.developments = [development.id, development.id];
 		land.slotsUsed = land.developments.length;
-		const removePassive = vi.spyOn(ctx.passives, 'removePassive');
+		const removePassive = vi.spyOn(engineContext.passives, 'removePassive');
 
 		developmentRemove(
 			createRemovalEffect({
 				id: development.id,
 				landId: land.id,
 			}),
-			ctx,
+			engineContext,
 			2,
 		);
 
@@ -35,25 +35,25 @@ describe('development:remove effect', () => {
 		expect(removePassive).toHaveBeenCalledTimes(2);
 		expect(removePassive).toHaveBeenCalledWith(
 			`${development.id}_${land.id}`,
-			ctx,
+			engineContext,
 		);
 	});
 
 	it('stops removing when no copies remain even if multiplier is higher', () => {
 		const content = createContentFactory();
 		const development = content.development();
-		const ctx = createTestEngine(content);
-		const land = ctx.activePlayer.lands[0];
+		const engineContext = createTestEngine(content);
+		const land = engineContext.activePlayer.lands[0];
 		land.developments = [development.id];
 		land.slotsUsed = land.developments.length;
-		const removePassive = vi.spyOn(ctx.passives, 'removePassive');
+		const removePassive = vi.spyOn(engineContext.passives, 'removePassive');
 
 		developmentRemove(
 			createRemovalEffect({
 				id: development.id,
 				landId: land.id,
 			}),
-			ctx,
+			engineContext,
 			3,
 		);
 
@@ -64,16 +64,16 @@ describe('development:remove effect', () => {
 
 	it('throws when id or landId are missing', () => {
 		const content = createContentFactory();
-		const ctx = createTestEngine(content);
-		expect(() => developmentRemove(createRemovalEffect({}), ctx, 1)).toThrow(
-			/requires id and landId/,
-		);
+		const engineContext = createTestEngine(content);
+		expect(() =>
+			developmentRemove(createRemovalEffect({}), engineContext, 1),
+		).toThrow(/requires id and landId/);
 	});
 
 	it('throws when the land cannot be found', () => {
 		const content = createContentFactory();
 		const development = content.development();
-		const ctx = createTestEngine(content);
+		const engineContext = createTestEngine(content);
 
 		expect(() =>
 			developmentRemove(
@@ -81,7 +81,7 @@ describe('development:remove effect', () => {
 					id: development.id,
 					landId: 'missing-land',
 				}),
-				ctx,
+				engineContext,
 				1,
 			),
 		).toThrow(/Land missing-land not found/);

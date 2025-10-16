@@ -4,8 +4,8 @@ import { createTestEngine } from '../helpers.ts';
 
 describe('land:add effect', () => {
 	it('appends new lands to the end', () => {
-		const ctx = createTestEngine();
-		const beforeIds = ctx.activePlayer.lands.map((land) => land.id);
+		const engineContext = createTestEngine();
+		const beforeIds = engineContext.activePlayer.lands.map((land) => land.id);
 		const beforeCount = beforeIds.length;
 
 		runEffects(
@@ -16,19 +16,19 @@ describe('land:add effect', () => {
 					params: { count: 2 },
 				},
 			],
-			ctx,
+			engineContext,
 		);
 
-		const lands = ctx.activePlayer.lands;
+		const lands = engineContext.activePlayer.lands;
 		expect(lands.length).toBe(beforeCount + 2);
 		expect(lands.slice(0, beforeCount).map((land) => land.id)).toEqual(
 			beforeIds,
 		);
 		expect(lands[beforeCount]?.id).toBe(
-			`${ctx.activePlayer.id}-L${beforeCount + 1}`,
+			`${engineContext.activePlayer.id}-L${beforeCount + 1}`,
 		);
 		expect(lands[beforeCount + 1]?.id).toBe(
-			`${ctx.activePlayer.id}-L${beforeCount + 2}`,
+			`${engineContext.activePlayer.id}-L${beforeCount + 2}`,
 		);
 	});
 });

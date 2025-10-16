@@ -27,18 +27,19 @@ describe('resource and stat bounds', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
+		const engineContext = createTestEngine({ actions });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
 		const actionDef = actions.get('lower_fort');
 		const effectAmount = actionDef.effects.find(
 			(effect) => effect.type === 'stat',
 		)?.params?.amount as number;
-		ctx.activePlayer.stats[CStat.fortificationStrength] = effectAmount - 1;
-		const cost = getActionCosts('lower_fort', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('lower_fort', ctx);
-		expect(ctx.activePlayer.fortificationStrength).toBe(0);
+		engineContext.activePlayer.stats[CStat.fortificationStrength] =
+			effectAmount - 1;
+		const cost = getActionCosts('lower_fort', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('lower_fort', engineContext);
+		expect(engineContext.activePlayer.fortificationStrength).toBe(0);
 	});
 
 	it('clamps resource additions to zero', () => {
@@ -55,18 +56,18 @@ describe('resource and stat bounds', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
+		const engineContext = createTestEngine({ actions });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
 		const actionDef = actions.get('lose_gold');
 		const effectAmount = actionDef.effects.find(
 			(effect) => effect.type === 'resource',
 		)?.params?.amount as number;
-		ctx.activePlayer.gold = 1;
-		const cost = getActionCosts('lose_gold', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('lose_gold', ctx);
-		expect(ctx.activePlayer.gold).toBe(Math.max(1 + effectAmount, 0));
+		engineContext.activePlayer.gold = 1;
+		const cost = getActionCosts('lose_gold', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('lose_gold', engineContext);
+		expect(engineContext.activePlayer.gold).toBe(Math.max(1 + effectAmount, 0));
 	});
 
 	it('clamps negative stat additions to zero', () => {
@@ -83,18 +84,18 @@ describe('resource and stat bounds', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
+		const engineContext = createTestEngine({ actions });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
 		const actionDef = actions.get('bad_add');
 		const effectAmount = actionDef.effects.find(
 			(effect) => effect.type === 'stat',
 		)?.params?.amount as number;
-		const before = ctx.activePlayer.armyStrength;
-		const cost = getActionCosts('bad_add', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('bad_add', ctx);
-		expect(ctx.activePlayer.armyStrength).toBe(
+		const before = engineContext.activePlayer.armyStrength;
+		const cost = getActionCosts('bad_add', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('bad_add', engineContext);
+		expect(engineContext.activePlayer.armyStrength).toBe(
 			Math.max(before + effectAmount, 0),
 		);
 	});

@@ -6,7 +6,7 @@ import type { EffectDef } from '../../src/effects/index.ts';
 
 describe('passive:add effect', () => {
 	it('applies nested effects and registers phase triggers', () => {
-		const ctx = createTestEngine();
+		const engineContext = createTestEngine();
 		const effect: EffectDef<{ id: string } & Record<string, EffectDef[]>> = {
 			type: 'passive',
 			method: 'add',
@@ -50,10 +50,12 @@ describe('passive:add effect', () => {
 			],
 		};
 
-		const before = ctx.activePlayer.stats[Stat.armyStrength];
-		runEffects([effect], ctx);
-		expect(ctx.activePlayer.stats[Stat.armyStrength]).toBe(before + 1);
-		ctx.passives.removePassive('temp', ctx);
-		expect(ctx.activePlayer.stats[Stat.armyStrength]).toBe(before);
+		const before = engineContext.activePlayer.stats[Stat.armyStrength];
+		runEffects([effect], engineContext);
+		expect(engineContext.activePlayer.stats[Stat.armyStrength]).toBe(
+			before + 1,
+		);
+		engineContext.passives.removePassive('temp', engineContext);
+		expect(engineContext.activePlayer.stats[Stat.armyStrength]).toBe(before);
 	});
 });

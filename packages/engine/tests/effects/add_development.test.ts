@@ -26,27 +26,30 @@ describe('development:add effect', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		const land = ctx.activePlayer.lands.find(
+		const land = engineContext.activePlayer.lands.find(
 			(land) => land.slotsUsed < land.slotsMax,
 		)!;
-		const cost = getActionCosts(action.id, ctx, {
+		const cost = getActionCosts(action.id, engineContext, {
 			id: development.id,
 			landId: land.id,
 		});
-		ctx.activePlayer.ap = cost[CResource.ap] ?? 0;
-		const beforeGold = ctx.activePlayer.gold;
+		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
+		const beforeGold = engineContext.activePlayer.gold;
 		const beforeSlots = land.slotsUsed;
 		const gain = development.onBuild?.find(
 			(e) => e.type === 'resource' && e.method === 'add',
 		)?.params?.['amount'] as number;
-		performAction(action.id, ctx, { id: development.id, landId: land.id });
+		performAction(action.id, engineContext, {
+			id: development.id,
+			landId: land.id,
+		});
 		expect(land.developments).toContain(development.id);
 		expect(land.slotsUsed).toBe(beforeSlots + 1);
-		expect(ctx.activePlayer.gold).toBe(beforeGold + gain);
+		expect(engineContext.activePlayer.gold).toBe(beforeGold + gain);
 	});
 
 	it('throws if land does not exist', () => {
@@ -61,11 +64,11 @@ describe('development:add effect', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		expect(() => performAction(action.id, ctx)).toThrow(
+		expect(() => performAction(action.id, engineContext)).toThrow(
 			/Land missing not found/,
 		);
 	});
@@ -82,14 +85,17 @@ describe('development:add effect', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		const land = ctx.activePlayer.lands[0];
+		const land = engineContext.activePlayer.lands[0];
 		land.slotsUsed = land.slotsMax;
 		expect(() =>
-			performAction(action.id, ctx, { id: development.id, landId: land.id }),
+			performAction(action.id, engineContext, {
+				id: development.id,
+				landId: land.id,
+			}),
 		).toThrow(new RegExp(`No free slots on land ${land.id}`));
 	});
 });
