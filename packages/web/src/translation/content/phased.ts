@@ -1,9 +1,8 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
-import type { TranslationContext } from '../context';
+import type { TranslationContext, TranslationTriggerAsset } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
 
 function formatStepTriggerLabel(
@@ -40,6 +39,42 @@ function formatStepTriggerLabel(
 	return undefined;
 }
 
+function composePhaseTitle(
+	phase: TranslationContext['phases'][number],
+): string | undefined {
+	const icon = typeof phase.icon === 'string' ? phase.icon.trim() : '';
+	const labelSource = phase.label ?? formatDetailText(phase.id);
+	const label =
+		typeof labelSource === 'string'
+			? labelSource.trim().replace(/\s+/gu, ' ')
+			: '';
+	if (label.length === 0 && icon.length === 0) {
+		return undefined;
+	}
+	if (label.length === 0) {
+		return icon.length > 0 ? icon : undefined;
+	}
+	const prefix = icon.length > 0 ? `${icon} ` : '';
+	return `${prefix}On each ${label} Phase`.trim();
+}
+
+function composeTriggerAssetTitle(
+	asset: TranslationTriggerAsset | undefined,
+): string | undefined {
+	const icon = typeof asset?.icon === 'string' ? asset.icon.trim() : '';
+	const futureOrLabel = asset?.future ?? asset?.label;
+	if (typeof futureOrLabel !== 'string') {
+		return undefined;
+	}
+	const trimmedLabel = futureOrLabel.trim();
+	if (trimmedLabel.length === 0) {
+		return undefined;
+	}
+	if (icon.length === 0) {
+		return trimmedLabel;
+	}
+	return `${icon} ${trimmedLabel}`.trim();
+}
 export interface PhasedDef {
 	onBuild?: EffectDef<Record<string, unknown>>[] | undefined;
 	onBeforeAttacked?: EffectDef<Record<string, unknown>>[] | undefined;
@@ -77,6 +112,7 @@ export class PhasedTranslator {
 		const applyTrigger = (
 			key: keyof PhasedDef,
 			fallbackTitle?: string,
+			presetInfo?: TranslationTriggerAsset,
 		): void => {
 			const identifier = key as string;
 			if (handled.has(identifier)) {
@@ -88,24 +124,26 @@ export class PhasedTranslator {
 			if (!effects.length) {
 				return;
 			}
-			const info = selectTriggerDisplay(context.assets, key as string);
+			const info =
+				presetInfo ?? selectTriggerDisplay(context.assets, identifier);
 			const stepLabel = formatStepTriggerLabel(context, identifier);
+			const icon = typeof info.icon === 'string' ? info.icon.trim() : '';
 			const title = (() => {
 				if (stepLabel) {
-					const icon = info.icon ?? '';
-					const trimmedIcon = icon.trim();
-					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
-					return `${prefix}During ${stepLabel}`;
+					const prefix = icon.length > 0 ? `${icon} ` : '';
+					return `${prefix}During ${stepLabel}`.trim();
 				}
-				const future = info.future ?? info.label;
-				const icon = info.icon ?? '';
-				if (future && future.trim().length) {
-					const parts = [icon, future].filter(Boolean).join(' ').trim();
-					if (parts.length) {
-						return parts;
+				const assetTitle = composeTriggerAssetTitle(info);
+				if (assetTitle) {
+					return assetTitle;
+				}
+				if (fallbackTitle) {
+					const trimmedFallback = fallbackTitle.trim();
+					if (trimmedFallback.length > 0) {
+						return trimmedFallback;
 					}
 				}
-				return fallbackTitle;
+				return undefined;
 			})();
 			if (title) {
 				root.push({ title, items: effects });
@@ -124,22 +162,41 @@ export class PhasedTranslator {
 			const capitalizedPhaseId =
 				phase.id.charAt(0).toUpperCase() + phase.id.slice(1);
 			const phaseKey = `on${capitalizedPhaseId}Phase` as keyof PhasedDef;
-			const icon = phase.icon ? `${phase.icon} ` : '';
-			const label = phase.label ?? formatDetailText(phase.id);
-			const phaseTitle = `${icon}On each ${label} Phase`.trim();
-			applyTrigger(phaseKey, phaseTitle);
+			const info = selectTriggerDisplay(context.assets, phaseKey as string);
+			const fallbackTitle =
+				composePhaseTitle(phase) ?? composeTriggerAssetTitle(info);
+			applyTrigger(phaseKey, fallbackTitle, info);
 		}
 
-		const triggerLookup = context.assets?.triggers ?? TRIGGER_INFO;
+		const triggerLookup = context.assets?.triggers ?? {};
 		const stepKeysFromInfo = Object.keys(triggerLookup).filter((key) =>
 			key.endsWith('Step'),
 		);
 		for (const key of stepKeysFromInfo) {
-			applyTrigger(key as keyof PhasedDef, key);
+			const info = triggerLookup[key];
+			const fallbackTitle = composeTriggerAssetTitle(info) ?? key;
+			applyTrigger(key as keyof PhasedDef, fallbackTitle, info);
 		}
 
-		applyTrigger('onBeforeAttacked');
-		applyTrigger('onAttackResolved');
+		const beforeAttackedInfo = selectTriggerDisplay(
+			context.assets,
+			'onBeforeAttacked',
+		);
+		applyTrigger(
+			'onBeforeAttacked',
+			composeTriggerAssetTitle(beforeAttackedInfo) ?? 'onBeforeAttacked',
+			beforeAttackedInfo,
+		);
+
+		const attackResolvedInfo = selectTriggerDisplay(
+			context.assets,
+			'onAttackResolved',
+		);
+		applyTrigger(
+			'onAttackResolved',
+			composeTriggerAssetTitle(attackResolvedInfo) ?? 'onAttackResolved',
+			attackResolvedInfo,
+		);
 
 		for (const key of Object.keys(phasedDefinition)) {
 			if (key === 'onBuild' || handled.has(key)) {
@@ -148,7 +205,12 @@ export class PhasedTranslator {
 			if (!key.startsWith('on')) {
 				continue;
 			}
-			applyTrigger(key as keyof PhasedDef, key);
+			const info = selectTriggerDisplay(context.assets, key);
+			applyTrigger(
+				key as keyof PhasedDef,
+				composeTriggerAssetTitle(info) ?? key,
+				info,
+			);
 		}
 
 		return root;
