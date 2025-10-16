@@ -126,6 +126,37 @@ function createTestSetup(): TestSetup {
 			land: { label: 'Territory', icon: '🗺️' },
 			passive: { label: 'Aura', icon: '✨' },
 		},
+		overview: {
+			hero: {
+				badgeIcon: '🛡️',
+				badgeLabel: 'Astral Mandate',
+				title: 'Astral Ascension',
+				intro: 'Lead the astral council to new frontiers.',
+				paragraph: 'Channel celestial energies and forge lasting alliances.',
+				tokens: {
+					motto: 'To the stars',
+				},
+			},
+			sections: [
+				{
+					kind: 'paragraph',
+					id: 'mission',
+					icon: 'mission',
+					title: 'Mission Outline',
+					paragraphs: [
+						`Secure {${resourceKey}} supplies and inspire the populace.`,
+					],
+				},
+			],
+			tokens: {
+				resources: {
+					[resourceKey]: [resourceKey],
+				},
+				population: {
+					[population.id]: [population.id],
+				},
+			},
+		},
 	};
 	const registries: SessionRegistries = {
 		actions: factory.actions,
@@ -284,6 +315,53 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
-		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(context.overviewContent.hero.title).toBe('Astral Ascension');
+	});
+
+	it('falls back to formatted descriptors when metadata entries are missing', () => {
+		const setup = createTestSetup();
+		const metadataWithoutDescriptors: SessionSnapshotMetadata = structuredClone(
+			setup.metadata,
+		);
+		delete metadataWithoutDescriptors.resources?.[setup.resourceKey];
+		delete metadataWithoutDescriptors.populations?.[setup.populationId];
+		delete metadataWithoutDescriptors.buildings?.[setup.buildingId];
+		delete metadataWithoutDescriptors.developments?.[setup.developmentId];
+		let captured: Pick<
+			CapturedLookups,
+			'resources' | 'populations' | 'buildings' | 'developments'
+		> | null = null;
+		const Capture = () => {
+			captured = {
+				resources: useResourceMetadata(),
+				populations: usePopulationMetadata(),
+				buildings: useBuildingMetadata(),
+				developments: useDevelopmentMetadata(),
+			};
+			return null;
+		};
+		renderToStaticMarkup(
+			<RegistryMetadataProvider
+				registries={setup.registries}
+				metadata={metadataWithoutDescriptors}
+			>
+				<Capture />
+			</RegistryMetadataProvider>,
+		);
+		if (!captured) {
+			throw new Error('Registry metadata fallbacks were not captured.');
+		}
+		expect(captured.resources.select(setup.resourceKey).label).toBe(
+			formatFallbackLabel(setup.resourceKey),
+		);
+		expect(captured.populations.select(setup.populationId).label).toBe(
+			formatFallbackLabel(setup.populationId),
+		);
+		expect(captured.buildings.select(setup.buildingId).label).toBe(
+			formatFallbackLabel(setup.buildingId),
+		);
+		expect(captured.developments.select(setup.developmentId).label).toBe(
+			formatFallbackLabel(setup.developmentId),
+		);
 	});
 });

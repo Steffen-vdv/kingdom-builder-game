@@ -6,13 +6,10 @@ import type {
 	ActionConfig,
 } from '@kingdom-builder/protocol';
 import type {
+	SessionOverviewContent,
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -43,6 +40,7 @@ import {
 	type AssetMetadataSelector,
 	type MetadataSelector,
 } from './registryMetadataSelectors';
+import { normalizeOverviewContent } from './registryOverviewHelpers';
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
@@ -67,7 +65,7 @@ export interface RegistryMetadataContextValue {
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
-	overviewContent: OverviewContentTemplate;
+	overviewContent: SessionOverviewContent;
 }
 
 interface RegistryMetadataProviderProps {
@@ -108,36 +106,22 @@ export function RegistryMetadataProvider({
 		[registries.populations],
 	);
 	const resourceMetadataLookup = useMemo(
-		() =>
-			buildResourceMetadata(
-				registries.resources,
-				extractDescriptorRecord(metadata, 'resources'),
-			),
-		[registries.resources, metadata],
+		() => buildResourceMetadata(extractDescriptorRecord(metadata, 'resources')),
+		[metadata],
 	);
 	const populationMetadataLookup = useMemo(
 		() =>
-			buildRegistryMetadata(
-				registries.populations,
-				extractDescriptorRecord(metadata, 'populations'),
-			),
-		[registries.populations, metadata],
+			buildRegistryMetadata(extractDescriptorRecord(metadata, 'populations')),
+		[metadata],
 	);
 	const buildingMetadataLookup = useMemo(
-		() =>
-			buildRegistryMetadata(
-				registries.buildings,
-				extractDescriptorRecord(metadata, 'buildings'),
-			),
-		[registries.buildings, metadata],
+		() => buildRegistryMetadata(extractDescriptorRecord(metadata, 'buildings')),
+		[metadata],
 	);
 	const developmentMetadataLookup = useMemo(
 		() =>
-			buildRegistryMetadata(
-				registries.developments,
-				extractDescriptorRecord(metadata, 'developments'),
-			),
-		[registries.developments, metadata],
+			buildRegistryMetadata(extractDescriptorRecord(metadata, 'developments')),
+		[metadata],
 	);
 	const statMetadataLookup = useMemo(
 		() => buildStatMetadata(extractDescriptorRecord(metadata, 'stats')),
@@ -222,7 +206,10 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const overviewContent = useMemo(
+		() => normalizeOverviewContent(metadata?.overview),
+		[metadata],
+	);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
@@ -334,7 +321,7 @@ export const useSlotMetadata = (): AssetMetadataSelector =>
 export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().passiveMetadata;
 
-export const useOverviewContent = (): OverviewContentTemplate =>
+export const useOverviewContent = (): SessionOverviewContent =>
 	useRegistryMetadata().overviewContent;
 
 export type {

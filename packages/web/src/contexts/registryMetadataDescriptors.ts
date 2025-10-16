@@ -1,9 +1,7 @@
-import type { Registry } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionPhaseMetadata,
 	SessionPhaseStepMetadata,
-	SessionResourceDefinition,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 
@@ -172,101 +170,39 @@ const createTriggerDescriptor = (
 	return Object.freeze(entry);
 };
 
-const mergeRegistryEntries = <TDefinition extends { id: string }>(
-	registry: Registry<TDefinition>,
-	metadata: Record<string, SessionMetadataDescriptor> | undefined,
-	extractFallback: (definition: TDefinition) => RegistryDescriptorFallback,
-): Iterable<readonly [string, RegistryMetadataDescriptor]> => {
-	const entries: Array<readonly [string, RegistryMetadataDescriptor]> = [];
-	const processed = new Set<string>();
-	for (const [id, definition] of registry.entries()) {
-		const descriptor = createRegistryDescriptor(
-			id,
-			metadata?.[id],
-			extractFallback(definition),
-		);
-		entries.push([id, descriptor]);
-		processed.add(id);
-	}
-	if (metadata) {
-		for (const [id, descriptor] of Object.entries(metadata)) {
-			if (processed.has(id)) {
-				continue;
-			}
-			entries.push([id, createRegistryDescriptor(id, descriptor, {})]);
-		}
-	}
-	return entries;
-};
-
-const mergeResourceEntries = (
-	resources: Record<string, SessionResourceDefinition>,
+const createDescriptorEntries = (
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
 ): Iterable<readonly [string, RegistryMetadataDescriptor]> => {
-	const entries: Array<readonly [string, RegistryMetadataDescriptor]> = [];
-	const processed = new Set<string>();
-	for (const [key, definition] of Object.entries(resources)) {
-		const descriptor = createRegistryDescriptor(key, metadata?.[key], {
-			label: definition.label ?? definition.key ?? key,
-			icon: definition.icon,
-			description: definition.description,
-		});
-		entries.push([key, descriptor]);
-		processed.add(key);
+	if (!metadata) {
+		return [];
 	}
-	if (metadata) {
-		for (const [key, descriptor] of Object.entries(metadata)) {
-			if (processed.has(key)) {
-				continue;
-			}
-			entries.push([key, createRegistryDescriptor(key, descriptor, {})]);
-		}
-	}
-	return entries;
+	return Object.entries(metadata).map(([id, descriptor]) => [
+		id,
+		createRegistryDescriptor(id, descriptor, {}),
+	]);
 };
 
-export const buildResourceMetadata = (
-	resources: Record<string, SessionResourceDefinition>,
+const createDescriptorLookup = (
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
 ): MetadataLookup<RegistryMetadataDescriptor> =>
-	createLookup(mergeResourceEntries(resources, metadata), (id: string) =>
+	createLookup(createDescriptorEntries(metadata), (id: string) =>
 		createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
 	);
 
-export const buildRegistryMetadata = <
-	TDefinition extends {
-		id: string;
-		name?: string | undefined;
-		icon?: string | undefined;
-		description?: string | undefined;
-	},
->(
-	registry: Registry<TDefinition>,
+export const buildResourceMetadata = (
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
 ): MetadataLookup<RegistryMetadataDescriptor> =>
-	createLookup(
-		mergeRegistryEntries(registry, metadata, (definition) => ({
-			label: definition.name,
-			icon: definition.icon,
-			description: definition.description,
-		})),
-		(id: string) =>
-			createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
-	);
+	createDescriptorLookup(metadata);
+
+export const buildRegistryMetadata = (
+	metadata: Record<string, SessionMetadataDescriptor> | undefined,
+): MetadataLookup<RegistryMetadataDescriptor> =>
+	createDescriptorLookup(metadata);
 
 export const buildStatMetadata = (
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
 ): MetadataLookup<RegistryMetadataDescriptor> =>
-	createLookup(
-		metadata
-			? Object.entries(metadata).map(([id, descriptor]) => [
-					id,
-					createRegistryDescriptor(id, descriptor, {}),
-				])
-			: [],
-		(id: string) =>
-			createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
-	);
+	createDescriptorLookup(metadata);
 
 export const buildPhaseMetadata = (
 	metadata: Record<string, SessionPhaseMetadata> | undefined,

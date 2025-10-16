@@ -38,26 +38,22 @@ export interface TestRegistryMetadataSelectors {
 }
 
 export function createTestRegistryMetadata(
-	registries: Pick<
+	_registries: Pick<
 		SessionRegistries,
 		'resources' | 'populations' | 'buildings' | 'developments'
 	>,
 	metadata: SessionSnapshotMetadata,
 ): TestRegistryMetadataSelectors {
 	const resourceMetadataLookup = buildResourceMetadata(
-		registries.resources,
 		extractDescriptorRecord(metadata, 'resources'),
 	);
 	const populationMetadataLookup = buildRegistryMetadata(
-		registries.populations,
 		extractDescriptorRecord(metadata, 'populations'),
 	);
 	const buildingMetadataLookup = buildRegistryMetadata(
-		registries.buildings,
 		extractDescriptorRecord(metadata, 'buildings'),
 	);
 	const developmentMetadataLookup = buildRegistryMetadata(
-		registries.developments,
 		extractDescriptorRecord(metadata, 'developments'),
 	);
 	const statMetadataLookup = buildStatMetadata(
