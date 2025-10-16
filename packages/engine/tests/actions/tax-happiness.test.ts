@@ -17,15 +17,16 @@ describe('resource removal penalties', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine(content);
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
-		ctx.activePlayer.resources[Resource.happiness] = 2;
-		const before = ctx.activePlayer.resources[Resource.happiness] ?? 0;
-		const cost = getActionCosts(action.id, ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction(action.id, ctx);
-		const after = ctx.activePlayer.resources[Resource.happiness] ?? 0;
+		const engineContext = createTestEngine(content);
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
+		engineContext.activePlayer.resources[Resource.happiness] = 2;
+		const before =
+			engineContext.activePlayer.resources[Resource.happiness] ?? 0;
+		const cost = getActionCosts(action.id, engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction(action.id, engineContext);
+		const after = engineContext.activePlayer.resources[Resource.happiness] ?? 0;
 		expect(after).toBe(before - 1);
 	});
 
@@ -50,25 +51,25 @@ describe('resource removal penalties', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions: content.actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
-		ctx.activePlayer.population[PopulationRole.Council] = 2;
-		ctx.activePlayer.resources[Resource.happiness] = 2;
-		const cost = getActionCosts(action.id, ctx)[Resource.ap] ?? 0;
+		const engineContext = createTestEngine({ actions: content.actions });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
+		engineContext.activePlayer.population[PopulationRole.Council] = 2;
+		engineContext.activePlayer.resources[Resource.happiness] = 2;
+		const cost = getActionCosts(action.id, engineContext)[Resource.ap] ?? 0;
 
-		ctx.activePlayer.ap = cost;
+		engineContext.activePlayer.ap = cost;
 
-		performAction(action.id, ctx);
+		performAction(action.id, engineContext);
 
-		expect(ctx.activePlayer.resources[Resource.happiness]).toBe(1);
+		expect(engineContext.activePlayer.resources[Resource.happiness]).toBe(1);
 
-		ctx.activePlayer.resources[Resource.happiness] = 0;
+		engineContext.activePlayer.resources[Resource.happiness] = 0;
 
-		ctx.activePlayer.ap = cost;
+		engineContext.activePlayer.ap = cost;
 
-		performAction(action.id, ctx);
+		performAction(action.id, engineContext);
 
-		expect(ctx.activePlayer.resources[Resource.happiness]).toBe(-1);
+		expect(engineContext.activePlayer.resources[Resource.happiness]).toBe(-1);
 	});
 });
