@@ -1,10 +1,10 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
+import { humanizeIdentifier } from '../effects/stringUtils';
 
 function formatStepTriggerLabel(
 	context: TranslationContext,
@@ -99,10 +99,25 @@ export class PhasedTranslator {
 				}
 				const future = info.future ?? info.label;
 				const icon = info.icon ?? '';
-				if (future && future.trim().length) {
-					const parts = [icon, future].filter(Boolean).join(' ').trim();
-					if (parts.length) {
-						return parts;
+				const trimmedFuture = future?.trim();
+				if (trimmedFuture && trimmedFuture.length) {
+					const normalizedIdentifier = identifier.trim().toLowerCase();
+					const normalizedFuture = trimmedFuture.toLowerCase();
+					const normalizedHumanized = (humanizeIdentifier(identifier) ?? '')
+						.trim()
+						.toLowerCase();
+					const shouldUseFuture =
+						normalizedFuture !== normalizedIdentifier &&
+						(normalizedHumanized.length === 0 ||
+							normalizedFuture !== normalizedHumanized);
+					if (shouldUseFuture) {
+						const parts = [icon, trimmedFuture]
+							.filter(Boolean)
+							.join(' ')
+							.trim();
+						if (parts.length) {
+							return parts;
+						}
 					}
 				}
 				return fallbackTitle;
@@ -130,11 +145,23 @@ export class PhasedTranslator {
 			applyTrigger(phaseKey, phaseTitle);
 		}
 
-		const triggerLookup = context.assets?.triggers ?? TRIGGER_INFO;
-		const stepKeysFromInfo = Object.keys(triggerLookup).filter((key) =>
-			key.endsWith('Step'),
-		);
-		for (const key of stepKeysFromInfo) {
+		const stepTriggerKeys = new Set<string>();
+		for (const phase of context.phases) {
+			const steps = phase.steps ?? [];
+			for (const step of steps) {
+				const triggers = step.triggers ?? [];
+				for (const trigger of triggers) {
+					stepTriggerKeys.add(trigger);
+				}
+			}
+		}
+		const triggerLookup = context.assets?.triggers ?? {};
+		for (const key of Object.keys(triggerLookup)) {
+			if (key.endsWith('Step') || stepTriggerKeys.has(key)) {
+				stepTriggerKeys.add(key);
+			}
+		}
+		for (const key of stepTriggerKeys) {
 			applyTrigger(key as keyof PhasedDef, key);
 		}
 

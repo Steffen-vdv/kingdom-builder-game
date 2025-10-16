@@ -1,8 +1,4 @@
-import {
-	STATS,
-	type PopulationRoleId,
-	type StatKey,
-} from '@kingdom-builder/contents';
+import { STATS, type StatKey } from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
 
@@ -84,27 +80,30 @@ function resolvePopulationFallback(context: ContextWithAssets | undefined) {
 
 export function selectPopulationDescriptor(
 	context: ContextWithAssets,
-	role: PopulationRoleId | undefined,
+	role: string | undefined,
 ): RegistryDescriptor {
 	const cache = getCacheEntry(
 		context,
 		populationCache,
 		populationFallbackCache,
 	);
-	const cacheKey = normalizeKey(role);
+	const normalizedRole = typeof role === 'string' ? role.trim() : undefined;
+	const roleKey =
+		normalizedRole && normalizedRole.length > 0 ? normalizedRole : undefined;
+	const cacheKey = normalizeKey(roleKey);
 	const cached = cache.get(cacheKey);
 	if (cached) {
 		return cached;
 	}
 	const fallback = resolvePopulationFallback(context);
-	if (!role) {
+	if (!roleKey) {
 		cache.set(cacheKey, fallback);
 		return fallback;
 	}
 	const assets = context.assets;
-	const entry = assets?.populations?.[role];
+	const entry = assets?.populations?.[roleKey];
 	const icon = coerceIcon(entry?.icon, fallback.icon);
-	const fallbackLabel = humanizeIdentifier(role) || fallback.label;
+	const fallbackLabel = humanizeIdentifier(roleKey) || fallback.label;
 	const label = coerceLabel(entry?.label, fallbackLabel);
 	const descriptor = { icon, label } satisfies RegistryDescriptor;
 	cache.set(cacheKey, descriptor);

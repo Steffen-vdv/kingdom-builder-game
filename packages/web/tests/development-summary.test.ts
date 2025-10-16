@@ -72,6 +72,12 @@ describe('development summary', () => {
 					},
 					effects: [nestedEffect],
 				};
+				(
+					development as unknown as Record<
+						string,
+						EffectDef<Record<string, unknown>>[] | undefined
+					>
+				)[triggerId] = [phaseEffect];
 				const targetPhase = session.phases[0];
 				phaseLabel = targetPhase?.label ?? targetPhase?.id ?? 'Growth';
 				const syntheticStep = {
