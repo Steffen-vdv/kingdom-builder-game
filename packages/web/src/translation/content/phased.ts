@@ -1,5 +1,4 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
@@ -130,11 +129,17 @@ export class PhasedTranslator {
 			applyTrigger(phaseKey, phaseTitle);
 		}
 
-		const triggerLookup = context.assets?.triggers ?? TRIGGER_INFO;
-		const stepKeysFromInfo = Object.keys(triggerLookup).filter((key) =>
-			key.endsWith('Step'),
+		const assetStepKeys = Object.keys(context.assets?.triggers ?? {}).filter(
+			(key) => key.endsWith('Step'),
 		);
-		for (const key of stepKeysFromInfo) {
+		const definitionStepKeys = Object.keys(phasedDefinition).filter(
+			(key) => typeof key === 'string' && key.endsWith('Step'),
+		);
+		const stepKeySet = new Set<string>([
+			...assetStepKeys,
+			...definitionStepKeys,
+		]);
+		for (const key of stepKeySet) {
 			applyTrigger(key as keyof PhasedDef, key);
 		}
 

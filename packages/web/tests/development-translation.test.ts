@@ -6,7 +6,10 @@ import {
 	summarizeContent,
 	type SummaryEntry,
 } from '../src/translation';
-import { selectResourceDisplay } from '../src/translation/context/assetSelectors';
+import {
+	selectResourceDisplay,
+	selectTriggerDisplay,
+} from '../src/translation/context/assetSelectors';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 
 interface SelfReferentialDevelopment {
@@ -117,9 +120,24 @@ describe('development translation', () => {
 		const developmentName = definition?.name ?? id;
 		const icon = definition?.icon ?? '';
 
-		const hasIncomeLine = strings.some((line) => {
-			return /Gain Income step/u.test(line);
-		});
+		const incomeTrigger = selectTriggerDisplay(
+			translationContext.assets,
+			'onGainIncomeStep',
+		);
+		const markerCandidates = [
+			incomeTrigger.future,
+			incomeTrigger.label,
+			incomeTrigger.past,
+			'Income',
+		]
+			.filter(
+				(value): value is string =>
+					typeof value === 'string' && value.trim().length > 0,
+			)
+			.map((value) => value.trim());
+		const hasIncomeLine = markerCandidates.some((marker) =>
+			strings.some((line) => line.includes(marker)),
+		);
 		expect(hasIncomeLine).toBe(true);
 
 		expect(strings.some((line) => /\+2/u.test(line))).toBe(true);
