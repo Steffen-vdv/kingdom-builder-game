@@ -157,14 +157,21 @@ function createMockGame() {
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const session = {
 		getActionCosts: vi.fn(),
+		hasActionCosts: vi.fn(() => true),
+		subscribeActionCosts: vi.fn(() => () => {}),
 		getActionRequirements: vi.fn(),
+		hasActionRequirements: vi.fn(() => true),
+		subscribeActionRequirements: vi.fn(() => () => {}),
 		getActionOptions: vi.fn(),
+		hasActionOptions: vi.fn(() => true),
+		subscribeActionOptions: vi.fn(() => () => {}),
 	} as const;
 	return {
 		...createActionsPanelState({
 			actionCostResource,
 			phaseId: phases[0]?.id ?? 'phase.action',
 		}),
+		sessionId: 'session:test',
 		logOverflowed: false,
 		session,
 		sessionState,
@@ -192,8 +199,14 @@ describe('GenericActions effect group handling', () => {
 	beforeEach(() => {
 		mockGame = createMockGame();
 		mockGame.session.getActionCosts.mockReset();
+		mockGame.session.hasActionCosts.mockReset();
+		mockGame.session.subscribeActionCosts.mockReset();
 		mockGame.session.getActionRequirements.mockReset();
+		mockGame.session.hasActionRequirements.mockReset();
+		mockGame.session.subscribeActionRequirements.mockReset();
 		mockGame.session.getActionOptions.mockReset();
+		mockGame.session.hasActionOptions.mockReset();
+		mockGame.session.subscribeActionOptions.mockReset();
 		getRequirementIconsMock.mockReset();
 		describeContentMock.mockReset();
 		summarizeContentMock.mockReset();
@@ -204,7 +217,9 @@ describe('GenericActions effect group handling', () => {
 			[mockGame.actionCostResource]: 1,
 			[mockGame.secondaryResource]: 12,
 		}));
+		mockGame.session.hasActionCosts.mockReturnValue(true);
 		mockGame.session.getActionRequirements.mockImplementation(() => []);
+		mockGame.session.hasActionRequirements.mockReturnValue(true);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
 			if (type === 'action' && id === mockGame.actionReferences.develop.id) {
@@ -258,6 +273,7 @@ describe('GenericActions effect group handling', () => {
 				},
 			];
 		});
+		mockGame.session.hasActionOptions.mockReturnValue(true);
 	});
 
 	it('collects choices and parameters before performing royal decree', async () => {

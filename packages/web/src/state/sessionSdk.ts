@@ -3,8 +3,11 @@ import type {
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
+	ActionParametersPayload,
 } from '@kingdom-builder/protocol/actions';
 import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
 	SessionCreateRequest,
@@ -15,6 +18,7 @@ import type {
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import {
 	applySessionState,
 	deleteSessionRecord,
@@ -96,6 +100,59 @@ function getAdapter(sessionId: string): RemoteSessionAdapter {
 	return getOrCreateRemoteAdapter(sessionId, {
 		ensureGameApi,
 		runAiTurn: runAiTurnInternal,
+	});
+}
+
+export async function loadActionCosts(
+	sessionId: string,
+	actionId: string,
+	params?: ActionParametersPayload,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionActionCostMap> {
+	const adapter = getAdapter(sessionId);
+	const request = params
+		? { sessionId, actionId, params }
+		: { sessionId, actionId };
+	return enqueueSessionTask(sessionId, async () => {
+		const api = ensureGameApi();
+		const response = await api.getActionCosts(request, requestOptions);
+		adapter.setActionCosts(actionId, params, response.costs);
+		return response.costs;
+	});
+}
+
+export async function loadActionRequirements(
+	sessionId: string,
+	actionId: string,
+	params?: ActionParametersPayload,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionActionRequirementList> {
+	const adapter = getAdapter(sessionId);
+	const request = params
+		? { sessionId, actionId, params }
+		: { sessionId, actionId };
+	return enqueueSessionTask(sessionId, async () => {
+		const api = ensureGameApi();
+		const response = await api.getActionRequirements(request, requestOptions);
+		adapter.setActionRequirements(actionId, params, response.requirements);
+		return response.requirements;
+	});
+}
+
+export async function loadActionOptions(
+	sessionId: string,
+	actionId: string,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<ActionEffectGroup[]> {
+	const adapter = getAdapter(sessionId);
+	return enqueueSessionTask(sessionId, async () => {
+		const api = ensureGameApi();
+		const response = await api.getActionOptions(
+			{ sessionId, actionId },
+			requestOptions,
+		);
+		adapter.setActionOptions(actionId, response.groups);
+		return response.groups;
 	});
 }
 

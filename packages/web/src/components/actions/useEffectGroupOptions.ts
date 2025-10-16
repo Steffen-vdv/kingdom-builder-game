@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
@@ -11,8 +11,9 @@ import {
 	type TranslationContext,
 } from '../../translation';
 import { type ActionCardOption } from './ActionCard';
-import type { HoverCardData, GameEngineApi } from './types';
+import type { HoverCardData } from './types';
 import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
+import { useActionMetadata } from '../../state/useActionMetadata';
 
 type OptionParams = ActionEffectGroupOption['params'];
 type PendingParams = Record<string, unknown> | undefined;
@@ -20,7 +21,6 @@ type PendingParams = Record<string, unknown> | undefined;
 type BuildOptionsParams = {
 	currentGroup: ActionEffectGroup | undefined;
 	pendingParams: PendingParams;
-	session: GameEngineApi['session'];
 	translationContext: TranslationContext;
 	formatRequirement: (requirement: string) => string;
 	handleOptionSelect: (
@@ -32,6 +32,14 @@ type BuildOptionsParams = {
 	handleHoverCard: (data: HoverCardData) => void;
 	hoverBackground: string;
 };
+
+interface ActiveOptionState {
+	option: ActionEffectGroupOption;
+	mergedParams: Record<string, unknown>;
+	optionLabel: string;
+	baseEffects: string[];
+	description?: string;
+}
 
 function resolveOptionParams(
 	option: ActionEffectGroupOption,
@@ -64,66 +72,9 @@ function resolveOptionParams(
 	return resolved;
 }
 
-function buildHoverDetails(
-	option: ActionEffectGroupOption,
-	mergedParams: Record<string, unknown>,
-	session: GameEngineApi['session'],
-	translationContext: TranslationContext,
-	formatRequirement: (requirement: string) => string,
-	hoverBackground: string,
-	optionLabel: string,
-): HoverCardData {
-	const hoverSummary = describeContent(
-		'action',
-		option.actionId,
-		translationContext,
-		mergedParams,
-	);
-	const { effects: baseEffects, description } = splitSummary(hoverSummary);
-	const requirementFailures = session.getActionRequirements(
-		option.actionId,
-		mergedParams,
-	);
-	const requirements = requirementFailures.map((failure) =>
-		formatRequirement(translateRequirementFailure(failure, translationContext)),
-	);
-	let effects = baseEffects;
-	const idParam = mergedParams?.id;
-	const developmentParam = mergedParams?.developmentId;
-	const developmentId =
-		typeof idParam === 'string'
-			? idParam
-			: typeof developmentParam === 'string'
-				? developmentParam
-				: undefined;
-	if (typeof developmentId === 'string') {
-		try {
-			const developmentSummary = describeContent(
-				'development',
-				developmentId,
-				translationContext,
-			);
-			const { effects: developmentEffects } = splitSummary(developmentSummary);
-			if (developmentEffects.length > 0) {
-				effects = developmentEffects;
-			}
-		} catch {
-			/* ignore missing development summaries */
-		}
-	}
-	return {
-		title: optionLabel.trim() || option.label || option.id,
-		effects,
-		...(description && { description }),
-		requirements,
-		bgClass: hoverBackground,
-	};
-}
-
 export function useEffectGroupOptions({
 	currentGroup,
 	pendingParams,
-	session,
 	translationContext,
 	formatRequirement,
 	handleOptionSelect,
@@ -131,6 +82,77 @@ export function useEffectGroupOptions({
 	handleHoverCard,
 	hoverBackground,
 }: BuildOptionsParams): ActionCardOption[] | undefined {
+	const [activeOption, setActiveOption] = useState<ActiveOptionState | null>(
+		null,
+	);
+	const activeMetadata = useActionMetadata(
+		activeOption
+			? {
+					actionId: activeOption.option.actionId,
+					params: activeOption.mergedParams,
+				}
+			: { actionId: '', enabled: false },
+	);
+
+	useEffect(() => {
+		if (!activeOption) {
+			return;
+		}
+		const failures = activeMetadata.requirements;
+		if (!failures) {
+			return;
+		}
+		const requirementTexts = failures.map((failure) =>
+			formatRequirement(
+				translateRequirementFailure(failure, translationContext),
+			),
+		);
+		let effects = activeOption.baseEffects;
+		let description = activeOption.description;
+		const idParam = activeOption.mergedParams?.['id'];
+		const developmentParam = activeOption.mergedParams?.['developmentId'];
+		const developmentId =
+			typeof idParam === 'string'
+				? idParam
+				: typeof developmentParam === 'string'
+					? developmentParam
+					: undefined;
+		if (typeof developmentId === 'string') {
+			try {
+				const developmentSummary = describeContent(
+					'development',
+					developmentId,
+					translationContext,
+				);
+				const { effects: developmentEffects } =
+					splitSummary(developmentSummary);
+				if (developmentEffects.length > 0) {
+					effects = developmentEffects;
+				}
+			} catch {
+				/* ignore missing development summaries */
+			}
+		}
+		const hoverDetails: HoverCardData = {
+			title:
+				activeOption.optionLabel.trim() ||
+				activeOption.option.label ||
+				activeOption.option.id,
+			effects,
+			...(description && { description }),
+			requirements: requirementTexts,
+			bgClass: hoverBackground,
+		};
+		handleHoverCard(hoverDetails);
+	}, [
+		activeMetadata.requirements,
+		activeOption,
+		formatRequirement,
+		handleHoverCard,
+		hoverBackground,
+		translationContext,
+	]);
+
 	return useMemo(() => {
 		if (!currentGroup) {
 			return undefined;
@@ -158,6 +180,7 @@ export function useEffectGroupOptions({
 				...(option.icon ? { icon: option.icon } : {}),
 				onSelect: () => {
 					clearHoverCard();
+					setActiveOption(null);
 					const selectionParams =
 						Object.keys(resolved).length > 0 ? resolved : undefined;
 					handleOptionSelect(currentGroup, option, selectionParams);
@@ -171,29 +194,46 @@ export function useEffectGroupOptions({
 				card.description = option.description;
 			}
 			card.onMouseEnter = () => {
-				const hoverDetails = buildHoverDetails(
+				const hoverSummary = describeContent(
+					'action',
+					option.actionId,
+					translationContext,
+					mergedParams,
+				);
+				const { effects: baseEffects, description } =
+					splitSummary(hoverSummary);
+				setActiveOption({
 					option,
 					mergedParams,
-					session,
-					translationContext,
-					formatRequirement,
-					hoverBackground,
 					optionLabel,
-				);
-				handleHoverCard(hoverDetails);
+					baseEffects,
+					description,
+				});
+				handleHoverCard({
+					title: optionLabel.trim() || option.label || option.id,
+					effects: baseEffects,
+					...(description && { description }),
+					requirements: ['Loading requirements…'],
+					bgClass: hoverBackground,
+				});
 			};
-			card.onMouseLeave = clearHoverCard;
+			card.onMouseLeave = () => {
+				setActiveOption((previous) =>
+					previous?.option.id === option.id ? null : previous,
+				);
+				clearHoverCard();
+			};
 			return card;
 		});
 	}, [
 		clearHoverCard,
 		currentGroup,
-		session,
 		translationContext,
 		formatRequirement,
 		handleHoverCard,
 		handleOptionSelect,
 		hoverBackground,
+		setActiveOption,
 		pendingParams,
 	]);
 }

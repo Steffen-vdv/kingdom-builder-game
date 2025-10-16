@@ -14,6 +14,7 @@ export function createActionsPanelState({
 		hoverCard: null,
 		handleHoverCard: vi.fn(),
 		clearHoverCard: vi.fn(),
+		sessionId: 'session:test',
 		phase: {
 			currentPhaseId: phaseId,
 			isActionPhase: true,

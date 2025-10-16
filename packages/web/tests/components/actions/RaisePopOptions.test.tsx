@@ -103,8 +103,14 @@ function createRaisePopScenario(
 	}
 	mockGame.session = {
 		getActionCosts: vi.fn(() => ({ gold: 5, ap: 1 })),
+		hasActionCosts: vi.fn(() => true),
+		subscribeActionCosts: vi.fn(() => () => {}),
 		getActionRequirements: vi.fn(() => []),
+		hasActionRequirements: vi.fn(() => true),
+		subscribeActionRequirements: vi.fn(() => () => {}),
 		getActionOptions: vi.fn(() => []),
+		hasActionOptions: vi.fn(() => true),
+		subscribeActionOptions: vi.fn(() => () => {}),
 	} as unknown as LegacyGameEngineContextValue['session'];
 	return {
 		registries,

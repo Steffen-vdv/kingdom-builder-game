@@ -9,6 +9,7 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { GameApi, GameApiRequestOptions } from '../services/gameApi';
 import {
 	assertSessionRecord,
@@ -24,6 +25,36 @@ const clone = <T>(value: T): T => {
 	return JSON.parse(JSON.stringify(value)) as T;
 };
 
+type ActionMetadataListener = () => void;
+
+const stableSerialize = (value: unknown): string => {
+	if (value === null) {
+		return 'null';
+	}
+	if (value === undefined) {
+		return 'undefined';
+	}
+	if (typeof value !== 'object') {
+		return JSON.stringify(value);
+	}
+	if (Array.isArray(value)) {
+		const entries = value.map((item) => stableSerialize(item));
+		return `[${entries.join(',')}]`;
+	}
+	const entries = Object.entries(value as Record<string, unknown>)
+		.map(([key, entry]) => [key, entry] as const)
+		.sort(([first], [second]) => first.localeCompare(second))
+		.map(([key, entry]) => `${JSON.stringify(key)}:${stableSerialize(entry)}`);
+	return `{${entries.join(',')}}`;
+};
+
+const toMetadataKey = (
+	actionId: string,
+	params?: ActionParametersPayload,
+): string => {
+	return `${actionId}:${stableSerialize(params ?? null)}`;
+};
+
 interface RemoteSessionAdapterDependencies {
 	ensureGameApi: () => GameApi;
 	runAiTurn: (
@@ -37,6 +68,12 @@ export class RemoteSessionAdapter implements LegacySession {
 	#deps: RemoteSessionAdapterDependencies;
 	#latestAdvance: SessionAdvanceResult | null = null;
 	#simulationCache: Map<string, SessionSimulateResponse['result']>;
+	#actionCostCache: Map<string, SessionActionCostMap>;
+	#actionRequirementCache: Map<string, SessionActionRequirementList>;
+	#actionOptionCache: Map<string, ActionEffectGroup[]>;
+	#actionCostListeners: Map<string, Set<ActionMetadataListener>>;
+	#actionRequirementListeners: Map<string, Set<ActionMetadataListener>>;
+	#actionOptionListeners: Map<string, Set<ActionMetadataListener>>;
 
 	constructor(
 		sessionId: string,
@@ -45,6 +82,48 @@ export class RemoteSessionAdapter implements LegacySession {
 		this.#sessionId = sessionId;
 		this.#deps = dependencies;
 		this.#simulationCache = new Map();
+		this.#actionCostCache = new Map();
+		this.#actionRequirementCache = new Map();
+		this.#actionOptionCache = new Map();
+		this.#actionCostListeners = new Map();
+		this.#actionRequirementListeners = new Map();
+		this.#actionOptionListeners = new Map();
+	}
+
+	#notify(
+		listeners: Map<string, Set<ActionMetadataListener>>,
+		key: string,
+	): void {
+		const handlers = listeners.get(key);
+		if (!handlers) {
+			return;
+		}
+		for (const listener of handlers) {
+			listener();
+		}
+	}
+
+	#subscribe(
+		listeners: Map<string, Set<ActionMetadataListener>>,
+		key: string,
+		listener: ActionMetadataListener,
+	): () => void {
+		let handlers = listeners.get(key);
+		if (!handlers) {
+			handlers = new Set();
+			listeners.set(key, handlers);
+		}
+		handlers.add(listener);
+		return () => {
+			const current = listeners.get(key);
+			if (!current) {
+				return;
+			}
+			current.delete(listener);
+			if (current.size === 0) {
+				listeners.delete(key);
+			}
+		};
 	}
 
 	enqueue<T>(task: () => Promise<T> | T): Promise<T> {
@@ -56,16 +135,115 @@ export class RemoteSessionAdapter implements LegacySession {
 		return record.snapshot;
 	}
 
-	getActionCosts(): SessionActionCostMap {
-		return {};
+	getActionCosts(
+		actionId: string,
+		params?: ActionParametersPayload,
+	): SessionActionCostMap {
+		const key = toMetadataKey(actionId, params);
+		const cached = this.#actionCostCache.get(key);
+		if (!cached) {
+			return {};
+		}
+		return clone(cached);
 	}
 
-	getActionRequirements(): SessionActionRequirementList {
-		return [];
+	hasActionCosts(actionId: string, params?: ActionParametersPayload): boolean {
+		const key = toMetadataKey(actionId, params);
+		return this.#actionCostCache.has(key);
 	}
 
-	getActionOptions(): ActionEffectGroup[] {
-		return [];
+	subscribeActionCosts(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		listener: ActionMetadataListener,
+	): () => void {
+		const key = toMetadataKey(actionId, params);
+		return this.#subscribe(this.#actionCostListeners, key, listener);
+	}
+
+	setActionCosts(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		costs: SessionActionCostMap | null,
+	): void {
+		const key = toMetadataKey(actionId, params);
+		if (!costs) {
+			this.#actionCostCache.delete(key);
+		} else {
+			this.#actionCostCache.set(key, clone(costs));
+		}
+		this.#notify(this.#actionCostListeners, key);
+	}
+
+	getActionRequirements(
+		actionId: string,
+		params?: ActionParametersPayload,
+	): SessionActionRequirementList {
+		const key = toMetadataKey(actionId, params);
+		const cached = this.#actionRequirementCache.get(key);
+		if (!cached) {
+			return [];
+		}
+		return clone(cached);
+	}
+
+	hasActionRequirements(
+		actionId: string,
+		params?: ActionParametersPayload,
+	): boolean {
+		const key = toMetadataKey(actionId, params);
+		return this.#actionRequirementCache.has(key);
+	}
+
+	subscribeActionRequirements(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		listener: ActionMetadataListener,
+	): () => void {
+		const key = toMetadataKey(actionId, params);
+		return this.#subscribe(this.#actionRequirementListeners, key, listener);
+	}
+
+	setActionRequirements(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		requirements: SessionActionRequirementList | null,
+	): void {
+		const key = toMetadataKey(actionId, params);
+		if (!requirements) {
+			this.#actionRequirementCache.delete(key);
+		} else {
+			this.#actionRequirementCache.set(key, clone(requirements));
+		}
+		this.#notify(this.#actionRequirementListeners, key);
+	}
+
+	getActionOptions(actionId: string): ActionEffectGroup[] {
+		const cached = this.#actionOptionCache.get(actionId);
+		if (!cached) {
+			return [];
+		}
+		return clone(cached);
+	}
+
+	hasActionOptions(actionId: string): boolean {
+		return this.#actionOptionCache.has(actionId);
+	}
+
+	subscribeActionOptions(
+		actionId: string,
+		listener: ActionMetadataListener,
+	): () => void {
+		return this.#subscribe(this.#actionOptionListeners, actionId, listener);
+	}
+
+	setActionOptions(actionId: string, groups: ActionEffectGroup[] | null): void {
+		if (!groups) {
+			this.#actionOptionCache.delete(actionId);
+		} else {
+			this.#actionOptionCache.set(actionId, clone(groups));
+		}
+		this.#notify(this.#actionOptionListeners, actionId);
 	}
 
 	getActionDefinition(

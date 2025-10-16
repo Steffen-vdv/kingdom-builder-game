@@ -465,10 +465,20 @@ export function createActionsPanelGame({
 		getActionCosts: vi.fn((actionId: string) => {
 			return metadata.costMap.get(actionId) ?? {};
 		}),
+		hasActionCosts: vi.fn((actionId: string) => {
+			return metadata.costMap.has(actionId);
+		}),
+		subscribeActionCosts: vi.fn(() => () => {}),
 		getActionRequirements: vi.fn((actionId: string) => {
 			return metadata.requirementFailures.get(actionId) ?? [];
 		}),
+		hasActionRequirements: vi.fn((actionId: string) => {
+			return metadata.requirementFailures.has(actionId);
+		}),
+		subscribeActionRequirements: vi.fn(() => () => {}),
 		getActionOptions: vi.fn(() => []),
+		hasActionOptions: vi.fn(() => true),
+		subscribeActionOptions: vi.fn(() => () => {}),
 	} as const;
 
 	sessionState.metadata = {

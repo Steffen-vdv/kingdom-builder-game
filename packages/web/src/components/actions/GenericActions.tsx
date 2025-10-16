@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import GenericActionCard from './GenericActionCard';
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';
 import type { ResourceDescriptorSelector } from './utils';
@@ -47,6 +48,7 @@ function GenericActions({
 		[handlePerform],
 	);
 	const [pending, setPending] = useState<PendingActionState | null>(null);
+	const [costTotals, setCostTotals] = useState<Map<string, number>>(new Map());
 
 	useEffect(() => {
 		if (!canInteract) {
@@ -164,56 +166,209 @@ function GenericActions({
 		[handlePerform],
 	);
 
-	const entries = useMemo(() => {
-		return actions
-			.map((action) => {
-				const costBag = session.getActionCosts(action.id);
-				const costs: Record<string, number> = {};
-				for (const [resourceKey, cost] of Object.entries(costBag)) {
-					costs[resourceKey] = cost ?? 0;
+	useEffect(() => {
+		setCostTotals((previous) => {
+			if (previous.size === 0) {
+				return previous;
+			}
+			const next = new Map(previous);
+			const activeIds = new Set(actions.map((entry) => entry.id));
+			let changed = false;
+			for (const key of next.keys()) {
+				if (!activeIds.has(key)) {
+					next.delete(key);
+					changed = true;
 				}
-				const total = Object.entries(costs).reduce(
-					(sum, [resourceKey, cost]) => {
-						if (resourceKey === actionCostResource) {
-							return sum;
-						}
-						return sum + (cost ?? 0);
-					},
-					0,
-				);
-				const groups = session.getActionOptions(action.id);
-				return { action, costs, total, groups };
+			}
+			return changed ? next : previous;
+		});
+	}, [actions]);
+
+	const sortedActions = useMemo(() => {
+		return actions
+			.map((action) => ({
+				action,
+				total: costTotals.get(action.id) ?? Number.POSITIVE_INFINITY,
+			}))
+			.sort((first, second) => {
+				if (first.total === second.total) {
+					return first.action.name.localeCompare(second.action.name);
+				}
+				return first.total - second.total;
 			})
-			.sort((first, second) => first.total - second.total);
-	}, [actions, session, actionCostResource]);
+			.map((entry) => entry.action);
+	}, [actions, costTotals]);
+
+	const handleTotalChange = useCallback(
+		(actionId: string, total: number | null) => {
+			setCostTotals((previous) => {
+				const current = previous.get(actionId);
+				if (total === null) {
+					if (current === undefined) {
+						return previous;
+					}
+					const next = new Map(previous);
+					next.delete(actionId);
+					return next;
+				}
+				if (current === total) {
+					return previous;
+				}
+				const next = new Map(previous);
+				next.set(actionId, total);
+				return next;
+			});
+		},
+		[],
+	);
+
+	const renderAction = useCallback(
+		(action: Action) => (
+			<GenericActionEntry
+				key={action.id}
+				action={action}
+				summaries={summaries}
+				player={player}
+				canInteract={canInteract}
+				pending={pending}
+				setPending={setPending}
+				cancelPending={cancelPending}
+				beginSelection={beginSelection}
+				handleOptionSelect={handleOptionSelect}
+				translationContext={translationContext}
+				actionCostResource={actionCostResource}
+				handlePerform={performAction}
+				handleHoverCard={handleHoverCard}
+				clearHoverCard={clearHoverCard}
+				formatRequirement={formatRequirement}
+				selectResourceDescriptor={selectResourceDescriptor}
+				onCostTotalChange={handleTotalChange}
+			/>
+		),
+		[
+			summaries,
+			player,
+			canInteract,
+			pending,
+			cancelPending,
+			beginSelection,
+			handleOptionSelect,
+			translationContext,
+			actionCostResource,
+			performAction,
+			handleHoverCard,
+			clearHoverCard,
+			formatRequirement,
+			selectResourceDescriptor,
+			handleTotalChange,
+		],
+	);
+
+	return <>{sortedActions.map(renderAction)}</>;
+}
+
+interface GenericActionEntryProps {
+	action: Action;
+	summaries: Map<string, Summary>;
+	player: DisplayPlayer;
+	canInteract: boolean;
+	pending: PendingActionState | null;
+	setPending: React.Dispatch<React.SetStateAction<PendingActionState | null>>;
+	cancelPending: () => void;
+	beginSelection: (action: Action, groups: ActionEffectGroup[]) => void;
+	handleOptionSelect: (
+		group: ActionEffectGroup,
+		option: ActionEffectGroupOption,
+		params?: Record<string, unknown>,
+	) => void;
+	translationContext: ReturnType<typeof useGameEngine>['translationContext'];
+	actionCostResource: string;
+	handlePerform: (
+		action: Action,
+		params?: Record<string, unknown>,
+	) => Promise<void>;
+	handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
+	clearHoverCard: () => void;
+	formatRequirement: (requirement: string) => string;
+	selectResourceDescriptor: ResourceDescriptorSelector;
+	onCostTotalChange: (actionId: string, total: number | null) => void;
+}
+
+function GenericActionEntry({
+	action,
+	summaries,
+	player,
+	canInteract,
+	pending,
+	setPending,
+	cancelPending,
+	beginSelection,
+	handleOptionSelect,
+	translationContext,
+	actionCostResource,
+	handlePerform,
+	handleHoverCard,
+	clearHoverCard,
+	formatRequirement,
+	selectResourceDescriptor,
+	onCostTotalChange,
+}: GenericActionEntryProps) {
+	const metadata = useActionMetadata({ actionId: action.id });
+	const costs = useMemo(() => {
+		const bag = metadata.costs;
+		if (!bag) {
+			return null;
+		}
+		const record: Record<string, number> = {};
+		for (const [resourceKey, cost] of Object.entries(bag)) {
+			record[resourceKey] = cost ?? 0;
+		}
+		return record;
+	}, [metadata.costs]);
+	const total = useMemo(() => {
+		if (!costs) {
+			return null;
+		}
+		return Object.entries(costs).reduce((sum, [resourceKey, cost]) => {
+			if (resourceKey === actionCostResource) {
+				return sum;
+			}
+			return sum + (cost ?? 0);
+		}, 0);
+	}, [costs, actionCostResource]);
+
+	useEffect(() => {
+		onCostTotalChange(action.id, total);
+	}, [action.id, onCostTotalChange, total]);
+
+	useEffect(() => {
+		return () => {
+			onCostTotalChange(action.id, null);
+		};
+	}, [action.id, onCostTotalChange]);
 
 	return (
-		<>
-			{entries.map(({ action, costs, groups }) => (
-				<GenericActionCard
-					key={action.id}
-					action={action}
-					costs={costs}
-					groups={groups}
-					summaries={summaries}
-					player={player}
-					canInteract={canInteract}
-					pending={pending}
-					setPending={setPending}
-					cancelPending={cancelPending}
-					beginSelection={beginSelection}
-					handleOptionSelect={handleOptionSelect}
-					session={session}
-					translationContext={translationContext}
-					actionCostResource={actionCostResource}
-					handlePerform={performAction}
-					handleHoverCard={handleHoverCard}
-					clearHoverCard={clearHoverCard}
-					formatRequirement={formatRequirement}
-					selectResourceDescriptor={selectResourceDescriptor}
-				/>
-			))}
-		</>
+		<GenericActionCard
+			action={action}
+			costs={costs}
+			groups={metadata.groups}
+			requirementFailures={metadata.requirements}
+			summaries={summaries}
+			player={player}
+			canInteract={canInteract}
+			pending={pending}
+			setPending={setPending}
+			cancelPending={cancelPending}
+			beginSelection={beginSelection}
+			handleOptionSelect={handleOptionSelect}
+			translationContext={translationContext}
+			actionCostResource={actionCostResource}
+			handlePerform={handlePerform}
+			handleHoverCard={handleHoverCard}
+			clearHoverCard={clearHoverCard}
+			formatRequirement={formatRequirement}
+			selectResourceDescriptor={selectResourceDescriptor}
+		/>
 	);
 }
 

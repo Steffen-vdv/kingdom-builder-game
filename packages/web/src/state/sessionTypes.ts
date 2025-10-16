@@ -30,11 +30,28 @@ export interface LegacySession {
 		actionId: string,
 		params?: ActionParametersPayload,
 	): SessionActionCostMap;
+	hasActionCosts(actionId: string, params?: ActionParametersPayload): boolean;
+	subscribeActionCosts(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		listener: () => void,
+	): () => void;
 	getActionRequirements(
 		actionId: string,
 		params?: ActionParametersPayload,
 	): SessionActionRequirementList;
+	hasActionRequirements(
+		actionId: string,
+		params?: ActionParametersPayload,
+	): boolean;
+	subscribeActionRequirements(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		listener: () => void,
+	): () => void;
 	getActionOptions(actionId: string): ActionEffectGroup[];
+	hasActionOptions(actionId: string): boolean;
+	subscribeActionOptions(actionId: string, listener: () => void): () => void;
 	getActionDefinition(
 		actionId: string,
 	): SessionActionDefinitionSummary | undefined;

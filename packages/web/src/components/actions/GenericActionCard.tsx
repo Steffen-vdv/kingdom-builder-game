@@ -3,6 +3,7 @@ import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
 } from '@kingdom-builder/protocol';
+import type { SessionActionRequirementList } from '@kingdom-builder/protocol/session';
 import {
 	describeContent,
 	splitSummary,
@@ -23,15 +24,15 @@ import {
 	toPerformableAction,
 	type Action,
 	type DisplayPlayer,
-	type GameEngineApi,
 	type HoverCardData,
 } from './types';
 import { normalizeActionFocus } from './types';
 
 interface GenericActionCardProps {
 	action: Action;
-	costs: Record<string, number>;
-	groups: ActionEffectGroup[];
+	costs: Record<string, number> | null;
+	groups: ActionEffectGroup[] | null;
+	requirementFailures: SessionActionRequirementList | null;
 	summaries: Map<string, Summary>;
 	player: DisplayPlayer;
 	canInteract: boolean;
@@ -44,7 +45,6 @@ interface GenericActionCardProps {
 		option: ActionEffectGroupOption,
 		params?: Record<string, unknown>,
 	) => void;
-	session: GameEngineApi['session'];
 	translationContext: TranslationContext;
 	actionCostResource: string;
 	handlePerform: (
@@ -61,6 +61,7 @@ function GenericActionCard({
 	action,
 	costs,
 	groups,
+	requirementFailures,
 	summaries,
 	player,
 	canInteract,
@@ -69,7 +70,6 @@ function GenericActionCard({
 	cancelPending,
 	beginSelection,
 	handleOptionSelect,
-	session,
 	translationContext,
 	actionCostResource,
 	handlePerform,
@@ -78,19 +78,30 @@ function GenericActionCard({
 	formatRequirement,
 	selectResourceDescriptor,
 }: GenericActionCardProps) {
-	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
+	const costsReady = costs !== null;
+	const requirementFailuresReady = requirementFailures !== null;
+	const groupsReady = groups !== null;
+	const safeCosts = costsReady ? costs : {};
+	const safeGroups = groupsReady ? groups : [];
+	const requirementList = requirementFailuresReady ? requirementFailures : [];
+	const requirements = requirementList.map((failure) =>
 		formatRequirement(translateRequirementFailure(failure, translationContext)),
 	);
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
-	const canPay = Object.entries(costs).every(
-		([resourceKey, cost]) =>
-			(player.resources[resourceKey] || 0) >= (cost ?? 0),
-	);
-	const meetsRequirements = requirements.length === 0;
+	const canPay = costsReady
+		? Object.entries(safeCosts).every(
+				([resourceKey, cost]) =>
+					(player.resources[resourceKey] || 0) >= (cost ?? 0),
+			)
+		: false;
+	const meetsRequirements =
+		requirementFailuresReady && requirementList.length === 0;
 	const summary = summaries.get(action.id);
 	const implemented = (summary?.length ?? 0) > 0;
 	const baseEnabled = [
+		costsReady,
+		requirementFailuresReady,
+		groupsReady,
 		canPay,
 		meetsRequirements,
 		canInteract,
@@ -101,32 +112,38 @@ function GenericActionCard({
 	if (isPending) {
 		cardEnabled = true;
 	}
-	const insufficientTooltip = formatMissingResources(
-		costs,
-		player.resources,
-		selectResourceDescriptor,
-	);
+	const insufficientTooltip = costsReady
+		? formatMissingResources(
+				safeCosts,
+				player.resources,
+				selectResourceDescriptor,
+			)
+		: undefined;
 	const requirementText = requirements.join(', ');
 	const title = !implemented
 		? 'Not implemented yet'
-		: !meetsRequirements
-			? requirementText
-			: !canPay
-				? (insufficientTooltip ?? 'Cannot pay costs')
-				: undefined;
+		: !requirementFailuresReady
+			? 'Loading action requirements…'
+			: !meetsRequirements
+				? requirementText
+				: !costsReady
+					? 'Loading action costs…'
+					: !canPay
+						? (insufficientTooltip ?? 'Cannot pay costs')
+						: undefined;
 	const hoverBackground =
 		'bg-gradient-to-br from-white/80 to-white/60 ' +
 		'dark:from-slate-900/80 dark:to-slate-900/60';
-	const hasGroups = groups.length > 0;
-	const currentGroup = isPending ? pending?.groups[pending.step] : undefined;
-	const stepCount = isPending && hasGroups ? groups.length : undefined;
+	const hasGroups = safeGroups.length > 0;
+	const currentGroup =
+		isPending && groupsReady ? pending?.groups[pending.step] : undefined;
+	const stepCount = isPending && hasGroups ? safeGroups.length : undefined;
 	const stepIndex = stepCount
 		? Math.min(stepCount, (pending?.step ?? 0) + 1)
 		: undefined;
 	const optionCards = useEffectGroupOptions({
 		currentGroup,
 		pendingParams: pending?.params,
-		session,
 		translationContext,
 		formatRequirement,
 		handleOptionSelect,
@@ -143,7 +160,7 @@ function GenericActionCard({
 		<ActionCard
 			key={action.id}
 			title={renderIconLabel(actionIcon, action.name)}
-			costs={costs}
+			costs={safeCosts}
 			playerResources={player.resources}
 			actionCostResource={actionCostResource}
 			requirements={requirements}
@@ -167,8 +184,8 @@ function GenericActionCard({
 				if (!canInteract || !baseEnabled) {
 					return;
 				}
-				if (groups.length > 0) {
-					beginSelection(action, groups);
+				if (safeGroups.length > 0) {
+					beginSelection(action, safeGroups);
 					return;
 				}
 				setPending(null);
