@@ -19,9 +19,9 @@ vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-function createCtx() {
+function createEngineHarness() {
 	const synthetic = createSyntheticPlowContent();
-	const ctx = createEngine({
+	const engineContext = createEngine({
 		actions: synthetic.factory.actions,
 		buildings: synthetic.factory.buildings,
 		developments: synthetic.factory.developments,
@@ -30,27 +30,30 @@ function createCtx() {
 		start: synthetic.start,
 		rules: synthetic.rules,
 	});
-	const translation = createTranslationContextForEngine(ctx, (registries) => {
-		const plowDef = ctx.actions.get(synthetic.plow.id);
-		const expandDef = ctx.actions.get(synthetic.expand.id);
-		const tillDef = ctx.actions.get(synthetic.till.id);
-		registerSyntheticPlowResources(registries.resources);
-		if (plowDef) {
-			registries.actions.add(plowDef.id, { ...plowDef });
-		}
-		if (expandDef) {
-			registries.actions.add(expandDef.id, { ...expandDef });
-		}
-		if (tillDef) {
-			registries.actions.add(tillDef.id, { ...tillDef });
-		}
-	});
-	return { ...synthetic, ctx, translation };
+	const translation = createTranslationContextForEngine(
+		engineContext,
+		(registries) => {
+			const plowDef = engineContext.actions.get(synthetic.plow.id);
+			const expandDef = engineContext.actions.get(synthetic.expand.id);
+			const tillDef = engineContext.actions.get(synthetic.till.id);
+			registerSyntheticPlowResources(registries.resources);
+			if (plowDef) {
+				registries.actions.add(plowDef.id, { ...plowDef });
+			}
+			if (expandDef) {
+				registries.actions.add(expandDef.id, { ...expandDef });
+			}
+			if (tillDef) {
+				registries.actions.add(tillDef.id, { ...tillDef });
+			}
+		},
+	);
+	return { ...synthetic, engineContext, translation };
 }
 
 describe('plow action translation', () => {
 	it('summarizes plow action', () => {
-		const { translation, expand, till, plow } = createCtx();
+		const { translation, expand, till, plow } = createEngineHarness();
 		const summary = summarizeContent('action', plow.id, translation);
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
 		const upkeepLabel = SYNTHETIC_UPKEEP_PHASE.label;
@@ -74,7 +77,7 @@ describe('plow action translation', () => {
 	});
 
 	it('describes plow action without perform prefix and with passive icon', () => {
-		const { translation, plow, plowPassive } = createCtx();
+		const { translation, plow, plowPassive } = createEngineHarness();
 		const desc = describeContent('action', plow.id, translation);
 		const titles = desc.map((entry) => {
 			return typeof entry === 'string' ? entry : entry.title;
@@ -95,7 +98,8 @@ describe('plow action translation', () => {
 	});
 
 	it('keeps performed system actions in effects', () => {
-		const { translation, expand, till, plow, plowPassive } = createCtx();
+		const { translation, expand, till, plow, plowPassive } =
+			createEngineHarness();
 		const summary = describeContent('action', plow.id, translation);
 		const { effects, description } = splitSummary(summary);
 		expect(description).toBeUndefined();

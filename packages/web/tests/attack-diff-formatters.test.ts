@@ -11,7 +11,7 @@ import {
 import {
 	suppressSyntheticStatDescriptor,
 	restoreSyntheticStatDescriptor,
-	createSyntheticCtx,
+	createSyntheticEngineContext,
 } from './helpers/armyAttackFactories';
 import {
 	SYNTH_RESOURCE_IDS,
@@ -28,7 +28,7 @@ const getFirst = <T>(values: readonly T[]): T => {
 
 describe('attack diff formatters registry', () => {
 	it('formats resource diffs using the registered formatter', () => {
-		const { translation } = createSyntheticCtx();
+		const { translation } = createSyntheticEngineContext();
 		const resourceKey = getFirst(listAttackResourceKeys(translation));
 		const resourceInfo = selectAttackResourceDescriptor(
 			translation,
@@ -49,7 +49,7 @@ describe('attack diff formatters registry', () => {
 	});
 
 	it('formats stat diffs using the registered formatter', () => {
-		const { translation } = createSyntheticCtx();
+		const { translation } = createSyntheticEngineContext();
 		const statKey = getFirst(listAttackStatKeys(translation));
 		const statInfo = selectAttackStatDescriptor(translation, statKey);
 		const diff: Extract<AttackPlayerDiff, { type: 'stat' }> = {
@@ -71,7 +71,7 @@ describe('attack diff formatters registry', () => {
 		const original = SYNTH_RESOURCE_METADATA[resourceKey];
 		delete SYNTH_RESOURCE_METADATA[resourceKey];
 		try {
-			const { translation } = createSyntheticCtx();
+			const { translation } = createSyntheticEngineContext();
 			const diff: Extract<AttackPlayerDiff, { type: 'resource' }> = {
 				type: 'resource',
 				key: resourceKey,
@@ -100,7 +100,7 @@ describe('attack diff formatters registry', () => {
 		const statKey = SYNTH_STAT_IDS.armyStrength;
 		suppressSyntheticStatDescriptor(statKey);
 		try {
-			const { translation } = createSyntheticCtx();
+			const { translation } = createSyntheticEngineContext();
 			const diff: Extract<AttackPlayerDiff, { type: 'stat' }> = {
 				type: 'stat',
 				key: statKey,
@@ -121,7 +121,7 @@ describe('attack diff formatters registry', () => {
 	});
 
 	it('throws a clear error when a diff type has no registered formatter', () => {
-		const { translation } = createSyntheticCtx();
+		const { translation } = createSyntheticEngineContext();
 		const unsupportedDiff = {
 			type: 'unknown',
 			key: 'mystery',
