@@ -1,10 +1,10 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
+import { DEFAULT_TRIGGER_METADATA } from '../../contexts/defaultRegistryMetadata';
 
 function formatStepTriggerLabel(
 	context: TranslationContext,
@@ -88,22 +88,28 @@ export class PhasedTranslator {
 			if (!effects.length) {
 				return;
 			}
-			const info = selectTriggerDisplay(context.assets, key as string);
+			const info = selectTriggerDisplay(context.assets, identifier);
 			const stepLabel = formatStepTriggerLabel(context, identifier);
 			const title = (() => {
 				if (stepLabel) {
 					const icon = info.icon ?? '';
 					const trimmedIcon = icon.trim();
 					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
-					return `${prefix}During ${stepLabel}`;
+					const normalized = stepLabel.trim().replace(/\s+/gu, ' ');
+					return `${prefix}During ${normalized}`;
 				}
-				const future = info.future ?? info.label;
 				const icon = info.icon ?? '';
-				if (future && future.trim().length) {
-					const parts = [icon, future].filter(Boolean).join(' ').trim();
-					if (parts.length) {
-						return parts;
-					}
+				const trimmedIcon = icon.trim();
+				const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
+				const future = info.future?.trim();
+				if (future && future.length) {
+					const normalized = future.replace(/\s+/gu, ' ');
+					return `${prefix}${normalized}`.trim();
+				}
+				const past = info.past?.trim() ?? info.label?.trim();
+				if (past && past.length) {
+					const normalized = past.replace(/\s+/gu, ' ');
+					return `${prefix}${normalized}`.trim();
 				}
 				return fallbackTitle;
 			})();
@@ -130,11 +136,20 @@ export class PhasedTranslator {
 			applyTrigger(phaseKey, phaseTitle);
 		}
 
-		const triggerLookup = context.assets?.triggers ?? TRIGGER_INFO;
-		const stepKeysFromInfo = Object.keys(triggerLookup).filter((key) =>
-			key.endsWith('Step'),
-		);
-		for (const key of stepKeysFromInfo) {
+		const stepKeys = new Set<string>();
+		const triggerEntries = context.assets?.triggers ?? {};
+		for (const key of Object.keys(triggerEntries)) {
+			if (key.endsWith('Step')) {
+				stepKeys.add(key);
+			}
+		}
+		const fallbackTriggerMetadata = DEFAULT_TRIGGER_METADATA ?? {};
+		for (const key of Object.keys(fallbackTriggerMetadata)) {
+			if (key.endsWith('Step')) {
+				stepKeys.add(key);
+			}
+		}
+		for (const key of stepKeys) {
 			applyTrigger(key as keyof PhasedDef, key);
 		}
 
