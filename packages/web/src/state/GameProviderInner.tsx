@@ -64,7 +64,6 @@ export function GameProviderInner({
 }: GameProviderInnerProps) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
-
 	const {
 		adapter: sessionAdapter,
 		enqueue,
@@ -74,23 +73,41 @@ export function GameProviderInner({
 	const refresh = useCallback(() => {
 		void refreshSession();
 	}, [refreshSession]);
-
-	const primaryPlayerSnapshot = sessionState.game.players[0];
-	const primaryPlayerId = primaryPlayerSnapshot?.id;
-	const primaryPlayerName = primaryPlayerSnapshot?.name;
+	const controlledPlayerSnapshot = useMemo(() => {
+		const players = sessionState.game.players;
+		if (!Array.isArray(players) || players.length === 0) {
+			return undefined;
+		}
+		const { activePlayerId, opponentId } = sessionState.game;
+		return (
+			players.find((player) => {
+				return !sessionAdapter.hasAiController(player.id);
+			}) ??
+			players.find((player) => player.id === activePlayerId) ??
+			players.find((player) => player.id === opponentId) ??
+			players[0]
+		);
+	}, [
+		sessionAdapter,
+		sessionState.game.players,
+		sessionState.game.activePlayerId,
+		sessionState.game.opponentId,
+	]);
+	const controlledPlayerId = controlledPlayerSnapshot?.id;
+	const controlledPlayerName = controlledPlayerSnapshot?.name;
 	useEffect(() => {
 		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
 		if (
-			primaryPlayerId === undefined ||
-			primaryPlayerName === undefined ||
-			primaryPlayerName === desiredName
+			controlledPlayerId === undefined ||
+			controlledPlayerName === undefined ||
+			controlledPlayerName === desiredName
 		) {
 			return;
 		}
 		void enqueue(() =>
 			updateRemotePlayerName({
 				sessionId,
-				playerId: primaryPlayerId,
+				playerId: controlledPlayerId,
 				playerName: desiredName,
 			}),
 		).finally(() => {
@@ -98,13 +115,12 @@ export function GameProviderInner({
 		});
 	}, [
 		enqueue,
-		primaryPlayerId,
-		primaryPlayerName,
+		controlledPlayerId,
+		controlledPlayerName,
 		refresh,
 		playerName,
 		sessionId,
 	]);
-
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
 			sessionState,
