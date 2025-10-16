@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
@@ -31,6 +31,7 @@ type BuildOptionsParams = {
 	clearHoverCard: () => void;
 	handleHoverCard: (data: HoverCardData) => void;
 	hoverBackground: string;
+	fetchActionRequirements: GameEngineApi['requests']['fetchActionRequirements'];
 };
 
 function resolveOptionParams(
@@ -80,10 +81,8 @@ function buildHoverDetails(
 		mergedParams,
 	);
 	const { effects: baseEffects, description } = splitSummary(hoverSummary);
-	const requirementFailures = session.getActionRequirements(
-		option.actionId,
-		mergedParams,
-	);
+	const requirementFailures =
+		session.getActionRequirements(option.actionId, mergedParams) ?? [];
 	const requirements = requirementFailures.map((failure) =>
 		formatRequirement(translateRequirementFailure(failure, translationContext)),
 	);
@@ -130,7 +129,40 @@ export function useEffectGroupOptions({
 	clearHoverCard,
 	handleHoverCard,
 	hoverBackground,
+	fetchActionRequirements,
 }: BuildOptionsParams): ActionCardOption[] | undefined {
+	const [metadataVersion, setMetadataVersion] = useState(0);
+
+	useEffect(() => {
+		if (!currentGroup) {
+			return;
+		}
+		let disposed = false;
+		const loadRequirements = async () => {
+			let updated = false;
+			for (const option of currentGroup.options) {
+				const resolved = resolveOptionParams(option, pendingParams);
+				const mergedParams: Record<string, unknown> = {
+					...(pendingParams ?? {}),
+					...resolved,
+				};
+				if (
+					session.getActionRequirements(option.actionId, mergedParams) === null
+				) {
+					updated = true;
+					await fetchActionRequirements(option.actionId, mergedParams);
+				}
+			}
+			if (updated && !disposed) {
+				setMetadataVersion((value) => value + 1);
+			}
+		};
+		void loadRequirements();
+		return () => {
+			disposed = true;
+		};
+	}, [currentGroup, pendingParams, session, fetchActionRequirements]);
+
 	return useMemo(() => {
 		if (!currentGroup) {
 			return undefined;
@@ -195,5 +227,6 @@ export function useEffectGroupOptions({
 		handleOptionSelect,
 		hoverBackground,
 		pendingParams,
+		metadataVersion,
 	]);
 }

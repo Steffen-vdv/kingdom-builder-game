@@ -1,6 +1,8 @@
 import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
+	SessionActionCostMap,
+	SessionActionRequirementList,
 } from '@kingdom-builder/protocol/session';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
@@ -21,6 +23,8 @@ import type {
 	Session,
 	SessionResourceKey,
 } from './sessionTypes';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 
 export interface SessionContainer
 	extends Omit<RemoteSessionRecord, 'queueSeed'> {
@@ -87,6 +91,18 @@ export interface GameEngineContextValue {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;
 		refreshSession: RefreshSessionHandler;
+		fetchActionCosts: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => Promise<SessionActionCostMap>;
+		fetchActionRequirements: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => Promise<SessionActionRequirementList>;
+		fetchActionOptions: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => Promise<ActionEffectGroup[]>;
 	};
 	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;

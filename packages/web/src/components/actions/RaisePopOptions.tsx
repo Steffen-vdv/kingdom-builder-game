@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	describeContent,
 	splitSummary,
@@ -53,7 +53,33 @@ export default function RaisePopOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		requests: {
+			fetchActionCosts: requestActionCosts,
+			fetchActionRequirements: requestActionRequirements,
+		},
 	} = useGameEngine();
+	const [, setMetadataVersion] = useState(0);
+	useEffect(() => {
+		let disposed = false;
+		const loadMetadata = async () => {
+			let updated = false;
+			if (session.getActionCosts(action.id) === null) {
+				updated = true;
+				await requestActionCosts(action.id);
+			}
+			if (session.getActionRequirements(action.id) === null) {
+				updated = true;
+				await requestActionRequirements(action.id);
+			}
+			if (updated && !disposed) {
+				setMetadataVersion((value) => value + 1);
+			}
+		};
+		void loadMetadata();
+		return () => {
+			disposed = true;
+		};
+	}, [session, action.id, requestActionCosts, requestActionRequirements]);
 	const { populations } = useRegistryMetadata();
 	const populationMetadata = usePopulationMetadata();
 	const selectPopulationDescriptor = useCallback<PopulationDescriptorSelector>(
@@ -142,7 +168,7 @@ export default function RaisePopOptions({
 	return (
 		<>
 			{roleOptions.map((role) => {
-				const costsBag = session.getActionCosts(action.id);
+				const costsBag = session.getActionCosts(action.id) ?? {};
 				const costEntries = Object.entries(costsBag);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of costEntries) {
@@ -154,7 +180,7 @@ export default function RaisePopOptions({
 				} catch {
 					upkeep = undefined;
 				}
-				const rawRequirements = session.getActionRequirements(action.id);
+				const rawRequirements = session.getActionRequirements(action.id) ?? [];
 				const requirements = rawRequirements.map((failure) =>
 					translateRequirementFailure(failure, translationContext),
 				);

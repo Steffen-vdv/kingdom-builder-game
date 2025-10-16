@@ -39,6 +39,11 @@ function GenericActions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		requests: {
+			fetchActionCosts: requestActionCosts,
+			fetchActionRequirements: requestActionRequirements,
+			fetchActionOptions: requestActionOptions,
+		},
 	} = useGameEngine();
 	const formatRequirement = (requirement: string) => requirement;
 	const performAction = useCallback(
@@ -47,12 +52,50 @@ function GenericActions({
 		[handlePerform],
 	);
 	const [pending, setPending] = useState<PendingActionState | null>(null);
+	const [metadataVersion, setMetadataVersion] = useState(0);
 
 	useEffect(() => {
 		if (!canInteract) {
 			setPending(null);
 		}
 	}, [canInteract]);
+
+	useEffect(() => {
+		let disposed = false;
+		const loadMetadata = async () => {
+			if (actions.length === 0) {
+				return;
+			}
+			let updated = false;
+			for (const action of actions) {
+				if (session.getActionCosts(action.id) === null) {
+					updated = true;
+					await requestActionCosts(action.id);
+				}
+				if (session.getActionRequirements(action.id) === null) {
+					updated = true;
+					await requestActionRequirements(action.id);
+				}
+				if (session.getActionOptions(action.id) === null) {
+					updated = true;
+					await requestActionOptions(action.id);
+				}
+			}
+			if (updated && !disposed) {
+				setMetadataVersion((value) => value + 1);
+			}
+		};
+		void loadMetadata();
+		return () => {
+			disposed = true;
+		};
+	}, [
+		actions,
+		session,
+		requestActionCosts,
+		requestActionRequirements,
+		requestActionOptions,
+	]);
 
 	const cancelPending = useCallback(() => {
 		clearHoverCard();
@@ -167,7 +210,7 @@ function GenericActions({
 	const entries = useMemo(() => {
 		return actions
 			.map((action) => {
-				const costBag = session.getActionCosts(action.id);
+				const costBag = session.getActionCosts(action.id) ?? {};
 				const costs: Record<string, number> = {};
 				for (const [resourceKey, cost] of Object.entries(costBag)) {
 					costs[resourceKey] = cost ?? 0;
@@ -181,11 +224,11 @@ function GenericActions({
 					},
 					0,
 				);
-				const groups = session.getActionOptions(action.id);
+				const groups = session.getActionOptions(action.id) ?? [];
 				return { action, costs, total, groups };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [actions, session, actionCostResource]);
+	}, [actions, session, actionCostResource, metadataVersion]);
 
 	return (
 		<>
@@ -211,6 +254,7 @@ function GenericActions({
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}
 					selectResourceDescriptor={selectResourceDescriptor}
+					fetchActionRequirements={requestActionRequirements}
 				/>
 			))}
 		</>

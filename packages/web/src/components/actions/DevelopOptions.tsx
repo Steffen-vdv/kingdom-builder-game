@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
@@ -66,18 +66,44 @@ export default function DevelopOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		requests: { fetchActionCosts: requestActionCosts },
 	} = useGameEngine();
+	const [metadataVersion, setMetadataVersion] = useState(0);
 	const slotMetadata = useSlotMetadata();
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
+	useEffect(() => {
+		let disposed = false;
+		const loadMetadata = async () => {
+			let updated = false;
+			for (const development of developments) {
+				const params = {
+					id: development.id,
+					landId: landIdForCost,
+				} as Record<string, unknown>;
+				if (session.getActionCosts(action.id, params) === null) {
+					updated = true;
+					await requestActionCosts(action.id, params);
+				}
+			}
+			if (updated && !disposed) {
+				setMetadataVersion((value) => value + 1);
+			}
+		};
+		void loadMetadata();
+		return () => {
+			disposed = true;
+		};
+	}, [session, action.id, developments, landIdForCost, requestActionCosts]);
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
-					id: development.id,
-					landId: landIdForCost,
-				});
+				const costsBag =
+					session.getActionCosts(action.id, {
+						id: development.id,
+						landId: landIdForCost,
+					}) ?? {};
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
 					costs[costKey] = costAmount ?? 0;
@@ -86,7 +112,14 @@ export default function DevelopOptions({
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	}, [
+		developments,
+		session,
+		action.id,
+		landIdForCost,
+		actionCostResource,
+		metadataVersion,
+	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

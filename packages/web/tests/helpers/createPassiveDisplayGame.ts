@@ -4,6 +4,11 @@ import type {
 	EngineSessionSnapshot,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
+import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
+} from '@kingdom-builder/protocol/session';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import { createTranslationContext } from '../../src/translation/context';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';
@@ -71,6 +76,11 @@ export function createPassiveGame(
 			performAction: vi.fn().mockResolvedValue(undefined),
 			advancePhase: vi.fn().mockResolvedValue(undefined),
 			refreshSession: vi.fn().mockResolvedValue(undefined),
+			fetchActionCosts: vi.fn().mockResolvedValue({} as SessionActionCostMap),
+			fetchActionRequirements: vi
+				.fn()
+				.mockResolvedValue([] as SessionActionRequirementList),
+			fetchActionOptions: vi.fn().mockResolvedValue([] as ActionEffectGroup[]),
 		},
 		metadata: {
 			getRuleSnapshot: () => ruleSnapshot,

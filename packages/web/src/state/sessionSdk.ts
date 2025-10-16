@@ -37,6 +37,8 @@ import {
 } from './remoteSessionAdapter';
 import type { RemoteSessionAdapter } from './remoteSessionAdapter';
 import { SessionMirroringError, markFatalSessionError } from './sessionErrors';
+import { createSessionMetadataHelpers } from './sessionMetadata';
+export type { FetchActionOptionsRequest } from './sessionMetadata';
 
 interface CreateSessionOptions {
 	devMode?: boolean;
@@ -97,6 +99,35 @@ function getAdapter(sessionId: string): RemoteSessionAdapter {
 		ensureGameApi,
 		runAiTurn: runAiTurnInternal,
 	});
+}
+
+const metadataHelpers = createSessionMetadataHelpers({
+	ensureGameApi,
+	getAdapter,
+	clone,
+});
+
+export function fetchActionCosts(
+	request: Parameters<typeof metadataHelpers.fetchActionCosts>[0],
+	requestOptions?: Parameters<typeof metadataHelpers.fetchActionCosts>[1],
+): ReturnType<typeof metadataHelpers.fetchActionCosts> {
+	return metadataHelpers.fetchActionCosts(request, requestOptions);
+}
+
+export function fetchActionRequirements(
+	request: Parameters<typeof metadataHelpers.fetchActionRequirements>[0],
+	requestOptions?: Parameters<
+		typeof metadataHelpers.fetchActionRequirements
+	>[1],
+): ReturnType<typeof metadataHelpers.fetchActionRequirements> {
+	return metadataHelpers.fetchActionRequirements(request, requestOptions);
+}
+
+export function fetchActionOptions(
+	request: Parameters<typeof metadataHelpers.fetchActionOptions>[0],
+	requestOptions?: Parameters<typeof metadataHelpers.fetchActionOptions>[1],
+): ReturnType<typeof metadataHelpers.fetchActionOptions> {
+	return metadataHelpers.fetchActionOptions(request, requestOptions);
 }
 
 export async function createSession(
@@ -261,12 +292,7 @@ async function runAiTurnInternal(
 	};
 }
 
-export async function runAiTurn(
-	request: SessionRunAiRequest,
-	requestOptions: GameApiRequestOptions = {},
-): Promise<SessionRunAiResponse> {
-	return runAiTurnInternal(request, requestOptions);
-}
+export const runAiTurn = runAiTurnInternal;
 
 async function simulateUpcomingPhasesInternal(
 	request: SessionSimulateRequest,
@@ -281,12 +307,7 @@ async function simulateUpcomingPhasesInternal(
 	return clone(response);
 }
 
-export async function simulateUpcomingPhases(
-	request: SessionSimulateRequest,
-	requestOptions: GameApiRequestOptions = {},
-): Promise<SessionSimulateResponse> {
-	return simulateUpcomingPhasesInternal(request, requestOptions);
-}
+export const simulateUpcomingPhases = simulateUpcomingPhasesInternal;
 
 export async function updatePlayerName(
 	request: SessionUpdatePlayerNameRequest,

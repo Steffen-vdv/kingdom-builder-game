@@ -37,6 +37,9 @@ export class RemoteSessionAdapter implements LegacySession {
 	#deps: RemoteSessionAdapterDependencies;
 	#latestAdvance: SessionAdvanceResult | null = null;
 	#simulationCache: Map<string, SessionSimulateResponse['result']>;
+	#actionCostCache: Map<string, SessionActionCostMap>;
+	#actionRequirementCache: Map<string, SessionActionRequirementList>;
+	#actionOptionCache: Map<string, ActionEffectGroup[]>;
 
 	constructor(
 		sessionId: string,
@@ -45,6 +48,36 @@ export class RemoteSessionAdapter implements LegacySession {
 		this.#sessionId = sessionId;
 		this.#deps = dependencies;
 		this.#simulationCache = new Map();
+		this.#actionCostCache = new Map();
+		this.#actionRequirementCache = new Map();
+		this.#actionOptionCache = new Map();
+	}
+
+	static #serializeParams(params: Record<string, unknown> | undefined) {
+		if (!params) {
+			return '';
+		}
+		const normalize = (value: unknown): unknown => {
+			if (Array.isArray(value)) {
+				return value.map(normalize);
+			}
+			if (value && typeof value === 'object') {
+				const entries = Object.entries(value as Record<string, unknown>)
+					.map(([key, nested]) => [key, normalize(nested)] as const)
+					.sort(([first], [second]) => first.localeCompare(second));
+				return Object.fromEntries(entries);
+			}
+			return value;
+		};
+		return JSON.stringify(normalize(params));
+	}
+
+	static #buildCacheKey(
+		actionId: string,
+		params: Record<string, unknown> | undefined,
+	): string {
+		const serialized = RemoteSessionAdapter.#serializeParams(params);
+		return serialized ? `${actionId}:${serialized}` : actionId;
 	}
 
 	enqueue<T>(task: () => Promise<T> | T): Promise<T> {
@@ -56,16 +89,67 @@ export class RemoteSessionAdapter implements LegacySession {
 		return record.snapshot;
 	}
 
-	getActionCosts(): SessionActionCostMap {
-		return {};
+	getActionCosts(
+		actionId: string,
+		params?: Record<string, unknown>,
+	): SessionActionCostMap | null {
+		const key = RemoteSessionAdapter.#buildCacheKey(actionId, params);
+		const cached = this.#actionCostCache.get(key);
+		if (!cached) {
+			return null;
+		}
+		return clone(cached);
 	}
 
-	getActionRequirements(): SessionActionRequirementList {
-		return [];
+	getActionRequirements(
+		actionId: string,
+		params?: Record<string, unknown>,
+	): SessionActionRequirementList | null {
+		const key = RemoteSessionAdapter.#buildCacheKey(actionId, params);
+		const cached = this.#actionRequirementCache.get(key);
+		if (!cached) {
+			return null;
+		}
+		return clone(cached);
 	}
 
-	getActionOptions(): ActionEffectGroup[] {
-		return [];
+	getActionOptions(
+		actionId: string,
+		params?: Record<string, unknown>,
+	): ActionEffectGroup[] | null {
+		const key = RemoteSessionAdapter.#buildCacheKey(actionId, params);
+		const cached = this.#actionOptionCache.get(key);
+		if (!cached) {
+			return null;
+		}
+		return clone(cached);
+	}
+
+	primeActionCosts(
+		actionId: string,
+		params: Record<string, unknown> | undefined,
+		costs: SessionActionCostMap,
+	): void {
+		const key = RemoteSessionAdapter.#buildCacheKey(actionId, params);
+		this.#actionCostCache.set(key, clone(costs));
+	}
+
+	primeActionRequirements(
+		actionId: string,
+		params: Record<string, unknown> | undefined,
+		requirements: SessionActionRequirementList,
+	): void {
+		const key = RemoteSessionAdapter.#buildCacheKey(actionId, params);
+		this.#actionRequirementCache.set(key, clone(requirements));
+	}
+
+	primeActionOptions(
+		actionId: string,
+		params: Record<string, unknown> | undefined,
+		groups: ActionEffectGroup[],
+	): void {
+		const key = RemoteSessionAdapter.#buildCacheKey(actionId, params);
+		this.#actionOptionCache.set(key, clone(groups));
 	}
 
 	getActionDefinition(

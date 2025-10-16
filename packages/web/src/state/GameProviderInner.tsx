@@ -29,8 +29,14 @@ import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
+import {
+	updatePlayerName as updateRemotePlayerName,
+	fetchActionCosts as requestSessionActionCosts,
+	fetchActionRequirements as requestSessionActionRequirements,
+	fetchActionOptions as requestSessionActionOptions,
+} from './sessionSdk';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -271,14 +277,30 @@ export function GameProviderInner({
 		[handlePerform],
 	);
 
-	const requestHelpers = useMemo(
-		() => ({
+	const requestHelpers = useMemo(() => {
+		const withSession =
+			<T,>(
+				fn: (options: {
+					sessionId: string;
+					actionId: string;
+					params?: ActionParametersPayload;
+				}) => Promise<T>,
+			) =>
+			(actionId: string, params?: ActionParametersPayload) => {
+				if (params === undefined) {
+					return fn({ sessionId, actionId });
+				}
+				return fn({ sessionId, actionId, params });
+			};
+		return {
 			performAction: performActionRequest,
 			advancePhase: handleEndTurn,
 			refreshSession,
-		}),
-		[performActionRequest, handleEndTurn, refreshSession],
-	);
+			fetchActionCosts: withSession(requestSessionActionCosts),
+			fetchActionRequirements: withSession(requestSessionActionRequirements),
+			fetchActionOptions: withSession(requestSessionActionOptions),
+		};
+	}, [performActionRequest, handleEndTurn, refreshSession, sessionId]);
 
 	const handleExit = useCallback(() => {
 		onReleaseSession();

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
 	describeContent,
 	splitSummary,
@@ -52,7 +52,30 @@ export default function DemolishOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		requests: { fetchActionCosts: requestActionCosts },
 	} = useGameEngine();
+	const [metadataVersion, setMetadataVersion] = useState(0);
+
+	useEffect(() => {
+		let disposed = false;
+		const loadMetadata = async () => {
+			let updated = false;
+			for (const buildingId of player.buildings) {
+				const params = { id: buildingId } as Record<string, unknown>;
+				if (session.getActionCosts(action.id, params) === null) {
+					updated = true;
+					await requestActionCosts(action.id, params);
+				}
+			}
+			if (updated && !disposed) {
+				setMetadataVersion((value) => value + 1);
+			}
+		};
+		void loadMetadata();
+		return () => {
+			disposed = true;
+		};
+	}, [session, action.id, player.buildings, requestActionCosts]);
 
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)
@@ -61,9 +84,10 @@ export default function DemolishOptions({
 				if (!building) {
 					return null;
 				}
-				const costsBag = session.getActionCosts(action.id, {
-					id: buildingId,
-				});
+				const costsBag =
+					session.getActionCosts(action.id, {
+						id: buildingId,
+					}) ?? {};
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
 					costs[costKey] = costAmount ?? 0;
@@ -95,6 +119,7 @@ export default function DemolishOptions({
 		action.id,
 		actionCostResource,
 		player.buildings.size,
+		metadataVersion,
 	]);
 
 	if (entries.length === 0) {

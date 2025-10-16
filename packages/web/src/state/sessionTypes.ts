@@ -29,12 +29,15 @@ export interface LegacySession {
 	getActionCosts(
 		actionId: string,
 		params?: ActionParametersPayload,
-	): SessionActionCostMap;
+	): SessionActionCostMap | null;
 	getActionRequirements(
 		actionId: string,
 		params?: ActionParametersPayload,
-	): SessionActionRequirementList;
-	getActionOptions(actionId: string): ActionEffectGroup[];
+	): SessionActionRequirementList | null;
+	getActionOptions(
+		actionId: string,
+		params?: ActionParametersPayload,
+	): ActionEffectGroup[] | null;
 	getActionDefinition(
 		actionId: string,
 	): SessionActionDefinitionSummary | undefined;

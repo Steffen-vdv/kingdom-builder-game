@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
 	splitSummary,
 	translateRequirementFailure,
@@ -58,25 +58,62 @@ export default function BuildOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		requests: {
+			fetchActionCosts: requestActionCosts,
+			fetchActionRequirements: requestActionRequirements,
+		},
 	} = useGameEngine();
+	const [metadataVersion, setMetadataVersion] = useState(0);
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
+	const requirementFailures = session.getActionRequirements(action.id) ?? [];
 	const requirements = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
+
+	useEffect(() => {
+		let disposed = false;
+		const loadMetadata = async () => {
+			let updated = false;
+			if (session.getActionRequirements(action.id) === null) {
+				updated = true;
+				await requestActionRequirements(action.id);
+			}
+			for (const building of buildings) {
+				const params = { id: building.id } as Record<string, unknown>;
+				if (session.getActionCosts(action.id, params) === null) {
+					updated = true;
+					await requestActionCosts(action.id, params);
+				}
+			}
+			if (updated && !disposed) {
+				setMetadataVersion((value) => value + 1);
+			}
+		};
+		void loadMetadata();
+		return () => {
+			disposed = true;
+		};
+	}, [
+		buildings,
+		session,
+		action.id,
+		requestActionCosts,
+		requestActionRequirements,
+	]);
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
-					id: building.id,
-				});
+				const costsBag =
+					session.getActionCosts(action.id, {
+						id: building.id,
+					}) ?? {};
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
 					costs[costKey] = costAmount ?? 0;
@@ -91,6 +128,7 @@ export default function BuildOptions({
 		action.id,
 		actionCostResource,
 		player.buildings.size,
+		metadataVersion,
 	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,

@@ -55,6 +55,7 @@ interface GenericActionCardProps {
 	clearHoverCard: () => void;
 	formatRequirement: (requirement: string) => string;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	fetchActionRequirements: GameEngineApi['requests']['fetchActionRequirements'];
 }
 
 function GenericActionCard({
@@ -77,8 +78,9 @@ function GenericActionCard({
 	clearHoverCard,
 	formatRequirement,
 	selectResourceDescriptor,
+	fetchActionRequirements,
 }: GenericActionCardProps) {
-	const requirementFailures = session.getActionRequirements(action.id);
+	const requirementFailures = session.getActionRequirements(action.id) ?? [];
 	const requirements = requirementFailures.map((failure) =>
 		formatRequirement(translateRequirementFailure(failure, translationContext)),
 	);
@@ -133,6 +135,7 @@ function GenericActionCard({
 		clearHoverCard,
 		handleHoverCard,
 		hoverBackground,
+		fetchActionRequirements,
 	});
 	const actionIcon = typeof action.icon === 'string' ? action.icon : undefined;
 	const actionFocus = normalizeActionFocus(action.focus);
