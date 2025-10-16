@@ -18,7 +18,10 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 2. Install and authenticate the [CodeRabbit CLI](https://docs.coderabbit.ai/cli)
    so the `coderabbit` binary is available on your `PATH`. The CLI consumes the
    repository's `.coderabbit.yml` and must be present for `npm run verify` and
-   the Husky hooks to pass.
+   the Husky hooks to pass. Confirm the installation with `coderabbit
+   --version`; `npm run ensure:dev-deps` now exits early when the binary is
+   missing. If you store the executable outside your `PATH`, expose it via the
+   `CODERABBIT_BIN` environment variable.
 3. Install dependencies: `npm install` (uses npm workspaces to link local packages).
 4. Start the combined dev environment (Fastify server + Vite web client):
    `npm run dev`.

@@ -13,6 +13,10 @@ guide for rationale, lore, and extended background.
      [CodeRabbit CLI](https://docs.coderabbit.ai/cli) so the `coderabbit` binary
      is available on your `PATH` and respects the repository's
      `.coderabbit.yml` filters.
+   - Confirm the installation with `coderabbit --version`; the
+     `npm run ensure:dev-deps` preflight halts if the binary is missing.
+   - If you keep the CLI outside your `PATH`, set `CODERABBIT_BIN` to the
+     absolute path for the binary so automation can find it.
    - Keep CodeRabbit running in a separate terminal via
      `npm run coderabbit -- --watch` (or the CLI's equivalent). Treat it as an
      asynchronous reviewer: continue coding while it processes local changes and

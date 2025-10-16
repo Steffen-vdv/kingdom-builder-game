@@ -59,3 +59,39 @@ if (missing.length > 0) {
 		process.exit(result.status ?? 1);
 	}
 }
+
+const defaultCoderabbitBinary =
+	process.platform === 'win32' ? 'coderabbit.cmd' : 'coderabbit';
+const configuredBinary = process.env.CODERABBIT_BIN;
+const coderabbitBinary = configuredBinary?.trim()
+	? configuredBinary.trim()
+	: defaultCoderabbitBinary;
+
+const coderabbitCheck = spawnSync(coderabbitBinary, ['--version'], {
+	stdio: 'ignore',
+	env: process.env,
+});
+
+const missingCoderabbit =
+	Boolean(coderabbitCheck.error) && coderabbitCheck.error.code === 'ENOENT';
+const failedCoderabbit =
+	!missingCoderabbit && (coderabbitCheck.status ?? 1) !== 0;
+
+if (missingCoderabbit || failedCoderabbit) {
+	const helpLines = [
+		'',
+		'Missing CodeRabbit CLI binary.',
+		'Install the CLI and ensure the `coderabbit` command resolves before',
+		'continuing. Recommended steps:',
+		'- Follow the official guide: https://docs.coderabbit.ai/cli',
+		'- After installation, verify with `coderabbit --version`',
+		'- If the binary lives elsewhere, set CODERABBIT_BIN to its absolute path',
+		'',
+	];
+
+	for (const line of helpLines) {
+		console.error(line);
+	}
+
+	process.exit(1);
+}
