@@ -3,8 +3,8 @@ import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import {
 	HttpSessionGateway,
 	type HttpSessionGatewayOptions,
-} from '../src/client/HttpSessionGateway.js';
-import { TransportError } from '../src/transport/TransportTypes.js';
+	TransportError,
+} from '../src/index.js';
 
 describe('HttpSessionGateway', () => {
 	const baseUrl = 'https://gateway.test/api';
@@ -211,7 +211,7 @@ describe('HttpSessionGateway', () => {
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/costs',
+					'/api/sessions/test/actions/build/costs',
 				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({
@@ -266,7 +266,7 @@ describe('HttpSessionGateway', () => {
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/requirements',
+					'/api/sessions/test/actions/build/requirements',
 				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({
@@ -338,7 +338,7 @@ describe('HttpSessionGateway', () => {
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/options',
+					'/api/sessions/test/actions/choose/options',
 				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({
