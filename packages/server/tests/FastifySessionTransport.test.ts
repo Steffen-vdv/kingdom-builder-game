@@ -27,6 +27,10 @@ describe('FastifySessionTransport', () => {
 		authorization: 'Bearer session-manager',
 	} satisfies Record<string, string>;
 
+	const limitedHeaders = {
+		authorization: 'Bearer limited',
+	} satisfies Record<string, string>;
+
 	type SnapshotResponse = {
 		snapshot: SessionSnapshot;
 	};
@@ -78,6 +82,35 @@ describe('FastifySessionTransport', () => {
 		expectSnapshotMetadata(snapshot.snapshot.metadata);
 		expect(snapshot.snapshot.game.players).toHaveLength(2);
 		expectStaticMetadata(manager.getMetadata());
+		await app.close();
+	});
+
+	it('requires authorization for session snapshots', async () => {
+		const tokens = {
+			...defaultTokens,
+			limited: { userId: 'limited', roles: ['session:create'] },
+		} as const;
+		const { app } = await createServer(tokens);
+		const createResponse = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: {},
+		});
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
+		const missingAuthResponse = await app.inject({
+			method: 'GET',
+			url: `/sessions/${sessionId}/snapshot`,
+		});
+		expect(missingAuthResponse.statusCode).toBe(401);
+		const forbiddenResponse = await app.inject({
+			method: 'GET',
+			url: `/sessions/${sessionId}/snapshot`,
+			headers: limitedHeaders,
+		});
+		expect(forbiddenResponse.statusCode).toBe(403);
 		await app.close();
 	});
 
