@@ -24,11 +24,29 @@ import {
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 // prettier-ignore
 import type {
-	LegacyGameEngineContextValue,
+        LegacyGameEngineContextValue,
 } from '../../../src/state/GameContext.types';
 import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
 import type { Action } from '../../../src/components/actions/types';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
+
+const createMetadataReturn = () => ({
+	costs: { gold: 5, ap: 1 },
+	requirements: [] as unknown[],
+	options: [] as unknown[],
+	getCachedCosts: vi.fn(() => ({})),
+	getCachedRequirements: vi.fn(() => []),
+	getCachedOptions: vi.fn(() => []),
+	fetchCosts: vi.fn(() => Promise.resolve({})),
+	fetchRequirements: vi.fn(() => Promise.resolve([])),
+	fetchOptions: vi.fn(() => Promise.resolve([])),
+});
+
+const mockUseActionMetadata = vi.fn(createMetadataReturn);
+
+vi.mock('../../../src/state/useActionMetadata', () => ({
+	useActionMetadata: (...args: unknown[]) => mockUseActionMetadata(...args),
+}));
 
 interface RaisePopScenario {
 	registries: SessionRegistries;
@@ -101,11 +119,6 @@ function createRaisePopScenario(
 	if (!activeView) {
 		throw new Error('Expected active player view in session.');
 	}
-	mockGame.session = {
-		getActionCosts: vi.fn(() => ({ gold: 5, ap: 1 })),
-		getActionRequirements: vi.fn(() => []),
-		getActionOptions: vi.fn(() => []),
-	} as unknown as LegacyGameEngineContextValue['session'];
 	return {
 		registries,
 		metadata,
@@ -128,6 +141,7 @@ describe('<RaisePopOptions />', () => {
 	beforeEach(() => {
 		scenario = createRaisePopScenario();
 		currentGame = scenario.mockGame;
+		mockUseActionMetadata.mockReturnValue(createMetadataReturn());
 	});
 
 	it('renders population options using registry metadata', () => {

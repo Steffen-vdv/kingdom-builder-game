@@ -1,7 +1,13 @@
 import type {
 	SessionActionCostMap,
+	SessionActionCostRequest,
+	SessionActionCostResponse,
 	SessionActionDefinitionSummary,
+	SessionActionOptionsRequest,
+	SessionActionOptionsResponse,
 	SessionActionRequirementList,
+	SessionActionRequirementRequest,
+	SessionActionRequirementResponse,
 	SessionAdvanceResult,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
@@ -16,13 +22,17 @@ import {
 	getSessionRecord,
 } from './sessionStateStore';
 import type { LegacySession } from './sessionTypes';
-
-const clone = <T>(value: T): T => {
-	if (typeof structuredClone === 'function') {
-		return structuredClone(value);
-	}
-	return JSON.parse(JSON.stringify(value)) as T;
-};
+import {
+	addListener,
+	addNestedListener,
+	emitListeners,
+	emitNestedListeners,
+	serializeActionParams,
+	cloneValue as clone,
+	type ActionCostListener,
+	type ActionOptionListener,
+	type ActionRequirementListener,
+} from './actionMetadataCache';
 
 interface RemoteSessionAdapterDependencies {
 	ensureGameApi: () => GameApi;
@@ -37,6 +47,18 @@ export class RemoteSessionAdapter implements LegacySession {
 	#deps: RemoteSessionAdapterDependencies;
 	#latestAdvance: SessionAdvanceResult | null = null;
 	#simulationCache: Map<string, SessionSimulateResponse['result']>;
+	#actionCostCache: Map<string, Map<string, SessionActionCostMap>>;
+	#actionRequirementCache: Map<
+		string,
+		Map<string, SessionActionRequirementList>
+	>;
+	#actionOptionCache: Map<string, ActionEffectGroup[]>;
+	#actionCostListeners: Map<string, Map<string, Set<ActionCostListener>>>;
+	#actionRequirementListeners: Map<
+		string,
+		Map<string, Set<ActionRequirementListener>>
+	>;
+	#actionOptionListeners: Map<string, Set<ActionOptionListener>>;
 
 	constructor(
 		sessionId: string,
@@ -45,6 +67,12 @@ export class RemoteSessionAdapter implements LegacySession {
 		this.#sessionId = sessionId;
 		this.#deps = dependencies;
 		this.#simulationCache = new Map();
+		this.#actionCostCache = new Map();
+		this.#actionRequirementCache = new Map();
+		this.#actionOptionCache = new Map();
+		this.#actionCostListeners = new Map();
+		this.#actionRequirementListeners = new Map();
+		this.#actionOptionListeners = new Map();
 	}
 
 	enqueue<T>(task: () => Promise<T> | T): Promise<T> {
@@ -56,16 +84,127 @@ export class RemoteSessionAdapter implements LegacySession {
 		return record.snapshot;
 	}
 
-	getActionCosts(): SessionActionCostMap {
-		return {};
+	getActionCosts(
+		actionId: string,
+		params?: SessionActionCostRequest['params'],
+	): SessionActionCostMap {
+		const paramsKey = serializeActionParams(params);
+		const actionCache = this.#actionCostCache.get(actionId);
+		const cached = actionCache?.get(paramsKey);
+		if (!cached) {
+			return {};
+		}
+		return clone(cached);
 	}
 
-	getActionRequirements(): SessionActionRequirementList {
-		return [];
+	getActionRequirements(
+		actionId: string,
+		params?: SessionActionRequirementRequest['params'],
+	): SessionActionRequirementList {
+		const paramsKey = serializeActionParams(params);
+		const actionCache = this.#actionRequirementCache.get(actionId);
+		const cached = actionCache?.get(paramsKey);
+		if (!cached) {
+			return [];
+		}
+		return clone(cached);
 	}
 
-	getActionOptions(): ActionEffectGroup[] {
-		return [];
+	getActionOptions(actionId: string): ActionEffectGroup[] {
+		const cached = this.#actionOptionCache.get(actionId);
+		if (!cached) {
+			return [];
+		}
+		return clone(cached);
+	}
+
+	recordActionCosts(
+		request: SessionActionCostRequest,
+		response: SessionActionCostResponse,
+	): void {
+		const paramsKey = serializeActionParams(request.params);
+		let actionCache = this.#actionCostCache.get(request.actionId);
+		if (!actionCache) {
+			actionCache = new Map();
+			this.#actionCostCache.set(request.actionId, actionCache);
+		}
+		actionCache.set(paramsKey, clone(response.costs));
+		emitNestedListeners(
+			this.#actionCostListeners,
+			request.actionId,
+			paramsKey,
+			response.costs,
+			clone,
+		);
+	}
+
+	recordActionRequirements(
+		request: SessionActionRequirementRequest,
+		response: SessionActionRequirementResponse,
+	): void {
+		const paramsKey = serializeActionParams(request.params);
+		let actionCache = this.#actionRequirementCache.get(request.actionId);
+		if (!actionCache) {
+			actionCache = new Map();
+			this.#actionRequirementCache.set(request.actionId, actionCache);
+		}
+		actionCache.set(paramsKey, clone(response.requirements));
+		emitNestedListeners(
+			this.#actionRequirementListeners,
+			request.actionId,
+			paramsKey,
+			response.requirements,
+			clone,
+		);
+	}
+
+	recordActionOptions(
+		request: SessionActionOptionsRequest,
+		response: SessionActionOptionsResponse,
+	): void {
+		const clonedGroups = clone(response.groups);
+		this.#actionOptionCache.set(request.actionId, clonedGroups);
+		emitListeners(
+			this.#actionOptionListeners,
+			request.actionId,
+			clonedGroups,
+			clone,
+		);
+	}
+
+	subscribeActionCosts(
+		actionId: string,
+		params: SessionActionCostRequest['params'],
+		listener: ActionCostListener,
+	): () => void {
+		const paramsKey = serializeActionParams(params);
+		return addNestedListener(
+			this.#actionCostListeners,
+			actionId,
+			paramsKey,
+			listener,
+		);
+	}
+
+	subscribeActionRequirements(
+		actionId: string,
+		params: SessionActionRequirementRequest['params'],
+		listener: ActionRequirementListener,
+	): () => void {
+		const paramsKey = serializeActionParams(params);
+		return addNestedListener(
+			this.#actionRequirementListeners,
+			actionId,
+			paramsKey,
+			listener,
+		);
+	}
+
+	subscribeActionOptions(
+		actionId: string,
+		listener: ActionOptionListener,
+	): () => void {
+		return addListener(this.#actionOptionListeners, actionId, listener);
 	}
 
 	getActionDefinition(

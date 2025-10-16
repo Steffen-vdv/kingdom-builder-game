@@ -17,8 +17,12 @@ import {
 import { createTranslationContext } from '../src/translation/context';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 const getRequirementIconsMock = vi.fn();
+const mockUseActionMetadata = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => getRequirementIconsMock(...args),
+}));
+vi.mock('../src/state/useActionMetadata', () => ({
+	useActionMetadata: (...args: unknown[]) => mockUseActionMetadata(...args),
 }));
 const describeContentMock = vi.fn(() => []);
 const summarizeContentMock = vi.fn(() => []);
@@ -191,19 +195,14 @@ vi.mock('../src/state/GameContext', () => ({
 describe('GenericActions effect group handling', () => {
 	beforeEach(() => {
 		mockGame = createMockGame();
-		mockGame.session.getActionCosts.mockReset();
 		mockGame.session.getActionRequirements.mockReset();
-		mockGame.session.getActionOptions.mockReset();
 		getRequirementIconsMock.mockReset();
 		describeContentMock.mockReset();
 		summarizeContentMock.mockReset();
 		logContentMock.mockReset();
 		splitSummaryMock.mockReset();
 
-		mockGame.session.getActionCosts.mockImplementation(() => ({
-			[mockGame.actionCostResource]: 1,
-			[mockGame.secondaryResource]: 12,
-		}));
+		mockUseActionMetadata.mockReset();
 		mockGame.session.getActionRequirements.mockImplementation(() => []);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
@@ -212,51 +211,61 @@ describe('GenericActions effect group handling', () => {
 			}
 			return [];
 		});
-		mockGame.session.getActionOptions.mockImplementation((actionId: string) => {
-			if (actionId !== mockGame.actionReferences.royalDecree.id) {
-				return [];
-			}
-			const groups =
-				mockGame.actionReferences.royalDecree.definition.effects?.filter(
-					(
-						effect,
-					): effect is {
-						id?: string;
-						title?: string;
-						layout?: string;
-						options?: ReadonlyArray<{
-							id: string;
-							icon?: string;
-							actionId?: string;
-							params?: Record<string, unknown>;
-						}>;
-					} => {
-						return Array.isArray((effect as { options?: unknown[] }).options);
-					},
-				);
-			const primaryGroup = groups?.find((group) => group.options?.length);
-			const primaryOption = primaryGroup?.options?.[0];
-			if (!primaryGroup || !primaryOption) {
-				return [];
-			}
-			return [
-				{
-					id: primaryGroup.id ?? 'royal_decree_develop',
-					title: primaryGroup.title ?? 'Choose one:',
-					layout: (primaryGroup.layout as 'compact' | undefined) ?? 'compact',
-					options: [
-						{
-							...primaryOption,
-							params: {
-								...(primaryOption.params ?? {}),
-								landId: 'A-L2',
-							},
-							actionId:
-								primaryOption.actionId ?? mockGame.actionReferences.develop.id,
+		mockUseActionMetadata.mockImplementation((actionId: string) => {
+			const baseCosts = {
+				[mockGame.actionCostResource]: 1,
+				[mockGame.secondaryResource]: 12,
+			};
+			const metadata = {
+				costs: baseCosts,
+				requirements: [] as unknown[],
+				options: [] as unknown[],
+			};
+			if (actionId === mockGame.actionReferences.royalDecree.id) {
+				const groups =
+					mockGame.actionReferences.royalDecree.definition.effects?.filter(
+						(
+							effect,
+						): effect is {
+							id?: string;
+							title?: string;
+							layout?: string;
+							options?: ReadonlyArray<{
+								id: string;
+								icon?: string;
+								actionId?: string;
+								params?: Record<string, unknown>;
+							}>;
+						} => {
+							return Array.isArray((effect as { options?: unknown[] }).options);
 						},
-					],
-				},
-			];
+					);
+				const primaryGroup = groups?.find((group) => group.options?.length);
+				const primaryOption = primaryGroup?.options?.[0];
+				if (primaryGroup && primaryOption) {
+					metadata.options = [
+						{
+							id: primaryGroup.id ?? 'royal_decree_develop',
+							title: primaryGroup.title ?? 'Choose one:',
+							layout:
+								(primaryGroup.layout as 'compact' | undefined) ?? 'compact',
+							options: [
+								{
+									...primaryOption,
+									params: {
+										...(primaryOption.params ?? {}),
+										landId: 'A-L2',
+									},
+									actionId:
+										primaryOption.actionId ??
+										mockGame.actionReferences.develop.id,
+								},
+							],
+						},
+					];
+				}
+			}
+			return metadata;
 		});
 	});
 

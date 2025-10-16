@@ -35,6 +35,20 @@ export interface LegacySession {
 		params?: ActionParametersPayload,
 	): SessionActionRequirementList;
 	getActionOptions(actionId: string): ActionEffectGroup[];
+	subscribeActionCosts(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		listener: (value: SessionActionCostMap) => void,
+	): () => void;
+	subscribeActionRequirements(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		listener: (value: SessionActionRequirementList) => void,
+	): () => void;
+	subscribeActionOptions(
+		actionId: string,
+		listener: (value: ActionEffectGroup[]) => void,
+	): () => void;
 	getActionDefinition(
 		actionId: string,
 	): SessionActionDefinitionSummary | undefined;

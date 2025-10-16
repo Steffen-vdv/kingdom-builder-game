@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
 	describeContent,
 	splitSummary,
 	summarizeContent,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import ActionCard from './ActionCard';
 import {
@@ -45,7 +46,6 @@ export default function DemolishOptions({
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
@@ -54,6 +54,14 @@ export default function DemolishOptions({
 		actionCostResource,
 	} = useGameEngine();
 
+	const { getCachedCosts, fetchCosts } = useActionMetadata(action.id);
+	useEffect(() => {
+		for (const buildingId of player.buildings) {
+			void fetchCosts({
+				id: buildingId,
+			});
+		}
+	}, [player.buildings.size, player.buildings, fetchCosts]);
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)
 			.map((buildingId) => {
@@ -61,7 +69,7 @@ export default function DemolishOptions({
 				if (!building) {
 					return null;
 				}
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = getCachedCosts({
 					id: buildingId,
 				});
 				const costs: Record<string, number> = {};
@@ -90,9 +98,8 @@ export default function DemolishOptions({
 				return first.building.name.localeCompare(second.building.name);
 			});
 	}, [
-		session,
 		sessionView.buildings,
-		action.id,
+		getCachedCosts,
 		actionCostResource,
 		player.buildings.size,
 	]);

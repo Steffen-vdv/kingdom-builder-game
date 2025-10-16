@@ -10,9 +10,14 @@ import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 
 const requirementIconsMock = vi.fn();
+const useActionMetadataMock = vi.fn();
 
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => requirementIconsMock(...args),
+}));
+
+vi.mock('../src/state/useActionMetadata', () => ({
+	useActionMetadata: (...args: unknown[]) => useActionMetadataMock(...args),
 }));
 
 vi.mock('../src/translation', () => ({
@@ -38,6 +43,10 @@ function setScenario(options?: ActionsPanelGameOptions) {
 	requirementIconsMock.mockImplementation((actionId: string) => {
 		return metadata.requirementIcons.get(actionId) ?? [];
 	});
+}
+
+function clone<Value>(value: Value): Value {
+	return JSON.parse(JSON.stringify(value)) as Value;
 }
 
 function toTitleCase(identifier: string) {
@@ -71,6 +80,34 @@ beforeEach(() => {
 	requirementIconsMock.mockReset();
 	translateRequirementFailureMock.mockClear();
 	setScenario();
+	useActionMetadataMock.mockReset();
+	useActionMetadataMock.mockImplementation((actionId: string) => {
+		const baseCosts = metadata.costMap.get(actionId) ?? {};
+		const baseRequirements = metadata.requirementFailures.get(actionId) ?? [];
+		return {
+			costs: clone(baseCosts),
+			requirements: clone(baseRequirements),
+			options: [],
+			getCachedCosts: vi.fn((params?: unknown) => {
+				void params;
+				return clone(metadata.costMap.get(actionId) ?? {});
+			}),
+			getCachedRequirements: vi.fn((params?: unknown) => {
+				void params;
+				return clone(metadata.requirementFailures.get(actionId) ?? []);
+			}),
+			getCachedOptions: vi.fn(() => []),
+			fetchCosts: vi.fn(() =>
+				Promise.resolve(clone(metadata.costMap.get(actionId) ?? {})),
+			),
+			fetchRequirements: vi.fn(() =>
+				Promise.resolve(
+					clone(metadata.requirementFailures.get(actionId) ?? []),
+				),
+			),
+			fetchOptions: vi.fn(() => Promise.resolve([])),
+		};
+	});
 });
 
 describe('<ActionsPanel />', () => {

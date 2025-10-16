@@ -6,6 +6,7 @@ import {
 	translateRequirementFailure,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import {
 	usePopulationMetadata,
@@ -46,7 +47,6 @@ export default function RaisePopOptions({
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
@@ -54,6 +54,8 @@ export default function RaisePopOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { costs: costBag, requirements: requirementFailures } =
+		useActionMetadata(action.id);
 	const { populations } = useRegistryMetadata();
 	const populationMetadata = usePopulationMetadata();
 	const selectPopulationDescriptor = useCallback<PopulationDescriptorSelector>(
@@ -142,8 +144,7 @@ export default function RaisePopOptions({
 	return (
 		<>
 			{roleOptions.map((role) => {
-				const costsBag = session.getActionCosts(action.id);
-				const costEntries = Object.entries(costsBag);
+				const costEntries = Object.entries(costBag);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of costEntries) {
 					costs[costKey] = costAmount ?? 0;
@@ -154,8 +155,7 @@ export default function RaisePopOptions({
 				} catch {
 					upkeep = undefined;
 				}
-				const rawRequirements = session.getActionRequirements(action.id);
-				const requirements = rawRequirements.map((failure) =>
+				const requirements = requirementFailures.map((failure) =>
 					translateRequirementFailure(failure, translationContext),
 				);
 				const canPay = playerHasRequiredResources(player.resources, costs);

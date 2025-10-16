@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import GenericActionCard from './GenericActionCard';
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';
 import type { ResourceDescriptorSelector } from './utils';
@@ -16,6 +17,15 @@ export interface PendingActionState {
 	step: number;
 	params: Record<string, unknown>;
 	choices: ActionEffectGroupChoiceMap;
+}
+
+type GenericActionCardComponentProps = React.ComponentProps<
+	typeof GenericActionCard
+>;
+
+interface GenericActionEntryProps
+	extends Omit<GenericActionCardComponentProps, 'costs' | 'groups'> {
+	onTotalChange: (actionId: string, total: number) => void;
 }
 
 function GenericActions({
@@ -164,37 +174,44 @@ function GenericActions({
 		[handlePerform],
 	);
 
-	const entries = useMemo(() => {
-		return actions
-			.map((action) => {
-				const costBag = session.getActionCosts(action.id);
-				const costs: Record<string, number> = {};
-				for (const [resourceKey, cost] of Object.entries(costBag)) {
-					costs[resourceKey] = cost ?? 0;
+	const [totals, setTotals] = useState<Record<string, number>>({});
+	useEffect(() => {
+		setTotals((current) => {
+			const next: Record<string, number> = {};
+			for (const action of actions) {
+				const value = current[action.id];
+				if (value !== undefined) {
+					next[action.id] = value;
 				}
-				const total = Object.entries(costs).reduce(
-					(sum, [resourceKey, cost]) => {
-						if (resourceKey === actionCostResource) {
-							return sum;
-						}
-						return sum + (cost ?? 0);
-					},
-					0,
-				);
-				const groups = session.getActionOptions(action.id);
-				return { action, costs, total, groups };
-			})
-			.sort((first, second) => first.total - second.total);
-	}, [actions, session, actionCostResource]);
+			}
+			return next;
+		});
+	}, [actions]);
+	const handleTotalChange = useCallback((actionId: string, total: number) => {
+		setTotals((current) => {
+			if (current[actionId] === total) {
+				return current;
+			}
+			return { ...current, [actionId]: total };
+		});
+	}, []);
+	const sortedActions = useMemo(() => {
+		return [...actions].sort((first, second) => {
+			const firstTotal = totals[first.id] ?? 0;
+			const secondTotal = totals[second.id] ?? 0;
+			if (firstTotal !== secondTotal) {
+				return firstTotal - secondTotal;
+			}
+			return first.name.localeCompare(second.name);
+		});
+	}, [actions, totals]);
 
 	return (
 		<>
-			{entries.map(({ action, costs, groups }) => (
-				<GenericActionCard
+			{sortedActions.map((action) => (
+				<GenericActionEntry
 					key={action.id}
 					action={action}
-					costs={costs}
-					groups={groups}
 					summaries={summaries}
 					player={player}
 					canInteract={canInteract}
@@ -211,9 +228,47 @@ function GenericActions({
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}
 					selectResourceDescriptor={selectResourceDescriptor}
+					onTotalChange={handleTotalChange}
 				/>
 			))}
 		</>
+	);
+}
+
+function GenericActionEntry({
+	action,
+	actionCostResource,
+	onTotalChange,
+	...cardProps
+}: GenericActionEntryProps) {
+	const { costs: costMap, options } = useActionMetadata(action.id);
+	const costs = useMemo(() => {
+		const entries = Object.entries(costMap);
+		const resolved: Record<string, number> = {};
+		for (const [resourceKey, value] of entries) {
+			resolved[resourceKey] = value ?? 0;
+		}
+		return resolved;
+	}, [costMap]);
+	const total = useMemo(() => {
+		return Object.entries(costs).reduce((sum, [resourceKey, value]) => {
+			if (resourceKey === actionCostResource) {
+				return sum;
+			}
+			return sum + (value ?? 0);
+		}, 0);
+	}, [costs, actionCostResource]);
+	useEffect(() => {
+		onTotalChange(action.id, total);
+	}, [action.id, total, onTotalChange]);
+	return (
+		<GenericActionCard
+			{...cardProps}
+			action={action}
+			costs={costs}
+			groups={options}
+			actionCostResource={actionCostResource}
+		/>
 	);
 }
 

@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useSlotMetadata } from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
@@ -59,7 +60,6 @@ export default function DevelopOptions({
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
@@ -71,10 +71,19 @@ export default function DevelopOptions({
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
+	const { getCachedCosts, fetchCosts } = useActionMetadata(action.id);
+	useEffect(() => {
+		for (const development of developments) {
+			void fetchCosts({
+				id: development.id,
+				landId: landIdForCost,
+			});
+		}
+	}, [developments, landIdForCost, fetchCosts]);
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = getCachedCosts({
 					id: development.id,
 					landId: landIdForCost,
 				});
@@ -86,7 +95,7 @@ export default function DevelopOptions({
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	}, [developments, getCachedCosts, landIdForCost, actionCostResource]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

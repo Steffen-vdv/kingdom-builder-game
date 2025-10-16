@@ -8,13 +8,19 @@ import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
 	SessionCreateRequest,
+	SessionActionCostRequest,
+	SessionActionRequirementRequest,
+	SessionActionOptionsRequest,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
+	SessionActionCostMap,
+	SessionActionRequirementList,
 } from '@kingdom-builder/protocol/session';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import {
 	applySessionState,
 	deleteSessionRecord,
@@ -152,6 +158,45 @@ export async function setSessionDevMode(
 		adapter,
 		record: toRemoteRecord(stateRecord),
 	};
+}
+
+export async function getActionCosts(
+	request: SessionActionCostRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionActionCostMap> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.getActionCosts(request, requestOptions),
+	);
+	adapter.recordActionCosts(request, response);
+	return clone(response.costs);
+}
+
+export async function getActionRequirements(
+	request: SessionActionRequirementRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionActionRequirementList> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.getActionRequirements(request, requestOptions),
+	);
+	adapter.recordActionRequirements(request, response);
+	return clone(response.requirements);
+}
+
+export async function getActionOptions(
+	request: SessionActionOptionsRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<ActionEffectGroup[]> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.getActionOptions(request, requestOptions),
+	);
+	adapter.recordActionOptions(request, response);
+	return clone(response.groups);
 }
 
 function normalizeActionError(error: unknown): ActionExecuteErrorResponse {

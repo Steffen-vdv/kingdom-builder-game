@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
 	splitSummary,
 	translateRequirementFailure,
 	type Summary,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
@@ -51,7 +52,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
@@ -59,22 +59,36 @@ export default function BuildOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const {
+		requirements: requirementFailures,
+		getCachedCosts,
+		fetchCosts,
+	} = useActionMetadata(action.id);
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
 	const requirements = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
+	useEffect(() => {
+		for (const building of buildings) {
+			if (player.buildings.has(building.id)) {
+				continue;
+			}
+			void fetchCosts({
+				id: building.id,
+			});
+		}
+	}, [buildings, player.buildings.size, fetchCosts]);
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = getCachedCosts({
 					id: building.id,
 				});
 				const costs: Record<string, number> = {};
@@ -85,13 +99,7 @@ export default function BuildOptions({
 				return { building, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [
-		buildings,
-		session,
-		action.id,
-		actionCostResource,
-		player.buildings.size,
-	]);
+	}, [buildings, getCachedCosts, actionCostResource, player.buildings.size]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,
