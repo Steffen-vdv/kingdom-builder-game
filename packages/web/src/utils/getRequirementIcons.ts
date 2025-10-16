@@ -1,9 +1,5 @@
-import {
-	STATS,
-	POPULATION_ROLES,
-	type StatKey,
-	type PopulationRoleId,
-} from '@kingdom-builder/contents';
+import type { StatKey, PopulationRoleId } from '@kingdom-builder/contents';
+import { selectPopulationRoleDisplay, selectStatDisplay } from '../translation';
 import type { TranslationContext } from '../translation';
 
 interface EvalConfig {
@@ -22,8 +18,7 @@ export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
 		if (!key) {
 			return [];
 		}
-		const icon =
-			STATS[key]?.icon || translationContext.assets.stats?.[key]?.icon || '';
+		const icon = selectStatDisplay(translationContext.assets, key).icon;
 		return icon ? [icon] : [];
 	},
 	population: (params, translationContext) => {
@@ -31,11 +26,10 @@ export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
 		if (!role) {
 			return [];
 		}
-		const icon =
-			POPULATION_ROLES[role]?.icon ||
-			translationContext.assets.populations?.[role]?.icon ||
-			translationContext.assets.population?.icon ||
-			'';
+		const icon = selectPopulationRoleDisplay(
+			translationContext.assets,
+			role,
+		).icon;
 		return icon ? [icon] : [];
 	},
 };

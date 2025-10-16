@@ -4,40 +4,76 @@ import {
 	registerRequirementIconGetter,
 } from '../src/utils/getRequirementIcons';
 import type {
-	TranslationContext,
 	TranslationAssets,
+	TranslationContext,
 } from '../src/translation/context';
+import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
 const EMPTY_REGISTRY = {
 	get: (_id: string) => ({}),
 	has: () => false,
 } as TranslationContext['actions'];
 
-const DEFAULT_ASSETS: TranslationAssets = {
-	resources: {},
-	stats: {},
-	populations: {},
-	population: {},
-	land: {},
-	slot: {},
-	passive: {},
-	transfer: {},
-	upkeep: {},
-	modifiers: {},
-	triggers: {},
-	tierSummaries: {},
-	formatPassiveRemoval: (description: string) =>
-		`Active as long as ${description}`,
-};
-
 const createTranslationContext = (
 	requirements: unknown[],
-	assets: Partial<TranslationAssets>,
+	assetOverrides: Partial<TranslationAssets> = {},
 ): TranslationContext => {
+	const baseAssets = createDefaultTranslationAssets();
 	const mergedAssets: TranslationAssets = {
-		...DEFAULT_ASSETS,
-		...assets,
-	} as TranslationAssets;
+		...baseAssets,
+		...assetOverrides,
+		resources: {
+			...baseAssets.resources,
+			...(assetOverrides.resources ?? {}),
+		},
+		stats: {
+			...baseAssets.stats,
+			...(assetOverrides.stats ?? {}),
+		},
+		populations: {
+			...baseAssets.populations,
+			...(assetOverrides.populations ?? {}),
+		},
+		population: {
+			...baseAssets.population,
+			...(assetOverrides.population ?? {}),
+		},
+		land: {
+			...baseAssets.land,
+			...(assetOverrides.land ?? {}),
+		},
+		slot: {
+			...baseAssets.slot,
+			...(assetOverrides.slot ?? {}),
+		},
+		passive: {
+			...baseAssets.passive,
+			...(assetOverrides.passive ?? {}),
+		},
+		transfer: {
+			...baseAssets.transfer,
+			...(assetOverrides.transfer ?? {}),
+		},
+		upkeep: {
+			...baseAssets.upkeep,
+			...(assetOverrides.upkeep ?? {}),
+		},
+		modifiers: {
+			...baseAssets.modifiers,
+			...(assetOverrides.modifiers ?? {}),
+		},
+		triggers: {
+			...baseAssets.triggers,
+			...(assetOverrides.triggers ?? {}),
+		},
+		tierSummaries: {
+			...baseAssets.tierSummaries,
+			...(assetOverrides.tierSummaries ?? {}),
+		},
+		formatPassiveRemoval:
+			assetOverrides.formatPassiveRemoval ??
+			((description: string) => baseAssets.formatPassiveRemoval(description)),
+	};
 	return {
 		actions: new Map([
 			[
