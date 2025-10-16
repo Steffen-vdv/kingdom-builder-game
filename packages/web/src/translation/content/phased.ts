@@ -5,6 +5,13 @@ import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
 
+/**
+ * Builds a human-readable label describing the phase and step that contains the given trigger key.
+ *
+ * @param context - Translation context containing phases and their steps
+ * @param triggerKey - Trigger identifier to locate within steps
+ * @returns The composed label (e.g. "Icon PhaseLabel Phase — StepTitle step") when the trigger is found and at least one label component exists, `undefined` otherwise
+ */
 function formatStepTriggerLabel(
 	context: TranslationContext,
 	triggerKey: string,
@@ -39,6 +46,12 @@ function formatStepTriggerLabel(
 	return undefined;
 }
 
+/**
+ * Trim a string and normalize empty or non-string inputs to `undefined`.
+ *
+ * @param value - The input string to normalize; may be `undefined`
+ * @returns The trimmed string, or `undefined` if `value` is not a string or is empty after trimming
+ */
 function sanitize(value: string | undefined): string | undefined {
 	if (typeof value !== 'string') {
 		return undefined;
@@ -47,6 +60,13 @@ function sanitize(value: string | undefined): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
+/**
+ * Compose an icon and a label into a single trimmed string when either value is present.
+ *
+ * @param icon - Optional icon text to prefix (e.g., an emoji or short symbol)
+ * @param label - Optional descriptive text to follow the icon
+ * @returns The combined "`icon label`" when both are present, the single non-empty part when only one is present, or `undefined` when neither is provided
+ */
 function composeIconLabel(
 	icon: string | undefined,
 	label: string | undefined,
@@ -62,6 +82,15 @@ function composeIconLabel(
 	return iconPart ?? labelPart ?? undefined;
 }
 
+/**
+ * Build a human-readable trigger title from display metadata, step context, and fallbacks.
+ *
+ * @param identifier - The trigger identifier used as a last-resort detail when no display text is available.
+ * @param display - Trigger display metadata (icon, future, label, past) from asset selectors.
+ * @param fallbackTitle - An optional fallback title to use when display fields are absent.
+ * @param stepLabel - An optional step label; when provided, the title will be formatted as "During <stepLabel>".
+ * @returns The resolved human-readable trigger title, or `undefined` if no title can be produced.
+ */
 function formatTriggerTitle(
 	identifier: string,
 	display: ReturnType<typeof selectTriggerDisplay>,
@@ -100,6 +129,14 @@ function formatTriggerTitle(
 	return composeIconLabel(icon, identifier) ?? identifier;
 }
 
+/**
+ * Resolve a human-readable title for a phased trigger using available display and step context.
+ *
+ * @param context - Translation context used to look up assets and phase/step information
+ * @param identifier - Trigger key to resolve a title for
+ * @param fallbackTitle - Optional fallback title to use when no display title is available
+ * @returns The resolved trigger title (including phase/step context when available) or `undefined` if no title can be derived
+ */
 export function resolvePhasedTriggerTitle(
 	context: TranslationContext,
 	identifier: string,
@@ -110,6 +147,12 @@ export function resolvePhasedTriggerTitle(
 	return formatTriggerTitle(identifier, display, fallbackTitle, stepLabel);
 }
 
+/**
+ * Collects trigger keys corresponding to step-based triggers from the translation context.
+ *
+ * @param context - Translation context containing asset trigger definitions and phase/step entries
+ * @returns An array of unique trigger keys that end with `Step`, gathered from `context.assets.triggers` and from each phase's step `triggers`
+ */
 function collectStepTriggerKeys(context: TranslationContext): string[] {
 	const keys = new Set<string>();
 	const triggerLookup = context.assets?.triggers ?? {};

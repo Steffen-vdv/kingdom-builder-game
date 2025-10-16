@@ -51,6 +51,13 @@ function resolveAttackOnDamageFormatter(
 	);
 }
 
+/**
+ * Build a basic describe-style summary for an effect, including on-damage details if available.
+ *
+ * @param effectDefinition - The effect definition to summarize
+ * @param translationContext - Translation and formatting context used to resolve names and icons
+ * @returns An array containing the base summary entry and, if present, an on-damage summary entry
+ */
 function fallbackLog(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	translationContext: TranslationContext,
@@ -85,6 +92,14 @@ function buildEvaluationEntry(
 	});
 }
 
+/**
+ * Builds a summary block describing an action triggered by an attack-on-damage log entry.
+ *
+ * @param entry - The attack-on-damage log entry containing defender and attacker diffs and action params
+ * @param translationContext - Context providing action metadata (name, icon) and localization/formatting helpers
+ * @param formatter - Formatter used to render diff entries for the specified target
+ * @returns A SummaryEntry whose title identifies the triggered action and whose items are formatted diff entries for defender and attacker
+ */
 function buildActionLog(
 	entry: AttackOnDamageLogEntry,
 	translationContext: TranslationContext,
@@ -134,6 +149,18 @@ function buildActionLog(
 	return { title: `Trigger ${icon} ${name}`.trim(), items };
 }
 
+/**
+ * Builds a composite summary entry for an effect's on-damage log entries.
+ *
+ * Iterates defender entries first then attacker entries, formats each entry using a resolved
+ * on-damage handler when available or a default diff formatter, and aggregates the results
+ * into a titled SummaryEntry.
+ *
+ * @param logEntries - Array of on-damage log entries produced by an attack
+ * @param translationContext - Translation/context utilities used to resolve formatters and text
+ * @param effectDefinition - Effect definition used to resolve the appropriate target formatter
+ * @returns A SummaryEntry containing a title and aggregated items, or `null` if there are no items to include
+ */
 export function buildOnDamageEntry(
 	logEntries: AttackLog['onDamage'],
 	translationContext: TranslationContext,

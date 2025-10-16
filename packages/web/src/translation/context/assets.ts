@@ -57,6 +57,13 @@ type FormatAwareDescriptor = SessionMetadataDescriptor & {
 	format?: SessionMetadataFormat;
 };
 
+/**
+ * Produce a finalized TranslationIconLabel by merging a base label with optional session metadata overrides.
+ *
+ * @param base - Optional base label whose fields provide default values.
+ * @param descriptor - Optional session metadata whose defined fields override the base.
+ * @param fallbackLabel - Label to use when neither `descriptor` nor `base` provide a label.
+ * @returns A frozen TranslationIconLabel containing merged `icon`, `label`, `description`, `displayAsPercent`, and `format` properties; descriptor values take precedence. If `format` is an object, a shallow copy is made and frozen.
 function mergeIconLabel(
 	base: TranslationIconLabel | undefined,
 	descriptor: SessionMetadataDescriptor | undefined,
@@ -151,6 +158,12 @@ function buildResourceMap(
 	return Object.freeze(entries);
 }
 
+/**
+ * Build a mapping from stat keys to resolved TranslationIconLabel objects.
+ *
+ * @param descriptors - Optional mapping of stat keys to session metadata descriptors; each descriptor supplies or overrides icon, label, description, displayAsPercent, and format for that stat.
+ * @returns A frozen object mapping each stat key to its resolved TranslationIconLabel; an empty object if `descriptors` is undefined.
+ */
 function buildStatMap(
 	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
 ): Readonly<Record<string, TranslationIconLabel>> {
@@ -168,6 +181,12 @@ type ModifierDescriptorOverrides = {
 	result?: SessionMetadataDescriptor;
 };
 
+/**
+ * Extracts optional modifier descriptor overrides from an unknown value.
+ *
+ * @param value - A value that may contain `cost` and/or `result` descriptor objects
+ * @returns A `ModifierDescriptorOverrides` object with `cost` and/or `result` when present and objects; `undefined` if `value` is falsy, not an object, or contains neither `cost` nor `result`
+ */
 function resolveModifierDescriptors(
 	value: unknown,
 ): ModifierDescriptorOverrides | undefined {
@@ -187,6 +206,16 @@ function resolveModifierDescriptors(
 	}
 	return overrides;
 }
+/**
+ * Converts a session trigger metadata descriptor into a TranslationTriggerAsset.
+ *
+ * Copies `icon`, `future`, and `past` from the descriptor when present and sets `label`
+ * using `descriptor.label` if available, otherwise `descriptor.past`, otherwise `fallbackLabel`.
+ *
+ * @param descriptor - Optional trigger metadata to convert into a translation asset
+ * @param fallbackLabel - Label to use when the descriptor provides no `label` or `past`
+ * @returns A frozen TranslationTriggerAsset containing any of `icon`, `future`, `past`, and `label`
+ */
 function toTriggerAsset(
 	descriptor: SessionTriggerMetadata | undefined,
 	fallbackLabel: string,
@@ -208,6 +237,12 @@ function toTriggerAsset(
 	return Object.freeze(entry);
 }
 
+/**
+ * Build a frozen map of trigger IDs to their corresponding translation assets.
+ *
+ * @param triggers - Optional mapping of trigger IDs to SessionTriggerMetadata; when omitted or falsy, no triggers are included.
+ * @returns A frozen record mapping each trigger ID to a TranslationTriggerAsset; returns an empty frozen object if `triggers` is falsy.
+ */
 function buildTriggerMap(
 	triggers: Record<string, SessionTriggerMetadata> | undefined,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
@@ -238,6 +273,18 @@ function buildTierSummaryMap(
 	return Object.freeze(entries);
 }
 
+/**
+ * Assembles translation assets (labels, icons, and formatting) from registries and optional metadata.
+ *
+ * @param registries - Registries providing population and resource definitions used to build base maps.
+ * @param metadata - Optional snapshot metadata containing descriptors for resources, populations, stats, assets, and triggers that override or augment defaults.
+ * @param options - Optional settings (for example `rules`) used to derive tier summary text.
+ * @returns A frozen TranslationAssets object containing:
+ * - `resources`, `populations`, and `stats` maps,
+ * - individual asset entries: `population`, `land`, `slot`, `passive`, `transfer`, `upkeep`,
+ * - `modifiers` (with `cost` and `result`), `triggers`, and `tierSummaries`,
+ * - and the `formatPassiveRemoval` function for formatting passive removal descriptions.
+ */
 export function createTranslationAssets(
 	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
 	metadata?: Pick<

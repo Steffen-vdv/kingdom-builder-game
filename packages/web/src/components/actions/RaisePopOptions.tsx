@@ -34,6 +34,18 @@ const HOVER_CARD_BG = [
 	'dark:from-slate-900/80 dark:to-slate-900/60',
 ].join(' ');
 
+/**
+ * Renders a list of action option cards for each role eligible to perform the given raise-pop action.
+ *
+ * The component computes costs, requirements, upkeep, availability, icons, labels, hover content, and click handlers
+ * for each eligible role and renders an ActionCard for each.
+ *
+ * @param action - The action to present raise-pop options for
+ * @param player - The player view used to determine affordability and display current resources
+ * @param canInteract - When false, disables interaction for all rendered option cards
+ * @param selectResourceDescriptor - Selector used to format resource names and icons in tooltips
+ * @returns A React node containing action option cards for the eligible roles of the provided action
+ */
 export default function RaisePopOptions({
 	action,
 	player,

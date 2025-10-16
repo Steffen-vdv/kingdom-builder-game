@@ -23,6 +23,12 @@ export type OverviewTokenCandidates = NonNullable<
 
 export type OverviewContentSection = SessionOverviewSection;
 
+/**
+ * Produce an object that contains a `span` property only when a value is provided.
+ *
+ * @param span - Optional boolean that, if provided, will be assigned to the `span` property
+ * @returns `{}` when `span` is `undefined`, otherwise an object with a `span` property set to the provided value
+ */
 function spanProps(span?: boolean) {
 	return span === undefined ? {} : { span };
 }

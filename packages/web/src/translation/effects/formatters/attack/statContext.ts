@@ -49,6 +49,15 @@ function isRawAttackStatParam(value: unknown): value is RawAttackStatParam {
 	return typeof value === 'object' && value !== null;
 }
 
+/**
+ * Construct an AttackStatDescriptor for a given attack stat role, using an optional stat key and overrides resolved with the provided translation context.
+ *
+ * @param role - The attack stat role to describe ('power', 'absorption', or 'fortification').
+ * @param key - Optional StatKey used to resolve a base descriptor; when omitted the descriptor will not include a `key` property.
+ * @param overrides - Partial overrides for `label` and `icon` that take precedence over resolved or default values.
+ * @param context - TranslationContext used to resolve the base descriptor for `key`.
+ * @returns The assembled AttackStatDescriptor containing `role`, `label`, `icon`, and `key` when provided.
+ */
 function buildStatDescriptor(
 	role: AttackStatRole,
 	key: StatKey | undefined,
@@ -70,6 +79,13 @@ function buildStatDescriptor(
 	return descriptor;
 }
 
+/**
+ * Resolve attack stat descriptors for an effect definition using the provided translation context.
+ *
+ * @param effectDefinition - Effect definition whose `params['stats']` (if present) are used to configure attack stats
+ * @param translationContext - Context used to resolve stat descriptors and localized labels/icons
+ * @returns An AttackStatContext mapping each attack stat role to its resolved AttackStatDescriptor; entries are taken from the effect's `stats` parameter when available, otherwise default stat descriptors are returned
+ */
 function resolveAttackStats(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	translationContext: TranslationContext,
@@ -120,6 +136,13 @@ export type AttackFormatterContext = {
 	stats: AttackStatContext;
 };
 
+/**
+ * Resolve all attack formatting context (target formatter, target info, label, and stats) for an effect using the provided translation context.
+ *
+ * @param effectDefinition - Effect definition whose attack formatter and stats should be resolved
+ * @param translationContext - Translation context used to resolve labels and stat descriptors
+ * @returns An AttackFormatterContext containing `formatter`, `target`, `info`, `targetLabel`, and resolved `stats`
+ */
 export function resolveAttackFormatterContext(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	translationContext: TranslationContext,

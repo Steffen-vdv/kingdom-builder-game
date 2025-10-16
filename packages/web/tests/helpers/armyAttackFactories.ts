@@ -122,6 +122,19 @@ function registerSyntheticResources(registries: SessionRegistries) {
 	};
 }
 
+/**
+ * Create a test engine and translation context prepopulated with synthetic raid actions, building, and metadata for resources and stats.
+ *
+ * @returns An object containing:
+ * - `ctx`: the created engine context
+ * - `translation`: the translation context populated with action and building registries and synthetic resources
+ * - `attack`: the built attack action
+ * - `plunder`: the built plunder action
+ * - `building`: the synthetic building entity
+ * - `buildingAttack`: the built building-attack action
+ * - `resourceMetadata`: the synthetic resource metadata mapping
+ * - `statMetadata`: the synthetic stat descriptor mapping
+ */
 export function createSyntheticCtx() {
 	const { factory, ctx } = createBaseEngine();
 	const building = factory.building({ ...SYNTH_BUILDING });
@@ -175,6 +188,16 @@ export function createSyntheticCtx() {
 	} as const;
 }
 
+/**
+ * Create a test engine and translation context configured with a partial attack and synthetic resource/stat metadata.
+ *
+ * @returns An object containing:
+ * - `ctx`: the created engine context used for tests.
+ * - `translation`: the translation context wired to the engine and populated with synthetic stat and resource metadata.
+ * - `attack`: the built partial attack action used for tests.
+ * - `resourceMetadata`: the synthetic resource metadata map.
+ * - `statMetadata`: the synthetic stat metadata map.
+ */
 export function createPartialStatCtx() {
 	const { factory, ctx } = createBaseEngine();
 	const attack = buildAction(factory, ACTION_DEFS.partial);
@@ -210,6 +233,13 @@ export function createPartialStatCtx() {
 	} as const;
 }
 
+/**
+ * Fetches the attack stat descriptor for a given stat key from the provided translation assets.
+ *
+ * @param context - Object exposing translation `assets` used to resolve registry descriptors
+ * @param key - The stat key to look up
+ * @returns The attack registry descriptor associated with `key`
+ */
 export function getStat(
 	context: Pick<TranslationContext, 'assets'>,
 	key: string,
@@ -217,6 +247,14 @@ export function getStat(
 	return selectAttackStatDescriptor(context, key);
 }
 
+/**
+ * Produce a display label, optionally prefixed by an icon.
+ *
+ * @param icon - Optional icon string to prefix the label (e.g., emoji or symbol)
+ * @param label - Primary label to use when present
+ * @param fallback - Label to use when `label` is undefined
+ * @returns The chosen label (`label` if present, otherwise `fallback`), prefixed by `icon` and a space when `icon` is provided
+ */
 export function iconLabel(
 	icon: string | undefined,
 	label: string | undefined,

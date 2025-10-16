@@ -75,6 +75,14 @@ interface RegistryMetadataProviderProps {
 const RegistryMetadataContext =
 	createContext<RegistryMetadataContextValue | null>(null);
 
+/**
+ * Provides registry metadata and selectors to descendant components via context.
+ *
+ * @param registries - Registry definitions (actions, resources, buildings, developments, populations) used to build lookups and metadata selectors.
+ * @param metadata - Optional session snapshot metadata used to derive descriptor overrides and overview content; may be `null` or `undefined`.
+ * @param children - React nodes rendered within the provider.
+ * @returns A context provider that supplies lookups, metadata selectors, asset metadata selectors, and overview content to descendants.
+ */
 export function RegistryMetadataProvider({
 	registries,
 	metadata,

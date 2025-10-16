@@ -122,6 +122,14 @@ const createPlayers = () => {
 	return { active, opponent };
 };
 
+/**
+ * Create a synthetic Raiders Guild testing context with in-memory content registries, a session snapshot, and a translation context.
+ *
+ * @returns An object containing:
+ *  - `ctx` — registries maps for `actions`, `buildings`, `developments`, and `populations`.
+ *  - `translation` — the created TranslationContext for the constructed session.
+ *  - `ids` — the generated content IDs: `transferBuilding`, `populationBuilding`, `developmentBuilding`, `raidAction`, `ledgerAction`, and `harvestDevelopment`.
+ */
 export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 	const content = createContentFactory();
 
@@ -273,6 +281,11 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 	};
 }
 
+/**
+ * Retrieve the first on-build modifier for a building from the synthetic registries.
+ *
+ * @returns The first `onBuild` modifier as an `EffectDef` for the specified building, or an empty `EffectDef` if the building has no `onBuild` modifiers.
+ */
 export function getModifier(
 	ctx: RaidersGuildSyntheticContext['ctx'],
 	buildingId: string,

@@ -185,6 +185,13 @@ export function normalizeCandidates(input?: TokenCandidateInput): string[] {
 	return [input];
 }
 
+/**
+ * Merge a default token category configuration with optional overrides, producing a combined mapping of candidate lists per key.
+ *
+ * @param defaults - Base mapping of token keys to their candidate ID arrays.
+ * @param overrides - Optional per-key overrides whose candidates will be placed before defaults and deduplicated.
+ * @returns A new category config where each key maps to an array of candidates: override candidates first (duplicates removed), followed by any remaining default candidates.
+ */
 export function mergeTokenCategory(
 	defaults: OverviewTokenCategoryConfig,
 	overrides?: OverviewTokenCategoryOverrides,
@@ -220,6 +227,12 @@ export function mergeTokenCategory(
 
 export type OverviewTokenConfig = OverviewTokenOverrides;
 
+/**
+ * Build the default overview token configuration using the provided token sources.
+ *
+ * @param sources - Collection of token sources (actions, phases, resources, stats, population, land, slot and their descriptors) used to derive category keys.
+ * @returns A resolved token config mapping each category name to a map of token keys where each key's value is an array containing that key as the default candidate.
+ */
 export function createDefaultTokenConfig(
 	sources: OverviewTokenSources,
 ): OverviewTokenConfigResolved {

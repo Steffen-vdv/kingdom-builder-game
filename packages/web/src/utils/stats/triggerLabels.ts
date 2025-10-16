@@ -4,6 +4,13 @@ import type { DescriptorRegistryEntry, ResolveResult } from './types';
 
 const DEFAULT_TRIGGER_LABEL = 'Trigger';
 
+/**
+ * Selects icon and label for a trigger identifier using translation assets with sensible fallbacks.
+ *
+ * @param assets - Translation assets used to resolve localized trigger display strings
+ * @param id - Trigger identifier to resolve; when omitted the default trigger label is used
+ * @returns An object with `icon` (empty string when unavailable) and `label` (derived from asset `past`, `future`, or `label`, falling back to the `id` or the default label)
+ */
 function coerceTriggerLabel(
 	assets: TranslationAssets | undefined,
 	id?: string,
@@ -24,6 +31,13 @@ function coerceTriggerLabel(
 	} satisfies ResolveResult;
 }
 
+/**
+ * Resolve a trigger descriptor (icon and label) for a given trigger identifier using translation assets.
+ *
+ * @param assets - Translation assets used to derive localized icon and label; may be `undefined`
+ * @param id - Trigger identifier to resolve; may be `undefined`
+ * @returns An object with `icon` (empty string when not available) and `label` (falls back to the `id` or the default "Trigger")
+ */
 export function resolveTriggerDescriptor(
 	assets: TranslationAssets | undefined,
 	id?: string,
@@ -31,6 +45,13 @@ export function resolveTriggerDescriptor(
 	return coerceTriggerLabel(assets, id);
 }
 
+/**
+ * Create a DescriptorRegistryEntry for trigger descriptors that resolves labels using the provided translation assets.
+ *
+ * @param assets - Translation assets used to derive trigger icon and label during resolution
+ * @param defaultFormatDetail - Default `formatDetail` to include on the returned entry
+ * @returns A DescriptorRegistryEntry whose `resolve` function resolves trigger descriptors using `assets` and whose `formatDetail` is `defaultFormatDetail`
+ */
 export function createTriggerDescriptorEntry(
 	assets: TranslationAssets,
 	defaultFormatDetail: NonNullable<DescriptorRegistryEntry['formatDetail']>,
@@ -41,6 +62,13 @@ export function createTriggerDescriptorEntry(
 	} satisfies DescriptorRegistryEntry;
 }
 
+/**
+ * Builds a display label for a trigger by combining its resolved icon and label.
+ *
+ * @param assets - Translation assets used to resolve the trigger's icon and label
+ * @param id - The trigger identifier to resolve
+ * @returns The combined string containing icon and label separated by a space, or `undefined` if `id` is falsy or no display parts are available
+ */
 export function formatTriggerLabel(
 	assets: TranslationAssets | undefined,
 	id: string,

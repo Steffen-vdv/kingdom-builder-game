@@ -89,6 +89,12 @@ function createRecordResolver<T extends { icon?: string; label?: string }>(
 	};
 }
 
+/**
+ * Create a registry of descriptor entries that provide icon/label resolution and detail/dependency formatting for game entity kinds.
+ *
+ * @param translationContext - Translation and asset data used to populate labels, icons, and formatting behavior for descriptors.
+ * @returns A registry mapping descriptor kinds (e.g., population, building, development, action, phase, stat, resource, trigger, passive, land, start) to their DescriptorRegistryEntry used to resolve icons/labels and format details or dependencies.
+ */
 function createDescriptorRegistry(
 	translationContext: TranslationContext,
 ): Registry {

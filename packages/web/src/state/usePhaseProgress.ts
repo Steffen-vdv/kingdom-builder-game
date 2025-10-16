@@ -59,6 +59,18 @@ function computePhaseState(
 	};
 }
 
+/**
+ * Tracks and controls phase progression for a session, exposing current phase state and actions to advance, refresh, or end turns.
+ *
+ * @returns An object containing:
+ * - `phase`: the current PhaseProgressState for the session
+ * - `runUntilActionPhase`: enqueues advancing the session until the next action phase
+ * - `runUntilActionPhaseCore`: performs the core advancement to the next action phase
+ * - `handleEndTurn`: enqueues an end-turn operation for the active player
+ * - `endTurn`: attempts to end the active player's turn and advance the session phase
+ * - `applyPhaseSnapshot`: updates internal phase state from a provided SessionSnapshot with optional overrides
+ * - `refreshPhaseState`: reloads the latest session snapshot and applies it to the internal phase state
+ */
 export function usePhaseProgress({
 	sessionState,
 	sessionId,

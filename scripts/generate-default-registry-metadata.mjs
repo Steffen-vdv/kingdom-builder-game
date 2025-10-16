@@ -4,7 +4,24 @@ import { dirname, resolve } from 'node:path';
 
 // Regenerate with `npx tsx scripts/generate-default-registry-metadata.mjs`
 // after rebuilding @kingdom-builder/contents to stay aligned with the server
-// session bootstrap metadata.
+/**
+ * Load content modules from the contents package and expose their registry creators and metadata.
+ *
+ * @returns {Object} An object containing factory functions and content metadata:
+ * - createActionRegistry: function that creates the action registry.
+ * - createBuildingRegistry: function that creates the building registry.
+ * - createDevelopmentRegistry: function that creates the development registry.
+ * - createPopulationRegistry: function that creates the population registry.
+ * - POPULATION_INFO: population-related constants and descriptors.
+ * - LAND_INFO: land-related constants and descriptors.
+ * - SLOT_INFO: slot-related constants and descriptors.
+ * - PASSIVE_INFO: passive-related constants and descriptors.
+ * - PHASES: phase definitions.
+ * - RESOURCES: resource definitions.
+ * - STATS: stat definitions.
+ * - TRIGGER_INFO: trigger definitions and labels.
+ * - OVERVIEW_CONTENT: snapshot of overview content.
+ */
 
 async function loadContentModules() {
 	const baseUrl = new URL('../packages/contents/src/', import.meta.url);
@@ -152,6 +169,12 @@ function createPhaseMetadata(content) {
 	);
 }
 
+/**
+ * Create a metadata map for triggers from content.TRIGGER_INFO.
+ *
+ * @param {object} content - Module exports containing a TRIGGER_INFO object.
+ * @returns {Object<string, {label: string, icon?: string, future?: string, past: string}>} A mapping of trigger keys to metadata objects where `label` and `past` are set to the trigger's past text, and `icon` and `future` are included when present.
+ */
 function createTriggerMetadata(content) {
 	return Object.fromEntries(
 		Object.entries(content.TRIGGER_INFO).map(([key, info]) => [
@@ -166,10 +189,26 @@ function createTriggerMetadata(content) {
 	);
 }
 
+/**
+ * Locate the phase with id 'upkeep' in a list of phases.
+ * @param {Array<Object>} phases - Array of phase objects to search; each phase is expected to have an `id` property.
+ * @returns {Object|undefined} The phase object with id 'upkeep', or `undefined` if none is found.
+ */
 function findUpkeepPhase(phases) {
 	return phases.find((phase) => phase.id === 'upkeep');
 }
 
+/**
+ * Build a canonical set of asset descriptors (population, land, slot, passive, upkeep) from content metadata.
+ *
+ * @param {object} content - Content exports that provide asset and phase metadata.
+ * @param {object} content.POPULATION_INFO - Population metadata with `label`, `icon`, and optional `description`.
+ * @param {object} content.LAND_INFO - Land metadata with `label` and optional `icon`.
+ * @param {object} content.SLOT_INFO - Slot metadata with `label` and optional `icon`.
+ * @param {object} content.PASSIVE_INFO - Passive metadata with `label` and optional `icon`.
+ * @param {Array<object>} content.PHASES - Array of phase objects; used to derive the `upkeep` descriptor from the phase with `id === 'upkeep'`.
+ * @returns {object} An object with keys `population`, `land`, `slot`, `passive`, and `upkeep`, each a descriptor containing `label`, optional `icon`, and optional `description`.
+ */
 function createAssetMetadata(content) {
 	const upkeepPhase = findUpkeepPhase(content.PHASES);
 	return {
@@ -188,10 +227,20 @@ function createAssetMetadata(content) {
 	};
 }
 
+/**
+ * Create a deep copy of the overview content from a content module.
+ * @param {object} content - Module export object that contains an `OVERVIEW_CONTENT` property.
+ * @returns {*} A deep-cloned copy of `content.OVERVIEW_CONTENT`.
+ */
 function createOverviewContentSnapshot(content) {
 	return structuredClone(content.OVERVIEW_CONTENT);
 }
 
+/**
+ * Create a plain object mapping registry entry IDs to deep-cloned definitions.
+ * @param {Object} registry - An object exposing entries(), which yields [id, definition] pairs.
+ * @returns {Object} An object whose keys are entry IDs and whose values are deep-cloned entry definitions.
+ */
 function serializeRegistry(registry) {
 	return Object.fromEntries(
 		registry
@@ -210,6 +259,12 @@ function createRegistries(content) {
 	};
 }
 
+/**
+ * Build a metadata snapshot used by the default registry from serialized registries and loaded content.
+ *
+ * @param {Object} registries - Serialized registries produced by createRegistries (contains actions, buildings, developments, populations, resources).
+ * @param {Object} content - Loaded content modules providing RESOURCES, STATS, PHASES, TRIGGER_INFO and related content (including population and overview data).
+ * @returns {Object} An aggregated metadata object with the following properties: `passiveEvaluationModifiers`, `resources`, `populations`, `buildings`, `developments`, `stats`, `phases`, `triggers`, `assets`, and `overviewContent`.
 function createMetadata(registries, content) {
 	return {
 		passiveEvaluationModifiers: {},
@@ -225,6 +280,12 @@ function createMetadata(registries, content) {
 	};
 }
 
+/**
+ * Generate and write a metadata snapshot for default registries.
+ *
+ * Loads content modules, builds registries and metadata, writes the snapshot
+ * JSON to ../packages/web/src/contexts/defaultRegistryMetadata.json, and logs a success message.
+ */
 async function main() {
 	const content = await loadContentModules();
 	const registries = createRegistries(content);

@@ -80,6 +80,15 @@ const DIFF_FORMATTERS: DiffFormatterMap = {
 	stat: (prefix, diff, context) => formatStatDiff(prefix, diff, context),
 };
 
+/**
+ * Format a resource change into a human-readable diff string.
+ *
+ * @param prefix - Leading label inserted at the start of the formatted string (for example, an actor or source)
+ * @param diff - Resource diff object containing `before` and `after` values and the resource `key`
+ * @param context - Translation assets used to resolve the resource descriptor (icon and label)
+ * @param options - Formatting options. If `percent` is provided, that magnitude is shown as a percentage; if `showPercent` is true, the percent change is included when applicable
+ * @returns A single-line string containing the prefix, the resource label (with icon if available), the signed change, the before→after range, and optionally a percent representation
+ */
 export function formatResourceDiff(
 	prefix: string,
 	diff: ResourceDiff,
@@ -104,6 +113,14 @@ export function formatResourceDiff(
 	return `${prefix}: ${displayLabel} ${formatSigned(delta)} (${before}→${after})`;
 }
 
+/**
+ * Formats a stat change into a human-readable string with descriptor, signed delta, and before→after values.
+ *
+ * @param prefix - Text to prefix the formatted message (for example, the affected entity or category)
+ * @param diff - The stat diff containing `key`, `before`, and `after` values
+ * @param context - Translation assets used to resolve the stat descriptor and icon
+ * @returns The formatted stat diff string, e.g. "prefix: [icon label] +3 (5→8)"
+ */
 export function formatStatDiff(
 	prefix: string,
 	diff: StatDiff,
@@ -120,6 +137,16 @@ export function formatStatDiff(
 	)} (${before}→${after})`;
 }
 
+/**
+ * Dispatches an attack player diff to the appropriate formatter and returns the resulting formatted string.
+ *
+ * @param prefix - Text to prepend to the formatted diff
+ * @param diff - The attack player diff to format
+ * @param context - Translation context (only `assets` is required) used to resolve descriptors
+ * @param options - Optional formatting options that influence output (e.g., percent display)
+ * @returns The formatted representation of `diff` with `prefix`
+ * @throws Error if `diff.type` is not supported by the available formatters
+ */
 export function formatDiffCommon(
 	prefix: string,
 	diff: AttackPlayerDiff,

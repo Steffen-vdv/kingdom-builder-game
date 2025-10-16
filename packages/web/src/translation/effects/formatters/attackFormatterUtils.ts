@@ -63,7 +63,20 @@ export function ownerLabel(
 }
 
 // Attack summary strings must stay icon-based. Target formatters should call
-// buildAttackSummaryBullet for the summarize branch instead of returning prose.
+/**
+ * Create the base entry and related formatter context for an attack effect.
+ *
+ * @param effectDefinition - The effect definition that provides parameters and metadata used to build the entry
+ * @param translationContext - The translation/localization context used to resolve formatter and labels
+ * @param mode - The formatting mode that determines how the base entry should be built
+ * @returns An object containing:
+ *  - `entry`: the built base summary/description entry,
+ *  - `formatter`: the resolved formatter instance,
+ *  - `info`: resolved effect information,
+ *  - `target`: resolved target data,
+ *  - `targetLabel`: localized label for the target,
+ *  - `stats`: resolved statistics used for formatting
+ */
 export function buildBaseEntry(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	translationContext: TranslationContext,
@@ -187,6 +200,14 @@ export function summarizeOnDamage(
 	};
 }
 
+/**
+ * Format the attacker and defender diff entries from an attack-on-damage log into summary items.
+ *
+ * @param entry - The attack-on-damage log entry containing `defender` and `attacker` diff arrays
+ * @param formatter - Formatter used to convert each diff entry into a SummaryEntry
+ * @param translationContext - Translation context used to resolve owner labels and passed to the formatter
+ * @returns An array of formatted summary entries with defender entries first, followed by attacker entries
+ */
 export function formatDiffEntries(
 	entry: AttackOnDamageLogEntry,
 	formatter: AttackTargetFormatter,

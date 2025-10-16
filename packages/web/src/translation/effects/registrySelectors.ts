@@ -79,6 +79,15 @@ function resolvePopulationFallback(context: ContextWithAssets | undefined) {
 	return { icon, label } satisfies RegistryDescriptor;
 }
 
+/**
+ * Selects the registry descriptor for a population role.
+ *
+ * Resolves an icon and label from the provided translation assets (falling back to defaults and a humanized role name as needed) and caches the result per context and role.
+ *
+ * @param context - Translation context or assets container used to resolve descriptors
+ * @param role - Population role identifier; when `undefined` the default population descriptor is returned
+ * @returns The resolved `RegistryDescriptor` containing `icon` and `label`
+ */
 export function selectPopulationDescriptor(
 	context: ContextWithAssets,
 	role: string | undefined,
@@ -134,6 +143,12 @@ export function selectResourceDescriptor(
 const statCache: CacheStore<StatRegistryDescriptor> = new WeakMap();
 const statFallbackCache: CacheFallback<StatRegistryDescriptor> = new Map();
 
+/**
+ * Compute a stat display format from a stat asset entry.
+ *
+ * @param entry - The stat asset definition (may be undefined); its `format` (string or object) and `displayAsPercent` fields are consulted.
+ * @returns An object containing `prefix` and/or `percent` when specified by the entry, or `undefined` if no format applies.
+ */
 function resolveStatFormat(
 	entry: TranslationAssets['stats'][string] | undefined,
 ): { prefix?: string; percent?: boolean } | undefined {
@@ -175,6 +190,12 @@ function resolveStatFormat(
 	return format;
 }
 
+/**
+ * Selects or constructs a stat registry descriptor for the given stat key using translation assets and per-context caching.
+ *
+ * @param key - The stat identifier used to look up asset overrides and generate fallbacks
+ * @returns A `StatRegistryDescriptor` containing `icon`, `label`, and an optional `format`; `label` falls back to a humanized form of `key` and `icon` falls back to `key` when assets are not provided
+ */
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
@@ -231,6 +252,12 @@ const modifierCache: CacheStore<Record<string, RegistryDescriptor>> =
 const modifierFallbackCache: CacheFallback<Record<string, RegistryDescriptor>> =
 	new Map();
 
+/**
+ * Produce default modifier descriptors for "cost" and "result" using translation assets when available.
+ *
+ * @param context - Optional translation context whose `assets.modifiers` entries override descriptor fields; when omitted or missing fields, defaults are used.
+ * @returns An object with `cost` and `result` descriptors; each descriptor contains `icon` and `label` strings derived from the assets or fallback defaults.
+ */
 function resolveModifierFallback(context: ContextWithAssets | undefined) {
 	const assets = context?.assets;
 	const cost = assets?.modifiers?.cost ?? {};
@@ -250,6 +277,11 @@ function resolveModifierFallback(context: ContextWithAssets | undefined) {
 const transferCache: CacheStore<RegistryDescriptor> = new WeakMap();
 const transferFallbackCache: CacheFallback<RegistryDescriptor> = new Map();
 
+/**
+ * Resolve the transfer descriptor from the provided translation assets, falling back to defaults when missing.
+ *
+ * @returns The transfer registry descriptor containing `icon` and `label`
+ */
 function resolveTransferDescriptor(context: ContextWithAssets | undefined) {
 	const assets = context?.assets;
 	const icon = coerceIcon(assets?.transfer?.icon, DEFAULT_TRANSFER_ICON);
@@ -257,6 +289,12 @@ function resolveTransferDescriptor(context: ContextWithAssets | undefined) {
 	return { icon, label } satisfies RegistryDescriptor;
 }
 
+/**
+ * Selects the transfer registry descriptor for the given translation context.
+ *
+ * @param context - Context containing translation assets used to resolve the descriptor
+ * @returns The transfer RegistryDescriptor with `icon` and `label` resolved from the context's assets
+ */
 export function selectTransferDescriptor(
 	context: ContextWithAssets,
 ): RegistryDescriptor {
@@ -271,6 +309,13 @@ export function selectTransferDescriptor(
 	return descriptor;
 }
 
+/**
+ * Selects the registry descriptor for a modifier kind ('cost' or 'result') from translation assets and caches resolved values.
+ *
+ * @param context - Translation assets and context used to resolve descriptors
+ * @param kind - Which modifier descriptor to retrieve: `'cost'` or `'result'`
+ * @returns The resolved `RegistryDescriptor` for the requested modifier kind
+ */
 export function selectModifierInfo(
 	context: ContextWithAssets,
 	kind: 'cost' | 'result',

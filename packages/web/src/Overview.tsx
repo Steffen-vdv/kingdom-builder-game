@@ -48,6 +48,13 @@ const EMPTY_HERO_TOKEN_SOURCE = Object.freeze({}) as Readonly<
 	Record<string, string>
 >;
 
+/**
+ * Convert content-style overview sections into renderer-ready OverviewSectionDef objects,
+ * applying display-safe defaults for icons and span.
+ *
+ * @param sections - Content sections to convert into OverviewSectionDef format
+ * @returns An array of OverviewSectionDef where paragraph and list kinds are preserved, section `icon` is set to `null`, `span` defaults to `false` when missing, and list item icons are mapped to `null` when present or `undefined` when absent
+ */
 function createFallbackSections(
 	sections: OverviewContentSection[],
 ): OverviewSectionDef[] {
@@ -151,6 +158,17 @@ export interface OverviewProps {
 	content?: OverviewContentSection[];
 }
 
+/**
+ * Displays an overview page with a hero section, token-driven content sections, and a back action.
+ *
+ * Renders hero badge, title, intro and paragraph content, and a grid of overview sections
+ * that are resolved from registry metadata when available or from provided fallback content.
+ *
+ * @param onBack - Callback invoked when the "Back to Start" button is clicked.
+ * @param tokenConfig - Optional configuration that influences how tokens are rendered.
+ * @param content - Optional custom overview sections to override content derived from registry metadata.
+ * @returns The rendered Overview React element.
+ */
 export default function Overview({
 	onBack,
 	tokenConfig,

@@ -7,6 +7,13 @@ import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
 type MetadataOverrides = Partial<SessionSnapshotMetadata>;
 
+/**
+ * Produce a SessionSnapshotMetadata by applying `overrides` onto `base`, merging specific nested maps and overwriting other fields.
+ *
+ * @param base - The original session snapshot metadata to serve as the base.
+ * @param overrides - Partial metadata whose defined entries are applied to `base`. For the keys `resources`, `populations`, `buildings`, `developments`, `stats`, `triggers`, and `assets`, a shallow merge is performed with existing maps; other keys are replaced. If `overrides` is `undefined`, `base` is returned unchanged.
+ * @returns The resulting SessionSnapshotMetadata after applying the overrides.
+ */
 function mergeMetadata(
 	base: SessionSnapshotMetadata,
 	overrides: MetadataOverrides | undefined,
@@ -43,6 +50,15 @@ function mergeMetadata(
 	return merged;
 }
 
+/**
+ * Build a translation context from an engine context, with optional registry configuration and metadata overrides.
+ *
+ * @param engine - The engine context to take a snapshot from.
+ * @param configureRegistries - Optional callback to customize the newly created session registries before creating the context.
+ * @param options - Optional settings.
+ * @param options.metadata - Partial metadata to merge into the snapshot's metadata; provided keys overwrite or shallow-merge into corresponding metadata fields.
+ * @returns The translation context constructed from the engine snapshot, configured registries, and merged metadata.
+ */
 export function createTranslationContextForEngine(
 	engine: EngineContext,
 	configureRegistries?: (registries: SessionRegistries) => void,

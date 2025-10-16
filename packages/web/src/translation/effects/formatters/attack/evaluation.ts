@@ -18,6 +18,13 @@ import type {
 import type { TranslationContext } from '../../../context';
 import { selectAttackBuildingDescriptor } from './registrySelectors';
 
+/**
+ * Build a summary entry describing an attack and how damage reduction and fortification are applied.
+ *
+ * @param context - Context containing attack stats (`power`, `absorption`, `fortification`), the `ignoreAbsorption` flag, and utilities used to format labels and target displays
+ * @param fortificationItems - Preformatted lines describing fortification handling to append to the entry
+ * @returns A SummaryEntry with a title describing the attack and an items array that begins with the absorption handling line followed by the provided fortification items
+ */
 export function buildDescribeEntry(
 	context: BaseEntryContext<AttackTarget>,
 	fortificationItems: string[],
@@ -87,6 +94,19 @@ export function buildingFortificationItems(
 	];
 }
 
+/**
+ * Builds a human-readable summary entry describing the step-by-step damage evaluation for an attack.
+ *
+ * The returned entry summarizes comparison of attack power against damage reduction (absorption),
+ * handling of fortification, and the final application of damage to the target. Wording and values
+ * reflect whether absorption or fortification were bypassed (ignored) and include the carried
+ * remaining damage where applicable.
+ *
+ * @param log - Evaluation log containing computed values for power, absorption, fortification, and target damage
+ * @param context - Evaluation context providing stats and display information used to format labels and values
+ * @param isStat - When true, target values are formatted as stat references; otherwise they are formatted as plain numbers
+ * @returns A SummaryEntry with a title summarizing the evaluation and an items list detailing each evaluation step (absorption, fortification, and applied damage)
+ */
 export function buildStandardEvaluationEntry(
 	log: AttackLog['evaluation'],
 	context: EvaluationContext<AttackTarget>,
@@ -187,6 +207,13 @@ export function buildStandardEvaluationEntry(
 	return { title, items };
 }
 
+/**
+ * Retrieve the display descriptor for a building used when describing an attack.
+ *
+ * @param context - Translation context subset providing assets and building registry used to resolve the descriptor
+ * @param buildingId - The identifier of the building to resolve
+ * @returns The `TargetInfo` descriptor for the specified building, suitable for attack display and labeling
+ */
 export function getBuildingDisplay(
 	context: Pick<TranslationContext, 'assets' | 'buildings'>,
 	buildingId: string,

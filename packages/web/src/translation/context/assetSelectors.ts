@@ -68,6 +68,13 @@ export function selectUpkeepDisplay(
 	return coerceIconLabel(assets?.upkeep, 'Upkeep');
 }
 
+/**
+ * Retrieve the translation asset for a trigger and fall back to a minimal label object when missing.
+ *
+ * @param assets - Translation assets to look up the trigger in; may be `undefined`
+ * @param triggerId - Identifier of the trigger used to find the asset and as the fallback label
+ * @returns The matching `TranslationTriggerAsset` from `assets` if present; otherwise a frozen object with `label` set to `triggerId`
+ */
 export function selectTriggerDisplay(
 	assets: TranslationAssets | undefined,
 	triggerId: string,
@@ -79,6 +86,12 @@ export function selectTriggerDisplay(
 	return Object.freeze({ label: triggerId });
 }
 
+/**
+ * Retrieve the localized tier summary text for a given tier token.
+ *
+ * @param token - The tier token identifier to look up.
+ * @returns The tier summary for `token` if present, `undefined` otherwise.
+ */
 export function selectTierSummary(
 	assets: TranslationAssets | undefined,
 	token: string | undefined,

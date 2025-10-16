@@ -9,6 +9,17 @@ interface FormattablePhaseStep extends TranslationPhaseStep {
 	title?: string;
 }
 
+/**
+ * Normalize overloaded arguments into a single object containing `phases`, `phaseId`, and `stepId`.
+ *
+ * @param phasesOrPhaseId - Either an array of phases, a phase id string, or `undefined`. When an array is provided, it becomes the returned `phases`. When a string is provided, it becomes the returned `phaseId`.
+ * @param maybePhaseId - When `phasesOrPhaseId` is an array, this is treated as the `phaseId`. When `phasesOrPhaseId` is a string or `undefined`, this is treated as the `stepId`.
+ * @param maybeStepId - When `phasesOrPhaseId` is an array, this is treated as the `stepId`. Ignored otherwise.
+ * @returns An object with:
+ * - `phases`: the input array when one was provided, otherwise `undefined`.
+ * - `phaseId`: the resolved phase id when available, otherwise `undefined`.
+ * - `stepId`: the resolved step id when available, otherwise `undefined`.
+ */
 function resolvePhaseArguments(
 	phasesOrPhaseId: readonly TranslationPhase[] | string | undefined,
 	maybePhaseId?: string,
@@ -39,6 +50,17 @@ function resolvePhaseArguments(
 	};
 }
 
+/**
+ * Determine whether the stat identified by `key` should be displayed as a percentage.
+ *
+ * Checks the translation assets for a matching stat and returns `true` when the stat
+ * explicitly indicates a percent display — either via `displayAsPercent: true` or a
+ * `format` object with `percent` set — otherwise returns `false`.
+ *
+ * @param key - The stat key to look up in `assets.stats`
+ * @param assets - Optional translation assets containing stat metadata
+ * @returns `true` if the stat should be displayed as a percentage, `false` otherwise
+ */
 export function statDisplaysAsPercent(
 	key: string,
 	assets?: TranslationAssets,

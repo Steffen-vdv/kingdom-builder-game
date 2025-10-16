@@ -26,6 +26,12 @@ interface DefaultRegistrySnapshot {
 	readonly metadata: DefaultRegistryMetadata;
 }
 
+/**
+ * Recursively freezes arrays and plain objects so their contents become immutable.
+ *
+ * @param value - The value to freeze
+ * @returns The same `value` reference with all nested objects and arrays frozen
+ */
 function deepFreeze<T>(value: T): T {
 	if (Array.isArray(value)) {
 		for (const entry of value) {
