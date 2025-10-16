@@ -81,7 +81,7 @@ function GenericActionCard({
 	const costsReady = costs !== null;
 	const requirementFailuresReady = requirementFailures !== null;
 	const groupsReady = groups !== null;
-	const safeCosts = costsReady ? costs : {};
+	const safeCosts: Record<string, number> = costs ?? {};
 	const safeGroups = groupsReady ? groups : [];
 	const requirementList = requirementFailuresReady ? requirementFailures : [];
 	const requirements = requirementList.map((failure) =>
@@ -199,7 +199,7 @@ function GenericActionCard({
 								title: hoverTitle,
 								effects,
 								requirements,
-								costs,
+								...(costsReady ? { costs: safeCosts } : {}),
 								...(description && { description }),
 								...(!implemented && {
 									description: 'Not implemented yet',
