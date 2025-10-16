@@ -22,22 +22,22 @@ function isEffectGroup(effect: unknown): effect is EffectGroup {
 	);
 }
 
-function toMain(ctx: ReturnType<typeof createTestEngine>) {
-	while (ctx.game.currentPhase !== 'main') {
-		advance(ctx);
+function toMain(engineContext: ReturnType<typeof createTestEngine>) {
+	while (engineContext.game.currentPhase !== 'main') {
+		advance(engineContext);
 	}
 }
 
 describe('action:perform effect', () => {
 	it('uses the declared action when id points at a development', () => {
-		const ctx = createTestEngine();
-		toMain(ctx);
-		ctx.activePlayer.ap = 5;
-		ctx.activePlayer.gold = 20;
-		const newLandId = `${ctx.activePlayer.id}-L${ctx.activePlayer.lands.length + 1}`;
+		const engineContext = createTestEngine();
+		toMain(engineContext);
+		engineContext.activePlayer.ap = 5;
+		engineContext.activePlayer.gold = 20;
+		const newLandId = `${engineContext.activePlayer.id}-L${engineContext.activePlayer.lands.length + 1}`;
 		const fallbackLand = new Land(newLandId, 2, true);
-		ctx.activePlayer.lands.push(fallbackLand);
-		const developGroupOption = ctx.actions
+		engineContext.activePlayer.lands.push(fallbackLand);
+		const developGroupOption = engineContext.actions
 			.entries()
 			.flatMap(([, def]) => def.effects)
 			.filter(isEffectGroup)
@@ -54,8 +54,8 @@ describe('action:perform effect', () => {
 				developmentId,
 			},
 		};
-		expect(() => actionPerform(effect, ctx, 1)).not.toThrow();
-		const newestLand = ctx.activePlayer.lands.at(-1);
+		expect(() => actionPerform(effect, engineContext, 1)).not.toThrow();
+		const newestLand = engineContext.activePlayer.lands.at(-1);
 		expect(newestLand?.developments).toContain(developmentId);
 	});
 });

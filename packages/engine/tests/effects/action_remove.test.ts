@@ -11,14 +11,14 @@ describe('action:remove effect', () => {
 		const remove = content.action({
 			effects: [{ type: 'action', method: 'remove', params: { id: extra.id } }],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		ctx.activePlayer.actions.add(extra.id);
-		const cost = getActionCosts(remove.id, ctx);
-		ctx.activePlayer.ap = cost[CResource.ap] ?? 0;
-		performAction(remove.id, ctx);
-		expect(ctx.activePlayer.actions.has(extra.id)).toBe(false);
+		engineContext.activePlayer.actions.add(extra.id);
+		const cost = getActionCosts(remove.id, engineContext);
+		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
+		performAction(remove.id, engineContext);
+		expect(engineContext.activePlayer.actions.has(extra.id)).toBe(false);
 	});
 });

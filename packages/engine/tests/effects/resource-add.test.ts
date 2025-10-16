@@ -26,10 +26,10 @@ describe('resource:add effect', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
-		const before = ctx.activePlayer.gold;
+		const engineContext = createTestEngine({ actions });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
+		const before = engineContext.activePlayer.gold;
 		const actionDefinition = actions.get('grant_gold');
 		const amount = actionDefinition.effects.find(
 			(effect) =>
@@ -37,10 +37,10 @@ describe('resource:add effect', () => {
 				effect.method === 'add' &&
 				effect.params?.key === CResource.gold,
 		)?.params?.amount as number;
-		const cost = getActionCosts('grant_gold', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('grant_gold', ctx);
-		expect(ctx.activePlayer.gold).toBe(before + amount);
+		const cost = getActionCosts('grant_gold', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('grant_gold', engineContext);
+		expect(engineContext.activePlayer.gold).toBe(before + amount);
 	});
 
 	it('rounds fractional amounts according to round setting', () => {
@@ -71,11 +71,11 @@ describe('resource:add effect', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
+		const engineContext = createTestEngine({ actions });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
 
-		let before = ctx.activePlayer.gold;
+		let before = engineContext.activePlayer.gold;
 		let foundEffect = actions
 			.get('round_up')
 			.effects.find(
@@ -90,12 +90,12 @@ describe('resource:add effect', () => {
 		} else if (foundEffect?.round === 'down') {
 			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
 		}
-		let cost = getActionCosts('round_up', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('round_up', ctx);
-		expect(ctx.activePlayer.gold).toBe(before + total);
+		let cost = getActionCosts('round_up', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('round_up', engineContext);
+		expect(engineContext.activePlayer.gold).toBe(before + total);
 
-		before = ctx.activePlayer.gold;
+		before = engineContext.activePlayer.gold;
 		foundEffect = actions
 			.get('round_down')
 			.effects.find(
@@ -110,9 +110,9 @@ describe('resource:add effect', () => {
 		} else if (foundEffect?.round === 'down') {
 			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
 		}
-		cost = getActionCosts('round_down', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('round_down', ctx);
-		expect(ctx.activePlayer.gold).toBe(before + total);
+		cost = getActionCosts('round_down', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('round_down', engineContext);
+		expect(engineContext.activePlayer.gold).toBe(before + total);
 	});
 });

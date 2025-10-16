@@ -10,11 +10,11 @@ import type { EffectDef } from '../../src/effects/index.ts';
 
 describe('resource:transfer percent bounds', () => {
 	it('adjusts transfer percentage within bounds', () => {
-		const ctx = createTestEngine();
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine();
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		ctx.game.currentPlayerIndex = 0;
+		engineContext.game.currentPlayerIndex = 0;
 
 		const transfer: EffectDef<{ key: string; percent: number }> = {
 			type: 'resource',
@@ -57,31 +57,31 @@ describe('resource:transfer percent bounds', () => {
 			},
 		};
 
-		ctx.activePlayer.gold = 0;
-		ctx.opponent.gold = 10;
-		const total = ctx.opponent.gold;
+		engineContext.activePlayer.gold = 0;
+		engineContext.opponent.gold = 10;
+		const total = engineContext.opponent.gold;
 
-		runEffects([addBoost], ctx);
-		runEffects([transfer], ctx);
-		expect(ctx.activePlayer.gold).toBe(total);
-		expect(ctx.opponent.gold).toBe(0);
+		runEffects([addBoost], engineContext);
+		runEffects([transfer], engineContext);
+		expect(engineContext.activePlayer.gold).toBe(total);
+		expect(engineContext.opponent.gold).toBe(0);
 
-		runEffects([removeBoost], ctx);
-		ctx.activePlayer.gold = 0;
-		ctx.opponent.gold = total;
+		runEffects([removeBoost], engineContext);
+		engineContext.activePlayer.gold = 0;
+		engineContext.opponent.gold = total;
 
-		runEffects([addNerf], ctx);
-		runEffects([transfer], ctx);
-		expect(ctx.activePlayer.gold).toBe(0);
-		expect(ctx.opponent.gold).toBe(total);
+		runEffects([addNerf], engineContext);
+		runEffects([transfer], engineContext);
+		expect(engineContext.activePlayer.gold).toBe(0);
+		expect(engineContext.opponent.gold).toBe(total);
 	});
 
 	it('respects rounding configuration', () => {
-		const ctx = createTestEngine();
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine();
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		ctx.game.currentPlayerIndex = 0;
+		engineContext.game.currentPlayerIndex = 0;
 
 		const base: EffectDef<{ key: string; percent: number }> = {
 			type: 'resource',
@@ -90,14 +90,17 @@ describe('resource:transfer percent bounds', () => {
 		};
 
 		const run = (round?: 'up' | 'down') => {
-			ctx.activePlayer.gold = 0;
-			ctx.opponent.gold = 5;
+			engineContext.activePlayer.gold = 0;
+			engineContext.opponent.gold = 5;
 			const effect: EffectDef<{ key: string; percent: number }> = {
 				...base,
 				round,
 			};
-			runEffects([effect], ctx);
-			return { attacker: ctx.activePlayer.gold, defender: ctx.opponent.gold };
+			runEffects([effect], engineContext);
+			return {
+				attacker: engineContext.activePlayer.gold,
+				defender: engineContext.opponent.gold,
+			};
 		};
 
 		const floor = run();

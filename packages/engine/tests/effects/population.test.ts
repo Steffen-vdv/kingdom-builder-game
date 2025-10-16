@@ -19,19 +19,21 @@ describe('population effects', () => {
 				{ type: 'population', method: 'remove', params: { role: role.id } },
 			],
 		});
-		const ctx = createTestEngine(content);
-		while (ctx.game.currentPhase !== PhaseId.Main) {
-			advance(ctx);
+		const engineContext = createTestEngine(content);
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
 		}
-		let cost = getActionCosts(add.id, ctx);
-		ctx.activePlayer.ap = cost[CResource.ap] ?? 0;
-		performAction(add.id, ctx);
+		let cost = getActionCosts(add.id, engineContext);
+		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
+		performAction(add.id, engineContext);
 		const added = add.effects.filter((e) => e.method === 'add').length;
-		expect(ctx.activePlayer.population[role.id]).toBe(added);
-		cost = getActionCosts(remove.id, ctx);
-		ctx.activePlayer.ap = cost[CResource.ap] ?? 0;
-		performAction(remove.id, ctx);
+		expect(engineContext.activePlayer.population[role.id]).toBe(added);
+		cost = getActionCosts(remove.id, engineContext);
+		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
+		performAction(remove.id, engineContext);
 		const removed = remove.effects.filter((e) => e.method === 'remove').length;
-		expect(ctx.activePlayer.population[role.id]).toBe(added - removed);
+		expect(engineContext.activePlayer.population[role.id]).toBe(
+			added - removed,
+		);
 	});
 });

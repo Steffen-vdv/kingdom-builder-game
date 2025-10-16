@@ -26,10 +26,10 @@ describe('resource:remove effect', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
-		const before = ctx.activePlayer.gold;
+		const engineContext = createTestEngine({ actions });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
+		const before = engineContext.activePlayer.gold;
 		const actionDefinition = actions.get('pay_gold');
 		const amount = actionDefinition.effects.find(
 			(effect) =>
@@ -37,10 +37,10 @@ describe('resource:remove effect', () => {
 				effect.method === 'remove' &&
 				effect.params?.key === CResource.gold,
 		)?.params?.amount as number;
-		const cost = getActionCosts('pay_gold', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('pay_gold', ctx);
-		expect(ctx.activePlayer.gold).toBe(before - amount);
+		const cost = getActionCosts('pay_gold', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('pay_gold', engineContext);
+		expect(engineContext.activePlayer.gold).toBe(before - amount);
 	});
 
 	it('rounds fractional amounts according to round setting', () => {
@@ -71,11 +71,11 @@ describe('resource:remove effect', () => {
 				},
 			],
 		});
-		const ctx = createTestEngine({ actions });
-		advance(ctx);
-		ctx.game.currentPlayerIndex = 0;
+		const engineContext = createTestEngine({ actions });
+		advance(engineContext);
+		engineContext.game.currentPlayerIndex = 0;
 
-		let before = ctx.activePlayer.gold;
+		let before = engineContext.activePlayer.gold;
 		let foundEffect = actions
 			.get('round_up_remove')
 			.effects.find(
@@ -90,12 +90,13 @@ describe('resource:remove effect', () => {
 		} else if (foundEffect?.round === 'down') {
 			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
 		}
-		let cost = getActionCosts('round_up_remove', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('round_up_remove', ctx);
-		expect(ctx.activePlayer.gold).toBe(before - total);
+		let cost =
+			getActionCosts('round_up_remove', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('round_up_remove', engineContext);
+		expect(engineContext.activePlayer.gold).toBe(before - total);
 
-		before = ctx.activePlayer.gold;
+		before = engineContext.activePlayer.gold;
 		foundEffect = actions
 			.get('round_down_remove')
 			.effects.find(
@@ -110,9 +111,9 @@ describe('resource:remove effect', () => {
 		} else if (foundEffect?.round === 'down') {
 			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
 		}
-		cost = getActionCosts('round_down_remove', ctx)[Resource.ap] ?? 0;
-		ctx.activePlayer.ap = cost;
-		performAction('round_down_remove', ctx);
-		expect(ctx.activePlayer.gold).toBe(before - total);
+		cost = getActionCosts('round_down_remove', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.ap = cost;
+		performAction('round_down_remove', engineContext);
+		expect(engineContext.activePlayer.gold).toBe(before - total);
 	});
 });
