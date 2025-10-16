@@ -6,6 +6,11 @@ import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
 
+const FALLBACK_TRIGGERS = TRIGGER_INFO as Record<
+	string,
+	(typeof TRIGGER_INFO)[keyof typeof TRIGGER_INFO]
+>;
+
 function formatStepTriggerLabel(
 	context: TranslationContext,
 	triggerKey: string,
@@ -89,18 +94,39 @@ export class PhasedTranslator {
 				return;
 			}
 			const info = selectTriggerDisplay(context.assets, key as string);
+			const fallbackInfo = FALLBACK_TRIGGERS[key as string];
+			const icon = info.icon ?? fallbackInfo?.icon ?? '';
+			const future = info.future ?? fallbackInfo?.future;
+			const past = info.past ?? fallbackInfo?.past;
+			const fallbackLabel =
+				fallbackInfo &&
+				typeof fallbackInfo === 'object' &&
+				'label' in fallbackInfo
+					? (fallbackInfo as { label?: string }).label
+					: undefined;
+			const label = info.label ?? fallbackLabel;
 			const stepLabel = formatStepTriggerLabel(context, identifier);
 			const title = (() => {
 				if (stepLabel) {
-					const icon = info.icon ?? '';
 					const trimmedIcon = icon.trim();
 					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
 					return `${prefix}During ${stepLabel}`;
 				}
-				const future = info.future ?? info.label;
-				const icon = info.icon ?? '';
+				const futureOrLabel = future ?? label;
 				if (future && future.trim().length) {
 					const parts = [icon, future].filter(Boolean).join(' ').trim();
+					if (parts.length) {
+						return parts;
+					}
+				}
+				if (futureOrLabel && futureOrLabel.trim().length) {
+					const parts = [icon, futureOrLabel].filter(Boolean).join(' ').trim();
+					if (parts.length) {
+						return parts;
+					}
+				}
+				if (past && past.trim().length) {
+					const parts = [icon, past].filter(Boolean).join(' ').trim();
 					if (parts.length) {
 						return parts;
 					}

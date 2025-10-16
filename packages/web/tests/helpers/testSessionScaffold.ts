@@ -151,13 +151,35 @@ const buildPopulationMetadata = (
 };
 
 const buildStatMetadata = (): Record<string, SessionMetadataDescriptor> => ({
+	maxPopulation: {
+		icon: '👥',
+		label: 'Maximum Population',
+		description: 'Determines how many citizens the realm can sustain.',
+		format: { prefix: 'Max ' },
+	},
 	armyStrength: {
 		icon: '⚔️',
 		label: 'Army Might',
 		description: 'Measures combat readiness.',
 	},
 	fortificationStrength: {
+		icon: '🛡️',
+		label: 'Fortress Resilience',
 		description: 'Determines defensive strength.',
+	},
+	absorption: {
+		icon: '🌀',
+		label: 'Damage Absorption',
+		description: 'Reduces incoming damage by a percentage.',
+		displayAsPercent: true,
+		format: { percent: true },
+	},
+	growth: {
+		icon: '🌿',
+		label: 'Growth Rate',
+		description: 'Improves how quickly strength stats increase.',
+		displayAsPercent: true,
+		format: { percent: true },
 	},
 });
 
