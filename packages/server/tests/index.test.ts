@@ -95,6 +95,21 @@ describe('server entrypoint', () => {
 		stream.end();
 	});
 
+	it('resolves the bound port when configured with port 0', async () => {
+		const module = await import('../src/index.js');
+		const result = await module.startServer({
+			host: '127.0.0.1',
+			port: 0,
+			allowDevToken: true,
+		});
+		try {
+			expect(result.port).toBeGreaterThan(0);
+			expect(result.port).not.toBe(0);
+		} finally {
+			await result.app.close();
+		}
+	});
+
 	it('allows HttpSessionGateway to toggle developer mode', async () => {
 		const module = await import('../src/index.js');
 		const result = await module.startServer({
