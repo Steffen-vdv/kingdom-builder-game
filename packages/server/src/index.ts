@@ -126,7 +126,7 @@ function resolvePort(port: number | undefined, env: NodeJS.ProcessEnv): number {
 		readNumber(env.PORT),
 	];
 	for (const value of candidates) {
-		if (value && value > 0) {
+		if (value === 0 || (typeof value === 'number' && value > 0)) {
 			return value;
 		}
 	}
