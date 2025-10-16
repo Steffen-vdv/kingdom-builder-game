@@ -38,6 +38,15 @@ export interface LegacySession {
 	getActionDefinition(
 		actionId: string,
 	): SessionActionDefinitionSummary | undefined;
+	readActionMetadata(
+		actionId: string,
+		params?: ActionParametersPayload,
+	): SessionActionMetadataSnapshot;
+	subscribeActionMetadata(
+		actionId: string,
+		params: ActionParametersPayload | undefined,
+		listener: (snapshot: SessionActionMetadataSnapshot) => void,
+	): () => void;
 	runAiTurn(
 		playerId: SessionPlayerId,
 		overrides?: LegacySessionAiOverrides,
@@ -77,4 +86,10 @@ export interface SessionQueueHelpers {
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
 	getCurrentSession: () => Session;
 	getLatestSnapshot: () => SessionSnapshot | null;
+}
+
+export interface SessionActionMetadataSnapshot {
+	costs?: SessionActionCostMap;
+	requirements?: SessionActionRequirementList;
+	groups?: ActionEffectGroup[];
 }

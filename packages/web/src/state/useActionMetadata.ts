@@ -1,0 +1,173 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
+} from '@kingdom-builder/protocol/session';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+import { useGameEngine } from './GameContext';
+import {
+	loadActionCosts,
+	loadActionOptions,
+	loadActionRequirements,
+} from './sessionSdk';
+import { serializeActionParams } from './actionMetadataKey';
+import type { SessionActionMetadataSnapshot } from './sessionTypes';
+
+interface UseActionMetadataOptions {
+	actionId: string | null | undefined;
+	params?: ActionParametersPayload;
+}
+
+export interface UseActionMetadataResult {
+	costs: SessionActionCostMap | undefined;
+	requirements: SessionActionRequirementList | undefined;
+	groups: ActionEffectGroup[] | undefined;
+	loading: {
+		costs: boolean;
+		requirements: boolean;
+		groups: boolean;
+	};
+}
+
+const clone = <T>(value: T): T => {
+	if (typeof structuredClone === 'function') {
+		return structuredClone(value);
+	}
+	return JSON.parse(JSON.stringify(value)) as T;
+};
+
+const EMPTY_SNAPSHOT: SessionActionMetadataSnapshot = {};
+
+export function useActionMetadata({
+	actionId,
+	params,
+}: UseActionMetadataOptions): UseActionMetadataResult {
+	const { session, sessionId } = useGameEngine();
+	const paramsKey = useMemo(() => serializeActionParams(params), [params]);
+	const normalizedParams = useMemo<ActionParametersPayload | undefined>(() => {
+		if (!params) {
+			return undefined;
+		}
+		return clone(params);
+	}, [paramsKey]);
+	const [snapshot, setSnapshot] = useState<SessionActionMetadataSnapshot>(
+		() => {
+			if (!actionId) {
+				return EMPTY_SNAPSHOT;
+			}
+			return session.readActionMetadata(actionId, normalizedParams);
+		},
+	);
+	const loadingRef = useRef({
+		costs: false,
+		requirements: false,
+		groups: false,
+	});
+
+	useEffect(() => {
+		loadingRef.current = { costs: false, requirements: false, groups: false };
+	}, [actionId, paramsKey]);
+
+	useEffect(() => {
+		if (!actionId) {
+			setSnapshot(EMPTY_SNAPSHOT);
+			return () => {};
+		}
+		let disposed = false;
+		const unsubscribe = session.subscribeActionMetadata(
+			actionId,
+			normalizedParams,
+			(next) => {
+				if (!disposed) {
+					setSnapshot(next);
+				}
+			},
+		);
+		return () => {
+			disposed = true;
+			unsubscribe();
+		};
+	}, [session, actionId, normalizedParams, paramsKey]);
+
+	useEffect(() => {
+		if (!actionId) {
+			return () => {};
+		}
+		const controller = new AbortController();
+		let active = true;
+		const handleSettled = (key: keyof typeof loadingRef.current) => {
+			if (!active) {
+				return;
+			}
+			loadingRef.current[key] = false;
+		};
+		const maybeLoadCosts = () => {
+			if (snapshot.costs !== undefined || loadingRef.current.costs) {
+				return;
+			}
+			loadingRef.current.costs = true;
+			void loadActionCosts(sessionId, actionId, normalizedParams, {
+				signal: controller.signal,
+			}).finally(() => {
+				handleSettled('costs');
+			});
+		};
+		const maybeLoadRequirements = () => {
+			if (
+				snapshot.requirements !== undefined ||
+				loadingRef.current.requirements
+			) {
+				return;
+			}
+			loadingRef.current.requirements = true;
+			void loadActionRequirements(sessionId, actionId, normalizedParams, {
+				signal: controller.signal,
+			}).finally(() => {
+				handleSettled('requirements');
+			});
+		};
+		const maybeLoadOptions = () => {
+			if (snapshot.groups !== undefined || loadingRef.current.groups) {
+				return;
+			}
+			loadingRef.current.groups = true;
+			void loadActionOptions(sessionId, actionId, {
+				signal: controller.signal,
+			}).finally(() => {
+				handleSettled('groups');
+			});
+		};
+		maybeLoadCosts();
+		maybeLoadRequirements();
+		maybeLoadOptions();
+		return () => {
+			active = false;
+			controller.abort();
+			loadingRef.current = { costs: false, requirements: false, groups: false };
+		};
+	}, [
+		actionId,
+		sessionId,
+		snapshot.costs,
+		snapshot.groups,
+		snapshot.requirements,
+		normalizedParams,
+	]);
+
+	return useMemo(() => {
+		const result: UseActionMetadataResult = {
+			costs: snapshot.costs,
+			requirements: snapshot.requirements,
+			groups: snapshot.groups,
+			loading: {
+				costs: snapshot.costs === undefined,
+				requirements: snapshot.requirements === undefined,
+				groups: snapshot.groups === undefined,
+			},
+		};
+		return result;
+	}, [snapshot]);
+}
+
+export type { UseActionMetadataOptions };

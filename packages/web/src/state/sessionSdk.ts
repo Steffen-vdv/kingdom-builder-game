@@ -3,8 +3,11 @@ import type {
 	ActionExecuteRequest,
 	ActionExecuteResponse,
 	ActionExecuteSuccessResponse,
+	ActionParametersPayload,
 } from '@kingdom-builder/protocol/actions';
 import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
 	SessionCreateRequest,
@@ -15,6 +18,7 @@ import type {
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import {
 	applySessionState,
 	deleteSessionRecord,
@@ -24,11 +28,7 @@ import {
 	type SessionStateRecord,
 } from './sessionStateStore';
 import { type Session, type RemoteSessionRecord } from './sessionTypes';
-import {
-	createGameApi,
-	type GameApi,
-	type GameApiRequestOptions,
-} from '../services/gameApi';
+import { type GameApiRequestOptions } from '../services/gameApi';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import {
 	deleteRemoteAdapter,
@@ -37,24 +37,24 @@ import {
 } from './remoteSessionAdapter';
 import type { RemoteSessionAdapter } from './remoteSessionAdapter';
 import { SessionMirroringError, markFatalSessionError } from './sessionErrors';
+import {
+	ensureGameApi,
+	setGameApi as setGameApiInstance,
+} from './gameApiInstance';
+import { clone } from './clone';
 
 interface CreateSessionOptions {
 	devMode?: boolean;
 	playerName?: string;
 }
-
 export interface CreateSessionResult {
 	sessionId: string;
 	adapter: Session;
 	record: RemoteSessionRecord;
 }
-type ActionRequirementFailure =
-	ActionExecuteErrorResponse['requirementFailure'];
-type ActionRequirementFailures =
-	ActionExecuteErrorResponse['requirementFailures'];
 type ActionExecutionFailure = Error & {
-	requirementFailure?: ActionRequirementFailure;
-	requirementFailures?: ActionRequirementFailures;
+	requirementFailure?: ActionExecuteErrorResponse['requirementFailure'];
+	requirementFailures?: ActionExecuteErrorResponse['requirementFailures'];
 };
 
 export interface FetchSnapshotResult {
@@ -62,20 +62,13 @@ export interface FetchSnapshotResult {
 	adapter: Session;
 	record: RemoteSessionRecord;
 }
-const clone = <T>(value: T): T => {
-	if (typeof structuredClone === 'function') {
-		return structuredClone(value);
-	}
-	return JSON.parse(JSON.stringify(value)) as T;
-};
-let gameApi: GameApi | null = null;
-function ensureGameApi(): GameApi {
-	if (!gameApi) {
-		gameApi = createGameApi();
-	}
-	return gameApi;
+function buildActionMetadataRequest(
+	sessionId: string,
+	actionId: string,
+	params?: ActionParametersPayload,
+) {
+	return params ? { sessionId, actionId, params } : { sessionId, actionId };
 }
-
 function toRemoteRecord(record: SessionStateRecord): RemoteSessionRecord {
 	return {
 		sessionId: record.sessionId,
@@ -88,17 +81,13 @@ function toRemoteRecord(record: SessionStateRecord): RemoteSessionRecord {
 	};
 }
 
-export function setGameApi(instance: GameApi | null): void {
-	gameApi = instance;
-}
-
 function getAdapter(sessionId: string): RemoteSessionAdapter {
 	return getOrCreateRemoteAdapter(sessionId, {
 		ensureGameApi,
 		runAiTurn: runAiTurnInternal,
 	});
 }
-
+export { setGameApiInstance as setGameApi };
 export async function createSession(
 	options: CreateSessionOptions = {},
 	requestOptions: GameApiRequestOptions = {},
@@ -193,7 +182,6 @@ export async function performSessionAction(
 		return normalizeActionError(error);
 	}
 }
-
 function applyActionSnapshot(
 	sessionId: string,
 	response: ActionExecuteSuccessResponse,
@@ -231,7 +219,6 @@ export async function advanceSessionPhase(
 		advance: clone(response.advance),
 	};
 }
-
 async function runAiTurnInternal(
 	request: SessionRunAiRequest,
 	requestOptions: GameApiRequestOptions = {},
@@ -261,13 +248,59 @@ async function runAiTurnInternal(
 	};
 }
 
-export async function runAiTurn(
-	request: SessionRunAiRequest,
+export { runAiTurnInternal as runAiTurn };
+export async function loadActionCosts(
+	sessionId: string,
+	actionId: string,
+	params?: ActionParametersPayload,
 	requestOptions: GameApiRequestOptions = {},
-): Promise<SessionRunAiResponse> {
-	return runAiTurnInternal(request, requestOptions);
+): Promise<SessionActionCostMap> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(sessionId);
+	const response = await enqueueSessionTask(sessionId, () =>
+		api.getActionCosts(
+			buildActionMetadataRequest(sessionId, actionId, params),
+			requestOptions,
+		),
+	);
+	adapter.setActionCosts(actionId, response.costs, params);
+	return clone(response.costs);
 }
 
+export async function loadActionRequirements(
+	sessionId: string,
+	actionId: string,
+	params?: ActionParametersPayload,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionActionRequirementList> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(sessionId);
+	const response = await enqueueSessionTask(sessionId, () =>
+		api.getActionRequirements(
+			buildActionMetadataRequest(sessionId, actionId, params),
+			requestOptions,
+		),
+	);
+	adapter.setActionRequirements(actionId, response.requirements, params);
+	return clone(response.requirements);
+}
+
+export async function loadActionOptions(
+	sessionId: string,
+	actionId: string,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<ActionEffectGroup[]> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(sessionId);
+	const response = await enqueueSessionTask(sessionId, () =>
+		api.getActionOptions(
+			buildActionMetadataRequest(sessionId, actionId),
+			requestOptions,
+		),
+	);
+	adapter.setActionOptions(actionId, response.groups);
+	return clone(response.groups);
+}
 async function simulateUpcomingPhasesInternal(
 	request: SessionSimulateRequest,
 	requestOptions: GameApiRequestOptions = {},
@@ -281,12 +314,7 @@ async function simulateUpcomingPhasesInternal(
 	return clone(response);
 }
 
-export async function simulateUpcomingPhases(
-	request: SessionSimulateRequest,
-	requestOptions: GameApiRequestOptions = {},
-): Promise<SessionSimulateResponse> {
-	return simulateUpcomingPhasesInternal(request, requestOptions);
-}
+export { simulateUpcomingPhasesInternal as simulateUpcomingPhases };
 
 export async function updatePlayerName(
 	request: SessionUpdatePlayerNameRequest,

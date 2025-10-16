@@ -1,5 +1,8 @@
 /* eslint-disable max-lines */
-import { type PlayerStartConfig } from '@kingdom-builder/protocol';
+import {
+	type PlayerStartConfig,
+	type ActionEffectGroup,
+} from '@kingdom-builder/protocol';
 import { vi } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type {
@@ -25,6 +28,8 @@ import {
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { RemoteSessionAdapter } from '../../src/state/remoteSessionAdapter';
+import type { GameApi } from '../../src/services/gameApi';
 
 const POPULATION_ICON_FALLBACK = '👥';
 
@@ -460,16 +465,24 @@ export function createActionsPanelGame({
 			POPULATION_ICON_FALLBACK,
 		building: buildingDefinition,
 	} as const;
+	const actionOptions = new Map<string, ActionEffectGroup[]>();
 
-	const session = {
-		getActionCosts: vi.fn((actionId: string) => {
-			return metadata.costMap.get(actionId) ?? {};
+	const sessionId = 'actions-panel-session';
+	const session = new RemoteSessionAdapter(sessionId, {
+		ensureGameApi: vi.fn(() => ({}) as GameApi),
+		runAiTurn: vi.fn().mockResolvedValue({
+			sessionId,
+			snapshot: sessionState,
+			registries: sessionRegistries,
+			ranTurn: false,
 		}),
-		getActionRequirements: vi.fn((actionId: string) => {
-			return metadata.requirementFailures.get(actionId) ?? [];
-		}),
-		getActionOptions: vi.fn(() => []),
-	} as const;
+	});
+	for (const [actionId, costs] of metadata.costMap.entries()) {
+		session.setActionCosts(actionId, costs);
+	}
+	for (const [actionId, failures] of requirementFailures.entries()) {
+		session.setActionRequirements(actionId, failures);
+	}
 
 	sessionState.metadata = {
 		passiveEvaluationModifiers: {},
@@ -480,6 +493,7 @@ export function createActionsPanelGame({
 	};
 
 	return {
+		sessionId,
 		session,
 		sessionState,
 		sessionView,
@@ -491,5 +505,6 @@ export function createActionsPanelGame({
 		}),
 		metadata,
 		sessionRegistries,
+		actionOptions,
 	};
 }
