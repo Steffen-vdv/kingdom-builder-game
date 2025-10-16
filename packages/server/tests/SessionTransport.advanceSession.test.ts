@@ -3,6 +3,10 @@ import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	expectSnapshotMetadata,
+	expectStaticMetadata,
+} from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -35,8 +39,10 @@ describe('SessionTransport advanceSession', () => {
 		});
 		expect(advance.sessionId).toBe(sessionId);
 		expect(advance.snapshot.game.currentPhase).toBe('end');
+		expectSnapshotMetadata(advance.snapshot.metadata);
 		expect(Array.isArray(advance.advance.effects)).toBe(true);
 		expect(advance.registries.actions[actionId]).toBeDefined();
+		expectStaticMetadata(manager.getMetadata());
 	});
 
 	it('reports conflicts when advancing sessions fail', async () => {

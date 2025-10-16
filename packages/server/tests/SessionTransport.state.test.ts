@@ -3,6 +3,10 @@ import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	expectSnapshotMetadata,
+	expectStaticMetadata,
+} from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -38,7 +42,9 @@ describe('SessionTransport session state', () => {
 		});
 		expect(state.sessionId).toBe(sessionId);
 		expect(state.snapshot.game.players).toHaveLength(2);
+		expectSnapshotMetadata(state.snapshot.metadata);
 		expect(state.registries.actions[actionId]).toBeDefined();
+		expectStaticMetadata(manager.getMetadata());
 		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
 	});
