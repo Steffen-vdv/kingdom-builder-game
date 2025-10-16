@@ -102,9 +102,18 @@ function createRaisePopScenario(
 		throw new Error('Expected active player view in session.');
 	}
 	mockGame.session = {
+		enqueue: vi.fn(async (task) => Promise.resolve().then(task)),
 		getActionCosts: vi.fn(() => ({ gold: 5, ap: 1 })),
+		hasActionCosts: vi.fn(() => true),
+		recordActionCosts: vi.fn(),
 		getActionRequirements: vi.fn(() => []),
+		hasActionRequirements: vi.fn(() => true),
+		recordActionRequirements: vi.fn(),
 		getActionOptions: vi.fn(() => []),
+		hasActionOptions: vi.fn(() => true),
+		recordActionOptions: vi.fn(),
+		getActionMetadataVersion: vi.fn(() => 0),
+		subscribeActionMetadata: vi.fn(() => () => {}),
 	} as unknown as LegacyGameEngineContextValue['session'];
 	return {
 		registries,

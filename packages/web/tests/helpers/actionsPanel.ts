@@ -286,6 +286,7 @@ export function createActionsPanelGame({
 			},
 		})),
 	);
+	requirementFailures.set(basicAction.id, []);
 	if (buildingAction) {
 		requirementFailures.set(buildingAction.id, [
 			{
@@ -461,14 +462,28 @@ export function createActionsPanelGame({
 		building: buildingDefinition,
 	} as const;
 
+	const sessionId = 'actions-panel-session';
 	const session = {
+		enqueue: vi.fn(async (task) => Promise.resolve().then(task)),
 		getActionCosts: vi.fn((actionId: string) => {
 			return metadata.costMap.get(actionId) ?? {};
 		}),
+		hasActionCosts: vi.fn((actionId: string) => {
+			return metadata.costMap.has(actionId);
+		}),
+		recordActionCosts: vi.fn(),
 		getActionRequirements: vi.fn((actionId: string) => {
 			return metadata.requirementFailures.get(actionId) ?? [];
 		}),
+		hasActionRequirements: vi.fn((actionId: string) => {
+			return metadata.requirementFailures.has(actionId);
+		}),
+		recordActionRequirements: vi.fn(),
 		getActionOptions: vi.fn(() => []),
+		hasActionOptions: vi.fn(() => true),
+		recordActionOptions: vi.fn(),
+		getActionMetadataVersion: vi.fn(() => 0),
+		subscribeActionMetadata: vi.fn(() => () => {}),
 	} as const;
 
 	sessionState.metadata = {
@@ -480,6 +495,7 @@ export function createActionsPanelGame({
 	};
 
 	return {
+		sessionId,
 		session,
 		sessionState,
 		sessionView,

@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
 	splitSummary,
 	translateRequirementFailure,
 	type Summary,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
@@ -51,7 +52,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
@@ -59,38 +59,50 @@ export default function BuildOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const {
+		requirements: requirementFailures,
+		getCosts,
+		hasCosts,
+		ensureCosts,
+	} = useActionMetadata(action.id);
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
 	const requirements = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
+	useEffect(() => {
+		for (const building of buildings) {
+			void ensureCosts({ id: building.id });
+		}
+	}, [buildings, ensureCosts]);
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
-					id: building.id,
-				});
+				const params = { id: building.id };
+				const costsBag = getCosts(params);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
-				return { building, costs, total };
+				const known = hasCosts(params);
+				const sortValue = known ? total : Number.POSITIVE_INFINITY;
+				return { building, costs, total, sortValue };
 			})
-			.sort((first, second) => first.total - second.total);
+			.sort((first, second) => first.sortValue - second.sortValue);
 	}, [
 		buildings,
-		session,
 		action.id,
 		actionCostResource,
 		player.buildings.size,
+		getCosts,
+		hasCosts,
 	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,

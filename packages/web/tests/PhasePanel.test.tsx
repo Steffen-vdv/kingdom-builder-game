@@ -41,9 +41,18 @@ function createPhasePanelScenario() {
 		metadata: scaffold.metadata,
 	});
 	mockGame.session = {
+		enqueue: vi.fn(async (task) => Promise.resolve().then(task)),
 		getActionCosts: vi.fn(),
+		hasActionCosts: vi.fn(() => true),
+		recordActionCosts: vi.fn(),
 		getActionRequirements: vi.fn(),
+		hasActionRequirements: vi.fn(() => true),
+		recordActionRequirements: vi.fn(),
 		getActionOptions: vi.fn(),
+		hasActionOptions: vi.fn(() => true),
+		recordActionOptions: vi.fn(),
+		getActionMetadataVersion: vi.fn(() => 0),
+		subscribeActionMetadata: vi.fn(() => () => {}),
 	} as unknown as EngineSession;
 	return {
 		mockGame,

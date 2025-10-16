@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useSlotMetadata } from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
@@ -59,7 +60,6 @@ export default function DevelopOptions({
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
@@ -67,26 +67,45 @@ export default function DevelopOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { getCosts, hasCosts, ensureCosts } = useActionMetadata(action.id);
 	const slotMetadata = useSlotMetadata();
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
+	useEffect(() => {
+		for (const development of developments) {
+			void ensureCosts({
+				id: development.id,
+				landId: landIdForCost,
+			});
+		}
+	}, [developments, ensureCosts, landIdForCost]);
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const params = {
 					id: development.id,
 					landId: landIdForCost,
-				});
+				};
+				const costsBag = getCosts(params);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
-				return { development, costs, total };
+				const known = hasCosts(params);
+				const sortValue = known ? total : Number.POSITIVE_INFINITY;
+				return { development, costs, total, sortValue };
 			})
-			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+			.sort((first, second) => first.sortValue - second.sortValue);
+	}, [
+		developments,
+		action.id,
+		landIdForCost,
+		actionCostResource,
+		getCosts,
+		hasCosts,
+	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

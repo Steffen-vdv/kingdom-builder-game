@@ -156,9 +156,18 @@ function createMockGame() {
 	const sessionRegistries = registries;
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const session = {
+		enqueue: vi.fn(async (task) => Promise.resolve().then(task)),
 		getActionCosts: vi.fn(),
+		hasActionCosts: vi.fn(() => true),
+		recordActionCosts: vi.fn(),
 		getActionRequirements: vi.fn(),
+		hasActionRequirements: vi.fn(() => true),
+		recordActionRequirements: vi.fn(),
 		getActionOptions: vi.fn(),
+		hasActionOptions: vi.fn(() => true),
+		recordActionOptions: vi.fn(),
+		getActionMetadataVersion: vi.fn(() => 0),
+		subscribeActionMetadata: vi.fn(() => () => {}),
 	} as const;
 	return {
 		...createActionsPanelState({

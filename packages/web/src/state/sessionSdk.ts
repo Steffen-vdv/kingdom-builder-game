@@ -5,6 +5,11 @@ import type {
 	ActionExecuteSuccessResponse,
 } from '@kingdom-builder/protocol/actions';
 import type {
+	SessionActionCostMap,
+	SessionActionCostRequest,
+	SessionActionRequirementList,
+	SessionActionRequirementRequest,
+	SessionActionOptionsRequest,
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
 	SessionCreateRequest,
@@ -15,6 +20,7 @@ import type {
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import {
 	applySessionState,
 	deleteSessionRecord,
@@ -152,6 +158,48 @@ export async function setSessionDevMode(
 		adapter,
 		record: toRemoteRecord(stateRecord),
 	};
+}
+
+export async function getActionCosts(
+	request: SessionActionCostRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionActionCostMap> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.getActionCosts(request, requestOptions),
+	);
+	const costs = response.costs ?? {};
+	adapter.recordActionCosts(request, costs);
+	return clone(costs);
+}
+
+export async function getActionRequirements(
+	request: SessionActionRequirementRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionActionRequirementList> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.getActionRequirements(request, requestOptions),
+	);
+	const requirements = response.requirements ?? [];
+	adapter.recordActionRequirements(request, requirements);
+	return clone(requirements);
+}
+
+export async function getActionOptions(
+	request: SessionActionOptionsRequest,
+	requestOptions: GameApiRequestOptions = {},
+): Promise<ActionEffectGroup[]> {
+	const api = ensureGameApi();
+	const adapter = getAdapter(request.sessionId);
+	const response = await enqueueSessionTask(request.sessionId, async () =>
+		api.getActionOptions(request, requestOptions),
+	);
+	const groups = response.groups ?? [];
+	adapter.recordActionOptions(request, groups);
+	return clone(groups);
 }
 
 function normalizeActionError(error: unknown): ActionExecuteErrorResponse {

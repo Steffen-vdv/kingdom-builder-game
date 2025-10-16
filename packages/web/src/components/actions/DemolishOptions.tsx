@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
 	describeContent,
 	splitSummary,
 	summarizeContent,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import ActionCard from './ActionCard';
 import {
@@ -45,7 +46,6 @@ export default function DemolishOptions({
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
@@ -53,7 +53,13 @@ export default function DemolishOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { getCosts, hasCosts, ensureCosts } = useActionMetadata(action.id);
 
+	useEffect(() => {
+		for (const buildingId of player.buildings) {
+			void ensureCosts({ id: buildingId });
+		}
+	}, [player.buildings.size, ensureCosts, player.buildings]);
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)
 			.map((buildingId) => {
@@ -61,16 +67,17 @@ export default function DemolishOptions({
 				if (!building) {
 					return null;
 				}
-				const costsBag = session.getActionCosts(action.id, {
-					id: buildingId,
-				});
+				const params = { id: buildingId };
+				const costsBag = getCosts(params);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
 				const focus = normalizeActionFocus(building.focus);
-				return { id: buildingId, building, costs, total, focus };
+				const known = hasCosts(params);
+				const sortValue = known ? total : Number.POSITIVE_INFINITY;
+				return { id: buildingId, building, costs, total, focus, sortValue };
 			})
 			.filter(
 				(
@@ -81,20 +88,22 @@ export default function DemolishOptions({
 					costs: Record<string, number>;
 					total: number;
 					focus: ActionFocus | undefined;
+					sortValue: number;
 				} => entry !== null,
 			)
 			.sort((first, second) => {
-				if (first.total !== second.total) {
-					return first.total - second.total;
+				if (first.sortValue !== second.sortValue) {
+					return first.sortValue - second.sortValue;
 				}
 				return first.building.name.localeCompare(second.building.name);
 			});
 	}, [
-		session,
 		sessionView.buildings,
 		action.id,
 		actionCostResource,
 		player.buildings.size,
+		getCosts,
+		hasCosts,
 	]);
 
 	if (entries.length === 0) {

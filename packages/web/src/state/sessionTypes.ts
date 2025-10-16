@@ -10,7 +10,12 @@ import type {
 	SimulateUpcomingPhasesOptions,
 	SimulateUpcomingPhasesResult,
 } from '@kingdom-builder/protocol/session';
-import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+import type {
+	ActionEffectGroup,
+	SessionActionCostRequest,
+	SessionActionOptionsRequest,
+	SessionActionRequirementRequest,
+} from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { SessionStateRecord } from './sessionStateStore';
 
@@ -30,11 +35,31 @@ export interface LegacySession {
 		actionId: string,
 		params?: ActionParametersPayload,
 	): SessionActionCostMap;
+	hasActionCosts(actionId: string, params?: ActionParametersPayload): boolean;
+	recordActionCosts(
+		request: SessionActionCostRequest,
+		response: SessionActionCostMap,
+	): void;
 	getActionRequirements(
 		actionId: string,
 		params?: ActionParametersPayload,
 	): SessionActionRequirementList;
+	hasActionRequirements(
+		actionId: string,
+		params?: ActionParametersPayload,
+	): boolean;
+	recordActionRequirements(
+		request: SessionActionRequirementRequest,
+		response: SessionActionRequirementList,
+	): void;
 	getActionOptions(actionId: string): ActionEffectGroup[];
+	hasActionOptions(actionId: string): boolean;
+	recordActionOptions(
+		request: SessionActionOptionsRequest,
+		response: ActionEffectGroup[],
+	): void;
+	subscribeActionMetadata(actionId: string, listener: () => void): () => void;
+	getActionMetadataVersion(actionId: string): number;
 	getActionDefinition(
 		actionId: string,
 	): SessionActionDefinitionSummary | undefined;

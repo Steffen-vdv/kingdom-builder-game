@@ -6,6 +6,8 @@ import type {
 } from '@kingdom-builder/protocol';
 import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import type { LegacyGameEngineContextValue } from '../../state/GameContext.types';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import GenericActionCard from './GenericActionCard';
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';
 import type { ResourceDescriptorSelector } from './utils';
@@ -16,6 +18,101 @@ export interface PendingActionState {
 	step: number;
 	params: Record<string, unknown>;
 	choices: ActionEffectGroupChoiceMap;
+}
+
+interface GenericActionEntryProps {
+	action: Action;
+	summaries: Map<string, Summary>;
+	player: DisplayPlayer;
+	canInteract: boolean;
+	pending: PendingActionState | null;
+	setPending: React.Dispatch<React.SetStateAction<PendingActionState | null>>;
+	cancelPending: () => void;
+	beginSelection: (action: Action, groups: ActionEffectGroup[]) => void;
+	handleOptionSelect: (
+		group: ActionEffectGroup,
+		option: ActionEffectGroupOption,
+		selectionParams?: Record<string, unknown>,
+	) => void;
+	session: LegacyGameEngineContextValue['session'];
+	translationContext: LegacyGameEngineContextValue['translationContext'];
+	actionCostResource: string;
+	handlePerform: (
+		action: Action,
+		params?: Record<string, unknown>,
+	) => Promise<void>;
+	handleHoverCard: LegacyGameEngineContextValue['handleHoverCard'];
+	clearHoverCard: LegacyGameEngineContextValue['clearHoverCard'];
+	formatRequirement: (requirement: string) => string;
+	selectResourceDescriptor: ResourceDescriptorSelector;
+	onTotalChange: (actionId: string, total: number) => void;
+}
+
+function GenericActionEntry({
+	action,
+	summaries,
+	player,
+	canInteract,
+	pending,
+	setPending,
+	cancelPending,
+	beginSelection,
+	handleOptionSelect,
+	session,
+	translationContext,
+	actionCostResource,
+	handlePerform,
+	handleHoverCard,
+	clearHoverCard,
+	formatRequirement,
+	selectResourceDescriptor,
+	onTotalChange,
+}: GenericActionEntryProps) {
+	const { costs, options, hasCosts } = useActionMetadata(action.id);
+	const normalizedCosts = useMemo(() => {
+		const entries = Object.entries(costs);
+		const record: Record<string, number> = {};
+		for (const [resourceKey, amount] of entries) {
+			record[resourceKey] = amount ?? 0;
+		}
+		return record;
+	}, [costs]);
+	const total = useMemo(() => {
+		return Object.entries(normalizedCosts).reduce((sum, [key, value]) => {
+			if (key === actionCostResource) {
+				return sum;
+			}
+			return sum + (value ?? 0);
+		}, 0);
+	}, [normalizedCosts, actionCostResource]);
+	const sortValue = hasCosts() ? total : Number.POSITIVE_INFINITY;
+	useEffect(() => {
+		onTotalChange(action.id, sortValue);
+	}, [action.id, sortValue, onTotalChange]);
+	return (
+		<GenericActionCard
+			key={action.id}
+			action={action}
+			costs={normalizedCosts}
+			groups={options}
+			summaries={summaries}
+			player={player}
+			canInteract={canInteract}
+			pending={pending}
+			setPending={setPending}
+			cancelPending={cancelPending}
+			beginSelection={beginSelection}
+			handleOptionSelect={handleOptionSelect}
+			session={session}
+			translationContext={translationContext}
+			actionCostResource={actionCostResource}
+			handlePerform={handlePerform}
+			handleHoverCard={handleHoverCard}
+			clearHoverCard={clearHoverCard}
+			formatRequirement={formatRequirement}
+			selectResourceDescriptor={selectResourceDescriptor}
+		/>
+	);
 }
 
 function GenericActions({
@@ -47,6 +144,19 @@ function GenericActions({
 		[handlePerform],
 	);
 	const [pending, setPending] = useState<PendingActionState | null>(null);
+	const [totals, setTotals] = useState<Map<string, number>>(new Map());
+
+	const updateTotal = useCallback((actionId: string, total: number) => {
+		setTotals((previous) => {
+			const current = previous.get(actionId);
+			if (current === total) {
+				return previous;
+			}
+			const next = new Map(previous);
+			next.set(actionId, total);
+			return next;
+		});
+	}, []);
 
 	useEffect(() => {
 		if (!canInteract) {
@@ -164,37 +274,29 @@ function GenericActions({
 		[handlePerform],
 	);
 
-	const entries = useMemo(() => {
-		return actions
-			.map((action) => {
-				const costBag = session.getActionCosts(action.id);
-				const costs: Record<string, number> = {};
-				for (const [resourceKey, cost] of Object.entries(costBag)) {
-					costs[resourceKey] = cost ?? 0;
+	const sortedActions = useMemo(() => {
+		return [...actions].sort((first, second) => {
+			const firstTotal = totals.get(first.id);
+			const secondTotal = totals.get(second.id);
+			if (firstTotal !== undefined && secondTotal !== undefined) {
+				if (firstTotal !== secondTotal) {
+					return firstTotal - secondTotal;
 				}
-				const total = Object.entries(costs).reduce(
-					(sum, [resourceKey, cost]) => {
-						if (resourceKey === actionCostResource) {
-							return sum;
-						}
-						return sum + (cost ?? 0);
-					},
-					0,
-				);
-				const groups = session.getActionOptions(action.id);
-				return { action, costs, total, groups };
-			})
-			.sort((first, second) => first.total - second.total);
-	}, [actions, session, actionCostResource]);
+			} else if (firstTotal !== undefined) {
+				return -1;
+			} else if (secondTotal !== undefined) {
+				return 1;
+			}
+			return first.name.localeCompare(second.name);
+		});
+	}, [actions, totals]);
 
 	return (
 		<>
-			{entries.map(({ action, costs, groups }) => (
-				<GenericActionCard
+			{sortedActions.map((action) => (
+				<GenericActionEntry
 					key={action.id}
 					action={action}
-					costs={costs}
-					groups={groups}
 					summaries={summaries}
 					player={player}
 					canInteract={canInteract}
@@ -211,6 +313,7 @@ function GenericActions({
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}
 					selectResourceDescriptor={selectResourceDescriptor}
+					onTotalChange={updateTotal}
 				/>
 			))}
 		</>
