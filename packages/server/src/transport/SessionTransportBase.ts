@@ -104,6 +104,7 @@ export class SessionTransportBase {
 
 	public getSessionState(request: TransportRequest): SessionStateResponse {
 		const sessionId = this.parseSessionIdentifier(request.body);
+		this.requireAuthorization(request, 'session:advance');
 		this.requireSession(sessionId);
 		const snapshot = this.sessionManager.getSnapshot(sessionId);
 		return sessionStateResponseSchema.parse(
