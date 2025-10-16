@@ -25,14 +25,19 @@ import type {
 import { createOverviewTokenSources } from './components/overview/overviewTokenUtils';
 import {
 	useOptionalRegistryMetadata,
+	useOverviewContent,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
 import {
-	OVERVIEW_CONTENT,
 	type OverviewTokenCandidates,
+	type OverviewTokenCategoryName,
 } from '@kingdom-builder/contents';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
+type TokenCategoryEntry = [
+	OverviewTokenCategoryName,
+	Record<string, string[]> | undefined,
+];
 
 const EMPTY_SECTIONS_RESULT = Object.freeze({
 	sections: Object.freeze([]) as ReadonlyArray<OverviewSectionDef>,
@@ -134,6 +139,28 @@ function resolveOverviewTokenSources(
 	});
 }
 
+function cloneTokenCandidates(
+	tokenCandidates: OverviewTokenCandidates | undefined,
+): OverviewTokenCandidates {
+	if (!tokenCandidates) {
+		return {};
+	}
+	const clone: OverviewTokenCandidates = {};
+	for (const [category, entries] of Object.entries(
+		tokenCandidates,
+	) as TokenCategoryEntry[]) {
+		if (!entries) {
+			continue;
+		}
+		const categoryClone: Record<string, string[]> = {};
+		for (const [tokenKey, candidates] of Object.entries(entries)) {
+			categoryClone[tokenKey] = [...candidates];
+		}
+		clone[category] = categoryClone;
+	}
+	return clone;
+}
+
 export type { OverviewTokenConfig } from './components/overview/overviewTokens';
 
 export interface OverviewProps {
@@ -147,10 +174,13 @@ export default function Overview({
 	tokenConfig,
 	content,
 }: OverviewProps) {
+	const overviewContent = useOverviewContent();
 	const metadata = useOptionalRegistryMetadata();
-	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
 	const sections = content ?? overviewContent.sections;
-	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
+	const defaultTokens = React.useMemo(
+		() => cloneTokenCandidates(overviewContent.tokens),
+		[overviewContent.tokens],
+	);
 	const heroContent = overviewContent.hero;
 	const tokenSources = React.useMemo(
 		() => resolveOverviewTokenSources(metadata),
