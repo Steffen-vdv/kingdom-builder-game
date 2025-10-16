@@ -19,6 +19,11 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
    so the `coderabbit` binary is available on your `PATH`. The CLI consumes the
    repository's `.coderabbit.yml` and must be present for `npm run verify` and
    the Husky hooks to pass.
+   - Follow the platform notes in
+     [`docs/tooling/coderabbit-cli.md`](docs/tooling/coderabbit-cli.md) during
+     your initial setup.
+   - Confirm the install with `coderabbit --version`.
+   - Run `coderabbit auth login` so the reviewer can authenticate locally.
 3. Install dependencies: `npm install` (uses npm workspaces to link local packages).
 4. Start the combined dev environment (Fastify server + Vite web client):
    `npm run dev`.
@@ -38,7 +43,9 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
   in your work.
 - `npm run verify` now launches CodeRabbit before the existing lint, test, and
   coverage tasks so automated checks share the same review context as manual
-  CLI runs.
+  CLI runs. When the CLI is missing, the script records instructions in
+  `artifacts/*coderabbit-review.log` so you can correct the environment and
+  rerun the suite.
 
 ### Pre-PR checklist
 
