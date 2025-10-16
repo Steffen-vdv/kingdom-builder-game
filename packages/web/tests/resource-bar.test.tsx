@@ -16,7 +16,7 @@ import { selectSessionView } from '../src/state/sessionSelectors';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import {
-	formatDescriptorSummary,
+	formatIconLabel,
 	toDescriptorDisplay,
 } from '../src/components/player/registryDisplays';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
@@ -241,7 +241,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		expect(handleHoverCard).toHaveBeenCalled();
 		const hoverCard = handleHoverCard.mock.calls.at(-1)?.[0];
 		expect(hoverCard).toBeTruthy();
-		expect(hoverCard?.title).toBe(formatDescriptorSummary(resourceDescriptor));
+		expect(hoverCard?.title).toBe(formatIconLabel(resourceDescriptor));
 		expect(hoverCard?.description).toBeUndefined();
 		expect(hoverCard?.effectsTitle).toBe(
 			`Happiness thresholds (current: ${resourceValue})`,

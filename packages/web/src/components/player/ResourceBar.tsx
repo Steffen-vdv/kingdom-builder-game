@@ -16,7 +16,7 @@ import {
 	useResourceMetadata,
 } from '../../contexts/RegistryMetadataContext';
 import {
-	formatDescriptorSummary,
+	formatIconLabel,
 	toDescriptorDisplay,
 	type DescriptorDisplay,
 } from './registryDisplays';
@@ -163,7 +163,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 				});
 			}
 			handleHoverCard({
-				title: formatDescriptorSummary(descriptor),
+				title: formatIconLabel(descriptor),
 				effects: tierEntries,
 				effectsTitle: `Happiness thresholds (current: ${value})`,
 				requirements: [],
@@ -201,7 +201,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 				return;
 			}
 			handleHoverCard({
-				title: formatDescriptorSummary(descriptor),
+				title: formatIconLabel(descriptor),
 				effects: [],
 				requirements: [],
 				...(descriptor.description
