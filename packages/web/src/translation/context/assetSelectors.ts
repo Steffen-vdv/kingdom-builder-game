@@ -3,7 +3,35 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import { DEFAULT_TRIGGER_METADATA } from '../../contexts/defaultRegistryMetadata';
+
+const EMPTY_TRIGGER_ASSET: TranslationTriggerAsset = Object.freeze({});
+
+const FALLBACK_TRIGGER_ASSETS: Readonly<
+	Record<string, TranslationTriggerAsset>
+> = Object.freeze(
+	Object.fromEntries(
+		Object.entries(DEFAULT_TRIGGER_METADATA ?? {}).map(
+			([identifier, descriptor]) => {
+				const entry: TranslationTriggerAsset = {};
+				if (descriptor?.icon !== undefined) {
+					entry.icon = descriptor.icon;
+				}
+				if (descriptor?.future !== undefined) {
+					entry.future = descriptor.future;
+				}
+				if (descriptor?.past !== undefined) {
+					entry.past = descriptor.past;
+				}
+				const label = descriptor?.label ?? descriptor?.past;
+				if (label !== undefined) {
+					entry.label = label;
+				}
+				return [identifier, Object.freeze(entry)];
+			},
+		),
+	),
+);
 
 interface IconLabelDisplay {
 	icon?: string;
@@ -74,19 +102,14 @@ export function selectTriggerDisplay(
 	triggerId: string,
 ): TranslationTriggerAsset {
 	const entry = assets?.triggers?.[triggerId];
-	if (entry) {
+	if (entry !== undefined) {
 		return entry;
 	}
-	const fallback = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
-	if (fallback) {
-		return Object.freeze({
-			icon: fallback.icon,
-			future: fallback.future,
-			past: fallback.past,
-			label: fallback.past,
-		});
+	const fallback = FALLBACK_TRIGGER_ASSETS[triggerId];
+	if (fallback !== undefined) {
+		return fallback;
 	}
-	return {};
+	return EMPTY_TRIGGER_ASSET;
 }
 
 export function selectTierSummary(
