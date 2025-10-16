@@ -3,7 +3,8 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import { DEFAULT_TRIGGER_METADATA } from '../../contexts/defaultRegistryMetadata';
+import { mergeTriggerAsset } from './assets';
 
 interface IconLabelDisplay {
 	icon?: string;
@@ -77,16 +78,29 @@ export function selectTriggerDisplay(
 	if (entry) {
 		return entry;
 	}
-	const fallback = TRIGGER_INFO[triggerId as keyof typeof TRIGGER_INFO];
+	const fallback = selectDefaultTrigger(triggerId);
 	if (fallback) {
-		return Object.freeze({
-			icon: fallback.icon,
-			future: fallback.future,
-			past: fallback.past,
-			label: fallback.past,
-		});
+		return fallback;
 	}
 	return {};
+}
+
+const DEFAULT_TRIGGER_CACHE = new Map<string, TranslationTriggerAsset>();
+
+function selectDefaultTrigger(
+	triggerId: string,
+): TranslationTriggerAsset | undefined {
+	const cached = DEFAULT_TRIGGER_CACHE.get(triggerId);
+	if (cached) {
+		return cached;
+	}
+	const descriptor = DEFAULT_TRIGGER_METADATA?.[triggerId];
+	if (!descriptor) {
+		return undefined;
+	}
+	const asset = mergeTriggerAsset(undefined, descriptor);
+	DEFAULT_TRIGGER_CACHE.set(triggerId, asset);
+	return asset;
 }
 
 export function selectTierSummary(
