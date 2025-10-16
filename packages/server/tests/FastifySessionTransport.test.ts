@@ -1,5 +1,6 @@
 import fastify from 'fastify';
 import { describe, it, expect, vi } from 'vitest';
+import type { SessionSnapshot } from '@kingdom-builder/protocol';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,
@@ -9,6 +10,10 @@ import {
 	createSyntheticSessionManager,
 	findAiPlayerId,
 } from './helpers/createSyntheticSessionManager.js';
+import {
+	expectSnapshotMetadata,
+	expectStaticMetadata,
+} from './helpers/expectSnapshotMetadata.js';
 
 describe('FastifySessionTransport', () => {
 	const defaultTokens = {
@@ -23,11 +28,7 @@ describe('FastifySessionTransport', () => {
 	} satisfies Record<string, string>;
 
 	type SnapshotResponse = {
-		snapshot: {
-			game: { players: Array<{ id: string }>; currentPhase?: string };
-			recentResourceGains?: unknown[];
-			metadata: { passiveEvaluationModifiers?: unknown };
-		};
+		snapshot: SessionSnapshot;
 	};
 
 	async function createServer(tokens = defaultTokens) {
@@ -43,7 +44,7 @@ describe('FastifySessionTransport', () => {
 	}
 
 	it('creates sessions over HTTP', async () => {
-		const { app } = await createServer();
+		const { app, manager } = await createServer();
 		const response = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -51,15 +52,15 @@ describe('FastifySessionTransport', () => {
 			payload: { devMode: true },
 		});
 		expect(response.statusCode).toBe(201);
-		const body = response.json() as {
-			snapshot: { game: { devMode: boolean } };
-		};
+		const body = response.json() as SnapshotResponse;
+		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.devMode).toBe(true);
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
 	it('retrieves snapshots for sessions', async () => {
-		const { app } = await createServer();
+		const { app, manager } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -73,15 +74,15 @@ describe('FastifySessionTransport', () => {
 			headers: authorizedHeaders,
 		});
 		expect(snapshotResponse.statusCode).toBe(200);
-		const snapshot = snapshotResponse.json() as {
-			snapshot: { game: { players: unknown[] } };
-		};
+		const snapshot = snapshotResponse.json() as SnapshotResponse;
+		expectSnapshotMetadata(snapshot.snapshot.metadata);
 		expect(snapshot.snapshot.game.players).toHaveLength(2);
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
 	it('advances sessions through the API', async () => {
-		const { app } = await createServer();
+		const { app, manager } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -96,26 +97,28 @@ describe('FastifySessionTransport', () => {
 			payload: {},
 		});
 		expect(advanceResponse.statusCode).toBe(200);
-		const advanceBody = advanceResponse.json() as {
-			snapshot: { game: { currentPhase: string } };
-		};
+		const advanceBody = advanceResponse.json() as SnapshotResponse;
+		expectSnapshotMetadata(advanceBody.snapshot.metadata);
 		expect(advanceBody.snapshot.game.currentPhase).toBe('end');
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
 	it('toggles developer mode through the API', async () => {
-		const { app } = await createServer();
+		const { app, manager } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
 			headers: authorizedHeaders,
 			payload: {},
 		});
-		const { sessionId, snapshot: createdSnapshot } = createResponse.json() as {
-			sessionId: string;
-			snapshot: { game: { devMode: boolean } };
-		};
+		const { sessionId, snapshot: createdSnapshot } =
+			createResponse.json() as SnapshotResponse & {
+				sessionId: string;
+			};
+		expectSnapshotMetadata(createdSnapshot.metadata);
 		expect(createdSnapshot.game.devMode).toBe(false);
+		expectStaticMetadata(manager.getMetadata());
 		const devModeResponse = await app.inject({
 			method: 'POST',
 			url: `/sessions/${sessionId}/dev-mode`,
@@ -123,15 +126,15 @@ describe('FastifySessionTransport', () => {
 			payload: { enabled: true },
 		});
 		expect(devModeResponse.statusCode).toBe(200);
-		const devModeBody = devModeResponse.json() as {
-			snapshot: { game: { devMode: boolean } };
-		};
+		const devModeBody = devModeResponse.json() as SnapshotResponse;
+		expectSnapshotMetadata(devModeBody.snapshot.metadata);
 		expect(devModeBody.snapshot.game.devMode).toBe(true);
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
 	it('updates player names through the API', async () => {
-		const { app } = await createServer();
+		const { app, manager } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -146,15 +149,15 @@ describe('FastifySessionTransport', () => {
 			payload: { playerId: 'A', playerName: ' Captain ' },
 		});
 		expect(updateResponse.statusCode).toBe(200);
-		const body = updateResponse.json() as {
-			snapshot: { game: { players: Array<{ name: string }> } };
-		};
+		const body = updateResponse.json() as SnapshotResponse;
+		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.players[0]?.name).toBe('Captain');
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
 	it('executes actions and returns success payloads', async () => {
-		const { app, actionId, gainKey } = await createServer();
+		const { app, actionId, gainKey, manager } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -169,15 +172,14 @@ describe('FastifySessionTransport', () => {
 			payload: { actionId },
 		});
 		expect(actionResponse.statusCode).toBe(200);
-		const actionBody = actionResponse.json() as {
+		const actionBody = actionResponse.json() as SnapshotResponse & {
 			status: string;
-			snapshot: {
-				game: { players: Array<{ resources: Record<string, number> }> };
-			};
 		};
 		expect(actionBody.status).toBe('success');
+		expectSnapshotMetadata(actionBody.snapshot.metadata);
 		const [player] = actionBody.snapshot.game.players;
 		expect(player?.resources[gainKey]).toBe(1);
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
@@ -229,7 +231,7 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('rejects invalid action payloads with protocol errors', async () => {
-		const { app } = await createServer();
+		const { app, manager } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -250,6 +252,7 @@ describe('FastifySessionTransport', () => {
 		};
 		expect(invalidBody.status).toBe('error');
 		expect(invalidBody.error).toBe('Invalid action request.');
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
@@ -303,17 +306,17 @@ describe('FastifySessionTransport', () => {
 			payload: { playerId },
 		});
 		expect(response.statusCode).toBe(200);
-		const body = response.json() as {
+		const body = response.json() as SnapshotResponse & {
 			sessionId: string;
 			ranTurn: boolean;
-			snapshot: SnapshotResponse['snapshot'];
 			registries: { actions: Record<string, unknown> };
 		};
 		expect(body.sessionId).toBe(sessionId);
 		expect(body.ranTurn).toBe(true);
+		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.currentPhase).toBeDefined();
 		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);
-		expect(body.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
+		expectStaticMetadata(manager.getMetadata());
 		expect(body.registries.actions).toBeDefined();
 		expect(runSpy).toHaveBeenCalledWith(playerId);
 		await app.close();
@@ -354,6 +357,7 @@ describe('FastifySessionTransport', () => {
 			code: string;
 		};
 		expect(body.code).toBe('CONFLICT');
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
@@ -386,6 +390,7 @@ describe('FastifySessionTransport', () => {
 		expect(response.statusCode).toBe(401);
 		const body = response.json() as { code: string };
 		expect(body.code).toBe('UNAUTHORIZED');
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
@@ -414,6 +419,7 @@ describe('FastifySessionTransport', () => {
 		expect(invalidResponse.statusCode).toBe(400);
 		const body = invalidResponse.json() as { code: string };
 		expect(body.code).toBe('INVALID_REQUEST');
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
@@ -462,6 +468,7 @@ describe('FastifySessionTransport', () => {
 			result: unknown;
 		};
 		expect(body.result).toEqual(expected);
+		expectStaticMetadata(manager.getMetadata());
 		if (simulateSpy) {
 			expect(simulateSpy).toHaveBeenCalledWith(playerId, {
 				maxIterations: 2,
@@ -471,7 +478,7 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('returns 401 when authorization headers are missing', async () => {
-		const { app } = await createServer();
+		const { app, manager } = await createServer();
 		const response = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -480,6 +487,7 @@ describe('FastifySessionTransport', () => {
 		expect(response.statusCode).toBe(401);
 		const body = response.json() as { code: string };
 		expect(body.code).toBe('UNAUTHORIZED');
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 
@@ -508,7 +516,7 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('prefers the last authorization header value when multiple values are provided', async () => {
-		const { app } = await createServer();
+		const { app, manager } = await createServer();
 		const response = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -518,6 +526,7 @@ describe('FastifySessionTransport', () => {
 			payload: {},
 		});
 		expect(response.statusCode).toBe(403);
+		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
 });

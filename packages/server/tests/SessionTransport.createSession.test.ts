@@ -6,6 +6,10 @@ import {
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
+import {
+	expectSnapshotMetadata,
+	expectStaticMetadata,
+} from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -37,7 +41,9 @@ describe('SessionTransport createSession', () => {
 			headers: authorizedHeaders,
 		});
 		expect(response.sessionId).toBe('transport-session');
+		expectSnapshotMetadata(response.snapshot.metadata);
 		expect(response.snapshot.game.devMode).toBe(true);
+		expectStaticMetadata(manager.getMetadata());
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
 		expect(playerB?.name).toBe('Beta');
@@ -64,9 +70,11 @@ describe('SessionTransport createSession', () => {
 			headers: authorizedHeaders,
 		});
 		manager.createSession.mockRestore();
+		expectStaticMetadata(manager.getMetadata());
 		expect(updateSpy).toBeDefined();
 		expect(updateSpy?.mock.calls).toHaveLength(1);
 		expect(updateSpy?.mock.calls[0]).toEqual(['B', 'Bravo']);
+		expectSnapshotMetadata(response.snapshot.metadata);
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).not.toBe('   ');
 		expect(playerB?.name).toBe('Bravo');
@@ -83,6 +91,8 @@ describe('SessionTransport createSession', () => {
 			body: { playerNames: { A: '  Charlie  ' } },
 			headers: authorizedHeaders,
 		});
+		expectSnapshotMetadata(response.snapshot.metadata);
+		expectStaticMetadata(manager.getMetadata());
 		const [playerA] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Charlie');
 	});
@@ -99,6 +109,8 @@ describe('SessionTransport createSession', () => {
 			body: { playerNames: { A: maxLengthName } },
 			headers: authorizedHeaders,
 		});
+		expectSnapshotMetadata(response.snapshot.metadata);
+		expectStaticMetadata(manager.getMetadata());
 		const [playerA] = response.snapshot.game.players;
 		expect(playerA?.name).toBe(maxLengthName);
 	});
@@ -167,6 +179,7 @@ describe('SessionTransport createSession', () => {
 			headers: authorizedHeaders,
 		});
 		const { registries } = response;
+		expectSnapshotMetadata(response.snapshot.metadata);
 		expect(new Set(Object.keys(registries.actions))).toEqual(
 			new Set(factory.actions.keys()),
 		);

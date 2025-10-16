@@ -1,6 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
+import type {
+	SessionMetadataDescriptor,
+	SessionTriggerMetadata,
+} from '@kingdom-builder/protocol';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 import * as metadataModule from '../src/session/buildSessionMetadata.js';
+import {
+	expectSnapshotMetadata,
+	expectStaticMetadata,
+} from './helpers/expectSnapshotMetadata.js';
 
 describe('SessionManager', () => {
 	it('creates and retrieves sessions using synthetic content', () => {
@@ -12,6 +20,8 @@ describe('SessionManager', () => {
 		expect(manager.getSession(sessionId)).toBe(session);
 		expect(manager.getSessionCount()).toBe(1);
 		const snapshot = manager.getSnapshot(sessionId);
+		expectSnapshotMetadata(snapshot.metadata);
+		expectStaticMetadata(manager.getMetadata());
 		const [activePlayer] = snapshot.game.players;
 		expect(activePlayer?.resources[costKey]).toBeDefined();
 		expect(snapshot.rules.tieredResourceKey).toBe(gainKey);
@@ -70,17 +80,58 @@ describe('SessionManager', () => {
 		const { manager, costKey } = createSyntheticSessionManager();
 		expect(buildSpy).toHaveBeenCalledTimes(1);
 		const baseline = manager.getMetadata();
+		expectStaticMetadata(baseline);
 		expect(buildSpy).toHaveBeenCalledTimes(1);
 		expect(baseline.resources?.[costKey]).toBeDefined();
+		const triggerKeys = Object.keys(baseline.triggers ?? {});
+		expect(triggerKeys.length).toBeGreaterThan(0);
+		const statKeys = Object.keys(baseline.stats ?? {});
+		expect(statKeys.length).toBeGreaterThan(0);
+		const heroTokens = baseline.overview?.hero?.tokens ?? {};
+		const overviewTokenKeys = Object.keys(heroTokens);
+		expect(overviewTokenKeys.length).toBeGreaterThan(0);
 		const mutated = manager.getMetadata();
 		expect(mutated).not.toBe(baseline);
 		expect(mutated).toEqual(baseline);
 		if (mutated.resources) {
 			mutated.resources[costKey] = { label: 'changed' };
 		}
+		const [triggerKey] = triggerKeys;
+		if (mutated.triggers && triggerKey) {
+			const original = mutated.triggers[triggerKey];
+			const descriptor: SessionTriggerMetadata = {
+				...(original ?? {}),
+				label: 'changed',
+			};
+			mutated.triggers[triggerKey] = descriptor;
+		}
+		const [statKey] = statKeys;
+		if (mutated.stats && statKey) {
+			const original = mutated.stats[statKey];
+			const descriptor: SessionMetadataDescriptor = {
+				...(original ?? {}),
+				label: 'changed',
+			};
+			mutated.stats[statKey] = descriptor;
+		}
+		const [overviewTokenKey] = overviewTokenKeys;
+		if (mutated.overview?.hero?.tokens && overviewTokenKey) {
+			mutated.overview.hero.tokens[overviewTokenKey] = 'changed';
+		}
 		const next = manager.getMetadata();
 		expect(next).toEqual(baseline);
 		expect(next.resources?.[costKey]?.label).not.toBe('changed');
+		if (triggerKey) {
+			expect(next.triggers?.[triggerKey]?.label).not.toBe('changed');
+		}
+		if (statKey) {
+			expect(next.stats?.[statKey]?.label).not.toBe('changed');
+		}
+		if (overviewTokenKey) {
+			expect(next.overview?.hero?.tokens?.[overviewTokenKey]).not.toBe(
+				'changed',
+			);
+		}
 		buildSpy.mockRestore();
 	});
 
@@ -88,6 +139,7 @@ describe('SessionManager', () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const snapshotMetadata = manager.getMetadata();
 		const session = manager.createSession('metadata-stability');
+		expectSnapshotMetadata(session.getSnapshot().metadata);
 		await session.enqueue(() => session.performAction(actionId));
 		session.advancePhase();
 		expect(manager.getMetadata()).toEqual(snapshotMetadata);

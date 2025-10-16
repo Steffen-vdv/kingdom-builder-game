@@ -1,5 +1,6 @@
 import {
 	LAND_INFO,
+	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
 	SLOT_INFO,
 	STATS,
@@ -32,6 +33,7 @@ export type SessionStaticMetadataPayload = Pick<
 	| 'phases'
 	| 'triggers'
 	| 'assets'
+	| 'overview'
 >;
 
 export interface BuildSessionMetadataOptions {
@@ -78,6 +80,8 @@ export function buildSessionMetadata(
 	if (hasEntries(assetMetadata)) {
 		metadata.assets = assetMetadata;
 	}
+	const overviewMetadata = structuredClone(OVERVIEW_CONTENT);
+	metadata.overview = overviewMetadata;
 	return metadata;
 }
 

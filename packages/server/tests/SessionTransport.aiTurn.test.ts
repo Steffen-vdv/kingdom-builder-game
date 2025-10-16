@@ -6,6 +6,10 @@ import {
 	findAiPlayerId,
 } from './helpers/createSyntheticSessionManager.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
+import {
+	expectSnapshotMetadata,
+	expectStaticMetadata,
+} from './helpers/expectSnapshotMetadata.js';
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -51,10 +55,11 @@ describe('SessionTransport runAiTurn', () => {
 		});
 		expect(result.sessionId).toBe(sessionId);
 		expect(result.ranTurn).toBe(true);
+		expectSnapshotMetadata(result.snapshot.metadata);
 		expect(result.snapshot.game.currentPhase).toBeDefined();
 		expect(Array.isArray(result.snapshot.recentResourceGains)).toBe(true);
-		expect(result.snapshot.metadata.passiveEvaluationModifiers).toBeDefined();
 		expect(Object.keys(result.registries.actions)).not.toHaveLength(0);
+		expectStaticMetadata(manager.getMetadata());
 		expect(runSpy).toHaveBeenCalledWith(playerId);
 	});
 
