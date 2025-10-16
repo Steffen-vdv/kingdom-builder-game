@@ -1,4 +1,3 @@
-import { type PopulationRoleId } from '@kingdom-builder/contents';
 import type { TranslationContext, TranslationAssets } from '../context';
 import { humanizeIdentifier } from './stringUtils';
 
@@ -82,7 +81,7 @@ function resolvePopulationFallback(context: ContextWithAssets | undefined) {
 
 export function selectPopulationDescriptor(
 	context: ContextWithAssets,
-	role: PopulationRoleId | undefined,
+	role: string | undefined,
 ): RegistryDescriptor {
 	const cache = getCacheEntry(
 		context,

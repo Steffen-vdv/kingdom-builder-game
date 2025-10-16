@@ -1,15 +1,9 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
 import { formatDetailText } from '../../utils/stats/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
-
-const FALLBACK_TRIGGERS = TRIGGER_INFO as Record<
-	string,
-	(typeof TRIGGER_INFO)[keyof typeof TRIGGER_INFO]
->;
 
 function formatStepTriggerLabel(
 	context: TranslationContext,
@@ -43,6 +37,99 @@ function formatStepTriggerLabel(
 		}
 	}
 	return undefined;
+}
+
+function sanitize(value: string | undefined): string | undefined {
+	if (typeof value !== 'string') {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function composeIconLabel(
+	icon: string | undefined,
+	label: string | undefined,
+): string | undefined {
+	const iconPart = sanitize(icon);
+	const labelPart = sanitize(label);
+	if (!iconPart && !labelPart) {
+		return undefined;
+	}
+	if (iconPart && labelPart) {
+		return `${iconPart} ${labelPart}`.trim();
+	}
+	return iconPart ?? labelPart ?? undefined;
+}
+
+function formatTriggerTitle(
+	identifier: string,
+	display: ReturnType<typeof selectTriggerDisplay>,
+	fallbackTitle: string | undefined,
+	stepLabel: string | undefined,
+): string | undefined {
+	const icon = sanitize(display.icon);
+	const future = sanitize(display.future);
+	const label = sanitize(display.label);
+	const past = sanitize(display.past);
+	const fallback = sanitize(fallbackTitle);
+	if (stepLabel) {
+		return (
+			composeIconLabel(icon, `During ${stepLabel}`) ?? `During ${stepLabel}`
+		);
+	}
+	if (future) {
+		return composeIconLabel(icon, future) ?? future;
+	}
+	if (label) {
+		return composeIconLabel(icon, label) ?? label;
+	}
+	if (past) {
+		return composeIconLabel(icon, past) ?? past;
+	}
+	if (fallback) {
+		if (icon && !fallback.includes(icon)) {
+			return composeIconLabel(icon, fallback) ?? fallback;
+		}
+		return fallback;
+	}
+	const detail = sanitize(formatDetailText(identifier));
+	if (detail) {
+		return composeIconLabel(icon, detail) ?? detail;
+	}
+	return composeIconLabel(icon, identifier) ?? identifier;
+}
+
+export function resolvePhasedTriggerTitle(
+	context: TranslationContext,
+	identifier: string,
+	fallbackTitle?: string,
+): string | undefined {
+	const display = selectTriggerDisplay(context.assets, identifier);
+	const stepLabel = formatStepTriggerLabel(context, identifier);
+	return formatTriggerTitle(identifier, display, fallbackTitle, stepLabel);
+}
+
+function collectStepTriggerKeys(context: TranslationContext): string[] {
+	const keys = new Set<string>();
+	const triggerLookup = context.assets?.triggers ?? {};
+	for (const key of Object.keys(triggerLookup)) {
+		if (key.endsWith('Step')) {
+			keys.add(key);
+		}
+	}
+	for (const phase of context.phases) {
+		const steps = phase.steps ?? [];
+		for (const step of steps) {
+			const triggers = step.triggers ?? [];
+			for (const trigger of triggers) {
+				if (typeof trigger === 'string' && trigger.endsWith('Step')) {
+					keys.add(trigger);
+				}
+			}
+		}
+	}
+	return [...keys];
 }
 
 export interface PhasedDef {
@@ -93,46 +180,11 @@ export class PhasedTranslator {
 			if (!effects.length) {
 				return;
 			}
-			const info = selectTriggerDisplay(context.assets, key as string);
-			const fallbackInfo = FALLBACK_TRIGGERS[key as string];
-			const icon = info.icon ?? fallbackInfo?.icon ?? '';
-			const future = info.future ?? fallbackInfo?.future;
-			const past = info.past ?? fallbackInfo?.past;
-			const fallbackLabel =
-				fallbackInfo &&
-				typeof fallbackInfo === 'object' &&
-				'label' in fallbackInfo
-					? (fallbackInfo as { label?: string }).label
-					: undefined;
-			const label = info.label ?? fallbackLabel;
-			const stepLabel = formatStepTriggerLabel(context, identifier);
-			const title = (() => {
-				if (stepLabel) {
-					const trimmedIcon = icon.trim();
-					const prefix = trimmedIcon.length ? `${trimmedIcon} ` : '';
-					return `${prefix}During ${stepLabel}`;
-				}
-				const futureOrLabel = future ?? label;
-				if (future && future.trim().length) {
-					const parts = [icon, future].filter(Boolean).join(' ').trim();
-					if (parts.length) {
-						return parts;
-					}
-				}
-				if (futureOrLabel && futureOrLabel.trim().length) {
-					const parts = [icon, futureOrLabel].filter(Boolean).join(' ').trim();
-					if (parts.length) {
-						return parts;
-					}
-				}
-				if (past && past.trim().length) {
-					const parts = [icon, past].filter(Boolean).join(' ').trim();
-					if (parts.length) {
-						return parts;
-					}
-				}
-				return fallbackTitle;
-			})();
+			const title = resolvePhasedTriggerTitle(
+				context,
+				identifier,
+				fallbackTitle,
+			);
 			if (title) {
 				root.push({ title, items: effects });
 				return;
@@ -156,11 +208,8 @@ export class PhasedTranslator {
 			applyTrigger(phaseKey, phaseTitle);
 		}
 
-		const triggerLookup = context.assets?.triggers ?? TRIGGER_INFO;
-		const stepKeysFromInfo = Object.keys(triggerLookup).filter((key) =>
-			key.endsWith('Step'),
-		);
-		for (const key of stepKeysFromInfo) {
+		const stepTriggerKeys = collectStepTriggerKeys(context);
+		for (const key of stepTriggerKeys) {
 			applyTrigger(key as keyof PhasedDef, key);
 		}
 
