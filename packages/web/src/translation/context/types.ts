@@ -50,6 +50,7 @@ export interface TranslationAssets {
 	readonly land: Readonly<TranslationIconLabel>;
 	readonly slot: Readonly<TranslationIconLabel>;
 	readonly passive: Readonly<TranslationIconLabel>;
+	readonly transfer: Readonly<TranslationIconLabel>;
 	readonly upkeep: Readonly<TranslationIconLabel>;
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
 	readonly triggers: Readonly<Record<string, TranslationTriggerAsset>>;

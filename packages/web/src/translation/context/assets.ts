@@ -39,6 +39,11 @@ const DEFAULT_UPKEEP_INFO = Object.freeze({
 	label: 'Upkeep',
 });
 
+const DEFAULT_TRANSFER_INFO = Object.freeze({
+	icon: '🔁',
+	label: 'Transfer',
+});
+
 const DEFAULT_MODIFIER_INFO = Object.freeze({
 	cost: Object.freeze({ icon: '💲', label: 'Cost Adjustment' }),
 	result: Object.freeze({ icon: '✨', label: 'Outcome Adjustment' }),
@@ -157,6 +162,31 @@ function buildStatMap(
 	}
 	return Object.freeze(entries);
 }
+
+type ModifierDescriptorOverrides = {
+	cost?: SessionMetadataDescriptor;
+	result?: SessionMetadataDescriptor;
+};
+
+function resolveModifierDescriptors(
+	value: unknown,
+): ModifierDescriptorOverrides | undefined {
+	if (!value || typeof value !== 'object') {
+		return undefined;
+	}
+	const descriptor = value as Record<string, unknown>;
+	if (!('cost' in descriptor) && !('result' in descriptor)) {
+		return undefined;
+	}
+	const overrides: ModifierDescriptorOverrides = {};
+	if (descriptor.cost && typeof descriptor.cost === 'object') {
+		overrides.cost = descriptor.cost as SessionMetadataDescriptor;
+	}
+	if (descriptor.result && typeof descriptor.result === 'object') {
+		overrides.result = descriptor.result as SessionMetadataDescriptor;
+	}
+	return overrides;
+}
 function toTriggerAsset(
 	descriptor: SessionTriggerMetadata | undefined,
 	fallbackLabel: string,
@@ -248,6 +278,26 @@ export function createTranslationAssets(
 		assetDescriptors.upkeep,
 		DEFAULT_UPKEEP_INFO.label,
 	);
+	const transferAsset = mergeIconLabel(
+		DEFAULT_TRANSFER_INFO,
+		assetDescriptors.transfer,
+		DEFAULT_TRANSFER_INFO.label,
+	);
+	const modifierOverrides = resolveModifierDescriptors(
+		assetDescriptors['modifiers'],
+	);
+	const modifiers = Object.freeze({
+		cost: mergeIconLabel(
+			DEFAULT_MODIFIER_INFO.cost,
+			modifierOverrides?.cost,
+			DEFAULT_MODIFIER_INFO.cost.label ?? 'Cost Adjustment',
+		),
+		result: mergeIconLabel(
+			DEFAULT_MODIFIER_INFO.result,
+			modifierOverrides?.result,
+			DEFAULT_MODIFIER_INFO.result.label ?? 'Outcome Adjustment',
+		),
+	});
 	const triggers = buildTriggerMap(metadata?.triggers);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
@@ -258,8 +308,9 @@ export function createTranslationAssets(
 		land: landAsset,
 		slot: slotAsset,
 		passive: passiveAsset,
+		transfer: transferAsset,
 		upkeep: upkeepAsset,
-		modifiers: DEFAULT_MODIFIER_INFO,
+		modifiers,
 		triggers,
 		tierSummaries,
 		formatPassiveRemoval: formatRemoval,

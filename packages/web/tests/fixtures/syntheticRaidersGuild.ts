@@ -273,8 +273,6 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 	};
 }
 
-export const SYNTHETIC_RESOURCE_TRANSFER_ICON = '🔁';
-
 export function getModifier(
 	ctx: RaidersGuildSyntheticContext['ctx'],
 	buildingId: string,

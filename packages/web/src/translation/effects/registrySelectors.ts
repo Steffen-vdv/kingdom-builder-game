@@ -16,6 +16,8 @@ const DEFAULT_COST_ICON = '💲';
 const DEFAULT_COST_LABEL = 'Cost Adjustment';
 const DEFAULT_RESULT_ICON = '✨';
 const DEFAULT_RESULT_LABEL = 'Outcome Adjustment';
+const DEFAULT_TRANSFER_ICON = '🔁';
+const DEFAULT_TRANSFER_LABEL = 'Transfer';
 
 const DEFAULT_KEY = Symbol('default');
 
@@ -244,6 +246,30 @@ function resolveModifierFallback(context: ContextWithAssets | undefined) {
 			label: coerceLabel(result.label, DEFAULT_RESULT_LABEL),
 		},
 	};
+}
+
+const transferCache: CacheStore<RegistryDescriptor> = new WeakMap();
+const transferFallbackCache: CacheFallback<RegistryDescriptor> = new Map();
+
+function resolveTransferDescriptor(context: ContextWithAssets | undefined) {
+	const assets = context?.assets;
+	const icon = coerceIcon(assets?.transfer?.icon, DEFAULT_TRANSFER_ICON);
+	const label = coerceLabel(assets?.transfer?.label, DEFAULT_TRANSFER_LABEL);
+	return { icon, label } satisfies RegistryDescriptor;
+}
+
+export function selectTransferDescriptor(
+	context: ContextWithAssets,
+): RegistryDescriptor {
+	const cache = getCacheEntry(context, transferCache, transferFallbackCache);
+	const cacheKey = normalizeKey(undefined);
+	const cached = cache.get(cacheKey);
+	if (cached) {
+		return cached;
+	}
+	const descriptor = resolveTransferDescriptor(context);
+	cache.set(cacheKey, descriptor);
+	return descriptor;
 }
 
 export function selectModifierInfo(
