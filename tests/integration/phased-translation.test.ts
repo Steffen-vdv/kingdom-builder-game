@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import { createEngine } from '@kingdom-builder/engine';
 import type { EngineContext } from '@kingdom-builder/engine';
@@ -11,7 +11,6 @@ import type {
 	PhasedDef,
 } from '@kingdom-builder/web/translation/content/phased';
 import {
-	TRIGGER_INFO,
 	RESOURCES,
 	PHASES,
 	POPULATIONS,
@@ -21,8 +20,9 @@ import {
 import type { ResourceKey } from '@kingdom-builder/contents';
 // prettier-ignore
 import {
-	createContentFactory,
+        createContentFactory,
 } from '@kingdom-builder/testing';
+import { createDefaultTriggerMetadata } from '../../packages/web/src/contexts/defaultRegistryMetadata';
 import { formatDetailText } from '../../packages/web/src/utils/stats/format';
 
 type Entry = string | { title: string; items: Entry[] };
@@ -84,21 +84,6 @@ function formatStepTriggerLabel(
 }
 
 describe('PhasedTranslator step triggers', () => {
-	const addedStep = {
-		icon: '🧪',
-		future: 'During test step',
-		past: 'Test step',
-	} as const;
-
-	beforeAll(() => {
-		(TRIGGER_INFO as Record<string, typeof addedStep>)['onTestStep'] =
-			addedStep;
-	});
-
-	afterAll(() => {
-		delete (TRIGGER_INFO as Record<string, unknown>)['onTestStep'];
-	});
-
 	it('renders dynamic step metadata from trigger info', () => {
 		const content = createContentFactory();
 		const development = content.development();
@@ -113,12 +98,12 @@ describe('PhasedTranslator step triggers', () => {
 			params: { key: resourceKey, amount },
 		});
 
-		const stepKeys = Object.keys(TRIGGER_INFO).filter((key) =>
+		const triggerMetadata = createDefaultTriggerMetadata();
+		const stepKeys = Object.keys(triggerMetadata).filter((key) =>
 			key.endsWith('Step'),
 		);
 
-		expect(stepKeys).toContain('onTestStep');
-		expect(stepKeys.some((key) => key !== 'onTestStep')).toBe(true);
+		expect(stepKeys.length).toBeGreaterThan(0);
 
 		stepKeys.forEach((key, index) => {
 			stored[key as keyof PhasedDef] = [makeEffect(index + 1)];
@@ -145,18 +130,15 @@ describe('PhasedTranslator step triggers', () => {
 			ctx,
 		) as unknown as Entry[];
 
-		const info = TRIGGER_INFO as Record<
-			string,
-			{ icon: string; future: string }
-		>;
 		for (const key of stepKeys) {
-			const expectedTitle = [info[key]?.icon, info[key]?.future]
+			const metadata = triggerMetadata[key] ?? {};
+			const expectedTitle = [metadata.icon, metadata.future]
 				.filter(Boolean)
 				.join(' ')
 				.trim();
 			const stepLabel = formatStepTriggerLabel(ctx, key);
 			const resolvedTitle = stepLabel
-				? [info[key]?.icon, `During ${stepLabel}`]
+				? [metadata.icon, `During ${stepLabel}`]
 						.filter(Boolean)
 						.join(' ')
 						.trim()

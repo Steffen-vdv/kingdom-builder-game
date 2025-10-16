@@ -5,7 +5,7 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
-import { TRIGGER_INFO } from '@kingdom-builder/contents';
+import { createDefaultTriggerMetadata } from '../../contexts/defaultRegistryMetadata';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -173,16 +173,13 @@ function buildStatMap(
 	return Object.freeze(entries);
 }
 
-const DEFAULT_TRIGGER_ASSETS = Object.freeze(
+const DEFAULT_TRIGGER_METADATA = createDefaultTriggerMetadata() ?? {};
+
+export const DEFAULT_TRIGGER_ASSETS = Object.freeze(
 	Object.fromEntries(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => [
+		Object.entries(DEFAULT_TRIGGER_METADATA).map(([id, info]) => [
 			id,
-			Object.freeze({
-				icon: info.icon,
-				future: info.future,
-				past: info.past,
-				label: info.past,
-			} satisfies TranslationTriggerAsset),
+			mergeTriggerAsset(undefined, info),
 		]),
 	),
 );
