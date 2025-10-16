@@ -1,5 +1,6 @@
 import type { AttackPlayerDiff } from '@kingdom-builder/protocol';
 import { formatStatValue } from '../../../../utils/stats';
+import type { TranslationContext } from '../../../context';
 import type { AttackStatDescriptor, DiffFormatOptions } from './types';
 import {
 	selectAttackResourceDescriptor,
@@ -61,29 +62,15 @@ function formatStatSigned(key: string, value: number): string {
 	return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
-type ResourceDiff = Extract<AttackPlayerDiff, { type: 'resource' }>;
-type StatDiff = Extract<AttackPlayerDiff, { type: 'stat' }>;
-
-type DiffFormatterMap = {
-	[T in AttackPlayerDiff['type']]: (
-		prefix: string,
-		diff: Extract<AttackPlayerDiff, { type: T }>,
-		options?: DiffFormatOptions,
-	) => string;
-};
-
-const DIFF_FORMATTERS: DiffFormatterMap = {
-	resource: (prefix, diff, options) =>
-		formatResourceDiff(prefix, diff, options),
-	stat: (prefix, diff) => formatStatDiff(prefix, diff),
-};
-
 export function formatResourceDiff(
 	prefix: string,
-	diff: ResourceDiff,
+	diff: Extract<AttackPlayerDiff, { type: 'resource' }>,
 	options?: DiffFormatOptions,
+	translation?: TranslationContext,
 ): string {
-	const descriptor = selectAttackResourceDescriptor(String(diff.key));
+	const descriptor = translation
+		? selectAttackResourceDescriptor(translation, String(diff.key))
+		: { icon: '', label: String(diff.key) };
 	const displayLabel = iconLabel(descriptor.icon, descriptor.label);
 	const delta = diff.after - diff.before;
 	const before = formatNumber(diff.before);
@@ -101,8 +88,14 @@ export function formatResourceDiff(
 	return `${prefix}: ${displayLabel} ${formatSigned(delta)} (${before}→${after})`;
 }
 
-export function formatStatDiff(prefix: string, diff: StatDiff): string {
-	const descriptor = selectAttackStatDescriptor(String(diff.key));
+export function formatStatDiff(
+	prefix: string,
+	diff: Extract<AttackPlayerDiff, { type: 'stat' }>,
+	translation?: TranslationContext,
+): string {
+	const descriptor = translation
+		? selectAttackStatDescriptor(translation, String(diff.key))
+		: { icon: '', label: String(diff.key) };
 	const displayLabel = iconLabel(descriptor.icon, descriptor.label);
 	const delta = diff.after - diff.before;
 	const before = formatStatValue(String(diff.key), diff.before);
@@ -117,10 +110,13 @@ export function formatDiffCommon(
 	prefix: string,
 	diff: AttackPlayerDiff,
 	options?: DiffFormatOptions,
+	translation?: TranslationContext,
 ): string {
-	const formatter = DIFF_FORMATTERS[diff.type];
-	if (!formatter) {
-		throw new Error(`Unsupported attack diff type: ${diff.type}`);
+	if (diff.type === 'resource') {
+		return formatResourceDiff(prefix, diff, options, translation);
 	}
-	return formatter(prefix, diff as never, options);
+	if (diff.type === 'stat') {
+		return formatStatDiff(prefix, diff, translation);
+	}
+	throw new Error('Unsupported attack diff type');
 }

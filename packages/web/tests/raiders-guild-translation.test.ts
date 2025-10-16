@@ -109,7 +109,8 @@ describe('raiders guild translation', () => {
 		const resourceEffect = getResourceEffect(modifier);
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
-		const resourceIcon = selectAttackResourceDescriptor(key).icon || key;
+		const resourceIcon =
+			selectAttackResourceDescriptor(translation, key).icon || key;
 		const expected = `${modifierInfo.icon ?? ''}${development.icon}: ${resourceIcon}${signed(
 			amount,
 		)}${Math.abs(amount)}`;
@@ -159,7 +160,7 @@ describe('raiders guild translation', () => {
 		const resourceEffect = getResourceEffect(modifier);
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
-		const icon = selectAttackResourceDescriptor(key).icon || key;
+		const icon = selectAttackResourceDescriptor(translation, key).icon || key;
 		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
 			development.icon ?? '',
 			development.name,

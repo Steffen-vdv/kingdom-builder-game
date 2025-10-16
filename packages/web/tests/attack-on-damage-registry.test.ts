@@ -16,8 +16,9 @@ import { createTranslationContext } from '../src/translation/context/createTrans
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import { selectResourceDisplay } from '../src/translation/context/assetSelectors';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
-import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
 import { ownerLabel } from '../src/translation/effects/formatters/attackFormatterUtils';
+import { iconLabel } from '../src/translation/effects/formatters/attack/shared';
+import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
 
 vi.mock('../src/translation/effects/factory', () => ({
 	registerEffectFormatter: vi.fn(),
@@ -33,7 +34,6 @@ interface TestSetup {
 	resourceKey: string;
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 	customResourceLabel: string;
-	canonicalResourceLabel: string;
 }
 
 const TEST_PHASES = [
@@ -125,14 +125,11 @@ function createTestSetup(): TestSetup {
 	const customResourceLabel = resourceDisplay.icon
 		? `${resourceDisplay.icon} ${labelSource}`
 		: labelSource;
-	const canonicalResourceLabel =
-		formatKindLabel(translationContext, 'resource', resourceKey) ?? resourceKey;
 	return {
 		translationContext,
 		resourceKey,
 		metadataSelectors,
 		customResourceLabel,
-		canonicalResourceLabel,
 	};
 }
 
@@ -147,7 +144,6 @@ describe('attack on-damage formatter registry', () => {
 		resourceKey,
 		metadataSelectors,
 		customResourceLabel,
-		canonicalResourceLabel,
 	} = createTestSetup();
 	const defenderLabel = ownerLabel(translationContext, 'defender');
 	const attackerLabel = ownerLabel(translationContext, 'attacker');
@@ -215,9 +211,14 @@ describe('attack on-damage formatter registry', () => {
 		);
 
 		expect(result).not.toBeNull();
+		const descriptor = selectAttackResourceDescriptor(
+			translationContext,
+			resourceKey,
+		);
+		const descriptorLabel = iconLabel(descriptor.icon, descriptor.label);
 		expect(result?.items).toEqual([
-			`${defenderLabel}: ${canonicalResourceLabel} -2 (5→3)`,
-			`${attackerLabel}: ${canonicalResourceLabel} +3 (1→4)`,
+			`${defenderLabel}: ${descriptorLabel} -2 (5→3)`,
+			`${attackerLabel}: ${descriptorLabel} +3 (1→4)`,
 		]);
 	});
 
@@ -254,9 +255,14 @@ describe('attack on-damage formatter registry', () => {
 		);
 
 		expect(result).not.toBeNull();
+		const descriptor = selectAttackResourceDescriptor(
+			translationContext,
+			resourceKey,
+		);
+		const descriptorLabel = iconLabel(descriptor.icon, descriptor.label);
 		expect(result?.items).toEqual([
-			`${defenderLabel}: ${canonicalResourceLabel} -0.5% (10→5) (-5)`,
-			`${attackerLabel}: ${canonicalResourceLabel} +5 (2→7)`,
+			`${defenderLabel}: ${descriptorLabel} -0.5% (10→5) (-5)`,
+			`${attackerLabel}: ${descriptorLabel} +5 (2→7)`,
 		]);
 	});
 
@@ -297,14 +303,28 @@ describe('attack on-damage formatter registry', () => {
 		const first = buildOnDamageEntry([logEntry], mutatedContext, attackEffect);
 		const second = buildOnDamageEntry([logEntry], mutatedContext, attackEffect);
 
+		const resolved = selectAttackResourceDescriptor(
+			translationContext,
+			resourceKey,
+		);
+		const resolvedLabel = iconLabel(resolved.icon, resolved.label);
 		expect(
 			metadataSelectors.resourceMetadata.select(resourceKey).label,
 		).toContain('Auric Coin');
 		expect(customResourceLabel).toContain('Auric Coin');
-		expect(canonicalResourceLabel).not.toContain('Auric Coin');
+		expect(resolvedLabel).toContain('Auric Coin');
+		const fallbackDescriptor = selectAttackResourceDescriptor(
+			mutatedContext,
+			resourceKey,
+		);
+		const fallbackLabel = iconLabel(
+			fallbackDescriptor.icon,
+			fallbackDescriptor.label,
+		);
+		expect(fallbackLabel).not.toContain('Auric Coin');
 		expect(first?.items).toEqual([
-			`${ownerLabel(mutatedContext, 'defender')}: ${canonicalResourceLabel} -2 (5→3)`,
-			`${ownerLabel(mutatedContext, 'attacker')}: ${canonicalResourceLabel} +3 (1→4)`,
+			`${ownerLabel(mutatedContext, 'defender')}: ${fallbackLabel} -2 (5→3)`,
+			`${ownerLabel(mutatedContext, 'attacker')}: ${fallbackLabel} +3 (1→4)`,
 		]);
 		expect(second?.items).toEqual(first?.items);
 	});

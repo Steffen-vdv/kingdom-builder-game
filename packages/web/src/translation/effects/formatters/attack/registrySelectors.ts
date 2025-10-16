@@ -1,10 +1,8 @@
 import {
-	BUILDINGS,
-	RESOURCES,
-	STATS,
-	type ResourceKey,
-	type StatKey,
-} from '@kingdom-builder/contents';
+	selectResourceDisplay,
+	selectStatDisplay,
+} from '../../../context/assetSelectors';
+import type { TranslationContext } from '../../../context';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
@@ -31,49 +29,97 @@ function toDescriptor(
 	};
 }
 
+function deriveKeysFromRecords(
+	record: Readonly<Record<string, unknown>> | undefined,
+): string[] {
+	if (!record) {
+		return [];
+	}
+	return Object.keys(record);
+}
+
+function collectPlayerKeys(players: Array<Record<string, number>>): string[] {
+	const allKeys = new Set<string>();
+	for (const player of players) {
+		for (const key of Object.keys(player)) {
+			allKeys.add(key);
+		}
+	}
+	return Array.from(allKeys);
+}
+
+function uniqueKeys(...sources: string[][]): string[] {
+	const seen = new Set<string>();
+	for (const list of sources) {
+		for (const key of list) {
+			if (!seen.has(key)) {
+				seen.add(key);
+			}
+		}
+	}
+	return Array.from(seen);
+}
+
 export function selectAttackResourceDescriptor(
+	translation: TranslationContext,
 	resourceKey: string,
 ): AttackRegistryDescriptor {
-	const definition = RESOURCES[resourceKey as ResourceKey];
-	return toDescriptor(definition?.label, definition?.icon, resourceKey);
+	const display = selectResourceDisplay(translation.assets, resourceKey);
+	return toDescriptor(display.label, display.icon, resourceKey);
 }
 
 export function selectAttackStatDescriptor(
+	translation: TranslationContext,
 	statKey: string,
 ): AttackRegistryDescriptor {
-	const definition = STATS[statKey as StatKey];
-	return toDescriptor(definition?.label, definition?.icon, statKey);
+	const display = selectStatDisplay(translation.assets, statKey);
+	return toDescriptor(display.label, display.icon, statKey);
 }
 
 export function selectAttackBuildingDescriptor(
+	translation: TranslationContext,
 	buildingId: string,
 ): AttackRegistryDescriptor {
 	try {
-		const definition = BUILDINGS.get(buildingId);
+		const definition = translation.buildings.get(buildingId);
 		return toDescriptor(definition.name, definition.icon, buildingId);
 	} catch {
 		return { icon: '', label: buildingId };
 	}
 }
 
-export function listAttackResourceKeys(): ReadonlyArray<ResourceKey> {
-	return Object.freeze(Object.keys(RESOURCES) as ReadonlyArray<ResourceKey>);
+export function listAttackResourceKeys(
+	translation: TranslationContext,
+): ReadonlyArray<string> {
+	const assetKeys = deriveKeysFromRecords(translation.assets?.resources);
+	const playerKeys = collectPlayerKeys([
+		translation.activePlayer.resources,
+		translation.opponent.resources,
+	]);
+	return Object.freeze(uniqueKeys(assetKeys, playerKeys));
 }
 
-export function listAttackStatKeys(): ReadonlyArray<StatKey> {
-	return Object.freeze(Object.keys(STATS) as ReadonlyArray<StatKey>);
-}
-
-export function listAttackBuildingIds(): ReadonlyArray<string> {
-	return Object.freeze(BUILDINGS.keys().slice());
-}
-
-export function selectAttackDefaultStatKey(): StatKey | undefined {
-	const keys = listAttackStatKeys();
+export function selectAttackDefaultResourceKey(
+	translation: TranslationContext,
+): string | undefined {
+	const keys = listAttackResourceKeys(translation);
 	return keys.length > 0 ? keys[0] : undefined;
 }
 
-export function selectAttackDefaultBuildingId(): string | undefined {
-	const ids = listAttackBuildingIds();
-	return ids.length > 0 ? ids[0] : undefined;
+export function listAttackStatKeys(
+	translation: TranslationContext,
+): ReadonlyArray<string> {
+	const assetKeys = deriveKeysFromRecords(translation.assets?.stats);
+	const playerKeys = collectPlayerKeys([
+		translation.activePlayer.stats,
+		translation.opponent.stats,
+	]);
+	return Object.freeze(uniqueKeys(assetKeys, playerKeys));
+}
+
+export function selectAttackDefaultStatKey(
+	translation: TranslationContext,
+): string | undefined {
+	const keys = listAttackStatKeys(translation);
+	return keys.length > 0 ? keys[0] : undefined;
 }

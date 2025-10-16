@@ -4,7 +4,6 @@ import './helpers/armyAttackSyntheticRegistries';
 
 import type { SummaryEntry } from '../src/translation/content';
 import { summarizeContent, describeContent } from '../src/translation/content';
-import { Resource, Stat } from '@kingdom-builder/engine';
 import type { EffectDef } from './helpers/armyAttackFactories';
 import {
 	createSyntheticCtx,
@@ -28,6 +27,7 @@ import {
 	selectAttackResourceDescriptor,
 	selectAttackStatDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
+import { buildBaseEntry } from '../src/translation/effects/formatters/attackFormatterUtils';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -42,12 +42,37 @@ afterAll(() => {
 });
 
 describe('army attack translation summary', () => {
+	const summaryToken = (
+		icon: string | undefined,
+		label: string | undefined,
+		fallback: string,
+	): string => {
+		const trimmedIcon = icon?.trim();
+		if (trimmedIcon) {
+			return trimmedIcon;
+		}
+		const trimmedLabel = label?.trim();
+		if (trimmedLabel) {
+			return trimmedLabel;
+		}
+		return fallback;
+	};
+
 	it('summarizes attack action with on-damage effects', () => {
 		const { translation, attack, plunder } = createSyntheticCtx();
-		const castle = selectAttackResourceDescriptor(Resource.castleHP);
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const happiness = selectAttackResourceDescriptor(Resource.happiness);
-		const warWeariness = selectAttackStatDescriptor(Stat.warWeariness);
+		const castle = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.castleHP,
+		);
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const happiness = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.happiness,
+		);
+		const warWeariness = selectAttackStatDescriptor(
+			translation,
+			SYNTH_STAT_IDS.warWeariness,
+		);
 		const attackEffect = attack.effects.find(
 			(effectDef: EffectDef) => effectDef.type === 'attack',
 		);
@@ -83,10 +108,21 @@ describe('army attack translation summary', () => {
 		);
 		const warAmt = (warEffect?.params as { amount?: number })?.amount ?? 0;
 		const summary = summarizeContent('action', attack.id, translation);
-		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
-		const targetSummary = castle.icon || castle.label;
+		const powerSummary = summaryToken(
+			powerStat.icon,
+			powerStat.label,
+			COMBAT_STAT_CONFIG.power.icon,
+		);
+		const targetSummary = summaryToken(
+			castle.icon,
+			castle.label,
+			SYNTH_RESOURCE_IDS.castleHP,
+		);
+		const expectedBaseEntry = attackEffect
+			? buildBaseEntry(attackEffect, translation, 'summarize').entry
+			: `${powerSummary}${targetSummary}`;
 		expect(summary).toEqual([
-			`${powerSummary}${targetSummary}`,
+			expectedBaseEntry,
 			{
 				title: `${targetSummary}💥`,
 				items: [
@@ -131,13 +167,16 @@ describe('army attack translation summary', () => {
 		delete resourceMetadata[SYNTH_RESOURCE_IDS.castleHP];
 		suppressSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
 		try {
-			const castle = selectAttackResourceDescriptor(Resource.castleHP);
-			const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
+			const castle = selectAttackResourceDescriptor(
+				translation,
+				SYNTH_RESOURCE_IDS.castleHP,
+			);
+			const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
 			expect(powerStat.label).toBe(SYNTH_COMBAT_STATS.power.key);
 			const targetDisplay = iconLabel(
 				castle.icon,
 				castle.label,
-				Resource.castleHP,
+				SYNTH_RESOURCE_IDS.castleHP,
 			);
 
 			const summary = summarizeContent('action', attack.id, translation);
@@ -171,11 +210,20 @@ describe('army attack translation summary', () => {
 
 	it('summarizes building attack as destruction', () => {
 		const { translation, buildingAttack, building } = createSyntheticCtx();
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const gold = selectAttackResourceDescriptor(Resource.gold);
-		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
-		const summaryTarget =
-			buildingDescriptor.icon || buildingDescriptor.label || building.id;
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const gold = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.gold,
+		);
+		const buildingDescriptor = selectAttackBuildingDescriptor(
+			translation,
+			building.id,
+		);
+		const summaryTarget = summaryToken(
+			buildingDescriptor.icon,
+			buildingDescriptor.label,
+			building.id,
+		);
 		const attackEffect = buildingAttack.effects.find(
 			(effectDef: EffectDef) => effectDef.type === 'attack',
 		);
@@ -191,9 +239,16 @@ describe('army attack translation summary', () => {
 			(rewardEffect?.params as { amount?: number })?.amount ?? 0;
 
 		const summary = summarizeContent('action', buildingAttack.id, translation);
-		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
+		const powerSummary = summaryToken(
+			powerStat.icon,
+			powerStat.label,
+			COMBAT_STAT_CONFIG.power.icon,
+		);
+		const expectedBaseEntry = attackEffect
+			? buildBaseEntry(attackEffect, translation, 'summarize').entry
+			: `${powerSummary}${summaryTarget}`;
 		expect(summary).toEqual([
-			`${powerSummary}${summaryTarget}`,
+			expectedBaseEntry,
 			{
 				title: `${summaryTarget}💥`,
 				items: [`⚔️${gold.icon}+${rewardAmount}`],

@@ -2,19 +2,22 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 
 import './helpers/armyAttackSyntheticRegistries';
 import { logContent } from '../src/translation/content';
-import { Resource, Stat, performAction } from '@kingdom-builder/engine';
+import { performAction } from '@kingdom-builder/engine';
 import {
 	createSyntheticCtx,
 	setupStatOverrides,
 	teardownStatOverrides,
-	getStat,
 	iconLabel,
-	SYNTH_COMBAT_STATS,
 	PLUNDER_PERCENT,
 	ATTACKER_HAPPINESS_GAIN,
 	DEFENDER_HAPPINESS_LOSS,
 	BUILDING_REWARD_GOLD,
 } from './helpers/armyAttackFactories';
+import {
+	SYNTH_RESOURCE_IDS,
+	SYNTH_STAT_IDS,
+	COMBAT_STAT_CONFIG,
+} from './helpers/armyAttackConfig';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import {
 	selectAttackBuildingDescriptor,
@@ -51,32 +54,50 @@ describe('army attack translation log', () => {
 			attack,
 			plunder,
 		} = createSyntheticCtx();
-		const castle = selectAttackResourceDescriptor(Resource.castleHP);
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
-		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const happiness = selectAttackResourceDescriptor(Resource.happiness);
-		const gold = selectAttackResourceDescriptor(Resource.gold);
+		const castle = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.castleHP,
+		);
+		const happiness = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.happiness,
+		);
+		const gold = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.gold,
+		);
 
-		engineContext.activePlayer.resources[Resource.ap] = 1;
-		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
-		engineContext.activePlayer.resources[Resource.happiness] = 2;
-		engineContext.activePlayer.resources[Resource.gold] = 7;
-		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
-		engineContext.opponent.resources[Resource.happiness] = 5;
-		engineContext.opponent.resources[Resource.gold] = 25;
+		engineContext.activePlayer.resources[SYNTH_RESOURCE_IDS.ap] = 1;
+		engineContext.activePlayer.stats[SYNTH_STAT_IDS.armyStrength] = 2;
+		engineContext.activePlayer.resources[SYNTH_RESOURCE_IDS.happiness] = 2;
+		engineContext.activePlayer.resources[SYNTH_RESOURCE_IDS.gold] = 7;
+		engineContext.opponent.stats[SYNTH_STAT_IDS.fortificationStrength] = 1;
+		engineContext.opponent.resources[SYNTH_RESOURCE_IDS.happiness] = 5;
+		engineContext.opponent.resources[SYNTH_RESOURCE_IDS.gold] = 25;
 
 		performAction(attack.id, engineContext);
 
 		const log = logContent('action', attack.id, translation);
-		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
-		const absorptionLabel = iconLabel(
-			absorptionStat.icon,
-			absorptionStat.label,
-			'Absorption',
+		const powerLabel = iconLabel(
+			COMBAT_STAT_CONFIG.power.icon,
+			COMBAT_STAT_CONFIG.power.label,
+			COMBAT_STAT_CONFIG.power.label,
 		);
-		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
-		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
+		const absorptionLabel = iconLabel(
+			COMBAT_STAT_CONFIG.absorption.icon,
+			COMBAT_STAT_CONFIG.absorption.label,
+			COMBAT_STAT_CONFIG.absorption.label,
+		);
+		const fortLabel = iconLabel(
+			COMBAT_STAT_CONFIG.fortification.icon,
+			COMBAT_STAT_CONFIG.fortification.label,
+			COMBAT_STAT_CONFIG.fortification.label,
+		);
+		const castleLabel = iconLabel(
+			castle.icon,
+			castle.label,
+			SYNTH_RESOURCE_IDS.castleHP,
+		);
 		expect(withLegacyIndent(log)).toEqual([
 			`${attack.icon} ${attack.name}`,
 			`  Attack opponent with your ${powerLabel}`,
@@ -98,32 +119,43 @@ describe('army attack translation log', () => {
 			buildingAttack,
 			building,
 		} = createSyntheticCtx();
-		const powerStat = getStat(SYNTH_COMBAT_STATS.power.key)!;
-		const absorptionStat = getStat(SYNTH_COMBAT_STATS.absorption.key)!;
-		const fortStat = getStat(SYNTH_COMBAT_STATS.fortification.key)!;
-		const gold = selectAttackResourceDescriptor(Resource.gold);
-		const buildingDescriptor = selectAttackBuildingDescriptor(building.id);
+		const gold = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.gold,
+		);
+		const buildingDescriptor = selectAttackBuildingDescriptor(
+			translation,
+			building.id,
+		);
 		const buildingDisplay = iconLabel(
 			buildingDescriptor.icon,
 			buildingDescriptor.label,
 			building.id,
 		);
 
-		engineContext.activePlayer.resources[Resource.ap] = 1;
-		engineContext.activePlayer.stats[Stat.armyStrength] = 3;
-		engineContext.activePlayer.resources[Resource.gold] = 0;
-		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
+		engineContext.activePlayer.resources[SYNTH_RESOURCE_IDS.ap] = 1;
+		engineContext.activePlayer.stats[SYNTH_STAT_IDS.armyStrength] = 3;
+		engineContext.activePlayer.resources[SYNTH_RESOURCE_IDS.gold] = 0;
+		engineContext.opponent.stats[SYNTH_STAT_IDS.fortificationStrength] = 1;
 		engineContext.opponent.buildings.add(building.id);
 
 		performAction(buildingAttack.id, engineContext);
 		const log = logContent('action', buildingAttack.id, translation);
-		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
-		const absorptionLabel = iconLabel(
-			absorptionStat.icon,
-			absorptionStat.label,
-			'Absorption',
+		const powerLabel = iconLabel(
+			COMBAT_STAT_CONFIG.power.icon,
+			COMBAT_STAT_CONFIG.power.label,
+			COMBAT_STAT_CONFIG.power.label,
 		);
-		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
+		const absorptionLabel = iconLabel(
+			COMBAT_STAT_CONFIG.absorption.icon,
+			COMBAT_STAT_CONFIG.absorption.label,
+			COMBAT_STAT_CONFIG.absorption.label,
+		);
+		const fortLabel = iconLabel(
+			COMBAT_STAT_CONFIG.fortification.icon,
+			COMBAT_STAT_CONFIG.fortification.label,
+			COMBAT_STAT_CONFIG.fortification.label,
+		);
 		expect(withLegacyIndent(log)).toEqual([
 			`${buildingAttack.icon} ${buildingAttack.name}`,
 			`  Attack opponent with your ${powerLabel}`,

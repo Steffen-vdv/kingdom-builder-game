@@ -1,4 +1,3 @@
-import { type ResourceKey } from '@kingdom-builder/contents';
 import type {
 	AttackOnDamageLogEntry,
 	EffectDef,
@@ -66,24 +65,31 @@ export function ownerLabel(
 // buildAttackSummaryBullet for the summarize branch instead of returning prose.
 export function buildBaseEntry(
 	effectDefinition: EffectDef<Record<string, unknown>>,
+	translationContext: TranslationContext,
 	mode: Mode,
 ): BaseEntryResult {
-	const context = resolveAttackFormatterContext(effectDefinition);
+	const context = resolveAttackFormatterContext(
+		effectDefinition,
+		translationContext,
+	);
 	const ignoreAbsorption = Boolean(
 		effectDefinition.params?.['ignoreAbsorption'],
 	);
 	const ignoreFortification = Boolean(
 		effectDefinition.params?.['ignoreFortification'],
 	);
-	const entry = context.formatter.buildBaseEntry({
-		mode,
-		stats: context.stats,
-		info: context.info,
-		target: context.target,
-		targetLabel: context.targetLabel,
-		ignoreAbsorption,
-		ignoreFortification,
-	});
+	const entry = context.formatter.buildBaseEntry(
+		{
+			mode,
+			stats: context.stats,
+			info: context.info,
+			target: context.target,
+			targetLabel: context.targetLabel,
+			ignoreAbsorption,
+			ignoreFortification,
+		},
+		translationContext,
+	);
 	return {
 		entry,
 		formatter: context.formatter,
@@ -174,11 +180,15 @@ export function summarizeOnDamage(
 		return null;
 	}
 	return {
-		title: formatter.buildOnDamageTitle(mode, {
-			info,
-			target,
-			targetLabel,
-		}),
+		title: formatter.buildOnDamageTitle(
+			mode,
+			{
+				info,
+				target,
+				targetLabel,
+			},
+			translationContext,
+		),
 		items: combined,
 	};
 }
@@ -194,6 +204,8 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'defender'),
 				diffEntry,
+				undefined,
+				translationContext,
 			),
 		),
 	);
@@ -202,6 +214,8 @@ export function formatDiffEntries(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'attacker'),
 				diffEntry,
+				undefined,
+				translationContext,
 			),
 		),
 	);
@@ -210,7 +224,7 @@ export function formatDiffEntries(
 
 export function collectTransferPercents(
 	effects: EffectDef[] | undefined,
-	transferPercents: Map<ResourceKey, number>,
+	transferPercents: Map<string, number>,
 ): void {
 	if (!effects) {
 		return;
@@ -222,8 +236,7 @@ export function collectTransferPercents(
 			effectDefinition.params
 		) {
 			const key =
-				(effectDefinition.params['key'] as ResourceKey | undefined) ??
-				undefined;
+				(effectDefinition.params['key'] as string | undefined) ?? undefined;
 			const percent = effectDefinition.params['percent'] as number | undefined;
 			if (key && percent !== undefined && !transferPercents.has(key)) {
 				transferPercents.set(key, percent);
