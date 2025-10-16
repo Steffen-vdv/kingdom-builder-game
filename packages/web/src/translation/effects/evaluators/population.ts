@@ -1,4 +1,4 @@
-import type { PopulationRoleId } from '@kingdom-builder/contents';
+import type { SessionPopulationRoleId } from '@kingdom-builder/protocol/session';
 import type { SummaryEntry } from '../../content';
 import type { TranslationContext } from '../../context';
 import { registerEvaluatorFormatter } from '../factory';
@@ -11,7 +11,7 @@ type PopulationEvaluator = {
 function formatSubEntries(
 	subEntries: readonly SummaryEntry[],
 	context: TranslationContext,
-	role: PopulationRoleId | undefined,
+	role: SessionPopulationRoleId | undefined,
 	mode: 'summarize' | 'describe',
 ): SummaryEntry[] {
 	const { icon, label } = resolvePopulationDisplay(context, role);
@@ -32,7 +32,9 @@ registerEvaluatorFormatter('population', {
 		subEntries: SummaryEntry[],
 		context: TranslationContext,
 	) => {
-		const role = evaluator.params?.['role'] as PopulationRoleId | undefined;
+		const role = evaluator.params?.['role'] as
+			| SessionPopulationRoleId
+			| undefined;
 		return formatSubEntries(subEntries, context, role, 'summarize');
 	},
 	describe: (
@@ -40,7 +42,9 @@ registerEvaluatorFormatter('population', {
 		subEntries: SummaryEntry[],
 		context: TranslationContext,
 	) => {
-		const role = evaluator.params?.['role'] as PopulationRoleId | undefined;
+		const role = evaluator.params?.['role'] as
+			| SessionPopulationRoleId
+			| undefined;
 		return formatSubEntries(subEntries, context, role, 'describe');
 	},
 });
