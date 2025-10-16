@@ -57,18 +57,29 @@ Kingdom Builder is a turn-based 1v1 strategy game. Players grow their realm, man
 
 ## 3) Repository overview
 
-The repository consists of three isolated domains: Web, Content and Engine. Each is represented as a directory inside `/packages`
+The project is organized into five domains housed under `/packages`. Web is the
+frontend, while the backend combines the Server, Engine, Content, and Protocol
+packages. The web client always communicates with the backend through the
+server's HTTP API, and the backend, in turn, hosts the engine runtime alongside
+the content registries it consumes.
 
-- Engine: The _technical_ heart of the game. Engine is responsible for driving the core game loop, execute actions, maintaining game state and evaluating effects. It can be considered 'the backend'.
-- Server: The orchestration layer for running a Node-based backend
-  that builds on top of the Engine and Content packages. See
+- **Web**: Presents the game state, maps engine identifiers to localized
+  content, and forwards user intent to the backend exclusively through the
+  server/API boundary.
+- **Server**: Hosts HTTP transport, authentication, and session lifecycle logic
+  around the engine. It bootstraps engine instances with content registries and
+  serializes responses using shared protocol types. See
   [`docs/server-auth.md`](docs/server-auth.md) for configuring the
   authentication stub used by transport routes.
-- Web: The _visual_ heart of the game. This domain is responsible for housing the game's frontend. It talks to Engine domain to receive game state updates and inform Engine of player-driven actions.
-- Content: The _practical_ heart of the game. This domain houses all of the game's configurations. The domain is configured in a way that allows extremely broad and deep updates to the game's configuration. The intent is for this domain to eventually become separated into it's own service and either passed to a content curation team or even allow players themselves to build gamemodes by giving them access, through some interface, to manipulate/override parts of 'Contents' domain at runtime.
-- Protocol: Shared type surfaces for content schemas and the runtime session
-  contract so Engine and Web can collaborate without importing engine
-  internals.
+- **Engine**: Executes the deterministic game loop by interpreting content
+  definitions, resolving effects, and emitting serializable snapshots for
+  clients.
+- **Content**: Supplies schema-validated definitions, registries, and metadata
+  that describe actions, buildings, and other gameplay elements consumed by the
+  engine and web client.
+- **Protocol**: Publishes the canonical TypeScript types and zod schemas shared
+  across packages so that web and server calls remain in lockstep with the
+  engine state.
 
 ## 4) Coding Standards
 
