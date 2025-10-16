@@ -6,13 +6,11 @@ import type {
 	ActionConfig,
 } from '@kingdom-builder/protocol';
 import type {
+	SessionOverviewContent,
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
+import { DEFAULT_REGISTRY_METADATA } from './defaultRegistryMetadata';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
@@ -67,7 +65,7 @@ export interface RegistryMetadataContextValue {
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
-	overviewContent: OverviewContentTemplate;
+	overviewContent: SessionOverviewContent;
 }
 
 interface RegistryMetadataProviderProps {
@@ -81,6 +79,15 @@ interface RegistryMetadataProviderProps {
 
 const RegistryMetadataContext =
 	createContext<RegistryMetadataContextValue | null>(null);
+
+const DEFAULT_OVERVIEW_CONTENT = DEFAULT_REGISTRY_METADATA.overviewContent;
+
+const cloneOverviewContent = <TValue,>(value: TValue): TValue => {
+	if (typeof structuredClone === 'function') {
+		return structuredClone(value);
+	}
+	return JSON.parse(JSON.stringify(value)) as TValue;
+};
 
 export function RegistryMetadataProvider({
 	registries,
@@ -222,7 +229,15 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(() => OVERVIEW_CONTENT, []);
+	const overviewContent = useMemo(() => {
+		if (metadata.overviewContent) {
+			return metadata.overviewContent;
+		}
+		if (!DEFAULT_OVERVIEW_CONTENT) {
+			throw new Error('Missing default overview content snapshot.');
+		}
+		return cloneOverviewContent(DEFAULT_OVERVIEW_CONTENT);
+	}, [metadata]);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({
@@ -334,7 +349,7 @@ export const useSlotMetadata = (): AssetMetadataSelector =>
 export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().passiveMetadata;
 
-export const useOverviewContent = (): OverviewContentTemplate =>
+export const useOverviewContent = (): SessionOverviewContent =>
 	useRegistryMetadata().overviewContent;
 
 export type {

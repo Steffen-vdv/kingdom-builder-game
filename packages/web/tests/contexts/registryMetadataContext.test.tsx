@@ -2,6 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type {
+	SessionOverviewContent,
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
@@ -27,6 +28,7 @@ import {
 	type AssetMetadataSelector,
 } from '../../src/contexts/RegistryMetadataContext';
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_REGISTRY_METADATA } from '../../src/contexts/defaultRegistryMetadata';
 
 interface TestSetup {
 	registries: SessionRegistries;
@@ -175,6 +177,19 @@ const formatFallbackLabel = (value: string): string => {
 describe('RegistryMetadataProvider', () => {
 	it('provides memoized metadata lookups for registries', () => {
 		const setup = createTestSetup();
+		const overviewContent = {
+			hero: {
+				badgeIcon: '🛡️',
+				badgeLabel: 'Celestial Dispatch',
+				title: 'Celestial Agenda',
+				intro: 'Plot the course of stellar dominion.',
+				paragraph: 'Channel cosmic insight into every decree.',
+				tokens: {},
+			},
+			sections: [],
+			tokens: {},
+		} satisfies SessionOverviewContent;
+		setup.metadata.overviewContent = overviewContent;
 		let captured: CapturedLookups | null = null;
 		const Capture = () => {
 			captured = {
@@ -284,6 +299,36 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
-		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(context.overviewContent).toBe(overviewContent);
+		expect(context.overviewContent.hero.title).toBe('Celestial Agenda');
+	});
+
+	it('clones default overview content when metadata is missing', () => {
+		const setup = createTestSetup();
+		let capturedOverview: SessionOverviewContent | null = null;
+		const Capture = () => {
+			capturedOverview = useRegistryMetadata().overviewContent;
+			return null;
+		};
+		renderToStaticMarkup(
+			<RegistryMetadataProvider
+				registries={setup.registries}
+				metadata={setup.metadata}
+			>
+				<Capture />
+			</RegistryMetadataProvider>,
+		);
+		if (!capturedOverview) {
+			throw new Error('Overview content was not captured.');
+		}
+		const defaultOverview = DEFAULT_REGISTRY_METADATA.overviewContent;
+		if (!defaultOverview) {
+			throw new Error('Expected default overview content.');
+		}
+		expect(Object.isFrozen(defaultOverview)).toBe(true);
+		expect(capturedOverview).not.toBe(defaultOverview);
+		expect(capturedOverview.hero.title).toBe(defaultOverview.hero.title);
+		capturedOverview.hero.title = 'Altered Overview';
+		expect(defaultOverview.hero.title).toBe('Game Overview');
 	});
 });

@@ -159,6 +159,13 @@
 
 ## Domain Migration - P1 - T8 - Forecast Protocol Alignment
 
+## Domain Migration - P2 - T6 - Registry metadata overview decoupling
+
+- `RegistryMetadataContext` now sources overview content from protocol session
+  metadata when present and clones the default registry snapshot otherwise,
+  removing its dependency on the `@kingdom-builder/contents` package for UI
+  overview copy.
+
 - Updated `useNextTurnForecast` and supporting tests to source
   `PlayerSnapshotDeltaBucket` and session snapshot typings from
   `@kingdom-builder/protocol`. Forecasting still depends on the engine's
