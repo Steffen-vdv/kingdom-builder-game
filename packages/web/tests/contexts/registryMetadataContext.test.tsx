@@ -126,6 +126,32 @@ function createTestSetup(): TestSetup {
 			land: { label: 'Territory', icon: '🗺️' },
 			passive: { label: 'Aura', icon: '✨' },
 		},
+		overview: {
+			hero: {
+				badgeIcon: '🧭',
+				badgeLabel: 'Astral Primer',
+				title: 'Astral Campaign Overview',
+				intro: 'Chart a path among the stars.',
+				paragraph: 'Harness celestial rites to rise above rivals.',
+				tokens: {
+					realm: 'Astral Realm',
+				},
+			},
+			sections: [
+				{
+					kind: 'paragraph',
+					id: 'astral-briefing',
+					icon: '✨',
+					title: 'Astral Briefing',
+					paragraphs: ['Guard the {realm} well.'],
+				},
+			],
+			tokens: {
+				static: {
+					realm: ['realm-token'],
+				},
+			},
+		},
 	};
 	const registries: SessionRegistries = {
 		actions: factory.actions,
@@ -284,6 +310,36 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
 		expect(slot.descriptor.label).toBe('Development Slot');
-		expect(context.overviewContent.hero.title).toBe('Game Overview');
+		expect(context.overviewContent.hero.title).toBe('Astral Campaign Overview');
+		expect(context.overviewContent.sections).toHaveLength(1);
+		expect(context.overviewContent.hero.tokens.realm).toBe('Astral Realm');
+	});
+
+	it('falls back to empty overview content when metadata omits overview', () => {
+		const setup = createTestSetup();
+		let captured: RegistryMetadataContextValue | null = null;
+		const Capture = () => {
+			captured = useRegistryMetadata();
+			return null;
+		};
+		const metadataWithoutOverview: SessionSnapshotMetadata = {
+			...setup.metadata,
+		};
+		delete metadataWithoutOverview.overview;
+		renderToStaticMarkup(
+			<RegistryMetadataProvider
+				registries={setup.registries}
+				metadata={metadataWithoutOverview}
+			>
+				<Capture />
+			</RegistryMetadataProvider>,
+		);
+		if (!captured) {
+			throw new Error('Registry metadata context was not captured.');
+		}
+		expect(captured.overviewContent.hero.title).toBe('');
+		expect(captured.overviewContent.hero.tokens).toEqual({});
+		expect(captured.overviewContent.sections).toEqual([]);
+		expect(captured.overviewContent.tokens).toEqual({});
 	});
 });
