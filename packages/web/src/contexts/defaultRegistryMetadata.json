@@ -1131,12 +1131,20 @@
 			"absorption": {
 				"label": "Absorption",
 				"icon": "🌀",
-				"description": "Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows."
+				"description": "Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.",
+				"displayAsPercent": true,
+				"format": {
+					"percent": true
+				}
 			},
 			"growth": {
 				"label": "Growth",
 				"icon": "📈",
-				"description": "Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase."
+				"description": "Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase.",
+				"displayAsPercent": true,
+				"format": {
+					"percent": true
+				}
 			},
 			"warWeariness": {
 				"label": "War Weariness",
