@@ -238,7 +238,7 @@ export class HttpGameApi implements GameApi {
 		const { sessionId } = request;
 
 		return this.#send(
-			`/sessions/${encodeURIComponent(sessionId)}/ai`,
+			`/sessions/${encodeURIComponent(sessionId)}/ai-turn`,
 			{
 				method: 'POST',
 				body: request,
