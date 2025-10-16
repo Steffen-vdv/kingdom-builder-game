@@ -60,3 +60,24 @@ message explaining what to change. A few examples:
 Following this checklist keeps the content registry clean and prevents confusing
 runtime failures. The tests in `packages/contents/tests/builder-validations.test.ts`
 cover the most common mistakes so new messages stay informative.
+
+## Happiness thresholds
+
+The happiness tier builder lives in `packages/contents/src/rules.ts`. When
+adding or updating tiers:
+
+- Declare each tier with `happinessTier()` and provide an inclusive `range`, the
+  passive payload, and any supporting metadata.
+- Use the helper modifiers to keep effects consistent:
+  - `incomeModifier(...)` adjusts gold gain.
+  - `buildingDiscountModifier(...)` lowers building costs.
+  - `growthBonusEffect(...)` grants Growth stat bonuses.
+- Register phase or upkeep skips through `.skipPhase(...)` / `.skipStep(...)`
+  so the engine can disable the appropriate cycle hooks without ad-hoc logic.
+- Metadata helpers such as `.growthBonusPct(...)`, `.disableGrowth()`, and
+  `.text(...)` drive UI copy. Keep removal text aligned with the range shown to
+  players.
+
+After changing ranges or metadata, update
+`tests/integration/happiness-tier-content.test.ts` so the snapshot reflects the
+new configuration.
