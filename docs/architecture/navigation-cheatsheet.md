@@ -18,6 +18,12 @@ Use this as a jumping-off point when you need to track how combat, passives, and
 - **`packages/engine/src/effects/result_mod.ts`** – Registers result/evaluation modifiers tied to passives; pair with the manager when adding custom stacking math.【F:packages/engine/src/effects/result_mod.ts†L1-L55】
 - **Preload helpers** – Pull passive templates from `@kingdom-builder/contents` (e.g., tier definitions, passive registries) or seed them via `createContentFactory()` before tests so modifiers have ids and icons ready.
 
+## Happiness Thresholds
+
+- **`packages/engine/src/services/services.ts`** – `handleTieredResourceChange` swaps passive stacks when happiness crosses a tier boundary and applies enter/exit effects plus passive metadata. Call `initializeTierPassives` after bootstrapping sessions so cached stacks reflect the starting happiness value.【F:packages/engine/src/services/services.ts†L1-L135】
+- **`packages/web/src/components/player/PassiveDisplay.tsx`** – Reads the tiered resource metadata to highlight the active tier and surface removal copy in hover tooltips. Keep summary tokens in tier definitions aligned with the UI expectations.【F:packages/web/src/components/player/PassiveDisplay.tsx†L76-L190】
+- **`tests/integration/happiness-tier-content.test.ts`** – Snapshot guard that verifies tier metadata, passive payloads, and skip markers stay in sync. Update it whenever tier ranges, effects, or text change.【F:tests/integration/happiness-tier-content.test.ts†L1-L214】
+
 ## Server Session Management
 
 - **`packages/server/src/session/SessionManager.ts`** – Source of truth for creating, caching, and snapshotting engine sessions; clones registries and merges optional overrides on boot.【F:packages/server/src/session/SessionManager.ts†L1-L126】
