@@ -1,13 +1,26 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+	type Dispatch,
+	type SetStateAction,
+} from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupChoiceMap,
 	ActionEffectGroupOption,
 } from '@kingdom-builder/protocol';
-import { type Summary } from '../../translation';
+import { type Summary, type TranslationContext } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import GenericActionCard from './GenericActionCard';
-import { toPerformableAction, type Action, type DisplayPlayer } from './types';
+import {
+	toPerformableAction,
+	type Action,
+	type DisplayPlayer,
+	type HoverCardData,
+} from './types';
 import type { ResourceDescriptorSelector } from './utils';
 
 export interface PendingActionState {
@@ -16,6 +29,90 @@ export interface PendingActionState {
 	step: number;
 	params: Record<string, unknown>;
 	choices: ActionEffectGroupChoiceMap;
+}
+
+interface GenericActionEntryProps {
+	action: Action;
+	summaries: Map<string, Summary>;
+	player: DisplayPlayer;
+	canInteract: boolean;
+	pending: PendingActionState | null;
+	setPending: Dispatch<SetStateAction<PendingActionState | null>>;
+	cancelPending: () => void;
+	beginSelection: (action: Action, groups: ActionEffectGroup[]) => void;
+	handleOptionSelect: (
+		group: ActionEffectGroup,
+		option: ActionEffectGroupOption,
+		params?: Record<string, unknown>,
+	) => void;
+	translationContext: TranslationContext;
+	actionCostResource: string;
+	handlePerform: (
+		action: Action,
+		params?: Record<string, unknown>,
+	) => Promise<void>;
+	handleHoverCard: (data: HoverCardData) => void;
+	clearHoverCard: () => void;
+	formatRequirement: (requirement: string) => string;
+	selectResourceDescriptor: ResourceDescriptorSelector;
+	onTotalChange: (actionId: string, total: number | null) => void;
+}
+
+function GenericActionEntry({
+	action,
+	summaries,
+	player,
+	canInteract,
+	pending,
+	setPending,
+	cancelPending,
+	beginSelection,
+	handleOptionSelect,
+	translationContext,
+	actionCostResource,
+	handlePerform,
+	handleHoverCard,
+	clearHoverCard,
+	formatRequirement,
+	selectResourceDescriptor,
+	onTotalChange,
+}: GenericActionEntryProps) {
+	const metadata = useActionMetadata({ actionId: action.id });
+	const total = useMemo(() => {
+		if (!metadata.costs) {
+			return null;
+		}
+		return Object.entries(metadata.costs).reduce((sum, [resourceKey, cost]) => {
+			if (resourceKey === actionCostResource) {
+				return sum;
+			}
+			return sum + (cost ?? 0);
+		}, 0);
+	}, [metadata.costs, actionCostResource]);
+	useEffect(() => {
+		onTotalChange(action.id, total);
+	}, [action.id, total, onTotalChange]);
+	return (
+		<GenericActionCard
+			action={action}
+			metadata={metadata}
+			summaries={summaries}
+			player={player}
+			canInteract={canInteract}
+			pending={pending}
+			setPending={setPending}
+			cancelPending={cancelPending}
+			beginSelection={beginSelection}
+			handleOptionSelect={handleOptionSelect}
+			translationContext={translationContext}
+			actionCostResource={actionCostResource}
+			handlePerform={handlePerform}
+			handleHoverCard={handleHoverCard}
+			clearHoverCard={clearHoverCard}
+			formatRequirement={formatRequirement}
+			selectResourceDescriptor={selectResourceDescriptor}
+		/>
+	);
 }
 
 function GenericActions({
@@ -32,7 +129,6 @@ function GenericActions({
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
 	const {
-		session,
 		sessionView,
 		translationContext,
 		handlePerform,
@@ -161,40 +257,48 @@ function GenericActions({
 				return null;
 			});
 		},
-		[handlePerform],
+		[performAction],
 	);
 
-	const entries = useMemo(() => {
-		return actions
-			.map((action) => {
-				const costBag = session.getActionCosts(action.id);
-				const costs: Record<string, number> = {};
-				for (const [resourceKey, cost] of Object.entries(costBag)) {
-					costs[resourceKey] = cost ?? 0;
+	const [actionTotals, setActionTotals] = useState<
+		Record<string, number | null>
+	>({});
+	const handleTotalChange = useCallback(
+		(actionId: string, total: number | null) => {
+			setActionTotals((previous) => {
+				if (previous[actionId] === total) {
+					return previous;
 				}
-				const total = Object.entries(costs).reduce(
-					(sum, [resourceKey, cost]) => {
-						if (resourceKey === actionCostResource) {
-							return sum;
-						}
-						return sum + (cost ?? 0);
-					},
-					0,
-				);
-				const groups = session.getActionOptions(action.id);
-				return { action, costs, total, groups };
+				return { ...previous, [actionId]: total };
+			});
+		},
+		[],
+	);
+
+	const sortedActions = useMemo(() => {
+		return actions
+			.map((action, index) => ({
+				action,
+				index,
+				total: actionTotals[action.id],
+			}))
+			.sort((first, second) => {
+				const firstValue = first.total ?? Number.POSITIVE_INFINITY;
+				const secondValue = second.total ?? Number.POSITIVE_INFINITY;
+				if (firstValue !== secondValue) {
+					return firstValue - secondValue;
+				}
+				return first.index - second.index;
 			})
-			.sort((first, second) => first.total - second.total);
-	}, [actions, session, actionCostResource]);
+			.map((entry) => entry.action);
+	}, [actions, actionTotals]);
 
 	return (
 		<>
-			{entries.map(({ action, costs, groups }) => (
-				<GenericActionCard
+			{sortedActions.map((action) => (
+				<GenericActionEntry
 					key={action.id}
 					action={action}
-					costs={costs}
-					groups={groups}
 					summaries={summaries}
 					player={player}
 					canInteract={canInteract}
@@ -203,7 +307,6 @@ function GenericActions({
 					cancelPending={cancelPending}
 					beginSelection={beginSelection}
 					handleOptionSelect={handleOptionSelect}
-					session={session}
 					translationContext={translationContext}
 					actionCostResource={actionCostResource}
 					handlePerform={performAction}
@@ -211,6 +314,7 @@ function GenericActions({
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}
 					selectResourceDescriptor={selectResourceDescriptor}
+					onTotalChange={handleTotalChange}
 				/>
 			))}
 		</>

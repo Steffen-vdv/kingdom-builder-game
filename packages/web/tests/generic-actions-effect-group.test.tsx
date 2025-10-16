@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
 import GenericActions from '../src/components/actions/GenericActions';
@@ -16,6 +17,20 @@ import {
 } from './helpers/sessionFixtures';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
+import { RemoteSessionAdapter } from '../src/state/remoteSessionAdapter';
+import { createMetadataKey } from '../src/state/actionMetadataKey';
+import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
+} from '@kingdom-builder/protocol/session';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { GameApi } from '../src/services/gameApi';
+import {
+	loadActionCosts,
+	loadActionOptions,
+	loadActionRequirements,
+} from '../src/state/sessionSdk';
 const getRequirementIconsMock = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => getRequirementIconsMock(...args),
@@ -24,6 +39,10 @@ const describeContentMock = vi.fn(() => []);
 const summarizeContentMock = vi.fn(() => []);
 const logContentMock = vi.fn(() => []);
 const splitSummaryMock = vi.fn(() => ({ effects: [], description: undefined }));
+
+const mockActionCosts = new Map<string, SessionActionCostMap>();
+const mockActionRequirements = new Map<string, SessionActionRequirementList>();
+const mockActionOptions = new Map<string, ActionEffectGroup[]>();
 
 vi.mock('../src/translation', async () => {
 	const actual = (await vi.importActual(
@@ -48,6 +67,45 @@ vi.mock('../src/translation/content', async () => {
 		describeContent: (...args: unknown[]) => describeContentMock(...args),
 		summarizeContent: (...args: unknown[]) => summarizeContentMock(...args),
 		logContent: (...args: unknown[]) => logContentMock(...args),
+	};
+});
+
+vi.mock('../src/state/sessionSdk', async () => {
+	const actual = (await vi.importActual('../src/state/sessionSdk')) as Record<
+		string,
+		unknown
+	>;
+	return {
+		...actual,
+		loadActionCosts: vi.fn(
+			(
+				_sessionId: string,
+				actionId: string,
+				params?: ActionParametersPayload,
+			) => {
+				const key = createMetadataKey(actionId, params);
+				const costs = mockActionCosts.get(key) ?? {};
+				mockGame.session.setActionCosts(actionId, costs, params);
+				return Promise.resolve(costs);
+			},
+		),
+		loadActionRequirements: vi.fn(
+			(
+				_sessionId: string,
+				actionId: string,
+				params?: ActionParametersPayload,
+			) => {
+				const key = createMetadataKey(actionId, params);
+				const requirements = mockActionRequirements.get(key) ?? [];
+				mockGame.session.setActionRequirements(actionId, requirements, params);
+				return Promise.resolve(requirements);
+			},
+		),
+		loadActionOptions: vi.fn((_sessionId: string, actionId: string) => {
+			const groups = mockActionOptions.get(actionId) ?? [];
+			mockGame.session.setActionOptions(actionId, groups);
+			return Promise.resolve(groups);
+		}),
 	};
 });
 
@@ -155,11 +213,16 @@ function createMockGame() {
 	);
 	const sessionRegistries = registries;
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
-	const session = {
-		getActionCosts: vi.fn(),
-		getActionRequirements: vi.fn(),
-		getActionOptions: vi.fn(),
-	} as const;
+	const sessionId = 'session-generic-actions';
+	const session = new RemoteSessionAdapter(sessionId, {
+		ensureGameApi: vi.fn(() => ({}) as GameApi),
+		runAiTurn: vi.fn().mockResolvedValue({
+			sessionId,
+			snapshot: sessionState,
+			registries,
+			ranTurn: false,
+		}),
+	});
 	return {
 		...createActionsPanelState({
 			actionCostResource,
@@ -167,6 +230,7 @@ function createMockGame() {
 		}),
 		logOverflowed: false,
 		session,
+		sessionId,
 		sessionState,
 		sessionView,
 		translationContext,
@@ -190,56 +254,47 @@ vi.mock('../src/state/GameContext', () => ({
 
 describe('GenericActions effect group handling', () => {
 	beforeEach(() => {
+		mockActionCosts.clear();
+		mockActionRequirements.clear();
+		mockActionOptions.clear();
 		mockGame = createMockGame();
-		mockGame.session.getActionCosts.mockReset();
-		mockGame.session.getActionRequirements.mockReset();
-		mockGame.session.getActionOptions.mockReset();
+		vi.mocked(loadActionCosts).mockClear();
+		vi.mocked(loadActionRequirements).mockClear();
+		vi.mocked(loadActionOptions).mockClear();
 		getRequirementIconsMock.mockReset();
 		describeContentMock.mockReset();
 		summarizeContentMock.mockReset();
 		logContentMock.mockReset();
 		splitSummaryMock.mockReset();
-
-		mockGame.session.getActionCosts.mockImplementation(() => ({
+		const royalKey = createMetadataKey(
+			mockGame.actionReferences.royalDecree.id,
+			undefined,
+		);
+		mockActionCosts.set(royalKey, {
 			[mockGame.actionCostResource]: 1,
 			[mockGame.secondaryResource]: 12,
-		}));
-		mockGame.session.getActionRequirements.mockImplementation(() => []);
-		getRequirementIconsMock.mockImplementation(() => []);
-		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
-			if (type === 'action' && id === mockGame.actionReferences.develop.id) {
-				return ['🏠 House'];
-			}
-			return [];
 		});
-		mockGame.session.getActionOptions.mockImplementation((actionId: string) => {
-			if (actionId !== mockGame.actionReferences.royalDecree.id) {
-				return [];
-			}
-			const groups =
-				mockGame.actionReferences.royalDecree.definition.effects?.filter(
-					(
-						effect,
-					): effect is {
-						id?: string;
-						title?: string;
-						layout?: string;
-						options?: ReadonlyArray<{
-							id: string;
-							icon?: string;
-							actionId?: string;
-							params?: Record<string, unknown>;
-						}>;
-					} => {
-						return Array.isArray((effect as { options?: unknown[] }).options);
-					},
-				);
-			const primaryGroup = groups?.find((group) => group.options?.length);
-			const primaryOption = primaryGroup?.options?.[0];
-			if (!primaryGroup || !primaryOption) {
-				return [];
-			}
-			return [
+		mockActionRequirements.set(royalKey, []);
+		const groups =
+			mockGame.actionReferences.royalDecree.definition.effects?.filter(
+				(
+					effect,
+				): effect is {
+					id?: string;
+					title?: string;
+					layout?: string;
+					options?: ReadonlyArray<{
+						id: string;
+						icon?: string;
+						actionId?: string;
+						params?: Record<string, unknown>;
+					}>;
+				} => Array.isArray((effect as { options?: unknown[] }).options),
+			) ?? [];
+		const primaryGroup = groups.find((group) => group.options?.length);
+		const primaryOption = primaryGroup?.options?.[0];
+		if (primaryGroup && primaryOption) {
+			mockActionOptions.set(mockGame.actionReferences.royalDecree.id, [
 				{
 					id: primaryGroup.id ?? 'royal_decree_develop',
 					title: primaryGroup.title ?? 'Choose one:',
@@ -256,7 +311,27 @@ describe('GenericActions effect group handling', () => {
 						},
 					],
 				},
-			];
+			]);
+		}
+		const developKey = createMetadataKey(
+			mockGame.actionReferences.develop.id,
+			undefined,
+		);
+		mockActionCosts.set(developKey, {
+			[mockGame.actionCostResource]: 2,
+		});
+		mockActionRequirements.set(developKey, []);
+		const developWithParamsKey = createMetadataKey(
+			mockGame.actionReferences.develop.id,
+			{ landId: 'A-L2' },
+		);
+		mockActionRequirements.set(developWithParamsKey, []);
+		getRequirementIconsMock.mockImplementation(() => []);
+		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
+			if (type === 'action' && id === mockGame.actionReferences.develop.id) {
+				return ['🏠 House'];
+			}
+			return [];
 		});
 	});
 
@@ -300,7 +375,29 @@ describe('GenericActions effect group handling', () => {
 			</RegistryMetadataProvider>,
 		);
 
-		const actionButton = screen.getByRole('button', { name: /Royal Decree/ });
+		const actionButton = await screen.findByRole('button', {
+			name: /Royal Decree/,
+		});
+		await waitFor(() => {
+			expect(loadActionCosts).toHaveBeenCalledWith(
+				mockGame.sessionId,
+				action.id,
+				undefined,
+				expect.any(Object),
+			);
+			expect(loadActionRequirements).toHaveBeenCalledWith(
+				mockGame.sessionId,
+				action.id,
+				undefined,
+				expect.any(Object),
+			);
+			expect(loadActionOptions).toHaveBeenCalledWith(
+				mockGame.sessionId,
+				action.id,
+				expect.any(Object),
+			);
+			expect(actionButton).not.toBeDisabled();
+		});
 		fireEvent.click(actionButton);
 
 		const optionButton = await screen.findByRole('button', {

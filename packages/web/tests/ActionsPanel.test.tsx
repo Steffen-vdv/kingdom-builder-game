@@ -8,6 +8,12 @@ import { translateRequirementFailure } from '../src/translation';
 import { createActionsPanelGame } from './helpers/actionsPanel';
 import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { ActionEffectGroup } from '@kingdom-builder/protocol';
+import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
+} from '@kingdom-builder/protocol/session';
 
 const requirementIconsMock = vi.fn();
 
@@ -27,6 +33,51 @@ vi.mock('../src/translation', () => ({
 			`translated:${failure.requirement.method ?? 'unknown'}`,
 	),
 }));
+
+vi.mock('../src/state/sessionSdk', async () => {
+	const actual = (await vi.importActual('../src/state/sessionSdk')) as Record<
+		string,
+		unknown
+	>;
+	return {
+		...actual,
+		loadActionCosts: vi.fn(
+			(
+				_sessionId: string,
+				actionId: string,
+				params?: ActionParametersPayload,
+			) => {
+				const costs = mockGame.metadata.costMap.get(actionId) ?? {};
+				mockGame.session.setActionCosts(actionId, costs, params);
+				return Promise.resolve(costs as SessionActionCostMap);
+			},
+		),
+		loadActionRequirements: vi.fn(
+			(
+				_sessionId: string,
+				actionId: string,
+				params?: ActionParametersPayload,
+			) => {
+				const requirements =
+					mockGame.metadata.requirementFailures.get(actionId) ?? [];
+				mockGame.session.setActionRequirements(
+					actionId,
+					requirements as SessionActionRequirementList,
+					params,
+				);
+				return Promise.resolve(requirements as SessionActionRequirementList);
+			},
+		),
+		loadActionOptions: vi.fn((_sessionId: string, actionId: string) => {
+			const groups = mockGame.actionOptions.get(actionId) ?? [];
+			mockGame.session.setActionOptions(
+				actionId,
+				groups as ActionEffectGroup[],
+			);
+			return Promise.resolve(groups as ActionEffectGroup[]);
+		}),
+	};
+});
 
 const translateRequirementFailureMock = vi.mocked(translateRequirementFailure);
 

@@ -1,4 +1,4 @@
-import React, { type Dispatch, type SetStateAction } from 'react';
+import React, { useMemo, type Dispatch, type SetStateAction } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupOption,
@@ -23,15 +23,14 @@ import {
 	toPerformableAction,
 	type Action,
 	type DisplayPlayer,
-	type GameEngineApi,
 	type HoverCardData,
 } from './types';
 import { normalizeActionFocus } from './types';
+import type { UseActionMetadataResult } from '../../state/useActionMetadata';
 
 interface GenericActionCardProps {
 	action: Action;
-	costs: Record<string, number>;
-	groups: ActionEffectGroup[];
+	metadata: UseActionMetadataResult;
 	summaries: Map<string, Summary>;
 	player: DisplayPlayer;
 	canInteract: boolean;
@@ -44,7 +43,6 @@ interface GenericActionCardProps {
 		option: ActionEffectGroupOption,
 		params?: Record<string, unknown>,
 	) => void;
-	session: GameEngineApi['session'];
 	translationContext: TranslationContext;
 	actionCostResource: string;
 	handlePerform: (
@@ -59,8 +57,7 @@ interface GenericActionCardProps {
 
 function GenericActionCard({
 	action,
-	costs,
-	groups,
+	metadata,
 	summaries,
 	player,
 	canInteract,
@@ -69,7 +66,6 @@ function GenericActionCard({
 	cancelPending,
 	beginSelection,
 	handleOptionSelect,
-	session,
 	translationContext,
 	actionCostResource,
 	handlePerform,
@@ -78,19 +74,41 @@ function GenericActionCard({
 	formatRequirement,
 	selectResourceDescriptor,
 }: GenericActionCardProps) {
-	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		formatRequirement(translateRequirementFailure(failure, translationContext)),
-	);
+	const costs = useMemo(() => {
+		if (!metadata.costs) {
+			return {} as Record<string, number>;
+		}
+		const entries = Object.entries(metadata.costs).map(
+			([resourceKey, cost]) => [resourceKey, cost ?? 0],
+		);
+		return Object.fromEntries(entries) as Record<string, number>;
+	}, [metadata.costs]);
+	const costsReady = metadata.costs !== undefined;
+	const requirementsReady = metadata.requirements !== undefined;
+	const requirementFailures = metadata.requirements ?? [];
+	const requirements = requirementsReady
+		? requirementFailures.map((failure) =>
+				formatRequirement(
+					translateRequirementFailure(failure, translationContext),
+				),
+			)
+		: ['Loading requirements…'];
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
-	const canPay = Object.entries(costs).every(
-		([resourceKey, cost]) =>
-			(player.resources[resourceKey] || 0) >= (cost ?? 0),
-	);
-	const meetsRequirements = requirements.length === 0;
+	const canPay = costsReady
+		? Object.entries(costs).every(
+				([resourceKey, cost]) =>
+					(player.resources[resourceKey] || 0) >= (cost ?? 0),
+			)
+		: false;
+	const meetsRequirements =
+		requirementsReady && requirementFailures.length === 0;
 	const summary = summaries.get(action.id);
 	const implemented = (summary?.length ?? 0) > 0;
+	const groups = metadata.groups ?? [];
+	const groupsReady = metadata.groups !== undefined;
+	const metadataReady = costsReady && requirementsReady && groupsReady;
 	const baseEnabled = [
+		metadataReady,
 		canPay,
 		meetsRequirements,
 		canInteract,
@@ -101,23 +119,25 @@ function GenericActionCard({
 	if (isPending) {
 		cardEnabled = true;
 	}
-	const insufficientTooltip = formatMissingResources(
-		costs,
-		player.resources,
-		selectResourceDescriptor,
-	);
+	const insufficientTooltip = costsReady
+		? formatMissingResources(costs, player.resources, selectResourceDescriptor)
+		: 'Loading costs…';
 	const requirementText = requirements.join(', ');
 	const title = !implemented
 		? 'Not implemented yet'
-		: !meetsRequirements
-			? requirementText
-			: !canPay
-				? (insufficientTooltip ?? 'Cannot pay costs')
-				: undefined;
+		: !requirementsReady
+			? 'Loading requirements…'
+			: !costsReady
+				? 'Loading costs…'
+				: !meetsRequirements
+					? requirementText
+					: !canPay
+						? (insufficientTooltip ?? 'Cannot pay costs')
+						: undefined;
 	const hoverBackground =
 		'bg-gradient-to-br from-white/80 to-white/60 ' +
 		'dark:from-slate-900/80 dark:to-slate-900/60';
-	const hasGroups = groups.length > 0;
+	const hasGroups = groupsReady && groups.length > 0;
 	const currentGroup = isPending ? pending?.groups[pending.step] : undefined;
 	const stepCount = isPending && hasGroups ? groups.length : undefined;
 	const stepIndex = stepCount
@@ -126,7 +146,6 @@ function GenericActionCard({
 	const optionCards = useEffectGroupOptions({
 		currentGroup,
 		pendingParams: pending?.params,
-		session,
 		translationContext,
 		formatRequirement,
 		handleOptionSelect,
@@ -167,7 +186,7 @@ function GenericActionCard({
 				if (!canInteract || !baseEnabled) {
 					return;
 				}
-				if (groups.length > 0) {
+				if (groupsReady && groups.length > 0) {
 					beginSelection(action, groups);
 					return;
 				}
