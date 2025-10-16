@@ -1,4 +1,3 @@
-import { RESOURCE_TRANSFER_ICON } from '@kingdom-builder/contents';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
 	RESULT_EVENT_RESOLVE,
@@ -26,6 +25,7 @@ import {
 	selectModifierInfo,
 	selectResourceDescriptor,
 } from '../registrySelectors';
+import { RESOURCE_TRANSFER_ICON } from '../../../icons';
 
 interface ModifierEvalHandler {
 	summarize: (
@@ -73,6 +73,11 @@ function getResultModifierLabel(context: TranslationContext) {
 
 function getCostModifierLabel(context: TranslationContext) {
 	return getModifierDescriptor(context, 'cost', 'Cost Adjustment');
+}
+
+function getTransferModifierIcon(context: TranslationContext) {
+	const descriptor = selectModifierInfo(context, 'transfer');
+	return descriptor.icon || RESOURCE_TRANSFER_ICON;
 }
 
 function formatCostEffect(
@@ -178,18 +183,24 @@ registerModifierEvalHandler('transfer_pct', {
 		const sign = amount >= 0 ? '+' : '';
 		const descriptor = getResultModifierLabel(context);
 		const targetSummaryLabel = `${descriptor.icon}${target.summaryLabel}`;
-		const transferAdjustment = `${RESOURCE_TRANSFER_ICON}${sign}${Math.abs(amount)}%`;
+		const transferIcon = getTransferModifierIcon(context);
+		const transferAdjustment = `${transferIcon}${sign}${Math.abs(amount)}%`;
 		return [`${targetSummaryLabel}: ${transferAdjustment}`];
 	},
 	describe: (effect, evaluation, context) => {
 		const target = resolveTransferModifierTarget(effect, evaluation, context);
 		const amount = Number(effect.params?.['adjust'] ?? 0);
 		const descriptor = getResultModifierLabel(context);
+		const transferIcon = getTransferModifierIcon(context);
+		const transferIconText = transferIcon ? `${transferIcon} ` : '';
+		const transferEffectText = `${transferIconText}${increaseOrDecrease(
+			amount,
+		)} transfer by ${Math.abs(amount)}%`;
 		const modifierDescription = formatResultModifierClause(
 			buildModifierLabelText(descriptor),
 			target.clauseTarget,
 			RESULT_EVENT_TRANSFER,
-			`${RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,
+			transferEffectText,
 		);
 		const entries: Summary = [modifierDescription];
 		if (target.actionId) {

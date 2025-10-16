@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EffectDef } from '@kingdom-builder/engine';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
+import { increaseOrDecrease } from '../src/translation/effects/helpers';
 import { registerModifierEvalHandler } from '../src/translation/effects/formatters/modifier';
 import {
 	createSnapshotPlayer,
@@ -259,6 +260,10 @@ describe('modifier evaluation handlers', () => {
 		const summary = summarizeEffects([eff], translationContext);
 		const description = describeEffects([eff], translationContext);
 		const resultDescriptor = selectModifierInfo(translationContext, 'result');
+		const transferDescriptor = selectModifierInfo(
+			translationContext,
+			'transfer',
+		);
 		const actionInfo = translationContext.actions.get(actionId);
 		const actionIcon =
 			actionInfo?.icon && actionInfo.icon.trim().length > 0
@@ -272,14 +277,17 @@ describe('modifier evaluation handlers', () => {
 		expect(
 			summary[0].startsWith(`${resultDescriptor.icon}${actionIcon}: `),
 		).toBe(true);
-		expect(summary[0]).toMatch(/\+10%$/u);
+		expect(summary[0]).toContain(`${transferDescriptor.icon}+10%`);
 		const primaryLine = description[0];
 		expect(
 			primaryLine.startsWith(
 				`${joinParts(resultDescriptor.icon, resultDescriptor.label)} on ${targetLabel}:`,
 			),
 		).toBe(true);
-		expect(primaryLine).toMatch(/transfers.+10%/u);
+		const expectedTransferText = `${transferDescriptor.icon} ${increaseOrDecrease(
+			10,
+		)} transfer by 10%`;
+		expect(primaryLine).toContain(expectedTransferText);
 		const card = description[1];
 		expect(card).toMatchObject({
 			title: targetLabel,
@@ -301,6 +309,11 @@ describe('modifier evaluation handlers', () => {
 		const resultDescriptor = selectModifierInfo(translationContext, 'result');
 		expect(resultDescriptor.icon).toBeTruthy();
 		expect(resultDescriptor.label).toBeTruthy();
+		const transferDescriptor = selectModifierInfo(
+			translationContext,
+			'transfer',
+		);
+		expect(transferDescriptor.icon).toBeTruthy();
 		const eff: EffectDef = {
 			type: 'result_mod',
 			method: 'add',

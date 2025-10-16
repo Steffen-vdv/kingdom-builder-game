@@ -7,6 +7,7 @@ import type {
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../../state/sessionRegistries';
+import { RESOURCE_TRANSFER_ICON } from '../../icons';
 import type {
 	TranslationAssets,
 	TranslationIconLabel,
@@ -42,6 +43,10 @@ const DEFAULT_UPKEEP_INFO = Object.freeze({
 const DEFAULT_MODIFIER_INFO = Object.freeze({
 	cost: Object.freeze({ icon: '💲', label: 'Cost Adjustment' }),
 	result: Object.freeze({ icon: '✨', label: 'Outcome Adjustment' }),
+	transfer: Object.freeze({
+		icon: RESOURCE_TRANSFER_ICON,
+		label: 'Transfer Adjustment',
+	}),
 }) satisfies Readonly<Record<string, TranslationModifierInfo>>;
 
 const formatRemoval = (description: string) =>

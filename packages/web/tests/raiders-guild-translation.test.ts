@@ -8,6 +8,7 @@ import {
 import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../src/icons';
 import { increaseOrDecrease, signed } from '../src/translation/effects/helpers';
 import { formatTargetLabel } from '../src/translation/effects/formatters/modifier_helpers';
+import { selectModifierInfo } from '../src/translation/effects/registrySelectors';
 import {
 	collectText,
 	createRaidersGuildContext,
@@ -52,6 +53,8 @@ describe('raiders guild translation', () => {
 			icon: '✨',
 			label: 'Outcome Adjustment',
 		};
+		const transferDescriptor = selectModifierInfo(translation, 'transfer');
+		expect(transferDescriptor.icon).toBe(SYNTHETIC_RESOURCE_TRANSFER_ICON);
 		const summary = describeContent(
 			'building',
 			ids.transferBuilding,
@@ -64,7 +67,7 @@ describe('raiders guild translation', () => {
 		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
 			raid.icon ?? '',
 			raid.name,
-		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${SYNTHETIC_RESOURCE_TRANSFER_ICON} ${increaseOrDecrease(
+		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${transferDescriptor.icon} ${increaseOrDecrease(
 			adjust,
 		)} transfer by ${Math.abs(adjust)}%`;
 		expect(collectText(effects)).toContain(clause);

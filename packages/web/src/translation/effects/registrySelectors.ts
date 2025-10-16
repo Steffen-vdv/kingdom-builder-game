@@ -3,7 +3,12 @@ import {
 	type PopulationRoleId,
 	type StatKey,
 } from '@kingdom-builder/contents';
-import type { TranslationContext, TranslationAssets } from '../context';
+import type {
+	TranslationAssets,
+	TranslationContext,
+	TranslationModifierInfo,
+} from '../context';
+import { RESOURCE_TRANSFER_ICON } from '../../icons';
 import { humanizeIdentifier } from './stringUtils';
 
 export type RegistryDescriptor = { icon: string; label: string };
@@ -20,6 +25,8 @@ const DEFAULT_COST_ICON = '💲';
 const DEFAULT_COST_LABEL = 'Cost Adjustment';
 const DEFAULT_RESULT_ICON = '✨';
 const DEFAULT_RESULT_LABEL = 'Outcome Adjustment';
+const DEFAULT_TRANSFER_ICON = RESOURCE_TRANSFER_ICON;
+const DEFAULT_TRANSFER_LABEL = 'Transfer Adjustment';
 
 const DEFAULT_KEY = Symbol('default');
 
@@ -194,25 +201,56 @@ const modifierCache: CacheStore<Record<string, RegistryDescriptor>> =
 const modifierFallbackCache: CacheFallback<Record<string, RegistryDescriptor>> =
 	new Map();
 
+const DEFAULT_MODIFIER_DESCRIPTOR_MAP: ReadonlyMap<string, RegistryDescriptor> =
+	new Map([
+		['cost', { icon: DEFAULT_COST_ICON, label: DEFAULT_COST_LABEL }],
+		['result', { icon: DEFAULT_RESULT_ICON, label: DEFAULT_RESULT_LABEL }],
+		[
+			'transfer',
+			{ icon: DEFAULT_TRANSFER_ICON, label: DEFAULT_TRANSFER_LABEL },
+		],
+	] satisfies ReadonlyArray<readonly [string, RegistryDescriptor]>);
+
 function resolveModifierFallback(context: ContextWithAssets | undefined) {
 	const assets = context?.assets;
-	const cost = assets?.modifiers?.cost ?? {};
-	const result = assets?.modifiers?.result ?? {};
-	return {
-		cost: {
-			icon: coerceIcon(cost.icon, DEFAULT_COST_ICON),
-			label: coerceLabel(cost.label, DEFAULT_COST_LABEL),
-		},
-		result: {
-			icon: coerceIcon(result.icon, DEFAULT_RESULT_ICON),
-			label: coerceLabel(result.label, DEFAULT_RESULT_LABEL),
-		},
-	};
+	const assetDescriptors =
+		assets?.modifiers ??
+		({} as Readonly<Record<string, TranslationModifierInfo>>);
+	const keys = new Set<string>([
+		...DEFAULT_MODIFIER_DESCRIPTOR_MAP.keys(),
+		...Object.keys(assetDescriptors),
+	]);
+	const descriptors: Record<string, RegistryDescriptor> = {};
+	for (const key of keys) {
+		const assetDescriptor: TranslationModifierInfo | undefined =
+			assetDescriptors[key];
+		const fallback = DEFAULT_MODIFIER_DESCRIPTOR_MAP.get(key);
+		const fallbackLabel = fallback?.label ?? humanizeIdentifier(key) ?? key;
+		const fallbackIcon = fallback?.icon ?? '';
+		descriptors[key] = {
+			icon: coerceIcon(assetDescriptor?.icon, fallbackIcon),
+			label: coerceLabel(assetDescriptor?.label, fallbackLabel),
+		};
+	}
+	return descriptors;
+}
+
+function resolveModifierFallbackLabel(kind: string) {
+	const fallback = DEFAULT_MODIFIER_DESCRIPTOR_MAP.get(kind);
+	if (fallback) {
+		return fallback.label;
+	}
+	return humanizeIdentifier(kind) ?? kind;
+}
+
+function resolveModifierFallbackIcon(kind: string) {
+	const fallback = DEFAULT_MODIFIER_DESCRIPTOR_MAP.get(kind);
+	return fallback ? fallback.icon : '';
 }
 
 export function selectModifierInfo(
 	context: ContextWithAssets,
-	kind: 'cost' | 'result',
+	kind: string,
 ): RegistryDescriptor {
 	const cache = getCacheEntry(context, modifierCache, modifierFallbackCache);
 	const cacheKey = normalizeKey(undefined);
@@ -225,7 +263,10 @@ export function selectModifierInfo(
 	if (descriptor) {
 		return descriptor;
 	}
-	const fallback = resolveModifierFallback(context)[kind];
-	cache.set(cacheKey, { ...base, [kind]: fallback });
-	return fallback;
+	const fallbackDescriptor: RegistryDescriptor = {
+		icon: resolveModifierFallbackIcon(kind),
+		label: resolveModifierFallbackLabel(kind),
+	};
+	cache.set(cacheKey, { ...base, [kind]: fallbackDescriptor });
+	return fallbackDescriptor;
 }
