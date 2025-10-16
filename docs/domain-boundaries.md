@@ -5,6 +5,19 @@ collaborate inside Kingdom Builder. It focuses on responsibilities, sanctioned
 data exchange, and the invariants that the engine relies on when executing the
 game loop.
 
+## Post-Migration Reference
+
+The P1–P3 domain migration is complete and the detailed task journal now lives
+in `docs/domain-migration/handover-log.md`. Refer to the following live
+integration points when tracing current cross-domain behaviour:
+
+- Metadata context loaders and selectors:
+  `packages/web/src/contexts/RegistryMetadataContext.tsx` and companions.
+- Protocol schemas and DTO exports: `packages/protocol/src/session/index.ts`
+  (re-exported via `packages/protocol/src/index.ts`).
+- HTTP session gateway client: `packages/server/src/client/HttpSessionGateway.ts`
+  alongside its helper types.
+
 ## Responsibilities
 
 ### Content (`@kingdom-builder/contents`)
