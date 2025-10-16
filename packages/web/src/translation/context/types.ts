@@ -10,6 +10,7 @@ import type {
 	SessionPlayerId,
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
+import type { SessionMetadataFormat } from '@kingdom-builder/protocol/session';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that
@@ -26,6 +27,7 @@ export interface TranslationIconLabel {
 	label?: string;
 	description?: string;
 	displayAsPercent?: boolean;
+	format?: SessionMetadataFormat;
 }
 
 export interface TranslationModifierInfo {
@@ -48,6 +50,7 @@ export interface TranslationAssets {
 	readonly land: Readonly<TranslationIconLabel>;
 	readonly slot: Readonly<TranslationIconLabel>;
 	readonly passive: Readonly<TranslationIconLabel>;
+	readonly transfer: Readonly<TranslationIconLabel>;
 	readonly upkeep: Readonly<TranslationIconLabel>;
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
 	readonly triggers: Readonly<Record<string, TranslationTriggerAsset>>;

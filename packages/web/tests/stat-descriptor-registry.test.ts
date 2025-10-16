@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getStatBreakdownSummary, formatStatValue } from '../src/utils/stats';
+import { formatTriggerLabel } from '../src/utils/stats/descriptors';
 import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
@@ -97,6 +98,20 @@ function createDescriptorSetup(): DescriptorSetup {
 				label: 'Starlight',
 				icon: '✨',
 				description: 'Brilliant astral currency.',
+			},
+		},
+		stats: {
+			armyStrength: {
+				label: 'Steel Resolve',
+				icon: '⚔️',
+				description: 'Represents martial power.',
+			},
+			absorption: {
+				label: 'Prismatic Barrier',
+				icon: '🌈',
+				description: 'Absorbs incoming damage.',
+				displayAsPercent: true,
+				format: { percent: true },
 			},
 		},
 		triggers: {
@@ -340,6 +355,7 @@ describe('stat descriptor registry', () => {
 			'trigger',
 			triggerId,
 		);
+		expect(triggerLabel).toContain('Starlight Surge');
 		expect(triggerLine).toContain(triggerLabel);
 		const passiveLabel = formatKindLabel(translationContext, 'passive', '');
 		expect(passiveLine).toContain(passiveLabel);
@@ -352,7 +368,7 @@ describe('stat descriptor registry', () => {
 
 	it('falls back to ids and defaults when metadata is missing', () => {
 		const setup = createDescriptorSetup();
-		const { translationContext, primaryStatKey } = setup;
+		const { translationContext, primaryStatKey, triggerId } = setup;
 		const mutatedContext = {
 			...translationContext,
 			assets: {
@@ -373,6 +389,16 @@ describe('stat descriptor registry', () => {
 			'mystery-trigger',
 		);
 		expect(triggerFallback).toBe('mystery-trigger');
+		const formattedTrigger = formatTriggerLabel(
+			translationContext.assets,
+			triggerId,
+		);
+		expect(formattedTrigger).toBe('⚡ Starlight Surge');
+		const fallbackTrigger = formatTriggerLabel(
+			mutatedContext.assets,
+			'unknown-trigger',
+		);
+		expect(fallbackTrigger).toBe('unknown-trigger');
 		const phaseFallback = formatKindLabel(
 			mutatedContext,
 			'phase',

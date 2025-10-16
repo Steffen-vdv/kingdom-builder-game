@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import type {
+	SessionOverviewMetadata,
+	SessionOverviewTokenCategoryName,
+} from '@kingdom-builder/protocol/session';
+import type {
 	AssetMetadata,
 	AssetMetadataSelector,
 	DefinitionLookup,
@@ -8,16 +12,21 @@ import type {
 	PhaseMetadata,
 	RegistryMetadataDescriptor,
 } from '../../contexts/RegistryMetadataContext';
-import type { OverviewTokenCategoryName } from '@kingdom-builder/contents';
 
 export type TokenCandidateInput = string | ReadonlyArray<string>;
 
+type OverviewTokenCategoryName = SessionOverviewTokenCategoryName;
+type OverviewTokenMapShape = NonNullable<SessionOverviewMetadata['tokens']>;
 type OverviewTokenCategoryOverrides = Record<string, TokenCandidateInput>;
 type OverviewTokenCategoryConfig = Record<string, string[]>;
 type OverviewTokenConfigResolved = Record<
 	OverviewTokenCategoryName,
 	OverviewTokenCategoryConfig
 >;
+
+type OverviewTokenOverrides = {
+	[Category in keyof OverviewTokenMapShape]?: OverviewTokenCategoryOverrides;
+};
 
 export interface OverviewTokenSources {
 	actions: DefinitionLookup<ActionConfig>;
@@ -209,9 +218,7 @@ export function mergeTokenCategory(
 	return result;
 }
 
-export type OverviewTokenConfig = Partial<
-	Record<OverviewTokenCategoryName, OverviewTokenCategoryOverrides>
->;
+export type OverviewTokenConfig = OverviewTokenOverrides;
 
 export function createDefaultTokenConfig(
 	sources: OverviewTokenSources,

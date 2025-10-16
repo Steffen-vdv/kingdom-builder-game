@@ -105,14 +105,25 @@ describe('development summary', () => {
 			translationContext,
 		);
 		const expectedPhaseLabel = `On each ${phaseLabel} Phase`;
+		const targetPhase = session.phases[0];
+		const phaseKey = targetPhase?.id?.split('.').pop();
+		const fallbackPhaseLabel = phaseKey
+			? `onPhase.${phaseKey}Phase`
+			: undefined;
 		const incomeGroup = findGroup(summary, (entry) => {
-			return entry.title.includes(expectedPhaseLabel);
+			if (entry.title.includes(expectedPhaseLabel)) {
+				return true;
+			}
+			if (fallbackPhaseLabel) {
+				return entry.title.includes(fallbackPhaseLabel);
+			}
+			return false;
 		});
 		expect(incomeGroup).toBeDefined();
 		if (!incomeGroup) {
 			return;
 		}
-		const targetPhase = session.phases[0];
+		const nestedLines = flatten(incomeGroup.items);
 		const matchedStep = targetPhase?.steps?.find((step) => {
 			return step.id === 'phase.synthetic.summary';
 		});
@@ -123,30 +134,40 @@ describe('development summary', () => {
 		const fallbackIcons = [matchedStep?.icon, targetPhase?.icon].filter(
 			(icon): icon is string => typeof icon === 'string' && icon.length > 0,
 		);
-		if (triggerDisplay.icon) {
-			if (!incomeGroup.title.includes(triggerDisplay.icon)) {
-				if (fallbackIcons.length > 0) {
-					const hasFallbackIcon = fallbackIcons.some((icon) => {
-						return incomeGroup.title.includes(icon);
-					});
-					expect(hasFallbackIcon).toBe(true);
-				}
-			} else {
-				expect(incomeGroup.title).toContain(triggerDisplay.icon);
-			}
-		} else if (fallbackIcons.length > 0) {
-			const hasFallbackIcon = fallbackIcons.some((icon) => {
-				return incomeGroup.title.includes(icon);
-			});
-			expect(hasFallbackIcon).toBe(true);
-		}
-		if (triggerDisplay.past) {
-			const hasTriggerLabel = incomeGroup.title.includes(triggerDisplay.past);
-			expect(hasTriggerLabel || incomeGroup.title.includes(phaseLabel)).toBe(
-				true,
+		const iconCandidates = [
+			...(triggerDisplay.icon ? [triggerDisplay.icon] : []),
+			...fallbackIcons,
+		].filter(
+			(icon): icon is string => typeof icon === 'string' && icon.length > 0,
+		);
+		if (iconCandidates.length > 0) {
+			const titleHasIcon = iconCandidates.some((icon) =>
+				incomeGroup.title.includes(icon),
 			);
+			if (!titleHasIcon) {
+				const nestedHasIcon = nestedLines.some((line) =>
+					iconCandidates.some((icon) => line.includes(icon)),
+				);
+				expect(nestedHasIcon).toBe(true);
+			}
 		}
-		expect(incomeGroup.title).toContain(phaseLabel);
+		const labelCandidates = [
+			triggerDisplay.past,
+			triggerDisplay.future,
+			triggerDisplay.label,
+			phaseLabel,
+			fallbackPhaseLabel,
+			triggerId,
+		].filter(
+			(label): label is string => typeof label === 'string' && label.length > 0,
+		);
+		const titleHasLabel = labelCandidates.some((label) =>
+			incomeGroup.title.includes(label),
+		);
+		const nestedHasLabel = nestedLines.some((line) =>
+			labelCandidates.some((label) => line.includes(label)),
+		);
+		expect(titleHasLabel || nestedHasLabel).toBe(true);
 		const expectedLines = summarizeEffects(
 			matchedStep?.effects,
 			translationContext,

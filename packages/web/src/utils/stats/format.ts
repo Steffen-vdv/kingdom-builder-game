@@ -9,8 +9,6 @@ interface FormattablePhaseStep extends TranslationPhaseStep {
 	title?: string;
 }
 
-type PercentMetadata = { displayAsPercent?: boolean };
-
 function resolvePhaseArguments(
 	phasesOrPhaseId: readonly TranslationPhase[] | string | undefined,
 	maybePhaseId?: string,
@@ -41,21 +39,20 @@ function resolvePhaseArguments(
 	};
 }
 
-function isPercentMetadata(value: unknown): value is PercentMetadata {
-	if (!value || typeof value !== 'object') {
-		return false;
-	}
-	const record = value as { displayAsPercent?: unknown };
-	return typeof record.displayAsPercent === 'boolean';
-}
-
 export function statDisplaysAsPercent(
 	key: string,
 	assets?: TranslationAssets,
 ): boolean {
 	const stat = assets?.stats?.[key];
-	if (isPercentMetadata(stat)) {
-		return Boolean(stat.displayAsPercent);
+	if (!stat) {
+		return false;
+	}
+	if (typeof stat.displayAsPercent === 'boolean') {
+		return stat.displayAsPercent;
+	}
+	const format = stat.format;
+	if (format && typeof format === 'object') {
+		return Boolean(format.percent);
 	}
 	return false;
 }

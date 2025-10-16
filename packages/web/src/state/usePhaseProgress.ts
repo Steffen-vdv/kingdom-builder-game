@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { advanceToActionPhase } from './usePhaseProgress.helpers';
 import { advanceSessionPhase } from './sessionSdk';
@@ -75,6 +75,12 @@ export function usePhaseProgress({
 		computePhaseState(sessionState, actionCostResource),
 	);
 
+	const sessionStateRef = useRef(sessionState);
+
+	useEffect(() => {
+		sessionStateRef.current = sessionState;
+	}, [sessionState]);
+
 	const applyPhaseSnapshot = useCallback(
 		(
 			snapshot: SessionSnapshot,
@@ -105,7 +111,7 @@ export function usePhaseProgress({
 
 	const runUntilActionPhaseCore = useCallback(() => {
 		const record = getSessionRecord(sessionId);
-		const latestSnapshot = record?.snapshot ?? sessionState;
+		const latestSnapshot = record?.snapshot ?? sessionStateRef.current;
 		return advanceToActionPhase({
 			sessionId,
 			initialSnapshot: latestSnapshot,
@@ -128,7 +134,6 @@ export function usePhaseProgress({
 		resourceKeys,
 		registries,
 		showResolution,
-		sessionState,
 	]);
 
 	const runUntilActionPhase = useCallback(

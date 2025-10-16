@@ -1,4 +1,3 @@
-import { type StatKey } from '@kingdom-builder/contents';
 import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatDiffCommon, iconLabel } from './shared';
 import { buildAttackSummaryBullet } from './summary';
@@ -7,28 +6,23 @@ import {
 	buildStandardEvaluationEntry,
 	defaultFortificationItems,
 } from './evaluation';
-import type { AttackTargetFormatter } from './types';
-import {
-	selectAttackDefaultStatKey,
-	selectAttackStatDescriptor,
-} from './registrySelectors';
+import type { AttackTargetFormatter, AttackStatKey } from './types';
+import { selectAttackStatDescriptor } from './registrySelectors';
+import { DEFAULT_ATTACK_POWER_STAT_KEY } from './defaultKeys';
 
 const statFormatter: AttackTargetFormatter<{
 	type: 'stat';
-	key: StatKey;
+	key: AttackStatKey;
 }> = {
 	type: 'stat',
-	parseEffectTarget(effect) {
+	parseEffectTarget(effect, _context) {
 		const targetParam = effect.params?.['target'] as
-			| { type: 'stat'; key: StatKey }
+			| { type: 'stat'; key: AttackStatKey }
 			| undefined;
 		if (targetParam?.type === 'stat') {
 			return targetParam;
 		}
-		const fallbackKey = selectAttackDefaultStatKey();
-		if (!fallbackKey) {
-			throw new Error('No stat definitions available');
-		}
+		const fallbackKey = DEFAULT_ATTACK_POWER_STAT_KEY;
 		return { type: 'stat', key: fallbackKey };
 	},
 	normalizeLogTarget(target) {
@@ -36,10 +30,10 @@ const statFormatter: AttackTargetFormatter<{
 			AttackLog['evaluation']['target'],
 			{ type: 'stat' }
 		>;
-		return { type: 'stat', key: statTarget.key as StatKey };
+		return { type: 'stat', key: statTarget.key };
 	},
-	getInfo(target) {
-		return selectAttackStatDescriptor(target.key);
+	getInfo(target, context) {
+		return selectAttackStatDescriptor(context, target.key);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);
@@ -60,8 +54,8 @@ const statFormatter: AttackTargetFormatter<{
 	buildEvaluationEntry(log, context) {
 		return buildStandardEvaluationEntry(log, context, true);
 	},
-	formatDiff(prefix, diff, options) {
-		return formatDiffCommon(prefix, diff, options);
+	formatDiff(prefix, diff, context, options) {
+		return formatDiffCommon(prefix, diff, context, options);
 	},
 	onDamageLogTitle(info) {
 		return `${info.icon} ${info.label} damage trigger evaluation`;

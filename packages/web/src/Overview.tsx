@@ -16,8 +16,11 @@ import {
 	renderTokens,
 } from './components/overview/OverviewLayout';
 import type { OverviewSectionDef } from './components/overview/OverviewLayout';
-import { createOverviewSections } from './components/overview/sectionsData';
-import type { OverviewContentSection } from './components/overview/sectionsData';
+import {
+	createOverviewSections,
+	type OverviewContentSection,
+	type OverviewTokenCandidates,
+} from './components/overview/sectionsData';
 import type {
 	OverviewTokenConfig,
 	OverviewTokenSources,
@@ -27,10 +30,8 @@ import {
 	useOptionalRegistryMetadata,
 	type RegistryMetadataContextValue,
 } from './contexts/RegistryMetadataContext';
-import {
-	OVERVIEW_CONTENT,
-	type OverviewTokenCandidates,
-} from '@kingdom-builder/contents';
+import type { SessionOverviewHero } from '@kingdom-builder/protocol/session';
+import { DEFAULT_OVERVIEW_CONTENT } from './contexts/registryMetadataDefaults';
 
 type OverviewTokenRecord = Record<string, React.ReactNode>;
 
@@ -38,6 +39,14 @@ const EMPTY_SECTIONS_RESULT = Object.freeze({
 	sections: Object.freeze([]) as ReadonlyArray<OverviewSectionDef>,
 	tokens: Object.freeze({}) as OverviewTokenRecord,
 });
+
+const DEFAULT_HERO_CONTENT: SessionOverviewHero = Object.freeze({
+	tokens: {},
+});
+
+const EMPTY_HERO_TOKEN_SOURCE = Object.freeze({}) as Readonly<
+	Record<string, string>
+>;
 
 function createFallbackSections(
 	sections: OverviewContentSection[],
@@ -148,24 +157,28 @@ export default function Overview({
 	content,
 }: OverviewProps) {
 	const metadata = useOptionalRegistryMetadata();
-	const overviewContent = metadata?.overviewContent ?? OVERVIEW_CONTENT;
-	const sections = content ?? overviewContent.sections;
+	const overviewContent = metadata?.overviewContent ?? DEFAULT_OVERVIEW_CONTENT;
+	const sections = content ?? overviewContent.sections ?? [];
 	const defaultTokens: OverviewTokenCandidates = overviewContent.tokens ?? {};
-	const heroContent = overviewContent.hero;
+	const heroContent = overviewContent.hero ?? DEFAULT_HERO_CONTENT;
+	const heroTokenSource = heroContent.tokens ?? EMPTY_HERO_TOKEN_SOURCE;
 	const tokenSources = React.useMemo(
 		() => resolveOverviewTokenSources(metadata),
 		[metadata],
 	);
+	const fallbackTokens = React.useMemo(
+		() => createFallbackTokens(defaultTokens, tokenConfig),
+		[defaultTokens, tokenConfig],
+	);
 	const { sections: renderedSections, tokens: iconTokens } =
 		React.useMemo(() => {
-			if (sections.length === 0) {
-				return EMPTY_SECTIONS_RESULT;
-			}
-
 			if (!tokenSources) {
 				return {
-					sections: createFallbackSections(sections),
-					tokens: createFallbackTokens(defaultTokens, tokenConfig),
+					sections:
+						sections.length > 0
+							? createFallbackSections(sections)
+							: EMPTY_SECTIONS_RESULT.sections,
+					tokens: EMPTY_SECTIONS_RESULT.tokens,
 				};
 			}
 
@@ -176,15 +189,25 @@ export default function Overview({
 				tokenSources,
 			);
 		}, [defaultTokens, sections, tokenConfig, tokenSources]);
-	const tokens = React.useMemo(() => ({ ...iconTokens }), [iconTokens]);
+	const tokens = React.useMemo(() => {
+		const resolvedTokens: OverviewTokenRecord = {
+			...fallbackTokens,
+		};
+		for (const [tokenKey, iconToken] of Object.entries(iconTokens)) {
+			if (iconToken !== undefined && iconToken !== null) {
+				resolvedTokens[tokenKey] = iconToken;
+			}
+		}
+		return resolvedTokens;
+	}, [fallbackTokens, iconTokens]);
 
 	const heroTokens: Record<string, React.ReactNode> = React.useMemo(() => {
 		const heroTokenNodes: Record<string, React.ReactNode> = {};
-		for (const [tokenKey, label] of Object.entries(heroContent.tokens)) {
-			heroTokenNodes[tokenKey] = <strong>{label}</strong>;
+		for (const [tokenKey, label] of Object.entries(heroTokenSource)) {
+			heroTokenNodes[tokenKey] = <strong>{label ?? tokenKey}</strong>;
 		}
 		return { ...tokens, ...heroTokenNodes };
-	}, [heroContent.tokens, tokens]);
+	}, [heroTokenSource, tokens]);
 
 	const renderSection = (section: OverviewSectionDef) => {
 		if (section.kind === 'paragraph') {
@@ -222,20 +245,20 @@ export default function Overview({
 			<ShowcaseLayout className="items-center">
 				<header className="flex flex-col items-center text-center">
 					<span className={SHOWCASE_BADGE_CLASS}>
-						<span className="text-lg">{heroContent.badgeIcon}</span>
-						<span>{heroContent.badgeLabel}</span>
+						<span className="text-lg">{heroContent.badgeIcon ?? ''}</span>
+						<span>{heroContent.badgeLabel ?? ''}</span>
 					</span>
 					<h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl md:text-6xl">
-						{heroContent.title}
+						{heroContent.title ?? ''}
 					</h1>
 					<p className={SHOWCASE_INTRO_CLASS}>
-						{renderTokens(heroContent.intro, heroTokens)}
+						{renderTokens(heroContent.intro ?? '', heroTokens)}
 					</p>
 				</header>
 
 				<ShowcaseCard as="article" className={OVERVIEW_CARD_CLASS}>
 					<p className="text-base leading-relaxed">
-						{renderTokens(heroContent.paragraph, heroTokens)}
+						{renderTokens(heroContent.paragraph ?? '', heroTokens)}
 					</p>
 
 					<div className={OVERVIEW_GRID_CLASS}>

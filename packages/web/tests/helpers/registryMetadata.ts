@@ -1,9 +1,6 @@
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import {
-	DEFAULT_LAND_DESCRIPTOR,
-	DEFAULT_PASSIVE_DESCRIPTOR,
-	DEFAULT_SLOT_DESCRIPTOR,
 	buildPhaseMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
@@ -14,6 +11,11 @@ import {
 	type PhaseMetadata,
 	type TriggerMetadata,
 } from '../../src/contexts/registryMetadataDescriptors';
+import {
+	DEFAULT_LAND_DESCRIPTOR,
+	DEFAULT_PASSIVE_DESCRIPTOR,
+	DEFAULT_SLOT_DESCRIPTOR,
+} from '../../src/contexts/registryMetadataDefaults';
 import {
 	createAssetMetadataSelector,
 	createMetadataSelector,

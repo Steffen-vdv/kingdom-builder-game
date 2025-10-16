@@ -1,4 +1,3 @@
-import type { PopulationRoleId } from '@kingdom-builder/contents';
 import type { PopulationConfig } from '@kingdom-builder/protocol';
 import type { RegistryMetadataDescriptor } from '../../contexts/RegistryMetadataContext';
 import type { Action } from './types';
@@ -111,7 +110,7 @@ export function getPopulationIconFromRole(
 
 function getIconsFromEvaluator(
 	evaluator: EvaluatorConfig | undefined,
-	roleId: PopulationRoleId,
+	roleId: string,
 	populations: PopulationRegistryLike,
 	selectDescriptor: PopulationDescriptorSelector,
 	defaultIcon?: string,
@@ -154,7 +153,7 @@ function getIconsFromEvaluator(
 export function determineRaisePopRoles(
 	actionDefinition: Action | undefined,
 	populations: PopulationRegistryLike,
-): PopulationRoleId[] {
+): string[] {
 	const explicitRoles = new Set<string>();
 	const usesPlaceholder = collectPopulationRolesFromEffects(
 		(actionDefinition?.effects as EffectConfig[]) ?? [],
@@ -169,24 +168,29 @@ export function determineRaisePopRoles(
 			orderedRoles.add(roleId);
 		}
 	}
-	const result: PopulationRoleId[] = [];
+	const result: string[] = [];
 	for (const roleId of orderedRoles) {
+		let population: PopulationDefinition | undefined;
 		try {
-			const population = populations.get(roleId);
-			if (!explicitRoles.has(roleId) && !isHirablePopulation(population)) {
-				continue;
-			}
-			result.push(roleId as PopulationRoleId);
+			population = populations.get(roleId);
 		} catch {
-			// Ignore missing population ids when collecting options.
+			population = undefined;
 		}
+		if (
+			!explicitRoles.has(roleId) &&
+			population &&
+			!isHirablePopulation(population)
+		) {
+			continue;
+		}
+		result.push(roleId);
 	}
 	return result;
 }
 
 export function buildRequirementIconsForRole(
 	actionDefinition: Action | undefined,
-	roleId: PopulationRoleId,
+	roleId: string,
 	baseIcons: string[],
 	populations: PopulationRegistryLike,
 	selectDescriptor: PopulationDescriptorSelector,

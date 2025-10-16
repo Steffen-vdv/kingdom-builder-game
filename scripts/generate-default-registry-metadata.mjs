@@ -1,68 +1,46 @@
-import { constants as fsConstants } from 'node:fs';
-import { access, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-const REQUIRED_DIST_FILES = [
-	'../packages/contents/dist/actions.js',
-	'../packages/contents/dist/buildings.js',
-	'../packages/contents/dist/developments.js',
-	'../packages/contents/dist/populations.js',
-	'../packages/contents/dist/land.js',
-	'../packages/contents/dist/passive.js',
-	'../packages/contents/dist/phases.js',
-	'../packages/contents/dist/resources.js',
-	'../packages/contents/dist/stats.js',
-	'../packages/contents/dist/triggers.js',
-];
-
-async function ensureDistArtifacts() {
-	const baseDir = dirname(fileURLToPath(import.meta.url));
-	await Promise.all(
-		REQUIRED_DIST_FILES.map(async (relativePath) => {
-			const absolutePath = resolve(baseDir, relativePath);
-			try {
-				await access(absolutePath, fsConstants.F_OK | fsConstants.R_OK);
-			} catch (error) {
-				throw new Error(
-					`Missing required dist artifact: ${relativePath}. ` +
-						"Run 'npm run build --workspace @kingdom-builder/contents' before regenerating.",
-				);
-			}
-		}),
-	);
-}
+// Regenerate with `npx tsx scripts/generate-default-registry-metadata.mjs`
+// after rebuilding @kingdom-builder/contents to stay aligned with the server
+// session bootstrap metadata.
 
 async function loadContentModules() {
-	const baseUrl = new URL('../packages/contents/dist/', import.meta.url);
+	const baseUrl = new URL('../packages/contents/src/', import.meta.url);
 	const [
 		actionsModule,
 		buildingsModule,
 		developmentsModule,
 		populationsModule,
+		populationModule,
 		landModule,
 		passiveModule,
 		phasesModule,
 		resourcesModule,
 		statsModule,
 		triggersModule,
+		overviewModule,
 	] = await Promise.all([
-		import(new URL('actions.js', baseUrl)),
-		import(new URL('buildings.js', baseUrl)),
-		import(new URL('developments.js', baseUrl)),
-		import(new URL('populations.js', baseUrl)),
-		import(new URL('land.js', baseUrl)),
-		import(new URL('passive.js', baseUrl)),
-		import(new URL('phases.js', baseUrl)),
-		import(new URL('resources.js', baseUrl)),
-		import(new URL('stats.js', baseUrl)),
-		import(new URL('triggers.js', baseUrl)),
+		import(new URL('actions.ts', baseUrl)),
+		import(new URL('buildings.ts', baseUrl)),
+		import(new URL('developments.ts', baseUrl)),
+		import(new URL('populations.ts', baseUrl)),
+		import(new URL('population.ts', baseUrl)),
+		import(new URL('land.ts', baseUrl)),
+		import(new URL('passive.ts', baseUrl)),
+		import(new URL('phases.ts', baseUrl)),
+		import(new URL('resources.ts', baseUrl)),
+		import(new URL('stats.ts', baseUrl)),
+		import(new URL('triggers.ts', baseUrl)),
+		import(new URL('overview.ts', baseUrl)),
 	]);
 	return {
 		createActionRegistry: actionsModule.createActionRegistry,
 		createBuildingRegistry: buildingsModule.createBuildingRegistry,
 		createDevelopmentRegistry: developmentsModule.createDevelopmentRegistry,
 		createPopulationRegistry: populationsModule.createPopulationRegistry,
+		POPULATION_INFO: populationModule.POPULATION_INFO,
 		LAND_INFO: landModule.LAND_INFO,
 		SLOT_INFO: landModule.SLOT_INFO,
 		PASSIVE_INFO: passiveModule.PASSIVE_INFO,
@@ -70,6 +48,7 @@ async function loadContentModules() {
 		RESOURCES: resourcesModule.RESOURCES,
 		STATS: statsModule.STATS,
 		TRIGGER_INFO: triggersModule.TRIGGER_INFO,
+		OVERVIEW_CONTENT: overviewModule.OVERVIEW_CONTENT,
 	};
 }
 
@@ -187,15 +166,30 @@ function createTriggerMetadata(content) {
 	);
 }
 
+function findUpkeepPhase(phases) {
+	return phases.find((phase) => phase.id === 'upkeep');
+}
+
 function createAssetMetadata(content) {
+	const upkeepPhase = findUpkeepPhase(content.PHASES);
 	return {
+		population: createDescriptor(
+			content.POPULATION_INFO.label,
+			content.POPULATION_INFO.icon,
+			content.POPULATION_INFO.description,
+		),
 		land: createDescriptor(content.LAND_INFO.label, content.LAND_INFO.icon),
 		slot: createDescriptor(content.SLOT_INFO.label, content.SLOT_INFO.icon),
 		passive: createDescriptor(
 			content.PASSIVE_INFO.label,
 			content.PASSIVE_INFO.icon,
 		),
+		upkeep: createDescriptor(upkeepPhase?.label, upkeepPhase?.icon),
 	};
+}
+
+function createOverviewContentSnapshot(content) {
+	return structuredClone(content.OVERVIEW_CONTENT);
 }
 
 function serializeRegistry(registry) {
@@ -227,11 +221,11 @@ function createMetadata(registries, content) {
 		phases: createPhaseMetadata(content),
 		triggers: createTriggerMetadata(content),
 		assets: createAssetMetadata(content),
+		overviewContent: createOverviewContentSnapshot(content),
 	};
 }
 
 async function main() {
-	await ensureDistArtifacts();
 	const content = await loadContentModules();
 	const registries = createRegistries(content);
 	const metadata = createMetadata(registries, content);

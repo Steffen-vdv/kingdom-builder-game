@@ -1,5 +1,6 @@
 import { createEngine, type EffectDef } from '@kingdom-builder/engine';
 import { createContentFactory } from '@kingdom-builder/testing';
+import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol/session';
 
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
@@ -30,6 +31,7 @@ import {
 	ACTION_DEFS,
 	type ActionDefinition,
 } from './armyAttackEffects';
+import type { TranslationContext } from '../../src/translation/context';
 import {
 	selectAttackStatDescriptor,
 	type AttackRegistryDescriptor,
@@ -126,25 +128,41 @@ export function createSyntheticCtx() {
 	const plunder = buildAction(factory, ACTION_DEFS.plunder);
 	const attack = buildAction(factory, ACTION_DEFS.attack);
 	const buildingAttack = buildAction(factory, ACTION_DEFS.buildingAttack);
-	const translation = createTranslationContextForEngine(ctx, (registries) => {
-		const raid = ctx.actions.get(attack.id);
-		const raidPlunder = ctx.actions.get(plunder.id);
-		const raidBuilding = ctx.actions.get(buildingAttack.id);
-		const ctxBuilding = ctx.buildings.get(building.id);
-		if (raid) {
-			registries.actions.add(raid.id, { ...raid });
-		}
-		if (raidPlunder) {
-			registries.actions.add(raidPlunder.id, { ...raidPlunder });
-		}
-		if (raidBuilding) {
-			registries.actions.add(raidBuilding.id, { ...raidBuilding });
-		}
-		if (ctxBuilding) {
-			registries.buildings.add(ctxBuilding.id, { ...ctxBuilding });
-		}
-		registerSyntheticResources(registries);
-	});
+	const statMetadata = Object.fromEntries(
+		Object.entries(SYNTH_STAT_METADATA).map(([key, descriptor]) => {
+			const entry: SessionMetadataDescriptor = {};
+			if (descriptor.icon !== undefined) {
+				entry.icon = descriptor.icon;
+			}
+			if (descriptor.label !== undefined) {
+				entry.label = descriptor.label;
+			}
+			return [key, entry] as const;
+		}),
+	);
+	const translation = createTranslationContextForEngine(
+		ctx,
+		(registries) => {
+			const raid = ctx.actions.get(attack.id);
+			const raidPlunder = ctx.actions.get(plunder.id);
+			const raidBuilding = ctx.actions.get(buildingAttack.id);
+			const ctxBuilding = ctx.buildings.get(building.id);
+			if (raid) {
+				registries.actions.add(raid.id, { ...raid });
+			}
+			if (raidPlunder) {
+				registries.actions.add(raidPlunder.id, { ...raidPlunder });
+			}
+			if (raidBuilding) {
+				registries.actions.add(raidBuilding.id, { ...raidBuilding });
+			}
+			if (ctxBuilding) {
+				registries.buildings.add(ctxBuilding.id, { ...ctxBuilding });
+			}
+			registerSyntheticResources(registries);
+		},
+		{ metadata: { stats: statMetadata } },
+	);
 	return {
 		ctx,
 		translation,
@@ -160,13 +178,29 @@ export function createSyntheticCtx() {
 export function createPartialStatCtx() {
 	const { factory, ctx } = createBaseEngine();
 	const attack = buildAction(factory, ACTION_DEFS.partial);
-	const translation = createTranslationContextForEngine(ctx, (registries) => {
-		const raid = ctx.actions.get(attack.id);
-		if (raid) {
-			registries.actions.add(raid.id, { ...raid });
-		}
-		registerSyntheticResources(registries);
-	});
+	const statMetadata = Object.fromEntries(
+		Object.entries(SYNTH_STAT_METADATA).map(([key, descriptor]) => {
+			const entry: SessionMetadataDescriptor = {};
+			if (descriptor.icon !== undefined) {
+				entry.icon = descriptor.icon;
+			}
+			if (descriptor.label !== undefined) {
+				entry.label = descriptor.label;
+			}
+			return [key, entry] as const;
+		}),
+	);
+	const translation = createTranslationContextForEngine(
+		ctx,
+		(registries) => {
+			const raid = ctx.actions.get(attack.id);
+			if (raid) {
+				registries.actions.add(raid.id, { ...raid });
+			}
+			registerSyntheticResources(registries);
+		},
+		{ metadata: { stats: statMetadata } },
+	);
 	return {
 		ctx,
 		translation,
@@ -176,8 +210,11 @@ export function createPartialStatCtx() {
 	} as const;
 }
 
-export function getStat(key: string): AttackRegistryDescriptor {
-	return selectAttackStatDescriptor(key);
+export function getStat(
+	context: Pick<TranslationContext, 'assets'>,
+	key: string,
+): AttackRegistryDescriptor {
+	return selectAttackStatDescriptor(context, key);
 }
 
 export function iconLabel(

@@ -1,79 +1,97 @@
-import {
-	BUILDINGS,
-	RESOURCES,
-	STATS,
-	type ResourceKey,
-	type StatKey,
-} from '@kingdom-builder/contents';
+import type { TranslationAssets, TranslationContext } from '../../../context';
+import { humanizeIdentifier } from '../../stringUtils';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
-function coerceLabel(value: string | undefined, fallback: string): string {
-	if (!value) {
-		return fallback;
+type AssetsCarrier =
+	| Pick<TranslationContext, 'assets'>
+	| { assets?: TranslationAssets };
+
+type BuildingCarrier = Pick<TranslationContext, 'buildings'> & AssetsCarrier;
+
+type ResourceCarrier = AssetsCarrier;
+
+type StatCarrier = AssetsCarrier;
+
+function coerceString(value: unknown): string | undefined {
+	if (typeof value !== 'string') {
+		return undefined;
 	}
 	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : fallback;
+	return trimmed.length > 0 ? trimmed : undefined;
 }
 
-function coerceIcon(icon: string | undefined): string {
-	return icon ? icon : '';
+function coerceLabel(value: unknown, fallback: string): string {
+	return coerceString(value) ?? fallback;
 }
 
-function toDescriptor(
-	label: string | undefined,
-	icon: string | undefined,
-	fallback: string,
-): AttackRegistryDescriptor {
-	return {
-		icon: coerceIcon(icon),
-		label: coerceLabel(label, fallback),
-	};
+function coerceIcon(value: unknown): string {
+	return coerceString(value) ?? '';
+}
+
+function readAssets(context: AssetsCarrier): TranslationAssets | undefined {
+	return 'assets' in context ? context.assets : undefined;
+}
+
+function freezeKeys<T extends string>(keys: string[]): ReadonlyArray<T> {
+	return Object.freeze(keys) as ReadonlyArray<T>;
 }
 
 export function selectAttackResourceDescriptor(
+	context: ResourceCarrier,
 	resourceKey: string,
 ): AttackRegistryDescriptor {
-	const definition = RESOURCES[resourceKey as ResourceKey];
-	return toDescriptor(definition?.label, definition?.icon, resourceKey);
+	const assets = readAssets(context);
+	const entry = assets?.resources?.[resourceKey];
+	const label = coerceLabel(
+		entry?.label,
+		humanizeIdentifier(resourceKey) || resourceKey,
+	);
+	const icon = coerceIcon(entry?.icon);
+	return { icon, label };
 }
 
 export function selectAttackStatDescriptor(
+	context: StatCarrier,
 	statKey: string,
 ): AttackRegistryDescriptor {
-	const definition = STATS[statKey as StatKey];
-	return toDescriptor(definition?.label, definition?.icon, statKey);
+	const assets = readAssets(context);
+	const entry = assets?.stats?.[statKey];
+	const fallbackLabel = humanizeIdentifier(statKey) || statKey;
+	const label = coerceLabel(entry?.label, fallbackLabel);
+	const icon = coerceIcon(entry?.icon);
+	return { icon, label };
 }
 
 export function selectAttackBuildingDescriptor(
+	context: BuildingCarrier,
 	buildingId: string,
 ): AttackRegistryDescriptor {
+	const fallback: AttackRegistryDescriptor = {
+		icon: '',
+		label: buildingId,
+	};
 	try {
-		const definition = BUILDINGS.get(buildingId);
-		return toDescriptor(definition.name, definition.icon, buildingId);
+		const definition = context.buildings.get(buildingId);
+		const label = coerceLabel(definition?.name, buildingId);
+		const icon = coerceIcon(definition?.icon);
+		const descriptor: AttackRegistryDescriptor = { icon, label };
+		return descriptor;
 	} catch {
-		return { icon: '', label: buildingId };
+		return fallback;
 	}
 }
 
-export function listAttackResourceKeys(): ReadonlyArray<ResourceKey> {
-	return Object.freeze(Object.keys(RESOURCES) as ReadonlyArray<ResourceKey>);
+export function listAttackResourceKeys(
+	context: ResourceCarrier,
+): ReadonlyArray<string> {
+	const assets = readAssets(context);
+	return freezeKeys(Object.keys(assets?.resources ?? {}));
 }
 
-export function listAttackStatKeys(): ReadonlyArray<StatKey> {
-	return Object.freeze(Object.keys(STATS) as ReadonlyArray<StatKey>);
-}
-
-export function listAttackBuildingIds(): ReadonlyArray<string> {
-	return Object.freeze(BUILDINGS.keys().slice());
-}
-
-export function selectAttackDefaultStatKey(): StatKey | undefined {
-	const keys = listAttackStatKeys();
-	return keys.length > 0 ? keys[0] : undefined;
-}
-
-export function selectAttackDefaultBuildingId(): string | undefined {
-	const ids = listAttackBuildingIds();
-	return ids.length > 0 ? ids[0] : undefined;
+export function listAttackStatKeys(
+	context: StatCarrier,
+): ReadonlyArray<string> {
+	const assets = readAssets(context);
+	return freezeKeys(Object.keys(assets?.stats ?? {}));
 }

@@ -1,11 +1,11 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
-import Overview, { type OverviewTokenConfig } from '../src/Overview';
+import Overview from '../src/Overview';
 import type { OverviewContentSection } from '../src/components/overview/sectionsData';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
@@ -67,64 +67,64 @@ describe('<Overview />', () => {
 				land: { label: 'Land', icon: '🗺️' },
 				slot: { label: 'Slot', icon: '🧩' },
 			},
-		};
-
-		const tokenConfig: OverviewTokenConfig = {
-			actions: {
-				expand: ['missing-action', expandAction.id],
-			},
-			phases: {
-				growth: ['missing-phase', 'growth'],
-			},
-			resources: {
-				gold: ['missing-gold', 'gold'],
-				ap: ['missing-ap', 'ap'],
-			},
-			stats: {
-				army: ['missing-army', 'army'],
-			},
-			population: {
-				council: ['missing-council', councilRole.id],
-			},
-		};
-
-		const customContent: OverviewContentSection[] = [
-			{
-				kind: 'paragraph',
-				id: 'custom-story',
-				icon: 'land',
-				title: 'Custom Story',
-				span: true,
-				paragraphs: [
-					'Story {gold} keepers guard the realm.',
-					'Advisors {council} manage {ap} to fuel plans.',
-				],
-			},
-			{
-				kind: 'list',
-				id: 'custom-flow',
-				icon: 'growth',
-				title: 'Custom Flow',
-				items: [
+			overview: {
+				sections: [
 					{
-						icon: 'expand',
-						label: 'Advance',
-						body: [
-							'Execute {expand} during the {growth} sequence.',
-							'Strengthen {army} before moving out.',
+						kind: 'paragraph',
+						id: 'custom-story',
+						icon: 'land',
+						title: 'Custom Story',
+						span: true,
+						paragraphs: [
+							'Story {gold} keepers guard the realm.',
+							'Advisors {council} manage {ap} to fuel plans.',
+						],
+					},
+					{
+						kind: 'list',
+						id: 'custom-flow',
+						icon: 'growth',
+						title: 'Custom Flow',
+						items: [
+							{
+								icon: 'expand',
+								label: 'Advance',
+								body: [
+									'Execute {expand} during the {growth} sequence.',
+									'Strengthen {army} before moving out.',
+								],
+							},
 						],
 					},
 				],
+				tokens: {
+					actions: {
+						expand: ['missing-action', expandAction.id],
+					},
+					phases: {
+						growth: ['missing-phase', 'growth'],
+					},
+					resources: {
+						gold: ['missing-gold', 'gold'],
+						ap: ['missing-ap', 'ap'],
+					},
+					stats: {
+						army: ['missing-army', 'army'],
+					},
+					population: {
+						council: ['missing-council', councilRole.id],
+					},
+					static: {
+						land: ['land'],
+						slot: ['slot'],
+					},
+				},
 			},
-		];
+		};
 
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<Overview
-					onBack={vi.fn()}
-					tokenConfig={tokenConfig}
-					content={customContent}
-				/>
+				<Overview onBack={vi.fn()} />
 			</RegistryMetadataProvider>,
 		);
 
@@ -157,5 +157,31 @@ describe('<Overview />', () => {
 		expect(flowSection).toHaveTextContent('🛡️');
 
 		expect(screen.getByText('Advance')).toBeInTheDocument();
+	});
+
+	it('falls back to labeled tokens when registry metadata is unavailable', () => {
+		const fallbackContent: OverviewContentSection[] = [
+			{
+				kind: 'paragraph',
+				id: 'fallback-section',
+				icon: 'castleHP',
+				title: 'Fallback Section',
+				paragraphs: ['Use {expand} to grow your reach.'],
+			},
+		];
+
+		render(<Overview onBack={vi.fn()} content={fallbackContent} />);
+
+		const section = screen.getByText('Fallback Section').closest('section');
+		expect(section).not.toBeNull();
+		if (!section) {
+			return;
+		}
+
+		const highlightedToken = within(section).getByText('expand', {
+			selector: 'strong',
+		});
+		expect(highlightedToken).toBeInTheDocument();
+		expect(section.textContent).not.toContain('{expand}');
 	});
 });

@@ -11,7 +11,6 @@ export default defineConfig({
 	plugins: [react()],
 	resolve: {
 		alias: {
-			'@kingdom-builder/contents': path.resolve(rootDir, '../contents/src'),
 			'@kingdom-builder/protocol': path.resolve(rootDir, '../protocol/src'),
 		},
 	},

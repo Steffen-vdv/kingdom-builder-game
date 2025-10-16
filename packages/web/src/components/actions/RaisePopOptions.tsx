@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from 'react';
-import { type PopulationRoleId } from '@kingdom-builder/contents';
 import {
 	describeContent,
 	splitSummary,
@@ -12,6 +11,7 @@ import {
 	usePopulationMetadata,
 	useRegistryMetadata,
 } from '../../contexts/RegistryMetadataContext';
+import type { RegistryMetadataDescriptor } from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
@@ -92,8 +92,35 @@ export default function RaisePopOptions({
 		() => determineRaisePopRoles(actionDefinition, populationRegistry),
 		[actionDefinition, populationRegistry],
 	);
+	const resolvePopulationDescriptor = useCallback(
+		(role: string) => {
+			try {
+				return selectPopulationDescriptor(role);
+			} catch {
+				let name: string | undefined;
+				let icon: string | undefined;
+				try {
+					const definition = populationRegistry.get(role);
+					name = definition?.name ?? role;
+					icon = definition?.icon;
+				} catch {
+					name = role;
+				}
+				const descriptor: RegistryMetadataDescriptor = {
+					id: role,
+					label: name ?? role,
+				};
+				const resolvedIcon = icon ?? defaultPopulationIcon;
+				if (resolvedIcon) {
+					descriptor.icon = resolvedIcon;
+				}
+				return descriptor;
+			}
+		},
+		[selectPopulationDescriptor, populationRegistry, defaultPopulationIcon],
+	);
 	const getRequirementIconsForRole = useCallback(
-		(role: PopulationRoleId) =>
+		(role: string) =>
 			buildRequirementIconsForRole(
 				actionDefinition,
 				role,
@@ -142,7 +169,7 @@ export default function RaisePopOptions({
 				);
 				const actionIcon = actionInfo?.icon;
 				const actionName = actionInfo?.name ?? action.name;
-				const roleDescriptor = selectPopulationDescriptor(role);
+				const roleDescriptor = resolvePopulationDescriptor(role);
 				const roleIcon = roleDescriptor.icon ?? defaultPopulationIcon ?? '';
 				const roleLabel = roleDescriptor.label;
 				const title = !meetsReq

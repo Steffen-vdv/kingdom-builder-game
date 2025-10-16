@@ -17,7 +17,11 @@ const EMPTY_ASSETS: TranslationAssets = {
 	land: {},
 	slot: {},
 	passive: {},
+	transfer: {},
+	upkeep: {},
 	modifiers: {},
+	triggers: {},
+	tierSummaries: {},
 	formatPassiveRemoval: (description: string) =>
 		`Active as long as ${description}`,
 };
