@@ -82,7 +82,7 @@ export class HttpSessionGateway implements SessionGateway {
 	public readonly runAiTurn: SessionGateway['runAiTurn'] =
 		this.createActionHandler(
 			sessionRunAiRequestSchema,
-			'ai',
+			'ai-turn',
 			sessionRunAiResponseSchema,
 		) as RunAiTurnHandler;
 	public readonly simulateUpcomingPhases: SessionGateway['simulateUpcomingPhases'] =
