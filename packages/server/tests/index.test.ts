@@ -104,7 +104,6 @@ describe('server entrypoint', () => {
 		});
 		try {
 			expect(result.port).toBeGreaterThan(0);
-			expect(result.port).not.toBe(0);
 		} finally {
 			await result.app.close();
 		}
