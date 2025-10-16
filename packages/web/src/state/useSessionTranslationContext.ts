@@ -43,12 +43,30 @@ export function useSessionTranslationContext({
 			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
 		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
 		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
-				}
-			: { passiveEvaluationModifiers };
+		const resources = sessionMetadata.resources ?? fallbackMetadata?.resources;
+		const populations =
+			sessionMetadata.populations ?? fallbackMetadata?.populations;
+		const buildings = sessionMetadata.buildings ?? fallbackMetadata?.buildings;
+		const developments =
+			sessionMetadata.developments ?? fallbackMetadata?.developments;
+		const stats = sessionMetadata.stats ?? fallbackMetadata?.stats;
+		const phases = sessionMetadata.phases ?? fallbackMetadata?.phases;
+		const triggers = sessionMetadata.triggers ?? fallbackMetadata?.triggers;
+		const assets = sessionMetadata.assets ?? fallbackMetadata?.assets;
+		const overview = sessionMetadata.overview ?? fallbackMetadata?.overview;
+		const metadataPayload = {
+			passiveEvaluationModifiers,
+			...(effectLogs ? { effectLogs } : {}),
+			...(resources ? { resources } : {}),
+			...(populations ? { populations } : {}),
+			...(buildings ? { buildings } : {}),
+			...(developments ? { developments } : {}),
+			...(stats ? { stats } : {}),
+			...(phases ? { phases } : {}),
+			...(triggers ? { triggers } : {}),
+			...(assets ? { assets } : {}),
+			...(overview ? { overview } : {}),
+		};
 		try {
 			const context = createTranslationContext(
 				sessionState,
