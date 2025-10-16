@@ -9,6 +9,7 @@ import {
 	applySessionState,
 	assertSessionRecord,
 	clearSessionStateStore,
+	enqueueSessionTask,
 	getSessionRecord,
 	initializeSessionState,
 } from '../../src/state/sessionStateStore';
@@ -143,5 +144,25 @@ describe('sessionStateStore', () => {
 		expect(() => assertSessionRecord('missing:session')).toThrow(
 			/Missing session record/,
 		);
+	});
+
+	it('allows reentrant enqueueSessionTask calls for the same session', async () => {
+		const baseSnapshot = createBaseSnapshot();
+		const response: SessionCreateResponse = {
+			sessionId: 'session:queue',
+			snapshot: baseSnapshot,
+			registries: createSessionRegistriesPayload(),
+		};
+		initializeSessionState(response);
+		const order: string[] = [];
+		await enqueueSessionTask('session:queue', async () => {
+			order.push('outer-start');
+			await enqueueSessionTask('session:queue', async () => {
+				await Promise.resolve();
+				order.push('inner');
+			});
+			order.push('outer-end');
+		});
+		expect(order).toEqual(['outer-start', 'inner', 'outer-end']);
 	});
 });

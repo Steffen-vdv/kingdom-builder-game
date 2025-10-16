@@ -24,6 +24,7 @@ export interface SessionStateRecord {
 	resourceKeys: string[];
 	metadata: SessionSnapshotMetadata;
 	queueSeed: Promise<void>;
+	queueDepth: number;
 }
 
 type SessionStatePayload = SessionStateResponse | SessionAdvanceResponse;
@@ -88,6 +89,7 @@ export function initializeSessionState(
 		resourceKeys: extractResourceKeys(registries),
 		metadata: clone(response.snapshot.metadata),
 		queueSeed: Promise.resolve(),
+		queueDepth: 0,
 	};
 	records.set(response.sessionId, record);
 	return record;
@@ -162,7 +164,18 @@ export function enqueueSessionTask<T>(
 	task: () => Promise<T> | T,
 ): Promise<T> {
 	const record = assertSessionRecord(sessionId);
-	const chain = record.queueSeed.then(() => Promise.resolve().then(task));
+	const runTask = async () => {
+		record.queueDepth += 1;
+		try {
+			return await task();
+		} finally {
+			record.queueDepth -= 1;
+		}
+	};
+	if (record.queueDepth > 0) {
+		return runTask();
+	}
+	const chain = record.queueSeed.then(runTask);
 	record.queueSeed = chain.catch(() => {}).then(() => undefined);
 	return chain;
 }
