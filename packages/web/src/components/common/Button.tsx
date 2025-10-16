@@ -85,7 +85,7 @@ export default function Button({
 		'inline-flex items-center gap-3 justify-start rounded-full',
 		'px-4 py-2 text-left text-sm font-semibold leading-snug transition',
 		'disabled:cursor-not-allowed disabled:opacity-50',
-		disabled ? '' : 'hoverable',
+		disabled ? '' : 'hoverable cursor-pointer',
 		variantClass,
 		'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-0',
 		className,
