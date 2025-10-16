@@ -422,6 +422,77 @@ describe('GameProvider', () => {
 		);
 	});
 
+	it('ignores stale refresh results that resolve after a dev mode update', async () => {
+		const { rerender } = render(
+			<GameProvider devMode={false} playerName="Scout">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:1'),
+		);
+
+		const devModeSnapshot = createSessionSnapshot({
+			players: initialSnapshot.game.players,
+			activePlayerId: initialSnapshot.game.activePlayerId,
+			opponentId: initialSnapshot.game.opponentId,
+			phases: initialSnapshot.phases,
+			actionCostResource: initialSnapshot.actionCostResource,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 3,
+			devMode: true,
+		});
+		setSessionDevModeMock.mockImplementationOnce(() => {
+			const response: SessionStateResponse = {
+				sessionId,
+				snapshot: devModeSnapshot,
+				registries: registriesPayload,
+			};
+			const stateRecord = applySessionState(response);
+			return Promise.resolve({
+				sessionId,
+				adapter: session,
+				record: {
+					sessionId: stateRecord.sessionId,
+					snapshot: stateRecord.snapshot,
+					ruleSnapshot: stateRecord.ruleSnapshot,
+					registries: stateRecord.registries,
+					resourceKeys: stateRecord.resourceKeys,
+					metadata: stateRecord.metadata,
+					queueSeed: stateRecord.queueSeed,
+				},
+			});
+		});
+
+		rerender(
+			<GameProvider devMode playerName="Scout">
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(setSessionDevModeMock).toHaveBeenCalledWith('session-1', true),
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:3'),
+		);
+
+		const initialFetchCount = fetchSnapshotMock.mock.calls.length;
+
+		await act(() => {
+			capturedPhaseOptions?.refresh?.();
+			return waitFor(() =>
+				expect(fetchSnapshotMock).toHaveBeenCalledTimes(initialFetchCount + 1),
+			);
+		});
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:3'),
+		);
+	});
+
 	it('refreshes the session state when hooks request a snapshot', async () => {
 		render(
 			<GameProvider devMode={false} playerName="Scout">

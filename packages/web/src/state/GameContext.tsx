@@ -222,6 +222,14 @@ export function GameProvider(props: GameProviderProps) {
 				) {
 					return;
 				}
+				const currentSnapshot = sessionStateRef.current?.snapshot;
+				const latestTurn = currentSnapshot?.game.turn ?? 0;
+				const refreshedTurn = result.record.snapshot.game.turn ?? latestTurn;
+				if (refreshedTurn < latestTurn) {
+					// Ignore stale refresh responses that resolve after a more
+					// recent update (for example, toggling dev mode).
+					return;
+				}
 				const { queueSeed: _queue, ...record } = result.record;
 				updateSessionData({
 					adapter: result.adapter,
