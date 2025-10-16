@@ -225,7 +225,7 @@ describe('HttpSessionGateway', () => {
 			},
 		);
 		const gateway = createGateway({ fetch });
-		const response = await gateway.fetchActionCosts({
+		const response = await gateway.getActionCosts({
 			sessionId: 'test',
 			actionId: 'build',
 		});
@@ -243,7 +243,7 @@ describe('HttpSessionGateway', () => {
 		);
 		const gateway = createGateway({ fetch });
 		await expect(
-			gateway.fetchActionCosts({ sessionId: 'test', actionId: 'missing' }),
+			gateway.getActionCosts({ sessionId: 'test', actionId: 'missing' }),
 		).rejects.toBeInstanceOf(TransportError);
 	});
 
@@ -251,7 +251,7 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn();
 		const gateway = createGateway({ fetch });
 		await expect(
-			gateway.fetchActionCosts({
+			gateway.getActionCosts({
 				sessionId: '',
 				actionId: '',
 			} as never),
@@ -293,7 +293,7 @@ describe('HttpSessionGateway', () => {
 			},
 		);
 		const gateway = createGateway({ fetch });
-		const response = await gateway.fetchActionRequirements({
+		const response = await gateway.getActionRequirements({
 			sessionId: 'test',
 			actionId: 'build',
 			params: { choices: { slot: { optionId: 'farm' } } },
@@ -312,7 +312,7 @@ describe('HttpSessionGateway', () => {
 		);
 		const gateway = createGateway({ fetch });
 		await expect(
-			gateway.fetchActionRequirements({
+			gateway.getActionRequirements({
 				sessionId: 'test',
 				actionId: 'build',
 			}),
@@ -323,7 +323,7 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn();
 		const gateway = createGateway({ fetch });
 		await expect(
-			gateway.fetchActionRequirements({
+			gateway.getActionRequirements({
 				sessionId: 'test',
 				actionId: '',
 			} as never),
@@ -336,15 +336,13 @@ describe('HttpSessionGateway', () => {
 			async (input: RequestInfo | URL, init?: RequestInit) => {
 				const request =
 					input instanceof Request ? input : new Request(input, init);
-				expect(request.method).toBe('POST');
+				expect(request.method).toBe('GET');
 				expect(new URL(request.url).pathname).toBe(
 					'/api/sessions/test/actions/choose/options',
 				);
-				const payload = await request.clone().json();
-				expect(payload).toEqual({
-					sessionId: 'test',
-					actionId: 'choose',
-				});
+				expect(request.headers.get('content-type')).toBeNull();
+				const body = await request.clone().text();
+				expect(body).toBe('');
 				return jsonResponse({
 					sessionId: 'test',
 					groups: [
@@ -364,13 +362,12 @@ describe('HttpSessionGateway', () => {
 			},
 		);
 		const gateway = createGateway({ fetch });
-		const response = await gateway.fetchActionOptions({
+		const response = await gateway.getActionOptions({
 			sessionId: 'test',
 			actionId: 'choose',
 		});
 		expect(response.groups).toHaveLength(1);
 	});
-
 	it('propagates transport errors from action option lookup', async () => {
 		const fetch = vi.fn(() =>
 			Promise.resolve(
@@ -382,7 +379,7 @@ describe('HttpSessionGateway', () => {
 		);
 		const gateway = createGateway({ fetch });
 		await expect(
-			gateway.fetchActionOptions({
+			gateway.getActionOptions({
 				sessionId: 'test',
 				actionId: 'choose',
 			}),
@@ -393,7 +390,7 @@ describe('HttpSessionGateway', () => {
 		const fetch = vi.fn();
 		const gateway = createGateway({ fetch });
 		await expect(
-			gateway.fetchActionOptions({
+			gateway.getActionOptions({
 				sessionId: '',
 				actionId: 'choose',
 			} as never),
