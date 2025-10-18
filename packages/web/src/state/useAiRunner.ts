@@ -14,6 +14,7 @@ interface UseAiRunnerOptions {
 		overrides?: Partial<PhaseProgressState>,
 	) => void;
 	mountedRef: MutableRefObject<boolean>;
+	hasPendingResolution: boolean;
 	onFatalSessionError?: (error: unknown) => void;
 }
 
@@ -23,9 +24,13 @@ export function useAiRunner({
 	runUntilActionPhaseCore,
 	syncPhaseState,
 	mountedRef,
+	hasPendingResolution,
 	onFatalSessionError,
 }: UseAiRunnerOptions) {
 	useEffect(() => {
+		if (hasPendingResolution) {
+			return;
+		}
 		const phaseDefinition = sessionState.phases[sessionState.game.phaseIndex];
 		if (!phaseDefinition?.action) {
 			return;
@@ -89,5 +94,6 @@ export function useAiRunner({
 		syncPhaseState,
 		mountedRef,
 		onFatalSessionError,
+		hasPendingResolution,
 	]);
 }

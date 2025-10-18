@@ -75,6 +75,7 @@ describe('useAiRunner', () => {
 				runUntilActionPhaseCore,
 				syncPhaseState,
 				mountedRef,
+				hasPendingResolution: false,
 				onFatalSessionError,
 			}),
 		);
@@ -142,6 +143,7 @@ describe('useAiRunner', () => {
 				runUntilActionPhaseCore: vi.fn(),
 				syncPhaseState,
 				mountedRef,
+				hasPendingResolution: false,
 				onFatalSessionError,
 			}),
 		);
@@ -152,6 +154,70 @@ describe('useAiRunner', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
+		cleanup();
+	});
+
+	it('waits until resolutions are acknowledged before running AI turns', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{
+				id: 'phase-main',
+				name: 'Main Phase',
+				action: true,
+				steps: [],
+			},
+		];
+		const activePlayer = createSnapshotPlayer({ id: 'A', aiControlled: true });
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+		});
+		const registries = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
+		});
+		const runUntilActionPhaseCore = vi.fn();
+		const syncPhaseState = vi.fn();
+		const mountedRef = { current: true };
+		const runAiSpy = vi.spyOn(adapter, 'runAiTurn').mockResolvedValue(true);
+		const { rerender } = renderHook(
+			({ hasPending }: { hasPending: boolean }) =>
+				useAiRunner({
+					session: adapter,
+					sessionState,
+					runUntilActionPhaseCore,
+					syncPhaseState,
+					mountedRef,
+					hasPendingResolution: hasPending,
+				}),
+			{ initialProps: { hasPending: true } },
+		);
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(runAiSpy).not.toHaveBeenCalled();
+		rerender({ hasPending: false });
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(runAiSpy).toHaveBeenCalledTimes(1);
 		cleanup();
 	});
 });

@@ -233,6 +233,7 @@ export function GameProviderInner({
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
 		mountedRef,
+		hasPendingResolution: Boolean(resolution?.requireAcknowledgement),
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
