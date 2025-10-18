@@ -6,7 +6,6 @@ import type {
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 } from '@kingdom-builder/protocol';
-import { type Land } from '../content';
 import {
 	appendResourceChanges,
 	appendStatChanges,
@@ -32,19 +31,8 @@ export interface PlayerSnapshot {
 	passives: SessionPassiveSummary[];
 }
 
-interface LegacyPlayerSnapshot {
-	id: string;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population?: Record<string, number>;
-	buildings: Set<string> | string[];
-	lands: Land[];
-	passives?: SessionPassiveSummary[];
-}
-
 type SnapshotInput =
 	| SessionPlayerStateSnapshot
-	| LegacyPlayerSnapshot
 	| ActionPlayerSnapshot
 	| PlayerSnapshot;
 
@@ -61,13 +49,8 @@ interface SnapshotContext {
 	};
 }
 
-export function snapshotPlayer(
-	playerState: SnapshotInput,
-	context?: SnapshotContext,
-): PlayerSnapshot {
-	const buildingList = Array.isArray(playerState.buildings)
-		? [...playerState.buildings]
-		: Array.from(playerState.buildings ?? []);
+export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
+	const buildingList = [...playerState.buildings];
 	const lands = playerState.lands.map((land) => ({
 		id: land.id,
 		slotsMax: land.slotsMax,
@@ -75,25 +58,12 @@ export function snapshotPlayer(
 		developments: [...land.developments],
 	}));
 	const population = (() => {
-		if ('population' in playerState && playerState.population) {
+		if ('population' in playerState) {
 			return { ...playerState.population };
-		}
-		if (context && 'id' in playerState) {
-			const match = context.game.players.find((entry) => {
-				return entry.id === (playerState.id as SessionPlayerId);
-			});
-			if (match) {
-				return { ...match.population };
-			}
 		}
 		return {};
 	})();
-	const hasPassives = 'passives' in playerState && playerState.passives;
-	const passives = hasPassives
-		? [...playerState.passives!]
-		: context && 'id' in playerState
-			? context.passives.list(playerState.id as SessionPlayerId)
-			: [];
+	const passives = 'passives' in playerState ? [...playerState.passives] : [];
 	return {
 		resources: { ...playerState.resources },
 		stats: { ...playerState.stats },

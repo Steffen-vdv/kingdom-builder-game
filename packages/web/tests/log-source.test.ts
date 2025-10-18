@@ -25,6 +25,7 @@ import {
 	diffStepSnapshots,
 	createTranslationDiffContext,
 } from '../src/translation/log';
+import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -33,6 +34,12 @@ const RESOURCE_KEYS = Object.keys(
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+
+function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
+	return snapshotPlayer(
+		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
+	);
+}
 
 describe('log resource sources', () => {
 	it('ignores opponent mills when logging farm gains', () => {
@@ -67,13 +74,13 @@ describe('log resource sources', () => {
 		const gainIncomeStep = growthPhase?.steps.find(
 			(stepDefinition) => stepDefinition.id === SYNTHETIC_STEP_IDS.gainIncome,
 		);
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = captureActivePlayer(engineContext);
 		const bundles = collectTriggerEffects('onGainIncomeStep', engineContext);
 		for (const bundle of bundles) {
 			runEffects(bundle.effects, engineContext);
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,
@@ -124,9 +131,9 @@ describe('log resource sources', () => {
 			id: SYNTHETIC_IDS.taxAction,
 			effects: engineContext.actions.get(SYNTHETIC_IDS.taxAction).effects,
 		};
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = captureActivePlayer(engineContext);
 		performAction(SYNTHETIC_IDS.taxAction, engineContext);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,
@@ -177,13 +184,13 @@ describe('log resource sources', () => {
 		const payUpkeepStep = upkeepPhase?.steps.find(
 			(stepDefinition) => stepDefinition.id === SYNTHETIC_STEP_IDS.payUpkeep,
 		);
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = captureActivePlayer(engineContext);
 		const bundles = collectTriggerEffects('onPayUpkeepStep', engineContext);
 		for (const bundle of bundles) {
 			runEffects(bundle.effects, engineContext);
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,
