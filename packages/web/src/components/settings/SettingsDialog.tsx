@@ -50,8 +50,9 @@ const TAB_BUTTON_ACTIVE_CLASS = [
 ].join(' ');
 
 const TAB_BUTTON_INACTIVE_CLASS = [
-	'bg-white/60 text-slate-600 hover:bg-white/80',
-	'dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-900/50',
+	'bg-white/60 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700',
+	'dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/70',
+	'dark:hover:text-emerald-200',
 ].join(' ');
 
 const FOCUSABLE_ELEMENTS_SELECTOR = [
