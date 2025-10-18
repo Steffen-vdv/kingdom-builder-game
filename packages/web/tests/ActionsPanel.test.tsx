@@ -1,6 +1,13 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+	cleanup,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
@@ -209,6 +216,30 @@ describe('<ActionsPanel />', () => {
 		expect(callIndex).toBeGreaterThanOrEqual(0);
 		const result = requirementIconsMock.mock.results[callIndex];
 		expect(result?.value).toBe(metadata.requirementIcons.get(raiseAction.id));
+	});
+
+	it('performs a basic action when its card is clicked', async () => {
+		renderActionsPanel();
+		const basicAction = metadata.actions.basic;
+		if (!basicAction) {
+			throw new Error('Expected basic action to exist');
+		}
+		const actionButton = await screen.findByRole('button', {
+			name: new RegExp(basicAction.name),
+		});
+		await waitFor(() => {
+			expect(actionButton).toBeEnabled();
+		});
+		fireEvent.click(actionButton);
+		await waitFor(() => {
+			expect(mockGame.handlePerform).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: basicAction.id,
+					name: basicAction.name,
+				}),
+				undefined,
+			);
+		});
 	});
 
 	it('disables building cards when requirements fail and surfaces translations', () => {
