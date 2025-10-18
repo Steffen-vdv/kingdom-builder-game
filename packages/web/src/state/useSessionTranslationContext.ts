@@ -47,12 +47,12 @@ export function useSessionTranslationContext({
 			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
 		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
 		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
-				}
-			: { passiveEvaluationModifiers };
+		const metadataPayload = {
+			...(fallbackMetadata ?? {}),
+			...sessionMetadata,
+			passiveEvaluationModifiers,
+			...(effectLogs !== undefined ? { effectLogs } : {}),
+		};
 		try {
 			const context = createTranslationContext(
 				sessionState,
