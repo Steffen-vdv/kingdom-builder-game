@@ -235,8 +235,8 @@ export default function ActionsPanel() {
 							aria-label={toggleLabel}
 						>
 							<span className="margin-top-correction-five">
-							{viewingOpponent ? '←' : '→'}
-						</span>
+								{viewingOpponent ? '←' : '→'}
+							</span>
 						</button>
 					)}
 				</div>

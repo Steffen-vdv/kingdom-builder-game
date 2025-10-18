@@ -5,7 +5,7 @@ const UI_TEST_PORT = 4173;
 const webServerCommand = [
 	'npm',
 	'run',
-	'dev:web',
+	'dev',
 	'--',
 	'--host',
 	'127.0.0.1',
