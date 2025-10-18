@@ -6,7 +6,7 @@ import {
 	TRANSFER_PCT_EVALUATION_TYPE,
 } from '../../src/effects/resource_transfer.ts';
 import { createTestEngine } from '../helpers.ts';
-import type { EffectDef } from '../../src/effects/index.ts';
+import type { EffectDef } from '@kingdom-builder/protocol';
 
 describe('resource:transfer percent bounds', () => {
 	it('adjusts transfer percentage within bounds', () => {

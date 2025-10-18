@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
-import { Registry } from '../../src/registry.ts';
+import { Registry } from '@kingdom-builder/protocol';
 
 describe('Registry', () => {
 	it('adds and retrieves values using schema', () => {

@@ -10,7 +10,7 @@ import {
 	registerEvaluatorDependencyCollector,
 	evaluatorDependencyCollectorRegistry,
 } from '../src/stat_sources.ts';
-import type { EffectDef } from '../src/effects/index.ts';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EvaluatorDependencyCollector } from '../src/stat_sources.ts';
 
 describe('stat sources metadata', () => {

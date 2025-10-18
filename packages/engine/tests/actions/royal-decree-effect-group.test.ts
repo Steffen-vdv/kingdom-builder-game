@@ -4,8 +4,8 @@ import {
 	getActionCosts,
 	performAction,
 	resolveActionEffects,
-	type EffectDef,
 } from '../../src';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { createTestEngine } from '../helpers';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 

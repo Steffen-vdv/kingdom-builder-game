@@ -1,9 +1,11 @@
-import type { EngineContext } from '@kingdom-builder/engine';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import type { createEngine } from '@kingdom-builder/engine';
+
+type EngineContext = ReturnType<typeof createEngine>;
 
 type MetadataOverrides = Partial<SessionSnapshotMetadata>;
 

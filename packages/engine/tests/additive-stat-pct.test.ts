@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { runEffects, type EffectDef } from '../src/index.ts';
+import { runEffects } from '../src/index.ts';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { Stat } from '../src/state/index.ts';
 import { createTestEngine } from './helpers.ts';
 

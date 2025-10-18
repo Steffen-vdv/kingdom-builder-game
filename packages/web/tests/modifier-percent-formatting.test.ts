@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { formatStatValue } from '../src/utils/stats';
-import type { EffectDef, PlayerId } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
+import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
 import {
 	createTranslationContext,
 	selectStatDisplay,
@@ -15,10 +16,10 @@ import {
 function createContext() {
 	const scaffold = createTestSessionScaffold();
 	const activePlayer = createSnapshotPlayer({
-		id: 'player:active' as PlayerId,
+		id: 'player:active' as SessionPlayerId,
 	});
 	const opponent = createSnapshotPlayer({
-		id: 'player:opponent' as PlayerId,
+		id: 'player:opponent' as SessionPlayerId,
 	});
 	const session = createSessionSnapshot({
 		players: [activePlayer, opponent],

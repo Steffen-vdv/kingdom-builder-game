@@ -14,7 +14,7 @@ import type {
 	PassiveRecord,
 	PhaseSkipConfig,
 } from '../../src/services/passive_types';
-import type { EffectDef } from '../../src/effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 
 describe('passive helpers', () => {
 	it('deeply clones passive records and metadata while pruning undefined', () => {

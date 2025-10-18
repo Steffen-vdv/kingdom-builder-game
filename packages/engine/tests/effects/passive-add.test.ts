@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { runEffects } from '../../src/index.ts';
 import { Resource, Stat } from '../../src/state/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import type { EffectDef } from '../../src/effects/index.ts';
+import type { EffectDef } from '@kingdom-builder/protocol';
 
 describe('passive:add effect', () => {
 	it('applies nested effects and registers phase triggers', () => {

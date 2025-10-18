@@ -10,10 +10,11 @@ import {
 	RULES,
 	RESOURCES,
 } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
+
+type EngineContext = ReturnType<typeof createEngine>;
 
 function deepClone<T>(value: T): T {
 	return structuredClone(value);

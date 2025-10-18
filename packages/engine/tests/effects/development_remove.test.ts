@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { developmentRemove, type EffectDef } from '../../src/effects';
+import { developmentRemove } from '../../src/effects';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
 

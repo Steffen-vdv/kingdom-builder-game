@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { actionPerform } from '../../src/effects/action_perform';
-import { advance, type EffectDef } from '../../src';
+import { advance } from '../../src';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { createTestEngine } from '../helpers';
 import { Land } from '../../src/state';
 

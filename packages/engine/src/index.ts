@@ -59,14 +59,6 @@ export {
 	type ResolvedActionEffectStep,
 } from './actions/effect_groups';
 export { advance } from './phases/advance';
-/**
- * @deprecated Use createEngineSession instead.
- */
-export { EngineContext } from './context';
-/**
- * @deprecated Use createEngineSession instead.
- */
-export { Services, PassiveManager } from './services';
 export type { PassiveSummary } from './services';
 export {
 	EFFECTS,
@@ -77,18 +69,7 @@ export {
 	EffectCostRegistry,
 } from './effects';
 export type { EffectHandler, EffectCostCollector } from './effects';
-/**
- * @deprecated Use @kingdom-builder/protocol instead.
- */
-export type { EffectDef } from '@kingdom-builder/protocol';
-export {
-	registerCoreEvaluators,
-	EvaluatorRegistry,
-	/**
-	 * @deprecated Use createEngineSession instead.
-	 */
-	EVALUATORS,
-} from './evaluators';
+export { registerCoreEvaluators, EvaluatorRegistry } from './evaluators';
 export type { EvaluatorHandler } from './evaluators';
 export { registerCoreRequirements, RequirementRegistry } from './requirements';
 export type {
@@ -96,18 +77,6 @@ export type {
 	RequirementDef,
 	RequirementFailure,
 } from './requirements';
-/**
- * @deprecated Use @kingdom-builder/protocol instead.
- */
-export { validateGameConfig } from '@kingdom-builder/protocol';
-export type {
-	ActionEffect,
-	ActionEffectGroup as ActionEffectGroupConfig,
-} from '@kingdom-builder/protocol';
-/**
- * @deprecated Use @kingdom-builder/protocol instead.
- */
-export type { EvaluatorDef } from '@kingdom-builder/protocol';
 export { resolveAttack } from './effects/attack';
 export type {
 	AttackLog,
@@ -116,10 +85,6 @@ export type {
 	AttackPlayerDiff,
 	AttackPowerLog,
 } from '@kingdom-builder/protocol';
-/**
- * @deprecated Use @kingdom-builder/protocol instead.
- */
-export type { GameConfig } from '@kingdom-builder/protocol';
 export { collectTriggerEffects } from './triggers';
 export { applyParamsToEffects } from '@kingdom-builder/protocol';
 export { snapshotPlayer } from './log';
