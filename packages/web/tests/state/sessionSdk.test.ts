@@ -35,6 +35,7 @@ import {
 	getSessionRecord,
 	clearSessionStateStore,
 } from '../../src/state/sessionStateStore';
+import * as sessionStateStoreModule from '../../src/state/sessionStateStore';
 
 const resourceKeys = createResourceKeys();
 const [resourceKey] = resourceKeys;
@@ -207,6 +208,29 @@ describe('sessionSdk', () => {
 		});
 		expect(response.status).toBe('error');
 		expect(response).toHaveProperty('error', 'Nope.');
+	});
+
+	it('skips the queue when requested', async () => {
+		await createSession();
+		const enqueueSpy = vi.spyOn(sessionStateStoreModule, 'enqueueSessionTask');
+		const successResponse: ActionExecuteSuccessResponse = {
+			status: 'success',
+			snapshot: initialSnapshot,
+			costs: {},
+			traces: [],
+		};
+		api.setNextActionResponse(successResponse);
+		const response = await performSessionAction(
+			{
+				sessionId: 'session-1',
+				actionId: taxActionId,
+			},
+			undefined,
+			{ skipQueue: true },
+		);
+		expect(response).toEqual(successResponse);
+		expect(enqueueSpy).not.toHaveBeenCalled();
+		enqueueSpy.mockRestore();
 	});
 
 	it('converts thrown API errors into error responses', async () => {

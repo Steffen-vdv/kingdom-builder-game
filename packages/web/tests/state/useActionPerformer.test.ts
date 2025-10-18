@@ -538,6 +538,50 @@ describe('useActionPerformer', () => {
 		}
 	});
 
+	it('executes actions while skipping redundant queue hops', async () => {
+		performSessionActionMock.mockResolvedValueOnce({
+			status: 'success',
+			snapshot: sessionSnapshot,
+			costs: {},
+			traces: [],
+		});
+		const localEnqueue = vi.fn(async (task: () => Promise<void>) => {
+			await task();
+		});
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution: vi.fn().mockResolvedValue(undefined),
+				syncPhaseState: vi.fn(),
+				refresh: vi.fn(),
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn: vi.fn(),
+				enqueue: localEnqueue,
+				resourceKeys,
+				onFatalSessionError: undefined,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(localEnqueue).toHaveBeenCalledTimes(1);
+		expect(performSessionActionMock).toHaveBeenCalledWith(
+			{
+				sessionId,
+				actionId: action.id,
+			},
+			undefined,
+			expect.objectContaining({ skipQueue: true }),
+		);
+	});
+
 	it('reports mirroring failures via onFatalSessionError', async () => {
 		const fatalCause = new Error('mirror failed');
 		const fatalError = new SessionMirroringError('Mirroring failed', {
