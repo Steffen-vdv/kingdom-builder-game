@@ -83,6 +83,21 @@ function resolveActorLabel(
 	return undefined;
 }
 
+function isPhaseSource(
+	source: ResolutionSource,
+): source is Extract<ResolutionSource, { kind: 'phase' }> {
+	return typeof source !== 'string' && source.kind === 'phase';
+}
+
+function resolvePhaseKey(
+	source: Extract<ResolutionSource, { kind: 'phase' }>,
+	actorLabel: string | undefined,
+) {
+	return (
+		source.id?.trim() ?? actorLabel?.trim() ?? source.label?.trim() ?? null
+	);
+}
+
 function useActionResolution({
 	addLog,
 	setTrackedTimeout,
@@ -90,12 +105,14 @@ function useActionResolution({
 	mountedRef,
 }: UseActionResolutionOptions) {
 	const [resolution, setResolution] = useState<ActionResolution | null>(null);
+	const resolutionRef = useRef<ActionResolution | null>(null);
 	const sequenceRef = useRef(0);
 	const resolverRef = useRef<(() => void) | null>(null);
 
 	const acknowledgeResolution = useCallback(() => {
 		sequenceRef.current += 1;
 		setResolution(null);
+		resolutionRef.current = null;
 		if (resolverRef.current) {
 			resolverRef.current();
 			resolverRef.current = null;
@@ -117,6 +134,7 @@ function useActionResolution({
 			);
 			if (!entries.length) {
 				setResolution(null);
+				resolutionRef.current = null;
 				return Promise.resolve();
 			}
 			if (!mountedRef.current) {
@@ -140,16 +158,70 @@ function useActionResolution({
 					resolvedSource,
 					action,
 				);
-				setResolution({
-					lines: entries,
-					visibleLines: [],
-					isComplete: false,
-					summaries,
-					source: resolvedSource,
-					requireAcknowledgement,
-					...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
-					...(player ? { player } : {}),
-					...(action ? { action } : {}),
+				const normalizedSummaries = summaries.filter((item) =>
+					Boolean(item?.trim()),
+				);
+				const previousResolution = resolutionRef.current;
+				const logPlayer = player ?? previousResolution?.player;
+				let baseLineIndex = 0;
+				setResolution((previous) => {
+					const shouldAppend = Boolean(
+						previous &&
+							!previous.requireAcknowledgement &&
+							!requireAcknowledgement &&
+							isPhaseSource(previous.source) &&
+							isPhaseSource(resolvedSource) &&
+							resolvePhaseKey(previous.source, previous.actorLabel) ===
+								resolvePhaseKey(
+									resolvedSource,
+									resolvedActorLabel ?? previous.actorLabel,
+								),
+					);
+					if (shouldAppend && previous) {
+						baseLineIndex = previous.lines.length;
+						const mergedLines = [...previous.lines, ...entries];
+						const mergedSummaries = [
+							...previous.summaries,
+							...normalizedSummaries,
+						];
+						const nextResolution: ActionResolution = {
+							...previous,
+							lines: mergedLines,
+							visibleLines: previous.visibleLines,
+							isComplete: previous.visibleLines.length === mergedLines.length,
+							summaries: mergedSummaries,
+							source: resolvedSource,
+							requireAcknowledgement:
+								previous.requireAcknowledgement || requireAcknowledgement,
+							...(resolvedActorLabel
+								? { actorLabel: resolvedActorLabel }
+								: previous.actorLabel
+									? { actorLabel: previous.actorLabel }
+									: {}),
+							...(player || previous.player
+								? { player: player ?? previous.player }
+								: {}),
+							...(action || previous.action
+								? { action: action ?? previous.action }
+								: {}),
+						};
+						resolutionRef.current = nextResolution;
+						return nextResolution;
+					}
+					baseLineIndex = 0;
+					const nextResolution: ActionResolution = {
+						lines: entries,
+						visibleLines: [],
+						isComplete: false,
+						summaries: normalizedSummaries,
+						source: resolvedSource,
+						requireAcknowledgement,
+						...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
+						...(player ? { player } : {}),
+						...(action ? { action } : {}),
+					};
+					resolutionRef.current = nextResolution;
+					return nextResolution;
 				});
 
 				const revealLine = (index: number) => {
@@ -157,6 +229,7 @@ function useActionResolution({
 					if (line === undefined) {
 						return;
 					}
+					const absoluteIndex = baseLineIndex + index;
 					setResolution((previous) => {
 						if (!previous) {
 							return previous;
@@ -164,18 +237,23 @@ function useActionResolution({
 						if (sequenceRef.current !== sequence) {
 							return previous;
 						}
-						if (previous.visibleLines.length > index) {
+						if (previous.visibleLines.length > absoluteIndex) {
+							return previous;
+						}
+						if (previous.visibleLines.length !== absoluteIndex) {
 							return previous;
 						}
 						const nextVisible = [...previous.visibleLines, line];
 						const isComplete = nextVisible.length === previous.lines.length;
-						return {
+						const nextResolution: ActionResolution = {
 							...previous,
 							visibleLines: nextVisible,
 							isComplete,
 						};
+						resolutionRef.current = nextResolution;
+						return nextResolution;
 					});
-					addLog(line, player);
+					addLog(line, logPlayer);
 				};
 
 				const scheduleReveal = (index: number) => {

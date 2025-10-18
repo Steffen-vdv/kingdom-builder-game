@@ -23,7 +23,7 @@ const playerBadgeClassName = [
 ].join(' ');
 
 const phaseBadgeClassName = [
-	'inline-flex items-center gap-2 self-start rounded-full border px-4 py-2',
+	'inline-flex items-center gap-3 self-start rounded-full border px-4 py-2',
 	'border-slate-300 bg-white/70 text-sm font-semibold uppercase tracking-[0.2em]',
 	'text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/80',
 	'dark:text-slate-100',
@@ -44,6 +44,8 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			sessionState.game.players[0]?.name ??
 			'Player';
 		const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
+		const phaseLabel = currentPhaseDefinition?.label ?? phase.currentPhaseId;
+		const phaseIcon = currentPhaseDefinition?.icon?.trim();
 		const handleEndTurnClick = () => {
 			// Phase errors are surfaced via onFatalSessionError inside
 			// usePhaseProgress.
@@ -56,21 +58,24 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 				className={panelClassName}
 				style={{ height: `${panelHeight}px` }}
 			>
-				<header className="flex flex-col gap-3">
+				<header className="flex items-start justify-between gap-4">
 					<p className={turnClassName}>
 						<span>Turn {sessionState.game.turn}</span>
 						<span className="sr-only">Active player:</span>
 						<span className={playerBadgeClassName}>{activePlayerName}</span>
 					</p>
 					<span
-						className={phaseBadgeClassName}
+						className={`${phaseBadgeClassName} ml-auto`}
 						role="status"
 						aria-live="polite"
 					>
 						<span className="text-[0.65rem] text-slate-500 dark:text-slate-300">
 							Current Phase
 						</span>
-						<span>{currentPhaseDefinition?.label ?? phase.currentPhaseId}</span>
+						<span className="flex items-center gap-2">
+							{phaseIcon ? <span aria-hidden="true">{phaseIcon}</span> : null}
+							<span>{phaseLabel}</span>
+						</span>
 					</span>
 				</header>
 				<div className="mt-auto flex justify-end">
