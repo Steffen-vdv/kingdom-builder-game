@@ -10,6 +10,7 @@ import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
+import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
 	selectPopulationDescriptor,
 	selectResourceDescriptor,
@@ -119,6 +120,10 @@ function createLogHarness(
 	};
 }
 
+function captureActivePlayer(engine: ReturnType<typeof createEngine>) {
+	return snapshotPlayer(snapshotEnginePlayer(engine, engine.activePlayer));
+}
+
 describe('log resource source icon registry', () => {
 	const scenarios = [
 		{
@@ -187,12 +192,9 @@ describe('log resource source icon registry', () => {
 				meta: { source: meta },
 			};
 			const step = { id: `meta-icons-${name}`, effects: [effect] };
-			const before = snapshotPlayer(
-				harness.engine.activePlayer,
-				harness.engine,
-			);
+			const before = captureActivePlayer(harness.engine);
 			runEffects([effect], harness.engine);
-			const after = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+			const after = captureActivePlayer(harness.engine);
 			const diffContext = createTranslationDiffContext({
 				activePlayer: harness.engine.activePlayer,
 				buildings: harness.engine.buildings,
@@ -242,9 +244,9 @@ describe('log resource source icon registry', () => {
 			params: { key: harness.resourceKeys[0] ?? 'resource', amount: 1 },
 			meta: { source: { type: 'land' as const } },
 		};
-		const before = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const before = captureActivePlayer(harness.engine);
 		runEffects([effect], harness.engine);
-		const after = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const after = captureActivePlayer(harness.engine);
 		const lines = diffStepSnapshots(
 			before,
 			after,

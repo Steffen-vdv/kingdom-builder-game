@@ -25,6 +25,7 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
 	appendSubActionChanges,
 	filterActionDiffChanges,
@@ -39,6 +40,12 @@ const RESOURCE_KEYS = Object.keys(
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+
+function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
+	return snapshotPlayer(
+		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
+	);
+}
 
 function asTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
@@ -90,13 +97,13 @@ describe('tax action logging with market', () => {
 			advance(engineContext);
 		}
 		const action = engineContext.actions.get(SYNTHETIC_IDS.taxAction);
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = captureActivePlayer(engineContext);
 		const costs = getActionCosts(SYNTHETIC_IDS.taxAction, engineContext);
 		const traces: ActionTrace[] = performAction(
 			SYNTHETIC_IDS.taxAction,
 			engineContext,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const changes = diffStepSnapshots(
 			before,

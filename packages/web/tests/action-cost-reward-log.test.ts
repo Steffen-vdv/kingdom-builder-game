@@ -22,6 +22,7 @@ import {
 import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 
 function asTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
@@ -52,6 +53,12 @@ const RESOURCE_KEYS = Object.keys(
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+
+function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
+	return snapshotPlayer(
+		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
+	);
+}
 
 describe('action cost and reward logging', () => {
 	it('shows both the cost block and reward highlight for the same resource', () => {
@@ -86,10 +93,10 @@ describe('action cost and reward logging', () => {
 		while (engineContext.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
 			advance(engineContext);
 		}
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = captureActivePlayer(engineContext);
 		const costs = getActionCosts(refundAction.id, engineContext);
 		performAction(refundAction.id, engineContext);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = captureActivePlayer(engineContext);
 		const diffContext = createTranslationDiffContext(engineContext);
 		const actionDefinition = engineContext.actions.get(refundAction.id);
 		if (!actionDefinition) {

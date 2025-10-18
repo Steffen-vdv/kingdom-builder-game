@@ -17,10 +17,19 @@ import {
 	LOG_KEYWORDS,
 } from '../src/translation/log/logMessages';
 import { createEngineTranslationContext } from './helpers/createEngineTranslationContext';
+import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
+
+function captureActivePlayer(
+	engineContext: Parameters<typeof snapshotEnginePlayer>[0],
+) {
+	return snapshotPlayer(
+		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
+	);
+}
 
 const TEST_PHASES: PhaseConfig[] = [
 	{
@@ -84,7 +93,7 @@ function createTestContext() {
 describe('land change log formatting', () => {
 	it('logs gained land entries with icon and label', () => {
 		const engineContext = createTestContext();
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = captureActivePlayer(engineContext);
 		runEffects(
 			[
 				{
@@ -94,7 +103,7 @@ describe('land change log formatting', () => {
 			],
 			engineContext,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,
@@ -153,7 +162,7 @@ describe('land change log formatting', () => {
 		if (!developmentId) {
 			return;
 		}
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = captureActivePlayer(engineContext);
 		runEffects(
 			[
 				{
@@ -167,7 +176,7 @@ describe('land change log formatting', () => {
 			],
 			engineContext,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,

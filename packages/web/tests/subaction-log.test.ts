@@ -18,6 +18,7 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
 	appendSubActionChanges,
 	filterActionDiffChanges,
@@ -56,6 +57,12 @@ vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
+function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
+	return snapshotPlayer(
+		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
+	);
+}
+
 describe('sub-action logging', () => {
 	it('nests sub-action effects under the triggering action', () => {
 		const synthetic = createSyntheticPlowContent();
@@ -82,10 +89,10 @@ describe('sub-action logging', () => {
 		engineContext.activePlayer.actions.add(synthetic.plow.id);
 		engineContext.activePlayer.resources.gold = 10;
 		engineContext.activePlayer.resources.ap = 1;
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = captureActivePlayer(engineContext);
 		const costs = getActionCosts(synthetic.plow.id, engineContext);
 		const traces = performAction(synthetic.plow.id, engineContext);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = captureActivePlayer(engineContext);
 		const diffContext = createTranslationDiffContext(engineContext);
 		const changes = diffStepSnapshots(
 			before,
