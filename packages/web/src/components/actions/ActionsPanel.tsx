@@ -27,6 +27,7 @@ import { normalizeActionFocus } from './types';
 
 export default function ActionsPanel() {
 	const {
+		session,
 		sessionState,
 		sessionView,
 		translationContext,
@@ -62,13 +63,14 @@ export default function ActionsPanel() {
 		[sessionState.phases],
 	);
 	const isActionPhase = isActionPhaseActive(phase, actionPhaseId);
-	const isLocalTurn = sessionState.game.activePlayerId === player.id;
+	const activePlayerId = sessionState.game.activePlayerId;
+	const isControlledTurn = !session.hasAiController(activePlayerId);
 
 	useEffect(() => {
-		if (!isLocalTurn && viewingOpponent) {
+		if (!isControlledTurn && viewingOpponent) {
 			setViewingOpponent(false);
 		}
-	}, [isLocalTurn, viewingOpponent]);
+	}, [isControlledTurn, viewingOpponent]);
 
 	useEffect(() => {
 		if (!hasOpponent && viewingOpponent) {
@@ -77,7 +79,7 @@ export default function ActionsPanel() {
 	}, [hasOpponent, viewingOpponent]);
 
 	const selectedPlayer: DisplayPlayer = viewingOpponent ? opponent : player;
-	const canInteract = isLocalTurn && isActionPhase && !viewingOpponent;
+	const canInteract = isControlledTurn && isActionPhase && !viewingOpponent;
 	const panelDisabled = !canInteract;
 
 	const actions = useMemo<Action[]>(() => {
@@ -215,12 +217,17 @@ export default function ActionsPanel() {
 							<span>Viewing Opponent</span>
 						</span>
 					)}
+					{!isControlledTurn && (
+						<span className={INDICATOR_PILL_CLASSES}>
+							<span>Opponent Turn</span>
+						</span>
+					)}
 					{!isActionPhase && (
 						<span className={INDICATOR_PILL_CLASSES}>
 							<span>Not In Main Phase</span>
 						</span>
 					)}
-					{isLocalTurn && hasOpponent && (
+					{isControlledTurn && hasOpponent && (
 						<button
 							type="button"
 							className={TOGGLE_BUTTON_CLASSES}
