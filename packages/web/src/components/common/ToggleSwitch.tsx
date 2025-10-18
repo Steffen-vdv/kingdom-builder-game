@@ -1,5 +1,24 @@
 import React from 'react';
 
+const TOGGLE_BASE_CLASS = [
+	'relative inline-flex h-7 w-14 items-center rounded-full',
+	'border border-white/40 cursor-pointer transition-colors',
+	'focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70',
+	'focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50',
+].join(' ');
+
+const TOGGLE_CHECKED_CLASS = [
+	'bg-emerald-500/80 shadow-inner shadow-emerald-600/40',
+	'hover:bg-emerald-500/90 hover:shadow-emerald-600/50',
+	'dark:hover:bg-emerald-400/80',
+].join(' ');
+
+const TOGGLE_UNCHECKED_CLASS = [
+	'bg-slate-300/70 shadow-inner shadow-slate-500/30 dark:bg-slate-700/70',
+	'hover:bg-slate-200/80 hover:shadow-slate-500/40',
+	'dark:hover:bg-slate-600/70',
+].join(' ');
+
 type ToggleSwitchProps = {
 	checked: boolean;
 	onChange: (value: boolean) => void;
@@ -31,11 +50,11 @@ export default function ToggleSwitch({
 			aria-checked={checked}
 			disabled={disabled}
 			onClick={handleClick}
-			className={`relative inline-flex h-7 w-14 items-center rounded-full border border-white/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 ${
-				checked
-					? 'bg-emerald-500/80 shadow-inner shadow-emerald-600/40'
-					: 'bg-slate-300/70 shadow-inner shadow-slate-500/30 dark:bg-slate-700/70'
-			} ${className}`}
+			className={[
+				TOGGLE_BASE_CLASS,
+				checked ? TOGGLE_CHECKED_CLASS : TOGGLE_UNCHECKED_CLASS,
+				className,
+			].join(' ')}
 			{...ariaProps}
 		>
 			<span
