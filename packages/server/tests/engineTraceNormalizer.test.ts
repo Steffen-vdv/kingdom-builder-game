@@ -3,8 +3,10 @@ import { normalizeActionTraces } from '../src/transport/engineTraceNormalizer.js
 import type {
 	ActionTrace as EngineActionTrace,
 	PlayerSnapshot as EnginePlayerSnapshot,
-	PassiveSummary as EnginePassiveSummary,
 } from '@kingdom-builder/engine';
+import type { SessionPassiveSummary } from '@kingdom-builder/protocol';
+
+type EnginePassiveSummary = SessionPassiveSummary;
 
 describe('engineTraceNormalizer', () => {
 	it('deeply clones player snapshots when normalizing traces', () => {

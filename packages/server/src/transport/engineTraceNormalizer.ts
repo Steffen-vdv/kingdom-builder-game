@@ -1,7 +1,6 @@
 import type {
 	ActionTrace as EngineActionTrace,
 	PlayerSnapshot as EnginePlayerSnapshot,
-	PassiveSummary as EnginePassiveSummary,
 } from '@kingdom-builder/engine';
 import type {
 	ActionExecuteSuccessResponse,
@@ -36,7 +35,7 @@ function normalizePlayerSnapshot(
 }
 
 function normalizePassive(
-	passive: EnginePassiveSummary,
+	passive: SessionPassiveSummary,
 ): SessionPassiveSummary {
 	const normalized: SessionPassiveSummary = {
 		id: passive.id,
