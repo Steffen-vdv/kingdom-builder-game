@@ -22,18 +22,6 @@ const playerBadgeClassName = [
 	'tracking-[0.15em] text-slate-500 dark:bg-white/10 dark:text-slate-200',
 ].join(' ');
 
-const phaseBadgeClassName = [
-	'inline-flex items-center gap-2 self-start rounded-full border px-4 py-2',
-	'border-slate-300 bg-white/70 text-sm font-semibold uppercase tracking-[0.2em]',
-	'text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/80',
-	'dark:text-slate-100',
-].join(' ');
-
-const phaseBadgeRightClassName = [
-	phaseBadgeClassName,
-	'ml-auto text-right',
-].join(' ');
-
 const phaseListClassName = ['mt-4 grid gap-3', 'sm:grid-cols-3 sm:gap-4'].join(
 	' ',
 );
@@ -66,13 +54,6 @@ export default function PhasePanel() {
 			})),
 		[sessionState.phases],
 	);
-	const currentPhaseDefinition = useMemo(
-		() =>
-			phases.find(
-				(phaseDefinition) => phaseDefinition.id === phase.currentPhaseId,
-			),
-		[phases, phase.currentPhaseId],
-	);
 	const activePlayerName =
 		sessionView.active?.name ?? sessionState.game.players[0]?.name ?? 'Player';
 	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
@@ -82,8 +63,6 @@ export default function PhasePanel() {
 		// usePhaseProgress.
 		void handleEndTurn();
 	};
-	const badgeIcon = currentPhaseDefinition?.icon;
-	const badgeLabel = currentPhaseDefinition?.label ?? phase.currentPhaseId;
 	return (
 		<section className={panelClassName}>
 			<header className={headerClassName}>
@@ -92,21 +71,6 @@ export default function PhasePanel() {
 					<span className="sr-only">Active player:</span>
 					<span className={playerBadgeClassName}>{activePlayerName}</span>
 				</p>
-				<span
-					className={phaseBadgeRightClassName}
-					role="status"
-					aria-live="polite"
-				>
-					<span className="text-[0.65rem] text-slate-500 dark:text-slate-300">
-						Current Phase
-					</span>
-					<span className="flex items-center gap-2">
-						{badgeIcon ? (
-							<span className="text-base leading-none">{badgeIcon}</span>
-						) : null}
-						<span>{badgeLabel}</span>
-					</span>
-				</span>
 			</header>
 			<ul className={phaseListClassName}>
 				{phases.map((phaseDefinition) => {
