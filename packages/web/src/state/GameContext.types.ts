@@ -1,4 +1,5 @@
 import type {
+	SessionPlayerId,
 	SessionRuleSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
@@ -71,6 +72,7 @@ export interface GameEngineContextValue {
 	sessionSnapshot: SessionSnapshot;
 	cachedSessionSnapshot: SessionSnapshot;
 	selectors: SessionDerivedSelectors;
+	controlledPlayerId: SessionPlayerId | null;
 	translationContext: TranslationContext;
 	ruleSnapshot: SessionRuleSnapshot;
 	log: LogEntry[];

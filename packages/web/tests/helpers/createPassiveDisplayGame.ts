@@ -43,11 +43,26 @@ export function createPassiveGame(
 		},
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
+	const controlledPlayerId =
+		sessionState.game.players.find((player) => !player.aiControlled)?.id ??
+		sessionState.game.activePlayerId ??
+		sessionState.game.players[0]?.id ??
+		null;
+	const sessionStub = {
+		getActionCosts: vi.fn(),
+		getActionRequirements: vi.fn(),
+		getActionOptions: vi.fn(),
+		setActionCosts: vi.fn(),
+		setActionRequirements: vi.fn(),
+		setActionOptions: vi.fn(),
+		hasAiController: vi.fn().mockReturnValue(false),
+	} as Partial<EngineSession> as EngineSession;
 	const mockGame: MockGame = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
 		cachedSessionSnapshot: sessionState,
 		selectors: { sessionView },
+		controlledPlayerId,
 		translationContext,
 		ruleSnapshot,
 		log: [],
@@ -96,7 +111,7 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
+		session: sessionStub,
 		sessionState,
 		sessionView,
 		handlePerform: vi.fn().mockResolvedValue(undefined),

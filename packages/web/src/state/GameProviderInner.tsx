@@ -312,6 +312,7 @@ export function GameProviderInner({
 		sessionSnapshot: sessionState,
 		cachedSessionSnapshot,
 		selectors,
+		controlledPlayerId: controlledPlayerId ?? null,
 		translationContext,
 		ruleSnapshot,
 		log,

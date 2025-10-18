@@ -144,6 +144,10 @@ export function useActionPerformer({
 				),
 				() => new Error('Missing active player before action'),
 			);
+			if (session.hasAiController(activePlayerId)) {
+				pushErrorToast('The opponent is currently taking their turn.');
+				return;
+			}
 			const before = snapshotPlayer(playerBefore);
 			try {
 				const response = await performSessionAction(

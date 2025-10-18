@@ -197,6 +197,54 @@ describe('useActionPerformer', () => {
 		expect(translateRequirementFailureMock).not.toHaveBeenCalled();
 	});
 
+	it('prevents manual actions during an AI-controlled turn', async () => {
+		const players = sessionSnapshot.game.players;
+		const active = players[0];
+		const opponent = players[1];
+		if (!active || !opponent) {
+			throw new Error('Missing players in session snapshot');
+		}
+		const snapshotWithAi = {
+			...sessionSnapshot,
+			game: {
+				...sessionSnapshot.game,
+				players: [{ ...active, aiControlled: true }, { ...opponent }],
+				activePlayerId: active.id,
+			},
+		};
+		updateSessionSnapshot(sessionId, snapshotWithAi);
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const syncPhaseState = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn();
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(pushErrorToast).toHaveBeenCalledWith(
+			'The opponent is currently taking their turn.',
+		);
+		expect(performSessionActionMock).not.toHaveBeenCalled();
+	});
+
 	it('translates requirement failures for authentication errors', async () => {
 		const error = new Error('Forbidden');
 		const failure = { reason: 'auth' } as SessionRequirementFailure;
