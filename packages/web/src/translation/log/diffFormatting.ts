@@ -59,7 +59,10 @@ export function formatStatChange(
 	const after = formatStatValue(key, change.after, assets);
 	const delta = formatStatValue(key, change.delta, assets);
 	const sign = change.delta >= 0 ? '+' : '';
-	return `${prefix}${label} ${sign}${delta} (${before}→${after})`;
+	const normalizedLabel = label.trim();
+	const deltaText = `${sign}${delta}`;
+	const labelSegment = normalizedLabel.length > 0 ? ` ${normalizedLabel}` : '';
+	return `${prefix}${deltaText}${labelSegment} (${before}→${after})`;
 }
 
 export function formatPercentBreakdown(

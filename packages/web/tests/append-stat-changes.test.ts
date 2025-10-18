@@ -4,6 +4,7 @@ import { type PlayerSnapshot } from '../src/translation/log';
 import { type StepEffects } from '../src/translation/log/statBreakdown';
 import { formatPercentBreakdown } from '../src/translation/log/diffFormatting';
 import { formatStatValue } from '../src/utils/stats';
+import { formatDetailText } from '../src/utils/stats/format';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -225,8 +226,9 @@ describe('appendStatChanges', () => {
 		};
 		const changes: string[] = [];
 		appendStatChanges(changes, before, after, player, step, fallbackAssets);
-		const entry = changes.find((line) => line.includes(primaryStatId));
+		const fallbackLabel = formatDetailText(primaryStatId) || primaryStatId;
+		const entry = changes.find((line) => line.includes(fallbackLabel));
 		expect(entry).toBeDefined();
-		expect(entry?.includes(primaryStatId)).toBe(true);
+		expect(entry?.includes(fallbackLabel)).toBe(true);
 	});
 });

@@ -14,14 +14,14 @@ describe('action log line formatting', () => {
 		];
 		const changes = [
 			`${LOG_KEYWORDS.developed} 🗼 Watchtower`,
-			'🛡️ Fortification Strength +2 (0→2)',
-			'🌀 Absorption +50% (0%→50%)',
+			'🛡️ +2 Fortification Strength (0→2)',
+			'🌀 +50% Absorption (0%→50%)',
 		];
 		expect(formatDevelopActionLogLines(messages, changes)).toEqual([
 			`${LOG_KEYWORDS.developed} 🗼 Watchtower`,
 			'• 💲 Action cost',
-			'• 🛡️ Fortification Strength +2 (0→2)',
-			'• 🌀 Absorption +50% (0%→50%)',
+			'• 🛡️ +2 Fortification Strength (0→2)',
+			'• 🌀 +50% Absorption (0%→50%)',
 		]);
 	});
 
