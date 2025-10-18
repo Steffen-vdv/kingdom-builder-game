@@ -32,6 +32,7 @@ export default function ActionsPanel() {
 		translationContext,
 		phase,
 		actionCostResource,
+		session,
 	} = useGameEngine();
 	const resourceMetadata = useResourceMetadata();
 	const selectResourceDescriptor = useCallback(
@@ -62,13 +63,17 @@ export default function ActionsPanel() {
 		[sessionState.phases],
 	);
 	const isActionPhase = isActionPhaseActive(phase, actionPhaseId);
-	const isLocalTurn = sessionState.game.activePlayerId === player.id;
+	const activePlayerId = sessionState.game.activePlayerId;
+	const isLocalPlayerActive =
+		activePlayerId === undefined
+			? true
+			: !session.hasAiController(activePlayerId);
 
 	useEffect(() => {
-		if (!isLocalTurn && viewingOpponent) {
+		if (!isLocalPlayerActive && viewingOpponent) {
 			setViewingOpponent(false);
 		}
-	}, [isLocalTurn, viewingOpponent]);
+	}, [isLocalPlayerActive, viewingOpponent]);
 
 	useEffect(() => {
 		if (!hasOpponent && viewingOpponent) {
@@ -77,7 +82,7 @@ export default function ActionsPanel() {
 	}, [hasOpponent, viewingOpponent]);
 
 	const selectedPlayer: DisplayPlayer = viewingOpponent ? opponent : player;
-	const canInteract = isLocalTurn && isActionPhase && !viewingOpponent;
+	const canInteract = isLocalPlayerActive && isActionPhase && !viewingOpponent;
 	const panelDisabled = !canInteract;
 
 	const actions = useMemo<Action[]>(() => {

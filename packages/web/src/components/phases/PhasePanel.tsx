@@ -40,8 +40,14 @@ const phaseBadgeRightClassName = [
 
 const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 	({ height }, ref) => {
-		const { sessionState, sessionView, phase, handleEndTurn, resolution } =
-			useGameEngine();
+		const {
+			sessionState,
+			sessionView,
+			phase,
+			handleEndTurn,
+			resolution,
+			session,
+		} = useGameEngine();
 		const currentPhaseDefinition = useMemo(
 			() =>
 				sessionState.phases.find(
@@ -53,7 +59,13 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			sessionView.active?.name ??
 			sessionState.game.players[0]?.name ??
 			'Player';
-		const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
+		const activePlayerId = sessionState.game.activePlayerId;
+		const isLocalPlayerActive =
+			activePlayerId === undefined
+				? true
+				: !session.hasAiController(activePlayerId);
+		const canEndTurn =
+			isLocalPlayerActive && phase.canEndTurn && !phase.isAdvancing;
 		const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
 		const handleEndTurnClick = () => {
 			// Phase errors are surfaced via onFatalSessionError inside

@@ -138,6 +138,13 @@ export function useActionPerformer({
 				registries,
 			});
 			const activePlayerId = snapshotBefore.game.activePlayerId;
+			if (
+				activePlayerId !== undefined &&
+				session.hasAiController(activePlayerId)
+			) {
+				pushErrorToast('The opponent is taking their turn.');
+				return;
+			}
 			const playerBefore = ensureValue(
 				snapshotBefore.game.players.find(
 					(entry) => entry.id === activePlayerId,

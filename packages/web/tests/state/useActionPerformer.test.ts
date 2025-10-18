@@ -197,6 +197,64 @@ describe('useActionPerformer', () => {
 		expect(translateRequirementFailureMock).not.toHaveBeenCalled();
 	});
 
+	it('blocks action execution when the active player is AI', async () => {
+		const aiPlayer = createSnapshotPlayer({
+			id: 'A',
+			name: 'Hero',
+			aiControlled: true,
+			resources: { [actionCostResource]: 5 },
+		});
+		const rivalPlayer = createSnapshotPlayer({
+			id: 'B',
+			name: 'Rival',
+			resources: { [actionCostResource]: 4 },
+		});
+		const aiSnapshot = createSessionSnapshot({
+			players: [aiPlayer, rivalPlayer],
+			activePlayerId: aiPlayer.id,
+			opponentId: rivalPlayer.id,
+			phases: sessionSnapshot.phases,
+			actionCostResource,
+			ruleSnapshot,
+			turn: sessionSnapshot.game.turn,
+			currentPhase: sessionSnapshot.game.currentPhase,
+			currentStep: sessionSnapshot.game.currentStep,
+			phaseIndex: sessionSnapshot.game.phaseIndex,
+			stepIndex: sessionSnapshot.game.stepIndex,
+		});
+		updateSessionSnapshot(sessionId, aiSnapshot);
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const syncPhaseState = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn();
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				session,
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+			}),
+		);
+
+		await act(async () => {
+			await result.current.handlePerform(action);
+		});
+
+		expect(pushErrorToast).toHaveBeenCalledWith(
+			'The opponent is taking their turn.',
+		);
+		expect(performSessionActionMock).not.toHaveBeenCalled();
+	});
+
 	it('translates requirement failures for authentication errors', async () => {
 		const error = new Error('Forbidden');
 		const failure = { reason: 'auth' } as SessionRequirementFailure;
