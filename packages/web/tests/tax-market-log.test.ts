@@ -90,13 +90,13 @@ describe('tax action logging with market', () => {
 			advance(engineContext);
 		}
 		const action = engineContext.actions.get(SYNTHETIC_IDS.taxAction);
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = snapshotPlayer(engineContext.activePlayer);
 		const costs = getActionCosts(SYNTHETIC_IDS.taxAction, engineContext);
 		const traces: ActionTrace[] = performAction(
 			SYNTHETIC_IDS.taxAction,
 			engineContext,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const changes = diffStepSnapshots(
 			before,

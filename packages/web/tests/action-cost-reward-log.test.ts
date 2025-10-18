@@ -86,10 +86,10 @@ describe('action cost and reward logging', () => {
 		while (engineContext.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
 			advance(engineContext);
 		}
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = snapshotPlayer(engineContext.activePlayer);
 		const costs = getActionCosts(refundAction.id, engineContext);
 		performAction(refundAction.id, engineContext);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer);
 		const diffContext = createTranslationDiffContext(engineContext);
 		const actionDefinition = engineContext.actions.get(refundAction.id);
 		if (!actionDefinition) {

@@ -82,10 +82,10 @@ describe('sub-action logging', () => {
 		engineContext.activePlayer.actions.add(synthetic.plow.id);
 		engineContext.activePlayer.resources.gold = 10;
 		engineContext.activePlayer.resources.ap = 1;
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = snapshotPlayer(engineContext.activePlayer);
 		const costs = getActionCosts(synthetic.plow.id, engineContext);
 		const traces = performAction(synthetic.plow.id, engineContext);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer);
 		const diffContext = createTranslationDiffContext(engineContext);
 		const changes = diffStepSnapshots(
 			before,

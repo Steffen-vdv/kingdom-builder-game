@@ -84,7 +84,7 @@ function createTestContext() {
 describe('land change log formatting', () => {
 	it('logs gained land entries with icon and label', () => {
 		const engineContext = createTestContext();
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = snapshotPlayer(engineContext.activePlayer);
 		runEffects(
 			[
 				{
@@ -94,7 +94,7 @@ describe('land change log formatting', () => {
 			],
 			engineContext,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,
@@ -153,7 +153,7 @@ describe('land change log formatting', () => {
 		if (!developmentId) {
 			return;
 		}
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = snapshotPlayer(engineContext.activePlayer);
 		runEffects(
 			[
 				{
@@ -167,7 +167,7 @@ describe('land change log formatting', () => {
 			],
 			engineContext,
 		);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,

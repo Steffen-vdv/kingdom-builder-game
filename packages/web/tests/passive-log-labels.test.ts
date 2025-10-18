@@ -238,7 +238,7 @@ describe('passive log labels', () => {
 	it('formats building passives and skips bonus activations', () => {
 		const harness = createPassiveHarness();
 		const castleWallsId = findBuildingId(harness.registries, 'castle_walls');
-		const before = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const before = snapshotPlayer(harness.engine.activePlayer);
 		runEffects(
 			[
 				{
@@ -249,7 +249,7 @@ describe('passive log labels', () => {
 			],
 			harness.engine,
 		);
-		const after = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const after = snapshotPlayer(harness.engine.activePlayer);
 		const { translationContext, diffContext } =
 			rebuildTranslationArtifacts(harness);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
@@ -284,7 +284,7 @@ describe('passive log labels', () => {
 			return;
 		}
 		const developmentId = findDevelopmentId(harness.registries, 'watchtower');
-		const before = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const before = snapshotPlayer(harness.engine.activePlayer);
 		runEffects(
 			[
 				{
@@ -295,7 +295,7 @@ describe('passive log labels', () => {
 			],
 			harness.engine,
 		);
-		const after = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const after = snapshotPlayer(harness.engine.activePlayer);
 		const { translationContext, diffContext } =
 			rebuildTranslationArtifacts(harness);
 		const lines = diffStepSnapshots(before, after, undefined, diffContext);
@@ -359,14 +359,14 @@ describe('passive log labels', () => {
 			harness.engine.activePlayer,
 			happinessKey,
 		);
-		const before = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const before = snapshotPlayer(harness.engine.activePlayer);
 		harness.engine.activePlayer.resources[happinessKey] = 0;
 		harness.engine.services.handleTieredResourceChange(
 			harness.engine,
 			harness.engine.activePlayer,
 			happinessKey,
 		);
-		const after = snapshotPlayer(harness.engine.activePlayer, harness.engine);
+		const after = snapshotPlayer(harness.engine.activePlayer);
 		const { translationContext, diffContext } =
 			rebuildTranslationArtifacts(harness);
 		const descriptor = selectResourceDescriptor(

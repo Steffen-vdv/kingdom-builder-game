@@ -67,13 +67,13 @@ describe('log resource sources', () => {
 		const gainIncomeStep = growthPhase?.steps.find(
 			(stepDefinition) => stepDefinition.id === SYNTHETIC_STEP_IDS.gainIncome,
 		);
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = snapshotPlayer(engineContext.activePlayer);
 		const bundles = collectTriggerEffects('onGainIncomeStep', engineContext);
 		for (const bundle of bundles) {
 			runEffects(bundle.effects, engineContext);
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,
@@ -124,9 +124,9 @@ describe('log resource sources', () => {
 			id: SYNTHETIC_IDS.taxAction,
 			effects: engineContext.actions.get(SYNTHETIC_IDS.taxAction).effects,
 		};
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = snapshotPlayer(engineContext.activePlayer);
 		performAction(SYNTHETIC_IDS.taxAction, engineContext);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,
@@ -177,13 +177,13 @@ describe('log resource sources', () => {
 		const payUpkeepStep = upkeepPhase?.steps.find(
 			(stepDefinition) => stepDefinition.id === SYNTHETIC_STEP_IDS.payUpkeep,
 		);
-		const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const before = snapshotPlayer(engineContext.activePlayer);
 		const bundles = collectTriggerEffects('onPayUpkeepStep', engineContext);
 		for (const bundle of bundles) {
 			runEffects(bundle.effects, engineContext);
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
-		const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+		const after = snapshotPlayer(engineContext.activePlayer);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
 		const lines = diffStepSnapshots(
 			before,

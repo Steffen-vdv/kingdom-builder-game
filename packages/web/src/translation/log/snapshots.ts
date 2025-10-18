@@ -6,7 +6,6 @@ import type {
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 } from '@kingdom-builder/protocol';
-import { type Land } from '../content';
 import {
 	appendResourceChanges,
 	appendStatChanges,
@@ -32,75 +31,28 @@ export interface PlayerSnapshot {
 	passives: SessionPassiveSummary[];
 }
 
-interface LegacyPlayerSnapshot {
-	id: string;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population?: Record<string, number>;
-	buildings: Set<string> | string[];
-	lands: Land[];
-	passives?: SessionPassiveSummary[];
-}
-
 type SnapshotInput =
 	| SessionPlayerStateSnapshot
-	| LegacyPlayerSnapshot
 	| ActionPlayerSnapshot
 	| PlayerSnapshot;
 
-interface SnapshotContext {
-	game: {
-		players: Array<{
-			id: SessionPlayerId;
-			population: Record<string, number>;
-			passives?: SessionPassiveSummary[];
-		}>;
-	};
-	passives: {
-		list(owner?: SessionPlayerId): SessionPassiveSummary[];
-	};
-}
-
-export function snapshotPlayer(
-	playerState: SnapshotInput,
-	context?: SnapshotContext,
-): PlayerSnapshot {
-	const buildingList = Array.isArray(playerState.buildings)
-		? [...playerState.buildings]
-		: Array.from(playerState.buildings ?? []);
+export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
+	const buildingList = [...playerState.buildings];
 	const lands = playerState.lands.map((land) => ({
 		id: land.id,
 		slotsMax: land.slotsMax,
 		slotsUsed: land.slotsUsed,
 		developments: [...land.developments],
 	}));
-	const population = (() => {
-		if ('population' in playerState && playerState.population) {
-			return { ...playerState.population };
-		}
-		if (context && 'id' in playerState) {
-			const match = context.game.players.find((entry) => {
-				return entry.id === (playerState.id as SessionPlayerId);
-			});
-			if (match) {
-				return { ...match.population };
-			}
-		}
-		return {};
-	})();
-	const hasPassives = 'passives' in playerState && playerState.passives;
-	const passives = hasPassives
-		? [...playerState.passives!]
-		: context && 'id' in playerState
-			? context.passives.list(playerState.id as SessionPlayerId)
-			: [];
+	const population =
+		'population' in playerState ? { ...playerState.population } : {};
 	return {
 		resources: { ...playerState.resources },
 		stats: { ...playerState.stats },
 		population,
 		buildings: buildingList,
 		lands,
-		passives,
+		passives: [...playerState.passives],
 	};
 }
 
@@ -114,7 +66,7 @@ export function collectResourceKeys(
 	});
 }
 
-interface DiffContext extends SnapshotContext {
+interface DiffContext {
 	activePlayer: {
 		id: SessionPlayerId;
 		population: Record<string, number>;
@@ -128,6 +80,7 @@ interface DiffContext extends SnapshotContext {
 		get(id: string): DevelopmentConfig;
 		has?(id: string): boolean;
 	};
+	passives: unknown;
 	assets: TranslationAssets;
 }
 
