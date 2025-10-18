@@ -181,6 +181,11 @@ const buildStatMetadata = (): Record<string, SessionMetadataDescriptor> => ({
 		displayAsPercent: true,
 		format: { percent: true },
 	},
+	warWeariness: {
+		icon: '💤',
+		label: 'War Weariness',
+		description: 'Tracks fatigue from protracted conflict.',
+	},
 });
 
 const buildPhaseDefinitions = (
