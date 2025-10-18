@@ -37,6 +37,7 @@ type LegacyPassiveSummary = PassiveSummary;
 type LegacyPlayerStateSnapshot = {
 	id: PlayerId;
 	name: string;
+	aiControlled?: boolean;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	statsHistory: Record<string, boolean>;

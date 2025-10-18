@@ -109,6 +109,27 @@ describe('EngineSession', () => {
 		expect(next.game.players[0]!.resources[CResource.gold]).not.toBe(999);
 	});
 
+	it('flags AI-controlled players in session snapshots', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const aiPlayer = snapshot.game.players.find((player) =>
+			session.hasAiController(player.id),
+		);
+		expect(aiPlayer).toBeDefined();
+		if (!aiPlayer) {
+			throw new Error('Expected AI-controlled player to be present.');
+		}
+		expect(aiPlayer.aiControlled).toBe(true);
+		const humanPlayer = snapshot.game.players.find(
+			(player) => !session.hasAiController(player.id),
+		);
+		expect(humanPlayer).toBeDefined();
+		if (!humanPlayer) {
+			throw new Error('Expected human-controlled player to be present.');
+		}
+		expect(humanPlayer.aiControlled ?? false).toBe(false);
+	});
+
 	it('provides cloned advance results', () => {
 		const session = createTestSession();
 		const result = session.advancePhase();
