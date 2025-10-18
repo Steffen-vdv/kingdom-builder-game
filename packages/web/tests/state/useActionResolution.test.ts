@@ -203,4 +203,124 @@ describe('useActionResolution', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it('preserves phase resolution history across sequential steps', async () => {
+		vi.useFakeTimers();
+		try {
+			const addLog = vi.fn();
+			const setTrackedTimeout = vi
+				.fn<(callback: () => void, delay: number) => number>()
+				.mockImplementation((callback, delay) => {
+					return window.setTimeout(callback, delay);
+				});
+			const { result } = renderHook(() => {
+				const timeScaleRef = React.useRef(1);
+				const mountedRef = React.useRef(true);
+				React.useEffect(() => {
+					return () => {
+						mountedRef.current = false;
+					};
+				}, []);
+				return useActionResolution({
+					addLog,
+					setTrackedTimeout,
+					timeScaleRef,
+					mountedRef,
+				});
+			});
+			const phaseSource = {
+				kind: 'phase' as const,
+				label: '🌱 Growth Phase',
+				id: 'growth',
+				name: 'Collect Income',
+			};
+			const firstLines = [
+				'🌱 Growth Phase – Collect Income',
+				'Gold +2 (10→12)',
+			];
+			let firstPromise: Promise<void> = Promise.resolve();
+			act(() => {
+				firstPromise = result.current.showResolution({
+					lines: firstLines,
+					summaries: ['Gold +2 (10→12)'],
+					source: phaseSource,
+					player: { id: 'player-1', name: 'Player One' },
+					requireAcknowledgement: false,
+				});
+			});
+			expect(result.current.resolution?.lines).toEqual(firstLines);
+			expect(result.current.resolution?.visibleLines).toEqual([firstLines[0]]);
+			expect(addLog).toHaveBeenCalledTimes(1);
+			expect(addLog).toHaveBeenLastCalledWith(firstLines[0], {
+				id: 'player-1',
+				name: 'Player One',
+			});
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			expect(result.current.resolution?.visibleLines).toEqual(firstLines);
+			expect(addLog).toHaveBeenCalledTimes(2);
+			expect(addLog).toHaveBeenLastCalledWith(firstLines[1], {
+				id: 'player-1',
+				name: 'Player One',
+			});
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			await firstPromise;
+			expect(result.current.resolution).toBeNull();
+
+			const secondLines = ['🌱 Growth Phase – Resolve Upkeep', 'No effect'];
+			const secondSource = {
+				...phaseSource,
+				name: 'Resolve Upkeep',
+			};
+			let secondPromise: Promise<void> = Promise.resolve();
+			act(() => {
+				secondPromise = result.current.showResolution({
+					lines: secondLines,
+					summaries: ['No effect'],
+					source: secondSource,
+					player: { id: 'player-1', name: 'Player One' },
+					requireAcknowledgement: false,
+				});
+			});
+			expect(result.current.resolution?.lines).toEqual([
+				...firstLines,
+				...secondLines,
+			]);
+			expect(result.current.resolution?.visibleLines).toEqual([
+				...firstLines,
+				secondLines[0],
+			]);
+			expect(result.current.resolution?.summaries).toEqual([
+				'Gold +2 (10→12)',
+				'No effect',
+			]);
+			expect(addLog).toHaveBeenCalledTimes(3);
+			expect(addLog).toHaveBeenLastCalledWith(secondLines[0], {
+				id: 'player-1',
+				name: 'Player One',
+			});
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			expect(result.current.resolution?.visibleLines).toEqual([
+				...firstLines,
+				...secondLines,
+			]);
+			expect(addLog).toHaveBeenCalledTimes(4);
+			expect(addLog).toHaveBeenLastCalledWith(secondLines[1], {
+				id: 'player-1',
+				name: 'Player One',
+			});
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			await secondPromise;
+			expect(result.current.resolution).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });

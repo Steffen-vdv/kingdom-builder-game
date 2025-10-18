@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { ACTION_EFFECT_DELAY } from './useGameLog';
 
@@ -83,6 +83,31 @@ function resolveActorLabel(
 	return undefined;
 }
 
+function isPhaseSource(
+	source: ResolutionSource | undefined,
+): source is ResolutionPhaseSource | 'phase' {
+	if (!source) {
+		return false;
+	}
+	if (source === 'phase') {
+		return true;
+	}
+	return typeof source === 'object' && source.kind === 'phase';
+}
+
+function resolvePhaseIdentifier(source: ResolutionSource | undefined) {
+	if (!source) {
+		return undefined;
+	}
+	if (typeof source === 'string') {
+		return source === 'phase' ? 'phase' : undefined;
+	}
+	if (source.kind !== 'phase') {
+		return undefined;
+	}
+	return source.id?.trim() || source.label?.trim();
+}
+
 function useActionResolution({
 	addLog,
 	setTrackedTimeout,
@@ -92,6 +117,22 @@ function useActionResolution({
 	const [resolution, setResolution] = useState<ActionResolution | null>(null);
 	const sequenceRef = useRef(0);
 	const resolverRef = useRef<(() => void) | null>(null);
+	const resolutionRef = useRef<ActionResolution | null>(null);
+	const lastPhaseResolutionRef = useRef<ActionResolution | null>(null);
+
+	useEffect(() => {
+		resolutionRef.current = resolution;
+	}, [resolution]);
+
+	useEffect(() => {
+		if (resolution && isPhaseSource(resolution.source)) {
+			lastPhaseResolutionRef.current = resolution;
+			return;
+		}
+		if (resolution && !isPhaseSource(resolution.source)) {
+			lastPhaseResolutionRef.current = null;
+		}
+	}, [resolution]);
 
 	const acknowledgeResolution = useCallback(() => {
 		sequenceRef.current += 1;
@@ -140,20 +181,66 @@ function useActionResolution({
 					resolvedSource,
 					action,
 				);
-				setResolution({
-					lines: entries,
-					visibleLines: [],
-					isComplete: false,
-					summaries,
-					source: resolvedSource,
-					requireAcknowledgement,
-					...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
-					...(player ? { player } : {}),
-					...(action ? { action } : {}),
-				});
+				const previousResolution =
+					resolutionRef.current ?? lastPhaseResolutionRef.current;
+				const isPhaseContinuation =
+					previousResolution != null &&
+					!requireAcknowledgement &&
+					previousResolution.requireAcknowledgement === false &&
+					isPhaseSource(previousResolution.source) &&
+					isPhaseSource(resolvedSource) &&
+					resolvePhaseIdentifier(previousResolution.source) ===
+						resolvePhaseIdentifier(resolvedSource);
+				const combinedEntries = isPhaseContinuation
+					? [...previousResolution.lines, ...entries]
+					: entries;
+				const combinedVisible = isPhaseContinuation
+					? [...previousResolution.visibleLines]
+					: [];
+				const combinedSummaries = isPhaseContinuation
+					? [...previousResolution.summaries, ...summaries]
+					: summaries;
+				const combinedSource = isPhaseContinuation
+					? previousResolution.source
+					: resolvedSource;
+				const combinedActorLabel = isPhaseContinuation
+					? (previousResolution.actorLabel ?? resolvedActorLabel)
+					: resolvedActorLabel;
+				const combinedPlayer = isPhaseContinuation
+					? (previousResolution.player ?? player)
+					: player;
+				const combinedAction = isPhaseContinuation
+					? previousResolution.action
+					: action;
+				const combinedRequireAcknowledgement = isPhaseContinuation
+					? previousResolution.requireAcknowledgement || requireAcknowledgement
+					: requireAcknowledgement;
+				const revealStartIndex = isPhaseContinuation
+					? previousResolution.lines.length
+					: 0;
+				const nextResolution: ActionResolution = {
+					lines: combinedEntries,
+					visibleLines: combinedVisible,
+					isComplete:
+						combinedVisible.length === combinedEntries.length &&
+						combinedEntries.length > 0,
+					summaries: combinedSummaries,
+					source: combinedSource,
+					requireAcknowledgement: combinedRequireAcknowledgement,
+					...(combinedActorLabel ? { actorLabel: combinedActorLabel } : {}),
+					...(combinedPlayer ? { player: combinedPlayer } : {}),
+					...(combinedAction ? { action: combinedAction } : {}),
+				};
+				setResolution(nextResolution);
+				if (isPhaseSource(nextResolution.source)) {
+					lastPhaseResolutionRef.current = nextResolution;
+				} else {
+					lastPhaseResolutionRef.current = null;
+				}
 
+				const logPlayer = player ?? combinedPlayer;
 				const revealLine = (index: number) => {
-					const line = entries[index];
+					const line = combinedEntries[index];
 					if (line === undefined) {
 						return;
 					}
@@ -175,12 +262,12 @@ function useActionResolution({
 							isComplete,
 						};
 					});
-					addLog(line, player);
+					addLog(line, logPlayer);
 				};
 
 				const scheduleReveal = (index: number) => {
-					if (index >= entries.length) {
-						if (!requireAcknowledgement) {
+					if (index >= combinedEntries.length) {
+						if (!combinedRequireAcknowledgement) {
 							const scale = timeScaleRef.current || 1;
 							const duration = ACTION_EFFECT_DELAY / scale;
 							const finalize = () => {
@@ -216,8 +303,9 @@ function useActionResolution({
 					}, duration);
 				};
 
-				revealLine(0);
-				scheduleReveal(1);
+				const initialRevealIndex = Math.max(revealStartIndex, 0);
+				revealLine(initialRevealIndex);
+				scheduleReveal(initialRevealIndex + 1);
 			});
 		},
 		[addLog, mountedRef, setTrackedTimeout, timeScaleRef],

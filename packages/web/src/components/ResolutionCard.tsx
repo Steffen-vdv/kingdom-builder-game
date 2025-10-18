@@ -35,6 +35,15 @@ function isSourceDetail(
 	return typeof source === 'object' && source !== null && 'kind' in source;
 }
 
+function isPhaseSourceDetail(
+	source: ResolutionSource | undefined,
+): source is Extract<
+	Exclude<ResolutionSource, 'action' | 'phase'>,
+	{ kind: 'phase' }
+> {
+	return isSourceDetail(source) && source.kind === 'phase';
+}
+
 interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
@@ -84,6 +93,12 @@ function ResolutionCard({
 		(isSourceDetail(resolution.source)
 			? (resolution.source.icon?.trim() ?? undefined)
 			: undefined);
+	const phaseSource = isPhaseSourceDetail(resolution.source)
+		? resolution.source
+		: undefined;
+	const phaseName = phaseSource
+		? (resolution.actorLabel ?? phaseSource.label ?? 'Current phase')
+		: null;
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
@@ -145,11 +160,47 @@ function ResolutionCard({
 							<div className={headerLabelClass}>Resolution</div>
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
 						</div>
-						{resolution.player ? (
-							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`${resolvedLabels.player} ${playerName}`}
-							</div>
-						) : null}
+						<div className="flex flex-col items-end gap-2 text-right">
+							{phaseSource && phaseName ? (
+								<div
+									className={joinClasses(
+										'rounded-2xl border border-emerald-500/40',
+										'bg-emerald-500/10 px-3 py-2 shadow-sm',
+										'text-emerald-700 dark:border-emerald-400/40',
+										'dark:bg-emerald-400/10 dark:text-emerald-200',
+									)}
+								>
+									<div
+										className={joinClasses(
+											CARD_LABEL_CLASS,
+											'text-xs uppercase tracking-wider text-emerald-700/80',
+											'dark:text-emerald-200/80',
+										)}
+									>
+										Current phase
+									</div>
+									<div
+										className={joinClasses(
+											CARD_META_TEXT_CLASS,
+											'mt-1 flex items-center justify-end gap-2 text-emerald-900',
+											'dark:text-emerald-100',
+										)}
+									>
+										{phaseSource.icon ? (
+											<span aria-hidden="true">{phaseSource.icon}</span>
+										) : null}
+										<span>{phaseName}</span>
+									</div>
+								</div>
+							) : null}
+							{resolution.player ? (
+								<div
+									className={joinClasses(CARD_META_TEXT_CLASS, 'text-right')}
+								>
+									{`${resolvedLabels.player} ${playerName}`}
+								</div>
+							) : null}
+						</div>
 					</div>
 				</div>
 				<div className={resolutionContainerClass}>
