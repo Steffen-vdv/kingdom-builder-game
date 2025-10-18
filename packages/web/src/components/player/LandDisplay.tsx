@@ -41,18 +41,34 @@ const LandTile: React.FC<{
 	slotDisplay,
 	getDevelopmentDisplay,
 }) => {
+	const developName =
+		developAction?.name && developAction.name.trim().length > 0
+			? developAction.name
+			: 'Develop';
+	const developLabelParts = [developAction?.icon, developName].filter(
+		(part): part is string =>
+			typeof part === 'string' && part.trim().length > 0,
+	);
+	const developInstruction = developLabelParts.length
+		? `Use ${developLabelParts.join(' ')} to build here`
+		: 'Use Develop to build here';
 	const showLandCard = () => {
 		const full = describeContent('land', land, translationContext);
 		const { effects, description } = splitSummary(full);
+		const hasSummaryDescription = description && description.length > 0;
+		const hasEmptySlot = land.slotsUsed < land.slotsMax;
+		const cardDescription =
+			landDisplay.description ??
+			(hasSummaryDescription ? description : undefined) ??
+			(hasEmptySlot ? developInstruction : undefined);
 		handleHoverCard({
 			title: formatIconLabel(landDisplay),
 			effects,
 			requirements: [],
 			effectsTitle: DEVELOPMENTS_TITLE,
-			...(description && { description }),
-			...(landDisplay.description
-				? { description: landDisplay.description }
-				: {}),
+			...(cardDescription !== undefined && {
+				description: cardDescription,
+			}),
 			bgClass: HOVER_CARD_BACKGROUND,
 		});
 	};
@@ -128,11 +144,7 @@ const LandTile: React.FC<{
 						handleHoverCard({
 							title: `${formatIconLabel(slotDisplay)} (empty)`,
 							effects: [],
-							...(developAction && {
-								description: `Use ${
-									developAction.icon ? `${developAction.icon} ` : ''
-								}${developAction.name} to build here`,
-							}),
+							description: developInstruction,
 							requirements: [],
 							bgClass: HOVER_CARD_BACKGROUND,
 						});
