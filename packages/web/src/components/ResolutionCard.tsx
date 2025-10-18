@@ -130,6 +130,56 @@ function ResolutionCard({
 		'whitespace-pre-line text-amber-900 dark:text-amber-100',
 	);
 	const shouldShowContinue = resolution.requireAcknowledgement;
+	const phaseSource =
+		isSourceDetail(resolution.source) && resolution.source.kind === 'phase'
+			? resolution.source
+			: null;
+	const phaseBadgeClass = joinClasses(
+		'rounded-2xl border border-amber-500/40 bg-amber-50/80 px-3 py-2',
+		'shadow-inner shadow-amber-500/20 text-right',
+		'dark:border-amber-400/30 dark:bg-amber-400/10',
+	);
+	const phaseBadgeLabelClass = joinClasses(
+		CARD_LABEL_CLASS,
+		'text-amber-700 dark:text-amber-200',
+	);
+	const phaseBadgeContentClass = joinClasses(
+		'mt-1 flex items-center justify-end gap-2 text-sm font-semibold',
+		'text-amber-900 dark:text-amber-50',
+	);
+	const phaseBadgeIconClass = 'text-lg leading-none';
+	const phaseName = phaseSource
+		? resolution.actorLabel?.trim() ||
+			phaseSource.label?.trim() ||
+			phaseSource.name?.trim() ||
+			'Phase'
+		: null;
+	const phaseIcon = phaseSource?.icon?.trim() ?? null;
+	const phaseBadge = phaseSource ? (
+		<div className={phaseBadgeClass}>
+			<div className={phaseBadgeLabelClass}>Current phase</div>
+			<div className={phaseBadgeContentClass}>
+				{phaseIcon ? (
+					<span aria-hidden="true" className={phaseBadgeIconClass}>
+						{phaseIcon}
+					</span>
+				) : null}
+				<span>{phaseName}</span>
+			</div>
+		</div>
+	) : null;
+	const playerMeta = resolution.player ? (
+		<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
+			{`${resolvedLabels.player} ${playerName}`}
+		</div>
+	) : null;
+	const headerRight =
+		phaseBadge || playerMeta ? (
+			<div className="flex flex-col items-end gap-3 text-right">
+				{phaseBadge}
+				{playerMeta}
+			</div>
+		) : null;
 
 	return (
 		<div className={containerClass} data-state="enter">
@@ -145,11 +195,7 @@ function ResolutionCard({
 							<div className={headerLabelClass}>Resolution</div>
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
 						</div>
-						{resolution.player ? (
-							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`${resolvedLabels.player} ${playerName}`}
-							</div>
-						) : null}
+						{headerRight}
 					</div>
 				</div>
 				<div className={resolutionContainerClass}>

@@ -55,6 +55,7 @@ describe('<ResolutionCard />', () => {
 
 		expect(screen.getByText('Action - Played by')).toBeInTheDocument();
 		expect(screen.getByText('Played by Player One')).toBeInTheDocument();
+		expect(screen.queryByText('Current phase')).toBeNull();
 	});
 
 	it('renders custom source metadata when provided', () => {
@@ -63,6 +64,7 @@ describe('<ResolutionCard />', () => {
 				kind: 'phase',
 				label: 'Phase',
 				name: 'Growth Phase',
+				icon: '🌙',
 			},
 			actorLabel: 'Growth Phase',
 			player: {
@@ -75,6 +77,15 @@ describe('<ResolutionCard />', () => {
 
 		expect(screen.getByText('Phase - Growth Phase')).toBeInTheDocument();
 		expect(screen.getByText('Phase owner Player Two')).toBeInTheDocument();
+		const currentPhaseLabel = screen.getByText('Current phase');
+		expect(currentPhaseLabel).toBeInTheDocument();
+		const phaseBadge = currentPhaseLabel.parentElement?.parentElement;
+		expect(phaseBadge?.textContent ?? '').toContain('🌙');
+		const textContent = phaseBadge?.textContent ?? '';
+		const iconIndex = textContent.indexOf('🌙');
+		const nameIndex = textContent.indexOf('Growth Phase');
+		expect(iconIndex).toBeGreaterThanOrEqual(0);
+		expect(nameIndex).toBeGreaterThan(iconIndex);
 	});
 
 	it('hides the continue button when acknowledgement is not required', () => {

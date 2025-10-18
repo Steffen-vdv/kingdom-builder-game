@@ -72,6 +72,11 @@ export async function advanceToActionPhase({
 			return;
 		}
 		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
+		const aggregatedLines: string[] = [];
+		const aggregatedSummaries: string[] = [];
+		let aggregatedSource: ShowResolutionOptions['source'];
+		let aggregatedActorLabel: string | undefined;
+		let aggregatedPlayer: ShowResolutionOptions['player'];
 		while (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
 			const activePlayerBefore = snapshot.game.players.find(
 				(player) => player.id === snapshot.game.activePlayerId,
@@ -111,23 +116,38 @@ export async function advanceToActionPhase({
 				diffContext,
 				resourceKeys,
 			});
-			const resolutionOptions: ShowResolutionOptions = {
-				lines: formatted.lines,
-				summaries: formatted.summaries,
-				source: formatted.source,
-				player,
-				requireAcknowledgement: false,
-				...(formatted.actorLabel ? { actorLabel: formatted.actorLabel } : {}),
-			};
-			await showResolution(resolutionOptions);
-			if (!mountedRef.current) {
-				return;
+			aggregatedSource ??= formatted.source;
+			if (formatted.actorLabel && !aggregatedActorLabel) {
+				aggregatedActorLabel = formatted.actorLabel;
+			}
+			if (formatted.lines.length) {
+				aggregatedLines.push(...formatted.lines);
+			}
+			if (formatted.summaries.length) {
+				aggregatedSummaries.push(...formatted.summaries);
+			}
+			if (!aggregatedPlayer && player) {
+				aggregatedPlayer = player;
 			}
 			applyPhaseSnapshot(snapshotAfter, {
 				isAdvancing: true,
 				canEndTurn: false,
 			});
 			snapshot = snapshotAfter;
+		}
+		if (aggregatedLines.length) {
+			const resolutionOptions: ShowResolutionOptions = {
+				lines: aggregatedLines,
+				summaries: aggregatedSummaries,
+				source: aggregatedSource ?? 'phase',
+				requireAcknowledgement: false,
+				...(aggregatedPlayer ? { player: aggregatedPlayer } : {}),
+				...(aggregatedActorLabel ? { actorLabel: aggregatedActorLabel } : {}),
+			};
+			await showResolution(resolutionOptions);
+			if (!mountedRef.current) {
+				return;
+			}
 		}
 		if (!mountedRef.current) {
 			return;
