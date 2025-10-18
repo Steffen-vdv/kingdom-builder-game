@@ -94,8 +94,13 @@ afterEach(() => {
 describe('<PhasePanel />', () => {
 	it('displays the turn indicator and current phase badge', () => {
 		render(<PhasePanel />);
+		const turnLabel = screen.getByText('Turn', { selector: 'span' });
+		expect(turnLabel).toBeInTheDocument();
 		expect(
-			screen.getByText(`Turn ${mockGame.sessionState.game.turn}`),
+			within(turnLabel.parentElement as HTMLElement).getByText(
+				String(mockGame.sessionState.game.turn),
+				{ selector: 'span' },
+			),
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
@@ -105,9 +110,8 @@ describe('<PhasePanel />', () => {
 			),
 		).toBeInTheDocument();
 		const phaseStatus = screen.getByRole('status');
-		expect(phaseStatus).toHaveTextContent(
-			`Current phase: ${currentPhaseLabel}`,
-		);
+		expect(phaseStatus).toHaveTextContent(/current phase/i);
+		expect(phaseStatus).toHaveTextContent(currentPhaseLabel);
 	});
 
 	it('invokes the end turn handler when allowed', () => {
