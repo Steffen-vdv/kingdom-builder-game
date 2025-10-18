@@ -65,11 +65,15 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			}
 		};
 	}, []);
+	const panelClassName = [
+		'player-panel flex h-auto min-h-[320px] flex-col gap-2',
+		'self-start text-slate-800 dark:text-slate-100',
+		className,
+	]
+		.filter(Boolean)
+		.join(' ');
 	return (
-		<div
-			ref={panelRef}
-			className={`player-panel flex min-h-[320px] flex-col gap-2 text-slate-800 dark:text-slate-100 ${className}`}
-		>
+		<div ref={panelRef} className={panelClassName}>
 			<h3 className="text-lg font-semibold tracking-tight">
 				{isActive && (
 					<span role="img" aria-label="active player" className="mr-1">

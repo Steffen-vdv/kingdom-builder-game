@@ -104,9 +104,10 @@ describe('<PhasePanel />', () => {
 					'Player',
 			),
 		).toBeInTheDocument();
-		const phaseBadge = screen.getByRole('status');
-		expect(phaseBadge).toHaveTextContent('Current Phase');
-		expect(phaseBadge).toHaveTextContent(currentPhaseLabel);
+		const phaseStatus = screen.getByRole('status');
+		expect(phaseStatus).toHaveTextContent(
+			`Current phase: ${currentPhaseLabel}`,
+		);
 	});
 
 	it('invokes the end turn handler when allowed', () => {
