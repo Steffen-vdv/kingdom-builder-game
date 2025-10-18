@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type {
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../translation/context';
 import type { TranslationContext } from '../translation/context';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
@@ -37,18 +40,55 @@ export function useSessionTranslationContext({
 		error: unknown;
 	}>(() => {
 		const fallbackMetadata = cachedSessionSnapshot.metadata;
-		const fallbackModifiers =
-			fallbackMetadata?.passiveEvaluationModifiers ?? {};
+		const fallbackModifiers = fallbackMetadata.passiveEvaluationModifiers ?? {};
 		const passiveEvaluationModifiers =
 			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
-		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
+		const fallbackEffectLogs = fallbackMetadata.effectLogs;
 		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
-				}
-			: { passiveEvaluationModifiers };
+		const metadataPayload: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers,
+		};
+		if (effectLogs) {
+			metadataPayload.effectLogs = effectLogs;
+		}
+		const resources = sessionMetadata.resources ?? fallbackMetadata.resources;
+		if (resources !== undefined) {
+			metadataPayload.resources = resources;
+		}
+		const populations =
+			sessionMetadata.populations ?? fallbackMetadata.populations;
+		if (populations !== undefined) {
+			metadataPayload.populations = populations;
+		}
+		const buildings = sessionMetadata.buildings ?? fallbackMetadata.buildings;
+		if (buildings !== undefined) {
+			metadataPayload.buildings = buildings;
+		}
+		const developments =
+			sessionMetadata.developments ?? fallbackMetadata.developments;
+		if (developments !== undefined) {
+			metadataPayload.developments = developments;
+		}
+		const stats = sessionMetadata.stats ?? fallbackMetadata.stats;
+		if (stats !== undefined) {
+			metadataPayload.stats = stats;
+		}
+		const phases = sessionMetadata.phases ?? fallbackMetadata.phases;
+		if (phases !== undefined) {
+			metadataPayload.phases = phases;
+		}
+		const triggers = sessionMetadata.triggers ?? fallbackMetadata.triggers;
+		if (triggers !== undefined) {
+			metadataPayload.triggers = triggers;
+		}
+		const assets = sessionMetadata.assets ?? fallbackMetadata.assets;
+		if (assets !== undefined) {
+			metadataPayload.assets = assets;
+		}
+		const overview = sessionMetadata.overview ?? fallbackMetadata.overview;
+		if (overview !== undefined) {
+			metadataPayload.overview = overview;
+		}
 		try {
 			const context = createTranslationContext(
 				sessionState,
