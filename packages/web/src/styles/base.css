@@ -2,6 +2,12 @@
 	cursor: help;
 }
 
+button[title],
+[title][role='button'],
+a[title] {
+	cursor: pointer;
+}
+
 @keyframes player-bg-slide {
 	to {
 		background-position: -32px 32px;
