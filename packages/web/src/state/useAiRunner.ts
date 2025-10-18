@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { MutableRefObject } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { LegacySession } from './sessionTypes';
@@ -25,6 +25,8 @@ export function useAiRunner({
 	mountedRef,
 	onFatalSessionError,
 }: UseAiRunnerOptions) {
+	const runningRef = useRef<Promise<void> | null>(null);
+
 	useEffect(() => {
 		const phaseDefinition = sessionState.phases[sessionState.game.phaseIndex];
 		if (!phaseDefinition?.action) {
@@ -37,7 +39,10 @@ export function useAiRunner({
 		if (!session.hasAiController(activeId)) {
 			return;
 		}
-		void session.enqueue(async () => {
+		if (runningRef.current) {
+			return;
+		}
+		const task = (async () => {
 			let fatalError: unknown = null;
 			const forwardFatalError = (error: unknown) => {
 				if (fatalError !== null) {
@@ -79,6 +84,9 @@ export function useAiRunner({
 			if (fatalError !== null) {
 				return;
 			}
+		})();
+		runningRef.current = task.finally(() => {
+			runningRef.current = null;
 		});
 	}, [
 		session,
