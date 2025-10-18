@@ -78,7 +78,16 @@ function ResolutionCard({
 	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
 	const actionName = rawActionName || fallbackActionName;
 	const resolvedLabels = resolveSourceLabels(resolution.source);
-	const actorLabel = (resolution.actorLabel ?? '').trim() || actionName;
+	const actorLabel = (resolution.actorLabel ?? '').trim();
+	const normalizedActorLabel = actorLabel ? actorLabel.toLocaleLowerCase() : '';
+	const normalizedPlayerLabel = resolvedLabels.player
+		.trim()
+		.toLocaleLowerCase();
+	const actorHeaderSubject = actionName
+		? !actorLabel || normalizedActorLabel === normalizedPlayerLabel
+			? actionName
+			: actorLabel
+		: actorLabel || actionName;
 	const actionIcon =
 		resolution.action?.icon?.trim() ||
 		(isSourceDetail(resolution.source)
@@ -88,8 +97,8 @@ function ResolutionCard({
 		Boolean(item?.trim()),
 	);
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
-	const headerTitle = actorLabel
-		? `${resolvedLabels.title} - ${actorLabel}`
+	const headerTitle = actorHeaderSubject
+		? `${resolvedLabels.title} - ${actorHeaderSubject}`
 		: defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,

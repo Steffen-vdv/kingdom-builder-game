@@ -53,7 +53,7 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Action - Played by')).toBeInTheDocument();
+		expect(screen.getByText('Action - Test Action')).toBeInTheDocument();
 		expect(screen.getByText('Played by Player One')).toBeInTheDocument();
 	});
 
