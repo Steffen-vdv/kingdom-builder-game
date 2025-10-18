@@ -159,8 +159,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		session: {} as EngineSession,
 		sessionState,
 		sessionView,
-		handlePerform: vi.fn().mockResolvedValue(undefined),
-		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 	};
 	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
 		(acc, key, index) => {

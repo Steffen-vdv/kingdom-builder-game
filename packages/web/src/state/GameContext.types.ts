@@ -130,17 +130,6 @@ export interface LegacyGameEngineContextBridge {
 	 * TODO(#session-migration): Read from `selectors.sessionView` instead.
 	 */
 	sessionView: SessionView;
-	/**
-	 * TODO(#session-migration): Use `requests.performAction`.
-	 */
-	handlePerform: (
-		action: Action,
-		params?: Record<string, unknown>,
-	) => Promise<void>;
-	/**
-	 * TODO(#session-migration): Use `requests.advancePhase`.
-	 */
-	handleEndTurn: () => Promise<void>;
 }
 
 export type LegacyGameEngineContextValue = GameEngineContextValue &

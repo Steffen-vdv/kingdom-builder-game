@@ -48,7 +48,7 @@ export default function DemolishOptions({
 		session,
 		sessionView,
 		translationContext,
-		handlePerform,
+		requests,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
@@ -163,7 +163,10 @@ export default function DemolishOptions({
 								if (!canInteract) {
 									return;
 								}
-								void handlePerform(toPerformableAction(action), { id });
+								void requests.performAction({
+									action: toPerformableAction(action),
+									params: { id },
+								});
 							}}
 							onMouseEnter={() => {
 								const full = describeContent(

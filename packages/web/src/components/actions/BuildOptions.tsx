@@ -54,7 +54,7 @@ export default function BuildOptions({
 		session,
 		sessionView,
 		translationContext,
-		handlePerform,
+		requests,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
@@ -160,8 +160,9 @@ export default function BuildOptions({
 								if (!canInteract) {
 									return;
 								}
-								void handlePerform(toPerformableAction(action), {
-									id: building.id,
+								void requests.performAction({
+									action: toPerformableAction(action),
+									params: { id: building.id },
 								});
 							}}
 							onMouseEnter={() => {

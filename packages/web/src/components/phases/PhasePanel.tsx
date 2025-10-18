@@ -80,7 +80,7 @@ const phaseListItemLabelClassName = [
 ].join(' ');
 
 export default function PhasePanel() {
-	const { sessionState, sessionView, phase, handleEndTurn, resolution } =
+	const { sessionState, sessionView, phase, requests, resolution } =
 		useGameEngine();
 	const phases = useMemo(
 		() =>
@@ -105,7 +105,7 @@ export default function PhasePanel() {
 	const handleEndTurnClick = () => {
 		// Phase errors are surfaced via onFatalSessionError inside
 		// usePhaseProgress.
-		void handleEndTurn();
+		void requests.advancePhase();
 	};
 	return (
 		<section className={panelClassName}>

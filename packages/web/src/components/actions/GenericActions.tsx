@@ -47,7 +47,7 @@ interface GenericActionEntryProps {
 	) => void;
 	translationContext: TranslationContext;
 	actionCostResource: string;
-	handlePerform: (
+	performAction: (
 		action: Action,
 		params?: Record<string, unknown>,
 	) => Promise<void>;
@@ -70,7 +70,7 @@ function GenericActionEntry({
 	handleOptionSelect,
 	translationContext,
 	actionCostResource,
-	handlePerform,
+	performAction,
 	handleHoverCard,
 	clearHoverCard,
 	formatRequirement,
@@ -106,7 +106,7 @@ function GenericActionEntry({
 			handleOptionSelect={handleOptionSelect}
 			translationContext={translationContext}
 			actionCostResource={actionCostResource}
-			handlePerform={handlePerform}
+			performAction={performAction}
 			handleHoverCard={handleHoverCard}
 			clearHoverCard={clearHoverCard}
 			formatRequirement={formatRequirement}
@@ -131,16 +131,23 @@ function GenericActions({
 	const {
 		sessionView,
 		translationContext,
-		handlePerform,
+		requests,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
 	const formatRequirement = (requirement: string) => requirement;
 	const performAction = useCallback(
-		(action: Action, params?: Record<string, unknown>) =>
-			handlePerform(toPerformableAction(action), params),
-		[handlePerform],
+		(action: Action, params?: Record<string, unknown>) => {
+			const request = params
+				? {
+						action: toPerformableAction(action),
+						params,
+					}
+				: { action: toPerformableAction(action) };
+			return requests.performAction(request);
+		},
+		[requests],
 	);
 	const [pending, setPending] = useState<PendingActionState | null>(null);
 
@@ -309,7 +316,7 @@ function GenericActions({
 					handleOptionSelect={handleOptionSelect}
 					translationContext={translationContext}
 					actionCostResource={actionCostResource}
-					handlePerform={performAction}
+					performAction={performAction}
 					handleHoverCard={handleHoverCard}
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}
