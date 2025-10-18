@@ -49,6 +49,8 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
   warnings or auto-fixable errors.
 - Execute `npm run check` and then `npm run verify`. Resolve any failures and
   rerun the commands until both complete cleanly without changing files.
+- Run `npm run test:ui` whenever your changes touch UI layout, copy, or other
+  rendered elements so reviewers can trust the Playwright coverage.
 - Husky installs the repository's `pre-commit` and `pre-push` hooks during
   `npm install`. If the hooks ever go missing, run `npm run prepare` and do not
   bypass them—fix the reported issues locally before pushing.

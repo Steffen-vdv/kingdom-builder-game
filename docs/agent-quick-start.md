@@ -20,6 +20,8 @@ guide for rationale, lore, and extended background.
    - [`npm run verify`](../scripts/run-verification.mjs) runs `npm run check`
      followed by `npm run test:coverage`. It streams output into timestamped
      logs inside `artifacts/` so you can share the run when needed.
+   - Run `npm run test:ui` whenever UI structure, layout, or copy might change
+     and record the run in your notes for reviewers.
    - Stop immediately if any of these commands fail. Fix the reported problem
      (formatting, type errors, lint drift, or test regressions) and re-run the
      command locally before staging changes so the PR lands clean.
@@ -53,6 +55,8 @@ guide for rationale, lore, and extended background.
 - Execute `npm run check` followed by `npm run verify` and confirm that both
   commands finish without errors or uncommitted file changes. Re-run the
   commands after fixing any issues to verify the workspace is clean.
+- Run `npm run test:ui` for any change that could affect rendered UI surfaces.
+  Include the results in your PR summary when applicable.
 - Husky installs the `pre-commit` and `pre-push` hooks automatically when you
   run `npm install` (`npm run prepare` manually reapplies them if necessary).
   Never bypass the hooks—resolve the reported failures locally before pushing.
