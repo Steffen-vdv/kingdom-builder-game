@@ -31,6 +31,20 @@ import {
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 import { humanizeIdentifier } from '../src/translation/effects/stringUtils';
 
+function formatStatSummaryEntry(
+	descriptor: { icon?: string | undefined; label?: string | undefined },
+	amount: number,
+): string {
+	const icon =
+		typeof descriptor.icon === 'string' ? descriptor.icon.trim() : '';
+	const label =
+		typeof descriptor.label === 'string' ? descriptor.label.trim() : '';
+	const base = icon || label;
+	const prefix = base ? `${base} ` : '';
+	const sign = amount >= 0 ? '+' : '';
+	return `${prefix}${sign}${amount}`;
+}
+
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
@@ -96,6 +110,7 @@ describe('army attack translation summary', () => {
 		const summary = summarizeContent('action', attack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
+		const warSummary = formatStatSummaryEntry(warWeariness, warAmt);
 		expect(summary).toEqual([
 			`${powerSummary}${targetSummary}`,
 			{
@@ -106,11 +121,7 @@ describe('army attack translation summary', () => {
 					`⚔️${plunder.icon} ${plunder.name}`,
 				],
 			},
-			`${iconLabel(
-				warWeariness.icon,
-				warWeariness.label,
-				Stat.warWeariness,
-			)} ${warAmt >= 0 ? '+' : ''}${warAmt}`,
+			warSummary,
 		]);
 	});
 
