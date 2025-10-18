@@ -95,18 +95,22 @@ describe('army attack translation summary', () => {
 		const warAmt = (warEffect?.params as { amount?: number })?.amount ?? 0;
 		const summary = summarizeContent('action', attack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
-		const targetSummary = castle.icon || castle.label;
+		const targetIcon = castle.icon || castle.label || Resource.castleHP;
 		expect(summary).toEqual([
-			`${powerSummary}${targetSummary}`,
+			`${powerSummary}${targetIcon}`,
 			{
-				title: `${targetSummary}💥`,
+				title: `${targetIcon}💥`,
 				items: [
 					`🛡️${happiness.icon}${defenderAmt}`,
 					`⚔️${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt}`,
 					`⚔️${plunder.icon} ${plunder.name}`,
 				],
 			},
-			`${warWeariness.icon}${warAmt >= 0 ? '+' : ''}${warAmt}`,
+			`${iconLabel(
+				warWeariness.icon,
+				warWeariness.label,
+				Stat.warWeariness,
+			)} ${warAmt >= 0 ? '+' : ''}${warAmt}`,
 		]);
 	});
 

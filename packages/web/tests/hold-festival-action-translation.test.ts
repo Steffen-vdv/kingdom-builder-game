@@ -22,13 +22,21 @@ describe('hold festival action translation', () => {
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
 
+		const happinessSummary = `${details.happinessInfo.icon}${sign(details.happinessAmt)}${details.happinessAmt}`;
+		const fortSummary = `${details.fortInfo.icon}${
+			details.fortInfo.label ? ` ${details.fortInfo.label}` : ''
+		} ${sign(details.fortAmt)}${details.fortAmt}`.trim();
+		const penaltySummary = `${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt}`;
+
 		expect(summary).toEqual([
-			`${details.happinessIcon}${sign(details.happinessAmt)}${details.happinessAmt}`,
-			`${details.fortIcon}${sign(details.fortAmt)}${details.fortAmt}`,
+			happinessSummary,
+			fortSummary,
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
-					`${details.modifierInfo.icon ?? ''}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
+					`${details.modifierInfo.icon ?? ''}${
+						details.armyAttack.icon
+					}: ${penaltySummary}`,
 				],
 			},
 		]);
