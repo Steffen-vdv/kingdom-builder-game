@@ -91,69 +91,79 @@ export function useActionMetadata({
 	}, [session, actionId, normalizedParams, paramsKey]);
 
 	useEffect(() => {
-		if (!actionId) {
+		if (!actionId || snapshot.costs !== undefined) {
+			return () => {};
+		}
+		if (loadingRef.current.costs) {
 			return () => {};
 		}
 		const controller = new AbortController();
 		let active = true;
-		const handleSettled = (key: keyof typeof loadingRef.current) => {
+		loadingRef.current.costs = true;
+		void loadActionCosts(sessionId, actionId, normalizedParams, {
+			signal: controller.signal,
+		}).finally(() => {
 			if (!active) {
 				return;
 			}
-			loadingRef.current[key] = false;
-		};
-		const maybeLoadCosts = () => {
-			if (snapshot.costs !== undefined || loadingRef.current.costs) {
-				return;
-			}
-			loadingRef.current.costs = true;
-			void loadActionCosts(sessionId, actionId, normalizedParams, {
-				signal: controller.signal,
-			}).finally(() => {
-				handleSettled('costs');
-			});
-		};
-		const maybeLoadRequirements = () => {
-			if (
-				snapshot.requirements !== undefined ||
-				loadingRef.current.requirements
-			) {
-				return;
-			}
-			loadingRef.current.requirements = true;
-			void loadActionRequirements(sessionId, actionId, normalizedParams, {
-				signal: controller.signal,
-			}).finally(() => {
-				handleSettled('requirements');
-			});
-		};
-		const maybeLoadOptions = () => {
-			if (snapshot.groups !== undefined || loadingRef.current.groups) {
-				return;
-			}
-			loadingRef.current.groups = true;
-			void loadActionOptions(sessionId, actionId, {
-				signal: controller.signal,
-			}).finally(() => {
-				handleSettled('groups');
-			});
-		};
-		maybeLoadCosts();
-		maybeLoadRequirements();
-		maybeLoadOptions();
+			loadingRef.current.costs = false;
+		});
 		return () => {
 			active = false;
 			controller.abort();
-			loadingRef.current = { costs: false, requirements: false, groups: false };
+			loadingRef.current.costs = false;
 		};
-	}, [
-		actionId,
-		sessionId,
-		snapshot.costs,
-		snapshot.groups,
-		snapshot.requirements,
-		normalizedParams,
-	]);
+	}, [actionId, sessionId, snapshot.costs, normalizedParams, paramsKey]);
+
+	useEffect(() => {
+		if (!actionId || snapshot.requirements !== undefined) {
+			return () => {};
+		}
+		if (loadingRef.current.requirements) {
+			return () => {};
+		}
+		const controller = new AbortController();
+		let active = true;
+		loadingRef.current.requirements = true;
+		void loadActionRequirements(sessionId, actionId, normalizedParams, {
+			signal: controller.signal,
+		}).finally(() => {
+			if (!active) {
+				return;
+			}
+			loadingRef.current.requirements = false;
+		});
+		return () => {
+			active = false;
+			controller.abort();
+			loadingRef.current.requirements = false;
+		};
+	}, [actionId, sessionId, snapshot.requirements, normalizedParams, paramsKey]);
+
+	useEffect(() => {
+		if (!actionId || snapshot.groups !== undefined) {
+			return () => {};
+		}
+		if (loadingRef.current.groups) {
+			return () => {};
+		}
+		const controller = new AbortController();
+		let active = true;
+		loadingRef.current.groups = true;
+		void loadActionOptions(sessionId, actionId, {
+			signal: controller.signal,
+		}).finally(() => {
+			if (!active) {
+				return;
+			}
+			loadingRef.current.groups = false;
+		});
+		return () => {
+			active = false;
+			controller.abort();
+			loadingRef.current.groups = false;
+		};
+	}, [actionId, sessionId, snapshot.groups, paramsKey]);
 
 	return useMemo(() => {
 		const result: UseActionMetadataResult = {
