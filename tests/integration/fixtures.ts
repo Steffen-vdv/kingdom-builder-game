@@ -10,10 +10,11 @@ import {
 	RULES,
 	RESOURCES,
 } from '@kingdom-builder/contents';
-import type { EngineContext } from '@kingdom-builder/engine';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
+
+type EngineForTest = ReturnType<typeof createEngine>;
 
 function deepClone<T>(value: T): T {
 	return structuredClone(value);
@@ -59,12 +60,12 @@ export function createTestContext(
 
 export function simulateEffects(
 	effects: EffectDef[],
-	engineContext: EngineContext,
+	engineContext: EngineForTest,
 	actionId?: string,
 ) {
 	const before = clonePlayer(engineContext.activePlayer);
 	const dummy = clonePlayer(engineContext.activePlayer);
-	const dummyCtx = { ...engineContext, activePlayer: dummy } as EngineContext;
+	const dummyCtx = { ...engineContext, activePlayer: dummy } as EngineForTest;
 	runEffects(effects, dummyCtx);
 	if (actionId) {
 		engineContext.passives.runResultMods(actionId, dummyCtx);
@@ -94,7 +95,7 @@ export function simulateEffects(
 	return { resources, stats, land };
 }
 
-export function getActionOutcome(id: string, engineContext: EngineContext) {
+export function getActionOutcome(id: string, engineContext: EngineForTest) {
 	const actionDefinition = engineContext.actions.get(id);
 	const resolved = resolveActionEffects(actionDefinition);
 	const costs = getActionCosts(id, engineContext);
@@ -124,7 +125,7 @@ function findEffect(
 	return undefined;
 }
 
-export function getBuildActionId(engineContext: EngineContext) {
+export function getBuildActionId(engineContext: EngineForTest) {
 	for (const [id, def] of engineContext.actions.entries()) {
 		if (
 			findEffect(
@@ -183,7 +184,7 @@ export function getBuildingWithStatBonuses() {
 	throw new Error('No building with stat bonuses found');
 }
 
-export function getActionWithMultipleCosts(engineContext: EngineContext) {
+export function getActionWithMultipleCosts(engineContext: EngineForTest) {
 	for (const [id] of engineContext.actions.entries()) {
 		const costs = getActionCosts(id, engineContext);
 		if (Object.keys(costs).length > 1) {
@@ -193,7 +194,7 @@ export function getActionWithMultipleCosts(engineContext: EngineContext) {
 	throw new Error('No action with multiple costs found');
 }
 
-export function getActionWithCost(engineContext: EngineContext) {
+export function getActionWithCost(engineContext: EngineForTest) {
 	for (const [id] of engineContext.actions.entries()) {
 		const costs = getActionCosts(id, engineContext);
 		if (Object.keys(costs).length > 0) {

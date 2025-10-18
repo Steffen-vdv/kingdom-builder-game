@@ -12,7 +12,8 @@ import {
 	describeContent,
 	splitSummary,
 } from '../src/translation/content';
-import { createEngine, type EffectDef } from '@kingdom-builder/engine';
+import { createEngine } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
 
 vi.mock('@kingdom-builder/engine', async () => {

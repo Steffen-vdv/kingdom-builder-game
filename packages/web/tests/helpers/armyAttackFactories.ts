@@ -1,4 +1,5 @@
-import { createEngine, type EffectDef } from '@kingdom-builder/engine';
+import { createEngine } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol/session';
 

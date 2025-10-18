@@ -1,4 +1,3 @@
-import type { EngineContext } from '@kingdom-builder/engine';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
@@ -44,7 +43,7 @@ function mergeMetadata(
 }
 
 export function createTranslationContextForEngine(
-	engine: EngineContext,
+	engine: Parameters<typeof snapshotEngine>[0],
 	configureRegistries?: (registries: SessionRegistries) => void,
 	options?: { metadata?: MetadataOverrides },
 ) {

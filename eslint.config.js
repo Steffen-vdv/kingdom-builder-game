@@ -273,7 +273,6 @@ export default [
 			'packages/web/src/components/actions/ActionsPanel.tsx',
 			'packages/engine/src/ai/index.ts',
 			'packages/engine/src/context.ts',
-			'packages/engine/src/registry.ts',
 			'packages/engine/src/services/index.ts',
 			'packages/web/src/translation/effects/helpers.ts',
 			'packages/web/src/translation/render.tsx',
