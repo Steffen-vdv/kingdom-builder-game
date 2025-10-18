@@ -2,16 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 const UI_TEST_PORT = 4173;
 
-const webServerCommand = [
-	'npm',
-	'run',
-	'dev:web',
-	'--',
-	'--host',
-	'127.0.0.1',
-	'--port',
-	String(UI_TEST_PORT),
-].join(' ');
+const webServerCommand = 'npm run dev:ui-tests';
 
 export default defineConfig({
 	testDir: 'tests/ui',
@@ -26,7 +17,7 @@ export default defineConfig({
 	webServer: {
 		command: webServerCommand,
 		url: `http://127.0.0.1:${UI_TEST_PORT}`,
-		reuseExistingServer: !process.env.CI,
+		reuseExistingServer: false,
 		timeout: 120 * 1000,
 	},
 	expect: { timeout: 10_000 },

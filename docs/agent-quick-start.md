@@ -20,8 +20,8 @@ guide for rationale, lore, and extended background.
    - `npm run generate:snapshots` refreshes
      `packages/web/src/contexts/defaultRegistryMetadata.json` through
      `scripts/build-default-registry-snapshot.mjs`. The snapshot test inside
-     `npm run check` fails when the JSON drifts, and both `npm run dev` and
-     `npm run dev:web` regenerate it automatically.
+     `npm run check` fails when the JSON drifts, and `npm run dev`,
+     `npm run dev:web`, and `npm run dev:ui-tests` regenerate it automatically.
    - [`npm run verify`](../scripts/run-verification.mjs) runs `npm run check`
      followed by `npm run test:coverage`. It streams output into timestamped
      logs inside `artifacts/` so you can share the run when needed.

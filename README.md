@@ -27,6 +27,7 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 5. Run a single target when needed:
    - Web client only: `npm run dev:web`
    - Server only: `npm run server:dev`
+   - UI tests (Fastify + Vite on fixed ports): `npm run dev:ui-tests`
 6. Build production bundles for both server and web: `npm run build`.
 7. Build just the Node server bundle: `npm run server:build`.
 8. Launch the production server locally with `npm run start` after supplying a
@@ -50,7 +51,9 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 - Execute `npm run check` and then `npm run verify`. Resolve any failures and
   rerun the commands until both complete cleanly without changing files.
 - Run `npm run test:ui` whenever your changes touch UI layout, copy, or other
-  rendered elements so reviewers can trust the Playwright coverage.
+  rendered elements so reviewers can trust the Playwright coverage. The
+  Playwright config boots `npm run dev:ui-tests`, which starts the Fastify
+  server on `127.0.0.1:3001` and the Vite dev server on `127.0.0.1:4173`.
 - Husky installs the repository's `pre-commit` and `pre-push` hooks during
   `npm install`. If the hooks ever go missing, run `npm run prepare` and do not
   bypass them—fix the reported issues locally before pushing.
