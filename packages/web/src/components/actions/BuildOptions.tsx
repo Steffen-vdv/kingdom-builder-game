@@ -114,26 +114,23 @@ export default function BuildOptions({
 					const icon = building.icon;
 					const canPay = playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(building.id);
-					const implemented = (summary?.length ?? 0) > 0;
+					const hasSummary = (summary?.length ?? 0) > 0;
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
 						selectResourceDescriptor,
 					);
 					const requirementText = requirements.join(', ');
-					const title = !implemented
-						? 'Not implemented yet'
-						: !meetsRequirements
+					const summaryTooltip = hasSummary ? undefined : 'Summary unavailable';
+					const title =
+						summaryTooltip ??
+						(!meetsRequirements
 							? requirementText
 							: !canPay
 								? (insufficientTooltip ?? 'Cannot pay costs')
-								: undefined;
+								: undefined);
 					const enabled =
-						canPay &&
-						meetsRequirements &&
-						isActionPhase &&
-						canInteract &&
-						implemented;
+						canPay && meetsRequirements && isActionPhase && canInteract;
 					const hoverTitle = [
 						actionHoverTitle,
 						formatIconTitle(icon, building.name),
@@ -151,7 +148,7 @@ export default function BuildOptions({
 							requirements={requirements}
 							requirementIcons={requirementIcons}
 							summary={summary}
-							implemented={implemented}
+							implemented={hasSummary}
 							enabled={enabled}
 							tooltip={title}
 							focus={focus}
@@ -174,9 +171,10 @@ export default function BuildOptions({
 									costs,
 									upkeep,
 									...(description && { description }),
-									...(!implemented && {
-										description: 'Not implemented yet',
-										descriptionClass: 'italic text-red-600',
+									...(!hasSummary && {
+										description: 'Summary unavailable',
+										descriptionClass:
+											'italic text-slate-600 dark:text-slate-300',
 									}),
 									bgClass: HOVER_CARD_BG,
 								});

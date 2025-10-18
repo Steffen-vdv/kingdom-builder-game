@@ -137,8 +137,8 @@ export default function ActionCard({
 	const renderedSummary = implemented ? (
 		renderSummary(stripSummary(summary, requirements))
 	) : (
-		<li className="italic text-rose-500 dark:text-rose-300">
-			Not implemented yet
+		<li className="italic text-slate-500 dark:text-slate-300">
+			Summary unavailable
 		</li>
 	);
 

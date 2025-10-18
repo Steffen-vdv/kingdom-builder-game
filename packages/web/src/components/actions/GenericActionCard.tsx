@@ -103,7 +103,7 @@ function GenericActionCard({
 	const meetsRequirements =
 		requirementsReady && requirementFailures.length === 0;
 	const summary = summaries.get(action.id);
-	const implemented = (summary?.length ?? 0) > 0;
+	const hasSummary = (summary?.length ?? 0) > 0;
 	const groups = metadata.groups ?? [];
 	const groupsReady = metadata.groups !== undefined;
 	const metadataReady = costsReady && requirementsReady && groupsReady;
@@ -112,7 +112,6 @@ function GenericActionCard({
 		canPay,
 		meetsRequirements,
 		canInteract,
-		implemented,
 	].every(Boolean);
 	const isPending = pending?.action.id === action.id;
 	let cardEnabled = baseEnabled && !pending;
@@ -123,9 +122,10 @@ function GenericActionCard({
 		? formatMissingResources(costs, player.resources, selectResourceDescriptor)
 		: 'Loading costs…';
 	const requirementText = requirements.join(', ');
-	const title = !implemented
-		? 'Not implemented yet'
-		: !requirementsReady
+	const missingSummaryTooltip = hasSummary ? undefined : 'Summary unavailable';
+	const title =
+		missingSummaryTooltip ??
+		(!requirementsReady
 			? 'Loading requirements…'
 			: !costsReady
 				? 'Loading costs…'
@@ -133,7 +133,7 @@ function GenericActionCard({
 					? requirementText
 					: !canPay
 						? (insufficientTooltip ?? 'Cannot pay costs')
-						: undefined;
+						: undefined);
 	const hoverBackground =
 		'bg-gradient-to-br from-white/80 to-white/60 ' +
 		'dark:from-slate-900/80 dark:to-slate-900/60';
@@ -168,7 +168,7 @@ function GenericActionCard({
 			requirements={requirements}
 			requirementIcons={requirementIcons}
 			summary={summary}
-			implemented={implemented}
+			implemented={hasSummary}
 			enabled={cardEnabled}
 			tooltip={title}
 			focus={actionFocus}
@@ -203,9 +203,9 @@ function GenericActionCard({
 								requirements,
 								costs,
 								...(description && { description }),
-								...(!implemented && {
-									description: 'Not implemented yet',
-									descriptionClass: 'italic text-red-600',
+								...(!hasSummary && {
+									description: 'Summary unavailable',
+									descriptionClass: 'italic text-slate-600 dark:text-slate-300',
 								}),
 								bgClass: hoverBackground,
 							};

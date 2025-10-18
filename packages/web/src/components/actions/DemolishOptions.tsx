@@ -124,18 +124,17 @@ export default function DemolishOptions({
 					const summary = summarizeContent('building', id, translationContext, {
 						installed: true,
 					});
-					const implemented = (summary?.length ?? 0) > 0;
+					const hasSummary = (summary?.length ?? 0) > 0;
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
 						selectResourceDescriptor,
 					);
-					const title = !implemented
-						? 'Not implemented yet'
-						: !canPay
-							? (insufficientTooltip ?? 'Cannot pay costs')
-							: undefined;
-					const enabled = canPay && isActionPhase && canInteract && implemented;
+					const summaryTooltip = hasSummary ? undefined : 'Summary unavailable';
+					const title =
+						summaryTooltip ??
+						(!canPay ? (insufficientTooltip ?? 'Cannot pay costs') : undefined);
+					const enabled = canPay && isActionPhase && canInteract;
 					const upkeep = building.upkeep;
 					const hoverTitle = [
 						actionHoverTitle,
@@ -155,7 +154,7 @@ export default function DemolishOptions({
 							requirementIcons={[]}
 							summary={summary}
 							assets={translationContext.assets}
-							implemented={implemented}
+							implemented={hasSummary}
 							enabled={enabled}
 							tooltip={title}
 							focus={focus}
@@ -182,9 +181,10 @@ export default function DemolishOptions({
 									costs,
 									upkeep,
 									...(description && { description }),
-									...(!implemented && {
-										description: 'Not implemented yet',
-										descriptionClass: 'italic text-red-600',
+									...(!hasSummary && {
+										description: 'Summary unavailable',
+										descriptionClass:
+											'italic text-slate-600 dark:text-slate-300',
 									}),
 									bgClass: HOVER_CARD_BG,
 								});

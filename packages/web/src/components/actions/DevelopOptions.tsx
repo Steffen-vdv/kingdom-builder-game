@@ -116,7 +116,7 @@ export default function DevelopOptions({
 						hasDevelopLand &&
 						playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(development.id);
-					const implemented = (summary?.length ?? 0) > 0;
+					const hasSummary = (summary?.length ?? 0) > 0;
 					const insufficientTooltip = formatMissingResources(
 						costs,
 						player.resources,
@@ -127,14 +127,15 @@ export default function DevelopOptions({
 						slotDescriptor.label,
 						slotDescriptor.icon,
 					);
-					const title = !implemented
-						? 'Not implemented yet'
-						: !hasDevelopLand
+					const summaryTooltip = hasSummary ? undefined : 'Summary unavailable';
+					const title =
+						summaryTooltip ??
+						(!hasDevelopLand
 							? missingLandTooltip
 							: !canPay
 								? (insufficientTooltip ?? 'Cannot pay costs')
-								: undefined;
-					const enabled = canPay && isActionPhase && canInteract && implemented;
+								: undefined);
+					const enabled = canPay && isActionPhase && canInteract;
 					const hoverTitle = [
 						actionHoverTitle,
 						formatIconTitle(development.icon, development.name),
@@ -154,7 +155,7 @@ export default function DevelopOptions({
 								slotDescriptor.icon ? [slotDescriptor.icon] : []
 							}
 							summary={summary}
-							implemented={implemented}
+							implemented={hasSummary}
 							enabled={enabled}
 							tooltip={title}
 							focus={focus}
@@ -185,9 +186,10 @@ export default function DevelopOptions({
 									costs,
 									upkeep,
 									...(description && { description }),
-									...(!implemented && {
-										description: 'Not implemented yet',
-										descriptionClass: 'italic text-red-600',
+									...(!hasSummary && {
+										description: 'Summary unavailable',
+										descriptionClass:
+											'italic text-slate-600 dark:text-slate-300',
 									}),
 									bgClass: HOVER_CARD_BG,
 								});
