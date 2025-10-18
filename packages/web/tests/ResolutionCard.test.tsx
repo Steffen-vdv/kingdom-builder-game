@@ -61,8 +61,9 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			source: {
 				kind: 'phase',
-				label: 'Phase',
+				label: 'Growth Phase',
 				name: 'Growth Phase',
+				icon: '🌿',
 			},
 			actorLabel: 'Growth Phase',
 			player: {
@@ -75,6 +76,9 @@ describe('<ResolutionCard />', () => {
 
 		expect(screen.getByText('Phase - Growth Phase')).toBeInTheDocument();
 		expect(screen.getByText('Phase owner Player Two')).toBeInTheDocument();
+		expect(screen.getByText('Current phase')).toBeInTheDocument();
+		expect(screen.getByText('Growth Phase')).toBeInTheDocument();
+		expect(screen.getAllByText('🌿')[0]).toBeInTheDocument();
 	});
 
 	it('hides the continue button when acknowledgement is not required', () => {

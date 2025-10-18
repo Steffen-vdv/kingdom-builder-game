@@ -35,6 +35,29 @@ function isSourceDetail(
 	return typeof source === 'object' && source !== null && 'kind' in source;
 }
 
+function isPhaseSourceDetail(
+	source: ResolutionSource | undefined,
+): source is Extract<ResolutionSource, { kind: 'phase' }> {
+	return isSourceDetail(source) && source.kind === 'phase';
+}
+
+function resolvePhaseInfo(source: ResolutionSource | undefined) {
+	if (!isPhaseSourceDetail(source)) {
+		return null;
+	}
+	const icon = source.icon?.trim();
+	const rawLabel = source.label?.trim() ?? '';
+	const label =
+		icon && rawLabel.startsWith(icon)
+			? rawLabel.slice(icon.length).trim()
+			: rawLabel;
+	const resolvedLabel = label || rawLabel || 'Phase';
+	return {
+		icon: icon || undefined,
+		label: resolvedLabel,
+	};
+}
+
 interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
@@ -47,6 +70,9 @@ function resolveSourceLabels(source: ResolutionSource | undefined) {
 	}
 	if (typeof source === 'string') {
 		return SOURCE_LABELS[source] ?? SOURCE_LABELS.action;
+	}
+	if (source.kind === 'phase') {
+		return SOURCE_LABELS.phase;
 	}
 	const fallback = SOURCE_LABELS[source.kind] ?? SOURCE_LABELS.action;
 	const title = source.label?.trim() || fallback.title;
@@ -84,6 +110,7 @@ function ResolutionCard({
 		(isSourceDetail(resolution.source)
 			? (resolution.source.icon?.trim() ?? undefined)
 			: undefined);
+	const phaseInfo = resolvePhaseInfo(resolution.source);
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
@@ -101,6 +128,26 @@ function ResolutionCard({
 		'border border-white/50 bg-white/70 text-3xl shadow-inner',
 		'shadow-amber-500/20 dark:border-white/10 dark:bg-slate-900/60',
 		'dark:shadow-slate-900/40',
+	);
+	const headerMetaClass = joinClasses(
+		'flex flex-col items-end gap-3',
+		phaseInfo ? 'min-w-[12rem]' : undefined,
+	);
+	const phaseBadgeClass = joinClasses(
+		'rounded-2xl border border-white/50 bg-white/70',
+		'px-4 py-3 shadow-inner shadow-amber-500/10',
+		'ring-1 ring-white/30 backdrop-blur-sm',
+		'dark:border-white/10 dark:bg-slate-900/60',
+		'dark:shadow-slate-900/40 dark:ring-white/10',
+	);
+	const phaseLabelClass = joinClasses(
+		CARD_LABEL_CLASS,
+		'text-xs uppercase tracking-wide text-slate-600',
+	);
+	const phaseValueClass = joinClasses(
+		CARD_META_TEXT_CLASS,
+		'mt-1 flex items-center gap-2 text-slate-900',
+		'dark:text-slate-100',
 	);
 	const resolutionContainerClass = joinClasses(
 		'mt-4 rounded-3xl border border-white/50 bg-white/70 p-4',
@@ -145,11 +192,26 @@ function ResolutionCard({
 							<div className={headerLabelClass}>Resolution</div>
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
 						</div>
-						{resolution.player ? (
-							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`${resolvedLabels.player} ${playerName}`}
-							</div>
-						) : null}
+						<div className={headerMetaClass}>
+							{phaseInfo ? (
+								<div className={phaseBadgeClass}>
+									<div className={phaseLabelClass}>Current phase</div>
+									<div className={phaseValueClass}>
+										{phaseInfo.icon ? (
+											<span aria-hidden="true">{phaseInfo.icon}</span>
+										) : null}
+										<span>{phaseInfo.label}</span>
+									</div>
+								</div>
+							) : null}
+							{resolution.player ? (
+								<div
+									className={joinClasses('text-right', CARD_META_TEXT_CLASS)}
+								>
+									{`${resolvedLabels.player} ${playerName}`}
+								</div>
+							) : null}
+						</div>
 					</div>
 				</div>
 				<div className={resolutionContainerClass}>

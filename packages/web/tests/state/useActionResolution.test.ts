@@ -6,7 +6,7 @@ import { useActionResolution } from '../../src/state/useActionResolution';
 import { ACTION_EFFECT_DELAY } from '../../src/state/useGameLog';
 
 describe('useActionResolution', () => {
-	it('reveals lines, logs entries, and resolves after acknowledgement', async () => {
+	it('reveals lines and resolves after acknowledgement', async () => {
 		vi.useFakeTimers();
 		try {
 			const addLog = vi.fn();
@@ -198,6 +198,96 @@ describe('useActionResolution', () => {
 				vi.advanceTimersByTime(1);
 			});
 			await resolutionPromise;
+			expect(result.current.resolution).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('appends phase resolution steps within the same phase', async () => {
+		vi.useFakeTimers();
+		try {
+			const addLog = vi.fn();
+			const setTrackedTimeout = vi
+				.fn<(callback: () => void, delay: number) => number>()
+				.mockImplementation((callback, delay) => {
+					return window.setTimeout(callback, delay);
+				});
+			const { result } = renderHook(() => {
+				const timeScaleRef = React.useRef(1);
+				const mountedRef = React.useRef(true);
+				React.useEffect(() => {
+					return () => {
+						mountedRef.current = false;
+					};
+				}, []);
+				return useActionResolution({
+					addLog,
+					setTrackedTimeout,
+					timeScaleRef,
+					mountedRef,
+				});
+			});
+			const phaseSource = {
+				kind: 'phase' as const,
+				label: '🌿 Growth Phase',
+				id: 'growth-phase',
+			};
+			act(() => {
+				void result.current.showResolution({
+					lines: ['🌿 Growth Phase – Step 1', 'Gold +2'],
+					source: phaseSource,
+					summaries: ['Gold +2'],
+					requireAcknowledgement: false,
+				});
+			});
+			expect(result.current.resolution?.lines).toEqual([
+				'🌿 Growth Phase – Step 1',
+				'Gold +2',
+			]);
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			expect(result.current.resolution?.visibleLines).toEqual([
+				'🌿 Growth Phase – Step 1',
+				'Gold +2',
+			]);
+			act(() => {
+				void result.current.showResolution({
+					lines: ['🌿 Growth Phase – Step 2', 'Gain 1 AP'],
+					source: phaseSource,
+					summaries: ['Gain 1 AP'],
+					requireAcknowledgement: false,
+				});
+			});
+			await act(async () => {
+				await Promise.resolve();
+			});
+			expect(result.current.resolution?.lines).toEqual([
+				'🌿 Growth Phase – Step 1',
+				'Gold +2',
+				'🌿 Growth Phase – Step 2',
+				'Gain 1 AP',
+			]);
+			expect(result.current.resolution?.visibleLines).toEqual([
+				'🌿 Growth Phase – Step 1',
+				'Gold +2',
+				'🌿 Growth Phase – Step 2',
+			]);
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			expect(result.current.resolution?.visibleLines).toEqual([
+				'🌿 Growth Phase – Step 1',
+				'Gold +2',
+				'🌿 Growth Phase – Step 2',
+				'Gain 1 AP',
+			]);
+			expect(addLog).toHaveBeenCalledWith('Gain 1 AP', undefined);
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			await Promise.resolve();
 			expect(result.current.resolution).toBeNull();
 		} finally {
 			vi.useRealTimers();

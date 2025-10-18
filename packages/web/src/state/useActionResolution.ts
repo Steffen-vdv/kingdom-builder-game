@@ -62,6 +62,18 @@ interface ActionResolution {
 	requireAcknowledgement: boolean;
 }
 
+function isResolutionDetail(
+	source: ResolutionSource,
+): source is ResolutionSourceDetail {
+	return typeof source === 'object' && source !== null && 'kind' in source;
+}
+
+function isPhaseResolutionSource(
+	source: ResolutionSource,
+): source is ResolutionPhaseSource {
+	return isResolutionDetail(source) && source.kind === 'phase';
+}
+
 function resolveActorLabel(
 	label: string | undefined,
 	source: ResolutionSource,
@@ -83,6 +95,34 @@ function resolveActorLabel(
 	return undefined;
 }
 
+function shouldAppendPhaseResolution(
+	previous: ActionResolution | null,
+	source: ResolutionSource,
+	action: ResolutionActionMeta | undefined,
+) {
+	if (!previous) {
+		return false;
+	}
+	if (action || previous.action) {
+		return false;
+	}
+	if (!isPhaseResolutionSource(previous.source)) {
+		return false;
+	}
+	if (!isPhaseResolutionSource(source)) {
+		return false;
+	}
+	if (previous.source.id && source.id) {
+		return previous.source.id === source.id;
+	}
+	const previousLabel = previous.source.label?.trim();
+	const nextLabel = source.label?.trim();
+	if (previousLabel && nextLabel) {
+		return previousLabel === nextLabel;
+	}
+	return true;
+}
+
 function useActionResolution({
 	addLog,
 	setTrackedTimeout,
@@ -92,15 +132,32 @@ function useActionResolution({
 	const [resolution, setResolution] = useState<ActionResolution | null>(null);
 	const sequenceRef = useRef(0);
 	const resolverRef = useRef<(() => void) | null>(null);
+	const resolutionRef = useRef<ActionResolution | null>(null);
+
+	const updateResolution = useCallback(
+		(
+			value:
+				| ActionResolution
+				| null
+				| ((previous: ActionResolution | null) => ActionResolution | null),
+		) => {
+			setResolution((previous) => {
+				const next = typeof value === 'function' ? value(previous) : value;
+				resolutionRef.current = next;
+				return next;
+			});
+		},
+		[],
+	);
 
 	const acknowledgeResolution = useCallback(() => {
 		sequenceRef.current += 1;
-		setResolution(null);
+		updateResolution(null);
 		if (resolverRef.current) {
 			resolverRef.current();
 			resolverRef.current = null;
 		}
-	}, []);
+	}, [updateResolution]);
 
 	const showResolution = useCallback(
 		({
@@ -116,7 +173,7 @@ function useActionResolution({
 				(line): line is string => Boolean(line?.trim()),
 			);
 			if (!entries.length) {
-				setResolution(null);
+				updateResolution(null);
 				return Promise.resolve();
 			}
 			if (!mountedRef.current) {
@@ -140,24 +197,67 @@ function useActionResolution({
 					resolvedSource,
 					action,
 				);
-				setResolution({
-					lines: entries,
-					visibleLines: [],
-					isComplete: false,
-					summaries,
-					source: resolvedSource,
-					requireAcknowledgement,
-					...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
-					...(player ? { player } : {}),
-					...(action ? { action } : {}),
-				});
+				const previousResolution = resolutionRef.current;
+				const shouldAppend = shouldAppendPhaseResolution(
+					previousResolution,
+					resolvedSource,
+					action,
+				);
+				const previousLines = shouldAppend
+					? (previousResolution?.lines ?? [])
+					: [];
+				const previousSummaries = shouldAppend
+					? (previousResolution?.summaries ?? [])
+					: [];
+				const combinedEntries = [...previousLines, ...entries];
+				const combinedSummaries = [...previousSummaries, ...summaries];
+				const baseVisible = shouldAppend ? [...previousLines] : [];
+				const baseSource = shouldAppend
+					? (previousResolution?.source ?? resolvedSource)
+					: resolvedSource;
+				const basePlayer = shouldAppend
+					? (previousResolution?.player ?? player)
+					: player;
+				const baseAction = shouldAppend
+					? (previousResolution?.action ?? action)
+					: action;
+				const baseActorLabel = shouldAppend
+					? (previousResolution?.actorLabel ?? resolvedActorLabel)
+					: resolvedActorLabel;
+				const previousRequireAcknowledgement =
+					previousResolution?.requireAcknowledgement;
+				let combinedRequireAcknowledgement = requireAcknowledgement;
+				if (shouldAppend) {
+					combinedRequireAcknowledgement =
+						previousRequireAcknowledgement ?? requireAcknowledgement;
+				}
+				const nextResolution: ActionResolution = {
+					lines: combinedEntries,
+					visibleLines: baseVisible,
+					isComplete: baseVisible.length === combinedEntries.length,
+					summaries: combinedSummaries,
+					source: baseSource,
+					requireAcknowledgement: combinedRequireAcknowledgement,
+				};
+				if (basePlayer) {
+					nextResolution.player = basePlayer;
+				}
+				if (baseAction) {
+					nextResolution.action = baseAction;
+				}
+				if (baseActorLabel) {
+					nextResolution.actorLabel = baseActorLabel;
+				}
+				updateResolution(nextResolution);
+
+				const revealStartIndex = baseVisible.length;
 
 				const revealLine = (index: number) => {
-					const line = entries[index];
+					const line = combinedEntries[index];
 					if (line === undefined) {
 						return;
 					}
-					setResolution((previous) => {
+					updateResolution((previous) => {
 						if (!previous) {
 							return previous;
 						}
@@ -167,7 +267,8 @@ function useActionResolution({
 						if (previous.visibleLines.length > index) {
 							return previous;
 						}
-						const nextVisible = [...previous.visibleLines, line];
+						const nextVisible = previous.visibleLines.slice();
+						nextVisible.push(line);
 						const isComplete = nextVisible.length === previous.lines.length;
 						return {
 							...previous,
@@ -175,11 +276,11 @@ function useActionResolution({
 							isComplete,
 						};
 					});
-					addLog(line, player);
+					addLog(line, basePlayer);
 				};
 
 				const scheduleReveal = (index: number) => {
-					if (index >= entries.length) {
+					if (index >= combinedEntries.length) {
 						if (!requireAcknowledgement) {
 							const scale = timeScaleRef.current || 1;
 							const duration = ACTION_EFFECT_DELAY / scale;
@@ -216,11 +317,15 @@ function useActionResolution({
 					}, duration);
 				};
 
-				revealLine(0);
-				scheduleReveal(1);
+				if (revealStartIndex < combinedEntries.length) {
+					revealLine(revealStartIndex);
+					scheduleReveal(revealStartIndex + 1);
+				} else {
+					scheduleReveal(revealStartIndex);
+				}
 			});
 		},
-		[addLog, mountedRef, setTrackedTimeout, timeScaleRef],
+		[addLog, mountedRef, setTrackedTimeout, timeScaleRef, updateResolution],
 	);
 
 	return { resolution, showResolution, acknowledgeResolution };

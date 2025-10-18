@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -372,16 +372,16 @@ describe('<HoverCard />', () => {
 				actorLabel: formatted.actorLabel,
 			});
 		});
-		const resolvedSourceLabel =
-			typeof formatted.source === 'object' && formatted.source
-				? (formatted.source.label ?? 'Phase')
-				: formatted.source === 'phase'
-					? 'Phase'
-					: 'Action';
 		const expectedHeader = formatted.actorLabel
-			? `${resolvedSourceLabel} - ${formatted.actorLabel}`
-			: `${resolvedSourceLabel} resolution`;
+			? `Phase - ${formatted.actorLabel}`
+			: 'Phase resolution';
 		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
+		const phaseBadge =
+			screen.getByText('Current phase').parentElement?.parentElement;
+		expect(phaseBadge).not.toBeNull();
+		const phaseIcon = phaseBadge?.querySelector('span[aria-hidden="true"]');
+		expect(phaseIcon?.textContent).toBe('🌅');
+		expect(within(phaseBadge!).getByText('Dawn Phase')).toBeInTheDocument();
 		expect(
 			screen.getByText(`Phase owner ${sessionPlayer.name}`),
 		).toBeInTheDocument();
