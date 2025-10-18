@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, type Mock } from 'vitest';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PlayerPanel from '../src/components/player/PlayerPanel';
@@ -126,11 +126,17 @@ describe('<PlayerPanel />', () => {
 		);
 		const statLabel = resolveDescriptorLabel(firstStatKey, statDescriptor);
 		const statValue = activePlayerSnapshot.stats[firstStatKey] ?? 0;
-		const formattedStatValue = formatStatValue(firstStatKey, statValue);
+		const translationAssets = mockGame.translationContext.assets;
+		const formattedStatValue = formatStatValue(
+			firstStatKey,
+			statValue,
+			translationAssets,
+		);
 		const statDelta = statForecast[firstStatKey]!;
 		const formattedStatDelta = `${statDelta > 0 ? '+' : '-'}${formatStatValue(
 			firstStatKey,
 			Math.abs(statDelta),
+			translationAssets,
 		)}`;
 		const statButtons = screen.getAllByRole('button', {
 			name: `${statLabel}: ${formattedStatValue} (${formattedStatDelta})`,
@@ -142,6 +148,51 @@ describe('<PlayerPanel />', () => {
 		);
 		expect(statForecastBadge).toBeInTheDocument();
 		expect(statForecastBadge).toHaveClass('text-emerald-300');
+	});
+
+	it('renders percent-based stats and hover cards with percent formatting', () => {
+		const translationAssets = mockGame.translationContext.assets;
+		renderPanel();
+		const percentEntry = Object.entries(translationAssets.stats).find(
+			([, info]) =>
+				info?.displayAsPercent ||
+				(Boolean(info?.format) &&
+					typeof info?.format === 'object' &&
+					Boolean(info.format.percent)),
+		);
+		expect(percentEntry).toBeDefined();
+		if (!percentEntry) {
+			throw new Error('Expected at least one percent-based stat for the test.');
+		}
+		const [percentStatKey] = percentEntry;
+		const descriptor = metadataSelectors.statMetadata.select(percentStatKey);
+		const displayDescriptor = toDescriptorDisplay(descriptor);
+		const statLabel = resolveDescriptorLabel(percentStatKey, displayDescriptor);
+		const statValue = activePlayerSnapshot.stats[percentStatKey] ?? 0;
+		const formattedValue = formatStatValue(
+			percentStatKey,
+			statValue,
+			translationAssets,
+		);
+		const statDelta = statForecast[percentStatKey] ?? 0;
+		const formattedDelta = `${statDelta > 0 ? '+' : '-'}${formatStatValue(
+			percentStatKey,
+			Math.abs(statDelta),
+			translationAssets,
+		)}`;
+		const matchingButtons = screen.getAllByRole('button', {
+			name: `${statLabel}: ${formattedValue} (${formattedDelta})`,
+		});
+		expect(matchingButtons.length).toBeGreaterThan(0);
+		const [statButton] = matchingButtons;
+		expect(statButton).toHaveTextContent(formattedValue);
+		const handleHoverCard = mockGame.handleHoverCard as Mock;
+		handleHoverCard.mockClear();
+		fireEvent.mouseEnter(statButton);
+		expect(handleHoverCard).toHaveBeenCalled();
+		const hoverPayload = handleHoverCard.mock.calls.at(-1)?.[0];
+		const serialized = JSON.stringify(hoverPayload);
+		expect(serialized).toContain(formattedValue);
 	});
 
 	it('memoizes registry metadata selectors', () => {

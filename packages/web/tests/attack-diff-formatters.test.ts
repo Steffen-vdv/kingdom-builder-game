@@ -2,6 +2,7 @@ import type { AttackPlayerDiff } from '@kingdom-builder/engine';
 import { describe, expect, it } from 'vitest';
 
 import { formatDiffCommon } from '../src/translation/effects/formatters/attack/shared';
+import { formatStatValue } from '../src/utils/stats';
 import {
 	listAttackResourceKeys,
 	listAttackStatKeys,
@@ -64,6 +65,18 @@ describe('attack diff formatters registry', () => {
 		expect(formatted.startsWith('Update:')).toBe(true);
 		expect(formatted).toContain(statInfo.label ?? statKey);
 		expect(formatted).toContain('+5');
+		const before = formatStatValue(statKey, diff.before, translation.assets);
+		const after = formatStatValue(statKey, diff.after, translation.assets);
+		expect(formatted).toContain(before);
+		expect(formatted).toContain(after);
+		if (
+			statInfo.displayAsPercent ||
+			(Boolean(statInfo.format) &&
+				typeof statInfo.format === 'object' &&
+				Boolean(statInfo.format.percent))
+		) {
+			expect(formatted).toMatch(/%/);
+		}
 	});
 
 	it('falls back to resource key when descriptor metadata is missing', () => {

@@ -3,7 +3,7 @@ import {
 	type AttackPlayerDiff,
 	type EffectDef,
 } from '@kingdom-builder/protocol';
-import type { TranslationContext } from '../../../context';
+import type { TranslationAssets, TranslationContext } from '../../../context';
 import type { SummaryEntry } from '../../../content';
 
 export type AttackResourceKey = string;
@@ -58,6 +58,7 @@ export type EvaluationContext<TTarget extends AttackTarget> = {
 	info: TargetInfo;
 	target: TTarget;
 	targetLabel: string;
+	assets: TranslationAssets;
 };
 
 export type DiffFormatOptions = {

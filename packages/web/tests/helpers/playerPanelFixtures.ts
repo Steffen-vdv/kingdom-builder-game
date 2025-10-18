@@ -4,6 +4,7 @@ import type {
 	EngineSessionSnapshot,
 	PlayerId,
 } from '@kingdom-builder/engine';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
@@ -65,6 +66,25 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		}
 		statIndex += 1;
 	}
+	const percentStatEntry = statEntries.find(
+		([, entry]) => entry.displayAsPercent === true,
+	);
+	const statSources: SessionPlayerStateSnapshot['statSources'] = {};
+	if (percentStatEntry) {
+		const [percentStatKey] = percentStatEntry;
+		const percentValue = stats[percentStatKey] ?? 0;
+		statSources[percentStatKey] = {
+			[`source.${percentStatKey}`]: {
+				amount: percentValue,
+				meta: {
+					key: percentStatKey,
+					longevity: 'ongoing',
+					kind: 'passive',
+					id: 'fixture-passive',
+				},
+			},
+		};
+	}
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
@@ -72,6 +92,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		stats,
 		statsHistory,
 		population: {},
+		statSources,
 	});
 	const opponent = createSnapshotPlayer({
 		id: opponentId,
