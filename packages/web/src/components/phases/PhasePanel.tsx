@@ -31,7 +31,8 @@ const phaseBadgeClassName = [
 
 const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 	({ height }, ref) => {
-		const { sessionState, sessionView, phase, handleEndTurn } = useGameEngine();
+		const { sessionState, sessionView, phase, handleEndTurn, resolution } =
+			useGameEngine();
 		const currentPhaseDefinition = useMemo(
 			() =>
 				sessionState.phases.find(
@@ -44,6 +45,7 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			sessionState.game.players[0]?.name ??
 			'Player';
 		const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
+		const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
 		const handleEndTurnClick = () => {
 			// Phase errors are surfaced via onFatalSessionError inside
 			// usePhaseProgress.
@@ -74,14 +76,16 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 					</span>
 				</header>
 				<div className="mt-auto flex justify-end">
-					<Button
-						variant="primary"
-						disabled={!canEndTurn}
-						onClick={handleEndTurnClick}
-						icon="⏭️"
-					>
-						Next Turn
-					</Button>
+					{shouldHideNextTurn ? null : (
+						<Button
+							variant="primary"
+							disabled={!canEndTurn}
+							onClick={handleEndTurnClick}
+							icon="⏭️"
+						>
+							Next Turn
+						</Button>
+					)}
 				</div>
 			</section>
 		);

@@ -37,13 +37,16 @@ const DIALOG_DESCRIPTION = [
 
 const TAB_BUTTON_CLASS = [
 	'flex-1 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold',
-	'tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300',
+	'tracking-wide transition hoverable cursor-pointer focus:outline-none',
+	'focus-visible:ring-2 focus-visible:ring-emerald-300',
 	'dark:focus-visible:ring-emerald-500/60',
 ].join(' ');
 
 const TAB_BUTTON_ACTIVE_CLASS = [
 	'bg-emerald-100 text-emerald-900 shadow-sm shadow-emerald-500/20',
+	'hover:bg-emerald-200',
 	'dark:bg-emerald-500/20 dark:text-emerald-100 dark:shadow-black/40',
+	'dark:hover:bg-emerald-500/30',
 ].join(' ');
 
 const TAB_BUTTON_INACTIVE_CLASS = [
