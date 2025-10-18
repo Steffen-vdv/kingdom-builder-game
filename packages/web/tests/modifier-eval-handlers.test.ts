@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { EffectDef } from '@kingdom-builder/engine';
+import type { EffectDef } from '@kingdom-builder/protocol';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { registerModifierEvalHandler } from '../src/translation/effects/formatters/modifier';
 import {
