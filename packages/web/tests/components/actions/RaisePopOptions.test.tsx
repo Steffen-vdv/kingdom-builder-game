@@ -22,13 +22,18 @@ import {
 	createSnapshotPlayer,
 } from '../../helpers/sessionFixtures';
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
+import { RemoteSessionAdapter } from '../../../src/state/remoteSessionAdapter';
 // prettier-ignore
 import type {
-	LegacyGameEngineContextValue,
+        LegacyGameEngineContextValue,
 } from '../../../src/state/GameContext.types';
-import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
+import type {
+	SessionPlayerId,
+	SessionRequirementFailure,
+} from '@kingdom-builder/protocol/session';
 import type { Action } from '../../../src/components/actions/types';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
+import type { GameApi } from '../../../src/services/gameApi';
 
 interface RaisePopScenario {
 	registries: SessionRegistries;
@@ -38,6 +43,7 @@ interface RaisePopScenario {
 	action: Action;
 	player: LegacyGameEngineContextValue['sessionView']['active'];
 	populationIds: string[];
+	adapter: RemoteSessionAdapter;
 }
 
 function createRaisePopScenario(
@@ -60,6 +66,7 @@ function createRaisePopScenario(
 		id: 'player-1' as SessionPlayerId,
 		name: 'Player One',
 		resources: { gold: 12, ap: 5 },
+		stats: { maxPopulation: 3 },
 		population: {
 			[primaryRole]: 2,
 			...(secondaryRole ? { [secondaryRole]: 1 } : {}),
@@ -101,11 +108,20 @@ function createRaisePopScenario(
 	if (!activeView) {
 		throw new Error('Expected active player view in session.');
 	}
-	mockGame.session = {
-		getActionCosts: vi.fn(() => ({ gold: 5, ap: 1 })),
-		getActionRequirements: vi.fn(() => []),
-		getActionOptions: vi.fn(() => []),
-	} as unknown as LegacyGameEngineContextValue['session'];
+	const adapter = new RemoteSessionAdapter(mockGame.sessionId, {
+		ensureGameApi: vi.fn(() => ({}) as GameApi),
+		runAiTurn: vi.fn().mockResolvedValue({
+			sessionId: mockGame.sessionId,
+			snapshot: sessionState,
+			registries,
+			ranTurn: false,
+		}),
+	});
+	adapter.setActionCosts(action.id, { gold: 5, ap: 1 });
+	adapter.setActionRequirements(action.id, []);
+	adapter.setActionOptions(action.id, []);
+	mockGame.session =
+		adapter as unknown as LegacyGameEngineContextValue['session'];
 	return {
 		registries,
 		metadata,
@@ -114,6 +130,7 @@ function createRaisePopScenario(
 		action,
 		player: activeView,
 		populationIds,
+		adapter,
 	};
 }
 
@@ -213,5 +230,45 @@ describe('<RaisePopOptions />', () => {
 				expect(summaryItems[0]?.textContent ?? '').toContain(expectedIcon);
 			}
 		}
+	});
+
+	it('disables hire options when population is at capacity', () => {
+		const { registries, metadata, metadataSelectors, action, player, adapter } =
+			scenario;
+		const requirementFailure: SessionRequirementFailure = {
+			requirement: {
+				type: 'evaluator',
+				method: 'compare',
+				params: {
+					operator: 'lt',
+					left: { type: 'population', params: { role: '$role' } },
+					right: { type: 'stat', params: { key: 'maxPopulation' } },
+				},
+			},
+			details: { left: 3, right: 3 },
+		};
+		adapter.setActionRequirements(action.id, [requirementFailure]);
+		const selectResourceDescriptor = (resourceKey: string) =>
+			metadataSelectors.resourceMetadata.select(resourceKey);
+		render(
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<RaisePopOptions
+					action={action}
+					player={player}
+					canInteract={true}
+					selectResourceDescriptor={selectResourceDescriptor}
+				/>
+			</RegistryMetadataProvider>,
+		);
+		const hireButtons = screen.getAllByRole('button', { name: /hire/i });
+		expect(hireButtons.length).toBeGreaterThan(0);
+		const primaryHireButton = hireButtons[0];
+		expect(primaryHireButton).toBeDisabled();
+		const card = primaryHireButton.closest('.action-card');
+		expect(card).not.toBeNull();
+		expect(card).toHaveAttribute(
+			'title',
+			expect.stringContaining('Population is at capacity'),
+		);
 	});
 });
