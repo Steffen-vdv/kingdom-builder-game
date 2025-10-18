@@ -3,8 +3,9 @@ export function humanizeIdentifier(identifier: string | undefined): string {
 		return '';
 	}
 	const terminal = identifier.split(':').pop() ?? identifier;
-	const tokens = terminal
-		.split(/[-_]/)
+	const camelSeparated = terminal.replace(/([a-z0-9])([A-Z])/gu, '$1 $2');
+	const tokens = camelSeparated
+		.split(/[-_\s]/u)
 		.map((part) => part.trim())
 		.filter((part) => part.length > 0);
 	if (tokens.length === 0) {

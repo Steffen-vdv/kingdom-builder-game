@@ -175,6 +175,45 @@ function resolveStatFormat(
 	return format;
 }
 
+function resolveStatEntry(
+	assets: TranslationAssets | undefined,
+	key: string | undefined,
+): {
+	entry: TranslationAssets['stats'][string] | undefined;
+	resolvedKey: string | undefined;
+} {
+	if (!assets?.stats || !key) {
+		return { entry: undefined, resolvedKey: key };
+	}
+	const stats = assets.stats as Record<
+		string,
+		TranslationAssets['stats'][string]
+	>;
+	if (key in stats) {
+		return {
+			entry: stats[key],
+			resolvedKey: key,
+		};
+	}
+	const loweredFirst = key.charAt(0).toLowerCase() + key.slice(1);
+	if (loweredFirst in stats) {
+		return {
+			entry: stats[loweredFirst],
+			resolvedKey: loweredFirst,
+		};
+	}
+	const normalized = key.toLowerCase();
+	for (const [candidateKey, candidate] of Object.entries(stats)) {
+		if (candidateKey.toLowerCase() === normalized) {
+			return {
+				entry: candidate,
+				resolvedKey: candidateKey,
+			};
+		}
+	}
+	return { entry: undefined, resolvedKey: key };
+}
+
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
@@ -186,12 +225,15 @@ export function selectStatDescriptor(
 		return cached;
 	}
 	const assets = context.assets;
-	const entry = assets?.stats?.[key];
-	const statLabelFallback = humanizeIdentifier(key);
+	const { entry, resolvedKey } = resolveStatEntry(assets, key);
+	const labelSource = resolvedKey ?? key;
+	const statLabelFallback = humanizeIdentifier(labelSource);
 	const fallbackLabel =
-		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
+		statLabelFallback && statLabelFallback.length > 0
+			? statLabelFallback
+			: (labelSource ?? key);
 	const label = coerceLabel(entry?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon, key);
+	const icon = coerceIcon(entry?.icon, labelSource ?? key ?? '');
 	const format = resolveStatFormat(entry);
 	const descriptor: StatRegistryDescriptor = {
 		icon,
