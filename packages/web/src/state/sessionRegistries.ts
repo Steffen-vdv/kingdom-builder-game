@@ -69,18 +69,21 @@ export function deserializeSessionRegistries(
 	payload: SessionRegistriesPayload,
 ): SessionRegistries {
 	return {
-		actions: createRegistryFromPayload(payload.actions ?? {}, actionSchema),
+		actions: createRegistryFromPayload(
+			payload.actions ?? {},
+			actionSchema.passthrough(),
+		),
 		buildings: createRegistryFromPayload(
 			payload.buildings ?? {},
-			buildingSchema,
+			buildingSchema.passthrough(),
 		),
 		developments: createRegistryFromPayload(
 			payload.developments ?? {},
-			developmentSchema,
+			developmentSchema.passthrough(),
 		),
 		populations: createRegistryFromPayload(
 			payload.populations ?? {},
-			populationSchema,
+			populationSchema.passthrough(),
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
 	};

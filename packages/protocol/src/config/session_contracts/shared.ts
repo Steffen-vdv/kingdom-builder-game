@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z, type ZodObject, type ZodRawShape } from 'zod';
 import {
 	actionSchema,
 	buildingSchema,
@@ -20,9 +20,9 @@ const resourceDefinitionSchema = z.object({
 	tags: z.array(z.string()).optional(),
 });
 
-const serializedRegistrySchema = <SchemaType extends z.ZodTypeAny>(
-	schema: SchemaType,
-) => z.record(z.string(), schema);
+const serializedRegistrySchema = <Shape extends ZodRawShape>(
+	schema: ZodObject<Shape>,
+) => z.record(z.string(), schema.passthrough());
 
 export const sessionRegistriesSchema = z
 	.object({
