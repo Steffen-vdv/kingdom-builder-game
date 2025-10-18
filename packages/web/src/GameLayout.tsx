@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Button from './components/common/Button';
 import ConfirmDialog from './components/common/ConfirmDialog';
 import TimeControl from './components/common/TimeControl';
@@ -53,51 +53,6 @@ export default function GameLayout() {
 		setQuitDialogOpen(false);
 		onExit();
 	}, [onExit]);
-	const playerAreaRef = useRef<HTMLElement | null>(null);
-	const [phasePanelHeight, setPhasePanelHeight] = useState(320);
-	useEffect(() => {
-		const node = playerAreaRef.current;
-		if (!node) {
-			return;
-		}
-
-		let frame = 0;
-		const updateHeight = () => {
-			if (!playerAreaRef.current) {
-				return;
-			}
-			const { height } = playerAreaRef.current.getBoundingClientRect();
-			setPhasePanelHeight((prev) => {
-				const nextHeight = Math.max(320, Math.ceil(height));
-				if (prev === nextHeight) {
-					return prev;
-				}
-				return nextHeight;
-			});
-		};
-
-		updateHeight();
-
-		if (typeof ResizeObserver === 'undefined') {
-			window.addEventListener('resize', updateHeight);
-			return () => {
-				window.removeEventListener('resize', updateHeight);
-			};
-		}
-
-		const observer = new ResizeObserver(() => {
-			frame = window.requestAnimationFrame(updateHeight);
-		});
-
-		observer.observe(node);
-
-		return () => {
-			observer.disconnect();
-			if (frame) {
-				window.cancelAnimationFrame(frame);
-			}
-		};
-	}, [sessionState.game.players.length]);
 	const playerPanels = sessionState.game.players.map((player, index) => {
 		const isActive = player.id === sessionState.game.activePlayerId;
 		const sideClass = index === 0 ? 'pr-6' : 'pl-6';
@@ -127,11 +82,6 @@ export default function GameLayout() {
 		);
 	});
 	const conclusion = sessionState.game.conclusion;
-	const phasePanelElement = (
-		<div className="w-full lg:col-start-2">
-			<PhasePanel height={phasePanelHeight} />
-		</div>
-	);
 	const logButton = (
 		<Button
 			onClick={toggleLog}
@@ -211,20 +161,17 @@ export default function GameLayout() {
 				</div>
 
 				<div className="grid grid-cols-1 gap-y-8 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
-					<section
-						ref={playerAreaRef}
-						className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface"
-					>
+					<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface">
 						<div className="flex flex-1 items-stretch gap-6">
 							{playerPanels}
 						</div>
 					</section>
-					{phasePanelElement}
+					<div className="flex w-full flex-col gap-6 lg:col-start-2">
+						<PhasePanel />
+						<HoverCard />
+					</div>
 					<div className="lg:col-start-1 lg:row-start-2">
 						<ActionsPanel />
-					</div>
-					<div className="lg:col-start-2 lg:row-start-2">
-						<HoverCard />
 					</div>
 				</div>
 				<LogPanel isOpen={isLogOpen} onClose={closeLog} />

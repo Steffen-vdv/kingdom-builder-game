@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	cleanup,
+	within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
@@ -134,5 +140,36 @@ describe('<PhasePanel />', () => {
 		};
 		render(<PhasePanel />);
 		expect(screen.getByRole('button', { name: /next turn/i })).toBeDisabled();
+	});
+
+	it('shows all phases with icons and highlights the active phase', () => {
+		render(<PhasePanel />);
+		const phaseDefinitions = mockGame.sessionState.phases;
+		expect(screen.getAllByRole('listitem')).toHaveLength(
+			phaseDefinitions.length,
+		);
+		const listItems = screen.getAllByRole('listitem');
+		for (const phaseDefinition of phaseDefinitions) {
+			const label = phaseDefinition.label ?? phaseDefinition.id;
+			const labelMatches = listItems.filter((item) =>
+				Boolean(within(item).queryByText(label)),
+			);
+			expect(labelMatches.length).toBeGreaterThan(0);
+			const icon = phaseDefinition.icon?.trim();
+			if (!icon) {
+				continue;
+			}
+			expect(
+				screen.getAllByText(icon, { selector: 'span' }).length,
+			).toBeGreaterThan(0);
+		}
+		const activeItem = screen.getByRole('listitem', { current: 'step' });
+		expect(activeItem).toHaveAttribute('data-active', 'true');
+		const activeLabel =
+			phaseDefinitions.find(
+				(phaseDefinition) =>
+					phaseDefinition.id === mockGame.phase.currentPhaseId,
+			)?.label ?? mockGame.phase.currentPhaseId;
+		expect(activeItem).toHaveTextContent(activeLabel);
 	});
 });
