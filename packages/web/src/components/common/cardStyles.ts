@@ -46,6 +46,7 @@ const CONTINUE_BUTTON_CLASS = [
 	'justify-center',
 	'rounded-2xl',
 	'bg-amber-500',
+	'cursor-pointer',
 	'px-4',
 	'py-2',
 	'text-sm',

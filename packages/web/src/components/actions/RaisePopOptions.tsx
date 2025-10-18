@@ -67,8 +67,10 @@ export default function RaisePopOptions({
 		[populationMetadata],
 	);
 	const defaultPopulationIcon = useMemo(() => {
-		return populationMetadata.list.find((entry) => entry.icon)?.icon;
-	}, [populationMetadata]);
+		const fallback = populationMetadata.list.find((entry) => entry.icon)?.icon;
+		const assetIcon = translationContext.assets.population?.icon;
+		return assetIcon ?? fallback;
+	}, [populationMetadata, translationContext.assets.population]);
 	const populationRegistry = useMemo<PopulationRegistryLike>(() => {
 		const entries: Array<[string, PopulationDefinition]> = populations
 			.entries()
