@@ -106,7 +106,11 @@ describe('army attack translation summary', () => {
 					`⚔️${plunder.icon} ${plunder.name}`,
 				],
 			},
-			`${warWeariness.icon}${warAmt >= 0 ? '+' : ''}${warAmt}`,
+			`${iconLabel(
+				warWeariness.icon,
+				warWeariness.label,
+				Stat.warWeariness,
+			)} ${warAmt >= 0 ? '+' : ''}${warAmt}`,
 		]);
 	});
 

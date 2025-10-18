@@ -21,10 +21,13 @@ describe('hold festival action translation', () => {
 		const upkeepSummaryLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
+		const fortSummaryLabel = `${
+			details.fortIcon ? `${details.fortIcon} ` : ''
+		}${details.fortInfo.label}`;
 
 		expect(summary).toEqual([
 			`${details.happinessIcon}${sign(details.happinessAmt)}${details.happinessAmt}`,
-			`${details.fortIcon}${sign(details.fortAmt)}${details.fortAmt}`,
+			`${fortSummaryLabel} ${sign(details.fortAmt)}${details.fortAmt}`,
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [

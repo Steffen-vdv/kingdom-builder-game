@@ -1,9 +1,22 @@
-import { gainOrLose, increaseOrDecrease, signed } from '../../helpers';
+import {
+	formatStatIconLabel,
+	gainOrLose,
+	increaseOrDecrease,
+	signed,
+} from '../../helpers';
 import { registerEffectFormatter } from '../../factory';
 import { selectStatDescriptor } from '../../registrySelectors';
 
 function resolveStatKey(value: unknown): string {
 	return typeof value === 'string' ? value : '';
+}
+
+function formatStatDisplay(
+	descriptor: ReturnType<typeof selectStatDescriptor>,
+	statKey: string,
+): string {
+	const label = descriptor.label || statKey;
+	return formatStatIconLabel(descriptor.icon, label, statKey);
 }
 
 registerEffectFormatter('stat', 'add', {
@@ -13,11 +26,12 @@ registerEffectFormatter('stat', 'add', {
 		const amount = Number(effectDefinition.params?.['amount']);
 		const format = descriptor.format;
 		const prefix = format?.prefix ?? '';
+		const display = formatStatDisplay(descriptor, statKey);
 		if (format?.percent) {
 			const percentValue = amount * 100;
-			return `${prefix}${descriptor.icon}${signed(percentValue)}${percentValue}%`;
+			return `${prefix}${display} ${signed(percentValue)}${percentValue}%`;
 		}
-		return `${prefix}${descriptor.icon}${signed(amount)}${amount}`;
+		return `${prefix}${display} ${signed(amount)}${amount}`;
 	},
 	describe: (effectDefinition, context) => {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
@@ -25,16 +39,15 @@ registerEffectFormatter('stat', 'add', {
 		const amount = Number(effectDefinition.params?.['amount']);
 		const format = descriptor.format;
 		const prefix = format?.prefix ?? '';
-		const icon = descriptor.icon || '';
-		const label = descriptor.label || statKey;
+		const display = formatStatDisplay(descriptor, statKey);
 		if (format?.percent) {
 			const percentMagnitude = Math.abs(amount * 100);
-			return `${increaseOrDecrease(amount)} ${icon}${label} by ${percentMagnitude}%`;
+			return `${increaseOrDecrease(amount)} ${prefix}${display} by ${percentMagnitude}%`;
 		}
 		if (prefix) {
-			return `${increaseOrDecrease(amount)} ${prefix}${icon} by ${Math.abs(amount)}`;
+			return `${increaseOrDecrease(amount)} ${prefix}${display} by ${Math.abs(amount)}`;
 		}
-		return `${gainOrLose(amount)} ${Math.abs(amount)} ${icon} ${label}`;
+		return `${gainOrLose(amount)} ${Math.abs(amount)} ${display}`;
 	},
 });
 
@@ -45,11 +58,12 @@ registerEffectFormatter('stat', 'remove', {
 		const amount = -Number(effectDefinition.params?.['amount']);
 		const format = descriptor.format;
 		const prefix = format?.prefix ?? '';
+		const display = formatStatDisplay(descriptor, statKey);
 		if (format?.percent) {
 			const percentValue = amount * 100;
-			return `${prefix}${descriptor.icon}${signed(percentValue)}${percentValue}%`;
+			return `${prefix}${display} ${signed(percentValue)}${percentValue}%`;
 		}
-		return `${prefix}${descriptor.icon}${signed(amount)}${amount}`;
+		return `${prefix}${display} ${signed(amount)}${amount}`;
 	},
 	describe: (effectDefinition, context) => {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
@@ -57,16 +71,15 @@ registerEffectFormatter('stat', 'remove', {
 		const amount = -Number(effectDefinition.params?.['amount']);
 		const format = descriptor.format;
 		const prefix = format?.prefix ?? '';
-		const icon = descriptor.icon || '';
-		const label = descriptor.label || statKey;
+		const display = formatStatDisplay(descriptor, statKey);
 		if (format?.percent) {
 			const percentMagnitude = Math.abs(amount * 100);
-			return `${increaseOrDecrease(amount)} ${icon}${label} by ${percentMagnitude}%`;
+			return `${increaseOrDecrease(amount)} ${prefix}${display} by ${percentMagnitude}%`;
 		}
 		if (prefix) {
-			return `${increaseOrDecrease(amount)} ${prefix}${icon} by ${Math.abs(amount)}`;
+			return `${increaseOrDecrease(amount)} ${prefix}${display} by ${Math.abs(amount)}`;
 		}
-		return `${gainOrLose(amount)} ${Math.abs(amount)} ${icon} ${label}`;
+		return `${gainOrLose(amount)} ${Math.abs(amount)} ${display}`;
 	},
 });
 
@@ -75,9 +88,12 @@ registerEffectFormatter('stat', 'add_pct', {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
 		const descriptor = selectStatDescriptor(context, statKey);
 		const percent = effectDefinition.params?.['percent'];
+		const format = descriptor.format;
+		const prefix = format?.prefix ?? '';
+		const display = formatStatDisplay(descriptor, statKey);
 		if (percent !== undefined) {
 			const percentValue = Number(percent) * 100;
-			return `${descriptor.icon}${signed(percentValue)}${percentValue}%`;
+			return `${prefix}${display} ${signed(percentValue)}${percentValue}%`;
 		}
 		const percentageStatKey = resolveStatKey(
 			effectDefinition.params?.['percentStat'],
@@ -87,18 +103,25 @@ registerEffectFormatter('stat', 'add_pct', {
 				context,
 				percentageStatKey,
 			);
-			return `${descriptor.icon}${percentageDescriptor.icon}`;
+			const percentageDisplay = formatStatDisplay(
+				percentageDescriptor,
+				percentageStatKey,
+			);
+			return `${prefix}${display} ${percentageDisplay}`;
 		}
-		return descriptor.icon;
+		return `${prefix}${display}`;
 	},
 	describe: (effectDefinition, context) => {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
 		const descriptor = selectStatDescriptor(context, statKey);
 		const percent = effectDefinition.params?.['percent'];
+		const format = descriptor.format;
+		const prefix = format?.prefix ?? '';
+		const display = formatStatDisplay(descriptor, statKey);
 		if (percent !== undefined) {
 			const percentChange = Number(percent);
 			const percentValue = percentChange * 100;
-			return `${increaseOrDecrease(percentChange)} ${descriptor.icon}${descriptor.label} by ${Math.abs(percentValue)}%`;
+			return `${increaseOrDecrease(percentChange)} ${prefix}${display} by ${Math.abs(percentValue)}%`;
 		}
 		const percentageStatKey = resolveStatKey(
 			effectDefinition.params?.['percentStat'],
@@ -108,8 +131,12 @@ registerEffectFormatter('stat', 'add_pct', {
 				context,
 				percentageStatKey,
 			);
-			return `Increase ${descriptor.icon}${descriptor.label} by ${percentageDescriptor.icon}${percentageDescriptor.label}`;
+			const percentageDisplay = formatStatDisplay(
+				percentageDescriptor,
+				percentageStatKey,
+			);
+			return `Increase ${prefix}${display} by ${percentageDisplay}`;
 		}
-		return `${increaseOrDecrease(0)} ${descriptor.icon}${descriptor.label}`;
+		return `${increaseOrDecrease(0)} ${prefix}${display}`;
 	},
 });
