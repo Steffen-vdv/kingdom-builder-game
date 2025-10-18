@@ -160,8 +160,8 @@ export default function GameLayout() {
 					)}
 				</div>
 
-				<div className="grid grid-cols-1 gap-y-8 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
-					<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface">
+				<div className="grid grid-cols-1 items-start gap-y-8 gap-x-6 lg:grid-cols-[minmax(0,1fr)_30rem]">
+					<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface self-start">
 						<div className="flex flex-1 items-stretch gap-6">
 							{playerPanels}
 						</div>
