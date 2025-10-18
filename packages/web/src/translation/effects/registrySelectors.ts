@@ -186,7 +186,23 @@ export function selectStatDescriptor(
 		return cached;
 	}
 	const assets = context.assets;
-	const entry = assets?.stats?.[key];
+	const stats = assets?.stats;
+	let entry = stats?.[key];
+	if (!entry && key) {
+		const trimmedKey = key.trim();
+		if (trimmedKey.length > 0) {
+			const lowerFirst = `${trimmedKey.charAt(0).toLowerCase()}${trimmedKey.slice(1)}`;
+			if (lowerFirst !== key) {
+				entry = stats?.[lowerFirst];
+			}
+			if (!entry) {
+				const lowerCase = trimmedKey.toLowerCase();
+				if (lowerCase !== key && lowerCase !== lowerFirst) {
+					entry = stats?.[lowerCase];
+				}
+			}
+		}
+	}
 	const statLabelFallback = humanizeIdentifier(key);
 	const fallbackLabel =
 		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;

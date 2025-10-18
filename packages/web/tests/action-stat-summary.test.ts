@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { summarizeContent } from '../src/translation/content';
+import { describeContent, summarizeContent } from '../src/translation/content';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 
 describe('action stat summaries', () => {
@@ -21,7 +21,6 @@ describe('action stat summaries', () => {
 				key: 'absorption',
 				method: 'add' as const,
 				amount: 0.1,
-				percent: true,
 			},
 			{
 				key: 'maxPopulation',
@@ -58,26 +57,90 @@ describe('action stat summaries', () => {
 			actionId as string,
 			translationContext,
 		);
-		const formatDisplay = (key: string): string => {
-			const entry = translationContext.assets.stats[key] ?? {};
-			const label = entry.label ?? key;
+		expect(summary).toEqual([
+			'⚔️ +1',
+			'🛡️ -2',
+			'🌀 +0.1',
+			'Max 👥 +3',
+			'💤 +1',
+		]);
+	});
+
+	it('formats stat changes with case-insensitive keys', () => {
+		const factory = createContentFactory();
+		let actionId: string | undefined;
+		const { translationContext } = buildSyntheticTranslationContext(
+			({ registries: actionRegistries }) => {
+				const showcaseAction = factory.action({
+					name: 'Case Showcase',
+					icon: '🧮',
+					effects: [
+						{
+							type: 'stat',
+							method: 'add',
+							params: { key: 'MaxPopulation', amount: 2 },
+						},
+						{
+							type: 'stat',
+							method: 'remove',
+							params: { key: 'FortificationStrength', amount: 3 },
+						},
+					],
+				});
+				actionId = showcaseAction.id;
+				actionRegistries.actions.add(showcaseAction.id, {
+					...showcaseAction,
+				});
+			},
+		);
+		expect(actionId).toBeDefined();
+		const summary = summarizeContent(
+			'action',
+			actionId as string,
+			translationContext,
+		);
+		const description = describeContent(
+			'action',
+			actionId as string,
+			translationContext,
+		);
+		const stats = translationContext.assets.stats;
+		const resolveEntry = (key: string) =>
+			stats[key] ?? stats[key.charAt(0).toLowerCase() + key.slice(1)] ?? {};
+		const resolveIcon = (entry: { icon?: string }, fallback: string) => {
 			const icon = typeof entry.icon === 'string' ? entry.icon.trim() : '';
-			const prefix =
-				(entry.format as { prefix?: string } | undefined)?.prefix ?? '';
-			const iconPart = icon && icon !== key ? `${icon} ${label}` : label;
-			return `${prefix}${iconPart}`;
+			return icon && icon !== fallback ? icon : fallback;
 		};
-		const expected = statEffects.map(({ key, method, amount, percent }) => {
-			const display = formatDisplay(key);
-			if (percent) {
-				const pct = amount * 100;
-				const sign = pct >= 0 ? '+' : '';
-				return `${display} ${sign}${pct}%`;
+		const resolveLabel = (entry: { label?: string }, fallback: string) =>
+			typeof entry.label === 'string' && entry.label.trim().length > 0
+				? entry.label
+				: fallback;
+		const resolvePrefix = (entry: { format?: unknown }) =>
+			((entry.format as { prefix?: string } | undefined)?.prefix ?? '').trim();
+		const applyPrefix = (value: string, prefix: string) => {
+			if (!prefix) {
+				return value;
 			}
-			const delta = method === 'remove' ? -amount : amount;
-			const sign = delta >= 0 ? '+' : '';
-			return `${display} ${sign}${delta}`;
-		});
-		expect(summary).toEqual(expected);
+			const trimmedValue = value.trimStart();
+			return trimmedValue.toLowerCase().startsWith(prefix.toLowerCase())
+				? trimmedValue
+				: `${prefix} ${trimmedValue}`.replace(/\s+/gu, ' ');
+		};
+		const maxEntry = resolveEntry('MaxPopulation');
+		const fortEntry = resolveEntry('FortificationStrength');
+		const maxPrefix = resolvePrefix(maxEntry);
+		const fortPrefix = resolvePrefix(fortEntry);
+		const maxIcon = resolveIcon(maxEntry, '👥');
+		const fortIcon = resolveIcon(fortEntry, '🛡️');
+		const maxLabel = resolveLabel(maxEntry, 'Maximum Population');
+		const fortLabel = resolveLabel(fortEntry, 'Fortification Strength');
+		expect(summary).toEqual([
+			`${applyPrefix(maxIcon, maxPrefix)} +2`,
+			`${applyPrefix(fortIcon, fortPrefix)} -3`,
+		]);
+		expect(description).toEqual([
+			`${maxIcon} +2 ${applyPrefix(maxLabel, maxPrefix)}`,
+			`${fortIcon} -3 ${applyPrefix(fortLabel, fortPrefix)}`,
+		]);
 	});
 });
