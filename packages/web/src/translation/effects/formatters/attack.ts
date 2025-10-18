@@ -81,6 +81,7 @@ function buildEvaluationEntry(
 		info: context.info,
 		target: context.target,
 		targetLabel: context.targetLabel,
+		assets: context.assets,
 	});
 }
 

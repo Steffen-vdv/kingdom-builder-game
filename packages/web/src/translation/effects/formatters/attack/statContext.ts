@@ -1,5 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import type { TranslationContext } from '../../../context';
+import type { TranslationAssets, TranslationContext } from '../../../context';
 import {
 	resolveAttackTargetFormatter,
 	type AttackTargetFormatter,
@@ -122,6 +122,7 @@ export type AttackFormatterContext = {
 	target: AttackTarget;
 	targetLabel: string;
 	stats: AttackStatContext;
+	assets: TranslationAssets;
 };
 
 export function resolveAttackFormatterContext(
@@ -133,5 +134,12 @@ export function resolveAttackFormatterContext(
 		translationContext,
 	);
 	const stats = resolveAttackStats(effectDefinition, translationContext);
-	return { formatter, target, info, targetLabel, stats };
+	return {
+		formatter,
+		target,
+		info,
+		targetLabel,
+		stats,
+		assets: translationContext.assets,
+	};
 }

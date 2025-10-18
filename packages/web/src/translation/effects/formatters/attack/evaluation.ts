@@ -92,7 +92,7 @@ export function buildStandardEvaluationEntry(
 	context: EvaluationContext<AttackTarget>,
 	isStat: boolean,
 ): SummaryEntry {
-	const { stats, info } = context;
+	const { stats, info, assets } = context;
 	const power = stats.power;
 	const absorption = stats.absorption;
 	const fortificationStat = stats.fortification;
@@ -121,7 +121,7 @@ export function buildStandardEvaluationEntry(
 	>;
 	const formatTargetValue = (value: number) => {
 		if (isStat) {
-			return formatStatValue(String(target.key), value);
+			return formatStatValue(String(target.key), value, assets);
 		}
 		return formatNumber(value);
 	};
