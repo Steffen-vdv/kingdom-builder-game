@@ -43,6 +43,13 @@ export function createPassiveGame(
 		},
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
+	const controlledPlayerSnapshot =
+		sessionState.game.players.find((player) => !player.aiControlled) ??
+		sessionState.game.players[0];
+	const controlledPlayerId = controlledPlayerSnapshot?.id;
+	const controlledPlayer = controlledPlayerId
+		? sessionView.byId.get(controlledPlayerId)
+		: undefined;
 	const mockGame: MockGame = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
@@ -50,6 +57,8 @@ export function createPassiveGame(
 		selectors: { sessionView },
 		translationContext,
 		ruleSnapshot,
+		controlledPlayerId,
+		controlledPlayer,
 		log: [],
 		logOverflowed: false,
 		resolution: null,

@@ -242,6 +242,7 @@ export function createActionsPanelGame({
 	} as const;
 	const playerSnapshot = toPlayerSnapshot(player, capacityStat);
 	const opponentSnapshot = toPlayerSnapshot(opponent, capacityStat);
+	opponentSnapshot.aiControlled = true;
 	const sessionState: EngineSessionSnapshot = {
 		game: {
 			turn: 1,
@@ -324,6 +325,8 @@ export function createActionsPanelGame({
 		sessionView,
 		translationContext,
 		ruleSnapshot,
+		controlledPlayerId: player.id,
+		controlledPlayer: sessionView.byId.get(player.id),
 		...createActionsPanelState({
 			actionCostResource,
 			phaseId: phaseDefinition.id,

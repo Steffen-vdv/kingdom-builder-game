@@ -103,6 +103,8 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		sessionState.metadata,
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
+	const controlledPlayerId = activePlayer.id;
+	const controlledPlayer = sessionView.byId.get(controlledPlayerId);
 	const mockGame: LegacyGameEngineContextValue = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
@@ -110,6 +112,8 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		selectors: { sessionView },
 		translationContext,
 		ruleSnapshot,
+		controlledPlayerId,
+		controlledPlayer,
 		log: [],
 		logOverflowed: false,
 		resolution: null,

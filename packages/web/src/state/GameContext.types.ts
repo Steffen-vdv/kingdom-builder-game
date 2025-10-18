@@ -3,7 +3,7 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import type { TranslationContext } from '../translation/context';
-import type { SessionView } from './sessionSelectors';
+import type { SessionPlayerView, SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import type { TimeScale } from './useTimeScale';
@@ -73,6 +73,8 @@ export interface GameEngineContextValue {
 	selectors: SessionDerivedSelectors;
 	translationContext: TranslationContext;
 	ruleSnapshot: SessionRuleSnapshot;
+	controlledPlayerId?: string;
+	controlledPlayer?: SessionPlayerView;
 	log: LogEntry[];
 	logOverflowed: boolean;
 	resolution: ActionResolution | null;

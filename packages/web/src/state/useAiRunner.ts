@@ -14,6 +14,7 @@ interface UseAiRunnerOptions {
 		overrides?: Partial<PhaseProgressState>,
 	) => void;
 	mountedRef: MutableRefObject<boolean>;
+	controlledPlayerId?: string;
 	onFatalSessionError?: (error: unknown) => void;
 }
 
@@ -23,6 +24,7 @@ export function useAiRunner({
 	runUntilActionPhaseCore,
 	syncPhaseState,
 	mountedRef,
+	controlledPlayerId,
 	onFatalSessionError,
 }: UseAiRunnerOptions) {
 	useEffect(() => {
@@ -34,7 +36,14 @@ export function useAiRunner({
 			return;
 		}
 		const activeId = sessionState.game.activePlayerId;
-		if (!session.hasAiController(activeId)) {
+		const hasController = session.hasAiController(activeId);
+		const isControlledPlayerActive = controlledPlayerId
+			? activeId === controlledPlayerId
+			: !hasController;
+		if (isControlledPlayerActive) {
+			return;
+		}
+		if (!hasController && controlledPlayerId === undefined) {
 			return;
 		}
 		void session.enqueue(async () => {
@@ -88,6 +97,7 @@ export function useAiRunner({
 		runUntilActionPhaseCore,
 		syncPhaseState,
 		mountedRef,
+		controlledPlayerId,
 		onFatalSessionError,
 	]);
 }

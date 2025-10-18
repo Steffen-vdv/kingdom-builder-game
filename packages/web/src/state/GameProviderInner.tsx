@@ -147,6 +147,11 @@ export function GameProviderInner({
 		() => selectSessionView(sessionState, registries),
 		[sessionState, registries],
 	);
+	const controlledPlayer = useMemo(
+		() =>
+			controlledPlayerId ? sessionView.byId.get(controlledPlayerId) : undefined,
+		[controlledPlayerId, sessionView],
+	);
 	const selectors = useMemo<SessionDerivedSelectors>(
 		() => ({ sessionView }),
 		[sessionView],
@@ -233,6 +238,7 @@ export function GameProviderInner({
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
 		mountedRef,
+		...(controlledPlayerId !== undefined ? { controlledPlayerId } : {}),
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
@@ -328,6 +334,8 @@ export function GameProviderInner({
 		metadata,
 		runUntilActionPhase,
 		refreshPhaseState,
+		...(controlledPlayerId !== undefined ? { controlledPlayerId } : {}),
+		...(controlledPlayer !== undefined ? { controlledPlayer } : {}),
 		darkMode: darkMode ?? true,
 		onToggleDark: onToggleDark ?? (() => {}),
 		musicEnabled: musicEnabled ?? true,

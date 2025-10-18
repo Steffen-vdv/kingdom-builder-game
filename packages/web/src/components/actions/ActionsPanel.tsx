@@ -27,11 +27,13 @@ import { normalizeActionFocus } from './types';
 
 export default function ActionsPanel() {
 	const {
+		session,
 		sessionState,
 		sessionView,
 		translationContext,
 		phase,
 		actionCostResource,
+		controlledPlayerId,
 	} = useGameEngine();
 	const resourceMetadata = useResourceMetadata();
 	const selectResourceDescriptor = useCallback(
@@ -47,13 +49,13 @@ export default function ActionsPanel() {
 	const actionCostIcon = actionCostDescriptor.icon;
 	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
 	const sectionRef = useAnimate<HTMLDivElement>();
-	const player = sessionView.active;
-	if (!player) {
+	const activePlayer = sessionView.active;
+	if (!activePlayer) {
 		return null;
 	}
 	const opponentView = sessionView.opponent;
 	const hasOpponent = Boolean(opponentView);
-	const opponent = opponentView ?? player;
+	const opponent = opponentView ?? activePlayer;
 	const [viewingOpponent, setViewingOpponent] = useState(false);
 
 	const actionPhaseId = useMemo(
@@ -62,7 +64,11 @@ export default function ActionsPanel() {
 		[sessionState.phases],
 	);
 	const isActionPhase = isActionPhaseActive(phase, actionPhaseId);
-	const isLocalTurn = sessionState.game.activePlayerId === player.id;
+	const activePlayerId = sessionState.game.activePlayerId;
+	const isAiTurn = controlledPlayerId
+		? activePlayerId !== controlledPlayerId
+		: session.hasAiController(activePlayerId);
+	const isLocalTurn = !isAiTurn;
 
 	useEffect(() => {
 		if (!isLocalTurn && viewingOpponent) {
@@ -76,7 +82,9 @@ export default function ActionsPanel() {
 		}
 	}, [hasOpponent, viewingOpponent]);
 
-	const selectedPlayer: DisplayPlayer = viewingOpponent ? opponent : player;
+	const selectedPlayer: DisplayPlayer = viewingOpponent
+		? opponent
+		: activePlayer;
 	const canInteract = isLocalTurn && isActionPhase && !viewingOpponent;
 	const panelDisabled = !canInteract;
 

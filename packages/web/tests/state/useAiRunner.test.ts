@@ -75,6 +75,7 @@ describe('useAiRunner', () => {
 				runUntilActionPhaseCore,
 				syncPhaseState,
 				mountedRef,
+				controlledPlayerId: opponent.id,
 				onFatalSessionError,
 			}),
 		);
@@ -142,6 +143,7 @@ describe('useAiRunner', () => {
 				runUntilActionPhaseCore: vi.fn(),
 				syncPhaseState,
 				mountedRef,
+				controlledPlayerId: opponent.id,
 				onFatalSessionError,
 			}),
 		);
@@ -152,6 +154,73 @@ describe('useAiRunner', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
+		cleanup();
+	});
+
+	it('runs AI turns when the active player is not controlled locally', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{
+				id: 'phase-main',
+				name: 'Main Phase',
+				action: true,
+				steps: [],
+			},
+		];
+		const activePlayer = createSnapshotPlayer({ id: 'A' });
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+		});
+		const registries = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
+		});
+		const enqueueSpy = vi.spyOn(adapter, 'enqueue');
+		const runSpy = vi.spyOn(adapter, 'runAiTurn');
+		runSpy.mockResolvedValueOnce({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
+			ranTurn: true,
+		});
+		const syncPhaseState = vi.fn();
+		const mountedRef = { current: true };
+
+		renderHook(() =>
+			useAiRunner({
+				session: adapter,
+				sessionState,
+				runUntilActionPhaseCore: vi.fn(),
+				syncPhaseState,
+				mountedRef,
+				controlledPlayerId: opponent.id,
+			}),
+		);
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(enqueueSpy).toHaveBeenCalled();
+		expect(runSpy).toHaveBeenCalledWith(activePlayer.id);
 		cleanup();
 	});
 });
