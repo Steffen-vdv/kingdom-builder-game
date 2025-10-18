@@ -26,6 +26,8 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
    JSON token map.
 5. Run a single target when needed:
    - Web client only: `npm run dev:web`
+   - UI test harness (Fastify + Vite with fixed ports):
+     `npm run dev:ui-tests`
    - Server only: `npm run server:dev`
 6. Build production bundles for both server and web: `npm run build`.
 7. Build just the Node server bundle: `npm run server:build`.
