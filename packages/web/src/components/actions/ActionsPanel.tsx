@@ -234,7 +234,9 @@ export default function ActionsPanel() {
 							onClick={() => setViewingOpponent((previous) => !previous)}
 							aria-label={toggleLabel}
 						>
+							<span className="margin-top-correction-five">
 							{viewingOpponent ? '←' : '→'}
+						</span>
 						</button>
 					)}
 				</div>
