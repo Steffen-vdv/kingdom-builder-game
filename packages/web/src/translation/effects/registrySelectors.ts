@@ -175,6 +175,26 @@ function resolveStatFormat(
 	return format;
 }
 
+function resolveStatEntry(
+	assets: TranslationAssets | undefined,
+	key: string,
+): { entry: TranslationAssets['stats'][string] | undefined; resolved: string } {
+	const stats = assets?.stats;
+	if (!stats) {
+		return { entry: undefined, resolved: key };
+	}
+	if (key in stats) {
+		return { entry: stats[key], resolved: key };
+	}
+	if (key.length > 0) {
+		const camelCandidate = key.charAt(0).toLowerCase() + key.slice(1);
+		if (camelCandidate in stats) {
+			return { entry: stats[camelCandidate], resolved: camelCandidate };
+		}
+	}
+	return { entry: undefined, resolved: key };
+}
+
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
@@ -186,12 +206,14 @@ export function selectStatDescriptor(
 		return cached;
 	}
 	const assets = context.assets;
-	const entry = assets?.stats?.[key];
-	const statLabelFallback = humanizeIdentifier(key);
+	const { entry, resolved } = resolveStatEntry(assets, key);
+	const statLabelFallback = humanizeIdentifier(resolved);
 	const fallbackLabel =
-		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
+		statLabelFallback && statLabelFallback.length > 0
+			? statLabelFallback
+			: resolved;
 	const label = coerceLabel(entry?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon, key);
+	const icon = coerceIcon(entry?.icon, resolved);
 	const format = resolveStatFormat(entry);
 	const descriptor: StatRegistryDescriptor = {
 		icon,
