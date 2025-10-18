@@ -6,6 +6,7 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
+import { DEFAULT_STAT_METADATA } from '../../contexts/registryMetadataDefaults';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -155,9 +156,16 @@ function buildStatMap(
 	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
+	const defaults = DEFAULT_STAT_METADATA ?? {};
+	for (const [key, descriptor] of Object.entries(defaults)) {
+		const fallbackLabel = descriptor.label ?? key;
+		entries[key] = mergeIconLabel(undefined, descriptor, fallbackLabel);
+	}
 	if (descriptors) {
 		for (const [key, descriptor] of Object.entries(descriptors)) {
-			entries[key] = mergeIconLabel(undefined, descriptor, key);
+			const baseEntry = entries[key];
+			const fallbackLabel = descriptor.label ?? baseEntry?.label ?? key;
+			entries[key] = mergeIconLabel(baseEntry, descriptor, fallbackLabel);
 		}
 	}
 	return Object.freeze(entries);
