@@ -27,6 +27,8 @@ At time of writing, this project is still heavily W.I.P. and should not by any m
 5. Run a single target when needed:
    - Web client only: `npm run dev:web`
    - Server only: `npm run server:dev`
+   - UI test stack (Fastify + Vite with fixed hosts/ports):
+     `npm run dev:ui-tests`
 6. Build production bundles for both server and web: `npm run build`.
 7. Build just the Node server bundle: `npm run server:build`.
 8. Launch the production server locally with `npm run start` after supplying a
