@@ -81,6 +81,7 @@ export const TOGGLE_BUTTON_CLASS_NAMES = [
 	'w-10',
 	'items-center',
 	'justify-center',
+	'leading-none',
 	'rounded-full',
 	'border',
 	'border-white/60',
