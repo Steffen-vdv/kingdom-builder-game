@@ -4,6 +4,18 @@ import type {
 	TranslationPhaseStep,
 } from '../../translation/context';
 
+const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 2,
+});
+
+const formatNumericValue = (value: number): string => {
+	if (Number.isInteger(value)) {
+		return value.toString();
+	}
+	return NUMBER_FORMATTER.format(value);
+};
+
 interface FormattablePhaseStep extends TranslationPhaseStep {
 	icon?: string;
 	title?: string;
@@ -62,7 +74,10 @@ export function formatStatValue(
 	value: number,
 	assets?: TranslationAssets,
 ): string {
-	return statDisplaysAsPercent(key, assets) ? `${value * 100}%` : String(value);
+	if (statDisplaysAsPercent(key, assets)) {
+		return `${formatNumericValue(value * 100)}%`;
+	}
+	return formatNumericValue(value);
 }
 
 export function formatDetailText(detail: string): string {
