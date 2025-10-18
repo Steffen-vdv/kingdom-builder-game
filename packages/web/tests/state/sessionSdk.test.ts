@@ -35,6 +35,7 @@ import {
 	getSessionRecord,
 	clearSessionStateStore,
 } from '../../src/state/sessionStateStore';
+import * as sessionStateStoreModule from '../../src/state/sessionStateStore';
 
 const resourceKeys = createResourceKeys();
 const [resourceKey] = resourceKeys;
@@ -193,6 +194,46 @@ describe('sessionSdk', () => {
 		expect(response).toEqual(successResponse);
 		const record = getSessionRecord('session-1');
 		expect(record?.snapshot).toEqual(updatedSnapshot);
+	});
+
+	it('performs actions without queuing when skipQueue is true', async () => {
+		await createSession();
+		const updatedSnapshot = createSessionSnapshot({
+			players: [
+				createSnapshotPlayer({
+					id: playerA.id,
+					name: playerA.name,
+					resources: { [resourceKey]: 9 },
+				}),
+				playerB,
+			],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 3,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
+		});
+		const successResponse: ActionExecuteSuccessResponse = {
+			status: 'success',
+			snapshot: updatedSnapshot,
+			costs: {},
+			traces: [],
+		};
+		api.setNextActionResponse(successResponse);
+		const enqueueSpy = vi.spyOn(sessionStateStoreModule, 'enqueueSessionTask');
+		const response = await performSessionAction(
+			{ sessionId: 'session-1', actionId: taxActionId },
+			undefined,
+			{ skipQueue: true },
+		);
+		expect(response).toEqual(successResponse);
+		expect(enqueueSpy).not.toHaveBeenCalled();
+		const record = getSessionRecord('session-1');
+		expect(record?.snapshot).toEqual(updatedSnapshot);
+		enqueueSpy.mockRestore();
 	});
 
 	it('returns error payloads when the API action fails', async () => {

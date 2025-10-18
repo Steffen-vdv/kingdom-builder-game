@@ -414,6 +414,14 @@ describe('useActionPerformer', () => {
 			await result.current.handlePerform(action);
 		});
 
+		expect(performSessionActionMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				sessionId,
+				actionId: action.id,
+			}),
+			undefined,
+			{ skipQueue: true },
+		);
 		expect(showResolution).toHaveBeenCalledTimes(1);
 		expect(showResolution).toHaveBeenLastCalledWith(
 			expect.objectContaining({

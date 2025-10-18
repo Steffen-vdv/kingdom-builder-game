@@ -1,8 +1,6 @@
 import type {
-	ActionExecuteErrorResponse,
 	ActionExecuteRequest,
 	ActionExecuteResponse,
-	ActionExecuteSuccessResponse,
 	ActionParametersPayload,
 } from '@kingdom-builder/protocol/actions';
 import type {
@@ -24,7 +22,6 @@ import {
 	deleteSessionRecord,
 	enqueueSessionTask,
 	initializeSessionState,
-	updateSessionSnapshot,
 	type SessionStateRecord,
 } from './sessionStateStore';
 import { type Session, type RemoteSessionRecord } from './sessionTypes';
@@ -42,6 +39,10 @@ import {
 	setGameApi as setGameApiInstance,
 } from './gameApiInstance';
 import { clone } from './clone';
+import {
+	applyActionSnapshot,
+	normalizeActionError,
+} from './sessionSdk.helpers';
 
 interface CreateSessionOptions {
 	devMode?: boolean;
@@ -52,11 +53,6 @@ export interface CreateSessionResult {
 	adapter: Session;
 	record: RemoteSessionRecord;
 }
-type ActionExecutionFailure = Error & {
-	requirementFailure?: ActionExecuteErrorResponse['requirementFailure'];
-	requirementFailures?: ActionExecuteErrorResponse['requirementFailures'];
-};
-
 export interface FetchSnapshotResult {
 	sessionId: string;
 	adapter: Session;
@@ -143,20 +139,18 @@ export async function setSessionDevMode(
 	};
 }
 
-function normalizeActionError(error: unknown): ActionExecuteErrorResponse {
-	const failure = error as ActionExecutionFailure;
-	const response: ActionExecuteErrorResponse = {
-		status: 'error',
-		error: failure?.message ?? 'Action failed.',
-	};
-	if (failure?.requirementFailure) {
-		response.requirementFailure = failure.requirementFailure;
-	}
-	if (failure?.requirementFailures) {
-		response.requirementFailures = failure.requirementFailures;
-	}
-	if (!response.requirementFailure && !response.requirementFailures) {
-		response.fatal = true;
+interface PerformSessionActionOptions {
+	skipQueue?: boolean;
+}
+
+async function runPerformSessionAction(
+	request: ActionExecuteRequest,
+	requestOptions: GameApiRequestOptions,
+	api: ReturnType<typeof ensureGameApi>,
+): Promise<ActionExecuteResponse> {
+	const response = await api.performAction(request, requestOptions);
+	if (response.status === 'success') {
+		applyActionSnapshot(request.sessionId, response);
 	}
 	return response;
 }
@@ -164,16 +158,15 @@ function normalizeActionError(error: unknown): ActionExecuteErrorResponse {
 export async function performSessionAction(
 	request: ActionExecuteRequest,
 	requestOptions: GameApiRequestOptions = {},
+	options: PerformSessionActionOptions = {},
 ): Promise<ActionExecuteResponse> {
 	const api = ensureGameApi();
 	try {
-		return await enqueueSessionTask(request.sessionId, async () => {
-			const response = await api.performAction(request, requestOptions);
-			if (response.status === 'success') {
-				applyActionSnapshot(request.sessionId, response);
-			}
-			return response;
-		});
+		const execute = () => runPerformSessionAction(request, requestOptions, api);
+		if (options.skipQueue) {
+			return await execute();
+		}
+		return await enqueueSessionTask(request.sessionId, execute);
 	} catch (error) {
 		if (error instanceof SessionMirroringError) {
 			markFatalSessionError(error);
@@ -182,25 +175,6 @@ export async function performSessionAction(
 		return normalizeActionError(error);
 	}
 }
-function applyActionSnapshot(
-	sessionId: string,
-	response: ActionExecuteSuccessResponse,
-): void {
-	try {
-		updateSessionSnapshot(sessionId, response.snapshot);
-	} catch (cause) {
-		throw new SessionMirroringError(
-			'Failed to update session snapshot after action.',
-			{
-				cause,
-				details: {
-					sessionId,
-				},
-			},
-		);
-	}
-}
-
 interface AdvanceSessionPhaseOptions {
 	skipQueue?: boolean;
 }
