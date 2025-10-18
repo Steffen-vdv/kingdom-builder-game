@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type {
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../translation/context';
+import { DEFAULT_REGISTRY_METADATA } from '../contexts/defaultRegistryMetadata';
 import type { TranslationContext } from '../translation/context';
 export {
 	createSessionTranslationDiffContext,
@@ -47,12 +51,44 @@ export function useSessionTranslationContext({
 			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
 		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
 		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
-				}
-			: { passiveEvaluationModifiers };
+		const metadataPayload: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers,
+		};
+		if (effectLogs !== undefined) {
+			metadataPayload.effectLogs = effectLogs;
+		}
+		const assignMetadataField = <
+			K extends Exclude<
+				keyof SessionSnapshotMetadata,
+				'effectLogs' | 'passiveEvaluationModifiers'
+			>,
+		>(
+			key: K,
+		) => {
+			const primary = sessionMetadata[key];
+			if (primary !== undefined) {
+				metadataPayload[key] = primary;
+				return;
+			}
+			const fallback = fallbackMetadata?.[key];
+			if (fallback !== undefined) {
+				metadataPayload[key] = fallback;
+				return;
+			}
+			const defaults = DEFAULT_REGISTRY_METADATA[key];
+			if (defaults !== undefined) {
+				metadataPayload[key] = defaults;
+			}
+		};
+		assignMetadataField('resources');
+		assignMetadataField('populations');
+		assignMetadataField('buildings');
+		assignMetadataField('developments');
+		assignMetadataField('stats');
+		assignMetadataField('phases');
+		assignMetadataField('triggers');
+		assignMetadataField('assets');
+		assignMetadataField('overview');
 		try {
 			const context = createTranslationContext(
 				sessionState,
