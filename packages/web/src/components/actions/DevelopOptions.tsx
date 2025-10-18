@@ -62,7 +62,7 @@ export default function DevelopOptions({
 		session,
 		sessionView,
 		translationContext,
-		handlePerform,
+		requests,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
@@ -166,9 +166,12 @@ export default function DevelopOptions({
 								const landId = player.lands.find(
 									(land) => land.slotsFree > 0,
 								)?.id;
-								void handlePerform(toPerformableAction(action), {
-									id: development.id,
-									landId,
+								void requests.performAction({
+									action: toPerformableAction(action),
+									params: {
+										id: development.id,
+										landId,
+									},
 								});
 							}}
 							onMouseEnter={() => {

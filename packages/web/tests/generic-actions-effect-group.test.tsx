@@ -406,10 +406,10 @@ describe('GenericActions effect group handling', () => {
 		fireEvent.click(optionButton);
 
 		await waitFor(() => {
-			expect(mockGame.handlePerform).toHaveBeenCalledTimes(1);
+			expect(mockGame.requests.performAction).toHaveBeenCalledTimes(1);
 		});
-		const [, params] = mockGame.handlePerform.mock.calls[0]!;
-		expect(params).toMatchObject({
+		const [[request]] = mockGame.requests.performAction.mock.calls;
+		expect(request?.params).toMatchObject({
 			choices: {
 				royal_decree_develop: {
 					optionId: 'royal_decree_house',

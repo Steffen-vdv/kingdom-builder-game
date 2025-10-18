@@ -19,12 +19,7 @@ import {
 import type { PendingActionState } from './GenericActions';
 import { useEffectGroupOptions } from './useEffectGroupOptions';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
-import {
-	toPerformableAction,
-	type Action,
-	type DisplayPlayer,
-	type HoverCardData,
-} from './types';
+import { type Action, type DisplayPlayer, type HoverCardData } from './types';
 import { normalizeActionFocus } from './types';
 import type { UseActionMetadataResult } from '../../state/useActionMetadata';
 
@@ -45,7 +40,7 @@ interface GenericActionCardProps {
 	) => void;
 	translationContext: TranslationContext;
 	actionCostResource: string;
-	handlePerform: (
+	performAction: (
 		action: Action,
 		params?: Record<string, unknown>,
 	) => Promise<void>;
@@ -68,7 +63,7 @@ function GenericActionCard({
 	handleOptionSelect,
 	translationContext,
 	actionCostResource,
-	handlePerform,
+	performAction,
 	handleHoverCard,
 	clearHoverCard,
 	formatRequirement,
@@ -191,7 +186,7 @@ function GenericActionCard({
 					return;
 				}
 				setPending(null);
-				void handlePerform(toPerformableAction(action));
+				void performAction(action);
 			}}
 			onMouseEnter={
 				isPending

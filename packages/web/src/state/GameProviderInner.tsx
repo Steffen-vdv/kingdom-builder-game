@@ -348,8 +348,6 @@ export function GameProviderInner({
 		session: sessionAdapter,
 		sessionState,
 		sessionView,
-		handlePerform,
-		handleEndTurn,
 		...(onExit ? { onExit: handleExit } : {}),
 	};
 

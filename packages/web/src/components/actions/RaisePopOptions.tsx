@@ -54,7 +54,7 @@ export default function RaisePopOptions({
 		session,
 		sessionView,
 		translationContext,
-		handlePerform,
+		requests,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
@@ -280,7 +280,10 @@ export default function RaisePopOptions({
 							if (!canInteract) {
 								return;
 							}
-							void handlePerform(toPerformableAction(action), { role });
+							void requests.performAction({
+								action: toPerformableAction(action),
+								params: { role },
+							});
 						}}
 						onMouseEnter={() => {
 							const { effects, description } = splitSummary(summary);

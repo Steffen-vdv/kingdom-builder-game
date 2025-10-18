@@ -99,8 +99,6 @@ export function createPassiveGame(
 		session: {} as EngineSession,
 		sessionState,
 		sessionView,
-		handlePerform: vi.fn().mockResolvedValue(undefined),
-		handleEndTurn: vi.fn().mockResolvedValue(undefined),
 	};
 	return {
 		mockGame,

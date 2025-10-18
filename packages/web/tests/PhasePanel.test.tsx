@@ -84,7 +84,7 @@ beforeEach(() => {
 	currentPhaseLabel = scenario.currentPhaseLabel;
 	defaultPhase = scenario.defaultPhase;
 	mockGame.phase = { ...defaultPhase };
-	mockGame.handleEndTurn.mockClear();
+	mockGame.requests.advancePhase.mockClear();
 });
 
 afterEach(() => {
@@ -126,7 +126,7 @@ describe('<PhasePanel />', () => {
 		});
 		expect(nextTurnButton).toBeEnabled();
 		fireEvent.click(nextTurnButton);
-		expect(mockGame.handleEndTurn).toHaveBeenCalledTimes(1);
+		expect(mockGame.requests.advancePhase).toHaveBeenCalledTimes(1);
 	});
 
 	it('disables the Next Turn button when ending the turn is blocked', () => {
