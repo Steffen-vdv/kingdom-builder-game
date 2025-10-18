@@ -96,10 +96,15 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const assets = translationContext.assets;
 	const populationMetadata = usePopulationMetadata();
 	const statMetadata = useStatMetadata();
-	const populationDescriptors = React.useMemo(
-		() => populationMetadata.list.map(toDescriptorDisplay),
-		[populationMetadata],
-	);
+	const populationDescriptors = React.useMemo(() => {
+		const descriptors = Object.entries(assets.populations).map(
+			([roleId, asset]) => toAssetDisplay(asset, roleId),
+		);
+		if (descriptors.length > 0) {
+			return descriptors;
+		}
+		return populationMetadata.list.map(toDescriptorDisplay);
+	}, [assets.populations, populationMetadata]);
 	const populationDisplayMap = React.useMemo(
 		() => createDisplayMap(populationDescriptors),
 		[populationDescriptors],
