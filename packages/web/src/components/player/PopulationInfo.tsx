@@ -97,8 +97,12 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const populationMetadata = usePopulationMetadata();
 	const statMetadata = useStatMetadata();
 	const populationDescriptors = React.useMemo(
-		() => populationMetadata.list.map(toDescriptorDisplay),
-		[populationMetadata],
+		() =>
+			populationMetadata.list.map((descriptor) => ({
+				...toDescriptorDisplay(descriptor),
+				...toAssetDisplay(assets.populations?.[descriptor.id], descriptor.id),
+			})),
+		[assets.populations, populationMetadata],
 	);
 	const populationDisplayMap = React.useMemo(
 		() => createDisplayMap(populationDescriptors),
