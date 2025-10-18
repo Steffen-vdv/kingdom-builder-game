@@ -198,12 +198,38 @@ describe('getRequirementIcons', () => {
 				},
 			],
 			{
-				population: { icon: '👤' },
+				population: {
+					icon: '👤',
+				},
 			},
 		);
 
 		const icons = getRequirementIcons('test-action', translationContext);
 		expect(icons).toEqual(['👤']);
+	});
+
+	it('uses generic population icon when role is unspecified', () => {
+		const translationContext = createTranslationContext(
+			[
+				{
+					type: 'evaluator',
+					method: 'compare',
+					params: {
+						left: {
+							type: 'population',
+						},
+					},
+				},
+			],
+			{
+				population: {
+					icon: '🧑',
+				},
+			},
+		);
+
+		const icons = getRequirementIcons('test-action', translationContext);
+		expect(icons).toContain('🧑');
 	});
 
 	it('handles unknown actions without throwing', () => {
