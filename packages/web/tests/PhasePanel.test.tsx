@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	cleanup,
+	within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
@@ -116,6 +122,31 @@ describe('<PhasePanel />', () => {
 		expect(nextTurnButton).toBeEnabled();
 		fireEvent.click(nextTurnButton);
 		expect(mockGame.handleEndTurn).toHaveBeenCalledTimes(1);
+	});
+
+	it('lists every phase and highlights the active phase', () => {
+		render(<PhasePanel />);
+		const listItems = screen.getAllByRole('listitem');
+		expect(listItems).toHaveLength(scenario.sessionState.phases.length);
+		scenario.sessionState.phases.forEach((phaseDefinition, index) => {
+			const scope = within(listItems[index]);
+			const label = phaseDefinition.label ?? phaseDefinition.id;
+			expect(scope.getByText(label)).toBeInTheDocument();
+			if (phaseDefinition.icon) {
+				expect(
+					scope.getByText(phaseDefinition.icon.trim()),
+				).toBeInTheDocument();
+			}
+		});
+		const activeItem = listItems.find(
+			(item) => item.getAttribute('aria-current') === 'step',
+		);
+		expect(activeItem).toBeDefined();
+		if (!activeItem) {
+			return;
+		}
+		expect(activeItem).toHaveTextContent(currentPhaseLabel);
+		expect(activeItem).toHaveTextContent('Active');
 	});
 
 	it('disables the Next Turn button when ending the turn is blocked', () => {

@@ -2,10 +2,6 @@ import React, { useMemo } from 'react';
 import { useGameEngine } from '../../state/GameContext';
 import Button from '../common/Button';
 
-type PhasePanelProps = {
-	height?: number;
-};
-
 const panelClassName = [
 	'relative flex min-h-[240px] w-full flex-col gap-6 rounded-3xl',
 	'border border-white/60 bg-white/80 p-6 shadow-2xl',
@@ -38,8 +34,41 @@ const phaseBadgeRightClassName = [
 	'ml-auto text-right',
 ].join(' ');
 
-const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
-	({ height }, ref) => {
+const panelBodyClassName = ['mt-6 flex flex-col gap-6'].join(' ');
+
+const phaseListClassName = ['grid gap-3'].join(' ');
+
+const phaseItemBaseClassName = [
+	'flex items-center justify-between rounded-2xl border px-4 py-3',
+	'transition-colors',
+].join(' ');
+
+const phaseItemActiveClassName = [
+	'border-sky-500 bg-sky-200/80 text-slate-900',
+	'dark:border-sky-400 dark:bg-sky-500/20 dark:text-slate-100',
+].join(' ');
+
+const phaseItemInactiveClassName = [
+	'border-white/40 bg-white/50 text-slate-600',
+	'dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300',
+].join(' ');
+
+const phaseItemContentClassName = [
+	'flex items-center gap-3 text-sm font-semibold uppercase',
+	'tracking-[0.2em] text-slate-700 dark:text-slate-100',
+].join(' ');
+
+const phaseIconClassName = ['text-base leading-none'].join(' ');
+
+const phaseStatusClassName = [
+	'text-xs font-semibold uppercase tracking-[0.3em]',
+	'text-slate-500 dark:text-slate-300',
+].join(' ');
+
+const phaseStatusActiveClassName = ['text-sky-700 dark:text-sky-200'].join(' ');
+
+const PhasePanel = React.forwardRef<HTMLDivElement, Record<string, never>>(
+	(_props, ref) => {
 		const { sessionState, sessionView, phase, handleEndTurn, resolution } =
 			useGameEngine();
 		const currentPhaseDefinition = useMemo(
@@ -60,15 +89,11 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 			// usePhaseProgress.
 			void handleEndTurn();
 		};
-		const panelHeight = Math.max(240, height ?? 0);
 		const phaseIcon = currentPhaseDefinition?.icon?.trim();
 		const phaseLabel = currentPhaseDefinition?.label ?? phase.currentPhaseId;
+		const phases = sessionState.phases ?? [];
 		return (
-			<section
-				ref={ref}
-				className={panelClassName}
-				style={{ height: `${panelHeight}px` }}
-			>
+			<section ref={ref} className={panelClassName}>
 				<header className={headerClassName}>
 					<p className={turnClassName}>
 						<span>Turn {sessionState.game.turn}</span>
@@ -93,17 +118,59 @@ const PhasePanel = React.forwardRef<HTMLDivElement, PhasePanelProps>(
 						</span>
 					</span>
 				</header>
-				<div className="mt-auto flex justify-end">
-					{shouldHideNextTurn ? null : (
-						<Button
-							variant="primary"
-							disabled={!canEndTurn}
-							onClick={handleEndTurnClick}
-							icon="⏭️"
-						>
-							Next Turn
-						</Button>
-					)}
+				<div className={panelBodyClassName}>
+					<ol className={phaseListClassName}>
+						{phases.map((phaseDefinition) => {
+							const icon = phaseDefinition.icon?.trim();
+							const label = phaseDefinition.label ?? phaseDefinition.id;
+							const isActive = phaseDefinition.id === phase.currentPhaseId;
+							const listItemClassName = [
+								phaseItemBaseClassName,
+								isActive
+									? phaseItemActiveClassName
+									: phaseItemInactiveClassName,
+							]
+								.filter(Boolean)
+								.join(' ');
+							const statusClassName = [
+								phaseStatusClassName,
+								isActive ? phaseStatusActiveClassName : null,
+							]
+								.filter(Boolean)
+								.join(' ');
+							return (
+								<li
+									key={phaseDefinition.id}
+									className={listItemClassName}
+									aria-current={isActive ? 'step' : undefined}
+								>
+									<span className={phaseItemContentClassName}>
+										{icon ? (
+											<span aria-hidden="true" className={phaseIconClassName}>
+												{icon}
+											</span>
+										) : null}
+										<span>{label}</span>
+									</span>
+									<span className={statusClassName}>
+										{isActive ? 'Active' : 'Pending'}
+									</span>
+								</li>
+							);
+						})}
+					</ol>
+					<div className="flex justify-end">
+						{shouldHideNextTurn ? null : (
+							<Button
+								variant="primary"
+								disabled={!canEndTurn}
+								onClick={handleEndTurnClick}
+								icon="⏭️"
+							>
+								Next Turn
+							</Button>
+						)}
+					</div>
 				</div>
 			</section>
 		);
