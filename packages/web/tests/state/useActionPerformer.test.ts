@@ -40,10 +40,10 @@ vi.mock('../../src/translation', () => ({
 	translateRequirementFailure: translateRequirementFailureMock,
 }));
 
-const getLegacySessionContextMock = vi.hoisted(() => vi.fn());
+const createSessionTranslationContextMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../src/state/getLegacySessionContext', () => ({
-	getLegacySessionContext: getLegacySessionContextMock,
+vi.mock('../../src/state/createSessionTranslationContext', () => ({
+	createSessionTranslationContext: createSessionTranslationContextMock,
 }));
 
 vi.mock('../../src/state/sessionSdk', async () => {
@@ -136,7 +136,7 @@ describe('useActionPerformer', () => {
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
-		getLegacySessionContextMock.mockReturnValue({
+		createSessionTranslationContextMock.mockReturnValue({
 			translationContext: {
 				actions: new Map([
 					[action.id, { icon: '⚔️', name: action.name, effects: [] }],
@@ -474,13 +474,13 @@ describe('useActionPerformer', () => {
 				snapshot: snapshotAfter,
 			});
 		});
-		getLegacySessionContextMock.mockReturnValueOnce({
+		createSessionTranslationContextMock.mockReturnValueOnce({
 			translationContext: {
 				actions: new Map([[action.id, { icon: '⚔️', name: action.name }]]),
 			},
 			diffContext: {},
 		});
-		getLegacySessionContextMock.mockReturnValueOnce({
+		createSessionTranslationContextMock.mockReturnValueOnce({
 			translationContext: { actions: new Map() },
 			diffContext: {},
 		});

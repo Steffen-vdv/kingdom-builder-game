@@ -30,7 +30,7 @@ import {
 	formatDevelopActionLogLines,
 } from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
-import { getLegacySessionContext } from './getLegacySessionContext';
+import { createSessionTranslationContext } from './createSessionTranslationContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
 import {
@@ -131,7 +131,7 @@ export function useActionPerformer({
 				pushErrorToast('The battle is already decided.');
 				return;
 			}
-			let { translationContext: context } = getLegacySessionContext({
+			let { translationContext: context } = createSessionTranslationContext({
 				snapshot: snapshotBefore,
 				ruleSnapshot: snapshotBefore.rules,
 				passiveRecords: snapshotBefore.passiveRecords,
@@ -164,7 +164,7 @@ export function useActionPerformer({
 				const costs = response.costs ?? {};
 				const traces = response.traces;
 				const snapshotAfter = session.getSnapshot();
-				const legacyContext = getLegacySessionContext({
+				const legacyContext = createSessionTranslationContext({
 					snapshot: snapshotAfter,
 					ruleSnapshot: snapshotAfter.rules,
 					passiveRecords: snapshotAfter.passiveRecords,
