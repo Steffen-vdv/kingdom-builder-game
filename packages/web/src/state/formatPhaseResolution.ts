@@ -72,11 +72,12 @@ export function formatPhaseResolution({
 }: FormatPhaseResolutionOptions): PhaseResolutionFormatResult {
 	const phaseId = phaseDefinition?.id ?? advance.phase;
 	const rawPhaseLabel = phaseDefinition?.label ?? advance.phase;
-	const actorLabel = appendPhaseSuffix(rawPhaseLabel);
+	const actorLabelBase = appendPhaseSuffix(rawPhaseLabel);
 	const phaseDisplay = createPhaseDisplay(
-		actorLabel ?? rawPhaseLabel,
+		actorLabelBase ?? rawPhaseLabel,
 		phaseDefinition?.icon,
 	);
+	const actorLabel = phaseDisplay;
 	const source: ResolutionSource = {
 		kind: 'phase',
 		label: phaseDisplay,

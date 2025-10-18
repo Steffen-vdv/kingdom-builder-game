@@ -122,7 +122,7 @@ describe('formatPhaseResolution integration', () => {
 			icon: '🌅',
 			id: phaseDefinition.id,
 		});
-		expect(result.actorLabel).toBe('Aurora Phase');
+		expect(result.actorLabel).toBe('🌅 Aurora Phase');
 		expect(result.lines).toEqual([
 			'⏭️ 🌅 Aurora Phase skipped',
 			'  • Night watch',

@@ -18,7 +18,16 @@ import type {
 	FormatPhaseResolutionOptions,
 	PhaseResolutionFormatResult,
 } from './formatPhaseResolution';
-import type { ShowResolutionOptions } from './useActionResolution';
+import type {
+	ResolutionSource,
+	ShowResolutionOptions,
+} from './useActionResolution';
+
+function isPhaseSourceDetail(
+	source: ResolutionSource,
+): source is Extract<ResolutionSource, { kind: 'phase' }> {
+	return typeof source !== 'string' && source.kind === 'phase';
+}
 import type { PhaseProgressState } from './usePhaseProgress';
 
 type FormatPhaseResolution = (
@@ -72,6 +81,8 @@ export async function advanceToActionPhase({
 			return;
 		}
 		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
+		let lastPhaseSourceId: string | null = null;
+		let lastPhaseHeaderLogged = false;
 		while (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
 			const activePlayerBefore = snapshot.game.players.find(
 				(player) => player.id === snapshot.game.activePlayerId,
@@ -111,8 +122,28 @@ export async function advanceToActionPhase({
 				diffContext,
 				resourceKeys,
 			});
+			let outputLines = formatted.lines;
+			if (isPhaseSourceDetail(formatted.source)) {
+				const heading = formatted.source.label;
+				const phaseKey = formatted.source.id ?? heading;
+				const hasHeading = outputLines.length > 0 && outputLines[0] === heading;
+				if (hasHeading) {
+					if (lastPhaseHeaderLogged && phaseKey === lastPhaseSourceId) {
+						outputLines = outputLines.slice(1);
+					} else {
+						lastPhaseSourceId = phaseKey;
+						lastPhaseHeaderLogged = true;
+					}
+				} else {
+					lastPhaseSourceId = phaseKey;
+					lastPhaseHeaderLogged = false;
+				}
+			} else {
+				lastPhaseSourceId = null;
+				lastPhaseHeaderLogged = false;
+			}
 			const resolutionOptions: ShowResolutionOptions = {
-				lines: formatted.lines,
+				lines: outputLines,
 				summaries: formatted.summaries,
 				source: formatted.source,
 				player,
