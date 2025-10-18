@@ -46,13 +46,14 @@ export default function DemolishOptions({
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
 		session,
-		sessionView,
+		selectors,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { sessionView } = selectors;
 
 	const entries = useMemo(() => {
 		return Array.from(player.buildings)

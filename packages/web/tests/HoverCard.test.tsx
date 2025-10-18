@@ -87,7 +87,6 @@ function createHoverCardScenario(): HoverCardScenario {
 	});
 	const sessionView = selectSessionView(sessionState, scaffold.registries);
 	mockGame.selectors.sessionView = sessionView;
-	mockGame.sessionView = sessionView;
 	mockGame.sessionState = sessionState;
 	const translationContext = mockGame.translationContext;
 	const costIcon = ensureIconDescriptor(
@@ -193,7 +192,7 @@ describe('<HoverCard />', () => {
 		};
 		render(<ResolutionHarness />);
 		let resolutionPromise: Promise<void> = Promise.resolve();
-		const activePlayerView = mockGame.sessionView.active;
+		const activePlayerView = mockGame.selectors.sessionView.active;
 		if (!activePlayerView) {
 			throw new Error('Expected active player in session view');
 		}
@@ -270,7 +269,7 @@ describe('<HoverCard />', () => {
 		};
 		render(<ResolutionHarness />);
 
-		const activePlayerView = mockGame.sessionView.active;
+		const activePlayerView = mockGame.selectors.sessionView.active;
 		if (!activePlayerView) {
 			throw new Error('Expected active player for phase resolution test');
 		}

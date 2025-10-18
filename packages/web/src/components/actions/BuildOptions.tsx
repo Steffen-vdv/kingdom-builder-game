@@ -52,13 +52,14 @@ export default function BuildOptions({
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
 		session,
-		sessionView,
+		selectors,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { sessionView } = selectors;
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],

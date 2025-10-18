@@ -127,10 +127,6 @@ export interface LegacyGameEngineContextBridge {
 	 */
 	sessionState: SessionSnapshot;
 	/**
-	 * TODO(#session-migration): Read from `selectors.sessionView` instead.
-	 */
-	sessionView: SessionView;
-	/**
 	 * TODO(#session-migration): Use `requests.performAction`.
 	 */
 	handlePerform: (

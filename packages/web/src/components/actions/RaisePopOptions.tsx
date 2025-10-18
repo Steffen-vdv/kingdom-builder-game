@@ -52,13 +52,14 @@ export default function RaisePopOptions({
 }) {
 	const {
 		session,
-		sessionView,
+		selectors,
 		translationContext,
 		handlePerform,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { sessionView } = selectors;
 	const { populations } = useRegistryMetadata();
 	const populationMetadata = usePopulationMetadata();
 	const metadata = useActionMetadata({ actionId: action.id });

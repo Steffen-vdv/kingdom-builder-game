@@ -374,8 +374,8 @@ export const useOptionalGameEngine = (): LegacyGameEngineContextValue | null =>
 	useContext(GameEngineContext);
 
 export const useSessionView = () => {
-	const { sessionView } = useGameEngine();
-	return sessionView;
+	const { selectors } = useGameEngine();
+	return selectors.sessionView;
 };
 
 export const useSessionPlayers = () => {

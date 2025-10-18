@@ -347,7 +347,6 @@ export function GameProviderInner({
 		onChangePlayerName,
 		session: sessionAdapter,
 		sessionState,
-		sessionView,
 		handlePerform,
 		handleEndTurn,
 		...(onExit ? { onExit: handleExit } : {}),
