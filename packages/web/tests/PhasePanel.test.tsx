@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import {
+	render,
+	screen,
+	fireEvent,
+	cleanup,
+	within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
@@ -101,6 +107,38 @@ describe('<PhasePanel />', () => {
 		const phaseBadge = screen.getByRole('status');
 		expect(phaseBadge).toHaveTextContent('Current Phase');
 		expect(phaseBadge).toHaveTextContent(currentPhaseLabel);
+		const currentPhaseDefinition =
+			mockGame.sessionState.phases[mockGame.sessionState.game.phaseIndex];
+		const currentPhaseIcon = currentPhaseDefinition?.icon ?? '•';
+		expect(phaseBadge).toHaveTextContent(currentPhaseIcon);
+	});
+
+	it('lists every phase with its icon and highlights the active entry', () => {
+		render(<PhasePanel />);
+		const phaseItems = screen.getAllByRole('listitem');
+		expect(phaseItems).toHaveLength(mockGame.sessionState.phases.length);
+		mockGame.sessionState.phases.forEach((phaseDefinition, index) => {
+			const item = phaseItems[index];
+			expect(
+				within(item).getByText(phaseDefinition.label ?? phaseDefinition.id),
+			).toBeInTheDocument();
+			if (phaseDefinition.icon) {
+				expect(
+					within(item).getByText(phaseDefinition.icon),
+				).toBeInTheDocument();
+			}
+		});
+		const activePhaseItem = phaseItems.find((item) =>
+			Boolean(within(item).queryByText(currentPhaseLabel, { exact: false })),
+		);
+		expect(activePhaseItem).toBeDefined();
+		expect(activePhaseItem).toHaveAttribute('aria-current', 'step');
+		for (const item of phaseItems) {
+			if (item === activePhaseItem) {
+				continue;
+			}
+			expect(item).not.toHaveAttribute('aria-current');
+		}
 	});
 
 	it('invokes the end turn handler when allowed', () => {
