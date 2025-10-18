@@ -400,11 +400,13 @@ describe('<HoverCard />', () => {
 		});
 		expect(continueButton).toBeDisabled();
 		const secondLine = formatted.lines[1]!;
-		expect(screen.queryByText(secondLine)).not.toBeInTheDocument();
+		const effectMatcher = (content: string) =>
+			content.trim() === secondLine.trim();
+		expect(screen.queryByText(effectMatcher)).not.toBeInTheDocument();
 		act(() => {
 			vi.advanceTimersByTime(1);
 		});
-		const visibleMatches = screen.getAllByText(secondLine);
+		const visibleMatches = screen.getAllByText(effectMatcher);
 		expect(visibleMatches.length).toBeGreaterThanOrEqual(2);
 		expect(addLog).toHaveBeenCalledWith(secondLine, {
 			id: sessionPlayer.id,

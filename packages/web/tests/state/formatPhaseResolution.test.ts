@@ -109,13 +109,9 @@ describe('formatPhaseResolution', () => {
 			label: '🌱 Growth Phase',
 			icon: '🌱',
 			id: 'growth',
-			name: 'Collect income',
 		});
 		expect(result.actorLabel).toBe('Growth Phase');
-		expect(result.lines).toEqual([
-			'🌱 Growth Phase – Collect income',
-			'Gold +2 (5→7)',
-		]);
+		expect(result.lines).toEqual(['🌱 Growth Phase', '    Gold +2 (5→7)']);
 		expect(result.summaries).toEqual(['Gold +2 (5→7)']);
 	});
 
@@ -208,8 +204,8 @@ describe('formatPhaseResolution', () => {
 			diffContext: {} as TranslationDiffContext,
 		});
 
-		expect(result.lines).toEqual(['Growth Phase – Income', 'No effect']);
-		expect(result.summaries).toEqual(['No effect']);
+		expect(result.lines).toEqual([]);
+		expect(result.summaries).toEqual([]);
 		expect(describeSkipEventMock).not.toHaveBeenCalled();
 	});
 });
