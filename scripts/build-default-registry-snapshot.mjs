@@ -9,6 +9,7 @@ async function loadContentModules() {
 		developmentsModule,
 		populationsModule,
 		populationModule,
+		populationRolesModule,
 		landModule,
 		passiveModule,
 		phasesModule,
@@ -22,6 +23,7 @@ async function loadContentModules() {
 		import(new URL('developments.ts', baseUrl)),
 		import(new URL('populations.ts', baseUrl)),
 		import(new URL('population.ts', baseUrl)),
+		import(new URL('populationRoles.ts', baseUrl)),
 		import(new URL('land.ts', baseUrl)),
 		import(new URL('passive.ts', baseUrl)),
 		import(new URL('phases.ts', baseUrl)),
@@ -36,6 +38,7 @@ async function loadContentModules() {
 		createDevelopmentRegistry: developmentsModule.createDevelopmentRegistry,
 		createPopulationRegistry: populationsModule.createPopulationRegistry,
 		POPULATION_INFO: populationModule.POPULATION_INFO,
+		POPULATION_ROLES: populationRolesModule.POPULATION_ROLES,
 		LAND_INFO: landModule.LAND_INFO,
 		SLOT_INFO: landModule.SLOT_INFO,
 		PASSIVE_INFO: passiveModule.PASSIVE_INFO,
@@ -71,6 +74,22 @@ function createRegistryDescriptorMap(registry) {
 				definition.description,
 			),
 		]),
+	);
+}
+
+function createPopulationMetadata(registry, populationRoles) {
+	return Object.fromEntries(
+		Object.entries(registry).map(([id, definition]) => {
+			const roleInfo = populationRoles?.[id];
+			return [
+				id,
+				createDescriptor(
+					definition.name ?? roleInfo?.label,
+					definition.icon ?? roleInfo?.icon,
+					roleInfo?.description,
+				),
+			];
+		}),
 	);
 }
 
@@ -209,7 +228,10 @@ function createMetadata(registries, content) {
 	return {
 		passiveEvaluationModifiers: {},
 		resources: createResourceMetadata(content),
-		populations: createRegistryDescriptorMap(registries.populations),
+		populations: createPopulationMetadata(
+			registries.populations,
+			content.POPULATION_ROLES,
+		),
 		buildings: createRegistryDescriptorMap(registries.buildings),
 		developments: createRegistryDescriptorMap(registries.developments),
 		stats: createStatMetadata(content),
