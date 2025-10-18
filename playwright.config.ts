@@ -1,17 +1,8 @@
 import { defineConfig } from '@playwright/test';
 
-const UI_TEST_PORT = 4173;
+const UI_TEST_PORT = 5173;
 
-const webServerCommand = [
-	'npm',
-	'run',
-	'dev:web',
-	'--',
-	'--host',
-	'127.0.0.1',
-	'--port',
-	String(UI_TEST_PORT),
-].join(' ');
+const webServerCommand = ['npm', 'run', 'dev'].join(' ');
 
 export default defineConfig({
 	testDir: 'tests/ui',
