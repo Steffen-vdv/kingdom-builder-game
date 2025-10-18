@@ -92,7 +92,7 @@ export const TOGGLE_BUTTON_CLASS_NAMES = [
 	'shadow-md',
 	'transition',
 	'hover:bg-white/90',
-	'hover:text-slate-900',
+	'hover:text-slate-400',
 	'focus:outline-none',
 	'focus-visible:ring-2',
 	'focus-visible:ring-amber-400',
