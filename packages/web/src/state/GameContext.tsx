@@ -345,7 +345,7 @@ export function GameProvider(props: GameProviderProps) {
 		onChangePlayerName,
 		queue: queueHelpers,
 		sessionId: sessionData.sessionId,
-		sessionState: sessionData.snapshot,
+		sessionSnapshot: sessionData.snapshot,
 		ruleSnapshot: sessionData.ruleSnapshot,
 		refreshSession,
 		onReleaseSession: handleRelease,

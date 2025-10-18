@@ -157,7 +157,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
 		session: {} as EngineSession,
-		sessionState,
 		sessionView,
 		handlePerform: vi.fn().mockResolvedValue(undefined),
 		handleEndTurn: vi.fn().mockResolvedValue(undefined),

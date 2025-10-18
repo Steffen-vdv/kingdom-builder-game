@@ -103,7 +103,7 @@ function renderActionsPanel() {
 	return render(
 		<RegistryMetadataProvider
 			registries={mockGame.sessionRegistries}
-			metadata={mockGame.sessionState.metadata}
+			metadata={mockGame.sessionSnapshot.metadata}
 		>
 			<ActionsPanel />
 		</RegistryMetadataProvider>,
@@ -195,7 +195,7 @@ describe('<ActionsPanel />', () => {
 	it('uses fallback descriptors when metadata omits resource icons and labels', () => {
 		renderActionsPanel();
 		const descriptor =
-			mockGame.sessionState.metadata.resources?.[metadata.upkeepResource];
+			mockGame.sessionSnapshot.metadata.resources?.[metadata.upkeepResource];
 		expect(descriptor?.icon).toBeUndefined();
 		expect(descriptor?.label).toBe(toTitleCase(metadata.upkeepResource));
 	});

@@ -98,14 +98,14 @@ describe('<PhasePanel />', () => {
 		expect(turnLabel).toBeInTheDocument();
 		expect(
 			within(turnLabel.parentElement as HTMLElement).getByText(
-				String(mockGame.sessionState.game.turn),
+				String(mockGame.sessionSnapshot.game.turn),
 				{ selector: 'span' },
 			),
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
 				scenario.sessionView.active?.name ??
-					mockGame.sessionState.game.players[0]?.name ??
+					mockGame.sessionSnapshot.game.players[0]?.name ??
 					'Player',
 			),
 		).toBeInTheDocument();
@@ -149,7 +149,7 @@ describe('<PhasePanel />', () => {
 
 	it('shows all phases with icons and highlights the active phase', () => {
 		render(<PhasePanel />);
-		const phaseDefinitions = mockGame.sessionState.phases;
+		const phaseDefinitions = mockGame.sessionSnapshot.phases;
 		expect(screen.getAllByRole('listitem')).toHaveLength(
 			phaseDefinitions.length,
 		);

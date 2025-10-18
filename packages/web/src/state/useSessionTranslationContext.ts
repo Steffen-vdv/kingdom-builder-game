@@ -13,7 +13,7 @@ export {
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 
 type UseSessionTranslationContextOptions = {
-	sessionState: GameProviderInnerProps['sessionState'];
+	sessionSnapshot: GameProviderInnerProps['sessionSnapshot'];
 	registries: GameProviderInnerProps['registries'];
 	ruleSnapshot: GameProviderInnerProps['ruleSnapshot'];
 	sessionMetadata: GameProviderInnerProps['sessionMetadata'];
@@ -27,7 +27,7 @@ interface SessionTranslationContextResult {
 }
 
 export function useSessionTranslationContext({
-	sessionState,
+	sessionSnapshot,
 	registries,
 	ruleSnapshot,
 	sessionMetadata,
@@ -91,12 +91,12 @@ export function useSessionTranslationContext({
 		assignMetadataField('overview');
 		try {
 			const context = createTranslationContext(
-				sessionState,
+				sessionSnapshot,
 				registries,
 				metadataPayload,
 				{
 					ruleSnapshot,
-					passiveRecords: sessionState.passiveRecords,
+					passiveRecords: sessionSnapshot.passiveRecords,
 				},
 			);
 			lastTranslationContextRef.current = context;
@@ -108,10 +108,10 @@ export function useSessionTranslationContext({
 			};
 		}
 	}, [
-		sessionState,
+		sessionSnapshot,
 		registries,
 		ruleSnapshot,
-		sessionState.passiveRecords,
+		sessionSnapshot.passiveRecords,
 		sessionMetadata,
 		cachedSessionSnapshot,
 	]);
