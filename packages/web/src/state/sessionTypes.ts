@@ -14,16 +14,7 @@ import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { SessionStateRecord } from './sessionStateStore';
 
-export interface LegacySessionAiOverrides {
-	performAction?: (
-		actionId: string,
-		context: unknown,
-		params?: ActionParametersPayload,
-	) => Promise<void> | void;
-	advance?: (context: unknown) => Promise<void> | void;
-}
-
-export interface LegacySession {
+export interface SessionAdapter {
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
 	getSnapshot(): SessionSnapshot;
 	getActionCosts(
@@ -47,10 +38,7 @@ export interface LegacySession {
 		params: ActionParametersPayload | undefined,
 		listener: (snapshot: SessionActionMetadataSnapshot) => void,
 	): () => void;
-	runAiTurn(
-		playerId: SessionPlayerId,
-		overrides?: LegacySessionAiOverrides,
-	): Promise<boolean>;
+	runAiTurn(playerId: SessionPlayerId): Promise<boolean>;
 	hasAiController(playerId: SessionPlayerId): boolean;
 	simulateUpcomingPhases(
 		playerId: SessionPlayerId,
@@ -61,7 +49,7 @@ export interface LegacySession {
 	updatePlayerName(playerId: SessionPlayerId, name: string): void;
 }
 
-export type Session = LegacySession;
+export type Session = SessionAdapter;
 export type SessionResourceKeys = string[];
 export type SessionResourceKey = SessionResourceKeys[number];
 export type SessionMetadata = SessionSnapshotMetadata;

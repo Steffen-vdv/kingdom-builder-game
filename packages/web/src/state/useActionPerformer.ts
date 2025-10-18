@@ -39,7 +39,7 @@ import {
 	isFatalSessionError,
 } from './sessionErrors';
 import type {
-	LegacySession,
+	SessionAdapter,
 	SessionRegistries,
 	SessionResourceKey,
 } from './sessionTypes';
@@ -66,7 +66,7 @@ function createActionExecutionError(
 	return failure;
 }
 interface UseActionPerformerOptions {
-	session: LegacySession;
+	session: SessionAdapter;
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
 	registries: Pick<

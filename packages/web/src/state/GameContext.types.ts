@@ -16,9 +16,9 @@ import type {
 } from './useActionResolution';
 import type { ReactNode } from 'react';
 import type {
-	LegacySession,
 	RemoteSessionRecord,
 	Session,
+	SessionAdapter,
 	SessionResourceKey,
 } from './sessionTypes';
 
@@ -120,7 +120,7 @@ export interface LegacyGameEngineContextBridge {
 	 * TODO(#session-migration): Remove direct EngineSession exposure once
 	 * all consumers rely on request helpers.
 	 */
-	session: LegacySession;
+	session: SessionAdapter;
 	/**
 	 * TODO(#session-migration): Replace with `sessionSnapshot` in consuming
 	 * modules after the serialization audit completes.

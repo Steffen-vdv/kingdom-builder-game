@@ -16,8 +16,8 @@ import {
 	getSessionRecord,
 } from './sessionStateStore';
 import type {
-	LegacySession,
 	SessionActionMetadataSnapshot,
+	SessionAdapter,
 } from './sessionTypes';
 import { ActionMetadataCache } from './actionMetadataCache';
 import { ActionMetadataSubscriptions } from './actionMetadataSubscriptions';
@@ -32,7 +32,7 @@ interface RemoteSessionAdapterDependencies {
 	) => Promise<SessionRunAiResponse>;
 }
 
-export class RemoteSessionAdapter implements LegacySession {
+export class RemoteSessionAdapter implements SessionAdapter {
 	#sessionId: string;
 	#dependencies: RemoteSessionAdapterDependencies;
 	#advanceManager: SessionAdvanceManager;

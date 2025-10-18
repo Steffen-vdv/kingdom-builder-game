@@ -3,7 +3,7 @@ import React from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import type { LegacySession } from '../../src/state/sessionTypes';
+import type { SessionAdapter } from '../../src/state/sessionTypes';
 import { GameProvider, useGameEngine } from '../../src/state/GameContext';
 import { SessionMirroringError } from '../../src/state/sessionErrors';
 import {
@@ -176,7 +176,7 @@ function SessionInspector() {
 }
 
 describe('GameProvider', () => {
-	let session: LegacySession;
+	let session: SessionAdapter;
 	let registriesPayload: ReturnType<typeof createSessionRegistriesPayload>;
 	let initialSnapshot: ReturnType<typeof createSessionSnapshot>;
 	let refreshedSnapshot: ReturnType<typeof createSessionSnapshot>;
