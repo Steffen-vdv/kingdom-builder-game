@@ -22,9 +22,6 @@ export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
 	},
 	population: (params, translationContext) => {
 		const role = params?.['role'] as string | undefined;
-		if (!role) {
-			return [];
-		}
 		const icon = selectPopulationRoleDisplay(
 			translationContext.assets,
 			role,

@@ -1,4 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
+import type {
+	SessionActionRequirementList,
+	SessionRequirementFailure,
+} from '@kingdom-builder/protocol/session';
 import {
 	describeContent,
 	splitSummary,
@@ -6,6 +10,7 @@ import {
 	translateRequirementFailure,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import {
 	usePopulationMetadata,
@@ -56,13 +61,16 @@ export default function RaisePopOptions({
 	} = useGameEngine();
 	const { populations } = useRegistryMetadata();
 	const populationMetadata = usePopulationMetadata();
+	const metadata = useActionMetadata({ actionId: action.id });
 	const selectPopulationDescriptor = useCallback<PopulationDescriptorSelector>(
 		(roleId) => populationMetadata.select(roleId),
 		[populationMetadata],
 	);
 	const defaultPopulationIcon = useMemo(() => {
-		return populationMetadata.list.find((entry) => entry.icon)?.icon;
-	}, [populationMetadata]);
+		const fallback = populationMetadata.list.find((entry) => entry.icon)?.icon;
+		const assetIcon = translationContext.assets.population?.icon;
+		return assetIcon ?? fallback;
+	}, [populationMetadata, translationContext.assets.population]);
 	const populationRegistry = useMemo<PopulationRegistryLike>(() => {
 		const entries: Array<[string, PopulationDefinition]> = populations
 			.entries()
@@ -139,44 +147,96 @@ export default function RaisePopOptions({
 	);
 	const actionInfo = sessionView.actions.get(action.id);
 	const actionFocus = normalizeActionFocus(actionInfo?.focus ?? action.focus);
+	const costs = useMemo(() => {
+		const entries = Object.entries(metadata.costs ?? {});
+		return Object.fromEntries(
+			entries.map(([resourceKey, amount]) => [resourceKey, amount ?? 0]),
+		) as Record<string, number>;
+	}, [metadata.costs]);
+	const costsReady = metadata.costs !== undefined;
+	const fallbackRequirementFailures = useMemo<SessionActionRequirementList>(
+		() => session.getActionRequirements(action.id),
+		[session, action.id],
+	);
+	const requirementFailures =
+		metadata.requirements ?? fallbackRequirementFailures;
+	const populationCap = player.stats?.maxPopulation;
+	const totalPopulation = useMemo(
+		() =>
+			Object.values(player.population ?? {}).reduce(
+				(sum, count) => sum + (count ?? 0),
+				0,
+			),
+		[player.population],
+	);
+	const derivedRequirementFailure = useMemo(() => {
+		if (typeof populationCap !== 'number' || totalPopulation < populationCap) {
+			return null;
+		}
+		const failure: SessionRequirementFailure = {
+			requirement: {
+				type: 'evaluator',
+				method: 'compare',
+				params: {
+					operator: 'lt',
+					left: { type: 'population' },
+					right: { type: 'stat', params: { key: 'maxPopulation' } },
+				},
+			},
+			details: { left: totalPopulation, right: populationCap },
+		};
+		return failure;
+	}, [populationCap, totalPopulation]);
+	const effectiveRequirementFailures =
+		derivedRequirementFailure && requirementFailures.length === 0
+			? [derivedRequirementFailure]
+			: requirementFailures;
+	const requirementsReady =
+		metadata.requirements !== undefined || derivedRequirementFailure !== null;
+	const requirementMessages = requirementsReady
+		? effectiveRequirementFailures.map((failure) =>
+				translateRequirementFailure(failure, translationContext),
+			)
+		: ['Loading requirements…'];
 	return (
 		<>
 			{roleOptions.map((role) => {
-				const costsBag = session.getActionCosts(action.id);
-				const costEntries = Object.entries(costsBag);
-				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of costEntries) {
-					costs[costKey] = costAmount ?? 0;
-				}
 				let upkeep: Record<string, number> | undefined;
 				try {
 					upkeep = populationRegistry.get(role)?.upkeep;
 				} catch {
 					upkeep = undefined;
 				}
-				const rawRequirements = session.getActionRequirements(action.id);
-				const requirements = rawRequirements.map((failure) =>
-					translateRequirementFailure(failure, translationContext),
-				);
-				const canPay = playerHasRequiredResources(player.resources, costs);
-				const meetsReq = requirements.length === 0;
-				const enabled = canPay && meetsReq && canInteract;
+				const canPay = costsReady
+					? playerHasRequiredResources(player.resources, costs)
+					: false;
+				const meetsRequirements =
+					requirementsReady && effectiveRequirementFailures.length === 0;
+				const enabled =
+					canInteract && costsReady && canPay && meetsRequirements;
 				const requirementIcons = getRequirementIconsForRole(role);
-				const insufficientTooltip = formatMissingResources(
-					costs,
-					player.resources,
-					selectResourceDescriptor,
-				);
+				const insufficientTooltip = costsReady
+					? formatMissingResources(
+							costs,
+							player.resources,
+							selectResourceDescriptor,
+						)
+					: undefined;
 				const actionIcon = actionInfo?.icon;
 				const actionName = actionInfo?.name ?? action.name;
 				const roleDescriptor = resolvePopulationDescriptor(role);
 				const roleIcon = roleDescriptor.icon ?? defaultPopulationIcon ?? '';
 				const roleLabel = roleDescriptor.label;
-				const title = !meetsReq
-					? requirements.join(', ')
-					: !canPay
-						? (insufficientTooltip ?? 'Cannot pay costs')
-						: undefined;
+				const requirementText = requirementMessages.join(', ');
+				const title = !requirementsReady
+					? 'Loading requirements…'
+					: !costsReady
+						? 'Loading costs…'
+						: !meetsRequirements
+							? requirementText
+							: !canPay
+								? (insufficientTooltip ?? 'Cannot pay costs')
+								: undefined;
 				const summary = describeContent(
 					'action',
 					action.id,
@@ -209,7 +269,7 @@ export default function RaisePopOptions({
 						upkeep={upkeep}
 						playerResources={player.resources}
 						actionCostResource={actionCostResource}
-						requirements={requirements}
+						requirements={requirementMessages}
 						requirementIcons={requirementIcons}
 						summary={shortSummary}
 						assets={translationContext.assets}
@@ -227,7 +287,7 @@ export default function RaisePopOptions({
 							handleHoverCard({
 								title: hoverTitle,
 								effects,
-								requirements,
+								requirements: requirementMessages,
 								costs,
 								upkeep,
 								...(description && { description }),
