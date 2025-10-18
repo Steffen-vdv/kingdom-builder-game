@@ -237,6 +237,9 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const button = screen.getByRole('button', {
 			name: `${resourceDescriptor.label}: ${resourceValue}`,
 		});
+		const descriptorIcon = resourceDescriptor.icon;
+		expect(descriptorIcon).toBeDefined();
+		expect(button).toHaveTextContent(descriptorIcon as string);
 		fireEvent.mouseEnter(button);
 		expect(handleHoverCard).toHaveBeenCalled();
 		const hoverCard = handleHoverCard.mock.calls.at(-1)?.[0];
