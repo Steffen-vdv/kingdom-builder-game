@@ -270,4 +270,62 @@ describe('usePhaseProgress', () => {
 		);
 		expect(enqueue).toHaveBeenCalled();
 	});
+
+	it('prevents ending the turn when the active player is AI-controlled', () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const aiPlayer = createSnapshotPlayer({
+			id: 'AI',
+			name: 'Opposing AI',
+			aiControlled: true,
+			resources: { [actionCostResource]: 0 },
+		});
+		const humanPlayer = createSnapshotPlayer({
+			id: 'PL',
+			name: 'Player',
+			resources: { [actionCostResource]: 0 },
+		});
+		const phases = [
+			{ id: 'phase-main', label: 'Main Phase', action: true, steps: [] },
+		];
+		const sessionSnapshot = createSessionSnapshot({
+			players: [aiPlayer, humanPlayer],
+			activePlayerId: aiPlayer.id,
+			opponentId: humanPlayer.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			turn: 2,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: phases[0]?.id ?? 'phase-main',
+		});
+		initializeSessionState({
+			sessionId: 'session-ai',
+			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
+		});
+		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
+			return await task();
+		});
+		const { result } = renderHook(() =>
+			usePhaseProgress({
+				sessionState: sessionSnapshot,
+				sessionId: 'session-ai',
+				actionCostResource,
+				mountedRef: { current: true },
+				refresh: vi.fn(),
+				resourceKeys: [actionCostResource],
+				enqueue,
+				registries: createSessionRegistries(),
+				showResolution: vi.fn().mockResolvedValue(undefined),
+			}),
+		);
+		expect(result.current.phase.canEndTurn).toBe(false);
+	});
 });

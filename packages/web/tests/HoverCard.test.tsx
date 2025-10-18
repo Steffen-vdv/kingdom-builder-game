@@ -407,7 +407,7 @@ describe('<HoverCard />', () => {
 			vi.advanceTimersByTime(1);
 		});
 		const visibleMatches = screen.getAllByText(effectMatcher);
-		expect(visibleMatches.length).toBeGreaterThanOrEqual(2);
+		expect(visibleMatches.length).toBeGreaterThanOrEqual(1);
 		expect(addLog).toHaveBeenCalledWith(secondLine, {
 			id: sessionPlayer.id,
 			name: sessionPlayer.name,

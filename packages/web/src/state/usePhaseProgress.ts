@@ -48,8 +48,10 @@ function computePhaseState(
 	);
 	const remainingActionPoints =
 		activePlayer?.resources[actionCostResource] ?? 0;
-	const canEndTurn =
-		overrides.canEndTurn ?? (isActionPhase && remainingActionPoints <= 0);
+	const isAiTurn = Boolean(activePlayer?.aiControlled);
+	const canEndTurn = isAiTurn
+		? false
+		: (overrides.canEndTurn ?? (isActionPhase && remainingActionPoints <= 0));
 	const isAdvancing = overrides.isAdvancing ?? false;
 	return {
 		currentPhaseId,
