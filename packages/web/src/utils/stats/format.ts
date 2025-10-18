@@ -79,6 +79,11 @@ export function formatDetailText(detail: string): string {
 			})
 			.join(' ');
 	}
+	if (/^[a-z]+(?:[A-Z][a-z0-9]*)+$/.test(detail)) {
+		return detail
+			.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+			.replace(/^./, (char) => char.toUpperCase());
+	}
 	if (/^[a-z]/.test(detail)) {
 		return detail.charAt(0).toUpperCase() + detail.slice(1);
 	}

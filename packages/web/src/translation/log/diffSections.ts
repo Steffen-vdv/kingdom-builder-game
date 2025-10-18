@@ -1,4 +1,5 @@
 import { formatStatValue, statDisplaysAsPercent } from '../../utils/stats';
+import { formatDetailText } from '../../utils/stats/format';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
 import {
 	buildSignedDelta,
@@ -105,7 +106,9 @@ export function appendStatChanges(
 			continue;
 		}
 		const info = assets.stats[key];
-		const label = info?.label ?? key;
+		const rawLabel = info?.label?.trim();
+		const fallbackLabel = formatDetailText(key) || key;
+		const label = rawLabel && rawLabel.length > 0 ? rawLabel : fallbackLabel;
 		const icon = info?.icon;
 		const line = formatStatChange(label, icon, key, change, assets);
 		if (statDisplaysAsPercent(key, assets)) {
