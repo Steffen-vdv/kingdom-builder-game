@@ -96,6 +96,18 @@ describe('army attack translation summary', () => {
 		const summary = summarizeContent('action', attack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
+		const warIcon = (() => {
+			if (typeof warWeariness.icon !== 'string') {
+				return '';
+			}
+			const trimmed = warWeariness.icon.trim();
+			return trimmed.length > 0 && trimmed !== Stat.warWeariness ? trimmed : '';
+		})();
+		const warLabel = warWeariness.label ?? Stat.warWeariness;
+		const warChange = `${warAmt >= 0 ? '+' : ''}${warAmt}`;
+		const warSummary = warIcon
+			? `${warIcon} ${warChange}`
+			: `${warLabel} ${warChange}`;
 		expect(summary).toEqual([
 			`${powerSummary}${targetSummary}`,
 			{
@@ -106,11 +118,7 @@ describe('army attack translation summary', () => {
 					`⚔️${plunder.icon} ${plunder.name}`,
 				],
 			},
-			`${iconLabel(
-				warWeariness.icon,
-				warWeariness.label,
-				Stat.warWeariness,
-			)} ${warAmt >= 0 ? '+' : ''}${warAmt}`,
+			warSummary,
 		]);
 	});
 

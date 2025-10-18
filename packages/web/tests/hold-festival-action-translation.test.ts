@@ -21,13 +21,20 @@ describe('hold festival action translation', () => {
 		const upkeepSummaryLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
-		const fortSummaryLabel = `${
-			details.fortIcon ? `${details.fortIcon} ` : ''
-		}${details.fortInfo.label}`;
+		const fortSummary = (() => {
+			const icon =
+				typeof details.fortInfo.icon === 'string'
+					? details.fortInfo.icon.trim()
+					: '';
+			if (icon.length > 0 && icon !== details.fortInfo.label) {
+				return `${icon} ${sign(details.fortAmt)}${details.fortAmt}`;
+			}
+			return `${details.fortInfo.label} ${sign(details.fortAmt)}${details.fortAmt}`;
+		})();
 
 		expect(summary).toEqual([
 			`${details.happinessIcon}${sign(details.happinessAmt)}${details.happinessAmt}`,
-			`${fortSummaryLabel} ${sign(details.fortAmt)}${details.fortAmt}`,
+			fortSummary,
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
@@ -50,9 +57,22 @@ describe('hold festival action translation', () => {
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
 
+		const fortDescription = (() => {
+			const icon =
+				typeof details.fortInfo.icon === 'string'
+					? details.fortInfo.icon.trim()
+					: '';
+			const label = details.fortInfo.label;
+			const change = `${sign(details.fortAmt)}${details.fortAmt}`;
+			if (icon.length > 0 && icon !== label) {
+				return `${icon} ${change} ${label}`;
+			}
+			return `${label} ${change}`;
+		})();
+
 		expect(description).toEqual([
 			`${details.happinessInfo.icon}${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
-			`${details.fortAmt >= 0 ? 'Gain' : 'Lose'} ${Math.abs(details.fortAmt)} ${details.fortInfo.icon} ${details.fortInfo.label}`,
+			fortDescription,
 			{
 				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [

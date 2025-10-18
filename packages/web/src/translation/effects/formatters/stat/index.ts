@@ -1,9 +1,4 @@
-import {
-	formatStatIconLabel,
-	gainOrLose,
-	increaseOrDecrease,
-	signed,
-} from '../../helpers';
+import { increaseOrDecrease, signed } from '../../helpers';
 import { registerEffectFormatter } from '../../factory';
 import { selectStatDescriptor } from '../../registrySelectors';
 
@@ -11,12 +6,91 @@ function resolveStatKey(value: unknown): string {
 	return typeof value === 'string' ? value : '';
 }
 
+function resolveStatIcon(
+	descriptor: ReturnType<typeof selectStatDescriptor>,
+	statKey: string,
+): string {
+	const icon =
+		typeof descriptor.icon === 'string' ? descriptor.icon.trim() : '';
+	if (icon.length === 0 || icon === statKey) {
+		return '';
+	}
+	return icon;
+}
+
+function resolveStatLabel(
+	descriptor: ReturnType<typeof selectStatDescriptor>,
+	statKey: string,
+): string {
+	return descriptor.label || statKey;
+}
+
 function formatStatDisplay(
 	descriptor: ReturnType<typeof selectStatDescriptor>,
 	statKey: string,
 ): string {
-	const label = descriptor.label || statKey;
-	return formatStatIconLabel(descriptor.icon, label, statKey);
+	const icon = resolveStatIcon(descriptor, statKey);
+	const label = resolveStatLabel(descriptor, statKey);
+	if (icon) {
+		return `${icon} ${label}`;
+	}
+	return label;
+}
+
+function resolveStatPrefix(
+	descriptor: ReturnType<typeof selectStatDescriptor>,
+): string {
+	const prefix = descriptor.format?.prefix;
+	if (typeof prefix !== 'string') {
+		return '';
+	}
+	const trimmed = prefix.trim();
+	return trimmed.length > 0 ? trimmed : '';
+}
+
+function formatSignedAmount(amount: number): string {
+	return `${signed(amount)}${amount}`;
+}
+
+function summarizeStatChange(
+	descriptor: ReturnType<typeof selectStatDescriptor>,
+	statKey: string,
+	amount: number,
+): string {
+	const icon = resolveStatIcon(descriptor, statKey);
+	const label = resolveStatLabel(descriptor, statKey);
+	const prefix = resolveStatPrefix(descriptor);
+	const leading: string[] = [];
+	if (prefix) {
+		leading.push(prefix);
+	}
+	if (icon) {
+		leading.push(icon);
+	} else if (label) {
+		leading.push(label);
+	}
+	const change = formatSignedAmount(amount);
+	if (leading.length === 0) {
+		return change;
+	}
+	return `${leading.join(' ')} ${change}`;
+}
+
+function describeStatChange(
+	descriptor: ReturnType<typeof selectStatDescriptor>,
+	statKey: string,
+	amount: number,
+): string {
+	const icon = resolveStatIcon(descriptor, statKey);
+	const label = resolveStatLabel(descriptor, statKey);
+	const change = formatSignedAmount(amount);
+	if (icon) {
+		return `${icon} ${change} ${label}`;
+	}
+	if (label) {
+		return `${change} ${label}`;
+	}
+	return change;
 }
 
 registerEffectFormatter('stat', 'add', {
@@ -24,30 +98,13 @@ registerEffectFormatter('stat', 'add', {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
 		const descriptor = selectStatDescriptor(context, statKey);
 		const amount = Number(effectDefinition.params?.['amount']);
-		const format = descriptor.format;
-		const prefix = format?.prefix ?? '';
-		const display = formatStatDisplay(descriptor, statKey);
-		if (format?.percent) {
-			const percentValue = amount * 100;
-			return `${prefix}${display} ${signed(percentValue)}${percentValue}%`;
-		}
-		return `${prefix}${display} ${signed(amount)}${amount}`;
+		return summarizeStatChange(descriptor, statKey, amount);
 	},
 	describe: (effectDefinition, context) => {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
 		const descriptor = selectStatDescriptor(context, statKey);
 		const amount = Number(effectDefinition.params?.['amount']);
-		const format = descriptor.format;
-		const prefix = format?.prefix ?? '';
-		const display = formatStatDisplay(descriptor, statKey);
-		if (format?.percent) {
-			const percentMagnitude = Math.abs(amount * 100);
-			return `${increaseOrDecrease(amount)} ${prefix}${display} by ${percentMagnitude}%`;
-		}
-		if (prefix) {
-			return `${increaseOrDecrease(amount)} ${prefix}${display} by ${Math.abs(amount)}`;
-		}
-		return `${gainOrLose(amount)} ${Math.abs(amount)} ${display}`;
+		return describeStatChange(descriptor, statKey, amount);
 	},
 });
 
@@ -56,30 +113,13 @@ registerEffectFormatter('stat', 'remove', {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
 		const descriptor = selectStatDescriptor(context, statKey);
 		const amount = -Number(effectDefinition.params?.['amount']);
-		const format = descriptor.format;
-		const prefix = format?.prefix ?? '';
-		const display = formatStatDisplay(descriptor, statKey);
-		if (format?.percent) {
-			const percentValue = amount * 100;
-			return `${prefix}${display} ${signed(percentValue)}${percentValue}%`;
-		}
-		return `${prefix}${display} ${signed(amount)}${amount}`;
+		return summarizeStatChange(descriptor, statKey, amount);
 	},
 	describe: (effectDefinition, context) => {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
 		const descriptor = selectStatDescriptor(context, statKey);
 		const amount = -Number(effectDefinition.params?.['amount']);
-		const format = descriptor.format;
-		const prefix = format?.prefix ?? '';
-		const display = formatStatDisplay(descriptor, statKey);
-		if (format?.percent) {
-			const percentMagnitude = Math.abs(amount * 100);
-			return `${increaseOrDecrease(amount)} ${prefix}${display} by ${percentMagnitude}%`;
-		}
-		if (prefix) {
-			return `${increaseOrDecrease(amount)} ${prefix}${display} by ${Math.abs(amount)}`;
-		}
-		return `${gainOrLose(amount)} ${Math.abs(amount)} ${display}`;
+		return describeStatChange(descriptor, statKey, amount);
 	},
 });
 

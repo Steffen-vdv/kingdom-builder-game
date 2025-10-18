@@ -4,7 +4,7 @@ import { summarizeContent } from '../src/translation/content';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 
 describe('action stat summaries', () => {
-	it('include stat icons and labels alongside changes', () => {
+	it('include stat icons alongside stat changes', () => {
 		const factory = createContentFactory();
 		const statEffects = [
 			{
@@ -21,7 +21,6 @@ describe('action stat summaries', () => {
 				key: 'absorption',
 				method: 'add' as const,
 				amount: 0.1,
-				percent: true,
 			},
 			{
 				key: 'maxPopulation',
@@ -58,25 +57,44 @@ describe('action stat summaries', () => {
 			actionId as string,
 			translationContext,
 		);
-		const formatDisplay = (key: string): string => {
+		const formatSummary = (
+			key: string,
+			method: 'add' | 'remove',
+			amount: number,
+		): string => {
 			const entry = translationContext.assets.stats[key] ?? {};
 			const label = entry.label ?? key;
-			const icon = typeof entry.icon === 'string' ? entry.icon.trim() : '';
-			const prefix =
-				(entry.format as { prefix?: string } | undefined)?.prefix ?? '';
-			const iconPart = icon && icon !== key ? `${icon} ${label}` : label;
-			return `${prefix}${iconPart}`;
-		};
-		const expected = statEffects.map(({ key, method, amount, percent }) => {
-			const display = formatDisplay(key);
-			if (percent) {
-				const pct = amount * 100;
-				const sign = pct >= 0 ? '+' : '';
-				return `${display} ${sign}${pct}%`;
+			const icon = (() => {
+				if (typeof entry.icon !== 'string') {
+					return '';
+				}
+				const trimmed = entry.icon.trim();
+				return trimmed.length > 0 && trimmed !== key ? trimmed : '';
+			})();
+			const prefix = (() => {
+				const format = entry.format as { prefix?: string } | undefined;
+				if (!format || typeof format.prefix !== 'string') {
+					return '';
+				}
+				const trimmed = format.prefix.trim();
+				return trimmed.length > 0 ? trimmed : '';
+			})();
+			const change = method === 'remove' ? -amount : amount;
+			const sign = change >= 0 ? '+' : '';
+			const leading: string[] = [];
+			if (prefix) {
+				leading.push(prefix);
 			}
-			const delta = method === 'remove' ? -amount : amount;
-			const sign = delta >= 0 ? '+' : '';
-			return `${display} ${sign}${delta}`;
+			if (icon) {
+				leading.push(icon);
+			} else if (label) {
+				leading.push(label);
+			}
+			const delta = `${sign}${change}`;
+			return leading.length > 0 ? `${leading.join(' ')} ${delta}` : delta;
+		};
+		const expected = statEffects.map(({ key, method, amount }) => {
+			return formatSummary(key, method, amount);
 		});
 		expect(summary).toEqual(expected);
 	});

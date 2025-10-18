@@ -175,6 +175,39 @@ function resolveStatFormat(
 	return format;
 }
 
+function resolveStatEntry(
+	stats: TranslationAssets['stats'] | undefined,
+	key: string,
+): {
+	entry: TranslationAssets['stats'][string] | undefined;
+	lookupKey: string;
+} {
+	if (!stats) {
+		return { entry: undefined, lookupKey: key };
+	}
+	const direct = stats[key];
+	if (direct) {
+		return { entry: direct, lookupKey: key };
+	}
+	if (key.length > 0) {
+		const loweredFirst = key.charAt(0).toLowerCase() + key.slice(1);
+		if (loweredFirst !== key) {
+			const loweredEntry = stats[loweredFirst];
+			if (loweredEntry) {
+				return { entry: loweredEntry, lookupKey: loweredFirst };
+			}
+		}
+		const fullyLower = key.toLowerCase();
+		if (fullyLower !== key) {
+			const lowerEntry = stats[fullyLower];
+			if (lowerEntry) {
+				return { entry: lowerEntry, lookupKey: fullyLower };
+			}
+		}
+	}
+	return { entry: undefined, lookupKey: key };
+}
+
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
@@ -186,12 +219,12 @@ export function selectStatDescriptor(
 		return cached;
 	}
 	const assets = context.assets;
-	const entry = assets?.stats?.[key];
+	const { entry, lookupKey } = resolveStatEntry(assets?.stats, key);
 	const statLabelFallback = humanizeIdentifier(key);
 	const fallbackLabel =
 		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
 	const label = coerceLabel(entry?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon, key);
+	const icon = coerceIcon(entry?.icon, lookupKey);
 	const format = resolveStatFormat(entry);
 	const descriptor: StatRegistryDescriptor = {
 		icon,
