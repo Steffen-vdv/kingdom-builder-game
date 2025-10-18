@@ -96,7 +96,9 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
+		session: {
+			hasAiController: vi.fn().mockReturnValue(false),
+		} as unknown as EngineSession,
 		sessionState,
 		sessionView,
 		handlePerform: vi.fn().mockResolvedValue(undefined),

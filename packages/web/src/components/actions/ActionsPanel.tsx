@@ -32,6 +32,7 @@ export default function ActionsPanel() {
 		translationContext,
 		phase,
 		actionCostResource,
+		session,
 	} = useGameEngine();
 	const resourceMetadata = useResourceMetadata();
 	const selectResourceDescriptor = useCallback(
@@ -47,7 +48,32 @@ export default function ActionsPanel() {
 	const actionCostIcon = actionCostDescriptor.icon;
 	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
 	const sectionRef = useAnimate<HTMLDivElement>();
-	const player = sessionView.active;
+	const players = sessionState.game.players;
+	const controlledPlayerId = useMemo(() => {
+		if (!Array.isArray(players) || players.length === 0) {
+			return null;
+		}
+		const { activePlayerId, opponentId } = sessionState.game;
+		const fallback =
+			players.find((entry) => !session.hasAiController(entry.id)) ??
+			players.find((entry) => entry.id === activePlayerId) ??
+			players.find((entry) => entry.id === opponentId) ??
+			players[0];
+		return fallback?.id ?? null;
+	}, [
+		session,
+		players,
+		sessionState.game.activePlayerId,
+		sessionState.game.opponentId,
+	]);
+	const player = useMemo(() => {
+		if (!controlledPlayerId) {
+			return sessionView.active ?? null;
+		}
+		return (
+			sessionView.byId.get(controlledPlayerId) ?? sessionView.active ?? null
+		);
+	}, [controlledPlayerId, sessionView]);
 	if (!player) {
 		return null;
 	}
