@@ -64,8 +64,8 @@ describe('action stat summaries', () => {
 			const icon = typeof entry.icon === 'string' ? entry.icon.trim() : '';
 			const prefix =
 				(entry.format as { prefix?: string } | undefined)?.prefix ?? '';
-			const iconPart = icon && icon !== key ? `${icon} ${label}` : label;
-			return `${prefix}${iconPart}`;
+			const iconOrLabel = icon && icon !== key ? icon : label;
+			return prefix ? `${prefix}${iconOrLabel}` : iconOrLabel;
 		};
 		const expected = statEffects.map(({ key, method, amount, percent }) => {
 			const display = formatDisplay(key);
