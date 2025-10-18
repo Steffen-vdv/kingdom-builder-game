@@ -96,6 +96,9 @@ describe('army attack translation summary', () => {
 		const summary = summarizeContent('action', attack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
+		const warSubject =
+			warWeariness.icon || warWeariness.label || Stat.warWeariness;
+		const warChange = `${warAmt >= 0 ? '+' : '-'}${Math.abs(warAmt)}`;
 		expect(summary).toEqual([
 			`${powerSummary}${targetSummary}`,
 			{
@@ -106,11 +109,7 @@ describe('army attack translation summary', () => {
 					`⚔️${plunder.icon} ${plunder.name}`,
 				],
 			},
-			`${iconLabel(
-				warWeariness.icon,
-				warWeariness.label,
-				Stat.warWeariness,
-			)} ${warAmt >= 0 ? '+' : ''}${warAmt}`,
+			`${warSubject} ${warChange}`,
 		]);
 	});
 
