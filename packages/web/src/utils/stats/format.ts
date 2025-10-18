@@ -3,6 +3,7 @@ import type {
 	TranslationPhase,
 	TranslationPhaseStep,
 } from '../../translation/context';
+import { DEFAULT_REGISTRY_METADATA } from '../../contexts/defaultRegistryMetadata';
 
 interface FormattablePhaseStep extends TranslationPhaseStep {
 	icon?: string;
@@ -39,22 +40,47 @@ function resolvePhaseArguments(
 	};
 }
 
+const PERCENT_FLAG_CACHE = new Map<string, boolean>();
+
+function resolvePercentFromDefaults(key: string): boolean {
+	const cached = PERCENT_FLAG_CACHE.get(key);
+	if (cached !== undefined) {
+		return cached;
+	}
+	let resolved = false;
+	const descriptor = DEFAULT_REGISTRY_METADATA.stats?.[key];
+	if (descriptor) {
+		if (typeof descriptor.displayAsPercent === 'boolean') {
+			resolved = descriptor.displayAsPercent;
+		} else {
+			const format = descriptor.format;
+			if (format && typeof format === 'object') {
+				resolved = Boolean(format.percent);
+			}
+		}
+	}
+	PERCENT_FLAG_CACHE.set(key, resolved);
+	return resolved;
+}
+
 export function statDisplaysAsPercent(
 	key: string,
 	assets?: TranslationAssets,
 ): boolean {
 	const stat = assets?.stats?.[key];
-	if (!stat) {
-		return false;
+	if (stat) {
+		if (typeof stat.displayAsPercent === 'boolean') {
+			return stat.displayAsPercent;
+		}
+		const format = stat.format;
+		if (format && typeof format === 'object') {
+			const percent = format.percent;
+			if (percent !== undefined) {
+				return Boolean(percent);
+			}
+		}
 	}
-	if (typeof stat.displayAsPercent === 'boolean') {
-		return stat.displayAsPercent;
-	}
-	const format = stat.format;
-	if (format && typeof format === 'object') {
-		return Boolean(format.percent);
-	}
-	return false;
+	return resolvePercentFromDefaults(key);
 }
 
 export function formatStatValue(
