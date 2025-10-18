@@ -58,7 +58,7 @@ type PassiveEffectParams = {
 export class PassiveEffectParamsBuilder extends ParamsBuilder<
         PassiveEffectParams
 > {
-        private triggerBuckets = new Map<TriggerKey, EffectConfig[]>();
+	private triggerBuckets = new Map<TriggerKey, EffectConfig[]>();
 	id(id: string) {
 		return this.set('id', id, PASSIVE_ID_DUPLICATE);
 	}
