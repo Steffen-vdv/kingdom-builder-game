@@ -87,14 +87,7 @@ export function buildBaseEntry(
 		ignoreAbsorption,
 		ignoreFortification,
 	});
-	return {
-		entry,
-		formatter: context.formatter,
-		info: context.info,
-		target: context.target,
-		targetLabel: context.targetLabel,
-		stats: context.stats,
-	};
+	return { ...context, entry };
 }
 
 function applyOwnerPresentation(

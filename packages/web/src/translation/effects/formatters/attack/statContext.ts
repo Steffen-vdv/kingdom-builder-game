@@ -122,6 +122,7 @@ export type AttackFormatterContext = {
 	target: AttackTarget;
 	targetLabel: string;
 	stats: AttackStatContext;
+	translationContext: TranslationContext;
 };
 
 export function resolveAttackFormatterContext(
@@ -133,5 +134,12 @@ export function resolveAttackFormatterContext(
 		translationContext,
 	);
 	const stats = resolveAttackStats(effectDefinition, translationContext);
-	return { formatter, target, info, targetLabel, stats };
+	return {
+		formatter,
+		target,
+		info,
+		targetLabel,
+		stats,
+		translationContext,
+	};
 }
