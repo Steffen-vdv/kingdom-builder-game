@@ -8,6 +8,10 @@ a[title] {
 	cursor: pointer;
 }
 
+.margin-top-correction-five {
+	margin-top: -5px;
+}
+
 @keyframes player-bg-slide {
 	to {
 		background-position: -32px 32px;

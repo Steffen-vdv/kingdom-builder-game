@@ -7,7 +7,7 @@ import type { SessionResourceDefinition } from '@kingdom-builder/protocol/sessio
 import fallbackConfigJson from './runtimeConfigFallback.json';
 import { clone } from '../state/clone';
 
-export interface LegacyContentConfig {
+export interface RuntimeContentConfig {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
@@ -15,7 +15,7 @@ export interface LegacyContentConfig {
 	primaryIconId?: string | null;
 }
 
-type RuntimeConfigSource = Partial<LegacyContentConfig>;
+type RuntimeConfigSource = Partial<RuntimeContentConfig>;
 
 declare global {
 	var __KINGDOM_BUILDER_CONFIG__: RuntimeConfigSource | undefined;
@@ -43,20 +43,20 @@ function readRuntimeConfig(): RuntimeConfigSource | undefined {
 	return globalConfig?.__KINGDOM_BUILDER_CONFIG__;
 }
 
-const FALLBACK_CONFIG = fallbackConfigJson as LegacyContentConfig;
+const FALLBACK_CONFIG = fallbackConfigJson as RuntimeContentConfig;
 
-function loadFallbackConfig(): LegacyContentConfig {
+function loadFallbackConfig(): RuntimeContentConfig {
 	return clone(FALLBACK_CONFIG);
 }
 
-let resolvedConfigPromise: Promise<LegacyContentConfig> | null = null;
+let resolvedConfigPromise: Promise<RuntimeContentConfig> | null = null;
 
-export async function getLegacyContentConfig(): Promise<LegacyContentConfig> {
+export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 	if (!resolvedConfigPromise) {
 		resolvedConfigPromise = (async () => {
 			const runtimeConfig = readRuntimeConfig();
-			let fallback: LegacyContentConfig | null = null;
-			const requireFallback = (): Promise<LegacyContentConfig> => {
+			let fallback: RuntimeContentConfig | null = null;
+			const requireFallback = (): Promise<RuntimeContentConfig> => {
 				if (!fallback) {
 					fallback = loadFallbackConfig();
 				}
@@ -78,7 +78,7 @@ export async function getLegacyContentConfig(): Promise<LegacyContentConfig> {
 				runtimeConfig?.primaryIconId ??
 				(await requireFallback()).primaryIconId ??
 				null;
-			const config: LegacyContentConfig = {
+			const config: RuntimeContentConfig = {
 				phases,
 				start,
 				rules,

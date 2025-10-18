@@ -6,7 +6,7 @@ import {
 	type PlayerSnapshot,
 	type TranslationDiffContext,
 } from '../translation';
-import { getLegacySessionContext } from './getLegacySessionContext';
+import { createSessionTranslationContext } from './createSessionTranslationContext';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 
 interface UseCompensationLoggerOptions {
@@ -40,7 +40,7 @@ export function useCompensationLogger({
 		if (sessionState.game.turn !== 1) {
 			return;
 		}
-		const { diffContext: baseDiffContext } = getLegacySessionContext({
+		const { diffContext: baseDiffContext } = createSessionTranslationContext({
 			snapshot: sessionState,
 			ruleSnapshot: sessionState.rules,
 			passiveRecords: sessionState.passiveRecords,

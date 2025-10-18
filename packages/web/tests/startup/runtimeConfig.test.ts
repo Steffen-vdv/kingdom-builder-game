@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LegacyContentConfig } from '../../src/startup/runtimeConfig';
+import type { RuntimeContentConfig } from '../../src/startup/runtimeConfig';
 import fallbackConfigJson from '../../src/startup/runtimeConfigFallback.json';
 
 const runtimeModulePath = '../../src/startup/runtimeConfig';
-const fallbackConfig = fallbackConfigJson as LegacyContentConfig;
+const fallbackConfig = fallbackConfigJson as RuntimeContentConfig;
 const globalScope = globalThis as {
-	__KINGDOM_BUILDER_CONFIG__?: Partial<LegacyContentConfig> | undefined;
+	__KINGDOM_BUILDER_CONFIG__?: Partial<RuntimeContentConfig> | undefined;
 };
 
 function resetRuntimeOverrides(): void {
 	delete globalScope.__KINGDOM_BUILDER_CONFIG__;
 }
 
-describe('getLegacyContentConfig', () => {
+describe('getRuntimeContentConfig', () => {
 	beforeEach(() => {
 		resetRuntimeOverrides();
 		vi.resetModules();
@@ -23,8 +23,8 @@ describe('getLegacyContentConfig', () => {
 	});
 
 	it('returns the static fallback snapshot when no runtime overrides exist', async () => {
-		const { getLegacyContentConfig } = await import(runtimeModulePath);
-		const config = await getLegacyContentConfig();
+		const { getRuntimeContentConfig } = await import(runtimeModulePath);
+		const config = await getRuntimeContentConfig();
 		expect(config).toEqual(fallbackConfig);
 		expect(config).not.toBe(fallbackConfig);
 		expect(config.resources).not.toBe(fallbackConfig.resources);
@@ -46,8 +46,8 @@ describe('getLegacyContentConfig', () => {
 				extra: { key: 'extra', icon: '✨' },
 			},
 		};
-		const { getLegacyContentConfig } = await import(runtimeModulePath);
-		const config = await getLegacyContentConfig();
+		const { getRuntimeContentConfig } = await import(runtimeModulePath);
+		const config = await getRuntimeContentConfig();
 		expect(config.primaryIconId).toBe('custom-primary');
 		expect(config.resources.extra).toEqual({ key: 'extra', icon: '✨' });
 		expect(config.resources[firstResourceKey]).toEqual(

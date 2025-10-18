@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../translation/context';
 import type { TranslationContext } from '../translation/context';
+export {
+	createSessionTranslationDiffContext,
+	type SessionTranslationContextData,
+} from './createSessionTranslationContext';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 
 type UseSessionTranslationContextOptions = {

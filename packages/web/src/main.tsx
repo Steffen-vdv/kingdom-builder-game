@@ -2,7 +2,7 @@ import './styles/index.css';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { resolvePrimaryIcon } from './startup/resolvePrimaryIcon';
-import { getLegacyContentConfig } from './startup/runtimeConfig';
+import { getRuntimeContentConfig } from './startup/runtimeConfig';
 
 const createFaviconSvg = (emoji: string): string =>
 	[
@@ -29,7 +29,7 @@ async function bootstrap() {
 		throw new Error('Root element not found.');
 	}
 	try {
-		const config = await getLegacyContentConfig();
+		const config = await getRuntimeContentConfig();
 		const iconResolution = resolvePrimaryIcon(
 			config.resources,
 			config.primaryIconId,

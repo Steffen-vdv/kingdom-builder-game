@@ -165,17 +165,17 @@ export default function GameLayout() {
 				</div>
 
 				<div className={layoutGridClassName}>
-					<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface">
-						<div className="flex flex-1 items-stretch gap-6">
-							{playerPanels}
-						</div>
-					</section>
+					<div className="flex w-full flex-col gap-6">
+						<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface">
+							<div className="flex flex-1 items-stretch gap-6">
+								{playerPanels}
+							</div>
+						</section>
+						<ActionsPanel />
+					</div>
 					<div className="flex w-full flex-col gap-6 lg:col-start-2">
 						<PhasePanel />
 						<HoverCard />
-					</div>
-					<div className="lg:col-start-1 lg:row-start-2">
-						<ActionsPanel />
 					</div>
 				</div>
 				<LogPanel isOpen={isLogOpen} onClose={closeLog} />

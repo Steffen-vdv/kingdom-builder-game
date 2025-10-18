@@ -5,7 +5,7 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { snapshotPlayer } from '../translation';
-import { getLegacySessionContext } from './getLegacySessionContext';
+import { createSessionTranslationContext } from './createSessionTranslationContext';
 import { advanceSessionPhase } from './sessionSdk';
 import { getSessionRecord } from './sessionStateStore';
 import {
@@ -109,7 +109,7 @@ export async function advanceToActionPhase({
 				refresh();
 				return;
 			}
-			const { diffContext } = getLegacySessionContext({
+			const { diffContext } = createSessionTranslationContext({
 				snapshot: snapshotAfter,
 				ruleSnapshot: snapshotAfter.rules,
 				passiveRecords: snapshotAfter.passiveRecords,

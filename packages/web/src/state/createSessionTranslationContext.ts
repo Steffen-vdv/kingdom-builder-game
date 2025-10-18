@@ -158,7 +158,7 @@ function evaluateDefinition(
 	}
 }
 
-interface LegacySessionContextInput {
+interface SessionTranslationContextInput {
 	snapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	passiveRecords: SessionSnapshot['passiveRecords'];
@@ -168,7 +168,7 @@ interface LegacySessionContextInput {
 	>;
 }
 
-function createDiffContext(
+export function createSessionTranslationDiffContext(
 	snapshot: SessionSnapshot,
 	translationContext: TranslationContext,
 ): TranslationDiffContext {
@@ -204,17 +204,17 @@ function createDiffContext(
 	};
 }
 
-export interface LegacySessionContextData {
+export interface SessionTranslationContextData {
 	translationContext: TranslationContext;
 	diffContext: TranslationDiffContext;
 }
 
-export function getLegacySessionContext({
+export function createSessionTranslationContext({
 	snapshot,
 	ruleSnapshot,
 	passiveRecords,
 	registries,
-}: LegacySessionContextInput): LegacySessionContextData {
+}: SessionTranslationContextInput): SessionTranslationContextData {
 	const translationContext = createTranslationContext(
 		snapshot,
 		registries,
@@ -224,6 +224,9 @@ export function getLegacySessionContext({
 			passiveRecords,
 		},
 	);
-	const diffContext = createDiffContext(snapshot, translationContext);
+	const diffContext = createSessionTranslationDiffContext(
+		snapshot,
+		translationContext,
+	);
 	return { translationContext, diffContext };
 }
