@@ -211,6 +211,19 @@ describe('<ActionsPanel />', () => {
 		expect(result?.value).toBe(metadata.requirementIcons.get(raiseAction.id));
 	});
 
+	it('disables player interactions when the active participant is AI-controlled', () => {
+		setScenario({ activePlayerAiControlled: true });
+		renderActionsPanel();
+		const basicAction = metadata.actions.basic;
+		if (!basicAction) {
+			throw new Error('Expected a basic action definition.');
+		}
+		const actionButton = screen.getByRole('button', {
+			name: new RegExp(basicAction.name),
+		});
+		expect(actionButton).toBeDisabled();
+	});
+
 	it('disables building cards when requirements fail and surfaces translations', () => {
 		setScenario({ showBuilding: true });
 		renderActionsPanel();

@@ -135,7 +135,7 @@ export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
-	return {
+	const snapshot: PlayerStateSnapshot = {
 		id: player.id,
 		name: player.name,
 		resources: { ...player.resources },
@@ -150,6 +150,15 @@ export function snapshotPlayer(
 		skipSteps: cloneSkipSteps(player.skipSteps),
 		passives: clonePassives(context, player.id),
 	};
+	const explicitAiFlag = Boolean(
+		(player as { aiControlled?: unknown }).aiControlled,
+	);
+	const hasRegisteredController = Boolean(context.aiSystem?.has(player.id));
+	const aiControlled = explicitAiFlag || hasRegisteredController;
+	if (aiControlled) {
+		snapshot.aiControlled = true;
+	}
+	return snapshot;
 }
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {

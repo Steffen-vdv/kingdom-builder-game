@@ -34,7 +34,12 @@ export function useAiRunner({
 			return;
 		}
 		const activeId = sessionState.game.activePlayerId;
-		if (!session.hasAiController(activeId)) {
+		const activePlayer = sessionState.game.players.find(
+			(entry) => entry.id === activeId,
+		);
+		const hasAiController =
+			Boolean(activePlayer?.aiControlled) || session.hasAiController(activeId);
+		if (!hasAiController) {
 			return;
 		}
 		void session.enqueue(async () => {
@@ -84,6 +89,7 @@ export function useAiRunner({
 		session,
 		sessionState.game.activePlayerId,
 		sessionState.game.phaseIndex,
+		sessionState.game.players,
 		sessionState.phases,
 		runUntilActionPhaseCore,
 		syncPhaseState,

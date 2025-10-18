@@ -199,6 +199,19 @@ describe('EngineSession', () => {
 		expect(refreshed[CResource.gold]).toBe(goldCost);
 	});
 
+	it('marks AI-controlled players in snapshots', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const { activePlayerId, opponentId } = snapshot.game;
+		const playersById = new Map(
+			snapshot.game.players.map((player) => [player.id, player]),
+		);
+		const activePlayer = playersById.get(activePlayerId);
+		const opponent = playersById.get(opponentId);
+		expect(opponent?.aiControlled).toBe(true);
+		expect(Boolean(activePlayer?.aiControlled)).toBe(false);
+	});
+
 	it('unlocks non-system actions at session start', () => {
 		const content = createContentFactory();
 		const unlocked = content.action({ name: 'Unlocked Action' });

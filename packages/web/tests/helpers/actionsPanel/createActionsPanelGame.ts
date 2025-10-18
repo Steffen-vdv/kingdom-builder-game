@@ -124,6 +124,7 @@ export function createActionsPanelGame({
 	resourceKeys,
 	statKeys,
 	placeholders,
+	activePlayerAiControlled = false,
 }: ActionsPanelGameOptions = {}): ActionsPanelTestHarness {
 	const sessionRegistries = createSessionRegistries();
 	const resourceSelection: ResourceSelectionContext = {
@@ -241,6 +242,9 @@ export function createActionsPanelGame({
 		steps: [],
 	} as const;
 	const playerSnapshot = toPlayerSnapshot(player, capacityStat);
+	if (activePlayerAiControlled) {
+		playerSnapshot.aiControlled = true;
+	}
 	const opponentSnapshot = toPlayerSnapshot(opponent, capacityStat);
 	const sessionState: EngineSessionSnapshot = {
 		game: {

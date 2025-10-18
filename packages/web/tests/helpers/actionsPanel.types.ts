@@ -23,6 +23,7 @@ export interface ActionsPanelGameOptions {
 	placeholders?: {
 		population?: string;
 	};
+	activePlayerAiControlled?: boolean;
 }
 
 export type ActionsPanelTestHarness = ReturnType<typeof createActionsPanelGame>;

@@ -154,4 +154,69 @@ describe('useAiRunner', () => {
 		expect(syncPhaseState).not.toHaveBeenCalled();
 		cleanup();
 	});
+
+	it('runs AI turns when the snapshot marks the active player as AI-controlled', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{
+				id: 'phase-main',
+				name: 'Main Phase',
+				action: true,
+				steps: [],
+			},
+		];
+		const activePlayer = createSnapshotPlayer({ id: 'A', aiControlled: true });
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+		});
+		const registries = createSessionRegistriesPayload();
+		const { adapter, api, cleanup } = createRemoteSessionAdapter({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
+		});
+		api.setNextRunAiResponse({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
+			ranTurn: true,
+		});
+		vi.spyOn(adapter, 'hasAiController').mockReturnValue(false);
+		const runSpy = vi.spyOn(adapter, 'runAiTurn');
+		const syncPhaseState = vi.fn();
+		const mountedRef = { current: true };
+
+		renderHook(() =>
+			useAiRunner({
+				session: adapter,
+				sessionState,
+				runUntilActionPhaseCore: vi.fn(),
+				syncPhaseState,
+				mountedRef,
+			}),
+		);
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(runSpy).toHaveBeenCalledWith(activePlayer.id);
+		cleanup();
+	});
 });

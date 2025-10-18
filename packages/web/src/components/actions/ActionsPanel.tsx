@@ -62,7 +62,8 @@ export default function ActionsPanel() {
 		[sessionState.phases],
 	);
 	const isActionPhase = isActionPhaseActive(phase, actionPhaseId);
-	const isLocalTurn = sessionState.game.activePlayerId === player.id;
+	const isLocalTurn =
+		sessionState.game.activePlayerId === player.id && !player.aiControlled;
 
 	useEffect(() => {
 		if (!isLocalTurn && viewingOpponent) {
