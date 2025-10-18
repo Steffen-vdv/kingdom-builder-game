@@ -16,8 +16,14 @@ Follow this workflow before authoring new copy or extending translators:
    and [Section 3](#3-effect-formatter-inventory) before introducing new files.
    If a handler exists, extend it instead of forking the phrasing.
 2. Reuse canonical keywords, icons, and helpers from
-   [Section 4](#4-canonical-keywords-icons--helper-utilities). Do not invent new
-   emoji or verbs when the tables already provide an approved option.
+   [Section 4](#4-canonical-keywords-icons--helper-utilities). Icons, labels,
+   and descriptions are defined in `@kingdom-builder/contents` (see
+   [`packages/contents`](../packages/contents)), loaded into active sessions by
+   [`SessionManager.ts`](../packages/server/src/session/SessionManager.ts), and
+   exposed to React components through
+   [`RegistryMetadataContext`](../packages/web/src/contexts/RegistryMetadataContext.tsx).
+   Do not invent new emoji or verbs when the tables already provide an approved
+   option.
 3. Match the required voice for each output mode:
    - **Summary** — terse, present-tense fragments that read as bullet points.
    - **Description** — complete sentences in present tense that explain cause
@@ -35,13 +41,18 @@ Use these prompts while developing and when filling out the PR template:
 2. Enumerate every canonical keyword, icon, or helper you touched from
    [Section 4](#4-canonical-keywords-icons--helper-utilities) to prove you
    pulled from the approved tables.
-3. Confirm that you reviewed the Summary, Description, and Log voices for each
+3. When a visual surface needs new icons, labels, or descriptions, update the
+   relevant definitions in `@kingdom-builder/contents` and rerun
+   `npm run test:ui` instead of patching fallback metadata in `packages/web`.
+4. Confirm that you reviewed the Summary, Description, and Log voices for each
    affected surface and adjusted copy to match the definitions above.
 
 > **Quick reference — paste into your PR description**
 >
 > - [ ] Linked the translator(s)/formatter(s) reused, referencing Sections 2–3.
 > - [ ] Listed every canonical keyword/icon/helper touched from Section 4.
+> - [ ] Updated `@kingdom-builder/contents` (not web fallbacks) for new icons,
+>       labels, or descriptions and reran `npm run test:ui`.
 > - [ ] Confirmed Summary/Description/Log voices were audited for affected UI.
 
 ## 1. Translation Pipeline Overview

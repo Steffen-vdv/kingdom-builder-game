@@ -22,35 +22,37 @@ guide for rationale, lore, and extended background.
      logs inside `artifacts/` so you can share the run when needed.
    - Run `npm run test:ui` whenever UI structure, layout, or copy might change
      and record the run in your notes for reviewers.
-
-- Stop immediately if any of these commands fail. Fix the reported problem
-  (formatting, type errors, lint drift, or test regressions) and re-run the
-  command locally before staging changes so the PR lands clean.
-- Regenerate the runtime config fallback with
-  `npx tsx scripts/generateRuntimeConfig.ts` whenever content packages change.
-  `npm run check` executes
-  `packages/web/tests/runtime-config-fallback-sync.test.ts` to enforce this, so
-  stale snapshots will block your PR until you rerun the generator.
-
-- The Husky pre-push hook enforces that verification run (with a fallback
-  to `npm run check && npm run test:coverage` on tooling failures). If you
-  must execute the fallback manually, note the environment issue in your PR
-  body so reviewers know why the hook could not complete normally.
-- Husky also runs the commit-time trio: `lint-staged`, `npm run check`,
-  and `npm run test:quick`. Never bypass the hooks; fix the underlying
-  problem so the automated gates pass cleanly before calling `make_pr`.
-- Reach for `npm run fix` after Prettier when eslint complains about
-  spacing or other autofixable style violations.
-- `npm run check` still runs linting, type checks, and tests together if you
-  need a direct invocation or the verification script is unavailable.
-- Documentation-only updates or pure content typo fixes may skip coverage
-  runs entirely—note the exception in your PR body so reviewers know it was
-  intentional.
-- Expect `npm run check` to take about two minutes; the Vitest progress
-  reporter prints live suite counts so the run is not stuck.
-- Use `npm run build` only when you must validate a production bundle.
-- See [`AGENTS.md` §2.5](../AGENTS.md#25-testing-workflow) for the complete
-  testing workflow policy and quick-run commands.
+   - When icons, labels, or descriptions change, edit the definitions in
+     `@kingdom-builder/contents` (see [`packages/contents`](../packages/contents))
+     and rerun `npm run test:ui`. Do **not** patch fallback metadata in
+     `packages/web`—components read content-driven values at runtime.
+   - Stop immediately if any of these commands fail. Fix the reported problem
+     (formatting, type errors, lint drift, or test regressions) and re-run the
+     command locally before staging changes so the PR lands clean.
+   - Regenerate the runtime config fallback with
+     `npx tsx scripts/generateRuntimeConfig.ts` whenever content packages change.
+     `npm run check` executes
+     `packages/web/tests/runtime-config-fallback-sync.test.ts` to enforce this, so
+     stale snapshots will block your PR until you rerun the generator.
+   - The Husky pre-push hook enforces that verification run (with a fallback
+     to `npm run check && npm run test:coverage` on tooling failures). If you
+     must execute the fallback manually, note the environment issue in your PR
+     body so reviewers know why the hook could not complete normally.
+   - Husky also runs the commit-time trio: `lint-staged`, `npm run check`,
+     and `npm run test:quick`. Never bypass the hooks; fix the underlying
+     problem so the automated gates pass cleanly before calling `make_pr`.
+   - Reach for `npm run fix` after Prettier when eslint complains about
+     spacing or other autofixable style violations.
+   - `npm run check` still runs linting, type checks, and tests together if you
+     need a direct invocation or the verification script is unavailable.
+   - Documentation-only updates or pure content typo fixes may skip coverage
+     runs entirely—note the exception in your PR body so reviewers know it was
+     intentional.
+   - Expect `npm run check` to take about two minutes; the Vitest progress
+     reporter prints live suite counts so the run is not stuck.
+   - Use `npm run build` only when you must validate a production bundle.
+   - See [`AGENTS.md` §2.5](../AGENTS.md#25-testing-workflow) for the complete
+     testing workflow policy and quick-run commands.
 
 ### Before pushing or calling `make_pr`
 
@@ -75,6 +77,13 @@ guide for rationale, lore, and extended background.
    - Respect dependency boundaries: the web app imports engine code only
      from `@kingdom-builder/engine`, and the engine runtime never reaches into
      web or content internals beyond registry surfaces.
+   - Icons, labels, and descriptions originate in
+     `@kingdom-builder/contents`, flow through the session bootstrapper in
+     [`SessionManager.ts`](../packages/server/src/session/SessionManager.ts),
+     and surface in React via
+     [`RegistryMetadataContext`](../packages/web/src/contexts/RegistryMetadataContext.tsx).
+     Update the content package (not web-layer fallbacks) so every layer stays
+     in sync.
 4. **Honor the PR template**
    - Copy `.github/PULL_REQUEST_TEMPLATE.md` into every PR body and replace all
      placeholders with specific details before calling `make_pr`.
