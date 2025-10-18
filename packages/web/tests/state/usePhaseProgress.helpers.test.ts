@@ -14,6 +14,7 @@ import {
 import {
 	clearSessionStateStore,
 	initializeSessionState,
+	updateSessionSnapshot,
 } from '../../src/state/sessionStateStore';
 
 const advanceSessionPhaseMock = vi.hoisted(() => vi.fn());
@@ -96,6 +97,149 @@ describe('advanceToActionPhase', () => {
 			{ sessionId: 'session-1' },
 			undefined,
 			expect.objectContaining({ skipQueue: true }),
+		);
+	});
+
+	it('omits duplicate phase headers when consecutive steps log changes', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{
+				id: 'phase-growth',
+				name: 'Growth',
+				action: false,
+				steps: [
+					{ id: 'step-income', title: 'Gain income', effects: [] },
+					{ id: 'step-ap', title: 'Gain action points', effects: [] },
+				],
+			},
+			{ id: 'phase-action', name: 'Action', action: true, steps: [] },
+		];
+		const player = createSnapshotPlayer({ id: 'A' });
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const ruleSnapshot = {
+			tieredResourceKey: actionCostResource,
+			tierDefinitions: [],
+			winConditions: [],
+		};
+		const baseOptions = {
+			players: [player, opponent],
+			activePlayerId: player.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot,
+			turn: 1,
+		};
+		const snapshot = createSessionSnapshot({
+			...baseOptions,
+			currentPhase: phases[0]?.id ?? 'phase-growth',
+			currentStep: phases[0]?.steps?.[0]?.id ?? 'step-income',
+			phaseIndex: 0,
+			stepIndex: 0,
+		});
+		const registriesPayload = createSessionRegistriesPayload();
+		initializeSessionState({
+			sessionId: 'session-2',
+			snapshot,
+			registries: registriesPayload,
+		});
+		const snapshotAfterFirst = createSessionSnapshot({
+			...baseOptions,
+			currentPhase: phases[0]?.id ?? 'phase-growth',
+			currentStep: phases[0]?.steps?.[1]?.id ?? 'step-ap',
+			phaseIndex: 0,
+			stepIndex: 1,
+		});
+		const snapshotAfterSecond = createSessionSnapshot({
+			...baseOptions,
+			currentPhase: phases[1]?.id ?? 'phase-action',
+			currentStep: phases[1]?.id ?? 'phase-action',
+			phaseIndex: 1,
+			stepIndex: 0,
+		});
+		advanceSessionPhaseMock
+			.mockImplementationOnce(() => {
+				updateSessionSnapshot('session-2', snapshotAfterFirst);
+				return Promise.resolve({
+					sessionId: 'session-2',
+					snapshot: snapshotAfterFirst,
+					registries: registriesPayload,
+					advance: {
+						phase: phases[0]?.id ?? 'phase-growth',
+						step: phases[0]?.steps?.[0]?.id ?? 'step-income',
+						effects: [],
+						player: snapshotAfterFirst.game.players[0]!,
+					},
+				});
+			})
+			.mockImplementationOnce(() => {
+				updateSessionSnapshot('session-2', snapshotAfterSecond);
+				return Promise.resolve({
+					sessionId: 'session-2',
+					snapshot: snapshotAfterSecond,
+					registries: registriesPayload,
+					advance: {
+						phase: phases[0]?.id ?? 'phase-growth',
+						step: phases[0]?.steps?.[1]?.id ?? 'step-ap',
+						effects: [],
+						player: snapshotAfterSecond.game.players[0]!,
+					},
+				});
+			});
+		const formatPhaseResolution = vi
+			.fn()
+			.mockReturnValueOnce({
+				source: {
+					kind: 'phase',
+					label: '🌱 Growth Phase',
+					icon: '🌱',
+					id: phases[0]?.id ?? 'phase-growth',
+				},
+				lines: ['🌱 Growth Phase', '    🪙 Gold +2'],
+				summaries: ['🪙 Gold +2'],
+				actorLabel: '🌱 Growth Phase',
+			})
+			.mockReturnValueOnce({
+				source: {
+					kind: 'phase',
+					label: '🌱 Growth Phase',
+					icon: '🌱',
+					id: phases[0]?.id ?? 'phase-growth',
+				},
+				lines: ['🌱 Growth Phase', '    ⚡ Action Points +1'],
+				summaries: ['⚡ Action Points +1'],
+				actorLabel: '🌱 Growth Phase',
+			});
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const mountedRef = { current: true };
+		await advanceToActionPhase({
+			sessionId: 'session-2',
+			initialSnapshot: snapshot,
+			resourceKeys: [actionCostResource],
+			mountedRef,
+			applyPhaseSnapshot: vi.fn(),
+			refresh: vi.fn(),
+			formatPhaseResolution: formatPhaseResolution as never,
+			showResolution: showResolution as never,
+			registries: createSessionRegistries(),
+		});
+		expect(showResolution).toHaveBeenCalledTimes(2);
+		expect(showResolution).toHaveBeenNthCalledWith(
+			1,
+			expect.objectContaining({
+				lines: ['🌱 Growth Phase', '    🪙 Gold +2'],
+				actorLabel: '🌱 Growth Phase',
+			}),
+		);
+		expect(showResolution).toHaveBeenNthCalledWith(
+			2,
+			expect.objectContaining({
+				lines: ['    ⚡ Action Points +1'],
+				actorLabel: '🌱 Growth Phase',
+			}),
 		);
 	});
 });

@@ -61,14 +61,6 @@ function createPhaseDisplay(
 	return 'Phase';
 }
 
-function createHeaderLine(phaseDisplay: string, stepTitle: string | undefined) {
-	const trimmedStep = stepTitle?.trim();
-	if (trimmedStep && trimmedStep.length > 0) {
-		return `${phaseDisplay} – ${trimmedStep}`;
-	}
-	return phaseDisplay;
-}
-
 export function formatPhaseResolution({
 	advance,
 	before,
@@ -80,15 +72,12 @@ export function formatPhaseResolution({
 }: FormatPhaseResolutionOptions): PhaseResolutionFormatResult {
 	const phaseId = phaseDefinition?.id ?? advance.phase;
 	const rawPhaseLabel = phaseDefinition?.label ?? advance.phase;
-	const actorLabel = appendPhaseSuffix(rawPhaseLabel);
+	const actorLabelBase = appendPhaseSuffix(rawPhaseLabel);
 	const phaseDisplay = createPhaseDisplay(
-		actorLabel ?? rawPhaseLabel,
+		actorLabelBase ?? rawPhaseLabel,
 		phaseDefinition?.icon,
 	);
-	const fallbackStep = advance.step
-		? formatDetailText(advance.step)
-		: advance.step;
-	const stepTitle = stepDefinition?.title ?? fallbackStep;
+	const actorLabel = phaseDisplay;
 	const source: ResolutionSource = {
 		kind: 'phase',
 		label: phaseDisplay,
@@ -96,7 +85,6 @@ export function formatPhaseResolution({
 			? { icon: phaseDefinition.icon.trim() }
 			: {}),
 		...(phaseId ? { id: phaseId } : {}),
-		...(stepTitle?.trim() ? { name: stepTitle.trim() } : {}),
 	};
 
 	if (advance.skipped) {
@@ -144,9 +132,17 @@ export function formatPhaseResolution({
 		diffContext,
 		resourceKeys,
 	).filter((line) => Boolean(line?.trim()));
-	const headerLine = createHeaderLine(phaseDisplay, stepTitle);
-	const lines = [headerLine, ...(changes.length ? changes : ['No effect'])];
-	const summaries = changes.length ? changes : ['No effect'];
+	if (!changes.length) {
+		return {
+			source,
+			lines: [],
+			summaries: [],
+			...(actorLabel ? { actorLabel } : {}),
+		};
+	}
+	const indentedChanges = changes.map((line) => `    ${line}`);
+	const lines = [phaseDisplay, ...indentedChanges];
+	const summaries = changes;
 
 	return {
 		source,

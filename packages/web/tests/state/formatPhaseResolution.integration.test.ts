@@ -121,9 +121,8 @@ describe('formatPhaseResolution integration', () => {
 			label: '🌅 Aurora Phase',
 			icon: '🌅',
 			id: phaseDefinition.id,
-			name: stepDefinition.title,
 		});
-		expect(result.actorLabel).toBe('Aurora Phase');
+		expect(result.actorLabel).toBe('🌅 Aurora Phase');
 		expect(result.lines).toEqual([
 			'⏭️ 🌅 Aurora Phase skipped',
 			'  • Night watch',
@@ -172,10 +171,7 @@ describe('formatPhaseResolution integration', () => {
 			resourceKeys: [resourceKey],
 		});
 
-		expect(result.lines).toEqual([
-			'🌅 Aurora Phase – Prepare Tribute',
-			'No effect',
-		]);
-		expect(result.summaries).toEqual(['No effect']);
+		expect(result.lines).toEqual([]);
+		expect(result.summaries).toEqual([]);
 	});
 });
