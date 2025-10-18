@@ -135,9 +135,11 @@ export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
+	const aiControlled = Boolean(context.aiSystem?.has(player.id));
 	return {
 		id: player.id,
 		name: player.name,
+		aiControlled,
 		resources: { ...player.resources },
 		stats: { ...player.stats },
 		statsHistory: { ...player.statsHistory },

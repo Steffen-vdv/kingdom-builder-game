@@ -168,6 +168,15 @@ describe('EngineSession', () => {
 		expect(entry.detail.amount).toBe(7);
 	});
 
+	it('marks AI-controlled players in session snapshots', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const human = snapshot.game.players.find((player) => player.id === 'A');
+		const ai = snapshot.game.players.find((player) => player.id === 'B');
+		expect(human?.aiControlled).toBe(false);
+		expect(ai?.aiControlled).toBe(true);
+	});
+
 	it('returns cloned passive evaluation modifier maps', () => {
 		const session = createTestSession();
 		const mods = session.getPassiveEvaluationMods();
