@@ -10,6 +10,7 @@ import {
 } from '../../contexts/RegistryMetadataContext';
 import {
 	formatDescriptorSummary,
+	formatDescriptorSummaryWithCount,
 	formatIconLabel,
 	toAssetDisplay,
 	toDescriptorDisplay,
@@ -165,12 +166,22 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
 
-	const showPopulationCard = () =>
+	const showPopulationCard = () => {
+		const roleSummaries =
+			popEntries.length > 0
+				? popEntries.map(([role, count]) => {
+						const descriptor =
+							populationDisplayMap.get(role) ??
+							toDescriptorDisplay(populationMetadata.select(role));
+						return formatDescriptorSummaryWithCount(descriptor, count);
+					})
+				: populationDescriptors.map((descriptor) =>
+						formatDescriptorSummary(descriptor),
+					);
+
 		handleHoverCard({
 			title: formatIconLabel(populationInfo),
-			effects: populationDescriptors.map((descriptor) =>
-				formatDescriptorSummary(descriptor),
-			),
+			effects: roleSummaries,
 			effectsTitle: POPULATION_ARCHETYPE_LABEL,
 			requirements: [],
 			...(populationInfo.description
@@ -178,6 +189,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				: {}),
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
+	};
 
 	const createRoleHoverHandlers = (roleDisplay: DescriptorDisplay) => {
 		const showRoleCard = () =>

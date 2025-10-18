@@ -66,3 +66,15 @@ export const formatDescriptorSummary = (
 	}
 	return base;
 };
+
+export const formatDescriptorSummaryWithCount = (
+	descriptor: DescriptorDisplay,
+	count: number,
+): string => {
+	const baseLabel = formatIconLabel(descriptor);
+	const withCount = `${baseLabel} × ${count}`.trim();
+	if (descriptor.description) {
+		return `${withCount} - ${descriptor.description}`.trim();
+	}
+	return withCount;
+};
