@@ -1025,19 +1025,23 @@
 		"populations": {
 			"council": {
 				"label": "Council",
-				"icon": "⚖️"
+				"icon": "⚖️",
+				"description": "The Council advises the crown and generates Action Points during the Growth phase. Keeping them employed fuels your economy."
 			},
 			"legion": {
 				"label": "Legion",
-				"icon": "🎖️"
+				"icon": "🎖️",
+				"description": "Legions lead your forces, boosting Army Strength and training troops each Growth phase."
 			},
 			"fortifier": {
 				"label": "Fortifier",
-				"icon": "🔧"
+				"icon": "🔧",
+				"description": "Fortifiers reinforce your defenses. They raise Fortification Strength and shore up the castle every Growth phase."
 			},
 			"citizen": {
 				"label": "Citizen",
-				"icon": "👤"
+				"icon": "👤",
+				"description": "Citizens are unassigned populace who await a role. They contribute little on their own but can be trained into specialists."
 			}
 		},
 		"buildings": {
