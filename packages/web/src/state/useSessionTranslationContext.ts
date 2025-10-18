@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type {
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../translation/context';
 import type { TranslationContext } from '../translation/context';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
@@ -43,12 +46,14 @@ export function useSessionTranslationContext({
 			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
 		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
 		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
-				}
-			: { passiveEvaluationModifiers };
+		const metadataPayload: SessionSnapshotMetadata = {
+			...(fallbackMetadata ?? {}),
+			...sessionMetadata,
+			passiveEvaluationModifiers,
+		};
+		if (effectLogs !== undefined) {
+			metadataPayload.effectLogs = effectLogs;
+		}
 		try {
 			const context = createTranslationContext(
 				sessionState,
