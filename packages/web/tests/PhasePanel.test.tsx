@@ -127,6 +127,20 @@ describe('<PhasePanel />', () => {
 		expect(screen.getByRole('button', { name: /next turn/i })).toBeDisabled();
 	});
 
+	it('disables the Next Turn button when the active player is AI-controlled', () => {
+		mockGame.phase = {
+			...defaultPhase,
+			canEndTurn: true,
+			isAdvancing: false,
+		};
+		mockGame.sessionState.game.players[0] = {
+			...mockGame.sessionState.game.players[0],
+			aiControlled: true,
+		};
+		render(<PhasePanel />);
+		expect(screen.getByRole('button', { name: /next turn/i })).toBeDisabled();
+	});
+
 	it('disables the Next Turn button while phases advance', () => {
 		mockGame.phase = {
 			...defaultPhase,

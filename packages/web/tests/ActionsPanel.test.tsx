@@ -125,6 +125,12 @@ beforeEach(() => {
 });
 
 describe('<ActionsPanel />', () => {
+	it('disables player interactions during AI-controlled turns', () => {
+		setScenario({ activePlayerAiControlled: true });
+		renderActionsPanel();
+		expect(screen.getByRole('button', { name: /Survey/i })).toBeDisabled();
+	});
+
 	it(
 		'renders hire options for generated population roles ' +
 			'with derived requirement icons',

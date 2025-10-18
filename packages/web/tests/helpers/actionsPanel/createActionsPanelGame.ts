@@ -44,6 +44,7 @@ interface Participant {
 	readonly lands: Array<{ id: string; slotsFree: number }>;
 	readonly buildings: Set<string>;
 	readonly actions: Set<string>;
+	readonly aiControlled?: boolean;
 }
 
 function pickResourceKey(
@@ -77,6 +78,7 @@ function createParticipant(
 	baseResources: Record<string, number>,
 	initialPopulation: Record<string, number>,
 	actionIds: string[],
+	options: { aiControlled?: boolean } = {},
 ): Participant {
 	return {
 		id,
@@ -86,6 +88,9 @@ function createParticipant(
 		lands: [],
 		buildings: new Set<string>(),
 		actions: new Set(actionIds),
+		...(options.aiControlled !== undefined
+			? { aiControlled: options.aiControlled }
+			: {}),
 	};
 }
 
@@ -113,6 +118,9 @@ function toPlayerSnapshot(
 		skipPhases: {},
 		skipSteps: {},
 		passives: [],
+		...(participant.aiControlled !== undefined
+			? { aiControlled: participant.aiControlled }
+			: {}),
 	};
 }
 
@@ -124,6 +132,8 @@ export function createActionsPanelGame({
 	resourceKeys,
 	statKeys,
 	placeholders,
+	activePlayerAiControlled,
+	opponentAiControlled,
 }: ActionsPanelGameOptions = {}): ActionsPanelTestHarness {
 	const sessionRegistries = createSessionRegistries();
 	const resourceSelection: ResourceSelectionContext = {
@@ -184,6 +194,7 @@ export function createActionsPanelGame({
 		baseResources,
 		content.initialPopulation,
 		content.actionIds,
+		{ aiControlled: activePlayerAiControlled },
 	);
 	const opponent = createParticipant(
 		'B',
@@ -191,6 +202,7 @@ export function createActionsPanelGame({
 		baseResources,
 		content.initialPopulation,
 		[],
+		{ aiControlled: opponentAiControlled },
 	);
 	const actionDefinitions = [
 		content.raisePopulationAction,
