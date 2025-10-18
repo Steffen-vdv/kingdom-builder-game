@@ -93,9 +93,6 @@ function ResolutionCard({
 		(isSourceDetail(resolution.source)
 			? (resolution.source.icon?.trim() ?? undefined)
 			: undefined);
-	const summaryItems = resolution.summaries.filter((item): item is string =>
-		Boolean(item?.trim()),
-	);
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
 	const headerTitle = actorHeaderSubject
 		? `${resolvedLabels.title} - ${actorHeaderSubject}`
@@ -128,15 +125,6 @@ function ResolutionCard({
 	const timelineTextClass = joinClasses(
 		CARD_BODY_TEXT_CLASS,
 		'whitespace-pre-wrap leading-relaxed',
-	);
-	const summaryContainerClass = joinClasses(
-		'rounded-2xl border border-amber-500/30 bg-amber-50/80 p-3',
-		'shadow-inner shadow-amber-500/20 dark:border-amber-400/30',
-		'dark:bg-amber-400/10',
-	);
-	const summaryTextClass = joinClasses(
-		CARD_BODY_TEXT_CLASS,
-		'whitespace-pre-line text-amber-900 dark:text-amber-100',
 	);
 	const shouldShowContinue = resolution.requireAcknowledgement;
 
@@ -174,20 +162,6 @@ function ResolutionCard({
 						))}
 					</ol>
 				</div>
-				{resolution.isComplete && summaryItems.length ? (
-					<div className={summaryContainerClass}>
-						<div className={joinClasses(CARD_LABEL_CLASS, 'text-amber-700')}>
-							Highlights
-						</div>
-						<ul className="mt-2 space-y-1">
-							{summaryItems.map((item, index) => (
-								<li key={index} className={summaryTextClass}>
-									{item}
-								</li>
-							))}
-						</ul>
-					</div>
-				) : null}
 			</div>
 			{shouldShowContinue ? (
 				<div className="mt-6 flex justify-end">
