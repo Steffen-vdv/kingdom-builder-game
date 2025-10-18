@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type {
+	SessionMetadataDescriptor,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../translation/context';
 import type { TranslationContext } from '../translation/context';
 export {
@@ -47,12 +51,110 @@ export function useSessionTranslationContext({
 			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
 		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
 		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
+		const metadataPayload: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers,
+		};
+		if (effectLogs !== undefined) {
+			metadataPayload.effectLogs = effectLogs;
+		}
+		type DescriptorRecordKey =
+			| 'resources'
+			| 'populations'
+			| 'buildings'
+			| 'developments'
+			| 'stats'
+			| 'assets';
+		const mergeDescriptor = (
+			primary: SessionMetadataDescriptor | undefined,
+			fallback: SessionMetadataDescriptor | undefined,
+		): SessionMetadataDescriptor | undefined => {
+			if (!primary && !fallback) {
+				return undefined;
+			}
+			const descriptor: SessionMetadataDescriptor = {};
+			if (primary?.label !== undefined) {
+				descriptor.label = primary.label;
+			} else if (fallback?.label !== undefined) {
+				descriptor.label = fallback.label;
+			}
+			if (primary?.icon !== undefined) {
+				descriptor.icon = primary.icon;
+			} else if (fallback?.icon !== undefined) {
+				descriptor.icon = fallback.icon;
+			}
+			if (primary?.description !== undefined) {
+				descriptor.description = primary.description;
+			} else if (fallback?.description !== undefined) {
+				descriptor.description = fallback.description;
+			}
+			if (primary?.displayAsPercent !== undefined) {
+				descriptor.displayAsPercent = primary.displayAsPercent;
+			} else if (fallback?.displayAsPercent !== undefined) {
+				descriptor.displayAsPercent = fallback.displayAsPercent;
+			}
+			if (primary?.format !== undefined) {
+				descriptor.format = primary.format;
+			} else if (fallback?.format !== undefined) {
+				descriptor.format = fallback.format;
+			}
+			return Object.keys(descriptor).length > 0 ? descriptor : undefined;
+		};
+		const mergeDescriptorRecord = (
+			primary: Record<string, SessionMetadataDescriptor> | undefined,
+			fallback: Record<string, SessionMetadataDescriptor> | undefined,
+		) => {
+			if (!primary && !fallback) {
+				return undefined;
+			}
+			const keys = new Set<string>([
+				...Object.keys(fallback ?? {}),
+				...Object.keys(primary ?? {}),
+			]);
+			const merged: Record<string, SessionMetadataDescriptor> = {};
+			for (const key of keys) {
+				const descriptor = mergeDescriptor(primary?.[key], fallback?.[key]);
+				if (descriptor) {
+					merged[key] = descriptor;
 				}
-			: { passiveEvaluationModifiers };
+			}
+			return Object.keys(merged).length > 0 ? merged : undefined;
+		};
+		const assignDescriptorField = (key: DescriptorRecordKey) => {
+			const merged = mergeDescriptorRecord(
+				sessionMetadata[key],
+				fallbackMetadata?.[key],
+			);
+			if (merged) {
+				metadataPayload[key] = merged;
+			}
+		};
+		assignDescriptorField('resources');
+		assignDescriptorField('populations');
+		assignDescriptorField('buildings');
+		assignDescriptorField('developments');
+		assignDescriptorField('stats');
+		assignDescriptorField('assets');
+		const assignMetadataField = <
+			K extends Extract<
+				keyof SessionSnapshotMetadata,
+				'phases' | 'triggers' | 'overview'
+			>,
+		>(
+			key: K,
+		) => {
+			const primary = sessionMetadata[key];
+			if (primary !== undefined) {
+				metadataPayload[key] = primary;
+				return;
+			}
+			const fallback = fallbackMetadata?.[key];
+			if (fallback !== undefined) {
+				metadataPayload[key] = fallback;
+			}
+		};
+		assignMetadataField('phases');
+		assignMetadataField('triggers');
+		assignMetadataField('overview');
 		try {
 			const context = createTranslationContext(
 				sessionState,
