@@ -35,6 +35,29 @@ function isSourceDetail(
 	return typeof source === 'object' && source !== null && 'kind' in source;
 }
 
+function isPhaseSource(
+	source: ResolutionSource | undefined,
+): source is Extract<ResolutionSource, { kind: 'phase' }> {
+	return isSourceDetail(source) && source.kind === 'phase';
+}
+
+function extractPhaseName(
+	actorLabel: string | undefined,
+	source: ResolutionSource | undefined,
+) {
+	const trimmedActor = actorLabel?.trim();
+	if (trimmedActor && trimmedActor.length > 0) {
+		return trimmedActor;
+	}
+	if (isPhaseSource(source)) {
+		const label = source.label?.trim();
+		if (label && label.length > 0) {
+			return label.replace(/^[\s\p{Extended_Pictographic}\uFE0F]+/u, '');
+		}
+	}
+	return 'Phase';
+}
+
 interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
@@ -84,6 +107,11 @@ function ResolutionCard({
 		(isSourceDetail(resolution.source)
 			? (resolution.source.icon?.trim() ?? undefined)
 			: undefined);
+	const phaseSource = isPhaseSource(resolution.source)
+		? resolution.source
+		: null;
+	const phaseName = extractPhaseName(resolution.actorLabel, resolution.source);
+	const phaseIcon = phaseSource?.icon?.trim();
 	const summaryItems = resolution.summaries.filter((item): item is string =>
 		Boolean(item?.trim()),
 	);
@@ -95,7 +123,10 @@ function ResolutionCard({
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',
 	);
-	const headerRowClass = 'flex items-start gap-4';
+	const headerContainerClass = 'flex flex-col gap-3';
+	const headerRowClass = 'flex items-start justify-between gap-4';
+	const headerMainRowClass = 'flex min-w-0 items-start gap-4';
+	const headerTextColumnClass = 'min-w-0 space-y-1';
 	const actionBadgeClass = joinClasses(
 		'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
 		'border border-white/50 bg-white/70 text-3xl shadow-inner',
@@ -130,27 +161,60 @@ function ResolutionCard({
 		'whitespace-pre-line text-amber-900 dark:text-amber-100',
 	);
 	const shouldShowContinue = resolution.requireAcknowledgement;
+	const phaseBoxClass = joinClasses(
+		'min-w-[10rem] rounded-2xl border border-white/40 bg-white/80 px-3 py-2',
+		'shadow-inner shadow-amber-500/10 backdrop-blur-sm',
+		'dark:border-white/10 dark:bg-slate-900/60 dark:shadow-slate-900/30',
+	);
+	const phaseLabelClass = joinClasses(
+		CARD_LABEL_CLASS,
+		'text-slate-600 dark:text-slate-300',
+	);
+	const phaseNameClass = joinClasses(
+		'flex items-center justify-end gap-2 text-sm font-semibold',
+		'text-slate-900 dark:text-slate-100',
+	);
 
 	return (
 		<div className={containerClass} data-state="enter">
 			<div className="space-y-3">
-				<div className={headerRowClass}>
-					{actionIcon || actionName ? (
-						<div className={actionBadgeClass} aria-hidden="true">
-							{actionIcon ?? '✦'}
+				<div className={headerContainerClass}>
+					<div className={headerRowClass}>
+						<div className={headerMainRowClass}>
+							{actionIcon || actionName ? (
+								<div className={actionBadgeClass} aria-hidden="true">
+									{actionIcon ?? '✦'}
+								</div>
+							) : null}
+							<div className={headerTextColumnClass}>
+								<div className={headerLabelClass}>Resolution</div>
+								<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
+							</div>
 						</div>
-					) : null}
-					<div className="flex flex-1 items-start justify-between gap-4">
-						<div className="space-y-1">
-							<div className={headerLabelClass}>Resolution</div>
-							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
-						</div>
-						{resolution.player ? (
-							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`${resolvedLabels.player} ${playerName}`}
+						{phaseSource ? (
+							<div className={phaseBoxClass}>
+								<div className={phaseLabelClass}>Current phase</div>
+								<div className={phaseNameClass}>
+									{phaseIcon ? (
+										<span aria-hidden="true" className="text-base">
+											{phaseIcon}
+										</span>
+									) : null}
+									<span>{phaseName}</span>
+								</div>
 							</div>
 						) : null}
 					</div>
+					{resolution.player ? (
+						<div
+							className={joinClasses(
+								'text-right text-slate-700 dark:text-slate-200',
+								CARD_META_TEXT_CLASS,
+							)}
+						>
+							{`${resolvedLabels.player} ${playerName}`}
+						</div>
+					) : null}
 				</div>
 				<div className={resolutionContainerClass}>
 					<div className={joinClasses(CARD_LABEL_CLASS, 'text-slate-600')}>

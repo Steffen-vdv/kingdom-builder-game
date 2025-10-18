@@ -63,6 +63,7 @@ describe('<ResolutionCard />', () => {
 				kind: 'phase',
 				label: 'Phase',
 				name: 'Growth Phase',
+				icon: '🌱',
 			},
 			actorLabel: 'Growth Phase',
 			player: {
@@ -88,5 +89,27 @@ describe('<ResolutionCard />', () => {
 		);
 
 		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
+	});
+
+	it('displays the current phase box with icon before the phase name', () => {
+		const resolution = createResolution({
+			source: {
+				kind: 'phase',
+				label: 'Growth Phase',
+				icon: '🌱',
+				name: 'Step One',
+			},
+			actorLabel: 'Growth Phase',
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		expect(screen.getByText('Current phase')).toBeInTheDocument();
+		const phaseContainer = screen.getByText('Current phase').parentElement;
+		expect(phaseContainer).not.toBeNull();
+		const nameElement = screen.getByText('Growth Phase');
+		expect(nameElement).toBeInTheDocument();
+		const iconElement = nameElement.previousElementSibling;
+		expect(iconElement?.textContent).toBe('🌱');
 	});
 });

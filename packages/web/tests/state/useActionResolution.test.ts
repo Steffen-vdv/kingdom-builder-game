@@ -203,4 +203,101 @@ describe('useActionResolution', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it('accumulates resolution lines across steps in the same phase', async () => {
+		vi.useFakeTimers();
+		try {
+			const addLog = vi.fn();
+			const setTrackedTimeout = vi
+				.fn<(callback: () => void, delay: number) => number>()
+				.mockImplementation((callback, delay) => {
+					return window.setTimeout(callback, delay);
+				});
+			const { result } = renderHook(() => {
+				const timeScaleRef = React.useRef(1);
+				timeScaleRef.current = 1;
+				const mountedRef = React.useRef(true);
+				React.useEffect(() => {
+					return () => {
+						mountedRef.current = false;
+					};
+				}, []);
+				return useActionResolution({
+					addLog,
+					setTrackedTimeout,
+					timeScaleRef,
+					mountedRef,
+				});
+			});
+			const firstSource = {
+				kind: 'phase' as const,
+				label: 'Growth Phase',
+				icon: '🌱',
+				id: 'growth',
+				name: 'Step One',
+			};
+			act(() => {
+				void result.current.showResolution({
+					lines: ['Growth Phase – Step One', '+2 Gold'],
+					summaries: ['+2 Gold'],
+					source: firstSource,
+					requireAcknowledgement: false,
+					actorLabel: 'Growth Phase',
+				});
+			});
+			expect(result.current.resolution?.visibleLines).toEqual([
+				'Growth Phase – Step One',
+			]);
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			expect(result.current.resolution?.visibleLines).toEqual([
+				'Growth Phase – Step One',
+				'+2 Gold',
+			]);
+			const secondSource = { ...firstSource, name: 'Step Two' };
+			act(() => {
+				void result.current.showResolution({
+					lines: ['Growth Phase – Step Two', '+1 Population'],
+					summaries: ['+1 Population'],
+					source: secondSource,
+					requireAcknowledgement: false,
+					actorLabel: 'Growth Phase',
+				});
+			});
+			expect(result.current.resolution?.lines).toEqual([
+				'Growth Phase – Step One',
+				'+2 Gold',
+				'Growth Phase – Step Two',
+				'+1 Population',
+			]);
+			expect(result.current.resolution?.visibleLines).toEqual([
+				'Growth Phase – Step One',
+				'+2 Gold',
+				'Growth Phase – Step Two',
+			]);
+			expect(result.current.resolution?.summaries).toEqual([
+				'+2 Gold',
+				'+1 Population',
+			]);
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			expect(result.current.resolution?.visibleLines).toEqual([
+				'Growth Phase – Step One',
+				'+2 Gold',
+				'Growth Phase – Step Two',
+				'+1 Population',
+			]);
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+			});
+			await Promise.resolve();
+			expect(result.current.resolution).toBeNull();
+			expect(addLog).toHaveBeenCalledWith('Growth Phase – Step Two', undefined);
+			expect(addLog).toHaveBeenCalledWith('+1 Population', undefined);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });

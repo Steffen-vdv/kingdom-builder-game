@@ -62,6 +62,41 @@ interface ActionResolution {
 	requireAcknowledgement: boolean;
 }
 
+function isPhaseSourceDetail(
+	source: ResolutionSource,
+): source is ResolutionPhaseSource {
+	return typeof source !== 'string' && source.kind === 'phase';
+}
+
+function shouldAccumulatePhaseResolution(
+	previous: ActionResolution | null,
+	nextSource: ResolutionSource,
+) {
+	if (!previous) {
+		return false;
+	}
+	if (!isPhaseSourceDetail(previous.source)) {
+		return false;
+	}
+	if (!isPhaseSourceDetail(nextSource)) {
+		return false;
+	}
+	const previousId = previous.source.id?.trim();
+	const nextId = nextSource.id?.trim();
+	if (previousId && nextId) {
+		return previousId === nextId;
+	}
+	if (previousId || nextId) {
+		return false;
+	}
+	const previousLabel = previous.source.label?.trim().toLowerCase();
+	const nextLabel = nextSource.label?.trim().toLowerCase();
+	if (previousLabel && nextLabel) {
+		return previousLabel === nextLabel;
+	}
+	return false;
+}
+
 function resolveActorLabel(
 	label: string | undefined,
 	source: ResolutionSource,
@@ -140,16 +175,39 @@ function useActionResolution({
 					resolvedSource,
 					action,
 				);
-				setResolution({
-					lines: entries,
-					visibleLines: [],
-					isComplete: false,
-					summaries,
-					source: resolvedSource,
-					requireAcknowledgement,
-					...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
-					...(player ? { player } : {}),
-					...(action ? { action } : {}),
+				let revealOffset = 0;
+				setResolution((previous) => {
+					if (shouldAccumulatePhaseResolution(previous, resolvedSource)) {
+						revealOffset = previous?.visibleLines.length ?? 0;
+						const mergedSummaries = [
+							...(previous?.summaries ?? []),
+							...summaries,
+						];
+						const mergedActorLabel =
+							previous?.actorLabel ?? resolvedActorLabel ?? undefined;
+						return {
+							...previous,
+							lines: [...(previous?.lines ?? []), ...entries],
+							visibleLines: previous?.visibleLines ?? [],
+							summaries: mergedSummaries,
+							isComplete: false,
+							requireAcknowledgement,
+							...(mergedActorLabel ? { actorLabel: mergedActorLabel } : {}),
+							...(player && !previous?.player ? { player } : {}),
+						} as ActionResolution;
+					}
+					revealOffset = 0;
+					return {
+						lines: entries,
+						visibleLines: [],
+						isComplete: false,
+						summaries,
+						source: resolvedSource,
+						requireAcknowledgement,
+						...(resolvedActorLabel ? { actorLabel: resolvedActorLabel } : {}),
+						...(player ? { player } : {}),
+						...(action ? { action } : {}),
+					};
 				});
 
 				const revealLine = (index: number) => {
@@ -164,7 +222,7 @@ function useActionResolution({
 						if (sequenceRef.current !== sequence) {
 							return previous;
 						}
-						if (previous.visibleLines.length > index) {
+						if (previous.visibleLines.length > index + revealOffset) {
 							return previous;
 						}
 						const nextVisible = [...previous.visibleLines, line];
@@ -185,6 +243,34 @@ function useActionResolution({
 							const duration = ACTION_EFFECT_DELAY / scale;
 							const finalize = () => {
 								if (!mountedRef.current || sequenceRef.current !== sequence) {
+									return;
+								}
+								let shouldResolveWithoutAcknowledgement = false;
+								setResolution((previous) => {
+									if (!previous) {
+										return previous;
+									}
+									if (
+										!previous.requireAcknowledgement &&
+										shouldAccumulatePhaseResolution(previous, resolvedSource)
+									) {
+										shouldResolveWithoutAcknowledgement = true;
+										if (!previous.isComplete) {
+											return {
+												...previous,
+												isComplete: true,
+											};
+										}
+										return previous;
+									}
+									return previous;
+								});
+								if (shouldResolveWithoutAcknowledgement) {
+									if (resolverRef.current) {
+										const resolver = resolverRef.current;
+										resolverRef.current = null;
+										resolver();
+									}
 									return;
 								}
 								acknowledgeResolution();
