@@ -22,9 +22,15 @@ guide for rationale, lore, and extended background.
      logs inside `artifacts/` so you can share the run when needed.
    - Run `npm run test:ui` whenever UI structure, layout, or copy might change
      and record the run in your notes for reviewers.
-   - Stop immediately if any of these commands fail. Fix the reported problem
-     (formatting, type errors, lint drift, or test regressions) and re-run the
-     command locally before staging changes so the PR lands clean.
+
+- Stop immediately if any of these commands fail. Fix the reported problem
+  (formatting, type errors, lint drift, or test regressions) and re-run the
+  command locally before staging changes so the PR lands clean.
+- Regenerate the runtime config fallback with
+  `npx tsx scripts/generateRuntimeConfig.ts` whenever content packages change.
+  `npm run check` executes
+  `packages/web/tests/runtime-config-fallback-sync.test.ts` to enforce this, so
+  stale snapshots will block your PR until you rerun the generator.
 
 - The Husky pre-push hook enforces that verification run (with a fallback
   to `npm run check && npm run test:coverage` on tooling failures). If you
