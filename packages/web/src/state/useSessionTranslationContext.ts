@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type {
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../translation/context';
 import type { TranslationContext } from '../translation/context';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
@@ -16,6 +19,39 @@ type UseSessionTranslationContextOptions = {
 interface SessionTranslationContextResult {
 	translationContext: TranslationContext | null;
 	isReady: boolean;
+}
+
+function applyMetadata(
+	target: SessionSnapshotMetadata,
+	source: Partial<SessionSnapshotMetadata> | undefined,
+): void {
+	if (!source) {
+		return;
+	}
+	const writableTarget = target as Partial<
+		Record<keyof SessionSnapshotMetadata, unknown>
+	>;
+	const keys = Object.keys(source) as Array<keyof SessionSnapshotMetadata>;
+	for (const key of keys) {
+		const value = source[key];
+		if (value !== undefined) {
+			writableTarget[key] = value;
+		}
+	}
+}
+
+export function mergeSessionMetadata(
+	fallback: SessionSnapshotMetadata | undefined,
+	current: SessionSnapshotMetadata | undefined,
+	overrides: Partial<SessionSnapshotMetadata> = {},
+): SessionSnapshotMetadata {
+	const merged: SessionSnapshotMetadata = {
+		passiveEvaluationModifiers: fallback?.passiveEvaluationModifiers ?? {},
+	};
+	applyMetadata(merged, fallback);
+	applyMetadata(merged, current);
+	applyMetadata(merged, overrides);
+	return merged;
 }
 
 export function useSessionTranslationContext({
@@ -43,12 +79,13 @@ export function useSessionTranslationContext({
 			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
 		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
 		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
-		const metadataPayload = effectLogs
-			? {
-					passiveEvaluationModifiers,
-					effectLogs,
-				}
-			: { passiveEvaluationModifiers };
+		const metadataPayload = mergeSessionMetadata(
+			fallbackMetadata,
+			sessionMetadata,
+			effectLogs !== undefined
+				? { passiveEvaluationModifiers, effectLogs }
+				: { passiveEvaluationModifiers },
+		);
 		try {
 			const context = createTranslationContext(
 				sessionState,
