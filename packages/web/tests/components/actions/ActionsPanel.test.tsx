@@ -11,7 +11,7 @@ import {
 	createSnapshotPlayer,
 } from '../../helpers/sessionFixtures';
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
-import type { LegacySession } from '../../../src/state/sessionTypes';
+import type { SessionAdapter } from '../../../src/state/sessionTypes';
 
 function createActionsPanelScenario() {
 	const scaffold = createTestSessionScaffold();
@@ -57,7 +57,7 @@ function createActionsPanelScenario() {
 		hasAiController: (playerId: string) => playerId === aiPlayer.id,
 		readActionMetadata: () => metadataSnapshot,
 		subscribeActionMetadata: () => () => {},
-	} as unknown as LegacySession;
+	} as unknown as SessionAdapter;
 	return {
 		mockGame,
 		actionCostResource,

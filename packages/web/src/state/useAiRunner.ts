@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import type { MutableRefObject } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
-import type { LegacySession } from './sessionTypes';
+import type { SessionAdapter } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 
 interface UseAiRunnerOptions {
-	session: LegacySession;
+	session: SessionAdapter;
 	sessionState: SessionSnapshot;
 	runUntilActionPhaseCore: () => Promise<void>;
 	syncPhaseState: (

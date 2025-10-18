@@ -8,6 +8,7 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
+import type { SessionAdapter } from '../../src/state/sessionTypes';
 import type {
 	SessionRequirementFailure,
 	SessionResourceDefinition,
@@ -55,7 +56,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 });
 
 describe('useActionPerformer', () => {
-	let session: LegacySession;
+	let session: SessionAdapter;
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
