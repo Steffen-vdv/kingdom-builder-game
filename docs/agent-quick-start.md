@@ -22,6 +22,10 @@ guide for rationale, lore, and extended background.
      logs inside `artifacts/` so you can share the run when needed.
    - Run `npm run test:ui` whenever UI structure, layout, or copy might change
      and record the run in your notes for reviewers.
+   - When icons, labels, or descriptions change, edit the definitions in
+     `@kingdom-builder/contents` (see [`packages/contents`](../packages/contents))
+     and rerun `npm run test:ui`. Do **not** patch fallback metadata in
+     `packages/web`—components read content-driven values at runtime.
    - Stop immediately if any of these commands fail. Fix the reported problem
      (formatting, type errors, lint drift, or test regressions) and re-run the
      command locally before staging changes so the PR lands clean.
@@ -69,6 +73,13 @@ guide for rationale, lore, and extended background.
    - Respect dependency boundaries: the web app imports engine code only
      from `@kingdom-builder/engine`, and the engine runtime never reaches into
      web or content internals beyond registry surfaces.
+   - Icons, labels, and descriptions originate in
+     `@kingdom-builder/contents`, flow through the session bootstrapper in
+     [`SessionManager.ts`](../packages/server/src/session/SessionManager.ts),
+     and surface in React via
+     [`RegistryMetadataContext`](../packages/web/src/contexts/RegistryMetadataContext.tsx).
+     Update the content package (not web-layer fallbacks) so every layer stays
+     in sync.
 4. **Honor the PR template**
    - Copy `.github/PULL_REQUEST_TEMPLATE.md` into every PR body and replace all
      placeholders with specific details before calling `make_pr`.
