@@ -48,6 +48,7 @@
 		"server:build": "npm run build --workspace @kingdom-builder/server",
 		"lint:eslint": "node scripts/run-eslint.mjs --ext=.ts,.tsx",
 		"dev:run": "run-p server:dev dev:web",
+		"dev:ui-tests": "run-p \"cross-env KB_SERVER_PORT=3001 KB_SERVER_HOST=127.0.0.1 npm run server:dev\" \"npm run dev:web -- --host 127.0.0.1 --port 4173\"",
 		"start:server": "node packages/server/dist/index.js",
 		"start": "cross-env NODE_ENV=production node scripts/run-with-auth.mjs start:server --require-tokens"
 	},
