@@ -27,31 +27,9 @@ type BivariantCallback<Args extends unknown[], TResult> = {
 
 export type ContentTranslatorContext = TranslationContext;
 
-/**
- * @deprecated Prefer {@link ContentTranslatorContext}. This alias is retained
- * so translators that still reference the full engine context continue to
- * type-check during the transition.
- */
-export type LegacyContentTranslatorContext = TranslationContext;
-
 export type TranslatorLogEntry = string | ActionLogLineDescriptor;
 
 export interface ContentTranslator<T = unknown, O = Record<string, unknown>> {
-	summarize: BivariantCallback<[T, TranslationContext, O?], Summary>;
-	describe: BivariantCallback<[T, TranslationContext, O?], Summary>;
-	log?: BivariantCallback<[T, TranslationContext, O?], TranslatorLogEntry[]>;
-}
-
-/**
- * @deprecated Temporary compatibility surface for translators that still type
- * their implementations against {@link LegacyContentTranslatorContext}. The
- * runtime translation context conforms to {@link ContentTranslatorContext}; new
- * code should migrate to that interface.
- */
-export interface LegacyContentTranslator<
-	T = unknown,
-	O = Record<string, unknown>,
-> {
 	summarize: BivariantCallback<[T, TranslationContext, O?], Summary>;
 	describe: BivariantCallback<[T, TranslationContext, O?], Summary>;
 	log?: BivariantCallback<[T, TranslationContext, O?], TranslatorLogEntry[]>;
