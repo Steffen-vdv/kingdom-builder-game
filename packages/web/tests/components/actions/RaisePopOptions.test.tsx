@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import RaisePopOptions from '../../../src/components/actions/RaisePopOptions';
@@ -26,9 +26,16 @@ import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import type {
 	LegacyGameEngineContextValue,
 } from '../../../src/state/GameContext.types';
-import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
+import type {
+	SessionPlayerId,
+	SessionRequirementFailure,
+} from '@kingdom-builder/protocol/session';
 import type { Action } from '../../../src/components/actions/types';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
+
+afterEach(() => {
+	cleanup();
+});
 
 interface RaisePopScenario {
 	registries: SessionRegistries;
@@ -38,6 +45,10 @@ interface RaisePopScenario {
 	action: Action;
 	player: LegacyGameEngineContextValue['sessionView']['active'];
 	populationIds: string[];
+	setRoleRequirements: (
+		role: string,
+		failures: SessionRequirementFailure[],
+	) => void;
 }
 
 function createRaisePopScenario(
@@ -101,10 +112,70 @@ function createRaisePopScenario(
 	if (!activeView) {
 		throw new Error('Expected active player view in session.');
 	}
+	const requirementStore = new Map<string, SessionRequirementFailure[]>();
+	const requirementListeners = new Map<
+		string,
+		Set<(snapshot: { requirements?: SessionRequirementFailure[] }) => void>
+	>();
+	for (const roleId of populationIds) {
+		requirementStore.set(roleId, []);
+	}
+	const cloneFailures = (failures: SessionRequirementFailure[]) =>
+		failures.map((failure) => ({
+			requirement: failure.requirement,
+			...(failure.details ? { details: { ...failure.details } } : {}),
+			...(failure.message ? { message: failure.message } : {}),
+		}));
+	const setRoleRequirements = (
+		role: string,
+		failures: SessionRequirementFailure[],
+	) => {
+		requirementStore.set(role, cloneFailures(failures));
+		const listeners = requirementListeners.get(role);
+		if (!listeners) {
+			return;
+		}
+		const snapshot = { requirements: cloneFailures(failures) };
+		for (const listener of listeners) {
+			listener(snapshot);
+		}
+	};
 	mockGame.session = {
 		getActionCosts: vi.fn(() => ({ gold: 5, ap: 1 })),
-		getActionRequirements: vi.fn(() => []),
+		getActionRequirements: vi.fn((_, params?: { role?: string }) => {
+			const role = params?.role;
+			if (!role) {
+				return [];
+			}
+			return cloneFailures(requirementStore.get(role) ?? []);
+		}),
 		getActionOptions: vi.fn(() => []),
+		readActionMetadata: vi.fn((_, params?: { role?: string }) => {
+			const role = params?.role;
+			if (!role) {
+				return {};
+			}
+			const failures = requirementStore.get(role);
+			if (!failures) {
+				return {};
+			}
+			return { requirements: cloneFailures(failures) };
+		}),
+		subscribeActionMetadata: vi.fn((_, params, listener) => {
+			const role = params?.role;
+			if (!role) {
+				return () => {};
+			}
+			let listeners = requirementListeners.get(role);
+			if (!listeners) {
+				listeners = new Set();
+				requirementListeners.set(role, listeners);
+			}
+			listeners.add(listener);
+			return () => {
+				listeners?.delete(listener);
+			};
+		}),
 	} as unknown as LegacyGameEngineContextValue['session'];
 	return {
 		registries,
@@ -114,6 +185,7 @@ function createRaisePopScenario(
 		action,
 		player: activeView,
 		populationIds,
+		setRoleRequirements,
 	};
 }
 
@@ -212,6 +284,49 @@ describe('<RaisePopOptions />', () => {
 			if (summaryItems.length > 0) {
 				expect(summaryItems[0]?.textContent ?? '').toContain(expectedIcon);
 			}
+		}
+	});
+
+	it('disables hire options when requirements are not met', () => {
+		const failure: SessionRequirementFailure = {
+			requirement: {
+				type: 'evaluator',
+				method: 'compare',
+				params: {
+					operator: 'lt',
+					left: { type: 'population' },
+					right: {
+						type: 'stat',
+						params: { key: 'maxPopulation' },
+					},
+				},
+			},
+			details: {
+				left: { value: 3 },
+				right: { value: 3 },
+			},
+		};
+		for (const role of scenario.populationIds) {
+			scenario.setRoleRequirements(role, [failure]);
+		}
+		const { registries, metadata, metadataSelectors, action, player } =
+			scenario;
+		const selectResourceDescriptor = (resourceKey: string) =>
+			metadataSelectors.resourceMetadata.select(resourceKey);
+		render(
+			<RegistryMetadataProvider registries={registries} metadata={metadata}>
+				<RaisePopOptions
+					action={action}
+					player={player}
+					canInteract={true}
+					selectResourceDescriptor={selectResourceDescriptor}
+				/>
+			</RegistryMetadataProvider>,
+		);
+		const hireButtons = screen.getAllByRole('button', { name: /hire/i });
+		expect(hireButtons.length).toBeGreaterThan(0);
+		for (const button of hireButtons) {
+			expect(button).toBeDisabled();
 		}
 	});
 });

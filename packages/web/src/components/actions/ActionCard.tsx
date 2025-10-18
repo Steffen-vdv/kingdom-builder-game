@@ -1,4 +1,9 @@
-import type { ReactElement, ReactNode } from 'react';
+import {
+	useLayoutEffect,
+	useRef,
+	type ReactElement,
+	type ReactNode,
+} from 'react';
 import { type Summary } from '../../translation';
 import type { TranslationAssets } from '../../translation/context';
 import { renderSummary, renderCosts } from '../../translation/render';
@@ -74,6 +79,22 @@ export default function ActionCard({
 		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
 	const isBack = variant === 'back';
 	const interactive = !isBack && enabled;
+	const buttonRef = useRef<HTMLButtonElement | null>(null);
+	useLayoutEffect(() => {
+		const element = buttonRef.current;
+		if (!element) {
+			return;
+		}
+		if (interactive) {
+			element.disabled = false;
+			element.removeAttribute('disabled');
+			element.setAttribute('aria-disabled', 'false');
+			return;
+		}
+		element.disabled = true;
+		element.setAttribute('disabled', '');
+		element.setAttribute('aria-disabled', 'true');
+	}, [interactive]);
 	const containerClass = [
 		'action-card',
 		'panel-card',
@@ -163,6 +184,8 @@ export default function ActionCard({
 					className="action-card__face action-card__face--front"
 					onClick={interactive ? onClick : undefined}
 					disabled={!interactive}
+					aria-disabled={!interactive}
+					ref={buttonRef}
 				>
 					<div className={frontContentClass}>
 						<span className="text-base font-medium">{title}</span>

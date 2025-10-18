@@ -28,6 +28,10 @@ import {
 import { toPerformableAction, type Action, type DisplayPlayer } from './types';
 import { normalizeActionFocus } from './types';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
+import {
+	getRoleRequirementState,
+	useActionRoleRequirements,
+} from './useActionRoleRequirements';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -53,6 +57,7 @@ export default function RaisePopOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		sessionId,
 	} = useGameEngine();
 	const { populations } = useRegistryMetadata();
 	const populationMetadata = usePopulationMetadata();
@@ -91,6 +96,12 @@ export default function RaisePopOptions({
 	const roleOptions = useMemo(
 		() => determineRaisePopRoles(actionDefinition, populationRegistry),
 		[actionDefinition, populationRegistry],
+	);
+	const roleRequirements = useActionRoleRequirements(
+		action.id,
+		roleOptions,
+		session,
+		sessionId,
 	);
 	const resolvePopulationDescriptor = useCallback(
 		(role: string) => {
@@ -154,13 +165,29 @@ export default function RaisePopOptions({
 				} catch {
 					upkeep = undefined;
 				}
-				const rawRequirements = session.getActionRequirements(action.id);
-				const requirements = rawRequirements.map((failure) =>
-					translateRequirementFailure(failure, translationContext),
+				const requirementState = getRoleRequirementState(
+					roleRequirements,
+					role,
 				);
+				const cachedRequirementFailures = session.getActionRequirements(
+					action.id,
+					{ role },
+				);
+				const failures = cachedRequirementFailures ?? requirementState.failures;
+				const requirementsReady =
+					requirementState.ready || cachedRequirementFailures !== undefined;
+				const requirementsLoading =
+					!requirementsReady && requirementState.loading;
+				const requirements = requirementsReady
+					? failures.map((failure) =>
+							translateRequirementFailure(failure, translationContext),
+						)
+					: requirementsLoading
+						? ['Loading requirements…']
+						: [];
 				const canPay = playerHasRequiredResources(player.resources, costs);
-				const meetsReq = requirements.length === 0;
-				const enabled = canPay && meetsReq && canInteract;
+				const meetsReq = requirementsReady && failures.length === 0;
+				const enabled = canPay && meetsReq && canInteract && requirementsReady;
 				const requirementIcons = getRequirementIconsForRole(role);
 				const insufficientTooltip = formatMissingResources(
 					costs,
@@ -176,7 +203,9 @@ export default function RaisePopOptions({
 					? requirements.join(', ')
 					: !canPay
 						? (insufficientTooltip ?? 'Cannot pay costs')
-						: undefined;
+						: !requirementsReady
+							? 'Loading requirements…'
+							: undefined;
 				const summary = describeContent(
 					'action',
 					action.id,
