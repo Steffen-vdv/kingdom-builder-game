@@ -1,5 +1,17 @@
 import { useCallback, useRef, useState } from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
+import type {
+	ActionResolution,
+	ResolutionSource,
+	ShowResolutionOptions,
+} from './useActionResolution.types';
+import {
+	isPhaseSourceDetail,
+	resolveActorLabel,
+	resolveTimelineEntries,
+	resolveVisibleTimelineEntries,
+	shouldAppendPhaseResolution,
+} from './useActionResolution.helpers';
 import { ACTION_EFFECT_DELAY } from './useGameLog';
 
 interface UseActionResolutionOptions {
@@ -12,110 +24,10 @@ interface UseActionResolutionOptions {
 	mountedRef: React.MutableRefObject<boolean>;
 }
 
-interface ResolutionActionMeta {
-	id: string;
-	name: string;
-	icon?: string;
-}
-
-interface ResolutionSourceBase {
-	kind: 'action' | 'phase';
-	label: string;
-	icon?: string;
-}
-
-interface ResolutionActionSource extends ResolutionSourceBase {
-	kind: 'action';
-	id: string;
-	name: string;
-}
-
-interface ResolutionPhaseSource extends ResolutionSourceBase {
-	kind: 'phase';
-	id?: string;
-	name?: string;
-}
-
-type ResolutionSourceDetail = ResolutionActionSource | ResolutionPhaseSource;
-
-type ResolutionSource = 'action' | 'phase' | ResolutionSourceDetail;
-
-interface ShowResolutionOptions {
-	lines: string | string[];
-	player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
-	action?: ResolutionActionMeta;
-	summaries?: string[];
-	source?: ResolutionSource;
-	actorLabel?: string;
-	requireAcknowledgement?: boolean;
-}
-
-interface ActionResolution {
-	lines: string[];
-	visibleLines: string[];
-	isComplete: boolean;
-	player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
-	action?: ResolutionActionMeta;
-	summaries: string[];
-	source: ResolutionSource;
-	actorLabel?: string;
-	requireAcknowledgement: boolean;
-}
-
-function resolveActorLabel(
-	label: string | undefined,
-	source: ResolutionSource,
-	action: ResolutionActionMeta | undefined,
-): string | undefined {
-	const trimmed = label?.trim();
-	if (trimmed) {
-		return trimmed;
-	}
-	if (typeof source === 'string') {
-		if (source === 'action') {
-			return action?.name?.trim() || undefined;
-		}
-		return undefined;
-	}
-	if (source.kind === 'action') {
-		return source.name?.trim() || action?.name?.trim() || undefined;
-	}
-	return undefined;
-}
-
 type ResolutionStateUpdater =
 	| ActionResolution
 	| null
 	| ((previous: ActionResolution | null) => ActionResolution | null);
-const isPhaseSourceDetail = (
-	source: ResolutionSource,
-): source is Extract<ResolutionSource, { kind: 'phase' }> =>
-	typeof source !== 'string' && source.kind === 'phase';
-
-const resolvePhaseIdentity = (
-	source: Extract<ResolutionSource, { kind: 'phase' }>,
-) => source.id?.trim() || source.label?.trim() || null;
-function shouldAppendPhaseResolution(
-	existing: ActionResolution | null,
-	nextSource: ResolutionSource,
-	requireAcknowledgement: boolean,
-) {
-	if (
-		!existing ||
-		existing.requireAcknowledgement ||
-		requireAcknowledgement ||
-		!isPhaseSourceDetail(existing.source) ||
-		!isPhaseSourceDetail(nextSource)
-	) {
-		return false;
-	}
-	const existingIdentity = resolvePhaseIdentity(existing.source);
-	const nextIdentity = resolvePhaseIdentity(nextSource);
-	return Boolean(
-		existingIdentity && nextIdentity && existingIdentity === nextIdentity,
-	);
-}
-
 function useActionResolution({
 	addLog,
 	setTrackedTimeout,
@@ -164,6 +76,8 @@ function useActionResolution({
 			source,
 			actorLabel,
 			requireAcknowledgement = true,
+			timeline,
+			visibleTimeline,
 		}: ShowResolutionOptions) => {
 			const entries = (Array.isArray(lines) ? lines : [lines]).filter(
 				(line): line is string => Boolean(line?.trim()),
@@ -205,6 +119,21 @@ function useActionResolution({
 					? [...previousLines, ...entries]
 					: [...entries];
 				const combinedVisible = [...previousVisible];
+				const resolvedTimelineEntries = resolveTimelineEntries(
+					entries,
+					timeline,
+				);
+				const resolvedVisibleTimelineEntries =
+					resolveVisibleTimelineEntries(visibleTimeline);
+				const timelineEntries = shouldAppend
+					? [...(baseResolution?.timeline ?? []), ...resolvedTimelineEntries]
+					: [...resolvedTimelineEntries];
+				const combinedVisibleTimeline = shouldAppend
+					? [
+							...(baseResolution?.visibleTimeline ?? []),
+							...resolvedVisibleTimelineEntries,
+						]
+					: [...resolvedVisibleTimelineEntries];
 				const filteredSummaries = summaries
 					.map((item) => item?.trim())
 					.filter((item): item is string => Boolean(item));
@@ -235,6 +164,8 @@ function useActionResolution({
 				setResolution({
 					lines: combinedLines,
 					visibleLines: combinedVisible,
+					timeline: timelineEntries,
+					visibleTimeline: combinedVisibleTimeline,
 					isComplete: combinedVisible.length === combinedLines.length,
 					summaries: combinedSummaries,
 					source: resolvedSourceForState,
@@ -249,6 +180,7 @@ function useActionResolution({
 					if (line === undefined) {
 						return;
 					}
+					const descriptor = timelineEntries[startIndex + offset];
 					setResolution((previous) => {
 						if (!previous) {
 							return previous;
@@ -261,10 +193,14 @@ function useActionResolution({
 							return previous;
 						}
 						const nextVisible = [...previous.visibleLines, line];
+						const nextVisibleTimeline = descriptor
+							? [...previous.visibleTimeline, descriptor]
+							: previous.visibleTimeline;
 						const isComplete = nextVisible.length >= previous.lines.length;
 						return {
 							...previous,
 							visibleLines: nextVisible,
+							visibleTimeline: nextVisibleTimeline,
 							isComplete,
 						};
 					});
@@ -346,5 +282,5 @@ export type {
 	ResolutionActionMeta,
 	ResolutionSource,
 	ShowResolutionOptions,
-};
+} from './useActionResolution.types';
 export { useActionResolution };

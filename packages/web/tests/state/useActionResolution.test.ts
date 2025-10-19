@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { useActionResolution } from '../../src/state/useActionResolution';
+import type { ActionLogLineDescriptor } from '../../src/translation/log/timeline';
 import { ACTION_EFFECT_DELAY } from '../../src/state/useGameLog';
 
 describe('useActionResolution', () => {
@@ -39,6 +40,10 @@ describe('useActionResolution', () => {
 				id: 'test-action',
 				name: 'Test Action',
 			};
+			const timeline: ActionLogLineDescriptor[] = [
+				{ text: 'First reveal', depth: 0, kind: 'headline' },
+				{ text: 'Second reveal', depth: 1, kind: 'effect' },
+			];
 			act(() => {
 				resolutionPromise = result.current.showResolution({
 					lines: ['First reveal', 'Second reveal'],
@@ -47,6 +52,7 @@ describe('useActionResolution', () => {
 						name: 'Player A',
 					},
 					action: actionMeta,
+					timeline,
 				});
 			});
 			expect(addLog).toHaveBeenCalledTimes(1);
@@ -55,6 +61,7 @@ describe('useActionResolution', () => {
 				name: 'Player A',
 			});
 			expect(result.current.resolution?.visibleLines).toEqual(['First reveal']);
+			expect(result.current.resolution?.visibleTimeline).toEqual([timeline[0]]);
 			expect(result.current.resolution?.source).toBe('action');
 			expect(result.current.resolution?.actorLabel).toBe('Test Action');
 			expect(result.current.resolution?.isComplete).toBe(false);
@@ -66,6 +73,7 @@ describe('useActionResolution', () => {
 				vi.advanceTimersByTime(ACTION_EFFECT_DELAY / 3 - 1);
 			});
 			expect(result.current.resolution?.visibleLines).toEqual(['First reveal']);
+			expect(result.current.resolution?.visibleTimeline).toEqual([timeline[0]]);
 			expect(addLog).toHaveBeenCalledTimes(1);
 			act(() => {
 				vi.advanceTimersByTime(1);
@@ -73,6 +81,10 @@ describe('useActionResolution', () => {
 			expect(result.current.resolution?.visibleLines).toEqual([
 				'First reveal',
 				'Second reveal',
+			]);
+			expect(result.current.resolution?.visibleTimeline).toEqual([
+				timeline[0],
+				timeline[1],
 			]);
 			expect(result.current.resolution?.isComplete).toBe(true);
 			expect(addLog).toHaveBeenCalledTimes(2);
@@ -148,6 +160,12 @@ describe('useActionResolution', () => {
 			});
 			expect(result.current.resolution?.source).toBe('phase');
 			expect(result.current.resolution?.actorLabel).toBe('Growth Phase');
+			expect(result.current.resolution?.timeline).toEqual([
+				{ text: 'Phase line', depth: 0, kind: 'headline' },
+			]);
+			expect(result.current.resolution?.visibleTimeline).toEqual([
+				{ text: 'Phase line', depth: 0, kind: 'headline' },
+			]);
 		} finally {
 			vi.useRealTimers();
 		}
@@ -186,6 +204,9 @@ describe('useActionResolution', () => {
 			});
 			expect(result.current.resolution?.requireAcknowledgement).toBe(false);
 			expect(addLog).toHaveBeenCalledWith('Auto line', undefined);
+			expect(result.current.resolution?.visibleTimeline).toEqual([
+				{ text: 'Auto line', depth: 0, kind: 'headline' },
+			]);
 			expect(setTrackedTimeout).toHaveBeenLastCalledWith(
 				expect.any(Function),
 				ACTION_EFFECT_DELAY,
