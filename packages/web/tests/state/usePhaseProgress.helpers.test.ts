@@ -226,6 +226,20 @@ describe('advanceToActionPhase', () => {
 			showResolution: showResolution as never,
 			registries: createSessionRegistries(),
 		});
+		const firstCall = formatPhaseResolution.mock.calls[0]?.[0];
+		expect(firstCall?.phaseDefinition?.id).toBe(
+			phases[0]?.id ?? 'phase-growth',
+		);
+		expect(firstCall?.stepDefinition?.id).toBe(
+			phases[0]?.steps?.[0]?.id ?? 'step-income',
+		);
+		const secondCall = formatPhaseResolution.mock.calls[1]?.[0];
+		expect(secondCall?.phaseDefinition?.id).toBe(
+			phases[0]?.id ?? 'phase-growth',
+		);
+		expect(secondCall?.stepDefinition?.id).toBe(
+			phases[0]?.steps?.[1]?.id ?? 'step-ap',
+		);
 		expect(showResolution).toHaveBeenCalledTimes(2);
 		expect(showResolution).toHaveBeenNthCalledWith(
 			1,
