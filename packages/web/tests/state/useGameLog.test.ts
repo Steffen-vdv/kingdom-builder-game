@@ -72,14 +72,31 @@ describe('useGameLog', () => {
 			useGameLog({ sessionSnapshot: sessionState }),
 		);
 
+		const createResolution = (message: string): ActionResolution => ({
+			lines: [message],
+			visibleLines: [],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: false,
+			summaries: [],
+			source: 'action',
+			requireAcknowledgement: false,
+		});
+
 		act(() => {
-			result.current.addLog('Initial entry');
+			result.current.addResolutionLog(
+				createResolution('Initial entry'),
+				players[0],
+			);
 		});
 		expect(result.current.log[0]?.id).toBe(0);
 
 		act(() => {
 			for (let index = 1; index <= MAX_LOG_ENTRIES; index += 1) {
-				result.current.addLog(`Message ${index}`);
+				result.current.addResolutionLog(
+					createResolution(`Message ${index}`),
+					players[index % players.length],
+				);
 			}
 		});
 		expect(result.current.log).toHaveLength(MAX_LOG_ENTRIES);
@@ -96,7 +113,10 @@ describe('useGameLog', () => {
 		const preservedId = ids[Math.floor(ids.length / 2)];
 
 		act(() => {
-			result.current.addLog('Overflow entry');
+			result.current.addResolutionLog(
+				createResolution('Overflow entry'),
+				players[0],
+			);
 		});
 		expect(result.current.log).toHaveLength(MAX_LOG_ENTRIES);
 		const updatedIds = result.current.log.map((entry) => entry.id);

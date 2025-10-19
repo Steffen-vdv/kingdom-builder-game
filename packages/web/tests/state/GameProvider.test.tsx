@@ -48,7 +48,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
 const runUntilActionPhaseCoreMock = vi.hoisted(() => vi.fn());
 const handleEndTurnMock = vi.hoisted(() => vi.fn());
-const addLogMock = vi.hoisted(() => vi.fn());
+const addResolutionLogMock = vi.hoisted(() => vi.fn());
 const pushToastMock = vi.hoisted(() => vi.fn());
 const pushErrorToastMock = vi.hoisted(() => vi.fn());
 const pushSuccessToastMock = vi.hoisted(() => vi.fn());
@@ -92,7 +92,7 @@ vi.mock('../../src/state/useGameLog', () => ({
 	useGameLog: () => ({
 		log: [],
 		logOverflowed: false,
-		addLog: addLogMock,
+		addResolutionLog: addResolutionLogMock,
 	}),
 	ACTION_EFFECT_DELAY: 600,
 }));
@@ -195,7 +195,7 @@ describe('GameProvider', () => {
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
-		addLogMock.mockReset();
+		addResolutionLogMock.mockReset();
 		pushToastMock.mockReset();
 		pushErrorToastMock.mockReset();
 		pushSuccessToastMock.mockReset();

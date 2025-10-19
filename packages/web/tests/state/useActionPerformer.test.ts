@@ -232,13 +232,16 @@ describe('useActionPerformer', () => {
 		);
 		expect(pushErrorToast).toHaveBeenCalledWith(authMessage);
 		expect(addResolutionLog).toHaveBeenCalledTimes(1);
-		const failureDetail = `Failed to play ⚔️ Attack: ${authMessage}`;
+		const failureDetail = authMessage;
 		const resolution = addResolutionLog.mock.calls[0]?.[0];
 		expect(resolution).toBeDefined();
-		expect(resolution?.lines).toEqual(['Action failed', `• ${failureDetail}`]);
-		expect(resolution?.summaries).toEqual([failureDetail]);
+		expect(resolution?.lines).toEqual([
+			'Failed to play ⚔️ Attack',
+			`• ${failureDetail}`,
+		]);
+		expect(resolution?.summaries).toEqual([authMessage]);
 		expect(resolution?.timeline).toEqual([
-			{ text: 'Action failed', depth: 0, kind: 'headline' },
+			{ text: 'Failed to play ⚔️ Attack', depth: 0, kind: 'headline' },
 			{ text: failureDetail, depth: 1, kind: 'effect' },
 		]);
 		expect(resolution?.player).toEqual({
@@ -285,12 +288,15 @@ describe('useActionPerformer', () => {
 		);
 		expect(pushErrorToast).toHaveBeenCalledWith(translated);
 		expect(addResolutionLog).toHaveBeenCalledTimes(1);
-		const failureDetail = `Failed to play ⚔️ Attack: ${translated}`;
+		const failureDetail = translated;
 		const resolution = addResolutionLog.mock.calls[0]?.[0];
-		expect(resolution?.lines).toEqual(['Action failed', `• ${failureDetail}`]);
-		expect(resolution?.summaries).toEqual([failureDetail]);
+		expect(resolution?.lines).toEqual([
+			'Failed to play ⚔️ Attack',
+			`• ${failureDetail}`,
+		]);
+		expect(resolution?.summaries).toEqual([translated]);
 		expect(resolution?.timeline).toEqual([
-			{ text: 'Action failed', depth: 0, kind: 'headline' },
+			{ text: 'Failed to play ⚔️ Attack', depth: 0, kind: 'headline' },
 			{ text: failureDetail, depth: 1, kind: 'effect' },
 		]);
 		expect(resolution?.player).toEqual({

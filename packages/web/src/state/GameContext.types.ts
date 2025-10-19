@@ -8,7 +8,7 @@ import type { Action } from './actionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import type { TimeScale } from './useTimeScale';
 import type { HoverCard } from './useHoverCard';
-import type { LogEntry } from './useGameLog';
+import type { ResolutionLogEntry } from './useGameLog';
 import type { Toast } from './useToasts';
 import type {
 	ActionResolution,
@@ -72,7 +72,7 @@ export interface GameEngineContextValue {
 	selectors: SessionDerivedSelectors;
 	translationContext: TranslationContext;
 	ruleSnapshot: SessionRuleSnapshot;
-	log: LogEntry[];
+	log: ResolutionLogEntry[];
 	logOverflowed: boolean;
 	resolution: ActionResolution | null;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;

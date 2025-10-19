@@ -59,7 +59,6 @@ vi.mock('../../src/state/useGameLog', () => ({
 	useGameLog: () => ({
 		log: [],
 		logOverflowed: false,
-		addLog: vi.fn(),
 		addResolutionLog: vi.fn(),
 	}),
 }));
