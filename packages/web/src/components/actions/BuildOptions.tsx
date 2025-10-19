@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import {
 	splitSummary,
 	translateRequirementFailure,
@@ -22,6 +23,7 @@ import {
 	type DisplayPlayer,
 } from './types';
 import { normalizeActionFocus } from './types';
+import { useActionOptionCosts } from './useActionOptionCosts';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -70,29 +72,40 @@ export default function BuildOptions({
 		translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
+	const costRequests = useMemo(
+		() =>
+			buildings.map((building) => ({
+				key: building.id,
+				params: { id: building.id } as ActionParametersPayload,
+			})),
+		[buildings],
+	);
+	const costMap = useActionOptionCosts(action.id, costRequests);
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
-					id: building.id,
-				});
+				const metadataCosts = costMap.get(building.id);
 				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(costsBag)) {
+				for (const [costKey, costAmount] of Object.entries(
+					building.costs ?? {},
+				)) {
 					costs[costKey] = costAmount ?? 0;
+				}
+				for (const [costKey, costAmount] of Object.entries(
+					metadataCosts ?? {},
+				)) {
+					if (costAmount === undefined) {
+						continue;
+					}
+					costs[costKey] = costAmount;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
 				return { building, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [
-		buildings,
-		session,
-		action.id,
-		actionCostResource,
-		player.buildings.size,
-	]);
+	}, [buildings, actionCostResource, player.buildings.size, costMap]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

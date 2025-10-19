@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
@@ -17,6 +18,7 @@ import {
 	type DisplayPlayer,
 } from './types';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
+import { useActionOptionCosts } from './useActionOptionCosts';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -59,7 +61,6 @@ export default function DevelopOptions({
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -72,22 +73,33 @@ export default function DevelopOptions({
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
+	const costRequests = useMemo(
+		() =>
+			developments.map((development) => ({
+				key: development.id,
+				params: {
+					id: development.id,
+					...(landIdForCost ? { landId: landIdForCost } : {}),
+				} as ActionParametersPayload,
+			})),
+		[developments, landIdForCost],
+	);
+	const costMap = useActionOptionCosts(action.id, costRequests);
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
-					id: development.id,
-					landId: landIdForCost,
-				});
+				const metadataCosts = costMap.get(development.id);
 				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(costsBag)) {
+				for (const [costKey, costAmount] of Object.entries(
+					metadataCosts ?? {},
+				)) {
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	}, [developments, actionCostResource, costMap]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

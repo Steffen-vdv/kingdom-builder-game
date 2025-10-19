@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import {
 	describeContent,
 	splitSummary,
@@ -22,6 +23,7 @@ import {
 	type DisplayPlayer,
 } from './types';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
+import { useActionOptionCosts } from './useActionOptionCosts';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -45,7 +47,6 @@ export default function DemolishOptions({
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -54,19 +55,31 @@ export default function DemolishOptions({
 		actionCostResource,
 	} = useGameEngine();
 	const { sessionView } = selectors;
-
+	const buildingIds = useMemo(
+		() => Array.from(player.buildings),
+		[player.buildings],
+	);
+	const costRequests = useMemo(
+		() =>
+			buildingIds.map((buildingId) => ({
+				key: buildingId,
+				params: { id: buildingId } as ActionParametersPayload,
+			})),
+		[buildingIds],
+	);
+	const costMap = useActionOptionCosts(action.id, costRequests);
 	const entries = useMemo(() => {
-		return Array.from(player.buildings)
+		return buildingIds
 			.map((buildingId) => {
 				const building = sessionView.buildings.get(buildingId);
 				if (!building) {
 					return null;
 				}
-				const costsBag = session.getActionCosts(action.id, {
-					id: buildingId,
-				});
+				const metadataCosts = costMap.get(buildingId);
 				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(costsBag)) {
+				for (const [costKey, costAmount] of Object.entries(
+					metadataCosts ?? {},
+				)) {
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
@@ -90,13 +103,7 @@ export default function DemolishOptions({
 				}
 				return first.building.name.localeCompare(second.building.name);
 			});
-	}, [
-		session,
-		sessionView.buildings,
-		action.id,
-		actionCostResource,
-		player.buildings.size,
-	]);
+	}, [buildingIds, sessionView.buildings, actionCostResource, costMap]);
 
 	if (entries.length === 0) {
 		return null;
