@@ -1,13 +1,10 @@
 /** @vitest-environment jsdom */
-import React, { useContext } from 'react';
+import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
-import {
-	GameEngineContext,
-	GameProviderInner,
-} from '../../src/state/GameProviderInner';
+import { GameProviderInner } from '../../src/state/GameProviderInner';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -127,18 +124,6 @@ vi.mock('../../src/state/sessionSdk', () => ({
 	updatePlayerName: vi.fn(() => Promise.resolve()),
 }));
 
-function ContextInspector() {
-	const context = useContext(GameEngineContext);
-	if (!context) {
-		throw new Error('Missing game engine context');
-	}
-	return (
-		<div data-testid="adapter-id">
-			{(context.session as { id?: string }).id ?? ''}
-		</div>
-	);
-}
-
 describe('GameProviderInner', () => {
 	const sessionId = 'session:test';
 	let sessionState: SessionSnapshot;
@@ -185,7 +170,7 @@ describe('GameProviderInner', () => {
 		});
 	});
 
-	it('routes the remote adapter through hooks and the legacy bridge for the playbook', () => {
+	it('routes the remote adapter through hooks for the playbook', () => {
 		const registriesPayload = createSessionRegistriesPayload();
 		const { adapter, cleanup } = createRemoteSessionAdapter({
 			sessionId,
@@ -196,13 +181,18 @@ describe('GameProviderInner', () => {
 		const enqueue = vi.fn(
 			async <T,>(task: () => Promise<T> | T) => await task(),
 		);
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => adapter,
+			getLatestSnapshot: () => null,
+		};
 		useSessionQueueMock.mockReturnValue({
 			adapter,
 			enqueue,
 			cachedSessionSnapshot: sessionState,
 		});
 
-		const { getByTestId } = render(
+		render(
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
@@ -215,11 +205,7 @@ describe('GameProviderInner', () => {
 				onToggleBackgroundAudioMute={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
-				queue={{
-					enqueue: vi.fn(),
-					getCurrentSession: () => adapter,
-					getLatestSnapshot: () => null,
-				}}
+				queue={queueHelpers}
 				sessionId={sessionId}
 				sessionSnapshot={sessionState}
 				ruleSnapshot={sessionState.rules}
@@ -228,9 +214,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
-			>
-				<ContextInspector />
-			</GameProviderInner>,
+			/>,
 		);
 
 		expect(capturedPerformerOptions).not.toHaveProperty('session');
@@ -239,7 +223,11 @@ describe('GameProviderInner', () => {
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
-		expect(getByTestId('adapter-id')).toHaveTextContent('adapter:test');
+		expect(useSessionQueueMock).toHaveBeenCalledWith(
+			queueHelpers,
+			sessionState,
+			sessionId,
+		);
 		cleanup();
 	});
 
@@ -255,6 +243,11 @@ describe('GameProviderInner', () => {
 		);
 		const refreshSession = vi.fn(async () => {});
 		let currentSnapshot = sessionState;
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => adapter,
+			getLatestSnapshot: () => null,
+		};
 		useSessionQueueMock.mockImplementation(() => ({
 			adapter,
 			enqueue,
@@ -274,11 +267,7 @@ describe('GameProviderInner', () => {
 				onToggleBackgroundAudioMute={() => {}}
 				playerName="Strategist"
 				onChangePlayerName={() => {}}
-				queue={{
-					enqueue: vi.fn(),
-					getCurrentSession: () => adapter,
-					getLatestSnapshot: () => null,
-				}}
+				queue={queueHelpers}
 				sessionId={sessionId}
 				sessionSnapshot={sessionState}
 				ruleSnapshot={sessionState.rules}
@@ -287,9 +276,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
-			>
-				<ContextInspector />
-			</GameProviderInner>,
+			/>,
 		);
 
 		await waitFor(() => {
@@ -334,11 +321,7 @@ describe('GameProviderInner', () => {
 				onToggleBackgroundAudioMute={() => {}}
 				playerName="Warlord"
 				onChangePlayerName={() => {}}
-				queue={{
-					enqueue: vi.fn(),
-					getCurrentSession: () => adapter,
-					getLatestSnapshot: () => null,
-				}}
+				queue={queueHelpers}
 				sessionId={sessionId}
 				sessionSnapshot={currentSnapshot}
 				ruleSnapshot={currentSnapshot.rules}
@@ -347,9 +330,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={currentSnapshot.metadata}
-			>
-				<ContextInspector />
-			</GameProviderInner>,
+			/>,
 		);
 
 		await waitFor(() => {

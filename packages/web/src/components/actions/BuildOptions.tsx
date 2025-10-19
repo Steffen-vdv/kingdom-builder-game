@@ -24,6 +24,7 @@ import {
 } from './types';
 import { normalizeActionFocus } from './types';
 import { useActionOptionCosts } from './useActionOptionCosts';
+import { useActionMetadata } from '../../state/useActionMetadata';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -53,7 +54,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -67,11 +67,16 @@ export default function BuildOptions({
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		translateRequirementFailure(failure, translationContext),
+	const metadata = useActionMetadata({ actionId: action.id });
+	const requirementFailures = metadata.requirements ?? [];
+	const requirementMessages = useMemo(
+		() =>
+			requirementFailures.map((failure) =>
+				translateRequirementFailure(failure, translationContext),
+			),
+		[requirementFailures, translationContext],
 	);
-	const meetsRequirements = requirements.length === 0;
+	const meetsRequirements = requirementFailures.length === 0;
 	const costRequests = useMemo(
 		() =>
 			buildings.map((building) => ({
@@ -134,7 +139,7 @@ export default function BuildOptions({
 						player.resources,
 						selectResourceDescriptor,
 					);
-					const requirementText = requirements.join(', ');
+					const requirementText = requirementMessages.join(', ');
 					const title = !implemented
 						? 'Not implemented yet'
 						: !meetsRequirements
@@ -162,7 +167,7 @@ export default function BuildOptions({
 							upkeep={upkeep}
 							playerResources={player.resources}
 							actionCostResource={actionCostResource}
-							requirements={requirements}
+							requirements={requirementMessages}
 							requirementIcons={requirementIcons}
 							summary={summary}
 							implemented={implemented}
@@ -185,7 +190,7 @@ export default function BuildOptions({
 								handleHoverCard({
 									title: hoverTitle,
 									effects,
-									requirements,
+									requirements: requirementMessages,
 									costs,
 									upkeep,
 									...(description && { description }),
