@@ -70,23 +70,21 @@ function collectCostEntries(nodes: TimelineNode[]): TimelineEntry[] {
 		if (node.descriptor.kind === 'cost') {
 			const baseKey = `cost-${costIndex}`;
 			costIndex += 1;
-			entries.push({
-				key: baseKey,
-				text: node.descriptor.text,
-				level: 0,
-				kind: node.descriptor.kind,
-			});
 
-			node.children
-				.filter((child) => child.descriptor.kind === 'cost-detail')
-				.forEach((child, childIndex) =>
+			node.children.forEach((child, childIndex) => {
+				if (child.descriptor.kind === 'cost-detail') {
 					collectCostDetail(
 						child,
 						`${baseKey}-detail-${childIndex}`,
-						1,
+						0,
 						entries,
-					),
-				);
+					);
+				} else {
+					visit(child);
+				}
+			});
+
+			return;
 		}
 
 		node.children.forEach(visit);
