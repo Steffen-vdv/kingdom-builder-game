@@ -261,3 +261,29 @@ describe('<ResolutionCard />', () => {
 		expect(followUpLine).toHaveStyle({ marginLeft: '2.625rem' });
 	});
 });
+
+it('shows the phase icon and omits duplicate headlines from effect entries', () => {
+	const resolution = createResolution({
+		source: {
+			kind: 'phase',
+			label: '🌱 Growth Phase',
+			name: 'Growth Phase',
+			icon: '🌱',
+		},
+		actorLabel: '🌱 Growth Phase',
+		lines: ['🌱 Growth Phase', 'Gain 1 population'],
+		visibleLines: [],
+		visibleTimeline: [
+			{ text: '🌱 Growth Phase', depth: 0, kind: 'headline' },
+			{ text: 'Gain 1 population', depth: 1, kind: 'change' },
+		],
+	});
+
+	render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+	expect(screen.getByText('🌱')).toBeInTheDocument();
+	expect(screen.getAllByText('🌱 Growth Phase')).toHaveLength(1);
+	expect(screen.getByText('Gain 1 population')).toBeInTheDocument();
+	expect(screen.getByText('🪄 Effects')).toBeInTheDocument();
+	expect(screen.queryByText('✦')).toBeNull();
+});

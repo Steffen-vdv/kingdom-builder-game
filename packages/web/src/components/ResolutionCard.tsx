@@ -70,6 +70,9 @@ function ResolutionCard({
 	const playerName = playerLabel ?? 'Unknown player';
 	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
+	const sourceDetail = isSourceDetail(resolution.source)
+		? resolution.source
+		: null;
 
 	const fallbackActionName = leadingLine
 		.replace(/^[\s\p{Extended_Pictographic}\uFE0F\p{Pd}\p{Po}\p{So}]+/u, '')
@@ -77,9 +80,7 @@ function ResolutionCard({
 		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	const sourceName = isSourceDetail(resolution.source)
-		? (resolution.source.name?.trim() ?? '')
-		: '';
+	const sourceName = sourceDetail?.name?.trim() ?? '';
 	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
 	const actionName = rawActionName || fallbackActionName;
 	const resolvedLabels = resolveSourceLabels(resolution.source);
@@ -93,11 +94,14 @@ function ResolutionCard({
 			? actionName
 			: actorLabel
 		: actorLabel || actionName;
+	const fallbackIconMatch = leadingLine.match(
+		/^[\p{Extended_Pictographic}\uFE0F]+/u,
+	);
+	const fallbackActionIcon = fallbackIconMatch?.[0]?.trim() || undefined;
 	const actionIcon =
 		resolution.action?.icon?.trim() ||
-		(isSourceDetail(resolution.source)
-			? (resolution.source.icon?.trim() ?? undefined)
-			: undefined);
+		sourceDetail?.icon?.trim() ||
+		fallbackActionIcon;
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
 	const normalizedResolvedTitle = resolvedLabels.title
 		.trim()
@@ -156,6 +160,18 @@ function ResolutionCard({
 		() => buildTimelineTree(resolution.visibleTimeline),
 		[resolution.visibleTimeline],
 	);
+	const skipHeadlineCandidates = React.useMemo(() => {
+		const unique = new Set<string>();
+		const trimmedHeader = actorHeaderSubject?.trim();
+		const trimmedActionName = actionName?.trim();
+		if (trimmedHeader) {
+			unique.add(trimmedHeader);
+		}
+		if (trimmedActionName) {
+			unique.add(trimmedActionName);
+		}
+		return Array.from(unique);
+	}, [actorHeaderSubject, actionName]);
 	const timelineEntries = React.useMemo(() => {
 		const options: Parameters<typeof buildResolutionTimelineEntries>[1] = {};
 
@@ -165,9 +181,12 @@ function ResolutionCard({
 		if (actionName) {
 			options.actionName = actionName;
 		}
+		if (skipHeadlineCandidates.length > 0) {
+			options.skipHeadlines = skipHeadlineCandidates;
+		}
 
 		return buildResolutionTimelineEntries(structuredTimeline, options);
-	}, [actionIcon, actionName, structuredTimeline]);
+	}, [actionIcon, actionName, skipHeadlineCandidates, structuredTimeline]);
 
 	const fallbackLines = React.useMemo(() => {
 		if (resolution.visibleTimeline.length > 0) {

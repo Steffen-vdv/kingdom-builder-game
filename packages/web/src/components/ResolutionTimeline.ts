@@ -20,6 +20,7 @@ interface CollectEffectEntriesOptions {
 interface BuildResolutionTimelineOptions {
 	actionIcon?: string;
 	actionName?: string;
+	skipHeadlines?: readonly string[];
 }
 
 function buildTimelineTree(
@@ -179,9 +180,13 @@ function buildResolutionTimelineEntries(
 	}
 
 	const combinedHeadline = buildHeadline(options);
+	const manualHeadlines = normalizeHeadlineSet(options?.skipHeadlines ?? []);
+	if (combinedHeadline) {
+		manualHeadlines.add(normalizeHeadline(combinedHeadline));
+	}
 	const effectEntries = adjustEntryLevels(
 		collectEffectEntries(nodes, {
-			skipHeadlines: combinedHeadline ? [combinedHeadline] : [],
+			skipHeadlines: Array.from(manualHeadlines),
 		}),
 	);
 
