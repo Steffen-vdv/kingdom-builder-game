@@ -18,7 +18,6 @@ import type { ReactNode } from 'react';
 import type {
 	RemoteSessionRecord,
 	Session,
-	SessionAdapter,
 	SessionResourceKey,
 } from './sessionTypes';
 
@@ -66,7 +65,7 @@ export interface SessionDerivedSelectors {
 	sessionView: SessionView;
 }
 
-export interface GameEngineContextValue {
+export type GameEngineContextValue = {
 	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
 	cachedSessionSnapshot: SessionSnapshot;
@@ -113,15 +112,4 @@ export interface GameEngineContextValue {
 	dismissToast: (id: number) => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
-}
-
-export interface LegacyGameEngineContextBridge {
-	/**
-	 * TODO(#session-migration): Remove direct EngineSession exposure once
-	 * all consumers rely on request helpers.
-	 */
-	session: SessionAdapter;
-}
-
-export type LegacyGameEngineContextValue = GameEngineContextValue &
-	LegacyGameEngineContextBridge;
+};
