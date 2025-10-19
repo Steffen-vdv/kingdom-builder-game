@@ -15,6 +15,7 @@ import { createSessionHelpers } from './utils/sessionStateHelpers';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
 import type { SessionResourceKey } from '../src/state/sessionTypes';
+import type { GameEngineContextValue } from '../src/state/GameContext.types';
 
 const simulationMocks = vi.hoisted(() => ({
 	enqueueSimulateUpcomingPhases: vi.fn(),
@@ -30,7 +31,6 @@ vi.stubGlobal('document', jsdom.window.document);
 vi.stubGlobal('navigator', jsdom.window.navigator);
 
 interface MockGameEngine {
-	session: { enqueue: ReturnType<typeof vi.fn> };
 	sessionSnapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	resolution: null;
@@ -128,7 +128,6 @@ function buildSimulationResponse(
 }
 
 const engineValue: MockGameEngine = {
-	session: { enqueue: vi.fn() },
 	sessionSnapshot: undefined as unknown as SessionSnapshot,
 	ruleSnapshot: {
 		tieredResourceKey: primaryResource,
@@ -156,7 +155,7 @@ const setGameState = (overrides: Partial<SessionSnapshot['game']>) =>
 engineValue.sessionSnapshot = sessionHelpers.createSessionState([]);
 
 vi.mock('../src/state/GameContext', () => ({
-	useGameEngine: (): MockGameEngine => engineValue,
+	useGameEngine: () => engineValue as unknown as GameEngineContextValue,
 }));
 
 describe('useNextTurnForecast', () => {

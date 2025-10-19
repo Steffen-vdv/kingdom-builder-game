@@ -6,6 +6,7 @@ import {
 	type Summary,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
@@ -53,7 +54,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -62,16 +62,21 @@ export default function BuildOptions({
 		actionCostResource,
 	} = useGameEngine();
 	const { sessionView } = selectors;
+	const metadata = useActionMetadata({ actionId: action.id });
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		translateRequirementFailure(failure, translationContext),
-	);
-	const meetsRequirements = requirements.length === 0;
+	const requirementFailures = metadata.requirements ?? [];
+	const requirementsReady = metadata.requirements !== undefined;
+	const requirementMessages = requirementsReady
+		? requirementFailures.map((failure) =>
+				translateRequirementFailure(failure, translationContext),
+			)
+		: ['Loading requirements…'];
+	const meetsRequirements =
+		requirementsReady && requirementFailures.length === 0;
 	const costRequests = useMemo(
 		() =>
 			buildings.map((building) => ({
@@ -134,20 +139,23 @@ export default function BuildOptions({
 						player.resources,
 						selectResourceDescriptor,
 					);
-					const requirementText = requirements.join(', ');
+					const requirementText = requirementMessages.join(', ');
 					const title = !implemented
 						? 'Not implemented yet'
-						: !meetsRequirements
-							? requirementText
-							: !canPay
-								? (insufficientTooltip ?? 'Cannot pay costs')
-								: undefined;
+						: !requirementsReady
+							? 'Loading requirements…'
+							: !meetsRequirements
+								? requirementText
+								: !canPay
+									? (insufficientTooltip ?? 'Cannot pay costs')
+									: undefined;
 					const enabled =
 						canPay &&
 						meetsRequirements &&
 						isActionPhase &&
 						canInteract &&
-						implemented;
+						implemented &&
+						requirementsReady;
 					const hoverTitle = [
 						actionHoverTitle,
 						formatIconTitle(icon, building.name),
@@ -162,7 +170,7 @@ export default function BuildOptions({
 							upkeep={upkeep}
 							playerResources={player.resources}
 							actionCostResource={actionCostResource}
-							requirements={requirements}
+							requirements={requirementMessages}
 							requirementIcons={requirementIcons}
 							summary={summary}
 							implemented={implemented}
@@ -185,7 +193,7 @@ export default function BuildOptions({
 								handleHoverCard({
 									title: hoverTitle,
 									effects,
-									requirements,
+									requirements: requirementMessages,
 									costs,
 									upkeep,
 									...(description && { description }),
