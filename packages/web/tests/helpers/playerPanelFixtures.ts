@@ -5,17 +5,16 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
-import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
+import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
 import { createTestSessionScaffold } from './testSessionScaffold';
-import { createMockSessionAdapter } from './mockSessionAdapter';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
-	mockGame: LegacyGameEngineContextValue;
+	mockGame: GameEngineContextValue;
 	resourceForecast: Record<string, number>;
 	displayableStatKeys: string[];
 	statForecast: Record<string, number>;
@@ -103,7 +102,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		sessionState.metadata,
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
-	const mockGame: LegacyGameEngineContextValue = {
+	const mockGame: GameEngineContextValue = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
 		cachedSessionSnapshot: sessionState,
@@ -161,7 +160,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: createMockSessionAdapter(sessionState),
 	};
 	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
 		(acc, key, index) => {
