@@ -17,9 +17,15 @@ import {
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import { selectSessionView } from '../../../src/state/sessionSelectors';
 import type { SessionAdapter } from '../../../src/state/sessionTypes';
+import {
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../../src/state/sessionStateStore';
+import { createSessionRegistriesPayload } from '../../helpers/sessionRegistries';
 
 function createActionsPanelScenario() {
 	clearSessionActionMetadataStore();
+	clearSessionStateStore();
 	const scaffold = createTestSessionScaffold();
 	const actionCostResource = scaffold.ruleSnapshot.tieredResourceKey;
 	const aiPlayer = createSnapshotPlayer({
@@ -73,6 +79,11 @@ function createActionsPanelScenario() {
 			metadataSnapshot,
 		);
 	}
+	initializeSessionState({
+		sessionId: mockGame.sessionId,
+		snapshot: sessionState,
+		registries: createSessionRegistriesPayload(),
+	});
 	return {
 		mockGame,
 		actionCostResource,

@@ -5,6 +5,7 @@ import {
 	type Summary,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { hasAiController } from '../../state/sessionAi';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
@@ -27,13 +28,13 @@ import { normalizeActionFocus } from './types';
 
 export default function ActionsPanel() {
 	const {
-		session,
 		sessionSnapshot,
 		selectors,
 		translationContext,
 		phase,
 		actionCostResource,
 		resolution,
+		sessionId,
 	} = useGameEngine();
 	const { sessionView } = selectors;
 	const resourceMetadata = useResourceMetadata();
@@ -67,7 +68,7 @@ export default function ActionsPanel() {
 	);
 	const isActionPhase = isActionPhaseActive(phase, actionPhaseId);
 	const activePlayerId = sessionSnapshot.game.activePlayerId;
-	const isControlledTurn = !session.hasAiController(activePlayerId);
+	const isControlledTurn = !hasAiController(sessionId, activePlayerId);
 
 	useEffect(() => {
 		if (!isControlledTurn && viewingOpponent) {

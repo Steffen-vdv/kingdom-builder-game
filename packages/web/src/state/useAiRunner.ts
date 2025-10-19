@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import type { MutableRefObject } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
-import type { SessionAdapter } from './sessionTypes';
+import { getSessionSnapshot } from './sessionStateStore';
+import { enqueueSessionTask, hasAiController, runAiTurn } from './sessionAi';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 
 interface UseAiRunnerOptions {
-	session: SessionAdapter;
+	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
 	runUntilActionPhaseCore: () => Promise<void>;
 	syncPhaseState: (
@@ -18,7 +19,7 @@ interface UseAiRunnerOptions {
 }
 
 export function useAiRunner({
-	session,
+	sessionId,
 	sessionSnapshot,
 	runUntilActionPhaseCore,
 	syncPhaseState,
@@ -35,7 +36,7 @@ export function useAiRunner({
 			return;
 		}
 		const activeId = sessionSnapshot.game.activePlayerId;
-		if (!session.hasAiController(activeId)) {
+		if (!hasAiController(sessionId, activeId)) {
 			return;
 		}
 		void (async () => {
@@ -54,11 +55,11 @@ export function useAiRunner({
 				}
 			};
 			try {
-				const ranTurn = await session.runAiTurn(activeId);
+				const ranTurn = await runAiTurn(sessionId, activeId);
 				if (fatalError !== null) {
 					return;
 				}
-				const snapshot = session.getSnapshot();
+				const snapshot = getSessionSnapshot(sessionId);
 				syncPhaseState(snapshot);
 				if (!ranTurn) {
 					return;
@@ -69,12 +70,12 @@ export function useAiRunner({
 				if (fatalError !== null) {
 					return;
 				}
-				void session.enqueue(async () => {
+				void enqueueSessionTask(sessionId, async () => {
 					if (fatalError !== null) {
 						return;
 					}
 					try {
-						syncPhaseState(session.getSnapshot(), {
+						syncPhaseState(getSessionSnapshot(sessionId), {
 							isAdvancing: true,
 							canEndTurn: false,
 						});
@@ -88,7 +89,7 @@ export function useAiRunner({
 			}
 		})();
 	}, [
-		session,
+		sessionId,
 		sessionSnapshot.game.activePlayerId,
 		sessionSnapshot.game.phaseIndex,
 		sessionSnapshot.phases,

@@ -1,5 +1,5 @@
 import { describe, expect, beforeEach, it, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { JSDOM } from 'jsdom';
 import type {
 	PlayerSnapshotDeltaBucket,
@@ -17,12 +17,10 @@ import { createDefaultTranslationAssets } from './helpers/translationAssets';
 import type { SessionResourceKey } from '../src/state/sessionTypes';
 
 const simulationMocks = vi.hoisted(() => ({
-	simulateUpcomingPhases: vi.fn(),
 	enqueueSimulateUpcomingPhases: vi.fn(),
 }));
 
 vi.mock('../src/state/sessionSdk', () => ({
-	simulateUpcomingPhases: simulationMocks.simulateUpcomingPhases,
 	enqueueSimulateUpcomingPhases: simulationMocks.enqueueSimulateUpcomingPhases,
 }));
 
@@ -32,14 +30,7 @@ vi.stubGlobal('document', jsdom.window.document);
 vi.stubGlobal('navigator', jsdom.window.navigator);
 
 interface MockGameEngine {
-	session: {
-		enqueue: ReturnType<typeof vi.fn>;
-		simulateUpcomingPhases: ReturnType<typeof vi.fn>;
-		hasAiController: () => boolean;
-		getActionDefinition: () => undefined;
-		runAiTurn: ReturnType<typeof vi.fn>;
-		advancePhase: ReturnType<typeof vi.fn>;
-	};
+	session: { enqueue: ReturnType<typeof vi.fn> };
 	sessionSnapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	resolution: null;
@@ -108,15 +99,36 @@ function createDelta(amount: number): PlayerSnapshotDeltaBucket {
 	};
 }
 
+function cloneEmptyDelta(): PlayerSnapshotDeltaBucket {
+	return {
+		resources: {},
+		stats: {},
+		population: {},
+	};
+}
+
+function emptyPlayerSnapshot(): SessionPlayerStateSnapshot {
+	return {} as SessionPlayerStateSnapshot;
+}
+
+function buildSimulationResponse(
+	playerId: string,
+	delta: PlayerSnapshotDeltaBucket,
+) {
+	return {
+		sessionId: engineValue.sessionId,
+		result: {
+			playerId,
+			before: emptyPlayerSnapshot(),
+			after: emptyPlayerSnapshot(),
+			delta,
+			steps: [],
+		},
+	};
+}
+
 const engineValue: MockGameEngine = {
-	session: {
-		enqueue: vi.fn(),
-		simulateUpcomingPhases: vi.fn(),
-		hasAiController: () => false,
-		getActionDefinition: () => undefined,
-		runAiTurn: vi.fn().mockResolvedValue(false),
-		advancePhase: vi.fn(),
-	},
+	session: { enqueue: vi.fn() },
 	sessionSnapshot: undefined as unknown as SessionSnapshot,
 	ruleSnapshot: {
 		tieredResourceKey: primaryResource,
@@ -153,143 +165,86 @@ describe('useNextTurnForecast', () => {
 
 	beforeEach(() => {
 		resetNextTurnForecastCacheForTests();
-		simulationMocks.simulateUpcomingPhases.mockReset();
 		simulationMocks.enqueueSimulateUpcomingPhases.mockReset();
-		simulationMocks.simulateUpcomingPhases.mockResolvedValue({
-			sessionId: engineValue.sessionId,
-			result: {
-				playerId: '',
-				before: {} as SessionPlayerStateSnapshot,
-				after: {} as SessionPlayerStateSnapshot,
-				delta: cloneEmptyDelta(),
-				steps: [],
-			},
-		});
 		simulationMocks.enqueueSimulateUpcomingPhases.mockImplementation(
-			(sessionId: string, playerId: string) =>
-				simulationMocks.simulateUpcomingPhases({
-					sessionId,
-					playerId,
-				}),
+			(_sessionId, playerId) =>
+				Promise.resolve(buildSimulationResponse(playerId, cloneEmptyDelta())),
 		);
-		engineValue.session.simulateUpcomingPhases.mockReset();
 		resetSessionState([createPlayer(1), createPlayer(2)]);
 	});
 
-	function cloneEmptyDelta(): PlayerSnapshotDeltaBucket {
-		return {
-			resources: {},
-			stats: {},
-			population: {},
-		};
-	}
-
-	async function flushAsync(): Promise<void> {
-		await Promise.resolve();
-		await Promise.resolve();
+	async function flushAsync(iterations = 3): Promise<void> {
+		for (let index = 0; index < iterations; index += 1) {
+			await act(async () => {
+				await Promise.resolve();
+			});
+		}
 	}
 
 	function mockSimulationResponse(
 		getDelta: (playerId: string) => PlayerSnapshotDeltaBucket,
 	): void {
-		simulationMocks.simulateUpcomingPhases.mockImplementation(
-			(request: { playerId: string }) =>
-				Promise.resolve({
-					sessionId: engineValue.sessionId,
-					result: {
-						playerId: request.playerId,
-						before: {} as SessionPlayerStateSnapshot,
-						after: {} as SessionPlayerStateSnapshot,
-						delta: getDelta(request.playerId),
-						steps: [],
-					},
-				}),
+		simulationMocks.enqueueSimulateUpcomingPhases.mockImplementation(
+			(_sessionId, playerId) =>
+				Promise.resolve(buildSimulationResponse(playerId, getDelta(playerId))),
 		);
 	}
 
-	it('memoizes per-player forecasts for stable snapshots', async () => {
-		engineValue.session.simulateUpcomingPhases.mockImplementation(
-			(playerId: string) => {
-				const deltaAmount = playerId === firstPlayerId ? 3 : 5;
-				return {
-					playerId,
-					before: {} as SessionPlayerStateSnapshot,
-					after: {} as SessionPlayerStateSnapshot,
-					delta: createDelta(deltaAmount),
-					steps: [],
-				};
-			},
-		);
+	it('fetches and caches per-player forecasts for stable snapshots', async () => {
 		mockSimulationResponse((playerId) =>
 			createDelta(playerId === firstPlayerId ? 3 : 5),
 		);
 		const { result, rerender } = renderHook(() => useNextTurnForecast());
-		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(result.current[firstPlayerId]).toEqual(createDelta(3));
-		expect(result.current[secondPlayerId]).toEqual(createDelta(5));
+		expect(result.current[firstPlayerId]).toEqual(cloneEmptyDelta());
+		expect(result.current[secondPlayerId]).toEqual(cloneEmptyDelta());
 
 		await flushAsync();
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
 		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
 			2,
 		);
+		expect(result.current[firstPlayerId]).toEqual(createDelta(3));
+		expect(result.current[secondPlayerId]).toEqual(createDelta(5));
 
-		engineValue.session.simulateUpcomingPhases.mockClear();
+		simulationMocks.enqueueSimulateUpcomingPhases.mockClear();
 		rerender();
 		await flushAsync();
-		expect(engineValue.session.simulateUpcomingPhases).not.toHaveBeenCalled();
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
-			2,
-		);
+		expect(
+			simulationMocks.enqueueSimulateUpcomingPhases,
+		).not.toHaveBeenCalled();
 		expect(result.current[firstPlayerId]).toEqual(createDelta(3));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(5));
 
-		engineValue.session.simulateUpcomingPhases.mockClear();
+		simulationMocks.enqueueSimulateUpcomingPhases.mockClear();
 		setPlayers([createPlayer(1), createPlayer(2)]);
 		rerender();
 		await flushAsync();
-		expect(engineValue.session.simulateUpcomingPhases).not.toHaveBeenCalled();
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
-			2,
-		);
+		expect(
+			simulationMocks.enqueueSimulateUpcomingPhases,
+		).not.toHaveBeenCalled();
 		expect(result.current[firstPlayerId]).toEqual(createDelta(3));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(5));
 	});
 
-	it('recomputes after updates when a simulation fails', async () => {
-		engineValue.session.simulateUpcomingPhases.mockImplementation(
-			(playerId: string) => {
-				if (playerId === firstPlayerId) {
-					throw new Error('fail');
-				}
-				return {
-					playerId,
-					before: {} as SessionPlayerStateSnapshot,
-					after: {} as SessionPlayerStateSnapshot,
-					delta: createDelta(7),
-					steps: [],
-				};
-			},
+	it('retries failed simulations after state changes', async () => {
+		const failure = new Error('fail');
+		simulationMocks.enqueueSimulateUpcomingPhases.mockImplementationOnce(() =>
+			Promise.reject(failure),
 		);
-		mockSimulationResponse(() => createDelta(7));
-		const { result, rerender } = renderHook(() => useNextTurnForecast());
-		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(result.current[firstPlayerId]).toEqual({
-			resources: {},
-			stats: {},
-			population: {},
-		});
-		expect(result.current[secondPlayerId]).toEqual(createDelta(7));
+		simulationMocks.enqueueSimulateUpcomingPhases.mockImplementation(
+			(_sessionId, playerId) =>
+				Promise.resolve(buildSimulationResponse(playerId, createDelta(7))),
+		);
 
+		const { result, rerender } = renderHook(() => useNextTurnForecast());
 		await flushAsync();
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
 		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
 			2,
 		);
+		expect(result.current[firstPlayerId]).toEqual(cloneEmptyDelta());
+		expect(result.current[secondPlayerId]).toEqual(createDelta(7));
 
-		engineValue.session.simulateUpcomingPhases.mockClear();
+		simulationMocks.enqueueSimulateUpcomingPhases.mockClear();
+		mockSimulationResponse(() => createDelta(9));
 		setPlayers([
 			createPlayer(1, {
 				resources: { [primaryResource]: 11 },
@@ -298,48 +253,34 @@ describe('useNextTurnForecast', () => {
 		]);
 		rerender();
 		await flushAsync();
-		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(4);
 		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
-			4,
+			2,
 		);
+		expect(result.current[firstPlayerId]).toEqual(createDelta(9));
+		expect(result.current[secondPlayerId]).toEqual(createDelta(9));
 	});
 
 	it('recomputes when game state changes without player deltas', async () => {
-		engineValue.session.simulateUpcomingPhases.mockImplementation(
-			(playerId: string) => {
-				const deltaAmount = playerId === firstPlayerId ? 4 : 6;
-				return {
-					playerId,
-					before: {} as SessionPlayerStateSnapshot,
-					after: {} as SessionPlayerStateSnapshot,
-					delta: createDelta(deltaAmount),
-					steps: [],
-				};
-			},
-		);
 		mockSimulationResponse((playerId) =>
 			createDelta(playerId === firstPlayerId ? 4 : 6),
 		);
 		const { result, rerender } = renderHook(() => useNextTurnForecast());
-		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(result.current[firstPlayerId]).toEqual(createDelta(4));
-		expect(result.current[secondPlayerId]).toEqual(createDelta(6));
-
 		await flushAsync();
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
 		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
 			2,
 		);
+		expect(result.current[firstPlayerId]).toEqual(createDelta(4));
+		expect(result.current[secondPlayerId]).toEqual(createDelta(6));
 
-		engineValue.session.simulateUpcomingPhases.mockClear();
+		simulationMocks.enqueueSimulateUpcomingPhases.mockClear();
+		mockSimulationResponse((playerId) =>
+			createDelta(playerId === firstPlayerId ? 4 : 6),
+		);
 		setGameState({ turn: engineValue.sessionSnapshot.game.turn + 1 });
 		rerender();
 		await flushAsync();
-		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(4);
 		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
-			4,
+			2,
 		);
 		expect(result.current[firstPlayerId]).toEqual(createDelta(4));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(6));
@@ -357,33 +298,21 @@ describe('useNextTurnForecast', () => {
 			createPlayer(1, { lands: [baseLand] }),
 			createPlayer(2),
 		]);
-		engineValue.session.simulateUpcomingPhases.mockImplementation(
-			(playerId: string) => {
-				const deltaAmount = playerId === firstPlayerId ? 2 : 3;
-				return {
-					playerId,
-					before: {} as SessionPlayerStateSnapshot,
-					after: {} as SessionPlayerStateSnapshot,
-					delta: createDelta(deltaAmount),
-					steps: [],
-				};
-			},
-		);
 		mockSimulationResponse((playerId) =>
 			createDelta(playerId === firstPlayerId ? 2 : 3),
 		);
 		const { result, rerender } = renderHook(() => useNextTurnForecast());
-		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(result.current[firstPlayerId]).toEqual(createDelta(2));
-		expect(result.current[secondPlayerId]).toEqual(createDelta(3));
-
 		await flushAsync();
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
 		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
 			2,
 		);
+		expect(result.current[firstPlayerId]).toEqual(createDelta(2));
+		expect(result.current[secondPlayerId]).toEqual(createDelta(3));
 
-		engineValue.session.simulateUpcomingPhases.mockClear();
+		simulationMocks.enqueueSimulateUpcomingPhases.mockClear();
+		mockSimulationResponse((playerId) =>
+			createDelta(playerId === firstPlayerId ? 2 : 3),
+		);
 		setPlayers([
 			createPlayer(1, {
 				lands: [
@@ -397,10 +326,8 @@ describe('useNextTurnForecast', () => {
 		]);
 		rerender();
 		await flushAsync();
-		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
-		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(4);
 		expect(simulationMocks.enqueueSimulateUpcomingPhases).toHaveBeenCalledTimes(
-			4,
+			2,
 		);
 		expect(result.current[firstPlayerId]).toEqual(createDelta(2));
 		expect(result.current[secondPlayerId]).toEqual(createDelta(3));
