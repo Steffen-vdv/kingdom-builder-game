@@ -8,14 +8,19 @@ import {
 } from '../translation';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
+import type { ActionResolution } from './useActionResolution';
+import { ensureTimelineLines } from './useActionPerformer.helpers';
+import { createResolutionLogSnapshot } from './actionResolutionLog';
+import {
+	buildActionLogTimeline,
+	formatActionLogLines,
+} from './actionLogFormat';
+import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 
 interface UseCompensationLoggerOptions {
 	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
-	addLog: (
-		entry: string | string[],
-		player?: SessionSnapshot['game']['players'][number],
-	) => void;
+	addResolutionLog: (resolution: ActionResolution) => void;
 	resourceKeys: SessionResourceKey[];
 	registries: Pick<
 		SessionRegistries,
@@ -26,7 +31,7 @@ interface UseCompensationLoggerOptions {
 export function useCompensationLogger({
 	sessionId,
 	sessionSnapshot,
-	addLog,
+	addResolutionLog,
 	resourceKeys,
 	registries,
 }: UseCompensationLoggerOptions) {
@@ -97,12 +102,31 @@ export function useCompensationLogger({
 				resourceKeys,
 			);
 			if (lines.length) {
-				addLog(
-					['Last-player compensation:', ...lines.map((line) => `  ${line}`)],
-					player,
-				);
+				const headline = 'Last-player compensation';
+				const baseMessages = ensureTimelineLines([headline]);
+				const effectMessages: ActionLogLineDescriptor[] = lines.map((line) => ({
+					text: line,
+					depth: 1,
+					kind: 'effect',
+				}));
+				const messages = [...baseMessages, ...effectMessages];
+				const timeline = buildActionLogTimeline(messages, []);
+				const formattedLines = formatActionLogLines(messages, []);
+				const source = {
+					kind: 'phase' as const,
+					label: 'Compensation',
+					name: 'Compensation',
+				} satisfies ActionResolution['source'];
+				const resolution = createResolutionLogSnapshot({
+					lines: formattedLines,
+					timeline,
+					summaries: [...lines],
+					source,
+					player: { id: player.id, name: player.name },
+				});
+				addResolutionLog(resolution);
 				loggedPlayersRef.current.add(player.id);
 			}
 		});
-	}, [addLog, registries, resourceKeys, sessionId, sessionSnapshot]);
+	}, [addResolutionLog, registries, resourceKeys, sessionId, sessionSnapshot]);
 }
