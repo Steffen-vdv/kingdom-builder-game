@@ -8,6 +8,7 @@ import {
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
@@ -53,7 +54,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -62,16 +62,18 @@ export default function BuildOptions({
 		actionCostResource,
 	} = useGameEngine();
 	const { sessionView } = selectors;
+	const metadata = useActionMetadata({ actionId: action.id });
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
+	const requirementFailures = metadata.requirements ?? [];
 	const requirements = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
 	);
 	const meetsRequirements = requirements.length === 0;
+	const requirementsReady = metadata.requirements !== undefined;
 	const costRequests = useMemo(
 		() =>
 			buildings.map((building) => ({
@@ -145,6 +147,7 @@ export default function BuildOptions({
 					const enabled =
 						canPay &&
 						meetsRequirements &&
+						requirementsReady &&
 						isActionPhase &&
 						canInteract &&
 						implemented;

@@ -5,7 +5,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
-import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
+import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
@@ -15,13 +15,14 @@ import { createMockSessionAdapter } from './mockSessionAdapter';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
-	mockGame: LegacyGameEngineContextValue;
+	mockGame: GameEngineContextValue;
 	resourceForecast: Record<string, number>;
 	displayableStatKeys: string[];
 	statForecast: Record<string, number>;
 	registries: SessionRegistries;
 	metadata: SessionSnapshot['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
+	sessionAdapter: ReturnType<typeof createMockSessionAdapter>;
 }
 
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
@@ -103,7 +104,8 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		sessionState.metadata,
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
-	const mockGame: LegacyGameEngineContextValue = {
+	const sessionAdapter = createMockSessionAdapter(sessionState);
+	const mockGame: GameEngineContextValue = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
 		cachedSessionSnapshot: sessionState,
@@ -161,7 +163,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: createMockSessionAdapter(sessionState),
 	};
 	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
 		(acc, key, index) => {
@@ -193,6 +194,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	return {
 		activePlayer,
 		mockGame,
+		sessionAdapter,
 		resourceForecast,
 		displayableStatKeys,
 		statForecast,
