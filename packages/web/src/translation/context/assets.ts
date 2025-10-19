@@ -13,6 +13,10 @@ import type {
 	TranslationModifierInfo,
 	TranslationTriggerAsset,
 } from './types';
+import {
+	DEFAULT_STAT_METADATA,
+	mergeDescriptorRecords,
+} from '../../contexts/registryMetadataDefaults';
 
 const DEFAULT_POPULATION_INFO = Object.freeze({
 	icon: '👥',
@@ -152,7 +156,7 @@ function buildResourceMap(
 }
 
 function buildStatMap(
-	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
+	descriptors: Readonly<Record<string, SessionMetadataDescriptor>> | undefined,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
 	if (descriptors) {
@@ -251,7 +255,11 @@ export function createTranslationAssets(
 		metadata?.populations,
 	);
 	const resources = buildResourceMap(registries.resources, metadata?.resources);
-	const stats = buildStatMap(metadata?.stats);
+	const statDescriptors = mergeDescriptorRecords(
+		DEFAULT_STAT_METADATA,
+		metadata?.stats,
+	);
+	const stats = buildStatMap(statDescriptors);
 	const assetDescriptors = metadata?.assets ?? {};
 	const populationAsset = mergeIconLabel(
 		DEFAULT_POPULATION_INFO,
