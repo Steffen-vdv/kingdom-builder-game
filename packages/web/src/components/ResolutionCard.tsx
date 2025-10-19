@@ -114,18 +114,64 @@ function ResolutionCard({
 		'backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60',
 		'dark:shadow-slate-900/40 dark:ring-white/10',
 	);
-	const timelineListClass = 'space-y-3';
-	const timelineItemClass = 'relative pl-8';
-	const timelineMarkerClass = joinClasses(
-		'absolute left-0 top-1.5 flex h-5 w-5 items-center justify-center',
-		'rounded-lg border border-white/40 bg-white/80 text-xs font-semibold',
-		'text-slate-500 shadow-sm dark:border-white/10 dark:bg-slate-900/80',
-		'dark:text-slate-300',
+	const timelineListClass = 'relative mt-4 flex flex-col gap-3 pl-4';
+	const timelineRailClass = joinClasses(
+		'pointer-events-none absolute left-[0.875rem] top-6 bottom-6 w-px',
+		'bg-white/30 dark:bg-white/10',
 	);
 	const timelineTextClass = joinClasses(
 		CARD_BODY_TEXT_CLASS,
 		'whitespace-pre-wrap leading-relaxed',
 	);
+	const nestedTimelineTextClass = joinClasses(
+		timelineTextClass,
+		'text-slate-600 dark:text-slate-300',
+	);
+	const timelineItemClass = 'relative flex items-start gap-3';
+	const primaryMarkerClass = joinClasses(
+		'mt-1.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full',
+		'bg-amber-500 shadow-[0_0_0_4px_rgba(251,191,36,0.25)]',
+		'dark:bg-amber-400 dark:shadow-[0_0_0_4px_rgba(251,191,36,0.2)]',
+	);
+	const nestedMarkerClass = joinClasses(
+		'mt-1.5 flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full',
+		'bg-slate-400/80 shadow-[0_0_0_4px_rgba(148,163,184,0.2)]',
+		'dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(15,23,42,0.45)]',
+	);
+	const parsedLines = React.useMemo(() => {
+		function parseLine(line: string) {
+			const patterns = [
+				// Explicit three-space indent
+				/^(?: {3})/,
+				// Leading bullets with optional whitespace
+				/^(?:[ \t]*[•▪‣◦●]\s+)/u,
+				// Connector arrows with optional whitespace
+				/^(?:[ \t]*[↳➜➤➣]\s+)/u,
+			];
+
+			let remaining = line;
+			let depth = 0;
+			let matched = true;
+
+			while (matched) {
+				matched = false;
+				for (const pattern of patterns) {
+					const match = remaining.match(pattern);
+					if (match && match[0].length > 0) {
+						remaining = remaining.slice(match[0].length);
+						depth += 1;
+						matched = true;
+						break;
+					}
+				}
+			}
+
+			const text = remaining.trimStart();
+			return { depth, text };
+		}
+
+		return resolution.visibleLines.map((line) => parseLine(line));
+	}, [resolution.visibleLines]);
 	const shouldShowContinue = resolution.requireAcknowledgement;
 
 	return (
@@ -153,14 +199,28 @@ function ResolutionCard({
 					<div className={joinClasses(CARD_LABEL_CLASS, 'text-slate-600')}>
 						Resolution steps
 					</div>
-					<ol className={timelineListClass}>
-						{resolution.visibleLines.map((line, index) => (
-							<li key={index} className={timelineItemClass}>
-								<span className={timelineMarkerClass}>{index + 1}</span>
-								<div className={timelineTextClass}>{line}</div>
-							</li>
-						))}
-					</ol>
+					<div className={timelineListClass}>
+						<div aria-hidden="true" className={timelineRailClass} />
+						{parsedLines.map(({ text, depth }, index) => {
+							const markerClass =
+								depth === 0 ? primaryMarkerClass : nestedMarkerClass;
+							const itemIndent =
+								depth > 0 ? { marginLeft: `${depth * 0.875}rem` } : undefined;
+							const textClass =
+								depth === 0 ? timelineTextClass : nestedTimelineTextClass;
+
+							return (
+								<div
+									key={index}
+									className={timelineItemClass}
+									style={itemIndent}
+								>
+									<span className={markerClass} aria-hidden="true" />
+									<div className={textClass}>{text}</div>
+								</div>
+							);
+						})}
+					</div>
 				</div>
 			</div>
 			{shouldShowContinue ? (
