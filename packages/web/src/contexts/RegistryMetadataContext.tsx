@@ -19,12 +19,6 @@ import {
 	type MetadataSelector,
 } from './registryMetadataSelectors';
 import {
-	DEFAULT_LAND_DESCRIPTOR,
-	DEFAULT_PASSIVE_DESCRIPTOR,
-	DEFAULT_SLOT_DESCRIPTOR,
-	resolveOverviewContent,
-} from './registryMetadataDefaults';
-import {
 	useDefinitionLookups,
 	useDescriptorOverrides,
 	useMetadataLookups,
@@ -63,6 +57,20 @@ export interface RegistryMetadataContextValue {
 	overviewContent: SessionOverviewMetadata;
 }
 
+type SnapshotMetadataWithOverview = SessionSnapshotMetadata & {
+	overviewContent?: SessionOverviewMetadata | undefined;
+};
+
+const METADATA_REQUIRED_ERROR =
+	'RegistryMetadataProvider requires metadata with asset and overview ' +
+	'descriptors.';
+const ASSET_DESCRIPTOR_ERROR =
+	'RegistryMetadataProvider requires metadata.assets.land, ' +
+	'metadata.assets.slot, and metadata.assets.passive.';
+const OVERVIEW_DESCRIPTOR_ERROR =
+	'RegistryMetadataProvider requires metadata.overviewContent or ' +
+	'metadata.overview.';
+
 interface RegistryMetadataProviderProps {
 	registries: Pick<
 		SessionRegistries,
@@ -80,8 +88,24 @@ export function RegistryMetadataProvider({
 	metadata,
 	children,
 }: RegistryMetadataProviderProps) {
-	const snapshotMetadata = metadata ?? null;
-	const descriptorOverrides = useDescriptorOverrides(snapshotMetadata);
+	if (!metadata) {
+		throw new Error(METADATA_REQUIRED_ERROR);
+	}
+	const metadataWithOverview: SnapshotMetadataWithOverview = metadata;
+	const assets = metadataWithOverview.assets;
+	if (!assets) {
+		throw new Error(ASSET_DESCRIPTOR_ERROR);
+	}
+	const { land, slot, passive } = assets;
+	if (!land || !slot || !passive) {
+		throw new Error(ASSET_DESCRIPTOR_ERROR);
+	}
+	const overviewSource =
+		metadataWithOverview.overviewContent ?? metadataWithOverview.overview;
+	if (!overviewSource) {
+		throw new Error(OVERVIEW_DESCRIPTOR_ERROR);
+	}
+	const descriptorOverrides = useDescriptorOverrides(metadataWithOverview);
 	const {
 		resourceLookup,
 		actionLookup,
@@ -97,34 +121,18 @@ export function RegistryMetadataProvider({
 		statMetadataLookup,
 		phaseMetadataLookup,
 		triggerMetadataLookup,
-		assetDescriptors,
 	} = useMetadataLookups(registries, descriptorOverrides);
 	const landDescriptor = useMemo(
-		() =>
-			resolveAssetDescriptor(
-				'land',
-				assetDescriptors?.land,
-				DEFAULT_LAND_DESCRIPTOR,
-			),
-		[assetDescriptors],
+		() => resolveAssetDescriptor('land', land),
+		[land],
 	);
 	const slotDescriptor = useMemo(
-		() =>
-			resolveAssetDescriptor(
-				'slot',
-				assetDescriptors?.slot,
-				DEFAULT_SLOT_DESCRIPTOR,
-			),
-		[assetDescriptors],
+		() => resolveAssetDescriptor('slot', slot),
+		[slot],
 	);
 	const passiveDescriptor = useMemo(
-		() =>
-			resolveAssetDescriptor(
-				'passive',
-				assetDescriptors?.passive,
-				DEFAULT_PASSIVE_DESCRIPTOR,
-			),
-		[assetDescriptors],
+		() => resolveAssetDescriptor('passive', passive),
+		[passive],
 	);
 	const resourceMetadata = useMemo(
 		() => createMetadataSelector(resourceMetadataLookup),
@@ -166,10 +174,7 @@ export function RegistryMetadataProvider({
 		() => createAssetMetadataSelector(passiveDescriptor),
 		[passiveDescriptor],
 	);
-	const overviewContent = useMemo(
-		() => resolveOverviewContent(snapshotMetadata),
-		[snapshotMetadata],
-	);
+	const overviewContent = useMemo(() => overviewSource, [overviewSource]);
 	const value = useMemo<RegistryMetadataContextValue>(
 		() =>
 			Object.freeze({

@@ -66,6 +66,7 @@ describe('<Overview />', () => {
 			assets: {
 				land: { label: 'Land', icon: '🗺️' },
 				slot: { label: 'Slot', icon: '🧩' },
+				passive: { label: 'Passive', icon: '✨' },
 			},
 			overview: {
 				sections: [
