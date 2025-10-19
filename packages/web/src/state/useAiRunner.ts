@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { MutableRefObject } from 'react';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { getSessionSnapshot } from './sessionStateStore';
 import { enqueueSessionTask, hasAiController, runAiTurn } from './sessionAi';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import type { ActionResolution } from './useActionResolution';
 
 interface UseAiRunnerOptions {
 	sessionId: string;
@@ -16,6 +17,7 @@ interface UseAiRunnerOptions {
 	) => void;
 	mountedRef: MutableRefObject<boolean>;
 	onFatalSessionError?: (error: unknown) => void;
+	resolution: ActionResolution | null;
 }
 
 export function useAiRunner({
@@ -25,7 +27,9 @@ export function useAiRunner({
 	syncPhaseState,
 	mountedRef,
 	onFatalSessionError,
+	resolution,
 }: UseAiRunnerOptions) {
+	const runningRef = useRef(false);
 	useEffect(() => {
 		const phaseDefinition =
 			sessionSnapshot.phases[sessionSnapshot.game.phaseIndex];
@@ -35,11 +39,21 @@ export function useAiRunner({
 		if (sessionSnapshot.game.conclusion) {
 			return;
 		}
+		if (runningRef.current) {
+			return;
+		}
 		const activeId = sessionSnapshot.game.activePlayerId;
 		if (!hasAiController(sessionId, activeId)) {
 			return;
 		}
+		if (
+			resolution &&
+			(!resolution.isComplete || resolution.requireAcknowledgement)
+		) {
+			return;
+		}
 		void (async () => {
+			runningRef.current = true;
 			let fatalError: unknown = null;
 			const forwardFatalError = (error: unknown) => {
 				if (fatalError !== null) {
@@ -57,20 +71,24 @@ export function useAiRunner({
 			try {
 				const ranTurn = await runAiTurn(sessionId, activeId);
 				if (fatalError !== null) {
+					runningRef.current = false;
 					return;
 				}
 				const snapshot = getSessionSnapshot(sessionId);
 				syncPhaseState(snapshot);
 				if (!ranTurn) {
+					runningRef.current = false;
 					return;
 				}
 				if (!mountedRef.current) {
+					runningRef.current = false;
 					return;
 				}
 				if (fatalError !== null) {
+					runningRef.current = false;
 					return;
 				}
-				void enqueueSessionTask(sessionId, async () => {
+				await enqueueSessionTask(sessionId, async () => {
 					if (fatalError !== null) {
 						return;
 					}
@@ -86,6 +104,8 @@ export function useAiRunner({
 				});
 			} catch (error) {
 				forwardFatalError(error);
+			} finally {
+				runningRef.current = false;
 			}
 		})();
 	}, [
@@ -97,5 +117,6 @@ export function useAiRunner({
 		syncPhaseState,
 		mountedRef,
 		onFatalSessionError,
+		resolution,
 	]);
 }

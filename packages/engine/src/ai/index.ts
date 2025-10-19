@@ -107,25 +107,17 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			return;
 		}
 
-		while (
-			engineContext.activePlayer.id === playerId &&
-			engineContext.phases[engineContext.game.phaseIndex]?.action &&
-			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) > 0
-		) {
-			try {
-				await dependencies.performAction(TAX_ACTION_ID, engineContext);
-			} catch (error) {
-				void error;
-				await finishActionPhaseAsync();
-				return;
-			}
+		const remaining =
+			engineContext.activePlayer.resources[actionPointResourceKey] ?? 0;
+		if (remaining <= 0) {
+			await finishActionPhaseAsync();
+			return;
 		}
 
-		if (
-			engineContext.activePlayer.id === playerId &&
-			engineContext.phases[engineContext.game.phaseIndex]?.action &&
-			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) === 0
-		) {
+		try {
+			await dependencies.performAction(TAX_ACTION_ID, engineContext);
+		} catch (error) {
+			void error;
 			await finishActionPhaseAsync();
 		}
 	};

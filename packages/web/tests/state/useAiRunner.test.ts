@@ -77,6 +77,7 @@ describe('useAiRunner', () => {
 				syncPhaseState,
 				mountedRef,
 				onFatalSessionError,
+				resolution: null,
 			}),
 		);
 
@@ -84,7 +85,8 @@ describe('useAiRunner', () => {
 			await Promise.resolve();
 		});
 
-		expect(syncPhaseState).toHaveBeenCalledWith(sessionState, {
+		expect(syncPhaseState).toHaveBeenCalledTimes(2);
+		expect(syncPhaseState).toHaveBeenNthCalledWith(2, expect.anything(), {
 			isAdvancing: true,
 			canEndTurn: false,
 		});
@@ -147,6 +149,7 @@ describe('useAiRunner', () => {
 				syncPhaseState,
 				mountedRef,
 				onFatalSessionError,
+				resolution: null,
 			}),
 		);
 
@@ -156,6 +159,78 @@ describe('useAiRunner', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
+		runAiTurnSpy.mockRestore();
+	});
+
+	it('waits for blocking resolutions before running additional actions', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{
+				id: 'phase-main',
+				name: 'Main Phase',
+				action: true,
+				steps: [],
+			},
+		];
+		const activePlayer = createSnapshotPlayer({ id: 'A', aiControlled: true });
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+		});
+		const registries = createSessionRegistriesPayload();
+		const sessionId = 'session-ai';
+		initializeSessionState({
+			sessionId,
+			snapshot: sessionState,
+			registries,
+		});
+		const runAiTurnSpy = vi
+			.spyOn(sessionAiModule, 'runAiTurn')
+			.mockResolvedValue(true);
+		const syncPhaseState = vi.fn();
+		const mountedRef = { current: true };
+
+		renderHook(() =>
+			useAiRunner({
+				sessionId,
+				sessionSnapshot: sessionState,
+				runUntilActionPhaseCore: vi.fn(),
+				syncPhaseState,
+				mountedRef,
+				onFatalSessionError: undefined,
+				resolution: {
+					lines: ['line'],
+					visibleLines: ['line'],
+					timeline: [],
+					visibleTimeline: [],
+					isComplete: false,
+					summaries: [],
+					source: 'action',
+					requireAcknowledgement: true,
+				},
+			}),
+		);
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(runAiTurnSpy).not.toHaveBeenCalled();
 		runAiTurnSpy.mockRestore();
 	});
 });
