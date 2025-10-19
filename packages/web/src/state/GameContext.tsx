@@ -18,7 +18,7 @@ import {
 } from './sessionTypes';
 import type {
 	GameProviderProps,
-	LegacyGameEngineContextValue,
+	GameEngineContextValue,
 	SessionContainer,
 } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
@@ -362,7 +362,7 @@ export function GameProvider(props: GameProviderProps) {
 	return <GameProviderInner {...innerProps} />;
 }
 
-export const useGameEngine = (): LegacyGameEngineContextValue => {
+export const useGameEngine = (): GameEngineContextValue => {
 	const value = useContext(GameEngineContext);
 	if (!value) {
 		throw new Error('useGameEngine must be used within GameProvider');
@@ -370,7 +370,7 @@ export const useGameEngine = (): LegacyGameEngineContextValue => {
 	return value;
 };
 
-export const useOptionalGameEngine = (): LegacyGameEngineContextValue | null =>
+export const useOptionalGameEngine = (): GameEngineContextValue | null =>
 	useContext(GameEngineContext);
 
 export const useSessionView = () => {

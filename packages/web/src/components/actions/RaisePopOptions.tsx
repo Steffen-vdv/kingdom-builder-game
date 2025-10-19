@@ -1,8 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import type {
-	SessionActionRequirementList,
-	SessionRequirementFailure,
-} from '@kingdom-builder/protocol/session';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol/session';
 import {
 	describeContent,
 	splitSummary,
@@ -51,7 +48,6 @@ export default function RaisePopOptions({
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -155,12 +151,7 @@ export default function RaisePopOptions({
 		) as Record<string, number>;
 	}, [metadata.costs]);
 	const costsReady = metadata.costs !== undefined;
-	const fallbackRequirementFailures = useMemo<SessionActionRequirementList>(
-		() => session.getActionRequirements(action.id),
-		[session, action.id],
-	);
-	const requirementFailures =
-		metadata.requirements ?? fallbackRequirementFailures;
+	const requirementFailures = metadata.requirements ?? [];
 	const populationCap = player.stats?.maxPopulation;
 	const totalPopulation = useMemo(
 		() =>

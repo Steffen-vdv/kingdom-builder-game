@@ -16,15 +16,13 @@ import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
 import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
 import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
 import type { PlayerSnapshot } from '../src/translation';
-import type {
-	LegacyGameEngineContextValue,
-	PlayerId,
-} from '@kingdom-builder/engine';
+import type { GameEngineContextValue } from '../src/state/GameContext.types';
+import type { PlayerId } from '@kingdom-builder/engine';
 import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 interface HoverCardScenario {
-	mockGame: LegacyGameEngineContextValue;
+	mockGame: GameEngineContextValue;
 	costResource: string;
 	costIcon: string;
 	actionCostResource: string;
@@ -104,7 +102,7 @@ function createHoverCardScenario(): HoverCardScenario {
 		icon: exampleActionDefinition?.icon,
 	};
 	return {
-		mockGame: mockGame as LegacyGameEngineContextValue,
+		mockGame,
 		costResource,
 		costIcon,
 		actionCostResource,

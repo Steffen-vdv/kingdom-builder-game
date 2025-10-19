@@ -18,7 +18,6 @@ import type { ReactNode } from 'react';
 import type {
 	RemoteSessionRecord,
 	Session,
-	SessionAdapter,
 	SessionResourceKey,
 } from './sessionTypes';
 
@@ -115,13 +114,6 @@ export interface GameEngineContextValue {
 	onChangePlayerName: (name: string) => void;
 }
 
-export interface LegacyGameEngineContextBridge {
-	/**
-	 * TODO(#session-migration): Remove direct EngineSession exposure once
-	 * all consumers rely on request helpers.
-	 */
-	session: SessionAdapter;
-}
-
-export type LegacyGameEngineContextValue = GameEngineContextValue &
-	LegacyGameEngineContextBridge;
+// NOTE: Session adapters are now exposed directly through queue helpers or
+// dedicated harness utilities during tests instead of via the game engine
+// context.

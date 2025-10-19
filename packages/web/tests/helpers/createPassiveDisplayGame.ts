@@ -4,13 +4,13 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
-import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
+import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createMockSessionAdapter } from './mockSessionAdapter';
 
-export type MockGame = LegacyGameEngineContextValue;
+export type MockGame = GameEngineContextValue;
 
 export type PassiveGameContext = {
 	mockGame: MockGame;
@@ -18,6 +18,7 @@ export type PassiveGameContext = {
 	clearHoverCard: ReturnType<typeof vi.fn>;
 	registries: SessionRegistries;
 	metadata: SessionSnapshot['metadata'];
+	sessionAdapter: ReturnType<typeof createMockSessionAdapter>;
 };
 
 export function createPassiveGame(
@@ -43,6 +44,7 @@ export function createPassiveGame(
 		},
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
+	const sessionAdapter = createMockSessionAdapter(sessionState);
 	const mockGame: MockGame = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
@@ -101,7 +103,6 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: createMockSessionAdapter(sessionState),
 	};
 	return {
 		mockGame,
@@ -109,5 +110,6 @@ export function createPassiveGame(
 		clearHoverCard,
 		registries: sessionRegistries,
 		metadata: sessionMetadata,
+		sessionAdapter,
 	};
 }
