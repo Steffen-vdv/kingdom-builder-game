@@ -38,7 +38,9 @@ async function bootstrap() {
 			const svg = createFaviconSvg(iconResolution.icon);
 			const link = ensureFaviconLink();
 			link.rel = 'icon';
+			link.type = 'image/svg+xml';
 			link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+			link.sizes = 'any';
 			if (!link.parentElement) {
 				document.head.appendChild(link);
 			}
