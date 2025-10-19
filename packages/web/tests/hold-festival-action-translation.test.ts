@@ -88,7 +88,7 @@ describe('hold festival action translation', () => {
 				kind: 'headline',
 			},
 			{
-				text: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
+				text: `♾️ ${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} activated`,
 				depth: 1,
 				kind: 'group',
 			},
