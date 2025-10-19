@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import clsx from 'clsx';
+import { ResolutionCard } from './ResolutionCard';
 import { useGameEngine } from '../state/GameContext';
+import type { ResolutionLogEntry, TextLogEntry } from '../state/useGameLog';
 import { useAnimate } from '../utils/useAutoAnimate';
 
 interface LogPanelProps {
@@ -12,7 +14,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	const { log: entries, logOverflowed, sessionSnapshot } = useGameEngine();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
-	const listRef = useAnimate<HTMLUListElement>();
+	const listRef = useAnimate<HTMLDivElement>();
 	const pendingScrollRef = useRef(false);
 
 	useEffect(() => {
@@ -123,9 +125,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		'relative flex h-full flex-col overflow-y-auto px-6 pb-6 pt-6',
 		'custom-scrollbar',
 	);
-	const listClasses = clsx(
-		'mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200',
-	);
+	const listClasses = clsx('mt-6 flex flex-col gap-6');
 	const closeButtonClasses = clsx(
 		'flex h-8 w-8 items-center justify-center rounded-full border',
 		'border-rose-500 bg-rose-500 text-base font-semibold leading-none text-white',
@@ -179,11 +179,55 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 			onClose();
 		}
 	};
+	const timestampClasses = clsx(
+		'text-xs font-semibold uppercase tracking-[0.3em]',
+		'text-slate-500 dark:text-slate-400',
+	);
+	const entryContainerClasses = clsx('flex flex-col gap-3');
+	const cardWrapperBaseClasses = clsx('log-entry-card');
+	const fallbackContainerClasses = clsx(
+		'rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl',
+		'shadow-amber-500/10 dark:border-white/10 dark:bg-slate-900/80',
+		'dark:shadow-slate-900/60 frosted-surface',
+	);
+	const fallbackTextClasses = clsx(
+		'text-sm text-slate-700 dark:text-slate-200',
+		'whitespace-pre-wrap',
+	);
+	const renderTextEntry = (
+		entry: TextLogEntry,
+		entryElementId: string,
+		cardClasses: string,
+	) => (
+		<div key={entry.id} id={entryElementId} className={entryContainerClasses}>
+			<div className={timestampClasses}>{entry.time}</div>
+			<div className={cardClasses}>
+				<div className={fallbackContainerClasses}>
+					<p className={fallbackTextClasses}>{entry.text}</p>
+				</div>
+			</div>
+		</div>
+	);
+	const renderResolutionEntry = (
+		entry: ResolutionLogEntry,
+		entryElementId: string,
+		cardClasses: string,
+	) => {
+		const resolutionTestId = `log-resolution-card-${entry.id}`;
+		return (
+			<div key={entry.id} id={entryElementId} className={entryContainerClasses}>
+				<div className={timestampClasses}>{entry.time}</div>
+				<div className={cardClasses} data-testid={resolutionTestId}>
+					<ResolutionCard resolution={entry.resolution} onContinue={() => {}} />
+				</div>
+			</div>
+		);
+	};
 	const logContent = (
 		<>
 			{header}
 			{overflowNotice}
-			<ul ref={listRef} className={listClasses}>
+			<div ref={listRef} className={listClasses}>
 				{entries.map((entry) => {
 					const [playerA, playerB] = sessionSnapshot.game.players;
 					const aId = playerA?.id;
@@ -194,29 +238,17 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 							: entry.playerId === bId
 								? 'log-entry-b'
 								: '';
-					const entryClasses = clsx(
-						'text-sm font-mono leading-relaxed',
-						'whitespace-pre-wrap',
-						colorClass,
-					);
-					const entryText =
-						entry.kind === 'resolution'
-							? (entry.resolution.visibleLines.length
-									? entry.resolution.visibleLines
-									: entry.resolution.lines
-								).join('\n')
-							: entry.text;
-					return (
-						<li
-							key={entry.id}
-							id={`game-log-entry-${entry.id}`}
-							className={entryClasses}
-						>
-							[{entry.time}] {entryText}
-						</li>
-					);
+					const entryElementId = `game-log-entry-${entry.id}`;
+					const cardClasses = clsx(cardWrapperBaseClasses, colorClass);
+					if (entry.kind !== 'resolution') {
+						if (!entry.text) {
+							return null;
+						}
+						return renderTextEntry(entry, entryElementId, cardClasses);
+					}
+					return renderResolutionEntry(entry, entryElementId, cardClasses);
 				})}
-			</ul>
+			</div>
 		</>
 	);
 

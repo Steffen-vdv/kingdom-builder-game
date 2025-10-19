@@ -142,19 +142,53 @@
 		--player-color: rgba(244, 63, 94, 0.5);
 	}
 
-	.log-entry-a {
-		color: rgb(37, 99, 235);
+	.log-entry-card {
+		@apply relative p-3;
+		border-radius: 1.75rem;
 	}
 
-	.log-entry-b {
-		color: rgb(190, 18, 60);
+	.log-entry-card::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		border: 1px solid rgba(148, 163, 184, 0.35);
+		pointer-events: none;
 	}
 
-	.dark .log-entry-a {
-		color: rgb(191, 219, 254);
+	.dark .log-entry-card::before {
+		border-color: rgba(148, 163, 184, 0.4);
 	}
 
-	.dark .log-entry-b {
-		color: rgb(251, 207, 232);
+	.log-entry-card.log-entry-a {
+		@apply bg-blue-100/50;
+	}
+
+	.log-entry-card.log-entry-b {
+		@apply bg-rose-100/50;
+	}
+
+	.dark .log-entry-card.log-entry-a {
+		@apply bg-blue-500/20;
+	}
+
+	.dark .log-entry-card.log-entry-b {
+		@apply bg-rose-500/20;
+	}
+
+	.log-entry-card.log-entry-a::before {
+		border-color: rgba(59, 130, 246, 0.45);
+	}
+
+	.log-entry-card.log-entry-b::before {
+		border-color: rgba(244, 63, 94, 0.45);
+	}
+
+	.dark .log-entry-card.log-entry-a::before {
+		border-color: rgba(191, 219, 254, 0.6);
+	}
+
+	.dark .log-entry-card.log-entry-b::before {
+		border-color: rgba(251, 207, 232, 0.6);
 	}
 }
