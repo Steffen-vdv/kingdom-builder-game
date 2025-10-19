@@ -1,4 +1,5 @@
 import { formatStatValue, statDisplaysAsPercent } from '../../utils/stats';
+import { selectStatDescriptor } from '../effects/registrySelectors';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
 import {
 	buildSignedDelta,
@@ -104,9 +105,9 @@ export function appendStatChanges(
 		if (change.delta === 0) {
 			continue;
 		}
-		const info = assets.stats[key];
-		const label = info?.label ?? key;
-		const icon = info?.icon;
+		const descriptor = selectStatDescriptor({ assets }, key);
+		const icon = descriptor.icon !== key ? descriptor.icon : undefined;
+		const label = descriptor.label ?? key;
 		const line = formatStatChange(label, icon, key, change, assets);
 		if (statDisplaysAsPercent(key, assets)) {
 			changes.push(line);

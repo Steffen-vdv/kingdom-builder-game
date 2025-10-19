@@ -223,10 +223,15 @@ describe('appendStatChanges', () => {
 				}),
 			),
 		};
+		const descriptor = selectStatDescriptor(
+			{ assets: fallbackAssets },
+			primaryStatId,
+		);
+		const expectedLabel = descriptor.label ?? primaryStatId;
 		const changes: string[] = [];
 		appendStatChanges(changes, before, after, player, step, fallbackAssets);
-		const entry = changes.find((line) => line.includes(primaryStatId));
+		const entry = changes.find((line) => line.includes(expectedLabel));
 		expect(entry).toBeDefined();
-		expect(entry?.includes(primaryStatId)).toBe(true);
+		expect(entry?.includes(primaryStatId)).toBe(false);
 	});
 });

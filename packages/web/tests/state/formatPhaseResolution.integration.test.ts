@@ -174,4 +174,65 @@ describe('formatPhaseResolution integration', () => {
 		expect(result.lines).toEqual([]);
 		expect(result.summaries).toEqual([]);
 	});
+
+	it('formats stat changes with icons and labels', () => {
+		const factory = createContentFactory();
+		const phaseDefinition = createPhaseDefinition();
+		const stepDefinition = phaseDefinition
+			.steps[0] as SessionPhaseStepDefinition;
+		const statKey = 'fortificationStrength';
+		const before: PlayerSnapshot = {
+			resources: {},
+			stats: { [statKey]: 0 },
+			population: {},
+			buildings: [],
+			lands: [],
+			passives: [],
+		};
+		const after: PlayerSnapshot = {
+			resources: {},
+			stats: { [statKey]: 2 },
+			population: {},
+			buildings: [],
+			lands: [],
+			passives: [],
+		};
+		const player = createSessionPlayer(
+			factory.action().id,
+			'Phase Sentinel',
+			after,
+		);
+		const advance: SessionAdvanceResult = {
+			phase: phaseDefinition.id,
+			step: stepDefinition.id,
+			effects: [],
+			player,
+		};
+		const diffContext = createTranslationDiffContext({
+			activePlayer: {
+				id: player.id,
+				population: {},
+				lands: [],
+			},
+			buildings: factory.buildings,
+			developments: factory.developments,
+			passives: { evaluationMods: new Map(), get: () => undefined },
+			assets: translationAssets,
+		});
+
+		const result = formatPhaseResolution({
+			advance,
+			before,
+			after,
+			phaseDefinition,
+			stepDefinition,
+			diffContext,
+		});
+
+		expect(result.lines).toEqual([
+			'🌅 Aurora Phase',
+			'    🛡️ Fortification Strength +2 (0→2)',
+		]);
+		expect(result.summaries).toEqual(['🛡️ Fortification Strength +2 (0→2)']);
+	});
 });
