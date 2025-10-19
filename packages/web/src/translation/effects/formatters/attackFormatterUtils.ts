@@ -94,6 +94,7 @@ export function buildBaseEntry(
 		target: context.target,
 		targetLabel: context.targetLabel,
 		stats: context.stats,
+		assets: context.assets,
 	};
 }
 

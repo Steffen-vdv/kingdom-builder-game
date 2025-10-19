@@ -58,6 +58,7 @@ export type EvaluationContext<TTarget extends AttackTarget> = {
 	info: TargetInfo;
 	target: TTarget;
 	targetLabel: string;
+	assets: TranslationContext['assets'];
 };
 
 export type DiffFormatOptions = {

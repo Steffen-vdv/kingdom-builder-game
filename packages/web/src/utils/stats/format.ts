@@ -4,6 +4,11 @@ import type {
 	TranslationPhaseStep,
 } from '../../translation/context';
 
+const PERCENT_FORMATTER = new Intl.NumberFormat('en-US', {
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 2,
+});
+
 interface FormattablePhaseStep extends TranslationPhaseStep {
 	icon?: string;
 	title?: string;
@@ -62,7 +67,10 @@ export function formatStatValue(
 	value: number,
 	assets?: TranslationAssets,
 ): string {
-	return statDisplaysAsPercent(key, assets) ? `${value * 100}%` : String(value);
+	if (statDisplaysAsPercent(key, assets)) {
+		return `${PERCENT_FORMATTER.format(value * 100)}%`;
+	}
+	return String(value);
 }
 
 export function formatDetailText(detail: string): string {

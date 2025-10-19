@@ -4,6 +4,7 @@ import type {
 	EngineSessionSnapshot,
 	PlayerId,
 } from '@kingdom-builder/engine';
+import type { SessionStatSourceContribution } from '@kingdom-builder/protocol';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
@@ -22,6 +23,7 @@ export interface PlayerPanelFixtures {
 	registries: SessionRegistries;
 	metadata: EngineSessionSnapshot['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
+	percentStatKey?: string;
 }
 
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
@@ -48,22 +50,60 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	);
 	const stats: Record<string, number> = {};
 	const statsHistory: Record<string, boolean> = {};
-	let statIndex = 0;
 	const statEntries = Object.entries(translationAssets.stats);
 	const maxPopulationKey =
 		statEntries.find(([, entry]) =>
 			entry.label?.toLowerCase().includes('max population'),
 		)?.[0] ?? 'maxPopulation';
+	const percentStatKeys = new Set<string>();
+	let primaryPercentStatKey: string | undefined;
+	let percentIndex = 0;
+	let nonPercentIndex = 0;
+	const statSources: Record<
+		string,
+		Record<string, SessionStatSourceContribution>
+	> = {};
+	const isPercentStat = (key: string) => {
+		const entry = translationAssets.stats[key];
+		if (!entry) {
+			return false;
+		}
+		if (typeof entry.displayAsPercent === 'boolean') {
+			return entry.displayAsPercent;
+		}
+		return Boolean(entry.format?.percent);
+	};
 	for (const [statKey] of statEntries) {
 		if (statKey === maxPopulationKey) {
 			continue;
 		}
-		const value = statIndex % 2 === 0 ? statIndex + 1 : 0;
+		if (isPercentStat(statKey)) {
+			const value = 0.25 + percentIndex * 0.1;
+			stats[statKey] = value;
+			percentStatKeys.add(statKey);
+			if (!primaryPercentStatKey) {
+				primaryPercentStatKey = statKey;
+			}
+			statSources[statKey] = {
+				[`${statKey}-source`]: {
+					amount: value,
+					meta: {
+						key: statKey,
+						longevity: 'ongoing',
+						kind: 'passive',
+						id: `${statKey}.passive`,
+					},
+				},
+			};
+			percentIndex += 1;
+			continue;
+		}
+		const value = nonPercentIndex % 2 === 0 ? nonPercentIndex + 1 : 0;
 		stats[statKey] = value;
 		if (value === 0) {
 			statsHistory[statKey] = true;
 		}
-		statIndex += 1;
+		nonPercentIndex += 1;
 	}
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
@@ -71,6 +111,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		resources: resourceValues,
 		stats,
 		statsHistory,
+		statSources,
 		population: {},
 	});
 	const opponent = createSnapshotPlayer({
@@ -179,6 +220,10 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		.map(([statKey]) => statKey);
 	const statForecast = displayableStatKeys.reduce<Record<string, number>>(
 		(acc, key, index) => {
+			if (percentStatKeys.has(key)) {
+				acc[key] = 0.1;
+				return acc;
+			}
 			const offset = index + 2;
 			acc[key] = index % 2 === 0 ? offset : -offset;
 			return acc;
@@ -194,5 +239,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		registries: sessionRegistries,
 		metadata: sessionState.metadata,
 		metadataSelectors,
+		percentStatKey: primaryPercentStatKey,
 	};
 }

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, type Mock } from 'vitest';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PlayerPanel from '../src/components/player/PlayerPanel';
@@ -18,6 +18,7 @@ const {
 	registries,
 	metadata,
 	metadataSelectors,
+	percentStatKey,
 } = createPlayerPanelFixtures();
 
 const renderPanel = () =>
@@ -126,11 +127,16 @@ describe('<PlayerPanel />', () => {
 		);
 		const statLabel = resolveDescriptorLabel(firstStatKey, statDescriptor);
 		const statValue = activePlayerSnapshot.stats[firstStatKey] ?? 0;
-		const formattedStatValue = formatStatValue(firstStatKey, statValue);
+		const formattedStatValue = formatStatValue(
+			firstStatKey,
+			statValue,
+			mockGame.translationContext.assets,
+		);
 		const statDelta = statForecast[firstStatKey]!;
 		const formattedStatDelta = `${statDelta > 0 ? '+' : '-'}${formatStatValue(
 			firstStatKey,
 			Math.abs(statDelta),
+			mockGame.translationContext.assets,
 		)}`;
 		const statButtons = screen.getAllByRole('button', {
 			name: `${statLabel}: ${formattedStatValue} (${formattedStatDelta})`,
@@ -162,5 +168,68 @@ describe('<PlayerPanel />', () => {
 			descriptor.id,
 		]);
 		expect(record[descriptor.id]).toBe(first);
+	});
+
+	it('formats percent-based stats as percents in the UI and hover card', () => {
+		const assets = mockGame.translationContext.assets;
+		const percentEntries = Object.entries(assets.stats).filter(
+			([, entry]) =>
+				entry?.displayAsPercent === true || entry?.format?.percent === true,
+		);
+		expect(percentEntries.length).toBeGreaterThan(0);
+		renderPanel();
+		const [resolvedPercentKey] =
+			percentEntries.find(([key]) => key in activePlayerSnapshot.stats) ?? [];
+		const targetPercentKey = resolvedPercentKey ?? percentStatKey;
+		expect(targetPercentKey).toBeDefined();
+		if (!targetPercentKey) {
+			return;
+		}
+		const percentValue = activePlayerSnapshot.stats[targetPercentKey];
+		expect(typeof percentValue).toBe('number');
+		if (typeof percentValue !== 'number') {
+			return;
+		}
+		const formattedPercent = formatStatValue(
+			targetPercentKey,
+			percentValue,
+			assets,
+		);
+		expect(formattedPercent.endsWith('%')).toBe(true);
+		const percentStatDescriptor = toDescriptorDisplay(
+			metadataSelectors.statMetadata.select(targetPercentKey),
+		);
+		const percentLabel = resolveDescriptorLabel(
+			targetPercentKey,
+			percentStatDescriptor,
+		);
+		const percentDelta = statForecast[targetPercentKey] ?? 0;
+		const formattedPercentDelta = percentDelta
+			? `${percentDelta > 0 ? '+' : '-'}${formatStatValue(
+					targetPercentKey,
+					Math.abs(percentDelta),
+					assets,
+				)}`
+			: undefined;
+		const percentAriaLabel = formattedPercentDelta
+			? `${percentLabel}: ${formattedPercent} (${formattedPercentDelta})`
+			: `${percentLabel}: ${formattedPercent}`;
+		const percentButtons = screen.getAllByLabelText(percentAriaLabel);
+		expect(percentButtons.length).toBeGreaterThan(0);
+		const [button] = percentButtons;
+		expect(button).toHaveTextContent(formattedPercent);
+		const handleHoverCardMock = mockGame.handleHoverCard as Mock;
+		handleHoverCardMock.mockClear();
+		fireEvent.mouseEnter(button);
+		expect(handleHoverCardMock).toHaveBeenCalled();
+		const lastCall = handleHoverCardMock.mock.calls.at(-1);
+		expect(lastCall).toBeDefined();
+		if (!lastCall) {
+			return;
+		}
+		const [hoverCard] = lastCall;
+		expect(hoverCard).toBeDefined();
+		const serializedEffects = JSON.stringify(hoverCard.effects);
+		expect(serializedEffects).toContain(formattedPercent);
 	});
 });
