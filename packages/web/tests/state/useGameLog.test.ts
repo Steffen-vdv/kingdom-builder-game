@@ -183,4 +183,103 @@ describe('useGameLog', () => {
 		expect(entry.resolution.requireAcknowledgement).toBe(false);
 		expect(entry.resolution.player).toEqual(players[0]);
 	});
+
+	it('merges resolution log entries for repeated phase updates', () => {
+		const players: SessionPlayerStateSnapshot[] = [
+			createPlayer('A'),
+			createPlayer('B'),
+		];
+		const sessionState: SessionSnapshot = {
+			game: {
+				turn: 1,
+				currentPlayerIndex: 0,
+				currentPhase: 'growth',
+				currentStep: 'step-0',
+				phaseIndex: 0,
+				stepIndex: 0,
+				devMode: false,
+				players,
+				activePlayerId: players[0]!.id,
+				opponentId: players[1]!.id,
+			},
+			phases: [],
+			actionCostResource: primaryResource,
+			recentResourceGains: [],
+			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			passiveRecords: {
+				[players[0]!.id]: [],
+				[players[1]!.id]: [],
+			},
+			metadata: { passiveEvaluationModifiers: {} },
+		};
+		const { result } = renderHook(() =>
+			useGameLog({ sessionSnapshot: sessionState }),
+		);
+		const phaseSourceA = {
+			kind: 'phase',
+			id: 'growth',
+			label: 'Growth Phase',
+		} as const;
+		const firstResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gold +2 (10→12)'],
+			visibleLines: ['Growth Phase', '    Gold +2 (10→12)'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: ['Gold +2 (10→12)'],
+			source: phaseSourceA,
+			requireAcknowledgement: false,
+		};
+
+		act(() => {
+			result.current.addResolutionLog(firstResolution, players[0]);
+		});
+
+		expect(result.current.log).toHaveLength(1);
+		const firstEntry = result.current.log[0];
+		const firstId = firstEntry?.id;
+		expect(firstEntry?.kind).toBe('resolution');
+
+		const phaseSourceB = {
+			kind: 'phase',
+			id: 'growth',
+			label: 'Growth Phase',
+		} as const;
+		const secondResolution: ActionResolution = {
+			lines: [
+				'Growth Phase',
+				'    Gold +2 (10→12)',
+				'    Fortification +1 (0→1)',
+			],
+			visibleLines: [
+				'Growth Phase',
+				'    Gold +2 (10→12)',
+				'    Fortification +1 (0→1)',
+			],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: ['Gold +2 (10→12)', 'Fortification +1 (0→1)'],
+			source: phaseSourceB,
+			requireAcknowledgement: false,
+		};
+
+		act(() => {
+			result.current.addResolutionLog(secondResolution, players[0]);
+		});
+
+		expect(result.current.log).toHaveLength(1);
+		const [entry] = result.current.log;
+		expect(entry?.id).toBe(firstId);
+		if (entry?.kind !== 'resolution') {
+			throw new Error('Expected resolution log entry');
+		}
+		expect(entry.resolution.lines).toEqual(secondResolution.lines);
+		expect(entry.resolution.summaries).toEqual(secondResolution.summaries);
+	});
 });

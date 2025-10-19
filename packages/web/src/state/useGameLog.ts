@@ -30,6 +30,18 @@ interface GameLogOptions {
 	sessionSnapshot: SessionSnapshot;
 }
 
+type PhaseSource = Extract<ActionResolution['source'], { kind: 'phase' }>;
+
+function isPhaseSourceDetail(
+	source: ActionResolution['source'],
+): source is PhaseSource {
+	return typeof source !== 'string' && source.kind === 'phase';
+}
+
+function resolvePhaseIdentity(source: PhaseSource) {
+	return source.id?.trim() || source.label?.trim() || null;
+}
+
 function cloneResolution(
 	resolution: ActionResolution,
 	resolvedPlayer: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
@@ -136,20 +148,63 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 				return;
 			}
 			const resolutionSnapshot = cloneResolution(resolution, resolvedPlayer);
-			const entry: LogEntry = {
-				id: nextLogIdRef.current++,
-				time: new Date().toLocaleTimeString(),
-				playerId: resolvedPlayer.id,
-				kind: 'resolution',
-				resolution: resolutionSnapshot,
-			};
-			appendEntries([entry]);
+			const shouldAttemptMerge =
+				!resolutionSnapshot.requireAcknowledgement &&
+				isPhaseSourceDetail(resolutionSnapshot.source);
+			let overflowed = false;
+			setLog((previous) => {
+				if (shouldAttemptMerge) {
+					const lastEntry = previous[previous.length - 1];
+					if (
+						lastEntry &&
+						lastEntry.kind === 'resolution' &&
+						lastEntry.playerId === resolvedPlayer.id &&
+						isPhaseSourceDetail(lastEntry.resolution.source)
+					) {
+						const previousIdentity = resolvePhaseIdentity(
+							lastEntry.resolution.source,
+						);
+						const nextIdentity = resolvePhaseIdentity(
+							resolutionSnapshot.source,
+						);
+						if (
+							previousIdentity &&
+							nextIdentity &&
+							previousIdentity === nextIdentity
+						) {
+							const mergedEntry: ResolutionLogEntry = {
+								...lastEntry,
+								time: new Date().toLocaleTimeString(),
+								resolution: resolutionSnapshot,
+							};
+							return [...previous.slice(0, -1), mergedEntry];
+						}
+					}
+				}
+				const entry: LogEntry = {
+					id: nextLogIdRef.current++,
+					time: new Date().toLocaleTimeString(),
+					playerId: resolvedPlayer.id,
+					kind: 'resolution',
+					resolution: resolutionSnapshot,
+				};
+				const combined = [...previous, entry];
+				const next = combined.slice(-MAX_LOG_ENTRIES);
+				if (next.length < combined.length) {
+					overflowed = true;
+				}
+				return next;
+			});
+			if (overflowed) {
+				setLogOverflowed(true);
+			}
 		},
 		[
-			appendEntries,
 			resolvePlayer,
 			sessionSnapshot.game.activePlayerId,
 			sessionSnapshot.game.players,
+			setLog,
+			setLogOverflowed,
 		],
 	);
 
