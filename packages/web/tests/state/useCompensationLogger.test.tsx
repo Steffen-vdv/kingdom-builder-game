@@ -118,7 +118,7 @@ function Harness({
 }: HarnessProps) {
 	useCompensationLogger({
 		sessionId,
-		sessionState: state,
+		sessionSnapshot: state,
 		addLog,
 		resourceKeys,
 		registries,

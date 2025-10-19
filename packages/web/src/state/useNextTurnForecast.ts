@@ -109,8 +109,8 @@ function hashGameState(
 }
 
 export function useNextTurnForecast(): NextTurnForecast {
-	const { session, sessionState, sessionId } = useGameEngine();
-	const { game, phases } = sessionState;
+	const { session, sessionSnapshot, sessionId } = useGameEngine();
+	const { game, phases } = sessionSnapshot;
 	const players = game.players;
 	const playerIds = useMemo(
 		() => players.map((player) => player.id),

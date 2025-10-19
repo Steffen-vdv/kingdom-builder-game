@@ -7,7 +7,7 @@ import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 
 interface UseAiRunnerOptions {
 	session: SessionAdapter;
-	sessionState: SessionSnapshot;
+	sessionSnapshot: SessionSnapshot;
 	runUntilActionPhaseCore: () => Promise<void>;
 	syncPhaseState: (
 		snapshot: SessionSnapshot,
@@ -19,21 +19,22 @@ interface UseAiRunnerOptions {
 
 export function useAiRunner({
 	session,
-	sessionState,
+	sessionSnapshot,
 	runUntilActionPhaseCore,
 	syncPhaseState,
 	mountedRef,
 	onFatalSessionError,
 }: UseAiRunnerOptions) {
 	useEffect(() => {
-		const phaseDefinition = sessionState.phases[sessionState.game.phaseIndex];
+		const phaseDefinition =
+			sessionSnapshot.phases[sessionSnapshot.game.phaseIndex];
 		if (!phaseDefinition?.action) {
 			return;
 		}
-		if (sessionState.game.conclusion) {
+		if (sessionSnapshot.game.conclusion) {
 			return;
 		}
-		const activeId = sessionState.game.activePlayerId;
+		const activeId = sessionSnapshot.game.activePlayerId;
 		if (!session.hasAiController(activeId)) {
 			return;
 		}
@@ -82,9 +83,9 @@ export function useAiRunner({
 		});
 	}, [
 		session,
-		sessionState.game.activePlayerId,
-		sessionState.game.phaseIndex,
-		sessionState.phases,
+		sessionSnapshot.game.activePlayerId,
+		sessionSnapshot.game.phaseIndex,
+		sessionSnapshot.phases,
 		runUntilActionPhaseCore,
 		syncPhaseState,
 		mountedRef,

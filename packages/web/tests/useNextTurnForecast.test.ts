@@ -40,7 +40,7 @@ interface MockGameEngine {
 		runAiTurn: ReturnType<typeof vi.fn>;
 		advancePhase: ReturnType<typeof vi.fn>;
 	};
-	sessionState: SessionSnapshot;
+	sessionSnapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	resolution: null;
 	showResolution: ReturnType<typeof vi.fn>;
@@ -117,7 +117,7 @@ const engineValue: MockGameEngine = {
 		runAiTurn: vi.fn().mockResolvedValue(false),
 		advancePhase: vi.fn(),
 	},
-	sessionState: undefined as unknown as SessionSnapshot,
+	sessionSnapshot: undefined as unknown as SessionSnapshot,
 	ruleSnapshot: {
 		tieredResourceKey: primaryResource,
 		tierDefinitions: [],
@@ -141,7 +141,7 @@ const setPlayers = (players: SessionPlayerStateSnapshot[]) =>
 const setGameState = (overrides: Partial<SessionSnapshot['game']>) =>
 	sessionHelpers.setGameState(overrides);
 
-engineValue.sessionState = sessionHelpers.createSessionState([]);
+engineValue.sessionSnapshot = sessionHelpers.createSessionState([]);
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: (): MockGameEngine => engineValue,
@@ -333,7 +333,7 @@ describe('useNextTurnForecast', () => {
 		);
 
 		engineValue.session.simulateUpcomingPhases.mockClear();
-		setGameState({ turn: engineValue.sessionState.game.turn + 1 });
+		setGameState({ turn: engineValue.sessionSnapshot.game.turn + 1 });
 		rerender();
 		await flushAsync();
 		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);

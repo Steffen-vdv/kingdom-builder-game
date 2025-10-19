@@ -97,7 +97,6 @@ export function createPassiveGame(
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
 		session: {} as EngineSession,
-		sessionState,
 	};
 	return {
 		mockGame,

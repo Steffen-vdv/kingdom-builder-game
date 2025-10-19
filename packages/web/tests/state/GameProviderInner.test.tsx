@@ -219,7 +219,7 @@ describe('GameProviderInner', () => {
 					getLatestSnapshot: () => null,
 				}}
 				sessionId={sessionId}
-				sessionState={sessionState}
+				sessionSnapshot={sessionState}
 				ruleSnapshot={sessionState.rules}
 				refreshSession={async () => {}}
 				onReleaseSession={() => {}}
@@ -235,7 +235,7 @@ describe('GameProviderInner', () => {
 		expect(capturedAiOptions?.session).toBe(adapter);
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
-		expect(capturedTranslationOptions?.sessionState).toBe(sessionState);
+		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
 		expect(getByTestId('adapter-id')).toHaveTextContent('adapter:test');
 		cleanup();
 	});
@@ -277,7 +277,7 @@ describe('GameProviderInner', () => {
 					getLatestSnapshot: () => null,
 				}}
 				sessionId={sessionId}
-				sessionState={sessionState}
+				sessionSnapshot={sessionState}
 				ruleSnapshot={sessionState.rules}
 				refreshSession={refreshSession}
 				onReleaseSession={() => {}}
@@ -337,7 +337,7 @@ describe('GameProviderInner', () => {
 					getLatestSnapshot: () => null,
 				}}
 				sessionId={sessionId}
-				sessionState={currentSnapshot}
+				sessionSnapshot={currentSnapshot}
 				ruleSnapshot={currentSnapshot.rules}
 				refreshSession={refreshSession}
 				onReleaseSession={() => {}}

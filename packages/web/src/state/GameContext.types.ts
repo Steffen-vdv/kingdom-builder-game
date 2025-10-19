@@ -121,11 +121,6 @@ export interface LegacyGameEngineContextBridge {
 	 * all consumers rely on request helpers.
 	 */
 	session: SessionAdapter;
-	/**
-	 * TODO(#session-migration): Replace with `sessionSnapshot` in consuming
-	 * modules after the serialization audit completes.
-	 */
-	sessionState: SessionSnapshot;
 }
 
 export type LegacyGameEngineContextValue = GameEngineContextValue &

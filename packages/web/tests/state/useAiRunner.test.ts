@@ -71,7 +71,7 @@ describe('useAiRunner', () => {
 		renderHook(() =>
 			useAiRunner({
 				session: adapter,
-				sessionState,
+				sessionSnapshot: sessionState,
 				runUntilActionPhaseCore,
 				syncPhaseState,
 				mountedRef,
@@ -138,7 +138,7 @@ describe('useAiRunner', () => {
 		renderHook(() =>
 			useAiRunner({
 				session: adapter,
-				sessionState,
+				sessionSnapshot: sessionState,
 				runUntilActionPhaseCore: vi.fn(),
 				syncPhaseState,
 				mountedRef,
