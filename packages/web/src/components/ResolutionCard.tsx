@@ -3,6 +3,18 @@ import type {
 	ActionResolution,
 	ResolutionSource,
 } from '../state/useActionResolution';
+import type {
+	ActionLogLineDescriptor,
+	ActionLogLineKind,
+} from '../translation/log/timeline';
+import {
+	buildTimelineTree,
+	collectTimelineItems,
+	findSectionBaseDepth,
+	renderTimelineEntry,
+	type TimelineNode,
+	type TimelineRenderConfig,
+} from './resolutionTimeline';
 import {
 	CARD_BASE_CLASS,
 	CARD_BODY_TEXT_CLASS,
@@ -123,9 +135,12 @@ function ResolutionCard({
 		'backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60',
 		'dark:shadow-slate-900/40 dark:ring-white/10',
 	);
-	const timelineListClass = 'relative mt-4 flex flex-col gap-3 pl-4';
+	const timelineSectionsClass = 'mt-4 space-y-6';
+	const timelineSectionClass = joinClasses(
+		'relative flex flex-col gap-3 pl-4 pt-1',
+	);
 	const timelineRailClass = joinClasses(
-		'pointer-events-none absolute left-[0.875rem] top-6 bottom-6 w-px',
+		'pointer-events-none absolute left-[0.875rem] top-3 bottom-3 w-px',
 		'bg-white/30 dark:bg-white/10',
 	);
 	const timelineTextClass = joinClasses(
@@ -147,40 +162,86 @@ function ResolutionCard({
 		'bg-slate-400/80 shadow-[0_0_0_4px_rgba(148,163,184,0.2)]',
 		'dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(15,23,42,0.45)]',
 	);
-	const parsedLines = React.useMemo(() => {
-		function parseLine(line: string) {
-			const patterns = [
-				// Explicit three-space indent
-				/^(?: {3})/,
-				// Leading bullets with optional whitespace
-				/^(?:[ \t]*[•▪‣◦●]\s+)/u,
-				// Connector arrows with optional whitespace
-				/^(?:[ \t]*[↳➜➤➣]\s+)/u,
-			];
-
-			let remaining = line;
-			let depth = 0;
-			let matched = true;
-
-			while (matched) {
-				matched = false;
-				for (const pattern of patterns) {
-					const match = remaining.match(pattern);
-					if (match && match[0].length > 0) {
-						remaining = remaining.slice(match[0].length);
-						depth += 1;
-						matched = true;
-						break;
-					}
-				}
+	const timelineRenderConfig = React.useMemo<TimelineRenderConfig>(() => {
+		return {
+			timelineItemClass,
+			primaryMarkerClass,
+			nestedMarkerClass,
+			timelineTextClass,
+			nestedTimelineTextClass,
+		};
+	}, [
+		nestedMarkerClass,
+		nestedTimelineTextClass,
+		primaryMarkerClass,
+		timelineItemClass,
+		timelineTextClass,
+	]);
+	const timelineEntries = React.useMemo<ActionLogLineDescriptor[]>(() => {
+		const normalized: ActionLogLineDescriptor[] = [];
+		for (const entry of resolution.visibleTimeline) {
+			const trimmed = entry.text.trim();
+			if (!trimmed) {
+				continue;
 			}
-
-			const text = remaining.trimStart();
-			return { depth, text };
+			normalized.push({ ...entry, text: trimmed });
 		}
-
-		return resolution.visibleLines.map((line) => parseLine(line));
-	}, [resolution.visibleLines]);
+		if (normalized.length) {
+			return normalized;
+		}
+		const fallback: ActionLogLineDescriptor[] = [];
+		resolution.visibleLines.forEach((line, index) => {
+			const text = line.trim();
+			if (!text) {
+				return;
+			}
+			const kind: ActionLogLineKind = index === 0 ? 'headline' : 'effect';
+			fallback.push({
+				text,
+				depth: index === 0 ? 0 : 1,
+				kind,
+			});
+		});
+		return fallback;
+	}, [resolution.visibleTimeline, resolution.visibleLines]);
+	const timelineNodes = React.useMemo<TimelineNode[]>(() => {
+		return buildTimelineTree(timelineEntries);
+	}, [timelineEntries]);
+	const timelineByKind = React.useMemo(() => {
+		const map = new Map<ActionLogLineKind, TimelineNode[]>();
+		for (const node of timelineNodes) {
+			const kind = node.descriptor.kind;
+			const bucket = map.get(kind);
+			if (bucket) {
+				bucket.push(node);
+			} else {
+				map.set(kind, [node]);
+			}
+		}
+		return map;
+	}, [timelineNodes]);
+	const costNodes: TimelineNode[] = timelineByKind.get('cost') ?? [];
+	const effectNodes = React.useMemo(() => {
+		return timelineNodes.filter((node) => {
+			const kind = node.descriptor.kind;
+			if (kind === 'cost' || kind === 'cost-detail') {
+				return false;
+			}
+			return true;
+		});
+	}, [timelineNodes]);
+	const costBaseDepth = React.useMemo(() => {
+		return findSectionBaseDepth(costNodes);
+	}, [costNodes]);
+	const effectBaseDepth = React.useMemo(() => {
+		return findSectionBaseDepth(effectNodes);
+	}, [effectNodes]);
+	const costItems = React.useMemo(() => {
+		return collectTimelineItems(costNodes, costBaseDepth);
+	}, [costNodes, costBaseDepth]);
+	const effectItems = React.useMemo(() => {
+		return collectTimelineItems(effectNodes, effectBaseDepth);
+	}, [effectNodes, effectBaseDepth]);
 	const shouldShowContinue = resolution.requireAcknowledgement;
 
 	return (
@@ -208,27 +269,35 @@ function ResolutionCard({
 					<div className={joinClasses(CARD_LABEL_CLASS, 'text-slate-600')}>
 						Resolution steps
 					</div>
-					<div className={timelineListClass}>
-						<div aria-hidden="true" className={timelineRailClass} />
-						{parsedLines.map(({ text, depth }, index) => {
-							const markerClass =
-								depth === 0 ? primaryMarkerClass : nestedMarkerClass;
-							const itemIndent =
-								depth > 0 ? { marginLeft: `${depth * 0.875}rem` } : undefined;
-							const textClass =
-								depth === 0 ? timelineTextClass : nestedTimelineTextClass;
-
-							return (
+					<div className={timelineSectionsClass}>
+						{costItems.length ? (
+							<div className={timelineSectionClass}>
+								<div aria-hidden="true" className={timelineRailClass} />
+								{costItems.map((item) =>
+									renderTimelineEntry(item, 'cost', timelineRenderConfig),
+								)}
+							</div>
+						) : null}
+						{effectItems.length ? (
+							<div className="space-y-3">
 								<div
-									key={index}
-									className={timelineItemClass}
-									style={itemIndent}
+									className={joinClasses(
+										CARD_LABEL_CLASS,
+										'flex items-center gap-2 pl-1',
+										'text-slate-600 dark:text-slate-300',
+									)}
 								>
-									<span className={markerClass} aria-hidden="true" />
-									<div className={textClass}>{text}</div>
+									<span aria-hidden="true">🪄</span>
+									<span>Effects</span>
 								</div>
-							);
-						})}
+								<div className={timelineSectionClass}>
+									<div aria-hidden="true" className={timelineRailClass} />
+									{effectItems.map((item) =>
+										renderTimelineEntry(item, 'effect', timelineRenderConfig),
+									)}
+								</div>
+							</div>
+						) : null}
 					</div>
 				</div>
 			</div>
