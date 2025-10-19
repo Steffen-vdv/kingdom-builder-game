@@ -142,6 +142,53 @@ suffixes like "per 🧩 Development" (see
 [`effects/evaluators/development.ts`](../packages/web/src/translation/effects/evaluators/development.ts) and
 [`effects/evaluators/population.ts`](../packages/web/src/translation/effects/evaluators/population.ts)).
 
+### 3.1 Percent & Stat Presentation Map
+
+Stat copy for summaries, descriptions, and logs runs through the same
+formatter-plus-utility pairing:
+
+- [`effects/formatters/stat/index.ts`](../packages/web/src/translation/effects/formatters/stat/index.ts)
+  registers the `stat:add`, `stat:remove`, and `stat:add_pct` handlers. The
+  summary and description branches call helpers such as
+  `formatStatSummarySubject` and `resolveStatDescriptionParts` so cards and
+  hovercards render identical icon/label combinations when `summarizeEffects`
+  or `describeEffects` wrap the effect list.
+- [`utils/stats/format.ts`](../packages/web/src/utils/stats/format.ts)
+  centralises percent-aware math via `statDisplaysAsPercent` and
+  `formatStatValue`. Any component that displays raw stat values (growth phase
+  inspectors, damage calculators, etc.) should call `formatStatValue` so the
+  percent flag defined in contents drives the UI instead of duplicating the
+  conversion logic.
+
+Because content translators (`ActionTranslator.log`,
+`PhasedTranslator.summarize`, `PhasedTranslator.describe`, etc.) funnel their
+effect arrays through `summarizeEffects`, `describeEffects`, and `logEffects`,
+the same formatter is responsible for card bullets, tooltip sentences, and
+action-resolution logs. When a new stat output mode needs bespoke log text,
+extend the corresponding formatter with a `log` implementation so `logEffects`
+can pick it up without hand-written component patches.
+
+#### Worked example — Growth absorption tuning
+
+Suppose a Growth phase card increases absorption by percentage. Update the
+`stat:add_pct` formatter so the summary prints `🛡️ +50% Absorption` (icon +
+signed percent) and the description resolves to `🛡️ +50% Absorption damage
+reduction` or similar. With that formatter in place:
+
+1. Cards pull the bullet via `PhasedTranslator.summarize`, which delegates to
+   `summarizeEffects`.
+2. Hovercards/tooltips reuse the same effect list through
+   `PhasedTranslator.describe` → `describeEffects`.
+3. Resolution logs (including `ActionTranslator.log` and any phased log wrapper)
+   call `logEffects`. Add a `log` branch to `stat:add_pct` if the log needs past-
+   tense phrasing; otherwise the shared handler keeps the three surfaces aligned
+   automatically.
+
+Whenever the percent should appear on readouts outside of translators (for
+example, combat previews), make sure the consumer uses
+`formatStatValue('absorption', value, assets)` so any `displayAsPercent` or
+`format.percent` flag defined in contents propagates everywhere.
+
 ## 4. Canonical Keywords, Icons, & Helper Utilities
 
 - **General verbs** — `gainOrLose`, `increaseOrDecrease`, and `signed` in
@@ -187,6 +234,10 @@ suffixes like "per 🧩 Development" (see
   [`content/decorators.ts`](../packages/web/src/translation/content/decorators.ts))
   contains the approved "On build" / "On each" phrasing. Use it when writing new
   trigger copy.
+- **Stat presentation** — See
+  [Section 3.1](#31-percent--stat-presentation-map) before introducing
+  component-level percent math. Reviewers will expect changes in `stat`
+  formatters or `utils/stats/format.ts`, not ad-hoc patches.
 
 ## 5. Working With Logs
 
