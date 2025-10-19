@@ -128,7 +128,7 @@ export default function PhasePanel() {
 							Turn
 						</span>
 						<span className="text-base tracking-[0.15em]">
-							{sessionSnapshot.game.turn}
+							{phase.turnNumber}
 						</span>
 					</span>
 					<span className="sr-only">Active player:</span>
