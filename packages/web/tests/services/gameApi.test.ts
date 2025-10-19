@@ -278,6 +278,27 @@ describe('createGameApi', () => {
 		expect(url).toBe('/api/sessions/session-5/actions');
 	});
 
+	it('returns action error payloads when the service responds with conflicts', async () => {
+		const errorResponse: ActionExecuteErrorResponse = {
+			status: 'error',
+			error: 'Insufficient resource.gold: need 8, have 7',
+		};
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createJsonResponse(errorResponse, { status: 409 }));
+		const api = createGameApi({ fetchFn: fetchMock });
+		const request: ActionExecuteRequest = {
+			sessionId: 'session-conflict',
+			actionId: 'action.build',
+			params: { id: 'mill' },
+		};
+
+		const response = await api.performAction(request);
+
+		expect(response).toEqual(errorResponse);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
 	it('toggles dev mode for sessions', async () => {
 		const response = createStateResponse('session-dev');
 		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
