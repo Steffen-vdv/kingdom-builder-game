@@ -130,6 +130,8 @@ describe('<ActionsPanel />', () => {
 		const resolution: ActionResolution = {
 			lines: ['Step 1'],
 			visibleLines: ['Step 1'],
+			timeline: [{ text: 'Step 1', depth: 0, kind: 'headline' }],
+			visibleTimeline: [{ text: 'Step 1', depth: 0, kind: 'headline' }],
 			isComplete: true,
 			summaries: [],
 			source: 'action',

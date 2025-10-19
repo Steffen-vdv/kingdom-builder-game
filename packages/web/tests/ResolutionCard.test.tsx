@@ -12,6 +12,8 @@ function createResolution(
 	return {
 		lines: ['First line'],
 		visibleLines: ['First line'],
+		timeline: [{ text: 'First line', depth: 0, kind: 'headline' }],
+		visibleTimeline: [{ text: 'First line', depth: 0, kind: 'headline' }],
 		isComplete: true,
 		summaries: [],
 		source: 'action',
