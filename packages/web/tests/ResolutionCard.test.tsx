@@ -125,4 +125,110 @@ describe('<ResolutionCard />', () => {
 			within(effectList).getByText('🪄 Effect happens'),
 		).toBeInTheDocument();
 	});
+
+	it('renders grouped cost and effect entries with nested structure', () => {
+		const resolution = createResolution({
+			action: {
+				id: 'action-with-costs',
+				name: 'Channel Arcana',
+				icon: '🧙',
+			},
+			visibleTimeline: [
+				{ text: '🧙 Channel Arcana', depth: 0, kind: 'headline' },
+				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				{ text: 'Pay 3 Gold', depth: 2, kind: 'cost-detail' },
+				{ text: 'Spend 1 Influence', depth: 3, kind: 'cost-detail' },
+				{ text: '🪄 Conjured effects', depth: 1, kind: 'group' },
+				{ text: 'Gain 2 Gold', depth: 2, kind: 'change' },
+				{ text: 'Trigger a follow-up', depth: 3, kind: 'change' },
+				{ text: 'Grant an enchantment', depth: 2, kind: 'effect' },
+			],
+			visibleLines: [],
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		const costHeader = screen.getByText('Cost');
+		const costList = costHeader.nextElementSibling as HTMLElement | null;
+		const effectsHeader = screen.getByText('Effects');
+		const effectsList = effectsHeader.parentElement
+			?.nextElementSibling as HTMLElement | null;
+
+		if (!costList) {
+			throw new Error('Expected the cost list to be rendered');
+		}
+		if (!effectsList) {
+			throw new Error('Expected the effects list to be rendered');
+		}
+
+		expect(within(costList).getByText('💲 Action cost')).toBeInTheDocument();
+		const primaryCostDetail = within(costList).getByText('Pay 3 Gold');
+		const primaryCostWrapper = primaryCostDetail.closest('div[style]');
+		expect(primaryCostWrapper).toHaveStyle('margin-left: 0.875rem');
+
+		const nestedCostDetail = within(costList).getByText('Spend 1 Influence');
+		const nestedCostWrapper = nestedCostDetail.closest('div[style]');
+		expect(nestedCostWrapper).toHaveStyle('margin-left: 1.75rem');
+
+		const effectGroup = within(effectsList).getByText('🪄 Conjured effects');
+		const effectGroupWrapper = effectGroup.closest('div[style]');
+		expect(effectGroupWrapper).toHaveStyle('margin-left: 0.875rem');
+
+		const nestedEffect = within(effectsList).getByText('Trigger a follow-up');
+		const nestedEffectWrapper = nestedEffect.closest('div[style]');
+		expect(nestedEffectWrapper).toHaveStyle('margin-left: 2.625rem');
+
+		const siblingEffect = within(effectsList).getByText('Grant an enchantment');
+		const siblingEffectWrapper = siblingEffect.closest('div[style]');
+		expect(siblingEffectWrapper).toHaveStyle('margin-left: 1.75rem');
+	});
+
+	it('renders fallback layout for simple phase-style lines', () => {
+		const resolution = createResolution({
+			source: 'phase',
+			actorLabel: 'Growth Phase',
+			visibleTimeline: [],
+			visibleLines: [
+				'Growth Phase summary',
+				'   Rewards trigger',
+				'   • Gain 2 Gold',
+				'   • Gain 1 Happiness',
+				'↳ Aftermath resolves',
+			],
+		});
+
+		const { container } = render(
+			<ResolutionCard resolution={resolution} onContinue={() => {}} />,
+		);
+
+		expect(screen.queryByText('Cost')).toBeNull();
+		expect(screen.queryByText('Effects')).toBeNull();
+
+		const stepsLabel = screen.getByText('Resolution steps');
+		const fallbackList = stepsLabel.nextElementSibling as HTMLElement | null;
+
+		if (!fallbackList) {
+			throw new Error('Expected fallback resolution list to be rendered');
+		}
+
+		expect(
+			within(fallbackList).getByText('Growth Phase summary'),
+		).toBeInTheDocument();
+		const rewardLine = within(fallbackList).getByText('Rewards trigger');
+		expect(rewardLine.closest('div[style]')).toHaveStyle(
+			'margin-left: 0.875rem',
+		);
+
+		const gainGoldLine = within(fallbackList).getByText('Gain 2 Gold');
+		expect(gainGoldLine.closest('div[style]')).toHaveStyle(
+			'margin-left: 1.75rem',
+		);
+
+		const aftermathLine = within(fallbackList).getByText('Aftermath resolves');
+		expect(aftermathLine.closest('div[style]')).toHaveStyle(
+			'margin-left: 0.875rem',
+		);
+
+		expect(container).toMatchSnapshot();
+	});
 });
