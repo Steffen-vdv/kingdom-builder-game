@@ -18,6 +18,7 @@ import {
 import type {
 	SessionActionMetadataSnapshot,
 	SessionAdapter,
+	SessionAiTurnResult,
 } from './sessionTypes';
 import { ActionMetadataCache } from './actionMetadataCache';
 import { ActionMetadataSubscriptions } from './actionMetadataSubscriptions';
@@ -153,7 +154,9 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		return summary;
 	}
 
-	async runAiTurn(playerId: SessionRunAiRequest['playerId']): Promise<boolean> {
+	async runAiTurn(
+		playerId: SessionRunAiRequest['playerId'],
+	): Promise<SessionAiTurnResult> {
 		return this.#aiSimulationManager.runAiTurn(playerId);
 	}
 

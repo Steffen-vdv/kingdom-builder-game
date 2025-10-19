@@ -53,7 +53,7 @@ describe('useAiRunner', () => {
 		});
 		const registries = createSessionRegistriesPayload();
 		const sessionId = 'session-ai';
-		initializeSessionState({
+		const record = initializeSessionState({
 			sessionId,
 			snapshot: sessionState,
 			registries,
@@ -67,7 +67,13 @@ describe('useAiRunner', () => {
 		const mountedRef = { current: true };
 		const runAiTurnSpy = vi
 			.spyOn(sessionAiModule, 'runAiTurn')
-			.mockResolvedValueOnce(true);
+			.mockResolvedValueOnce({
+				ranTurn: true,
+				actions: [],
+				phaseComplete: false,
+				snapshot: record.snapshot,
+				registries: record.registries,
+			});
 
 		renderHook(() =>
 			useAiRunner({
