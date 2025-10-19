@@ -10,8 +10,11 @@ import {
 	createResourceKeys,
 	createSessionRegistriesPayload,
 } from '../helpers/sessionRegistries';
-import { createRemoteSessionAdapter } from '../helpers/remoteSessionAdapter';
-import { clearSessionStateStore } from '../../src/state/sessionStateStore';
+import {
+	clearSessionStateStore,
+	initializeSessionState,
+} from '../../src/state/sessionStateStore';
+import * as sessionAiModule from '../../src/state/sessionAi';
 
 describe('useAiRunner', () => {
 	beforeEach(() => {
@@ -49,16 +52,11 @@ describe('useAiRunner', () => {
 			phaseIndex: 0,
 		});
 		const registries = createSessionRegistriesPayload();
-		const { adapter, api, cleanup } = createRemoteSessionAdapter({
-			sessionId: 'session-ai',
+		const sessionId = 'session-ai';
+		initializeSessionState({
+			sessionId,
 			snapshot: sessionState,
 			registries,
-		});
-		api.setNextRunAiResponse({
-			sessionId: 'session-ai',
-			snapshot: sessionState,
-			registries,
-			ranTurn: true,
 		});
 		const fatalError = new Error('failed to reach action phase');
 		const runUntilActionPhaseCore = vi
@@ -67,10 +65,13 @@ describe('useAiRunner', () => {
 		const onFatalSessionError = vi.fn();
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
+		const runAiTurnSpy = vi
+			.spyOn(sessionAiModule, 'runAiTurn')
+			.mockResolvedValueOnce(true);
 
 		renderHook(() =>
 			useAiRunner({
-				session: adapter,
+				sessionId,
 				sessionSnapshot: sessionState,
 				runUntilActionPhaseCore,
 				syncPhaseState,
@@ -90,7 +91,7 @@ describe('useAiRunner', () => {
 		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
-		cleanup();
+		runAiTurnSpy.mockRestore();
 	});
 
 	it('stops background turns when the AI run reports a fatal error', async () => {
@@ -124,20 +125,23 @@ describe('useAiRunner', () => {
 			phaseIndex: 0,
 		});
 		const registries = createSessionRegistriesPayload();
-		const { adapter, cleanup } = createRemoteSessionAdapter({
-			sessionId: 'session-ai',
+		const sessionId = 'session-ai';
+		initializeSessionState({
+			sessionId,
 			snapshot: sessionState,
 			registries,
 		});
 		const fatalError = new Error('fatal AI failure');
 		const onFatalSessionError = vi.fn();
-		vi.spyOn(adapter, 'runAiTurn').mockRejectedValueOnce(fatalError);
+		const runAiTurnSpy = vi
+			.spyOn(sessionAiModule, 'runAiTurn')
+			.mockRejectedValueOnce(fatalError);
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
 
 		renderHook(() =>
 			useAiRunner({
-				session: adapter,
+				sessionId,
 				sessionSnapshot: sessionState,
 				runUntilActionPhaseCore: vi.fn(),
 				syncPhaseState,
@@ -152,6 +156,6 @@ describe('useAiRunner', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
-		cleanup();
+		runAiTurnSpy.mockRestore();
 	});
 });

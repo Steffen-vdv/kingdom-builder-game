@@ -235,7 +235,7 @@ describe('GameProviderInner', () => {
 
 		expect(capturedPerformerOptions).not.toHaveProperty('session');
 		expect(capturedPerformerOptions?.sessionId).toBe(sessionId);
-		expect(capturedAiOptions?.session).toBe(adapter);
+		expect(capturedAiOptions?.sessionId).toBe(sessionId);
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
