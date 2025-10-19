@@ -22,6 +22,10 @@ export default defineConfig({
 				changeOrigin: true,
 				rewrite: (incomingPath) => incomingPath.replace(/^\/api/, ''),
 			},
+			'/runtime-config': {
+				target: 'http://localhost:3001',
+				changeOrigin: true,
+			},
 		},
 	},
 	build: {
