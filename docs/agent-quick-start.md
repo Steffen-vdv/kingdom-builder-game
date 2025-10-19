@@ -28,14 +28,13 @@ guide for rationale, lore, and extended background.
    - [`npm run verify`](../scripts/run-verification.mjs) runs `npm run check`
      followed by `npm run test:coverage`. It streams output into timestamped
      logs inside `artifacts/` so you can share the run when needed.
-   - Run `npm run verify:ui-change` whenever UI structure, layout, or copy
-     might change. The script regenerates snapshots and replays
-     `npm run test:ui`, failing fast on either command. Paste the output in your
-     PR notes for any UI-visible update so reviewers can confirm the run.
+   - For UI structure, layout, or copy updates, regenerate snapshots with
+     `npm run generate:snapshots` and capture manual screenshots as needed to
+     document the change in your PR notes.
    - When icons, labels, or descriptions change, edit the definitions in
      `@kingdom-builder/contents` (see [`packages/contents`](../packages/contents))
-     and rerun `npm run verify:ui-change`. Do **not** patch fallback metadata in
-     `packages/web`—components read content-driven values at runtime.
+     and rerun `npm run generate:snapshots`. Do **not** patch fallback metadata
+     in `packages/web`—components read content-driven values at runtime.
    - Stop immediately if any of these commands fail. Fix the reported problem
      (formatting, type errors, lint drift, or test regressions) and re-run the
      command locally before staging changes so the PR lands clean.
@@ -45,11 +44,9 @@ guide for rationale, lore, and extended background.
      `packages/web/tests/runtime-config-fallback-sync.test.ts` to enforce this, so
      stale snapshots will block your PR until you rerun the generator.
    - The Husky pre-push hook enforces that verification run (with a fallback
-     to `npm run check && npm run test:coverage` on tooling failures) and will
-     add `npm run verify:ui-change` automatically when you modify the UI,
-     translation, or content directories. If you must execute the fallback
-     manually, note the environment issue in your PR body so reviewers know why
-     the hook could not complete normally.
+     to `npm run check && npm run test:coverage` on tooling failures). If you
+     must execute the fallback manually, note the environment issue in your PR
+     body so reviewers know why the hook could not complete normally.
    - Husky also runs the commit-time trio: `lint-staged`, `npm run check`,
      and `npm run test:quick`. Never bypass the hooks; fix the underlying
      problem so the automated gates pass cleanly before calling `make_pr`.
@@ -75,9 +72,9 @@ guide for rationale, lore, and extended background.
 - Execute `npm run check` followed by `npm run verify` and confirm that both
   commands finish without errors or uncommitted file changes. Re-run the
   commands after fixing any issues to verify the workspace is clean.
-- Run `npm run verify:ui-change` for any change that could affect rendered UI
-  surfaces and paste the command output into your PR summary so reviewers can
-  confirm both the snapshot refresh and UI tests.
+- Regenerate snapshots (`npm run generate:snapshots`) for any change that could
+  affect rendered UI surfaces and include the command output or screenshots in
+  your PR summary so reviewers can confirm the UI adjustments.
 - Husky installs the `pre-commit` and `pre-push` hooks automatically when you
   run `npm install` (`npm run prepare` manually reapplies them if necessary).
   Never bypass the hooks—resolve the reported failures locally before pushing.
@@ -148,5 +145,5 @@ guide for rationale, lore, and extended background.
   work for the step-by-step checklist that traces metadata from content through
   translators.
 - Review [`docs/ui-metadata-pipeline.md`](ui-metadata-pipeline.md) for the
-  metadata flow. **JSX-only edits do not update visuals—change the content,
-  regenerate snapshots, and rerun Playwright whenever icons or labels shift.**
+  metadata flow. **JSX-only edits do not update visuals—change the content and
+  regenerate snapshots whenever icons or labels shift.**

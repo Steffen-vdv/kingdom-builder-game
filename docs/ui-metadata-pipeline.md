@@ -25,13 +25,11 @@ Translators & React components
 Whenever any upstream content changes, immediately rerun the automation that
 keeps the visuals in sync:
 
-- `npm run verify:ui-change` regenerates snapshots and reruns the Playwright UI
-  suite so both metadata and rendered output stay in sync. Paste the command
-  output into your PR notes whenever UI copy, layout, or visuals change.
-- The script wraps `npm run generate:snapshots` (updating
-  `packages/web/src/contexts/defaultRegistryMetadata.json`) and
-  `npm run test:ui`, failing fast if either command reports a problem.
+- `npm run generate:snapshots` refreshes
+  `packages/web/src/contexts/defaultRegistryMetadata.json` so both metadata and
+  rendered output stay aligned. Paste the command output into your PR notes
+  whenever UI copy, layout, or visuals change.
 
 Skipping these steps leaves the UI with stale icons or labels even if the JSX is
-correct. Always fix the content definition first, regenerate snapshots, and
-re-run Playwright before shipping metadata edits.
+correct. Always fix the content definition first and regenerate the snapshots
+before shipping metadata edits.
