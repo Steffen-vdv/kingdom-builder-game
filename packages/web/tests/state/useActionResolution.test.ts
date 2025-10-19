@@ -39,9 +39,14 @@ describe('useActionResolution', () => {
 				id: 'test-action',
 				name: 'Test Action',
 			};
+			const timeline = [
+				{ text: 'First reveal', depth: 0, kind: 'headline' as const },
+				{ text: 'Second reveal', depth: 1, kind: 'effect' as const },
+			];
 			act(() => {
 				resolutionPromise = result.current.showResolution({
 					lines: ['First reveal', 'Second reveal'],
+					timeline,
 					player: {
 						id: 'A',
 						name: 'Player A',
@@ -55,6 +60,7 @@ describe('useActionResolution', () => {
 				name: 'Player A',
 			});
 			expect(result.current.resolution?.visibleLines).toEqual(['First reveal']);
+			expect(result.current.resolution?.visibleTimeline).toEqual([timeline[0]]);
 			expect(result.current.resolution?.source).toBe('action');
 			expect(result.current.resolution?.actorLabel).toBe('Test Action');
 			expect(result.current.resolution?.isComplete).toBe(false);
@@ -74,6 +80,7 @@ describe('useActionResolution', () => {
 				'First reveal',
 				'Second reveal',
 			]);
+			expect(result.current.resolution?.visibleTimeline).toEqual(timeline);
 			expect(result.current.resolution?.isComplete).toBe(true);
 			expect(addLog).toHaveBeenCalledTimes(2);
 			expect(addLog).toHaveBeenLastCalledWith('Second reveal', {
@@ -134,6 +141,9 @@ describe('useActionResolution', () => {
 			});
 			expect(result.current.resolution?.source).toBe('action');
 			expect(result.current.resolution?.actorLabel).toBe('Action Name');
+			expect(result.current.resolution?.visibleTimeline).toEqual([
+				{ text: 'Only line', depth: 0, kind: 'headline' },
+			]);
 			act(() => {
 				result.current.acknowledgeResolution();
 			});
@@ -148,6 +158,9 @@ describe('useActionResolution', () => {
 			});
 			expect(result.current.resolution?.source).toBe('phase');
 			expect(result.current.resolution?.actorLabel).toBe('Growth Phase');
+			expect(result.current.resolution?.visibleTimeline).toEqual([
+				{ text: 'Phase line', depth: 0, kind: 'headline' },
+			]);
 		} finally {
 			vi.useRealTimers();
 		}
@@ -185,6 +198,9 @@ describe('useActionResolution', () => {
 				});
 			});
 			expect(result.current.resolution?.requireAcknowledgement).toBe(false);
+			expect(result.current.resolution?.visibleTimeline).toEqual([
+				{ text: 'Auto line', depth: 0, kind: 'headline' },
+			]);
 			expect(addLog).toHaveBeenCalledWith('Auto line', undefined);
 			expect(setTrackedTimeout).toHaveBeenLastCalledWith(
 				expect.any(Function),
