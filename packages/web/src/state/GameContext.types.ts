@@ -122,11 +122,6 @@ export interface LegacyGameEngineContextBridge {
 	 */
 	session: SessionAdapter;
 	/**
-	 * TODO(#session-migration): Replace with `sessionSnapshot` in consuming
-	 * modules after the serialization audit completes.
-	 */
-	sessionState: SessionSnapshot;
-	/**
 	 * TODO(#session-migration): Read from `selectors.sessionView` instead.
 	 */
 	sessionView: SessionView;

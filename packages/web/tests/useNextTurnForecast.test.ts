@@ -139,7 +139,7 @@ const setPlayers = (players: SessionPlayerStateSnapshot[]) =>
 const setGameState = (overrides: Partial<SessionSnapshot['game']>) =>
 	sessionHelpers.setGameState(overrides);
 
-engineValue.sessionState = sessionHelpers.createSessionState([]);
+engineValue.sessionSnapshot = sessionHelpers.createSessionState([]);
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: (): MockGameEngine => engineValue,
@@ -309,7 +309,7 @@ describe('useNextTurnForecast', () => {
 		expect(simulationMocks.simulateUpcomingPhases).toHaveBeenCalledTimes(2);
 
 		engineValue.session.simulateUpcomingPhases.mockClear();
-		setGameState({ turn: engineValue.sessionState.game.turn + 1 });
+		setGameState({ turn: engineValue.sessionSnapshot.game.turn + 1 });
 		rerender();
 		await flushAsync();
 		expect(engineValue.session.simulateUpcomingPhases).toHaveBeenCalledTimes(2);

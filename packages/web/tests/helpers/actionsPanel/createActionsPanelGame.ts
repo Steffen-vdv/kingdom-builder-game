@@ -320,7 +320,7 @@ export function createActionsPanelGame({
 	return {
 		sessionId,
 		session,
-		sessionState,
+		sessionSnapshot: sessionState,
 		sessionView,
 		translationContext,
 		ruleSnapshot,
