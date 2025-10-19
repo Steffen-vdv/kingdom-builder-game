@@ -139,6 +139,8 @@ guide for rationale, lore, and extended background.
 - Translation inventories and helper tables live in
   [`docs/text-formatting.md`](text-formatting.md#1-translation-pipeline-overview).
   Consult them after completing the mandatory checklist above.
-- Review [`docs/ui-metadata-pipeline.md`](ui-metadata-pipeline.md) for the
+- Start every UI-affecting assignment with the
+  [`UI Change Playbook`](ui-change-playbook.md) checklist, then review
+  [`docs/ui-metadata-pipeline.md`](ui-metadata-pipeline.md) for the deeper
   metadata flow. **JSX-only edits do not update visuals—change the content,
   regenerate snapshots, and rerun Playwright whenever icons or labels shift.**
