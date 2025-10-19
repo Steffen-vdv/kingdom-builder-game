@@ -12,6 +12,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@kingdom-builder/protocol': path.resolve(rootDir, '../protocol/src'),
+			'@kingdom-builder/contents': path.resolve(rootDir, '../contents/src'),
 		},
 	},
 	server: {
