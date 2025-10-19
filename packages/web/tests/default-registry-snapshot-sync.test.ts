@@ -1,9 +1,30 @@
-import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { expect, test } from 'vitest';
+import type { Registry } from '@kingdom-builder/protocol';
+import type { SessionRegistries } from '../src/state/sessionRegistries';
+import { clone } from '../src/state/clone';
+import { getContentRegistrySnapshot } from '../src/contexts/contentRegistrySnapshot';
 
-test('default registry metadata snapshot stays in sync', async () => {
+const serializeRegistry = <TDefinition extends { id: string }>(
+	registry: Registry<TDefinition>,
+) =>
+	Object.fromEntries(
+		Array.from(registry.entries()).map(([id, definition]) => [
+			id,
+			clone(definition),
+		]),
+	);
+
+const serializeRegistries = (registries: SessionRegistries) => ({
+	actions: serializeRegistry(registries.actions),
+	buildings: serializeRegistry(registries.buildings),
+	developments: serializeRegistry(registries.developments),
+	populations: serializeRegistry(registries.populations),
+	resources: { ...registries.resources },
+});
+
+test('content registry snapshot matches build script output', async () => {
 	const { buildDefaultRegistrySnapshot } = await import(
 		pathToFileURL(
 			resolve(
@@ -12,12 +33,10 @@ test('default registry metadata snapshot stays in sync', async () => {
 			),
 		).href
 	);
-	const snapshot = await buildDefaultRegistrySnapshot();
-	const target = resolve(
-		dirname(fileURLToPath(import.meta.url)),
-		'../src/contexts/defaultRegistryMetadata.json',
+	const runtimeSnapshot = getContentRegistrySnapshot();
+	const scriptSnapshot = await buildDefaultRegistrySnapshot();
+	expect(serializeRegistries(runtimeSnapshot.registries)).toEqual(
+		scriptSnapshot.registries,
 	);
-	const contents = await readFile(target, 'utf8');
-	const stored = JSON.parse(contents);
-	expect(snapshot).toEqual(stored);
+	expect(runtimeSnapshot.metadata).toEqual(scriptSnapshot.metadata);
 });
