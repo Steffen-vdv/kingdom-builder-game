@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
@@ -12,6 +12,7 @@ function createResolution(
 	return {
 		lines: ['First line'],
 		visibleLines: ['First line'],
+		visibleTimeline: [],
 		isComplete: true,
 		summaries: [],
 		source: 'action',
@@ -90,5 +91,38 @@ describe('<ResolutionCard />', () => {
 		);
 
 		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
+	});
+
+	it('separates cost entries from effect entries', () => {
+		const resolution = createResolution({
+			visibleTimeline: [
+				{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
+				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
+				{ text: '🪄 Effect happens', depth: 1, kind: 'change' },
+			],
+			visibleLines: [],
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		const costLabel = screen.getByText('Cost');
+		const costList = costLabel.nextElementSibling;
+		const effectLabel = screen.getByText('Effects');
+		const effectList = effectLabel.parentElement?.nextElementSibling ?? null;
+
+		expect(costList).not.toBeNull();
+		expect(effectList).not.toBeNull();
+
+		if (!costList || !effectList) {
+			throw new Error('Expected cost and effect sections to be rendered');
+		}
+
+		expect(within(costList).getByText('💲 Action cost')).toBeInTheDocument();
+		expect(within(costList).getByText('Gold -3')).toBeInTheDocument();
+		expect(within(effectList).queryByText('💲 Action cost')).toBeNull();
+		expect(
+			within(effectList).getByText('🪄 Effect happens'),
+		).toBeInTheDocument();
 	});
 });
