@@ -168,18 +168,18 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		'relative flex h-full flex-col overflow-y-auto px-6 pb-6 pt-6',
 		'custom-scrollbar',
 	);
-        const listClasses = 'mt-4 flex flex-col gap-6';
-        const entryWrapperClass = 'space-y-3';
-        const entryHeaderClasses =
-                'flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400';
-        const entryTimeClasses =
-                'font-mono tracking-[0.25em] text-slate-500 dark:text-slate-400';
-        const entryPlayerClasses =
-                'text-[0.7rem] font-semibold tracking-[0.25em] text-slate-600 dark:text-slate-300';
-        const entryContainerBaseClasses =
-                'rounded-[1.875rem] border border-white/40 bg-white/70 p-1.5 shadow-lg backdrop-blur-sm transition-shadow dark:border-white/10 dark:bg-slate-900/60 dark:shadow-[0_24px_48px_rgba(0,0,0,0.45)]';
-        const legacyEntryClasses =
-                'rounded-[1.5rem] border border-white/40 bg-white/80 p-4 text-sm text-slate-700 shadow-inner shadow-amber-500/10 whitespace-pre-wrap dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200';
+	const listClasses = 'mt-4 flex flex-col gap-6';
+	const entryWrapperClass = 'space-y-3';
+	const entryHeaderClasses =
+		'flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400';
+	const entryTimeClasses =
+		'font-mono tracking-[0.25em] text-slate-500 dark:text-slate-400';
+	const entryPlayerClasses =
+		'text-[0.7rem] font-semibold tracking-[0.25em] text-slate-600 dark:text-slate-300';
+	const entryContainerBaseClasses =
+		'rounded-[1.875rem] border border-white/40 bg-white/70 p-1.5 shadow-lg backdrop-blur-sm transition-shadow dark:border-white/10 dark:bg-slate-900/60 dark:shadow-[0_24px_48px_rgba(0,0,0,0.45)]';
+	const legacyEntryClasses =
+		'rounded-[1.5rem] border border-white/40 bg-white/80 p-4 text-sm text-slate-700 shadow-inner shadow-amber-500/10 whitespace-pre-wrap dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200';
 	const closeButtonClasses = clsx(
 		'flex h-8 w-8 items-center justify-center rounded-full border',
 		'border-rose-500 bg-rose-500 text-base font-semibold leading-none text-white',
