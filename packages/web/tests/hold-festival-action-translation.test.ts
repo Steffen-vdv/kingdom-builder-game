@@ -98,7 +98,7 @@ describe('hold festival action translation', () => {
 				kind: 'effect',
 			},
 			{
-				text: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} duration: Until player's next ${upkeepDescriptionLabel}`,
+				text: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}Duration: Until player's next ${upkeepDescriptionLabel}`,
 				depth: 2,
 				kind: 'effect',
 			},
