@@ -4,7 +4,6 @@ import type {
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../translation/context';
-import { DEFAULT_REGISTRY_METADATA } from '../contexts/defaultRegistryMetadata';
 import type { TranslationContext } from '../translation/context';
 export {
 	createSessionTranslationDiffContext,
@@ -45,15 +44,14 @@ export function useSessionTranslationContext({
 		error: unknown;
 	}>(() => {
 		const fallbackMetadata = cachedSessionSnapshot.metadata;
-		const fallbackModifiers =
-			fallbackMetadata?.passiveEvaluationModifiers ?? {};
-		const passiveEvaluationModifiers =
-			sessionMetadata.passiveEvaluationModifiers ?? fallbackModifiers;
-		const fallbackEffectLogs = fallbackMetadata?.effectLogs;
-		const effectLogs = sessionMetadata.effectLogs ?? fallbackEffectLogs;
 		const metadataPayload: SessionSnapshotMetadata = {
-			passiveEvaluationModifiers,
+			passiveEvaluationModifiers:
+				sessionMetadata.passiveEvaluationModifiers ??
+				fallbackMetadata?.passiveEvaluationModifiers ??
+				{},
 		};
+		const effectLogs =
+			sessionMetadata.effectLogs ?? fallbackMetadata?.effectLogs;
 		if (effectLogs !== undefined) {
 			metadataPayload.effectLogs = effectLogs;
 		}
@@ -73,11 +71,6 @@ export function useSessionTranslationContext({
 			const fallback = fallbackMetadata?.[key];
 			if (fallback !== undefined) {
 				metadataPayload[key] = fallback;
-				return;
-			}
-			const defaults = DEFAULT_REGISTRY_METADATA[key];
-			if (defaults !== undefined) {
-				metadataPayload[key] = defaults;
 			}
 		};
 		assignMetadataField('resources');

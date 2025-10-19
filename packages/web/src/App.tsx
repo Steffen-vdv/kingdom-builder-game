@@ -8,10 +8,10 @@ import { useAppNavigation } from './state/useAppNavigation';
 import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 import { RegistryMetadataProvider } from './contexts/RegistryMetadataContext';
-import {
-	DEFAULT_REGISTRIES,
-	DEFAULT_REGISTRY_METADATA,
-} from './contexts/defaultRegistryMetadata';
+import { getContentRegistrySnapshot } from './contexts/contentRegistrySnapshot';
+
+const { registries: OVERVIEW_REGISTRIES, metadata: OVERVIEW_METADATA } =
+	getContentRegistrySnapshot();
 
 export default function App() {
 	const {
@@ -39,8 +39,8 @@ export default function App() {
 		case Screen.Overview:
 			screen = (
 				<RegistryMetadataProvider
-					registries={DEFAULT_REGISTRIES}
-					metadata={DEFAULT_REGISTRY_METADATA}
+					registries={OVERVIEW_REGISTRIES}
+					metadata={OVERVIEW_METADATA}
 				>
 					<Overview onBack={returnToMenu} />
 				</RegistryMetadataProvider>

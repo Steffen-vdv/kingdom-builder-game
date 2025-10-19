@@ -2,7 +2,7 @@ import type {
 	SessionOverviewMetadata,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import { DEFAULT_REGISTRY_METADATA } from './defaultRegistryMetadata';
+import { getContentRegistrySnapshot } from './contentRegistrySnapshot';
 import {
 	resolveAssetDescriptor,
 	type AssetMetadata,
@@ -18,8 +18,8 @@ export type SnapshotMetadataWithOverview = SessionSnapshotMetadata & {
 	overview?: SessionOverviewMetadata;
 };
 
-const DEFAULT_METADATA =
-	DEFAULT_REGISTRY_METADATA as SnapshotMetadataWithOverview;
+const DEFAULT_METADATA = getContentRegistrySnapshot()
+	.metadata as SnapshotMetadataWithOverview;
 
 const FALLBACK_OVERVIEW_CONTENT: SessionOverviewMetadata = {
 	hero: { tokens: {} },

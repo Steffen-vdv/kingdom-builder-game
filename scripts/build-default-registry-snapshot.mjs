@@ -1,6 +1,3 @@
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-
 async function loadContentModules() {
 	const baseUrl = new URL('../packages/contents/src/', import.meta.url);
 	const [
@@ -235,6 +232,7 @@ function createRegistries(content) {
 }
 
 function createMetadata(registries, content) {
+	const overviewContent = createOverviewContentSnapshot(content);
 	return {
 		passiveEvaluationModifiers: {},
 		resources: createResourceMetadata(content),
@@ -248,15 +246,9 @@ function createMetadata(registries, content) {
 		phases: createPhaseMetadata(content),
 		triggers: createTriggerMetadata(content),
 		assets: createAssetMetadata(content),
-		overviewContent: createOverviewContentSnapshot(content),
+		overviewContent,
+		overview: overviewContent,
 	};
-}
-
-function resolveDefaultRegistrySnapshotPath(baseUrl) {
-	return resolve(
-		dirname(fileURLToPath(baseUrl)),
-		'../packages/web/src/contexts/defaultRegistryMetadata.json',
-	);
 }
 
 export async function buildDefaultRegistrySnapshot() {
@@ -267,8 +259,4 @@ export async function buildDefaultRegistrySnapshot() {
 		registries,
 		metadata,
 	};
-}
-
-export function getDefaultRegistrySnapshotPath() {
-	return resolveDefaultRegistrySnapshotPath(import.meta.url);
 }
