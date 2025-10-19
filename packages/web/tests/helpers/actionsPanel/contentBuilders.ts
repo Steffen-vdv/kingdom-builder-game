@@ -1,4 +1,4 @@
-import type { RequirementFailure } from '@kingdom-builder/engine';
+import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 import type { createContentFactory } from '@kingdom-builder/testing';
 import {
 	compareRequirement,
@@ -40,7 +40,7 @@ export interface ActionsPanelContent {
 	readonly buildingDefinition?: BuildingDefinition;
 	readonly initialPopulation: Record<string, number>;
 	readonly actionIds: string[];
-	readonly requirementFailures: Map<string, RequirementFailure[]>;
+	readonly requirementFailures: Map<string, SessionRequirementFailure[]>;
 	readonly requirementIcons: Map<string, string[]>;
 	readonly costMap: Map<string, Record<string, number>>;
 }
@@ -145,7 +145,7 @@ export function buildActionsPanelContent({
 	const actionIds = [raisePopulationAction, basicAction, buildingAction]
 		.filter(Boolean)
 		.map((action) => action!.id);
-	const requirementFailures = new Map<string, RequirementFailure[]>();
+	const requirementFailures = new Map<string, SessionRequirementFailure[]>();
 	requirementFailures.set(
 		raisePopulationAction.id,
 		buildRequirements.map((requirement, index) => ({
