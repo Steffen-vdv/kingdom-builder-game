@@ -5,9 +5,13 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { cloneValue } from './cloneValue';
 import type { SessionStateRecord } from './sessionStateStore';
+import type { SessionQueueOptions } from './sessionSdk.actions';
 
 interface SessionAiSimulationManagerDependencies {
-	runAiTurn: (request: SessionRunAiRequest) => Promise<SessionRunAiResponse>;
+	runAiTurn: (
+		request: SessionRunAiRequest,
+		options?: SessionQueueOptions,
+	) => Promise<SessionRunAiResponse>;
 	getSessionRecord: () => SessionStateRecord | undefined;
 }
 
@@ -25,11 +29,17 @@ export class SessionAiSimulationManager {
 		this.#simulationCache = new Map();
 	}
 
-	async runAiTurn(playerId: SessionRunAiRequest['playerId']): Promise<boolean> {
-		const response = await this.#dependencies.runAiTurn({
-			sessionId: this.#sessionId,
-			playerId,
-		});
+	async runAiTurn(
+		playerId: SessionRunAiRequest['playerId'],
+		options: SessionQueueOptions = {},
+	): Promise<boolean> {
+		const response = await this.#dependencies.runAiTurn(
+			{
+				sessionId: this.#sessionId,
+				playerId,
+			},
+			options,
+		);
 		return response.ranTurn;
 	}
 

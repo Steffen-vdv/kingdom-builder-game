@@ -295,7 +295,8 @@ export class HttpGameApi implements GameApi {
 			requestInit.body = JSON.stringify(init.body);
 		}
 
-		const response = await this.#fetch(`${this.#baseUrl}${path}`, requestInit);
+		const url = `${this.#baseUrl}${path}`;
+		const response = await this.#fetch(url, requestInit);
 
 		if (!response.ok) {
 			const errorPayload = await this.#extractPayload(response);

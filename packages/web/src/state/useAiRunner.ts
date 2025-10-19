@@ -53,7 +53,9 @@ export function useAiRunner({
 				}
 			};
 			try {
-				const ranTurn = await session.runAiTurn(activeId);
+				const ranTurn = await session.runAiTurn(activeId, {
+					skipQueue: true,
+				});
 				if (!ranTurn || fatalError !== null) {
 					if (ranTurn && mountedRef.current && fatalError === null) {
 						syncPhaseState(session.getSnapshot());

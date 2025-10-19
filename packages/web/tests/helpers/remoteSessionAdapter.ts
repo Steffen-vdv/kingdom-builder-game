@@ -44,7 +44,8 @@ export function createRemoteSessionAdapter({
 	const record = initializeSessionState(response);
 	const adapter = getOrCreateRemoteAdapter(sessionId, {
 		ensureGameApi: () => api,
-		runAiTurn: (request) => api.runAiTurn(request),
+		runAiTurn: (request, options, _queueOptions) =>
+			api.runAiTurn(request, options),
 	});
 	const cleanup = () => {
 		deleteRemoteAdapter(sessionId);

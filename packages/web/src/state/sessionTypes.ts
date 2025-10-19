@@ -13,6 +13,7 @@ import type {
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { SessionStateRecord } from './sessionStateStore';
+import type { SessionQueueOptions } from './sessionSdk.actions';
 
 export interface SessionAdapter {
 	enqueue<T>(task: () => Promise<T> | T): Promise<T>;
@@ -38,7 +39,10 @@ export interface SessionAdapter {
 		params: ActionParametersPayload | undefined,
 		listener: (snapshot: SessionActionMetadataSnapshot) => void,
 	): () => void;
-	runAiTurn(playerId: SessionPlayerId): Promise<boolean>;
+	runAiTurn(
+		playerId: SessionPlayerId,
+		options?: SessionQueueOptions,
+	): Promise<boolean>;
 	hasAiController(playerId: SessionPlayerId): boolean;
 	simulateUpcomingPhases(
 		playerId: SessionPlayerId,

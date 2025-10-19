@@ -271,4 +271,14 @@ describe('EngineSession', () => {
 			},
 		]);
 	});
+
+	it('marks AI-controlled players in snapshots', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const players = snapshot.game.players;
+		expect(players).toHaveLength(2);
+		const [player, opponent] = players;
+		expect(player?.aiControlled).toBeUndefined();
+		expect(opponent?.aiControlled).toBe(true);
+	});
 });

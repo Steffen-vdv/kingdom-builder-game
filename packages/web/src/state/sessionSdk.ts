@@ -166,12 +166,14 @@ export async function advanceSessionPhase(
 async function runAiTurnInternal(
 	request: SessionRunAiRequest,
 	requestOptions: GameApiRequestOptions = {},
+	options: SessionQueueOptions = {},
 ): Promise<SessionRunAiResponse> {
 	const api = ensureGameApi();
 	const adapter = getAdapter(request.sessionId);
-	const response = await enqueueSessionTask(request.sessionId, async () =>
-		api.runAiTurn(request, requestOptions),
-	);
+	const execute = async () => api.runAiTurn(request, requestOptions);
+	const response = options.skipQueue
+		? await execute()
+		: await enqueueSessionTask(request.sessionId, execute);
 	const stateRecord = applySessionState(response);
 	const activePlayer = stateRecord.snapshot.game.players.find(
 		(entry) => entry.id === stateRecord.snapshot.game.activePlayerId,

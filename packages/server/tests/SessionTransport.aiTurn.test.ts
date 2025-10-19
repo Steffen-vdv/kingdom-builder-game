@@ -61,6 +61,10 @@ describe('SessionTransport runAiTurn', () => {
 		expect(Object.keys(result.registries.actions)).not.toHaveLength(0);
 		expectStaticMetadata(manager.getMetadata());
 		expect(runSpy).toHaveBeenCalledWith(playerId);
+		const aiPlayer = result.snapshot.game.players.find(
+			(entry) => entry.id === playerId,
+		);
+		expect(aiPlayer?.aiControlled).toBe(true);
 	});
 
 	it('rejects AI requests when controllers are missing', async () => {

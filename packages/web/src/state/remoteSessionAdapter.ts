@@ -23,12 +23,14 @@ import { ActionMetadataCache } from './actionMetadataCache';
 import { ActionMetadataSubscriptions } from './actionMetadataSubscriptions';
 import { SessionAiSimulationManager } from './sessionAiSimulationManager';
 import { SessionAdvanceManager } from './sessionAdvanceManager';
+import type { SessionQueueOptions } from './sessionSdk.actions';
 
 interface RemoteSessionAdapterDependencies {
 	ensureGameApi: () => GameApi;
 	runAiTurn: (
 		request: SessionRunAiRequest,
 		options?: GameApiRequestOptions,
+		queueOptions?: SessionQueueOptions,
 	) => Promise<SessionRunAiResponse>;
 }
 
@@ -54,7 +56,8 @@ export class RemoteSessionAdapter implements SessionAdapter {
 			getSessionRecord: () => getSessionRecord(this.#sessionId),
 		});
 		this.#aiSimulationManager = new SessionAiSimulationManager(sessionId, {
-			runAiTurn: (request) => this.#dependencies.runAiTurn(request),
+			runAiTurn: (request, queueOptions) =>
+				this.#dependencies.runAiTurn(request, undefined, queueOptions),
 			getSessionRecord: () => getSessionRecord(this.#sessionId),
 		});
 	}
@@ -146,8 +149,11 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		return summary;
 	}
 
-	async runAiTurn(playerId: SessionRunAiRequest['playerId']): Promise<boolean> {
-		return this.#aiSimulationManager.runAiTurn(playerId);
+	async runAiTurn(
+		playerId: SessionRunAiRequest['playerId'],
+		options: SessionQueueOptions = {},
+	): Promise<boolean> {
+		return this.#aiSimulationManager.runAiTurn(playerId, options);
 	}
 
 	hasAiController(playerId: string): boolean {

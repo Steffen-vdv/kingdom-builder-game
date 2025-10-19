@@ -312,6 +312,44 @@ describe('sessionSdk', () => {
 		expect(record?.snapshot).toEqual(updatedSnapshot);
 	});
 
+	it('skips the session queue when requested', async () => {
+		await createSession();
+		const updatedSnapshot = createSessionSnapshot({
+			players: [playerA, playerB],
+			activePlayerId: playerB.id,
+			opponentId: playerA.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 2,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
+		});
+		const runAiResponse: SessionRunAiResponse = {
+			sessionId: 'session-1',
+			snapshot: updatedSnapshot,
+			registries: createSessionRegistriesPayload(),
+			ranTurn: true,
+		};
+		api.setNextRunAiResponse(runAiResponse);
+		const enqueueSpy = vi.spyOn(sessionStateStoreModule, 'enqueueSessionTask');
+		enqueueSpy.mockClear();
+		try {
+			const response = await runAiTurn(
+				{
+					sessionId: 'session-1',
+					playerId: playerA.id,
+				},
+				undefined,
+				{ skipQueue: true },
+			);
+			expect(response).toEqual(runAiResponse);
+			expect(enqueueSpy).not.toHaveBeenCalled();
+		} finally {
+			enqueueSpy.mockRestore();
+		}
+	});
+
 	it('caches simulation results for the adapter', async () => {
 		const created = await createSession();
 		const simulation: SessionSimulateResponse = {
