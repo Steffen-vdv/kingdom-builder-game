@@ -3,7 +3,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
-import type { ActionResolution } from './useActionResolution';
+import type { ActionResolution, ResolutionSource } from './useActionResolution';
 
 const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
@@ -62,6 +62,57 @@ function cloneResolution(
 		...(resolution.actorLabel ? { actorLabel: resolution.actorLabel } : {}),
 		...(actionSnapshot ? { action: actionSnapshot } : {}),
 	};
+}
+
+function isPhaseSourceDetail(
+	source: ResolutionSource,
+): source is Extract<ResolutionSource, { kind: 'phase' }> {
+	return typeof source !== 'string' && source.kind === 'phase';
+}
+
+function resolvePhaseIdentity(
+	source: Extract<ResolutionSource, { kind: 'phase' }>,
+) {
+	const id = source.id?.trim();
+	if (id && id.length > 0) {
+		return id;
+	}
+	const label = source.label?.trim();
+	return label && label.length > 0 ? label : null;
+}
+
+function shouldMergePhaseResolution(
+	previous: ResolutionLogEntry,
+	nextResolution: ActionResolution,
+	playerId: string,
+) {
+	if (previous.playerId !== playerId) {
+		return false;
+	}
+	const previousSource = previous.resolution.source;
+	const nextSource = nextResolution.source;
+	if (
+		!isPhaseSourceDetail(previousSource) ||
+		!isPhaseSourceDetail(nextSource)
+	) {
+		return false;
+	}
+	const previousIdentity = resolvePhaseIdentity(previousSource);
+	const nextIdentity = resolvePhaseIdentity(nextSource);
+	if (!previousIdentity || !nextIdentity || previousIdentity !== nextIdentity) {
+		return false;
+	}
+	const previousLines = previous.resolution.lines;
+	const nextLines = nextResolution.lines;
+	if (previousLines.length > nextLines.length) {
+		return false;
+	}
+	for (let index = 0; index < previousLines.length; index += 1) {
+		if (previousLines[index] !== nextLines[index]) {
+			return false;
+		}
+	}
+	return true;
 }
 
 export function useGameLog({ sessionSnapshot }: GameLogOptions) {
@@ -136,17 +187,43 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 				return;
 			}
 			const resolutionSnapshot = cloneResolution(resolution, resolvedPlayer);
-			const entry: LogEntry = {
-				id: nextLogIdRef.current++,
-				time: new Date().toLocaleTimeString(),
-				playerId: resolvedPlayer.id,
-				kind: 'resolution',
-				resolution: resolutionSnapshot,
-			};
-			appendEntries([entry]);
+			setLog((previous) => {
+				const lastEntry = previous[previous.length - 1];
+				if (
+					lastEntry &&
+					lastEntry.kind === 'resolution' &&
+					shouldMergePhaseResolution(
+						lastEntry,
+						resolutionSnapshot,
+						resolvedPlayer.id,
+					)
+				) {
+					const merged: ResolutionLogEntry = {
+						...lastEntry,
+						time: new Date().toLocaleTimeString(),
+						resolution: resolutionSnapshot,
+					};
+					const next = [...previous];
+					next[next.length - 1] = merged;
+					return next;
+				}
+				const entry: LogEntry = {
+					id: nextLogIdRef.current++,
+					time: new Date().toLocaleTimeString(),
+					playerId: resolvedPlayer.id,
+					kind: 'resolution',
+					resolution: resolutionSnapshot,
+				};
+				const combined = [...previous, entry];
+				const trimmed = combined.slice(-MAX_LOG_ENTRIES);
+				if (trimmed.length < combined.length) {
+					setLogOverflowed(true);
+				}
+				return trimmed;
+			});
 		},
 		[
-			appendEntries,
+			setLogOverflowed,
 			resolvePlayer,
 			sessionSnapshot.game.activePlayerId,
 			sessionSnapshot.game.players,
