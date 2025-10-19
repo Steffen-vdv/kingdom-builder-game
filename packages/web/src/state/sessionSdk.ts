@@ -28,6 +28,11 @@ import {
 	getOrCreateRemoteAdapter,
 	getRemoteAdapter,
 } from './remoteSessionAdapter';
+import {
+	setSessionActionCosts,
+	setSessionActionOptions,
+	setSessionActionRequirements,
+} from './sessionActionMetadataStore';
 import type { RemoteSessionAdapter } from './remoteSessionAdapter';
 export { performSessionAction } from './sessionSdk.actions';
 import type { SessionQueueOptions } from './sessionSdk.actions';
@@ -204,14 +209,14 @@ export async function loadActionCosts(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionActionCostMap> {
 	const api = ensureGameApi();
-	const adapter = getAdapter(sessionId);
+	void getAdapter(sessionId);
 	const response = await enqueueSessionTask(sessionId, () =>
 		api.getActionCosts(
 			buildActionMetadataRequest(sessionId, actionId, params),
 			requestOptions,
 		),
 	);
-	adapter.setActionCosts(actionId, response.costs, params);
+	setSessionActionCosts(sessionId, actionId, response.costs, params);
 	return clone(response.costs);
 }
 
@@ -222,14 +227,19 @@ export async function loadActionRequirements(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionActionRequirementList> {
 	const api = ensureGameApi();
-	const adapter = getAdapter(sessionId);
+	void getAdapter(sessionId);
 	const response = await enqueueSessionTask(sessionId, () =>
 		api.getActionRequirements(
 			buildActionMetadataRequest(sessionId, actionId, params),
 			requestOptions,
 		),
 	);
-	adapter.setActionRequirements(actionId, response.requirements, params);
+	setSessionActionRequirements(
+		sessionId,
+		actionId,
+		response.requirements,
+		params,
+	);
 	return clone(response.requirements);
 }
 
@@ -239,14 +249,14 @@ export async function loadActionOptions(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<ActionEffectGroup[]> {
 	const api = ensureGameApi();
-	const adapter = getAdapter(sessionId);
+	void getAdapter(sessionId);
 	const response = await enqueueSessionTask(sessionId, () =>
 		api.getActionOptions(
 			buildActionMetadataRequest(sessionId, actionId),
 			requestOptions,
 		),
 	);
-	adapter.setActionOptions(actionId, response.groups);
+	setSessionActionOptions(sessionId, actionId, response.groups);
 	return clone(response.groups);
 }
 async function simulateUpcomingPhasesInternal(

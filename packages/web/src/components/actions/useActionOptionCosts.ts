@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { SessionActionCostMap } from '@kingdom-builder/protocol/session';
 import { useGameEngine } from '../../state/GameContext';
+import {
+	readSessionActionMetadata,
+	subscribeSessionActionMetadata,
+} from '../../state/sessionActionMetadataStore';
 import { loadActionCosts } from '../../state/sessionSdk';
 
 interface ActionCostRequest {
@@ -31,7 +35,7 @@ export function useActionOptionCosts(
 	actionId: string | undefined,
 	requests: ActionCostRequest[],
 ): CostMap {
-	const { session, sessionId } = useGameEngine();
+	const { sessionId } = useGameEngine();
 	const normalizedRequests = useMemo(() => {
 		const map = new Map<string, ActionParametersPayload | undefined>();
 		for (const request of requests) {
@@ -56,7 +60,7 @@ export function useActionOptionCosts(
 			return map;
 		}
 		for (const [key, params] of requestEntries) {
-			const snapshot = session.readActionMetadata(actionId, params);
+			const snapshot = readSessionActionMetadata(sessionId, actionId, params);
 			map.set(key, snapshot.costs);
 		}
 		return map;
@@ -68,31 +72,36 @@ export function useActionOptionCosts(
 				return map;
 			}
 			for (const [key, params] of requestEntries) {
-				const snapshot = session.readActionMetadata(actionId, params);
+				const snapshot = readSessionActionMetadata(sessionId, actionId, params);
 				map.set(key, snapshot.costs);
 			}
 			return map;
 		});
-	}, [session, actionId, requestKey, requestEntries]);
+	}, [sessionId, actionId, requestKey, requestEntries]);
 	useEffect(() => {
 		if (!actionId) {
 			return () => {};
 		}
 		const disposers = requestEntries.map(([key, params]) =>
-			session.subscribeActionMetadata(actionId, params, (snapshot) => {
-				setCosts((previous) => {
-					const next: CostMap = new Map(previous);
-					next.set(key, snapshot.costs);
-					return next;
-				});
-			}),
+			subscribeSessionActionMetadata(
+				sessionId,
+				actionId,
+				params,
+				(snapshot) => {
+					setCosts((previous) => {
+						const next: CostMap = new Map(previous);
+						next.set(key, snapshot.costs);
+						return next;
+					});
+				},
+			),
 		);
 		return () => {
 			for (const dispose of disposers) {
 				dispose();
 			}
 		};
-	}, [session, actionId, requestKey, requestEntries]);
+	}, [sessionId, actionId, requestKey, requestEntries]);
 	const pendingRef = useRef(new Set<string>());
 	useEffect(() => {
 		if (!actionId) {

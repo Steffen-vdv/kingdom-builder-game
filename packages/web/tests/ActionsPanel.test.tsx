@@ -3,6 +3,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, within, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
+import {
+	clearSessionActionMetadataStore,
+	seedSessionActionMetadata,
+	setSessionActionCostsMock,
+	setSessionActionOptionsMock,
+	setSessionActionRequirementsMock,
+} from './helpers/mockSessionActionMetadataStore';
 import ActionsPanel from '../src/components/actions/ActionsPanel';
 import { translateRequirementFailure } from '../src/translation';
 import { createActionsPanelGame } from './helpers/actionsPanel';
@@ -49,7 +56,12 @@ vi.mock('../src/state/sessionSdk', async () => {
 				params?: ActionParametersPayload,
 			) => {
 				const costs = mockGame.metadata.costMap.get(actionId) ?? {};
-				mockGame.session.setActionCosts(actionId, costs, params);
+				setSessionActionCostsMock(
+					mockGame.sessionId,
+					actionId,
+					costs as SessionActionCostMap,
+					params,
+				);
 				return Promise.resolve(costs as SessionActionCostMap);
 			},
 		),
@@ -61,7 +73,8 @@ vi.mock('../src/state/sessionSdk', async () => {
 			) => {
 				const requirements =
 					mockGame.metadata.requirementFailures.get(actionId) ?? [];
-				mockGame.session.setActionRequirements(
+				setSessionActionRequirementsMock(
+					mockGame.sessionId,
 					actionId,
 					requirements as SessionActionRequirementList,
 					params,
@@ -71,7 +84,8 @@ vi.mock('../src/state/sessionSdk', async () => {
 		),
 		loadActionOptions: vi.fn((_sessionId: string, actionId: string) => {
 			const groups = mockGame.actionOptions.get(actionId) ?? [];
-			mockGame.session.setActionOptions(
+			setSessionActionOptionsMock(
+				mockGame.sessionId,
 				actionId,
 				groups as ActionEffectGroup[],
 			);
@@ -84,12 +98,28 @@ const translateRequirementFailureMock = vi.mocked(translateRequirementFailure);
 
 let mockGame = createActionsPanelGame();
 let metadata = mockGame.metadata;
+clearSessionActionMetadataStore();
+for (const [actionId, costs] of mockGame.metadata.costMap.entries()) {
+	seedSessionActionMetadata(mockGame.sessionId, actionId, {
+		costs,
+		requirements: mockGame.metadata.requirementFailures.get(actionId) ?? [],
+		groups: mockGame.actionOptions.get(actionId) ?? [],
+	});
+}
 function setScenario(options?: ActionsPanelGameOptions) {
 	mockGame = createActionsPanelGame(options);
 	metadata = mockGame.metadata;
 	requirementIconsMock.mockImplementation((actionId: string) => {
 		return metadata.requirementIcons.get(actionId) ?? [];
 	});
+	clearSessionActionMetadataStore();
+	for (const [actionId, costs] of mockGame.metadata.costMap.entries()) {
+		seedSessionActionMetadata(mockGame.sessionId, actionId, {
+			costs,
+			requirements: mockGame.metadata.requirementFailures.get(actionId) ?? [],
+			groups: mockGame.actionOptions.get(actionId) ?? [],
+		});
+	}
 }
 
 function toTitleCase(identifier: string) {
