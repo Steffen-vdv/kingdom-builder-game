@@ -8,7 +8,6 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import type { SessionAdapter } from '../../src/state/sessionTypes';
 import type {
 	SessionRequirementFailure,
 	SessionResourceDefinition,
@@ -56,7 +55,6 @@ vi.mock('../../src/state/sessionSdk', async () => {
 });
 
 describe('useActionPerformer', () => {
-	let session: SessionAdapter;
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
@@ -133,7 +131,6 @@ describe('useActionPerformer', () => {
 			snapshot: sessionSnapshot,
 			registries: registriesPayload,
 		});
-		session = sessionHarness.adapter;
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
@@ -167,7 +164,6 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
@@ -210,7 +206,6 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
@@ -257,7 +252,6 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
@@ -314,7 +308,6 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
@@ -394,7 +387,6 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
@@ -488,7 +480,6 @@ describe('useActionPerformer', () => {
 
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
@@ -551,7 +542,6 @@ describe('useActionPerformer', () => {
 		});
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,
@@ -596,7 +586,6 @@ describe('useActionPerformer', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			useActionPerformer({
-				session,
 				sessionId,
 				actionCostResource,
 				registries,

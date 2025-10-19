@@ -211,7 +211,6 @@ export function GameProviderInner({
 	});
 
 	const { handlePerform } = useActionPerformer({
-		session: sessionAdapter,
 		sessionId,
 		actionCostResource,
 		registries,

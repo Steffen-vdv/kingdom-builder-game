@@ -42,13 +42,10 @@ import {
 	getActionErrorMetadata,
 	setActionErrorMetadata,
 } from './actionErrorMetadata';
-import type {
-	SessionAdapter,
-	SessionRegistries,
-	SessionResourceKey,
-} from './sessionTypes';
+import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
+import { getSessionSnapshot } from './sessionStateStore';
 
 type ActionRequirementFailures =
 	ActionExecuteErrorResponse['requirementFailures'];
@@ -81,7 +78,6 @@ function createActionExecutionError(
 	return failure;
 }
 interface UseActionPerformerOptions {
-	session: SessionAdapter;
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
 	registries: Pick<
@@ -106,7 +102,6 @@ interface UseActionPerformerOptions {
 	onFatalSessionError?: (error: unknown) => void;
 }
 export function useActionPerformer({
-	session,
 	sessionId,
 	actionCostResource,
 	registries,
@@ -141,7 +136,7 @@ export function useActionPerformer({
 				value: T | undefined,
 				createError: () => Error,
 			): T => value ?? throwFatal(createError());
-			const snapshotBefore = session.getSnapshot();
+			const snapshotBefore = getSessionSnapshot(sessionId);
 			if (snapshotBefore.game.conclusion) {
 				pushErrorToast('The battle is already decided.');
 				return;
@@ -178,7 +173,7 @@ export function useActionPerformer({
 				}
 				const costs = response.costs ?? {};
 				const traces = response.traces;
-				const snapshotAfter = session.getSnapshot();
+				const snapshotAfter = getSessionSnapshot(sessionId);
 				const legacyContext = createSessionTranslationContext({
 					snapshot: snapshotAfter,
 					ruleSnapshot: snapshotAfter.rules,
@@ -321,7 +316,6 @@ export function useActionPerformer({
 			pushErrorToast,
 			refresh,
 			resourceKeys,
-			session,
 			showResolution,
 			syncPhaseState,
 			actionCostResource,

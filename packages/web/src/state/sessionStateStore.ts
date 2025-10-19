@@ -141,6 +141,11 @@ export function getSessionRecord(
 	return records.get(sessionId);
 }
 
+export function getSessionSnapshot(sessionId: string): SessionSnapshot {
+	const record = assertSessionRecord(sessionId);
+	return clone(record.snapshot);
+}
+
 export function assertSessionRecord(sessionId: string): SessionStateRecord {
 	const record = getSessionRecord(sessionId);
 	if (!record) {
