@@ -5,6 +5,8 @@ import type {
 	DevelopmentConfig,
 	GameConfig,
 	PopulationConfig,
+	PhaseConfig,
+	StartConfig,
 } from '../config/schema';
 import type { ActionParametersPayload } from '../actions/contracts';
 import type {
@@ -16,6 +18,7 @@ import type {
 	SimulateUpcomingPhasesOptions,
 	SimulateUpcomingPhasesResult,
 } from './index';
+import type { RuleSet } from '../services';
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -45,6 +48,14 @@ export interface SessionRegistriesPayload {
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
+}
+
+export interface SessionRuntimeConfigResponse {
+	phases: PhaseConfig[];
+	start: StartConfig;
+	rules: RuleSet;
+	resources: SerializedRegistry<SessionResourceDefinition>;
+	primaryIconId: string | null;
 }
 
 export interface SessionCreateResponse {

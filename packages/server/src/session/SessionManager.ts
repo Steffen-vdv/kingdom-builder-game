@@ -11,6 +11,7 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	PRIMARY_ICON_ID,
 } from '@kingdom-builder/contents';
 import type {
 	PlayerStartConfig,
@@ -18,6 +19,9 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	PhaseConfig,
+	StartConfig,
+	RuleSet,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -34,6 +38,15 @@ type SessionResourceRegistry = SerializedRegistry<SessionResourceDefinition>;
 
 type EngineSessionOverrideOptions = Partial<EngineSessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
+	primaryIconId?: string | null;
+};
+
+type SessionRuntimeConfig = {
+	phases: PhaseConfig[];
+	start: StartConfig;
+	rules: RuleSet;
+	resources: SessionResourceRegistry;
+	primaryIconId: string | null;
 };
 
 type SessionRecord = {
@@ -71,6 +84,8 @@ export class SessionManager {
 
 	private readonly metadata: SessionStaticMetadataPayload;
 
+	private readonly runtimeConfig: SessionRuntimeConfig;
+
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
 			maxIdleDurationMs = DEFAULT_MAX_IDLE_DURATION_MS,
@@ -91,6 +106,8 @@ export class SessionManager {
 			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
 		};
+		const primaryIconId =
+			engineOverrides.primaryIconId ?? PRIMARY_ICON_ID ?? null;
 		const resources = this.buildResourceRegistry(resourceRegistry);
 		this.registries = {
 			actions: this.cloneRegistry(this.baseOptions.actions),
@@ -105,6 +122,25 @@ export class SessionManager {
 			populations: this.baseOptions.populations,
 			resources,
 			phases: this.baseOptions.phases,
+		});
+		const frozenPhases = Object.freeze(
+			structuredClone(this.baseOptions.phases),
+		) as unknown as PhaseConfig[];
+		const frozenStart = Object.freeze(
+			structuredClone(this.baseOptions.start),
+		) as unknown as StartConfig;
+		const frozenRules = Object.freeze(
+			structuredClone(this.baseOptions.rules),
+		) as unknown as RuleSet;
+		const frozenResources = this.freezeResourceRegistry(
+			structuredClone(resources),
+		);
+		this.runtimeConfig = Object.freeze({
+			phases: frozenPhases,
+			start: frozenStart,
+			rules: frozenRules,
+			resources: frozenResources,
+			primaryIconId,
 		});
 	}
 
@@ -181,6 +217,10 @@ export class SessionManager {
 
 	public getMetadata(): SessionStaticMetadataPayload {
 		return structuredClone(this.metadata);
+	}
+
+	public getRuntimeConfig(): SessionRuntimeConfig {
+		return this.runtimeConfig;
 	}
 
 	private requireSession(sessionId: string): EngineSession {
@@ -268,6 +308,15 @@ export class SessionManager {
 		return Object.fromEntries(registry.entries());
 	}
 
+	private freezeResourceRegistry(
+		registry: SessionResourceRegistry,
+	): SessionResourceRegistry {
+		for (const definition of Object.values(registry)) {
+			Object.freeze(definition);
+		}
+		return Object.freeze(registry) as SessionResourceRegistry;
+	}
+
 	private purgeExpiredSessions(): void {
 		const expiration = this.now() - this.maxIdleDurationMs;
 		for (const [sessionId, record] of this.sessions.entries()) {
@@ -279,3 +328,4 @@ export class SessionManager {
 }
 
 export type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
+export type { SessionRuntimeConfig };

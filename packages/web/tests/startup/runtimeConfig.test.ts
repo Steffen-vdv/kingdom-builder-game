@@ -1,57 +1,117 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RuntimeContentConfig } from '../../src/startup/runtimeConfig';
-import fallbackConfigJson from '../../src/startup/runtimeConfigFallback.json';
 
 const runtimeModulePath = '../../src/startup/runtimeConfig';
-const fallbackConfig = fallbackConfigJson as RuntimeContentConfig;
 const globalScope = globalThis as {
 	__KINGDOM_BUILDER_CONFIG__?: Partial<RuntimeContentConfig> | undefined;
 };
 
-function resetRuntimeOverrides(): void {
-	delete globalScope.__KINGDOM_BUILDER_CONFIG__;
-}
+const baseResponse = {
+	phases: [
+		{
+			id: 'phase:main',
+			steps: [{ id: 'step:main' }],
+		},
+	],
+	start: {
+		player: {
+			resources: { gold: 10 },
+			stats: {},
+			population: {},
+			lands: [],
+		},
+	},
+	rules: {
+		defaultActionAPCost: 1,
+		absorptionCapPct: 1,
+		absorptionRounding: 'down',
+		tieredResourceKey: 'gold',
+		tierDefinitions: [],
+		slotsPerNewLand: 1,
+		maxSlotsPerLand: 1,
+		basePopulationCap: 1,
+		winConditions: [],
+	},
+	resources: {
+		gold: { key: 'gold', icon: 'gold-icon' },
+	},
+	primaryIconId: 'gold',
+} as const;
 
 describe('getRuntimeContentConfig', () => {
+	let fetchMock: ReturnType<typeof vi.fn>;
+
+	function resetRuntimeOverrides(): void {
+		delete globalScope.__KINGDOM_BUILDER_CONFIG__;
+	}
+
 	beforeEach(() => {
 		resetRuntimeOverrides();
 		vi.resetModules();
+		fetchMock = vi.fn();
+		vi.stubGlobal('fetch', fetchMock);
 	});
 
 	afterEach(() => {
 		resetRuntimeOverrides();
+		vi.unstubAllGlobals();
 	});
 
-	it('returns the static fallback snapshot when no runtime overrides exist', async () => {
+	function mockSuccessfulFetch(
+		payload: typeof baseResponse = baseResponse,
+	): void {
+		fetchMock.mockResolvedValue({
+			ok: true,
+			status: 200,
+			json: vi.fn().mockResolvedValue(payload),
+		});
+	}
+
+	it('fetches runtime configuration from the server', async () => {
+		mockSuccessfulFetch();
 		const { getRuntimeContentConfig } = await import(runtimeModulePath);
 		const config = await getRuntimeContentConfig();
-		expect(config).toEqual(fallbackConfig);
-		expect(config).not.toBe(fallbackConfig);
-		expect(config.resources).not.toBe(fallbackConfig.resources);
+		expect(fetchMock).toHaveBeenCalledWith('/runtime-config', {
+			credentials: 'same-origin',
+		});
+		expect(config.phases).toEqual(baseResponse.phases);
+		expect(config.phases).not.toBe(baseResponse.phases);
+		expect(config.resources.gold).toEqual(baseResponse.resources.gold);
 	});
 
-	it('merges runtime overrides on top of the fallback snapshot', async () => {
-		const [firstResourceKey] = Object.keys(fallbackConfig.resources);
-		if (!firstResourceKey) {
-			throw new Error('Fallback resources are empty.');
-		}
-		const fallbackResource = fallbackConfig.resources[firstResourceKey];
-		if (!fallbackResource) {
-			throw new Error('Missing fallback resource definition.');
-		}
+	it('applies runtime overrides from the global scope', async () => {
+		mockSuccessfulFetch();
 		globalScope.__KINGDOM_BUILDER_CONFIG__ = {
 			primaryIconId: 'custom-primary',
 			resources: {
-				[firstResourceKey]: { ...fallbackResource },
-				extra: { key: 'extra', icon: '✨' },
+				gold: { key: 'gold', icon: 'override-icon' },
+				extra: { key: 'extra' },
 			},
 		};
 		const { getRuntimeContentConfig } = await import(runtimeModulePath);
 		const config = await getRuntimeContentConfig();
 		expect(config.primaryIconId).toBe('custom-primary');
-		expect(config.resources.extra).toEqual({ key: 'extra', icon: '✨' });
-		expect(config.resources[firstResourceKey]).toEqual(
-			expect.objectContaining({ key: firstResourceKey }),
+		expect(config.resources.extra).toEqual({ key: 'extra' });
+		expect(config.resources.gold?.icon).toBe('override-icon');
+	});
+
+	it('throws when the runtime configuration request fails', async () => {
+		fetchMock.mockRejectedValue(new Error('network-error'));
+		const { getRuntimeContentConfig } = await import(runtimeModulePath);
+		await expect(getRuntimeContentConfig()).rejects.toThrow(
+			'Failed to request runtime configuration.',
+		);
+	});
+
+	it('throws when the runtime configuration response is not ok', async () => {
+		fetchMock.mockResolvedValue({
+			ok: false,
+			status: 500,
+			json: vi.fn(),
+		});
+		const { getRuntimeContentConfig } = await import(runtimeModulePath);
+		await expect(getRuntimeContentConfig()).rejects.toThrow(
+			'Runtime configuration request failed with status 500.',
 		);
 	});
 });
