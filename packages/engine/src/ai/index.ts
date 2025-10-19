@@ -79,28 +79,20 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			return;
 		}
 
-                const finishActionPhaseAsync = async () => {
-                        if (engineContext.activePlayer.id !== playerId) {
-                                return;
-                        }
-                        if (
-                                !engineContext.phases[
-                                        engineContext.game.phaseIndex
-                                ]?.action
-                        ) {
-                                return;
-                        }
-                        const remaining =
-                                engineContext.activePlayer.resources[
-                                        actionPointResourceKey
-                                ];
-                        if (typeof remaining === 'number' && remaining > 0) {
-                                engineContext.activePlayer.resources[
-                                        actionPointResourceKey
-                                ] = 0;
-                        }
-                        await dependencies.advance(engineContext);
-                };
+		const finishActionPhaseAsync = async () => {
+			if (engineContext.activePlayer.id !== playerId) {
+				return;
+			}
+			if (!engineContext.phases[engineContext.game.phaseIndex]?.action) {
+				return;
+			}
+			const remaining =
+				engineContext.activePlayer.resources[actionPointResourceKey];
+			if (typeof remaining === 'number' && remaining > 0) {
+				engineContext.activePlayer.resources[actionPointResourceKey] = 0;
+			}
+			await dependencies.advance(engineContext);
+		};
 
 		const definition = engineContext.actions.get(TAX_ACTION_ID);
 		if (!definition) {
@@ -115,20 +107,15 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			return;
 		}
 
-                const remaining =
-                        engineContext.activePlayer.resources[
-                                actionPointResourceKey
-                        ] ?? 0;
+		const remaining =
+			engineContext.activePlayer.resources[actionPointResourceKey] ?? 0;
 		if (remaining <= 0) {
 			await finishActionPhaseAsync();
 			return;
 		}
 
 		try {
-                        await dependencies.performAction(
-                                TAX_ACTION_ID,
-                                engineContext,
-                        );
+			await dependencies.performAction(TAX_ACTION_ID, engineContext);
 		} catch (error) {
 			void error;
 			await finishActionPhaseAsync();

@@ -158,11 +158,9 @@ export function createEngineSession(
 			}
 			return cloneEffectLogEntry(entry);
 		},
-                getPassiveEvaluationMods() {
-                        return clonePassiveEvaluationMods(
-                                context.passives.evaluationMods,
-                        );
-                },
+		getPassiveEvaluationMods() {
+			return clonePassiveEvaluationMods(context.passives.evaluationMods);
+		},
 		enqueue(taskFactory) {
 			return context.enqueue(taskFactory);
 		},
@@ -178,11 +176,7 @@ export function createEngineSession(
 			const beforePhaseHasAction = Boolean(
 				context.phases[beforePhaseIndex]?.action,
 			);
-                        await context.aiSystem.run(
-                                playerId,
-                                context,
-                                overrides,
-                        );
+			await context.aiSystem.run(playerId, context, overrides);
 			const afterActiveId = context.game.active.id;
 			const afterPhaseIndex = context.game.phaseIndex;
 			const afterPhaseHasAction = Boolean(
