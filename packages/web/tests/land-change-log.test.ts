@@ -1,37 +1,26 @@
-import { describe, expect, it, vi } from 'vitest';
-import { runEffects } from '@kingdom-builder/engine';
+import { describe, expect, it } from 'vitest';
 import type {
-	PhaseConfig,
-	RuleSet,
-	StartConfig,
-} from '@kingdom-builder/protocol';
+	SessionPhaseDefinition,
+	SessionPlayerStateSnapshot,
+	SessionRuleSnapshot,
+	SessionSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import { logContent } from '../src/translation/content';
-import {
-	snapshotPlayer,
-	diffStepSnapshots,
-	createTranslationDiffContext,
-} from '../src/translation/log';
+import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
 	formatIconLabel,
 	formatLogHeadline,
 	LOG_KEYWORDS,
 } from '../src/translation/log/logMessages';
-import { createEngineTranslationContext } from './helpers/createEngineTranslationContext';
-import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
+import { createSessionTranslationContext } from '../src/state/createSessionTranslationContext';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
-
-function captureActivePlayer(
-	engineContext: Parameters<typeof snapshotEnginePlayer>[0],
-) {
-	return snapshotPlayer(
-		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
-	);
-}
-
-const TEST_PHASES: PhaseConfig[] = [
+const TEST_PHASES: SessionPhaseDefinition[] = [
 	{
 		id: 'phase:action',
 		label: 'Action Phase',
@@ -41,70 +30,98 @@ const TEST_PHASES: PhaseConfig[] = [
 	},
 ];
 
-const TEST_START: StartConfig = {
-	player: {
-		resources: {},
-		stats: {},
-		population: {},
-		lands: [],
-		buildings: [],
-	},
-	players: {
-		opponent: {
-			resources: {},
-			stats: {},
-			population: {},
-			lands: [],
-			buildings: [],
-		},
+const BASE_METADATA: SessionSnapshotMetadata = {
+	passiveEvaluationModifiers: {},
+	assets: {
+		land: { label: 'Territory', icon: '🗺️' },
+		slot: { label: 'Development Slot', icon: '🧩' },
 	},
 };
 
-const TEST_RULES: RuleSet = {
-	defaultActionAPCost: 1,
-	absorptionCapPct: 1,
-	absorptionRounding: 'nearest',
-	tieredResourceKey: 'resource:test',
-	tierDefinitions: [],
-	slotsPerNewLand: 1,
-	maxSlotsPerLand: 1,
-	basePopulationCap: 1,
-	winConditions: [],
-};
+function createRuleSnapshot(resourceKey: string): SessionRuleSnapshot {
+	return {
+		tieredResourceKey: resourceKey,
+		tierDefinitions: [],
+		winConditions: [],
+	} satisfies SessionRuleSnapshot;
+}
 
-function createTestContext() {
-	const { engineContext, translationContext } = createEngineTranslationContext({
-		phases: TEST_PHASES,
-		start: TEST_START,
-		rules: TEST_RULES,
-		configureMetadata: (metadata) => ({
-			...metadata,
-			assets: {
-				...(metadata.assets ?? {}),
-				land: { label: 'Territory', icon: '🗺️' },
-				slot: { label: 'Development Slot', icon: '🧩' },
-			},
-		}),
+function createSessionState(
+	players: SessionPlayerStateSnapshot[],
+	metadata: SessionSnapshotMetadata,
+	ruleSnapshot: SessionRuleSnapshot,
+	phases: SessionPhaseDefinition[],
+	actionCostResource: SessionSnapshot['actionCostResource'],
+): SessionSnapshot {
+	return createSessionSnapshot({
+		players,
+		activePlayerId: players[0]!.id,
+		opponentId: players[1]!.id,
+		phases,
+		actionCostResource,
+		ruleSnapshot,
+		metadata,
 	});
-	engineContext.assets = translationContext.assets;
-	return engineContext;
 }
 
 describe('land change log formatting', () => {
 	it('logs gained land entries with icon and label', () => {
-		const engineContext = createTestContext();
-		const before = captureActivePlayer(engineContext);
-		runEffects(
-			[
+		const registries = createSessionRegistries();
+		const resourceKey = Object.keys(registries.resources)[0] ?? 'resource:test';
+		const ruleSnapshot = createRuleSnapshot(resourceKey);
+		const metadata = {
+			...BASE_METADATA,
+		} satisfies SessionSnapshotMetadata;
+		const opponent = createSnapshotPlayer({ id: 'player:opponent' });
+		const baseLand = {
+			id: 'land:existing',
+			slotsMax: 1,
+			slotsUsed: 0,
+			tilled: true,
+			developments: [],
+		} satisfies SessionPlayerStateSnapshot['lands'][number];
+		const beforePlayer = createSnapshotPlayer({
+			id: 'player:active',
+			lands: [baseLand],
+		});
+		const afterPlayer = createSnapshotPlayer({
+			id: beforePlayer.id,
+			lands: [
+				baseLand,
 				{
-					type: 'land',
-					method: 'add',
+					id: 'land:new',
+					slotsMax: 1,
+					slotsUsed: 0,
+					tilled: false,
+					developments: [],
 				},
 			],
-			engineContext,
+		});
+		const beforeSession = createSessionState(
+			[beforePlayer, opponent],
+			metadata,
+			ruleSnapshot,
+			TEST_PHASES,
+			resourceKey,
 		);
-		const after = captureActivePlayer(engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const afterSession = createSessionState(
+			[afterPlayer, opponent],
+			metadata,
+			ruleSnapshot,
+			TEST_PHASES,
+			resourceKey,
+		);
+		const before = snapshotPlayer(beforeSession.game.players[0]!);
+		const after = snapshotPlayer(afterSession.game.players[0]!);
+		const { diffContext, translationContext } = createSessionTranslationContext(
+			{
+				snapshot: afterSession,
+				ruleSnapshot: afterSession.rules,
+				passiveRecords: afterSession.passiveRecords,
+				registries,
+			},
+		);
+		const translationDiffContext = diffContext;
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -118,7 +135,7 @@ describe('land change log formatting', () => {
 		if (!landLine) {
 			return;
 		}
-		const landInfo = engineContext.assets.land;
+		const landInfo = translationContext.assets.land;
 		const landLabel =
 			formatIconLabel(landInfo.icon, landInfo.label) ||
 			landInfo.label ||
@@ -135,24 +152,25 @@ describe('land change log formatting', () => {
 	});
 
 	it('logs developed entries for new land improvements', () => {
-		const engineContext = createTestContext();
-		runEffects(
-			[
-				{
-					type: 'land',
-					method: 'add',
-				},
-			],
-			engineContext,
-		);
-		const targetLand =
-			engineContext.activePlayer.lands.at(-1) ??
-			engineContext.activePlayer.lands[0];
-		expect(targetLand).toBeTruthy();
-		if (!targetLand) {
-			return;
-		}
-		const developmentEntries = engineContext.developments.entries();
+		const registries = createSessionRegistries();
+		const resourceKey = Object.keys(registries.resources)[0] ?? 'resource:test';
+		const ruleSnapshot = createRuleSnapshot(resourceKey);
+		const metadata = {
+			...BASE_METADATA,
+		} satisfies SessionSnapshotMetadata;
+		const opponent = createSnapshotPlayer({ id: 'player:opponent' });
+		const targetLand = {
+			id: 'land:target',
+			slotsMax: 1,
+			slotsUsed: 0,
+			tilled: true,
+			developments: [],
+		} satisfies SessionPlayerStateSnapshot['lands'][number];
+		const beforePlayer = createSnapshotPlayer({
+			id: 'player:active',
+			lands: [targetLand],
+		});
+		const developmentEntries = Array.from(registries.developments.entries());
 		const developmentEntry = developmentEntries.find(([, definition]) => {
 			return Boolean(definition?.icon) && Boolean(definition?.name);
 		});
@@ -162,22 +180,40 @@ describe('land change log formatting', () => {
 		if (!developmentId) {
 			return;
 		}
-		const before = captureActivePlayer(engineContext);
-		runEffects(
-			[
+		const afterPlayer = createSnapshotPlayer({
+			id: beforePlayer.id,
+			lands: [
 				{
-					type: 'development',
-					method: 'add',
-					params: {
-						id: developmentId,
-						landId: targetLand.id,
-					},
+					...targetLand,
+					developments: [developmentId],
 				},
 			],
-			engineContext,
+		});
+		const beforeSession = createSessionState(
+			[beforePlayer, opponent],
+			metadata,
+			ruleSnapshot,
+			TEST_PHASES,
+			resourceKey,
 		);
-		const after = captureActivePlayer(engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const afterSession = createSessionState(
+			[afterPlayer, opponent],
+			metadata,
+			ruleSnapshot,
+			TEST_PHASES,
+			resourceKey,
+		);
+		const before = snapshotPlayer(beforeSession.game.players[0]!);
+		const after = snapshotPlayer(afterSession.game.players[0]!);
+		const { diffContext, translationContext } = createSessionTranslationContext(
+			{
+				snapshot: afterSession,
+				ruleSnapshot: afterSession.rules,
+				passiveRecords: afterSession.passiveRecords,
+				registries,
+			},
+		);
+		const translationDiffContext = diffContext;
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -194,7 +230,7 @@ describe('land change log formatting', () => {
 		const developmentContent = logContent(
 			'development',
 			developmentId,
-			engineContext,
+			translationContext,
 		);
 		const developmentLabel = developmentContent[0] ?? developmentId;
 		const expectedLine = formatLogHeadline(
