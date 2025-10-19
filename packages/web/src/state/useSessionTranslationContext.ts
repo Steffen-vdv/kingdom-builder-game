@@ -1,8 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type {
-	SessionSnapshot,
-	SessionSnapshotMetadata,
-} from '@kingdom-builder/protocol/session';
+import { useEffect, useMemo, useState } from 'react';
 import { createTranslationContext } from '../translation/context';
 import type { TranslationContext } from '../translation/context';
 export {
@@ -16,7 +12,6 @@ type UseSessionTranslationContextOptions = {
 	registries: GameProviderInnerProps['registries'];
 	ruleSnapshot: GameProviderInnerProps['ruleSnapshot'];
 	sessionMetadata: GameProviderInnerProps['sessionMetadata'];
-	cachedSessionSnapshot: SessionSnapshot;
 	onFatalSessionError?: GameProviderInnerProps['onFatalSessionError'];
 };
 
@@ -30,73 +25,31 @@ export function useSessionTranslationContext({
 	registries,
 	ruleSnapshot,
 	sessionMetadata,
-	cachedSessionSnapshot,
 	onFatalSessionError,
 }: UseSessionTranslationContextOptions): SessionTranslationContextResult {
 	const [capturedFatalError, setCapturedFatalError] = useState<{
 		value: unknown;
 	} | null>(null);
 	const [isHandlingFatal, setIsHandlingFatal] = useState(false);
-	const lastTranslationContextRef = useRef<TranslationContext | null>(null);
 
 	const translationContextResult = useMemo<{
 		context: TranslationContext | null;
 		error: unknown;
 	}>(() => {
-		const fallbackMetadata = cachedSessionSnapshot.metadata;
-		const metadataPayload: SessionSnapshotMetadata = {
-			passiveEvaluationModifiers:
-				sessionMetadata.passiveEvaluationModifiers ??
-				fallbackMetadata?.passiveEvaluationModifiers ??
-				{},
-		};
-		const effectLogs =
-			sessionMetadata.effectLogs ?? fallbackMetadata?.effectLogs;
-		if (effectLogs !== undefined) {
-			metadataPayload.effectLogs = effectLogs;
-		}
-		const assignMetadataField = <
-			K extends Exclude<
-				keyof SessionSnapshotMetadata,
-				'effectLogs' | 'passiveEvaluationModifiers'
-			>,
-		>(
-			key: K,
-		) => {
-			const primary = sessionMetadata[key];
-			if (primary !== undefined) {
-				metadataPayload[key] = primary;
-				return;
-			}
-			const fallback = fallbackMetadata?.[key];
-			if (fallback !== undefined) {
-				metadataPayload[key] = fallback;
-			}
-		};
-		assignMetadataField('resources');
-		assignMetadataField('populations');
-		assignMetadataField('buildings');
-		assignMetadataField('developments');
-		assignMetadataField('stats');
-		assignMetadataField('phases');
-		assignMetadataField('triggers');
-		assignMetadataField('assets');
-		assignMetadataField('overview');
 		try {
 			const context = createTranslationContext(
 				sessionSnapshot,
 				registries,
-				metadataPayload,
+				sessionMetadata,
 				{
 					ruleSnapshot,
 					passiveRecords: sessionSnapshot.passiveRecords,
 				},
 			);
-			lastTranslationContextRef.current = context;
 			return { context, error: null };
 		} catch (error) {
 			return {
-				context: lastTranslationContextRef.current,
+				context: null,
 				error,
 			};
 		}
@@ -106,7 +59,6 @@ export function useSessionTranslationContext({
 		ruleSnapshot,
 		sessionSnapshot.passiveRecords,
 		sessionMetadata,
-		cachedSessionSnapshot,
 	]);
 
 	const immediateError = translationContextResult.error;
