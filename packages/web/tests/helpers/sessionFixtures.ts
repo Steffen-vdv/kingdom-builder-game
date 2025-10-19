@@ -2,6 +2,7 @@ import type { EffectDef } from '@kingdom-builder/protocol';
 import type {
 	PlayerStartConfig,
 	SessionLandSnapshot,
+	SessionOverviewMetadata,
 	SessionPassiveRecordSnapshot,
 	SessionPhaseDefinition,
 	SessionPlayerId,
@@ -280,7 +281,19 @@ export function createSessionSnapshot({
 	}
 	const metadata = metadataOverride
 		? clone(metadataOverride)
-		: ({ passiveEvaluationModifiers: {} } satisfies SessionSnapshotMetadata);
+		: ({
+				passiveEvaluationModifiers: {},
+				assets: {
+					land: { label: 'Land' },
+					slot: { label: 'Development Slot' },
+					passive: { label: 'Passive' },
+				},
+				overview: {
+					hero: { title: 'Session Overview', tokens: {} },
+					sections: [],
+					tokens: {},
+				} satisfies SessionOverviewMetadata,
+			} satisfies SessionSnapshotMetadata);
 	return {
 		game: {
 			turn,

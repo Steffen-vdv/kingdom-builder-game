@@ -273,6 +273,11 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		phases: phaseMetadata,
 		triggers: { ...TRIGGER_METADATA },
 		assets: { ...ASSET_METADATA },
+		overviewContent: {
+			hero: { title: 'Session Overview', tokens: {} },
+			sections: [],
+			tokens: {},
+		},
 	};
 	const phases = buildPhaseDefinitions(PHASE_ORDER);
 	const tieredResourceKey = resourceKeys[0] ?? 'resource-0';
