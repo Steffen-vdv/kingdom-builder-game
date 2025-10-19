@@ -183,4 +183,149 @@ describe('useGameLog', () => {
 		expect(entry.resolution.requireAcknowledgement).toBe(false);
 		expect(entry.resolution.player).toEqual(players[0]);
 	});
+
+	it('merges sequential phase resolution updates into single log entry', () => {
+		const players: SessionPlayerStateSnapshot[] = [
+			createPlayer('A'),
+			createPlayer('B'),
+		];
+		const sessionState: SessionSnapshot = {
+			game: {
+				turn: 1,
+				currentPlayerIndex: 0,
+				currentPhase: 'growth',
+				currentStep: 'growth-step',
+				phaseIndex: 0,
+				stepIndex: 0,
+				devMode: false,
+				players,
+				activePlayerId: players[0]!.id,
+				opponentId: players[1]!.id,
+			},
+			phases: [],
+			actionCostResource: primaryResource,
+			recentResourceGains: [],
+			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			passiveRecords: {
+				[players[0]!.id]: [],
+				[players[1]!.id]: [],
+			},
+			metadata: { passiveEvaluationModifiers: {} },
+		};
+		const { result } = renderHook(() =>
+			useGameLog({ sessionSnapshot: sessionState }),
+		);
+		const phaseSource = {
+			kind: 'phase',
+			label: 'Growth Phase',
+			id: 'phase.growth',
+		};
+		const firstResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gain 2 Gold (10→12)'],
+			visibleLines: ['Growth Phase', '    Gain 2 Gold (10→12)'],
+			timeline: [
+				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain 2 Gold (10→12)', depth: 1, kind: 'effect' },
+			],
+			visibleTimeline: [
+				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain 2 Gold (10→12)', depth: 1, kind: 'effect' },
+			],
+			isComplete: true,
+			summaries: ['Gain 2 Gold (10→12)'],
+			source: phaseSource,
+			requireAcknowledgement: false,
+			player: players[0],
+		};
+		const secondResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gain 2 Gold (10→12)', '    Draw 1 Card'],
+			visibleLines: [
+				'Growth Phase',
+				'    Gain 2 Gold (10→12)',
+				'    Draw 1 Card',
+			],
+			timeline: [
+				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain 2 Gold (10→12)', depth: 1, kind: 'effect' },
+				{ text: 'Draw 1 Card', depth: 1, kind: 'effect' },
+			],
+			visibleTimeline: [
+				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain 2 Gold (10→12)', depth: 1, kind: 'effect' },
+				{ text: 'Draw 1 Card', depth: 1, kind: 'effect' },
+			],
+			isComplete: true,
+			summaries: ['Gain 2 Gold (10→12)', 'Draw 1 Card'],
+			source: { ...phaseSource },
+			requireAcknowledgement: false,
+			player: players[0],
+		};
+		const actionResolution: ActionResolution = {
+			lines: ['Forge Weapon', '    Gain 1 Army Strength'],
+			visibleLines: ['Forge Weapon', '    Gain 1 Army Strength'],
+			timeline: [
+				{ text: 'Forge Weapon', depth: 0, kind: 'headline' },
+				{ text: 'Gain 1 Army Strength', depth: 1, kind: 'effect' },
+			],
+			visibleTimeline: [
+				{ text: 'Forge Weapon', depth: 0, kind: 'headline' },
+				{ text: 'Gain 1 Army Strength', depth: 1, kind: 'effect' },
+			],
+			isComplete: true,
+			summaries: ['Gain 1 Army Strength'],
+			source: {
+				kind: 'action',
+				label: 'Action',
+				id: 'action.forge-weapon',
+				name: 'Forge Weapon',
+			},
+			requireAcknowledgement: true,
+			action: {
+				id: 'action.forge-weapon',
+				name: 'Forge Weapon',
+			},
+			player: players[0],
+		};
+
+		act(() => {
+			result.current.addResolutionLog(firstResolution, players[0]);
+		});
+		expect(result.current.log).toHaveLength(1);
+		const firstEntry = result.current.log[0];
+		if (firstEntry?.kind !== 'resolution') {
+			throw new Error('Expected a resolution log entry');
+		}
+		expect(firstEntry.resolution.lines).toEqual(firstResolution.lines);
+		const initialId = firstEntry.id;
+
+		act(() => {
+			result.current.addResolutionLog(secondResolution, players[0]);
+		});
+		expect(result.current.log).toHaveLength(1);
+		const mergedEntry = result.current.log[0];
+		if (mergedEntry?.kind !== 'resolution') {
+			throw new Error('Expected a resolution log entry');
+		}
+		expect(mergedEntry.id).toBe(initialId);
+		expect(mergedEntry.resolution.lines).toEqual(secondResolution.lines);
+		expect(mergedEntry.resolution.summaries).toEqual(
+			secondResolution.summaries,
+		);
+
+		act(() => {
+			result.current.addResolutionLog(actionResolution, players[0]);
+		});
+		expect(result.current.log).toHaveLength(2);
+		const actionEntry = result.current.log[1];
+		if (actionEntry?.kind !== 'resolution') {
+			throw new Error('Expected a resolution log entry');
+		}
+		expect(actionEntry.id).toBeGreaterThan(initialId);
+		expect(actionEntry.resolution.lines).toEqual(actionResolution.lines);
+	});
 });

@@ -285,7 +285,7 @@ export function useActionPerformer({
 				if (handleError(error)) {
 					throw error;
 				}
-// <<<<<<< project/rescard_log_uni
+				// <<<<<<< project/rescard_log_uni
 				if (error instanceof SessionMirroringError) {
 					fatalError = error;
 					notifyFatal(error);
@@ -312,8 +312,8 @@ export function useActionPerformer({
 					detail: failureDetail,
 				});
 				addResolutionLog(resolutionSnapshot);
-// =======
-// >>>>>>> main
+				// =======
+				// >>>>>>> main
 			}
 		},
 		[

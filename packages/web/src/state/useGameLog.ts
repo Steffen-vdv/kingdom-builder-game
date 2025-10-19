@@ -64,6 +64,46 @@ function cloneResolution(
 	};
 }
 
+function isPhaseResolution(
+	source: ActionResolution['source'],
+): source is Extract<ActionResolution['source'], { kind: 'phase' }> {
+	return typeof source !== 'string' && source.kind === 'phase';
+}
+
+function resolvePhaseIdentity(
+	source: Extract<ActionResolution['source'], { kind: 'phase' }>,
+): string | null {
+	const identifier = source.id?.trim();
+	if (identifier) {
+		return identifier;
+	}
+	const label = source.label?.trim();
+	return label && label.length > 0 ? label : null;
+}
+
+function shouldMergePhaseResolution(
+	previous: LogEntry | undefined,
+	nextResolution: ActionResolution,
+	playerId: string,
+): previous is ResolutionLogEntry {
+	if (!previous || previous.kind !== 'resolution') {
+		return false;
+	}
+	if (previous.playerId !== playerId) {
+		return false;
+	}
+	const previousSource = previous.resolution.source;
+	const nextSource = nextResolution.source;
+	if (!isPhaseResolution(previousSource) || !isPhaseResolution(nextSource)) {
+		return false;
+	}
+	const previousIdentity = resolvePhaseIdentity(previousSource);
+	const nextIdentity = resolvePhaseIdentity(nextSource);
+	return Boolean(
+		previousIdentity && nextIdentity && previousIdentity === nextIdentity,
+	);
+}
+
 export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 	const [log, setLog] = useState<LogEntry[]>([]);
 	const [logOverflowed, setLogOverflowed] = useState(false);
@@ -136,17 +176,37 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 				return;
 			}
 			const resolutionSnapshot = cloneResolution(resolution, resolvedPlayer);
-			const entry: LogEntry = {
-				id: nextLogIdRef.current++,
-				time: new Date().toLocaleTimeString(),
-				playerId: resolvedPlayer.id,
-				kind: 'resolution',
-				resolution: resolutionSnapshot,
-			};
-			appendEntries([entry]);
+			setLog((previous) => {
+				const lastEntry = previous[previous.length - 1];
+				if (
+					shouldMergePhaseResolution(
+						lastEntry,
+						resolutionSnapshot,
+						resolvedPlayer.id,
+					)
+				) {
+					const updatedEntry: ResolutionLogEntry = {
+						...lastEntry,
+						resolution: resolutionSnapshot,
+					};
+					return [...previous.slice(0, previous.length - 1), updatedEntry];
+				}
+				const entry: ResolutionLogEntry = {
+					id: nextLogIdRef.current++,
+					time: new Date().toLocaleTimeString(),
+					playerId: resolvedPlayer.id,
+					kind: 'resolution',
+					resolution: resolutionSnapshot,
+				};
+				const combined = [...previous, entry];
+				const next = combined.slice(-MAX_LOG_ENTRIES);
+				if (next.length < combined.length) {
+					setLogOverflowed(true);
+				}
+				return next;
+			});
 		},
 		[
-			appendEntries,
 			resolvePlayer,
 			sessionSnapshot.game.activePlayerId,
 			sessionSnapshot.game.players,
