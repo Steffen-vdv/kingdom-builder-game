@@ -7,6 +7,22 @@ import { ResolutionCard } from '../src/components/ResolutionCard';
 import type { ActionResolution } from '../src/state/useActionResolution';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 
+const LEADING_EMOJI_PATTERN =
+	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
+const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
+
+function resolvePhaseHeader(label: string | undefined) {
+	if (!label) {
+		return 'Phase resolution';
+	}
+	const sanitized = label
+		.replace(LEADING_EMOJI_PATTERN, '')
+		.replace(TRAILING_PHASE_PATTERN, '')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+	return sanitized ? `Phase - ${sanitized}` : 'Phase resolution';
+}
+
 function createResolution(
 	overrides: Partial<ActionResolution>,
 ): ActionResolution {
@@ -76,7 +92,8 @@ describe('<ResolutionCard />', () => {
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
-		expect(screen.getByText('Growth Phase')).toBeInTheDocument();
+		const expectedHeader = resolvePhaseHeader(resolution.source.label);
+		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
 		const phasePlayerLabel = screen.getByLabelText('Player');
 		expect(phasePlayerLabel).toHaveTextContent('Player Two');
 	});
