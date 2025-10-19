@@ -199,13 +199,20 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 						'whitespace-pre-wrap',
 						colorClass,
 					);
+					const entryText =
+						entry.kind === 'resolution'
+							? (entry.resolution.visibleLines.length
+									? entry.resolution.visibleLines
+									: entry.resolution.lines
+								).join('\n')
+							: entry.text;
 					return (
 						<li
 							key={entry.id}
 							id={`game-log-entry-${entry.id}`}
 							className={entryClasses}
 						>
-							[{entry.time}] {entry.text}
+							[{entry.time}] {entryText}
 						</li>
 					);
 				})}
