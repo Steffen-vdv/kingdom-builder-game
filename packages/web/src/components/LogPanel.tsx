@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
+import { ResolutionCard } from './ResolutionCard';
 
 interface LogPanelProps {
 	isOpen: boolean;
@@ -12,8 +13,9 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	const { log: entries, logOverflowed, sessionSnapshot } = useGameEngine();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
-	const listRef = useAnimate<HTMLUListElement>();
+	const listRef = useAnimate<HTMLDivElement>();
 	const pendingScrollRef = useRef(false);
+	const acknowledgeLogResolution = useCallback(() => {}, []);
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -123,8 +125,21 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		'relative flex h-full flex-col overflow-y-auto px-6 pb-6 pt-6',
 		'custom-scrollbar',
 	);
-	const listClasses = clsx(
-		'mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200',
+	const listClasses = clsx('mt-4 flex flex-col gap-6');
+	const entryContainerClasses = clsx('player-log-entry flex flex-col gap-3');
+	const entryHeaderClasses = clsx(
+		'flex items-center justify-between gap-3',
+		'text-[0.6875rem] font-semibold uppercase tracking-[0.3em]',
+		'text-slate-500 dark:text-slate-400',
+	);
+	const entryHeaderPlayerClasses = clsx(
+		'text-[0.6875rem] font-medium uppercase tracking-[0.3em]',
+		'text-slate-400 dark:text-slate-500',
+	);
+	const legacyTextClasses = clsx(
+		'rounded-3xl border border-white/60 bg-white/80 p-4 text-sm',
+		'text-slate-700 shadow-inner shadow-amber-500/10 whitespace-pre-wrap',
+		'dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-200',
 	);
 	const closeButtonClasses = clsx(
 		'flex h-8 w-8 items-center justify-center rounded-full border',
@@ -183,40 +198,73 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		<>
 			{header}
 			{overflowNotice}
-			<ul ref={listRef} className={listClasses}>
+			<div ref={listRef} className={listClasses}>
 				{entries.map((entry) => {
 					const [playerA, playerB] = sessionSnapshot.game.players;
 					const aId = playerA?.id;
 					const bId = playerB?.id;
-					const colorClass =
-						entry.playerId === aId
-							? 'log-entry-a'
-							: entry.playerId === bId
-								? 'log-entry-b'
-								: '';
-					const entryClasses = clsx(
-						'text-sm font-mono leading-relaxed',
-						'whitespace-pre-wrap',
-						colorClass,
-					);
-					const entryText =
-						entry.kind === 'resolution'
-							? (entry.resolution.visibleLines.length
-									? entry.resolution.visibleLines
-									: entry.resolution.lines
-								).join('\n')
-							: entry.text;
+					if (entry.kind === 'resolution') {
+						const resolutionPlayerName =
+							entry.resolution.player?.name ??
+							entry.resolution.player?.id ??
+							null;
+						let resolutionCardClass = 'ring-1 ring-inset ring-white/20';
+						if (entry.playerId === aId) {
+							resolutionCardClass = clsx(
+								'border-blue-500/40',
+								'shadow-blue-500/20',
+								'ring-1 ring-inset ring-blue-500/20',
+								'dark:border-blue-300/40',
+								'dark:shadow-blue-900/40',
+								'dark:ring-blue-300/30',
+							);
+						} else if (entry.playerId === bId) {
+							resolutionCardClass = clsx(
+								'border-rose-500/40',
+								'shadow-rose-500/25',
+								'ring-1 ring-inset ring-rose-500/20',
+								'dark:border-rose-300/40',
+								'dark:shadow-rose-900/40',
+								'dark:ring-rose-300/30',
+							);
+						}
+						return (
+							<section
+								key={entry.id}
+								id={`game-log-entry-${entry.id}`}
+								className={entryContainerClasses}
+							>
+								<header className={entryHeaderClasses}>
+									<time dateTime={entry.time}>{entry.time}</time>
+									{resolutionPlayerName ? (
+										<span className={entryHeaderPlayerClasses}>
+											{resolutionPlayerName}
+										</span>
+									) : null}
+								</header>
+								<ResolutionCard
+									resolution={entry.resolution}
+									onContinue={acknowledgeLogResolution}
+									className={resolutionCardClass}
+								/>
+							</section>
+						);
+					}
+
 					return (
-						<li
+						<section
 							key={entry.id}
 							id={`game-log-entry-${entry.id}`}
-							className={entryClasses}
+							className={entryContainerClasses}
 						>
-							[{entry.time}] {entryText}
-						</li>
+							<header className={entryHeaderClasses}>
+								<time dateTime={entry.time}>{entry.time}</time>
+							</header>
+							<div className={legacyTextClasses}>{entry.text}</div>
+						</section>
 					);
 				})}
-			</ul>
+			</div>
 		</>
 	);
 

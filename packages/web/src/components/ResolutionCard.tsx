@@ -45,6 +45,7 @@ interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
 	onContinue: () => void;
+	className?: string;
 }
 
 function resolveSourceLabels(source: ResolutionSource | undefined) {
@@ -66,10 +67,15 @@ function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
+	className,
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
-	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
+	const containerClass = joinClasses(
+		CARD_BASE_CLASS,
+		'pointer-events-auto',
+		className,
+	);
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
