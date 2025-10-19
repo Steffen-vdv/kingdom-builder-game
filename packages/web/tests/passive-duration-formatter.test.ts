@@ -107,6 +107,11 @@ describe('passive formatter duration metadata', () => {
 			festivalPhase?.label,
 			festivalPhase?.icon,
 		);
+		const generalIcon = context.assets.passive.icon?.trim() || '♾️';
+		const activationLabel = [generalIcon, '✨ Festival Spirit']
+			.filter((part) => part && part.trim().length > 0)
+			.join(' ')
+			.trim();
 
 		expect(summary).toEqual([
 			{ title: `⏳ Until next ${durationLabel}`, items: [] },
@@ -119,7 +124,7 @@ describe('passive formatter duration metadata', () => {
 		]);
 		expect(log).toEqual([
 			{
-				title: '✨ Festival Spirit added',
+				title: `${activationLabel} activated`,
 				items: [`✨ Duration: Until player's next ${durationLabel}`],
 			},
 		]);

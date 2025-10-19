@@ -84,7 +84,7 @@ export const buildFestivalRuleSnapshot = (
 
 export const createFestivalMetadata = (): SessionSnapshotMetadata => ({
 	assets: {
-		passive: SYNTHETIC_RESULT_MODIFIER,
+		passive: { icon: '♾️', label: 'Passive' },
 		upkeep: FALLBACK_UPKEEP,
 	},
 	resources: { ...RESOURCE_LOOKUP },

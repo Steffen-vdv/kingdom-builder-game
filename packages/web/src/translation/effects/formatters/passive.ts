@@ -224,6 +224,13 @@ registerEffectFormatter('passive', 'add', {
 			'Passive';
 		const prefix = icon ? `${icon} ` : '';
 		const label = `${prefix}${name}`.trim();
+		const passiveAssetIcon = context.assets.passive.icon?.trim();
+		const generalIcon =
+			passiveAssetIcon && passiveAssetIcon.length > 0 ? passiveAssetIcon : '♾️';
+		const decoratedLabel = [generalIcon, label]
+			.filter((part) => part && part.trim().length > 0)
+			.join(' ')
+			.trim();
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
 		const items = [...inner];
@@ -238,11 +245,11 @@ registerEffectFormatter('passive', 'add', {
 			return items;
 		}
 		if (items.length === 0) {
-			return `${label} added`;
+			return `${decoratedLabel} activated`;
 		}
 		return [
 			{
-				title: `${label} added`,
+				title: `${decoratedLabel} activated`,
 				items,
 			},
 		];

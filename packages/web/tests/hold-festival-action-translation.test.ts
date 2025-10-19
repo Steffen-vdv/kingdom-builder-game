@@ -81,6 +81,14 @@ describe('hold festival action translation', () => {
 				/\s{2,}/gu,
 				' ',
 			);
+		const passiveGeneralPrefix = details.passiveGeneralIcon
+			? `${details.passiveGeneralIcon} `
+			: '♾️ ';
+		const passiveIconPrefix = details.passiveIcon
+			? `${details.passiveIcon} `
+			: '';
+		const activationLabel =
+			`${passiveGeneralPrefix}${passiveIconPrefix}${details.passiveName}`.trim();
 		expect(log).toEqual([
 			{
 				text: `${details.festival.icon} ${details.festival.name}`,
@@ -88,7 +96,7 @@ describe('hold festival action translation', () => {
 				kind: 'headline',
 			},
 			{
-				text: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
+				text: `${activationLabel} activated`,
 				depth: 1,
 				kind: 'group',
 			},

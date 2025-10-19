@@ -40,23 +40,6 @@ export function appendPassiveChanges(
 	const previous = createPassiveMap(before.passives);
 	const next = createPassiveMap(after.passives);
 	const previousContext = createPassiveVisibilityContext(before);
-	const nextContext = createPassiveVisibilityContext(after);
-	for (const [id, passive] of next) {
-		if (previous.has(id)) {
-			continue;
-		}
-		if (!shouldSurfacePassive(passive, nextContext, 'log')) {
-			continue;
-		}
-		const { icon, label } = resolvePassivePresentation(passive, {
-			assets,
-		});
-		const decoratedLabel = decoratePassiveLabel(icon, label, assets);
-		const entry = `${decoratedLabel} activated`;
-		if (!changes.includes(entry)) {
-			changes.push(entry);
-		}
-	}
 	for (const [id, passive] of previous) {
 		if (next.has(id)) {
 			continue;

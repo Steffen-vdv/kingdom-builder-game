@@ -237,6 +237,7 @@ export const getSyntheticFestivalDetails = (
 		fortAmt,
 		passiveName: passiveMeta?.name,
 		passiveIcon: passiveMeta?.icon,
+		passiveGeneralIcon: translation.assets.passive.icon,
 		penaltyAmt,
 		upkeepLabel,
 		upkeepIcon,
