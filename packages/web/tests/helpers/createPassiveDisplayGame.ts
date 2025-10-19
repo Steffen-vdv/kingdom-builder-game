@@ -101,7 +101,10 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
+		session: {
+			readActionMetadata: () => ({}),
+			subscribeActionMetadata: () => () => {},
+		} as unknown as EngineSession,
 	};
 	return {
 		mockGame,

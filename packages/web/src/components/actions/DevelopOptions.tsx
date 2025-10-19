@@ -1,6 +1,12 @@
-import React, { useMemo } from 'react';
-import { describeContent, splitSummary, type Summary } from '../../translation';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	describeContent,
+	splitSummary,
+	type Summary,
+	type TranslationContext,
+} from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useSlotMetadata } from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
@@ -15,13 +21,18 @@ import {
 	type Action,
 	type Development,
 	type DisplayPlayer,
+	type GameEngineApi,
 } from './types';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
+
+const EMPTY_COSTS: Record<string, number> = {};
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
 	'dark:from-slate-900/80 dark:to-slate-900/60',
 ].join(' ');
+
+type TranslationAssets = TranslationContext['assets'];
 
 function formatLandRequirement(
 	prefix: string,
@@ -47,6 +58,180 @@ interface DevelopOptionsProps {
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }
 
+interface DevelopOptionCardProps {
+	action: Action;
+	development: Development;
+	summaries: Map<string, Summary>;
+	player: DisplayPlayer;
+	canInteract: boolean;
+	isActionPhase: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
+	actionCostResource: string;
+	translationContext: TranslationContext;
+	developLandRequirement: string;
+	missingLandTooltip: string;
+	hasDevelopLand: boolean;
+	actionHoverTitle: string;
+	handleHoverCard: GameEngineApi['handleHoverCard'];
+	clearHoverCard: GameEngineApi['clearHoverCard'];
+	requests: GameEngineApi['requests'];
+	onTotalChange: (developmentId: string, total: number | null) => void;
+	landIdForCost?: string;
+	assets: TranslationAssets;
+}
+
+function normalizeCosts(
+	costs: Record<string, number | undefined> | undefined,
+): Record<string, number> | undefined {
+	if (!costs) {
+		return undefined;
+	}
+	const normalized: Record<string, number> = {};
+	for (const [costKey, costAmount] of Object.entries(costs)) {
+		normalized[costKey] = Number(costAmount ?? 0);
+	}
+	return normalized;
+}
+
+function createMetadataParams(
+	developmentId: string,
+	landIdForCost: string | undefined,
+): { id: string; landId?: string } {
+	if (!landIdForCost) {
+		return { id: developmentId };
+	}
+	return { id: developmentId, landId: landIdForCost };
+}
+
+function DevelopOptionCard({
+	action,
+	development,
+	summaries,
+	player,
+	canInteract,
+	isActionPhase,
+	selectResourceDescriptor,
+	actionCostResource,
+	translationContext,
+	developLandRequirement,
+	missingLandTooltip,
+	hasDevelopLand,
+	actionHoverTitle,
+	handleHoverCard,
+	clearHoverCard,
+	requests,
+	onTotalChange,
+	landIdForCost,
+	assets,
+}: DevelopOptionCardProps) {
+	const metadataParams = useMemo(
+		() => createMetadataParams(development.id, landIdForCost),
+		[development.id, landIdForCost],
+	);
+	const metadata = useActionMetadata({
+		actionId: action.id,
+		params: metadataParams,
+	});
+	const normalizedCosts = useMemo(
+		() => normalizeCosts(metadata.costs),
+		[metadata.costs],
+	);
+	const costs = normalizedCosts ?? EMPTY_COSTS;
+	const total = useMemo(() => {
+		if (!normalizedCosts) {
+			return null;
+		}
+		return sumNonActionCosts(normalizedCosts, actionCostResource);
+	}, [normalizedCosts, actionCostResource]);
+	useEffect(() => {
+		onTotalChange(development.id, total);
+	}, [development.id, total, onTotalChange]);
+	const summary = summaries.get(development.id);
+	const implemented = (summary?.length ?? 0) > 0;
+	const loadingCosts = metadata.costs === undefined;
+	const canPay =
+		hasDevelopLand &&
+		!loadingCosts &&
+		playerHasRequiredResources(player.resources, costs);
+	const insufficientTooltip = !loadingCosts
+		? formatMissingResources(costs, player.resources, selectResourceDescriptor)
+		: undefined;
+	const requirements = hasDevelopLand ? [] : [developLandRequirement];
+	let tooltip: string | undefined;
+	if (!implemented) {
+		tooltip = 'Not implemented yet';
+	} else if (!hasDevelopLand) {
+		tooltip = missingLandTooltip;
+	} else if (loadingCosts) {
+		tooltip = 'Checking costs…';
+	} else if (!canPay) {
+		tooltip = insufficientTooltip ?? 'Cannot pay costs';
+	}
+	const enabled =
+		hasDevelopLand &&
+		!loadingCosts &&
+		canPay &&
+		isActionPhase &&
+		canInteract &&
+		implemented;
+	const hoverTitle = [
+		actionHoverTitle,
+		formatIconTitle(development.icon, development.name),
+	]
+		.filter(Boolean)
+		.join(' - ');
+	return (
+		<ActionCard
+			key={development.id}
+			title={renderIconLabel(development.icon, development.name)}
+			costs={costs}
+			upkeep={development.upkeep}
+			playerResources={player.resources}
+			actionCostResource={actionCostResource}
+			requirements={requirements}
+			requirementIcons={[]}
+			summary={summary}
+			implemented={implemented}
+			enabled={enabled}
+			tooltip={tooltip}
+			focus={development.focus}
+			assets={assets}
+			onClick={() => {
+				if (!canInteract || !enabled) {
+					return;
+				}
+				const landId = player.lands.find((land) => land.slotsFree > 0)?.id;
+				void requests.performAction({
+					action: toPerformableAction(action),
+					params: { id: development.id, landId },
+				});
+			}}
+			onMouseEnter={() => {
+				const full = describeContent(
+					'development',
+					development.id,
+					translationContext,
+				);
+				const { effects, description } = splitSummary(full);
+				handleHoverCard({
+					title: hoverTitle,
+					effects,
+					requirements,
+					costs,
+					upkeep: development.upkeep,
+					...(description && { description }),
+					...(!implemented && {
+						description: 'Not implemented yet',
+						descriptionClass: 'italic text-red-600',
+					}),
+					bgClass: HOVER_CARD_BG,
+				});
+			}}
+			onMouseLeave={clearHoverCard}
+		/>
+	);
+}
+
 export default function DevelopOptions({
 	action,
 	isActionPhase,
@@ -59,7 +244,6 @@ export default function DevelopOptions({
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -70,24 +254,52 @@ export default function DevelopOptions({
 	const { sessionView } = selectors;
 	const slotMetadata = useSlotMetadata();
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
-	const landIdForCost = player.lands[0]?.id as string;
-	const actionInfo = sessionView.actions.get(action.id);
-	const entries = useMemo(() => {
-		return developments
-			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
-					id: development.id,
-					landId: landIdForCost,
-				});
-				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(costsBag)) {
-					costs[costKey] = costAmount ?? 0;
+	const developLandRequirement = useMemo(
+		() =>
+			formatLandRequirement(
+				'Requires',
+				slotDescriptor.label,
+				slotDescriptor.icon,
+			),
+		[slotDescriptor],
+	);
+	const missingLandTooltip = useMemo(
+		() =>
+			formatLandRequirement('No', slotDescriptor.label, slotDescriptor.icon),
+		[slotDescriptor],
+	);
+	const landIdForCost = player.lands[0]?.id;
+	const [developmentTotals, setDevelopmentTotals] = useState<
+		Record<string, number | null>
+	>({});
+	const handleTotalChange = useCallback(
+		(developmentId: string, total: number | null) => {
+			setDevelopmentTotals((previous) => {
+				if (previous[developmentId] === total) {
+					return previous;
 				}
-				const total = sumNonActionCosts(costs, actionCostResource);
-				return { development, costs, total };
+				return { ...previous, [developmentId]: total };
+			});
+		},
+		[],
+	);
+	const sortedDevelopments = useMemo(() => {
+		return developments
+			.map((development) => ({
+				development,
+				total: developmentTotals[development.id],
+			}))
+			.sort((first, second) => {
+				const firstValue = first.total ?? Number.POSITIVE_INFINITY;
+				const secondValue = second.total ?? Number.POSITIVE_INFINITY;
+				if (firstValue !== secondValue) {
+					return firstValue - secondValue;
+				}
+				return first.development.name.localeCompare(second.development.name);
 			})
-			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+			.map((entry) => entry.development);
+	}, [developments, developmentTotals]);
+	const actionInfo = sessionView.actions.get(action.id);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,
@@ -104,102 +316,30 @@ export default function DevelopOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
-				{entries.map(({ development, costs }) => {
-					const upkeep = development.upkeep;
-					const focus = development.focus;
-					const developLandRequirement = formatLandRequirement(
-						'Requires',
-						slotDescriptor.label,
-						slotDescriptor.icon,
-					);
-					const requirements = hasDevelopLand ? [] : [developLandRequirement];
-					const canPay =
-						hasDevelopLand &&
-						playerHasRequiredResources(player.resources, costs);
-					const summary = summaries.get(development.id);
-					const implemented = (summary?.length ?? 0) > 0;
-					const insufficientTooltip = formatMissingResources(
-						costs,
-						player.resources,
-						selectResourceDescriptor,
-					);
-					const missingLandTooltip = formatLandRequirement(
-						'No',
-						slotDescriptor.label,
-						slotDescriptor.icon,
-					);
-					const title = !implemented
-						? 'Not implemented yet'
-						: !hasDevelopLand
-							? missingLandTooltip
-							: !canPay
-								? (insufficientTooltip ?? 'Cannot pay costs')
-								: undefined;
-					const enabled = canPay && isActionPhase && canInteract && implemented;
-					const hoverTitle = [
-						actionHoverTitle,
-						formatIconTitle(development.icon, development.name),
-					]
-						.filter(Boolean)
-						.join(' - ');
-					return (
-						<ActionCard
-							key={development.id}
-							title={renderIconLabel(development.icon, development.name)}
-							costs={costs}
-							upkeep={upkeep}
-							playerResources={player.resources}
-							actionCostResource={actionCostResource}
-							requirements={requirements}
-							requirementIcons={
-								slotDescriptor.icon ? [slotDescriptor.icon] : []
-							}
-							summary={summary}
-							implemented={implemented}
-							enabled={enabled}
-							tooltip={title}
-							focus={focus}
-							assets={translationContext.assets}
-							onClick={() => {
-								if (!canInteract) {
-									return;
-								}
-								const landId = player.lands.find(
-									(land) => land.slotsFree > 0,
-								)?.id;
-								void requests.performAction({
-									action: toPerformableAction(action),
-									params: {
-										id: development.id,
-										landId,
-									},
-								});
-							}}
-							onMouseEnter={() => {
-								const full = describeContent(
-									'development',
-									development.id,
-									translationContext,
-								);
-								const { effects, description } = splitSummary(full);
-								handleHoverCard({
-									title: hoverTitle,
-									effects,
-									requirements,
-									costs,
-									upkeep,
-									...(description && { description }),
-									...(!implemented && {
-										description: 'Not implemented yet',
-										descriptionClass: 'italic text-red-600',
-									}),
-									bgClass: HOVER_CARD_BG,
-								});
-							}}
-							onMouseLeave={clearHoverCard}
-						/>
-					);
-				})}
+				{sortedDevelopments.map((development) => (
+					<DevelopOptionCard
+						key={development.id}
+						action={action}
+						development={development}
+						summaries={summaries}
+						player={player}
+						canInteract={canInteract}
+						isActionPhase={isActionPhase}
+						selectResourceDescriptor={selectResourceDescriptor}
+						actionCostResource={actionCostResource}
+						translationContext={translationContext}
+						developLandRequirement={developLandRequirement}
+						missingLandTooltip={missingLandTooltip}
+						hasDevelopLand={hasDevelopLand}
+						actionHoverTitle={actionHoverTitle}
+						handleHoverCard={handleHoverCard}
+						clearHoverCard={clearHoverCard}
+						requests={requests}
+						onTotalChange={handleTotalChange}
+						{...(landIdForCost ? { landIdForCost } : {})}
+						assets={translationContext.assets}
+					/>
+				))}
 			</div>
 		</div>
 	);

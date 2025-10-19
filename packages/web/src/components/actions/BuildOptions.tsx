@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	splitSummary,
 	translateRequirementFailure,
 	type Summary,
+	type TranslationContext,
 } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
+import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
@@ -20,8 +22,13 @@ import {
 	type Action,
 	type Building,
 	type DisplayPlayer,
+	type GameEngineApi,
 } from './types';
 import { normalizeActionFocus } from './types';
+
+type TranslationAssets = TranslationContext['assets'];
+
+const EMPTY_COSTS: Record<string, number> = {};
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -39,6 +46,168 @@ interface BuildOptionsProps {
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }
 
+interface BuildOptionCardProps {
+	action: Action;
+	building: Building;
+	summaries: Map<string, Summary>;
+	descriptions: Map<string, Summary>;
+	player: DisplayPlayer;
+	canInteract: boolean;
+	isActionPhase: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
+	actionCostResource: string;
+	requirementIcons: string[];
+	requirements: string[];
+	requirementsLoaded: boolean;
+	meetsRequirements: boolean;
+	actionHoverTitle: string;
+	handleHoverCard: GameEngineApi['handleHoverCard'];
+	clearHoverCard: GameEngineApi['clearHoverCard'];
+	requests: GameEngineApi['requests'];
+	onTotalChange: (buildingId: string, total: number | null) => void;
+	assets: TranslationAssets;
+}
+
+function normalizeCosts(
+	costs: Record<string, number | undefined> | undefined,
+): Record<string, number> | undefined {
+	if (!costs) {
+		return undefined;
+	}
+	const normalized: Record<string, number> = {};
+	for (const [costKey, costAmount] of Object.entries(costs)) {
+		normalized[costKey] = Number(costAmount ?? 0);
+	}
+	return normalized;
+}
+
+function BuildOptionCard({
+	action,
+	building,
+	summaries,
+	descriptions,
+	player,
+	canInteract,
+	isActionPhase,
+	selectResourceDescriptor,
+	actionCostResource,
+	requirementIcons,
+	requirements,
+	requirementsLoaded,
+	meetsRequirements,
+	actionHoverTitle,
+	handleHoverCard,
+	clearHoverCard,
+	requests,
+	onTotalChange,
+	assets,
+}: BuildOptionCardProps) {
+	const metadataParams = useMemo(() => ({ id: building.id }), [building.id]);
+	const metadata = useActionMetadata({
+		actionId: action.id,
+		params: metadataParams,
+	});
+	const normalizedCosts = useMemo(
+		() => normalizeCosts(metadata.costs),
+		[metadata.costs],
+	);
+	const costs = normalizedCosts ?? EMPTY_COSTS;
+	const total = useMemo(() => {
+		if (!normalizedCosts) {
+			return null;
+		}
+		return sumNonActionCosts(normalizedCosts, actionCostResource);
+	}, [normalizedCosts, actionCostResource]);
+	useEffect(() => {
+		onTotalChange(building.id, total);
+	}, [building.id, total, onTotalChange]);
+	const summary = summaries.get(building.id);
+	const implemented = (summary?.length ?? 0) > 0;
+	const focus = normalizeActionFocus(building.focus);
+	const loadingCosts = metadata.costs === undefined;
+	const canPay =
+		!loadingCosts && playerHasRequiredResources(player.resources, costs);
+	const insufficientTooltip = !loadingCosts
+		? formatMissingResources(costs, player.resources, selectResourceDescriptor)
+		: undefined;
+	const requirementSummary = requirements.join(', ');
+	let tooltip: string | undefined;
+	if (!implemented) {
+		tooltip = 'Not implemented yet';
+	} else if (!requirementsLoaded) {
+		tooltip = 'Checking requirements…';
+	} else if (!meetsRequirements) {
+		tooltip =
+			requirementSummary.length > 0
+				? requirementSummary
+				: 'Requirements not met';
+	} else if (loadingCosts) {
+		tooltip = 'Checking costs…';
+	} else if (!canPay) {
+		tooltip = insufficientTooltip ?? 'Cannot pay costs';
+	}
+	const enabled =
+		!loadingCosts &&
+		canPay &&
+		meetsRequirements &&
+		isActionPhase &&
+		canInteract &&
+		implemented;
+	const hoverTitle = [
+		actionHoverTitle,
+		formatIconTitle(building.icon, building.name),
+	]
+		.filter(Boolean)
+		.join(' - ');
+	const upkeep = building.upkeep;
+	const visibleRequirements = requirementsLoaded ? requirements : [];
+	return (
+		<ActionCard
+			key={building.id}
+			title={renderIconLabel(building.icon, building.name)}
+			costs={costs}
+			upkeep={upkeep}
+			playerResources={player.resources}
+			actionCostResource={actionCostResource}
+			requirements={visibleRequirements}
+			requirementIcons={requirementIcons}
+			summary={summary}
+			implemented={implemented}
+			enabled={enabled}
+			tooltip={tooltip}
+			focus={focus}
+			assets={assets}
+			onClick={() => {
+				if (!canInteract || !enabled) {
+					return;
+				}
+				void requests.performAction({
+					action: toPerformableAction(action),
+					params: { id: building.id },
+				});
+			}}
+			onMouseEnter={() => {
+				const full = descriptions.get(building.id) ?? [];
+				const { effects, description } = splitSummary(full);
+				handleHoverCard({
+					title: hoverTitle,
+					effects,
+					requirements: visibleRequirements,
+					costs,
+					upkeep,
+					...(description && { description }),
+					...(!implemented && {
+						description: 'Not implemented yet',
+						descriptionClass: 'italic text-red-600',
+					}),
+					bgClass: HOVER_CARD_BG,
+				});
+			}}
+			onMouseLeave={clearHoverCard}
+		/>
+	);
+}
+
 export default function BuildOptions({
 	action,
 	isActionPhase,
@@ -51,7 +220,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -60,39 +228,56 @@ export default function BuildOptions({
 		actionCostResource,
 	} = useGameEngine();
 	const { sessionView } = selectors;
+	const actionMetadata = useActionMetadata({ actionId: action.id });
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
-	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
-	const requirements = requirementFailures.map((failure) =>
-		translateRequirementFailure(failure, translationContext),
+	const requirements = useMemo(() => {
+		if (!actionMetadata.requirements) {
+			return [];
+		}
+		return actionMetadata.requirements.map((failure) =>
+			translateRequirementFailure(failure, translationContext),
+		);
+	}, [actionMetadata.requirements, translationContext]);
+	const requirementsLoaded = actionMetadata.requirements !== undefined;
+	const meetsRequirements = requirementsLoaded && requirements.length === 0;
+	const availableBuildings = useMemo(
+		() => buildings.filter((building) => !player.buildings.has(building.id)),
+		[buildings, player.buildings],
 	);
-	const meetsRequirements = requirements.length === 0;
-	const entries = useMemo(() => {
-		const owned = player.buildings;
-		return buildings
-			.filter((building) => !owned.has(building.id))
-			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
-					id: building.id,
-				});
-				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(costsBag)) {
-					costs[costKey] = costAmount ?? 0;
+	const [buildingTotals, setBuildingTotals] = useState<
+		Record<string, number | null>
+	>({});
+	const handleTotalChange = useCallback(
+		(buildingId: string, total: number | null) => {
+			setBuildingTotals((previous) => {
+				if (previous[buildingId] === total) {
+					return previous;
 				}
-				const total = sumNonActionCosts(costs, actionCostResource);
-				return { building, costs, total };
+				return { ...previous, [buildingId]: total };
+			});
+		},
+		[],
+	);
+	const sortedBuildings = useMemo(() => {
+		return availableBuildings
+			.map((building) => ({
+				building,
+				total: buildingTotals[building.id],
+			}))
+			.sort((first, second) => {
+				const firstValue = first.total ?? Number.POSITIVE_INFINITY;
+				const secondValue = second.total ?? Number.POSITIVE_INFINITY;
+				if (firstValue !== secondValue) {
+					return firstValue - secondValue;
+				}
+				return first.building.name.localeCompare(second.building.name);
 			})
-			.sort((first, second) => first.total - second.total);
-	}, [
-		buildings,
-		session,
-		action.id,
-		actionCostResource,
-		player.buildings.size,
-	]);
+			.map((entry) => entry.building);
+	}, [availableBuildings, buildingTotals]);
+	const actionInfo = sessionView.actions.get(action.id);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,
@@ -109,84 +294,30 @@ export default function BuildOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
-				{entries.map(({ building, costs }) => {
-					const upkeep = building.upkeep;
-					const focus = normalizeActionFocus(building.focus);
-					const icon = building.icon;
-					const canPay = playerHasRequiredResources(player.resources, costs);
-					const summary = summaries.get(building.id);
-					const implemented = (summary?.length ?? 0) > 0;
-					const insufficientTooltip = formatMissingResources(
-						costs,
-						player.resources,
-						selectResourceDescriptor,
-					);
-					const requirementText = requirements.join(', ');
-					const title = !implemented
-						? 'Not implemented yet'
-						: !meetsRequirements
-							? requirementText
-							: !canPay
-								? (insufficientTooltip ?? 'Cannot pay costs')
-								: undefined;
-					const enabled =
-						canPay &&
-						meetsRequirements &&
-						isActionPhase &&
-						canInteract &&
-						implemented;
-					const hoverTitle = [
-						actionHoverTitle,
-						formatIconTitle(icon, building.name),
-					]
-						.filter(Boolean)
-						.join(' - ');
-					return (
-						<ActionCard
-							key={building.id}
-							title={renderIconLabel(icon, building.name)}
-							costs={costs}
-							upkeep={upkeep}
-							playerResources={player.resources}
-							actionCostResource={actionCostResource}
-							requirements={requirements}
-							requirementIcons={requirementIcons}
-							summary={summary}
-							implemented={implemented}
-							enabled={enabled}
-							tooltip={title}
-							focus={focus}
-							assets={translationContext.assets}
-							onClick={() => {
-								if (!canInteract) {
-									return;
-								}
-								void requests.performAction({
-									action: toPerformableAction(action),
-									params: { id: building.id },
-								});
-							}}
-							onMouseEnter={() => {
-								const full = descriptions.get(building.id) ?? [];
-								const { effects, description } = splitSummary(full);
-								handleHoverCard({
-									title: hoverTitle,
-									effects,
-									requirements,
-									costs,
-									upkeep,
-									...(description && { description }),
-									...(!implemented && {
-										description: 'Not implemented yet',
-										descriptionClass: 'italic text-red-600',
-									}),
-									bgClass: HOVER_CARD_BG,
-								});
-							}}
-							onMouseLeave={clearHoverCard}
-						/>
-					);
-				})}
+				{sortedBuildings.map((building) => (
+					<BuildOptionCard
+						key={building.id}
+						action={action}
+						building={building}
+						summaries={summaries}
+						descriptions={descriptions}
+						player={player}
+						canInteract={canInteract}
+						isActionPhase={isActionPhase}
+						selectResourceDescriptor={selectResourceDescriptor}
+						actionCostResource={actionCostResource}
+						requirementIcons={requirementIcons}
+						requirements={requirements}
+						requirementsLoaded={requirementsLoaded}
+						meetsRequirements={meetsRequirements}
+						actionHoverTitle={actionHoverTitle}
+						handleHoverCard={handleHoverCard}
+						clearHoverCard={clearHoverCard}
+						requests={requests}
+						onTotalChange={handleTotalChange}
+						assets={translationContext.assets}
+					/>
+				))}
 			</div>
 		</div>
 	);
