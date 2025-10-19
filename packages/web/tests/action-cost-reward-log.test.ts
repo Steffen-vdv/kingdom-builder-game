@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { ActionConfig } from '@kingdom-builder/protocol';
 import {
 	createEngine,
 	performAction,
@@ -15,36 +16,12 @@ import {
 } from './fixtures/syntheticTaxLog';
 import {
 	snapshotPlayer,
-	diffStepSnapshots,
-	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
-import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers';
-import { formatActionLogLines } from '../src/state/actionLogFormat';
-import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import { buildActionResolution } from '../src/state/buildActionResolution';
+import type { TranslationContext } from '../src/translation/context';
+import type { SessionRegistries } from '../src/state/sessionRegistries';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
-
-function asTimelineLines(
-	entries: readonly (string | ActionLogLineDescriptor)[],
-): ActionLogLineDescriptor[] {
-	const lines: ActionLogLineDescriptor[] = [];
-	for (const [index, entry] of entries.entries()) {
-		if (typeof entry === 'string') {
-			const text = entry.trim();
-			if (!text) {
-				continue;
-			}
-			lines.push({
-				text,
-				depth: index === 0 ? 0 : 1,
-				kind: index === 0 ? 'headline' : 'effect',
-			});
-			continue;
-		}
-		lines.push(entry);
-	}
-	return lines;
-}
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -102,47 +79,29 @@ describe('action cost and reward logging', () => {
 		if (!actionDefinition) {
 			throw new Error('Missing refund action definition');
 		}
-		const changes = diffStepSnapshots(
+		const resourceDefinitions: SessionRegistries['resources'] =
+			Object.fromEntries(
+				Object.entries(SYNTHETIC_RESOURCES).map(([resourceKey, info]) => [
+					resourceKey,
+					{
+						key: resourceKey,
+						icon: info.icon,
+						label: info.label,
+					},
+				]),
+			);
+		const { logLines, summaries } = buildActionResolution({
+			actionId: refundAction.id,
+			actionDefinition: actionDefinition as unknown as ActionConfig,
 			before,
 			after,
-			actionDefinition,
+			traces: [],
+			costs,
+			context: engineContext as unknown as TranslationContext,
 			diffContext,
-			RESOURCE_KEYS,
-		);
-		const messages = asTimelineLines(
-			logContent('action', refundAction.id, engineContext),
-		);
-		const costLines: ActionLogLineDescriptor[] = [];
-		for (const key of Object.keys(costs) as SyntheticResourceKey[]) {
-			const amount = costs[key] ?? 0;
-			if (!amount) {
-				continue;
-			}
-			const info = SYNTHETIC_RESOURCES[key];
-			const icon = info?.icon ? `${info.icon} ` : '';
-			const label = info?.label ?? key;
-			const beforeAmount = before.resources[key] ?? 0;
-			const afterAmount = beforeAmount - amount;
-			costLines.push({
-				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
-				depth: 2,
-				kind: 'cost-detail',
-			});
-		}
-		if (costLines.length) {
-			messages.splice(
-				1,
-				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-				...costLines,
-			);
-		}
-		const filtered = filterActionDiffChanges({
-			changes,
-			messages,
-			subLines: [],
+			resourceKeys: RESOURCE_KEYS,
+			resources: resourceDefinitions,
 		});
-		const logLines = formatActionLogLines(messages, filtered);
 		const coinInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const coinCost = costs[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		expect(logLines).toContain('• 💲 Action cost');
@@ -152,7 +111,7 @@ describe('action cost and reward logging', () => {
 		expect(costEntry).toBeDefined();
 		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const rewardLine = filtered.find(
+		const rewardLine = summaries.find(
 			(line) =>
 				line.startsWith(`${coinInfo.icon} ${coinInfo.label}`) &&
 				line.includes('+') &&

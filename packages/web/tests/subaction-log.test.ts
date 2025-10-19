@@ -15,39 +15,14 @@ import {
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
-	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
-import {
-	appendSubActionChanges,
-	filterActionDiffChanges,
-} from '../src/state/useActionPerformer.helpers';
-import { formatActionLogLines } from '../src/state/actionLogFormat';
-import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
-
-function asTimelineLines(
-	entries: readonly (string | ActionLogLineDescriptor)[],
-): ActionLogLineDescriptor[] {
-	const lines: ActionLogLineDescriptor[] = [];
-	for (const [index, entry] of entries.entries()) {
-		if (typeof entry === 'string') {
-			const text = entry.trim();
-			if (!text) {
-				continue;
-			}
-			lines.push({
-				text,
-				depth: index === 0 ? 0 : 1,
-				kind: index === 0 ? 'headline' : 'effect',
-			});
-			continue;
-		}
-		lines.push(entry);
-	}
-	return lines;
-}
+import { buildActionResolution } from '../src/state/buildActionResolution';
+import type { TranslationContext } from '../src/translation/context';
+import type { SessionRegistries } from '../src/state/sessionRegistries';
+import type { ActionConfig } from '@kingdom-builder/protocol';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -94,56 +69,33 @@ describe('sub-action logging', () => {
 		const traces = performAction(synthetic.plow.id, engineContext);
 		const after = captureActivePlayer(engineContext);
 		const diffContext = createTranslationDiffContext(engineContext);
-		const changes = diffStepSnapshots(
+		const actionDefinition = engineContext.actions.get(synthetic.plow.id);
+		if (!actionDefinition) {
+			throw new Error('Missing plow action definition');
+		}
+		const resourceDefinitions: SessionRegistries['resources'] =
+			Object.fromEntries(
+				Object.entries(SYNTHETIC_RESOURCES).map(([resourceKey, info]) => [
+					resourceKey,
+					{
+						key: resourceKey,
+						icon: info.icon,
+						label: info.label,
+					},
+				]),
+			);
+		const { logLines } = buildActionResolution({
+			actionId: synthetic.plow.id,
+			actionDefinition: actionDefinition as unknown as ActionConfig,
 			before,
 			after,
-			engineContext.actions.get(synthetic.plow.id),
-			diffContext,
-			RESOURCE_KEYS,
-		);
-		const messages = asTimelineLines(
-			logContent('action', synthetic.plow.id, engineContext),
-		);
-		const costLines: ActionLogLineDescriptor[] = [];
-		for (const key of Object.keys(
-			costs,
-		) as (keyof typeof SYNTHETIC_RESOURCES)[]) {
-			const amount = costs[key] ?? 0;
-			if (!amount) {
-				continue;
-			}
-			const info = SYNTHETIC_RESOURCES[key];
-			const icon = info?.icon ? `${info.icon} ` : '';
-			const label = info?.label ?? key;
-			const beforeResource = before.resources[key] ?? 0;
-			const afterResource = beforeResource - amount;
-			costLines.push({
-				text: `${icon}${label} -${amount} (${beforeResource}→${afterResource})`,
-				depth: 2,
-				kind: 'cost-detail',
-			});
-		}
-		if (costLines.length) {
-			messages.splice(
-				1,
-				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-				...costLines,
-			);
-		}
-		const subLines = appendSubActionChanges({
 			traces,
-			context: engineContext,
+			costs,
+			context: engineContext as unknown as TranslationContext,
 			diffContext,
-			resourceKeys: RESOURCE_KEYS,
-			messages,
+			resourceKeys: RESOURCE_KEYS as string[],
+			resources: resourceDefinitions,
 		});
-		const filtered = filterActionDiffChanges({
-			changes,
-			messages,
-			subLines,
-		});
-		const logLines = formatActionLogLines(messages, filtered);
 
 		const expandTrace = traces.find(
 			(traceEntry) => traceEntry.id === synthetic.expand.id,

@@ -9,7 +9,7 @@ import {
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { ActionResolution } from './useActionResolution';
-import { ensureTimelineLines } from './useActionPerformer.helpers';
+import { ensureTimelineLines } from './buildActionResolution';
 import { createResolutionLogSnapshot } from './actionResolutionLog';
 import {
 	buildActionLogTimeline,

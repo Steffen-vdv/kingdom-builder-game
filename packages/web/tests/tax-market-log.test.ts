@@ -21,17 +21,13 @@ import {
 } from './fixtures/syntheticTaxLog';
 import {
 	snapshotPlayer,
-	diffStepSnapshots,
-	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
-import {
-	appendSubActionChanges,
-	filterActionDiffChanges,
-} from '../src/state/useActionPerformer.helpers';
-import { formatActionLogLines } from '../src/state/actionLogFormat';
-import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import { buildActionResolution } from '../src/state/buildActionResolution';
+import type { TranslationContext } from '../src/translation/context';
+import type { SessionRegistries } from '../src/state/sessionRegistries';
+import type { ActionConfig } from '@kingdom-builder/protocol';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -45,28 +41,6 @@ function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
 	return snapshotPlayer(
 		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
 	);
-}
-
-function asTimelineLines(
-	entries: readonly (string | ActionLogLineDescriptor)[],
-): ActionLogLineDescriptor[] {
-	const lines: ActionLogLineDescriptor[] = [];
-	for (const [index, entry] of entries.entries()) {
-		if (typeof entry === 'string') {
-			const text = entry.trim();
-			if (!text) {
-				continue;
-			}
-			lines.push({
-				text,
-				depth: index === 0 ? 0 : 1,
-				kind: index === 0 ? 'headline' : 'effect',
-			});
-			continue;
-		}
-		lines.push(entry);
-	}
-	return lines;
 }
 
 describe('tax action logging with market', () => {
@@ -105,54 +79,32 @@ describe('tax action logging with market', () => {
 		);
 		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
-		const changes = diffStepSnapshots(
+		if (!action) {
+			throw new Error('Missing tax action definition');
+		}
+		const resourceDefinitions: SessionRegistries['resources'] =
+			Object.fromEntries(
+				Object.entries(SYNTHETIC_RESOURCES).map(([resourceKey, info]) => [
+					resourceKey,
+					{
+						key: resourceKey,
+						icon: info.icon,
+						label: info.label,
+					},
+				]),
+			);
+		const { logLines } = buildActionResolution({
+			actionId: SYNTHETIC_IDS.taxAction,
+			actionDefinition: action as unknown as ActionConfig,
 			before,
 			after,
-			action,
-			translationDiffContext,
-			RESOURCE_KEYS,
-		);
-		const messages = asTimelineLines(
-			logContent('action', SYNTHETIC_IDS.taxAction, engineContext),
-		);
-		const costDescriptors: ActionLogLineDescriptor[] = [];
-		for (const key of Object.keys(costs) as SyntheticResourceKey[]) {
-			const amount = costs[key] ?? 0;
-			if (!amount) {
-				continue;
-			}
-			const info = SYNTHETIC_RESOURCES[key];
-			const icon = info?.icon ? `${info.icon} ` : '';
-			const label = info?.label ?? key;
-			const beforeAmount = before.resources[key] ?? 0;
-			const afterAmount = beforeAmount - amount;
-			costDescriptors.push({
-				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
-				depth: 2,
-				kind: 'cost-detail',
-			});
-		}
-		if (costDescriptors.length) {
-			messages.splice(
-				1,
-				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-				...costDescriptors,
-			);
-		}
-		const subLines = appendSubActionChanges({
 			traces,
-			context: engineContext,
+			costs,
+			context: engineContext as unknown as TranslationContext,
 			diffContext: translationDiffContext,
 			resourceKeys: RESOURCE_KEYS,
-			messages,
+			resources: resourceDefinitions,
 		});
-		const filtered = filterActionDiffChanges({
-			changes,
-			messages,
-			subLines,
-		});
-		const logLines = formatActionLogLines(messages, filtered);
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const populationIcon =
 			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon ||

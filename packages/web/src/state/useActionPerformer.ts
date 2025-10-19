@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
-import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
+import { snapshotPlayer } from '../translation';
 import {
-	appendSubActionChanges,
-	buildActionCostLines,
-	ensureTimelineLines,
-	filterActionDiffChanges,
+	buildActionResolution,
+	type BuildActionResolutionOptions,
+} from './buildActionResolution';
+import {
 	handleMissingActionDefinition,
 	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
@@ -17,15 +16,8 @@ import type {
 	ActionResolution,
 	ShowResolutionOptions,
 } from './useActionResolution';
-import {
-	buildActionLogTimeline,
-	buildDevelopActionLogTimeline,
-	formatActionLogLines,
-	formatDevelopActionLogLines,
-} from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
-import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
 import { markFatalSessionError, isFatalSessionError } from './sessionErrors';
 import {
@@ -34,7 +26,6 @@ import {
 } from './actionErrorMetadata';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
-import { LOG_KEYWORDS } from '../translation/log/logMessages';
 import { getSessionSnapshot } from './sessionStateStore';
 import { createActionExecutionError } from './actionExecutionError';
 interface UseActionPerformerOptions {
@@ -173,59 +164,27 @@ export function useActionPerformer({
 					});
 					return;
 				}
-				const resolvedStep = resolveActionEffects(stepDef, params);
-				const changes = diffStepSnapshots(
+				const resolutionInput = {
+					actionId: action.id,
+					actionDefinition: stepDef,
 					before,
 					after,
-					resolvedStep,
-					diffContext,
-					resourceKeys,
-				);
-				const rawMessages = logContent('action', action.id, context, params);
-				const messages = ensureTimelineLines(rawMessages);
-				const logHeadline = messages[0]?.text;
-				const costLines = buildActionCostLines({
+					traces: traces ?? [],
 					costs,
-					beforeResources: before.resources,
-					resources: registries.resources,
-				});
-				if (costLines.length) {
-					const header: ActionLogLineDescriptor = {
-						text: '💲 Action cost',
-						depth: 1,
-						kind: 'cost',
-					};
-					messages.splice(1, 0, header, ...costLines);
-				}
-				const subLines = appendSubActionChanges({
-					traces,
 					context,
 					diffContext,
 					resourceKeys,
-					messages,
-				});
-				const filtered = filterActionDiffChanges({
-					changes,
-					messages,
-					subLines,
-				});
-				const useDevelopFormatter = filtered.some((line) =>
-					line.startsWith(LOG_KEYWORDS.developed),
-				);
-				const buildTimeline = useDevelopFormatter
-					? buildDevelopActionLogTimeline
-					: buildActionLogTimeline;
-				const formatLines = useDevelopFormatter
-					? formatDevelopActionLogLines
-					: formatActionLogLines;
-				const timeline = buildTimeline(messages, filtered);
-				const logLines = formatLines(messages, filtered);
+					resources: registries.resources,
+					...(params ? { params } : {}),
+				} satisfies BuildActionResolutionOptions;
+				const { timeline, logLines, summaries, headline } =
+					buildActionResolution(resolutionInput);
 				syncPhaseState(snapshotAfter);
 				refresh();
 				void presentResolutionOrLog({
-					action: buildResolutionActionMeta(action, stepDef, logHeadline),
+					action: buildResolutionActionMeta(action, stepDef, headline),
 					logLines,
-					summaries: filtered,
+					summaries,
 					player: {
 						id: playerAfter.id,
 						name: playerAfter.name,

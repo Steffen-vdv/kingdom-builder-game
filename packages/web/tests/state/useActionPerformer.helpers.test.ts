@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ActionTrace } from '@kingdom-builder/protocol/actions';
-import { appendSubActionChanges } from '../../src/state/useActionPerformer.helpers';
+import { appendSubActionChanges } from '../../src/state/buildActionResolution';
 import type { TranslationContext } from '../../src/translation/context';
 import type { TranslationDiffContext } from '../../src/translation/log/resourceSources/context';
 import type { ActionLogLineDescriptor } from '../../src/translation/log/timeline';
