@@ -10,6 +10,12 @@ function renderTimelineLine(line: ActionLogLineDescriptor): string {
 	return `${indent}${marker}${line.text}`;
 }
 
+function renderTimeline(
+	descriptors: readonly ActionLogLineDescriptor[],
+): string[] {
+	return descriptors.map(renderTimelineLine);
+}
+
 export function buildActionLogTimeline(
 	messages: readonly ActionLogLineDescriptor[],
 	changes: readonly string[],
@@ -21,17 +27,10 @@ export function buildActionLogTimeline(
 	return descriptors;
 }
 
-export function formatActionLogLines(
+export function buildDevelopActionLogTimeline(
 	messages: readonly ActionLogLineDescriptor[],
 	changes: readonly string[],
-): string[] {
-	return buildActionLogTimeline(messages, changes).map(renderTimelineLine);
-}
-
-export function formatDevelopActionLogLines(
-	messages: readonly ActionLogLineDescriptor[],
-	changes: readonly string[],
-): string[] {
+): ActionLogLineDescriptor[] {
 	let developmentHeadline: string | undefined;
 	const remainingChanges: string[] = [];
 	for (const change of changes) {
@@ -42,14 +41,26 @@ export function formatDevelopActionLogLines(
 		remainingChanges.push(change);
 	}
 	if (!developmentHeadline) {
-		return formatActionLogLines(messages, changes);
+		return buildActionLogTimeline(messages, changes);
 	}
 	const [, ...restMessages] = messages;
 	const descriptors: ActionLogLineDescriptor[] = [
 		{ text: developmentHeadline, depth: 0, kind: 'headline' },
 		...restMessages,
 	];
-	return buildActionLogTimeline(descriptors, remainingChanges).map(
-		renderTimelineLine,
-	);
+	return buildActionLogTimeline(descriptors, remainingChanges);
+}
+
+export function formatActionLogLines(
+	messages: readonly ActionLogLineDescriptor[],
+	changes: readonly string[],
+): string[] {
+	return renderTimeline(buildActionLogTimeline(messages, changes));
+}
+
+export function formatDevelopActionLogLines(
+	messages: readonly ActionLogLineDescriptor[],
+	changes: readonly string[],
+): string[] {
+	return renderTimeline(buildDevelopActionLogTimeline(messages, changes));
 }

@@ -26,6 +26,8 @@ import {
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
 import {
+	buildActionLogTimeline,
+	buildDevelopActionLogTimeline,
 	formatActionLogLines,
 	formatDevelopActionLogLines,
 } from './actionLogFormat';
@@ -244,6 +246,11 @@ export function useActionPerformer({
 				const useDevelopFormatter = filtered.some((line) =>
 					line.startsWith(LOG_KEYWORDS.developed),
 				);
+				const timeline = (
+					useDevelopFormatter
+						? buildDevelopActionLogTimeline
+						: buildActionLogTimeline
+				)(messages, filtered);
 				const logLines = (
 					useDevelopFormatter
 						? formatDevelopActionLogLines
@@ -267,6 +274,7 @@ export function useActionPerformer({
 					player: playerIdentity,
 					showResolution,
 					addLog,
+					timeline,
 				});
 				if (!mountedRef.current || snapshotAfter.game.conclusion) {
 					return;

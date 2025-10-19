@@ -418,6 +418,22 @@ describe('useActionPerformer', () => {
 					icon: '⚔️',
 				},
 				actorLabel: 'Played by',
+				timeline: [
+					{
+						text: '⚔️ Attack',
+						depth: 0,
+						kind: 'headline',
+					},
+					{
+						text: '💲 Action cost',
+						depth: 1,
+						kind: 'cost',
+					},
+					expect.objectContaining({
+						depth: 2,
+						kind: 'cost-detail',
+					}),
+				],
 			}),
 		);
 	});
@@ -511,6 +527,18 @@ describe('useActionPerformer', () => {
 						'• No detailed log available because the action definition was missing.',
 					],
 					summaries: [],
+					timeline: [
+						{
+							text: `Played ${action.name}`,
+							depth: 0,
+							kind: 'headline',
+						},
+						{
+							text: 'No detailed log available because the action definition was missing.',
+							depth: 1,
+							kind: 'change',
+						},
+					],
 				}),
 			);
 			expect(addLog).toHaveBeenCalledWith(
