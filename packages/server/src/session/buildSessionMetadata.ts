@@ -5,6 +5,7 @@ import {
 	SLOT_INFO,
 	STATS,
 	TRIGGER_INFO,
+	POPULATION_ROLES,
 } from '@kingdom-builder/contents';
 import type {
 	BuildingConfig,
@@ -52,7 +53,7 @@ export function buildSessionMetadata(
 	if (hasEntries(resourceMetadata)) {
 		metadata.resources = resourceMetadata;
 	}
-	const populationMetadata = buildRegistryMetadata(options.populations);
+	const populationMetadata = buildPopulationMetadata(options.populations);
 	if (hasEntries(populationMetadata)) {
 		metadata.populations = populationMetadata;
 	}
@@ -110,13 +111,43 @@ function buildResourceMetadata(
 }
 
 function buildRegistryMetadata<
-	Definition extends { name: string; icon?: string | undefined },
+	Definition extends {
+		name: string;
+		icon?: string | undefined;
+		description?: string | undefined;
+	},
 >(registry: Registry<Definition>): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
 	for (const [id, definition] of registry.entries()) {
 		const descriptor: SessionMetadataDescriptor = { label: definition.name };
 		if (definition.icon) {
 			descriptor.icon = definition.icon;
+		}
+		if (definition.description) {
+			descriptor.description = definition.description;
+		}
+		descriptors[id] = descriptor;
+	}
+	return descriptors;
+}
+
+function buildPopulationMetadata(
+	registry: Registry<PopulationConfig>,
+): SessionMetadataDescriptorMap {
+	const descriptors: SessionMetadataDescriptorMap = {};
+	for (const [id, definition] of registry.entries()) {
+		const descriptor: SessionMetadataDescriptor = { label: definition.name };
+		if (definition.icon) {
+			descriptor.icon = definition.icon;
+		}
+		const description = (definition as { description?: string }).description;
+		if (description) {
+			descriptor.description = description;
+		} else {
+			const roleInfo = POPULATION_ROLES[id as keyof typeof POPULATION_ROLES];
+			if (roleInfo?.description) {
+				descriptor.description = roleInfo.description;
+			}
 		}
 		descriptors[id] = descriptor;
 	}
