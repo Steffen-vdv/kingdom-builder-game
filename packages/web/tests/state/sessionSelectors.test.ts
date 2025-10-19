@@ -10,6 +10,7 @@ import {
 	selectSessionView,
 } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 
 describe('sessionSelectors', () => {
 	const factory = createContentFactory();
@@ -137,7 +138,7 @@ describe('sessionSelectors', () => {
 			A: [],
 			B: [],
 		},
-		metadata: { passiveEvaluationModifiers: {} },
+		metadata: createEmptySnapshotMetadata(),
 	};
 	const registries = {
 		actions: factory.actions,

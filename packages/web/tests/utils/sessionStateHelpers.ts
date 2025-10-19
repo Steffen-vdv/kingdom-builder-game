@@ -4,6 +4,7 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import type { SessionResourceKey } from '../../src/state/sessionTypes';
+import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 
 interface SessionStateHandle {
 	sessionSnapshot: SessionSnapshot;
@@ -63,7 +64,7 @@ export function createSessionHelpers(
 		const overridesMetadata = overrides?.metadata;
 		const metadata = overridesMetadata
 			? structuredClone(overridesMetadata)
-			: { passiveEvaluationModifiers: {} };
+			: createEmptySnapshotMetadata();
 		return {
 			game: {
 				turn: gameOverrides.turn ?? 1,

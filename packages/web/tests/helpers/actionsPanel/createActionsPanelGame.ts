@@ -21,6 +21,7 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from '../translationContextStub';
+import { createEmptySnapshotMetadata } from '../sessionFixtures';
 import { buildActionsPanelContent } from './contentBuilders';
 import {
 	createLandDescriptor,
@@ -266,7 +267,7 @@ export function createActionsPanelGame({
 			[player.id]: [],
 			[opponent.id]: [],
 		},
-		metadata: { passiveEvaluationModifiers: {} },
+		metadata: createEmptySnapshotMetadata(),
 	};
 	sessionRegistries.actions = actionsRegistry;
 	sessionRegistries.buildings = buildingsRegistry;
@@ -314,8 +315,7 @@ export function createActionsPanelGame({
 	for (const [actionId, failures] of metadata.requirementFailures.entries()) {
 		session.setActionRequirements(actionId, failures);
 	}
-	sessionState.metadata = {
-		passiveEvaluationModifiers: {},
+	sessionState.metadata = createEmptySnapshotMetadata({
 		resources: resourceDescriptors,
 		populations: populationDescriptors,
 		stats: Object.fromEntries(statMetadataEntries),
@@ -329,7 +329,7 @@ export function createActionsPanelGame({
 			sections: [],
 			tokens: {},
 		},
-	};
+	});
 	return {
 		sessionId,
 		session,

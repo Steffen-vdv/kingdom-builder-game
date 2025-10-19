@@ -8,6 +8,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
 import {
+	createEmptySnapshotMetadata,
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
@@ -73,7 +74,7 @@ const buildMetadata = (
 ): SessionSnapshotMetadata => {
 	const population = registries.populations.get(populationId);
 	const development = registries.developments.get(developmentId);
-	return {
+	return createEmptySnapshotMetadata({
 		resources: {
 			[resourceKey]: {
 				icon: '🪙',
@@ -104,8 +105,7 @@ const buildMetadata = (
 				label: development.name ?? developmentId,
 			},
 		},
-		passiveEvaluationModifiers: {},
-	};
+	});
 };
 
 const createPlayers = () => {

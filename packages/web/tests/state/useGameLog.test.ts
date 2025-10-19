@@ -5,6 +5,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
 import type { ActionResolution } from '../../src/state/useActionResolution';
 
@@ -66,7 +67,7 @@ describe('useGameLog', () => {
 				[players[0]!.id]: [],
 				[players[1]!.id]: [],
 			},
-			metadata: { passiveEvaluationModifiers: {} },
+			metadata: createEmptySnapshotMetadata(),
 		};
 		const { result } = renderHook(() =>
 			useGameLog({ sessionSnapshot: sessionState }),
@@ -136,7 +137,7 @@ describe('useGameLog', () => {
 				[players[0]!.id]: [],
 				[players[1]!.id]: [],
 			},
-			metadata: { passiveEvaluationModifiers: {} },
+			metadata: createEmptySnapshotMetadata(),
 		};
 		const { result } = renderHook(() =>
 			useGameLog({ sessionSnapshot: sessionState }),
@@ -215,7 +216,7 @@ describe('useGameLog', () => {
 				[players[0]!.id]: [],
 				[players[1]!.id]: [],
 			},
-			metadata: { passiveEvaluationModifiers: {} },
+			metadata: createEmptySnapshotMetadata(),
 		};
 		const { result } = renderHook(() =>
 			useGameLog({ sessionSnapshot: sessionState }),

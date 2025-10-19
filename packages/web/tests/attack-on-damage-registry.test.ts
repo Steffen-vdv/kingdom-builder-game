@@ -9,6 +9,7 @@ import type {
 } from '@kingdom-builder/engine';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
+	createEmptySnapshotMetadata,
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
@@ -78,8 +79,7 @@ function createTestSetup(): TestSetup {
 		name: 'Defender',
 		resources: { [resourceKey]: 0 },
 	});
-	const metadata: SessionSnapshotMetadata = {
-		passiveEvaluationModifiers: {},
+	const metadata: SessionSnapshotMetadata = createEmptySnapshotMetadata({
 		resources: {
 			[resourceKey]: {
 				label: 'Auric Coin',
@@ -92,7 +92,7 @@ function createTestSetup(): TestSetup {
 			slot: { label: 'Development Slot', icon: '🧩' },
 			passive: { label: 'Passive', icon: '♾️' },
 		},
-	};
+	});
 	const sessionSnapshot = createSessionSnapshot({
 		players: [attacker, defender],
 		activePlayerId: attacker.id,

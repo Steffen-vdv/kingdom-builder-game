@@ -6,7 +6,10 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
-import { createSnapshotPlayer } from '../helpers/sessionFixtures';
+import {
+	createEmptySnapshotMetadata,
+	createSnapshotPlayer,
+} from '../helpers/sessionFixtures';
 
 export const ON_UPKEEP_PHASE = 'onUpkeepPhase';
 
@@ -82,28 +85,28 @@ export const buildFestivalRuleSnapshot = (
 	winConditions: [],
 });
 
-export const createFestivalMetadata = (): SessionSnapshotMetadata => ({
-	assets: {
-		passive: SYNTHETIC_RESULT_MODIFIER,
-		upkeep: FALLBACK_UPKEEP,
-	},
-	resources: { ...RESOURCE_LOOKUP },
-	stats: {
-		[FORTIFICATION_STAT_KEY]: {
-			icon: '🛡️',
-			label: 'Fortification Strength',
-			description: 'Determines defensive strength.',
+export const createFestivalMetadata = (): SessionSnapshotMetadata =>
+	createEmptySnapshotMetadata({
+		assets: {
+			passive: SYNTHETIC_RESULT_MODIFIER,
+			upkeep: FALLBACK_UPKEEP,
 		},
-	},
-	triggers: {
-		[ON_UPKEEP_PHASE]: {
-			icon: FALLBACK_UPKEEP.icon,
-			future: `During ${FALLBACK_UPKEEP.label}`,
-			past: FALLBACK_UPKEEP.label,
+		resources: { ...RESOURCE_LOOKUP },
+		stats: {
+			[FORTIFICATION_STAT_KEY]: {
+				icon: '🛡️',
+				label: 'Fortification Strength',
+				description: 'Determines defensive strength.',
+			},
 		},
-	},
-	passiveEvaluationModifiers: {},
-});
+		triggers: {
+			[ON_UPKEEP_PHASE]: {
+				icon: FALLBACK_UPKEEP.icon,
+				future: `During ${FALLBACK_UPKEEP.label}`,
+				past: FALLBACK_UPKEEP.label,
+			},
+		},
+	});
 
 export const buildFestivalPassiveRecord = (
 	owner: SessionPlayerId,
