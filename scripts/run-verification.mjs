@@ -1,11 +1,18 @@
-import { spawn } from 'node:child_process';
+import { exec as execCallback, spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { promisify } from 'node:util';
 
-const tasks = [
+const exec = promisify(execCallback);
+const baseTasks = [
 	{ label: 'check', script: 'check' },
 	{ label: 'test-coverage', script: 'test:coverage' },
+];
+const uiDirectories = [
+	'packages/contents/',
+	'packages/web/src/translation/',
+	'packages/web/src/components/',
 ];
 
 const isWindows = process.platform === 'win32';
@@ -14,6 +21,89 @@ const artifactsDirectory = path.resolve(process.cwd(), 'artifacts');
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
 await mkdir(artifactsDirectory, { recursive: true });
+
+function parseFileList(output) {
+	return Array.from(
+		new Set(
+			output
+				.split('\n')
+				.map((line) => line.trim())
+				.filter(Boolean),
+		),
+	);
+}
+
+function parseStatusList(output) {
+	return Array.from(
+		new Set(
+			output
+				.split('\n')
+				.map((line) => line.trim())
+				.filter(Boolean)
+				.map((line) => line.replace(/^..\s+/, ''))
+				.map((line) => {
+					const parts = line.split(' -> ');
+					return parts[parts.length - 1]?.trim();
+				})
+				.filter(Boolean),
+		),
+	);
+}
+
+async function getChangedFiles() {
+	const candidates = [
+		process.env.VERIFICATION_BASE_REF,
+		process.env.CHANGE_TARGET,
+		'origin/main',
+		'origin/master',
+		'main',
+		'master',
+	].filter(Boolean);
+
+	for (const base of candidates) {
+		try {
+			await exec(`git rev-parse --verify ${base}`);
+			const { stdout } = await exec(
+				`git diff --name-only --diff-filter=ACMRTUXB ${base}...HEAD`,
+			);
+			const files = parseFileList(stdout);
+			if (files.length > 0) {
+				return files;
+			}
+		} catch {
+			continue;
+		}
+	}
+
+	try {
+		const { stdout } = await exec(
+			'git diff --name-only --diff-filter=ACMRTUXB HEAD^...HEAD',
+		);
+		const files = parseFileList(stdout);
+		if (files.length > 0) {
+			return files;
+		}
+	} catch {
+		// ignore missing parent commits
+	}
+
+	try {
+		const { stdout } = await exec('git status --porcelain');
+		return parseStatusList(stdout);
+	} catch {
+		return [];
+	}
+}
+
+function shouldRunUiVerification(files) {
+	if (files.length === 0) {
+		return false;
+	}
+
+	return files.some((file) =>
+		uiDirectories.some((directory) => file.startsWith(directory)),
+	);
+}
 
 async function runTask(task) {
 	const artifactName = `${timestamp}-${task.label}.log`;
@@ -72,6 +162,18 @@ async function runTask(task) {
 }
 
 const results = [];
+const tasks = [...baseTasks];
+const changedFiles = await getChangedFiles();
+
+if (shouldRunUiVerification(changedFiles)) {
+	console.log(
+		'Detected UI-affecting file changes; adding verify:ui-change task.',
+	);
+	tasks.splice(1, 0, {
+		label: 'verify-ui-change',
+		script: 'verify:ui-change',
+	});
+}
 
 for (const task of tasks) {
 	const result = await runTask(task);
