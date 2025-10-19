@@ -74,6 +74,20 @@ const isJsonContentType = (value: string) => {
 	);
 };
 
+function isActionExecuteResponsePayload(
+	payload: unknown,
+): payload is ActionExecuteResponse {
+	if (typeof payload !== 'object' || payload === null) {
+		return false;
+	}
+	const record = payload as Record<PropertyKey, unknown>;
+	const status = record.status;
+	if (typeof status !== 'string') {
+		return false;
+	}
+	return status === 'success' || status === 'error';
+}
+
 export class HttpGameApi implements GameApi {
 	#baseUrl: string;
 	#fetch: FetchFn;
@@ -127,6 +141,8 @@ export class HttpGameApi implements GameApi {
 				body: request,
 			},
 			options,
+			(_response, payload) =>
+				isActionExecuteResponsePayload(payload) ? payload : undefined,
 		);
 	}
 
@@ -267,6 +283,7 @@ export class HttpGameApi implements GameApi {
 		path: string,
 		init: { method: string; body?: unknown },
 		options: GameApiRequestOptions = {},
+		onError?: (response: Response, payload: unknown) => TResponse | undefined,
 	): Promise<TResponse> {
 		const headers = ensureHeaders(this.#headers);
 
@@ -299,6 +316,13 @@ export class HttpGameApi implements GameApi {
 
 		if (!response.ok) {
 			const errorPayload = await this.#extractPayload(response);
+
+			if (onError) {
+				const handled = onError(response, errorPayload);
+				if (handled !== undefined) {
+					return handled;
+				}
+			}
 
 			throw new GameApiError(
 				'Game service request failed.',
