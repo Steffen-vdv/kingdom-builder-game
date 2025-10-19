@@ -19,9 +19,21 @@ export type AdvanceFn = (
 	engineContext: EngineContext,
 ) => AdvanceResultValue | Promise<AdvanceResultValue>;
 
+export type ShouldContinueAfterActionFn = (
+	actionId: string,
+	engineContext: EngineContext,
+	result: PerformActionResult,
+) => boolean | Promise<boolean>;
+
+export type ShouldAdvanceAfterActionsFn = (
+	engineContext: EngineContext,
+) => boolean | Promise<boolean>;
+
 export interface AIDependencies {
 	performAction: PerformActionFn;
 	advance: AdvanceFn;
+	shouldContinueAfterAction?: ShouldContinueAfterActionFn;
+	shouldAdvanceAfterActions?: ShouldAdvanceAfterActionsFn;
 }
 
 export type AIController = (
@@ -55,7 +67,24 @@ export class AISystem {
 			...this.dependencies,
 			...(overrides || {}),
 		} as AIDependencies;
-		await controller(engineContext, dependencies);
+		const dependenciesWithDefaults: AIDependencies = {
+			...dependencies,
+			shouldContinueAfterAction:
+				dependencies.shouldContinueAfterAction ??
+				((actionId, engineCtx, actionResult) => {
+					void actionId;
+					void engineCtx;
+					void actionResult;
+					return true;
+				}),
+			shouldAdvanceAfterActions:
+				dependencies.shouldAdvanceAfterActions ??
+				((engineCtx) => {
+					void engineCtx;
+					return true;
+				}),
+		};
+		await controller(engineContext, dependenciesWithDefaults);
 		return true;
 	}
 }
@@ -91,6 +120,11 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			if (typeof remaining === 'number' && remaining > 0) {
 				engineContext.activePlayer.resources[actionPointResourceKey] = 0;
 			}
+			const shouldAdvance =
+				(await dependencies.shouldAdvanceAfterActions?.(engineContext)) ?? true;
+			if (!shouldAdvance) {
+				return;
+			}
 			await dependencies.advance(engineContext);
 		};
 
@@ -113,7 +147,19 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) > 0
 		) {
 			try {
-				await dependencies.performAction(TAX_ACTION_ID, engineContext);
+				const result = await dependencies.performAction(
+					TAX_ACTION_ID,
+					engineContext,
+				);
+				const shouldContinue =
+					(await dependencies.shouldContinueAfterAction?.(
+						TAX_ACTION_ID,
+						engineContext,
+						result,
+					)) ?? true;
+				if (!shouldContinue) {
+					return;
+				}
 			} catch (error) {
 				void error;
 				await finishActionPhaseAsync();
