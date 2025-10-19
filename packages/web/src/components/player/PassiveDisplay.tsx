@@ -146,11 +146,12 @@ export default function PassiveDisplay({
 				definition: (typeof definitions)[number];
 			} => entry.definition !== undefined,
 		);
+
+	const animatePassives = useAnimate<HTMLDivElement>();
+
 	if (entries.length === 0) {
 		return null;
 	}
-
-	const animatePassives = useAnimate<HTMLDivElement>();
 	return (
 		<div
 			ref={animatePassives}
