@@ -158,17 +158,11 @@ function ResolutionCard({
 		[resolution.visibleTimeline],
 	);
 	const costEntries = React.useMemo(
-		() =>
-			collectCostEntries(
-				structuredTimeline.filter((node) => node.descriptor.kind === 'cost'),
-			),
+		() => collectCostEntries(structuredTimeline),
 		[structuredTimeline],
 	);
 	const effectEntries = React.useMemo(
-		() =>
-			collectEffectEntries(
-				structuredTimeline.filter((node) => node.descriptor.kind !== 'cost'),
-			),
+		() => collectEffectEntries(structuredTimeline),
 		[structuredTimeline],
 	);
 

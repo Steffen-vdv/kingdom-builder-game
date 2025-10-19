@@ -14,8 +14,11 @@ interface TimelineEntry {
 }
 
 function buildTimelineTree(
-	descriptors: ActionLogLineDescriptor[],
+	descriptors: ActionLogLineDescriptor[] | undefined,
 ): TimelineNode[] {
+	if (!Array.isArray(descriptors) || descriptors.length === 0) {
+		return [];
+	}
 	const roots: TimelineNode[] = [];
 	const stack: TimelineNode[] = [];
 
@@ -52,22 +55,35 @@ function buildTimelineTree(
 
 function collectCostEntries(nodes: TimelineNode[]): TimelineEntry[] {
 	const entries: TimelineEntry[] = [];
+	let costIndex = 0;
 
-	nodes.forEach((node, index) => {
-		const baseKey = `cost-${index}`;
-		entries.push({
-			key: baseKey,
-			text: node.descriptor.text,
-			level: 0,
-			kind: node.descriptor.kind,
-		});
+	function visit(node: TimelineNode): void {
+		if (node.descriptor.kind === 'cost') {
+			const baseKey = `cost-${costIndex}`;
+			costIndex += 1;
+			entries.push({
+				key: baseKey,
+				text: node.descriptor.text,
+				level: 0,
+				kind: node.descriptor.kind,
+			});
 
-		node.children
-			.filter((child) => child.descriptor.kind === 'cost-detail')
-			.forEach((child, childIndex) =>
-				collectCostDetail(child, `${baseKey}-detail-${childIndex}`, 1, entries),
-			);
-	});
+			node.children
+				.filter((child) => child.descriptor.kind === 'cost-detail')
+				.forEach((child, childIndex) =>
+					collectCostDetail(
+						child,
+						`${baseKey}-detail-${childIndex}`,
+						1,
+						entries,
+					),
+				);
+		}
+
+		node.children.forEach(visit);
+	}
+
+	nodes.forEach(visit);
 
 	return entries;
 }
@@ -105,12 +121,17 @@ function collectEffectNode(
 	key: string,
 	entries: TimelineEntry[],
 ): void {
-	entries.push({
-		key,
-		text: node.descriptor.text,
-		level: node.level,
-		kind: node.descriptor.kind,
-	});
+	if (
+		node.descriptor.kind !== 'cost' &&
+		node.descriptor.kind !== 'cost-detail'
+	) {
+		entries.push({
+			key,
+			text: node.descriptor.text,
+			level: node.level,
+			kind: node.descriptor.kind,
+		});
+	}
 
 	node.children.forEach((child, index) =>
 		collectEffectNode(child, `${key}-${index}`, entries),
