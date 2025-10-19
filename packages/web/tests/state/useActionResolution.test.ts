@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import React from 'react';
 import { useActionResolution } from '../../src/state/useActionResolution';
+import type { ActionLogLineDescriptor } from '../../src/translation/log/timeline';
 import { ACTION_EFFECT_DELAY } from '../../src/state/useGameLog';
 
 describe('useActionResolution', () => {
@@ -39,6 +40,10 @@ describe('useActionResolution', () => {
 				id: 'test-action',
 				name: 'Test Action',
 			};
+			const timeline: ActionLogLineDescriptor[] = [
+				{ text: 'First reveal', depth: 0, kind: 'headline' },
+				{ text: 'Second reveal', depth: 1, kind: 'effect' },
+			];
 			act(() => {
 				resolutionPromise = result.current.showResolution({
 					lines: ['First reveal', 'Second reveal'],
@@ -47,6 +52,7 @@ describe('useActionResolution', () => {
 						name: 'Player A',
 					},
 					action: actionMeta,
+					timeline,
 				});
 			});
 			expect(addLog).toHaveBeenCalledTimes(1);
@@ -55,6 +61,9 @@ describe('useActionResolution', () => {
 				name: 'Player A',
 			});
 			expect(result.current.resolution?.visibleLines).toEqual(['First reveal']);
+			expect(
+				result.current.resolution?.visibleTimeline.map((entry) => entry.text),
+			).toEqual(['First reveal']);
 			expect(result.current.resolution?.source).toBe('action');
 			expect(result.current.resolution?.actorLabel).toBe('Test Action');
 			expect(result.current.resolution?.isComplete).toBe(false);
@@ -74,6 +83,9 @@ describe('useActionResolution', () => {
 				'First reveal',
 				'Second reveal',
 			]);
+			expect(
+				result.current.resolution?.visibleTimeline.map((entry) => entry.text),
+			).toEqual(['First reveal', 'Second reveal']);
 			expect(result.current.resolution?.isComplete).toBe(true);
 			expect(addLog).toHaveBeenCalledTimes(2);
 			expect(addLog).toHaveBeenLastCalledWith('Second reveal', {
@@ -134,6 +146,9 @@ describe('useActionResolution', () => {
 			});
 			expect(result.current.resolution?.source).toBe('action');
 			expect(result.current.resolution?.actorLabel).toBe('Action Name');
+			expect(
+				result.current.resolution?.visibleTimeline.map((entry) => entry.text),
+			).toEqual(['Only line']);
 			act(() => {
 				result.current.acknowledgeResolution();
 			});
