@@ -8,6 +8,11 @@ import { ensureGameApi } from './gameApiInstance';
 import { enqueueSessionTask, updateSessionSnapshot } from './sessionStateStore';
 import { SessionMirroringError, markFatalSessionError } from './sessionErrors';
 import type { GameApiRequestOptions } from '../services/gameApi';
+import { GameApiError } from '../services/gameApi';
+import {
+	setActionErrorMetadata,
+	type ActionErrorMetadata,
+} from './actionErrorMetadata';
 
 type ActionExecutionFailure = Error & {
 	requirementFailure?: ActionExecuteErrorResponse['requirementFailure'];
@@ -16,7 +21,32 @@ type ActionExecutionFailure = Error & {
 
 export type SessionQueueOptions = { skipQueue?: boolean };
 
-function normalizeActionError(error: unknown): ActionExecuteErrorResponse {
+function buildActionErrorMetadata(
+	error: unknown,
+	request: ActionExecuteRequest,
+): ActionErrorMetadata {
+	const metadata: ActionErrorMetadata = {
+		request,
+	};
+	if (error instanceof GameApiError) {
+		metadata.cause = error;
+		metadata.gameApi = {
+			status: error.status,
+			statusText: error.statusText,
+			body: error.body,
+		};
+	} else if (error instanceof Error) {
+		metadata.cause = error;
+	} else if (error !== undefined) {
+		metadata.cause = error;
+	}
+	return metadata;
+}
+
+function normalizeActionError(
+	error: unknown,
+	request: ActionExecuteRequest,
+): ActionExecuteErrorResponse {
 	const failure = error as ActionExecutionFailure;
 	const response: ActionExecuteErrorResponse = {
 		status: 'error',
@@ -31,6 +61,7 @@ function normalizeActionError(error: unknown): ActionExecuteErrorResponse {
 	if (!response.requirementFailure && !response.requirementFailures) {
 		response.fatal = true;
 	}
+	setActionErrorMetadata(response, buildActionErrorMetadata(error, request));
 	return response;
 }
 
@@ -75,6 +106,6 @@ export async function performSessionAction(
 			markFatalSessionError(error);
 			throw error;
 		}
-		return normalizeActionError(error);
+		return normalizeActionError(error, request);
 	}
 }
