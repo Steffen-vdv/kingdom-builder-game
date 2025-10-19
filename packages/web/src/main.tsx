@@ -13,6 +13,11 @@ const createFaviconSvg = (emoji: string): string =>
 		'</svg>',
 	].join('');
 
+const createFaviconDataUrl = (emoji: string): string => {
+	const svg = createFaviconSvg(emoji);
+	return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
 const ensureFaviconLink = (): HTMLLinkElement => {
 	const existing = document.querySelector<HTMLLinkElement>('#favicon');
 	if (existing) {
@@ -35,10 +40,10 @@ async function bootstrap() {
 			config.primaryIconId,
 		);
 		if (iconResolution.icon) {
-			const svg = createFaviconSvg(iconResolution.icon);
 			const link = ensureFaviconLink();
 			link.rel = 'icon';
-			link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+			link.type = 'image/svg+xml';
+			link.href = createFaviconDataUrl(iconResolution.icon);
 			if (!link.parentElement) {
 				document.head.appendChild(link);
 			}
