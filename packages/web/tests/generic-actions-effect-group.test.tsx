@@ -31,6 +31,7 @@ import {
 	loadActionOptions,
 	loadActionRequirements,
 } from '../src/state/sessionSdk';
+import type { SessionActionMetadataSnapshot } from '../src/state/sessionTypes';
 const getRequirementIconsMock = vi.fn();
 vi.mock('../src/utils/getRequirementIcons', () => ({
 	getRequirementIcons: (...args: unknown[]) => getRequirementIconsMock(...args),
@@ -223,11 +224,39 @@ function createMockGame() {
 			ranTurn: false,
 		}),
 	});
+	const baseState = createActionsPanelState({
+		actionCostResource,
+		phaseId: phases[0]?.id ?? 'phase.action',
+	});
+	const requests = {
+		...baseState.requests,
+		readActionMetadata: vi.fn(
+			(actionId: string, params?: ActionParametersPayload) =>
+				session.readActionMetadata(actionId, params),
+		),
+		subscribeActionMetadata: vi.fn(
+			(
+				actionId: string,
+				params: ActionParametersPayload | undefined,
+				listener: (snapshot: SessionActionMetadataSnapshot) => void,
+			) => session.subscribeActionMetadata(actionId, params, listener),
+		),
+		getActionCosts: vi.fn(
+			(actionId: string, params?: ActionParametersPayload) =>
+				session.getActionCosts(actionId, params),
+		),
+		getActionRequirements: vi.fn(
+			(actionId: string, params?: ActionParametersPayload) =>
+				session.getActionRequirements(actionId, params),
+		),
+		hasAiController: vi.fn((playerId: string) =>
+			session.hasAiController(playerId),
+		),
+		enqueueTask: vi.fn(async <T,>(task: () => Promise<T> | T) => await task()),
+	};
+
 	return {
-		...createActionsPanelState({
-			actionCostResource,
-			phaseId: phases[0]?.id ?? 'phase.action',
-		}),
+		...baseState,
 		logOverflowed: false,
 		session,
 		sessionId,
@@ -245,6 +274,7 @@ function createMockGame() {
 			develop: developAction,
 			till: tillAction,
 		},
+		requests,
 	};
 }
 let mockGame: ReturnType<typeof createMockGame>;

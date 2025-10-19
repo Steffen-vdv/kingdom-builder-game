@@ -1,6 +1,11 @@
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
 	SessionRuleSnapshot,
 	SessionSnapshot,
+	SimulateUpcomingPhasesOptions,
+	SimulateUpcomingPhasesResult,
 } from '@kingdom-builder/protocol/session';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
@@ -18,7 +23,8 @@ import type { ReactNode } from 'react';
 import type {
 	RemoteSessionRecord,
 	Session,
-	SessionAdapter,
+	SessionActionMetadataSnapshot,
+	SessionPlayerId,
 	SessionResourceKey,
 } from './sessionTypes';
 
@@ -56,6 +62,49 @@ export type AdvancePhaseHandler = () => Promise<void>;
 
 export type RefreshSessionHandler = () => Promise<void>;
 
+export type HasAiControllerRequest = (playerId: SessionPlayerId) => boolean;
+
+export type ReadActionMetadataRequest = (
+	actionId: string,
+	params?: ActionParametersPayload,
+) => SessionActionMetadataSnapshot;
+
+export type SubscribeActionMetadataRequest = (
+	actionId: string,
+	params: ActionParametersPayload | undefined,
+	listener: (snapshot: SessionActionMetadataSnapshot) => void,
+) => () => void;
+
+export type GetActionCostsRequest = (
+	actionId: string,
+	params?: ActionParametersPayload,
+) => SessionActionCostMap;
+
+export type GetActionRequirementsRequest = (
+	actionId: string,
+	params?: ActionParametersPayload,
+) => SessionActionRequirementList;
+
+export type SimulateUpcomingPhasesRequest = (
+	playerId: SessionPlayerId,
+	options?: SimulateUpcomingPhasesOptions,
+) => SimulateUpcomingPhasesResult;
+
+export type EnqueueTaskRequest = <T>(task: () => Promise<T> | T) => Promise<T>;
+
+export interface GameEngineRequests {
+	performAction: PerformActionHandler;
+	advancePhase: AdvancePhaseHandler;
+	refreshSession: RefreshSessionHandler;
+	hasAiController: HasAiControllerRequest;
+	readActionMetadata: ReadActionMetadataRequest;
+	subscribeActionMetadata: SubscribeActionMetadataRequest;
+	getActionCosts: GetActionCostsRequest;
+	getActionRequirements: GetActionRequirementsRequest;
+	simulateUpcomingPhases: SimulateUpcomingPhasesRequest;
+	enqueueTask: EnqueueTaskRequest;
+}
+
 export interface SessionMetadataFetchers {
 	getRuleSnapshot: () => SessionRuleSnapshot;
 	getSessionView: () => SessionView;
@@ -83,11 +132,7 @@ export interface GameEngineContextValue {
 	clearHoverCard: () => void;
 	phase: PhaseProgressState;
 	actionCostResource: SessionResourceKey;
-	requests: {
-		performAction: PerformActionHandler;
-		advancePhase: AdvancePhaseHandler;
-		refreshSession: RefreshSessionHandler;
-	};
+	requests: GameEngineRequests;
 	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;
 	refreshPhaseState: (overrides?: Partial<PhaseProgressState>) => void;
@@ -114,14 +159,3 @@ export interface GameEngineContextValue {
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 }
-
-export interface LegacyGameEngineContextBridge {
-	/**
-	 * TODO(#session-migration): Remove direct EngineSession exposure once
-	 * all consumers rely on request helpers.
-	 */
-	session: SessionAdapter;
-}
-
-export type LegacyGameEngineContextValue = GameEngineContextValue &
-	LegacyGameEngineContextBridge;

@@ -6,7 +6,7 @@ import React from 'react';
 import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
-import type { LegacyGameEngineContextValue } from '../src/state/GameContext.types';
+import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { PlayerId, RuleSnapshot } from '@kingdom-builder/engine';
 import {
 	createSessionSnapshot,
@@ -22,7 +22,7 @@ import {
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 
-type MockGame = LegacyGameEngineContextValue;
+type MockGame = GameEngineContextValue;
 type TierDefinition = RuleSnapshot['tierDefinitions'][number];
 
 type SummaryGroupLike = {

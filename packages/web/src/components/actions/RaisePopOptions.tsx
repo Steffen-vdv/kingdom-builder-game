@@ -51,7 +51,6 @@ export default function RaisePopOptions({
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -59,6 +58,7 @@ export default function RaisePopOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { getActionRequirements, performAction } = requests;
 	const { sessionView } = selectors;
 	const { populations } = useRegistryMetadata();
 	const populationMetadata = usePopulationMetadata();
@@ -156,8 +156,8 @@ export default function RaisePopOptions({
 	}, [metadata.costs]);
 	const costsReady = metadata.costs !== undefined;
 	const fallbackRequirementFailures = useMemo<SessionActionRequirementList>(
-		() => session.getActionRequirements(action.id),
-		[session, action.id],
+		() => getActionRequirements(action.id),
+		[getActionRequirements, action.id],
 	);
 	const requirementFailures =
 		metadata.requirements ?? fallbackRequirementFailures;
@@ -281,7 +281,7 @@ export default function RaisePopOptions({
 							if (!canInteract) {
 								return;
 							}
-							void requests.performAction({
+							void performAction({
 								action: toPerformableAction(action),
 								params: { role },
 							});

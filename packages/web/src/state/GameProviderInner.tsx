@@ -18,11 +18,13 @@ import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
 import type {
-	LegacyGameEngineContextValue,
+	GameEngineContextValue,
 	PerformActionHandler,
 	SessionDerivedSelectors,
-	SessionMetadataFetchers,
 } from './GameContext.types';
+import { useGameRequests } from './useGameRequests';
+import { usePreferenceHandlers } from './usePreferenceHandlers';
+import { useSessionMetadataFetchers } from './useSessionMetadataFetchers';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import type { SessionResourceKey } from './sessionTypes';
@@ -30,12 +32,13 @@ import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
-import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import { useInitialPhaseRunner } from './useInitialPhaseRunner';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
-export const GameEngineContext =
-	createContext<LegacyGameEngineContextValue | null>(null);
+export const GameEngineContext = createContext<GameEngineContextValue | null>(
+	null,
+);
 
 export function GameProviderInner({
 	children,
@@ -236,49 +239,30 @@ export function GameProviderInner({
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
-	useEffect(() => {
-		let disposed = false;
-		const run = async () => {
-			try {
-				await runUntilActionPhase();
-			} catch (error) {
-				if (disposed) {
-					return;
-				}
-				if (!onFatalSessionError) {
-					return;
-				}
-				if (isFatalSessionError(error)) {
-					return;
-				}
-				markFatalSessionError(error);
-				onFatalSessionError(error);
-			}
-		};
-		void run();
-		return () => {
-			disposed = true;
-		};
-	}, [runUntilActionPhase, onFatalSessionError]);
-
-	const metadataSnapshot = useMemo(
-		() => sessionMetadata ?? cachedSessionSnapshot.metadata,
-		[sessionMetadata, cachedSessionSnapshot],
+	useInitialPhaseRunner(
+		onFatalSessionError
+			? { runUntilActionPhase, onFatalSessionError }
+			: { runUntilActionPhase },
 	);
 
-	const metadata = useMemo<SessionMetadataFetchers>(
-		() => ({
-			getRuleSnapshot: () => ruleSnapshot,
-			getSessionView: () => sessionView,
-			getTranslationContext: () => {
-				if (!translationContext) {
-					throw new Error('Translation context unavailable');
-				}
-				return translationContext;
-			},
-		}),
-		[ruleSnapshot, sessionView, translationContext],
-	);
+	const { metadataSnapshot, metadata } = useSessionMetadataFetchers({
+		ruleSnapshot,
+		sessionView,
+		translationContext,
+		sessionMetadata,
+		cachedMetadata: cachedSessionSnapshot.metadata,
+	});
+
+	const preferenceHandlers = usePreferenceHandlers({
+		darkMode,
+		onToggleDark,
+		musicEnabled,
+		onToggleMusic,
+		soundEnabled,
+		onToggleSound,
+		backgroundAudioMuted,
+		onToggleBackgroundAudioMute,
+	});
 
 	const performActionRequest = useCallback<PerformActionHandler>(
 		async ({ action, params }) => {
@@ -287,14 +271,13 @@ export function GameProviderInner({
 		[handlePerform],
 	);
 
-	const requestHelpers = useMemo(
-		() => ({
-			performAction: performActionRequest,
-			advancePhase: handleEndTurn,
-			refreshSession,
-		}),
-		[performActionRequest, handleEndTurn, refreshSession],
-	);
+	const requestHelpers = useGameRequests({
+		session: sessionAdapter,
+		performAction: performActionRequest,
+		advancePhase: handleEndTurn,
+		refreshSession,
+		enqueue,
+	});
 
 	const handleExit = useCallback(() => {
 		onReleaseSession();
@@ -307,7 +290,7 @@ export function GameProviderInner({
 		return <TranslationContextLoading />;
 	}
 
-	const value: LegacyGameEngineContextValue = {
+	const value: GameEngineContextValue = {
 		sessionId,
 		sessionSnapshot,
 		cachedSessionSnapshot,
@@ -328,14 +311,7 @@ export function GameProviderInner({
 		metadata,
 		runUntilActionPhase,
 		refreshPhaseState,
-		darkMode: darkMode ?? true,
-		onToggleDark: onToggleDark ?? (() => {}),
-		musicEnabled: musicEnabled ?? true,
-		onToggleMusic: onToggleMusic ?? (() => {}),
-		soundEnabled: soundEnabled ?? true,
-		onToggleSound: onToggleSound ?? (() => {}),
-		backgroundAudioMuted: backgroundAudioMuted ?? true,
-		onToggleBackgroundAudioMute: onToggleBackgroundAudioMute ?? (() => {}),
+		...preferenceHandlers,
 		timeScale,
 		setTimeScale,
 		toasts,
@@ -345,7 +321,6 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session: sessionAdapter,
 		...(onExit ? { onExit: handleExit } : {}),
 	};
 

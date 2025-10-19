@@ -1,13 +1,10 @@
 /** @vitest-environment jsdom */
-import React, { useContext } from 'react';
+import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
-import {
-	GameEngineContext,
-	GameProviderInner,
-} from '../../src/state/GameProviderInner';
+import { GameProviderInner } from '../../src/state/GameProviderInner';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -125,18 +122,6 @@ vi.mock('../../src/state/sessionSdk', () => ({
 	updatePlayerName: vi.fn(() => Promise.resolve()),
 }));
 
-function ContextInspector() {
-	const context = useContext(GameEngineContext);
-	if (!context) {
-		throw new Error('Missing game engine context');
-	}
-	return (
-		<div data-testid="adapter-id">
-			{(context.session as { id?: string }).id ?? ''}
-		</div>
-	);
-}
-
 describe('GameProviderInner', () => {
 	const sessionId = 'session:test';
 	let sessionState: SessionSnapshot;
@@ -200,7 +185,7 @@ describe('GameProviderInner', () => {
 			cachedSessionSnapshot: sessionState,
 		});
 
-		const { getByTestId } = render(
+		render(
 			<GameProviderInner
 				darkMode
 				onToggleDark={() => {}}
@@ -226,9 +211,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
-			>
-				<ContextInspector />
-			</GameProviderInner>,
+			/>,
 		);
 
 		expect(capturedPerformerOptions?.session).toBe(adapter);
@@ -236,7 +219,6 @@ describe('GameProviderInner', () => {
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
-		expect(getByTestId('adapter-id')).toHaveTextContent('adapter:test');
 		cleanup();
 	});
 
@@ -284,9 +266,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
-			>
-				<ContextInspector />
-			</GameProviderInner>,
+			/>,
 		);
 
 		await waitFor(() => {
@@ -344,9 +324,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={currentSnapshot.metadata}
-			>
-				<ContextInspector />
-			</GameProviderInner>,
+			/>,
 		);
 
 		await waitFor(() => {

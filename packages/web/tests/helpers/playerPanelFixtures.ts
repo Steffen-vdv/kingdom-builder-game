@@ -1,12 +1,8 @@
 import { vi } from 'vitest';
-import type {
-	EngineSession,
-	EngineSessionSnapshot,
-	PlayerId,
-} from '@kingdom-builder/engine';
+import type { EngineSessionSnapshot, PlayerId } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
-import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
+import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
@@ -15,7 +11,7 @@ import { createTestSessionScaffold } from './testSessionScaffold';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
-	mockGame: LegacyGameEngineContextValue;
+	mockGame: GameEngineContextValue;
 	resourceForecast: Record<string, number>;
 	displayableStatKeys: string[];
 	statForecast: Record<string, number>;
@@ -103,7 +99,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		sessionState.metadata,
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
-	const mockGame: LegacyGameEngineContextValue = {
+	const mockGame: GameEngineContextValue = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
 		cachedSessionSnapshot: sessionState,
@@ -131,6 +127,13 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			performAction: vi.fn().mockResolvedValue(undefined),
 			advancePhase: vi.fn().mockResolvedValue(undefined),
 			refreshSession: vi.fn().mockResolvedValue(undefined),
+			hasAiController: vi.fn().mockReturnValue(false),
+			readActionMetadata: vi.fn().mockReturnValue({}),
+			subscribeActionMetadata: vi.fn().mockReturnValue(() => {}),
+			getActionCosts: vi.fn().mockReturnValue({}),
+			getActionRequirements: vi.fn().mockReturnValue([]),
+			simulateUpcomingPhases: vi.fn(),
+			enqueueTask: vi.fn().mockResolvedValue(undefined),
 		},
 		metadata: {
 			getRuleSnapshot: () => ruleSnapshot,
@@ -156,7 +159,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
 	};
 	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
 		(acc, key, index) => {

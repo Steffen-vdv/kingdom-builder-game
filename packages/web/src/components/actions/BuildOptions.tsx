@@ -51,7 +51,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -59,13 +58,14 @@ export default function BuildOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { getActionCosts, getActionRequirements, performAction } = requests;
 	const { sessionView } = selectors;
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
+	const requirementFailures = getActionRequirements(action.id);
 	const requirements = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
 	);
@@ -75,7 +75,7 @@ export default function BuildOptions({
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = getActionCosts(action.id, {
 					id: building.id,
 				});
 				const costs: Record<string, number> = {};
@@ -88,7 +88,7 @@ export default function BuildOptions({
 			.sort((first, second) => first.total - second.total);
 	}, [
 		buildings,
-		session,
+		getActionCosts,
 		action.id,
 		actionCostResource,
 		player.buildings.size,
@@ -161,7 +161,7 @@ export default function BuildOptions({
 								if (!canInteract) {
 									return;
 								}
-								void requests.performAction({
+								void performAction({
 									action: toPerformableAction(action),
 									params: { id: building.id },
 								});

@@ -59,7 +59,6 @@ export default function DevelopOptions({
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -67,6 +66,7 @@ export default function DevelopOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { getActionCosts, performAction } = requests;
 	const { sessionView } = selectors;
 	const slotMetadata = useSlotMetadata();
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
@@ -75,7 +75,7 @@ export default function DevelopOptions({
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = getActionCosts(action.id, {
 					id: development.id,
 					landId: landIdForCost,
 				});
@@ -87,7 +87,13 @@ export default function DevelopOptions({
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	}, [
+		developments,
+		getActionCosts,
+		action.id,
+		landIdForCost,
+		actionCostResource,
+	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,
@@ -167,7 +173,7 @@ export default function DevelopOptions({
 								const landId = player.lands.find(
 									(land) => land.slotsFree > 0,
 								)?.id;
-								void requests.performAction({
+								void performAction({
 									action: toPerformableAction(action),
 									params: {
 										id: development.id,

@@ -67,7 +67,7 @@ export type RemoteSessionRecord = Pick<
 
 export type SessionQueueSeed = SessionStateRecord['queueSeed'];
 
-export type { SessionRuleSnapshot, SessionSnapshot };
+export type { SessionPlayerId, SessionRuleSnapshot, SessionSnapshot };
 export type { SessionRegistries } from './sessionRegistries';
 
 export interface SessionQueueHelpers {

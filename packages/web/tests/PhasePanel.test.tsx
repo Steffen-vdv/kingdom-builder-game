@@ -11,7 +11,6 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import PhasePanel from '../src/components/phases/PhasePanel';
 import { selectSessionView } from '../src/state/sessionSelectors';
-import type { EngineSession } from '@kingdom-builder/engine';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import {
 	createSessionSnapshot,
@@ -46,11 +45,6 @@ function createPhasePanelScenario() {
 		registries: scaffold.registries,
 		metadata: scaffold.metadata,
 	});
-	mockGame.session = {
-		getActionCosts: vi.fn(),
-		getActionRequirements: vi.fn(),
-		getActionOptions: vi.fn(),
-	} as unknown as EngineSession;
 	return {
 		mockGame,
 		sessionState,

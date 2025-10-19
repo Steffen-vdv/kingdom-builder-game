@@ -12,7 +12,6 @@ import {
 } from '../../helpers/sessionFixtures';
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import { selectSessionView } from '../../../src/state/sessionSelectors';
-import type { SessionAdapter } from '../../../src/state/sessionTypes';
 
 function createActionsPanelScenario() {
 	const scaffold = createTestSessionScaffold();
@@ -58,11 +57,13 @@ function createActionsPanelScenario() {
 		requirements: [],
 		groups: [],
 	};
-	mockGame.session = {
-		hasAiController: (playerId: string) => playerId === aiPlayer.id,
-		readActionMetadata: () => metadataSnapshot,
-		subscribeActionMetadata: () => () => {},
-	} as unknown as SessionAdapter;
+	Object.assign(mockGame.requests, {
+		hasAiController: vi.fn((playerId: string) => playerId === aiPlayer.id),
+		readActionMetadata: vi.fn(() => metadataSnapshot),
+		subscribeActionMetadata: vi.fn(() => () => {}),
+		getActionCosts: vi.fn(() => metadataSnapshot.costs ?? {}),
+		getActionRequirements: vi.fn(() => metadataSnapshot.requirements ?? []),
+	});
 	return {
 		mockGame,
 		actionCostResource,

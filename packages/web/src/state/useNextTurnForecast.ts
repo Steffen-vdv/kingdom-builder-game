@@ -109,7 +109,11 @@ function hashGameState(
 }
 
 export function useNextTurnForecast(): NextTurnForecast {
-	const { session, sessionSnapshot, sessionId } = useGameEngine();
+	const {
+		sessionSnapshot,
+		sessionId,
+		requests: { simulateUpcomingPhases },
+	} = useGameEngine();
 	const { game, phases } = sessionSnapshot;
 	const players = game.players;
 	const playerIds = useMemo(
@@ -214,7 +218,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 			disposed = true;
 			inflightRequests.delete(requestKey);
 		};
-	}, [hashKey, playerIds, session, sessionId]);
+	}, [hashKey, playerIds, simulateUpcomingPhases, sessionId]);
 
 	return useMemo(() => {
 		if (cacheRef.current?.key === hashKey) {
@@ -228,7 +232,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
 			try {
-				const { delta } = session.simulateUpcomingPhases(player.id);
+				const { delta } = simulateUpcomingPhases(player.id);
 				forecast[player.id] = delta;
 			} catch (error) {
 				void error;
@@ -239,5 +243,5 @@ export function useNextTurnForecast(): NextTurnForecast {
 		cacheRef.current = entry;
 		forecastCache.set(sessionId, entry);
 		return forecast;
-	}, [session, hashKey, players, revision, sessionId]);
+	}, [simulateUpcomingPhases, hashKey, players, revision, sessionId]);
 }

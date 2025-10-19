@@ -45,7 +45,6 @@ export default function DemolishOptions({
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -53,6 +52,7 @@ export default function DemolishOptions({
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { getActionCosts, performAction } = requests;
 	const { sessionView } = selectors;
 
 	const entries = useMemo(() => {
@@ -62,7 +62,7 @@ export default function DemolishOptions({
 				if (!building) {
 					return null;
 				}
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = getActionCosts(action.id, {
 					id: buildingId,
 				});
 				const costs: Record<string, number> = {};
@@ -91,7 +91,7 @@ export default function DemolishOptions({
 				return first.building.name.localeCompare(second.building.name);
 			});
 	}, [
-		session,
+		getActionCosts,
 		sessionView.buildings,
 		action.id,
 		actionCostResource,
@@ -164,7 +164,7 @@ export default function DemolishOptions({
 								if (!canInteract) {
 									return;
 								}
-								void requests.performAction({
+								void performAction({
 									action: toPerformableAction(action),
 									params: { id },
 								});

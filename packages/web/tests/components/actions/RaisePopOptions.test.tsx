@@ -23,10 +23,7 @@ import {
 } from '../../helpers/sessionFixtures';
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import { RemoteSessionAdapter } from '../../../src/state/remoteSessionAdapter';
-// prettier-ignore
-import type {
-        LegacyGameEngineContextValue,
-} from '../../../src/state/GameContext.types';
+import type { GameEngineContextValue } from '../../../src/state/GameContext.types';
 import type {
 	SessionPlayerId,
 	SessionRequirementFailure,
@@ -39,9 +36,9 @@ interface RaisePopScenario {
 	registries: SessionRegistries;
 	metadata: ReturnType<typeof createTestSessionScaffold>['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
-	mockGame: LegacyGameEngineContextValue;
+	mockGame: GameEngineContextValue;
 	action: Action;
-	player: LegacyGameEngineContextValue['selectors']['sessionView']['active'];
+	player: GameEngineContextValue['selectors']['sessionView']['active'];
 	populationIds: string[];
 	adapter: RemoteSessionAdapter;
 }
@@ -120,13 +117,19 @@ function createRaisePopScenario(
 	adapter.setActionCosts(action.id, { gold: 5, ap: 1 });
 	adapter.setActionRequirements(action.id, []);
 	adapter.setActionOptions(action.id, []);
-	mockGame.session =
-		adapter as unknown as LegacyGameEngineContextValue['session'];
+	mockGame.requests.getActionCosts = (actionId, params) =>
+		adapter.getActionCosts(actionId, params);
+	mockGame.requests.getActionRequirements = (actionId, params) =>
+		adapter.getActionRequirements(actionId, params);
+	mockGame.requests.readActionMetadata = (actionId, params) =>
+		adapter.readActionMetadata(actionId, params);
+	mockGame.requests.subscribeActionMetadata = (actionId, params, listener) =>
+		adapter.subscribeActionMetadata(actionId, params, listener);
 	return {
 		registries,
 		metadata,
 		metadataSelectors,
-		mockGame: mockGame as LegacyGameEngineContextValue,
+		mockGame: mockGame as GameEngineContextValue,
 		action,
 		player: activeView,
 		populationIds,
