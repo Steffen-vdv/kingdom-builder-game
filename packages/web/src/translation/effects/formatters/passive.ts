@@ -229,7 +229,9 @@ registerEffectFormatter('passive', 'add', {
 		const items = [...inner];
 		if (duration) {
 			const durationLabel = formatDuration(duration);
-			const durationDescription = `${prefix}${name} duration: Until player's next ${durationLabel}`;
+			const durationPrefix = icon ? `${icon} ` : '';
+			const durationDescription =
+				`${durationPrefix}Duration: Until player's next ${durationLabel}`.trim();
 			items.push(durationDescription);
 		}
 		if (!label) {
