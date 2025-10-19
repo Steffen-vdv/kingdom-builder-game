@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -377,10 +377,23 @@ describe('<HoverCard />', () => {
 				: formatted.source === 'phase'
 					? 'Phase'
 					: 'Action';
-		const expectedHeader = formatted.actorLabel
-			? `${resolvedSourceLabel} - ${formatted.actorLabel}`
-			: `${resolvedSourceLabel} resolution`;
-		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
+		const shouldCollapseHeader = Boolean(
+			formatted.actorLabel &&
+				typeof formatted.source === 'object' &&
+				formatted.source?.kind === 'phase' &&
+				resolvedSourceLabel.trim().toLocaleLowerCase() ===
+					formatted.actorLabel.trim().toLocaleLowerCase(),
+		);
+		const expectedHeader = shouldCollapseHeader
+			? formatted.actorLabel
+			: formatted.actorLabel
+				? `${resolvedSourceLabel} - ${formatted.actorLabel}`
+				: `${resolvedSourceLabel} resolution`;
+		const headerContainer = screen.getByText('Resolution').parentElement;
+		expect(headerContainer).not.toBeNull();
+		expect(
+			within(headerContainer as HTMLElement).getByText(expectedHeader),
+		).toBeInTheDocument();
 		expect(
 			screen.getByText(`Phase owner ${sessionPlayer.name}`),
 		).toBeInTheDocument();
@@ -389,7 +402,7 @@ describe('<HoverCard />', () => {
 		});
 		expect(continueButton).toBeDisabled();
 		const firstLine = formatted.lines[0]!;
-		expect(screen.getByText(firstLine)).toBeInTheDocument();
+		expect(screen.getAllByText(firstLine).length).toBeGreaterThan(0);
 		expect(addLog).toHaveBeenCalledWith(firstLine, {
 			id: sessionPlayer.id,
 			name: sessionPlayer.name,

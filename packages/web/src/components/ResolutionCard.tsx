@@ -94,9 +94,20 @@ function ResolutionCard({
 			? (resolution.source.icon?.trim() ?? undefined)
 			: undefined);
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
-	const headerTitle = actorHeaderSubject
-		? `${resolvedLabels.title} - ${actorHeaderSubject}`
-		: defaultTitle;
+	const normalizedHeaderTitle = resolvedLabels.title.trim().toLocaleLowerCase();
+	const normalizedHeaderSubject = actorHeaderSubject
+		? actorHeaderSubject.trim().toLocaleLowerCase()
+		: '';
+	const shouldCollapseHeaderTitle =
+		actorHeaderSubject &&
+		normalizedHeaderTitle === normalizedHeaderSubject &&
+		isSourceDetail(resolution.source) &&
+		resolution.source.kind === 'phase';
+	const headerTitle = shouldCollapseHeaderTitle
+		? actorHeaderSubject
+		: actorHeaderSubject
+			? `${resolvedLabels.title} - ${actorHeaderSubject}`
+			: defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',
