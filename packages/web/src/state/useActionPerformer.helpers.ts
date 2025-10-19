@@ -14,7 +14,11 @@ import {
 } from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import type { Action } from './actionTypes';
-import type { ShowResolutionOptions } from './useActionResolution';
+import type {
+	ActionResolution,
+	ShowResolutionOptions,
+} from './useActionResolution';
+import { createResolutionLogSnapshot } from './actionResolutionLog';
 import type { PhaseProgressState } from './usePhaseProgress';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 
@@ -179,15 +183,12 @@ interface HandleMissingActionDefinitionOptions {
 	snapshot: SessionSnapshot;
 	actionCostResource: SessionResourceKey;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
+	addResolutionLog: (resolution: ActionResolution) => void;
 	syncPhaseState: (
 		snapshot: SessionSnapshot,
 		overrides?: Partial<PhaseProgressState>,
 	) => void;
 	refresh: () => void;
-	addLog: (
-		entry: string | string[],
-		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-	) => void;
 	mountedRef: { current: boolean };
 	endTurn: () => Promise<void>;
 }
@@ -198,9 +199,9 @@ export async function handleMissingActionDefinition({
 	snapshot,
 	actionCostResource,
 	showResolution,
+	addResolutionLog,
 	syncPhaseState,
 	refresh,
-	addLog,
 	mountedRef,
 	endTurn,
 }: HandleMissingActionDefinitionOptions) {
@@ -235,9 +236,17 @@ export async function handleMissingActionDefinition({
 		id: player.id,
 		name: player.name,
 	} satisfies ShowResolutionOptions['player'];
+	const resolutionSnapshot = createResolutionLogSnapshot({
+		lines: logLines,
+		timeline,
+		summaries: [],
+		source: resolutionSource,
+		action: actionMeta,
+		player: resolutionPlayer,
+		actorLabel: 'Played by',
+	});
 	syncPhaseState(snapshot);
 	refresh();
-	let shouldAddLog = true;
 	try {
 		await showResolution({
 			action: actionMeta,
@@ -250,12 +259,8 @@ export async function handleMissingActionDefinition({
 		});
 	} catch (error) {
 		void error;
-		addLog(logLines, resolutionPlayer);
-		shouldAddLog = false;
 	}
-	if (shouldAddLog) {
-		addLog(logLines, resolutionPlayer);
-	}
+	addResolutionLog(resolutionSnapshot);
 	if (!mountedRef.current) {
 		return;
 	}
@@ -276,10 +281,7 @@ interface PresentResolutionOptions {
 	summaries: string[];
 	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
-	addLog: (
-		entry: string | string[],
-		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-	) => void;
+	addResolutionLog: (resolution: ActionResolution) => void;
 	timeline: ActionLogLineDescriptor[];
 }
 
@@ -289,7 +291,7 @@ export async function presentResolutionOrLog({
 	summaries,
 	player,
 	showResolution,
-	addLog,
+	addResolutionLog,
 	timeline,
 }: PresentResolutionOptions) {
 	const source = {
@@ -315,6 +317,15 @@ export async function presentResolutionOrLog({
 		});
 	} catch (error) {
 		void error;
-		addLog(logLines, playerIdentity);
+		const snapshot = createResolutionLogSnapshot({
+			lines: logLines,
+			timeline,
+			summaries,
+			source,
+			action,
+			player: playerIdentity,
+			actorLabel: 'Played by',
+		});
+		addResolutionLog(snapshot);
 	}
 }

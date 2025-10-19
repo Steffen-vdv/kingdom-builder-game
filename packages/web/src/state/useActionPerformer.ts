@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import type {
-	ActionExecuteErrorResponse,
-	ActionParametersPayload,
-} from '@kingdom-builder/protocol/actions';
-import type {
-	SessionPlayerStateSnapshot,
-	SessionRequirementFailure,
-	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import {
 	diffStepSnapshots,
 	logContent,
@@ -23,8 +16,12 @@ import {
 	handleMissingActionDefinition,
 	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
+import { createFailureResolutionSnapshot } from './actionResolutionLog';
 import type { Action } from './actionTypes';
-import type { ShowResolutionOptions } from './useActionResolution';
+import type {
+	ActionResolution,
+	ShowResolutionOptions,
+} from './useActionResolution';
 import {
 	buildActionLogTimeline,
 	buildDevelopActionLogTimeline,
@@ -40,45 +37,14 @@ import {
 	markFatalSessionError,
 	isFatalSessionError,
 } from './sessionErrors';
-import {
-	getActionErrorMetadata,
-	setActionErrorMetadata,
-} from './actionErrorMetadata';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
 import { getSessionSnapshot } from './sessionStateStore';
-
-type ActionRequirementFailures =
-	ActionExecuteErrorResponse['requirementFailures'];
-type ActionExecutionError = Error & {
-	requirementFailure?: SessionRequirementFailure;
-	requirementFailures?: ActionRequirementFailures;
-	fatal?: boolean;
-};
-
-function createActionExecutionError(
-	response: ActionExecuteErrorResponse,
-): ActionExecutionError {
-	const failure = new Error(response.error) as ActionExecutionError;
-	const metadata = getActionErrorMetadata(response);
-	if (response.requirementFailure) {
-		failure.requirementFailure = response.requirementFailure;
-	}
-	if (response.requirementFailures) {
-		failure.requirementFailures = response.requirementFailures;
-	}
-	if (response.fatal !== undefined) {
-		failure.fatal = response.fatal;
-	}
-	if (metadata) {
-		setActionErrorMetadata(failure, metadata);
-		if ('cause' in metadata && metadata.cause !== undefined) {
-			failure.cause = metadata.cause;
-		}
-	}
-	return failure;
-}
+import {
+	createActionExecutionError,
+	type ActionExecutionError,
+} from './actionExecutionError';
 interface UseActionPerformerOptions {
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
@@ -86,10 +52,7 @@ interface UseActionPerformerOptions {
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
-	addLog: (
-		entry: string | string[],
-		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-	) => void;
+	addResolutionLog: (resolution: ActionResolution) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	syncPhaseState: (
 		snapshot: SessionSnapshot,
@@ -107,7 +70,7 @@ export function useActionPerformer({
 	sessionId,
 	actionCostResource,
 	registries,
-	addLog,
+	addResolutionLog,
 	showResolution,
 	syncPhaseState,
 	refresh,
@@ -199,9 +162,9 @@ export function useActionPerformer({
 						snapshot: snapshotAfter,
 						actionCostResource,
 						showResolution,
+						addResolutionLog,
 						syncPhaseState,
 						refresh,
-						addLog,
 						mountedRef,
 						endTurn,
 					});
@@ -273,7 +236,7 @@ export function useActionPerformer({
 					summaries: filtered,
 					player: playerIdentity,
 					showResolution,
-					addLog,
+					addResolutionLog,
 					timeline,
 				});
 				if (!mountedRef.current || snapshotAfter.game.conclusion) {
@@ -308,15 +271,21 @@ export function useActionPerformer({
 					message = translateRequirementFailure(requirementFailure, context);
 				}
 				pushErrorToast(message);
-				const failureLog = `Failed to play ${icon} ${action.name}: ${message}`;
-				addLog(failureLog, {
-					id: playerBefore.id,
-					name: playerBefore.name,
+				const failureDetail = `Failed to play ${icon} ${action.name}: ${message}`;
+				const resolutionSnapshot = createFailureResolutionSnapshot({
+					action,
+					stepDefinition: context.actions.get(action.id),
+					player: {
+						id: playerBefore.id,
+						name: playerBefore.name,
+					},
+					detail: failureDetail,
 				});
+				addResolutionLog(resolutionSnapshot);
 			}
 		},
 		[
-			addLog,
+			addResolutionLog,
 			endTurn,
 			mountedRef,
 			registries,
