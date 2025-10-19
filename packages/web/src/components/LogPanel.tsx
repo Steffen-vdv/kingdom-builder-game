@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
+import { ResolutionCard } from './ResolutionCard';
 
 interface LogPanelProps {
 	isOpen: boolean;
@@ -12,8 +13,52 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	const { log: entries, logOverflowed, sessionSnapshot } = useGameEngine();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
-	const listRef = useAnimate<HTMLUListElement>();
+	const listRef = useAnimate<HTMLDivElement>();
 	const pendingScrollRef = useRef(false);
+	const noop = useCallback(() => {}, []);
+	const [playerA, playerB] = sessionSnapshot.game.players;
+	const accentClassForPlayer = useCallback(
+		(playerId: string) => {
+			if (playerA && playerId === playerA.id) {
+				return clsx(
+					'border-blue-400/50',
+					'shadow-[0_18px_48px_rgba(37,99,235,0.25)]',
+					'dark:border-blue-300/40',
+					'dark:shadow-[0_24px_54px_rgba(37,99,235,0.35)]',
+				);
+			}
+			if (playerB && playerId === playerB.id) {
+				return clsx(
+					'border-rose-400/50',
+					'shadow-[0_18px_48px_rgba(190,18,60,0.25)]',
+					'dark:border-rose-300/40',
+					'dark:shadow-[0_24px_54px_rgba(244,63,94,0.35)]',
+				);
+			}
+			return clsx(
+				'border-slate-300/40',
+				'shadow-[0_18px_48px_rgba(15,23,42,0.18)]',
+				'dark:border-slate-500/40',
+				'dark:shadow-[0_24px_48px_rgba(15,23,42,0.4)]',
+			);
+		},
+		[playerA, playerB],
+	);
+	const resolvePlayerName = useCallback(
+		(playerId: string, fallback?: string | null) => {
+			const player = sessionSnapshot.game.players.find(
+				(candidate) => candidate.id === playerId,
+			);
+			if (player?.name?.trim()) {
+				return player.name;
+			}
+			if (fallback?.trim()) {
+				return fallback;
+			}
+			return player?.id ?? null;
+		},
+		[sessionSnapshot.game.players],
+	);
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -123,9 +168,18 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		'relative flex h-full flex-col overflow-y-auto px-6 pb-6 pt-6',
 		'custom-scrollbar',
 	);
-	const listClasses = clsx(
-		'mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200',
-	);
+	const listClasses = 'mt-4 flex flex-col gap-6';
+	const entryWrapperClass = 'space-y-3';
+	const entryHeaderClasses =
+		'flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400';
+	const entryTimeClasses =
+		'font-mono tracking-[0.25em] text-slate-500 dark:text-slate-400';
+	const entryPlayerClasses =
+		'text-[0.7rem] font-semibold tracking-[0.25em] text-slate-600 dark:text-slate-300';
+	const entryContainerBaseClasses =
+		'rounded-[1.875rem] border border-white/40 bg-white/70 p-1.5 shadow-lg backdrop-blur-sm transition-shadow dark:border-white/10 dark:bg-slate-900/60 dark:shadow-[0_24px_48px_rgba(0,0,0,0.45)]';
+	const legacyEntryClasses =
+		'rounded-[1.5rem] border border-white/40 bg-white/80 p-4 text-sm text-slate-700 shadow-inner shadow-amber-500/10 whitespace-pre-wrap dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200';
 	const closeButtonClasses = clsx(
 		'flex h-8 w-8 items-center justify-center rounded-full border',
 		'border-rose-500 bg-rose-500 text-base font-semibold leading-none text-white',
@@ -183,33 +237,74 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		<>
 			{header}
 			{overflowNotice}
-			<ul ref={listRef} className={listClasses}>
+			<div ref={listRef} className={listClasses} role="list">
 				{entries.map((entry) => {
-					const [playerA, playerB] = sessionSnapshot.game.players;
-					const aId = playerA?.id;
-					const bId = playerB?.id;
-					const colorClass =
-						entry.playerId === aId
-							? 'log-entry-a'
-							: entry.playerId === bId
-								? 'log-entry-b'
-								: '';
-					const entryClasses = clsx(
-						'text-sm font-mono leading-relaxed',
-						'whitespace-pre-wrap',
-						colorClass,
+					const accentClass = accentClassForPlayer(entry.playerId);
+					const entryContainerClasses = clsx(
+						entryContainerBaseClasses,
+						accentClass,
 					);
+					const playerName =
+						entry.kind === 'resolution'
+							? resolvePlayerName(
+									entry.playerId,
+									entry.resolution.player?.name ??
+										entry.resolution.player?.id ??
+										null,
+								)
+							: resolvePlayerName(entry.playerId);
+					const header = (
+						<div className={entryHeaderClasses} data-log-entry-header>
+							<span className={entryTimeClasses}>{entry.time}</span>
+							{playerName ? (
+								<>
+									<span aria-hidden="true" className="text-slate-400">
+										—
+									</span>
+									<span className={entryPlayerClasses}>{playerName}</span>
+								</>
+							) : null}
+						</div>
+					);
+					if (entry.kind !== 'resolution') {
+						return (
+							<article
+								key={entry.id}
+								id={`game-log-entry-${entry.id}`}
+								data-log-entry-id={entry.id}
+								data-log-entry-kind={entry.kind}
+								className={entryWrapperClass}
+								role="listitem"
+							>
+								{header}
+								<div className={entryContainerClasses}>
+									<div className={legacyEntryClasses} data-log-entry-fallback>
+										{entry.text}
+									</div>
+								</div>
+							</article>
+						);
+					}
 					return (
-						<li
+						<article
 							key={entry.id}
 							id={`game-log-entry-${entry.id}`}
-							className={entryClasses}
+							data-log-entry-id={entry.id}
+							data-log-entry-kind={entry.kind}
+							className={entryWrapperClass}
+							role="listitem"
 						>
-							[{entry.time}] {entry.text}
-						</li>
+							{header}
+							<div className={entryContainerClasses}>
+								<ResolutionCard
+									resolution={entry.resolution}
+									onContinue={noop}
+								/>
+							</div>
+						</article>
 					);
 				})}
-			</ul>
+			</div>
 		</>
 	);
 

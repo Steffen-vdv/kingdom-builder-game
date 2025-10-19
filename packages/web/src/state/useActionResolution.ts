@@ -12,74 +12,31 @@ import {
 	isCompleteTimeline,
 } from './resolutionTimeline';
 import { ACTION_EFFECT_DELAY } from './useGameLog';
+import {
+	resolveActorLabel,
+	isPhaseSourceDetail,
+	shouldAppendPhaseResolution,
+} from './useActionResolution.helpers';
 
 interface UseActionResolutionOptions {
 	addLog: (
 		entry: string | string[],
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
+	addResolutionLog?: (resolution: ActionResolution) => void;
 	setTrackedTimeout: (callback: () => void, delay: number) => number;
 	timeScaleRef: React.MutableRefObject<number>;
 	mountedRef: React.MutableRefObject<boolean>;
-}
-
-function resolveActorLabel(
-	label: string | undefined,
-	source: ResolutionSource,
-	action: ResolutionActionMeta | undefined,
-): string | undefined {
-	const trimmed = label?.trim();
-	if (trimmed) {
-		return trimmed;
-	}
-	if (typeof source === 'string') {
-		if (source === 'action') {
-			return action?.name?.trim() || undefined;
-		}
-		return undefined;
-	}
-	if (source.kind === 'action') {
-		return source.name?.trim() || action?.name?.trim() || undefined;
-	}
-	return undefined;
 }
 
 type ResolutionStateUpdater =
 	| ActionResolution
 	| null
 	| ((previous: ActionResolution | null) => ActionResolution | null);
-const isPhaseSourceDetail = (
-	source: ResolutionSource,
-): source is Extract<ResolutionSource, { kind: 'phase' }> =>
-	typeof source !== 'string' && source.kind === 'phase';
-
-const resolvePhaseIdentity = (
-	source: Extract<ResolutionSource, { kind: 'phase' }>,
-) => source.id?.trim() || source.label?.trim() || null;
-
-function shouldAppendPhaseResolution(
-	existing: ActionResolution | null,
-	nextSource: ResolutionSource,
-	requireAcknowledgement: boolean,
-) {
-	if (
-		!existing ||
-		existing.requireAcknowledgement ||
-		requireAcknowledgement ||
-		!isPhaseSourceDetail(existing.source) ||
-		!isPhaseSourceDetail(nextSource)
-	) {
-		return false;
-	}
-	const existingIdentity = resolvePhaseIdentity(existing.source);
-	const nextIdentity = resolvePhaseIdentity(nextSource);
-	return Boolean(
-		existingIdentity && nextIdentity && existingIdentity === nextIdentity,
-	);
-}
 
 function useActionResolution({
 	addLog,
+	addResolutionLog,
 	setTrackedTimeout,
 	timeScaleRef,
 	mountedRef,
@@ -90,6 +47,39 @@ function useActionResolution({
 	const resolutionRef = useRef<ActionResolution | null>(null);
 	const sequenceRef = useRef(0);
 	const resolverRef = useRef<(() => void) | null>(null);
+
+	const pushResolutionLog = useCallback(
+		(snapshot: ActionResolution) => {
+			if (!snapshot.lines.length) {
+				return;
+			}
+			const completeLines = [...snapshot.lines];
+			const completeTimeline = [...snapshot.timeline];
+			const resolutionLog: ActionResolution = {
+				...snapshot,
+				lines: completeLines,
+				visibleLines: [...completeLines],
+				timeline: completeTimeline,
+				visibleTimeline: [...completeTimeline],
+				summaries: [...snapshot.summaries],
+				isComplete: true,
+				requireAcknowledgement: false,
+				source:
+					typeof snapshot.source === 'string'
+						? snapshot.source
+						: { ...snapshot.source },
+				...(snapshot.player ? { player: { ...snapshot.player } } : {}),
+				...(snapshot.action ? { action: { ...snapshot.action } } : {}),
+				...(snapshot.actorLabel ? { actorLabel: snapshot.actorLabel } : {}),
+			};
+			if (addResolutionLog) {
+				addResolutionLog(resolutionLog);
+				return;
+			}
+			addLog(resolutionLog.lines, resolutionLog.player);
+		},
+		[addLog, addResolutionLog],
+	);
 
 	const setResolution = useCallback(
 		(updater: ResolutionStateUpdater) => {
@@ -147,8 +137,76 @@ function useActionResolution({
 				timeline && isCompleteTimeline(timelinePairs)
 					? timelinePairs
 					: deriveTimelineFromLines(entries);
+			const resolvedSource: ResolutionSource =
+				source ?? (action ? 'action' : 'phase');
+			const shouldPersist = isPhaseSourceDetail(resolvedSource);
+			const existingResolution = resolutionRef.current;
+			const shouldAppend = shouldAppendPhaseResolution(
+				existingResolution,
+				resolvedSource,
+				requireAcknowledgement,
+			);
+			const baseResolution = shouldAppend ? existingResolution : null;
+			const previousLines = baseResolution ? baseResolution.lines : [];
+			const previousVisible = baseResolution ? baseResolution.visibleLines : [];
+			const previousTimeline = baseResolution ? baseResolution.timeline : [];
+			const previousVisibleTimeline = baseResolution
+				? baseResolution.visibleTimeline
+				: [];
+			const startIndex = previousVisible.length;
+			const combinedLines = shouldAppend
+				? [...previousLines, ...entries]
+				: [...entries];
+			const combinedVisible = [...previousVisible];
+			const combinedTimeline = shouldAppend
+				? [...previousTimeline, ...resolvedTimelineEntries]
+				: [...resolvedTimelineEntries];
+			const combinedVisibleTimeline = [...previousVisibleTimeline];
+			const filteredSummaries = summaries
+				.map((item) => item?.trim())
+				.filter((item): item is string => Boolean(item));
+			const combinedSummaries = baseResolution
+				? [...baseResolution.summaries, ...filteredSummaries]
+				: filteredSummaries;
+			const resolvedActorLabel = resolveActorLabel(
+				actorLabel,
+				resolvedSource,
+				action,
+			);
+			const resolvedPlayer = baseResolution
+				? (player ?? baseResolution.player)
+				: player;
+			const resolvedAction = baseResolution
+				? (action ?? baseResolution.action)
+				: action;
+			const actorForState = baseResolution
+				? (resolvedActorLabel ?? baseResolution.actorLabel)
+				: resolvedActorLabel;
+			const resolvedSourceForState = baseResolution
+				? baseResolution.source
+				: resolvedSource;
+			const resolvedRequireAcknowledgement = baseResolution
+				? baseResolution.requireAcknowledgement
+				: requireAcknowledgement;
+
+			const finalSnapshot: ActionResolution = {
+				lines: [...combinedLines],
+				visibleLines: [...combinedLines],
+				timeline: [...combinedTimeline],
+				visibleTimeline: [...combinedTimeline],
+				isComplete: true,
+				summaries: [...combinedSummaries],
+				source:
+					typeof resolvedSourceForState === 'string'
+						? resolvedSourceForState
+						: { ...resolvedSourceForState },
+				requireAcknowledgement: resolvedRequireAcknowledgement,
+				...(actorForState ? { actorLabel: actorForState } : {}),
+				...(resolvedPlayer ? { player: { ...resolvedPlayer } } : {}),
+				...(resolvedAction ? { action: { ...resolvedAction } } : {}),
+			};
 			if (!mountedRef.current) {
-				addLog(entries, player);
+				pushResolutionLog(finalSnapshot);
 				return Promise.resolve();
 			}
 			sequenceRef.current += 1;
@@ -161,60 +219,6 @@ function useActionResolution({
 					resolverRef.current = null;
 					resolve();
 				};
-				const resolvedSource: ResolutionSource =
-					source ?? (action ? 'action' : 'phase');
-				const shouldPersist = isPhaseSourceDetail(resolvedSource);
-				const existingResolution = resolutionRef.current;
-				const shouldAppend = shouldAppendPhaseResolution(
-					existingResolution,
-					resolvedSource,
-					requireAcknowledgement,
-				);
-				const baseResolution = shouldAppend ? existingResolution : null;
-				const previousLines = baseResolution ? baseResolution.lines : [];
-				const previousVisible = baseResolution
-					? baseResolution.visibleLines
-					: [];
-				const previousTimeline = baseResolution ? baseResolution.timeline : [];
-				const previousVisibleTimeline = baseResolution
-					? baseResolution.visibleTimeline
-					: [];
-				const startIndex = previousVisible.length;
-				const combinedLines = shouldAppend
-					? [...previousLines, ...entries]
-					: [...entries];
-				const combinedVisible = [...previousVisible];
-				const combinedTimeline = shouldAppend
-					? [...previousTimeline, ...resolvedTimelineEntries]
-					: [...resolvedTimelineEntries];
-				const combinedVisibleTimeline = [...previousVisibleTimeline];
-				const filteredSummaries = summaries
-					.map((item) => item?.trim())
-					.filter((item): item is string => Boolean(item));
-				const combinedSummaries = baseResolution
-					? [...baseResolution.summaries, ...filteredSummaries]
-					: filteredSummaries;
-				const resolvedActorLabel = resolveActorLabel(
-					actorLabel,
-					resolvedSource,
-					action,
-				);
-				const resolvedPlayer = baseResolution
-					? (player ?? baseResolution.player)
-					: player;
-				const resolvedAction = baseResolution
-					? (action ?? baseResolution.action)
-					: action;
-				const actorForState = baseResolution
-					? (resolvedActorLabel ?? baseResolution.actorLabel)
-					: resolvedActorLabel;
-				const resolvedSourceForState = baseResolution
-					? baseResolution.source
-					: resolvedSource;
-				const resolvedRequireAcknowledgement = baseResolution
-					? baseResolution.requireAcknowledgement
-					: requireAcknowledgement;
-
 				setResolution({
 					lines: combinedLines,
 					visibleLines: combinedVisible,
@@ -259,11 +263,11 @@ function useActionResolution({
 							isComplete,
 						};
 					});
-					addLog(line, resolvedPlayer);
 				};
 
 				const scheduleReveal = (offset: number) => {
 					if (offset >= entries.length) {
+						pushResolutionLog(finalSnapshot);
 						if (!resolvedRequireAcknowledgement) {
 							const scale = timeScaleRef.current || 1;
 							const duration = ACTION_EFFECT_DELAY / scale;
@@ -321,7 +325,7 @@ function useActionResolution({
 		},
 		[
 			acknowledgeResolution,
-			addLog,
+			pushResolutionLog,
 			mountedRef,
 			setResolution,
 			setTrackedTimeout,

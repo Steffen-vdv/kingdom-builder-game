@@ -10,6 +10,7 @@ describe('useActionResolution', () => {
 		vi.useFakeTimers();
 		try {
 			const addLog = vi.fn();
+			const addResolutionLog = vi.fn();
 			const setTrackedTimeout = vi
 				.fn<(callback: () => void, delay: number) => number>()
 				.mockImplementation((callback, delay) => {
@@ -27,6 +28,7 @@ describe('useActionResolution', () => {
 					}, []);
 					return useActionResolution({
 						addLog,
+						addResolutionLog,
 						setTrackedTimeout,
 						timeScaleRef,
 						mountedRef,
@@ -54,11 +56,7 @@ describe('useActionResolution', () => {
 					action: actionMeta,
 				});
 			});
-			expect(addLog).toHaveBeenCalledTimes(1);
-			expect(addLog).toHaveBeenLastCalledWith('First reveal', {
-				id: 'A',
-				name: 'Player A',
-			});
+			expect(addResolutionLog).not.toHaveBeenCalled();
 			expect(result.current.resolution?.visibleLines).toEqual(['First reveal']);
 			expect(result.current.resolution?.visibleTimeline).toEqual([timeline[0]]);
 			expect(result.current.resolution?.source).toBe('action');
@@ -72,7 +70,7 @@ describe('useActionResolution', () => {
 				vi.advanceTimersByTime(ACTION_EFFECT_DELAY / 3 - 1);
 			});
 			expect(result.current.resolution?.visibleLines).toEqual(['First reveal']);
-			expect(addLog).toHaveBeenCalledTimes(1);
+			expect(addResolutionLog).not.toHaveBeenCalled();
 			act(() => {
 				vi.advanceTimersByTime(1);
 			});
@@ -82,11 +80,19 @@ describe('useActionResolution', () => {
 			]);
 			expect(result.current.resolution?.visibleTimeline).toEqual(timeline);
 			expect(result.current.resolution?.isComplete).toBe(true);
-			expect(addLog).toHaveBeenCalledTimes(2);
-			expect(addLog).toHaveBeenLastCalledWith('Second reveal', {
-				id: 'A',
-				name: 'Player A',
-			});
+			expect(addResolutionLog).toHaveBeenCalledTimes(1);
+			const loggedSnapshot = addResolutionLog.mock.calls[0][0];
+			expect(loggedSnapshot.lines).toEqual(['First reveal', 'Second reveal']);
+			expect(loggedSnapshot.visibleLines).toEqual(loggedSnapshot.lines);
+			expect(loggedSnapshot.timeline).toEqual(timeline);
+			expect(loggedSnapshot.visibleTimeline).toEqual(timeline);
+			expect(loggedSnapshot.isComplete).toBe(true);
+			expect(loggedSnapshot.requireAcknowledgement).toBe(false);
+			expect(loggedSnapshot.source).toBe('action');
+			expect(loggedSnapshot.actorLabel).toBe('Test Action');
+			expect(loggedSnapshot.player).toEqual({ id: 'A', name: 'Player A' });
+			expect(loggedSnapshot.action).toEqual(actionMeta);
+			expect(addLog).not.toHaveBeenCalled();
 			const resolvedState = { done: false };
 			void resolutionPromise.then(() => {
 				resolvedState.done = true;
@@ -109,6 +115,7 @@ describe('useActionResolution', () => {
 		vi.useFakeTimers();
 		try {
 			const addLog = vi.fn();
+			const addResolutionLog = vi.fn();
 			const setTrackedTimeout = vi
 				.fn<(callback: () => void, delay: number) => number>()
 				.mockImplementation((callback, delay) => {
@@ -124,6 +131,7 @@ describe('useActionResolution', () => {
 				}, []);
 				return useActionResolution({
 					addLog,
+					addResolutionLog,
 					setTrackedTimeout,
 					timeScaleRef,
 					mountedRef,
@@ -170,6 +178,74 @@ describe('useActionResolution', () => {
 		vi.useFakeTimers();
 		try {
 			const addLog = vi.fn();
+			const addResolutionLog = vi.fn();
+			const setTrackedTimeout = vi
+				.fn<(callback: () => void, delay: number) => number>()
+				.mockImplementation((callback, delay) => {
+					return window.setTimeout(callback, delay);
+				});
+			const { result } = renderHook(() => {
+				const timeScaleRef = React.useRef(1);
+				const mountedRef = React.useRef(true);
+				React.useEffect(() => {
+					return () => {
+						mountedRef.current = false;
+					};
+				}, []);
+				return useActionResolution({
+					addLog,
+					addResolutionLog,
+					setTrackedTimeout,
+					timeScaleRef,
+					mountedRef,
+				});
+			});
+			let resolutionPromise: Promise<void> = Promise.resolve();
+			act(() => {
+				resolutionPromise = result.current.showResolution({
+					lines: ['Auto line'],
+					requireAcknowledgement: false,
+				});
+			});
+			expect(result.current.resolution?.requireAcknowledgement).toBe(false);
+			expect(result.current.resolution?.visibleTimeline).toEqual([
+				{ text: 'Auto line', depth: 0, kind: 'headline' },
+			]);
+			expect(addResolutionLog).toHaveBeenCalledTimes(1);
+			const autoSnapshot = addResolutionLog.mock.calls[0][0];
+			expect(autoSnapshot.lines).toEqual(['Auto line']);
+			expect(autoSnapshot.visibleLines).toEqual(['Auto line']);
+			expect(autoSnapshot.timeline).toEqual([
+				{ text: 'Auto line', depth: 0, kind: 'headline' },
+			]);
+			expect(autoSnapshot.visibleTimeline).toEqual([
+				{ text: 'Auto line', depth: 0, kind: 'headline' },
+			]);
+			expect(autoSnapshot.requireAcknowledgement).toBe(false);
+			expect(autoSnapshot.isComplete).toBe(true);
+			expect(addLog).not.toHaveBeenCalled();
+			expect(setTrackedTimeout).toHaveBeenLastCalledWith(
+				expect.any(Function),
+				ACTION_EFFECT_DELAY,
+			);
+			act(() => {
+				vi.advanceTimersByTime(ACTION_EFFECT_DELAY - 1);
+			});
+			expect(result.current.resolution).not.toBeNull();
+			act(() => {
+				vi.advanceTimersByTime(1);
+			});
+			await resolutionPromise;
+			expect(result.current.resolution).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('falls back to addLog when addResolutionLog is absent', async () => {
+		vi.useFakeTimers();
+		try {
+			const addLog = vi.fn();
 			const setTrackedTimeout = vi
 				.fn<(callback: () => void, delay: number) => number>()
 				.mockImplementation((callback, delay) => {
@@ -193,25 +269,23 @@ describe('useActionResolution', () => {
 			let resolutionPromise: Promise<void> = Promise.resolve();
 			act(() => {
 				resolutionPromise = result.current.showResolution({
-					lines: ['Auto line'],
-					requireAcknowledgement: false,
+					lines: ['Fallback line'],
+					player: {
+						id: 'F',
+						name: 'Fallback Player',
+					},
 				});
 			});
-			expect(result.current.resolution?.requireAcknowledgement).toBe(false);
-			expect(result.current.resolution?.visibleTimeline).toEqual([
-				{ text: 'Auto line', depth: 0, kind: 'headline' },
-			]);
-			expect(addLog).toHaveBeenCalledWith('Auto line', undefined);
-			expect(setTrackedTimeout).toHaveBeenLastCalledWith(
-				expect.any(Function),
-				ACTION_EFFECT_DELAY,
-			);
 			act(() => {
-				vi.advanceTimersByTime(ACTION_EFFECT_DELAY - 1);
+				vi.runAllTimers();
 			});
-			expect(result.current.resolution).not.toBeNull();
+			expect(addLog).toHaveBeenCalledTimes(1);
+			expect(addLog).toHaveBeenCalledWith(['Fallback line'], {
+				id: 'F',
+				name: 'Fallback Player',
+			});
 			act(() => {
-				vi.advanceTimersByTime(1);
+				result.current.acknowledgeResolution();
 			});
 			await resolutionPromise;
 			expect(result.current.resolution).toBeNull();

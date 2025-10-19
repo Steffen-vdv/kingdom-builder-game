@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-import type {
-	ActionExecuteErrorResponse,
-	ActionParametersPayload,
-} from '@kingdom-builder/protocol/actions';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type {
 	SessionPlayerStateSnapshot,
-	SessionRequirementFailure,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
@@ -18,9 +14,13 @@ import {
 	handleMissingActionDefinition,
 	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
+import { createFailureResolutionSnapshot } from './actionResolutionLog';
 import { createActionErrorHandler } from './useActionErrorHandler';
 import type { Action } from './actionTypes';
-import type { ShowResolutionOptions } from './useActionResolution';
+import type {
+	ActionResolution,
+	ShowResolutionOptions,
+} from './useActionResolution';
 import {
 	buildActionLogTimeline,
 	buildDevelopActionLogTimeline,
@@ -40,37 +40,7 @@ import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
 import { getSessionSnapshot } from './sessionStateStore';
-
-type ActionRequirementFailures =
-	ActionExecuteErrorResponse['requirementFailures'];
-type ActionExecutionError = Error & {
-	requirementFailure?: SessionRequirementFailure;
-	requirementFailures?: ActionRequirementFailures;
-	fatal?: boolean;
-};
-
-function createActionExecutionError(
-	response: ActionExecuteErrorResponse,
-): ActionExecutionError {
-	const failure = new Error(response.error) as ActionExecutionError;
-	const metadata = getActionErrorMetadata(response);
-	if (response.requirementFailure) {
-		failure.requirementFailure = response.requirementFailure;
-	}
-	if (response.requirementFailures) {
-		failure.requirementFailures = response.requirementFailures;
-	}
-	if (response.fatal !== undefined) {
-		failure.fatal = response.fatal;
-	}
-	if (metadata) {
-		setActionErrorMetadata(failure, metadata);
-		if ('cause' in metadata && metadata.cause !== undefined) {
-			failure.cause = metadata.cause;
-		}
-	}
-	return failure;
-}
+import { createActionExecutionError } from './actionExecutionError';
 interface UseActionPerformerOptions {
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
@@ -78,8 +48,9 @@ interface UseActionPerformerOptions {
 		SessionRegistries,
 		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
-	addLog: (
-		entry: string | string[],
+	addResolutionLog: (resolution: ActionResolution) => void;
+	addLog?: (
+		entry: string | readonly string[],
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
@@ -99,7 +70,8 @@ export function useActionPerformer({
 	sessionId,
 	actionCostResource,
 	registries,
-	addLog,
+	addResolutionLog,
+	addLog: legacyAddLog,
 	showResolution,
 	syncPhaseState,
 	refresh,
@@ -110,6 +82,12 @@ export function useActionPerformer({
 	resourceKeys,
 	onFatalSessionError,
 }: UseActionPerformerOptions) {
+	const logResolution = (resolution: ActionResolution) => {
+		if (legacyAddLog) {
+			legacyAddLog(resolution.lines, resolution.player);
+		}
+		addResolutionLog(resolution);
+	};
 	const perform = useCallback(
 		async (action: Action, params?: ActionParametersPayload) => {
 			const notifyFatal = (error: unknown) => {
@@ -150,6 +128,19 @@ export function useActionPerformer({
 				() => new Error('Missing active player before action'),
 			);
 			const before = snapshotPlayer(playerBefore);
+			const recordFailureLog = (
+				entry: string | string[],
+				player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
+			) => {
+				const detail = Array.isArray(entry) ? entry.join(' ') : entry;
+				const resolutionSnapshot = createFailureResolutionSnapshot({
+					action,
+					stepDefinition: contextRef.current.actions.get(action.id),
+					player: player ?? { id: playerBefore.id, name: playerBefore.name },
+					detail,
+				});
+				logResolution(resolutionSnapshot);
+			};
 			const handleError = createActionErrorHandler({
 				fatalErrorRef,
 				notifyFatal,
@@ -157,7 +148,7 @@ export function useActionPerformer({
 				action,
 				player: playerBefore,
 				pushErrorToast,
-				addLog,
+				addLog: recordFailureLog,
 			});
 			try {
 				const response = await performSessionAction(
@@ -202,9 +193,9 @@ export function useActionPerformer({
 						snapshot: snapshotAfter,
 						actionCostResource,
 						showResolution,
+						addResolutionLog,
 						syncPhaseState,
 						refresh,
-						addLog,
 						mountedRef,
 						endTurn,
 					});
@@ -268,7 +259,7 @@ export function useActionPerformer({
 						name: playerAfter.name,
 					},
 					showResolution,
-					addLog,
+					addResolutionLog: logResolution,
 					timeline,
 				})
 					.then(() => {
@@ -289,10 +280,41 @@ export function useActionPerformer({
 				if (handleError(error)) {
 					throw error;
 				}
+				if (!error || typeof error !== 'object') {
+					return;
+				}
+				const metadata = getActionErrorMetadata(error);
+				const contextDetails = {
+					...(metadata?.context ?? {}),
+					action: {
+						id: action.id,
+						name: action.name,
+						definition: contextRef.current.actions.get(action.id),
+					},
+					params: params ?? null,
+					player: {
+						before: {
+							id: playerBefore.id,
+							name: playerBefore.name,
+						},
+					},
+					snapshot: snapshotBefore,
+				};
+				setActionErrorMetadata(error, {
+					...(metadata ?? {
+						request: {
+							sessionId,
+							actionId: action.id,
+							...(params ? { params } : {}),
+						},
+					}),
+					context: contextDetails,
+				});
 			}
 		},
 		[
-			addLog,
+			addResolutionLog,
+			legacyAddLog,
 			endTurn,
 			mountedRef,
 			registries,

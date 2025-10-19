@@ -157,13 +157,14 @@ export function GameProviderInner({
 		clearTrackedTimeout,
 	});
 
-	const { log, logOverflowed, addLog } = useGameLog({
+	const { log, logOverflowed, addLog, addResolutionLog } = useGameLog({
 		sessionSnapshot,
 	});
 
 	const { resolution, showResolution, acknowledgeResolution } =
 		useActionResolution({
 			addLog,
+			addResolutionLog,
 			setTrackedTimeout,
 			timeScaleRef,
 			mountedRef,
@@ -206,7 +207,7 @@ export function GameProviderInner({
 	useCompensationLogger({
 		sessionId,
 		sessionSnapshot,
-		addLog,
+		addResolutionLog,
 		resourceKeys,
 		registries,
 	});
@@ -215,7 +216,7 @@ export function GameProviderInner({
 		sessionId,
 		actionCostResource,
 		registries,
-		addLog,
+		addResolutionLog,
 		showResolution: handleShowResolution,
 		syncPhaseState: applyPhaseSnapshot,
 		refresh,

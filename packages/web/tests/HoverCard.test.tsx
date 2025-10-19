@@ -244,6 +244,7 @@ describe('<HoverCard />', () => {
 	it('renders formatted phase resolutions and logs phase advances', async () => {
 		vi.useFakeTimers();
 		const addLog = vi.fn();
+		const addResolutionLog = vi.fn();
 		const ResolutionHarness = () => {
 			const timeScaleRef = React.useRef(1);
 			const mountedRef = React.useRef(true);
@@ -255,6 +256,7 @@ describe('<HoverCard />', () => {
 			const { resolution, showResolution, acknowledgeResolution } =
 				useActionResolution({
 					addLog,
+					addResolutionLog,
 					setTrackedTimeout: (callback, delay) =>
 						window.setTimeout(callback, delay),
 					timeScaleRef,
@@ -401,10 +403,7 @@ describe('<HoverCard />', () => {
 		const firstLine = formatted.lines[0]!;
 		const firstLineMatches = screen.getAllByText(firstLine);
 		expect(firstLineMatches.length).toBeGreaterThan(0);
-		expect(addLog).toHaveBeenCalledWith(firstLine, {
-			id: sessionPlayer.id,
-			name: sessionPlayer.name,
-		});
+		expect(addResolutionLog).not.toHaveBeenCalled();
 		act(() => {
 			vi.advanceTimersByTime(ACTION_EFFECT_DELAY - 1);
 		});
@@ -418,10 +417,16 @@ describe('<HoverCard />', () => {
 		});
 		const visibleMatches = screen.getAllByText(effectMatcher);
 		expect(visibleMatches.length).toBeGreaterThanOrEqual(1);
-		expect(addLog).toHaveBeenCalledWith(secondLine, {
+		expect(addResolutionLog).toHaveBeenCalledTimes(1);
+		const phaseSnapshot = addResolutionLog.mock.calls[0][0];
+		expect(phaseSnapshot.lines).toEqual(formatted.lines);
+		expect(phaseSnapshot.visibleLines).toEqual(formatted.lines);
+		expect(phaseSnapshot.player).toEqual({
 			id: sessionPlayer.id,
 			name: sessionPlayer.name,
 		});
+		expect(phaseSnapshot.requireAcknowledgement).toBe(false);
+		expect(addLog).not.toHaveBeenCalled();
 		expect(continueButton).not.toBeDisabled();
 		act(() => {
 			mockGame.acknowledgeResolution();
