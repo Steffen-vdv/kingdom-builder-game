@@ -19,9 +19,21 @@ export type AdvanceFn = (
 	engineContext: EngineContext,
 ) => AdvanceResultValue | Promise<AdvanceResultValue>;
 
+export type ContinueAfterActionFn = (
+	actionId: string,
+	engineContext: EngineContext,
+	result: PerformActionResult,
+) => boolean | Promise<boolean>;
+
+export type ShouldAdvancePhaseFn = (
+	engineContext: EngineContext,
+) => boolean | Promise<boolean>;
+
 export interface AIDependencies {
 	performAction: PerformActionFn;
 	advance: AdvanceFn;
+	continueAfterAction?: ContinueAfterActionFn;
+	shouldAdvancePhase?: ShouldAdvancePhaseFn;
 }
 
 export type AIController = (
@@ -55,6 +67,12 @@ export class AISystem {
 			...this.dependencies,
 			...(overrides || {}),
 		} as AIDependencies;
+		if (!dependencies.continueAfterAction) {
+			dependencies.continueAfterAction = () => true;
+		}
+		if (!dependencies.shouldAdvancePhase) {
+			dependencies.shouldAdvancePhase = () => true;
+		}
 		await controller(engineContext, dependencies);
 		return true;
 	}
@@ -79,17 +97,26 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			return;
 		}
 
+		const continueAfterAction =
+			dependencies.continueAfterAction ?? (() => true);
+		const shouldAdvancePhase = dependencies.shouldAdvancePhase ?? (() => true);
+
 		const finishActionPhaseAsync = async () => {
 			if (engineContext.activePlayer.id !== playerId) {
 				return;
 			}
-			if (!engineContext.phases[engineContext.game.phaseIndex]?.action) {
+			const activePhase = engineContext.phases[engineContext.game.phaseIndex];
+			if (!activePhase?.action) {
 				return;
 			}
 			const remaining =
 				engineContext.activePlayer.resources[actionPointResourceKey];
 			if (typeof remaining === 'number' && remaining > 0) {
 				engineContext.activePlayer.resources[actionPointResourceKey] = 0;
+			}
+			const shouldAdvance = await shouldAdvancePhase(engineContext);
+			if (!shouldAdvance) {
+				return;
 			}
 			await dependencies.advance(engineContext);
 		};
@@ -113,7 +140,18 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) > 0
 		) {
 			try {
-				await dependencies.performAction(TAX_ACTION_ID, engineContext);
+				const result = await dependencies.performAction(
+					TAX_ACTION_ID,
+					engineContext,
+				);
+				const shouldContinue = await continueAfterAction(
+					TAX_ACTION_ID,
+					engineContext,
+					result,
+				);
+				if (!shouldContinue) {
+					return;
+				}
 			} catch (error) {
 				void error;
 				await finishActionPhaseAsync();
