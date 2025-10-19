@@ -171,8 +171,8 @@ vi.mock('../../src/state/sessionSelectors', () => ({
 }));
 
 function SessionInspector() {
-	const { sessionState } = useGameEngine();
-	return <div data-testid="session-turn">turn:{sessionState.game.turn}</div>;
+	const { sessionSnapshot } = useGameEngine();
+	return <div data-testid="session-turn">turn:{sessionSnapshot.game.turn}</div>;
 }
 
 describe('GameProvider', () => {

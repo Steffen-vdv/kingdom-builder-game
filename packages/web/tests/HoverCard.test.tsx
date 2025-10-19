@@ -87,7 +87,7 @@ function createHoverCardScenario(): HoverCardScenario {
 	});
 	const sessionView = selectSessionView(sessionState, scaffold.registries);
 	mockGame.selectors.sessionView = sessionView;
-	mockGame.sessionState = sessionState;
+	mockGame.sessionSnapshot = sessionState;
 	const translationContext = mockGame.translationContext;
 	const costIcon = ensureIconDescriptor(
 		translationContext.assets.resources,

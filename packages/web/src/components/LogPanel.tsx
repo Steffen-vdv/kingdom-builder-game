@@ -9,7 +9,7 @@ interface LogPanelProps {
 }
 
 export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
-	const { log: entries, logOverflowed, sessionState } = useGameEngine();
+	const { log: entries, logOverflowed, sessionSnapshot } = useGameEngine();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const listRef = useAnimate<HTMLUListElement>();
@@ -185,7 +185,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 			{overflowNotice}
 			<ul ref={listRef} className={listClasses}>
 				{entries.map((entry) => {
-					const [playerA, playerB] = sessionState.game.players;
+					const [playerA, playerB] = sessionSnapshot.game.players;
 					const aId = playerA?.id;
 					const bId = playerB?.id;
 					const colorClass =

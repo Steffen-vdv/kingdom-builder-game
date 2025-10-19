@@ -183,7 +183,7 @@ function createResourceBarScenario() {
 		});
 	const sessionView = selectSessionView(sessionState, scaffold.registries);
 	mockGame.selectors.sessionView = sessionView;
-	mockGame.sessionState = sessionState;
+	mockGame.sessionSnapshot = sessionState;
 	mockGame.handleHoverCard = handleHoverCard;
 	mockGame.clearHoverCard = clearHoverCard;
 	const metadataSelectors = createTestRegistryMetadata(

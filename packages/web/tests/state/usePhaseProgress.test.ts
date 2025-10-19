@@ -87,7 +87,7 @@ describe('usePhaseProgress', () => {
 		const { result, rerender } = renderHook(
 			({ fatalHandler }: { fatalHandler: (error: unknown) => void }) =>
 				usePhaseProgress({
-					sessionState: sessionSnapshot,
+					sessionSnapshot: sessionSnapshot,
 					sessionId: 'session-1',
 					actionCostResource,
 					mountedRef: { current: true },
@@ -171,7 +171,7 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				sessionState: sessionSnapshot,
+				sessionSnapshot: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,
 				mountedRef: { current: true },
@@ -244,7 +244,7 @@ describe('usePhaseProgress', () => {
 		const onFatalSessionError = vi.fn();
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				sessionState: sessionSnapshot,
+				sessionSnapshot: sessionSnapshot,
 				sessionId: 'session-1',
 				actionCostResource,
 				mountedRef: { current: true },
@@ -315,7 +315,7 @@ describe('usePhaseProgress', () => {
 		});
 		const { result } = renderHook(() =>
 			usePhaseProgress({
-				sessionState: sessionSnapshot,
+				sessionSnapshot: sessionSnapshot,
 				sessionId: 'session-ai',
 				actionCostResource,
 				mountedRef: { current: true },

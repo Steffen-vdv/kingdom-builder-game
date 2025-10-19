@@ -80,17 +80,17 @@ const phaseListItemLabelClassName = [
 ].join(' ');
 
 export default function PhasePanel() {
-	const { sessionState, selectors, phase, requests, resolution } =
+	const { sessionSnapshot, selectors, phase, requests, resolution } =
 		useGameEngine();
 	const { sessionView } = selectors;
 	const phases = useMemo(
 		() =>
-			sessionState.phases.map((phaseDefinition) => ({
+			sessionSnapshot.phases.map((phaseDefinition) => ({
 				id: phaseDefinition.id,
 				label: phaseDefinition.label ?? phaseDefinition.id,
 				icon: phaseDefinition.icon?.trim() ?? '',
 			})),
-		[sessionState.phases],
+		[sessionSnapshot.phases],
 	);
 	const currentPhaseDefinition = useMemo(
 		() =>
@@ -100,7 +100,9 @@ export default function PhasePanel() {
 		[phases, phase.currentPhaseId],
 	);
 	const activePlayerName =
-		sessionView.active?.name ?? sessionState.game.players[0]?.name ?? 'Player';
+		sessionView.active?.name ??
+		sessionSnapshot.game.players[0]?.name ??
+		'Player';
 	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
 	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
 	const handleEndTurnClick = () => {
@@ -117,7 +119,7 @@ export default function PhasePanel() {
 							Turn
 						</span>
 						<span className="text-base tracking-[0.15em]">
-							{sessionState.game.turn}
+							{sessionSnapshot.game.turn}
 						</span>
 					</span>
 					<span className="sr-only">Active player:</span>
