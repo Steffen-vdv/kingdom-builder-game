@@ -327,6 +327,7 @@ export function createActionsPanelGame({
 		...createActionsPanelState({
 			actionCostResource,
 			phaseId: phaseDefinition.id,
+			session,
 		}),
 		metadata,
 		sessionRegistries,

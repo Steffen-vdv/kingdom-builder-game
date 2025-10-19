@@ -1,7 +1,13 @@
 import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
+	SessionPlayerId,
 	SessionRuleSnapshot,
 	SessionSnapshot,
+	SimulateUpcomingPhasesOptions,
+	SimulateUpcomingPhasesResult,
 } from '@kingdom-builder/protocol/session';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
@@ -18,7 +24,7 @@ import type { ReactNode } from 'react';
 import type {
 	RemoteSessionRecord,
 	Session,
-	SessionAdapter,
+	SessionActionMetadataSnapshot,
 	SessionResourceKey,
 } from './sessionTypes';
 
@@ -70,6 +76,11 @@ export interface GameEngineContextValue {
 	sessionId: string;
 	sessionSnapshot: SessionSnapshot;
 	cachedSessionSnapshot: SessionSnapshot;
+	/**
+	 * TODO(#session-migration): Replace remaining references with
+	 * `sessionSnapshot` once serialization consumers are updated.
+	 */
+	sessionState: SessionSnapshot;
 	selectors: SessionDerivedSelectors;
 	translationContext: TranslationContext;
 	ruleSnapshot: SessionRuleSnapshot;
@@ -87,6 +98,29 @@ export interface GameEngineContextValue {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;
 		refreshSession: RefreshSessionHandler;
+		hasAiController: (playerId: SessionPlayerId) => boolean;
+		readActionMetadata: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => SessionActionMetadataSnapshot;
+		subscribeActionMetadata: (
+			actionId: string,
+			params: ActionParametersPayload | undefined,
+			listener: (snapshot: SessionActionMetadataSnapshot) => void,
+		) => () => void;
+		getActionCosts: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => SessionActionCostMap;
+		getActionRequirements: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => SessionActionRequirementList;
+		enqueueTask: <T>(task: () => Promise<T> | T) => Promise<T>;
+		simulateUpcomingPhases: (
+			playerId: SessionPlayerId,
+			options?: SimulateUpcomingPhasesOptions,
+		) => SimulateUpcomingPhasesResult;
 	};
 	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;
@@ -114,19 +148,3 @@ export interface GameEngineContextValue {
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 }
-
-export interface LegacyGameEngineContextBridge {
-	/**
-	 * TODO(#session-migration): Remove direct EngineSession exposure once
-	 * all consumers rely on request helpers.
-	 */
-	session: SessionAdapter;
-	/**
-	 * TODO(#session-migration): Replace with `sessionSnapshot` in consuming
-	 * modules after the serialization audit completes.
-	 */
-	sessionState: SessionSnapshot;
-}
-
-export type LegacyGameEngineContextValue = GameEngineContextValue &
-	LegacyGameEngineContextBridge;

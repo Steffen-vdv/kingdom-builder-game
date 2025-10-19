@@ -227,6 +227,7 @@ function createMockGame() {
 		...createActionsPanelState({
 			actionCostResource,
 			phaseId: phases[0]?.id ?? 'phase.action',
+			session,
 		}),
 		logOverflowed: false,
 		session,

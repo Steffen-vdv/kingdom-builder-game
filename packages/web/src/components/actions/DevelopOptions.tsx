@@ -59,7 +59,6 @@ export default function DevelopOptions({
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -75,7 +74,7 @@ export default function DevelopOptions({
 	const entries = useMemo(() => {
 		return developments
 			.map((development) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = requests.getActionCosts(action.id, {
 					id: development.id,
 					landId: landIdForCost,
 				});
@@ -87,7 +86,7 @@ export default function DevelopOptions({
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	}, [developments, requests, action.id, landIdForCost, actionCostResource]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

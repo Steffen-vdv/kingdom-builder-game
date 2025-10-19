@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
@@ -8,6 +8,7 @@ import {
 	GameEngineContext,
 	GameProviderInner,
 } from '../../src/state/GameProviderInner';
+import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -125,16 +126,19 @@ vi.mock('../../src/state/sessionSdk', () => ({
 	updatePlayerName: vi.fn(() => Promise.resolve()),
 }));
 
-function ContextInspector() {
+interface ContextInspectorProps {
+	onInspect: (context: GameEngineContextValue) => void;
+}
+
+function ContextInspector({ onInspect }: ContextInspectorProps) {
 	const context = useContext(GameEngineContext);
 	if (!context) {
 		throw new Error('Missing game engine context');
 	}
-	return (
-		<div data-testid="adapter-id">
-			{(context.session as { id?: string }).id ?? ''}
-		</div>
-	);
+	useEffect(() => {
+		onInspect(context);
+	}, [context, onInspect]);
+	return <div data-testid="context-ready" />;
 }
 
 describe('GameProviderInner', () => {
@@ -200,6 +204,7 @@ describe('GameProviderInner', () => {
 			cachedSessionSnapshot: sessionState,
 		});
 
+		const inspect = vi.fn<(context: GameEngineContextValue) => void>();
 		const { getByTestId } = render(
 			<GameProviderInner
 				darkMode
@@ -227,7 +232,7 @@ describe('GameProviderInner', () => {
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
 			>
-				<ContextInspector />
+				<ContextInspector onInspect={inspect} />
 			</GameProviderInner>,
 		);
 
@@ -236,7 +241,16 @@ describe('GameProviderInner', () => {
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionState).toBe(sessionState);
-		expect(getByTestId('adapter-id')).toHaveTextContent('adapter:test');
+		expect(getByTestId('context-ready')).toBeInTheDocument();
+		const inspectedContext = inspect.mock.calls.at(-1)?.[0];
+		if (!inspectedContext) {
+			throw new Error('Expected game engine context to be inspected');
+		}
+		expect(inspectedContext.requests.enqueueTask).toBe(enqueue);
+		expect(inspectedContext.requests.hasAiController(aiOpponent.id)).toBe(true);
+		expect(inspectedContext.requests.hasAiController(localPlayer.id)).toBe(
+			false,
+		);
 		cleanup();
 	});
 
@@ -285,7 +299,7 @@ describe('GameProviderInner', () => {
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
 			>
-				<ContextInspector />
+				<ContextInspector onInspect={() => {}} />
 			</GameProviderInner>,
 		);
 
@@ -345,7 +359,7 @@ describe('GameProviderInner', () => {
 				resourceKeys={resourceKeys}
 				sessionMetadata={currentSnapshot.metadata}
 			>
-				<ContextInspector />
+				<ContextInspector onInspect={() => {}} />
 			</GameProviderInner>,
 		);
 

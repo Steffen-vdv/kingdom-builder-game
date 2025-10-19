@@ -45,7 +45,6 @@ export default function DemolishOptions({
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -62,7 +61,7 @@ export default function DemolishOptions({
 				if (!building) {
 					return null;
 				}
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = requests.getActionCosts(action.id, {
 					id: buildingId,
 				});
 				const costs: Record<string, number> = {};
@@ -91,7 +90,7 @@ export default function DemolishOptions({
 				return first.building.name.localeCompare(second.building.name);
 			});
 	}, [
-		session,
+		requests,
 		sessionView.buildings,
 		action.id,
 		actionCostResource,

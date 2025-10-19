@@ -51,7 +51,6 @@ export default function RaisePopOptions({
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -156,8 +155,8 @@ export default function RaisePopOptions({
 	}, [metadata.costs]);
 	const costsReady = metadata.costs !== undefined;
 	const fallbackRequirementFailures = useMemo<SessionActionRequirementList>(
-		() => session.getActionRequirements(action.id),
-		[session, action.id],
+		() => requests.getActionRequirements(action.id),
+		[requests, action.id],
 	);
 	const requirementFailures =
 		metadata.requirements ?? fallbackRequirementFailures;

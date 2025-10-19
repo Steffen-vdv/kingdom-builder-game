@@ -18,7 +18,7 @@ import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
 import type {
-	LegacyGameEngineContextValue,
+	GameEngineContextValue,
 	PerformActionHandler,
 	SessionDerivedSelectors,
 	SessionMetadataFetchers,
@@ -26,6 +26,7 @@ import type {
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import type { SessionResourceKey } from './sessionTypes';
+import { createSessionRequestHelpers } from './createSessionRequestHelpers';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
@@ -34,8 +35,9 @@ import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
-export const GameEngineContext =
-	createContext<LegacyGameEngineContextValue | null>(null);
+export const GameEngineContext = createContext<GameEngineContextValue | null>(
+	null,
+);
 
 export function GameProviderInner({
 	children,
@@ -288,12 +290,21 @@ export function GameProviderInner({
 	);
 
 	const requestHelpers = useMemo(
-		() => ({
-			performAction: performActionRequest,
-			advancePhase: handleEndTurn,
+		() =>
+			createSessionRequestHelpers({
+				sessionAdapter,
+				performAction: performActionRequest,
+				advancePhase: handleEndTurn,
+				refreshSession,
+				enqueue,
+			}),
+		[
+			sessionAdapter,
+			performActionRequest,
+			handleEndTurn,
 			refreshSession,
-		}),
-		[performActionRequest, handleEndTurn, refreshSession],
+			enqueue,
+		],
 	);
 
 	const handleExit = useCallback(() => {
@@ -307,10 +318,11 @@ export function GameProviderInner({
 		return <TranslationContextLoading />;
 	}
 
-	const value: LegacyGameEngineContextValue = {
+	const value: GameEngineContextValue = {
 		sessionId,
 		sessionSnapshot: sessionState,
 		cachedSessionSnapshot,
+		sessionState,
 		selectors,
 		translationContext,
 		ruleSnapshot,
@@ -345,8 +357,6 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session: sessionAdapter,
-		sessionState,
 		...(onExit ? { onExit: handleExit } : {}),
 	};
 

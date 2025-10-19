@@ -51,7 +51,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -65,7 +64,7 @@ export default function BuildOptions({
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
+	const requirementFailures = requests.getActionRequirements(action.id);
 	const requirements = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
 	);
@@ -75,7 +74,7 @@ export default function BuildOptions({
 		return buildings
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
-				const costsBag = session.getActionCosts(action.id, {
+				const costsBag = requests.getActionCosts(action.id, {
 					id: building.id,
 				});
 				const costs: Record<string, number> = {};
@@ -88,7 +87,7 @@ export default function BuildOptions({
 			.sort((first, second) => first.total - second.total);
 	}, [
 		buildings,
-		session,
+		requests,
 		action.id,
 		actionCostResource,
 		player.buildings.size,
