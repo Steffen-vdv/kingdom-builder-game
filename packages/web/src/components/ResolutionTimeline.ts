@@ -113,20 +113,6 @@ function collectCostDetail(
 	);
 }
 
-function collectEffectEntries(
-	nodes: TimelineNode[],
-	options?: CollectEffectEntriesOptions,
-): TimelineEntry[] {
-	const entries: TimelineEntry[] = [];
-	const skipHeadlines = normalizeHeadlineSet(options?.skipHeadlines ?? []);
-
-	nodes.forEach((node, index) =>
-		collectEffectNode(node, `effect-${index}`, entries, skipHeadlines),
-	);
-
-	return entries;
-}
-
 function collectEffectNode(
 	node: TimelineNode,
 	key: string,
@@ -156,6 +142,20 @@ function collectEffectNode(
 	);
 }
 
+function collectEffectEntries(
+	nodes: TimelineNode[],
+	options?: CollectEffectEntriesOptions,
+): TimelineEntry[] {
+	const entries: TimelineEntry[] = [];
+	const skipHeadlines = normalizeHeadlineSet(options?.skipHeadlines ?? []);
+
+	nodes.forEach((node, index) =>
+		collectEffectNode(node, `effect-${index}`, entries, skipHeadlines),
+	);
+
+	return entries;
+}
+
 function buildResolutionTimelineEntries(
 	nodes: TimelineNode[],
 	options?: BuildResolutionTimelineOptions,
@@ -178,10 +178,18 @@ function buildResolutionTimelineEntries(
 		);
 	}
 
+	const skipHeadlines: string[] = [];
 	const combinedHeadline = buildHeadline(options);
+	if (combinedHeadline) {
+		skipHeadlines.push(combinedHeadline);
+	}
+	const trimmedActionName = options?.actionName?.trim();
+	if (trimmedActionName) {
+		skipHeadlines.push(trimmedActionName);
+	}
 	const effectEntries = adjustEntryLevels(
 		collectEffectEntries(nodes, {
-			skipHeadlines: combinedHeadline ? [combinedHeadline] : [],
+			skipHeadlines,
 		}),
 	);
 

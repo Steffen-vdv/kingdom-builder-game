@@ -34,6 +34,25 @@ const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
 	},
 };
 
+const LEADING_EMOJI_PATTERN =
+	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
+
+function extractLeadingIcon(value: string | undefined) {
+	if (!value) {
+		return undefined;
+	}
+	const trimmed = value.trimStart();
+	if (!trimmed) {
+		return undefined;
+	}
+	const match = trimmed.match(LEADING_EMOJI_PATTERN);
+	if (!match) {
+		return undefined;
+	}
+	const icon = match[0]?.trim();
+	return icon && /\p{Extended_Pictographic}/u.test(icon) ? icon : undefined;
+}
+
 function isSourceDetail(
 	source: ResolutionSource | undefined,
 ): source is Exclude<ResolutionSource, 'action' | 'phase'> {
@@ -80,6 +99,9 @@ function ResolutionCard({
 	const sourceName = isSourceDetail(resolution.source)
 		? (resolution.source.name?.trim() ?? '')
 		: '';
+	const sourceLabel = isSourceDetail(resolution.source)
+		? resolution.source.label
+		: undefined;
 	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
 	const actionName = rawActionName || fallbackActionName;
 	const resolvedLabels = resolveSourceLabels(resolution.source);
@@ -93,11 +115,12 @@ function ResolutionCard({
 			? actionName
 			: actorLabel
 		: actorLabel || actionName;
+	const sourceIcon = isSourceDetail(resolution.source)
+		? resolution.source.icon?.trim() || extractLeadingIcon(sourceLabel)
+		: undefined;
+	const fallbackIcon = extractLeadingIcon(leadingLine);
 	const actionIcon =
-		resolution.action?.icon?.trim() ||
-		(isSourceDetail(resolution.source)
-			? (resolution.source.icon?.trim() ?? undefined)
-			: undefined);
+		resolution.action?.icon?.trim() || sourceIcon || fallbackIcon;
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
 	const normalizedResolvedTitle = resolvedLabels.title
 		.trim()
