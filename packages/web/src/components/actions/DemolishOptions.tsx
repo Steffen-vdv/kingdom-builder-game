@@ -12,6 +12,7 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	sumCleanupCosts,
 	type ResourceDescriptorSelector,
 } from './utils';
 import {
@@ -70,7 +71,7 @@ export default function DemolishOptions({
 	const costMap = useActionOptionCosts(action.id, costRequests);
 	const entries = useMemo(() => {
 		return buildingIds
-			.map((buildingId) => {
+			.map((buildingId, index) => {
 				const building = sessionView.buildings.get(buildingId);
 				if (!building) {
 					return null;
@@ -84,7 +85,16 @@ export default function DemolishOptions({
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
 				const focus = normalizeActionFocus(building.focus);
-				return { id: buildingId, building, costs, total, focus };
+				const cleanup = sumCleanupCosts(building.upkeep);
+				return {
+					id: buildingId,
+					building,
+					costs,
+					total,
+					focus,
+					cleanup,
+					index,
+				};
 			})
 			.filter(
 				(
@@ -95,13 +105,24 @@ export default function DemolishOptions({
 					costs: Record<string, number>;
 					total: number;
 					focus: ActionFocus | undefined;
+					cleanup: number;
+					index: number;
 				} => entry !== null,
 			)
 			.sort((first, second) => {
 				if (first.total !== second.total) {
 					return first.total - second.total;
 				}
-				return first.building.name.localeCompare(second.building.name);
+				if (first.cleanup !== second.cleanup) {
+					return first.cleanup - second.cleanup;
+				}
+				const nameComparison = first.building.name.localeCompare(
+					second.building.name,
+				);
+				if (nameComparison !== 0) {
+					return nameComparison;
+				}
+				return first.index - second.index;
 			});
 	}, [buildingIds, sessionView.buildings, actionCostResource, costMap]);
 

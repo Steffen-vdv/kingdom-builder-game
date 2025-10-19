@@ -14,6 +14,7 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	sumCleanupCosts,
 	type ResourceDescriptorSelector,
 } from './utils';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
@@ -89,8 +90,9 @@ export default function BuildOptions({
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings
-			.filter((building) => !owned.has(building.id))
-			.map((building) => {
+			.map((building, index) => ({ building, index }))
+			.filter(({ building }) => !owned.has(building.id))
+			.map(({ building, index }) => {
 				const metadataCosts = costMap.get(building.id);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(
@@ -107,9 +109,24 @@ export default function BuildOptions({
 					costs[costKey] = costAmount;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
-				return { building, costs, total };
+				const cleanup = sumCleanupCosts(building.upkeep);
+				return { building, costs, total, cleanup, index };
 			})
-			.sort((first, second) => first.total - second.total);
+			.sort((first, second) => {
+				if (first.total !== second.total) {
+					return first.total - second.total;
+				}
+				if (first.cleanup !== second.cleanup) {
+					return first.cleanup - second.cleanup;
+				}
+				const nameComparison = first.building.name.localeCompare(
+					second.building.name,
+				);
+				if (nameComparison !== 0) {
+					return nameComparison;
+				}
+				return first.index - second.index;
+			});
 	}, [buildings, actionCostResource, player.buildings.size, costMap]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,

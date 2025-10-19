@@ -31,6 +31,8 @@ export interface PendingActionState {
 	choices: ActionEffectGroupChoiceMap;
 }
 
+type ActionSortMetrics = { cost: number | null; cleanup: number };
+
 interface GenericActionEntryProps {
 	action: Action;
 	summaries: Map<string, Summary>;
@@ -55,7 +57,7 @@ interface GenericActionEntryProps {
 	clearHoverCard: () => void;
 	formatRequirement: (requirement: string) => string;
 	selectResourceDescriptor: ResourceDescriptorSelector;
-	onTotalChange: (actionId: string, total: number | null) => void;
+	onMetricsChange: (actionId: string, metrics: ActionSortMetrics) => void;
 }
 
 function GenericActionEntry({
@@ -75,7 +77,7 @@ function GenericActionEntry({
 	clearHoverCard,
 	formatRequirement,
 	selectResourceDescriptor,
-	onTotalChange,
+	onMetricsChange,
 }: GenericActionEntryProps) {
 	const metadata = useActionMetadata({ actionId: action.id });
 	const total = useMemo(() => {
@@ -89,9 +91,10 @@ function GenericActionEntry({
 			return sum + (cost ?? 0);
 		}, 0);
 	}, [metadata.costs, actionCostResource]);
+	const cleanup = 0;
 	useEffect(() => {
-		onTotalChange(action.id, total);
-	}, [action.id, total, onTotalChange]);
+		onMetricsChange(action.id, { cost: total, cleanup });
+	}, [action.id, total, cleanup, onMetricsChange]);
 	return (
 		<GenericActionCard
 			action={action}
@@ -268,16 +271,21 @@ function GenericActions({
 		[performAction],
 	);
 
-	const [actionTotals, setActionTotals] = useState<
-		Record<string, number | null>
+	const [actionMetrics, setActionMetrics] = useState<
+		Record<string, ActionSortMetrics>
 	>({});
-	const handleTotalChange = useCallback(
-		(actionId: string, total: number | null) => {
-			setActionTotals((previous) => {
-				if (previous[actionId] === total) {
+	const handleMetricsChange = useCallback(
+		(actionId: string, metrics: ActionSortMetrics) => {
+			setActionMetrics((previous) => {
+				const current = previous[actionId];
+				if (
+					current &&
+					current.cost === metrics.cost &&
+					current.cleanup === metrics.cleanup
+				) {
 					return previous;
 				}
-				return { ...previous, [actionId]: total };
+				return { ...previous, [actionId]: metrics };
 			});
 		},
 		[],
@@ -288,18 +296,26 @@ function GenericActions({
 			.map((action, index) => ({
 				action,
 				index,
-				total: actionTotals[action.id],
+				cost: actionMetrics[action.id]?.cost ?? Number.POSITIVE_INFINITY,
+				cleanup: actionMetrics[action.id]?.cleanup ?? 0,
 			}))
 			.sort((first, second) => {
-				const firstValue = first.total ?? Number.POSITIVE_INFINITY;
-				const secondValue = second.total ?? Number.POSITIVE_INFINITY;
-				if (firstValue !== secondValue) {
-					return firstValue - secondValue;
+				if (first.cost !== second.cost) {
+					return first.cost - second.cost;
+				}
+				if (first.cleanup !== second.cleanup) {
+					return first.cleanup - second.cleanup;
+				}
+				const nameComparison = first.action.name.localeCompare(
+					second.action.name,
+				);
+				if (nameComparison !== 0) {
+					return nameComparison;
 				}
 				return first.index - second.index;
 			})
 			.map((entry) => entry.action);
-	}, [actions, actionTotals]);
+	}, [actions, actionMetrics]);
 
 	return (
 		<>
@@ -322,7 +338,7 @@ function GenericActions({
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}
 					selectResourceDescriptor={selectResourceDescriptor}
-					onTotalChange={handleTotalChange}
+					onMetricsChange={handleMetricsChange}
 				/>
 			))}
 		</>

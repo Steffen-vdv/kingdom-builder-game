@@ -48,6 +48,7 @@ interface GenericActionCardProps {
 	clearHoverCard: () => void;
 	formatRequirement: (requirement: string) => string;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	upkeep?: Record<string, number> | undefined;
 }
 
 function GenericActionCard({
@@ -68,6 +69,7 @@ function GenericActionCard({
 	clearHoverCard,
 	formatRequirement,
 	selectResourceDescriptor,
+	upkeep,
 }: GenericActionCardProps) {
 	const costs = useMemo(() => {
 		if (!metadata.costs) {
@@ -160,6 +162,7 @@ function GenericActionCard({
 			costs={costs}
 			playerResources={player.resources}
 			actionCostResource={actionCostResource}
+			upkeep={upkeep}
 			requirements={requirements}
 			requirementIcons={requirementIcons}
 			summary={summary}
@@ -197,6 +200,7 @@ function GenericActionCard({
 								effects,
 								requirements,
 								costs,
+								...(upkeep && { upkeep }),
 								...(description && { description }),
 								...(!implemented && {
 									description: 'Not implemented yet',

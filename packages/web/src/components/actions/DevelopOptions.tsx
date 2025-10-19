@@ -9,6 +9,7 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	sumCleanupCosts,
 	type ResourceDescriptorSelector,
 } from './utils';
 import {
@@ -87,7 +88,8 @@ export default function DevelopOptions({
 	const costMap = useActionOptionCosts(action.id, costRequests);
 	const entries = useMemo(() => {
 		return developments
-			.map((development) => {
+			.map((development, index) => ({ development, index }))
+			.map(({ development, index }) => {
 				const metadataCosts = costMap.get(development.id);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(
@@ -96,9 +98,24 @@ export default function DevelopOptions({
 					costs[costKey] = costAmount ?? 0;
 				}
 				const total = sumNonActionCosts(costs, actionCostResource);
-				return { development, costs, total };
+				const cleanup = sumCleanupCosts(development.upkeep);
+				return { development, costs, total, cleanup, index };
 			})
-			.sort((first, second) => first.total - second.total);
+			.sort((first, second) => {
+				if (first.total !== second.total) {
+					return first.total - second.total;
+				}
+				if (first.cleanup !== second.cleanup) {
+					return first.cleanup - second.cleanup;
+				}
+				const nameComparison = first.development.name.localeCompare(
+					second.development.name,
+				);
+				if (nameComparison !== 0) {
+					return nameComparison;
+				}
+				return first.index - second.index;
+			});
 	}, [developments, actionCostResource, costMap]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,

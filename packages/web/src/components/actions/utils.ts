@@ -44,6 +44,21 @@ export function getOptionalProperty<T>(
 	return undefined;
 }
 
+export function sumCleanupCosts(
+	upkeep: Record<string, number | undefined> | undefined,
+): number {
+	if (!upkeep) {
+		return 0;
+	}
+	return Object.values(upkeep).reduce<number>((sum, amount) => {
+		const value = Number(amount ?? 0);
+		if (!Number.isFinite(value)) {
+			return sum;
+		}
+		return sum + value;
+	}, 0);
+}
+
 export function formatMissingResources(
 	costs: Record<string, number>,
 	playerResources: Record<string, number | undefined>,
