@@ -20,6 +20,7 @@ interface CollectEffectEntriesOptions {
 interface BuildResolutionTimelineOptions {
 	actionIcon?: string;
 	actionName?: string;
+	headlineLabels?: readonly string[];
 }
 
 function buildTimelineTree(
@@ -178,10 +179,19 @@ function buildResolutionTimelineEntries(
 		);
 	}
 
+	const skipHeadlines: string[] = [];
 	const combinedHeadline = buildHeadline(options);
+	if (combinedHeadline) {
+		skipHeadlines.push(combinedHeadline);
+	}
+	if (options?.headlineLabels?.length) {
+		skipHeadlines.push(
+			...options.headlineLabels.filter((headline) => Boolean(headline?.trim())),
+		);
+	}
 	const effectEntries = adjustEntryLevels(
 		collectEffectEntries(nodes, {
-			skipHeadlines: combinedHeadline ? [combinedHeadline] : [],
+			skipHeadlines,
 		}),
 	);
 

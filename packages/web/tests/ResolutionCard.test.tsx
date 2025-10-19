@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
@@ -79,6 +79,40 @@ describe('<ResolutionCard />', () => {
 		expect(screen.getByText('Growth Phase')).toBeInTheDocument();
 		const phasePlayerLabel = screen.getByLabelText('Player');
 		expect(phasePlayerLabel).toHaveTextContent('Player Two');
+	});
+
+	it('shows phase icon and omits duplicate phase headline in effects', () => {
+		const resolution = createResolution({
+			source: {
+				kind: 'phase',
+				label: '🌱 Growth Phase',
+				name: 'Growth Phase',
+				icon: '🌱',
+			},
+			actorLabel: '🌱 Growth Phase',
+			lines: ['🌱 Growth Phase', '    🪙 Gold +2'],
+			visibleLines: ['🌱 Growth Phase', '    🪙 Gold +2'],
+			visibleTimeline: [
+				{ text: '🌱 Growth Phase', depth: 0, kind: 'headline' },
+				{ text: '🪙 Gold +2', depth: 1, kind: 'change' },
+			],
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		expect(screen.getByText('🌱')).toBeInTheDocument();
+		const effectsSection = screen.getByText('🪄 Effects');
+		const effectsContainer = effectsSection.parentElement;
+		const effectsList = effectsContainer?.parentElement;
+		if (!effectsContainer || !effectsList) {
+			throw new Error('Expected effects section to have timeline containers');
+		}
+		expect(within(effectsContainer).queryByText('🌱 Growth Phase')).toBeNull();
+		expect(
+			within(effectsList).getByText((content) =>
+				/Gold\s*\+\s*2/u.test(content),
+			),
+		).toBeInTheDocument();
 	});
 
 	it('hides the continue button when acknowledgement is not required', () => {

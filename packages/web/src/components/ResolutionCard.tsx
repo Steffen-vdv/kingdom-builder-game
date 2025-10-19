@@ -34,10 +34,39 @@ const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
 	},
 };
 
+const EMOJI_PREFIX_PATTERN =
+	/^([\p{Extended_Pictographic}#*0-9](?:\uFE0F|\u200D[\p{Extended_Pictographic}#*0-9])*)/u;
+
 function isSourceDetail(
 	source: ResolutionSource | undefined,
 ): source is Exclude<ResolutionSource, 'action' | 'phase'> {
 	return typeof source === 'object' && source !== null && 'kind' in source;
+}
+
+function extractLeadingIcon(value: string | undefined) {
+	if (!value) {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return undefined;
+	}
+	const match = trimmed.match(EMOJI_PREFIX_PATTERN);
+	return match?.[1]?.trim() || undefined;
+}
+
+function appendHeadlineCandidate(
+	target: string[],
+	candidate: string | undefined,
+) {
+	if (!candidate) {
+		return;
+	}
+	const trimmed = candidate.trim();
+	if (!trimmed) {
+		return;
+	}
+	target.push(trimmed);
 }
 
 interface ResolutionCardProps {
@@ -93,11 +122,15 @@ function ResolutionCard({
 			? actionName
 			: actorLabel
 		: actorLabel || actionName;
+	const sourceDetail = isSourceDetail(resolution.source)
+		? resolution.source
+		: undefined;
 	const actionIcon =
 		resolution.action?.icon?.trim() ||
-		(isSourceDetail(resolution.source)
-			? (resolution.source.icon?.trim() ?? undefined)
-			: undefined);
+		sourceDetail?.icon?.trim() ||
+		extractLeadingIcon(sourceDetail?.label) ||
+		extractLeadingIcon(actorLabel) ||
+		extractLeadingIcon(leadingLine);
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
 	const normalizedResolvedTitle = resolvedLabels.title
 		.trim()
@@ -158,6 +191,9 @@ function ResolutionCard({
 	);
 	const timelineEntries = React.useMemo(() => {
 		const options: Parameters<typeof buildResolutionTimelineEntries>[1] = {};
+		const skipHeadlines: string[] = [];
+		const isPhaseResolution =
+			resolution.source === 'phase' || sourceDetail?.kind === 'phase';
 
 		if (actionIcon) {
 			options.actionIcon = actionIcon;
@@ -165,9 +201,29 @@ function ResolutionCard({
 		if (actionName) {
 			options.actionName = actionName;
 		}
+		if (isPhaseResolution) {
+			appendHeadlineCandidate(skipHeadlines, sourceDetail?.label);
+			appendHeadlineCandidate(skipHeadlines, sourceDetail?.name);
+			appendHeadlineCandidate(skipHeadlines, actorLabel);
+			appendHeadlineCandidate(skipHeadlines, leadingLine);
+			if (actionIcon && actionName) {
+				appendHeadlineCandidate(skipHeadlines, `${actionIcon} ${actionName}`);
+			}
+		}
+		if (skipHeadlines.length > 0) {
+			options.headlineLabels = skipHeadlines;
+		}
 
 		return buildResolutionTimelineEntries(structuredTimeline, options);
-	}, [actionIcon, actionName, structuredTimeline]);
+	}, [
+		actionIcon,
+		actionName,
+		actorLabel,
+		leadingLine,
+		resolution.source,
+		sourceDetail,
+		structuredTimeline,
+	]);
 
 	const fallbackLines = React.useMemo(() => {
 		if (resolution.visibleTimeline.length > 0) {
