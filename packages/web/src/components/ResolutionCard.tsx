@@ -153,27 +153,29 @@ function ResolutionCard({
 		'bg-slate-400/80 shadow-[0_0_0_4px_rgba(148,163,184,0.2)]',
 		'dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(15,23,42,0.45)]',
 	);
-	const structuredTimeline = React.useMemo(
-		() => buildTimelineTree(resolution.visibleTimeline),
+	const visibleTimeline = React.useMemo(
+		() => resolution.visibleTimeline ?? [],
 		[resolution.visibleTimeline],
 	);
+	const visibleLines = React.useMemo(
+		() => resolution.visibleLines ?? [],
+		[resolution.visibleLines],
+	);
+	const structuredTimeline = React.useMemo(
+		() => buildTimelineTree(visibleTimeline),
+		[visibleTimeline],
+	);
 	const costEntries = React.useMemo(
-		() =>
-			collectCostEntries(
-				structuredTimeline.filter((node) => node.descriptor.kind === 'cost'),
-			),
+		() => collectCostEntries(structuredTimeline),
 		[structuredTimeline],
 	);
 	const effectEntries = React.useMemo(
-		() =>
-			collectEffectEntries(
-				structuredTimeline.filter((node) => node.descriptor.kind !== 'cost'),
-			),
+		() => collectEffectEntries(structuredTimeline),
 		[structuredTimeline],
 	);
 
 	const fallbackLines = React.useMemo(() => {
-		if (resolution.visibleTimeline.length > 0) {
+		if (visibleTimeline.length > 0) {
 			return [] as { depth: number; text: string }[];
 		}
 
@@ -205,8 +207,8 @@ function ResolutionCard({
 			return { depth, text };
 		}
 
-		return resolution.visibleLines.map((line) => parseLine(line));
-	}, [resolution.visibleLines, resolution.visibleTimeline]);
+		return visibleLines.map((line) => parseLine(line));
+	}, [visibleLines, visibleTimeline]);
 	const hasStructuredTimeline =
 		costEntries.length > 0 || effectEntries.length > 0;
 
