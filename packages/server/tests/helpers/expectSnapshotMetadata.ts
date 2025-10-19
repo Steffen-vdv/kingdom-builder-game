@@ -17,6 +17,10 @@ export function expectStaticMetadata(
 ): void {
 	const statKeys = Object.keys(metadata.stats ?? {});
 	expect(statKeys.length).toBeGreaterThan(0);
+	const hasPercentStat = Object.values(metadata.stats ?? {}).some(
+		(descriptor) => descriptor?.displayAsPercent === true,
+	);
+	expect(hasPercentStat).toBe(true);
 	const triggerKeys = Object.keys(metadata.triggers ?? {});
 	expect(triggerKeys.length).toBeGreaterThan(0);
 	expect(metadata.overview).toBeDefined();

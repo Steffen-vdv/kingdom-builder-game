@@ -31,6 +31,9 @@ describe('buildSessionMetadata', () => {
 		expect((statMetadata as { format?: unknown })?.format).toEqual(
 			statInfo.addFormat,
 		);
+		if (statInfo.displayAsPercent !== undefined) {
+			expect(statMetadata?.displayAsPercent).toBe(statInfo.displayAsPercent);
+		}
 	});
 
 	it('includes trigger metadata from content definitions', () => {

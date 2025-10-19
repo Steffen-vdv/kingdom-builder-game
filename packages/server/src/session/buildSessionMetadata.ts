@@ -138,6 +138,9 @@ function buildStatMetadata(): SessionMetadataDescriptorMap {
 		if (info.displayAsPercent) {
 			descriptor.displayAsPercent = info.displayAsPercent;
 		}
+		if (info.addFormat) {
+			descriptor.format = { ...info.addFormat };
+		}
 		descriptors[key] = descriptor;
 	}
 	return descriptors;
