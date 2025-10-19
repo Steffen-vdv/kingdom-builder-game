@@ -60,13 +60,14 @@ export default function DevelopOptions({
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
 		session,
-		sessionView,
+		selectors,
 		translationContext,
 		requests,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { sessionView } = selectors;
 	const slotMetadata = useSlotMetadata();
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const landIdForCost = player.lands[0]?.id as string;

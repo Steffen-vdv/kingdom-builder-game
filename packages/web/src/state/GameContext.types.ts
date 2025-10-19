@@ -126,10 +126,6 @@ export interface LegacyGameEngineContextBridge {
 	 * modules after the serialization audit completes.
 	 */
 	sessionState: SessionSnapshot;
-	/**
-	 * TODO(#session-migration): Read from `selectors.sessionView` instead.
-	 */
-	sessionView: SessionView;
 }
 
 export type LegacyGameEngineContextValue = GameEngineContextValue &

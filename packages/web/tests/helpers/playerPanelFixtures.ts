@@ -158,7 +158,6 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		onChangePlayerName: vi.fn(),
 		session: {} as EngineSession,
 		sessionState,
-		sessionView,
 	};
 	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
 		(acc, key, index) => {

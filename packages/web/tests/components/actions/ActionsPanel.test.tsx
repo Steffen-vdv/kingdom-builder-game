@@ -11,6 +11,7 @@ import {
 	createSnapshotPlayer,
 } from '../../helpers/sessionFixtures';
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
+import { selectSessionView } from '../../../src/state/sessionSelectors';
 import type { SessionAdapter } from '../../../src/state/sessionTypes';
 
 function createActionsPanelScenario() {
@@ -48,6 +49,10 @@ function createActionsPanelScenario() {
 		registries: scaffold.registries,
 		metadata: scaffold.metadata,
 	});
+	mockGame.selectors.sessionView = selectSessionView(
+		sessionState,
+		scaffold.registries,
+	);
 	const metadataSnapshot = {
 		costs: { [actionCostResource]: 1, gold: 2 },
 		requirements: [],
