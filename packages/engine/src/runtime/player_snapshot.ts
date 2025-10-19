@@ -138,6 +138,7 @@ export function snapshotPlayer(
 	return {
 		id: player.id,
 		name: player.name,
+		aiControlled: Boolean(context.aiSystem?.has(player.id)),
 		resources: { ...player.resources },
 		stats: { ...player.stats },
 		statsHistory: { ...player.statsHistory },
