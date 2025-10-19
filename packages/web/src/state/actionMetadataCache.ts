@@ -19,6 +19,23 @@ export class ActionMetadataCache {
 		this.#actionOptionCache = new Map();
 	}
 
+	clear(): string[] {
+		const keys = new Set<string>();
+		for (const key of this.#actionCostCache.keys()) {
+			keys.add(key);
+		}
+		for (const key of this.#actionRequirementCache.keys()) {
+			keys.add(key);
+		}
+		for (const key of this.#actionOptionCache.keys()) {
+			keys.add(key);
+		}
+		this.#actionCostCache.clear();
+		this.#actionRequirementCache.clear();
+		this.#actionOptionCache.clear();
+		return [...keys];
+	}
+
 	cacheActionCosts(
 		actionId: string,
 		costs: SessionActionCostMap,

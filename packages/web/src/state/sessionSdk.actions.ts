@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/protocol/actions';
 import { ensureGameApi } from './gameApiInstance';
 import { enqueueSessionTask, updateSessionSnapshot } from './sessionStateStore';
+import { getRemoteAdapter } from './remoteSessionAdapter';
 import { SessionMirroringError, markFatalSessionError } from './sessionErrors';
 import type { GameApiRequestOptions } from '../services/gameApi';
 
@@ -40,6 +41,8 @@ function applyActionSnapshot(
 ): void {
 	try {
 		updateSessionSnapshot(sessionId, response.snapshot);
+		const adapter = getRemoteAdapter(sessionId);
+		adapter?.resetActionMetadata();
 	} catch (cause) {
 		throw new SessionMirroringError(
 			'Failed to update session snapshot after action.',

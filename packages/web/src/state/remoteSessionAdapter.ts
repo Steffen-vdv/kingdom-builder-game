@@ -128,6 +128,13 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		this.#metadataSubscriptions.emitAll(actionId);
 	}
 
+	resetActionMetadata(): void {
+		const keys = this.#metadataCache.clear();
+		for (const key of keys) {
+			this.#metadataSubscriptions.emitForKey(key);
+		}
+	}
+
 	getActionDefinition(
 		actionId: string,
 	): SessionActionDefinitionSummary | undefined {

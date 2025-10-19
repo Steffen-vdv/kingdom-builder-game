@@ -106,6 +106,7 @@ export async function fetchSnapshot(
 	const adapter = getAdapter(sessionId);
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const stateRecord = applySessionState(response);
+	adapter.resetActionMetadata();
 	return {
 		sessionId,
 		adapter,
@@ -124,6 +125,7 @@ export async function setSessionDevMode(
 		api.setDevMode({ sessionId, enabled }, requestOptions),
 	);
 	const stateRecord = applySessionState(response);
+	adapter.resetActionMetadata();
 	adapter.setDevMode(enabled);
 	return {
 		sessionId,
@@ -140,6 +142,7 @@ async function runAdvanceSessionPhase(
 ): Promise<SessionAdvanceResponse> {
 	const response = await api.advancePhase(request, requestOptions);
 	const stateRecord = applySessionState(response);
+	adapter.resetActionMetadata();
 	adapter.recordAdvanceResult(response.advance);
 	return {
 		sessionId: response.sessionId,
@@ -173,6 +176,7 @@ async function runAiTurnInternal(
 		api.runAiTurn(request, requestOptions),
 	);
 	const stateRecord = applySessionState(response);
+	adapter.resetActionMetadata();
 	const activePlayer = stateRecord.snapshot.game.players.find(
 		(entry) => entry.id === stateRecord.snapshot.game.activePlayerId,
 	);
