@@ -424,14 +424,9 @@ describe('useActionPerformer', () => {
 						depth: 0,
 						kind: 'headline',
 					},
-					{
-						text: '💲 Action cost',
+					expect.objectContaining({
 						depth: 1,
 						kind: 'cost',
-					},
-					expect.objectContaining({
-						depth: 2,
-						kind: 'cost-detail',
 					}),
 				],
 			}),

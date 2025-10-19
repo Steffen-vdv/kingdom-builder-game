@@ -125,17 +125,12 @@ describe('action cost and reward logging', () => {
 			const afterAmount = beforeAmount - amount;
 			costLines.push({
 				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
-				depth: 2,
-				kind: 'cost-detail',
+				depth: 1,
+				kind: 'cost',
 			});
 		}
 		if (costLines.length) {
-			messages.splice(
-				1,
-				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-				...costLines,
-			);
+			messages.splice(1, 0, ...costLines);
 		}
 		const filtered = filterActionDiffChanges({
 			changes,
@@ -145,7 +140,6 @@ describe('action cost and reward logging', () => {
 		const logLines = formatActionLogLines(messages, filtered);
 		const coinInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const coinCost = costs[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		expect(logLines).toContain('• 💲 Action cost');
 		const costEntry = logLines.find((line) =>
 			line.includes(`${coinInfo.icon} ${coinInfo.label} -${coinCost} `),
 		);

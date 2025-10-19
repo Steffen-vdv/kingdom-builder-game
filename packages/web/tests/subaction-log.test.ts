@@ -119,17 +119,12 @@ describe('sub-action logging', () => {
 			const afterResource = beforeResource - amount;
 			costLines.push({
 				text: `${icon}${label} -${amount} (${beforeResource}→${afterResource})`,
-				depth: 2,
-				kind: 'cost-detail',
+				depth: 1,
+				kind: 'cost',
 			});
 		}
 		if (costLines.length) {
-			messages.splice(
-				1,
-				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-				...costLines,
-			);
+			messages.splice(1, 0, ...costLines);
 		}
 		const subLines = appendSubActionChanges({
 			traces,

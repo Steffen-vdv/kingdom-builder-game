@@ -127,8 +127,8 @@ export function buildActionCostLines({
 		const costDelta = `${beforeAmount}→${afterAmount}`;
 		costLines.push({
 			text: `${icon}${label} -${costAmount} (${costDelta})`,
-			depth: 2,
-			kind: 'cost-detail',
+			depth: 1,
+			kind: 'cost',
 		});
 	}
 	return costLines;

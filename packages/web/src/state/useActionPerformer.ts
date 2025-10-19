@@ -29,7 +29,6 @@ import {
 } from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
-import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
 import { markFatalSessionError, isFatalSessionError } from './sessionErrors';
 import {
@@ -227,12 +226,7 @@ export function useActionPerformer({
 					resources: registries.resources,
 				});
 				if (costLines.length) {
-					const header: ActionLogLineDescriptor = {
-						text: '💲 Action cost',
-						depth: 1,
-						kind: 'cost',
-					};
-					messages.splice(1, 0, header, ...costLines);
+					messages.splice(1, 0, ...costLines);
 				}
 				const subLines = appendSubActionChanges({
 					traces,

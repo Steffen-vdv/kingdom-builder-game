@@ -11,7 +11,7 @@ describe('action log line formatting', () => {
 	it('nests development changes under the development headline', () => {
 		const messages: ActionLogLineDescriptor[] = [
 			{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
-			{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+			{ text: 'Gold -3', depth: 1, kind: 'cost' },
 		];
 		const changes = [
 			`${LOG_KEYWORDS.developed} 🗼 Watchtower`,
@@ -20,7 +20,7 @@ describe('action log line formatting', () => {
 		];
 		expect(formatDevelopActionLogLines(messages, changes)).toEqual([
 			`${LOG_KEYWORDS.developed} 🗼 Watchtower`,
-			'• 💲 Action cost',
+			'• Gold -3',
 			'• 🛡️ Fortification Strength +2 (0→2)',
 			'• 🌀 Absorption +50% (0%→50%)',
 		]);

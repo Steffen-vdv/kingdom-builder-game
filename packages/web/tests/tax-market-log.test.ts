@@ -128,17 +128,12 @@ describe('tax action logging with market', () => {
 			const afterAmount = beforeAmount - amount;
 			costDescriptors.push({
 				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
-				depth: 2,
-				kind: 'cost-detail',
+				depth: 1,
+				kind: 'cost',
 			});
 		}
 		if (costDescriptors.length) {
-			messages.splice(
-				1,
-				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-				...costDescriptors,
-			);
+			messages.splice(1, 0, ...costDescriptors);
 		}
 		const subLines = appendSubActionChanges({
 			traces,
