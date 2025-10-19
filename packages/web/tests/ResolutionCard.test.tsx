@@ -61,7 +61,7 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			source: {
 				kind: 'phase',
-				label: 'Phase',
+				label: 'Growth Phase',
 				name: 'Growth Phase',
 			},
 			actorLabel: 'Growth Phase',
@@ -73,7 +73,7 @@ describe('<ResolutionCard />', () => {
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
-		expect(screen.getByText('Phase - Growth Phase')).toBeInTheDocument();
+		expect(screen.getByText('Growth Phase')).toBeInTheDocument();
 		expect(screen.getByText('Phase owner Player Two')).toBeInTheDocument();
 	});
 

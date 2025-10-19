@@ -94,8 +94,17 @@ function ResolutionCard({
 			? (resolution.source.icon?.trim() ?? undefined)
 			: undefined);
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
+	const normalizedResolvedTitle = resolvedLabels.title
+		.trim()
+		.toLocaleLowerCase();
+	const normalizedHeaderSubject = actorHeaderSubject
+		?.trim()
+		.toLocaleLowerCase();
 	const headerTitle = actorHeaderSubject
-		? `${resolvedLabels.title} - ${actorHeaderSubject}`
+		? normalizedHeaderSubject &&
+			normalizedHeaderSubject !== normalizedResolvedTitle
+			? `${resolvedLabels.title} - ${actorHeaderSubject}`
+			: actorHeaderSubject
 		: defaultTitle;
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
