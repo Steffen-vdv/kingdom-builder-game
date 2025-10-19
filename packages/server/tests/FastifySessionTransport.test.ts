@@ -378,9 +378,13 @@ describe('FastifySessionTransport', () => {
 			sessionId: string;
 			ranTurn: boolean;
 			registries: { actions: Record<string, unknown> };
+			actions: unknown[];
+			phaseComplete: boolean;
 		};
 		expect(body.sessionId).toBe(sessionId);
 		expect(body.ranTurn).toBe(true);
+		expect(Array.isArray(body.actions)).toBe(true);
+		expect(body.phaseComplete).toBe(false);
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.currentPhase).toBeDefined();
 		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);

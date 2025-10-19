@@ -162,6 +162,7 @@ export type {
 	SessionActionRequirementResponse,
 	SessionActionOptionsRequest,
 	SessionActionOptionsResponse,
+	SessionRunAiAction,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateRequest,

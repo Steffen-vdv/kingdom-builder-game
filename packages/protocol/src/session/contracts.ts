@@ -8,7 +8,10 @@ import type {
 	PhaseConfig,
 	StartConfig,
 } from '../config/schema';
-import type { ActionParametersPayload } from '../actions/contracts';
+import type {
+	ActionParametersPayload,
+	ActionTrace,
+} from '../actions/contracts';
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
@@ -115,8 +118,17 @@ export interface SessionRunAiRequest extends SessionIdentifier {
 	playerId: SessionPlayerId;
 }
 
+export interface SessionRunAiAction {
+	actionId: string;
+	params?: ActionParametersPayload;
+	costs: SessionActionCostMap;
+	traces: ActionTrace[];
+}
+
 export interface SessionRunAiResponse extends SessionCreateResponse {
 	ranTurn: boolean;
+	actions: SessionRunAiAction[];
+	phaseComplete: boolean;
 }
 
 export interface SessionSimulateRequest extends SessionIdentifier {

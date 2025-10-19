@@ -151,6 +151,8 @@ const createRunAiResponse = (
 	snapshot: createSnapshot(),
 	registries: createSessionRegistriesPayload(),
 	ranTurn,
+	actions: [],
+	phaseComplete: false,
 });
 
 const createAdvanceResponse = (sessionId: string): SessionAdvanceResponse => ({

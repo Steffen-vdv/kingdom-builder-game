@@ -414,6 +414,8 @@ describe('HttpSessionGateway', () => {
 					snapshot: { game: { players: [] } },
 					registries: createRegistries(),
 					ranTurn: true,
+					actions: [],
+					phaseComplete: false,
 				});
 			},
 		);

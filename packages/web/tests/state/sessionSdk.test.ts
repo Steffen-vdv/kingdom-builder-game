@@ -301,6 +301,8 @@ describe('sessionSdk', () => {
 			snapshot: updatedSnapshot,
 			registries: createSessionRegistriesPayload(),
 			ranTurn: true,
+			actions: [],
+			phaseComplete: false,
 		};
 		api.setNextRunAiResponse(runAiResponse);
 		const response = await runAiTurn({
