@@ -4,6 +4,7 @@ import {
 	sessionSetDevModeResponseSchema,
 	sessionIdSchema,
 	sessionStateResponseSchema,
+	runtimeConfigResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
 	ActionExecuteErrorResponse,
@@ -14,6 +15,7 @@ import type {
 	SessionStateResponse,
 	SessionSnapshot,
 	SessionUpdatePlayerNameResponse,
+	SessionRuntimeConfigResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import type { SessionManager } from '../session/SessionManager.js';
@@ -139,6 +141,12 @@ export class SessionTransportBase {
 			request,
 			requireAuthorization: (role) => this.requireAuthorization(request, role),
 		});
+	}
+
+	public getRuntimeConfig(): SessionRuntimeConfigResponse {
+		return runtimeConfigResponseSchema.parse(
+			this.sessionManager.getRuntimeConfig(),
+		);
 	}
 	protected attachHttpStatus<T extends object>(
 		payload: T,

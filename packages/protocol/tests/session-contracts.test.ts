@@ -11,6 +11,7 @@ import {
 	sessionRunAiResponseSchema,
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
+	runtimeConfigResponseSchema,
 } from '../src';
 import type {
 	SessionActionCostRequest,
@@ -25,6 +26,7 @@ import type {
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
 } from '../src/session';
+import type { SessionRuntimeConfigResponse } from '../src/session/contracts';
 
 describe('session contract schemas', () => {
 	it('match action support request and response types', () => {
@@ -81,6 +83,13 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof sessionSimulateResponseSchema>
 		>().toEqualTypeOf<SessionSimulateResponse>();
+	});
+
+	it('matches the runtime config response type', () => {
+		expect(runtimeConfigResponseSchema).toBeDefined();
+		expectTypeOf<
+			ZodInfer<typeof runtimeConfigResponseSchema>
+		>().toEqualTypeOf<SessionRuntimeConfigResponse>();
 	});
 });
 

@@ -3,6 +3,7 @@ export {
 	sessionIdSchema,
 	sessionPlayerNameMapSchema,
 	sessionPlayerIdSchema,
+	runtimeConfigResponseSchema,
 } from './shared';
 export {
 	sessionCreateRequestSchema,

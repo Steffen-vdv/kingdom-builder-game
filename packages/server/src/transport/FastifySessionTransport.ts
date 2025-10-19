@@ -15,6 +15,15 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 > = (fastify, options, done) => {
 	const transport = new SessionTransport(options);
 
+	fastify.get('/runtime-config', async (_request, reply) => {
+		try {
+			const response = transport.getRuntimeConfig();
+			return reply.send(response);
+		} catch (error) {
+			return handleTransportError(reply, error);
+		}
+	});
+
 	fastify.post('/sessions', async (request, reply) => {
 		try {
 			const response = transport.createSession({

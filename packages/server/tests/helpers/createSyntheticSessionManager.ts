@@ -34,6 +34,7 @@ export interface SyntheticSessionManagerResult {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
+	primaryIconId: string | null;
 }
 
 export function createSyntheticSessionManager(
@@ -109,6 +110,7 @@ export function createSyntheticSessionManager(
 		winConditions: [],
 	};
 	const { engineOptions: engineOverrides = {}, ...rest } = options;
+	const defaultPrimaryIconId = gainKey;
 	const engineOptions: NonNullable<SessionManagerOptions['engineOptions']> = {
 		actions: engineOverrides.actions ?? factory.actions,
 		buildings: engineOverrides.buildings ?? factory.buildings,
@@ -121,6 +123,7 @@ export function createSyntheticSessionManager(
 			[costKey]: { key: costKey },
 			[gainKey]: { key: gainKey },
 		},
+		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
 	};
 	const manager = new SessionManager({
 		...rest,
@@ -135,6 +138,7 @@ export function createSyntheticSessionManager(
 		phases,
 		start,
 		rules,
+		primaryIconId: engineOptions.primaryIconId ?? null,
 	};
 }
 

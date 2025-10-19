@@ -4,15 +4,19 @@ import {
 	buildingSchema,
 	developmentSchema,
 	populationSchema,
+	phaseSchema,
+	startConfigSchema,
+	ruleSetSchema,
 } from '../schema';
 import type {
 	SessionIdentifier,
 	SessionPlayerNameMap,
 	SessionRegistriesPayload,
+	SessionRuntimeConfigResponse,
 } from '../../session/contracts';
 import type { SessionPlayerId } from '../../session';
 
-const resourceDefinitionSchema = z.object({
+export const sessionResourceDefinitionSchema = z.object({
 	key: z.string(),
 	icon: z.string().optional(),
 	label: z.string().optional(),
@@ -30,9 +34,19 @@ export const sessionRegistriesSchema = z
 		buildings: serializedRegistrySchema(buildingSchema),
 		developments: serializedRegistrySchema(developmentSchema),
 		populations: serializedRegistrySchema(populationSchema),
-		resources: serializedRegistrySchema(resourceDefinitionSchema),
+		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
+
+export const runtimeConfigResponseSchema = z
+	.object({
+		phases: z.array(phaseSchema),
+		start: startConfigSchema,
+		rules: ruleSetSchema,
+		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		primaryIconId: z.string().nullable(),
+	})
+	.transform((value) => value as SessionRuntimeConfigResponse);
 
 export const sessionIdSchema = z.string().min(1);
 
@@ -61,4 +75,10 @@ type _SessionRegistriesSchemaMatches = Expect<
 >;
 type _SessionPlayerIdMatches = Expect<
 	Equal<z.infer<typeof sessionPlayerIdSchema>, SessionPlayerId>
+>;
+type _RuntimeConfigResponseMatches = Expect<
+	Equal<
+		z.infer<typeof runtimeConfigResponseSchema>,
+		SessionRuntimeConfigResponse
+	>
 >;

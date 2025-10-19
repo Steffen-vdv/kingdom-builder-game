@@ -166,6 +166,7 @@ export type {
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
+	SessionRuntimeConfigResponse,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {
@@ -202,6 +203,7 @@ export {
 	sessionRunAiResponseSchema,
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
+	runtimeConfigResponseSchema,
 } from './config/session_contracts';
 export {
 	actionEffectChoiceSchema,

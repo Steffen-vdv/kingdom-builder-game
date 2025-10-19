@@ -1,6 +1,9 @@
 import fastify from 'fastify';
 import { describe, it, expect, vi } from 'vitest';
-import type { SessionSnapshot } from '@kingdom-builder/protocol';
+import type {
+	SessionSnapshot,
+	SessionRuntimeConfigResponse,
+} from '@kingdom-builder/protocol';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,
@@ -36,7 +39,8 @@ describe('FastifySessionTransport', () => {
 	};
 
 	async function createServer(tokens = defaultTokens) {
-		const { manager, actionId, gainKey } = createSyntheticSessionManager();
+		const { manager, actionId, gainKey, phases, start, rules, primaryIconId } =
+			createSyntheticSessionManager();
 		const app = fastify();
 		const options: FastifySessionTransportOptions = {
 			sessionManager: manager,
@@ -44,7 +48,16 @@ describe('FastifySessionTransport', () => {
 		};
 		await app.register(createSessionTransportPlugin, options);
 		await app.ready();
-		return { app, actionId, gainKey, manager };
+		return {
+			app,
+			actionId,
+			gainKey,
+			manager,
+			phases,
+			start,
+			rules,
+			primaryIconId,
+		};
 	}
 
 	it('creates sessions over HTTP', async () => {
@@ -71,7 +84,10 @@ describe('FastifySessionTransport', () => {
 			headers: authorizedHeaders,
 			payload: {},
 		});
-		const { sessionId } = createResponse.json() as { sessionId: string };
+
+		const { sessionId } = createResponse.json() as {
+			sessionId: string;
+		};
 		const snapshotResponse = await app.inject({
 			method: 'GET',
 			url: `/sessions/${sessionId}/snapshot`,
@@ -82,6 +98,25 @@ describe('FastifySessionTransport', () => {
 		expectSnapshotMetadata(snapshot.snapshot.metadata);
 		expect(snapshot.snapshot.game.players).toHaveLength(2);
 		expectStaticMetadata(manager.getMetadata());
+		await app.close();
+	});
+
+	it('returns the runtime configuration without authentication', async () => {
+		const { app, manager, gainKey, phases, start, rules, primaryIconId } =
+			await createServer();
+		const response = await app.inject({
+			method: 'GET',
+			url: '/runtime-config',
+		});
+		expect(response.statusCode).toBe(200);
+		const body = response.json() as SessionRuntimeConfigResponse;
+		expect(body.phases).toEqual(phases);
+		expect(body.start).toEqual(start);
+		expect(body.rules).toEqual(rules);
+		expect(body.primaryIconId).toBe(primaryIconId);
+		const resource = body.resources[gainKey];
+		expect(resource).toBeDefined();
+		expect(body).toEqual(manager.getRuntimeConfig());
 		await app.close();
 	});
 
