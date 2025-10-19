@@ -34,40 +34,44 @@ const createPlayer = (id: string): SessionPlayerStateSnapshot => ({
 	passives: [],
 });
 
+const createSessionState = (
+	players: SessionPlayerStateSnapshot[],
+): SessionSnapshot => ({
+	game: {
+		turn: 1,
+		currentPlayerIndex: 0,
+		currentPhase: 'main',
+		currentStep: 'step-0',
+		phaseIndex: 0,
+		stepIndex: 0,
+		devMode: false,
+		players,
+		activePlayerId: players[0]!.id,
+		opponentId: players[1]!.id,
+	},
+	phases: [],
+	actionCostResource: primaryResource,
+	recentResourceGains: [],
+	compensations: {},
+	rules: {
+		tieredResourceKey: primaryResource,
+		tierDefinitions: [],
+		winConditions: [],
+	},
+	passiveRecords: {
+		[players[0]!.id]: [],
+		[players[1]!.id]: [],
+	},
+	metadata: { passiveEvaluationModifiers: {} },
+});
+
 describe('useGameLog', () => {
 	it('preserves incrementing ids when trimming overflowing log entries', () => {
 		const players: SessionPlayerStateSnapshot[] = [
 			createPlayer('A'),
 			createPlayer('B'),
 		];
-		const sessionState: SessionSnapshot = {
-			game: {
-				turn: 1,
-				currentPlayerIndex: 0,
-				currentPhase: 'main',
-				currentStep: 'step-0',
-				phaseIndex: 0,
-				stepIndex: 0,
-				devMode: false,
-				players,
-				activePlayerId: players[0]!.id,
-				opponentId: players[1]!.id,
-			},
-			phases: [],
-			actionCostResource: primaryResource,
-			recentResourceGains: [],
-			compensations: {},
-			rules: {
-				tieredResourceKey: primaryResource,
-				tierDefinitions: [],
-				winConditions: [],
-			},
-			passiveRecords: {
-				[players[0]!.id]: [],
-				[players[1]!.id]: [],
-			},
-			metadata: { passiveEvaluationModifiers: {} },
-		};
+		const sessionState = createSessionState(players);
 		const { result } = renderHook(() =>
 			useGameLog({ sessionSnapshot: sessionState }),
 		);
@@ -110,34 +114,7 @@ describe('useGameLog', () => {
 			createPlayer('A'),
 			createPlayer('B'),
 		];
-		const sessionState: SessionSnapshot = {
-			game: {
-				turn: 1,
-				currentPlayerIndex: 0,
-				currentPhase: 'main',
-				currentStep: 'step-0',
-				phaseIndex: 0,
-				stepIndex: 0,
-				devMode: false,
-				players,
-				activePlayerId: players[0]!.id,
-				opponentId: players[1]!.id,
-			},
-			phases: [],
-			actionCostResource: primaryResource,
-			recentResourceGains: [],
-			compensations: {},
-			rules: {
-				tieredResourceKey: primaryResource,
-				tierDefinitions: [],
-				winConditions: [],
-			},
-			passiveRecords: {
-				[players[0]!.id]: [],
-				[players[1]!.id]: [],
-			},
-			metadata: { passiveEvaluationModifiers: {} },
-		};
+		const sessionState = createSessionState(players);
 		const { result } = renderHook(() =>
 			useGameLog({ sessionSnapshot: sessionState }),
 		);
@@ -182,5 +159,72 @@ describe('useGameLog', () => {
 		expect(entry.resolution.isComplete).toBe(true);
 		expect(entry.resolution.requireAcknowledgement).toBe(false);
 		expect(entry.resolution.player).toEqual(players[0]);
+	});
+
+	it('merges sequential phase resolutions into a single log entry', () => {
+		const players: SessionPlayerStateSnapshot[] = [
+			createPlayer('A'),
+			createPlayer('B'),
+		];
+		const sessionState = createSessionState(players);
+		const { result } = renderHook(() =>
+			useGameLog({ sessionSnapshot: sessionState }),
+		);
+		const phaseSource = {
+			kind: 'phase' as const,
+			label: 'Growth Phase',
+			id: 'growth',
+		};
+		const firstResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gain 2 gold'],
+			visibleLines: ['Growth Phase', '    Gain 2 gold'],
+			timeline: [
+				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain 2 gold', depth: 1, kind: 'effect' },
+			],
+			visibleTimeline: [
+				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain 2 gold', depth: 1, kind: 'effect' },
+			],
+			isComplete: true,
+			summaries: ['Gain 2 gold'],
+			source: phaseSource,
+			requireAcknowledgement: false,
+		};
+		act(() => {
+			result.current.addResolutionLog(firstResolution, players[0]);
+		});
+		expect(result.current.log).toHaveLength(1);
+		const secondResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gain 2 gold', '    Draw 1 card'],
+			visibleLines: ['Growth Phase', '    Gain 2 gold', '    Draw 1 card'],
+			timeline: [
+				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain 2 gold', depth: 1, kind: 'effect' },
+				{ text: 'Draw 1 card', depth: 1, kind: 'effect' },
+			],
+			visibleTimeline: [
+				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain 2 gold', depth: 1, kind: 'effect' },
+				{ text: 'Draw 1 card', depth: 1, kind: 'effect' },
+			],
+			isComplete: true,
+			summaries: ['Gain 2 gold', 'Draw 1 card'],
+			source: phaseSource,
+			requireAcknowledgement: false,
+		};
+		act(() => {
+			result.current.addResolutionLog(secondResolution, players[0]);
+		});
+		expect(result.current.log).toHaveLength(1);
+		const [entry] = result.current.log;
+		expect(entry?.kind).toBe('resolution');
+		if (entry?.kind !== 'resolution') {
+			throw new Error('Expected resolution log entry');
+		}
+		expect(entry.id).toBe(0);
+		expect(entry.playerId).toBe(players[0]!.id);
+		expect(entry.resolution.lines).toEqual(secondResolution.lines);
+		expect(entry.resolution.summaries).toEqual(secondResolution.summaries);
 	});
 });

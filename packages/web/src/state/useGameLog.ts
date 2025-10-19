@@ -4,6 +4,10 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import type { ActionResolution } from './useActionResolution';
+import {
+	isPhaseSourceDetail,
+	resolvePhaseIdentity,
+} from './useActionResolution.helpers';
 
 const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
@@ -136,6 +140,37 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 				return;
 			}
 			const resolutionSnapshot = cloneResolution(resolution, resolvedPlayer);
+			let merged = false;
+			setLog((previous) => {
+				const lastEntry = previous[previous.length - 1];
+				if (
+					lastEntry?.kind === 'resolution' &&
+					isPhaseSourceDetail(lastEntry.resolution.source) &&
+					isPhaseSourceDetail(resolutionSnapshot.source)
+				) {
+					const previousIdentity = resolvePhaseIdentity(
+						lastEntry.resolution.source,
+					);
+					const nextIdentity = resolvePhaseIdentity(resolutionSnapshot.source);
+					if (
+						previousIdentity &&
+						nextIdentity &&
+						previousIdentity === nextIdentity
+					) {
+						const updatedEntry: ResolutionLogEntry = {
+							...lastEntry,
+							playerId: resolvedPlayer.id,
+							resolution: resolutionSnapshot,
+						};
+						merged = true;
+						return [...previous.slice(0, -1), updatedEntry];
+					}
+				}
+				return previous;
+			});
+			if (merged) {
+				return;
+			}
 			const entry: LogEntry = {
 				id: nextLogIdRef.current++,
 				time: new Date().toLocaleTimeString(),
