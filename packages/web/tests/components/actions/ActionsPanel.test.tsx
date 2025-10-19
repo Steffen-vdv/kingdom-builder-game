@@ -3,6 +3,10 @@ import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	clearSessionActionMetadataStore,
+	seedSessionActionMetadata,
+} from '../../helpers/mockSessionActionMetadataStore';
 import ActionsPanel from '../../../src/components/actions/ActionsPanel';
 import { RegistryMetadataProvider } from '../../../src/contexts/RegistryMetadataContext';
 import { createTestSessionScaffold } from '../../helpers/testSessionScaffold';
@@ -15,6 +19,7 @@ import { selectSessionView } from '../../../src/state/sessionSelectors';
 import type { SessionAdapter } from '../../../src/state/sessionTypes';
 
 function createActionsPanelScenario() {
+	clearSessionActionMetadataStore();
 	const scaffold = createTestSessionScaffold();
 	const actionCostResource = scaffold.ruleSnapshot.tieredResourceKey;
 	const aiPlayer = createSnapshotPlayer({
@@ -60,9 +65,14 @@ function createActionsPanelScenario() {
 	};
 	mockGame.session = {
 		hasAiController: (playerId: string) => playerId === aiPlayer.id,
-		readActionMetadata: () => metadataSnapshot,
-		subscribeActionMetadata: () => () => {},
 	} as unknown as SessionAdapter;
+	for (const actionDefinition of mockGame.selectors.sessionView.actionList) {
+		seedSessionActionMetadata(
+			mockGame.sessionId,
+			actionDefinition.id,
+			metadataSnapshot,
+		);
+	}
 	return {
 		mockGame,
 		actionCostResource,

@@ -4,6 +4,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
+import {
+	clearSessionActionMetadataStore,
+	seedSessionActionMetadata,
+	setSessionActionCostsMock,
+	setSessionActionOptionsMock,
+	setSessionActionRequirementsMock,
+} from './helpers/mockSessionActionMetadataStore';
 import GenericActions from '../src/components/actions/GenericActions';
 import type * as TranslationModule from '../src/translation';
 import type * as TranslationContentModule from '../src/translation/content';
@@ -85,7 +92,12 @@ vi.mock('../src/state/sessionSdk', async () => {
 			) => {
 				const key = createMetadataKey(actionId, params);
 				const costs = mockActionCosts.get(key) ?? {};
-				mockGame.session.setActionCosts(actionId, costs, params);
+				setSessionActionCostsMock(
+					mockGame.sessionId,
+					actionId,
+					costs as SessionActionCostMap,
+					params,
+				);
 				return Promise.resolve(costs);
 			},
 		),
@@ -97,13 +109,22 @@ vi.mock('../src/state/sessionSdk', async () => {
 			) => {
 				const key = createMetadataKey(actionId, params);
 				const requirements = mockActionRequirements.get(key) ?? [];
-				mockGame.session.setActionRequirements(actionId, requirements, params);
+				setSessionActionRequirementsMock(
+					mockGame.sessionId,
+					actionId,
+					requirements as SessionActionRequirementList,
+					params,
+				);
 				return Promise.resolve(requirements);
 			},
 		),
 		loadActionOptions: vi.fn((_sessionId: string, actionId: string) => {
 			const groups = mockActionOptions.get(actionId) ?? [];
-			mockGame.session.setActionOptions(actionId, groups);
+			setSessionActionOptionsMock(
+				mockGame.sessionId,
+				actionId,
+				groups as ActionEffectGroup[],
+			);
 			return Promise.resolve(groups);
 		}),
 	};
@@ -258,6 +279,7 @@ describe('GenericActions effect group handling', () => {
 		mockActionCosts.clear();
 		mockActionRequirements.clear();
 		mockActionOptions.clear();
+		clearSessionActionMetadataStore();
 		mockGame = createMockGame();
 		vi.mocked(loadActionCosts).mockClear();
 		vi.mocked(loadActionRequirements).mockClear();
@@ -275,7 +297,6 @@ describe('GenericActions effect group handling', () => {
 			[mockGame.actionCostResource]: 1,
 			[mockGame.secondaryResource]: 12,
 		});
-		mockActionRequirements.set(royalKey, []);
 		const groups =
 			mockGame.actionReferences.royalDecree.definition.effects?.filter(
 				(
@@ -327,6 +348,29 @@ describe('GenericActions effect group handling', () => {
 			{ landId: 'A-L2' },
 		);
 		mockActionRequirements.set(developWithParamsKey, []);
+		const royalRequirements = mockActionRequirements.get(royalKey);
+		if (royalRequirements !== undefined) {
+			seedSessionActionMetadata(
+				mockGame.sessionId,
+				mockGame.actionReferences.royalDecree.id,
+				{ requirements: royalRequirements },
+			);
+		}
+		seedSessionActionMetadata(
+			mockGame.sessionId,
+			mockGame.actionReferences.develop.id,
+			{
+				requirements: mockActionRequirements.get(developKey) ?? [],
+			},
+		);
+		seedSessionActionMetadata(
+			mockGame.sessionId,
+			mockGame.actionReferences.develop.id,
+			{
+				requirements: mockActionRequirements.get(developWithParamsKey) ?? [],
+			},
+			{ landId: 'A-L2' },
+		);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
 			if (type === 'action' && id === mockGame.actionReferences.develop.id) {

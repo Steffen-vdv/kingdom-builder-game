@@ -3,18 +3,22 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
+import {
+	clearSessionActionMetadataStore,
+	seedSessionActionMetadata,
+} from '../../helpers/mockSessionActionMetadataStore';
 import RaisePopOptions from '../../../src/components/actions/RaisePopOptions';
 // prettier-ignore
 import {
-	RegistryMetadataProvider,
+        RegistryMetadataProvider,
 } from '../../../src/contexts/RegistryMetadataContext';
 // prettier-ignore
 import {
-	createTestRegistryMetadata,
+        createTestRegistryMetadata,
 } from '../../helpers/registryMetadata';
 // prettier-ignore
 import {
-	toDescriptorDisplay,
+        toDescriptorDisplay,
 } from '../../../src/components/player/registryDisplays';
 import { createTestSessionScaffold } from '../../helpers/testSessionScaffold';
 import {
@@ -49,6 +53,7 @@ interface RaisePopScenario {
 function createRaisePopScenario(
 	options: { omitMetadataFor?: string } = {},
 ): RaisePopScenario {
+	clearSessionActionMetadataStore();
 	const scaffold = createTestSessionScaffold();
 	const registries = scaffold.registries;
 	const metadata = structuredClone(scaffold.metadata);
@@ -122,6 +127,11 @@ function createRaisePopScenario(
 	adapter.setActionOptions(action.id, []);
 	mockGame.session =
 		adapter as unknown as LegacyGameEngineContextValue['session'];
+	seedSessionActionMetadata(mockGame.sessionId, action.id, {
+		costs: { gold: 5, ap: 1 },
+		requirements: [],
+		groups: [],
+	});
 	return {
 		registries,
 		metadata,
