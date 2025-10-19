@@ -67,6 +67,7 @@ function createPhasePanelScenario() {
 			isAdvancing: false,
 			activePlayerId: activePlayer.id,
 			activePlayerName: activePlayer.name,
+			turnNumber: sessionState.game.turn,
 		},
 	};
 }
@@ -100,7 +101,7 @@ describe('<PhasePanel />', () => {
 		expect(turnLabel).toBeInTheDocument();
 		expect(
 			within(turnLabel.parentElement as HTMLElement).getByText(
-				String(mockGame.sessionSnapshot.game.turn),
+				String(mockGame.phase.turnNumber),
 				{ selector: 'span' },
 			),
 		).toBeInTheDocument();

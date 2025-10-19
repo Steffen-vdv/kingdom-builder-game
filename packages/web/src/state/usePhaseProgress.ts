@@ -35,6 +35,7 @@ export interface PhaseProgressState {
 	isAdvancing: boolean;
 	activePlayerId: string | null;
 	activePlayerName: string | null;
+	turnNumber: number;
 }
 
 function computePhaseState(
@@ -62,6 +63,7 @@ function computePhaseState(
 		isAdvancing,
 		activePlayerId: overrides.activePlayerId ?? activePlayer?.id ?? null,
 		activePlayerName: overrides.activePlayerName ?? activePlayer?.name ?? null,
+		turnNumber: overrides.turnNumber ?? snapshot.game.turn,
 	};
 }
 
