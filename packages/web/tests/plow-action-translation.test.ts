@@ -1,10 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
 	createSyntheticPlowContent,
 	SYNTHETIC_UPKEEP_PHASE,
 	SYNTHETIC_PASSIVE_INFO,
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_SLOT_INFO,
+	SYNTHETIC_RESOURCES,
 	registerSyntheticPlowResources,
 } from './fixtures/syntheticPlow';
 import {
@@ -12,49 +13,117 @@ import {
 	describeContent,
 	splitSummary,
 } from '../src/translation/content';
-import { createEngine } from '@kingdom-builder/engine';
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { createTranslationContextForEngine } from './helpers/createTranslationContextForEngine';
+import type {
+	SessionMetadataDescriptor,
+	SessionPhaseDefinition,
+	SessionRuleSnapshot,
+} from '@kingdom-builder/protocol/session';
+import { createTranslationContext } from '../src/translation/context/createTranslationContext';
+import { createSessionRegistries } from './helpers/sessionRegistries';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
 
-vi.mock('@kingdom-builder/engine', async () => {
-	return await import('../../engine/src');
-});
-
-function createEngineHarness() {
+function createTranslationHarness() {
 	const synthetic = createSyntheticPlowContent();
-	const engineContext = createEngine({
-		actions: synthetic.factory.actions,
-		buildings: synthetic.factory.buildings,
-		developments: synthetic.factory.developments,
-		populations: synthetic.factory.populations,
-		phases: synthetic.phases,
-		start: synthetic.start,
-		rules: synthetic.rules,
+	const registries = createSessionRegistries();
+	registerSyntheticPlowResources(registries.resources);
+	registries.actions.add(synthetic.expand.id, { ...synthetic.expand });
+	registries.actions.add(synthetic.till.id, { ...synthetic.till });
+	registries.actions.add(synthetic.plow.id, { ...synthetic.plow });
+	registries.buildings.add(synthetic.building.id, { ...synthetic.building });
+
+	const baseResources = synthetic.start.player.resources;
+	const activePlayer = createSnapshotPlayer({
+		id: 'A',
+		name: 'Active Player',
+		resources: { ...baseResources },
+		buildings: [synthetic.building.id],
+		actions: [synthetic.expand.id, synthetic.till.id, synthetic.plow.id],
 	});
-	const translation = createTranslationContextForEngine(
-		engineContext,
-		(registries) => {
-			const plowDef = engineContext.actions.get(synthetic.plow.id);
-			const expandDef = engineContext.actions.get(synthetic.expand.id);
-			const tillDef = engineContext.actions.get(synthetic.till.id);
-			registerSyntheticPlowResources(registries.resources);
-			if (plowDef) {
-				registries.actions.add(plowDef.id, { ...plowDef });
-			}
-			if (expandDef) {
-				registries.actions.add(expandDef.id, { ...expandDef });
-			}
-			if (tillDef) {
-				registries.actions.add(tillDef.id, { ...tillDef });
-			}
+	const opponent = createSnapshotPlayer({
+		id: 'B',
+		name: 'Opponent',
+		resources: { ...baseResources },
+	});
+
+	const phaseDefinitions: SessionPhaseDefinition[] = synthetic.phases.map(
+		(phase) => {
+			return {
+				id: phase.id,
+				icon: phase.icon,
+				label: phase.label,
+				action: phase.action ?? false,
+				steps: (phase.steps ?? []).map((step) => ({
+					id: step.id,
+					title: step.title,
+					icon: step.icon,
+					triggers: step.triggers,
+					effects: (step.effects ?? []).map((effect) => ({
+						...effect,
+					})),
+				})),
+			} satisfies SessionPhaseDefinition;
 		},
 	);
-	return { ...synthetic, engineContext, translation };
+	const ruleSnapshot: SessionRuleSnapshot = {
+		tieredResourceKey: synthetic.rules.tieredResourceKey,
+		tierDefinitions: [...synthetic.rules.tierDefinitions],
+		winConditions: [...synthetic.rules.winConditions],
+	} satisfies SessionRuleSnapshot;
+	const resourceMetadata: Record<string, SessionMetadataDescriptor> =
+		Object.fromEntries(
+			Object.entries(SYNTHETIC_RESOURCES).map(([key, info]) => {
+				return [key, { icon: info.icon, label: info.label }];
+			}),
+		);
+	const session = createSessionSnapshot({
+		players: [activePlayer, opponent],
+		activePlayerId: activePlayer.id,
+		opponentId: opponent.id,
+		phases: phaseDefinitions,
+		actionCostResource: 'ap',
+		ruleSnapshot,
+		metadata: {
+			passiveEvaluationModifiers: {},
+			resources: resourceMetadata,
+			assets: {
+				land: {
+					icon: SYNTHETIC_LAND_INFO.icon,
+					label: SYNTHETIC_LAND_INFO.label,
+				},
+				slot: {
+					icon: SYNTHETIC_SLOT_INFO.icon,
+					label: SYNTHETIC_SLOT_INFO.label,
+				},
+				passive: {
+					icon: SYNTHETIC_PASSIVE_INFO.icon,
+					label: SYNTHETIC_PASSIVE_INFO.label,
+				},
+				upkeep: {
+					icon: SYNTHETIC_UPKEEP_PHASE.icon,
+					label: SYNTHETIC_UPKEEP_PHASE.label,
+				},
+			},
+		},
+	});
+	const translation = createTranslationContext(
+		session,
+		registries,
+		session.metadata,
+		{
+			ruleSnapshot: session.rules,
+			passiveRecords: session.passiveRecords,
+		},
+	);
+	return { ...synthetic, registries, session, translation };
 }
 
 describe('plow action translation', () => {
 	it('summarizes plow action', () => {
-		const { translation, expand, till, plow } = createEngineHarness();
+		const { translation, expand, till, plow } = createTranslationHarness();
 		const summary = summarizeContent('action', plow.id, translation);
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
 		const upkeepLabel = SYNTHETIC_UPKEEP_PHASE.label;
@@ -78,7 +147,7 @@ describe('plow action translation', () => {
 	});
 
 	it('describes plow action without perform prefix and with passive icon', () => {
-		const { translation, plow, plowPassive } = createEngineHarness();
+		const { translation, plow, plowPassive } = createTranslationHarness();
 		const desc = describeContent('action', plow.id, translation);
 		const titles = desc.map((entry) => {
 			return typeof entry === 'string' ? entry : entry.title;
@@ -100,7 +169,7 @@ describe('plow action translation', () => {
 
 	it('keeps performed system actions in effects', () => {
 		const { translation, expand, till, plow, plowPassive } =
-			createEngineHarness();
+			createTranslationHarness();
 		const summary = describeContent('action', plow.id, translation);
 		const { effects, description } = splitSummary(summary);
 		expect(description).toBeUndefined();
