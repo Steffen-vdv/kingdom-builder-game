@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
+import markdown from '@eslint/markdown';
 import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
@@ -19,6 +20,27 @@ const typeCheckedRules =
 const nonProjectTypeRuleOverrides = Object.fromEntries(
 	Object.keys(typeCheckedRules).map((ruleName) => [ruleName, 'off']),
 );
+
+const noopMarkdownParser = {
+	parseForESLint() {
+		return {
+			ast: {
+				type: 'Program',
+				body: [],
+				sourceType: 'module',
+				range: [0, 0],
+				loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+				tokens: [],
+				comments: [],
+			},
+			scopeManager: null,
+			visitorKeys: null,
+			tokens: [],
+			comments: [],
+			services: {},
+		};
+	},
+};
 
 const baseRules = {
 	...js.configs.recommended.rules,
@@ -118,6 +140,21 @@ const baseRules = {
 };
 
 export default [
+	...markdown.configs.processor,
+	{
+		files: ['**/*.md/**'],
+		languageOptions: {
+			parser: noopMarkdownParser,
+		},
+		rules: {
+			...nonProjectTypeRuleOverrides,
+			'@typescript-eslint/consistent-type-imports': 'off',
+			'unused-imports/no-unused-imports': 'off',
+			'unused-imports/no-unused-vars': 'off',
+			'max-lines': 'off',
+			'local/no-max-lines-override': 'off',
+		},
+	},
 	{
 		ignores: [
 			'dist',
@@ -130,6 +167,7 @@ export default [
 	},
 	{
 		files: ['**/*.{ts,tsx,js,cjs,mjs}'],
+		ignores: ['**/*.md/**'],
 		languageOptions: {
 			parser: tsParser,
 			parserOptions: {
@@ -255,6 +293,8 @@ export default [
 			'@typescript-eslint/consistent-type-imports': 'off',
 			'unused-imports/no-unused-imports': 'off',
 			'unused-imports/no-unused-vars': 'off',
+			'max-lines': 'off',
+			'local/no-max-lines-override': 'off',
 		},
 	},
 	{
