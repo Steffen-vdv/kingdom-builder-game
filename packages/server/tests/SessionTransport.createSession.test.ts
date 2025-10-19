@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol';
 import {
 	SessionTransport,
 	PLAYER_NAME_MAX_LENGTH,
@@ -10,6 +11,18 @@ import {
 	expectSnapshotMetadata,
 	expectStaticMetadata,
 } from './helpers/expectSnapshotMetadata.js';
+
+function expectDescriptorMetadata(
+	metadata: SessionSnapshotMetadata | undefined,
+): void {
+	expect(metadata).toBeDefined();
+	if (!metadata) {
+		return;
+	}
+	expect(Object.keys(metadata.stats ?? {})).not.toHaveLength(0);
+	expect(Object.keys(metadata.triggers ?? {})).not.toHaveLength(0);
+	expect(metadata.overview).toBeDefined();
+}
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -42,6 +55,7 @@ describe('SessionTransport createSession', () => {
 		});
 		expect(response.sessionId).toBe('transport-session');
 		expectSnapshotMetadata(response.snapshot.metadata);
+		expectDescriptorMetadata(response.snapshot.metadata);
 		expect(response.snapshot.game.devMode).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		const [playerA, playerB] = response.snapshot.game.players;

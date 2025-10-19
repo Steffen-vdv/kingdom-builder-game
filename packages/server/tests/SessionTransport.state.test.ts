@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { TransportError } from '../src/transport/TransportTypes.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
@@ -7,6 +8,18 @@ import {
 	expectSnapshotMetadata,
 	expectStaticMetadata,
 } from './helpers/expectSnapshotMetadata.js';
+
+function expectDescriptorMetadata(
+	metadata: SessionSnapshotMetadata | undefined,
+): void {
+	expect(metadata).toBeDefined();
+	if (!metadata) {
+		return;
+	}
+	expect(Object.keys(metadata.stats ?? {})).not.toHaveLength(0);
+	expect(Object.keys(metadata.triggers ?? {})).not.toHaveLength(0);
+	expect(metadata.overview).toBeDefined();
+}
 
 const middleware = createTokenAuthMiddleware({
 	tokens: {
@@ -43,6 +56,7 @@ describe('SessionTransport session state', () => {
 		expect(state.sessionId).toBe(sessionId);
 		expect(state.snapshot.game.players).toHaveLength(2);
 		expectSnapshotMetadata(state.snapshot.metadata);
+		expectDescriptorMetadata(state.snapshot.metadata);
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expectStaticMetadata(manager.getMetadata());
 		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });

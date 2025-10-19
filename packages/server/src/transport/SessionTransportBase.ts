@@ -17,6 +17,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import type { SessionManager } from '../session/SessionManager.js';
+import { mergeSessionMetadata } from '../session/mergeSessionMetadata.js';
 import type { AuthContext, AuthRole } from '../auth/AuthContext.js';
 import { AuthError } from '../auth/AuthError.js';
 import type { AuthMiddleware } from '../auth/tokenAuthMiddleware.js';
@@ -221,9 +222,14 @@ export class SessionTransportBase {
 		sessionId: string,
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
+		const clonedSnapshot = structuredClone(snapshot);
+		clonedSnapshot.metadata = mergeSessionMetadata({
+			baseMetadata: this.sessionManager.getMetadata(),
+			snapshotMetadata: clonedSnapshot.metadata,
+		});
 		return {
 			sessionId,
-			snapshot,
+			snapshot: clonedSnapshot,
 			registries: this.sessionManager.getRegistries(),
 		};
 	}
