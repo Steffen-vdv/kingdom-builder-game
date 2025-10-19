@@ -6,6 +6,8 @@ import { translateRequirementFailure } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { Action } from './actionTypes';
 import { SessionMirroringError, isFatalSessionError } from './sessionErrors';
+import { createFailureResolutionSnapshot } from './actionResolutionLog';
+import type { ActionResolution } from './useActionResolution';
 
 type RequirementFailureCarrier = {
 	requirementFailure?: SessionRequirementFailure;
@@ -19,10 +21,7 @@ interface ActionErrorHandlerOptions {
 	action: Action;
 	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
 	pushErrorToast: (message: string) => void;
-	addLog: (
-		entry: string | string[],
-		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-	) => void;
+	addResolutionLog: (resolution: ActionResolution) => void;
 }
 
 export function createActionErrorHandler({
@@ -32,7 +31,7 @@ export function createActionErrorHandler({
 	action,
 	player,
 	pushErrorToast,
-	addLog,
+	addResolutionLog,
 }: ActionErrorHandlerOptions) {
 	return (error: unknown): boolean => {
 		if (fatalErrorRef.current !== null || isFatalSessionError(error)) {
@@ -58,10 +57,17 @@ export function createActionErrorHandler({
 			message = translateRequirementFailure(requirementFailure, context);
 		}
 		pushErrorToast(message);
-		addLog(`Failed to play ${icon} ${action.name}: ${message}`, {
-			id: player.id,
-			name: player.name,
+		const headline = icon
+			? `Failed to play ${icon} ${action.name}`
+			: `Failed to play ${action.name}`;
+		const resolution = createFailureResolutionSnapshot({
+			action,
+			stepDefinition: context.actions.get(action.id),
+			player: { id: player.id, name: player.name },
+			detail: message,
+			headline,
 		});
+		addResolutionLog(resolution);
 		return false;
 	};
 }

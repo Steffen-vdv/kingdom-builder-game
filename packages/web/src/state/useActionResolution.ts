@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react';
-import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import type {
 	ActionResolution,
@@ -19,11 +18,7 @@ import {
 } from './useActionResolution.helpers';
 
 interface UseActionResolutionOptions {
-	addLog: (
-		entry: string | string[],
-		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-	) => void;
-	addResolutionLog?: (resolution: ActionResolution) => void;
+	addResolutionLog: (resolution: ActionResolution) => void;
 	setTrackedTimeout: (callback: () => void, delay: number) => number;
 	timeScaleRef: React.MutableRefObject<number>;
 	mountedRef: React.MutableRefObject<boolean>;
@@ -35,7 +30,6 @@ type ResolutionStateUpdater =
 	| ((previous: ActionResolution | null) => ActionResolution | null);
 
 function useActionResolution({
-	addLog,
 	addResolutionLog,
 	setTrackedTimeout,
 	timeScaleRef,
@@ -72,13 +66,9 @@ function useActionResolution({
 				...(snapshot.action ? { action: { ...snapshot.action } } : {}),
 				...(snapshot.actorLabel ? { actorLabel: snapshot.actorLabel } : {}),
 			};
-			if (addResolutionLog) {
-				addResolutionLog(resolutionLog);
-				return;
-			}
-			addLog(resolutionLog.lines, resolutionLog.player);
+			addResolutionLog(resolutionLog);
 		},
-		[addLog, addResolutionLog],
+		[addResolutionLog],
 	);
 
 	const setResolution = useCallback(

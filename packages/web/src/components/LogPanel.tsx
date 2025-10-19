@@ -178,8 +178,6 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		'text-[0.7rem] font-semibold tracking-[0.25em] text-slate-600 dark:text-slate-300';
 	const entryContainerBaseClasses =
 		'rounded-[1.875rem] border border-white/40 bg-white/70 p-1.5 shadow-lg backdrop-blur-sm transition-shadow dark:border-white/10 dark:bg-slate-900/60 dark:shadow-[0_24px_48px_rgba(0,0,0,0.45)]';
-	const legacyEntryClasses =
-		'rounded-[1.5rem] border border-white/40 bg-white/80 p-4 text-sm text-slate-700 shadow-inner shadow-amber-500/10 whitespace-pre-wrap dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-200';
 	const closeButtonClasses = clsx(
 		'flex h-8 w-8 items-center justify-center rounded-full border',
 		'border-rose-500 bg-rose-500 text-base font-semibold leading-none text-white',
@@ -244,15 +242,12 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 						entryContainerBaseClasses,
 						accentClass,
 					);
-					const playerName =
-						entry.kind === 'resolution'
-							? resolvePlayerName(
-									entry.playerId,
-									entry.resolution.player?.name ??
-										entry.resolution.player?.id ??
-										null,
-								)
-							: resolvePlayerName(entry.playerId);
+					const playerName = resolvePlayerName(
+						entry.playerId,
+						entry.resolution.player?.name ??
+							entry.resolution.player?.id ??
+							null,
+					);
 					const header = (
 						<div className={entryHeaderClasses} data-log-entry-header>
 							<span className={entryTimeClasses}>{entry.time}</span>
@@ -266,25 +261,6 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 							) : null}
 						</div>
 					);
-					if (entry.kind !== 'resolution') {
-						return (
-							<article
-								key={entry.id}
-								id={`game-log-entry-${entry.id}`}
-								data-log-entry-id={entry.id}
-								data-log-entry-kind={entry.kind}
-								className={entryWrapperClass}
-								role="listitem"
-							>
-								{header}
-								<div className={entryContainerClasses}>
-									<div className={legacyEntryClasses} data-log-entry-fallback>
-										{entry.text}
-									</div>
-								</div>
-							</article>
-						);
-					}
 					return (
 						<article
 							key={entry.id}

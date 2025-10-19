@@ -157,13 +157,12 @@ export function GameProviderInner({
 		clearTrackedTimeout,
 	});
 
-	const { log, logOverflowed, addLog, addResolutionLog } = useGameLog({
+	const { log, logOverflowed, addResolutionLog } = useGameLog({
 		sessionSnapshot,
 	});
 
 	const { resolution, showResolution, acknowledgeResolution } =
 		useActionResolution({
-			addLog,
 			addResolutionLog,
 			setTrackedTimeout,
 			timeScaleRef,

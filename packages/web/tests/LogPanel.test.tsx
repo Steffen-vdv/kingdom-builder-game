@@ -162,31 +162,4 @@ describe('<LogPanel />', () => {
 		expect(header.textContent).toContain(logEntry.time);
 		expect(header.textContent).toContain('Player One');
 	});
-
-	it('gracefully renders legacy text log entries', () => {
-		const { players } = scenario;
-		mockGame.log = [
-			...mockGame.log,
-			{
-				id: 2,
-				time: '10:05:00 AM',
-				playerId: players[1].id,
-				kind: 'text' as const,
-				text: '[Player Two] Legacy entry text',
-			},
-		];
-		const { container } = render(<LogPanel isOpen onClose={() => {}} />);
-		const legacyEntry = container.querySelector('[data-log-entry-id="2"]');
-		expect(legacyEntry).not.toBeNull();
-		if (!legacyEntry) {
-			throw new Error('Expected legacy log entry to render');
-		}
-		expect(legacyEntry.getAttribute('data-log-entry-kind')).toBe('text');
-		const fallback = legacyEntry.querySelector('[data-log-entry-fallback]');
-		expect(fallback).not.toBeNull();
-		if (!fallback) {
-			throw new Error('Expected fallback text container');
-		}
-		expect(fallback).toHaveTextContent('Legacy entry text');
-	});
 });

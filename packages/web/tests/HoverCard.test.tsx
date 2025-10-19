@@ -177,7 +177,7 @@ describe('<HoverCard />', () => {
 			}, []);
 			const { resolution, showResolution, acknowledgeResolution } =
 				useActionResolution({
-					addLog: vi.fn(),
+					addResolutionLog: vi.fn(),
 					setTrackedTimeout: (callback, delay) =>
 						window.setTimeout(callback, delay),
 					timeScaleRef,
@@ -243,7 +243,6 @@ describe('<HoverCard />', () => {
 
 	it('renders formatted phase resolutions and logs phase advances', async () => {
 		vi.useFakeTimers();
-		const addLog = vi.fn();
 		const addResolutionLog = vi.fn();
 		const ResolutionHarness = () => {
 			const timeScaleRef = React.useRef(1);
@@ -255,7 +254,6 @@ describe('<HoverCard />', () => {
 			}, []);
 			const { resolution, showResolution, acknowledgeResolution } =
 				useActionResolution({
-					addLog,
 					addResolutionLog,
 					setTrackedTimeout: (callback, delay) =>
 						window.setTimeout(callback, delay),
@@ -426,7 +424,6 @@ describe('<HoverCard />', () => {
 			name: sessionPlayer.name,
 		});
 		expect(phaseSnapshot.requireAcknowledgement).toBe(false);
-		expect(addLog).not.toHaveBeenCalled();
 		expect(continueButton).not.toBeDisabled();
 		act(() => {
 			mockGame.acknowledgeResolution();
