@@ -14,6 +14,8 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	splitActionCostMap,
+	sumUpkeep,
 	type ResourceDescriptorSelector,
 } from './utils';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
@@ -92,24 +94,37 @@ export default function BuildOptions({
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
 				const metadataCosts = costMap.get(building.id);
+				const { costs: dynamicCosts, cleanup: dynamicCleanup } =
+					splitActionCostMap(metadataCosts);
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(
 					building.costs ?? {},
 				)) {
 					costs[costKey] = costAmount ?? 0;
 				}
-				for (const [costKey, costAmount] of Object.entries(
-					metadataCosts ?? {},
-				)) {
+				for (const [costKey, costAmount] of Object.entries(dynamicCosts)) {
 					if (costAmount === undefined) {
 						continue;
 					}
 					costs[costKey] = costAmount;
 				}
+				const combinedUpkeep: Record<string, number> = {
+					...(building.upkeep ?? {}),
+					...dynamicCleanup,
+				};
 				const total = sumNonActionCosts(costs, actionCostResource);
-				return { building, costs, total };
+				const cleanup = sumUpkeep(combinedUpkeep);
+				return { building, costs, total, cleanup, upkeep: combinedUpkeep };
 			})
-			.sort((first, second) => first.total - second.total);
+			.sort((first, second) => {
+				if (first.total !== second.total) {
+					return first.total - second.total;
+				}
+				if (first.cleanup !== second.cleanup) {
+					return first.cleanup - second.cleanup;
+				}
+				return first.building.name.localeCompare(second.building.name);
+			});
 	}, [buildings, actionCostResource, player.buildings.size, costMap]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
@@ -127,8 +142,7 @@ export default function BuildOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
-				{entries.map(({ building, costs }) => {
-					const upkeep = building.upkeep;
+				{entries.map(({ building, costs, upkeep }) => {
 					const focus = normalizeActionFocus(building.focus);
 					const icon = building.icon;
 					const canPay = playerHasRequiredResources(player.resources, costs);
