@@ -142,3 +142,7 @@ guide for rationale, lore, and extended background.
 - Review [`docs/ui-metadata-pipeline.md`](ui-metadata-pipeline.md) for the
   metadata flow. **JSX-only edits do not update visuals—change the content,
   regenerate snapshots, and rerun Playwright whenever icons or labels shift.**
+- Start UI-affecting assignments with
+  [`docs/ui-change-playbook.md`](ui-change-playbook.md).
+  It routes you through the correct content, server, and translation
+  touchpoints.
