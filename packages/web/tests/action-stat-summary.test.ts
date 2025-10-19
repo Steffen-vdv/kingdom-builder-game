@@ -50,7 +50,7 @@ describe('action stat summaries', () => {
 		expect(summary).toEqual([
 			'Max 👥 +1',
 			'🛡️ +1',
-			'🌀 +0.2',
+			'🌀 +20%',
 			'⚔️ +1',
 			'🛡️ -3',
 		]);
@@ -65,7 +65,7 @@ describe('action stat summaries', () => {
 		expect(lines).toEqual([
 			'👥 +1 Max Population',
 			'🛡️ +1 Fortification Strength',
-			'🌀 +0.2 Absorption',
+			'🌀 +20% Absorption',
 			'⚔️ +1 Army Strength',
 			'🛡️ -3 Fortification Strength',
 		]);
@@ -86,16 +86,28 @@ describe('action stat summaries', () => {
 		expect(summary).toEqual([
 			'Max 👥 +1',
 			'🛡️ +1',
-			'🌀 +0.2',
+			'🌀 +20%',
 			'⚔️ +1',
 			'🛡️ -3',
 		]);
 		expect(lines).toEqual([
 			'👥 +1 Max Population',
 			'🛡️ +1 Fortification Strength',
-			'🌀 +0.2 Absorption',
+			'🌀 +20% Absorption',
 			'⚔️ +1 Army Strength',
 			'🛡️ -3 Fortification Strength',
 		]);
+	});
+	it('formats percent-based stat changes using percentage notation', () => {
+		const { actionId, translationContext } = setupStatAction([
+			{ key: 'absorption', method: 'add', amount: 0.5 },
+		]);
+		const summary = summarizeContent('action', actionId, translationContext);
+		const description = describeContent('action', actionId, translationContext);
+		const lines = description.filter(
+			(entry): entry is string => typeof entry === 'string',
+		);
+		expect(summary).toEqual(['🌀 +50%']);
+		expect(lines).toEqual(['🌀 +50% Absorption']);
 	});
 });
