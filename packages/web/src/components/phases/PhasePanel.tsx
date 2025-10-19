@@ -35,20 +35,6 @@ const playerNameClassName = [
 	'text-base font-semibold text-slate-800 dark:text-white',
 ].join(' ');
 
-const currentPhaseCardClassName = [
-	'flex flex-col gap-1 rounded-2xl border border-indigo-200/70 px-4 py-3',
-	'bg-indigo-50/80 text-indigo-700 shadow-sm dark:border-indigo-300/40',
-	'dark:bg-indigo-500/20 dark:text-indigo-100',
-].join(' ');
-
-const currentPhaseLabelClassName = [
-	'text-[0.625rem] uppercase tracking-[0.35em]',
-].join(' ');
-
-const currentPhaseNameClassName = [
-	'text-sm font-semibold tracking-[0.08em]',
-].join(' ');
-
 const phaseSectionClassName = ['flex flex-col gap-3'].join(' ');
 
 const phaseListClassName = [
@@ -69,6 +55,12 @@ const phaseListItemClassName = [
 const phaseListItemContentClassName = ['flex w-full items-center gap-3'].join(
 	' ',
 );
+
+const phaseListItemIndexClassName = [
+	'grid h-7 w-7 place-items-center rounded-xl border border-indigo-200/70',
+	'bg-indigo-50/80 text-[0.75rem] font-semibold text-indigo-700 shadow-sm',
+	'dark:border-indigo-300/40 dark:bg-indigo-500/20 dark:text-indigo-100',
+].join(' ');
 
 const phaseListItemIconClassName = [
 	'grid h-9 w-9 place-items-center rounded-xl bg-white/80 text-base',
@@ -92,11 +84,11 @@ export default function PhasePanel() {
 			})),
 		[sessionSnapshot.phases],
 	);
-	const currentPhaseDefinition = useMemo(
+	const currentPhaseLabel = useMemo(
 		() =>
 			phases.find(
 				(phaseDefinition) => phaseDefinition.id === phase.currentPhaseId,
-			),
+			)?.label ?? phase.currentPhaseId,
 		[phases, phase.currentPhaseId],
 	);
 	const activePlayerSnapshot = useMemo(() => {
@@ -137,26 +129,17 @@ export default function PhasePanel() {
 						<span className={playerNameClassName}>{activePlayerName}</span>
 					</div>
 				</div>
-				<div
-					className={currentPhaseCardClassName}
-					role="status"
-					aria-live="polite"
-				>
-					<span className={currentPhaseLabelClassName}>Current Phase</span>
-					<span className={currentPhaseNameClassName}>
-						{currentPhaseDefinition?.label ?? phase.currentPhaseId}
-					</span>
-				</div>
+				<span className="sr-only" role="status" aria-live="polite">
+					Current phase: {currentPhaseLabel}
+				</span>
 			</header>
 			<div className={phaseSectionClassName}>
 				<p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
-					Phase Order
+					Phases
 				</p>
 				<ul className={phaseListClassName}>
-					{phases.map((phaseDefinition) => {
+					{phases.map((phaseDefinition, phaseIndex) => {
 						const isActive = phaseDefinition.id === phase.currentPhaseId;
-						const icon =
-							phaseDefinition.icon !== '' ? phaseDefinition.icon : '•';
 						return (
 							<li
 								key={phaseDefinition.id}
@@ -166,10 +149,16 @@ export default function PhasePanel() {
 							>
 								<span className={phaseListItemContentClassName}>
 									<span
+										className={phaseListItemIndexClassName}
+										aria-hidden="true"
+									>
+										{String(phaseIndex + 1).padStart(2, '0')}
+									</span>
+									<span
 										className={phaseListItemIconClassName}
 										aria-hidden="true"
 									>
-										{icon}
+										{phaseDefinition.icon || '✦'}
 									</span>
 									<span className={phaseListItemLabelClassName}>
 										{phaseDefinition.label}
