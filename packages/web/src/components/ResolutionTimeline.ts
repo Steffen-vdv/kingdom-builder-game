@@ -52,22 +52,35 @@ function buildTimelineTree(
 
 function collectCostEntries(nodes: TimelineNode[]): TimelineEntry[] {
 	const entries: TimelineEntry[] = [];
+	let index = 0;
 
-	nodes.forEach((node, index) => {
-		const baseKey = `cost-${index}`;
-		entries.push({
-			key: baseKey,
-			text: node.descriptor.text,
-			level: 0,
-			kind: node.descriptor.kind,
-		});
+	function visit(node: TimelineNode): void {
+		if (node.descriptor.kind === 'cost') {
+			const baseKey = `cost-${index}`;
+			index += 1;
+			entries.push({
+				key: baseKey,
+				text: node.descriptor.text,
+				level: 0,
+				kind: node.descriptor.kind,
+			});
 
-		node.children
-			.filter((child) => child.descriptor.kind === 'cost-detail')
-			.forEach((child, childIndex) =>
-				collectCostDetail(child, `${baseKey}-detail-${childIndex}`, 1, entries),
-			);
-	});
+			node.children
+				.filter((child) => child.descriptor.kind === 'cost-detail')
+				.forEach((child, childIndex) =>
+					collectCostDetail(
+						child,
+						`${baseKey}-detail-${childIndex}`,
+						1,
+						entries,
+					),
+				);
+		}
+
+		node.children.forEach((child) => visit(child));
+	}
+
+	nodes.forEach((node) => visit(node));
 
 	return entries;
 }
@@ -105,12 +118,17 @@ function collectEffectNode(
 	key: string,
 	entries: TimelineEntry[],
 ): void {
-	entries.push({
-		key,
-		text: node.descriptor.text,
-		level: node.level,
-		kind: node.descriptor.kind,
-	});
+	const isCostNode =
+		node.descriptor.kind === 'cost' || node.descriptor.kind === 'cost-detail';
+
+	if (!isCostNode) {
+		entries.push({
+			key,
+			text: node.descriptor.text,
+			level: node.level,
+			kind: node.descriptor.kind,
+		});
+	}
 
 	node.children.forEach((child, index) =>
 		collectEffectNode(child, `${key}-${index}`, entries),

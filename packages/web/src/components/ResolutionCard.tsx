@@ -154,26 +154,20 @@ function ResolutionCard({
 		'dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(15,23,42,0.45)]',
 	);
 	const structuredTimeline = React.useMemo(
-		() => buildTimelineTree(resolution.visibleTimeline),
+		() => buildTimelineTree(resolution.visibleTimeline ?? []),
 		[resolution.visibleTimeline],
 	);
 	const costEntries = React.useMemo(
-		() =>
-			collectCostEntries(
-				structuredTimeline.filter((node) => node.descriptor.kind === 'cost'),
-			),
+		() => collectCostEntries(structuredTimeline),
 		[structuredTimeline],
 	);
 	const effectEntries = React.useMemo(
-		() =>
-			collectEffectEntries(
-				structuredTimeline.filter((node) => node.descriptor.kind !== 'cost'),
-			),
+		() => collectEffectEntries(structuredTimeline),
 		[structuredTimeline],
 	);
 
 	const fallbackLines = React.useMemo(() => {
-		if (resolution.visibleTimeline.length > 0) {
+		if ((resolution.visibleTimeline?.length ?? 0) > 0) {
 			return [] as { depth: number; text: string }[];
 		}
 
