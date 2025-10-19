@@ -12,7 +12,12 @@ import {
 } from '../../helpers/sessionFixtures';
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import { selectSessionView } from '../../../src/state/sessionSelectors';
-import type { SessionAdapter } from '../../../src/state/sessionTypes';
+
+const sessionAiMocks = vi.hoisted(() => ({
+	hasAiController: vi.fn(),
+}));
+
+vi.mock('../../../src/state/sessionAi', () => sessionAiMocks);
 
 function createActionsPanelScenario() {
 	const scaffold = createTestSessionScaffold();
@@ -58,11 +63,13 @@ function createActionsPanelScenario() {
 		requirements: [],
 		groups: [],
 	};
+	sessionAiMocks.hasAiController.mockImplementation(
+		(_sessionId: string, playerId: string) => playerId === aiPlayer.id,
+	);
 	mockGame.session = {
-		hasAiController: (playerId: string) => playerId === aiPlayer.id,
 		readActionMetadata: () => metadataSnapshot,
 		subscribeActionMetadata: () => () => {},
-	} as unknown as SessionAdapter;
+	} as unknown as typeof mockGame.session;
 	return {
 		mockGame,
 		actionCostResource,
@@ -82,6 +89,7 @@ describe('<ActionsPanel />', () => {
 	beforeEach(() => {
 		scenario = createActionsPanelScenario();
 		mockGame = scenario.mockGame;
+		sessionAiMocks.hasAiController.mockClear();
 	});
 
 	afterEach(() => {

@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import { useGameEngine } from './GameContext';
 import { enqueueSimulateUpcomingPhases } from './sessionSdk';
+import { simulateUpcomingPhases } from './sessionAi';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
 
@@ -109,7 +110,7 @@ function hashGameState(
 }
 
 export function useNextTurnForecast(): NextTurnForecast {
-	const { session, sessionSnapshot, sessionId } = useGameEngine();
+	const { sessionSnapshot, sessionId } = useGameEngine();
 	const { game, phases } = sessionSnapshot;
 	const players = game.players;
 	const playerIds = useMemo(
@@ -214,7 +215,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 			disposed = true;
 			inflightRequests.delete(requestKey);
 		};
-	}, [hashKey, playerIds, session, sessionId]);
+	}, [hashKey, playerIds, sessionId]);
 
 	return useMemo(() => {
 		if (cacheRef.current?.key === hashKey) {
@@ -228,7 +229,7 @@ export function useNextTurnForecast(): NextTurnForecast {
 		const forecast: NextTurnForecast = {};
 		for (const player of players) {
 			try {
-				const { delta } = session.simulateUpcomingPhases(player.id);
+				const { delta } = simulateUpcomingPhases(sessionId, player.id);
 				forecast[player.id] = delta;
 			} catch (error) {
 				void error;
@@ -239,5 +240,5 @@ export function useNextTurnForecast(): NextTurnForecast {
 		cacheRef.current = entry;
 		forecastCache.set(sessionId, entry);
 		return forecast;
-	}, [session, hashKey, players, revision, sessionId]);
+	}, [hashKey, players, revision, sessionId]);
 }

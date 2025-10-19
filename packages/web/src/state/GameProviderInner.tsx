@@ -17,6 +17,7 @@ import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
+import { hasAiController } from './sessionAi';
 import type {
 	LegacyGameEngineContextValue,
 	PerformActionHandler,
@@ -81,14 +82,14 @@ export function GameProviderInner({
 		const { activePlayerId, opponentId } = sessionSnapshot.game;
 		return (
 			players.find((player) => {
-				return !sessionAdapter.hasAiController(player.id);
+				return !hasAiController(sessionId, player.id);
 			}) ??
 			players.find((player) => player.id === activePlayerId) ??
 			players.find((player) => player.id === opponentId) ??
 			players[0]
 		);
 	}, [
-		sessionAdapter,
+		sessionId,
 		sessionSnapshot.game.players,
 		sessionSnapshot.game.activePlayerId,
 		sessionSnapshot.game.opponentId,
@@ -228,7 +229,7 @@ export function GameProviderInner({
 	});
 
 	useAiRunner({
-		session: sessionAdapter,
+		sessionId,
 		sessionSnapshot,
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
