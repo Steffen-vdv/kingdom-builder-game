@@ -1,4 +1,4 @@
-import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import type { TranslationContext } from '../../src/translation/context';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
@@ -9,12 +9,12 @@ import { createTestRegistryMetadata } from './registryMetadata';
 export interface SyntheticTranslationContextResult {
 	translationContext: TranslationContext;
 	registries: SessionRegistries;
-	session: EngineSessionSnapshot;
+	session: SessionSnapshot;
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 }
 
 export type SyntheticContextConfigurator = (options: {
-	session: EngineSessionSnapshot;
+	session: SessionSnapshot;
 	registries: SessionRegistries;
 }) => void;
 

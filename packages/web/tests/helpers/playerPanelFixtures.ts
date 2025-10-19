@@ -1,9 +1,8 @@
 import { vi } from 'vitest';
 import type {
-	EngineSession,
-	EngineSessionSnapshot,
-	PlayerId,
-} from '@kingdom-builder/engine';
+	SessionPlayerId,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
@@ -12,6 +11,7 @@ import { selectSessionView } from '../../src/state/sessionSelectors';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
 import { createTestSessionScaffold } from './testSessionScaffold';
+import { createMockSessionAdapter } from './mockSessionAdapter';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
@@ -20,13 +20,13 @@ export interface PlayerPanelFixtures {
 	displayableStatKeys: string[];
 	statForecast: Record<string, number>;
 	registries: SessionRegistries;
-	metadata: EngineSessionSnapshot['metadata'];
+	metadata: SessionSnapshot['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 }
 
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
-	const activePlayerId = 'player-1' as PlayerId;
-	const opponentId = 'player-2' as PlayerId;
+	const activePlayerId = 'player-1' as SessionPlayerId;
+	const opponentId = 'player-2' as SessionPlayerId;
 	const {
 		registries: sessionRegistries,
 		metadata: sessionMetadata,
@@ -161,7 +161,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
+		session: createMockSessionAdapter(sessionState),
 	};
 	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
 		(acc, key, index) => {

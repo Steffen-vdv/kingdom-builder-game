@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
+import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import {
 	clearSessionActionMetadataStore,
 	seedSessionActionMetadata,
@@ -26,10 +30,6 @@ import { createTranslationContext } from '../src/translation/context';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import { RemoteSessionAdapter } from '../src/state/remoteSessionAdapter';
 import { createMetadataKey } from '../src/state/actionMetadataKey';
-import type {
-	SessionActionCostMap,
-	SessionActionRequirementList,
-} from '@kingdom-builder/protocol/session';
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { GameApi } from '../src/services/gameApi';
@@ -210,7 +210,7 @@ function createMockGame() {
 		buildings: [],
 		actions: [],
 	});
-	const sessionState: EngineSessionSnapshot = createSessionSnapshot({
+	const sessionState: SessionSnapshot = createSessionSnapshot({
 		players: [activePlayer, opponent],
 		activePlayerId: activePlayer.id,
 		opponentId: opponent.id,

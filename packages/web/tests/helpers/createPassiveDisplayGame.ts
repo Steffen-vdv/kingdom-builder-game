@@ -1,14 +1,14 @@
 import { vi } from 'vitest';
 import type {
-	EngineSession,
-	EngineSessionSnapshot,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
+	SessionRuleSnapshot,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
 import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { createMockSessionAdapter } from './mockSessionAdapter';
 
 export type MockGame = LegacyGameEngineContextValue;
 
@@ -17,15 +17,15 @@ export type PassiveGameContext = {
 	handleHoverCard: ReturnType<typeof vi.fn>;
 	clearHoverCard: ReturnType<typeof vi.fn>;
 	registries: SessionRegistries;
-	metadata: EngineSessionSnapshot['metadata'];
+	metadata: SessionSnapshot['metadata'];
 };
 
 export function createPassiveGame(
-	sessionState: EngineSessionSnapshot,
+	sessionState: SessionSnapshot,
 	options: {
-		ruleSnapshot?: RuleSnapshot;
+		ruleSnapshot?: SessionRuleSnapshot;
 		registries?: SessionRegistries;
-		metadata?: EngineSessionSnapshot['metadata'];
+		metadata?: SessionSnapshot['metadata'];
 	} = {},
 ): PassiveGameContext {
 	const handleHoverCard = vi.fn();
@@ -101,7 +101,7 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
+		session: createMockSessionAdapter(sessionState),
 	};
 	return {
 		mockGame,

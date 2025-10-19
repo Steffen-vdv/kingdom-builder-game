@@ -1,10 +1,10 @@
 import { vi } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type { EngineSessionSnapshot } from '@kingdom-builder/engine';
 import type {
 	ActionEffectGroup,
 	PlayerStartConfig,
 } from '@kingdom-builder/protocol';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { GameApi } from '../../../src/services/gameApi';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
 import { RemoteSessionAdapter } from '../../../src/state/remoteSessionAdapter';
@@ -92,7 +92,7 @@ function createParticipant(
 function toPlayerSnapshot(
 	participant: Participant,
 	capacityStat: string,
-): EngineSessionSnapshot['game']['players'][number] {
+): SessionSnapshot['game']['players'][number] {
 	return {
 		id: participant.id,
 		name: participant.name,
@@ -242,7 +242,7 @@ export function createActionsPanelGame({
 	} as const;
 	const playerSnapshot = toPlayerSnapshot(player, capacityStat);
 	const opponentSnapshot = toPlayerSnapshot(opponent, capacityStat);
-	const sessionState: EngineSessionSnapshot = {
+	const sessionState: SessionSnapshot = {
 		game: {
 			turn: 1,
 			currentPlayerIndex: 0,
