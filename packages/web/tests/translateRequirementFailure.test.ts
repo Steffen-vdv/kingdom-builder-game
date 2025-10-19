@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { translateRequirementFailure } from '../src/translation';
-import type { PlayerId } from '@kingdom-builder/engine';
+import type { SessionPlayerId } from '@kingdom-builder/protocol';
 import {
 	createTranslationContext,
 	selectPopulationRoleDisplay,
@@ -17,10 +17,10 @@ type RequirementFailure = Parameters<typeof translateRequirementFailure>[0];
 describe('translateRequirementFailure', () => {
 	const scaffold = createTestSessionScaffold();
 	const activePlayer = createSnapshotPlayer({
-		id: 'player:active' as PlayerId,
+		id: 'player:active' as SessionPlayerId,
 	});
 	const opponent = createSnapshotPlayer({
-		id: 'player:opponent' as PlayerId,
+		id: 'player:opponent' as SessionPlayerId,
 	});
 	const session = createSessionSnapshot({
 		players: [activePlayer, opponent],

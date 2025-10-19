@@ -5,7 +5,7 @@ import type {
 	TranslationPlayer,
 	TranslationRegistry,
 } from '../../src/translation/context';
-import type { RuleSnapshot } from '@kingdom-builder/engine';
+import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
 
@@ -81,16 +81,16 @@ export function createTranslationContextStub(
 		populations?: TranslationRegistry<unknown>;
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
-		rules?: RuleSnapshot;
+		rules?: SessionRuleSnapshot;
 	},
 ): TranslationContext {
-	const rules: RuleSnapshot =
+	const rules: SessionRuleSnapshot =
 		options.rules ??
 		({
 			tieredResourceKey: 'happiness',
 			tierDefinitions: [],
 			winConditions: [],
-		} as RuleSnapshot);
+		} as SessionRuleSnapshot);
 	return {
 		actions: options.actions,
 		buildings: options.buildings,

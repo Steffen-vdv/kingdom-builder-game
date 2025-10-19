@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { PlayerId } from '@kingdom-builder/engine';
+import type { SessionPlayerId } from '@kingdom-builder/protocol';
 import type { SessionAdvanceSkipSnapshot } from '@kingdom-builder/protocol/session';
 import { describeSkipEvent } from '../src/utils/describeSkipEvent';
 import { createTranslationContext } from '../src/translation/context';
@@ -13,10 +13,10 @@ import {
 function createSkipScenario() {
 	const scaffold = createTestSessionScaffold();
 	const activePlayer = createSnapshotPlayer({
-		id: 'player:active' as PlayerId,
+		id: 'player:active' as SessionPlayerId,
 	});
 	const opponent = createSnapshotPlayer({
-		id: 'player:opponent' as PlayerId,
+		id: 'player:opponent' as SessionPlayerId,
 	});
 	const session = createSessionSnapshot({
 		players: [activePlayer, opponent],

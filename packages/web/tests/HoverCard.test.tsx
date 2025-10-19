@@ -16,7 +16,7 @@ import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
 import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
 import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
 import type { PlayerSnapshot } from '../src/translation';
-import type { PlayerId } from '@kingdom-builder/engine';
+import type { SessionPlayerId } from '@kingdom-builder/protocol';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -26,8 +26,8 @@ interface HoverCardScenario {
 	costResource: string;
 	costIcon: string;
 	actionCostResource: string;
-	activePlayerId: PlayerId;
-	opponentId: PlayerId;
+	activePlayerId: SessionPlayerId;
+	opponentId: SessionPlayerId;
 	exampleAction: { id: string; name: string; icon?: string };
 	sessionState: ReturnType<typeof createSessionSnapshot>;
 }
@@ -61,8 +61,8 @@ function createHoverCardScenario(): HoverCardScenario {
 	const costResource =
 		resourceKeys.find((key) => key !== actionCostResource) ??
 		actionCostResource;
-	const activePlayerId = 'player-1' as PlayerId;
-	const opponentId = 'player-2' as PlayerId;
+	const activePlayerId = 'player-1' as SessionPlayerId;
+	const opponentId = 'player-2' as SessionPlayerId;
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',

@@ -18,7 +18,7 @@ import {
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 // prettier-ignore
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
-import type { PlayerId } from '@kingdom-builder/engine';
+import type { SessionPlayerId } from '@kingdom-builder/protocol';
 
 interface PopulationInfoScenario {
 	registries: ReturnType<typeof createTestSessionScaffold>['registries'];
@@ -78,14 +78,14 @@ function createPopulationInfoScenario(
 		playerStats[maxPopulationKey] = 5;
 	}
 	const activePlayer = createSnapshotPlayer({
-		id: 'player-1' as PlayerId,
+		id: 'player-1' as SessionPlayerId,
 		name: 'Player One',
 		population: populationCounts,
 		stats: playerStats,
 		statsHistory: { ...(options.statsHistory ?? {}) },
 	});
 	const opponent = createSnapshotPlayer({
-		id: 'player-2' as PlayerId,
+		id: 'player-2' as SessionPlayerId,
 		name: 'Player Two',
 	});
 	const sessionState = createSessionSnapshot({

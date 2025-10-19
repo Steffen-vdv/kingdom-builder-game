@@ -7,7 +7,10 @@ import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
-import type { PlayerId, RuleSnapshot } from '@kingdom-builder/engine';
+import type {
+	SessionPlayerId,
+	SessionRuleSnapshot,
+} from '@kingdom-builder/protocol';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -23,7 +26,7 @@ import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 
 type MockGame = GameEngineContextValue;
-type TierDefinition = RuleSnapshot['tierDefinitions'][number];
+type TierDefinition = SessionRuleSnapshot['tierDefinitions'][number];
 
 type SummaryGroupLike = {
 	title?: string;
@@ -149,13 +152,13 @@ function createResourceBarScenario() {
 			},
 		},
 	];
-	const ruleSnapshot: RuleSnapshot = {
+	const ruleSnapshot: SessionRuleSnapshot = {
 		...scaffold.ruleSnapshot,
 		tieredResourceKey: happinessKey,
 		tierDefinitions,
 	};
-	const activePlayerId = 'player-1' as PlayerId;
-	const opponentId = 'player-2' as PlayerId;
+	const activePlayerId = 'player-1' as SessionPlayerId;
+	const opponentId = 'player-2' as SessionPlayerId;
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',

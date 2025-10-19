@@ -1,8 +1,8 @@
 import type {
-	PlayerId,
-	PlayerStateSnapshot,
-	RuleSnapshot,
-} from '@kingdom-builder/engine';
+	SessionPlayerId,
+	SessionPlayerStateSnapshot,
+	SessionRuleSnapshot,
+} from '@kingdom-builder/protocol';
 import {
 	createPassiveRecord,
 	createSessionSnapshot,
@@ -15,19 +15,19 @@ import {
 import { createTestSessionScaffold } from './testSessionScaffold';
 
 export type TierPassiveScenario = PassiveGameContext & {
-	activePlayer: PlayerStateSnapshot;
-	ruleSnapshot: RuleSnapshot;
+	activePlayer: SessionPlayerStateSnapshot;
+	ruleSnapshot: SessionRuleSnapshot;
 };
 
 export type NeutralPassiveScenario = PassiveGameContext & {
-	activePlayer: PlayerStateSnapshot;
+	activePlayer: SessionPlayerStateSnapshot;
 };
 
 export type BuildingPassiveScenario = PassiveGameContext & {
-	activePlayer: PlayerStateSnapshot;
+	activePlayer: SessionPlayerStateSnapshot;
 };
 
-function cloneRuleSnapshot(base: RuleSnapshot): RuleSnapshot {
+function cloneRuleSnapshot(base: SessionRuleSnapshot): SessionRuleSnapshot {
 	const clone = structuredClone(base);
 	clone.tierDefinitions = clone.tierDefinitions.map((tier) => ({
 		...tier,
@@ -40,7 +40,7 @@ function cloneRuleSnapshot(base: RuleSnapshot): RuleSnapshot {
 }
 
 function sampleValueForTier(
-	tier: RuleSnapshot['tierDefinitions'][number],
+	tier: SessionRuleSnapshot['tierDefinitions'][number],
 ): number {
 	const min = tier.range.min ?? 0;
 	const max = tier.range.max;
@@ -81,8 +81,8 @@ export function createTierPassiveScenario(): TierPassiveScenario {
 			token: removalDetail,
 		},
 	};
-	const activePlayerId = 'player-1' as PlayerId;
-	const opponentId = 'player-2' as PlayerId;
+	const activePlayerId = 'player-1' as SessionPlayerId;
+	const opponentId = 'player-2' as SessionPlayerId;
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
@@ -146,8 +146,8 @@ export function createNeutralScenario(): NeutralPassiveScenario {
 	if (!neutralTier) {
 		throw new Error('No neutral tier definition available.');
 	}
-	const activePlayerId = 'player-1' as PlayerId;
-	const opponentId = 'player-2' as PlayerId;
+	const activePlayerId = 'player-1' as SessionPlayerId;
+	const opponentId = 'player-2' as SessionPlayerId;
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
@@ -187,8 +187,8 @@ export function createBuildingScenario(): BuildingPassiveScenario {
 	} = createTestSessionScaffold();
 	const ruleSnapshot = cloneRuleSnapshot(baseRuleSnapshot);
 	const happinessKey = ruleSnapshot.tieredResourceKey;
-	const activePlayerId = 'player-1' as PlayerId;
-	const opponentId = 'player-2' as PlayerId;
+	const activePlayerId = 'player-1' as SessionPlayerId;
+	const opponentId = 'player-2' as SessionPlayerId;
 	const buildingId = 'castle_walls';
 	const buildingInfo = registries.buildings.get(buildingId);
 	const passiveId = `${buildingId}_bonus`;
