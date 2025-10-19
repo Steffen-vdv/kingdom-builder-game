@@ -1,3 +1,4 @@
+import { GENERAL_RESOURCE_ICON } from '../../../icons';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
 	RESULT_EVENT_RESOLVE,
@@ -175,11 +176,10 @@ registerModifierEvalHandler('transfer_pct', {
 	summarize: (effect, evaluation, context) => {
 		const target = resolveTransferModifierTarget(effect, evaluation, context);
 		const amount = Number(effect.params?.['adjust'] ?? 0);
-		const sign = amount >= 0 ? '+' : '';
+		const sign = amount >= 0 ? '+' : '-';
 		const descriptor = getResultModifierLabel(context);
 		const targetSummaryLabel = `${descriptor.icon}${target.summaryLabel}`;
-		const transferIcon = selectTransferDescriptor(context).icon;
-		const transferAdjustment = `${transferIcon}${sign}${Math.abs(amount)}%`;
+		const transferAdjustment = `${GENERAL_RESOURCE_ICON} ${sign}${Math.abs(amount)}%`;
 		return [`${targetSummaryLabel}: ${transferAdjustment}`];
 	},
 	describe: (effect, evaluation, context) => {
