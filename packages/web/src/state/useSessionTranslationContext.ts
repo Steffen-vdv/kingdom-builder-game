@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
+	SessionMetadataDescriptor,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
@@ -24,6 +25,34 @@ type UseSessionTranslationContextOptions = {
 interface SessionTranslationContextResult {
 	translationContext: TranslationContext | null;
 	isReady: boolean;
+}
+
+type DescriptorRecord = Record<string, SessionMetadataDescriptor>;
+
+function mergeDescriptorRecords(
+	...sources: ReadonlyArray<DescriptorRecord | undefined>
+): DescriptorRecord | undefined {
+	const merged = new Map<string, SessionMetadataDescriptor>();
+	for (const source of sources) {
+		if (!source) {
+			continue;
+		}
+		for (const [key, descriptor] of Object.entries(source)) {
+			if (!descriptor || typeof descriptor !== 'object') {
+				continue;
+			}
+			const existing = merged.get(key);
+			if (existing) {
+				merged.set(key, { ...existing, ...descriptor });
+			} else {
+				merged.set(key, { ...descriptor });
+			}
+		}
+	}
+	if (merged.size === 0) {
+		return undefined;
+	}
+	return Object.fromEntries(merged.entries());
 }
 
 export function useSessionTranslationContext({
@@ -84,11 +113,18 @@ export function useSessionTranslationContext({
 		assignMetadataField('populations');
 		assignMetadataField('buildings');
 		assignMetadataField('developments');
-		assignMetadataField('stats');
 		assignMetadataField('phases');
 		assignMetadataField('triggers');
 		assignMetadataField('assets');
 		assignMetadataField('overview');
+		const mergedStats = mergeDescriptorRecords(
+			DEFAULT_REGISTRY_METADATA.stats,
+			fallbackMetadata?.stats,
+			sessionMetadata.stats,
+		);
+		if (mergedStats) {
+			metadataPayload.stats = mergedStats;
+		}
 		try {
 			const context = createTranslationContext(
 				sessionState,
