@@ -14,7 +14,7 @@ import { useGameEngine } from './state/GameContext';
 
 export default function GameLayout() {
 	const {
-		sessionState,
+		sessionSnapshot,
 		ruleSnapshot,
 		onExit,
 		darkMode,
@@ -53,8 +53,8 @@ export default function GameLayout() {
 		setQuitDialogOpen(false);
 		onExit();
 	}, [onExit]);
-	const playerPanels = sessionState.game.players.map((player, index) => {
-		const isActive = player.id === sessionState.game.activePlayerId;
+	const playerPanels = sessionSnapshot.game.players.map((player, index) => {
+		const isActive = player.id === sessionSnapshot.game.activePlayerId;
 		const sideClass = index === 0 ? 'pr-6' : 'pl-6';
 		const colorClass =
 			index === 0
@@ -85,7 +85,7 @@ export default function GameLayout() {
 		'grid grid-cols-1 gap-y-8 gap-x-6',
 		'items-start lg:grid-cols-[minmax(0,1fr)_30rem]',
 	].join(' ');
-	const conclusion = sessionState.game.conclusion;
+	const conclusion = sessionSnapshot.game.conclusion;
 	const logButton = (
 		<Button
 			onClick={toggleLog}
@@ -114,7 +114,7 @@ export default function GameLayout() {
 				<GameConclusionOverlay
 					conclusion={conclusion}
 					ruleSnapshot={ruleSnapshot}
-					sessionState={sessionState}
+					sessionSnapshot={sessionSnapshot}
 					onExit={onExit}
 				/>
 			)}

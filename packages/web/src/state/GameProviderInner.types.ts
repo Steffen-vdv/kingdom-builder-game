@@ -24,7 +24,7 @@ export interface GameProviderInnerProps {
 	onChangePlayerName: (name: string) => void;
 	queue: SessionQueueHelpers;
 	sessionId: string;
-	sessionState: SessionSnapshot;
+	sessionSnapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	refreshSession: () => Promise<void>;
 	onReleaseSession: () => void;

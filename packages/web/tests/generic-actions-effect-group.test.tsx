@@ -352,7 +352,7 @@ describe('GenericActions effect group handling', () => {
 		render(
 			<RegistryMetadataProvider
 				registries={mockGame.sessionRegistries}
-				metadata={mockGame.sessionState.metadata}
+				metadata={mockGame.sessionSnapshot.metadata}
 			>
 				<GenericActions
 					actions={[action]}

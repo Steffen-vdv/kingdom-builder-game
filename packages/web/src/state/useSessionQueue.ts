@@ -14,12 +14,12 @@ interface UseSessionQueueResult {
 
 export function useSessionQueue(
 	queue: SessionQueueHelpers,
-	sessionState: SessionSnapshot,
+	sessionSnapshot: SessionSnapshot,
 	sessionId: string,
 ): UseSessionQueueResult {
 	const adapter = useMemo(
 		() => queue.getCurrentSession(),
-		[queue, sessionState],
+		[queue, sessionSnapshot],
 	);
 	const enqueue = useCallback(
 		<T>(task: () => Promise<T> | T) => enqueueSessionTask(sessionId, task),
@@ -34,8 +34,8 @@ export function useSessionQueue(
 		if (record) {
 			return record.snapshot;
 		}
-		return sessionState;
-	}, [queue, sessionId, sessionState]);
+		return sessionSnapshot;
+	}, [queue, sessionId, sessionSnapshot]);
 	return {
 		adapter,
 		enqueue,

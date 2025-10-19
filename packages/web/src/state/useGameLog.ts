@@ -15,10 +15,10 @@ type LogEntry = {
 };
 
 interface GameLogOptions {
-	sessionState: SessionSnapshot;
+	sessionSnapshot: SessionSnapshot;
 }
 
-export function useGameLog({ sessionState }: GameLogOptions) {
+export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 	const [log, setLog] = useState<LogEntry[]>([]);
 	const [logOverflowed, setLogOverflowed] = useState(false);
 	const nextLogIdRef = useRef(0);
@@ -28,8 +28,8 @@ export function useGameLog({ sessionState }: GameLogOptions) {
 			entry: string | string[],
 			player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 		) => {
-			const fallbackPlayerId = sessionState.game.activePlayerId;
-			const fallbackPlayer = sessionState.game.players.find(
+			const fallbackPlayerId = sessionSnapshot.game.activePlayerId;
+			const fallbackPlayer = sessionSnapshot.game.players.find(
 				(candidate) => candidate.id === fallbackPlayerId,
 			);
 			const logPlayer = player ?? fallbackPlayer;
@@ -52,7 +52,7 @@ export function useGameLog({ sessionState }: GameLogOptions) {
 				return next;
 			});
 		},
-		[sessionState.game.activePlayerId, sessionState.game.players],
+		[sessionSnapshot.game.activePlayerId, sessionSnapshot.game.players],
 	);
 
 	return { log, logOverflowed, addLog };

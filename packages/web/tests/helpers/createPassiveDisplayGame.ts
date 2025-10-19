@@ -21,7 +21,7 @@ export type PassiveGameContext = {
 };
 
 export function createPassiveGame(
-	sessionState: EngineSessionSnapshot,
+	sessionSnapshot: EngineSessionSnapshot,
 	options: {
 		ruleSnapshot?: RuleSnapshot;
 		registries?: SessionRegistries;
@@ -30,23 +30,22 @@ export function createPassiveGame(
 ): PassiveGameContext {
 	const handleHoverCard = vi.fn();
 	const clearHoverCard = vi.fn();
-	const ruleSnapshot = options.ruleSnapshot ?? sessionState.rules;
+	const ruleSnapshot = options.ruleSnapshot ?? sessionSnapshot.rules;
 	const sessionRegistries = options.registries ?? createSessionRegistries();
-	const sessionMetadata = options.metadata ?? sessionState.metadata;
+	const sessionMetadata = options.metadata ?? sessionSnapshot.metadata;
 	const translationContext = createTranslationContext(
-		sessionState,
+		sessionSnapshot,
 		sessionRegistries,
 		sessionMetadata,
 		{
 			ruleSnapshot,
-			passiveRecords: sessionState.passiveRecords,
+			passiveRecords: sessionSnapshot.passiveRecords,
 		},
 	);
-	const sessionView = selectSessionView(sessionState, sessionRegistries);
+	const sessionView = selectSessionView(sessionSnapshot, sessionRegistries);
 	const mockGame: MockGame = {
 		sessionId: 'test-session',
-		sessionSnapshot: sessionState,
-		cachedSessionSnapshot: sessionState,
+		cachedSessionSnapshot: sessionSnapshot,
 		selectors: { sessionView },
 		translationContext,
 		ruleSnapshot,
@@ -59,14 +58,14 @@ export function createPassiveGame(
 		handleHoverCard,
 		clearHoverCard,
 		phase: {
-			currentPhaseId: sessionState.game.currentPhase,
+			currentPhaseId: sessionSnapshot.game.currentPhase,
 			isActionPhase: Boolean(
-				sessionState.phases[sessionState.game.phaseIndex]?.action,
+				sessionSnapshot.phases[sessionSnapshot.game.phaseIndex]?.action,
 			),
 			canEndTurn: true,
 			isAdvancing: false,
 		},
-		actionCostResource: sessionState.actionCostResource,
+		actionCostResource: sessionSnapshot.actionCostResource,
 		requests: {
 			performAction: vi.fn().mockResolvedValue(undefined),
 			advancePhase: vi.fn().mockResolvedValue(undefined),
@@ -97,7 +96,7 @@ export function createPassiveGame(
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
 		session: {} as EngineSession,
-		sessionState,
+		sessionSnapshot,
 	};
 	return {
 		mockGame,

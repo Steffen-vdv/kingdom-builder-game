@@ -67,7 +67,9 @@ describe('useGameLog', () => {
 			},
 			metadata: { passiveEvaluationModifiers: {} },
 		};
-		const { result } = renderHook(() => useGameLog({ sessionState }));
+		const { result } = renderHook(() =>
+			useGameLog({ sessionSnapshot: sessionState }),
+		);
 
 		act(() => {
 			result.current.addLog('Initial entry');

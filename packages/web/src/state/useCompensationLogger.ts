@@ -11,7 +11,7 @@ import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 
 interface UseCompensationLoggerOptions {
 	sessionId: string;
-	sessionState: SessionSnapshot;
+	sessionSnapshot: SessionSnapshot;
 	addLog: (
 		entry: string | string[],
 		player?: SessionSnapshot['game']['players'][number],
@@ -25,7 +25,7 @@ interface UseCompensationLoggerOptions {
 
 export function useCompensationLogger({
 	sessionId,
-	sessionState,
+	sessionSnapshot,
 	addLog,
 	resourceKeys,
 	registries,
@@ -37,20 +37,20 @@ export function useCompensationLogger({
 			loggedSessionRef.current = sessionId;
 			loggedPlayersRef.current = new Set();
 		}
-		if (sessionState.game.turn !== 1) {
+		if (sessionSnapshot.game.turn !== 1) {
 			return;
 		}
 		const { diffContext: baseDiffContext } = createSessionTranslationContext({
-			snapshot: sessionState,
-			ruleSnapshot: sessionState.rules,
-			passiveRecords: sessionState.passiveRecords,
+			snapshot: sessionSnapshot,
+			ruleSnapshot: sessionSnapshot.rules,
+			passiveRecords: sessionSnapshot.passiveRecords,
 			registries,
 		});
-		sessionState.game.players.forEach((player) => {
+		sessionSnapshot.game.players.forEach((player) => {
 			if (loggedPlayersRef.current.has(player.id)) {
 				return;
 			}
-			const compensation = sessionState.compensations[player.id];
+			const compensation = sessionSnapshot.compensations[player.id];
 			if (
 				!compensation ||
 				(Object.keys(compensation.resources || {}).length === 0 &&
@@ -104,5 +104,5 @@ export function useCompensationLogger({
 				loggedPlayersRef.current.add(player.id);
 			}
 		});
-	}, [addLog, registries, resourceKeys, sessionId, sessionState]);
+	}, [addLog, registries, resourceKeys, sessionId, sessionSnapshot]);
 }

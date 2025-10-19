@@ -92,15 +92,15 @@ export function createSessionHelpers(
 	}
 
 	function resetState(players: SessionPlayerStateSnapshot[]) {
-		handle.sessionState = buildState(players);
+		handle.sessionSnapshot = buildState(players);
 	}
 
 	function applyPlayers(players: SessionPlayerStateSnapshot[]) {
 		const {
 			game: { players: _ignored, ...restGame },
 			phases,
-		} = handle.sessionState;
-		handle.sessionState = buildState(players, {
+		} = handle.sessionSnapshot;
+		handle.sessionSnapshot = buildState(players, {
 			game: restGame,
 			phases,
 		});
@@ -110,8 +110,8 @@ export function createSessionHelpers(
 		const {
 			game: { players, ...restGame },
 			phases,
-		} = handle.sessionState;
-		handle.sessionState = buildState(players, {
+		} = handle.sessionSnapshot;
+		handle.sessionSnapshot = buildState(players, {
 			game: { ...restGame, ...overrides },
 			phases,
 		});

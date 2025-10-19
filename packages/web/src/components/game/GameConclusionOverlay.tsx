@@ -11,18 +11,18 @@ import { toDescriptorDisplay } from '../player/registryDisplays';
 interface GameConclusionOverlayProps {
 	conclusion: SessionGameConclusionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
-	sessionState: SessionSnapshot;
+	sessionSnapshot: SessionSnapshot;
 	onExit?: (() => void) | undefined;
 }
 
 export default function GameConclusionOverlay({
 	conclusion,
 	ruleSnapshot,
-	sessionState,
+	sessionSnapshot,
 	onExit,
 }: GameConclusionOverlayProps) {
 	const resourceMetadata = useResourceMetadata();
-	const localPlayer = sessionState.game.players[0];
+	const localPlayer = sessionSnapshot.game.players[0];
 	if (!localPlayer) {
 		return null;
 	}
