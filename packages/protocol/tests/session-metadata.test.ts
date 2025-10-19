@@ -62,6 +62,7 @@ describe('session snapshot metadata', () => {
 			snapshot: { metadata } as unknown as SessionSnapshot,
 			registries: {
 				actions: {},
+				actionCategories: {},
 				buildings: {},
 				developments: {},
 				populations: {},

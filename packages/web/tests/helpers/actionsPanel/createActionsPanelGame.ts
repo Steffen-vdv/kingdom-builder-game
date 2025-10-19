@@ -6,7 +6,6 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { GameApi } from '../../../src/services/gameApi';
-import type { SessionRegistries } from '../../../src/state/sessionRegistries';
 import { RemoteSessionAdapter } from '../../../src/state/remoteSessionAdapter';
 import { selectSessionView } from '../../../src/state/sessionSelectors';
 import type {
@@ -22,6 +21,12 @@ import {
 	wrapTranslationRegistry,
 } from '../translationContextStub';
 import { buildActionsPanelContent } from './contentBuilders';
+import type { ResourceSelectionContext } from './participants';
+import {
+	pickResourceKey,
+	createParticipant,
+	toPlayerSnapshot,
+} from './participants';
 import {
 	createPopulationDescriptors,
 	createResourceDescriptors,
@@ -30,91 +35,6 @@ import {
 import { createStatMetadata, humanizeId } from './statMetadata';
 
 const POPULATION_ICON_FALLBACK = '👥';
-
-interface ResourceSelectionContext {
-	readonly registries: SessionRegistries;
-	readonly usedResourceKeys: Set<string>;
-}
-
-interface Participant {
-	readonly id: string;
-	readonly name: string;
-	readonly resources: Record<string, number>;
-	readonly population: Record<string, number>;
-	readonly lands: Array<{ id: string; slotsFree: number }>;
-	readonly buildings: Set<string>;
-	readonly actions: Set<string>;
-}
-
-function pickResourceKey(
-	context: ResourceSelectionContext,
-	requested: string | undefined,
-	label: string,
-): string {
-	const { registries, usedResourceKeys } = context;
-	if (requested && registries.resources[requested]) {
-		usedResourceKeys.add(requested);
-		return requested;
-	}
-	const available = Object.keys(registries.resources).find(
-		(key) => !usedResourceKeys.has(key),
-	);
-	if (available) {
-		usedResourceKeys.add(available);
-		return available;
-	}
-	const fallback = requested ?? `${label}-${usedResourceKeys.size}`;
-	if (!registries.resources[fallback]) {
-		registries.resources[fallback] = { key: fallback };
-	}
-	usedResourceKeys.add(fallback);
-	return fallback;
-}
-
-function createParticipant(
-	id: string,
-	name: string,
-	baseResources: Record<string, number>,
-	initialPopulation: Record<string, number>,
-	actionIds: string[],
-): Participant {
-	return {
-		id,
-		name,
-		resources: { ...baseResources },
-		population: { ...initialPopulation },
-		lands: [],
-		buildings: new Set<string>(),
-		actions: new Set(actionIds),
-	};
-}
-
-function toPlayerSnapshot(
-	participant: Participant,
-	capacityStat: string,
-): SessionSnapshot['game']['players'][number] {
-	return {
-		id: participant.id,
-		name: participant.name,
-		resources: { ...participant.resources },
-		stats: { [capacityStat]: 3 },
-		statsHistory: {},
-		population: { ...participant.population },
-		lands: participant.lands.map((land) => ({
-			...land,
-			slotsMax: land.slotsFree,
-			slotsUsed: 0,
-			tilled: false,
-			developments: [],
-		})),
-		buildings: Array.from(participant.buildings),
-		actions: Array.from(participant.actions),
-		statSources: {},
-		skipPhases: {},
-		skipSteps: {},
-		passives: [],
-	};
-}
 
 export function createActionsPanelGame({
 	populationRoles,
@@ -198,6 +118,45 @@ export function createActionsPanelGame({
 		content.buildingAction,
 	].filter(Boolean) as ReturnType<typeof factory.action>[];
 	const actionsRegistry = createRegistry(actionDefinitions);
+	const actionCategoryDefinitions = [
+		{
+			id: categories.basic,
+			name: 'Basic',
+			icon: '⚙️',
+			order: 1,
+			description: '(Effects take place immediately, unless stated otherwise)',
+		},
+		{
+			id: categories.population,
+			name: 'Hire',
+			icon: '👶',
+			order: 2,
+			description: [
+				'(',
+				'Recruit population instantly; upkeep and role effects apply ',
+				'while they remain)',
+			].join(''),
+		},
+		{
+			id: 'development',
+			name: 'Develop',
+			icon: '🏗️',
+			order: 3,
+			description:
+				'(Effects take place on build and last until development is removed)',
+		},
+	];
+	if (showBuilding) {
+		actionCategoryDefinitions.push({
+			id: categories.building,
+			name: 'Build',
+			icon: '🏛️',
+			order: 4,
+			description:
+				'(Effects take place on build and last until building is removed)',
+		});
+	}
+	const actionCategoryRegistry = createRegistry(actionCategoryDefinitions);
 	const buildingsRegistry = createRegistry(
 		content.buildingDefinition ? [content.buildingDefinition] : [],
 	);
@@ -267,6 +226,7 @@ export function createActionsPanelGame({
 		metadata: { passiveEvaluationModifiers: {} },
 	};
 	sessionRegistries.actions = actionsRegistry;
+	sessionRegistries.actionCategories = actionCategoryRegistry;
 	sessionRegistries.buildings = buildingsRegistry;
 	sessionRegistries.developments = developmentsRegistry;
 	sessionRegistries.populations = populationsRegistry;

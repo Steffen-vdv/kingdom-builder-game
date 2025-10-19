@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ActionCategoryConfig } from '@kingdom-builder/protocol';
 import {
 	describeContent,
 	summarizeContent,
@@ -8,7 +9,10 @@ import { useGameEngine } from '../../state/GameContext';
 import { hasAiController } from '../../state/sessionAi';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
-import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
+import {
+	useRegistryMetadata,
+	useResourceMetadata,
+} from '../../contexts/RegistryMetadataContext';
 import BasicOptions from './BasicOptions';
 import BuildOptions from './BuildOptions';
 import DevelopOptions from './DevelopOptions';
@@ -79,6 +83,9 @@ export default function ActionsPanel() {
 		sessionView.byId,
 	]);
 	const [viewingOpponent, setViewingOpponent] = useState(false);
+	const toggleOpponentView = useCallback(() => {
+		setViewingOpponent((previous) => !previous);
+	}, [setViewingOpponent]);
 
 	const actionPhaseId = useMemo(
 		() =>
@@ -209,19 +216,121 @@ export default function ActionsPanel() {
 	const hasDevelopLand = selectedPlayer.lands.some(
 		(land) => land.slotsFree > 0,
 	);
-	const developAction = actions.find(
-		(action) => action.category === 'development',
-	);
-	const buildAction = actions.find((action) => action.category === 'building');
-	const raisePopAction = actions.find(
-		(action) => action.category === 'population',
-	);
-	const otherActions = actions.filter(
-		(action) =>
-			action.category !== 'building_remove' &&
-			(action.category ?? 'basic') === 'basic',
+
+	const sharedCategoryProps = useMemo(
+		() => ({
+			player: selectedPlayer,
+			canInteract,
+			selectResourceDescriptor,
+		}),
+		[selectedPlayer, canInteract, selectResourceDescriptor],
 	);
 
+	const { actionCategories } = useRegistryMetadata();
+
+	const actionsByCategory = useMemo(() => {
+		const map = new Map<string, Action[]>();
+		for (const action of actions) {
+			if (!action.category || action.category === 'building_remove') {
+				continue;
+			}
+			const existing = map.get(action.category);
+			if (existing) {
+				existing.push(action);
+			} else {
+				map.set(action.category, [action]);
+			}
+		}
+		return map;
+	}, [actions]);
+
+	const raisePopAction = actionsByCategory.get('population')?.[0];
+	const developAction = actionsByCategory.get('development')?.[0];
+	const buildAction = actionsByCategory.get('building')?.[0];
+
+	const raisePopCategoryId = raisePopAction?.category;
+	const developCategoryId = developAction?.category;
+	const buildCategoryId = buildAction?.category;
+
+	const raisePopCategory = useMemo(
+		() =>
+			raisePopCategoryId ? actionCategories.get(raisePopCategoryId) : undefined,
+		[actionCategories, raisePopCategoryId],
+	);
+	const developCategory = useMemo(
+		() =>
+			developCategoryId ? actionCategories.get(developCategoryId) : undefined,
+		[actionCategories, developCategoryId],
+	);
+	const buildCategory = useMemo(
+		() => (buildCategoryId ? actionCategories.get(buildCategoryId) : undefined),
+		[actionCategories, buildCategoryId],
+	);
+
+	const sortedCategoryDefinitions = useMemo(() => {
+		const definitions = actionCategories
+			.entries()
+			.map(([, definition]) => definition);
+		return [...definitions].sort((first, second) => {
+			const firstOrder = first.order ?? 0;
+			const secondOrder = second.order ?? 0;
+			if (firstOrder !== secondOrder) {
+				return firstOrder - secondOrder;
+			}
+			return first.name.localeCompare(second.name);
+		});
+	}, [actionCategories]);
+
+	const specialCategoryIds = useMemo(
+		() =>
+			new Set(
+				[raisePopCategoryId, developCategoryId, buildCategoryId].filter(
+					Boolean,
+				) as string[],
+			),
+		[raisePopCategoryId, developCategoryId, buildCategoryId],
+	);
+
+	const genericCategories = useMemo(() => {
+		const seen = new Set<string>();
+		const mapped = sortedCategoryDefinitions
+			.filter((definition) => {
+				return !specialCategoryIds.has(definition.id);
+			})
+			.map((definition) => {
+				seen.add(definition.id);
+				const actionsForDefinition = actionsByCategory.get(definition.id) ?? [];
+				return {
+					definition,
+					actions: actionsForDefinition,
+				};
+			})
+			.filter((entry) => entry.actions.length > 0);
+		for (const entry of actionsByCategory.entries()) {
+			const [categoryId, categoryActions] = entry;
+			if (categoryActions.length === 0) {
+				continue;
+			}
+			if (specialCategoryIds.has(categoryId) || seen.has(categoryId)) {
+				continue;
+			}
+			const fallbackDefinition: ActionCategoryConfig = {
+				id: categoryId,
+				name: categoryActions[0]?.name ?? categoryId,
+				icon: categoryActions[0]?.icon,
+			};
+			mapped.push({
+				definition: fallbackDefinition,
+				actions: categoryActions,
+			});
+			seen.add(categoryId);
+		}
+		return mapped;
+	}, [sortedCategoryDefinitions, specialCategoryIds, actionsByCategory]);
+
+	const actionsHeading = viewingOpponent
+		? `${opponent.name} Actions`
+		: 'Actions';
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
 		: 'Show opponent actions';
@@ -233,7 +342,7 @@ export default function ActionsPanel() {
 			{panelDisabled && <div aria-hidden className={OVERLAY_CLASSES} />}
 			<div className={HEADER_CLASSES}>
 				<h2 className={TITLE_CLASSES}>
-					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
+					{actionsHeading}{' '}
 					<span className={COST_LABEL_CLASSES}>
 						(1 {actionCostIcon ?? ''}
 						{actionCostIcon ? ' ' : ''}
@@ -260,7 +369,7 @@ export default function ActionsPanel() {
 						<button
 							type="button"
 							className={TOGGLE_BUTTON_CLASSES}
-							onClick={() => setViewingOpponent((previous) => !previous)}
+							onClick={toggleOpponentView}
 							aria-label={toggleLabel}
 						>
 							<span className="margin-top-correction-five">
@@ -272,45 +381,42 @@ export default function ActionsPanel() {
 			</div>
 			<div className="relative">
 				<div ref={sectionRef} className="space-y-4">
-					{otherActions.length > 0 && (
+					{genericCategories.map((entry) => (
 						<BasicOptions
-							actions={otherActions}
+							key={entry.definition.id}
+							category={entry.definition}
+							actions={entry.actions}
 							summaries={actionSummaries}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
+							{...sharedCategoryProps}
 						/>
-					)}
+					))}
 					{raisePopAction && (
 						<HireOptions
 							action={raisePopAction}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
+							category={raisePopCategory}
+							{...sharedCategoryProps}
 						/>
 					)}
 					{developAction && (
 						<DevelopOptions
 							action={developAction}
+							category={developCategory}
 							isActionPhase={isActionPhase}
 							developments={developmentOptions}
 							summaries={developmentSummaries}
 							hasDevelopLand={hasDevelopLand}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
+							{...sharedCategoryProps}
 						/>
 					)}
 					{buildAction && (
 						<BuildOptions
 							action={buildAction}
+							category={buildCategory}
 							isActionPhase={isActionPhase}
 							buildings={buildingOptions}
 							summaries={buildingSummaries}
 							descriptions={buildingDescriptions}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
+							{...sharedCategoryProps}
 						/>
 					)}
 				</div>

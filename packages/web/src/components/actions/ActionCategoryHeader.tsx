@@ -13,7 +13,7 @@ const ICON_CLASS = 'text-lg leading-none';
 interface ActionCategoryHeaderProps {
 	icon: React.ReactNode;
 	title: string;
-	subtitle: string;
+	subtitle?: string;
 }
 
 export default function ActionCategoryHeader({
@@ -21,14 +21,20 @@ export default function ActionCategoryHeader({
 	title,
 	subtitle,
 }: ActionCategoryHeaderProps) {
+	const iconNode = icon ? (
+		<span aria-hidden className={ICON_CLASS}>
+			{icon}
+		</span>
+	) : null;
+	const subtitleNode = subtitle ? (
+		<span className={SUBTITLE_CLASS}>{subtitle}</span>
+	) : null;
 	return (
 		<header>
 			<h3 className={HEADING_CLASS}>
-				<span aria-hidden className={ICON_CLASS}>
-					{icon}
-				</span>
+				{iconNode}
 				<span>{title}</span>
-				<span className={SUBTITLE_CLASS}>{subtitle}</span>
+				{subtitleNode}
 			</h3>
 		</header>
 	);

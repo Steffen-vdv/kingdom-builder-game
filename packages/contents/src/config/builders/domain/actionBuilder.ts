@@ -3,7 +3,7 @@ import type {
 	EffectConfig,
 	RequirementConfig,
 } from '@kingdom-builder/protocol';
-import type { ActionCategory, ActionDef } from '../../../actions';
+import type { ActionCategoryId, ActionDef } from '../../../actions';
 import type { Focus } from '../../../defs';
 import type { ResourceKey } from '../../../resources';
 import { ActionEffectGroupBuilder } from '../actionEffectGroups';
@@ -20,7 +20,7 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 		super({ effects: [] }, 'Action');
 	}
 
-	category(category: ActionCategory) {
+	category(category: ActionCategoryId) {
 		this.config.category = category;
 		return this;
 	}

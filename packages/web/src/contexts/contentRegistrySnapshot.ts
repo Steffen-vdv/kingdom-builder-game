@@ -10,6 +10,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import {
 	createActionRegistry,
+	createActionCategoryRegistry,
 	createBuildingRegistry,
 	createDevelopmentRegistry,
 	createPopulationRegistry,
@@ -262,6 +263,7 @@ const createOverviewContentSnapshot = () => clone(OVERVIEW_CONTENT);
 
 const createRegistriesPayload = (): SessionRegistriesPayload => ({
 	actions: createRegistryPayload(createActionRegistry),
+	actionCategories: createRegistryPayload(createActionCategoryRegistry),
 	buildings: createRegistryPayload(createBuildingRegistry),
 	developments: createRegistryPayload(createDevelopmentRegistry),
 	populations: createRegistryPayload(createPopulationRegistry),

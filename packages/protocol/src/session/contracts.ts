@@ -1,4 +1,5 @@
 import type {
+	ActionCategoryConfig,
 	ActionConfig,
 	ActionEffectGroup,
 	BuildingConfig,
@@ -47,6 +48,7 @@ export type SerializedRegistry<T> = Record<string, T>;
 
 export interface SessionRegistriesPayload {
 	actions: SerializedRegistry<ActionConfig>;
+	actionCategories: SerializedRegistry<ActionCategoryConfig>;
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;

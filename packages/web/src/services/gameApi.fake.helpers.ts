@@ -19,6 +19,7 @@ export const toStateResponse = (
 
 export const EMPTY_REGISTRIES = {
 	actions: {},
+	actionCategories: {},
 	buildings: {},
 	developments: {},
 	populations: {},

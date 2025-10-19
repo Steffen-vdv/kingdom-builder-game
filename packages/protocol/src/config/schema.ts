@@ -70,6 +70,9 @@ export const actionSchema = z.object({
 	requirements: z.array(requirementSchema).optional(),
 	effects: z.array(actionEffectSchema),
 	system: z.boolean().optional(),
+	order: z.number().optional(),
+	category: z.string().optional(),
+	focus: z.string().optional(),
 });
 
 export type ActionConfig = z.infer<typeof actionSchema>;
@@ -88,6 +91,7 @@ export const buildingSchema = z.object({
 	onPayUpkeepStep: z.array(effectSchema).optional(),
 	onGainIncomeStep: z.array(effectSchema).optional(),
 	onGainAPStep: z.array(effectSchema).optional(),
+	focus: z.string().optional(),
 });
 
 export type BuildingConfig = z.infer<typeof buildingSchema>;
@@ -106,9 +110,21 @@ export const developmentSchema = z.object({
 	onGainAPStep: z.array(effectSchema).optional(),
 	system: z.boolean().optional(),
 	populationCap: z.number().optional(),
+	order: z.number().optional(),
+	focus: z.string().optional(),
 });
 
 export type DevelopmentConfig = z.infer<typeof developmentSchema>;
+
+export const actionCategorySchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	icon: z.string().optional(),
+	order: z.number().optional(),
+	description: z.string().optional(),
+});
+
+export type ActionCategoryConfig = z.infer<typeof actionCategorySchema>;
 
 export const populationSchema = z.object({
 	id: z.string(),

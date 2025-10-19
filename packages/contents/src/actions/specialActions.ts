@@ -32,7 +32,8 @@ import {
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
-import { ActionCategory, ActionId } from '../actions';
+import { ActionId } from '../actions';
+import { ActionCategoryId } from '../actionCategories';
 
 export function registerSpecialActions(registry: Registry<ActionDef>) {
 	registry.add(
@@ -79,7 +80,7 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					.params(statParams().key(Stat.warWeariness).amount(1))
 					.build(),
 			)
-			.category(ActionCategory.Basic)
+			.category(ActionCategoryId.Basic)
 			.order(6)
 			.focus(Focus.Aggressive)
 			.build(),
@@ -136,7 +137,7 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.category(ActionCategory.Basic)
+			.category(ActionCategoryId.Basic)
 			.order(7)
 			.focus(Focus.Economy)
 			.build(),
@@ -220,7 +221,7 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					.params(buildingParams().id('$id'))
 					.build(),
 			)
-			.category(ActionCategory.Building)
+			.category(ActionCategoryId.Building)
 			.order(1)
 			.focus(Focus.Other)
 			.build(),

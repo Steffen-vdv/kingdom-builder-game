@@ -29,6 +29,7 @@ describe('HttpSessionGateway', () => {
 	function createRegistries(): SessionRegistriesPayload {
 		return {
 			actions: {},
+			actionCategories: {},
 			buildings: {},
 			developments: {},
 			populations: {},

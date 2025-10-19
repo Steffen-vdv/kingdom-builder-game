@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import type { ActionCategoryConfig } from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import { describeContent, splitSummary, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
@@ -21,6 +22,7 @@ import {
 } from './types';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
 import { useActionOptionCosts } from './useActionOptionCosts';
+import ActionCategoryHeader from './ActionCategoryHeader';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -42,6 +44,7 @@ function formatLandRequirement(
 
 interface DevelopOptionsProps {
 	action: Action;
+	category?: ActionCategoryConfig;
 	isActionPhase: boolean;
 	developments: Development[];
 	summaries: Map<string, Summary>;
@@ -53,6 +56,7 @@ interface DevelopOptionsProps {
 
 export default function DevelopOptions({
 	action,
+	category,
 	isActionPhase,
 	developments,
 	summaries,
@@ -125,17 +129,21 @@ export default function DevelopOptions({
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,
 	);
+	const headerIcon = category?.icon ?? actionInfo?.icon ?? action.icon;
+	const headerTitle = category?.name ?? actionInfo?.name ?? action.name;
+	const headerSubtitle =
+		category?.description ??
+		'(Effects take place on build and last until development is removed)';
 	return (
-		<div>
-			<h3 className="font-medium flex flex-wrap items-center gap-2">
-				{renderIconLabel(actionInfo?.icon, actionInfo?.name ?? action.name)}
-				<span className="italic text-sm font-normal">
-					(Effects take place on build and last until development is removed)
-				</span>
-			</h3>
+		<div className="space-y-2">
+			<ActionCategoryHeader
+				icon={headerIcon}
+				title={headerTitle}
+				subtitle={headerSubtitle}
+			/>
 			<div
 				ref={listRef}
-				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2"
 			>
 				{entries.map(({ development, costs, upkeep }) => {
 					const focus = development.focus;

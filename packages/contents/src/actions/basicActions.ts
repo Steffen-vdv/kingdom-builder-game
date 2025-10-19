@@ -27,7 +27,8 @@ import {
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
-import { ActionCategory, ActionId, PopulationEvaluationId } from '../actions';
+import { ActionId, PopulationEvaluationId } from '../actions';
+import { ActionCategoryId } from '../actionCategories';
 
 export function registerBasicActions(registry: Registry<ActionDef>) {
 	registry.add(
@@ -44,7 +45,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(resourceParams().key(Resource.happiness).amount(1))
 					.build(),
 			)
-			.category(ActionCategory.Basic)
+			.category(ActionCategoryId.Basic)
 			.order(1)
 			.focus(Focus.Economy)
 			.build(),
@@ -63,7 +64,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(developmentParams().id('$id').landId('$landId'))
 					.build(),
 			)
-			.category(ActionCategory.Development)
+			.category(ActionCategoryId.Development)
 			.order(1)
 			.focus(Focus.Economy)
 			.build(),
@@ -93,7 +94,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.category(ActionCategory.Basic)
+			.category(ActionCategoryId.Basic)
 			.order(3)
 			.focus(Focus.Economy)
 			.build(),
@@ -124,7 +125,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(resourceParams().key(Resource.happiness).amount(1))
 					.build(),
 			)
-			.category(ActionCategory.Population)
+			.category(ActionCategoryId.Population)
 			.order(1)
 			.focus(Focus.Economy)
 			.build(),
@@ -186,7 +187,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.allowShortfall()
 					.build(),
 			)
-			.category(ActionCategory.Basic)
+			.category(ActionCategoryId.Basic)
 			.order(5)
 			.focus(Focus.Economy)
 			.build(),

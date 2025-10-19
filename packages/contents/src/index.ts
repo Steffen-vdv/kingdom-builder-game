@@ -1,4 +1,11 @@
 export { ACTIONS, createActionRegistry, ActionId } from './actions';
+export {
+	ACTION_CATEGORIES,
+	ActionCategoryId,
+	createActionCategoryRegistry,
+	type ActionCategoryId as ActionCategoryIdType,
+	type ActionCategoryDef,
+} from './actionCategories';
 export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';

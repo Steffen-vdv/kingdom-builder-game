@@ -1,5 +1,6 @@
 import { z, type ZodObject, type ZodRawShape } from 'zod';
 import {
+	actionCategorySchema,
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
@@ -31,6 +32,7 @@ const serializedRegistrySchema = <Shape extends ZodRawShape>(
 export const sessionRegistriesSchema = z
 	.object({
 		actions: serializedRegistrySchema(actionSchema),
+		actionCategories: serializedRegistrySchema(actionCategorySchema),
 		buildings: serializedRegistrySchema(buildingSchema),
 		developments: serializedRegistrySchema(developmentSchema),
 		populations: serializedRegistrySchema(populationSchema),

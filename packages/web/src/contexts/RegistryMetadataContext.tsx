@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import type {
+	ActionCategoryConfig,
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
@@ -40,6 +41,7 @@ import {
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
 	actions: DefinitionLookup<ActionConfig>;
+	actionCategories: DefinitionLookup<ActionCategoryConfig>;
 	buildings: DefinitionLookup<BuildingConfig>;
 	developments: DefinitionLookup<DevelopmentConfig>;
 	populations: DefinitionLookup<PopulationConfig>;
@@ -66,7 +68,12 @@ export interface RegistryMetadataContextValue {
 interface RegistryMetadataProviderProps {
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
+		| 'actions'
+		| 'actionCategories'
+		| 'resources'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
 	>;
 	metadata?: SessionSnapshotMetadata | null;
 	children: React.ReactNode;
@@ -85,6 +92,7 @@ export function RegistryMetadataProvider({
 	const {
 		resourceLookup,
 		actionLookup,
+		actionCategoryLookup,
 		buildingLookup,
 		developmentLookup,
 		populationLookup,
@@ -175,6 +183,7 @@ export function RegistryMetadataProvider({
 			Object.freeze({
 				resources: resourceLookup,
 				actions: actionLookup,
+				actionCategories: actionCategoryLookup,
 				buildings: buildingLookup,
 				developments: developmentLookup,
 				populations: populationLookup,

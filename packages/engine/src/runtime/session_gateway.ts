@@ -118,6 +118,7 @@ export function createLocalSessionGateway(
 	const sessionId = options.sessionId ?? 'local-session';
 	const baseRegistries: SessionRegistriesPayload = options.registries ?? {
 		actions: {},
+		actionCategories: {},
 		buildings: {},
 		developments: {},
 		populations: {},
@@ -129,6 +130,9 @@ export function createLocalSessionGateway(
 		}
 		return {
 			actions: { ...baseRegistries.actions },
+			actionCategories: {
+				...baseRegistries.actionCategories,
+			},
 			buildings: { ...baseRegistries.buildings },
 			developments: { ...baseRegistries.developments },
 			populations: { ...baseRegistries.populations },

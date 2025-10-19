@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type {
+	ActionCategoryConfig,
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
@@ -75,6 +76,7 @@ export const useDescriptorOverrides = (
 interface DefinitionLookups {
 	readonly resourceLookup: DefinitionLookup<SessionResourceDefinition>;
 	readonly actionLookup: DefinitionLookup<ActionConfig>;
+	readonly actionCategoryLookup: DefinitionLookup<ActionCategoryConfig>;
 	readonly buildingLookup: DefinitionLookup<BuildingConfig>;
 	readonly developmentLookup: DefinitionLookup<DevelopmentConfig>;
 	readonly populationLookup: DefinitionLookup<PopulationConfig>;
@@ -83,12 +85,21 @@ interface DefinitionLookups {
 export const useDefinitionLookups = (
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
+		| 'actions'
+		| 'actionCategories'
+		| 'resources'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
 	>,
 ): DefinitionLookups =>
 	useMemo(() => {
 		const resourceLookup = createResourceLookup(registries.resources);
 		const actionLookup = createRegistryLookup(registries.actions, 'action');
+		const actionCategoryLookup = createRegistryLookup(
+			registries.actionCategories,
+			'action category',
+		);
 		const buildingLookup = createRegistryLookup(
 			registries.buildings,
 			'building',
@@ -104,12 +115,14 @@ export const useDefinitionLookups = (
 		return Object.freeze({
 			resourceLookup,
 			actionLookup,
+			actionCategoryLookup,
 			buildingLookup,
 			developmentLookup,
 			populationLookup,
 		});
 	}, [
 		registries.actions,
+		registries.actionCategories,
 		registries.buildings,
 		registries.developments,
 		registries.populations,

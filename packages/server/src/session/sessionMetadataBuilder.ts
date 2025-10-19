@@ -1,5 +1,6 @@
 import {
 	ACTIONS,
+	ACTION_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
@@ -268,6 +269,7 @@ const cloneOverviewContent = () =>
 export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 	const registries: SessionRegistriesPayload = {
 		actions: cloneRegistry(ACTIONS),
+		actionCategories: cloneRegistry(ACTION_CATEGORIES),
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),

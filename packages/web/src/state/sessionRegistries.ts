@@ -1,10 +1,12 @@
 import {
 	Registry,
 	actionSchema,
+	actionCategorySchema,
 	buildingSchema,
 	developmentSchema,
 	populationSchema,
 	type ActionConfig,
+	type ActionCategoryConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type PopulationConfig,
@@ -59,6 +61,7 @@ function cloneResourceRegistry(
 
 export interface SessionRegistries {
 	actions: Registry<ActionConfig>;
+	actionCategories: Registry<ActionCategoryConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
@@ -72,6 +75,10 @@ export function deserializeSessionRegistries(
 		actions: createRegistryFromPayload(
 			payload.actions ?? {},
 			actionSchema.passthrough(),
+		),
+		actionCategories: createRegistryFromPayload(
+			payload.actionCategories ?? {},
+			actionCategorySchema.passthrough(),
 		),
 		buildings: createRegistryFromPayload(
 			payload.buildings ?? {},

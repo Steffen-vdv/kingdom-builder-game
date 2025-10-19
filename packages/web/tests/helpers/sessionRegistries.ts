@@ -46,6 +46,7 @@ function cloneRegistriesPayload(
 	};
 	return {
 		actions: cloneEntries(payload.actions),
+		actionCategories: cloneEntries(payload.actionCategories),
 		buildings: cloneEntries(payload.buildings),
 		developments: cloneEntries(payload.developments),
 		populations: cloneEntries(payload.populations),

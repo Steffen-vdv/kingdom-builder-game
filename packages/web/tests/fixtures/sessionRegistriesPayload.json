@@ -968,6 +968,36 @@
 			"icon": "👤"
 		}
 	},
+	"actionCategories": {
+		"basic": {
+			"id": "basic",
+			"name": "Basic",
+			"icon": "⚙️",
+			"order": 1,
+			"description": "(Effects take place immediately, unless stated otherwise)"
+		},
+		"population": {
+			"id": "population",
+			"name": "Hire",
+			"icon": "👶",
+			"order": 2,
+			"description": "(Recruit population instantly; upkeep and role effects apply while they remain)"
+		},
+		"development": {
+			"id": "development",
+			"name": "Develop",
+			"icon": "🏗️",
+			"order": 3,
+			"description": "(Effects take place on build and last until development is removed)"
+		},
+		"building": {
+			"id": "building",
+			"name": "Build",
+			"icon": "🏛️",
+			"order": 4,
+			"description": "(Effects take place on build and last until building is removed)"
+		}
+	},
 	"resources": {
 		"gold": {
 			"key": "gold",
