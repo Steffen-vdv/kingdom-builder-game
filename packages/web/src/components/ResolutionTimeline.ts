@@ -6,11 +6,14 @@ interface TimelineNode {
 	level: number;
 }
 
+type TimelineEntryKind = ActionLogLineDescriptor['kind'] | 'section-root';
+
 interface TimelineEntry {
 	key: string;
 	text: string;
 	level: number;
-	kind: ActionLogLineDescriptor['kind'];
+	kind: TimelineEntryKind;
+	isSectionRoot?: boolean;
 }
 
 function buildTimelineTree(
@@ -54,17 +57,17 @@ function buildTimelineTree(
 }
 
 function collectCostEntries(nodes: TimelineNode[]): TimelineEntry[] {
-	const entries: TimelineEntry[] = [];
+	const sectionChildren: TimelineEntry[] = [];
 	let costIndex = 0;
 
 	function visit(node: TimelineNode): void {
 		if (node.descriptor.kind === 'cost') {
 			const baseKey = `cost-${costIndex}`;
 			costIndex += 1;
-			entries.push({
+			sectionChildren.push({
 				key: baseKey,
 				text: node.descriptor.text,
-				level: 0,
+				level: 1,
 				kind: node.descriptor.kind,
 			});
 
@@ -74,8 +77,8 @@ function collectCostEntries(nodes: TimelineNode[]): TimelineEntry[] {
 					collectCostDetail(
 						child,
 						`${baseKey}-detail-${childIndex}`,
-						1,
-						entries,
+						2,
+						sectionChildren,
 					),
 				);
 		}
@@ -85,7 +88,20 @@ function collectCostEntries(nodes: TimelineNode[]): TimelineEntry[] {
 
 	nodes.forEach(visit);
 
-	return entries;
+	if (sectionChildren.length === 0) {
+		return [];
+	}
+
+	return [
+		{
+			key: 'section-cost',
+			text: '💲 Cost',
+			level: 0,
+			kind: 'section-root',
+			isSectionRoot: true,
+		},
+		...sectionChildren,
+	];
 }
 
 function collectCostDetail(
@@ -106,37 +122,109 @@ function collectCostDetail(
 	);
 }
 
-function collectEffectEntries(nodes: TimelineNode[]): TimelineEntry[] {
-	const entries: TimelineEntry[] = [];
+interface EffectEntryOptions {
+	displayedIcon?: string;
+	displayedName?: string;
+}
+
+function collectEffectEntries(
+	nodes: TimelineNode[],
+	options?: EffectEntryOptions,
+): TimelineEntry[] {
+	const sectionChildren: TimelineEntry[] = [];
 
 	nodes.forEach((node, index) =>
-		collectEffectNode(node, `effect-${index}`, entries),
+		collectEffectNode(node, `effect-${index}`, sectionChildren, options),
 	);
 
-	return entries;
+	if (sectionChildren.length === 0) {
+		return [];
+	}
+
+	return [
+		{
+			key: 'section-effects',
+			text: '🪄 Effects',
+			level: 0,
+			kind: 'section-root',
+			isSectionRoot: true,
+		},
+		...sectionChildren,
+	];
+}
+
+function isRedundantHeadline(
+	node: TimelineNode,
+	options: EffectEntryOptions | undefined,
+): boolean {
+	if (node.descriptor.kind !== 'headline') {
+		return false;
+	}
+
+	const displayedName = options?.displayedName?.trim();
+	const displayedIcon = options?.displayedIcon?.trim();
+	if (!displayedName && !displayedIcon) {
+		return false;
+	}
+
+	const normalizedText = node.descriptor.text.replace(/\s+/gu, ' ').trim();
+	const candidates: string[] = [];
+
+	if (displayedIcon && displayedName) {
+		candidates.push(`${displayedIcon} ${displayedName}`);
+		candidates.push(`${displayedIcon}${displayedName}`);
+	}
+
+	if (displayedName) {
+		candidates.push(displayedName);
+	}
+
+	if (displayedIcon) {
+		candidates.push(displayedIcon);
+	}
+
+	return candidates
+		.map((candidate) => candidate.replace(/\s+/gu, ' ').trim())
+		.some((candidate) => candidate.length > 0 && candidate === normalizedText);
 }
 
 function collectEffectNode(
 	node: TimelineNode,
 	key: string,
 	entries: TimelineEntry[],
+	options: EffectEntryOptions | undefined,
 ): void {
 	if (
-		node.descriptor.kind !== 'cost' &&
-		node.descriptor.kind !== 'cost-detail'
+		node.descriptor.kind === 'cost' ||
+		node.descriptor.kind === 'cost-detail'
 	) {
-		entries.push({
-			key,
-			text: node.descriptor.text,
-			level: node.level,
-			kind: node.descriptor.kind,
-		});
+		return;
 	}
 
+	if (node.level === 0 && isRedundantHeadline(node, options)) {
+		node.children.forEach((child, index) =>
+			collectEffectNode(child, `${key}-${index}`, entries, options),
+		);
+		return;
+	}
+
+	const displayLevel = Math.max(node.level, 1);
+	entries.push({
+		key,
+		text: node.descriptor.text,
+		level: displayLevel,
+		kind: node.descriptor.kind,
+	});
+
 	node.children.forEach((child, index) =>
-		collectEffectNode(child, `${key}-${index}`, entries),
+		collectEffectNode(child, `${key}-${index}`, entries, options),
 	);
 }
 
-export type { TimelineEntry, TimelineNode };
+export type {
+	TimelineEntry,
+	TimelineEntryKind,
+	TimelineNode,
+	EffectEntryOptions,
+};
 export { buildTimelineTree, collectCostEntries, collectEffectEntries };
