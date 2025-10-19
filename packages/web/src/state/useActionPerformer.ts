@@ -1,26 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
-// <<<<<<< project/rescard_log_uni
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
-import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
-import {
-	diffStepSnapshots,
-	logContent,
-	snapshotPlayer,
-	translateRequirementFailure,
-} from '../translation';
-// =======
-import type {
-	ActionExecuteErrorResponse,
-	ActionParametersPayload,
-} from '@kingdom-builder/protocol/actions';
 import type {
 	SessionPlayerStateSnapshot,
-	SessionRequirementFailure,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
-// >>>>>>> main
 import {
 	appendSubActionChanges,
 	buildActionCostLines,
@@ -29,11 +14,8 @@ import {
 	handleMissingActionDefinition,
 	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
-// <<<<<<< project/rescard_log_uni
 import { createFailureResolutionSnapshot } from './actionResolutionLog';
-// =======
 import { createActionErrorHandler } from './useActionErrorHandler';
-// >>>>>>> main
 import type { Action } from './actionTypes';
 import type {
 	ActionResolution,
@@ -49,27 +31,14 @@ import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
-// <<<<<<< project/rescard_log_uni
-import {
-	SessionMirroringError,
-	markFatalSessionError,
-	isFatalSessionError,
-} from './sessionErrors';
-// =======
 import { markFatalSessionError, isFatalSessionError } from './sessionErrors';
-import {
-	getActionErrorMetadata,
-	setActionErrorMetadata,
-} from './actionErrorMetadata';
-// >>>>>>> main
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
 import { getSessionSnapshot } from './sessionStateStore';
-import {
-	createActionExecutionError,
-	type ActionExecutionError,
-} from './actionExecutionError';
+import { createActionExecutionError } from './actionExecutionError';
+import { createActionErrorMetadataEnsurer } from './createActionErrorMetadataEnsurer';
+
 interface UseActionPerformerOptions {
 	sessionId: string;
 	actionCostResource: SessionResourceKey;
@@ -91,6 +60,7 @@ interface UseActionPerformerOptions {
 	resourceKeys: SessionResourceKey[];
 	onFatalSessionError?: (error: unknown) => void;
 }
+
 export function useActionPerformer({
 	sessionId,
 	actionCostResource,
@@ -146,6 +116,44 @@ export function useActionPerformer({
 				() => new Error('Missing active player before action'),
 			);
 			const before = snapshotPlayer(playerBefore);
+			const baseMetadataContext = {
+				sessionId,
+				action: { id: action.id, name: action.name },
+				params,
+				player: { id: playerBefore.id, name: playerBefore.name },
+				playerSnapshot: before,
+			};
+			const ensureActionMetadata = createActionErrorMetadataEnsurer(
+				{
+					sessionId,
+					actionId: action.id,
+					...(params ? { params } : {}),
+				},
+				baseMetadataContext,
+			);
+			const addLog = (
+				entry: string | string[],
+				player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'> = playerBefore,
+			): void => {
+				const lines = Array.isArray(entry) ? entry : [entry];
+				const normalized = lines
+					.map((line) => (line ? `${line}`.trim() : ''))
+					.filter((line): line is string => Boolean(line));
+				if (!normalized.length) {
+					return;
+				}
+				const [headline, ...rest] = normalized;
+				const headlineText = headline || 'Action failed';
+				const detailText = rest.length ? rest.join('\n') : headlineText;
+				const resolutionSnapshot = createFailureResolutionSnapshot({
+					action,
+					stepDefinition: contextRef.current.actions.get(action.id),
+					player,
+					detail: detailText,
+					headline: headlineText,
+				});
+				addResolutionLog(resolutionSnapshot);
+			};
 			const handleError = createActionErrorHandler({
 				fatalErrorRef,
 				notifyFatal,
@@ -166,10 +174,13 @@ export function useActionPerformer({
 					{ skipQueue: true },
 				);
 				if (response.status === 'error') {
+					ensureActionMetadata(response, { error: response.error });
+					const failure = createActionExecutionError(response);
+					ensureActionMetadata(failure, { error: response.error });
 					if (response.fatal) {
-						throwFatal(createActionExecutionError(response));
+						throwFatal(failure);
 					}
-					throw createActionExecutionError(response);
+					throw failure;
 				}
 				const costs = response.costs ?? {};
 				const traces = response.traces;
@@ -282,38 +293,12 @@ export function useActionPerformer({
 						void handleError(error);
 					});
 			} catch (error) {
+				ensureActionMetadata(error, {
+					message: error instanceof Error ? error.message : undefined,
+				});
 				if (handleError(error)) {
 					throw error;
 				}
-// <<<<<<< project/rescard_log_uni
-				if (error instanceof SessionMirroringError) {
-					fatalError = error;
-					notifyFatal(error);
-					throw error;
-				}
-				const icon = context.actions.get(action.id)?.icon || '';
-				let message = (error as Error).message || 'Action failed';
-				const executionError = error as ActionExecutionError;
-				const requirementFailure =
-					executionError?.requirementFailure ??
-					executionError?.requirementFailures?.[0];
-				if (requirementFailure) {
-					message = translateRequirementFailure(requirementFailure, context);
-				}
-				pushErrorToast(message);
-				const failureDetail = `Failed to play ${icon} ${action.name}: ${message}`;
-				const resolutionSnapshot = createFailureResolutionSnapshot({
-					action,
-					stepDefinition: context.actions.get(action.id),
-					player: {
-						id: playerBefore.id,
-						name: playerBefore.name,
-					},
-					detail: failureDetail,
-				});
-				addResolutionLog(resolutionSnapshot);
-// =======
-// >>>>>>> main
 			}
 		},
 		[
@@ -344,8 +329,10 @@ export function useActionPerformer({
 		[enqueue, perform],
 	);
 	const performRef = useRef<typeof handlePerform>(handlePerform);
+
 	useEffect(() => {
 		performRef.current = handlePerform;
 	}, [handlePerform]);
+
 	return { handlePerform, performRef };
 }
