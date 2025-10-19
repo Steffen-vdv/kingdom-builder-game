@@ -37,7 +37,7 @@ export function useAiRunner({
 		if (!session.hasAiController(activeId)) {
 			return;
 		}
-		void session.enqueue(async () => {
+		void (async () => {
 			let fatalError: unknown = null;
 			const forwardFatalError = (error: unknown) => {
 				if (fatalError !== null) {
@@ -54,32 +54,38 @@ export function useAiRunner({
 			};
 			try {
 				const ranTurn = await session.runAiTurn(activeId);
-				if (!ranTurn || fatalError !== null) {
-					if (ranTurn && mountedRef.current && fatalError === null) {
-						syncPhaseState(session.getSnapshot());
-					}
+				if (fatalError !== null) {
+					return;
+				}
+				const snapshot = session.getSnapshot();
+				syncPhaseState(snapshot);
+				if (!ranTurn) {
 					return;
 				}
 				if (!mountedRef.current) {
-					syncPhaseState(session.getSnapshot());
 					return;
 				}
-				try {
-					syncPhaseState(session.getSnapshot(), {
-						isAdvancing: true,
-						canEndTurn: false,
-					});
-					await runUntilActionPhaseCore();
-				} catch (error) {
-					forwardFatalError(error);
+				if (fatalError !== null) {
+					return;
 				}
+				void session.enqueue(async () => {
+					if (fatalError !== null) {
+						return;
+					}
+					try {
+						syncPhaseState(session.getSnapshot(), {
+							isAdvancing: true,
+							canEndTurn: false,
+						});
+						await runUntilActionPhaseCore();
+					} catch (error) {
+						forwardFatalError(error);
+					}
+				});
 			} catch (error) {
 				forwardFatalError(error);
 			}
-			if (fatalError !== null) {
-				return;
-			}
-		});
+		})();
 	}, [
 		session,
 		sessionState.game.activePlayerId,
