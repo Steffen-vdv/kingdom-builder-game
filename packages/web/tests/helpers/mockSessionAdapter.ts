@@ -1,10 +1,14 @@
 import { vi } from 'vitest';
-import type { SessionAdapter } from '../../src/state/sessionTypes';
+import type {
+	SessionAdapter,
+	SessionAiTurnResult,
+} from '../../src/state/sessionTypes';
 import type {
 	SessionAdvanceResult,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import { createSessionRegistriesPayload } from './sessionRegistries';
 
 const createFallbackPlayer = (
 	sessionState: SessionSnapshot,
@@ -47,6 +51,7 @@ export function createMockSessionAdapter(
 	sessionState: SessionSnapshot,
 ): SessionAdapter {
 	const referencePlayer = resolveReferencePlayer(sessionState);
+	const registries = createSessionRegistriesPayload();
 	return {
 		enqueue: vi.fn(async <T>(task: () => Promise<T> | T) => await task()),
 		getSnapshot: vi.fn(() => sessionState),
@@ -56,7 +61,15 @@ export function createMockSessionAdapter(
 		getActionDefinition: vi.fn(() => undefined),
 		readActionMetadata: vi.fn(() => ({})),
 		subscribeActionMetadata: vi.fn(() => () => {}),
-		runAiTurn: vi.fn(() => Promise.resolve(false)),
+		runAiTurn: vi.fn(() =>
+			Promise.resolve({
+				ranTurn: false,
+				actions: [],
+				phaseComplete: false,
+				snapshot: sessionState,
+				registries,
+			} satisfies SessionAiTurnResult),
+		),
 		hasAiController: vi.fn(() => false),
 		simulateUpcomingPhases: vi.fn(() => ({
 			playerId: referencePlayer.id,

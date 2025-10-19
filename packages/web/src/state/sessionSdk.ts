@@ -6,7 +6,6 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 	SessionRunAiRequest,
-	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionUpdatePlayerNameRequest,
@@ -20,7 +19,11 @@ import {
 	initializeSessionState,
 	type SessionStateRecord,
 } from './sessionStateStore';
-import { type Session, type RemoteSessionRecord } from './sessionTypes';
+import {
+	type Session,
+	type RemoteSessionRecord,
+	type SessionAiTurnResult,
+} from './sessionTypes';
 import { type GameApiRequestOptions } from '../services/gameApi';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import {
@@ -174,7 +177,7 @@ export async function advanceSessionPhase(
 async function runAiTurnInternal(
 	request: SessionRunAiRequest,
 	requestOptions: GameApiRequestOptions = {},
-): Promise<SessionRunAiResponse> {
+): Promise<SessionAiTurnResult> {
 	const api = ensureGameApi();
 	const adapter = getAdapter(request.sessionId);
 	const response = await enqueueSessionTask(request.sessionId, async () =>
@@ -194,11 +197,10 @@ async function runAiTurnInternal(
 		});
 	}
 	return {
-		sessionId: response.sessionId,
 		snapshot: stateRecord.snapshot,
-		registries: response.registries,
+		registries: clone(response.registries),
 		ranTurn: response.ranTurn,
-		actions: response.actions,
+		actions: clone(response.actions),
 		phaseComplete: response.phaseComplete,
 	};
 }

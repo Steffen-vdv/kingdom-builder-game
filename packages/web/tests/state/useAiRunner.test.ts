@@ -15,6 +15,7 @@ import {
 	initializeSessionState,
 } from '../../src/state/sessionStateStore';
 import * as sessionAiModule from '../../src/state/sessionAi';
+import type { SessionAiTurnResult } from '../../src/state/sessionTypes';
 
 describe('useAiRunner', () => {
 	beforeEach(() => {
@@ -67,7 +68,13 @@ describe('useAiRunner', () => {
 		const mountedRef = { current: true };
 		const runAiTurnSpy = vi
 			.spyOn(sessionAiModule, 'runAiTurn')
-			.mockResolvedValueOnce(true);
+			.mockResolvedValueOnce({
+				ranTurn: true,
+				actions: [],
+				phaseComplete: false,
+				snapshot: sessionState,
+				registries,
+			} satisfies SessionAiTurnResult);
 
 		renderHook(() =>
 			useAiRunner({

@@ -4,7 +4,6 @@ import type {
 	SessionActionRequirementList,
 	SessionAdvanceResult,
 	SessionRunAiRequest,
-	SessionRunAiResponse,
 	SessionSimulateResponse,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
@@ -18,6 +17,7 @@ import {
 import type {
 	SessionActionMetadataSnapshot,
 	SessionAdapter,
+	SessionAiTurnResult,
 } from './sessionTypes';
 import { ActionMetadataCache } from './actionMetadataCache';
 import { ActionMetadataSubscriptions } from './actionMetadataSubscriptions';
@@ -29,7 +29,7 @@ interface RemoteSessionAdapterDependencies {
 	runAiTurn: (
 		request: SessionRunAiRequest,
 		options?: GameApiRequestOptions,
-	) => Promise<SessionRunAiResponse>;
+	) => Promise<SessionAiTurnResult>;
 }
 
 export class RemoteSessionAdapter implements SessionAdapter {
@@ -153,7 +153,9 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		return summary;
 	}
 
-	async runAiTurn(playerId: SessionRunAiRequest['playerId']): Promise<boolean> {
+	async runAiTurn(
+		playerId: SessionRunAiRequest['playerId'],
+	): Promise<SessionAiTurnResult> {
 		return this.#aiSimulationManager.runAiTurn(playerId);
 	}
 

@@ -5,6 +5,7 @@ import type {
 	SessionAdvanceResult,
 	SessionPlayerId,
 	SessionRuleSnapshot,
+	SessionRunAiResponse,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 	SimulateUpcomingPhasesOptions,
@@ -38,7 +39,7 @@ export interface SessionAdapter {
 		params: ActionParametersPayload | undefined,
 		listener: (snapshot: SessionActionMetadataSnapshot) => void,
 	): () => void;
-	runAiTurn(playerId: SessionPlayerId): Promise<boolean>;
+	runAiTurn(playerId: SessionPlayerId): Promise<SessionAiTurnResult>;
 	hasAiController(playerId: SessionPlayerId): boolean;
 	simulateUpcomingPhases(
 		playerId: SessionPlayerId,
@@ -53,6 +54,14 @@ export type Session = SessionAdapter;
 export type SessionResourceKeys = string[];
 export type SessionResourceKey = SessionResourceKeys[number];
 export type SessionMetadata = SessionSnapshotMetadata;
+
+export interface SessionAiTurnResult {
+	ranTurn: boolean;
+	actions: SessionRunAiResponse['actions'];
+	phaseComplete: boolean;
+	snapshot: SessionSnapshot;
+	registries: SessionRunAiResponse['registries'];
+}
 
 export type RemoteSessionRecord = Pick<
 	SessionStateRecord,

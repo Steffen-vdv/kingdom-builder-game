@@ -4,6 +4,7 @@ import {
 	getSessionRecord,
 } from './sessionStateStore';
 import { runAiTurn as runAiTurnThroughSdk } from './sessionSdk';
+import type { SessionAiTurnResult } from './sessionTypes';
 
 export function hasAiController(
 	sessionId: string,
@@ -22,9 +23,8 @@ export function hasAiController(
 export async function runAiTurn(
 	sessionId: string,
 	playerId: SessionPlayerId,
-): Promise<boolean> {
-	const response = await runAiTurnThroughSdk({ sessionId, playerId });
-	return response.ranTurn;
+): Promise<SessionAiTurnResult> {
+	return await runAiTurnThroughSdk({ sessionId, playerId });
 }
 
 export function enqueueSessionTask<T>(

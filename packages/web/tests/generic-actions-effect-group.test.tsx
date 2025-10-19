@@ -238,7 +238,6 @@ function createMockGame() {
 	const session = new RemoteSessionAdapter(sessionId, {
 		ensureGameApi: vi.fn(() => ({}) as GameApi),
 		runAiTurn: vi.fn().mockResolvedValue({
-			sessionId,
 			snapshot: sessionState,
 			registries,
 			ranTurn: false,

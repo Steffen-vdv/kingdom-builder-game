@@ -298,7 +298,6 @@ export function createActionsPanelGame({
 	const session = new RemoteSessionAdapter(sessionId, {
 		ensureGameApi: vi.fn(() => ({}) as GameApi),
 		runAiTurn: vi.fn().mockResolvedValue({
-			sessionId,
 			snapshot: sessionState,
 			registries: sessionRegistries,
 			ranTurn: false,

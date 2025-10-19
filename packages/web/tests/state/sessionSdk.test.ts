@@ -36,6 +36,7 @@ import {
 	clearSessionStateStore,
 } from '../../src/state/sessionStateStore';
 import * as sessionStateStoreModule from '../../src/state/sessionStateStore';
+import type { SessionAiTurnResult } from '../../src/state/sessionTypes';
 
 const resourceKeys = createResourceKeys();
 const [resourceKey] = resourceKeys;
@@ -309,7 +310,14 @@ describe('sessionSdk', () => {
 			sessionId: 'session-1',
 			playerId: playerA.id,
 		});
-		expect(response).toEqual(runAiResponse);
+		const expected: SessionAiTurnResult = {
+			ranTurn: runAiResponse.ranTurn,
+			actions: runAiResponse.actions,
+			phaseComplete: runAiResponse.phaseComplete,
+			snapshot: runAiResponse.snapshot,
+			registries: runAiResponse.registries,
+		};
+		expect(response).toEqual(expected);
 		const record = getSessionRecord('session-1');
 		expect(record?.snapshot).toEqual(updatedSnapshot);
 	});

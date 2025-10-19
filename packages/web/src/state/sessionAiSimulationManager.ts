@@ -1,13 +1,13 @@
 import type {
 	SessionRunAiRequest,
-	SessionRunAiResponse,
 	SessionSimulateResponse,
 } from '@kingdom-builder/protocol/session';
 import { cloneValue } from './cloneValue';
 import type { SessionStateRecord } from './sessionStateStore';
+import type { SessionAiTurnResult } from './sessionTypes';
 
 interface SessionAiSimulationManagerDependencies {
-	runAiTurn: (request: SessionRunAiRequest) => Promise<SessionRunAiResponse>;
+	runAiTurn: (request: SessionRunAiRequest) => Promise<SessionAiTurnResult>;
 	getSessionRecord: () => SessionStateRecord | undefined;
 }
 
@@ -25,12 +25,13 @@ export class SessionAiSimulationManager {
 		this.#simulationCache = new Map();
 	}
 
-	async runAiTurn(playerId: SessionRunAiRequest['playerId']): Promise<boolean> {
-		const response = await this.#dependencies.runAiTurn({
+	async runAiTurn(
+		playerId: SessionRunAiRequest['playerId'],
+	): Promise<SessionAiTurnResult> {
+		return await this.#dependencies.runAiTurn({
 			sessionId: this.#sessionId,
 			playerId,
 		});
-		return response.ranTurn;
 	}
 
 	hasAiController(playerId: string): boolean {
