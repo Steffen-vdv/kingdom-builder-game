@@ -87,6 +87,7 @@ export default function BuildOptions({
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
 				const metadataCosts = costMap.get(building.id);
+				const costsReady = metadataCosts !== undefined;
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(
 					building.costs ?? {},
@@ -101,8 +102,10 @@ export default function BuildOptions({
 					}
 					costs[costKey] = costAmount;
 				}
-				const total = sumNonActionCosts(costs, actionCostResource);
-				return { building, costs, total };
+				const total = costsReady
+					? sumNonActionCosts(costs, actionCostResource)
+					: Number.POSITIVE_INFINITY;
+				return { building, costs, total, costsReady };
 			})
 			.sort((first, second) => first.total - second.total);
 	}, [buildings, actionCostResource, player.buildings.size, costMap]);
@@ -122,27 +125,33 @@ export default function BuildOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
-				{entries.map(({ building, costs }) => {
+				{entries.map(({ building, costs, costsReady }) => {
 					const upkeep = building.upkeep;
 					const focus = normalizeActionFocus(building.focus);
 					const icon = building.icon;
-					const canPay = playerHasRequiredResources(player.resources, costs);
+					const canPay =
+						costsReady && playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(building.id);
 					const implemented = (summary?.length ?? 0) > 0;
-					const insufficientTooltip = formatMissingResources(
-						costs,
-						player.resources,
-						selectResourceDescriptor,
-					);
+					const insufficientTooltip = costsReady
+						? formatMissingResources(
+								costs,
+								player.resources,
+								selectResourceDescriptor,
+							)
+						: undefined;
 					const requirementText = requirements.join(', ');
 					const title = !implemented
 						? 'Not implemented yet'
-						: !meetsRequirements
-							? requirementText
-							: !canPay
-								? (insufficientTooltip ?? 'Cannot pay costs')
-								: undefined;
+						: !costsReady
+							? 'Loading costs…'
+							: !meetsRequirements
+								? requirementText
+								: !canPay
+									? (insufficientTooltip ?? 'Cannot pay costs')
+									: undefined;
 					const enabled =
+						costsReady &&
 						canPay &&
 						meetsRequirements &&
 						isActionPhase &&

@@ -76,15 +76,18 @@ export default function DemolishOptions({
 					return null;
 				}
 				const metadataCosts = costMap.get(buildingId);
+				const costsReady = metadataCosts !== undefined;
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(
 					metadataCosts ?? {},
 				)) {
 					costs[costKey] = costAmount ?? 0;
 				}
-				const total = sumNonActionCosts(costs, actionCostResource);
+				const total = costsReady
+					? sumNonActionCosts(costs, actionCostResource)
+					: Number.POSITIVE_INFINITY;
 				const focus = normalizeActionFocus(building.focus);
-				return { id: buildingId, building, costs, total, focus };
+				return { id: buildingId, building, costs, total, focus, costsReady };
 			})
 			.filter(
 				(
@@ -95,6 +98,7 @@ export default function DemolishOptions({
 					costs: Record<string, number>;
 					total: number;
 					focus: ActionFocus | undefined;
+					costsReady: boolean;
 				} => entry !== null,
 			)
 			.sort((first, second) => {
@@ -126,24 +130,30 @@ export default function DemolishOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
-				{entries.map(({ id, building, costs, focus }) => {
+				{entries.map(({ id, building, costs, focus, costsReady }) => {
 					const requirements: string[] = [];
-					const canPay = playerHasRequiredResources(player.resources, costs);
+					const canPay =
+						costsReady && playerHasRequiredResources(player.resources, costs);
 					const summary = summarizeContent('building', id, translationContext, {
 						installed: true,
 					});
 					const implemented = (summary?.length ?? 0) > 0;
-					const insufficientTooltip = formatMissingResources(
-						costs,
-						player.resources,
-						selectResourceDescriptor,
-					);
+					const insufficientTooltip = costsReady
+						? formatMissingResources(
+								costs,
+								player.resources,
+								selectResourceDescriptor,
+							)
+						: undefined;
 					const title = !implemented
 						? 'Not implemented yet'
-						: !canPay
-							? (insufficientTooltip ?? 'Cannot pay costs')
-							: undefined;
-					const enabled = canPay && isActionPhase && canInteract && implemented;
+						: !costsReady
+							? 'Loading costs…'
+							: !canPay
+								? (insufficientTooltip ?? 'Cannot pay costs')
+								: undefined;
+					const enabled =
+						costsReady && canPay && isActionPhase && canInteract && implemented;
 					const upkeep = building.upkeep;
 					const hoverTitle = [
 						actionHoverTitle,

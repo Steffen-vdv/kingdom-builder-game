@@ -9,6 +9,7 @@ import { createActionsPanelGame } from './helpers/actionsPanel';
 import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import type { ActionResolution } from '../src/state/useActionResolution';
+import { selectSessionView } from '../src/state/sessionSelectors';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type {
@@ -250,6 +251,38 @@ describe('<ActionsPanel />', () => {
 			}),
 			expect.anything(),
 		);
+	});
+
+	it('disables building cards when the active player lacks action points', () => {
+		setScenario({ showBuilding: true });
+		const buildingAction = metadata.actions.building;
+		const buildingDefinition = metadata.building;
+		if (!buildingAction || !buildingDefinition) {
+			throw new Error('Expected building action and definition to exist');
+		}
+		mockGame.metadata.requirementFailures.set(buildingAction.id, []);
+		mockGame.session.setActionRequirements(buildingAction.id, []);
+		const actionCostResource = mockGame.actionCostResource;
+		const activePlayer = mockGame.sessionSnapshot.game.players.find(
+			(player) => player.id === mockGame.sessionSnapshot.game.activePlayerId,
+		);
+		if (!activePlayer) {
+			throw new Error('Expected active player to exist');
+		}
+		activePlayer.resources[actionCostResource] = 0;
+		const translationActivePlayer = mockGame.translationContext.activePlayer;
+		if (translationActivePlayer?.resources) {
+			translationActivePlayer.resources[actionCostResource] = 0;
+		}
+		mockGame.selectors.sessionView = selectSessionView(
+			mockGame.sessionSnapshot,
+			mockGame.sessionRegistries,
+		);
+		renderActionsPanel();
+		const buildingButton = screen.getByRole('button', {
+			name: new RegExp(buildingDefinition.name),
+		});
+		expect(buildingButton).toBeDisabled();
 	});
 
 	it(

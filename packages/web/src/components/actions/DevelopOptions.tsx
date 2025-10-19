@@ -89,14 +89,17 @@ export default function DevelopOptions({
 		return developments
 			.map((development) => {
 				const metadataCosts = costMap.get(development.id);
+				const costsReady = metadataCosts !== undefined;
 				const costs: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(
 					metadataCosts ?? {},
 				)) {
 					costs[costKey] = costAmount ?? 0;
 				}
-				const total = sumNonActionCosts(costs, actionCostResource);
-				return { development, costs, total };
+				const total = costsReady
+					? sumNonActionCosts(costs, actionCostResource)
+					: Number.POSITIVE_INFINITY;
+				return { development, costs, total, costsReady };
 			})
 			.sort((first, second) => first.total - second.total);
 	}, [developments, actionCostResource, costMap]);
@@ -116,7 +119,7 @@ export default function DevelopOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
-				{entries.map(({ development, costs }) => {
+				{entries.map(({ development, costs, costsReady }) => {
 					const upkeep = development.upkeep;
 					const focus = development.focus;
 					const developLandRequirement = formatLandRequirement(
@@ -126,15 +129,18 @@ export default function DevelopOptions({
 					);
 					const requirements = hasDevelopLand ? [] : [developLandRequirement];
 					const canPay =
+						costsReady &&
 						hasDevelopLand &&
 						playerHasRequiredResources(player.resources, costs);
 					const summary = summaries.get(development.id);
 					const implemented = (summary?.length ?? 0) > 0;
-					const insufficientTooltip = formatMissingResources(
-						costs,
-						player.resources,
-						selectResourceDescriptor,
-					);
+					const insufficientTooltip = costsReady
+						? formatMissingResources(
+								costs,
+								player.resources,
+								selectResourceDescriptor,
+							)
+						: undefined;
 					const missingLandTooltip = formatLandRequirement(
 						'No',
 						slotDescriptor.label,
@@ -142,12 +148,15 @@ export default function DevelopOptions({
 					);
 					const title = !implemented
 						? 'Not implemented yet'
-						: !hasDevelopLand
-							? missingLandTooltip
-							: !canPay
-								? (insufficientTooltip ?? 'Cannot pay costs')
-								: undefined;
-					const enabled = canPay && isActionPhase && canInteract && implemented;
+						: !costsReady
+							? 'Loading costs…'
+							: !hasDevelopLand
+								? missingLandTooltip
+								: !canPay
+									? (insufficientTooltip ?? 'Cannot pay costs')
+									: undefined;
+					const enabled =
+						costsReady && canPay && isActionPhase && canInteract && implemented;
 					const hoverTitle = [
 						actionHoverTitle,
 						formatIconTitle(development.icon, development.name),
