@@ -1,8 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import type {
-	SessionMetadataDescriptor,
-	SessionTriggerMetadata,
-} from '@kingdom-builder/protocol';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 import * as metadataModule from '../src/session/buildSessionMetadata.js';
 import {
@@ -75,63 +71,74 @@ describe('SessionManager', () => {
 		expect(manager.getSessionCount()).toBe(0);
 	});
 
-	it('caches metadata and clones results on access', () => {
+	it('caches metadata and returns frozen snapshots', () => {
 		const buildSpy = vi.spyOn(metadataModule, 'buildSessionMetadata');
 		const { manager, costKey } = createSyntheticSessionManager();
 		expect(buildSpy).toHaveBeenCalledTimes(1);
 		const baseline = manager.getMetadata();
-		expectStaticMetadata(baseline);
 		expect(buildSpy).toHaveBeenCalledTimes(1);
-		expect(baseline.resources?.[costKey]).toBeDefined();
-		const triggerKeys = Object.keys(baseline.triggers ?? {});
-		expect(triggerKeys.length).toBeGreaterThan(0);
-		const statKeys = Object.keys(baseline.stats ?? {});
-		expect(statKeys.length).toBeGreaterThan(0);
-		const heroTokens = baseline.overview?.hero?.tokens ?? {};
-		const overviewTokenKeys = Object.keys(heroTokens);
+		expectStaticMetadata(baseline);
+		expect(Object.isFrozen(baseline)).toBe(true);
+		const resources = baseline.resources;
+		if (!resources) {
+			throw new Error('Session metadata missing resources');
+		}
+		expect(Object.isFrozen(resources)).toBe(true);
+		expect(resources[costKey]).toBeDefined();
+		const triggerEntries = Object.entries(baseline.triggers ?? {});
+		expect(triggerEntries.length).toBeGreaterThan(0);
+		for (const [, trigger] of triggerEntries) {
+			if (trigger) {
+				expect(Object.isFrozen(trigger)).toBe(true);
+			}
+		}
+		const statEntries = Object.entries(baseline.stats ?? {});
+		expect(statEntries.length).toBeGreaterThan(0);
+		for (const [, stat] of statEntries) {
+			if (stat) {
+				expect(Object.isFrozen(stat)).toBe(true);
+			}
+		}
+		const overviewTokens = baseline.overview?.hero?.tokens ?? {};
+		const overviewTokenKeys = Object.keys(overviewTokens);
 		expect(overviewTokenKeys.length).toBeGreaterThan(0);
-		const mutated = manager.getMetadata();
-		expect(mutated).not.toBe(baseline);
-		expect(mutated).toEqual(baseline);
-		if (mutated.resources) {
-			mutated.resources[costKey] = { label: 'changed' };
-		}
-		const [triggerKey] = triggerKeys;
-		if (mutated.triggers && triggerKey) {
-			const original = mutated.triggers[triggerKey];
-			const descriptor: SessionTriggerMetadata = {
-				...(original ?? {}),
-				label: 'changed',
-			};
-			mutated.triggers[triggerKey] = descriptor;
-		}
-		const [statKey] = statKeys;
-		if (mutated.stats && statKey) {
-			const original = mutated.stats[statKey];
-			const descriptor: SessionMetadataDescriptor = {
-				...(original ?? {}),
-				label: 'changed',
-			};
-			mutated.stats[statKey] = descriptor;
-		}
-		const [overviewTokenKey] = overviewTokenKeys;
-		if (mutated.overview?.hero?.tokens && overviewTokenKey) {
-			mutated.overview.hero.tokens[overviewTokenKey] = 'changed';
+		if (baseline.overview?.hero?.tokens) {
+			expect(Object.isFrozen(baseline.overview.hero.tokens)).toBe(true);
 		}
 		const next = manager.getMetadata();
-		expect(next).toEqual(baseline);
-		expect(next.resources?.[costKey]?.label).not.toBe('changed');
-		if (triggerKey) {
-			expect(next.triggers?.[triggerKey]?.label).not.toBe('changed');
+		expect(next).toBe(baseline);
+		expect(buildSpy).toHaveBeenCalledTimes(1);
+		const resourceUpdateResult = Reflect.set(resources, costKey, {
+			label: 'changed',
+		});
+		expect(resourceUpdateResult).toBe(false);
+		expect(resources[costKey]?.label).not.toBe('changed');
+		const [triggerKey, triggerMeta] = triggerEntries[0] ?? [];
+		if (triggerKey && triggerMeta) {
+			const triggerUpdateResult = Reflect.set(triggerMeta, 'label', 'changed');
+			expect(triggerUpdateResult).toBe(false);
+			expect(triggerMeta.label).not.toBe('changed');
 		}
-		if (statKey) {
-			expect(next.stats?.[statKey]?.label).not.toBe('changed');
+		const [, statMeta] = statEntries[0] ?? [];
+		if (statMeta) {
+			const statUpdateResult = Reflect.set(statMeta, 'label', 'changed');
+			expect(statUpdateResult).toBe(false);
+			expect(statMeta.label).not.toBe('changed');
 		}
-		if (overviewTokenKey) {
-			expect(next.overview?.hero?.tokens?.[overviewTokenKey]).not.toBe(
+		const [overviewTokenKey] = overviewTokenKeys;
+		if (baseline.overview?.hero?.tokens && overviewTokenKey) {
+			const tokenUpdateResult = Reflect.set(
+				baseline.overview.hero.tokens,
+				overviewTokenKey,
+				'changed',
+			);
+			expect(tokenUpdateResult).toBe(false);
+			expect(baseline.overview.hero.tokens[overviewTokenKey]).not.toBe(
 				'changed',
 			);
 		}
+		const finalSnapshot = manager.getMetadata();
+		expect(finalSnapshot).toBe(baseline);
 		buildSpy.mockRestore();
 	});
 

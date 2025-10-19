@@ -49,7 +49,7 @@ describe('useAiRunner', () => {
 			phaseIndex: 0,
 		});
 		const registries = createSessionRegistriesPayload();
-		const { adapter, api, cleanup } = createRemoteSessionAdapter({
+		const { adapter, api, record, cleanup } = createRemoteSessionAdapter({
 			sessionId: 'session-ai',
 			snapshot: sessionState,
 			registries,
@@ -67,6 +67,7 @@ describe('useAiRunner', () => {
 		const onFatalSessionError = vi.fn();
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
+		const showResolution = vi.fn().mockResolvedValue(undefined);
 
 		renderHook(() =>
 			useAiRunner({
@@ -75,6 +76,9 @@ describe('useAiRunner', () => {
 				runUntilActionPhaseCore,
 				syncPhaseState,
 				mountedRef,
+				showResolution,
+				resourceKeys: record.resourceKeys,
+				registries: record.registries,
 				onFatalSessionError,
 			}),
 		);
@@ -124,7 +128,7 @@ describe('useAiRunner', () => {
 			phaseIndex: 0,
 		});
 		const registries = createSessionRegistriesPayload();
-		const { adapter, cleanup } = createRemoteSessionAdapter({
+		const { adapter, record, cleanup } = createRemoteSessionAdapter({
 			sessionId: 'session-ai',
 			snapshot: sessionState,
 			registries,
@@ -134,6 +138,7 @@ describe('useAiRunner', () => {
 		vi.spyOn(adapter, 'runAiTurn').mockRejectedValueOnce(fatalError);
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
+		const showResolution = vi.fn().mockResolvedValue(undefined);
 
 		renderHook(() =>
 			useAiRunner({
@@ -142,6 +147,9 @@ describe('useAiRunner', () => {
 				runUntilActionPhaseCore: vi.fn(),
 				syncPhaseState,
 				mountedRef,
+				showResolution,
+				resourceKeys: record.resourceKeys,
+				registries: record.registries,
 				onFatalSessionError,
 			}),
 		);
@@ -152,6 +160,116 @@ describe('useAiRunner', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
+		cleanup();
+	});
+
+	it('shows the AI action resolution before advancing phases', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{
+				id: 'phase-main',
+				name: 'Main Phase',
+				action: true,
+				steps: [],
+			},
+		];
+		const activePlayer = createSnapshotPlayer({ id: 'A', aiControlled: true });
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+		});
+		const registries = createSessionRegistriesPayload();
+		const { adapter, api, record, cleanup } = createRemoteSessionAdapter({
+			sessionId: 'session-ai',
+			snapshot: sessionState,
+			registries,
+		});
+		const updatedSnapshot = structuredClone(sessionState);
+		const aiPlayerSnapshot = updatedSnapshot.game.players.find(
+			(player) => player.id === activePlayer.id,
+		);
+		if (aiPlayerSnapshot) {
+			aiPlayerSnapshot.resources.gold =
+				(aiPlayerSnapshot.resources.gold ?? 0) + 4;
+			aiPlayerSnapshot.resources.happiness =
+				(aiPlayerSnapshot.resources.happiness ?? 0) - 1;
+		}
+		const taxActionEntry = Array.from(record.registries.actions.entries()).find(
+			([, definition]) => definition.name === 'Tax',
+		);
+		if (!taxActionEntry) {
+			throw new Error('Missing Tax action in registries');
+		}
+		const [taxActionId] = taxActionEntry;
+		updatedSnapshot.metadata = {
+			...updatedSnapshot.metadata,
+			effectLogs: {
+				...(updatedSnapshot.metadata.effectLogs ?? {}),
+				'action:resolved': [
+					{
+						playerId: activePlayer.id,
+						actionId: taxActionId,
+					},
+				],
+			},
+		};
+		api.setNextRunAiResponse({
+			sessionId: 'session-ai',
+			snapshot: updatedSnapshot,
+			registries,
+			ranTurn: true,
+		});
+		const runUntilActionPhaseCore = vi.fn().mockResolvedValue(undefined);
+		const syncPhaseState = vi.fn();
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const mountedRef = { current: true };
+
+		renderHook(() =>
+			useAiRunner({
+				session: adapter,
+				sessionState,
+				runUntilActionPhaseCore,
+				syncPhaseState,
+				mountedRef,
+				showResolution,
+				resourceKeys: record.resourceKeys,
+				registries: record.registries,
+			}),
+		);
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(showResolution).toHaveBeenCalledTimes(1);
+		const [resolutionArgs] = showResolution.mock.calls[0] ?? [];
+		const actionId: string | undefined = resolutionArgs?.action?.id;
+		expect(actionId).toBeTruthy();
+		if (actionId) {
+			expect(record.registries.actions.has(actionId)).toBe(true);
+			const definition = record.registries.actions.get(actionId);
+			expect(definition?.name).toBe('Tax');
+		}
+
+		expect(
+			resolutionArgs?.lines?.some((line: string) => /Gold/i.test(line ?? '')),
+		).toBe(true);
+		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
 		cleanup();
 	});
 });

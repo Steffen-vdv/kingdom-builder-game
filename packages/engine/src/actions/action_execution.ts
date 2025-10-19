@@ -13,6 +13,7 @@ import {
 	verifyCostAffordability,
 } from './costs';
 import { cloneEngineContext } from './context_clone';
+import { cloneActionTraces } from '../runtime/player_snapshot';
 
 function assertSystemActionUnlocked(
 	actionId: string,
@@ -137,6 +138,12 @@ function executeAction<T extends string>(
 	);
 	const actionTraces = engineContext.actionTraces;
 	engineContext.actionTraces = [];
+	engineContext.pushEffectLog('action:resolved', {
+		playerId: engineContext.activePlayer.id,
+		actionId: actionDefinition.id,
+		params: params ? structuredClone(params) : undefined,
+		traces: cloneActionTraces(actionTraces),
+	});
 	return actionTraces;
 }
 

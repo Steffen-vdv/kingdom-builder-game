@@ -42,6 +42,26 @@ type SessionRecord = {
 	lastAccessedAt: number;
 };
 
+function deepFreeze<T>(value: T): T {
+	if (value === null || typeof value !== 'object') {
+		return value;
+	}
+	if (Object.isFrozen(value)) {
+		return value;
+	}
+	if (Array.isArray(value)) {
+		for (const entry of value) {
+			deepFreeze(entry);
+		}
+	} else {
+		const entries = Object.values(value as Record<string, unknown>);
+		for (const entry of entries) {
+			deepFreeze(entry);
+		}
+	}
+	return Object.freeze(value);
+}
+
 export interface SessionManagerOptions {
 	maxIdleDurationMs?: number;
 	maxSessions?: number;
@@ -92,20 +112,22 @@ export class SessionManager {
 			rules: engineOverrides.rules ?? RULES,
 		};
 		const resources = this.buildResourceRegistry(resourceRegistry);
-		this.registries = {
+		this.registries = deepFreeze({
 			actions: this.cloneRegistry(this.baseOptions.actions),
 			buildings: this.cloneRegistry(this.baseOptions.buildings),
 			developments: this.cloneRegistry(this.baseOptions.developments),
 			populations: this.cloneRegistry(this.baseOptions.populations),
 			resources,
-		};
-		this.metadata = buildSessionMetadata({
-			buildings: this.baseOptions.buildings,
-			developments: this.baseOptions.developments,
-			populations: this.baseOptions.populations,
-			resources,
-			phases: this.baseOptions.phases,
 		});
+		this.metadata = deepFreeze(
+			buildSessionMetadata({
+				buildings: this.baseOptions.buildings,
+				developments: this.baseOptions.developments,
+				populations: this.baseOptions.populations,
+				resources,
+				phases: this.baseOptions.phases,
+			}),
+		);
 	}
 
 	public createSession(
@@ -176,11 +198,11 @@ export class SessionManager {
 	}
 
 	public getRegistries(): SessionRegistriesPayload {
-		return structuredClone(this.registries);
+		return this.registries;
 	}
 
 	public getMetadata(): SessionStaticMetadataPayload {
-		return structuredClone(this.metadata);
+		return this.metadata;
 	}
 
 	private requireSession(sessionId: string): EngineSession {

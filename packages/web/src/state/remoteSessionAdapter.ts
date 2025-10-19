@@ -14,6 +14,8 @@ import {
 	assertSessionRecord,
 	enqueueSessionTask,
 	getSessionRecord,
+	updateRegistries,
+	updateSessionSnapshot,
 } from './sessionStateStore';
 import type {
 	SessionActionMetadataSnapshot,
@@ -56,6 +58,10 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		this.#aiSimulationManager = new SessionAiSimulationManager(sessionId, {
 			runAiTurn: (request) => this.#dependencies.runAiTurn(request),
 			getSessionRecord: () => getSessionRecord(this.#sessionId),
+			applyAiRunResult: (response) => {
+				updateSessionSnapshot(this.#sessionId, response.snapshot);
+				updateRegistries(this.#sessionId, response.registries);
+			},
 		});
 	}
 

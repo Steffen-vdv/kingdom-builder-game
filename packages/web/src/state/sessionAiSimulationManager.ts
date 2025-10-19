@@ -9,6 +9,7 @@ import type { SessionStateRecord } from './sessionStateStore';
 interface SessionAiSimulationManagerDependencies {
 	runAiTurn: (request: SessionRunAiRequest) => Promise<SessionRunAiResponse>;
 	getSessionRecord: () => SessionStateRecord | undefined;
+	applyAiRunResult: (response: SessionRunAiResponse) => void;
 }
 
 export class SessionAiSimulationManager {
@@ -30,6 +31,7 @@ export class SessionAiSimulationManager {
 			sessionId: this.#sessionId,
 			playerId,
 		});
+		this.#dependencies.applyAiRunResult(response);
 		return response.ranTurn;
 	}
 
