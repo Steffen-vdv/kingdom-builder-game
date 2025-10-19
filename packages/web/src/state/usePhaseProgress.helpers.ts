@@ -115,12 +115,28 @@ export async function advanceToActionPhase({
 				passiveRecords: snapshotAfter.passiveRecords,
 				registries,
 			});
+			const phaseDefinitionAfter = snapshotAfter.phases.find(
+				(phase) => phase.id === advanceResult.phase,
+			);
+			const phaseDefinitionBefore = snapshot.phases.find(
+				(phase) => phase.id === advanceResult.phase,
+			);
+			const phaseDefinition = phaseDefinitionAfter ?? phaseDefinitionBefore;
+			const stepDefinitionAfter = phaseDefinitionAfter?.steps?.find(
+				(step) => step.id === advanceResult.step,
+			);
+			const stepDefinitionBefore = phaseDefinitionBefore?.steps?.find(
+				(step) => step.id === advanceResult.step,
+			);
+			const stepDefinition = stepDefinitionAfter ?? stepDefinitionBefore;
 			const formatted = formatPhaseResolution({
 				advance: advanceResult,
 				before,
 				...(skipMetadata ? {} : { after: snapshotPlayer(player) }),
 				diffContext,
 				resourceKeys,
+				...(phaseDefinition ? { phaseDefinition } : {}),
+				...(stepDefinition ? { stepDefinition } : {}),
 			});
 			let outputLines = formatted.lines;
 			if (isPhaseSourceDetail(formatted.source)) {
