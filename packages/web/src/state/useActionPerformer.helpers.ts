@@ -8,7 +8,10 @@ import { diffStepSnapshots, snapshotPlayer } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { TranslationDiffContext } from '../translation';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
-import { formatActionLogLines } from './actionLogFormat';
+import {
+	buildActionLogTimeline,
+	formatActionLogLines,
+} from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
@@ -214,6 +217,7 @@ export async function handleMissingActionDefinition({
 			kind: 'headline',
 		},
 	];
+	const timeline = buildActionLogTimeline(fallbackMessages, [fallbackChange]);
 	const logLines = formatActionLogLines(fallbackMessages, [fallbackChange]);
 	const actionMeta = buildResolutionActionMeta(
 		action,
@@ -242,6 +246,7 @@ export async function handleMissingActionDefinition({
 			summaries: [],
 			source: resolutionSource,
 			actorLabel: 'Played by',
+			timeline,
 		});
 	} catch (error) {
 		void error;
@@ -275,6 +280,7 @@ interface PresentResolutionOptions {
 		entry: string | string[],
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
+	timeline: ActionLogLineDescriptor[];
 }
 
 export async function presentResolutionOrLog({
@@ -284,6 +290,7 @@ export async function presentResolutionOrLog({
 	player,
 	showResolution,
 	addLog,
+	timeline,
 }: PresentResolutionOptions) {
 	const source = {
 		kind: 'action' as const,
@@ -304,6 +311,7 @@ export async function presentResolutionOrLog({
 			summaries,
 			source,
 			actorLabel: 'Played by',
+			timeline,
 		});
 	} catch (error) {
 		void error;
