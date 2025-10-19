@@ -627,6 +627,93 @@ describe('useActionPerformer', () => {
 		);
 	});
 
+	it('releases the queue before applying post-resolution turn logic', async () => {
+		const [activeBefore, opponentBefore] = sessionSnapshot.game.players;
+		if (!activeBefore || !opponentBefore) {
+			throw new Error('Expected players in snapshot');
+		}
+		const updatedPlayer = createSnapshotPlayer({
+			id: activeBefore.id,
+			name: activeBefore.name,
+			resources: { ...activeBefore.resources, [actionCostResource]: 0 },
+		});
+		const updatedOpponent = createSnapshotPlayer({
+			id: opponentBefore.id,
+			name: opponentBefore.name,
+			resources: { ...opponentBefore.resources },
+		});
+		const snapshotAfter = createSessionSnapshot({
+			players: [updatedPlayer, updatedOpponent],
+			activePlayerId: updatedPlayer.id,
+			opponentId: updatedOpponent.id,
+			phases: sessionSnapshot.phases,
+			actionCostResource,
+			ruleSnapshot,
+			turn: sessionSnapshot.game.turn,
+			currentPhase: sessionSnapshot.game.currentPhase,
+			currentStep: sessionSnapshot.game.currentStep,
+			devMode: true,
+		});
+		performSessionActionMock.mockImplementationOnce(() => {
+			sessionSnapshot = snapshotAfter;
+			updateSessionSnapshot(sessionId, snapshotAfter);
+			return Promise.resolve({
+				status: 'success',
+				costs: {},
+				traces: [],
+				snapshot: snapshotAfter,
+			});
+		});
+		logContentMock.mockReturnValue(['⚔️ Attack']);
+		let resolveResolution: (() => void) | null = null;
+		const showResolution = vi.fn().mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					resolveResolution = resolve;
+				}),
+		);
+		const syncPhaseState = vi.fn();
+		const refresh = vi.fn();
+		const endTurn = vi.fn().mockResolvedValue(undefined);
+
+		const { result } = renderHook(() =>
+			useActionPerformer({
+				sessionId,
+				actionCostResource,
+				registries,
+				addLog,
+				showResolution,
+				syncPhaseState,
+				refresh,
+				pushErrorToast,
+				mountedRef: { current: true },
+				endTurn,
+				enqueue: enqueueMock,
+				resourceKeys,
+				onFatalSessionError: undefined,
+			}),
+		);
+
+		let performPromise: Promise<void> | undefined;
+		await act(async () => {
+			performPromise = result.current.handlePerform(action);
+			await performPromise;
+		});
+
+		if (!performPromise) {
+			throw new Error('Expected perform promise');
+		}
+		expect(showResolution).toHaveBeenCalledTimes(1);
+		expect(endTurn).not.toHaveBeenCalled();
+
+		await act(async () => {
+			resolveResolution?.();
+			await Promise.resolve();
+		});
+
+		expect(endTurn).toHaveBeenCalledTimes(1);
+	});
+
 	it('reports mirroring failures via onFatalSessionError', async () => {
 		const fatalCause = new Error('mirror failed');
 		const fatalError = new SessionMirroringError('Mirroring failed', {

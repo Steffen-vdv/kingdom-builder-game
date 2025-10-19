@@ -45,6 +45,10 @@ export function appendPassiveChanges(
 		if (previous.has(id)) {
 			continue;
 		}
+		const sourceType = passive.meta?.source?.type;
+		if (!sourceType || sourceType.trim().length === 0) {
+			continue;
+		}
 		if (!shouldSurfacePassive(passive, nextContext, 'log')) {
 			continue;
 		}

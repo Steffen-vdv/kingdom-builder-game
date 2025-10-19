@@ -1,6 +1,7 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { formatTargetLabel } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
+import { selectTransferDescriptor } from '../registrySelectors';
 import { humanizeIdentifier } from '../stringUtils';
 import type { TranslationContext } from '../../context';
 
@@ -60,10 +61,14 @@ export function resolveTransferModifierTarget(
 	}
 
 	const clauseTarget = formatTargetLabel('', fallbackName);
+	const summaryLabel =
+		evaluation?.type === 'transfer_pct'
+			? selectTransferDescriptor(translationContext).icon
+			: fallbackName;
 	return {
 		icon: '',
 		name: fallbackName,
-		summaryLabel: fallbackName,
+		summaryLabel,
 		clauseTarget,
 	};
 }

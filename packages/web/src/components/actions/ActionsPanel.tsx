@@ -11,7 +11,6 @@ import { useAnimate } from '../../utils/useAutoAnimate';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
 import BasicOptions from './BasicOptions';
 import BuildOptions from './BuildOptions';
-import DemolishOptions from './DemolishOptions';
 import DevelopOptions from './DevelopOptions';
 import HireOptions from './HireOptions';
 import {
@@ -58,6 +57,27 @@ export default function ActionsPanel() {
 	const opponentView = sessionView.opponent;
 	const hasOpponent = Boolean(opponentView);
 	const opponent = opponentView ?? player;
+	const controlledPlayer = useMemo<DisplayPlayer>(() => {
+		const players = sessionSnapshot.game.players;
+		const candidateSnapshot =
+			players.find((entry) => !hasAiController(sessionId, entry.id)) ??
+			players.find(
+				(entry) => entry.id === sessionSnapshot.game.activePlayerId,
+			) ??
+			players.find((entry) => entry.id === sessionSnapshot.game.opponentId) ??
+			players[0];
+		if (!candidateSnapshot) {
+			return player;
+		}
+		return sessionView.byId.get(candidateSnapshot.id) ?? player;
+	}, [
+		player,
+		sessionId,
+		sessionSnapshot.game.activePlayerId,
+		sessionSnapshot.game.opponentId,
+		sessionSnapshot.game.players,
+		sessionView.byId,
+	]);
 	const [viewingOpponent, setViewingOpponent] = useState(false);
 
 	const actionPhaseId = useMemo(
@@ -82,7 +102,9 @@ export default function ActionsPanel() {
 		}
 	}, [hasOpponent, viewingOpponent]);
 
-	const selectedPlayer: DisplayPlayer = viewingOpponent ? opponent : player;
+	const selectedPlayer: DisplayPlayer = viewingOpponent
+		? opponent
+		: controlledPlayer;
 	const canInteract =
 		isControlledTurn &&
 		isActionPhase &&
@@ -191,14 +213,13 @@ export default function ActionsPanel() {
 		(action) => action.category === 'development',
 	);
 	const buildAction = actions.find((action) => action.category === 'building');
-	const demolishAction = actions.find(
-		(action) => action.category === 'building_remove',
-	);
 	const raisePopAction = actions.find(
 		(action) => action.category === 'population',
 	);
 	const otherActions = actions.filter(
-		(action) => (action.category ?? 'basic') === 'basic',
+		(action) =>
+			action.category !== 'building_remove' &&
+			(action.category ?? 'basic') === 'basic',
 	);
 
 	const toggleLabel = viewingOpponent
@@ -287,15 +308,6 @@ export default function ActionsPanel() {
 							buildings={buildingOptions}
 							summaries={buildingSummaries}
 							descriptions={buildingDescriptions}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-						/>
-					)}
-					{demolishAction && (
-						<DemolishOptions
-							action={demolishAction}
-							isActionPhase={isActionPhase}
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}

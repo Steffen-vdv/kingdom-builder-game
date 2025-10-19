@@ -224,6 +224,9 @@ registerEffectFormatter('passive', 'add', {
 			'Passive';
 		const prefix = icon ? `${icon} ` : '';
 		const label = `${prefix}${name}`.trim();
+		const activationLabel = label.length
+			? `♾️ ${label} activated`
+			: '♾️ Passive activated';
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
 		const items = [...inner];
@@ -238,11 +241,11 @@ registerEffectFormatter('passive', 'add', {
 			return items;
 		}
 		if (items.length === 0) {
-			return `${label} added`;
+			return activationLabel;
 		}
 		return [
 			{
-				title: `${label} added`,
+				title: activationLabel,
 				items,
 			},
 		];

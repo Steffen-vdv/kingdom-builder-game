@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
@@ -94,7 +94,7 @@ describe('<ResolutionCard />', () => {
 		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
 	});
 
-	it('separates cost entries from effect entries', () => {
+	it('renders section roots with nested cost and effect entries', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
 				{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
@@ -107,24 +107,33 @@ describe('<ResolutionCard />', () => {
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
-		const costLabel = screen.getByText('Cost');
-		const costList = costLabel.nextElementSibling;
-		const effectLabel = screen.getByText('Effects');
-		const effectList = effectLabel.parentElement?.nextElementSibling ?? null;
+		const costSection = screen.getByText('💲 Cost');
+		const effectsSection = screen.getByText('🪄 Effects');
+		const costSectionContainer = costSection.parentElement;
+		const effectsSectionContainer = effectsSection.parentElement;
+		const goldCost = screen.getByText('Gold -3');
+		const goldCostContainer = goldCost.parentElement;
+		const effectHeadline = screen.getByText('🏗️ Develop');
+		const effectEntry = screen.getByText('🪄 Effect happens');
+		const effectHeadlineContainer = effectHeadline.parentElement;
+		const effectEntryContainer = effectEntry.parentElement;
 
-		expect(costList).not.toBeNull();
-		expect(effectList).not.toBeNull();
-
-		if (!costList || !effectList) {
-			throw new Error('Expected cost and effect sections to be rendered');
+		if (
+			!costSectionContainer ||
+			!effectsSectionContainer ||
+			!goldCostContainer ||
+			!effectHeadlineContainer ||
+			!effectEntryContainer
+		) {
+			throw new Error('Expected timeline entries to have container elements');
 		}
 
-		expect(within(costList).getByText('💲 Action cost')).toBeInTheDocument();
-		expect(within(costList).getByText('Gold -3')).toBeInTheDocument();
-		expect(within(effectList).queryByText('💲 Action cost')).toBeNull();
-		expect(
-			within(effectList).getByText('🪄 Effect happens'),
-		).toBeInTheDocument();
+		expect(costSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
+		expect(screen.queryByText('💲 Action cost')).toBeNull();
+		expect(goldCostContainer).toHaveStyle({ marginLeft: '0.875rem' });
+		expect(effectsSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
+		expect(effectHeadlineContainer).toHaveStyle({ marginLeft: '0.875rem' });
+		expect(effectEntryContainer).toHaveStyle({ marginLeft: '1.75rem' });
 	});
 
 	it('renders nested cost groups and effect hierarchies', () => {
@@ -158,50 +167,43 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		const costLabel = screen.getByText('Cost');
-		const costList = costLabel.nextElementSibling;
-		const effectsLabel = screen.getByText('Effects');
-		const effectsList = effectsLabel.parentElement?.nextElementSibling ?? null;
+		const costSection = screen.getByText('💲 Cost');
+		const effectsSection = screen.getByText('🪄 Effects');
+		const costSectionContainer = costSection.parentElement;
+		const effectsSectionContainer = effectsSection.parentElement;
 
-		expect(costList).not.toBeNull();
-		expect(effectsList).not.toBeNull();
-
-		if (!costList || !effectsList) {
-			throw new Error('Expected cost and effect sections to be rendered');
-		}
-
-		const costEntries = within(costList);
-		const actionCost = costEntries.getByText('💲 Action cost');
-		const goldCost = costEntries.getByText('Gold -3');
-		const discountGroup = costEntries.getByText('Discounts applied');
-		const happinessCost = costEntries.getByText('Happiness -1');
-		const actionCostContainer = actionCost.parentElement;
+		const goldCost = screen.getByText('Gold -3');
+		const discountGroup = screen.getByText('Discounts applied');
+		const happinessCost = screen.getByText('Happiness -1');
 		const goldCostContainer = goldCost.parentElement;
 		const discountContainer = discountGroup.parentElement;
 		const happinessContainer = happinessCost.parentElement;
 
 		if (
-			!actionCostContainer ||
+			!costSectionContainer ||
+			!effectsSectionContainer ||
 			!goldCostContainer ||
 			!discountContainer ||
 			!happinessContainer
 		) {
-			throw new Error('Expected cost entries to have container elements');
+			throw new Error(
+				'Expected cost section entries to have container elements',
+			);
 		}
 
-		expect(actionCostContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
+		expect(costSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
+		expect(screen.queryByText('💲 Action cost')).toBeNull();
 		expect(goldCostContainer).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(discountContainer).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(happinessContainer).toHaveStyle({ marginLeft: '2.625rem' });
 
-		const effectEntries = within(effectsList);
-		const headline = effectEntries.getByText('🛠️ Forge Relic');
-		const group = effectEntries.getByText('🪄 Channel the forge');
-		const effect = effectEntries.getByText('Gain 2 Relics');
-		const subAction = effectEntries.getByText('Summon guardian golem');
-		const firstChange = effectEntries.getByText('Army +1');
-		const secondChange = effectEntries.getByText('Fortification +1');
-		const headlineContainer = headline.parentElement;
+		expect(screen.queryByText('🛠️ Forge Relic')).toBeNull();
+
+		const group = screen.getByText('🪄 Channel the forge');
+		const effect = screen.getByText('Gain 2 Relics');
+		const subAction = screen.getByText('Summon guardian golem');
+		const firstChange = screen.getByText('Army +1');
+		const secondChange = screen.getByText('Fortification +1');
 		const groupContainer = group.parentElement;
 		const effectContainer = effect.parentElement;
 		const subActionContainer = subAction.parentElement;
@@ -209,7 +211,6 @@ describe('<ResolutionCard />', () => {
 		const secondChangeContainer = secondChange.parentElement;
 
 		if (
-			!headlineContainer ||
 			!groupContainer ||
 			!effectContainer ||
 			!subActionContainer ||
@@ -219,7 +220,7 @@ describe('<ResolutionCard />', () => {
 			throw new Error('Expected effect entries to have container elements');
 		}
 
-		expect(headlineContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
+		expect(effectsSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
 		expect(groupContainer).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(effectContainer).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(subActionContainer).toHaveStyle({ marginLeft: '2.625rem' });
@@ -241,8 +242,8 @@ describe('<ResolutionCard />', () => {
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
-		expect(screen.queryByText('Cost')).toBeNull();
-		expect(screen.queryByText('Effects')).toBeNull();
+		expect(screen.queryByText('💲 Cost')).toBeNull();
+		expect(screen.queryByText('🪄 Effects')).toBeNull();
 
 		const resolutionSteps = screen.getByText('Growth Phase begins');
 		const firstLine = resolutionSteps.parentElement;

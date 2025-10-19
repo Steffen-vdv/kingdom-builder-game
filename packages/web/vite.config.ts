@@ -12,6 +12,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@kingdom-builder/protocol': path.resolve(rootDir, '../protocol/src'),
+			'@kingdom-builder/contents': path.resolve(rootDir, '../contents/src'),
 		},
 	},
 	server: {
@@ -21,6 +22,10 @@ export default defineConfig({
 				target: 'http://localhost:3001',
 				changeOrigin: true,
 				rewrite: (incomingPath) => incomingPath.replace(/^\/api/, ''),
+			},
+			'/runtime-config': {
+				target: 'http://localhost:3001',
+				changeOrigin: true,
 			},
 		},
 	},

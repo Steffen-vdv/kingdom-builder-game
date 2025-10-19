@@ -14,6 +14,7 @@ import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
+	splitActionCostMap,
 	type ResourceDescriptorSelector,
 } from './utils';
 import type { PendingActionState } from './GenericActions';
@@ -69,16 +70,12 @@ function GenericActionCard({
 	formatRequirement,
 	selectResourceDescriptor,
 }: GenericActionCardProps) {
-	const costs = useMemo(() => {
-		if (!metadata.costs) {
-			return {} as Record<string, number>;
-		}
-		const entries = Object.entries(metadata.costs).map(
-			([resourceKey, cost]) => [resourceKey, cost ?? 0],
-		);
-		return Object.fromEntries(entries) as Record<string, number>;
-	}, [metadata.costs]);
+	const { costs, cleanup: cleanupCosts } = useMemo(
+		() => splitActionCostMap(metadata.costs),
+		[metadata.costs],
+	);
 	const costsReady = metadata.costs !== undefined;
+	const hasCleanupCosts = Object.keys(cleanupCosts).length > 0;
 	const requirementsReady = metadata.requirements !== undefined;
 	const requirementFailures = metadata.requirements ?? [];
 	const requirements = requirementsReady
@@ -160,6 +157,7 @@ function GenericActionCard({
 			costs={costs}
 			playerResources={player.resources}
 			actionCostResource={actionCostResource}
+			upkeep={hasCleanupCosts ? cleanupCosts : undefined}
 			requirements={requirements}
 			requirementIcons={requirementIcons}
 			summary={summary}
@@ -197,6 +195,7 @@ function GenericActionCard({
 								effects,
 								requirements,
 								costs,
+								...(hasCleanupCosts ? { upkeep: cleanupCosts } : {}),
 								...(description && { description }),
 								...(!implemented && {
 									description: 'Not implemented yet',

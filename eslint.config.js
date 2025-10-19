@@ -6,6 +6,7 @@ import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
+import markdown from '@eslint/markdown';
 import unusedImports from 'eslint-plugin-unused-imports';
 import globals from 'globals';
 
@@ -127,6 +128,13 @@ export default [
 			'**/*.d.ts',
 			'packages/**/src/**/*.js',
 		],
+	},
+	{
+		files: ['**/*.md'],
+		language: 'markdown/commonmark',
+		plugins: {
+			markdown,
+		},
 	},
 	{
 		files: ['**/*.{ts,tsx,js,cjs,mjs}'],

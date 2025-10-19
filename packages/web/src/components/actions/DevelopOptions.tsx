@@ -9,6 +9,8 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	splitActionCostMap,
+	sumUpkeep,
 	type ResourceDescriptorSelector,
 } from './utils';
 import {
@@ -89,16 +91,35 @@ export default function DevelopOptions({
 		return developments
 			.map((development) => {
 				const metadataCosts = costMap.get(development.id);
+				const { costs: dynamicCosts, cleanup: dynamicCleanup } =
+					splitActionCostMap(metadataCosts);
 				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(
-					metadataCosts ?? {},
-				)) {
+				for (const [costKey, costAmount] of Object.entries(dynamicCosts)) {
 					costs[costKey] = costAmount ?? 0;
 				}
+				const combinedUpkeep: Record<string, number> = {
+					...(development.upkeep ?? {}),
+					...dynamicCleanup,
+				};
 				const total = sumNonActionCosts(costs, actionCostResource);
-				return { development, costs, total };
+				const cleanup = sumUpkeep(combinedUpkeep);
+				return {
+					development,
+					costs,
+					total,
+					cleanup,
+					upkeep: combinedUpkeep,
+				};
 			})
-			.sort((first, second) => first.total - second.total);
+			.sort((first, second) => {
+				if (first.total !== second.total) {
+					return first.total - second.total;
+				}
+				if (first.cleanup !== second.cleanup) {
+					return first.cleanup - second.cleanup;
+				}
+				return first.development.name.localeCompare(second.development.name);
+			});
 	}, [developments, actionCostResource, costMap]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
@@ -116,8 +137,7 @@ export default function DevelopOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
-				{entries.map(({ development, costs }) => {
-					const upkeep = development.upkeep;
+				{entries.map(({ development, costs, upkeep }) => {
 					const focus = development.focus;
 					const developLandRequirement = formatLandRequirement(
 						'Requires',

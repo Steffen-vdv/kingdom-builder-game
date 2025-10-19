@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import { registerModifierEvalHandler } from '../src/translation/effects/formatters/modifier';
 import {
 	createSnapshotPlayer,
@@ -279,7 +280,9 @@ describe('modifier evaluation handlers', () => {
 			summary[0].startsWith(`${resultDescriptor.icon}${actionIcon}: `),
 		).toBe(true);
 		expect(summary[0]).toMatch(/\+10%$/u);
-		expect(summary[0]).toContain(`${transferIcon}+${transferAdjust}%`);
+		expect(summary[0]).toContain(
+			`${GENERAL_RESOURCE_ICON} +${transferAdjust}%`,
+		);
 		const primaryLine = description[0];
 		expect(
 			primaryLine.startsWith(

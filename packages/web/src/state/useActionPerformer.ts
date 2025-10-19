@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
+// <<<<<<< project/rescard_log_uni
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import {
@@ -8,6 +9,18 @@ import {
 	snapshotPlayer,
 	translateRequirementFailure,
 } from '../translation';
+// =======
+import type {
+	ActionExecuteErrorResponse,
+	ActionParametersPayload,
+} from '@kingdom-builder/protocol/actions';
+import type {
+	SessionPlayerStateSnapshot,
+	SessionRequirementFailure,
+	SessionSnapshot,
+} from '@kingdom-builder/protocol/session';
+import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
+// >>>>>>> main
 import {
 	appendSubActionChanges,
 	buildActionCostLines,
@@ -16,7 +29,11 @@ import {
 	handleMissingActionDefinition,
 	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
+// <<<<<<< project/rescard_log_uni
 import { createFailureResolutionSnapshot } from './actionResolutionLog';
+// =======
+import { createActionErrorHandler } from './useActionErrorHandler';
+// >>>>>>> main
 import type { Action } from './actionTypes';
 import type {
 	ActionResolution,
@@ -32,11 +49,19 @@ import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
+// <<<<<<< project/rescard_log_uni
 import {
 	SessionMirroringError,
 	markFatalSessionError,
 	isFatalSessionError,
 } from './sessionErrors';
+// =======
+import { markFatalSessionError, isFatalSessionError } from './sessionErrors';
+import {
+	getActionErrorMetadata,
+	setActionErrorMetadata,
+} from './actionErrorMetadata';
+// >>>>>>> main
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
@@ -91,9 +116,9 @@ export function useActionPerformer({
 					onFatalSessionError(error);
 				}
 			};
-			let fatalError: unknown = null;
+			const fatalErrorRef: { current: unknown } = { current: null };
 			const throwFatal = (error: unknown): never => {
-				fatalError = error;
+				fatalErrorRef.current = error;
 				notifyFatal(error);
 				throw error;
 			};
@@ -112,6 +137,7 @@ export function useActionPerformer({
 				passiveRecords: snapshotBefore.passiveRecords,
 				registries,
 			});
+			const contextRef = { current: context };
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = ensureValue(
 				snapshotBefore.game.players.find(
@@ -120,6 +146,15 @@ export function useActionPerformer({
 				() => new Error('Missing active player before action'),
 			);
 			const before = snapshotPlayer(playerBefore);
+			const handleError = createActionErrorHandler({
+				fatalErrorRef,
+				notifyFatal,
+				contextRef,
+				action,
+				player: playerBefore,
+				pushErrorToast,
+				addLog,
+			});
 			try {
 				const response = await performSessionAction(
 					{
@@ -139,14 +174,15 @@ export function useActionPerformer({
 				const costs = response.costs ?? {};
 				const traces = response.traces;
 				const snapshotAfter = getSessionSnapshot(sessionId);
-				const legacyContext = createSessionTranslationContext({
-					snapshot: snapshotAfter,
-					ruleSnapshot: snapshotAfter.rules,
-					passiveRecords: snapshotAfter.passiveRecords,
-					registries,
-				});
-				const { translationContext, diffContext } = legacyContext;
-				context = translationContext;
+				const { translationContext: updatedContext, diffContext } =
+					createSessionTranslationContext({
+						snapshot: snapshotAfter,
+						ruleSnapshot: snapshotAfter.rules,
+						passiveRecords: snapshotAfter.passiveRecords,
+						registries,
+					});
+				context = updatedContext;
+				contextRef.current = context;
 				const playerAfter = ensureValue(
 					snapshotAfter.game.players.find(
 						(entry) => entry.id === activePlayerId,
@@ -209,53 +245,47 @@ export function useActionPerformer({
 				const useDevelopFormatter = filtered.some((line) =>
 					line.startsWith(LOG_KEYWORDS.developed),
 				);
-				const timeline = (
-					useDevelopFormatter
-						? buildDevelopActionLogTimeline
-						: buildActionLogTimeline
-				)(messages, filtered);
-				const logLines = (
-					useDevelopFormatter
-						? formatDevelopActionLogLines
-						: formatActionLogLines
-				)(messages, filtered);
-				const actionMeta = buildResolutionActionMeta(
-					action,
-					stepDef,
-					logHeadline,
-				);
-				const playerIdentity = {
-					id: playerAfter.id,
-					name: playerAfter.name,
-				};
+				const buildTimeline = useDevelopFormatter
+					? buildDevelopActionLogTimeline
+					: buildActionLogTimeline;
+				const formatLines = useDevelopFormatter
+					? formatDevelopActionLogLines
+					: formatActionLogLines;
+				const timeline = buildTimeline(messages, filtered);
+				const logLines = formatLines(messages, filtered);
 				syncPhaseState(snapshotAfter);
 				refresh();
-				await presentResolutionOrLog({
-					action: actionMeta,
+				void presentResolutionOrLog({
+					action: buildResolutionActionMeta(action, stepDef, logHeadline),
 					logLines,
 					summaries: filtered,
-					player: playerIdentity,
+					player: {
+						id: playerAfter.id,
+						name: playerAfter.name,
+					},
 					showResolution,
 					addResolutionLog,
 					timeline,
-				});
-				if (!mountedRef.current || snapshotAfter.game.conclusion) {
-					return;
-				}
-				if (
-					snapshotAfter.game.devMode &&
-					(playerAfter.resources[actionCostResource] ?? 0) <= 0
-				) {
-					await endTurn();
-				}
+				})
+					.then(() => {
+						if (
+							!mountedRef.current ||
+							snapshotAfter.game.conclusion ||
+							!snapshotAfter.game.devMode ||
+							(playerAfter.resources[actionCostResource] ?? 0) > 0
+						) {
+							return;
+						}
+						return endTurn();
+					})
+					.catch((error) => {
+						void handleError(error);
+					});
 			} catch (error) {
-				if (fatalError !== null || isFatalSessionError(error)) {
-					if (fatalError === null) {
-						fatalError = error;
-						notifyFatal(error);
-					}
+				if (handleError(error)) {
 					throw error;
 				}
+// <<<<<<< project/rescard_log_uni
 				if (error instanceof SessionMirroringError) {
 					fatalError = error;
 					notifyFatal(error);
@@ -282,6 +312,8 @@ export function useActionPerformer({
 					detail: failureDetail,
 				});
 				addResolutionLog(resolutionSnapshot);
+// =======
+// >>>>>>> main
 			}
 		},
 		[

@@ -36,6 +36,7 @@ type SessionActionOption = {
 	order?: number | undefined;
 	category?: string | undefined;
 	focus?: unknown;
+	baseCosts?: Record<string, number | undefined> | undefined;
 };
 type SessionBuildingOption = {
 	id: string;
