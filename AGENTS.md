@@ -98,11 +98,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Every time you call the `make_pr` tool, copy the full contents of
   `.github/PULL_REQUEST_TEMPLATE.md` into the PR body and replace every
   placeholder with the specific information for the current change set.
-- Before invoking `make_pr`, set the pull request title to the exact **Task
-  title** shown at the top of your current assignment. This is the short,
-  auto-generated summary (maximum 10 words) that Codex provides when the task
-  starts—not the longer instruction text or anything you write yourself. Using
-  that concise Task title verbatim keeps reviewer context aligned across tools.
 - Do not trim sections from the template or leave HTML comments/placeholder
   markers in place; fill out each required section completely.
 - Reviewers will immediately bounce any PR whose description omits a section
