@@ -65,6 +65,17 @@ describe('hold festival action translation', () => {
 		const { translation, festivalActionId } = scenario;
 		const log = logContent('action', festivalActionId, translation);
 		const details = getSyntheticFestivalDetails(scenario);
+		const passiveAssetIcon = translation.assets.passive.icon?.trim() ?? '';
+		const passiveLabel = [
+			details.passiveIcon?.trim() ?? '',
+			details.passiveName?.trim() ?? '',
+		]
+			.filter((part) => part.length > 0)
+			.join(' ');
+		const passiveActivationLabel = [passiveAssetIcon, passiveLabel]
+			.filter((part) => part.length > 0)
+			.join(' ')
+			.trim();
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
@@ -88,7 +99,7 @@ describe('hold festival action translation', () => {
 				kind: 'headline',
 			},
 			{
-				text: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
+				text: `${passiveActivationLabel} activated`,
 				depth: 1,
 				kind: 'group',
 			},

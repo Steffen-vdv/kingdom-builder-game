@@ -48,15 +48,11 @@ export function appendPassiveChanges(
 		if (!shouldSurfacePassive(passive, nextContext, 'log')) {
 			continue;
 		}
-		const { icon, label } = resolvePassivePresentation(passive, {
-			assets,
-		});
-		const decoratedLabel = decoratePassiveLabel(icon, label, assets);
-		const entry = `${decoratedLabel} activated`;
-		if (!changes.includes(entry)) {
-			changes.push(entry);
-		}
+		// Passive activations are surfaced by the effect logs that added them.
+		// Skip adding a duplicate summary entry here to avoid redundant lines in
+		// resolution timelines.
 	}
+
 	for (const [id, passive] of previous) {
 		if (next.has(id)) {
 			continue;

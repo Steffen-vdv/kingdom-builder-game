@@ -216,33 +216,53 @@ registerEffectFormatter('passive', 'add', {
 	},
 	log: (effect, context) => {
 		const descriptor = selectPassiveDescriptor(context);
-		const icon =
-			(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
-		const name =
+		const manualIcon =
+			typeof effect.params?.['icon'] === 'string'
+				? effect.params['icon'].trim()
+				: '';
+		const generalIcon = (descriptor.icon ?? '♾️').trim();
+		const fallbackIcon = manualIcon || generalIcon;
+		const rawName =
 			(effect.params?.['name'] as string | undefined) ??
 			descriptor.label ??
 			'Passive';
-		const prefix = icon ? `${icon} ` : '';
-		const label = `${prefix}${name}`.trim();
+		const name = rawName.trim();
+		const baseLabelParts: string[] = [];
+		if (manualIcon) {
+			baseLabelParts.push(manualIcon);
+		}
+		if (name) {
+			baseLabelParts.push(name);
+		}
+		const baseLabel = baseLabelParts.join(' ').trim() || name;
+		const activationLabelParts: string[] = [];
+		if (generalIcon) {
+			activationLabelParts.push(generalIcon);
+		}
+		if (baseLabel) {
+			activationLabelParts.push(baseLabel);
+		}
+		const activationLabel = activationLabelParts.join(' ').trim();
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
 		const items = [...inner];
 		if (duration) {
 			const durationLabel = formatDuration(duration);
-			const durationPrefix = icon ? `${icon} ` : '';
+			const durationPrefix = fallbackIcon ? `${fallbackIcon} ` : '';
 			const durationDescription =
 				`${durationPrefix}Duration: Until player's next ${durationLabel}`.trim();
 			items.push(durationDescription);
 		}
-		if (!label) {
+		if (!activationLabel) {
 			return items;
 		}
+		const title = `${activationLabel} activated`;
 		if (items.length === 0) {
-			return `${label} added`;
+			return title;
 		}
 		return [
 			{
-				title: `${label} added`,
+				title,
 				items,
 			},
 		];
