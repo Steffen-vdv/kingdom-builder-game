@@ -28,7 +28,7 @@ import { normalizeActionFocus } from './types';
 export default function ActionsPanel() {
 	const {
 		session,
-		sessionState,
+		sessionSnapshot,
 		sessionView,
 		translationContext,
 		phase,
@@ -59,11 +59,12 @@ export default function ActionsPanel() {
 
 	const actionPhaseId = useMemo(
 		() =>
-			sessionState.phases.find((phaseDefinition) => phaseDefinition.action)?.id,
-		[sessionState.phases],
+			sessionSnapshot.phases.find((phaseDefinition) => phaseDefinition.action)
+				?.id,
+		[sessionSnapshot.phases],
 	);
 	const isActionPhase = isActionPhaseActive(phase, actionPhaseId);
-	const activePlayerId = sessionState.game.activePlayerId;
+	const activePlayerId = sessionSnapshot.game.activePlayerId;
 	const isControlledTurn = !session.hasAiController(activePlayerId);
 
 	useEffect(() => {
