@@ -158,9 +158,11 @@ export function createEngineSession(
 			}
 			return cloneEffectLogEntry(entry);
 		},
-		getPassiveEvaluationMods() {
-			return clonePassiveEvaluationMods(context.passives.evaluationMods);
-		},
+                getPassiveEvaluationMods() {
+                        return clonePassiveEvaluationMods(
+                                context.passives.evaluationMods,
+                        );
+                },
 		enqueue(taskFactory) {
 			return context.enqueue(taskFactory);
 		},
@@ -171,7 +173,31 @@ export function createEngineSession(
 			if (!context.aiSystem) {
 				return false;
 			}
-			return context.aiSystem.run(playerId, context, overrides);
+			const beforeActiveId = context.game.active.id;
+			const beforePhaseIndex = context.game.phaseIndex;
+			const beforePhaseHasAction = Boolean(
+				context.phases[beforePhaseIndex]?.action,
+			);
+                        await context.aiSystem.run(
+                                playerId,
+                                context,
+                                overrides,
+                        );
+			const afterActiveId = context.game.active.id;
+			const afterPhaseIndex = context.game.phaseIndex;
+			const afterPhaseHasAction = Boolean(
+				context.phases[afterPhaseIndex]?.action,
+			);
+			if (!beforePhaseHasAction) {
+				return false;
+			}
+			if (afterActiveId !== beforeActiveId) {
+				return true;
+			}
+			if (afterPhaseIndex !== beforePhaseIndex) {
+				return true;
+			}
+			return !afterPhaseHasAction;
 		},
 		hasAiController(playerId) {
 			if (!context.aiSystem) {

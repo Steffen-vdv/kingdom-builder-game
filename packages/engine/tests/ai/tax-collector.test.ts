@@ -9,7 +9,7 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers';
 
 describe('tax collector AI controller', () => {
-	it('collects tax until action points are spent then ends the turn', async () => {
+	it('collects tax one action at a time before ending the turn', async () => {
 		const content = createContentFactory();
 		content.action({
 			id: TAX_ACTION_ID,
@@ -55,10 +55,27 @@ describe('tax collector AI controller', () => {
 			advance: endPhase,
 		});
 
+		expect(perform).toHaveBeenCalledTimes(1);
+		expect(perform).toHaveBeenLastCalledWith(TAX_ACTION_ID, engineContext);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(1);
+		expect(endPhase).not.toHaveBeenCalled();
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+		});
+
 		expect(perform).toHaveBeenCalledTimes(2);
-		expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, engineContext);
-		expect(perform).toHaveBeenNthCalledWith(2, TAX_ACTION_ID, engineContext);
+		expect(perform).toHaveBeenLastCalledWith(TAX_ACTION_ID, engineContext);
 		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(endPhase).not.toHaveBeenCalled();
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+		});
+
+		expect(perform).toHaveBeenCalledTimes(2);
 		expect(endPhase).toHaveBeenCalledTimes(1);
 	});
 });
