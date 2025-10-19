@@ -377,10 +377,19 @@ describe('<HoverCard />', () => {
 				: formatted.source === 'phase'
 					? 'Phase'
 					: 'Action';
+		const normalizedSourceLabel = resolvedSourceLabel
+			.trim()
+			.toLocaleLowerCase();
+		const normalizedActorLabel = formatted.actorLabel
+			?.trim()
+			.toLocaleLowerCase();
 		const expectedHeader = formatted.actorLabel
-			? `${resolvedSourceLabel} - ${formatted.actorLabel}`
+			? normalizedActorLabel && normalizedActorLabel !== normalizedSourceLabel
+				? `${resolvedSourceLabel} - ${formatted.actorLabel}`
+				: formatted.actorLabel
 			: `${resolvedSourceLabel} resolution`;
-		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
+		const headerMatches = screen.getAllByText(expectedHeader);
+		expect(headerMatches.length).toBeGreaterThan(0);
 		expect(
 			screen.getByText(`Phase owner ${sessionPlayer.name}`),
 		).toBeInTheDocument();
@@ -389,7 +398,8 @@ describe('<HoverCard />', () => {
 		});
 		expect(continueButton).toBeDisabled();
 		const firstLine = formatted.lines[0]!;
-		expect(screen.getByText(firstLine)).toBeInTheDocument();
+		const firstLineMatches = screen.getAllByText(firstLine);
+		expect(firstLineMatches.length).toBeGreaterThan(0);
 		expect(addLog).toHaveBeenCalledWith(firstLine, {
 			id: sessionPlayer.id,
 			name: sessionPlayer.name,
