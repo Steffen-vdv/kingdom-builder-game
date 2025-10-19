@@ -29,11 +29,12 @@ export default function ActionsPanel() {
 	const {
 		session,
 		sessionState,
-		sessionView,
+		selectors,
 		translationContext,
 		phase,
 		actionCostResource,
 	} = useGameEngine();
+	const { sessionView } = selectors;
 	const resourceMetadata = useResourceMetadata();
 	const selectResourceDescriptor = useCallback(
 		(resourceKey: string) =>

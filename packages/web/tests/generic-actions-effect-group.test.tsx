@@ -232,7 +232,7 @@ function createMockGame() {
 		session,
 		sessionId,
 		sessionState,
-		sessionView,
+		selectors: { sessionView },
 		translationContext,
 		ruleSnapshot,
 		sessionRegistries,
@@ -345,7 +345,7 @@ describe('GenericActions effect group handling', () => {
 			order: royalDecree.order,
 			focus: royalDecree.focus,
 		};
-		const activePlayer = mockGame.sessionView.active;
+		const activePlayer = mockGame.selectors.sessionView.active;
 		if (!activePlayer) {
 			throw new Error('Expected active player for generic actions test');
 		}

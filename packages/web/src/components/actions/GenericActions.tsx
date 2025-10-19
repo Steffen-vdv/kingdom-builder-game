@@ -129,13 +129,14 @@ function GenericActions({
 	selectResourceDescriptor: ResourceDescriptorSelector;
 }) {
 	const {
-		sessionView,
+		selectors,
 		translationContext,
 		requests,
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
 	} = useGameEngine();
+	const { sessionView } = selectors;
 	const formatRequirement = (requirement: string) => requirement;
 	const performAction = useCallback(
 		(action: Action, params?: Record<string, unknown>) => {

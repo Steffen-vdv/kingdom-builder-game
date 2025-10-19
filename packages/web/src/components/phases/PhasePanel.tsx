@@ -80,8 +80,9 @@ const phaseListItemLabelClassName = [
 ].join(' ');
 
 export default function PhasePanel() {
-	const { sessionState, sessionView, phase, requests, resolution } =
+	const { sessionState, selectors, phase, requests, resolution } =
 		useGameEngine();
+	const { sessionView } = selectors;
 	const phases = useMemo(
 		() =>
 			sessionState.phases.map((phaseDefinition) => ({

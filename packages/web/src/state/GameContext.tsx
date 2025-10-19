@@ -374,7 +374,9 @@ export const useOptionalGameEngine = (): LegacyGameEngineContextValue | null =>
 	useContext(GameEngineContext);
 
 export const useSessionView = () => {
-	const { sessionView } = useGameEngine();
+	const {
+		selectors: { sessionView },
+	} = useGameEngine();
 	return sessionView;
 };
 

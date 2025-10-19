@@ -321,7 +321,7 @@ export function createActionsPanelGame({
 		sessionId,
 		session,
 		sessionState,
-		sessionView,
+		selectors: { sessionView },
 		translationContext,
 		ruleSnapshot,
 		...createActionsPanelState({

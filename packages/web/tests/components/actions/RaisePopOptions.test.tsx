@@ -41,7 +41,7 @@ interface RaisePopScenario {
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 	mockGame: LegacyGameEngineContextValue;
 	action: Action;
-	player: LegacyGameEngineContextValue['sessionView']['active'];
+	player: LegacyGameEngineContextValue['selectors']['sessionView']['active'];
 	populationIds: string[];
 	adapter: RemoteSessionAdapter;
 }
@@ -104,7 +104,7 @@ function createRaisePopScenario(
 		requirements: translated?.requirements ?? definition.requirements,
 		effects: translated?.effects ?? definition.effects,
 	} as Action;
-	const activeView = mockGame.sessionView.active;
+	const activeView = mockGame.selectors.sessionView.active;
 	if (!activeView) {
 		throw new Error('Expected active player view in session.');
 	}
