@@ -43,6 +43,7 @@
 		"prepare": "husky install",
 		"lint:deps": "dependency-cruiser packages/engine packages/contents packages/web packages/server --config scripts/dependency-cruiser.cjs --output-type err",
 		"verify": "node scripts/run-verification.mjs",
+		"verify:ui-change": "node scripts/verify-ui-change.mjs",
 		"predev:build-contents": "npm run build --workspace @kingdom-builder/contents",
 		"server:dev": "npm run dev --workspace @kingdom-builder/server",
 		"server:build": "npm run build --workspace @kingdom-builder/server",
