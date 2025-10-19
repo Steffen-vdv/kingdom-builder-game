@@ -233,6 +233,7 @@ export function createActionsPanelGame({
 		tieredResourceKey,
 		tierDefinitions: [],
 		winConditions: [],
+		defaultActionAPCost: 1,
 	} as const;
 	const phaseDefinition = {
 		id: actionPhaseId,

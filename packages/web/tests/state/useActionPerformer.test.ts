@@ -100,6 +100,7 @@ describe('useActionPerformer', () => {
 			tieredResourceKey: actionCostResource,
 			tierDefinitions: [],
 			winConditions: [],
+			defaultActionAPCost: 1,
 		};
 		const player = createSnapshotPlayer({
 			id: 'A',

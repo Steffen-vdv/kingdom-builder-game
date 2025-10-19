@@ -188,6 +188,7 @@ export function createEngineSession(
 				tieredResourceKey,
 				tierDefinitions,
 				winConditions = [],
+				defaultActionAPCost,
 			} = context.services.rules;
 			const clonedDefinitions = structuredClone(tierDefinitions);
 			const clonedWinConditions = cloneWinConditions(winConditions);
@@ -195,6 +196,7 @@ export function createEngineSession(
 				tieredResourceKey,
 				tierDefinitions: clonedDefinitions,
 				winConditions: clonedWinConditions,
+				defaultActionAPCost,
 			} satisfies SessionRuleSnapshot;
 		},
 		pushEffectLog(key, entry) {

@@ -49,6 +49,7 @@ export default function ActionsPanel() {
 	);
 	const actionCostIcon = actionCostDescriptor.icon;
 	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
+	const defaultActionCost = sessionSnapshot.rules.defaultActionAPCost;
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = sessionView.active;
 	if (!player) {
@@ -257,6 +258,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							defaultActionCost={defaultActionCost}
 						/>
 					)}
 					{raisePopAction && (
@@ -265,6 +267,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							defaultActionCost={defaultActionCost}
 						/>
 					)}
 					{developAction && (
@@ -277,6 +280,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							defaultActionCost={defaultActionCost}
 						/>
 					)}
 					{buildAction && (
@@ -289,6 +293,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							defaultActionCost={defaultActionCost}
 						/>
 					)}
 					{demolishAction && (
@@ -298,6 +303,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							defaultActionCost={defaultActionCost}
 						/>
 					)}
 				</div>

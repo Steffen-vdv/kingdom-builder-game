@@ -61,5 +61,6 @@ export function cloneRuleSnapshot(
 		tieredResourceKey: ruleSnapshot.tieredResourceKey,
 		tierDefinitions: structuredClone(ruleSnapshot.tierDefinitions),
 		winConditions: structuredClone(ruleSnapshot.winConditions),
+		defaultActionAPCost: ruleSnapshot.defaultActionAPCost,
 	});
 }

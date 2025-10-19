@@ -80,6 +80,7 @@ export const buildFestivalRuleSnapshot = (
 	tieredResourceKey: tierResourceKey,
 	tierDefinitions: [],
 	winConditions: [],
+	defaultActionAPCost: 1,
 });
 
 export const createFestivalMetadata = (): SessionSnapshotMetadata => ({

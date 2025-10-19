@@ -8,6 +8,7 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	withDefaultActionCost,
 	type ResourceDescriptorSelector,
 } from './utils';
 import {
@@ -45,6 +46,7 @@ interface DevelopOptionsProps {
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	defaultActionCost: number;
 }
 
 export default function DevelopOptions({
@@ -56,6 +58,7 @@ export default function DevelopOptions({
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	defaultActionCost,
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
@@ -79,15 +82,28 @@ export default function DevelopOptions({
 					id: development.id,
 					landId: landIdForCost,
 				});
-				const costs: Record<string, number> = {};
+				const normalizedCosts: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
-					costs[costKey] = costAmount ?? 0;
+					normalizedCosts[costKey] = costAmount ?? 0;
 				}
+				const costs = withDefaultActionCost(normalizedCosts, {
+					actionCostResource,
+					defaultActionCost,
+					isSystemAction: Boolean(action.system),
+				});
 				const total = sumNonActionCosts(costs, actionCostResource);
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, session, action.id, landIdForCost, actionCostResource]);
+	}, [
+		developments,
+		session,
+		action.id,
+		landIdForCost,
+		actionCostResource,
+		defaultActionCost,
+		action.system,
+	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

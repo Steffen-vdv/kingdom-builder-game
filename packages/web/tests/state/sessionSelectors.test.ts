@@ -132,6 +132,7 @@ describe('sessionSelectors', () => {
 			tieredResourceKey: primaryResource,
 			tierDefinitions: [],
 			winConditions: [],
+			defaultActionAPCost: 1,
 		},
 		passiveRecords: {
 			A: [],

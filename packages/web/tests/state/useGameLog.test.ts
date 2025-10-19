@@ -60,6 +60,7 @@ describe('useGameLog', () => {
 				tieredResourceKey: primaryResource,
 				tierDefinitions: [],
 				winConditions: [],
+				defaultActionAPCost: 1,
 			},
 			passiveRecords: {
 				[players[0]!.id]: [],

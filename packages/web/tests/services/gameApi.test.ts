@@ -100,6 +100,7 @@ const createSnapshot = (
 			tieredResourceKey: 'resource.happiness',
 			tierDefinitions: [],
 			winConditions: [],
+			defaultActionAPCost: 1,
 		},
 		passiveRecords: overrides.passiveRecords ?? {
 			A: [],

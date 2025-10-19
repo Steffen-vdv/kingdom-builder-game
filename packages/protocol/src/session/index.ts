@@ -172,6 +172,7 @@ export interface SessionRuleSnapshot {
 	tieredResourceKey: string;
 	tierDefinitions: HappinessTierDefinition[];
 	winConditions: WinConditionDefinition[];
+	defaultActionAPCost: number;
 }
 
 export interface SessionRecentResourceGain {

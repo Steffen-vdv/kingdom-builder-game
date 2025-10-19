@@ -114,6 +114,7 @@ const createTranslationContext = (
 			tierDefinitions: [],
 			tieredResourceKey: undefined,
 			winConditions: [],
+			defaultActionAPCost: 1,
 		},
 		pullEffectLog: () => undefined,
 		actionCostResource: undefined,

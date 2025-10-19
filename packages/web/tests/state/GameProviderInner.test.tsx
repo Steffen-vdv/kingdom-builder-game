@@ -181,6 +181,7 @@ describe('GameProviderInner', () => {
 				tieredResourceKey: 'ap',
 				tierDefinitions: [],
 				winConditions: [],
+				defaultActionAPCost: 1,
 			},
 		});
 	});

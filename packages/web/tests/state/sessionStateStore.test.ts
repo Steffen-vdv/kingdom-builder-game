@@ -50,6 +50,7 @@ describe('sessionStateStore', () => {
 				tieredResourceKey: 'gold',
 				tierDefinitions: [],
 				winConditions: [],
+				defaultActionAPCost: 1,
 			},
 			metadata: createMetadata({
 				effectLogs: {

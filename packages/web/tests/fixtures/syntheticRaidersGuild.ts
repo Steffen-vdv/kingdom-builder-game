@@ -62,6 +62,7 @@ const buildRuleSnapshot = (): SessionRuleSnapshot => ({
 	tieredResourceKey: tierResourceKey,
 	tierDefinitions: [],
 	winConditions: [],
+	defaultActionAPCost: 1,
 });
 
 const buildMetadata = (

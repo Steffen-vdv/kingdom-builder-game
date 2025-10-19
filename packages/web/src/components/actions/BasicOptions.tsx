@@ -16,6 +16,7 @@ interface BasicOptionsProps {
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	defaultActionCost: number;
 }
 
 export default function BasicOptions({
@@ -24,6 +25,7 @@ export default function BasicOptions({
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	defaultActionCost,
 }: BasicOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	return (
@@ -43,6 +45,7 @@ export default function BasicOptions({
 					player={player}
 					canInteract={canInteract}
 					selectResourceDescriptor={selectResourceDescriptor}
+					defaultActionCost={defaultActionCost}
 				/>
 			</div>
 		</div>

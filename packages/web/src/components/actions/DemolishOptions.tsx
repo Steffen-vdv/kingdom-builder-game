@@ -11,6 +11,7 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	withDefaultActionCost,
 	type ResourceDescriptorSelector,
 } from './utils';
 import {
@@ -34,6 +35,7 @@ interface DemolishOptionsProps {
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	defaultActionCost: number;
 }
 
 export default function DemolishOptions({
@@ -42,6 +44,7 @@ export default function DemolishOptions({
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	defaultActionCost,
 }: DemolishOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
@@ -65,10 +68,15 @@ export default function DemolishOptions({
 				const costsBag = session.getActionCosts(action.id, {
 					id: buildingId,
 				});
-				const costs: Record<string, number> = {};
+				const normalizedCosts: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
-					costs[costKey] = costAmount ?? 0;
+					normalizedCosts[costKey] = costAmount ?? 0;
 				}
+				const costs = withDefaultActionCost(normalizedCosts, {
+					actionCostResource,
+					defaultActionCost,
+					isSystemAction: Boolean(action.system),
+				});
 				const total = sumNonActionCosts(costs, actionCostResource);
 				const focus = normalizeActionFocus(building.focus);
 				return { id: buildingId, building, costs, total, focus };
@@ -96,6 +104,8 @@ export default function DemolishOptions({
 		action.id,
 		actionCostResource,
 		player.buildings.size,
+		defaultActionCost,
+		action.system,
 	]);
 
 	if (entries.length === 0) {

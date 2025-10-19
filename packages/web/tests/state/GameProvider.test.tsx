@@ -224,6 +224,7 @@ describe('GameProvider', () => {
 			tieredResourceKey: resourceKey,
 			tierDefinitions: [],
 			winConditions: [],
+			defaultActionAPCost: 1,
 		} as const;
 		const player = createSnapshotPlayer({
 			id: 'A',

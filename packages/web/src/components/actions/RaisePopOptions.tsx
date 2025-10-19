@@ -21,6 +21,7 @@ import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
 	playerHasRequiredResources,
+	withDefaultActionCost,
 	type ResourceDescriptorSelector,
 } from './utils';
 import {
@@ -44,11 +45,13 @@ export default function RaisePopOptions({
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	defaultActionCost,
 }: {
 	action: Action;
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	defaultActionCost: number;
 }) {
 	const {
 		session,
@@ -150,10 +153,15 @@ export default function RaisePopOptions({
 	const actionFocus = normalizeActionFocus(actionInfo?.focus ?? action.focus);
 	const costs = useMemo(() => {
 		const entries = Object.entries(metadata.costs ?? {});
-		return Object.fromEntries(
+		const baseCosts = Object.fromEntries(
 			entries.map(([resourceKey, amount]) => [resourceKey, amount ?? 0]),
 		) as Record<string, number>;
-	}, [metadata.costs]);
+		return withDefaultActionCost(baseCosts, {
+			actionCostResource,
+			defaultActionCost,
+			isSystemAction: Boolean(action.system),
+		});
+	}, [metadata.costs, actionCostResource, defaultActionCost, action.system]);
 	const costsReady = metadata.costs !== undefined;
 	const fallbackRequirementFailures = useMemo<SessionActionRequirementList>(
 		() => session.getActionRequirements(action.id),

@@ -46,6 +46,7 @@ const snapshot = createSessionSnapshot({
 		tieredResourceKey: resourceKey,
 		tierDefinitions: [],
 		winConditions: [],
+		defaultActionAPCost: 1,
 	},
 });
 

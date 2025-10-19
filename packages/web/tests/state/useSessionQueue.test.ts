@@ -35,6 +35,7 @@ const createTestSnapshot = (): SessionSnapshot => {
 			tieredResourceKey: 'resource:test',
 			tierDefinitions: [],
 			winConditions: [],
+			defaultActionAPCost: 1,
 		},
 	});
 };

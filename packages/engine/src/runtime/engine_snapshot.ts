@@ -185,11 +185,13 @@ function cloneRuleSnapshot(context: EngineContext): SessionRuleSnapshot {
 		tieredResourceKey,
 		tierDefinitions,
 		winConditions = [],
+		defaultActionAPCost,
 	} = context.services.rules;
 	return {
 		tieredResourceKey,
 		tierDefinitions: structuredClone(tierDefinitions),
 		winConditions: structuredClone(winConditions),
+		defaultActionAPCost,
 	} satisfies SessionRuleSnapshot;
 }
 

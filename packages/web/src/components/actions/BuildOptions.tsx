@@ -12,6 +12,7 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	withDefaultActionCost,
 	type ResourceDescriptorSelector,
 } from './utils';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
@@ -37,6 +38,7 @@ interface BuildOptionsProps {
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	defaultActionCost: number;
 }
 
 export default function BuildOptions({
@@ -48,6 +50,7 @@ export default function BuildOptions({
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	defaultActionCost,
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
@@ -78,10 +81,15 @@ export default function BuildOptions({
 				const costsBag = session.getActionCosts(action.id, {
 					id: building.id,
 				});
-				const costs: Record<string, number> = {};
+				const normalizedCosts: Record<string, number> = {};
 				for (const [costKey, costAmount] of Object.entries(costsBag)) {
-					costs[costKey] = costAmount ?? 0;
+					normalizedCosts[costKey] = costAmount ?? 0;
 				}
+				const costs = withDefaultActionCost(normalizedCosts, {
+					actionCostResource,
+					defaultActionCost,
+					isSystemAction: Boolean(action.system),
+				});
 				const total = sumNonActionCosts(costs, actionCostResource);
 				return { building, costs, total };
 			})
@@ -92,6 +100,8 @@ export default function BuildOptions({
 		action.id,
 		actionCostResource,
 		player.buildings.size,
+		defaultActionCost,
+		action.system,
 	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,

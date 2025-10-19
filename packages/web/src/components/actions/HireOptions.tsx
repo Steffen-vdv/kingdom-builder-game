@@ -14,6 +14,7 @@ interface HireOptionsProps {
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	defaultActionCost: number;
 }
 
 export default function HireOptions({
@@ -21,6 +22,7 @@ export default function HireOptions({
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	defaultActionCost,
 }: HireOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const icon = action.icon ?? '👶';
@@ -40,6 +42,7 @@ export default function HireOptions({
 					player={player}
 					canInteract={canInteract}
 					selectResourceDescriptor={selectResourceDescriptor}
+					defaultActionCost={defaultActionCost}
 				/>
 			</div>
 		</div>

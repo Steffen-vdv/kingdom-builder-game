@@ -122,6 +122,7 @@ const engineValue: MockGameEngine = {
 		tieredResourceKey: primaryResource,
 		tierDefinitions: [],
 		winConditions: [],
+		defaultActionAPCost: 1,
 	},
 	resolution: null,
 	showResolution: vi.fn().mockResolvedValue(undefined),

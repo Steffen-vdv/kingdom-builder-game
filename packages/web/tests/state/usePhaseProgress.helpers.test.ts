@@ -55,6 +55,7 @@ describe('advanceToActionPhase', () => {
 				tieredResourceKey: actionCostResource,
 				tierDefinitions: [],
 				winConditions: [],
+				defaultActionAPCost: 1,
 			},
 			turn: 1,
 			currentPhase: phases[0]?.id ?? 'phase-setup',
@@ -123,6 +124,7 @@ describe('advanceToActionPhase', () => {
 			tieredResourceKey: actionCostResource,
 			tierDefinitions: [],
 			winConditions: [],
+			defaultActionAPCost: 1,
 		};
 		const baseOptions = {
 			players: [player, opponent],

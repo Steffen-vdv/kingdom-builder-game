@@ -85,6 +85,7 @@ export function createSessionHelpers(
 				tieredResourceKey: primaryResource,
 				tierDefinitions: [],
 				winConditions: [],
+				defaultActionAPCost: 1,
 			},
 			passiveRecords,
 			metadata,

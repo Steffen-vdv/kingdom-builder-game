@@ -258,6 +258,7 @@ const buildRuleSnapshot = (resourceKey: string): RuleSnapshot => ({
 		},
 	],
 	winConditions: [],
+	defaultActionAPCost: 1,
 });
 
 export function createTestSessionScaffold(): TestSessionScaffold {

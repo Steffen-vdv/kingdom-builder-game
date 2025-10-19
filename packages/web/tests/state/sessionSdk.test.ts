@@ -78,6 +78,7 @@ const initialSnapshot = createSessionSnapshot({
 		tieredResourceKey: resourceKey,
 		tierDefinitions: [],
 		winConditions: [],
+		defaultActionAPCost: 1,
 	},
 	turn: 1,
 	currentPhase: phases[0]?.id ?? 'phase-main',

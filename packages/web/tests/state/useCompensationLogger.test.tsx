@@ -92,6 +92,7 @@ function createSessionState(
 			tieredResourceKey: resourceKey,
 			tierDefinitions: [],
 			winConditions: [],
+			defaultActionAPCost: 1,
 		},
 		passiveRecords: {
 			A: [],

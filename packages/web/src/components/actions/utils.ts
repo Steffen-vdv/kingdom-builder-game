@@ -71,3 +71,33 @@ export function formatMissingResources(
 	}
 	return `Need ${missing.join(', ')}`;
 }
+
+export interface NormalizeActionCostOptions {
+	actionCostResource: string;
+	defaultActionCost: number;
+	isSystemAction?: boolean;
+}
+
+export function withDefaultActionCost(
+	costs: Record<string, number>,
+	{
+		actionCostResource,
+		defaultActionCost,
+		isSystemAction = false,
+	}: NormalizeActionCostOptions,
+): Record<string, number> {
+	if (!actionCostResource || isSystemAction) {
+		return costs;
+	}
+	const existing = costs[actionCostResource];
+	if (typeof existing === 'number' && Number.isFinite(existing)) {
+		return costs;
+	}
+	if (!Number.isFinite(defaultActionCost)) {
+		return costs;
+	}
+	return {
+		...costs,
+		[actionCostResource]: defaultActionCost,
+	};
+}
