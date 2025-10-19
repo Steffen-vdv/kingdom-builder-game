@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useGameEngine } from '../../state/GameContext';
 import Button from '../common/Button';
+import { DEFAULT_PLAYER_NAME } from '../../state/playerIdentity';
 
 const panelClassName = [
 	'relative flex w-full flex-col gap-6 rounded-3xl border border-white/40',
@@ -99,8 +100,13 @@ export default function PhasePanel() {
 			),
 		[phases, phase.currentPhaseId],
 	);
+	const fallbackName =
+		sessionState.game.players[0]?.name ?? DEFAULT_PLAYER_NAME;
+	const phaseActiveName = phase.activePlayerName.trim();
 	const activePlayerName =
-		sessionView.active?.name ?? sessionState.game.players[0]?.name ?? 'Player';
+		phaseActiveName.length > 0
+			? phaseActiveName
+			: (sessionView.active?.name ?? fallbackName);
 	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
 	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
 	const handleEndTurnClick = () => {

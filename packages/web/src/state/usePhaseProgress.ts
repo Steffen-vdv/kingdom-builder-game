@@ -11,6 +11,7 @@ import {
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import { formatPhaseResolution } from './formatPhaseResolution';
 import type { ShowResolutionOptions } from './useActionResolution';
+import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 
 interface PhaseProgressOptions {
 	sessionState: SessionSnapshot;
@@ -33,6 +34,8 @@ export interface PhaseProgressState {
 	isActionPhase: boolean;
 	canEndTurn: boolean;
 	isAdvancing: boolean;
+	activePlayerId: string | null;
+	activePlayerName: string;
 }
 
 function computePhaseState(
@@ -53,11 +56,21 @@ function computePhaseState(
 		? false
 		: (overrides.canEndTurn ?? (isActionPhase && remainingActionPoints <= 0));
 	const isAdvancing = overrides.isAdvancing ?? false;
+	const activePlayerId =
+		overrides.activePlayerId ??
+		activePlayer?.id ??
+		snapshot.game.activePlayerId ??
+		null;
+	const computedName = overrides.activePlayerName ?? activePlayer?.name ?? '';
+	const normalizedName =
+		computedName.trim().length > 0 ? computedName : DEFAULT_PLAYER_NAME;
 	return {
 		currentPhaseId,
 		isActionPhase,
 		canEndTurn,
 		isAdvancing,
+		activePlayerId,
+		activePlayerName: normalizedName,
 	};
 }
 

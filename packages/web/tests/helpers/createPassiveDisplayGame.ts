@@ -9,6 +9,7 @@ import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.t
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { DEFAULT_PLAYER_NAME } from '../../src/state/playerIdentity';
 
 export type MockGame = LegacyGameEngineContextValue;
 
@@ -43,6 +44,11 @@ export function createPassiveGame(
 		},
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
+	const activePlayerId = sessionState.game.activePlayerId;
+	const activePlayer = sessionState.game.players.find(
+		(player) => player.id === activePlayerId,
+	);
+	const activePlayerName = activePlayer?.name ?? DEFAULT_PLAYER_NAME;
 	const mockGame: MockGame = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
@@ -65,6 +71,8 @@ export function createPassiveGame(
 			),
 			canEndTurn: true,
 			isAdvancing: false,
+			activePlayerId,
+			activePlayerName,
 		},
 		actionCostResource: sessionState.actionCostResource,
 		requests: {

@@ -65,6 +65,8 @@ function createPhasePanelScenario() {
 			),
 			canEndTurn: true,
 			isAdvancing: false,
+			activePlayerId: sessionState.game.activePlayerId,
+			activePlayerName: sessionState.game.players[0]?.name ?? 'Player',
 		},
 	};
 }
@@ -103,11 +105,7 @@ describe('<PhasePanel />', () => {
 			),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText(
-				scenario.sessionView.active?.name ??
-					mockGame.sessionState.game.players[0]?.name ??
-					'Player',
-			),
+			screen.getByText(mockGame.phase.activePlayerName),
 		).toBeInTheDocument();
 		const phaseStatus = screen.getByRole('status');
 		expect(phaseStatus).toHaveTextContent(/current phase/i);

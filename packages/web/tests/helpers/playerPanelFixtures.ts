@@ -12,6 +12,7 @@ import { selectSessionView } from '../../src/state/sessionSelectors';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
 import { createTestSessionScaffold } from './testSessionScaffold';
+import { DEFAULT_PLAYER_NAME } from '../../src/state/playerIdentity';
 
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
@@ -103,6 +104,10 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		sessionState.metadata,
 	);
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
+	const currentActive = sessionState.game.players.find(
+		(player) => player.id === activePlayerId,
+	);
+	const activePlayerName = currentActive?.name ?? DEFAULT_PLAYER_NAME;
 	const mockGame: LegacyGameEngineContextValue = {
 		sessionId: 'test-session',
 		sessionSnapshot: sessionState,
@@ -125,6 +130,8 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			),
 			canEndTurn: true,
 			isAdvancing: false,
+			activePlayerId,
+			activePlayerName,
 		},
 		actionCostResource: sessionState.actionCostResource,
 		requests: {

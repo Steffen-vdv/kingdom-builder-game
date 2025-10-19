@@ -114,6 +114,8 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 				isActionPhase: true,
 				canEndTurn: true,
 				isAdvancing: false,
+				activePlayerId: 'player-1',
+				activePlayerName: 'Player One',
 			},
 			runUntilActionPhase: runUntilActionPhaseMock,
 			runUntilActionPhaseCore: runUntilActionPhaseCoreMock,
