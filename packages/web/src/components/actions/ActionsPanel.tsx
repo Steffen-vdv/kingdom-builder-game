@@ -27,13 +27,13 @@ import { normalizeActionFocus } from './types';
 
 export default function ActionsPanel() {
 	const {
-		session,
 		sessionSnapshot,
 		selectors,
 		translationContext,
 		phase,
 		actionCostResource,
 		resolution,
+		requests,
 	} = useGameEngine();
 	const { sessionView } = selectors;
 	const resourceMetadata = useResourceMetadata();
@@ -67,7 +67,7 @@ export default function ActionsPanel() {
 	);
 	const isActionPhase = isActionPhaseActive(phase, actionPhaseId);
 	const activePlayerId = sessionSnapshot.game.activePlayerId;
-	const isControlledTurn = !session.hasAiController(activePlayerId);
+	const isControlledTurn = !requests.hasAiController(activePlayerId);
 
 	useEffect(() => {
 		if (!isControlledTurn && viewingOpponent) {

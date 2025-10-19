@@ -43,6 +43,7 @@ const splitSummaryMock = vi.fn(() => ({ effects: [], description: undefined }));
 const mockActionCosts = new Map<string, SessionActionCostMap>();
 const mockActionRequirements = new Map<string, SessionActionRequirementList>();
 const mockActionOptions = new Map<string, ActionEffectGroup[]>();
+let activeAdapter: RemoteSessionAdapter | null = null;
 
 vi.mock('../src/translation', async () => {
 	const actual = (await vi.importActual(
@@ -85,7 +86,7 @@ vi.mock('../src/state/sessionSdk', async () => {
 			) => {
 				const key = createMetadataKey(actionId, params);
 				const costs = mockActionCosts.get(key) ?? {};
-				mockGame.session.setActionCosts(actionId, costs, params);
+				activeAdapter?.setActionCosts(actionId, costs, params);
 				return Promise.resolve(costs);
 			},
 		),
@@ -97,13 +98,13 @@ vi.mock('../src/state/sessionSdk', async () => {
 			) => {
 				const key = createMetadataKey(actionId, params);
 				const requirements = mockActionRequirements.get(key) ?? [];
-				mockGame.session.setActionRequirements(actionId, requirements, params);
+				activeAdapter?.setActionRequirements(actionId, requirements, params);
 				return Promise.resolve(requirements);
 			},
 		),
 		loadActionOptions: vi.fn((_sessionId: string, actionId: string) => {
 			const groups = mockActionOptions.get(actionId) ?? [];
-			mockGame.session.setActionOptions(actionId, groups);
+			activeAdapter?.setActionOptions(actionId, groups);
 			return Promise.resolve(groups);
 		}),
 	};
@@ -223,13 +224,14 @@ function createMockGame() {
 			ranTurn: false,
 		}),
 	});
+	activeAdapter = session;
+	const baseState = createActionsPanelState({
+		actionCostResource,
+		phaseId: phases[0]?.id ?? 'phase.action',
+	});
 	return {
-		...createActionsPanelState({
-			actionCostResource,
-			phaseId: phases[0]?.id ?? 'phase.action',
-		}),
+		...baseState,
 		logOverflowed: false,
-		session,
 		sessionId,
 		sessionSnapshot: sessionState,
 		cachedSessionSnapshot: sessionState,
@@ -244,6 +246,30 @@ function createMockGame() {
 			royalDecree: { id: royalDecreeId, definition: royalDecreeDef },
 			develop: developAction,
 			till: tillAction,
+		},
+		requests: {
+			...baseState.requests,
+			hasAiController: (playerId: string) => session.hasAiController(playerId),
+			readActionMetadata: (
+				actionId: string,
+				params?: ActionParametersPayload,
+			) => session.readActionMetadata(actionId, params),
+			subscribeActionMetadata: (
+				actionId: string,
+				params: ActionParametersPayload | undefined,
+				listener: Parameters<
+					RemoteSessionAdapter['subscribeActionMetadata']
+				>[2],
+			) => session.subscribeActionMetadata(actionId, params, listener),
+			getActionCosts: (actionId: string, params?: ActionParametersPayload) =>
+				session.getActionCosts(actionId, params),
+			getActionRequirements: (
+				actionId: string,
+				params?: ActionParametersPayload,
+			) => session.getActionRequirements(actionId, params),
+			enqueueTask: <T,>(task: () => Promise<T> | T) => session.enqueue(task),
+			simulateUpcomingPhases: (playerId: string) =>
+				session.simulateUpcomingPhases(playerId),
 		},
 	};
 }

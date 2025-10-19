@@ -49,7 +49,7 @@ vi.mock('../src/state/sessionSdk', async () => {
 				params?: ActionParametersPayload,
 			) => {
 				const costs = mockGame.metadata.costMap.get(actionId) ?? {};
-				mockGame.session.setActionCosts(actionId, costs, params);
+				mockGame.adapter.setActionCosts(actionId, costs, params);
 				return Promise.resolve(costs as SessionActionCostMap);
 			},
 		),
@@ -61,7 +61,7 @@ vi.mock('../src/state/sessionSdk', async () => {
 			) => {
 				const requirements =
 					mockGame.metadata.requirementFailures.get(actionId) ?? [];
-				mockGame.session.setActionRequirements(
+				mockGame.adapter.setActionRequirements(
 					actionId,
 					requirements as SessionActionRequirementList,
 					params,
@@ -71,7 +71,7 @@ vi.mock('../src/state/sessionSdk', async () => {
 		),
 		loadActionOptions: vi.fn((_sessionId: string, actionId: string) => {
 			const groups = mockGame.actionOptions.get(actionId) ?? [];
-			mockGame.session.setActionOptions(
+			mockGame.adapter.setActionOptions(
 				actionId,
 				groups as ActionEffectGroup[],
 			);

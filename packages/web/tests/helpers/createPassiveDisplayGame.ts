@@ -1,16 +1,17 @@
 import { vi } from 'vitest';
 import type {
-	EngineSession,
 	EngineSessionSnapshot,
 	RuleSnapshot,
 } from '@kingdom-builder/engine';
+import type { SimulateUpcomingPhasesResult } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
-import type { LegacyGameEngineContextValue } from '../../src/state/GameContext.types';
+import type { GameEngineContextValue } from '../../src/state/GameContext.types';
+import type { SessionActionMetadataSnapshot } from '../../src/state/sessionTypes';
 import { selectSessionView } from '../../src/state/sessionSelectors';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
-export type MockGame = LegacyGameEngineContextValue;
+export type MockGame = GameEngineContextValue;
 
 export type PassiveGameContext = {
 	mockGame: MockGame;
@@ -76,6 +77,22 @@ export function createPassiveGame(
 			performAction: vi.fn().mockResolvedValue(undefined),
 			advancePhase: vi.fn().mockResolvedValue(undefined),
 			refreshSession: vi.fn().mockResolvedValue(undefined),
+			hasAiController: vi.fn().mockReturnValue(false),
+			readActionMetadata: vi.fn(() => ({}) as SessionActionMetadataSnapshot),
+			subscribeActionMetadata: vi.fn(() => () => {}),
+			getActionCosts: vi.fn(() => ({})),
+			getActionRequirements: vi.fn(() => []),
+			enqueueTask: vi.fn(async <T>(task: () => Promise<T> | T) => await task()),
+			simulateUpcomingPhases: vi.fn(
+				() =>
+					({
+						delta: {
+							resources: {},
+							stats: {},
+							population: {},
+						},
+					}) as SimulateUpcomingPhasesResult,
+			),
 		},
 		metadata: {
 			getRuleSnapshot: () => ruleSnapshot,
@@ -101,7 +118,6 @@ export function createPassiveGame(
 		dismissToast: vi.fn(),
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
-		session: {} as EngineSession,
 	};
 	return {
 		mockGame,

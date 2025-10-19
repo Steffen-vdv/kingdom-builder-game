@@ -1,10 +1,4 @@
-import React, {
-	createContext,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-} from 'react';
+import React, { createContext, useCallback, useEffect, useMemo } from 'react';
 import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import TranslationContextLoading from './TranslationContextLoading';
 import { useTimeScale } from './useTimeScale';
@@ -18,7 +12,7 @@ import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
 import type {
-	LegacyGameEngineContextValue,
+	GameEngineContextValue,
 	PerformActionHandler,
 	SessionDerivedSelectors,
 	SessionMetadataFetchers,
@@ -29,13 +23,15 @@ import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import { createSessionRequestHelpers } from './createRequestHelpers';
+import { useControlledPlayer } from './useControlledPlayer';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
-export const GameEngineContext =
-	createContext<LegacyGameEngineContextValue | null>(null);
+export const GameEngineContext = createContext<GameEngineContextValue | null>(
+	null,
+);
 
 export function GameProviderInner({
 	children,
@@ -62,8 +58,6 @@ export function GameProviderInner({
 	resourceKeys,
 	sessionMetadata,
 }: GameProviderInnerProps) {
-	const playerNameRef = useRef(playerName);
-	playerNameRef.current = playerName;
 	const {
 		adapter: sessionAdapter,
 		enqueue,
@@ -73,54 +67,14 @@ export function GameProviderInner({
 	const refresh = useCallback(() => {
 		void refreshSession();
 	}, [refreshSession]);
-	const controlledPlayerSnapshot = useMemo(() => {
-		const players = sessionSnapshot.game.players;
-		if (!Array.isArray(players) || players.length === 0) {
-			return undefined;
-		}
-		const { activePlayerId, opponentId } = sessionSnapshot.game;
-		return (
-			players.find((player) => {
-				return !sessionAdapter.hasAiController(player.id);
-			}) ??
-			players.find((player) => player.id === activePlayerId) ??
-			players.find((player) => player.id === opponentId) ??
-			players[0]
-		);
-	}, [
+	useControlledPlayer({
 		sessionAdapter,
-		sessionSnapshot.game.players,
-		sessionSnapshot.game.activePlayerId,
-		sessionSnapshot.game.opponentId,
-	]);
-	const controlledPlayerId = controlledPlayerSnapshot?.id;
-	const controlledPlayerName = controlledPlayerSnapshot?.name;
-	useEffect(() => {
-		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
-		if (
-			controlledPlayerId === undefined ||
-			controlledPlayerName === undefined ||
-			controlledPlayerName === desiredName
-		) {
-			return;
-		}
-		void enqueue(() =>
-			updateRemotePlayerName({
-				sessionId,
-				playerId: controlledPlayerId,
-				playerName: desiredName,
-			}),
-		).finally(() => {
-			refresh();
-		});
-	}, [
+		sessionSnapshot,
 		enqueue,
-		controlledPlayerId,
-		controlledPlayerName,
-		refresh,
-		playerName,
 		sessionId,
-	]);
+		desiredPlayerName: playerName,
+		refresh,
+	});
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
 			sessionSnapshot,
@@ -288,12 +242,14 @@ export function GameProviderInner({
 	);
 
 	const requestHelpers = useMemo(
-		() => ({
-			performAction: performActionRequest,
-			advancePhase: handleEndTurn,
-			refreshSession,
-		}),
-		[performActionRequest, handleEndTurn, refreshSession],
+		() =>
+			createSessionRequestHelpers({
+				sessionAdapter,
+				performAction: performActionRequest,
+				advancePhase: handleEndTurn,
+				refreshSession,
+			}),
+		[sessionAdapter, performActionRequest, handleEndTurn, refreshSession],
 	);
 
 	const handleExit = useCallback(() => {
@@ -307,7 +263,7 @@ export function GameProviderInner({
 		return <TranslationContextLoading />;
 	}
 
-	const value: LegacyGameEngineContextValue = {
+	const value: GameEngineContextValue = {
 		sessionId,
 		sessionSnapshot,
 		cachedSessionSnapshot,
@@ -345,7 +301,6 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session: sessionAdapter,
 		...(onExit ? { onExit: handleExit } : {}),
 	};
 

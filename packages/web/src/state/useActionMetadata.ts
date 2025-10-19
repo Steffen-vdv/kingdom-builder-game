@@ -43,7 +43,7 @@ export function useActionMetadata({
 	actionId,
 	params,
 }: UseActionMetadataOptions): UseActionMetadataResult {
-	const { session, sessionId } = useGameEngine();
+	const { requests, sessionId } = useGameEngine();
 	const paramsKey = useMemo(() => serializeActionParams(params), [params]);
 	const normalizedParams = useMemo<ActionParametersPayload | undefined>(() => {
 		if (!params) {
@@ -56,7 +56,7 @@ export function useActionMetadata({
 			if (!actionId) {
 				return EMPTY_SNAPSHOT;
 			}
-			return session.readActionMetadata(actionId, normalizedParams);
+			return requests.readActionMetadata(actionId, normalizedParams);
 		},
 	);
 	const loadingRef = useRef({
@@ -75,7 +75,7 @@ export function useActionMetadata({
 			return () => {};
 		}
 		let disposed = false;
-		const unsubscribe = session.subscribeActionMetadata(
+		const unsubscribe = requests.subscribeActionMetadata(
 			actionId,
 			normalizedParams,
 			(next) => {
@@ -88,7 +88,7 @@ export function useActionMetadata({
 			disposed = true;
 			unsubscribe();
 		};
-	}, [session, actionId, normalizedParams, paramsKey]);
+	}, [requests, actionId, normalizedParams, paramsKey]);
 
 	useEffect(() => {
 		if (!actionId || snapshot.costs !== undefined) {

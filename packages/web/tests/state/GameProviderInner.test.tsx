@@ -134,7 +134,11 @@ function ContextInspector() {
 	}
 	return (
 		<div data-testid="adapter-id">
-			{(context.session as { id?: string }).id ?? ''}
+			{String(
+				context.requests.hasAiController(
+					context.sessionSnapshot.game.activePlayerId,
+				),
+			)}
 		</div>
 	);
 }
@@ -238,7 +242,7 @@ describe('GameProviderInner', () => {
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
-		expect(getByTestId('adapter-id')).toHaveTextContent('adapter:test');
+		expect(getByTestId('adapter-id')).toHaveTextContent('true');
 		cleanup();
 	});
 

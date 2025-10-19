@@ -1,7 +1,11 @@
 import type {
+	SessionActionCostMap,
+	SessionActionRequirementList,
+	SessionPlayerId,
 	SessionRuleSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { TranslationContext } from '../translation/context';
 import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
@@ -18,8 +22,8 @@ import type { ReactNode } from 'react';
 import type {
 	RemoteSessionRecord,
 	Session,
-	SessionAdapter,
 	SessionResourceKey,
+	SessionActionMetadataSnapshot,
 } from './sessionTypes';
 
 export interface SessionContainer
@@ -87,6 +91,28 @@ export interface GameEngineContextValue {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;
 		refreshSession: RefreshSessionHandler;
+		hasAiController: (playerId: SessionPlayerId) => boolean;
+		readActionMetadata: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => SessionActionMetadataSnapshot;
+		subscribeActionMetadata: (
+			actionId: string,
+			params: ActionParametersPayload | undefined,
+			listener: (snapshot: SessionActionMetadataSnapshot) => void,
+		) => () => void;
+		getActionCosts: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => SessionActionCostMap;
+		getActionRequirements: (
+			actionId: string,
+			params?: ActionParametersPayload,
+		) => SessionActionRequirementList;
+		enqueueTask: <T>(task: () => Promise<T> | T) => Promise<T>;
+		simulateUpcomingPhases: (
+			playerId: SessionPlayerId,
+		) => ReturnType<Session['simulateUpcomingPhases']>;
 	};
 	metadata: SessionMetadataFetchers;
 	runUntilActionPhase: () => Promise<void>;
@@ -115,13 +141,4 @@ export interface GameEngineContextValue {
 	onChangePlayerName: (name: string) => void;
 }
 
-export interface LegacyGameEngineContextBridge {
-	/**
-	 * TODO(#session-migration): Remove direct EngineSession exposure once
-	 * all consumers rely on request helpers.
-	 */
-	session: SessionAdapter;
-}
-
-export type LegacyGameEngineContextValue = GameEngineContextValue &
-	LegacyGameEngineContextBridge;
+export type GameEngineRequests = GameEngineContextValue['requests'];

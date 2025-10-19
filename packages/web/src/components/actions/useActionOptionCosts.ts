@@ -31,7 +31,7 @@ export function useActionOptionCosts(
 	actionId: string | undefined,
 	requests: ActionCostRequest[],
 ): CostMap {
-	const { session, sessionId } = useGameEngine();
+	const { requests: gameRequests, sessionId } = useGameEngine();
 	const normalizedRequests = useMemo(() => {
 		const map = new Map<string, ActionParametersPayload | undefined>();
 		for (const request of requests) {
@@ -56,7 +56,7 @@ export function useActionOptionCosts(
 			return map;
 		}
 		for (const [key, params] of requestEntries) {
-			const snapshot = session.readActionMetadata(actionId, params);
+			const snapshot = gameRequests.readActionMetadata(actionId, params);
 			map.set(key, snapshot.costs);
 		}
 		return map;
@@ -68,18 +68,18 @@ export function useActionOptionCosts(
 				return map;
 			}
 			for (const [key, params] of requestEntries) {
-				const snapshot = session.readActionMetadata(actionId, params);
+				const snapshot = gameRequests.readActionMetadata(actionId, params);
 				map.set(key, snapshot.costs);
 			}
 			return map;
 		});
-	}, [session, actionId, requestKey, requestEntries]);
+	}, [gameRequests, actionId, requestKey, requestEntries]);
 	useEffect(() => {
 		if (!actionId) {
 			return () => {};
 		}
 		const disposers = requestEntries.map(([key, params]) =>
-			session.subscribeActionMetadata(actionId, params, (snapshot) => {
+			gameRequests.subscribeActionMetadata(actionId, params, (snapshot) => {
 				setCosts((previous) => {
 					const next: CostMap = new Map(previous);
 					next.set(key, snapshot.costs);
@@ -92,7 +92,7 @@ export function useActionOptionCosts(
 				dispose();
 			}
 		};
-	}, [session, actionId, requestKey, requestEntries]);
+	}, [gameRequests, actionId, requestKey, requestEntries]);
 	const pendingRef = useRef(new Set<string>());
 	useEffect(() => {
 		if (!actionId) {
