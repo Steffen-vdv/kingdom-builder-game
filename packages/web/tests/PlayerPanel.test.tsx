@@ -73,6 +73,7 @@ describe('<PlayerPanel />', () => {
 	it('renders next-turn forecasts with accessible labels', () => {
 		expect(displayableStatKeys.length).toBeGreaterThan(0);
 		renderPanel();
+		const assets = mockGame.translationContext.assets;
 		const resourceDisplays = metadataSelectors.resourceMetadata.list.map(
 			(descriptor) => toDescriptorDisplay(descriptor),
 		);
@@ -126,12 +127,11 @@ describe('<PlayerPanel />', () => {
 		);
 		const statLabel = resolveDescriptorLabel(firstStatKey, statDescriptor);
 		const statValue = activePlayerSnapshot.stats[firstStatKey] ?? 0;
-		const formattedStatValue = formatStatValue(firstStatKey, statValue);
+		const formattedStatValue = formatStatValue(firstStatKey, statValue, assets);
 		const statDelta = statForecast[firstStatKey]!;
-		const formattedStatDelta = `${statDelta > 0 ? '+' : '-'}${formatStatValue(
-			firstStatKey,
-			Math.abs(statDelta),
-		)}`;
+		const formattedStatDelta = `${
+			statDelta > 0 ? '+' : '-'
+		}${formatStatValue(firstStatKey, Math.abs(statDelta), assets)}`;
 		const statButtons = screen.getAllByRole('button', {
 			name: `${statLabel}: ${formattedStatValue} (${formattedStatDelta})`,
 		});

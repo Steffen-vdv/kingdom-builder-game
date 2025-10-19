@@ -1,6 +1,7 @@
 import type { AttackPlayerDiff } from '@kingdom-builder/protocol';
 import { formatStatValue } from '../../../../utils/stats';
 import type { TranslationContext } from '../../../context';
+import type { TranslationAssets } from '../../../context/types';
 import type { AttackStatDescriptor, DiffFormatOptions } from './types';
 import {
 	selectAttackResourceDescriptor,
@@ -57,8 +58,12 @@ function formatSigned(value: number): string {
 	return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
-function formatStatSigned(key: string, value: number): string {
-	const formatted = formatStatValue(key, Math.abs(value));
+function formatStatSigned(
+	key: string,
+	value: number,
+	assets: TranslationAssets,
+): string {
+	const formatted = formatStatValue(key, Math.abs(value), assets);
 	return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
@@ -112,11 +117,12 @@ export function formatStatDiff(
 	const descriptor = selectAttackStatDescriptor(context, String(diff.key));
 	const displayLabel = iconLabel(descriptor.icon, descriptor.label);
 	const delta = diff.after - diff.before;
-	const before = formatStatValue(String(diff.key), diff.before);
-	const after = formatStatValue(String(diff.key), diff.after);
+	const before = formatStatValue(String(diff.key), diff.before, context.assets);
+	const after = formatStatValue(String(diff.key), diff.after, context.assets);
 	return `${prefix}: ${displayLabel} ${formatStatSigned(
 		String(diff.key),
 		delta,
+		context.assets,
 	)} (${before}→${after})`;
 }
 

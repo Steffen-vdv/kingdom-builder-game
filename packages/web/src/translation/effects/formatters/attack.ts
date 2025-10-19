@@ -75,12 +75,14 @@ function fallbackLog(
 function buildEvaluationEntry(
 	log: AttackLog['evaluation'],
 	context: AttackFormatterContext,
+	translationContext: TranslationContext,
 ): SummaryEntry {
 	return context.formatter.buildEvaluationEntry(log, {
 		stats: context.stats,
 		info: context.info,
 		target: context.target,
 		targetLabel: context.targetLabel,
+		assets: translationContext.assets,
 	});
 }
 
@@ -248,7 +250,7 @@ registerEffectFormatter('attack', 'perform', {
 			translationContext,
 		);
 		const entries: SummaryEntry[] = [
-			buildEvaluationEntry(log.evaluation, contextDetails),
+			buildEvaluationEntry(log.evaluation, contextDetails, translationContext),
 		];
 		const onDamage = buildOnDamageEntry(
 			log.onDamage,
