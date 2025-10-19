@@ -5,6 +5,7 @@ import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 import {
 	expectSnapshotMetadata,
+	expectSnapshotStaticDescriptors,
 	expectStaticMetadata,
 } from './helpers/expectSnapshotMetadata.js';
 
@@ -43,6 +44,7 @@ describe('SessionTransport session state', () => {
 		expect(state.sessionId).toBe(sessionId);
 		expect(state.snapshot.game.players).toHaveLength(2);
 		expectSnapshotMetadata(state.snapshot.metadata);
+		expectSnapshotStaticDescriptors(state.snapshot.metadata);
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expectStaticMetadata(manager.getMetadata());
 		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });

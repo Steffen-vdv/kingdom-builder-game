@@ -29,3 +29,18 @@ export function expectStaticMetadata(
 		expect(Object.keys(heroTokens).length).toBeGreaterThan(0);
 	}
 }
+
+export function expectSnapshotStaticDescriptors(
+	metadata: SessionSnapshotMetadata | undefined,
+): void {
+	expect(metadata?.stats).toBeDefined();
+	const statKeys = Object.keys(metadata?.stats ?? {});
+	expect(statKeys.length).toBeGreaterThan(0);
+	const triggerKeys = Object.keys(metadata?.triggers ?? {});
+	expect(triggerKeys.length).toBeGreaterThan(0);
+	expect(metadata?.overview).toBeDefined();
+	if (metadata?.overview) {
+		const heroTokens = metadata.overview.hero?.tokens ?? {};
+		expect(Object.keys(heroTokens).length).toBeGreaterThan(0);
+	}
+}
