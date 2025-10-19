@@ -8,6 +8,12 @@ import {
 } from '../translation';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
+import {
+	buildActionLogTimeline,
+	formatActionLogLines,
+} from './actionLogFormat';
+import { createResolutionLogSnapshot } from './createResolutionLogSnapshot';
+import type { ActionResolution } from './useActionResolution';
 
 interface UseCompensationLoggerOptions {
 	sessionId: string;
@@ -16,6 +22,7 @@ interface UseCompensationLoggerOptions {
 		entry: string | string[],
 		player?: SessionSnapshot['game']['players'][number],
 	) => void;
+	addResolutionLog: (resolution: ActionResolution) => void;
 	resourceKeys: SessionResourceKey[];
 	registries: Pick<
 		SessionRegistries,
@@ -26,10 +33,12 @@ interface UseCompensationLoggerOptions {
 export function useCompensationLogger({
 	sessionId,
 	sessionSnapshot,
-	addLog,
+	addLog: _addLog,
+	addResolutionLog,
 	resourceKeys,
 	registries,
 }: UseCompensationLoggerOptions) {
+	void _addLog;
 	const loggedSessionRef = useRef<string | null>(null);
 	const loggedPlayersRef = useRef<Set<string>>(new Set());
 	useEffect(() => {
@@ -97,12 +106,31 @@ export function useCompensationLogger({
 				resourceKeys,
 			);
 			if (lines.length) {
-				addLog(
-					['Last-player compensation:', ...lines.map((line) => `  ${line}`)],
-					player,
-				);
+				const headline = 'Last-player compensation';
+				const descriptors = [
+					{
+						text: headline,
+						depth: 0,
+						kind: 'headline' as const,
+					},
+					...lines.map((line) => ({
+						text: line,
+						depth: 1,
+						kind: 'effect' as const,
+					})),
+				];
+				const timeline = buildActionLogTimeline(descriptors, []);
+				const logLines = formatActionLogLines(descriptors, []);
+				const resolution = createResolutionLogSnapshot({
+					lines: logLines,
+					timeline,
+					summaries: lines,
+					player: { id: player.id, name: player.name },
+					source: { kind: 'phase', label: 'Compensation' },
+				});
+				addResolutionLog(resolution);
 				loggedPlayersRef.current.add(player.id);
 			}
 		});
-	}, [addLog, registries, resourceKeys, sessionId, sessionSnapshot]);
+	}, [addResolutionLog, registries, resourceKeys, sessionId, sessionSnapshot]);
 }

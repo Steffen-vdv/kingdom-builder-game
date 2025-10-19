@@ -6,6 +6,13 @@ import { translateRequirementFailure } from '../translation';
 import type { TranslationContext } from '../translation/context';
 import type { Action } from './actionTypes';
 import { SessionMirroringError, isFatalSessionError } from './sessionErrors';
+import {
+	buildActionLogTimeline,
+	formatActionLogLines,
+} from './actionLogFormat';
+import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import { createResolutionLogSnapshot } from './createResolutionLogSnapshot';
+import type { ActionResolution } from './useActionResolution';
 
 type RequirementFailureCarrier = {
 	requirementFailure?: SessionRequirementFailure;
@@ -19,10 +26,7 @@ interface ActionErrorHandlerOptions {
 	action: Action;
 	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
 	pushErrorToast: (message: string) => void;
-	addLog: (
-		entry: string | string[],
-		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-	) => void;
+	addResolutionLog: (resolution: ActionResolution) => void;
 }
 
 export function createActionErrorHandler({
@@ -32,7 +36,7 @@ export function createActionErrorHandler({
 	action,
 	player,
 	pushErrorToast,
-	addLog,
+	addResolutionLog,
 }: ActionErrorHandlerOptions) {
 	return (error: unknown): boolean => {
 		if (fatalErrorRef.current !== null || isFatalSessionError(error)) {
@@ -58,10 +62,56 @@ export function createActionErrorHandler({
 			message = translateRequirementFailure(requirementFailure, context);
 		}
 		pushErrorToast(message);
-		addLog(`Failed to play ${icon} ${action.name}: ${message}`, {
-			id: player.id,
-			name: player.name,
+		const actionDefinition = context.actions.get(action.id);
+		const decoratedIcon = icon || actionDefinition?.icon || '';
+		const actionLabel = [decoratedIcon, action.name]
+			.map((part) => part?.trim())
+			.filter(Boolean)
+			.join(' ');
+		const attemptLine = actionLabel
+			? `Attempted to play ${actionLabel}`
+			: 'Attempted to play an action';
+		const reasonLine = message ? `Reason: ${message}` : '';
+		const messages = [
+			{
+				text: 'Action failed',
+				depth: 0,
+				kind: 'headline' as const,
+			},
+			{
+				text: attemptLine,
+				depth: 1,
+				kind: 'effect' as const,
+			},
+		];
+		const changeLines = reasonLine ? [reasonLine] : [];
+		const timeline = buildActionLogTimeline(messages, changeLines);
+		const logLines = formatActionLogLines(messages, changeLines);
+		const actionMeta = buildResolutionActionMeta(
+			action,
+			actionDefinition,
+			'Action failed',
+		);
+		const source = {
+			kind: 'action' as const,
+			label: 'Action',
+			id: actionMeta.id,
+			name: actionMeta.name,
+			icon: actionMeta.icon ?? '',
+		};
+		const resolution = createResolutionLogSnapshot({
+			lines: logLines,
+			timeline,
+			summaries: changeLines,
+			player: {
+				id: player.id,
+				name: player.name,
+			},
+			action: actionMeta,
+			source,
+			actorLabel: 'Played by',
 		});
+		addResolutionLog(resolution);
 		return false;
 	};
 }

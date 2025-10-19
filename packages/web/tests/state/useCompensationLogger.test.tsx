@@ -105,6 +105,7 @@ interface HarnessProps {
 	sessionId: string;
 	state: SessionSnapshot;
 	addLog: (entry: string | string[]) => void;
+	addResolutionLog: ReturnType<typeof vi.fn>;
 	registries: ReturnType<typeof createSessionRegistries>;
 	resourceKeys: SessionResourceKey[];
 }
@@ -113,6 +114,7 @@ function Harness({
 	sessionId,
 	state,
 	addLog,
+	addResolutionLog,
 	registries,
 	resourceKeys,
 }: HarnessProps) {
@@ -120,6 +122,7 @@ function Harness({
 		sessionId,
 		sessionSnapshot: state,
 		addLog,
+		addResolutionLog,
 		resourceKeys,
 		registries,
 	});
@@ -130,6 +133,7 @@ describe('useCompensationLogger', () => {
 	it('logs compensation once for a session', () => {
 		diffStepSnapshotsMock.mockClear();
 		const addLog = vi.fn();
+		const addResolutionLog = vi.fn();
 		const { registries, resourceKeys, primaryResource } =
 			createRegistriesWithFallback();
 		const resourceKey =
@@ -141,11 +145,17 @@ describe('useCompensationLogger', () => {
 				sessionId={sessionId}
 				state={state}
 				addLog={addLog}
+				addResolutionLog={addResolutionLog}
 				registries={registries}
 				resourceKeys={resourceKeys}
 			/>,
 		);
-		expect(addLog).toHaveBeenCalledTimes(1);
+		expect(addResolutionLog).toHaveBeenCalledTimes(1);
+		const resolution = addResolutionLog.mock.calls[0]?.[0];
+		expect(resolution?.lines[0]).toBe('Last-player compensation');
+		expect(resolution?.source).toEqual(
+			expect.objectContaining({ kind: 'phase', label: 'Compensation' }),
+		);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 		const diffContext = diffStepSnapshotsMock.mock.calls[0]?.[3];
 		expect(diffContext?.activePlayer.id).toBe('B');
@@ -159,17 +169,19 @@ describe('useCompensationLogger', () => {
 				sessionId={sessionId}
 				state={nextState}
 				addLog={addLog}
+				addResolutionLog={addResolutionLog}
 				registries={registries}
 				resourceKeys={resourceKeys}
 			/>,
 		);
-		expect(addLog).toHaveBeenCalledTimes(1);
+		expect(addResolutionLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 	});
 
 	it('logs again when a new session starts', () => {
 		diffStepSnapshotsMock.mockClear();
 		const addLog = vi.fn();
+		const addResolutionLog = vi.fn();
 		const { registries, resourceKeys } = createRegistriesWithFallback();
 		const resourceKey =
 			resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
@@ -180,11 +192,12 @@ describe('useCompensationLogger', () => {
 				sessionId={sessionId}
 				state={state}
 				addLog={addLog}
+				addResolutionLog={addResolutionLog}
 				registries={registries}
 				resourceKeys={resourceKeys}
 			/>,
 		);
-		expect(addLog).toHaveBeenCalledTimes(1);
+		expect(addResolutionLog).toHaveBeenCalledTimes(1);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(1);
 		const nextSessionId = 'session:next';
 		const newState = createSessionState(1, resourceKey);
@@ -193,11 +206,12 @@ describe('useCompensationLogger', () => {
 				sessionId={nextSessionId}
 				state={newState}
 				addLog={addLog}
+				addResolutionLog={addResolutionLog}
 				registries={registries}
 				resourceKeys={resourceKeys}
 			/>,
 		);
-		expect(addLog).toHaveBeenCalledTimes(2);
+		expect(addResolutionLog).toHaveBeenCalledTimes(2);
 		expect(diffStepSnapshotsMock).toHaveBeenCalledTimes(2);
 		const firstContext = diffStepSnapshotsMock.mock.calls[0]?.[3];
 		const secondContext = diffStepSnapshotsMock.mock.calls[1]?.[3];

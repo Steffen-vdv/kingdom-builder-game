@@ -93,6 +93,7 @@ vi.mock('../../src/state/useGameLog', () => ({
 		log: [],
 		logOverflowed: false,
 		addLog: addLogMock,
+		addResolutionLog: vi.fn(),
 	}),
 	ACTION_EFFECT_DELAY: 600,
 }));

@@ -3,6 +3,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
+import type { ActionResolution } from './useActionResolution';
 
 const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
@@ -12,6 +13,7 @@ type LogEntry = {
 	time: string;
 	text: string;
 	playerId: string;
+	resolution?: ActionResolution;
 };
 
 interface GameLogOptions {
@@ -55,7 +57,49 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 		[sessionSnapshot.game.activePlayerId, sessionSnapshot.game.players],
 	);
 
-	return { log, logOverflowed, addLog };
+	const addResolutionLog = useCallback(
+		(resolution: ActionResolution) => {
+			const candidateLines =
+				resolution.visibleLines.length > 0
+					? resolution.visibleLines
+					: resolution.lines;
+			if (!candidateLines.length) {
+				return;
+			}
+			const fallbackPlayerId =
+				resolution.player?.id ?? sessionSnapshot.game.activePlayerId;
+			const fallbackPlayer = sessionSnapshot.game.players.find(
+				(candidate) => candidate.id === fallbackPlayerId,
+			);
+			const logPlayer = resolution.player ?? fallbackPlayer;
+			if (!logPlayer) {
+				return;
+			}
+			const sanitizedLines = candidateLines.filter((line) => line.trim());
+			if (!sanitizedLines.length) {
+				return;
+			}
+			const combined = sanitizedLines.join('\n');
+			setLog((previous) => {
+				const entry: LogEntry = {
+					id: nextLogIdRef.current++,
+					time: new Date().toLocaleTimeString(),
+					text: `[${logPlayer.name ?? logPlayer.id}] ${combined}`,
+					playerId: logPlayer.id,
+					resolution,
+				};
+				const nextEntries = [...previous, entry];
+				const trimmed = nextEntries.slice(-MAX_LOG_ENTRIES);
+				if (trimmed.length < nextEntries.length) {
+					setLogOverflowed(true);
+				}
+				return trimmed;
+			});
+		},
+		[sessionSnapshot.game.activePlayerId, sessionSnapshot.game.players],
+	);
+
+	return { log, logOverflowed, addLog, addResolutionLog };
 }
 
 export type { LogEntry };

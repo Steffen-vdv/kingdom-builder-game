@@ -20,7 +20,10 @@ import {
 } from './useActionPerformer.helpers';
 import { createActionErrorHandler } from './useActionErrorHandler';
 import type { Action } from './actionTypes';
-import type { ShowResolutionOptions } from './useActionResolution';
+import type {
+	ActionResolution,
+	ShowResolutionOptions,
+} from './useActionResolution';
 import {
 	buildActionLogTimeline,
 	buildDevelopActionLogTimeline,
@@ -82,6 +85,7 @@ interface UseActionPerformerOptions {
 		entry: string | string[],
 		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 	) => void;
+	addResolutionLog: (resolution: ActionResolution) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	syncPhaseState: (
 		snapshot: SessionSnapshot,
@@ -99,7 +103,8 @@ export function useActionPerformer({
 	sessionId,
 	actionCostResource,
 	registries,
-	addLog,
+	addLog: _addLog,
+	addResolutionLog,
 	showResolution,
 	syncPhaseState,
 	refresh,
@@ -110,6 +115,7 @@ export function useActionPerformer({
 	resourceKeys,
 	onFatalSessionError,
 }: UseActionPerformerOptions) {
+	void _addLog;
 	const perform = useCallback(
 		async (action: Action, params?: ActionParametersPayload) => {
 			const notifyFatal = (error: unknown) => {
@@ -157,7 +163,7 @@ export function useActionPerformer({
 				action,
 				player: playerBefore,
 				pushErrorToast,
-				addLog,
+				addResolutionLog,
 			});
 			try {
 				const response = await performSessionAction(
@@ -204,7 +210,7 @@ export function useActionPerformer({
 						showResolution,
 						syncPhaseState,
 						refresh,
-						addLog,
+						addResolutionLog,
 						mountedRef,
 						endTurn,
 					});
@@ -268,7 +274,7 @@ export function useActionPerformer({
 						name: playerAfter.name,
 					},
 					showResolution,
-					addLog,
+					addResolutionLog,
 					timeline,
 				})
 					.then(() => {
@@ -292,7 +298,7 @@ export function useActionPerformer({
 			}
 		},
 		[
-			addLog,
+			addResolutionLog,
 			endTurn,
 			mountedRef,
 			registries,

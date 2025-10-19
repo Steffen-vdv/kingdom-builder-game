@@ -58,6 +58,7 @@ describe('useActionPerformer', () => {
 	let action: Action;
 	let pushErrorToast: ReturnType<typeof vi.fn>;
 	let addLog: ReturnType<typeof vi.fn>;
+	let addResolutionLog: ReturnType<typeof vi.fn>;
 	let enqueueMock: ReturnType<
 		typeof vi.fn<(task: () => Promise<void>) => Promise<void>>
 	>;
@@ -134,6 +135,7 @@ describe('useActionPerformer', () => {
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addLog = vi.fn();
+		addResolutionLog = vi.fn();
 		createSessionTranslationContextMock.mockReturnValue({
 			translationContext: {
 				actions: new Map([
@@ -168,6 +170,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution,
 				syncPhaseState,
 				refresh,
@@ -189,7 +192,7 @@ describe('useActionPerformer', () => {
 			expect.objectContaining({ message: 'Network offline' }),
 		);
 		expect(pushErrorToast).not.toHaveBeenCalled();
-		expect(addLog).not.toHaveBeenCalled();
+		expect(addResolutionLog).not.toHaveBeenCalled();
 		expect(enqueueMock).toHaveBeenCalled();
 		expect(translateRequirementFailureMock).not.toHaveBeenCalled();
 	});
@@ -210,6 +213,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
 				refresh: vi.fn(),
@@ -231,13 +235,18 @@ describe('useActionPerformer', () => {
 			expect.anything(),
 		);
 		expect(pushErrorToast).toHaveBeenCalledWith(authMessage);
-		expect(addLog).toHaveBeenCalledWith(
-			`Failed to play ⚔️ Attack: ${authMessage}`,
-			{
-				id: sessionSnapshot.game.activePlayerId,
-				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
-			},
-		);
+		expect(addResolutionLog).toHaveBeenCalledTimes(1);
+		const failureResolution = addResolutionLog.mock.calls[0]?.[0];
+		expect(failureResolution?.lines).toEqual([
+			'Action failed',
+			'• Attempted to play ⚔️ Attack',
+			`• Reason: ${authMessage}`,
+		]);
+		expect(failureResolution?.summaries).toEqual([`Reason: ${authMessage}`]);
+		expect(failureResolution?.player).toEqual({
+			id: sessionSnapshot.game.activePlayerId,
+			name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
+		});
 	});
 
 	it('uses requirement failures array when single failure field is missing', async () => {
@@ -256,6 +265,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
 				refresh: vi.fn(),
@@ -277,13 +287,18 @@ describe('useActionPerformer', () => {
 			expect.anything(),
 		);
 		expect(pushErrorToast).toHaveBeenCalledWith(translated);
-		expect(addLog).toHaveBeenCalledWith(
-			`Failed to play ⚔️ Attack: ${translated}`,
-			{
-				id: sessionSnapshot.game.activePlayerId,
-				name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
-			},
-		);
+		expect(addResolutionLog).toHaveBeenCalledTimes(1);
+		const translatedResolution = addResolutionLog.mock.calls[0]?.[0];
+		expect(translatedResolution?.lines).toEqual([
+			'Action failed',
+			'• Attempted to play ⚔️ Attack',
+			`• Reason: ${translated}`,
+		]);
+		expect(translatedResolution?.summaries).toEqual([`Reason: ${translated}`]);
+		expect(translatedResolution?.player).toEqual({
+			id: sessionSnapshot.game.activePlayerId,
+			name: sessionSnapshot.game.players[0]?.name ?? 'Hero',
+		});
 	});
 
 	it('treats missing active players as fatal errors', async () => {
@@ -312,6 +327,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
 				refresh: vi.fn(),
@@ -336,7 +352,7 @@ describe('useActionPerformer', () => {
 		);
 		expect(performSessionActionMock).not.toHaveBeenCalled();
 		expect(pushErrorToast).not.toHaveBeenCalled();
-		expect(addLog).not.toHaveBeenCalled();
+		expect(addResolutionLog).not.toHaveBeenCalled();
 	});
 
 	it('passes enriched resolution metadata when an action succeeds', async () => {
@@ -391,6 +407,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution,
 				syncPhaseState,
 				refresh,
@@ -500,6 +517,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution,
 				syncPhaseState,
 				refresh,
@@ -541,16 +559,17 @@ describe('useActionPerformer', () => {
 					],
 				}),
 			);
-			expect(addLog).toHaveBeenCalledWith(
-				[
-					`Played ${action.name}`,
-					'• No detailed log available because the action definition was missing.',
-				],
-				{
-					id: snapshotAfter.game.activePlayerId,
-					name: snapshotAfter.game.players[0]?.name ?? updatedPlayer.name,
-				},
-			);
+			expect(addResolutionLog).toHaveBeenCalledTimes(1);
+			const fallbackResolution = addResolutionLog.mock.calls[0]?.[0];
+			expect(fallbackResolution?.lines).toEqual([
+				`Played ${action.name}`,
+				'• No detailed log available because the action definition was missing.',
+			]);
+			expect(fallbackResolution?.summaries).toEqual([]);
+			expect(fallbackResolution?.player).toEqual({
+				id: snapshotAfter.game.activePlayerId,
+				name: snapshotAfter.game.players[0]?.name ?? updatedPlayer.name,
+			});
 			expect(diffStepSnapshotsMock).not.toHaveBeenCalled();
 			expect(logContentMock).not.toHaveBeenCalled();
 		} finally {
@@ -574,6 +593,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution: vi.fn().mockResolvedValue(undefined),
 				syncPhaseState: vi.fn(),
 				refresh: vi.fn(),
@@ -656,6 +676,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution,
 				syncPhaseState,
 				refresh,
@@ -705,6 +726,7 @@ describe('useActionPerformer', () => {
 				actionCostResource,
 				registries,
 				addLog,
+				addResolutionLog,
 				showResolution,
 				syncPhaseState,
 				refresh,
@@ -723,6 +745,6 @@ describe('useActionPerformer', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(pushErrorToast).not.toHaveBeenCalled();
-		expect(addLog).not.toHaveBeenCalled();
+		expect(addResolutionLog).not.toHaveBeenCalled();
 	});
 });

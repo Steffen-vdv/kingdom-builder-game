@@ -6,6 +6,7 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
+import type { ActionResolution } from '../../src/state/useActionResolution';
 
 const primaryResource = 'resource.primary';
 
@@ -102,5 +103,68 @@ describe('useGameLog', () => {
 		expect(updatedIds).toContain(preservedId);
 		const lastId = updatedIds[updatedIds.length - 1];
 		expect(lastId).toBeGreaterThan(preservedId);
+	});
+
+	it('records structured resolution entries', () => {
+		const players: SessionPlayerStateSnapshot[] = [
+			createPlayer('A'),
+			createPlayer('B'),
+		];
+		const sessionState: SessionSnapshot = {
+			game: {
+				turn: 1,
+				currentPlayerIndex: 0,
+				currentPhase: 'main',
+				currentStep: 'step-0',
+				phaseIndex: 0,
+				stepIndex: 0,
+				devMode: false,
+				players,
+				activePlayerId: players[0]!.id,
+				opponentId: players[1]!.id,
+			},
+			phases: [],
+			actionCostResource: primaryResource,
+			recentResourceGains: [],
+			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			passiveRecords: {
+				[players[0]!.id]: [],
+				[players[1]!.id]: [],
+			},
+			metadata: { passiveEvaluationModifiers: {} },
+		};
+		const { result } = renderHook(() =>
+			useGameLog({ sessionSnapshot: sessionState }),
+		);
+		const timeline = [
+			{ text: 'Resolution headline', depth: 0, kind: 'headline' as const },
+			{ text: 'Resolution detail', depth: 1, kind: 'effect' as const },
+		];
+		const resolution: ActionResolution = {
+			lines: ['Resolution headline', '• Resolution detail'],
+			visibleLines: ['Resolution headline', '• Resolution detail'],
+			timeline,
+			visibleTimeline: timeline,
+			isComplete: true,
+			summaries: ['Resolution detail'],
+			source: { kind: 'phase', label: 'Test' },
+			requireAcknowledgement: false,
+			player: { id: players[0]!.id, name: players[0]!.name },
+		};
+
+		act(() => {
+			result.current.addResolutionLog(resolution);
+		});
+
+		expect(result.current.log).toHaveLength(1);
+		const entry = result.current.log[0];
+		expect(entry?.resolution).toEqual(resolution);
+		expect(entry?.text).toContain('Resolution headline');
+		expect(entry?.text).toContain('• Resolution detail');
 	});
 });
