@@ -183,4 +183,86 @@ describe('useGameLog', () => {
 		expect(entry.resolution.requireAcknowledgement).toBe(false);
 		expect(entry.resolution.player).toEqual(players[0]);
 	});
+
+	it('merges resolution snapshots for the same phase into a single log entry', () => {
+		const players: SessionPlayerStateSnapshot[] = [
+			createPlayer('A'),
+			createPlayer('B'),
+		];
+		const sessionState: SessionSnapshot = {
+			game: {
+				turn: 1,
+				currentPlayerIndex: 0,
+				currentPhase: 'growth',
+				currentStep: 'step-0',
+				phaseIndex: 0,
+				stepIndex: 0,
+				devMode: false,
+				players,
+				activePlayerId: players[0]!.id,
+				opponentId: players[1]!.id,
+			},
+			phases: [],
+			actionCostResource: primaryResource,
+			recentResourceGains: [],
+			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			passiveRecords: {
+				[players[0]!.id]: [],
+				[players[1]!.id]: [],
+			},
+			metadata: { passiveEvaluationModifiers: {} },
+		};
+		const { result } = renderHook(() =>
+			useGameLog({ sessionSnapshot: sessionState }),
+		);
+		const growthSource = {
+			kind: 'phase' as const,
+			id: 'growth',
+			label: 'Growth Phase',
+		};
+		const firstResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gain 2 gold'],
+			visibleLines: ['Growth Phase', '    Gain 2 gold'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: ['Gain 2 gold'],
+			source: growthSource,
+			requireAcknowledgement: false,
+			player: players[0],
+		};
+		const combinedResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gain 2 gold', '    Gain 1 happiness'],
+			visibleLines: ['Growth Phase', '    Gain 2 gold', '    Gain 1 happiness'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: ['Gain 2 gold', 'Gain 1 happiness'],
+			source: growthSource,
+			requireAcknowledgement: false,
+			player: players[0],
+		};
+
+		act(() => {
+			result.current.addResolutionLog(firstResolution, players[0]);
+		});
+		act(() => {
+			result.current.addResolutionLog(combinedResolution, players[0]);
+		});
+
+		expect(result.current.log).toHaveLength(1);
+		const [entry] = result.current.log;
+		expect(entry?.kind).toBe('resolution');
+		if (entry?.kind !== 'resolution') {
+			throw new Error('Expected merged resolution log entry');
+		}
+		expect(entry.resolution.lines).toEqual(combinedResolution.lines);
+		expect(entry.resolution.summaries).toEqual(combinedResolution.summaries);
+		expect(entry.resolution).not.toBe(combinedResolution);
+	});
 });

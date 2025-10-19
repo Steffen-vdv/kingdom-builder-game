@@ -3,7 +3,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
-import type { ActionResolution } from './useActionResolution';
+import type { ActionResolution, ResolutionSource } from './useActionResolution';
 
 const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
@@ -62,6 +62,25 @@ function cloneResolution(
 		...(resolution.actorLabel ? { actorLabel: resolution.actorLabel } : {}),
 		...(actionSnapshot ? { action: actionSnapshot } : {}),
 	};
+}
+
+function isPhaseResolution(
+	resolution: ActionResolution,
+): resolution is ActionResolution & {
+	source: Extract<ResolutionSource, { kind: 'phase' }>;
+} {
+	return (
+		typeof resolution.source !== 'string' && resolution.source.kind === 'phase'
+	);
+}
+
+function resolvePhaseIdentity(resolution: ActionResolution) {
+	if (!isPhaseResolution(resolution)) {
+		return null;
+	}
+	return (
+		resolution.source.id?.trim() || resolution.source.label?.trim() || null
+	);
 }
 
 export function useGameLog({ sessionSnapshot }: GameLogOptions) {
@@ -136,17 +155,47 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 				return;
 			}
 			const resolutionSnapshot = cloneResolution(resolution, resolvedPlayer);
-			const entry: LogEntry = {
-				id: nextLogIdRef.current++,
-				time: new Date().toLocaleTimeString(),
-				playerId: resolvedPlayer.id,
-				kind: 'resolution',
-				resolution: resolutionSnapshot,
-			};
-			appendEntries([entry]);
+			const phaseIdentity = resolvePhaseIdentity(resolutionSnapshot);
+			const timeStamp = new Date().toLocaleTimeString();
+			setLog((previous) => {
+				if (phaseIdentity) {
+					for (let index = previous.length - 1; index >= 0; index -= 1) {
+						const item = previous[index];
+						if (item?.kind !== 'resolution') {
+							continue;
+						}
+						if (item.playerId !== resolvedPlayer.id) {
+							continue;
+						}
+						const existingIdentity = resolvePhaseIdentity(item.resolution);
+						if (!existingIdentity || existingIdentity !== phaseIdentity) {
+							continue;
+						}
+						const nextEntries = [...previous];
+						nextEntries[index] = {
+							...item,
+							time: timeStamp,
+							resolution: resolutionSnapshot,
+						};
+						return nextEntries;
+					}
+				}
+				const entry: ResolutionLogEntry = {
+					id: nextLogIdRef.current++,
+					time: timeStamp,
+					playerId: resolvedPlayer.id,
+					kind: 'resolution',
+					resolution: resolutionSnapshot,
+				};
+				const combined = [...previous, entry];
+				const next = combined.slice(-MAX_LOG_ENTRIES);
+				if (next.length < combined.length) {
+					setLogOverflowed(true);
+				}
+				return next;
+			});
 		},
 		[
-			appendEntries,
 			resolvePlayer,
 			sessionSnapshot.game.activePlayerId,
 			sessionSnapshot.game.players,
