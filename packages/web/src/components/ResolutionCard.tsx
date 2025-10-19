@@ -3,6 +3,7 @@ import type {
 	ActionResolution,
 	ResolutionSource,
 } from '../state/useActionResolution';
+import type { TimelineEntry } from './ResolutionTimeline';
 import {
 	CARD_BASE_CLASS,
 	CARD_BODY_TEXT_CLASS,
@@ -12,6 +13,11 @@ import {
 	CONTINUE_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
+import {
+	buildTimelineTree,
+	collectCostEntries,
+	collectEffectEntries,
+} from './ResolutionTimeline';
 
 interface ResolutionLabels {
 	title: string;
@@ -123,9 +129,9 @@ function ResolutionCard({
 		'backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60',
 		'dark:shadow-slate-900/40 dark:ring-white/10',
 	);
-	const timelineListClass = 'relative mt-4 flex flex-col gap-3 pl-4';
+	const timelineListClass = 'relative flex flex-col gap-3 pl-4';
 	const timelineRailClass = joinClasses(
-		'pointer-events-none absolute left-[0.875rem] top-6 bottom-6 w-px',
+		'pointer-events-none absolute left-[0.875rem] top-4 bottom-4 w-px',
 		'bg-white/30 dark:bg-white/10',
 	);
 	const timelineTextClass = joinClasses(
@@ -147,14 +153,34 @@ function ResolutionCard({
 		'bg-slate-400/80 shadow-[0_0_0_4px_rgba(148,163,184,0.2)]',
 		'dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(15,23,42,0.45)]',
 	);
-	const parsedLines = React.useMemo(() => {
+	const structuredTimeline = React.useMemo(
+		() => buildTimelineTree(resolution.visibleTimeline),
+		[resolution.visibleTimeline],
+	);
+	const costEntries = React.useMemo(
+		() =>
+			collectCostEntries(
+				structuredTimeline.filter((node) => node.descriptor.kind === 'cost'),
+			),
+		[structuredTimeline],
+	);
+	const effectEntries = React.useMemo(
+		() =>
+			collectEffectEntries(
+				structuredTimeline.filter((node) => node.descriptor.kind !== 'cost'),
+			),
+		[structuredTimeline],
+	);
+
+	const fallbackLines = React.useMemo(() => {
+		if (resolution.visibleTimeline.length > 0) {
+			return [] as { depth: number; text: string }[];
+		}
+
 		function parseLine(line: string) {
 			const patterns = [
-				// Explicit three-space indent
 				/^(?: {3})/,
-				// Leading bullets with optional whitespace
 				/^(?:[ \t]*[•▪‣◦●]\s+)/u,
-				// Connector arrows with optional whitespace
 				/^(?:[ \t]*[↳➜➤➣]\s+)/u,
 			];
 
@@ -180,7 +206,25 @@ function ResolutionCard({
 		}
 
 		return resolution.visibleLines.map((line) => parseLine(line));
-	}, [resolution.visibleLines]);
+	}, [resolution.visibleLines, resolution.visibleTimeline]);
+	const hasStructuredTimeline =
+		costEntries.length > 0 || effectEntries.length > 0;
+
+	function renderEntry(entry: TimelineEntry): React.ReactNode {
+		const markerClass =
+			entry.level === 0 ? primaryMarkerClass : nestedMarkerClass;
+		const itemIndent =
+			entry.level > 0 ? { marginLeft: `${entry.level * 0.875}rem` } : undefined;
+		const textClass =
+			entry.level === 0 ? timelineTextClass : nestedTimelineTextClass;
+
+		return (
+			<div key={entry.key} className={timelineItemClass} style={itemIndent}>
+				<span className={markerClass} aria-hidden="true" />
+				<div className={textClass}>{entry.text}</div>
+			</div>
+		);
+	}
 	const shouldShowContinue = resolution.requireAcknowledgement;
 
 	return (
@@ -208,28 +252,67 @@ function ResolutionCard({
 					<div className={joinClasses(CARD_LABEL_CLASS, 'text-slate-600')}>
 						Resolution steps
 					</div>
-					<div className={timelineListClass}>
-						<div aria-hidden="true" className={timelineRailClass} />
-						{parsedLines.map(({ text, depth }, index) => {
-							const markerClass =
-								depth === 0 ? primaryMarkerClass : nestedMarkerClass;
-							const itemIndent =
-								depth > 0 ? { marginLeft: `${depth * 0.875}rem` } : undefined;
-							const textClass =
-								depth === 0 ? timelineTextClass : nestedTimelineTextClass;
-
-							return (
-								<div
-									key={index}
-									className={timelineItemClass}
-									style={itemIndent}
-								>
-									<span className={markerClass} aria-hidden="true" />
-									<div className={textClass}>{text}</div>
+					{hasStructuredTimeline ? (
+						<div className="mt-3 space-y-6">
+							{costEntries.length > 0 ? (
+								<div>
+									<div
+										className={joinClasses(CARD_LABEL_CLASS, 'text-slate-600')}
+									>
+										Cost
+									</div>
+									<div className={joinClasses(timelineListClass, 'mt-2')}>
+										<div aria-hidden="true" className={timelineRailClass} />
+										{costEntries.map((entry) => renderEntry(entry))}
+									</div>
 								</div>
-							);
-						})}
-					</div>
+							) : null}
+							{effectEntries.length > 0 ? (
+								<div>
+									<div
+										className={joinClasses(
+											CARD_LABEL_CLASS,
+											'flex items-center gap-2 text-slate-600',
+										)}
+									>
+										<span aria-hidden="true">🪄</span>
+										<span>Effects</span>
+									</div>
+									<div className={joinClasses(timelineListClass, 'mt-2')}>
+										<div aria-hidden="true" className={timelineRailClass} />
+										{effectEntries.map((entry) => renderEntry(entry))}
+									</div>
+								</div>
+							) : null}
+						</div>
+					) : (
+						<div className={joinClasses(timelineListClass, 'mt-3')}>
+							<div aria-hidden="true" className={timelineRailClass} />
+							{fallbackLines.map(({ text, depth }, index) => {
+								const markerClass =
+									depth === 0 ? primaryMarkerClass : nestedMarkerClass;
+								const itemIndent =
+									depth > 0
+										? {
+												marginLeft: `${depth * 0.875}rem`,
+											}
+										: undefined;
+								const textClass =
+									depth === 0 ? timelineTextClass : nestedTimelineTextClass;
+
+								return (
+									<div
+										key={index}
+										className={timelineItemClass}
+										style={itemIndent}
+									>
+										<span className={markerClass} aria-hidden="true" />
+										<div className={textClass}>{text}</div>
+									</div>
+								);
+							})}
+						</div>
+					)}
 				</div>
 			</div>
 			{shouldShowContinue ? (
