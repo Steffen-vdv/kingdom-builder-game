@@ -28,9 +28,7 @@ import {
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import { RemoteSessionAdapter } from '../../../src/state/remoteSessionAdapter';
 // prettier-ignore
-import type {
-        LegacyGameEngineContextValue,
-} from '../../../src/state/GameContext.types';
+import type { GameEngineContextValue } from '../../../src/state/GameContext.types';
 import type {
 	SessionPlayerId,
 	SessionRequirementFailure,
@@ -43,9 +41,9 @@ interface RaisePopScenario {
 	registries: SessionRegistries;
 	metadata: ReturnType<typeof createTestSessionScaffold>['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
-	mockGame: LegacyGameEngineContextValue;
+	mockGame: GameEngineContextValue;
 	action: Action;
-	player: LegacyGameEngineContextValue['selectors']['sessionView']['active'];
+	player: GameEngineContextValue['selectors']['sessionView']['active'];
 	populationIds: string[];
 	adapter: RemoteSessionAdapter;
 }
@@ -113,7 +111,7 @@ function createRaisePopScenario(
 	if (!activeView) {
 		throw new Error('Expected active player view in session.');
 	}
-	const adapter = new RemoteSessionAdapter(mockGame.sessionId, {
+	const sessionAdapter = new RemoteSessionAdapter(mockGame.sessionId, {
 		ensureGameApi: vi.fn(() => ({}) as GameApi),
 		runAiTurn: vi.fn().mockResolvedValue({
 			sessionId: mockGame.sessionId,
@@ -122,11 +120,9 @@ function createRaisePopScenario(
 			ranTurn: false,
 		}),
 	});
-	adapter.setActionCosts(action.id, { gold: 5, ap: 1 });
-	adapter.setActionRequirements(action.id, []);
-	adapter.setActionOptions(action.id, []);
-	mockGame.session =
-		adapter as unknown as LegacyGameEngineContextValue['session'];
+	sessionAdapter.setActionCosts(action.id, { gold: 5, ap: 1 });
+	sessionAdapter.setActionRequirements(action.id, []);
+	sessionAdapter.setActionOptions(action.id, []);
 	seedSessionActionMetadata(mockGame.sessionId, action.id, {
 		costs: { gold: 5, ap: 1 },
 		requirements: [],
@@ -136,11 +132,11 @@ function createRaisePopScenario(
 		registries,
 		metadata,
 		metadataSelectors,
-		mockGame: mockGame as LegacyGameEngineContextValue,
+		mockGame,
 		action,
 		player: activeView,
 		populationIds,
-		adapter,
+		adapter: sessionAdapter,
 	};
 }
 

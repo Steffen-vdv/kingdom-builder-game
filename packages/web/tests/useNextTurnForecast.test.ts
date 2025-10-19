@@ -30,7 +30,6 @@ vi.stubGlobal('document', jsdom.window.document);
 vi.stubGlobal('navigator', jsdom.window.navigator);
 
 interface MockGameEngine {
-	session: { enqueue: ReturnType<typeof vi.fn> };
 	sessionSnapshot: SessionSnapshot;
 	ruleSnapshot: SessionRuleSnapshot;
 	resolution: null;
@@ -128,7 +127,6 @@ function buildSimulationResponse(
 }
 
 const engineValue: MockGameEngine = {
-	session: { enqueue: vi.fn() },
 	sessionSnapshot: undefined as unknown as SessionSnapshot,
 	ruleSnapshot: {
 		tieredResourceKey: primaryResource,

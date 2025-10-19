@@ -24,6 +24,7 @@ import {
 } from './types';
 import { normalizeActionFocus } from './types';
 import { useActionOptionCosts } from './useActionOptionCosts';
+import { useActionMetadata } from '../../state/useActionMetadata';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -53,7 +54,6 @@ export default function BuildOptions({
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
-		session,
 		selectors,
 		translationContext,
 		requests,
@@ -67,7 +67,10 @@ export default function BuildOptions({
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
-	const requirementFailures = session.getActionRequirements(action.id);
+	const { requirements: metadataRequirements } = useActionMetadata({
+		actionId: action.id,
+	});
+	const requirementFailures = metadataRequirements ?? [];
 	const requirements = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
 	);

@@ -132,11 +132,7 @@ function ContextInspector() {
 	if (!context) {
 		throw new Error('Missing game engine context');
 	}
-	return (
-		<div data-testid="adapter-id">
-			{(context.session as { id?: string }).id ?? ''}
-		</div>
-	);
+	return <div data-testid="session-id">{context.sessionId}</div>;
 }
 
 describe('GameProviderInner', () => {
@@ -185,7 +181,7 @@ describe('GameProviderInner', () => {
 		});
 	});
 
-	it('routes the remote adapter through hooks and the legacy bridge for the playbook', () => {
+	it('routes the remote adapter through the session queue for the playbook', () => {
 		const registriesPayload = createSessionRegistriesPayload();
 		const { adapter, cleanup } = createRemoteSessionAdapter({
 			sessionId,
@@ -239,7 +235,16 @@ describe('GameProviderInner', () => {
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
-		expect(getByTestId('adapter-id')).toHaveTextContent('adapter:test');
+		expect(useSessionQueueMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				enqueue: expect.any(Function),
+				getCurrentSession: expect.any(Function),
+				getLatestSnapshot: expect.any(Function),
+			}),
+			sessionState,
+			sessionId,
+		);
+		expect(getByTestId('session-id')).toHaveTextContent(sessionId);
 		cleanup();
 	});
 

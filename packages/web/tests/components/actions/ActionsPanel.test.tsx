@@ -16,7 +16,6 @@ import {
 } from '../../helpers/sessionFixtures';
 import { createPassiveGame } from '../../helpers/createPassiveDisplayGame';
 import { selectSessionView } from '../../../src/state/sessionSelectors';
-import type { SessionAdapter } from '../../../src/state/sessionTypes';
 import {
 	clearSessionStateStore,
 	initializeSessionState,
@@ -69,10 +68,8 @@ function createActionsPanelScenario() {
 		requirements: [],
 		groups: [],
 	};
-	mockGame.session = {
-		hasAiController: (playerId: string) => playerId === aiPlayer.id,
-	} as unknown as SessionAdapter;
-	for (const actionDefinition of mockGame.selectors.sessionView.actionList) {
+	const actionList = mockGame.selectors.sessionView.actionList;
+	for (const actionDefinition of actionList) {
 		seedSessionActionMetadata(
 			mockGame.sessionId,
 			actionDefinition.id,
