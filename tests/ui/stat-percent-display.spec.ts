@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Percent stat displays', () => {
-        test('shows percent stats as percentages in the panel and hover card', async ({
-                page,
-        }) => {
+	test('shows percent stats as percentages in the panel and hover card', async ({
+		page,
+	}) => {
 		const consoleErrors: string[] = [];
 		page.on('console', (message) => {
 			if (message.type() === 'error') {

@@ -975,7 +975,9 @@
 				"icon": "🪙",
 				"label": "Gold",
 				"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
-				"tags": ["bankruptcy-check"]
+				"tags": [
+					"bankruptcy-check"
+				]
 			},
 			"ap": {
 				"key": "ap",
@@ -994,7 +996,10 @@
 				"icon": "🏰",
 				"label": "Castle HP",
 				"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
-				"tags": ["attack-target", "win-condition-zero"]
+				"tags": [
+					"attack-target",
+					"win-condition-zero"
+				]
 			}
 		}
 	},
@@ -1157,18 +1162,24 @@
 					{
 						"id": "resolve-dynamic-triggers",
 						"label": "Resolve dynamic triggers",
-						"triggers": ["onGrowthPhase"]
+						"triggers": [
+							"onGrowthPhase"
+						]
 					},
 					{
 						"id": "gain-income",
 						"label": "Gain Income",
 						"icon": "💰",
-						"triggers": ["onGainIncomeStep"]
+						"triggers": [
+							"onGainIncomeStep"
+						]
 					},
 					{
 						"id": "gain-ap",
 						"label": "Gain Action Points",
-						"triggers": ["onGainAPStep"]
+						"triggers": [
+							"onGainAPStep"
+						]
 					},
 					{
 						"id": "raise-strength",
@@ -1184,12 +1195,16 @@
 					{
 						"id": "resolve-dynamic-triggers",
 						"label": "Resolve dynamic triggers",
-						"triggers": ["onUpkeepPhase"]
+						"triggers": [
+							"onUpkeepPhase"
+						]
 					},
 					{
 						"id": "pay-upkeep",
 						"label": "Pay Upkeep",
-						"triggers": ["onPayUpkeepStep"]
+						"triggers": [
+							"onPayUpkeepStep"
+						]
 					},
 					{
 						"id": "war-recovery",
@@ -1361,7 +1376,9 @@
 						{
 							"icon": "gold",
 							"label": "Gold",
-							"body": ["Fuels {build} buildings, diplomacy, and daring plays."]
+							"body": [
+								"Fuels {build} buildings, diplomacy, and daring plays."
+							]
 						},
 						{
 							"icon": "ap",
@@ -1373,12 +1390,16 @@
 						{
 							"icon": "happiness",
 							"label": "Happiness",
-							"body": ["Keeps the populace cheering instead of rioting."]
+							"body": [
+								"Keeps the populace cheering instead of rioting."
+							]
 						},
 						{
 							"icon": "castleHP",
 							"label": "Castle HP",
-							"body": ["Is your lifeline—lose it and the dynasty topples."]
+							"body": [
+								"Is your lifeline—lose it and the dynasty topples."
+							]
 						}
 					]
 				},
@@ -1402,7 +1423,9 @@
 						{
 							"icon": "council",
 							"label": "Council",
-							"body": ["Rallies extra {ap} Action Points each round."]
+							"body": [
+								"Rallies extra {ap} Action Points each round."
+							]
 						},
 						{
 							"icon": "legion",
@@ -1414,12 +1437,16 @@
 						{
 							"icon": "fortifier",
 							"label": "Fortifier",
-							"body": ["Cements your defenses with persistent buffs."]
+							"body": [
+								"Cements your defenses with persistent buffs."
+							]
 						},
 						{
 							"icon": "citizen",
 							"label": "Citizens",
-							"body": ["Wait in the wings, ready to specialize as needed."]
+							"body": [
+								"Wait in the wings, ready to specialize as needed."
+							]
 						}
 					]
 				},
@@ -1437,36 +1464,76 @@
 			],
 			"tokens": {
 				"actions": {
-					"expand": ["expand"],
-					"build": ["build"],
-					"develop": ["develop"],
-					"raise_pop": ["raise_pop"],
-					"army_attack": ["army_attack"]
+					"expand": [
+						"expand"
+					],
+					"build": [
+						"build"
+					],
+					"develop": [
+						"develop"
+					],
+					"raise_pop": [
+						"raise_pop"
+					],
+					"army_attack": [
+						"army_attack"
+					]
 				},
 				"phases": {
-					"growth": ["growth"],
-					"upkeep": ["upkeep"],
-					"main": ["main"]
+					"growth": [
+						"growth"
+					],
+					"upkeep": [
+						"upkeep"
+					],
+					"main": [
+						"main"
+					]
 				},
 				"resources": {
-					"gold": ["gold"],
-					"ap": ["ap"],
-					"happiness": ["happiness"],
-					"castleHP": ["castleHP"]
+					"gold": [
+						"gold"
+					],
+					"ap": [
+						"ap"
+					],
+					"happiness": [
+						"happiness"
+					],
+					"castleHP": [
+						"castleHP"
+					]
 				},
 				"stats": {
-					"armyStrength": ["armyStrength"],
-					"fortificationStrength": ["fortificationStrength"]
+					"armyStrength": [
+						"armyStrength"
+					],
+					"fortificationStrength": [
+						"fortificationStrength"
+					]
 				},
 				"population": {
-					"council": ["council"],
-					"legion": ["legion"],
-					"fortifier": ["fortifier"],
-					"citizen": ["citizen"]
+					"council": [
+						"council"
+					],
+					"legion": [
+						"legion"
+					],
+					"fortifier": [
+						"fortifier"
+					],
+					"citizen": [
+						"citizen"
+					]
 				},
 				"static": {
-					"land": ["land"],
-					"slot": ["slot"]
+					"land": [
+						"land"
+					],
+					"slot": [
+						"slot"
+					]
 				}
 			}
 		}
