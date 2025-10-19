@@ -6,6 +6,11 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { MAX_LOG_ENTRIES, useGameLog } from '../../src/state/useGameLog';
+import { createTestSessionScaffold } from '../helpers/testSessionScaffold';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from '../helpers/sessionFixtures';
 import type { ActionResolution } from '../../src/state/useActionResolution';
 
 const primaryResource = 'resource.primary';
@@ -182,5 +187,70 @@ describe('useGameLog', () => {
 		expect(entry.resolution.isComplete).toBe(true);
 		expect(entry.resolution.requireAcknowledgement).toBe(false);
 		expect(entry.resolution.player).toEqual(players[0]);
+	});
+
+	it('merges sequential phase resolutions into a single log entry', () => {
+		const scaffold = createTestSessionScaffold();
+		const players = [
+			createSnapshotPlayer({ id: 'player-1', name: 'Player One' }),
+			createSnapshotPlayer({ id: 'player-2', name: 'Player Two' }),
+		];
+		const sessionSnapshot = createSessionSnapshot({
+			players,
+			activePlayerId: players[0]!.id,
+			opponentId: players[1]!.id,
+			phases: scaffold.phases,
+			actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
+			ruleSnapshot: scaffold.ruleSnapshot,
+			metadata: scaffold.metadata,
+		});
+		const { result } = renderHook(() => useGameLog({ sessionSnapshot }));
+		const firstResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gold +2'],
+			visibleLines: ['Growth Phase', '    Gold +2'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: ['Gold +2'],
+			source: {
+				kind: 'phase',
+				label: 'Growth Phase',
+				id: 'growth',
+			},
+			requireAcknowledgement: false,
+			player: { id: players[0]!.id, name: players[0]!.name },
+		};
+		act(() => {
+			result.current.addResolutionLog(firstResolution);
+		});
+		expect(result.current.log).toHaveLength(1);
+		expect(result.current.log[0]?.resolution.lines).toEqual([
+			'Growth Phase',
+			'    Gold +2',
+		]);
+		const secondResolution: ActionResolution = {
+			lines: ['Growth Phase', '    Gold +2', '    Happiness +1'],
+			visibleLines: ['Growth Phase', '    Gold +2', '    Happiness +1'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: ['Gold +2', 'Happiness +1'],
+			source: {
+				kind: 'phase',
+				label: 'Growth Phase',
+				id: 'growth',
+			},
+			requireAcknowledgement: false,
+			player: { id: players[0]!.id, name: players[0]!.name },
+		};
+		act(() => {
+			result.current.addResolutionLog(secondResolution);
+		});
+		expect(result.current.log).toHaveLength(1);
+		expect(result.current.log[0]?.resolution.lines).toEqual([
+			'Growth Phase',
+			'    Gold +2',
+			'    Happiness +1',
+		]);
 	});
 });

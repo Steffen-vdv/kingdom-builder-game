@@ -4,6 +4,10 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import type { ActionResolution } from './useActionResolution';
+import {
+	isPhaseSourceDetail,
+	resolvePhaseIdentity,
+} from './useActionResolution.helpers';
 
 const ACTION_EFFECT_DELAY = 600;
 const MAX_LOG_ENTRIES = 250;
@@ -133,6 +137,52 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 				fallbackPlayer,
 			);
 			if (!resolvedPlayer) {
+				return;
+			}
+			let merged = false;
+			if (isPhaseSourceDetail(resolution.source)) {
+				const identity = resolvePhaseIdentity(resolution.source);
+				if (identity) {
+					setLog((previous) => {
+						if (!previous.length) {
+							return previous;
+						}
+						const lastIndex = previous.length - 1;
+						const candidate = previous[lastIndex];
+						if (
+							!candidate ||
+							candidate.kind !== 'resolution' ||
+							candidate.playerId !== resolvedPlayer.id
+						) {
+							return previous;
+						}
+						const lastEntry: ResolutionLogEntry = candidate;
+						if (!isPhaseSourceDetail(lastEntry.resolution.source)) {
+							return previous;
+						}
+						const lastIdentity = resolvePhaseIdentity(
+							lastEntry.resolution.source,
+						);
+						if (lastIdentity !== identity) {
+							return previous;
+						}
+						merged = true;
+						const resolutionSnapshot = cloneResolution(
+							resolution,
+							resolvedPlayer,
+						);
+						return [
+							...previous.slice(0, lastIndex),
+							{
+								...lastEntry,
+								playerId: resolvedPlayer.id,
+								resolution: resolutionSnapshot,
+							},
+						];
+					});
+				}
+			}
+			if (merged) {
 				return;
 			}
 			const resolutionSnapshot = cloneResolution(resolution, resolvedPlayer);

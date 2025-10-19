@@ -55,4 +55,9 @@ function shouldAppendPhaseResolution(
 	);
 }
 
-export { resolveActorLabel, isPhaseSourceDetail, shouldAppendPhaseResolution };
+export {
+	resolveActorLabel,
+	isPhaseSourceDetail,
+	shouldAppendPhaseResolution,
+	resolvePhaseIdentity,
+};
