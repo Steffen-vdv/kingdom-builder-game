@@ -5,7 +5,7 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import { useGameEngine } from './GameContext';
-import { simulateUpcomingPhases } from './sessionSdk';
+import { enqueueSimulateUpcomingPhases } from './sessionSdk';
 
 export type NextTurnForecast = Record<string, PlayerSnapshotDeltaBucket>;
 
@@ -161,11 +161,9 @@ export function useNextTurnForecast(): NextTurnForecast {
 			await Promise.all(
 				playerIds.map(async (playerId) => {
 					try {
-						const response = await session.enqueue(() =>
-							simulateUpcomingPhases({
-								sessionId,
-								playerId,
-							}),
+						const response = await enqueueSimulateUpcomingPhases(
+							sessionId,
+							playerId,
 						);
 						updates[playerId] = response.result.delta;
 						hasSuccess = true;

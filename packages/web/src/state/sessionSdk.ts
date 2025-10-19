@@ -260,6 +260,16 @@ async function simulateUpcomingPhasesInternal(
 
 export { simulateUpcomingPhasesInternal as simulateUpcomingPhases };
 
+export function enqueueSimulateUpcomingPhases(
+	sessionId: string,
+	playerId: SessionSimulateRequest['playerId'],
+	requestOptions: GameApiRequestOptions = {},
+): Promise<SessionSimulateResponse> {
+	return enqueueSessionTask(sessionId, () =>
+		simulateUpcomingPhasesInternal({ sessionId, playerId }, requestOptions),
+	);
+}
+
 export async function updatePlayerName(
 	request: SessionUpdatePlayerNameRequest,
 	requestOptions: GameApiRequestOptions = {},
