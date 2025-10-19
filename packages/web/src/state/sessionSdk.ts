@@ -198,6 +198,8 @@ async function runAiTurnInternal(
 		snapshot: stateRecord.snapshot,
 		registries: response.registries,
 		ranTurn: response.ranTurn,
+		actions: response.actions,
+		phaseComplete: response.phaseComplete,
 	};
 }
 

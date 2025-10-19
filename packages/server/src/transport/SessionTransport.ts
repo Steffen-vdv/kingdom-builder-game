@@ -126,6 +126,8 @@ export class SessionTransport extends SessionTransportBase {
 			const response = {
 				...base,
 				ranTurn,
+				actions: [],
+				phaseComplete: false,
 			} satisfies SessionRunAiResponse;
 			return sessionRunAiResponseSchema.parse(response);
 		} catch (error) {

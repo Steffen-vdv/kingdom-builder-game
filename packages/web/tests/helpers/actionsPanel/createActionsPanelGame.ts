@@ -302,6 +302,8 @@ export function createActionsPanelGame({
 			snapshot: sessionState,
 			registries: sessionRegistries,
 			ranTurn: false,
+			actions: [],
+			phaseComplete: false,
 		}),
 	});
 	for (const [actionId, costs] of metadata.costMap.entries()) {

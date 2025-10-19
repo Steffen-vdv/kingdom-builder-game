@@ -242,6 +242,8 @@ function createMockGame() {
 			snapshot: sessionState,
 			registries,
 			ranTurn: false,
+			actions: [],
+			phaseComplete: false,
 		}),
 	});
 	return {
