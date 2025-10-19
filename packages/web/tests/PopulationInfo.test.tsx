@@ -18,7 +18,7 @@ import {
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 // prettier-ignore
 import type {
-	LegacyGameEngineContextValue,
+        GameEngineContextValue,
 } from '../src/state/GameContext.types';
 import type { PlayerId } from '@kingdom-builder/engine';
 
@@ -27,7 +27,7 @@ interface PopulationInfoScenario {
 	metadata: ReturnType<typeof createTestSessionScaffold>['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
-	mockGame: LegacyGameEngineContextValue;
+	mockGame: GameEngineContextValue;
 	forecast: Record<
 		string,
 		{
@@ -117,7 +117,7 @@ function createPopulationInfoScenario(
 		metadata,
 		metadataSelectors,
 		activePlayer,
-		mockGame: mockGame as LegacyGameEngineContextValue,
+		mockGame: mockGame as GameEngineContextValue,
 		forecast,
 		populationIds,
 		maxPopulationKey,

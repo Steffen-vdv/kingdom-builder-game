@@ -18,7 +18,7 @@ import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
 import type {
-	LegacyGameEngineContextValue,
+	GameEngineContextValue,
 	PerformActionHandler,
 	SessionDerivedSelectors,
 	SessionMetadataFetchers,
@@ -34,8 +34,9 @@ import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
-export const GameEngineContext =
-	createContext<LegacyGameEngineContextValue | null>(null);
+export const GameEngineContext = createContext<GameEngineContextValue | null>(
+	null,
+);
 
 export function GameProviderInner({
 	children,
@@ -306,7 +307,7 @@ export function GameProviderInner({
 		return <TranslationContextLoading />;
 	}
 
-	const value: LegacyGameEngineContextValue = {
+	const value: GameEngineContextValue = {
 		sessionId,
 		sessionSnapshot,
 		cachedSessionSnapshot,
@@ -344,7 +345,6 @@ export function GameProviderInner({
 		dismissToast,
 		playerName,
 		onChangePlayerName,
-		session: sessionAdapter,
 		...(onExit ? { onExit: handleExit } : {}),
 	};
 
