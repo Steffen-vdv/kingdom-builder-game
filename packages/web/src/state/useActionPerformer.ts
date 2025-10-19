@@ -9,12 +9,7 @@ import type {
 	SessionRequirementFailure,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
-import {
-	diffStepSnapshots,
-	logContent,
-	snapshotPlayer,
-	translateRequirementFailure,
-} from '../translation';
+import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
 import {
 	appendSubActionChanges,
 	buildActionCostLines,
@@ -23,6 +18,7 @@ import {
 	handleMissingActionDefinition,
 	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
+import { createActionErrorHandler } from './useActionErrorHandler';
 import type { Action } from './actionTypes';
 import type { ShowResolutionOptions } from './useActionResolution';
 import {
@@ -35,11 +31,7 @@ import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
-import {
-	SessionMirroringError,
-	markFatalSessionError,
-	isFatalSessionError,
-} from './sessionErrors';
+import { markFatalSessionError, isFatalSessionError } from './sessionErrors';
 import {
 	getActionErrorMetadata,
 	setActionErrorMetadata,
@@ -128,9 +120,9 @@ export function useActionPerformer({
 					onFatalSessionError(error);
 				}
 			};
-			let fatalError: unknown = null;
+			const fatalErrorRef: { current: unknown } = { current: null };
 			const throwFatal = (error: unknown): never => {
-				fatalError = error;
+				fatalErrorRef.current = error;
 				notifyFatal(error);
 				throw error;
 			};
@@ -149,6 +141,7 @@ export function useActionPerformer({
 				passiveRecords: snapshotBefore.passiveRecords,
 				registries,
 			});
+			const contextRef = { current: context };
 			const activePlayerId = snapshotBefore.game.activePlayerId;
 			const playerBefore = ensureValue(
 				snapshotBefore.game.players.find(
@@ -157,6 +150,15 @@ export function useActionPerformer({
 				() => new Error('Missing active player before action'),
 			);
 			const before = snapshotPlayer(playerBefore);
+			const handleError = createActionErrorHandler({
+				fatalErrorRef,
+				notifyFatal,
+				contextRef,
+				action,
+				player: playerBefore,
+				pushErrorToast,
+				addLog,
+			});
 			try {
 				const response = await performSessionAction(
 					{
@@ -176,14 +178,15 @@ export function useActionPerformer({
 				const costs = response.costs ?? {};
 				const traces = response.traces;
 				const snapshotAfter = getSessionSnapshot(sessionId);
-				const legacyContext = createSessionTranslationContext({
-					snapshot: snapshotAfter,
-					ruleSnapshot: snapshotAfter.rules,
-					passiveRecords: snapshotAfter.passiveRecords,
-					registries,
-				});
-				const { translationContext, diffContext } = legacyContext;
-				context = translationContext;
+				const { translationContext: updatedContext, diffContext } =
+					createSessionTranslationContext({
+						snapshot: snapshotAfter,
+						ruleSnapshot: snapshotAfter.rules,
+						passiveRecords: snapshotAfter.passiveRecords,
+						registries,
+					});
+				context = updatedContext;
+				contextRef.current = context;
 				const playerAfter = ensureValue(
 					snapshotAfter.game.players.find(
 						(entry) => entry.id === activePlayerId,
@@ -246,73 +249,46 @@ export function useActionPerformer({
 				const useDevelopFormatter = filtered.some((line) =>
 					line.startsWith(LOG_KEYWORDS.developed),
 				);
-				const timeline = (
-					useDevelopFormatter
-						? buildDevelopActionLogTimeline
-						: buildActionLogTimeline
-				)(messages, filtered);
-				const logLines = (
-					useDevelopFormatter
-						? formatDevelopActionLogLines
-						: formatActionLogLines
-				)(messages, filtered);
-				const actionMeta = buildResolutionActionMeta(
-					action,
-					stepDef,
-					logHeadline,
-				);
-				const playerIdentity = {
-					id: playerAfter.id,
-					name: playerAfter.name,
-				};
+				const buildTimeline = useDevelopFormatter
+					? buildDevelopActionLogTimeline
+					: buildActionLogTimeline;
+				const formatLines = useDevelopFormatter
+					? formatDevelopActionLogLines
+					: formatActionLogLines;
+				const timeline = buildTimeline(messages, filtered);
+				const logLines = formatLines(messages, filtered);
 				syncPhaseState(snapshotAfter);
 				refresh();
-				await presentResolutionOrLog({
-					action: actionMeta,
+				void presentResolutionOrLog({
+					action: buildResolutionActionMeta(action, stepDef, logHeadline),
 					logLines,
 					summaries: filtered,
-					player: playerIdentity,
+					player: {
+						id: playerAfter.id,
+						name: playerAfter.name,
+					},
 					showResolution,
 					addLog,
 					timeline,
-				});
-				if (!mountedRef.current || snapshotAfter.game.conclusion) {
-					return;
-				}
-				if (
-					snapshotAfter.game.devMode &&
-					(playerAfter.resources[actionCostResource] ?? 0) <= 0
-				) {
-					await endTurn();
-				}
+				})
+					.then(() => {
+						if (
+							!mountedRef.current ||
+							snapshotAfter.game.conclusion ||
+							!snapshotAfter.game.devMode ||
+							(playerAfter.resources[actionCostResource] ?? 0) > 0
+						) {
+							return;
+						}
+						return endTurn();
+					})
+					.catch((error) => {
+						void handleError(error);
+					});
 			} catch (error) {
-				if (fatalError !== null || isFatalSessionError(error)) {
-					if (fatalError === null) {
-						fatalError = error;
-						notifyFatal(error);
-					}
+				if (handleError(error)) {
 					throw error;
 				}
-				if (error instanceof SessionMirroringError) {
-					fatalError = error;
-					notifyFatal(error);
-					throw error;
-				}
-				const icon = context.actions.get(action.id)?.icon || '';
-				let message = (error as Error).message || 'Action failed';
-				const executionError = error as ActionExecutionError;
-				const requirementFailure =
-					executionError?.requirementFailure ??
-					executionError?.requirementFailures?.[0];
-				if (requirementFailure) {
-					message = translateRequirementFailure(requirementFailure, context);
-				}
-				pushErrorToast(message);
-				const failureLog = `Failed to play ${icon} ${action.name}: ${message}`;
-				addLog(failureLog, {
-					id: playerBefore.id,
-					name: playerBefore.name,
-				});
 			}
 		},
 		[
