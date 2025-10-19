@@ -65,6 +65,11 @@ export function createPassiveGame(
 			),
 			canEndTurn: true,
 			isAdvancing: false,
+			activePlayerId: sessionState.game.activePlayerId,
+			activePlayerName:
+				sessionState.game.players.find(
+					(player) => player.id === sessionState.game.activePlayerId,
+				)?.name ?? null,
 		},
 		actionCostResource: sessionState.actionCostResource,
 		requests: {

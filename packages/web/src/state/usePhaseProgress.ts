@@ -33,6 +33,8 @@ export interface PhaseProgressState {
 	isActionPhase: boolean;
 	canEndTurn: boolean;
 	isAdvancing: boolean;
+	activePlayerId: string | null;
+	activePlayerName: string | null;
 }
 
 function computePhaseState(
@@ -58,6 +60,8 @@ function computePhaseState(
 		isActionPhase,
 		canEndTurn,
 		isAdvancing,
+		activePlayerId: overrides.activePlayerId ?? activePlayer?.id ?? null,
+		activePlayerName: overrides.activePlayerName ?? activePlayer?.name ?? null,
 	};
 }
 

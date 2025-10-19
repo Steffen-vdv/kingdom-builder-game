@@ -65,6 +65,8 @@ function createPhasePanelScenario() {
 			),
 			canEndTurn: true,
 			isAdvancing: false,
+			activePlayerId: activePlayer.id,
+			activePlayerName: activePlayer.name,
 		},
 	};
 }
@@ -177,4 +179,15 @@ describe('<PhasePanel />', () => {
 			)?.label ?? mockGame.phase.currentPhaseId;
 		expect(activeItem).toHaveTextContent(activeLabel);
 	});
+});
+
+it('renders the phase active player when it differs from the session view', () => {
+	mockGame.phase = {
+		...defaultPhase,
+		activePlayerId: scenario.sessionState.game.opponentId,
+		activePlayerName:
+			scenario.sessionState.game.players[1]?.name ?? 'Player Two',
+	};
+	render(<PhasePanel />);
+	expect(screen.getByText('Player Two')).toBeInTheDocument();
 });

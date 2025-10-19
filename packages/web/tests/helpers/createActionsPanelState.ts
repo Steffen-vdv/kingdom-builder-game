@@ -19,6 +19,8 @@ export function createActionsPanelState({
 			isActionPhase: true,
 			canEndTurn: true,
 			isAdvancing: false,
+			activePlayerId: 'player-actions',
+			activePlayerName: 'Player Actions',
 		},
 		actionCostResource,
 		requests: {
