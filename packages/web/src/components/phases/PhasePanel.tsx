@@ -99,9 +99,18 @@ export default function PhasePanel() {
 			),
 		[phases, phase.currentPhaseId],
 	);
+	const activePlayerSnapshot = useMemo(() => {
+		if (phase.activePlayerId) {
+			return sessionSnapshot.game.players.find(
+				(player) => player.id === phase.activePlayerId,
+			);
+		}
+		return sessionSnapshot.game.players[0];
+	}, [phase.activePlayerId, sessionSnapshot.game.players]);
 	const activePlayerName =
+		phase.activePlayerName ??
 		sessionView.active?.name ??
-		sessionSnapshot.game.players[0]?.name ??
+		activePlayerSnapshot?.name ??
 		'Player';
 	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
 	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
