@@ -142,12 +142,18 @@ export async function advanceToActionPhase({
 				lastPhaseSourceId = null;
 				lastPhaseHeaderLogged = false;
 			}
+			const resolvedPhaseDefinition = snapshot.phases.find(
+				(phase) => phase?.id === advanceResult.phase,
+			);
+			const shouldRequireAcknowledgement = Boolean(
+				resolvedPhaseDefinition?.action && outputLines.length > 0,
+			);
 			const resolutionOptions: ShowResolutionOptions = {
 				lines: outputLines,
 				summaries: formatted.summaries,
 				source: formatted.source,
 				player,
-				requireAcknowledgement: false,
+				requireAcknowledgement: shouldRequireAcknowledgement,
 				...(formatted.actorLabel ? { actorLabel: formatted.actorLabel } : {}),
 			};
 			await showResolution(resolutionOptions);
