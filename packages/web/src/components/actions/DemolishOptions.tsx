@@ -12,6 +12,8 @@ import {
 	formatMissingResources,
 	playerHasRequiredResources,
 	sumNonActionCosts,
+	splitActionCostMap,
+	sumUpkeep,
 	type ResourceDescriptorSelector,
 } from './utils';
 import {
@@ -76,15 +78,28 @@ export default function DemolishOptions({
 					return null;
 				}
 				const metadataCosts = costMap.get(buildingId);
+				const { costs: dynamicCosts, cleanup: dynamicCleanup } =
+					splitActionCostMap(metadataCosts);
 				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(
-					metadataCosts ?? {},
-				)) {
+				for (const [costKey, costAmount] of Object.entries(dynamicCosts)) {
 					costs[costKey] = costAmount ?? 0;
 				}
+				const combinedUpkeep: Record<string, number> = {
+					...(building.upkeep ?? {}),
+					...dynamicCleanup,
+				};
 				const total = sumNonActionCosts(costs, actionCostResource);
 				const focus = normalizeActionFocus(building.focus);
-				return { id: buildingId, building, costs, total, focus };
+				const cleanup = sumUpkeep(combinedUpkeep);
+				return {
+					id: buildingId,
+					building,
+					costs,
+					total,
+					focus,
+					cleanup,
+					upkeep: combinedUpkeep,
+				};
 			})
 			.filter(
 				(
@@ -95,11 +110,16 @@ export default function DemolishOptions({
 					costs: Record<string, number>;
 					total: number;
 					focus: ActionFocus | undefined;
+					cleanup: number;
+					upkeep: Record<string, number>;
 				} => entry !== null,
 			)
 			.sort((first, second) => {
 				if (first.total !== second.total) {
 					return first.total - second.total;
+				}
+				if (first.cleanup !== second.cleanup) {
+					return first.cleanup - second.cleanup;
 				}
 				return first.building.name.localeCompare(second.building.name);
 			});
@@ -126,7 +146,7 @@ export default function DemolishOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
 			>
-				{entries.map(({ id, building, costs, focus }) => {
+				{entries.map(({ id, building, costs, focus, upkeep }) => {
 					const requirements: string[] = [];
 					const canPay = playerHasRequiredResources(player.resources, costs);
 					const summary = summarizeContent('building', id, translationContext, {
@@ -144,7 +164,6 @@ export default function DemolishOptions({
 							? (insufficientTooltip ?? 'Cannot pay costs')
 							: undefined;
 					const enabled = canPay && isActionPhase && canInteract && implemented;
-					const upkeep = building.upkeep;
 					const hoverTitle = [
 						actionHoverTitle,
 						formatIconTitle(building.icon, building.name),

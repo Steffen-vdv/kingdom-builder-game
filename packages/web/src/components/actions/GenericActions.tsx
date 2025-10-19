@@ -21,6 +21,7 @@ import {
 	type DisplayPlayer,
 	type HoverCardData,
 } from './types';
+import { splitActionCostMap, sumNonActionCosts, sumUpkeep } from './utils';
 import type { ResourceDescriptorSelector } from './utils';
 
 export interface PendingActionState {
@@ -29,6 +30,11 @@ export interface PendingActionState {
 	step: number;
 	params: Record<string, unknown>;
 	choices: ActionEffectGroupChoiceMap;
+}
+
+interface ActionSortMetrics {
+	cost: number | null;
+	cleanup: number | null;
 }
 
 interface GenericActionEntryProps {
@@ -55,7 +61,7 @@ interface GenericActionEntryProps {
 	clearHoverCard: () => void;
 	formatRequirement: (requirement: string) => string;
 	selectResourceDescriptor: ResourceDescriptorSelector;
-	onTotalChange: (actionId: string, total: number | null) => void;
+	onSortMetricsChange: (actionId: string, metrics: ActionSortMetrics) => void;
 }
 
 function GenericActionEntry({
@@ -75,23 +81,31 @@ function GenericActionEntry({
 	clearHoverCard,
 	formatRequirement,
 	selectResourceDescriptor,
-	onTotalChange,
+	onSortMetricsChange,
 }: GenericActionEntryProps) {
 	const metadata = useActionMetadata({ actionId: action.id });
+	const { costs: actionCosts, cleanup: cleanupCosts } = useMemo(
+		() => splitActionCostMap(metadata.costs),
+		[metadata.costs],
+	);
 	const total = useMemo(() => {
 		if (!metadata.costs) {
 			return null;
 		}
-		return Object.entries(metadata.costs).reduce((sum, [resourceKey, cost]) => {
-			if (resourceKey === actionCostResource) {
-				return sum;
-			}
-			return sum + (cost ?? 0);
-		}, 0);
-	}, [metadata.costs, actionCostResource]);
+		return sumNonActionCosts(actionCosts, actionCostResource);
+	}, [metadata.costs, actionCosts, actionCostResource]);
+	const cleanupTotal = useMemo(() => {
+		if (!metadata.costs) {
+			return null;
+		}
+		return sumUpkeep(cleanupCosts);
+	}, [metadata.costs, cleanupCosts]);
 	useEffect(() => {
-		onTotalChange(action.id, total);
-	}, [action.id, total, onTotalChange]);
+		onSortMetricsChange(action.id, {
+			cost: total,
+			cleanup: cleanupTotal,
+		});
+	}, [action.id, total, cleanupTotal, onSortMetricsChange]);
 	return (
 		<GenericActionCard
 			action={action}
@@ -268,16 +282,21 @@ function GenericActions({
 		[performAction],
 	);
 
-	const [actionTotals, setActionTotals] = useState<
-		Record<string, number | null>
+	const [actionSortMetrics, setActionSortMetrics] = useState<
+		Record<string, ActionSortMetrics>
 	>({});
-	const handleTotalChange = useCallback(
-		(actionId: string, total: number | null) => {
-			setActionTotals((previous) => {
-				if (previous[actionId] === total) {
+	const handleSortMetricsChange = useCallback(
+		(actionId: string, metrics: ActionSortMetrics) => {
+			setActionSortMetrics((previous) => {
+				const existing = previous[actionId];
+				if (
+					existing &&
+					existing.cost === metrics.cost &&
+					existing.cleanup === metrics.cleanup
+				) {
 					return previous;
 				}
-				return { ...previous, [actionId]: total };
+				return { ...previous, [actionId]: metrics };
 			});
 		},
 		[],
@@ -288,18 +307,30 @@ function GenericActions({
 			.map((action, index) => ({
 				action,
 				index,
-				total: actionTotals[action.id],
+				metrics: actionSortMetrics[action.id],
+				fallbackCost: sumNonActionCosts(action.baseCosts, actionCostResource),
 			}))
 			.sort((first, second) => {
-				const firstValue = first.total ?? Number.POSITIVE_INFINITY;
-				const secondValue = second.total ?? Number.POSITIVE_INFINITY;
-				if (firstValue !== secondValue) {
-					return firstValue - secondValue;
+				const firstCost = first.metrics?.cost ?? first.fallbackCost;
+				const secondCost = second.metrics?.cost ?? second.fallbackCost;
+				if (firstCost !== secondCost) {
+					return firstCost - secondCost;
+				}
+				const firstCleanup = first.metrics?.cleanup ?? 0;
+				const secondCleanup = second.metrics?.cleanup ?? 0;
+				if (firstCleanup !== secondCleanup) {
+					return firstCleanup - secondCleanup;
+				}
+				const nameComparison = first.action.name.localeCompare(
+					second.action.name,
+				);
+				if (nameComparison !== 0) {
+					return nameComparison;
 				}
 				return first.index - second.index;
 			})
 			.map((entry) => entry.action);
-	}, [actions, actionTotals]);
+	}, [actions, actionSortMetrics, actionCostResource]);
 
 	return (
 		<>
@@ -322,7 +353,7 @@ function GenericActions({
 					clearHoverCard={clearHoverCard}
 					formatRequirement={formatRequirement}
 					selectResourceDescriptor={selectResourceDescriptor}
-					onTotalChange={handleTotalChange}
+					onSortMetricsChange={handleSortMetricsChange}
 				/>
 			))}
 		</>
