@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
@@ -226,6 +226,48 @@ describe('<ResolutionCard />', () => {
 		expect(subActionContainer).toHaveStyle({ marginLeft: '2.625rem' });
 		expect(firstChangeContainer).toHaveStyle({ marginLeft: '3.5rem' });
 		expect(secondChangeContainer).toHaveStyle({ marginLeft: '3.5rem' });
+	});
+
+	it('shows phase icons and omits duplicate phase headlines in effect lists', () => {
+		const visibleTimeline: ActionLogLineDescriptor[] = [
+			{ text: '🌅 Dawn Phase', depth: 0, kind: 'headline' },
+			{ text: 'Gain 1 gold', depth: 1, kind: 'change' },
+		];
+		const resolution = createResolution({
+			source: {
+				kind: 'phase',
+				label: '🌅 Dawn Phase',
+				icon: '🌅',
+				id: 'dawn',
+			},
+			actorLabel: '🌅 Dawn Phase',
+			lines: ['🌅 Dawn Phase', '    Gain 1 gold'],
+			visibleLines: [],
+			visibleTimeline,
+		});
+
+		const { container } = render(
+			<ResolutionCard resolution={resolution} onContinue={() => {}} />,
+		);
+
+		const headerLabel = screen.getByText('Resolution');
+		const headerRow = headerLabel.parentElement?.parentElement?.parentElement;
+		if (!headerRow) {
+			throw new Error('Expected resolution header row to be present');
+		}
+		const iconContainer = headerRow.firstElementChild as HTMLElement | null;
+		if (!iconContainer) {
+			throw new Error('Expected phase icon container to be present');
+		}
+		expect(iconContainer.textContent?.trim()).toBe('🌅');
+
+		const effectsSection = screen.getByText('🪄 Effects');
+		const effectsContainer = effectsSection.parentElement;
+		if (!effectsContainer) {
+			throw new Error('Expected effects section to have a container');
+		}
+		expect(within(effectsContainer).queryByText('🌅 Dawn Phase')).toBeNull();
+		expect(container.textContent).toContain('Gain 1 gold');
 	});
 
 	it('falls back to simple line rendering for phase resolutions without timeline data', () => {

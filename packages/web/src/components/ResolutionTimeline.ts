@@ -20,6 +20,7 @@ interface CollectEffectEntriesOptions {
 interface BuildResolutionTimelineOptions {
 	actionIcon?: string;
 	actionName?: string;
+	headlinesToSkip?: readonly string[];
 }
 
 function buildTimelineTree(
@@ -179,9 +180,22 @@ function buildResolutionTimelineEntries(
 	}
 
 	const combinedHeadline = buildHeadline(options);
+	const skipHeadlines = new Set<string>();
+
+	if (combinedHeadline) {
+		skipHeadlines.add(combinedHeadline);
+	}
+
+	options?.headlinesToSkip?.forEach((headline) => {
+		const trimmed = headline?.trim();
+		if (trimmed) {
+			skipHeadlines.add(trimmed);
+		}
+	});
+
 	const effectEntries = adjustEntryLevels(
 		collectEffectEntries(nodes, {
-			skipHeadlines: combinedHeadline ? [combinedHeadline] : [],
+			skipHeadlines: Array.from(skipHeadlines),
 		}),
 	);
 
