@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { ActionTrace } from '@kingdom-builder/protocol';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
@@ -45,7 +46,41 @@ describe('SessionTransport runAiTurn', () => {
 		if (playerId === null) {
 			throw new Error('No AI controller was available.');
 		}
-		const runSpy = vi.spyOn(session, 'runAiTurn').mockResolvedValue(true);
+		const fakeTrace: ActionTrace = {
+			id: 'trace',
+			before: {
+				resources: {},
+				stats: {},
+				buildings: [],
+				lands: [],
+				passives: [],
+			},
+			after: {
+				resources: {},
+				stats: {},
+				buildings: [],
+				lands: [],
+				passives: [],
+			},
+		};
+		const performSpy = vi
+			.spyOn(session, 'performAction')
+			.mockReturnValue([fakeTrace]);
+		const advanceSpy = vi.spyOn(session, 'advancePhase');
+		vi.spyOn(session, 'getActionCosts').mockImplementation(() => {
+			return { gold: 2, invalid: null } as never;
+		});
+		const runSpy = vi
+			.spyOn(session, 'runAiTurn')
+			.mockImplementation(async (_player, overrides) => {
+				if (!overrides) {
+					return true;
+				}
+				await overrides.performAction?.('tax', {} as never);
+				await overrides.performAction?.('tax', {} as never);
+				await overrides.advance?.({} as never);
+				return true;
+			});
 		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
 			return await factory();
 		});
@@ -55,12 +90,21 @@ describe('SessionTransport runAiTurn', () => {
 		});
 		expect(result.sessionId).toBe(sessionId);
 		expect(result.ranTurn).toBe(true);
+		expect(result.actions).toHaveLength(1);
+		const [action] = result.actions;
+		expect(action.actionId).toBe('tax');
+		expect(action.costs).toEqual({ gold: 2 });
+		expect(Array.isArray(action.traces)).toBe(true);
+		expect(action.traces.length).toBeGreaterThan(0);
+		expect(result.phaseComplete).toBe(true);
 		expectSnapshotMetadata(result.snapshot.metadata);
 		expect(result.snapshot.game.currentPhase).toBeDefined();
 		expect(Array.isArray(result.snapshot.recentResourceGains)).toBe(true);
 		expect(Object.keys(result.registries.actions)).not.toHaveLength(0);
 		expectStaticMetadata(manager.getMetadata());
-		expect(runSpy).toHaveBeenCalledWith(playerId);
+		expect(runSpy).toHaveBeenCalledWith(playerId, expect.any(Object));
+		expect(performSpy).toHaveBeenCalledTimes(1);
+		expect(advanceSpy).not.toHaveBeenCalled();
 	});
 
 	it('rejects AI requests when controllers are missing', async () => {
