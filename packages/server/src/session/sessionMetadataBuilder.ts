@@ -182,6 +182,9 @@ const buildStatMetadata = () =>
 				icon: info.icon,
 				description: info.description,
 			};
+			if (info.displayAsPercent) {
+				descriptor.displayAsPercent = info.displayAsPercent;
+			}
 			if (info.addFormat) {
 				descriptor.format = { ...info.addFormat };
 			}

@@ -125,10 +125,20 @@ function createResourceMetadata(content) {
 
 function createStatMetadata(content) {
 	return Object.fromEntries(
-		Object.entries(content.STATS).map(([key, info]) => [
-			key,
-			createDescriptor(info.label, info.icon, info.description),
-		]),
+		Object.entries(content.STATS).map(([key, info]) => {
+			const descriptor = createDescriptor(
+				info.label,
+				info.icon,
+				info.description,
+			);
+			if (info.displayAsPercent !== undefined) {
+				descriptor.displayAsPercent = info.displayAsPercent;
+			}
+			if (info.addFormat) {
+				descriptor.format = { ...info.addFormat };
+			}
+			return [key, descriptor];
+		}),
 	);
 }
 
