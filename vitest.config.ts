@@ -23,6 +23,9 @@ export default defineConfig({
 	test: {
 		include: ['**/*.test.ts', '**/*.test.tsx'],
 		exclude: ['**/node_modules/**'],
+		setupFiles: [
+			path.resolve(__dirname, 'tests/setup/react-act-environment.ts'),
+		],
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'html'],
