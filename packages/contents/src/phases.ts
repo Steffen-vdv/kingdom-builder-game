@@ -48,7 +48,7 @@ export type PhaseTrigger = (typeof PhaseTrigger)[keyof typeof PhaseTrigger];
 export const PHASES: PhaseDef[] = [
 	phase(PhaseId.Growth)
 		.label('Growth')
-		.icon('🏗️')
+		.icon('🌳')
 		.step(
 			step(PhaseStepId.ResolveDynamicTriggers)
 				.title('Resolve dynamic triggers')
