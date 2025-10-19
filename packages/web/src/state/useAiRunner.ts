@@ -55,13 +55,12 @@ export function useAiRunner({
 				}
 			};
 			try {
-				const ranTurn = await runAiTurn(sessionId, activeId);
+				const result = await runAiTurn(sessionId, activeId);
 				if (fatalError !== null) {
 					return;
 				}
-				const snapshot = getSessionSnapshot(sessionId);
-				syncPhaseState(snapshot);
-				if (!ranTurn) {
+				syncPhaseState(result.snapshot);
+				if (!result.ranTurn) {
 					return;
 				}
 				if (!mountedRef.current) {

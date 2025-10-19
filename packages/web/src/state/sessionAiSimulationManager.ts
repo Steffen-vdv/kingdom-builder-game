@@ -5,6 +5,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { cloneValue } from './cloneValue';
 import type { SessionStateRecord } from './sessionStateStore';
+import type { SessionAiTurnResult } from './sessionTypes';
 
 interface SessionAiSimulationManagerDependencies {
 	runAiTurn: (request: SessionRunAiRequest) => Promise<SessionRunAiResponse>;
@@ -25,12 +26,28 @@ export class SessionAiSimulationManager {
 		this.#simulationCache = new Map();
 	}
 
-	async runAiTurn(playerId: SessionRunAiRequest['playerId']): Promise<boolean> {
+	async runAiTurn(
+		playerId: SessionRunAiRequest['playerId'],
+	): Promise<SessionAiTurnResult> {
 		const response = await this.#dependencies.runAiTurn({
 			sessionId: this.#sessionId,
 			playerId,
 		});
-		return response.ranTurn;
+		const record = this.#dependencies.getSessionRecord();
+		if (!record) {
+			const message = [
+				'Missing session record for AI turn in session',
+				`"${this.#sessionId}".`,
+			].join(' ');
+			throw new Error(message);
+		}
+		return {
+			ranTurn: response.ranTurn,
+			actions: cloneValue(response.actions),
+			phaseComplete: response.phaseComplete,
+			snapshot: record.snapshot,
+			registries: record.registries,
+		};
 	}
 
 	hasAiController(playerId: string): boolean {
