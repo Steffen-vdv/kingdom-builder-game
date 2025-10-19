@@ -54,7 +54,8 @@ describe('<ResolutionCard />', () => {
 		);
 
 		expect(screen.getByText('Action - Test Action')).toBeInTheDocument();
-		expect(screen.getByText('Played by Player One')).toBeInTheDocument();
+		const actionPlayerLabel = screen.getByLabelText('Player');
+		expect(actionPlayerLabel).toHaveTextContent('Player One');
 	});
 
 	it('renders custom source metadata when provided', () => {
@@ -74,7 +75,8 @@ describe('<ResolutionCard />', () => {
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
 		expect(screen.getByText('Growth Phase')).toBeInTheDocument();
-		expect(screen.getByText('Phase owner Player Two')).toBeInTheDocument();
+		const phasePlayerLabel = screen.getByLabelText('Player');
+		expect(phasePlayerLabel).toHaveTextContent('Player Two');
 	});
 
 	it('hides the continue button when acknowledgement is not required', () => {

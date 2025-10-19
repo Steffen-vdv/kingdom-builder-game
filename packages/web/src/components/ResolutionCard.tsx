@@ -198,8 +198,11 @@ function ResolutionCard({
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
 						</div>
 						{resolution.player ? (
-							<div className={joinClasses('text-right', CARD_META_TEXT_CLASS)}>
-								{`${resolvedLabels.player} ${playerName}`}
+							<div
+								className={joinClasses('text-right', CARD_META_TEXT_CLASS)}
+								aria-label="Player"
+							>
+								{playerName}
 							</div>
 						) : null}
 					</div>

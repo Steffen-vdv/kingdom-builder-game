@@ -390,9 +390,12 @@ describe('<HoverCard />', () => {
 			: `${resolvedSourceLabel} resolution`;
 		const headerMatches = screen.getAllByText(expectedHeader);
 		expect(headerMatches.length).toBeGreaterThan(0);
+		const playerLabels = screen.getAllByLabelText('Player');
 		expect(
-			screen.getByText(`Phase owner ${sessionPlayer.name}`),
-		).toBeInTheDocument();
+			playerLabels.some(
+				(playerLabel) => playerLabel.textContent === sessionPlayer.name,
+			),
+		).toBe(true);
 		const continueButton = screen.getByRole('button', {
 			name: 'Continue',
 		});
