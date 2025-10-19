@@ -62,6 +62,26 @@ export type ActionEffectGroupOption = z.infer<
 export type ActionEffectGroup = z.infer<typeof actionEffectGroupSchema>;
 export type ActionEffect = z.infer<typeof actionEffectSchema>;
 
+const actionCategoryLayoutSchema = z.enum([
+	'grid-primary',
+	'grid-secondary',
+	'list',
+]);
+
+export const actionCategorySchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	subtitle: z.string().optional(),
+	description: z.string().optional(),
+	icon: z.string(),
+	order: z.number(),
+	layout: actionCategoryLayoutSchema,
+	hideWhenEmpty: z.boolean().optional(),
+	analyticsKey: z.string().optional(),
+});
+
+export type ActionCategoryConfig = z.infer<typeof actionCategorySchema>;
+
 export const actionSchema = z.object({
 	id: z.string(),
 	name: z.string(),
