@@ -675,6 +675,7 @@ describe('useActionPerformer', () => {
 		const syncPhaseState = vi.fn();
 		const refresh = vi.fn();
 		const endTurn = vi.fn().mockResolvedValue(undefined);
+		const addLog = vi.fn();
 
 		const { result } = renderHook(() =>
 			useActionPerformer({

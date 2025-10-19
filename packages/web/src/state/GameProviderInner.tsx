@@ -216,6 +216,7 @@ export function GameProviderInner({
 		sessionId,
 		actionCostResource,
 		registries,
+		addLog,
 		addResolutionLog,
 		showResolution: handleShowResolution,
 		syncPhaseState: applyPhaseSnapshot,
