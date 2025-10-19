@@ -94,6 +94,23 @@ describe('<ResolutionCard />', () => {
 		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
 	});
 
+	it('applies custom class names to the card container', () => {
+		const resolution = createResolution({
+			requireAcknowledgement: false,
+		});
+
+		const { container } = render(
+			<ResolutionCard
+				className="log-entry-card"
+				resolution={resolution}
+				onContinue={() => {}}
+			/>,
+		);
+
+		const card = container.firstElementChild;
+		expect(card).toHaveClass('log-entry-card');
+	});
+
 	it('separates cost entries from effect entries', () => {
 		const resolution = createResolution({
 			visibleTimeline: [

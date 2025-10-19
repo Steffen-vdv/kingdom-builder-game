@@ -2,6 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
+import { ResolutionCard } from './ResolutionCard';
+import {
+	CARD_BASE_CLASS,
+	CARD_BODY_TEXT_CLASS,
+	CARD_LABEL_CLASS,
+	joinClasses,
+} from './common/cardStyles';
 
 interface LogPanelProps {
 	isOpen: boolean;
@@ -12,7 +19,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	const { log: entries, logOverflowed, sessionSnapshot } = useGameEngine();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
-	const listRef = useAnimate<HTMLUListElement>();
+	const listRef = useAnimate<HTMLDivElement>();
 	const pendingScrollRef = useRef(false);
 
 	useEffect(() => {
@@ -123,9 +130,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 		'relative flex h-full flex-col overflow-y-auto px-6 pb-6 pt-6',
 		'custom-scrollbar',
 	);
-	const listClasses = clsx(
-		'mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200',
-	);
+	const listClasses = clsx('mt-4 flex flex-col gap-6');
 	const closeButtonClasses = clsx(
 		'flex h-8 w-8 items-center justify-center rounded-full border',
 		'border-rose-500 bg-rose-500 text-base font-semibold leading-none text-white',
@@ -179,44 +184,71 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 			onClose();
 		}
 	};
+	const timestampClasses = clsx(
+		'text-xs font-semibold uppercase tracking-[0.3em]',
+		'text-slate-500 dark:text-slate-400',
+	);
+	const legacyCardLabelClass = joinClasses(
+		CARD_LABEL_CLASS,
+		'text-slate-600 dark:text-slate-300',
+	);
+	const legacyCardBodyClass = joinClasses(
+		CARD_BODY_TEXT_CLASS,
+		'whitespace-pre-wrap leading-relaxed',
+	);
+	const [playerA, playerB] = sessionSnapshot.game.players;
+	const playerAId = playerA?.id;
+	const playerBId = playerB?.id;
+	const entryWrapperClasses = 'space-y-3';
 	const logContent = (
 		<>
 			{header}
 			{overflowNotice}
-			<ul ref={listRef} className={listClasses}>
+			<div ref={listRef} className={listClasses}>
 				{entries.map((entry) => {
-					const [playerA, playerB] = sessionSnapshot.game.players;
-					const aId = playerA?.id;
-					const bId = playerB?.id;
 					const colorClass =
-						entry.playerId === aId
+						entry.playerId === playerAId
 							? 'log-entry-a'
-							: entry.playerId === bId
+							: entry.playerId === playerBId
 								? 'log-entry-b'
 								: '';
-					const entryClasses = clsx(
-						'text-sm font-mono leading-relaxed',
-						'whitespace-pre-wrap',
-						colorClass,
-					);
-					const entryText =
-						entry.kind === 'resolution'
-							? (entry.resolution.visibleLines.length
-									? entry.resolution.visibleLines
-									: entry.resolution.lines
-								).join('\n')
-							: entry.text;
+					if (entry.kind !== 'resolution') {
+						const legacyCardClass = joinClasses(
+							CARD_BASE_CLASS,
+							'pointer-events-auto',
+							'log-entry-card',
+							colorClass,
+						);
+						return (
+							<div
+								key={entry.id}
+								id={`game-log-entry-${entry.id}`}
+								className={entryWrapperClasses}
+							>
+								<div className={timestampClasses}>{entry.time}</div>
+								<div className={legacyCardClass}>
+									<div className={legacyCardLabelClass}>Legacy log entry</div>
+									<div className={legacyCardBodyClass}>{entry.text}</div>
+								</div>
+							</div>
+						);
+					}
 					return (
-						<li
+						<div
 							key={entry.id}
 							id={`game-log-entry-${entry.id}`}
-							className={entryClasses}
+							className={entryWrapperClasses}
 						>
-							[{entry.time}] {entryText}
-						</li>
+							<div className={timestampClasses}>{entry.time}</div>
+							<ResolutionCard
+								className={clsx('log-entry-card', colorClass)}
+								resolution={entry.resolution}
+								onContinue={() => {}}
+							/>
+						</div>
 					);
 				})}
-			</ul>
+			</div>
 		</>
 	);
 
