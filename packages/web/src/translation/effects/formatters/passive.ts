@@ -222,8 +222,19 @@ registerEffectFormatter('passive', 'add', {
 			(effect.params?.['name'] as string | undefined) ??
 			descriptor.label ??
 			'Passive';
-		const prefix = icon ? `${icon} ` : '';
-		const label = `${prefix}${name}`.trim();
+		const trimmedIcon = icon.trim();
+		const generalPassiveIcon = context.assets.passive.icon?.trim() || '♾️';
+		const nameLabel = name.trim();
+		const labelParts: string[] = [generalPassiveIcon].filter(
+			(part) => part.length > 0,
+		);
+		if (trimmedIcon.length > 0 && trimmedIcon !== generalPassiveIcon) {
+			labelParts.push(trimmedIcon);
+		}
+		if (nameLabel.length > 0) {
+			labelParts.push(nameLabel);
+		}
+		const decoratedLabel = labelParts.join(' ').trim();
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
 		const items = [...inner];
@@ -234,15 +245,15 @@ registerEffectFormatter('passive', 'add', {
 				`${durationPrefix}Duration: Until player's next ${durationLabel}`.trim();
 			items.push(durationDescription);
 		}
-		if (!label) {
+		if (decoratedLabel.length === 0) {
 			return items;
 		}
 		if (items.length === 0) {
-			return `${label} added`;
+			return `${decoratedLabel} activated`;
 		}
 		return [
 			{
-				title: `${label} added`,
+				title: `${decoratedLabel} activated`,
 				items,
 			},
 		];

@@ -119,7 +119,7 @@ describe('passive formatter duration metadata', () => {
 		]);
 		expect(log).toEqual([
 			{
-				title: '✨ Festival Spirit added',
+				title: '♾️ ✨ Festival Spirit activated',
 				items: [`✨ Duration: Until player's next ${durationLabel}`],
 			},
 		]);

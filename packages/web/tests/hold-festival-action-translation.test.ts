@@ -81,6 +81,25 @@ describe('hold festival action translation', () => {
 				/\s{2,}/gu,
 				' ',
 			);
+		const generalPassiveIcon = (details.passivePrefixIcon ?? '').trim();
+		const specificPassiveIcon = (details.passiveIcon ?? '').trim();
+		const passiveHeadingParts: string[] = [];
+		if (generalPassiveIcon.length > 0) {
+			passiveHeadingParts.push(generalPassiveIcon);
+		}
+		if (
+			specificPassiveIcon.length > 0 &&
+			specificPassiveIcon !== generalPassiveIcon
+		) {
+			passiveHeadingParts.push(specificPassiveIcon);
+		}
+		if ((details.passiveName ?? '').trim().length > 0) {
+			passiveHeadingParts.push(details.passiveName);
+		}
+		const passiveHeading = passiveHeadingParts
+			.join(' ')
+			.replace(/\s{2,}/gu, ' ')
+			.trim();
 		expect(log).toEqual([
 			{
 				text: `${details.festival.icon} ${details.festival.name}`,
@@ -88,7 +107,7 @@ describe('hold festival action translation', () => {
 				kind: 'headline',
 			},
 			{
-				text: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} added`,
+				text: `${passiveHeading} activated`,
 				depth: 1,
 				kind: 'group',
 			},
