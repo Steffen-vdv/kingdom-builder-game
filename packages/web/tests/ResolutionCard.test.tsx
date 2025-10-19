@@ -111,8 +111,6 @@ describe('<ResolutionCard />', () => {
 		const effectsSection = screen.getByText('🪄 Effects');
 		const costSectionContainer = costSection.parentElement;
 		const effectsSectionContainer = effectsSection.parentElement;
-		const actionCost = screen.getByText('💲 Action cost');
-		const actionCostContainer = actionCost.parentElement;
 		const goldCost = screen.getByText('Gold -3');
 		const goldCostContainer = goldCost.parentElement;
 		const effectHeadline = screen.getByText('🏗️ Develop');
@@ -123,7 +121,6 @@ describe('<ResolutionCard />', () => {
 		if (
 			!costSectionContainer ||
 			!effectsSectionContainer ||
-			!actionCostContainer ||
 			!goldCostContainer ||
 			!effectHeadlineContainer ||
 			!effectEntryContainer
@@ -132,8 +129,8 @@ describe('<ResolutionCard />', () => {
 		}
 
 		expect(costSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
-		expect(actionCostContainer).toHaveStyle({ marginLeft: '0.875rem' });
-		expect(goldCostContainer).toHaveStyle({ marginLeft: '1.75rem' });
+		expect(screen.queryByText('💲 Action cost')).toBeNull();
+		expect(goldCostContainer).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(effectsSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
 		expect(effectHeadlineContainer).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(effectEntryContainer).toHaveStyle({ marginLeft: '1.75rem' });
@@ -175,11 +172,9 @@ describe('<ResolutionCard />', () => {
 		const costSectionContainer = costSection.parentElement;
 		const effectsSectionContainer = effectsSection.parentElement;
 
-		const actionCost = screen.getByText('💲 Action cost');
 		const goldCost = screen.getByText('Gold -3');
 		const discountGroup = screen.getByText('Discounts applied');
 		const happinessCost = screen.getByText('Happiness -1');
-		const actionCostContainer = actionCost.parentElement;
 		const goldCostContainer = goldCost.parentElement;
 		const discountContainer = discountGroup.parentElement;
 		const happinessContainer = happinessCost.parentElement;
@@ -187,7 +182,6 @@ describe('<ResolutionCard />', () => {
 		if (
 			!costSectionContainer ||
 			!effectsSectionContainer ||
-			!actionCostContainer ||
 			!goldCostContainer ||
 			!discountContainer ||
 			!happinessContainer
@@ -198,10 +192,10 @@ describe('<ResolutionCard />', () => {
 		}
 
 		expect(costSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
-		expect(actionCostContainer).toHaveStyle({ marginLeft: '0.875rem' });
-		expect(goldCostContainer).toHaveStyle({ marginLeft: '1.75rem' });
-		expect(discountContainer).toHaveStyle({ marginLeft: '2.625rem' });
-		expect(happinessContainer).toHaveStyle({ marginLeft: '3.5rem' });
+		expect(screen.queryByText('💲 Action cost')).toBeNull();
+		expect(goldCostContainer).toHaveStyle({ marginLeft: '0.875rem' });
+		expect(discountContainer).toHaveStyle({ marginLeft: '1.75rem' });
+		expect(happinessContainer).toHaveStyle({ marginLeft: '2.625rem' });
 
 		expect(screen.queryByText('🛠️ Forge Relic')).toBeNull();
 
