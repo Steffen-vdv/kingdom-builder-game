@@ -261,13 +261,10 @@ export function useActionPerformer({
 					stepDef,
 					logHeadline,
 				);
-				const playerIdentity = {
-					id: playerAfter.id,
-					name: playerAfter.name,
-				};
+				const playerIdentity = { id: playerAfter.id, name: playerAfter.name };
 				syncPhaseState(snapshotAfter);
 				refresh();
-				await presentResolutionOrLog({
+				const shouldAddLog = await presentResolutionOrLog({
 					action: actionMeta,
 					logLines,
 					summaries: filtered,
@@ -276,6 +273,9 @@ export function useActionPerformer({
 					addLog,
 					timeline,
 				});
+				if (shouldAddLog) {
+					addLog(logLines, playerIdentity);
+				}
 				if (!mountedRef.current || snapshotAfter.game.conclusion) {
 					return;
 				}

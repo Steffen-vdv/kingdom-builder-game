@@ -6,7 +6,10 @@ import type {
 	GameConfig,
 	PopulationConfig,
 } from '../config/schema';
-import type { ActionParametersPayload } from '../actions/contracts';
+import type {
+	ActionParametersPayload,
+	ActionTrace,
+} from '../actions/contracts';
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
@@ -107,6 +110,17 @@ export interface SessionRunAiRequest extends SessionIdentifier {
 export interface SessionRunAiResponse extends SessionCreateResponse {
 	ranTurn: boolean;
 }
+
+export interface SessionAiActionLogEntry {
+	turn: number;
+	sequence: number;
+	playerId: SessionPlayerId;
+	actionId: string;
+	traces: ActionTrace[];
+	params?: ActionParametersPayload;
+}
+
+export const SESSION_AI_ACTION_LOG_KEY = 'ai:action';
 
 export interface SessionSimulateRequest extends SessionIdentifier {
 	playerId: SessionPlayerId;

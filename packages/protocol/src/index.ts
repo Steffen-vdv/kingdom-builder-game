@@ -160,10 +160,15 @@ export type {
 	SessionActionCostResponse,
 	SessionActionRequirementRequest,
 	SessionActionRequirementResponse,
+} from './session/contracts';
+
+export { SESSION_AI_ACTION_LOG_KEY } from './session/contracts';
+export type {
 	SessionActionOptionsRequest,
 	SessionActionOptionsResponse,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
+	SessionAiActionLogEntry,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 } from './session/contracts';

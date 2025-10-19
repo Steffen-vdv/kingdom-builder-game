@@ -291,7 +291,7 @@ export async function presentResolutionOrLog({
 	showResolution,
 	addLog,
 	timeline,
-}: PresentResolutionOptions) {
+}: PresentResolutionOptions): Promise<boolean> {
 	const source = {
 		kind: 'action' as const,
 		label: 'Action',
@@ -313,8 +313,10 @@ export async function presentResolutionOrLog({
 			actorLabel: 'Played by',
 			timeline,
 		});
+		return true;
 	} catch (error) {
 		void error;
 		addLog(logLines, playerIdentity);
+		return false;
 	}
 }

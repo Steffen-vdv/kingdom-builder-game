@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Resource as CResource } from '@kingdom-builder/contents';
+import {
+	SESSION_AI_ACTION_LOG_KEY,
+	type SessionAiActionLogEntry,
+} from '@kingdom-builder/protocol';
 import { performAction, advance } from '../../src';
 import {
 	createTaxCollectorController,
@@ -50,15 +54,41 @@ describe('tax collector AI controller', () => {
 		);
 		const endPhase = vi.fn(() => advance(engineContext));
 
+		const initialTurn = engineContext.game.turn;
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+		});
+
+		expect(perform).toHaveBeenCalledTimes(1);
+		expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, engineContext);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(1);
+		expect(endPhase).not.toHaveBeenCalled();
+		const firstLogs = engineContext.drainEffectLogs();
+		const initialEntries = firstLogs.get(SESSION_AI_ACTION_LOG_KEY) ?? [];
+		expect(initialEntries).toHaveLength(1);
+		const [firstEntry] = initialEntries as SessionAiActionLogEntry[];
+		expect(firstEntry.turn).toBe(initialTurn);
+		expect(firstEntry.sequence).toBe(0);
+		expect(firstEntry.traces).toHaveLength(1);
+
 		await controller(engineContext, {
 			performAction: perform,
 			advance: endPhase,
 		});
 
 		expect(perform).toHaveBeenCalledTimes(2);
-		expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, engineContext);
 		expect(perform).toHaveBeenNthCalledWith(2, TAX_ACTION_ID, engineContext);
 		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
 		expect(endPhase).toHaveBeenCalledTimes(1);
+		const secondLogs = engineContext.drainEffectLogs();
+		const followupEntries = secondLogs.get(SESSION_AI_ACTION_LOG_KEY) ?? [];
+		expect(followupEntries).toHaveLength(1);
+		const [secondEntry] = followupEntries as SessionAiActionLogEntry[];
+		expect(secondEntry.turn).toBe(initialTurn);
+		expect(secondEntry.sequence).toBe(1);
+		expect(secondEntry.traces).toHaveLength(1);
+		expect(engineContext.game.turn).toBe(initialTurn + 1);
 	});
 });
