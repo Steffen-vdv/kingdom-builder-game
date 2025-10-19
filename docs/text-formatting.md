@@ -43,7 +43,8 @@ Use these prompts while developing and when filling out the PR template:
    pulled from the approved tables.
 3. When a visual surface needs new icons, labels, or descriptions, update the
    relevant definitions in `@kingdom-builder/contents` and rerun
-   `npm run test:ui` instead of patching fallback metadata in `packages/web`.
+   `npm run generate:snapshots` instead of patching fallback metadata in
+   `packages/web`.
 4. Confirm that you reviewed the Summary, Description, and Log voices for each
    affected surface and adjusted copy to match the definitions above.
 
@@ -52,7 +53,7 @@ Use these prompts while developing and when filling out the PR template:
 > - [ ] Linked the translator(s)/formatter(s) reused, referencing Sections 2–3.
 > - [ ] Listed every canonical keyword/icon/helper touched from Section 4.
 > - [ ] Updated `@kingdom-builder/contents` (not web fallbacks) for new icons,
->       labels, or descriptions and reran `npm run test:ui`.
+>       labels, or descriptions and reran `npm run generate:snapshots`.
 > - [ ] Confirmed Summary/Description/Log voices were audited for affected UI.
 
 ## 1. Translation Pipeline Overview
