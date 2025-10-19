@@ -213,6 +213,7 @@ const buildPhaseMetadata = (): Record<string, SessionPhaseMetadata> => {
 };
 
 const buildRuleSnapshot = (resourceKey: string): RuleSnapshot => ({
+	defaultActionAPCost: 1,
 	tieredResourceKey: resourceKey,
 	tierDefinitions: [
 		{

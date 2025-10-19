@@ -185,6 +185,7 @@ export function createEngineSession(
 		},
 		getRuleSnapshot() {
 			const {
+				defaultActionAPCost,
 				tieredResourceKey,
 				tierDefinitions,
 				winConditions = [],
@@ -192,6 +193,7 @@ export function createEngineSession(
 			const clonedDefinitions = structuredClone(tierDefinitions);
 			const clonedWinConditions = cloneWinConditions(winConditions);
 			return {
+				defaultActionAPCost,
 				tieredResourceKey,
 				tierDefinitions: clonedDefinitions,
 				winConditions: clonedWinConditions,

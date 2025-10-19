@@ -7,6 +7,7 @@ import { useSlotMetadata } from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
+	mergeDefaultActionCost,
 	playerHasRequiredResources,
 	sumNonActionCosts,
 	type ResourceDescriptorSelector,
@@ -67,6 +68,7 @@ export default function DevelopOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		ruleSnapshot,
 	} = useGameEngine();
 	const { sessionView } = selectors;
 	const slotMetadata = useSlotMetadata();
@@ -89,17 +91,21 @@ export default function DevelopOptions({
 		return developments
 			.map((development) => {
 				const metadataCosts = costMap.get(development.id);
-				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(
+				const costs = mergeDefaultActionCost(
 					metadataCosts ?? {},
-				)) {
-					costs[costKey] = costAmount ?? 0;
-				}
+					actionCostResource,
+					ruleSnapshot.defaultActionAPCost,
+				);
 				const total = sumNonActionCosts(costs, actionCostResource);
 				return { development, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [developments, actionCostResource, costMap]);
+	}, [
+		developments,
+		actionCostResource,
+		costMap,
+		ruleSnapshot.defaultActionAPCost,
+	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

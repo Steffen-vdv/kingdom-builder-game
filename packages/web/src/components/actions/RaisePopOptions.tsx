@@ -20,6 +20,7 @@ import type { RegistryMetadataDescriptor } from '../../contexts/RegistryMetadata
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
+	mergeDefaultActionCost,
 	playerHasRequiredResources,
 	type ResourceDescriptorSelector,
 } from './utils';
@@ -58,6 +59,7 @@ export default function RaisePopOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		ruleSnapshot,
 	} = useGameEngine();
 	const { sessionView } = selectors;
 	const { populations } = useRegistryMetadata();
@@ -148,12 +150,15 @@ export default function RaisePopOptions({
 	);
 	const actionInfo = sessionView.actions.get(action.id);
 	const actionFocus = normalizeActionFocus(actionInfo?.focus ?? action.focus);
-	const costs = useMemo(() => {
-		const entries = Object.entries(metadata.costs ?? {});
-		return Object.fromEntries(
-			entries.map(([resourceKey, amount]) => [resourceKey, amount ?? 0]),
-		) as Record<string, number>;
-	}, [metadata.costs]);
+	const costs = useMemo(
+		() =>
+			mergeDefaultActionCost(
+				metadata.costs,
+				actionCostResource,
+				ruleSnapshot.defaultActionAPCost,
+			),
+		[metadata.costs, actionCostResource, ruleSnapshot.defaultActionAPCost],
+	);
 	const costsReady = metadata.costs !== undefined;
 	const fallbackRequirementFailures = useMemo<SessionActionRequirementList>(
 		() => session.getActionRequirements(action.id),

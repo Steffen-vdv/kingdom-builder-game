@@ -169,6 +169,7 @@ export interface SessionPassiveRecordSnapshot extends SessionPassiveSummary {
 }
 
 export interface SessionRuleSnapshot {
+	defaultActionAPCost: number;
 	tieredResourceKey: string;
 	tierDefinitions: HappinessTierDefinition[];
 	winConditions: WinConditionDefinition[];

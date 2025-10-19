@@ -58,6 +58,7 @@ export function cloneRuleSnapshot(
 	ruleSnapshot: SessionRuleSnapshot,
 ): SessionRuleSnapshot {
 	return Object.freeze({
+		defaultActionAPCost: ruleSnapshot.defaultActionAPCost,
 		tieredResourceKey: ruleSnapshot.tieredResourceKey,
 		tierDefinitions: structuredClone(ruleSnapshot.tierDefinitions),
 		winConditions: structuredClone(ruleSnapshot.winConditions),

@@ -10,6 +10,7 @@ import { useAnimate } from '../../utils/useAutoAnimate';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
+	mergeDefaultActionCost,
 	playerHasRequiredResources,
 	sumNonActionCosts,
 	type ResourceDescriptorSelector,
@@ -53,6 +54,7 @@ export default function DemolishOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		ruleSnapshot,
 	} = useGameEngine();
 	const { sessionView } = selectors;
 	const buildingIds = useMemo(
@@ -76,12 +78,11 @@ export default function DemolishOptions({
 					return null;
 				}
 				const metadataCosts = costMap.get(buildingId);
-				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(
+				const costs = mergeDefaultActionCost(
 					metadataCosts ?? {},
-				)) {
-					costs[costKey] = costAmount ?? 0;
-				}
+					actionCostResource,
+					ruleSnapshot.defaultActionAPCost,
+				);
 				const total = sumNonActionCosts(costs, actionCostResource);
 				const focus = normalizeActionFocus(building.focus);
 				return { id: buildingId, building, costs, total, focus };
@@ -103,7 +104,13 @@ export default function DemolishOptions({
 				}
 				return first.building.name.localeCompare(second.building.name);
 			});
-	}, [buildingIds, sessionView.buildings, actionCostResource, costMap]);
+	}, [
+		buildingIds,
+		sessionView.buildings,
+		actionCostResource,
+		costMap,
+		ruleSnapshot.defaultActionAPCost,
+	]);
 
 	if (entries.length === 0) {
 		return null;

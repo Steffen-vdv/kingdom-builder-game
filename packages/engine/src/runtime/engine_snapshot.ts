@@ -182,11 +182,13 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 
 function cloneRuleSnapshot(context: EngineContext): SessionRuleSnapshot {
 	const {
+		defaultActionAPCost,
 		tieredResourceKey,
 		tierDefinitions,
 		winConditions = [],
 	} = context.services.rules;
 	return {
+		defaultActionAPCost,
 		tieredResourceKey,
 		tierDefinitions: structuredClone(tierDefinitions),
 		winConditions: structuredClone(winConditions),

@@ -14,6 +14,7 @@ import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
+	mergeDefaultActionCost,
 	type ResourceDescriptorSelector,
 } from './utils';
 import type { PendingActionState } from './GenericActions';
@@ -40,6 +41,7 @@ interface GenericActionCardProps {
 	) => void;
 	translationContext: TranslationContext;
 	actionCostResource: string;
+	defaultActionAPCost: number;
 	performAction: (
 		action: Action,
 		params?: Record<string, unknown>,
@@ -63,21 +65,22 @@ function GenericActionCard({
 	handleOptionSelect,
 	translationContext,
 	actionCostResource,
+	defaultActionAPCost,
 	performAction,
 	handleHoverCard,
 	clearHoverCard,
 	formatRequirement,
 	selectResourceDescriptor,
 }: GenericActionCardProps) {
-	const costs = useMemo(() => {
-		if (!metadata.costs) {
-			return {} as Record<string, number>;
-		}
-		const entries = Object.entries(metadata.costs).map(
-			([resourceKey, cost]) => [resourceKey, cost ?? 0],
-		);
-		return Object.fromEntries(entries) as Record<string, number>;
-	}, [metadata.costs]);
+	const costs = useMemo(
+		() =>
+			mergeDefaultActionCost(
+				metadata.costs,
+				actionCostResource,
+				defaultActionAPCost,
+			),
+		[metadata.costs, actionCostResource, defaultActionAPCost],
+	);
 	const costsReady = metadata.costs !== undefined;
 	const requirementsReady = metadata.requirements !== undefined;
 	const requirementFailures = metadata.requirements ?? [];

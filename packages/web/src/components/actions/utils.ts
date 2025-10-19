@@ -71,3 +71,32 @@ export function formatMissingResources(
 	}
 	return `Need ${missing.join(', ')}`;
 }
+
+export function mergeDefaultActionCost(
+	costs: Record<string, number | undefined> | undefined,
+	actionCostResource: string,
+	defaultActionCost: number | undefined,
+): Record<string, number> {
+	const normalized: Record<string, number> = {};
+	for (const [resourceKey, value] of Object.entries(costs ?? {})) {
+		const normalizedAmount = Number(value ?? 0);
+		if (!Number.isFinite(normalizedAmount)) {
+			continue;
+		}
+		normalized[resourceKey] = normalizedAmount;
+	}
+	if (!actionCostResource) {
+		return normalized;
+	}
+	if (normalized[actionCostResource] !== undefined) {
+		return normalized;
+	}
+	if (
+		typeof defaultActionCost !== 'number' ||
+		!Number.isFinite(defaultActionCost)
+	) {
+		return normalized;
+	}
+	normalized[actionCostResource] = defaultActionCost;
+	return normalized;
+}

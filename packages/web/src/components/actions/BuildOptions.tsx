@@ -11,6 +11,7 @@ import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
+	mergeDefaultActionCost,
 	playerHasRequiredResources,
 	sumNonActionCosts,
 	type ResourceDescriptorSelector,
@@ -60,6 +61,7 @@ export default function BuildOptions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		ruleSnapshot,
 	} = useGameEngine();
 	const { sessionView } = selectors;
 	const requirementIcons = useMemo(
@@ -87,25 +89,33 @@ export default function BuildOptions({
 			.filter((building) => !owned.has(building.id))
 			.map((building) => {
 				const metadataCosts = costMap.get(building.id);
-				const costs: Record<string, number> = {};
+				const combinedCosts: Record<string, number | undefined> = {};
 				for (const [costKey, costAmount] of Object.entries(
 					building.costs ?? {},
 				)) {
-					costs[costKey] = costAmount ?? 0;
+					combinedCosts[costKey] = costAmount ?? 0;
 				}
 				for (const [costKey, costAmount] of Object.entries(
 					metadataCosts ?? {},
 				)) {
-					if (costAmount === undefined) {
-						continue;
-					}
-					costs[costKey] = costAmount;
+					combinedCosts[costKey] = costAmount ?? 0;
 				}
+				const costs = mergeDefaultActionCost(
+					combinedCosts,
+					actionCostResource,
+					ruleSnapshot.defaultActionAPCost,
+				);
 				const total = sumNonActionCosts(costs, actionCostResource);
 				return { building, costs, total };
 			})
 			.sort((first, second) => first.total - second.total);
-	}, [buildings, actionCostResource, player.buildings.size, costMap]);
+	}, [
+		buildings,
+		actionCostResource,
+		player.buildings.size,
+		costMap,
+		ruleSnapshot.defaultActionAPCost,
+	]);
 	const actionHoverTitle = formatIconTitle(
 		actionInfo?.icon,
 		actionInfo?.name ?? action.name,

@@ -47,6 +47,7 @@ interface GenericActionEntryProps {
 	) => void;
 	translationContext: TranslationContext;
 	actionCostResource: string;
+	defaultActionAPCost: number;
 	performAction: (
 		action: Action,
 		params?: Record<string, unknown>,
@@ -70,6 +71,7 @@ function GenericActionEntry({
 	handleOptionSelect,
 	translationContext,
 	actionCostResource,
+	defaultActionAPCost,
 	performAction,
 	handleHoverCard,
 	clearHoverCard,
@@ -106,6 +108,7 @@ function GenericActionEntry({
 			handleOptionSelect={handleOptionSelect}
 			translationContext={translationContext}
 			actionCostResource={actionCostResource}
+			defaultActionAPCost={defaultActionAPCost}
 			performAction={performAction}
 			handleHoverCard={handleHoverCard}
 			clearHoverCard={clearHoverCard}
@@ -135,6 +138,7 @@ function GenericActions({
 		handleHoverCard,
 		clearHoverCard,
 		actionCostResource,
+		ruleSnapshot,
 	} = useGameEngine();
 	const { sessionView } = selectors;
 	const formatRequirement = (requirement: string) => requirement;
@@ -317,6 +321,7 @@ function GenericActions({
 					handleOptionSelect={handleOptionSelect}
 					translationContext={translationContext}
 					actionCostResource={actionCostResource}
+					defaultActionAPCost={ruleSnapshot.defaultActionAPCost}
 					performAction={performAction}
 					handleHoverCard={handleHoverCard}
 					clearHoverCard={clearHoverCard}
