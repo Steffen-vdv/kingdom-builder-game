@@ -31,6 +31,7 @@ import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import { hasAiController } from './sessionAi';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -81,14 +82,14 @@ export function GameProviderInner({
 		const { activePlayerId, opponentId } = sessionSnapshot.game;
 		return (
 			players.find((player) => {
-				return !sessionAdapter.hasAiController(player.id);
+				return !hasAiController(sessionId, player.id);
 			}) ??
 			players.find((player) => player.id === activePlayerId) ??
 			players.find((player) => player.id === opponentId) ??
 			players[0]
 		);
 	}, [
-		sessionAdapter,
+		sessionId,
 		sessionSnapshot.game.players,
 		sessionSnapshot.game.activePlayerId,
 		sessionSnapshot.game.opponentId,
@@ -227,7 +228,7 @@ export function GameProviderInner({
 	});
 
 	useAiRunner({
-		session: sessionAdapter,
+		sessionId,
 		sessionSnapshot,
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,

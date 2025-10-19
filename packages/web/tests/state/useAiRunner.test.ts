@@ -1,21 +1,33 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+const sessionAiMocks = vi.hoisted(() => ({
+	hasAiController: vi.fn(),
+	runAiTurn: vi.fn(),
+	enqueueSessionTask: vi.fn(),
+}));
+
+vi.mock('../../src/state/sessionAi', () => ({
+	hasAiController: sessionAiMocks.hasAiController,
+	runAiTurn: sessionAiMocks.runAiTurn,
+	enqueueSessionTask: sessionAiMocks.enqueueSessionTask,
+}));
+
 import { useAiRunner } from '../../src/state/useAiRunner';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
-import {
-	createResourceKeys,
-	createSessionRegistriesPayload,
-} from '../helpers/sessionRegistries';
-import { createRemoteSessionAdapter } from '../helpers/remoteSessionAdapter';
+import { createResourceKeys } from '../helpers/sessionRegistries';
 import { clearSessionStateStore } from '../../src/state/sessionStateStore';
+import * as sessionStateStoreModule from '../../src/state/sessionStateStore';
 
 describe('useAiRunner', () => {
 	beforeEach(() => {
 		clearSessionStateStore();
+		sessionAiMocks.hasAiController.mockReset();
+		sessionAiMocks.runAiTurn.mockReset();
+		sessionAiMocks.enqueueSessionTask.mockReset();
 	});
 
 	it('forwards fatal errors from the action phase runner', async () => {
@@ -48,18 +60,17 @@ describe('useAiRunner', () => {
 			currentStep: phases[0]?.id,
 			phaseIndex: 0,
 		});
-		const registries = createSessionRegistriesPayload();
-		const { adapter, api, cleanup } = createRemoteSessionAdapter({
-			sessionId: 'session-ai',
-			snapshot: sessionState,
-			registries,
-		});
-		api.setNextRunAiResponse({
-			sessionId: 'session-ai',
-			snapshot: sessionState,
-			registries,
-			ranTurn: true,
-		});
+		sessionAiMocks.hasAiController.mockReturnValue(true);
+		sessionAiMocks.runAiTurn.mockResolvedValue(true);
+		sessionAiMocks.enqueueSessionTask.mockImplementation(
+			async <T>(sessionId: string, task: () => Promise<T> | T) => {
+				void sessionId;
+				return await task();
+			},
+		);
+		const getSnapshotSpy = vi
+			.spyOn(sessionStateStoreModule, 'getSessionSnapshot')
+			.mockReturnValue(sessionState);
 		const fatalError = new Error('failed to reach action phase');
 		const runUntilActionPhaseCore = vi
 			.fn<[], Promise<void>>()
@@ -70,7 +81,7 @@ describe('useAiRunner', () => {
 
 		renderHook(() =>
 			useAiRunner({
-				session: adapter,
+				sessionId: 'session-ai',
 				sessionSnapshot: sessionState,
 				runUntilActionPhaseCore,
 				syncPhaseState,
@@ -90,7 +101,11 @@ describe('useAiRunner', () => {
 		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledTimes(1);
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
-		cleanup();
+		expect(sessionAiMocks.runAiTurn).toHaveBeenCalledWith(
+			'session-ai',
+			activePlayer.id,
+		);
+		getSnapshotSpy.mockRestore();
 	});
 
 	it('stops background turns when the AI run reports a fatal error', async () => {
@@ -123,21 +138,20 @@ describe('useAiRunner', () => {
 			currentStep: phases[0]?.id,
 			phaseIndex: 0,
 		});
-		const registries = createSessionRegistriesPayload();
-		const { adapter, cleanup } = createRemoteSessionAdapter({
-			sessionId: 'session-ai',
-			snapshot: sessionState,
-			registries,
-		});
+		sessionAiMocks.hasAiController.mockReturnValue(true);
 		const fatalError = new Error('fatal AI failure');
 		const onFatalSessionError = vi.fn();
-		vi.spyOn(adapter, 'runAiTurn').mockRejectedValueOnce(fatalError);
+		sessionAiMocks.runAiTurn.mockRejectedValueOnce(fatalError);
+		sessionAiMocks.enqueueSessionTask.mockResolvedValue(undefined);
+		const getSnapshotSpy = vi
+			.spyOn(sessionStateStoreModule, 'getSessionSnapshot')
+			.mockReturnValue(sessionState);
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
 
 		renderHook(() =>
 			useAiRunner({
-				session: adapter,
+				sessionId: 'session-ai',
 				sessionSnapshot: sessionState,
 				runUntilActionPhaseCore: vi.fn(),
 				syncPhaseState,
@@ -152,6 +166,6 @@ describe('useAiRunner', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
-		cleanup();
+		getSnapshotSpy.mockRestore();
 	});
 });
