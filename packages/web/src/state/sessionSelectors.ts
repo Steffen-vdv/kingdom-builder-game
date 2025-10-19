@@ -46,6 +46,9 @@ const createActionOption = (
 	order: definition.order,
 	category: definition.category,
 	focus: definition.focus,
+	baseCosts: definition.baseCosts
+		? cloneRecord(definition.baseCosts)
+		: undefined,
 });
 const createBuildingOption = (
 	id: string,

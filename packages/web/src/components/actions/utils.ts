@@ -19,9 +19,12 @@ export function playerHasRequiredResources(
 }
 
 export function sumNonActionCosts(
-	costs: Record<string, number>,
+	costs: Record<string, number | undefined> | undefined,
 	actionCostResource: string,
 ): number {
+	if (!costs) {
+		return 0;
+	}
 	return Object.entries(costs).reduce((sum, [resourceKey, requiredAmount]) => {
 		if (resourceKey === actionCostResource) {
 			return sum;
@@ -32,6 +35,52 @@ export function sumNonActionCosts(
 		}
 		return sum + neededAmount;
 	}, 0);
+}
+
+export function sumUpkeep(
+	upkeep: Record<string, number | undefined> | undefined,
+): number {
+	if (!upkeep) {
+		return 0;
+	}
+	return Object.values(upkeep).reduce<number>((sum, amount) => {
+		const normalized = Number(amount ?? 0);
+		if (!Number.isFinite(normalized)) {
+			return sum;
+		}
+		return sum + normalized;
+	}, 0);
+}
+
+const CLEANUP_COST_PATTERN = /^cleanup[:.](.+)$/i;
+
+export function splitActionCostMap(
+	costMap: Record<string, number | undefined> | undefined,
+): {
+	costs: Record<string, number>;
+	cleanup: Record<string, number>;
+} {
+	const costs: Record<string, number> = {};
+	const cleanup: Record<string, number> = {};
+	if (!costMap) {
+		return { costs, cleanup };
+	}
+	for (const [key, value] of Object.entries(costMap)) {
+		const normalized = Number(value ?? 0);
+		if (!Number.isFinite(normalized)) {
+			continue;
+		}
+		const cleanupMatch = key.match(CLEANUP_COST_PATTERN);
+		if (cleanupMatch) {
+			const resourceKey = cleanupMatch[1]?.trim();
+			if (resourceKey) {
+				cleanup[resourceKey] = normalized;
+			}
+			continue;
+		}
+		costs[key] = normalized;
+	}
+	return { costs, cleanup };
 }
 
 export function getOptionalProperty<T>(
