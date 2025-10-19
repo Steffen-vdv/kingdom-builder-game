@@ -19,6 +19,30 @@ const clone = <T>(value: T): T => {
 	return JSON.parse(JSON.stringify(value)) as T;
 };
 
+export const createEmptySnapshotMetadata = (
+	overrides: Partial<SessionSnapshotMetadata> = {},
+): SessionSnapshotMetadata => {
+	const { assets: assetOverrides, ...metadataOverrides } = overrides;
+	const baseAssets: NonNullable<SessionSnapshotMetadata['assets']> = {
+		land: { label: 'Land' },
+		slot: { label: 'Development Slot' },
+		passive: { label: 'Passive' },
+	};
+	const metadata: SessionSnapshotMetadata = {
+		passiveEvaluationModifiers: {},
+		resources: {},
+		populations: {},
+		buildings: {},
+		developments: {},
+		stats: {},
+		phases: {},
+		triggers: {},
+		assets: assetOverrides ? { ...baseAssets, ...assetOverrides } : baseAssets,
+		...metadataOverrides,
+	};
+	return metadata;
+};
+
 interface SnapshotPlayerOptions {
 	id: SessionPlayerId;
 	name?: string;
@@ -281,19 +305,13 @@ export function createSessionSnapshot({
 	}
 	const metadata = metadataOverride
 		? clone(metadataOverride)
-		: ({
-				passiveEvaluationModifiers: {},
-				assets: {
-					land: { label: 'Land' },
-					slot: { label: 'Development Slot' },
-					passive: { label: 'Passive' },
-				},
+		: createEmptySnapshotMetadata({
 				overview: {
 					hero: { title: 'Session Overview', tokens: {} },
 					sections: [],
 					tokens: {},
 				} satisfies SessionOverviewMetadata,
-			} satisfies SessionSnapshotMetadata);
+			});
 	return {
 		game: {
 			turn,
