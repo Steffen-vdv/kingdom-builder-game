@@ -66,6 +66,7 @@ describe('<ResolutionCard />', () => {
 				kind: 'phase',
 				label: 'Growth Phase',
 				name: 'Growth Phase',
+				icon: '🌱',
 			},
 			actorLabel: 'Growth Phase',
 			player: {
@@ -77,8 +78,41 @@ describe('<ResolutionCard />', () => {
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
 		expect(screen.getByText('Growth Phase')).toBeInTheDocument();
+		expect(screen.getByText('🌱')).toBeInTheDocument();
 		const phasePlayerLabel = screen.getByLabelText('Player');
 		expect(phasePlayerLabel).toHaveTextContent('Player Two');
+	});
+	it('shows phase icon and hides duplicate headline entries in effects section', () => {
+		const resolution = createResolution({
+			source: 'phase',
+			actorLabel: 'Night Phase',
+			lines: ['🌘 Night Phase', '    Harvest completed'],
+			visibleLines: ['🌘 Night Phase', '    Harvest completed'],
+			visibleTimeline: [
+				{ text: '🌘 Night Phase', depth: 0, kind: 'headline' },
+				{ text: 'Harvest completed', depth: 1, kind: 'change' },
+			],
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		expect(screen.getByText('🌘')).toBeInTheDocument();
+
+		const effectsSection = screen.getByText('🪄 Effects');
+		const effectsContainer = effectsSection.parentElement;
+
+		if (!effectsContainer) {
+			throw new Error('Expected effects section to have a parent element');
+		}
+
+		const firstTimelineEntry = effectsContainer.nextElementSibling;
+		if (!firstTimelineEntry) {
+			throw new Error('Expected effects section to have timeline entries');
+		}
+
+		const entryText = firstTimelineEntry.textContent ?? '';
+		expect(entryText).toContain('Harvest completed');
+		expect(entryText).not.toContain('Night Phase');
 	});
 
 	it('hides the continue button when acknowledgement is not required', () => {

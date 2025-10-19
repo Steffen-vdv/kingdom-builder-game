@@ -77,6 +77,12 @@ function ResolutionCard({
 		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
+	const fallbackActionIconMatch = leadingLine
+		.trimStart()
+		.match(/^[\p{Extended_Pictographic}\uFE0F]+/u);
+	const fallbackActionIcon = fallbackActionIconMatch
+		? fallbackActionIconMatch[0]?.trim() || undefined
+		: undefined;
 	const sourceName = isSourceDetail(resolution.source)
 		? (resolution.source.name?.trim() ?? '')
 		: '';
@@ -97,7 +103,8 @@ function ResolutionCard({
 		resolution.action?.icon?.trim() ||
 		(isSourceDetail(resolution.source)
 			? (resolution.source.icon?.trim() ?? undefined)
-			: undefined);
+			: undefined) ||
+		fallbackActionIcon;
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
 	const normalizedResolvedTitle = resolvedLabels.title
 		.trim()

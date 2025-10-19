@@ -178,10 +178,10 @@ function buildResolutionTimelineEntries(
 		);
 	}
 
-	const combinedHeadline = buildHeadline(options);
+	const combinedHeadlines = buildHeadlines(options);
 	const effectEntries = adjustEntryLevels(
 		collectEffectEntries(nodes, {
-			skipHeadlines: combinedHeadline ? [combinedHeadline] : [],
+			skipHeadlines: combinedHeadlines,
 		}),
 	);
 
@@ -219,17 +219,24 @@ function adjustEntryLevels(entries: TimelineEntry[]): TimelineEntry[] {
 	}));
 }
 
-function buildHeadline(
+function buildHeadlines(
 	options: BuildResolutionTimelineOptions | undefined,
-): string | null {
-	const actionIcon = options?.actionIcon?.trim();
-	const actionName = options?.actionName?.trim();
+): string[] {
+	if (!options) {
+		return [];
+	}
+	const actionIcon = options.actionIcon?.trim();
+	const actionName = options.actionName?.trim();
+	const headlines = new Set<string>();
 
-	if (!actionIcon || !actionName) {
-		return null;
+	if (actionIcon && actionName) {
+		headlines.add(`${actionIcon} ${actionName}`.replace(/\s+/g, ' ').trim());
+	}
+	if (actionName) {
+		headlines.add(actionName);
 	}
 
-	return `${actionIcon} ${actionName}`.replace(/\s+/g, ' ').trim();
+	return Array.from(headlines);
 }
 
 function normalizeHeadlineSet(headlines: readonly string[]): Set<string> {
