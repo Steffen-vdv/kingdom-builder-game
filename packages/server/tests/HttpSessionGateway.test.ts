@@ -414,8 +414,15 @@ describe('HttpSessionGateway', () => {
 					snapshot: { game: { players: [] } },
 					registries: createRegistries(),
 					ranTurn: true,
-					actions: [],
-					phaseComplete: false,
+					actions: [
+						{
+							actionId: 'tax',
+							params: { choices: {} },
+							costs: { ap: 1 },
+							traces: [],
+						},
+					],
+					phaseComplete: true,
 				});
 			},
 		);
@@ -425,6 +432,11 @@ describe('HttpSessionGateway', () => {
 			playerId: 'A',
 		});
 		expect(response.ranTurn).toBe(true);
+		expect(response.actions).toHaveLength(1);
+		expect(response.phaseComplete).toBe(true);
+		const [action] = response.actions;
+		expect(action.actionId).toBe('tax');
+		expect(action.costs).toEqual({ ap: 1 });
 	});
 
 	it('propagates transport errors from AI runs', async () => {

@@ -3,7 +3,11 @@ import { describe, it, expect, vi } from 'vitest';
 import type {
 	SessionSnapshot,
 	SessionRuntimeConfigResponse,
+	SessionRunAiResponse,
 } from '@kingdom-builder/protocol';
+import type { ActionTrace, EngineSession } from '@kingdom-builder/engine';
+import type { EngineActionParameters } from '../src/transport/actionParameterHelpers.js';
+import { normalizeActionTraces } from '../src/transport/engineTraceNormalizer.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,
@@ -39,8 +43,16 @@ describe('FastifySessionTransport', () => {
 	};
 
 	async function createServer(tokens = defaultTokens) {
-		const { manager, actionId, gainKey, phases, start, rules, primaryIconId } =
-			createSyntheticSessionManager();
+		const {
+			manager,
+			actionId,
+			gainKey,
+			costKey,
+			phases,
+			start,
+			rules,
+			primaryIconId,
+		} = createSyntheticSessionManager();
 		const app = fastify();
 		const options: FastifySessionTransportOptions = {
 			sessionManager: manager,
@@ -52,6 +64,7 @@ describe('FastifySessionTransport', () => {
 			app,
 			actionId,
 			gainKey,
+			costKey,
 			manager,
 			phases,
 			start,
@@ -343,7 +356,7 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('runs AI turns through the API when controllers exist', async () => {
-		const { app, manager } = await createServer();
+		const { app, manager, actionId, costKey } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -363,7 +376,60 @@ describe('FastifySessionTransport', () => {
 		if (playerId === null) {
 			throw new Error('No AI controller was available.');
 		}
-		const runSpy = vi.spyOn(session, 'runAiTurn').mockResolvedValue(true);
+		const actionParams = {
+			choices: { primary: { optionId: 'primary-option' } },
+		} as EngineActionParameters;
+		const actionTraces: ActionTrace[] = [
+			{
+				id: 'trace-1',
+				before: {
+					resources: { [costKey]: 1 },
+					stats: {},
+					buildings: [],
+					lands: [],
+					passives: [],
+				},
+				after: {
+					resources: { [costKey]: 0 },
+					stats: {},
+					buildings: [],
+					lands: [],
+					passives: [],
+				},
+			},
+		];
+		const performSpy = vi
+			.spyOn(session, 'performAction')
+			.mockImplementation(() => actionTraces);
+		const costSpy = vi
+			.spyOn(session, 'getActionCosts')
+			.mockImplementation(() => {
+				return {
+					[costKey]: 1,
+					ignore: 'skip',
+				} as unknown as ReturnType<EngineSession['getActionCosts']>;
+			});
+		const advanceSpy = vi.spyOn(session, 'advancePhase');
+		const runSpy = vi
+			.spyOn(session, 'runAiTurn')
+			.mockImplementation(async (id, overrides) => {
+				expect(id).toBe(playerId);
+				expect(overrides).toBeDefined();
+				const perform = overrides?.performAction;
+				const advance = overrides?.advance;
+				const cont = overrides?.continueAfterAction;
+				expect(typeof perform).toBe('function');
+				expect(typeof advance).toBe('function');
+				expect(typeof cont).toBe('function');
+				if (!perform || !advance || !cont) {
+					return true;
+				}
+				await perform(actionId, {} as never, actionParams);
+				expect(await cont(actionId, {} as never, actionTraces)).toBe(false);
+				await perform(actionId, {} as never, undefined);
+				await advance({} as never);
+				return true;
+			});
 		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
 			return await factory();
 		});
@@ -384,13 +450,24 @@ describe('FastifySessionTransport', () => {
 		expect(body.sessionId).toBe(sessionId);
 		expect(body.ranTurn).toBe(true);
 		expect(Array.isArray(body.actions)).toBe(true);
-		expect(body.phaseComplete).toBe(false);
+		expect(body.actions).toHaveLength(1);
+		const [action] = body.actions as SessionRunAiResponse['actions'];
+		expect(action.actionId).toBe(actionId);
+		expect(action.params).toEqual(actionParams);
+		expect(action.costs).toEqual({ [costKey]: 1 });
+		expect(action.traces).toEqual(normalizeActionTraces(actionTraces));
+		expect(body.phaseComplete).toBe(true);
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.currentPhase).toBeDefined();
 		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		expect(body.registries.actions).toBeDefined();
-		expect(runSpy).toHaveBeenCalledWith(playerId);
+		expect(runSpy).toHaveBeenCalledTimes(1);
+		const [, overrides] = runSpy.mock.calls[0]!;
+		expect(overrides).toBeDefined();
+		expect(advanceSpy).not.toHaveBeenCalled();
+		expect(performSpy).toHaveBeenCalledTimes(1);
+		expect(costSpy).toHaveBeenCalledTimes(1);
 		await app.close();
 	});
 

@@ -11,6 +11,7 @@ import {
 	sessionSimulateResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
+	ActionParametersPayload,
 	SessionActionCostResponse,
 	SessionActionRequirementResponse,
 	SessionActionOptionsResponse,
@@ -26,6 +27,7 @@ import type { TransportRequest } from './TransportTypes.js';
 import { TransportError } from './TransportTypes.js';
 import { SessionTransportBase } from './SessionTransportBase.js';
 import type { SessionTransportOptions } from './SessionTransportBase.js';
+import { normalizeActionTraces } from './engineTraceNormalizer.js';
 
 type ActionMetadataRequest = {
 	session: EngineSession;
@@ -120,14 +122,73 @@ export class SessionTransport extends SessionTransportBase {
 			);
 		}
 		try {
-			const ranTurn = await session.enqueue(() => session.runAiTurn(playerId));
+			type AiOverrides = NonNullable<Parameters<EngineSession['runAiTurn']>[1]>;
+			type AiPerformAction = Exclude<AiOverrides['performAction'], undefined>;
+			type AiAdvance = Exclude<AiOverrides['advance'], undefined>;
+			type AiContinueAfterAction = Exclude<
+				AiOverrides['continueAfterAction'],
+				undefined
+			>;
+			const actions: SessionRunAiResponse['actions'] = [];
+			let phaseComplete = false;
+			let performedAction = false;
+			const sanitizeCostMap = (
+				rawCosts: ReturnType<EngineSession['getActionCosts']>,
+			): Record<string, number> => {
+				const costs: Record<string, number> = {};
+				for (const [resourceKey, amount] of Object.entries(rawCosts)) {
+					if (typeof amount === 'number' && Number.isFinite(amount)) {
+						costs[resourceKey] = amount;
+					}
+				}
+				return costs;
+			};
+			const performAction: AiPerformAction = (actionId, _context, params) => {
+				if (performedAction) {
+					return [];
+				}
+				const normalizedParams = params as EngineActionParameters;
+				const rawCosts = session.getActionCosts(actionId, normalizedParams);
+				const costs = sanitizeCostMap(rawCosts);
+				const traces = session.performAction(actionId, normalizedParams);
+				const paramsPayload =
+					normalizedParams === undefined
+						? undefined
+						: (structuredClone(normalizedParams) as ActionParametersPayload);
+				const actionEntry: SessionRunAiResponse['actions'][number] = {
+					actionId,
+					costs,
+					traces: normalizeActionTraces(traces),
+				};
+				if (paramsPayload !== undefined) {
+					actionEntry.params = paramsPayload;
+				}
+				actions.push(actionEntry);
+				performedAction = true;
+				return traces;
+			};
+			const continueAfterAction: AiContinueAfterAction = () => {
+				return !performedAction;
+			};
+			const advancePhase: AiAdvance = () => {
+				phaseComplete = true;
+				return undefined;
+			};
+			const overrides: AiOverrides = {
+				performAction,
+				continueAfterAction,
+				advance: advancePhase,
+			};
+			const ranTurn = await session.enqueue(() =>
+				session.runAiTurn(playerId, overrides),
+			);
 			const snapshot = this.sessionManager.getSnapshot(sessionId);
 			const base = this.buildStateResponse(sessionId, snapshot);
 			const response = {
 				...base,
 				ranTurn,
-				actions: [],
-				phaseComplete: false,
+				actions,
+				phaseComplete,
 			} satisfies SessionRunAiResponse;
 			return sessionRunAiResponseSchema.parse(response);
 		} catch (error) {
