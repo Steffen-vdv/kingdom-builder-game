@@ -229,6 +229,12 @@ describe('GameProviderInner', () => {
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
+		expect(capturedTranslationOptions?.sessionMetadata).toBe(
+			sessionState.metadata,
+		);
+		expect(capturedTranslationOptions).not.toHaveProperty(
+			'cachedSessionSnapshot',
+		);
 		cleanup();
 	});
 
