@@ -137,6 +137,13 @@ function executeAction<T extends string>(
 	);
 	const actionTraces = engineContext.actionTraces;
 	engineContext.actionTraces = [];
+	if (engineContext.activePlayer.aiControlled && actionTraces.length > 0) {
+		engineContext.pushEffectLog('ai:action', {
+			actionId: actionDefinition.id,
+			playerId: engineContext.activePlayer.id,
+			traces: structuredClone(actionTraces),
+		});
+	}
 	return actionTraces;
 }
 
