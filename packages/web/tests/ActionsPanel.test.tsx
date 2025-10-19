@@ -8,6 +8,7 @@ import { translateRequirementFailure } from '../src/translation';
 import { createActionsPanelGame } from './helpers/actionsPanel';
 import type { ActionsPanelGameOptions } from './helpers/actionsPanel.types';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
+import type { ActionResolution } from '../src/state/useActionResolution';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type {
@@ -125,6 +126,24 @@ beforeEach(() => {
 });
 
 describe('<ActionsPanel />', () => {
+	it('disables action cards while acknowledgements are pending', () => {
+		const resolution: ActionResolution = {
+			lines: ['Step 1'],
+			visibleLines: ['Step 1'],
+			isComplete: true,
+			summaries: [],
+			source: 'action',
+			requireAcknowledgement: true,
+		};
+		mockGame.resolution = resolution;
+		renderActionsPanel();
+		const actionName = metadata.actions.basic.name;
+		const surveyButton = screen.getByRole('button', {
+			name: new RegExp(actionName, 'i'),
+		});
+		expect(surveyButton).toBeDisabled();
+	});
+
 	it(
 		'renders hire options for generated population roles ' +
 			'with derived requirement icons',

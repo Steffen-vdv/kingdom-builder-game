@@ -33,6 +33,7 @@ export default function ActionsPanel() {
 		translationContext,
 		phase,
 		actionCostResource,
+		resolution,
 	} = useGameEngine();
 	const { sessionView } = selectors;
 	const resourceMetadata = useResourceMetadata();
@@ -80,7 +81,11 @@ export default function ActionsPanel() {
 	}, [hasOpponent, viewingOpponent]);
 
 	const selectedPlayer: DisplayPlayer = viewingOpponent ? opponent : player;
-	const canInteract = isControlledTurn && isActionPhase && !viewingOpponent;
+	const canInteract =
+		isControlledTurn &&
+		isActionPhase &&
+		!viewingOpponent &&
+		!resolution?.requireAcknowledgement;
 	const panelDisabled = !canInteract;
 
 	const actions = useMemo<Action[]>(() => {
