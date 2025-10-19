@@ -1,0 +1,126 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { SessionActionCostMap } from '@kingdom-builder/protocol/session';
+import { useGameEngine } from '../../state/GameContext';
+import { loadActionCosts } from '../../state/sessionSdk';
+
+interface ActionCostRequest {
+	readonly key: string;
+	readonly params?: ActionParametersPayload;
+}
+
+type CostMap = Map<string, SessionActionCostMap | undefined>;
+
+const cloneParams = (
+	params: ActionParametersPayload | undefined,
+): ActionParametersPayload | undefined => {
+	if (!params) {
+		return undefined;
+	}
+	if (typeof structuredClone === 'function') {
+		return structuredClone(params);
+	}
+	return JSON.parse(JSON.stringify(params)) as ActionParametersPayload;
+};
+
+const toRequestsKey = (
+	entries: readonly [string, ActionParametersPayload | undefined][],
+) => JSON.stringify(entries.map(([key, params]) => [key, params ?? null]));
+
+export function useActionOptionCosts(
+	actionId: string | undefined,
+	requests: ActionCostRequest[],
+): CostMap {
+	const { session, sessionId } = useGameEngine();
+	const normalizedRequests = useMemo(() => {
+		const map = new Map<string, ActionParametersPayload | undefined>();
+		for (const request of requests) {
+			if (map.has(request.key)) {
+				continue;
+			}
+			map.set(request.key, cloneParams(request.params));
+		}
+		return map;
+	}, [requests]);
+	const requestEntries = useMemo(
+		() => [...normalizedRequests.entries()],
+		[normalizedRequests],
+	);
+	const requestKey = useMemo(
+		() => toRequestsKey(requestEntries),
+		[requestEntries],
+	);
+	const [costs, setCosts] = useState<CostMap>(() => {
+		const map: CostMap = new Map();
+		if (!actionId) {
+			return map;
+		}
+		for (const [key, params] of requestEntries) {
+			const snapshot = session.readActionMetadata(actionId, params);
+			map.set(key, snapshot.costs);
+		}
+		return map;
+	});
+	useEffect(() => {
+		setCosts(() => {
+			const map: CostMap = new Map();
+			if (!actionId) {
+				return map;
+			}
+			for (const [key, params] of requestEntries) {
+				const snapshot = session.readActionMetadata(actionId, params);
+				map.set(key, snapshot.costs);
+			}
+			return map;
+		});
+	}, [session, actionId, requestKey, requestEntries]);
+	useEffect(() => {
+		if (!actionId) {
+			return () => {};
+		}
+		const disposers = requestEntries.map(([key, params]) =>
+			session.subscribeActionMetadata(actionId, params, (snapshot) => {
+				setCosts((previous) => {
+					const next: CostMap = new Map(previous);
+					next.set(key, snapshot.costs);
+					return next;
+				});
+			}),
+		);
+		return () => {
+			for (const dispose of disposers) {
+				dispose();
+			}
+		};
+	}, [session, actionId, requestKey, requestEntries]);
+	const pendingRef = useRef(new Set<string>());
+	useEffect(() => {
+		if (!actionId) {
+			return () => {};
+		}
+		const pending = pendingRef.current;
+		const controllers: Array<{ key: string; controller: AbortController }> = [];
+		for (const [key, params] of requestEntries) {
+			if (costs.get(key) !== undefined || pending.has(key)) {
+				continue;
+			}
+			const controller = new AbortController();
+			controllers.push({ key, controller });
+			pending.add(key);
+			void loadActionCosts(actionId ? sessionId : '', actionId, params, {
+				signal: controller.signal,
+			}).finally(() => {
+				pending.delete(key);
+			});
+		}
+		return () => {
+			for (const { key, controller } of controllers) {
+				controller.abort();
+				pending.delete(key);
+			}
+		};
+	}, [sessionId, actionId, requestKey, requestEntries, costs]);
+	return costs;
+}
+
+export type { ActionCostRequest };
