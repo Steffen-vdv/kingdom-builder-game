@@ -7,6 +7,10 @@ import type {
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import { useGameEngine } from './GameContext';
 import {
+	readSessionActionMetadata,
+	subscribeSessionActionMetadata,
+} from './sessionActionMetadataStore';
+import {
 	loadActionCosts,
 	loadActionOptions,
 	loadActionRequirements,
@@ -43,7 +47,7 @@ export function useActionMetadata({
 	actionId,
 	params,
 }: UseActionMetadataOptions): UseActionMetadataResult {
-	const { session, sessionId } = useGameEngine();
+	const { sessionId } = useGameEngine();
 	const paramsKey = useMemo(() => serializeActionParams(params), [params]);
 	const normalizedParams = useMemo<ActionParametersPayload | undefined>(() => {
 		if (!params) {
@@ -56,7 +60,7 @@ export function useActionMetadata({
 			if (!actionId) {
 				return EMPTY_SNAPSHOT;
 			}
-			return session.readActionMetadata(actionId, normalizedParams);
+			return readSessionActionMetadata(sessionId, actionId, normalizedParams);
 		},
 	);
 	const loadingRef = useRef({
@@ -75,7 +79,8 @@ export function useActionMetadata({
 			return () => {};
 		}
 		let disposed = false;
-		const unsubscribe = session.subscribeActionMetadata(
+		const unsubscribe = subscribeSessionActionMetadata(
+			sessionId,
 			actionId,
 			normalizedParams,
 			(next) => {
@@ -88,7 +93,17 @@ export function useActionMetadata({
 			disposed = true;
 			unsubscribe();
 		};
-	}, [session, actionId, normalizedParams, paramsKey]);
+	}, [sessionId, actionId, normalizedParams, paramsKey]);
+
+	useEffect(() => {
+		if (!actionId) {
+			setSnapshot(EMPTY_SNAPSHOT);
+			return;
+		}
+		setSnapshot(
+			readSessionActionMetadata(sessionId, actionId, normalizedParams),
+		);
+	}, [sessionId, actionId, normalizedParams, paramsKey]);
 
 	useEffect(() => {
 		if (!actionId || snapshot.costs !== undefined) {
