@@ -15,8 +15,7 @@ import {
 } from './common/cardStyles';
 import {
 	buildTimelineTree,
-	collectCostEntries,
-	collectEffectEntries,
+	buildResolutionTimelineEntries,
 } from './ResolutionTimeline';
 
 interface ResolutionLabels {
@@ -157,14 +156,18 @@ function ResolutionCard({
 		() => buildTimelineTree(resolution.visibleTimeline),
 		[resolution.visibleTimeline],
 	);
-	const costEntries = React.useMemo(
-		() => collectCostEntries(structuredTimeline),
-		[structuredTimeline],
-	);
-	const effectEntries = React.useMemo(
-		() => collectEffectEntries(structuredTimeline),
-		[structuredTimeline],
-	);
+	const timelineEntries = React.useMemo(() => {
+		const options: Parameters<typeof buildResolutionTimelineEntries>[1] = {};
+
+		if (actionIcon) {
+			options.actionIcon = actionIcon;
+		}
+		if (actionName) {
+			options.actionName = actionName;
+		}
+
+		return buildResolutionTimelineEntries(structuredTimeline, options);
+	}, [actionIcon, actionName, structuredTimeline]);
 
 	const fallbackLines = React.useMemo(() => {
 		if (resolution.visibleTimeline.length > 0) {
@@ -201,16 +204,17 @@ function ResolutionCard({
 
 		return resolution.visibleLines.map((line) => parseLine(line));
 	}, [resolution.visibleLines, resolution.visibleTimeline]);
-	const hasStructuredTimeline =
-		costEntries.length > 0 || effectEntries.length > 0;
+	const hasStructuredTimeline = timelineEntries.length > 0;
 
 	function renderEntry(entry: TimelineEntry): React.ReactNode {
-		const markerClass =
-			entry.level === 0 ? primaryMarkerClass : nestedMarkerClass;
-		const itemIndent =
-			entry.level > 0 ? { marginLeft: `${entry.level * 0.875}rem` } : undefined;
-		const textClass =
-			entry.level === 0 ? timelineTextClass : nestedTimelineTextClass;
+		const isSectionRoot = entry.kind === 'section';
+		const markerClass = isSectionRoot ? primaryMarkerClass : nestedMarkerClass;
+		const itemIndent = !isSectionRoot
+			? { marginLeft: `${entry.level * 0.875}rem` }
+			: undefined;
+		const textClass = isSectionRoot
+			? timelineTextClass
+			: nestedTimelineTextClass;
 
 		return (
 			<div key={entry.key} className={timelineItemClass} style={itemIndent}>
@@ -250,37 +254,9 @@ function ResolutionCard({
 						Resolution steps
 					</div>
 					{hasStructuredTimeline ? (
-						<div className="mt-3 space-y-6">
-							{costEntries.length > 0 ? (
-								<div>
-									<div
-										className={joinClasses(CARD_LABEL_CLASS, 'text-slate-600')}
-									>
-										Cost
-									</div>
-									<div className={joinClasses(timelineListClass, 'mt-2')}>
-										<div aria-hidden="true" className={timelineRailClass} />
-										{costEntries.map((entry) => renderEntry(entry))}
-									</div>
-								</div>
-							) : null}
-							{effectEntries.length > 0 ? (
-								<div>
-									<div
-										className={joinClasses(
-											CARD_LABEL_CLASS,
-											'flex items-center gap-2 text-slate-600',
-										)}
-									>
-										<span aria-hidden="true">🪄</span>
-										<span>Effects</span>
-									</div>
-									<div className={joinClasses(timelineListClass, 'mt-2')}>
-										<div aria-hidden="true" className={timelineRailClass} />
-										{effectEntries.map((entry) => renderEntry(entry))}
-									</div>
-								</div>
-							) : null}
+						<div className={joinClasses(timelineListClass, 'mt-3')}>
+							<div aria-hidden="true" className={timelineRailClass} />
+							{timelineEntries.map((entry) => renderEntry(entry))}
 						</div>
 					) : (
 						<div className={joinClasses(timelineListClass, 'mt-3')}>
