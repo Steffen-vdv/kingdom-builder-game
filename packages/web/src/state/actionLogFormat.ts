@@ -10,7 +10,7 @@ function renderTimelineLine(line: ActionLogLineDescriptor): string {
 	return `${indent}${marker}${line.text}`;
 }
 
-function appendChangeDescriptors(
+export function buildActionLogTimeline(
 	messages: readonly ActionLogLineDescriptor[],
 	changes: readonly string[],
 ): ActionLogLineDescriptor[] {
@@ -25,7 +25,7 @@ export function formatActionLogLines(
 	messages: readonly ActionLogLineDescriptor[],
 	changes: readonly string[],
 ): string[] {
-	return appendChangeDescriptors(messages, changes).map(renderTimelineLine);
+	return buildActionLogTimeline(messages, changes).map(renderTimelineLine);
 }
 
 export function formatDevelopActionLogLines(
@@ -49,8 +49,7 @@ export function formatDevelopActionLogLines(
 		{ text: developmentHeadline, depth: 0, kind: 'headline' },
 		...restMessages,
 	];
-	for (const change of remainingChanges) {
-		descriptors.push({ text: change, depth: 1, kind: 'change' });
-	}
-	return descriptors.map(renderTimelineLine);
+	return buildActionLogTimeline(descriptors, remainingChanges).map(
+		renderTimelineLine,
+	);
 }

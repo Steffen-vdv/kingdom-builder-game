@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	buildActionLogTimeline,
 	formatActionLogLines,
 	formatDevelopActionLogLines,
 } from '../src/state/actionLogFormat';
@@ -39,6 +40,21 @@ describe('action log line formatting', () => {
 			'💰 Tax',
 			'• Gold +3',
 			'• Happiness -1',
+		]);
+	});
+
+	it('builds a timeline with change descriptors for appended entries', () => {
+		const messages: ActionLogLineDescriptor[] = [
+			{ text: 'Phase start', depth: 0, kind: 'headline' },
+		];
+		const changes = ['Gold +3'];
+		expect(buildActionLogTimeline(messages, changes)).toEqual([
+			{ text: 'Phase start', depth: 0, kind: 'headline' },
+			{ text: 'Gold +3', depth: 1, kind: 'change' },
+		]);
+		expect(formatActionLogLines(messages, changes)).toEqual([
+			'Phase start',
+			'• Gold +3',
 		]);
 	});
 });
