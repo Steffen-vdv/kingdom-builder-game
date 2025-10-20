@@ -14,7 +14,9 @@ import BasicOptions from './BasicOptions';
 import BuildOptions from './BuildOptions';
 import DevelopOptions from './DevelopOptions';
 import HireOptions from './HireOptions';
-import type { ActionCategoryDescriptor } from './ActionCategoryHeader';
+import ActionCategoryHeader, {
+	type ActionCategoryDescriptor,
+} from './ActionCategoryHeader';
 import {
 	COST_LABEL_CLASSES,
 	HEADER_CLASSES,
@@ -23,15 +25,30 @@ import {
 	SECTION_CLASSES,
 	TITLE_CLASSES,
 	TOGGLE_BUTTON_CLASSES,
+	TAB_LIST_CLASSES,
+	TAB_BUTTON_CLASSES,
+	TAB_BUTTON_ACTIVE_CLASSES,
+	TAB_BUTTON_INACTIVE_CLASSES,
 } from './actionsPanelStyles';
 import type { Action, Building, Development, DisplayPlayer } from './types';
 import { normalizeActionFocus } from './types';
 import type { ResourceDescriptorSelector } from './utils';
+import { useActionMetadata } from '../../state/useActionMetadata';
+import {
+	getActionAvailability,
+	type ActionAvailabilityResult,
+} from './getActionAvailability';
 
 interface CategoryEntry {
 	id: string;
 	definition?: TranslationActionCategoryDefinition;
 	actions: Action[];
+}
+
+interface VisibleCategoryEntry extends CategoryEntry {
+	descriptor: ActionCategoryDescriptor;
+	renderer: CategoryRenderer;
+	visibleActions: Action[];
 }
 
 interface CategoryRendererContext {
@@ -165,6 +182,38 @@ const CATEGORY_RENDERERS = new Map<string, CategoryRenderer>([
 ]);
 
 const DEFAULT_RENDERER = renderGenericGrid;
+
+interface ActionAvailabilityObserverProps {
+	action: Action;
+	player: DisplayPlayer;
+	canInteract: boolean;
+	summary: Summary | undefined;
+	onChange: (actionId: string, availability: ActionAvailabilityResult) => void;
+}
+
+function ActionAvailabilityObserver({
+	action,
+	player,
+	canInteract,
+	summary,
+	onChange,
+}: ActionAvailabilityObserverProps) {
+	const metadata = useActionMetadata({ actionId: action.id });
+	const availability = useMemo(
+		() =>
+			getActionAvailability({
+				metadata,
+				player,
+				canInteract,
+				summary,
+			}),
+		[metadata, player, canInteract, summary],
+	);
+	useEffect(() => {
+		onChange(action.id, availability);
+	}, [action.id, availability, onChange]);
+	return null;
+}
 
 function createCategoryDescriptor(
 	definition: TranslationActionCategoryDefinition | undefined,
@@ -426,7 +475,127 @@ export default function ActionsPanel() {
 		});
 		return entries;
 	}, [actionsByCategory, categoryDefinitions]);
-
+	const [availabilityMap, setAvailabilityMap] = useState<
+		Map<string, ActionAvailabilityResult>
+	>(() => new Map());
+	useEffect(() => {
+		const validIds = new Set(actions.map((entry) => entry.id));
+		setAvailabilityMap((previous) => {
+			let removed = false;
+			previous.forEach((_value, key) => {
+				if (!validIds.has(key)) {
+					removed = true;
+				}
+			});
+			if (!removed) {
+				return previous;
+			}
+			const next = new Map<string, ActionAvailabilityResult>();
+			previous.forEach((value, key) => {
+				if (validIds.has(key)) {
+					next.set(key, value);
+				}
+			});
+			return next;
+		});
+	}, [actions]);
+	const handleAvailabilityChange = useCallback(
+		(actionId: string, availability: ActionAvailabilityResult) => {
+			setAvailabilityMap((previous) => {
+				const next = new Map(previous);
+				next.set(actionId, availability);
+				return next;
+			});
+		},
+		[],
+	);
+	const visibleCategoryEntries = useMemo<VisibleCategoryEntry[]>(() => {
+		const entries: VisibleCategoryEntry[] = [];
+		categoryEntries.forEach((entry) => {
+			const { id, definition, actions: grouped } = entry;
+			const visibleActions = grouped.filter(
+				(actionDefinition) => !actionDefinition.system,
+			);
+			if (definition?.hideWhenEmpty && visibleActions.length === 0) {
+				return;
+			}
+			const fallbackLabel = grouped[0]?.name ?? definition?.title ?? 'Actions';
+			const descriptor = createCategoryDescriptor(definition, fallbackLabel);
+			const analyticsKey = definition?.analyticsKey ?? definition?.id ?? id;
+			const rendererKey = analyticsKey?.toLowerCase();
+			const renderer =
+				(rendererKey ? CATEGORY_RENDERERS.get(rendererKey) : undefined) ??
+				DEFAULT_RENDERER;
+			entries.push({
+				...entry,
+				descriptor,
+				renderer,
+				visibleActions,
+			});
+		});
+		return entries;
+	}, [categoryEntries]);
+	const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+	useEffect(() => {
+		if (visibleCategoryEntries.length === 0) {
+			if (activeCategoryId !== null) {
+				setActiveCategoryId(null);
+			}
+			return;
+		}
+		if (
+			activeCategoryId &&
+			visibleCategoryEntries.some((entry) => entry.id === activeCategoryId)
+		) {
+			return;
+		}
+		const nextId = visibleCategoryEntries[0]?.id ?? null;
+		if (nextId !== activeCategoryId) {
+			setActiveCategoryId(nextId);
+		}
+	}, [visibleCategoryEntries, activeCategoryId]);
+	const categoryCounts = useMemo(() => {
+		const map = new Map<string, { performable: number; total: number }>();
+		visibleCategoryEntries.forEach((entry) => {
+			const total = entry.visibleActions.length;
+			const performable = entry.visibleActions.reduce(
+				(count, actionDefinition) => {
+					const availability = availabilityMap.get(actionDefinition.id);
+					if (availability?.performable) {
+						return count + 1;
+					}
+					return count;
+				},
+				0,
+			);
+			map.set(entry.id, { performable, total });
+		});
+		return map;
+	}, [visibleCategoryEntries, availabilityMap]);
+	const activeEntry = activeCategoryId
+		? visibleCategoryEntries.find((entry) => entry.id === activeCategoryId)
+		: visibleCategoryEntries[0];
+	const tabPanelId = 'actions-panel-tabpanel';
+	const activeButtonId = activeEntry
+		? `actions-panel-tab-${activeEntry.id}`
+		: undefined;
+	const activeContent = activeEntry
+		? activeEntry.renderer({
+				actions: activeEntry.actions,
+				descriptor: activeEntry.descriptor,
+				player: selectedPlayer,
+				canInteract,
+				selectResourceDescriptor,
+				actionSummaries,
+				isActionPhase,
+				developmentOptions,
+				developmentSummaries,
+				buildingOptions,
+				buildingSummaries,
+				buildingDescriptions,
+				hasDevelopLand,
+			})
+		: null;
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
 		: 'Show opponent actions';
@@ -476,46 +645,63 @@ export default function ActionsPanel() {
 				</div>
 			</div>
 			<div className="relative">
-				<div ref={sectionRef} className="space-y-4">
-					{categoryEntries.map((entry) => {
-						const { id, definition, actions: grouped } = entry;
-						if (definition?.hideWhenEmpty && grouped.length === 0) {
-							return null;
-						}
-						const fallbackLabel =
-							grouped[0]?.name ?? definition?.title ?? 'Actions';
-						const descriptor = createCategoryDescriptor(
-							definition,
-							fallbackLabel,
+				<div
+					className={TAB_LIST_CLASSES}
+					role="tablist"
+					aria-label="Action categories"
+				>
+					{visibleCategoryEntries.map((entry) => {
+						const isActive = activeEntry?.id === entry.id;
+						const buttonId = `actions-panel-tab-${entry.id}`;
+						const counts = categoryCounts.get(entry.id) ?? {
+							performable: 0,
+							total: entry.visibleActions.length,
+						};
+						const buttonClasses = [
+							TAB_BUTTON_CLASSES,
+							isActive
+								? TAB_BUTTON_ACTIVE_CLASSES
+								: TAB_BUTTON_INACTIVE_CLASSES,
+						].join(' ');
+						return (
+							<button
+								key={entry.id}
+								id={buttonId}
+								type="button"
+								role="tab"
+								aria-selected={isActive}
+								aria-controls={tabPanelId}
+								className={buttonClasses}
+								onClick={() => setActiveCategoryId(entry.id)}
+							>
+								<ActionCategoryHeader
+									descriptor={entry.descriptor}
+									counts={counts}
+								/>
+							</button>
 						);
-						const analyticsKey =
-							definition?.analyticsKey ?? definition?.id ?? id;
-						const rendererKey = analyticsKey?.toLowerCase();
-						const renderer =
-							(rendererKey ? CATEGORY_RENDERERS.get(rendererKey) : undefined) ??
-							DEFAULT_RENDERER;
-						const content = renderer({
-							actions: grouped,
-							descriptor,
-							player: selectedPlayer,
-							canInteract,
-							selectResourceDescriptor,
-							actionSummaries,
-							isActionPhase,
-							developmentOptions,
-							developmentSummaries,
-							buildingOptions,
-							buildingSummaries,
-							buildingDescriptions,
-							hasDevelopLand,
-						});
-						if (!content) {
-							return null;
-						}
-						return <React.Fragment key={id}>{content}</React.Fragment>;
 					})}
 				</div>
+				<div
+					ref={sectionRef}
+					role="tabpanel"
+					id={tabPanelId}
+					aria-labelledby={activeButtonId}
+					className="mt-4"
+				>
+					{activeContent}
+				</div>
 			</div>
+			{actions.map((actionDefinition) => (
+				<ActionAvailabilityObserver
+					key={`availability-${actionDefinition.id}`}
+					action={actionDefinition}
+					player={selectedPlayer}
+					canInteract={canInteract}
+					summary={actionSummaries.get(actionDefinition.id)}
+					onChange={handleAvailabilityChange}
+				/>
+			))}
 		</section>
 	);
 }

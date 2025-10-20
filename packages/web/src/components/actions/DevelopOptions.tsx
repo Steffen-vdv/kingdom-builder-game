@@ -5,9 +5,7 @@ import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useSlotMetadata } from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
-import ActionCategoryHeader, {
-	type ActionCategoryDescriptor,
-} from './ActionCategoryHeader';
+import type { ActionCategoryDescriptor } from './ActionCategoryHeader';
 import {
 	formatMissingResources,
 	playerHasRequiredResources,
@@ -24,6 +22,7 @@ import {
 } from './types';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
 import { useActionOptionCosts } from './useActionOptionCosts';
+import { CATEGORY_SUBTITLE_CLASSES } from './actionsPanelStyles';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -78,6 +77,7 @@ export default function DevelopOptions({
 	const { sessionView } = selectors;
 	const slotMetadata = useSlotMetadata();
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
+	const { subtitle } = category;
 	const landIdForCost = player.lands[0]?.id as string;
 	const actionInfo = sessionView.actions.get(action.id);
 	const costRequests = useMemo(
@@ -131,11 +131,13 @@ export default function DevelopOptions({
 		actionInfo?.name ?? action.name,
 	);
 	return (
-		<div>
-			<ActionCategoryHeader descriptor={category} />
+		<div className="space-y-3">
+			{subtitle ? (
+				<p className={CATEGORY_SUBTITLE_CLASSES}>{subtitle}</p>
+			) : null}
 			<div
 				ref={listRef}
-				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2"
 			>
 				{entries.map(({ development, costs, upkeep }) => {
 					const focus = development.focus;
