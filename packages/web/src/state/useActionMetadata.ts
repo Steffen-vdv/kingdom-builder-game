@@ -69,6 +69,9 @@ export function useActionMetadata({
 		requirements: false,
 		groups: false,
 	});
+	const costsStale = snapshot.stale?.costs === true;
+	const requirementsStale = snapshot.stale?.requirements === true;
+	const groupsStale = snapshot.stale?.groups === true;
 
 	useEffect(() => {
 		loadingRef.current = { costs: false, requirements: false, groups: false };
@@ -107,7 +110,6 @@ export function useActionMetadata({
 	}, [sessionId, actionId, normalizedParams, paramsKey]);
 
 	useEffect(() => {
-		const costsStale = snapshot.stale?.costs === true;
 		if (!actionId || (snapshot.costs !== undefined && !costsStale)) {
 			return () => {};
 		}
@@ -137,10 +139,16 @@ export function useActionMetadata({
 			controller.abort();
 			loadingRef.current.costs = false;
 		};
-	}, [actionId, sessionId, snapshot.costs, normalizedParams, paramsKey]);
+	}, [
+		actionId,
+		sessionId,
+		snapshot.costs,
+		costsStale,
+		normalizedParams,
+		paramsKey,
+	]);
 
 	useEffect(() => {
-		const requirementsStale = snapshot.stale?.requirements === true;
 		if (
 			!actionId ||
 			(snapshot.requirements !== undefined && !requirementsStale)
@@ -173,10 +181,16 @@ export function useActionMetadata({
 			controller.abort();
 			loadingRef.current.requirements = false;
 		};
-	}, [actionId, sessionId, snapshot.requirements, normalizedParams, paramsKey]);
+	}, [
+		actionId,
+		sessionId,
+		snapshot.requirements,
+		requirementsStale,
+		normalizedParams,
+		paramsKey,
+	]);
 
 	useEffect(() => {
-		const groupsStale = snapshot.stale?.groups === true;
 		if (!actionId || (snapshot.groups !== undefined && !groupsStale)) {
 			return () => {};
 		}
@@ -206,7 +220,7 @@ export function useActionMetadata({
 			controller.abort();
 			loadingRef.current.groups = false;
 		};
-	}, [actionId, sessionId, snapshot.groups, paramsKey]);
+	}, [actionId, sessionId, snapshot.groups, groupsStale, paramsKey]);
 
 	return useMemo(() => {
 		const result: UseActionMetadataResult = {
