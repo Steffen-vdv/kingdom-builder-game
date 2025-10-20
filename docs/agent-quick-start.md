@@ -17,14 +17,10 @@ guide for rationale, lore, and extended background.
    - `npm run lint` and `npm run format` keep eslint and Prettier happy.
    - `npm run lint` also runs dependency-cruiser to enforce package
      boundaries.
-   - `npm run generate:snapshots` refreshes
-     `packages/web/src/contexts/defaultRegistryMetadata.json` through
-     `scripts/build-default-registry-snapshot.mjs`. The snapshot test inside
-     `npm run check` fails when the JSON drifts, and both `npm run dev` and
-     `npm run dev:web` regenerate it automatically. When the generator reports
-     updates, stage and commit the resulting
-     `packages/web/src/contexts/defaultRegistryMetadata.json` changes before
-     opening a PR.
+   - `npm run generate:snapshots` refreshes local UI metadata caches so the web
+     client stays aligned with content packages. The automation runs as part of
+     the dev scripts, and `npm run check` fails when the generated metadata
+     drifts. Stage and commit any regenerated assets before opening a PR.
    - [`npm run verify`](../scripts/run-verification.mjs) runs `npm run check`
      followed by `npm run test:coverage`. It streams output into timestamped
      logs inside `artifacts/` so you can share the run when needed.

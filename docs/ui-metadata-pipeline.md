@@ -25,10 +25,9 @@ Translators & React components
 Whenever any upstream content changes, immediately rerun the automation that
 keeps the visuals in sync:
 
-- `npm run generate:snapshots` refreshes
-  `packages/web/src/contexts/defaultRegistryMetadata.json` so both metadata and
-  rendered output stay aligned. Paste the command output into your PR notes
-  whenever UI copy, layout, or visuals change.
+- `npm run generate:snapshots` refreshes cached registry metadata so both
+  metadata and rendered output stay aligned. Paste the command output into your
+  PR notes whenever UI copy, layout, or visuals change.
 
 Skipping these steps leaves the UI with stale icons or labels even if the JSX is
 correct. Always fix the content definition first and regenerate the snapshots
