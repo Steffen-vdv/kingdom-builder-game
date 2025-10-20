@@ -27,6 +27,7 @@ import {
 	deleteRemoteAdapter,
 	getOrCreateRemoteAdapter,
 	getRemoteAdapter,
+	setRemoteAdapterDefaultDependencies,
 } from './remoteSessionAdapter';
 import {
 	setSessionActionCosts,
@@ -75,12 +76,22 @@ function toRemoteRecord(record: SessionStateRecord): RemoteSessionRecord {
 	};
 }
 
+function configureRemoteAdapterDependencies(): void {
+	setRemoteAdapterDefaultDependencies({
+		ensureGameApi,
+		runAiTurn: runAiTurnInternal,
+	});
+}
+
 function getAdapter(sessionId: string): RemoteSessionAdapter {
+	configureRemoteAdapterDependencies();
 	return getOrCreateRemoteAdapter(sessionId, {
 		ensureGameApi,
 		runAiTurn: runAiTurnInternal,
 	});
 }
+
+configureRemoteAdapterDependencies();
 export { setGameApiInstance as setGameApi };
 export async function createSession(
 	options: CreateSessionOptions = {},

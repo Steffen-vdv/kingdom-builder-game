@@ -33,6 +33,27 @@ interface RemoteSessionAdapterDependencies {
 	) => Promise<SessionRunAiResponse>;
 }
 
+let defaultDependencies: RemoteSessionAdapterDependencies | null = null;
+
+const assignDefaultDependencies = (
+	dependencies: RemoteSessionAdapterDependencies,
+): RemoteSessionAdapterDependencies => {
+	defaultDependencies = dependencies;
+	return dependencies;
+};
+
+const resolveDependencies = (
+	dependencies: RemoteSessionAdapterDependencies | undefined,
+): RemoteSessionAdapterDependencies => {
+	if (dependencies) {
+		return assignDefaultDependencies(dependencies);
+	}
+	if (!defaultDependencies) {
+		throw new Error('Remote session adapter dependencies are not configured.');
+	}
+	return defaultDependencies;
+};
+
 export class RemoteSessionAdapter implements SessionAdapter {
 	#sessionId: string;
 	#dependencies: RemoteSessionAdapterDependencies;
@@ -218,9 +239,10 @@ export function getOrCreateRemoteAdapter(
 	sessionId: string,
 	dependencies: RemoteSessionAdapterDependencies,
 ): RemoteSessionAdapter {
+	const resolved = resolveDependencies(dependencies);
 	let adapter = adapters.get(sessionId);
 	if (!adapter) {
-		adapter = new RemoteSessionAdapter(sessionId, dependencies);
+		adapter = new RemoteSessionAdapter(sessionId, resolved);
 		adapters.set(sessionId, adapter);
 	}
 	return adapter;
@@ -233,5 +255,20 @@ export function deleteRemoteAdapter(sessionId: string): void {
 export function getRemoteAdapter(
 	sessionId: string,
 ): RemoteSessionAdapter | undefined {
-	return adapters.get(sessionId);
+	const adapter = adapters.get(sessionId);
+	if (adapter) {
+		return adapter;
+	}
+	if (!defaultDependencies) {
+		return undefined;
+	}
+	const created = new RemoteSessionAdapter(sessionId, defaultDependencies);
+	adapters.set(sessionId, created);
+	return created;
+}
+
+export function setRemoteAdapterDefaultDependencies(
+	dependencies: RemoteSessionAdapterDependencies,
+): void {
+	assignDefaultDependencies(dependencies);
 }
