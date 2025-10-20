@@ -4,7 +4,7 @@ import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
 } from '@kingdom-builder/protocol/session';
-import { getRemoteAdapter } from './remoteSessionAdapter';
+import { ensureRemoteAdapter, getRemoteAdapter } from './remoteSessionAdapter';
 import type { SessionActionMetadataSnapshot } from './sessionTypes';
 
 const EMPTY_SNAPSHOT: SessionActionMetadataSnapshot = {};
@@ -14,7 +14,7 @@ export function readSessionActionMetadata(
 	actionId: string,
 	params?: ActionParametersPayload,
 ): SessionActionMetadataSnapshot {
-	const adapter = getRemoteAdapter(sessionId);
+	const adapter = getRemoteAdapter(sessionId) ?? ensureRemoteAdapter(sessionId);
 	if (!adapter) {
 		return EMPTY_SNAPSHOT;
 	}
@@ -27,7 +27,7 @@ export function subscribeSessionActionMetadata(
 	params: ActionParametersPayload | undefined,
 	listener: (snapshot: SessionActionMetadataSnapshot) => void,
 ): () => void {
-	const adapter = getRemoteAdapter(sessionId);
+	const adapter = getRemoteAdapter(sessionId) ?? ensureRemoteAdapter(sessionId);
 	if (!adapter) {
 		return () => {};
 	}
@@ -40,7 +40,7 @@ export function setSessionActionCosts(
 	costs: SessionActionCostMap,
 	params?: ActionParametersPayload,
 ): void {
-	const adapter = getRemoteAdapter(sessionId);
+	const adapter = getRemoteAdapter(sessionId) ?? ensureRemoteAdapter(sessionId);
 	if (!adapter) {
 		return;
 	}
@@ -53,7 +53,7 @@ export function setSessionActionRequirements(
 	requirements: SessionActionRequirementList,
 	params?: ActionParametersPayload,
 ): void {
-	const adapter = getRemoteAdapter(sessionId);
+	const adapter = getRemoteAdapter(sessionId) ?? ensureRemoteAdapter(sessionId);
 	if (!adapter) {
 		return;
 	}
@@ -65,7 +65,7 @@ export function setSessionActionOptions(
 	actionId: string,
 	groups: ActionEffectGroup[],
 ): void {
-	const adapter = getRemoteAdapter(sessionId);
+	const adapter = getRemoteAdapter(sessionId) ?? ensureRemoteAdapter(sessionId);
 	if (!adapter) {
 		return;
 	}
