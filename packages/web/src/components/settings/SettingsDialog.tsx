@@ -75,6 +75,10 @@ interface SettingsDialogProps {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
+	autoAcknowledgeEnabled: boolean;
+	onToggleAutoAcknowledge: () => void;
+	autoPassEnabled: boolean;
+	onToggleAutoPass: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 }
@@ -122,10 +126,16 @@ export default function SettingsDialog({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
+	autoAcknowledgeEnabled,
+	onToggleAutoAcknowledge,
+	autoPassEnabled,
+	onToggleAutoPass,
 	playerName,
 	onChangePlayerName,
 }: SettingsDialogProps) {
-	const [activeTab, setActiveTab] = useState<'general' | 'audio'>('general');
+	const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'gameplay'>(
+		'general',
+	);
 	const dialogTitleId = useId();
 	const dialogDescriptionId = useId();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -283,6 +293,17 @@ export default function SettingsDialog({
 						>
 							Audio
 						</button>
+						<button
+							type="button"
+							className={`${TAB_BUTTON_CLASS} ${
+								activeTab === 'gameplay'
+									? TAB_BUTTON_ACTIVE_CLASS
+									: TAB_BUTTON_INACTIVE_CLASS
+							}`}
+							onClick={() => setActiveTab('gameplay')}
+						>
+							Gameplay
+						</button>
 					</div>
 					{activeTab === 'general' ? (
 						<div className="flex flex-col gap-4">
@@ -299,7 +320,7 @@ export default function SettingsDialog({
 								onToggle={onToggleDark}
 							/>
 						</div>
-					) : (
+					) : activeTab === 'audio' ? (
 						<div className="flex flex-col gap-4">
 							<SettingRow
 								id="settings-music"
@@ -321,6 +342,23 @@ export default function SettingsDialog({
 								description="Keep sound active when you switch tabs or windows."
 								checked={!backgroundAudioMuted}
 								onToggle={onToggleBackgroundAudioMute}
+							/>
+						</div>
+					) : (
+						<div className="flex flex-col gap-4">
+							<SettingRow
+								id="settings-auto-acknowledge"
+								title="Automatically acknowledge"
+								description="Resolve pop-ups and claim rewards without extra clicks."
+								checked={autoAcknowledgeEnabled}
+								onToggle={onToggleAutoAcknowledge}
+							/>
+							<SettingRow
+								id="settings-auto-pass"
+								title="Automatically pass turn"
+								description="End your turn once actions are complete and nothing remains."
+								checked={autoPassEnabled}
+								onToggle={onToggleAutoPass}
 							/>
 						</div>
 					)}

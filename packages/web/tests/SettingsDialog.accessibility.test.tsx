@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import SettingsDialog from '../src/components/settings/SettingsDialog';
@@ -21,6 +22,10 @@ function createProps(
 		onToggleSound: vi.fn(),
 		backgroundAudioMuted: false,
 		onToggleBackgroundAudioMute: vi.fn(),
+		autoAcknowledgeEnabled: false,
+		onToggleAutoAcknowledge: vi.fn(),
+		autoPassEnabled: false,
+		onToggleAutoPass: vi.fn(),
 		playerName: 'Traveler',
 		onChangePlayerName: vi.fn(),
 		...overrides,
@@ -67,16 +72,20 @@ describe('SettingsDialog accessibility', () => {
 			expect(generalTab).toHaveFocus();
 		});
 		const closeButton = screen.getByRole('button', { name: 'Close' });
-		fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
-		await waitFor(() => {
-			expect(closeButton).toHaveFocus();
-		});
-		fireEvent.keyDown(document, { key: 'Tab' });
-		await waitFor(() => {
-			expect(generalTab).toHaveFocus();
-		});
+		const audioTab = screen.getByRole('button', { name: 'Audio' });
+		const gameplayTab = screen.getByRole('button', { name: 'Gameplay' });
+		const user = userEvent.setup();
+		await user.tab({ shift: true });
+		expect(closeButton).toHaveFocus();
+		await user.tab();
+		expect(generalTab).toHaveFocus();
+		gameplayTab.focus();
+		await user.tab({ shift: true });
+		expect(audioTab).toHaveFocus();
+		await user.tab();
+		expect(gameplayTab).toHaveFocus();
 		closeButton.focus();
-		fireEvent.keyDown(document, { key: 'Tab' });
+		await user.tab();
 		expect(generalTab).toHaveFocus();
 		fireEvent.keyDown(document, { key: 'Escape' });
 		expect(onClose).toHaveBeenCalledTimes(1);
@@ -85,6 +94,29 @@ describe('SettingsDialog accessibility', () => {
 			expect(trigger).toHaveFocus();
 		});
 		trigger.remove();
+		unmount();
+	});
+
+	it('activates gameplay toggles when clicked', async () => {
+		const onToggleAutoAcknowledge = vi.fn();
+		const onToggleAutoPass = vi.fn();
+		const props = createProps({
+			onToggleAutoAcknowledge,
+			onToggleAutoPass,
+		});
+		const { unmount } = render(<SettingsDialog {...props} />);
+		const gameplayTab = screen.getByRole('button', { name: 'Gameplay' });
+		fireEvent.click(gameplayTab);
+		const autoAcknowledgeSwitch = await screen.findByRole('switch', {
+			name: 'Automatically acknowledge',
+		});
+		const autoPassSwitch = await screen.findByRole('switch', {
+			name: 'Automatically pass turn',
+		});
+		fireEvent.click(autoAcknowledgeSwitch);
+		fireEvent.click(autoPassSwitch);
+		expect(onToggleAutoAcknowledge).toHaveBeenCalledTimes(1);
+		expect(onToggleAutoPass).toHaveBeenCalledTimes(1);
 		unmount();
 	});
 });

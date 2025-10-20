@@ -22,6 +22,10 @@ interface MenuProps {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
+	autoAcknowledgeEnabled: boolean;
+	onToggleAutoAcknowledge: () => void;
+	autoPassEnabled: boolean;
+	onToggleAutoPass: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	hasStoredName: boolean;
@@ -40,6 +44,10 @@ export default function Menu({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
+	autoAcknowledgeEnabled,
+	onToggleAutoAcknowledge,
+	autoPassEnabled,
+	onToggleAutoPass,
 	playerName,
 	onChangePlayerName,
 	hasStoredName,
@@ -76,6 +84,10 @@ export default function Menu({
 				onToggleSound={onToggleSound}
 				backgroundAudioMuted={backgroundAudioMuted}
 				onToggleBackgroundAudioMute={onToggleBackgroundAudioMute}
+				autoAcknowledgeEnabled={autoAcknowledgeEnabled}
+				onToggleAutoAcknowledge={onToggleAutoAcknowledge}
+				autoPassEnabled={autoPassEnabled}
+				onToggleAutoPass={onToggleAutoPass}
 				playerName={playerName}
 				onChangePlayerName={onChangePlayerName}
 			/>
