@@ -5,6 +5,7 @@ import type {
 	SessionSnapshot,
 	SessionRuntimeConfigResponse,
 	SessionMetadataSnapshotResponse,
+	SessionRegistriesPayload,
 } from '@kingdom-builder/protocol';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
@@ -40,9 +41,22 @@ describe('FastifySessionTransport', () => {
 		snapshot: SessionSnapshot;
 	};
 
+	type SessionResponse = SnapshotResponse & {
+		sessionId: string;
+		registries: SessionRegistriesPayload;
+	};
+
 	async function createServer(tokens = defaultTokens) {
-		const { manager, actionId, gainKey, phases, start, rules, primaryIconId } =
-			createSyntheticSessionManager();
+		const {
+			manager,
+			actionId,
+			gainKey,
+			phases,
+			start,
+			rules,
+			primaryIconId,
+			factory,
+		} = createSyntheticSessionManager();
 		const app = fastify();
 		const options: FastifySessionTransportOptions = {
 			sessionManager: manager,
@@ -59,6 +73,7 @@ describe('FastifySessionTransport', () => {
 			start,
 			rules,
 			primaryIconId,
+			factory,
 		};
 	}
 
@@ -71,10 +86,10 @@ describe('FastifySessionTransport', () => {
 			payload: { devMode: true },
 		});
 		expect(response.statusCode).toBe(201);
-		const body = response.json() as SnapshotResponse;
+		const body = response.json() as SessionResponse;
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.devMode).toBe(true);
-		expectStaticMetadata(manager.getMetadata());
+		expectStaticMetadata(manager.getSessionMetadata(body.sessionId));
 		await app.close();
 	});
 
@@ -99,7 +114,124 @@ describe('FastifySessionTransport', () => {
 		const snapshot = snapshotResponse.json() as SnapshotResponse;
 		expectSnapshotMetadata(snapshot.snapshot.metadata);
 		expect(snapshot.snapshot.game.players).toHaveLength(2);
-		expectStaticMetadata(manager.getMetadata());
+		expectStaticMetadata(manager.getSessionMetadata(sessionId));
+		await app.close();
+	});
+
+	it('includes session-specific registries and metadata for custom configs', async () => {
+		const { app, manager, factory, gainKey, start } = await createServer();
+		const [actionId] = factory.actions.entries()[0];
+		const [buildingId] = factory.buildings.entries()[0];
+		const [developmentId] = factory.developments.entries()[0];
+		const [populationId] = factory.populations.entries()[0];
+		const actions = factory.actions
+			.entries()
+			.map(([, definition]) => structuredClone(definition));
+		const buildings = factory.buildings
+			.entries()
+			.map(([, definition]) => structuredClone(definition));
+		const developments = factory.developments
+			.entries()
+			.map(([, definition]) => structuredClone(definition));
+		const populations = factory.populations
+			.entries()
+			.map(([, definition]) => structuredClone(definition));
+		const actionOverride = actions.find(
+			(definition) => definition.id === actionId,
+		);
+		expect(actionOverride).toBeDefined();
+		if (!actionOverride) {
+			throw new Error('Missing action override.');
+		}
+		actionOverride.name = `${actionOverride.name} (override)`;
+		actionOverride.baseCosts = {
+			...actionOverride.baseCosts,
+			[gainKey]: (actionOverride.baseCosts?.[gainKey] ?? 0) + 1,
+		};
+		const buildingOverride = buildings.find(
+			(definition) => definition.id === buildingId,
+		);
+		expect(buildingOverride).toBeDefined();
+		if (!buildingOverride) {
+			throw new Error('Missing building override.');
+		}
+		buildingOverride.name = `${buildingOverride.name} (override)`;
+		const developmentOverride = developments.find(
+			(definition) => definition.id === developmentId,
+		);
+		expect(developmentOverride).toBeDefined();
+		if (!developmentOverride) {
+			throw new Error('Missing development override.');
+		}
+		developmentOverride.name = `${developmentOverride.name} (override)`;
+		const populationOverride = populations.find(
+			(definition) => definition.id === populationId,
+		);
+		expect(populationOverride).toBeDefined();
+		if (!populationOverride) {
+			throw new Error('Missing population override.');
+		}
+		populationOverride.name = `${populationOverride.name} (override)`;
+		const startOverride = structuredClone(start);
+		startOverride.player.resources[gainKey] =
+			(startOverride.player.resources?.[gainKey] ?? 0) + 5;
+		const configPayload = {
+			actions,
+			buildings,
+			developments,
+			populations,
+			start: startOverride,
+		};
+		const response = await app.inject({
+			method: 'POST',
+			url: '/sessions',
+			headers: authorizedHeaders,
+			payload: { config: configPayload },
+		});
+		expect(response.statusCode).toBe(201);
+		const body = response.json() as SessionResponse;
+		expect(body.registries.actions[actionId].name).toBe(actionOverride.name);
+		expect(body.registries.buildings[buildingId].name).toBe(
+			buildingOverride.name,
+		);
+		expect(body.registries.developments[developmentId].name).toBe(
+			developmentOverride.name,
+		);
+		expect(body.registries.populations[populationId].name).toBe(
+			populationOverride.name,
+		);
+		const metadata = body.snapshot.metadata;
+		expect(metadata.buildings?.[buildingId]?.label).toBe(buildingOverride.name);
+		expect(metadata.developments?.[developmentId]?.label).toBe(
+			developmentOverride.name,
+		);
+		expect(metadata.populations?.[populationId]?.label).toBe(
+			populationOverride.name,
+		);
+		const metadataResponse = await app.inject({
+			method: 'GET',
+			url: '/metadata',
+			query: { sessionId: body.sessionId },
+		});
+		expect(metadataResponse.statusCode).toBe(200);
+		const metadataBody =
+			metadataResponse.json() as SessionMetadataSnapshotResponse;
+		expect(metadataBody.registries.actions[actionId].name).toBe(
+			actionOverride.name,
+		);
+		expect(metadataBody.metadata.buildings?.[buildingId]?.label).toBe(
+			buildingOverride.name,
+		);
+		expect(metadataBody.metadata.populations?.[populationId]?.label).toBe(
+			populationOverride.name,
+		);
+		expect(metadataBody.metadata.developments?.[developmentId]?.label).toBe(
+			developmentOverride.name,
+		);
+		expect(manager.getSessionRegistries(body.sessionId)).toEqual(
+			body.registries,
+		);
+		expectStaticMetadata(manager.getSessionMetadata(body.sessionId));
 		await app.close();
 	});
 
@@ -184,7 +316,7 @@ describe('FastifySessionTransport', () => {
 		const advanceBody = advanceResponse.json() as SnapshotResponse;
 		expectSnapshotMetadata(advanceBody.snapshot.metadata);
 		expect(advanceBody.snapshot.game.currentPhase).toBe('end');
-		expectStaticMetadata(manager.getMetadata());
+		expectStaticMetadata(manager.getSessionMetadata(sessionId));
 		await app.close();
 	});
 

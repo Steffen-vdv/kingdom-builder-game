@@ -232,13 +232,13 @@ export class SessionTransportBase {
 	): SessionStateResponse {
 		const clonedSnapshot = structuredClone(snapshot);
 		clonedSnapshot.metadata = mergeSessionMetadata({
-			baseMetadata: this.sessionManager.getMetadata(),
+			baseMetadata: this.sessionManager.getSessionMetadata(sessionId),
 			snapshotMetadata: clonedSnapshot.metadata,
 		});
 		return {
 			sessionId,
 			snapshot: clonedSnapshot,
-			registries: this.sessionManager.getRegistries(),
+			registries: this.sessionManager.getSessionRegistries(sessionId),
 		};
 	}
 }

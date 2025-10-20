@@ -11,16 +11,10 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
-	RESOURCES,
 	PRIMARY_ICON_ID,
-	type ActionCategoryConfig as ContentActionCategoryConfig,
 } from '@kingdom-builder/contents';
 import type {
-	PlayerStartConfig,
-	Registry,
-	SerializedRegistry,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	PhaseConfig,
 	StartConfig,
 	RuleSet,
@@ -35,18 +29,13 @@ import {
 	cloneRegistry,
 	freezeSerializedRegistry,
 } from './registryUtils.js';
+import {
+	buildSessionAssets,
+	buildResourceRegistry,
+	type SessionBaseOptions,
+	type SessionResourceRegistry,
+} from './sessionConfigAssets.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
-
-type EngineSessionBaseOptions = Omit<
-	EngineSessionOptions,
-	'devMode' | 'config'
->;
-
-type SessionBaseOptions = EngineSessionBaseOptions & {
-	actionCategories: Registry<ContentActionCategoryConfig>;
-};
-
-type SessionResourceRegistry = SerializedRegistry<SessionResourceDefinition>;
 
 type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
@@ -66,6 +55,8 @@ type SessionRecord = {
 	session: EngineSession;
 	createdAt: number;
 	lastAccessedAt: number;
+	registries: SessionRegistriesPayload;
+	metadata: SessionStaticMetadataPayload;
 };
 
 export interface SessionManagerOptions {
@@ -96,6 +87,8 @@ export class SessionManager {
 	private readonly registries: SessionRegistriesPayload;
 
 	private readonly metadata: SessionStaticMetadataPayload;
+
+	private readonly resourceOverrides: SessionResourceRegistry | undefined;
 
 	private readonly runtimeConfig: SessionRuntimeConfig;
 
@@ -128,7 +121,14 @@ export class SessionManager {
 			rules: engineOverrides.rules ?? RULES,
 		};
 		const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
-		const resources = this.buildResourceRegistry(resourceRegistry);
+		const resourceOverrideSnapshot = resourceRegistry
+			? freezeSerializedRegistry(structuredClone(resourceRegistry))
+			: undefined;
+		this.resourceOverrides = resourceOverrideSnapshot;
+		const resources = buildResourceRegistry(
+			this.resourceOverrides,
+			this.baseOptions.start,
+		);
 		const actionCategories = actionCategoryRegistry
 			? (freezeSerializedRegistry(
 					structuredClone(actionCategoryRegistry),
@@ -200,10 +200,21 @@ export class SessionManager {
 		const session = createEngineSession(sessionOptions);
 		session.setDevMode(devMode);
 		const timestamp = this.now();
+		const { registries, metadata } = buildSessionAssets(
+			{
+				baseOptions: this.baseOptions,
+				resourceOverrides: this.resourceOverrides,
+				baseRegistries: this.registries,
+				baseMetadata: this.metadata,
+			},
+			config,
+		);
 		this.sessions.set(sessionId, {
 			session,
 			createdAt: timestamp,
 			lastAccessedAt: timestamp,
+			registries,
+			metadata,
 		});
 		return session;
 	}
@@ -249,6 +260,16 @@ export class SessionManager {
 		return structuredClone(this.metadata);
 	}
 
+	public getSessionRegistries(sessionId: string): SessionRegistriesPayload {
+		const record = this.requireSessionRecord(sessionId);
+		return structuredClone(record.registries);
+	}
+
+	public getSessionMetadata(sessionId: string): SessionStaticMetadataPayload {
+		const record = this.requireSessionRecord(sessionId);
+		return structuredClone(record.metadata);
+	}
+
 	public getRuntimeConfig(): SessionRuntimeConfig {
 		return this.runtimeConfig;
 	}
@@ -261,70 +282,12 @@ export class SessionManager {
 		return session;
 	}
 
-	private buildResourceRegistry(
-		overrides?: SessionResourceRegistry,
-	): SessionResourceRegistry {
-		const registry = new Map<string, SessionResourceDefinition>();
-		const applyOverride = (
-			source: SessionResourceRegistry | undefined,
-		): void => {
-			if (!source) {
-				return;
-			}
-			for (const [key, definition] of Object.entries(source)) {
-				registry.set(key, structuredClone(definition));
-			}
-		};
-		applyOverride(overrides);
-		const addKey = (key: string): void => {
-			if (registry.has(key)) {
-				return;
-			}
-			const info = RESOURCES[key as keyof typeof RESOURCES];
-			if (info) {
-				const definition: SessionResourceDefinition = {
-					key: info.key,
-					icon: info.icon,
-					label: info.label,
-					description: info.description,
-				};
-				if (info.tags && info.tags.length > 0) {
-					definition.tags = [...info.tags];
-				}
-				registry.set(key, definition);
-				return;
-			}
-			registry.set(key, { key });
-		};
-		const addFromStart = (config: PlayerStartConfig | undefined): void => {
-			if (!config?.resources) {
-				return;
-			}
-			for (const key of Object.keys(config.resources)) {
-				addKey(key);
-			}
-		};
-		const { start } = this.baseOptions;
-		addFromStart(start.player);
-		if (start.players) {
-			for (const playerConfig of Object.values(start.players)) {
-				addFromStart(playerConfig);
-			}
+	private requireSessionRecord(sessionId: string): SessionRecord {
+		const record = this.sessions.get(sessionId);
+		if (!record) {
+			throw new Error(`Session "${sessionId}" was not found.`);
 		}
-		if (start.modes) {
-			for (const mode of Object.values(start.modes)) {
-				if (!mode) {
-					continue;
-				}
-				addFromStart(mode.player);
-				if (mode.players) {
-					for (const modePlayer of Object.values(mode.players)) {
-						addFromStart(modePlayer);
-					}
-				}
-			}
-		}
-		return Object.fromEntries(registry.entries());
+		return record;
 	}
 
 	private purgeExpiredSessions(): void {
