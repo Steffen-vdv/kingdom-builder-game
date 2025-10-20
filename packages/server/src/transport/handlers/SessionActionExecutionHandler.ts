@@ -86,7 +86,7 @@ export class SessionActionExecutionHandler {
 			});
 			const snapshot = structuredClone(result.snapshot);
 			snapshot.metadata = mergeSessionMetadata({
-				baseMetadata: this.sessionManager.getMetadata(),
+				baseMetadata: this.sessionManager.getSessionMetadata(sessionId),
 				snapshotMetadata: snapshot.metadata,
 			});
 			const response = actionExecuteResponseSchema.parse({
