@@ -395,4 +395,218 @@ describe('useAiRunner', () => {
 		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
 		runAiTurnSpy.mockRestore();
 	});
+
+	it('advances when the AI has no remaining action resources', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{
+				id: 'phase-main',
+				name: 'Main Phase',
+				action: true,
+				steps: [],
+			},
+		];
+		const activePlayer = createSnapshotPlayer({
+			id: 'A',
+			aiControlled: true,
+			resources: { [actionCostResource]: 1 },
+		});
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+		});
+		const registriesPayload = createSessionRegistriesPayload();
+		const sessionId = 'session-ai';
+		const record = initializeSessionState({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const resourceKeys = record.resourceKeys;
+		const [actionId] = record.registries.actions.keys();
+		if (!actionId) {
+			throw new Error('No actions available');
+		}
+		const initialResources = {
+			...activePlayer.resources,
+		};
+		const spentResources = {
+			...initialResources,
+			[actionCostResource]: (initialResources[actionCostResource] ?? 0) - 1,
+		};
+		const createTrace = (
+			beforeResources: Record<string, number>,
+			afterResources: Record<string, number>,
+		) => ({
+			id: actionId,
+			before: {
+				resources: { ...beforeResources },
+				stats: { ...activePlayer.stats },
+				buildings: [...activePlayer.buildings],
+				lands: activePlayer.lands.map((land) => ({
+					id: land.id,
+					slotsMax: land.slotsMax,
+					slotsUsed: land.slotsUsed,
+					developments: [...land.developments],
+				})),
+				passives: [],
+			},
+			after: {
+				resources: { ...afterResources },
+				stats: { ...activePlayer.stats },
+				buildings: [...activePlayer.buildings],
+				lands: activePlayer.lands.map((land) => ({
+					id: land.id,
+					slotsMax: land.slotsMax,
+					slotsUsed: land.slotsUsed,
+					developments: [...land.developments],
+				})),
+				passives: [],
+			},
+		});
+		const firstTrace = createTrace(initialResources, spentResources);
+		const firstSnapshot = {
+			...sessionState,
+			game: {
+				...sessionState.game,
+				players: sessionState.game.players.map((player) => {
+					if (player.id !== activePlayer.id) {
+						return player;
+					}
+					return {
+						...player,
+						resources: { ...spentResources },
+					};
+				}),
+			},
+		};
+		const actionLockedSnapshot = {
+			...firstSnapshot,
+			game: {
+				...firstSnapshot.game,
+				players: firstSnapshot.game.players.map((player) => {
+					if (player.id !== activePlayer.id) {
+						return player;
+					}
+					return {
+						...player,
+						resources: { ...spentResources },
+					};
+				}),
+			},
+		};
+		const resolution = createDeferred();
+		const showResolution = vi
+			.fn<[], Promise<void>>()
+			.mockReturnValueOnce(resolution.promise);
+		const addResolutionLog = vi.fn();
+		const runAiTurnSpy = vi
+			.spyOn(sessionAiModule, 'runAiTurn')
+			.mockImplementationOnce(() => {
+				updateSessionSnapshot(sessionId, firstSnapshot);
+				return Promise.resolve({
+					ranTurn: true,
+					actions: [
+						{
+							actionId,
+							costs: { [actionCostResource]: 1 },
+							traces: [firstTrace],
+						},
+					],
+					phaseComplete: false,
+					snapshot: firstSnapshot,
+					registries: record.registries,
+				});
+			})
+			.mockImplementationOnce(() => {
+				updateSessionSnapshot(sessionId, actionLockedSnapshot);
+				return Promise.resolve({
+					ranTurn: true,
+					actions: [],
+					phaseComplete: false,
+					snapshot: actionLockedSnapshot,
+					registries: record.registries,
+				});
+			})
+			.mockResolvedValue({
+				ranTurn: false,
+				actions: [],
+				phaseComplete: false,
+				snapshot: actionLockedSnapshot,
+				registries: record.registries,
+			});
+		const syncPhaseState = vi.fn();
+		const mountedRef = { current: true };
+		const runUntilActionPhaseCore = vi.fn().mockResolvedValue(undefined);
+
+		renderHook(() =>
+			useAiRunner({
+				sessionId,
+				sessionSnapshot: sessionState,
+				runUntilActionPhaseCore,
+				syncPhaseState,
+				mountedRef,
+				showResolution,
+				addResolutionLog,
+				registries: record.registries,
+				resourceKeys,
+				actionCostResource,
+			}),
+		);
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(runAiTurnSpy).toHaveBeenCalledTimes(1);
+		expect(showResolution).toHaveBeenCalledTimes(1);
+
+		await act(async () => {
+			resolution.resolve();
+			await Promise.resolve();
+		});
+
+		expect(runAiTurnSpy).toHaveBeenCalledTimes(2);
+		expect(showResolution).toHaveBeenCalledTimes(1);
+
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
+		expect(syncPhaseState).toHaveBeenNthCalledWith(1, firstSnapshot);
+		expect(syncPhaseState).toHaveBeenNthCalledWith(2, actionLockedSnapshot);
+		const finalCall = syncPhaseState.mock.calls[2];
+		if (!finalCall) {
+			throw new Error('Expected syncPhaseState to be called three times');
+		}
+		expect(finalCall[0]).toEqual(
+			expect.objectContaining({
+				game: expect.objectContaining({
+					activePlayerId: activePlayer.id,
+				}),
+			}),
+		);
+		expect(finalCall[1]).toEqual({
+			isAdvancing: true,
+			canEndTurn: false,
+		});
+		runAiTurnSpy.mockRestore();
+	});
 });

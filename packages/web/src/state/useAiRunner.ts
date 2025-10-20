@@ -211,7 +211,6 @@ export function useAiRunner({
 	actionCostResource,
 	onFatalSessionError,
 }: UseAiRunnerOptions) {
-	void actionCostResource;
 	const runningRef = useRef(false);
 	useEffect(() => {
 		const phaseDefinition =
@@ -244,6 +243,22 @@ export function useAiRunner({
 					markFatalSessionError(error);
 					onFatalSessionError(error);
 				}
+			};
+			const enqueueAdvanceToActionPhase = () => {
+				void enqueueSessionTask(sessionId, async () => {
+					if (fatalError !== null) {
+						return;
+					}
+					try {
+						syncPhaseState(getSessionSnapshot(sessionId), {
+							isAdvancing: true,
+							canEndTurn: false,
+						});
+						await runUntilActionPhaseCore();
+					} catch (error) {
+						forwardFatalError(error);
+					}
+				});
 			};
 			try {
 				let latestSnapshot = sessionSnapshot;
@@ -285,23 +300,27 @@ export function useAiRunner({
 						break;
 					}
 					if (result.phaseComplete) {
-						void enqueueSessionTask(sessionId, async () => {
-							if (fatalError !== null) {
-								return;
-							}
-							try {
-								syncPhaseState(getSessionSnapshot(sessionId), {
-									isAdvancing: true,
-									canEndTurn: false,
-								});
-								await runUntilActionPhaseCore();
-							} catch (error) {
-								forwardFatalError(error);
-							}
-						});
+						enqueueAdvanceToActionPhase();
 						break;
 					}
 					if (result.actions.length === 0) {
+						const currentPhase =
+							result.snapshot.phases[result.snapshot.game.phaseIndex];
+						const activePlayerSnapshot = result.snapshot.game.players.find(
+							(player) => player.id === activeId,
+						);
+						const remainingResource =
+							actionCostResource && activePlayerSnapshot
+								? (activePlayerSnapshot.resources[actionCostResource] ?? 0)
+								: null;
+						if (
+							currentPhase?.action &&
+							result.snapshot.game.activePlayerId === activeId &&
+							typeof remainingResource === 'number' &&
+							remainingResource <= 0
+						) {
+							enqueueAdvanceToActionPhase();
+						}
 						break;
 					}
 				}
