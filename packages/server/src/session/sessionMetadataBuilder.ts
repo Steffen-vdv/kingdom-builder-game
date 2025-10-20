@@ -3,19 +3,27 @@ import {
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
+	MODIFIER_INFO,
+	PASSIVE_INFO,
+	PHASES,
+	POPULATION_INFO,
+	POPULATION_ROLES,
 	RESOURCES,
 	STATS,
-	PHASES,
 	TRIGGER_INFO,
+	PhaseId,
 	LAND_INFO,
 	SLOT_INFO,
-	PASSIVE_INFO,
 	DEVELOPMENTS_INFO,
-	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
+import {
+	BROOM_ICON,
+	RESOURCE_TRANSFER_ICON,
+} from '@kingdom-builder/contents/defs';
 import type {
+	PopulationConfig,
 	Registry,
 	SerializedRegistry,
 	SessionRegistriesPayload,
@@ -248,19 +256,51 @@ const buildTriggerMetadata = () =>
 		}),
 	);
 
-const buildAssetMetadata = () =>
-	createMetadataRecord([
-		['land', { label: LAND_INFO.label, icon: LAND_INFO.icon }],
-		['slot', { label: SLOT_INFO.label, icon: SLOT_INFO.icon }],
-		['passive', { label: PASSIVE_INFO.label, icon: PASSIVE_INFO.icon }],
-		[
-			'developments',
-			{
-				label: DEVELOPMENTS_INFO.label,
-				icon: DEVELOPMENTS_INFO.icon,
-			},
-		],
-	]);
+const buildAssetMetadata = () => {
+	const descriptors: Record<string, unknown> = {};
+	assignAssetDescriptor(descriptors, 'population', POPULATION_INFO);
+	assignAssetDescriptor(descriptors, 'passive', PASSIVE_INFO);
+	assignAssetDescriptor(descriptors, 'land', LAND_INFO);
+	assignAssetDescriptor(descriptors, 'slot', SLOT_INFO);
+	assignAssetDescriptor(descriptors, 'developments', DEVELOPMENTS_INFO);
+	const upkeepPhase = findUpkeepPhase();
+	assignAssetDescriptor(descriptors, 'upkeep', {
+		label: upkeepPhase?.label ?? 'Upkeep',
+		icon: upkeepPhase?.icon ?? BROOM_ICON,
+	});
+	assignAssetDescriptor(descriptors, 'transfer', {
+		label: 'Transfer',
+		icon: RESOURCE_TRANSFER_ICON,
+	});
+	descriptors.modifiers = deepFreeze(structuredClone(MODIFIER_INFO));
+	return deepFreeze(descriptors) as Record<string, SessionMetadataDescriptor>;
+};
+
+const findUpkeepPhase = () =>
+	PHASES.find((phase) => phase.id === PhaseId.Upkeep);
+
+type AssetInfo = { icon?: string; label?: string; description?: string };
+
+function assignAssetDescriptor(
+	target: Record<string, unknown>,
+	key: string,
+	info: AssetInfo | undefined,
+): void {
+	if (!info) {
+		return;
+	}
+	const descriptor: SessionMetadataDescriptor = {};
+	if (info.label) {
+		descriptor.label = info.label;
+	}
+	if (info.icon) {
+		descriptor.icon = info.icon;
+	}
+	if (info.description) {
+		descriptor.description = info.description;
+	}
+	target[key] = deepFreeze(descriptor);
+}
 
 const cloneOverviewContent = () =>
 	deepFreeze(structuredClone(OVERVIEW_CONTENT));
@@ -270,7 +310,7 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		actions: cloneRegistry(ACTIONS),
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
-		populations: cloneRegistry(POPULATIONS),
+		populations: cloneRegistry(POPULATIONS as Registry<PopulationConfig>),
 		resources: buildResourceRegistry(),
 	};
 	const metadata: StaticSessionMetadata = {

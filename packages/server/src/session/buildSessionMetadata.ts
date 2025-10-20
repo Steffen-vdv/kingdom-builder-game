@@ -1,12 +1,20 @@
 import {
 	LAND_INFO,
+	MODIFIER_INFO,
 	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
+	POPULATION_INFO,
+	POPULATION_ROLES,
+	PhaseId,
 	SLOT_INFO,
 	STATS,
 	TRIGGER_INFO,
-	POPULATION_ROLES,
 } from '@kingdom-builder/contents';
+import {
+	BROOM_ICON,
+	RESOURCE_TRANSFER_ICON,
+} from '@kingdom-builder/contents/defs';
+import { DEVELOPMENTS_INFO } from '@kingdom-builder/contents/land';
 import type {
 	BuildingConfig,
 	DevelopmentConfig,
@@ -66,7 +74,7 @@ export function buildSessionMetadata(
 	if (hasEntries(triggerMetadata)) {
 		metadata.triggers = triggerMetadata;
 	}
-	const assetMetadata = buildAssetMetadata();
+	const assetMetadata = buildAssetMetadata(options.phases);
 	if (hasEntries(assetMetadata)) {
 		metadata.assets = assetMetadata;
 	}
@@ -229,18 +237,40 @@ function buildTriggerDescriptor(
 	return descriptor;
 }
 
-function buildAssetMetadata(): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
+function buildAssetMetadata(
+	phases: ReadonlyArray<PhaseConfig>,
+): SessionMetadataDescriptorMap {
+	const descriptors: Record<string, unknown> = {};
+	assignAssetDescriptor(descriptors, 'population', POPULATION_INFO);
 	assignAssetDescriptor(descriptors, 'passive', PASSIVE_INFO);
 	assignAssetDescriptor(descriptors, 'land', LAND_INFO);
 	assignAssetDescriptor(descriptors, 'slot', SLOT_INFO);
-	return descriptors;
+	assignAssetDescriptor(descriptors, 'developments', DEVELOPMENTS_INFO);
+	const upkeepDescriptor = resolveUpkeepDescriptor(phases);
+	assignAssetDescriptor(descriptors, 'upkeep', upkeepDescriptor);
+	assignAssetDescriptor(descriptors, 'transfer', {
+		label: 'Transfer',
+		icon: RESOURCE_TRANSFER_ICON,
+	});
+	descriptors.modifiers = Object.freeze(structuredClone(MODIFIER_INFO));
+	return descriptors as SessionMetadataDescriptorMap;
+}
+
+function resolveUpkeepDescriptor(
+	phases: ReadonlyArray<PhaseConfig>,
+): AssetInfo {
+	const upkeepPhase = phases.find((phase) => phase.id === PhaseId.Upkeep);
+	const descriptor: AssetInfo = {
+		label: upkeepPhase?.label ?? 'Upkeep',
+		icon: upkeepPhase?.icon ?? BROOM_ICON,
+	};
+	return descriptor;
 }
 
 type AssetInfo = { icon?: string; label?: string; description?: string };
 
 function assignAssetDescriptor(
-	target: SessionMetadataDescriptorMap,
+	target: Record<string, unknown>,
 	key: string,
 	info: AssetInfo | undefined,
 ): void {
@@ -257,7 +287,7 @@ function assignAssetDescriptor(
 	if (info.description) {
 		descriptor.description = info.description;
 	}
-	target[key] = descriptor;
+	target[key] = Object.freeze(descriptor);
 }
 
 function hasEntries<T>(value: Record<string, T>): boolean {

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
 	ACTIONS,
+	BROOM_ICON,
+	MODIFIER_INFO,
+	PHASES,
+	PhaseId,
+	POPULATION_INFO,
+	RESOURCE_TRANSFER_ICON,
 	STATS,
 	TRIGGER_INFO,
 	OVERVIEW_CONTENT,
@@ -44,6 +50,25 @@ describe('buildSessionMetadata', () => {
 		expect(triggerMetadata?.icon).toBe(triggerInfo.icon);
 		expect(triggerMetadata?.future).toBe(triggerInfo.future);
 		expect(triggerMetadata?.past).toBe(triggerInfo.past);
+	});
+
+	it('provides population, upkeep, transfer, and modifier descriptors', () => {
+		const { metadata } = buildSessionMetadata();
+		const assets = metadata.assets ?? {};
+		expect(assets.population).toMatchObject({
+			icon: POPULATION_INFO.icon,
+			label: POPULATION_INFO.label,
+		});
+		const upkeepPhase = PHASES.find((phase) => phase.id === PhaseId.Upkeep);
+		expect(assets.upkeep).toMatchObject({
+			icon: upkeepPhase?.icon ?? BROOM_ICON,
+			label: upkeepPhase?.label ?? 'Upkeep',
+		});
+		expect(assets.transfer).toMatchObject({
+			icon: RESOURCE_TRANSFER_ICON,
+			label: 'Transfer',
+		});
+		expect(assets.modifiers).toEqual(MODIFIER_INFO);
 	});
 
 	it('clones overview content including hero tokens', () => {
