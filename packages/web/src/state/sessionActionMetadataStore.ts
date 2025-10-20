@@ -4,20 +4,15 @@ import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
 } from '@kingdom-builder/protocol/session';
-import { getRemoteAdapter } from './remoteSessionAdapter';
+import { ensureSessionAdapter } from './sessionSdk';
 import type { SessionActionMetadataSnapshot } from './sessionTypes';
-
-const EMPTY_SNAPSHOT: SessionActionMetadataSnapshot = {};
 
 export function readSessionActionMetadata(
 	sessionId: string,
 	actionId: string,
 	params?: ActionParametersPayload,
 ): SessionActionMetadataSnapshot {
-	const adapter = getRemoteAdapter(sessionId);
-	if (!adapter) {
-		return EMPTY_SNAPSHOT;
-	}
+	const adapter = ensureSessionAdapter(sessionId);
 	return adapter.readActionMetadata(actionId, params);
 }
 
@@ -27,10 +22,7 @@ export function subscribeSessionActionMetadata(
 	params: ActionParametersPayload | undefined,
 	listener: (snapshot: SessionActionMetadataSnapshot) => void,
 ): () => void {
-	const adapter = getRemoteAdapter(sessionId);
-	if (!adapter) {
-		return () => {};
-	}
+	const adapter = ensureSessionAdapter(sessionId);
 	return adapter.subscribeActionMetadata(actionId, params, listener);
 }
 
@@ -40,10 +32,7 @@ export function setSessionActionCosts(
 	costs: SessionActionCostMap,
 	params?: ActionParametersPayload,
 ): void {
-	const adapter = getRemoteAdapter(sessionId);
-	if (!adapter) {
-		return;
-	}
+	const adapter = ensureSessionAdapter(sessionId);
 	adapter.setActionCosts(actionId, costs, params);
 }
 
@@ -53,10 +42,7 @@ export function setSessionActionRequirements(
 	requirements: SessionActionRequirementList,
 	params?: ActionParametersPayload,
 ): void {
-	const adapter = getRemoteAdapter(sessionId);
-	if (!adapter) {
-		return;
-	}
+	const adapter = ensureSessionAdapter(sessionId);
 	adapter.setActionRequirements(actionId, requirements, params);
 }
 
@@ -65,9 +51,6 @@ export function setSessionActionOptions(
 	actionId: string,
 	groups: ActionEffectGroup[],
 ): void {
-	const adapter = getRemoteAdapter(sessionId);
-	if (!adapter) {
-		return;
-	}
+	const adapter = ensureSessionAdapter(sessionId);
 	adapter.setActionOptions(actionId, groups);
 }

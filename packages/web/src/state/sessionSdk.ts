@@ -29,11 +29,6 @@ import {
 	getOrCreateRemoteAdapter,
 	getRemoteAdapter,
 } from './remoteSessionAdapter';
-import {
-	setSessionActionCosts,
-	setSessionActionOptions,
-	setSessionActionRequirements,
-} from './sessionActionMetadataStore';
 import type { RemoteSessionAdapter } from './remoteSessionAdapter';
 export { performSessionAction } from './sessionSdk.actions';
 import type { SessionQueueOptions } from './sessionSdk.actions';
@@ -76,7 +71,10 @@ function toRemoteRecord(record: SessionStateRecord): RemoteSessionRecord {
 	};
 }
 
-function getAdapter(sessionId: string): RemoteSessionAdapter {
+export function ensureSessionAdapter(sessionId: string): RemoteSessionAdapter {
+	if (!sessionId) {
+		throw new Error('Cannot ensure session adapter without a session id.');
+	}
 	return getOrCreateRemoteAdapter(sessionId, {
 		ensureGameApi,
 		runAiTurn: runAiTurnInternal,
@@ -96,7 +94,7 @@ export async function createSession(
 	const api = ensureGameApi();
 	const response = await api.createSession(sessionRequest, requestOptions);
 	const stateRecord = initializeSessionState(response);
-	const adapter = getAdapter(response.sessionId);
+	const adapter = ensureSessionAdapter(response.sessionId);
 	return {
 		sessionId: response.sessionId,
 		adapter,
@@ -109,7 +107,7 @@ export async function fetchSnapshot(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const adapter = getAdapter(sessionId);
+	const adapter = ensureSessionAdapter(sessionId);
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
 	const stateRecord = applySessionState(response);
 	adapter.invalidateActionMetadata();
@@ -126,7 +124,7 @@ export async function setSessionDevMode(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<FetchSnapshotResult> {
 	const api = ensureGameApi();
-	const adapter = getAdapter(sessionId);
+	const adapter = ensureSessionAdapter(sessionId);
 	const response = await enqueueSessionTask(sessionId, async () =>
 		api.setDevMode({ sessionId, enabled }, requestOptions),
 	);
@@ -164,7 +162,7 @@ export async function advanceSessionPhase(
 	options: SessionQueueOptions = {},
 ): Promise<SessionAdvanceResponse> {
 	const api = ensureGameApi();
-	const adapter = getAdapter(request.sessionId);
+	const adapter = ensureSessionAdapter(request.sessionId);
 	if (options.skipQueue) {
 		return runAdvanceSessionPhase(request, requestOptions, api, adapter);
 	}
@@ -177,7 +175,7 @@ async function runAiTurnInternal(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionRunAiResponse> {
 	const api = ensureGameApi();
-	const adapter = getAdapter(request.sessionId);
+	const adapter = ensureSessionAdapter(request.sessionId);
 	const response = await enqueueSessionTask(request.sessionId, async () =>
 		api.runAiTurn(request, requestOptions),
 	);
@@ -212,7 +210,7 @@ export async function loadActionCosts(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionActionCostMap> {
 	const api = ensureGameApi();
-	void getAdapter(sessionId);
+	const adapter = ensureSessionAdapter(sessionId);
 	const waitOptions = requestOptions.signal
 		? { signal: requestOptions.signal }
 		: undefined;
@@ -223,7 +221,7 @@ export async function loadActionCosts(
 			requestOptions,
 		),
 	);
-	setSessionActionCosts(sessionId, actionId, response.costs, params);
+	adapter.setActionCosts(actionId, response.costs, params);
 	return clone(response.costs);
 }
 
@@ -234,7 +232,7 @@ export async function loadActionRequirements(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionActionRequirementList> {
 	const api = ensureGameApi();
-	void getAdapter(sessionId);
+	const adapter = ensureSessionAdapter(sessionId);
 	const waitOptions = requestOptions.signal
 		? { signal: requestOptions.signal }
 		: undefined;
@@ -245,12 +243,7 @@ export async function loadActionRequirements(
 			requestOptions,
 		),
 	);
-	setSessionActionRequirements(
-		sessionId,
-		actionId,
-		response.requirements,
-		params,
-	);
+	adapter.setActionRequirements(actionId, response.requirements, params);
 	return clone(response.requirements);
 }
 
@@ -260,7 +253,7 @@ export async function loadActionOptions(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<ActionEffectGroup[]> {
 	const api = ensureGameApi();
-	void getAdapter(sessionId);
+	const adapter = ensureSessionAdapter(sessionId);
 	const waitOptions = requestOptions.signal
 		? { signal: requestOptions.signal }
 		: undefined;
@@ -271,7 +264,7 @@ export async function loadActionOptions(
 			requestOptions,
 		),
 	);
-	setSessionActionOptions(sessionId, actionId, response.groups);
+	adapter.setActionOptions(actionId, response.groups);
 	return clone(response.groups);
 }
 async function simulateUpcomingPhasesInternal(
@@ -304,7 +297,7 @@ export async function updatePlayerName(
 	requestOptions: GameApiRequestOptions = {},
 ): Promise<SessionUpdatePlayerNameResponse> {
 	const api = ensureGameApi();
-	const adapter = getAdapter(request.sessionId);
+	const adapter = ensureSessionAdapter(request.sessionId);
 	const response = await enqueueSessionTask(request.sessionId, async () =>
 		api.updatePlayerName(request, requestOptions),
 	);
