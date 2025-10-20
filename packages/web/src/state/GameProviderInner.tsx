@@ -13,6 +13,7 @@ import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
+import { useKeybindingPreferences } from './keybindings';
 import type {
 	GameEngineContextValue,
 	PerformActionHandler,
@@ -159,6 +160,12 @@ export function GameProviderInner({
 		useToasts({
 			setTrackedTimeout,
 		});
+
+	const {
+		keybinds: controlKeybinds,
+		setControlKeybind,
+		resetControlKeybind,
+	} = useKeybindingPreferences();
 
 	useCompensationLogger({
 		sessionId,
@@ -310,6 +317,9 @@ export function GameProviderInner({
 		onToggleAutoPass: onToggleAutoPass ?? (() => {}),
 		timeScale,
 		setTimeScale,
+		controlKeybinds,
+		setControlKeybind,
+		resetControlKeybind,
 		toasts,
 		pushToast,
 		pushErrorToast,

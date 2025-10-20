@@ -8,6 +8,7 @@ import { HeroSection } from './menu/HeroSection';
 import { CallToActionSection } from './menu/CallToActionSection';
 import { HighlightsSection } from './menu/HighlightsSection';
 import { PlayerNamePrompt } from './menu/PlayerNamePrompt';
+import { useKeybindingPreferences } from './state/keybindings';
 
 interface MenuProps {
 	onStart: () => void;
@@ -54,6 +55,11 @@ export default function Menu({
 }: MenuProps) {
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
 	const showNamePrompt = !hasStoredName;
+	const {
+		keybinds: controlKeybinds,
+		setControlKeybind,
+		resetControlKeybind,
+	} = useKeybindingPreferences();
 
 	return (
 		<>
@@ -90,6 +96,9 @@ export default function Menu({
 				onToggleAutoPass={onToggleAutoPass}
 				playerName={playerName}
 				onChangePlayerName={onChangePlayerName}
+				controlKeybinds={controlKeybinds}
+				onChangeControlKeybind={setControlKeybind}
+				onResetControlKeybind={resetControlKeybind}
 			/>
 		</>
 	);
