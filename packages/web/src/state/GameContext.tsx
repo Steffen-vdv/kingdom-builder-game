@@ -33,6 +33,7 @@ import {
 	releaseSession,
 	setSessionDevMode,
 } from './sessionSdk';
+import { prepareSessionActionMetadata } from './prepareSessionActionMetadata';
 import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
 
 const NOOP = () => {};
@@ -234,6 +235,16 @@ export function GameProvider(props: GameProviderProps) {
 							return;
 						}
 						const { queueSeed: _queue, ...record } = resumed.record;
+						await prepareSessionActionMetadata(
+							resumed.sessionId,
+							record.snapshot,
+							record.registries,
+							{ signal: controller.signal },
+						);
+						if (disposed || !mountedRef.current) {
+							releaseSession(resumed.sessionId);
+							return;
+						}
 						updateSessionData({
 							adapter: resumed.adapter,
 							...record,
@@ -252,6 +263,16 @@ export function GameProvider(props: GameProviderProps) {
 						return;
 					}
 					const { queueSeed: _queue, ...record } = created.record;
+					await prepareSessionActionMetadata(
+						created.sessionId,
+						record.snapshot,
+						record.registries,
+						{ signal: controller.signal },
+					);
+					if (disposed || !mountedRef.current) {
+						releaseSession(created.sessionId);
+						return;
+					}
 					updateSessionData({
 						adapter: created.adapter,
 						...record,
