@@ -24,6 +24,15 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		}
 	});
 
+	fastify.get('/metadata', async (_request, reply) => {
+		try {
+			const response = transport.getMetadataSnapshot();
+			return reply.send(response);
+		} catch (error) {
+			return handleTransportError(reply, error);
+		}
+	});
+
 	fastify.post('/sessions', async (request, reply) => {
 		try {
 			const response = transport.createSession({

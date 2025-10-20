@@ -332,6 +332,8 @@ export type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
+	SessionMetadataSnapshot,
+	SessionMetadataSnapshotResponse,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 	SessionActionCostRequest,

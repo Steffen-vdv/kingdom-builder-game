@@ -136,6 +136,7 @@ export type {
 	SessionPhaseStepMetadata,
 	SessionTriggerMetadata,
 	SessionSnapshotMetadata,
+	SessionMetadataSnapshot,
 	SessionActionDefinitionSummary,
 	SessionActionCostMap,
 	SessionRequirementFailure,
@@ -167,6 +168,7 @@ export type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionRuntimeConfigResponse,
+	SessionMetadataSnapshotResponse,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
 export type {
@@ -204,6 +206,8 @@ export {
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
 	runtimeConfigResponseSchema,
+	sessionMetadataSnapshotSchema,
+	sessionMetadataSnapshotResponseSchema,
 } from './config/session_contracts';
 export {
 	actionEffectChoiceSchema,
