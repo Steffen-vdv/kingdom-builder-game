@@ -113,6 +113,7 @@ export function createSyntheticSessionManager(
 	const defaultPrimaryIconId = gainKey;
 	const engineOptions: NonNullable<SessionManagerOptions['engineOptions']> = {
 		actions: engineOverrides.actions ?? factory.actions,
+		actionCategories: engineOverrides.actionCategories ?? factory.categories,
 		buildings: engineOverrides.buildings ?? factory.buildings,
 		developments: engineOverrides.developments ?? factory.developments,
 		populations: engineOverrides.populations ?? factory.populations,

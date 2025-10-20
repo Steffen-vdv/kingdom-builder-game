@@ -4,6 +4,8 @@ import { act, render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import type { ActionResolution } from '../../src/state/useActionResolution';
+import type { PhaseProgressState } from '../../src/state/usePhaseProgress';
 import {
 	GameProviderInner,
 	GameEngineContext,
@@ -29,6 +31,10 @@ const applyPhaseSnapshotMock = vi.fn();
 const refreshPhaseStateMock = vi.fn();
 const handlePerformMock = vi.fn();
 const useSessionQueueMock = vi.fn();
+const showResolutionMock = vi.fn();
+const acknowledgeResolutionMock = vi.fn();
+let mockResolution: ActionResolution | null = null;
+let mockPhaseState: PhaseProgressState;
 let capturedPhaseOptions: Record<string, unknown> | null = null;
 let capturedPerformerOptions: Record<string, unknown> | null = null;
 let capturedAiOptions: Record<string, unknown> | null = null;
@@ -69,9 +75,9 @@ vi.mock('../../src/state/useGameLog', () => ({
 
 vi.mock('../../src/state/useActionResolution', () => ({
 	useActionResolution: () => ({
-		resolution: null,
-		showResolution: vi.fn(),
-		acknowledgeResolution: vi.fn(),
+		resolution: mockResolution,
+		showResolution: showResolutionMock,
+		acknowledgeResolution: acknowledgeResolutionMock,
 	}),
 }));
 
@@ -79,14 +85,7 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 	usePhaseProgress: (options: Record<string, unknown>) => {
 		capturedPhaseOptions = options;
 		return {
-			phase: {
-				currentPhaseId: 'phase:test',
-				isActionPhase: true,
-				canEndTurn: true,
-				isAdvancing: false,
-				activePlayerId: 'player-test',
-				activePlayerName: 'Player Test',
-			},
+			phase: mockPhaseState,
 			runUntilActionPhase: runUntilActionPhaseMock,
 			runUntilActionPhaseCore: runUntilActionPhaseCoreMock,
 			handleEndTurn: handleEndTurnMock,
@@ -128,6 +127,25 @@ vi.mock('../../src/state/sessionSdk', () => ({
 	updatePlayerName: vi.fn(() => Promise.resolve()),
 }));
 
+function createResolutionState({
+	requireAcknowledgement,
+	isComplete,
+}: {
+	requireAcknowledgement: boolean;
+	isComplete: boolean;
+}): ActionResolution {
+	return {
+		lines: ['Event resolved'],
+		visibleLines: ['Event resolved'],
+		timeline: [],
+		visibleTimeline: [],
+		isComplete,
+		summaries: [],
+		source: 'action',
+		requireAcknowledgement,
+	};
+}
+
 describe('GameProviderInner', () => {
 	const sessionId = 'session:test';
 	let sessionState: SessionSnapshot;
@@ -152,6 +170,9 @@ describe('GameProviderInner', () => {
 		useSessionQueueMock.mockReset();
 		vi.mocked(updateRemotePlayerName).mockClear();
 		addResolutionLogMock.mockClear();
+		showResolutionMock.mockClear();
+		acknowledgeResolutionMock.mockClear();
+		mockResolution = null;
 		const phases = [
 			{ id: 'phase:test', action: true, steps: [{ id: 'phase:test:start' }] },
 		];
@@ -173,6 +194,18 @@ describe('GameProviderInner', () => {
 				winConditions: [],
 			},
 		});
+		mockPhaseState = {
+			currentPhaseId: sessionState.game.currentPhase,
+			isActionPhase: true,
+			canEndTurn: true,
+			isAdvancing: false,
+			activePlayerId: sessionState.game.activePlayerId,
+			activePlayerName:
+				sessionState.game.players.find((player) => {
+					return player.id === sessionState.game.activePlayerId;
+				})?.name ?? null,
+			turnNumber: sessionState.game.turn,
+		};
 	});
 
 	it('routes the remote adapter through session queue helpers', () => {
@@ -466,6 +499,547 @@ describe('GameProviderInner', () => {
 				playerId: localPlayer.id,
 				playerName: 'Warlord',
 			});
+		});
+		cleanup();
+	});
+
+	it('does not auto acknowledge resolutions when the preference is disabled', async () => {
+		const registriesPayload = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const enqueue = vi.fn(
+			async <T,>(task: () => Promise<T> | T) => await task(),
+		);
+		useSessionQueueMock.mockReturnValue({
+			enqueue,
+			cachedSessionSnapshot: sessionState,
+		});
+
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => adapter,
+			getLatestSnapshot: () => null,
+		};
+
+		mockResolution = createResolutionState({
+			requireAcknowledgement: true,
+			isComplete: true,
+		});
+
+		render(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(acknowledgeResolutionMock).not.toHaveBeenCalled();
+		});
+		cleanup();
+	});
+
+	it('auto acknowledges completed resolutions once when enabled', async () => {
+		const registriesPayload = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const enqueue = vi.fn(
+			async <T,>(task: () => Promise<T> | T) => await task(),
+		);
+		useSessionQueueMock.mockReturnValue({
+			enqueue,
+			cachedSessionSnapshot: sessionState,
+		});
+
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => adapter,
+			getLatestSnapshot: () => null,
+		};
+
+		mockResolution = createResolutionState({
+			requireAcknowledgement: true,
+			isComplete: false,
+		});
+
+		const { rerender } = render(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(acknowledgeResolutionMock).not.toHaveBeenCalled();
+		});
+
+		mockResolution = createResolutionState({
+			requireAcknowledgement: true,
+			isComplete: true,
+		});
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(acknowledgeResolutionMock).toHaveBeenCalledTimes(1);
+		});
+
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		expect(acknowledgeResolutionMock).toHaveBeenCalledTimes(1);
+
+		mockResolution = null;
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		mockResolution = createResolutionState({
+			requireAcknowledgement: true,
+			isComplete: true,
+		});
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(acknowledgeResolutionMock).toHaveBeenCalledTimes(2);
+		});
+		cleanup();
+	});
+
+	it('does not auto pass when disabled or acknowledgement is pending', async () => {
+		const registriesPayload = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const enqueue = vi.fn(
+			async <T,>(task: () => Promise<T> | T) => await task(),
+		);
+		useSessionQueueMock.mockReturnValue({
+			enqueue,
+			cachedSessionSnapshot: sessionState,
+		});
+
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => adapter,
+			getLatestSnapshot: () => null,
+		};
+
+		mockResolution = createResolutionState({
+			requireAcknowledgement: true,
+			isComplete: true,
+		});
+
+		const { rerender } = render(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(handleEndTurnMock).not.toHaveBeenCalled();
+		});
+
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(handleEndTurnMock).not.toHaveBeenCalled();
+		});
+		cleanup();
+	});
+
+	it('auto passes exactly once per eligible window', async () => {
+		const registriesPayload = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const enqueue = vi.fn(
+			async <T,>(task: () => Promise<T> | T) => await task(),
+		);
+		useSessionQueueMock.mockReturnValue({
+			enqueue,
+			cachedSessionSnapshot: sessionState,
+		});
+
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => adapter,
+			getLatestSnapshot: () => null,
+		};
+
+		mockResolution = null;
+		mockPhaseState = {
+			...mockPhaseState,
+			canEndTurn: true,
+			isAdvancing: false,
+		};
+
+		const { rerender } = render(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(handleEndTurnMock).toHaveBeenCalledTimes(1);
+		});
+
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		expect(handleEndTurnMock).toHaveBeenCalledTimes(1);
+
+		mockPhaseState = {
+			...mockPhaseState,
+			canEndTurn: false,
+		};
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		expect(handleEndTurnMock).toHaveBeenCalledTimes(1);
+
+		mockPhaseState = {
+			...mockPhaseState,
+			canEndTurn: true,
+		};
+		rerender(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<div />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(handleEndTurnMock).toHaveBeenCalledTimes(2);
 		});
 		cleanup();
 	});
