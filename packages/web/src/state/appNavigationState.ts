@@ -1,4 +1,5 @@
 import type { Screen } from './appHistory';
+import type { ResumeSessionRecord } from './sessionResumeStorage';
 
 export interface AppNavigationState {
 	currentScreen: Screen;
@@ -10,8 +11,11 @@ export interface AppNavigationState {
 	isBackgroundAudioMuted: boolean;
 	isAutoAcknowledgeEnabled: boolean;
 	isAutoPassEnabled: boolean;
+	resumePoint: ResumeSessionRecord | null;
+	resumeSessionId: string | null;
 	startStandardGame: () => void;
 	startDeveloperGame: () => void;
+	continueSavedGame: () => void;
 	openOverview: () => void;
 	openTutorial: () => void;
 	returnToMenu: () => void;
@@ -21,4 +25,10 @@ export interface AppNavigationState {
 	toggleBackgroundAudioMute: () => void;
 	toggleAutoAcknowledge: () => void;
 	toggleAutoPass: () => void;
+	persistResumeSession: (record: ResumeSessionRecord) => void;
+	clearResumeSession: (sessionId?: string | null) => void;
+	handleResumeSessionFailure: (options: {
+		sessionId: string;
+		error: unknown;
+	}) => void;
 }
