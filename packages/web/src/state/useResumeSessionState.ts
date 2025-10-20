@@ -12,6 +12,7 @@ interface ResumeSessionStateResult {
 	updateFromHistory: (
 		nextSessionId: string | null,
 	) => ResumeSessionRecord | null;
+	suspendResumeSession: () => void;
 	persistResumeSession: (
 		record: ResumeSessionRecord,
 		updateHistory: (nextSessionId: string | null) => void,
@@ -40,9 +41,10 @@ export const useResumeSessionState = (): ResumeSessionStateResult => {
 	const updateFromHistory = useCallback(
 		(nextSessionId: string | null): ResumeSessionRecord | null => {
 			if (!nextSessionId) {
-				setResumePoint(null);
+				const storedRecord = readStoredResumeSession();
+				setResumePoint(storedRecord ?? null);
 				setResumeSessionId(null);
-				return null;
+				return storedRecord ?? null;
 			}
 			if (resumePoint?.sessionId === nextSessionId) {
 				setResumeSessionId(nextSessionId);
@@ -60,6 +62,10 @@ export const useResumeSessionState = (): ResumeSessionStateResult => {
 		},
 		[resumePoint],
 	);
+
+	const suspendResumeSession = useCallback(() => {
+		setResumeSessionId(null);
+	}, []);
 
 	const persistResumeSession = useCallback(
 		(
@@ -110,6 +116,7 @@ export const useResumeSessionState = (): ResumeSessionStateResult => {
 		updateFromHistory,
 		persistResumeSession,
 		clearResumeSession,
+		suspendResumeSession,
 		handleResumeSessionFailure,
 	};
 };

@@ -100,7 +100,10 @@ export function initializeSessionState(
 export function applySessionState(
 	response: SessionStatePayload,
 ): SessionStateRecord {
-	const record = assertSessionRecord(response.sessionId);
+	const record = getSessionRecord(response.sessionId);
+	if (!record) {
+		return initializeSessionState(response);
+	}
 	record.snapshot = clone(response.snapshot);
 	record.ruleSnapshot = clone(response.snapshot.rules);
 	applyRegistries(record, response.registries);

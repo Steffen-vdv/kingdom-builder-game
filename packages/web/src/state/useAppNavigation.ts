@@ -48,6 +48,7 @@ export function useAppNavigation(): AppNavigationState {
 		resumePoint,
 		resumeSessionId,
 		updateFromHistory,
+		suspendResumeSession,
 		persistResumeSession: persistResumeSessionState,
 		clearResumeSession: clearResumeSessionState,
 		handleResumeSessionFailure: handleResumeSessionFailureState,
@@ -215,6 +216,7 @@ export function useAppNavigation(): AppNavigationState {
 
 	const startStandardGame = useCallback(() => {
 		const nextGameKey = currentGameKey + 1;
+		suspendResumeSession();
 		setIsDevMode(false);
 		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);
@@ -223,13 +225,20 @@ export function useAppNavigation(): AppNavigationState {
 				screen: Screen.Game,
 				gameKey: nextGameKey,
 				isDevModeEnabled: false,
+				resumeSessionId: null,
 			}),
 			SCREEN_PATHS[Screen.Game],
 		);
-	}, [buildHistoryState, currentGameKey, pushHistoryState]);
+	}, [
+		buildHistoryState,
+		currentGameKey,
+		pushHistoryState,
+		suspendResumeSession,
+	]);
 
 	const startDeveloperGame = useCallback(() => {
 		const nextGameKey = currentGameKey + 1;
+		suspendResumeSession();
 		setIsDevMode(true);
 		setIsAutoAcknowledgeEnabled(true);
 		setIsAutoPassEnabled(true);
@@ -242,10 +251,16 @@ export function useAppNavigation(): AppNavigationState {
 				isDevModeEnabled: true,
 				isAutoAcknowledgeEnabled: true,
 				isAutoPassEnabled: true,
+				resumeSessionId: null,
 			}),
 			SCREEN_PATHS[Screen.Game],
 		);
-	}, [buildHistoryState, currentGameKey, pushHistoryState]);
+	}, [
+		buildHistoryState,
+		currentGameKey,
+		pushHistoryState,
+		suspendResumeSession,
+	]);
 
 	const openOverview = useCallback(() => {
 		setCurrentScreen(Screen.Overview);
