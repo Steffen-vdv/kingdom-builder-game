@@ -31,6 +31,7 @@ export default function GameLayout() {
 		onToggleAutoPass,
 		playerName,
 		onChangePlayerName,
+		phase,
 	} = useGameEngine();
 	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
@@ -57,8 +58,10 @@ export default function GameLayout() {
 		setQuitDialogOpen(false);
 		onExit();
 	}, [onExit]);
+	const activePlayerId =
+		phase.activePlayerId ?? sessionSnapshot.game.activePlayerId;
 	const playerPanels = sessionSnapshot.game.players.map((player, index) => {
-		const isActive = player.id === sessionSnapshot.game.activePlayerId;
+		const isActive = player.id === activePlayerId;
 		const sideClass = index === 0 ? 'pr-6' : 'pl-6';
 		const colorClass =
 			index === 0
