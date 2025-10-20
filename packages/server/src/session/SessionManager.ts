@@ -4,6 +4,7 @@ import {
 } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
+	ACTION_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
@@ -12,6 +13,7 @@ import {
 	RULES,
 	RESOURCES,
 	PRIMARY_ICON_ID,
+	type ActionCategoryConfig as ContentActionCategoryConfig,
 } from '@kingdom-builder/contents';
 import type {
 	PlayerStartConfig,
@@ -22,11 +24,17 @@ import type {
 	PhaseConfig,
 	StartConfig,
 	RuleSet,
+	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
 	type SessionStaticMetadataPayload,
 } from './buildSessionMetadata.js';
+import {
+	cloneActionCategoryRegistry,
+	cloneRegistry,
+	freezeSerializedRegistry,
+} from './registryUtils.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionBaseOptions = Omit<
@@ -34,10 +42,15 @@ type EngineSessionBaseOptions = Omit<
 	'devMode' | 'config'
 >;
 
+type SessionBaseOptions = EngineSessionBaseOptions & {
+	actionCategories: Registry<ContentActionCategoryConfig>;
+};
+
 type SessionResourceRegistry = SerializedRegistry<SessionResourceDefinition>;
 
-type EngineSessionOverrideOptions = Partial<EngineSessionBaseOptions> & {
+type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
+	actionCategoryRegistry?: SessionActionCategoryRegistry;
 	primaryIconId?: string | null;
 };
 
@@ -78,7 +91,7 @@ export class SessionManager {
 
 	private readonly now: () => number;
 
-	private readonly baseOptions: EngineSessionBaseOptions;
+	private readonly baseOptions: SessionBaseOptions;
 
 	private readonly registries: SessionRegistriesPayload;
 
@@ -93,12 +106,20 @@ export class SessionManager {
 			now = Date.now,
 			engineOptions = {},
 		} = options;
-		const { resourceRegistry, ...engineOverrides } = engineOptions;
+		const {
+			resourceRegistry,
+			actionCategoryRegistry,
+			primaryIconId: primaryIconOverride,
+			...engineOverrides
+		} = engineOptions;
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
+		const baseActionCategories =
+			engineOverrides.actionCategories ?? ACTION_CATEGORIES;
 		this.baseOptions = {
 			actions: engineOverrides.actions ?? ACTIONS,
+			actionCategories: baseActionCategories,
 			buildings: engineOverrides.buildings ?? BUILDINGS,
 			developments: engineOverrides.developments ?? DEVELOPMENTS,
 			populations: engineOverrides.populations ?? POPULATIONS,
@@ -106,14 +127,21 @@ export class SessionManager {
 			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
 		};
-		const primaryIconId =
-			engineOverrides.primaryIconId ?? PRIMARY_ICON_ID ?? null;
+		const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
 		const resources = this.buildResourceRegistry(resourceRegistry);
+		const actionCategories = actionCategoryRegistry
+			? (freezeSerializedRegistry(
+					structuredClone(actionCategoryRegistry),
+				) as SessionActionCategoryRegistry)
+			: (freezeSerializedRegistry(
+					cloneActionCategoryRegistry(this.baseOptions.actionCategories),
+				) as SessionActionCategoryRegistry);
 		this.registries = {
-			actions: this.cloneRegistry(this.baseOptions.actions),
-			buildings: this.cloneRegistry(this.baseOptions.buildings),
-			developments: this.cloneRegistry(this.baseOptions.developments),
-			populations: this.cloneRegistry(this.baseOptions.populations),
+			actions: cloneRegistry(this.baseOptions.actions),
+			actionCategories,
+			buildings: cloneRegistry(this.baseOptions.buildings),
+			developments: cloneRegistry(this.baseOptions.developments),
+			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
 		};
 		this.metadata = buildSessionMetadata({
@@ -132,9 +160,9 @@ export class SessionManager {
 		const frozenRules = Object.freeze(
 			structuredClone(this.baseOptions.rules),
 		) as unknown as RuleSet;
-		const frozenResources = this.freezeResourceRegistry(
+		const frozenResources = freezeSerializedRegistry(
 			structuredClone(resources),
-		);
+		) as SessionResourceRegistry;
 		this.runtimeConfig = Object.freeze({
 			phases: frozenPhases,
 			start: frozenStart,
@@ -160,8 +188,10 @@ export class SessionManager {
 		}
 		const devMode = options.devMode ?? false;
 		const { config } = options;
+		const { actionCategories: _baseActionCategories, ...engineBaseOptions } =
+			this.baseOptions;
 		const sessionOptions: EngineSessionOptions = {
-			...this.baseOptions,
+			...engineBaseOptions,
 			devMode,
 		};
 		if (config !== undefined) {
@@ -231,17 +261,6 @@ export class SessionManager {
 		return session;
 	}
 
-	private cloneRegistry<DefinitionType>(
-		registry: Registry<DefinitionType>,
-	): SerializedRegistry<DefinitionType> {
-		const entries = registry.entries();
-		const result: SerializedRegistry<DefinitionType> = {};
-		for (const [id, definition] of entries) {
-			result[id] = structuredClone(definition);
-		}
-		return result;
-	}
-
 	private buildResourceRegistry(
 		overrides?: SessionResourceRegistry,
 	): SessionResourceRegistry {
@@ -306,15 +325,6 @@ export class SessionManager {
 			}
 		}
 		return Object.fromEntries(registry.entries());
-	}
-
-	private freezeResourceRegistry(
-		registry: SessionResourceRegistry,
-	): SessionResourceRegistry {
-		for (const definition of Object.values(registry)) {
-			Object.freeze(definition);
-		}
-		return Object.freeze(registry) as SessionResourceRegistry;
 	}
 
 	private purgeExpiredSessions(): void {

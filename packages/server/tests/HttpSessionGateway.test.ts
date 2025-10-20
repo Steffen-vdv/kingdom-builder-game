@@ -29,6 +29,17 @@ describe('HttpSessionGateway', () => {
 	function createRegistries(): SessionRegistriesPayload {
 		return {
 			actions: {},
+			actionCategories: {
+				basic: {
+					id: 'basic',
+					title: 'Basic',
+					subtitle: 'Core Commands',
+					description: 'Default commands.',
+					icon: 'icon-action-basic',
+					order: 0,
+					layout: 'grid-primary',
+				},
+			},
 			buildings: {},
 			developments: {},
 			populations: {},
@@ -59,6 +70,9 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.createSession({ devMode: true });
 		expect(response.sessionId).toBe('rest-session');
+		expect(response.registries.actionCategories).toEqual(
+			createRegistries().actionCategories,
+		);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
@@ -106,6 +120,9 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.fetchSnapshot({ sessionId: 'test' });
 		expect(response.sessionId).toBe('test');
+		expect(response.registries.actionCategories).toEqual(
+			createRegistries().actionCategories,
+		);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
@@ -127,6 +144,9 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.advancePhase({ sessionId: 'test' });
 		expect(response.advance.effects).toEqual([]);
+		expect(response.registries.actionCategories).toEqual(
+			createRegistries().actionCategories,
+		);
 	});
 
 	it('performs actions and returns success payloads', async () => {
@@ -202,6 +222,9 @@ describe('HttpSessionGateway', () => {
 			enabled: true,
 		});
 		expect(response.snapshot.game.devMode).toBe(true);
+		expect(response.registries.actionCategories).toEqual(
+			createRegistries().actionCategories,
+		);
 	});
 
 	it('fetches action costs through the REST endpoint', async () => {

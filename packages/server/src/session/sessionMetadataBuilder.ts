@@ -1,5 +1,6 @@
 import {
 	ACTIONS,
+	ACTION_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
@@ -20,6 +21,7 @@ import type {
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
+	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionSnapshotMetadata,
@@ -74,6 +76,31 @@ const cloneRegistry = <DefinitionType>(
 		result[id] = structuredClone(definition);
 	}
 	return deepFreeze(result);
+};
+
+const cloneActionCategoryRegistry = (): SessionActionCategoryRegistry => {
+	const entries: SessionActionCategoryRegistry = {};
+	for (const [id, definition] of ACTION_CATEGORIES.entries()) {
+		const entry: SessionActionCategoryRegistry[string] = {
+			id: definition.id,
+			title: definition.label,
+			subtitle: definition.subtitle ?? definition.label,
+			icon: definition.icon,
+			order: definition.order,
+			layout: definition.layout,
+		};
+		if (definition.description) {
+			entry.description = definition.description;
+		}
+		if (definition.hideWhenEmpty) {
+			entry.hideWhenEmpty = definition.hideWhenEmpty;
+		}
+		if (definition.analyticsKey) {
+			entry.analyticsKey = definition.analyticsKey;
+		}
+		entries[id] = deepFreeze(entry);
+	}
+	return deepFreeze(entries);
 };
 
 const buildResourceRegistry =
@@ -268,6 +295,7 @@ const cloneOverviewContent = () =>
 export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 	const registries: SessionRegistriesPayload = {
 		actions: cloneRegistry(ACTIONS),
+		actionCategories: cloneActionCategoryRegistry(),
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
