@@ -114,10 +114,10 @@ describe('SettingsDialog accessibility', () => {
 		});
 		fireEvent.click(gameTab);
 		const acknowledgeSwitch = screen.getByRole('switch', {
-			name: 'Skip resolution pop-ups',
+			name: 'Auto-Acknowledge Action Summaries',
 		});
 		const passSwitch = screen.getByRole('switch', {
-			name: 'Auto-pass when actions are spent',
+			name: 'Auto-end turn',
 		});
 		fireEvent.click(acknowledgeSwitch);
 		expect(onToggleAutoAcknowledge).toHaveBeenCalledTimes(1);

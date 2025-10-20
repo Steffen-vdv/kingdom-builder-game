@@ -40,18 +40,16 @@ const TAB_BUTTON_INACTIVE_CLASS = [
 	'dark:hover:text-emerald-200',
 ].join(' ');
 
-const AUTO_ACKNOWLEDGE_TITLE = 'Skip resolution pop-ups';
+const AUTO_ACKNOWLEDGE_TITLE = 'Auto-Acknowledge Action Summaries';
 
 const AUTO_ACKNOWLEDGE_DESCRIPTION = [
-	'Automatically close action results the moment they appear.',
-	'Helpful when you do not need to read every summary.',
+	'Automatically acknowledge action results the moment they appear.',
 ].join(' ');
 
-const AUTO_PASS_TITLE = 'Auto-pass when actions are spent';
+const AUTO_PASS_TITLE = 'Auto-end turn';
 
 const AUTO_PASS_DESCRIPTION = [
 	'End your turn for you after every available action is used.',
-	'Great for keeping the game flowing without extra clicks.',
 ].join(' ');
 
 const FOCUSABLE_ELEMENTS_SELECTOR = [
