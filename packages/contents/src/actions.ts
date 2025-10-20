@@ -9,6 +9,9 @@ import {
 	ActionCategoryId as ActionCategoryIds,
 	type ActionCategoryId as ActionCategoryIdValue,
 } from './actionCategories';
+import { DevelopmentId } from './developments';
+import { BuildingId } from './buildingIds';
+import { PopulationRole } from './populationRoles';
 import type { Focus as FocusType } from './defs';
 
 const ACTION_ID_MAP = {
@@ -23,11 +26,89 @@ const ACTION_ID_MAP = {
 	royal_decree: 'royal_decree',
 	tax: 'tax',
 	till: 'till',
+	develop_farm: `develop:${DevelopmentId.Farm}`,
+	develop_house: `develop:${DevelopmentId.House}`,
+	develop_outpost: `develop:${DevelopmentId.Outpost}`,
+	develop_watchtower: `develop:${DevelopmentId.Watchtower}`,
+	develop_garden: `develop:${DevelopmentId.Garden}`,
+	build_town_charter: `build:${BuildingId.TownCharter}`,
+	build_mill: `build:${BuildingId.Mill}`,
+	build_raiders_guild: `build:${BuildingId.RaidersGuild}`,
+	build_plow_workshop: `build:${BuildingId.PlowWorkshop}`,
+	build_market: `build:${BuildingId.Market}`,
+	build_barracks: `build:${BuildingId.Barracks}`,
+	build_citadel: `build:${BuildingId.Citadel}`,
+	build_castle_walls: `build:${BuildingId.CastleWalls}`,
+	build_castle_gardens: `build:${BuildingId.CastleGardens}`,
+	build_temple: `build:${BuildingId.Temple}`,
+	build_palace: `build:${BuildingId.Palace}`,
+	build_great_hall: `build:${BuildingId.GreatHall}`,
+	hire_council: `hire:${PopulationRole.Council}`,
+	hire_legion: `hire:${PopulationRole.Legion}`,
+	hire_fortifier: `hire:${PopulationRole.Fortifier}`,
 } as const;
 
 const POPULATION_EVALUATION_ID_MAP = {
 	tax: 'tax',
 } as const;
+
+const HIREABLE_POPULATION_ROLE_VALUES = [
+	PopulationRole.Council,
+	PopulationRole.Legion,
+	PopulationRole.Fortifier,
+] as const;
+
+const DEVELOPMENT_ACTION_ID_ENTRIES = [
+	[DevelopmentId.Farm, ACTION_ID_MAP.develop_farm],
+	[DevelopmentId.House, ACTION_ID_MAP.develop_house],
+	[DevelopmentId.Outpost, ACTION_ID_MAP.develop_outpost],
+	[DevelopmentId.Watchtower, ACTION_ID_MAP.develop_watchtower],
+	[DevelopmentId.Garden, ACTION_ID_MAP.develop_garden],
+] as const;
+
+const BUILDING_ACTION_ID_ENTRIES = [
+	[BuildingId.TownCharter, ACTION_ID_MAP.build_town_charter],
+	[BuildingId.Mill, ACTION_ID_MAP.build_mill],
+	[BuildingId.RaidersGuild, ACTION_ID_MAP.build_raiders_guild],
+	[BuildingId.PlowWorkshop, ACTION_ID_MAP.build_plow_workshop],
+	[BuildingId.Market, ACTION_ID_MAP.build_market],
+	[BuildingId.Barracks, ACTION_ID_MAP.build_barracks],
+	[BuildingId.Citadel, ACTION_ID_MAP.build_citadel],
+	[BuildingId.CastleWalls, ACTION_ID_MAP.build_castle_walls],
+	[BuildingId.CastleGardens, ACTION_ID_MAP.build_castle_gardens],
+	[BuildingId.Temple, ACTION_ID_MAP.build_temple],
+	[BuildingId.Palace, ACTION_ID_MAP.build_palace],
+	[BuildingId.GreatHall, ACTION_ID_MAP.build_great_hall],
+] as const;
+
+const HIRE_ACTION_ID_ENTRIES = [
+	[PopulationRole.Council, ACTION_ID_MAP.hire_council],
+	[PopulationRole.Legion, ACTION_ID_MAP.hire_legion],
+	[PopulationRole.Fortifier, ACTION_ID_MAP.hire_fortifier],
+] as const;
+
+const DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT = new Map(
+	DEVELOPMENT_ACTION_ID_ENTRIES,
+);
+const DEVELOPMENT_ID_BY_ACTION = new Map<ActionId, DevelopmentId>(
+	DEVELOPMENT_ACTION_ID_ENTRIES.map(([developmentId, actionId]) => [
+		actionId,
+		developmentId,
+	]),
+);
+
+const BUILDING_ACTION_ID_BY_BUILDING = new Map(BUILDING_ACTION_ID_ENTRIES);
+const BUILDING_ID_BY_ACTION = new Map<ActionId, BuildingId>(
+	BUILDING_ACTION_ID_ENTRIES.map(([buildingId, actionId]) => [
+		actionId,
+		buildingId,
+	]),
+);
+
+const HIRE_ACTION_ID_BY_ROLE = new Map(HIRE_ACTION_ID_ENTRIES);
+const HIRE_ROLE_BY_ACTION = new Map<ActionId, HireablePopulationRoleId>(
+	HIRE_ACTION_ID_ENTRIES.map(([roleId, actionId]) => [actionId, roleId]),
+);
 
 export const ActionId = ACTION_ID_MAP;
 
@@ -39,6 +120,116 @@ type PopulationEvaluationIdMap = typeof POPULATION_EVALUATION_ID_MAP;
 
 export type PopulationEvaluationId =
 	PopulationEvaluationIdMap[keyof PopulationEvaluationIdMap];
+
+export type DevelopmentActionId =
+	(typeof DEVELOPMENT_ACTION_ID_ENTRIES)[number][1];
+
+export type BuildingActionId = (typeof BUILDING_ACTION_ID_ENTRIES)[number][1];
+
+export type HireActionId = (typeof HIRE_ACTION_ID_ENTRIES)[number][1];
+
+export type HireablePopulationRoleId =
+	(typeof HIREABLE_POPULATION_ROLE_VALUES)[number];
+
+export const HIREABLE_POPULATION_ROLE_IDS = HIREABLE_POPULATION_ROLE_VALUES;
+
+export const DEVELOPMENT_ACTION_IDS_BY_DEVELOPMENT =
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT as ReadonlyMap<
+		DevelopmentId,
+		DevelopmentActionId
+	>;
+
+export const DEVELOPMENT_ACTION_IDS = Object.freeze(
+	DEVELOPMENT_ACTION_ID_ENTRIES.map(([, actionId]) => actionId),
+);
+
+export const BUILDING_ACTION_IDS_BY_BUILDING =
+	BUILDING_ACTION_ID_BY_BUILDING as ReadonlyMap<BuildingId, BuildingActionId>;
+
+export const BUILDING_ACTION_IDS = Object.freeze(
+	BUILDING_ACTION_ID_ENTRIES.map(([, actionId]) => actionId),
+);
+
+export const HIRE_ACTION_IDS_BY_ROLE = HIRE_ACTION_ID_BY_ROLE as ReadonlyMap<
+	HireablePopulationRoleId,
+	HireActionId
+>;
+
+export const HIRE_ACTION_IDS = Object.freeze(
+	HIRE_ACTION_ID_ENTRIES.map(([, actionId]) => actionId),
+);
+
+/**
+ * Returns the action identifier associated with the provided development id.
+ * Consumers should call this helper instead of hardcoding action strings.
+ */
+export function actionIdForDevelopment(
+	developmentId: DevelopmentId,
+): DevelopmentActionId {
+	const actionId = DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT.get(developmentId);
+	if (!actionId) {
+		throw new Error(
+			`Missing action id mapping for development "${developmentId}".`,
+		);
+	}
+	return actionId;
+}
+
+/**
+ * Looks up the development id for a development action identifier.
+ * Unrelated action ids return undefined so callers can branch safely.
+ */
+export function developmentIdFromAction(
+	actionId: ActionId,
+): DevelopmentId | undefined {
+	return DEVELOPMENT_ID_BY_ACTION.get(actionId);
+}
+
+/**
+ * Returns the action identifier used to construct the requested building.
+ * Prefer this over embedding `build:*` action strings in other modules.
+ */
+export function actionIdForBuilding(buildingId: BuildingId): BuildingActionId {
+	const actionId = BUILDING_ACTION_ID_BY_BUILDING.get(buildingId);
+	if (!actionId) {
+		throw new Error(`Missing action id mapping for building "${buildingId}".`);
+	}
+	return actionId;
+}
+
+/**
+ * Resolves a building id from a building construction action identifier.
+ * Returns undefined for non-building actions so callers can guard results.
+ */
+export function buildingIdFromAction(
+	actionId: ActionId,
+): BuildingId | undefined {
+	return BUILDING_ID_BY_ACTION.get(actionId);
+}
+
+/**
+ * Returns the hire action identifier for a hireable population role.
+ * Downstream code should use this helper to avoid string duplication.
+ */
+export function actionIdForHireableRole(
+	roleId: HireablePopulationRoleId,
+): HireActionId {
+	const actionId = HIRE_ACTION_ID_BY_ROLE.get(roleId);
+	if (!actionId) {
+		throw new Error(`Missing hire action id for role "${roleId}".`);
+	}
+	return actionId;
+}
+
+/**
+ * Attempts to recover a hireable role id from a hire action identifier.
+ * Non-hire actions return undefined, allowing graceful guard clauses.
+ */
+export function hireableRoleFromAction(
+	actionId: ActionId,
+): HireablePopulationRoleId | undefined {
+	return HIRE_ROLE_BY_ACTION.get(actionId);
+}
 
 export interface ActionDef extends ActionConfig {
 	category?: ActionCategoryIdValue;
