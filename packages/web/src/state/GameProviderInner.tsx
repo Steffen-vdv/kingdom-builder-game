@@ -233,6 +233,11 @@ export function GameProviderInner({
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
 		mountedRef,
+		showResolution: handleShowResolution,
+		registries,
+		resourceKeys,
+		actionCostResource,
+		addResolutionLog,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
