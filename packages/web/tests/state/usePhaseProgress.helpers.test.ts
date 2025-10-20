@@ -258,4 +258,117 @@ describe('advanceToActionPhase', () => {
 			}),
 		);
 	});
+
+	it('advances at least once when forced from an action phase snapshot', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{ id: 'phase-ai', name: 'AI Action', action: true, steps: [] },
+			{ id: 'phase-player', name: 'Player Action', action: true, steps: [] },
+		];
+		const aiPlayer = createSnapshotPlayer({ id: 'AI', aiControlled: true });
+		const humanPlayer = createSnapshotPlayer({
+			id: 'Human',
+			aiControlled: false,
+		});
+		const ruleSnapshot = {
+			tieredResourceKey: actionCostResource,
+			tierDefinitions: [],
+			winConditions: [],
+		};
+		const sessionId = 'session-forced';
+		const initialSnapshot = createSessionSnapshot({
+			players: [aiPlayer, humanPlayer],
+			activePlayerId: aiPlayer.id,
+			opponentId: humanPlayer.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot,
+			currentPhase: phases[0]?.id ?? 'phase-ai',
+			currentStep: phases[0]?.id ?? 'phase-ai',
+			phaseIndex: 0,
+			turn: 1,
+		});
+		const nextSnapshot = createSessionSnapshot({
+			players: [aiPlayer, humanPlayer],
+			activePlayerId: humanPlayer.id,
+			opponentId: aiPlayer.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot,
+			currentPhase: phases[1]?.id ?? 'phase-player',
+			currentStep: phases[1]?.id ?? 'phase-player',
+			phaseIndex: 1,
+			turn: 1,
+		});
+		const registriesPayload = createSessionRegistriesPayload();
+		initializeSessionState({
+			sessionId,
+			snapshot: initialSnapshot,
+			registries: registriesPayload,
+		});
+		advanceSessionPhaseMock.mockImplementationOnce(() => {
+			updateSessionSnapshot(sessionId, nextSnapshot);
+			return Promise.resolve({
+				sessionId,
+				snapshot: nextSnapshot,
+				registries: registriesPayload,
+				advance: {
+					phase: phases[0]?.id ?? 'phase-ai',
+					step: phases[0]?.id ?? 'phase-ai',
+					effects: [],
+					player: nextSnapshot.game.players[1]!,
+				},
+			});
+		});
+		const mountedRef = { current: true };
+		const applyPhaseSnapshot = vi.fn();
+		const refresh = vi.fn();
+		const formatPhaseResolution = vi.fn().mockReturnValue({
+			source: {
+				kind: 'phase',
+				label: 'AI Action',
+				id: phases[0]?.id ?? 'phase-ai',
+			},
+			lines: [],
+			summaries: [],
+		});
+		await advanceToActionPhase({
+			sessionId,
+			initialSnapshot,
+			resourceKeys: [actionCostResource],
+			mountedRef,
+			applyPhaseSnapshot,
+			refresh,
+			formatPhaseResolution: formatPhaseResolution as never,
+			showResolution: vi.fn().mockResolvedValue(undefined) as never,
+			registries: createSessionRegistries(),
+			forceAdvance: true,
+		});
+		expect(advanceSessionPhaseMock).toHaveBeenCalledTimes(1);
+		expect(applyPhaseSnapshot).toHaveBeenNthCalledWith(
+			1,
+			initialSnapshot,
+			expect.objectContaining({
+				isAdvancing: true,
+				canEndTurn: false,
+			}),
+		);
+		expect(applyPhaseSnapshot).toHaveBeenNthCalledWith(
+			2,
+			nextSnapshot,
+			expect.objectContaining({
+				isAdvancing: true,
+				canEndTurn: false,
+			}),
+		);
+		expect(applyPhaseSnapshot).toHaveBeenNthCalledWith(
+			3,
+			nextSnapshot,
+			expect.objectContaining({ isAdvancing: false }),
+		);
+		expect(refresh).toHaveBeenCalledTimes(1);
+	});
 });

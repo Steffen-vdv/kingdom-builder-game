@@ -51,6 +51,7 @@ interface AdvanceToActionPhaseOptions {
 		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
 	>;
 	onFatalSessionError?: (error: unknown) => void;
+	forceAdvance?: boolean;
 }
 
 export async function advanceToActionPhase({
@@ -64,6 +65,7 @@ export async function advanceToActionPhase({
 	showResolution,
 	registries,
 	onFatalSessionError,
+	forceAdvance = false,
 }: AdvanceToActionPhaseOptions) {
 	try {
 		const record = getSessionRecord(sessionId);
@@ -73,7 +75,7 @@ export async function advanceToActionPhase({
 			refresh();
 			return;
 		}
-		if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
+		if (snapshot.phases[snapshot.game.phaseIndex]?.action && !forceAdvance) {
 			if (!mountedRef.current) {
 				return;
 			}
@@ -83,7 +85,11 @@ export async function advanceToActionPhase({
 		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
 		let lastPhaseSourceId: string | null = null;
 		let lastPhaseHeaderLogged = false;
-		while (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
+		let forcedIterationsRemaining = forceAdvance ? 1 : 0;
+		while (
+			forcedIterationsRemaining > 0 ||
+			!snapshot.phases[snapshot.game.phaseIndex]?.action
+		) {
 			const activePlayerBefore = snapshot.game.players.find(
 				(player) => player.id === snapshot.game.activePlayerId,
 			);
@@ -175,6 +181,9 @@ export async function advanceToActionPhase({
 				canEndTurn: false,
 			});
 			snapshot = snapshotAfter;
+			if (forcedIterationsRemaining > 0) {
+				forcedIterationsRemaining -= 1;
+			}
 		}
 		if (!mountedRef.current) {
 			return;
