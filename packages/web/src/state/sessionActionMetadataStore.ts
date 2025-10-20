@@ -4,7 +4,8 @@ import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
 } from '@kingdom-builder/protocol/session';
-import { getRemoteAdapter } from './remoteSessionAdapter';
+import { getRemoteAdapter, waitForRemoteAdapter } from './remoteSessionAdapter';
+import { isAbortError } from './isAbortError';
 import type { SessionActionMetadataSnapshot } from './sessionTypes';
 
 const EMPTY_SNAPSHOT: SessionActionMetadataSnapshot = {};
@@ -28,10 +29,36 @@ export function subscribeSessionActionMetadata(
 	listener: (snapshot: SessionActionMetadataSnapshot) => void,
 ): () => void {
 	const adapter = getRemoteAdapter(sessionId);
-	if (!adapter) {
-		return () => {};
+	if (adapter) {
+		return adapter.subscribeActionMetadata(actionId, params, listener);
 	}
-	return adapter.subscribeActionMetadata(actionId, params, listener);
+	const controller = new AbortController();
+	let disposed = false;
+	let unsubscribe: (() => void) | null = null;
+	void waitForRemoteAdapter(sessionId, { signal: controller.signal })
+		.then((resolved) => {
+			if (disposed) {
+				return;
+			}
+			unsubscribe = resolved.subscribeActionMetadata(
+				actionId,
+				params,
+				listener,
+			);
+		})
+		.catch((error) => {
+			if (isAbortError(error)) {
+				return;
+			}
+			throw error;
+		});
+	return () => {
+		disposed = true;
+		controller.abort();
+		if (unsubscribe) {
+			unsubscribe();
+		}
+	};
 }
 
 export function setSessionActionCosts(

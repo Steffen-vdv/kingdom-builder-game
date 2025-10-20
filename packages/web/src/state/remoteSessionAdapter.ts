@@ -211,8 +211,114 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		this.#aiSimulationManager.cacheSimulation(playerId, result);
 	}
 }
-
 const adapters = new Map<string, RemoteSessionAdapter>();
+interface AdapterWaiter {
+	resolve: (adapter: RemoteSessionAdapter) => void;
+	reject: (error: unknown) => void;
+}
+
+const adapterWaiters = new Map<string, Set<AdapterWaiter>>();
+function createAbortError(signal?: AbortSignal): Error {
+	const reason: unknown =
+		signal && 'reason' in signal
+			? (signal as { reason?: unknown }).reason
+			: undefined;
+	if (reason instanceof Error) {
+		return reason;
+	}
+	if (typeof DOMException === 'function') {
+		return new DOMException(
+			typeof reason === 'string' ? reason : 'The operation was aborted.',
+			'AbortError',
+		);
+	}
+	const error = new Error(
+		typeof reason === 'string' ? reason : 'The operation was aborted.',
+	);
+	error.name = 'AbortError';
+	return error;
+}
+
+function notifyAdapterWaiters(
+	sessionId: string,
+	adapter: RemoteSessionAdapter,
+): void {
+	const waiters = adapterWaiters.get(sessionId);
+	if (!waiters) {
+		return;
+	}
+	adapterWaiters.delete(sessionId);
+	for (const waiter of waiters) {
+		waiter.resolve(adapter);
+	}
+}
+
+function rejectAdapterWaiters(sessionId: string, error: unknown): void {
+	const waiters = adapterWaiters.get(sessionId);
+	if (!waiters) {
+		return;
+	}
+	adapterWaiters.delete(sessionId);
+	for (const waiter of waiters) {
+		waiter.reject(error);
+	}
+}
+
+export function waitForRemoteAdapter(
+	sessionId: string,
+	options: { signal?: AbortSignal } = {},
+): Promise<RemoteSessionAdapter> {
+	if (!sessionId) {
+		return Promise.reject(new Error('Missing session identifier.'));
+	}
+	const existing = adapters.get(sessionId);
+	if (existing) {
+		return Promise.resolve(existing);
+	}
+	const { signal } = options;
+	return new Promise<RemoteSessionAdapter>((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(createAbortError(signal));
+			return;
+		}
+		let waiters = adapterWaiters.get(sessionId);
+		if (!waiters) {
+			waiters = new Set();
+			adapterWaiters.set(sessionId, waiters);
+		}
+		const cleanup = () => {
+			waiters?.delete(waiter);
+			if ((waiters?.size ?? 0) === 0) {
+				adapterWaiters.delete(sessionId);
+			}
+			if (signal && abortHandler) {
+				signal.removeEventListener('abort', abortHandler);
+			}
+		};
+		const waiter: AdapterWaiter = {
+			resolve: (adapter) => {
+				cleanup();
+				resolve(adapter);
+			},
+			reject: (error) => {
+				cleanup();
+				const normalized =
+					error instanceof Error
+						? error
+						: new Error('Remote adapter unavailable');
+				reject(normalized);
+			},
+		};
+		waiters.add(waiter);
+		let abortHandler: (() => void) | undefined;
+		abortHandler = () => {
+			waiter.reject(createAbortError(signal));
+		};
+		if (signal) {
+			signal.addEventListener('abort', abortHandler, { once: true });
+		}
+	});
+}
 
 export function getOrCreateRemoteAdapter(
 	sessionId: string,
@@ -222,12 +328,19 @@ export function getOrCreateRemoteAdapter(
 	if (!adapter) {
 		adapter = new RemoteSessionAdapter(sessionId, dependencies);
 		adapters.set(sessionId, adapter);
+		notifyAdapterWaiters(sessionId, adapter);
 	}
 	return adapter;
 }
 
 export function deleteRemoteAdapter(sessionId: string): void {
-	adapters.delete(sessionId);
+	const removed = adapters.delete(sessionId);
+	if (removed) {
+		rejectAdapterWaiters(
+			sessionId,
+			new Error(`Missing remote adapter: ${sessionId}`),
+		);
+	}
 }
 
 export function getRemoteAdapter(
