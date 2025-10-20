@@ -52,16 +52,22 @@ export function appendLandChanges(
 	after: PlayerSnapshot,
 	context: Pick<TranslationDiffContext, 'developments' | 'assets'>,
 ): void {
+	const landLabelBase =
+		formatIconLabel(context.assets.land.icon, context.assets.land.label) ||
+		context.assets.land.label ||
+		'Land';
+	const startingLandCount = before.lands.length;
+	let gainedLandCount = 0;
 	for (const land of after.lands) {
 		const previous = before.lands.find((item) => {
 			return item.id === land.id;
 		});
 		if (!previous) {
-			const landLabel =
-				formatIconLabel(context.assets.land.icon, context.assets.land.label) ||
-				context.assets.land.label ||
-				'Land';
-			changes.push(formatLogHeadline(LOG_KEYWORDS.gained, landLabel));
+			const previousCount = startingLandCount + gainedLandCount;
+			const newCount = previousCount + 1;
+			const summary = `${landLabelBase} +1 (${previousCount}→${newCount})`;
+			changes.push(summary);
+			gainedLandCount += 1;
 			continue;
 		}
 		for (const development of land.developments) {

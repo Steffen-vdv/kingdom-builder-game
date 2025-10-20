@@ -123,6 +123,11 @@ describe('land change log formatting', () => {
 			},
 		);
 		const translationDiffContext = diffContext;
+		const landInfo = translationContext.assets.land;
+		const landLabel =
+			formatIconLabel(landInfo.icon, landInfo.label) ||
+			landInfo.label ||
+			'Land';
 		const lines = diffStepSnapshots(
 			before,
 			after,
@@ -130,18 +135,14 @@ describe('land change log formatting', () => {
 			translationDiffContext,
 		);
 		const landLine = lines.find((line) => {
-			return line.startsWith(LOG_KEYWORDS.gained);
+			return line.startsWith(landLabel);
 		});
 		expect(landLine).toBeTruthy();
 		if (!landLine) {
 			return;
 		}
-		const landInfo = translationContext.assets.land;
-		const landLabel =
-			formatIconLabel(landInfo.icon, landInfo.label) ||
-			landInfo.label ||
-			'Land';
-		const expectedLine = formatLogHeadline(LOG_KEYWORDS.gained, landLabel);
+		const previousCount = before.lands.length;
+		const expectedLine = `${landLabel} +1 (${previousCount}→${previousCount + 1})`;
 		expect(landLine).toBe(expectedLine);
 		const repeatLines = diffStepSnapshots(
 			before,
