@@ -9,10 +9,12 @@ import { CallToActionSection } from './menu/CallToActionSection';
 import { HighlightsSection } from './menu/HighlightsSection';
 import { PlayerNamePrompt } from './menu/PlayerNamePrompt';
 import { useKeybindingPreferences } from './state/keybindings';
+import type { ResumeSessionRecord } from './state/sessionResumeStorage';
 
 interface MenuProps {
 	onStart: () => void;
 	onStartDev: () => void;
+	onContinueSavedGame: () => void;
 	onOverview: () => void;
 	onTutorial: () => void;
 	darkModeEnabled: boolean;
@@ -30,11 +32,13 @@ interface MenuProps {
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	hasStoredName: boolean;
+	resumePoint: ResumeSessionRecord | null;
 }
 
 export default function Menu({
 	onStart,
 	onStartDev,
+	onContinueSavedGame,
 	onOverview,
 	onTutorial,
 	darkModeEnabled,
@@ -52,6 +56,7 @@ export default function Menu({
 	playerName,
 	onChangePlayerName,
 	hasStoredName,
+	resumePoint,
 }: MenuProps) {
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
 	const showNamePrompt = !hasStoredName;
@@ -72,9 +77,11 @@ export default function Menu({
 					<CallToActionSection
 						onStart={onStart}
 						onStartDev={onStartDev}
+						onContinue={onContinueSavedGame}
 						onOverview={onOverview}
 						onTutorial={onTutorial}
 						onOpenSettings={() => setSettingsOpen(true)}
+						resumePoint={resumePoint}
 					/>
 					<HighlightsSection />
 				</ShowcaseLayout>
