@@ -71,7 +71,11 @@ export function GameProvider(props: GameProviderProps) {
 	const queueRef = useRef<SessionQueueSeed>(Promise.resolve());
 	const sessionStateRef = useRef<SessionContainer | null>(null);
 	const latestSnapshotRef = useRef<SessionSnapshot | null>(null);
+	const lastBootSessionIdRef = useRef<string | null>(null);
+	const lastPersistedSessionIdRef = useRef<string | null>(null);
 	const refreshAbortRef = useRef<AbortController | null>(null);
+	const lastPersistedSessionTurnRef = useRef<number | null>(null);
+	const lastPersistedSessionDevModeRef = useRef<boolean | null>(null);
 	const [sessionError, setSessionError] =
 		useState<SessionFailureDetails | null>(null);
 	const [bootAttempt, setBootAttempt] = useState(0);
@@ -79,31 +83,27 @@ export function GameProvider(props: GameProviderProps) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
 
-	const updateSessionData = useCallback(
-		(next: SessionContainer | null) => {
-			sessionStateRef.current = next;
-			latestSnapshotRef.current = next?.snapshot ?? null;
-			if (mountedRef.current) {
-				setSessionData(next);
+	const updateSessionData = useCallback((next: SessionContainer | null) => {
+		sessionStateRef.current = next;
+		latestSnapshotRef.current = next?.snapshot ?? null;
+		if (mountedRef.current) {
+			setSessionData(next);
+		}
+		if (next) {
+			const record = getSessionRecord(next.sessionId);
+			if (record) {
+				queueRef.current = record.queueSeed;
 			}
-			if (next) {
-				const record = getSessionRecord(next.sessionId);
-				if (record) {
-					queueRef.current = record.queueSeed;
-				}
-				onPersistResumeSession({
-					sessionId: next.sessionId,
-					turn: next.snapshot.game.turn ?? 0,
-					devMode: next.snapshot.game.devMode ?? false,
-					updatedAt: Date.now(),
-				});
-				setSessionError(null);
-				return;
-			}
-			queueRef.current = Promise.resolve();
-		},
-		[onPersistResumeSession],
-	);
+			lastBootSessionIdRef.current = next.sessionId;
+			setSessionError(null);
+			return;
+		}
+		lastBootSessionIdRef.current = null;
+		lastPersistedSessionIdRef.current = null;
+		lastPersistedSessionTurnRef.current = null;
+		lastPersistedSessionDevModeRef.current = null;
+		queueRef.current = Promise.resolve();
+	}, []);
 
 	const handleRetry = useCallback(() => {
 		setSessionError(null);
@@ -174,7 +174,41 @@ export function GameProvider(props: GameProviderProps) {
 	);
 
 	useEffect(() => {
+		if (!sessionData) {
+			return;
+		}
+		const sessionId = sessionData.sessionId;
+		const turn = sessionData.snapshot.game.turn ?? 0;
+		const devModeState = sessionData.snapshot.game.devMode ?? false;
+		if (
+			sessionId === lastPersistedSessionIdRef.current &&
+			turn === lastPersistedSessionTurnRef.current &&
+			devModeState === lastPersistedSessionDevModeRef.current
+		) {
+			return;
+		}
+		onPersistResumeSession({
+			sessionId,
+			turn,
+			devMode: devModeState,
+			updatedAt: Date.now(),
+		});
+		lastPersistedSessionIdRef.current = sessionId;
+		lastPersistedSessionTurnRef.current = turn;
+		lastPersistedSessionDevModeRef.current = devModeState;
+	}, [sessionData, onPersistResumeSession]);
+
+	useEffect(() => {
 		let disposed = false;
+		const targetResumeId = resumeSessionId ?? null;
+		const activeSessionId = sessionStateRef.current?.sessionId ?? null;
+		if (
+			targetResumeId &&
+			targetResumeId === activeSessionId &&
+			lastBootSessionIdRef.current === activeSessionId
+		) {
+			return;
+		}
 		const controller = new AbortController();
 		setSessionError(null);
 		const bootstrap = () =>
