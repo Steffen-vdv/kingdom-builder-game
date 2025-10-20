@@ -211,7 +211,6 @@ export function useAiRunner({
 	actionCostResource,
 	onFatalSessionError,
 }: UseAiRunnerOptions) {
-	void actionCostResource;
 	const runningRef = useRef(false);
 	useEffect(() => {
 		const phaseDefinition =
@@ -244,6 +243,22 @@ export function useAiRunner({
 					markFatalSessionError(error);
 					onFatalSessionError(error);
 				}
+			};
+			const enqueueActionPhaseRun = () => {
+				void enqueueSessionTask(sessionId, async () => {
+					if (fatalError !== null) {
+						return;
+					}
+					try {
+						syncPhaseState(getSessionSnapshot(sessionId), {
+							isAdvancing: true,
+							canEndTurn: false,
+						});
+						await runUntilActionPhaseCore();
+					} catch (error) {
+						forwardFatalError(error);
+					}
+				});
 			};
 			try {
 				let latestSnapshot = sessionSnapshot;
@@ -285,23 +300,23 @@ export function useAiRunner({
 						break;
 					}
 					if (result.phaseComplete) {
-						void enqueueSessionTask(sessionId, async () => {
-							if (fatalError !== null) {
-								return;
-							}
-							try {
-								syncPhaseState(getSessionSnapshot(sessionId), {
-									isAdvancing: true,
-									canEndTurn: false,
-								});
-								await runUntilActionPhaseCore();
-							} catch (error) {
-								forwardFatalError(error);
-							}
-						});
+						enqueueActionPhaseRun();
 						break;
 					}
 					if (result.actions.length === 0) {
+						const nextActivePlayerId = result.snapshot.game.activePlayerId;
+						const nextActivePlayer = result.snapshot.game.players.find(
+							(player) => player.id === nextActivePlayerId,
+						);
+						const nextPhaseDefinition =
+							result.snapshot.phases[result.snapshot.game.phaseIndex];
+						if (nextActivePlayer?.aiControlled && nextPhaseDefinition?.action) {
+							const remainingResource =
+								nextActivePlayer.resources[actionCostResource] ?? 0;
+							if (remainingResource <= 0) {
+								enqueueActionPhaseRun();
+							}
+						}
 						break;
 					}
 				}
@@ -323,6 +338,7 @@ export function useAiRunner({
 		addResolutionLog,
 		registries,
 		resourceKeys,
+		actionCostResource,
 		onFatalSessionError,
 	]);
 }

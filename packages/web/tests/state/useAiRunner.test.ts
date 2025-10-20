@@ -116,6 +116,113 @@ describe('useAiRunner', () => {
 		runAiTurnSpy.mockRestore();
 	});
 
+	it('continues the action phase when the AI lacks actions and resources', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{
+				id: 'phase-main',
+				name: 'Main Phase',
+				action: true,
+				steps: [],
+			},
+		];
+		const activePlayer = createSnapshotPlayer({
+			id: 'A',
+			aiControlled: true,
+			resources: { [actionCostResource]: 0 },
+		});
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+		});
+		const registriesPayload = createSessionRegistriesPayload();
+		const sessionId = 'session-ai';
+		const record = initializeSessionState({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const exhaustedSnapshot = {
+			...sessionState,
+			game: {
+				...sessionState.game,
+				players: sessionState.game.players.map((player) => {
+					if (player.id !== activePlayer.id) {
+						return player;
+					}
+					return {
+						...player,
+						resources: {
+							...player.resources,
+							[actionCostResource]: 0,
+						},
+					};
+				}),
+			},
+		};
+		const runAiTurnSpy = vi
+			.spyOn(sessionAiModule, 'runAiTurn')
+			.mockImplementationOnce(() => {
+				updateSessionSnapshot(sessionId, exhaustedSnapshot);
+				return Promise.resolve({
+					ranTurn: true,
+					actions: [],
+					phaseComplete: false,
+					snapshot: exhaustedSnapshot,
+					registries: record.registries,
+				});
+			});
+		const runUntilActionPhaseCore = vi.fn().mockResolvedValue(undefined);
+		const syncPhaseState = vi.fn();
+		const mountedRef = { current: true };
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const addResolutionLog = vi.fn();
+
+		renderHook(() =>
+			useAiRunner({
+				sessionId,
+				sessionSnapshot: sessionState,
+				runUntilActionPhaseCore,
+				syncPhaseState,
+				mountedRef,
+				showResolution,
+				addResolutionLog,
+				registries: record.registries,
+				resourceKeys: record.resourceKeys,
+				actionCostResource,
+			}),
+		);
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(syncPhaseState).toHaveBeenNthCalledWith(1, exhaustedSnapshot);
+		expect(syncPhaseState).toHaveBeenNthCalledWith(2, exhaustedSnapshot, {
+			isAdvancing: true,
+			canEndTurn: false,
+		});
+		expect(syncPhaseState).toHaveBeenCalledTimes(2);
+		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
+		expect(runAiTurnSpy).toHaveBeenCalledTimes(1);
+		runAiTurnSpy.mockRestore();
+	});
+
 	it('stops background turns when the AI run reports a fatal error', async () => {
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {
