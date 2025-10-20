@@ -64,6 +64,14 @@ const FOCUSABLE_ELEMENTS_SELECTOR = [
 	'[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
+type SettingsTab = 'general' | 'audio' | 'gameplay';
+
+const TAB_OPTIONS: Array<{ id: SettingsTab; label: string }> = [
+	{ id: 'general', label: 'General' },
+	{ id: 'audio', label: 'Audio' },
+	{ id: 'gameplay', label: 'Gameplay' },
+];
+
 interface SettingsDialogProps {
 	open: boolean;
 	onClose: () => void;
@@ -75,6 +83,10 @@ interface SettingsDialogProps {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
+	autoAcknowledgeEnabled: boolean;
+	onToggleAutoAcknowledge: () => void;
+	autoPassEnabled: boolean;
+	onToggleAutoPass: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 }
@@ -122,10 +134,14 @@ export default function SettingsDialog({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
+	autoAcknowledgeEnabled,
+	onToggleAutoAcknowledge,
+	autoPassEnabled,
+	onToggleAutoPass,
 	playerName,
 	onChangePlayerName,
 }: SettingsDialogProps) {
-	const [activeTab, setActiveTab] = useState<'general' | 'audio'>('general');
+	const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 	const dialogTitleId = useId();
 	const dialogDescriptionId = useId();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -260,70 +276,85 @@ export default function SettingsDialog({
 				</header>
 				<div className="flex flex-col gap-5">
 					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70">
-						<button
-							type="button"
-							className={`${TAB_BUTTON_CLASS} ${
-								activeTab === 'general'
-									? TAB_BUTTON_ACTIVE_CLASS
-									: TAB_BUTTON_INACTIVE_CLASS
-							}`}
-							onClick={() => setActiveTab('general')}
-							ref={initialFocusRef}
-						>
-							General
-						</button>
-						<button
-							type="button"
-							className={`${TAB_BUTTON_CLASS} ${
-								activeTab === 'audio'
-									? TAB_BUTTON_ACTIVE_CLASS
-									: TAB_BUTTON_INACTIVE_CLASS
-							}`}
-							onClick={() => setActiveTab('audio')}
-						>
-							Audio
-						</button>
+						{TAB_OPTIONS.map(({ id, label }) => (
+							<button
+								key={id}
+								type="button"
+								className={`${TAB_BUTTON_CLASS} ${
+									activeTab === id
+										? TAB_BUTTON_ACTIVE_CLASS
+										: TAB_BUTTON_INACTIVE_CLASS
+								}`}
+								onClick={() => setActiveTab(id)}
+								ref={id === 'general' ? initialFocusRef : undefined}
+							>
+								{label}
+							</button>
+						))}
 					</div>
-					{activeTab === 'general' ? (
-						<div className="flex flex-col gap-4">
-							<PlayerNameSetting
-								open={open}
-								playerName={playerName}
-								onSave={onChangePlayerName}
-							/>
-							<SettingRow
-								id="settings-theme"
-								title="Dark mode"
-								description="Switch between bright parchment tones and moonlit hues."
-								checked={darkMode}
-								onToggle={onToggleDark}
-							/>
-						</div>
-					) : (
-						<div className="flex flex-col gap-4">
-							<SettingRow
-								id="settings-music"
-								title="Background music"
-								description="Play a gentle score to accompany your strategy."
-								checked={musicEnabled}
-								onToggle={onToggleMusic}
-							/>
-							<SettingRow
-								id="settings-sound"
-								title="Game sounds"
-								description="Toggle sound effects."
-								checked={soundEnabled}
-								onToggle={onToggleSound}
-							/>
-							<SettingRow
-								id="settings-background-audio"
-								title="Play audio in background"
-								description="Keep sound active when you switch tabs or windows."
-								checked={!backgroundAudioMuted}
-								onToggle={onToggleBackgroundAudioMute}
-							/>
-						</div>
-					)}
+					{
+						{
+							general: (
+								<div className="flex flex-col gap-4">
+									<PlayerNameSetting
+										open={open}
+										playerName={playerName}
+										onSave={onChangePlayerName}
+									/>
+									<SettingRow
+										id="settings-theme"
+										title="Dark mode"
+										description="Switch between bright parchment tones and moonlit hues."
+										checked={darkMode}
+										onToggle={onToggleDark}
+									/>
+								</div>
+							),
+							audio: (
+								<div className="flex flex-col gap-4">
+									<SettingRow
+										id="settings-music"
+										title="Background music"
+										description="Play a gentle score to accompany your strategy."
+										checked={musicEnabled}
+										onToggle={onToggleMusic}
+									/>
+									<SettingRow
+										id="settings-sound"
+										title="Game sounds"
+										description="Toggle sound effects."
+										checked={soundEnabled}
+										onToggle={onToggleSound}
+									/>
+									<SettingRow
+										id="settings-background-audio"
+										title="Play audio in background"
+										description="Keep sound active when you switch tabs or windows."
+										checked={!backgroundAudioMuted}
+										onToggle={onToggleBackgroundAudioMute}
+									/>
+								</div>
+							),
+							gameplay: (
+								<div className="flex flex-col gap-4">
+									<SettingRow
+										id="settings-auto-acknowledge"
+										title="Automatically acknowledge"
+										description="Resolve confirmations for you so play keeps moving."
+										checked={autoAcknowledgeEnabled}
+										onToggle={onToggleAutoAcknowledge}
+									/>
+									<SettingRow
+										id="settings-auto-pass"
+										title="Automatically pass turn"
+										description="End your turn when no more actions are available."
+										checked={autoPassEnabled}
+										onToggle={onToggleAutoPass}
+									/>
+								</div>
+							),
+						}[activeTab]
+					}
 				</div>
 				<div className="mt-8 flex justify-end">
 					<Button variant="ghost" onClick={onClose} className="px-6" icon="✖️">
