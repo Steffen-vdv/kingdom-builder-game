@@ -26,12 +26,13 @@ import type {
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import type { SessionResourceKey } from './sessionTypes';
-import { hasAiController } from './sessionAi';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import { createGameplayPreferenceContext } from './gameplayPreferenceContext';
+import { useControlledPlayerSnapshot } from './useControlledPlayerSnapshot';
+import { usePlayerNameSync } from './usePlayerNameSync';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -55,6 +56,10 @@ export function GameProviderInner({
 	onToggleAutoAcknowledge,
 	autoPassEnabled,
 	onToggleAutoPass,
+	autoAcknowledgeResolutions,
+	onToggleAutoAcknowledgeResolutions,
+	autoPassTurn,
+	onToggleAutoPassTurn,
 	playerName = DEFAULT_PLAYER_NAME,
 	onChangePlayerName = () => {},
 	queue,
@@ -76,57 +81,22 @@ export function GameProviderInner({
 		sessionId,
 	);
 
-	const refresh = useCallback(() => {
-		void refreshSession();
-	}, [refreshSession]);
-	const controlledPlayerSnapshot = useMemo(() => {
-		const players = sessionSnapshot.game.players;
-		if (!Array.isArray(players) || players.length === 0) {
-			return undefined;
-		}
-		const { activePlayerId, opponentId } = sessionSnapshot.game;
-		return (
-			players.find((player) => {
-				return !hasAiController(sessionId, player.id);
-			}) ??
-			players.find((player) => player.id === activePlayerId) ??
-			players.find((player) => player.id === opponentId) ??
-			players[0]
-		);
-	}, [
+	const refresh = useCallback(() => void refreshSession(), [refreshSession]);
+	const controlledPlayerSnapshot = useControlledPlayerSnapshot({
+		sessionSnapshot,
 		sessionId,
-		sessionSnapshot.game.players,
-		sessionSnapshot.game.activePlayerId,
-		sessionSnapshot.game.opponentId,
-	]);
+	});
 	const controlledPlayerId = controlledPlayerSnapshot?.id;
 	const controlledPlayerName = controlledPlayerSnapshot?.name;
-	useEffect(() => {
-		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
-		if (
-			controlledPlayerId === undefined ||
-			controlledPlayerName === undefined ||
-			controlledPlayerName === desiredName
-		) {
-			return;
-		}
-		void enqueue(() =>
-			updateRemotePlayerName({
-				sessionId,
-				playerId: controlledPlayerId,
-				playerName: desiredName,
-			}),
-		).finally(() => {
-			refresh();
-		});
-	}, [
-		enqueue,
+	usePlayerNameSync({
 		controlledPlayerId,
 		controlledPlayerName,
+		playerNameRef,
+		enqueue,
 		refresh,
 		playerName,
 		sessionId,
-	]);
+	});
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
 			sessionSnapshot,
@@ -164,7 +134,6 @@ export function GameProviderInner({
 	const { log, logOverflowed, addResolutionLog } = useGameLog({
 		sessionSnapshot,
 	});
-
 	const { resolution, showResolution, acknowledgeResolution } =
 		useActionResolution({
 			addResolutionLog,
@@ -340,10 +309,16 @@ export function GameProviderInner({
 		onToggleSound: onToggleSound ?? (() => {}),
 		backgroundAudioMuted: backgroundAudioMuted ?? true,
 		onToggleBackgroundAudioMute: onToggleBackgroundAudioMute ?? (() => {}),
-		autoAcknowledgeEnabled: autoAcknowledgeEnabled ?? false,
-		onToggleAutoAcknowledge: onToggleAutoAcknowledge ?? (() => {}),
-		autoPassEnabled: autoPassEnabled ?? false,
-		onToggleAutoPass: onToggleAutoPass ?? (() => {}),
+		...createGameplayPreferenceContext({
+			autoAcknowledgeEnabled,
+			onToggleAutoAcknowledge,
+			autoPassEnabled,
+			onToggleAutoPass,
+			autoAcknowledgeResolutions,
+			onToggleAutoAcknowledgeResolutions,
+			autoPassTurn,
+			onToggleAutoPassTurn,
+		}),
 		timeScale,
 		setTimeScale,
 		toasts,

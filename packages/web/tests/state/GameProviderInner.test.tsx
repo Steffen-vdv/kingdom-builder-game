@@ -211,6 +211,10 @@ describe('GameProviderInner', () => {
 				onToggleAutoAcknowledge={() => {}}
 				autoPassEnabled={false}
 				onToggleAutoPass={() => {}}
+				autoAcknowledgeResolutions={false}
+				onToggleAutoAcknowledgeResolutions={() => {}}
+				autoPassTurn={false}
+				onToggleAutoPassTurn={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -276,11 +280,17 @@ describe('GameProviderInner', () => {
 		};
 		const toggleAutoAcknowledge = vi.fn();
 		const toggleAutoPass = vi.fn();
+		const toggleAutoAcknowledgeResolutions = vi.fn();
+		const toggleAutoPassTurn = vi.fn();
 		const captured: Array<{
 			autoAcknowledgeEnabled: boolean;
 			autoPassEnabled: boolean;
 			onToggleAutoAcknowledge: () => void;
 			onToggleAutoPass: () => void;
+			autoAcknowledgeResolutions: boolean;
+			autoPassTurn: boolean;
+			onToggleAutoAcknowledgeResolutions: () => void;
+			onToggleAutoPassTurn: () => void;
 		}> = [];
 
 		function PreferenceConsumer() {
@@ -294,6 +304,11 @@ describe('GameProviderInner', () => {
 					autoPassEnabled: value.autoPassEnabled,
 					onToggleAutoAcknowledge: value.onToggleAutoAcknowledge,
 					onToggleAutoPass: value.onToggleAutoPass,
+					autoAcknowledgeResolutions: value.autoAcknowledgeResolutions,
+					autoPassTurn: value.autoPassTurn,
+					onToggleAutoAcknowledgeResolutions:
+						value.onToggleAutoAcknowledgeResolutions,
+					onToggleAutoPassTurn: value.onToggleAutoPassTurn,
 				});
 			}, [value]);
 			return null;
@@ -314,6 +329,10 @@ describe('GameProviderInner', () => {
 				onToggleAutoAcknowledge={toggleAutoAcknowledge}
 				autoPassEnabled={false}
 				onToggleAutoPass={toggleAutoPass}
+				autoAcknowledgeResolutions
+				onToggleAutoAcknowledgeResolutions={toggleAutoAcknowledgeResolutions}
+				autoPassTurn={false}
+				onToggleAutoPassTurn={toggleAutoPassTurn}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -337,14 +356,24 @@ describe('GameProviderInner', () => {
 		const latest = captured[captured.length - 1];
 		expect(latest.autoAcknowledgeEnabled).toBe(true);
 		expect(latest.autoPassEnabled).toBe(false);
+		expect(latest.autoAcknowledgeResolutions).toBe(true);
+		expect(latest.autoPassTurn).toBe(false);
 		act(() => {
 			latest.onToggleAutoAcknowledge();
 		});
 		act(() => {
 			latest.onToggleAutoPass();
 		});
+		act(() => {
+			latest.onToggleAutoAcknowledgeResolutions();
+		});
+		act(() => {
+			latest.onToggleAutoPassTurn();
+		});
 		expect(toggleAutoAcknowledge).toHaveBeenCalledTimes(1);
 		expect(toggleAutoPass).toHaveBeenCalledTimes(1);
+		expect(toggleAutoAcknowledgeResolutions).toHaveBeenCalledTimes(1);
+		expect(toggleAutoPassTurn).toHaveBeenCalledTimes(1);
 		cleanup();
 	});
 
@@ -385,6 +414,10 @@ describe('GameProviderInner', () => {
 				onToggleAutoAcknowledge={() => {}}
 				autoPassEnabled={false}
 				onToggleAutoPass={() => {}}
+				autoAcknowledgeResolutions={false}
+				onToggleAutoAcknowledgeResolutions={() => {}}
+				autoPassTurn={false}
+				onToggleAutoPassTurn={() => {}}
 				playerName="Strategist"
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -444,6 +477,10 @@ describe('GameProviderInner', () => {
 				onToggleAutoAcknowledge={() => {}}
 				autoPassEnabled={false}
 				onToggleAutoPass={() => {}}
+				autoAcknowledgeResolutions={false}
+				onToggleAutoAcknowledgeResolutions={() => {}}
+				autoPassTurn={false}
+				onToggleAutoPassTurn={() => {}}
 				playerName="Warlord"
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}

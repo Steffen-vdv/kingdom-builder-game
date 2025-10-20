@@ -42,6 +42,10 @@ export interface GameProviderProps {
 	onToggleAutoAcknowledge?: () => void;
 	autoPassEnabled?: boolean;
 	onToggleAutoPass?: () => void;
+	autoAcknowledgeResolutions?: boolean;
+	onToggleAutoAcknowledgeResolutions?: () => void;
+	autoPassTurn?: boolean;
+	onToggleAutoPassTurn?: () => void;
 	playerName?: string;
 	onChangePlayerName?: (name: string) => void;
 }
@@ -107,6 +111,10 @@ export interface GameEngineContextValue {
 	onToggleAutoAcknowledge: () => void;
 	autoPassEnabled: boolean;
 	onToggleAutoPass: () => void;
+	autoAcknowledgeResolutions: boolean;
+	onToggleAutoAcknowledgeResolutions: () => void;
+	autoPassTurn: boolean;
+	onToggleAutoPassTurn: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
 	toasts: Toast[];

@@ -17,6 +17,10 @@ interface GameProps {
 	onToggleAutoAcknowledge?: () => void;
 	autoPassEnabled?: boolean;
 	onToggleAutoPass?: () => void;
+	autoAcknowledgeResolutions?: boolean;
+	onToggleAutoAcknowledgeResolutions?: () => void;
+	autoPassTurn?: boolean;
+	onToggleAutoPassTurn?: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 }
@@ -36,6 +40,10 @@ export default function Game({
 	onToggleAutoAcknowledge = () => {},
 	autoPassEnabled = false,
 	onToggleAutoPass = () => {},
+	autoAcknowledgeResolutions = false,
+	onToggleAutoAcknowledgeResolutions = () => {},
+	autoPassTurn = false,
+	onToggleAutoPassTurn = () => {},
 	playerName,
 	onChangePlayerName,
 }: GameProps) {
@@ -55,6 +63,10 @@ export default function Game({
 			onToggleAutoAcknowledge={onToggleAutoAcknowledge}
 			autoPassEnabled={autoPassEnabled}
 			onToggleAutoPass={onToggleAutoPass}
+			autoAcknowledgeResolutions={autoAcknowledgeResolutions}
+			onToggleAutoAcknowledgeResolutions={onToggleAutoAcknowledgeResolutions}
+			autoPassTurn={autoPassTurn}
+			onToggleAutoPassTurn={onToggleAutoPassTurn}
 			playerName={playerName}
 			onChangePlayerName={onChangePlayerName}
 		>
