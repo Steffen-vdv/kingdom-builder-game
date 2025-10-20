@@ -258,4 +258,95 @@ describe('advanceToActionPhase', () => {
 			}),
 		);
 	});
+
+	it('forces an advance when requested even if already in an action phase', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{ id: 'phase-action', name: 'Action', action: true, steps: [] },
+		];
+		const player = createSnapshotPlayer({ id: 'A' });
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const baseOptions = {
+			players: [player, opponent],
+			activePlayerId: player.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			turn: 1,
+			currentPhase: phases[0]?.id ?? 'phase-action',
+			currentStep: phases[0]?.id ?? 'phase-action',
+			phaseIndex: 0,
+		};
+		const snapshot = createSessionSnapshot(baseOptions);
+		const registriesPayload = createSessionRegistriesPayload();
+		initializeSessionState({
+			sessionId: 'session-force',
+			snapshot,
+			registries: registriesPayload,
+		});
+		const nextSnapshot = createSessionSnapshot({
+			...baseOptions,
+			activePlayerId: opponent.id,
+			turn: 2,
+		});
+		advanceSessionPhaseMock.mockImplementationOnce(() => {
+			updateSessionSnapshot('session-force', nextSnapshot);
+			return Promise.resolve({
+				sessionId: 'session-force',
+				snapshot: nextSnapshot,
+				registries: registriesPayload,
+				advance: {
+					phase: phases[0]?.id ?? 'phase-action',
+					step: phases[0]?.id ?? 'phase-action',
+					effects: [],
+					player: nextSnapshot.game.players[0]!,
+				},
+			});
+		});
+		const mountedRef = { current: true };
+		const applyPhaseSnapshot = vi.fn();
+		const refresh = vi.fn();
+		const formatPhaseResolution = vi.fn().mockReturnValue({
+			source: { kind: 'phase', label: 'Action Phase' },
+			lines: [],
+			summaries: [],
+		});
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const registries = createSessionRegistries();
+
+		await advanceToActionPhase({
+			sessionId: 'session-force',
+			initialSnapshot: snapshot,
+			resourceKeys: [actionCostResource],
+			mountedRef,
+			applyPhaseSnapshot,
+			refresh,
+			formatPhaseResolution: formatPhaseResolution as never,
+			showResolution: showResolution as never,
+			registries,
+			forceAdvance: true,
+		});
+
+		expect(advanceSessionPhaseMock).toHaveBeenCalledTimes(1);
+		expect(applyPhaseSnapshot).toHaveBeenNthCalledWith(1, snapshot, {
+			isAdvancing: true,
+			canEndTurn: false,
+		});
+		expect(applyPhaseSnapshot).toHaveBeenNthCalledWith(2, nextSnapshot, {
+			isAdvancing: true,
+			canEndTurn: false,
+		});
+		expect(applyPhaseSnapshot).toHaveBeenLastCalledWith(nextSnapshot, {
+			isAdvancing: false,
+		});
+		expect(refresh).toHaveBeenCalledTimes(1);
+	});
 });

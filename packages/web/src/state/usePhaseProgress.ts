@@ -38,6 +38,10 @@ export interface PhaseProgressState {
 	turnNumber: number;
 }
 
+export interface RunUntilActionPhaseOptions {
+	forceAdvance?: boolean;
+}
+
 function computePhaseState(
 	snapshot: SessionSnapshot,
 	actionCostResource: SessionResourceKey,
@@ -117,35 +121,39 @@ export function usePhaseProgress({
 		});
 	}, [sessionSnapshot, actionCostResource]);
 
-	const runUntilActionPhaseCore = useCallback(() => {
-		const record = getSessionRecord(sessionId);
-		const latestSnapshot = record?.snapshot ?? sessionSnapshotRef.current;
-		return advanceToActionPhase({
-			sessionId,
-			initialSnapshot: latestSnapshot,
-			resourceKeys,
-			mountedRef,
+	const runUntilActionPhaseCore = useCallback(
+		(options?: RunUntilActionPhaseOptions) => {
+			const record = getSessionRecord(sessionId);
+			const latestSnapshot = record?.snapshot ?? sessionSnapshotRef.current;
+			return advanceToActionPhase({
+				sessionId,
+				initialSnapshot: latestSnapshot,
+				resourceKeys,
+				mountedRef,
+				applyPhaseSnapshot,
+				refresh,
+				formatPhaseResolution,
+				showResolution,
+				registries,
+				...(onFatalSessionError ? { onFatalSessionError } : {}),
+				...(options?.forceAdvance ? { forceAdvance: true } : {}),
+			});
+		},
+		[
 			applyPhaseSnapshot,
-			refresh,
 			formatPhaseResolution,
-			showResolution,
+			mountedRef,
+			onFatalSessionError,
+			sessionId,
+			refresh,
+			resourceKeys,
 			registries,
-			...(onFatalSessionError ? { onFatalSessionError } : {}),
-		});
-	}, [
-		applyPhaseSnapshot,
-		formatPhaseResolution,
-		mountedRef,
-		onFatalSessionError,
-		sessionId,
-		refresh,
-		resourceKeys,
-		registries,
-		showResolution,
-	]);
+			showResolution,
+		],
+	);
 
 	const runUntilActionPhase = useCallback(
-		() => enqueue(runUntilActionPhaseCore),
+		() => enqueue(() => runUntilActionPhaseCore()),
 		[enqueue, runUntilActionPhaseCore],
 	);
 

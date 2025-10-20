@@ -25,6 +25,8 @@ function createDeferred() {
 	return { promise, resolve };
 }
 
+type ForceAdvanceOptions = { forceAdvance?: boolean };
+
 describe('useAiRunner', () => {
 	beforeEach(() => {
 		clearSessionStateStore();
@@ -69,7 +71,7 @@ describe('useAiRunner', () => {
 		});
 		const fatalError = new Error('failed to reach action phase');
 		const runUntilActionPhaseCore = vi
-			.fn<[], Promise<void>>()
+			.fn<[options?: ForceAdvanceOptions], Promise<void>>()
 			.mockRejectedValueOnce(fatalError);
 		const onFatalSessionError = vi.fn();
 		const syncPhaseState = vi.fn();
@@ -112,6 +114,9 @@ describe('useAiRunner', () => {
 			canEndTurn: false,
 		});
 		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
+		expect(runUntilActionPhaseCore).toHaveBeenCalledWith({
+			forceAdvance: true,
+		});
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		runAiTurnSpy.mockRestore();
 	});
@@ -167,7 +172,10 @@ describe('useAiRunner', () => {
 			useAiRunner({
 				sessionId,
 				sessionSnapshot: sessionState,
-				runUntilActionPhaseCore: vi.fn(),
+				runUntilActionPhaseCore: vi.fn<
+					[options?: ForceAdvanceOptions],
+					Promise<void>
+				>(),
 				syncPhaseState,
 				mountedRef,
 				showResolution,
@@ -185,6 +193,114 @@ describe('useAiRunner', () => {
 
 		expect(onFatalSessionError).toHaveBeenCalledWith(fatalError);
 		expect(syncPhaseState).not.toHaveBeenCalled();
+		runAiTurnSpy.mockRestore();
+	});
+
+	it('advances past the AI action phase to restore player control', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{ id: 'phase-main', name: 'Main Phase', action: true, steps: [] },
+		];
+		const activePlayer = createSnapshotPlayer({ id: 'A', aiControlled: true });
+		const opponent = createSnapshotPlayer({ id: 'B', aiControlled: false });
+		const sessionState = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: activePlayer.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+		});
+		const registriesPayload = createSessionRegistriesPayload();
+		const sessionId = 'session-ai';
+		const record = initializeSessionState({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const nextSnapshot = createSessionSnapshot({
+			players: [activePlayer, opponent],
+			activePlayerId: opponent.id,
+			opponentId: activePlayer.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.id,
+			phaseIndex: 0,
+			turn: sessionState.game.turn + 1,
+		});
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const addResolutionLog = vi.fn();
+		const syncPhaseState = vi.fn();
+		const runUntilActionPhaseCore = vi
+			.fn<[options?: ForceAdvanceOptions], Promise<void>>()
+			.mockImplementation((options) => {
+				expect(options?.forceAdvance).toBe(true);
+				updateSessionSnapshot(sessionId, nextSnapshot);
+				syncPhaseState(nextSnapshot, {
+					isAdvancing: false,
+					canEndTurn: true,
+				});
+				return Promise.resolve();
+			});
+		const runAiTurnSpy = vi
+			.spyOn(sessionAiModule, 'runAiTurn')
+			.mockResolvedValue({
+				ranTurn: true,
+				actions: [],
+				phaseComplete: true,
+				snapshot: record.snapshot,
+				registries: record.registries,
+			});
+		const mountedRef = { current: true };
+
+		renderHook(() =>
+			useAiRunner({
+				sessionId,
+				sessionSnapshot: sessionState,
+				runUntilActionPhaseCore,
+				syncPhaseState,
+				mountedRef,
+				showResolution,
+				addResolutionLog,
+				registries: record.registries,
+				resourceKeys: record.resourceKeys,
+				actionCostResource,
+			}),
+		);
+
+		await act(async () => {
+			await Promise.resolve();
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(runUntilActionPhaseCore).toHaveBeenCalledWith({
+			forceAdvance: true,
+		});
+		const lastSyncCall = syncPhaseState.mock.calls.at(-1);
+		expect(lastSyncCall?.[0]).toEqual(nextSnapshot);
+		expect(lastSyncCall?.[1]).toEqual(
+			expect.objectContaining({
+				isAdvancing: false,
+			}),
+		);
+		expect(nextSnapshot.game.activePlayerId).toBe(opponent.id);
 		runAiTurnSpy.mockRestore();
 	});
 
@@ -355,7 +471,9 @@ describe('useAiRunner', () => {
 			});
 		const syncPhaseState = vi.fn();
 		const mountedRef = { current: true };
-		const runUntilActionPhaseCore = vi.fn().mockResolvedValue(undefined);
+		const runUntilActionPhaseCore = vi
+			.fn<[options?: { forceAdvance?: boolean }], Promise<void>>()
+			.mockResolvedValue(undefined);
 
 		renderHook(() =>
 			useAiRunner({
@@ -393,6 +511,9 @@ describe('useAiRunner', () => {
 		});
 
 		expect(runUntilActionPhaseCore).toHaveBeenCalledTimes(1);
+		expect(runUntilActionPhaseCore).toHaveBeenCalledWith({
+			forceAdvance: true,
+		});
 		runAiTurnSpy.mockRestore();
 	});
 });
