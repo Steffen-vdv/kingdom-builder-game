@@ -49,10 +49,12 @@ export interface GameProviderProps {
 	resumeSessionId?: string | null;
 	onPersistResumeSession?: (record: ResumeSessionRecord) => void;
 	onClearResumeSession?: (sessionId?: string | null) => void;
-	onResumeSessionFailure?: (options: {
-		sessionId: string;
-		error: unknown;
-	}) => void;
+	onResumeSessionFailure?: (options: ResumeSessionFailureOptions) => void;
+}
+
+export interface ResumeSessionFailureOptions {
+	sessionId: string;
+	error: unknown;
 }
 
 export interface PerformActionRequest {
