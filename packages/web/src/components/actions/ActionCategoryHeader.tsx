@@ -10,24 +10,29 @@ const SUBTITLE_CLASS = [
 ].join(' ');
 const ICON_CLASS = 'text-lg leading-none';
 
-interface ActionCategoryHeaderProps {
-	icon: React.ReactNode;
-	title: string;
+export interface ActionCategoryDescriptor {
+	icon?: React.ReactNode;
+	label: string;
 	subtitle: string;
 }
 
+interface ActionCategoryHeaderProps {
+	descriptor: ActionCategoryDescriptor;
+}
+
 export default function ActionCategoryHeader({
-	icon,
-	title,
-	subtitle,
+	descriptor,
 }: ActionCategoryHeaderProps) {
+	const { icon, label, subtitle } = descriptor;
 	return (
 		<header>
 			<h3 className={HEADING_CLASS}>
-				<span aria-hidden className={ICON_CLASS}>
-					{icon}
-				</span>
-				<span>{title}</span>
+				{icon ? (
+					<span aria-hidden className={ICON_CLASS}>
+						{icon}
+					</span>
+				) : null}
+				<span>{label}</span>
 				<span className={SUBTITLE_CLASS}>{subtitle}</span>
 			</h3>
 		</header>

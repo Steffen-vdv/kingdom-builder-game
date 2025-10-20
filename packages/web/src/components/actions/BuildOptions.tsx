@@ -10,6 +10,9 @@ import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
+import ActionCategoryHeader, {
+	type ActionCategoryDescriptor,
+} from './ActionCategoryHeader';
 import {
 	formatMissingResources,
 	playerHasRequiredResources,
@@ -42,6 +45,7 @@ interface BuildOptionsProps {
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	category: ActionCategoryDescriptor;
 }
 
 export default function BuildOptions({
@@ -53,6 +57,7 @@ export default function BuildOptions({
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	category,
 }: BuildOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
@@ -137,12 +142,7 @@ export default function BuildOptions({
 	);
 	return (
 		<div>
-			<h3 className="font-medium flex flex-wrap items-center gap-2">
-				{renderIconLabel(actionInfo?.icon, actionInfo?.name ?? action.name)}
-				<span className="italic text-sm font-normal">
-					(Effects take place on build and last until building is removed)
-				</span>
-			</h3>
+			<ActionCategoryHeader descriptor={category} />
 			<div
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
