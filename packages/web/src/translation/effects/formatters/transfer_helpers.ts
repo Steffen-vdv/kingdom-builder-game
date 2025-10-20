@@ -48,21 +48,26 @@ export function resolveTransferModifierTarget(
 		fallbackName = humanizeIdentifier(paramActionId) || paramActionId;
 	} else if (evaluationId) {
 		fallbackName = humanizeIdentifier(evaluationId) || evaluationId;
-	} else if (evaluation?.type === 'transfer_pct') {
+	} else if (
+		evaluation?.type === 'transfer_pct' ||
+		evaluation?.type === 'transfer_amt'
+	) {
 		fallbackName = 'resource transfers';
 	} else if (evaluation) {
 		fallbackName = humanizeIdentifier(evaluation.type) || evaluation.type;
 	}
 	if (
-		evaluation?.type === 'transfer_pct' &&
-		(!evaluationId || evaluationId === 'percent')
+		(evaluation?.type === 'transfer_pct' &&
+			(!evaluationId || evaluationId === 'percent')) ||
+		(evaluation?.type === 'transfer_amt' &&
+			(!evaluationId || evaluationId === 'amount'))
 	) {
 		fallbackName = 'resource transfers';
 	}
 
 	const clauseTarget = formatTargetLabel('', fallbackName);
 	const summaryLabel =
-		evaluation?.type === 'transfer_pct'
+		evaluation?.type === 'transfer_pct' || evaluation?.type === 'transfer_amt'
 			? selectTransferDescriptor(translationContext).icon
 			: fallbackName;
 	return {

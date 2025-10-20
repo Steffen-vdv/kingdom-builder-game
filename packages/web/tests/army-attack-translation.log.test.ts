@@ -11,9 +11,8 @@ import {
 	iconLabel,
 	SYNTH_COMBAT_STATS,
 	PLUNDER_PERCENT,
-	ATTACKER_HAPPINESS_GAIN,
-	DEFENDER_HAPPINESS_LOSS,
 	BUILDING_REWARD_GOLD,
+	PLUNDER_HAPPINESS_AMOUNT,
 } from './helpers/armyAttackFactories';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import {
@@ -66,13 +65,20 @@ describe('army attack translation log', () => {
 		);
 		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
 
+		const attackerGoldBefore = 7;
+		const attackerHappinessBefore = 2;
+		const defenderHappinessBefore = 5;
+		const defenderGoldBefore = 25;
+
 		engineContext.activePlayer.resources[Resource.ap] = 1;
 		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
-		engineContext.activePlayer.resources[Resource.happiness] = 2;
-		engineContext.activePlayer.resources[Resource.gold] = 7;
+		engineContext.activePlayer.resources[Resource.happiness] =
+			attackerHappinessBefore;
+		engineContext.activePlayer.resources[Resource.gold] = attackerGoldBefore;
 		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
-		engineContext.opponent.resources[Resource.happiness] = 5;
-		engineContext.opponent.resources[Resource.gold] = 25;
+		engineContext.opponent.resources[Resource.happiness] =
+			defenderHappinessBefore;
+		engineContext.opponent.resources[Resource.gold] = defenderGoldBefore;
 
 		performAction(attack.id, engineContext);
 
@@ -92,10 +98,9 @@ describe('army attack translation log', () => {
 			`    Apply damage to opponent ${fortLabel}`,
 			`    If opponent ${fortLabel} falls to 0, overflow remaining damage onto opponent ${castleLabel}`,
 			`  On opponent ${castleLabel} damage`,
-			`    ${happiness.icon}-${DEFENDER_HAPPINESS_LOSS} ${happiness.label} for Opponent`,
-			`    ${happiness.icon}+${ATTACKER_HAPPINESS_GAIN} ${happiness.label} for Player`,
 			`    ${plunder.icon} ${plunder.name}`,
 			`      Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}${gold.label} to you`,
+			`      Transfer ${PLUNDER_HAPPINESS_AMOUNT} of opponent's ${happiness.icon}${happiness.label} to you`,
 		]);
 	});
 
