@@ -71,14 +71,19 @@ export default function BuildOptions({
 	);
 	const actionInfo = sessionView.actions.get(action.id);
 	const requirementFailures = metadata.requirements ?? [];
-	const requirementsReady = metadata.requirements !== undefined;
-	const requirementMessages = requirementsReady
-		? requirementFailures.map((failure) =>
-				translateRequirementFailure(failure, translationContext),
-			)
-		: ['Loading requirements…'];
+	const requirementMessages = requirementFailures.map((failure) =>
+		translateRequirementFailure(failure, translationContext),
+	);
+	const requirementsAvailable = metadata.requirements !== undefined;
+	const requirementsLoading = metadata.loading.requirements;
+	const requirementDisplay =
+		requirementMessages.length > 0
+			? requirementMessages
+			: requirementsAvailable
+				? []
+				: ['Loading requirements…'];
 	const meetsRequirements =
-		requirementsReady && requirementFailures.length === 0;
+		!requirementsLoading && requirementFailures.length === 0;
 	const costRequests = useMemo(
 		() =>
 			buildings.map((building) => ({
@@ -154,9 +159,11 @@ export default function BuildOptions({
 						selectResourceDescriptor,
 					);
 					const requirementText = requirementMessages.join(', ');
+					const loadingRequirements =
+						!requirementsAvailable && requirementsLoading;
 					const title = !implemented
 						? 'Not implemented yet'
-						: !requirementsReady
+						: loadingRequirements
 							? 'Loading requirements…'
 							: !meetsRequirements
 								? requirementText
@@ -169,7 +176,7 @@ export default function BuildOptions({
 						isActionPhase &&
 						canInteract &&
 						implemented &&
-						requirementsReady;
+						!requirementsLoading;
 					const hoverTitle = [
 						actionHoverTitle,
 						formatIconTitle(icon, building.name),
@@ -184,7 +191,7 @@ export default function BuildOptions({
 							upkeep={upkeep}
 							playerResources={player.resources}
 							actionCostResource={actionCostResource}
-							requirements={requirementMessages}
+							requirements={requirementDisplay}
 							requirementIcons={requirementIcons}
 							summary={summary}
 							implemented={implemented}

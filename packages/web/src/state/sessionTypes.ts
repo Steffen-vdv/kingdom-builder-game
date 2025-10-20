@@ -90,4 +90,9 @@ export interface SessionActionMetadataSnapshot {
 	costs?: SessionActionCostMap;
 	requirements?: SessionActionRequirementList;
 	groups?: ActionEffectGroup[];
+	stale?: {
+		costs?: boolean;
+		requirements?: boolean;
+		groups?: boolean;
+	};
 }

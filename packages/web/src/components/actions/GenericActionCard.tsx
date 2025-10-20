@@ -74,17 +74,21 @@ function GenericActionCard({
 		() => splitActionCostMap(metadata.costs),
 		[metadata.costs],
 	);
-	const costsReady = metadata.costs !== undefined;
+	const costsLoading = metadata.loading.costs;
+	const requirementsLoading = metadata.loading.requirements;
+	const groupsLoading = metadata.loading.groups;
+	const costsReady = !costsLoading;
 	const hasCleanupCosts = Object.keys(cleanupCosts).length > 0;
-	const requirementsReady = metadata.requirements !== undefined;
 	const requirementFailures = metadata.requirements ?? [];
-	const requirements = requirementsReady
-		? requirementFailures.map((failure) =>
-				formatRequirement(
-					translateRequirementFailure(failure, translationContext),
-				),
-			)
-		: ['Loading requirements…'];
+	const requirementMessages = requirementFailures.map((failure) =>
+		formatRequirement(translateRequirementFailure(failure, translationContext)),
+	);
+	const requirements =
+		requirementMessages.length > 0
+			? requirementMessages
+			: metadata.requirements !== undefined
+				? []
+				: ['Loading requirements…'];
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
 	const canPay = costsReady
 		? Object.entries(costs).every(
@@ -92,12 +96,13 @@ function GenericActionCard({
 					(player.resources[resourceKey] || 0) >= (cost ?? 0),
 			)
 		: false;
+	const requirementsReady = !requirementsLoading;
 	const meetsRequirements =
 		requirementsReady && requirementFailures.length === 0;
 	const summary = summaries.get(action.id);
 	const implemented = (summary?.length ?? 0) > 0;
 	const groups = metadata.groups ?? [];
-	const groupsReady = metadata.groups !== undefined;
+	const groupsReady = !groupsLoading;
 	const metadataReady = costsReady && requirementsReady && groupsReady;
 	const baseEnabled = [
 		metadataReady,
@@ -117,9 +122,9 @@ function GenericActionCard({
 	const requirementText = requirements.join(', ');
 	const title = !implemented
 		? 'Not implemented yet'
-		: !requirementsReady
+		: requirementsLoading
 			? 'Loading requirements…'
-			: !costsReady
+			: costsLoading
 				? 'Loading costs…'
 				: !meetsRequirements
 					? requirementText
@@ -129,7 +134,7 @@ function GenericActionCard({
 	const hoverBackground =
 		'bg-gradient-to-br from-white/80 to-white/60 ' +
 		'dark:from-slate-900/80 dark:to-slate-900/60';
-	const hasGroups = groupsReady && groups.length > 0;
+	const hasGroups = groups.length > 0;
 	const currentGroup = isPending ? pending?.groups[pending.step] : undefined;
 	const stepCount = isPending && hasGroups ? groups.length : undefined;
 	const stepIndex = stepCount
