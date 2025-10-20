@@ -73,17 +73,30 @@ export async function advanceToActionPhase({
 			refresh();
 			return;
 		}
-		if (snapshot.phases[snapshot.game.phaseIndex]?.action) {
+		const activePlayer = snapshot.game.players.find(
+			(player) => player.id === snapshot.game.activePlayerId,
+		);
+		const currentPhase = snapshot.phases[snapshot.game.phaseIndex];
+		const isActionPhase = Boolean(currentPhase?.action);
+		const shouldForceInitialAdvance = Boolean(
+			isActionPhase && activePlayer?.aiControlled,
+		);
+		if (isActionPhase && !shouldForceInitialAdvance) {
 			if (!mountedRef.current) {
 				return;
 			}
 			applyPhaseSnapshot(snapshot, { isAdvancing: false });
 			return;
 		}
-		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
+		applyPhaseSnapshot(snapshot, {
+			isAdvancing: true,
+			canEndTurn: false,
+		});
 		let lastPhaseSourceId: string | null = null;
 		let lastPhaseHeaderLogged = false;
-		while (!snapshot.phases[snapshot.game.phaseIndex]?.action) {
+		let forceAdvance = shouldForceInitialAdvance;
+		while (forceAdvance || !snapshot.phases[snapshot.game.phaseIndex]?.action) {
+			forceAdvance = false;
 			const activePlayerBefore = snapshot.game.players.find(
 				(player) => player.id === snapshot.game.activePlayerId,
 			);

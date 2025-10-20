@@ -34,6 +34,119 @@ describe('advanceToActionPhase', () => {
 		clearSessionStateStore();
 	});
 
+	it('advances AI-controlled action phases before looping', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const phases = [
+			{ id: 'phase-action', name: 'Action', action: true, steps: [] },
+			{ id: 'phase-growth', name: 'Growth', action: false, steps: [] },
+			{ id: 'phase-next', name: 'Next', action: true, steps: [] },
+		];
+		const player = createSnapshotPlayer({ id: 'A', aiControlled: true });
+		const opponent = createSnapshotPlayer({ id: 'B' });
+		const ruleSnapshot = {
+			tieredResourceKey: actionCostResource,
+			tierDefinitions: [],
+			winConditions: [],
+		};
+		const baseOptions = {
+			players: [player, opponent],
+			activePlayerId: player.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot,
+			turn: 1,
+		};
+		const snapshot = createSessionSnapshot({
+			...baseOptions,
+			currentPhase: phases[0]?.id ?? 'phase-action',
+			currentStep: phases[0]?.id ?? 'phase-action',
+			phaseIndex: 0,
+			stepIndex: 0,
+		});
+		const registriesPayload = createSessionRegistriesPayload();
+		initializeSessionState({
+			sessionId: 'session-ai',
+			snapshot,
+			registries: registriesPayload,
+		});
+		const snapshotAfterAction = createSessionSnapshot({
+			...baseOptions,
+			currentPhase: phases[1]?.id ?? 'phase-growth',
+			currentStep: phases[1]?.id ?? 'phase-growth',
+			phaseIndex: 1,
+			stepIndex: 0,
+		});
+		const snapshotAfterGrowth = createSessionSnapshot({
+			...baseOptions,
+			currentPhase: phases[2]?.id ?? 'phase-next',
+			currentStep: phases[2]?.id ?? 'phase-next',
+			phaseIndex: 2,
+			stepIndex: 0,
+		});
+		advanceSessionPhaseMock
+			.mockImplementationOnce(() => {
+				updateSessionSnapshot('session-ai', snapshotAfterAction);
+				return Promise.resolve({
+					sessionId: 'session-ai',
+					snapshot: snapshotAfterAction,
+					registries: registriesPayload,
+					advance: {
+						phase: phases[0]?.id ?? 'phase-action',
+						step: phases[0]?.id ?? 'phase-action',
+						effects: [],
+						player: snapshotAfterAction.game.players[0]!,
+					},
+				});
+			})
+			.mockImplementationOnce(() => {
+				updateSessionSnapshot('session-ai', snapshotAfterGrowth);
+				return Promise.resolve({
+					sessionId: 'session-ai',
+					snapshot: snapshotAfterGrowth,
+					registries: registriesPayload,
+					advance: {
+						phase: phases[1]?.id ?? 'phase-growth',
+						step: phases[1]?.id ?? 'phase-growth',
+						effects: [],
+						player: snapshotAfterGrowth.game.players[0]!,
+					},
+				});
+			});
+		const applyPhaseSnapshot = vi.fn();
+		const refresh = vi.fn();
+		const formatPhaseResolution = vi.fn().mockReturnValue({
+			source: { kind: 'phase', label: 'Phase', icon: '🧠' },
+			lines: [],
+			summaries: [],
+		});
+		const showResolution = vi.fn().mockResolvedValue(undefined);
+		const mountedRef = { current: true };
+		await advanceToActionPhase({
+			sessionId: 'session-ai',
+			initialSnapshot: snapshot,
+			resourceKeys: [actionCostResource],
+			mountedRef,
+			applyPhaseSnapshot,
+			refresh,
+			formatPhaseResolution: formatPhaseResolution as never,
+			showResolution: showResolution as never,
+			registries: createSessionRegistries(),
+		});
+		expect(advanceSessionPhaseMock).toHaveBeenCalledTimes(2);
+		expect(applyPhaseSnapshot).toHaveBeenCalledWith(snapshot, {
+			isAdvancing: true,
+			canEndTurn: false,
+		});
+		expect(applyPhaseSnapshot).toHaveBeenLastCalledWith(
+			snapshotAfterGrowth,
+			expect.objectContaining({ isAdvancing: false }),
+		);
+		expect(refresh).toHaveBeenCalled();
+	});
 	it('forwards mirroring failures to the fatal handler', async () => {
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {
