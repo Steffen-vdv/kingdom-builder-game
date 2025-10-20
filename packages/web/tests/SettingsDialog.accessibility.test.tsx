@@ -21,6 +21,10 @@ function createProps(
 		onToggleSound: vi.fn(),
 		backgroundAudioMuted: false,
 		onToggleBackgroundAudioMute: vi.fn(),
+		autoAcknowledgeEnabled: false,
+		onToggleAutoAcknowledge: vi.fn(),
+		autoPassEnabled: false,
+		onToggleAutoPass: vi.fn(),
 		playerName: 'Traveler',
 		onChangePlayerName: vi.fn(),
 		...overrides,
@@ -86,5 +90,29 @@ describe('SettingsDialog accessibility', () => {
 		});
 		trigger.remove();
 		unmount();
+	});
+
+	it('invokes gameplay toggles when switches are activated', async () => {
+		const onToggleAutoAcknowledge = vi.fn();
+		const onToggleAutoPass = vi.fn();
+		const props = createProps({
+			onToggleAutoAcknowledge,
+			onToggleAutoPass,
+		});
+		render(<SettingsDialog {...props} />);
+		const gameplayTab = await screen.findByRole('button', {
+			name: 'Gameplay',
+		});
+		fireEvent.click(gameplayTab);
+		const acknowledgeSwitch = await screen.findByRole('switch', {
+			name: 'Automatically acknowledge',
+		});
+		fireEvent.click(acknowledgeSwitch);
+		expect(onToggleAutoAcknowledge).toHaveBeenCalledTimes(1);
+		const passSwitch = await screen.findByRole('switch', {
+			name: 'Automatically pass turn',
+		});
+		fireEvent.click(passSwitch);
+		expect(onToggleAutoPass).toHaveBeenCalledTimes(1);
 	});
 });

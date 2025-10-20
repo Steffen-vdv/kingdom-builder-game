@@ -92,6 +92,10 @@ export default function App() {
 					onToggleSound={toggleSound}
 					backgroundAudioMuted={isBackgroundAudioMuted}
 					onToggleBackgroundAudioMute={toggleBackgroundAudioMute}
+					autoAcknowledgeEnabled={isAutoAcknowledgeEnabled}
+					onToggleAutoAcknowledge={toggleAutoAcknowledge}
+					autoPassEnabled={isAutoPassEnabled}
+					onToggleAutoPass={toggleAutoPass}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 					hasStoredName={hasStoredName}
