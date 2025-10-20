@@ -160,7 +160,11 @@ describe('<RaisePopOptions />', () => {
 				/>
 			</RegistryMetadataProvider>,
 		);
-		const optionButtons = screen.getAllByRole('button', { name: /hire/i });
+		const optionButtons = screen
+			.getAllByRole('button')
+			.filter((button) =>
+				button.classList.contains('action-card__face--front'),
+			);
 		expect(optionButtons.length).toBeGreaterThan(0);
 		const [primaryRole] = populationIds;
 		const primaryDescriptor = toDescriptorDisplay(
@@ -208,7 +212,8 @@ describe('<RaisePopOptions />', () => {
 			metadataSelectors.populationMetadata.select(fallbackRole),
 		);
 		const fallbackButton = screen
-			.getAllByRole('button', { name: /hire/i })
+			.getAllByRole('button')
+			.filter((button) => button.classList.contains('action-card__face--front'))
 			.find((button) => button.textContent?.includes(descriptor.label));
 		expect(fallbackButton).toBeDefined();
 		const expectedIcon =
@@ -262,7 +267,11 @@ describe('<RaisePopOptions />', () => {
 				/>
 			</RegistryMetadataProvider>,
 		);
-		const hireButtons = screen.getAllByRole('button', { name: /hire/i });
+		const hireButtons = screen
+			.getAllByRole('button')
+			.filter((button) =>
+				button.classList.contains('action-card__face--front'),
+			);
 		expect(hireButtons.length).toBeGreaterThan(0);
 		const primaryHireButton = hireButtons[0];
 		expect(primaryHireButton).toBeDisabled();

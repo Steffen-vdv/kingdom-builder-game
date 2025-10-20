@@ -253,20 +253,17 @@ export default function RaisePopOptions({
 						role,
 					},
 				);
-				const actionLabelNode = renderIconLabel(actionIcon, actionName);
 				const roleLabelNode = renderIconLabel(roleIcon, roleLabel);
-				const hoverTitle = `${formatIconTitle(
-					actionIcon,
-					actionName,
-				)}: ${formatIconTitle(roleIcon, roleLabel)}`;
+				const hoverTitle = [
+					formatIconTitle(actionIcon, actionName),
+					formatIconTitle(roleIcon, roleLabel),
+				]
+					.filter(Boolean)
+					.join(' - ');
 				return (
 					<ActionCard
 						key={role}
-						title={
-							<>
-								{actionLabelNode}: {roleLabelNode}
-							</>
-						}
+						title={roleLabelNode}
 						costs={costs}
 						upkeep={upkeep}
 						playerResources={player.resources}
