@@ -86,7 +86,7 @@ registerEffectFormatter('action', 'add', {
 			return null;
 		}
 		const { label } = getActionPresentation(id, context);
-		return formatActionChangeSentence('gain', label, 'log');
+		return `Unlock Action: ${label}`;
 	},
 });
 
