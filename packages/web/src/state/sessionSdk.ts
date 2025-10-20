@@ -28,6 +28,7 @@ import {
 	deleteRemoteAdapter,
 	getOrCreateRemoteAdapter,
 	getRemoteAdapter,
+	configureRemoteSessionAdapterDependencies,
 } from './remoteSessionAdapter';
 import {
 	setSessionActionCosts,
@@ -203,6 +204,11 @@ async function runAiTurnInternal(
 		phaseComplete: response.phaseComplete,
 	};
 }
+
+configureRemoteSessionAdapterDependencies({
+	ensureGameApi,
+	runAiTurn: runAiTurnInternal,
+});
 
 export { runAiTurnInternal as runAiTurn };
 export async function loadActionCosts(

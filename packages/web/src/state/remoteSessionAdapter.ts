@@ -213,11 +213,19 @@ export class RemoteSessionAdapter implements SessionAdapter {
 }
 
 const adapters = new Map<string, RemoteSessionAdapter>();
+let sharedDependencies: RemoteSessionAdapterDependencies | null = null;
+
+export function configureRemoteSessionAdapterDependencies(
+	dependencies: RemoteSessionAdapterDependencies,
+): void {
+	sharedDependencies = dependencies;
+}
 
 export function getOrCreateRemoteAdapter(
 	sessionId: string,
 	dependencies: RemoteSessionAdapterDependencies,
 ): RemoteSessionAdapter {
+	sharedDependencies = dependencies;
 	let adapter = adapters.get(sessionId);
 	if (!adapter) {
 		adapter = new RemoteSessionAdapter(sessionId, dependencies);
@@ -233,5 +241,10 @@ export function deleteRemoteAdapter(sessionId: string): void {
 export function getRemoteAdapter(
 	sessionId: string,
 ): RemoteSessionAdapter | undefined {
-	return adapters.get(sessionId);
+	let adapter = adapters.get(sessionId);
+	if (!adapter && sharedDependencies) {
+		adapter = new RemoteSessionAdapter(sessionId, sharedDependencies);
+		adapters.set(sessionId, adapter);
+	}
+	return adapter;
 }
