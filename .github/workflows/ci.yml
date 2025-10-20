@@ -37,11 +37,8 @@ jobs:
 
       - run: npm run ${{ matrix.task }}
 
-  tests:
+  test-engine:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        suite: [root, server]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
@@ -58,21 +55,109 @@ jobs:
             }
           done
 
-      - run: npm run test:coverage:${{ matrix.suite }}
+      - run: npm run test:coverage:engine
       - uses: actions/upload-artifact@v4
-        if: matrix.suite == 'root'
         with:
-          name: coverage-root
+          name: coverage-engine
           path: coverage/
+
+  test-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: |
+          for i in 1 2 3; do
+            npm ci --prefer-offline --no-progress && break || {
+              echo "Install failed (attempt $i). Retrying in 10s..."; sleep 10;
+            }
+          done
+
+      - run: npm run test:coverage:protocol
       - uses: actions/upload-artifact@v4
-        if: matrix.suite == 'server'
+        with:
+          name: coverage-protocol
+          path: coverage/
+
+  test-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: |
+          for i in 1 2 3; do
+            npm ci --prefer-offline --no-progress && break || {
+              echo "Install failed (attempt $i). Retrying in 10s..."; sleep 10;
+            }
+          done
+
+      - run: npm run test:integration
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-integration
+          path: coverage/
+
+  test-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: |
+          for i in 1 2 3; do
+            npm ci --prefer-offline --no-progress && break || {
+              echo "Install failed (attempt $i). Retrying in 10s..."; sleep 10;
+            }
+          done
+
+      - run: npm run test:web
+
+  test-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: |
+          for i in 1 2 3; do
+            npm ci --prefer-offline --no-progress && break || {
+              echo "Install failed (attempt $i). Retrying in 10s..."; sleep 10;
+            }
+          done
+
+      - run: npm run test:coverage:server
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage-server
           path: packages/server/coverage/
 
   build:
     runs-on: ubuntu-latest
-    needs: [quality, tests]
+    needs:
+      - quality
+      - test-engine
+      - test-protocol
+      - test-integration
+      - test-web
+      - test-server
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
