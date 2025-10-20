@@ -17,6 +17,7 @@ import {
 } from './sessionSdk';
 import { serializeActionParams } from './actionMetadataKey';
 import type { SessionActionMetadataSnapshot } from './sessionTypes';
+import { isAbortError } from './isAbortError';
 
 interface UseActionMetadataOptions {
 	actionId: string | null | undefined;
@@ -118,12 +119,19 @@ export function useActionMetadata({
 		loadingRef.current.costs = true;
 		void loadActionCosts(sessionId, actionId, normalizedParams, {
 			signal: controller.signal,
-		}).finally(() => {
-			if (!active) {
-				return;
-			}
-			loadingRef.current.costs = false;
-		});
+		})
+			.catch((error) => {
+				if (isAbortError(error)) {
+					return;
+				}
+				throw error;
+			})
+			.finally(() => {
+				if (!active) {
+					return;
+				}
+				loadingRef.current.costs = false;
+			});
 		return () => {
 			active = false;
 			controller.abort();
@@ -147,12 +155,19 @@ export function useActionMetadata({
 		loadingRef.current.requirements = true;
 		void loadActionRequirements(sessionId, actionId, normalizedParams, {
 			signal: controller.signal,
-		}).finally(() => {
-			if (!active) {
-				return;
-			}
-			loadingRef.current.requirements = false;
-		});
+		})
+			.catch((error) => {
+				if (isAbortError(error)) {
+					return;
+				}
+				throw error;
+			})
+			.finally(() => {
+				if (!active) {
+					return;
+				}
+				loadingRef.current.requirements = false;
+			});
 		return () => {
 			active = false;
 			controller.abort();
@@ -173,12 +188,19 @@ export function useActionMetadata({
 		loadingRef.current.groups = true;
 		void loadActionOptions(sessionId, actionId, {
 			signal: controller.signal,
-		}).finally(() => {
-			if (!active) {
-				return;
-			}
-			loadingRef.current.groups = false;
-		});
+		})
+			.catch((error) => {
+				if (isAbortError(error)) {
+					return;
+				}
+				throw error;
+			})
+			.finally(() => {
+				if (!active) {
+					return;
+				}
+				loadingRef.current.groups = false;
+			});
 		return () => {
 			active = false;
 			controller.abort();
