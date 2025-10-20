@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import {
+	render,
+	screen,
+	within,
+	cleanup,
+	waitFor,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import {
@@ -156,7 +162,7 @@ beforeEach(() => {
 });
 
 describe('<ActionsPanel />', () => {
-	it('disables action cards while acknowledgements are pending', () => {
+	it('disables action cards while acknowledgements are pending', async () => {
 		const resolution: ActionResolution = {
 			lines: ['Step 1'],
 			visibleLines: ['Step 1'],
@@ -168,7 +174,7 @@ describe('<ActionsPanel />', () => {
 		mockGame.resolution = resolution;
 		renderActionsPanel();
 		const actionName = metadata.actions.basic.name;
-		const surveyButton = screen.getByRole('button', {
+		const surveyButton = await screen.findByRole('button', {
 			name: new RegExp(actionName, 'i'),
 		});
 		expect(surveyButton).toBeDisabled();
@@ -177,15 +183,17 @@ describe('<ActionsPanel />', () => {
 	it(
 		'renders hire options for generated population roles ' +
 			'with derived requirement icons',
-		() => {
+		async () => {
 			renderActionsPanel();
 			const raiseAction = metadata.actions.raise;
-			expect(requirementIconsMock).toHaveBeenCalledWith(
-				raiseAction.id,
-				mockGame.translationContext,
-			);
+			await waitFor(() => {
+				expect(requirementIconsMock).toHaveBeenCalledWith(
+					raiseAction.id,
+					mockGame.translationContext,
+				);
+			});
 			const baseIcons = metadata.requirementIcons.get(raiseAction.id) ?? [];
-			const hireButtons = screen.getAllByRole('button', {
+			const hireButtons = await screen.findAllByRole('button', {
 				name: /Hire\s*:/,
 			});
 			const requirementTexts = hireButtons.map(
@@ -214,23 +222,25 @@ describe('<ActionsPanel />', () => {
 		},
 	);
 
-	it('falls back to requirement helper icons for building cards', () => {
+	it('falls back to requirement helper icons for building cards', async () => {
 		setScenario({ showBuilding: true });
 		renderActionsPanel();
 		const buildingAction = metadata.actions.building;
 		if (!buildingAction) {
 			throw new Error('Expected building action to be defined');
 		}
-		expect(requirementIconsMock).toHaveBeenCalledWith(
-			buildingAction.id,
-			mockGame.translationContext,
-		);
+		await waitFor(() => {
+			expect(requirementIconsMock).toHaveBeenCalledWith(
+				buildingAction.id,
+				mockGame.translationContext,
+			);
+		});
 		const icons = metadata.requirementIcons.get(buildingAction.id) ?? [];
 		const buildingDefinition = metadata.building;
 		if (!buildingDefinition) {
 			throw new Error('Expected building definition to exist');
 		}
-		const buildingButton = screen.getByRole('button', {
+		const buildingButton = await screen.findByRole('button', {
 			name: new RegExp(buildingDefinition.name),
 		});
 		const requirementText =
@@ -241,17 +251,25 @@ describe('<ActionsPanel />', () => {
 		expect(allIconsPresent).toBe(true);
 	});
 
-	it('uses fallback descriptors when metadata omits resource icons and labels', () => {
+	it('uses fallback descriptors when metadata omits resource icons and labels', async () => {
 		renderActionsPanel();
+		const actionName = metadata.actions.basic.name;
+		await screen.findByRole('button', { name: new RegExp(actionName, 'i') });
 		const descriptor =
 			mockGame.sessionSnapshot.metadata.resources?.[metadata.upkeepResource];
 		expect(descriptor?.icon).toBeUndefined();
 		expect(descriptor?.label).toBe(toTitleCase(metadata.upkeepResource));
 	});
 
-	it('reuses cached requirement icon arrays for identical lookups', () => {
+	it('reuses cached requirement icon arrays for identical lookups', async () => {
 		renderActionsPanel();
 		const raiseAction = metadata.actions.raise;
+		await waitFor(() => {
+			const index = requirementIconsMock.mock.calls.findIndex(
+				([actionId]) => actionId === raiseAction.id,
+			);
+			expect(index).toBeGreaterThanOrEqual(0);
+		});
 		const callIndex = requirementIconsMock.mock.calls.findIndex(
 			([actionId]) => actionId === raiseAction.id,
 		);
@@ -260,44 +278,50 @@ describe('<ActionsPanel />', () => {
 		expect(result?.value).toBe(metadata.requirementIcons.get(raiseAction.id));
 	});
 
-	it('disables building cards when requirements fail and surfaces translations', () => {
+	it('disables building cards when requirements fail and surfaces translations', async () => {
 		setScenario({ showBuilding: true });
 		renderActionsPanel();
 		const buildingDefinition = metadata.building;
 		if (!buildingDefinition) {
 			throw new Error('Expected building definition to exist');
 		}
-		const buildingButton = screen.getByRole('button', {
+		const buildingButton = await screen.findByRole('button', {
 			name: new RegExp(buildingDefinition.name),
 		});
 		expect(buildingButton).toBeDisabled();
-		expect(translateRequirementFailureMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				requirement: expect.objectContaining({
-					type: 'evaluator',
-					method: 'compare',
+		await waitFor(() => {
+			expect(translateRequirementFailureMock).toHaveBeenCalledWith(
+				expect.objectContaining({
+					requirement: expect.objectContaining({
+						type: 'evaluator',
+						method: 'compare',
+					}),
 				}),
-			}),
-			expect.anything(),
-		);
+				expect.anything(),
+			);
+		});
 	});
 
 	it(
 		'omits the hire section when the helper supplies a non-population ' +
 			'action category',
-		() => {
+		async () => {
 			setScenario({
 				actionCategories: { population: 'custom-population' },
 			});
 			expect(metadata.actions.raise.category).toBe('custom-population');
 			renderActionsPanel();
+			const baseActionName = metadata.actions.basic.name;
+			await screen.findByRole('button', {
+				name: new RegExp(baseActionName, 'i'),
+			});
 			expect(
 				screen.queryAllByRole('button', { name: /Hire\s*:/ }),
 			).toHaveLength(0);
 		},
 	);
 
-	it('renders requirement icons for custom generated population roles', () => {
+	it('renders requirement icons for custom generated population roles', async () => {
 		setScenario({
 			populationRoles: [
 				{
@@ -310,7 +334,7 @@ describe('<ActionsPanel />', () => {
 			statKeys: { capacity: `${metadata.capacityStat}-alt` },
 		});
 		renderActionsPanel();
-		const hireButtons = screen.getAllByRole('button', {
+		const hireButtons = await screen.findAllByRole('button', {
 			name: /Hire\s*:/,
 		});
 		const requirementTexts = hireButtons.map(
