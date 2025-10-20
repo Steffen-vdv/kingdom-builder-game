@@ -8,6 +8,7 @@ import type {
 import {
 	applySessionState,
 	assertSessionRecord,
+	enqueueSessionTask,
 	clearSessionStateStore,
 	getSessionRecord,
 	initializeSessionState,
@@ -18,6 +19,7 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
+import { SessionMirroringError } from '../../src/state/sessionErrors';
 
 const createMetadata = (overrides: Partial<SessionSnapshotMetadata> = {}) =>
 	createEmptySnapshotMetadata(overrides);
@@ -140,7 +142,41 @@ describe('sessionStateStore', () => {
 
 	it('throws when asserting an unknown session record', () => {
 		expect(() => assertSessionRecord('missing:session')).toThrow(
-			/Missing session record/,
+			SessionMirroringError,
 		);
+	});
+
+	it('queues tasks scheduled before initializing a session record', async () => {
+		const sessionId = 'session:pending';
+		const calls: string[] = [];
+		let releaseFirst: (() => void) | undefined;
+		const first = enqueueSessionTask(
+			sessionId,
+			() =>
+				new Promise<void>((resolve) => {
+					releaseFirst = () => {
+						calls.push('first');
+						resolve();
+					};
+				}),
+		);
+		const second = enqueueSessionTask(sessionId, () => {
+			calls.push('second');
+		});
+		const baseSnapshot = createBaseSnapshot();
+		const response: SessionCreateResponse = {
+			sessionId,
+			snapshot: baseSnapshot,
+			registries: createSessionRegistriesPayload(),
+		};
+		initializeSessionState(response);
+		await new Promise((resolve) => setImmediate(resolve));
+		if (!releaseFirst) {
+			throw new Error('Expected releaseFirst to be assigned');
+		}
+		releaseFirst();
+		await first;
+		await second;
+		expect(calls).toEqual(['first', 'second']);
 	});
 });

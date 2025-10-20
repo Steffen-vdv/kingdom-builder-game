@@ -15,6 +15,7 @@ import {
 	type SessionRegistries,
 } from './sessionRegistries';
 import { clone } from './clone';
+import { SessionMirroringError, markFatalSessionError } from './sessionErrors';
 
 export interface SessionStateRecord {
 	readonly sessionId: string;
@@ -29,6 +30,30 @@ export interface SessionStateRecord {
 type SessionStatePayload = SessionStateResponse | SessionAdvanceResponse;
 
 const records = new Map<string, SessionStateRecord>();
+const queueSeeds = new Map<string, Promise<void>>();
+
+function getQueueSeed(sessionId: string): Promise<void> {
+	const record = records.get(sessionId);
+	if (record) {
+		queueSeeds.set(sessionId, record.queueSeed);
+		return record.queueSeed;
+	}
+	const existing = queueSeeds.get(sessionId);
+	if (existing) {
+		return existing;
+	}
+	const seed = Promise.resolve();
+	queueSeeds.set(sessionId, seed);
+	return seed;
+}
+
+function setQueueSeed(sessionId: string, seed: Promise<void>): void {
+	const record = records.get(sessionId);
+	if (record) {
+		record.queueSeed = seed;
+	}
+	queueSeeds.set(sessionId, seed);
+}
 
 function mergeRegistryEntries<DefinitionType>(
 	target: Registry<DefinitionType>,
@@ -84,6 +109,8 @@ export function initializeSessionState(
 	const snapshot = clone(response.snapshot);
 	const ruleSnapshot = clone(response.snapshot.rules);
 	const registries = deserializeSessionRegistries(response.registries);
+	const queueSeed = queueSeeds.get(response.sessionId) ?? Promise.resolve();
+	queueSeeds.set(response.sessionId, queueSeed);
 	const record: SessionStateRecord = {
 		sessionId: response.sessionId,
 		snapshot,
@@ -91,7 +118,7 @@ export function initializeSessionState(
 		registries,
 		resourceKeys: extractResourceKeys(registries),
 		metadata: clone(response.snapshot.metadata),
-		queueSeed: Promise.resolve(),
+		queueSeed,
 	};
 	records.set(response.sessionId, record);
 	return record;
@@ -108,6 +135,7 @@ export function applySessionState(
 	record.ruleSnapshot = clone(response.snapshot.rules);
 	applyRegistries(record, response.registries);
 	applyMetadata(record, response.snapshot.metadata);
+	queueSeeds.set(response.sessionId, record.queueSeed);
 	records.set(response.sessionId, record);
 	return record;
 }
@@ -120,6 +148,7 @@ export function updateSessionSnapshot(
 	record.snapshot = clone(snapshot);
 	record.ruleSnapshot = clone(snapshot.rules);
 	applyMetadata(record, snapshot.metadata);
+	queueSeeds.set(sessionId, record.queueSeed);
 	records.set(sessionId, record);
 	return record;
 }
@@ -156,25 +185,35 @@ export function getSessionSnapshot(sessionId: string): SessionSnapshot {
 export function assertSessionRecord(sessionId: string): SessionStateRecord {
 	const record = getSessionRecord(sessionId);
 	if (!record) {
-		throw new Error(`Missing session record: ${sessionId}`);
+		const error = new SessionMirroringError('Session state unavailable', {
+			cause: new Error(`Missing session record: ${sessionId}`),
+			details: { sessionId },
+		});
+		markFatalSessionError(error);
+		throw error;
 	}
 	return record;
 }
 
 export function deleteSessionRecord(sessionId: string): void {
 	records.delete(sessionId);
+	queueSeeds.delete(sessionId);
 }
 
 export function clearSessionStateStore(): void {
 	records.clear();
+	queueSeeds.clear();
 }
 
 export function enqueueSessionTask<T>(
 	sessionId: string,
 	task: () => Promise<T> | T,
 ): Promise<T> {
-	const record = assertSessionRecord(sessionId);
-	const chain = record.queueSeed.then(() => Promise.resolve().then(task));
-	record.queueSeed = chain.catch(() => {}).then(() => undefined);
+	const seed = getQueueSeed(sessionId);
+	const chain = seed.then(() => Promise.resolve().then(task));
+	setQueueSeed(
+		sessionId,
+		chain.catch(() => {}).then(() => undefined),
+	);
 	return chain;
 }
