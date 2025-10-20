@@ -1,4 +1,5 @@
 import type {
+	ActionCategoryConfig,
 	PlayerStartConfig,
 	SessionPassiveEvaluationModifierMap,
 	SessionPassiveSummary,
@@ -6,6 +7,8 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import type {
+	TranslationActionCategoryDefinition,
+	TranslationActionCategoryRegistry,
 	TranslationPassiveDescriptor,
 	TranslationPassiveModifierMap,
 	TranslationPlayer,
@@ -86,6 +89,60 @@ export function wrapRegistry<TDefinition>(registry: {
 		},
 		has(id: string) {
 			return registry.has(id);
+		},
+	});
+}
+
+function normalizeActionCategoryDefinition(
+	definition: ActionCategoryConfig,
+): TranslationActionCategoryDefinition {
+	return Object.freeze({
+		id: definition.id,
+		title: definition.title,
+		subtitle: definition.subtitle ?? definition.title,
+		...(definition.description !== undefined
+			? { description: definition.description }
+			: {}),
+		icon: definition.icon,
+		order: definition.order,
+		layout: definition.layout,
+		hideWhenEmpty: definition.hideWhenEmpty ?? false,
+		...(definition.analyticsKey !== undefined
+			? { analyticsKey: definition.analyticsKey }
+			: {}),
+	});
+}
+
+export function wrapActionCategoryRegistry(
+	registry: Record<string, ActionCategoryConfig> | undefined,
+): TranslationActionCategoryRegistry {
+	const entries = Object.values(registry ?? {}).map(
+		normalizeActionCategoryDefinition,
+	);
+	entries.sort((left, right) => {
+		if (left.order !== right.order) {
+			return left.order - right.order;
+		}
+		return left.id.localeCompare(right.id);
+	});
+	const ordered: ReadonlyArray<TranslationActionCategoryDefinition> =
+		Object.freeze([...entries]);
+	const byId = new Map(
+		ordered.map((definition) => [definition.id, definition] as const),
+	);
+	return Object.freeze({
+		get(id: string) {
+			const definition = byId.get(id);
+			if (!definition) {
+				throw new Error(`Unknown action category definition for id "${id}".`);
+			}
+			return definition;
+		},
+		has(id: string) {
+			return byId.has(id);
+		},
+		list() {
+			return ordered;
 		},
 	});
 }

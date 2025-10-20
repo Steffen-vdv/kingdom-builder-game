@@ -1,4 +1,5 @@
 import type {
+	ActionCategoryConfig,
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
@@ -20,6 +21,23 @@ import type { SessionMetadataFormat } from '@kingdom-builder/protocol/session';
 export interface TranslationRegistry<TDefinition> {
 	get(id: string): TDefinition;
 	has(id: string): boolean;
+}
+
+export interface TranslationActionCategoryDefinition {
+	readonly id: string;
+	readonly title: string;
+	readonly subtitle: string;
+	readonly description?: string;
+	readonly icon: string;
+	readonly order: number;
+	readonly layout: ActionCategoryConfig['layout'];
+	readonly hideWhenEmpty: boolean;
+	readonly analyticsKey?: string;
+}
+
+export interface TranslationActionCategoryRegistry
+	extends TranslationRegistry<TranslationActionCategoryDefinition> {
+	list(): readonly TranslationActionCategoryDefinition[];
 }
 
 export interface TranslationIconLabel {
@@ -139,6 +157,7 @@ export interface TranslationPlayer {
  */
 export interface TranslationContext {
 	readonly actions: TranslationRegistry<ActionConfig>;
+	readonly actionCategories: TranslationActionCategoryRegistry;
 	readonly buildings: TranslationRegistry<BuildingConfig>;
 	readonly developments: TranslationRegistry<DevelopmentConfig>;
 	readonly populations: TranslationRegistry<PopulationConfig>;

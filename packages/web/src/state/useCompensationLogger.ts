@@ -24,7 +24,12 @@ interface UseCompensationLoggerOptions {
 	resourceKeys: SessionResourceKey[];
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		| 'actions'
+		| 'actionCategories'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
+		| 'resources'
 	>;
 }
 

@@ -1,9 +1,11 @@
 import {
 	Registry,
+	actionCategorySchema,
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
 	populationSchema,
+	type ActionCategoryConfig,
 	type ActionConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
@@ -57,8 +59,45 @@ function cloneResourceRegistry(
 	);
 }
 
+function cloneActionCategoryDefinition(
+	definition: ActionCategoryConfig,
+): ActionCategoryConfig {
+	const parsed = actionCategorySchema.passthrough().parse(definition);
+	const clone: ActionCategoryConfig = {
+		id: parsed.id,
+		title: parsed.title,
+		subtitle: parsed.subtitle ?? parsed.title,
+		icon: parsed.icon,
+		order: parsed.order,
+		layout: parsed.layout,
+		hideWhenEmpty: parsed.hideWhenEmpty ?? false,
+	};
+	if (parsed.description !== undefined) {
+		clone.description = parsed.description;
+	}
+	if (parsed.analyticsKey !== undefined) {
+		clone.analyticsKey = parsed.analyticsKey;
+	}
+	return clone;
+}
+
+function cloneActionCategoryRegistry(
+	categories: Record<string, ActionCategoryConfig> | undefined,
+): Record<string, ActionCategoryConfig> {
+	if (!categories) {
+		return {};
+	}
+	return Object.fromEntries(
+		Object.entries(categories).map(([id, definition]) => [
+			id,
+			cloneActionCategoryDefinition(definition),
+		]),
+	);
+}
+
 export interface SessionRegistries {
 	actions: Registry<ActionConfig>;
+	actionCategories: Record<string, ActionCategoryConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
@@ -86,6 +125,7 @@ export function deserializeSessionRegistries(
 			populationSchema.passthrough(),
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
+		actionCategories: cloneActionCategoryRegistry(payload.actionCategories),
 	};
 }
 
