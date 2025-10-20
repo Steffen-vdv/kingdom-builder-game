@@ -261,9 +261,6 @@ export function useAiRunner({
 					}
 					syncPhaseState(result.snapshot);
 					latestSnapshot = result.snapshot;
-					if (!result.ranTurn) {
-						break;
-					}
 					if (!mountedRef.current) {
 						break;
 					}
@@ -302,6 +299,12 @@ export function useAiRunner({
 						break;
 					}
 					if (result.actions.length === 0) {
+						if (!result.ranTurn) {
+							break;
+						}
+						continue;
+					}
+					if (!result.ranTurn) {
 						break;
 					}
 				}
