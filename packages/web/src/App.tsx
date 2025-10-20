@@ -71,6 +71,10 @@ export default function App() {
 					onToggleAutoAcknowledge={toggleAutoAcknowledge}
 					autoPassEnabled={isAutoPassEnabled}
 					onToggleAutoPass={toggleAutoPass}
+					autoAcknowledgeResolutions={isAutoAcknowledgeEnabled}
+					onToggleAutoAcknowledgeResolutions={toggleAutoAcknowledge}
+					autoPassTurn={isAutoPassEnabled}
+					onToggleAutoPassTurn={toggleAutoPass}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 				/>
