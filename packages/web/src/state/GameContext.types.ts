@@ -7,6 +7,7 @@ import type { SessionView } from './sessionSelectors';
 import type { Action } from './actionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import type { TimeScale } from './useTimeScale';
+import type { ControlId, ControlKeybindMap } from './keybindings';
 import type { HoverCard } from './useHoverCard';
 import type { ResolutionLogEntry } from './useGameLog';
 import type { Toast } from './useToasts';
@@ -109,6 +110,9 @@ export interface GameEngineContextValue {
 	onToggleAutoPass: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
+	controlKeybinds: ControlKeybindMap;
+	setControlKeybind: (controlId: ControlId, value: string) => void;
+	resetControlKeybind: (controlId: ControlId) => void;
 	toasts: Toast[];
 	pushToast: (options: {
 		message: string;
