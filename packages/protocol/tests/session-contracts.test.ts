@@ -11,6 +11,7 @@ import {
 	sessionRunAiResponseSchema,
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
+	sessionRegistriesSchema,
 	runtimeConfigResponseSchema,
 } from '../src';
 import type {
@@ -29,6 +30,8 @@ import type {
 import type {
 	SessionRuntimeConfigResponse,
 	SessionRunAiAction,
+	SessionRegistriesPayload,
+	SessionActionCategoryRegistry,
 } from '../src/session/contracts';
 
 describe('session contract schemas', () => {
@@ -99,6 +102,16 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof runtimeConfigResponseSchema>
 		>().toEqualTypeOf<SessionRuntimeConfigResponse>();
+	});
+
+	it('matches the registries payload type including action categories', () => {
+		expect(sessionRegistriesSchema).toBeDefined();
+		expectTypeOf<
+			ZodInfer<typeof sessionRegistriesSchema>
+		>().toEqualTypeOf<SessionRegistriesPayload>();
+		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
+			SessionActionCategoryRegistry | undefined
+		>();
 	});
 });
 
