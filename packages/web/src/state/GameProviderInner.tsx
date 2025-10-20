@@ -1,10 +1,4 @@
-import React, {
-	createContext,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-} from 'react';
+import React, { createContext, useCallback, useMemo, useRef } from 'react';
 import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import TranslationContextLoading from './TranslationContextLoading';
 import { useTimeScale } from './useTimeScale';
@@ -30,8 +24,8 @@ import { hasAiController } from './sessionAi';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
-import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import { useRemotePlayerNameSync } from './useRemotePlayerNameSync';
+import { useRunUntilActionPhaseSync } from './useRunUntilActionPhaseSync';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -52,9 +46,13 @@ export function GameProviderInner({
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
 	autoAcknowledgeEnabled,
-	onToggleAutoAcknowledge,
+	onToggleAutoAcknowledge = () => {},
 	autoPassEnabled,
-	onToggleAutoPass,
+	onToggleAutoPass = () => {},
+	autoAcknowledgeResolutions = autoAcknowledgeEnabled ?? false,
+	onToggleAutoAcknowledgeResolutions = onToggleAutoAcknowledge ?? (() => {}),
+	autoPassTurn = autoPassEnabled ?? false,
+	onToggleAutoPassTurn = onToggleAutoPass ?? (() => {}),
 	playerName = DEFAULT_PLAYER_NAME,
 	onChangePlayerName = () => {},
 	queue,
@@ -101,32 +99,15 @@ export function GameProviderInner({
 	]);
 	const controlledPlayerId = controlledPlayerSnapshot?.id;
 	const controlledPlayerName = controlledPlayerSnapshot?.name;
-	useEffect(() => {
-		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
-		if (
-			controlledPlayerId === undefined ||
-			controlledPlayerName === undefined ||
-			controlledPlayerName === desiredName
-		) {
-			return;
-		}
-		void enqueue(() =>
-			updateRemotePlayerName({
-				sessionId,
-				playerId: controlledPlayerId,
-				playerName: desiredName,
-			}),
-		).finally(() => {
-			refresh();
-		});
-	}, [
-		enqueue,
+	useRemotePlayerNameSync({
 		controlledPlayerId,
 		controlledPlayerName,
-		refresh,
-		playerName,
 		sessionId,
-	]);
+		enqueue,
+		refresh,
+		playerNameRef,
+		playerName,
+	});
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
 			sessionSnapshot,
@@ -245,30 +226,10 @@ export function GameProviderInner({
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
-	useEffect(() => {
-		let disposed = false;
-		const run = async () => {
-			try {
-				await runUntilActionPhase();
-			} catch (error) {
-				if (disposed) {
-					return;
-				}
-				if (!onFatalSessionError) {
-					return;
-				}
-				if (isFatalSessionError(error)) {
-					return;
-				}
-				markFatalSessionError(error);
-				onFatalSessionError(error);
-			}
-		};
-		void run();
-		return () => {
-			disposed = true;
-		};
-	}, [runUntilActionPhase, onFatalSessionError]);
+	useRunUntilActionPhaseSync({
+		runUntilActionPhase,
+		...(onFatalSessionError ? { onFatalSessionError } : {}),
+	});
 
 	const metadata = useMemo<SessionMetadataFetchers>(
 		() => ({
@@ -341,9 +302,13 @@ export function GameProviderInner({
 		backgroundAudioMuted: backgroundAudioMuted ?? true,
 		onToggleBackgroundAudioMute: onToggleBackgroundAudioMute ?? (() => {}),
 		autoAcknowledgeEnabled: autoAcknowledgeEnabled ?? false,
-		onToggleAutoAcknowledge: onToggleAutoAcknowledge ?? (() => {}),
+		onToggleAutoAcknowledge: onToggleAutoAcknowledge,
 		autoPassEnabled: autoPassEnabled ?? false,
-		onToggleAutoPass: onToggleAutoPass ?? (() => {}),
+		onToggleAutoPass: onToggleAutoPass,
+		autoAcknowledgeResolutions,
+		onToggleAutoAcknowledgeResolutions,
+		autoPassTurn,
+		onToggleAutoPassTurn,
 		timeScale,
 		setTimeScale,
 		toasts,
