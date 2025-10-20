@@ -1,5 +1,6 @@
 import { z, type ZodObject, type ZodRawShape } from 'zod';
 import {
+	actionCategorySchema,
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
@@ -37,6 +38,7 @@ export const sessionRegistriesSchema = z
 		developments: serializedRegistrySchema(developmentSchema),
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 

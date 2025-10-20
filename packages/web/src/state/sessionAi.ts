@@ -4,6 +4,8 @@ import {
 	getSessionRecord,
 } from './sessionStateStore';
 import { runAiTurn as runAiTurnThroughSdk } from './sessionSdk';
+import type { SessionAiTurnResult } from './sessionTypes';
+import { cloneValue } from './cloneValue';
 
 export function hasAiController(
 	sessionId: string,
@@ -22,9 +24,23 @@ export function hasAiController(
 export async function runAiTurn(
 	sessionId: string,
 	playerId: SessionPlayerId,
-): Promise<boolean> {
+): Promise<SessionAiTurnResult> {
 	const response = await runAiTurnThroughSdk({ sessionId, playerId });
-	return response.ranTurn;
+	const record = getSessionRecord(sessionId);
+	if (!record) {
+		const message = [
+			'Missing session record after AI turn in session',
+			`"${sessionId}".`,
+		].join(' ');
+		throw new Error(message);
+	}
+	return {
+		ranTurn: response.ranTurn,
+		actions: cloneValue(response.actions),
+		phaseComplete: response.phaseComplete,
+		snapshot: record.snapshot,
+		registries: record.registries,
+	};
 }
 
 export function enqueueSessionTask<T>(

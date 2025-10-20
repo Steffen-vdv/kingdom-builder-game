@@ -5,6 +5,7 @@ import {
 	getActionCosts,
 	type ActionTrace,
 } from '@kingdom-builder/engine';
+import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
@@ -21,9 +22,15 @@ import {
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
 	appendSubActionChanges,
+	buildActionResolution,
 	filterActionDiffChanges,
 } from '../src/state/useActionPerformer.helpers';
-import { formatActionLogLines } from '../src/state/actionLogFormat';
+import {
+	buildActionLogTimeline,
+	buildDevelopActionLogTimeline,
+	formatActionLogLines,
+} from '../src/state/actionLogFormat';
+import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
@@ -144,6 +151,44 @@ describe('sub-action logging', () => {
 			subLines,
 		});
 		const logLines = formatActionLogLines(messages, filtered);
+		const useDevelopTimeline = filtered.some((line) =>
+			line.startsWith(LOG_KEYWORDS.developed),
+		);
+		const manualTimeline = useDevelopTimeline
+			? buildDevelopActionLogTimeline(messages, filtered)
+			: buildActionLogTimeline(messages, filtered);
+		const actionDefinition = engineContext.actions.get(synthetic.plow.id);
+		expect(actionDefinition).toBeDefined();
+		if (!actionDefinition) {
+			return;
+		}
+		const resourceDefinitions = Object.fromEntries(
+			Object.entries(SYNTHETIC_RESOURCES).map(([key, info]) => [
+				key,
+				{
+					key,
+					icon: info.icon,
+					label: info.label,
+				} satisfies SessionResourceDefinition,
+			]),
+		) as Record<string, SessionResourceDefinition>;
+		const resolution = buildActionResolution({
+			actionId: synthetic.plow.id,
+			actionDefinition,
+			traces,
+			costs,
+			before,
+			after,
+			translationContext: engineContext,
+			diffContext,
+			resourceKeys: RESOURCE_KEYS,
+			resources: resourceDefinitions,
+		});
+		expect(resolution.messages).toEqual(messages);
+		expect(resolution.summaries).toEqual(filtered);
+		expect(resolution.logLines).toEqual(logLines);
+		expect(resolution.timeline).toEqual(manualTimeline);
+		expect(resolution.headline).toBe(messages[0]?.text);
 
 		const expandTrace = traces.find(
 			(traceEntry) => traceEntry.id === synthetic.expand.id,

@@ -17,6 +17,7 @@ import {
 } from './sessionSdk';
 import { serializeActionParams } from './actionMetadataKey';
 import type { SessionActionMetadataSnapshot } from './sessionTypes';
+import { isAbortError } from './isAbortError';
 
 interface UseActionMetadataOptions {
 	actionId: string | null | undefined;
@@ -106,7 +107,8 @@ export function useActionMetadata({
 	}, [sessionId, actionId, normalizedParams, paramsKey]);
 
 	useEffect(() => {
-		if (!actionId || snapshot.costs !== undefined) {
+		const costsStale = snapshot.stale?.costs === true;
+		if (!actionId || (snapshot.costs !== undefined && !costsStale)) {
 			return () => {};
 		}
 		if (loadingRef.current.costs) {
@@ -117,12 +119,19 @@ export function useActionMetadata({
 		loadingRef.current.costs = true;
 		void loadActionCosts(sessionId, actionId, normalizedParams, {
 			signal: controller.signal,
-		}).finally(() => {
-			if (!active) {
-				return;
-			}
-			loadingRef.current.costs = false;
-		});
+		})
+			.catch((error) => {
+				if (isAbortError(error)) {
+					return;
+				}
+				throw error;
+			})
+			.finally(() => {
+				if (!active) {
+					return;
+				}
+				loadingRef.current.costs = false;
+			});
 		return () => {
 			active = false;
 			controller.abort();
@@ -131,7 +140,11 @@ export function useActionMetadata({
 	}, [actionId, sessionId, snapshot.costs, normalizedParams, paramsKey]);
 
 	useEffect(() => {
-		if (!actionId || snapshot.requirements !== undefined) {
+		const requirementsStale = snapshot.stale?.requirements === true;
+		if (
+			!actionId ||
+			(snapshot.requirements !== undefined && !requirementsStale)
+		) {
 			return () => {};
 		}
 		if (loadingRef.current.requirements) {
@@ -142,12 +155,19 @@ export function useActionMetadata({
 		loadingRef.current.requirements = true;
 		void loadActionRequirements(sessionId, actionId, normalizedParams, {
 			signal: controller.signal,
-		}).finally(() => {
-			if (!active) {
-				return;
-			}
-			loadingRef.current.requirements = false;
-		});
+		})
+			.catch((error) => {
+				if (isAbortError(error)) {
+					return;
+				}
+				throw error;
+			})
+			.finally(() => {
+				if (!active) {
+					return;
+				}
+				loadingRef.current.requirements = false;
+			});
 		return () => {
 			active = false;
 			controller.abort();
@@ -156,7 +176,8 @@ export function useActionMetadata({
 	}, [actionId, sessionId, snapshot.requirements, normalizedParams, paramsKey]);
 
 	useEffect(() => {
-		if (!actionId || snapshot.groups !== undefined) {
+		const groupsStale = snapshot.stale?.groups === true;
+		if (!actionId || (snapshot.groups !== undefined && !groupsStale)) {
 			return () => {};
 		}
 		if (loadingRef.current.groups) {
@@ -167,12 +188,19 @@ export function useActionMetadata({
 		loadingRef.current.groups = true;
 		void loadActionOptions(sessionId, actionId, {
 			signal: controller.signal,
-		}).finally(() => {
-			if (!active) {
-				return;
-			}
-			loadingRef.current.groups = false;
-		});
+		})
+			.catch((error) => {
+				if (isAbortError(error)) {
+					return;
+				}
+				throw error;
+			})
+			.finally(() => {
+				if (!active) {
+					return;
+				}
+				loadingRef.current.groups = false;
+			});
 		return () => {
 			active = false;
 			controller.abort();
@@ -186,9 +214,12 @@ export function useActionMetadata({
 			requirements: snapshot.requirements,
 			groups: snapshot.groups,
 			loading: {
-				costs: snapshot.costs === undefined,
-				requirements: snapshot.requirements === undefined,
-				groups: snapshot.groups === undefined,
+				costs: snapshot.costs === undefined || snapshot.stale?.costs === true,
+				requirements:
+					snapshot.requirements === undefined ||
+					snapshot.stale?.requirements === true,
+				groups:
+					snapshot.groups === undefined || snapshot.stale?.groups === true,
 			},
 		};
 		return result;

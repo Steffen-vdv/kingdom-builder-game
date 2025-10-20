@@ -73,7 +73,7 @@ function applyActionSnapshot(
 	try {
 		updateSessionSnapshot(sessionId, response.snapshot);
 		const adapter = getRemoteAdapter(sessionId);
-		adapter?.resetActionMetadata();
+		adapter?.invalidateActionMetadata();
 	} catch (cause) {
 		throw new SessionMirroringError(
 			'Failed to update session snapshot after action.',

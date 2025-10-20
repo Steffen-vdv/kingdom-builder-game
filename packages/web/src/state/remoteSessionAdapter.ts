@@ -18,6 +18,7 @@ import {
 import type {
 	SessionActionMetadataSnapshot,
 	SessionAdapter,
+	SessionAiTurnResult,
 } from './sessionTypes';
 import { ActionMetadataCache } from './actionMetadataCache';
 import { ActionMetadataSubscriptions } from './actionMetadataSubscriptions';
@@ -128,8 +129,8 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		this.#metadataSubscriptions.emitAll(actionId);
 	}
 
-	resetActionMetadata(): void {
-		const keys = this.#metadataCache.clear();
+	invalidateActionMetadata(): void {
+		const keys = this.#metadataCache.invalidateAll();
 		for (const key of keys) {
 			this.#metadataSubscriptions.emitForKey(key);
 		}
@@ -153,7 +154,9 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		return summary;
 	}
 
-	async runAiTurn(playerId: SessionRunAiRequest['playerId']): Promise<boolean> {
+	async runAiTurn(
+		playerId: SessionRunAiRequest['playerId'],
+	): Promise<SessionAiTurnResult> {
 		return this.#aiSimulationManager.runAiTurn(playerId);
 	}
 

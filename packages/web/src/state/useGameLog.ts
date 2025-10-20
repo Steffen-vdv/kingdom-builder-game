@@ -14,17 +14,10 @@ type LogEntryBase = {
 	playerId: string;
 };
 
-type TextLogEntry = LogEntryBase & {
-	kind: 'text';
-	text: string;
-};
-
 type ResolutionLogEntry = LogEntryBase & {
 	kind: 'resolution';
 	resolution: ActionResolution;
 };
-
-type LogEntry = TextLogEntry | ResolutionLogEntry;
 
 interface GameLogOptions {
 	sessionSnapshot: SessionSnapshot;
@@ -116,20 +109,9 @@ function shouldMergePhaseResolution(
 }
 
 export function useGameLog({ sessionSnapshot }: GameLogOptions) {
-	const [log, setLog] = useState<LogEntry[]>([]);
+	const [log, setLog] = useState<ResolutionLogEntry[]>([]);
 	const [logOverflowed, setLogOverflowed] = useState(false);
 	const nextLogIdRef = useRef(0);
-
-	const appendEntries = useCallback((entries: LogEntry[]) => {
-		setLog((previous) => {
-			const combined = [...previous, ...entries];
-			const next = combined.slice(-MAX_LOG_ENTRIES);
-			if (next.length < combined.length) {
-				setLogOverflowed(true);
-			}
-			return next;
-		});
-	}, []);
 
 	const resolvePlayer = useCallback(
 		(
@@ -137,37 +119,6 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 			fallback?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
 		) => candidate ?? fallback,
 		[],
-	);
-
-	const addLog = useCallback(
-		(
-			entry: string | string[],
-			player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-		) => {
-			const fallbackPlayerId = sessionSnapshot.game.activePlayerId;
-			const fallbackPlayer = sessionSnapshot.game.players.find(
-				(candidate) => candidate.id === fallbackPlayerId,
-			);
-			const logPlayer = resolvePlayer(player, fallbackPlayer);
-			if (!logPlayer) {
-				return;
-			}
-			const messages = Array.isArray(entry) ? entry : [entry];
-			const items = messages.map<LogEntry>((text) => ({
-				id: nextLogIdRef.current++,
-				time: new Date().toLocaleTimeString(),
-				text: `[${logPlayer.name}] ${text}`,
-				playerId: logPlayer.id,
-				kind: 'text',
-			}));
-			appendEntries(items);
-		},
-		[
-			appendEntries,
-			resolvePlayer,
-			sessionSnapshot.game.activePlayerId,
-			sessionSnapshot.game.players,
-		],
 	);
 
 	const addResolutionLog = useCallback(
@@ -207,7 +158,7 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 					next[next.length - 1] = merged;
 					return next;
 				}
-				const entry: LogEntry = {
+				const entry: ResolutionLogEntry = {
 					id: nextLogIdRef.current++,
 					time: new Date().toLocaleTimeString(),
 					playerId: resolvedPlayer.id,
@@ -230,8 +181,8 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 		],
 	);
 
-	return { log, logOverflowed, addLog, addResolutionLog };
+	return { log, logOverflowed, addResolutionLog };
 }
 
-export type { LogEntry, ResolutionLogEntry, TextLogEntry };
+export type { ResolutionLogEntry };
 export { ACTION_EFFECT_DELAY, MAX_LOG_ENTRIES };

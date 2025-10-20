@@ -21,6 +21,22 @@ import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
 import { createContentFactory } from '@kingdom-builder/testing';
 
+const LEADING_EMOJI_PATTERN =
+	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
+const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
+
+function resolvePhaseHeader(label: string | undefined) {
+	if (!label) {
+		return 'Phase resolution';
+	}
+	const sanitized = label
+		.replace(LEADING_EMOJI_PATTERN, '')
+		.replace(TRAILING_PHASE_PATTERN, '')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+	return sanitized ? `Phase - ${sanitized}` : 'Phase resolution';
+}
+
 interface HoverCardScenario {
 	mockGame: GameEngineContextValue;
 	costResource: string;
@@ -177,7 +193,7 @@ describe('<HoverCard />', () => {
 			}, []);
 			const { resolution, showResolution, acknowledgeResolution } =
 				useActionResolution({
-					addLog: vi.fn(),
+					addResolutionLog: vi.fn(),
 					setTrackedTimeout: (callback, delay) =>
 						window.setTimeout(callback, delay),
 					timeScaleRef,
@@ -243,7 +259,6 @@ describe('<HoverCard />', () => {
 
 	it('renders formatted phase resolutions and logs phase advances', async () => {
 		vi.useFakeTimers();
-		const addLog = vi.fn();
 		const addResolutionLog = vi.fn();
 		const ResolutionHarness = () => {
 			const timeScaleRef = React.useRef(1);
@@ -255,7 +270,6 @@ describe('<HoverCard />', () => {
 			}, []);
 			const { resolution, showResolution, acknowledgeResolution } =
 				useActionResolution({
-					addLog,
 					addResolutionLog,
 					setTrackedTimeout: (callback, delay) =>
 						window.setTimeout(callback, delay),
@@ -371,23 +385,7 @@ describe('<HoverCard />', () => {
 				actorLabel: formatted.actorLabel,
 			});
 		});
-		const resolvedSourceLabel =
-			typeof formatted.source === 'object' && formatted.source
-				? (formatted.source.label ?? 'Phase')
-				: formatted.source === 'phase'
-					? 'Phase'
-					: 'Action';
-		const normalizedSourceLabel = resolvedSourceLabel
-			.trim()
-			.toLocaleLowerCase();
-		const normalizedActorLabel = formatted.actorLabel
-			?.trim()
-			.toLocaleLowerCase();
-		const expectedHeader = formatted.actorLabel
-			? normalizedActorLabel && normalizedActorLabel !== normalizedSourceLabel
-				? `${resolvedSourceLabel} - ${formatted.actorLabel}`
-				: formatted.actorLabel
-			: `${resolvedSourceLabel} resolution`;
+		const expectedHeader = resolvePhaseHeader(formatted.actorLabel);
 		const headerMatches = screen.getAllByText(expectedHeader);
 		expect(headerMatches.length).toBeGreaterThan(0);
 		const playerLabels = screen.getAllByLabelText('Player');
@@ -401,8 +399,14 @@ describe('<HoverCard />', () => {
 		});
 		expect(continueButton).toBeDisabled();
 		const firstLine = formatted.lines[0]!;
-		const firstLineMatches = screen.getAllByText(firstLine);
-		expect(firstLineMatches.length).toBeGreaterThan(0);
+		const normalizedHeadlineMatches = screen.getAllByText((content) => {
+			const trimmed = content.trim();
+			return (
+				trimmed === firstLine.trim() ||
+				trimmed === resolvePhaseHeader(firstLine)
+			);
+		});
+		expect(normalizedHeadlineMatches.length).toBeGreaterThan(0);
 		expect(addResolutionLog).not.toHaveBeenCalled();
 		act(() => {
 			vi.advanceTimersByTime(ACTION_EFFECT_DELAY - 1);
@@ -426,7 +430,6 @@ describe('<HoverCard />', () => {
 			name: sessionPlayer.name,
 		});
 		expect(phaseSnapshot.requireAcknowledgement).toBe(false);
-		expect(addLog).not.toHaveBeenCalled();
 		expect(continueButton).not.toBeDisabled();
 		act(() => {
 			mockGame.acknowledgeResolution();

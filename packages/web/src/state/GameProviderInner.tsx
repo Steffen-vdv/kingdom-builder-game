@@ -51,6 +51,10 @@ export function GameProviderInner({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
+	autoAcknowledgeEnabled,
+	onToggleAutoAcknowledge,
+	autoPassEnabled,
+	onToggleAutoPass,
 	playerName = DEFAULT_PLAYER_NAME,
 	onChangePlayerName = () => {},
 	queue,
@@ -157,13 +161,12 @@ export function GameProviderInner({
 		clearTrackedTimeout,
 	});
 
-	const { log, logOverflowed, addLog, addResolutionLog } = useGameLog({
+	const { log, logOverflowed, addResolutionLog } = useGameLog({
 		sessionSnapshot,
 	});
 
 	const { resolution, showResolution, acknowledgeResolution } =
 		useActionResolution({
-			addLog,
 			addResolutionLog,
 			setTrackedTimeout,
 			timeScaleRef,
@@ -234,6 +237,11 @@ export function GameProviderInner({
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
 		mountedRef,
+		showResolution: handleShowResolution,
+		addResolutionLog,
+		registries,
+		resourceKeys,
+		actionCostResource,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
 
@@ -332,6 +340,10 @@ export function GameProviderInner({
 		onToggleSound: onToggleSound ?? (() => {}),
 		backgroundAudioMuted: backgroundAudioMuted ?? true,
 		onToggleBackgroundAudioMute: onToggleBackgroundAudioMute ?? (() => {}),
+		autoAcknowledgeEnabled: autoAcknowledgeEnabled ?? false,
+		onToggleAutoAcknowledge: onToggleAutoAcknowledge ?? (() => {}),
+		autoPassEnabled: autoPassEnabled ?? false,
+		onToggleAutoPass: onToggleAutoPass ?? (() => {}),
 		timeScale,
 		setTimeScale,
 		toasts,

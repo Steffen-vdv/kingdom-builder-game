@@ -34,6 +34,26 @@ const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
 	},
 };
 
+const LEADING_EMOJI_PATTERN =
+	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
+const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
+
+function extractLeadingIcon(value: string | undefined) {
+	if (!value) {
+		return undefined;
+	}
+	const trimmed = value.trimStart();
+	if (!trimmed) {
+		return undefined;
+	}
+	const match = trimmed.match(LEADING_EMOJI_PATTERN);
+	if (!match) {
+		return undefined;
+	}
+	const icon = match[0]?.trim();
+	return icon && /\p{Extended_Pictographic}/u.test(icon) ? icon : undefined;
+}
+
 function isSourceDetail(
 	source: ResolutionSource | undefined,
 ): source is Exclude<ResolutionSource, 'action' | 'phase'> {
@@ -80,9 +100,17 @@ function ResolutionCard({
 	const sourceName = isSourceDetail(resolution.source)
 		? (resolution.source.name?.trim() ?? '')
 		: '';
+	const sourceLabel = isSourceDetail(resolution.source)
+		? resolution.source.label
+		: undefined;
 	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
 	const actionName = rawActionName || fallbackActionName;
 	const resolvedLabels = resolveSourceLabels(resolution.source);
+	const resolvedSourceKind = isSourceDetail(resolution.source)
+		? resolution.source.kind
+		: typeof resolution.source === 'string'
+			? resolution.source
+			: undefined;
 	const actorLabel = (resolution.actorLabel ?? '').trim();
 	const normalizedActorLabel = actorLabel ? actorLabel.toLocaleLowerCase() : '';
 	const normalizedPlayerLabel = resolvedLabels.player
@@ -93,11 +121,12 @@ function ResolutionCard({
 			? actionName
 			: actorLabel
 		: actorLabel || actionName;
+	const sourceIcon = isSourceDetail(resolution.source)
+		? resolution.source.icon?.trim() || extractLeadingIcon(sourceLabel)
+		: undefined;
+	const fallbackIcon = extractLeadingIcon(leadingLine);
 	const actionIcon =
-		resolution.action?.icon?.trim() ||
-		(isSourceDetail(resolution.source)
-			? (resolution.source.icon?.trim() ?? undefined)
-			: undefined);
+		resolution.action?.icon?.trim() || sourceIcon || fallbackIcon;
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
 	const normalizedResolvedTitle = resolvedLabels.title
 		.trim()
@@ -105,12 +134,22 @@ function ResolutionCard({
 	const normalizedHeaderSubject = actorHeaderSubject
 		?.trim()
 		.toLocaleLowerCase();
-	const headerTitle = actorHeaderSubject
+	let headerTitle = actorHeaderSubject
 		? normalizedHeaderSubject &&
 			normalizedHeaderSubject !== normalizedResolvedTitle
 			? `${resolvedLabels.title} - ${actorHeaderSubject}`
 			: actorHeaderSubject
 		: defaultTitle;
+	if (resolvedSourceKind === 'phase') {
+		const sanitizedPhaseSubject = (actorHeaderSubject || '')
+			.replace(LEADING_EMOJI_PATTERN, '')
+			.replace(TRAILING_PHASE_PATTERN, '')
+			.replace(/\s{2,}/g, ' ')
+			.trim();
+		headerTitle = sanitizedPhaseSubject
+			? `${SOURCE_LABELS.phase.title} - ${sanitizedPhaseSubject}`
+			: `${SOURCE_LABELS.phase.title} resolution`;
+	}
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
 		'text-amber-600 dark:text-amber-300',

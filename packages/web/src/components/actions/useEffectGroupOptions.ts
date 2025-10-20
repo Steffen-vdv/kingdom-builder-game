@@ -142,14 +142,17 @@ export function useEffectGroupOptions({
 			return;
 		}
 		const { option, mergedParams, optionLabel } = hovered;
+		const requirementFailures = hoveredMetadata.requirements ?? [];
 		const requirementStrings =
-			hoveredMetadata.requirements === undefined
-				? ['Loading requirements…']
-				: hoveredMetadata.requirements.map((failure) =>
+			requirementFailures.length > 0
+				? requirementFailures.map((failure) =>
 						formatRequirement(
 							translateRequirementFailure(failure, translationContext),
 						),
-					);
+					)
+				: hoveredMetadata.loading.requirements
+					? ['Loading requirements…']
+					: [];
 		const hoverDetails = buildHoverDetails(
 			option,
 			mergedParams,

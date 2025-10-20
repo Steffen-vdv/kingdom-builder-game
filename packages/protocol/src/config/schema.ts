@@ -31,6 +31,26 @@ export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
 
 export type EffectConfig = EffectDef;
 
+const actionCategoryLayoutSchema = z.enum([
+	'grid-primary',
+	'grid-secondary',
+	'list',
+]);
+
+export const actionCategorySchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	subtitle: z.string().optional(),
+	description: z.string().optional(),
+	icon: z.string(),
+	order: z.number(),
+	layout: actionCategoryLayoutSchema,
+	hideWhenEmpty: z.boolean().optional(),
+	analyticsKey: z.string().optional(),
+});
+
+export type ActionCategoryConfig = z.infer<typeof actionCategorySchema>;
+
 const actionEffectGroupOptionSchema = z.object({
 	id: z.string(),
 	label: z.string().optional(),

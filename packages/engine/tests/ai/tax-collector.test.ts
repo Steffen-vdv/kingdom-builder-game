@@ -9,7 +9,7 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers';
 
 describe('tax collector AI controller', () => {
-	it('collects tax until action points are spent then ends the turn', async () => {
+	function createControllerFixture(actionPoints: number = 2) {
 		const content = createContentFactory();
 		content.action({
 			id: TAX_ACTION_ID,
@@ -40,11 +40,17 @@ describe('tax collector AI controller', () => {
 			engineContext.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
 
 		const apKey = engineContext.actionCostResource;
-		engineContext.activePlayer.resources[apKey] = 2;
+		engineContext.activePlayer.resources[apKey] = actionPoints;
 
 		const controller = createTaxCollectorController(
 			engineContext.activePlayer.id,
 		);
+
+		return { engineContext, apKey, controller } as const;
+	}
+
+	it('collects tax until AP are spent then ends the turn', async () => {
+		const { engineContext, apKey, controller } = createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -60,5 +66,70 @@ describe('tax collector AI controller', () => {
 		expect(perform).toHaveBeenNthCalledWith(2, TAX_ACTION_ID, engineContext);
 		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
 		expect(endPhase).toHaveBeenCalledTimes(1);
+	});
+
+	it('stops when continuation declines without advancing', async () => {
+		const { engineContext, apKey, controller } = createControllerFixture();
+		const perform = vi.fn((actionId: string) =>
+			performAction(actionId, engineContext),
+		);
+		const continueAfterAction = vi.fn().mockResolvedValueOnce(false);
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
+		const endPhase = vi.fn(() => advance(engineContext));
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+			continueAfterAction,
+			shouldAdvancePhase,
+		});
+
+		expect(perform).toHaveBeenCalledTimes(1);
+		expect(continueAfterAction).toHaveBeenCalledTimes(1);
+		expect(continueAfterAction).toHaveBeenNthCalledWith(
+			1,
+			TAX_ACTION_ID,
+			engineContext,
+			expect.anything(),
+		);
+		expect(shouldAdvancePhase).not.toHaveBeenCalled();
+		expect(endPhase).not.toHaveBeenCalled();
+		expect(engineContext.activePlayer.resources[apKey]).toBe(1);
+	});
+
+	it('continues through the full turn when callbacks allow', async () => {
+		const { engineContext, apKey, controller } = createControllerFixture();
+		const perform = vi.fn((actionId: string) =>
+			performAction(actionId, engineContext),
+		);
+		const continueAfterAction = vi.fn().mockResolvedValue(true);
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
+		const endPhase = vi.fn(() => advance(engineContext));
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+			continueAfterAction,
+			shouldAdvancePhase,
+		});
+
+		expect(perform).toHaveBeenCalledTimes(2);
+		expect(continueAfterAction).toHaveBeenCalledTimes(2);
+		expect(continueAfterAction).toHaveBeenNthCalledWith(
+			1,
+			TAX_ACTION_ID,
+			engineContext,
+			expect.anything(),
+		);
+		expect(continueAfterAction).toHaveBeenNthCalledWith(
+			2,
+			TAX_ACTION_ID,
+			engineContext,
+			expect.anything(),
+		);
+		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
+		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
+		expect(endPhase).toHaveBeenCalledTimes(1);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
 	});
 });

@@ -243,6 +243,8 @@ export function createLocalSessionGateway(
 				ranTurn,
 				snapshot: session.getSnapshot(),
 				registries: getRegistries(),
+				actions: [],
+				phaseComplete: false,
 			}));
 		},
 		simulateUpcomingPhases(

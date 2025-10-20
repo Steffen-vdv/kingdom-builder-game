@@ -8,7 +8,7 @@ import type { Action } from './actionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
 import type { TimeScale } from './useTimeScale';
 import type { HoverCard } from './useHoverCard';
-import type { LogEntry } from './useGameLog';
+import type { ResolutionLogEntry } from './useGameLog';
 import type { Toast } from './useToasts';
 import type {
 	ActionResolution,
@@ -38,6 +38,10 @@ export interface GameProviderProps {
 	onToggleSound?: () => void;
 	backgroundAudioMuted?: boolean;
 	onToggleBackgroundAudioMute?: () => void;
+	autoAcknowledgeEnabled?: boolean;
+	onToggleAutoAcknowledge?: () => void;
+	autoPassEnabled?: boolean;
+	onToggleAutoPass?: () => void;
 	playerName?: string;
 	onChangePlayerName?: (name: string) => void;
 }
@@ -72,7 +76,7 @@ export interface GameEngineContextValue {
 	selectors: SessionDerivedSelectors;
 	translationContext: TranslationContext;
 	ruleSnapshot: SessionRuleSnapshot;
-	log: LogEntry[];
+	log: ResolutionLogEntry[];
 	logOverflowed: boolean;
 	resolution: ActionResolution | null;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
@@ -99,6 +103,10 @@ export interface GameEngineContextValue {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
+	autoAcknowledgeEnabled: boolean;
+	onToggleAutoAcknowledge: () => void;
+	autoPassEnabled: boolean;
+	onToggleAutoPass: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
 	toasts: Toast[];

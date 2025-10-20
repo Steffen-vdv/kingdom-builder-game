@@ -7,6 +7,7 @@ import {
 	subscribeSessionActionMetadata,
 } from '../../state/sessionActionMetadataStore';
 import { loadActionCosts } from '../../state/sessionSdk';
+import { isAbortError } from '../../state/isAbortError';
 
 interface ActionCostRequest {
 	readonly key: string;
@@ -65,6 +66,17 @@ export function useActionOptionCosts(
 		}
 		return map;
 	});
+	const [staleMap, setStaleMap] = useState<Map<string, boolean>>(() => {
+		const map = new Map<string, boolean>();
+		if (!actionId) {
+			return map;
+		}
+		for (const [key, params] of requestEntries) {
+			const snapshot = readSessionActionMetadata(sessionId, actionId, params);
+			map.set(key, snapshot.stale?.costs === true);
+		}
+		return map;
+	});
 	useEffect(() => {
 		setCosts(() => {
 			const map: CostMap = new Map();
@@ -74,6 +86,17 @@ export function useActionOptionCosts(
 			for (const [key, params] of requestEntries) {
 				const snapshot = readSessionActionMetadata(sessionId, actionId, params);
 				map.set(key, snapshot.costs);
+			}
+			return map;
+		});
+		setStaleMap(() => {
+			const map = new Map<string, boolean>();
+			if (!actionId) {
+				return map;
+			}
+			for (const [key, params] of requestEntries) {
+				const snapshot = readSessionActionMetadata(sessionId, actionId, params);
+				map.set(key, snapshot.stale?.costs === true);
 			}
 			return map;
 		});
@@ -93,6 +116,11 @@ export function useActionOptionCosts(
 						next.set(key, snapshot.costs);
 						return next;
 					});
+					setStaleMap((previous) => {
+						const next = new Map(previous);
+						next.set(key, snapshot.stale?.costs === true);
+						return next;
+					});
 				},
 			),
 		);
@@ -110,7 +138,8 @@ export function useActionOptionCosts(
 		const pending = pendingRef.current;
 		const controllers: Array<{ key: string; controller: AbortController }> = [];
 		for (const [key, params] of requestEntries) {
-			if (costs.get(key) !== undefined || pending.has(key)) {
+			const isStale = staleMap.get(key) === true;
+			if ((costs.get(key) !== undefined && !isStale) || pending.has(key)) {
 				continue;
 			}
 			const controller = new AbortController();
@@ -118,9 +147,16 @@ export function useActionOptionCosts(
 			pending.add(key);
 			void loadActionCosts(actionId ? sessionId : '', actionId, params, {
 				signal: controller.signal,
-			}).finally(() => {
-				pending.delete(key);
-			});
+			})
+				.catch((error) => {
+					if (isAbortError(error)) {
+						return;
+					}
+					throw error;
+				})
+				.finally(() => {
+					pending.delete(key);
+				});
 		}
 		return () => {
 			for (const { key, controller } of controllers) {
@@ -128,7 +164,7 @@ export function useActionOptionCosts(
 				pending.delete(key);
 			}
 		};
-	}, [sessionId, actionId, requestKey, requestEntries, costs]);
+	}, [sessionId, actionId, requestKey, requestEntries, costs, staleMap]);
 	return costs;
 }
 

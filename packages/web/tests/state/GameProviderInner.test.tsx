@@ -1,10 +1,13 @@
 /** @vitest-environment jsdom */
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
-import { GameProviderInner } from '../../src/state/GameProviderInner';
+import {
+	GameProviderInner,
+	GameEngineContext,
+} from '../../src/state/GameProviderInner';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -29,6 +32,7 @@ const useSessionQueueMock = vi.fn();
 let capturedPhaseOptions: Record<string, unknown> | null = null;
 let capturedPerformerOptions: Record<string, unknown> | null = null;
 let capturedAiOptions: Record<string, unknown> | null = null;
+const addResolutionLogMock = vi.fn();
 let capturedLoggerOptions: Record<string, unknown> | null = null;
 let capturedTranslationOptions: Record<string, unknown> | null = null;
 
@@ -59,8 +63,7 @@ vi.mock('../../src/state/useGameLog', () => ({
 	useGameLog: () => ({
 		log: [],
 		logOverflowed: false,
-		addLog: vi.fn(),
-		addResolutionLog: vi.fn(),
+		addResolutionLog: addResolutionLogMock,
 	}),
 }));
 
@@ -148,6 +151,7 @@ describe('GameProviderInner', () => {
 		handlePerformMock.mockClear();
 		useSessionQueueMock.mockReset();
 		vi.mocked(updateRemotePlayerName).mockClear();
+		addResolutionLogMock.mockClear();
 		const phases = [
 			{ id: 'phase:test', action: true, steps: [{ id: 'phase:test:start' }] },
 		];
@@ -203,6 +207,10 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -227,6 +235,13 @@ describe('GameProviderInner', () => {
 		expect(capturedPerformerOptions).not.toHaveProperty('session');
 		expect(capturedPerformerOptions?.sessionId).toBe(sessionId);
 		expect(capturedAiOptions?.sessionId).toBe(sessionId);
+		expect(typeof capturedAiOptions?.showResolution).toBe('function');
+		expect(capturedAiOptions?.addResolutionLog).toBe(addResolutionLogMock);
+		expect(capturedAiOptions?.registries).toBe(registries);
+		expect(capturedAiOptions?.resourceKeys).toBe(resourceKeys);
+		expect(capturedAiOptions?.actionCostResource).toBe(
+			sessionState.actionCostResource,
+		);
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
@@ -236,6 +251,100 @@ describe('GameProviderInner', () => {
 		expect(capturedTranslationOptions).not.toHaveProperty(
 			'cachedSessionSnapshot',
 		);
+		cleanup();
+	});
+
+	it('stores gameplay preference props in the engine context', async () => {
+		const registriesPayload = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const enqueue = vi.fn(
+			async <T,>(task: () => Promise<T> | T) => await task(),
+		);
+		useSessionQueueMock.mockReturnValue({
+			enqueue,
+			cachedSessionSnapshot: sessionState,
+		});
+
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => adapter,
+			getLatestSnapshot: () => null,
+		};
+		const toggleAutoAcknowledge = vi.fn();
+		const toggleAutoPass = vi.fn();
+		const captured: Array<{
+			autoAcknowledgeEnabled: boolean;
+			autoPassEnabled: boolean;
+			onToggleAutoAcknowledge: () => void;
+			onToggleAutoPass: () => void;
+		}> = [];
+
+		function PreferenceConsumer() {
+			const value = React.useContext(GameEngineContext);
+			React.useEffect(() => {
+				if (!value) {
+					return;
+				}
+				captured.push({
+					autoAcknowledgeEnabled: value.autoAcknowledgeEnabled,
+					autoPassEnabled: value.autoPassEnabled,
+					onToggleAutoAcknowledge: value.onToggleAutoAcknowledge,
+					onToggleAutoPass: value.onToggleAutoPass,
+				});
+			}, [value]);
+			return null;
+		}
+
+		render(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled
+				onToggleAutoAcknowledge={toggleAutoAcknowledge}
+				autoPassEnabled={false}
+				onToggleAutoPass={toggleAutoPass}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<PreferenceConsumer />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => {
+			expect(captured.length).toBeGreaterThan(0);
+		});
+
+		const latest = captured[captured.length - 1];
+		expect(latest.autoAcknowledgeEnabled).toBe(true);
+		expect(latest.autoPassEnabled).toBe(false);
+		act(() => {
+			latest.onToggleAutoAcknowledge();
+		});
+		act(() => {
+			latest.onToggleAutoPass();
+		});
+		expect(toggleAutoAcknowledge).toHaveBeenCalledTimes(1);
+		expect(toggleAutoPass).toHaveBeenCalledTimes(1);
 		cleanup();
 	});
 
@@ -272,6 +381,10 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
 				playerName="Strategist"
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -327,6 +440,10 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
 				playerName="Warlord"
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}

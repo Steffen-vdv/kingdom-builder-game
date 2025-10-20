@@ -284,7 +284,7 @@ describe('sessionSdk', () => {
 	});
 
 	it('runs AI turns via the API and refreshes local state', async () => {
-		await createSession();
+		const created = await createSession();
 		const updatedSnapshot = createSessionSnapshot({
 			players: [playerA, playerB],
 			activePlayerId: playerB.id,
@@ -301,6 +301,8 @@ describe('sessionSdk', () => {
 			snapshot: updatedSnapshot,
 			registries: createSessionRegistriesPayload(),
 			ranTurn: true,
+			actions: [],
+			phaseComplete: false,
 		};
 		api.setNextRunAiResponse(runAiResponse);
 		const response = await runAiTurn({
@@ -310,6 +312,15 @@ describe('sessionSdk', () => {
 		expect(response).toEqual(runAiResponse);
 		const record = getSessionRecord('session-1');
 		expect(record?.snapshot).toEqual(updatedSnapshot);
+		api.setNextRunAiResponse(runAiResponse);
+		const adapterResult = await created.adapter.runAiTurn(playerA.id);
+		expect(adapterResult.ranTurn).toBe(runAiResponse.ranTurn);
+		expect(adapterResult.phaseComplete).toBe(runAiResponse.phaseComplete);
+		expect(adapterResult.actions).toEqual(runAiResponse.actions);
+		expect(adapterResult.snapshot).toEqual(updatedSnapshot);
+		const recordAfterAdapter = getSessionRecord('session-1');
+		expect(recordAfterAdapter?.snapshot).toBe(adapterResult.snapshot);
+		expect(recordAfterAdapter?.registries).toBe(adapterResult.registries);
 	});
 
 	it('caches simulation results for the adapter', async () => {

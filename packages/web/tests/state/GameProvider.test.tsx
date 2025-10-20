@@ -48,7 +48,7 @@ vi.mock('../../src/state/sessionSdk', async () => {
 const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
 const runUntilActionPhaseCoreMock = vi.hoisted(() => vi.fn());
 const handleEndTurnMock = vi.hoisted(() => vi.fn());
-const addLogMock = vi.hoisted(() => vi.fn());
+const addResolutionLogMock = vi.hoisted(() => vi.fn());
 const pushToastMock = vi.hoisted(() => vi.fn());
 const pushErrorToastMock = vi.hoisted(() => vi.fn());
 const pushSuccessToastMock = vi.hoisted(() => vi.fn());
@@ -92,7 +92,7 @@ vi.mock('../../src/state/useGameLog', () => ({
 	useGameLog: () => ({
 		log: [],
 		logOverflowed: false,
-		addLog: addLogMock,
+		addResolutionLog: addResolutionLogMock,
 	}),
 	ACTION_EFFECT_DELAY: 600,
 }));
@@ -195,7 +195,7 @@ describe('GameProvider', () => {
 		runUntilActionPhaseMock.mockReset();
 		runUntilActionPhaseCoreMock.mockReset();
 		handleEndTurnMock.mockReset();
-		addLogMock.mockReset();
+		addResolutionLogMock.mockReset();
 		pushToastMock.mockReset();
 		pushErrorToastMock.mockReset();
 		pushSuccessToastMock.mockReset();
@@ -362,6 +362,61 @@ describe('GameProvider', () => {
 		await waitFor(() =>
 			expect(runUntilActionPhaseMock).toHaveBeenCalledTimes(1),
 		);
+	});
+
+	it('exposes gameplay preference props through the game context', async () => {
+		const handleToggleAutoAcknowledge = vi.fn();
+		const handleToggleAutoPass = vi.fn();
+		const capture = vi.fn();
+
+		function PreferenceSpy() {
+			const {
+				autoAcknowledgeEnabled,
+				onToggleAutoAcknowledge,
+				autoPassEnabled,
+				onToggleAutoPass,
+			} = useGameEngine();
+			React.useEffect(() => {
+				capture({
+					autoAcknowledgeEnabled,
+					onToggleAutoAcknowledge,
+					autoPassEnabled,
+					onToggleAutoPass,
+				});
+			}, [
+				autoAcknowledgeEnabled,
+				onToggleAutoAcknowledge,
+				autoPassEnabled,
+				onToggleAutoPass,
+			]);
+			return null;
+		}
+
+		render(
+			<GameProvider
+				playerName="Commander"
+				autoAcknowledgeEnabled
+				onToggleAutoAcknowledge={handleToggleAutoAcknowledge}
+				autoPassEnabled={false}
+				onToggleAutoPass={handleToggleAutoPass}
+			>
+				<PreferenceSpy />
+			</GameProvider>,
+		);
+
+		await waitFor(() => expect(capture).toHaveBeenCalled());
+
+		const lastCall = capture.mock.calls[capture.mock.calls.length - 1]?.[0];
+		expect(lastCall?.autoAcknowledgeEnabled).toBe(true);
+		act(() => {
+			lastCall?.onToggleAutoAcknowledge();
+		});
+		expect(handleToggleAutoAcknowledge).toHaveBeenCalledTimes(1);
+		expect(lastCall?.autoPassEnabled).toBe(false);
+		act(() => {
+			lastCall?.onToggleAutoPass();
+		});
+		expect(handleToggleAutoPass).toHaveBeenCalledTimes(1);
 	});
 
 	it('updates the active session when the dev mode prop changes', async () => {

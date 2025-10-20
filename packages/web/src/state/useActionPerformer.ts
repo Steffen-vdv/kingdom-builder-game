@@ -1,35 +1,20 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
-import type {
-	SessionPlayerStateSnapshot,
-	SessionSnapshot,
-} from '@kingdom-builder/protocol/session';
-import { diffStepSnapshots, logContent, snapshotPlayer } from '../translation';
+import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
+import { snapshotPlayer } from '../translation';
+import { buildActionResolution } from './buildActionResolution';
 import {
-	appendSubActionChanges,
-	buildActionCostLines,
-	ensureTimelineLines,
-	filterActionDiffChanges,
 	handleMissingActionDefinition,
 	presentResolutionOrLog,
 } from './useActionPerformer.helpers';
-import { createFailureResolutionSnapshot } from './actionResolutionLog';
 import { createActionErrorHandler } from './useActionErrorHandler';
 import type { Action } from './actionTypes';
 import type {
 	ActionResolution,
 	ShowResolutionOptions,
 } from './useActionResolution';
-import {
-	buildActionLogTimeline,
-	buildDevelopActionLogTimeline,
-	formatActionLogLines,
-	formatDevelopActionLogLines,
-} from './actionLogFormat';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
-import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { performSessionAction } from './sessionSdk';
 import { markFatalSessionError, isFatalSessionError } from './sessionErrors';
 import {
@@ -38,7 +23,6 @@ import {
 } from './actionErrorMetadata';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { PhaseProgressState } from './usePhaseProgress';
-import { LOG_KEYWORDS } from '../translation/log/logMessages';
 import { getSessionSnapshot } from './sessionStateStore';
 import { createActionExecutionError } from './actionExecutionError';
 interface UseActionPerformerOptions {
@@ -49,10 +33,6 @@ interface UseActionPerformerOptions {
 		'actions' | 'buildings' | 'developments' | 'resources' | 'populations'
 	>;
 	addResolutionLog: (resolution: ActionResolution) => void;
-	addLog?: (
-		entry: string | readonly string[],
-		player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-	) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	syncPhaseState: (
 		snapshot: SessionSnapshot,
@@ -71,7 +51,6 @@ export function useActionPerformer({
 	actionCostResource,
 	registries,
 	addResolutionLog,
-	addLog: legacyAddLog,
 	showResolution,
 	syncPhaseState,
 	refresh,
@@ -82,12 +61,6 @@ export function useActionPerformer({
 	resourceKeys,
 	onFatalSessionError,
 }: UseActionPerformerOptions) {
-	const logResolution = (resolution: ActionResolution) => {
-		if (legacyAddLog) {
-			legacyAddLog(resolution.lines, resolution.player);
-		}
-		addResolutionLog(resolution);
-	};
 	const perform = useCallback(
 		async (action: Action, params?: ActionParametersPayload) => {
 			const notifyFatal = (error: unknown) => {
@@ -128,19 +101,6 @@ export function useActionPerformer({
 				() => new Error('Missing active player before action'),
 			);
 			const before = snapshotPlayer(playerBefore);
-			const recordFailureLog = (
-				entry: string | string[],
-				player?: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>,
-			) => {
-				const detail = Array.isArray(entry) ? entry.join(' ') : entry;
-				const resolutionSnapshot = createFailureResolutionSnapshot({
-					action,
-					stepDefinition: contextRef.current.actions.get(action.id),
-					player: player ?? { id: playerBefore.id, name: playerBefore.name },
-					detail,
-				});
-				logResolution(resolutionSnapshot);
-			};
 			const handleError = createActionErrorHandler({
 				fatalErrorRef,
 				notifyFatal,
@@ -148,7 +108,7 @@ export function useActionPerformer({
 				action,
 				player: playerBefore,
 				pushErrorToast,
-				addLog: recordFailureLog,
+				addResolutionLog,
 			});
 			try {
 				const response = await performSessionAction(
@@ -201,65 +161,32 @@ export function useActionPerformer({
 					});
 					return;
 				}
-				const resolvedStep = resolveActionEffects(stepDef, params);
-				const changes = diffStepSnapshots(
+				const resolution = buildActionResolution({
+					actionId: action.id,
+					actionDefinition: stepDef,
+					...(params ? { params } : {}),
+					traces,
+					costs,
 					before,
 					after,
-					resolvedStep,
+					translationContext: context,
 					diffContext,
 					resourceKeys,
-				);
-				const rawMessages = logContent('action', action.id, context, params);
-				const messages = ensureTimelineLines(rawMessages);
-				const logHeadline = messages[0]?.text;
-				const costLines = buildActionCostLines({
-					costs,
-					beforeResources: before.resources,
 					resources: registries.resources,
 				});
-				if (costLines.length) {
-					const header: ActionLogLineDescriptor = {
-						text: '💲 Action cost',
-						depth: 1,
-						kind: 'cost',
-					};
-					messages.splice(1, 0, header, ...costLines);
-				}
-				const subLines = appendSubActionChanges({
-					traces,
-					context,
-					diffContext,
-					resourceKeys,
-					messages,
-				});
-				const filtered = filterActionDiffChanges({
-					changes,
-					messages,
-					subLines,
-				});
-				const useDevelopFormatter = filtered.some((line) =>
-					line.startsWith(LOG_KEYWORDS.developed),
-				);
-				const buildTimeline = useDevelopFormatter
-					? buildDevelopActionLogTimeline
-					: buildActionLogTimeline;
-				const formatLines = useDevelopFormatter
-					? formatDevelopActionLogLines
-					: formatActionLogLines;
-				const timeline = buildTimeline(messages, filtered);
-				const logLines = formatLines(messages, filtered);
+				const { timeline, logLines, summaries, headline } = resolution;
 				syncPhaseState(snapshotAfter);
 				refresh();
 				void presentResolutionOrLog({
-					action: buildResolutionActionMeta(action, stepDef, logHeadline),
+					action: buildResolutionActionMeta(action, stepDef, headline),
 					logLines,
-					summaries: filtered,
+					summaries,
 					player: {
 						id: playerAfter.id,
 						name: playerAfter.name,
 					},
 					showResolution,
-					addResolutionLog: logResolution,
+					addResolutionLog,
 					timeline,
 				})
 					.then(() => {
@@ -314,7 +241,6 @@ export function useActionPerformer({
 		},
 		[
 			addResolutionLog,
-			legacyAddLog,
 			endTurn,
 			mountedRef,
 			registries,

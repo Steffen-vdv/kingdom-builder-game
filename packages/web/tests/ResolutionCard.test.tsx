@@ -1,11 +1,27 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
 import type { ActionResolution } from '../src/state/useActionResolution';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+
+const LEADING_EMOJI_PATTERN =
+	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
+const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
+
+function resolvePhaseHeader(label: string | undefined) {
+	if (!label) {
+		return 'Phase resolution';
+	}
+	const sanitized = label
+		.replace(LEADING_EMOJI_PATTERN, '')
+		.replace(TRAILING_PHASE_PATTERN, '')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+	return sanitized ? `Phase - ${sanitized}` : 'Phase resolution';
+}
 
 function createResolution(
 	overrides: Partial<ActionResolution>,
@@ -76,9 +92,60 @@ describe('<ResolutionCard />', () => {
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
-		expect(screen.getByText('Growth Phase')).toBeInTheDocument();
+		const expectedHeader = resolvePhaseHeader(resolution.source.label);
+		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
 		const phasePlayerLabel = screen.getByLabelText('Player');
 		expect(phasePlayerLabel).toHaveTextContent('Player Two');
+	});
+
+	it('shows the phase icon in the header when available', () => {
+		const resolution = createResolution({
+			lines: ['🌱 Growth Phase', '    Gain +2 population'],
+			visibleLines: ['🌱 Growth Phase', '    Gain +2 population'],
+			source: {
+				kind: 'phase',
+				label: '🌱 Growth Phase',
+				name: 'Growth Phase',
+				icon: '🌱',
+			},
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		expect(screen.getByText('🌱')).toBeInTheDocument();
+		expect(screen.queryByText('✦')).toBeNull();
+	});
+
+	it('omits the phase headline from the effects section', () => {
+		const resolution = createResolution({
+			visibleTimeline: [
+				{ text: '🌱 Growth Phase', depth: 0, kind: 'headline' },
+				{ text: 'Gain +2 population', depth: 1, kind: 'effect' },
+			],
+			visibleLines: [],
+			source: {
+				kind: 'phase',
+				label: '🌱 Growth Phase',
+				name: 'Growth Phase',
+				icon: '🌱',
+			},
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		const effectsLabel = screen.getByText('🪄 Effects');
+		const effectsContainer = effectsLabel.parentElement;
+		if (!effectsContainer) {
+			throw new Error('Expected effects label to have a parent element');
+		}
+		const effectsList = effectsContainer.parentElement;
+		if (!effectsList) {
+			throw new Error('Expected effects container to have a parent element');
+		}
+		expect(within(effectsList).queryByText('🌱 Growth Phase')).toBeNull();
+		expect(
+			within(effectsList).getByText('Gain +2 population'),
+		).toBeInTheDocument();
 	});
 
 	it('hides the continue button when acknowledgement is not required', () => {

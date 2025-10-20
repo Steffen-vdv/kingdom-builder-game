@@ -12,6 +12,7 @@ import {
 	sessionMetadataSnapshotResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
+	ActionParametersPayload,
 	SessionActionCostResponse,
 	SessionActionRequirementResponse,
 	SessionActionOptionsResponse,
@@ -122,12 +123,63 @@ export class SessionTransport extends SessionTransportBase {
 			);
 		}
 		try {
-			const ranTurn = await session.enqueue(() => session.runAiTurn(playerId));
+			const actions: SessionRunAiResponse['actions'] = [];
+			let phaseComplete = false;
+			const sanitizeCosts = (
+				rawCosts: ReturnType<EngineSession['getActionCosts']>,
+			): Record<string, number> => {
+				const costs: Record<string, number> = {};
+				for (const [resourceKey, amount] of Object.entries(rawCosts)) {
+					if (typeof amount === 'number') {
+						costs[resourceKey] = amount;
+					}
+				}
+				return costs;
+			};
+			const overrides: NonNullable<Parameters<EngineSession['runAiTurn']>[1]> =
+				{
+					performAction(actionId, _context, params) {
+						if (actions.length > 0) {
+							return [];
+						}
+						let serializedParams: ActionParametersPayload | undefined;
+						if (params !== undefined) {
+							serializedParams = structuredClone(
+								params,
+							) as ActionParametersPayload;
+						}
+						const costs = sanitizeCosts(
+							session.getActionCosts(actionId, params),
+						);
+						const traces = session.performAction(actionId, params);
+						const action = {
+							actionId,
+							costs,
+							traces,
+							...(serializedParams !== undefined
+								? { params: serializedParams }
+								: {}),
+						};
+						actions.push(action);
+						return traces;
+					},
+					advance() {
+						phaseComplete = true;
+					},
+					continueAfterAction() {
+						return false;
+					},
+				};
+			const ranTurn = await session.enqueue(() =>
+				session.runAiTurn(playerId, overrides),
+			);
 			const snapshot = this.sessionManager.getSnapshot(sessionId);
 			const base = this.buildStateResponse(sessionId, snapshot);
 			const response = {
 				...base,
 				ranTurn,
+				actions,
+				phaseComplete,
 			} satisfies SessionRunAiResponse;
 			return sessionRunAiResponseSchema.parse(response);
 		} catch (error) {

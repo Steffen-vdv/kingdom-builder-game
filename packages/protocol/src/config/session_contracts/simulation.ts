@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type {
+	SessionRunAiAction,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateRequest,
@@ -15,6 +16,8 @@ import {
 	sessionPlayerIdSchema,
 	sessionRegistriesSchema,
 } from './shared';
+import { actionParametersSchema, actionTraceSchema } from '../action_contracts';
+import { sessionActionCostResponseSchema } from './actions';
 
 const simulateUpcomingPhasesIdsSchema = z.object({
 	growth: z.string(),
@@ -28,6 +31,15 @@ const simulateUpcomingPhasesOptionsSchema = z
 	})
 	.transform((value) => value as SimulateUpcomingPhasesOptions);
 
+const sessionRunAiActionSchema = z
+	.object({
+		actionId: z.string(),
+		params: actionParametersSchema.optional(),
+		costs: sessionActionCostResponseSchema.shape.costs,
+		traces: z.array(actionTraceSchema),
+	})
+	.transform((value) => value as SessionRunAiAction);
+
 export const sessionRunAiRequestSchema = z.object({
 	sessionId: sessionIdSchema,
 	playerId: sessionPlayerIdSchema,
@@ -40,6 +52,8 @@ export const sessionRunAiResponseSchema = z.object({
 	),
 	registries: sessionRegistriesSchema,
 	ranTurn: z.boolean(),
+	actions: z.array(sessionRunAiActionSchema),
+	phaseComplete: z.boolean(),
 });
 
 export const sessionSimulateRequestSchema = z.object({
@@ -72,6 +86,9 @@ type _SessionRunAiRequestMatches = Expect<
 >;
 type _SessionRunAiResponseMatches = Expect<
 	Equal<z.infer<typeof sessionRunAiResponseSchema>, SessionRunAiResponse>
+>;
+type _SessionRunAiActionMatches = Expect<
+	Equal<z.infer<typeof sessionRunAiActionSchema>, SessionRunAiAction>
 >;
 type _SessionSimulateRequestMatches = Expect<
 	Equal<z.infer<typeof sessionSimulateRequestSchema>, SessionSimulateRequest>

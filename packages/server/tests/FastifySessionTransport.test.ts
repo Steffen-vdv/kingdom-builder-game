@@ -1,6 +1,7 @@
 import fastify from 'fastify';
 import { describe, it, expect, vi } from 'vitest';
 import type {
+	ActionTrace,
 	SessionSnapshot,
 	SessionRuntimeConfigResponse,
 	SessionMetadataSnapshotResponse,
@@ -378,7 +379,41 @@ describe('FastifySessionTransport', () => {
 		if (playerId === null) {
 			throw new Error('No AI controller was available.');
 		}
-		const runSpy = vi.spyOn(session, 'runAiTurn').mockResolvedValue(true);
+		const fakeTrace: ActionTrace = {
+			id: 'trace',
+			before: {
+				resources: {},
+				stats: {},
+				buildings: [],
+				lands: [],
+				passives: [],
+			},
+			after: {
+				resources: {},
+				stats: {},
+				buildings: [],
+				lands: [],
+				passives: [],
+			},
+		};
+		const performSpy = vi
+			.spyOn(session, 'performAction')
+			.mockReturnValue([fakeTrace]);
+		const advanceSpy = vi.spyOn(session, 'advancePhase');
+		vi.spyOn(session, 'getActionCosts').mockImplementation(() => {
+			return { gold: 3, ignored: undefined } as never;
+		});
+		const runSpy = vi
+			.spyOn(session, 'runAiTurn')
+			.mockImplementation(async (_player, overrides) => {
+				if (!overrides) {
+					return true;
+				}
+				await overrides.performAction?.('tax', {} as never);
+				await overrides.performAction?.('tax', {} as never);
+				await overrides.advance?.({} as never);
+				return true;
+			});
 		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
 			return await factory();
 		});
@@ -393,15 +428,25 @@ describe('FastifySessionTransport', () => {
 			sessionId: string;
 			ranTurn: boolean;
 			registries: { actions: Record<string, unknown> };
+			actions: unknown[];
+			phaseComplete: boolean;
 		};
 		expect(body.sessionId).toBe(sessionId);
 		expect(body.ranTurn).toBe(true);
+		expect(Array.isArray(body.actions)).toBe(true);
+		expect(body.actions).toHaveLength(1);
+		expect(body.actions[0]?.costs).toEqual({ gold: 3 });
+		expect(Array.isArray(body.actions[0]?.traces)).toBe(true);
+		expect(body.actions[0]?.traces.length).toBeGreaterThan(0);
+		expect(body.phaseComplete).toBe(true);
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.currentPhase).toBeDefined();
 		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		expect(body.registries.actions).toBeDefined();
-		expect(runSpy).toHaveBeenCalledWith(playerId);
+		expect(runSpy).toHaveBeenCalledWith(playerId, expect.any(Object));
+		expect(performSpy).toHaveBeenCalledTimes(1);
+		expect(advanceSpy).not.toHaveBeenCalled();
 		await app.close();
 	});
 
