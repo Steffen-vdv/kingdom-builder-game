@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { getSessionSnapshot } from './sessionStateStore';
 import { enqueueSessionTask, hasAiController, runAiTurn } from './sessionAi';
+import { advanceSessionPhase } from './sessionSdk';
 import type { PhaseProgressState } from './usePhaseProgress';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
@@ -290,10 +291,20 @@ export function useAiRunner({
 								return;
 							}
 							try {
-								syncPhaseState(getSessionSnapshot(sessionId), {
+								const latestPhaseSnapshot = getSessionSnapshot(sessionId);
+								const phaseDefinition =
+									latestPhaseSnapshot.phases[
+										latestPhaseSnapshot.game.phaseIndex
+									];
+								syncPhaseState(latestPhaseSnapshot, {
 									isAdvancing: true,
 									canEndTurn: false,
 								});
+								if (phaseDefinition?.action) {
+									await advanceSessionPhase({ sessionId }, undefined, {
+										skipQueue: true,
+									});
+								}
 								await runUntilActionPhaseCore();
 							} catch (error) {
 								forwardFatalError(error);
