@@ -7,6 +7,7 @@ import {
 	subscribeSessionActionMetadata,
 } from '../../state/sessionActionMetadataStore';
 import { loadActionCosts } from '../../state/sessionSdk';
+import { isAbortError } from '../../state/isAbortError';
 
 interface ActionCostRequest {
 	readonly key: string;
@@ -146,9 +147,16 @@ export function useActionOptionCosts(
 			pending.add(key);
 			void loadActionCosts(actionId ? sessionId : '', actionId, params, {
 				signal: controller.signal,
-			}).finally(() => {
-				pending.delete(key);
-			});
+			})
+				.catch((error) => {
+					if (isAbortError(error)) {
+						return;
+					}
+					throw error;
+				})
+				.finally(() => {
+					pending.delete(key);
+				});
 		}
 		return () => {
 			for (const { key, controller } of controllers) {
