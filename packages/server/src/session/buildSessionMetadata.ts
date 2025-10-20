@@ -6,6 +6,9 @@ import {
 	STATS,
 	TRIGGER_INFO,
 	POPULATION_ROLES,
+	POPULATION_INFO,
+	DEVELOPMENTS_INFO,
+	PhaseId,
 } from '@kingdom-builder/contents';
 import type {
 	BuildingConfig,
@@ -66,7 +69,7 @@ export function buildSessionMetadata(
 	if (hasEntries(triggerMetadata)) {
 		metadata.triggers = triggerMetadata;
 	}
-	const assetMetadata = buildAssetMetadata();
+	const assetMetadata = buildAssetMetadata(options.phases);
 	if (hasEntries(assetMetadata)) {
 		metadata.assets = assetMetadata;
 	}
@@ -229,11 +232,26 @@ function buildTriggerDescriptor(
 	return descriptor;
 }
 
-function buildAssetMetadata(): SessionMetadataDescriptorMap {
+function buildAssetMetadata(
+	phases: ReadonlyArray<PhaseConfig>,
+): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
 	assignAssetDescriptor(descriptors, 'passive', PASSIVE_INFO);
 	assignAssetDescriptor(descriptors, 'land', LAND_INFO);
 	assignAssetDescriptor(descriptors, 'slot', SLOT_INFO);
+	assignAssetDescriptor(descriptors, 'population', POPULATION_INFO);
+	assignAssetDescriptor(descriptors, 'developments', DEVELOPMENTS_INFO);
+	const upkeepPhase = phases.find((phase) => phase.id === PhaseId.Upkeep);
+	if (upkeepPhase) {
+		const upkeepDescriptor: AssetInfo = {};
+		if (typeof upkeepPhase.label === 'string') {
+			upkeepDescriptor.label = upkeepPhase.label;
+		}
+		if (typeof upkeepPhase.icon === 'string') {
+			upkeepDescriptor.icon = upkeepPhase.icon;
+		}
+		assignAssetDescriptor(descriptors, 'upkeep', upkeepDescriptor);
+	}
 	return descriptors;
 }
 

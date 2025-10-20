@@ -13,6 +13,8 @@ import {
 	DEVELOPMENTS_INFO,
 	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
+	POPULATION_INFO,
+	PhaseId,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
 import type {
@@ -248,8 +250,8 @@ const buildTriggerMetadata = () =>
 		}),
 	);
 
-const buildAssetMetadata = () =>
-	createMetadataRecord([
+const buildAssetMetadata = () => {
+	const entries: Array<readonly [string, SessionMetadataDescriptor]> = [
 		['land', { label: LAND_INFO.label, icon: LAND_INFO.icon }],
 		['slot', { label: SLOT_INFO.label, icon: SLOT_INFO.icon }],
 		['passive', { label: PASSIVE_INFO.label, icon: PASSIVE_INFO.icon }],
@@ -260,7 +262,28 @@ const buildAssetMetadata = () =>
 				icon: DEVELOPMENTS_INFO.icon,
 			},
 		],
-	]);
+		[
+			'population',
+			{
+				label: POPULATION_INFO.label,
+				icon: POPULATION_INFO.icon,
+				description: POPULATION_INFO.description,
+			},
+		],
+	];
+	const upkeepPhase = PHASES.find((phase) => phase.id === PhaseId.Upkeep);
+	if (upkeepPhase) {
+		const descriptor: SessionMetadataDescriptor = {};
+		if (typeof upkeepPhase.label === 'string') {
+			descriptor.label = upkeepPhase.label;
+		}
+		if (typeof upkeepPhase.icon === 'string') {
+			descriptor.icon = upkeepPhase.icon;
+		}
+		entries.push(['upkeep', descriptor]);
+	}
+	return createMetadataRecord(entries);
+};
 
 const cloneOverviewContent = () =>
 	deepFreeze(structuredClone(OVERVIEW_CONTENT));
