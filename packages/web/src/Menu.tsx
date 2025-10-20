@@ -8,6 +8,7 @@ import { HeroSection } from './menu/HeroSection';
 import { CallToActionSection } from './menu/CallToActionSection';
 import { HighlightsSection } from './menu/HighlightsSection';
 import { PlayerNamePrompt } from './menu/PlayerNamePrompt';
+import type { ResumeSessionRecord } from './state/sessionResumeStorage';
 import { useKeybindingPreferences } from './state/keybindings';
 
 interface MenuProps {
@@ -30,6 +31,8 @@ interface MenuProps {
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	hasStoredName: boolean;
+	resumePoint: ResumeSessionRecord | null;
+	onContinue: () => void;
 }
 
 export default function Menu({
@@ -52,6 +55,8 @@ export default function Menu({
 	playerName,
 	onChangePlayerName,
 	hasStoredName,
+	resumePoint,
+	onContinue,
 }: MenuProps) {
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
 	const showNamePrompt = !hasStoredName;
@@ -75,6 +80,8 @@ export default function Menu({
 						onOverview={onOverview}
 						onTutorial={onTutorial}
 						onOpenSettings={() => setSettingsOpen(true)}
+						resumePoint={resumePoint}
+						onContinue={onContinue}
 					/>
 					<HighlightsSection />
 				</ShowcaseLayout>

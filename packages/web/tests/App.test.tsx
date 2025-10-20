@@ -52,8 +52,11 @@ function createNavigationState(
 		isBackgroundAudioMuted: false,
 		isAutoAcknowledgeEnabled: false,
 		isAutoPassEnabled: false,
+		resumePoint: null,
+		resumeSessionId: null,
 		startStandardGame: vi.fn(),
 		startDeveloperGame: vi.fn(),
+		continueSavedGame: vi.fn(),
 		openOverview: vi.fn(),
 		openTutorial: vi.fn(),
 		returnToMenu: vi.fn(),
@@ -63,6 +66,9 @@ function createNavigationState(
 		toggleBackgroundAudioMute: vi.fn(),
 		toggleAutoAcknowledge: vi.fn(),
 		toggleAutoPass: vi.fn(),
+		persistResumeSession: vi.fn(),
+		clearResumeSession: vi.fn(),
+		handleResumeSessionFailure: vi.fn(),
 		...overrides,
 	};
 }
@@ -113,6 +119,36 @@ describe('<App />', () => {
 		expect(screen.getByText('Kingdom Builder')).toBeInTheDocument();
 		expect(screen.getByText('Start New Game')).toBeInTheDocument();
 		expect(screen.getByText('Start Dev/Debug Game')).toBeInTheDocument();
+	});
+
+	it('renders continue call-to-action when a resume point exists', () => {
+		const continueSavedGame = vi.fn();
+		const resumePoint = {
+			sessionId: 'session-123',
+			turn: 1234,
+			devMode: false,
+			updatedAt: Date.now(),
+		};
+		const formattedTurn = new Intl.NumberFormat(undefined, {
+			maximumFractionDigits: 0,
+			useGrouping: true,
+		}).format(resumePoint.turn);
+		useAppNavigationMock.mockReturnValue(
+			createNavigationState({ resumePoint, continueSavedGame }),
+		);
+		usePlayerIdentityMock.mockReturnValue({
+			playerName: 'Returning Player',
+			hasStoredName: true,
+			setPlayerName: vi.fn(),
+			clearStoredName: vi.fn(),
+		});
+		render(<App />);
+		const continueButton = screen.getByRole('button', {
+			name: `Continue game (turn ${formattedTurn})`,
+		});
+		expect(continueButton).toBeInTheDocument();
+		fireEvent.click(continueButton);
+		expect(continueSavedGame).toHaveBeenCalledTimes(1);
 	});
 
 	it('shows loading state while overview metadata loads', () => {
