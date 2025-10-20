@@ -150,7 +150,8 @@ export default function RaisePopOptions({
 			entries.map(([resourceKey, amount]) => [resourceKey, amount ?? 0]),
 		) as Record<string, number>;
 	}, [metadata.costs]);
-	const costsReady = metadata.costs !== undefined;
+	const costsLoading = metadata.loading.costs;
+	const costsReady = !costsLoading;
 	const requirementFailures = metadata.requirements ?? [];
 	const populationCap = player.stats?.maxPopulation;
 	const totalPopulation = useMemo(
@@ -183,13 +184,20 @@ export default function RaisePopOptions({
 		derivedRequirementFailure && requirementFailures.length === 0
 			? [derivedRequirementFailure]
 			: requirementFailures;
-	const requirementsReady =
+	const requirementsAvailable =
 		metadata.requirements !== undefined || derivedRequirementFailure !== null;
-	const requirementMessages = requirementsReady
-		? effectiveRequirementFailures.map((failure) =>
-				translateRequirementFailure(failure, translationContext),
-			)
-		: ['Loading requirements…'];
+	const requirementsLoadingBase = metadata.loading.requirements;
+	const requirementsLoading =
+		derivedRequirementFailure === null ? requirementsLoadingBase : false;
+	const requirementMessages = effectiveRequirementFailures.map((failure) =>
+		translateRequirementFailure(failure, translationContext),
+	);
+	const requirementDisplay =
+		requirementMessages.length > 0
+			? requirementMessages
+			: requirementsAvailable
+				? []
+				: ['Loading requirements…'];
 	return (
 		<>
 			{roleOptions.map((role) => {
@@ -203,9 +211,9 @@ export default function RaisePopOptions({
 					? playerHasRequiredResources(player.resources, costs)
 					: false;
 				const meetsRequirements =
-					requirementsReady && effectiveRequirementFailures.length === 0;
+					!requirementsLoading && effectiveRequirementFailures.length === 0;
 				const enabled =
-					canInteract && costsReady && canPay && meetsRequirements;
+					canInteract && !costsLoading && canPay && meetsRequirements;
 				const requirementIcons = getRequirementIconsForRole(role);
 				const insufficientTooltip = costsReady
 					? formatMissingResources(
@@ -220,9 +228,11 @@ export default function RaisePopOptions({
 				const roleIcon = roleDescriptor.icon ?? defaultPopulationIcon ?? '';
 				const roleLabel = roleDescriptor.label;
 				const requirementText = requirementMessages.join(', ');
-				const title = !requirementsReady
+				const showRequirementsLoading =
+					!requirementsAvailable && requirementsLoading;
+				const title = showRequirementsLoading
 					? 'Loading requirements…'
-					: !costsReady
+					: costsLoading
 						? 'Loading costs…'
 						: !meetsRequirements
 							? requirementText
@@ -261,7 +271,7 @@ export default function RaisePopOptions({
 						upkeep={upkeep}
 						playerResources={player.resources}
 						actionCostResource={actionCostResource}
-						requirements={requirementMessages}
+						requirements={requirementDisplay}
 						requirementIcons={requirementIcons}
 						summary={shortSummary}
 						assets={translationContext.assets}
@@ -282,7 +292,7 @@ export default function RaisePopOptions({
 							handleHoverCard({
 								title: hoverTitle,
 								effects,
-								requirements: requirementMessages,
+								requirements: requirementDisplay,
 								costs,
 								upkeep,
 								...(description && { description }),

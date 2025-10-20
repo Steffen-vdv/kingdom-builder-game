@@ -106,7 +106,8 @@ export function useActionMetadata({
 	}, [sessionId, actionId, normalizedParams, paramsKey]);
 
 	useEffect(() => {
-		if (!actionId || snapshot.costs !== undefined) {
+		const costsStale = snapshot.stale?.costs === true;
+		if (!actionId || (snapshot.costs !== undefined && !costsStale)) {
 			return () => {};
 		}
 		if (loadingRef.current.costs) {
@@ -131,7 +132,11 @@ export function useActionMetadata({
 	}, [actionId, sessionId, snapshot.costs, normalizedParams, paramsKey]);
 
 	useEffect(() => {
-		if (!actionId || snapshot.requirements !== undefined) {
+		const requirementsStale = snapshot.stale?.requirements === true;
+		if (
+			!actionId ||
+			(snapshot.requirements !== undefined && !requirementsStale)
+		) {
 			return () => {};
 		}
 		if (loadingRef.current.requirements) {
@@ -156,7 +161,8 @@ export function useActionMetadata({
 	}, [actionId, sessionId, snapshot.requirements, normalizedParams, paramsKey]);
 
 	useEffect(() => {
-		if (!actionId || snapshot.groups !== undefined) {
+		const groupsStale = snapshot.stale?.groups === true;
+		if (!actionId || (snapshot.groups !== undefined && !groupsStale)) {
 			return () => {};
 		}
 		if (loadingRef.current.groups) {
@@ -186,9 +192,12 @@ export function useActionMetadata({
 			requirements: snapshot.requirements,
 			groups: snapshot.groups,
 			loading: {
-				costs: snapshot.costs === undefined,
-				requirements: snapshot.requirements === undefined,
-				groups: snapshot.groups === undefined,
+				costs: snapshot.costs === undefined || snapshot.stale?.costs === true,
+				requirements:
+					snapshot.requirements === undefined ||
+					snapshot.stale?.requirements === true,
+				groups:
+					snapshot.groups === undefined || snapshot.stale?.groups === true,
 			},
 		};
 		return result;
