@@ -15,8 +15,8 @@ import type {
 	Registry,
 	SerializedRegistry,
 	SessionMetadataDescriptor,
+	SessionMetadataSnapshot,
 	SessionPhaseMetadata,
-	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
@@ -24,18 +24,7 @@ import type {
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
 type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
 
-export type SessionStaticMetadataPayload = Pick<
-	SessionSnapshotMetadata,
-	| 'resources'
-	| 'populations'
-	| 'buildings'
-	| 'developments'
-	| 'stats'
-	| 'phases'
-	| 'triggers'
-	| 'assets'
-	| 'overview'
->;
+export type SessionStaticMetadataPayload = SessionMetadataSnapshot;
 
 export interface BuildSessionMetadataOptions {
 	buildings: Registry<BuildingConfig>;

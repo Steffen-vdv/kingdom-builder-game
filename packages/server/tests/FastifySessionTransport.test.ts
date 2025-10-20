@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import type {
 	SessionSnapshot,
 	SessionRuntimeConfigResponse,
+	SessionMetadataSnapshotResponse,
 } from '@kingdom-builder/protocol';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
@@ -117,6 +118,20 @@ describe('FastifySessionTransport', () => {
 		const resource = body.resources[gainKey];
 		expect(resource).toBeDefined();
 		expect(body).toEqual(manager.getRuntimeConfig());
+		await app.close();
+	});
+
+	it('returns the metadata snapshot without authentication', async () => {
+		const { app, manager } = await createServer();
+		const response = await app.inject({
+			method: 'GET',
+			url: '/metadata',
+		});
+		expect(response.statusCode).toBe(200);
+		const body = response.json() as SessionMetadataSnapshotResponse;
+		expect(body.registries).toEqual(manager.getRegistries());
+		expectStaticMetadata(body.metadata);
+		expect(body.metadata).toEqual(manager.getMetadata());
 		await app.close();
 	});
 
