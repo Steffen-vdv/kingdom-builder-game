@@ -1,7 +1,4 @@
-import {
-	createEngineSession,
-	type EngineSession,
-} from '@kingdom-builder/engine';
+import type { EngineSession } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
 	ACTION_CATEGORIES,
@@ -35,8 +32,14 @@ import {
 	type SessionBaseOptions,
 	type SessionResourceRegistry,
 } from './sessionConfigAssets.js';
-type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
-
+import type { SessionStore } from './SessionStore.js';
+import {
+	buildEngineSession,
+	createEntryFromStoreRecord,
+	createStoreRecord,
+	type EngineSessionOptions,
+	type SessionEntry,
+} from './sessionPersistence.js';
 type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
 	actionCategoryRegistry?: SessionActionCategoryRegistry;
@@ -51,19 +54,12 @@ type SessionRuntimeConfig = {
 	primaryIconId: string | null;
 };
 
-type SessionRecord = {
-	session: EngineSession;
-	createdAt: number;
-	lastAccessedAt: number;
-	registries: SessionRegistriesPayload;
-	metadata: SessionStaticMetadataPayload;
-};
-
 export interface SessionManagerOptions {
 	maxIdleDurationMs?: number;
 	maxSessions?: number;
 	now?: () => number;
 	engineOptions?: EngineSessionOverrideOptions;
+	store?: SessionStore;
 }
 
 export interface CreateSessionOptions {
@@ -74,7 +70,7 @@ export interface CreateSessionOptions {
 const DEFAULT_MAX_IDLE_DURATION_MS = 15 * 60 * 1000;
 
 export class SessionManager {
-	private readonly sessions = new Map<string, SessionRecord>();
+	private readonly sessions = new Map<string, SessionEntry>();
 
 	private readonly maxIdleDurationMs: number;
 
@@ -91,6 +87,7 @@ export class SessionManager {
 	private readonly resourceOverrides: SessionResourceRegistry | undefined;
 
 	private readonly runtimeConfig: SessionRuntimeConfig;
+	private readonly store: SessionStore | undefined;
 
 	public constructor(options: SessionManagerOptions = {}) {
 		const {
@@ -98,6 +95,7 @@ export class SessionManager {
 			maxSessions,
 			now = Date.now,
 			engineOptions = {},
+			store,
 		} = options;
 		const {
 			resourceRegistry,
@@ -129,13 +127,12 @@ export class SessionManager {
 			this.resourceOverrides,
 			this.baseOptions.start,
 		);
-		const actionCategories = actionCategoryRegistry
-			? (freezeSerializedRegistry(
-					structuredClone(actionCategoryRegistry),
-				) as SessionActionCategoryRegistry)
-			: (freezeSerializedRegistry(
-					cloneActionCategoryRegistry(this.baseOptions.actionCategories),
-				) as SessionActionCategoryRegistry);
+		const actionCategories: SessionActionCategoryRegistry =
+			actionCategoryRegistry
+				? freezeSerializedRegistry(structuredClone(actionCategoryRegistry))
+				: freezeSerializedRegistry(
+						cloneActionCategoryRegistry(baseActionCategories),
+					);
 		this.registries = {
 			actions: cloneRegistry(this.baseOptions.actions),
 			actionCategories,
@@ -160,9 +157,9 @@ export class SessionManager {
 		const frozenRules = Object.freeze(
 			structuredClone(this.baseOptions.rules),
 		) as unknown as RuleSet;
-		const frozenResources = freezeSerializedRegistry(
+		const frozenResources: SessionResourceRegistry = freezeSerializedRegistry(
 			structuredClone(resources),
-		) as SessionResourceRegistry;
+		);
 		this.runtimeConfig = Object.freeze({
 			phases: frozenPhases,
 			start: frozenStart,
@@ -170,6 +167,8 @@ export class SessionManager {
 			resources: frozenResources,
 			primaryIconId,
 		});
+		this.store = store;
+		this.hydrateFromStore();
 	}
 
 	public createSession(
@@ -187,18 +186,15 @@ export class SessionManager {
 			throw new Error('Maximum session count reached.');
 		}
 		const devMode = options.devMode ?? false;
-		const { config } = options;
-		const { actionCategories: _baseActionCategories, ...engineBaseOptions } =
-			this.baseOptions;
-		const sessionOptions: EngineSessionOptions = {
-			...engineBaseOptions,
+		const sessionConfig =
+			options.config === undefined
+				? undefined
+				: structuredClone(options.config);
+		const session = buildEngineSession(
+			this.baseOptions,
 			devMode,
-		};
-		if (config !== undefined) {
-			sessionOptions.config = config;
-		}
-		const session = createEngineSession(sessionOptions);
-		session.setDevMode(devMode);
+			sessionConfig,
+		);
 		const timestamp = this.now();
 		const { registries, metadata } = buildSessionAssets(
 			{
@@ -207,15 +203,19 @@ export class SessionManager {
 				baseRegistries: this.registries,
 				baseMetadata: this.metadata,
 			},
-			config,
+			sessionConfig,
 		);
-		this.sessions.set(sessionId, {
+		const entry: SessionEntry = {
 			session,
 			createdAt: timestamp,
 			lastAccessedAt: timestamp,
 			registries,
 			metadata,
-		});
+			devMode,
+			config: sessionConfig,
+		};
+		this.sessions.set(sessionId, entry);
+		this.persistRecord(sessionId, entry);
 		return session;
 	}
 
@@ -226,11 +226,16 @@ export class SessionManager {
 			return undefined;
 		}
 		record.lastAccessedAt = this.now();
+		this.persistRecord(sessionId, record);
 		return record.session;
 	}
 
 	public destroySession(sessionId: string): boolean {
-		return this.sessions.delete(sessionId);
+		const removed = this.sessions.delete(sessionId);
+		if (removed) {
+			this.store?.delete(sessionId);
+		}
+		return removed;
 	}
 
 	public getSnapshot(
@@ -261,12 +266,12 @@ export class SessionManager {
 	}
 
 	public getSessionRegistries(sessionId: string): SessionRegistriesPayload {
-		const record = this.requireSessionRecord(sessionId);
+		const record = this.requireSessionEntry(sessionId);
 		return structuredClone(record.registries);
 	}
 
 	public getSessionMetadata(sessionId: string): SessionStaticMetadataPayload {
-		const record = this.requireSessionRecord(sessionId);
+		const record = this.requireSessionEntry(sessionId);
 		return structuredClone(record.metadata);
 	}
 
@@ -282,7 +287,7 @@ export class SessionManager {
 		return session;
 	}
 
-	private requireSessionRecord(sessionId: string): SessionRecord {
+	private requireSessionEntry(sessionId: string): SessionEntry {
 		const record = this.sessions.get(sessionId);
 		if (!record) {
 			throw new Error(`Session "${sessionId}" was not found.`);
@@ -290,11 +295,38 @@ export class SessionManager {
 		return record;
 	}
 
+	private hydrateFromStore(): void {
+		if (!this.store) {
+			return;
+		}
+		const records = this.store.loadAll();
+		for (const record of records) {
+			if (this.sessions.has(record.sessionId)) {
+				continue;
+			}
+			try {
+				const entry = createEntryFromStoreRecord(record, this.baseOptions);
+				this.sessions.set(record.sessionId, entry);
+			} catch {
+				// Ignore invalid session records.
+			}
+		}
+		this.purgeExpiredSessions();
+	}
+
+	private persistRecord(sessionId: string, entry: SessionEntry): void {
+		if (!this.store) {
+			return;
+		}
+		this.store.save(createStoreRecord(sessionId, entry));
+	}
+
 	private purgeExpiredSessions(): void {
 		const expiration = this.now() - this.maxIdleDurationMs;
 		for (const [sessionId, record] of this.sessions.entries()) {
 			if (record.lastAccessedAt < expiration) {
 				this.sessions.delete(sessionId);
+				this.store?.delete(sessionId);
 			}
 		}
 	}

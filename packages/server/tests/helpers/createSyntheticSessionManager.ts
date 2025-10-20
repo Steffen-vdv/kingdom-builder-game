@@ -35,6 +35,7 @@ export interface SyntheticSessionManagerResult {
 	start: StartConfig;
 	rules: RuleSet;
 	primaryIconId: string | null;
+	engineOptions: NonNullable<SessionManagerOptions['engineOptions']>;
 }
 
 export function createSyntheticSessionManager(
@@ -140,6 +141,7 @@ export function createSyntheticSessionManager(
 		start,
 		rules,
 		primaryIconId: engineOptions.primaryIconId ?? null,
+		engineOptions,
 	};
 }
 
