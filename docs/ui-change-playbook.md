@@ -9,9 +9,8 @@ contexts that surface translated strings.
 1. **Update content definitions**
    - Apply edits under `packages/contents/src/**` so icons, labels, and
      descriptions stay data-driven.
-   - Run `npm run generate:snapshots` (or the dev server) to refresh
-     `packages/web/src/contexts/defaultRegistryMetadata.json` whenever content
-     changes.
+   - Run `npm run generate:snapshots` (or the dev server) to refresh cached
+     registry metadata whenever content changes.
 2. **Confirm server bootstrap**
    - Verify the session pipeline in
      `packages/server/src/session/SessionManager.ts` pulls the updated metadata
