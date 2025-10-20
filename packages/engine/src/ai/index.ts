@@ -150,6 +150,14 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 					result,
 				);
 				if (!shouldContinue) {
+					if (
+						engineContext.activePlayer.id === playerId &&
+						engineContext.phases[engineContext.game.phaseIndex]?.action &&
+						(engineContext.activePlayer.resources[actionPointResourceKey] ??
+							0) === 0
+					) {
+						await finishActionPhaseAsync();
+					}
 					return;
 				}
 			} catch (error) {

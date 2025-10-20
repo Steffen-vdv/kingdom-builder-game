@@ -97,6 +97,36 @@ describe('tax collector AI controller', () => {
 		expect(engineContext.activePlayer.resources[apKey]).toBe(1);
 	});
 
+	it('advances when continuation declines with no remaining AP', async () => {
+		const { engineContext, apKey, controller } = createControllerFixture(1);
+		const perform = vi.fn((actionId: string) =>
+			performAction(actionId, engineContext),
+		);
+		const continueAfterAction = vi.fn().mockResolvedValueOnce(false);
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
+		const endPhase = vi.fn(() => advance(engineContext));
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+			continueAfterAction,
+			shouldAdvancePhase,
+		});
+
+		expect(perform).toHaveBeenCalledTimes(1);
+		expect(continueAfterAction).toHaveBeenCalledTimes(1);
+		expect(continueAfterAction).toHaveBeenNthCalledWith(
+			1,
+			TAX_ACTION_ID,
+			engineContext,
+			expect.anything(),
+		);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
+		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
+		expect(endPhase).toHaveBeenCalledTimes(1);
+	});
+
 	it('continues through the full turn when callbacks allow', async () => {
 		const { engineContext, apKey, controller } = createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
