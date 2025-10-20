@@ -86,6 +86,45 @@ describe('useAppNavigation', () => {
 		unmount();
 	});
 
+	it('keeps resume sessions suspended after starting a new game', async () => {
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-before-start',
+			turn: 7,
+			devMode: false,
+			updatedAt: Date.UTC(2024, 0, 1),
+		};
+		writeStoredResumeSession(resumeRecord);
+		const { result, unmount } = await renderNavigationHook();
+
+		expect(result.current.resumeSessionId).toBe(resumeRecord.sessionId);
+
+		act(() => {
+			result.current.startStandardGame();
+		});
+
+		await waitFor(() => {
+			expect(result.current.resumeSessionId).toBeNull();
+		});
+		expect(result.current.resumePoint).toEqual(resumeRecord);
+		expect(readStoredResumeSession()).toEqual(resumeRecord);
+
+		const nextResumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-after-start',
+			turn: 1,
+			devMode: false,
+			updatedAt: Date.UTC(2024, 0, 2),
+		};
+
+		act(() => {
+			result.current.persistResumeSession(nextResumeRecord);
+		});
+
+		expect(result.current.resumeSessionId).toBe(nextResumeRecord.sessionId);
+		expect(result.current.resumePoint).toEqual(nextResumeRecord);
+		expect(readStoredResumeSession()).toEqual(nextResumeRecord);
+		unmount();
+	});
+
 	it('restores stored gameplay preferences when history is missing them', async () => {
 		window.localStorage.setItem(
 			AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,

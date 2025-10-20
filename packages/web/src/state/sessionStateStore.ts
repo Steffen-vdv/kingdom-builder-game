@@ -15,6 +15,7 @@ import {
 	type SessionRegistries,
 } from './sessionRegistries';
 import { clone } from './clone';
+import { SessionMirroringError, markFatalSessionError } from './sessionErrors';
 
 export interface SessionStateRecord {
 	readonly sessionId: string;
@@ -156,7 +157,16 @@ export function getSessionSnapshot(sessionId: string): SessionSnapshot {
 export function assertSessionRecord(sessionId: string): SessionStateRecord {
 	const record = getSessionRecord(sessionId);
 	if (!record) {
-		throw new Error(`Missing session record: ${sessionId}`);
+		const knownSessionIds = Array.from(records.keys());
+		const error = new SessionMirroringError(
+			`Missing session record for session "${sessionId}".`,
+			{
+				cause: new Error('Missing session record in sessionStateStore.'),
+				details: { sessionId, knownSessionIds },
+			},
+		);
+		markFatalSessionError(error);
+		throw error;
 	}
 	return record;
 }
