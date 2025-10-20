@@ -15,6 +15,7 @@ import type {
 	SessionCreateRequest,
 	SessionCreateResponse,
 	SessionPlayerId,
+	SessionMetadataSnapshotResponse,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateRequest,
@@ -42,6 +43,7 @@ type NextResponses = {
 	actionOptions?: SessionActionOptionsResponse;
 	runAi?: SessionRunAiResponse;
 	simulate?: SessionSimulateResponse;
+	metadataSnapshot?: SessionMetadataSnapshotResponse;
 };
 
 export interface GameApiFakeState {
@@ -76,6 +78,9 @@ export class GameApiFake implements GameApi {
 	}
 	setNextActionResponse(response: ActionExecuteResponse) {
 		this.#primeNext('action', response);
+	}
+	setNextMetadataSnapshotResponse(response: SessionMetadataSnapshotResponse) {
+		this.#primeNext('metadataSnapshot', response);
 	}
 	setNextSetDevModeResponse(response: SessionSetDevModeResponse) {
 		this.#primeNext('devMode', response);
@@ -137,6 +142,15 @@ export class GameApiFake implements GameApi {
 			);
 		}
 		return Promise.resolve(clone(session));
+	}
+	fetchMetadataSnapshot(
+		_options: GameApiRequestOptions = {},
+	): Promise<SessionMetadataSnapshotResponse> {
+		const response = this.#consumeNext(
+			'metadataSnapshot',
+			'No metadata snapshot response primed.',
+		);
+		return Promise.resolve(clone(response));
 	}
 	performAction(
 		request: ActionExecuteRequest,

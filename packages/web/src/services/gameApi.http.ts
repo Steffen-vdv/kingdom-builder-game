@@ -13,6 +13,7 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 	SessionCreateResponse,
+	SessionMetadataSnapshotResponse,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSetDevModeRequest,
@@ -110,6 +111,18 @@ export class HttpGameApi implements GameApi {
 			{
 				method: 'POST',
 				body: request,
+			},
+			options,
+		);
+	}
+
+	async fetchMetadataSnapshot(
+		options: GameApiRequestOptions = {},
+	): Promise<SessionMetadataSnapshotResponse> {
+		return this.#send(
+			'/metadata',
+			{
+				method: 'GET',
 			},
 			options,
 		);
