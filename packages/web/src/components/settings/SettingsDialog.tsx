@@ -1,8 +1,8 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useId, useRef, useState } from 'react';
 import Button from '../common/Button';
-import ToggleSwitch from '../common/ToggleSwitch';
 import { PlayerNameSetting } from './PlayerNameSetting';
+import SettingRow from './SettingRow';
 
 const DIALOG_SURFACE_CLASS = [
 	'relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border border-white/20',
@@ -13,21 +13,6 @@ const DIALOG_SURFACE_CLASS = [
 const ACCENT_GLOW_CLASS = [
 	'absolute -top-12 right-8 h-24 w-24 rounded-full bg-emerald-400/30 blur-3xl',
 	'dark:bg-emerald-500/30',
-].join(' ');
-
-const SETTING_ROW_CLASS = [
-	'flex items-center justify-between gap-4 rounded-2xl border border-white/20 bg-white/85 px-6 py-5',
-	'shadow-inner shadow-slate-900/5 dark:border-white/10 dark:bg-slate-900/80 dark:shadow-black/30',
-].join(' ');
-
-const SETTING_TITLE_CLASS = [
-	'text-sm font-semibold uppercase tracking-wide text-slate-700',
-	'dark:text-slate-200',
-].join(' ');
-
-const SETTING_DESCRIPTION_CLASS = [
-	'mt-2 text-sm text-slate-600',
-	'dark:text-slate-300/80',
 ].join(' ');
 
 const DIALOG_DESCRIPTION = [
@@ -55,6 +40,16 @@ const TAB_BUTTON_INACTIVE_CLASS = [
 	'dark:hover:text-emerald-200',
 ].join(' ');
 
+const AUTO_ACKNOWLEDGE_DESCRIPTION = [
+	'Dismiss notifications the moment results are ready.',
+	'Keep focus on your next choice.',
+].join(' ');
+
+const AUTO_PASS_DESCRIPTION = [
+	'End your turn automatically once no actions remain.',
+	'Keep the game moving at your pace.',
+].join(' ');
+
 const FOCUSABLE_ELEMENTS_SELECTOR = [
 	'a[href]',
 	'button:not([disabled])',
@@ -75,40 +70,12 @@ interface SettingsDialogProps {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
+	autoAcknowledgeEnabled: boolean;
+	onToggleAutoAcknowledge: () => void;
+	autoPassEnabled: boolean;
+	onToggleAutoPass: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
-}
-
-interface SettingRowProps {
-	id: string;
-	title: string;
-	description: string;
-	checked: boolean;
-	onToggle: () => void;
-}
-
-function SettingRow({
-	id,
-	title,
-	description,
-	checked,
-	onToggle,
-}: SettingRowProps) {
-	return (
-		<div className={SETTING_ROW_CLASS}>
-			<div className="max-w-[75%] text-left">
-				<h3 id={`${id}-label`} className={SETTING_TITLE_CLASS}>
-					{title}
-				</h3>
-				<p className={SETTING_DESCRIPTION_CLASS}>{description}</p>
-			</div>
-			<ToggleSwitch
-				checked={checked}
-				onChange={() => onToggle()}
-				aria-labelledby={`${id}-label`}
-			/>
-		</div>
-	);
 }
 
 export default function SettingsDialog({
@@ -122,10 +89,16 @@ export default function SettingsDialog({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
+	autoAcknowledgeEnabled,
+	onToggleAutoAcknowledge,
+	autoPassEnabled,
+	onToggleAutoPass,
 	playerName,
 	onChangePlayerName,
 }: SettingsDialogProps) {
-	const [activeTab, setActiveTab] = useState<'general' | 'audio'>('general');
+	const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'gameplay'>(
+		'general',
+	);
 	const dialogTitleId = useId();
 	const dialogDescriptionId = useId();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -283,8 +256,19 @@ export default function SettingsDialog({
 						>
 							Audio
 						</button>
+						<button
+							type="button"
+							className={`${TAB_BUTTON_CLASS} ${
+								activeTab === 'gameplay'
+									? TAB_BUTTON_ACTIVE_CLASS
+									: TAB_BUTTON_INACTIVE_CLASS
+							}`}
+							onClick={() => setActiveTab('gameplay')}
+						>
+							Gameplay
+						</button>
 					</div>
-					{activeTab === 'general' ? (
+					{activeTab === 'general' && (
 						<div className="flex flex-col gap-4">
 							<PlayerNameSetting
 								open={open}
@@ -299,7 +283,8 @@ export default function SettingsDialog({
 								onToggle={onToggleDark}
 							/>
 						</div>
-					) : (
+					)}
+					{activeTab === 'audio' && (
 						<div className="flex flex-col gap-4">
 							<SettingRow
 								id="settings-music"
@@ -321,6 +306,24 @@ export default function SettingsDialog({
 								description="Keep sound active when you switch tabs or windows."
 								checked={!backgroundAudioMuted}
 								onToggle={onToggleBackgroundAudioMute}
+							/>
+						</div>
+					)}
+					{activeTab === 'gameplay' && (
+						<div className="flex flex-col gap-4">
+							<SettingRow
+								id="settings-auto-acknowledge"
+								title="Automatically acknowledge"
+								description={AUTO_ACKNOWLEDGE_DESCRIPTION}
+								checked={autoAcknowledgeEnabled}
+								onToggle={onToggleAutoAcknowledge}
+							/>
+							<SettingRow
+								id="settings-auto-pass"
+								title="Automatically pass turn"
+								description={AUTO_PASS_DESCRIPTION}
+								checked={autoPassEnabled}
+								onToggle={onToggleAutoPass}
 							/>
 						</div>
 					)}

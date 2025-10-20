@@ -25,6 +25,10 @@ export default function GameLayout() {
 		onToggleSound,
 		backgroundAudioMuted,
 		onToggleBackgroundAudioMute,
+		autoAcknowledgeEnabled,
+		onToggleAutoAcknowledge,
+		autoPassEnabled,
+		onToggleAutoPass,
 		playerName,
 		onChangePlayerName,
 	} = useGameEngine();
@@ -129,6 +133,10 @@ export default function GameLayout() {
 				onToggleSound={onToggleSound}
 				backgroundAudioMuted={backgroundAudioMuted}
 				onToggleBackgroundAudioMute={onToggleBackgroundAudioMute}
+				autoAcknowledgeEnabled={autoAcknowledgeEnabled}
+				onToggleAutoAcknowledge={onToggleAutoAcknowledge}
+				autoPassEnabled={autoPassEnabled}
+				onToggleAutoPass={onToggleAutoPass}
 				playerName={playerName}
 				onChangePlayerName={onChangePlayerName}
 			/>
