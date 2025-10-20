@@ -54,9 +54,9 @@ describe('useSessionQueue', () => {
 			snapshot,
 			registries,
 		});
-		const enqueueMock = vi.fn(() => {
-			throw new Error('queue helper enqueue should not be used');
-		});
+		const enqueueMock = vi.fn(
+			async <T>(task: () => Promise<T> | T) => await task(),
+		);
 		const queueHelpers: SessionQueueHelpers = {
 			enqueue: enqueueMock,
 			getCurrentSession: () => adapter,
@@ -72,7 +72,7 @@ describe('useSessionQueue', () => {
 		});
 		expect(value).toBe('complete');
 		expect(task).toHaveBeenCalledTimes(1);
-		expect(enqueueMock).not.toHaveBeenCalled();
+		expect(enqueueMock).toHaveBeenCalledWith(task);
 		cleanup();
 	});
 

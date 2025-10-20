@@ -53,14 +53,17 @@ function useRemotePlayerNameSync({
 		) {
 			return;
 		}
-		void enqueue(() =>
-			updateRemotePlayerName({
-				sessionId,
-				playerId: controlledPlayerId,
-				playerName: desiredName,
-			}),
-		).finally(() => {
-			refresh();
+		void enqueue(async () => {
+			try {
+				await updateRemotePlayerName({
+					sessionId,
+					playerId: controlledPlayerId,
+					playerName: desiredName,
+				});
+			} catch (error) {
+				refresh();
+				throw error;
+			}
 		});
 	}, [
 		enqueue,

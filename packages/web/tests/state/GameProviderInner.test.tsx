@@ -224,7 +224,7 @@ describe('GameProviderInner', () => {
 		});
 
 		const queueHelpers = {
-			enqueue: vi.fn(),
+			enqueue: vi.fn(async <T,>(task: () => Promise<T> | T) => await task()),
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
@@ -303,7 +303,7 @@ describe('GameProviderInner', () => {
 		});
 
 		const queueHelpers = {
-			enqueue: vi.fn(),
+			enqueue: vi.fn(async <T,>(task: () => Promise<T> | T) => await task()),
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
@@ -399,7 +399,7 @@ describe('GameProviderInner', () => {
 		}));
 
 		const queueHelpers = {
-			enqueue: vi.fn(),
+			enqueue: vi.fn(async <T,>(task: () => Promise<T> | T) => await task()),
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
@@ -441,9 +441,7 @@ describe('GameProviderInner', () => {
 				playerName: 'Strategist',
 			});
 		});
-		await waitFor(() => {
-			expect(refreshSession).toHaveBeenCalled();
-		});
+		expect(refreshSession).not.toHaveBeenCalled();
 
 		const updatedLocal = createSnapshotPlayer({
 			id: localPlayer.id,
@@ -519,7 +517,7 @@ describe('GameProviderInner', () => {
 		});
 
 		const queueHelpers = {
-			enqueue: vi.fn(),
+			enqueue: vi.fn(async <T,>(task: () => Promise<T> | T) => await task()),
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
@@ -582,7 +580,7 @@ describe('GameProviderInner', () => {
 		});
 
 		const queueHelpers = {
-			enqueue: vi.fn(),
+			enqueue: vi.fn(async <T,>(task: () => Promise<T> | T) => await task()),
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
@@ -788,7 +786,7 @@ describe('GameProviderInner', () => {
 		});
 
 		const queueHelpers = {
-			enqueue: vi.fn(),
+			enqueue: vi.fn(async <T,>(task: () => Promise<T> | T) => await task()),
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
@@ -886,7 +884,7 @@ describe('GameProviderInner', () => {
 		});
 
 		const queueHelpers = {
-			enqueue: vi.fn(),
+			enqueue: vi.fn(async <T,>(task: () => Promise<T> | T) => await task()),
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};

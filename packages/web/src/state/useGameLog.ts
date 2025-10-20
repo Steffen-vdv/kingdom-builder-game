@@ -1,5 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
+	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
@@ -120,6 +121,47 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 		) => candidate ?? fallback,
 		[],
 	);
+
+	useEffect(() => {
+		setLog((previous) => {
+			if (previous.length === 0) {
+				return previous;
+			}
+			const playerNames = new Map<SessionPlayerId, string>(
+				sessionSnapshot.game.players.map((player) => [player.id, player.name]),
+			);
+			let mutated = false;
+			const updated = previous.map((entry) => {
+				if (entry.kind !== 'resolution') {
+					return entry;
+				}
+				const entryPlayerId = entry.playerId as SessionPlayerId;
+				const playerName = playerNames.get(entryPlayerId);
+				if (!playerName) {
+					return entry;
+				}
+				const resolutionPlayer = entry.resolution.player;
+				const existingName = resolutionPlayer?.name;
+				if (existingName === playerName) {
+					return entry;
+				}
+				mutated = true;
+				const updatedPlayer: Pick<SessionPlayerStateSnapshot, 'id' | 'name'> = {
+					id: resolutionPlayer?.id ?? entryPlayerId,
+					name: playerName,
+				};
+				const updatedResolution = {
+					...entry.resolution,
+					player: updatedPlayer,
+				};
+				return {
+					...entry,
+					resolution: updatedResolution,
+				};
+			});
+			return mutated ? updated : previous;
+		});
+	}, [sessionSnapshot.game.players]);
 
 	const addResolutionLog = useCallback(
 		(

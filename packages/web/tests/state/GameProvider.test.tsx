@@ -177,6 +177,16 @@ function SessionInspector() {
 	return <div data-testid="session-turn">turn:{sessionSnapshot.game.turn}</div>;
 }
 
+function PlayerNameInspector() {
+	const {
+		sessionSnapshot: {
+			game: { players },
+		},
+	} = useGameEngine();
+	const name = players[0]?.name ?? '';
+	return <div data-testid="player-name">{name}</div>;
+}
+
 describe('GameProvider', () => {
 	let session: SessionAdapter;
 	let registriesPayload: ReturnType<typeof createSessionRegistriesPayload>;
@@ -417,6 +427,80 @@ describe('GameProvider', () => {
 			lastCall?.onToggleAutoPass();
 		});
 		expect(handleToggleAutoPass).toHaveBeenCalledTimes(1);
+	});
+
+	it('synchronizes session snapshots after queued player name updates', async () => {
+		const renameTarget = initialSnapshot.game.players[0];
+		if (!renameTarget) {
+			throw new Error('Missing initial player');
+		}
+		const renamedPlayer = createSnapshotPlayer({
+			id: renameTarget.id,
+			name: 'Warlord',
+			resources: renameTarget.resources,
+			stats: renameTarget.stats,
+			statsHistory: renameTarget.statsHistory,
+			population: renameTarget.population,
+			lands: renameTarget.lands,
+			buildings: renameTarget.buildings,
+			passives: renameTarget.passives,
+			actions: renameTarget.actions,
+			statSources: renameTarget.statSources,
+			skipPhases: renameTarget.skipPhases,
+			skipSteps: renameTarget.skipSteps,
+		});
+		const updatedSnapshot = createSessionSnapshot({
+			players: [renamedPlayer, ...initialSnapshot.game.players.slice(1)],
+			activePlayerId: initialSnapshot.game.activePlayerId,
+			opponentId: initialSnapshot.game.opponentId,
+			phases: initialSnapshot.phases,
+			actionCostResource: initialSnapshot.actionCostResource,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: initialSnapshot.game.turn,
+			currentPhase: initialSnapshot.game.currentPhase,
+			currentStep: initialSnapshot.game.currentStep,
+		});
+		updatePlayerNameMock.mockImplementationOnce(() => {
+			const response: SessionStateResponse = {
+				sessionId,
+				snapshot: updatedSnapshot,
+				registries: registriesPayload,
+			};
+			const stateRecord = applySessionState(response);
+			return Promise.resolve({
+				sessionId,
+				snapshot: stateRecord.snapshot,
+				registries: stateRecord.registries,
+			});
+		});
+
+		const { rerender } = render(
+			<GameProvider playerName="Commander">
+				<PlayerNameInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('player-name')).toHaveTextContent('Commander'),
+		);
+
+		rerender(
+			<GameProvider playerName="Warlord">
+				<PlayerNameInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(updatePlayerNameMock).toHaveBeenCalledWith({
+				sessionId,
+				playerId: renameTarget.id,
+				playerName: 'Warlord',
+			}),
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('player-name')).toHaveTextContent('Warlord'),
+		);
 	});
 
 	it('updates the active session when the dev mode prop changes', async () => {

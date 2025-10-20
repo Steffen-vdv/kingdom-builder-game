@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
+import { getSessionRecord } from './sessionStateStore';
 import type {
 	SessionQueueHelpers,
 	SessionSnapshot,
@@ -22,8 +22,8 @@ export function useSessionQueue(
 		[queue, sessionSnapshot],
 	);
 	const enqueue = useCallback(
-		<T>(task: () => Promise<T> | T) => enqueueSessionTask(sessionId, task),
-		[sessionId],
+		<T>(task: () => Promise<T> | T) => queue.enqueue(task),
+		[queue],
 	);
 	const cachedSessionSnapshot = useMemo(() => {
 		const latest = queue.getLatestSnapshot();

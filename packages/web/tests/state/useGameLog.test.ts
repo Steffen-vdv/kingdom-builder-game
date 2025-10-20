@@ -299,4 +299,77 @@ describe('useGameLog', () => {
 		expect(entry.resolution.timeline).toEqual(secondResolution.timeline);
 		expect(entry.resolution.timeline).not.toBe(secondResolution.timeline);
 	});
+
+	it('updates logged player names when the session snapshot changes', () => {
+		const players: SessionPlayerStateSnapshot[] = [
+			createPlayer('A'),
+			createPlayer('B'),
+		];
+		const sessionState: SessionSnapshot = {
+			game: {
+				turn: 1,
+				currentPlayerIndex: 0,
+				currentPhase: 'main',
+				currentStep: 'step-0',
+				phaseIndex: 0,
+				stepIndex: 0,
+				devMode: false,
+				players,
+				activePlayerId: players[0]!.id,
+				opponentId: players[1]!.id,
+			},
+			phases: [],
+			actionCostResource: primaryResource,
+			recentResourceGains: [],
+			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			passiveRecords: {
+				[players[0]!.id]: [],
+				[players[1]!.id]: [],
+			},
+			metadata: createEmptySnapshotMetadata(),
+		};
+		const { result, rerender } = renderHook(
+			({ snapshot }: { snapshot: SessionSnapshot }) =>
+				useGameLog({ sessionSnapshot: snapshot }),
+			{ initialProps: { snapshot: sessionState } },
+		);
+		const resolution: ActionResolution = {
+			lines: ['Initial action'],
+			visibleLines: ['Initial action'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: [],
+			source: 'action',
+			requireAcknowledgement: false,
+		};
+
+		act(() => {
+			result.current.addResolutionLog(resolution, players[0]);
+		});
+
+		const renamedPlayer = {
+			...players[0],
+			name: 'Heroic Commander',
+		};
+		const updatedSnapshot: SessionSnapshot = {
+			...sessionState,
+			game: {
+				...sessionState.game,
+				players: [renamedPlayer, players[1]!],
+			},
+		};
+
+		act(() => {
+			rerender({ snapshot: updatedSnapshot });
+		});
+
+		const [entry] = result.current.log;
+		expect(entry?.resolution.player?.name).toBe('Heroic Commander');
+	});
 });

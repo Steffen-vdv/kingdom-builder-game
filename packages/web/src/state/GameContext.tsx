@@ -105,6 +105,35 @@ export function GameProvider(props: GameProviderProps) {
 		[],
 	);
 
+	const syncSessionContainerFromStore = useCallback(() => {
+		const current = sessionStateRef.current;
+		if (!current) {
+			return;
+		}
+		const record = getSessionRecord(current.sessionId);
+		if (!record) {
+			return;
+		}
+		if (
+			current.snapshot === record.snapshot &&
+			current.ruleSnapshot === record.ruleSnapshot &&
+			current.registries === record.registries &&
+			current.resourceKeys === record.resourceKeys &&
+			current.metadata === record.metadata
+		) {
+			return;
+		}
+		updateSessionData({
+			adapter: current.adapter,
+			sessionId: record.sessionId,
+			snapshot: record.snapshot,
+			ruleSnapshot: record.ruleSnapshot,
+			registries: record.registries,
+			resourceKeys: record.resourceKeys,
+			metadata: record.metadata,
+		});
+	}, [updateSessionData]);
+
 	const releaseCurrentSession = useCallback(() => {
 		const abortController = refreshAbortRef.current;
 		if (abortController) {
@@ -299,12 +328,16 @@ export function GameProvider(props: GameProviderProps) {
 	const queueHelpers = useMemo<SessionQueueHelpers>(
 		() => ({
 			enqueue: <T,>(task: () => Promise<T> | T) =>
-				runExclusive(() => {
+				runExclusive(async () => {
 					const current = sessionStateRef.current;
 					if (!current) {
 						throw new Error('Session not ready');
 					}
-					return enqueueSessionTask(current.sessionId, task);
+					try {
+						return await enqueueSessionTask(current.sessionId, task);
+					} finally {
+						syncSessionContainerFromStore();
+					}
 				}),
 			getCurrentSession: () => {
 				const current = sessionStateRef.current;
@@ -315,7 +348,7 @@ export function GameProvider(props: GameProviderProps) {
 			},
 			getLatestSnapshot: () => latestSnapshotRef.current,
 		}),
-		[runExclusive],
+		[runExclusive, syncSessionContainerFromStore],
 	);
 
 	if (!sessionData) {
