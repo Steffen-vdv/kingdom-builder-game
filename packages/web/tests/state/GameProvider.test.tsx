@@ -102,6 +102,7 @@ vi.mock('../../src/state/useActionResolution', () => ({
 		resolution: null,
 		showResolution: showResolutionMock,
 		acknowledgeResolution: acknowledgeResolutionMock,
+		syncResolutionPlayers: vi.fn(),
 	}),
 }));
 

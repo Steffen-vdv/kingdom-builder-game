@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import type {
 	ActionResolution,
@@ -16,6 +16,7 @@ import {
 	isPhaseSourceDetail,
 	shouldAppendPhaseResolution,
 } from './useActionResolution.helpers';
+import { createResolutionPlayerSynchronizer } from './useActionResolution.playerSync';
 
 interface UseActionResolutionOptions {
 	addResolutionLog: (resolution: ActionResolution) => void;
@@ -96,6 +97,10 @@ function useActionResolution({
 			resolverRef.current = null;
 		}
 	}, [setResolution]);
+	const syncResolutionPlayers = useMemo(
+		() => createResolutionPlayerSynchronizer(setResolution),
+		[setResolution],
+	);
 
 	const showResolution = useCallback(
 		({
@@ -323,7 +328,12 @@ function useActionResolution({
 		],
 	);
 
-	return { resolution, showResolution, acknowledgeResolution };
+	return {
+		resolution,
+		showResolution,
+		acknowledgeResolution,
+		syncResolutionPlayers,
+	};
 }
 
 export type {

@@ -55,7 +55,7 @@ export function GameProviderInner({
 	onChangePlayerName = () => {},
 	queue,
 	sessionId,
-	sessionSnapshot,
+	sessionSnapshot: initialSessionSnapshot,
 	ruleSnapshot,
 	refreshSession,
 	onReleaseSession,
@@ -66,9 +66,10 @@ export function GameProviderInner({
 }: GameProviderInnerProps) {
 	const { enqueue, cachedSessionSnapshot } = useSessionQueue(
 		queue,
-		sessionSnapshot,
+		initialSessionSnapshot,
 		sessionId,
 	);
+	const sessionSnapshot = cachedSessionSnapshot;
 
 	const refresh = useCallback(() => {
 		void refreshSession();
@@ -118,13 +119,28 @@ export function GameProviderInner({
 		sessionSnapshot,
 	});
 
-	const { resolution, showResolution, acknowledgeResolution } =
-		useActionResolution({
-			addResolutionLog,
-			setTrackedTimeout,
-			timeScaleRef,
-			mountedRef,
-		});
+	const {
+		resolution,
+		showResolution,
+		acknowledgeResolution,
+		syncResolutionPlayers,
+	} = useActionResolution({
+		addResolutionLog,
+		setTrackedTimeout,
+		timeScaleRef,
+		mountedRef,
+	});
+	const playerIdentities = useMemo(
+		() =>
+			sessionSnapshot.game.players.map((player) => ({
+				id: player.id,
+				name: player.name,
+			})),
+		[sessionSnapshot.game.players],
+	);
+	useEffect(() => {
+		syncResolutionPlayers(playerIdentities);
+	}, [playerIdentities, syncResolutionPlayers]);
 
 	const handleShowResolution = useCallback(
 		(options: ShowResolutionOptions) => {

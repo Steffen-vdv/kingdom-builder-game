@@ -299,4 +299,75 @@ describe('useGameLog', () => {
 		expect(entry.resolution.timeline).toEqual(secondResolution.timeline);
 		expect(entry.resolution.timeline).not.toBe(secondResolution.timeline);
 	});
+
+	it('updates logged player names when the session snapshot changes', async () => {
+		const players: SessionPlayerStateSnapshot[] = [
+			createPlayer('A'),
+			createPlayer('B'),
+		];
+		const sessionState: SessionSnapshot = {
+			game: {
+				turn: 1,
+				currentPlayerIndex: 0,
+				currentPhase: 'main',
+				currentStep: 'step-0',
+				phaseIndex: 0,
+				stepIndex: 0,
+				devMode: false,
+				players,
+				activePlayerId: players[0]!.id,
+				opponentId: players[1]!.id,
+			},
+			phases: [],
+			actionCostResource: primaryResource,
+			recentResourceGains: [],
+			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			passiveRecords: {
+				[players[0]!.id]: [],
+				[players[1]!.id]: [],
+			},
+			metadata: createEmptySnapshotMetadata(),
+		};
+		const { result, rerender } = renderHook(
+			({ snapshot }: { snapshot: SessionSnapshot }) =>
+				useGameLog({ sessionSnapshot: snapshot }),
+			{ initialProps: { snapshot: sessionState } },
+		);
+		const resolution: ActionResolution = {
+			lines: ['First line'],
+			visibleLines: ['First line'],
+			timeline: [{ text: 'First line', depth: 0, kind: 'headline' }],
+			visibleTimeline: [{ text: 'First line', depth: 0, kind: 'headline' }],
+			isComplete: true,
+			summaries: [],
+			source: 'action',
+			requireAcknowledgement: false,
+		};
+		act(() => {
+			result.current.addResolutionLog(resolution, players[0]);
+		});
+		const renamedPlayers: SessionPlayerStateSnapshot[] = [
+			{ ...players[0]!, name: 'Renamed Hero' },
+			players[1]!,
+		];
+		const renamedSnapshot: SessionSnapshot = {
+			...sessionState,
+			game: { ...sessionState.game, players: renamedPlayers },
+		};
+		await act(async () => {
+			rerender({ snapshot: renamedSnapshot });
+			await Promise.resolve();
+		});
+		const [entry] = result.current.log;
+		expect(entry?.kind).toBe('resolution');
+		if (entry?.kind !== 'resolution') {
+			throw new Error('Expected a resolution log entry');
+		}
+		expect(entry.resolution.player?.name).toBe('Renamed Hero');
+	});
 });

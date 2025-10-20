@@ -233,4 +233,37 @@ describe('useActionResolution', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it('synchronizes the displayed player name when updates occur', () => {
+		const addResolutionLog = vi.fn();
+		const setTrackedTimeout = vi
+			.fn<(callback: () => void, delay: number) => number>()
+			.mockReturnValue(0);
+		const { result } = renderHook(() => {
+			const timeScaleRef = React.useRef(1);
+			const mountedRef = React.useRef(true);
+			React.useEffect(() => {
+				return () => {
+					mountedRef.current = false;
+				};
+			}, []);
+			return useActionResolution({
+				addResolutionLog,
+				setTrackedTimeout,
+				timeScaleRef,
+				mountedRef,
+			});
+		});
+		act(() => {
+			void result.current.showResolution({
+				lines: ['Line'],
+				player: { id: 'A', name: 'Original' },
+			});
+		});
+		expect(result.current.resolution?.player?.name).toBe('Original');
+		act(() => {
+			result.current.syncResolutionPlayers([{ id: 'A', name: 'Updated' }]);
+		});
+		expect(result.current.resolution?.player?.name).toBe('Updated');
+	});
 });

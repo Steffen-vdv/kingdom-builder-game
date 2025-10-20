@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
@@ -112,6 +112,14 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 	const [log, setLog] = useState<ResolutionLogEntry[]>([]);
 	const [logOverflowed, setLogOverflowed] = useState(false);
 	const nextLogIdRef = useRef(0);
+	const playerNamesById = useMemo(() => {
+		const map = new Map<string, string>();
+		for (const player of sessionSnapshot.game.players) {
+			const rawName = player.name ?? '';
+			map.set(player.id, rawName);
+		}
+		return map;
+	}, [sessionSnapshot.game.players]);
 
 	const resolvePlayer = useCallback(
 		(
@@ -180,6 +188,36 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 			sessionSnapshot.game.players,
 		],
 	);
+
+	useEffect(() => {
+		setLog((previous) => {
+			let updated = false;
+			const entries = previous.map((entry) => {
+				const stored = playerNamesById.get(entry.playerId);
+				if (!stored) {
+					return entry;
+				}
+				const trimmed = stored.trim();
+				const name =
+					trimmed.length > 0
+						? trimmed
+						: (entry.resolution.player?.id ?? entry.playerId);
+				const currentName = entry.resolution.player?.name;
+				if (currentName === name) {
+					return entry;
+				}
+				updated = true;
+				const resolution = entry.resolution.player
+					? {
+							...entry.resolution,
+							player: { ...entry.resolution.player, name },
+						}
+					: entry.resolution;
+				return { ...entry, resolution } satisfies ResolutionLogEntry;
+			});
+			return updated ? entries : previous;
+		});
+	}, [playerNamesById]);
 
 	return { log, logOverflowed, addResolutionLog };
 }
