@@ -2,6 +2,8 @@ import type { Registry } from '@kingdom-builder/protocol';
 import { Resource } from '../resources';
 import { Stat } from '../stats';
 import { DevelopmentId } from '../developments';
+import { ACTION_CATEGORIES, ActionCategoryId } from '../actionCategories';
+import type { ActionCategoryId as ActionCategoryIdValue } from '../actionCategories';
 import {
 	action,
 	compareRequirement,
@@ -27,7 +29,12 @@ import {
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
-import { ActionCategory, ActionId, PopulationEvaluationId } from '../actions';
+import { ActionId, PopulationEvaluationId } from '../actions';
+
+const categoryOrder = (categoryId: ActionCategoryIdValue, offset: number) => {
+	const category = ACTION_CATEGORIES.get(categoryId);
+	return category.order * 10 + offset;
+};
 
 export function registerBasicActions(registry: Registry<ActionDef>) {
 	registry.add(
@@ -44,8 +51,8 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(resourceParams().key(Resource.happiness).amount(1))
 					.build(),
 			)
-			.category(ActionCategory.Basic)
-			.order(1)
+			.category(ActionCategoryId.Basic)
+			.order(categoryOrder(ActionCategoryId.Basic, 1))
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -63,8 +70,8 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(developmentParams().id('$id').landId('$landId'))
 					.build(),
 			)
-			.category(ActionCategory.Development)
-			.order(1)
+			.category(ActionCategoryId.Develop)
+			.order(categoryOrder(ActionCategoryId.Develop, 1))
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -93,8 +100,8 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.category(ActionCategory.Basic)
-			.order(3)
+			.category(ActionCategoryId.Basic)
+			.order(categoryOrder(ActionCategoryId.Basic, 3))
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -124,8 +131,8 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(resourceParams().key(Resource.happiness).amount(1))
 					.build(),
 			)
-			.category(ActionCategory.Population)
-			.order(1)
+			.category(ActionCategoryId.Hire)
+			.order(categoryOrder(ActionCategoryId.Hire, 1))
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -186,8 +193,8 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.allowShortfall()
 					.build(),
 			)
-			.category(ActionCategory.Basic)
-			.order(5)
+			.category(ActionCategoryId.Basic)
+			.order(categoryOrder(ActionCategoryId.Basic, 5))
 			.focus(Focus.Economy)
 			.build(),
 	);

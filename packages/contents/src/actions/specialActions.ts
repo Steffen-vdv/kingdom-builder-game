@@ -2,6 +2,8 @@ import type { Registry } from '@kingdom-builder/protocol';
 import { Resource } from '../resources';
 import { Stat } from '../stats';
 import { PopulationRole } from '../populationRoles';
+import { ACTION_CATEGORIES, ActionCategoryId } from '../actionCategories';
+import type { ActionCategoryId as ActionCategoryIdValue } from '../actionCategories';
 import {
 	action,
 	compareRequirement,
@@ -32,7 +34,12 @@ import {
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
-import { ActionCategory, ActionId } from '../actions';
+import { ActionId } from '../actions';
+
+const categoryOrder = (categoryId: ActionCategoryIdValue, offset: number) => {
+	const category = ACTION_CATEGORIES.get(categoryId);
+	return category.order * 10 + offset;
+};
 
 export function registerSpecialActions(registry: Registry<ActionDef>) {
 	registry.add(
@@ -79,8 +86,8 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					.params(statParams().key(Stat.warWeariness).amount(1))
 					.build(),
 			)
-			.category(ActionCategory.Basic)
-			.order(6)
+			.category(ActionCategoryId.Basic)
+			.order(categoryOrder(ActionCategoryId.Basic, 6))
 			.focus(Focus.Aggressive)
 			.build(),
 	);
@@ -136,8 +143,8 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.category(ActionCategory.Basic)
-			.order(7)
+			.category(ActionCategoryId.Basic)
+			.order(categoryOrder(ActionCategoryId.Basic, 7))
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -220,8 +227,8 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					.params(buildingParams().id('$id'))
 					.build(),
 			)
-			.category(ActionCategory.Building)
-			.order(1)
+			.category(ActionCategoryId.Build)
+			.order(categoryOrder(ActionCategoryId.Build, 1))
 			.focus(Focus.Other)
 			.build(),
 	);

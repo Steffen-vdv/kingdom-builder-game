@@ -6,6 +6,7 @@ import {
 import { registerBasicActions } from './actions/basicActions';
 import { registerSpecialActions } from './actions/specialActions';
 import type { Focus as FocusType } from './defs';
+import type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 
 const ACTION_ID_MAP = {
 	build: 'build',
@@ -36,21 +37,14 @@ type PopulationEvaluationIdMap = typeof POPULATION_EVALUATION_ID_MAP;
 export type PopulationEvaluationId =
 	PopulationEvaluationIdMap[keyof PopulationEvaluationIdMap];
 
-export const ActionCategory = {
-	Basic: 'basic',
-	Development: 'development',
-	Population: 'population',
-	Building: 'building',
-} as const;
-
-export type ActionCategory =
-	(typeof ActionCategory)[keyof typeof ActionCategory];
-
 export interface ActionDef extends ActionConfig {
-	category?: ActionCategory;
+	category?: ActionCategoryIdValue;
 	order?: number;
 	focus?: FocusType;
 }
+
+export { ActionCategoryId } from './actionCategories';
+export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 
 export function createActionRegistry() {
 	const registry = new Registry<ActionDef>(actionSchema.passthrough());
