@@ -4,7 +4,11 @@ import {
 	createLocalSessionGateway,
 } from '../../src/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type { StartConfig, RuleSet } from '@kingdom-builder/protocol';
+import type {
+	StartConfig,
+	RuleSet,
+	SessionRegistriesPayload,
+} from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 
@@ -61,6 +65,33 @@ const RULES: RuleSet = {
 	winConditions: [],
 };
 
+function createSessionForContent(
+	content: ReturnType<typeof createContentFactory>,
+) {
+	return createEngineSession({
+		actions: content.actions,
+		buildings: content.buildings,
+		developments: content.developments,
+		populations: content.populations,
+		phases: PHASES,
+		start: START,
+		rules: RULES,
+	});
+}
+
+function toRegistriesPayload(
+	content: ReturnType<typeof createContentFactory>,
+): SessionRegistriesPayload {
+	return {
+		actions: Object.fromEntries(content.actions.entries()),
+		buildings: Object.fromEntries(content.buildings.entries()),
+		developments: Object.fromEntries(content.developments.entries()),
+		populations: Object.fromEntries(content.populations.entries()),
+		resources: {},
+		actionCategories: Object.fromEntries(content.categories.entries()),
+	};
+}
+
 function createGateway() {
 	const content = createContentFactory();
 	const gainGold = content.action({
@@ -83,15 +114,7 @@ function createGateway() {
 			},
 		],
 	});
-	const session = createEngineSession({
-		actions: content.actions,
-		buildings: content.buildings,
-		developments: content.developments,
-		populations: content.populations,
-		phases: PHASES,
-		start: START,
-		rules: RULES,
-	});
+	const session = createSessionForContent(content);
 	return {
 		gateway: createLocalSessionGateway(session),
 		actionIds: {
@@ -111,6 +134,9 @@ describe('createLocalSessionGateway', () => {
 		expect(created.sessionId).toBe('local-session');
 		expect(created.snapshot.game.devMode).toBe(true);
 		expect(created.snapshot.game.players[0]?.name).toBe('Hero');
+		const categories = created.registries.actionCategories;
+		expect(categories).toEqual({});
+		(categories as Record<string, unknown>).mutated = 'value';
 		created.snapshot.game.players[0]!.name = 'Mutated';
 		created.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 99;
 		const fetched = await gateway.fetchSnapshot({
@@ -118,6 +144,7 @@ describe('createLocalSessionGateway', () => {
 		});
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
 		expect(fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(0);
+		expect(fetched.registries.actionCategories).toEqual({});
 	});
 
 	it('performs actions and clones response payloads', async () => {
@@ -183,5 +210,49 @@ describe('createLocalSessionGateway', () => {
 		enabled.snapshot.game.devMode = false;
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		expect(refreshed.snapshot.game.devMode).toBe(true);
+	});
+
+	it('clones provided action category registries', async () => {
+		const content = createContentFactory();
+		const category = content.category({ label: 'Provided Category' });
+		const session = createSessionForContent(content);
+		const registries = toRegistriesPayload(content);
+		const gateway = createLocalSessionGateway(session, { registries });
+		const created = await gateway.createSession();
+		const categoryId = category.id;
+		const expectedCategory = registries.actionCategories?.[categoryId];
+		expect(expectedCategory).toEqual(category);
+		expect(created.registries.actionCategories?.[categoryId]).toEqual(
+			expectedCategory,
+		);
+		const createdCategories = created.registries.actionCategories!;
+		createdCategories[categoryId] = {
+			...createdCategories[categoryId]!,
+			label: 'Mutated',
+		};
+		const fetched = await gateway.fetchSnapshot({
+			sessionId: created.sessionId,
+		});
+		expect(fetched.registries.actionCategories?.[categoryId]).toEqual(
+			expectedCategory,
+		);
+	});
+
+	it('falls back to empty action categories when overrides omit them', async () => {
+		const content = createContentFactory();
+		content.category({ label: 'Unused Category' });
+		const session = createSessionForContent(content);
+		const registries = toRegistriesPayload(content);
+		const { actionCategories, ...rest } = registries;
+		const gateway = createLocalSessionGateway(session, {
+			registries: rest as SessionRegistriesPayload,
+		});
+		const created = await gateway.createSession();
+		expect(actionCategories).not.toBeUndefined();
+		expect(created.registries.actionCategories).toEqual({});
+		const fetched = await gateway.fetchSnapshot({
+			sessionId: created.sessionId,
+		});
+		expect(fetched.registries.actionCategories).toEqual({});
 	});
 });
