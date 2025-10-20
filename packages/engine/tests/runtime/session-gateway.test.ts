@@ -4,7 +4,11 @@ import {
 	createLocalSessionGateway,
 } from '../../src/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type { StartConfig, RuleSet } from '@kingdom-builder/protocol';
+import type {
+	StartConfig,
+	RuleSet,
+	SessionRegistriesPayload,
+} from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 
@@ -61,7 +65,9 @@ const RULES: RuleSet = {
 	winConditions: [],
 };
 
-function createGateway() {
+type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
+
+function createGateway(options?: GatewayOptions) {
 	const content = createContentFactory();
 	const gainGold = content.action({
 		baseCosts: { [RESOURCE_AP]: 1 },
@@ -93,7 +99,7 @@ function createGateway() {
 		rules: RULES,
 	});
 	return {
-		gateway: createLocalSessionGateway(session),
+		gateway: createLocalSessionGateway(session, options),
 		actionIds: {
 			gainGold: gainGold.id,
 			failing: failingAction.id,
@@ -111,6 +117,9 @@ describe('createLocalSessionGateway', () => {
 		expect(created.sessionId).toBe('local-session');
 		expect(created.snapshot.game.devMode).toBe(true);
 		expect(created.snapshot.game.players[0]?.name).toBe('Hero');
+		expect(created.registries.actionCategories).toEqual({});
+		const category = createContentFactory().category();
+		created.registries.actionCategories![category.id] = category;
 		created.snapshot.game.players[0]!.name = 'Mutated';
 		created.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 99;
 		const fetched = await gateway.fetchSnapshot({
@@ -118,6 +127,7 @@ describe('createLocalSessionGateway', () => {
 		});
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
 		expect(fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(0);
+		expect(fetched.registries.actionCategories).toEqual({});
 	});
 
 	it('performs actions and clones response payloads', async () => {
@@ -183,5 +193,32 @@ describe('createLocalSessionGateway', () => {
 		enabled.snapshot.game.devMode = false;
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		expect(refreshed.snapshot.game.devMode).toBe(true);
+	});
+
+	it('clones provided action category registries when supplied', async () => {
+		const categoryFactory = createContentFactory();
+		const providedCategory = categoryFactory.category();
+		const registries: SessionRegistriesPayload = {
+			actions: {},
+			buildings: {},
+			developments: {},
+			populations: {},
+			resources: {},
+			actionCategories: {
+				[providedCategory.id]: providedCategory,
+			},
+		};
+		const { gateway } = createGateway({ registries });
+		const created = await gateway.createSession();
+		expect(created.registries.actionCategories).toEqual({
+			[providedCategory.id]: providedCategory,
+		});
+		delete created.registries.actionCategories![providedCategory.id];
+		const fetched = await gateway.fetchSnapshot({
+			sessionId: created.sessionId,
+		});
+		expect(fetched.registries.actionCategories).toEqual({
+			[providedCategory.id]: providedCategory,
+		});
 	});
 });

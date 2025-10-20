@@ -24,6 +24,7 @@
 		"format:check": "prettier --check --log-level warn .",
 		"precheck": "npm run ensure:dev-deps",
 		"check": "run-s format:check typecheck lint test",
+		"check:ci": "run-s format:check typecheck lint",
 		"pretest": "npm run ensure:dev-deps",
 		"test": "run-s test:root test:server",
 		"test:root": "vitest run --reporter=default",
