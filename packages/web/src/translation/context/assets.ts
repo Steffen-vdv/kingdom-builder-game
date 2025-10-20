@@ -10,49 +10,8 @@ import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
 	TranslationIconLabel,
-	TranslationModifierInfo,
 	TranslationTriggerAsset,
 } from './types';
-import {
-	DEFAULT_STAT_METADATA,
-	mergeDescriptorRecords,
-} from '../../contexts/registryMetadataDefaults';
-
-const DEFAULT_POPULATION_INFO = Object.freeze({
-	icon: '👥',
-	label: 'Population',
-});
-
-const DEFAULT_LAND_INFO = Object.freeze({
-	icon: '🗺️',
-	label: 'Land',
-});
-
-const DEFAULT_SLOT_INFO = Object.freeze({
-	icon: '🧩',
-	label: 'Development Slot',
-});
-
-const DEFAULT_PASSIVE_INFO = Object.freeze({
-	icon: '♾️',
-	label: 'Passive',
-});
-
-const DEFAULT_UPKEEP_INFO = Object.freeze({
-	icon: '🧹',
-	label: 'Upkeep',
-});
-
-const DEFAULT_TRANSFER_INFO = Object.freeze({
-	icon: '🔁',
-	label: 'Transfer',
-});
-
-const DEFAULT_MODIFIER_INFO = Object.freeze({
-	cost: Object.freeze({ icon: '💲', label: 'Cost Adjustment' }),
-	result: Object.freeze({ icon: '✨', label: 'Outcome Adjustment' }),
-}) satisfies Readonly<Record<string, TranslationModifierInfo>>;
-
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
 
@@ -168,28 +127,32 @@ function buildStatMap(
 }
 
 type ModifierDescriptorOverrides = {
-	cost?: SessionMetadataDescriptor;
-	result?: SessionMetadataDescriptor;
+	cost: SessionMetadataDescriptor;
+	result: SessionMetadataDescriptor;
 };
 
 function resolveModifierDescriptors(
 	value: unknown,
-): ModifierDescriptorOverrides | undefined {
+): ModifierDescriptorOverrides {
 	if (!value || typeof value !== 'object') {
-		return undefined;
+		throw new Error(
+			'Translation assets metadata must include assets.modifiers with cost and result descriptors.',
+		);
 	}
 	const descriptor = value as Record<string, unknown>;
-	if (!('cost' in descriptor) && !('result' in descriptor)) {
-		return undefined;
-	}
-	const overrides: ModifierDescriptorOverrides = {};
+	const overrides: Partial<ModifierDescriptorOverrides> = {};
 	if (descriptor.cost && typeof descriptor.cost === 'object') {
 		overrides.cost = descriptor.cost as SessionMetadataDescriptor;
 	}
 	if (descriptor.result && typeof descriptor.result === 'object') {
 		overrides.result = descriptor.result as SessionMetadataDescriptor;
 	}
-	return overrides;
+	if (!overrides.cost || !overrides.result) {
+		throw new Error(
+			'Translation assets metadata must define both cost and result descriptors for assets.modifiers.',
+		);
+	}
+	return overrides as ModifierDescriptorOverrides;
 }
 function toTriggerAsset(
 	descriptor: SessionTriggerMetadata | undefined,
@@ -242,71 +205,115 @@ function buildTierSummaryMap(
 	return Object.freeze(entries);
 }
 
+function requireMetadataSection<TKey extends keyof SessionSnapshotMetadata>(
+	metadata: SessionSnapshotMetadata,
+	key: TKey,
+): NonNullable<SessionSnapshotMetadata[TKey]> {
+	const value = metadata[key];
+	if (value === undefined || value === null) {
+		throw new Error(
+			`Translation assets require session metadata for ${String(key)}.`,
+		);
+	}
+	return value as NonNullable<SessionSnapshotMetadata[TKey]>;
+}
+
+function requireAssetDescriptor(
+	descriptors: NonNullable<SessionSnapshotMetadata['assets']>,
+	key: string,
+): SessionMetadataDescriptor {
+	const descriptor = descriptors[key];
+	if (
+		!descriptor ||
+		typeof descriptor !== 'object' ||
+		Array.isArray(descriptor)
+	) {
+		throw new Error(
+			`Translation assets metadata is missing descriptor for assets.${key}.`,
+		);
+	}
+	if ('cost' in descriptor || 'result' in descriptor) {
+		throw new Error(
+			`Translation assets metadata entry assets.${key} must be a descriptor, not a composite configuration.`,
+		);
+	}
+	return descriptor;
+}
+
+function optionalAssetDescriptor(
+	descriptors: NonNullable<SessionSnapshotMetadata['assets']>,
+	key: string,
+): SessionMetadataDescriptor | undefined {
+	const descriptor = descriptors[key];
+	if (!descriptor) {
+		return undefined;
+	}
+	if (typeof descriptor !== 'object' || Array.isArray(descriptor)) {
+		throw new Error(
+			`Translation assets metadata entry assets.${key} must be an object descriptor when provided.`,
+		);
+	}
+	if ('cost' in descriptor || 'result' in descriptor) {
+		throw new Error(
+			`Translation assets metadata entry assets.${key} cannot reuse the modifiers descriptor structure.`,
+		);
+	}
+	return descriptor;
+}
+
 export function createTranslationAssets(
 	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
-	metadata?: Pick<
-		SessionSnapshotMetadata,
-		'resources' | 'populations' | 'stats' | 'assets' | 'triggers'
-	>,
+	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
+	const resourceDescriptors = requireMetadataSection(metadata, 'resources');
+	const populationDescriptors = requireMetadataSection(metadata, 'populations');
+	const statDescriptors = requireMetadataSection(metadata, 'stats');
+	const assetDescriptors = requireMetadataSection(metadata, 'assets');
+	const triggerDescriptors = requireMetadataSection(metadata, 'triggers');
 	const populations = buildPopulationMap(
 		registries.populations,
-		metadata?.populations,
+		populationDescriptors,
 	);
-	const resources = buildResourceMap(registries.resources, metadata?.resources);
-	const statDescriptors = mergeDescriptorRecords(
-		DEFAULT_STAT_METADATA,
-		metadata?.stats,
-	);
+	const resources = buildResourceMap(registries.resources, resourceDescriptors);
 	const stats = buildStatMap(statDescriptors);
-	const assetDescriptors = metadata?.assets ?? {};
 	const populationAsset = mergeIconLabel(
-		DEFAULT_POPULATION_INFO,
-		assetDescriptors.population,
-		DEFAULT_POPULATION_INFO.label,
+		undefined,
+		requireAssetDescriptor(assetDescriptors, 'population'),
+		'population',
 	);
 	const landAsset = mergeIconLabel(
-		DEFAULT_LAND_INFO,
-		assetDescriptors.land,
-		DEFAULT_LAND_INFO.label,
+		undefined,
+		requireAssetDescriptor(assetDescriptors, 'land'),
+		'land',
 	);
 	const slotAsset = mergeIconLabel(
-		DEFAULT_SLOT_INFO,
-		assetDescriptors.slot,
-		DEFAULT_SLOT_INFO.label,
+		undefined,
+		requireAssetDescriptor(assetDescriptors, 'slot'),
+		'slot',
 	);
 	const passiveAsset = mergeIconLabel(
-		DEFAULT_PASSIVE_INFO,
-		assetDescriptors.passive,
-		DEFAULT_PASSIVE_INFO.label,
+		undefined,
+		requireAssetDescriptor(assetDescriptors, 'passive'),
+		'passive',
 	);
-	const upkeepAsset = mergeIconLabel(
-		DEFAULT_UPKEEP_INFO,
-		assetDescriptors.upkeep,
-		DEFAULT_UPKEEP_INFO.label,
-	);
-	const transferAsset = mergeIconLabel(
-		DEFAULT_TRANSFER_INFO,
-		assetDescriptors.transfer,
-		DEFAULT_TRANSFER_INFO.label,
+	const upkeepDescriptor = optionalAssetDescriptor(assetDescriptors, 'upkeep');
+	const transferDescriptor = optionalAssetDescriptor(
+		assetDescriptors,
+		'transfer',
 	);
 	const modifierOverrides = resolveModifierDescriptors(
-		assetDescriptors['modifiers'],
+		(assetDescriptors as Record<string, unknown>)['modifiers'],
 	);
 	const modifiers = Object.freeze({
-		cost: mergeIconLabel(
-			DEFAULT_MODIFIER_INFO.cost,
-			modifierOverrides?.cost,
-			DEFAULT_MODIFIER_INFO.cost.label ?? 'Cost Adjustment',
-		),
+		cost: mergeIconLabel(undefined, modifierOverrides.cost, 'Cost Modifier'),
 		result: mergeIconLabel(
-			DEFAULT_MODIFIER_INFO.result,
-			modifierOverrides?.result,
-			DEFAULT_MODIFIER_INFO.result.label ?? 'Outcome Adjustment',
+			undefined,
+			modifierOverrides.result,
+			'Result Modifier',
 		),
 	});
-	const triggers = buildTriggerMap(metadata?.triggers);
+	const triggers = buildTriggerMap(triggerDescriptors);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
 		resources,
@@ -316,8 +323,12 @@ export function createTranslationAssets(
 		land: landAsset,
 		slot: slotAsset,
 		passive: passiveAsset,
-		transfer: transferAsset,
-		upkeep: upkeepAsset,
+		transfer: transferDescriptor
+			? mergeIconLabel(undefined, transferDescriptor, 'transfer')
+			: Object.freeze({}),
+		upkeep: upkeepDescriptor
+			? mergeIconLabel(undefined, upkeepDescriptor, 'upkeep')
+			: Object.freeze({}),
 		modifiers,
 		triggers,
 		tierSummaries,

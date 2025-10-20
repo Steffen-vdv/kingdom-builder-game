@@ -19,7 +19,7 @@ const EMPTY_ASSETS: TranslationAssets = {
 	passive: {},
 	transfer: {},
 	upkeep: {},
-	modifiers: {},
+	modifiers: { cost: {}, result: {} },
 	triggers: {},
 	tierSummaries: {},
 	formatPassiveRemoval: (description: string) =>

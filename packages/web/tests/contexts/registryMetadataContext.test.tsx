@@ -123,9 +123,16 @@ function createTestSetup(): TestSetup {
 			},
 		},
 		assets: {
+			population: { label: 'Crew', icon: '👥' },
 			land: { label: 'Territory', icon: '🗺️' },
 			slot: { label: 'Sky Dock', icon: '🛠️' },
 			passive: { label: 'Aura', icon: '✨' },
+			upkeep: { label: 'Maintenance', icon: '🧰' },
+			transfer: { label: 'Transfer', icon: '🔄' },
+			modifiers: {
+				cost: { label: 'Cost Modifier', icon: '💰' },
+				result: { label: 'Result Modifier', icon: '✨' },
+			},
 		},
 		overviewContent: {
 			hero: { title: 'Game Overview', tokens: {} },

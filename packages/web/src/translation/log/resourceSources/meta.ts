@@ -75,7 +75,8 @@ function renderLandMetaIcons(
 	_meta: ResourceSourceMeta,
 	context: TranslationDiffContext,
 ): string {
-	return context.assets.land.icon || '';
+	const landAsset = context.assets.land;
+	return landAsset.icon || landAsset.label || '';
 }
 
 const META_ICON_RENDERERS: Record<string, MetaIconRenderer> = {

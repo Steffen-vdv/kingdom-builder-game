@@ -51,9 +51,16 @@ describe('buildOverviewIconSet', () => {
 		},
 		triggers: {},
 		assets: {
+			population: { label: 'Population', icon: '👥' },
 			land: { label: 'Land', icon: '🗺️' },
 			slot: { label: 'Slot', icon: '🧩' },
 			passive: { label: 'Passive', icon: '✨' },
+			upkeep: { label: 'Upkeep', icon: '🧹' },
+			transfer: { label: 'Transfer', icon: '🔁' },
+			modifiers: {
+				cost: { label: 'Cost Modifier', icon: '💰' },
+				result: { label: 'Result Modifier', icon: '✨' },
+			},
 		},
 		overviewContent: {
 			hero: { title: 'Overview Tokens', tokens: {} },

@@ -138,9 +138,16 @@ function createDescriptorSetup(): DescriptorSetup {
 			},
 		},
 		assets: {
+			population: { label: 'Citizens', icon: '👥' },
 			land: { label: 'Territory', icon: '🗺️' },
 			slot: { label: 'Development Slot', icon: '🧩' },
 			passive: { label: 'Aura', icon: '♾️' },
+			upkeep: { label: 'Maintenance', icon: '🧹' },
+			transfer: { label: 'Transfer', icon: '🔁' },
+			modifiers: {
+				cost: { label: 'Cost Modifier', icon: '💰' },
+				result: { label: 'Result Modifier', icon: '✨' },
+			},
 		},
 	};
 	const activePlayer = createSnapshotPlayer({

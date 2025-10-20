@@ -3,6 +3,7 @@ import type {
 	SessionPhaseMetadata,
 	SessionRuleSnapshot,
 	SessionSnapshot,
+	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 import { createSessionRegistries } from './sessionRegistries';
@@ -85,13 +86,21 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 		},
 	});
 
-const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
+const ASSET_METADATA: NonNullable<SessionSnapshotMetadata['assets']> =
 	Object.freeze({
 		passive: { label: 'Passive Effect' },
 		population: { label: 'Citizens' },
 		land: { icon: '🛤️', label: 'Frontier Land' },
-		slot: { description: 'Development slot descriptor.' },
+		slot: {
+			label: 'Development Slot',
+			description: 'Development slot descriptor.',
+		},
 		upkeep: { icon: '🧽', label: 'Maintenance' },
+		transfer: { icon: '🔄', label: 'Transfer' },
+		modifiers: Object.freeze({
+			cost: { icon: '💰', label: 'Cost Modifier' },
+			result: { icon: '✨', label: 'Result Modifier' },
+		}),
 	});
 
 export interface TestSessionScaffold {

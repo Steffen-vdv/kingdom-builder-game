@@ -15,8 +15,11 @@ function createAssets(overrides: AssetOverrides = {}): TranslationAssets {
 		land: overrides.land ?? {},
 		slot: overrides.slot ?? {},
 		passive: overrides.passive ?? {},
+		transfer: overrides.transfer ?? {},
 		upkeep: overrides.upkeep ?? {},
-		modifiers: overrides.modifiers ?? {},
+		modifiers:
+			overrides.modifiers ??
+			Object.freeze({ cost: Object.freeze({}), result: Object.freeze({}) }),
 		triggers: overrides.triggers ?? {},
 		tierSummaries: overrides.tierSummaries ?? {},
 		formatPassiveRemoval:

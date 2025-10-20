@@ -47,16 +47,12 @@ describe('land till formatter', () => {
 	it('summarizes till effect', () => {
 		const { context } = createContext();
 		const slotDisplay = selectSlotDisplay(context.assets);
+		const slotIcon = slotDisplay.icon ?? '🧩';
 		const summary = summarizeEffects(
 			[{ type: 'land', method: 'till' } as EffectDef],
 			context,
 		);
-		const expectedIcon = slotDisplay.icon ?? '';
-		if (expectedIcon) {
-			expect(summary).toContain(`${expectedIcon}+1`);
-		} else {
-			expect(summary).toContain('+1');
-		}
+		expect(summary).toContain(`${slotIcon}+1`);
 	});
 
 	it('summarizes till action', () => {
@@ -73,9 +69,12 @@ describe('land till formatter', () => {
 			return;
 		}
 		const summary = summarizeContent('action', tillId, context);
-		const slotToken = slotDisplay.icon ?? slotDisplay.label ?? '';
+		const slotIcon = slotDisplay.icon ?? '🧩';
+		const slotLabel = slotDisplay.label ?? 'Development Slot';
 		const hasSlotToken = summary.some(
-			(item) => typeof item === 'string' && item.includes(slotToken),
+			(item) =>
+				typeof item === 'string' &&
+				(item.includes(slotIcon) || item.includes(slotLabel)),
 		);
 		expect(hasSlotToken).toBe(true);
 	});

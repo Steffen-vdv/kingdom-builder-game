@@ -58,7 +58,12 @@ describe('translation diff resource source context', () => {
 				land: {},
 				slot: {},
 				passive: {},
-				modifiers: {},
+				transfer: {},
+				upkeep: {},
+				modifiers: {
+					cost: {},
+					result: {},
+				},
 				formatPassiveRemoval: (description: string) =>
 					`Active as long as ${description}`,
 			},

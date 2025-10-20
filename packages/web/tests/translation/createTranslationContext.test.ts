@@ -83,6 +83,11 @@ describe('createTranslationContext', () => {
 				land: { icon: '🌄', label: 'Territory' },
 				population: { icon: '🧑‍🤝‍🧑', label: 'Citizens' },
 				upkeep: { icon: '🪣', label: 'Maintenance' },
+				transfer: { icon: '🔁', label: 'Transfer' },
+				modifiers: {
+					cost: { icon: '💰', label: 'Cost Modifier' },
+					result: { icon: '✨', label: 'Result Modifier' },
+				},
 			},
 			triggers: {
 				[triggerId]: {
