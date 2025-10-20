@@ -367,8 +367,6 @@ describe('GameProvider', () => {
 	it('exposes gameplay preference props through the game context', async () => {
 		const handleToggleAutoAcknowledge = vi.fn();
 		const handleToggleAutoPass = vi.fn();
-		const handleToggleAutoAcknowledgeResolutions = vi.fn();
-		const handleToggleAutoPassTurn = vi.fn();
 		const capture = vi.fn();
 
 		function PreferenceSpy() {
@@ -377,10 +375,6 @@ describe('GameProvider', () => {
 				onToggleAutoAcknowledge,
 				autoPassEnabled,
 				onToggleAutoPass,
-				autoAcknowledgeResolutions,
-				onToggleAutoAcknowledgeResolutions,
-				autoPassTurn,
-				onToggleAutoPassTurn,
 			} = useGameEngine();
 			React.useEffect(() => {
 				capture({
@@ -388,20 +382,12 @@ describe('GameProvider', () => {
 					onToggleAutoAcknowledge,
 					autoPassEnabled,
 					onToggleAutoPass,
-					autoAcknowledgeResolutions,
-					onToggleAutoAcknowledgeResolutions,
-					autoPassTurn,
-					onToggleAutoPassTurn,
 				});
 			}, [
 				autoAcknowledgeEnabled,
 				onToggleAutoAcknowledge,
 				autoPassEnabled,
 				onToggleAutoPass,
-				autoAcknowledgeResolutions,
-				onToggleAutoAcknowledgeResolutions,
-				autoPassTurn,
-				onToggleAutoPassTurn,
 			]);
 			return null;
 		}
@@ -413,12 +399,6 @@ describe('GameProvider', () => {
 				onToggleAutoAcknowledge={handleToggleAutoAcknowledge}
 				autoPassEnabled={false}
 				onToggleAutoPass={handleToggleAutoPass}
-				autoAcknowledgeResolutions={false}
-				onToggleAutoAcknowledgeResolutions={
-					handleToggleAutoAcknowledgeResolutions
-				}
-				autoPassTurn
-				onToggleAutoPassTurn={handleToggleAutoPassTurn}
 			>
 				<PreferenceSpy />
 			</GameProvider>,
@@ -437,16 +417,6 @@ describe('GameProvider', () => {
 			lastCall?.onToggleAutoPass();
 		});
 		expect(handleToggleAutoPass).toHaveBeenCalledTimes(1);
-		expect(lastCall?.autoAcknowledgeResolutions).toBe(false);
-		act(() => {
-			lastCall?.onToggleAutoAcknowledgeResolutions();
-		});
-		expect(handleToggleAutoAcknowledgeResolutions).toHaveBeenCalledTimes(1);
-		expect(lastCall?.autoPassTurn).toBe(true);
-		act(() => {
-			lastCall?.onToggleAutoPassTurn();
-		});
-		expect(handleToggleAutoPassTurn).toHaveBeenCalledTimes(1);
 	});
 
 	it('updates the active session when the dev mode prop changes', async () => {
