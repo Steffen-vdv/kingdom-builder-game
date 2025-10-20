@@ -3,6 +3,7 @@ import { increaseOrDecrease, signed } from '../helpers';
 import {
 	RESULT_EVENT_RESOLVE,
 	RESULT_EVENT_TRANSFER,
+	formatModifierDescriptionLabel,
 	formatDevelopment,
 	formatPercentMagnitude,
 	formatPercentText,
@@ -64,10 +65,6 @@ function getModifierDescriptor(
 	};
 }
 
-function buildModifierLabelText(descriptor: { icon: string; label: string }) {
-	return [descriptor.icon, descriptor.label].filter(Boolean).join(' ').trim();
-}
-
 function getResultModifierLabel(context: TranslationContext) {
 	return getModifierDescriptor(context, 'result', 'Outcome Adjustment');
 }
@@ -98,7 +95,8 @@ function formatCostEffect(
 	const target = actionId
 		? `${actionInfo.icon} ${actionInfo.name}`
 		: actionInfo.name;
-	const labelText = `${buildModifierLabelText(costLabel)} on ${target}:`;
+	const modifierLabel = formatModifierDescriptionLabel(costLabel);
+	const labelText = `${modifierLabel} on ${target}:`;
 	const percent = parseNumericParam(effect.params?.['percent']);
 	if (typeof percent === 'number') {
 		const resolvedPercent = method === 'remove' ? -percent : percent;
@@ -188,7 +186,7 @@ registerModifierEvalHandler('transfer_pct', {
 		const descriptor = getResultModifierLabel(context);
 		const transferIcon = selectTransferDescriptor(context).icon;
 		const modifierDescription = formatResultModifierClause(
-			buildModifierLabelText(descriptor),
+			descriptor,
 			target.clauseTarget,
 			RESULT_EVENT_TRANSFER,
 			`${transferIcon} ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,

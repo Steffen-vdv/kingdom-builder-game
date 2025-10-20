@@ -9,6 +9,26 @@ import { selectResourceDescriptor } from '../registrySelectors';
 const joinParts = (...parts: Array<string | undefined>) =>
 	parts.filter(Boolean).join(' ').trim();
 
+const resolveModifierDescriptorToken = (descriptor: {
+	icon?: string;
+	label?: string;
+}) => {
+	const icon = descriptor.icon?.trim();
+	if (icon) {
+		return icon;
+	}
+	const label = descriptor.label?.trim();
+	return label ?? '';
+};
+
+export const formatModifierDescriptionLabel = (descriptor: {
+	icon?: string;
+	label?: string;
+}) => {
+	const token = resolveModifierDescriptorToken(descriptor);
+	return token ? `${token} modifier` : 'modifier';
+};
+
 const GENERAL_RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
 
 export const RESULT_EVENT_GRANT_RESOURCES = `Whenever it grants ${GENERAL_RESOURCES_KEYWORD}`,
@@ -19,12 +39,13 @@ export const formatTargetLabel = (icon: string, name: string) =>
 	joinParts(icon, name || '');
 
 export function formatResultModifierClause(
-	label: string,
+	label: { icon?: string; label?: string },
 	target: string,
 	event: string,
 	effect: string,
 ): string {
-	const prefix = `${label} on ${target}: ${event}`;
+	const modifierLabel = formatModifierDescriptionLabel(label);
+	const prefix = `${modifierLabel} on ${target}: ${event}`;
 	return `${prefix}, ${effect}`;
 }
 
@@ -63,7 +84,7 @@ export function wrapResultModifierEntries(
 					},
 		);
 	}
-	const labelText = `${label.icon} ${label.label}`;
+	const labelText = formatModifierDescriptionLabel(label);
 	const targetLabel = formatTargetLabel(target.icon ?? '', target.name);
 	const prefix = `${labelText} on ${targetLabel}: ${event}`;
 	return entries.map((entry) =>
@@ -165,7 +186,7 @@ export function formatGainFrom(
 		return `${magnitude}% ${adjective}${detailed ? ' of that resource' : ''}`;
 	})();
 	return formatResultModifierClause(
-		`${label.icon} ${label.label}`,
+		label,
 		source.description,
 		RESULT_EVENT_GRANT_RESOURCES,
 		`gain ${more}${usePercent ? roundingDetail : ''}`,
