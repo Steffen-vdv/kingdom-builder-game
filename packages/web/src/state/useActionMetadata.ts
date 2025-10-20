@@ -120,6 +120,14 @@ export function useActionMetadata({
 		void loadActionCosts(sessionId, actionId, normalizedParams, {
 			signal: controller.signal,
 		})
+			.then(() => {
+				if (!active) {
+					return;
+				}
+				setSnapshot(
+					readSessionActionMetadata(sessionId, actionId, normalizedParams),
+				);
+			})
 			.catch((error) => {
 				if (isAbortError(error)) {
 					return;
@@ -156,6 +164,14 @@ export function useActionMetadata({
 		void loadActionRequirements(sessionId, actionId, normalizedParams, {
 			signal: controller.signal,
 		})
+			.then(() => {
+				if (!active) {
+					return;
+				}
+				setSnapshot(
+					readSessionActionMetadata(sessionId, actionId, normalizedParams),
+				);
+			})
 			.catch((error) => {
 				if (isAbortError(error)) {
 					return;
@@ -189,6 +205,14 @@ export function useActionMetadata({
 		void loadActionOptions(sessionId, actionId, {
 			signal: controller.signal,
 		})
+			.then(() => {
+				if (!active) {
+					return;
+				}
+				setSnapshot(
+					readSessionActionMetadata(sessionId, actionId, normalizedParams),
+				);
+			})
 			.catch((error) => {
 				if (isAbortError(error)) {
 					return;
@@ -206,7 +230,7 @@ export function useActionMetadata({
 			controller.abort();
 			loadingRef.current.groups = false;
 		};
-	}, [actionId, sessionId, snapshot.groups, paramsKey]);
+	}, [actionId, sessionId, snapshot.groups, normalizedParams, paramsKey]);
 
 	return useMemo(() => {
 		const result: UseActionMetadataResult = {
