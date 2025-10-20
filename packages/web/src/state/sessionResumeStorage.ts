@@ -4,7 +4,7 @@ export interface ResumeSessionRecord {
 	readonly sessionId: string;
 	readonly turn: number;
 	readonly devMode: boolean;
-	readonly updatedAt: string;
+	readonly updatedAt: number;
 }
 
 const resolveStorage = (): Storage | undefined => {
@@ -27,6 +27,8 @@ const sanitizeParsedRecord = (
 	>;
 	const { sessionId, turn, devMode, updatedAt } = candidate;
 	const numericTurn = Number(turn);
+	const numericUpdatedAt =
+		typeof updatedAt === 'string' ? Date.parse(updatedAt) : Number(updatedAt);
 
 	if (typeof sessionId !== 'string') {
 		return undefined;
@@ -36,11 +38,11 @@ const sanitizeParsedRecord = (
 		return undefined;
 	}
 
-	if (typeof updatedAt !== 'string') {
+	if (!Number.isFinite(numericTurn)) {
 		return undefined;
 	}
 
-	if (!Number.isFinite(numericTurn)) {
+	if (!Number.isFinite(numericUpdatedAt)) {
 		return undefined;
 	}
 
@@ -48,7 +50,7 @@ const sanitizeParsedRecord = (
 		sessionId,
 		turn: numericTurn,
 		devMode,
-		updatedAt,
+		updatedAt: numericUpdatedAt,
 	};
 };
 
@@ -93,7 +95,7 @@ export const writeStoredResumeSession = (record: ResumeSessionRecord): void => {
 			sessionId: record.sessionId,
 			turn: Number(record.turn),
 			devMode: record.devMode,
-			updatedAt: record.updatedAt,
+			updatedAt: Number(record.updatedAt),
 		});
 		storage.setItem(RESUME_SESSION_STORAGE_KEY, payload);
 	} catch {
