@@ -1,5 +1,6 @@
 import Button from '../components/common/Button';
 import { ShowcaseCard } from '../components/layouts/ShowcasePage';
+import type { ResumeSessionRecord } from '../state/sessionResumeStorage';
 
 const KNOWLEDGE_CARD_CLASS = [
 	'mt-8 flex flex-col gap-4 rounded-2xl border border-white/60',
@@ -61,12 +62,23 @@ const KNOWLEDGE_PARAGRAPH_TEXT = [
 	'or revisit the lore to sharpen your grand strategy.',
 ].join(' ');
 
+const TURN_LABEL_FORMATTER = new Intl.NumberFormat('en-US', {
+	maximumFractionDigits: 0,
+});
+
+const formatTurnLabel = (turn: number): string => {
+	const normalized = Number.isFinite(turn) ? Math.max(1, Math.round(turn)) : 1;
+	return TURN_LABEL_FORMATTER.format(normalized);
+};
+
 export interface CallToActionProps {
 	onStart: () => void;
 	onStartDev: () => void;
 	onOverview: () => void;
 	onTutorial: () => void;
 	onOpenSettings: () => void;
+	resumePoint: ResumeSessionRecord | null;
+	onContinueSavedGame: () => void;
 }
 
 export function CallToActionSection({
@@ -75,7 +87,19 @@ export function CallToActionSection({
 	onOverview,
 	onTutorial,
 	onOpenSettings,
+	resumePoint,
+	onContinueSavedGame,
 }: CallToActionProps) {
+	const continueButton = resumePoint ? (
+		<Button
+			variant="primary"
+			className={CTA_BUTTON_BASE_CLASS}
+			onClick={onContinueSavedGame}
+			icon="⏯️"
+		>
+			{`Continue game (turn ${formatTurnLabel(resumePoint.turn)})`}
+		</Button>
+	) : null;
 	const startGameButton = (
 		<Button
 			variant="primary"
@@ -141,10 +165,11 @@ export function CallToActionSection({
 					</h2>
 					{/* prettier-ignore */}
 					<p className={CTA_DESCRIPTION_CLASS}>
-						{CTA_DESCRIPTION_TEXT}
-					</p>
+{CTA_DESCRIPTION_TEXT}
+</p>
 				</div>
 				<div className={CTA_BUTTON_COLUMN_CLASS}>
+					{continueButton}
 					{startGameButton}
 					{startDevButton}
 					{settingsButton}

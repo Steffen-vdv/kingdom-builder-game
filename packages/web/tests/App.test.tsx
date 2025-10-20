@@ -52,8 +52,11 @@ function createNavigationState(
 		isBackgroundAudioMuted: false,
 		isAutoAcknowledgeEnabled: false,
 		isAutoPassEnabled: false,
+		resumePoint: null,
+		resumeSessionId: null,
 		startStandardGame: vi.fn(),
 		startDeveloperGame: vi.fn(),
+		continueSavedGame: vi.fn(),
 		openOverview: vi.fn(),
 		openTutorial: vi.fn(),
 		returnToMenu: vi.fn(),
@@ -63,6 +66,9 @@ function createNavigationState(
 		toggleBackgroundAudioMute: vi.fn(),
 		toggleAutoAcknowledge: vi.fn(),
 		toggleAutoPass: vi.fn(),
+		persistResumeSession: vi.fn(),
+		clearResumeSession: vi.fn(),
+		handleResumeSessionFailure: vi.fn(),
 		...overrides,
 	};
 }
@@ -158,5 +164,26 @@ describe('<App />', () => {
 		fetchMetadataSnapshotMock.mockResolvedValue(response);
 		render(<App />);
 		expect(await screen.findByText(heroTitle)).toBeInTheDocument();
+	});
+
+	it('surfaces continue CTA when resume point is available', () => {
+		const continueSavedGame = vi.fn();
+		useAppNavigationMock.mockReturnValue(
+			createNavigationState({
+				resumePoint: {
+					sessionId: 'session-1',
+					turn: 12,
+					devMode: false,
+					updatedAt: Date.now(),
+				},
+				continueSavedGame,
+			}),
+		);
+		render(<App />);
+		const continueButton = screen.getByRole('button', {
+			name: 'Continue game (turn 12)',
+		});
+		fireEvent.click(continueButton);
+		expect(continueSavedGame).toHaveBeenCalledTimes(1);
 	});
 });
