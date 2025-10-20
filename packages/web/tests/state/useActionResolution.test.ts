@@ -30,6 +30,10 @@ describe('useActionResolution', () => {
 						setTrackedTimeout,
 						timeScaleRef,
 						mountedRef,
+						players: [
+							{ id: 'A', name: 'Player A' },
+							{ id: 'B', name: 'Player B' },
+						],
 					});
 				},
 				{ initialProps: { scale: 3 } },
@@ -130,6 +134,10 @@ describe('useActionResolution', () => {
 					setTrackedTimeout,
 					timeScaleRef,
 					mountedRef,
+					players: [
+						{ id: 'A', name: 'Player A' },
+						{ id: 'B', name: 'Player B' },
+					],
 				});
 			});
 			let firstPromise: Promise<void> = Promise.resolve();
@@ -191,6 +199,10 @@ describe('useActionResolution', () => {
 					setTrackedTimeout,
 					timeScaleRef,
 					mountedRef,
+					players: [
+						{ id: 'A', name: 'Player A' },
+						{ id: 'B', name: 'Player B' },
+					],
 				});
 			});
 			let resolutionPromise: Promise<void> = Promise.resolve();
@@ -232,5 +244,51 @@ describe('useActionResolution', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+
+	it('updates active resolution player names when player data changes', async () => {
+		const addResolutionLog = vi.fn();
+		const setTrackedTimeout = vi
+			.fn<(callback: () => void, delay: number) => number>()
+			.mockImplementation((callback) => {
+				callback();
+				return 0;
+			});
+		const { result, rerender } = renderHook(
+			({ players }: { players: Array<{ id: string; name: string }> }) => {
+				const timeScaleRef = React.useRef(1);
+				const mountedRef = React.useRef(true);
+				React.useEffect(() => {
+					return () => {
+						mountedRef.current = false;
+					};
+				}, []);
+				return useActionResolution({
+					addResolutionLog,
+					setTrackedTimeout,
+					timeScaleRef,
+					mountedRef,
+					players,
+				});
+			},
+			{
+				initialProps: {
+					players: [{ id: 'A', name: 'Player A' }],
+				},
+			},
+		);
+		act(() => {
+			void result.current.showResolution({
+				lines: ['Single entry'],
+				player: { id: 'A', name: 'Player A' },
+				requireAcknowledgement: true,
+			});
+		});
+		expect(result.current.resolution?.player?.name).toBe('Player A');
+		rerender({ players: [{ id: 'A', name: 'Hero' }] });
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(result.current.resolution?.player?.name).toBe('Hero');
 	});
 });

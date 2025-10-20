@@ -124,6 +124,7 @@ export function GameProviderInner({
 			setTrackedTimeout,
 			timeScaleRef,
 			mountedRef,
+			players: sessionSnapshot.game.players,
 		});
 
 	const handleShowResolution = useCallback(

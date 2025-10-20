@@ -190,6 +190,8 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		);
 		if (player) {
 			player.name = name;
+			this.#advanceManager.syncPlayerName(playerId, name);
+			this.#aiSimulationManager.syncPlayerName(playerId, name);
 		}
 	}
 

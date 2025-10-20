@@ -24,6 +24,20 @@ export class SessionAdvanceManager {
 		this.#latestAdvance = cloneValue(result);
 	}
 
+	syncPlayerName(playerId: string, name: string): void {
+		if (!this.#latestAdvance) {
+			return;
+		}
+		const { player } = this.#latestAdvance;
+		if (player.id !== playerId || player.name === name) {
+			return;
+		}
+		this.#latestAdvance = {
+			...this.#latestAdvance,
+			player: { ...player, name },
+		} satisfies SessionAdvanceResult;
+	}
+
 	advancePhase(): SessionAdvanceResult {
 		if (this.#latestAdvance) {
 			const result = cloneValue(this.#latestAdvance);

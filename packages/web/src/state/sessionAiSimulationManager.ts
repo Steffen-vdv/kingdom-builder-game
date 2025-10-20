@@ -75,6 +75,49 @@ export class SessionAiSimulationManager {
 		return cloneValue(cached);
 	}
 
+	syncPlayerName(playerId: string, name: string): void {
+		if (!this.#simulationCache.size) {
+			return;
+		}
+		for (const [key, result] of this.#simulationCache.entries()) {
+			let changed = false;
+			const before =
+				result.before.id === playerId && result.before.name !== name
+					? { ...result.before, name }
+					: result.before;
+			if (before !== result.before) {
+				changed = true;
+			}
+			const after =
+				result.after.id === playerId && result.after.name !== name
+					? { ...result.after, name }
+					: result.after;
+			if (after !== result.after) {
+				changed = true;
+			}
+			let stepsChanged = false;
+			const steps = result.steps.map((step) => {
+				if (step.player.id !== playerId || step.player.name === name) {
+					return step;
+				}
+				stepsChanged = true;
+				return {
+					...step,
+					player: { ...step.player, name },
+				};
+			});
+			if (!changed && !stepsChanged) {
+				continue;
+			}
+			this.#simulationCache.set(key, {
+				...result,
+				before,
+				after,
+				steps,
+			});
+		}
+	}
+
 	cacheSimulation(
 		playerId: string,
 		result: SessionSimulateResponse['result'],

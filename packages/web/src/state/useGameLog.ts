@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
@@ -112,6 +112,7 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 	const [log, setLog] = useState<ResolutionLogEntry[]>([]);
 	const [logOverflowed, setLogOverflowed] = useState(false);
 	const nextLogIdRef = useRef(0);
+	const playerNamesRef = useRef<Map<string, string>>(new Map());
 
 	const resolvePlayer = useCallback(
 		(
@@ -180,6 +181,62 @@ export function useGameLog({ sessionSnapshot }: GameLogOptions) {
 			sessionSnapshot.game.players,
 		],
 	);
+
+	useEffect(() => {
+		const names = new Map<string, string>();
+		for (const player of sessionSnapshot.game.players) {
+			names.set(player.id, player.name);
+		}
+		const previous = playerNamesRef.current;
+		let changed = false;
+		for (const [playerId, playerName] of names.entries()) {
+			if (previous.get(playerId) !== playerName) {
+				changed = true;
+				break;
+			}
+		}
+		if (!changed) {
+			for (const key of previous.keys()) {
+				if (!names.has(key)) {
+					changed = true;
+					break;
+				}
+			}
+		}
+		playerNamesRef.current = names;
+		if (!changed) {
+			return;
+		}
+		setLog((entries) => {
+			if (!entries.length) {
+				return entries;
+			}
+			let updated: ResolutionLogEntry[] | undefined;
+			for (let index = 0; index < entries.length; index += 1) {
+				const entry = entries[index];
+				if (!entry || entry.kind !== 'resolution') {
+					continue;
+				}
+				const { player } = entry.resolution;
+				if (!player) {
+					continue;
+				}
+				const nextName = names.get(player.id);
+				if (!nextName || nextName === player.name) {
+					continue;
+				}
+				if (!updated) {
+					updated = [...entries];
+				}
+				const resolution = {
+					...entry.resolution,
+					player: { ...player, name: nextName },
+				} satisfies ActionResolution;
+				updated[index] = { ...entry, resolution };
+			}
+			return updated ?? entries;
+		});
+	}, [sessionSnapshot.game.players]);
 
 	return { log, logOverflowed, addResolutionLog };
 }

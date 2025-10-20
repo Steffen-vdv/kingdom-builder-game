@@ -299,4 +299,90 @@ describe('useGameLog', () => {
 		expect(entry.resolution.timeline).toEqual(secondResolution.timeline);
 		expect(entry.resolution.timeline).not.toBe(secondResolution.timeline);
 	});
+
+	it('updates logged player identities when names change', () => {
+		const players: SessionPlayerStateSnapshot[] = [
+			createPlayer('A'),
+			createPlayer('B'),
+		];
+		const createSession = (
+			playerList: SessionPlayerStateSnapshot[],
+		): SessionSnapshot => ({
+			game: {
+				turn: 1,
+				currentPlayerIndex: 0,
+				currentPhase: 'main',
+				currentStep: 'step-0',
+				phaseIndex: 0,
+				stepIndex: 0,
+				devMode: false,
+				players: playerList,
+				activePlayerId: playerList[0]!.id,
+				opponentId: playerList[1]!.id,
+			},
+			phases: [],
+			actionCostResource: primaryResource,
+			recentResourceGains: [],
+			compensations: {},
+			rules: {
+				tieredResourceKey: primaryResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			passiveRecords: {
+				[playerList[0]!.id]: [],
+				[playerList[1]!.id]: [],
+			},
+			metadata: createEmptySnapshotMetadata(),
+		});
+		const sessionState = createSession(players);
+		const { result, rerender } = renderHook(
+			({ snapshot }: { snapshot: SessionSnapshot }) =>
+				useGameLog({ sessionSnapshot: snapshot }),
+			{
+				initialProps: { snapshot: sessionState },
+			},
+		);
+		const resolution: ActionResolution = {
+			lines: ['Resolution summary'],
+			visibleLines: ['Resolution summary'],
+			timeline: [
+				{
+					text: 'Resolution summary',
+					depth: 0,
+					kind: 'headline',
+				},
+			],
+			visibleTimeline: [
+				{
+					text: 'Resolution summary',
+					depth: 0,
+					kind: 'headline',
+				},
+			],
+			isComplete: true,
+			summaries: [],
+			source: 'action',
+			requireAcknowledgement: false,
+			player: players[0],
+		};
+
+		act(() => {
+			result.current.addResolutionLog(resolution, players[0]);
+		});
+
+		const renamedPlayers: SessionPlayerStateSnapshot[] = [
+			{ ...players[0]!, name: 'Heroic Player' },
+			players[1]!,
+		];
+		rerender({ snapshot: createSession(renamedPlayers) });
+
+		const [entry] = result.current.log;
+		expect(entry?.kind).toBe('resolution');
+		if (entry?.kind !== 'resolution') {
+			throw new Error('Expected a resolution log entry');
+		}
+		expect(entry.resolution.player?.id).toBe(players[0]!.id);
+		expect(entry.resolution.player?.name).toBe('Heroic Player');
+	});
 });

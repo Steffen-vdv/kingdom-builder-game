@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import type {
 	ActionResolution,
@@ -6,6 +6,7 @@ import type {
 	ResolutionSource,
 	ShowResolutionOptions,
 } from './useActionResolution.types';
+import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol/session';
 import {
 	deriveTimelineFromLines,
 	isCompleteTimeline,
@@ -22,6 +23,7 @@ interface UseActionResolutionOptions {
 	setTrackedTimeout: (callback: () => void, delay: number) => number;
 	timeScaleRef: React.MutableRefObject<number>;
 	mountedRef: React.MutableRefObject<boolean>;
+	players?: ReadonlyArray<Pick<SessionPlayerStateSnapshot, 'id' | 'name'>>;
 }
 
 type ResolutionStateUpdater =
@@ -34,6 +36,7 @@ function useActionResolution({
 	setTrackedTimeout,
 	timeScaleRef,
 	mountedRef,
+	players = [],
 }: UseActionResolutionOptions) {
 	const [resolution, assignResolution] = useState<ActionResolution | null>(
 		null,
@@ -322,6 +325,28 @@ function useActionResolution({
 			timeScaleRef,
 		],
 	);
+
+	useEffect(() => {
+		if (!players.length) {
+			return;
+		}
+		const lookup = new Map(
+			players.map((player) => [player.id, player.name] as const),
+		);
+		setResolution((previous) => {
+			if (!previous || !previous.player) {
+				return previous;
+			}
+			const nextName = lookup.get(previous.player.id);
+			if (!nextName || nextName === previous.player.name) {
+				return previous;
+			}
+			return {
+				...previous,
+				player: { ...previous.player, name: nextName },
+			} satisfies ActionResolution;
+		});
+	}, [players, setResolution]);
 
 	return { resolution, showResolution, acknowledgeResolution };
 }
