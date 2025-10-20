@@ -47,6 +47,7 @@ export {
 export {
 	requirementSchema,
 	effectSchema,
+	actionCategorySchema,
 	actionEffectGroupSchema,
 	actionEffectSchema,
 	actionSchema,
@@ -62,6 +63,7 @@ export {
 export type {
 	RequirementConfig,
 	EffectConfig,
+	ActionCategoryConfig,
 	ActionEffectGroup,
 	ActionEffectGroupOption,
 	ActionEffect,
