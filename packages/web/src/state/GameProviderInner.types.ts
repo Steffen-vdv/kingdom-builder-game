@@ -24,10 +24,6 @@ export interface GameProviderInnerProps {
 	onToggleAutoAcknowledge: () => void;
 	autoPassEnabled: boolean;
 	onToggleAutoPass: () => void;
-	autoAcknowledgeResolutions: boolean;
-	onToggleAutoAcknowledgeResolutions: () => void;
-	autoPassTurn: boolean;
-	onToggleAutoPassTurn: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	queue: SessionQueueHelpers;
