@@ -1,14 +1,10 @@
 import React from 'react';
-
-const HEADING_CLASS = [
-	'flex flex-wrap items-center gap-2 text-base font-medium',
-	'text-slate-900 dark:text-slate-100',
-].join(' ');
-const SUBTITLE_CLASS = [
-	'italic text-sm font-normal text-slate-600',
-	'dark:text-slate-300',
-].join(' ');
-const ICON_CLASS = 'text-lg leading-none';
+import {
+	TAB_HEADER_CLASSES,
+	TAB_ICON_CLASSES,
+	TAB_LABEL_CLASSES,
+	TAB_COUNT_CLASSES,
+} from './actionsPanelStyles';
 
 export interface ActionCategoryDescriptor {
 	icon?: React.ReactNode;
@@ -18,23 +14,32 @@ export interface ActionCategoryDescriptor {
 
 interface ActionCategoryHeaderProps {
 	descriptor: ActionCategoryDescriptor;
+	counts?: { performable: number; total: number };
 }
 
 export default function ActionCategoryHeader({
 	descriptor,
+	counts,
 }: ActionCategoryHeaderProps) {
-	const { icon, label, subtitle } = descriptor;
+	const { icon, label } = descriptor;
+	const performable = counts?.performable ?? 0;
+	const total = counts?.total ?? 0;
 	return (
-		<header>
-			<h3 className={HEADING_CLASS}>
-				{icon ? (
-					<span aria-hidden className={ICON_CLASS}>
-						{icon}
-					</span>
-				) : null}
-				<span>{label}</span>
-				<span className={SUBTITLE_CLASS}>{subtitle}</span>
-			</h3>
-		</header>
+		<span className={TAB_HEADER_CLASSES}>
+			{icon ? (
+				<span aria-hidden className={TAB_ICON_CLASSES}>
+					{icon}
+				</span>
+			) : null}
+			<span className="flex flex-col text-left">
+				<span className={TAB_LABEL_CLASSES}>{label}</span>
+				<span
+					className={TAB_COUNT_CLASSES}
+					aria-label={`${performable} of ${total} actions performable`}
+				>
+					{performable}/{total} performable
+				</span>
+			</span>
+		</span>
 	);
 }

@@ -33,6 +33,8 @@ import {
 	createSlotDescriptor,
 } from './descriptors';
 import { createStatMetadata, humanizeId } from './statMetadata';
+import { initializeSessionState } from '../../../src/state/sessionStateStore';
+import { toRegistriesPayload } from './registriesPayload';
 
 const POPULATION_ICON_FALLBACK = '👥';
 
@@ -325,6 +327,11 @@ export function createActionsPanelGame({
 			sections: [],
 			tokens: {},
 		},
+	});
+	initializeSessionState({
+		sessionId,
+		snapshot: sessionState,
+		registries: toRegistriesPayload(sessionRegistries),
 	});
 	return {
 		sessionId,

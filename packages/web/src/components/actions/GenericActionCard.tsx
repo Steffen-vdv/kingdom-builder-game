@@ -14,7 +14,6 @@ import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
-	splitActionCostMap,
 	type ResourceDescriptorSelector,
 } from './utils';
 import type { PendingActionState } from './GenericActions';
@@ -23,6 +22,7 @@ import { formatIconTitle, renderIconLabel } from './iconHelpers';
 import { type Action, type DisplayPlayer, type HoverCardData } from './types';
 import { normalizeActionFocus } from './types';
 import type { UseActionMetadataResult } from '../../state/useActionMetadata';
+import { getActionAvailability } from './getActionAvailability';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -70,16 +70,24 @@ function GenericActionCard({
 	formatRequirement,
 	selectResourceDescriptor,
 }: GenericActionCardProps) {
-	const { costs, cleanup: cleanupCosts } = useMemo(
-		() => splitActionCostMap(metadata.costs),
-		[metadata.costs],
+	const summary = summaries.get(action.id);
+	const availability = useMemo(
+		() =>
+			getActionAvailability({
+				metadata,
+				player,
+				canInteract,
+				summary,
+			}),
+		[metadata, player, canInteract, summary],
 	);
+	const { costs, cleanup: cleanupCosts } = availability;
 	const costsLoading = metadata.loading.costs;
 	const requirementsLoading = metadata.loading.requirements;
 	const groupsLoading = metadata.loading.groups;
-	const costsReady = !costsLoading;
-	const hasCleanupCosts = Object.keys(cleanupCosts).length > 0;
-	const requirementFailures = metadata.requirements ?? [];
+	const costsReady = availability.costsReady;
+	const hasCleanupCosts = availability.hasCleanupCosts;
+	const requirementFailures = availability.requirementFailures;
 	const requirementMessages = requirementFailures.map((failure) =>
 		formatRequirement(translateRequirementFailure(failure, translationContext)),
 	);
@@ -90,27 +98,9 @@ function GenericActionCard({
 				? []
 				: ['Loading requirements…'];
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
-	const canPay = costsReady
-		? Object.entries(costs).every(
-				([resourceKey, cost]) =>
-					(player.resources[resourceKey] || 0) >= (cost ?? 0),
-			)
-		: false;
-	const requirementsReady = !requirementsLoading;
-	const meetsRequirements =
-		requirementsReady && requirementFailures.length === 0;
-	const summary = summaries.get(action.id);
-	const implemented = (summary?.length ?? 0) > 0;
 	const groups = metadata.groups ?? [];
 	const groupsReady = !groupsLoading;
-	const metadataReady = costsReady && requirementsReady && groupsReady;
-	const baseEnabled = [
-		metadataReady,
-		canPay,
-		meetsRequirements,
-		canInteract,
-		implemented,
-	].every(Boolean);
+	const baseEnabled = availability.performable;
 	const isPending = pending?.action.id === action.id;
 	let cardEnabled = baseEnabled && !pending;
 	if (isPending) {
@@ -120,15 +110,15 @@ function GenericActionCard({
 		? formatMissingResources(costs, player.resources, selectResourceDescriptor)
 		: 'Loading costs…';
 	const requirementText = requirements.join(', ');
-	const title = !implemented
+	const title = !availability.implemented
 		? 'Not implemented yet'
 		: requirementsLoading
 			? 'Loading requirements…'
 			: costsLoading
 				? 'Loading costs…'
-				: !meetsRequirements
+				: !availability.meetsRequirements
 					? requirementText
-					: !canPay
+					: !availability.canPay
 						? (insufficientTooltip ?? 'Cannot pay costs')
 						: undefined;
 	const hoverBackground =
@@ -140,6 +130,12 @@ function GenericActionCard({
 	const stepIndex = stepCount
 		? Math.min(stepCount, (pending?.step ?? 0) + 1)
 		: undefined;
+	const notImplementedDetails = availability.implemented
+		? undefined
+		: {
+				description: 'Not implemented yet',
+				descriptionClass: 'italic text-red-600',
+			};
 	const optionCards = useEffectGroupOptions({
 		currentGroup,
 		pendingParams: pending?.params,
@@ -155,6 +151,21 @@ function GenericActionCard({
 	const hoverTitle = formatIconTitle(actionIcon, action.name);
 	const hoverContent = describeContent('action', action.id, translationContext);
 	const { effects, description } = splitSummary(hoverContent);
+	const createHoverDetails = (): HoverCardData => ({
+		title: hoverTitle,
+		effects,
+		requirements,
+		costs,
+		...(hasCleanupCosts ? { upkeep: cleanupCosts } : {}),
+		...(description && { description }),
+		...(notImplementedDetails ?? {}),
+		bgClass: hoverBackground,
+	});
+	const handleMouseEnter = isPending
+		? undefined
+		: () => {
+				handleHoverCard(createHoverDetails());
+			};
 	return (
 		<ActionCard
 			key={action.id}
@@ -166,7 +177,7 @@ function GenericActionCard({
 			requirements={requirements}
 			requirementIcons={requirementIcons}
 			summary={summary}
-			implemented={implemented}
+			implemented={availability.implemented}
 			enabled={cardEnabled}
 			tooltip={title}
 			focus={actionFocus}
@@ -191,26 +202,7 @@ function GenericActionCard({
 				setPending(null);
 				void performAction(action);
 			}}
-			onMouseEnter={
-				isPending
-					? undefined
-					: () => {
-							const hoverDetails: HoverCardData = {
-								title: hoverTitle,
-								effects,
-								requirements,
-								costs,
-								...(hasCleanupCosts ? { upkeep: cleanupCosts } : {}),
-								...(description && { description }),
-								...(!implemented && {
-									description: 'Not implemented yet',
-									descriptionClass: 'italic text-red-600',
-								}),
-								bgClass: hoverBackground,
-							};
-							handleHoverCard(hoverDetails);
-						}
-			}
+			onMouseEnter={handleMouseEnter}
 			onMouseLeave={isPending ? undefined : clearHoverCard}
 		/>
 	);

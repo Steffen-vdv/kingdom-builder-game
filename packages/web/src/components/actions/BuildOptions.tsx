@@ -10,9 +10,7 @@ import { useActionMetadata } from '../../state/useActionMetadata';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
-import ActionCategoryHeader, {
-	type ActionCategoryDescriptor,
-} from './ActionCategoryHeader';
+import type { ActionCategoryDescriptor } from './ActionCategoryHeader';
 import {
 	formatMissingResources,
 	playerHasRequiredResources,
@@ -30,6 +28,7 @@ import {
 } from './types';
 import { normalizeActionFocus } from './types';
 import { useActionOptionCosts } from './useActionOptionCosts';
+import { CATEGORY_SUBTITLE_CLASSES } from './actionsPanelStyles';
 
 const HOVER_CARD_BG = [
 	'bg-gradient-to-br from-white/80 to-white/60',
@@ -75,6 +74,7 @@ export default function BuildOptions({
 		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
+	const { subtitle } = category;
 	const requirementFailures = metadata.requirements ?? [];
 	const requirementMessages = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
@@ -141,11 +141,13 @@ export default function BuildOptions({
 		actionInfo?.name ?? action.name,
 	);
 	return (
-		<div>
-			<ActionCategoryHeader descriptor={category} />
+		<div className="space-y-3">
+			{subtitle ? (
+				<p className={CATEGORY_SUBTITLE_CLASSES}>{subtitle}</p>
+			) : null}
 			<div
 				ref={listRef}
-				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2"
 			>
 				{entries.map(({ building, costs, upkeep }) => {
 					const focus = normalizeActionFocus(building.focus);
