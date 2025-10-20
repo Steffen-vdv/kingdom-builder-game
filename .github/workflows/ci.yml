@@ -8,10 +8,10 @@ on:
 
 env:
   # Kill the slow audit/fund calls that were timing out (503) in your logs
-  NPM_CONFIG_AUDIT: "false"
-  NPM_CONFIG_FUND: "false"
+  NPM_CONFIG_AUDIT: 'false'
+  NPM_CONFIG_FUND: 'false'
   # Optional: silence progress bars in CI
-  NPM_CONFIG_PROGRESS: "false"
+  NPM_CONFIG_PROGRESS: 'false'
 
 jobs:
   test:
