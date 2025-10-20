@@ -32,7 +32,25 @@ import {
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
-import { ActionCategory, ActionId } from '../actions';
+import { ActionId } from '../actions';
+import {
+	ACTION_CATEGORIES,
+	ActionCategoryId,
+	type ActionCategoryId as ActionCategoryIdValue,
+} from '../actionCategories';
+
+const categoryOrder = (categoryId: ActionCategoryIdValue) => {
+	const category = ACTION_CATEGORIES.get(categoryId);
+	if (!category) {
+		throw new Error(
+			`Missing action category definition for id "${categoryId}".`,
+		);
+	}
+	return category.order;
+};
+
+const basicCategoryOrder = categoryOrder(ActionCategoryId.Basic);
+const buildCategoryOrder = categoryOrder(ActionCategoryId.Build);
 
 export function registerSpecialActions(registry: Registry<ActionDef>) {
 	registry.add(
@@ -79,8 +97,8 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					.params(statParams().key(Stat.warWeariness).amount(1))
 					.build(),
 			)
-			.category(ActionCategory.Basic)
-			.order(6)
+			.category(ActionCategoryId.Basic)
+			.order(basicCategoryOrder + 6)
 			.focus(Focus.Aggressive)
 			.build(),
 	);
@@ -136,8 +154,8 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.category(ActionCategory.Basic)
-			.order(7)
+			.category(ActionCategoryId.Basic)
+			.order(basicCategoryOrder + 7)
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -220,8 +238,8 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 					.params(buildingParams().id('$id'))
 					.build(),
 			)
-			.category(ActionCategory.Building)
-			.order(1)
+			.category(ActionCategoryId.Build)
+			.order(buildCategoryOrder - 2)
 			.focus(Focus.Other)
 			.build(),
 	);
