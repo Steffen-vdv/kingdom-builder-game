@@ -4,14 +4,13 @@ import Menu from './Menu';
 import Overview from './Overview';
 import Tutorial from './Tutorial';
 import BackgroundMusic from './components/audio/BackgroundMusic';
+import BlockingScreen from './components/common/BlockingScreen';
+import Button from './components/common/Button';
 import { useAppNavigation } from './state/useAppNavigation';
 import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 import { RegistryMetadataProvider } from './contexts/RegistryMetadataContext';
-import { getContentRegistrySnapshot } from './contexts/contentRegistrySnapshot';
-
-const { registries: OVERVIEW_REGISTRIES, metadata: OVERVIEW_METADATA } =
-	getContentRegistrySnapshot();
+import { useOverviewMetadata } from './state/useOverviewMetadata';
 
 export default function App() {
 	const {
@@ -37,14 +36,59 @@ export default function App() {
 		toggleAutoPass,
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
+	const overviewMetadataState = useOverviewMetadata(
+		currentScreen === Screen.Overview,
+	);
 
 	let screen: ReactNode;
 	switch (currentScreen) {
 		case Screen.Overview:
+			if (overviewMetadataState.error) {
+				screen = (
+					<BlockingScreen
+						title="We could not load the overview."
+						description="Try again in a moment."
+					>
+						<p className="max-w-xl text-sm text-slate-600 dark:text-slate-300">
+							{overviewMetadataState.error.message}
+						</p>
+						<div className="flex flex-wrap items-center justify-center gap-4">
+							<Button
+								onClick={overviewMetadataState.retry}
+								variant="primary"
+								icon="↻"
+							>
+								Try again
+							</Button>
+							<Button onClick={returnToMenu} variant="secondary" icon="🏠">
+								Return to menu
+							</Button>
+						</div>
+					</BlockingScreen>
+				);
+				break;
+			}
+			if (
+				overviewMetadataState.isLoading ||
+				!overviewMetadataState.registries ||
+				!overviewMetadataState.metadata
+			) {
+				screen = (
+					<BlockingScreen
+						title="Preparing your kingdom..."
+						description="Loading overview details."
+					>
+						<p className="text-sm text-slate-600 dark:text-slate-300">
+							This will only take a few moments.
+						</p>
+					</BlockingScreen>
+				);
+				break;
+			}
 			screen = (
 				<RegistryMetadataProvider
-					registries={OVERVIEW_REGISTRIES}
-					metadata={OVERVIEW_METADATA}
+					registries={overviewMetadataState.registries}
+					metadata={overviewMetadataState.metadata}
 				>
 					<Overview onBack={returnToMenu} />
 				</RegistryMetadataProvider>

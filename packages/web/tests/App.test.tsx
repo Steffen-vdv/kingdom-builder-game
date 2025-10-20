@@ -1,62 +1,162 @@
-import { describe, it, expect, vi } from 'vitest';
-import { renderToString } from 'react-dom/server';
+/** @vitest-environment jsdom */
 import React from 'react';
+import { describe, beforeEach, it, expect, vi } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import type {
+	SessionMetadataSnapshot,
+	SessionMetadataSnapshotResponse,
+} from '@kingdom-builder/protocol/session';
+import type { AppNavigationState } from '../src/state/appNavigationState';
+import { Screen } from '../src/state/appHistory';
+
+vi.mock('../src/components/audio/BackgroundMusic', () => ({
+	default: () => null,
+}));
+
+const useAppNavigationMock = vi.fn();
+vi.mock('../src/state/useAppNavigation', () => ({
+	useAppNavigation: () => useAppNavigationMock(),
+}));
+
+const usePlayerIdentityMock = vi.fn();
+vi.mock('../src/state/playerIdentity', () => ({
+	usePlayerIdentity: () => usePlayerIdentityMock(),
+}));
+
+const fetchMetadataSnapshotMock = vi.fn<
+	[],
+	Promise<SessionMetadataSnapshotResponse>
+>();
+vi.mock('../src/state/gameApiInstance', () => ({
+	ensureGameApi: () => ({
+		fetchMetadataSnapshot: fetchMetadataSnapshotMock,
+	}),
+}));
+
 import App from '../src/App';
+import { clearOverviewMetadataCache } from '../src/state/useOverviewMetadata';
+import { createSessionRegistriesPayload } from './helpers/sessionRegistries';
+import { createEmptySnapshotMetadata } from './helpers/sessionFixtures';
 
-vi.mock('@kingdom-builder/engine', () => {
-	const phaseA = 'phaseA';
-	const phaseB = 'phaseB';
-	const phaseC = 'phaseC';
-	const resources = {
-		r1: 'r1',
-		r2: 'r2',
-		r3: 'r3',
-		r4: 'r4',
-	} as const;
-
-	const player = {
-		id: 'A',
-		name: 'A',
-		resources: {} as Record<string, number>,
-		stats: { maxPopulation: 0, warWeariness: 0 } as Record<string, number>,
-		population: {} as Record<string, number>,
-		buildings: new Set<string>(),
-		lands: [] as unknown[],
-	};
+function createNavigationState(
+	overrides: Partial<AppNavigationState> = {},
+): AppNavigationState {
 	return {
-		createEngine: () => ({
-			activePlayer: player,
-			actions: { map: new Map() },
-			developments: { map: new Map() },
-			buildings: { map: new Map(), get: () => undefined },
-			passives: { list: () => [] },
-			game: {
-				currentPhase: phaseA,
-				players: [player],
-				currentPlayerIndex: 0,
-			},
-		}),
-		performAction: () => {},
-		runEffects: () => {},
-		collectTriggerEffects: () => [],
-		getActionCosts: () => ({}),
-		getActionEffectGroups: () => [],
-		coerceActionEffectGroupChoices: () => ({}),
-		Phase: { Growth: phaseA, Upkeep: phaseB, Main: phaseC },
-		PHASES: [
-			{ id: phaseA, label: 'Phase A', icon: '🏗️', steps: [] },
-			{ id: phaseB, label: 'Phase B', icon: '🧹', steps: [] },
-			{ id: phaseC, label: 'Phase C', icon: '🎯', steps: [], action: true },
-		],
-		Resource: resources,
+		currentScreen: Screen.Menu,
+		currentGameKey: 0,
+		isDarkMode: false,
+		isDevMode: false,
+		isMusicEnabled: false,
+		isSoundEnabled: false,
+		isBackgroundAudioMuted: false,
+		isAutoAcknowledgeEnabled: false,
+		isAutoPassEnabled: false,
+		startStandardGame: vi.fn(),
+		startDeveloperGame: vi.fn(),
+		openOverview: vi.fn(),
+		openTutorial: vi.fn(),
+		returnToMenu: vi.fn(),
+		toggleDarkMode: vi.fn(),
+		toggleMusic: vi.fn(),
+		toggleSound: vi.fn(),
+		toggleBackgroundAudioMute: vi.fn(),
+		toggleAutoAcknowledge: vi.fn(),
+		toggleAutoPass: vi.fn(),
+		...overrides,
 	};
+}
+
+interface MetadataResponseSetup {
+	response: SessionMetadataSnapshotResponse;
+	heroTitle: string;
+}
+
+function createMetadataSnapshotResponse(
+	heroTitle: string,
+): MetadataResponseSetup {
+	const registries = createSessionRegistriesPayload();
+	const baseMetadata = createEmptySnapshotMetadata({
+		overviewContent: {
+			hero: { title: heroTitle, intro: 'Intro text.' },
+			sections: [],
+			tokens: {},
+		},
+	});
+	const { passiveEvaluationModifiers: _ignored, ...metadata } = baseMetadata;
+	return {
+		response: {
+			registries,
+			metadata: metadata as SessionMetadataSnapshot,
+		},
+		heroTitle,
+	};
+}
+
+beforeEach(() => {
+	clearOverviewMetadataCache();
+	fetchMetadataSnapshotMock.mockReset();
+	useAppNavigationMock.mockReset();
+	usePlayerIdentityMock.mockReset();
+	useAppNavigationMock.mockReturnValue(createNavigationState());
+	usePlayerIdentityMock.mockReturnValue({
+		playerName: 'Player',
+		hasStoredName: false,
+		setPlayerName: vi.fn(),
+		clearStoredName: vi.fn(),
+	});
 });
 
 describe('<App />', () => {
 	it('renders main menu', () => {
-		const html = renderToString(<App />);
-		expect(html).toContain('Kingdom Builder');
-		expect(html).toContain('Start New Game');
-		expect(html).toContain('Start Dev/Debug Game');
+		render(<App />);
+		expect(screen.getByText('Kingdom Builder')).toBeInTheDocument();
+		expect(screen.getByText('Start New Game')).toBeInTheDocument();
+		expect(screen.getByText('Start Dev/Debug Game')).toBeInTheDocument();
+	});
+
+	it('shows loading state while overview metadata loads', () => {
+		useAppNavigationMock.mockReturnValue(
+			createNavigationState({ currentScreen: Screen.Overview }),
+		);
+		fetchMetadataSnapshotMock.mockImplementation(() => new Promise(() => {}));
+		render(<App />);
+		expect(screen.getByText('Loading overview details.')).toBeInTheDocument();
+		expect(
+			screen.getByText('This will only take a few moments.'),
+		).toBeInTheDocument();
+	});
+
+	it('surfaces overview metadata errors with retry', async () => {
+		const { response, heroTitle } =
+			createMetadataSnapshotResponse('Recovered Title');
+		useAppNavigationMock.mockReturnValue(
+			createNavigationState({ currentScreen: Screen.Overview }),
+		);
+		const error = new Error('Service unavailable');
+		fetchMetadataSnapshotMock
+			.mockRejectedValueOnce(error)
+			.mockResolvedValueOnce(response);
+		render(<App />);
+		const retryButton = await screen.findByRole('button', {
+			name: 'Try again',
+		});
+		expect(screen.getByText(error.message)).toBeInTheDocument();
+		fireEvent.click(retryButton);
+		await waitFor(() => {
+			expect(fetchMetadataSnapshotMock).toHaveBeenCalledTimes(2);
+		});
+		expect(await screen.findByText(heroTitle)).toBeInTheDocument();
+	});
+
+	it('renders overview once metadata arrives', async () => {
+		const { response, heroTitle } =
+			createMetadataSnapshotResponse('Glorious Realm');
+		useAppNavigationMock.mockReturnValue(
+			createNavigationState({ currentScreen: Screen.Overview }),
+		);
+		fetchMetadataSnapshotMock.mockResolvedValue(response);
+		render(<App />);
+		expect(await screen.findByText(heroTitle)).toBeInTheDocument();
 	});
 });
