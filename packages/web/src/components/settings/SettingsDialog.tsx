@@ -40,14 +40,18 @@ const TAB_BUTTON_INACTIVE_CLASS = [
 	'dark:hover:text-emerald-200',
 ].join(' ');
 
+const AUTO_ACKNOWLEDGE_TITLE = 'Skip resolution pop-ups';
+
 const AUTO_ACKNOWLEDGE_DESCRIPTION = [
-	'Dismiss notifications the moment results are ready.',
-	'Keep focus on your next choice.',
+	'Automatically close action results the moment they appear.',
+	'Helpful when you do not need to read every summary.',
 ].join(' ');
 
+const AUTO_PASS_TITLE = 'Auto-pass when actions are spent';
+
 const AUTO_PASS_DESCRIPTION = [
-	'End your turn automatically once no actions remain.',
-	'Keep the game moving at your pace.',
+	'End your turn for you after every available action is used.',
+	'Great for keeping the game flowing without extra clicks.',
 ].join(' ');
 
 const FOCUSABLE_ELEMENTS_SELECTOR = [
@@ -96,8 +100,8 @@ export default function SettingsDialog({
 	playerName,
 	onChangePlayerName,
 }: SettingsDialogProps) {
-	const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'gameplay'>(
-		'general',
+	const [activeTab, setActiveTab] = useState<'game' | 'visual' | 'audio'>(
+		'game',
 	);
 	const dialogTitleId = useId();
 	const dialogDescriptionId = useId();
@@ -109,7 +113,7 @@ export default function SettingsDialog({
 		if (!open) {
 			return;
 		}
-		setActiveTab('general');
+		setActiveTab('game');
 	}, [open]);
 
 	useEffect(() => {
@@ -236,14 +240,25 @@ export default function SettingsDialog({
 						<button
 							type="button"
 							className={`${TAB_BUTTON_CLASS} ${
-								activeTab === 'general'
+								activeTab === 'game'
 									? TAB_BUTTON_ACTIVE_CLASS
 									: TAB_BUTTON_INACTIVE_CLASS
 							}`}
-							onClick={() => setActiveTab('general')}
+							onClick={() => setActiveTab('game')}
 							ref={initialFocusRef}
 						>
-							General
+							Game
+						</button>
+						<button
+							type="button"
+							className={`${TAB_BUTTON_CLASS} ${
+								activeTab === 'visual'
+									? TAB_BUTTON_ACTIVE_CLASS
+									: TAB_BUTTON_INACTIVE_CLASS
+							}`}
+							onClick={() => setActiveTab('visual')}
+						>
+							Visual
 						</button>
 						<button
 							type="button"
@@ -256,25 +271,32 @@ export default function SettingsDialog({
 						>
 							Audio
 						</button>
-						<button
-							type="button"
-							className={`${TAB_BUTTON_CLASS} ${
-								activeTab === 'gameplay'
-									? TAB_BUTTON_ACTIVE_CLASS
-									: TAB_BUTTON_INACTIVE_CLASS
-							}`}
-							onClick={() => setActiveTab('gameplay')}
-						>
-							Gameplay
-						</button>
 					</div>
-					{activeTab === 'general' && (
+					{activeTab === 'game' && (
 						<div className="flex flex-col gap-4">
 							<PlayerNameSetting
 								open={open}
 								playerName={playerName}
 								onSave={onChangePlayerName}
 							/>
+							<SettingRow
+								id="settings-auto-acknowledge"
+								title={AUTO_ACKNOWLEDGE_TITLE}
+								description={AUTO_ACKNOWLEDGE_DESCRIPTION}
+								checked={autoAcknowledgeEnabled}
+								onToggle={onToggleAutoAcknowledge}
+							/>
+							<SettingRow
+								id="settings-auto-pass"
+								title={AUTO_PASS_TITLE}
+								description={AUTO_PASS_DESCRIPTION}
+								checked={autoPassEnabled}
+								onToggle={onToggleAutoPass}
+							/>
+						</div>
+					)}
+					{activeTab === 'visual' && (
+						<div className="flex flex-col gap-4">
 							<SettingRow
 								id="settings-theme"
 								title="Dark mode"
@@ -306,24 +328,6 @@ export default function SettingsDialog({
 								description="Keep sound active when you switch tabs or windows."
 								checked={!backgroundAudioMuted}
 								onToggle={onToggleBackgroundAudioMute}
-							/>
-						</div>
-					)}
-					{activeTab === 'gameplay' && (
-						<div className="flex flex-col gap-4">
-							<SettingRow
-								id="settings-auto-acknowledge"
-								title="Automatically acknowledge"
-								description={AUTO_ACKNOWLEDGE_DESCRIPTION}
-								checked={autoAcknowledgeEnabled}
-								onToggle={onToggleAutoAcknowledge}
-							/>
-							<SettingRow
-								id="settings-auto-pass"
-								title="Automatically pass turn"
-								description={AUTO_PASS_DESCRIPTION}
-								checked={autoPassEnabled}
-								onToggle={onToggleAutoPass}
 							/>
 						</div>
 					)}

@@ -33,7 +33,7 @@ function createProps(
 }
 
 describe('SettingsDialog accessibility', () => {
-	it('focuses the general tab and restores the trigger focus', async () => {
+	it('focuses the game tab and restores the trigger focus', async () => {
 		const trigger = document.createElement('button');
 		trigger.textContent = 'Open settings';
 		document.body.append(trigger);
@@ -41,11 +41,11 @@ describe('SettingsDialog accessibility', () => {
 		const onClose = vi.fn();
 		const props = createProps({ onClose });
 		const { rerender, unmount } = render(<SettingsDialog {...props} />);
-		const generalTab = await screen.findByRole('button', {
-			name: 'General',
+		const gameTab = await screen.findByRole('button', {
+			name: 'Game',
 		});
 		await waitFor(() => {
-			expect(generalTab).toHaveFocus();
+			expect(gameTab).toHaveFocus();
 		});
 		fireEvent.keyDown(document, { key: 'Escape' });
 		expect(onClose).toHaveBeenCalledTimes(1);
@@ -66,13 +66,13 @@ describe('SettingsDialog accessibility', () => {
 		const onClose = vi.fn();
 		const props = createProps({ onClose });
 		const { rerender, unmount } = render(<SettingsDialog {...props} />);
-		const generalTab = await screen.findByRole('button', {
-			name: 'General',
+		const gameTab = await screen.findByRole('button', {
+			name: 'Game',
 		});
 		const audioTab = screen.getByRole('button', { name: 'Audio' });
-		const gameplayTab = screen.getByRole('button', { name: 'Gameplay' });
+		const visualTab = screen.getByRole('button', { name: 'Visual' });
 		await waitFor(() => {
-			expect(generalTab).toHaveFocus();
+			expect(gameTab).toHaveFocus();
 		});
 		const closeButton = screen.getByRole('button', { name: 'Close' });
 		await user.tab({ shift: true });
@@ -81,15 +81,15 @@ describe('SettingsDialog accessibility', () => {
 		});
 		await user.tab();
 		await waitFor(() => {
-			expect(generalTab).toHaveFocus();
+			expect(gameTab).toHaveFocus();
+		});
+		await user.tab();
+		await waitFor(() => {
+			expect(visualTab).toHaveFocus();
 		});
 		await user.tab();
 		await waitFor(() => {
 			expect(audioTab).toHaveFocus();
-		});
-		await user.tab();
-		await waitFor(() => {
-			expect(gameplayTab).toHaveFocus();
 		});
 		await user.keyboard('{Escape}');
 		expect(onClose).toHaveBeenCalledTimes(1);
@@ -101,7 +101,7 @@ describe('SettingsDialog accessibility', () => {
 		unmount();
 	});
 
-	it('activates gameplay toggles with provided handlers', async () => {
+	it('activates game toggles with provided handlers', async () => {
 		const onToggleAutoAcknowledge = vi.fn();
 		const onToggleAutoPass = vi.fn();
 		const props = createProps({
@@ -109,15 +109,15 @@ describe('SettingsDialog accessibility', () => {
 			onToggleAutoPass,
 		});
 		const { rerender, unmount } = render(<SettingsDialog {...props} />);
-		const gameplayTab = await screen.findByRole('button', {
-			name: 'Gameplay',
+		const gameTab = await screen.findByRole('button', {
+			name: 'Game',
 		});
-		fireEvent.click(gameplayTab);
+		fireEvent.click(gameTab);
 		const acknowledgeSwitch = screen.getByRole('switch', {
-			name: 'Automatically acknowledge',
+			name: 'Skip resolution pop-ups',
 		});
 		const passSwitch = screen.getByRole('switch', {
-			name: 'Automatically pass turn',
+			name: 'Auto-pass when actions are spent',
 		});
 		fireEvent.click(acknowledgeSwitch);
 		expect(onToggleAutoAcknowledge).toHaveBeenCalledTimes(1);
