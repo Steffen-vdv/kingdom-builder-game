@@ -1,17 +1,16 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import Overview from '../src/Overview';
-import type { OverviewContentSection } from '../src/components/overview/sectionsData';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import type { SessionRegistries } from '../src/state/sessionRegistries';
 
 describe('<Overview />', () => {
-	it('renders supplied overview content using dynamic token fallbacks', () => {
+	it('renders supplied overview content using registry metadata tokens', () => {
 		const factory = createContentFactory();
 		const expandAction = factory.action({ id: 'expand', icon: '🚀' });
 		const councilRole = factory.population({
@@ -160,29 +159,13 @@ describe('<Overview />', () => {
 		expect(screen.getByText('Advance')).toBeInTheDocument();
 	});
 
-	it('falls back to labeled tokens when registry metadata is unavailable', () => {
-		const fallbackContent: OverviewContentSection[] = [
-			{
-				kind: 'paragraph',
-				id: 'fallback-section',
-				icon: 'castleHP',
-				title: 'Fallback Section',
-				paragraphs: ['Use {expand} to grow your reach.'],
-			},
-		];
+	it('throws when rendered without registry metadata', () => {
+		const renderOverview = () => {
+			render(<Overview onBack={vi.fn()} />);
+		};
 
-		render(<Overview onBack={vi.fn()} content={fallbackContent} />);
-
-		const section = screen.getByText('Fallback Section').closest('section');
-		expect(section).not.toBeNull();
-		if (!section) {
-			return;
-		}
-
-		const highlightedToken = within(section).getByText('expand', {
-			selector: 'strong',
-		});
-		expect(highlightedToken).toBeInTheDocument();
-		expect(section.textContent).not.toContain('{expand}');
+		expect(renderOverview).toThrow(
+			'useRegistryMetadata must be used within RegistryMetadataProvider',
+		);
 	});
 });
