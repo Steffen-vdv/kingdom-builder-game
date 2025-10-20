@@ -86,6 +86,26 @@ describe('useAppNavigation', () => {
 		unmount();
 	});
 
+	it('clears pending resume data when starting a new game', async () => {
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-new-game',
+			turn: 2,
+			devMode: false,
+			updatedAt: Date.UTC(2024, 0, 1),
+		};
+		writeStoredResumeSession(resumeRecord);
+		const { result, unmount } = await renderNavigationHook();
+
+		act(() => {
+			result.current.startStandardGame();
+		});
+
+		expect(result.current.resumeSessionId).toBeNull();
+		expect(result.current.resumePoint).toBeNull();
+		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
+		unmount();
+	});
+
 	it('restores stored gameplay preferences when history is missing them', async () => {
 		window.localStorage.setItem(
 			AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
