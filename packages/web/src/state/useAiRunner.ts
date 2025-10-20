@@ -302,6 +302,9 @@ export function useAiRunner({
 						break;
 					}
 					if (result.actions.length === 0) {
+						if (!result.phaseComplete) {
+							continue;
+						}
 						break;
 					}
 				}
