@@ -15,6 +15,7 @@ import {
 	type SessionRegistries,
 } from './sessionRegistries';
 import { clone } from './clone';
+import { SessionMirroringError, markFatalSessionError } from './sessionErrors';
 
 export interface SessionStateRecord {
 	readonly sessionId: string;
@@ -30,6 +31,130 @@ type SessionStatePayload = SessionStateResponse | SessionAdvanceResponse;
 
 const records = new Map<string, SessionStateRecord>();
 
+interface SessionRecordWaiter {
+	resolve: (record: SessionStateRecord) => void;
+	reject: (error: unknown) => void;
+}
+
+const recordWaiters = new Map<string, Set<SessionRecordWaiter>>();
+
+function createAbortError(signal?: AbortSignal): Error {
+	const reason: unknown =
+		signal && 'reason' in signal
+			? (signal as { reason?: unknown }).reason
+			: undefined;
+	if (reason instanceof Error) {
+		return reason;
+	}
+	if (typeof DOMException === 'function') {
+		return new DOMException(
+			typeof reason === 'string' ? reason : 'The operation was aborted.',
+			'AbortError',
+		);
+	}
+	const error = new Error(
+		typeof reason === 'string' ? reason : 'The operation was aborted.',
+	);
+	error.name = 'AbortError';
+	return error;
+}
+
+function createMissingSessionError(sessionId: string): SessionMirroringError {
+	const error = new SessionMirroringError(
+		`Missing session record: ${sessionId}`,
+		{
+			cause: undefined,
+			details: { sessionId },
+		},
+	);
+	markFatalSessionError(error);
+	return error;
+}
+
+function notifyRecordWaiters(
+	sessionId: string,
+	record: SessionStateRecord,
+): void {
+	const waiters = recordWaiters.get(sessionId);
+	if (!waiters) {
+		return;
+	}
+	recordWaiters.delete(sessionId);
+	for (const waiter of waiters) {
+		waiter.resolve(record);
+	}
+}
+
+function rejectRecordWaiters(sessionId: string, error: unknown): void {
+	const waiters = recordWaiters.get(sessionId);
+	if (!waiters) {
+		return;
+	}
+	recordWaiters.delete(sessionId);
+	for (const waiter of waiters) {
+		waiter.reject(error);
+	}
+}
+
+interface WaitForSessionRecordOptions {
+	signal?: AbortSignal;
+}
+
+export function waitForSessionRecord(
+	sessionId: string,
+	options: WaitForSessionRecordOptions = {},
+): Promise<SessionStateRecord> {
+	if (!sessionId) {
+		return Promise.reject(createMissingSessionError(sessionId));
+	}
+	const existing = getSessionRecord(sessionId);
+	if (existing) {
+		return Promise.resolve(existing);
+	}
+	const { signal } = options;
+	return new Promise<SessionStateRecord>((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(createAbortError(signal));
+			return;
+		}
+		let waiters = recordWaiters.get(sessionId);
+		if (!waiters) {
+			waiters = new Set();
+			recordWaiters.set(sessionId, waiters);
+		}
+		let abortHandler: (() => void) | undefined;
+		const cleanup = () => {
+			waiters?.delete(waiter);
+			if ((waiters?.size ?? 0) === 0) {
+				recordWaiters.delete(sessionId);
+			}
+			if (signal && abortHandler) {
+				signal.removeEventListener('abort', abortHandler);
+			}
+		};
+		const waiter: SessionRecordWaiter = {
+			resolve: (record) => {
+				cleanup();
+				resolve(record);
+			},
+			reject: (error) => {
+				cleanup();
+				if (error instanceof Error) {
+					reject(error);
+					return;
+				}
+				reject(createAbortError(signal));
+			},
+		};
+		abortHandler = () => {
+			waiter.reject(createAbortError(signal));
+		};
+		waiters.add(waiter);
+		if (signal) {
+			signal.addEventListener('abort', abortHandler, { once: true });
+		}
+	});
+}
 function mergeRegistryEntries<DefinitionType>(
 	target: Registry<DefinitionType>,
 	source: Registry<DefinitionType>,
@@ -94,6 +219,7 @@ export function initializeSessionState(
 		queueSeed: Promise.resolve(),
 	};
 	records.set(response.sessionId, record);
+	notifyRecordWaiters(response.sessionId, record);
 	return record;
 }
 
@@ -109,6 +235,7 @@ export function applySessionState(
 	applyRegistries(record, response.registries);
 	applyMetadata(record, response.snapshot.metadata);
 	records.set(response.sessionId, record);
+	notifyRecordWaiters(response.sessionId, record);
 	return record;
 }
 
@@ -121,6 +248,7 @@ export function updateSessionSnapshot(
 	record.ruleSnapshot = clone(snapshot.rules);
 	applyMetadata(record, snapshot.metadata);
 	records.set(sessionId, record);
+	notifyRecordWaiters(sessionId, record);
 	return record;
 }
 
@@ -156,17 +284,24 @@ export function getSessionSnapshot(sessionId: string): SessionSnapshot {
 export function assertSessionRecord(sessionId: string): SessionStateRecord {
 	const record = getSessionRecord(sessionId);
 	if (!record) {
-		throw new Error(`Missing session record: ${sessionId}`);
+		throw createMissingSessionError(sessionId);
 	}
 	return record;
 }
 
 export function deleteSessionRecord(sessionId: string): void {
-	records.delete(sessionId);
+	const removed = records.delete(sessionId);
+	if (removed) {
+		rejectRecordWaiters(sessionId, createMissingSessionError(sessionId));
+	}
 }
 
 export function clearSessionStateStore(): void {
+	const pendingSessions = new Set(recordWaiters.keys());
 	records.clear();
+	for (const sessionId of pendingSessions) {
+		rejectRecordWaiters(sessionId, createMissingSessionError(sessionId));
+	}
 }
 
 export function enqueueSessionTask<T>(
