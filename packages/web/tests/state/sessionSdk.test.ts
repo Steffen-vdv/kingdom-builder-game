@@ -88,11 +88,12 @@ const taxActionId = 'tax';
 
 describe('sessionSdk', () => {
 	let api: GameApiFake;
+	let registries: ReturnType<typeof createSessionRegistriesPayload>;
 
 	beforeEach(() => {
 		api = new GameApiFake();
 		setGameApi(api);
-		const registries = createSessionRegistriesPayload();
+		registries = createSessionRegistriesPayload();
 		registries.resources = resources;
 		api.setNextCreateResponse({
 			sessionId: 'session-1',
@@ -125,6 +126,17 @@ describe('sessionSdk', () => {
 		expect(fetched.record.snapshot).toEqual(initialSnapshot);
 		expect(fetched.record.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(fetched.record.metadata).toEqual(initialSnapshot.metadata);
+	});
+
+	it('initializes session state when fetching snapshot without existing record', async () => {
+		api.primeSession({
+			sessionId: 'session-1',
+			snapshot: initialSnapshot,
+			registries,
+		});
+		const fetched = await fetchSnapshot('session-1');
+		expect(fetched.record.snapshot).toEqual(initialSnapshot);
+		expect(getSessionRecord('session-1')?.snapshot).toEqual(initialSnapshot);
 	});
 
 	it('sets dev mode via the API and refreshes local state', async () => {

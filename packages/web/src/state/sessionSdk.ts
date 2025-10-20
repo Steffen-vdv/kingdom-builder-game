@@ -17,6 +17,7 @@ import {
 	applySessionState,
 	deleteSessionRecord,
 	enqueueSessionTask,
+	getSessionRecord,
 	initializeSessionState,
 	type SessionStateRecord,
 } from './sessionStateStore';
@@ -110,7 +111,10 @@ export async function fetchSnapshot(
 	const api = ensureGameApi();
 	const adapter = getAdapter(sessionId);
 	const response = await api.fetchSnapshot(sessionId, requestOptions);
-	const stateRecord = applySessionState(response);
+	const existingRecord = getSessionRecord(sessionId);
+	const stateRecord = existingRecord
+		? applySessionState(response)
+		: initializeSessionState(response);
 	adapter.invalidateActionMetadata();
 	return {
 		sessionId,
