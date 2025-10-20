@@ -3,6 +3,7 @@ import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { createEmptySnapshotMetadata } from './sessionFixtures';
 
 type MetadataOverrides = Partial<SessionSnapshotMetadata>;
 
@@ -50,7 +51,11 @@ export function createTranslationContextForEngine(
 	const registries = createSessionRegistries();
 	configureRegistries?.(registries);
 	const snapshot = snapshotEngine(engine);
-	const metadata = mergeMetadata(snapshot.metadata, options?.metadata);
+	const baseMetadata = mergeMetadata(
+		createEmptySnapshotMetadata(),
+		snapshot.metadata,
+	);
+	const metadata = mergeMetadata(baseMetadata, options?.metadata);
 	return createTranslationContext(snapshot, registries, metadata, {
 		ruleSnapshot: snapshot.rules,
 		passiveRecords: snapshot.passiveRecords,

@@ -254,8 +254,9 @@ describe('log resource source icon registry', () => {
 			diffContext,
 			[effect.params.key],
 		);
-		const landSource = harness.translationContext.assets.land.icon ?? '';
+		const landAsset = harness.translationContext.assets.land;
+		const expectedSource = landAsset.label ?? landAsset.icon ?? 'Land';
 		const suffix = lines[0]?.match(/ from (.+)\)$/u)?.[1];
-		expect(suffix).toBe(landSource);
+		expect(suffix).toBe(expectedSource);
 	});
 });

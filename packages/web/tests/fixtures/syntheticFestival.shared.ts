@@ -90,6 +90,10 @@ export const createFestivalMetadata = (): SessionSnapshotMetadata =>
 		assets: {
 			passive: SYNTHETIC_RESULT_MODIFIER,
 			upkeep: FALLBACK_UPKEEP,
+			land: { icon: '🏕️', label: 'Festival Grounds' },
+			slot: { icon: '🧩', label: 'Improvement Slot' },
+			population: { icon: '👥', label: 'Revelers' },
+			transfer: { icon: '🔁', label: 'Resource Transfer' },
 		},
 		resources: { ...RESOURCE_LOOKUP },
 		stats: {

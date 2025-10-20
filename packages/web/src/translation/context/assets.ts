@@ -13,46 +13,6 @@ import type {
 	TranslationModifierInfo,
 	TranslationTriggerAsset,
 } from './types';
-import {
-	DEFAULT_STAT_METADATA,
-	mergeDescriptorRecords,
-} from '../../contexts/registryMetadataDefaults';
-
-const DEFAULT_POPULATION_INFO = Object.freeze({
-	icon: '👥',
-	label: 'Population',
-});
-
-const DEFAULT_LAND_INFO = Object.freeze({
-	icon: '🗺️',
-	label: 'Land',
-});
-
-const DEFAULT_SLOT_INFO = Object.freeze({
-	icon: '🧩',
-	label: 'Development Slot',
-});
-
-const DEFAULT_PASSIVE_INFO = Object.freeze({
-	icon: '♾️',
-	label: 'Passive',
-});
-
-const DEFAULT_UPKEEP_INFO = Object.freeze({
-	icon: '🧹',
-	label: 'Upkeep',
-});
-
-const DEFAULT_TRANSFER_INFO = Object.freeze({
-	icon: '🔁',
-	label: 'Transfer',
-});
-
-const DEFAULT_MODIFIER_INFO = Object.freeze({
-	cost: Object.freeze({ icon: '💲', label: 'Cost Adjustment' }),
-	result: Object.freeze({ icon: '✨', label: 'Outcome Adjustment' }),
-}) satisfies Readonly<Record<string, TranslationModifierInfo>>;
-
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
 
@@ -60,6 +20,52 @@ type FormatAwareDescriptor = SessionMetadataDescriptor & {
 	displayAsPercent?: boolean;
 	format?: SessionMetadataFormat;
 };
+
+const REQUIRED_METADATA_KEYS = Object.freeze([
+	'resources',
+	'populations',
+	'stats',
+	'assets',
+	'triggers',
+] as const);
+
+type RequiredTranslationMetadata = Required<
+	Pick<SessionSnapshotMetadata, (typeof REQUIRED_METADATA_KEYS)[number]>
+>;
+
+function assertMetadataSections(
+	metadata?: Pick<
+		SessionSnapshotMetadata,
+		(typeof REQUIRED_METADATA_KEYS)[number]
+	>,
+): asserts metadata is RequiredTranslationMetadata {
+	if (!metadata) {
+		throw new Error(
+			[
+				'createTranslationAssets requires metadata for resources, populations, stats,',
+				'assets, and triggers.',
+			].join(' '),
+		);
+	}
+	for (const key of REQUIRED_METADATA_KEYS) {
+		if (!metadata[key]) {
+			throw new Error(
+				[
+					`Session metadata is missing "${key}" descriptors required`,
+					'to build translation assets.',
+				].join(' '),
+			);
+		}
+	}
+}
+
+function toTitleCaseFallback(key: string): string {
+	if (!key) {
+		return key;
+	}
+	const firstCharacter = key.charAt(0);
+	return `${firstCharacter.toUpperCase()}${key.slice(1)}`;
+}
 
 function mergeIconLabel(
 	base: TranslationIconLabel | undefined,
@@ -156,13 +162,11 @@ function buildResourceMap(
 }
 
 function buildStatMap(
-	descriptors: Readonly<Record<string, SessionMetadataDescriptor>> | undefined,
+	descriptors: Readonly<Record<string, SessionMetadataDescriptor>>,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
-	if (descriptors) {
-		for (const [key, descriptor] of Object.entries(descriptors)) {
-			entries[key] = mergeIconLabel(undefined, descriptor, key);
-		}
+	for (const [key, descriptor] of Object.entries(descriptors)) {
+		entries[key] = mergeIconLabel(undefined, descriptor, key);
 	}
 	return Object.freeze(entries);
 }
@@ -213,11 +217,8 @@ function toTriggerAsset(
 }
 
 function buildTriggerMap(
-	triggers: Record<string, SessionTriggerMetadata> | undefined,
+	triggers: Record<string, SessionTriggerMetadata>,
 ): Readonly<Record<string, TranslationTriggerAsset>> {
-	if (!triggers) {
-		return Object.freeze({});
-	}
 	const entries: Record<string, TranslationTriggerAsset> = {};
 	for (const [id, descriptor] of Object.entries(triggers)) {
 		entries[id] = toTriggerAsset(descriptor, id);
@@ -250,63 +251,66 @@ export function createTranslationAssets(
 	>,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
+	assertMetadataSections(metadata);
 	const populations = buildPopulationMap(
 		registries.populations,
-		metadata?.populations,
+		metadata.populations,
 	);
-	const resources = buildResourceMap(registries.resources, metadata?.resources);
-	const statDescriptors = mergeDescriptorRecords(
-		DEFAULT_STAT_METADATA,
-		metadata?.stats,
-	);
-	const stats = buildStatMap(statDescriptors);
-	const assetDescriptors = metadata?.assets ?? {};
+	const resources = buildResourceMap(registries.resources, metadata.resources);
+	const stats = buildStatMap(metadata.stats);
+	const assetDescriptors = metadata.assets;
+	for (const key of ['land', 'slot', 'passive'] as const) {
+		if (!assetDescriptors[key]) {
+			throw new Error(
+				[
+					`Session metadata must include an "assets.${key}" descriptor`,
+					'to build translation assets.',
+				].join(' '),
+			);
+		}
+	}
 	const populationAsset = mergeIconLabel(
-		DEFAULT_POPULATION_INFO,
+		undefined,
 		assetDescriptors.population,
-		DEFAULT_POPULATION_INFO.label,
+		toTitleCaseFallback('population'),
 	);
 	const landAsset = mergeIconLabel(
-		DEFAULT_LAND_INFO,
+		undefined,
 		assetDescriptors.land,
-		DEFAULT_LAND_INFO.label,
+		toTitleCaseFallback('land'),
 	);
 	const slotAsset = mergeIconLabel(
-		DEFAULT_SLOT_INFO,
+		undefined,
 		assetDescriptors.slot,
-		DEFAULT_SLOT_INFO.label,
+		toTitleCaseFallback('slot'),
 	);
 	const passiveAsset = mergeIconLabel(
-		DEFAULT_PASSIVE_INFO,
+		undefined,
 		assetDescriptors.passive,
-		DEFAULT_PASSIVE_INFO.label,
+		toTitleCaseFallback('passive'),
 	);
 	const upkeepAsset = mergeIconLabel(
-		DEFAULT_UPKEEP_INFO,
+		undefined,
 		assetDescriptors.upkeep,
-		DEFAULT_UPKEEP_INFO.label,
+		toTitleCaseFallback('upkeep'),
 	);
 	const transferAsset = mergeIconLabel(
-		DEFAULT_TRANSFER_INFO,
+		undefined,
 		assetDescriptors.transfer,
-		DEFAULT_TRANSFER_INFO.label,
+		toTitleCaseFallback('transfer'),
 	);
 	const modifierOverrides = resolveModifierDescriptors(
 		assetDescriptors['modifiers'],
 	);
 	const modifiers = Object.freeze({
-		cost: mergeIconLabel(
-			DEFAULT_MODIFIER_INFO.cost,
-			modifierOverrides?.cost,
-			DEFAULT_MODIFIER_INFO.cost.label ?? 'Cost Adjustment',
-		),
+		cost: mergeIconLabel(undefined, modifierOverrides?.cost, 'Cost Modifier'),
 		result: mergeIconLabel(
-			DEFAULT_MODIFIER_INFO.result,
+			undefined,
 			modifierOverrides?.result,
-			DEFAULT_MODIFIER_INFO.result.label ?? 'Outcome Adjustment',
+			'Result Modifier',
 		),
-	});
-	const triggers = buildTriggerMap(metadata?.triggers);
+	}) satisfies Readonly<Record<'cost' | 'result', TranslationModifierInfo>>;
+	const triggers = buildTriggerMap(metadata.triggers);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
 		resources,

@@ -223,8 +223,10 @@ export const getSyntheticFestivalDetails = (
 		FALLBACK_UPKEEP.label;
 	const upkeepIcon =
 		upkeepPhase?.icon ?? upkeepTrigger?.icon ?? FALLBACK_UPKEEP.icon;
-	const modifierInfo =
-		translation.assets.modifiers.result ?? SYNTHETIC_RESULT_MODIFIER;
+	const modifierInfo = Object.freeze({
+		...SYNTHETIC_RESULT_MODIFIER,
+		...(translation.assets.modifiers.result ?? {}),
+	});
 
 	return {
 		festival,

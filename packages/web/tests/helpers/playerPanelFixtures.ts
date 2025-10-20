@@ -33,7 +33,10 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		ruleSnapshot,
 	} = createTestSessionScaffold();
 	const translationAssets = createTranslationAssets(
-		sessionRegistries,
+		{
+			populations: sessionRegistries.populations,
+			resources: sessionRegistries.resources,
+		},
 		sessionMetadata,
 		{ rules: ruleSnapshot },
 	);

@@ -10,6 +10,7 @@ import {
 	type SessionRegistries,
 } from '@kingdom-builder/web/state/sessionRegistries';
 import registriesPayload from '../../packages/web/tests/fixtures/sessionRegistriesPayload.json';
+import { createEmptySnapshotMetadata } from '../../packages/web/tests/helpers/sessionFixtures';
 
 type TimelineEntry = string | { text: string };
 
@@ -97,10 +98,18 @@ describe('content-driven action log hooks', () => {
 				rules: RULES,
 			});
 			const snapshot = session.getSnapshot();
+			const translationMetadata = createEmptySnapshotMetadata({
+				...snapshot.metadata,
+				resources: { ...(snapshot.metadata?.resources ?? {}) },
+				populations: { ...(snapshot.metadata?.populations ?? {}) },
+				stats: { ...(snapshot.metadata?.stats ?? {}) },
+				triggers: { ...(snapshot.metadata?.triggers ?? {}) },
+				assets: { ...(snapshot.metadata?.assets ?? {}) },
+			});
 			const translationContext = createTranslationContext(
 				snapshot,
 				registries,
-				snapshot.metadata,
+				translationMetadata,
 				{
 					ruleSnapshot: session.getRuleSnapshot(),
 					passiveRecords: snapshot.passiveRecords,

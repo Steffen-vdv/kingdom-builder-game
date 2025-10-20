@@ -17,6 +17,10 @@ import {
 	type RaidersGuildSyntheticContext,
 } from './fixtures/syntheticRaidersGuild';
 import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
+import {
+	selectModifierInfo,
+	selectPopulationDescriptor,
+} from '../src/translation/effects/registrySelectors';
 
 const RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
 function expectHoistedActionCard(
@@ -47,10 +51,11 @@ describe('raiders guild translation', () => {
 
 	it('describes transfer modifier with hoisted action card', () => {
 		const { engineContext, translation, ids } = synthetic;
-		const modifierInfo = translation.assets.modifiers.result ?? {
-			icon: '✨',
-			label: 'Outcome Adjustment',
-		};
+		const modifierInfo = selectModifierInfo(translation, 'result');
+		const modifierLabel = [modifierInfo.icon, modifierInfo.label]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
 		const summary = describeContent(
 			'building',
 			ids.transferBuilding,
@@ -61,7 +66,7 @@ describe('raiders guild translation', () => {
 		const adjust = Number(modifier.params?.['adjust'] ?? 0);
 		const raid = engineContext.actions.get(ids.raidAction);
 		const transferIcon = translation.assets.transfer.icon ?? '🔁';
-		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
+		const clause = `${modifierLabel} on ${formatTargetLabel(
 			raid.icon ?? '',
 			raid.name,
 		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${transferIcon} ${increaseOrDecrease(
@@ -78,9 +83,7 @@ describe('raiders guild translation', () => {
 
 	it('summarizes population modifier compactly', () => {
 		const { engineContext, translation, ids } = synthetic;
-		const modifierInfo = translation.assets.modifiers.result ?? {
-			icon: '✨',
-		};
+		const modifierInfo = selectModifierInfo(translation, 'result');
 		const summary = summarizeContent(
 			'building',
 			ids.populationBuilding,
@@ -91,9 +94,13 @@ describe('raiders guild translation', () => {
 		const amount = Number(modifier.params?.['amount'] ?? 0);
 		const actionIcon =
 			ledger.icon && ledger.icon.trim().length ? ledger.icon : ledger.name;
-		const populationAsset = translation.assets.population;
-		const populationIcon = populationAsset.icon ?? '';
-		const expected = `${modifierInfo.icon ?? ''}${populationIcon}(${actionIcon}): ${GENERAL_RESOURCE_ICON}${signed(
+		const populationDescriptor = selectPopulationDescriptor(
+			translation,
+			undefined,
+		);
+		const populationIcon = populationDescriptor.icon ?? '';
+		const summaryPrefix = `${modifierInfo.icon ?? ''}${populationIcon}(${actionIcon}):`;
+		const expected = `${summaryPrefix} ${GENERAL_RESOURCE_ICON}${signed(
 			amount,
 		)}${Math.abs(amount)}`;
 		expect(collectText(summary)).toContain(expected);
@@ -101,9 +108,7 @@ describe('raiders guild translation', () => {
 
 	it('summarizes development modifier compactly', () => {
 		const { engineContext, translation, ids } = synthetic;
-		const modifierInfo = translation.assets.modifiers.result ?? {
-			icon: '✨',
-		};
+		const modifierInfo = selectModifierInfo(translation, 'result');
 		const summary = summarizeContent(
 			'building',
 			ids.developmentBuilding,
@@ -116,7 +121,8 @@ describe('raiders guild translation', () => {
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
 		const resourceIcon =
 			selectAttackResourceDescriptor(translation, key).icon || key;
-		const expected = `${modifierInfo.icon ?? ''}${development.icon}: ${resourceIcon}${signed(
+		const summaryPrefix = `${modifierInfo.icon ?? ''}${development.icon}:`;
+		const expected = `${summaryPrefix} ${resourceIcon}${signed(
 			amount,
 		)}${Math.abs(amount)}`;
 		expect(collectText(summary)).toContain(expected);
@@ -124,10 +130,11 @@ describe('raiders guild translation', () => {
 
 	it('describes population modifier with detailed clause', () => {
 		const { engineContext, translation, ids } = synthetic;
-		const modifierInfo = translation.assets.modifiers.result ?? {
-			icon: '✨',
-			label: 'Outcome Adjustment',
-		};
+		const modifierInfo = selectModifierInfo(translation, 'result');
+		const modifierLabel = [modifierInfo.icon, modifierInfo.label]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
 		const summary = describeContent(
 			'building',
 			ids.populationBuilding,
@@ -137,13 +144,18 @@ describe('raiders guild translation', () => {
 		const modifier = getModifier(engineContext, ids.populationBuilding);
 		const amount = Number(modifier.params?.['amount'] ?? 0);
 		const populationAsset = translation.assets.population;
-		const populationIcon = populationAsset.icon ?? '';
-		const populationLabel = populationAsset.label ?? 'Population';
+		const populationDescriptor = selectPopulationDescriptor(
+			translation,
+			undefined,
+		);
+		const populationIcon = populationDescriptor.icon ?? '';
+		const populationLabel =
+			populationDescriptor.label ?? populationAsset.label ?? 'Population';
 		const target = `${populationIcon ? `${populationIcon} ` : ''}${populationLabel} through ${formatTargetLabel(
 			ledger.icon ?? '',
 			ledger.name,
 		)}`;
-		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${target}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${GENERAL_RESOURCE_ICON}${signed(
+		const clause = `${modifierLabel} on ${target}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${GENERAL_RESOURCE_ICON}${signed(
 			amount,
 		)}${Math.abs(amount)} more of that resource`;
 		expect(collectText(summary)).toContain(clause);
@@ -151,10 +163,11 @@ describe('raiders guild translation', () => {
 
 	it('describes development modifier with detailed clause', () => {
 		const { engineContext, translation, ids } = synthetic;
-		const modifierInfo = translation.assets.modifiers.result ?? {
-			icon: '✨',
-			label: 'Outcome Adjustment',
-		};
+		const modifierInfo = selectModifierInfo(translation, 'result');
+		const modifierLabel = [modifierInfo.icon, modifierInfo.label]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
 		const summary = describeContent(
 			'building',
 			ids.developmentBuilding,
@@ -166,7 +179,7 @@ describe('raiders guild translation', () => {
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
 		const icon = selectAttackResourceDescriptor(translation, key).icon || key;
-		const clause = `${modifierInfo.icon ?? ''} ${modifierInfo.label ?? 'Outcome Adjustment'} on ${formatTargetLabel(
+		const clause = `${modifierLabel} on ${formatTargetLabel(
 			development.icon ?? '',
 			development.name,
 		)}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${icon}${signed(amount)}${Math.abs(

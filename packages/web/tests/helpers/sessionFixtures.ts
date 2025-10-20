@@ -24,9 +24,12 @@ export const createEmptySnapshotMetadata = (
 ): SessionSnapshotMetadata => {
 	const { assets: assetOverrides, ...metadataOverrides } = overrides;
 	const baseAssets: NonNullable<SessionSnapshotMetadata['assets']> = {
-		land: { label: 'Land' },
-		slot: { label: 'Development Slot' },
-		passive: { label: 'Passive' },
+		land: { icon: '🛤️', label: 'Land' },
+		slot: { icon: '🧩', label: 'Development Slot' },
+		passive: { icon: '♾️', label: 'Passive' },
+		population: { icon: '👥', label: 'Population' },
+		upkeep: { icon: '⏳', label: 'Upkeep' },
+		transfer: { icon: '🔁', label: 'Transfer' },
 	};
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
