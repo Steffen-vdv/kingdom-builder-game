@@ -97,33 +97,37 @@ following metadata. Future refactors must validate parity against these values.
 
 - **basic**
   - title: `Basic`
-  - subtitle: `Core Commands`
+  - subtitle:
+    `(Effects take place immediately, unless stated otherwise)`
   - description: Default castle commands available every turn.
-  - icon: `icon-action-basic`
+  - icon: `⚙️`
   - order: `0`
   - layout: `grid-primary`
   - hideWhenEmpty: `false`
 - **hire**
   - title: `Hire`
-  - subtitle: `Recruit Citizens`
+  - subtitle:
+    `(Effects take place immediately and last until the population is removed or reassigned)`
   - description: Actions that add population or assign roles.
-  - icon: `icon-action-hire`
+  - icon: `🧑‍🤝‍🧑`
   - order: `1`
   - layout: `grid-primary`
   - hideWhenEmpty: `false`
 - **develop**
   - title: `Develop`
-  - subtitle: `Improve Holdings`
+  - subtitle:
+    `(Effects take place immediately and last until the development is removed)`
   - description: Developments that upgrade existing buildings or lands.
-  - icon: `icon-action-dev`
+  - icon: `🛠️`
   - order: `2`
   - layout: `grid-secondary`
   - hideWhenEmpty: `false`
 - **build**
   - title: `Build`
-  - subtitle: `Expand Territory`
+  - subtitle:
+    `(Effects take place immediately build and last until the building is removed)`
   - description: Construction options that add new structures or unlocks.
-  - icon: `icon-action-build`
+  - icon: `🏗️`
   - order: `3`
   - layout: `grid-secondary`
   - hideWhenEmpty: `false`
