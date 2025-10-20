@@ -10,49 +10,8 @@ import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
 	TranslationIconLabel,
-	TranslationModifierInfo,
 	TranslationTriggerAsset,
 } from './types';
-import {
-	DEFAULT_STAT_METADATA,
-	mergeDescriptorRecords,
-} from '../../contexts/registryMetadataDefaults';
-
-const DEFAULT_POPULATION_INFO = Object.freeze({
-	icon: '👥',
-	label: 'Population',
-});
-
-const DEFAULT_LAND_INFO = Object.freeze({
-	icon: '🗺️',
-	label: 'Land',
-});
-
-const DEFAULT_SLOT_INFO = Object.freeze({
-	icon: '🧩',
-	label: 'Development Slot',
-});
-
-const DEFAULT_PASSIVE_INFO = Object.freeze({
-	icon: '♾️',
-	label: 'Passive',
-});
-
-const DEFAULT_UPKEEP_INFO = Object.freeze({
-	icon: '🧹',
-	label: 'Upkeep',
-});
-
-const DEFAULT_TRANSFER_INFO = Object.freeze({
-	icon: '🔁',
-	label: 'Transfer',
-});
-
-const DEFAULT_MODIFIER_INFO = Object.freeze({
-	cost: Object.freeze({ icon: '💲', label: 'Cost Adjustment' }),
-	result: Object.freeze({ icon: '✨', label: 'Outcome Adjustment' }),
-}) satisfies Readonly<Record<string, TranslationModifierInfo>>;
-
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
 
@@ -156,13 +115,11 @@ function buildResourceMap(
 }
 
 function buildStatMap(
-	descriptors: Readonly<Record<string, SessionMetadataDescriptor>> | undefined,
+	descriptors: Readonly<Record<string, SessionMetadataDescriptor>>,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
-	if (descriptors) {
-		for (const [key, descriptor] of Object.entries(descriptors)) {
-			entries[key] = mergeIconLabel(undefined, descriptor, key);
-		}
+	for (const [key, descriptor] of Object.entries(descriptors)) {
+		entries[key] = mergeIconLabel(undefined, descriptor, key);
 	}
 	return Object.freeze(entries);
 }
@@ -242,71 +199,100 @@ function buildTierSummaryMap(
 	return Object.freeze(entries);
 }
 
+function requireAssetDescriptor(
+	descriptors: Readonly<Record<string, SessionMetadataDescriptor>>,
+	key: 'land' | 'slot' | 'passive',
+): SessionMetadataDescriptor {
+	const descriptor = descriptors[key];
+	if (!descriptor) {
+		throw new Error(
+			`Session metadata is missing a descriptor for assets.${key}.`,
+		);
+	}
+	return descriptor;
+}
+
+type MetadataRequirementKey =
+	| 'resources'
+	| 'populations'
+	| 'stats'
+	| 'assets'
+	| 'triggers';
+
+function requireMetadataRecord(
+	metadata: SessionSnapshotMetadata,
+	key: MetadataRequirementKey,
+): Record<string, unknown> {
+	const record = metadata[key];
+	if (!record) {
+		throw new Error(
+			`Session metadata must include ${key} descriptors to build ` +
+				'translation assets.',
+		);
+	}
+	return record as Record<string, unknown>;
+}
+
 export function createTranslationAssets(
 	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
-	metadata?: Pick<
-		SessionSnapshotMetadata,
-		'resources' | 'populations' | 'stats' | 'assets' | 'triggers'
-	>,
+	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
+	const populationMetadata = requireMetadataRecord(
+		metadata,
+		'populations',
+	) as Record<string, SessionMetadataDescriptor>;
+	const resourceMetadata = requireMetadataRecord(
+		metadata,
+		'resources',
+	) as Record<string, SessionMetadataDescriptor>;
+	const statMetadata = requireMetadataRecord(metadata, 'stats') as Record<
+		string,
+		SessionMetadataDescriptor
+	>;
+	const assetDescriptors = requireMetadataRecord(metadata, 'assets') as Record<
+		string,
+		SessionMetadataDescriptor
+	>;
+	const triggerMetadata = requireMetadataRecord(metadata, 'triggers') as Record<
+		string,
+		SessionTriggerMetadata
+	>;
 	const populations = buildPopulationMap(
 		registries.populations,
-		metadata?.populations,
+		populationMetadata,
 	);
-	const resources = buildResourceMap(registries.resources, metadata?.resources);
-	const statDescriptors = mergeDescriptorRecords(
-		DEFAULT_STAT_METADATA,
-		metadata?.stats,
-	);
-	const stats = buildStatMap(statDescriptors);
-	const assetDescriptors = metadata?.assets ?? {};
+	const resources = buildResourceMap(registries.resources, resourceMetadata);
+	const stats = buildStatMap(statMetadata);
 	const populationAsset = mergeIconLabel(
-		DEFAULT_POPULATION_INFO,
+		undefined,
 		assetDescriptors.population,
-		DEFAULT_POPULATION_INFO.label,
+		'population',
 	);
-	const landAsset = mergeIconLabel(
-		DEFAULT_LAND_INFO,
-		assetDescriptors.land,
-		DEFAULT_LAND_INFO.label,
-	);
-	const slotAsset = mergeIconLabel(
-		DEFAULT_SLOT_INFO,
-		assetDescriptors.slot,
-		DEFAULT_SLOT_INFO.label,
-	);
-	const passiveAsset = mergeIconLabel(
-		DEFAULT_PASSIVE_INFO,
-		assetDescriptors.passive,
-		DEFAULT_PASSIVE_INFO.label,
-	);
+	const landDescriptor = requireAssetDescriptor(assetDescriptors, 'land');
+	const landAsset = mergeIconLabel(undefined, landDescriptor, 'land');
+	const slotDescriptor = requireAssetDescriptor(assetDescriptors, 'slot');
+	const slotAsset = mergeIconLabel(undefined, slotDescriptor, 'slot');
+	const passiveDescriptor = requireAssetDescriptor(assetDescriptors, 'passive');
+	const passiveAsset = mergeIconLabel(undefined, passiveDescriptor, 'passive');
 	const upkeepAsset = mergeIconLabel(
-		DEFAULT_UPKEEP_INFO,
+		undefined,
 		assetDescriptors.upkeep,
-		DEFAULT_UPKEEP_INFO.label,
+		'upkeep',
 	);
 	const transferAsset = mergeIconLabel(
-		DEFAULT_TRANSFER_INFO,
+		undefined,
 		assetDescriptors.transfer,
-		DEFAULT_TRANSFER_INFO.label,
+		'transfer',
 	);
 	const modifierOverrides = resolveModifierDescriptors(
 		assetDescriptors['modifiers'],
 	);
 	const modifiers = Object.freeze({
-		cost: mergeIconLabel(
-			DEFAULT_MODIFIER_INFO.cost,
-			modifierOverrides?.cost,
-			DEFAULT_MODIFIER_INFO.cost.label ?? 'Cost Adjustment',
-		),
-		result: mergeIconLabel(
-			DEFAULT_MODIFIER_INFO.result,
-			modifierOverrides?.result,
-			DEFAULT_MODIFIER_INFO.result.label ?? 'Outcome Adjustment',
-		),
+		cost: mergeIconLabel(undefined, modifierOverrides?.cost, 'cost'),
+		result: mergeIconLabel(undefined, modifierOverrides?.result, 'result'),
 	});
-	const triggers = buildTriggerMap(metadata?.triggers);
+	const triggers = buildTriggerMap(triggerMetadata);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
 		resources,

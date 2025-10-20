@@ -22,6 +22,7 @@ import type {
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
+	createEmptySnapshotMetadata,
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
@@ -86,8 +87,7 @@ function createTranslationHarness() {
 		phases: phaseDefinitions,
 		actionCostResource: 'ap',
 		ruleSnapshot,
-		metadata: {
-			passiveEvaluationModifiers: {},
+		metadata: createEmptySnapshotMetadata({
 			resources: resourceMetadata,
 			assets: {
 				land: {
@@ -107,7 +107,7 @@ function createTranslationHarness() {
 					label: SYNTHETIC_UPKEEP_PHASE.label,
 				},
 			},
-		},
+		}),
 	});
 	const translation = createTranslationContext(
 		session,

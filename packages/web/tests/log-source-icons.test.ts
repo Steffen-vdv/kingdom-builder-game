@@ -220,42 +220,12 @@ describe('log resource source icon registry', () => {
 		});
 	}
 
-	it('falls back to default source labels when metadata icons are missing', () => {
-		const harness = createLogHarness(
-			(() => {
-				const original = createTestSessionScaffold().metadata;
-				const clone = structuredClone(original);
-				if (clone.assets?.land) {
-					delete clone.assets.land.icon;
-				}
-				return clone;
-			})(),
-		);
-		const diffContext = createTranslationDiffContext({
-			activePlayer: harness.engine.activePlayer,
-			buildings: harness.engine.buildings,
-			developments: harness.engine.developments,
-			passives: harness.translationContext.passives,
-			assets: harness.translationContext.assets,
-		});
-		const effect = {
-			type: 'resource' as const,
-			method: 'add' as const,
-			params: { key: harness.resourceKeys[0] ?? 'resource', amount: 1 },
-			meta: { source: { type: 'land' as const } },
-		};
-		const before = captureActivePlayer(harness.engine);
-		runEffects([effect], harness.engine);
-		const after = captureActivePlayer(harness.engine);
-		const lines = diffStepSnapshots(
-			before,
-			after,
-			{ id: 'meta-icons-fallback', effects: [effect] },
-			diffContext,
-			[effect.params.key],
-		);
-		const landSource = harness.translationContext.assets.land.icon ?? '';
-		const suffix = lines[0]?.match(/ from (.+)\)$/u)?.[1];
-		expect(suffix).toBe(landSource);
+	it('throws when land metadata descriptor is removed', () => {
+		const baseMetadata = createTestSessionScaffold().metadata;
+		const clone = structuredClone(baseMetadata);
+		if (clone.assets) {
+			delete clone.assets.land;
+		}
+		expect(() => createLogHarness(clone)).toThrowError(/assets\.land/);
 	});
 });

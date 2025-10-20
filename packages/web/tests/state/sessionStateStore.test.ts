@@ -14,14 +14,13 @@ import {
 } from '../../src/state/sessionStateStore';
 import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
 import {
+	createEmptySnapshotMetadata,
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
 
-const createMetadata = (overrides: Partial<SessionSnapshotMetadata> = {}) => ({
-	passiveEvaluationModifiers: {},
-	...overrides,
-});
+const createMetadata = (overrides: Partial<SessionSnapshotMetadata> = {}) =>
+	createEmptySnapshotMetadata(overrides);
 
 describe('sessionStateStore', () => {
 	beforeEach(() => {

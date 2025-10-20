@@ -24,17 +24,6 @@ import {
 	buildTriggerMetadata,
 } from './registryMetadataDescriptors';
 import {
-	DEFAULT_ASSET_METADATA,
-	DEFAULT_BUILDING_METADATA,
-	DEFAULT_DEVELOPMENT_METADATA,
-	DEFAULT_PHASE_METADATA,
-	DEFAULT_POPULATION_METADATA,
-	DEFAULT_RESOURCE_METADATA,
-	DEFAULT_STAT_METADATA,
-	DEFAULT_TRIGGER_METADATA,
-	mergeDescriptorRecords,
-} from './registryMetadataDefaults';
-import {
 	extractDescriptorRecord,
 	extractPhaseRecord,
 	extractTriggerRecord,
@@ -60,15 +49,51 @@ export const useDescriptorOverrides = (
 		if (!snapshotMetadata) {
 			return EMPTY_DESCRIPTOR_OVERRIDES;
 		}
+		const requireDescriptorRecord = <TValue>(
+			value: TValue | undefined,
+			descriptorKey: string,
+		): TValue => {
+			if (value === undefined) {
+				throw new Error(
+					`Session snapshot metadata is missing the "${descriptorKey}" ` +
+						'descriptors. Ensure metadata includes this record.',
+				);
+			}
+			return value;
+		};
 		return Object.freeze({
-			resources: extractDescriptorRecord(snapshotMetadata, 'resources'),
-			populations: extractDescriptorRecord(snapshotMetadata, 'populations'),
-			buildings: extractDescriptorRecord(snapshotMetadata, 'buildings'),
-			developments: extractDescriptorRecord(snapshotMetadata, 'developments'),
-			stats: extractDescriptorRecord(snapshotMetadata, 'stats'),
-			assets: extractDescriptorRecord(snapshotMetadata, 'assets'),
-			phases: extractPhaseRecord(snapshotMetadata),
-			triggers: extractTriggerRecord(snapshotMetadata),
+			resources: requireDescriptorRecord(
+				extractDescriptorRecord(snapshotMetadata, 'resources'),
+				'resources',
+			),
+			populations: requireDescriptorRecord(
+				extractDescriptorRecord(snapshotMetadata, 'populations'),
+				'populations',
+			),
+			buildings: requireDescriptorRecord(
+				extractDescriptorRecord(snapshotMetadata, 'buildings'),
+				'buildings',
+			),
+			developments: requireDescriptorRecord(
+				extractDescriptorRecord(snapshotMetadata, 'developments'),
+				'developments',
+			),
+			stats: requireDescriptorRecord(
+				extractDescriptorRecord(snapshotMetadata, 'stats'),
+				'stats',
+			),
+			assets: requireDescriptorRecord(
+				extractDescriptorRecord(snapshotMetadata, 'assets'),
+				'assets',
+			),
+			phases: requireDescriptorRecord(
+				extractPhaseRecord(snapshotMetadata),
+				'phases',
+			),
+			triggers: requireDescriptorRecord(
+				extractTriggerRecord(snapshotMetadata),
+				'triggers',
+			),
 		});
 	}, [snapshotMetadata]);
 
@@ -139,39 +164,24 @@ export const useMetadataLookups = (
 	useMemo(() => {
 		const resourceMetadataLookup = buildResourceMetadata(
 			registries.resources,
-			mergeDescriptorRecords(DEFAULT_RESOURCE_METADATA, overrides.resources),
+			overrides.resources,
 		);
 		const populationMetadataLookup = buildRegistryMetadata(
 			registries.populations,
-			mergeDescriptorRecords(
-				DEFAULT_POPULATION_METADATA,
-				overrides.populations,
-			),
+			overrides.populations,
 		);
 		const buildingMetadataLookup = buildRegistryMetadata(
 			registries.buildings,
-			mergeDescriptorRecords(DEFAULT_BUILDING_METADATA, overrides.buildings),
+			overrides.buildings,
 		);
 		const developmentMetadataLookup = buildRegistryMetadata(
 			registries.developments,
-			mergeDescriptorRecords(
-				DEFAULT_DEVELOPMENT_METADATA,
-				overrides.developments,
-			),
+			overrides.developments,
 		);
-		const statMetadataLookup = buildStatMetadata(
-			mergeDescriptorRecords(DEFAULT_STAT_METADATA, overrides.stats),
-		);
-		const phaseMetadataLookup = buildPhaseMetadata(
-			mergeDescriptorRecords(DEFAULT_PHASE_METADATA, overrides.phases),
-		);
-		const triggerMetadataLookup = buildTriggerMetadata(
-			mergeDescriptorRecords(DEFAULT_TRIGGER_METADATA, overrides.triggers),
-		);
-		const assetDescriptors = mergeDescriptorRecords<SessionMetadataDescriptor>(
-			DEFAULT_ASSET_METADATA,
-			overrides.assets,
-		);
+		const statMetadataLookup = buildStatMetadata(overrides.stats);
+		const phaseMetadataLookup = buildPhaseMetadata(overrides.phases);
+		const triggerMetadataLookup = buildTriggerMetadata(overrides.triggers);
+		const assetDescriptors = overrides.assets;
 		return Object.freeze({
 			resourceMetadataLookup,
 			populationMetadataLookup,

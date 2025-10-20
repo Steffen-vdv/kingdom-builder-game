@@ -16,6 +16,7 @@ import {
 import { createSessionTranslationContext } from '../src/state/createSessionTranslationContext';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
+	createEmptySnapshotMetadata,
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
@@ -30,13 +31,13 @@ const TEST_PHASES: SessionPhaseDefinition[] = [
 	},
 ];
 
-const BASE_METADATA: SessionSnapshotMetadata = {
-	passiveEvaluationModifiers: {},
+const BASE_METADATA: SessionSnapshotMetadata = createEmptySnapshotMetadata({
 	assets: {
 		land: { label: 'Territory', icon: '🗺️' },
 		slot: { label: 'Development Slot', icon: '🧩' },
+		passive: { label: 'Passive', icon: '✨' },
 	},
-};
+});
 
 function createRuleSnapshot(resourceKey: string): SessionRuleSnapshot {
 	return {

@@ -6,6 +6,7 @@ import type {
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 import { createSessionRegistries } from './sessionRegistries';
+import { createEmptySnapshotMetadata } from './sessionFixtures';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
 interface PhaseOrderEntry {
@@ -86,11 +87,36 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 
 const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 	Object.freeze({
-		passive: { label: 'Passive Effect' },
-		population: { label: 'Citizens' },
-		land: { icon: '🛤️', label: 'Frontier Land' },
-		slot: { description: 'Development slot descriptor.' },
-		upkeep: { icon: '🧽', label: 'Maintenance' },
+		passive: {
+			icon: '♾️',
+			label: 'Passive Effect',
+			description: 'Always-on bonuses that shape your realm.',
+		},
+		population: {
+			icon: '👥',
+			label: 'Citizens',
+			description: 'Track population roles and assignments.',
+		},
+		land: {
+			icon: '🛤️',
+			label: 'Frontier Land',
+			description: 'Represents territory under your control.',
+		},
+		slot: {
+			icon: '🧩',
+			label: 'Development Slot',
+			description: 'Install new structures by filling available slots.',
+		},
+		upkeep: {
+			icon: '🧽',
+			label: 'Maintenance',
+			description: 'Costs paid each upkeep phase to retain benefits.',
+		},
+		transfer: {
+			icon: '🔁',
+			label: 'Transfer',
+			description: 'Movement of resources or assets between owners.',
+		},
 	});
 
 export interface TestSessionScaffold {
@@ -265,15 +291,19 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 	const populationMetadata = buildPopulationMetadata(registries);
 	const statMetadata = buildStatMetadata();
 	const phaseMetadata = buildPhaseMetadata();
-	const metadata: SessionSnapshot['metadata'] = {
-		passiveEvaluationModifiers: {},
+	const metadata: SessionSnapshot['metadata'] = createEmptySnapshotMetadata({
 		resources: resourceMetadata,
 		populations: populationMetadata,
 		stats: statMetadata,
 		phases: phaseMetadata,
 		triggers: { ...TRIGGER_METADATA },
 		assets: { ...ASSET_METADATA },
-	};
+		overviewContent: {
+			hero: { title: 'Session Overview', tokens: {} },
+			sections: [],
+			tokens: {},
+		},
+	});
 	const phases = buildPhaseDefinitions(PHASE_ORDER);
 	const tieredResourceKey = resourceKeys[0] ?? 'resource-0';
 	const ruleSnapshot = buildRuleSnapshot(tieredResourceKey);

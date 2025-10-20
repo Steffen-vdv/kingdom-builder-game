@@ -9,6 +9,7 @@ import {
 	sessionRunAiResponseSchema,
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
+	sessionMetadataSnapshotResponseSchema,
 } from '@kingdom-builder/protocol';
 import type {
 	ActionParametersPayload,
@@ -17,6 +18,7 @@ import type {
 	SessionActionOptionsResponse,
 	SessionRunAiResponse,
 	SessionSimulateResponse,
+	SessionMetadataSnapshotResponse,
 } from '@kingdom-builder/protocol';
 import type { EngineSession } from '@kingdom-builder/engine';
 import {
@@ -209,6 +211,16 @@ export class SessionTransport extends SessionTransportBase {
 			result,
 		} satisfies SessionSimulateResponse;
 		return sessionSimulateResponseSchema.parse(response);
+	}
+
+	public getMetadataSnapshot(): SessionMetadataSnapshotResponse {
+		const registries = this.sessionManager.getRegistries();
+		const metadata = this.sessionManager.getMetadata();
+		const response = {
+			registries,
+			metadata,
+		} satisfies SessionMetadataSnapshotResponse;
+		return sessionMetadataSnapshotResponseSchema.parse(response);
 	}
 
 	private parseActionMetadataRequest<S extends ActionMetadataSchema>(

@@ -4,6 +4,8 @@ export {
 	sessionPlayerNameMapSchema,
 	sessionPlayerIdSchema,
 	runtimeConfigResponseSchema,
+	sessionMetadataSnapshotSchema,
+	sessionMetadataSnapshotResponseSchema,
 } from './shared';
 export {
 	sessionCreateRequestSchema,

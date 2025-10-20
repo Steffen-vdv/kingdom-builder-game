@@ -21,8 +21,11 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from '../translationContextStub';
+import { createEmptySnapshotMetadata } from '../sessionFixtures';
 import { buildActionsPanelContent } from './contentBuilders';
 import {
+	createLandDescriptor,
+	createPassiveDescriptor,
 	createPopulationDescriptors,
 	createResourceDescriptors,
 	createSlotDescriptor,
@@ -264,7 +267,7 @@ export function createActionsPanelGame({
 			[player.id]: [],
 			[opponent.id]: [],
 		},
-		metadata: { passiveEvaluationModifiers: {} },
+		metadata: createEmptySnapshotMetadata(),
 	};
 	sessionRegistries.actions = actionsRegistry;
 	sessionRegistries.buildings = buildingsRegistry;
@@ -275,7 +278,9 @@ export function createActionsPanelGame({
 	const populationDescriptors = createPopulationDescriptors(
 		content.registeredPopulationRoles,
 	);
+	const landDescriptor = createLandDescriptor();
 	const slotDescriptor = createSlotDescriptor();
+	const passiveDescriptor = createPassiveDescriptor();
 	const metadata = {
 		upkeepResource,
 		capacityStat,
@@ -312,13 +317,21 @@ export function createActionsPanelGame({
 	for (const [actionId, failures] of metadata.requirementFailures.entries()) {
 		session.setActionRequirements(actionId, failures);
 	}
-	sessionState.metadata = {
-		passiveEvaluationModifiers: {},
+	sessionState.metadata = createEmptySnapshotMetadata({
 		resources: resourceDescriptors,
 		populations: populationDescriptors,
 		stats: Object.fromEntries(statMetadataEntries),
-		assets: { slot: slotDescriptor },
-	};
+		assets: {
+			land: landDescriptor,
+			slot: slotDescriptor,
+			passive: passiveDescriptor,
+		},
+		overviewContent: {
+			hero: { title: 'Session Overview', tokens: {} },
+			sections: [],
+			tokens: {},
+		},
+	});
 	return {
 		sessionId,
 		session,

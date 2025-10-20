@@ -2,6 +2,7 @@ import type { EffectDef } from '@kingdom-builder/protocol';
 import type {
 	PlayerStartConfig,
 	SessionLandSnapshot,
+	SessionOverviewMetadata,
 	SessionPassiveRecordSnapshot,
 	SessionPhaseDefinition,
 	SessionPlayerId,
@@ -16,6 +17,33 @@ const clone = <T>(value: T): T => {
 		return structuredClone(value);
 	}
 	return JSON.parse(JSON.stringify(value)) as T;
+};
+
+export const createEmptySnapshotMetadata = (
+	overrides: Partial<SessionSnapshotMetadata> = {},
+): SessionSnapshotMetadata => {
+	const { assets: assetOverrides, ...metadataOverrides } = overrides;
+	const baseAssets: NonNullable<SessionSnapshotMetadata['assets']> = {
+		land: { label: 'Land' },
+		slot: { label: 'Development Slot' },
+		passive: { label: 'Passive' },
+		population: { label: 'Population' },
+		transfer: { label: 'Transfer' },
+		upkeep: { label: 'Upkeep' },
+	};
+	const metadata: SessionSnapshotMetadata = {
+		passiveEvaluationModifiers: {},
+		resources: {},
+		populations: {},
+		buildings: {},
+		developments: {},
+		stats: {},
+		phases: {},
+		triggers: {},
+		assets: assetOverrides ? { ...baseAssets, ...assetOverrides } : baseAssets,
+		...metadataOverrides,
+	};
+	return metadata;
 };
 
 interface SnapshotPlayerOptions {
@@ -280,7 +308,13 @@ export function createSessionSnapshot({
 	}
 	const metadata = metadataOverride
 		? clone(metadataOverride)
-		: ({ passiveEvaluationModifiers: {} } satisfies SessionSnapshotMetadata);
+		: createEmptySnapshotMetadata({
+				overview: {
+					hero: { title: 'Session Overview', tokens: {} },
+					sections: [],
+					tokens: {},
+				} satisfies SessionOverviewMetadata,
+			});
 	return {
 		game: {
 			turn,
