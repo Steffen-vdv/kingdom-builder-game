@@ -127,6 +127,22 @@ describe('sessionSdk', () => {
 		expect(fetched.record.metadata).toEqual(initialSnapshot.metadata);
 	});
 
+	it('initializes state when fetching snapshot for a new session id', async () => {
+		const registries = createSessionRegistriesPayload();
+		registries.resources = resources;
+		api.primeSession({
+			sessionId: 'session-resume',
+			snapshot: initialSnapshot,
+			registries,
+		});
+		const fetched = await fetchSnapshot('session-resume');
+		expect(fetched.record.snapshot).toEqual(initialSnapshot);
+		expect(fetched.record.ruleSnapshot).toEqual(initialSnapshot.rules);
+		expect(fetched.record.metadata).toEqual(initialSnapshot.metadata);
+		const record = getSessionRecord('session-resume');
+		expect(record?.snapshot).toEqual(initialSnapshot);
+	});
+
 	it('sets dev mode via the API and refreshes local state', async () => {
 		await createSession();
 		const updatedSnapshot = createSessionSnapshot({
