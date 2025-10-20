@@ -90,7 +90,11 @@ export default function GameLayout() {
 	});
 	const layoutGridClassName = [
 		'grid grid-cols-1 gap-y-8 gap-x-6',
-		'items-start lg:grid-cols-[minmax(0,1fr)_30rem]',
+		'items-start',
+		'lg:grid-cols-[minmax(0,1.35fr)_minmax(22rem,1fr)]',
+		'xl:grid-cols-[minmax(0,1.5fr)_minmax(24rem,1.1fr)]',
+		'2xl:grid-cols-[minmax(0,1.65fr)_minmax(28rem,1.25fr)]',
+		'xl:gap-x-8 2xl:gap-x-10',
 	].join(' ');
 	const conclusion = sessionSnapshot.game.conclusion;
 	const logButton = (

@@ -66,7 +66,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 		};
 	}, []);
 	const panelClassName = [
-		'player-panel flex h-auto min-h-[320px] flex-col gap-2',
+		'player-panel flex h-auto min-h-[320px] flex-col gap-3',
 		'self-start text-slate-800 dark:text-slate-100',
 		className,
 	]
@@ -74,22 +74,27 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 		.join(' ');
 	return (
 		<div ref={panelRef} className={panelClassName}>
-			<h3 className="text-lg font-semibold tracking-tight">
-				{isActive && (
-					<span role="img" aria-label="active player" className="mr-1">
-						👑
-					</span>
-				)}
-				{player.name}
-			</h3>
-			<div
-				ref={animateBar}
-				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
-			>
-				<ResourceBar player={player} />
-				<PopulationInfo player={player} />
+			<div className="player-panel__summary flex flex-col gap-3">
+				<h3 className="text-lg font-semibold tracking-tight">
+					{isActive && (
+						<span role="img" aria-label="active player" className="mr-1">
+							👑
+						</span>
+					)}
+					{player.name}
+				</h3>
+				<div
+					ref={animateBar}
+					className="panel-card player-panel__summary-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
+				>
+					<ResourceBar player={player} />
+					<PopulationInfo player={player} />
+				</div>
 			</div>
-			<div ref={animateSections} className="flex flex-col gap-2">
+			<div
+				ref={animateSections}
+				className="player-panel__details flex flex-col gap-2"
+			>
 				<LandDisplay player={player} />
 				<BuildingDisplay player={player} />
 				<PassiveDisplay player={player} />

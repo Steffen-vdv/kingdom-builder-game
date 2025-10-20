@@ -271,47 +271,58 @@ export default function ActionsPanel() {
 				</div>
 			</div>
 			<div className="relative">
-				<div ref={sectionRef} className="space-y-4">
+				<div
+					ref={sectionRef}
+					className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-5 2xl:gap-6"
+				>
 					{otherActions.length > 0 && (
-						<BasicOptions
-							actions={otherActions}
-							summaries={actionSummaries}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-						/>
+						<div className="xl:col-span-2">
+							<BasicOptions
+								actions={otherActions}
+								summaries={actionSummaries}
+								player={selectedPlayer}
+								canInteract={canInteract}
+								selectResourceDescriptor={selectResourceDescriptor}
+							/>
+						</div>
 					)}
 					{raisePopAction && (
-						<HireOptions
-							action={raisePopAction}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-						/>
+						<div>
+							<HireOptions
+								action={raisePopAction}
+								player={selectedPlayer}
+								canInteract={canInteract}
+								selectResourceDescriptor={selectResourceDescriptor}
+							/>
+						</div>
 					)}
 					{developAction && (
-						<DevelopOptions
-							action={developAction}
-							isActionPhase={isActionPhase}
-							developments={developmentOptions}
-							summaries={developmentSummaries}
-							hasDevelopLand={hasDevelopLand}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-						/>
+						<div>
+							<DevelopOptions
+								action={developAction}
+								isActionPhase={isActionPhase}
+								developments={developmentOptions}
+								summaries={developmentSummaries}
+								hasDevelopLand={hasDevelopLand}
+								player={selectedPlayer}
+								canInteract={canInteract}
+								selectResourceDescriptor={selectResourceDescriptor}
+							/>
+						</div>
 					)}
 					{buildAction && (
-						<BuildOptions
-							action={buildAction}
-							isActionPhase={isActionPhase}
-							buildings={buildingOptions}
-							summaries={buildingSummaries}
-							descriptions={buildingDescriptions}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-						/>
+						<div>
+							<BuildOptions
+								action={buildAction}
+								isActionPhase={isActionPhase}
+								buildings={buildingOptions}
+								summaries={buildingSummaries}
+								descriptions={buildingDescriptions}
+								player={selectedPlayer}
+								canInteract={canInteract}
+								selectResourceDescriptor={selectResourceDescriptor}
+							/>
+						</div>
 					)}
 				</div>
 			</div>
