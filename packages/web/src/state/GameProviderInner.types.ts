@@ -36,4 +36,5 @@ export interface GameProviderInnerProps {
 	registries: SessionRegistries;
 	resourceKeys: SessionResourceKeys;
 	sessionMetadata: SessionMetadata;
+	syncPlayerName: (playerId: string, name: string) => void;
 }

@@ -63,6 +63,7 @@ export function GameProviderInner({
 	registries,
 	resourceKeys,
 	sessionMetadata,
+	syncPlayerName,
 }: GameProviderInnerProps) {
 	const { enqueue, cachedSessionSnapshot } = useSessionQueue(
 		queue,
@@ -79,6 +80,7 @@ export function GameProviderInner({
 		playerName,
 		enqueue,
 		refresh,
+		syncPlayerName,
 	});
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({

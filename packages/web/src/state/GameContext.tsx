@@ -33,7 +33,12 @@ import {
 	releaseSession,
 	setSessionDevMode,
 } from './sessionSdk';
-import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
+import {
+	enqueueSessionTask,
+	getSessionRecord,
+	updateSessionSnapshot,
+} from './sessionStateStore';
+import { clone } from './clone';
 
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
@@ -318,6 +323,37 @@ export function GameProvider(props: GameProviderProps) {
 		[runExclusive],
 	);
 
+	const syncPlayerName = useCallback(
+		(playerId: string, name: string) => {
+			const current = sessionStateRef.current;
+			if (!current) {
+				return;
+			}
+			const snapshot = clone(current.snapshot);
+			const target = snapshot.game.players.find(
+				(player) => player.id === playerId,
+			);
+			if (!target) {
+				return;
+			}
+			if (target.name === name) {
+				return;
+			}
+			target.name = name;
+			const updatedRecord = updateSessionSnapshot(current.sessionId, snapshot);
+			updateSessionData({
+				adapter: current.adapter,
+				sessionId: updatedRecord.sessionId,
+				snapshot: updatedRecord.snapshot,
+				ruleSnapshot: updatedRecord.ruleSnapshot,
+				registries: updatedRecord.registries,
+				resourceKeys: updatedRecord.resourceKeys,
+				metadata: updatedRecord.metadata,
+			});
+		},
+		[updateSessionData],
+	);
+
 	if (!sessionData) {
 		const bootstrapProps = {
 			error: sessionError,
@@ -361,6 +397,7 @@ export function GameProvider(props: GameProviderProps) {
 		registries: sessionData.registries,
 		resourceKeys: sessionData.resourceKeys,
 		sessionMetadata: sessionData.metadata,
+		syncPlayerName,
 	};
 
 	if (onExit) {

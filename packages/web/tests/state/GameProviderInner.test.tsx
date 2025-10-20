@@ -255,6 +255,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -358,6 +359,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<PreferenceConsumer />
 			</GameProviderInner>,
@@ -403,6 +405,7 @@ describe('GameProviderInner', () => {
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
+		const syncPlayerName = vi.fn();
 		const { rerender } = render(
 			<GameProviderInner
 				darkMode
@@ -429,6 +432,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={syncPlayerName}
 			>
 				<div />
 			</GameProviderInner>,
@@ -488,6 +492,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={currentSnapshot.metadata}
+				syncPlayerName={syncPlayerName}
 			>
 				<div />
 			</GameProviderInner>,
@@ -499,6 +504,15 @@ describe('GameProviderInner', () => {
 				playerId: localPlayer.id,
 				playerName: 'Warlord',
 			});
+		});
+		await waitFor(() => {
+			expect(syncPlayerName).toHaveBeenCalledWith(localPlayer.id, 'Strategist');
+		});
+		await waitFor(() => {
+			expect(syncPlayerName).toHaveBeenLastCalledWith(
+				localPlayer.id,
+				'Warlord',
+			);
 		});
 		cleanup();
 	});
@@ -555,6 +569,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -618,6 +633,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -657,6 +673,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -692,6 +709,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -726,6 +744,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -761,6 +780,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -824,6 +844,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -859,6 +880,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -924,6 +946,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -959,6 +982,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -996,6 +1020,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,
@@ -1033,6 +1058,7 @@ describe('GameProviderInner', () => {
 				registries={registries}
 				resourceKeys={resourceKeys}
 				sessionMetadata={sessionState.metadata}
+				syncPlayerName={() => {}}
 			>
 				<div />
 			</GameProviderInner>,

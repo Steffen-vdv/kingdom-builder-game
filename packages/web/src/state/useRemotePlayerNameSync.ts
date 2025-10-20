@@ -3,6 +3,7 @@ import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import { hasAiController } from './sessionAi';
 import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
+import { getSessionRecord } from './sessionStateStore';
 
 interface RemotePlayerNameSyncOptions {
 	sessionSnapshot: SessionSnapshot;
@@ -10,6 +11,7 @@ interface RemotePlayerNameSyncOptions {
 	playerName: string;
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	refresh: () => void;
+	syncPlayerName: (playerId: string, name: string) => void;
 }
 
 function useRemotePlayerNameSync({
@@ -18,6 +20,7 @@ function useRemotePlayerNameSync({
 	playerName,
 	enqueue,
 	refresh,
+	syncPlayerName,
 }: RemotePlayerNameSyncOptions) {
 	const playerNameRef = useRef(playerName);
 	playerNameRef.current = playerName;
@@ -59,9 +62,24 @@ function useRemotePlayerNameSync({
 				playerId: controlledPlayerId,
 				playerName: desiredName,
 			}),
-		).finally(() => {
-			refresh();
-		});
+		)
+			.then(() => {
+				const record = getSessionRecord(sessionId);
+				const updatedName = record?.snapshot.game.players.find(
+					(player) => player.id === controlledPlayerId,
+				)?.name;
+				const sanitizedName = updatedName?.trim();
+				const finalName =
+					sanitizedName &&
+					sanitizedName.length > 0 &&
+					sanitizedName === desiredName
+						? sanitizedName
+						: desiredName;
+				syncPlayerName(controlledPlayerId, finalName);
+			})
+			.finally(() => {
+				refresh();
+			});
 	}, [
 		enqueue,
 		controlledPlayerId,
@@ -69,6 +87,7 @@ function useRemotePlayerNameSync({
 		refresh,
 		playerName,
 		sessionId,
+		syncPlayerName,
 	]);
 }
 
