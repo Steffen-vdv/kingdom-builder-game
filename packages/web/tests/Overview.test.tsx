@@ -21,6 +21,7 @@ describe('<Overview />', () => {
 		});
 		const registries: SessionRegistries = {
 			actions: factory.actions,
+			actionCategories: factory.categories,
 			buildings: factory.buildings,
 			developments: factory.developments,
 			populations: factory.populations,

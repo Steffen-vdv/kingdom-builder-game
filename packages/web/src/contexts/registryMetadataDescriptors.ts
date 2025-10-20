@@ -237,6 +237,7 @@ export const buildRegistryMetadata = <
 	TDefinition extends {
 		id: string;
 		name?: string | undefined;
+		label?: string | undefined;
 		icon?: string | undefined;
 		description?: string | undefined;
 	},
@@ -246,7 +247,7 @@ export const buildRegistryMetadata = <
 ): MetadataLookup<RegistryMetadataDescriptor> =>
 	createLookup(
 		mergeRegistryEntries(registry, metadata, (definition) => ({
-			label: definition.name,
+			label: definition.name ?? definition.label,
 			icon: definition.icon,
 			description: definition.description,
 		})),

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type {
+	ActionCategoryConfig,
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
@@ -24,6 +25,7 @@ import {
 	buildTriggerMetadata,
 } from './registryMetadataDescriptors';
 import {
+	DEFAULT_ACTION_CATEGORY_METADATA,
 	DEFAULT_ASSET_METADATA,
 	DEFAULT_BUILDING_METADATA,
 	DEFAULT_DEVELOPMENT_METADATA,
@@ -43,6 +45,7 @@ import {
 export interface DescriptorOverrides {
 	readonly resources?: ReturnType<typeof extractDescriptorRecord>;
 	readonly populations?: ReturnType<typeof extractDescriptorRecord>;
+	readonly actionCategories?: ReturnType<typeof extractDescriptorRecord>;
 	readonly buildings?: ReturnType<typeof extractDescriptorRecord>;
 	readonly developments?: ReturnType<typeof extractDescriptorRecord>;
 	readonly stats?: ReturnType<typeof extractDescriptorRecord>;
@@ -63,6 +66,10 @@ export const useDescriptorOverrides = (
 		return Object.freeze({
 			resources: extractDescriptorRecord(snapshotMetadata, 'resources'),
 			populations: extractDescriptorRecord(snapshotMetadata, 'populations'),
+			actionCategories: extractDescriptorRecord(
+				snapshotMetadata,
+				'actionCategories',
+			),
 			buildings: extractDescriptorRecord(snapshotMetadata, 'buildings'),
 			developments: extractDescriptorRecord(snapshotMetadata, 'developments'),
 			stats: extractDescriptorRecord(snapshotMetadata, 'stats'),
@@ -75,6 +82,7 @@ export const useDescriptorOverrides = (
 interface DefinitionLookups {
 	readonly resourceLookup: DefinitionLookup<SessionResourceDefinition>;
 	readonly actionLookup: DefinitionLookup<ActionConfig>;
+	readonly actionCategoryLookup: DefinitionLookup<ActionCategoryConfig>;
 	readonly buildingLookup: DefinitionLookup<BuildingConfig>;
 	readonly developmentLookup: DefinitionLookup<DevelopmentConfig>;
 	readonly populationLookup: DefinitionLookup<PopulationConfig>;
@@ -83,12 +91,21 @@ interface DefinitionLookups {
 export const useDefinitionLookups = (
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
+		| 'actionCategories'
+		| 'actions'
+		| 'resources'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
 	>,
 ): DefinitionLookups =>
 	useMemo(() => {
 		const resourceLookup = createResourceLookup(registries.resources);
 		const actionLookup = createRegistryLookup(registries.actions, 'action');
+		const actionCategoryLookup = createRegistryLookup(
+			registries.actionCategories,
+			'action category',
+		);
 		const buildingLookup = createRegistryLookup(
 			registries.buildings,
 			'building',
@@ -104,11 +121,13 @@ export const useDefinitionLookups = (
 		return Object.freeze({
 			resourceLookup,
 			actionLookup,
+			actionCategoryLookup,
 			buildingLookup,
 			developmentLookup,
 			populationLookup,
 		});
 	}, [
+		registries.actionCategories,
 		registries.actions,
 		registries.buildings,
 		registries.developments,
@@ -119,6 +138,9 @@ export const useDefinitionLookups = (
 interface MetadataLookups {
 	readonly resourceMetadataLookup: ReturnType<typeof buildResourceMetadata>;
 	readonly populationMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
+	readonly actionCategoryMetadataLookup: ReturnType<
+		typeof buildRegistryMetadata
+	>;
 	readonly buildingMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
 	readonly developmentMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
 	readonly statMetadataLookup: ReturnType<typeof buildStatMetadata>;
@@ -132,7 +154,12 @@ interface MetadataLookups {
 export const useMetadataLookups = (
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
+		| 'actionCategories'
+		| 'actions'
+		| 'resources'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
 	>,
 	overrides: DescriptorOverrides,
 ): MetadataLookups =>
@@ -140,6 +167,13 @@ export const useMetadataLookups = (
 		const resourceMetadataLookup = buildResourceMetadata(
 			registries.resources,
 			mergeDescriptorRecords(DEFAULT_RESOURCE_METADATA, overrides.resources),
+		);
+		const actionCategoryMetadataLookup = buildRegistryMetadata(
+			registries.actionCategories,
+			mergeDescriptorRecords(
+				DEFAULT_ACTION_CATEGORY_METADATA,
+				overrides.actionCategories,
+			),
 		);
 		const populationMetadataLookup = buildRegistryMetadata(
 			registries.populations,
@@ -174,6 +208,7 @@ export const useMetadataLookups = (
 		);
 		return Object.freeze({
 			resourceMetadataLookup,
+			actionCategoryMetadataLookup,
 			populationMetadataLookup,
 			buildingMetadataLookup,
 			developmentMetadataLookup,
@@ -184,6 +219,7 @@ export const useMetadataLookups = (
 		});
 	}, [
 		overrides,
+		registries.actionCategories,
 		registries.buildings,
 		registries.developments,
 		registries.populations,

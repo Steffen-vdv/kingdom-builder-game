@@ -40,6 +40,10 @@ export const DEFAULT_POPULATION_METADATA = extractDescriptorRecord(
 	DEFAULT_METADATA,
 	'populations',
 );
+export const DEFAULT_ACTION_CATEGORY_METADATA = extractDescriptorRecord(
+	DEFAULT_METADATA,
+	'actionCategories',
+);
 export const DEFAULT_BUILDING_METADATA = extractDescriptorRecord(
 	DEFAULT_METADATA,
 	'buildings',
