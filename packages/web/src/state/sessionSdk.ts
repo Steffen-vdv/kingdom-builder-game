@@ -18,6 +18,7 @@ import {
 	deleteSessionRecord,
 	enqueueSessionTask,
 	initializeSessionState,
+	waitForSessionRecord,
 	type SessionStateRecord,
 } from './sessionStateStore';
 import { type Session, type RemoteSessionRecord } from './sessionTypes';
@@ -212,6 +213,10 @@ export async function loadActionCosts(
 ): Promise<SessionActionCostMap> {
 	const api = ensureGameApi();
 	void getAdapter(sessionId);
+	const waitOptions = requestOptions.signal
+		? { signal: requestOptions.signal }
+		: undefined;
+	await waitForSessionRecord(sessionId, waitOptions);
 	const response = await enqueueSessionTask(sessionId, () =>
 		api.getActionCosts(
 			buildActionMetadataRequest(sessionId, actionId, params),
@@ -230,6 +235,10 @@ export async function loadActionRequirements(
 ): Promise<SessionActionRequirementList> {
 	const api = ensureGameApi();
 	void getAdapter(sessionId);
+	const waitOptions = requestOptions.signal
+		? { signal: requestOptions.signal }
+		: undefined;
+	await waitForSessionRecord(sessionId, waitOptions);
 	const response = await enqueueSessionTask(sessionId, () =>
 		api.getActionRequirements(
 			buildActionMetadataRequest(sessionId, actionId, params),
@@ -252,6 +261,10 @@ export async function loadActionOptions(
 ): Promise<ActionEffectGroup[]> {
 	const api = ensureGameApi();
 	void getAdapter(sessionId);
+	const waitOptions = requestOptions.signal
+		? { signal: requestOptions.signal }
+		: undefined;
+	await waitForSessionRecord(sessionId, waitOptions);
 	const response = await enqueueSessionTask(sessionId, () =>
 		api.getActionOptions(
 			buildActionMetadataRequest(sessionId, actionId),

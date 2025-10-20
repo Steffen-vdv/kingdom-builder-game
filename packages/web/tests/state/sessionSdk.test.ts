@@ -10,6 +10,7 @@ import {
 	advanceSessionPhase,
 	createSession,
 	fetchSnapshot,
+	loadActionCosts,
 	performSessionAction,
 	releaseSession,
 	runAiTurn,
@@ -34,6 +35,7 @@ import {
 import {
 	getSessionRecord,
 	clearSessionStateStore,
+	initializeSessionState,
 } from '../../src/state/sessionStateStore';
 import * as sessionStateStoreModule from '../../src/state/sessionStateStore';
 
@@ -117,6 +119,36 @@ describe('sessionSdk', () => {
 		expect(created.record.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(created.record.resourceKeys).toEqual(resourceKeys);
 		expect(created.record.metadata).toEqual(initialSnapshot.metadata);
+	});
+
+	it('waits for session records before loading action costs', async () => {
+		const sessionId = 'session-wait';
+		const snapshot = createSessionSnapshot({
+			players: [playerA, playerB],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 1,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
+		});
+		const registries = createSessionRegistriesPayload();
+		registries.resources = resources;
+		const costResponse = {
+			sessionId,
+			actionId: taxActionId,
+			costs: { [resourceKey]: 3 },
+		} as const;
+		api.setNextActionCostResponse(costResponse);
+		const pendingCosts = loadActionCosts(sessionId, taxActionId);
+		initializeSessionState({
+			sessionId,
+			snapshot,
+			registries,
+		});
+		await expect(pendingCosts).resolves.toEqual(costResponse.costs);
 	});
 
 	it('fetches snapshots via the API client', async () => {
