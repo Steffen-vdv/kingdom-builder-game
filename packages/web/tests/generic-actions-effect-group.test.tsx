@@ -447,9 +447,9 @@ describe('GenericActions effect group handling', () => {
 		});
 		fireEvent.click(actionButton);
 
-		const optionButton = await screen.findByRole('button', {
-			name: /Develop - 🏠 House/,
-		});
+const optionButton = await screen.findByRole('button', {
+name: /Install Development - 🏠 House/,
+});
 		fireEvent.click(optionButton);
 
 		await waitFor(() => {

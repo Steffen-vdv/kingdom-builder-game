@@ -228,10 +228,10 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 	);
 
 	registry.add(
-		ActionId.build,
+		ActionId.construct_building,
 		action()
-			.id(ActionId.build)
-			.name('Build')
+			.id(ActionId.construct_building)
+			.name('Construct Building')
 			.icon('🏛️')
 			.effect(
 				effect(Types.Building, BuildingMethods.ADD)

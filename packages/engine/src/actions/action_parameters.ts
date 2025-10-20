@@ -2,10 +2,10 @@ import type { ActionEffectGroupChoiceMap } from '@kingdom-builder/protocol';
 import type { PopulationRoleId } from '../state';
 
 type ActionParameterMap = {
-	develop: { id: string; landId: string };
-	build: { id: string };
+	install_development: { id: string; landId: string };
+	construct_building: { id: string };
 	demolish: { id: string };
-	raise_pop: { role: PopulationRoleId };
+	recruit_population: { role: PopulationRoleId };
 	[key: string]: Record<string, unknown>;
 };
 

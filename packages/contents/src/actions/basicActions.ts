@@ -70,10 +70,10 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 	);
 
 	registry.add(
-		ActionId.develop,
+		ActionId.install_development,
 		action()
-			.id(ActionId.develop)
-			.name('Develop')
+			.id(ActionId.install_development)
+			.name('Install Development')
 			.icon('🏗️')
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
@@ -119,10 +119,10 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 	);
 
 	registry.add(
-		ActionId.raise_pop,
+		ActionId.recruit_population,
 		action()
-			.id(ActionId.raise_pop)
-			.name('Hire')
+			.id(ActionId.recruit_population)
+			.name('Recruit Population')
 			.icon('👶')
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
@@ -154,28 +154,28 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 		.option(
 			actionEffectGroupOption('royal_decree_house')
 				.icon('🏠')
-				.action(ActionId.develop)
+				.action(ActionId.install_development)
 				.paramDevelopmentId(DevelopmentId.House)
 				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_farm')
 				.icon('🌾')
-				.action(ActionId.develop)
+				.action(ActionId.install_development)
 				.paramDevelopmentId(DevelopmentId.Farm)
 				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_outpost')
 				.icon('🏹')
-				.action(ActionId.develop)
+				.action(ActionId.install_development)
 				.paramDevelopmentId(DevelopmentId.Outpost)
 				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_watchtower')
 				.icon('🗼')
-				.action(ActionId.develop)
+				.action(ActionId.install_development)
 				.paramDevelopmentId(DevelopmentId.Watchtower)
 				.paramLandId('$landId'),
 		);
