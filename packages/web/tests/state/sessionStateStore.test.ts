@@ -18,6 +18,10 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
+import {
+	SessionMirroringError,
+	isFatalSessionError,
+} from '../../src/state/sessionErrors';
 
 const createMetadata = (overrides: Partial<SessionSnapshotMetadata> = {}) =>
 	createEmptySnapshotMetadata(overrides);
@@ -138,9 +142,17 @@ describe('sessionStateStore', () => {
 		expect(updated.metadata).toEqual(nextSnapshot.metadata);
 	});
 
-	it('throws when asserting an unknown session record', () => {
-		expect(() => assertSessionRecord('missing:session')).toThrow(
-			/Missing session record/,
-		);
+	it('throws a fatal session mirroring error when asserting an unknown session', () => {
+		try {
+			assertSessionRecord('missing:session');
+			throw new Error('Expected assertSessionRecord to throw.');
+		} catch (error) {
+			expect(error).toBeInstanceOf(SessionMirroringError);
+			expect(isFatalSessionError(error)).toBe(true);
+			if (error instanceof SessionMirroringError) {
+				expect(error.details.sessionId).toBe('missing:session');
+				expect(Array.isArray(error.details.knownSessionIds)).toBe(true);
+			}
+		}
 	});
 });

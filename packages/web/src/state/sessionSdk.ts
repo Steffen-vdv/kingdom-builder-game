@@ -212,11 +212,9 @@ export async function loadActionCosts(
 ): Promise<SessionActionCostMap> {
 	const api = ensureGameApi();
 	void getAdapter(sessionId);
-	const response = await enqueueSessionTask(sessionId, () =>
-		api.getActionCosts(
-			buildActionMetadataRequest(sessionId, actionId, params),
-			requestOptions,
-		),
+	const response = await api.getActionCosts(
+		buildActionMetadataRequest(sessionId, actionId, params),
+		requestOptions,
 	);
 	setSessionActionCosts(sessionId, actionId, response.costs, params);
 	return clone(response.costs);
@@ -230,11 +228,9 @@ export async function loadActionRequirements(
 ): Promise<SessionActionRequirementList> {
 	const api = ensureGameApi();
 	void getAdapter(sessionId);
-	const response = await enqueueSessionTask(sessionId, () =>
-		api.getActionRequirements(
-			buildActionMetadataRequest(sessionId, actionId, params),
-			requestOptions,
-		),
+	const response = await api.getActionRequirements(
+		buildActionMetadataRequest(sessionId, actionId, params),
+		requestOptions,
 	);
 	setSessionActionRequirements(
 		sessionId,
@@ -252,11 +248,9 @@ export async function loadActionOptions(
 ): Promise<ActionEffectGroup[]> {
 	const api = ensureGameApi();
 	void getAdapter(sessionId);
-	const response = await enqueueSessionTask(sessionId, () =>
-		api.getActionOptions(
-			buildActionMetadataRequest(sessionId, actionId),
-			requestOptions,
-		),
+	const response = await api.getActionOptions(
+		buildActionMetadataRequest(sessionId, actionId),
+		requestOptions,
 	);
 	setSessionActionOptions(sessionId, actionId, response.groups);
 	return clone(response.groups);
