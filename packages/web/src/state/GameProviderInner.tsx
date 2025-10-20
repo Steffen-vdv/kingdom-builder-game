@@ -1,17 +1,13 @@
-import React, {
-	createContext,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-} from 'react';
+import React, { createContext, useCallback, useEffect, useMemo } from 'react';
 import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import TranslationContextLoading from './TranslationContextLoading';
 import { useTimeScale } from './useTimeScale';
 import { useHoverCard } from './useHoverCard';
 import { useGameLog } from './useGameLog';
-import { useActionResolution } from './useActionResolution';
-import type { ShowResolutionOptions } from './useActionResolution';
+import {
+	useActionResolution,
+	type ShowResolutionOptions,
+} from './useActionResolution';
 import { usePhaseProgress } from './usePhaseProgress';
 import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
@@ -26,12 +22,12 @@ import type {
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import type { SessionResourceKey } from './sessionTypes';
-import { hasAiController } from './sessionAi';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import { updatePlayerName as updateRemotePlayerName } from './sessionSdk';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import { useResolutionAutomation } from './useResolutionAutomation';
+import { useRemotePlayerNameSync } from './useRemotePlayerNameSync';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -68,8 +64,6 @@ export function GameProviderInner({
 	resourceKeys,
 	sessionMetadata,
 }: GameProviderInnerProps) {
-	const playerNameRef = useRef(playerName);
-	playerNameRef.current = playerName;
 	const { enqueue, cachedSessionSnapshot } = useSessionQueue(
 		queue,
 		sessionSnapshot,
@@ -79,54 +73,13 @@ export function GameProviderInner({
 	const refresh = useCallback(() => {
 		void refreshSession();
 	}, [refreshSession]);
-	const controlledPlayerSnapshot = useMemo(() => {
-		const players = sessionSnapshot.game.players;
-		if (!Array.isArray(players) || players.length === 0) {
-			return undefined;
-		}
-		const { activePlayerId, opponentId } = sessionSnapshot.game;
-		return (
-			players.find((player) => {
-				return !hasAiController(sessionId, player.id);
-			}) ??
-			players.find((player) => player.id === activePlayerId) ??
-			players.find((player) => player.id === opponentId) ??
-			players[0]
-		);
-	}, [
+	useRemotePlayerNameSync({
+		sessionSnapshot,
 		sessionId,
-		sessionSnapshot.game.players,
-		sessionSnapshot.game.activePlayerId,
-		sessionSnapshot.game.opponentId,
-	]);
-	const controlledPlayerId = controlledPlayerSnapshot?.id;
-	const controlledPlayerName = controlledPlayerSnapshot?.name;
-	useEffect(() => {
-		const desiredName = playerNameRef.current ?? DEFAULT_PLAYER_NAME;
-		if (
-			controlledPlayerId === undefined ||
-			controlledPlayerName === undefined ||
-			controlledPlayerName === desiredName
-		) {
-			return;
-		}
-		void enqueue(() =>
-			updateRemotePlayerName({
-				sessionId,
-				playerId: controlledPlayerId,
-				playerName: desiredName,
-			}),
-		).finally(() => {
-			refresh();
-		});
-	}, [
-		enqueue,
-		controlledPlayerId,
-		controlledPlayerName,
-		refresh,
 		playerName,
-		sessionId,
-	]);
+		enqueue,
+		refresh,
+	});
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
 			sessionSnapshot,
@@ -299,6 +252,17 @@ export function GameProviderInner({
 		}),
 		[performActionRequest, handleEndTurn, refreshSession],
 	);
+
+	useResolutionAutomation({
+		autoAcknowledgeEnabled,
+		autoPassEnabled,
+		acknowledgeResolution,
+		resolution,
+		mountedRef,
+		phaseCanEnd: phase.canEndTurn,
+		phaseIsAdvancing: phase.isAdvancing,
+		advancePhase: requestHelpers.advancePhase,
+	});
 
 	const handleExit = useCallback(() => {
 		onReleaseSession();
