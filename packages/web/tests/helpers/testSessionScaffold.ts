@@ -87,11 +87,36 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 
 const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 	Object.freeze({
-		passive: { label: 'Passive Effect' },
-		population: { label: 'Citizens' },
-		land: { icon: '🛤️', label: 'Frontier Land' },
-		slot: { description: 'Development slot descriptor.' },
-		upkeep: { icon: '🧽', label: 'Maintenance' },
+		passive: {
+			icon: '♾️',
+			label: 'Passive Effect',
+			description: 'Always-on bonuses that shape your realm.',
+		},
+		population: {
+			icon: '👥',
+			label: 'Citizens',
+			description: 'Track population roles and assignments.',
+		},
+		land: {
+			icon: '🛤️',
+			label: 'Frontier Land',
+			description: 'Represents territory under your control.',
+		},
+		slot: {
+			icon: '🧩',
+			label: 'Development Slot',
+			description: 'Install new structures by filling available slots.',
+		},
+		upkeep: {
+			icon: '🧽',
+			label: 'Maintenance',
+			description: 'Costs paid each upkeep phase to retain benefits.',
+		},
+		transfer: {
+			icon: '🔁',
+			label: 'Transfer',
+			description: 'Movement of resources or assets between owners.',
+		},
 	});
 
 export interface TestSessionScaffold {

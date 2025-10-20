@@ -27,6 +27,9 @@ export const createEmptySnapshotMetadata = (
 		land: { label: 'Land' },
 		slot: { label: 'Development Slot' },
 		passive: { label: 'Passive' },
+		population: { label: 'Population' },
+		transfer: { label: 'Transfer' },
+		upkeep: { label: 'Upkeep' },
 	};
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},

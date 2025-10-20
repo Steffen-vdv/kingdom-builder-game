@@ -3,23 +3,49 @@ import { createTranslationAssets } from '../src/translation/context/assets';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 
 describe('translation assets', () => {
-	it('falls back to default stat metadata when snapshot metadata omits stats', () => {
-		const { registries, ruleSnapshot } = createTestSessionScaffold();
+	it('uses provided metadata descriptors for critical assets and stats', () => {
+		const { registries, metadata, ruleSnapshot } = createTestSessionScaffold();
 		const assets = createTranslationAssets(
 			{
 				populations: registries.populations,
 				resources: registries.resources,
 			},
-			undefined,
+			metadata,
 			{ rules: ruleSnapshot },
 		);
-		expect(assets.stats.fortificationStrength).toMatchObject({
-			icon: '🛡️',
-			label: 'Fortification Strength',
+		expect(assets.land).toMatchObject({
+			icon: metadata.assets?.land?.icon,
+			label: metadata.assets?.land?.label,
+			description: metadata.assets?.land?.description,
 		});
-		expect(assets.stats.absorption).toMatchObject({
-			icon: '🌀',
-			label: 'Absorption',
+		expect(assets.passive).toMatchObject({
+			icon: metadata.assets?.passive?.icon,
+			label: metadata.assets?.passive?.label,
+			description: metadata.assets?.passive?.description,
 		});
+		expect(assets.stats.maxPopulation).toMatchObject({
+			icon: metadata.stats?.maxPopulation?.icon,
+			label: metadata.stats?.maxPopulation?.label,
+			description: metadata.stats?.maxPopulation?.description,
+		});
+	});
+
+	it('throws when required asset descriptors are missing', () => {
+		const { registries, metadata, ruleSnapshot } = createTestSessionScaffold();
+		const metadataWithoutLand = {
+			...metadata,
+			assets: { ...metadata.assets },
+		};
+		delete metadataWithoutLand.assets.land;
+		expect(() =>
+			createTranslationAssets(
+				{
+					populations: registries.populations,
+					resources: registries.resources,
+				},
+				metadataWithoutLand as typeof metadata,
+				{ rules: ruleSnapshot },
+			),
+		).toThrowError(/assets\.land/);
 	});
 });
