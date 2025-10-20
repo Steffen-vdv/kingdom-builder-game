@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -105,7 +105,7 @@ describe('<ActionsPanel />', () => {
 		cleanup();
 	});
 
-	it('disables player interactions while the AI resolves its turn', () => {
+	it('disables player interactions while the AI resolves its turn', async () => {
 		render(
 			<RegistryMetadataProvider
 				registries={scenario.registries}
@@ -114,8 +114,10 @@ describe('<ActionsPanel />', () => {
 				<ActionsPanel />
 			</RegistryMetadataProvider>,
 		);
-		expect(screen.getByText('Opponent Turn')).toBeInTheDocument();
-		const expandButton = screen.getByRole('button', { name: /expand/i });
+		await waitFor(() => {
+			expect(screen.getByText('Opponent Turn')).toBeInTheDocument();
+		});
+		const expandButton = await screen.findByRole('button', { name: /expand/i });
 		expect(expandButton).toBeDisabled();
 	});
 });
