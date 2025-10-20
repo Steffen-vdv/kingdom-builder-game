@@ -22,6 +22,8 @@ export default function App() {
 		isMusicEnabled,
 		isSoundEnabled,
 		isBackgroundAudioMuted,
+		isAutoAcknowledgeEnabled,
+		isAutoPassEnabled,
 		startStandardGame,
 		startDeveloperGame,
 		openOverview,
@@ -31,6 +33,8 @@ export default function App() {
 		toggleMusic,
 		toggleSound,
 		toggleBackgroundAudioMute,
+		toggleAutoAcknowledge,
+		toggleAutoPass,
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
 
@@ -63,6 +67,10 @@ export default function App() {
 					onToggleSound={toggleSound}
 					backgroundAudioMuted={isBackgroundAudioMuted}
 					onToggleBackgroundAudioMute={toggleBackgroundAudioMute}
+					autoAcknowledgeEnabled={isAutoAcknowledgeEnabled}
+					onToggleAutoAcknowledge={toggleAutoAcknowledge}
+					autoPassEnabled={isAutoPassEnabled}
+					onToggleAutoPass={toggleAutoPass}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 				/>

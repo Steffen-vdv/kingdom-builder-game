@@ -8,6 +8,8 @@ export interface AppNavigationState {
 	isMusicEnabled: boolean;
 	isSoundEnabled: boolean;
 	isBackgroundAudioMuted: boolean;
+	isAutoAcknowledgeEnabled: boolean;
+	isAutoPassEnabled: boolean;
 	startStandardGame: () => void;
 	startDeveloperGame: () => void;
 	openOverview: () => void;
@@ -17,4 +19,6 @@ export interface AppNavigationState {
 	toggleMusic: () => void;
 	toggleSound: () => void;
 	toggleBackgroundAudioMute: () => void;
+	toggleAutoAcknowledge: () => void;
+	toggleAutoPass: () => void;
 }

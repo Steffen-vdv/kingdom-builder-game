@@ -364,6 +364,61 @@ describe('GameProvider', () => {
 		);
 	});
 
+	it('exposes gameplay preference props through the game context', async () => {
+		const handleToggleAutoAcknowledge = vi.fn();
+		const handleToggleAutoPass = vi.fn();
+		const capture = vi.fn();
+
+		function PreferenceSpy() {
+			const {
+				autoAcknowledgeEnabled,
+				onToggleAutoAcknowledge,
+				autoPassEnabled,
+				onToggleAutoPass,
+			} = useGameEngine();
+			React.useEffect(() => {
+				capture({
+					autoAcknowledgeEnabled,
+					onToggleAutoAcknowledge,
+					autoPassEnabled,
+					onToggleAutoPass,
+				});
+			}, [
+				autoAcknowledgeEnabled,
+				onToggleAutoAcknowledge,
+				autoPassEnabled,
+				onToggleAutoPass,
+			]);
+			return null;
+		}
+
+		render(
+			<GameProvider
+				playerName="Commander"
+				autoAcknowledgeEnabled
+				onToggleAutoAcknowledge={handleToggleAutoAcknowledge}
+				autoPassEnabled={false}
+				onToggleAutoPass={handleToggleAutoPass}
+			>
+				<PreferenceSpy />
+			</GameProvider>,
+		);
+
+		await waitFor(() => expect(capture).toHaveBeenCalled());
+
+		const lastCall = capture.mock.calls[capture.mock.calls.length - 1]?.[0];
+		expect(lastCall?.autoAcknowledgeEnabled).toBe(true);
+		act(() => {
+			lastCall?.onToggleAutoAcknowledge();
+		});
+		expect(handleToggleAutoAcknowledge).toHaveBeenCalledTimes(1);
+		expect(lastCall?.autoPassEnabled).toBe(false);
+		act(() => {
+			lastCall?.onToggleAutoPass();
+		});
+		expect(handleToggleAutoPass).toHaveBeenCalledTimes(1);
+	});
+
 	it('updates the active session when the dev mode prop changes', async () => {
 		const { rerender } = render(
 			<GameProvider devMode={false} playerName="Scout">

@@ -38,6 +38,10 @@ export interface GameProviderProps {
 	onToggleSound?: () => void;
 	backgroundAudioMuted?: boolean;
 	onToggleBackgroundAudioMute?: () => void;
+	autoAcknowledgeEnabled?: boolean;
+	onToggleAutoAcknowledge?: () => void;
+	autoPassEnabled?: boolean;
+	onToggleAutoPass?: () => void;
 	playerName?: string;
 	onChangePlayerName?: (name: string) => void;
 }
@@ -99,6 +103,10 @@ export interface GameEngineContextValue {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
+	autoAcknowledgeEnabled: boolean;
+	onToggleAutoAcknowledge: () => void;
+	autoPassEnabled: boolean;
+	onToggleAutoPass: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
 	toasts: Toast[];

@@ -8,6 +8,10 @@ import {
 } from '../../src/state/appHistory';
 import { useAppNavigation } from '../../src/state/useAppNavigation';
 import { DARK_MODE_PREFERENCE_STORAGE_KEY } from '../../src/state/darkModePreference';
+import {
+	AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
+	AUTO_PASS_PREFERENCE_STORAGE_KEY,
+} from '../../src/state/gameplayPreferences';
 
 describe('useAppNavigation', () => {
 	const originalMatchMedia = window.matchMedia;
@@ -57,6 +61,22 @@ describe('useAppNavigation', () => {
 
 		expect(result.current.isDarkMode).toBe(true);
 		expect(menuState.isDarkModeEnabled).toBe(true);
+		unmount();
+	});
+
+	it('restores stored gameplay preferences when history is missing them', async () => {
+		window.localStorage.setItem(
+			AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
+			'true',
+		);
+		window.localStorage.setItem(AUTO_PASS_PREFERENCE_STORAGE_KEY, 'true');
+
+		const { result, menuState, unmount } = await renderNavigationHook();
+
+		expect(result.current.isAutoAcknowledgeEnabled).toBe(true);
+		expect(result.current.isAutoPassEnabled).toBe(true);
+		expect(menuState.isAutoAcknowledgeEnabled).toBe(true);
+		expect(menuState.isAutoPassEnabled).toBe(true);
 		unmount();
 	});
 
@@ -146,5 +166,60 @@ describe('useAppNavigation', () => {
 		const secondRender = await renderNavigationHook();
 		expect(secondRender.result.current.isDarkMode).toBe(true);
 		secondRender.unmount();
+	});
+
+	it('persists gameplay preferences across reloads and syncs history', async () => {
+		const firstRender = await renderNavigationHook();
+
+		expect(firstRender.result.current.isAutoAcknowledgeEnabled).toBe(false);
+		expect(firstRender.result.current.isAutoPassEnabled).toBe(false);
+
+		act(() => {
+			firstRender.result.current.toggleAutoAcknowledge();
+		});
+
+		expect(
+			window.localStorage.getItem(AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY),
+		).toBe('true');
+		expect(
+			(window.history.state as HistoryState).isAutoAcknowledgeEnabled,
+		).toBe(true);
+
+		act(() => {
+			firstRender.result.current.toggleAutoPass();
+		});
+
+		expect(window.localStorage.getItem(AUTO_PASS_PREFERENCE_STORAGE_KEY)).toBe(
+			'true',
+		);
+		expect((window.history.state as HistoryState).isAutoPassEnabled).toBe(true);
+
+		firstRender.unmount();
+
+		const secondRender = await renderNavigationHook();
+		expect(secondRender.result.current.isAutoAcknowledgeEnabled).toBe(true);
+		expect(secondRender.result.current.isAutoPassEnabled).toBe(true);
+		secondRender.unmount();
+	});
+
+	it('enables gameplay preferences when starting a developer game', async () => {
+		const { result, unmount } = await renderNavigationHook();
+
+		act(() => {
+			result.current.startDeveloperGame();
+		});
+
+		const historyState = window.history.state as HistoryState;
+		expect(historyState.isAutoAcknowledgeEnabled).toBe(true);
+		expect(historyState.isAutoPassEnabled).toBe(true);
+		expect(result.current.isAutoAcknowledgeEnabled).toBe(true);
+		expect(result.current.isAutoPassEnabled).toBe(true);
+		expect(
+			window.localStorage.getItem(AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY),
+		).toBe('true');
+		expect(window.localStorage.getItem(AUTO_PASS_PREFERENCE_STORAGE_KEY)).toBe(
+			'true',
+		);
+		unmount();
 	});
 });
