@@ -3,12 +3,17 @@ import type {
 	FastifyReply,
 	FastifyRequest,
 } from 'fastify';
+import { sessionIdSchema } from '@kingdom-builder/protocol';
 import { SessionTransport } from './SessionTransport.js';
 import type { SessionTransportOptions } from './SessionTransport.js';
 import { TransportError } from './TransportTypes.js';
 import type { TransportErrorCode } from './TransportTypes.js';
 
 export type FastifySessionTransportOptions = SessionTransportOptions;
+
+interface MetadataQuerystring {
+	sessionId?: string;
+}
 
 export const createSessionTransportPlugin: FastifyPluginCallback<
 	FastifySessionTransportOptions
@@ -24,14 +29,29 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 		}
 	});
 
-	fastify.get('/metadata', async (_request, reply) => {
-		try {
-			const response = transport.getMetadataSnapshot();
-			return reply.send(response);
-		} catch (error) {
-			return handleTransportError(reply, error);
-		}
-	});
+	fastify.get<{ Querystring: MetadataQuerystring }>(
+		'/metadata',
+		async (request, reply) => {
+			try {
+				let sessionId: string | undefined;
+				if (request.query.sessionId !== undefined) {
+					const parsed = sessionIdSchema.safeParse(request.query.sessionId);
+					if (!parsed.success) {
+						throw new TransportError(
+							'INVALID_REQUEST',
+							'Invalid session identifier.',
+							{ issues: parsed.error.issues },
+						);
+					}
+					sessionId = parsed.data;
+				}
+				const response = transport.getMetadataSnapshot(sessionId);
+				return reply.send(response);
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
 
 	fastify.post('/sessions', async (request, reply) => {
 		try {
