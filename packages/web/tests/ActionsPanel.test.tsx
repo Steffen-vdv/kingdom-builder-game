@@ -156,6 +156,22 @@ beforeEach(() => {
 });
 
 describe('<ActionsPanel />', () => {
+	it('renders action categories using registry metadata', () => {
+		renderActionsPanel();
+		const [firstCategory] =
+			mockGame.sessionRegistries.actionCategories.entries();
+		if (!firstCategory) {
+			throw new Error('Expected at least one action category');
+		}
+		const [, definition] = firstCategory;
+		const labelNode = screen.getByText(definition.title);
+		const subtitleNode = screen.getByText(
+			definition.subtitle ?? definition.title,
+		);
+		expect(labelNode.closest('h3')).not.toBeNull();
+		expect(subtitleNode.closest('h3')).not.toBeNull();
+	});
+
 	it('disables action cards while acknowledgements are pending', () => {
 		const resolution: ActionResolution = {
 			lines: ['Step 1'],

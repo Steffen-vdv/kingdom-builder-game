@@ -21,6 +21,8 @@ import {
 	toTranslationPlayer,
 	wrapTranslationRegistry,
 } from '../translationContextStub';
+import { wrapActionCategoryRegistry } from '../../../src/translation/context/contextHelpers';
+import { resolveActionCategoryIds } from './categorySelectors';
 import { createEmptySnapshotMetadata } from '../sessionFixtures';
 import { buildActionsPanelContent } from './contentBuilders';
 import {
@@ -37,16 +39,6 @@ const POPULATION_ICON_FALLBACK = '👥';
 interface ResourceSelectionContext {
 	readonly registries: SessionRegistries;
 	readonly usedResourceKeys: Set<string>;
-}
-
-interface Participant {
-	readonly id: string;
-	readonly name: string;
-	readonly resources: Record<string, number>;
-	readonly population: Record<string, number>;
-	readonly lands: Array<{ id: string; slotsFree: number }>;
-	readonly buildings: Set<string>;
-	readonly actions: Set<string>;
 }
 
 function pickResourceKey(
@@ -80,7 +72,7 @@ function createParticipant(
 	baseResources: Record<string, number>,
 	initialPopulation: Record<string, number>,
 	actionIds: string[],
-): Participant {
+) {
 	return {
 		id,
 		name,
@@ -93,7 +85,7 @@ function createParticipant(
 }
 
 function toPlayerSnapshot(
-	participant: Participant,
+	participant: ReturnType<typeof createParticipant>,
 	capacityStat: string,
 ): SessionSnapshot['game']['players'][number] {
 	return {
@@ -152,11 +144,10 @@ export function createActionsPanelGame({
 		sessionRegistries,
 		statKeys?.capacity,
 	);
-	const categories = {
-		population: providedCategories?.population ?? 'population',
-		basic: providedCategories?.basic ?? 'basic',
-		building: providedCategories?.building ?? 'building',
-	} as const;
+	const categories = resolveActionCategoryIds(
+		sessionRegistries.actionCategories,
+		providedCategories,
+	);
 	const actionPhaseId = `phase.${categories.basic}`;
 	const phaseLabel = `${humanizeId(categories.basic)} Phase`;
 	const populationPlaceholder = placeholders?.population ?? '$role';
@@ -208,6 +199,9 @@ export function createActionsPanelGame({
 	const populationsRegistry = createRegistry(content.registeredPopulationRoles);
 	const translationContext = createTranslationContextStub({
 		actions: wrapTranslationRegistry(actionsRegistry),
+		actionCategories: wrapActionCategoryRegistry(
+			sessionRegistries.actionCategories,
+		),
 		buildings: wrapTranslationRegistry(buildingsRegistry),
 		developments: wrapTranslationRegistry(developmentsRegistry),
 		populations: wrapTranslationRegistry(populationsRegistry),
