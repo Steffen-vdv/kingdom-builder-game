@@ -30,6 +30,25 @@ type SessionStatePayload = SessionStateResponse | SessionAdvanceResponse;
 
 const records = new Map<string, SessionStateRecord>();
 
+function createSessionStateRecord(
+	sessionId: string,
+	snapshot: SessionSnapshot,
+	registries: SessionRegistriesPayload,
+): SessionStateRecord {
+	const clonedSnapshot = clone(snapshot);
+	const clonedRules = clone(clonedSnapshot.rules);
+	const deserializedRegistries = deserializeSessionRegistries(registries);
+	return {
+		sessionId,
+		snapshot: clonedSnapshot,
+		ruleSnapshot: clonedRules,
+		registries: deserializedRegistries,
+		resourceKeys: extractResourceKeys(deserializedRegistries),
+		metadata: clone(clonedSnapshot.metadata),
+		queueSeed: Promise.resolve(),
+	};
+}
+
 function mergeRegistryEntries<DefinitionType>(
 	target: Registry<DefinitionType>,
 	source: Registry<DefinitionType>,
@@ -81,18 +100,11 @@ function applyMetadata(
 export function initializeSessionState(
 	response: SessionCreateResponse,
 ): SessionStateRecord {
-	const snapshot = clone(response.snapshot);
-	const ruleSnapshot = clone(response.snapshot.rules);
-	const registries = deserializeSessionRegistries(response.registries);
-	const record: SessionStateRecord = {
-		sessionId: response.sessionId,
-		snapshot,
-		ruleSnapshot,
-		registries,
-		resourceKeys: extractResourceKeys(registries),
-		metadata: clone(response.snapshot.metadata),
-		queueSeed: Promise.resolve(),
-	};
+	const record = createSessionStateRecord(
+		response.sessionId,
+		response.snapshot,
+		response.registries,
+	);
 	records.set(response.sessionId, record);
 	return record;
 }
@@ -100,7 +112,16 @@ export function initializeSessionState(
 export function applySessionState(
 	response: SessionStatePayload,
 ): SessionStateRecord {
-	const record = assertSessionRecord(response.sessionId);
+	let record = getSessionRecord(response.sessionId);
+	if (!record) {
+		record = createSessionStateRecord(
+			response.sessionId,
+			response.snapshot,
+			response.registries,
+		);
+		records.set(response.sessionId, record);
+		return record;
+	}
 	record.snapshot = clone(response.snapshot);
 	record.ruleSnapshot = clone(response.snapshot.rules);
 	applyRegistries(record, response.registries);
