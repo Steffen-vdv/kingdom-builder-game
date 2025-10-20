@@ -79,18 +79,34 @@ export default function GameLayout() {
 		]
 			.filter(Boolean)
 			.join(' ');
+		const panelSizingClasses = [
+			'flex-1',
+			'basis-full',
+			'md:basis-[calc(50%-1rem)]',
+			'md:max-w-[calc(50%-1rem)]',
+			'2xl:basis-[40rem]',
+			'2xl:max-w-[40rem]',
+			'p-4',
+		].join(' ');
 		return (
 			<PlayerPanel
 				key={player.id}
 				player={player}
-				className={`grow basis-[calc(50%-1rem)] max-w-[calc(50%-1rem)] p-4 ${bgClass}`}
+				className={`${panelSizingClasses} ${bgClass}`}
 				isActive={isActive}
 			/>
 		);
 	});
 	const layoutGridClassName = [
-		'grid grid-cols-1 gap-y-8 gap-x-6',
-		'items-start lg:grid-cols-[minmax(0,1fr)_30rem]',
+		'grid grid-cols-1 gap-y-8 gap-x-6 items-start',
+		'lg:grid-cols-[minmax(0,1fr)_minmax(24rem,32rem)]',
+		'2xl:grid-cols-[minmax(0,1fr)_minmax(30rem,40rem)]',
+		'2xl:gap-x-10',
+	].join(' ');
+	const playerPanelWrapperClassName = [
+		'flex flex-1 flex-wrap items-stretch gap-6',
+		'xl:flex-nowrap',
+		'2xl:gap-8',
 	].join(' ');
 	const conclusion = sessionSnapshot.game.conclusion;
 	const logButton = (
@@ -160,7 +176,7 @@ export default function GameLayout() {
 				<div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.55),_rgba(255,255,255,0)_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.6),_rgba(15,23,42,0)_60%)]" />
 			</div>
 
-			<div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-8 sm:px-8 lg:px-12">
+			<div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-8 sm:px-8 lg:px-12 2xl:px-20">
 				<div className="flex items-center justify-between rounded-3xl border border-white/50 bg-white/70 px-6 py-4 shadow-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/40 frosted-surface">
 					<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
 						Kingdom Builder
@@ -178,9 +194,7 @@ export default function GameLayout() {
 				<div className={layoutGridClassName}>
 					<div className="flex w-full flex-col gap-6">
 						<section className="relative flex min-h-[275px] items-stretch rounded-3xl border border-white/60 bg-white/80 p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900/75 dark:shadow-slate-900/50 frosted-surface">
-							<div className="flex flex-1 items-stretch gap-6">
-								{playerPanels}
-							</div>
+							<div className={playerPanelWrapperClassName}>{playerPanels}</div>
 						</section>
 						<ActionsPanel />
 					</div>

@@ -66,12 +66,25 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 		};
 	}, []);
 	const panelClassName = [
-		'player-panel flex h-auto min-h-[320px] flex-col gap-2',
+		'player-panel flex h-auto min-h-[320px] flex-col gap-3',
+		'2xl:gap-4',
 		'self-start text-slate-800 dark:text-slate-100',
 		className,
 	]
 		.filter(Boolean)
 		.join(' ');
+	const headerCardClassName = [
+		'panel-card grid w-full grid-cols-1 items-stretch gap-2 px-4 py-3',
+		'sm:gap-3',
+		'2xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]',
+		'2xl:gap-4',
+	].join(' ');
+	const sectionLayoutClassName = [
+		'grid grid-cols-1 gap-2',
+		'2xl:grid-cols-2',
+		'2xl:gap-3',
+		'2xl:[&>*:last-child]:col-span-2',
+	].join(' ');
 	return (
 		<div ref={panelRef} className={panelClassName}>
 			<h3 className="text-lg font-semibold tracking-tight">
@@ -82,14 +95,15 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				)}
 				{player.name}
 			</h3>
-			<div
-				ref={animateBar}
-				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
-			>
-				<ResourceBar player={player} />
-				<PopulationInfo player={player} />
+			<div ref={animateBar} className={headerCardClassName}>
+				<div className="min-w-0">
+					<ResourceBar player={player} />
+				</div>
+				<div className="min-w-0">
+					<PopulationInfo player={player} />
+				</div>
 			</div>
-			<div ref={animateSections} className="flex flex-col gap-2">
+			<div ref={animateSections} className={sectionLayoutClassName}>
 				<LandDisplay player={player} />
 				<BuildingDisplay player={player} />
 				<PassiveDisplay player={player} />

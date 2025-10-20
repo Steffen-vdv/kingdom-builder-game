@@ -270,6 +270,72 @@ export default function ActionsPanel() {
 		? createCategoryDescriptor(buildAction, BUILD_CATEGORY_SUBTITLE)
 		: undefined;
 
+	const sections: { key: string; content: React.ReactNode }[] = [];
+	if (otherActions.length > 0) {
+		sections.push({
+			key: 'basic',
+			content: (
+				<BasicOptions
+					actions={otherActions}
+					summaries={actionSummaries}
+					player={selectedPlayer}
+					canInteract={canInteract}
+					selectResourceDescriptor={selectResourceDescriptor}
+					category={basicCategory}
+				/>
+			),
+		});
+	}
+	if (raisePopAction) {
+		sections.push({
+			key: 'hire',
+			content: (
+				<HireOptions
+					action={raisePopAction}
+					player={selectedPlayer}
+					canInteract={canInteract}
+					selectResourceDescriptor={selectResourceDescriptor}
+					category={hireCategory ?? BASIC_CATEGORY_METADATA}
+				/>
+			),
+		});
+	}
+	if (developAction) {
+		sections.push({
+			key: 'develop',
+			content: (
+				<DevelopOptions
+					action={developAction}
+					isActionPhase={isActionPhase}
+					developments={developmentOptions}
+					summaries={developmentSummaries}
+					hasDevelopLand={hasDevelopLand}
+					player={selectedPlayer}
+					canInteract={canInteract}
+					selectResourceDescriptor={selectResourceDescriptor}
+					category={developCategory ?? BASIC_CATEGORY_METADATA}
+				/>
+			),
+		});
+	}
+	if (buildAction) {
+		sections.push({
+			key: 'build',
+			content: (
+				<BuildOptions
+					action={buildAction}
+					isActionPhase={isActionPhase}
+					buildings={buildingOptions}
+					summaries={buildingSummaries}
+					descriptions={buildingDescriptions}
+					player={selectedPlayer}
+					canInteract={canInteract}
+					selectResourceDescriptor={selectResourceDescriptor}
+					category={buildCategory ?? BASIC_CATEGORY_METADATA}
+				/>
+			),
+		});
+	}
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
 		: 'Show opponent actions';
@@ -319,52 +385,15 @@ export default function ActionsPanel() {
 				</div>
 			</div>
 			<div className="relative">
-				<div ref={sectionRef} className="space-y-4">
-					{otherActions.length > 0 && (
-						<BasicOptions
-							actions={otherActions}
-							summaries={actionSummaries}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-							category={basicCategory}
-						/>
-					)}
-					{raisePopAction && (
-						<HireOptions
-							action={raisePopAction}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-							category={hireCategory ?? BASIC_CATEGORY_METADATA}
-						/>
-					)}
-					{developAction && (
-						<DevelopOptions
-							action={developAction}
-							isActionPhase={isActionPhase}
-							developments={developmentOptions}
-							summaries={developmentSummaries}
-							hasDevelopLand={hasDevelopLand}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-							category={developCategory ?? BASIC_CATEGORY_METADATA}
-						/>
-					)}
-					{buildAction && (
-						<BuildOptions
-							action={buildAction}
-							isActionPhase={isActionPhase}
-							buildings={buildingOptions}
-							summaries={buildingSummaries}
-							descriptions={buildingDescriptions}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-							category={buildCategory ?? BASIC_CATEGORY_METADATA}
-						/>
-					)}
+				<div
+					ref={sectionRef}
+					className="flex flex-col gap-4 2xl:grid 2xl:grid-cols-2 2xl:gap-6"
+				>
+					{sections.map(({ key, content }) => (
+						<div key={key} className="min-w-0">
+							{content}
+						</div>
+					))}
 				</div>
 			</div>
 		</section>
