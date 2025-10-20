@@ -15,6 +15,7 @@ import {
 	type SessionRegistries,
 } from './sessionRegistries';
 import { clone } from './clone';
+import { markFatalSessionError } from './sessionErrors';
 
 export interface SessionStateRecord {
 	readonly sessionId: string;
@@ -29,6 +30,63 @@ export interface SessionStateRecord {
 type SessionStatePayload = SessionStateResponse | SessionAdvanceResponse;
 
 const records = new Map<string, SessionStateRecord>();
+const queueSeeds = new Map<string, Promise<void>>();
+
+export class MissingSessionRecordError extends Error {
+	public readonly sessionId: string;
+
+	public constructor(sessionId: string) {
+		super(`Missing session record: ${sessionId}`);
+		this.name = 'MissingSessionRecordError';
+		this.sessionId = sessionId;
+		markFatalSessionError(this);
+	}
+}
+
+type MissingRecordListener = (error: MissingSessionRecordError) => void;
+
+const missingRecordListeners = new Set<MissingRecordListener>();
+
+export function subscribeMissingSessionRecord(
+	listener: MissingRecordListener,
+): () => void {
+	missingRecordListeners.add(listener);
+	return () => {
+		missingRecordListeners.delete(listener);
+	};
+}
+
+function notifyMissingSessionRecord(
+	sessionId: string,
+): MissingSessionRecordError {
+	const error = new MissingSessionRecordError(sessionId);
+	for (const listener of missingRecordListeners) {
+		try {
+			listener(error);
+		} catch {
+			// Listener failures should not prevent other handlers.
+		}
+	}
+	return error;
+}
+
+function getQueueSeed(sessionId: string): Promise<void> {
+	let seed = queueSeeds.get(sessionId);
+	if (!seed) {
+		seed = Promise.resolve();
+		queueSeeds.set(sessionId, seed);
+	}
+	return seed;
+}
+
+function setQueueSeed(sessionId: string, seed: Promise<void>): void {
+	queueSeeds.set(sessionId, seed);
+	const record = records.get(sessionId);
+	if (record) {
+		record.queueSeed = seed;
+		records.set(sessionId, record);
+	}
+}
 
 function mergeRegistryEntries<DefinitionType>(
 	target: Registry<DefinitionType>,
@@ -84,6 +142,7 @@ export function initializeSessionState(
 	const snapshot = clone(response.snapshot);
 	const ruleSnapshot = clone(response.snapshot.rules);
 	const registries = deserializeSessionRegistries(response.registries);
+	const queueSeed = getQueueSeed(response.sessionId);
 	const record: SessionStateRecord = {
 		sessionId: response.sessionId,
 		snapshot,
@@ -91,9 +150,10 @@ export function initializeSessionState(
 		registries,
 		resourceKeys: extractResourceKeys(registries),
 		metadata: clone(response.snapshot.metadata),
-		queueSeed: Promise.resolve(),
+		queueSeed,
 	};
 	records.set(response.sessionId, record);
+	setQueueSeed(response.sessionId, queueSeed);
 	return record;
 }
 
@@ -156,25 +216,28 @@ export function getSessionSnapshot(sessionId: string): SessionSnapshot {
 export function assertSessionRecord(sessionId: string): SessionStateRecord {
 	const record = getSessionRecord(sessionId);
 	if (!record) {
-		throw new Error(`Missing session record: ${sessionId}`);
+		throw notifyMissingSessionRecord(sessionId);
 	}
 	return record;
 }
 
 export function deleteSessionRecord(sessionId: string): void {
 	records.delete(sessionId);
+	queueSeeds.delete(sessionId);
 }
 
 export function clearSessionStateStore(): void {
 	records.clear();
+	queueSeeds.clear();
 }
 
 export function enqueueSessionTask<T>(
 	sessionId: string,
 	task: () => Promise<T> | T,
 ): Promise<T> {
-	const record = assertSessionRecord(sessionId);
-	const chain = record.queueSeed.then(() => Promise.resolve().then(task));
-	record.queueSeed = chain.catch(() => {}).then(() => undefined);
+	const previous = getQueueSeed(sessionId);
+	const chain = previous.then(() => Promise.resolve().then(task));
+	const nextSeed = chain.catch(() => {}).then(() => undefined);
+	setQueueSeed(sessionId, nextSeed);
 	return chain;
 }

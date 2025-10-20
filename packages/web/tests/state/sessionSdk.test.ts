@@ -10,6 +10,7 @@ import {
 	advanceSessionPhase,
 	createSession,
 	fetchSnapshot,
+	loadActionCosts,
 	performSessionAction,
 	releaseSession,
 	runAiTurn,
@@ -34,6 +35,7 @@ import {
 import {
 	getSessionRecord,
 	clearSessionStateStore,
+	initializeSessionState,
 } from '../../src/state/sessionStateStore';
 import * as sessionStateStoreModule from '../../src/state/sessionStateStore';
 
@@ -125,6 +127,30 @@ describe('sessionSdk', () => {
 		expect(fetched.record.snapshot).toEqual(initialSnapshot);
 		expect(fetched.record.ruleSnapshot).toEqual(initialSnapshot.rules);
 		expect(fetched.record.metadata).toEqual(initialSnapshot.metadata);
+	});
+
+	it('queues action metadata requests before session initialises', async () => {
+		const sessionId = 'session:queued';
+		const registries = createSessionRegistriesPayload();
+		const snapshot = createSessionSnapshot({
+			players: [playerA, playerB],
+			activePlayerId: playerA.id,
+			opponentId: playerB.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot: initialSnapshot.rules,
+			turn: 1,
+			currentPhase: phases[0]?.id ?? 'phase-main',
+			currentStep: mainStepId,
+		});
+		api.setNextActionCostResponse({ costs: {} });
+		const pendingCosts = loadActionCosts(sessionId, taxActionId);
+		initializeSessionState({
+			sessionId,
+			snapshot,
+			registries,
+		});
+		await expect(pendingCosts).resolves.toEqual({});
 	});
 
 	it('sets dev mode via the API and refreshes local state', async () => {

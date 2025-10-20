@@ -11,6 +11,8 @@ import {
 	clearSessionStateStore,
 	getSessionRecord,
 	initializeSessionState,
+	subscribeMissingSessionRecord,
+	MissingSessionRecordError,
 } from '../../src/state/sessionStateStore';
 import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
 import {
@@ -139,8 +141,18 @@ describe('sessionStateStore', () => {
 	});
 
 	it('throws when asserting an unknown session record', () => {
-		expect(() => assertSessionRecord('missing:session')).toThrow(
-			/Missing session record/,
-		);
+		const captured: MissingSessionRecordError[] = [];
+		const unsubscribe = subscribeMissingSessionRecord((error) => {
+			captured.push(error);
+		});
+		try {
+			expect(() => assertSessionRecord('missing:session')).toThrow(
+				MissingSessionRecordError,
+			);
+		} finally {
+			unsubscribe();
+		}
+		expect(captured).toHaveLength(1);
+		expect(captured[0]?.sessionId).toBe('missing:session');
 	});
 });

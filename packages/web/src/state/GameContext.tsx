@@ -33,7 +33,11 @@ import {
 	releaseSession,
 	setSessionDevMode,
 } from './sessionSdk';
-import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
+import {
+	enqueueSessionTask,
+	getSessionRecord,
+	subscribeMissingSessionRecord,
+} from './sessionStateStore';
 
 const NOOP = () => {};
 
@@ -164,6 +168,15 @@ export function GameProvider(props: GameProviderProps) {
 		},
 		[applyFatalSessionError, runExclusive],
 	);
+
+	useEffect(() => {
+		const unsubscribe = subscribeMissingSessionRecord((error) => {
+			handleFatalSessionError(error);
+		});
+		return () => {
+			unsubscribe();
+		};
+	}, [handleFatalSessionError]);
 
 	useEffect(
 		() => () => {
