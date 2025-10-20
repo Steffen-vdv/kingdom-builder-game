@@ -9,6 +9,7 @@ import { hasAiController } from '../../state/sessionAi';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
+import type { TranslationActionCategoryDefinition } from '../../translation/context/types';
 import BasicOptions from './BasicOptions';
 import BuildOptions from './BuildOptions';
 import DevelopOptions from './DevelopOptions';
@@ -25,24 +26,155 @@ import {
 } from './actionsPanelStyles';
 import type { Action, Building, Development, DisplayPlayer } from './types';
 import { normalizeActionFocus } from './types';
+import type { ResourceDescriptorSelector } from './utils';
 
-const BASIC_CATEGORY_METADATA: ActionCategoryDescriptor = {
-	icon: '⚙️',
-	label: 'Basic',
-	subtitle: '(Effects take place immediately, unless stated otherwise)',
+interface CategoryEntry {
+	id: string;
+	definition?: TranslationActionCategoryDefinition;
+	actions: Action[];
+}
+
+interface CategoryRendererContext {
+	actions: Action[];
+	descriptor: ActionCategoryDescriptor;
+	player: DisplayPlayer;
+	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
+	actionSummaries: Map<string, Summary>;
+	isActionPhase: boolean;
+	developmentOptions: Development[];
+	developmentSummaries: Map<string, Summary>;
+	buildingOptions: Building[];
+	buildingSummaries: Map<string, Summary>;
+	buildingDescriptions: Map<string, Summary>;
+	hasDevelopLand: boolean;
+}
+
+type CategoryRenderer = (context: CategoryRendererContext) => React.ReactNode;
+
+const renderGenericGrid: CategoryRenderer = ({
+	actions,
+	descriptor,
+	player,
+	canInteract,
+	selectResourceDescriptor,
+	actionSummaries,
+}) => {
+	if (actions.length === 0) {
+		return null;
+	}
+	return (
+		<BasicOptions
+			actions={actions}
+			summaries={actionSummaries}
+			player={player}
+			canInteract={canInteract}
+			selectResourceDescriptor={selectResourceDescriptor}
+			category={descriptor}
+		/>
+	);
 };
 
-const HIRE_CATEGORY_SUBTITLE =
-	'(Recruit population instantly; upkeep and role effects apply while ' +
-	'they remain)';
+const renderHireCategory: CategoryRenderer = ({
+	actions,
+	descriptor,
+	player,
+	canInteract,
+	selectResourceDescriptor,
+}) => {
+	const action = actions[0];
+	if (!action) {
+		return null;
+	}
+	return (
+		<HireOptions
+			action={action}
+			player={player}
+			canInteract={canInteract}
+			selectResourceDescriptor={selectResourceDescriptor}
+			category={descriptor}
+		/>
+	);
+};
 
-const DEVELOP_CATEGORY_SUBTITLE =
-	'(Effects take place on build and last until development is removed)';
+const renderDevelopCategory: CategoryRenderer = ({
+	actions,
+	descriptor,
+	player,
+	canInteract,
+	selectResourceDescriptor,
+	isActionPhase,
+	developmentOptions,
+	developmentSummaries,
+	hasDevelopLand,
+}) => {
+	const action = actions[0];
+	if (!action) {
+		return null;
+	}
+	return (
+		<DevelopOptions
+			action={action}
+			isActionPhase={isActionPhase}
+			developments={developmentOptions}
+			summaries={developmentSummaries}
+			hasDevelopLand={hasDevelopLand}
+			player={player}
+			canInteract={canInteract}
+			selectResourceDescriptor={selectResourceDescriptor}
+			category={descriptor}
+		/>
+	);
+};
 
-const BUILD_CATEGORY_SUBTITLE =
-	'(Effects take place on build and last until building is removed)';
+const renderBuildCategory: CategoryRenderer = ({
+	actions,
+	descriptor,
+	player,
+	canInteract,
+	selectResourceDescriptor,
+	isActionPhase,
+	buildingOptions,
+	buildingSummaries,
+	buildingDescriptions,
+}) => {
+	const action = actions[0];
+	if (!action) {
+		return null;
+	}
+	return (
+		<BuildOptions
+			action={action}
+			isActionPhase={isActionPhase}
+			buildings={buildingOptions}
+			summaries={buildingSummaries}
+			descriptions={buildingDescriptions}
+			player={player}
+			canInteract={canInteract}
+			selectResourceDescriptor={selectResourceDescriptor}
+			category={descriptor}
+		/>
+	);
+};
 
-const DEFAULT_POPULATION_ICON = '👶';
+const CATEGORY_RENDERERS = new Map<string, CategoryRenderer>([
+	['basic', renderGenericGrid],
+	['hire', renderHireCategory],
+	['develop', renderDevelopCategory],
+	['build', renderBuildCategory],
+]);
+
+const DEFAULT_RENDERER = renderGenericGrid;
+
+function createCategoryDescriptor(
+	definition: TranslationActionCategoryDefinition | undefined,
+	fallbackLabel: string,
+): ActionCategoryDescriptor {
+	const label = definition?.title ?? fallbackLabel;
+	const subtitle = definition?.subtitle ?? fallbackLabel;
+	const icon = definition?.icon;
+	return { icon, label, subtitle };
+}
 
 export default function ActionsPanel() {
 	const {
@@ -228,47 +360,72 @@ export default function ActionsPanel() {
 	const hasDevelopLand = selectedPlayer.lands.some(
 		(land) => land.slotsFree > 0,
 	);
-	const developAction = actions.find(
-		(action) => action.category === 'development',
+	const categoryDefinitions = useMemo(
+		() => translationContext.actionCategories.list(),
+		[translationContext.actionCategories],
 	);
-	const buildAction = actions.find((action) => action.category === 'building');
-	const raisePopAction = actions.find(
-		(action) => action.category === 'population',
+	const categoriesById = useMemo(
+		() =>
+			new Map(
+				categoryDefinitions.map(
+					(definition) => [definition.id, definition] as const,
+				),
+			),
+		[categoryDefinitions],
 	);
-	const otherActions = actions.filter(
-		(action) =>
-			action.category !== 'building_remove' &&
-			(action.category ?? 'basic') === 'basic',
-	);
-
-	const createCategoryDescriptor = (
-		actionDefinition: Action,
-		subtitle: string,
-		fallbackIcon?: string,
-	): ActionCategoryDescriptor => {
-		const actionInfo = sessionView.actions.get(actionDefinition.id);
-		const icon = actionInfo?.icon ?? actionDefinition.icon ?? fallbackIcon;
-		return {
-			icon: icon ?? undefined,
-			label: actionInfo?.name ?? actionDefinition.name,
-			subtitle,
-		};
-	};
-
-	const basicCategory = BASIC_CATEGORY_METADATA;
-	const hireCategory = raisePopAction
-		? createCategoryDescriptor(
-				raisePopAction,
-				HIRE_CATEGORY_SUBTITLE,
-				DEFAULT_POPULATION_ICON,
-			)
-		: undefined;
-	const developCategory = developAction
-		? createCategoryDescriptor(developAction, DEVELOP_CATEGORY_SUBTITLE)
-		: undefined;
-	const buildCategory = buildAction
-		? createCategoryDescriptor(buildAction, BUILD_CATEGORY_SUBTITLE)
-		: undefined;
+	const fallbackCategoryId = categoryDefinitions[0]?.id;
+	const actionsByCategory = useMemo(() => {
+		const map = new Map<string, Action[]>();
+		actions.forEach((actionDefinition) => {
+			const categoryId = actionDefinition.category ?? fallbackCategoryId;
+			if (!categoryId) {
+				return;
+			}
+			if (
+				actionDefinition.category !== undefined &&
+				!categoriesById.has(actionDefinition.category)
+			) {
+				return;
+			}
+			const bucket = map.get(categoryId);
+			if (bucket) {
+				bucket.push(actionDefinition);
+			} else {
+				map.set(categoryId, [actionDefinition]);
+			}
+		});
+		return map;
+	}, [actions, fallbackCategoryId, categoriesById]);
+	const categoryEntries = useMemo<CategoryEntry[]>(() => {
+		const entries: CategoryEntry[] = [];
+		const seen = new Set<string>();
+		categoryDefinitions.forEach((definition) => {
+			const grouped = actionsByCategory.get(definition.id) ?? [];
+			if (definition.hideWhenEmpty && grouped.length === 0) {
+				seen.add(definition.id);
+				return;
+			}
+			entries.push({
+				id: definition.id,
+				definition,
+				actions: grouped,
+			});
+			seen.add(definition.id);
+		});
+		actionsByCategory.forEach((grouped, categoryId) => {
+			if (seen.has(categoryId)) {
+				return;
+			}
+			if (grouped.length === 0) {
+				return;
+			}
+			entries.push({
+				id: categoryId,
+				actions: grouped,
+			});
+		});
+		return entries;
+	}, [actionsByCategory, categoryDefinitions]);
 
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
@@ -320,51 +477,43 @@ export default function ActionsPanel() {
 			</div>
 			<div className="relative">
 				<div ref={sectionRef} className="space-y-4">
-					{otherActions.length > 0 && (
-						<BasicOptions
-							actions={otherActions}
-							summaries={actionSummaries}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-							category={basicCategory}
-						/>
-					)}
-					{raisePopAction && (
-						<HireOptions
-							action={raisePopAction}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-							category={hireCategory ?? BASIC_CATEGORY_METADATA}
-						/>
-					)}
-					{developAction && (
-						<DevelopOptions
-							action={developAction}
-							isActionPhase={isActionPhase}
-							developments={developmentOptions}
-							summaries={developmentSummaries}
-							hasDevelopLand={hasDevelopLand}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-							category={developCategory ?? BASIC_CATEGORY_METADATA}
-						/>
-					)}
-					{buildAction && (
-						<BuildOptions
-							action={buildAction}
-							isActionPhase={isActionPhase}
-							buildings={buildingOptions}
-							summaries={buildingSummaries}
-							descriptions={buildingDescriptions}
-							player={selectedPlayer}
-							canInteract={canInteract}
-							selectResourceDescriptor={selectResourceDescriptor}
-							category={buildCategory ?? BASIC_CATEGORY_METADATA}
-						/>
-					)}
+					{categoryEntries.map((entry) => {
+						const { id, definition, actions: grouped } = entry;
+						if (definition?.hideWhenEmpty && grouped.length === 0) {
+							return null;
+						}
+						const fallbackLabel =
+							grouped[0]?.name ?? definition?.title ?? 'Actions';
+						const descriptor = createCategoryDescriptor(
+							definition,
+							fallbackLabel,
+						);
+						const analyticsKey =
+							definition?.analyticsKey ?? definition?.id ?? id;
+						const rendererKey = analyticsKey?.toLowerCase();
+						const renderer =
+							(rendererKey ? CATEGORY_RENDERERS.get(rendererKey) : undefined) ??
+							DEFAULT_RENDERER;
+						const content = renderer({
+							actions: grouped,
+							descriptor,
+							player: selectedPlayer,
+							canInteract,
+							selectResourceDescriptor,
+							actionSummaries,
+							isActionPhase,
+							developmentOptions,
+							developmentSummaries,
+							buildingOptions,
+							buildingSummaries,
+							buildingDescriptions,
+							hasDevelopLand,
+						});
+						if (!content) {
+							return null;
+						}
+						return <React.Fragment key={id}>{content}</React.Fragment>;
+					})}
 				</div>
 			</div>
 		</section>

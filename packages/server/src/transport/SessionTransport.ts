@@ -213,9 +213,18 @@ export class SessionTransport extends SessionTransportBase {
 		return sessionSimulateResponseSchema.parse(response);
 	}
 
-	public getMetadataSnapshot(): SessionMetadataSnapshotResponse {
-		const registries = this.sessionManager.getRegistries();
-		const metadata = this.sessionManager.getMetadata();
+	public getMetadataSnapshot(
+		sessionId?: string,
+	): SessionMetadataSnapshotResponse {
+		let registries: SessionMetadataSnapshotResponse['registries'];
+		let metadata: SessionMetadataSnapshotResponse['metadata'];
+		if (sessionId) {
+			registries = this.sessionManager.getSessionRegistries(sessionId);
+			metadata = this.sessionManager.getSessionMetadata(sessionId);
+		} else {
+			registries = this.sessionManager.getRegistries();
+			metadata = this.sessionManager.getMetadata();
+		}
 		const response = {
 			registries,
 			metadata,

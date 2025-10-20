@@ -33,9 +33,12 @@ describe('HttpSessionGateway', () => {
 				basic: {
 					id: 'basic',
 					title: 'Basic',
-					subtitle: 'Core Commands',
+					subtitle:
+						'(' +
+						'Effects take place immediately, unless stated otherwise' +
+						')',
 					description: 'Default commands.',
-					icon: 'icon-action-basic',
+					icon: '⚙️',
 					order: 0,
 					layout: 'grid-primary',
 				},

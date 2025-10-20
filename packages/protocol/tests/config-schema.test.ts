@@ -15,9 +15,9 @@ describe('action category schema', () => {
 		const category: ActionCategoryConfig = {
 			id: 'basic',
 			title: 'Basic',
-			subtitle: 'Core Commands',
+			subtitle: '(Effects take place immediately, unless stated otherwise)',
 			description: 'Default castle commands available every turn.',
-			icon: 'icon-action-basic',
+			icon: '⚙️',
 			order: 0,
 			layout: 'grid-primary',
 			hideWhenEmpty: false,

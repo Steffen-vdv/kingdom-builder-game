@@ -4,41 +4,48 @@ import Button from '../common/Button';
 import { PlayerNameSetting } from './PlayerNameSetting';
 import SettingRow from './SettingRow';
 
+import ControlBindingsTab from './ControlBindingsTab';
+import type { ControlId, ControlKeybindMap } from '../../state/keybindings';
+
 const DIALOG_SURFACE_CLASS = [
 	'relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border border-white/20',
 	'bg-gradient-to-br from-white/98 via-white/95 to-white/90 p-8 text-slate-900 shadow-2xl shadow-slate-900/40',
 	'dark:border-white/10 dark:from-slate-900/95 dark:via-slate-900/90 dark:to-slate-900/85 dark:text-slate-100',
 ].join(' ');
-
 const ACCENT_GLOW_CLASS = [
 	'absolute -top-12 right-8 h-24 w-24 rounded-full bg-emerald-400/30 blur-3xl',
 	'dark:bg-emerald-500/30',
 ].join(' ');
-
 const DIALOG_DESCRIPTION = [
 	'Tune the ambience and visuals of your kingdom.',
 	'These selections stay with you as you explore different screens.',
 ].join(' ');
-
 const TAB_BUTTON_CLASS = [
 	'flex-1 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold',
 	'tracking-wide transition hoverable cursor-pointer focus:outline-none',
 	'focus-visible:ring-2 focus-visible:ring-emerald-300',
 	'dark:focus-visible:ring-emerald-500/60',
 ].join(' ');
-
 const TAB_BUTTON_ACTIVE_CLASS = [
 	'bg-emerald-100 text-emerald-900 shadow-sm shadow-emerald-500/20',
 	'hover:bg-emerald-200',
 	'dark:bg-emerald-500/20 dark:text-emerald-100 dark:shadow-black/40',
 	'dark:hover:bg-emerald-500/30',
 ].join(' ');
-
 const TAB_BUTTON_INACTIVE_CLASS = [
 	'bg-white/60 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700',
 	'dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/70',
 	'dark:hover:text-emerald-200',
 ].join(' ');
+
+type SettingsTabId = 'game' | 'visual' | 'audio' | 'controls';
+
+const SETTINGS_TABS: Array<{ id: SettingsTabId; label: string }> = [
+	{ id: 'game', label: 'Game' },
+	{ id: 'visual', label: 'Visual' },
+	{ id: 'audio', label: 'Audio' },
+	{ id: 'controls', label: 'Controls' },
+];
 
 const AUTO_ACKNOWLEDGE_TITLE = 'Auto-Acknowledge Action Summaries';
 
@@ -78,6 +85,9 @@ interface SettingsDialogProps {
 	onToggleAutoPass: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
+	controlKeybinds: ControlKeybindMap;
+	onChangeControlKeybind: (controlId: ControlId, key: string) => void;
+	onResetControlKeybind: (controlId: ControlId) => void;
 }
 
 export default function SettingsDialog({
@@ -97,10 +107,11 @@ export default function SettingsDialog({
 	onToggleAutoPass,
 	playerName,
 	onChangePlayerName,
+	controlKeybinds,
+	onChangeControlKeybind,
+	onResetControlKeybind,
 }: SettingsDialogProps) {
-	const [activeTab, setActiveTab] = useState<'game' | 'visual' | 'audio'>(
-		'game',
-	);
+	const [activeTab, setActiveTab] = useState<SettingsTabId>('game');
 	const dialogTitleId = useId();
 	const dialogDescriptionId = useId();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -235,40 +246,24 @@ export default function SettingsDialog({
 				</header>
 				<div className="flex flex-col gap-5">
 					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70">
-						<button
-							type="button"
-							className={`${TAB_BUTTON_CLASS} ${
-								activeTab === 'game'
-									? TAB_BUTTON_ACTIVE_CLASS
-									: TAB_BUTTON_INACTIVE_CLASS
-							}`}
-							onClick={() => setActiveTab('game')}
-							ref={initialFocusRef}
-						>
-							Game
-						</button>
-						<button
-							type="button"
-							className={`${TAB_BUTTON_CLASS} ${
-								activeTab === 'visual'
-									? TAB_BUTTON_ACTIVE_CLASS
-									: TAB_BUTTON_INACTIVE_CLASS
-							}`}
-							onClick={() => setActiveTab('visual')}
-						>
-							Visual
-						</button>
-						<button
-							type="button"
-							className={`${TAB_BUTTON_CLASS} ${
-								activeTab === 'audio'
-									? TAB_BUTTON_ACTIVE_CLASS
-									: TAB_BUTTON_INACTIVE_CLASS
-							}`}
-							onClick={() => setActiveTab('audio')}
-						>
-							Audio
-						</button>
+						{SETTINGS_TABS.map((tab) => {
+							const isActive = activeTab === tab.id;
+							return (
+								<button
+									key={tab.id}
+									type="button"
+									className={`${TAB_BUTTON_CLASS} ${
+										isActive
+											? TAB_BUTTON_ACTIVE_CLASS
+											: TAB_BUTTON_INACTIVE_CLASS
+									}`}
+									onClick={() => setActiveTab(tab.id)}
+									ref={tab.id === 'game' ? initialFocusRef : undefined}
+								>
+									{tab.label}
+								</button>
+							);
+						})}
 					</div>
 					{activeTab === 'game' && (
 						<div className="flex flex-col gap-4">
@@ -328,6 +323,13 @@ export default function SettingsDialog({
 								onToggle={onToggleBackgroundAudioMute}
 							/>
 						</div>
+					)}
+					{activeTab === 'controls' && (
+						<ControlBindingsTab
+							keybinds={controlKeybinds}
+							onChange={onChangeControlKeybind}
+							onReset={onResetControlKeybind}
+						/>
 					)}
 				</div>
 				<div className="mt-8 flex justify-end">

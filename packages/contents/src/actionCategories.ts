@@ -8,6 +8,34 @@ const ACTION_CATEGORY_ID_MAP = {
 	Build: 'build',
 } as const;
 
+const ACTION_CATEGORY_SUBTITLES = {
+	Basic: '(Effects take place immediately, unless stated otherwise)',
+	Hire: [
+		'(',
+		'Effects take place immediately and last until the population is removed',
+		' or reassigned',
+		')',
+	].join(''),
+	Develop: [
+		'(',
+		'Effects take place immediately and last until the development is removed',
+		')',
+	].join(''),
+	Build: [
+		'(',
+		'Effects take place immediately build and last until the building is',
+		' removed',
+		')',
+	].join(''),
+} as const;
+
+const ACTION_CATEGORY_ICONS = {
+	Basic: '⚙️',
+	Hire: '🧑‍🤝‍🧑',
+	Develop: '🛠️',
+	Build: '🏗️',
+} as const;
+
 export const ActionCategoryId = ACTION_CATEGORY_ID_MAP;
 
 export type ActionCategoryId =
@@ -20,8 +48,8 @@ export function createActionCategoryRegistry() {
 		actionCategory()
 			.id(ActionCategoryId.Basic)
 			.label('Basic')
-			.subtitle('Core Commands')
-			.icon('icon-action-basic')
+			.subtitle(ACTION_CATEGORY_SUBTITLES.Basic)
+			.icon(ACTION_CATEGORY_ICONS.Basic)
 			.order(0)
 			.layout('grid-primary')
 			.description('Default castle commands available every turn.')
@@ -29,8 +57,8 @@ export function createActionCategoryRegistry() {
 		actionCategory()
 			.id(ActionCategoryId.Hire)
 			.label('Hire')
-			.subtitle('Recruit Citizens')
-			.icon('icon-action-hire')
+			.subtitle(ACTION_CATEGORY_SUBTITLES.Hire)
+			.icon(ACTION_CATEGORY_ICONS.Hire)
 			.order(1)
 			.layout('grid-primary')
 			.description('Actions that add population or assign roles.')
@@ -38,8 +66,8 @@ export function createActionCategoryRegistry() {
 		actionCategory()
 			.id(ActionCategoryId.Develop)
 			.label('Develop')
-			.subtitle('Improve Holdings')
-			.icon('icon-action-dev')
+			.subtitle(ACTION_CATEGORY_SUBTITLES.Develop)
+			.icon(ACTION_CATEGORY_ICONS.Develop)
 			.order(2)
 			.layout('grid-secondary')
 			.description('Developments that upgrade existing buildings or lands.')
@@ -47,8 +75,8 @@ export function createActionCategoryRegistry() {
 		actionCategory()
 			.id(ActionCategoryId.Build)
 			.label('Build')
-			.subtitle('Expand Territory')
-			.icon('icon-action-build')
+			.subtitle(ACTION_CATEGORY_SUBTITLES.Build)
+			.icon(ACTION_CATEGORY_ICONS.Build)
 			.order(3)
 			.layout('grid-secondary')
 			.description('Construction options that add new structures or unlocks.')
