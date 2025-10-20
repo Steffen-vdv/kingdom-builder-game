@@ -33,4 +33,5 @@ export interface HistoryState {
 	isBackgroundAudioMuted: boolean;
 	isAutoAcknowledgeEnabled: boolean;
 	isAutoPassEnabled: boolean;
+	resumeSessionId: string | null;
 }

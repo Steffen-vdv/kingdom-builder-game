@@ -12,6 +12,12 @@ import {
 	AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
 	AUTO_PASS_PREFERENCE_STORAGE_KEY,
 } from '../../src/state/gameplayPreferences';
+import {
+	RESUME_SESSION_STORAGE_KEY,
+	readStoredResumeSession,
+	type ResumeSessionRecord,
+	writeStoredResumeSession,
+} from '../../src/state/sessionResumeStorage';
 
 describe('useAppNavigation', () => {
 	const originalMatchMedia = window.matchMedia;
@@ -61,6 +67,22 @@ describe('useAppNavigation', () => {
 
 		expect(result.current.isDarkMode).toBe(true);
 		expect(menuState.isDarkModeEnabled).toBe(true);
+		unmount();
+	});
+
+	it('restores stored resume session data when available', async () => {
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-session',
+			turn: 5,
+			devMode: true,
+			updatedAt: new Date().toISOString(),
+		};
+		writeStoredResumeSession(resumeRecord);
+		const { result, menuState, unmount } = await renderNavigationHook();
+
+		expect(result.current.resumeSessionId).toBe(resumeRecord.sessionId);
+		expect(result.current.resumePoint).toEqual(resumeRecord);
+		expect(menuState.resumeSessionId).toBe(resumeRecord.sessionId);
 		unmount();
 	});
 
@@ -220,6 +242,110 @@ describe('useAppNavigation', () => {
 		expect(window.localStorage.getItem(AUTO_PASS_PREFERENCE_STORAGE_KEY)).toBe(
 			'true',
 		);
+		unmount();
+	});
+
+	it('continues a saved game and updates history and dev mode', async () => {
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-dev',
+			turn: 9,
+			devMode: true,
+			updatedAt: new Date().toISOString(),
+		};
+		writeStoredResumeSession(resumeRecord);
+		const pushSpy = vi.spyOn(window.history, 'pushState');
+		const { result, unmount } = await renderNavigationHook();
+		pushSpy.mockClear();
+
+		act(() => {
+			result.current.continueSavedGame();
+		});
+
+		expect(result.current.currentScreen).toBe(Screen.Game);
+		expect(result.current.isDevMode).toBe(true);
+		expect(result.current.currentGameKey).toBe(1);
+		expect(pushSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				screen: Screen.Game,
+				resumeSessionId: resumeRecord.sessionId,
+				isDevModeEnabled: true,
+			}),
+			'',
+			SCREEN_PATHS[Screen.Game],
+		);
+		unmount();
+	});
+
+	it('persists resume session updates and syncs storage and history', async () => {
+		const { result, unmount } = await renderNavigationHook();
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-save',
+			turn: 3,
+			devMode: false,
+			updatedAt: new Date().toISOString(),
+		};
+
+		act(() => {
+			result.current.persistResumeSession(resumeRecord);
+		});
+
+		expect(result.current.resumeSessionId).toBe(resumeRecord.sessionId);
+		expect(result.current.resumePoint).toEqual(resumeRecord);
+		expect((window.history.state as HistoryState).resumeSessionId).toBe(
+			resumeRecord.sessionId,
+		);
+		expect(readStoredResumeSession()).toEqual(resumeRecord);
+		unmount();
+	});
+
+	it('clears resume session state when requested', async () => {
+		const { result, unmount } = await renderNavigationHook();
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-clear',
+			turn: 12,
+			devMode: false,
+			updatedAt: new Date().toISOString(),
+		};
+
+		act(() => {
+			result.current.persistResumeSession(resumeRecord);
+		});
+
+		act(() => {
+			result.current.clearResumeSession();
+		});
+
+		expect(result.current.resumeSessionId).toBeNull();
+		expect(result.current.resumePoint).toBeNull();
+		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
+		expect(window.localStorage.getItem(RESUME_SESSION_STORAGE_KEY)).toBeNull();
+		unmount();
+	});
+
+	it('clears resume session data when handling a resume failure', async () => {
+		const { result, unmount } = await renderNavigationHook();
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-failure',
+			turn: 4,
+			devMode: true,
+			updatedAt: new Date().toISOString(),
+		};
+
+		act(() => {
+			result.current.persistResumeSession(resumeRecord);
+		});
+
+		act(() => {
+			result.current.handleResumeSessionFailure({
+				sessionId: resumeRecord.sessionId,
+				error: new Error('resume failed'),
+			});
+		});
+
+		expect(result.current.resumeSessionId).toBeNull();
+		expect(result.current.resumePoint).toBeNull();
+		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
+		expect(readStoredResumeSession()).toBeUndefined();
 		unmount();
 	});
 });
