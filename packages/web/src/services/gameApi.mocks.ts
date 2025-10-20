@@ -13,6 +13,7 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 	SessionCreateResponse,
+	SessionMetadataSnapshotResponse,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSetDevModeRequest,
@@ -36,6 +37,11 @@ export type GameApiMockHandlers = {
 		request: SessionCreateRequest,
 		options?: GameApiRequestOptions,
 	) => Promise<SessionCreateResponse> | SessionCreateResponse;
+	fetchMetadataSnapshot?: (
+		options?: GameApiRequestOptions,
+	) =>
+		| Promise<SessionMetadataSnapshotResponse>
+		| SessionMetadataSnapshotResponse;
 	fetchSnapshot?: (
 		sessionId: string,
 		options?: GameApiRequestOptions,
@@ -102,6 +108,12 @@ export const createGameApiMock = (
 		options: GameApiRequestOptions = {},
 	) =>
 		resolveHandler(handlers.createSession, 'createSession', request, options),
+	fetchMetadataSnapshot: (options: GameApiRequestOptions = {}) =>
+		resolveHandler(
+			handlers.fetchMetadataSnapshot,
+			'fetchMetadataSnapshot',
+			options,
+		),
 	fetchSnapshot: (sessionId: string, options: GameApiRequestOptions = {}) =>
 		resolveHandler(handlers.fetchSnapshot, 'fetchSnapshot', sessionId, options),
 	performAction: (

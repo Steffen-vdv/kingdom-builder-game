@@ -13,6 +13,7 @@ import type {
 	SessionAdvanceResponse,
 	SessionCreateRequest,
 	SessionCreateResponse,
+	SessionMetadataSnapshotResponse,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSetDevModeRequest,
@@ -51,6 +52,9 @@ export interface GameApi {
 		request?: SessionCreateRequest,
 		options?: GameApiRequestOptions,
 	): Promise<SessionCreateResponse>;
+	fetchMetadataSnapshot(
+		options?: GameApiRequestOptions,
+	): Promise<SessionMetadataSnapshotResponse>;
 	fetchSnapshot(
 		sessionId: string,
 		options?: GameApiRequestOptions,

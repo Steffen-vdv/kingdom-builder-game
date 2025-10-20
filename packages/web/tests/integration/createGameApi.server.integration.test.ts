@@ -87,6 +87,13 @@ describe.skipIf(!runIntegration)(
 			expect(options.sessionId).toBe(sessionId);
 			expect(Array.isArray(options.groups)).toBe(true);
 		});
+		it('fetches metadata snapshots from the live transport', async () => {
+			const api = createApi();
+			const metadata = await api.fetchMetadataSnapshot();
+
+			expect(Object.keys(metadata.registries.actions)).not.toHaveLength(0);
+			expect(metadata.metadata.assets).toBeDefined();
+		});
 		it('runs AI turns and simulations via HTTP endpoints', async () => {
 			const api = createApi();
 			const created = await api.createSession();
