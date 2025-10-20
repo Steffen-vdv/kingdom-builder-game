@@ -19,7 +19,7 @@ registerEffectFormatter('population', 'add', {
 	describe: (effect, context) => {
 		const role = coercePopulationRole(effect.params?.['role']);
 		const { icon, label } = resolvePopulationDisplay(context, role);
-		return `Add ${icon} ${label}`;
+		return `${icon}+1 ${label}`;
 	},
 	log: (effect, context) => {
 		const role = coercePopulationRole(effect.params?.['role']);
