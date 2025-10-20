@@ -9,10 +9,13 @@ import { CallToActionSection } from './menu/CallToActionSection';
 import { HighlightsSection } from './menu/HighlightsSection';
 import { PlayerNamePrompt } from './menu/PlayerNamePrompt';
 import { useKeybindingPreferences } from './state/keybindings';
+import type { ResumeSessionRecord } from './state/sessionResumeStorage';
 
 interface MenuProps {
 	onStart: () => void;
 	onStartDev: () => void;
+	resumePoint: ResumeSessionRecord | null;
+	onContinue: () => void;
 	onOverview: () => void;
 	onTutorial: () => void;
 	darkModeEnabled: boolean;
@@ -35,6 +38,8 @@ interface MenuProps {
 export default function Menu({
 	onStart,
 	onStartDev,
+	resumePoint,
+	onContinue,
 	onOverview,
 	onTutorial,
 	darkModeEnabled,
@@ -72,6 +77,8 @@ export default function Menu({
 					<CallToActionSection
 						onStart={onStart}
 						onStartDev={onStartDev}
+						resumePoint={resumePoint}
+						onContinue={onContinue}
 						onOverview={onOverview}
 						onTutorial={onTutorial}
 						onOpenSettings={() => setSettingsOpen(true)}

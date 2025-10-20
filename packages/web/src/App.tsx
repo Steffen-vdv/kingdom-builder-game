@@ -23,8 +23,11 @@ export default function App() {
 		isBackgroundAudioMuted,
 		isAutoAcknowledgeEnabled,
 		isAutoPassEnabled,
+		resumePoint,
+		resumeSessionId,
 		startStandardGame,
 		startDeveloperGame,
+		continueSavedGame,
 		openOverview,
 		openTutorial,
 		returnToMenu,
@@ -34,6 +37,9 @@ export default function App() {
 		toggleBackgroundAudioMute,
 		toggleAutoAcknowledge,
 		toggleAutoPass,
+		persistResumeSession,
+		clearResumeSession,
+		handleResumeSessionFailure,
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
 	const overviewMetadataState = useOverviewMetadata(
@@ -117,6 +123,10 @@ export default function App() {
 					onToggleAutoPass={toggleAutoPass}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
+					resumeSessionId={resumeSessionId}
+					onPersistResumeSession={persistResumeSession}
+					onClearResumeSession={clearResumeSession}
+					onResumeSessionFailure={handleResumeSessionFailure}
 				/>
 			);
 			break;
@@ -126,6 +136,8 @@ export default function App() {
 				<Menu
 					onStart={startStandardGame}
 					onStartDev={startDeveloperGame}
+					resumePoint={resumePoint}
+					onContinue={continueSavedGame}
 					onOverview={openOverview}
 					onTutorial={openTutorial}
 					darkModeEnabled={isDarkMode}
