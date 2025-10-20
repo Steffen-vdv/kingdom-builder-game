@@ -1,7 +1,4 @@
-import {
-	createEngineSession,
-	type EngineSession,
-} from '@kingdom-builder/engine';
+import type { EngineSession } from '@kingdom-builder/engine';
 import {
 	ACTIONS,
 	ACTION_CATEGORIES,
@@ -35,8 +32,15 @@ import {
 	type SessionBaseOptions,
 	type SessionResourceRegistry,
 } from './sessionConfigAssets.js';
-type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
-
+import type { SessionStore } from './SessionStore.js';
+import {
+	attachDevModePersistence,
+	createEngineSessionWithOptions,
+	hydratePersistedSessions,
+	persistSessionRecord,
+	type EngineSessionOptions,
+	type SessionRecord,
+} from './SessionPersistenceHelpers.js';
 type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
 	actionCategoryRegistry?: SessionActionCategoryRegistry;
@@ -51,19 +55,12 @@ type SessionRuntimeConfig = {
 	primaryIconId: string | null;
 };
 
-type SessionRecord = {
-	session: EngineSession;
-	createdAt: number;
-	lastAccessedAt: number;
-	registries: SessionRegistriesPayload;
-	metadata: SessionStaticMetadataPayload;
-};
-
 export interface SessionManagerOptions {
 	maxIdleDurationMs?: number;
 	maxSessions?: number;
 	now?: () => number;
 	engineOptions?: EngineSessionOverrideOptions;
+	store?: SessionStore;
 }
 
 export interface CreateSessionOptions {
@@ -90,6 +87,8 @@ export class SessionManager {
 
 	private readonly resourceOverrides: SessionResourceRegistry | undefined;
 
+	private readonly sessionStore: SessionStore | undefined;
+
 	private readonly runtimeConfig: SessionRuntimeConfig;
 
 	public constructor(options: SessionManagerOptions = {}) {
@@ -98,6 +97,7 @@ export class SessionManager {
 			maxSessions,
 			now = Date.now,
 			engineOptions = {},
+			store,
 		} = options;
 		const {
 			resourceRegistry,
@@ -108,6 +108,7 @@ export class SessionManager {
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
+		this.sessionStore = store;
 		const baseActionCategories =
 			engineOverrides.actionCategories ?? ACTION_CATEGORIES;
 		this.baseOptions = {
@@ -170,6 +171,19 @@ export class SessionManager {
 			resources: frozenResources,
 			primaryIconId,
 		});
+		const restoredSessions = hydratePersistedSessions(
+			this.sessionStore,
+			this.baseOptions,
+		);
+		for (const [restoredId, record] of restoredSessions) {
+			this.sessions.set(restoredId, record);
+			attachDevModePersistence(
+				restoredId,
+				record.session,
+				this.sessions,
+				this.sessionStore,
+			);
+		}
 	}
 
 	public createSession(
@@ -187,18 +201,15 @@ export class SessionManager {
 			throw new Error('Maximum session count reached.');
 		}
 		const devMode = options.devMode ?? false;
-		const { config } = options;
-		const { actionCategories: _baseActionCategories, ...engineBaseOptions } =
-			this.baseOptions;
-		const sessionOptions: EngineSessionOptions = {
-			...engineBaseOptions,
+		const configSnapshot =
+			options.config !== undefined
+				? structuredClone(options.config)
+				: undefined;
+		const session = createEngineSessionWithOptions(
+			this.baseOptions,
 			devMode,
-		};
-		if (config !== undefined) {
-			sessionOptions.config = config;
-		}
-		const session = createEngineSession(sessionOptions);
-		session.setDevMode(devMode);
+			configSnapshot,
+		);
 		const timestamp = this.now();
 		const { registries, metadata } = buildSessionAssets(
 			{
@@ -207,15 +218,25 @@ export class SessionManager {
 				baseRegistries: this.registries,
 				baseMetadata: this.metadata,
 			},
-			config,
+			configSnapshot,
 		);
-		this.sessions.set(sessionId, {
+		const record: SessionRecord = {
 			session,
 			createdAt: timestamp,
 			lastAccessedAt: timestamp,
 			registries,
 			metadata,
-		});
+			devMode,
+			...(configSnapshot !== undefined ? { config: configSnapshot } : {}),
+		};
+		this.sessions.set(sessionId, record);
+		attachDevModePersistence(
+			sessionId,
+			session,
+			this.sessions,
+			this.sessionStore,
+		);
+		persistSessionRecord(this.sessionStore, sessionId, record);
 		return session;
 	}
 
@@ -226,11 +247,16 @@ export class SessionManager {
 			return undefined;
 		}
 		record.lastAccessedAt = this.now();
+		persistSessionRecord(this.sessionStore, sessionId, record);
 		return record.session;
 	}
 
 	public destroySession(sessionId: string): boolean {
-		return this.sessions.delete(sessionId);
+		const removed = this.sessions.delete(sessionId);
+		if (removed) {
+			this.sessionStore?.delete(sessionId);
+		}
+		return removed;
 	}
 
 	public getSnapshot(
@@ -295,6 +321,7 @@ export class SessionManager {
 		for (const [sessionId, record] of this.sessions.entries()) {
 			if (record.lastAccessedAt < expiration) {
 				this.sessions.delete(sessionId);
+				this.sessionStore?.delete(sessionId);
 			}
 		}
 	}
