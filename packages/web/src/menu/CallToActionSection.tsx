@@ -1,5 +1,6 @@
 import Button from '../components/common/Button';
 import { ShowcaseCard } from '../components/layouts/ShowcasePage';
+import type { ResumeSessionRecord } from '../state/sessionResumeStorage';
 
 const KNOWLEDGE_CARD_CLASS = [
 	'mt-8 flex flex-col gap-4 rounded-2xl border border-white/60',
@@ -39,6 +40,8 @@ const CTA_DESCRIPTION_CLASS = [
 
 const CTA_BUTTON_COLUMN_CLASS = 'flex w-full flex-col gap-3 sm:w-64';
 
+const TURN_NUMBER_FORMATTER = new Intl.NumberFormat('en-US');
+
 const KNOWLEDGE_HEADER_LAYOUT_CLASS = [
 	'flex flex-col gap-4',
 	'sm:flex-row sm:items-center sm:justify-between',
@@ -64,6 +67,8 @@ const KNOWLEDGE_PARAGRAPH_TEXT = [
 export interface CallToActionProps {
 	onStart: () => void;
 	onStartDev: () => void;
+	resumePoint: ResumeSessionRecord | null;
+	onContinue: () => void;
 	onOverview: () => void;
 	onTutorial: () => void;
 	onOpenSettings: () => void;
@@ -72,10 +77,26 @@ export interface CallToActionProps {
 export function CallToActionSection({
 	onStart,
 	onStartDev,
+	resumePoint,
+	onContinue,
 	onOverview,
 	onTutorial,
 	onOpenSettings,
 }: CallToActionProps) {
+	const formattedResumeTurn = resumePoint
+		? TURN_NUMBER_FORMATTER.format(Math.max(1, Math.round(resumePoint.turn)))
+		: null;
+	const continueGameButton =
+		resumePoint && formattedResumeTurn ? (
+			<Button
+				variant="primary"
+				className={CTA_BUTTON_BASE_CLASS}
+				onClick={onContinue}
+				icon="⏯️"
+			>
+				Continue game (turn {formattedResumeTurn})
+			</Button>
+		) : null;
 	const startGameButton = (
 		<Button
 			variant="primary"
@@ -145,6 +166,7 @@ export function CallToActionSection({
 					</p>
 				</div>
 				<div className={CTA_BUTTON_COLUMN_CLASS}>
+					{continueGameButton}
 					{startGameButton}
 					{startDevButton}
 					{settingsButton}
