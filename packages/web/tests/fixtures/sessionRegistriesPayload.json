@@ -29,9 +29,9 @@
 			"order": 1,
 			"focus": "economy"
 		},
-		"develop": {
-			"id": "develop",
-			"name": "Develop",
+		"install_development": {
+			"id": "install_development",
+			"name": "Install Development",
 			"icon": "🏗️",
 			"baseCosts": {
 				"ap": 1,
@@ -94,9 +94,9 @@
 			"order": 3,
 			"focus": "economy"
 		},
-		"raise_pop": {
-			"id": "raise_pop",
-			"name": "Hire",
+		"recruit_population": {
+			"id": "recruit_population",
+			"name": "Recruit Population",
 			"icon": "👶",
 			"baseCosts": {
 				"ap": 1,
@@ -173,7 +173,7 @@
 						{
 							"id": "royal_decree_house",
 							"icon": "🏠",
-							"actionId": "develop",
+							"actionId": "install_development",
 							"params": {
 								"developmentId": "house",
 								"landId": "$landId"
@@ -182,7 +182,7 @@
 						{
 							"id": "royal_decree_farm",
 							"icon": "🌾",
-							"actionId": "develop",
+							"actionId": "install_development",
 							"params": {
 								"developmentId": "farm",
 								"landId": "$landId"
@@ -191,7 +191,7 @@
 						{
 							"id": "royal_decree_outpost",
 							"icon": "🏹",
-							"actionId": "develop",
+							"actionId": "install_development",
 							"params": {
 								"developmentId": "outpost",
 								"landId": "$landId"
@@ -200,7 +200,7 @@
 						{
 							"id": "royal_decree_watchtower",
 							"icon": "🗼",
-							"actionId": "develop",
+							"actionId": "install_development",
 							"params": {
 								"developmentId": "watchtower",
 								"landId": "$landId"
@@ -490,9 +490,9 @@
 			],
 			"system": true
 		},
-		"build": {
-			"id": "build",
-			"name": "Build",
+		"construct_building": {
+			"id": "construct_building",
+			"name": "Construct Building",
 			"icon": "🏛️",
 			"effects": [
 				{

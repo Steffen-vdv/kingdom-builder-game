@@ -63,15 +63,15 @@ const HERO_INTRO_TEXT = [
 
 const HERO_PARAGRAPH_TEXT = [
 	'Welcome to {game}, a brisk duel of wits where {expand} expansion,',
-	'{build} clever construction, and {army_attack} daring raids decide who steers the crown.',
+	'{construct_building} clever construction, and {army_attack} daring raids decide who steers the crown.',
 ].join(' ');
 
 const DEFAULT_TOKENS: OverviewTokenCandidates = {
 	actions: {
 		[ActionId.expand]: [ActionId.expand],
-		[ActionId.build]: [ActionId.build],
-		[ActionId.develop]: [ActionId.develop],
-		[ActionId.raise_pop]: [ActionId.raise_pop],
+		[ActionId.construct_building]: [ActionId.construct_building],
+		[ActionId.install_development]: [ActionId.install_development],
+		[ActionId.recruit_population]: [ActionId.recruit_population],
 		[ActionId.army_attack]: [ActionId.army_attack],
 	},
 	phases: {
@@ -156,7 +156,9 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 			{
 				icon: 'gold',
 				label: 'Gold',
-				body: ['Fuels {build} buildings, diplomacy, and daring plays.'],
+				body: [
+					'Fuels {construct_building} projects, diplomacy, and daring plays.',
+				],
 			},
 			{
 				icon: 'ap',
@@ -223,8 +225,8 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 		title: 'Actions & Strategy',
 		span: true,
 		paragraphs: [
-			'Spend {ap} AP to {expand} grow territory or {develop} upgrade key lands.',
-			'Field {raise_pop} specialists or launch {army_attack} attacks to snowball momentum.',
+			'Spend {ap} AP to {expand} grow territory or {install_development} upgrade key lands.',
+			'Field {recruit_population} specialists or launch {army_attack} attacks to snowball momentum.',
 		],
 	},
 ];

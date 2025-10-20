@@ -93,11 +93,12 @@ function createRaisePopScenario(
 		metadata,
 	});
 	const metadataSelectors = createTestRegistryMetadata(registries, metadata);
-	const definition = registries.actions.get('raise_pop');
+	const definition = registries.actions.get('recruit_population');
 	if (!definition) {
-		throw new Error('Expected raise_pop definition in registries.');
+		throw new Error('Expected recruit_population definition in registries.');
 	}
-	const translated = mockGame.translationContext.actions.get('raise_pop');
+	const translated =
+		mockGame.translationContext.actions.get('recruit_population');
 	const action: Action = {
 		id: definition.id,
 		name: definition.name ?? definition.id,

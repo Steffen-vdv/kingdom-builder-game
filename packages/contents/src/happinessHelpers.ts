@@ -61,7 +61,7 @@ export const buildingDiscountModifier = (id: string) =>
 		.params(
 			costModParams()
 				.id(id)
-				.actionId(ActionId.build)
+				.actionId(ActionId.construct_building)
 				.key(Resource.gold)
 				.percent(-0.2)
 				.build(),

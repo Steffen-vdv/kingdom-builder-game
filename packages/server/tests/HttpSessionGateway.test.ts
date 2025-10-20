@@ -237,12 +237,12 @@ describe('HttpSessionGateway', () => {
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/build/costs',
+					'/api/sessions/test/actions/construct_building/costs',
 				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({
 					sessionId: 'test',
-					actionId: 'build',
+					actionId: 'construct_building',
 				});
 				return jsonResponse({
 					sessionId: 'test',
@@ -253,7 +253,7 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.getActionCosts({
 			sessionId: 'test',
-			actionId: 'build',
+			actionId: 'construct_building',
 		});
 		expect(response.costs).toEqual({ gold: 4 });
 	});
@@ -292,12 +292,12 @@ describe('HttpSessionGateway', () => {
 					input instanceof Request ? input : new Request(input, init);
 				expect(request.method).toBe('POST');
 				expect(new URL(request.url).pathname).toBe(
-					'/api/sessions/test/actions/build/requirements',
+					'/api/sessions/test/actions/construct_building/requirements',
 				);
 				const payload = await request.clone().json();
 				expect(payload).toEqual({
 					sessionId: 'test',
-					actionId: 'build',
+					actionId: 'construct_building',
 					params: { choices: { slot: { optionId: 'farm' } } },
 				});
 				return jsonResponse({
@@ -321,7 +321,7 @@ describe('HttpSessionGateway', () => {
 		const gateway = createGateway({ fetch });
 		const response = await gateway.getActionRequirements({
 			sessionId: 'test',
-			actionId: 'build',
+			actionId: 'construct_building',
 			params: { choices: { slot: { optionId: 'farm' } } },
 		});
 		expect(response.requirements).toHaveLength(1);
@@ -340,7 +340,7 @@ describe('HttpSessionGateway', () => {
 		await expect(
 			gateway.getActionRequirements({
 				sessionId: 'test',
-				actionId: 'build',
+				actionId: 'construct_building',
 			}),
 		).rejects.toBeInstanceOf(TransportError);
 	});

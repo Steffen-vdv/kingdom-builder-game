@@ -48,7 +48,7 @@ describe('content builder safeguards', () => {
 	});
 
 	it('prevents duplicate action param setters', () => {
-		const builder = actionParams().id(ActionId.develop);
+		const builder = actionParams().id(ActionId.install_development);
 		expect(() => builder.id('again')).toThrowError(
 			'Action effect params already set id(). Remove the extra id() call.',
 		);

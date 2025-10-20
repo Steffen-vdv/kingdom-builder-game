@@ -12,14 +12,14 @@ import {
 import type { Focus as FocusType } from './defs';
 
 const ACTION_ID_MAP = {
-	build: 'build',
+	construct_building: 'construct_building',
 	army_attack: 'army_attack',
-	develop: 'develop',
+	install_development: 'install_development',
 	expand: 'expand',
 	hold_festival: 'hold_festival',
 	plow: 'plow',
 	plunder: 'plunder',
-	raise_pop: 'raise_pop',
+	recruit_population: 'recruit_population',
 	royal_decree: 'royal_decree',
 	tax: 'tax',
 	till: 'till',

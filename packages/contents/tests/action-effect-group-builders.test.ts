@@ -24,12 +24,16 @@ describe('action effect group builder safeguards', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
 			.option(
-				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('Farm')
+					.action(ActionId.install_development),
 			);
 
 		expect(() =>
 			group.option(
-				actionEffectGroupOption('farm').label('House').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('House')
+					.action(ActionId.install_development),
 			),
 		).toThrowError(
 			'Action effect group option id "farm" already exists. Use unique option ids within a group.',
@@ -44,7 +48,7 @@ describe('action effect group builder safeguards', () => {
 				.option(
 					actionEffectGroupOption('farm')
 						.label('Farm')
-						.action(ActionId.develop),
+						.action(ActionId.install_development),
 				),
 		);
 
@@ -55,7 +59,7 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('house')
 							.label('House')
-							.action(ActionId.develop),
+							.action(ActionId.install_development),
 					),
 			),
 		).toThrowError(
@@ -68,7 +72,9 @@ describe('action effect group builder safeguards', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
 			.option(
-				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('Farm')
+					.action(ActionId.install_development),
 			);
 
 		expect(() =>
@@ -94,7 +100,7 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('farm')
 							.label('Farm')
-							.action(ActionId.develop)
+							.action(ActionId.install_development)
 							.params(actionParams().id('farm').landId('$landId')),
 					),
 			)
@@ -111,7 +117,7 @@ describe('action effect group builder safeguards', () => {
 				{
 					id: 'farm',
 					label: 'Farm',
-					actionId: ActionId.develop,
+					actionId: ActionId.install_development,
 					params: { id: 'farm', landId: '$landId' },
 				},
 			],
