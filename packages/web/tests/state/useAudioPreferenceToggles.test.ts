@@ -19,6 +19,8 @@ const DEFAULT_HISTORY_STATE: HistoryState = {
 	isMusicEnabled: true,
 	isSoundEnabled: true,
 	isBackgroundAudioMuted: false,
+	isAutoAcknowledgeEnabled: false,
+	isAutoPassEnabled: false,
 };
 
 function createBooleanSetter(initialValue: boolean): BooleanSetterFactory {
