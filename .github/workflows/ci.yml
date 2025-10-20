@@ -14,8 +14,11 @@ env:
   NPM_CONFIG_PROGRESS: 'false'
 
 jobs:
-  test:
+  quality:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [format:check, typecheck, lint]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
@@ -32,15 +35,44 @@ jobs:
             }
           done
 
-      - run: npm run check:ci
-      - run: npm run test:ci
-      - uses: actions/upload-artifact@v4
+      - run: npm run ${{ matrix.task }}
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        suite: [root, server]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
-          name: coverage-report
-          path: coverage
+          node-version: 20
+          cache: 'npm'
+
+      # Robust install: prefer lockfile, skip audit/fund, retry on transient failures
+      - name: Install deps
+        run: |
+          for i in 1 2 3; do
+            npm ci --prefer-offline --no-progress && break || {
+              echo "Install failed (attempt $i). Retrying in 10s..."; sleep 10;
+            }
+          done
+
+      - run: npm run test:coverage:${{ matrix.suite }}
+      - uses: actions/upload-artifact@v4
+        if: matrix.suite == 'root'
+        with:
+          name: coverage-root
+          path: coverage/
+      - uses: actions/upload-artifact@v4
+        if: matrix.suite == 'server'
+        with:
+          name: coverage-server
+          path: packages/server/coverage/
 
   build:
     runs-on: ubuntu-latest
+    needs: [quality, tests]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
@@ -56,5 +88,4 @@ jobs:
             }
           done
 
-      - run: npm run check
       - run: npm run build
