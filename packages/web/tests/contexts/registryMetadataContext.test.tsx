@@ -1,6 +1,11 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	Registry,
+	actionCategorySchema,
+	type ActionCategoryConfig,
+} from '@kingdom-builder/protocol';
 import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
@@ -11,6 +16,7 @@ import {
 	useRegistryMetadata,
 	useResourceMetadata,
 	usePopulationMetadata,
+	useActionCategoryMetadata,
 	useBuildingMetadata,
 	useDevelopmentMetadata,
 	useStatMetadata,
@@ -31,6 +37,7 @@ import { describe, expect, it } from 'vitest';
 interface TestSetup {
 	registries: SessionRegistries;
 	actionId: string;
+	categoryId: string;
 	buildingId: string;
 	developmentId: string;
 	populationId: string;
@@ -55,6 +62,19 @@ function createTestSetup(): TestSetup {
 		name: 'Sky Assault',
 		icon: '🛩️',
 	});
+	const category: ActionCategoryConfig = {
+		id: nextKey('category'),
+		title: 'Arcane',
+		subtitle: 'Arcane Ops',
+		icon: '🔮',
+		order: 1,
+		layout: 'list',
+		hideWhenEmpty: false,
+	};
+	const actionCategories = new Registry<ActionCategoryConfig>(
+		actionCategorySchema.passthrough(),
+	);
+	actionCategories.add(category.id, category);
 	const building = factory.building({
 		name: 'Sky Bastion',
 		icon: '🏯',
@@ -89,6 +109,9 @@ function createTestSetup(): TestSetup {
 		},
 		populations: {
 			[population.id]: { label: 'Astral Council', icon: '✨' },
+		},
+		actionCategories: {
+			[category.id]: { label: 'Arcane Actions', icon: '🔮' },
 		},
 		buildings: {
 			[building.id]: { label: 'Sky Bastion Prime', icon: '🏯' },
@@ -135,7 +158,7 @@ function createTestSetup(): TestSetup {
 	};
 	const registries: SessionRegistries = {
 		actions: factory.actions,
-		actionCategories: {},
+		actionCategories,
 		buildings: factory.buildings,
 		developments: factory.developments,
 		populations: factory.populations,
@@ -144,6 +167,7 @@ function createTestSetup(): TestSetup {
 	return {
 		registries,
 		actionId: action.id,
+		categoryId: category.id,
 		buildingId: building.id,
 		developmentId: development.id,
 		populationId: population.id,
@@ -161,6 +185,7 @@ interface CapturedLookups {
 	context: RegistryMetadataContextValue;
 	resources: MetadataSelector<RegistryMetadataDescriptor>;
 	populations: MetadataSelector<RegistryMetadataDescriptor>;
+	actionCategories: MetadataSelector<RegistryMetadataDescriptor>;
 	buildings: MetadataSelector<RegistryMetadataDescriptor>;
 	developments: MetadataSelector<RegistryMetadataDescriptor>;
 	stats: MetadataSelector<RegistryMetadataDescriptor>;
@@ -188,6 +213,7 @@ describe('RegistryMetadataProvider', () => {
 				context: useRegistryMetadata(),
 				resources: useResourceMetadata(),
 				populations: usePopulationMetadata(),
+				actionCategories: useActionCategoryMetadata(),
 				buildings: useBuildingMetadata(),
 				developments: useDevelopmentMetadata(),
 				stats: useStatMetadata(),
@@ -214,6 +240,7 @@ describe('RegistryMetadataProvider', () => {
 			context,
 			resources,
 			populations,
+			actionCategories,
 			buildings,
 			developments,
 			stats,
@@ -226,6 +253,9 @@ describe('RegistryMetadataProvider', () => {
 		const { actionId, buildingId, developmentId, populationId, resourceKey } =
 			setup;
 		expect(context.actions.getOrThrow(actionId).id).toBe(actionId);
+		expect(context.actionCategories.getOrThrow(setup.categoryId).id).toBe(
+			setup.categoryId,
+		);
 		expect(context.buildings.getOrThrow(buildingId).id).toBe(buildingId);
 		expect(context.developments.getOrThrow(developmentId).id).toBe(
 			developmentId,
@@ -237,6 +267,9 @@ describe('RegistryMetadataProvider', () => {
 			developmentId,
 		);
 		expect(context.populations.has(nextKey('population'))).toBe(false);
+		expect(context.actionCategories.get(setup.categoryId)?.title).toBe(
+			'Arcane',
+		);
 		const resourceDescriptor = resources.byId[resourceKey];
 		expect(resourceDescriptor.label).toBe('Auric Light');
 		expect(resourceDescriptor.description).toBe('Condensed radiance.');
@@ -260,6 +293,9 @@ describe('RegistryMetadataProvider', () => {
 		expect(Object.isFrozen(selectedResources)).toBe(true);
 		expect(Object.isFrozen(resourceRecord)).toBe(true);
 		expect(populations.byId[populationId].label).toBe('Astral Council');
+		expect(actionCategories.byId[setup.categoryId].label).toBe(
+			'Arcane Actions',
+		);
 		expect(buildings.byId[buildingId].label).toBe('Sky Bastion Prime');
 		expect(developments.byId[developmentId].label).toBe('Celestial Garden');
 		expect(stats.select(setup.statId).icon).toBe('🔥');

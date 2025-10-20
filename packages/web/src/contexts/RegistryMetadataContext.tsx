@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import type {
+	ActionCategoryConfig,
+	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
-	ActionConfig,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionOverviewMetadata,
@@ -34,10 +35,12 @@ import {
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
 	actions: DefinitionLookup<ActionConfig>;
+	actionCategories: DefinitionLookup<ActionCategoryConfig>;
 	buildings: DefinitionLookup<BuildingConfig>;
 	developments: DefinitionLookup<DevelopmentConfig>;
 	populations: DefinitionLookup<PopulationConfig>;
 	resourceMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
+	actionCategoryMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	populationMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	buildingMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	developmentMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
@@ -45,6 +48,7 @@ export interface RegistryMetadataContextValue {
 	phaseMetadataLookup: MetadataLookup<PhaseMetadata>;
 	triggerMetadataLookup: MetadataLookup<TriggerMetadata>;
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
+	actionCategoryMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	populationMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	buildingMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	developmentMetadata: MetadataSelector<RegistryMetadataDescriptor>;
@@ -74,7 +78,12 @@ const OVERVIEW_DESCRIPTOR_ERROR =
 interface RegistryMetadataProviderProps {
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
+		| 'actions'
+		| 'actionCategories'
+		| 'resources'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
 	>;
 	metadata?: SessionSnapshotMetadata | null;
 	children: React.ReactNode;
@@ -109,12 +118,14 @@ export function RegistryMetadataProvider({
 	const {
 		resourceLookup,
 		actionLookup,
+		actionCategoryLookup,
 		buildingLookup,
 		developmentLookup,
 		populationLookup,
 	} = useDefinitionLookups(registries);
 	const {
 		resourceMetadataLookup,
+		actionCategoryMetadataLookup,
 		populationMetadataLookup,
 		buildingMetadataLookup,
 		developmentMetadataLookup,
@@ -137,6 +148,10 @@ export function RegistryMetadataProvider({
 	const resourceMetadata = useMemo(
 		() => createMetadataSelector(resourceMetadataLookup),
 		[resourceMetadataLookup],
+	);
+	const actionCategoryMetadata = useMemo(
+		() => createMetadataSelector(actionCategoryMetadataLookup),
+		[actionCategoryMetadataLookup],
 	);
 	const populationMetadata = useMemo(
 		() => createMetadataSelector(populationMetadataLookup),
@@ -180,10 +195,12 @@ export function RegistryMetadataProvider({
 			Object.freeze({
 				resources: resourceLookup,
 				actions: actionLookup,
+				actionCategories: actionCategoryLookup,
 				buildings: buildingLookup,
 				developments: developmentLookup,
 				populations: populationLookup,
 				resourceMetadataLookup,
+				actionCategoryMetadataLookup,
 				populationMetadataLookup,
 				buildingMetadataLookup,
 				developmentMetadataLookup,
@@ -191,6 +208,7 @@ export function RegistryMetadataProvider({
 				phaseMetadataLookup,
 				triggerMetadataLookup,
 				resourceMetadata,
+				actionCategoryMetadata,
 				populationMetadata,
 				buildingMetadata,
 				developmentMetadata,
@@ -205,10 +223,12 @@ export function RegistryMetadataProvider({
 		[
 			resourceLookup,
 			actionLookup,
+			actionCategoryLookup,
 			buildingLookup,
 			developmentLookup,
 			populationLookup,
 			resourceMetadataLookup,
+			actionCategoryMetadataLookup,
 			populationMetadataLookup,
 			buildingMetadataLookup,
 			developmentMetadataLookup,
@@ -216,6 +236,7 @@ export function RegistryMetadataProvider({
 			phaseMetadataLookup,
 			triggerMetadataLookup,
 			resourceMetadata,
+			actionCategoryMetadata,
 			populationMetadata,
 			buildingMetadata,
 			developmentMetadata,
@@ -258,6 +279,10 @@ export const useResourceMetadata =
 export const usePopulationMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().populationMetadata;
+
+export const useActionCategoryMetadata =
+	(): MetadataSelector<RegistryMetadataDescriptor> =>
+		useRegistryMetadata().actionCategoryMetadata;
 
 export const useBuildingMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>

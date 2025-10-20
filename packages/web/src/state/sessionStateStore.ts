@@ -59,6 +59,10 @@ function applyRegistries(
 ): void {
 	const next = deserializeSessionRegistries(payload);
 	mergeRegistryEntries(record.registries.actions, next.actions);
+	mergeRegistryEntries(
+		record.registries.actionCategories,
+		next.actionCategories,
+	);
 	mergeRegistryEntries(record.registries.buildings, next.buildings);
 	mergeRegistryEntries(record.registries.developments, next.developments);
 	mergeRegistryEntries(record.registries.populations, next.populations);

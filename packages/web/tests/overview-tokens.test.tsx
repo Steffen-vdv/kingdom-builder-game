@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import React from 'react';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { Registry, type ActionCategoryConfig } from '@kingdom-builder/protocol';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import { buildOverviewIconSet } from '../src/components/overview/overviewTokens';
 import { createOverviewTokenSources } from '../src/components/overview/overviewTokenUtils';
@@ -21,7 +22,7 @@ describe('buildOverviewIconSet', () => {
 	const legionRole = factory.population({ id: 'legion', icon: '🛡️' });
 	const registries: SessionRegistries = {
 		actions: factory.actions,
-		actionCategories: {},
+		actionCategories: new Registry<ActionCategoryConfig>(),
 		buildings: factory.buildings,
 		developments: factory.developments,
 		populations: factory.populations,
