@@ -1,28 +1,18 @@
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-	type Dispatch,
-	type SetStateAction,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
 	ActionEffectGroup,
 	ActionEffectGroupChoiceMap,
 	ActionEffectGroupOption,
 } from '@kingdom-builder/protocol';
-import { type Summary, type TranslationContext } from '../../translation';
+import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
-import { useActionMetadata } from '../../state/useActionMetadata';
-import GenericActionCard from './GenericActionCard';
-import {
-	toPerformableAction,
-	type Action,
-	type DisplayPlayer,
-	type HoverCardData,
-} from './types';
-import { splitActionCostMap, sumNonActionCosts, sumUpkeep } from './utils';
-import type { ResourceDescriptorSelector } from './utils';
+import GenericActionEntry, {
+	type ActionSortMetrics,
+} from './GenericActionEntry';
+import { toPerformableAction, type Action, type DisplayPlayer } from './types';
+import { sumNonActionCosts, type ResourceDescriptorSelector } from './utils';
+import type { UseActionMetadataResult } from '../../state/useActionMetadata';
+import { EMPTY_ACTION_METADATA } from './getActionAvailability';
 
 export interface PendingActionState {
 	action: Action;
@@ -32,115 +22,20 @@ export interface PendingActionState {
 	choices: ActionEffectGroupChoiceMap;
 }
 
-interface ActionSortMetrics {
-	cost: number | null;
-	cleanup: number | null;
-}
-
-interface GenericActionEntryProps {
-	action: Action;
-	summaries: Map<string, Summary>;
-	player: DisplayPlayer;
-	canInteract: boolean;
-	pending: PendingActionState | null;
-	setPending: Dispatch<SetStateAction<PendingActionState | null>>;
-	cancelPending: () => void;
-	beginSelection: (action: Action, groups: ActionEffectGroup[]) => void;
-	handleOptionSelect: (
-		group: ActionEffectGroup,
-		option: ActionEffectGroupOption,
-		params?: Record<string, unknown>,
-	) => void;
-	translationContext: TranslationContext;
-	actionCostResource: string;
-	performAction: (
-		action: Action,
-		params?: Record<string, unknown>,
-	) => Promise<void>;
-	handleHoverCard: (data: HoverCardData) => void;
-	clearHoverCard: () => void;
-	formatRequirement: (requirement: string) => string;
-	selectResourceDescriptor: ResourceDescriptorSelector;
-	onSortMetricsChange: (actionId: string, metrics: ActionSortMetrics) => void;
-}
-
-function GenericActionEntry({
-	action,
-	summaries,
-	player,
-	canInteract,
-	pending,
-	setPending,
-	cancelPending,
-	beginSelection,
-	handleOptionSelect,
-	translationContext,
-	actionCostResource,
-	performAction,
-	handleHoverCard,
-	clearHoverCard,
-	formatRequirement,
-	selectResourceDescriptor,
-	onSortMetricsChange,
-}: GenericActionEntryProps) {
-	const metadata = useActionMetadata({ actionId: action.id });
-	const { costs: actionCosts, cleanup: cleanupCosts } = useMemo(
-		() => splitActionCostMap(metadata.costs),
-		[metadata.costs],
-	);
-	const total = useMemo(() => {
-		if (!metadata.costs) {
-			return null;
-		}
-		return sumNonActionCosts(actionCosts, actionCostResource);
-	}, [metadata.costs, actionCosts, actionCostResource]);
-	const cleanupTotal = useMemo(() => {
-		if (!metadata.costs) {
-			return null;
-		}
-		return sumUpkeep(cleanupCosts);
-	}, [metadata.costs, cleanupCosts]);
-	useEffect(() => {
-		onSortMetricsChange(action.id, {
-			cost: total,
-			cleanup: cleanupTotal,
-		});
-	}, [action.id, total, cleanupTotal, onSortMetricsChange]);
-	return (
-		<GenericActionCard
-			action={action}
-			metadata={metadata}
-			summaries={summaries}
-			player={player}
-			canInteract={canInteract}
-			pending={pending}
-			setPending={setPending}
-			cancelPending={cancelPending}
-			beginSelection={beginSelection}
-			handleOptionSelect={handleOptionSelect}
-			translationContext={translationContext}
-			actionCostResource={actionCostResource}
-			performAction={performAction}
-			handleHoverCard={handleHoverCard}
-			clearHoverCard={clearHoverCard}
-			formatRequirement={formatRequirement}
-			selectResourceDescriptor={selectResourceDescriptor}
-		/>
-	);
-}
-
 function GenericActions({
 	actions,
 	summaries,
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	metadataByAction,
 }: {
 	actions: Action[];
 	summaries: Map<string, Summary>;
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	metadataByAction: Map<string, UseActionMetadataResult>;
 }) {
 	const {
 		selectors,
@@ -341,6 +236,7 @@ function GenericActions({
 					summaries={summaries}
 					player={player}
 					canInteract={canInteract}
+					metadata={metadataByAction.get(action.id) ?? EMPTY_ACTION_METADATA}
 					pending={pending}
 					setPending={setPending}
 					cancelPending={cancelPending}

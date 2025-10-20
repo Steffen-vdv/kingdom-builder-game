@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
-import React from 'react';
+import React, { useMemo } from 'react';
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
@@ -16,6 +16,7 @@ import {
 	setSessionActionRequirementsMock,
 } from './helpers/mockSessionActionMetadataStore';
 import GenericActions from '../src/components/actions/GenericActions';
+import { useActionMetadata } from '../src/state/useActionMetadata';
 import type * as TranslationModule from '../src/translation';
 import type * as TranslationContentModule from '../src/translation/content';
 import { selectSessionView } from '../src/state/sessionSelectors';
@@ -396,11 +397,13 @@ describe('GenericActions effect group handling', () => {
 		if (!activePlayer) {
 			throw new Error('Expected active player for generic actions test');
 		}
-		render(
-			<RegistryMetadataProvider
-				registries={mockGame.sessionRegistries}
-				metadata={mockGame.sessionSnapshot.metadata}
-			>
+		const Harness = () => {
+			const metadata = useActionMetadata({ actionId: action.id });
+			const metadataByAction = useMemo(
+				() => new Map([[action.id, metadata]]),
+				[action.id, metadata],
+			);
+			return (
 				<GenericActions
 					actions={[action]}
 					summaries={new Map([[action.id, ['Expand swiftly']]])}
@@ -418,7 +421,16 @@ describe('GenericActions effect group handling', () => {
 						}
 						return { id: resourceKey, label: resourceKey };
 					}}
+					metadataByAction={metadataByAction}
 				/>
+			);
+		};
+		render(
+			<RegistryMetadataProvider
+				registries={mockGame.sessionRegistries}
+				metadata={mockGame.sessionSnapshot.metadata}
+			>
+				<Harness />
 			</RegistryMetadataProvider>,
 		);
 

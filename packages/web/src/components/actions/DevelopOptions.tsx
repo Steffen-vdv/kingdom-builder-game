@@ -131,11 +131,11 @@ export default function DevelopOptions({
 		actionInfo?.name ?? action.name,
 	);
 	return (
-		<div>
+		<div className="space-y-3">
 			<ActionCategoryHeader descriptor={category} />
 			<div
 				ref={listRef}
-				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
+				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2"
 			>
 				{entries.map(({ development, costs, upkeep }) => {
 					const focus = development.focus;

@@ -14,7 +14,6 @@ import { getRequirementIcons } from '../../utils/getRequirementIcons';
 import ActionCard from './ActionCard';
 import {
 	formatMissingResources,
-	splitActionCostMap,
 	type ResourceDescriptorSelector,
 } from './utils';
 import type { PendingActionState } from './GenericActions';
@@ -23,6 +22,7 @@ import { formatIconTitle, renderIconLabel } from './iconHelpers';
 import { type Action, type DisplayPlayer, type HoverCardData } from './types';
 import { normalizeActionFocus } from './types';
 import type { UseActionMetadataResult } from '../../state/useActionMetadata';
+import { getActionAvailability } from './getActionAvailability';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -70,14 +70,22 @@ function GenericActionCard({
 	formatRequirement,
 	selectResourceDescriptor,
 }: GenericActionCardProps) {
-	const { costs, cleanup: cleanupCosts } = useMemo(
-		() => splitActionCostMap(metadata.costs),
-		[metadata.costs],
+	const summary = summaries.get(action.id);
+	const availability = useMemo(
+		() =>
+			getActionAvailability({
+				metadata,
+				summary,
+				player,
+				canInteract,
+			}),
+		[metadata, summary, player, canInteract],
 	);
+	const costs = availability.costs;
+	const cleanupCosts = availability.cleanup;
 	const costsLoading = metadata.loading.costs;
 	const requirementsLoading = metadata.loading.requirements;
-	const groupsLoading = metadata.loading.groups;
-	const costsReady = !costsLoading;
+	const costsReady = availability.costsReady;
 	const hasCleanupCosts = Object.keys(cleanupCosts).length > 0;
 	const requirementFailures = metadata.requirements ?? [];
 	const requirementMessages = requirementFailures.map((failure) =>
@@ -90,27 +98,12 @@ function GenericActionCard({
 				? []
 				: ['Loading requirements…'];
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
-	const canPay = costsReady
-		? Object.entries(costs).every(
-				([resourceKey, cost]) =>
-					(player.resources[resourceKey] || 0) >= (cost ?? 0),
-			)
-		: false;
-	const requirementsReady = !requirementsLoading;
-	const meetsRequirements =
-		requirementsReady && requirementFailures.length === 0;
-	const summary = summaries.get(action.id);
-	const implemented = (summary?.length ?? 0) > 0;
+	const canPay = availability.canPay;
+	const meetsRequirements = availability.meetsRequirements;
+	const implemented = availability.implemented;
 	const groups = metadata.groups ?? [];
-	const groupsReady = !groupsLoading;
-	const metadataReady = costsReady && requirementsReady && groupsReady;
-	const baseEnabled = [
-		metadataReady,
-		canPay,
-		meetsRequirements,
-		canInteract,
-		implemented,
-	].every(Boolean);
+	const groupsReady = availability.groupsReady;
+	const baseEnabled = availability.isPerformable;
 	const isPending = pending?.action.id === action.id;
 	let cardEnabled = baseEnabled && !pending;
 	if (isPending) {

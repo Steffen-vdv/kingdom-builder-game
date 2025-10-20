@@ -6,6 +6,7 @@ import ActionCategoryHeader, {
 } from './ActionCategoryHeader';
 import GenericActions from './GenericActions';
 import type { Action, DisplayPlayer } from './types';
+import type { UseActionMetadataResult } from '../../state/useActionMetadata';
 import type { ResourceDescriptorSelector } from './utils';
 
 interface BasicOptionsProps {
@@ -15,6 +16,7 @@ interface BasicOptionsProps {
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
 	category: ActionCategoryDescriptor;
+	metadataByAction: Map<string, UseActionMetadataResult>;
 }
 
 export default function BasicOptions({
@@ -24,10 +26,11 @@ export default function BasicOptions({
 	canInteract,
 	selectResourceDescriptor,
 	category,
+	metadataByAction,
 }: BasicOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	return (
-		<div className="space-y-2">
+		<div className="space-y-3">
 			<ActionCategoryHeader descriptor={category} />
 			<div
 				ref={listRef}
@@ -39,6 +42,7 @@ export default function BasicOptions({
 					player={player}
 					canInteract={canInteract}
 					selectResourceDescriptor={selectResourceDescriptor}
+					metadataByAction={metadataByAction}
 				/>
 			</div>
 		</div>

@@ -23,15 +23,30 @@ import {
 	SECTION_CLASSES,
 	TITLE_CLASSES,
 	TOGGLE_BUTTON_CLASSES,
+	TAB_LIST_CLASSES,
+	TAB_BUTTON_CLASSES,
+	TAB_BUTTON_ACTIVE_CLASSES,
+	TAB_BUTTON_INACTIVE_CLASSES,
+	TAB_COUNT_BADGE_CLASSES,
+	TAB_ICON_CLASSES,
+	TAB_LABEL_CLASSES,
+	TAB_PANEL_CLASSES,
 } from './actionsPanelStyles';
 import type { Action, Building, Development, DisplayPlayer } from './types';
 import { normalizeActionFocus } from './types';
 import type { ResourceDescriptorSelector } from './utils';
+import { useActionMetadata } from '../../state/useActionMetadata';
+import type { UseActionMetadataResult } from '../../state/useActionMetadata';
+import {
+	getActionAvailability,
+	EMPTY_ACTION_METADATA,
+} from './getActionAvailability';
 
 interface CategoryEntry {
 	id: string;
-	definition?: TranslationActionCategoryDefinition;
+	definition: TranslationActionCategoryDefinition | undefined;
 	actions: Action[];
+	descriptor: ActionCategoryDescriptor;
 }
 
 interface CategoryRendererContext {
@@ -48,9 +63,27 @@ interface CategoryRendererContext {
 	buildingSummaries: Map<string, Summary>;
 	buildingDescriptions: Map<string, Summary>;
 	hasDevelopLand: boolean;
+	metadataByAction: Map<string, UseActionMetadataResult>;
 }
 
 type CategoryRenderer = (context: CategoryRendererContext) => React.ReactNode;
+
+function ActionMetadataWatcher({
+	actionId,
+	onMetadataChange,
+}: {
+	actionId: string;
+	onMetadataChange: (
+		actionId: string,
+		metadata: UseActionMetadataResult,
+	) => void;
+}) {
+	const metadata = useActionMetadata({ actionId });
+	useEffect(() => {
+		onMetadataChange(actionId, metadata);
+	}, [actionId, metadata, onMetadataChange]);
+	return null;
+}
 
 const renderGenericGrid: CategoryRenderer = ({
 	actions,
@@ -59,6 +92,7 @@ const renderGenericGrid: CategoryRenderer = ({
 	canInteract,
 	selectResourceDescriptor,
 	actionSummaries,
+	metadataByAction,
 }) => {
 	if (actions.length === 0) {
 		return null;
@@ -71,6 +105,7 @@ const renderGenericGrid: CategoryRenderer = ({
 			canInteract={canInteract}
 			selectResourceDescriptor={selectResourceDescriptor}
 			category={descriptor}
+			metadataByAction={metadataByAction}
 		/>
 	);
 };
@@ -309,6 +344,39 @@ export default function ActionsPanel() {
 		[sessionView.buildingList],
 	);
 
+	const [metadataByAction, setMetadataByAction] = useState<
+		Map<string, UseActionMetadataResult>
+	>(() => new Map());
+	const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+
+	const handleMetadataUpdate = useCallback(
+		(actionId: string, metadata: UseActionMetadataResult) => {
+			setMetadataByAction((previous) => {
+				const current = previous.get(actionId);
+				if (current === metadata) {
+					return previous;
+				}
+				const next = new Map(previous);
+				next.set(actionId, metadata);
+				return next;
+			});
+		},
+		[],
+	);
+
+	useEffect(() => {
+		setMetadataByAction((previous) => {
+			const next = new Map<string, UseActionMetadataResult>();
+			actions.forEach((actionDefinition) => {
+				const existing = previous.get(actionDefinition.id);
+				if (existing) {
+					next.set(actionDefinition.id, existing);
+				}
+			});
+			return next;
+		});
+	}, [actions]);
+
 	const actionSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
 		actions.forEach((actionDefinition) =>
@@ -401,14 +469,16 @@ export default function ActionsPanel() {
 		const seen = new Set<string>();
 		categoryDefinitions.forEach((definition) => {
 			const grouped = actionsByCategory.get(definition.id) ?? [];
-			if (definition.hideWhenEmpty && grouped.length === 0) {
+			if (grouped.length === 0) {
 				seen.add(definition.id);
 				return;
 			}
+			const fallbackLabel = grouped[0]?.name ?? definition.title ?? 'Actions';
 			entries.push({
 				id: definition.id,
 				definition,
 				actions: grouped,
+				descriptor: createCategoryDescriptor(definition, fallbackLabel),
 			});
 			seen.add(definition.id);
 		});
@@ -419,13 +489,115 @@ export default function ActionsPanel() {
 			if (grouped.length === 0) {
 				return;
 			}
+			const definition = categoriesById.get(categoryId);
+			const fallbackLabel = grouped[0]?.name ?? definition?.title ?? 'Actions';
 			entries.push({
 				id: categoryId,
+				definition,
 				actions: grouped,
+				descriptor: createCategoryDescriptor(definition, fallbackLabel),
 			});
 		});
 		return entries;
-	}, [actionsByCategory, categoryDefinitions]);
+	}, [actionsByCategory, categoryDefinitions, categoriesById]);
+
+	useEffect(() => {
+		if (categoryEntries.length === 0) {
+			setActiveCategoryId(null);
+			return;
+		}
+		setActiveCategoryId((previous) => {
+			if (previous && categoryEntries.some((entry) => entry.id === previous)) {
+				return previous;
+			}
+			return categoryEntries[0]?.id ?? null;
+		});
+	}, [categoryEntries]);
+
+	const countsByCategory = useMemo(() => {
+		const counts = new Map<string, { performable: number; total: number }>();
+		categoryEntries.forEach((entry) => {
+			let total = 0;
+			let performable = 0;
+			entry.actions.forEach((actionDefinition) => {
+				if (actionDefinition.system) {
+					return;
+				}
+				total += 1;
+				const metadata =
+					metadataByAction.get(actionDefinition.id) ?? EMPTY_ACTION_METADATA;
+				const summary = actionSummaries.get(actionDefinition.id);
+				const availability = getActionAvailability({
+					metadata,
+					summary,
+					player: selectedPlayer,
+					canInteract,
+				});
+				if (availability.isPerformable) {
+					performable += 1;
+				}
+			});
+			counts.set(entry.id, { performable, total });
+		});
+		return counts;
+	}, [
+		categoryEntries,
+		metadataByAction,
+		actionSummaries,
+		selectedPlayer,
+		canInteract,
+	]);
+
+	const activeCategory = useMemo(
+		() => categoryEntries.find((entry) => entry.id === activeCategoryId),
+		[categoryEntries, activeCategoryId],
+	);
+
+	const activeCategoryContent = useMemo(() => {
+		if (!activeCategory) {
+			return null;
+		}
+		const definition = activeCategory.definition;
+		if (definition?.hideWhenEmpty && activeCategory.actions.length === 0) {
+			return null;
+		}
+		const analyticsKey =
+			definition?.analyticsKey ?? definition?.id ?? activeCategory.id;
+		const rendererKey = analyticsKey?.toLowerCase();
+		const renderer =
+			(rendererKey ? CATEGORY_RENDERERS.get(rendererKey) : undefined) ??
+			DEFAULT_RENDERER;
+		return renderer({
+			actions: activeCategory.actions,
+			descriptor: activeCategory.descriptor,
+			player: selectedPlayer,
+			canInteract,
+			selectResourceDescriptor,
+			actionSummaries,
+			isActionPhase,
+			developmentOptions,
+			developmentSummaries,
+			buildingOptions,
+			buildingSummaries,
+			buildingDescriptions,
+			hasDevelopLand,
+			metadataByAction,
+		});
+	}, [
+		activeCategory,
+		selectedPlayer,
+		canInteract,
+		selectResourceDescriptor,
+		actionSummaries,
+		isActionPhase,
+		developmentOptions,
+		developmentSummaries,
+		buildingOptions,
+		buildingSummaries,
+		buildingDescriptions,
+		hasDevelopLand,
+		metadataByAction,
+	]);
 
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
@@ -475,47 +647,72 @@ export default function ActionsPanel() {
 					)}
 				</div>
 			</div>
-			<div className="relative">
-				<div ref={sectionRef} className="space-y-4">
-					{categoryEntries.map((entry) => {
-						const { id, definition, actions: grouped } = entry;
-						if (definition?.hideWhenEmpty && grouped.length === 0) {
-							return null;
-						}
-						const fallbackLabel =
-							grouped[0]?.name ?? definition?.title ?? 'Actions';
-						const descriptor = createCategoryDescriptor(
-							definition,
-							fallbackLabel,
-						);
-						const analyticsKey =
-							definition?.analyticsKey ?? definition?.id ?? id;
-						const rendererKey = analyticsKey?.toLowerCase();
-						const renderer =
-							(rendererKey ? CATEGORY_RENDERERS.get(rendererKey) : undefined) ??
-							DEFAULT_RENDERER;
-						const content = renderer({
-							actions: grouped,
-							descriptor,
-							player: selectedPlayer,
-							canInteract,
-							selectResourceDescriptor,
-							actionSummaries,
-							isActionPhase,
-							developmentOptions,
-							developmentSummaries,
-							buildingOptions,
-							buildingSummaries,
-							buildingDescriptions,
-							hasDevelopLand,
-						});
-						if (!content) {
-							return null;
-						}
-						return <React.Fragment key={id}>{content}</React.Fragment>;
-					})}
+			<div
+				className={TAB_LIST_CLASSES}
+				role="tablist"
+				aria-label="Action categories"
+			>
+				{categoryEntries.map((entry) => {
+					const counts = countsByCategory.get(entry.id) ?? {
+						performable: 0,
+						total: 0,
+					};
+					const isActive = entry.id === activeCategoryId;
+					const descriptor = entry.descriptor;
+					const tabId = `actions-tab-${entry.id}`;
+					const panelId = `actions-tabpanel-${entry.id}`;
+					return (
+						<button
+							key={entry.id}
+							type="button"
+							role="tab"
+							id={tabId}
+							aria-selected={isActive}
+							aria-controls={panelId}
+							tabIndex={isActive ? 0 : -1}
+							className={`${TAB_BUTTON_CLASSES} ${
+								isActive
+									? TAB_BUTTON_ACTIVE_CLASSES
+									: TAB_BUTTON_INACTIVE_CLASSES
+							}`}
+							onClick={() => setActiveCategoryId(entry.id)}
+						>
+							<span className={TAB_LABEL_CLASSES}>
+								{descriptor.icon ? (
+									<span aria-hidden className={TAB_ICON_CLASSES}>
+										{descriptor.icon}
+									</span>
+								) : null}
+								<span>{descriptor.label}</span>
+							</span>
+							<span className={TAB_COUNT_BADGE_CLASSES}>
+								{counts.performable}/{counts.total}
+							</span>
+						</button>
+					);
+				})}
+			</div>
+			<div className={TAB_PANEL_CLASSES}>
+				<div
+					ref={sectionRef}
+					role="tabpanel"
+					id={
+						activeCategory ? `actions-tabpanel-${activeCategory.id}` : undefined
+					}
+					aria-labelledby={
+						activeCategory ? `actions-tab-${activeCategory.id}` : undefined
+					}
+				>
+					{activeCategoryContent}
 				</div>
 			</div>
+			{actions.map((actionDefinition) => (
+				<ActionMetadataWatcher
+					key={`metadata-${actionDefinition.id}`}
+					actionId={actionDefinition.id}
+					onMetadataChange={handleMetadataUpdate}
+				/>
+			))}
 		</section>
 	);
 }
