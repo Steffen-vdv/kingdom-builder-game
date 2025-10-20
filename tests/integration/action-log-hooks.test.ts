@@ -4,7 +4,11 @@ import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type { SessionRegistriesPayload } from '@kingdom-builder/protocol/session';
+import type {
+	SessionMetadataDescriptor,
+	SessionRegistriesPayload,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
@@ -27,6 +31,147 @@ function createSessionRegistries(): SessionRegistries {
 		JSON.stringify(BASE_REGISTRIES_PAYLOAD),
 	) as SessionRegistriesPayload;
 	return deserializeSessionRegistries(payload);
+}
+
+const REQUIRED_ASSET_DESCRIPTORS: Record<string, SessionMetadataDescriptor> =
+	Object.freeze({
+		land: {
+			icon: '🛤️',
+			label: 'Frontier Land',
+			description: 'Represents territory under your control.',
+		},
+		slot: {
+			icon: '🧩',
+			label: 'Development Slot',
+			description: 'Install new structures by filling available slots.',
+		},
+		passive: {
+			icon: '♾️',
+			label: 'Passive Effect',
+			description: 'Always-on bonuses that shape your realm.',
+		},
+		population: {
+			icon: '👥',
+			label: 'Citizens',
+			description: 'Track population roles and assignments.',
+		},
+		transfer: {
+			icon: '🔁',
+			label: 'Transfer',
+			description: 'Movement of resources or assets between owners.',
+		},
+		upkeep: {
+			icon: '🧽',
+			label: 'Maintenance',
+			description: 'Costs paid each upkeep phase to retain benefits.',
+		},
+	});
+
+const REQUIRED_STAT_DESCRIPTORS: Record<string, SessionMetadataDescriptor> =
+	Object.freeze({
+		maxPopulation: {
+			icon: '👥',
+			label: 'Max Population',
+			description:
+				'Max Population determines how many subjects your kingdom can sustain.',
+			format: { prefix: 'Max ' },
+		},
+		armyStrength: {
+			icon: '⚔️',
+			label: 'Army Strength',
+			description:
+				'Army Strength reflects the overall power of your military forces.',
+		},
+		fortificationStrength: {
+			icon: '🛡️',
+			label: 'Fortification Strength',
+			description:
+				'Fortification Strength measures how resilient your defenses are.',
+		},
+		absorption: {
+			icon: '🌀',
+			label: 'Absorption',
+			description: 'Absorption reduces incoming damage by a percentage.',
+			displayAsPercent: true,
+			format: { percent: true },
+		},
+		growth: {
+			icon: '📈',
+			label: 'Growth',
+			description:
+				'Growth increases combat stats during the Raise Strength step.',
+			displayAsPercent: true,
+			format: { percent: true },
+		},
+		warWeariness: {
+			icon: '💤',
+			label: 'War Weariness',
+			description:
+				'War Weariness reflects the fatigue from prolonged conflict.',
+		},
+	});
+
+function ensureTranslationMetadata(
+	metadata: SessionSnapshotMetadata,
+	registries: SessionRegistries,
+): SessionSnapshotMetadata {
+	const enriched: SessionSnapshotMetadata = {
+		...metadata,
+		resources: { ...(metadata.resources ?? {}) },
+		populations: { ...(metadata.populations ?? {}) },
+		stats: { ...(metadata.stats ?? {}) },
+		assets: { ...(metadata.assets ?? {}) },
+		triggers: { ...(metadata.triggers ?? {}) },
+	};
+	const resourceDescriptors = enriched.resources ?? {};
+	for (const [key, definition] of Object.entries(registries.resources)) {
+		const descriptor = resourceDescriptors[key] ?? {};
+		if (definition.icon !== undefined && descriptor.icon === undefined) {
+			descriptor.icon = definition.icon;
+		}
+		if (descriptor.label === undefined) {
+			descriptor.label = definition.label ?? definition.key ?? key;
+		}
+		if (descriptor.description === undefined) {
+			descriptor.description = definition.description;
+		}
+		resourceDescriptors[key] = descriptor;
+	}
+	enriched.resources = resourceDescriptors;
+	const populationDescriptors = enriched.populations ?? {};
+	for (const [id, population] of registries.populations.entries()) {
+		const descriptor = populationDescriptors[id] ?? {};
+		if (population.icon !== undefined && descriptor.icon === undefined) {
+			descriptor.icon = population.icon;
+		}
+		if (descriptor.label === undefined) {
+			descriptor.label = population.name ?? id;
+		}
+		if (descriptor.description === undefined) {
+			descriptor.description = population.description;
+		}
+		populationDescriptors[id] = descriptor;
+	}
+	enriched.populations = populationDescriptors;
+	const statDescriptors = enriched.stats ?? {};
+	for (const [id, fallback] of Object.entries(REQUIRED_STAT_DESCRIPTORS)) {
+		const descriptor = statDescriptors[id] ?? {};
+		statDescriptors[id] = {
+			...fallback,
+			...descriptor,
+		};
+	}
+	enriched.stats = statDescriptors;
+	const assetDescriptors = enriched.assets ?? {};
+	for (const [id, descriptor] of Object.entries(REQUIRED_ASSET_DESCRIPTORS)) {
+		const existing = assetDescriptors[id] ?? {};
+		assetDescriptors[id] = {
+			...descriptor,
+			...existing,
+		};
+	}
+	enriched.assets = assetDescriptors;
+	return enriched;
 }
 
 describe('content-driven action log hooks', () => {
@@ -97,10 +242,12 @@ describe('content-driven action log hooks', () => {
 				rules: RULES,
 			});
 			const snapshot = session.getSnapshot();
+			const metadata = ensureTranslationMetadata(snapshot.metadata, registries);
+			snapshot.metadata = metadata;
 			const translationContext = createTranslationContext(
 				snapshot,
 				registries,
-				snapshot.metadata,
+				metadata,
 				{
 					ruleSnapshot: session.getRuleSnapshot(),
 					passiveRecords: snapshot.passiveRecords,

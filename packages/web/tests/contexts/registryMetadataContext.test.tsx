@@ -7,12 +7,6 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
-	DEFAULT_LAND_DESCRIPTOR,
-	DEFAULT_OVERVIEW_CONTENT,
-	DEFAULT_PASSIVE_DESCRIPTOR,
-	DEFAULT_SLOT_DESCRIPTOR,
-} from '../../src/contexts/registryMetadataDefaults';
-import {
 	RegistryMetadataProvider,
 	useRegistryMetadata,
 	useResourceMetadata,
@@ -130,7 +124,13 @@ function createTestSetup(): TestSetup {
 		},
 		assets: {
 			land: { label: 'Territory', icon: '🗺️' },
+			slot: { label: 'Sky Dock', icon: '🛠️' },
 			passive: { label: 'Aura', icon: '✨' },
+		},
+		overviewContent: {
+			hero: { title: 'Game Overview', tokens: {} },
+			sections: [],
+			tokens: {},
 		},
 	};
 	const registries: SessionRegistries = {
@@ -290,39 +290,20 @@ describe('RegistryMetadataProvider', () => {
 		expect(land.descriptor.label).toBe('Territory');
 		expect(land.select()).toBe(land.descriptor);
 		expect(passive.descriptor.label).toBe('Aura');
-		expect(slot.descriptor.label).toBe('Development Slot');
+		expect(slot.descriptor.label).toBe('Sky Dock');
 		expect(context.overviewContent.hero.title).toBe('Game Overview');
 	});
 
-	it('falls back to default metadata when snapshot metadata is missing', () => {
+	it('throws when metadata is missing', () => {
 		const setup = createTestSetup();
-		let captured: {
-			slot: AssetMetadataSelector;
-			land: AssetMetadataSelector;
-			passive: AssetMetadataSelector;
-			overviewTitle: string | undefined;
-		} | null = null;
-		const Capture = () => {
-			const { overviewContent } = useRegistryMetadata();
-			captured = {
-				land: useLandMetadata(),
-				slot: useSlotMetadata(),
-				passive: usePassiveAssetMetadata(),
-				overviewTitle: overviewContent.hero?.title,
-			};
-			return null;
-		};
-		renderToStaticMarkup(
-			<RegistryMetadataProvider registries={setup.registries}>
-				<Capture />
-			</RegistryMetadataProvider>,
+		expect(() =>
+			renderToStaticMarkup(
+				<RegistryMetadataProvider registries={setup.registries}>
+					<div />
+				</RegistryMetadataProvider>,
+			),
+		).toThrowError(
+			'RegistryMetadataProvider requires metadata with asset and overview descriptors.',
 		);
-		if (!captured) {
-			throw new Error('Registry metadata context was not captured.');
-		}
-		expect(captured.land.descriptor).toEqual(DEFAULT_LAND_DESCRIPTOR);
-		expect(captured.slot.descriptor).toEqual(DEFAULT_SLOT_DESCRIPTOR);
-		expect(captured.passive.descriptor).toEqual(DEFAULT_PASSIVE_DESCRIPTOR);
-		expect(captured.overviewTitle).toBe(DEFAULT_OVERVIEW_CONTENT.hero?.title);
 	});
 });

@@ -10,6 +10,9 @@ export function expectSnapshotMetadata(
 		return;
 	}
 	expect(metadata.passiveEvaluationModifiers).toBeDefined();
+	expect(metadata.assets).toBeDefined();
+	expect(metadata.assets?.upkeep?.icon).toBeDefined();
+	expect(metadata.assets?.transfer?.icon).toBeDefined();
 }
 
 export function expectStaticMetadata(
@@ -28,4 +31,7 @@ export function expectStaticMetadata(
 		const heroTokens = metadata.overview.hero?.tokens ?? {};
 		expect(Object.keys(heroTokens).length).toBeGreaterThan(0);
 	}
+	expect(metadata.assets).toBeDefined();
+	expect(metadata.assets?.upkeep?.icon).toBeDefined();
+	expect(metadata.assets?.transfer?.icon).toBeDefined();
 }

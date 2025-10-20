@@ -19,6 +19,7 @@ import type {
 	SessionAdvanceResult,
 	SessionPlayerId,
 	SessionSnapshot,
+	SessionSnapshotMetadata,
 	SimulateUpcomingPhasesOptions,
 	SimulateUpcomingPhasesResult,
 } from './index';
@@ -56,6 +57,24 @@ export interface SessionRegistriesPayload {
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
+}
+
+export type SessionMetadataSnapshot = Pick<
+	SessionSnapshotMetadata,
+	| 'resources'
+	| 'populations'
+	| 'buildings'
+	| 'developments'
+	| 'stats'
+	| 'phases'
+	| 'triggers'
+	| 'assets'
+	| 'overview'
+>;
+
+export interface SessionMetadataSnapshotResponse {
+	registries: SessionRegistriesPayload;
+	metadata: SessionMetadataSnapshot;
 }
 
 export interface SessionRuntimeConfigResponse {

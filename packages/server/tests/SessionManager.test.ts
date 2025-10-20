@@ -5,6 +5,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 import * as metadataModule from '../src/session/buildSessionMetadata.js';
+import { mergeSessionMetadata } from '../src/session/mergeSessionMetadata.js';
 import {
 	expectSnapshotMetadata,
 	expectStaticMetadata,
@@ -20,8 +21,13 @@ describe('SessionManager', () => {
 		expect(manager.getSession(sessionId)).toBe(session);
 		expect(manager.getSessionCount()).toBe(1);
 		const snapshot = manager.getSnapshot(sessionId);
-		expectSnapshotMetadata(snapshot.metadata);
-		expectStaticMetadata(manager.getMetadata());
+		const staticMetadata = manager.getMetadata();
+		const mergedMetadata = mergeSessionMetadata({
+			baseMetadata: staticMetadata,
+			snapshotMetadata: snapshot.metadata,
+		});
+		expectSnapshotMetadata(mergedMetadata);
+		expectStaticMetadata(staticMetadata);
 		const [activePlayer] = snapshot.game.players;
 		expect(activePlayer?.resources[costKey]).toBeDefined();
 		expect(snapshot.rules.tieredResourceKey).toBe(gainKey);
@@ -163,7 +169,11 @@ describe('SessionManager', () => {
 		const { manager, actionId } = createSyntheticSessionManager();
 		const snapshotMetadata = manager.getMetadata();
 		const session = manager.createSession('metadata-stability');
-		expectSnapshotMetadata(session.getSnapshot().metadata);
+		const mergedInitial = mergeSessionMetadata({
+			baseMetadata: snapshotMetadata,
+			snapshotMetadata: session.getSnapshot().metadata,
+		});
+		expectSnapshotMetadata(mergedInitial);
 		await session.enqueue(() => session.performAction(actionId));
 		session.advancePhase();
 		expect(manager.getMetadata()).toEqual(snapshotMetadata);

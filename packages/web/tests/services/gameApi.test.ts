@@ -11,6 +11,7 @@ import type {
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
 	SessionSnapshot,
+	SessionMetadataSnapshotResponse,
 	SessionStateResponse,
 	SessionSetDevModeRequest,
 	SessionActionCostResponse,
@@ -29,6 +30,7 @@ import {
 	createGameApiMock,
 } from '../../src/services/gameApi';
 import { createSessionRegistriesPayload } from '../helpers/sessionRegistries';
+import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 
 type Mutable<T> = { -readonly [K in keyof T]: Mutable<T[K]> };
 
@@ -105,7 +107,7 @@ const createSnapshot = (
 			A: [],
 			B: [],
 		},
-		metadata: overrides.metadata ?? { passiveEvaluationModifiers: {} },
+		metadata: overrides.metadata ?? createEmptySnapshotMetadata(),
 	};
 
 	return {
@@ -165,6 +167,24 @@ const createAdvanceResponse = (sessionId: string): SessionAdvanceResponse => ({
 		player: createPlayerSnapshot('A'),
 	},
 });
+
+const createMetadataSnapshotResponse = (): SessionMetadataSnapshotResponse => {
+	const metadata = createEmptySnapshotMetadata();
+	return {
+		registries: createSessionRegistriesPayload(),
+		metadata: {
+			resources: metadata.resources,
+			populations: metadata.populations,
+			buildings: metadata.buildings,
+			developments: metadata.developments,
+			stats: metadata.stats,
+			phases: metadata.phases,
+			triggers: metadata.triggers,
+			assets: metadata.assets,
+			overview: metadata.overview,
+		},
+	};
+};
 
 describe('createGameApi', () => {
 	it('sends JSON requests with auth headers', async () => {
@@ -242,6 +262,20 @@ describe('createGameApi', () => {
 		const [url, init] = fetchMock.mock.calls[0];
 		expect(url).toBe('/api/sessions/session%2Fspecial/snapshot');
 		expect(init?.method).toBe('GET');
+	});
+
+	it('retrieves metadata snapshots from the metadata endpoint', async () => {
+		const response = createMetadataSnapshotResponse();
+		const fetchMock = vi.fn().mockResolvedValue(createJsonResponse(response));
+		const api = createGameApi({ fetchFn: fetchMock });
+
+		const result = await api.fetchMetadataSnapshot();
+
+		expect(result).toEqual(response);
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toBe('/api/metadata');
+		expect(init?.method).toBe('GET');
+		expect(init?.body).toBeUndefined();
 	});
 
 	it('omits JSON content type when no request body is present', async () => {
@@ -485,8 +519,10 @@ describe('createGameApiMock', () => {
 		};
 		const runAiResponse = createRunAiResponse('mock-session', true);
 		const simulationResponse = createSimulationResponse('mock-session', 'A');
+		const metadataResponse = createMetadataSnapshotResponse();
 		const mock = createGameApiMock({
 			createSession: vi.fn().mockResolvedValue(createResponse),
+			fetchMetadataSnapshot: vi.fn().mockResolvedValue(metadataResponse),
 			fetchSnapshot: vi.fn().mockResolvedValue(createResponse),
 			setDevMode: vi.fn().mockResolvedValue(createResponse),
 			updatePlayerName: vi.fn().mockResolvedValue(updateResponse),
@@ -498,6 +534,9 @@ describe('createGameApiMock', () => {
 		});
 
 		await expect(mock.createSession()).resolves.toEqual(createResponse);
+		await expect(mock.fetchMetadataSnapshot()).resolves.toEqual(
+			metadataResponse,
+		);
 		await expect(mock.fetchSnapshot('mock-session')).resolves.toEqual(
 			createResponse,
 		);
@@ -543,6 +582,9 @@ describe('createGameApiMock', () => {
 	it('throws when handler is missing', async () => {
 		const mock = createGameApiMock();
 
+		await expect(mock.fetchMetadataSnapshot()).rejects.toThrow(
+			missingMockHandlerMessage('fetchMetadataSnapshot'),
+		);
 		await expect(mock.fetchSnapshot('missing')).rejects.toThrow(
 			missingMockHandlerMessage('fetchSnapshot'),
 		);
@@ -577,6 +619,14 @@ describe('GameApiFake', () => {
 				actionId: 'action',
 			}),
 		).resolves.toEqual(actionResponse);
+	});
+
+	it('returns primed metadata snapshot responses', async () => {
+		const fake = new GameApiFake();
+		const response = createMetadataSnapshotResponse();
+		fake.setNextMetadataSnapshotResponse(response);
+
+		await expect(fake.fetchMetadataSnapshot()).resolves.toEqual(response);
 	});
 
 	it('stores responses from setDevMode calls', async () => {

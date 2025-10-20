@@ -6,6 +6,8 @@ import {
 	STATS,
 	TRIGGER_INFO,
 	POPULATION_ROLES,
+	UPKEEP_INFO,
+	TRANSFER_INFO,
 } from '@kingdom-builder/contents';
 import type {
 	BuildingConfig,
@@ -15,8 +17,8 @@ import type {
 	Registry,
 	SerializedRegistry,
 	SessionMetadataDescriptor,
+	SessionMetadataSnapshot,
 	SessionPhaseMetadata,
-	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
@@ -24,18 +26,7 @@ import type {
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
 type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
 
-export type SessionStaticMetadataPayload = Pick<
-	SessionSnapshotMetadata,
-	| 'resources'
-	| 'populations'
-	| 'buildings'
-	| 'developments'
-	| 'stats'
-	| 'phases'
-	| 'triggers'
-	| 'assets'
-	| 'overview'
->;
+export type SessionStaticMetadataPayload = SessionMetadataSnapshot;
 
 export interface BuildSessionMetadataOptions {
 	buildings: Registry<BuildingConfig>;
@@ -245,6 +236,8 @@ function buildAssetMetadata(): SessionMetadataDescriptorMap {
 	assignAssetDescriptor(descriptors, 'passive', PASSIVE_INFO);
 	assignAssetDescriptor(descriptors, 'land', LAND_INFO);
 	assignAssetDescriptor(descriptors, 'slot', SLOT_INFO);
+	assignAssetDescriptor(descriptors, 'upkeep', UPKEEP_INFO);
+	assignAssetDescriptor(descriptors, 'transfer', TRANSFER_INFO);
 	return descriptors;
 }
 

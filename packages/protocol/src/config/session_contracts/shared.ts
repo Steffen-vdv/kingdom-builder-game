@@ -11,6 +11,8 @@ import {
 } from '../schema';
 import type {
 	SessionIdentifier,
+	SessionMetadataSnapshot,
+	SessionMetadataSnapshotResponse,
 	SessionPlayerNameMap,
 	SessionRegistriesPayload,
 	SessionRuntimeConfigResponse,
@@ -50,6 +52,150 @@ export const runtimeConfigResponseSchema = z
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
 
+const sessionMetadataFormatSchema = z.union([
+	z.string(),
+	z
+		.object({
+			prefix: z.string().optional(),
+			percent: z.boolean().optional(),
+		})
+		.passthrough(),
+]);
+
+const sessionMetadataDescriptorSchema = z
+	.object({
+		label: z.string().optional(),
+		icon: z.string().optional(),
+		description: z.string().optional(),
+		displayAsPercent: z.boolean().optional(),
+		format: sessionMetadataFormatSchema.optional(),
+	})
+	.passthrough();
+
+const sessionMetadataDescriptorRecordSchema = z.record(
+	z.string(),
+	sessionMetadataDescriptorSchema,
+);
+
+const sessionPhaseStepMetadataSchema = z
+	.object({
+		id: z.string().optional(),
+		label: z.string().optional(),
+		icon: z.string().optional(),
+		triggers: z.array(z.string()).optional(),
+	})
+	.passthrough();
+
+const sessionPhaseMetadataSchema = z
+	.object({
+		id: z.string().optional(),
+		label: z.string().optional(),
+		icon: z.string().optional(),
+		action: z.boolean().optional(),
+		steps: z.array(sessionPhaseStepMetadataSchema).optional(),
+	})
+	.passthrough();
+
+const sessionTriggerMetadataSchema = z
+	.object({
+		label: z.string().optional(),
+		icon: z.string().optional(),
+		future: z.string().optional(),
+		past: z.string().optional(),
+	})
+	.passthrough();
+
+const sessionOverviewHeroSchema = z
+	.object({
+		badgeIcon: z.string().optional(),
+		badgeLabel: z.string().optional(),
+		title: z.string().optional(),
+		intro: z.string().optional(),
+		paragraph: z.string().optional(),
+		tokens: z.record(z.string(), z.string()).optional(),
+	})
+	.passthrough();
+
+const sessionOverviewListItemSchema = z
+	.object({
+		icon: z.string().optional(),
+		label: z.string(),
+		body: z.array(z.string()),
+	})
+	.passthrough();
+
+const sessionOverviewParagraphSectionSchema = z
+	.object({
+		kind: z.literal('paragraph'),
+		id: z.string(),
+		icon: z.string(),
+		title: z.string(),
+		span: z.boolean().optional(),
+		paragraphs: z.array(z.string()),
+	})
+	.passthrough();
+
+const sessionOverviewListSectionSchema = z
+	.object({
+		kind: z.literal('list'),
+		id: z.string(),
+		icon: z.string(),
+		title: z.string(),
+		span: z.boolean().optional(),
+		items: z.array(sessionOverviewListItemSchema),
+	})
+	.passthrough();
+
+const sessionOverviewSectionSchema = z.union([
+	sessionOverviewParagraphSectionSchema,
+	sessionOverviewListSectionSchema,
+]);
+
+const sessionOverviewTokenEntriesSchema = z.record(
+	z.string(),
+	z.array(z.string()),
+);
+
+const sessionOverviewTokenMapSchema = z
+	.object({
+		actions: sessionOverviewTokenEntriesSchema.optional(),
+		phases: sessionOverviewTokenEntriesSchema.optional(),
+		resources: sessionOverviewTokenEntriesSchema.optional(),
+		stats: sessionOverviewTokenEntriesSchema.optional(),
+		population: sessionOverviewTokenEntriesSchema.optional(),
+		static: sessionOverviewTokenEntriesSchema.optional(),
+	})
+	.passthrough();
+
+const sessionOverviewMetadataSchema = z
+	.object({
+		hero: sessionOverviewHeroSchema.optional(),
+		sections: z.array(sessionOverviewSectionSchema).optional(),
+		tokens: sessionOverviewTokenMapSchema.optional(),
+	})
+	.passthrough();
+
+export const sessionMetadataSnapshotSchema = z
+	.object({
+		resources: sessionMetadataDescriptorRecordSchema.optional(),
+		populations: sessionMetadataDescriptorRecordSchema.optional(),
+		buildings: sessionMetadataDescriptorRecordSchema.optional(),
+		developments: sessionMetadataDescriptorRecordSchema.optional(),
+		stats: sessionMetadataDescriptorRecordSchema.optional(),
+		phases: z.record(z.string(), sessionPhaseMetadataSchema).optional(),
+		triggers: z.record(z.string(), sessionTriggerMetadataSchema).optional(),
+		assets: sessionMetadataDescriptorRecordSchema.optional(),
+		overview: sessionOverviewMetadataSchema.optional(),
+	})
+	.transform((value) => value as SessionMetadataSnapshot);
+
+export const sessionMetadataSnapshotResponseSchema = z
+	.object({
+		registries: sessionRegistriesSchema,
+		metadata: sessionMetadataSnapshotSchema,
+	})
+	.transform((value) => value as SessionMetadataSnapshotResponse);
+
 export const sessionIdSchema = z.string().min(1);
 
 export const sessionPlayerNameMapSchema = z
@@ -82,5 +228,14 @@ type _RuntimeConfigResponseMatches = Expect<
 	Equal<
 		z.infer<typeof runtimeConfigResponseSchema>,
 		SessionRuntimeConfigResponse
+	>
+>;
+type _SessionMetadataSnapshotMatches = Expect<
+	Equal<z.infer<typeof sessionMetadataSnapshotSchema>, SessionMetadataSnapshot>
+>;
+type _SessionMetadataSnapshotResponseMatches = Expect<
+	Equal<
+		z.infer<typeof sessionMetadataSnapshotResponseSchema>,
+		SessionMetadataSnapshotResponse
 	>
 >;
