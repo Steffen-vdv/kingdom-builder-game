@@ -59,6 +59,7 @@ export function GameProviderInner({
 	ruleSnapshot,
 	refreshSession,
 	onReleaseSession,
+	onAbandonSession,
 	onFatalSessionError,
 	registries,
 	resourceKeys,
@@ -265,11 +266,14 @@ export function GameProviderInner({
 	});
 
 	const handleExit = useCallback(() => {
+		if (onAbandonSession) {
+			onAbandonSession();
+		}
 		onReleaseSession();
 		if (onExit) {
 			onExit();
 		}
-	}, [onReleaseSession, onExit]);
+	}, [onAbandonSession, onReleaseSession, onExit]);
 
 	if (!translationContextReady || !translationContext) {
 		return <TranslationContextLoading />;

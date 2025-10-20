@@ -75,7 +75,7 @@ describe('useAppNavigation', () => {
 			sessionId: 'resume-session',
 			turn: 5,
 			devMode: true,
-			updatedAt: new Date().toISOString(),
+			updatedAt: Date.UTC(2024, 0, 1),
 		};
 		writeStoredResumeSession(resumeRecord);
 		const { result, menuState, unmount } = await renderNavigationHook();
@@ -250,7 +250,7 @@ describe('useAppNavigation', () => {
 			sessionId: 'resume-dev',
 			turn: 9,
 			devMode: true,
-			updatedAt: new Date().toISOString(),
+			updatedAt: Date.UTC(2024, 0, 1),
 		};
 		writeStoredResumeSession(resumeRecord);
 		const pushSpy = vi.spyOn(window.history, 'pushState');
@@ -282,7 +282,7 @@ describe('useAppNavigation', () => {
 			sessionId: 'resume-save',
 			turn: 3,
 			devMode: false,
-			updatedAt: new Date().toISOString(),
+			updatedAt: Date.UTC(2024, 0, 1),
 		};
 
 		act(() => {
@@ -304,7 +304,7 @@ describe('useAppNavigation', () => {
 			sessionId: 'resume-clear',
 			turn: 12,
 			devMode: false,
-			updatedAt: new Date().toISOString(),
+			updatedAt: Date.UTC(2024, 0, 1),
 		};
 
 		act(() => {
@@ -328,7 +328,7 @@ describe('useAppNavigation', () => {
 			sessionId: 'resume-failure',
 			turn: 4,
 			devMode: true,
-			updatedAt: new Date().toISOString(),
+			updatedAt: Date.UTC(2024, 0, 1),
 		};
 
 		act(() => {

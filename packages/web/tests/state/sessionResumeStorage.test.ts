@@ -22,11 +22,12 @@ describe('sessionResumeStorage', () => {
 	});
 
 	it('writes and reads a stored record preserving updatedAt', () => {
+		const timestamp = Date.UTC(2024, 0, 1);
 		const record = {
 			sessionId: 'session-123',
 			turn: 7,
 			devMode: true,
-			updatedAt: '2024-01-01T00:00:00.000Z',
+			updatedAt: timestamp,
 		};
 
 		writeStoredResumeSession(record);
@@ -42,7 +43,7 @@ describe('sessionResumeStorage', () => {
 				sessionId: 'session-123',
 				turn: 1,
 				devMode: false,
-				updatedAt: '2024-01-01T00:00:00.000Z',
+				updatedAt: Date.UTC(2024, 0, 1),
 			}),
 		);
 
@@ -94,7 +95,7 @@ describe('sessionResumeStorage', () => {
 			sessionId: 'session-123',
 			turn: 12,
 			devMode: false,
-			updatedAt: '2024-01-01T00:00:00.000Z',
+			updatedAt: Date.parse('2024-01-01T00:00:00.000Z'),
 		});
 	});
 
