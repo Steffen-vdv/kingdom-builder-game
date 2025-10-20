@@ -37,9 +37,15 @@ export const useResumeSessionState = (): ResumeSessionStateResult => {
 	const [resumeSessionId, setResumeSessionId] = useState<string | null>(
 		() => resumePoint?.sessionId ?? null,
 	);
+	const [isSuspended, setIsSuspended] = useState(false);
 
 	const updateFromHistory = useCallback(
 		(nextSessionId: string | null): ResumeSessionRecord | null => {
+			if (isSuspended) {
+				setResumePoint(null);
+				setResumeSessionId(null);
+				return null;
+			}
 			if (!nextSessionId) {
 				const storedRecord = readStoredResumeSession();
 				setResumePoint(storedRecord ?? null);
@@ -60,11 +66,13 @@ export const useResumeSessionState = (): ResumeSessionStateResult => {
 			setResumeSessionId(nextSessionId);
 			return null;
 		},
-		[resumePoint],
+		[isSuspended, resumePoint],
 	);
 
 	const suspendResumeSession = useCallback(() => {
+		setResumePoint(null);
 		setResumeSessionId(null);
+		setIsSuspended(true);
 	}, []);
 
 	const persistResumeSession = useCallback(
@@ -74,6 +82,7 @@ export const useResumeSessionState = (): ResumeSessionStateResult => {
 		) => {
 			setResumePoint(record);
 			setResumeSessionId(record.sessionId);
+			setIsSuspended(false);
 			writeStoredResumeSession(record);
 			updateHistory(record.sessionId);
 		},
@@ -94,6 +103,7 @@ export const useResumeSessionState = (): ResumeSessionStateResult => {
 			}
 			setResumePoint(null);
 			setResumeSessionId(null);
+			setIsSuspended(false);
 			clearStoredResumeSession();
 			updateHistory(null);
 		},
