@@ -17,24 +17,19 @@ guide for rationale, lore, and extended background.
    - `npm run lint` and `npm run format` keep eslint and Prettier happy.
    - `npm run lint` also runs dependency-cruiser to enforce package
      boundaries.
-   - `npm run generate:snapshots` refreshes
-     `packages/web/src/contexts/defaultRegistryMetadata.json` through
-     `scripts/build-default-registry-snapshot.mjs`. The snapshot test inside
-     `npm run check` fails when the JSON drifts, and both `npm run dev` and
-     `npm run dev:web` regenerate it automatically. When the generator reports
-     updates, stage and commit the resulting
-     `packages/web/src/contexts/defaultRegistryMetadata.json` changes before
-     opening a PR.
+   - Registry metadata now streams directly from
+     `@kingdom-builder/contents` at runtime, so no fallback snapshot or build
+     script needs to be regenerated. After updating content definitions, run
+     `npm run check` to confirm the pipeline stays in sync.
    - [`npm run verify`](../scripts/run-verification.mjs) runs `npm run check`
      followed by `npm run test:coverage`. It streams output into timestamped
      logs inside `artifacts/` so you can share the run when needed.
-   - For UI structure, layout, or copy updates, regenerate snapshots with
-     `npm run generate:snapshots` and capture manual screenshots as needed to
-     document the change in your PR notes.
+   - For UI structure, layout, or copy updates, document screenshots as needed
+     so reviewers can verify the visual change.
    - When icons, labels, or descriptions change, edit the definitions in
-     `@kingdom-builder/contents` (see [`packages/contents`](../packages/contents))
-     and rerun `npm run generate:snapshots`. Do **not** patch fallback metadata
-     in `packages/web`—components read content-driven values at runtime.
+     `@kingdom-builder/contents` (see [`packages/contents`](../packages/contents)).
+     Do **not** patch fallback metadata in `packages/web`—components read
+     content-driven values at runtime.
    - Stop immediately if any of these commands fail. Fix the reported problem
      (formatting, type errors, lint drift, or test regressions) and re-run the
      command locally before staging changes so the PR lands clean.
@@ -72,9 +67,8 @@ guide for rationale, lore, and extended background.
 - Execute `npm run check` followed by `npm run verify` and confirm that both
   commands finish without errors or uncommitted file changes. Re-run the
   commands after fixing any issues to verify the workspace is clean.
-- Regenerate snapshots (`npm run generate:snapshots`) for any change that could
-  affect rendered UI surfaces and include the command output or screenshots in
-  your PR summary so reviewers can confirm the UI adjustments.
+- Capture screenshots or link to verification steps for any change that could
+  affect rendered UI surfaces so reviewers can confirm the UI adjustments.
 - Husky installs the `pre-commit` and `pre-push` hooks automatically when you
   run `npm install` (`npm run prepare` manually reapplies them if necessary).
   Never bypass the hooks—resolve the reported failures locally before pushing.

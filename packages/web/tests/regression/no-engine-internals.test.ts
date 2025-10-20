@@ -33,9 +33,7 @@ describe('web package avoids engine internals', () => {
 		const requirePattern = /\brequire\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g;
 		const engineViolations: Array<{ file: string; specifier: string }> = [];
 		const contentViolations: Array<{ file: string; specifier: string }> = [];
-		const allowedContentImports = new Set<string>([
-			'src/contexts/contentRegistrySnapshot.ts',
-		]);
+		const allowedContentImports = new Set<string>();
 		for (const rootName of roots) {
 			const rootPath = path.join(packageRoot, rootName);
 			let stat;

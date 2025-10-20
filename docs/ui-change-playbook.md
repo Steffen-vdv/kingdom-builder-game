@@ -9,9 +9,8 @@ contexts that surface translated strings.
 1. **Update content definitions**
    - Apply edits under `packages/contents/src/**` so icons, labels, and
      descriptions stay data-driven.
-   - Run `npm run generate:snapshots` (or the dev server) to refresh
-     `packages/web/src/contexts/defaultRegistryMetadata.json` whenever content
-     changes.
+   - Metadata loads directly from the runtime registries, so rebuilding the
+     contents workspace is sufficient to surface new labels or icons in the UI.
 2. **Confirm server bootstrap**
    - Verify the session pipeline in
      `packages/server/src/session/SessionManager.ts` pulls the updated metadata
@@ -32,7 +31,7 @@ contexts that surface translated strings.
 
 ```
 @kingdom-builder/contents (packages/contents/src/**)
-        ↓ build + snapshot refresh
+        ↓ build
 SessionManager (packages/server/src/session/SessionManager.ts)
         ↓ registry payload
 sessionRegistries (packages/web/src/state/sessionRegistries.ts)

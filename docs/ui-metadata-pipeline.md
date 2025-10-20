@@ -22,14 +22,11 @@ Translators & React components
    (e.g., packages/web/src/translation/**, feature UIs)
 ```
 
-Whenever any upstream content changes, immediately rerun the automation that
-keeps the visuals in sync:
-
-- `npm run generate:snapshots` refreshes
-  `packages/web/src/contexts/defaultRegistryMetadata.json` so both metadata and
-  rendered output stay aligned. Paste the command output into your PR notes
-  whenever UI copy, layout, or visuals change.
+Whenever upstream content changes, rebuild the contents workspace (run `npm run
+predev:build-contents` or start the dev server) so the latest registries flow
+through the pipeline. Document the verification step in your PR notes when UI
+copy, layout, or visuals change.
 
 Skipping these steps leaves the UI with stale icons or labels even if the JSX is
-correct. Always fix the content definition first and regenerate the snapshots
-before shipping metadata edits.
+correct. Always fix the content definition first and confirm the registries
+reflect the new metadata before shipping UI edits.
