@@ -81,23 +81,24 @@ function cloneActionCategoryDefinition(
 	return clone;
 }
 
-function cloneActionCategoryRegistry(
+function createActionCategoryRegistry(
 	categories: Record<string, ActionCategoryConfig> | undefined,
-): Record<string, ActionCategoryConfig> {
-	if (!categories) {
-		return {};
-	}
-	return Object.fromEntries(
-		Object.entries(categories).map(([id, definition]) => [
-			id,
-			cloneActionCategoryDefinition(definition),
-		]),
+): Registry<ActionCategoryConfig> {
+	const registry = new Registry<ActionCategoryConfig>(
+		actionCategorySchema.passthrough(),
 	);
+	if (!categories) {
+		return registry;
+	}
+	for (const [id, definition] of Object.entries(categories)) {
+		registry.add(id, cloneActionCategoryDefinition(definition));
+	}
+	return registry;
 }
 
 export interface SessionRegistries {
 	actions: Registry<ActionConfig>;
-	actionCategories: Record<string, ActionCategoryConfig>;
+	actionCategories: Registry<ActionCategoryConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
@@ -125,7 +126,7 @@ export function deserializeSessionRegistries(
 			populationSchema.passthrough(),
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
-		actionCategories: cloneActionCategoryRegistry(payload.actionCategories),
+		actionCategories: createActionCategoryRegistry(payload.actionCategories),
 	};
 }
 

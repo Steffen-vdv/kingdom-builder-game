@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type {
+	ActionCategoryConfig,
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
@@ -31,6 +32,7 @@ import {
 
 export interface DescriptorOverrides {
 	readonly resources?: ReturnType<typeof extractDescriptorRecord>;
+	readonly actionCategories?: ReturnType<typeof extractDescriptorRecord>;
 	readonly populations?: ReturnType<typeof extractDescriptorRecord>;
 	readonly buildings?: ReturnType<typeof extractDescriptorRecord>;
 	readonly developments?: ReturnType<typeof extractDescriptorRecord>;
@@ -66,6 +68,10 @@ export const useDescriptorOverrides = (
 				extractDescriptorRecord(snapshotMetadata, 'resources'),
 				'resources',
 			),
+			actionCategories: extractDescriptorRecord(
+				snapshotMetadata,
+				'actionCategories',
+			),
 			populations: requireDescriptorRecord(
 				extractDescriptorRecord(snapshotMetadata, 'populations'),
 				'populations',
@@ -100,6 +106,7 @@ export const useDescriptorOverrides = (
 interface DefinitionLookups {
 	readonly resourceLookup: DefinitionLookup<SessionResourceDefinition>;
 	readonly actionLookup: DefinitionLookup<ActionConfig>;
+	readonly actionCategoryLookup: DefinitionLookup<ActionCategoryConfig>;
 	readonly buildingLookup: DefinitionLookup<BuildingConfig>;
 	readonly developmentLookup: DefinitionLookup<DevelopmentConfig>;
 	readonly populationLookup: DefinitionLookup<PopulationConfig>;
@@ -108,12 +115,21 @@ interface DefinitionLookups {
 export const useDefinitionLookups = (
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
+		| 'actions'
+		| 'actionCategories'
+		| 'resources'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
 	>,
 ): DefinitionLookups =>
 	useMemo(() => {
 		const resourceLookup = createResourceLookup(registries.resources);
 		const actionLookup = createRegistryLookup(registries.actions, 'action');
+		const actionCategoryLookup = createRegistryLookup(
+			registries.actionCategories,
+			'action category',
+		);
 		const buildingLookup = createRegistryLookup(
 			registries.buildings,
 			'building',
@@ -129,12 +145,14 @@ export const useDefinitionLookups = (
 		return Object.freeze({
 			resourceLookup,
 			actionLookup,
+			actionCategoryLookup,
 			buildingLookup,
 			developmentLookup,
 			populationLookup,
 		});
 	}, [
 		registries.actions,
+		registries.actionCategories,
 		registries.buildings,
 		registries.developments,
 		registries.populations,
@@ -143,6 +161,9 @@ export const useDefinitionLookups = (
 
 interface MetadataLookups {
 	readonly resourceMetadataLookup: ReturnType<typeof buildResourceMetadata>;
+	readonly actionCategoryMetadataLookup: ReturnType<
+		typeof buildRegistryMetadata
+	>;
 	readonly populationMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
 	readonly buildingMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
 	readonly developmentMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
@@ -157,7 +178,12 @@ interface MetadataLookups {
 export const useMetadataLookups = (
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'resources' | 'buildings' | 'developments' | 'populations'
+		| 'actions'
+		| 'actionCategories'
+		| 'resources'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
 	>,
 	overrides: DescriptorOverrides,
 ): MetadataLookups =>
@@ -165,6 +191,10 @@ export const useMetadataLookups = (
 		const resourceMetadataLookup = buildResourceMetadata(
 			registries.resources,
 			overrides.resources,
+		);
+		const actionCategoryMetadataLookup = buildRegistryMetadata(
+			registries.actionCategories,
+			overrides.actionCategories,
 		);
 		const populationMetadataLookup = buildRegistryMetadata(
 			registries.populations,
@@ -184,6 +214,7 @@ export const useMetadataLookups = (
 		const assetDescriptors = overrides.assets;
 		return Object.freeze({
 			resourceMetadataLookup,
+			actionCategoryMetadataLookup,
 			populationMetadataLookup,
 			buildingMetadataLookup,
 			developmentMetadataLookup,
@@ -194,6 +225,7 @@ export const useMetadataLookups = (
 		});
 	}, [
 		overrides,
+		registries.actionCategories,
 		registries.buildings,
 		registries.developments,
 		registries.populations,

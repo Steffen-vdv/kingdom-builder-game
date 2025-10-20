@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { Registry, type ActionCategoryConfig } from '@kingdom-builder/protocol';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import Overview from '../src/Overview';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
@@ -20,7 +21,7 @@ describe('<Overview />', () => {
 		});
 		const registries: SessionRegistries = {
 			actions: factory.actions,
-			actionCategories: {},
+			actionCategories: new Registry<ActionCategoryConfig>(),
 			buildings: factory.buildings,
 			developments: factory.developments,
 			populations: factory.populations,
