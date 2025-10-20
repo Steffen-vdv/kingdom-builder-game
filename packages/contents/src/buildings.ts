@@ -8,6 +8,7 @@ import { ActionId, PopulationEvaluationId } from './actions';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { DevelopmentId } from './developments';
+import { BuildingId } from './buildingIds';
 import {
 	building,
 	effect,
@@ -31,21 +32,7 @@ import {
 } from './config/builderShared';
 import { Focus } from './defs';
 import type { BuildingDef } from './defs';
-export const BuildingId = {
-	TownCharter: 'town_charter',
-	Mill: 'mill',
-	RaidersGuild: 'raiders_guild',
-	PlowWorkshop: 'plow_workshop',
-	Market: 'market',
-	Barracks: 'barracks',
-	Citadel: 'citadel',
-	CastleWalls: 'castle_walls',
-	CastleGardens: 'castle_gardens',
-	Temple: 'temple',
-	Palace: 'palace',
-	GreatHall: 'great_hall',
-} as const;
-export type BuildingId = (typeof BuildingId)[keyof typeof BuildingId];
+
 export function createBuildingRegistry() {
 	const schema = buildingSchema.passthrough();
 	const registry = new Registry<BuildingDef>(schema);

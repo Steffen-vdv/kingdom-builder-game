@@ -5,7 +5,8 @@ export {
 } from './actionCategories';
 export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 export { ACTIONS, createActionRegistry, ActionId } from './actions';
-export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
+export { BUILDINGS, createBuildingRegistry } from './buildings';
+export { BuildingId } from './buildingIds';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
 export { PHASES, PhaseId, PhaseStepId, PhaseTrigger } from './phases';
