@@ -125,14 +125,17 @@ const LandTile: React.FC<{
 						event: React.MouseEvent<HTMLSpanElement>,
 					) => {
 						event.stopPropagation();
+						const description =
+							slotDisplay.description ??
+							(developAction
+								? `Use ${
+										developAction.icon ? `${developAction.icon} ` : ''
+									}${developAction.name} to build here`
+								: undefined);
 						handleHoverCard({
 							title: `${formatIconLabel(slotDisplay)} (empty)`,
 							effects: [],
-							...(developAction && {
-								description: `Use ${
-									developAction.icon ? `${developAction.icon} ` : ''
-								}${developAction.name} to build here`,
-							}),
+							...(description ? { description } : {}),
 							requirements: [],
 							bgClass: HOVER_CARD_BACKGROUND,
 						});

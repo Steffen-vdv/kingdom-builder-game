@@ -6,6 +6,7 @@ export const LAND_INFO = {
 export const SLOT_INFO = {
 	icon: '🧩',
 	label: 'Development Slot',
+	description: 'Use 🏗️ Develop to build here.',
 } as const;
 
 export const DEVELOPMENTS_INFO = {
