@@ -216,6 +216,7 @@ export const attackParams = () => new AttackParamsBuilder();
 export class TransferParamsBuilder extends ParamsBuilder<{
 	key?: ResourceKey;
 	percent?: number;
+	amount?: number;
 }> {
 	key(key: ResourceKey) {
 		return this.set(
@@ -231,6 +232,14 @@ export class TransferParamsBuilder extends ParamsBuilder<{
 			'You already set percent() for this transfer. Remove the duplicate percent() call.',
 		);
 	}
+	amount(amount: number) {
+		return this.set(
+			'amount',
+			amount,
+			'You already set amount() for this transfer. Remove the duplicate ' +
+				'amount() call.',
+		);
+	}
 
 	override build() {
 		if (!this.wasSet('key')) {
@@ -238,9 +247,19 @@ export class TransferParamsBuilder extends ParamsBuilder<{
 				'Resource transfer is missing key(). Call key(Resource.yourChoice) to pick the resource to move.',
 			);
 		}
-		if (!this.wasSet('percent')) {
+		const hasPercent = this.wasSet('percent');
+		const hasAmount = this.wasSet('amount');
+		if (hasPercent && hasAmount) {
 			throw new Error(
-				'Resource transfer is missing percent(). Call percent(amount) to choose how much to move.',
+				'Resource transfer cannot mix percent() and amount(). Remove ' +
+					'one of the calls.',
+			);
+		}
+		if (!hasPercent && !hasAmount) {
+			throw new Error(
+				'Resource transfer is missing amount() or percent(). Call ' +
+					'amount(value) or percent(percentOfOpponent) to choose ' +
+					'how much to move.',
 			);
 		}
 		return super.build();

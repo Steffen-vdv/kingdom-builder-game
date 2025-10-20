@@ -9,11 +9,10 @@ import {
 	COMBAT_STAT_CONFIG,
 	SYNTH_RESOURCE_IDS,
 	SYNTH_STAT_IDS,
-	ATTACKER_HAPPINESS_GAIN,
-	DEFENDER_HAPPINESS_LOSS,
 	WAR_WEARINESS_GAIN,
 	BUILDING_REWARD_GOLD,
 	PLUNDER_PERCENT,
+	PLUNDER_HAPPINESS_AMOUNT,
 	type SyntheticAction,
 } from './armyAttackConfig';
 
@@ -62,13 +61,17 @@ export type ActionDefinition = {
 
 function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 	if (descriptor.method === 'transfer') {
+		const params: Record<string, unknown> = { key: descriptor.key };
+		if (descriptor.percent !== undefined) {
+			params.percent = descriptor.percent;
+		}
+		if (descriptor.amount !== undefined) {
+			params.amount = descriptor.amount;
+		}
 		return {
 			type: 'resource',
 			method: 'transfer',
-			params: {
-				key: descriptor.key,
-				percent: descriptor.percent ?? 0,
-			},
+			params,
 		};
 	}
 	return {
@@ -177,23 +180,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 1 },
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
-			attacker: [
-				{
-					kind: 'resource',
-					method: 'add',
-					key: SYNTH_RESOURCE_IDS.happiness,
-					amount: ATTACKER_HAPPINESS_GAIN,
-				},
-				{ kind: 'action', id: SYNTH_PLUNDER.id },
-			],
-			defender: [
-				{
-					kind: 'resource',
-					method: 'remove',
-					key: SYNTH_RESOURCE_IDS.happiness,
-					amount: DEFENDER_HAPPINESS_LOSS,
-				},
-			],
+			attacker: [{ kind: 'action', id: SYNTH_PLUNDER.id }],
 		},
 		extra: [
 			{
@@ -227,6 +214,12 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 				method: 'transfer',
 				key: SYNTH_RESOURCE_IDS.gold,
 				percent: PLUNDER_PERCENT,
+			},
+			{
+				kind: 'resource',
+				method: 'transfer',
+				key: SYNTH_RESOURCE_IDS.happiness,
+				amount: PLUNDER_HAPPINESS_AMOUNT,
 			},
 		],
 	},

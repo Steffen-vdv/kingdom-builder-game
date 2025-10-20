@@ -338,3 +338,53 @@ describe('modifier evaluation handlers', () => {
 		).toBe(true);
 	});
 });
+
+it('formats transfer amount evaluation modifiers for arbitrary actions', () => {
+	const { translationContext, registries } = createModifierHarness();
+	const { id: actionId, definition: actionDef } =
+		selectActionWithIcon(registries);
+	const eff: EffectDef = {
+		type: 'result_mod',
+		method: 'add',
+		params: {
+			id: 'synthetic:transfer-amount-bonus',
+			evaluation: { type: 'transfer_amount', id: actionId },
+			adjust: 5,
+		},
+	};
+	const summary = summarizeEffects([eff], translationContext);
+	const description = describeEffects([eff], translationContext);
+	const resultDescriptor = selectModifierInfo(translationContext, 'result');
+	const actionInfo = translationContext.actions.get(actionId);
+	const actionIcon =
+		actionInfo?.icon && actionInfo.icon.trim().length > 0
+			? actionInfo.icon
+			: (actionInfo?.name ?? actionDef.name ?? actionId);
+	const targetLabel = joinParts(
+		actionInfo?.icon ?? actionDef.icon,
+		actionInfo?.name ?? actionDef.name ?? actionId,
+	);
+	const transferDescriptor = selectTransferDescriptor(translationContext);
+	const transferIcon = transferDescriptor.icon;
+	expect(summary).toHaveLength(1);
+	expect(summary[0].startsWith(`${resultDescriptor.icon}${actionIcon}: `)).toBe(
+		true,
+	);
+	expect(summary[0]).toMatch(/\+5$/u);
+	expect(summary[0]).toContain(`${GENERAL_RESOURCE_ICON} +5`);
+	const primaryLine = description[0];
+	expect(
+		primaryLine.startsWith(
+			`${joinParts(resultDescriptor.icon, resultDescriptor.label)} on ${targetLabel}:`,
+		),
+	).toBe(true);
+	expect(primaryLine.toLowerCase()).toContain(
+		`${transferIcon} increase transfer by 5`.toLowerCase(),
+	);
+	const card = description[1];
+	expect(card).toMatchObject({
+		title: targetLabel,
+		_hoist: true,
+		_desc: true,
+	});
+});

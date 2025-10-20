@@ -11,8 +11,7 @@ import {
 	iconLabel,
 	SYNTH_COMBAT_STATS,
 	PLUNDER_PERCENT,
-	ATTACKER_HAPPINESS_GAIN,
-	DEFENDER_HAPPINESS_LOSS,
+	PLUNDER_HAPPINESS_AMOUNT,
 	BUILDING_REWARD_GOLD,
 } from './helpers/armyAttackFactories';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
@@ -60,11 +59,11 @@ describe('army attack translation log', () => {
 			translation,
 			SYNTH_COMBAT_STATS.fortification.key,
 		)!;
+		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
 		const happiness = selectAttackResourceDescriptor(
 			translation,
 			Resource.happiness,
 		);
-		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
 
 		engineContext.activePlayer.resources[Resource.ap] = 1;
 		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
@@ -85,6 +84,10 @@ describe('army attack translation log', () => {
 		);
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
 		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
+		const goldTransfer = `      Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}${gold.label} to you`;
+		const happinessTransfer =
+			`      Transfer ${happiness.icon}${PLUNDER_HAPPINESS_AMOUNT} of opponent's ` +
+			`${happiness.icon}${happiness.label} to you`;
 		expect(withLegacyIndent(log)).toEqual([
 			`${attack.icon} ${attack.name}`,
 			`  Attack opponent with your ${powerLabel}`,
@@ -92,10 +95,9 @@ describe('army attack translation log', () => {
 			`    Apply damage to opponent ${fortLabel}`,
 			`    If opponent ${fortLabel} falls to 0, overflow remaining damage onto opponent ${castleLabel}`,
 			`  On opponent ${castleLabel} damage`,
-			`    ${happiness.icon}-${DEFENDER_HAPPINESS_LOSS} ${happiness.label} for Opponent`,
-			`    ${happiness.icon}+${ATTACKER_HAPPINESS_GAIN} ${happiness.label} for Player`,
 			`    ${plunder.icon} ${plunder.name}`,
-			`      Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}${gold.label} to you`,
+			goldTransfer,
+			happinessTransfer,
 		]);
 	});
 

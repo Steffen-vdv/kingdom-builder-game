@@ -76,17 +76,8 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 							.fortificationStat(Stat.fortificationStrength)
 							.targetResource(Resource.castleHP)
 							.onDamageAttacker(
-								effect(Types.Resource, ResourceMethods.ADD)
-									.params(resourceParams().key(Resource.happiness).amount(1))
-									.build(),
 								effect(Types.Action, ActionMethods.PERFORM)
 									.params(actionParams().id(ActionId.plunder))
-									.build(),
-							)
-							.onDamageDefender(
-								effect(Types.Resource, ResourceMethods.REMOVE)
-									.params(resourceParams().key(Resource.happiness).amount(1))
-									.allowShortfall()
 									.build(),
 							),
 					)
@@ -170,6 +161,11 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 			.effect(
 				effect(Types.Resource, ResourceMethods.TRANSFER)
 					.params(transferParams().key(Resource.gold).percent(25))
+					.build(),
+			)
+			.effect(
+				effect(Types.Resource, ResourceMethods.TRANSFER)
+					.params(transferParams().key(Resource.happiness).amount(1))
 					.build(),
 			)
 			.build(),

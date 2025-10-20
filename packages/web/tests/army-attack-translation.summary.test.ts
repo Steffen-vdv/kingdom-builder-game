@@ -51,41 +51,10 @@ describe('army attack translation summary', () => {
 			Resource.castleHP,
 		);
 		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
-		const happiness = selectAttackResourceDescriptor(
-			translation,
-			Resource.happiness,
-		);
 		const warWeariness = selectAttackStatDescriptor(
 			translation,
 			Stat.warWeariness,
 		);
-		const attackEffect = attack.effects.find(
-			(effectDef: EffectDef) => effectDef.type === 'attack',
-		);
-		const onDamage = (attackEffect?.params?.['onDamage'] ?? {}) as {
-			attacker?: EffectDef[];
-			defender?: EffectDef[];
-		};
-		const attackerRes = (onDamage.attacker ?? []).find(
-			(effectDef: EffectDef) =>
-				effectDef.type === 'resource' &&
-				(effectDef.params as { key?: string }).key ===
-					SYNTH_RESOURCE_IDS.happiness,
-		);
-		const defenderRes = (onDamage.defender ?? []).find(
-			(effectDef: EffectDef) =>
-				effectDef.type === 'resource' &&
-				(effectDef.params as { key?: string }).key ===
-					SYNTH_RESOURCE_IDS.happiness,
-		);
-		const attackerAmtRaw =
-			(attackerRes?.params as { amount?: number })?.amount ?? 0;
-		const defenderAmtRaw =
-			(defenderRes?.params as { amount?: number })?.amount ?? 0;
-		const attackerAmt =
-			attackerRes?.method === 'remove' ? -attackerAmtRaw : attackerAmtRaw;
-		const defenderAmt =
-			defenderRes?.method === 'remove' ? -defenderAmtRaw : defenderAmtRaw;
 		const warEffect = attack.effects.find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'stat' &&
@@ -99,18 +68,27 @@ describe('army attack translation summary', () => {
 		const warSubject =
 			warWeariness.icon || warWeariness.label || Stat.warWeariness;
 		const warChange = `${warAmt >= 0 ? '+' : '-'}${Math.abs(warAmt)}`;
-		expect(summary).toEqual([
-			`${powerSummary}${targetSummary}`,
-			{
-				title: `${targetSummary}💥`,
-				items: [
-					`🛡️${happiness.icon}${defenderAmt}`,
-					`⚔️${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt}`,
-					`⚔️${plunder.icon} ${plunder.name}`,
-				],
-			},
-			`${warSubject} ${warChange}`,
+		expect(summary[0]).toBe(`${powerSummary}${targetSummary}`);
+		const damageSummary = summary[1];
+		expect(typeof damageSummary).toBe('object');
+		if (typeof damageSummary !== 'object' || damageSummary === null) {
+			return;
+		}
+		expect('items' in damageSummary).toBe(true);
+		const items = (damageSummary as { items?: SummaryEntry[] }).items ?? [];
+		const itemTexts = items.map((entry) =>
+			typeof entry === 'string'
+				? entry
+				: 'title' in entry
+					? (entry.title as string)
+					: '',
+		);
+		const expectedPlunderLine = `⚔️${plunder.icon} ${plunder.name}`;
+		expect(itemTexts).toContain(expectedPlunderLine);
+		expect(itemTexts.filter((text) => text.length > 0)).toEqual([
+			expectedPlunderLine,
 		]);
+		expect(summary[2]).toBe(`${warSubject} ${warChange}`);
 	});
 
 	it('describes plunder effects under on-damage entry', () => {
