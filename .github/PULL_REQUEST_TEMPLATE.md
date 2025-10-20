@@ -4,6 +4,17 @@
 
 <!-- Provide a concise summary of the changes. -->
 
+## Player experience briefing (required)
+
+<!-- Describe, in non-technical language, what a player will notice. Include
+updates to visuals, text, and flows using player-facing terms only. -->
+
+### Human playtest checklist
+
+<!-- List the UI areas, game flows, and interactions a human should verify.
+For each item, explain what to test and the expected player-facing outcome.
+Call out any regression risks and how to confirm they still behave correctly. -->
+
 ## Original task description (required)
 
 <!-- Paste the original user task verbatim. If the task was delivered over
