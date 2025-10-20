@@ -1,5 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
-import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
+import type {
+	ActionEffect,
+	SessionPlayerStateSnapshot,
+} from '@kingdom-builder/protocol';
 import { describeContent, splitSummary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
@@ -8,11 +11,95 @@ import {
 	useLandMetadata,
 	useSlotMetadata,
 } from '../../contexts/RegistryMetadataContext';
+import type { TranslationActionCategoryDefinition } from '../../translation/context/types';
 import {
 	formatIconLabel,
 	toDescriptorDisplay,
 	type DescriptorDisplay,
 } from './registryDisplays';
+
+interface CategorizedAction {
+	category?: string;
+	categoryId?: string;
+	icon?: string;
+	name: string;
+}
+
+type ActionWithEffects = CategorizedAction & {
+	effects?: ReadonlyArray<ActionEffect>;
+};
+
+const normalizeCategoryKey = (value: string | undefined): string => {
+	if (typeof value !== 'string') {
+		return '';
+	}
+	const trimmed = value.trim().toLowerCase();
+	return trimmed;
+};
+
+const resolveActionCategoryId = (
+	action: CategorizedAction,
+	categoryKeyMap: ReadonlyMap<string, string>,
+): string | undefined => {
+	const rawCategory = action.categoryId ?? action.category;
+	if (typeof rawCategory !== 'string') {
+		return undefined;
+	}
+	const normalized = normalizeCategoryKey(rawCategory);
+	if (!normalized) {
+		return undefined;
+	}
+	const resolved = categoryKeyMap.get(normalized);
+	if (resolved) {
+		return resolved;
+	}
+	return rawCategory;
+};
+
+const buildCategoryKeyMap = (
+	definitions: readonly TranslationActionCategoryDefinition[],
+): ReadonlyMap<string, string> => {
+	const entries = new Map<string, string>();
+	definitions.forEach((definition) => {
+		const primaryKey = normalizeCategoryKey(
+			definition.analyticsKey ?? definition.id,
+		);
+		if (primaryKey) {
+			entries.set(primaryKey, definition.id);
+		}
+		const idKey = normalizeCategoryKey(definition.id);
+		if (idKey) {
+			entries.set(idKey, definition.id);
+		}
+		if (primaryKey === 'develop' && !entries.has('development')) {
+			entries.set('development', definition.id);
+		}
+	});
+	return entries;
+};
+
+const hasDevelopmentEffect = (
+	effects: ReadonlyArray<ActionEffect> | undefined,
+): boolean => {
+	if (!effects) {
+		return false;
+	}
+	for (const effect of effects) {
+		if (!effect || typeof effect !== 'object') {
+			continue;
+		}
+		if ('options' in effect) {
+			continue;
+		}
+		if (effect.type === 'development') {
+			return true;
+		}
+		if (hasDevelopmentEffect(effect.effects)) {
+			return true;
+		}
+	}
+	return false;
+};
 
 interface LandDisplayProps {
 	player: SessionPlayerStateSnapshot;
@@ -169,20 +256,44 @@ const LandDisplay: React.FC<LandDisplayProps> = ({ player }) => {
 	const landMetadata = useLandMetadata();
 	const slotMetadata = useSlotMetadata();
 	const developmentMetadata = useDevelopmentMetadata();
+	const categoryDefinitions = useMemo(
+		() => translationContext.actionCategories.list(),
+		[translationContext.actionCategories],
+	);
+	const categoryKeyMap = useMemo(
+		() => buildCategoryKeyMap(categoryDefinitions),
+		[categoryDefinitions],
+	);
 	const developAction = useMemo(() => {
-		for (const actionId of player.actions) {
-			if (!translationContext.actions.has(actionId)) {
-				continue;
-			}
-			const action = translationContext.actions.get(actionId);
-			const category = (action as { category?: string }).category;
-			if (category === 'development') {
-				const icon = (action as { icon?: string }).icon;
+		for (const definition of categoryDefinitions) {
+			for (const actionId of player.actions) {
+				if (!translationContext.actions.has(actionId)) {
+					continue;
+				}
+				const action = translationContext.actions.get(
+					actionId,
+				) as ActionWithEffects;
+				const resolvedCategoryId = resolveActionCategoryId(
+					action,
+					categoryKeyMap,
+				);
+				if (resolvedCategoryId !== definition.id) {
+					continue;
+				}
+				if (!hasDevelopmentEffect(action.effects)) {
+					continue;
+				}
+				const icon = action.icon;
 				return icon ? { icon, name: action.name } : { name: action.name };
 			}
 		}
 		return undefined;
-	}, [player.actions, translationContext]);
+	}, [
+		categoryDefinitions,
+		player.actions,
+		translationContext.actions,
+		categoryKeyMap,
+	]);
 	const landDisplay = useMemo(
 		() => toDescriptorDisplay(landMetadata.select()),
 		[landMetadata],
