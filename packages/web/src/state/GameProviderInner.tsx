@@ -29,6 +29,7 @@ import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 import { useResolutionAutomation } from './useResolutionAutomation';
 import { useRemotePlayerNameSync } from './useRemotePlayerNameSync';
+import GameSessionLoadingScreen from '../components/game/GameSessionLoadingScreen';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
 
@@ -138,6 +139,7 @@ export function GameProviderInner({
 
 	const {
 		phase,
+		initializing,
 		runUntilActionPhase,
 		runUntilActionPhaseCore,
 		handleEndTurn,
@@ -284,6 +286,10 @@ export function GameProviderInner({
 
 	if (!translationContextReady || !translationContext) {
 		return <TranslationContextLoading />;
+	}
+
+	if (initializing) {
+		return <GameSessionLoadingScreen />;
 	}
 
 	const value: GameEngineContextValue = {

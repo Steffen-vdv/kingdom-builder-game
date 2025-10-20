@@ -88,8 +88,14 @@ export function usePhaseProgress({
 	showResolution,
 	onFatalSessionError,
 }: PhaseProgressOptions) {
-	const [phaseState, setPhaseState] = useState<PhaseProgressState>(() =>
-		computePhaseState(sessionSnapshot, actionCostResource),
+	const initialPhaseState = computePhaseState(
+		sessionSnapshot,
+		actionCostResource,
+	);
+	const [phaseState, setPhaseState] =
+		useState<PhaseProgressState>(initialPhaseState);
+	const [initializing, setInitializing] = useState<boolean>(
+		() => !initialPhaseState.isActionPhase,
 	);
 
 	const sessionSnapshotRef = useRef(sessionSnapshot);
@@ -98,14 +104,41 @@ export function usePhaseProgress({
 		sessionSnapshotRef.current = sessionSnapshot;
 	}, [sessionSnapshot]);
 
+	useEffect(() => {
+		const resetState = computePhaseState(
+			sessionSnapshotRef.current,
+			actionCostResource,
+		);
+		setPhaseState(resetState);
+		setInitializing(!resetState.isActionPhase);
+	}, [sessionId, actionCostResource]);
+
+	const markInitialized = useCallback((next: PhaseProgressState) => {
+		setInitializing((current) => {
+			if (!current) {
+				return current;
+			}
+			if (!next.isActionPhase || next.isAdvancing) {
+				return current;
+			}
+			return false;
+		});
+	}, []);
+
 	const applyPhaseSnapshot = useCallback(
 		(
 			snapshot: SessionSnapshot,
 			overrides: Partial<PhaseProgressState> = {},
 		) => {
-			setPhaseState(computePhaseState(snapshot, actionCostResource, overrides));
+			const nextState = computePhaseState(
+				snapshot,
+				actionCostResource,
+				overrides,
+			);
+			markInitialized(nextState);
+			setPhaseState(nextState);
 		},
-		[actionCostResource],
+		[actionCostResource, markInitialized],
 	);
 
 	const refreshPhaseState = useCallback(
@@ -122,9 +155,11 @@ export function usePhaseProgress({
 			if (previous.isAdvancing) {
 				return previous;
 			}
-			return computePhaseState(sessionSnapshot, actionCostResource);
+			const nextState = computePhaseState(sessionSnapshot, actionCostResource);
+			markInitialized(nextState);
+			return nextState;
 		});
-	}, [sessionSnapshot, actionCostResource]);
+	}, [sessionSnapshot, actionCostResource, markInitialized]);
 
 	const runUntilActionPhaseCore = useCallback(
 		(options: RunUntilActionPhaseOptions = {}) => {
@@ -223,6 +258,7 @@ export function usePhaseProgress({
 
 	return {
 		phase: phaseState,
+		initializing,
 		runUntilActionPhase,
 		runUntilActionPhaseCore,
 		handleEndTurn,
