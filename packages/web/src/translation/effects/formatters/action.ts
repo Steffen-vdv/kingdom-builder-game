@@ -71,8 +71,7 @@ registerEffectFormatter('action', 'add', {
 		const { label, system } = getActionPresentation(id, context);
 		const card = describeContent('action', id, context);
 		return [
-			label,
-			formatActionChangeSentence('gain', label, 'describe'),
+			`Unlock Action: ${label}`,
 			{
 				title: label,
 				items: card,
@@ -87,7 +86,7 @@ registerEffectFormatter('action', 'add', {
 			return null;
 		}
 		const { label } = getActionPresentation(id, context);
-		return formatActionChangeSentence('gain', label, 'log');
+		return `Unlock Action: ${label}`;
 	},
 });
 
