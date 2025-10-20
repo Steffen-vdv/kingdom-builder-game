@@ -13,7 +13,7 @@ import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
 } from '@kingdom-builder/web/state/sessionRegistries';
-import registriesPayload from '../../packages/web/tests/fixtures/sessionRegistriesPayload.json';
+import { createSessionRegistriesPayload } from '../../packages/web/tests/helpers/sessionRegistries';
 
 type TimelineEntry = string | { text: string };
 
@@ -24,7 +24,7 @@ function extractLineText(entry: TimelineEntry | undefined): string {
 	return typeof entry === 'string' ? entry : entry.text;
 }
 
-const BASE_REGISTRIES_PAYLOAD = registriesPayload as SessionRegistriesPayload;
+const BASE_REGISTRIES_PAYLOAD = createSessionRegistriesPayload();
 
 function createSessionRegistries(): SessionRegistries {
 	const payload = JSON.parse(
