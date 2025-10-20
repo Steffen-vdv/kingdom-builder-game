@@ -1,5 +1,6 @@
 import Button from '../components/common/Button';
 import { ShowcaseCard } from '../components/layouts/ShowcasePage';
+import type { ResumeSessionRecord } from '../state/sessionResumeStorage';
 
 const KNOWLEDGE_CARD_CLASS = [
 	'mt-8 flex flex-col gap-4 rounded-2xl border border-white/60',
@@ -67,6 +68,8 @@ export interface CallToActionProps {
 	onOverview: () => void;
 	onTutorial: () => void;
 	onOpenSettings: () => void;
+	resumePoint: ResumeSessionRecord | null;
+	onContinue: () => void;
 }
 
 export function CallToActionSection({
@@ -75,7 +78,22 @@ export function CallToActionSection({
 	onOverview,
 	onTutorial,
 	onOpenSettings,
+	resumePoint,
+	onContinue,
 }: CallToActionProps) {
+	const formattedTurn = resumePoint
+		? new Intl.NumberFormat('en-US').format(resumePoint.turn)
+		: null;
+	const continueButton = resumePoint ? (
+		<Button
+			variant="primary"
+			className={CTA_BUTTON_BASE_CLASS}
+			onClick={onContinue}
+			icon="🎯"
+		>
+			Continue game (turn {formattedTurn})
+		</Button>
+	) : null;
 	const startGameButton = (
 		<Button
 			variant="primary"
@@ -145,6 +163,7 @@ export function CallToActionSection({
 					</p>
 				</div>
 				<div className={CTA_BUTTON_COLUMN_CLASS}>
+					{continueButton}
 					{startGameButton}
 					{startDevButton}
 					{settingsButton}
