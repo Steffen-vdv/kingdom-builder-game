@@ -28,6 +28,7 @@ export { Resource, type ResourceKey, RESOURCES } from './resources';
 export { Stat, type StatKey, STATS } from './stats';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
+export { UPKEEP_INFO, TRANSFER_INFO } from './assets';
 export { POPULATION_INFO, POPULATION_ARCHETYPE_INFO } from './population';
 export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';

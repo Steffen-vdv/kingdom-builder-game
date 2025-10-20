@@ -16,6 +16,7 @@ import type { SessionManager } from '../../session/SessionManager.js';
 import { parseActionParameters } from '../actionParameterHelpers.js';
 import { normalizeActionTraces } from '../engineTraceNormalizer.js';
 import { extractRequirementFailures } from '../extractRequirementFailures.js';
+import { mergeSessionMetadata } from '../../session/mergeSessionMetadata.js';
 
 type AuthorizationCallback = (role: AuthRole) => AuthContext;
 
@@ -83,9 +84,14 @@ export class SessionActionExecutionHandler {
 				const snapshot = session.getSnapshot();
 				return { traces, snapshot };
 			});
+			const snapshot = structuredClone(result.snapshot);
+			snapshot.metadata = mergeSessionMetadata({
+				baseMetadata: this.sessionManager.getMetadata(),
+				snapshotMetadata: snapshot.metadata,
+			});
 			const response = actionExecuteResponseSchema.parse({
 				status: 'success',
-				snapshot: result.snapshot,
+				snapshot,
 				costs,
 				traces: normalizeActionTraces(result.traces),
 			}) as ActionExecuteSuccessResponse;
