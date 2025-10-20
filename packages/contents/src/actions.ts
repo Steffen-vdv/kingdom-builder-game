@@ -5,6 +5,10 @@ import {
 } from '@kingdom-builder/protocol';
 import { registerBasicActions } from './actions/basicActions';
 import { registerSpecialActions } from './actions/specialActions';
+import {
+	ActionCategoryId as ActionCategoryIds,
+	type ActionCategoryId as ActionCategoryIdValue,
+} from './actionCategories';
 import type { Focus as FocusType } from './defs';
 
 const ACTION_ID_MAP = {
@@ -36,21 +40,13 @@ type PopulationEvaluationIdMap = typeof POPULATION_EVALUATION_ID_MAP;
 export type PopulationEvaluationId =
 	PopulationEvaluationIdMap[keyof PopulationEvaluationIdMap];
 
-export const ActionCategory = {
-	Basic: 'basic',
-	Development: 'development',
-	Population: 'population',
-	Building: 'building',
-} as const;
-
-export type ActionCategory =
-	(typeof ActionCategory)[keyof typeof ActionCategory];
-
 export interface ActionDef extends ActionConfig {
-	category?: ActionCategory;
+	category?: ActionCategoryIdValue;
 	order?: number;
 	focus?: FocusType;
 }
+
+export const ActionCategoryId = ActionCategoryIds;
 
 export function createActionRegistry() {
 	const registry = new Registry<ActionDef>(actionSchema.passthrough());
