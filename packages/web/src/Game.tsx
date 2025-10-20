@@ -1,6 +1,8 @@
 import React from 'react';
 import GameLayout from './GameLayout';
 import { GameProvider } from './state/GameContext';
+import type { ResumeSessionRecord } from './state/sessionResumeStorage';
+import type { ResumeSessionFailureOptions } from './state/GameContext.types';
 
 interface GameProps {
 	onExit?: () => void;
@@ -19,6 +21,10 @@ interface GameProps {
 	onToggleAutoPass?: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
+	resumeSessionId?: string | null;
+	onPersistResumeSession?: (record: ResumeSessionRecord) => void;
+	onClearResumeSession?: (sessionId?: string | null) => void;
+	onResumeSessionFailure?: (options: ResumeSessionFailureOptions) => void;
 }
 
 export default function Game({
@@ -38,6 +44,10 @@ export default function Game({
 	onToggleAutoPass = () => {},
 	playerName,
 	onChangePlayerName,
+	resumeSessionId = null,
+	onPersistResumeSession = () => {},
+	onClearResumeSession = () => {},
+	onResumeSessionFailure = () => {},
 }: GameProps) {
 	return (
 		<GameProvider
@@ -57,6 +67,10 @@ export default function Game({
 			onToggleAutoPass={onToggleAutoPass}
 			playerName={playerName}
 			onChangePlayerName={onChangePlayerName}
+			resumeSessionId={resumeSessionId}
+			onPersistResumeSession={onPersistResumeSession}
+			onClearResumeSession={onClearResumeSession}
+			onResumeSessionFailure={onResumeSessionFailure}
 		>
 			<GameLayout />
 		</GameProvider>
