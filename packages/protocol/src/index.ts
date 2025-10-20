@@ -156,6 +156,7 @@ export type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SerializedRegistry,
+	SessionActionCategoryRegistry,
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 	SessionActionCostRequest,
@@ -206,6 +207,7 @@ export {
 	sessionRunAiResponseSchema,
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
+	sessionRegistriesSchema,
 	runtimeConfigResponseSchema,
 } from './config/session_contracts';
 export {

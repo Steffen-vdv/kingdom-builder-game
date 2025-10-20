@@ -1,4 +1,5 @@
 import type {
+	ActionCategoryConfig,
 	ActionConfig,
 	ActionEffectGroup,
 	BuildingConfig,
@@ -45,12 +46,16 @@ export interface SessionResourceDefinition {
 
 export type SerializedRegistry<T> = Record<string, T>;
 
+export type SessionActionCategoryRegistry =
+	SerializedRegistry<ActionCategoryConfig>;
+
 export interface SessionRegistriesPayload {
 	actions: SerializedRegistry<ActionConfig>;
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
+	actionCategories?: SessionActionCategoryRegistry;
 }
 
 export interface SessionRuntimeConfigResponse {
