@@ -1,8 +1,10 @@
 import {
+	createActionCategoryRegistry,
 	createActionRegistry,
 	createBuildingRegistry,
 	createDevelopmentRegistry,
 	createPopulationRegistry,
+	type ActionCategoryConfig,
 } from '@kingdom-builder/contents';
 import type {
 	ActionConfig,
@@ -19,10 +21,12 @@ function nextId(prefix: string) {
 }
 
 export interface ContentFactory {
+	categories: Registry<ActionCategoryConfig>;
 	actions: Registry<ActionConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
+	category(definition?: Partial<ActionCategoryConfig>): ActionCategoryConfig;
 	action(definition?: Partial<ActionConfig>): ActionConfig;
 	building(definition?: Partial<BuildingConfig>): BuildingConfig;
 	development(definition?: Partial<DevelopmentConfig>): DevelopmentConfig;
@@ -30,10 +34,42 @@ export interface ContentFactory {
 }
 
 export function createContentFactory(): ContentFactory {
+	const categories = createActionCategoryRegistry();
 	const actions = createActionRegistry();
 	const buildings = createBuildingRegistry();
 	const developments = createDevelopmentRegistry();
 	const populations = createPopulationRegistry();
+
+	let nextCategoryOrder = categories.values().length;
+
+	function category(
+		definition: Partial<ActionCategoryConfig> = {},
+	): ActionCategoryConfig {
+		const id = definition.id ?? nextId('category');
+		const order =
+			typeof definition.order === 'number'
+				? definition.order
+				: nextCategoryOrder++;
+
+		const built: ActionCategoryConfig = {
+			id,
+			label: definition.label ?? id,
+			subtitle: definition.subtitle ?? definition.label ?? id,
+			icon: definition.icon ?? 'icon-action-generic',
+			order,
+			layout: definition.layout ?? 'grid-primary',
+			hideWhenEmpty: definition.hideWhenEmpty ?? false,
+			analyticsKey: definition.analyticsKey ?? id,
+		};
+
+		if (definition.description) {
+			built.description = definition.description;
+		}
+
+		categories.add(id, built);
+
+		return built;
+	}
 
 	function action(definition: Partial<ActionConfig> = {}): ActionConfig {
 		const id = definition.id ?? nextId('action');
@@ -112,10 +148,12 @@ export function createContentFactory(): ContentFactory {
 	}
 
 	return {
+		categories,
 		actions,
 		buildings,
 		developments,
 		populations,
+		category,
 		action,
 		building,
 		development,
