@@ -15,7 +15,10 @@ import {
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
 import { createTranslationDiffContext } from './resourceSources/context';
-import type { TranslationAssets } from '../context';
+import type {
+	TranslationActionCategoryRegistry,
+	TranslationAssets,
+} from '../context';
 
 export interface PlayerSnapshot {
 	resources: Record<string, number>;
@@ -98,6 +101,7 @@ interface DiffContext extends SnapshotContext {
 		get(id: string): DevelopmentConfig;
 		has?(id: string): boolean;
 	};
+	actionCategories: TranslationActionCategoryRegistry;
 	assets: TranslationAssets;
 }
 
@@ -123,7 +127,10 @@ export function diffSnapshots(
 		undefined,
 		context.assets,
 	);
-	const diffContext = createTranslationDiffContext(context);
+	const diffContext = createTranslationDiffContext({
+		...context,
+		actionCategories: context.actionCategories,
+	});
 	appendBuildingChanges(
 		changeSummaries,
 		previousSnapshot,

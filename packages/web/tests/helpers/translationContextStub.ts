@@ -1,4 +1,5 @@
 import type {
+	TranslationActionCategoryRegistry,
 	TranslationAssets,
 	TranslationContext,
 	TranslationPassives,
@@ -44,6 +45,26 @@ const EMPTY_PASSIVES: TranslationPassives = {
 	},
 };
 
+const EMPTY_ACTION_CATEGORIES: TranslationActionCategoryRegistry = {
+	get(id: string) {
+		return Object.freeze({
+			id,
+			title: id,
+			subtitle: id,
+			icon: '',
+			order: 0,
+			layout: 'list',
+			hideWhenEmpty: false,
+		});
+	},
+	has() {
+		return false;
+	},
+	list() {
+		return [];
+	},
+};
+
 export function wrapTranslationRegistry<TDefinition>(
 	registry: Pick<TranslationRegistry<TDefinition>, 'get' | 'has'>,
 ): TranslationRegistry<TDefinition> {
@@ -76,6 +97,7 @@ export function toTranslationPlayer(
 export function createTranslationContextStub(
 	options: Pick<TranslationContext, 'phases' | 'actionCostResource'> & {
 		actions: TranslationRegistry<unknown>;
+		actionCategories?: TranslationActionCategoryRegistry;
 		buildings: TranslationRegistry<unknown>;
 		developments: TranslationRegistry<unknown>;
 		populations?: TranslationRegistry<unknown>;
@@ -93,6 +115,7 @@ export function createTranslationContextStub(
 		} as SessionRuleSnapshot);
 	return {
 		actions: options.actions,
+		actionCategories: options.actionCategories ?? EMPTY_ACTION_CATEGORIES,
 		buildings: options.buildings,
 		developments: options.developments,
 		populations: options.populations ?? options.actions,

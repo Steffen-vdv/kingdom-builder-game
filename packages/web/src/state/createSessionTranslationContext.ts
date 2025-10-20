@@ -164,7 +164,12 @@ interface SessionTranslationContextInput {
 	passiveRecords: SessionSnapshot['passiveRecords'];
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		| 'actions'
+		| 'actionCategories'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
+		| 'resources'
 	>;
 }
 
@@ -198,6 +203,8 @@ export function createSessionTranslationDiffContext(
 			translationContext.buildings as unknown as TranslationDiffContext['buildings'],
 		developments:
 			translationContext.developments as unknown as TranslationDiffContext['developments'],
+		actionCategories:
+			translationContext.actionCategories as unknown as TranslationDiffContext['actionCategories'],
 		passives,
 		assets: translationContext.assets,
 		evaluate,

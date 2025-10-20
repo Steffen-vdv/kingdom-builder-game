@@ -9,6 +9,7 @@ import type {
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol/session';
 import {
+	ACTION_CATEGORIES,
 	createActionRegistry,
 	createBuildingRegistry,
 	createDevelopmentRegistry,
@@ -24,7 +25,7 @@ import {
 	STATS,
 	TRIGGER_INFO,
 } from '@kingdom-builder/contents';
-import type { Registry } from '@kingdom-builder/protocol';
+import type { ActionCategoryConfig, Registry } from '@kingdom-builder/protocol';
 import { deserializeSessionRegistries } from '../state/sessionRegistries';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import { clone } from '../state/clone';
@@ -81,6 +82,7 @@ const deepFreeze = <TValue>(value: TValue): TValue => {
 
 const freezeRegistries = (registries: SessionRegistries): SessionRegistries => {
 	deepFreeze(registries.resources);
+	deepFreeze(registries.actionCategories);
 	return Object.freeze(registries);
 };
 
@@ -177,6 +179,28 @@ const createResourceMetadata = () =>
 		]),
 	) as Record<string, SessionMetadataDescriptor>;
 
+const createActionCategoryPayload = () =>
+	Object.fromEntries(
+		Array.from(ACTION_CATEGORIES.entries()).map(([id, definition]) => {
+			const entry: ActionCategoryConfig = {
+				id: definition.id,
+				title: definition.label,
+				subtitle: definition.subtitle ?? definition.label,
+				icon: definition.icon,
+				order: definition.order,
+				layout: definition.layout,
+				hideWhenEmpty: definition.hideWhenEmpty ?? false,
+			};
+			if (definition.description !== undefined) {
+				entry.description = definition.description;
+			}
+			if (definition.analyticsKey !== undefined) {
+				entry.analyticsKey = definition.analyticsKey;
+			}
+			return [id, entry];
+		}),
+	) as Record<string, ActionCategoryConfig>;
+
 const createStatMetadata = () =>
 	Object.fromEntries(
 		Object.entries(STATS).map(([key, info]) => {
@@ -266,6 +290,7 @@ const createRegistriesPayload = (): SessionRegistriesPayload => ({
 	developments: createRegistryPayload(createDevelopmentRegistry),
 	populations: createRegistryPayload(createPopulationRegistry),
 	resources: createResourceDefinitions(),
+	actionCategories: createActionCategoryPayload(),
 });
 
 const createMetadata = (

@@ -55,6 +55,7 @@ function cloneRegistriesPayload(
 				cloneResourceDefinition(definition),
 			]),
 		),
+		actionCategories: cloneEntries(payload.actionCategories),
 	};
 }
 

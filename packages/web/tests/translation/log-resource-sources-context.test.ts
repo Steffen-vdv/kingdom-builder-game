@@ -46,6 +46,19 @@ describe('translation diff resource source context', () => {
 					return id === 'synthetic';
 				},
 			} as TranslationDiffContext['developments'],
+			actionCategories: {
+				get: vi.fn(() => ({
+					id: 'synthetic',
+					title: 'Synthetic',
+					subtitle: 'Synthetic',
+					icon: '',
+					order: 0,
+					layout: 'list',
+					hideWhenEmpty: false,
+				})),
+				has: vi.fn(),
+				list: vi.fn(() => []),
+			} as TranslationDiffContext['actionCategories'],
 			passives: {
 				evaluationMods,
 				get: vi.fn(() => ({ icon: '✨' })),
