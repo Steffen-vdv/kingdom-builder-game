@@ -1,3 +1,9 @@
+export {
+	ACTION_CATEGORIES,
+	createActionCategoryRegistry,
+	ActionCategoryId,
+} from './actionCategories';
+export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 export { ACTIONS, createActionRegistry, ActionId } from './actions';
 export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
@@ -9,6 +15,10 @@ export type {
 	PhaseStepId as PhaseStepIdValue,
 	PhaseTrigger as PhaseTriggerKey,
 } from './phases';
+export type {
+	ActionCategoryConfig,
+	ActionCategoryLayout,
+} from './config/builders';
 export {
 	POPULATION_ROLES,
 	PopulationRole,

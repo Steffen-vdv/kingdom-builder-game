@@ -11,6 +11,7 @@ import type { PopulationRoleId } from '../populationRoles';
 import { CompareRequirementBuilder } from './builders/evaluators';
 import {
 	ActionBuilder,
+	ActionCategoryBuilder,
 	BaseBuilder,
 	BuildingBuilder,
 	DevelopmentBuilder,
@@ -23,6 +24,8 @@ import {
 export { happinessTier, tierDisplay, tierPassiveText } from './builders/tiers';
 
 export type {
+	ActionCategoryConfig,
+	ActionCategoryLayout,
 	InfoDef,
 	PopulationRoleInfo,
 	ResourceInfo,
@@ -31,6 +34,7 @@ export type {
 
 export {
 	ActionBuilder,
+	ActionCategoryBuilder,
 	BaseBuilder,
 	BuildingBuilder,
 	DevelopmentBuilder,
@@ -318,6 +322,9 @@ export function winCondition(id: string) {
 
 export function action() {
 	return new ActionBuilder();
+}
+export function actionCategory() {
+	return new ActionCategoryBuilder();
 }
 export function building() {
 	return new BuildingBuilder();
