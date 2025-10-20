@@ -57,6 +57,20 @@ describe('sessionStateStore', () => {
 			}),
 		}) as unknown as SessionSnapshot;
 
+	it('initializes session record when applying state response for unknown session', () => {
+		const baseSnapshot = createBaseSnapshot();
+		const stateResponse: SessionStateResponse = {
+			sessionId: 'session:resume',
+			snapshot: baseSnapshot,
+			registries: createSessionRegistriesPayload(),
+		};
+		const record = applySessionState(stateResponse);
+		expect(record.sessionId).toBe(stateResponse.sessionId);
+		expect(record.snapshot).toEqual(baseSnapshot);
+		expect(record.metadata).toEqual(baseSnapshot.metadata);
+		expect(getSessionRecord(stateResponse.sessionId)).toBe(record);
+	});
+
 	it('clones snapshot and metadata when initializing', () => {
 		const baseSnapshot = createBaseSnapshot();
 		const response: SessionCreateResponse = {
