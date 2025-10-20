@@ -29,6 +29,7 @@ const useSessionQueueMock = vi.fn();
 let capturedPhaseOptions: Record<string, unknown> | null = null;
 let capturedPerformerOptions: Record<string, unknown> | null = null;
 let capturedAiOptions: Record<string, unknown> | null = null;
+const addResolutionLogMock = vi.fn();
 let capturedLoggerOptions: Record<string, unknown> | null = null;
 let capturedTranslationOptions: Record<string, unknown> | null = null;
 
@@ -59,7 +60,7 @@ vi.mock('../../src/state/useGameLog', () => ({
 	useGameLog: () => ({
 		log: [],
 		logOverflowed: false,
-		addResolutionLog: vi.fn(),
+		addResolutionLog: addResolutionLogMock,
 	}),
 }));
 
@@ -147,6 +148,7 @@ describe('GameProviderInner', () => {
 		handlePerformMock.mockClear();
 		useSessionQueueMock.mockReset();
 		vi.mocked(updateRemotePlayerName).mockClear();
+		addResolutionLogMock.mockClear();
 		const phases = [
 			{ id: 'phase:test', action: true, steps: [{ id: 'phase:test:start' }] },
 		];
@@ -226,6 +228,13 @@ describe('GameProviderInner', () => {
 		expect(capturedPerformerOptions).not.toHaveProperty('session');
 		expect(capturedPerformerOptions?.sessionId).toBe(sessionId);
 		expect(capturedAiOptions?.sessionId).toBe(sessionId);
+		expect(typeof capturedAiOptions?.showResolution).toBe('function');
+		expect(capturedAiOptions?.addResolutionLog).toBe(addResolutionLogMock);
+		expect(capturedAiOptions?.registries).toBe(registries);
+		expect(capturedAiOptions?.resourceKeys).toBe(resourceKeys);
+		expect(capturedAiOptions?.actionCostResource).toBe(
+			sessionState.actionCostResource,
+		);
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
