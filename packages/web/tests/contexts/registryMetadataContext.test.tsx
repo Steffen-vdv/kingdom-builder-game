@@ -5,11 +5,17 @@ import type {
 	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
+import {
+	actionCategorySchema,
+	Registry,
+	type ActionCategoryConfig,
+} from '@kingdom-builder/protocol';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
 	RegistryMetadataProvider,
 	useRegistryMetadata,
 	useResourceMetadata,
+	useActionCategoryMetadata,
 	usePopulationMetadata,
 	useBuildingMetadata,
 	useDevelopmentMetadata,
@@ -31,6 +37,7 @@ import { describe, expect, it } from 'vitest';
 interface TestSetup {
 	registries: SessionRegistries;
 	actionId: string;
+	actionCategoryId: string;
 	buildingId: string;
 	developmentId: string;
 	populationId: string;
@@ -51,6 +58,19 @@ const nextKey = (prefix: string) => {
 
 function createTestSetup(): TestSetup {
 	const factory = createContentFactory();
+	const actionCategory: ActionCategoryConfig = {
+		id: nextKey('category'),
+		title: 'Sky Operations',
+		subtitle: 'High Altitude',
+		icon: '🛫',
+		order: 1,
+		layout: 'grid-primary',
+		hideWhenEmpty: false,
+	};
+	const actionCategories = new Registry<ActionCategoryConfig>(
+		actionCategorySchema.passthrough(),
+	);
+	actionCategories.add(actionCategory.id, actionCategory);
 	const action = factory.action({
 		name: 'Sky Assault',
 		icon: '🛩️',
@@ -135,7 +155,7 @@ function createTestSetup(): TestSetup {
 	};
 	const registries: SessionRegistries = {
 		actions: factory.actions,
-		actionCategories: {},
+		actionCategories,
 		buildings: factory.buildings,
 		developments: factory.developments,
 		populations: factory.populations,
@@ -144,6 +164,7 @@ function createTestSetup(): TestSetup {
 	return {
 		registries,
 		actionId: action.id,
+		actionCategoryId: actionCategory.id,
 		buildingId: building.id,
 		developmentId: development.id,
 		populationId: population.id,
@@ -160,6 +181,7 @@ function createTestSetup(): TestSetup {
 interface CapturedLookups {
 	context: RegistryMetadataContextValue;
 	resources: MetadataSelector<RegistryMetadataDescriptor>;
+	actionCategories: MetadataSelector<RegistryMetadataDescriptor>;
 	populations: MetadataSelector<RegistryMetadataDescriptor>;
 	buildings: MetadataSelector<RegistryMetadataDescriptor>;
 	developments: MetadataSelector<RegistryMetadataDescriptor>;
@@ -187,6 +209,7 @@ describe('RegistryMetadataProvider', () => {
 			captured = {
 				context: useRegistryMetadata(),
 				resources: useResourceMetadata(),
+				actionCategories: useActionCategoryMetadata(),
 				populations: usePopulationMetadata(),
 				buildings: useBuildingMetadata(),
 				developments: useDevelopmentMetadata(),
@@ -213,6 +236,7 @@ describe('RegistryMetadataProvider', () => {
 		const {
 			context,
 			resources,
+			actionCategories,
 			populations,
 			buildings,
 			developments,
@@ -230,6 +254,9 @@ describe('RegistryMetadataProvider', () => {
 		expect(context.developments.getOrThrow(developmentId).id).toBe(
 			developmentId,
 		);
+		expect(context.actionCategories.getOrThrow(setup.actionCategoryId).id).toBe(
+			setup.actionCategoryId,
+		);
 		expect(context.populations.getOrThrow(populationId).id).toBe(populationId);
 		expect(context.resources.getOrThrow(resourceKey)).toEqual(setup.resource);
 		expect(context.buildings.keys()).toContain(buildingId);
@@ -240,6 +267,8 @@ describe('RegistryMetadataProvider', () => {
 		const resourceDescriptor = resources.byId[resourceKey];
 		expect(resourceDescriptor.label).toBe('Auric Light');
 		expect(resourceDescriptor.description).toBe('Condensed radiance.');
+		const categoryDescriptor = actionCategories.select(setup.actionCategoryId);
+		expect(categoryDescriptor.label).toBe('Sky Operations');
 		const fallbackResourceId = nextKey('resource');
 		expect(resources.select(fallbackResourceId).label).toBe(
 			formatFallbackLabel(fallbackResourceId),

@@ -1,6 +1,7 @@
 import type {
 	ActionCategoryConfig,
 	PlayerStartConfig,
+	Registry,
 	SessionPassiveEvaluationModifierMap,
 	SessionPassiveSummary,
 	SessionPlayerId,
@@ -114,10 +115,10 @@ function normalizeActionCategoryDefinition(
 }
 
 export function wrapActionCategoryRegistry(
-	registry: Record<string, ActionCategoryConfig> | undefined,
+	registry: Registry<ActionCategoryConfig>,
 ): TranslationActionCategoryRegistry {
-	const entries = Object.values(registry ?? {}).map(
-		normalizeActionCategoryDefinition,
+	const entries = Array.from(registry.entries(), ([, definition]) =>
+		normalizeActionCategoryDefinition(definition),
 	);
 	entries.sort((left, right) => {
 		if (left.order !== right.order) {

@@ -1,4 +1,4 @@
-import type { Registry } from '@kingdom-builder/protocol';
+import type { ActionCategoryConfig, Registry } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionPhaseMetadata,
@@ -252,6 +252,22 @@ export const buildRegistryMetadata = <
 		})),
 		(id: string) =>
 			createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
+	);
+
+export const buildActionCategoryMetadata = (
+	registry: Registry<ActionCategoryConfig>,
+	metadata: Record<string, SessionMetadataDescriptor> | undefined,
+): MetadataLookup<RegistryMetadataDescriptor> =>
+	createLookup(
+		mergeRegistryEntries(registry, metadata, (definition) => ({
+			label: definition.title,
+			icon: definition.icon,
+			description: definition.description,
+		})),
+		(id: string) =>
+			createRegistryDescriptor(id, undefined, {
+				label: formatLabel(id),
+			}),
 	);
 
 export const buildStatMetadata = (
