@@ -9,6 +9,7 @@ import {
 } from './helpers/sessionFixtures';
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
+import { ensureRequiredTranslationAssets } from './helpers/translationAssets';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 
 type SummaryGroup = { title?: unknown; items?: unknown[] };
@@ -82,7 +83,7 @@ function createDescriptorSetup(): DescriptorSetup {
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
-	const metadata: SessionSnapshotMetadata = {
+	const metadata: SessionSnapshotMetadata = ensureRequiredTranslationAssets({
 		passiveEvaluationModifiers: {},
 		populations: {
 			[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
@@ -141,8 +142,15 @@ function createDescriptorSetup(): DescriptorSetup {
 			land: { label: 'Territory', icon: '🗺️' },
 			slot: { label: 'Development Slot', icon: '🧩' },
 			passive: { label: 'Aura', icon: '♾️' },
+			population: { label: 'Citizens', icon: '👥' },
+			transfer: { label: 'Transfer', icon: '🔁' },
+			upkeep: { label: 'Upkeep', icon: '🧽' },
+			modifiers: {
+				cost: { label: 'Cost Adjustment', icon: '💲' },
+				result: { label: 'Outcome Adjustment', icon: '✨' },
+			} as SessionSnapshotMetadata['assets'][string],
 		},
-	};
+	});
 	const activePlayer = createSnapshotPlayer({
 		id: 'player:active',
 		name: 'Active Player',

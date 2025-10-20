@@ -15,6 +15,7 @@ import {
 	selectPopulationDescriptor,
 	selectResourceDescriptor,
 } from '../src/translation/effects/registrySelectors';
+import { ensureRequiredTranslationAssets } from './helpers/translationAssets';
 
 interface LogHarness {
 	engine: ReturnType<typeof createEngine>;
@@ -67,8 +68,8 @@ function createLogHarness(
 		rules: scaffold.ruleSnapshot,
 	});
 	const engineSnapshot = snapshotEngine(engine);
-	engineSnapshot.metadata = structuredClone(
-		metadataOverride ?? scaffold.metadata,
+	engineSnapshot.metadata = ensureRequiredTranslationAssets(
+		structuredClone(metadataOverride ?? scaffold.metadata),
 	);
 	const translationContext = createTranslationContext(
 		engineSnapshot,

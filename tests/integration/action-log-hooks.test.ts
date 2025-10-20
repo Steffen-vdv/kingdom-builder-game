@@ -10,6 +10,7 @@ import {
 	type SessionRegistries,
 } from '@kingdom-builder/web/state/sessionRegistries';
 import registriesPayload from '../../packages/web/tests/fixtures/sessionRegistriesPayload.json';
+import { ensureRequiredTranslationAssets } from '../../packages/web/tests/helpers/translationAssets';
 
 type TimelineEntry = string | { text: string };
 
@@ -100,7 +101,7 @@ describe('content-driven action log hooks', () => {
 			const translationContext = createTranslationContext(
 				snapshot,
 				registries,
-				snapshot.metadata,
+				ensureRequiredTranslationAssets(snapshot.metadata),
 				{
 					ruleSnapshot: session.getRuleSnapshot(),
 					passiveRecords: snapshot.passiveRecords,

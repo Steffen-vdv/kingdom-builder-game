@@ -3,23 +3,42 @@ import { createTranslationAssets } from '../src/translation/context/assets';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 
 describe('translation assets', () => {
-	it('falls back to default stat metadata when snapshot metadata omits stats', () => {
-		const { registries, ruleSnapshot } = createTestSessionScaffold();
+	it('derives stat and asset descriptors directly from snapshot metadata', () => {
+		const { registries, ruleSnapshot, metadata } = createTestSessionScaffold();
 		const assets = createTranslationAssets(
 			{
 				populations: registries.populations,
 				resources: registries.resources,
 			},
-			undefined,
+			metadata,
 			{ rules: ruleSnapshot },
 		);
-		expect(assets.stats.fortificationStrength).toMatchObject({
-			icon: '🛡️',
-			label: 'Fortification Strength',
+		expect(assets.land).toMatchObject({
+			label: 'Frontier Land',
+			icon: '🛤️',
 		});
-		expect(assets.stats.absorption).toMatchObject({
-			icon: '🌀',
-			label: 'Absorption',
+		expect(assets.stats.growth).toMatchObject({
+			label: 'Growth Rate',
+			displayAsPercent: true,
 		});
+	});
+
+	it('throws when required asset descriptors are missing', () => {
+		const { registries, ruleSnapshot, metadata } = createTestSessionScaffold();
+		const invalidMetadata = {
+			...metadata,
+			assets: { ...metadata.assets },
+		};
+		delete invalidMetadata.assets?.passive;
+		expect(() =>
+			createTranslationAssets(
+				{
+					populations: registries.populations,
+					resources: registries.resources,
+				},
+				invalidMetadata,
+				{ rules: ruleSnapshot },
+			),
+		).toThrowError('assets.passive');
 	});
 });

@@ -5,6 +5,7 @@ import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol/sessio
 
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
+import { ensureRequiredTranslationAssets } from './translationAssets';
 import {
 	SYNTH_ATTACK,
 	SYNTH_PLUNDER,
@@ -123,6 +124,31 @@ function registerSyntheticResources(registries: SessionRegistries) {
 	};
 }
 
+function buildResourceMetadata(): Record<string, SessionMetadataDescriptor> {
+	const descriptors: Record<string, SessionMetadataDescriptor> = {};
+	for (const entry of Object.values(SYNTH_RESOURCE_METADATA)) {
+		descriptors[entry.key] = { icon: entry.icon, label: entry.label };
+	}
+	return descriptors;
+}
+
+function buildPopulationMetadata(
+	engineContext: ReturnType<typeof createBaseEngine>['engineContext'],
+): Record<string, SessionMetadataDescriptor> {
+	const descriptors: Record<string, SessionMetadataDescriptor> = {};
+	for (const population of engineContext.populations.values()) {
+		const descriptor: SessionMetadataDescriptor = {};
+		if (population.icon) {
+			descriptor.icon = population.icon;
+		}
+		if (population.name) {
+			descriptor.label = population.name;
+		}
+		descriptors[population.id] = descriptor;
+	}
+	return descriptors;
+}
+
 export function createSyntheticEngineContext() {
 	const { factory, engineContext } = createBaseEngine();
 	const building = factory.building({ ...SYNTH_BUILDING });
@@ -164,7 +190,13 @@ export function createSyntheticEngineContext() {
 			}
 			registerSyntheticResources(registries);
 		},
-		{ metadata: { stats: statMetadata } },
+		{
+			metadata: ensureRequiredTranslationAssets({
+				resources: buildResourceMetadata(),
+				populations: buildPopulationMetadata(engineContext),
+				stats: statMetadata,
+			}),
+		},
 	);
 	return {
 		engineContext,
@@ -201,7 +233,13 @@ export function createPartialStatEngineContext() {
 			}
 			registerSyntheticResources(registries);
 		},
-		{ metadata: { stats: statMetadata } },
+		{
+			metadata: ensureRequiredTranslationAssets({
+				resources: buildResourceMetadata(),
+				populations: buildPopulationMetadata(engineContext),
+				stats: statMetadata,
+			}),
+		},
 	);
 	return {
 		engineContext,

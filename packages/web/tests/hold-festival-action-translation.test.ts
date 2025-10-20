@@ -22,6 +22,7 @@ describe('hold festival action translation', () => {
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
 		const fortSummarySubject = details.fortIcon || details.fortInfo.label;
+		const modifierIcon = translation.assets.modifiers.result.icon ?? '✨';
 
 		expect(summary).toEqual([
 			`${details.happinessIcon}${sign(details.happinessAmt)}${details.happinessAmt}`,
@@ -29,7 +30,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
-					`${details.modifierInfo.icon ?? ''}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
+					`${modifierIcon}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
 				],
 			},
 		]);
@@ -47,6 +48,9 @@ describe('hold festival action translation', () => {
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
+		const modifierAsset = translation.assets.modifiers.result;
+		const modifierIcon = modifierAsset.icon ?? '✨';
+		const modifierLabel = modifierAsset.label ?? 'Outcome Adjustment';
 
 		expect(description).toEqual([
 			`${details.happinessInfo.icon}${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
@@ -54,7 +58,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
-					`${details.modifierInfo.icon ?? ''} ${details.modifierInfo.label ?? 'Outcome Adjustment'} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+					`${modifierIcon ? `${modifierIcon} ` : ''}${modifierLabel} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 		]);
@@ -68,10 +72,10 @@ describe('hold festival action translation', () => {
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
-		const modifierIcon = details.modifierInfo.icon
-			? `${details.modifierInfo.icon} `
-			: '';
-		const modifierLabel = details.modifierInfo.label ?? 'Outcome Adjustment';
+		const modifierAsset = translation.assets.modifiers.result;
+		const modifierIcon =
+			(modifierAsset.icon ?? '✨') ? `${modifierAsset.icon ?? '✨'} ` : '';
+		const modifierLabel = modifierAsset.label ?? 'Outcome Adjustment';
 		const raidLabel = formatTargetLabel(
 			details.armyAttack.icon ?? '',
 			details.armyAttack.name,

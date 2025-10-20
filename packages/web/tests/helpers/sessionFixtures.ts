@@ -2,6 +2,7 @@ import type { EffectDef } from '@kingdom-builder/protocol';
 import type {
 	PlayerStartConfig,
 	SessionLandSnapshot,
+	SessionMetadataDescriptor,
 	SessionOverviewMetadata,
 	SessionPassiveRecordSnapshot,
 	SessionPhaseDefinition,
@@ -24,9 +25,16 @@ export const createEmptySnapshotMetadata = (
 ): SessionSnapshotMetadata => {
 	const { assets: assetOverrides, ...metadataOverrides } = overrides;
 	const baseAssets: NonNullable<SessionSnapshotMetadata['assets']> = {
+		population: { label: 'Population' },
 		land: { label: 'Land' },
 		slot: { label: 'Development Slot' },
 		passive: { label: 'Passive' },
+		transfer: { label: 'Transfer' },
+		upkeep: { label: 'Upkeep' },
+		modifiers: {
+			cost: { label: 'Cost Adjustment' },
+			result: { label: 'Outcome Adjustment' },
+		} as unknown as SessionMetadataDescriptor,
 	};
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},

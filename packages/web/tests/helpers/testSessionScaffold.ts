@@ -87,11 +87,20 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 
 const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 	Object.freeze({
-		passive: { label: 'Passive Effect' },
-		population: { label: 'Citizens' },
+		passive: { icon: '♾️', label: 'Passive Effect' },
+		population: { icon: '👥', label: 'Citizens' },
 		land: { icon: '🛤️', label: 'Frontier Land' },
-		slot: { description: 'Development slot descriptor.' },
+		slot: {
+			icon: '🧩',
+			label: 'Development Slot',
+			description: 'Development slot descriptor.',
+		},
 		upkeep: { icon: '🧽', label: 'Maintenance' },
+		transfer: { icon: '🔁', label: 'Transfer' },
+		modifiers: {
+			cost: { icon: '💲', label: 'Cost Adjustment' },
+			result: { icon: '✨', label: 'Outcome Adjustment' },
+		} as unknown as SessionMetadataDescriptor,
 	});
 
 export interface TestSessionScaffold {

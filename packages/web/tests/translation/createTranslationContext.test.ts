@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { ensureRequiredTranslationAssets } from '../helpers/translationAssets';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
@@ -73,7 +74,7 @@ describe('createTranslationContext', () => {
 					format: { prefix: '~', percent: true },
 				},
 			},
-			assets: {
+			assets: ensureRequiredTranslationAssets({
 				passive: { icon: '✨', label: 'Passive Aura' },
 				slot: {
 					icon: '📦',
@@ -83,7 +84,12 @@ describe('createTranslationContext', () => {
 				land: { icon: '🌄', label: 'Territory' },
 				population: { icon: '🧑‍🤝‍🧑', label: 'Citizens' },
 				upkeep: { icon: '🪣', label: 'Maintenance' },
-			},
+				transfer: { icon: '🔄', label: 'Transfer Route' },
+				modifiers: {
+					cost: { icon: '📉', label: 'Cost Modifier' },
+					result: { icon: '📈', label: 'Result Modifier' },
+				} as SessionSnapshot['metadata']['assets'][string],
+			}),
 			triggers: {
 				[triggerId]: {
 					icon: '🔔',

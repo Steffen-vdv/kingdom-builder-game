@@ -301,40 +301,15 @@ describe('modifier evaluation handlers', () => {
 		});
 	});
 
-	it('falls back to default modifier descriptors when metadata is missing', () => {
-		const { translationContext, registries } = createModifierHarness({
-			customizeMetadata(metadata) {
-				if (metadata.assets) {
-					delete metadata.assets.modifiers;
-				}
-			},
-		});
-		const { id: actionId, definition: actionDef } =
-			selectActionWithIcon(registries);
-		const resultDescriptor = selectModifierInfo(translationContext, 'result');
-		expect(resultDescriptor.icon).toBeTruthy();
-		expect(resultDescriptor.label).toBeTruthy();
-		const eff: EffectDef = {
-			type: 'result_mod',
-			method: 'add',
-			params: {
-				evaluation: { type: 'transfer_pct', id: actionId },
-				adjust: 5,
-			},
-		};
-		const summary = summarizeEffects([eff], translationContext);
-		expect(summary[0].startsWith(resultDescriptor.icon)).toBe(true);
-		const targetLabel = joinParts(
-			translationContext.actions.get(actionId)?.icon ?? actionDef.icon,
-			translationContext.actions.get(actionId)?.name ??
-				actionDef.name ??
-				actionId,
-		);
-		const primaryLine = describeEffects([eff], translationContext)[0];
-		expect(
-			primaryLine.startsWith(
-				`${joinParts(resultDescriptor.icon, resultDescriptor.label)} on ${targetLabel}:`,
-			),
-		).toBe(true);
+	it('throws when modifier descriptors are missing', () => {
+		expect(() =>
+			createModifierHarness({
+				customizeMetadata(metadata) {
+					if (metadata.assets) {
+						delete metadata.assets.modifiers;
+					}
+				},
+			}),
+		).toThrowError('assets.modifiers');
 	});
 });

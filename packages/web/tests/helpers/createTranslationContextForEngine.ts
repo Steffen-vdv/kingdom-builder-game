@@ -3,17 +3,31 @@ import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from './sessionRegistries';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { ensureRequiredTranslationAssets } from './translationAssets';
 
 type MetadataOverrides = Partial<SessionSnapshotMetadata>;
+
+function withRequiredSections(
+	metadata: SessionSnapshotMetadata,
+): SessionSnapshotMetadata {
+	return {
+		...metadata,
+		resources: { ...(metadata.resources ?? {}) },
+		populations: { ...(metadata.populations ?? {}) },
+		stats: { ...(metadata.stats ?? {}) },
+		triggers: { ...(metadata.triggers ?? {}) },
+		assets: metadata.assets ? { ...metadata.assets } : {},
+	};
+}
 
 function mergeMetadata(
 	base: SessionSnapshotMetadata,
 	overrides: MetadataOverrides | undefined,
 ): SessionSnapshotMetadata {
 	if (!overrides) {
-		return base;
+		return withRequiredSections(base);
 	}
-	const merged: SessionSnapshotMetadata = { ...base };
+	const merged: SessionSnapshotMetadata = withRequiredSections(base);
 	for (const [key, value] of Object.entries(overrides)) {
 		if (value === undefined) {
 			continue;
@@ -50,7 +64,9 @@ export function createTranslationContextForEngine(
 	const registries = createSessionRegistries();
 	configureRegistries?.(registries);
 	const snapshot = snapshotEngine(engine);
-	const metadata = mergeMetadata(snapshot.metadata, options?.metadata);
+	const metadata = ensureRequiredTranslationAssets(
+		mergeMetadata(snapshot.metadata, options?.metadata),
+	);
 	return createTranslationContext(snapshot, registries, metadata, {
 		ruleSnapshot: snapshot.rules,
 		passiveRecords: snapshot.passiveRecords,
