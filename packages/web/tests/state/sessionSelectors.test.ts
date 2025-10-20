@@ -15,6 +15,12 @@ import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 describe('sessionSelectors', () => {
 	const factory = createContentFactory();
 	const sessionRegistries = createSessionRegistries();
+	const categoryEntries = sessionRegistries.actionCategories.entries();
+	const fallbackCategoryId = categoryEntries[0]?.[0] ?? 'basic';
+	const findCategoryId = (title: string) =>
+		categoryEntries.find(([, definition]) => definition.title === title)?.[0] ??
+		fallbackCategoryId;
+	const basicCategoryId = findCategoryId('Basic');
 	const [primaryResource] = Object.keys(sessionRegistries.resources);
 	const actionA = factory.action({ name: 'Action A' });
 	const actionB = factory.action({ name: 'Action B' });
@@ -23,11 +29,15 @@ describe('sessionSelectors', () => {
 		name: 'System Unlocked',
 		system: true,
 	});
-	Object.assign(actionA, { order: 2, category: 'basic', focus: 'economy' });
+	Object.assign(actionA, {
+		order: 2,
+		category: basicCategoryId,
+		focus: 'economy',
+	});
 	factory.actions.add(actionA.id, {
 		...factory.actions.get(actionA.id),
 		order: 2,
-		category: 'basic',
+		category: basicCategoryId,
 		focus: 'economy',
 	});
 	Object.assign(actionB, { order: 1 });
@@ -35,17 +45,17 @@ describe('sessionSelectors', () => {
 		...factory.actions.get(actionB.id),
 		order: 1,
 	});
-	Object.assign(systemLocked, { order: 3, category: 'basic' });
+	Object.assign(systemLocked, { order: 3, category: basicCategoryId });
 	factory.actions.add(systemLocked.id, {
 		...factory.actions.get(systemLocked.id),
 		order: 3,
-		category: 'basic',
+		category: basicCategoryId,
 	});
-	Object.assign(systemUnlocked, { order: 4, category: 'basic' });
+	Object.assign(systemUnlocked, { order: 4, category: basicCategoryId });
 	factory.actions.add(systemUnlocked.id, {
 		...factory.actions.get(systemUnlocked.id),
 		order: 4,
-		category: 'basic',
+		category: basicCategoryId,
 	});
 	const buildingA = factory.building({
 		name: 'Building A',

@@ -3,7 +3,10 @@ import {
 	createEngineSession,
 	createLocalSessionGateway,
 } from '../../src/index.ts';
-import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	createContentFactory,
+	toSessionActionCategoryConfig,
+} from '@kingdom-builder/testing';
 import type {
 	StartConfig,
 	RuleSet,
@@ -118,7 +121,9 @@ describe('createLocalSessionGateway', () => {
 		expect(created.snapshot.game.devMode).toBe(true);
 		expect(created.snapshot.game.players[0]?.name).toBe('Hero');
 		expect(created.registries.actionCategories).toEqual({});
-		const category = createContentFactory().category();
+		const category = toSessionActionCategoryConfig(
+			createContentFactory().category(),
+		);
 		created.registries.actionCategories![category.id] = category;
 		created.snapshot.game.players[0]!.name = 'Mutated';
 		created.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 99;
@@ -197,7 +202,9 @@ describe('createLocalSessionGateway', () => {
 
 	it('clones provided action category registries when supplied', async () => {
 		const categoryFactory = createContentFactory();
-		const providedCategory = categoryFactory.category();
+		const providedCategory = toSessionActionCategoryConfig(
+			categoryFactory.category(),
+		);
 		const registries: SessionRegistriesPayload = {
 			actions: {},
 			buildings: {},

@@ -4,9 +4,10 @@ import {
 	createBuildingRegistry,
 	createDevelopmentRegistry,
 	createPopulationRegistry,
-	type ActionCategoryConfig,
+	type ActionCategoryConfig as ContentActionCategoryConfig,
 } from '@kingdom-builder/contents';
 import type {
+	ActionCategoryConfig as SessionActionCategoryConfig,
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
@@ -21,12 +22,14 @@ function nextId(prefix: string) {
 }
 
 export interface ContentFactory {
-	categories: Registry<ActionCategoryConfig>;
+	categories: Registry<ContentActionCategoryConfig>;
 	actions: Registry<ActionConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
-	category(definition?: Partial<ActionCategoryConfig>): ActionCategoryConfig;
+	category(
+		definition?: Partial<ContentActionCategoryConfig>,
+	): ContentActionCategoryConfig;
 	action(definition?: Partial<ActionConfig>): ActionConfig;
 	building(definition?: Partial<BuildingConfig>): BuildingConfig;
 	development(definition?: Partial<DevelopmentConfig>): DevelopmentConfig;
@@ -43,15 +46,15 @@ export function createContentFactory(): ContentFactory {
 	let nextCategoryOrder = categories.values().length;
 
 	function category(
-		definition: Partial<ActionCategoryConfig> = {},
-	): ActionCategoryConfig {
+		definition: Partial<ContentActionCategoryConfig> = {},
+	): ContentActionCategoryConfig {
 		const id = definition.id ?? nextId('category');
 		const order =
 			typeof definition.order === 'number'
 				? definition.order
 				: nextCategoryOrder++;
 
-		const built: ActionCategoryConfig = {
+		const built: ContentActionCategoryConfig = {
 			id,
 			label: definition.label ?? id,
 			subtitle: definition.subtitle ?? definition.label ?? id,
@@ -159,4 +162,20 @@ export function createContentFactory(): ContentFactory {
 		development,
 		population,
 	};
+}
+
+export function toSessionActionCategoryConfig(
+	definition: ContentActionCategoryConfig,
+): SessionActionCategoryConfig {
+	return {
+		id: definition.id,
+		title: definition.label,
+		subtitle: definition.subtitle ?? definition.label,
+		icon: definition.icon,
+		order: definition.order,
+		layout: definition.layout,
+		hideWhenEmpty: definition.hideWhenEmpty,
+		description: definition.description,
+		analyticsKey: definition.analyticsKey,
+	} satisfies SessionActionCategoryConfig;
 }
