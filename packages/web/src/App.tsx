@@ -4,14 +4,12 @@ import Menu from './Menu';
 import Overview from './Overview';
 import Tutorial from './Tutorial';
 import BackgroundMusic from './components/audio/BackgroundMusic';
+import GameBootstrapScreen from './components/game/GameBootstrapScreen';
 import { useAppNavigation } from './state/useAppNavigation';
 import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 import { RegistryMetadataProvider } from './contexts/RegistryMetadataContext';
-import { getContentRegistrySnapshot } from './contexts/contentRegistrySnapshot';
-
-const { registries: OVERVIEW_REGISTRIES, metadata: OVERVIEW_METADATA } =
-	getContentRegistrySnapshot();
+import { useOverviewMetadata } from './state/useOverviewMetadata';
 
 export default function App() {
 	const {
@@ -37,14 +35,42 @@ export default function App() {
 		toggleAutoPass,
 	} = useAppNavigation();
 	const { playerName, hasStoredName, setPlayerName } = usePlayerIdentity();
+	const isOverviewScreen = currentScreen === Screen.Overview;
+	const {
+		registries: overviewRegistries,
+		metadata: overviewMetadata,
+		isLoading: isOverviewLoading,
+		error: overviewError,
+		retry: retryOverviewMetadata,
+	} = useOverviewMetadata(isOverviewScreen);
 
 	let screen: ReactNode;
 	switch (currentScreen) {
 		case Screen.Overview:
+			if (overviewError) {
+				screen = (
+					<GameBootstrapScreen
+						error={overviewError}
+						onRetry={retryOverviewMetadata}
+						onExit={returnToMenu}
+					/>
+				);
+				break;
+			}
+			if (isOverviewLoading || !overviewRegistries || !overviewMetadata) {
+				screen = (
+					<GameBootstrapScreen
+						error={null}
+						onRetry={retryOverviewMetadata}
+						onExit={returnToMenu}
+					/>
+				);
+				break;
+			}
 			screen = (
 				<RegistryMetadataProvider
-					registries={OVERVIEW_REGISTRIES}
-					metadata={OVERVIEW_METADATA}
+					registries={overviewRegistries}
+					metadata={overviewMetadata}
 				>
 					<Overview onBack={returnToMenu} />
 				</RegistryMetadataProvider>
