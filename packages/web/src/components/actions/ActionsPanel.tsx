@@ -13,6 +13,7 @@ import BasicOptions from './BasicOptions';
 import BuildOptions from './BuildOptions';
 import DevelopOptions from './DevelopOptions';
 import HireOptions from './HireOptions';
+import type { ActionCategoryDescriptor } from './ActionCategoryHeader';
 import {
 	COST_LABEL_CLASSES,
 	HEADER_CLASSES,
@@ -24,6 +25,24 @@ import {
 } from './actionsPanelStyles';
 import type { Action, Building, Development, DisplayPlayer } from './types';
 import { normalizeActionFocus } from './types';
+
+const BASIC_CATEGORY_METADATA: ActionCategoryDescriptor = {
+	icon: '⚙️',
+	label: 'Basic',
+	subtitle: '(Effects take place immediately, unless stated otherwise)',
+};
+
+const HIRE_CATEGORY_SUBTITLE =
+	'(Recruit population instantly; upkeep and role effects apply while ' +
+	'they remain)';
+
+const DEVELOP_CATEGORY_SUBTITLE =
+	'(Effects take place on build and last until development is removed)';
+
+const BUILD_CATEGORY_SUBTITLE =
+	'(Effects take place on build and last until building is removed)';
+
+const DEFAULT_POPULATION_ICON = '👶';
 
 export default function ActionsPanel() {
 	const {
@@ -222,6 +241,35 @@ export default function ActionsPanel() {
 			(action.category ?? 'basic') === 'basic',
 	);
 
+	const createCategoryDescriptor = (
+		actionDefinition: Action,
+		subtitle: string,
+		fallbackIcon?: string,
+	): ActionCategoryDescriptor => {
+		const actionInfo = sessionView.actions.get(actionDefinition.id);
+		const icon = actionInfo?.icon ?? actionDefinition.icon ?? fallbackIcon;
+		return {
+			icon: icon ?? undefined,
+			label: actionInfo?.name ?? actionDefinition.name,
+			subtitle,
+		};
+	};
+
+	const basicCategory = BASIC_CATEGORY_METADATA;
+	const hireCategory = raisePopAction
+		? createCategoryDescriptor(
+				raisePopAction,
+				HIRE_CATEGORY_SUBTITLE,
+				DEFAULT_POPULATION_ICON,
+			)
+		: undefined;
+	const developCategory = developAction
+		? createCategoryDescriptor(developAction, DEVELOP_CATEGORY_SUBTITLE)
+		: undefined;
+	const buildCategory = buildAction
+		? createCategoryDescriptor(buildAction, BUILD_CATEGORY_SUBTITLE)
+		: undefined;
+
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
 		: 'Show opponent actions';
@@ -279,6 +327,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							category={basicCategory}
 						/>
 					)}
 					{raisePopAction && (
@@ -287,6 +336,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							category={hireCategory ?? BASIC_CATEGORY_METADATA}
 						/>
 					)}
 					{developAction && (
@@ -299,6 +349,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							category={developCategory ?? BASIC_CATEGORY_METADATA}
 						/>
 					)}
 					{buildAction && (
@@ -311,6 +362,7 @@ export default function ActionsPanel() {
 							player={selectedPlayer}
 							canInteract={canInteract}
 							selectResourceDescriptor={selectResourceDescriptor}
+							category={buildCategory ?? BASIC_CATEGORY_METADATA}
 						/>
 					)}
 				</div>

@@ -5,6 +5,9 @@ import { useGameEngine } from '../../state/GameContext';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useSlotMetadata } from '../../contexts/RegistryMetadataContext';
 import ActionCard from './ActionCard';
+import ActionCategoryHeader, {
+	type ActionCategoryDescriptor,
+} from './ActionCategoryHeader';
 import {
 	formatMissingResources,
 	playerHasRequiredResources,
@@ -49,6 +52,7 @@ interface DevelopOptionsProps {
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
+	category: ActionCategoryDescriptor;
 }
 
 export default function DevelopOptions({
@@ -60,6 +64,7 @@ export default function DevelopOptions({
 	player,
 	canInteract,
 	selectResourceDescriptor,
+	category,
 }: DevelopOptionsProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const {
@@ -127,12 +132,7 @@ export default function DevelopOptions({
 	);
 	return (
 		<div>
-			<h3 className="font-medium flex flex-wrap items-center gap-2">
-				{renderIconLabel(actionInfo?.icon, actionInfo?.name ?? action.name)}
-				<span className="italic text-sm font-normal">
-					(Effects take place on build and last until development is removed)
-				</span>
-			</h3>
+			<ActionCategoryHeader descriptor={category} />
 			<div
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-1"
