@@ -18,6 +18,7 @@ describe('hold festival action translation', () => {
 		const { translation, festivalActionId } = scenario;
 		const summary = summarizeContent('action', festivalActionId, translation);
 		const details = getSyntheticFestivalDetails(scenario);
+		const modifierIcon = details.modifierInfo.icon ?? '✨';
 		const upkeepSummaryLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
@@ -29,7 +30,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
-					`${details.modifierInfo.icon ?? ''}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
+					`${modifierIcon}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
 				],
 			},
 		]);
@@ -44,6 +45,7 @@ describe('hold festival action translation', () => {
 			translation,
 		);
 		const details = getSyntheticFestivalDetails(scenario);
+		const modifierIcon = details.modifierInfo.icon ?? '✨';
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
@@ -54,7 +56,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
-					`${details.modifierInfo.icon ?? ''} ${details.modifierInfo.label ?? 'Outcome Adjustment'} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+					`${modifierIcon} ${details.modifierInfo.label ?? 'Outcome Adjustment'} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 		]);
@@ -68,9 +70,8 @@ describe('hold festival action translation', () => {
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
-		const modifierIcon = details.modifierInfo.icon
-			? `${details.modifierInfo.icon} `
-			: '';
+		const modifierIconValue = details.modifierInfo.icon ?? '✨';
+		const modifierIcon = modifierIconValue ? `${modifierIconValue} ` : '';
 		const modifierLabel = details.modifierInfo.label ?? 'Outcome Adjustment';
 		const raidLabel = formatTargetLabel(
 			details.armyAttack.icon ?? '',
