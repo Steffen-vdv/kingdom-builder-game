@@ -21,6 +21,11 @@ const INTERACTIVE_ELEMENT_SELECTOR = 'button, input, textarea, select';
 const ROLE_ELEMENT_SELECTOR = '[role="button"], [role="textbox"]';
 const CONTENT_EDITABLE_SELECTOR = '[contenteditable="true"]';
 
+export const QUIT_CONFIRMATION_DESCRIPTION = [
+	'If you quit now, the current game will end, your progress will be lost,',
+	"and you won't be able to continue later. Are you sure you want to retreat?",
+].join(' ');
+
 function isInteractiveTarget(target: EventTarget | null): boolean {
 	if (!(target instanceof HTMLElement)) {
 		return false;
@@ -261,7 +266,7 @@ export default function GameLayout() {
 			<ConfirmDialog
 				open={isQuitDialogOpen}
 				title="Leave the battlefield?"
-				description="If you quit now, the current game will end and any progress will be lost. Are you sure you want to retreat?"
+				description={QUIT_CONFIRMATION_DESCRIPTION}
 				confirmLabel="Quit game"
 				cancelLabel="Continue playing"
 				onCancel={closeDialog}

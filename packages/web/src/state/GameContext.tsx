@@ -35,6 +35,8 @@ import {
 } from './sessionSdk';
 import { enqueueSessionTask, getSessionRecord } from './sessionStateStore';
 
+const NOOP = () => {};
+
 export { TIME_SCALE_OPTIONS } from './useTimeScale';
 export type { TimeScale } from './useTimeScale';
 export type { PhaseProgressState } from './usePhaseProgress';
@@ -45,27 +47,35 @@ export function GameProvider(props: GameProviderProps) {
 		children,
 		onExit,
 		darkMode = true,
-		onToggleDark = () => {},
+		onToggleDark = NOOP,
 		devMode = false,
 		musicEnabled = true,
-		onToggleMusic = () => {},
+		onToggleMusic = NOOP,
 		soundEnabled = true,
-		onToggleSound = () => {},
+		onToggleSound = NOOP,
 		backgroundAudioMuted = true,
-		onToggleBackgroundAudioMute = () => {},
+		onToggleBackgroundAudioMute = NOOP,
 		autoAcknowledgeEnabled = false,
-		onToggleAutoAcknowledge = () => {},
+		onToggleAutoAcknowledge = NOOP,
 		autoPassEnabled = false,
-		onToggleAutoPass = () => {},
+		onToggleAutoPass = NOOP,
 		playerName = DEFAULT_PLAYER_NAME,
-		onChangePlayerName = () => {},
+		onChangePlayerName = NOOP,
+		resumeSessionId = null,
+		onPersistResumeSession = NOOP,
+		onClearResumeSession = NOOP,
+		onResumeSessionFailure = NOOP,
 	} = props;
 
 	const mountedRef = useRef(true);
 	const queueRef = useRef<SessionQueueSeed>(Promise.resolve());
 	const sessionStateRef = useRef<SessionContainer | null>(null);
 	const latestSnapshotRef = useRef<SessionSnapshot | null>(null);
+	const lastBootSessionIdRef = useRef<string | null>(null);
+	const lastPersistedSessionIdRef = useRef<string | null>(null);
 	const refreshAbortRef = useRef<AbortController | null>(null);
+	const lastPersistedSessionTurnRef = useRef<number | null>(null);
+	const lastPersistedSessionDevModeRef = useRef<boolean | null>(null);
 	const [sessionError, setSessionError] =
 		useState<SessionFailureDetails | null>(null);
 	const [bootAttempt, setBootAttempt] = useState(0);
@@ -84,9 +94,14 @@ export function GameProvider(props: GameProviderProps) {
 			if (record) {
 				queueRef.current = record.queueSeed;
 			}
+			lastBootSessionIdRef.current = next.sessionId;
 			setSessionError(null);
 			return;
 		}
+		lastBootSessionIdRef.current = null;
+		lastPersistedSessionIdRef.current = null;
+		lastPersistedSessionTurnRef.current = null;
+		lastPersistedSessionDevModeRef.current = null;
 		queueRef.current = Promise.resolve();
 	}, []);
 
@@ -118,6 +133,11 @@ export function GameProvider(props: GameProviderProps) {
 		releaseSession(current.sessionId);
 		updateSessionData(null);
 	}, [updateSessionData]);
+
+	const handleAbandonSession = useCallback(() => {
+		const activeSessionId = sessionStateRef.current?.sessionId ?? null;
+		onClearResumeSession(activeSessionId);
+	}, [onClearResumeSession]);
 
 	const teardownSession = useCallback(() => {
 		void runExclusive(() => {
@@ -154,16 +174,72 @@ export function GameProvider(props: GameProviderProps) {
 	);
 
 	useEffect(() => {
+		if (!sessionData) {
+			return;
+		}
+		const sessionId = sessionData.sessionId;
+		const turn = sessionData.snapshot.game.turn ?? 0;
+		const devModeState = sessionData.snapshot.game.devMode ?? false;
+		if (
+			sessionId === lastPersistedSessionIdRef.current &&
+			turn === lastPersistedSessionTurnRef.current &&
+			devModeState === lastPersistedSessionDevModeRef.current
+		) {
+			return;
+		}
+		onPersistResumeSession({
+			sessionId,
+			turn,
+			devMode: devModeState,
+			updatedAt: Date.now(),
+		});
+		lastPersistedSessionIdRef.current = sessionId;
+		lastPersistedSessionTurnRef.current = turn;
+		lastPersistedSessionDevModeRef.current = devModeState;
+	}, [sessionData, onPersistResumeSession]);
+
+	useEffect(() => {
 		let disposed = false;
+		const targetResumeId = resumeSessionId ?? null;
+		const activeSessionId = sessionStateRef.current?.sessionId ?? null;
+		if (
+			targetResumeId &&
+			targetResumeId === activeSessionId &&
+			lastBootSessionIdRef.current === activeSessionId
+		) {
+			return;
+		}
 		const controller = new AbortController();
 		setSessionError(null);
-		const create = () =>
+		const bootstrap = () =>
 			runExclusive(async () => {
-				if (sessionStateRef.current) {
-					return;
+				const targetResumeId = resumeSessionId ?? null;
+				const current = sessionStateRef.current;
+				if (current) {
+					if (!targetResumeId) {
+						return;
+					}
+					if (current.sessionId === targetResumeId) {
+						return;
+					}
 				}
 				releaseCurrentSession();
 				try {
+					if (targetResumeId) {
+						const resumed = await fetchSnapshot(targetResumeId, {
+							signal: controller.signal,
+						});
+						if (disposed || !mountedRef.current) {
+							releaseSession(resumed.sessionId);
+							return;
+						}
+						const { queueSeed: _queue, ...record } = resumed.record;
+						updateSessionData({
+							adapter: resumed.adapter,
+							...record,
+						});
+						return;
+					}
 					const created = await createSession(
 						{
 							devMode,
@@ -184,21 +260,39 @@ export function GameProvider(props: GameProviderProps) {
 					if (disposed || !mountedRef.current) {
 						return;
 					}
+					if (
+						error &&
+						typeof error === 'object' &&
+						'name' in error &&
+						(error as { name?: unknown }).name === 'AbortError'
+					) {
+						return;
+					}
+					if (targetResumeId) {
+						onResumeSessionFailure({
+							sessionId: targetResumeId,
+							error,
+						});
+						onClearResumeSession(targetResumeId);
+					}
 					applyFatalSessionError(error);
 				}
 			});
-		void create();
+		void bootstrap();
 		return () => {
 			disposed = true;
 			controller.abort();
 		};
 	}, [
 		devMode,
+		resumeSessionId,
 		releaseCurrentSession,
 		runExclusive,
 		updateSessionData,
 		bootAttempt,
 		applyFatalSessionError,
+		onResumeSessionFailure,
+		onClearResumeSession,
 	]);
 
 	const refreshSession = useCallback(() => {
@@ -357,6 +451,7 @@ export function GameProvider(props: GameProviderProps) {
 		ruleSnapshot: sessionData.ruleSnapshot,
 		refreshSession,
 		onReleaseSession: handleRelease,
+		onAbandonSession: handleAbandonSession,
 		onFatalSessionError: handleFatalSessionError,
 		registries: sessionData.registries,
 		resourceKeys: sessionData.resourceKeys,

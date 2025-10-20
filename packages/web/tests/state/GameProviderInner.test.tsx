@@ -381,6 +381,84 @@ describe('GameProviderInner', () => {
 		cleanup();
 	});
 
+	it('clears resume state before releasing the session on exit', async () => {
+		const registriesPayload = createSessionRegistriesPayload();
+		const { adapter, cleanup } = createRemoteSessionAdapter({
+			sessionId,
+			snapshot: sessionState,
+			registries: registriesPayload,
+		});
+		const enqueue = vi.fn(
+			async <T,>(task: () => Promise<T> | T) => await task(),
+		);
+		useSessionQueueMock.mockReturnValue({
+			enqueue,
+			cachedSessionSnapshot: sessionState,
+		});
+
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => adapter,
+			getLatestSnapshot: () => null,
+		};
+		const handleExit = vi.fn();
+		const handleReleaseSession = vi.fn();
+		const handleAbandonSession = vi.fn();
+
+		function ExitTrigger() {
+			const value = React.useContext(GameEngineContext);
+			React.useEffect(() => {
+				if (!value?.onExit) {
+					return;
+				}
+				value.onExit();
+			}, [value]);
+			return null;
+		}
+
+		render(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={localPlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={sessionState}
+				ruleSnapshot={sessionState.rules}
+				refreshSession={async () => {}}
+				onExit={handleExit}
+				onReleaseSession={handleReleaseSession}
+				onAbandonSession={handleAbandonSession}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={sessionState.metadata}
+			>
+				<ExitTrigger />
+			</GameProviderInner>,
+		);
+
+		await waitFor(() => expect(handleExit).toHaveBeenCalledTimes(1));
+
+		expect(handleAbandonSession).toHaveBeenCalledTimes(1);
+		expect(handleReleaseSession).toHaveBeenCalledTimes(1);
+		const abandonOrder = handleAbandonSession.mock.invocationCallOrder[0];
+		const releaseOrder = handleReleaseSession.mock.invocationCallOrder[0];
+		expect(abandonOrder).toBeLessThan(releaseOrder);
+		cleanup();
+	});
+
 	it('updates the human-controlled player name even when listed after AI opponents', async () => {
 		const registriesPayload = createSessionRegistriesPayload();
 		const { adapter, cleanup } = createRemoteSessionAdapter({

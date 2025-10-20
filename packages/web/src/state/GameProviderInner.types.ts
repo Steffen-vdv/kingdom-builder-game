@@ -32,6 +32,7 @@ export interface GameProviderInnerProps {
 	ruleSnapshot: SessionRuleSnapshot;
 	refreshSession: () => Promise<void>;
 	onReleaseSession: () => void;
+	onAbandonSession?: () => void;
 	onFatalSessionError?: (error: unknown) => void;
 	registries: SessionRegistries;
 	resourceKeys: SessionResourceKeys;

@@ -364,6 +364,145 @@ describe('GameProvider', () => {
 		);
 	});
 
+	it('persists resume metadata when snapshots are stored', async () => {
+		let currentTime = new Date('2024-01-01T00:00:00.000Z').getTime();
+		const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => currentTime);
+		const persistResumeSession = vi.fn();
+
+		try {
+			render(
+				<GameProvider
+					playerName="Commander"
+					onPersistResumeSession={persistResumeSession}
+				>
+					<SessionInspector />
+				</GameProvider>,
+			);
+
+			await waitFor(() =>
+				expect(persistResumeSession).toHaveBeenCalledTimes(1),
+			);
+
+			const firstRecord = persistResumeSession.mock.calls[0]?.[0] ?? null;
+			expect(firstRecord).toMatchObject({
+				sessionId,
+				turn: 1,
+				devMode: initialSnapshot.game.devMode ?? false,
+			});
+			expect(typeof firstRecord?.updatedAt).toBe('number');
+			expect(firstRecord?.updatedAt).toBe(currentTime);
+
+			currentTime = new Date('2024-01-01T00:05:00.000Z').getTime();
+			const devModeSnapshot = createSessionSnapshot({
+				players: initialSnapshot.game.players,
+				activePlayerId: initialSnapshot.game.activePlayerId,
+				opponentId: initialSnapshot.game.opponentId,
+				phases: initialSnapshot.phases,
+				actionCostResource: initialSnapshot.actionCostResource,
+				ruleSnapshot: initialSnapshot.rules,
+				turn: 2,
+				devMode: true,
+				currentPhase: initialSnapshot.game.currentPhase,
+				currentStep: initialSnapshot.game.currentStep,
+			});
+			fetchSnapshotMock.mockImplementationOnce(() => {
+				if (!sessionHarness) {
+					throw new Error('Session harness not initialised');
+				}
+				const response: SessionStateResponse = {
+					sessionId,
+					snapshot: devModeSnapshot,
+					registries: registriesPayload,
+				};
+				const stateRecord = applySessionState(response);
+				return Promise.resolve({
+					sessionId,
+					adapter: session,
+					record: {
+						sessionId: stateRecord.sessionId,
+						snapshot: stateRecord.snapshot,
+						ruleSnapshot: stateRecord.ruleSnapshot,
+						registries: stateRecord.registries,
+						resourceKeys: stateRecord.resourceKeys,
+						metadata: stateRecord.metadata,
+						queueSeed: stateRecord.queueSeed,
+					},
+				});
+			});
+
+			if (capturedPhaseOptions?.refresh) {
+				await act(() => Promise.resolve(capturedPhaseOptions.refresh()));
+			}
+
+			await waitFor(() =>
+				expect(persistResumeSession).toHaveBeenCalledTimes(2),
+			);
+
+			const secondRecord = persistResumeSession.mock.calls[1]?.[0] ?? null;
+			expect(secondRecord).toMatchObject({
+				sessionId,
+				turn: 2,
+				devMode: true,
+			});
+			expect(secondRecord?.updatedAt).toBe(currentTime);
+		} finally {
+			nowSpy.mockRestore();
+		}
+	});
+
+	it('fetches snapshots when a resume session id is provided', async () => {
+		if (!sessionHarness) {
+			sessionHarness = createRemoteSessionAdapter({
+				sessionId,
+				snapshot: refreshedSnapshot,
+				registries: registriesPayload,
+			});
+			session = sessionHarness.adapter;
+		}
+		render(
+			<GameProvider playerName="Commander" resumeSessionId={sessionId}>
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('session-turn')).toHaveTextContent('turn:2'),
+		);
+
+		expect(createSessionMock).not.toHaveBeenCalled();
+		expect(fetchSnapshotMock).toHaveBeenCalledWith(
+			sessionId,
+			expect.objectContaining({ signal: expect.any(AbortSignal) }),
+		);
+	});
+
+	it('routes resume bootstrap failures through callbacks', async () => {
+		const resumeError = new Error('resume failed');
+		fetchSnapshotMock.mockRejectedValueOnce(resumeError);
+		const handleResumeFailure = vi.fn();
+		const clearResumeSession = vi.fn();
+
+		render(
+			<GameProvider
+				playerName="Commander"
+				resumeSessionId={sessionId}
+				onResumeSessionFailure={handleResumeFailure}
+				onClearResumeSession={clearResumeSession}
+			>
+				<SessionInspector />
+			</GameProvider>,
+		);
+
+		await waitFor(() =>
+			expect(handleResumeFailure).toHaveBeenCalledWith({
+				sessionId,
+				error: resumeError,
+			}),
+		);
+		expect(clearResumeSession).toHaveBeenCalledWith(sessionId);
+		expect(createSessionMock).not.toHaveBeenCalled();
+	});
+
 	it('exposes gameplay preference props through the game context', async () => {
 		const handleToggleAutoAcknowledge = vi.fn();
 		const handleToggleAutoPass = vi.fn();
