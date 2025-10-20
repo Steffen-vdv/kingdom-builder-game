@@ -10,6 +10,8 @@ import {
 	advanceSessionPhase,
 	createSession,
 	fetchSnapshot,
+	loadActionCosts,
+	loadActionRequirements,
 	performSessionAction,
 	releaseSession,
 	runAiTurn,
@@ -208,6 +210,30 @@ describe('sessionSdk', () => {
 		});
 		expect(response.status).toBe('error');
 		expect(response).toHaveProperty('error', 'Nope.');
+	});
+
+	it('loads action costs for a freshly created session', async () => {
+		await createSession();
+		const expectedCosts = { [resourceKey]: 3 };
+		api.setNextActionCostResponse({
+			sessionId: 'session-1',
+			costs: expectedCosts,
+		});
+		const costs = await loadActionCosts('session-1', taxActionId);
+		expect(costs).toEqual(expectedCosts);
+	});
+
+	it('loads action requirements for a freshly created session', async () => {
+		await createSession();
+		const expectedRequirements = [
+			{ id: 'req:example', label: 'Requirement', met: true },
+		];
+		api.setNextActionRequirementResponse({
+			sessionId: 'session-1',
+			requirements: expectedRequirements,
+		});
+		const requirements = await loadActionRequirements('session-1', taxActionId);
+		expect(requirements).toEqual(expectedRequirements);
 	});
 
 	it('skips the queue when requested', async () => {
