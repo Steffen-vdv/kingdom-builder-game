@@ -48,7 +48,6 @@ export function useAppNavigation(): AppNavigationState {
 		resumePoint,
 		resumeSessionId,
 		updateFromHistory,
-		suspendResumeSession,
 		persistResumeSession: persistResumeSessionState,
 		clearResumeSession: clearResumeSessionState,
 		handleResumeSessionFailure: handleResumeSessionFailureState,
@@ -214,9 +213,19 @@ export function useAppNavigation(): AppNavigationState {
 		});
 	}, [buildHistoryState, replaceHistoryState]);
 
+	const updateResumeHistory = useCallback(
+		(nextSessionId: string | null) => {
+			replaceHistoryState(
+				buildHistoryState({
+					resumeSessionId: nextSessionId,
+				}),
+			);
+		},
+		[buildHistoryState, replaceHistoryState],
+	);
 	const startStandardGame = useCallback(() => {
 		const nextGameKey = currentGameKey + 1;
-		suspendResumeSession();
+		clearResumeSessionState(updateResumeHistory);
 		setIsDevMode(false);
 		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);
@@ -231,14 +240,15 @@ export function useAppNavigation(): AppNavigationState {
 		);
 	}, [
 		buildHistoryState,
+		clearResumeSessionState,
 		currentGameKey,
 		pushHistoryState,
-		suspendResumeSession,
+		updateResumeHistory,
 	]);
 
 	const startDeveloperGame = useCallback(() => {
 		const nextGameKey = currentGameKey + 1;
-		suspendResumeSession();
+		clearResumeSessionState(updateResumeHistory);
 		setIsDevMode(true);
 		setIsAutoAcknowledgeEnabled(true);
 		setIsAutoPassEnabled(true);
@@ -257,9 +267,10 @@ export function useAppNavigation(): AppNavigationState {
 		);
 	}, [
 		buildHistoryState,
+		clearResumeSessionState,
 		currentGameKey,
 		pushHistoryState,
-		suspendResumeSession,
+		updateResumeHistory,
 	]);
 
 	const openOverview = useCallback(() => {
@@ -277,16 +288,6 @@ export function useAppNavigation(): AppNavigationState {
 		});
 		pushHistoryState(tutorialState, SCREEN_PATHS[Screen.Tutorial]);
 	}, [buildHistoryState, pushHistoryState]);
-	const updateResumeHistory = useCallback(
-		(nextSessionId: string | null) => {
-			replaceHistoryState(
-				buildHistoryState({
-					resumeSessionId: nextSessionId,
-				}),
-			);
-		},
-		[buildHistoryState, replaceHistoryState],
-	);
 	const continueSavedGame = useContinueSavedGame({
 		resumePoint,
 		currentGameKey,
