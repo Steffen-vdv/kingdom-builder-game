@@ -16,6 +16,7 @@ import {
 import {
 	buildTimelineTree,
 	buildResolutionTimelineEntries,
+	normalizeModifierDescription,
 } from './ResolutionTimeline';
 
 interface ResolutionLabels {
@@ -237,7 +238,7 @@ function ResolutionCard({
 				}
 			}
 
-			const text = remaining.trimStart();
+			const text = normalizeModifierDescription(remaining.trimStart());
 			return { depth, text };
 		}
 

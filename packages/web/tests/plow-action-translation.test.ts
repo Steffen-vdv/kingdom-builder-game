@@ -203,7 +203,6 @@ describe('plow action translation', () => {
 		const hapIcon = hapDescriptor.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
 		const modifierIcon = modifierInfo.icon ?? '💲';
-		const modifierLabel = modifierInfo.label ?? 'Cost Adjustment';
 		const modifierDirection = modAmt >= 0 ? 'Increase' : 'Decrease';
 		const modMagnitude = Math.abs(modAmt);
 		const landAsset = translation.assets.land ?? {};
@@ -231,7 +230,7 @@ describe('plow action translation', () => {
 					upkeepDescriptionLabel
 				}`,
 				items: [
-					`${modifierIcon} ${modifierLabel} on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
+					`${modifierIcon} modifier on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
 				],
 			},
 		]);
