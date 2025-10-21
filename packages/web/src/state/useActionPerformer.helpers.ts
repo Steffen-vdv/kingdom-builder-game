@@ -69,8 +69,9 @@ export async function handleMissingActionDefinition({
 			kind: 'headline',
 		},
 	];
-	const timeline = buildActionLogTimeline(fallbackMessages, [fallbackChange]);
-	const logLines = formatActionLogLines(fallbackMessages, [fallbackChange]);
+	const fallbackChanges = [{ summary: fallbackChange }];
+	const timeline = buildActionLogTimeline(fallbackMessages, fallbackChanges);
+	const logLines = formatActionLogLines(fallbackMessages, fallbackChanges);
 	const actionMeta = buildResolutionActionMeta(
 		action,
 		undefined,

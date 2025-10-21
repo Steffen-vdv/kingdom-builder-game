@@ -9,6 +9,7 @@ import {
 	type PlayerSnapshot,
 	type TranslationDiffContext,
 } from '../translation';
+import { flattenActionDiffChanges } from '../translation/log/diff';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { ResolutionSource } from './useActionResolution';
 import { formatDetailText } from '../utils/stats/format';
@@ -22,6 +23,7 @@ interface FormatPhaseResolutionOptions {
 	stepDefinition?: SessionPhaseStepDefinition;
 	diffContext: TranslationDiffContext;
 	resourceKeys?: SessionResourceKey[];
+	tieredResourceKey?: string;
 }
 
 interface PhaseResolutionFormatResult {
@@ -69,6 +71,7 @@ export function formatPhaseResolution({
 	stepDefinition,
 	diffContext,
 	resourceKeys,
+	tieredResourceKey,
 }: FormatPhaseResolutionOptions): PhaseResolutionFormatResult {
 	const phaseId = phaseDefinition?.id ?? advance.phase;
 	const rawPhaseLabel = phaseDefinition?.label ?? advance.phase;
@@ -125,14 +128,19 @@ export function formatPhaseResolution({
 		: stepDefinition?.effects?.length
 			? { effects: stepDefinition.effects }
 			: undefined;
-	const changes = diffStepSnapshots(
+	const diffOptions = tieredResourceKey ? { tieredResourceKey } : undefined;
+	const diffResult = diffStepSnapshots(
 		before,
 		resolvedAfter,
 		stepEffects,
 		diffContext,
 		resourceKeys,
-	).filter((line) => Boolean(line?.trim()));
-	if (!changes.length) {
+		diffOptions,
+	);
+	const summaries = diffResult.summaries.filter((line) =>
+		Boolean(line?.trim()),
+	);
+	if (!summaries.length) {
 		return {
 			source,
 			lines: [],
@@ -140,9 +148,17 @@ export function formatPhaseResolution({
 			...(actorLabel ? { actorLabel } : {}),
 		};
 	}
-	const indentedChanges = changes.map((line) => `    ${line}`);
-	const lines = [phaseDisplay, ...indentedChanges];
-	const summaries = changes;
+	const formattedChanges = flattenActionDiffChanges(diffResult.tree)
+		.map(({ change, depth }) => ({ change, depth }))
+		.filter(({ change }) => Boolean(change.summary.trim()))
+		.map(({ change, depth }) => {
+			const nestedIndent = Math.max(0, depth - 1);
+			const baseIndent = '    ';
+			const extraIndent = '  '.repeat(nestedIndent);
+			const marker = depth > 1 ? '↳ ' : '';
+			return `${baseIndent}${extraIndent}${marker}${change.summary}`;
+		});
+	const lines = [phaseDisplay, ...formattedChanges];
 
 	return {
 		source,

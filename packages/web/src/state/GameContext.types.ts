@@ -21,6 +21,7 @@ import type {
 	Session,
 	SessionResourceKey,
 } from './sessionTypes';
+import type { ResumeSessionRecord } from './sessionResumeStorage';
 
 export interface SessionContainer
 	extends Omit<RemoteSessionRecord, 'queueSeed'> {
@@ -45,6 +46,15 @@ export interface GameProviderProps {
 	onToggleAutoPass?: () => void;
 	playerName?: string;
 	onChangePlayerName?: (name: string) => void;
+	resumeSessionId?: string | null;
+	onPersistResumeSession?: (record: ResumeSessionRecord) => void;
+	onClearResumeSession?: (sessionId?: string | null) => void;
+	onResumeSessionFailure?: (options: ResumeSessionFailureOptions) => void;
+}
+
+export interface ResumeSessionFailureOptions {
+	sessionId: string;
+	error: unknown;
 }
 
 export interface PerformActionRequest {
@@ -57,6 +67,8 @@ export type PerformActionHandler = (
 ) => Promise<void>;
 
 export type AdvancePhaseHandler = () => Promise<void>;
+
+export type StartSessionHandler = () => Promise<void>;
 
 export type RefreshSessionHandler = () => Promise<void>;
 
@@ -90,6 +102,7 @@ export interface GameEngineContextValue {
 	requests: {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;
+		startSession: StartSessionHandler;
 		refreshSession: RefreshSessionHandler;
 	};
 	metadata: SessionMetadataFetchers;

@@ -9,8 +9,7 @@ import {
 	COMBAT_STAT_CONFIG,
 	SYNTH_RESOURCE_IDS,
 	SYNTH_STAT_IDS,
-	ATTACKER_HAPPINESS_GAIN,
-	DEFENDER_HAPPINESS_LOSS,
+	PLUNDER_HAPPINESS_AMOUNT,
 	WAR_WEARINESS_GAIN,
 	BUILDING_REWARD_GOLD,
 	PLUNDER_PERCENT,
@@ -67,7 +66,12 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 			method: 'transfer',
 			params: {
 				key: descriptor.key,
-				percent: descriptor.percent ?? 0,
+				...(descriptor.percent !== undefined
+					? { percent: descriptor.percent }
+					: {}),
+				...(descriptor.amount !== undefined
+					? { amount: descriptor.amount }
+					: {}),
 			},
 		};
 	}
@@ -177,23 +181,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 1 },
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
-			attacker: [
-				{
-					kind: 'resource',
-					method: 'add',
-					key: SYNTH_RESOURCE_IDS.happiness,
-					amount: ATTACKER_HAPPINESS_GAIN,
-				},
-				{ kind: 'action', id: SYNTH_PLUNDER.id },
-			],
-			defender: [
-				{
-					kind: 'resource',
-					method: 'remove',
-					key: SYNTH_RESOURCE_IDS.happiness,
-					amount: DEFENDER_HAPPINESS_LOSS,
-				},
-			],
+			attacker: [{ kind: 'action', id: SYNTH_PLUNDER.id }],
 		},
 		extra: [
 			{
@@ -222,6 +210,12 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 		meta: SYNTH_PLUNDER,
 		system: true,
 		extra: [
+			{
+				kind: 'resource',
+				method: 'transfer',
+				key: SYNTH_RESOURCE_IDS.happiness,
+				amount: PLUNDER_HAPPINESS_AMOUNT,
+			},
 			{
 				kind: 'resource',
 				method: 'transfer',

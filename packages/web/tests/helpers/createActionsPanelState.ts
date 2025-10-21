@@ -19,6 +19,7 @@ export function createActionsPanelState({
 			isActionPhase: true,
 			canEndTurn: true,
 			isAdvancing: false,
+			awaitingManualStart: false,
 			activePlayerId: 'player-actions',
 			activePlayerName: 'Player Actions',
 		},
@@ -26,6 +27,7 @@ export function createActionsPanelState({
 		requests: {
 			performAction: vi.fn().mockResolvedValue(undefined),
 			advancePhase: vi.fn().mockResolvedValue(undefined),
+			startSession: vi.fn().mockResolvedValue(undefined),
 			refreshSession: vi.fn().mockResolvedValue(undefined),
 		},
 		runUntilActionPhase: vi.fn(),

@@ -1,4 +1,8 @@
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
+import {
+	flattenActionDiffChanges,
+	type ActionDiffChange,
+} from '../translation/log/diff';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 
 function renderTimelineLine(line: ActionLogLineDescriptor): string {
@@ -16,51 +20,63 @@ function renderTimeline(
 	return descriptors.map(renderTimelineLine);
 }
 
+function convertChangeTreeToDescriptors(
+	changes: readonly ActionDiffChange[],
+	baseDepth = 1,
+): ActionLogLineDescriptor[] {
+	const flattened = flattenActionDiffChanges(changes, baseDepth);
+	return flattened.map<ActionLogLineDescriptor>(({ change, depth }) => ({
+		text: change.summary,
+		depth,
+		kind: 'effect',
+	}));
+}
+
 export function buildActionLogTimeline(
 	messages: readonly ActionLogLineDescriptor[],
-	changes: readonly string[],
+	changes: readonly ActionDiffChange[],
 ): ActionLogLineDescriptor[] {
 	const descriptors: ActionLogLineDescriptor[] = [...messages];
-	for (const change of changes) {
-		descriptors.push({ text: change, depth: 1, kind: 'change' });
-	}
+	descriptors.push(...convertChangeTreeToDescriptors(changes));
 	return descriptors;
 }
 
 export function buildDevelopActionLogTimeline(
 	messages: readonly ActionLogLineDescriptor[],
-	changes: readonly string[],
+	changes: readonly ActionDiffChange[],
 ): ActionLogLineDescriptor[] {
-	let developmentHeadline: string | undefined;
-	const remainingChanges: string[] = [];
-	for (const change of changes) {
-		if (!developmentHeadline && change.startsWith(LOG_KEYWORDS.developed)) {
-			developmentHeadline = change;
-			continue;
-		}
-		remainingChanges.push(change);
-	}
-	if (!developmentHeadline) {
+	const developmentIndex = changes.findIndex((change) => {
+		return change.summary.startsWith(LOG_KEYWORDS.developed);
+	});
+	if (developmentIndex === -1) {
 		return buildActionLogTimeline(messages, changes);
 	}
+	const developmentChange = changes[developmentIndex]!;
 	const [, ...restMessages] = messages;
 	const descriptors: ActionLogLineDescriptor[] = [
-		{ text: developmentHeadline, depth: 0, kind: 'headline' },
+		{ text: developmentChange.summary, depth: 0, kind: 'headline' },
 		...restMessages,
 	];
-	return buildActionLogTimeline(descriptors, remainingChanges);
+	const remainingChanges = [
+		...changes.slice(0, developmentIndex),
+		...changes.slice(developmentIndex + 1),
+	];
+	descriptors.push(...convertChangeTreeToDescriptors(remainingChanges));
+	return descriptors;
 }
 
 export function formatActionLogLines(
 	messages: readonly ActionLogLineDescriptor[],
-	changes: readonly string[],
+	changes: readonly ActionDiffChange[],
 ): string[] {
 	return renderTimeline(buildActionLogTimeline(messages, changes));
 }
 
 export function formatDevelopActionLogLines(
 	messages: readonly ActionLogLineDescriptor[],
-	changes: readonly string[],
+	changes: readonly ActionDiffChange[],
 ): string[] {
 	return renderTimeline(buildDevelopActionLogTimeline(messages, changes));
 }
+
+export { convertChangeTreeToDescriptors };

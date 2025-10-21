@@ -13,9 +13,11 @@ import {
 	CONTINUE_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
+import { usePlayerAccentClasses } from './common/usePlayerAccentClasses';
 import {
 	buildTimelineTree,
 	buildResolutionTimelineEntries,
+	normalizeModifierDescription,
 } from './ResolutionTimeline';
 
 interface ResolutionLabels {
@@ -88,7 +90,13 @@ function ResolutionCard({
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
-	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
+	const resolveAccentClasses = usePlayerAccentClasses();
+	const accentClasses = resolveAccentClasses(resolution.player?.id ?? null);
+	const containerClass = joinClasses(
+		CARD_BASE_CLASS,
+		'pointer-events-auto',
+		accentClasses.card,
+	);
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
@@ -237,7 +245,7 @@ function ResolutionCard({
 				}
 			}
 
-			const text = remaining.trimStart();
+			const text = normalizeModifierDescription(remaining.trimStart());
 			return { depth, text };
 		}
 

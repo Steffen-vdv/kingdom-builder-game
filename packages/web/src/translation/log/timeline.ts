@@ -4,8 +4,7 @@ export type ActionLogLineKind =
 	| 'subaction'
 	| 'effect'
 	| 'cost'
-	| 'cost-detail'
-	| 'change';
+	| 'cost-detail';
 
 export interface ActionLogLineDescriptor {
 	text: string;

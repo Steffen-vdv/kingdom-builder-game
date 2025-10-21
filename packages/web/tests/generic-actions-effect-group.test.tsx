@@ -274,6 +274,7 @@ let mockGame: ReturnType<typeof createMockGame>;
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
+	useOptionalGameEngine: () => mockGame,
 }));
 
 describe('GenericActions effect group handling', () => {

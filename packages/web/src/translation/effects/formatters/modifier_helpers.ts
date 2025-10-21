@@ -18,6 +18,25 @@ export const RESULT_EVENT_GRANT_RESOURCES = `Whenever it grants ${GENERAL_RESOUR
 export const formatTargetLabel = (icon: string, name: string) =>
 	joinParts(icon, name || '');
 
+export interface ModifierLabelLike {
+	icon?: string;
+	label?: string;
+}
+
+export function buildModifierDescriptionLabel(
+	descriptor: ModifierLabelLike,
+): string {
+	const icon = descriptor.icon?.trim();
+	if (icon) {
+		return `${icon} Modifier`;
+	}
+	const label = descriptor.label?.trim();
+	if (label) {
+		return `${label} Modifier`;
+	}
+	return 'Modifier';
+}
+
 export function formatResultModifierClause(
 	label: string,
 	target: string,
@@ -63,7 +82,7 @@ export function wrapResultModifierEntries(
 					},
 		);
 	}
-	const labelText = `${label.icon} ${label.label}`;
+	const labelText = buildModifierDescriptionLabel(label);
 	const targetLabel = formatTargetLabel(target.icon ?? '', target.name);
 	const prefix = `${labelText} on ${targetLabel}: ${event}`;
 	return entries.map((entry) =>
@@ -165,7 +184,7 @@ export function formatGainFrom(
 		return `${magnitude}% ${adjective}${detailed ? ' of that resource' : ''}`;
 	})();
 	return formatResultModifierClause(
-		`${label.icon} ${label.label}`,
+		buildModifierDescriptionLabel(label),
 		source.description,
 		RESULT_EVENT_GRANT_RESOURCES,
 		`gain ${more}${usePercent ? roundingDetail : ''}`,

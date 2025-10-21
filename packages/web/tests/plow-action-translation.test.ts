@@ -136,12 +136,16 @@ describe('plow action translation', () => {
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
 		const resourceDescriptor = translation.assets.resources?.[modKey] ?? {};
 		const modIcon = resourceDescriptor.icon ?? '';
+		const modifierInfo = translation.assets.modifiers?.cost ?? {};
+		const modifierIcon = modifierInfo.icon ?? '✨';
 		expect(summary).toEqual([
 			`${expand.icon} ${expand.name}`,
 			`${till.icon} ${till.name}`,
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
-				items: [`💲: ${modIcon}${modAmt >= 0 ? '+' : ''}${modAmt}`],
+				items: [
+					`${modifierIcon}: ${modIcon}${modAmt >= 0 ? '+' : ''}${modAmt}`,
+				],
 			},
 		]);
 	});
@@ -202,8 +206,7 @@ describe('plow action translation', () => {
 		const hapLabel = hapDescriptor.label ?? 'happiness';
 		const hapIcon = hapDescriptor.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
-		const modifierIcon = modifierInfo.icon ?? '💲';
-		const modifierLabel = modifierInfo.label ?? 'Cost Adjustment';
+		const modifierIcon = modifierInfo.icon ?? '✨';
 		const modifierDirection = modAmt >= 0 ? 'Increase' : 'Decrease';
 		const modMagnitude = Math.abs(modAmt);
 		const landAsset = translation.assets.land ?? {};
@@ -231,7 +234,7 @@ describe('plow action translation', () => {
 					upkeepDescriptionLabel
 				}`,
 				items: [
-					`${modifierIcon} ${modifierLabel} on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
+					`${modifierIcon} Modifier on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
 				],
 			},
 		]);

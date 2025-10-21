@@ -1,4 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
+import { GENERAL_RESOURCE_ICON } from '../../../icons';
 import { formatTargetLabel } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
 import { selectTransferDescriptor } from '../registrySelectors';
@@ -19,6 +20,7 @@ export function resolveTransferModifierTarget(
 	translationContext: TranslationContext,
 ): TransferModifierTarget {
 	const params = effectDefinition.params ?? {};
+	const transferDescriptor = selectTransferDescriptor(translationContext);
 	const rawActionId = params['actionId'];
 	const paramActionId =
 		typeof rawActionId === 'string' ? rawActionId : undefined;
@@ -43,27 +45,35 @@ export function resolveTransferModifierTarget(
 		};
 	}
 
+	const resourceTransferName = `${GENERAL_RESOURCE_ICON}${
+		transferDescriptor.icon || ''
+	} Resource Transfers`;
 	let fallbackName = 'affected actions';
 	if (paramActionId) {
 		fallbackName = humanizeIdentifier(paramActionId) || paramActionId;
 	} else if (evaluationId) {
 		fallbackName = humanizeIdentifier(evaluationId) || evaluationId;
-	} else if (evaluation?.type === 'transfer_pct') {
-		fallbackName = 'resource transfers';
+	} else if (
+		evaluation?.type === 'transfer_pct' ||
+		evaluation?.type === 'transfer_amount'
+	) {
+		fallbackName = resourceTransferName;
 	} else if (evaluation) {
 		fallbackName = humanizeIdentifier(evaluation.type) || evaluation.type;
 	}
 	if (
-		evaluation?.type === 'transfer_pct' &&
-		(!evaluationId || evaluationId === 'percent')
+		(evaluation?.type === 'transfer_pct' ||
+			evaluation?.type === 'transfer_amount') &&
+		(!evaluationId || evaluationId === 'percent' || evaluationId === 'amount')
 	) {
-		fallbackName = 'resource transfers';
+		fallbackName = resourceTransferName;
 	}
 
 	const clauseTarget = formatTargetLabel('', fallbackName);
 	const summaryLabel =
-		evaluation?.type === 'transfer_pct'
-			? selectTransferDescriptor(translationContext).icon
+		evaluation?.type === 'transfer_pct' ||
+		evaluation?.type === 'transfer_amount'
+			? `${GENERAL_RESOURCE_ICON}${transferDescriptor.icon || ''}`
 			: fallbackName;
 	return {
 		icon: '',

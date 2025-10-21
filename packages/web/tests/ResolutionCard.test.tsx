@@ -167,7 +167,7 @@ describe('<ResolutionCard />', () => {
 				{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
 				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
 				{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
-				{ text: '🪄 Effect happens', depth: 1, kind: 'change' },
+				{ text: '🪄 Effect happens', depth: 1, kind: 'effect' },
 			],
 			visibleLines: [],
 		});
@@ -213,8 +213,8 @@ describe('<ResolutionCard />', () => {
 			{ text: '🪄 Channel the forge', depth: 1, kind: 'group' },
 			{ text: 'Gain 2 Relics', depth: 2, kind: 'effect' },
 			{ text: 'Summon guardian golem', depth: 3, kind: 'subaction' },
-			{ text: 'Army +1', depth: 4, kind: 'change' },
-			{ text: 'Fortification +1', depth: 4, kind: 'change' },
+			{ text: 'Army +1', depth: 4, kind: 'effect' },
+			{ text: 'Fortification +1', depth: 4, kind: 'effect' },
 		];
 		const resolution = createResolution({
 			action: {
@@ -295,6 +295,33 @@ describe('<ResolutionCard />', () => {
 		expect(secondChangeContainer).toHaveStyle({ marginLeft: '3.5rem' });
 	});
 
+	it('normalizes modifier descriptions in structured timelines', () => {
+		const resolution = createResolution({
+			visibleTimeline: [
+				{
+					text: '✨ result on Raid: Whenever it resolves, 🎯 +1',
+					depth: 1,
+					kind: 'effect',
+				},
+				{
+					text: '✨ cost on all actions: Increase cost by +3',
+					depth: 1,
+					kind: 'effect',
+				},
+			],
+			visibleLines: [],
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		expect(
+			screen.getByText('✨ Modifier on Raid: Whenever it resolves, 🎯 +1'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('✨ Modifier on all actions: Increase cost by +3'),
+		).toBeInTheDocument();
+	});
+
 	it('falls back to simple line rendering for phase resolutions without timeline data', () => {
 		const resolution = createResolution({
 			source: 'phase',
@@ -326,5 +353,24 @@ describe('<ResolutionCard />', () => {
 		expect(secondLine).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(bonusLine).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(followUpLine).toHaveStyle({ marginLeft: '2.625rem' });
+	});
+
+	it('normalizes modifier descriptions in fallback lines', () => {
+		const resolution = createResolution({
+			visibleTimeline: [],
+			visibleLines: [
+				'✨ result on Raid: Whenever it resolves, 🎯 +1',
+				'   ✨ cost on all actions: Increase cost by +3',
+			],
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		expect(
+			screen.getByText('✨ Modifier on Raid: Whenever it resolves, 🎯 +1'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('✨ Modifier on all actions: Increase cost by +3'),
+		).toBeInTheDocument();
 	});
 });

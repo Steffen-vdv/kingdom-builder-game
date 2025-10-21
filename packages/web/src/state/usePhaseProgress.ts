@@ -31,6 +31,7 @@ interface PhaseProgressOptions {
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	onFatalSessionError?: ((error: unknown) => void) | undefined;
+	onSnapshotApplied?: (snapshot: SessionSnapshot) => void;
 }
 
 export interface PhaseProgressState {
@@ -41,10 +42,42 @@ export interface PhaseProgressState {
 	activePlayerId: string | null;
 	activePlayerName: string | null;
 	turnNumber: number;
+	awaitingManualStart: boolean;
 }
 
 export interface RunUntilActionPhaseOptions {
 	forceAdvance?: boolean;
+}
+
+function requiresManualStart(snapshot: SessionSnapshot): boolean {
+	if (snapshot.game.conclusion) {
+		return false;
+	}
+	if (snapshot.game.turn !== 1) {
+		return false;
+	}
+	if (snapshot.game.phaseIndex !== 0) {
+		return false;
+	}
+	if (snapshot.game.stepIndex !== 0) {
+		return false;
+	}
+	const firstPhase = snapshot.phases[0];
+	if (!firstPhase) {
+		return false;
+	}
+	if (snapshot.game.currentPhase !== firstPhase.id) {
+		return false;
+	}
+	const firstStepId = firstPhase.steps?.[0]?.id ?? firstPhase.id;
+	if (snapshot.game.currentStep !== firstStepId) {
+		return false;
+	}
+	const firstPlayer = snapshot.game.players[0];
+	if (!firstPlayer) {
+		return false;
+	}
+	return snapshot.game.activePlayerId === firstPlayer.id;
 }
 
 function computePhaseState(
@@ -73,6 +106,7 @@ function computePhaseState(
 		activePlayerId: overrides.activePlayerId ?? activePlayer?.id ?? null,
 		activePlayerName: overrides.activePlayerName ?? activePlayer?.name ?? null,
 		turnNumber: overrides.turnNumber ?? snapshot.game.turn,
+		awaitingManualStart: overrides.awaitingManualStart ?? false,
 	};
 }
 
@@ -87,9 +121,28 @@ export function usePhaseProgress({
 	registries,
 	showResolution,
 	onFatalSessionError,
+	onSnapshotApplied,
 }: PhaseProgressOptions) {
-	const [phaseState, setPhaseState] = useState<PhaseProgressState>(() =>
-		computePhaseState(sessionSnapshot, actionCostResource),
+	const initialAwaitingManualStart = requiresManualStart(sessionSnapshot);
+	const awaitingManualStartRef = useRef<boolean>(initialAwaitingManualStart);
+	const [awaitingManualStart, setAwaitingManualStart] = useState<boolean>(
+		initialAwaitingManualStart,
+	);
+	const updateAwaitingManualStart = useCallback((value: boolean) => {
+		awaitingManualStartRef.current = value;
+		setAwaitingManualStart(value);
+	}, []);
+	const initialPhaseState = computePhaseState(
+		sessionSnapshot,
+		actionCostResource,
+		{
+			awaitingManualStart,
+		},
+	);
+	const [phaseState, setPhaseState] =
+		useState<PhaseProgressState>(initialPhaseState);
+	const [initializing, setInitializing] = useState<boolean>(
+		() => !initialPhaseState.isActionPhase && !initialAwaitingManualStart,
 	);
 
 	const sessionSnapshotRef = useRef(sessionSnapshot);
@@ -98,14 +151,57 @@ export function usePhaseProgress({
 		sessionSnapshotRef.current = sessionSnapshot;
 	}, [sessionSnapshot]);
 
+	useEffect(() => {
+		const snapshot = sessionSnapshotRef.current;
+		const manualStart = requiresManualStart(snapshot);
+		updateAwaitingManualStart(manualStart);
+		const resetState = computePhaseState(snapshot, actionCostResource, {
+			awaitingManualStart: manualStart,
+		});
+		setPhaseState(resetState);
+		setInitializing(!resetState.isActionPhase && !manualStart);
+	}, [sessionId, actionCostResource, updateAwaitingManualStart]);
+
+	const markInitialized = useCallback((next: PhaseProgressState) => {
+		setInitializing((current) => {
+			if (!current) {
+				return current;
+			}
+			if (!next.isActionPhase || next.isAdvancing) {
+				return current;
+			}
+			return false;
+		});
+	}, []);
+
 	const applyPhaseSnapshot = useCallback(
 		(
 			snapshot: SessionSnapshot,
 			overrides: Partial<PhaseProgressState> = {},
 		) => {
-			setPhaseState(computePhaseState(snapshot, actionCostResource, overrides));
+			let manualStart = awaitingManualStartRef.current;
+			if (manualStart) {
+				manualStart = requiresManualStart(snapshot);
+				if (manualStart !== awaitingManualStartRef.current) {
+					updateAwaitingManualStart(manualStart);
+				}
+			}
+			const nextState = computePhaseState(snapshot, actionCostResource, {
+				...overrides,
+				awaitingManualStart: manualStart,
+			});
+			markInitialized(nextState);
+			setPhaseState(nextState);
+			if (onSnapshotApplied) {
+				onSnapshotApplied(snapshot);
+			}
 		},
-		[actionCostResource],
+		[
+			actionCostResource,
+			markInitialized,
+			updateAwaitingManualStart,
+			onSnapshotApplied,
+		],
 	);
 
 	const refreshPhaseState = useCallback(
@@ -122,9 +218,25 @@ export function usePhaseProgress({
 			if (previous.isAdvancing) {
 				return previous;
 			}
-			return computePhaseState(sessionSnapshot, actionCostResource);
+			let manualStart = awaitingManualStartRef.current;
+			if (manualStart) {
+				manualStart = requiresManualStart(sessionSnapshot);
+				if (manualStart !== awaitingManualStartRef.current) {
+					updateAwaitingManualStart(manualStart);
+				}
+			}
+			const nextState = computePhaseState(sessionSnapshot, actionCostResource, {
+				awaitingManualStart: manualStart,
+			});
+			markInitialized(nextState);
+			return nextState;
 		});
-	}, [sessionSnapshot, actionCostResource]);
+	}, [
+		sessionSnapshot,
+		actionCostResource,
+		markInitialized,
+		updateAwaitingManualStart,
+	]);
 
 	const runUntilActionPhaseCore = useCallback(
 		(options: RunUntilActionPhaseOptions = {}) => {
@@ -162,6 +274,18 @@ export function usePhaseProgress({
 			enqueue(() => runUntilActionPhaseCore(options ?? {})),
 		[enqueue, runUntilActionPhaseCore],
 	);
+
+	const startSession = useCallback(async () => {
+		if (!awaitingManualStartRef.current) {
+			return;
+		}
+		updateAwaitingManualStart(false);
+		setPhaseState((previous) => ({
+			...previous,
+			awaitingManualStart: false,
+		}));
+		await runUntilActionPhase({ forceAdvance: true });
+	}, [runUntilActionPhase, updateAwaitingManualStart]);
 
 	const endTurn = useCallback(async () => {
 		const record = getSessionRecord(sessionId);
@@ -223,11 +347,13 @@ export function usePhaseProgress({
 
 	return {
 		phase: phaseState,
+		initializing,
 		runUntilActionPhase,
 		runUntilActionPhaseCore,
 		handleEndTurn,
 		endTurn,
 		applyPhaseSnapshot,
 		refreshPhaseState,
+		startSession,
 	};
 }

@@ -82,13 +82,14 @@ describe('log resource sources', () => {
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
-		const lines = diffStepSnapshots(
+		const diffResult = diffStepSnapshots(
 			before,
 			after,
 			{ ...gainIncomeStep, effects } as typeof gainIncomeStep,
 			translationDiffContext,
 			RESOURCE_KEYS,
 		);
+		const lines = diffResult.summaries;
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const farmIcon =
 			engineContext.developments.get(SYNTHETIC_IDS.farmDevelopment)?.icon || '';
@@ -135,13 +136,14 @@ describe('log resource sources', () => {
 		performAction(SYNTHETIC_IDS.taxAction, engineContext);
 		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
-		const lines = diffStepSnapshots(
+		const taxDiff = diffStepSnapshots(
 			before,
 			after,
 			taxStep,
 			translationDiffContext,
 			RESOURCE_KEYS,
 		);
+		const lines = taxDiff.summaries;
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const populationRoleIcon =
 			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon || '';
@@ -192,13 +194,14 @@ describe('log resource sources', () => {
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
-		const lines = diffStepSnapshots(
+		const upkeepDiff = diffStepSnapshots(
 			before,
 			after,
 			{ ...payUpkeepStep, effects } as typeof payUpkeepStep,
 			translationDiffContext,
 			RESOURCE_KEYS,
 		);
+		const lines = upkeepDiff.summaries;
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const goldLine = lines.find((line) =>
 			line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),

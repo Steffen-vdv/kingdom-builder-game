@@ -202,9 +202,10 @@ describe('log resource source icon registry', () => {
 				passives: harness.translationContext.passives,
 				assets: harness.translationContext.assets,
 			});
-			const lines = diffStepSnapshots(before, after, step, diffContext, [
+			const diffResult = diffStepSnapshots(before, after, step, diffContext, [
 				resourceKey,
 			]);
+			const lines = diffResult.summaries;
 			const resourceInfo = selectResourceDescriptor(
 				harness.translationContext,
 				resourceKey,

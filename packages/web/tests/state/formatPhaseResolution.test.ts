@@ -8,6 +8,7 @@ import type {
 	PlayerSnapshot,
 	TranslationDiffContext,
 } from '../../src/translation';
+import type { DiffStepSnapshotsResult } from '../../src/translation/log/diff';
 
 vi.mock('../../src/translation', () => ({
 	__esModule: true,
@@ -19,7 +20,7 @@ vi.mock('../../src/translation', () => ({
 				effects: unknown,
 				diffContext: TranslationDiffContext,
 				resourceKeys?: SessionResourceKey[],
-			) => string[]
+			) => DiffStepSnapshotsResult
 		>(),
 	snapshotPlayer: vi.fn(),
 }));
@@ -84,7 +85,10 @@ describe('formatPhaseResolution', () => {
 		const after = createPlayerSnapshot({ gold: 7 });
 		const diffContext = {} as TranslationDiffContext;
 		const resourceKeys = ['gold' as SessionResourceKey];
-		diffStepSnapshotsMock.mockReturnValue(['Gold +2 (5→7)']);
+		diffStepSnapshotsMock.mockReturnValue({
+			tree: [{ summary: 'Gold +2 (5→7)' }],
+			summaries: ['Gold +2 (5→7)'],
+		});
 
 		const result = formatPhaseResolution({
 			advance,
@@ -103,6 +107,7 @@ describe('formatPhaseResolution', () => {
 			{ effects: advance.effects },
 			diffContext,
 			resourceKeys,
+			undefined,
 		);
 		expect(result.source).toEqual({
 			kind: 'phase',
@@ -135,7 +140,10 @@ describe('formatPhaseResolution', () => {
 		};
 		const before = createPlayerSnapshot({ gold: 5 });
 		const after = createPlayerSnapshot({ gold: 6 });
-		diffStepSnapshotsMock.mockReturnValue(['Gold +1 (5→6)']);
+		diffStepSnapshotsMock.mockReturnValue({
+			tree: [{ summary: 'Gold +1 (5→6)' }],
+			summaries: ['Gold +1 (5→6)'],
+		});
 
 		formatPhaseResolution({
 			advance,
@@ -150,6 +158,7 @@ describe('formatPhaseResolution', () => {
 			after,
 			{ effects: stepDefinition.effects },
 			expect.any(Object),
+			undefined,
 			undefined,
 		);
 	});
@@ -196,7 +205,7 @@ describe('formatPhaseResolution', () => {
 			effects: [],
 			player: {} as SessionAdvanceResult['player'],
 		};
-		diffStepSnapshotsMock.mockReturnValue([]);
+		diffStepSnapshotsMock.mockReturnValue({ tree: [], summaries: [] });
 
 		const result = formatPhaseResolution({
 			advance,

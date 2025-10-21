@@ -17,10 +17,12 @@ import {
 	buildDevelopActionLogTimeline,
 	formatActionLogLines,
 	formatDevelopActionLogLines,
+	convertChangeTreeToDescriptors,
 } from './actionLogFormat';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
+import type { ActionDiffChange } from '../translation/log/diff';
 
 /**
  * buildActionResolution centralizes the legacy action resolution formatting
@@ -96,17 +98,22 @@ export function appendSubActionChanges({
 			continue;
 		}
 		const subResolved = resolveActionEffects(subStep);
-		const subChanges = diffStepSnapshots(
+		const tieredResourceKey = context.rules?.tieredResourceKey;
+		const subDiffOptions = tieredResourceKey
+			? { tieredResourceKey }
+			: undefined;
+		const subDiff = diffStepSnapshots(
 			snapshotPlayer(trace.before),
 			snapshotPlayer(trace.after),
 			subResolved,
 			diffContext,
 			Array.from(resourceKeys),
+			subDiffOptions,
 		);
-		if (!subChanges.length) {
+		if (!subDiff.summaries.length) {
 			continue;
 		}
-		subLines.push(...subChanges);
+		subLines.push(...subDiff.summaries);
 		const icon = subStep.icon ?? '';
 		const name = subStep.name ?? trace.id;
 		const trimmed = `${[icon, name].filter(Boolean).join(' ').trim()}`;
@@ -125,9 +132,11 @@ export function appendSubActionChanges({
 			continue;
 		}
 		const parentDepth = messages[index]?.depth ?? 1;
-		const nested = subChanges.map<ActionLogLineDescriptor>((change) => ({
-			text: change,
-			depth: parentDepth + 1,
+		const nested = convertChangeTreeToDescriptors(
+			subDiff.tree,
+			parentDepth + 1,
+		).map<ActionLogLineDescriptor>((descriptor) => ({
+			...descriptor,
 			kind: 'effect',
 		}));
 		messages.splice(index + 1, 0, ...nested);
@@ -207,6 +216,31 @@ export function filterActionDiffChanges({
 	});
 }
 
+function filterActionDiffTree(
+	changes: readonly ActionDiffChange[],
+	allowedSummaries: Set<string>,
+): ActionDiffChange[] {
+	const filtered: ActionDiffChange[] = [];
+	for (const change of changes) {
+		const filteredChildren = change.children
+			? filterActionDiffTree(change.children, allowedSummaries)
+			: [];
+		if (allowedSummaries.has(change.summary)) {
+			const clone: ActionDiffChange = {
+				summary: change.summary,
+				...(change.meta ? { meta: { ...change.meta } } : {}),
+			};
+			if (filteredChildren.length) {
+				clone.children = filteredChildren;
+			}
+			filtered.push(clone);
+			continue;
+		}
+		filtered.push(...filteredChildren);
+	}
+	return filtered;
+}
+
 export function buildActionResolution({
 	actionId,
 	actionDefinition,
@@ -221,12 +255,16 @@ export function buildActionResolution({
 	resources,
 }: BuildActionResolutionOptions): BuildActionResolutionResult {
 	const stepEffects = resolveActionEffects(actionDefinition, params);
-	const changes = diffStepSnapshots(
+	const diffOptions = translationContext.rules.tieredResourceKey
+		? { tieredResourceKey: translationContext.rules.tieredResourceKey }
+		: undefined;
+	const changeDiff = diffStepSnapshots(
 		before,
 		after,
 		stepEffects,
 		diffContext,
 		Array.from(resourceKeys),
+		diffOptions,
 	);
 	const rawMessages = logContent(
 		'action',
@@ -256,7 +294,7 @@ export function buildActionResolution({
 		messages,
 	});
 	const summaries = filterActionDiffChanges({
-		changes,
+		changes: changeDiff.summaries,
 		messages,
 		subLines,
 	});
@@ -269,8 +307,12 @@ export function buildActionResolution({
 	const formatLines = useDevelopFormatter
 		? formatDevelopActionLogLines
 		: formatActionLogLines;
-	const timeline = buildTimeline(messages, summaries);
-	const logLines = formatLines(messages, summaries);
+	const filteredTree = filterActionDiffTree(
+		changeDiff.tree,
+		new Set(summaries),
+	);
+	const timeline = buildTimeline(messages, filteredTree);
+	const logLines = formatLines(messages, filteredTree);
 	const headline = messages[0]?.text;
 	const result: BuildActionResolutionResult = {
 		messages,

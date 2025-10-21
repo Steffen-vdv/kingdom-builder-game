@@ -3,6 +3,7 @@ import type { EffectDef } from '@kingdom-builder/protocol';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import { registerModifierEvalHandler } from '../src/translation/effects/formatters/modifier';
+import { buildModifierDescriptionLabel } from '../src/translation/effects/formatters/modifier_helpers';
 import {
 	createSnapshotPlayer,
 	createSessionSnapshot,
@@ -188,10 +189,7 @@ describe('modifier evaluation handlers', () => {
 		expect(summary[0]).toContain(`${resourceToken}-2`);
 		expect(description).not.toHaveLength(0);
 		const primaryLine = description[0];
-		const resultLabelText = joinParts(
-			resultDescriptor.icon,
-			resultDescriptor.label,
-		);
+		const resultLabelText = buildModifierDescriptionLabel(resultDescriptor);
 		const targetLabel = joinParts(
 			developmentInfo?.icon ?? developmentDef.icon,
 			developmentInfo?.name ?? developmentDef.name ?? developmentId,
@@ -240,7 +238,7 @@ describe('modifier evaluation handlers', () => {
 			actionInfo?.icon ?? actionDef.icon,
 			actionInfo?.name ?? actionDef.name ?? actionId,
 		);
-		const costLabelText = joinParts(costDescriptor.icon, costDescriptor.label);
+		const costLabelText = buildModifierDescriptionLabel(costDescriptor);
 		expect(description).toEqual([
 			`${costLabelText} on ${targetLabel}: Decrease cost by 20% ${resourceIcon}`,
 		]);
@@ -286,7 +284,7 @@ describe('modifier evaluation handlers', () => {
 		const primaryLine = description[0];
 		expect(
 			primaryLine.startsWith(
-				`${joinParts(resultDescriptor.icon, resultDescriptor.label)} on ${targetLabel}:`,
+				`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
 			),
 		).toBe(true);
 		expect(primaryLine).toMatch(/transfers.+10%/u);
@@ -333,8 +331,55 @@ describe('modifier evaluation handlers', () => {
 		const primaryLine = describeEffects([eff], translationContext)[0];
 		expect(
 			primaryLine.startsWith(
-				`${joinParts(resultDescriptor.icon, resultDescriptor.label)} on ${targetLabel}:`,
+				`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
 			),
 		).toBe(true);
+	});
+});
+
+it('formats transfer amount evaluation modifiers for arbitrary actions', () => {
+	const { translationContext, registries } = createModifierHarness();
+	const { id: actionId, definition: actionDef } =
+		selectActionWithIcon(registries);
+	const eff: EffectDef = {
+		type: 'result_mod',
+		method: 'add',
+		params: {
+			id: 'synthetic:transfer-amount-bonus',
+			evaluation: { type: 'transfer_amount', id: actionId },
+			adjust: 2,
+		},
+	};
+	const summary = summarizeEffects([eff], translationContext);
+	const description = describeEffects([eff], translationContext);
+	const resultDescriptor = selectModifierInfo(translationContext, 'result');
+	const actionInfo = translationContext.actions.get(actionId);
+	const actionIcon =
+		actionInfo?.icon && actionInfo.icon.trim().length > 0
+			? actionInfo.icon
+			: (actionInfo?.name ?? actionDef.name ?? actionId);
+	const targetLabel = joinParts(
+		actionInfo?.icon ?? actionDef.icon,
+		actionInfo?.name ?? actionDef.name ?? actionId,
+	);
+	const transferDescriptor = selectTransferDescriptor(translationContext);
+	const transferIcon = transferDescriptor.icon;
+	expect(summary).toEqual([
+		`${resultDescriptor.icon}${actionIcon}: ${transferIcon} +2`,
+	]);
+	const primaryLine = description[0];
+	expect(
+		primaryLine.startsWith(
+			`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
+		),
+	).toBe(true);
+	expect(primaryLine.toLowerCase()).toContain(
+		`${transferIcon} ${increaseOrDecrease(2).toLowerCase()} transfer by 2`,
+	);
+	const card = description[1];
+	expect(card).toMatchObject({
+		title: targetLabel,
+		_hoist: true,
+		_desc: true,
 	});
 });

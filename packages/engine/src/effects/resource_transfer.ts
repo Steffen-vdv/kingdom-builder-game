@@ -8,10 +8,17 @@ export const TRANSFER_PCT_EVALUATION_TARGET = [
 	TRANSFER_PCT_EVALUATION_TYPE,
 	TRANSFER_PCT_EVALUATION_ID,
 ].join(':');
+export const TRANSFER_AMOUNT_EVALUATION_TYPE = 'transfer_amount';
+export const TRANSFER_AMOUNT_EVALUATION_ID = 'amount';
+export const TRANSFER_AMOUNT_EVALUATION_TARGET = [
+	TRANSFER_AMOUNT_EVALUATION_TYPE,
+	TRANSFER_AMOUNT_EVALUATION_ID,
+].join(':');
 
 interface TransferParams extends Record<string, unknown> {
 	key: ResourceKey;
 	percent?: number;
+	amount?: number;
 }
 
 export const resourceTransfer: EffectHandler<TransferParams> = (
@@ -19,7 +26,34 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 	context,
 	_multiplier = 1,
 ) => {
-	const { key, percent: requestedPercent } = effect.params!;
+	const {
+		key,
+		percent: requestedPercent,
+		amount: requestedAmount,
+	} = effect.params!;
+	if (requestedAmount !== undefined) {
+		const modifiers: ResourceGain[] = [{ key, amount: requestedAmount }];
+		context.passives.runEvaluationMods(
+			TRANSFER_AMOUNT_EVALUATION_TARGET,
+			context,
+			modifiers,
+		);
+		let amount = modifiers[0]!.amount;
+		if (amount < 0) {
+			amount = 0;
+		}
+		const defender = context.opponent;
+		const attacker = context.activePlayer;
+		const available = defender.resources[key] || 0;
+		if (available >= 0 && amount > available) {
+			amount = available;
+		}
+		defender.resources[key] = available - amount;
+		attacker.resources[key] = (attacker.resources[key] || 0) + amount;
+		context.services.handleResourceChange(context, defender, key);
+		context.services.handleResourceChange(context, attacker, key);
+		return;
+	}
 	const base = requestedPercent ?? 25;
 	const modifiers: ResourceGain[] = [{ key, amount: base }];
 	context.passives.runEvaluationMods(
@@ -43,7 +77,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 	if (amount < 0) {
 		amount = 0;
 	}
-	if (amount > available) {
+	if (available >= 0 && amount > available) {
 		amount = available;
 	}
 	defender.resources[key] = available - amount;
