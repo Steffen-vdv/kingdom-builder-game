@@ -56,10 +56,29 @@ const phaseListItemContentClassName = ['flex w-full items-center gap-3'].join(
 	' ',
 );
 
-const phaseListItemIndexClassName = [
-	'grid h-7 w-7 place-items-center rounded-xl border border-indigo-200/70',
-	'bg-indigo-50/80 text-[0.75rem] font-semibold text-indigo-700 shadow-sm',
-	'dark:border-indigo-300/40 dark:bg-indigo-500/20 dark:text-indigo-100',
+const phaseListItemIndexWrapperClassName = [
+	'relative grid h-10 w-10 place-items-center overflow-hidden rounded-2xl',
+	'bg-white/70 shadow-inner shadow-white/60 ring-1 ring-inset ring-white/70',
+	'backdrop-blur-[2px] transition-all duration-300 ease-out',
+	'dark:bg-white/10 dark:shadow-black/40 dark:ring-white/10',
+	'data-[active=true]:bg-gradient-to-br data-[active=true]:from-indigo-500/90',
+	'data-[active=true]:via-indigo-500/80 data-[active=true]:to-fuchsia-500/80',
+	'data-[active=true]:shadow-lg data-[active=true]:ring-indigo-200/80',
+	'dark:data-[active=true]:ring-indigo-300/60',
+].join(' ');
+
+const phaseListItemIndexHighlightClassName = [
+	'pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br',
+	'from-white/70 via-white/30 to-transparent opacity-0 transition-opacity',
+	'duration-300 ease-out data-[active=true]:opacity-60',
+	'dark:from-white/40 dark:via-white/5',
+].join(' ');
+
+const phaseListItemIndexTextClassName = [
+	'relative text-xs font-semibold uppercase tracking-[0.35em]',
+	'text-indigo-600 transition-colors duration-300 ease-out',
+	'data-[active=true]:text-white dark:text-indigo-200',
+	'dark:data-[active=true]:text-white font-mono tabular-nums',
 ].join(' ');
 
 const phaseListItemIconClassName = [
@@ -149,10 +168,21 @@ export default function PhasePanel() {
 							>
 								<span className={phaseListItemContentClassName}>
 									<span
-										className={phaseListItemIndexClassName}
+										className={phaseListItemIndexWrapperClassName}
+										data-active={isActive ? 'true' : 'false'}
 										aria-hidden="true"
 									>
-										{String(phaseIndex + 1).padStart(2, '0')}
+										<span
+											className={phaseListItemIndexHighlightClassName}
+											data-active={isActive ? 'true' : 'false'}
+											aria-hidden="true"
+										/>
+										<span
+											className={phaseListItemIndexTextClassName}
+											data-active={isActive ? 'true' : 'false'}
+										>
+											{String(phaseIndex + 1).padStart(2, '0')}
+										</span>
 									</span>
 									<span
 										className={phaseListItemIconClassName}
