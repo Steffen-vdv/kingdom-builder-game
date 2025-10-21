@@ -3,7 +3,7 @@ import { Resource } from '../resources';
 import { action, effect, developmentParams } from '../config/builders';
 import { DevelopmentMethods, Types } from '../config/builderShared';
 import type { ActionDef } from '../actions';
-import { actionIdForDevelopment } from '../actions';
+import { actionIdForDevelopment } from '../actionIds';
 import { ACTION_CATEGORIES, ActionCategoryId } from '../actionCategories';
 import { DevelopmentId, DEVELOPMENTS } from '../developments';
 

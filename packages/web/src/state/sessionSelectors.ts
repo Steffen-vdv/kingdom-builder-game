@@ -49,6 +49,8 @@ const createActionOption = (
 	baseCosts: definition.baseCosts
 		? cloneRecord(definition.baseCosts)
 		: undefined,
+	upkeep: definition.upkeep ? cloneRecord(definition.upkeep) : undefined,
+	buildingId: definition.buildingId,
 });
 const createBuildingOption = (
 	id: string,

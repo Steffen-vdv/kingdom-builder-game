@@ -107,6 +107,36 @@ export function createSessionRegistriesPayload(): SessionRegistriesPayload {
 	const payload = cloneRegistriesPayload(BASE_PAYLOAD);
 	normalizeActionCategories(payload);
 	payload.actionCategories = createCategoryRegistry();
+	if (payload.actions) {
+		delete payload.actions.build;
+	}
+	if (payload.buildings) {
+		payload.actions = payload.actions ?? {};
+		const buildingEntries = Object.entries(payload.buildings);
+		buildingEntries.forEach(([buildingId, building], index) => {
+			const actionId = `build:${buildingId}`;
+			const baseCosts = building.costs
+				? { ...building.costs }
+				: ({} as Record<string, number>);
+			payload.actions![actionId] = {
+				id: actionId,
+				name: `Build: ${building.name}`,
+				icon: building.icon,
+				baseCosts,
+				requirements: [],
+				effects: [
+					{
+						type: 'building',
+						method: 'add',
+						params: { id: buildingId },
+					},
+				],
+				category: 'build',
+				order: index + 1,
+				focus: (building as { focus?: unknown }).focus ?? 'other',
+			} as SessionRegistriesPayload['actions'][string];
+		});
+	}
 	return payload;
 }
 

@@ -59,7 +59,7 @@ describe('ActionsPanel tabs', () => {
 		expect(
 			within(basicTab).getByLabelText('0 of 1 actions performable'),
 		).toBeInTheDocument();
-		const buildAction = mockGame.metadata.actions.building;
+		const buildAction = mockGame.metadata.actions.buildings[0];
 		if (buildAction) {
 			const buildTab = await findTabButton(buildAction.category);
 			expect(
@@ -131,13 +131,13 @@ function seedInitialMetadata() {
 		requirements: [UNMET_REQUIREMENT],
 		groups: [],
 	});
-	if (actions.building) {
-		seedSessionActionMetadata(sessionId, actions.building.id, {
-			costs: costMap.get(actions.building.id) ?? {},
-			requirements: requirementFailures.get(actions.building.id) ?? [],
+	actions.buildings.forEach((buildingAction) => {
+		seedSessionActionMetadata(sessionId, buildingAction.id, {
+			costs: costMap.get(buildingAction.id) ?? {},
+			requirements: requirementFailures.get(buildingAction.id) ?? [],
 			groups: [],
 		});
-	}
+	});
 	actions.developments.forEach((developmentAction) => {
 		seedSessionActionMetadata(sessionId, developmentAction.id, {
 			costs: costMap.get(developmentAction.id) ?? {},

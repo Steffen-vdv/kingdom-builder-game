@@ -27,7 +27,7 @@ import {
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
-import { ActionId, PopulationEvaluationId } from '../actions';
+import { ActionId, PopulationEvaluationId } from '../actionIds';
 import {
 	ACTION_CATEGORIES,
 	ActionCategoryId,

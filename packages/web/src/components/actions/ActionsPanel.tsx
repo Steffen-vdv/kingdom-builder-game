@@ -154,13 +154,12 @@ const renderBuildCategory: CategoryRenderer = ({
 	buildingSummaries,
 	buildingDescriptions,
 }) => {
-	const action = actions[0];
-	if (!action) {
+	if (actions.length === 0) {
 		return null;
 	}
 	return (
 		<BuildOptions
-			action={action}
+			actions={actions}
 			isActionPhase={isActionPhase}
 			buildings={buildingOptions}
 			summaries={buildingSummaries}

@@ -7,7 +7,14 @@ import type {
 
 type RegistryLike<T> = { entries(): [string, T][]; get(id: string): T };
 type ActionDefinition = ActionConfig &
-	Partial<{ id: string; category: string; order: number; focus: unknown }>;
+	Partial<{
+		id: string;
+		category: string;
+		order: number;
+		focus: unknown;
+		buildingId: string;
+		upkeep: Record<string, number | undefined>;
+	}>;
 type BuildingDefinition = BuildingConfig &
 	Partial<{ id: string; focus: unknown }>;
 type DevelopmentDefinition = DevelopmentConfig &
@@ -37,6 +44,8 @@ type SessionActionOption = {
 	category?: string | undefined;
 	focus?: unknown;
 	baseCosts?: Record<string, number | undefined> | undefined;
+	upkeep?: Record<string, number | undefined> | undefined;
+	buildingId?: string | undefined;
 };
 type SessionBuildingOption = {
 	id: string;

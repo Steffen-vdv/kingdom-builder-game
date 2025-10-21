@@ -39,7 +39,7 @@ describe('action id helpers', () => {
 		});
 
 		it('returns undefined for non-development action ids', () => {
-			expect(developmentIdFromAction(ActionId.build)).toBeUndefined();
+			expect(developmentIdFromAction(ActionId.army_attack)).toBeUndefined();
 		});
 	});
 
