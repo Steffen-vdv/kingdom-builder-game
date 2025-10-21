@@ -12,7 +12,8 @@ import {
 	happinessTier,
 	populationParams,
 } from '../src/config/builders';
-import { ActionId } from '../src/actions';
+import { DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID } from '../src/actions';
+import { DevelopmentId } from '../src/developments';
 import { Types, PassiveMethods } from '../src/config/builderShared';
 import { RESOURCES, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
@@ -48,7 +49,9 @@ describe('content builder safeguards', () => {
 	});
 
 	it('prevents duplicate action param setters', () => {
-		const builder = actionParams().id(ActionId.develop);
+		const builder = actionParams().id(
+			DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Farm],
+		);
 		expect(() => builder.id('again')).toThrowError(
 			'Action effect params already set id(). Remove the extra id() call.',
 		);

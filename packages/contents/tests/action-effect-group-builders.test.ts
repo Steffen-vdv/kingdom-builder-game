@@ -9,8 +9,18 @@ import {
 	actionEffectGroupOption,
 } from '../src/config/builders/actionEffectGroups';
 import type { ActionEffectGroupDef } from '../src/config/builders/actionEffectGroups';
-import { ActionId } from '../src/actions';
+import {
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
+	type DevelopmentActionId,
+} from '../src/actions';
+import { DevelopmentId } from '../src/developments';
 import { describe, expect, it } from 'vitest';
+
+const DEVELOP_FARM_ACTION_ID: DevelopmentActionId =
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Farm];
+
+const DEVELOP_HOUSE_ACTION_ID: DevelopmentActionId =
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.House];
 
 describe('action effect group builder safeguards', () => {
 	it('requires action effect groups to include options', () => {
@@ -24,12 +34,16 @@ describe('action effect group builder safeguards', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
 			.option(
-				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('Farm')
+					.action(DEVELOP_FARM_ACTION_ID),
 			);
 
 		expect(() =>
 			group.option(
-				actionEffectGroupOption('farm').label('House').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('House')
+					.action(DEVELOP_HOUSE_ACTION_ID),
 			),
 		).toThrowError(
 			'Action effect group option id "farm" already exists. Use unique option ids within a group.',
@@ -44,7 +58,7 @@ describe('action effect group builder safeguards', () => {
 				.option(
 					actionEffectGroupOption('farm')
 						.label('Farm')
-						.action(ActionId.develop),
+						.action(DEVELOP_FARM_ACTION_ID),
 				),
 		);
 
@@ -55,7 +69,7 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('house')
 							.label('House')
-							.action(ActionId.develop),
+							.action(DEVELOP_HOUSE_ACTION_ID),
 					),
 			),
 		).toThrowError(
@@ -68,7 +82,9 @@ describe('action effect group builder safeguards', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
 			.option(
-				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('Farm')
+					.action(DEVELOP_FARM_ACTION_ID),
 			);
 
 		expect(() =>
@@ -94,7 +110,7 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('farm')
 							.label('Farm')
-							.action(ActionId.develop)
+							.action(DEVELOP_FARM_ACTION_ID)
 							.params(actionParams().id('farm').landId('$landId')),
 					),
 			)
@@ -111,7 +127,7 @@ describe('action effect group builder safeguards', () => {
 				{
 					id: 'farm',
 					label: 'Farm',
-					actionId: ActionId.develop,
+					actionId: DEVELOP_FARM_ACTION_ID,
 					params: { id: 'farm', landId: '$landId' },
 				},
 			],
