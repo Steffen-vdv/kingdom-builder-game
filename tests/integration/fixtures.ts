@@ -9,10 +9,12 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	actionIdForBuilding,
 } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
+import type { BuildingId } from '@kingdom-builder/contents';
 
 type EngineForTest = ReturnType<typeof createEngine>;
 
@@ -125,18 +127,15 @@ function findEffect(
 	return undefined;
 }
 
-export function getBuildActionId(engineContext: EngineForTest) {
-	for (const [id, def] of engineContext.actions.entries()) {
-		if (
-			findEffect(
-				def.effects,
-				(e) => e.type === 'building' && e.method === 'add',
-			)
-		) {
-			return id;
-		}
+export function getBuildActionId(
+	engineContext: EngineForTest,
+	buildingId: BuildingId,
+) {
+	const actionId = actionIdForBuilding(buildingId);
+	if (!engineContext.actions.has(actionId)) {
+		throw new Error(`No build action found for building "${buildingId}".`);
 	}
-	throw new Error('No build action found');
+	return actionId;
 }
 
 export function getBuildingWithActionMods() {

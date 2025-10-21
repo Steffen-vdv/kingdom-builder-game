@@ -10,6 +10,8 @@ export {
 	ActionId,
 	actionIdForDevelopment,
 	developmentIdFromAction,
+	actionIdForBuilding,
+	buildingIdFromAction,
 } from './actions';
 export { BUILDINGS, createBuildingRegistry } from './buildings';
 export { BuildingId } from './buildingIds';

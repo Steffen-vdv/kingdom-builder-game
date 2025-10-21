@@ -4,7 +4,7 @@ import {
 	TRANSFER_PCT_EVALUATION_TYPE,
 	buildingSchema,
 } from '@kingdom-builder/protocol';
-import { ActionId, PopulationEvaluationId } from './actions';
+import { ActionId, PopulationEvaluationId } from './actionIds';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { DevelopmentId } from './developments';

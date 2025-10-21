@@ -38,8 +38,8 @@ export interface ActionsPanelContent {
 	readonly buildRequirements: unknown[];
 	readonly raisePopulationAction: ActionDefinition;
 	readonly basicAction: ActionDefinition;
-	readonly buildingAction?: ActionDefinition;
-	readonly buildingDefinition?: BuildingDefinition;
+	readonly buildingActions: ActionDefinition[];
+	readonly buildingDefinitions: BuildingDefinition[];
 	readonly developmentActions: ActionDefinition[];
 	readonly developmentDefinitions: DevelopmentDefinition[];
 	readonly initialPopulation: Record<string, number>;
@@ -120,25 +120,33 @@ export function buildActionsPanelContent({
 		order: 2,
 		focus: 'other',
 	});
-	let buildingAction: ActionDefinition | undefined;
-	let buildingDefinition: BuildingDefinition | undefined;
+	const buildingActions: ActionDefinition[] = [];
+	const buildingDefinitions: BuildingDefinition[] = [];
 	if (showBuilding) {
-		buildingAction = factory.action({
-			name: 'Construct',
-			icon: '🏛️',
+		const buildingDefinition = factory.building({
+			name: 'Great Hall',
+			icon: '🏰',
+			costs: { [upkeepResource]: 5 },
+		});
+		const buildingAction = factory.action({
+			id: `build:${buildingDefinition.id}`,
+			name: `Build: ${buildingDefinition.name}`,
+			icon: buildingDefinition.icon,
 			requirements: [],
 			effects: [],
+			baseCosts: { ...buildingDefinition.costs },
 		});
 		Object.assign(buildingAction, {
 			category: categories.building,
 			order: 3,
 			focus: 'other',
+			baseCosts: { ...buildingDefinition.costs },
+			upkeep: buildingDefinition.upkeep
+				? { ...buildingDefinition.upkeep }
+				: undefined,
 		});
-		buildingDefinition = factory.building({
-			name: 'Great Hall',
-			icon: '🏰',
-			costs: { [upkeepResource]: 5 },
-		});
+		buildingDefinitions.push(buildingDefinition);
+		buildingActions.push(buildingAction);
 	}
 	const developmentDefinitions: DevelopmentDefinition[] = [
 		factory.development({
@@ -185,11 +193,9 @@ export function buildActionsPanelContent({
 	const actionIds = [
 		raisePopulationAction,
 		basicAction,
-		buildingAction,
+		...buildingActions,
 		...developmentActions,
-	]
-		.filter(Boolean)
-		.map((action) => action!.id);
+	].map((action) => action.id);
 	const requirementFailures = new Map<string, SessionRequirementFailure[]>();
 	requirementFailures.set(
 		raisePopulationAction.id,
@@ -201,7 +207,7 @@ export function buildActionsPanelContent({
 			},
 		})),
 	);
-	if (buildingAction) {
+	buildingActions.forEach((buildingAction) => {
 		requirementFailures.set(buildingAction.id, [
 			{
 				requirement: buildRequirements[0]!,
@@ -211,16 +217,16 @@ export function buildActionsPanelContent({
 				},
 			},
 		]);
-	}
+	});
 	for (const action of developmentActions) {
 		requirementFailures.set(action.id, []);
 	}
 	const requirementIcons = new Map<string, string[]>([
 		[raisePopulationAction.id, []],
 	]);
-	if (buildingAction) {
+	buildingActions.forEach((buildingAction) => {
 		requirementIcons.set(buildingAction.id, ['🛠️']);
-	}
+	});
 	for (const action of developmentActions) {
 		requirementIcons.set(action.id, []);
 	}
@@ -233,8 +239,8 @@ export function buildActionsPanelContent({
 		buildRequirements,
 		raisePopulationAction,
 		basicAction,
-		buildingAction,
-		buildingDefinition,
+		buildingActions,
+		buildingDefinitions,
 		developmentActions,
 		developmentDefinitions,
 		initialPopulation,

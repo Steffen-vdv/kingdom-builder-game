@@ -11,11 +11,9 @@ describe('Building placement integration', () => {
 	it('applies building effects to subsequent actions', () => {
 		const engineContext = createTestContext();
 		const { buildingId, actionId } = getBuildingWithActionMods();
-		const buildActionId = getBuildActionId(engineContext);
+		const buildActionId = getBuildActionId(engineContext, buildingId);
 		const expandBefore = getActionOutcome(actionId, engineContext);
-		const buildCosts = getActionCosts(buildActionId, engineContext, {
-			id: buildingId,
-		});
+		const buildCosts = getActionCosts(buildActionId, engineContext);
 		for (const [key, cost] of Object.entries(buildCosts)) {
 			engineContext.activePlayer.resources[key] =
 				(engineContext.activePlayer.resources[key] || 0) + (cost ?? 0);
@@ -25,7 +23,7 @@ describe('Building placement integration', () => {
 			expandBefore.costs[apKey] ?? 0;
 		const resBefore = { ...engineContext.activePlayer.resources };
 
-		performAction(buildActionId, engineContext, { id: buildingId });
+		performAction(buildActionId, engineContext);
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(true);
 		for (const [key, cost] of Object.entries(buildCosts)) {

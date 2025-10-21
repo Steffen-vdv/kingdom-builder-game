@@ -1,4 +1,4 @@
-import { ActionId } from './actions';
+import { ActionId } from './actionIds';
 import { PhaseId } from './phases';
 
 export type OverviewTokenCategoryName =
@@ -69,7 +69,7 @@ const HERO_PARAGRAPH_TEXT = [
 const DEFAULT_TOKENS: OverviewTokenCandidates = {
 	actions: {
 		[ActionId.expand]: [ActionId.expand],
-		[ActionId.build]: [ActionId.build],
+		build: [ActionId.build_town_charter],
 		[ActionId.develop]: [ActionId.develop],
 		[ActionId.raise_pop]: [ActionId.raise_pop],
 		[ActionId.army_attack]: [ActionId.army_attack],

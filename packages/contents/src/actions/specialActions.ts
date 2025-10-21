@@ -32,7 +32,7 @@ import {
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
-import { ActionId } from '../actions';
+import { ActionId } from '../actionIds';
 import {
 	ACTION_CATEGORIES,
 	ActionCategoryId,
@@ -233,6 +233,7 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 			.id(ActionId.build)
 			.name('Build')
 			.icon('🏛️')
+			.system()
 			.effect(
 				effect(Types.Building, BuildingMethods.ADD)
 					.params(buildingParams().id('$id'))

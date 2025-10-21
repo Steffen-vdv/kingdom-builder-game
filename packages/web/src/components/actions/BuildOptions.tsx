@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import {
 	splitSummary,
 	translateRequirementFailure,
@@ -14,8 +13,8 @@ import type { ActionCategoryDescriptor } from './ActionCategoryHeader';
 import {
 	formatMissingResources,
 	playerHasRequiredResources,
-	sumNonActionCosts,
 	splitActionCostMap,
+	sumNonActionCosts,
 	sumUpkeep,
 	type ResourceDescriptorSelector,
 } from './utils';
@@ -26,7 +25,6 @@ import {
 	type Building,
 	type DisplayPlayer,
 } from './types';
-import { normalizeActionFocus } from './types';
 import { useActionOptionCosts } from './useActionOptionCosts';
 import { CATEGORY_SUBTITLE_CLASSES } from './actionsPanelStyles';
 
@@ -35,8 +33,18 @@ const HOVER_CARD_BG = [
 	'dark:from-slate-900/80 dark:to-slate-900/60',
 ].join(' ');
 
-interface BuildOptionsProps {
+interface BuildOptionEntry {
 	action: Action;
+	building: Building;
+	costs: Record<string, number>;
+	upkeep: Record<string, number>;
+	summary: Summary | undefined;
+	description: Summary | undefined;
+	implemented: boolean;
+}
+
+interface BuildOptionsProps {
+	actions: Action[];
 	isActionPhase: boolean;
 	buildings: Building[];
 	summaries: Map<string, Summary>;
@@ -47,34 +55,77 @@ interface BuildOptionsProps {
 	category: ActionCategoryDescriptor;
 }
 
-export default function BuildOptions({
-	action,
+interface BuildActionCardEntryProps {
+	entry: BuildOptionEntry;
+	isActionPhase: boolean;
+	player: DisplayPlayer;
+	canInteract: boolean;
+	selectResourceDescriptor: ResourceDescriptorSelector;
+	actionCostResource: string;
+	handleHoverCard: ReturnType<typeof useGameEngine>['handleHoverCard'];
+	clearHoverCard: ReturnType<typeof useGameEngine>['clearHoverCard'];
+	requests: ReturnType<typeof useGameEngine>['requests'];
+	translationContext: ReturnType<typeof useGameEngine>['translationContext'];
+}
+
+function normalizeCostRecord(
+	record: Record<string, number | undefined> | undefined,
+): Record<string, number> {
+	if (!record) {
+		return {};
+	}
+	const normalized: Record<string, number> = {};
+	for (const [key, value] of Object.entries(record)) {
+		const amount = Number(value ?? 0);
+		if (!Number.isFinite(amount)) {
+			continue;
+		}
+		normalized[key] = amount;
+	}
+	return normalized;
+}
+
+function mergeCosts(
+	base: Record<string, number>,
+	overrides: Record<string, number>,
+): Record<string, number> {
+	const merged: Record<string, number> = { ...base };
+	for (const [key, amount] of Object.entries(overrides)) {
+		merged[key] = amount;
+	}
+	return merged;
+}
+
+function mergeUpkeep(
+	base: Record<string, number>,
+	cleanup: Record<string, number>,
+): Record<string, number> {
+	const merged: Record<string, number> = { ...base };
+	for (const [key, amount] of Object.entries(cleanup)) {
+		merged[key] = amount;
+	}
+	return merged;
+}
+
+function BuildActionCardEntry({
+	entry,
 	isActionPhase,
-	buildings,
-	summaries,
-	descriptions,
 	player,
 	canInteract,
 	selectResourceDescriptor,
-	category,
-}: BuildOptionsProps) {
-	const listRef = useAnimate<HTMLDivElement>();
-	const {
-		selectors,
-		translationContext,
-		requests,
-		handleHoverCard,
-		clearHoverCard,
-		actionCostResource,
-	} = useGameEngine();
-	const { sessionView } = selectors;
+	actionCostResource,
+	handleHoverCard,
+	clearHoverCard,
+	requests,
+	translationContext,
+}: BuildActionCardEntryProps) {
+	const { action, building, costs, upkeep, summary, description, implemented } =
+		entry;
 	const metadata = useActionMetadata({ actionId: action.id });
 	const requirementIcons = useMemo(
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
-	const actionInfo = sessionView.actions.get(action.id);
-	const { subtitle } = category;
 	const requirementFailures = metadata.requirements ?? [];
 	const requirementMessages = requirementFailures.map((failure) =>
 		translateRequirementFailure(failure, translationContext),
@@ -89,58 +140,181 @@ export default function BuildOptions({
 				: ['Loading requirements…'];
 	const meetsRequirements =
 		!requirementsLoading && requirementFailures.length === 0;
+	const canPay = playerHasRequiredResources(player.resources, costs);
+	const insufficientTooltip = formatMissingResources(
+		costs,
+		player.resources,
+		selectResourceDescriptor,
+	);
+	const requirementText = requirementMessages.join(', ');
+	const loadingRequirements = !requirementsAvailable && requirementsLoading;
+	const hoverTitle = formatIconTitle(action.icon ?? building.icon, action.name);
+	const title = !implemented
+		? 'Not implemented yet'
+		: loadingRequirements
+			? 'Loading requirements…'
+			: !meetsRequirements
+				? requirementText
+				: !canPay
+					? (insufficientTooltip ?? 'Cannot pay costs')
+					: undefined;
+	const enabled =
+		canPay &&
+		meetsRequirements &&
+		isActionPhase &&
+		canInteract &&
+		implemented &&
+		!requirementsLoading;
+	const onClick = () => {
+		if (!canInteract) {
+			return;
+		}
+		void requests.performAction({ action: toPerformableAction(action) });
+	};
+	const onMouseEnter = () => {
+		const full = description ?? [];
+		const { effects, description: hoverDescription } = splitSummary(full);
+		handleHoverCard({
+			title: hoverTitle,
+			effects,
+			requirements: requirementMessages,
+			costs,
+			upkeep,
+			...(hoverDescription && { description: hoverDescription }),
+			...(!implemented && {
+				description: 'Not implemented yet',
+				descriptionClass: 'italic text-red-600',
+			}),
+			bgClass: HOVER_CARD_BG,
+		});
+	};
+	const onMouseLeave = () => {
+		clearHoverCard();
+	};
+	const titleLabel = renderIconLabel(
+		building.icon ?? action.icon,
+		building.name ?? action.name,
+	);
+	return (
+		<ActionCard
+			key={action.id}
+			title={titleLabel}
+			costs={costs}
+			upkeep={upkeep}
+			playerResources={player.resources}
+			actionCostResource={actionCostResource}
+			requirements={requirementDisplay}
+			requirementIcons={requirementIcons}
+			summary={summary}
+			implemented={implemented}
+			enabled={enabled}
+			tooltip={title}
+			focus={action.focus}
+			assets={translationContext.assets}
+			onClick={onClick}
+			onMouseEnter={onMouseEnter}
+			onMouseLeave={onMouseLeave}
+		/>
+	);
+}
+
+export default function BuildOptions({
+	actions,
+	isActionPhase,
+	buildings,
+	summaries,
+	descriptions,
+	player,
+	canInteract,
+	selectResourceDescriptor,
+	category,
+}: BuildOptionsProps) {
+	const listRef = useAnimate<HTMLDivElement>();
+	const {
+		translationContext,
+		requests,
+		handleHoverCard,
+		clearHoverCard,
+		actionCostResource,
+	} = useGameEngine();
+	const { subtitle } = category;
+	const buildingMap = useMemo(() => {
+		const map = new Map<string, Building>();
+		buildings.forEach((building) => map.set(building.id, building));
+		return map;
+	}, [buildings]);
 	const costRequests = useMemo(
 		() =>
-			buildings.map((building) => ({
-				key: building.id,
+			actions.map((action) => ({
+				key: action.id,
 				actionId: action.id,
-				params: { id: building.id } as ActionParametersPayload,
 			})),
-		[buildings, action.id],
+		[actions],
 	);
 	const costMap = useActionOptionCosts(costRequests);
-	const entries = useMemo(() => {
+	const entries = useMemo<BuildOptionEntry[]>(() => {
 		const owned = player.buildings;
-		return buildings
-			.filter((building) => !owned.has(building.id))
-			.map((building) => {
-				const metadataCosts = costMap.get(building.id);
-				const { costs: dynamicCosts, cleanup: dynamicCleanup } =
-					splitActionCostMap(metadataCosts);
-				const costs: Record<string, number> = {};
-				for (const [costKey, costAmount] of Object.entries(
-					building.costs ?? {},
-				)) {
-					costs[costKey] = costAmount ?? 0;
-				}
-				for (const [costKey, costAmount] of Object.entries(dynamicCosts)) {
-					if (costAmount === undefined) {
-						continue;
-					}
-					costs[costKey] = costAmount;
-				}
-				const combinedUpkeep: Record<string, number> = {
-					...(building.upkeep ?? {}),
-					...dynamicCleanup,
-				};
-				const total = sumNonActionCosts(costs, actionCostResource);
-				const cleanup = sumUpkeep(combinedUpkeep);
-				return { building, costs, total, cleanup, upkeep: combinedUpkeep };
-			})
-			.sort((first, second) => {
-				if (first.total !== second.total) {
-					return first.total - second.total;
-				}
-				if (first.cleanup !== second.cleanup) {
-					return first.cleanup - second.cleanup;
-				}
-				return first.building.name.localeCompare(second.building.name);
+		const items: Array<
+			BuildOptionEntry & { totalCost: number; totalUpkeep: number }
+		> = [];
+		actions.forEach((action) => {
+			const buildingId = action.buildingId;
+			if (!buildingId) {
+				return;
+			}
+			const building = buildingMap.get(buildingId);
+			if (!building) {
+				return;
+			}
+			if (owned.has(buildingId)) {
+				return;
+			}
+			const metadataCosts = costMap.get(action.id);
+			const { costs: dynamicCosts, cleanup: dynamicCleanup } =
+				splitActionCostMap(metadataCosts);
+			const baseCosts = normalizeCostRecord(action.baseCosts);
+			const mergedCosts = mergeCosts(baseCosts, dynamicCosts);
+			const baseUpkeep = normalizeCostRecord(action.upkeep);
+			const mergedUpkeep = mergeUpkeep(baseUpkeep, dynamicCleanup);
+			const totalCost = sumNonActionCosts(mergedCosts, actionCostResource);
+			const totalUpkeep = sumUpkeep(mergedUpkeep);
+			const summary = summaries.get(building.id);
+			const description = descriptions.get(building.id);
+			const implemented = (summary?.length ?? 0) > 0;
+			items.push({
+				action,
+				building,
+				costs: mergedCosts,
+				upkeep: mergedUpkeep,
+				summary,
+				description,
+				implemented,
+				totalCost,
+				totalUpkeep,
 			});
-	}, [buildings, actionCostResource, player.buildings.size, costMap]);
-	const actionHoverTitle = formatIconTitle(
-		actionInfo?.icon,
-		actionInfo?.name ?? action.name,
-	);
+		});
+		return items
+			.sort((left, right) => {
+				if (left.totalCost !== right.totalCost) {
+					return left.totalCost - right.totalCost;
+				}
+				if (left.totalUpkeep !== right.totalUpkeep) {
+					return left.totalUpkeep - right.totalUpkeep;
+				}
+				return left.building.name.localeCompare(right.building.name);
+			})
+			.map(
+				({ totalCost: _totalCost, totalUpkeep: _totalUpkeep, ...rest }) => rest,
+			);
+	}, [
+		actions,
+		actionCostResource,
+		buildingMap,
+		costMap,
+		descriptions,
+		player.buildings,
+		summaries,
+	]);
 	return (
 		<div className="space-y-3">
 			{subtitle ? (
@@ -150,88 +324,21 @@ export default function BuildOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2"
 			>
-				{entries.map(({ building, costs, upkeep }) => {
-					const focus = normalizeActionFocus(building.focus);
-					const icon = building.icon;
-					const canPay = playerHasRequiredResources(player.resources, costs);
-					const summary = summaries.get(building.id);
-					const implemented = (summary?.length ?? 0) > 0;
-					const insufficientTooltip = formatMissingResources(
-						costs,
-						player.resources,
-						selectResourceDescriptor,
-					);
-					const requirementText = requirementMessages.join(', ');
-					const loadingRequirements =
-						!requirementsAvailable && requirementsLoading;
-					const title = !implemented
-						? 'Not implemented yet'
-						: loadingRequirements
-							? 'Loading requirements…'
-							: !meetsRequirements
-								? requirementText
-								: !canPay
-									? (insufficientTooltip ?? 'Cannot pay costs')
-									: undefined;
-					const enabled =
-						canPay &&
-						meetsRequirements &&
-						isActionPhase &&
-						canInteract &&
-						implemented &&
-						!requirementsLoading;
-					const hoverTitle = [
-						actionHoverTitle,
-						formatIconTitle(icon, building.name),
-					]
-						.filter(Boolean)
-						.join(' - ');
-					return (
-						<ActionCard
-							key={building.id}
-							title={renderIconLabel(icon, building.name)}
-							costs={costs}
-							upkeep={upkeep}
-							playerResources={player.resources}
-							actionCostResource={actionCostResource}
-							requirements={requirementDisplay}
-							requirementIcons={requirementIcons}
-							summary={summary}
-							implemented={implemented}
-							enabled={enabled}
-							tooltip={title}
-							focus={focus}
-							assets={translationContext.assets}
-							onClick={() => {
-								if (!canInteract) {
-									return;
-								}
-								void requests.performAction({
-									action: toPerformableAction(action),
-									params: { id: building.id },
-								});
-							}}
-							onMouseEnter={() => {
-								const full = descriptions.get(building.id) ?? [];
-								const { effects, description } = splitSummary(full);
-								handleHoverCard({
-									title: hoverTitle,
-									effects,
-									requirements: requirementMessages,
-									costs,
-									upkeep,
-									...(description && { description }),
-									...(!implemented && {
-										description: 'Not implemented yet',
-										descriptionClass: 'italic text-red-600',
-									}),
-									bgClass: HOVER_CARD_BG,
-								});
-							}}
-							onMouseLeave={clearHoverCard}
-						/>
-					);
-				})}
+				{entries.map((entry) => (
+					<BuildActionCardEntry
+						key={entry.action.id}
+						entry={entry}
+						isActionPhase={isActionPhase}
+						player={player}
+						canInteract={canInteract}
+						selectResourceDescriptor={selectResourceDescriptor}
+						actionCostResource={actionCostResource}
+						handleHoverCard={handleHoverCard}
+						clearHoverCard={clearHoverCard}
+						requests={requests}
+						translationContext={translationContext}
+					/>
+				))}
 			</div>
 		</div>
 	);

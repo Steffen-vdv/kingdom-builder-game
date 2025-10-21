@@ -14,10 +14,8 @@ describe('Building stat bonuses', () => {
 	it('applies and removes stat bonuses when built and removed', () => {
 		const { buildingId, stats } = getBuildingWithStatBonuses();
 		const engineContext = createTestContext();
-		const buildActionId = getBuildActionId(engineContext);
-		const buildCosts = getActionCosts(buildActionId, engineContext, {
-			id: buildingId,
-		});
+		const buildActionId = getBuildActionId(engineContext, buildingId);
+		const buildCosts = getActionCosts(buildActionId, engineContext);
 		for (const [key, cost] of Object.entries(buildCosts)) {
 			engineContext.activePlayer.resources[key] = cost ?? 0;
 		}
@@ -26,7 +24,7 @@ describe('Building stat bonuses', () => {
 			before[s.key] = engineContext.activePlayer.stats[s.key];
 		}
 
-		performAction(buildActionId, engineContext, { id: buildingId });
+		performAction(buildActionId, engineContext);
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(true);
 		for (const s of stats) {
