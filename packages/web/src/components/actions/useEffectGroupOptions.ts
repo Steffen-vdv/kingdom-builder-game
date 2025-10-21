@@ -15,6 +15,12 @@ import { type ActionCardOption } from './ActionCard';
 import type { HoverCardData } from './types';
 import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
 import { useActionMetadata } from '../../state/useActionMetadata';
+import {
+	extractParagraph,
+	extractPrimaryLine,
+	resolveContentDetails,
+	resolveContentTarget,
+} from './optionContentDetails';
 
 type OptionParams = ActionEffectGroupOption['params'];
 type PendingParams = Record<string, unknown> | undefined;
@@ -79,30 +85,20 @@ function buildHoverDetails(
 		translationContext,
 		mergedParams,
 	);
-	const { effects: baseEffects, description } = splitSummary(hoverSummary);
+	const { effects: baseEffects, description: baseDescription } =
+		splitSummary(hoverSummary);
 	let effects = baseEffects;
-	const idParam = mergedParams?.id;
-	const developmentParam = mergedParams?.developmentId;
-	const developmentId =
-		typeof idParam === 'string'
-			? idParam
-			: typeof developmentParam === 'string'
-				? developmentParam
-				: undefined;
-	if (typeof developmentId === 'string') {
-		try {
-			const developmentSummary = describeContent(
-				'development',
-				developmentId,
-				translationContext,
-			);
-			const { effects: developmentEffects } = splitSummary(developmentSummary);
-			if (developmentEffects.length > 0) {
-				effects = developmentEffects;
-			}
-		} catch {
-			/* ignore missing development summaries */
-		}
+	let description = baseDescription;
+	const target = resolveContentTarget(translationContext, mergedParams);
+	const contentDetails = resolveContentDetails(translationContext, target);
+	if (
+		contentDetails?.describeEffects &&
+		contentDetails.describeEffects.length > 0
+	) {
+		effects = contentDetails.describeEffects;
+	}
+	if (contentDetails?.description && contentDetails.description.length > 0) {
+		description = contentDetails.description;
 	}
 	return {
 		title: optionLabel.trim() || option.label || option.id,
@@ -199,6 +195,22 @@ export function useEffectGroupOptions({
 				translationContext,
 				summaryEntries,
 			);
+			const target = resolveContentTarget(translationContext, mergedParams);
+			const contentDetails = resolveContentDetails(translationContext, target);
+			const actionDescribeContent = describeContent(
+				'action',
+				option.actionId,
+				translationContext,
+				mergedParams,
+			);
+			const actionDescriptionSplit = splitSummary(actionDescribeContent);
+			const actionDescriptionSummary = actionDescriptionSplit.description;
+			const defaultSummaryText = extractPrimaryLine(summaryEntries);
+			const defaultDescriptionText = extractParagraph(actionDescriptionSummary);
+			const overrideSummary = extractPrimaryLine(contentDetails?.summary);
+			const overrideDescription = extractParagraph(contentDetails?.description);
+			const resolvedSummary = overrideSummary ?? defaultSummaryText;
+			const resolvedDescription = overrideDescription ?? defaultDescriptionText;
 			const card: ActionCardOption = {
 				id: option.id,
 				label: optionLabel,
@@ -213,12 +225,20 @@ export function useEffectGroupOptions({
 			};
 			if (option.summary) {
 				card.summary = option.summary;
+			} else if (resolvedSummary) {
+				card.summary = resolvedSummary;
 			}
 			if (option.description) {
 				card.description = option.description;
+			} else if (resolvedDescription) {
+				card.description = resolvedDescription;
 			}
 			card.onMouseEnter = () => {
-				setHovered({ option, mergedParams, optionLabel });
+				setHovered({
+					option,
+					mergedParams,
+					optionLabel,
+				});
 			};
 			card.onMouseLeave = () => {
 				setHovered(null);
