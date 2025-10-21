@@ -1,11 +1,18 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
+import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { ActionResolution } from '../src/state/useActionResolution';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+
+let optionalGame: Partial<GameEngineContextValue> | null = null;
+
+vi.mock('../src/state/GameContext', () => ({
+	useOptionalGameEngine: () => optionalGame as GameEngineContextValue | null,
+}));
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
@@ -41,6 +48,7 @@ function createResolution(
 describe('<ResolutionCard />', () => {
 	afterEach(() => {
 		cleanup();
+		optionalGame = null;
 	});
 	it('shows labels for action-based resolutions', () => {
 		const resolution = createResolution({
@@ -96,6 +104,32 @@ describe('<ResolutionCard />', () => {
 		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
 		const phasePlayerLabel = screen.getByLabelText('Player');
 		expect(phasePlayerLabel).toHaveTextContent('Player Two');
+	});
+
+	it('applies the active player accent classes when session data is available', () => {
+		optionalGame = {
+			sessionSnapshot: {
+				game: {
+					players: [
+						{ id: 'player-1', name: 'Player One' },
+						{ id: 'player-2', name: 'Player Two' },
+					],
+				},
+			},
+		} as Partial<GameEngineContextValue>;
+
+		const resolution = createResolution({
+			player: { id: 'player-1', name: 'Player One' },
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		const resolutionCard = document.querySelector('[data-state="enter"]');
+		expect(resolutionCard).not.toBeNull();
+		if (!resolutionCard) {
+			throw new Error('Expected resolution card to render');
+		}
+		expect(resolutionCard.className).toContain('border-blue-400/50');
 	});
 
 	it('shows the phase icon in the header when available', () => {
