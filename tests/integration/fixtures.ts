@@ -125,7 +125,10 @@ function findEffect(
 	return undefined;
 }
 
-export function getBuildActionId(engineContext: EngineForTest, buildingId: string) {
+export function getBuildActionId(
+	engineContext: EngineForTest,
+	buildingId: string,
+) {
 	for (const [id, def] of engineContext.actions.entries()) {
 		const effect = findEffect(
 			def.effects,
