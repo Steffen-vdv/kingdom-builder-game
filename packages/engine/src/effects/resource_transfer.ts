@@ -45,7 +45,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 		const defender = context.opponent;
 		const attacker = context.activePlayer;
 		const available = defender.resources[key] || 0;
-		if (amount > available) {
+		if (available >= 0 && amount > available) {
 			amount = available;
 		}
 		defender.resources[key] = available - amount;
@@ -77,7 +77,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 	if (amount < 0) {
 		amount = 0;
 	}
-	if (amount > available) {
+	if (available >= 0 && amount > available) {
 		amount = available;
 	}
 	defender.resources[key] = available - amount;

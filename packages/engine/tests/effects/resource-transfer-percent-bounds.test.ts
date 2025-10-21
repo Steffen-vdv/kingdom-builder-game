@@ -183,4 +183,26 @@ describe('resource:transfer amount behaviour', () => {
 		expect(engineContext.activePlayer.happiness).toBe(0);
 		expect(engineContext.opponent.happiness).toBe(4);
 	});
+
+	it('transfers the full static amount even when the defender is in debt', () => {
+		const engineContext = createTestEngine();
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
+		}
+		engineContext.game.currentPlayerIndex = 0;
+
+		const transfer: EffectDef<{ key: string; amount: number }> = {
+			type: 'resource',
+			method: 'transfer',
+			params: { key: Resource.happiness, amount: 1 },
+		};
+
+		engineContext.activePlayer.happiness = 0;
+		engineContext.opponent.happiness = -3;
+
+		runEffects([transfer], engineContext);
+
+		expect(engineContext.activePlayer.happiness).toBe(1);
+		expect(engineContext.opponent.happiness).toBe(-4);
+	});
 });
