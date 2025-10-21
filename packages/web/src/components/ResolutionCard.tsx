@@ -3,6 +3,7 @@ import type {
 	ActionResolution,
 	ResolutionSource,
 } from '../state/useActionResolution';
+import { useOptionalGameEngine } from '../state/GameContext';
 import type { TimelineEntry } from './ResolutionTimeline';
 import {
 	CARD_BASE_CLASS,
@@ -13,6 +14,7 @@ import {
 	CONTINUE_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
+import { getCardAccentClass } from './playerAccentStyles';
 import {
 	buildTimelineTree,
 	buildResolutionTimelineEntries,
@@ -87,9 +89,16 @@ function ResolutionCard({
 	resolution,
 	onContinue,
 }: ResolutionCardProps) {
+	const gameEngine = useOptionalGameEngine();
+	const players = gameEngine?.sessionSnapshot.game.players ?? [];
+	const accentClass = getCardAccentClass(players, resolution.player?.id);
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
-	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
+	const containerClass = joinClasses(
+		CARD_BASE_CLASS,
+		'pointer-events-auto',
+		accentClass,
+	);
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
