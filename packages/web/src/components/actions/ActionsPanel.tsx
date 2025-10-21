@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { summarizeContent, type Summary } from '../../translation';
+import { type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { hasAiController } from '../../state/sessionAi';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
@@ -30,6 +30,7 @@ import {
 	getActionAvailability,
 	type ActionAvailabilityResult,
 } from './getActionAvailability';
+import { summarizeActionWithInstallation } from './actionSummaryHelpers';
 
 interface CategoryEntry {
 	id: string;
@@ -196,12 +197,15 @@ export default function ActionsPanel() {
 	}, [sessionView.actionList, sessionView.actionsByPlayer, selectedPlayer]);
 	const actionSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
-		actions.forEach((actionDefinition) =>
+		actions.forEach((actionDefinition) => {
 			map.set(
 				actionDefinition.id,
-				summarizeContent('action', actionDefinition.id, translationContext),
-			),
-		);
+				summarizeActionWithInstallation(
+					actionDefinition.id,
+					translationContext,
+				),
+			);
+		});
 		return map;
 	}, [actions, translationContext]);
 	const categoryDefinitions = useMemo(
