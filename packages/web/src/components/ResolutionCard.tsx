@@ -13,6 +13,7 @@ import {
 	CONTINUE_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
+import { usePlayerAccentResolver } from './common/playerAccent';
 import {
 	buildTimelineTree,
 	buildResolutionTimelineEntries,
@@ -87,9 +88,15 @@ function ResolutionCard({
 	resolution,
 	onContinue,
 }: ResolutionCardProps) {
+	const resolvePlayerAccent = usePlayerAccentResolver();
+	const playerAccent = resolvePlayerAccent(resolution.player?.id ?? null);
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
-	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
+	const containerClass = joinClasses(
+		CARD_BASE_CLASS,
+		'pointer-events-auto',
+		playerAccent.cardClass,
+	);
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
@@ -162,11 +169,15 @@ function ResolutionCard({
 		'shadow-amber-500/20 dark:border-white/10 dark:bg-slate-900/60',
 		'dark:shadow-slate-900/40',
 	);
-	const resolutionContainerClass = joinClasses(
+	const resolutionSurfaceBaseClass = joinClasses(
 		'mt-4 rounded-3xl border border-white/50 bg-white/70 p-4',
 		'shadow-inner shadow-amber-500/10 ring-1 ring-white/30',
 		'backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60',
 		'dark:shadow-slate-900/40 dark:ring-white/10',
+	);
+	const resolutionContainerClass = joinClasses(
+		resolutionSurfaceBaseClass,
+		playerAccent.cardSurfaceClass,
 	);
 	const timelineListClass = 'relative flex flex-col gap-3 pl-4';
 	const timelineRailClass = joinClasses(
