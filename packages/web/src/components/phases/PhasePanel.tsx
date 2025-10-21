@@ -57,9 +57,35 @@ const phaseListItemContentClassName = ['flex w-full items-center gap-3'].join(
 );
 
 const phaseListItemIndexClassName = [
-	'grid h-7 w-7 place-items-center rounded-xl border border-indigo-200/70',
-	'bg-indigo-50/80 text-[0.75rem] font-semibold text-indigo-700 shadow-sm',
-	'dark:border-indigo-300/40 dark:bg-indigo-500/20 dark:text-indigo-100',
+	'relative flex h-12 w-12 flex-col items-center justify-center gap-1',
+	'overflow-hidden rounded-2xl border border-indigo-200/70',
+	'bg-gradient-to-br from-white via-white/80 to-indigo-50/70 text-indigo-700',
+	'shadow-sm transition-[border,box-shadow,transform] duration-200 ease-out',
+	'data-[active=true]:-translate-y-0.5 data-[active=true]:border-indigo-400',
+	'data-[active=true]:shadow-lg data-[active=true]:shadow-indigo-400/30',
+	'dark:border-indigo-400/30 dark:from-indigo-950/20 dark:via-indigo-900/30',
+	'dark:to-indigo-800/40 dark:text-indigo-100',
+	'dark:data-[active=true]:border-indigo-300/60',
+	'dark:data-[active=true]:shadow-indigo-500/30',
+].join(' ');
+
+const phaseListItemIndexAccentClassName = [
+	'pointer-events-none absolute inset-0 opacity-60 transition-opacity duration-200',
+	'bg-gradient-to-br from-indigo-500/20 via-transparent to-indigo-500/10',
+	'data-[active=true]:opacity-100',
+	'dark:from-indigo-200/20 dark:via-transparent dark:to-indigo-400/15',
+].join(' ');
+
+const phaseListItemIndexLabelClassName = [
+	'relative text-[0.5rem] uppercase tracking-[0.45em] text-indigo-400',
+	'transition-colors data-[active=true]:text-indigo-50',
+	'dark:text-indigo-200/70 dark:data-[active=true]:text-indigo-100/80',
+].join(' ');
+
+const phaseListItemIndexNumberClassName = [
+	'relative text-lg font-semibold leading-none tracking-[0.15em]',
+	'text-indigo-700 transition-colors data-[active=true]:text-white',
+	'dark:text-indigo-100 dark:data-[active=true]:text-white',
 ].join(' ');
 
 const phaseListItemIconClassName = [
@@ -151,8 +177,25 @@ export default function PhasePanel() {
 									<span
 										className={phaseListItemIndexClassName}
 										aria-hidden="true"
+										data-active={isActive ? 'true' : 'false'}
 									>
-										{String(phaseIndex + 1).padStart(2, '0')}
+										<span
+											className={phaseListItemIndexAccentClassName}
+											aria-hidden="true"
+											data-active={isActive ? 'true' : 'false'}
+										/>
+										<span
+											className={phaseListItemIndexLabelClassName}
+											data-active={isActive ? 'true' : 'false'}
+										>
+											Phase
+										</span>
+										<span
+											className={phaseListItemIndexNumberClassName}
+											data-active={isActive ? 'true' : 'false'}
+										>
+											{String(phaseIndex + 1).padStart(2, '0')}
+										</span>
 									</span>
 									<span
 										className={phaseListItemIconClassName}
