@@ -14,7 +14,7 @@ describe('Building stat bonuses', () => {
 	it('applies and removes stat bonuses when built and removed', () => {
 		const { buildingId, stats } = getBuildingWithStatBonuses();
 		const engineContext = createTestContext();
-		const buildActionId = getBuildActionId(engineContext);
+		const buildActionId = getBuildActionId(engineContext, buildingId);
 		const buildCosts = getActionCosts(buildActionId, engineContext, {
 			id: buildingId,
 		});

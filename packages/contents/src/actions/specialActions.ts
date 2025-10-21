@@ -32,7 +32,10 @@ import {
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
-import { ActionId } from '../actions';
+import { ActionId, BUILDING_ACTION_ID_BY_BUILDING_ID } from '../actions';
+import { BUILDINGS } from '../buildings';
+import { BUILDING_ID_VALUES } from '../buildingIds';
+import type { BuildingIdValue } from '../buildingIds';
 import {
 	ACTION_CATEGORIES,
 	ActionCategoryId,
@@ -51,6 +54,9 @@ const categoryOrder = (categoryId: ActionCategoryIdValue) => {
 
 const basicCategoryOrder = categoryOrder(ActionCategoryId.Basic);
 const buildCategoryOrder = categoryOrder(ActionCategoryId.Build);
+const buildingOrderById = new Map(
+	BUILDING_ID_VALUES.map((id, index) => [id, index] as const),
+);
 
 export function registerSpecialActions(registry: Registry<ActionDef>) {
 	registry.add(
@@ -227,20 +233,34 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 			.build(),
 	);
 
-	registry.add(
-		ActionId.build,
-		action()
-			.id(ActionId.build)
-			.name('Build')
-			.icon('🏛️')
-			.effect(
-				effect(Types.Building, BuildingMethods.ADD)
-					.params(buildingParams().id('$id'))
-					.build(),
-			)
-			.category(ActionCategoryId.Build)
-			.order(buildCategoryOrder - 2)
-			.focus(Focus.Other)
-			.build(),
-	);
+	BUILDINGS.entries().forEach(([buildingId, building]) => {
+		const typedBuildingId = buildingId as BuildingIdValue;
+		const mappedId = BUILDING_ACTION_ID_BY_BUILDING_ID[typedBuildingId];
+		const { icon, name, focus } = building;
+		if (!name) {
+			throw new Error(`Building "${typedBuildingId}" is missing a name.`);
+		}
+		if (!icon) {
+			throw new Error(`Building "${typedBuildingId}" is missing an icon.`);
+		}
+
+		registry.add(
+			mappedId,
+			action()
+				.id(mappedId)
+				.name(name)
+				.icon(icon)
+				.effect(
+					effect(Types.Building, BuildingMethods.ADD)
+						.params(buildingParams().id(typedBuildingId))
+						.build(),
+				)
+				.category(ActionCategoryId.Build)
+				.order(
+					buildCategoryOrder + (buildingOrderById.get(typedBuildingId) ?? 0),
+				)
+				.focus(focus ?? Focus.Other)
+				.build(),
+		);
+	});
 }
