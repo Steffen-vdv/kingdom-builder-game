@@ -86,6 +86,48 @@ describe('useAppNavigation', () => {
 		unmount();
 	});
 
+	it('clears stored resume session when starting a new game', async () => {
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-session-new',
+			turn: 7,
+			devMode: false,
+			updatedAt: Date.UTC(2024, 0, 2),
+		};
+		writeStoredResumeSession(resumeRecord);
+		const { result, unmount } = await renderNavigationHook();
+
+		act(() => {
+			result.current.startStandardGame();
+		});
+
+		expect(result.current.resumeSessionId).toBeNull();
+		expect(result.current.resumePoint).toBeNull();
+		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
+		expect(window.localStorage.getItem(RESUME_SESSION_STORAGE_KEY)).toBeNull();
+		unmount();
+	});
+
+	it('clears stored resume session when starting a developer game', async () => {
+		const resumeRecord: ResumeSessionRecord = {
+			sessionId: 'resume-session-dev',
+			turn: 11,
+			devMode: true,
+			updatedAt: Date.UTC(2024, 0, 3),
+		};
+		writeStoredResumeSession(resumeRecord);
+		const { result, unmount } = await renderNavigationHook();
+
+		act(() => {
+			result.current.startDeveloperGame();
+		});
+
+		expect(result.current.resumeSessionId).toBeNull();
+		expect(result.current.resumePoint).toBeNull();
+		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
+		expect(window.localStorage.getItem(RESUME_SESSION_STORAGE_KEY)).toBeNull();
+		unmount();
+	});
+
 	it('restores stored gameplay preferences when history is missing them', async () => {
 		window.localStorage.setItem(
 			AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
