@@ -56,7 +56,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
-					`${modifierIcon} ${details.modifierInfo.label ?? 'Outcome Adjustment'} on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+					`${modifierIcon} modifier on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 		]);
@@ -72,7 +72,6 @@ describe('hold festival action translation', () => {
 		}${details.upkeepLabel}`;
 		const modifierIconValue = details.modifierInfo.icon ?? '✨';
 		const modifierIcon = modifierIconValue ? `${modifierIconValue} ` : '';
-		const modifierLabel = details.modifierInfo.label ?? 'Outcome Adjustment';
 		const raidLabel = formatTargetLabel(
 			details.armyAttack.icon ?? '',
 			details.armyAttack.name,
@@ -94,7 +93,7 @@ describe('hold festival action translation', () => {
 				kind: 'group',
 			},
 			{
-				text: `${modifierIcon}${modifierLabel} on ${raidLabel}: Whenever it resolves, ${happinessLabel}`,
+				text: `${modifierIcon}modifier on ${raidLabel}: Whenever it resolves, ${happinessLabel}`,
 				depth: 2,
 				kind: 'effect',
 			},

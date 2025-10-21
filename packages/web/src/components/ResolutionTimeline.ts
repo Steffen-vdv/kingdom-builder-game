@@ -22,6 +22,15 @@ interface BuildResolutionTimelineOptions {
 	actionName?: string;
 }
 
+const MODIFIER_LABEL_PATTERN = /\b(cost|result)\s+on\b/giu;
+
+function normalizeModifierDescription(text: string): string {
+	if (!text.trim()) {
+		return text;
+	}
+	return text.replace(MODIFIER_LABEL_PATTERN, 'modifier on');
+}
+
 function buildTimelineTree(
 	descriptors: ActionLogLineDescriptor[] | undefined,
 ): TimelineNode[] {
@@ -103,7 +112,7 @@ function collectCostDetail(
 ): void {
 	entries.push({
 		key,
-		text: node.descriptor.text,
+		text: normalizeModifierDescription(node.descriptor.text),
 		level,
 		kind: node.descriptor.kind,
 	});
@@ -131,7 +140,7 @@ function collectEffectNode(
 	) {
 		entries.push({
 			key,
-			text: descriptorText,
+			text: normalizeModifierDescription(descriptorText),
 			level: node.level,
 			kind: node.descriptor.kind,
 		});
@@ -263,4 +272,5 @@ export {
 	buildTimelineTree,
 	collectCostEntries,
 	collectEffectEntries,
+	normalizeModifierDescription,
 };

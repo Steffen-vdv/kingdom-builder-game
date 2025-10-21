@@ -3,6 +3,7 @@ import type { EffectDef } from '@kingdom-builder/protocol';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import { registerModifierEvalHandler } from '../src/translation/effects/formatters/modifier';
+import { buildModifierDescriptionLabel } from '../src/translation/effects/formatters/modifier_helpers';
 import {
 	createSnapshotPlayer,
 	createSessionSnapshot,
@@ -188,10 +189,7 @@ describe('modifier evaluation handlers', () => {
 		expect(summary[0]).toContain(`${resourceToken}-2`);
 		expect(description).not.toHaveLength(0);
 		const primaryLine = description[0];
-		const resultLabelText = joinParts(
-			resultDescriptor.icon,
-			resultDescriptor.label,
-		);
+		const resultLabelText = buildModifierDescriptionLabel(resultDescriptor);
 		const targetLabel = joinParts(
 			developmentInfo?.icon ?? developmentDef.icon,
 			developmentInfo?.name ?? developmentDef.name ?? developmentId,
@@ -240,7 +238,7 @@ describe('modifier evaluation handlers', () => {
 			actionInfo?.icon ?? actionDef.icon,
 			actionInfo?.name ?? actionDef.name ?? actionId,
 		);
-		const costLabelText = joinParts(costDescriptor.icon, costDescriptor.label);
+		const costLabelText = buildModifierDescriptionLabel(costDescriptor);
 		expect(description).toEqual([
 			`${costLabelText} on ${targetLabel}: Decrease cost by 20% ${resourceIcon}`,
 		]);
@@ -286,7 +284,7 @@ describe('modifier evaluation handlers', () => {
 		const primaryLine = description[0];
 		expect(
 			primaryLine.startsWith(
-				`${joinParts(resultDescriptor.icon, resultDescriptor.label)} on ${targetLabel}:`,
+				`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
 			),
 		).toBe(true);
 		expect(primaryLine).toMatch(/transfers.+10%/u);
@@ -333,7 +331,7 @@ describe('modifier evaluation handlers', () => {
 		const primaryLine = describeEffects([eff], translationContext)[0];
 		expect(
 			primaryLine.startsWith(
-				`${joinParts(resultDescriptor.icon, resultDescriptor.label)} on ${targetLabel}:`,
+				`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
 			),
 		).toBe(true);
 	});

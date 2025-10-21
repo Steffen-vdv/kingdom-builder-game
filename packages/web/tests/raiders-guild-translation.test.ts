@@ -50,6 +50,9 @@ describe('raiders guild translation', () => {
 		const modifierInfo = translation.assets.modifiers.result ?? { icon: '✨' };
 		const modifierIcon = modifierInfo.icon ?? '✨';
 		const modifierLabel = modifierInfo.label ?? 'result';
+		const modifierText = modifierIcon
+			? `${modifierIcon} modifier`
+			: `${modifierLabel} modifier`;
 		const summary = describeContent(
 			'building',
 			ids.transferBuilding,
@@ -60,10 +63,7 @@ describe('raiders guild translation', () => {
 		const adjust = Number(modifier.params?.['adjust'] ?? 0);
 		const raid = engineContext.actions.get(ids.raidAction);
 		const transferIcon = translation.assets.transfer.icon ?? '🔁';
-		const modifierPrefix = [modifierIcon, modifierLabel]
-			.filter((value) => value && value.length > 0)
-			.join(' ');
-		const clause = `${modifierPrefix} on ${formatTargetLabel(
+		const clause = `${modifierText} on ${formatTargetLabel(
 			raid.icon ?? '',
 			raid.name,
 		)}: Whenever it transfers ${RESOURCES_KEYWORD}, ${transferIcon} ${increaseOrDecrease(
@@ -130,6 +130,9 @@ describe('raiders guild translation', () => {
 		const modifierInfo = translation.assets.modifiers.result ?? { icon: '✨' };
 		const modifierIcon = modifierInfo.icon ?? '✨';
 		const modifierLabel = modifierInfo.label ?? 'result';
+		const modifierText = modifierIcon
+			? `${modifierIcon} modifier`
+			: `${modifierLabel} modifier`;
 		const summary = describeContent(
 			'building',
 			ids.populationBuilding,
@@ -154,10 +157,7 @@ describe('raiders guild translation', () => {
 		if (!detailLine) {
 			return;
 		}
-		const expectedPrefix = [modifierIcon, modifierLabel]
-			.filter((value) => value && value.length > 0)
-			.join(' ');
-		expect(detailLine.startsWith(expectedPrefix)).toBe(true);
+		expect(detailLine.startsWith(modifierText)).toBe(true);
 		expect(detailLine).toContain(target);
 	});
 
@@ -166,6 +166,9 @@ describe('raiders guild translation', () => {
 		const modifierInfo = translation.assets.modifiers.result ?? { icon: '✨' };
 		const modifierIcon = modifierInfo.icon ?? '✨';
 		const modifierLabel = modifierInfo.label ?? 'result';
+		const modifierText = modifierIcon
+			? `${modifierIcon} modifier`
+			: `${modifierLabel} modifier`;
 		const summary = describeContent(
 			'building',
 			ids.developmentBuilding,
@@ -177,10 +180,7 @@ describe('raiders guild translation', () => {
 		const key = resourceEffect.params?.['key'] as string;
 		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
 		const icon = selectAttackResourceDescriptor(translation, key).icon || key;
-		const modifierPrefix = [modifierIcon, modifierLabel]
-			.filter((value) => value && value.length > 0)
-			.join(' ');
-		const clause = `${modifierPrefix} on ${formatTargetLabel(
+		const clause = `${modifierText} on ${formatTargetLabel(
 			development.icon ?? '',
 			development.name,
 		)}: Whenever it grants ${RESOURCES_KEYWORD}, gain ${icon}${signed(amount)}${Math.abs(

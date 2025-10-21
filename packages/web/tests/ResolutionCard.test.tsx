@@ -295,6 +295,33 @@ describe('<ResolutionCard />', () => {
 		expect(secondChangeContainer).toHaveStyle({ marginLeft: '3.5rem' });
 	});
 
+	it('normalizes modifier descriptions in structured timelines', () => {
+		const resolution = createResolution({
+			visibleTimeline: [
+				{
+					text: '✨ result on Raid: Whenever it resolves, 🎯 +1',
+					depth: 1,
+					kind: 'effect',
+				},
+				{
+					text: '💲 cost on all actions: Increase cost by +3',
+					depth: 1,
+					kind: 'effect',
+				},
+			],
+			visibleLines: [],
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		expect(
+			screen.getByText('✨ modifier on Raid: Whenever it resolves, 🎯 +1'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('💲 modifier on all actions: Increase cost by +3'),
+		).toBeInTheDocument();
+	});
+
 	it('falls back to simple line rendering for phase resolutions without timeline data', () => {
 		const resolution = createResolution({
 			source: 'phase',
@@ -326,5 +353,24 @@ describe('<ResolutionCard />', () => {
 		expect(secondLine).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(bonusLine).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(followUpLine).toHaveStyle({ marginLeft: '2.625rem' });
+	});
+
+	it('normalizes modifier descriptions in fallback lines', () => {
+		const resolution = createResolution({
+			visibleTimeline: [],
+			visibleLines: [
+				'✨ result on Raid: Whenever it resolves, 🎯 +1',
+				'   💲 cost on all actions: Increase cost by +3',
+			],
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		expect(
+			screen.getByText('✨ modifier on Raid: Whenever it resolves, 🎯 +1'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('💲 modifier on all actions: Increase cost by +3'),
+		).toBeInTheDocument();
 	});
 });
