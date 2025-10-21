@@ -8,6 +8,7 @@ export interface ActionsPanelGameOptions {
 		population?: string;
 		basic?: string;
 		building?: string;
+		develop?: string;
 	};
 	requirementBuilder?: (context: {
 		capacityStat: string;

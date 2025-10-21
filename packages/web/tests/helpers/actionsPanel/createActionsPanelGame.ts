@@ -192,12 +192,13 @@ export function createActionsPanelGame({
 		content.raisePopulationAction,
 		content.basicAction,
 		content.buildingAction,
+		...content.developmentActions,
 	].filter(Boolean) as ReturnType<typeof factory.action>[];
 	const actionsRegistry = createRegistry(actionDefinitions);
 	const buildingsRegistry = createRegistry(
 		content.buildingDefinition ? [content.buildingDefinition] : [],
 	);
-	const developmentsRegistry = createRegistry<{ id: string }>([]);
+	const developmentsRegistry = createRegistry(content.developmentDefinitions);
 	const populationsRegistry = createRegistry(content.registeredPopulationRoles);
 	const translationContext = createTranslationContextStub({
 		actions: wrapTranslationRegistry(actionsRegistry),
@@ -284,6 +285,7 @@ export function createActionsPanelGame({
 			raise: content.raisePopulationAction,
 			basic: content.basicAction,
 			building: content.buildingAction,
+			developments: content.developmentActions,
 		},
 		populationRoles: content.registeredPopulationRoles,
 		costMap: content.costMap,

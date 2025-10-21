@@ -4,7 +4,13 @@ export {
 	ActionCategoryId,
 } from './actionCategories';
 export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
-export { ACTIONS, createActionRegistry, ActionId } from './actions';
+export {
+	ACTIONS,
+	createActionRegistry,
+	ActionId,
+	actionIdForDevelopment,
+	developmentIdFromAction,
+} from './actions';
 export { BUILDINGS, createBuildingRegistry } from './buildings';
 export { BuildingId } from './buildingIds';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';

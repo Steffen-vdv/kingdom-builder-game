@@ -1,9 +1,4 @@
-import {
-	ActionBuilder,
-	action,
-	actionParams,
-	building,
-} from '../src/config/builders';
+import { ActionBuilder, action, building } from '../src/config/builders';
 import {
 	actionEffectGroup,
 	actionEffectGroupOption,
@@ -24,12 +19,16 @@ describe('action effect group builder safeguards', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
 			.option(
-				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('Farm')
+					.action(ActionId.develop_house),
 			);
 
 		expect(() =>
 			group.option(
-				actionEffectGroupOption('farm').label('House').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('House')
+					.action(ActionId.develop_house),
 			),
 		).toThrowError(
 			'Action effect group option id "farm" already exists. Use unique option ids within a group.',
@@ -44,7 +43,7 @@ describe('action effect group builder safeguards', () => {
 				.option(
 					actionEffectGroupOption('farm')
 						.label('Farm')
-						.action(ActionId.develop),
+						.action(ActionId.develop_house),
 				),
 		);
 
@@ -55,7 +54,7 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('house')
 							.label('House')
-							.action(ActionId.develop),
+							.action(ActionId.develop_house),
 					),
 			),
 		).toThrowError(
@@ -68,7 +67,9 @@ describe('action effect group builder safeguards', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
 			.option(
-				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('Farm')
+					.action(ActionId.develop_house),
 			);
 
 		expect(() =>
@@ -94,8 +95,9 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('farm')
 							.label('Farm')
-							.action(ActionId.develop)
-							.params(actionParams().id('farm').landId('$landId')),
+							.action(ActionId.develop_house)
+							.paramDevelopmentId('farm')
+							.paramLandId('$landId'),
 					),
 			)
 			.build();
@@ -111,8 +113,8 @@ describe('action effect group builder safeguards', () => {
 				{
 					id: 'farm',
 					label: 'Farm',
-					actionId: ActionId.develop,
-					params: { id: 'farm', landId: '$landId' },
+					actionId: ActionId.develop_house,
+					params: { developmentId: 'farm', landId: '$landId' },
 				},
 			],
 		});

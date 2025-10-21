@@ -3,6 +3,11 @@ import type { PopulationRoleId } from '../state';
 
 type ActionParameterMap = {
 	develop: { id: string; landId: string };
+	'develop:farm': { landId: string };
+	'develop:house': { landId: string };
+	'develop:outpost': { landId: string };
+	'develop:watchtower': { landId: string };
+	'develop:garden': { landId: string };
 	build: { id: string };
 	demolish: { id: string };
 	raise_pop: { role: PopulationRoleId };

@@ -5,6 +5,7 @@ import {
 } from '@kingdom-builder/protocol';
 import { registerBasicActions } from './actions/basicActions';
 import { registerSpecialActions } from './actions/specialActions';
+import { registerDevelopmentActions } from './actions/developmentActions';
 import {
 	ActionCategoryId as ActionCategoryIds,
 	type ActionCategoryId as ActionCategoryIdValue,
@@ -243,6 +244,7 @@ export function createActionRegistry() {
 	const registry = new Registry<ActionDef>(actionSchema.passthrough());
 
 	registerBasicActions(registry);
+	registerDevelopmentActions(registry);
 	registerSpecialActions(registry);
 
 	return registry;
