@@ -191,13 +191,11 @@ export function createActionsPanelGame({
 	const actionDefinitions = [
 		content.raisePopulationAction,
 		content.basicAction,
-		content.buildingAction,
+		...content.buildingActions,
 		...content.developmentActions,
-	].filter(Boolean) as ReturnType<typeof factory.action>[];
+	];
 	const actionsRegistry = createRegistry(actionDefinitions);
-	const buildingsRegistry = createRegistry(
-		content.buildingDefinition ? [content.buildingDefinition] : [],
-	);
+	const buildingsRegistry = createRegistry(content.buildingDefinitions);
 	const developmentsRegistry = createRegistry(content.developmentDefinitions);
 	const populationsRegistry = createRegistry(content.registeredPopulationRoles);
 	const translationContext = createTranslationContextStub({
@@ -284,7 +282,7 @@ export function createActionsPanelGame({
 		actions: {
 			raise: content.raisePopulationAction,
 			basic: content.basicAction,
-			building: content.buildingAction,
+			building: content.buildingActions,
 			developments: content.developmentActions,
 		},
 		populationRoles: content.registeredPopulationRoles,
@@ -294,7 +292,7 @@ export function createActionsPanelGame({
 		defaultPopulationIcon:
 			content.registeredPopulationRoles.find((entry) => entry.icon)?.icon ??
 			POPULATION_ICON_FALLBACK,
-		building: content.buildingDefinition,
+		buildings: content.buildingDefinitions,
 	} as const;
 	const actionOptions = new Map<string, ActionEffectGroup[]>();
 	const sessionId = 'actions-panel-session';

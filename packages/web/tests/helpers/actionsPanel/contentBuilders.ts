@@ -38,8 +38,8 @@ export interface ActionsPanelContent {
 	readonly buildRequirements: unknown[];
 	readonly raisePopulationAction: ActionDefinition;
 	readonly basicAction: ActionDefinition;
-	readonly buildingAction?: ActionDefinition;
-	readonly buildingDefinition?: BuildingDefinition;
+	readonly buildingActions: ActionDefinition[];
+	readonly buildingDefinitions: BuildingDefinition[];
 	readonly developmentActions: ActionDefinition[];
 	readonly developmentDefinitions: DevelopmentDefinition[];
 	readonly initialPopulation: Record<string, number>;
@@ -120,24 +120,36 @@ export function buildActionsPanelContent({
 		order: 2,
 		focus: 'other',
 	});
-	let buildingAction: ActionDefinition | undefined;
-	let buildingDefinition: BuildingDefinition | undefined;
+	let buildingDefinitions: BuildingDefinition[] = [];
+	let buildingActions: ActionDefinition[] = [];
 	if (showBuilding) {
-		buildingAction = factory.action({
-			name: 'Construct',
-			icon: '🏛️',
-			requirements: [],
-			effects: [],
-		});
-		Object.assign(buildingAction, {
-			category: categories.building,
-			order: 3,
-			focus: 'other',
-		});
-		buildingDefinition = factory.building({
-			name: 'Great Hall',
-			icon: '🏰',
-			costs: { [upkeepResource]: 5 },
+		buildingDefinitions = [
+			factory.building({
+				name: 'Great Hall',
+				icon: '🏰',
+				costs: { [upkeepResource]: 5 },
+			}),
+		];
+		buildingActions = buildingDefinitions.map((definition, index) => {
+			const action = factory.action({
+				name: `Build: ${definition.name}`,
+				icon: definition.icon,
+				requirements: [],
+				effects: [
+					{
+						type: 'building',
+						method: 'add',
+						params: { id: definition.id },
+					},
+				],
+			});
+			Object.assign(action, {
+				category: categories.building,
+				order: index + 1,
+				focus: definition.focus ?? 'other',
+				baseCosts: { ...definition.costs },
+			});
+			return action;
 		});
 	}
 	const developmentDefinitions: DevelopmentDefinition[] = [
@@ -185,7 +197,7 @@ export function buildActionsPanelContent({
 	const actionIds = [
 		raisePopulationAction,
 		basicAction,
-		buildingAction,
+		...buildingActions,
 		...developmentActions,
 	]
 		.filter(Boolean)
@@ -201,8 +213,8 @@ export function buildActionsPanelContent({
 			},
 		})),
 	);
-	if (buildingAction) {
-		requirementFailures.set(buildingAction.id, [
+	for (const action of buildingActions) {
+		requirementFailures.set(action.id, [
 			{
 				requirement: buildRequirements[0]!,
 				details: {
@@ -218,8 +230,8 @@ export function buildActionsPanelContent({
 	const requirementIcons = new Map<string, string[]>([
 		[raisePopulationAction.id, []],
 	]);
-	if (buildingAction) {
-		requirementIcons.set(buildingAction.id, ['🛠️']);
+	for (const action of buildingActions) {
+		requirementIcons.set(action.id, ['🛠️']);
 	}
 	for (const action of developmentActions) {
 		requirementIcons.set(action.id, []);
@@ -233,8 +245,8 @@ export function buildActionsPanelContent({
 		buildRequirements,
 		raisePopulationAction,
 		basicAction,
-		buildingAction,
-		buildingDefinition,
+		buildingActions,
+		buildingDefinitions,
 		developmentActions,
 		developmentDefinitions,
 		initialPopulation,

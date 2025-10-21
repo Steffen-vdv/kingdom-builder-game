@@ -326,7 +326,6 @@ describe('createGameApi', () => {
 		const request: ActionExecuteRequest = {
 			sessionId: 'session-conflict',
 			actionId: 'action.build',
-			params: { id: 'mill' },
 		};
 
 		const response = await api.performAction(request);

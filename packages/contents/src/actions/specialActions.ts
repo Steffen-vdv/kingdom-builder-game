@@ -13,7 +13,6 @@ import {
 	resultModParams,
 	transferParams,
 	costModParams,
-	buildingParams,
 	statEvaluator,
 	populationEvaluator,
 	effect,
@@ -27,7 +26,6 @@ import {
 	StatMethods,
 	CostModMethods,
 	ResultModMethods,
-	BuildingMethods,
 	LandMethods,
 } from '../config/builderShared';
 import { Focus } from '../defs';
@@ -233,9 +231,10 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 			.id(ActionId.build)
 			.name('Build')
 			.icon('🏛️')
+			.system()
 			.effect(
-				effect(Types.Building, BuildingMethods.ADD)
-					.params(buildingParams().id('$id'))
+				effect(Types.Resource, ResourceMethods.ADD)
+					.params(resourceParams().key(Resource.gold).amount(0))
 					.build(),
 			)
 			.category(ActionCategoryId.Build)

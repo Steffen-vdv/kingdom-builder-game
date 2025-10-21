@@ -12,7 +12,7 @@ import {
 	ResultModMethods,
 	PassiveMethods,
 } from './config/builderShared';
-import { ActionId } from './actions';
+import { BUILDING_ACTION_IDS } from './actions';
 import type { passiveParams } from './config/builders';
 import { Resource } from './resources';
 import { Stat } from './stats';
@@ -55,18 +55,20 @@ export const incomeModifier = (id: string, percent: number) =>
 		)
 		.build();
 
-export const buildingDiscountModifier = (id: string) =>
-	effect(Types.CostMod, CostModMethods.ADD)
-		.round('up')
-		.params(
-			costModParams()
-				.id(id)
-				.actionId(ActionId.build)
-				.key(Resource.gold)
-				.percent(-0.2)
-				.build(),
-		)
-		.build();
+export const buildingDiscountModifier = (id: string): EffectConfig[] =>
+	BUILDING_ACTION_IDS.map((actionId) =>
+		effect(Types.CostMod, CostModMethods.ADD)
+			.round('up')
+			.params(
+				costModParams()
+					.id(`${id}:${actionId}`)
+					.actionId(actionId)
+					.key(Resource.gold)
+					.percent(-0.2)
+					.build(),
+			)
+			.build(),
+	);
 
 export const growthBonusEffect = (amount: number) =>
 	statAddEffect(Stat.growth, amount);
