@@ -3,7 +3,7 @@ import React, {
 	useCallback,
 	useEffect,
 	useMemo,
-	useRef,
+	useState,
 } from 'react';
 import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import TranslationContextLoading from './TranslationContextLoading';
@@ -32,7 +32,7 @@ import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
-import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
+import { useManualSessionStart } from './useManualSessionStart';
 import { useResolutionAutomation } from './useResolutionAutomation';
 import { useRemotePlayerNameSync } from './useRemotePlayerNameSync';
 import GameSessionLoadingScreen from '../components/game/GameSessionLoadingScreen';
@@ -73,17 +73,17 @@ export function GameProviderInner({
 	resourceKeys,
 	sessionMetadata,
 }: GameProviderInnerProps) {
-	const { enqueue, cachedSessionSnapshot } = useSessionQueue(
-		queue,
-		sessionSnapshot,
-		sessionId,
-	);
-
+	const { enqueue } = useSessionQueue(queue, sessionSnapshot, sessionId);
+	const [liveSessionSnapshot, setLiveSessionSnapshot] =
+		useState(sessionSnapshot);
+	useEffect(() => {
+		setLiveSessionSnapshot(sessionSnapshot);
+	}, [sessionSnapshot]);
 	const refresh = useCallback(() => {
 		void refreshSession();
 	}, [refreshSession]);
 	useRemotePlayerNameSync({
-		sessionSnapshot,
+		sessionSnapshot: liveSessionSnapshot,
 		sessionId,
 		playerName,
 		enqueue,
@@ -91,7 +91,7 @@ export function GameProviderInner({
 	});
 	const { translationContext, isReady: translationContextReady } =
 		useSessionTranslationContext({
-			sessionSnapshot,
+			sessionSnapshot: liveSessionSnapshot,
 			registries,
 			ruleSnapshot,
 			sessionMetadata,
@@ -108,11 +108,11 @@ export function GameProviderInner({
 	} = useTimeScale({ devMode });
 
 	const actionCostResource: SessionResourceKey =
-		sessionSnapshot.actionCostResource;
+		liveSessionSnapshot.actionCostResource;
 
 	const sessionView = useMemo(
-		() => selectSessionView(sessionSnapshot, registries),
-		[sessionSnapshot, registries],
+		() => selectSessionView(liveSessionSnapshot, registries),
+		[liveSessionSnapshot, registries],
 	);
 	const selectors = useMemo<SessionDerivedSelectors>(
 		() => ({ sessionView }),
@@ -124,7 +124,7 @@ export function GameProviderInner({
 	});
 
 	const { log, logOverflowed, addResolutionLog } = useGameLog({
-		sessionSnapshot,
+		sessionSnapshot: liveSessionSnapshot,
 	});
 
 	const { resolution, showResolution, acknowledgeResolution } =
@@ -154,7 +154,7 @@ export function GameProviderInner({
 		refreshPhaseState,
 		startSession,
 	} = usePhaseProgress({
-		sessionSnapshot,
+		sessionSnapshot: liveSessionSnapshot,
 		sessionId,
 		actionCostResource,
 		mountedRef,
@@ -164,9 +164,15 @@ export function GameProviderInner({
 		showResolution: handleShowResolution,
 		registries,
 		onFatalSessionError,
+		onSnapshotApplied: setLiveSessionSnapshot,
 	});
 
-	const manualStartTriggeredRef = useRef(false);
+	const { handleStartSession } = useManualSessionStart({
+		phase,
+		runUntilActionPhase,
+		startSession,
+		onFatalSessionError,
+	});
 
 	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =
 		useToasts({
@@ -181,7 +187,7 @@ export function GameProviderInner({
 
 	useCompensationLogger({
 		sessionId,
-		sessionSnapshot,
+		sessionSnapshot: liveSessionSnapshot,
 		addResolutionLog,
 		resourceKeys,
 		registries,
@@ -205,7 +211,7 @@ export function GameProviderInner({
 
 	useAiRunner({
 		sessionId,
-		sessionSnapshot,
+		sessionSnapshot: liveSessionSnapshot,
 		runUntilActionPhaseCore,
 		syncPhaseState: applyPhaseSnapshot,
 		mountedRef,
@@ -216,37 +222,6 @@ export function GameProviderInner({
 		actionCostResource,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
 	});
-
-	useEffect(() => {
-		if (phase.awaitingManualStart) {
-			return;
-		}
-		if (manualStartTriggeredRef.current) {
-			return;
-		}
-		let disposed = false;
-		const run = async () => {
-			try {
-				await runUntilActionPhase();
-			} catch (error) {
-				if (disposed) {
-					return;
-				}
-				if (!onFatalSessionError) {
-					return;
-				}
-				if (isFatalSessionError(error)) {
-					return;
-				}
-				markFatalSessionError(error);
-				onFatalSessionError(error);
-			}
-		};
-		void run();
-		return () => {
-			disposed = true;
-		};
-	}, [phase.awaitingManualStart, runUntilActionPhase, onFatalSessionError]);
 
 	const metadata = useMemo<SessionMetadataFetchers>(
 		() => ({
@@ -268,15 +243,6 @@ export function GameProviderInner({
 		},
 		[handlePerform],
 	);
-
-	const handleStartSession = useCallback(async () => {
-		manualStartTriggeredRef.current = true;
-		try {
-			await startSession();
-		} finally {
-			manualStartTriggeredRef.current = false;
-		}
-	}, [startSession]);
 
 	const requestHelpers = useMemo(
 		() => ({
@@ -308,19 +274,16 @@ export function GameProviderInner({
 			onExit();
 		}
 	}, [onAbandonSession, onReleaseSession, onExit]);
-
 	if (!translationContextReady || !translationContext) {
 		return <TranslationContextLoading />;
 	}
-
 	if (initializing) {
 		return <GameSessionLoadingScreen />;
 	}
-
 	const value: GameEngineContextValue = {
 		sessionId,
-		sessionSnapshot,
-		cachedSessionSnapshot,
+		sessionSnapshot: liveSessionSnapshot,
+		cachedSessionSnapshot: liveSessionSnapshot,
 		selectors,
 		translationContext,
 		ruleSnapshot,

@@ -31,6 +31,7 @@ interface PhaseProgressOptions {
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	onFatalSessionError?: ((error: unknown) => void) | undefined;
+	onSnapshotApplied?: (snapshot: SessionSnapshot) => void;
 }
 
 export interface PhaseProgressState {
@@ -120,6 +121,7 @@ export function usePhaseProgress({
 	registries,
 	showResolution,
 	onFatalSessionError,
+	onSnapshotApplied,
 }: PhaseProgressOptions) {
 	const initialAwaitingManualStart = requiresManualStart(sessionSnapshot);
 	const awaitingManualStartRef = useRef<boolean>(initialAwaitingManualStart);
@@ -190,8 +192,16 @@ export function usePhaseProgress({
 			});
 			markInitialized(nextState);
 			setPhaseState(nextState);
+			if (onSnapshotApplied) {
+				onSnapshotApplied(snapshot);
+			}
 		},
-		[actionCostResource, markInitialized, updateAwaitingManualStart],
+		[
+			actionCostResource,
+			markInitialized,
+			updateAwaitingManualStart,
+			onSnapshotApplied,
+		],
 	);
 
 	const refreshPhaseState = useCallback(
