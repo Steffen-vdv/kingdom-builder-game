@@ -71,7 +71,7 @@ const DEFAULT_TOKENS: OverviewTokenCandidates = {
 		[ActionId.expand]: [ActionId.expand],
 		build: [ActionId.build_town_charter],
 		[ActionId.develop]: [ActionId.develop],
-		[ActionId.raise_pop]: [ActionId.raise_pop],
+		[ActionId.hire_council]: [ActionId.hire_council],
 		[ActionId.army_attack]: [ActionId.army_attack],
 	},
 	phases: {
@@ -224,7 +224,7 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 		span: true,
 		paragraphs: [
 			'Spend {ap} AP to {expand} grow territory or {develop} upgrade key lands.',
-			'Field {raise_pop} specialists or launch {army_attack} attacks to snowball momentum.',
+			'Field {hire_council} specialists or launch {army_attack} attacks to snowball momentum.',
 		],
 	},
 ];

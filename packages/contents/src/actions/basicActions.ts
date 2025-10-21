@@ -125,6 +125,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.id(ActionId.raise_pop)
 			.name('Hire')
 			.icon('👶')
+			.system()
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(

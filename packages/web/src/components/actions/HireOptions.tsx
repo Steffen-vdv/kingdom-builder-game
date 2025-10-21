@@ -7,7 +7,7 @@ import type { ResourceDescriptorSelector } from './utils';
 import { CATEGORY_SUBTITLE_CLASSES } from './actionsPanelStyles';
 
 interface HireOptionsProps {
-	action: Action;
+	actions: Action[];
 	player: DisplayPlayer;
 	canInteract: boolean;
 	selectResourceDescriptor: ResourceDescriptorSelector;
@@ -15,7 +15,7 @@ interface HireOptionsProps {
 }
 
 export default function HireOptions({
-	action,
+	actions,
 	player,
 	canInteract,
 	selectResourceDescriptor,
@@ -32,12 +32,15 @@ export default function HireOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2"
 			>
-				<RaisePopOptions
-					action={action}
-					player={player}
-					canInteract={canInteract}
-					selectResourceDescriptor={selectResourceDescriptor}
-				/>
+				{actions.map((action) => (
+					<RaisePopOptions
+						key={action.id}
+						action={action}
+						player={player}
+						canInteract={canInteract}
+						selectResourceDescriptor={selectResourceDescriptor}
+					/>
+				))}
 			</div>
 		</div>
 	);

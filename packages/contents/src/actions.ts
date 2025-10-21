@@ -7,6 +7,7 @@ import { registerBasicActions } from './actions/basicActions';
 import { registerSpecialActions } from './actions/specialActions';
 import { registerDevelopmentActions } from './actions/developmentActions';
 import { registerBuildingActions } from './actions/buildingActions';
+import { registerHireActions } from './actions/hireActions';
 import {
 	ActionCategoryId as ActionCategoryIds,
 	type ActionCategoryId as ActionCategoryIdValue,
@@ -31,6 +32,7 @@ export function createActionRegistry() {
 	const registry = new Registry<ActionDef>(actionSchema.passthrough());
 
 	registerBasicActions(registry);
+	registerHireActions(registry);
 	registerDevelopmentActions(registry);
 	registerBuildingActions(registry);
 	registerSpecialActions(registry);

@@ -1,6 +1,4 @@
 import type { ActionEffectGroupChoiceMap } from '@kingdom-builder/protocol';
-import type { PopulationRoleId } from '../state';
-
 type ActionParameterMap = {
 	develop: { id: string; landId: string };
 	'develop:farm': { landId: string };
@@ -9,7 +7,6 @@ type ActionParameterMap = {
 	'develop:watchtower': { landId: string };
 	'develop:garden': { landId: string };
 	demolish: { id: string };
-	raise_pop: { role: PopulationRoleId };
 	[key: string]: Record<string, unknown>;
 };
 

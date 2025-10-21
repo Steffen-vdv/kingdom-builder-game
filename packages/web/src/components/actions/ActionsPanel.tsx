@@ -99,13 +99,12 @@ const renderHireCategory: CategoryRenderer = ({
 	canInteract,
 	selectResourceDescriptor,
 }) => {
-	const action = actions[0];
-	if (!action) {
+	if (actions.length === 0) {
 		return null;
 	}
 	return (
 		<HireOptions
-			action={action}
+			actions={actions}
 			player={player}
 			canInteract={canInteract}
 			selectResourceDescriptor={selectResourceDescriptor}

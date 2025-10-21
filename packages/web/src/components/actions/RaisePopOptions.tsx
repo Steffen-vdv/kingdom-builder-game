@@ -22,7 +22,7 @@ import {
 } from './utils';
 import {
 	buildRequirementIconsForRole,
-	determineRaisePopRoles,
+	resolveHireActionRole,
 	type PopulationRegistryLike,
 	type PopulationDescriptorSelector,
 	type PopulationDefinition,
@@ -93,9 +93,10 @@ export default function RaisePopOptions({
 		() => getRequirementIcons(action.id, translationContext),
 		[action.id, translationContext],
 	);
-	const roleOptions = useMemo(
-		() => determineRaisePopRoles(actionDefinition, populationRegistry),
-		[actionDefinition, populationRegistry],
+	const role = useMemo(
+		() =>
+			resolveHireActionRole(action.id, actionDefinition, populationRegistry),
+		[action.id, actionDefinition, populationRegistry],
 	);
 	const resolvePopulationDescriptor = useCallback(
 		(role: string) => {
@@ -141,6 +142,32 @@ export default function RaisePopOptions({
 			selectPopulationDescriptor,
 			defaultPopulationIcon,
 		],
+	);
+	const roleDescriptor = useMemo(
+		() => (role ? resolvePopulationDescriptor(role) : undefined),
+		[role, resolvePopulationDescriptor],
+	);
+	const requirementIcons = useMemo(
+		() => (role ? getRequirementIconsForRole(role) : baseRequirementIcons),
+		[role, getRequirementIconsForRole, baseRequirementIcons],
+	);
+	const upkeep = useMemo(() => {
+		if (!role) {
+			return undefined;
+		}
+		try {
+			return populationRegistry.get(role)?.upkeep;
+		} catch {
+			return undefined;
+		}
+	}, [populationRegistry, role]);
+	const summary = useMemo(
+		() => describeContent('action', action.id, translationContext),
+		[action.id, translationContext],
+	);
+	const shortSummary = useMemo(
+		() => summarizeContent('action', action.id, translationContext),
+		[action.id, translationContext],
 	);
 	const actionInfo = sessionView.actions.get(action.id);
 	const actionFocus = normalizeActionFocus(actionInfo?.focus ?? action.focus);
@@ -198,108 +225,75 @@ export default function RaisePopOptions({
 			: requirementsAvailable
 				? []
 				: ['Loading requirements…'];
-	return (
-		<>
-			{roleOptions.map((role) => {
-				let upkeep: Record<string, number> | undefined;
-				try {
-					upkeep = populationRegistry.get(role)?.upkeep;
-				} catch {
-					upkeep = undefined;
-				}
-				const canPay = costsReady
-					? playerHasRequiredResources(player.resources, costs)
-					: false;
-				const meetsRequirements =
-					!requirementsLoading && effectiveRequirementFailures.length === 0;
-				const enabled =
-					canInteract && !costsLoading && canPay && meetsRequirements;
-				const requirementIcons = getRequirementIconsForRole(role);
-				const insufficientTooltip = costsReady
-					? formatMissingResources(
-							costs,
-							player.resources,
-							selectResourceDescriptor,
-						)
+	if (!role) {
+		return null;
+	}
+	const canPay = costsReady
+		? playerHasRequiredResources(player.resources, costs)
+		: false;
+	const meetsRequirements =
+		!requirementsLoading && effectiveRequirementFailures.length === 0;
+	const enabled = canInteract && !costsLoading && canPay && meetsRequirements;
+	const insufficientTooltip = costsReady
+		? formatMissingResources(costs, player.resources, selectResourceDescriptor)
+		: undefined;
+	const actionIcon = actionInfo?.icon;
+	const actionName = actionInfo?.name ?? action.name;
+	const roleIcon = roleDescriptor?.icon ?? defaultPopulationIcon ?? '';
+	const roleLabel = roleDescriptor?.label ?? role;
+	const requirementText = requirementMessages.join(', ');
+	const showRequirementsLoading = !requirementsAvailable && requirementsLoading;
+	const title = showRequirementsLoading
+		? 'Loading requirements…'
+		: costsLoading
+			? 'Loading costs…'
+			: !meetsRequirements
+				? requirementText
+				: !canPay
+					? (insufficientTooltip ?? 'Cannot pay costs')
 					: undefined;
-				const actionIcon = actionInfo?.icon;
-				const actionName = actionInfo?.name ?? action.name;
-				const roleDescriptor = resolvePopulationDescriptor(role);
-				const roleIcon = roleDescriptor.icon ?? defaultPopulationIcon ?? '';
-				const roleLabel = roleDescriptor.label;
-				const requirementText = requirementMessages.join(', ');
-				const showRequirementsLoading =
-					!requirementsAvailable && requirementsLoading;
-				const title = showRequirementsLoading
-					? 'Loading requirements…'
-					: costsLoading
-						? 'Loading costs…'
-						: !meetsRequirements
-							? requirementText
-							: !canPay
-								? (insufficientTooltip ?? 'Cannot pay costs')
-								: undefined;
-				const summary = describeContent(
-					'action',
-					action.id,
-					translationContext,
-					{ role },
-				);
-				const shortSummary = summarizeContent(
-					'action',
-					action.id,
-					translationContext,
-					{
-						role,
-					},
-				);
-				const roleLabelNode = renderIconLabel(roleIcon, roleLabel);
-				const hoverTitle = [
-					formatIconTitle(actionIcon, actionName),
-					formatIconTitle(roleIcon, roleLabel),
-				]
-					.filter(Boolean)
-					.join(' - ');
-				return (
-					<ActionCard
-						key={role}
-						title={roleLabelNode}
-						costs={costs}
-						upkeep={upkeep}
-						playerResources={player.resources}
-						actionCostResource={actionCostResource}
-						requirements={requirementDisplay}
-						requirementIcons={requirementIcons}
-						summary={shortSummary}
-						assets={translationContext.assets}
-						enabled={enabled}
-						tooltip={title}
-						focus={actionFocus}
-						onClick={() => {
-							if (!canInteract) {
-								return;
-							}
-							void requests.performAction({
-								action: toPerformableAction(action),
-								params: { role },
-							});
-						}}
-						onMouseEnter={() => {
-							const { effects, description } = splitSummary(summary);
-							handleHoverCard({
-								title: hoverTitle,
-								effects,
-								requirements: requirementDisplay,
-								costs,
-								upkeep,
-								...(description && { description }),
-								bgClass: HOVER_CARD_BG,
-							});
-						}}
-						onMouseLeave={clearHoverCard}
-					/>
-				);
-			})}
-		</>
+	const roleLabelNode = renderIconLabel(roleIcon, roleLabel);
+	const hoverTitle = [
+		formatIconTitle(actionIcon, actionName),
+		formatIconTitle(roleIcon, roleLabel),
+	]
+		.filter(Boolean)
+		.join(' - ');
+	return (
+		<ActionCard
+			title={roleLabelNode}
+			costs={costs}
+			upkeep={upkeep}
+			playerResources={player.resources}
+			actionCostResource={actionCostResource}
+			requirements={requirementDisplay}
+			requirementIcons={requirementIcons}
+			summary={shortSummary}
+			assets={translationContext.assets}
+			enabled={enabled}
+			tooltip={title}
+			focus={actionFocus}
+			onClick={() => {
+				if (!canInteract) {
+					return;
+				}
+				void requests.performAction({
+					action: toPerformableAction(action),
+				});
+			}}
+			onMouseEnter={() => {
+				const { effects, description } = splitSummary(summary);
+				handleHoverCard({
+					title: hoverTitle,
+					effects,
+					requirements: requirementDisplay,
+					costs,
+					upkeep,
+					...(description && { description }),
+					bgClass: HOVER_CARD_BG,
+				});
+			}}
+			onMouseLeave={clearHoverCard}
+		/>
 	);
 }

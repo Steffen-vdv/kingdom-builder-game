@@ -12,6 +12,11 @@ export {
 	developmentIdFromAction,
 	actionIdForBuilding,
 	buildingIdFromAction,
+	actionIdForHireableRole,
+	hireableRoleFromAction,
+	HIRE_ACTION_IDS,
+	HIRE_ACTION_IDS_BY_ROLE,
+	HIREABLE_POPULATION_ROLE_IDS,
 } from './actions';
 export { BUILDINGS, createBuildingRegistry } from './buildings';
 export { BuildingId } from './buildingIds';

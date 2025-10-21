@@ -1,3 +1,5 @@
+import type { ActionId } from '@kingdom-builder/contents';
+import { hireableRoleFromAction } from '@kingdom-builder/contents';
 import type { PopulationConfig } from '@kingdom-builder/protocol';
 import type { RegistryMetadataDescriptor } from '../../contexts/RegistryMetadataContext';
 import type { Action } from './types';
@@ -150,42 +152,30 @@ function getIconsFromEvaluator(
 	return defaultIcon ? [defaultIcon] : [];
 }
 
-export function determineRaisePopRoles(
+export function resolveHireActionRole(
+	actionId: string,
 	actionDefinition: Action | undefined,
 	populations: PopulationRegistryLike,
-): string[] {
+): string | undefined {
+	const typedActionId = actionId as ActionId;
+	const mappedRole = hireableRoleFromAction(typedActionId);
+	if (mappedRole) {
+		return mappedRole;
+	}
 	const explicitRoles = new Set<string>();
-	const usesPlaceholder = collectPopulationRolesFromEffects(
+	collectPopulationRolesFromEffects(
 		(actionDefinition?.effects as EffectConfig[]) ?? [],
 		explicitRoles,
 	);
-	const orderedRoles = new Set<string>(explicitRoles);
-	if (usesPlaceholder || explicitRoles.size === 0) {
-		for (const [roleId, populationDef] of populations.entries()) {
-			if (!explicitRoles.has(roleId) && !isHirablePopulation(populationDef)) {
-				continue;
-			}
-			orderedRoles.add(roleId);
+	if (explicitRoles.size > 0) {
+		return explicitRoles.values().next().value;
+	}
+	for (const [roleId, populationDef] of populations.entries()) {
+		if (isHirablePopulation(populationDef)) {
+			return roleId;
 		}
 	}
-	const result: string[] = [];
-	for (const roleId of orderedRoles) {
-		let population: PopulationDefinition | undefined;
-		try {
-			population = populations.get(roleId);
-		} catch {
-			population = undefined;
-		}
-		if (
-			!explicitRoles.has(roleId) &&
-			population &&
-			!isHirablePopulation(population)
-		) {
-			continue;
-		}
-		result.push(roleId);
-	}
-	return result;
+	return undefined;
 }
 
 export function buildRequirementIconsForRole(
