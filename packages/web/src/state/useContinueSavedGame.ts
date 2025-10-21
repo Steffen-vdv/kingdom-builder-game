@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Screen, SCREEN_PATHS, type HistoryState } from './appHistory';
+import { Screen, type HistoryState } from './appHistory';
 import type { ResumeSessionRecord } from './sessionResumeStorage';
 
 interface ContinueSavedGameOptions {
@@ -9,7 +9,7 @@ interface ContinueSavedGameOptions {
 	setCurrentScreen: (value: Screen) => void;
 	setIsDevMode: (value: boolean) => void;
 	buildHistoryState: (overrides?: Partial<HistoryState>) => HistoryState;
-	pushHistoryState: (state: HistoryState, path: string) => void;
+	pushHistoryState: (state: HistoryState) => void;
 }
 
 export const useContinueSavedGame = ({
@@ -36,7 +36,6 @@ export const useContinueSavedGame = ({
 				gameKey: nextGameKey,
 				isDevModeEnabled: nextDevMode,
 			}),
-			SCREEN_PATHS[Screen.Game],
 		);
 	}, [
 		buildHistoryState,
