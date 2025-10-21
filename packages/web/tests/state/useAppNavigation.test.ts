@@ -1,11 +1,7 @@
 /** @vitest-environment jsdom */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-	Screen,
-	SCREEN_PATHS,
-	type HistoryState,
-} from '../../src/state/appHistory';
+import { Screen } from '../../src/state/appHistory';
 import { useAppNavigation } from '../../src/state/useAppNavigation';
 import { DARK_MODE_PREFERENCE_STORAGE_KEY } from '../../src/state/darkModePreference';
 import {
@@ -24,7 +20,6 @@ describe('useAppNavigation', () => {
 
 	beforeEach(() => {
 		window.localStorage.clear();
-		window.history.replaceState(null, '', SCREEN_PATHS[Screen.Menu]);
 		const matchMediaMock = vi.fn().mockImplementation((query: string) => ({
 			matches: false,
 			media: query,
@@ -56,17 +51,14 @@ describe('useAppNavigation', () => {
 		await waitFor(() => {
 			expect(hook.result.current.currentScreen).toBe(Screen.Menu);
 		});
-		const menuState = window.history.state as HistoryState;
-		expect(menuState?.screen).toBe(Screen.Menu);
-		return { ...hook, menuState };
+		return hook;
 	}
 
 	it('restores stored dark mode preference when history is missing it', async () => {
 		window.localStorage.setItem(DARK_MODE_PREFERENCE_STORAGE_KEY, 'true');
-		const { result, menuState, unmount } = await renderNavigationHook();
+		const { result, unmount } = await renderNavigationHook();
 
 		expect(result.current.isDarkMode).toBe(true);
-		expect(menuState.isDarkModeEnabled).toBe(true);
 		unmount();
 	});
 
@@ -78,11 +70,10 @@ describe('useAppNavigation', () => {
 			updatedAt: Date.UTC(2024, 0, 1),
 		};
 		writeStoredResumeSession(resumeRecord);
-		const { result, menuState, unmount } = await renderNavigationHook();
+		const { result, unmount } = await renderNavigationHook();
 
 		expect(result.current.resumeSessionId).toBe(resumeRecord.sessionId);
 		expect(result.current.resumePoint).toEqual(resumeRecord);
-		expect(menuState.resumeSessionId).toBe(resumeRecord.sessionId);
 		unmount();
 	});
 
@@ -102,7 +93,6 @@ describe('useAppNavigation', () => {
 
 		expect(result.current.resumeSessionId).toBeNull();
 		expect(result.current.resumePoint).toBeNull();
-		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
 		expect(window.localStorage.getItem(RESUME_SESSION_STORAGE_KEY)).toBeNull();
 		unmount();
 	});
@@ -123,7 +113,6 @@ describe('useAppNavigation', () => {
 
 		expect(result.current.resumeSessionId).toBeNull();
 		expect(result.current.resumePoint).toBeNull();
-		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
 		expect(window.localStorage.getItem(RESUME_SESSION_STORAGE_KEY)).toBeNull();
 		unmount();
 	});
@@ -135,16 +124,14 @@ describe('useAppNavigation', () => {
 		);
 		window.localStorage.setItem(AUTO_PASS_PREFERENCE_STORAGE_KEY, 'true');
 
-		const { result, menuState, unmount } = await renderNavigationHook();
+		const { result, unmount } = await renderNavigationHook();
 
 		expect(result.current.isAutoAcknowledgeEnabled).toBe(true);
 		expect(result.current.isAutoPassEnabled).toBe(true);
-		expect(menuState.isAutoAcknowledgeEnabled).toBe(true);
-		expect(menuState.isAutoPassEnabled).toBe(true);
 		unmount();
 	});
 
-	it('replaces history when returning to the menu from the menu', async () => {
+	it('does not touch browser history when returning to the menu from the menu', async () => {
 		const pushSpy = vi.spyOn(window.history, 'pushState');
 		const replaceSpy = vi.spyOn(window.history, 'replaceState');
 		const { result, unmount } = await renderNavigationHook();
@@ -156,59 +143,7 @@ describe('useAppNavigation', () => {
 		});
 
 		expect(pushSpy).not.toHaveBeenCalled();
-		expect(replaceSpy).toHaveBeenCalledWith(
-			expect.objectContaining({ screen: Screen.Menu }),
-			'',
-			SCREEN_PATHS[Screen.Menu],
-		);
-		unmount();
-	});
-
-	it('restores the menu when navigating back from the game', async () => {
-		const { result, menuState, unmount } = await renderNavigationHook();
-
-		act(() => {
-			result.current.startStandardGame();
-		});
-		expect(result.current.currentScreen).toBe(Screen.Game);
-
-		act(() => {
-			window.dispatchEvent(new PopStateEvent('popstate', { state: menuState }));
-		});
-
-		expect(result.current.currentScreen).toBe(Screen.Menu);
-		unmount();
-	});
-
-	it('restores the menu when navigating back from the overview', async () => {
-		const { result, menuState, unmount } = await renderNavigationHook();
-
-		act(() => {
-			result.current.openOverview();
-		});
-		expect(result.current.currentScreen).toBe(Screen.Overview);
-
-		act(() => {
-			window.dispatchEvent(new PopStateEvent('popstate', { state: menuState }));
-		});
-
-		expect(result.current.currentScreen).toBe(Screen.Menu);
-		unmount();
-	});
-
-	it('restores the menu when navigating back from the tutorial', async () => {
-		const { result, menuState, unmount } = await renderNavigationHook();
-
-		act(() => {
-			result.current.openTutorial();
-		});
-		expect(result.current.currentScreen).toBe(Screen.Tutorial);
-
-		act(() => {
-			window.dispatchEvent(new PopStateEvent('popstate', { state: menuState }));
-		});
-
-		expect(result.current.currentScreen).toBe(Screen.Menu);
+		expect(replaceSpy).not.toHaveBeenCalled();
 		unmount();
 	});
 
@@ -232,7 +167,7 @@ describe('useAppNavigation', () => {
 		secondRender.unmount();
 	});
 
-	it('persists gameplay preferences across reloads and syncs history', async () => {
+	it('persists gameplay preferences across reloads', async () => {
 		const firstRender = await renderNavigationHook();
 
 		expect(firstRender.result.current.isAutoAcknowledgeEnabled).toBe(false);
@@ -245,9 +180,6 @@ describe('useAppNavigation', () => {
 		expect(
 			window.localStorage.getItem(AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY),
 		).toBe('true');
-		expect(
-			(window.history.state as HistoryState).isAutoAcknowledgeEnabled,
-		).toBe(true);
 
 		act(() => {
 			firstRender.result.current.toggleAutoPass();
@@ -256,7 +188,6 @@ describe('useAppNavigation', () => {
 		expect(window.localStorage.getItem(AUTO_PASS_PREFERENCE_STORAGE_KEY)).toBe(
 			'true',
 		);
-		expect((window.history.state as HistoryState).isAutoPassEnabled).toBe(true);
 
 		firstRender.unmount();
 
@@ -273,9 +204,6 @@ describe('useAppNavigation', () => {
 			result.current.startDeveloperGame();
 		});
 
-		const historyState = window.history.state as HistoryState;
-		expect(historyState.isAutoAcknowledgeEnabled).toBe(true);
-		expect(historyState.isAutoPassEnabled).toBe(true);
 		expect(result.current.isAutoAcknowledgeEnabled).toBe(true);
 		expect(result.current.isAutoPassEnabled).toBe(true);
 		expect(
@@ -287,7 +215,7 @@ describe('useAppNavigation', () => {
 		unmount();
 	});
 
-	it('continues a saved game and updates history and dev mode', async () => {
+	it('continues a saved game and updates dev mode without touching browser history', async () => {
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-dev',
 			turn: 9,
@@ -306,19 +234,11 @@ describe('useAppNavigation', () => {
 		expect(result.current.currentScreen).toBe(Screen.Game);
 		expect(result.current.isDevMode).toBe(true);
 		expect(result.current.currentGameKey).toBe(1);
-		expect(pushSpy).toHaveBeenCalledWith(
-			expect.objectContaining({
-				screen: Screen.Game,
-				resumeSessionId: resumeRecord.sessionId,
-				isDevModeEnabled: true,
-			}),
-			'',
-			SCREEN_PATHS[Screen.Game],
-		);
+		expect(pushSpy).not.toHaveBeenCalled();
 		unmount();
 	});
 
-	it('persists resume session updates and syncs storage and history', async () => {
+	it('persists resume session updates and syncs storage', async () => {
 		const { result, unmount } = await renderNavigationHook();
 		const resumeRecord: ResumeSessionRecord = {
 			sessionId: 'resume-save',
@@ -333,9 +253,6 @@ describe('useAppNavigation', () => {
 
 		expect(result.current.resumeSessionId).toBe(resumeRecord.sessionId);
 		expect(result.current.resumePoint).toEqual(resumeRecord);
-		expect((window.history.state as HistoryState).resumeSessionId).toBe(
-			resumeRecord.sessionId,
-		);
 		expect(readStoredResumeSession()).toEqual(resumeRecord);
 		unmount();
 	});
@@ -359,7 +276,6 @@ describe('useAppNavigation', () => {
 
 		expect(result.current.resumeSessionId).toBeNull();
 		expect(result.current.resumePoint).toBeNull();
-		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
 		expect(window.localStorage.getItem(RESUME_SESSION_STORAGE_KEY)).toBeNull();
 		unmount();
 	});
@@ -386,7 +302,6 @@ describe('useAppNavigation', () => {
 
 		expect(result.current.resumeSessionId).toBeNull();
 		expect(result.current.resumePoint).toBeNull();
-		expect((window.history.state as HistoryState).resumeSessionId).toBeNull();
 		expect(readStoredResumeSession()).toBeUndefined();
 		unmount();
 	});
