@@ -1,17 +1,12 @@
 import type { Registry } from '@kingdom-builder/protocol';
 import { Resource } from '../resources';
-import { Stat } from '../stats';
 import { DevelopmentId } from '../developments';
 import {
 	action,
-	compareRequirement,
 	effect,
 	populationEvaluator,
 	resourceParams,
-	statEvaluator,
-	developmentParams,
 	actionParams,
-	populationParams,
 } from '../config/builders';
 import {
 	actionEffectGroup,
@@ -19,11 +14,9 @@ import {
 } from '../config/builders/actionEffectGroups';
 import {
 	ActionMethods,
-	DevelopmentMethods,
 	LandMethods,
 	ResourceMethods,
 	Types,
-	PopulationMethods,
 } from '../config/builderShared';
 import { Focus } from '../defs';
 import type { ActionDef } from '../actions';
@@ -45,8 +38,6 @@ const categoryOrder = (categoryId: ActionCategoryIdValue) => {
 };
 
 const basicCategoryOrder = categoryOrder(ActionCategoryId.Basic);
-const hireCategoryOrder = categoryOrder(ActionCategoryId.Hire);
-const developCategoryOrder = categoryOrder(ActionCategoryId.Develop);
 
 export function registerBasicActions(registry: Registry<ActionDef>) {
 	registry.add(
@@ -65,26 +56,6 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			)
 			.category(ActionCategoryId.Basic)
 			.order(basicCategoryOrder + 1)
-			.focus(Focus.Economy)
-			.build(),
-	);
-
-	registry.add(
-		ActionId.develop,
-		action()
-			.id(ActionId.develop)
-			.name('Develop')
-			.icon('🏗️')
-			.system()
-			.cost(Resource.ap, 1)
-			.cost(Resource.gold, 3)
-			.effect(
-				effect(Types.Development, DevelopmentMethods.ADD)
-					.params(developmentParams().id('$id').landId('$landId'))
-					.build(),
-			)
-			.category(ActionCategoryId.Develop)
-			.order(developCategoryOrder - 1)
 			.focus(Focus.Economy)
 			.build(),
 	);
@@ -115,38 +86,6 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			)
 			.category(ActionCategoryId.Basic)
 			.order(basicCategoryOrder + 3)
-			.focus(Focus.Economy)
-			.build(),
-	);
-
-	registry.add(
-		ActionId.raise_pop,
-		action()
-			.id(ActionId.raise_pop)
-			.name('Hire')
-			.icon('👶')
-			.system()
-			.cost(Resource.ap, 1)
-			.cost(Resource.gold, 5)
-			.requirement(
-				compareRequirement()
-					.left(populationEvaluator())
-					.operator('lt')
-					.right(statEvaluator().key(Stat.maxPopulation))
-					.build(),
-			)
-			.effect(
-				effect(Types.Population, PopulationMethods.ADD)
-					.params(populationParams().role('$role'))
-					.build(),
-			)
-			.effect(
-				effect(Types.Resource, ResourceMethods.ADD)
-					.params(resourceParams().key(Resource.happiness).amount(1))
-					.build(),
-			)
-			.category(ActionCategoryId.Hire)
-			.order(hireCategoryOrder)
 			.focus(Focus.Economy)
 			.build(),
 	);

@@ -13,7 +13,6 @@ import {
 	resultModParams,
 	transferParams,
 	costModParams,
-	buildingParams,
 	statEvaluator,
 	populationEvaluator,
 	effect,
@@ -27,7 +26,6 @@ import {
 	StatMethods,
 	CostModMethods,
 	ResultModMethods,
-	BuildingMethods,
 	LandMethods,
 } from '../config/builderShared';
 import { Focus } from '../defs';
@@ -50,7 +48,6 @@ const categoryOrder = (categoryId: ActionCategoryIdValue) => {
 };
 
 const basicCategoryOrder = categoryOrder(ActionCategoryId.Basic);
-const buildCategoryOrder = categoryOrder(ActionCategoryId.Build);
 
 export function registerSpecialActions(registry: Registry<ActionDef>) {
 	registry.add(
@@ -224,24 +221,6 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 			.icon('🧑‍🌾')
 			.system()
 			.effect(effect(Types.Land, LandMethods.TILL).build())
-			.build(),
-	);
-
-	registry.add(
-		ActionId.build,
-		action()
-			.id(ActionId.build)
-			.name('Build')
-			.icon('🏛️')
-			.system()
-			.effect(
-				effect(Types.Building, BuildingMethods.ADD)
-					.params(buildingParams().id('$id'))
-					.build(),
-			)
-			.category(ActionCategoryId.Build)
-			.order(buildCategoryOrder - 2)
-			.focus(Focus.Other)
 			.build(),
 	);
 }

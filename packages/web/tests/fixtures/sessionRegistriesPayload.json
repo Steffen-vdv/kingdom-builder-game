@@ -29,28 +29,6 @@
 			"order": 1,
 			"focus": "economy"
 		},
-		"develop": {
-			"id": "develop",
-			"name": "Develop",
-			"icon": "🏗️",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 3
-			},
-			"effects": [
-				{
-					"type": "development",
-					"method": "add",
-					"params": {
-						"id": "$id",
-						"landId": "$landId"
-					}
-				}
-			],
-			"category": "development",
-			"order": 1,
-			"focus": "economy"
-		},
 		"tax": {
 			"id": "tax",
 			"name": "Tax",
@@ -267,7 +245,7 @@
 						{
 							"id": "royal_decree_house",
 							"icon": "🏠",
-							"actionId": "develop",
+							"actionId": "develop:house",
 							"params": {
 								"developmentId": "house",
 								"landId": "$landId"
@@ -276,7 +254,7 @@
 						{
 							"id": "royal_decree_farm",
 							"icon": "🌾",
-							"actionId": "develop",
+							"actionId": "develop:farm",
 							"params": {
 								"developmentId": "farm",
 								"landId": "$landId"
@@ -285,7 +263,7 @@
 						{
 							"id": "royal_decree_outpost",
 							"icon": "🏹",
-							"actionId": "develop",
+							"actionId": "develop:outpost",
 							"params": {
 								"developmentId": "outpost",
 								"landId": "$landId"
@@ -294,7 +272,7 @@
 						{
 							"id": "royal_decree_watchtower",
 							"icon": "🗼",
-							"actionId": "develop",
+							"actionId": "develop:watchtower",
 							"params": {
 								"developmentId": "watchtower",
 								"landId": "$landId"
@@ -584,21 +562,387 @@
 			],
 			"system": true
 		},
-		"build": {
-			"id": "build",
-			"name": "Build",
-			"icon": "🏛️",
+		"develop:house": {
+			"id": "develop:house",
+			"name": "Develop: House",
+			"icon": "🏠",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 3
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "development",
+					"method": "add",
+					"params": {
+						"id": "house",
+						"landId": "$landId"
+					}
+				}
+			],
+			"category": "development",
+			"order": 1,
+			"focus": "economy"
+		},
+		"develop:farm": {
+			"id": "develop:farm",
+			"name": "Develop: Farm",
+			"icon": "🌾",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 3
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "development",
+					"method": "add",
+					"params": {
+						"id": "farm",
+						"landId": "$landId"
+					}
+				}
+			],
+			"category": "development",
+			"order": 2,
+			"focus": "economy"
+		},
+		"develop:outpost": {
+			"id": "develop:outpost",
+			"name": "Develop: Outpost",
+			"icon": "🏹",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 3
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "development",
+					"method": "add",
+					"params": {
+						"id": "outpost",
+						"landId": "$landId"
+					}
+				}
+			],
+			"category": "development",
+			"order": 3,
+			"focus": "defense"
+		},
+		"develop:watchtower": {
+			"id": "develop:watchtower",
+			"name": "Develop: Watchtower",
+			"icon": "🗼",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 3
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "development",
+					"method": "add",
+					"params": {
+						"id": "watchtower",
+						"landId": "$landId"
+					}
+				}
+			],
+			"category": "development",
+			"order": 4,
+			"focus": "defense"
+		},
+		"develop:garden": {
+			"id": "develop:garden",
+			"name": "Develop: Garden",
+			"icon": "🌿",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 3
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "development",
+					"method": "add",
+					"params": {
+						"id": "garden",
+						"landId": "$landId"
+					}
+				}
+			],
+			"category": "development",
+			"order": 5,
+			"focus": "economy",
+			"system": true
+		},
+		"build:town_charter": {
+			"id": "build:town_charter",
+			"name": "Build: Town Charter",
+			"icon": "🏘️",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 5
+			},
+			"requirements": [],
 			"effects": [
 				{
 					"type": "building",
 					"method": "add",
 					"params": {
-						"id": "$id"
+						"id": "town_charter"
 					}
 				}
 			],
 			"category": "building",
 			"order": 1,
+			"focus": "economy"
+		},
+		"build:mill": {
+			"id": "build:mill",
+			"name": "Build: Mill",
+			"icon": "⚙️",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 7
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "mill"
+					}
+				}
+			],
+			"category": "building",
+			"order": 2,
+			"focus": "economy"
+		},
+		"build:raiders_guild": {
+			"id": "build:raiders_guild",
+			"name": "Build: Raider's Guild",
+			"icon": "🏴‍☠️",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 8
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "raiders_guild"
+					}
+				}
+			],
+			"category": "building",
+			"order": 3,
+			"focus": "aggressive",
+			"upkeep": {
+				"gold": 1
+			}
+		},
+		"build:plow_workshop": {
+			"id": "build:plow_workshop",
+			"name": "Build: Plow Workshop",
+			"icon": "🏭",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 10
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "plow_workshop"
+					}
+				}
+			],
+			"category": "building",
+			"order": 4,
+			"focus": "economy"
+		},
+		"build:market": {
+			"id": "build:market",
+			"name": "Build: Market",
+			"icon": "🏪",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 10
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "market"
+					}
+				}
+			],
+			"category": "building",
+			"order": 5,
+			"focus": "economy"
+		},
+		"build:castle_walls": {
+			"id": "build:castle_walls",
+			"name": "Build: Castle Walls",
+			"icon": "🧱",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 12
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "castle_walls"
+					}
+				}
+			],
+			"category": "building",
+			"order": 6,
+			"focus": "defense"
+		},
+		"build:barracks": {
+			"id": "build:barracks",
+			"name": "Build: Barracks",
+			"icon": "🪖",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 12
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "barracks"
+					}
+				}
+			],
+			"category": "building",
+			"order": 7,
+			"focus": "aggressive"
+		},
+		"build:citadel": {
+			"id": "build:citadel",
+			"name": "Build: Citadel",
+			"icon": "🏯",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 12
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "citadel"
+					}
+				}
+			],
+			"category": "building",
+			"order": 8,
+			"focus": "defense"
+		},
+		"build:castle_gardens": {
+			"id": "build:castle_gardens",
+			"name": "Build: Castle Gardens",
+			"icon": "🌷",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 15
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "castle_gardens"
+					}
+				}
+			],
+			"category": "building",
+			"order": 9,
+			"focus": "economy"
+		},
+		"build:temple": {
+			"id": "build:temple",
+			"name": "Build: Temple",
+			"icon": "⛪",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 16
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "temple"
+					}
+				}
+			],
+			"category": "building",
+			"order": 10,
+			"focus": "other"
+		},
+		"build:palace": {
+			"id": "build:palace",
+			"name": "Build: Palace",
+			"icon": "👑",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 20
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "palace"
+					}
+				}
+			],
+			"category": "building",
+			"order": 11,
+			"focus": "other"
+		},
+		"build:great_hall": {
+			"id": "build:great_hall",
+			"name": "Build: Great Hall",
+			"icon": "🏟️",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 22
+			},
+			"requirements": [],
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "great_hall"
+					}
+				}
+			],
+			"category": "building",
+			"order": 12,
 			"focus": "other"
 		}
 	},

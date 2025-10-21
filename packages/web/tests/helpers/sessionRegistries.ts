@@ -108,13 +108,21 @@ export function createSessionRegistriesPayload(): SessionRegistriesPayload {
 	normalizeActionCategories(payload);
 	payload.actionCategories = createCategoryRegistry();
 	if (payload.actions) {
-		delete payload.actions.build;
+		if (payload.actions.build) {
+			delete payload.actions.build;
+		}
+		if (payload.actions.develop) {
+			delete payload.actions.develop;
+		}
 	}
 	if (payload.buildings) {
 		payload.actions = payload.actions ?? {};
 		const buildingEntries = Object.entries(payload.buildings);
 		buildingEntries.forEach(([buildingId, building], index) => {
 			const actionId = `build:${buildingId}`;
+			if (payload.actions?.[actionId]) {
+				return;
+			}
 			const baseCosts = building.costs
 				? { ...building.costs }
 				: ({} as Record<string, number>);
@@ -136,6 +144,42 @@ export function createSessionRegistriesPayload(): SessionRegistriesPayload {
 				focus: (building as { focus?: unknown }).focus ?? 'other',
 			} as SessionRegistriesPayload['actions'][string];
 		});
+	}
+	if (payload.developments) {
+		payload.actions = payload.actions ?? {};
+		const developmentEntries = Object.entries(payload.developments);
+		developmentEntries
+			.sort(([, left], [, right]) => {
+				const leftOrder = (left as { order?: number }).order ?? Infinity;
+				const rightOrder = (right as { order?: number }).order ?? Infinity;
+				if (leftOrder !== rightOrder) {
+					return leftOrder - rightOrder;
+				}
+				return 0;
+			})
+			.forEach(([developmentId, development], index) => {
+				const actionId = `develop:${developmentId}`;
+				if (payload.actions?.[actionId]) {
+					return;
+				}
+				payload.actions![actionId] = {
+					id: actionId,
+					name: `Develop: ${(development as { name?: string }).name ?? developmentId}`,
+					icon: (development as { icon?: string }).icon,
+					baseCosts: { ap: 1, gold: 3 },
+					requirements: [],
+					effects: [
+						{
+							type: 'development',
+							method: 'add',
+							params: { id: developmentId, landId: '$landId' },
+						},
+					],
+					category: 'development',
+					order: index + 1,
+					focus: (development as { focus?: string }).focus ?? 'economy',
+				} as SessionRegistriesPayload['actions'][string];
+			});
 	}
 	return payload;
 }

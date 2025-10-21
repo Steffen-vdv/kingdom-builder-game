@@ -3,14 +3,11 @@ import { DevelopmentId } from './developments';
 import { PopulationRole } from './populationRoles';
 
 const ACTION_ID_MAP = {
-	build: 'build',
 	army_attack: 'army_attack',
-	develop: 'develop',
 	expand: 'expand',
 	hold_festival: 'hold_festival',
 	plow: 'plow',
 	plunder: 'plunder',
-	raise_pop: 'raise_pop',
 	royal_decree: 'royal_decree',
 	tax: 'tax',
 	till: 'till',

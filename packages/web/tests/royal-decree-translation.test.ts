@@ -27,7 +27,6 @@ interface RoyalDecreeActionInfo {
 	id: string;
 	action: ActionConfig;
 	developGroup: ActionEffectGroupEntry;
-	developActionId: string;
 	options: ActionEffectGroupOption[];
 }
 
@@ -118,12 +117,17 @@ function extractGroupOptions(
 				icon: option.icon,
 			} satisfies ActionEffectGroupOption;
 		});
-		const developOptions = options.filter((option) => option.developmentId);
+		const developOptions = options.filter(
+			(
+				option,
+			): option is ActionEffectGroupOption & {
+				developmentId: string;
+				actionId: string;
+			} =>
+				typeof option.developmentId === 'string' &&
+				typeof option.actionId === 'string',
+		);
 		if (developOptions.length > 0) {
-			const developActionId = developOptions[0]?.actionId;
-			if (!developActionId) {
-				continue;
-			}
 			return {
 				id: action.id,
 				action,
@@ -132,7 +136,6 @@ function extractGroupOptions(
 					title: entry.title,
 					options,
 				},
-				developActionId,
 				options: developOptions,
 			} satisfies RoyalDecreeActionInfo;
 		}
@@ -151,14 +154,6 @@ describe('royal decree translation', () => {
 		}
 		throw new Error('Expected royal decree action with develop options');
 	})();
-	const developAction = translationContext.actions.get(
-		actionInfo.developActionId,
-	);
-	const developLabel = combineLabels(
-		`${developAction.icon ?? ''} ${developAction.name ?? ''}`,
-		'',
-	);
-
 	it('summarizes options using develop action label', () => {
 		const summary = summarizeContent(
 			'action',
@@ -180,7 +175,12 @@ describe('royal decree translation', () => {
 				`${development.icon ?? ''} ${development.name ?? developmentId}`,
 				'',
 			);
-			const expectedTitle = combineLabels(developLabel, developmentLabel);
+			const optionAction = translationContext.actions.get(option.actionId);
+			const optionLabel = combineLabels(
+				`${optionAction.icon ?? ''} ${optionAction.name ?? option.actionId}`,
+				'',
+			);
+			const expectedTitle = combineLabels(optionLabel, developmentLabel);
 			const entry = group.items.find((item) =>
 				typeof item === 'string'
 					? item === expectedTitle
@@ -210,9 +210,11 @@ describe('royal decree translation', () => {
 			);
 			const described = describeContent(
 				'action',
-				actionInfo.developActionId,
+				option.actionId,
 				translationContext,
-				{ id: developmentId },
+				{
+					id: developmentId,
+				},
 			);
 			const describedLabel = described[0];
 			const describedTitle =
@@ -223,7 +225,12 @@ describe('royal decree translation', () => {
 				describedTitle,
 				developmentLabel,
 			);
-			const expectedTitle = combineLabels(developLabel, normalizedTitle);
+			const optionAction = translationContext.actions.get(option.actionId);
+			const optionLabel = combineLabels(
+				`${optionAction.icon ?? ''} ${optionAction.name ?? option.actionId}`,
+				'',
+			);
+			const expectedTitle = combineLabels(optionLabel, normalizedTitle);
 			const entry = group.items.find((item) =>
 				typeof item === 'string'
 					? item === expectedTitle
@@ -273,9 +280,22 @@ describe('royal decree translation', () => {
 			expect(entry).toContain(development.name ?? developmentId);
 			return;
 		}
-		expect(entry.title).toBe(developLabel);
+		const selectedOption = actionInfo.options.find(
+			(option) => option.developmentId === developmentId,
+		);
+		if (!selectedOption) {
+			throw new Error('Expected selected option for development');
+		}
+		const optionAction = translationContext.actions.get(
+			selectedOption.actionId,
+		);
+		const optionLabel = combineLabels(
+			`${optionAction.icon ?? ''} ${optionAction.name ?? selectedOption.actionId}`,
+			'',
+		);
+		expect(entry.title).toBe(optionLabel);
 		expect(entry.timelineKind).toBe('subaction');
-		expect(entry.actionId).toBe(actionInfo.developActionId);
+		expect(entry.actionId).toBe(selectedOption.actionId);
 		const entryItems = Array.isArray(entry.items)
 			? entry.items
 			: entry.items

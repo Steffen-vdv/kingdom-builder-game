@@ -72,7 +72,7 @@ describe('action id helpers', () => {
 		});
 
 		it('returns undefined for non-building action ids', () => {
-			expect(buildingIdFromAction(ActionId.develop)).toBeUndefined();
+			expect(buildingIdFromAction(ActionId.expand)).toBeUndefined();
 		});
 	});
 

@@ -70,8 +70,9 @@ const DEFAULT_TOKENS: OverviewTokenCandidates = {
 	actions: {
 		[ActionId.expand]: [ActionId.expand],
 		build: [ActionId.build_town_charter],
-		[ActionId.develop]: [ActionId.develop],
+		develop: [ActionId.develop_house],
 		[ActionId.hire_council]: [ActionId.hire_council],
+		hire_council: [ActionId.hire_council],
 		[ActionId.army_attack]: [ActionId.army_attack],
 	},
 	phases: {
