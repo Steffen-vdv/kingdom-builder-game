@@ -103,6 +103,35 @@ describe('ActionsPanel tabs', () => {
 		expect(panel).toHaveTextContent(basicCategory.subtitle ?? '');
 		expect(basicTab).not.toHaveTextContent(basicCategory.subtitle ?? '');
 	});
+
+	it('renders generic action cards for each action entry', async () => {
+		renderPanel();
+		const basicTab = await findTabButton(
+			mockGame.metadata.actions.basic.category,
+		);
+		fireEvent.click(basicTab);
+		const panel = getTabPanel();
+		expect(
+			within(panel).getByRole('button', { name: /Survey/i }),
+		).toBeInTheDocument();
+		const raiseTab = await findTabButton(
+			mockGame.metadata.actions.raise.category,
+		);
+		fireEvent.click(raiseTab);
+		const raisePanel = getTabPanel();
+		expect(
+			within(raisePanel).getByRole('button', { name: /Hire/i }),
+		).toBeInTheDocument();
+		const buildAction = mockGame.metadata.actions.building;
+		if (buildAction) {
+			const buildTab = await findTabButton(buildAction.category);
+			fireEvent.click(buildTab);
+			const buildPanel = getTabPanel();
+			expect(
+				within(buildPanel).getByRole('button', { name: /Construct/i }),
+			).toBeInTheDocument();
+		}
+	});
 });
 
 function renderPanel() {
