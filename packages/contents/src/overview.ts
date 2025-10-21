@@ -1,5 +1,13 @@
-import { ActionId } from './actions';
+import {
+	ActionId,
+	BUILDING_ACTION_ID_BY_BUILDING_ID,
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
+	POPULATION_ACTION_ID_BY_ROLE,
+} from './actions';
+import { BuildingId } from './buildingIds';
+import { DevelopmentId } from './developments';
 import { PhaseId } from './phases';
+import { PopulationRole } from './populationRoles';
 
 export type OverviewTokenCategoryName =
 	| 'actions'
@@ -61,17 +69,24 @@ const HERO_INTRO_TEXT = [
 	'Know where every resource, phase, and population surge will carry you.',
 ].join(' ');
 
+const DEFAULT_BUILD_ACTION_ID =
+	BUILDING_ACTION_ID_BY_BUILDING_ID[BuildingId.TownCharter];
+const DEFAULT_DEVELOP_ACTION_ID =
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Farm];
+const DEFAULT_HIRE_ACTION_ID =
+	POPULATION_ACTION_ID_BY_ROLE[PopulationRole.Council];
+
 const HERO_PARAGRAPH_TEXT = [
 	'Welcome to {game}, a brisk duel of wits where {expand} expansion,',
-	'{build} clever construction, and {army_attack} daring raids decide who steers the crown.',
+	`{${DEFAULT_BUILD_ACTION_ID}} clever construction, and {army_attack} daring raids decide who steers the crown.`,
 ].join(' ');
 
 const DEFAULT_TOKENS: OverviewTokenCandidates = {
 	actions: {
 		[ActionId.expand]: [ActionId.expand],
-		[ActionId.build]: [ActionId.build],
-		[ActionId.develop]: [ActionId.develop],
-		[ActionId.raise_pop]: [ActionId.raise_pop],
+		[DEFAULT_BUILD_ACTION_ID]: [DEFAULT_BUILD_ACTION_ID],
+		[DEFAULT_DEVELOP_ACTION_ID]: [DEFAULT_DEVELOP_ACTION_ID],
+		[DEFAULT_HIRE_ACTION_ID]: [DEFAULT_HIRE_ACTION_ID],
 		[ActionId.army_attack]: [ActionId.army_attack],
 	},
 	phases: {
@@ -156,7 +171,9 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 			{
 				icon: 'gold',
 				label: 'Gold',
-				body: ['Fuels {build} buildings, diplomacy, and daring plays.'],
+				body: [
+					`Fuels {${DEFAULT_BUILD_ACTION_ID}} buildings, diplomacy, and daring plays.`,
+				],
 			},
 			{
 				icon: 'ap',
@@ -223,8 +240,8 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 		title: 'Actions & Strategy',
 		span: true,
 		paragraphs: [
-			'Spend {ap} AP to {expand} grow territory or {develop} upgrade key lands.',
-			'Field {raise_pop} specialists or launch {army_attack} attacks to snowball momentum.',
+			`Spend {ap} AP to {expand} grow territory or {${DEFAULT_DEVELOP_ACTION_ID}} upgrade key lands.`,
+			`Recruit {${DEFAULT_HIRE_ACTION_ID}} specialists or launch {army_attack} attacks to snowball momentum.`,
 		],
 	},
 ];

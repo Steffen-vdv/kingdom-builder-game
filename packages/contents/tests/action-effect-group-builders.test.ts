@@ -9,8 +9,16 @@ import {
 	actionEffectGroupOption,
 } from '../src/config/builders/actionEffectGroups';
 import type { ActionEffectGroupDef } from '../src/config/builders/actionEffectGroups';
-import { ActionId } from '../src/actions';
+import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
 import { describe, expect, it } from 'vitest';
+
+const [firstDevelopmentActionId] = DEVELOPMENT_ACTION_IDS;
+
+if (!firstDevelopmentActionId) {
+	throw new Error(
+		'Expected at least one development action id for action effect group tests.',
+	);
+}
 
 describe('action effect group builder safeguards', () => {
 	it('requires action effect groups to include options', () => {
@@ -24,12 +32,16 @@ describe('action effect group builder safeguards', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
 			.option(
-				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('Farm')
+					.action(firstDevelopmentActionId),
 			);
 
 		expect(() =>
 			group.option(
-				actionEffectGroupOption('farm').label('House').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('House')
+					.action(firstDevelopmentActionId),
 			),
 		).toThrowError(
 			'Action effect group option id "farm" already exists. Use unique option ids within a group.',
@@ -44,7 +56,7 @@ describe('action effect group builder safeguards', () => {
 				.option(
 					actionEffectGroupOption('farm')
 						.label('Farm')
-						.action(ActionId.develop),
+						.action(firstDevelopmentActionId),
 				),
 		);
 
@@ -55,7 +67,7 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('house')
 							.label('House')
-							.action(ActionId.develop),
+							.action(firstDevelopmentActionId),
 					),
 			),
 		).toThrowError(
@@ -68,7 +80,9 @@ describe('action effect group builder safeguards', () => {
 		const group = actionEffectGroup('choose')
 			.title('Pick a project')
 			.option(
-				actionEffectGroupOption('farm').label('Farm').action(ActionId.develop),
+				actionEffectGroupOption('farm')
+					.label('Farm')
+					.action(firstDevelopmentActionId),
 			);
 
 		expect(() =>
@@ -94,7 +108,7 @@ describe('action effect group builder safeguards', () => {
 					.option(
 						actionEffectGroupOption('farm')
 							.label('Farm')
-							.action(ActionId.develop)
+							.action(firstDevelopmentActionId)
 							.params(actionParams().id('farm').landId('$landId')),
 					),
 			)
@@ -111,7 +125,7 @@ describe('action effect group builder safeguards', () => {
 				{
 					id: 'farm',
 					label: 'Farm',
-					actionId: ActionId.develop,
+					actionId: firstDevelopmentActionId,
 					params: { id: 'farm', landId: '$landId' },
 				},
 			],

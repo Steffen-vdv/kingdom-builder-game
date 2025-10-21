@@ -52,12 +52,12 @@ const summaryTexts = {
 	].join('\n'),
 	ecstatic: [
 		'During income step, gain 50% more 🪙 gold (rounded up).',
-		'Build action costs 20% less 🪙 gold (rounded up).',
+		'Actions cost 20% less 🪙 gold (rounded up).',
 		'Gain +20% 📈 Growth.',
 	].join('\n'),
 	elated: [
 		'During income step, gain 50% more 🪙 gold (rounded up).',
-		'Build action costs 20% less 🪙 gold (rounded up).',
+		'Actions cost 20% less 🪙 gold (rounded up).',
 	].join('\n'),
 	grim: [
 		'During income step, gain 25% less 🪙 gold (rounded up).',
@@ -65,7 +65,7 @@ const summaryTexts = {
 	].join('\n'),
 	joyful: [
 		'During income step, gain 25% more 🪙 gold (rounded up).',
-		'Build action costs 20% less 🪙 gold (rounded up).',
+		'Actions cost 20% less 🪙 gold (rounded up).',
 	].join('\n'),
 	misery: [
 		'During income step, gain 50% less 🪙 gold (rounded up).',

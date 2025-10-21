@@ -70,7 +70,7 @@ adding or updating tiers:
   passive payload, and any supporting metadata.
 - Use the helper modifiers to keep effects consistent:
   - `incomeModifier(...)` adjusts gold gain.
-  - `buildingDiscountModifier(...)` lowers building costs.
+  - `buildingDiscountModifier(...)` lowers gold costs for every action.
   - `growthBonusEffect(...)` grants Growth stat bonuses.
 - Register phase or upkeep skips through `.skipPhase(...)` / `.skipStep(...)`
   so the engine can disable the appropriate cycle hooks without ad-hoc logic.
