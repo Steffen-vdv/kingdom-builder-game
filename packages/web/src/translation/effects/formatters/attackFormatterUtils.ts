@@ -213,9 +213,11 @@ export function formatDiffEntries(
 	return formattedEntries;
 }
 
-export function collectTransferPercents(
+export type TransferSummary = { percent?: number; amount?: number };
+
+export function collectTransferSummaries(
 	effects: EffectDef[] | undefined,
-	transferPercents: Map<string, number>,
+	transferSummaries: Map<string, TransferSummary>,
 ): void {
 	if (!effects) {
 		return;
@@ -230,14 +232,35 @@ export function collectTransferPercents(
 				const rawKey = effectDefinition.params['key'];
 				return typeof rawKey === 'string' ? rawKey : undefined;
 			})();
-			const percent = effectDefinition.params['percent'] as number | undefined;
-			if (key && percent !== undefined && !transferPercents.has(key)) {
-				transferPercents.set(key, percent);
+			if (key) {
+				const summary = transferSummaries.get(key) ?? {};
+				if (summary.percent === undefined) {
+					const percent = effectDefinition.params['percent'] as
+						| number
+						| undefined;
+					if (percent !== undefined) {
+						summary.percent = percent;
+					}
+				}
+				if (summary.amount === undefined) {
+					const amount = effectDefinition.params['amount'] as
+						| number
+						| undefined;
+					if (amount !== undefined) {
+						summary.amount = amount;
+					}
+				}
+				if (
+					!transferSummaries.has(key) &&
+					(summary.percent !== undefined || summary.amount !== undefined)
+				) {
+					transferSummaries.set(key, summary);
+				}
 			}
 		}
 		if (Array.isArray(effectDefinition.effects)) {
 			const nestedEffects = effectDefinition.effects;
-			collectTransferPercents(nestedEffects, transferPercents);
+			collectTransferSummaries(nestedEffects, transferSummaries);
 		}
 	}
 }

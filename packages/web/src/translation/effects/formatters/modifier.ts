@@ -204,6 +204,42 @@ registerModifierEvalHandler('transfer_pct', {
 	},
 });
 
+registerModifierEvalHandler('transfer_amount', {
+	summarize: (effect, evaluation, context) => {
+		const target = resolveTransferModifierTarget(effect, evaluation, context);
+		const amount = Number(effect.params?.['adjust'] ?? 0);
+		const sign = amount >= 0 ? '+' : '-';
+		const descriptor = getResultModifierLabel(context);
+		const targetSummaryLabel = `${descriptor.icon}${target.summaryLabel}`;
+		const transferIcon = selectTransferDescriptor(context).icon;
+		const transferAdjustment = `${transferIcon} ${sign}${Math.abs(amount)}`;
+		return [`${targetSummaryLabel}: ${transferAdjustment}`];
+	},
+	describe: (effect, evaluation, context) => {
+		const target = resolveTransferModifierTarget(effect, evaluation, context);
+		const amount = Number(effect.params?.['adjust'] ?? 0);
+		const descriptor = getResultModifierLabel(context);
+		const transferIcon = selectTransferDescriptor(context).icon;
+		const modifierDescription = formatResultModifierClause(
+			buildModifierDescriptionLabel(descriptor),
+			target.clauseTarget,
+			RESULT_EVENT_TRANSFER,
+			`${transferIcon} ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}`,
+		);
+		const entries: Summary = [modifierDescription];
+		if (target.actionId) {
+			const card = describeContent('action', target.actionId, context);
+			entries.push({
+				title: formatTargetLabel(target.icon, target.name),
+				items: card,
+				_hoist: true,
+				_desc: true,
+			});
+		}
+		return entries;
+	},
+});
+
 registerEffectFormatter('cost_mod', 'add', {
 	summarize: (effect, context) =>
 		formatCostEffect(effect, context, 'summary', 'add'),
