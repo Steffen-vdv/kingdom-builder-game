@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import React from 'react';
-import { act, render, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
@@ -23,6 +23,7 @@ import { createRemoteSessionAdapter } from '../helpers/remoteSessionAdapter';
 import { clearSessionStateStore } from '../../src/state/sessionStateStore';
 import type { TranslationContext } from '../../src/translation/context';
 import { updatePlayerName as updateRemotePlayerName } from '../../src/state/sessionSdk';
+import ResourceButton from '../../src/components/player/ResourceButton';
 
 const runUntilActionPhaseMock = vi.fn(() => Promise.resolve());
 const runUntilActionPhaseCoreMock = vi.fn(() => Promise.resolve());
@@ -85,13 +86,26 @@ vi.mock('../../src/state/useActionResolution', () => ({
 vi.mock('../../src/state/usePhaseProgress', () => ({
 	usePhaseProgress: (options: Record<string, unknown>) => {
 		capturedPhaseOptions = options;
+		const { onSnapshotApplied } = options as {
+			onSnapshotApplied?: (snapshot: SessionSnapshot) => void;
+		};
+		const applyPhaseSnapshot = (
+			snapshot: SessionSnapshot,
+			overrides?: Partial<PhaseProgressState>,
+		) => {
+			applyPhaseSnapshotMock(snapshot, overrides);
+			if (onSnapshotApplied) {
+				onSnapshotApplied(snapshot);
+			}
+		};
 		return {
 			phase: mockPhaseState,
+			initializing: false,
 			runUntilActionPhase: runUntilActionPhaseMock,
 			runUntilActionPhaseCore: runUntilActionPhaseCoreMock,
 			handleEndTurn: handleEndTurnMock,
 			endTurn: vi.fn(),
-			applyPhaseSnapshot: applyPhaseSnapshotMock,
+			applyPhaseSnapshot,
 			refreshPhaseState: refreshPhaseStateMock,
 			startSession: startSessionMock,
 		};
@@ -280,6 +294,7 @@ describe('GameProviderInner', () => {
 			sessionState.actionCostResource,
 		);
 		expect(capturedPhaseOptions?.enqueue).toBe(enqueue);
+		expect(typeof capturedPhaseOptions?.onSnapshotApplied).toBe('function');
 		expect(capturedLoggerOptions?.sessionId).toBe(sessionId);
 		expect(capturedTranslationOptions?.sessionSnapshot).toBe(sessionState);
 		expect(capturedTranslationOptions?.sessionMetadata).toBe(
@@ -463,6 +478,168 @@ describe('GameProviderInner', () => {
 		cleanup();
 	});
 
+	it('propagates live session snapshots to resource change indicators', async () => {
+		const resourceKey = sessionState.actionCostResource;
+		const basePlayer = createSnapshotPlayer({
+			id: 'player-live',
+			name: 'Live Player',
+			resources: { [resourceKey]: 4 },
+		});
+		const opponentPlayer = createSnapshotPlayer({
+			id: 'player-opponent',
+			name: 'Opponent Player',
+		});
+		const phases = sessionState.phases;
+		const ruleSnapshot = sessionState.rules;
+		const metadata = sessionState.metadata;
+		const baseSnapshot = createSessionSnapshot({
+			players: [basePlayer, opponentPlayer],
+			activePlayerId: basePlayer.id,
+			opponentId: opponentPlayer.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			metadata,
+		});
+		const increasedPlayer = createSnapshotPlayer({
+			id: basePlayer.id,
+			name: basePlayer.name,
+			resources: {
+				...basePlayer.resources,
+				[resourceKey]: (basePlayer.resources[resourceKey] ?? 0) + 2,
+			},
+		});
+		const increasedSnapshot = createSessionSnapshot({
+			players: [increasedPlayer, opponentPlayer],
+			activePlayerId: basePlayer.id,
+			opponentId: opponentPlayer.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			metadata,
+		});
+		const restoredPlayer = createSnapshotPlayer({
+			id: basePlayer.id,
+			name: basePlayer.name,
+			resources: basePlayer.resources,
+		});
+		const restoredSnapshot = createSessionSnapshot({
+			players: [restoredPlayer, opponentPlayer],
+			activePlayerId: basePlayer.id,
+			opponentId: opponentPlayer.id,
+			phases,
+			actionCostResource: resourceKey,
+			ruleSnapshot,
+			metadata,
+		});
+		mockPhaseState = {
+			currentPhaseId: baseSnapshot.game.currentPhase,
+			isActionPhase: true,
+			canEndTurn: true,
+			isAdvancing: false,
+			activePlayerId: basePlayer.id,
+			activePlayerName: basePlayer.name,
+			turnNumber: baseSnapshot.game.turn,
+			awaitingManualStart: false,
+		};
+		const enqueue = vi.fn(
+			async <T,>(task: () => Promise<T> | T) => await task(),
+		);
+		useSessionQueueMock.mockReturnValue({
+			enqueue,
+			cachedSessionSnapshot: baseSnapshot,
+		});
+
+		const queueHelpers = {
+			enqueue: vi.fn(),
+			getCurrentSession: () => ({}) as never,
+			getLatestSnapshot: () => null,
+		};
+
+		function ResourceButtonHarness() {
+			const value = React.useContext(GameEngineContext);
+			if (!value) {
+				return null;
+			}
+			const activePlayer = value.sessionSnapshot.game.players.find(
+				(player) => player.id === value.sessionSnapshot.game.activePlayerId,
+			);
+			if (!activePlayer) {
+				return null;
+			}
+			return (
+				<ResourceButton
+					resourceId={resourceKey}
+					label="Test Resource"
+					icon="Ⓡ"
+					value={activePlayer.resources[resourceKey] ?? 0}
+					onShow={() => {}}
+					onHide={() => {}}
+				/>
+			);
+		}
+
+		render(
+			<GameProviderInner
+				darkMode
+				onToggleDark={() => {}}
+				devMode={false}
+				musicEnabled
+				onToggleMusic={() => {}}
+				soundEnabled
+				onToggleSound={() => {}}
+				backgroundAudioMuted
+				onToggleBackgroundAudioMute={() => {}}
+				autoAcknowledgeEnabled={false}
+				onToggleAutoAcknowledge={() => {}}
+				autoPassEnabled={false}
+				onToggleAutoPass={() => {}}
+				playerName={basePlayer.name}
+				onChangePlayerName={() => {}}
+				queue={queueHelpers}
+				sessionId={sessionId}
+				sessionSnapshot={baseSnapshot}
+				ruleSnapshot={ruleSnapshot}
+				refreshSession={async () => {}}
+				onReleaseSession={() => {}}
+				registries={registries}
+				resourceKeys={resourceKeys}
+				sessionMetadata={metadata}
+			>
+				<ResourceButtonHarness />
+			</GameProviderInner>,
+		);
+
+		await screen.findByRole('button', {
+			name: 'Test Resource: 4',
+		});
+
+		const syncPhaseState = capturedPerformerOptions?.syncPhaseState as
+			| ((snapshot: SessionSnapshot) => void)
+			| undefined;
+		expect(syncPhaseState).toBeTypeOf('function');
+
+		act(() => {
+			syncPhaseState?.(increasedSnapshot);
+		});
+
+		const increasedButton = await screen.findByRole('button', {
+			name: 'Test Resource: 6',
+		});
+		expect(within(increasedButton).getByText('+2')).toBeInTheDocument();
+
+		act(() => {
+			syncPhaseState?.(restoredSnapshot);
+		});
+
+		await waitFor(() => {
+			const resourceButton = screen.getByRole('button', {
+				name: 'Test Resource: 4',
+			});
+			expect(within(resourceButton).getByText('+2')).toBeInTheDocument();
+			expect(within(resourceButton).getByText('-2')).toBeInTheDocument();
+		});
+	});
 	it('updates the human-controlled player name even when listed after AI opponents', async () => {
 		const registriesPayload = createSessionRegistriesPayload();
 		const { adapter, cleanup } = createRemoteSessionAdapter({
