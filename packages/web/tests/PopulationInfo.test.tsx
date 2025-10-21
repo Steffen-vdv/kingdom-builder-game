@@ -128,6 +128,7 @@ let forecastByPlayerId = scenario.forecast;
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => currentGame,
+	useOptionalGameEngine: () => currentGame,
 }));
 
 vi.mock('../src/state/useNextTurnForecast', () => ({

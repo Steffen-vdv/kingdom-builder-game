@@ -1,8 +1,6 @@
 import React from 'react';
-import type {
-	ActionResolution,
-	ResolutionSource,
-} from '../state/useActionResolution';
+import type { ActionResolution } from '../state/useActionResolution';
+import { useOptionalGameEngine } from '../state/GameContext';
 import type { TimelineEntry } from './ResolutionTimeline';
 import {
 	CARD_BASE_CLASS,
@@ -14,52 +12,19 @@ import {
 	joinClasses,
 } from './common/cardStyles';
 import {
-	buildTimelineTree,
 	buildResolutionTimelineEntries,
-	normalizeModifierDescription,
+	buildTimelineTree,
 } from './ResolutionTimeline';
-
-interface ResolutionLabels {
-	title: string;
-	player: string;
-}
-
-const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
-	action: {
-		title: 'Action',
-		player: 'Played by',
-	},
-	phase: {
-		title: 'Phase',
-		player: 'Phase owner',
-	},
-};
-
-const LEADING_EMOJI_PATTERN =
-	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
-const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
-
-function extractLeadingIcon(value: string | undefined) {
-	if (!value) {
-		return undefined;
-	}
-	const trimmed = value.trimStart();
-	if (!trimmed) {
-		return undefined;
-	}
-	const match = trimmed.match(LEADING_EMOJI_PATTERN);
-	if (!match) {
-		return undefined;
-	}
-	const icon = match[0]?.trim();
-	return icon && /\p{Extended_Pictographic}/u.test(icon) ? icon : undefined;
-}
-
-function isSourceDetail(
-	source: ResolutionSource | undefined,
-): source is Exclude<ResolutionSource, 'action' | 'phase'> {
-	return typeof source === 'object' && source !== null && 'kind' in source;
-}
+import {
+	LEADING_EMOJI_PATTERN,
+	SOURCE_LABELS,
+	TRAILING_PHASE_PATTERN,
+	buildFallbackResolutionLines,
+	extractLeadingIcon,
+	isResolutionSourceDetail,
+	resolveResolutionSourceLabels,
+} from './resolutionCardSupport';
+import { resolveResolutionAccents } from './resolutionCardAccent';
 
 interface ResolutionCardProps {
 	title?: string;
@@ -67,29 +32,25 @@ interface ResolutionCardProps {
 	onContinue: () => void;
 }
 
-function resolveSourceLabels(source: ResolutionSource | undefined) {
-	if (!source) {
-		return SOURCE_LABELS.action;
-	}
-	if (typeof source === 'string') {
-		return SOURCE_LABELS[source] ?? SOURCE_LABELS.action;
-	}
-	const fallback = SOURCE_LABELS[source.kind] ?? SOURCE_LABELS.action;
-	const title = source.label?.trim() || fallback.title;
-	return {
-		title,
-		player: fallback.player,
-	};
-}
-
 function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
 }: ResolutionCardProps) {
+	const gameEngine = useOptionalGameEngine();
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
-	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
+	const players = gameEngine?.sessionSnapshot.game.players ?? [];
+	const resolvedPlayerId =
+		resolution.player?.id ??
+		gameEngine?.sessionSnapshot.game.activePlayerId ??
+		null;
+	const accents = resolveResolutionAccents(players, resolvedPlayerId);
+	const containerClass = joinClasses(
+		CARD_BASE_CLASS,
+		'pointer-events-auto',
+		accents.card,
+	);
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
@@ -98,16 +59,16 @@ function ResolutionCard({
 		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	const sourceName = isSourceDetail(resolution.source)
+	const sourceName = isResolutionSourceDetail(resolution.source)
 		? (resolution.source.name?.trim() ?? '')
 		: '';
-	const sourceLabel = isSourceDetail(resolution.source)
+	const sourceLabel = isResolutionSourceDetail(resolution.source)
 		? resolution.source.label
 		: undefined;
 	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
 	const actionName = rawActionName || fallbackActionName;
-	const resolvedLabels = resolveSourceLabels(resolution.source);
-	const resolvedSourceKind = isSourceDetail(resolution.source)
+	const resolvedLabels = resolveResolutionSourceLabels(resolution.source);
+	const resolvedSourceKind = isResolutionSourceDetail(resolution.source)
 		? resolution.source.kind
 		: typeof resolution.source === 'string'
 			? resolution.source
@@ -122,7 +83,7 @@ function ResolutionCard({
 			? actionName
 			: actorLabel
 		: actorLabel || actionName;
-	const sourceIcon = isSourceDetail(resolution.source)
+	const sourceIcon = isResolutionSourceDetail(resolution.source)
 		? resolution.source.icon?.trim() || extractLeadingIcon(sourceLabel)
 		: undefined;
 	const fallbackIcon = extractLeadingIcon(leadingLine);
@@ -156,17 +117,22 @@ function ResolutionCard({
 		'text-amber-600 dark:text-amber-300',
 	);
 	const headerRowClass = 'flex items-start gap-4';
-	const actionBadgeClass = joinClasses(
+	const baseActionBadgeClass = joinClasses(
 		'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
 		'border border-white/50 bg-white/70 text-3xl shadow-inner',
 		'shadow-amber-500/20 dark:border-white/10 dark:bg-slate-900/60',
 		'dark:shadow-slate-900/40',
 	);
-	const resolutionContainerClass = joinClasses(
+	const actionBadgeClass = joinClasses(baseActionBadgeClass, accents.badge);
+	const baseResolutionContainerClass = joinClasses(
 		'mt-4 rounded-3xl border border-white/50 bg-white/70 p-4',
 		'shadow-inner shadow-amber-500/10 ring-1 ring-white/30',
 		'backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60',
 		'dark:shadow-slate-900/40 dark:ring-white/10',
+	);
+	const resolutionContainerClass = joinClasses(
+		baseResolutionContainerClass,
+		accents.section,
 	);
 	const timelineListClass = 'relative flex flex-col gap-3 pl-4';
 	const timelineRailClass = joinClasses(
@@ -213,36 +179,7 @@ function ResolutionCard({
 		if (resolution.visibleTimeline.length > 0) {
 			return [] as { depth: number; text: string }[];
 		}
-
-		function parseLine(line: string) {
-			const patterns = [
-				/^(?: {3})/,
-				/^(?:[ \t]*[•▪‣◦●]\s+)/u,
-				/^(?:[ \t]*[↳➜➤➣]\s+)/u,
-			];
-
-			let remaining = line;
-			let depth = 0;
-			let matched = true;
-
-			while (matched) {
-				matched = false;
-				for (const pattern of patterns) {
-					const match = remaining.match(pattern);
-					if (match && match[0].length > 0) {
-						remaining = remaining.slice(match[0].length);
-						depth += 1;
-						matched = true;
-						break;
-					}
-				}
-			}
-
-			const text = normalizeModifierDescription(remaining.trimStart());
-			return { depth, text };
-		}
-
-		return resolution.visibleLines.map((line) => parseLine(line));
+		return buildFallbackResolutionLines(resolution.visibleLines);
 	}, [resolution.visibleLines, resolution.visibleTimeline]);
 	const hasStructuredTimeline = timelineEntries.length > 0;
 

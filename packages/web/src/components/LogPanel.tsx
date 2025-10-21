@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { useGameEngine } from '../state/GameContext';
+import { resolvePlayerAccentKey } from '../utils/playerAccent';
 import { useAnimate } from '../utils/useAutoAnimate';
 import { ResolutionCard } from './ResolutionCard';
 
@@ -16,33 +17,37 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const pendingScrollRef = useRef(false);
 	const noop = useCallback(() => {}, []);
-	const [playerA, playerB] = sessionSnapshot.game.players;
 	const accentClassForPlayer = useCallback(
 		(playerId: string) => {
-			if (playerA && playerId === playerA.id) {
-				return clsx(
-					'border-blue-400/50',
-					'shadow-[0_18px_48px_rgba(37,99,235,0.25)]',
-					'dark:border-blue-300/40',
-					'dark:shadow-[0_24px_54px_rgba(37,99,235,0.35)]',
-				);
-			}
-			if (playerB && playerId === playerB.id) {
-				return clsx(
-					'border-rose-400/50',
-					'shadow-[0_18px_48px_rgba(190,18,60,0.25)]',
-					'dark:border-rose-300/40',
-					'dark:shadow-[0_24px_54px_rgba(244,63,94,0.35)]',
-				);
-			}
-			return clsx(
-				'border-slate-300/40',
-				'shadow-[0_18px_48px_rgba(15,23,42,0.18)]',
-				'dark:border-slate-500/40',
-				'dark:shadow-[0_24px_48px_rgba(15,23,42,0.4)]',
+			const accentKey = resolvePlayerAccentKey(
+				sessionSnapshot.game.players,
+				playerId,
 			);
+			switch (accentKey) {
+				case 'primary':
+					return clsx(
+						'border-blue-400/50',
+						'shadow-[0_18px_48px_rgba(37,99,235,0.25)]',
+						'dark:border-blue-300/40',
+						'dark:shadow-[0_24px_54px_rgba(37,99,235,0.35)]',
+					);
+				case 'secondary':
+					return clsx(
+						'border-rose-400/50',
+						'shadow-[0_18px_48px_rgba(190,18,60,0.25)]',
+						'dark:border-rose-300/40',
+						'dark:shadow-[0_24px_54px_rgba(244,63,94,0.35)]',
+					);
+				default:
+					return clsx(
+						'border-slate-300/40',
+						'shadow-[0_18px_48px_rgba(15,23,42,0.18)]',
+						'dark:border-slate-500/40',
+						'dark:shadow-[0_24px_48px_rgba(15,23,42,0.4)]',
+					);
+			}
 		},
-		[playerA, playerB],
+		[sessionSnapshot.game.players],
 	);
 	const resolvePlayerName = useCallback(
 		(playerId: string, fallback?: string | null) => {
