@@ -19,6 +19,7 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import type { TranslationContext } from '../src/translation/context';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
 	appendSubActionChanges,
@@ -32,6 +33,7 @@ import {
 } from '../src/state/actionLogFormat';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import type { ActionDiffChange } from '../src/translation/log/diff';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
 function asTimelineLines(
@@ -70,6 +72,31 @@ function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
 	);
 }
 
+function filterChangeTree(
+	changes: readonly ActionDiffChange[],
+	allowed: Set<string>,
+): ActionDiffChange[] {
+	const filtered: ActionDiffChange[] = [];
+	for (const change of changes) {
+		const filteredChildren = change.children
+			? filterChangeTree(change.children, allowed)
+			: [];
+		if (allowed.has(change.summary)) {
+			const clone: ActionDiffChange = {
+				summary: change.summary,
+				...(change.meta ? { meta: { ...change.meta } } : {}),
+			};
+			if (filteredChildren.length) {
+				clone.children = filteredChildren;
+			}
+			filtered.push(clone);
+			continue;
+		}
+		filtered.push(...filteredChildren);
+	}
+	return filtered;
+}
+
 describe('sub-action logging', () => {
 	it('nests sub-action effects under the triggering action', () => {
 		const synthetic = createSyntheticPlowContent();
@@ -101,15 +128,20 @@ describe('sub-action logging', () => {
 		const traces = performAction(synthetic.plow.id, engineContext);
 		const after = captureActivePlayer(engineContext);
 		const diffContext = createTranslationDiffContext(engineContext);
-		const changes = diffStepSnapshots(
+		const translationContext = {
+			...engineContext,
+			rules: synthetic.rules,
+		} as unknown as TranslationContext;
+		const diffResult = diffStepSnapshots(
 			before,
 			after,
 			engineContext.actions.get(synthetic.plow.id),
 			diffContext,
 			RESOURCE_KEYS,
 		);
+		const changes = diffResult.summaries;
 		const messages = asTimelineLines(
-			logContent('action', synthetic.plow.id, engineContext),
+			logContent('action', synthetic.plow.id, translationContext),
 		);
 		const costLines: ActionLogLineDescriptor[] = [];
 		for (const key of Object.keys(
@@ -140,7 +172,7 @@ describe('sub-action logging', () => {
 		}
 		const subLines = appendSubActionChanges({
 			traces,
-			context: engineContext,
+			context: translationContext,
 			diffContext,
 			resourceKeys: RESOURCE_KEYS,
 			messages,
@@ -150,13 +182,14 @@ describe('sub-action logging', () => {
 			messages,
 			subLines,
 		});
-		const logLines = formatActionLogLines(messages, filtered);
+		const filteredTree = filterChangeTree(diffResult.tree, new Set(filtered));
+		const logLines = formatActionLogLines(messages, filteredTree);
 		const useDevelopTimeline = filtered.some((line) =>
 			line.startsWith(LOG_KEYWORDS.developed),
 		);
 		const manualTimeline = useDevelopTimeline
-			? buildDevelopActionLogTimeline(messages, filtered)
-			: buildActionLogTimeline(messages, filtered);
+			? buildDevelopActionLogTimeline(messages, filteredTree)
+			: buildActionLogTimeline(messages, filteredTree);
 		const actionDefinition = engineContext.actions.get(synthetic.plow.id);
 		expect(actionDefinition).toBeDefined();
 		if (!actionDefinition) {
@@ -179,7 +212,7 @@ describe('sub-action logging', () => {
 			costs,
 			before,
 			after,
-			translationContext: engineContext,
+			translationContext,
 			diffContext,
 			resourceKeys: RESOURCE_KEYS,
 			resources: resourceDefinitions,
@@ -200,7 +233,7 @@ describe('sub-action logging', () => {
 			diffContext,
 			RESOURCE_KEYS,
 		);
-		expandDiff.forEach((line) => {
+		expandDiff.summaries.forEach((line) => {
 			expect(logLines).toContain(`  ↳ ${line}`);
 			expect(logLines).not.toContain(`• ${line}`);
 		});
@@ -214,15 +247,15 @@ describe('sub-action logging', () => {
 			diffContext,
 			RESOURCE_KEYS,
 		);
-		expect(tillDiff.length).toBeGreaterThan(0);
+		expect(tillDiff.summaries.length).toBeGreaterThan(0);
 		expect(
-			tillDiff.some((line) =>
+			tillDiff.summaries.some((line) =>
 				line.startsWith(
 					`${SYNTHETIC_SLOT_INFO.icon} ${SYNTHETIC_SLOT_INFO.label}`,
 				),
 			),
 		).toBe(true);
-		tillDiff.forEach((line) => {
+		tillDiff.summaries.forEach((line) => {
 			expect(logLines).toContain(`  ↳ ${line}`);
 			expect(logLines).not.toContain(`• ${line}`);
 		});

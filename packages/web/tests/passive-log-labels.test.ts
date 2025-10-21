@@ -176,12 +176,13 @@ describe('passive log labels', () => {
 			translationContext,
 			happinessKey,
 		);
-		const activationLines = diffStepSnapshots(
+		const activationDiff = diffStepSnapshots(
 			beforeActivation,
 			afterActivation,
 			undefined,
 			diffContext,
 		);
+		const activationLines = activationDiff.summaries;
 		expect(activationLines.length).toBeGreaterThan(0);
 		const tierIncreaseLine = activationLines.find((line) =>
 			line.includes(tierDescriptor.label),
@@ -200,18 +201,19 @@ describe('passive log labels', () => {
 		const afterExpiration = captureActivePlayer(harness.engine);
 		const {
 			translationContext: expirationContext,
-			diffContext: expirationDiff,
+			diffContext: expirationDiffContext,
 		} = rebuildTranslationArtifacts(harness);
 		const expirationDescriptor = selectResourceDescriptor(
 			expirationContext,
 			happinessKey,
 		);
-		const expirationLines = diffStepSnapshots(
+		const expirationResult = diffStepSnapshots(
 			beforeExpiration,
 			afterExpiration,
 			undefined,
-			expirationDiff,
+			expirationDiffContext,
 		);
+		const expirationLines = expirationResult.summaries;
 		const tierDecreaseLine = expirationLines.find((line) =>
 			line.includes(expirationDescriptor.label),
 		);
@@ -245,7 +247,8 @@ describe('passive log labels', () => {
 		const after = captureActivePlayer(harness.engine);
 		const { translationContext, diffContext } =
 			rebuildTranslationArtifacts(harness);
-		const lines = diffStepSnapshots(before, after, undefined, diffContext);
+		const diffResult = diffStepSnapshots(before, after, undefined, diffContext);
+		const lines = diffResult.summaries;
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
 		const buildingEntry = translationContext.buildings.get(castleWallsId);
 		const buildingLabel = buildingEntry?.name ?? castleWallsId;
@@ -291,7 +294,8 @@ describe('passive log labels', () => {
 		const after = captureActivePlayer(harness.engine);
 		const { translationContext, diffContext } =
 			rebuildTranslationArtifacts(harness);
-		const lines = diffStepSnapshots(before, after, undefined, diffContext);
+		const diffResult = diffStepSnapshots(before, after, undefined, diffContext);
+		const lines = diffResult.summaries;
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
 		const rawLabel = logContent(
 			'development',
@@ -366,7 +370,8 @@ describe('passive log labels', () => {
 			translationContext,
 			happinessKey,
 		);
-		const lines = diffStepSnapshots(before, after, undefined, diffContext);
+		const diffResult = diffStepSnapshots(before, after, undefined, diffContext);
+		const lines = diffResult.summaries;
 		const tierChangeLine = lines.find(
 			(line) => line.includes(descriptor.label) && line.includes('→'),
 		);

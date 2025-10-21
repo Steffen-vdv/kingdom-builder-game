@@ -120,12 +120,13 @@ export async function advanceToActionPhase({
 				refresh();
 				return;
 			}
-			const { diffContext } = createSessionTranslationContext({
-				snapshot: snapshotAfter,
-				ruleSnapshot: snapshotAfter.rules,
-				passiveRecords: snapshotAfter.passiveRecords,
-				registries,
-			});
+			const { diffContext, translationContext } =
+				createSessionTranslationContext({
+					snapshot: snapshotAfter,
+					ruleSnapshot: snapshotAfter.rules,
+					passiveRecords: snapshotAfter.passiveRecords,
+					registries,
+				});
 			const phaseDefinitionAfter = snapshotAfter.phases.find(
 				(phase) => phase.id === advanceResult.phase,
 			);
@@ -148,6 +149,9 @@ export async function advanceToActionPhase({
 				resourceKeys,
 				...(phaseDefinition ? { phaseDefinition } : {}),
 				...(stepDefinition ? { stepDefinition } : {}),
+				...(translationContext.rules.tieredResourceKey
+					? { tieredResourceKey: translationContext.rules.tieredResourceKey }
+					: {}),
 			});
 			let outputLines = formatted.lines;
 			if (isPhaseSourceDetail(formatted.source)) {

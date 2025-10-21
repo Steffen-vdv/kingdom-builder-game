@@ -20,7 +20,10 @@ vi.mock('../../src/translation', async () => {
 	);
 	return {
 		...actual,
-		diffStepSnapshots: vi.fn(() => ['+1 gold']),
+		diffStepSnapshots: vi.fn(() => ({
+			tree: [{ summary: '+1 gold' }],
+			summaries: ['+1 gold'],
+		})),
 	};
 });
 

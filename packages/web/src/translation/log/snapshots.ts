@@ -112,13 +112,15 @@ export function diffSnapshots(
 	resourceKeys: string[] = collectResourceKeys(previousSnapshot, nextSnapshot),
 ): string[] {
 	const changeSummaries: string[] = [];
-	appendResourceChanges(
-		changeSummaries,
+	const resourceChanges = appendResourceChanges(
 		previousSnapshot,
 		nextSnapshot,
 		resourceKeys,
 		context.assets,
 	);
+	for (const change of resourceChanges) {
+		changeSummaries.push(change.summary);
+	}
 	appendStatChanges(
 		changeSummaries,
 		previousSnapshot,
@@ -149,11 +151,13 @@ export function diffSnapshots(
 		nextSnapshot,
 		context.assets,
 	);
-	appendPassiveChanges(
-		changeSummaries,
+	const passiveChanges = appendPassiveChanges(
 		previousSnapshot,
 		nextSnapshot,
 		context.assets,
 	);
+	for (const change of passiveChanges) {
+		changeSummaries.push(change.summary);
+	}
 	return changeSummaries;
 }

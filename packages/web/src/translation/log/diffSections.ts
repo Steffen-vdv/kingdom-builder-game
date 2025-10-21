@@ -1,5 +1,6 @@
 import { formatStatValue, statDisplaysAsPercent } from '../../utils/stats';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
+import type { ActionDiffChange } from './diff';
 import {
 	buildSignedDelta,
 	formatResourceChange,
@@ -74,19 +75,29 @@ function describeStatBreakdown(
 	);
 }
 export function appendResourceChanges(
-	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
 	resourceKeys: string[],
 	assets: TranslationAssets,
 	sources?: Record<string, string>,
-) {
+	options?: { trackByKey?: Map<string, ActionDiffChange> },
+): ActionDiffChange[] {
+	const changes: ActionDiffChange[] = [];
 	for (const key of resourceKeys) {
-		const line = describeResourceChange(key, before, after, assets, sources);
-		if (line) {
-			changes.push(line);
+		const summary = describeResourceChange(key, before, after, assets, sources);
+		if (!summary) {
+			continue;
 		}
+		const node: ActionDiffChange = {
+			summary,
+			meta: { resourceKey: key },
+		};
+		if (options?.trackByKey) {
+			options.trackByKey.set(key, node);
+		}
+		changes.push(node);
 	}
+	return changes;
 }
 export function appendStatChanges(
 	changes: string[],

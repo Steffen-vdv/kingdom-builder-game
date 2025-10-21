@@ -32,6 +32,7 @@ import {
 } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import type { ActionDiffChange } from '../src/translation/log/diff';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -45,6 +46,31 @@ function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
 	return snapshotPlayer(
 		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
 	);
+}
+
+function filterChangeTree(
+	changes: readonly ActionDiffChange[],
+	allowed: Set<string>,
+): ActionDiffChange[] {
+	const filtered: ActionDiffChange[] = [];
+	for (const change of changes) {
+		const filteredChildren = change.children
+			? filterChangeTree(change.children, allowed)
+			: [];
+		if (allowed.has(change.summary)) {
+			const clone: ActionDiffChange = {
+				summary: change.summary,
+				...(change.meta ? { meta: { ...change.meta } } : {}),
+			};
+			if (filteredChildren.length) {
+				clone.children = filteredChildren;
+			}
+			filtered.push(clone);
+			continue;
+		}
+		filtered.push(...filteredChildren);
+	}
+	return filtered;
 }
 
 function asTimelineLines(
@@ -105,13 +131,14 @@ describe('tax action logging with market', () => {
 		);
 		const after = captureActivePlayer(engineContext);
 		const translationDiffContext = createTranslationDiffContext(engineContext);
-		const changes = diffStepSnapshots(
+		const diffResult = diffStepSnapshots(
 			before,
 			after,
 			action,
 			translationDiffContext,
 			RESOURCE_KEYS,
 		);
+		const changes = diffResult.summaries;
 		const messages = asTimelineLines(
 			logContent('action', SYNTHETIC_IDS.taxAction, engineContext),
 		);
@@ -152,7 +179,8 @@ describe('tax action logging with market', () => {
 			messages,
 			subLines,
 		});
-		const logLines = formatActionLogLines(messages, filtered);
+		const filteredTree = filterChangeTree(diffResult.tree, new Set(filtered));
+		const logLines = formatActionLogLines(messages, filteredTree);
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const populationIcon =
 			SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID]?.icon ||

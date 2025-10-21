@@ -1,4 +1,5 @@
 import { resolvePassivePresentation } from './passives';
+import type { ActionDiffChange } from './diff';
 import type { PlayerSnapshot } from './snapshots';
 import {
 	createPassiveVisibilityContext,
@@ -31,16 +32,67 @@ function decoratePassiveLabel(
 	return decorated.length ? `${prefix} ${decorated}` : prefix;
 }
 
+interface PassiveChangeOptions {
+	resourceNodes?: Map<string, ActionDiffChange>;
+	tieredResourceKey?: string;
+	existingSummaries?: Set<string>;
+}
+
 export function appendPassiveChanges(
-	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
 	assets: TranslationAssets,
-) {
+	options?: PassiveChangeOptions,
+): ActionDiffChange[] {
+	const rootNodes: ActionDiffChange[] = [];
 	const previous = createPassiveMap(before.passives);
 	const next = createPassiveMap(after.passives);
 	const previousContext = createPassiveVisibilityContext(before);
 	const nextContext = createPassiveVisibilityContext(after);
+	const existingSummaries = options?.existingSummaries ?? new Set<string>();
+
+	function addPassiveChange(
+		passive: PlayerSnapshot['passives'][number],
+		context: ReturnType<typeof createPassiveVisibilityContext>,
+		status: 'activated' | 'deactivated',
+	) {
+		if (!shouldSurfacePassive(passive, context, 'log')) {
+			return;
+		}
+		const { icon, label } = resolvePassivePresentation(passive, {
+			assets,
+		});
+		const decoratedLabel = decoratePassiveLabel(icon, label, assets);
+		const entry = `${decoratedLabel} ${status}`;
+		if (existingSummaries.has(entry)) {
+			return;
+		}
+		const node: ActionDiffChange = { summary: entry };
+		const sourceType = passive.meta?.source?.type?.trim();
+		if (
+			sourceType === 'tiered-resource' &&
+			options?.tieredResourceKey &&
+			options.resourceNodes?.has(options.tieredResourceKey)
+		) {
+			const parent = options.resourceNodes.get(options.tieredResourceKey);
+			if (parent) {
+				if (!parent.children) {
+					parent.children = [];
+				}
+				const alreadyAdded = parent.children.some((child) => {
+					return child.summary === entry;
+				});
+				if (!alreadyAdded) {
+					parent.children.push(node);
+					existingSummaries.add(entry);
+				}
+				return;
+			}
+		}
+		existingSummaries.add(entry);
+		rootNodes.push(node);
+	}
+
 	for (const [id, passive] of next) {
 		if (previous.has(id)) {
 			continue;
@@ -49,32 +101,13 @@ export function appendPassiveChanges(
 		if (!sourceType || sourceType.trim().length === 0) {
 			continue;
 		}
-		if (!shouldSurfacePassive(passive, nextContext, 'log')) {
-			continue;
-		}
-		const { icon, label } = resolvePassivePresentation(passive, {
-			assets,
-		});
-		const decoratedLabel = decoratePassiveLabel(icon, label, assets);
-		const entry = `${decoratedLabel} activated`;
-		if (!changes.includes(entry)) {
-			changes.push(entry);
-		}
+		addPassiveChange(passive, nextContext, 'activated');
 	}
 	for (const [id, passive] of previous) {
 		if (next.has(id)) {
 			continue;
 		}
-		if (!shouldSurfacePassive(passive, previousContext, 'log')) {
-			continue;
-		}
-		const { icon, label } = resolvePassivePresentation(passive, {
-			assets,
-		});
-		const decoratedLabel = decoratePassiveLabel(icon, label, assets);
-		const entry = `${decoratedLabel} deactivated`;
-		if (!changes.includes(entry)) {
-			changes.push(entry);
-		}
+		addPassiveChange(passive, previousContext, 'deactivated');
 	}
+	return rootNodes;
 }
