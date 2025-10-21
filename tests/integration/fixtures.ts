@@ -125,18 +125,21 @@ function findEffect(
 	return undefined;
 }
 
-export function getBuildActionId(engineContext: EngineForTest) {
+export function getBuildActionId(engineContext: EngineForTest, buildingId: string) {
 	for (const [id, def] of engineContext.actions.entries()) {
-		if (
-			findEffect(
-				def.effects,
-				(e) => e.type === 'building' && e.method === 'add',
-			)
-		) {
+		const effect = findEffect(
+			def.effects,
+			(e) => e.type === 'building' && e.method === 'add',
+		);
+		if (!effect) {
+			continue;
+		}
+		const effectParams = effect.params as { id?: string } | undefined;
+		if (effectParams?.id === buildingId) {
 			return id;
 		}
 	}
-	throw new Error('No build action found');
+	throw new Error(`No build action found for building id "${buildingId}"`);
 }
 
 export function getBuildingWithActionMods() {
