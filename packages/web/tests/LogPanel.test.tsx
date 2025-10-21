@@ -49,6 +49,7 @@ let scenario: ScenarioContext;
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
+	useOptionalGameEngine: () => mockGame,
 }));
 
 beforeAll(() => {

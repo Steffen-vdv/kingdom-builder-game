@@ -73,6 +73,7 @@ let defaultPhase = scenario.defaultPhase;
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
+	useOptionalGameEngine: () => mockGame,
 }));
 
 beforeEach(() => {

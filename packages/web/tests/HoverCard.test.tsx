@@ -134,6 +134,7 @@ let mockGame = scenario.mockGame;
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
+	useOptionalGameEngine: () => mockGame,
 }));
 
 function resetResolutionState() {

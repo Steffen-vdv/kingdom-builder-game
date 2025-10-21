@@ -20,6 +20,7 @@ let currentGame: MockGame;
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => currentGame,
+	useOptionalGameEngine: () => currentGame,
 }));
 
 describe('<PassiveDisplay />', () => {

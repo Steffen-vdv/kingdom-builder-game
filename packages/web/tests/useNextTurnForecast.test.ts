@@ -156,6 +156,7 @@ engineValue.sessionSnapshot = sessionHelpers.createSessionState([]);
 
 vi.mock('../src/state/GameContext', () => ({
 	useGameEngine: () => engineValue as unknown as GameEngineContextValue,
+	useOptionalGameEngine: () => engineValue as unknown as GameEngineContextValue,
 }));
 
 describe('useNextTurnForecast', () => {
