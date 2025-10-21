@@ -4,6 +4,7 @@ interface CategoryOverrides {
 	readonly population?: string;
 	readonly basic?: string;
 	readonly building?: string;
+	readonly develop?: string;
 }
 
 function toMatchable(value: string | undefined): string {
@@ -13,7 +14,7 @@ function toMatchable(value: string | undefined): string {
 export function resolveActionCategoryIds(
 	registry: Registry<ActionCategoryConfig>,
 	overrides?: CategoryOverrides,
-): { population: string; basic: string; building: string } {
+): { population: string; basic: string; building: string; develop: string } {
 	const entries = registry.entries();
 	const fallbackId = entries[0]?.[0] ?? 'actions';
 	const find = (
@@ -47,5 +48,8 @@ export function resolveActionCategoryIds(
 			const title = toMatchable(definition.title);
 			return title.includes('build') || title.includes('construct');
 		}),
+		develop: find(overrides?.develop, (definition) =>
+			toMatchable(definition.title).includes('develop'),
+		),
 	};
 }

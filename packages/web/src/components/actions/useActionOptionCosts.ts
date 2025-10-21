@@ -11,7 +11,8 @@ import { isAbortError } from '../../state/isAbortError';
 
 interface ActionCostRequest {
 	readonly key: string;
-	readonly params?: ActionParametersPayload;
+	readonly actionId?: string | undefined;
+	readonly params?: ActionParametersPayload | undefined;
 }
 
 type CostMap = Map<string, SessionActionCostMap | undefined>;
@@ -29,21 +30,40 @@ const cloneParams = (
 };
 
 const toRequestsKey = (
-	entries: readonly [string, ActionParametersPayload | undefined][],
-) => JSON.stringify(entries.map(([key, params]) => [key, params ?? null]));
+	entries: readonly [
+		string,
+		{
+			actionId?: string | undefined;
+			params?: ActionParametersPayload | undefined;
+		},
+	][],
+) =>
+	JSON.stringify(
+		entries.map(([key, { actionId, params }]) => [
+			key,
+			actionId ?? null,
+			params ?? null,
+		]),
+	);
 
-export function useActionOptionCosts(
-	actionId: string | undefined,
-	requests: ActionCostRequest[],
-): CostMap {
+export function useActionOptionCosts(requests: ActionCostRequest[]): CostMap {
 	const { sessionId } = useGameEngine();
 	const normalizedRequests = useMemo(() => {
-		const map = new Map<string, ActionParametersPayload | undefined>();
+		const map = new Map<
+			string,
+			{
+				actionId?: string | undefined;
+				params?: ActionParametersPayload | undefined;
+			}
+		>();
 		for (const request of requests) {
 			if (map.has(request.key)) {
 				continue;
 			}
-			map.set(request.key, cloneParams(request.params));
+			map.set(request.key, {
+				actionId: request.actionId,
+				params: cloneParams(request.params),
+			});
 		}
 		return map;
 	}, [requests]);
@@ -57,10 +77,11 @@ export function useActionOptionCosts(
 	);
 	const [costs, setCosts] = useState<CostMap>(() => {
 		const map: CostMap = new Map();
-		if (!actionId) {
-			return map;
-		}
-		for (const [key, params] of requestEntries) {
+		for (const [key, { actionId, params }] of requestEntries) {
+			if (!actionId) {
+				map.set(key, undefined);
+				continue;
+			}
 			const snapshot = readSessionActionMetadata(sessionId, actionId, params);
 			map.set(key, snapshot.costs);
 		}
@@ -68,10 +89,11 @@ export function useActionOptionCosts(
 	});
 	const [staleMap, setStaleMap] = useState<Map<string, boolean>>(() => {
 		const map = new Map<string, boolean>();
-		if (!actionId) {
-			return map;
-		}
-		for (const [key, params] of requestEntries) {
+		for (const [key, { actionId, params }] of requestEntries) {
+			if (!actionId) {
+				map.set(key, false);
+				continue;
+			}
 			const snapshot = readSessionActionMetadata(sessionId, actionId, params);
 			map.set(key, snapshot.stale?.costs === true);
 		}
@@ -80,10 +102,11 @@ export function useActionOptionCosts(
 	useEffect(() => {
 		setCosts(() => {
 			const map: CostMap = new Map();
-			if (!actionId) {
-				return map;
-			}
-			for (const [key, params] of requestEntries) {
+			for (const [key, { actionId, params }] of requestEntries) {
+				if (!actionId) {
+					map.set(key, undefined);
+					continue;
+				}
 				const snapshot = readSessionActionMetadata(sessionId, actionId, params);
 				map.set(key, snapshot.costs);
 			}
@@ -91,53 +114,57 @@ export function useActionOptionCosts(
 		});
 		setStaleMap(() => {
 			const map = new Map<string, boolean>();
-			if (!actionId) {
-				return map;
-			}
-			for (const [key, params] of requestEntries) {
+			for (const [key, { actionId, params }] of requestEntries) {
+				if (!actionId) {
+					map.set(key, false);
+					continue;
+				}
 				const snapshot = readSessionActionMetadata(sessionId, actionId, params);
 				map.set(key, snapshot.stale?.costs === true);
 			}
 			return map;
 		});
-	}, [sessionId, actionId, requestKey, requestEntries]);
+	}, [sessionId, requestKey, requestEntries]);
 	useEffect(() => {
-		if (!actionId) {
-			return () => {};
-		}
-		const disposers = requestEntries.map(([key, params]) =>
-			subscribeSessionActionMetadata(
-				sessionId,
-				actionId,
-				params,
-				(snapshot) => {
-					setCosts((previous) => {
-						const next: CostMap = new Map(previous);
-						next.set(key, snapshot.costs);
-						return next;
-					});
-					setStaleMap((previous) => {
-						const next = new Map(previous);
-						next.set(key, snapshot.stale?.costs === true);
-						return next;
-					});
-				},
-			),
-		);
+		const disposers: Array<() => void> = [];
+		requestEntries.forEach(([key, { actionId, params }]) => {
+			if (!actionId) {
+				return;
+			}
+			disposers.push(
+				subscribeSessionActionMetadata(
+					sessionId,
+					actionId,
+					params,
+					(snapshot) => {
+						setCosts((previous) => {
+							const next: CostMap = new Map(previous);
+							next.set(key, snapshot.costs);
+							return next;
+						});
+						setStaleMap((previous) => {
+							const next = new Map(previous);
+							next.set(key, snapshot.stale?.costs === true);
+							return next;
+						});
+					},
+				),
+			);
+		});
 		return () => {
 			for (const dispose of disposers) {
 				dispose();
 			}
 		};
-	}, [sessionId, actionId, requestKey, requestEntries]);
+	}, [sessionId, requestKey, requestEntries]);
 	const pendingRef = useRef(new Set<string>());
 	useEffect(() => {
-		if (!actionId) {
-			return () => {};
-		}
 		const pending = pendingRef.current;
 		const controllers: Array<{ key: string; controller: AbortController }> = [];
-		for (const [key, params] of requestEntries) {
+		for (const [key, { actionId, params }] of requestEntries) {
+			if (!actionId) {
+				continue;
+			}
 			const isStale = staleMap.get(key) === true;
 			if ((costs.get(key) !== undefined && !isStale) || pending.has(key)) {
 				continue;
@@ -145,7 +172,7 @@ export function useActionOptionCosts(
 			const controller = new AbortController();
 			controllers.push({ key, controller });
 			pending.add(key);
-			void loadActionCosts(actionId ? sessionId : '', actionId, params, {
+			void loadActionCosts(sessionId, actionId, params, {
 				signal: controller.signal,
 			})
 				.catch((error) => {
@@ -164,7 +191,7 @@ export function useActionOptionCosts(
 				pending.delete(key);
 			}
 		};
-	}, [sessionId, actionId, requestKey, requestEntries, costs, staleMap]);
+	}, [sessionId, requestKey, requestEntries, costs, staleMap]);
 	return costs;
 }
 

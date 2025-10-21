@@ -138,6 +138,13 @@ function seedInitialMetadata() {
 			groups: [],
 		});
 	}
+	actions.developments.forEach((developmentAction) => {
+		seedSessionActionMetadata(sessionId, developmentAction.id, {
+			costs: costMap.get(developmentAction.id) ?? {},
+			requirements: requirementFailures.get(developmentAction.id) ?? [],
+			groups: [],
+		});
+	});
 }
 
 function getCategoryDefinition(categoryId: string) {

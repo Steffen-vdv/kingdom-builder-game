@@ -11,6 +11,7 @@ interface ActionCategories {
 	readonly population: string;
 	readonly basic: string;
 	readonly building: string;
+	readonly develop: string;
 }
 
 interface BuildActionsPanelContentOptions {
@@ -29,6 +30,7 @@ type ContentFactory = ReturnType<typeof createContentFactory>;
 type ActionDefinition = ReturnType<ContentFactory['action']>;
 type BuildingDefinition = ReturnType<ContentFactory['building']>;
 type PopulationDefinition = ReturnType<ContentFactory['population']>;
+type DevelopmentDefinition = ReturnType<ContentFactory['development']>;
 
 export interface ActionsPanelContent {
 	readonly registeredPopulationRoles: PopulationDefinition[];
@@ -38,6 +40,8 @@ export interface ActionsPanelContent {
 	readonly basicAction: ActionDefinition;
 	readonly buildingAction?: ActionDefinition;
 	readonly buildingDefinition?: BuildingDefinition;
+	readonly developmentActions: ActionDefinition[];
+	readonly developmentDefinitions: DevelopmentDefinition[];
 	readonly initialPopulation: Record<string, number>;
 	readonly actionIds: string[];
 	readonly requirementFailures: Map<string, SessionRequirementFailure[]>;
@@ -136,13 +140,54 @@ export function buildActionsPanelContent({
 			costs: { [upkeepResource]: 5 },
 		});
 	}
+	const developmentDefinitions: DevelopmentDefinition[] = [
+		factory.development({
+			name: 'Farmstead',
+			icon: '🌾',
+			focus: 'economy',
+			order: 1,
+		}),
+		factory.development({
+			name: 'Watchtower',
+			icon: '🗼',
+			focus: 'defense',
+			order: 2,
+		}),
+	];
+	const developmentActions = developmentDefinitions.map(
+		(development, index) => {
+			const action = factory.action({
+				name: `Develop: ${development.name}`,
+				icon: development.icon,
+				requirements: [],
+				effects: [
+					{
+						type: 'development',
+						method: 'add',
+						params: { id: development.id },
+					},
+				],
+			});
+			Object.assign(action, {
+				category: categories.develop,
+				order: index + 1,
+				focus: development.focus ?? 'other',
+			});
+			return action;
+		},
+	);
 	const initialPopulation = Object.fromEntries(
 		[...registeredPopulationRoles, passivePopulation].map((population) => [
 			population.id,
 			0,
 		]),
 	) as Record<string, number>;
-	const actionIds = [raisePopulationAction, basicAction, buildingAction]
+	const actionIds = [
+		raisePopulationAction,
+		basicAction,
+		buildingAction,
+		...developmentActions,
+	]
 		.filter(Boolean)
 		.map((action) => action!.id);
 	const requirementFailures = new Map<string, SessionRequirementFailure[]>();
@@ -167,11 +212,17 @@ export function buildActionsPanelContent({
 			},
 		]);
 	}
+	for (const action of developmentActions) {
+		requirementFailures.set(action.id, []);
+	}
 	const requirementIcons = new Map<string, string[]>([
 		[raisePopulationAction.id, []],
 	]);
 	if (buildingAction) {
 		requirementIcons.set(buildingAction.id, ['🛠️']);
+	}
+	for (const action of developmentActions) {
+		requirementIcons.set(action.id, []);
 	}
 	const costMap = new Map(
 		actionIds.map((id) => [id, { [actionCostResource]: 1 }]),
@@ -184,6 +235,8 @@ export function buildActionsPanelContent({
 		basicAction,
 		buildingAction,
 		buildingDefinition,
+		developmentActions,
+		developmentDefinitions,
 		initialPopulation,
 		actionIds,
 		requirementFailures,

@@ -93,11 +93,12 @@ export default function BuildOptions({
 		() =>
 			buildings.map((building) => ({
 				key: building.id,
+				actionId: action.id,
 				params: { id: building.id } as ActionParametersPayload,
 			})),
-		[buildings],
+		[buildings, action.id],
 	);
-	const costMap = useActionOptionCosts(action.id, costRequests);
+	const costMap = useActionOptionCosts(costRequests);
 	const entries = useMemo(() => {
 		const owned = player.buildings;
 		return buildings

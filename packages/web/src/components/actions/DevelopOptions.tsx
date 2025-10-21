@@ -43,7 +43,7 @@ function formatLandRequirement(
 }
 
 interface DevelopOptionsProps {
-	action: Action;
+	actions: Action[];
 	isActionPhase: boolean;
 	developments: Development[];
 	summaries: Map<string, Summary>;
@@ -55,7 +55,7 @@ interface DevelopOptionsProps {
 }
 
 export default function DevelopOptions({
-	action,
+	actions,
 	isActionPhase,
 	developments,
 	summaries,
@@ -78,24 +78,70 @@ export default function DevelopOptions({
 	const slotMetadata = useSlotMetadata();
 	const slotDescriptor = useMemo(() => slotMetadata.select(), [slotMetadata]);
 	const { subtitle } = category;
-	const landIdForCost = player.lands[0]?.id as string;
-	const actionInfo = sessionView.actions.get(action.id);
-	const costRequests = useMemo(
+	const landIdForCost = player.lands.find((land) => land.slotsFree > 0)?.id;
+	const developmentMap = useMemo(
 		() =>
-			developments.map((development) => ({
-				key: development.id,
-				params: {
-					id: development.id,
-					...(landIdForCost ? { landId: landIdForCost } : {}),
-				} as ActionParametersPayload,
-			})),
-		[developments, landIdForCost],
+			new Map(developments.map((development) => [development.id, development])),
+		[developments],
 	);
-	const costMap = useActionOptionCosts(action.id, costRequests);
+	const costRequests = useMemo(() => {
+		const params = landIdForCost
+			? ({ landId: landIdForCost } as ActionParametersPayload)
+			: undefined;
+		return actions.map((actionDefinition) => ({
+			key: actionDefinition.id,
+			actionId: actionDefinition.id,
+			params,
+		}));
+	}, [actions, landIdForCost]);
+	const costMap = useActionOptionCosts(costRequests);
 	const entries = useMemo(() => {
-		return developments
-			.map((development) => {
-				const metadataCosts = costMap.get(development.id);
+		const extractDevelopmentId = (
+			actionDefinition: Action,
+		): string | undefined => {
+			const effects = actionDefinition.effects ?? [];
+			for (const effectDefinition of effects) {
+				if (
+					!effectDefinition ||
+					typeof effectDefinition !== 'object' ||
+					Array.isArray(effectDefinition)
+				) {
+					continue;
+				}
+				const typeProperty =
+					'type' in effectDefinition
+						? (effectDefinition as { type?: unknown }).type
+						: undefined;
+				if (typeProperty !== 'development') {
+					continue;
+				}
+				const params =
+					'params' in effectDefinition &&
+					typeof (effectDefinition as { params?: unknown }).params ===
+						'object' &&
+					(effectDefinition as { params?: object }).params !== null
+						? ((effectDefinition as { params?: object }).params as {
+								id?: unknown;
+							})
+						: undefined;
+				const candidate = params?.id;
+				if (typeof candidate === 'string') {
+					return candidate;
+				}
+			}
+			return undefined;
+		};
+		return actions
+			.map((actionDefinition) => {
+				const developmentId = extractDevelopmentId(actionDefinition);
+				if (!developmentId) {
+					return undefined;
+				}
+				const development = developmentMap.get(developmentId);
+				if (!development) {
+					return undefined;
+				}
+				const metadataCosts = costMap.get(actionDefinition.id);
 				const { costs: dynamicCosts, cleanup: dynamicCleanup } =
 					splitActionCostMap(metadataCosts);
 				const costs: Record<string, number> = {};
@@ -109,6 +155,7 @@ export default function DevelopOptions({
 				const total = sumNonActionCosts(costs, actionCostResource);
 				const cleanup = sumUpkeep(combinedUpkeep);
 				return {
+					action: actionDefinition,
 					development,
 					costs,
 					total,
@@ -116,6 +163,7 @@ export default function DevelopOptions({
 					upkeep: combinedUpkeep,
 				};
 			})
+			.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
 			.sort((first, second) => {
 				if (first.total !== second.total) {
 					return first.total - second.total;
@@ -125,11 +173,13 @@ export default function DevelopOptions({
 				}
 				return first.development.name.localeCompare(second.development.name);
 			});
-	}, [developments, actionCostResource, costMap]);
-	const actionHoverTitle = formatIconTitle(
-		actionInfo?.icon,
-		actionInfo?.name ?? action.name,
-	);
+	}, [
+		actions,
+		developmentMap,
+		costMap,
+		actionCostResource,
+		sessionView.actions,
+	]);
 	return (
 		<div className="space-y-3">
 			{subtitle ? (
@@ -139,7 +189,7 @@ export default function DevelopOptions({
 				ref={listRef}
 				className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2"
 			>
-				{entries.map(({ development, costs, upkeep }) => {
+				{entries.map(({ action: actionOption, development, costs, upkeep }) => {
 					const focus = development.focus;
 					const developLandRequirement = formatLandRequirement(
 						'Requires',
@@ -169,16 +219,21 @@ export default function DevelopOptions({
 							: !canPay
 								? (insufficientTooltip ?? 'Cannot pay costs')
 								: undefined;
-					const enabled = canPay && isActionPhase && canInteract && implemented;
+					const actionInfo = sessionView.actions.get(actionOption.id);
+					const actionHoverTitle = formatIconTitle(
+						actionInfo?.icon,
+						actionInfo?.name ?? actionOption.name,
+					);
 					const hoverTitle = [
 						actionHoverTitle,
 						formatIconTitle(development.icon, development.name),
 					]
 						.filter(Boolean)
 						.join(' - ');
+					const enabled = canPay && isActionPhase && canInteract && implemented;
 					return (
 						<ActionCard
-							key={development.id}
+							key={actionOption.id}
 							title={renderIconLabel(development.icon, development.name)}
 							costs={costs}
 							upkeep={upkeep}
@@ -201,12 +256,12 @@ export default function DevelopOptions({
 								const landId = player.lands.find(
 									(land) => land.slotsFree > 0,
 								)?.id;
+								if (!landId) {
+									return;
+								}
 								void requests.performAction({
-									action: toPerformableAction(action),
-									params: {
-										id: development.id,
-										landId,
-									},
+									action: toPerformableAction(actionOption),
+									params: { landId },
 								});
 							}}
 							onMouseEnter={() => {

@@ -125,13 +125,12 @@ const renderDevelopCategory: CategoryRenderer = ({
 	developmentSummaries,
 	hasDevelopLand,
 }) => {
-	const action = actions[0];
-	if (!action) {
+	if (actions.length === 0) {
 		return null;
 	}
 	return (
 		<DevelopOptions
-			action={action}
+			actions={actions}
 			isActionPhase={isActionPhase}
 			developments={developmentOptions}
 			summaries={developmentSummaries}
@@ -581,7 +580,7 @@ export default function ActionsPanel() {
 		: undefined;
 	const activeContent = activeEntry
 		? activeEntry.renderer({
-				actions: activeEntry.actions,
+				actions: activeEntry.visibleActions,
 				descriptor: activeEntry.descriptor,
 				player: selectedPlayer,
 				canInteract,
