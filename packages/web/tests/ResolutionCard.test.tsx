@@ -1,11 +1,18 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
 import type { ActionResolution } from '../src/state/useActionResolution';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import {
+	createSnapshotPlayer,
+	createSessionSnapshot,
+} from './helpers/sessionFixtures';
+import { createPassiveGame } from './helpers/createPassiveDisplayGame';
+import type { GameEngineContextValue } from '../src/state/GameContext.types';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
@@ -38,7 +45,36 @@ function createResolution(
 	} as ActionResolution;
 }
 
+let mockGame: GameEngineContextValue;
+
+vi.mock('../src/state/GameContext', () => ({
+	useGameEngine: () => mockGame,
+}));
+
 describe('<ResolutionCard />', () => {
+	beforeEach(() => {
+		const scaffold = createTestSessionScaffold();
+		const players = [
+			createSnapshotPlayer({ id: 'player-1', name: 'Player One' }),
+			createSnapshotPlayer({ id: 'player-2', name: 'Player Two' }),
+		];
+		const sessionState = createSessionSnapshot({
+			players,
+			activePlayerId: players[0].id,
+			opponentId: players[1].id,
+			phases: scaffold.phases,
+			actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
+			ruleSnapshot: scaffold.ruleSnapshot,
+			metadata: scaffold.metadata,
+		});
+		const { mockGame: passiveGame } = createPassiveGame(sessionState, {
+			ruleSnapshot: scaffold.ruleSnapshot,
+			registries: scaffold.registries,
+			metadata: scaffold.metadata,
+		});
+		mockGame = passiveGame;
+	});
+
 	afterEach(() => {
 		cleanup();
 	});
@@ -326,5 +362,26 @@ describe('<ResolutionCard />', () => {
 		expect(secondLine).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(bonusLine).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(followUpLine).toHaveStyle({ marginLeft: '2.625rem' });
+	});
+
+	it('tints the card using the owning player accent', () => {
+		const resolution = createResolution({
+			player: { id: 'player-1', name: 'Player One' },
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		const card = document.querySelector('div[data-state="enter"]');
+		if (!card) {
+			throw new Error('Expected resolution card container');
+		}
+		expect(card.className).toContain('border-blue-400/60');
+		expect(card.className).toContain('bg-blue-50/90');
+		const stepsContainer = screen.getByText('Resolution steps').parentElement;
+		if (!stepsContainer) {
+			throw new Error('Expected resolution steps container');
+		}
+		expect(stepsContainer.className).toContain('border-blue-200/60');
+		expect(stepsContainer.className).toContain('ring-blue-400/25');
 	});
 });
