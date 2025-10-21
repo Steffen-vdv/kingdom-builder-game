@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
 import { ResolutionCard } from './ResolutionCard';
+import { resolvePlayerAccentTheme } from './common/playerAccent';
 
 interface LogPanelProps {
 	isOpen: boolean;
@@ -16,39 +17,10 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	const listRef = useAnimate<HTMLDivElement>();
 	const pendingScrollRef = useRef(false);
 	const noop = useCallback(() => {}, []);
-	const [playerA, playerB] = sessionSnapshot.game.players;
-	const accentClassForPlayer = useCallback(
-		(playerId: string) => {
-			if (playerA && playerId === playerA.id) {
-				return clsx(
-					'border-blue-400/50',
-					'shadow-[0_18px_48px_rgba(37,99,235,0.25)]',
-					'dark:border-blue-300/40',
-					'dark:shadow-[0_24px_54px_rgba(37,99,235,0.35)]',
-				);
-			}
-			if (playerB && playerId === playerB.id) {
-				return clsx(
-					'border-rose-400/50',
-					'shadow-[0_18px_48px_rgba(190,18,60,0.25)]',
-					'dark:border-rose-300/40',
-					'dark:shadow-[0_24px_54px_rgba(244,63,94,0.35)]',
-				);
-			}
-			return clsx(
-				'border-slate-300/40',
-				'shadow-[0_18px_48px_rgba(15,23,42,0.18)]',
-				'dark:border-slate-500/40',
-				'dark:shadow-[0_24px_48px_rgba(15,23,42,0.4)]',
-			);
-		},
-		[playerA, playerB],
-	);
+	const players = sessionSnapshot.game.players;
 	const resolvePlayerName = useCallback(
 		(playerId: string, fallback?: string | null) => {
-			const player = sessionSnapshot.game.players.find(
-				(candidate) => candidate.id === playerId,
-			);
+			const player = players.find((candidate) => candidate.id === playerId);
 			if (player?.name?.trim()) {
 				return player.name;
 			}
@@ -57,7 +29,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 			}
 			return player?.id ?? null;
 		},
-		[sessionSnapshot.game.players],
+		[players],
 	);
 
 	useEffect(() => {
@@ -237,7 +209,8 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 			{overflowNotice}
 			<div ref={listRef} className={listClasses} role="list">
 				{entries.map((entry) => {
-					const accentClass = accentClassForPlayer(entry.playerId);
+					const accentTheme = resolvePlayerAccentTheme(players, entry.playerId);
+					const accentClass = accentTheme.container;
 					const entryContainerClasses = clsx(
 						entryContainerBaseClasses,
 						accentClass,

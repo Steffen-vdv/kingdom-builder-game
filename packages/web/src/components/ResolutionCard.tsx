@@ -13,6 +13,7 @@ import {
 	CONTINUE_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
+import { usePlayerAccentTheme } from './common/playerAccent';
 import {
 	buildTimelineTree,
 	buildResolutionTimelineEntries,
@@ -88,7 +89,12 @@ function ResolutionCard({
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
-	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
+	const accent = usePlayerAccentTheme(resolution.player?.id ?? null);
+	const containerClass = joinClasses(
+		CARD_BASE_CLASS,
+		'pointer-events-auto',
+		resolution.player ? accent.container : null,
+	);
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
@@ -150,27 +156,32 @@ function ResolutionCard({
 			? `${SOURCE_LABELS.phase.title} - ${sanitizedPhaseSubject}`
 			: `${SOURCE_LABELS.phase.title} resolution`;
 	}
-	const headerLabelClass = joinClasses(
-		CARD_LABEL_CLASS,
-		'text-amber-600 dark:text-amber-300',
-	);
+	const headerLabelClass = joinClasses(CARD_LABEL_CLASS, accent.headerLabel);
 	const headerRowClass = 'flex items-start gap-4';
-	const actionBadgeClass = joinClasses(
+	const actionBadgeBaseClass = joinClasses(
 		'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
-		'border border-white/50 bg-white/70 text-3xl shadow-inner',
-		'shadow-amber-500/20 dark:border-white/10 dark:bg-slate-900/60',
-		'dark:shadow-slate-900/40',
+		'border text-3xl shadow-inner',
+	);
+	const actionBadgeSurfaceClass = joinClasses(
+		'border-white/50 bg-white/70 shadow-amber-500/20',
+		'dark:border-white/10 dark:bg-slate-900/60 dark:shadow-slate-900/40',
+	);
+	const actionBadgeClass = joinClasses(
+		actionBadgeBaseClass,
+		actionBadgeSurfaceClass,
+		resolution.player ? accent.actionBadge : null,
+	);
+	const resolutionContainerBaseClass = joinClasses(
+		'mt-4 rounded-3xl border p-4 shadow-inner ring-1 backdrop-blur-sm',
 	);
 	const resolutionContainerClass = joinClasses(
-		'mt-4 rounded-3xl border border-white/50 bg-white/70 p-4',
-		'shadow-inner shadow-amber-500/10 ring-1 ring-white/30',
-		'backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60',
-		'dark:shadow-slate-900/40 dark:ring-white/10',
+		resolutionContainerBaseClass,
+		accent.resolution,
 	);
 	const timelineListClass = 'relative flex flex-col gap-3 pl-4';
 	const timelineRailClass = joinClasses(
 		'pointer-events-none absolute left-[0.875rem] top-4 bottom-4 w-px',
-		'bg-white/30 dark:bg-white/10',
+		accent.timelineRail,
 	);
 	const timelineTextClass = joinClasses(
 		CARD_BODY_TEXT_CLASS,
@@ -181,15 +192,19 @@ function ResolutionCard({
 		'text-slate-600 dark:text-slate-300',
 	);
 	const timelineItemClass = 'relative flex items-start gap-3';
-	const primaryMarkerClass = joinClasses(
+	const primaryMarkerBaseClass = joinClasses(
 		'mt-1.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full',
-		'bg-amber-500 shadow-[0_0_0_4px_rgba(251,191,36,0.25)]',
-		'dark:bg-amber-400 dark:shadow-[0_0_0_4px_rgba(251,191,36,0.2)]',
+	);
+	const primaryMarkerClass = joinClasses(
+		primaryMarkerBaseClass,
+		accent.primaryMarker,
+	);
+	const nestedMarkerBaseClass = joinClasses(
+		'mt-1.5 flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full',
 	);
 	const nestedMarkerClass = joinClasses(
-		'mt-1.5 flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full',
-		'bg-slate-400/80 shadow-[0_0_0_4px_rgba(148,163,184,0.2)]',
-		'dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(15,23,42,0.45)]',
+		nestedMarkerBaseClass,
+		accent.nestedMarker,
 	);
 	const structuredTimeline = React.useMemo(
 		() => buildTimelineTree(resolution.visibleTimeline),

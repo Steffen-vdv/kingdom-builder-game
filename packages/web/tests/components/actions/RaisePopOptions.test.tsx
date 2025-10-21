@@ -131,6 +131,7 @@ let currentGame = scenario.mockGame;
 
 vi.mock('../../../src/state/GameContext', () => ({
 	useGameEngine: () => currentGame,
+	useOptionalGameEngine: () => currentGame,
 }));
 
 describe('<RaisePopOptions />', () => {

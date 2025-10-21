@@ -27,6 +27,7 @@ const UNMET_REQUIREMENT = {
 
 vi.mock('../../../src/state/GameContext', () => ({
 	useGameEngine: () => mockGame,
+	useOptionalGameEngine: () => mockGame,
 }));
 
 describe('ActionsPanel tabs', () => {
