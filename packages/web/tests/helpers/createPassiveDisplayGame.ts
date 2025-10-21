@@ -68,6 +68,7 @@ export function createPassiveGame(
 			),
 			canEndTurn: true,
 			isAdvancing: false,
+			awaitingManualStart: false,
 			activePlayerId: sessionState.game.activePlayerId,
 			activePlayerName:
 				sessionState.game.players.find(
@@ -78,6 +79,7 @@ export function createPassiveGame(
 		requests: {
 			performAction: vi.fn().mockResolvedValue(undefined),
 			advancePhase: vi.fn().mockResolvedValue(undefined),
+			startSession: vi.fn().mockResolvedValue(undefined),
 			refreshSession: vi.fn().mockResolvedValue(undefined),
 		},
 		metadata: {

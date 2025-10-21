@@ -124,6 +124,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			),
 			canEndTurn: true,
 			isAdvancing: false,
+			awaitingManualStart: false,
 			activePlayerId: sessionState.game.activePlayerId,
 			activePlayerName:
 				sessionState.game.players.find(
@@ -134,6 +135,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		requests: {
 			performAction: vi.fn().mockResolvedValue(undefined),
 			advancePhase: vi.fn().mockResolvedValue(undefined),
+			startSession: vi.fn().mockResolvedValue(undefined),
 			refreshSession: vi.fn().mockResolvedValue(undefined),
 		},
 		metadata: {
