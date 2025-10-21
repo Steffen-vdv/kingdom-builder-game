@@ -278,31 +278,10 @@
 						"onDamage": {
 							"attacker": [
 								{
-									"type": "resource",
-									"method": "add",
-									"params": {
-										"key": "happiness",
-										"amount": 1
-									}
-								},
-								{
 									"type": "action",
 									"method": "perform",
 									"params": {
 										"id": "plunder"
-									}
-								}
-							],
-							"defender": [
-								{
-									"type": "resource",
-									"method": "remove",
-									"params": {
-										"key": "happiness",
-										"amount": 1
-									},
-									"meta": {
-										"allowShortfall": true
 									}
 								}
 							]
@@ -414,6 +393,14 @@
 			"name": "Plunder",
 			"icon": "🏴‍☠️",
 			"effects": [
+				{
+					"type": "resource",
+					"method": "transfer",
+					"params": {
+						"key": "happiness",
+						"amount": 1
+					}
+				},
 				{
 					"type": "resource",
 					"method": "transfer",

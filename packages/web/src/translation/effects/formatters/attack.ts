@@ -10,7 +10,8 @@ import {
 	summarizeOnDamage,
 	formatDiffEntries,
 	ownerLabel,
-	collectTransferPercents,
+	collectTransferSummaries,
+	type TransferSummary,
 } from './attackFormatterUtils';
 import {
 	resolveAttackFormatterContext,
@@ -92,15 +93,15 @@ function buildActionLog(
 	const id = entry.effect.params?.['id'] as string | undefined;
 	let icon = '';
 	let name = id || 'Unknown action';
-	const transferPercents = new Map<string, number>();
+	const transferSummaries = new Map<string, TransferSummary>();
 	if (id) {
 		try {
 			const definition = translationContext.actions.get(id);
 			icon = definition.icon || '';
 			name = definition.name;
-			collectTransferPercents(
+			collectTransferSummaries(
 				definition.effects as EffectDef[] | undefined,
-				transferPercents,
+				transferSummaries,
 			);
 		} catch {
 			/* ignore missing action */
@@ -108,14 +109,22 @@ function buildActionLog(
 	}
 	const items: SummaryEntry[] = [];
 	entry.defender.forEach((diff) => {
-		const percent =
-			diff.type === 'resource' ? transferPercents.get(diff.key) : undefined;
+		const summary =
+			diff.type === 'resource' ? transferSummaries.get(diff.key) : undefined;
+		let options;
+		if (summary?.percent !== undefined) {
+			options = { percent: summary.percent } as const;
+		} else if (summary?.amount !== undefined) {
+			options = undefined;
+		} else {
+			options = { showPercent: true as const };
+		}
 		items.push(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'defender'),
 				diff,
 				translationContext,
-				percent !== undefined ? { percent } : { showPercent: true as const },
+				options,
 			),
 		);
 	});
@@ -179,10 +188,14 @@ registerAttackOnDamageFormatter(
 	'resource',
 	'transfer',
 	({ entry, translationContext, formatter }) => {
-		const percent = entry.effect.params
-			? (entry.effect.params['percent'] as number | undefined)
+		const params = entry.effect.params;
+		const amount = params
+			? (params['amount'] as number | undefined)
 			: undefined;
-		if (percent === undefined) {
+		const percent = params
+			? (params['percent'] as number | undefined)
+			: undefined;
+		if (percent === undefined || amount !== undefined) {
 			return formatDiffEntries(entry, formatter, translationContext);
 		}
 		const parts: SummaryEntry[] = [];

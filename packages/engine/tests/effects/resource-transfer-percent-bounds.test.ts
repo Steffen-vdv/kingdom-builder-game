@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { runEffects, advance, Resource } from '../../src/index.ts';
 import { PhaseId } from '@kingdom-builder/contents';
 import {
+	TRANSFER_AMOUNT_EVALUATION_ID,
+	TRANSFER_AMOUNT_EVALUATION_TYPE,
 	TRANSFER_PCT_EVALUATION_ID,
 	TRANSFER_PCT_EVALUATION_TYPE,
 } from '../../src/effects/resource_transfer.ts';
@@ -114,5 +116,71 @@ describe('resource:transfer percent bounds', () => {
 		const roundedDown = run('down');
 		expect(roundedDown.attacker).toBe(1);
 		expect(roundedDown.defender).toBe(4);
+	});
+});
+
+describe('resource:transfer amount behaviour', () => {
+	it('applies amount modifiers within available resources', () => {
+		const engineContext = createTestEngine();
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
+		}
+		engineContext.game.currentPlayerIndex = 0;
+
+		const transfer: EffectDef<{ key: string; amount: number }> = {
+			type: 'resource',
+			method: 'transfer',
+			params: { key: Resource.happiness, amount: 2 },
+		};
+		const addBoost: EffectDef<{ id: string }> = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				id: 'amount_boost',
+				evaluation: {
+					type: TRANSFER_AMOUNT_EVALUATION_TYPE,
+					id: TRANSFER_AMOUNT_EVALUATION_ID,
+				},
+				adjust: 3,
+			},
+		};
+		const removeBoost: EffectDef<{ id: string }> = {
+			type: 'result_mod',
+			method: 'remove',
+			params: {
+				id: 'amount_boost',
+				evaluation: {
+					type: TRANSFER_AMOUNT_EVALUATION_TYPE,
+					id: TRANSFER_AMOUNT_EVALUATION_ID,
+				},
+			},
+		};
+		const addNerf: EffectDef<{ id: string }> = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				id: 'amount_nerf',
+				evaluation: {
+					type: TRANSFER_AMOUNT_EVALUATION_TYPE,
+					id: TRANSFER_AMOUNT_EVALUATION_ID,
+				},
+				adjust: -5,
+			},
+		};
+
+		runEffects([addBoost], engineContext);
+		engineContext.activePlayer.happiness = 0;
+		engineContext.opponent.happiness = 4;
+		runEffects([transfer], engineContext);
+		expect(engineContext.activePlayer.happiness).toBe(4);
+		expect(engineContext.opponent.happiness).toBe(0);
+
+		runEffects([removeBoost], engineContext);
+		engineContext.activePlayer.happiness = 0;
+		engineContext.opponent.happiness = 4;
+		runEffects([addNerf], engineContext);
+		runEffects([transfer], engineContext);
+		expect(engineContext.activePlayer.happiness).toBe(0);
+		expect(engineContext.opponent.happiness).toBe(4);
 	});
 });

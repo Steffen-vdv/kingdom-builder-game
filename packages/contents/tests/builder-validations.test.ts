@@ -173,8 +173,21 @@ describe('content builder safeguards', () => {
 
 	it('demands transfer amounts', () => {
 		expect(() => transferParams().key(firstResourceKey).build()).toThrowError(
-			'Resource transfer is missing percent(). Call percent(amount) to choose how much to move.',
+			'Resource transfer is missing percent() or amount(). Call one of them to choose how much to move.',
 		);
+	});
+
+	it('prevents mixing percent and amount for transfers', () => {
+		expect(() =>
+			transferParams().key(firstResourceKey).percent(25).amount(1).build(),
+		).toThrowError(
+			'Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().',
+		);
+	});
+
+	it('supports static transfer amounts', () => {
+		const params = transferParams().key(firstResourceKey).amount(2).build();
+		expect(params).toEqual({ key: firstResourceKey, amount: 2 });
 	});
 
 	it('requires happiness tiers to declare an id', () => {
