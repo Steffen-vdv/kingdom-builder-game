@@ -28,7 +28,7 @@ function normalizeModifierDescription(text: string): string {
 	if (!text.trim()) {
 		return text;
 	}
-	return text.replace(MODIFIER_LABEL_PATTERN, 'modifier on');
+	return text.replace(MODIFIER_LABEL_PATTERN, 'Modifier on');
 }
 
 function buildTimelineTree(

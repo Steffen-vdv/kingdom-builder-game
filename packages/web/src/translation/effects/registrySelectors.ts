@@ -11,10 +11,10 @@ const DEFAULT_POPULATION_ICON = '👥';
 const DEFAULT_POPULATION_LABEL = 'Population';
 const DEFAULT_PASSIVE_ICON = '♾️';
 const DEFAULT_PASSIVE_LABEL = 'Passive';
-const DEFAULT_COST_ICON = '💲';
-const DEFAULT_COST_LABEL = 'Cost Adjustment';
 const DEFAULT_RESULT_ICON = '✨';
 const DEFAULT_RESULT_LABEL = 'Outcome Adjustment';
+const DEFAULT_COST_ICON = DEFAULT_RESULT_ICON;
+const DEFAULT_COST_LABEL = 'Cost Adjustment';
 const DEFAULT_TRANSFER_ICON = '🔁';
 const DEFAULT_TRANSFER_LABEL = 'Transfer';
 

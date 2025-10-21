@@ -304,7 +304,7 @@ describe('<ResolutionCard />', () => {
 					kind: 'effect',
 				},
 				{
-					text: '💲 cost on all actions: Increase cost by +3',
+					text: '✨ cost on all actions: Increase cost by +3',
 					depth: 1,
 					kind: 'effect',
 				},
@@ -315,10 +315,10 @@ describe('<ResolutionCard />', () => {
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
 		expect(
-			screen.getByText('✨ modifier on Raid: Whenever it resolves, 🎯 +1'),
+			screen.getByText('✨ Modifier on Raid: Whenever it resolves, 🎯 +1'),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText('💲 modifier on all actions: Increase cost by +3'),
+			screen.getByText('✨ Modifier on all actions: Increase cost by +3'),
 		).toBeInTheDocument();
 	});
 
@@ -360,17 +360,17 @@ describe('<ResolutionCard />', () => {
 			visibleTimeline: [],
 			visibleLines: [
 				'✨ result on Raid: Whenever it resolves, 🎯 +1',
-				'   💲 cost on all actions: Increase cost by +3',
+				'   ✨ cost on all actions: Increase cost by +3',
 			],
 		});
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
 		expect(
-			screen.getByText('✨ modifier on Raid: Whenever it resolves, 🎯 +1'),
+			screen.getByText('✨ Modifier on Raid: Whenever it resolves, 🎯 +1'),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText('💲 modifier on all actions: Increase cost by +3'),
+			screen.getByText('✨ Modifier on all actions: Increase cost by +3'),
 		).toBeInTheDocument();
 	});
 });

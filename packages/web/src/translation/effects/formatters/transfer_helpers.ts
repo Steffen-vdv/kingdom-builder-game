@@ -1,4 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
+import { GENERAL_RESOURCE_ICON } from '../../../icons';
 import { formatTargetLabel } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
 import { selectTransferDescriptor } from '../registrySelectors';
@@ -43,13 +44,21 @@ export function resolveTransferModifierTarget(
 		};
 	}
 
+	const transferDescriptor =
+		evaluation?.type === 'transfer_pct'
+			? selectTransferDescriptor(translationContext)
+			: undefined;
+	const resourceTransfersLabel = transferDescriptor
+		? `${GENERAL_RESOURCE_ICON}${transferDescriptor.icon} Resource Transfers`
+		: undefined;
+
 	let fallbackName = 'affected actions';
 	if (paramActionId) {
 		fallbackName = humanizeIdentifier(paramActionId) || paramActionId;
 	} else if (evaluationId) {
 		fallbackName = humanizeIdentifier(evaluationId) || evaluationId;
 	} else if (evaluation?.type === 'transfer_pct') {
-		fallbackName = 'resource transfers';
+		fallbackName = resourceTransfersLabel ?? 'resource transfers';
 	} else if (evaluation) {
 		fallbackName = humanizeIdentifier(evaluation.type) || evaluation.type;
 	}
@@ -57,13 +66,15 @@ export function resolveTransferModifierTarget(
 		evaluation?.type === 'transfer_pct' &&
 		(!evaluationId || evaluationId === 'percent')
 	) {
-		fallbackName = 'resource transfers';
+		fallbackName = resourceTransfersLabel ?? 'resource transfers';
 	}
 
 	const clauseTarget = formatTargetLabel('', fallbackName);
 	const summaryLabel =
 		evaluation?.type === 'transfer_pct'
-			? selectTransferDescriptor(translationContext).icon
+			? fallbackName === resourceTransfersLabel
+				? (resourceTransfersLabel ?? '')
+				: (transferDescriptor?.icon ?? fallbackName)
 			: fallbackName;
 	return {
 		icon: '',
