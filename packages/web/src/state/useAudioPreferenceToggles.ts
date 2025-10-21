@@ -14,7 +14,7 @@ interface PreferenceSetters {
 }
 
 type BuildHistoryState = (overrides?: Partial<HistoryState>) => HistoryState;
-type ReplaceHistoryState = (nextState: HistoryState) => void;
+type ReplaceHistoryState = (nextState: HistoryState, path?: string) => void;
 
 export function useAudioPreferenceToggles(
 	buildHistoryState: BuildHistoryState,

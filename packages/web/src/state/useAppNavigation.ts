@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Screen, type HistoryState } from './appHistory';
+import {
+	Screen,
+	SCREEN_PATHS,
+	getScreenFromPath,
+	type HistoryState,
+} from './appHistory';
 import {
 	getStoredAudioPreferences,
 	useAudioPreferences,
@@ -12,6 +17,7 @@ import type { AppNavigationState } from './appNavigationState';
 import { useAudioPreferenceToggles } from './useAudioPreferenceToggles';
 import { useGameplayPreferenceToggles } from './useGameplayPreferenceToggles';
 import type { ResumeSessionRecord } from './sessionResumeStorage';
+import { useHistoryNavigation } from './useHistoryNavigation';
 import { useResumeSessionState } from './useResumeSessionState';
 import { useContinueSavedGame } from './useContinueSavedGame';
 import {
@@ -24,10 +30,6 @@ export function useAppNavigation(): AppNavigationState {
 	const [currentGameKey, setCurrentGameKey] = useState(0);
 	const [isDarkMode, setIsDarkMode] = useDarkModePreference();
 	const [isDevMode, setIsDevMode] = useState(false);
-	const [navigationState, setNavigationState] = useState<HistoryState | null>(
-		null,
-	);
-	const [isInitialized, setIsInitialized] = useState(false);
 	const {
 		isMusicEnabled,
 		setIsMusicEnabled,
@@ -50,18 +52,7 @@ export function useAppNavigation(): AppNavigationState {
 		clearResumeSession: clearResumeSessionState,
 		handleResumeSessionFailure: handleResumeSessionFailureState,
 	} = useResumeSessionState();
-	const pushHistoryState = useCallback(
-		(nextState: HistoryState) => {
-			setNavigationState(nextState);
-		},
-		[setNavigationState],
-	);
-	const replaceHistoryState = useCallback(
-		(nextState: HistoryState) => {
-			setNavigationState(nextState);
-		},
-		[setNavigationState],
-	);
+	const { pushHistoryState, replaceHistoryState } = useHistoryNavigation();
 	const buildHistoryState = useCallback(
 		(overrides?: Partial<HistoryState>): HistoryState => {
 			const {
@@ -173,21 +164,42 @@ export function useAppNavigation(): AppNavigationState {
 	}, [isDarkMode]);
 
 	useEffect(() => {
-		if (isInitialized) {
+		if (typeof window === 'undefined') {
 			return;
 		}
-		const nextState = applyHistoryState(navigationState, Screen.Menu);
-		setNavigationState(nextState);
-		setIsInitialized(true);
-	}, [applyHistoryState, isInitialized, navigationState]);
+		const { history, location } = window;
+		const initialScreenFromPath = getScreenFromPath(location.pathname);
+		const historyState = history.state as HistoryState | null;
+		// prettier-ignore
+		const nextState = applyHistoryState(
+			historyState,
+			initialScreenFromPath,
+		);
+		const targetPath = SCREEN_PATHS[nextState.screen];
+		replaceHistoryState(nextState, targetPath);
+	}, [applyHistoryState, replaceHistoryState]);
+	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		const handlePopState = (event: PopStateEvent) => {
+			const state = event.state as HistoryState | null;
+			applyHistoryState(state, Screen.Menu);
+		};
+
+		window.addEventListener('popstate', handlePopState);
+		return () => {
+			window.removeEventListener('popstate', handlePopState);
+		};
+	}, [applyHistoryState]);
 	const returnToMenu = useCallback(() => {
 		const nextState = buildHistoryState({ screen: Screen.Menu });
 		setCurrentScreen(Screen.Menu);
 		if (currentScreen === Screen.Menu) {
-			replaceHistoryState(nextState);
+			replaceHistoryState(nextState, SCREEN_PATHS[Screen.Menu]);
 			return;
 		}
-		pushHistoryState(nextState);
+		pushHistoryState(nextState, SCREEN_PATHS[Screen.Menu]);
 	}, [buildHistoryState, currentScreen, pushHistoryState, replaceHistoryState]);
 	const toggleDarkMode = useCallback(() => {
 		setIsDarkMode((previousDarkMode) => {
@@ -224,6 +236,7 @@ export function useAppNavigation(): AppNavigationState {
 				isDevModeEnabled: false,
 				resumeSessionId: null,
 			}),
+			SCREEN_PATHS[Screen.Game],
 		);
 	}, [
 		buildHistoryState,
@@ -250,6 +263,7 @@ export function useAppNavigation(): AppNavigationState {
 				isAutoPassEnabled: true,
 				resumeSessionId: null,
 			}),
+			SCREEN_PATHS[Screen.Game],
 		);
 	}, [
 		buildHistoryState,
@@ -264,7 +278,7 @@ export function useAppNavigation(): AppNavigationState {
 		const overviewState = buildHistoryState({
 			screen: Screen.Overview,
 		});
-		pushHistoryState(overviewState);
+		pushHistoryState(overviewState, SCREEN_PATHS[Screen.Overview]);
 	}, [buildHistoryState, pushHistoryState]);
 
 	const openTutorial = useCallback(() => {
@@ -272,7 +286,7 @@ export function useAppNavigation(): AppNavigationState {
 		const tutorialState = buildHistoryState({
 			screen: Screen.Tutorial,
 		});
-		pushHistoryState(tutorialState);
+		pushHistoryState(tutorialState, SCREEN_PATHS[Screen.Tutorial]);
 	}, [buildHistoryState, pushHistoryState]);
 	const continueSavedGame = useContinueSavedGame({
 		resumePoint,
