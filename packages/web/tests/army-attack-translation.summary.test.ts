@@ -51,10 +51,6 @@ describe('army attack translation summary', () => {
 			Resource.castleHP,
 		);
 		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
-		const happiness = selectAttackResourceDescriptor(
-			translation,
-			Resource.happiness,
-		);
 		const warWeariness = selectAttackStatDescriptor(
 			translation,
 			Stat.warWeariness,
@@ -78,14 +74,8 @@ describe('army attack translation summary', () => {
 				(effectDef.params as { key?: string }).key ===
 					SYNTH_RESOURCE_IDS.happiness,
 		);
-		const attackerAmtRaw =
-			(attackerRes?.params as { amount?: number })?.amount ?? 0;
-		const defenderAmtRaw =
-			(defenderRes?.params as { amount?: number })?.amount ?? 0;
-		const attackerAmt =
-			attackerRes?.method === 'remove' ? -attackerAmtRaw : attackerAmtRaw;
-		const defenderAmt =
-			defenderRes?.method === 'remove' ? -defenderAmtRaw : defenderAmtRaw;
+		expect(attackerRes).toBeUndefined();
+		expect(defenderRes).toBeUndefined();
 		const warEffect = attack.effects.find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'stat' &&
@@ -103,13 +93,16 @@ describe('army attack translation summary', () => {
 			`${powerSummary}${targetSummary}`,
 			{
 				title: `${targetSummary}💥`,
-				items: [
-					`🛡️${happiness.icon}${defenderAmt}`,
-					`⚔️${happiness.icon}${attackerAmt >= 0 ? '+' : ''}${attackerAmt}`,
-					`⚔️${plunder.icon} ${plunder.name}`,
-				],
+				items: [`⚔️${plunder.icon} ${plunder.name}`],
 			},
 			`${warSubject} ${warChange}`,
+		]);
+		const onDamageSummary = summary[1] as {
+			title: string;
+			items: string[];
+		};
+		expect(onDamageSummary.items).toEqual([
+			`⚔️${plunder.icon} ${plunder.name}`,
 		]);
 	});
 

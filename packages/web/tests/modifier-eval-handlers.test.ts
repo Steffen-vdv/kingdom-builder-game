@@ -299,6 +299,57 @@ describe('modifier evaluation handlers', () => {
 		});
 	});
 
+	it('formats transfer amount evaluation modifiers for arbitrary actions', () => {
+		const { translationContext, registries } = createModifierHarness();
+		const { id: actionId, definition: actionDef } =
+			selectActionWithIcon(registries);
+		const eff: EffectDef = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				id: 'synthetic:transfer-boost',
+				evaluation: { type: 'transfer_amount', id: actionId },
+				adjust: 3,
+			},
+		};
+		const summary = summarizeEffects([eff], translationContext);
+		const description = describeEffects([eff], translationContext);
+		const resultDescriptor = selectModifierInfo(translationContext, 'result');
+		const actionInfo = translationContext.actions.get(actionId);
+		const actionIcon =
+			actionInfo?.icon && actionInfo.icon.trim().length > 0
+				? actionInfo.icon
+				: (actionInfo?.name ?? actionDef.name ?? actionId);
+		const targetLabel = joinParts(
+			actionInfo?.icon ?? actionDef.icon,
+			actionInfo?.name ?? actionDef.name ?? actionId,
+		);
+		const transferDescriptor = selectTransferDescriptor(translationContext);
+		const transferIcon = transferDescriptor.icon;
+		expect(summary).toHaveLength(1);
+		expect(
+			summary[0].startsWith(
+				`${resultDescriptor.icon}${actionIcon}: ${transferIcon}`,
+			),
+		).toBe(true);
+		expect(summary[0]).toContain(` ${transferIcon} +3`);
+		const primaryLine = description[0];
+		expect(
+			primaryLine.startsWith(
+				`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
+			),
+		).toBe(true);
+		expect(primaryLine.toLowerCase()).toContain(
+			`${transferIcon} increase transfer by 3`.toLowerCase(),
+		);
+		const card = description[1];
+		expect(card).toMatchObject({
+			title: targetLabel,
+			_hoist: true,
+			_desc: true,
+		});
+	});
+
 	it('falls back to default modifier descriptors when metadata is missing', () => {
 		const { translationContext, registries } = createModifierHarness({
 			customizeMetadata(metadata) {

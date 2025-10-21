@@ -265,6 +265,45 @@ describe('attack on-damage formatter registry', () => {
 		]);
 	});
 
+	it('formats resource transfer entries with static amounts', () => {
+		const logEntry: AttackOnDamageLogEntry = {
+			owner: 'defender',
+			effect: {
+				type: 'resource',
+				method: 'transfer',
+				params: { amount: 2 },
+			} as EffectDef,
+			defender: [
+				{
+					type: 'resource',
+					key: resourceKey,
+					before: 10,
+					after: 8,
+				},
+			],
+			attacker: [
+				{
+					type: 'resource',
+					key: resourceKey,
+					before: 1,
+					after: 3,
+				},
+			],
+		};
+
+		const result = buildOnDamageEntry(
+			[logEntry],
+			translationContext,
+			attackEffect,
+		);
+
+		expect(result).not.toBeNull();
+		expect(result?.items).toEqual([
+			`${defenderLabel}: ${diffResourceLabel} -2 (10→8)`,
+			`${attackerLabel}: ${diffResourceLabel} +2 (1→3)`,
+		]);
+	});
+
 	it('falls back to registry descriptors when resource metadata is missing', () => {
 		const logEntry: AttackOnDamageLogEntry = {
 			owner: 'defender',

@@ -150,11 +150,10 @@ export const COMBAT_STAT_CONFIG: Record<CombatStatKey, CombatStatConfig> = {
 	},
 };
 
-export const ATTACKER_HAPPINESS_GAIN = 2;
-export const DEFENDER_HAPPINESS_LOSS = 3;
 export const WAR_WEARINESS_GAIN = 4;
 export const BUILDING_REWARD_GOLD = 6;
 export const PLUNDER_PERCENT = 40;
+export const PLUNDER_HAPPINESS_AMOUNT = 1;
 export const TIER_RESOURCE_KEY = SYNTH_RESOURCE_IDS.tier;
 
 export const PHASES: PhaseDef[] = [

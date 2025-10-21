@@ -10,8 +10,9 @@ import {
 	summarizeOnDamage,
 	formatDiffEntries,
 	ownerLabel,
-	collectTransferPercents,
+	collectTransferDetails,
 } from './attackFormatterUtils';
+import type { TransferEffectDetail } from './attackFormatterUtils';
 import {
 	resolveAttackFormatterContext,
 	type AttackFormatterContext,
@@ -92,15 +93,15 @@ function buildActionLog(
 	const id = entry.effect.params?.['id'] as string | undefined;
 	let icon = '';
 	let name = id || 'Unknown action';
-	const transferPercents = new Map<string, number>();
+	const transferDetails = new Map<string, TransferEffectDetail>();
 	if (id) {
 		try {
 			const definition = translationContext.actions.get(id);
 			icon = definition.icon || '';
 			name = definition.name;
-			collectTransferPercents(
+			collectTransferDetails(
 				definition.effects as EffectDef[] | undefined,
-				transferPercents,
+				transferDetails,
 			);
 		} catch {
 			/* ignore missing action */
@@ -108,8 +109,9 @@ function buildActionLog(
 	}
 	const items: SummaryEntry[] = [];
 	entry.defender.forEach((diff) => {
-		const percent =
-			diff.type === 'resource' ? transferPercents.get(diff.key) : undefined;
+		const detail =
+			diff.type === 'resource' ? transferDetails.get(diff.key) : undefined;
+		const percent = detail?.percent;
 		items.push(
 			formatter.formatDiff(
 				ownerLabel(translationContext, 'defender'),

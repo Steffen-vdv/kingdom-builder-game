@@ -41,14 +41,30 @@ registerEffectFormatter('resource', 'transfer', {
 		const key = effect.params?.['key'];
 		const resourceKey = typeof key === 'string' ? key : '';
 		const descriptor = selectResourceDescriptor(context, resourceKey);
-		const percent = Number(effect.params?.['percent']);
-		return `Transfer ${percent}% ${descriptor.icon}`;
+		const percent = effect.params?.['percent'];
+		if (typeof percent === 'number' && Number.isFinite(percent)) {
+			return `Transfer ${percent}% ${descriptor.icon}`;
+		}
+		const amount = Number(effect.params?.['amount']);
+		if (Number.isFinite(amount)) {
+			const magnitude = Math.abs(amount);
+			return `Transfer ${descriptor.icon}${signed(amount)}${magnitude}`;
+		}
+		return `Transfer ${descriptor.icon}${descriptor.label}`;
 	},
 	describe: (effect, context) => {
 		const key = effect.params?.['key'];
 		const resourceKey = typeof key === 'string' ? key : '';
 		const descriptor = selectResourceDescriptor(context, resourceKey);
-		const percent = Number(effect.params?.['percent']);
-		return `Transfer ${percent}% of opponent's ${descriptor.icon}${descriptor.label} to you`;
+		const percent = effect.params?.['percent'];
+		if (typeof percent === 'number' && Number.isFinite(percent)) {
+			return `Transfer ${percent}% of opponent's ${descriptor.icon}${descriptor.label} to you`;
+		}
+		const amount = Number(effect.params?.['amount']);
+		if (Number.isFinite(amount)) {
+			const magnitude = Math.abs(amount);
+			return `Transfer ${descriptor.icon}${signed(amount)}${magnitude} ${descriptor.label} from opponent to you`;
+		}
+		return `Transfer opponent resources to you`;
 	},
 });

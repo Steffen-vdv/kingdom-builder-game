@@ -213,9 +213,14 @@ export function formatDiffEntries(
 	return formattedEntries;
 }
 
-export function collectTransferPercents(
+export interface TransferEffectDetail {
+	percent?: number;
+	amount?: number;
+}
+
+export function collectTransferDetails(
 	effects: EffectDef[] | undefined,
-	transferPercents: Map<string, number>,
+	transferDetails: Map<string, TransferEffectDetail>,
 ): void {
 	if (!effects) {
 		return;
@@ -231,13 +236,23 @@ export function collectTransferPercents(
 				return typeof rawKey === 'string' ? rawKey : undefined;
 			})();
 			const percent = effectDefinition.params['percent'] as number | undefined;
-			if (key && percent !== undefined && !transferPercents.has(key)) {
-				transferPercents.set(key, percent);
+			const amount = effectDefinition.params['amount'] as number | undefined;
+			if (key && (percent !== undefined || amount !== undefined)) {
+				const existing = transferDetails.get(key) ?? {};
+				if (percent !== undefined && existing.percent === undefined) {
+					existing.percent = percent;
+				}
+				if (amount !== undefined && existing.amount === undefined) {
+					existing.amount = amount;
+				}
+				if (existing.percent !== undefined || existing.amount !== undefined) {
+					transferDetails.set(key, existing);
+				}
 			}
 		}
 		if (Array.isArray(effectDefinition.effects)) {
 			const nestedEffects = effectDefinition.effects;
-			collectTransferPercents(nestedEffects, transferPercents);
+			collectTransferDetails(nestedEffects, transferDetails);
 		}
 	}
 }
