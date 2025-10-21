@@ -1,11 +1,18 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
 import type { ActionResolution } from '../src/state/useActionResolution';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
+import { createTestSessionScaffold } from './helpers/testSessionScaffold';
+import {
+	createSessionSnapshot,
+	createSnapshotPlayer,
+} from './helpers/sessionFixtures';
+import { createPassiveGame } from './helpers/createPassiveDisplayGame';
+import type { GameEngineContextValue } from '../src/state/GameContext.types';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
@@ -38,7 +45,39 @@ function createResolution(
 	} as ActionResolution;
 }
 
+let mockGame: GameEngineContextValue;
+let scenarioPlayers: ReturnType<typeof createSnapshotPlayer>[];
+
+vi.mock('../src/state/GameContext', () => ({
+	useGameEngine: () => mockGame,
+}));
+
 describe('<ResolutionCard />', () => {
+	beforeEach(() => {
+		const scaffold = createTestSessionScaffold();
+		const resourceKeys = Object.keys(scaffold.registries.resources);
+		const actionCostResource =
+			resourceKeys[0] ?? scaffold.ruleSnapshot.tieredResourceKey;
+		scenarioPlayers = [
+			createSnapshotPlayer({ id: 'player-1', name: 'Player One' }),
+			createSnapshotPlayer({ id: 'player-2', name: 'Player Two' }),
+		];
+		const sessionState = createSessionSnapshot({
+			players: scenarioPlayers,
+			activePlayerId: scenarioPlayers[0].id,
+			opponentId: scenarioPlayers[1].id,
+			phases: scaffold.phases,
+			actionCostResource,
+			ruleSnapshot: scaffold.ruleSnapshot,
+			metadata: scaffold.metadata,
+		});
+		const { mockGame: passiveGame } = createPassiveGame(sessionState, {
+			ruleSnapshot: scaffold.ruleSnapshot,
+			registries: scaffold.registries,
+			metadata: scaffold.metadata,
+		});
+		mockGame = passiveGame;
+	});
 	afterEach(() => {
 		cleanup();
 	});
@@ -58,8 +97,8 @@ describe('<ResolutionCard />', () => {
 			},
 			actorLabel: 'Played by',
 			player: {
-				id: 'player-1',
-				name: 'Player One',
+				id: scenarioPlayers[0].id,
+				name: scenarioPlayers[0].name,
 			},
 		});
 
@@ -73,7 +112,7 @@ describe('<ResolutionCard />', () => {
 
 		expect(screen.getByText('Action - Test Action')).toBeInTheDocument();
 		const actionPlayerLabel = screen.getByLabelText('Player');
-		expect(actionPlayerLabel).toHaveTextContent('Player One');
+		expect(actionPlayerLabel).toHaveTextContent(scenarioPlayers[0].name);
 	});
 
 	it('renders custom source metadata when provided', () => {
@@ -85,8 +124,8 @@ describe('<ResolutionCard />', () => {
 			},
 			actorLabel: 'Growth Phase',
 			player: {
-				id: 'player-2',
-				name: 'Player Two',
+				id: scenarioPlayers[1].id,
+				name: scenarioPlayers[1].name,
 			},
 		});
 
@@ -95,7 +134,67 @@ describe('<ResolutionCard />', () => {
 		const expectedHeader = resolvePhaseHeader(resolution.source.label);
 		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
 		const phasePlayerLabel = screen.getByLabelText('Player');
-		expect(phasePlayerLabel).toHaveTextContent('Player Two');
+		expect(phasePlayerLabel).toHaveTextContent(scenarioPlayers[1].name);
+	});
+
+	it('applies the first player accent styling to the card', () => {
+		const resolution = createResolution({
+			player: {
+				id: scenarioPlayers[0].id,
+				name: scenarioPlayers[0].name,
+			},
+			visibleTimeline: [],
+			visibleLines: ['Primary effect'],
+		});
+
+		const { container } = render(
+			<ResolutionCard resolution={resolution} onContinue={() => {}} />,
+		);
+
+		const card = container.querySelector('[data-state="enter"]');
+		expect(card).not.toBeNull();
+		if (!card) {
+			throw new Error('Expected resolution card element to render');
+		}
+		expect(card.className).toContain('border-blue-400/60');
+		const stepsLabel = screen.getByText('Resolution steps');
+		const stepsContainer = stepsLabel.parentElement;
+		if (!stepsContainer) {
+			throw new Error('Expected resolution steps container');
+		}
+		expect(stepsContainer.className).toContain('ring-blue-200/40');
+		const marker = card.querySelector('[class*="bg-blue-500"]');
+		expect(marker).not.toBeNull();
+	});
+
+	it('applies the opposing player accent styling to the card', () => {
+		const resolution = createResolution({
+			player: {
+				id: scenarioPlayers[1].id,
+				name: scenarioPlayers[1].name,
+			},
+			visibleTimeline: [],
+			visibleLines: ['Primary effect'],
+		});
+
+		const { container } = render(
+			<ResolutionCard resolution={resolution} onContinue={() => {}} />,
+		);
+
+		const card = container.querySelector('[data-state="enter"]');
+		expect(card).not.toBeNull();
+		if (!card) {
+			throw new Error('Expected resolution card element to render');
+		}
+		expect(card.className).toContain('border-rose-400/60');
+		const stepsLabel = screen.getByText('Resolution steps');
+		const stepsContainer = stepsLabel.parentElement;
+		if (!stepsContainer) {
+			throw new Error('Expected resolution steps container');
+		}
+		expect(stepsContainer.className).toContain('ring-rose-200/40');
+		const marker = card.querySelector('[class*="bg-rose-500"]');
+		expect(marker).not.toBeNull();
 	});
 
 	it('shows the phase icon in the header when available', () => {

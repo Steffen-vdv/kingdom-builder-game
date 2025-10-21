@@ -13,6 +13,7 @@ import {
 	CONTINUE_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
+import { usePlayerAccent } from './common/playerAccent';
 import {
 	buildTimelineTree,
 	buildResolutionTimelineEntries,
@@ -37,6 +38,16 @@ const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
 const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
+
+const RESOLUTION_CONTAINER_BASE_CLASS = joinClasses(
+	'mt-4 rounded-3xl border border-white/50 bg-white/70 p-4',
+	'shadow-inner ring-1 ring-white/30 backdrop-blur-sm',
+	'dark:border-white/10 dark:bg-slate-900/60',
+	'dark:shadow-slate-900/40 dark:ring-white/10',
+);
+
+const PRIMARY_MARKER_BASE_CLASS =
+	'mt-1.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full';
 
 function extractLeadingIcon(value: string | undefined) {
 	if (!value) {
@@ -88,7 +99,12 @@ function ResolutionCard({
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
-	const containerClass = `${CARD_BASE_CLASS} pointer-events-auto`;
+	const accent = usePlayerAccent(resolution.player?.id ?? null);
+	const containerClass = joinClasses(
+		CARD_BASE_CLASS,
+		'pointer-events-auto',
+		accent.card,
+	);
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
 	const fallbackActionName = leadingLine
@@ -150,10 +166,7 @@ function ResolutionCard({
 			? `${SOURCE_LABELS.phase.title} - ${sanitizedPhaseSubject}`
 			: `${SOURCE_LABELS.phase.title} resolution`;
 	}
-	const headerLabelClass = joinClasses(
-		CARD_LABEL_CLASS,
-		'text-amber-600 dark:text-amber-300',
-	);
+	const headerLabelClass = joinClasses(CARD_LABEL_CLASS, accent.headerLabel);
 	const headerRowClass = 'flex items-start gap-4';
 	const actionBadgeClass = joinClasses(
 		'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
@@ -162,10 +175,8 @@ function ResolutionCard({
 		'dark:shadow-slate-900/40',
 	);
 	const resolutionContainerClass = joinClasses(
-		'mt-4 rounded-3xl border border-white/50 bg-white/70 p-4',
-		'shadow-inner shadow-amber-500/10 ring-1 ring-white/30',
-		'backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60',
-		'dark:shadow-slate-900/40 dark:ring-white/10',
+		RESOLUTION_CONTAINER_BASE_CLASS,
+		accent.inner,
 	);
 	const timelineListClass = 'relative flex flex-col gap-3 pl-4';
 	const timelineRailClass = joinClasses(
@@ -182,9 +193,8 @@ function ResolutionCard({
 	);
 	const timelineItemClass = 'relative flex items-start gap-3';
 	const primaryMarkerClass = joinClasses(
-		'mt-1.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full',
-		'bg-amber-500 shadow-[0_0_0_4px_rgba(251,191,36,0.25)]',
-		'dark:bg-amber-400 dark:shadow-[0_0_0_4px_rgba(251,191,36,0.2)]',
+		PRIMARY_MARKER_BASE_CLASS,
+		accent.primaryMarker,
 	);
 	const nestedMarkerClass = joinClasses(
 		'mt-1.5 flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full',
