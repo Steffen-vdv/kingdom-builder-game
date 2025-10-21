@@ -6,6 +6,7 @@ import {
 import { registerBasicActions } from './actions/basicActions';
 import { registerSpecialActions } from './actions/specialActions';
 import { registerDevelopmentActions } from './actions/developmentActions';
+import { registerBuildingActions } from './actions/buildingActions';
 import {
 	ActionCategoryId as ActionCategoryIds,
 	type ActionCategoryId as ActionCategoryIdValue,
@@ -245,6 +246,7 @@ export function createActionRegistry() {
 
 	registerBasicActions(registry);
 	registerDevelopmentActions(registry);
+	registerBuildingActions(registry, actionIdForBuilding);
 	registerSpecialActions(registry);
 
 	return registry;

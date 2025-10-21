@@ -233,6 +233,7 @@ export function registerSpecialActions(registry: Registry<ActionDef>) {
 			.id(ActionId.build)
 			.name('Build')
 			.icon('🏛️')
+			.system()
 			.effect(
 				effect(Types.Building, BuildingMethods.ADD)
 					.params(buildingParams().id('$id'))

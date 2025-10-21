@@ -8,7 +8,6 @@ type ActionParameterMap = {
 	'develop:outpost': { landId: string };
 	'develop:watchtower': { landId: string };
 	'develop:garden': { landId: string };
-	build: { id: string };
 	demolish: { id: string };
 	raise_pop: { role: PopulationRoleId };
 	[key: string]: Record<string, unknown>;

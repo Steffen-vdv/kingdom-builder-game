@@ -65,6 +65,7 @@ interface CategoryRendererContext {
 	buildingSummaries: Map<string, Summary>;
 	buildingDescriptions: Map<string, Summary>;
 	hasDevelopLand: boolean;
+	availability: Map<string, ActionAvailabilityResult>;
 }
 
 type CategoryRenderer = (context: CategoryRendererContext) => React.ReactNode;
@@ -153,14 +154,14 @@ const renderBuildCategory: CategoryRenderer = ({
 	buildingOptions,
 	buildingSummaries,
 	buildingDescriptions,
+	availability,
 }) => {
-	const action = actions[0];
-	if (!action) {
+	if (actions.length === 0) {
 		return null;
 	}
 	return (
 		<BuildOptions
-			action={action}
+			actions={actions}
 			isActionPhase={isActionPhase}
 			buildings={buildingOptions}
 			summaries={buildingSummaries}
@@ -169,6 +170,7 @@ const renderBuildCategory: CategoryRenderer = ({
 			canInteract={canInteract}
 			selectResourceDescriptor={selectResourceDescriptor}
 			category={descriptor}
+			availability={availability}
 		/>
 	);
 };
@@ -593,6 +595,7 @@ export default function ActionsPanel() {
 				buildingSummaries,
 				buildingDescriptions,
 				hasDevelopLand,
+				availability: availabilityMap,
 			})
 		: null;
 	const toggleLabel = viewingOpponent

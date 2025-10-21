@@ -39,7 +39,9 @@ describe('action id helpers', () => {
 		});
 
 		it('returns undefined for non-development action ids', () => {
-			expect(developmentIdFromAction(ActionId.build)).toBeUndefined();
+			expect(
+				developmentIdFromAction(ActionId.build_town_charter),
+			).toBeUndefined();
 		});
 	});
 
@@ -73,6 +75,7 @@ describe('action id helpers', () => {
 
 		it('returns undefined for non-building action ids', () => {
 			expect(buildingIdFromAction(ActionId.develop)).toBeUndefined();
+			expect(buildingIdFromAction(ActionId.build)).toBeUndefined();
 		});
 	});
 
