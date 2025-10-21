@@ -56,7 +56,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
-					`${modifierIcon} modifier on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+					`${modifierIcon} Modifier on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 		]);
@@ -93,7 +93,7 @@ describe('hold festival action translation', () => {
 				kind: 'group',
 			},
 			{
-				text: `${modifierIcon}modifier on ${raidLabel}: Whenever it resolves, ${happinessLabel}`,
+				text: `${modifierIcon}Modifier on ${raidLabel}: Whenever it resolves, ${happinessLabel}`,
 				depth: 2,
 				kind: 'effect',
 			},

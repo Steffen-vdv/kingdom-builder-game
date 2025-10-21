@@ -51,8 +51,8 @@ describe('raiders guild translation', () => {
 		const modifierIcon = modifierInfo.icon ?? '✨';
 		const modifierLabel = modifierInfo.label ?? 'result';
 		const modifierText = modifierIcon
-			? `${modifierIcon} modifier`
-			: `${modifierLabel} modifier`;
+			? `${modifierIcon} Modifier`
+			: `${modifierLabel} Modifier`;
 		const summary = describeContent(
 			'building',
 			ids.transferBuilding,
@@ -131,8 +131,8 @@ describe('raiders guild translation', () => {
 		const modifierIcon = modifierInfo.icon ?? '✨';
 		const modifierLabel = modifierInfo.label ?? 'result';
 		const modifierText = modifierIcon
-			? `${modifierIcon} modifier`
-			: `${modifierLabel} modifier`;
+			? `${modifierIcon} Modifier`
+			: `${modifierLabel} Modifier`;
 		const summary = describeContent(
 			'building',
 			ids.populationBuilding,
@@ -167,8 +167,8 @@ describe('raiders guild translation', () => {
 		const modifierIcon = modifierInfo.icon ?? '✨';
 		const modifierLabel = modifierInfo.label ?? 'result';
 		const modifierText = modifierIcon
-			? `${modifierIcon} modifier`
-			: `${modifierLabel} modifier`;
+			? `${modifierIcon} Modifier`
+			: `${modifierLabel} Modifier`;
 		const summary = describeContent(
 			'building',
 			ids.developmentBuilding,

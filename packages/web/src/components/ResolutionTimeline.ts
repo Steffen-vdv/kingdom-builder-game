@@ -22,13 +22,13 @@ interface BuildResolutionTimelineOptions {
 	actionName?: string;
 }
 
-const MODIFIER_LABEL_PATTERN = /\b(cost|result)\s+on\b/giu;
+const MODIFIER_LABEL_PATTERN = /\b(cost|result|modifier)\s+on\b/giu;
 
 function normalizeModifierDescription(text: string): string {
 	if (!text.trim()) {
 		return text;
 	}
-	return text.replace(MODIFIER_LABEL_PATTERN, 'modifier on');
+	return text.replace(MODIFIER_LABEL_PATTERN, 'Modifier on');
 }
 
 function buildTimelineTree(
