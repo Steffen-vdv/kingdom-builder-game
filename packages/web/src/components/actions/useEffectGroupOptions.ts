@@ -79,30 +79,46 @@ function buildHoverDetails(
 		translationContext,
 		mergedParams,
 	);
-	const { effects: baseEffects, description } = splitSummary(hoverSummary);
+	const { effects: baseEffects, description: baseDescription } =
+		splitSummary(hoverSummary);
 	let effects = baseEffects;
+	let description = baseDescription;
 	const idParam = mergedParams?.id;
 	const developmentParam = mergedParams?.developmentId;
+	const buildingParam = mergedParams?.buildingId;
 	const developmentId =
 		typeof idParam === 'string'
 			? idParam
 			: typeof developmentParam === 'string'
 				? developmentParam
 				: undefined;
-	if (typeof developmentId === 'string') {
+	const hasBuildingParam =
+		typeof buildingParam === 'string' && buildingParam.length > 0;
+	const buildingId = hasBuildingParam ? buildingParam : undefined;
+	const resolveInstallationSummary = (
+		type: 'building' | 'development',
+		id: string,
+	) => {
 		try {
-			const developmentSummary = describeContent(
-				'development',
-				developmentId,
-				translationContext,
-			);
-			const { effects: developmentEffects } = splitSummary(developmentSummary);
-			if (developmentEffects.length > 0) {
-				effects = developmentEffects;
+			const installationSummary = describeContent(type, id, translationContext);
+			const {
+				effects: installationEffects,
+				description: installationDescription,
+			} = splitSummary(installationSummary);
+			if (installationEffects.length > 0) {
+				effects = installationEffects;
+			}
+			if (installationDescription?.length) {
+				description = installationDescription;
 			}
 		} catch {
-			/* ignore missing development summaries */
+			/* ignore missing installation summaries */
 		}
+	};
+	if (typeof buildingId === 'string') {
+		resolveInstallationSummary('building', buildingId);
+	} else if (typeof developmentId === 'string') {
+		resolveInstallationSummary('development', developmentId);
 	}
 	return {
 		title: optionLabel.trim() || option.label || option.id,

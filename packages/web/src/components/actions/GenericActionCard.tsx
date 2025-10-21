@@ -23,6 +23,7 @@ import { type Action, type DisplayPlayer, type HoverCardData } from './types';
 import { normalizeActionFocus } from './types';
 import type { UseActionMetadataResult } from '../../state/useActionMetadata';
 import { getActionAvailability } from './getActionAvailability';
+import { resolveInstallationTarget } from './actionSummaryHelpers';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -150,7 +151,29 @@ function GenericActionCard({
 	const actionFocus = normalizeActionFocus(action.focus);
 	const hoverTitle = formatIconTitle(actionIcon, action.name);
 	const hoverContent = describeContent('action', action.id, translationContext);
-	const { effects, description } = splitSummary(hoverContent);
+	let { effects, description } = splitSummary(hoverContent);
+	const installationTarget = useMemo(
+		() => resolveInstallationTarget(action.id, translationContext),
+		[action.id, translationContext],
+	);
+	if (installationTarget) {
+		try {
+			const installationSummary = describeContent(
+				installationTarget.type,
+				installationTarget.id,
+				translationContext,
+			);
+			const installationSplit = splitSummary(installationSummary);
+			if (installationSplit.effects.length > 0) {
+				effects = installationSplit.effects;
+			}
+			if (installationSplit.description?.length) {
+				description = installationSplit.description;
+			}
+		} catch {
+			/* ignore missing installation descriptions */
+		}
+	}
 	const createHoverDetails = (): HoverCardData => ({
 		title: hoverTitle,
 		effects,
