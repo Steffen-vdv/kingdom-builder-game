@@ -1,7 +1,7 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
 import { PhaseId, PhaseStepId } from './phases';
 import {
-	buildingDiscountModifier,
+	actionDiscountModifier,
 	growthBonusEffect,
 	happinessModifierId,
 	happinessPassiveId,
@@ -128,12 +128,12 @@ export const TIER_CONFIGS: TierConfig[] = [
 		buildingDiscountPct: 0.2,
 		summary: joinSummary(
 			'During income step, gain 25% more 🪙 gold (rounded up).',
-			'Build action costs 20% less 🪙 gold (rounded up).',
+			'All actions cost 20% less 🪙 gold (rounded up).',
 		),
 		removal: 'happiness stays between +5 and +7',
 		effects: [
 			incomeModifier(happinessModifierId('joyful', 'income'), 0.25),
-			buildingDiscountModifier(happinessModifierId('joyful', 'build-discount')),
+			actionDiscountModifier(happinessModifierId('joyful', 'action-discount')),
 		],
 	},
 	{
@@ -145,12 +145,12 @@ export const TIER_CONFIGS: TierConfig[] = [
 		buildingDiscountPct: 0.2,
 		summary: joinSummary(
 			'During income step, gain 50% more 🪙 gold (rounded up).',
-			'Build action costs 20% less 🪙 gold (rounded up).',
+			'All actions cost 20% less 🪙 gold (rounded up).',
 		),
 		removal: 'happiness stays between +8 and +9',
 		effects: [
 			incomeModifier(happinessModifierId('elated', 'income'), 0.5),
-			buildingDiscountModifier(happinessModifierId('elated', 'build-discount')),
+			actionDiscountModifier(happinessModifierId('elated', 'action-discount')),
 		],
 	},
 	{
@@ -162,14 +162,14 @@ export const TIER_CONFIGS: TierConfig[] = [
 		buildingDiscountPct: 0.2,
 		summary: joinSummary(
 			'During income step, gain 50% more 🪙 gold (rounded up).',
-			'Build action costs 20% less 🪙 gold (rounded up).',
+			'All actions cost 20% less 🪙 gold (rounded up).',
 			'Gain +20% 📈 Growth.',
 		),
 		removal: 'happiness is +10 or higher',
 		effects: [
 			incomeModifier(happinessModifierId('ecstatic', 'income'), 0.5),
-			buildingDiscountModifier(
-				happinessModifierId('ecstatic', 'build-discount'),
+			actionDiscountModifier(
+				happinessModifierId('ecstatic', 'action-discount'),
 			),
 			growthBonusEffect(0.2),
 		],
