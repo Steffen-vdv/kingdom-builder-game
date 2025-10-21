@@ -103,6 +103,30 @@ describe('ActionsPanel tabs', () => {
 		expect(panel).toHaveTextContent(basicCategory.subtitle ?? '');
 		expect(basicTab).not.toHaveTextContent(basicCategory.subtitle ?? '');
 	});
+
+	it('renders action cards within the active category using the generic grid', async () => {
+		renderPanel();
+		const raiseCategoryId = mockGame.metadata.actions.raise.category;
+		const raiseTab = await findTabButton(raiseCategoryId);
+		fireEvent.click(raiseTab);
+		const panel = getTabPanel();
+		const raiseActionName = mockGame.metadata.actions.raise.name;
+		expect(
+			within(panel).getByRole('button', {
+				name: new RegExp(raiseActionName, 'i'),
+			}),
+		).toBeInTheDocument();
+		const basicTab = await findTabButton(
+			mockGame.metadata.actions.basic.category,
+		);
+		fireEvent.click(basicTab);
+		const basicActionName = mockGame.metadata.actions.basic.name;
+		expect(
+			within(panel).getByRole('button', {
+				name: new RegExp(basicActionName, 'i'),
+			}),
+		).toBeInTheDocument();
+	});
 });
 
 function renderPanel() {

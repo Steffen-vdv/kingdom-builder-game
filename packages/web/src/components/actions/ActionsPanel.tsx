@@ -1,9 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-	describeContent,
-	summarizeContent,
-	type Summary,
-} from '../../translation';
+import { summarizeContent, type Summary } from '../../translation';
 import { useGameEngine } from '../../state/GameContext';
 import { hasAiController } from '../../state/sessionAi';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
@@ -11,9 +7,6 @@ import { useAnimate } from '../../utils/useAutoAnimate';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
 import type { TranslationActionCategoryDefinition } from '../../translation/context/types';
 import BasicOptions from './BasicOptions';
-import BuildOptions from './BuildOptions';
-import DevelopOptions from './DevelopOptions';
-import HireOptions from './HireOptions';
 import ActionCategoryHeader, {
 	type ActionCategoryDescriptor,
 } from './ActionCategoryHeader';
@@ -30,9 +23,8 @@ import {
 	TAB_BUTTON_ACTIVE_CLASSES,
 	TAB_BUTTON_INACTIVE_CLASSES,
 } from './actionsPanelStyles';
-import type { Action, Building, Development, DisplayPlayer } from './types';
+import type { Action, DisplayPlayer } from './types';
 import { normalizeActionFocus } from './types';
-import type { ResourceDescriptorSelector } from './utils';
 import { useActionMetadata } from '../../state/useActionMetadata';
 import {
 	getActionAvailability,
@@ -47,141 +39,8 @@ interface CategoryEntry {
 
 interface VisibleCategoryEntry extends CategoryEntry {
 	descriptor: ActionCategoryDescriptor;
-	renderer: CategoryRenderer;
 	visibleActions: Action[];
 }
-
-interface CategoryRendererContext {
-	actions: Action[];
-	descriptor: ActionCategoryDescriptor;
-	player: DisplayPlayer;
-	canInteract: boolean;
-	selectResourceDescriptor: ResourceDescriptorSelector;
-	actionSummaries: Map<string, Summary>;
-	isActionPhase: boolean;
-	developmentOptions: Development[];
-	developmentSummaries: Map<string, Summary>;
-	buildingOptions: Building[];
-	buildingSummaries: Map<string, Summary>;
-	buildingDescriptions: Map<string, Summary>;
-	hasDevelopLand: boolean;
-}
-
-type CategoryRenderer = (context: CategoryRendererContext) => React.ReactNode;
-
-const renderGenericGrid: CategoryRenderer = ({
-	actions,
-	descriptor,
-	player,
-	canInteract,
-	selectResourceDescriptor,
-	actionSummaries,
-}) => {
-	if (actions.length === 0) {
-		return null;
-	}
-	return (
-		<BasicOptions
-			actions={actions}
-			summaries={actionSummaries}
-			player={player}
-			canInteract={canInteract}
-			selectResourceDescriptor={selectResourceDescriptor}
-			category={descriptor}
-		/>
-	);
-};
-
-const renderHireCategory: CategoryRenderer = ({
-	actions,
-	descriptor,
-	player,
-	canInteract,
-	selectResourceDescriptor,
-}) => {
-	const action = actions[0];
-	if (!action) {
-		return null;
-	}
-	return (
-		<HireOptions
-			action={action}
-			player={player}
-			canInteract={canInteract}
-			selectResourceDescriptor={selectResourceDescriptor}
-			category={descriptor}
-		/>
-	);
-};
-
-const renderDevelopCategory: CategoryRenderer = ({
-	actions,
-	descriptor,
-	player,
-	canInteract,
-	selectResourceDescriptor,
-	isActionPhase,
-	developmentOptions,
-	developmentSummaries,
-	hasDevelopLand,
-}) => {
-	const action = actions[0];
-	if (!action) {
-		return null;
-	}
-	return (
-		<DevelopOptions
-			action={action}
-			isActionPhase={isActionPhase}
-			developments={developmentOptions}
-			summaries={developmentSummaries}
-			hasDevelopLand={hasDevelopLand}
-			player={player}
-			canInteract={canInteract}
-			selectResourceDescriptor={selectResourceDescriptor}
-			category={descriptor}
-		/>
-	);
-};
-
-const renderBuildCategory: CategoryRenderer = ({
-	actions,
-	descriptor,
-	player,
-	canInteract,
-	selectResourceDescriptor,
-	isActionPhase,
-	buildingOptions,
-	buildingSummaries,
-	buildingDescriptions,
-}) => {
-	const action = actions[0];
-	if (!action) {
-		return null;
-	}
-	return (
-		<BuildOptions
-			action={action}
-			isActionPhase={isActionPhase}
-			buildings={buildingOptions}
-			summaries={buildingSummaries}
-			descriptions={buildingDescriptions}
-			player={player}
-			canInteract={canInteract}
-			selectResourceDescriptor={selectResourceDescriptor}
-			category={descriptor}
-		/>
-	);
-};
-
-const CATEGORY_RENDERERS = new Map<string, CategoryRenderer>([
-	['basic', renderGenericGrid],
-	['hire', renderHireCategory],
-	['develop', renderDevelopCategory],
-	['build', renderBuildCategory],
-]);
-
-const DEFAULT_RENDERER = renderGenericGrid;
 
 interface ActionAvailabilityObserverProps {
 	action: Action;
@@ -335,29 +194,6 @@ export default function ActionsPanel() {
 					: (rest as Action);
 			});
 	}, [sessionView.actionList, sessionView.actionsByPlayer, selectedPlayer]);
-	const developmentOptions = useMemo<Development[]>(
-		() =>
-			sessionView.developmentList.map((developmentDefinition) => {
-				const { focus, ...rest } = developmentDefinition;
-				const normalized = normalizeActionFocus(focus);
-				return normalized
-					? ({ ...rest, focus: normalized } as Development)
-					: (rest as Development);
-			}),
-		[sessionView.developmentList],
-	);
-	const buildingOptions = useMemo<Building[]>(
-		() =>
-			sessionView.buildingList.map((buildingDefinition) => {
-				const { focus, ...rest } = buildingDefinition;
-				const normalized = normalizeActionFocus(focus);
-				return normalized
-					? ({ ...rest, focus: normalized } as Building)
-					: (rest as Building);
-			}),
-		[sessionView.buildingList],
-	);
-
 	const actionSummaries = useMemo(() => {
 		const map = new Map<string, Summary>();
 		actions.forEach((actionDefinition) =>
@@ -369,46 +205,6 @@ export default function ActionsPanel() {
 		return map;
 	}, [actions, translationContext]);
 
-	const developmentSummaries = useMemo(() => {
-		const map = new Map<string, Summary>();
-		developmentOptions.forEach((developmentDefinition) =>
-			map.set(
-				developmentDefinition.id,
-				summarizeContent(
-					'development',
-					developmentDefinition.id,
-					translationContext,
-				),
-			),
-		);
-		return map;
-	}, [developmentOptions, translationContext]);
-
-	const buildingSummaries = useMemo(() => {
-		const map = new Map<string, Summary>();
-		buildingOptions.forEach((buildingDefinition) =>
-			map.set(
-				buildingDefinition.id,
-				summarizeContent('building', buildingDefinition.id, translationContext),
-			),
-		);
-		return map;
-	}, [buildingOptions, translationContext]);
-
-	const buildingDescriptions = useMemo(() => {
-		const map = new Map<string, Summary>();
-		buildingOptions.forEach((buildingDefinition) =>
-			map.set(
-				buildingDefinition.id,
-				describeContent('building', buildingDefinition.id, translationContext),
-			),
-		);
-		return map;
-	}, [buildingOptions, translationContext]);
-
-	const hasDevelopLand = selectedPlayer.lands.some(
-		(land) => land.slotsFree > 0,
-	);
 	const categoryDefinitions = useMemo(
 		() => translationContext.actionCategories.list(),
 		[translationContext.actionCategories],
@@ -512,7 +308,7 @@ export default function ActionsPanel() {
 	const visibleCategoryEntries = useMemo<VisibleCategoryEntry[]>(() => {
 		const entries: VisibleCategoryEntry[] = [];
 		categoryEntries.forEach((entry) => {
-			const { id, definition, actions: grouped } = entry;
+			const { definition, actions: grouped } = entry;
 			const visibleActions = grouped.filter(
 				(actionDefinition) => !actionDefinition.system,
 			);
@@ -521,15 +317,9 @@ export default function ActionsPanel() {
 			}
 			const fallbackLabel = grouped[0]?.name ?? definition?.title ?? 'Actions';
 			const descriptor = createCategoryDescriptor(definition, fallbackLabel);
-			const analyticsKey = definition?.analyticsKey ?? definition?.id ?? id;
-			const rendererKey = analyticsKey?.toLowerCase();
-			const renderer =
-				(rendererKey ? CATEGORY_RENDERERS.get(rendererKey) : undefined) ??
-				DEFAULT_RENDERER;
 			entries.push({
 				...entry,
 				descriptor,
-				renderer,
 				visibleActions,
 			});
 		});
@@ -579,23 +369,17 @@ export default function ActionsPanel() {
 	const activeButtonId = activeEntry
 		? `actions-panel-tab-${activeEntry.id}`
 		: undefined;
-	const activeContent = activeEntry
-		? activeEntry.renderer({
-				actions: activeEntry.actions,
-				descriptor: activeEntry.descriptor,
-				player: selectedPlayer,
-				canInteract,
-				selectResourceDescriptor,
-				actionSummaries,
-				isActionPhase,
-				developmentOptions,
-				developmentSummaries,
-				buildingOptions,
-				buildingSummaries,
-				buildingDescriptions,
-				hasDevelopLand,
-			})
-		: null;
+	const activeContent =
+		activeEntry && activeEntry.visibleActions.length > 0 ? (
+			<BasicOptions
+				actions={activeEntry.visibleActions}
+				summaries={actionSummaries}
+				player={selectedPlayer}
+				canInteract={canInteract}
+				selectResourceDescriptor={selectResourceDescriptor}
+				category={activeEntry.descriptor}
+			/>
+		) : null;
 	const toggleLabel = viewingOpponent
 		? 'Show player actions'
 		: 'Show opponent actions';

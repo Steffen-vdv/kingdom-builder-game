@@ -19,7 +19,7 @@ import { useActionMetadata } from '../../state/useActionMetadata';
 type OptionParams = ActionEffectGroupOption['params'];
 type PendingParams = Record<string, unknown> | undefined;
 
-type BuildOptionsParams = {
+type EffectGroupOptionsParams = {
 	currentGroup: ActionEffectGroup | undefined;
 	pendingParams: PendingParams;
 	translationContext: TranslationContext;
@@ -122,7 +122,7 @@ export function useEffectGroupOptions({
 	clearHoverCard,
 	handleHoverCard,
 	hoverBackground,
-}: BuildOptionsParams): ActionCardOption[] | undefined {
+}: EffectGroupOptionsParams): ActionCardOption[] | undefined {
 	const [hovered, setHovered] = useState<{
 		option: ActionEffectGroupOption;
 		mergedParams: Record<string, unknown>;
