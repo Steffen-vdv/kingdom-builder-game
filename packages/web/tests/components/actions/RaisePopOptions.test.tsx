@@ -45,6 +45,7 @@ interface RaisePopScenario {
 	action: Action;
 	player: GameEngineContextValue['selectors']['sessionView']['active'];
 	populationIds: string[];
+	actionRoleId: string;
 }
 
 function createRaisePopScenario(
@@ -63,7 +64,10 @@ function createRaisePopScenario(
 			'Expected population roles to exist for raise population options.',
 		);
 	}
-	const [primaryRole, secondaryRole] = populationIds;
+	const primaryRole = (
+		populationIds.includes('council') ? 'council' : populationIds[0]
+	) as string;
+	const secondaryRole = populationIds.find((role) => role !== primaryRole);
 	const activePlayer = createSnapshotPlayer({
 		id: 'player-1' as SessionPlayerId,
 		name: 'Player One',
@@ -93,11 +97,30 @@ function createRaisePopScenario(
 		metadata,
 	});
 	const metadataSelectors = createTestRegistryMetadata(registries, metadata);
-	const definition = registries.actions.get('raise_pop');
+	const actionId = (() => {
+		for (const [id, definition] of registries.actions.entries()) {
+			if ((definition.category ?? '') !== 'hire') {
+				continue;
+			}
+			const effects = (definition.effects as EffectConfig[] | undefined) ?? [];
+			if (
+				effects.some(
+					(effect) =>
+						effect.type === 'population' &&
+						effect.method === 'add' &&
+						(effect.params?.['role'] as string | undefined) === primaryRole,
+				)
+			) {
+				return id;
+			}
+		}
+		throw new Error(`Missing hire action for role "${primaryRole}".`);
+	})();
+	const definition = registries.actions.get(actionId);
 	if (!definition) {
-		throw new Error('Expected raise_pop definition in registries.');
+		throw new Error(`Expected ${actionId} definition in registries.`);
 	}
-	const translated = mockGame.translationContext.actions.get('raise_pop');
+	const translated = mockGame.translationContext.actions.get(actionId);
 	const action: Action = {
 		id: definition.id,
 		name: definition.name ?? definition.id,
@@ -123,6 +146,7 @@ function createRaisePopScenario(
 		action,
 		player: activeView,
 		populationIds,
+		actionRoleId: primaryRole,
 	};
 }
 
@@ -146,7 +170,7 @@ describe('<RaisePopOptions />', () => {
 			metadataSelectors,
 			action,
 			player,
-			populationIds,
+			actionRoleId,
 		} = scenario;
 		const selectResourceDescriptor = (resourceKey: string) =>
 			metadataSelectors.resourceMetadata.select(resourceKey);
@@ -166,9 +190,8 @@ describe('<RaisePopOptions />', () => {
 				button.classList.contains('action-card__face--front'),
 			);
 		expect(optionButtons.length).toBeGreaterThan(0);
-		const [primaryRole] = populationIds;
 		const primaryDescriptor = toDescriptorDisplay(
-			metadataSelectors.populationMetadata.select(primaryRole),
+			metadataSelectors.populationMetadata.select(actionRoleId),
 		);
 		const primaryButton = optionButtons.find((button) =>
 			button.textContent?.includes(primaryDescriptor.label),
@@ -190,8 +213,7 @@ describe('<RaisePopOptions />', () => {
 	});
 
 	it('falls back to population definitions when metadata is missing', () => {
-		const fallbackRole =
-			scenario.populationIds.at(1) ?? scenario.populationIds[0];
+		const fallbackRole = scenario.actionRoleId;
 		scenario = createRaisePopScenario({ omitMetadataFor: fallbackRole });
 		currentGame = scenario.mockGame;
 		const { registries, metadata, metadataSelectors, action, player } =

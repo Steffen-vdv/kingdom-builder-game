@@ -325,7 +325,7 @@ describe('createGameApi', () => {
 		const api = createGameApi({ fetchFn: fetchMock });
 		const request: ActionExecuteRequest = {
 			sessionId: 'session-conflict',
-			actionId: 'action.build',
+			actionId: 'action.build_mill',
 			params: { id: 'mill' },
 		};
 
