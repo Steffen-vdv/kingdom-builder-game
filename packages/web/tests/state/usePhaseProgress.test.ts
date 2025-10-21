@@ -123,6 +123,86 @@ describe('usePhaseProgress', () => {
 		expect(enqueue).toHaveBeenCalledTimes(2);
 	});
 
+	it('requires manual confirmation before advancing a fresh session', async () => {
+		const [actionCostResource] = createResourceKeys();
+		if (!actionCostResource) {
+			throw new Error('RESOURCE_KEYS is empty');
+		}
+		const player = createSnapshotPlayer({
+			id: 'A',
+			name: 'Hero',
+			resources: { [actionCostResource]: 0 },
+		});
+		const opponent = createSnapshotPlayer({
+			id: 'B',
+			name: 'Rival',
+			resources: { [actionCostResource]: 0 },
+		});
+		const phases = [
+			{
+				id: 'phase-growth',
+				label: 'Growth Phase',
+				steps: [{ id: 'phase-growth:start' }],
+			},
+			{
+				id: 'phase-main',
+				label: 'Main Phase',
+				action: true,
+				steps: [{ id: 'phase-main:start' }],
+			},
+		];
+		const sessionSnapshot = createSessionSnapshot({
+			players: [player, opponent],
+			activePlayerId: player.id,
+			opponentId: opponent.id,
+			phases,
+			actionCostResource,
+			ruleSnapshot: {
+				tieredResourceKey: actionCostResource,
+				tierDefinitions: [],
+				winConditions: [],
+			},
+			turn: 1,
+			phaseIndex: 0,
+			stepIndex: 0,
+			currentPhase: phases[0]?.id,
+			currentStep: phases[0]?.steps?.[0]?.id,
+		});
+		initializeSessionState({
+			sessionId: 'session-1',
+			snapshot: sessionSnapshot,
+			registries: createSessionRegistriesPayload(),
+		});
+		const enqueue = vi.fn(async <T>(task: () => Promise<T> | T) => {
+			return await task();
+		});
+		const { result } = renderHook(() =>
+			usePhaseProgress({
+				sessionSnapshot,
+				sessionId: 'session-1',
+				actionCostResource,
+				mountedRef: { current: true },
+				refresh: vi.fn(),
+				resourceKeys: [actionCostResource],
+				enqueue,
+				registries: createSessionRegistries(),
+				showResolution: vi.fn().mockResolvedValue(undefined),
+			}),
+		);
+
+		expect(result.current.phase.awaitingManualStart).toBe(true);
+		expect(result.current.initializing).toBe(false);
+
+		await act(async () => {
+			await result.current.startSession();
+		});
+
+		expect(advanceToActionPhaseMock).toHaveBeenCalledWith(
+			expect.objectContaining({ forceAdvance: true }),
+		);
+		expect(result.current.phase.awaitingManualStart).toBe(false);
+	});
+
 	it('invokes fatal handler when advancing the session fails', async () => {
 		const [actionCostResource] = createResourceKeys();
 		if (!actionCostResource) {

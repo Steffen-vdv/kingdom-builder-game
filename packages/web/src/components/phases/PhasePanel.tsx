@@ -123,12 +123,16 @@ export default function PhasePanel() {
 		sessionView.active?.name ??
 		activePlayerSnapshot?.name ??
 		'Player';
+	const awaitingManualStart = phase.awaitingManualStart;
 	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
 	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
 	const handleEndTurnClick = () => {
 		// Phase errors are surfaced via onFatalSessionError inside
 		// usePhaseProgress.
 		void requests.advancePhase();
+	};
+	const handleStartSessionClick = () => {
+		void requests.startSession();
 	};
 	return (
 		<section className={panelClassName}>
@@ -201,14 +205,24 @@ export default function PhasePanel() {
 			</div>
 			{shouldHideNextTurn ? null : (
 				<div className="flex justify-end pt-2">
-					<Button
-						variant="primary"
-						disabled={!canEndTurn}
-						onClick={handleEndTurnClick}
-						icon="⏭️"
-					>
-						Next Turn
-					</Button>
+					{awaitingManualStart ? (
+						<Button
+							variant="success"
+							onClick={handleStartSessionClick}
+							icon="🚀"
+						>
+							Let's go!
+						</Button>
+					) : (
+						<Button
+							variant="primary"
+							disabled={!canEndTurn}
+							onClick={handleEndTurnClick}
+							icon="⏭️"
+						>
+							Next Turn
+						</Button>
+					)}
 				</div>
 			)}
 		</section>

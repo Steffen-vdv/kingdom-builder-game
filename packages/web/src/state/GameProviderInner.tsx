@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useEffect, useMemo } from 'react';
+import React, {
+	createContext,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+} from 'react';
 import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import TranslationContextLoading from './TranslationContextLoading';
 import { useTimeScale } from './useTimeScale';
@@ -146,6 +152,7 @@ export function GameProviderInner({
 		endTurn,
 		applyPhaseSnapshot,
 		refreshPhaseState,
+		startSession,
 	} = usePhaseProgress({
 		sessionSnapshot,
 		sessionId,
@@ -158,6 +165,8 @@ export function GameProviderInner({
 		registries,
 		onFatalSessionError,
 	});
+
+	const manualStartTriggeredRef = useRef(false);
 
 	const { toasts, pushToast, pushErrorToast, pushSuccessToast, dismissToast } =
 		useToasts({
@@ -209,6 +218,12 @@ export function GameProviderInner({
 	});
 
 	useEffect(() => {
+		if (phase.awaitingManualStart) {
+			return;
+		}
+		if (manualStartTriggeredRef.current) {
+			return;
+		}
 		let disposed = false;
 		const run = async () => {
 			try {
@@ -231,7 +246,7 @@ export function GameProviderInner({
 		return () => {
 			disposed = true;
 		};
-	}, [runUntilActionPhase, onFatalSessionError]);
+	}, [phase.awaitingManualStart, runUntilActionPhase, onFatalSessionError]);
 
 	const metadata = useMemo<SessionMetadataFetchers>(
 		() => ({
@@ -254,13 +269,23 @@ export function GameProviderInner({
 		[handlePerform],
 	);
 
+	const handleStartSession = useCallback(async () => {
+		manualStartTriggeredRef.current = true;
+		try {
+			await startSession();
+		} finally {
+			manualStartTriggeredRef.current = false;
+		}
+	}, [startSession]);
+
 	const requestHelpers = useMemo(
 		() => ({
 			performAction: performActionRequest,
 			advancePhase: handleEndTurn,
+			startSession: handleStartSession,
 			refreshSession,
 		}),
-		[performActionRequest, handleEndTurn, refreshSession],
+		[performActionRequest, handleEndTurn, handleStartSession, refreshSession],
 	);
 
 	useResolutionAutomation({

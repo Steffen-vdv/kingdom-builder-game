@@ -68,6 +68,8 @@ export type PerformActionHandler = (
 
 export type AdvancePhaseHandler = () => Promise<void>;
 
+export type StartSessionHandler = () => Promise<void>;
+
 export type RefreshSessionHandler = () => Promise<void>;
 
 export interface SessionMetadataFetchers {
@@ -100,6 +102,7 @@ export interface GameEngineContextValue {
 	requests: {
 		performAction: PerformActionHandler;
 		advancePhase: AdvancePhaseHandler;
+		startSession: StartSessionHandler;
 		refreshSession: RefreshSessionHandler;
 	};
 	metadata: SessionMetadataFetchers;

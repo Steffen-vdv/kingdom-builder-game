@@ -29,6 +29,7 @@ const runUntilActionPhaseCoreMock = vi.fn(() => Promise.resolve());
 const handleEndTurnMock = vi.fn();
 const applyPhaseSnapshotMock = vi.fn();
 const refreshPhaseStateMock = vi.fn();
+const startSessionMock = vi.fn(() => Promise.resolve());
 const handlePerformMock = vi.fn();
 const useSessionQueueMock = vi.fn();
 const showResolutionMock = vi.fn();
@@ -92,6 +93,7 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 			endTurn: vi.fn(),
 			applyPhaseSnapshot: applyPhaseSnapshotMock,
 			refreshPhaseState: refreshPhaseStateMock,
+			startSession: startSessionMock,
 		};
 	},
 }));
@@ -166,6 +168,7 @@ describe('GameProviderInner', () => {
 		handleEndTurnMock.mockClear();
 		applyPhaseSnapshotMock.mockClear();
 		refreshPhaseStateMock.mockClear();
+		startSessionMock.mockClear();
 		handlePerformMock.mockClear();
 		useSessionQueueMock.mockReset();
 		vi.mocked(updateRemotePlayerName).mockClear();
@@ -205,6 +208,7 @@ describe('GameProviderInner', () => {
 					return player.id === sessionState.game.activePlayerId;
 				})?.name ?? null,
 			turnNumber: sessionState.game.turn,
+			awaitingManualStart: false,
 		};
 	});
 

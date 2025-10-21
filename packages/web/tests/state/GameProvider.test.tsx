@@ -49,6 +49,7 @@ const runUntilActionPhaseMock = vi.hoisted(() => vi.fn());
 const runUntilActionPhaseCoreMock = vi.hoisted(() => vi.fn());
 const handleEndTurnMock = vi.hoisted(() => vi.fn());
 const addResolutionLogMock = vi.hoisted(() => vi.fn());
+const startSessionMock = vi.hoisted(() => vi.fn());
 const pushToastMock = vi.hoisted(() => vi.fn());
 const pushErrorToastMock = vi.hoisted(() => vi.fn());
 const pushSuccessToastMock = vi.hoisted(() => vi.fn());
@@ -116,6 +117,7 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 				isAdvancing: false,
 				activePlayerId: 'player-main',
 				activePlayerName: 'Player Main',
+				awaitingManualStart: false,
 			},
 			runUntilActionPhase: runUntilActionPhaseMock,
 			runUntilActionPhaseCore: runUntilActionPhaseCoreMock,
@@ -123,6 +125,7 @@ vi.mock('../../src/state/usePhaseProgress', () => ({
 			endTurn: vi.fn(),
 			applyPhaseSnapshot: vi.fn(),
 			refreshPhaseState: vi.fn(),
+			startSession: startSessionMock,
 		};
 	},
 }));
@@ -203,6 +206,7 @@ describe('GameProvider', () => {
 		showResolutionMock.mockReset();
 		acknowledgeResolutionMock.mockReset();
 		handlePerformMock.mockReset();
+		startSessionMock.mockReset();
 		createTranslationContextMock.mockReset();
 		createTranslationContextMock.mockImplementation(() => ({}));
 		capturedPhaseOptions = undefined;

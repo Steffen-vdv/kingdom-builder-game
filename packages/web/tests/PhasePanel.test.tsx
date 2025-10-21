@@ -59,6 +59,7 @@ function createPhasePanelScenario() {
 			),
 			canEndTurn: true,
 			isAdvancing: false,
+			awaitingManualStart: false,
 			activePlayerId: activePlayer.id,
 			activePlayerName: activePlayer.name,
 			turnNumber: sessionState.game.turn,
@@ -82,6 +83,7 @@ beforeEach(() => {
 	defaultPhase = scenario.defaultPhase;
 	mockGame.phase = { ...defaultPhase };
 	mockGame.requests.advancePhase.mockClear();
+	mockGame.requests.startSession.mockClear();
 });
 
 afterEach(() => {
@@ -124,6 +126,23 @@ describe('<PhasePanel />', () => {
 		expect(nextTurnButton).toBeEnabled();
 		fireEvent.click(nextTurnButton);
 		expect(mockGame.requests.advancePhase).toHaveBeenCalledTimes(1);
+	});
+
+	it('shows a manual start button when awaiting player confirmation', () => {
+		mockGame.phase = {
+			...defaultPhase,
+			awaitingManualStart: true,
+		};
+		render(<PhasePanel />);
+		const startButton = screen.getByRole('button', { name: /let's go!/i });
+		expect(startButton).toBeEnabled();
+		fireEvent.click(startButton);
+		expect(mockGame.requests.startSession).toHaveBeenCalledTimes(1);
+		expect(
+			screen.queryByRole('button', {
+				name: /next turn/i,
+			}),
+		).not.toBeInTheDocument();
 	});
 
 	it('disables the Next Turn button when ending the turn is blocked', () => {
