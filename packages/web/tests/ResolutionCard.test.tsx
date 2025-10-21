@@ -4,6 +4,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import type { ActionResolution } from '../src/state/useActionResolution';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 
@@ -165,7 +166,11 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
 				{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				{
+					text: `${GENERAL_RESOURCE_ICON} Action cost`,
+					depth: 1,
+					kind: 'cost',
+				},
 				{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
 				{ text: '🪄 Effect happens', depth: 1, kind: 'effect' },
 			],
@@ -174,7 +179,7 @@ describe('<ResolutionCard />', () => {
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
-		const costSection = screen.getByText('💲 Cost');
+		const costSection = screen.getByText(`${GENERAL_RESOURCE_ICON} Cost`);
 		const effectsSection = screen.getByText('🪄 Effects');
 		const costSectionContainer = costSection.parentElement;
 		const effectsSectionContainer = effectsSection.parentElement;
@@ -196,7 +201,9 @@ describe('<ResolutionCard />', () => {
 		}
 
 		expect(costSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
-		expect(screen.queryByText('💲 Action cost')).toBeNull();
+		expect(
+			screen.queryByText(`${GENERAL_RESOURCE_ICON} Action cost`),
+		).toBeNull();
 		expect(goldCostContainer).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(effectsSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
 		expect(effectHeadlineContainer).toHaveStyle({ marginLeft: '0.875rem' });
@@ -206,7 +213,11 @@ describe('<ResolutionCard />', () => {
 	it('renders nested cost groups and effect hierarchies', () => {
 		const visibleTimeline: ActionLogLineDescriptor[] = [
 			{ text: '🛠️ Forge Relic', depth: 0, kind: 'headline' },
-			{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+			{
+				text: `${GENERAL_RESOURCE_ICON} Action cost`,
+				depth: 1,
+				kind: 'cost',
+			},
 			{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
 			{ text: 'Discounts applied', depth: 3, kind: 'cost-detail' },
 			{ text: 'Happiness -1', depth: 4, kind: 'cost-detail' },
@@ -234,7 +245,7 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		const costSection = screen.getByText('💲 Cost');
+		const costSection = screen.getByText(`${GENERAL_RESOURCE_ICON} Cost`);
 		const effectsSection = screen.getByText('🪄 Effects');
 		const costSectionContainer = costSection.parentElement;
 		const effectsSectionContainer = effectsSection.parentElement;
@@ -259,7 +270,9 @@ describe('<ResolutionCard />', () => {
 		}
 
 		expect(costSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
-		expect(screen.queryByText('💲 Action cost')).toBeNull();
+		expect(
+			screen.queryByText(`${GENERAL_RESOURCE_ICON} Action cost`),
+		).toBeNull();
 		expect(goldCostContainer).toHaveStyle({ marginLeft: '0.875rem' });
 		expect(discountContainer).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(happinessContainer).toHaveStyle({ marginLeft: '2.625rem' });
@@ -304,7 +317,7 @@ describe('<ResolutionCard />', () => {
 					kind: 'effect',
 				},
 				{
-					text: '💲 cost on all actions: Increase cost by +3',
+					text: '🧺 cost on all actions: Increase cost by +3',
 					depth: 1,
 					kind: 'effect',
 				},
@@ -315,10 +328,10 @@ describe('<ResolutionCard />', () => {
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
 		expect(
-			screen.getByText('✨ modifier on Raid: Whenever it resolves, 🎯 +1'),
+			screen.getByText('✨ Modifier on Raid: Whenever it resolves, 🎯 +1'),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText('💲 modifier on all actions: Increase cost by +3'),
+			screen.getByText('🧺 Modifier on all actions: Increase cost by +3'),
 		).toBeInTheDocument();
 	});
 
@@ -336,7 +349,7 @@ describe('<ResolutionCard />', () => {
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
-		expect(screen.queryByText('💲 Cost')).toBeNull();
+		expect(screen.queryByText('🧺 Cost')).toBeNull();
 		expect(screen.queryByText('🪄 Effects')).toBeNull();
 
 		const resolutionSteps = screen.getByText('Growth Phase begins');
@@ -360,17 +373,17 @@ describe('<ResolutionCard />', () => {
 			visibleTimeline: [],
 			visibleLines: [
 				'✨ result on Raid: Whenever it resolves, 🎯 +1',
-				'   💲 cost on all actions: Increase cost by +3',
+				'   🧺 cost on all actions: Increase cost by +3',
 			],
 		});
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
 		expect(
-			screen.getByText('✨ modifier on Raid: Whenever it resolves, 🎯 +1'),
+			screen.getByText('✨ Modifier on Raid: Whenever it resolves, 🎯 +1'),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText('💲 modifier on all actions: Increase cost by +3'),
+			screen.getByText('🧺 Modifier on all actions: Increase cost by +3'),
 		).toBeInTheDocument();
 	});
 });

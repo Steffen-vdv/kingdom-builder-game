@@ -32,6 +32,7 @@ import {
 	formatActionLogLines,
 } from '../src/state/actionLogFormat';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import type { ActionDiffChange } from '../src/translation/log/diff';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
@@ -166,7 +167,11 @@ describe('sub-action logging', () => {
 			messages.splice(
 				1,
 				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				{
+					text: `${GENERAL_RESOURCE_ICON} Action cost`,
+					depth: 1,
+					kind: 'cost',
+				},
 				...costLines,
 			);
 		}

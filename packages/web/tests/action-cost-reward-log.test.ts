@@ -21,6 +21,7 @@ import {
 } from '../src/translation';
 import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import type { ActionDiffChange } from '../src/translation/log/diff';
@@ -160,7 +161,11 @@ describe('action cost and reward logging', () => {
 			messages.splice(
 				1,
 				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				{
+					text: `${GENERAL_RESOURCE_ICON} Action cost`,
+					depth: 1,
+					kind: 'cost',
+				},
 				...costLines,
 			);
 		}
@@ -173,7 +178,7 @@ describe('action cost and reward logging', () => {
 		const logLines = formatActionLogLines(messages, filteredTree);
 		const coinInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const coinCost = costs[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		expect(logLines).toContain('• 💲 Action cost');
+		expect(logLines).toContain(`• ${GENERAL_RESOURCE_ICON} Action cost`);
 		const costEntry = logLines.find((line) =>
 			line.includes(`${coinInfo.icon} ${coinInfo.label} -${coinCost} `),
 		);

@@ -13,6 +13,7 @@ import {
 	describeContent,
 	splitSummary,
 } from '../src/translation/content';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
@@ -141,7 +142,9 @@ describe('plow action translation', () => {
 			`${till.icon} ${till.name}`,
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
-				items: [`💲: ${modIcon}${modAmt >= 0 ? '+' : ''}${modAmt}`],
+				items: [
+					`${GENERAL_RESOURCE_ICON}: ${modIcon}${modAmt >= 0 ? '+' : ''}${modAmt}`,
+				],
 			},
 		]);
 	});
@@ -202,7 +205,7 @@ describe('plow action translation', () => {
 		const hapLabel = hapDescriptor.label ?? 'happiness';
 		const hapIcon = hapDescriptor.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
-		const modifierIcon = modifierInfo.icon ?? '💲';
+		const modifierIcon = modifierInfo.icon ?? GENERAL_RESOURCE_ICON;
 		const modifierDirection = modAmt >= 0 ? 'Increase' : 'Decrease';
 		const modMagnitude = Math.abs(modAmt);
 		const landAsset = translation.assets.land ?? {};
@@ -230,7 +233,7 @@ describe('plow action translation', () => {
 					upkeepDescriptionLabel
 				}`,
 				items: [
-					`${modifierIcon} modifier on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
+					`${modifierIcon} Modifier on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
 				],
 			},
 		]);

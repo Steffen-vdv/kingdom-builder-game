@@ -19,6 +19,7 @@ import {
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { ActionResolution } from '../src/state/useActionResolution';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
@@ -96,7 +97,11 @@ beforeEach(() => {
 	mockGame = passiveGame;
 	const timeline: ActionLogLineDescriptor[] = [
 		{ text: '🛡️ Heroic Deed', depth: 0, kind: 'headline' },
-		{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+		{
+			text: `${GENERAL_RESOURCE_ICON} Action cost`,
+			depth: 1,
+			kind: 'cost',
+		},
 		{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
 		{ text: '🪄 Empower the realm', depth: 1, kind: 'effect' },
 		{ text: 'Gain 2 Glory', depth: 2, kind: 'effect' },

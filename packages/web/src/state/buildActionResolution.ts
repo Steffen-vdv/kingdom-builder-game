@@ -4,6 +4,7 @@ import type {
 	ActionTrace,
 } from '@kingdom-builder/protocol/actions';
 import type { ActionConfig } from '@kingdom-builder/protocol';
+import { GENERAL_RESOURCE_ICON } from '../icons';
 import {
 	diffStepSnapshots,
 	logContent,
@@ -280,7 +281,7 @@ export function buildActionResolution({
 	});
 	if (costLines.length) {
 		const header: ActionLogLineDescriptor = {
-			text: '💲 Action cost',
+			text: `${GENERAL_RESOURCE_ICON} Action cost`,
 			depth: 1,
 			kind: 'cost',
 		};

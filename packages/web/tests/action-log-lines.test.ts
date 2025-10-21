@@ -5,6 +5,7 @@ import {
 	formatDevelopActionLogLines,
 } from '../src/state/actionLogFormat';
 import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import type { ActionDiffChange } from '../src/translation/log/diff';
 
@@ -12,7 +13,11 @@ describe('action log line formatting', () => {
 	it('nests development changes under the development headline', () => {
 		const messages: ActionLogLineDescriptor[] = [
 			{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
-			{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+			{
+				text: `${GENERAL_RESOURCE_ICON} Action cost`,
+				depth: 1,
+				kind: 'cost',
+			},
 		];
 		const changes: ActionDiffChange[] = [
 			{ summary: `${LOG_KEYWORDS.developed} 🗼 Watchtower` },
@@ -21,7 +26,7 @@ describe('action log line formatting', () => {
 		];
 		expect(formatDevelopActionLogLines(messages, changes)).toEqual([
 			`${LOG_KEYWORDS.developed} 🗼 Watchtower`,
-			'• 💲 Action cost',
+			`• ${GENERAL_RESOURCE_ICON} Action cost`,
 			'• 🛡️ Fortification Strength +2 (0→2)',
 			'• 🌀 Absorption +50% (0%→50%)',
 		]);

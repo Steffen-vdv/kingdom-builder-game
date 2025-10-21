@@ -28,13 +28,13 @@ export function buildModifierDescriptionLabel(
 ): string {
 	const icon = descriptor.icon?.trim();
 	if (icon) {
-		return `${icon} modifier`;
+		return `${icon} Modifier`;
 	}
 	const label = descriptor.label?.trim();
 	if (label) {
-		return `${label} modifier`;
+		return `${label} Modifier`;
 	}
-	return 'modifier';
+	return 'Modifier';
 }
 
 export function formatResultModifierClause(

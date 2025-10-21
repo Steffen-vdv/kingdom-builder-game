@@ -1,9 +1,10 @@
 /** @vitest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Action } from '../../src/state/actionTypes';
 import { useActionPerformer } from '../../src/state/useActionPerformer';
 import { SessionMirroringError } from '../../src/state/sessionErrors';
+import { GENERAL_RESOURCE_ICON } from '../../src/icons';
+import type { Action } from '../../src/state/actionTypes';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
@@ -447,7 +448,7 @@ describe('useActionPerformer', () => {
 						kind: 'headline',
 					},
 					{
-						text: '💲 Action cost',
+						text: `${GENERAL_RESOURCE_ICON} Action cost`,
 						depth: 1,
 						kind: 'cost',
 					},

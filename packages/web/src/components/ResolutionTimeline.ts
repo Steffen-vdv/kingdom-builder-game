@@ -1,3 +1,4 @@
+import { GENERAL_RESOURCE_ICON } from '../icons';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 
 interface TimelineNode {
@@ -28,7 +29,7 @@ function normalizeModifierDescription(text: string): string {
 	if (!text.trim()) {
 		return text;
 	}
-	return text.replace(MODIFIER_LABEL_PATTERN, 'modifier on');
+	return text.replace(MODIFIER_LABEL_PATTERN, 'Modifier on');
 }
 
 function buildTimelineTree(
@@ -175,7 +176,7 @@ function buildResolutionTimelineEntries(
 	if (costEntries.length > 0) {
 		entries.push({
 			key: 'section-cost',
-			text: '💲 Cost',
+			text: `${GENERAL_RESOURCE_ICON} Cost`,
 			level: 0,
 			kind: 'section',
 		});

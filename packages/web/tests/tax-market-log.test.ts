@@ -19,6 +19,7 @@ import {
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_ASSETS,
 } from './fixtures/syntheticTaxLog';
+import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -163,7 +164,11 @@ describe('tax action logging with market', () => {
 			messages.splice(
 				1,
 				0,
-				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
+				{
+					text: `${GENERAL_RESOURCE_ICON} Action cost`,
+					depth: 1,
+					kind: 'cost',
+				},
 				...costDescriptors,
 			);
 		}
