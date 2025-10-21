@@ -49,12 +49,18 @@ describe('ActionsPanel tabs', () => {
 
 	it('shows performable counters and updates when availability changes', async () => {
 		renderPanel();
-		const raiseCategoryId = mockGame.metadata.actions.raise.category;
+		const hireActions = mockGame.metadata.actions.hire;
+		const hireCategoryId = hireActions[0]?.category;
+		if (!hireCategoryId) {
+			throw new Error('Expected hire actions to be available.');
+		}
 		const basicCategoryId = mockGame.metadata.actions.basic.category;
-		const raiseTab = await findTabButton(raiseCategoryId);
+		const raiseTab = await findTabButton(hireCategoryId);
 		const basicTab = await findTabButton(basicCategoryId);
 		expect(
-			within(raiseTab).getByLabelText('0 of 1 actions performable'),
+			within(raiseTab).getByLabelText(
+				`0 of ${hireActions.length} actions performable`,
+			),
 		).toBeInTheDocument();
 		expect(
 			within(basicTab).getByLabelText('0 of 1 actions performable'),
@@ -84,15 +90,16 @@ describe('ActionsPanel tabs', () => {
 
 	it('places subtitles inside the tab panel and supports navigation', async () => {
 		renderPanel();
-		const raiseCategory = getCategoryDefinition(
-			mockGame.metadata.actions.raise.category,
-		);
+		const hireActions = mockGame.metadata.actions.hire;
+		const hireCategoryId = hireActions[0]?.category;
+		if (!hireCategoryId) {
+			throw new Error('Expected hire actions to be available.');
+		}
+		const raiseCategory = getCategoryDefinition(hireCategoryId);
 		const basicCategory = getCategoryDefinition(
 			mockGame.metadata.actions.basic.category,
 		);
-		const raiseTab = await findTabButton(
-			mockGame.metadata.actions.raise.category,
-		);
+		const raiseTab = await findTabButton(hireCategoryId);
 		const basicTab = await findTabButton(
 			mockGame.metadata.actions.basic.category,
 		);
@@ -121,10 +128,12 @@ function seedInitialMetadata() {
 		sessionId,
 		metadata: { actions, costMap, requirementFailures },
 	} = mockGame;
-	seedSessionActionMetadata(sessionId, actions.raise.id, {
-		costs: costMap.get(actions.raise.id) ?? {},
-		requirements: requirementFailures.get(actions.raise.id) ?? [],
-		groups: [],
+	actions.hire.forEach((hireAction) => {
+		seedSessionActionMetadata(sessionId, hireAction.id, {
+			costs: costMap.get(hireAction.id) ?? {},
+			requirements: requirementFailures.get(hireAction.id) ?? [],
+			groups: [],
+		});
 	});
 	seedSessionActionMetadata(sessionId, actions.basic.id, {
 		costs: costMap.get(actions.basic.id) ?? {},

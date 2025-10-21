@@ -189,7 +189,7 @@ export function createActionsPanelGame({
 		[],
 	);
 	const actionDefinitions = [
-		content.raisePopulationAction,
+		...content.hireActions,
 		content.basicAction,
 		...content.buildingActions,
 		...content.developmentActions,
@@ -280,7 +280,7 @@ export function createActionsPanelGame({
 		upkeepResource,
 		capacityStat,
 		actions: {
-			raise: content.raisePopulationAction,
+			hire: content.hireActions,
 			basic: content.basicAction,
 			building: content.buildingActions[0],
 			buildings: content.buildingActions,

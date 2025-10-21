@@ -7,7 +7,7 @@ import {
 	clearSessionActionMetadataStore,
 	seedSessionActionMetadata,
 } from '../../helpers/mockSessionActionMetadataStore';
-import RaisePopOptions from '../../../src/components/actions/RaisePopOptions';
+import HireOptions from '../../../src/components/actions/HireOptions';
 // prettier-ignore
 import {
         RegistryMetadataProvider,
@@ -36,20 +36,40 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import type { Action } from '../../../src/components/actions/types';
 import type { SessionRegistries } from '../../../src/state/sessionRegistries';
+import type { ActionCategoryDescriptor } from '../../../src/components/actions/ActionCategoryHeader';
 
-interface RaisePopScenario {
+interface HireScenario {
 	registries: SessionRegistries;
 	metadata: ReturnType<typeof createTestSessionScaffold>['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 	mockGame: GameEngineContextValue;
-	action: Action;
+	actions: Action[];
 	player: GameEngineContextValue['selectors']['sessionView']['active'];
 	populationIds: string[];
 }
 
-function createRaisePopScenario(
+type ActionEffect = {
+	type?: string;
+	method?: string;
+	params?: Record<string, unknown>;
+};
+
+function extractHireActionRole(action: Action): string | undefined {
+	const effects = (action.effects as ActionEffect[]) ?? [];
+	for (const effect of effects) {
+		if (effect.type === 'population' && effect.method === 'add') {
+			const role = effect.params?.['role'];
+			if (typeof role === 'string') {
+				return role;
+			}
+		}
+	}
+	return undefined;
+}
+
+function createHireScenario(
 	options: { omitMetadataFor?: string } = {},
-): RaisePopScenario {
+): HireScenario {
 	clearSessionActionMetadataStore();
 	const scaffold = createTestSessionScaffold();
 	const registries = scaffold.registries;
@@ -59,9 +79,7 @@ function createRaisePopScenario(
 	}
 	const populationIds = registries.populations.keys();
 	if (!populationIds.length) {
-		throw new Error(
-			'Expected population roles to exist for raise population options.',
-		);
+		throw new Error('Expected population roles to exist for hire options.');
 	}
 	const [primaryRole, secondaryRole] = populationIds;
 	const activePlayer = createSnapshotPlayer({
@@ -93,70 +111,76 @@ function createRaisePopScenario(
 		metadata,
 	});
 	const metadataSelectors = createTestRegistryMetadata(registries, metadata);
-	const definition = registries.actions.get('raise_pop');
-	if (!definition) {
-		throw new Error('Expected raise_pop definition in registries.');
+	const hireActionEntries = registries.actions
+		.entries()
+		.filter(([id]) => id.startsWith('hire:'))
+		.sort(([left], [right]) => left.localeCompare(right));
+	const actions: Action[] = hireActionEntries.map(([actionId, definition]) => {
+		const translated = mockGame.translationContext.actions.get(actionId);
+		const action: Action = {
+			id: definition.id,
+			name: definition.name ?? definition.id,
+			icon: definition.icon,
+			focus: definition.focus,
+			requirements: translated?.requirements ?? definition.requirements,
+			effects: translated?.effects ?? definition.effects,
+		} as Action;
+		seedSessionActionMetadata(mockGame.sessionId, action.id, {
+			costs: { gold: 5, ap: 1 },
+			requirements: [],
+			groups: [],
+		});
+		return action;
+	});
+	if (actions.length === 0) {
+		throw new Error('Expected hire actions to be available.');
 	}
-	const translated = mockGame.translationContext.actions.get('raise_pop');
-	const action: Action = {
-		id: definition.id,
-		name: definition.name ?? definition.id,
-		icon: definition.icon,
-		focus: definition.focus,
-		requirements: translated?.requirements ?? definition.requirements,
-		effects: translated?.effects ?? definition.effects,
-	} as Action;
 	const activeView = mockGame.selectors.sessionView.active;
 	if (!activeView) {
 		throw new Error('Expected active player view in session.');
 	}
-	seedSessionActionMetadata(mockGame.sessionId, action.id, {
-		costs: { gold: 5, ap: 1 },
-		requirements: [],
-		groups: [],
-	});
 	return {
 		registries,
 		metadata,
 		metadataSelectors,
 		mockGame: mockGame as GameEngineContextValue,
-		action,
+		actions,
 		player: activeView,
 		populationIds,
 	};
 }
 
-let scenario = createRaisePopScenario();
+const categoryDescriptor: ActionCategoryDescriptor = {
+	icon: '👶',
+	label: 'Hire',
+	subtitle: 'Recruit specialists',
+};
+
+let scenario = createHireScenario();
 let currentGame = scenario.mockGame;
 
 vi.mock('../../../src/state/GameContext', () => ({
 	useGameEngine: () => currentGame,
 }));
 
-describe('<RaisePopOptions />', () => {
+describe('<HireOptions />', () => {
 	beforeEach(() => {
-		scenario = createRaisePopScenario();
+		scenario = createHireScenario();
 		currentGame = scenario.mockGame;
 	});
 
-	it('renders population options using registry metadata', () => {
-		const {
-			registries,
-			metadata,
-			metadataSelectors,
-			action,
-			player,
-			populationIds,
-		} = scenario;
+	it('renders hire actions using registry metadata', () => {
+		const { registries, metadata, metadataSelectors, actions } = scenario;
 		const selectResourceDescriptor = (resourceKey: string) =>
 			metadataSelectors.resourceMetadata.select(resourceKey);
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<RaisePopOptions
-					action={action}
-					player={player}
+				<HireOptions
+					actions={actions}
+					player={scenario.player}
 					canInteract={true}
 					selectResourceDescriptor={selectResourceDescriptor}
+					category={categoryDescriptor}
 				/>
 			</RegistryMetadataProvider>,
 		);
@@ -165,64 +189,70 @@ describe('<RaisePopOptions />', () => {
 			.filter((button) =>
 				button.classList.contains('action-card__face--front'),
 			);
-		expect(optionButtons.length).toBeGreaterThan(0);
-		const [primaryRole] = populationIds;
-		const primaryDescriptor = toDescriptorDisplay(
-			metadataSelectors.populationMetadata.select(primaryRole),
-		);
-		const primaryButton = optionButtons.find((button) =>
-			button.textContent?.includes(primaryDescriptor.label),
-		);
-		expect(primaryButton).toBeDefined();
-		if (primaryDescriptor.icon) {
-			expect(primaryButton?.textContent ?? '').toContain(
-				primaryDescriptor.icon,
+		expect(optionButtons).toHaveLength(actions.length);
+		actions.forEach((action) => {
+			const roleId = extractHireActionRole(action) ?? action.id;
+			const descriptor = toDescriptorDisplay(
+				metadataSelectors.populationMetadata.select(roleId),
 			);
-			const summaryItems = primaryButton
-				? within(primaryButton).queryAllByRole('listitem')
-				: [];
-			if (summaryItems.length > 0) {
-				expect(summaryItems[0]?.textContent ?? '').toContain(
-					primaryDescriptor.icon,
-				);
+			const button = optionButtons.find((entry) =>
+				entry.textContent?.includes(descriptor.label),
+			);
+			expect(button).toBeDefined();
+			if (descriptor.icon) {
+				expect(button?.textContent ?? '').toContain(descriptor.icon);
+				const summaryItems = button
+					? within(button).queryAllByRole('listitem')
+					: [];
+				if (summaryItems.length > 0) {
+					expect(summaryItems[0]?.textContent ?? '').toContain(descriptor.icon);
+				}
 			}
-		}
+		});
 	});
 
 	it('falls back to population definitions when metadata is missing', () => {
 		const fallbackRole =
 			scenario.populationIds.at(1) ?? scenario.populationIds[0];
-		scenario = createRaisePopScenario({ omitMetadataFor: fallbackRole });
+		scenario = createHireScenario({ omitMetadataFor: fallbackRole });
 		currentGame = scenario.mockGame;
-		const { registries, metadata, metadataSelectors, action, player } =
-			scenario;
+		const { registries, metadata, metadataSelectors, actions } = scenario;
 		const selectResourceDescriptor = (resourceKey: string) =>
 			metadataSelectors.resourceMetadata.select(resourceKey);
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<RaisePopOptions
-					action={action}
-					player={player}
+				<HireOptions
+					actions={actions}
+					player={scenario.player}
 					canInteract={true}
 					selectResourceDescriptor={selectResourceDescriptor}
+					category={categoryDescriptor}
 				/>
 			</RegistryMetadataProvider>,
 		);
+		const fallbackAction = actions.find(
+			(entry) => extractHireActionRole(entry) === fallbackRole,
+		);
+		expect(fallbackAction).toBeDefined();
+		const optionButtons = screen
+			.getAllByRole('button')
+			.filter((button) =>
+				button.classList.contains('action-card__face--front'),
+			);
+		const fallbackDefinition = registries.populations.get(fallbackRole);
+		const expectedIcon = fallbackDefinition?.icon ?? '';
 		const descriptor = toDescriptorDisplay(
 			metadataSelectors.populationMetadata.select(fallbackRole),
 		);
-		const fallbackButton = screen
-			.getAllByRole('button')
-			.filter((button) => button.classList.contains('action-card__face--front'))
-			.find((button) => button.textContent?.includes(descriptor.label));
-		expect(fallbackButton).toBeDefined();
-		const expectedIcon =
-			descriptor.icon ?? registries.populations.get(fallbackRole)?.icon ?? '';
+		const button = optionButtons.find((entry) =>
+			entry.textContent?.includes(descriptor.label),
+		);
+		expect(button).toBeDefined();
 		if (expectedIcon) {
-			expect(fallbackButton?.textContent ?? '').toContain(expectedIcon);
-		}
-		if (fallbackButton && expectedIcon) {
-			const summaryItems = within(fallbackButton).queryAllByRole('listitem');
+			expect(button?.textContent ?? '').toContain(expectedIcon);
+			const summaryItems = button
+				? within(button).queryAllByRole('listitem')
+				: [];
 			if (summaryItems.length > 0) {
 				expect(summaryItems[0]?.textContent ?? '').toContain(expectedIcon);
 			}
@@ -230,27 +260,25 @@ describe('<RaisePopOptions />', () => {
 	});
 
 	it('disables hire options when population is at capacity', () => {
-		const {
-			registries,
-			metadata,
-			metadataSelectors,
-			action,
-			player,
-			mockGame,
-		} = scenario;
+		const { registries, metadata, metadataSelectors, actions, mockGame } =
+			scenario;
 		const requirementFailure: SessionRequirementFailure = {
 			requirement: {
 				type: 'evaluator',
 				method: 'compare',
 				params: {
 					operator: 'lt',
-					left: { type: 'population', params: { role: '$role' } },
-					right: { type: 'stat', params: { key: 'maxPopulation' } },
+					left: { type: 'population' },
+					right: {
+						type: 'stat',
+						params: { key: 'maxPopulation' },
+					},
 				},
 			},
 			details: { left: 3, right: 3 },
 		};
-		seedSessionActionMetadata(mockGame.sessionId, action.id, {
+		const firstAction = actions[0];
+		seedSessionActionMetadata(mockGame.sessionId, firstAction.id, {
 			costs: { gold: 5, ap: 1 },
 			requirements: [requirementFailure],
 			groups: [],
@@ -259,11 +287,12 @@ describe('<RaisePopOptions />', () => {
 			metadataSelectors.resourceMetadata.select(resourceKey);
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<RaisePopOptions
-					action={action}
-					player={player}
+				<HireOptions
+					actions={actions}
+					player={scenario.player}
 					canInteract={true}
 					selectResourceDescriptor={selectResourceDescriptor}
+					category={categoryDescriptor}
 				/>
 			</RegistryMetadataProvider>,
 		);
@@ -273,9 +302,9 @@ describe('<RaisePopOptions />', () => {
 				button.classList.contains('action-card__face--front'),
 			);
 		expect(hireButtons.length).toBeGreaterThan(0);
-		const primaryHireButton = hireButtons[0];
-		expect(primaryHireButton).toBeDisabled();
-		const card = primaryHireButton.closest('.action-card');
+		const primaryButton = hireButtons[0];
+		expect(primaryButton).toBeDisabled();
+		const card = primaryButton.closest('.action-card');
 		expect(card).not.toBeNull();
 		expect(card).toHaveAttribute(
 			'title',

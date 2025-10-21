@@ -94,9 +94,9 @@
 			"order": 3,
 			"focus": "economy"
 		},
-		"raise_pop": {
-			"id": "raise_pop",
-			"name": "Hire",
+		"hire:council": {
+			"id": "hire:council",
+			"name": "Hire Council",
 			"icon": "👶",
 			"baseCosts": {
 				"ap": 1,
@@ -125,7 +125,7 @@
 					"type": "population",
 					"method": "add",
 					"params": {
-						"role": "$role"
+						"role": "council"
 					}
 				},
 				{
@@ -139,6 +139,100 @@
 			],
 			"category": "population",
 			"order": 1,
+			"focus": "economy"
+		},
+		"hire:legion": {
+			"id": "hire:legion",
+			"name": "Hire Legion",
+			"icon": "👶",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 5
+			},
+			"requirements": [
+				{
+					"type": "evaluator",
+					"method": "compare",
+					"params": {
+						"left": {
+							"type": "population"
+						},
+						"operator": "lt",
+						"right": {
+							"type": "stat",
+							"params": {
+								"key": "maxPopulation"
+							}
+						}
+					}
+				}
+			],
+			"effects": [
+				{
+					"type": "population",
+					"method": "add",
+					"params": {
+						"role": "legion"
+					}
+				},
+				{
+					"type": "resource",
+					"method": "add",
+					"params": {
+						"key": "happiness",
+						"amount": 1
+					}
+				}
+			],
+			"category": "population",
+			"order": 2,
+			"focus": "economy"
+		},
+		"hire:fortifier": {
+			"id": "hire:fortifier",
+			"name": "Hire Fortifier",
+			"icon": "👶",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 5
+			},
+			"requirements": [
+				{
+					"type": "evaluator",
+					"method": "compare",
+					"params": {
+						"left": {
+							"type": "population"
+						},
+						"operator": "lt",
+						"right": {
+							"type": "stat",
+							"params": {
+								"key": "maxPopulation"
+							}
+						}
+					}
+				}
+			],
+			"effects": [
+				{
+					"type": "population",
+					"method": "add",
+					"params": {
+						"role": "fortifier"
+					}
+				},
+				{
+					"type": "resource",
+					"method": "add",
+					"params": {
+						"key": "happiness",
+						"amount": 1
+					}
+				}
+			],
+			"category": "population",
+			"order": 3,
 			"focus": "economy"
 		},
 		"royal_decree": {

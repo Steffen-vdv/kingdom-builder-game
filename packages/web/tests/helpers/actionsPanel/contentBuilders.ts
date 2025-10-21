@@ -36,7 +36,7 @@ export interface ActionsPanelContent {
 	readonly registeredPopulationRoles: PopulationDefinition[];
 	readonly passivePopulation: PopulationDefinition;
 	readonly buildRequirements: unknown[];
-	readonly raisePopulationAction: ActionDefinition;
+	readonly hireActions: ActionDefinition[];
 	readonly basicAction: ActionDefinition;
 	readonly buildingActions: ActionDefinition[];
 	readonly buildingDefinitions: BuildingDefinition[];
@@ -92,22 +92,26 @@ export function buildActionsPanelContent({
 				),
 			];
 
-	const raisePopulationAction = factory.action({
-		name: 'Hire',
-		icon: '👶',
-		requirements: buildRequirements,
-		effects: [
-			{
-				type: 'population',
-				method: 'add',
-				params: { role: populationPlaceholder },
-			},
-		],
-	});
-	Object.assign(raisePopulationAction, {
-		category: categories.population,
-		order: 1,
-		focus: 'economy',
+	const hireActions = registeredPopulationRoles.map((population, index) => {
+		const action = factory.action({
+			id: `hire:${population.id}`,
+			name: `Hire: ${population.name}`,
+			icon: '👶',
+			requirements: buildRequirements,
+			effects: [
+				{
+					type: 'population',
+					method: 'add',
+					params: { role: population.id },
+				},
+			],
+		});
+		Object.assign(action, {
+			category: categories.population,
+			order: index + 1,
+			focus: 'economy',
+		});
+		return action;
 	});
 	const basicAction = factory.action({
 		name: 'Survey',
@@ -191,22 +195,24 @@ export function buildActionsPanelContent({
 		]),
 	) as Record<string, number>;
 	const actionIds = [
-		raisePopulationAction,
+		...hireActions,
 		basicAction,
 		...buildingActions,
 		...developmentActions,
 	].map((action) => action.id);
 	const requirementFailures = new Map<string, SessionRequirementFailure[]>();
-	requirementFailures.set(
-		raisePopulationAction.id,
-		buildRequirements.map((requirement, index) => ({
-			requirement,
-			details: {
-				left: index === 0 ? 3 : 1,
-				right: index === 0 ? 3 : 0,
-			},
-		})),
-	);
+	hireActions.forEach((action, index) => {
+		requirementFailures.set(
+			action.id,
+			buildRequirements.map((requirement, requirementIndex) => ({
+				requirement,
+				details: {
+					left: requirementIndex === 0 ? 3 : index === 0 ? 1 : 0,
+					right: requirementIndex === 0 ? 3 : 0,
+				},
+			})),
+		);
+	});
 	buildingActions.forEach((buildingAction) => {
 		requirementFailures.set(buildingAction.id, [
 			{
@@ -221,9 +227,9 @@ export function buildActionsPanelContent({
 	for (const action of developmentActions) {
 		requirementFailures.set(action.id, []);
 	}
-	const requirementIcons = new Map<string, string[]>([
-		[raisePopulationAction.id, []],
-	]);
+	const requirementIcons = new Map<string, string[]>(
+		hireActions.map((action) => [action.id, []]),
+	);
 	buildingActions.forEach((buildingAction) => {
 		requirementIcons.set(buildingAction.id, ['🛠️']);
 	});
@@ -237,7 +243,7 @@ export function buildActionsPanelContent({
 		registeredPopulationRoles,
 		passivePopulation,
 		buildRequirements,
-		raisePopulationAction,
+		hireActions,
 		basicAction,
 		buildingActions,
 		buildingDefinitions,
