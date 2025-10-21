@@ -216,6 +216,7 @@ export const attackParams = () => new AttackParamsBuilder();
 export class TransferParamsBuilder extends ParamsBuilder<{
 	key?: ResourceKey;
 	percent?: number;
+	amount?: number;
 }> {
 	key(key: ResourceKey) {
 		return this.set(
@@ -225,10 +226,28 @@ export class TransferParamsBuilder extends ParamsBuilder<{
 		);
 	}
 	percent(percent: number) {
+		if (this.wasSet('amount')) {
+			throw new Error(
+				'Resource transfer already set amount(). Remove amount() before calling percent().',
+			);
+		}
 		return this.set(
 			'percent',
 			percent,
 			'You already set percent() for this transfer. Remove the duplicate percent() call.',
+		);
+	}
+
+	amount(amount: number) {
+		if (this.wasSet('percent')) {
+			throw new Error(
+				'Resource transfer already set percent(). Remove percent() before calling amount().',
+			);
+		}
+		return this.set(
+			'amount',
+			amount,
+			'You already set amount() for this transfer. Remove the duplicate amount() call.',
 		);
 	}
 
@@ -238,9 +257,9 @@ export class TransferParamsBuilder extends ParamsBuilder<{
 				'Resource transfer is missing key(). Call key(Resource.yourChoice) to pick the resource to move.',
 			);
 		}
-		if (!this.wasSet('percent')) {
+		if (!this.wasSet('percent') && !this.wasSet('amount')) {
 			throw new Error(
-				'Resource transfer is missing percent(). Call percent(amount) to choose how much to move.',
+				'Resource transfer is missing amount(). Call amount(value) or percent(amount) to choose how much to move.',
 			);
 		}
 		return super.build();

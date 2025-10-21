@@ -421,6 +421,14 @@
 						"key": "gold",
 						"percent": 25
 					}
+				},
+				{
+					"type": "resource",
+					"method": "transfer",
+					"params": {
+						"key": "happiness",
+						"amount": 1
+					}
 				}
 			],
 			"system": true

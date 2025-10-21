@@ -4,11 +4,13 @@ import { PhaseId } from '@kingdom-builder/contents';
 import {
 	TRANSFER_PCT_EVALUATION_ID,
 	TRANSFER_PCT_EVALUATION_TYPE,
+	TRANSFER_AMT_EVALUATION_ID,
+	TRANSFER_AMT_EVALUATION_TYPE,
 } from '../../src/effects/resource_transfer.ts';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
 
-describe('resource:transfer percent bounds', () => {
+describe('resource:transfer bounds', () => {
 	it('adjusts transfer percentage within bounds', () => {
 		const engineContext = createTestEngine();
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -114,5 +116,71 @@ describe('resource:transfer percent bounds', () => {
 		const roundedDown = run('down');
 		expect(roundedDown.attacker).toBe(1);
 		expect(roundedDown.defender).toBe(4);
+	});
+
+	it('adjusts transfer amount within bounds', () => {
+		const engineContext = createTestEngine();
+		while (engineContext.game.currentPhase !== PhaseId.Main) {
+			advance(engineContext);
+		}
+		engineContext.game.currentPlayerIndex = 0;
+
+		const transfer: EffectDef<{ key: string; amount: number }> = {
+			type: 'resource',
+			method: 'transfer',
+			params: { key: Resource.gold, amount: 3 },
+		};
+		const addBoost: EffectDef<{ id: string }> = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				id: 'boost',
+				evaluation: {
+					type: TRANSFER_AMT_EVALUATION_TYPE,
+					id: TRANSFER_AMT_EVALUATION_ID,
+				},
+				adjust: 5,
+			},
+		};
+		const removeBoost: EffectDef<{ id: string }> = {
+			type: 'result_mod',
+			method: 'remove',
+			params: {
+				id: 'boost',
+				evaluation: {
+					type: TRANSFER_AMT_EVALUATION_TYPE,
+					id: TRANSFER_AMT_EVALUATION_ID,
+				},
+			},
+		};
+		const addNerf: EffectDef<{ id: string }> = {
+			type: 'result_mod',
+			method: 'add',
+			params: {
+				id: 'nerf',
+				evaluation: {
+					type: TRANSFER_AMT_EVALUATION_TYPE,
+					id: TRANSFER_AMT_EVALUATION_ID,
+				},
+				adjust: -10,
+			},
+		};
+
+		engineContext.activePlayer.gold = 0;
+		engineContext.opponent.gold = 4;
+
+		runEffects([addBoost], engineContext);
+		runEffects([transfer], engineContext);
+		expect(engineContext.activePlayer.gold).toBe(4);
+		expect(engineContext.opponent.gold).toBe(0);
+
+		runEffects([removeBoost], engineContext);
+		engineContext.activePlayer.gold = 0;
+		engineContext.opponent.gold = 4;
+
+		runEffects([addNerf], engineContext);
+		runEffects([transfer], engineContext);
+		expect(engineContext.activePlayer.gold).toBe(0);
+		expect(engineContext.opponent.gold).toBe(4);
 	});
 });

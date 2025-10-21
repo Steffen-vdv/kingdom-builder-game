@@ -41,14 +41,38 @@ registerEffectFormatter('resource', 'transfer', {
 		const key = effect.params?.['key'];
 		const resourceKey = typeof key === 'string' ? key : '';
 		const descriptor = selectResourceDescriptor(context, resourceKey);
-		const percent = Number(effect.params?.['percent']);
+		const amountParam = effect.params?.['amount'];
+		const amount =
+			typeof amountParam === 'number'
+				? amountParam
+				: typeof amountParam === 'string'
+					? Number(amountParam)
+					: Number.NaN;
+		if (!Number.isNaN(amount)) {
+			const normalized = Math.abs(amount);
+			return `Transfer ${normalized} ${descriptor.icon}`;
+		}
+		const percentValue = Number(effect.params?.['percent']);
+		const percent = Number.isNaN(percentValue) ? 0 : percentValue;
 		return `Transfer ${percent}% ${descriptor.icon}`;
 	},
 	describe: (effect, context) => {
 		const key = effect.params?.['key'];
 		const resourceKey = typeof key === 'string' ? key : '';
 		const descriptor = selectResourceDescriptor(context, resourceKey);
-		const percent = Number(effect.params?.['percent']);
+		const amountParam = effect.params?.['amount'];
+		const amount =
+			typeof amountParam === 'number'
+				? amountParam
+				: typeof amountParam === 'string'
+					? Number(amountParam)
+					: Number.NaN;
+		if (!Number.isNaN(amount)) {
+			const normalized = Math.abs(amount);
+			return `Transfer ${normalized} of opponent's ${descriptor.icon}${descriptor.label} to you`;
+		}
+		const percentValue = Number(effect.params?.['percent']);
+		const percent = Number.isNaN(percentValue) ? 0 : percentValue;
 		return `Transfer ${percent}% of opponent's ${descriptor.icon}${descriptor.label} to you`;
 	},
 });

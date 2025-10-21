@@ -11,8 +11,7 @@ import {
 	iconLabel,
 	SYNTH_COMBAT_STATS,
 	PLUNDER_PERCENT,
-	ATTACKER_HAPPINESS_GAIN,
-	DEFENDER_HAPPINESS_LOSS,
+	PLUNDER_HAPPINESS_AMOUNT,
 	BUILDING_REWARD_GOLD,
 } from './helpers/armyAttackFactories';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
@@ -85,6 +84,12 @@ describe('army attack translation log', () => {
 		);
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
 		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
+		const plunderGoldLine =
+			`      Transfer ${PLUNDER_PERCENT}% of opponent's ` +
+			`${gold.icon}${gold.label} to you`;
+		const plunderHappinessLine =
+			`      Transfer ${PLUNDER_HAPPINESS_AMOUNT} of opponent's ` +
+			`${happiness.icon}${happiness.label} to you`;
 		expect(withLegacyIndent(log)).toEqual([
 			`${attack.icon} ${attack.name}`,
 			`  Attack opponent with your ${powerLabel}`,
@@ -92,10 +97,9 @@ describe('army attack translation log', () => {
 			`    Apply damage to opponent ${fortLabel}`,
 			`    If opponent ${fortLabel} falls to 0, overflow remaining damage onto opponent ${castleLabel}`,
 			`  On opponent ${castleLabel} damage`,
-			`    ${happiness.icon}-${DEFENDER_HAPPINESS_LOSS} ${happiness.label} for Opponent`,
-			`    ${happiness.icon}+${ATTACKER_HAPPINESS_GAIN} ${happiness.label} for Player`,
 			`    ${plunder.icon} ${plunder.name}`,
-			`      Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}${gold.label} to you`,
+			plunderGoldLine,
+			plunderHappinessLine,
 		]);
 	});
 

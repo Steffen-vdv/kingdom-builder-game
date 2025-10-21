@@ -173,7 +173,15 @@ describe('content builder safeguards', () => {
 
 	it('demands transfer amounts', () => {
 		expect(() => transferParams().key(firstResourceKey).build()).toThrowError(
-			'Resource transfer is missing percent(). Call percent(amount) to choose how much to move.',
+			'Resource transfer is missing amount(). Call amount(value) or percent(amount) to choose how much to move.',
+		);
+	});
+
+	it('prevents mixing transfer amount and percent', () => {
+		expect(() =>
+			transferParams().key(firstResourceKey).percent(10).amount(2),
+		).toThrowError(
+			'Resource transfer already set percent(). Remove percent() before calling amount().',
 		);
 	});
 
