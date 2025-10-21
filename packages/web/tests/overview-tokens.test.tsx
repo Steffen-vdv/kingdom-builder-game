@@ -17,7 +17,8 @@ import type { OverviewTokenConfig } from '../src/components/overview/overviewTok
 describe('buildOverviewIconSet', () => {
 	const factory = createContentFactory();
 	const expandAction = factory.action({ id: 'expand', icon: '🚀' });
-	const developAction = factory.action({ id: 'develop', icon: '🏗️' });
+	const developActionId = 'develop_house';
+	const developAction = factory.action({ id: developActionId, icon: '🏗️' });
 	const councilRole = factory.population({ id: 'council', icon: '👑' });
 	const legionRole = factory.population({ id: 'legion', icon: '🛡️' });
 	const registries: SessionRegistries = {
@@ -109,7 +110,7 @@ describe('buildOverviewIconSet', () => {
 		const icons = result.current;
 
 		expect(icons.expand).toBe(expandAction.icon);
-		expect(icons.develop).toBe(developAction.icon);
+		expect(icons[developActionId]).toBe(developAction.icon);
 		expect(icons.growth).toBe('🌱');
 		expect(icons.upkeep).toBe('🧹');
 		expect(icons.gold).toBe('🪙');
