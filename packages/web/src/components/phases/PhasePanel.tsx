@@ -52,14 +52,35 @@ const phaseListItemClassName = [
 	'dark:data-[active=true]:bg-indigo-500/20 dark:data-[active=true]:text-white',
 ].join(' ');
 
-const phaseListItemContentClassName = ['flex w-full items-center gap-3'].join(
+const phaseListItemContentClassName = ['flex w-full items-center gap-4'].join(
 	' ',
 );
 
 const phaseListItemIndexClassName = [
-	'grid h-7 w-7 place-items-center rounded-xl border border-indigo-200/70',
-	'bg-indigo-50/80 text-[0.75rem] font-semibold text-indigo-700 shadow-sm',
-	'dark:border-indigo-300/40 dark:bg-indigo-500/20 dark:text-indigo-100',
+	'relative flex h-12 w-12 flex-none items-center justify-center',
+	'overflow-hidden rounded-2xl border border-indigo-200/70',
+	'bg-gradient-to-br from-white/90 via-indigo-50/80 to-indigo-100/60',
+	'text-indigo-700 shadow-inner dark:border-indigo-300/30',
+	'dark:from-slate-900/60 dark:via-indigo-900/40 dark:to-indigo-900/30',
+	'dark:text-indigo-100 data-[active=true]:border-indigo-400',
+	'data-[active=true]:from-indigo-200/80 data-[active=true]:to-indigo-300/70',
+	'dark:data-[active=true]:border-indigo-200/60',
+	'dark:data-[active=true]:from-indigo-500/40',
+	'dark:data-[active=true]:to-indigo-500/30',
+].join(' ');
+
+const phaseListItemIndexTextClassName = [
+	'flex flex-col items-center justify-center leading-none',
+].join(' ');
+
+const phaseListItemIndexStepClassName = [
+	'text-[0.5rem] font-semibold uppercase tracking-[0.45em]',
+	'text-indigo-500/80 dark:text-indigo-200/70',
+].join(' ');
+
+const phaseListItemIndexNumberClassName = [
+	'text-sm font-semibold tracking-[0.2em] text-indigo-700',
+	'dark:text-indigo-50',
 ].join(' ');
 
 const phaseListItemIconClassName = [
@@ -150,9 +171,17 @@ export default function PhasePanel() {
 								<span className={phaseListItemContentClassName}>
 									<span
 										className={phaseListItemIndexClassName}
+										data-active={isActive ? 'true' : 'false'}
 										aria-hidden="true"
 									>
-										{String(phaseIndex + 1).padStart(2, '0')}
+										<span className={phaseListItemIndexTextClassName}>
+											<span className={phaseListItemIndexStepClassName}>
+												Step
+											</span>
+											<span className={phaseListItemIndexNumberClassName}>
+												{String(phaseIndex + 1).padStart(2, '0')}
+											</span>
+										</span>
 									</span>
 									<span
 										className={phaseListItemIconClassName}
