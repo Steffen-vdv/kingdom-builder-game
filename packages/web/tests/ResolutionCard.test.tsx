@@ -167,7 +167,7 @@ describe('<ResolutionCard />', () => {
 				{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
 				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
 				{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
-				{ text: '🪄 Effect happens', depth: 1, kind: 'change' },
+				{ text: '🪄 Effect happens', depth: 1, kind: 'effect' },
 			],
 			visibleLines: [],
 		});
@@ -213,8 +213,8 @@ describe('<ResolutionCard />', () => {
 			{ text: '🪄 Channel the forge', depth: 1, kind: 'group' },
 			{ text: 'Gain 2 Relics', depth: 2, kind: 'effect' },
 			{ text: 'Summon guardian golem', depth: 3, kind: 'subaction' },
-			{ text: 'Army +1', depth: 4, kind: 'change' },
-			{ text: 'Fortification +1', depth: 4, kind: 'change' },
+			{ text: 'Army +1', depth: 4, kind: 'effect' },
+			{ text: 'Fortification +1', depth: 4, kind: 'effect' },
 		];
 		const resolution = createResolution({
 			action: {

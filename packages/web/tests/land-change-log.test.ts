@@ -128,12 +128,13 @@ describe('land change log formatting', () => {
 			formatIconLabel(landInfo.icon, landInfo.label) ||
 			landInfo.label ||
 			'Land';
-		const lines = diffStepSnapshots(
+		const diffResult = diffStepSnapshots(
 			before,
 			after,
 			undefined,
 			translationDiffContext,
 		);
+		const lines = diffResult.summaries;
 		const landLine = lines.find((line) => {
 			return line.startsWith(landLabel);
 		});
@@ -144,13 +145,13 @@ describe('land change log formatting', () => {
 		const previousCount = before.lands.length;
 		const expectedLine = `${landLabel} +1 (${previousCount}→${previousCount + 1})`;
 		expect(landLine).toBe(expectedLine);
-		const repeatLines = diffStepSnapshots(
+		const repeatDiff = diffStepSnapshots(
 			before,
 			after,
 			undefined,
 			translationDiffContext,
 		);
-		expect(repeatLines).toContain(expectedLine);
+		expect(repeatDiff.summaries).toContain(expectedLine);
 	});
 
 	it('logs developed entries for new land improvements', () => {
@@ -216,12 +217,13 @@ describe('land change log formatting', () => {
 			},
 		);
 		const translationDiffContext = diffContext;
-		const lines = diffStepSnapshots(
+		const diffResult = diffStepSnapshots(
 			before,
 			after,
 			undefined,
 			translationDiffContext,
 		);
+		const lines = diffResult.summaries;
 		const developmentLine = lines.find((line) => {
 			return line.startsWith(LOG_KEYWORDS.developed);
 		});
@@ -240,12 +242,12 @@ describe('land change log formatting', () => {
 			developmentLabel,
 		);
 		expect(developmentLine).toBe(expectedLine);
-		const repeatLines = diffStepSnapshots(
+		const repeatDiff = diffStepSnapshots(
 			before,
 			after,
 			undefined,
 			translationDiffContext,
 		);
-		expect(repeatLines).toContain(expectedLine);
+		expect(repeatDiff.summaries).toContain(expectedLine);
 	});
 });

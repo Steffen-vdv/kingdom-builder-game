@@ -99,7 +99,7 @@ beforeEach(() => {
 		{ text: '💲 Action cost', depth: 1, kind: 'cost' },
 		{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
 		{ text: '🪄 Empower the realm', depth: 1, kind: 'effect' },
-		{ text: 'Gain 2 Glory', depth: 2, kind: 'change' },
+		{ text: 'Gain 2 Glory', depth: 2, kind: 'effect' },
 	];
 	const resolution = createResolution({
 		action: { id: 'heroic-deed', name: 'Heroic Deed', icon: '🛡️' },

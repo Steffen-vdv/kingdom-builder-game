@@ -15,7 +15,6 @@ import {
 	buildActionLogTimeline,
 	formatActionLogLines,
 } from './actionLogFormat';
-import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 
 interface UseCompensationLoggerOptions {
 	sessionId: string;
@@ -50,7 +49,10 @@ export function useCompensationLogger({
 		if (sessionSnapshot.game.turn !== 1) {
 			return;
 		}
-		const { diffContext: baseDiffContext } = createSessionTranslationContext({
+		const {
+			diffContext: baseDiffContext,
+			translationContext: baseTranslationContext,
+		} = createSessionTranslationContext({
 			snapshot: sessionSnapshot,
 			ruleSnapshot: sessionSnapshot.rules,
 			passiveRecords: sessionSnapshot.passiveRecords,
@@ -99,24 +101,23 @@ export function useCompensationLogger({
 					id: player.id,
 				},
 			};
-			const lines = diffStepSnapshots(
+			const tieredResourceOptions = baseTranslationContext.rules
+				.tieredResourceKey
+				? { tieredResourceKey: baseTranslationContext.rules.tieredResourceKey }
+				: undefined;
+			const diffResult = diffStepSnapshots(
 				before,
 				after,
 				undefined,
 				diffContext,
 				resourceKeys,
+				tieredResourceOptions,
 			);
-			if (lines.length) {
+			if (diffResult.summaries.length) {
 				const headline = 'Last-player compensation';
-				const baseMessages = ensureTimelineLines([headline]);
-				const effectMessages: ActionLogLineDescriptor[] = lines.map((line) => ({
-					text: line,
-					depth: 1,
-					kind: 'effect',
-				}));
-				const messages = [...baseMessages, ...effectMessages];
-				const timeline = buildActionLogTimeline(messages, []);
-				const formattedLines = formatActionLogLines(messages, []);
+				const messages = ensureTimelineLines([headline]);
+				const timeline = buildActionLogTimeline(messages, diffResult.tree);
+				const formattedLines = formatActionLogLines(messages, diffResult.tree);
 				const source = {
 					kind: 'phase' as const,
 					label: 'Compensation',
@@ -125,7 +126,7 @@ export function useCompensationLogger({
 				const resolution = createResolutionLogSnapshot({
 					lines: formattedLines,
 					timeline,
-					summaries: [...lines],
+					summaries: [...diffResult.summaries],
 					source,
 					player: { id: player.id, name: player.name },
 				});

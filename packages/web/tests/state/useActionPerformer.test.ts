@@ -30,7 +30,9 @@ import {
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
 const logContentMock = vi.hoisted(() => vi.fn(() => []));
-const diffStepSnapshotsMock = vi.hoisted(() => vi.fn(() => []));
+const diffStepSnapshotsMock = vi.hoisted(() =>
+	vi.fn(() => ({ tree: [], summaries: [] })),
+);
 const performSessionActionMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../src/translation', () => ({
@@ -76,7 +78,7 @@ describe('useActionPerformer', () => {
 		vi.clearAllMocks();
 		performSessionActionMock.mockReset();
 		diffStepSnapshotsMock.mockReset();
-		diffStepSnapshotsMock.mockReturnValue([]);
+		diffStepSnapshotsMock.mockReturnValue({ tree: [], summaries: [] });
 		logContentMock.mockReset();
 		logContentMock.mockReturnValue([]);
 		snapshotPlayerMock.mockReset();
@@ -139,6 +141,7 @@ describe('useActionPerformer', () => {
 				actions: new Map([
 					[action.id, { icon: '⚔️', name: action.name, effects: [] }],
 				]),
+				rules: ruleSnapshot,
 			},
 			diffContext: {},
 		});
@@ -505,11 +508,12 @@ describe('useActionPerformer', () => {
 		createSessionTranslationContextMock.mockReturnValueOnce({
 			translationContext: {
 				actions: new Map([[action.id, { icon: '⚔️', name: action.name }]]),
+				rules: ruleSnapshot,
 			},
 			diffContext: {},
 		});
 		createSessionTranslationContextMock.mockReturnValueOnce({
-			translationContext: { actions: new Map() },
+			translationContext: { actions: new Map(), rules: ruleSnapshot },
 			diffContext: {},
 		});
 
@@ -555,7 +559,7 @@ describe('useActionPerformer', () => {
 						{
 							text: 'No detailed log available because the action definition was missing.',
 							depth: 1,
-							kind: 'change',
+							kind: 'effect',
 						},
 					],
 				}),
@@ -576,7 +580,7 @@ describe('useActionPerformer', () => {
 				{
 					text: 'No detailed log available because the action definition was missing.',
 					depth: 1,
-					kind: 'change',
+					kind: 'effect',
 				},
 			]);
 			expect(snapshot?.player).toEqual({

@@ -31,6 +31,7 @@ describe('appendSubActionChanges', () => {
 		resolveActionEffectsMock.mockReset();
 		snapshotPlayerMock.mockReset();
 		diffStepSnapshotsMock.mockReset();
+		diffStepSnapshotsMock.mockReturnValue({ tree: [], summaries: [] });
 	});
 
 	it('skips diff generation when the sub-action is missing from the translation context', () => {

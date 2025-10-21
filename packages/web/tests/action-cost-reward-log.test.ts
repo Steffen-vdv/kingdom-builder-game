@@ -23,6 +23,7 @@ import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
+import type { ActionDiffChange } from '../src/translation/log/diff';
 
 function asTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
@@ -58,6 +59,31 @@ function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
 	return snapshotPlayer(
 		snapshotEnginePlayer(engineContext, engineContext.activePlayer),
 	);
+}
+
+function filterChangeTree(
+	changes: readonly ActionDiffChange[],
+	allowed: Set<string>,
+): ActionDiffChange[] {
+	const filtered: ActionDiffChange[] = [];
+	for (const change of changes) {
+		const filteredChildren = change.children
+			? filterChangeTree(change.children, allowed)
+			: [];
+		if (allowed.has(change.summary)) {
+			const clone: ActionDiffChange = {
+				summary: change.summary,
+				...(change.meta ? { meta: { ...change.meta } } : {}),
+			};
+			if (filteredChildren.length) {
+				clone.children = filteredChildren;
+			}
+			filtered.push(clone);
+			continue;
+		}
+		filtered.push(...filteredChildren);
+	}
+	return filtered;
 }
 
 describe('action cost and reward logging', () => {
@@ -102,13 +128,14 @@ describe('action cost and reward logging', () => {
 		if (!actionDefinition) {
 			throw new Error('Missing refund action definition');
 		}
-		const changes = diffStepSnapshots(
+		const diffResult = diffStepSnapshots(
 			before,
 			after,
 			actionDefinition,
 			diffContext,
 			RESOURCE_KEYS,
 		);
+		const changes = diffResult.summaries;
 		const messages = asTimelineLines(
 			logContent('action', refundAction.id, engineContext),
 		);
@@ -142,7 +169,8 @@ describe('action cost and reward logging', () => {
 			messages,
 			subLines: [],
 		});
-		const logLines = formatActionLogLines(messages, filtered);
+		const filteredTree = filterChangeTree(diffResult.tree, new Set(filtered));
+		const logLines = formatActionLogLines(messages, filteredTree);
 		const coinInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const coinCost = costs[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		expect(logLines).toContain('• 💲 Action cost');

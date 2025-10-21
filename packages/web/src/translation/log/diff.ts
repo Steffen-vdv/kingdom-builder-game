@@ -11,54 +11,147 @@ import { appendPassiveChanges } from './passiveChanges';
 import { collectResourceKeys, type PlayerSnapshot } from './snapshots';
 import { type StepEffects } from './statBreakdown';
 
+export interface ActionDiffChange {
+	summary: string;
+	children?: ActionDiffChange[];
+	meta?: {
+		resourceKey?: string;
+	};
+}
+
+export interface FlattenedActionDiffChange {
+	readonly change: ActionDiffChange;
+	readonly depth: number;
+}
+
+export interface DiffStepSnapshotsOptions {
+	tieredResourceKey?: string;
+}
+
+export interface DiffStepSnapshotsResult {
+	tree: ActionDiffChange[];
+	summaries: string[];
+}
+
+export function flattenActionDiffChanges(
+	changes: readonly ActionDiffChange[],
+	depth = 1,
+): FlattenedActionDiffChange[] {
+	const flattened: FlattenedActionDiffChange[] = [];
+	for (const change of changes) {
+		flattened.push({ change, depth });
+		if (change.children && change.children.length > 0) {
+			flattened.push(...flattenActionDiffChanges(change.children, depth + 1));
+		}
+	}
+	return flattened;
+}
+
+function createChangeNode(summary: string): ActionDiffChange {
+	return { summary };
+}
+
 export function diffStepSnapshots(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
 	stepEffects: StepEffects,
 	diffContext: TranslationDiffContext,
 	resourceKeys: string[] = collectResourceKeys(previousSnapshot, nextSnapshot),
-): string[] {
-	const changeSummaries: string[] = [];
+	options: DiffStepSnapshotsOptions = {},
+): DiffStepSnapshotsResult {
+	const changeTree: ActionDiffChange[] = [];
+	const summarySet = new Set<string>();
 	const sources = collectResourceSources(stepEffects, diffContext);
-	appendResourceChanges(
-		changeSummaries,
+	const resourceNodes = new Map<string, ActionDiffChange>();
+
+	const resourceChanges = appendResourceChanges(
 		previousSnapshot,
 		nextSnapshot,
 		resourceKeys,
 		diffContext.assets,
 		sources,
+		{ trackByKey: resourceNodes },
 	);
+	for (const change of resourceChanges) {
+		changeTree.push(change);
+		summarySet.add(change.summary);
+	}
+
+	const statChanges: string[] = [];
 	appendStatChanges(
-		changeSummaries,
+		statChanges,
 		previousSnapshot,
 		nextSnapshot,
 		nextSnapshot,
 		stepEffects,
 		diffContext.assets,
 	);
+	for (const summary of statChanges) {
+		if (!summary || !summary.trim()) {
+			continue;
+		}
+		changeTree.push(createChangeNode(summary));
+		summarySet.add(summary);
+	}
+
+	const buildingChanges: string[] = [];
 	appendBuildingChanges(
-		changeSummaries,
+		buildingChanges,
 		previousSnapshot,
 		nextSnapshot,
 		diffContext,
 	);
-	appendLandChanges(
-		changeSummaries,
-		previousSnapshot,
-		nextSnapshot,
-		diffContext,
-	);
+	for (const summary of buildingChanges) {
+		if (!summary || !summary.trim()) {
+			continue;
+		}
+		changeTree.push(createChangeNode(summary));
+		summarySet.add(summary);
+	}
+
+	const landChanges: string[] = [];
+	appendLandChanges(landChanges, previousSnapshot, nextSnapshot, diffContext);
+	for (const summary of landChanges) {
+		if (!summary || !summary.trim()) {
+			continue;
+		}
+		changeTree.push(createChangeNode(summary));
+		summarySet.add(summary);
+	}
+
+	const slotChanges: string[] = [];
 	appendSlotChanges(
-		changeSummaries,
+		slotChanges,
 		previousSnapshot,
 		nextSnapshot,
 		diffContext.assets,
 	);
-	appendPassiveChanges(
-		changeSummaries,
+	for (const summary of slotChanges) {
+		if (!summary || !summary.trim()) {
+			continue;
+		}
+		changeTree.push(createChangeNode(summary));
+		summarySet.add(summary);
+	}
+
+	const passiveOptions = {
+		resourceNodes,
+		existingSummaries: summarySet,
+		...(options.tieredResourceKey
+			? { tieredResourceKey: options.tieredResourceKey }
+			: {}),
+	};
+	const passiveChanges = appendPassiveChanges(
 		previousSnapshot,
 		nextSnapshot,
 		diffContext.assets,
+		passiveOptions,
 	);
-	return changeSummaries;
+	for (const change of passiveChanges) {
+		changeTree.push(change);
+	}
+
+	const flattened = flattenActionDiffChanges(changeTree);
+	const summaries = flattened.map(({ change }) => change.summary);
+	return { tree: changeTree, summaries };
 }
