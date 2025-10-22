@@ -206,6 +206,7 @@ export function createLocalSessionGateway(
 			const rawCosts = session.getActionCosts(
 				request.actionId,
 				params as never,
+				request.playerId,
 			);
 			const costs: Record<string, number> = {};
 			for (const [resourceKey, amount] of Object.entries(rawCosts)) {
@@ -226,6 +227,7 @@ export function createLocalSessionGateway(
 			const requirements = session.getActionRequirements(
 				request.actionId,
 				params as never,
+				request.playerId,
 			);
 			return Promise.resolve({
 				sessionId,

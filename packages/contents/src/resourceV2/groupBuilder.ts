@@ -2,16 +2,11 @@ import type { ResourceV2GroupDefinition, ResourceV2GroupParent } from './types';
 
 const builderName = 'ResourceV2 group builder';
 
-type ParentMetadata = Pick<
-	ResourceV2GroupParent,
-	'id' | 'label' | 'icon' | 'description'
->;
+type ParentMetadata = Pick<ResourceV2GroupParent, 'id' | 'label' | 'icon' | 'description'>;
 
 function assertInteger(value: number, field: 'order') {
 	if (!Number.isInteger(value)) {
-		throw new Error(
-			`${builderName} expected ${field} to be an integer but received ${value}.`,
-		);
+		throw new Error(`${builderName} expected ${field} to be an integer but received ${value}.`);
 	}
 }
 
@@ -37,9 +32,7 @@ class ResourceGroupBuilderImpl implements ResourceGroupBuilder {
 
 	order(order: number) {
 		if (this.orderSet) {
-			throw new Error(
-				`${builderName} already has order() set. Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already has order() set. Remove the duplicate call.`);
 		}
 		assertInteger(order, 'order');
 		this.definition.order = order;
@@ -49,9 +42,7 @@ class ResourceGroupBuilderImpl implements ResourceGroupBuilder {
 
 	parent(metadata: ParentMetadata) {
 		if (this.parentSet) {
-			throw new Error(
-				`${builderName} already has parent() set. Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already has parent() set. Remove the duplicate call.`);
 		}
 		if (!metadata?.id) {
 			throw new Error(`${builderName} parent() requires a non-empty id.`);
@@ -64,9 +55,7 @@ class ResourceGroupBuilderImpl implements ResourceGroupBuilder {
 		}
 
 		const { id, label, icon, description } = metadata;
-		this.definition.parent = description
-			? { id, label, icon, description }
-			: { id, label, icon };
+		this.definition.parent = description ? { id, label, icon, description } : { id, label, icon };
 		this.parentSet = true;
 		return this;
 	}

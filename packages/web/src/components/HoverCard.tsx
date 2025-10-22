@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
 import {
@@ -25,7 +25,11 @@ export default function HoverCard() {
 		actionCostResource,
 		resolution: actionResolution,
 		acknowledgeResolution,
+		sessionSnapshot,
+		phase,
+		requests,
 	} = useGameEngine();
+	const { advancePhase } = requests;
 	const shouldSuppressHoverCards = Boolean(
 		actionResolution &&
 			(!actionResolution.requireAcknowledgement ||
@@ -102,6 +106,69 @@ export default function HoverCard() {
 		[],
 	);
 
+	const shouldShowNextTurn = useMemo(() => {
+		if (!actionResolution) {
+			return false;
+		}
+		if (!actionResolution.requireAcknowledgement) {
+			return false;
+		}
+		const source = actionResolution.source;
+		const sourceKind =
+			typeof source === 'string'
+				? source
+				: source && typeof source === 'object'
+					? source.kind
+					: null;
+		const isActionSource =
+			sourceKind === 'action' || Boolean(actionResolution.action);
+		if (!isActionSource) {
+			return false;
+		}
+		if (!phase.isActionPhase || phase.isAdvancing) {
+			return false;
+		}
+		if (sessionSnapshot.game.conclusion) {
+			return false;
+		}
+		const activePlayerId =
+			phase.activePlayerId ?? actionResolution.player?.id ?? null;
+		if (!activePlayerId) {
+			return false;
+		}
+		const activePlayer = sessionSnapshot.game.players.find(
+			(player) => player.id === activePlayerId,
+		);
+		if (!activePlayer) {
+			return false;
+		}
+		const remainingActions = activePlayer.resources?.[actionCostResource] ?? 0;
+		if (remainingActions > 0) {
+			return false;
+		}
+		const isAiControlled = Boolean(activePlayer.aiControlled);
+		if (!isAiControlled && !phase.canEndTurn) {
+			return false;
+		}
+		return true;
+	}, [
+		actionResolution,
+		actionCostResource,
+		phase.activePlayerId,
+		phase.canEndTurn,
+		phase.isActionPhase,
+		phase.isAdvancing,
+		sessionSnapshot.game.conclusion,
+		sessionSnapshot.game.players,
+	]);
+
+	const handleActiveResolutionContinue = useCallback(() => {
+		acknowledgeResolution();
+		if (shouldShowNextTurn) {
+			void advancePhase();
+		}
+	}, [acknowledgeResolution, advancePhase, shouldShowNextTurn]);
+
 	const resolutionTitle =
 		data?.title ?? renderedData?.title ?? 'Action Resolution';
 	if (actionResolution && !data) {
@@ -109,7 +176,8 @@ export default function HoverCard() {
 			<ResolutionCard
 				title={resolutionTitle}
 				resolution={actionResolution}
-				onContinue={acknowledgeResolution}
+				onContinue={handleActiveResolutionContinue}
+				continueMode={shouldShowNextTurn ? 'next-turn' : 'continue'}
 			/>
 		);
 	}

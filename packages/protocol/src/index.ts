@@ -1,5 +1,19 @@
 export * as session from './session';
 export * as actions from './actions';
+export * as resourceV2 from './resource-v2';
+
+export type {
+	ResourceV2Bounds,
+	ResourceV2Definition,
+	ResourceV2GlobalCostConfig,
+	ResourceV2GroupDefinition,
+	ResourceV2GroupParent,
+	ResourceV2Metadata,
+	ResourceV2TierDefinition,
+	ResourceV2TierThreshold,
+	ResourceV2TierTrack,
+	ResourceV2TierTrackMetadata,
+} from './resource-v2';
 
 export { Registry } from './registry';
 export type { StepDef, PhaseDef } from './phases';

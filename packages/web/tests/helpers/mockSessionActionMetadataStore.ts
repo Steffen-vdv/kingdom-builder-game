@@ -4,6 +4,7 @@ import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
+	SessionPlayerId,
 } from '@kingdom-builder/protocol/session';
 import type { SessionActionMetadataSnapshot } from '../../src/state/sessionTypes';
 import { createMetadataKey } from '../../src/state/actionMetadataKey';
@@ -37,7 +38,8 @@ const toKey = (
 	sessionId: string,
 	actionId: string,
 	params: ActionParametersPayload | undefined,
-) => `${sessionId}:${createMetadataKey(actionId, params)}`;
+	playerId: SessionPlayerId | undefined,
+) => `${sessionId}:${createMetadataKey(actionId, params, playerId)}`;
 
 const emitSnapshot = (key: string, snapshot: SessionActionMetadataSnapshot) => {
 	const listeners = metadataListeners.get(key);
@@ -61,8 +63,13 @@ const upsertSnapshot = (
 };
 
 const readSessionActionMetadataMock = vi.fn(
-	(sessionId: string, actionId: string, params?: ActionParametersPayload) => {
-		const key = toKey(sessionId, actionId, params);
+	(
+		sessionId: string,
+		actionId: string,
+		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
+	) => {
+		const key = toKey(sessionId, actionId, params, playerId);
 		const snapshot = metadataStore.get(key);
 		if (!snapshot) {
 			return {};
@@ -76,9 +83,10 @@ const subscribeSessionActionMetadataMock = vi.fn(
 		sessionId: string,
 		actionId: string,
 		params: ActionParametersPayload | undefined,
+		playerId: SessionPlayerId | undefined,
 		listener: MetadataListener,
 	) => {
-		const key = toKey(sessionId, actionId, params);
+		const key = toKey(sessionId, actionId, params, playerId);
 		let listeners = metadataListeners.get(key);
 		if (!listeners) {
 			listeners = new Set();
@@ -104,8 +112,9 @@ const setSessionActionCostsMock = vi.fn(
 		actionId: string,
 		costs: SessionActionCostMap,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	) => {
-		const key = toKey(sessionId, actionId, params);
+		const key = toKey(sessionId, actionId, params, playerId);
 		upsertSnapshot(key, (snapshot) => {
 			snapshot.costs = cloneValue(costs);
 		});
@@ -118,8 +127,9 @@ const setSessionActionRequirementsMock = vi.fn(
 		actionId: string,
 		requirements: SessionActionRequirementList,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	) => {
-		const key = toKey(sessionId, actionId, params);
+		const key = toKey(sessionId, actionId, params, playerId);
 		upsertSnapshot(key, (snapshot) => {
 			snapshot.requirements = cloneValue(requirements);
 		});
@@ -142,7 +152,7 @@ const setSessionActionOptionsMock = vi.fn(
 		if (handled) {
 			return;
 		}
-		const key = toKey(sessionId, actionId, undefined);
+		const key = toKey(sessionId, actionId, undefined, undefined);
 		upsertSnapshot(key, (snapshot) => {
 			snapshot.groups = cloneValue(groups);
 		});
@@ -164,9 +174,16 @@ export function seedSessionActionMetadata(
 	actionId: string,
 	snapshot: SessionActionMetadataSnapshot,
 	params?: ActionParametersPayload,
+	playerId?: SessionPlayerId,
 ): void {
 	if (snapshot.costs) {
-		setSessionActionCostsMock(sessionId, actionId, snapshot.costs, params);
+		setSessionActionCostsMock(
+			sessionId,
+			actionId,
+			snapshot.costs,
+			params,
+			playerId,
+		);
 	}
 	if (snapshot.requirements) {
 		setSessionActionRequirementsMock(
@@ -174,6 +191,7 @@ export function seedSessionActionMetadata(
 			actionId,
 			snapshot.requirements,
 			params,
+			playerId,
 		);
 	}
 	if (snapshot.groups) {
@@ -186,27 +204,43 @@ vi.mock('../../src/state/sessionActionMetadataStore', () => ({
 		sessionId: string,
 		actionId: string,
 		params?: ActionParametersPayload,
-	) => readSessionActionMetadataMock(sessionId, actionId, params),
+		playerId?: SessionPlayerId,
+	) => readSessionActionMetadataMock(sessionId, actionId, params, playerId),
 	subscribeSessionActionMetadata: (
 		sessionId: string,
 		actionId: string,
 		params: ActionParametersPayload | undefined,
+		playerId: SessionPlayerId | undefined,
 		listener: MetadataListener,
 	) =>
-		subscribeSessionActionMetadataMock(sessionId, actionId, params, listener),
+		subscribeSessionActionMetadataMock(
+			sessionId,
+			actionId,
+			params,
+			playerId,
+			listener,
+		),
 	setSessionActionCosts: (
 		sessionId: string,
 		actionId: string,
 		costs: SessionActionCostMap,
 		params?: ActionParametersPayload,
-	) => setSessionActionCostsMock(sessionId, actionId, costs, params),
+		playerId?: SessionPlayerId,
+	) => setSessionActionCostsMock(sessionId, actionId, costs, params, playerId),
 	setSessionActionRequirements: (
 		sessionId: string,
 		actionId: string,
 		requirements: SessionActionRequirementList,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	) =>
-		setSessionActionRequirementsMock(sessionId, actionId, requirements, params),
+		setSessionActionRequirementsMock(
+			sessionId,
+			actionId,
+			requirements,
+			params,
+			playerId,
+		),
 	setSessionActionOptions: (
 		sessionId: string,
 		actionId: string,

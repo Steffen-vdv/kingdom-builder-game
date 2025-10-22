@@ -47,9 +47,7 @@ export interface ResourceV2TierTrack {
 	tiers: readonly ResourceV2TierDefinition[];
 }
 
-export interface ResourceV2Definition
-	extends ResourceV2Metadata,
-		ResourceV2Bounds {
+export interface ResourceV2Definition extends ResourceV2Metadata, ResourceV2Bounds {
 	displayAsPercent?: boolean;
 	trackValueBreakdown?: boolean;
 	trackBoundBreakdown?: boolean;
@@ -59,9 +57,7 @@ export interface ResourceV2Definition
 	tierTrack?: ResourceV2TierTrack;
 }
 
-export interface ResourceV2GroupParent
-	extends ResourceV2Metadata,
-		ResourceV2Bounds {
+export interface ResourceV2GroupParent extends ResourceV2Metadata, ResourceV2Bounds {
 	displayAsPercent?: boolean;
 	trackValueBreakdown?: boolean;
 	trackBoundBreakdown?: boolean;

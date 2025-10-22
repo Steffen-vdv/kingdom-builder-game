@@ -3,8 +3,7 @@ import { PHASES, PhaseId } from './phases';
 const phaseTriggers = Object.fromEntries(
 	PHASES.map((phaseDefinition) => {
 		const phaseId = phaseDefinition.id;
-		const capitalizedPhaseId =
-			phaseId.charAt(0).toUpperCase() + phaseId.slice(1);
+		const capitalizedPhaseId = phaseId.charAt(0).toUpperCase() + phaseId.slice(1);
 		return [
 			`on${capitalizedPhaseId}Phase`,
 			{
@@ -48,14 +47,9 @@ export const TRIGGER_INFO = {
 		past: 'AP step',
 	},
 	mainPhase: {
-		icon:
-			PHASES.find((phaseDefinition) => phaseDefinition.id === PhaseId.Main)
-				?.icon || '🎯',
+		icon: PHASES.find((phaseDefinition) => phaseDefinition.id === PhaseId.Main)?.icon || '🎯',
 		future: '',
-		past: `${
-			PHASES.find((phaseDefinition) => phaseDefinition.id === PhaseId.Main)
-				?.label || 'Main'
-		} phase`,
+		past: `${PHASES.find((phaseDefinition) => phaseDefinition.id === PhaseId.Main)?.label || 'Main'} phase`,
 	},
 	...phaseTriggers,
 } as const;
