@@ -49,6 +49,12 @@ Maintain a running list of important updates. Use subheadings with timestamps.
 - Placeholder: replace with summary when real work starts.
 - Recommended first migration target: **Absorption** (selected for its limited integrations and low risk while still covering stat-specific behaviours).
 
+### 2024-**-** – MVP scope alignment
+
+- MVP delivery is limited to clamp-based reconciliation, parented ResourceGroups, mandatory add/remove/transfer/upper-bound increase effects, percent modifiers, the hook-suppression escape hatch, a single global action cost resource, unified HUD/translations, and signed gain/loss logging (Option A). All other features stay on the backlog for later phases.
+- Deferred items (value/bound breakdown capture, additional bound adjusters, Pass/Reject reconciliation, parentless groups, bound-decrease effects, comprehensive validators, tier-based shortfall replacement, extra global cost resources) are tracked in [Deferred (Post-MVP) Work](../pre-production/project-outline.md#5-deferred-post-mvp-work). Do not reintroduce these during daily task triage.
+- Phase summaries must log both gains and losses in `recentResourceGains` (Option A) so stakeholders can audit negative swings without waiting for the backlog enhancements.
+
 ## 6. Intended Temporary Regressions
 
 Track deliberate breakages created by migration steps so nobody “fixes” them prematurely.
