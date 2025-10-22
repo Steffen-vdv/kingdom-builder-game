@@ -39,24 +39,9 @@ export { ActionBuilder, ActionCategoryBuilder, BaseBuilder, BuildingBuilder, Dev
 // ResourceV2 builders intentionally expose only clamp reconciliation helpers
 // during the MVP. Downstream content should continue to call the legacy
 // builders for non-migrated tracks.
-export {
-	resourceV2,
-	resourceV2Add,
-	resourceV2LowerBoundDecrease,
-	resourceV2LowerBoundIncrease,
-	resourceV2Remove,
-	resourceV2TierTrack,
-	resourceV2Transfer,
-	resourceV2UpperBoundIncrease,
-};
+export { resourceV2, resourceV2Add, resourceV2LowerBoundDecrease, resourceV2LowerBoundIncrease, resourceV2Remove, resourceV2TierTrack, resourceV2Transfer, resourceV2UpperBoundIncrease };
 
-export type {
-	ResourceV2BoundAdjustmentDefinition,
-	ResourceV2Definition,
-	ResourceV2TierTrack,
-	ResourceV2TransferEffectDefinition,
-	ResourceV2ValueEffectDefinition,
-};
+export type { ResourceV2BoundAdjustmentDefinition, ResourceV2Definition, ResourceV2TierTrack, ResourceV2TransferEffectDefinition, ResourceV2ValueEffectDefinition };
 
 export {
 	CompareRequirementBuilder,

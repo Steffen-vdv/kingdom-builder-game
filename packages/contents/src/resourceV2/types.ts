@@ -47,16 +47,12 @@ export interface ResourceV2TierTrack {
 	display?: ResourceV2TierTrackDisplay;
 }
 
-export interface ResourceV2GroupParentMetadata
-	extends ResourceV2DisplayMetadata {
+export interface ResourceV2GroupParentMetadata extends ResourceV2DisplayMetadata {
 	id: string;
 	limited: true;
 }
 
-export type ResourceV2GroupParentInput = Omit<
-	ResourceV2GroupParentMetadata,
-	'limited'
-> & {
+export type ResourceV2GroupParentInput = Omit<ResourceV2GroupParentMetadata, 'limited'> & {
 	limited?: boolean;
 };
 

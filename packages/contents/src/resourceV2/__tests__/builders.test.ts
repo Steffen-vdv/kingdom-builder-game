@@ -1,21 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-	resourceV2,
-	resourceV2TierTrack,
-	resourceV2Add,
-	resourceV2LowerBoundDecrease,
-	resourceV2Remove,
-	resourceV2Transfer,
-	resourceV2UpperBoundIncrease,
-} from '../builders';
+import { resourceV2, resourceV2TierTrack, resourceV2Add, resourceV2LowerBoundDecrease, resourceV2Remove, resourceV2Transfer, resourceV2UpperBoundIncrease } from '../builders';
 
-import {
-	ResourceV2ReconciliationStrategy,
-	type ResourceV2Definition,
-	type ResourceV2TransferEffectDefinition,
-	type ResourceV2ValueEffectDefinition,
-} from '../types';
+import { ResourceV2ReconciliationStrategy, type ResourceV2Definition, type ResourceV2TransferEffectDefinition, type ResourceV2ValueEffectDefinition } from '../types';
 
 describe('ResourceV2 builders', () => {
 	it('builds a resource definition with tier track and group parent', () => {
@@ -83,15 +70,9 @@ describe('ResourceV2 builders', () => {
 
 	it('prevents configuring more than one tier track', () => {
 		const builder = resourceV2('absorption');
-		builder.tierTrack(
-			resourceV2TierTrack('first').step({ id: 'one', min: 0 }).build(),
-		);
+		builder.tierTrack(resourceV2TierTrack('first').step({ id: 'one', min: 0 }).build());
 
-		expect(() =>
-			builder.tierTrack(
-				resourceV2TierTrack('second').step({ id: 'two', min: 5 }).build(),
-			),
-		).toThrowError('single tier track');
+		expect(() => builder.tierTrack(resourceV2TierTrack('second').step({ id: 'two', min: 5 }).build())).toThrowError('single tier track');
 	});
 
 	it('surfaces hook suppression flags through effect helpers', () => {
@@ -124,18 +105,12 @@ describe('ResourceV2 builders', () => {
 			recipient: { resourceId: 'focus' },
 		});
 
-		expect(transfer.donor.reconciliation).toBe(
-			ResourceV2ReconciliationStrategy.Clamp,
-		);
-		expect(transfer.recipient.reconciliation).toBe(
-			ResourceV2ReconciliationStrategy.Clamp,
-		);
+		expect(transfer.donor.reconciliation).toBe(ResourceV2ReconciliationStrategy.Clamp);
+		expect(transfer.recipient.reconciliation).toBe(ResourceV2ReconciliationStrategy.Clamp);
 	});
 
 	it('blocks unsupported lower-bound decreases while allowing upper-bound increases', () => {
-		expect(() => resourceV2LowerBoundDecrease()).toThrowError(
-			'lower-bound decrease',
-		);
+		expect(() => resourceV2LowerBoundDecrease()).toThrowError('lower-bound decrease');
 
 		expect(() =>
 			resourceV2UpperBoundIncrease({
