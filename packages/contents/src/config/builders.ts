@@ -52,6 +52,10 @@ export {
 	developmentEvaluator,
 	landEvaluator,
 	effect,
+	resourceAddEffect,
+	resourceRemoveEffect,
+	resourceTransferEffect,
+	resourceUpperBoundIncreaseEffect,
 	populationEvaluator,
 	requirement,
 	statAddEffect,
@@ -67,7 +71,21 @@ export {
 	actionEffectGroupOptionParams,
 } from './builders/actionEffectGroups';
 
-export { actionParams, buildingParams, developmentParams, landParams, passiveParams, resourceParams, statParams } from './builders/effectParams';
+export {
+	actionParams,
+	buildingParams,
+	developmentParams,
+	landParams,
+	passiveParams,
+	resourceParams,
+	resourceV2ValueParams,
+	resourceV2TransferParams,
+	resourceV2UpperBoundParams,
+	statParams,
+	ResourceV2ValueEffectParamsBuilder,
+	ResourceV2TransferEffectParamsBuilder,
+	ResourceV2UpperBoundEffectParamsBuilder,
+} from './builders/effectParams';
 
 export {
 	AttackParamsBuilder,
