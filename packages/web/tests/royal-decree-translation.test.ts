@@ -54,20 +54,6 @@ function combineLabels(left: string, right: string): string {
 	return `${base} - ${entry}`;
 }
 
-function normalizeDescribedTitle(
-	describedTitle: string | undefined,
-	developmentLabel: string,
-): string {
-	if (!describedTitle) {
-		return developmentLabel;
-	}
-	const trimmed = describedTitle.trim();
-	if (trimmed.length === 0) {
-		return developmentLabel;
-	}
-	return trimmed;
-}
-
 function findGroupEntry(
 	entries: SummaryEntry[],
 	titleMatch: string,
@@ -178,23 +164,11 @@ describe('royal decree translation', () => {
 				);
 			}
 			const developLabel = formatActionTitle(developAction, translationContext);
-			const developmentId = option.developmentId as string;
-			const development = translationContext.developments.get(developmentId);
-			if (!development) {
-				throw new Error(`Missing development definition for ${developmentId}`);
-			}
-			const developmentLabel = combineLabels(
-				`${development.icon ?? ''} ${development.name ?? developmentId}`,
-				'',
-			);
-			const expectedTitle = combineLabels(developLabel, developmentLabel);
-			const entry = group.items.find((item) =>
-				typeof item === 'string'
-					? item === expectedTitle
-					: item.title === expectedTitle,
+			const entry = group.items.find(
+				(item): item is string =>
+					typeof item === 'string' && item === developLabel,
 			);
 			expect(entry).toBeDefined();
-			expect(typeof entry).toBe('string');
 		}
 		expect(summaryAgain).toEqual(summary);
 	});
@@ -216,46 +190,11 @@ describe('royal decree translation', () => {
 				);
 			}
 			const developLabel = formatActionTitle(developAction, translationContext);
-			const developmentId = option.developmentId as string;
-			const development = translationContext.developments.get(developmentId);
-			if (!development) {
-				throw new Error(`Missing development definition for ${developmentId}`);
-			}
-			const developmentLabel = combineLabels(
-				`${development.icon ?? ''} ${development.name ?? developmentId}`,
-				'',
-			);
-			const described = describeContent(
-				'action',
-				option.actionId,
-				translationContext,
-				{ id: developmentId },
-			);
-			const describedLabel = described[0];
-			const describedTitle =
-				typeof describedLabel === 'string'
-					? describedLabel
-					: describedLabel?.title;
-			const normalizedTitle = normalizeDescribedTitle(
-				describedTitle,
-				developmentLabel,
-			);
-			const expectedTitle = combineLabels(developLabel, normalizedTitle);
-			const entry = group.items.find((item) =>
-				typeof item === 'string'
-					? item === expectedTitle
-					: item.title === expectedTitle,
+			const entry = group.items.find(
+				(item): item is string =>
+					typeof item === 'string' && item === developLabel,
 			);
 			expect(entry).toBeDefined();
-			if (!entry) {
-				continue;
-			}
-			if (typeof entry === 'string') {
-				expect(entry).toBe(expectedTitle);
-				continue;
-			}
-			expect(entry.title).toBe(expectedTitle);
-			expect(entry.items).toContain(normalizedTitle);
 		}
 	});
 

@@ -9,6 +9,7 @@ import {
 	createSyntheticFestivalScenario,
 	getSyntheticFestivalDetails,
 } from './fixtures/syntheticFestival';
+import { formatActionTitle } from '../src/translation/formatActionTitle';
 
 const sign = (n: number) => (n >= 0 ? '+' : '');
 
@@ -67,6 +68,11 @@ describe('hold festival action translation', () => {
 		const { translation, festivalActionId } = scenario;
 		const log = logContent('action', festivalActionId, translation);
 		const details = getSyntheticFestivalDetails(scenario);
+		const definition = translation.actions.get(festivalActionId);
+		if (!definition) {
+			throw new Error('Missing hold festival action definition');
+		}
+		const actionHeadline = formatActionTitle(definition, translation);
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
@@ -83,7 +89,7 @@ describe('hold festival action translation', () => {
 			);
 		expect(log).toEqual([
 			{
-				text: `Action - ${details.festival.icon} ${details.festival.name}`,
+				text: actionHeadline,
 				depth: 0,
 				kind: 'headline',
 			},

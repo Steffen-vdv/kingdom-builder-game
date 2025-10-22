@@ -38,7 +38,6 @@ const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
-const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
 
 function extractLeadingIcon(value: string | undefined) {
 	if (!value) {
@@ -135,28 +134,19 @@ function ResolutionCard({
 	const fallbackIcon = extractLeadingIcon(leadingLine);
 	const actionIcon =
 		resolution.action?.icon?.trim() || sourceIcon || fallbackIcon;
-	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
-	const normalizedResolvedTitle = resolvedLabels.title
-		.trim()
-		.toLocaleLowerCase();
-	const normalizedHeaderSubject = actorHeaderSubject
-		?.trim()
-		.toLocaleLowerCase();
-	let headerTitle = actorHeaderSubject
-		? normalizedHeaderSubject &&
-			normalizedHeaderSubject !== normalizedResolvedTitle
-			? `${resolvedLabels.title} - ${actorHeaderSubject}`
-			: actorHeaderSubject
-		: defaultTitle;
+	const resolutionLabelBase =
+		resolvedSourceKind === 'phase'
+			? SOURCE_LABELS.phase.title
+			: resolvedLabels.title;
+	const resolutionLabel = `${resolutionLabelBase} Resolution`;
+	const defaultTitle = title ?? resolutionLabel;
+	let headerTitle = actorHeaderSubject || defaultTitle;
 	if (resolvedSourceKind === 'phase') {
 		const sanitizedPhaseSubject = (actorHeaderSubject || '')
 			.replace(LEADING_EMOJI_PATTERN, '')
-			.replace(TRAILING_PHASE_PATTERN, '')
 			.replace(/\s{2,}/g, ' ')
 			.trim();
-		headerTitle = sanitizedPhaseSubject
-			? `${SOURCE_LABELS.phase.title} - ${sanitizedPhaseSubject}`
-			: `${SOURCE_LABELS.phase.title} resolution`;
+		headerTitle = sanitizedPhaseSubject || defaultTitle;
 	}
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
@@ -284,7 +274,7 @@ function ResolutionCard({
 					) : null}
 					<div className="flex flex-1 items-start justify-between gap-4">
 						<div className="space-y-1">
-							<div className={headerLabelClass}>Resolution</div>
+							<div className={headerLabelClass}>{resolutionLabel}</div>
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
 						</div>
 						{resolution.player ? (

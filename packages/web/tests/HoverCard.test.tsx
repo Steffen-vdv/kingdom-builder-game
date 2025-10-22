@@ -23,18 +23,15 @@ import { createContentFactory } from '@kingdom-builder/testing';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
-const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
-
 function resolvePhaseHeader(label: string | undefined) {
 	if (!label) {
-		return 'Phase resolution';
+		return 'Phase Resolution';
 	}
 	const sanitized = label
 		.replace(LEADING_EMOJI_PATTERN, '')
-		.replace(TRAILING_PHASE_PATTERN, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	return sanitized ? `Phase - ${sanitized}` : 'Phase resolution';
+	return sanitized || 'Phase Resolution';
 }
 
 interface HoverCardScenario {

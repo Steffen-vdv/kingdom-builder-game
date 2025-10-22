@@ -59,13 +59,17 @@ function formatActionTitle(
 	definition: ActionTitleDefinition,
 	context: TranslationContext,
 ): string {
-	const segments: string[] = ['Action'];
+	const segments: string[] = [];
 	const categoryLabel = resolveCategoryLabel(definition, context);
 	if (categoryLabel) {
-		segments.push('-', categoryLabel);
+		segments.push(categoryLabel);
 	}
 	const actionLabel = resolveActionLabel(definition);
-	segments.push('-', actionLabel);
+	if (segments.length > 0) {
+		segments.push('-', actionLabel);
+	} else {
+		segments.push(actionLabel);
+	}
 	return segments.join(' ').replace(/\s+/g, ' ').trim();
 }
 

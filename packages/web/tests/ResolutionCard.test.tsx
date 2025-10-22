@@ -9,18 +9,15 @@ import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
-const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
-
 function resolvePhaseHeader(label: string | undefined) {
 	if (!label) {
-		return 'Phase resolution';
+		return 'Phase Resolution';
 	}
 	const sanitized = label
 		.replace(LEADING_EMOJI_PATTERN, '')
-		.replace(TRAILING_PHASE_PATTERN, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	return sanitized ? `Phase - ${sanitized}` : 'Phase resolution';
+	return sanitized || 'Phase Resolution';
 }
 
 function createResolution(
@@ -43,7 +40,7 @@ describe('<ResolutionCard />', () => {
 		cleanup();
 	});
 	it('shows labels for action-based resolutions', () => {
-		const formattedName = 'Action - ⚙️ Basic - ⚔️ Test Action';
+		const formattedName = '⚙️ Basic - ⚔️ Test Action';
 		const resolution = createResolution({
 			action: {
 				id: 'action-id',
@@ -72,6 +69,7 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
+		expect(screen.getByText('Action Resolution')).toBeInTheDocument();
 		const header = screen.getByText((content) =>
 			content.includes(formattedName),
 		);
@@ -96,6 +94,7 @@ describe('<ResolutionCard />', () => {
 
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
+		expect(screen.getByText('Phase Resolution')).toBeInTheDocument();
 		const expectedHeader = resolvePhaseHeader(resolution.source.label);
 		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
 		const phasePlayerLabel = screen.getByLabelText('Player');
@@ -169,7 +168,7 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
 				{
-					text: 'Action - 🛠️ Develop - 🏠 Workshop',
+					text: '🛠️ Develop - 🏠 Workshop',
 					depth: 0,
 					kind: 'headline',
 				},
@@ -188,9 +187,7 @@ describe('<ResolutionCard />', () => {
 		const effectsSectionContainer = effectsSection.parentElement;
 		const goldCost = screen.getByText('Gold -3');
 		const goldCostContainer = goldCost.parentElement;
-		const effectHeadline = screen.getByText(
-			'Action - 🛠️ Develop - 🏠 Workshop',
-		);
+		const effectHeadline = screen.getByText('🛠️ Develop - 🏠 Workshop');
 		const effectEntry = screen.getByText('🪄 Effect happens');
 		const effectHeadlineContainer = effectHeadline.parentElement;
 		const effectEntryContainer = effectEntry.parentElement;
@@ -216,7 +213,7 @@ describe('<ResolutionCard />', () => {
 	it('renders nested cost groups and effect hierarchies', () => {
 		const visibleTimeline: ActionLogLineDescriptor[] = [
 			{
-				text: 'Action - 🛠️ Develop - ⚒️ Forge Relic',
+				text: '🛠️ Develop - ⚒️ Forge Relic',
 				depth: 0,
 				kind: 'headline',
 			},
@@ -233,7 +230,7 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			action: {
 				id: 'forge-relic',
-				name: 'Action - 🛠️ Develop - ⚒️ Forge Relic',
+				name: '🛠️ Develop - ⚒️ Forge Relic',
 				icon: '⚒️',
 			},
 			visibleTimeline,
@@ -279,7 +276,9 @@ describe('<ResolutionCard />', () => {
 		expect(happinessContainer).toHaveStyle({ marginLeft: '2.625rem' });
 
 		expect(
-			screen.queryByText('Action - 🛠️ Develop - ⚒️ Forge Relic'),
+			within(effectsSectionContainer).queryByText(
+				'🛠️ Develop - ⚒️ Forge Relic',
+			),
 		).toBeNull();
 
 		const group = screen.getByText('🪄 Channel the forge');

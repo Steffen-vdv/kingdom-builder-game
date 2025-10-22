@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import './helpers/armyAttackSyntheticRegistries';
 import { logContent } from '../src/translation/content';
 import { Resource, Stat, performAction } from '@kingdom-builder/engine';
+import { formatActionTitle } from '../src/translation/formatActionTitle';
 import {
 	createSyntheticEngineContext,
 	setupStatOverrides,
@@ -84,8 +85,13 @@ describe('army attack translation log', () => {
 		);
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
 		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
+		const attackDefinition = translation.actions.get(attack.id);
+		if (!attackDefinition) {
+			throw new Error('Missing attack definition');
+		}
+		const attackHeadline = formatActionTitle(attackDefinition, translation);
 		expect(withLegacyIndent(log)).toEqual([
-			`Action - ${attack.icon} ${attack.name}`,
+			attackHeadline,
 			`  Attack opponent with your ${powerLabel}`,
 			`    ${absorptionLabel} damage reduction applied`,
 			`    Apply damage to opponent ${fortLabel}`,
@@ -135,8 +141,16 @@ describe('army attack translation log', () => {
 			'Absorption',
 		);
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
+		const buildingAttackDefinition = translation.actions.get(buildingAttack.id);
+		if (!buildingAttackDefinition) {
+			throw new Error('Missing building attack definition');
+		}
+		const buildingAttackHeadline = formatActionTitle(
+			buildingAttackDefinition,
+			translation,
+		);
 		expect(withLegacyIndent(log)).toEqual([
-			`Action - ${buildingAttack.icon} ${buildingAttack.name}`,
+			buildingAttackHeadline,
 			`  Attack opponent with your ${powerLabel}`,
 			`    ${absorptionLabel} damage reduction applied`,
 			`    Apply damage to opponent ${fortLabel}`,
