@@ -4,6 +4,8 @@ import {
 	Land,
 	PlayerState,
 	type StatSourceContribution,
+	type ResourceV2BoundMap,
+	type ResourceV2BoundTracker,
 } from '../state';
 import { cloneMeta } from '../stat_sources/meta';
 import { cloneEffectList } from '../utils';
@@ -80,6 +82,25 @@ function clonePlayerState(player: PlayerState): PlayerState {
 			),
 		]),
 	);
+	const resourceV2 = player.resourceV2;
+	const boundEntries: Array<[string, ResourceV2BoundTracker]> = [];
+	for (const key of Object.keys(resourceV2.bounds)) {
+		const tracker = resourceV2.bounds[key];
+		if (tracker) {
+			boundEntries.push([key, { ...tracker }]);
+		}
+	}
+	const resourceV2Bounds = Object.fromEntries(
+		boundEntries,
+	) as ResourceV2BoundMap;
+	cloned.resourceV2 = {
+		values: { ...resourceV2.values },
+		bounds: resourceV2Bounds,
+		touched: { ...resourceV2.touched },
+		recentGains: resourceV2.recentGains.map((gain) => ({
+			...gain,
+		})),
+	};
 	const reserved = new Set([
 		'id',
 		'name',
@@ -93,6 +114,7 @@ function clonePlayerState(player: PlayerState): PlayerState {
 		'statSources',
 		'skipPhases',
 		'skipSteps',
+		'resourceV2',
 	]);
 	for (const [key, value] of Object.entries(player)) {
 		if (reserved.has(key)) {
@@ -150,6 +172,10 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 	cloned.statAddPctBases = { ...source.statAddPctBases };
 	cloned.statAddPctAccums = { ...source.statAddPctAccums };
 	cloned.recentResourceGains = source.recentResourceGains.map((gain) => ({
+		key: gain.key,
+		amount: gain.amount,
+	}));
+	cloned.recentResourceV2Gains = source.recentResourceV2Gains.map((gain) => ({
 		key: gain.key,
 		amount: gain.amount,
 	}));

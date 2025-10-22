@@ -1,4 +1,4 @@
-import type { GameState, ResourceKey, PlayerId } from './state';
+import type { GameState, ResourceKey, PlayerId, ResourceV2Id } from './state';
 import type { AISystem } from './ai';
 import type { Services, PassiveManager } from './services';
 import type { StatSourceFrame } from './stat_sources';
@@ -32,6 +32,10 @@ export class EngineContext {
 	aiSystem?: AISystem;
 	recentResourceGains: {
 		key: ResourceKey;
+		amount: number;
+	}[] = [];
+	recentResourceV2Gains: {
+		key: ResourceV2Id;
 		amount: number;
 	}[] = [];
 	// Cache base values for stat:add_pct per turn/phase/step to ensure

@@ -1,4 +1,8 @@
 import type { EffectDef } from '../effects';
+import type {
+	ResourceV2RuntimeCatalog,
+	ResourceV2RuntimeDefinition,
+} from '../resourcesV2';
 
 export const Resource: Record<string, string> = {};
 export type ResourceKey = string;
@@ -41,6 +45,120 @@ export function setPopulationRoleKeys(keys: string[]) {
 	}
 	for (const id of keys) {
 		PopulationRole[id.charAt(0).toUpperCase() + id.slice(1)] = id;
+	}
+}
+
+export type ResourceV2Id = string;
+
+export interface ResourceV2BoundTracker {
+	lower?: number;
+	upper?: number;
+}
+
+export interface ResourceV2RecentGain {
+	key: ResourceV2Id;
+	amount: number;
+}
+
+export type ResourceV2ValueMap = Record<ResourceV2Id, number>;
+export type ResourceV2BoundMap = Record<ResourceV2Id, ResourceV2BoundTracker>;
+export type ResourceV2TouchedMap = Record<ResourceV2Id, boolean>;
+
+export interface ResourceV2State {
+	values: ResourceV2ValueMap;
+	bounds: ResourceV2BoundMap;
+	touched: ResourceV2TouchedMap;
+	recentGains: ResourceV2RecentGain[];
+}
+
+const ResourceV2Definitions: Record<ResourceV2Id, ResourceV2RuntimeDefinition> =
+	{};
+let orderedResourceV2Ids: ResourceV2Id[] = [];
+
+export function setResourceV2Keys(catalog: ResourceV2RuntimeCatalog) {
+	orderedResourceV2Ids = [...catalog.orderedResourceIds];
+	for (const key of Object.keys(ResourceV2Definitions)) {
+		delete ResourceV2Definitions[key];
+	}
+	for (const id of orderedResourceV2Ids) {
+		const definition = catalog.resourcesById[id];
+		if (!definition) {
+			continue;
+		}
+		ResourceV2Definitions[id] = definition;
+	}
+}
+
+export function getResourceV2Ids(): ResourceV2Id[] {
+	return orderedResourceV2Ids;
+}
+
+export function getResourceV2Definition(
+	id: ResourceV2Id,
+): ResourceV2RuntimeDefinition | undefined {
+	return ResourceV2Definitions[id];
+}
+
+export function getResourceV2ValueMap(state: PlayerState): ResourceV2ValueMap {
+	return state.resourceV2.values;
+}
+
+export function getResourceV2Bounds(state: PlayerState): ResourceV2BoundMap {
+	return state.resourceV2.bounds;
+}
+
+export function getResourceV2TouchedMap(
+	state: PlayerState,
+): ResourceV2TouchedMap {
+	return state.resourceV2.touched;
+}
+
+export function getResourceV2RecentGains(
+	state: PlayerState,
+): ResourceV2RecentGain[] {
+	return state.resourceV2.recentGains;
+}
+
+export function setResourceV2Value(
+	state: PlayerState,
+	id: ResourceV2Id,
+	value: number,
+) {
+	state.resourceV2.values[id] = value;
+	if (value !== 0) {
+		state.resourceV2.touched[id] = true;
+	}
+}
+
+export function setResourceV2Bounds(
+	state: PlayerState,
+	id: ResourceV2Id,
+	lower: number | undefined,
+	upper: number | undefined,
+) {
+	const tracker: ResourceV2BoundTracker = {};
+	if (lower !== undefined) {
+		tracker.lower = lower;
+	}
+	if (upper !== undefined) {
+		tracker.upper = upper;
+	}
+	state.resourceV2.bounds[id] = tracker;
+}
+
+function initializeResourceV2State(state: PlayerState) {
+	for (const id of orderedResourceV2Ids) {
+		state.resourceV2.values[id] = 0;
+		state.resourceV2.touched[id] = false;
+		const definition = ResourceV2Definitions[id];
+		const tracker: ResourceV2BoundTracker = {};
+		if (definition?.lowerBound !== undefined) {
+			tracker.lower = definition.lowerBound;
+		}
+		if (definition?.upperBound !== undefined) {
+			tracker.upper = definition.upperBound;
+		}
+		state.resourceV2.bounds[id] = tracker;
 	}
 }
 
@@ -119,6 +237,7 @@ export class PlayerState {
 	statSources: Record<StatKey, Record<string, StatSourceContribution>>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
+	resourceV2: ResourceV2State;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any;
 	constructor(id: PlayerId, name: string) {
@@ -164,6 +283,13 @@ export class PlayerState {
 		}
 		this.skipPhases = {};
 		this.skipSteps = {};
+		this.resourceV2 = {
+			values: {},
+			bounds: {},
+			touched: {},
+			recentGains: [],
+		};
+		initializeResourceV2State(this);
 	}
 }
 

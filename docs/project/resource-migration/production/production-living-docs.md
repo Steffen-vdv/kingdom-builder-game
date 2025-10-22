@@ -32,23 +32,28 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Added ResourceV2 factory helpers to testing content factory, ensured type re-exports for compatibility, and introduced focused ResourceV2 bounds/tier/order tests. | `npm run lint` (pass); `npm run check` (pass) |
 | Monitor downstream test factories for ResourceV2 adoption needs and extend helper coverage if new inputs emerge.                                                   |
 | 2025-10-22                                                                                                                                                         | ChatGPT (gpt-5-codex)                         | packages/engine/src/resourcesV2/types.ts; packages/engine/src/resourcesV2/index.ts; packages/engine/src/index.ts; packages/engine/tests/resourcesV2-types.test.ts; docs/project/resource-migration/production/production-living-docs.md                                                                      | Added runtime ResourceV2 metadata catalog with conversion utilities covering ordering, parent mapping, percent formatting, and tier payload preservation, plus targeted engine tests.  | `npm run check` (pass)                                                                                                                                                                                              | Coordinate engine effect handlers and UI consumers to adopt the runtime catalog in upcoming migration tasks.                                      |
-| 2024-**-**                                                                                                                                                         | _(add entry)_                                 |                                                                                                                                                                                                                                                                                                              |                                                                                                                                                                                        |                                                                                                                                                                                                                     |                                                                                                                                                   |
+
+| 2025-10-23
+| ChatGPT (gpt-5-codex) | packages/engine/src/state/index.ts; packages/engine/src/context.ts; packages/engine/src/actions/context_clone.ts; packages/engine/tests/state-resourceV2.test.ts; docs/project/resource-migration/production/production-living-docs.md
+| Implemented ResourceV2 player state scaffolding (values, bounds, touched flags, recent gain logs), helper accessors, and context cloning coverage validated by new engine tests. | `npm run check` (pass)
+
+                   | Wire `setResourceV2Keys` into engine bootstrap and monitor dynamic catalog updates once effect integrations land.                               |
+
+| 2024-**-** | _(add entry)_ | | | | |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-22 19:40
-- **Current Focus:** Engine ResourceV2 runtime metadata & validation utilities
-- **State Summary:** Implemented the engine-side ResourceV2 runtime catalog with ordering, parent mapping, percent formatting helpers, and tier hydration, plus regression tests confirming conversions against content registries. Full `npm run check` run is green.
+- **Timestamp (UTC):** 2025-10-23 20:10
+- **Current Focus:** Engine player state ResourceV2 scaffolding & cloning
+- **State Summary:** Player state now provisions ResourceV2 values, bounds, touched flags, and recent gain logs alongside legacy fields; helper accessors and context cloning support the new data and are covered by targeted tests. Full `npm run check` run is green.
 - **Next Suggested Tasks:**
-  - Wire the runtime catalog into engine session bootstrap so ResourceV2 definitions populate player state and services.
-  - Expose the hydrated metadata to protocol/web pipelines, replacing legacy resource/stat lookups.
+  - Wire `setResourceV2Keys` into engine bootstrap so catalogs hydrate player sessions automatically.
+  - Extend effect handlers and integrations to mutate ResourceV2 values/bounds and validate dynamic catalog updates.
 - **Blocking Issues / Risks:** Filtered `npm run check -- --filter` remains unsupported; continue running the full suite until tooling improves.
-- **Reminder:** Keep future migration work aligned with the new catalog (especially percent-formatting helpers) and update the living doc as additional runtime consumers come online.
-
-Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.
+- **Reminder:** Monitor touched-flag semantics as more systems adopt ResourceV2 and expand regression coverage for multi-resource scenarios.
 
 ## 5. Notes & Decisions Archive
 
