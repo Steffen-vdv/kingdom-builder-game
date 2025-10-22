@@ -17,8 +17,5 @@ export type { ResourceV2Builder } from './resourceBuilder';
 export { resourceGroup } from './groupBuilder';
 export type { ResourceGroupBuilder } from './groupBuilder';
 
-export {
-	createResourceV2Registry,
-	createResourceGroupRegistry,
-} from './registry';
+export { createResourceV2Registry, createResourceGroupRegistry } from './registry';
 export type { ResourceV2Registry, ResourceGroupRegistry } from './registry';

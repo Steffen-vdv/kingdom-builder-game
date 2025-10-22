@@ -1,4 +1,8 @@
-import { selectPopulationRoleDisplay, selectStatDisplay } from '../translation';
+import {
+	selectPopulationRoleDisplay,
+	selectSlotDisplay,
+	selectStatDisplay,
+} from '../translation';
 import type { TranslationContext } from '../translation';
 
 interface EvalConfig {
@@ -26,6 +30,10 @@ export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
 			translationContext.assets,
 			role,
 		).icon;
+		return icon ? [icon] : [];
+	},
+	land: (_params, translationContext) => {
+		const icon = selectSlotDisplay(translationContext.assets).icon;
 		return icon ? [icon] : [];
 	},
 };

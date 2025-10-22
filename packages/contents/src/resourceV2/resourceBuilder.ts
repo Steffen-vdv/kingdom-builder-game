@@ -6,27 +6,18 @@ interface ResourceGroupOptions {
 
 const builderName = 'ResourceV2 builder';
 
-type NumericField =
-	| 'order'
-	| 'lowerBound'
-	| 'upperBound'
-	| 'groupOrder'
-	| 'globalCost.amount';
+type NumericField = 'order' | 'lowerBound' | 'upperBound' | 'groupOrder' | 'globalCost.amount';
 
 function assertInteger(value: number, field: NumericField) {
 	if (!Number.isInteger(value)) {
-		throw new Error(
-			`${builderName} expected ${field} to be an integer but received ${value}.`,
-		);
+		throw new Error(`${builderName} expected ${field} to be an integer but received ${value}.`);
 	}
 }
 
 function assertPositiveInteger(value: number, field: NumericField) {
 	assertInteger(value, field);
 	if (value <= 0) {
-		throw new Error(
-			`${builderName} expected ${field} to be greater than 0 but received ${value}.`,
-		);
+		throw new Error(`${builderName} expected ${field} to be greater than 0 but received ${value}.`);
 	}
 }
 
@@ -69,29 +60,17 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 		this.definition = { id };
 	}
 
-	private setOnce<K extends keyof ResourceV2Definition>(
-		key: K,
-		value: ResourceV2Definition[K],
-	) {
+	private setOnce<K extends keyof ResourceV2Definition>(key: K, value: ResourceV2Definition[K]) {
 		if (this.setKeys.has(key as string)) {
-			throw new Error(
-				`${builderName} already has ${String(
-					key,
-				)}() set. Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already has ${String(key)}() set. Remove the duplicate call.`);
 		}
 		this.definition[key] = value;
 		this.setKeys.add(key as string);
 	}
 
-	private setToggle(
-		key: 'displayAsPercent' | 'trackValueBreakdown' | 'trackBoundBreakdown',
-		value: boolean,
-	) {
+	private setToggle(key: 'displayAsPercent' | 'trackValueBreakdown' | 'trackBoundBreakdown', value: boolean) {
 		if (this.setToggles.has(key)) {
-			throw new Error(
-				`${builderName} already toggled ${key}(). Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already toggled ${key}(). Remove the duplicate call.`);
 		}
 		this.definition[key] = value;
 		this.setToggles.add(key);
@@ -99,14 +78,8 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	private validateBounds() {
 		const { lowerBound, upperBound } = this.definition;
-		if (
-			typeof lowerBound === 'number' &&
-			typeof upperBound === 'number' &&
-			lowerBound > upperBound
-		) {
-			throw new Error(
-				`${builderName} lowerBound must be less than or equal to upperBound (${lowerBound} > ${upperBound}).`,
-			);
+		if (typeof lowerBound === 'number' && typeof upperBound === 'number' && lowerBound > upperBound) {
+			throw new Error(`${builderName} lowerBound must be less than or equal to upperBound (${lowerBound} > ${upperBound}).`);
 		}
 	}
 
@@ -139,9 +112,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	lowerBound(value: number) {
 		if (this.lowerBoundSet) {
-			throw new Error(
-				`${builderName} already has lowerBound() set. Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already has lowerBound() set. Remove the duplicate call.`);
 		}
 		assertInteger(value, 'lowerBound');
 		this.definition.lowerBound = value;
@@ -152,9 +123,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	upperBound(value: number) {
 		if (this.upperBoundSet) {
-			throw new Error(
-				`${builderName} already has upperBound() set. Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already has upperBound() set. Remove the duplicate call.`);
 		}
 		assertInteger(value, 'upperBound');
 		this.definition.upperBound = value;
@@ -166,9 +135,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 	bounds(lower?: number, upper?: number) {
 		if (typeof lower === 'number') {
 			if (this.lowerBoundSet) {
-				throw new Error(
-					`${builderName} already has lowerBound() set. Remove the duplicate call.`,
-				);
+				throw new Error(`${builderName} already has lowerBound() set. Remove the duplicate call.`);
 			}
 			assertInteger(lower, 'lowerBound');
 			this.definition.lowerBound = lower;
@@ -176,9 +143,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 		}
 		if (typeof upper === 'number') {
 			if (this.upperBoundSet) {
-				throw new Error(
-					`${builderName} already has upperBound() set. Remove the duplicate call.`,
-				);
+				throw new Error(`${builderName} already has upperBound() set. Remove the duplicate call.`);
 			}
 			assertInteger(upper, 'upperBound');
 			this.definition.upperBound = upper;
@@ -202,9 +167,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	group(id: string, options?: ResourceGroupOptions) {
 		if (this.groupSet) {
-			throw new Error(
-				`${builderName} already configured group(). Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already configured group(). Remove the duplicate call.`);
 		}
 		if (!id) {
 			throw new Error(`${builderName} group() requires a non-empty id.`);
@@ -220,9 +183,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	tags(...tags: ReadonlyArray<string | readonly string[]>) {
 		if (this.tagsSet) {
-			throw new Error(
-				`${builderName} already configured tags(). Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already configured tags(). Remove the duplicate call.`);
 		}
 		const flattened: string[] = [];
 		for (const entry of tags) {
@@ -241,9 +202,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	tierTrack(track: ResourceV2TierTrack) {
 		if (this.tierTrackSet) {
-			throw new Error(
-				`${builderName} already configured tierTrack(). Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already configured tierTrack(). Remove the duplicate call.`);
 		}
 		this.definition.tierTrack = track;
 		this.tierTrackSet = true;
@@ -252,9 +211,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	globalActionCost(amount: number) {
 		if (this.globalCostSet) {
-			throw new Error(
-				`${builderName} already configured globalActionCost(). Remove the duplicate call.`,
-			);
+			throw new Error(`${builderName} already configured globalActionCost(). Remove the duplicate call.`);
 		}
 		assertPositiveInteger(amount, 'globalCost.amount');
 		this.definition.globalCost = { amount };
@@ -264,14 +221,10 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	build(): ResourceV2Definition {
 		if (!this.definition.label) {
-			throw new Error(
-				`${builderName} is missing label(). Call label('Readable label') before build().`,
-			);
+			throw new Error(`${builderName} is missing label(). Call label('Readable label') before build().`);
 		}
 		if (!this.definition.icon) {
-			throw new Error(
-				`${builderName} is missing icon(). Call icon('icon-id') before build().`,
-			);
+			throw new Error(`${builderName} is missing icon(). Call icon('icon-id') before build().`);
 		}
 		return this.definition as ResourceV2Definition;
 	}

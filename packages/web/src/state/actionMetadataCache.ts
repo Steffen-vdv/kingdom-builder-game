@@ -3,6 +3,7 @@ import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions'
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
+	SessionPlayerId,
 } from '@kingdom-builder/protocol/session';
 import { createMetadataKey } from './actionMetadataKey';
 import { cloneValue } from './cloneValue';
@@ -31,8 +32,9 @@ export class ActionMetadataCache {
 		actionId: string,
 		costs: SessionActionCostMap,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): string {
-		const key = createMetadataKey(actionId, params);
+		const key = createMetadataKey(actionId, params, playerId);
 		this.#actionCostCache.set(key, {
 			value: cloneValue(costs),
 			stale: false,
@@ -44,8 +46,9 @@ export class ActionMetadataCache {
 		actionId: string,
 		requirements: SessionActionRequirementList,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): string {
-		const key = createMetadataKey(actionId, params);
+		const key = createMetadataKey(actionId, params, playerId);
 		this.#actionRequirementCache.set(key, {
 			value: cloneValue(requirements),
 			stale: false,
@@ -54,7 +57,7 @@ export class ActionMetadataCache {
 	}
 
 	cacheActionOptions(actionId: string, groups: ActionEffectGroup[]): string {
-		const key = createMetadataKey(actionId, undefined);
+		const key = createMetadataKey(actionId, undefined, undefined);
 		this.#actionOptionCache.set(key, {
 			value: cloneValue(groups),
 			stale: false,
@@ -82,8 +85,9 @@ export class ActionMetadataCache {
 	getActionCosts(
 		actionId: string,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionCostMap {
-		const key = createMetadataKey(actionId, params);
+		const key = createMetadataKey(actionId, params, playerId);
 		const cached = this.#actionCostCache.get(key);
 		return cached ? cloneValue(cached.value) : {};
 	}
@@ -91,14 +95,15 @@ export class ActionMetadataCache {
 	getActionRequirements(
 		actionId: string,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionRequirementList {
-		const key = createMetadataKey(actionId, params);
+		const key = createMetadataKey(actionId, params, playerId);
 		const cached = this.#actionRequirementCache.get(key);
 		return cached ? cloneValue(cached.value) : [];
 	}
 
 	getActionOptions(actionId: string): ActionEffectGroup[] {
-		const key = createMetadataKey(actionId, undefined);
+		const key = createMetadataKey(actionId, undefined, undefined);
 		const cached = this.#actionOptionCache.get(key);
 		return cached ? cloneValue(cached.value) : [];
 	}
@@ -106,9 +111,10 @@ export class ActionMetadataCache {
 	readActionMetadata(
 		actionId: string,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionMetadataSnapshot {
 		const snapshot: SessionActionMetadataSnapshot = {};
-		const key = createMetadataKey(actionId, params);
+		const key = createMetadataKey(actionId, params, playerId);
 		const cachedCosts = this.#actionCostCache.get(key);
 		if (cachedCosts) {
 			snapshot.costs = cloneValue(cachedCosts.value);
@@ -125,7 +131,7 @@ export class ActionMetadataCache {
 				snapshot.stale.requirements = true;
 			}
 		}
-		const optionKey = createMetadataKey(actionId, undefined);
+		const optionKey = createMetadataKey(actionId, undefined, undefined);
 		const cachedGroups = this.#actionOptionCache.get(optionKey);
 		if (cachedGroups) {
 			snapshot.groups = cloneValue(cachedGroups.value);

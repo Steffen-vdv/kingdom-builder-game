@@ -65,12 +65,19 @@ const phaseListClassName = [
 
 const phaseListItemClassName = [
 	'flex items-center rounded-2xl border border-white/40 px-3 py-2 text-left',
-	'text-sm font-medium tracking-[0.08em] text-slate-600 transition-colors',
-	'bg-white/70 shadow-sm dark:border-white/10 dark:bg-slate-900/60',
-	'dark:text-slate-100',
+	'text-sm font-medium tracking-[0.08em] text-slate-600 transition-all',
+	'duration-200 ease-out bg-white/70 shadow-sm dark:border-white/10',
+	'dark:bg-slate-900/60 dark:text-slate-100 hover:-translate-y-0.5',
+	'hover:bg-white/60 hover:shadow-lg hover:shadow-amber-500/10',
+	'dark:hover:bg-white/10 dark:hover:shadow-black/30',
 	'data-[active=true]:border-indigo-500 data-[active=true]:bg-indigo-50/80',
-	'data-[active=true]:text-indigo-800 dark:data-[active=true]:border-indigo-300/60',
-	'dark:data-[active=true]:bg-indigo-500/20 dark:data-[active=true]:text-white',
+	'data-[active=true]:text-indigo-800',
+	'data-[active=true]:hover:bg-indigo-50/80',
+	'data-[active=true]:hover:shadow-lg',
+	'dark:data-[active=true]:border-indigo-300/60',
+	'dark:data-[active=true]:bg-indigo-500/20',
+	'dark:data-[active=true]:text-white',
+	'dark:data-[active=true]:hover:bg-indigo-500/20',
 ].join(' ');
 
 const phaseListItemContentClassName = ['flex w-full items-center gap-3'].join(
@@ -195,8 +202,15 @@ export default function PhasePanel() {
 		activePlayerSnapshot?.name ??
 		'Player';
 	const awaitingManualStart = phase.awaitingManualStart;
-	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
-	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
+	const shouldHideControls = Boolean(resolution?.requireAcknowledgement);
+	const shouldSuppressHoverCards = useMemo(
+		() =>
+			Boolean(
+				resolution &&
+					(!resolution.requireAcknowledgement || !resolution.isComplete),
+			),
+		[resolution],
+	);
 	const showPhaseHistory = useCallback(
 		(phaseSummary: PhaseSummary, resolution: ActionResolution | null) => {
 			if (phaseSummary.isActionPhase || !resolution) {
@@ -218,14 +232,11 @@ export default function PhasePanel() {
 	const hidePhaseHistory = useCallback(() => {
 		clearHoverCard();
 	}, [clearHoverCard]);
-	const handleEndTurnClick = () => {
-		// Phase errors are surfaced via onFatalSessionError inside
-		// usePhaseProgress.
-		void requests.advancePhase();
-	};
 	const handleStartSessionClick = () => {
 		void requests.startSession();
 	};
+	const shouldShowManualStartButton =
+		awaitingManualStart && !shouldHideControls;
 	return (
 		<section className={panelClassName}>
 			<header className={headerClassName}>
@@ -263,15 +274,26 @@ export default function PhasePanel() {
 							phaseHistory.byPhase.get(historyKey) ??
 							null;
 						const isActive = phaseDefinition.id === phase.currentPhaseId;
+						const shouldShowHoverIndicator =
+							Boolean(phaseResolution) &&
+							!phaseDefinition.isActionPhase &&
+							!shouldSuppressHoverCards;
+						const resolvedPhaseListItemClassName = [
+							phaseListItemClassName,
+							shouldShowHoverIndicator ? 'hoverable cursor-help' : '',
+						]
+							.filter(Boolean)
+							.join(' ');
+						const handlePhaseMouseEnter = shouldShowHoverIndicator
+							? () => showPhaseHistory(phaseDefinition, phaseResolution)
+							: hidePhaseHistory;
 						return (
 							<li
 								key={phaseDefinition.id}
-								className={phaseListItemClassName}
+								className={resolvedPhaseListItemClassName}
 								data-active={isActive ? 'true' : 'false'}
 								aria-current={isActive ? 'step' : undefined}
-								onMouseEnter={() =>
-									showPhaseHistory(phaseDefinition, phaseResolution)
-								}
+								onMouseEnter={handlePhaseMouseEnter}
 								onMouseLeave={hidePhaseHistory}
 							>
 								<span className={phaseListItemContentClassName}>
@@ -307,28 +329,13 @@ export default function PhasePanel() {
 					})}
 				</ul>
 			</div>
-			{shouldHideNextTurn ? null : (
+			{shouldShowManualStartButton ? (
 				<div className="flex justify-end pt-2">
-					{awaitingManualStart ? (
-						<Button
-							variant="success"
-							onClick={handleStartSessionClick}
-							icon="🚀"
-						>
-							Let's go!
-						</Button>
-					) : (
-						<Button
-							variant="primary"
-							disabled={!canEndTurn}
-							onClick={handleEndTurnClick}
-							icon="⏭️"
-						>
-							Next Turn
-						</Button>
-					)}
+					<Button variant="success" onClick={handleStartSessionClick} icon="🚀">
+						Let's go!
+					</Button>
 				</div>
-			)}
+			) : null}
 		</section>
 	);
 }

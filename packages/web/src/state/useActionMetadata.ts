@@ -3,6 +3,7 @@ import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions'
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
+	SessionPlayerId,
 } from '@kingdom-builder/protocol/session';
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import { useGameEngine } from './GameContext';
@@ -22,6 +23,7 @@ import { isAbortError } from './isAbortError';
 interface UseActionMetadataOptions {
 	actionId: string | null | undefined;
 	params?: ActionParametersPayload;
+	playerId?: SessionPlayerId;
 }
 
 export interface UseActionMetadataResult {
@@ -47,6 +49,7 @@ const EMPTY_SNAPSHOT: SessionActionMetadataSnapshot = {};
 export function useActionMetadata({
 	actionId,
 	params,
+	playerId,
 }: UseActionMetadataOptions): UseActionMetadataResult {
 	const { sessionId } = useGameEngine();
 	const paramsKey = useMemo(() => serializeActionParams(params), [params]);
@@ -61,7 +64,12 @@ export function useActionMetadata({
 			if (!actionId) {
 				return EMPTY_SNAPSHOT;
 			}
-			return readSessionActionMetadata(sessionId, actionId, normalizedParams);
+			return readSessionActionMetadata(
+				sessionId,
+				actionId,
+				normalizedParams,
+				playerId,
+			);
 		},
 	);
 	const loadingRef = useRef({
@@ -72,7 +80,7 @@ export function useActionMetadata({
 
 	useEffect(() => {
 		loadingRef.current = { costs: false, requirements: false, groups: false };
-	}, [actionId, paramsKey]);
+	}, [actionId, paramsKey, playerId]);
 
 	useEffect(() => {
 		if (!actionId) {
@@ -84,6 +92,7 @@ export function useActionMetadata({
 			sessionId,
 			actionId,
 			normalizedParams,
+			playerId,
 			(next) => {
 				if (!disposed) {
 					setSnapshot(next);
@@ -94,7 +103,7 @@ export function useActionMetadata({
 			disposed = true;
 			unsubscribe();
 		};
-	}, [sessionId, actionId, normalizedParams, paramsKey]);
+	}, [sessionId, actionId, normalizedParams, paramsKey, playerId]);
 
 	useEffect(() => {
 		if (!actionId) {
@@ -102,9 +111,14 @@ export function useActionMetadata({
 			return;
 		}
 		setSnapshot(
-			readSessionActionMetadata(sessionId, actionId, normalizedParams),
+			readSessionActionMetadata(
+				sessionId,
+				actionId,
+				normalizedParams,
+				playerId,
+			),
 		);
-	}, [sessionId, actionId, normalizedParams, paramsKey]);
+	}, [sessionId, actionId, normalizedParams, paramsKey, playerId]);
 
 	useEffect(() => {
 		const costsStale = snapshot.stale?.costs === true;
@@ -117,9 +131,13 @@ export function useActionMetadata({
 		const controller = new AbortController();
 		let active = true;
 		loadingRef.current.costs = true;
-		void loadActionCosts(sessionId, actionId, normalizedParams, {
-			signal: controller.signal,
-		})
+		void loadActionCosts(
+			sessionId,
+			actionId,
+			normalizedParams,
+			{ signal: controller.signal },
+			playerId,
+		)
 			.catch((error) => {
 				if (isAbortError(error)) {
 					return;
@@ -137,7 +155,14 @@ export function useActionMetadata({
 			controller.abort();
 			loadingRef.current.costs = false;
 		};
-	}, [actionId, sessionId, snapshot.costs, normalizedParams, paramsKey]);
+	}, [
+		actionId,
+		sessionId,
+		snapshot.costs,
+		normalizedParams,
+		paramsKey,
+		playerId,
+	]);
 
 	useEffect(() => {
 		const requirementsStale = snapshot.stale?.requirements === true;
@@ -153,9 +178,13 @@ export function useActionMetadata({
 		const controller = new AbortController();
 		let active = true;
 		loadingRef.current.requirements = true;
-		void loadActionRequirements(sessionId, actionId, normalizedParams, {
-			signal: controller.signal,
-		})
+		void loadActionRequirements(
+			sessionId,
+			actionId,
+			normalizedParams,
+			{ signal: controller.signal },
+			playerId,
+		)
 			.catch((error) => {
 				if (isAbortError(error)) {
 					return;
@@ -173,7 +202,14 @@ export function useActionMetadata({
 			controller.abort();
 			loadingRef.current.requirements = false;
 		};
-	}, [actionId, sessionId, snapshot.requirements, normalizedParams, paramsKey]);
+	}, [
+		actionId,
+		sessionId,
+		snapshot.requirements,
+		normalizedParams,
+		paramsKey,
+		playerId,
+	]);
 
 	useEffect(() => {
 		const groupsStale = snapshot.stale?.groups === true;

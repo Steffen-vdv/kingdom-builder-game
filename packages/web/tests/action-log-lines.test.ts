@@ -15,12 +15,17 @@ describe('action log line formatting', () => {
 			{ text: '💲 Action cost', depth: 1, kind: 'cost' },
 		];
 		const changes: ActionDiffChange[] = [
-			{ summary: `${LOG_KEYWORDS.developed} 🗼 Watchtower` },
+			{
+				summary:
+					`${LOG_KEYWORDS.developed} 🗼 Watchtower on ` +
+					'🧩 Empty Development Slot',
+			},
 			{ summary: '🛡️ Fortification Strength +2 (0→2)' },
 			{ summary: '🌀 Absorption +50% (0%→50%)' },
 		];
 		expect(formatDevelopActionLogLines(messages, changes)).toEqual([
-			`${LOG_KEYWORDS.developed} 🗼 Watchtower`,
+			`${LOG_KEYWORDS.developed} 🗼 Watchtower on ` +
+				'🧩 Empty Development Slot',
 			'• 💲 Action cost',
 			'• 🛡️ Fortification Strength +2 (0→2)',
 			'• 🌀 Absorption +50% (0%→50%)',

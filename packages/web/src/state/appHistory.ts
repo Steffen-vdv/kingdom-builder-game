@@ -13,7 +13,6 @@ export interface HistoryState {
 	isMusicEnabled: boolean;
 	isSoundEnabled: boolean;
 	isBackgroundAudioMuted: boolean;
-	isAutoAcknowledgeEnabled: boolean;
-	isAutoPassEnabled: boolean;
+	isAutoAdvanceEnabled: boolean;
 	resumeSessionId: string | null;
 }

@@ -29,10 +29,8 @@ interface MenuProps {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
-	autoAcknowledgeEnabled: boolean;
-	onToggleAutoAcknowledge: () => void;
-	autoPassEnabled: boolean;
-	onToggleAutoPass: () => void;
+	autoAdvanceEnabled: boolean;
+	onToggleAutoAdvance: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	hasStoredName: boolean;
@@ -53,10 +51,8 @@ export default function Menu({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
-	autoAcknowledgeEnabled,
-	onToggleAutoAcknowledge,
-	autoPassEnabled,
-	onToggleAutoPass,
+	autoAdvanceEnabled,
+	onToggleAutoAdvance,
 	playerName,
 	onChangePlayerName,
 	hasStoredName,
@@ -177,10 +173,8 @@ export default function Menu({
 				onToggleSound={onToggleSound}
 				backgroundAudioMuted={backgroundAudioMuted}
 				onToggleBackgroundAudioMute={onToggleBackgroundAudioMute}
-				autoAcknowledgeEnabled={autoAcknowledgeEnabled}
-				onToggleAutoAcknowledge={onToggleAutoAcknowledge}
-				autoPassEnabled={autoPassEnabled}
-				onToggleAutoPass={onToggleAutoPass}
+				autoAdvanceEnabled={autoAdvanceEnabled}
+				onToggleAutoAdvance={onToggleAutoAdvance}
 				playerName={playerName}
 				onChangePlayerName={onChangePlayerName}
 				controlKeybinds={controlKeybinds}

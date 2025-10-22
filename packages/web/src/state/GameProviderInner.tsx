@@ -20,6 +20,7 @@ import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
 import { useKeybindingPreferences } from './keybindings';
+import { useSoundEffectsContext } from './SoundEffectsContext';
 import type {
 	GameEngineContextValue,
 	PerformActionHandler,
@@ -55,10 +56,8 @@ export function GameProviderInner({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
-	autoAcknowledgeEnabled,
-	onToggleAutoAcknowledge,
-	autoPassEnabled,
-	onToggleAutoPass,
+	autoAdvanceEnabled,
+	onToggleAutoAdvance,
 	playerName = DEFAULT_PLAYER_NAME,
 	onChangePlayerName = () => {},
 	queue,
@@ -127,12 +126,16 @@ export function GameProviderInner({
 		sessionSnapshot: liveSessionSnapshot,
 	});
 
+	const { playResolutionSpawn, playTranslationTick } = useSoundEffectsContext();
+
 	const { resolution, showResolution, acknowledgeResolution } =
 		useActionResolution({
 			addResolutionLog,
 			setTrackedTimeout,
 			timeScaleRef,
 			mountedRef,
+			onResolutionStart: playResolutionSpawn,
+			onLineReveal: playTranslationTick,
 		});
 
 	const handleShowResolution = useCallback(
@@ -255,8 +258,7 @@ export function GameProviderInner({
 	);
 
 	useResolutionAutomation({
-		autoAcknowledgeEnabled,
-		autoPassEnabled,
+		autoAdvanceEnabled,
 		acknowledgeResolution,
 		resolution,
 		mountedRef,
@@ -309,10 +311,8 @@ export function GameProviderInner({
 		onToggleSound: onToggleSound ?? (() => {}),
 		backgroundAudioMuted: backgroundAudioMuted ?? true,
 		onToggleBackgroundAudioMute: onToggleBackgroundAudioMute ?? (() => {}),
-		autoAcknowledgeEnabled: autoAcknowledgeEnabled ?? false,
-		onToggleAutoAcknowledge: onToggleAutoAcknowledge ?? (() => {}),
-		autoPassEnabled: autoPassEnabled ?? false,
-		onToggleAutoPass: onToggleAutoPass ?? (() => {}),
+		autoAdvanceEnabled: autoAdvanceEnabled ?? false,
+		onToggleAutoAdvance: onToggleAutoAdvance ?? (() => {}),
 		timeScale,
 		setTimeScale,
 		controlKeybinds,

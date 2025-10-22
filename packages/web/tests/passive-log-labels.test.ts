@@ -6,7 +6,10 @@ import {
 	createTranslationDiffContext,
 } from '../src/translation/log';
 import { logContent } from '../src/translation/content';
-import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
+import {
+	formatIconLabel,
+	LOG_KEYWORDS,
+} from '../src/translation/log/logMessages';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
@@ -302,11 +305,21 @@ describe('passive log labels', () => {
 			developmentId,
 			harness.engine,
 		)[0];
-		const label =
+		const labelText =
 			rawLabel && typeof rawLabel === 'object'
-				? rawLabel.text
-				: (rawLabel ?? developmentId);
-		const expectedHeadline = `${LOG_KEYWORDS.developed} ${label}`;
+				? String(rawLabel.text ?? developmentId)
+				: String(rawLabel ?? developmentId);
+		const developmentLabel = labelText.trim() || developmentId;
+		const slotLabelBase =
+			harness.translationContext.assets.slot.label?.trim() ||
+			'Development Slot';
+		const slotLabel = `Empty ${slotLabelBase}`.trim();
+		const slotDisplay =
+			formatIconLabel(
+				harness.translationContext.assets.slot.icon,
+				slotLabel,
+			).trim() || slotLabel;
+		const expectedHeadline = `${LOG_KEYWORDS.developed} ${developmentLabel} on ${slotDisplay}`;
 		expect(lines).toContain(expectedHeadline);
 		const fortificationKey =
 			harness.metadataSelectors.statMetadata.list.find((descriptor) =>

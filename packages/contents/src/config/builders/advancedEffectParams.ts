@@ -1,8 +1,4 @@
-import type {
-	AttackTarget,
-	EffectConfig,
-	EffectDef,
-} from '@kingdom-builder/protocol';
+import type { AttackTarget, EffectConfig, EffectDef } from '@kingdom-builder/protocol';
 import type { ActionId } from '../../actions';
 import type { ResourceKey } from '../../resources';
 import type { StatKey } from '../../stats';
@@ -56,12 +52,9 @@ export class EvaluationTargetBuilder extends ParamsBuilder<{
 		return this.set('id', id);
 	}
 }
-export const evaluationTarget = (type: EvaluationTargetTypes | string) =>
-	new EvaluationTargetBuilder(type);
-export const developmentTarget = () =>
-	evaluationTarget(EvaluationTargetTypes.Development);
-export const populationTarget = () =>
-	evaluationTarget(EvaluationTargetTypes.Population);
+export const evaluationTarget = (type: EvaluationTargetTypes | string) => new EvaluationTargetBuilder(type);
+export const developmentTarget = () => evaluationTarget(EvaluationTargetTypes.Development);
+export const populationTarget = () => evaluationTarget(EvaluationTargetTypes.Population);
 export class ResultModParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	actionId?: ActionId;
@@ -76,15 +69,8 @@ export class ResultModParamsBuilder extends ParamsBuilder<{
 	actionId(actionId: ActionId) {
 		return this.set('actionId', actionId);
 	}
-	evaluation(
-		target:
-			| EvaluationTargetBuilder
-			| { type: EvaluationTargetType; id?: string },
-	) {
-		return this.set(
-			'evaluation',
-			target instanceof EvaluationTargetBuilder ? target.build() : target,
-		);
+	evaluation(target: EvaluationTargetBuilder | { type: EvaluationTargetType; id?: string }) {
+		return this.set('evaluation', target instanceof EvaluationTargetBuilder ? target.build() : target);
 	}
 	amount(amount: number) {
 		return this.set('amount', amount);
@@ -103,18 +89,12 @@ export class PopulationEffectParamsBuilder extends ParamsBuilder<{
 }> {
 	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 	role(role: PopulationRoleId | string) {
-		return this.set(
-			'role',
-			role,
-			'You already chose a role() for this population effect. Remove the duplicate call.',
-		);
+		return this.set('role', role, 'You already chose a role() for this population effect. Remove the duplicate call.');
 	}
 
 	override build() {
 		if (!this.wasSet('role')) {
-			throw new Error(
-				'Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.',
-			);
+			throw new Error('Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.');
 		}
 		return super.build();
 	}
@@ -159,11 +139,7 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	ignoreFortification(flag = true) {
 		return this.set('ignoreFortification', flag);
 	}
-	stat(
-		role: AttackStatRole,
-		key: StatKey,
-		overrides: { label?: string; icon?: string } = {},
-	) {
+	stat(role: AttackStatRole, key: StatKey, overrides: { label?: string; icon?: string } = {}) {
 		const stats = this.params.stats || (this.params.stats = []);
 		const existingIndex = stats.findIndex((item) => item.role === role);
 		const annotation: AttackStatAnnotation = {
@@ -184,10 +160,7 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	absorptionStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
 		return this.stat('absorption', key, overrides);
 	}
-	fortificationStat(
-		key: StatKey,
-		overrides?: { label?: string; icon?: string },
-	) {
+	fortificationStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
 		return this.stat('fortification', key, overrides);
 	}
 	onDamageAttacker(...effects: Array<EffectConfig | EffectBuilder>) {
@@ -205,9 +178,7 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 
 	override build() {
 		if (!this.wasSet('target')) {
-			throw new Error(
-				'Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.',
-			);
+			throw new Error('Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.');
 		}
 		return super.build();
 	}
@@ -219,44 +190,26 @@ export class TransferParamsBuilder extends ParamsBuilder<{
 	amount?: number;
 }> {
 	key(key: ResourceKey) {
-		return this.set(
-			'key',
-			key,
-			'You already chose a resource with key(). Remove the extra key() call.',
-		);
+		return this.set('key', key, 'You already chose a resource with key(). Remove the extra key() call.');
 	}
 	percent(percent: number) {
-		return this.set(
-			'percent',
-			percent,
-			'You already set percent() for this transfer. Remove the duplicate percent() call.',
-		);
+		return this.set('percent', percent, 'You already set percent() for this transfer. Remove the duplicate percent() call.');
 	}
 	amount(amount: number) {
-		return this.set(
-			'amount',
-			amount,
-			'You already set amount() for this transfer. Remove the duplicate amount() call.',
-		);
+		return this.set('amount', amount, 'You already set amount() for this transfer. Remove the duplicate amount() call.');
 	}
 
 	override build() {
 		if (!this.wasSet('key')) {
-			throw new Error(
-				'Resource transfer is missing key(). Call key(Resource.yourChoice) to pick the resource to move.',
-			);
+			throw new Error('Resource transfer is missing key(). Call key(Resource.yourChoice) to pick the resource to move.');
 		}
 		const hasPercent = this.wasSet('percent');
 		const hasAmount = this.wasSet('amount');
 		if (!hasPercent && !hasAmount) {
-			throw new Error(
-				'Resource transfer is missing percent() or amount(). Call one of them to choose how much to move.',
-			);
+			throw new Error('Resource transfer is missing percent() or amount(). Call one of them to choose how much to move.');
 		}
 		if (hasPercent && hasAmount) {
-			throw new Error(
-				'Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().',
-			);
+			throw new Error('Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().');
 		}
 		return super.build();
 	}
