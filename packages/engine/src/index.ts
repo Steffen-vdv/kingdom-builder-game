@@ -5,6 +5,7 @@ export {
 	Stat,
 	createEngine,
 } from './setup/create_engine';
+export * from './resourceV2';
 export type {
 	ResourceKey,
 	StatKey,
