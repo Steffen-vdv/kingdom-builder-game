@@ -105,6 +105,12 @@ export class PlayerState {
 	id: PlayerId;
 	name: string;
 	resources: Record<ResourceKey, number>;
+	resourceValues: Record<string, number>;
+	resourceLowerBounds: Record<string, number | null>;
+	resourceUpperBounds: Record<string, number | null>;
+	resourceTouched: Record<string, boolean>;
+	resourceTierIds: Record<string, string | null>;
+	resourceBoundTouched: Record<string, { lower: boolean; upper: boolean }>;
 	stats: Record<StatKey, number>;
 	/**
 	 * Tracks whether a stat has ever been non-zero. This allows the UI to hide
@@ -125,6 +131,12 @@ export class PlayerState {
 		this.id = id;
 		this.name = name;
 		this.resources = {};
+		this.resourceValues = {};
+		this.resourceLowerBounds = {};
+		this.resourceUpperBounds = {};
+		this.resourceTouched = {};
+		this.resourceTierIds = {};
+		this.resourceBoundTouched = {};
 		for (const key of Object.values(Resource)) {
 			this.resources[key] = 0;
 			Object.defineProperty(this, key, {
