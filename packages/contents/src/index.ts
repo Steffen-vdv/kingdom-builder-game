@@ -10,6 +10,25 @@ export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTri
 export type { ActionCategoryConfig, ActionCategoryLayout } from './config/builders';
 export { POPULATION_ROLES, PopulationRole, type PopulationRoleId } from './populationRoles';
 export { Resource, type ResourceKey, RESOURCES } from './resources';
+export {
+	createResourceGroupRegistry,
+	createResourceV2Registry,
+	deriveResourceV2PrimaryIconCandidate,
+	RESOURCE_V2_DEFINITIONS,
+	RESOURCE_V2_GROUPS,
+	resourceV2Add,
+	resourceV2Definition,
+	resourceV2Group,
+	resourceV2GroupParent,
+	resourceV2Remove,
+	resourceV2Tier,
+	resourceV2TierTrack,
+	type ResourceV2DefinitionPrimaryIconCandidate,
+	type ResourceV2DefinitionRegistryArtifacts,
+	type ResourceV2GroupParentPrimaryIconCandidate,
+	type ResourceV2GroupRegistryArtifacts,
+	type ResourceV2PrimaryIconCandidate,
+} from './resourceV2';
 export { Stat, type StatKey, STATS } from './stats';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
