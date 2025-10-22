@@ -36,12 +36,8 @@ export function useAppNavigation(): AppNavigationState {
 		isBackgroundAudioMuted,
 		setIsBackgroundAudioMuted,
 	} = useAudioPreferences();
-	const {
-		isAutoAcknowledgeEnabled,
-		setIsAutoAcknowledgeEnabled,
-		isAutoPassEnabled,
-		setIsAutoPassEnabled,
-	} = useGameplayPreferences();
+	const { isAutoAdvanceEnabled, setIsAutoAdvanceEnabled } =
+		useGameplayPreferences();
 	const {
 		resumePoint,
 		resumeSessionId,
@@ -72,8 +68,7 @@ export function useAppNavigation(): AppNavigationState {
 				isMusicEnabled: overrideMusic,
 				isSoundEnabled: overrideSound,
 				isBackgroundAudioMuted: overrideBackgroundMute,
-				isAutoAcknowledgeEnabled: overrideAutoAcknowledge,
-				isAutoPassEnabled: overrideAutoPass,
+				isAutoAdvanceEnabled: overrideAutoAdvance,
 				resumeSessionId: overrideResumeSessionId,
 			} = overrides ?? {};
 			const nextDarkMode = overrideDark ?? isDarkMode;
@@ -82,9 +77,7 @@ export function useAppNavigation(): AppNavigationState {
 			const nextSound = overrideSound ?? isSoundEnabled;
 			const nextBackgroundMute =
 				overrideBackgroundMute ?? isBackgroundAudioMuted;
-			const nextAutoAcknowledge =
-				overrideAutoAcknowledge ?? isAutoAcknowledgeEnabled;
-			const nextAutoPass = overrideAutoPass ?? isAutoPassEnabled;
+			const nextAutoAdvance = overrideAutoAdvance ?? isAutoAdvanceEnabled;
 			const nextResumeSessionId =
 				overrideResumeSessionId !== undefined
 					? overrideResumeSessionId
@@ -98,8 +91,7 @@ export function useAppNavigation(): AppNavigationState {
 				isMusicEnabled: nextMusic,
 				isSoundEnabled: nextSound,
 				isBackgroundAudioMuted: nextBackgroundMute,
-				isAutoAcknowledgeEnabled: nextAutoAcknowledge,
-				isAutoPassEnabled: nextAutoPass,
+				isAutoAdvanceEnabled: nextAutoAdvance,
 				resumeSessionId: nextResumeSessionId ?? null,
 			};
 		},
@@ -111,15 +103,14 @@ export function useAppNavigation(): AppNavigationState {
 			isMusicEnabled,
 			isSoundEnabled,
 			isBackgroundAudioMuted,
-			isAutoAcknowledgeEnabled,
-			isAutoPassEnabled,
+			isAutoAdvanceEnabled,
 			resumeSessionId,
 		],
 	);
 	const applyHistoryState = useCallback(
 		(state: HistoryState | null, fallbackScreen: Screen): HistoryState => {
 			const { music, sound, backgroundMute } = getStoredAudioPreferences();
-			const { autoAcknowledge, autoPass } = getStoredGameplayPreferences();
+			const { autoAdvance } = getStoredGameplayPreferences();
 			const darkMode = getStoredDarkModePreference();
 			const nextResumeSessionId = state
 				? state.resumeSessionId
@@ -133,9 +124,7 @@ export function useAppNavigation(): AppNavigationState {
 				isMusicEnabled: state?.isMusicEnabled ?? music,
 				isSoundEnabled: state?.isSoundEnabled ?? sound,
 				isBackgroundAudioMuted: state?.isBackgroundAudioMuted ?? backgroundMute,
-				isAutoAcknowledgeEnabled:
-					state?.isAutoAcknowledgeEnabled ?? autoAcknowledge,
-				isAutoPassEnabled: state?.isAutoPassEnabled ?? autoPass,
+				isAutoAdvanceEnabled: state?.isAutoAdvanceEnabled ?? autoAdvance,
 				resumeSessionId: nextResumeSessionId ?? null,
 			};
 
@@ -146,8 +135,7 @@ export function useAppNavigation(): AppNavigationState {
 			setIsMusicEnabled(nextState.isMusicEnabled);
 			setIsSoundEnabled(nextState.isSoundEnabled);
 			setIsBackgroundAudioMuted(nextState.isBackgroundAudioMuted);
-			setIsAutoAcknowledgeEnabled(nextState.isAutoAcknowledgeEnabled);
-			setIsAutoPassEnabled(nextState.isAutoPassEnabled);
+			setIsAutoAdvanceEnabled(nextState.isAutoAdvanceEnabled);
 
 			return nextState;
 		},
@@ -159,8 +147,7 @@ export function useAppNavigation(): AppNavigationState {
 			setIsMusicEnabled,
 			setIsSoundEnabled,
 			setIsBackgroundAudioMuted,
-			setIsAutoAcknowledgeEnabled,
-			setIsAutoPassEnabled,
+			setIsAutoAdvanceEnabled,
 			updateFromHistory,
 			resumeSessionId,
 		],
@@ -237,8 +224,7 @@ export function useAppNavigation(): AppNavigationState {
 		const nextGameKey = currentGameKey + 1;
 		clearResumeSessionState(updateResumeHistory);
 		setIsDevMode(true);
-		setIsAutoAcknowledgeEnabled(true);
-		setIsAutoPassEnabled(true);
+		setIsAutoAdvanceEnabled(true);
 		setCurrentGameKey(nextGameKey);
 		setCurrentScreen(Screen.Game);
 		pushHistoryState(
@@ -246,8 +232,7 @@ export function useAppNavigation(): AppNavigationState {
 				screen: Screen.Game,
 				gameKey: nextGameKey,
 				isDevModeEnabled: true,
-				isAutoAcknowledgeEnabled: true,
-				isAutoPassEnabled: true,
+				isAutoAdvanceEnabled: true,
 				resumeSessionId: null,
 			}),
 		);
@@ -308,11 +293,13 @@ export function useAppNavigation(): AppNavigationState {
 			setIsSoundEnabled,
 			setIsBackgroundAudioMuted,
 		});
-	const { toggleAutoAcknowledge, toggleAutoPass } =
-		useGameplayPreferenceToggles(buildHistoryState, replaceHistoryState, {
-			setIsAutoAcknowledgeEnabled,
-			setIsAutoPassEnabled,
-		});
+	const { toggleAutoAdvance } = useGameplayPreferenceToggles(
+		buildHistoryState,
+		replaceHistoryState,
+		{
+			setIsAutoAdvanceEnabled,
+		},
+	);
 
 	return {
 		currentScreen,
@@ -322,8 +309,7 @@ export function useAppNavigation(): AppNavigationState {
 		isMusicEnabled,
 		isSoundEnabled,
 		isBackgroundAudioMuted,
-		isAutoAcknowledgeEnabled,
-		isAutoPassEnabled,
+		isAutoAdvanceEnabled,
 		resumePoint,
 		resumeSessionId,
 		startStandardGame,
@@ -336,8 +322,7 @@ export function useAppNavigation(): AppNavigationState {
 		toggleMusic,
 		toggleSound,
 		toggleBackgroundAudioMute,
-		toggleAutoAcknowledge,
-		toggleAutoPass,
+		toggleAutoAdvance,
 		persistResumeSession,
 		clearResumeSession,
 		handleResumeSessionFailure,

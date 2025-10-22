@@ -21,8 +21,7 @@ export default function App() {
 		isMusicEnabled,
 		isSoundEnabled,
 		isBackgroundAudioMuted,
-		isAutoAcknowledgeEnabled,
-		isAutoPassEnabled,
+		isAutoAdvanceEnabled,
 		resumePoint,
 		resumeSessionId,
 		startStandardGame,
@@ -35,8 +34,7 @@ export default function App() {
 		toggleMusic,
 		toggleSound,
 		toggleBackgroundAudioMute,
-		toggleAutoAcknowledge,
-		toggleAutoPass,
+		toggleAutoAdvance,
 		persistResumeSession,
 		clearResumeSession,
 		handleResumeSessionFailure,
@@ -117,10 +115,8 @@ export default function App() {
 					onToggleSound={toggleSound}
 					backgroundAudioMuted={isBackgroundAudioMuted}
 					onToggleBackgroundAudioMute={toggleBackgroundAudioMute}
-					autoAcknowledgeEnabled={isAutoAcknowledgeEnabled}
-					onToggleAutoAcknowledge={toggleAutoAcknowledge}
-					autoPassEnabled={isAutoPassEnabled}
-					onToggleAutoPass={toggleAutoPass}
+					autoAdvanceEnabled={isAutoAdvanceEnabled}
+					onToggleAutoAdvance={toggleAutoAdvance}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 					resumeSessionId={resumeSessionId}
@@ -148,10 +144,8 @@ export default function App() {
 					onToggleSound={toggleSound}
 					backgroundAudioMuted={isBackgroundAudioMuted}
 					onToggleBackgroundAudioMute={toggleBackgroundAudioMute}
-					autoAcknowledgeEnabled={isAutoAcknowledgeEnabled}
-					onToggleAutoAcknowledge={toggleAutoAcknowledge}
-					autoPassEnabled={isAutoPassEnabled}
-					onToggleAutoPass={toggleAutoPass}
+					autoAdvanceEnabled={isAutoAdvanceEnabled}
+					onToggleAutoAdvance={toggleAutoAdvance}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 					hasStoredName={hasStoredName}

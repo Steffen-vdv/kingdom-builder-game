@@ -47,16 +47,11 @@ const SETTINGS_TABS: Array<{ id: SettingsTabId; label: string }> = [
 	{ id: 'controls', label: 'Controls' },
 ];
 
-const AUTO_ACKNOWLEDGE_TITLE = 'Auto-Acknowledge Action Summaries';
+const AUTO_ADVANCE_TITLE = 'Auto-advance';
 
-const AUTO_ACKNOWLEDGE_DESCRIPTION = [
-	'Automatically acknowledge action results the moment they appear.',
-].join(' ');
-
-const AUTO_PASS_TITLE = 'Auto-end turn';
-
-const AUTO_PASS_DESCRIPTION = [
-	'End your turn for you after every available action is used.',
+const AUTO_ADVANCE_DESCRIPTION = [
+	'Skip manual continue prompts by acknowledging finished actions and',
+	'advancing automatically when your turn can proceed.',
 ].join(' ');
 
 const FOCUSABLE_ELEMENTS_SELECTOR = [
@@ -79,10 +74,8 @@ interface SettingsDialogProps {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
-	autoAcknowledgeEnabled: boolean;
-	onToggleAutoAcknowledge: () => void;
-	autoPassEnabled: boolean;
-	onToggleAutoPass: () => void;
+	autoAdvanceEnabled: boolean;
+	onToggleAutoAdvance: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	controlKeybinds: ControlKeybindMap;
@@ -101,10 +94,8 @@ export default function SettingsDialog({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
-	autoAcknowledgeEnabled,
-	onToggleAutoAcknowledge,
-	autoPassEnabled,
-	onToggleAutoPass,
+	autoAdvanceEnabled,
+	onToggleAutoAdvance,
 	playerName,
 	onChangePlayerName,
 	controlKeybinds,
@@ -273,18 +264,11 @@ export default function SettingsDialog({
 								onSave={onChangePlayerName}
 							/>
 							<SettingRow
-								id="settings-auto-acknowledge"
-								title={AUTO_ACKNOWLEDGE_TITLE}
-								description={AUTO_ACKNOWLEDGE_DESCRIPTION}
-								checked={autoAcknowledgeEnabled}
-								onToggle={onToggleAutoAcknowledge}
-							/>
-							<SettingRow
-								id="settings-auto-pass"
-								title={AUTO_PASS_TITLE}
-								description={AUTO_PASS_DESCRIPTION}
-								checked={autoPassEnabled}
-								onToggle={onToggleAutoPass}
+								id="settings-auto-advance"
+								title={AUTO_ADVANCE_TITLE}
+								description={AUTO_ADVANCE_DESCRIPTION}
+								checked={autoAdvanceEnabled}
+								onToggle={onToggleAutoAdvance}
 							/>
 						</div>
 					)}
