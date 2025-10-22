@@ -330,7 +330,6 @@ export default [
 	},
 	{
 		files: [
-			'packages/content/**/*.{ts,tsx,js,cjs,mjs}',
 			'packages/contents/**/*.{ts,tsx,js,cjs,mjs}',
 		],
 		rules: {
