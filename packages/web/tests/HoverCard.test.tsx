@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -251,6 +251,75 @@ describe('<HoverCard />', () => {
 		act(() => {
 			mockGame.acknowledgeResolution();
 		});
+		await expect(resolutionPromise).resolves.toBeUndefined();
+		expect(mockGame.resolution).toBeNull();
+	});
+
+	it('advances the phase when continuing the final action resolution', async () => {
+		vi.useFakeTimers();
+		const { exampleAction } = scenario;
+		const advancePhaseSpy = mockGame.requests.advancePhase;
+		const acknowledgeSpy = vi.fn();
+		mockGame.phase = {
+			...mockGame.phase,
+			canEndTurn: true,
+			isAdvancing: false,
+			isActionPhase: true,
+		};
+		const ResolutionHarness = () => {
+			const timeScaleRef = React.useRef(1);
+			const mountedRef = React.useRef(true);
+			React.useEffect(() => {
+				return () => {
+					mountedRef.current = false;
+				};
+			}, []);
+			const { resolution, showResolution, acknowledgeResolution } =
+				useActionResolution({
+					addResolutionLog: vi.fn(),
+					setTrackedTimeout: (callback, delay) =>
+						window.setTimeout(callback, delay),
+					timeScaleRef,
+					mountedRef,
+				});
+			mockGame.resolution = resolution;
+			mockGame.showResolution = showResolution;
+			mockGame.acknowledgeResolution = () => {
+				acknowledgeSpy();
+				acknowledgeResolution();
+			};
+			return <HoverCard />;
+		};
+		render(<ResolutionHarness />);
+		const activePlayerView = mockGame.selectors.sessionView.active;
+		if (!activePlayerView) {
+			throw new Error('Expected active player in session view');
+		}
+		const resolutionSource = {
+			kind: 'action' as const,
+			label: 'Action',
+			id: exampleAction.id,
+			name: exampleAction.name,
+			icon: exampleAction.icon,
+		};
+		let resolutionPromise: Promise<void> = Promise.resolve();
+		act(() => {
+			resolutionPromise = mockGame.showResolution({
+				lines: ['Final effect'],
+				player: {
+					id: activePlayerView.id,
+					name: activePlayerView.name,
+				},
+				action: resolutionSource,
+				source: resolutionSource,
+				actorLabel: 'Played by',
+			});
+		});
+		const nextTurnButton = screen.getByRole('button', { name: 'Next Turn' });
+		expect(nextTurnButton).not.toBeDisabled();
+		fireEvent.click(nextTurnButton);
+		expect(acknowledgeSpy).toHaveBeenCalledTimes(1);
+		expect(advancePhaseSpy).toHaveBeenCalledTimes(1);
 		await expect(resolutionPromise).resolves.toBeUndefined();
 		expect(mockGame.resolution).toBeNull();
 	});

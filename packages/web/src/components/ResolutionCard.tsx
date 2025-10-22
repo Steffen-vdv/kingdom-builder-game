@@ -11,6 +11,7 @@ import {
 	CARD_META_TEXT_CLASS,
 	CARD_TITLE_TEXT_CLASS,
 	CONTINUE_BUTTON_CLASS,
+	NEXT_TURN_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
 import { usePlayerAccentClasses } from './common/usePlayerAccentClasses';
@@ -65,6 +66,7 @@ interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
 	onContinue: () => void;
+	continueVariant?: 'continue' | 'next-turn';
 }
 
 function resolveSourceLabels(source: ResolutionSource | undefined) {
@@ -86,6 +88,7 @@ function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
+	continueVariant = 'continue',
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
@@ -262,6 +265,14 @@ function ResolutionCard({
 		);
 	}
 	const shouldShowContinue = resolution.requireAcknowledgement;
+	const buttonVariant =
+		continueVariant === 'next-turn' ? 'next-turn' : 'continue';
+	const buttonLabel = buttonVariant === 'next-turn' ? 'Next Turn' : 'Continue';
+	const buttonIcon = buttonVariant === 'next-turn' ? '»' : '→';
+	const buttonClass =
+		buttonVariant === 'next-turn'
+			? NEXT_TURN_BUTTON_CLASS
+			: CONTINUE_BUTTON_CLASS;
 
 	return (
 		<div className={containerClass} data-state="enter">
@@ -332,9 +343,12 @@ function ResolutionCard({
 						type="button"
 						onClick={onContinue}
 						disabled={!resolution.isComplete}
-						className={CONTINUE_BUTTON_CLASS}
+						className={buttonClass}
 					>
-						Continue
+						<span>{buttonLabel}</span>
+						<span aria-hidden="true" className="text-base">
+							{buttonIcon}
+						</span>
 					</button>
 				</div>
 			) : null}

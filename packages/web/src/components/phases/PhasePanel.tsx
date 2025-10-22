@@ -195,8 +195,7 @@ export default function PhasePanel() {
 		activePlayerSnapshot?.name ??
 		'Player';
 	const awaitingManualStart = phase.awaitingManualStart;
-	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
-	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
+	const shouldHidePhaseControls = Boolean(resolution?.requireAcknowledgement);
 	const showPhaseHistory = useCallback(
 		(phaseSummary: PhaseSummary, resolution: ActionResolution | null) => {
 			if (phaseSummary.isActionPhase || !resolution) {
@@ -218,11 +217,6 @@ export default function PhasePanel() {
 	const hidePhaseHistory = useCallback(() => {
 		clearHoverCard();
 	}, [clearHoverCard]);
-	const handleEndTurnClick = () => {
-		// Phase errors are surfaced via onFatalSessionError inside
-		// usePhaseProgress.
-		void requests.advancePhase();
-	};
 	const handleStartSessionClick = () => {
 		void requests.startSession();
 	};
@@ -307,26 +301,11 @@ export default function PhasePanel() {
 					})}
 				</ul>
 			</div>
-			{shouldHideNextTurn ? null : (
+			{shouldHidePhaseControls || !awaitingManualStart ? null : (
 				<div className="flex justify-end pt-2">
-					{awaitingManualStart ? (
-						<Button
-							variant="success"
-							onClick={handleStartSessionClick}
-							icon="🚀"
-						>
-							Let's go!
-						</Button>
-					) : (
-						<Button
-							variant="primary"
-							disabled={!canEndTurn}
-							onClick={handleEndTurnClick}
-							icon="⏭️"
-						>
-							Next Turn
-						</Button>
-					)}
+					<Button variant="success" onClick={handleStartSessionClick} icon="🚀">
+						Let's go!
+					</Button>
 				</div>
 			)}
 		</section>

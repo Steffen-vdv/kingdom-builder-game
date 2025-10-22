@@ -388,4 +388,27 @@ describe('<ResolutionCard />', () => {
 			screen.getByText('✨ Modifier on all actions: Increase cost by +3'),
 		).toBeInTheDocument();
 	});
+
+	it('renders a Next Turn variant with distinct styling when requested', () => {
+		const resolution = createResolution({});
+
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={() => {}}
+				continueVariant="next-turn"
+			/>,
+		);
+
+		const nextTurnButton = screen.getByRole('button', { name: 'Next Turn' });
+		expect(nextTurnButton).toBeInTheDocument();
+		expect(nextTurnButton.className).toContain('bg-amber-600');
+		expect(nextTurnButton.className).toContain('shadow-amber-600/40');
+		expect(nextTurnButton.className).not.toContain('shadow-amber-500/40');
+		expect(within(nextTurnButton).getByText('Next Turn')).toBeInTheDocument();
+		expect(within(nextTurnButton).getByText('»')).toHaveAttribute(
+			'aria-hidden',
+			'true',
+		);
+	});
 });
