@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
 import {
@@ -25,7 +25,31 @@ export default function HoverCard() {
 		actionCostResource,
 		resolution: actionResolution,
 		acknowledgeResolution,
+		phase,
+		requests,
+		sessionSnapshot,
 	} = useGameEngine();
+	const { advancePhase } = requests;
+	const activePlayerId =
+		phase.activePlayerId ?? sessionSnapshot.game.activePlayerId;
+	const activePlayer = sessionSnapshot.game.players.find(
+		(player) => player.id === activePlayerId,
+	);
+	const isAiTurn = Boolean(activePlayer?.aiControlled);
+	const shouldLabelNextTurn = Boolean(
+		actionResolution &&
+			actionResolution.requireAcknowledgement &&
+			(phase.canEndTurn || isAiTurn) &&
+			!phase.isAdvancing,
+	);
+	const shouldAdvanceAfterContinue =
+		shouldLabelNextTurn && Boolean(actionResolution?.isComplete);
+	const handleResolutionContinue = useCallback(() => {
+		acknowledgeResolution();
+		if (shouldAdvanceAfterContinue) {
+			void advancePhase();
+		}
+	}, [acknowledgeResolution, advancePhase, shouldAdvanceAfterContinue]);
 	const shouldSuppressHoverCards = Boolean(
 		actionResolution &&
 			(!actionResolution.requireAcknowledgement ||
@@ -109,7 +133,8 @@ export default function HoverCard() {
 			<ResolutionCard
 				title={resolutionTitle}
 				resolution={actionResolution}
-				onContinue={acknowledgeResolution}
+				onContinue={handleResolutionContinue}
+				continueMode={shouldLabelNextTurn ? 'next-turn' : 'continue'}
 			/>
 		);
 	}

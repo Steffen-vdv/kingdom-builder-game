@@ -65,6 +65,7 @@ interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
 	onContinue: () => void;
+	continueMode?: 'continue' | 'next-turn';
 }
 
 function resolveSourceLabels(source: ResolutionSource | undefined) {
@@ -86,6 +87,7 @@ function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
+	continueMode = 'continue',
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
@@ -262,6 +264,27 @@ function ResolutionCard({
 		);
 	}
 	const shouldShowContinue = resolution.requireAcknowledgement;
+	const continueButtonClass = joinClasses(
+		CONTINUE_BUTTON_CLASS,
+		continueMode === 'next-turn'
+			? [
+					'bg-indigo-600',
+					'hover:bg-indigo-500',
+					'shadow-indigo-500/40',
+					'focus-visible:ring-indigo-500/60',
+					'disabled:bg-indigo-600/60',
+				].join(' ')
+			: [
+					'bg-amber-500',
+					'hover:bg-amber-400',
+					'shadow-amber-500/40',
+					'focus-visible:ring-amber-500/60',
+					'disabled:bg-amber-500/60',
+				].join(' '),
+	);
+	const continueLabel = continueMode === 'next-turn' ? 'Next Turn' : 'Continue';
+	const continueIcon = continueMode === 'next-turn' ? '≫' : '→';
+	const continueIconClass = 'ml-1 text-base leading-none';
 
 	return (
 		<div className={containerClass} data-state="enter">
@@ -332,9 +355,12 @@ function ResolutionCard({
 						type="button"
 						onClick={onContinue}
 						disabled={!resolution.isComplete}
-						className={CONTINUE_BUTTON_CLASS}
+						className={continueButtonClass}
 					>
-						Continue
+						<span>{continueLabel}</span>
+						<span aria-hidden="true" className={continueIconClass}>
+							{continueIcon}
+						</span>
 					</button>
 				</div>
 			) : null}

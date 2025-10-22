@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -181,6 +181,7 @@ describe('<HoverCard />', () => {
 	it('disables acknowledgement until the final resolution step', async () => {
 		vi.useFakeTimers();
 		const { exampleAction } = scenario;
+		mockGame.phase = { ...mockGame.phase, canEndTurn: false };
 		const ResolutionHarness = () => {
 			const timeScaleRef = React.useRef(1);
 			const mountedRef = React.useRef(true);
@@ -202,6 +203,7 @@ describe('<HoverCard />', () => {
 			mockGame.acknowledgeResolution = acknowledgeResolution;
 			return <HoverCard />;
 		};
+		mockGame.phase = { ...mockGame.phase, canEndTurn: false };
 		render(<ResolutionHarness />);
 		let resolutionPromise: Promise<void> = Promise.resolve();
 		const activePlayerView = mockGame.selectors.sessionView.active;
@@ -227,9 +229,11 @@ describe('<HoverCard />', () => {
 				actorLabel: 'Played by',
 			});
 		});
-		const continueButton = screen.getByRole('button', {
+		const continueButtons = screen.getAllByRole('button', {
 			name: 'Continue',
 		});
+		const continueButton =
+			continueButtons[continueButtons.length - 1] ?? continueButtons[0];
 		expect(continueButton).toBeDisabled();
 		const resolutionSteps =
 			screen.getByText('Resolution steps').nextElementSibling;
@@ -255,9 +259,164 @@ describe('<HoverCard />', () => {
 		expect(mockGame.resolution).toBeNull();
 	});
 
+	it('advances the turn when acknowledging the final action', async () => {
+		vi.useFakeTimers();
+		mockGame.requests.advancePhase.mockClear();
+		const { exampleAction } = scenario;
+		const ResolutionHarness = () => {
+			const timeScaleRef = React.useRef(1);
+			const mountedRef = React.useRef(true);
+			React.useEffect(() => {
+				return () => {
+					mountedRef.current = false;
+				};
+			}, []);
+			const { resolution, showResolution, acknowledgeResolution } =
+				useActionResolution({
+					addResolutionLog: vi.fn(),
+					setTrackedTimeout: (callback, delay) =>
+						window.setTimeout(callback, delay),
+					timeScaleRef,
+					mountedRef,
+				});
+			mockGame.resolution = resolution;
+			mockGame.showResolution = showResolution;
+			mockGame.acknowledgeResolution = acknowledgeResolution;
+			return <HoverCard />;
+		};
+		render(<ResolutionHarness />);
+
+		const activePlayerView = mockGame.selectors.sessionView.active;
+		if (!activePlayerView) {
+			throw new Error('Expected active player in session view');
+		}
+		const resolutionSource = {
+			kind: 'action' as const,
+			label: 'Action',
+			id: exampleAction.id,
+			name: exampleAction.name,
+			icon: exampleAction.icon,
+		};
+		let resolutionPromise: Promise<void> = Promise.resolve();
+		act(() => {
+			resolutionPromise = mockGame.showResolution({
+				lines: ['First reveal', 'Second reveal'],
+				player: {
+					id: activePlayerView.id,
+					name: activePlayerView.name,
+				},
+				action: resolutionSource,
+				source: resolutionSource,
+				actorLabel: 'Played by',
+			});
+		});
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Next Turn',
+		});
+		expect(nextTurnButton).toBeDisabled();
+		act(() => {
+			vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+		});
+		act(() => {
+			vi.advanceTimersByTime(1);
+		});
+		expect(nextTurnButton).not.toBeDisabled();
+		expect(mockGame.requests.advancePhase).not.toHaveBeenCalled();
+		act(() => {
+			fireEvent.click(nextTurnButton);
+		});
+		await expect(resolutionPromise).resolves.toBeUndefined();
+		expect(mockGame.requests.advancePhase).toHaveBeenCalledTimes(1);
+	});
+
+	it('advances the turn for AI-controlled players even when ending is disabled', async () => {
+		vi.useFakeTimers();
+		mockGame.requests.advancePhase.mockClear();
+		const { exampleAction } = scenario;
+		const aiPlayer = mockGame.sessionSnapshot.game.players[0];
+		if (!aiPlayer) {
+			throw new Error('Expected an active player for AI scenario');
+		}
+		mockGame.sessionSnapshot.game.players[0] = {
+			...aiPlayer,
+			aiControlled: true,
+		};
+		mockGame.sessionSnapshot.game.activePlayerId = aiPlayer.id;
+		mockGame.phase = {
+			...mockGame.phase,
+			activePlayerId: aiPlayer.id,
+			canEndTurn: false,
+		};
+		const ResolutionHarness = () => {
+			const timeScaleRef = React.useRef(1);
+			const mountedRef = React.useRef(true);
+			React.useEffect(() => {
+				return () => {
+					mountedRef.current = false;
+				};
+			}, []);
+			const { resolution, showResolution, acknowledgeResolution } =
+				useActionResolution({
+					addResolutionLog: vi.fn(),
+					setTrackedTimeout: (callback, delay) =>
+						window.setTimeout(callback, delay),
+					timeScaleRef,
+					mountedRef,
+				});
+			mockGame.resolution = resolution;
+			mockGame.showResolution = showResolution;
+			mockGame.acknowledgeResolution = acknowledgeResolution;
+			return <HoverCard />;
+		};
+		render(<ResolutionHarness />);
+
+		const activePlayerView = mockGame.selectors.sessionView.active;
+		if (!activePlayerView) {
+			throw new Error('Expected active player in session view');
+		}
+		const resolutionSource = {
+			kind: 'action' as const,
+			label: 'Action',
+			id: exampleAction.id,
+			name: exampleAction.name,
+			icon: exampleAction.icon,
+		};
+		let resolutionPromise: Promise<void> = Promise.resolve();
+		act(() => {
+			resolutionPromise = mockGame.showResolution({
+				lines: ['First reveal', 'Second reveal'],
+				player: {
+					id: activePlayerView.id,
+					name: activePlayerView.name,
+				},
+				action: resolutionSource,
+				source: resolutionSource,
+				actorLabel: 'Played by',
+			});
+		});
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Next Turn',
+		});
+		expect(nextTurnButton).toBeDisabled();
+		act(() => {
+			vi.advanceTimersByTime(ACTION_EFFECT_DELAY);
+		});
+		act(() => {
+			vi.advanceTimersByTime(1);
+		});
+		expect(nextTurnButton).not.toBeDisabled();
+		expect(mockGame.requests.advancePhase).not.toHaveBeenCalled();
+		act(() => {
+			fireEvent.click(nextTurnButton);
+		});
+		await expect(resolutionPromise).resolves.toBeUndefined();
+		expect(mockGame.requests.advancePhase).toHaveBeenCalledTimes(1);
+	});
+
 	it('renders formatted phase resolutions and logs phase advances', async () => {
 		vi.useFakeTimers();
 		const addResolutionLog = vi.fn();
+		mockGame.phase = { ...mockGame.phase, canEndTurn: false };
 		const ResolutionHarness = () => {
 			const timeScaleRef = React.useRef(1);
 			const mountedRef = React.useRef(true);
@@ -392,9 +551,11 @@ describe('<HoverCard />', () => {
 				(playerLabel) => playerLabel.textContent === sessionPlayer.name,
 			),
 		).toBe(true);
-		const continueButton = screen.getByRole('button', {
+		const continueButtons = screen.getAllByRole('button', {
 			name: 'Continue',
 		});
+		const continueButton =
+			continueButtons[continueButtons.length - 1] ?? continueButtons[0];
 		expect(continueButton).toBeDisabled();
 		const firstLine = formatted.lines[0]!;
 		const normalizedHeadlineMatches = screen.getAllByText((content) => {
