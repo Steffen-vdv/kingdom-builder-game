@@ -19,6 +19,7 @@ import {
 	buildResolutionTimelineEntries,
 	normalizeModifierDescription,
 } from './ResolutionTimeline';
+import { formatActionHeadline } from '../utils/formatActionHeadline';
 
 interface ResolutionLabels {
 	title: string;
@@ -113,6 +114,8 @@ function ResolutionCard({
 		: undefined;
 	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
 	const actionName = rawActionName || fallbackActionName;
+	const categoryIcon = resolution.action?.categoryIcon?.trim() || undefined;
+	const categoryTitle = resolution.action?.categoryTitle?.trim() || undefined;
 	const resolvedLabels = resolveSourceLabels(resolution.source);
 	const resolvedSourceKind = isSourceDetail(resolution.source)
 		? resolution.source.kind
@@ -124,30 +127,28 @@ function ResolutionCard({
 	const normalizedPlayerLabel = resolvedLabels.player
 		.trim()
 		.toLocaleLowerCase();
-	const actorHeaderSubject = actionName
-		? !actorLabel || normalizedActorLabel === normalizedPlayerLabel
-			? actionName
-			: actorLabel
-		: actorLabel || actionName;
 	const sourceIcon = isSourceDetail(resolution.source)
 		? resolution.source.icon?.trim() || extractLeadingIcon(sourceLabel)
 		: undefined;
 	const fallbackIcon = extractLeadingIcon(leadingLine);
 	const actionIcon =
 		resolution.action?.icon?.trim() || sourceIcon || fallbackIcon;
+	const formattedActionHeadline = actionName
+		? formatActionHeadline({
+				...(categoryIcon ? { categoryIcon } : {}),
+				...(categoryTitle ? { categoryTitle } : {}),
+				...(actionIcon ? { actionIcon } : {}),
+				actionTitle: actionName,
+			})
+		: undefined;
+	const displayActionHeadline = formattedActionHeadline ?? actionName;
+	const actorHeaderSubject = displayActionHeadline
+		? !actorLabel || normalizedActorLabel === normalizedPlayerLabel
+			? displayActionHeadline
+			: actorLabel
+		: actorLabel || displayActionHeadline;
 	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
-	const normalizedResolvedTitle = resolvedLabels.title
-		.trim()
-		.toLocaleLowerCase();
-	const normalizedHeaderSubject = actorHeaderSubject
-		?.trim()
-		.toLocaleLowerCase();
-	let headerTitle = actorHeaderSubject
-		? normalizedHeaderSubject &&
-			normalizedHeaderSubject !== normalizedResolvedTitle
-			? `${resolvedLabels.title} - ${actorHeaderSubject}`
-			: actorHeaderSubject
-		: defaultTitle;
+	let headerTitle = defaultTitle;
 	if (resolvedSourceKind === 'phase') {
 		const sanitizedPhaseSubject = (actorHeaderSubject || '')
 			.replace(LEADING_EMOJI_PATTERN, '')
@@ -157,6 +158,20 @@ function ResolutionCard({
 		headerTitle = sanitizedPhaseSubject
 			? `${SOURCE_LABELS.phase.title} - ${sanitizedPhaseSubject}`
 			: `${SOURCE_LABELS.phase.title} resolution`;
+	} else if (formattedActionHeadline) {
+		headerTitle = formattedActionHeadline;
+	} else if (actorHeaderSubject) {
+		const normalizedResolvedTitle = resolvedLabels.title
+			.trim()
+			.toLocaleLowerCase();
+		const normalizedHeaderSubject = actorHeaderSubject
+			.trim()
+			.toLocaleLowerCase();
+		headerTitle =
+			normalizedHeaderSubject &&
+			normalizedHeaderSubject !== normalizedResolvedTitle
+				? `${resolvedLabels.title} - ${actorHeaderSubject}`
+				: actorHeaderSubject;
 	}
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
@@ -209,12 +224,14 @@ function ResolutionCard({
 		if (actionIcon) {
 			options.actionIcon = actionIcon;
 		}
-		if (actionName) {
+		if (formattedActionHeadline) {
+			options.actionHeadline = formattedActionHeadline;
+		} else if (actionName) {
 			options.actionName = actionName;
 		}
 
 		return buildResolutionTimelineEntries(structuredTimeline, options);
-	}, [actionIcon, actionName, structuredTimeline]);
+	}, [actionIcon, actionName, formattedActionHeadline, structuredTimeline]);
 
 	const fallbackLines = React.useMemo(() => {
 		if (resolution.visibleTimeline.length > 0) {

@@ -48,6 +48,9 @@ describe('<ResolutionCard />', () => {
 				id: 'action-id',
 				name: 'Test Action',
 				icon: '⚔️',
+				categoryId: 'strategy',
+				categoryIcon: '🧪',
+				categoryTitle: 'Strategy',
 			},
 			source: {
 				kind: 'action',
@@ -71,7 +74,9 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Action - Test Action')).toBeInTheDocument();
+		expect(
+			screen.getByText('Action - 🧪 Strategy - ⚔️ Test Action'),
+		).toBeInTheDocument();
 		const actionPlayerLabel = screen.getByLabelText('Player');
 		expect(actionPlayerLabel).toHaveTextContent('Player One');
 	});
@@ -116,7 +121,7 @@ describe('<ResolutionCard />', () => {
 		expect(screen.queryByText('✦')).toBeNull();
 	});
 
-	it('omits the phase headline from the effects section', () => {
+	it('renders the phase headline as part of the structured effects section', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
 				{ text: '🌱 Growth Phase', depth: 0, kind: 'headline' },
@@ -142,10 +147,19 @@ describe('<ResolutionCard />', () => {
 		if (!effectsList) {
 			throw new Error('Expected effects container to have a parent element');
 		}
-		expect(within(effectsList).queryByText('🌱 Growth Phase')).toBeNull();
-		expect(
-			within(effectsList).getByText('Gain +2 population'),
-		).toBeInTheDocument();
+		const phaseHeadline = within(effectsList).getByText('🌱 Growth Phase');
+		const phaseEntryContainer = phaseHeadline.parentElement;
+		const effectEntry = within(effectsList).getByText('Gain +2 population');
+		const effectEntryContainer = effectEntry.parentElement;
+
+		if (!phaseEntryContainer || !effectEntryContainer) {
+			throw new Error(
+				'Expected phase headline entries to have container elements',
+			);
+		}
+
+		expect(phaseEntryContainer).toHaveStyle({ marginLeft: '0.875rem' });
+		expect(effectEntryContainer).toHaveStyle({ marginLeft: '1.75rem' });
 	});
 
 	it('hides the continue button when acknowledgement is not required', () => {
@@ -162,9 +176,10 @@ describe('<ResolutionCard />', () => {
 	});
 
 	it('renders section roots with nested cost and effect entries', () => {
+		const actionHeadline = 'Action - 🏗️ Development - 🛠️ Forge Relic';
 		const resolution = createResolution({
 			visibleTimeline: [
-				{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
+				{ text: actionHeadline, depth: 0, kind: 'headline' },
 				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
 				{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
 				{ text: '🪄 Effect happens', depth: 1, kind: 'effect' },
@@ -180,7 +195,7 @@ describe('<ResolutionCard />', () => {
 		const effectsSectionContainer = effectsSection.parentElement;
 		const goldCost = screen.getByText('Gold -3');
 		const goldCostContainer = goldCost.parentElement;
-		const effectHeadline = screen.getByText('🏗️ Develop');
+		const effectHeadline = screen.getByText(actionHeadline);
 		const effectEntry = screen.getByText('🪄 Effect happens');
 		const effectHeadlineContainer = effectHeadline.parentElement;
 		const effectEntryContainer = effectEntry.parentElement;
@@ -205,7 +220,11 @@ describe('<ResolutionCard />', () => {
 
 	it('renders nested cost groups and effect hierarchies', () => {
 		const visibleTimeline: ActionLogLineDescriptor[] = [
-			{ text: '🛠️ Forge Relic', depth: 0, kind: 'headline' },
+			{
+				text: 'Action - 🏗️ Development - 🛠️ Forge Relic',
+				depth: 0,
+				kind: 'headline',
+			},
 			{ text: '💲 Action cost', depth: 1, kind: 'cost' },
 			{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
 			{ text: 'Discounts applied', depth: 3, kind: 'cost-detail' },
@@ -221,6 +240,8 @@ describe('<ResolutionCard />', () => {
 				id: 'forge-relic',
 				name: 'Forge Relic',
 				icon: '🛠️',
+				categoryIcon: '🏗️',
+				categoryTitle: 'Development',
 			},
 			visibleTimeline,
 			visibleLines: [],
@@ -264,7 +285,16 @@ describe('<ResolutionCard />', () => {
 		expect(discountContainer).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(happinessContainer).toHaveStyle({ marginLeft: '2.625rem' });
 
-		expect(screen.queryByText('🛠️ Forge Relic')).toBeNull();
+		const actionHeadline = screen.getByText(
+			'Action - 🏗️ Development - 🛠️ Forge Relic',
+		);
+		const actionHeadlineContainer = actionHeadline.parentElement;
+
+		if (!actionHeadlineContainer) {
+			throw new Error('Expected action headline to have a container element');
+		}
+
+		expect(actionHeadline).toBeInTheDocument();
 
 		const group = screen.getByText('🪄 Channel the forge');
 		const effect = screen.getByText('Gain 2 Relics');

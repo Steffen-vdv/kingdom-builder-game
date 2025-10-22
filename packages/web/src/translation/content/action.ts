@@ -15,6 +15,14 @@ import type {
 } from './types';
 import type { TranslationContext } from '../context';
 import { getActionLogHook } from './actionLogHooks';
+import {
+	formatActionHeadline,
+	type FormatActionHeadlineOptions,
+} from '../../utils/formatActionHeadline';
+import {
+	extractActionCategoryId,
+	resolveActionCategoryDefinition,
+} from '../../utils/resolveActionCategory';
 import type {
 	ActionLogLineDescriptor,
 	ActionLogLineKind,
@@ -70,12 +78,30 @@ class ActionTranslator
 	): ActionLogLineDescriptor[] {
 		const definition = context.actions.get(id);
 		const icon = definition.icon?.trim();
-		const label = definition.name.trim();
-		let message = icon ? `${icon} ${label}` : label;
-		const extra = getActionLogHook(definition)?.(context, params);
-		if (extra) {
-			message += extra;
+		const label = (definition.name || id).trim();
+		const categoryId = extractActionCategoryId(definition);
+		const category = resolveActionCategoryDefinition(
+			context.actionCategories,
+			categoryId,
+		);
+		const categoryIcon = category?.icon;
+		const categoryTitle = category?.title;
+		const actionIcon = icon && icon.length > 0 ? icon : undefined;
+		const headlineOptions: FormatActionHeadlineOptions = {
+			actionTitle: label,
+		};
+		if (categoryIcon) {
+			headlineOptions.categoryIcon = categoryIcon;
 		}
+		if (categoryTitle) {
+			headlineOptions.categoryTitle = categoryTitle;
+		}
+		if (actionIcon) {
+			headlineOptions.actionIcon = actionIcon;
+		}
+		const message = formatActionHeadline(headlineOptions);
+		const extra = getActionLogHook(definition)?.(context, params);
+		const headline = extra ? `${message}${extra}` : message;
 		const resolved = resolveActionEffects(
 			definition,
 			params as ActionParametersPayload | undefined,
@@ -89,7 +115,7 @@ class ActionTranslator
 			effectLogs.push(...formatEffectGroups([step], 'log', context));
 		}
 		const lines: ActionLogLineDescriptor[] = [
-			{ text: message, depth: 0, kind: 'headline' },
+			{ text: headline, depth: 0, kind: 'headline' },
 		];
 		function push(
 			entry: SummaryEntry,

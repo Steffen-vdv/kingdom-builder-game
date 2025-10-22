@@ -8,6 +8,11 @@ import type { Action } from './actionTypes';
 import { SessionMirroringError, isFatalSessionError } from './sessionErrors';
 import { createFailureResolutionSnapshot } from './actionResolutionLog';
 import type { ActionResolution } from './useActionResolution';
+import type { ResolvedActionCategory } from '../utils/resolveActionCategory';
+import {
+	extractActionCategoryId,
+	resolveActionCategoryDefinition,
+} from '../utils/resolveActionCategory';
 
 type RequirementFailureCarrier = {
 	requirementFailure?: SessionRequirementFailure;
@@ -47,7 +52,8 @@ export function createActionErrorHandler({
 			return true;
 		}
 		const context = contextRef.current;
-		const icon = context.actions.get(action.id)?.icon || '';
+		const stepDefinition = context.actions.get(action.id);
+		const icon = stepDefinition?.icon || '';
 		let message = (error as Error).message || 'Action failed';
 		const executionError = error as RequirementFailureCarrier;
 		const requirementFailure =
@@ -60,12 +66,16 @@ export function createActionErrorHandler({
 		const headline = icon
 			? `Failed to play ${icon} ${action.name}`
 			: `Failed to play ${action.name}`;
+		const categoryId = extractActionCategoryId(stepDefinition);
+		const categoryDefinition: ResolvedActionCategory | undefined =
+			resolveActionCategoryDefinition(context.actionCategories, categoryId);
 		const resolution = createFailureResolutionSnapshot({
 			action,
-			stepDefinition: context.actions.get(action.id),
+			stepDefinition,
 			player: { id: player.id, name: player.name },
 			detail: message,
 			headline,
+			...(categoryDefinition ? { categoryDefinition } : {}),
 		});
 		addResolutionLog(resolution);
 		return false;

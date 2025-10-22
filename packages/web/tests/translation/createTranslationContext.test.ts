@@ -66,9 +66,9 @@ describe('createTranslationContext', () => {
 				: undefined,
 			stats: {
 				[statKey]: {
-					label: 'Citizen Capacity',
+					label: 'Population Capacity',
 					icon: '🏯',
-					description: 'Represents how many citizens can serve the realm.',
+					description: 'Represents how many specialists the realm can sustain.',
 					displayAsPercent: true,
 					format: { prefix: '~', percent: true },
 				},
@@ -81,7 +81,7 @@ describe('createTranslationContext', () => {
 					description: 'Designated location for new developments.',
 				},
 				land: { icon: '🌄', label: 'Territory' },
-				population: { icon: '🧑‍🤝‍🧑', label: 'Citizens' },
+				population: { icon: '🧑‍🤝‍🧑', label: 'Population' },
 				upkeep: { icon: '🪣', label: 'Maintenance' },
 			},
 			triggers: {
@@ -241,130 +241,130 @@ describe('createTranslationContext', () => {
 			},
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
-                        {
-                          "actionCostResource": "gold",
-                          "assets": {
-                            "passive": {
-                              "icon": "✨",
-                              "label": "Passive Aura",
-                            },
-                            "population": {
-                              "icon": "🧑‍🤝‍🧑",
-                              "label": "Citizens",
-                            },
-                            "resource": {
-                              "description": "The royal treasury fuels your ambitions.",
-                              "icon": "💰",
-                              "label": "Royal Treasury",
-                            },
-                            "slot": {
-                              "description": "Designated location for new developments.",
-                              "icon": "📦",
-                              "label": "Plot Slot",
-                            },
-                            "stat": {
-                              "description": "Represents how many citizens can serve the realm.",
-                              "displayAsPercent": true,
-                              "format": {
-                                "percent": true,
-                                "prefix": "~",
-                              },
-                              "icon": "🏯",
-                              "label": "Citizen Capacity",
-                            },
-                            "trigger": {
-                              "future": "When the signal sounds",
-                              "icon": "🔔",
-                              "label": "Signal Trigger",
-                              "past": "Signal",
-                            },
-                          },
-                          "compensations": {
-                            "A": {
-                              "resources": {
-                                "gold": 2,
-                              },
-                            },
-                            "B": {
-                              "resources": {
-                                "gold": 1,
-                              },
-                            },
-                          },
-                          "passives": {
-                            "definition": {
-                              "icon": "🌱",
-                              "id": "passive-a",
-                              "meta": {
-                                "source": {
-                                  "icon": "🏘️",
-                                },
-                              },
-                              "owner": "A",
-                            },
-                            "definitions": [
-                              "passive-a",
-                            ],
-                            "descriptor": {
-                              "icon": "🌱",
-                              "meta": {
-                                "source": {
-                                  "icon": "🏘️",
-                                },
-                              },
-                            },
-                            "evaluationMods": [
-                              [
-                                "gold",
-                                [
-                                  "modifier",
-                                ],
-                              ],
-                            ],
-                            "list": [
-                              "passive-a",
-                            ],
-                            "owned": [
-                              "passive-a",
-                            ],
-                          },
-                          "phases": [
-                            "phase.alpha",
-                          ],
-                          "players": {
-                            "active": "A",
-                            "opponent": "B",
-                          },
-                          "recentResourceGains": [
-                            {
-                              "amount": 3,
-                              "key": "gold",
-                            },
-                          ],
-                          "registries": {
-                            "action": {
-                              "has": true,
-                              "id": "expand",
-                            },
-                            "building": {
-                              "has": true,
-                              "id": "town_charter",
-                            },
-                            "development": {
-                              "has": true,
-                              "id": "farm",
-                            },
-                            "population": {
-                              "has": true,
-                              "id": "council",
-                            },
-                          },
-                          "rules": {
-                            "tierDefinitions": [],
-                            "tieredResourceKey": "gold",
-                            "winConditions": [],
-                          },
-                        }
-                `);
+			{
+			  "actionCostResource": "gold",
+			  "assets": {
+			    "passive": {
+			      "icon": "✨",
+			      "label": "Passive Aura",
+			    },
+			    "population": {
+			      "icon": "🧑‍🤝‍🧑",
+			      "label": "Population",
+			    },
+			    "resource": {
+			      "description": "The royal treasury fuels your ambitions.",
+			      "icon": "💰",
+			      "label": "Royal Treasury",
+			    },
+			    "slot": {
+			      "description": "Designated location for new developments.",
+			      "icon": "📦",
+			      "label": "Plot Slot",
+			    },
+			    "stat": {
+			      "description": "Represents how many specialists the realm can sustain.",
+			      "displayAsPercent": true,
+			      "format": {
+			        "percent": true,
+			        "prefix": "~",
+			      },
+			      "icon": "🏯",
+			      "label": "Population Capacity",
+			    },
+			    "trigger": {
+			      "future": "When the signal sounds",
+			      "icon": "🔔",
+			      "label": "Signal Trigger",
+			      "past": "Signal",
+			    },
+			  },
+			  "compensations": {
+			    "A": {
+			      "resources": {
+			        "gold": 2,
+			      },
+			    },
+			    "B": {
+			      "resources": {
+			        "gold": 1,
+			      },
+			    },
+			  },
+			  "passives": {
+			    "definition": {
+			      "icon": "🌱",
+			      "id": "passive-a",
+			      "meta": {
+			        "source": {
+			          "icon": "🏘️",
+			        },
+			      },
+			      "owner": "A",
+			    },
+			    "definitions": [
+			      "passive-a",
+			    ],
+			    "descriptor": {
+			      "icon": "🌱",
+			      "meta": {
+			        "source": {
+			          "icon": "🏘️",
+			        },
+			      },
+			    },
+			    "evaluationMods": [
+			      [
+			        "gold",
+			        [
+			          "modifier",
+			        ],
+			      ],
+			    ],
+			    "list": [
+			      "passive-a",
+			    ],
+			    "owned": [
+			      "passive-a",
+			    ],
+			  },
+			  "phases": [
+			    "phase.alpha",
+			  ],
+			  "players": {
+			    "active": "A",
+			    "opponent": "B",
+			  },
+			  "recentResourceGains": [
+			    {
+			      "amount": 3,
+			      "key": "gold",
+			    },
+			  ],
+			  "registries": {
+			    "action": {
+			      "has": true,
+			      "id": "expand",
+			    },
+			    "building": {
+			      "has": true,
+			      "id": "town_charter",
+			    },
+			    "development": {
+			      "has": true,
+			      "id": "farm",
+			    },
+			    "population": {
+			      "has": true,
+			      "id": "council",
+			    },
+			  },
+			  "rules": {
+			    "tierDefinitions": [],
+			    "tieredResourceKey": "gold",
+			    "winConditions": [],
+			  },
+			}
+		`);
 	});
 });

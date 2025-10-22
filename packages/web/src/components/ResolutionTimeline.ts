@@ -20,6 +20,7 @@ interface CollectEffectEntriesOptions {
 interface BuildResolutionTimelineOptions {
 	actionIcon?: string;
 	actionName?: string;
+	actionHeadline?: string;
 }
 
 const MODIFIER_LABEL_PATTERN = /\b(cost|result|modifier)\s+on\b/giu;
@@ -239,6 +240,10 @@ function adjustEntryLevels(entries: TimelineEntry[]): TimelineEntry[] {
 function buildHeadline(
 	options: BuildResolutionTimelineOptions | undefined,
 ): string | null {
+	const explicit = options?.actionHeadline?.trim();
+	if (explicit) {
+		return explicit.replace(/\s+/g, ' ');
+	}
 	const actionIcon = options?.actionIcon?.trim();
 	const actionName = options?.actionName?.trim();
 

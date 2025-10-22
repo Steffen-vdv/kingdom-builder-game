@@ -19,6 +19,7 @@ import {
 	selectAttackBuildingDescriptor,
 	selectAttackResourceDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
+import { resolveActionHeadline } from './helpers/actionHeadline';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -84,8 +85,13 @@ describe('army attack translation log', () => {
 		);
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
 		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
+		const attackHeadline = resolveActionHeadline(translation, {
+			id: attack.id,
+			icon: attack.icon,
+			name: attack.name,
+		});
 		expect(withLegacyIndent(log)).toEqual([
-			`${attack.icon} ${attack.name}`,
+			attackHeadline,
 			`  Attack opponent with your ${powerLabel}`,
 			`    ${absorptionLabel} damage reduction applied`,
 			`    Apply damage to opponent ${fortLabel}`,
@@ -135,8 +141,13 @@ describe('army attack translation log', () => {
 			'Absorption',
 		);
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
+		const buildingAttackHeadline = resolveActionHeadline(translation, {
+			id: buildingAttack.id,
+			icon: buildingAttack.icon,
+			name: buildingAttack.name,
+		});
 		expect(withLegacyIndent(log)).toEqual([
-			`${buildingAttack.icon} ${buildingAttack.name}`,
+			buildingAttackHeadline,
 			`  Attack opponent with your ${powerLabel}`,
 			`    ${absorptionLabel} damage reduction applied`,
 			`    Apply damage to opponent ${fortLabel}`,

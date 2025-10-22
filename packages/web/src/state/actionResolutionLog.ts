@@ -5,7 +5,10 @@ import {
 	buildActionLogTimeline,
 	formatActionLogLines,
 } from './actionLogFormat';
-import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import {
+	buildResolutionActionMeta,
+	type ResolutionActionCategory,
+} from './deriveResolutionActionName';
 import type {
 	ActionResolution,
 	ResolutionActionMeta,
@@ -57,10 +60,11 @@ function createResolutionLogSnapshot({
 
 interface CreateFailureResolutionOptions {
 	action: Action;
-	stepDefinition?: { icon?: unknown; name?: unknown };
+	stepDefinition?: { icon?: unknown; name?: unknown; category?: unknown };
 	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
 	detail: string;
 	headline?: string;
+	categoryDefinition?: ResolutionActionCategory;
 }
 
 function resolveActionSource(
@@ -89,6 +93,7 @@ function createFailureResolutionSnapshot({
 	player,
 	detail,
 	headline = 'Action failed',
+	categoryDefinition,
 }: CreateFailureResolutionOptions): ActionResolution {
 	const descriptors: ActionLogLineDescriptor[] = [
 		{ text: headline, depth: 0, kind: 'headline' },
@@ -100,6 +105,7 @@ function createFailureResolutionSnapshot({
 		action,
 		stepDefinition,
 		headline,
+		categoryDefinition,
 	);
 	const source = resolveActionSource(actionMeta);
 	return createResolutionLogSnapshot({

@@ -14,6 +14,7 @@ import {
 	type DevelopmentActionId,
 } from '@kingdom-builder/contents/actions';
 import type { DevelopmentId } from '@kingdom-builder/contents/developments';
+import { resolveActionHeadline } from './helpers/actionHeadline';
 
 interface ActionEffectGroupOption {
 	optionId: string;
@@ -176,10 +177,11 @@ describe('royal decree translation', () => {
 					`Missing develop action definition for ${option.actionId}`,
 				);
 			}
-			const developLabel = combineLabels(
-				`${developAction.icon ?? ''} ${developAction.name ?? option.actionId}`,
-				'',
-			);
+			const developLabel = resolveActionHeadline(translationContext, {
+				id: option.actionId,
+				icon: developAction.icon,
+				name: developAction.name,
+			});
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
@@ -217,10 +219,11 @@ describe('royal decree translation', () => {
 					`Missing develop action definition for ${option.actionId}`,
 				);
 			}
-			const developLabel = combineLabels(
-				`${developAction.icon ?? ''} ${developAction.name ?? option.actionId}`,
-				'',
-			);
+			const developLabel = resolveActionHeadline(translationContext, {
+				id: option.actionId,
+				icon: developAction.icon,
+				name: developAction.name,
+			});
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
@@ -296,7 +299,8 @@ describe('royal decree translation', () => {
 			throw new Error(`Missing development definition for ${developmentId}`);
 		}
 		if (typeof entry === 'string') {
-			expect(entry).toContain(development.name ?? developmentId);
+			const expectedDevelopmentName = development.name ?? developmentId;
+			expect(entry).toContain(expectedDevelopmentName);
 			return;
 		}
 		const developAction = translationContext.actions.get(developActionId);
@@ -305,11 +309,17 @@ describe('royal decree translation', () => {
 				`Missing develop action definition for ${developActionId}`,
 			);
 		}
-		const developLabel = combineLabels(
-			`${developAction.icon ?? ''} ${developAction.name ?? developActionId}`,
+		const developLabel = resolveActionHeadline(translationContext, {
+			id: developActionId,
+			icon: developAction.icon,
+			name: developAction.name,
+		});
+		const developmentLabel = combineLabels(
+			`${development.icon ?? ''} ${development.name ?? developmentId}`,
 			'',
 		);
-		expect(entry.title).toBe(developLabel);
+		const expectedTitle = combineLabels(developLabel, developmentLabel);
+		expect(entry.title).toBe(expectedTitle);
 		expect(entry.timelineKind).toBe('subaction');
 		expect(entry.actionId).toBe(developActionId);
 		const entryItems = Array.isArray(entry.items)

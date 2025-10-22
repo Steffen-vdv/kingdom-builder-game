@@ -14,7 +14,14 @@ import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import { snapshotPlayer, type PlayerSnapshot } from '../translation';
 import { buildActionResolution } from './buildActionResolution';
-import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import {
+	buildResolutionActionMeta,
+	type ResolutionActionCategory,
+} from './deriveResolutionActionName';
+import {
+	extractActionCategoryId,
+	resolveActionCategoryDefinition,
+} from '../utils/resolveActionCategory';
 import type { Action } from './actionTypes';
 import type {
 	ActionResolution,
@@ -128,6 +135,12 @@ async function presentAiActions({
 			: afterSnapshot
 				? clonePlayerSnapshot(afterSnapshot)
 				: clonePlayerSnapshot(beforeState);
+		const categoryId = extractActionCategoryId(stepDefinition);
+		const categoryDefinition: ResolutionActionCategory | undefined =
+			resolveActionCategoryDefinition(
+				translationContext.actionCategories,
+				categoryId,
+			);
 		const resolution = buildActionResolution({
 			actionId: actionResult.actionId,
 			actionDefinition: stepDefinition,
@@ -145,6 +158,7 @@ async function presentAiActions({
 			action,
 			stepDefinition,
 			resolution.headline,
+			categoryDefinition,
 		);
 		const source = {
 			kind: 'action' as const,

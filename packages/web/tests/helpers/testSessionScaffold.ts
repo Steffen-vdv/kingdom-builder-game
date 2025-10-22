@@ -94,7 +94,7 @@ const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 		},
 		population: {
 			icon: '👥',
-			label: 'Citizens',
+			label: 'Population',
 			description: 'Track population roles and assignments.',
 		},
 		land: {
@@ -178,7 +178,7 @@ const buildStatMetadata = (): Record<string, SessionMetadataDescriptor> => ({
 	maxPopulation: {
 		icon: '👥',
 		label: 'Max Population',
-		description: 'Determines how many citizens the realm can sustain.',
+		description: 'Determines how many specialists the realm can sustain.',
 		format: { prefix: 'Max ' },
 	},
 	armyStrength: {
@@ -264,7 +264,7 @@ const buildRuleSnapshot = (resourceKey: string): SessionRuleSnapshot => ({
 				title: 'Joyous Celebration',
 				icon: '🎉',
 				summaryToken: 'tier.joyous.summary',
-				removalCondition: 'Citizens remain joyful.',
+				removalCondition: 'Specialists remain joyful.',
 			},
 		},
 		{

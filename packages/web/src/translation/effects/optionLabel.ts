@@ -1,6 +1,14 @@
 import type { ActionEffectGroupOption } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../content';
 import type { TranslationContext } from '../context';
+import {
+	formatActionHeadline,
+	type FormatActionHeadlineOptions,
+} from '../../utils/formatActionHeadline';
+import {
+	extractActionCategoryId,
+	resolveActionCategoryDefinition,
+} from '../../utils/resolveActionCategory';
 
 type ObjectSummaryEntry = Extract<SummaryEntry, Record<string, unknown>>;
 
@@ -111,11 +119,34 @@ function resolveActionLabel(
 ): string {
 	try {
 		const definition = context.actions.get(option.actionId);
-		const icon = typeof definition?.icon === 'string' ? definition.icon : '';
+		const icon =
+			typeof definition?.icon === 'string' ? definition.icon.trim() : undefined;
 		const name =
-			typeof definition?.name === 'string' ? definition.name : option.actionId;
-		const combined = [icon, name].filter(Boolean).join(' ').trim();
-		return combined.length > 0 ? combined : option.actionId;
+			typeof definition?.name === 'string'
+				? definition.name.trim()
+				: option.actionId;
+		const categoryId = extractActionCategoryId(definition);
+		const category = resolveActionCategoryDefinition(
+			context.actionCategories,
+			categoryId,
+		);
+		const categoryIcon = category?.icon;
+		const categoryTitle = category?.title;
+		const actionIcon = icon && icon.length > 0 ? icon : undefined;
+		const headlineOptions: FormatActionHeadlineOptions = {
+			actionTitle: name,
+		};
+		if (categoryIcon) {
+			headlineOptions.categoryIcon = categoryIcon;
+		}
+		if (categoryTitle) {
+			headlineOptions.categoryTitle = categoryTitle;
+		}
+		if (actionIcon) {
+			headlineOptions.actionIcon = actionIcon;
+		}
+		const headline = formatActionHeadline(headlineOptions);
+		return headline.length > 0 ? headline : option.actionId;
 	} catch {
 		return option.actionId;
 	}

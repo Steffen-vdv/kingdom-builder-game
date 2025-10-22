@@ -5,6 +5,9 @@ interface ResolutionActionMeta {
 	id: string;
 	name: string;
 	icon?: string;
+	categoryId?: string;
+	categoryTitle?: string;
+	categoryIcon?: string;
 }
 
 interface ResolutionSourceBase {

@@ -9,6 +9,7 @@ import {
 	createSyntheticFestivalScenario,
 	getSyntheticFestivalDetails,
 } from './fixtures/syntheticFestival';
+import { resolveActionHeadline } from './helpers/actionHeadline';
 
 const sign = (n: number) => (n >= 0 ? '+' : '');
 
@@ -81,9 +82,14 @@ describe('hold festival action translation', () => {
 				/\s{2,}/gu,
 				' ',
 			);
+		const festivalHeadline = resolveActionHeadline(translation, {
+			id: festivalActionId,
+			icon: details.festival.icon,
+			name: details.festival.name,
+		});
 		expect(log).toEqual([
 			{
-				text: `${details.festival.icon} ${details.festival.name}`,
+				text: festivalHeadline,
 				depth: 0,
 				kind: 'headline',
 			},
