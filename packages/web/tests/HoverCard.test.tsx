@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -20,6 +20,7 @@ import type { SessionPlayerId } from '@kingdom-builder/protocol';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
 import { createContentFactory } from '@kingdom-builder/testing';
+import type { ActionResolution } from '../src/state/useActionResolution';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
@@ -139,6 +140,7 @@ function resetResolutionState() {
 	mockGame.resolution = null;
 	mockGame.showResolution = vi.fn().mockResolvedValue(undefined);
 	mockGame.acknowledgeResolution = vi.fn();
+	mockGame.requests.advancePhase.mockClear();
 }
 
 beforeEach(() => {
@@ -228,7 +230,7 @@ describe('<HoverCard />', () => {
 			});
 		});
 		const continueButton = screen.getByRole('button', {
-			name: 'Continue',
+			name: /continue/i,
 		});
 		expect(continueButton).toBeDisabled();
 		const resolutionSteps =
@@ -253,6 +255,50 @@ describe('<HoverCard />', () => {
 		});
 		await expect(resolutionPromise).resolves.toBeUndefined();
 		expect(mockGame.resolution).toBeNull();
+	});
+
+	it('advances the turn when acknowledging the final action resolution', () => {
+		const { exampleAction, sessionState } = scenario;
+		const activePlayer = sessionState.game.players[0];
+		if (!activePlayer) {
+			throw new Error('Expected an active player in the session state');
+		}
+		const resolution: ActionResolution = {
+			lines: ['Played Action'],
+			visibleLines: ['Played Action'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: [],
+			source: 'action',
+			requireAcknowledgement: true,
+			action: {
+				id: exampleAction.id,
+				name: exampleAction.name,
+			},
+			player: {
+				id: activePlayer.id,
+				name: activePlayer.name,
+			},
+		};
+		mockGame.resolution = resolution;
+		mockGame.phase = {
+			...mockGame.phase,
+			isActionPhase: true,
+			canEndTurn: true,
+			isAdvancing: false,
+		};
+		const acknowledgeSpy = mockGame.acknowledgeResolution;
+		const advanceSpy = mockGame.requests.advancePhase;
+
+		render(<HoverCard />);
+
+		const nextTurnButton = screen.getByRole('button', { name: /next turn/i });
+		expect(nextTurnButton).toBeEnabled();
+		fireEvent.click(nextTurnButton);
+
+		expect(acknowledgeSpy).toHaveBeenCalledTimes(1);
+		expect(advanceSpy).toHaveBeenCalledTimes(1);
 	});
 
 	it('renders formatted phase resolutions and logs phase advances', async () => {
@@ -393,7 +439,7 @@ describe('<HoverCard />', () => {
 			),
 		).toBe(true);
 		const continueButton = screen.getByRole('button', {
-			name: 'Continue',
+			name: /continue/i,
 		});
 		expect(continueButton).toBeDisabled();
 		const firstLine = formatted.lines[0]!;

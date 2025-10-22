@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
@@ -161,7 +167,51 @@ describe('<ResolutionCard />', () => {
 			<ResolutionCard resolution={resolution} onContinue={() => {}} />,
 		);
 
-		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
+		expect(queryByRole('button', { name: /continue/i })).toBeNull();
+	});
+
+	it('renders a Next Turn button and advances the phase when requested', () => {
+		const resolution = createResolution({
+			requireAcknowledgement: true,
+			source: 'action',
+		});
+		const handleContinue = vi.fn();
+		const handleAdvance = vi.fn();
+
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={handleContinue}
+				shouldAdvanceToNextTurn
+				onAdvanceTurn={handleAdvance}
+			/>,
+		);
+
+		const nextTurnButton = screen.getByRole('button', { name: /next turn/i });
+		fireEvent.click(nextTurnButton);
+
+		expect(handleContinue).toHaveBeenCalledTimes(1);
+		expect(handleAdvance).toHaveBeenCalledTimes(1);
+	});
+
+	it('disables the Next Turn button when advancement is blocked', () => {
+		const resolution = createResolution({
+			requireAcknowledgement: true,
+			source: 'action',
+		});
+
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={() => {}}
+				shouldAdvanceToNextTurn
+				onAdvanceTurn={() => {}}
+				isAdvanceDisabled
+			/>,
+		);
+
+		const nextTurnButton = screen.getByRole('button', { name: /next turn/i });
+		expect(nextTurnButton).toBeDisabled();
 	});
 
 	it('renders section roots with nested cost and effect entries', () => {
