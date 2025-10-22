@@ -41,18 +41,23 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | npx vitest run --config vitest.web.config.ts packages/web/tests/translation/resourceV2 (pass; see chunk 55f8f0)
 | UI wiring still pending once ResourceV2 payloads feed the resource bar; keep hover layout review on deck.
 |
+| 2025-10-27 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/state.ts, packages/engine/src/resource-v2/state.nodes.ts, packages/engine/src/resource-v2/state.types.ts, packages/engine/src/resource-v2/index.ts, eslint.config.js, docs/project/resource-migration/production/production-living-docs.md |
+| Resource Migration MVP - P2 - T7 - Implemented ResourceV2 state helper factory (initialise/read/write/adjust) with tier tracking, parent recompute, and signed delta logging, re-exported the API, and ignored dist output in ESLint. |
+| npm run lint (pass; see chunk 635d4a) / npm run check (fails coverage on engine suite; see chunk 543867) |
+| Backfill engine ResourceState helper coverage so `test:coverage:engine` meets thresholds before rerunning `npm run check`. |
+| |
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-26 18:16
-- **Current Focus:** Resource Migration MVP - P2 - T16 - Harden ResourceV2 formatter coverage
-- **State Summary:** Expanded the ResourceV2 formatter test suite to assert ordered parent/child rendering, percent-aware formatting, and signed gain emission through the helper APIs. Verified hover section ordering to guard upcoming UI consumption. The helpers remain pure logic utilities until session payloads provide ResourceV2 metadata/value feeds.
+- **Timestamp (UTC):** 2025-10-27 19:45
+- **Current Focus:** Resource Migration MVP - P2 - T7 - Stand-alone ResourceV2 state helpers
+- **State Summary:** Added a factory that initialises ResourceV2 player state, clamps writes, tracks tiers, recomputes parents, and logs signed deltas without effect registration so downstream tasks can consume it. ESLint now ignores `dist/` artifacts, but engine coverage thresholds fail until the new helpers receive tests.
 - **Next Suggested Tasks:**
-  - Surface ResourceV2 metadata/value snapshots in the translation context and resource bar once protocol wiring lands, then validate UI rendering with real payloads (Owner: Web).
-  - Audit hovercard layout to ensure parent rows and child resources share consistent spacing once the UI integration begins (Owner: Web/UI).
-- **Blocking Issues / Risks:** Still waiting on protocol/session wiring to populate ResourceV2 values; without those feeds UI work cannot proceed beyond tests.
+  - Author engine unit coverage for ResourceState helper initialisation, clamp/bounds edge cases, and parent recompute behaviour to satisfy `test:coverage:engine` (Owner: Engine).
+  - Wire the helper into engine bootstrap once runtime catalogs are available, then re-run `npm run check` to confirm clean pipelines (Owner: Engine).
+- **Blocking Issues / Risks:** Engine coverage gate blocks `npm run check` while the helper lacks automated tests; tests must land before merging broader integrations.
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 ## 5. Notes & Decisions Archive

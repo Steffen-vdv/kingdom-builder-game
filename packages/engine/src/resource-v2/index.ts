@@ -31,3 +31,14 @@ export {
 } from './reconciliation';
 
 export { createRuntimeResourceCatalog } from './fromContent';
+
+export type {
+	WriteResourceValueOptions,
+	WriteResourceValueResult,
+	AdjustResourceBoundsOptions,
+	AdjustResourceBoundsResult,
+	ResourceStateHelpers,
+	ClampResult,
+} from './state';
+
+export { createResourceStateHelpers } from './state';
