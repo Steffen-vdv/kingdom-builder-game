@@ -26,6 +26,12 @@ import {
 	clearSessionStateStore,
 	updateSessionSnapshot,
 } from '../../src/state/sessionStateStore';
+import { wrapActionCategoryRegistry } from '../../src/translation/context/contextHelpers';
+import {
+	formatActionDisplayTitle,
+	normalizeActionCategoryDisplayInfo,
+	normalizeActionDisplayInfo,
+} from '../../src/utils/formatActionDisplayTitle';
 
 const translateRequirementFailureMock = vi.hoisted(() => vi.fn());
 const snapshotPlayerMock = vi.hoisted(() => vi.fn((player) => player));
@@ -136,11 +142,15 @@ describe('useActionPerformer', () => {
 		action = { id: 'action.attack', name: 'Attack' };
 		pushErrorToast = vi.fn();
 		addResolutionLog = vi.fn();
+		const actionCategories = wrapActionCategoryRegistry(
+			registries.actionCategories,
+		);
 		createSessionTranslationContextMock.mockReturnValue({
 			translationContext: {
 				actions: new Map([
 					[action.id, { icon: '⚔️', name: action.name, effects: [] }],
 				]),
+				actionCategories,
 				rules: ruleSnapshot,
 			},
 			diffContext: {},
@@ -429,6 +439,25 @@ describe('useActionPerformer', () => {
 			await result.current.handlePerform(action);
 		});
 
+		let expectedCategory;
+		const actionDefinition = registries.actions.has(action.id)
+			? registries.actions.get(action.id)
+			: undefined;
+		const categoryId = (actionDefinition as { category?: string } | undefined)
+			?.category;
+		if (
+			typeof categoryId === 'string' &&
+			registries.actionCategories.has(categoryId)
+		) {
+			expectedCategory = normalizeActionCategoryDisplayInfo(
+				registries.actionCategories.get(categoryId),
+			);
+		}
+		const expectedResolutionName = formatActionDisplayTitle(
+			normalizeActionDisplayInfo('⚔️', action.name),
+			expectedCategory,
+		);
+
 		expect(showResolution).toHaveBeenCalledTimes(1);
 		expect(showResolution).toHaveBeenLastCalledWith(
 			expect.objectContaining({
@@ -436,7 +465,7 @@ describe('useActionPerformer', () => {
 					kind: 'action',
 					label: 'Action',
 					id: action.id,
-					name: action.name,
+					name: expectedResolutionName,
 					icon: '⚔️',
 				},
 				actorLabel: 'Played by',
@@ -508,12 +537,21 @@ describe('useActionPerformer', () => {
 		createSessionTranslationContextMock.mockReturnValueOnce({
 			translationContext: {
 				actions: new Map([[action.id, { icon: '⚔️', name: action.name }]]),
+				actionCategories: wrapActionCategoryRegistry(
+					registries.actionCategories,
+				),
 				rules: ruleSnapshot,
 			},
 			diffContext: {},
 		});
 		createSessionTranslationContextMock.mockReturnValueOnce({
-			translationContext: { actions: new Map(), rules: ruleSnapshot },
+			translationContext: {
+				actions: new Map(),
+				actionCategories: wrapActionCategoryRegistry(
+					registries.actionCategories,
+				),
+				rules: ruleSnapshot,
+			},
 			diffContext: {},
 		});
 

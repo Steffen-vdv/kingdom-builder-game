@@ -9,6 +9,11 @@ import {
 	createSyntheticFestivalScenario,
 	getSyntheticFestivalDetails,
 } from './fixtures/syntheticFestival';
+import {
+	formatActionDisplayTitle,
+	normalizeActionCategoryDisplayInfo,
+	normalizeActionDisplayInfo,
+} from '../src/utils/formatActionDisplayTitle';
 
 const sign = (n: number) => (n >= 0 ? '+' : '');
 
@@ -64,9 +69,17 @@ describe('hold festival action translation', () => {
 
 	it('logs hold festival action', () => {
 		const scenario = createSyntheticFestivalScenario();
-		const { translation, festivalActionId } = scenario;
+		const { translation, festivalActionId, registries } = scenario;
 		const log = logContent('action', festivalActionId, translation);
 		const details = getSyntheticFestivalDetails(scenario);
+		const festivalDefinition = registries.actions.get(festivalActionId);
+		const categoryId = (festivalDefinition as { category?: string })?.category;
+		const headline = formatActionDisplayTitle(
+			normalizeActionDisplayInfo(details.festival.icon, details.festival.name),
+			normalizeActionCategoryDisplayInfo(
+				translation.assets.actionCategories?.[categoryId ?? ''],
+			),
+		);
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
@@ -83,7 +96,7 @@ describe('hold festival action translation', () => {
 			);
 		expect(log).toEqual([
 			{
-				text: `${details.festival.icon} ${details.festival.name}`,
+				text: headline,
 				depth: 0,
 				kind: 'headline',
 			},

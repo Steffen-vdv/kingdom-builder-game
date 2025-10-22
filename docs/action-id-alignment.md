@@ -86,12 +86,11 @@ the `hire` category. Each action inherits the composite defaults: 1 AP and 5 g
 costs, the max-population requirement, and +1 happiness on success. The action
 parameters specify the role being hired so role-specific passives continue to fire.【F:packages/contents/src/actions/basicActions.ts†L121-L149】【F:packages/contents/src/populations.ts†L47-L127】
 
-| Action ID        | Population role | Default costs | Requirements     | Role behaviour carried forward                                                                                   |
-| ---------------- | --------------- | ------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `hire_council`   | `council`       | 1 AP, 5 gold  | Population < max | Grants +1 AP each gain AP step; upkeep 2 gold.【F:packages/contents/src/populations.ts†L50-L70】                 |
-| `hire_legion`    | `legion`        | 1 AP, 5 gold  | Population < max | Adds passive for +1 army strength and upkeep 1 gold.【F:packages/contents/src/populations.ts†L74-L97】           |
-| `hire_fortifier` | `fortifier`     | 1 AP, 5 gold  | Population < max | Adds passive for +1 fortification strength and upkeep 1 gold.【F:packages/contents/src/populations.ts†L99-L122】 |
-| `hire_citizen`   | `citizen`       | 1 AP, 5 gold  | Population < max | Baseline citizen with icon only; no passive hooks.【F:packages/contents/src/populations.ts†L124-L127】           |
+| Action ID        | Population role | Default costs | Requirements     | Role behaviour carried forward                                                                                    |
+| ---------------- | --------------- | ------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `hire_council`   | `council`       | 1 AP, 5 gold  | Population < max | Grants +1 AP each gain AP step; upkeep 2 gold.【F:packages/contents/src/populations.ts†L49-L73】                  |
+| `hire_legion`    | `legion`        | 1 AP, 5 gold  | Population < max | Adds passive for +1 army strength and upkeep 1 gold.【F:packages/contents/src/populations.ts†L75-L98】            |
+| `hire_fortifier` | `fortifier`     | 1 AP, 5 gold  | Population < max | Adds passive for +1 fortification strength and upkeep 1 gold.【F:packages/contents/src/populations.ts†L100-L123】 |
 
 ## Shared behaviours
 

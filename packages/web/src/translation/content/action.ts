@@ -7,6 +7,12 @@ import {
 	formatEffectGroups,
 } from '../effects';
 import { registerContentTranslator } from './factory';
+import {
+	formatActionDisplayTitle,
+	normalizeActionCategoryDisplayInfo,
+	normalizeActionDisplayInfo,
+	type ActionCategoryDisplayInfo,
+} from '../../utils/formatActionDisplayTitle';
 import type {
 	ContentTranslator,
 	Summary,
@@ -69,9 +75,23 @@ class ActionTranslator
 		params?: Record<string, unknown>,
 	): ActionLogLineDescriptor[] {
 		const definition = context.actions.get(id);
-		const icon = definition.icon?.trim();
-		const label = definition.name.trim();
-		let message = icon ? `${icon} ${label}` : label;
+		let category: ActionCategoryDisplayInfo | undefined;
+		const rawCategoryId: unknown = (definition as { category?: unknown })
+			?.category;
+		const categoryId =
+			typeof rawCategoryId === 'string' ? rawCategoryId : undefined;
+		if (categoryId && context.actionCategories.has(categoryId)) {
+			const rawCategory: unknown = context.actionCategories.get(categoryId);
+			const normalized = normalizeActionCategoryDisplayInfo(rawCategory);
+			if (normalized) {
+				category = normalized;
+			}
+		}
+		const actionDisplay = normalizeActionDisplayInfo(
+			definition.icon,
+			definition.name,
+		);
+		let message = formatActionDisplayTitle(actionDisplay, category);
 		const extra = getActionLogHook(definition)?.(context, params);
 		if (extra) {
 			message += extra;

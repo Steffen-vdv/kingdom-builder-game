@@ -1,6 +1,12 @@
 import type { ActionEffectGroupOption } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../content';
 import type { TranslationContext } from '../context';
+import {
+	formatActionDisplayTitle,
+	normalizeActionCategoryDisplayInfo,
+	normalizeActionDisplayInfo,
+	type ActionCategoryDisplayInfo,
+} from '../../utils/formatActionDisplayTitle';
 
 type ObjectSummaryEntry = Extract<SummaryEntry, Record<string, unknown>>;
 
@@ -109,16 +115,32 @@ function resolveActionLabel(
 	option: ActionEffectGroupOption,
 	context: TranslationContext,
 ): string {
+	let category: ActionCategoryDisplayInfo | undefined;
+	let icon: string | undefined;
+	let name: string | undefined;
 	try {
 		const definition = context.actions.get(option.actionId);
-		const icon = typeof definition?.icon === 'string' ? definition.icon : '';
-		const name =
-			typeof definition?.name === 'string' ? definition.name : option.actionId;
-		const combined = [icon, name].filter(Boolean).join(' ').trim();
-		return combined.length > 0 ? combined : option.actionId;
+		icon = typeof definition?.icon === 'string' ? definition.icon : undefined;
+		name = typeof definition?.name === 'string' ? definition.name : undefined;
+		const rawCategoryId: unknown = (definition as { category?: unknown })
+			?.category;
+		const categoryId =
+			typeof rawCategoryId === 'string' ? rawCategoryId : undefined;
+		if (categoryId && context.actionCategories.has(categoryId)) {
+			const rawCategory: unknown = context.actionCategories.get(categoryId);
+			const normalized = normalizeActionCategoryDisplayInfo(rawCategory);
+			if (normalized) {
+				category = normalized;
+			}
+		}
 	} catch {
-		return option.actionId;
+		/* ignore missing definitions */
 	}
+	const actionDisplay = normalizeActionDisplayInfo(
+		icon,
+		name ?? option.actionId,
+	);
+	return formatActionDisplayTitle(actionDisplay, category);
 }
 
 function combineLabels(

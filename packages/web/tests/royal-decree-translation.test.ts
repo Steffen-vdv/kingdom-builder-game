@@ -14,6 +14,11 @@ import {
 	type DevelopmentActionId,
 } from '@kingdom-builder/contents/actions';
 import type { DevelopmentId } from '@kingdom-builder/contents/developments';
+import {
+	formatActionDisplayTitle,
+	normalizeActionCategoryDisplayInfo,
+	normalizeActionDisplayInfo,
+} from '../src/utils/formatActionDisplayTitle';
 
 interface ActionEffectGroupOption {
 	optionId: string;
@@ -155,6 +160,24 @@ describe('royal decree translation', () => {
 		}
 		throw new Error('Expected royal decree action with develop options');
 	})();
+
+	function formatDevelopActionLabel(actionId: string): string {
+		const developAction = translationContext.actions.get(actionId);
+		if (!developAction) {
+			throw new Error(`Missing develop action definition for ${actionId}`);
+		}
+		const rawCategoryId = (developAction as { category?: unknown })?.category;
+		const categoryDefinition =
+			typeof rawCategoryId === 'string'
+				? translationContext.actionCategories.get(rawCategoryId)
+				: rawCategoryId;
+		const categoryInfo = normalizeActionCategoryDisplayInfo(categoryDefinition);
+		const actionDisplay = normalizeActionDisplayInfo(
+			developAction.icon,
+			developAction.name,
+		);
+		return formatActionDisplayTitle(actionDisplay, categoryInfo);
+	}
 	it('summarizes options using develop action label', () => {
 		const summary = summarizeContent(
 			'action',
@@ -170,14 +193,8 @@ describe('royal decree translation', () => {
 		const group = findGroupEntry(summary, groupTitle);
 		expect(group.items).toHaveLength(actionInfo.options.length);
 		for (const option of actionInfo.options) {
-			const developAction = translationContext.actions.get(option.actionId);
-			if (!developAction) {
-				throw new Error(
-					`Missing develop action definition for ${option.actionId}`,
-				);
-			}
 			const developLabel = combineLabels(
-				`${developAction.icon ?? ''} ${developAction.name ?? option.actionId}`,
+				formatDevelopActionLabel(option.actionId),
 				'',
 			);
 			const developmentId = option.developmentId as string;
@@ -211,14 +228,8 @@ describe('royal decree translation', () => {
 		const group = findGroupEntry(description, groupTitle);
 		expect(group.items).toHaveLength(actionInfo.options.length);
 		for (const option of actionInfo.options) {
-			const developAction = translationContext.actions.get(option.actionId);
-			if (!developAction) {
-				throw new Error(
-					`Missing develop action definition for ${option.actionId}`,
-				);
-			}
 			const developLabel = combineLabels(
-				`${developAction.icon ?? ''} ${developAction.name ?? option.actionId}`,
+				formatDevelopActionLabel(option.actionId),
 				'',
 			);
 			const developmentId = option.developmentId as string;
@@ -295,6 +306,10 @@ describe('royal decree translation', () => {
 		if (!development) {
 			throw new Error(`Missing development definition for ${developmentId}`);
 		}
+		const developmentLabel = combineLabels(
+			`${development.icon ?? ''} ${development.name ?? developmentId}`,
+			'',
+		);
 		if (typeof entry === 'string') {
 			expect(entry).toContain(development.name ?? developmentId);
 			return;
@@ -305,11 +320,11 @@ describe('royal decree translation', () => {
 				`Missing develop action definition for ${developActionId}`,
 			);
 		}
-		const developLabel = combineLabels(
-			`${developAction.icon ?? ''} ${developAction.name ?? developActionId}`,
-			'',
+		const expectedTitle = combineLabels(
+			formatDevelopActionLabel(developActionId),
+			developmentLabel,
 		);
-		expect(entry.title).toBe(developLabel);
+		expect(entry.title).toBe(expectedTitle);
 		expect(entry.timelineKind).toBe('subaction');
 		expect(entry.actionId).toBe(developActionId);
 		const entryItems = Array.isArray(entry.items)

@@ -142,9 +142,13 @@ function ResolutionCard({
 	const normalizedHeaderSubject = actorHeaderSubject
 		?.trim()
 		.toLocaleLowerCase();
+	const hasSourcePrefix = normalizedHeaderSubject?.startsWith(
+		`${normalizedResolvedTitle} -`,
+	);
 	let headerTitle = actorHeaderSubject
 		? normalizedHeaderSubject &&
-			normalizedHeaderSubject !== normalizedResolvedTitle
+			normalizedHeaderSubject !== normalizedResolvedTitle &&
+			!hasSourcePrefix
 			? `${resolvedLabels.title} - ${actorHeaderSubject}`
 			: actorHeaderSubject
 		: defaultTitle;

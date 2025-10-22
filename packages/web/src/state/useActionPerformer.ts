@@ -13,7 +13,10 @@ import type {
 	ActionResolution,
 	ShowResolutionOptions,
 } from './useActionResolution';
-import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import {
+	buildResolutionActionMeta,
+	resolveResolutionActionCategoryOptions,
+} from './deriveResolutionActionName';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import { performSessionAction } from './sessionSdk';
 import { markFatalSessionError, isFatalSessionError } from './sessionErrors';
@@ -183,7 +186,15 @@ export function useActionPerformer({
 				syncPhaseState(snapshotAfter);
 				refresh();
 				void presentResolutionOrLog({
-					action: buildResolutionActionMeta(action, stepDef, headline),
+					action: buildResolutionActionMeta(
+						action,
+						stepDef,
+						headline,
+						resolveResolutionActionCategoryOptions(
+							stepDef,
+							context.actionCategories,
+						),
+					),
 					logLines,
 					summaries,
 					player: {

@@ -37,7 +37,7 @@ describe('useActionResolution', () => {
 			let resolutionPromise: Promise<void> = Promise.resolve();
 			const actionMeta = {
 				id: 'test-action',
-				name: 'Test Action',
+				name: 'Action - ⚙️ Basic - ⚔️ Test Action',
 			};
 			const timeline = [
 				{ text: 'First reveal', depth: 0, kind: 'headline' as const },
@@ -58,7 +58,7 @@ describe('useActionResolution', () => {
 			expect(result.current.resolution?.visibleLines).toEqual(['First reveal']);
 			expect(result.current.resolution?.visibleTimeline).toEqual([timeline[0]]);
 			expect(result.current.resolution?.source).toBe('action');
-			expect(result.current.resolution?.actorLabel).toBe('Test Action');
+			expect(result.current.resolution?.actorLabel).toBe(actionMeta.name);
 			expect(result.current.resolution?.isComplete).toBe(false);
 			expect(setTrackedTimeout).toHaveBeenLastCalledWith(
 				expect.any(Function),
@@ -87,7 +87,7 @@ describe('useActionResolution', () => {
 			expect(loggedSnapshot.isComplete).toBe(true);
 			expect(loggedSnapshot.requireAcknowledgement).toBe(false);
 			expect(loggedSnapshot.source).toBe('action');
-			expect(loggedSnapshot.actorLabel).toBe('Test Action');
+			expect(loggedSnapshot.actorLabel).toBe(actionMeta.name);
 			expect(loggedSnapshot.player).toEqual({ id: 'A', name: 'Player A' });
 			expect(loggedSnapshot.action).toEqual(actionMeta);
 			const resolvedState = { done: false };

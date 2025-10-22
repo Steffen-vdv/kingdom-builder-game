@@ -66,6 +66,7 @@ export function createActionErrorHandler({
 			player: { id: player.id, name: player.name },
 			detail: message,
 			headline,
+			actionCategories: context.actionCategories,
 		});
 		addResolutionLog(resolution);
 		return false;

@@ -119,7 +119,6 @@ const DEFAULT_TOKENS: OverviewTokenCandidates = {
 		council: ['council'],
 		legion: ['legion'],
 		fortifier: ['fortifier'],
-		citizen: ['citizen'],
 	},
 	static: {
 		land: ['land'],
@@ -237,11 +236,6 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 				label: 'Fortifier',
 				body: ['Cements your defenses with persistent buffs.'],
 			},
-			{
-				icon: 'citizen',
-				label: 'Citizens',
-				body: ['Wait in the wings, ready to specialize as needed.'],
-			},
 		],
 	},
 	{
@@ -251,7 +245,8 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 		title: 'Actions & Strategy',
 		span: true,
 		paragraphs: [
-			`Spend {ap} AP to {expand} grow territory or {${DEFAULT_DEVELOP_ACTION}} upgrade key lands.`,
+			'Spend {ap} AP to {expand} grow territory or develop with ' +
+				`{${DEFAULT_DEVELOP_ACTION}} to upgrade key lands.`,
 			`Field {${DEFAULT_HIRE_ACTION}} specialists or launch {army_attack} attacks to snowball momentum.`,
 		],
 	},

@@ -66,9 +66,9 @@ describe('createTranslationContext', () => {
 				: undefined,
 			stats: {
 				[statKey]: {
-					label: 'Citizen Capacity',
+					label: 'Population Capacity',
 					icon: '🏯',
-					description: 'Represents how many citizens can serve the realm.',
+					description: 'Represents how many subjects can serve the realm.',
 					displayAsPercent: true,
 					format: { prefix: '~', percent: true },
 				},
@@ -81,7 +81,7 @@ describe('createTranslationContext', () => {
 					description: 'Designated location for new developments.',
 				},
 				land: { icon: '🌄', label: 'Territory' },
-				population: { icon: '🧑‍🤝‍🧑', label: 'Citizens' },
+				population: { icon: '🧑‍🤝‍🧑', label: 'Population' },
 				upkeep: { icon: '🪣', label: 'Maintenance' },
 			},
 			triggers: {
@@ -242,7 +242,7 @@ describe('createTranslationContext', () => {
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
                         {
-                          "actionCostResource": "gold",
+                          "actionCostResource": "ap",
                           "assets": {
                             "passive": {
                               "icon": "✨",
@@ -250,7 +250,7 @@ describe('createTranslationContext', () => {
                             },
                             "population": {
                               "icon": "🧑‍🤝‍🧑",
-                              "label": "Citizens",
+                              "label": "Population",
                             },
                             "resource": {
                               "description": "The royal treasury fuels your ambitions.",
@@ -263,14 +263,14 @@ describe('createTranslationContext', () => {
                               "label": "Plot Slot",
                             },
                             "stat": {
-                              "description": "Represents how many citizens can serve the realm.",
+                              "description": "Represents how many subjects can serve the realm.",
                               "displayAsPercent": true,
                               "format": {
                                 "percent": true,
                                 "prefix": "~",
                               },
                               "icon": "🏯",
-                              "label": "Citizen Capacity",
+                              "label": "Population Capacity",
                             },
                             "trigger": {
                               "future": "When the signal sounds",
@@ -282,22 +282,22 @@ describe('createTranslationContext', () => {
                           "compensations": {
                             "A": {
                               "resources": {
-                                "gold": 2,
+                                "ap": 2,
                               },
                             },
                             "B": {
                               "resources": {
-                                "gold": 1,
+                                "ap": 1,
                               },
                             },
                           },
                           "passives": {
                             "definition": {
-                              "icon": "🌱",
+                              "icon": "🗡️",
                               "id": "passive-a",
                               "meta": {
                                 "source": {
-                                  "icon": "🏘️",
+                                  "icon": "🪖",
                                 },
                               },
                               "owner": "A",
@@ -306,16 +306,16 @@ describe('createTranslationContext', () => {
                               "passive-a",
                             ],
                             "descriptor": {
-                              "icon": "🌱",
+                              "icon": "🗡️",
                               "meta": {
                                 "source": {
-                                  "icon": "🏘️",
+                                  "icon": "🪖",
                                 },
                               },
                             },
                             "evaluationMods": [
                               [
-                                "gold",
+                                "ap",
                                 [
                                   "modifier",
                                 ],
@@ -338,17 +338,17 @@ describe('createTranslationContext', () => {
                           "recentResourceGains": [
                             {
                               "amount": 3,
-                              "key": "gold",
+                              "key": "ap",
                             },
                           ],
                           "registries": {
                             "action": {
                               "has": true,
-                              "id": "expand",
+                              "id": "army_attack",
                             },
                             "building": {
                               "has": true,
-                              "id": "town_charter",
+                              "id": "barracks",
                             },
                             "development": {
                               "has": true,
@@ -361,7 +361,7 @@ describe('createTranslationContext', () => {
                           },
                           "rules": {
                             "tierDefinitions": [],
-                            "tieredResourceKey": "gold",
+                            "tieredResourceKey": "ap",
                             "winConditions": [],
                           },
                         }

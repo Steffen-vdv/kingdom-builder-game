@@ -43,17 +43,18 @@ describe('<ResolutionCard />', () => {
 		cleanup();
 	});
 	it('shows labels for action-based resolutions', () => {
+		const actionDisplay = 'Action - ⚙️ Basic - ⚔️ Test Action';
 		const resolution = createResolution({
 			action: {
 				id: 'action-id',
-				name: 'Test Action',
+				name: actionDisplay,
 				icon: '⚔️',
 			},
 			source: {
 				kind: 'action',
 				label: 'Action',
 				id: 'action-id',
-				name: 'Test Action',
+				name: actionDisplay,
 				icon: '⚔️',
 			},
 			actorLabel: 'Played by',
@@ -71,7 +72,7 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Action - Test Action')).toBeInTheDocument();
+		expect(screen.getByText(actionDisplay)).toBeInTheDocument();
 		const actionPlayerLabel = screen.getByLabelText('Player');
 		expect(actionPlayerLabel).toHaveTextContent('Player One');
 	});

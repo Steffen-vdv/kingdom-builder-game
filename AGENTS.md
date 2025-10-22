@@ -586,13 +586,12 @@ its definition, typical usage, and contrast with related systems.
 
 ### 4.10 Population Roles
 
-- Population archetypes: **Council**, **Legion**, **Fortifier**, **Citizen**.
+- Population archetypes: **Council**, **Legion**, **Fortifier**.
 - Council grants 1 AP at the end of each Growth Phase (trigger effect).
 - Legion provides +1 Army Strength passively and +25% Army Strength growth each
   Growth Phase (trigger effect that stacks permanently).
 - Fortifier provides +1 Fortification Strength passively and +25% Fortification
   growth each Growth Phase.
-- Citizens are unassigned with no benefits until moved into a role.
 - Removing a role-dependent population member removes its global effects but not
   past permanent stat increases.
 

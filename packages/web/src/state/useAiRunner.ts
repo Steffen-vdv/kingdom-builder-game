@@ -14,7 +14,10 @@ import { isFatalSessionError, markFatalSessionError } from './sessionErrors';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import { snapshotPlayer, type PlayerSnapshot } from '../translation';
 import { buildActionResolution } from './buildActionResolution';
-import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import {
+	buildResolutionActionMeta,
+	resolveResolutionActionCategoryOptions,
+} from './deriveResolutionActionName';
 import type { Action } from './actionTypes';
 import type {
 	ActionResolution,
@@ -145,6 +148,10 @@ async function presentAiActions({
 			action,
 			stepDefinition,
 			resolution.headline,
+			resolveResolutionActionCategoryOptions(
+				stepDefinition,
+				translationContext.actionCategories,
+			),
 		);
 		const source = {
 			kind: 'action' as const,
