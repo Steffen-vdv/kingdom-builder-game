@@ -40,6 +40,10 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P2 - T16 - Rebuilt ResourceV2 formatter tests around ordered parent/child fixtures to cover percent display, signed gains, and hover section ordering via the helper APIs.
 | npx vitest run --config vitest.web.config.ts packages/web/tests/translation/resourceV2 (pass; see chunk 55f8f0)
 | UI wiring still pending once ResourceV2 payloads feed the resource bar; keep hover layout review on deck.
+| 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/effects/addRemove.ts, docs/project/resource-migration/production/production-living-docs.md |
+| Resource Migration MVP - P2 - T9 - Authored unregistered ResourceV2 add/remove handlers using reconciliation + state helpers and documented pending hook wiring.|
+| npm run format; npm run lint; npm run check (partial – stopped during engine coverage to manage task duration) |
+| Wire handlers into the effect registry, attach runtime catalogs to the engine context, and implement suppressHooks plumbing for tier/win-condition notifications.|
 | 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/state.ts, packages/engine/src/resource-v2/state-helpers.ts, packages/engine/src/resource-v2/index.ts, packages/engine/tests/resource-v2/state.test.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T7 - Implemented ResourceV2 state initialisation/read/write helpers, refactored shared utilities, and added engine unit coverage for tiers, bounds, touched flags, and parent aggregation. | npm run check (pass; see chunk ab5b5d) | Wire helpers into engine bootstrap/effect handlers to populate state from runtime catalogs and consider additional tests around bound adjustments once integration path is defined. |
 |
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -47,13 +51,13 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-26 19:30
-- **Current Focus:** Resource Migration MVP - P2 - T7 - Engine ResourceV2 state helpers
-- **State Summary:** Added pure utilities for initialising ResourceV2 player state, reading/writing values with bounds-aware clamps, updating tier assignments, logging signed recent gains, and recalculating parent aggregates. Introduced companion unit tests covering tier resolution, touched flags, bound adjustments, and error paths to protect the helper surface ahead of runtime integration.
+- **Timestamp (UTC):** 2025-10-26 22:45
+- **Current Focus:** Resource Migration MVP - P2 - T9 - ResourceV2 add/remove effect handlers
+- **State Summary:** Implemented ResourceV2 `resource:add`/`resource:remove` handlers that normalise static/percent deltas, reuse reconciliation + state helpers, flag bound clamps, and keep hook suppression documented but dormant while the engine still lacks runtime catalogs on the context. Handlers remain unregistered until bootstrap wiring lands.
 - **Next Suggested Tasks:**
-  - Thread the new state helpers into engine bootstrap and reconciliation flows so runtime catalogs seed ResourceV2 values/bounds automatically (Owner: Engine).
-  - Extend coverage once effect handlers consume the helpers, especially around multi-resource parent updates and tier-triggered effects (Owner: Engine QA).
-- **Blocking Issues / Risks:** Helper logic still runs in isolation; pending wiring into actual gameplay loops means live data may expose edge cases such as parent/child bound conflicts. Coordinate closely with upcoming bootstrap tasks to validate against real catalogs.
+  - Attach the runtime ResourceV2 catalog to the engine context and register the new handlers so migrated content can exercise them (Owner: Engine).
+  - Flesh out suppressHooks plumbing and tier/win-condition bridge once hook routing adapts to ResourceV2 deltas (Owner: Engine Services).
+- **Blocking Issues / Risks:** EngineContext currently exposes no ResourceV2 catalog, so any premature registration would throw. Ensure catalog initialisation and hook routing are addressed before toggling handlers on.
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 ## 5. Notes & Decisions Archive
