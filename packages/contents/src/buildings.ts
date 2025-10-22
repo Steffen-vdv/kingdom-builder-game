@@ -4,7 +4,7 @@ import {
 	TRANSFER_PCT_EVALUATION_TYPE,
 	buildingSchema,
 } from '@kingdom-builder/protocol';
-import { ActionId, PopulationEvaluationId } from './actions';
+import { ActionId, PopulationEvaluationId } from './actionIds';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { DevelopmentId } from './developments';
@@ -30,22 +30,11 @@ import {
 	StatMethods,
 } from './config/builderShared';
 import { Focus } from './defs';
+import { BuildingId as BuildingIdMap } from './buildingIds';
+import type { BuildingId as BuildingIdType } from './buildingIds';
 import type { BuildingDef } from './defs';
-export const BuildingId = {
-	TownCharter: 'town_charter',
-	Mill: 'mill',
-	RaidersGuild: 'raiders_guild',
-	PlowWorkshop: 'plow_workshop',
-	Market: 'market',
-	Barracks: 'barracks',
-	Citadel: 'citadel',
-	CastleWalls: 'castle_walls',
-	CastleGardens: 'castle_gardens',
-	Temple: 'temple',
-	Palace: 'palace',
-	GreatHall: 'great_hall',
-} as const;
-export type BuildingId = (typeof BuildingId)[keyof typeof BuildingId];
+export const BuildingId = BuildingIdMap;
+export type BuildingId = BuildingIdType;
 export function createBuildingRegistry() {
 	const schema = buildingSchema.passthrough();
 	const registry = new Registry<BuildingDef>(schema);

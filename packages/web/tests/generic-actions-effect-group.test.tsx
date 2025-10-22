@@ -169,7 +169,7 @@ function createMockGame() {
 		actionCostResource;
 	const { id: royalDecreeId, definition: royalDecreeDef } =
 		selectRoyalDecree(registries);
-	const developAction = selectActionBySubstring(registries, 'develop');
+	const developAction = selectActionBySubstring(registries, 'develop_house');
 	const tillAction = selectActionBySubstring(registries, 'till');
 	const activePlayer = createSnapshotPlayer({
 		id: 'A',
@@ -449,7 +449,7 @@ describe('GenericActions effect group handling', () => {
 		fireEvent.click(actionButton);
 
 		const optionButton = await screen.findByRole('button', {
-			name: /Develop - 🏠 House/,
+			name: /Action - 🛠️ Develop - 🏠 House/,
 		});
 		fireEvent.click(optionButton);
 

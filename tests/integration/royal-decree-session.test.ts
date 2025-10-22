@@ -12,9 +12,15 @@ import {
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 
+interface EffectGroupOption {
+	id: string;
+	actionId: string;
+	params?: Record<string, unknown>;
+}
+
 interface EffectGroup {
 	id: string;
-	options: { id: string; params?: Record<string, unknown> }[];
+	options: EffectGroupOption[];
 }
 
 function isEffectGroup(effect: unknown): effect is EffectGroup {
@@ -52,8 +58,39 @@ describe('royal decree via session', () => {
 		expect(developGroup).toBeDefined();
 		const options = developGroup?.options ?? [];
 		expect(options.length).toBeGreaterThan(0);
+		const developmentIdByOption = new Map<string, string>();
 		for (const option of options) {
-			expect(option.params?.['developmentId']).toBeDefined();
+			const nestedAction = ACTIONS.get(option.actionId);
+			if (!nestedAction) {
+				throw new Error(
+					`Missing nested action definition for id "${option.actionId}".`,
+				);
+			}
+			const nestedDevelopmentEffect = nestedAction.effects.find(
+				(candidate) =>
+					candidate.type === 'development' && candidate.method === 'add',
+			);
+			if (!nestedDevelopmentEffect) {
+				throw new Error(
+					`Missing development:add effect for action "${nestedAction.id}".`,
+				);
+			}
+			const developmentParams = nestedDevelopmentEffect.params as {
+				id?: unknown;
+				developmentId?: unknown;
+			};
+			const effectDevelopmentId =
+				typeof developmentParams.id === 'string'
+					? developmentParams.id
+					: typeof developmentParams.developmentId === 'string'
+						? developmentParams.developmentId
+						: undefined;
+			if (!effectDevelopmentId) {
+				throw new Error(
+					`Missing development id for action "${nestedAction.id}".`,
+				);
+			}
+			developmentIdByOption.set(option.id, effectDevelopmentId);
 		}
 		const playerId = snapshot.game.players[0]!.id;
 		for (const option of options) {
@@ -83,7 +120,9 @@ describe('royal decree via session', () => {
 			expect(afterPlayer.lands.length).toBe(beforeLands + 1);
 			const newest = afterPlayer.lands.at(-1);
 			expect(newest).not.toBe(newestBefore);
-			expect(newest?.developments).toContain(option.params?.['developmentId']);
+			const developmentId = developmentIdByOption.get(option.id);
+			expect(developmentId).toBeDefined();
+			expect(newest?.developments).toContain(developmentId);
 		}
 	});
 });

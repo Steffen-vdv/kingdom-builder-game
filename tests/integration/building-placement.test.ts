@@ -11,7 +11,7 @@ describe('Building placement integration', () => {
 	it('applies building effects to subsequent actions', () => {
 		const engineContext = createTestContext();
 		const { buildingId, actionId } = getBuildingWithActionMods();
-		const buildActionId = getBuildActionId(engineContext);
+		const buildActionId = getBuildActionId(engineContext, buildingId);
 		const expandBefore = getActionOutcome(actionId, engineContext);
 		const buildCosts = getActionCosts(buildActionId, engineContext, {
 			id: buildingId,

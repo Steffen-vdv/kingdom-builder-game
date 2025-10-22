@@ -1,8 +1,6 @@
 import type {
 	ActionDefinition,
 	SessionActionOption,
-	SessionBuildingOption,
-	SessionDevelopmentOption,
 	SessionPlayerView,
 } from '../../state/sessionSelectors.types';
 import type { useGameEngine } from '../../state/GameContext';
@@ -28,14 +26,6 @@ export interface Action
 		PerformableAction,
 		Partial<Pick<ActionDefinition, 'effects' | 'requirements'>> {
 	system?: boolean;
-	focus?: ActionFocus;
-}
-
-export interface Development extends SessionDevelopmentOption {
-	focus?: ActionFocus;
-}
-
-export interface Building extends SessionBuildingOption {
 	focus?: ActionFocus;
 }
 

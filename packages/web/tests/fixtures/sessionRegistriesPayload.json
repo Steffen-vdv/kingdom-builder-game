@@ -29,10 +29,10 @@
 			"order": 1,
 			"focus": "economy"
 		},
-		"develop": {
-			"id": "develop",
-			"name": "Develop",
-			"icon": "🏗️",
+		"develop_house": {
+			"id": "develop_house",
+			"name": "House",
+			"icon": "🏠",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 3
@@ -42,14 +42,80 @@
 					"type": "development",
 					"method": "add",
 					"params": {
-						"id": "$id",
+						"id": "house",
 						"landId": "$landId"
 					}
 				}
 			],
-			"category": "development",
-			"order": 1,
+			"category": "develop",
+			"order": 2,
 			"focus": "economy"
+		},
+		"develop_farm": {
+			"id": "develop_farm",
+			"name": "Farm",
+			"icon": "🌾",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 3
+			},
+			"effects": [
+				{
+					"type": "development",
+					"method": "add",
+					"params": {
+						"id": "farm",
+						"landId": "$landId"
+					}
+				}
+			],
+			"category": "develop",
+			"order": 3,
+			"focus": "economy"
+		},
+		"develop_outpost": {
+			"id": "develop_outpost",
+			"name": "Outpost",
+			"icon": "🏹",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 3
+			},
+			"effects": [
+				{
+					"type": "development",
+					"method": "add",
+					"params": {
+						"id": "outpost",
+						"landId": "$landId"
+					}
+				}
+			],
+			"category": "develop",
+			"order": 4,
+			"focus": "defense"
+		},
+		"develop_watchtower": {
+			"id": "develop_watchtower",
+			"name": "Watchtower",
+			"icon": "🗼",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 3
+			},
+			"effects": [
+				{
+					"type": "development",
+					"method": "add",
+					"params": {
+						"id": "watchtower",
+						"landId": "$landId"
+					}
+				}
+			],
+			"category": "develop",
+			"order": 5,
+			"focus": "defense"
 		},
 		"tax": {
 			"id": "tax",
@@ -94,10 +160,10 @@
 			"order": 3,
 			"focus": "economy"
 		},
-		"raise_pop": {
-			"id": "raise_pop",
-			"name": "Hire",
-			"icon": "👶",
+		"hire_council": {
+			"id": "hire_council",
+			"name": "Hire Council",
+			"icon": "⚖️",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 5
@@ -125,7 +191,7 @@
 					"type": "population",
 					"method": "add",
 					"params": {
-						"role": "$role"
+						"role": "council"
 					}
 				},
 				{
@@ -137,8 +203,102 @@
 					}
 				}
 			],
-			"category": "population",
+			"category": "hire",
 			"order": 1,
+			"focus": "economy"
+		},
+		"hire_legion": {
+			"id": "hire_legion",
+			"name": "Hire Legion",
+			"icon": "🎖️",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 5
+			},
+			"requirements": [
+				{
+					"type": "evaluator",
+					"method": "compare",
+					"params": {
+						"left": {
+							"type": "population"
+						},
+						"operator": "lt",
+						"right": {
+							"type": "stat",
+							"params": {
+								"key": "maxPopulation"
+							}
+						}
+					}
+				}
+			],
+			"effects": [
+				{
+					"type": "population",
+					"method": "add",
+					"params": {
+						"role": "legion"
+					}
+				},
+				{
+					"type": "resource",
+					"method": "add",
+					"params": {
+						"key": "happiness",
+						"amount": 1
+					}
+				}
+			],
+			"category": "hire",
+			"order": 2,
+			"focus": "economy"
+		},
+		"hire_fortifier": {
+			"id": "hire_fortifier",
+			"name": "Hire Fortifier",
+			"icon": "🔧",
+			"baseCosts": {
+				"ap": 1,
+				"gold": 5
+			},
+			"requirements": [
+				{
+					"type": "evaluator",
+					"method": "compare",
+					"params": {
+						"left": {
+							"type": "population"
+						},
+						"operator": "lt",
+						"right": {
+							"type": "stat",
+							"params": {
+								"key": "maxPopulation"
+							}
+						}
+					}
+				}
+			],
+			"effects": [
+				{
+					"type": "population",
+					"method": "add",
+					"params": {
+						"role": "fortifier"
+					}
+				},
+				{
+					"type": "resource",
+					"method": "add",
+					"params": {
+						"key": "happiness",
+						"amount": 1
+					}
+				}
+			],
+			"category": "hire",
+			"order": 3,
 			"focus": "economy"
 		},
 		"royal_decree": {
@@ -173,36 +333,32 @@
 						{
 							"id": "royal_decree_house",
 							"icon": "🏠",
-							"actionId": "develop",
+							"actionId": "develop_house",
 							"params": {
-								"developmentId": "house",
 								"landId": "$landId"
 							}
 						},
 						{
 							"id": "royal_decree_farm",
 							"icon": "🌾",
-							"actionId": "develop",
+							"actionId": "develop_farm",
 							"params": {
-								"developmentId": "farm",
 								"landId": "$landId"
 							}
 						},
 						{
 							"id": "royal_decree_outpost",
 							"icon": "🏹",
-							"actionId": "develop",
+							"actionId": "develop_outpost",
 							"params": {
-								"developmentId": "outpost",
 								"landId": "$landId"
 							}
 						},
 						{
 							"id": "royal_decree_watchtower",
 							"icon": "🗼",
-							"actionId": "develop",
+							"actionId": "develop_watchtower",
 							"params": {
-								"developmentId": "watchtower",
 								"landId": "$landId"
 							}
 						}
@@ -477,21 +633,208 @@
 			],
 			"system": true
 		},
-		"build": {
-			"id": "build",
-			"name": "Build",
-			"icon": "🏛️",
+		"build_town_charter": {
+			"id": "build_town_charter",
+			"name": "Town Charter",
+			"icon": "🏘️",
 			"effects": [
 				{
 					"type": "building",
 					"method": "add",
 					"params": {
-						"id": "$id"
+						"id": "town_charter"
 					}
 				}
 			],
-			"category": "building",
-			"order": 1,
+			"category": "build",
+			"order": 3,
+			"focus": "economy"
+		},
+		"build_mill": {
+			"id": "build_mill",
+			"name": "Mill",
+			"icon": "⚙️",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "mill"
+					}
+				}
+			],
+			"category": "build",
+			"order": 4,
+			"focus": "economy"
+		},
+		"build_raiders_guild": {
+			"id": "build_raiders_guild",
+			"name": "Raider's Guild",
+			"icon": "🏴‍☠️",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "raiders_guild"
+					}
+				}
+			],
+			"category": "build",
+			"order": 5,
+			"focus": "aggressive"
+		},
+		"build_plow_workshop": {
+			"id": "build_plow_workshop",
+			"name": "Plow Workshop",
+			"icon": "🏭",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "plow_workshop"
+					}
+				}
+			],
+			"category": "build",
+			"order": 6,
+			"focus": "economy"
+		},
+		"build_market": {
+			"id": "build_market",
+			"name": "Market",
+			"icon": "🏪",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "market"
+					}
+				}
+			],
+			"category": "build",
+			"order": 7,
+			"focus": "economy"
+		},
+		"build_castle_walls": {
+			"id": "build_castle_walls",
+			"name": "Castle Walls",
+			"icon": "🧱",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "castle_walls"
+					}
+				}
+			],
+			"category": "build",
+			"order": 10,
+			"focus": "defense"
+		},
+		"build_barracks": {
+			"id": "build_barracks",
+			"name": "Barracks",
+			"icon": "🪖",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "barracks"
+					}
+				}
+			],
+			"category": "build",
+			"order": 8,
+			"focus": "aggressive"
+		},
+		"build_citadel": {
+			"id": "build_citadel",
+			"name": "Citadel",
+			"icon": "🏯",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "citadel"
+					}
+				}
+			],
+			"category": "build",
+			"order": 9,
+			"focus": "defense"
+		},
+		"build_castle_gardens": {
+			"id": "build_castle_gardens",
+			"name": "Castle Gardens",
+			"icon": "🌷",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "castle_gardens"
+					}
+				}
+			],
+			"category": "build",
+			"order": 11,
+			"focus": "economy"
+		},
+		"build_temple": {
+			"id": "build_temple",
+			"name": "Temple",
+			"icon": "⛪",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "temple"
+					}
+				}
+			],
+			"category": "build",
+			"order": 12,
+			"focus": "other"
+		},
+		"build_palace": {
+			"id": "build_palace",
+			"name": "Palace",
+			"icon": "👑",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "palace"
+					}
+				}
+			],
+			"category": "build",
+			"order": 13,
+			"focus": "other"
+		},
+		"build_great_hall": {
+			"id": "build_great_hall",
+			"name": "Great Hall",
+			"icon": "🏟️",
+			"effects": [
+				{
+					"type": "building",
+					"method": "add",
+					"params": {
+						"id": "great_hall"
+					}
+				}
+			],
+			"category": "build",
+			"order": 14,
 			"focus": "other"
 		}
 	},
@@ -948,11 +1291,6 @@
 					}
 				}
 			]
-		},
-		"citizen": {
-			"id": "citizen",
-			"name": "Citizen",
-			"icon": "👤"
 		}
 	},
 	"resources": {
@@ -981,6 +1319,52 @@
 			"label": "Castle HP",
 			"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
 			"tags": ["attack-target", "win-condition-zero"]
+		}
+	},
+	"actionCategories": {
+		"basic": {
+			"id": "basic",
+			"label": "Basic",
+			"subtitle": "(Effects take place immediately, unless stated otherwise)",
+			"icon": "⚙️",
+			"order": 0,
+			"layout": "grid-primary",
+			"hideWhenEmpty": false,
+			"analyticsKey": "basic",
+			"description": "Default castle commands available every turn."
+		},
+		"hire": {
+			"id": "hire",
+			"label": "Hire",
+			"subtitle": "(Effects take place immediately and last until the population is removed or reassigned)",
+			"icon": "🧑‍🤝‍🧑",
+			"order": 1,
+			"layout": "grid-primary",
+			"hideWhenEmpty": false,
+			"analyticsKey": "hire",
+			"description": "Actions that add population or assign roles."
+		},
+		"develop": {
+			"id": "develop",
+			"label": "Develop",
+			"subtitle": "(Effects take place immediately and last until the development is removed)",
+			"icon": "🛠️",
+			"order": 2,
+			"layout": "grid-secondary",
+			"hideWhenEmpty": false,
+			"analyticsKey": "develop",
+			"description": "Developments that upgrade existing buildings or lands."
+		},
+		"build": {
+			"id": "build",
+			"label": "Build",
+			"subtitle": "(Effects take place immediately build and last until the building is removed)",
+			"icon": "🏗️",
+			"order": 3,
+			"layout": "grid-secondary",
+			"hideWhenEmpty": false,
+			"analyticsKey": "build",
+			"description": "Construction options that add new structures or unlocks."
 		}
 	}
 }

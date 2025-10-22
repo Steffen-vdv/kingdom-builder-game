@@ -4,7 +4,7 @@ import { createTestEngine } from '../helpers';
 
 interface EffectGroup {
 	id: string;
-	options: { id: string; params?: Record<string, unknown> }[];
+	options: { id: string; actionId: string; params?: Record<string, unknown> }[];
 }
 
 function isEffectGroup(effect: unknown): effect is EffectGroup {
@@ -35,6 +35,37 @@ describe('royal decree auto land targeting', () => {
 			.find(([, def]) => def.effects.some(isEffectGroup))!;
 		const group = royalDecree.effects.find(isEffectGroup)!;
 		const option = group.options[0]!;
+		const nestedAction = engineContext.actions.get(option.actionId);
+		if (!nestedAction) {
+			throw new Error(
+				`Missing nested action definition for id "${option.actionId}".`,
+			);
+		}
+		const nestedDevelopmentEffect = nestedAction.effects.find(
+			(candidate) =>
+				candidate.type === 'development' && candidate.method === 'add',
+		);
+		if (!nestedDevelopmentEffect) {
+			throw new Error(
+				`Missing development:add effect for action "${nestedAction.id}".`,
+			);
+		}
+		const developmentParams = nestedDevelopmentEffect.params as {
+			id?: unknown;
+			developmentId?: unknown;
+		};
+		const effectDevelopmentId =
+			typeof developmentParams.id === 'string'
+				? developmentParams.id
+				: typeof developmentParams.developmentId === 'string'
+					? developmentParams.developmentId
+					: undefined;
+		if (!effectDevelopmentId) {
+			throw new Error(
+				`Missing development id for action "${nestedAction.id}".`,
+			);
+		}
+		const developmentId = effectDevelopmentId;
 
 		performAction(actionId, engineContext, {
 			choices: {
@@ -45,8 +76,6 @@ describe('royal decree auto land targeting', () => {
 		expect(engineContext.activePlayer.lands).toHaveLength(beforeLandCount + 1);
 		const newestLand = engineContext.activePlayer.lands.at(-1);
 		expect(newestLand?.tilled).toBe(true);
-		expect(newestLand?.developments).toContain(
-			option.params?.['developmentId'] as string,
-		);
+		expect(newestLand?.developments).toContain(developmentId);
 	});
 });

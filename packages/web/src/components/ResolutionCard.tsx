@@ -206,11 +206,12 @@ function ResolutionCard({
 	const timelineEntries = React.useMemo(() => {
 		const options: Parameters<typeof buildResolutionTimelineEntries>[1] = {};
 
-		if (actionIcon) {
-			options.actionIcon = actionIcon;
-		}
 		if (actionName) {
 			options.actionName = actionName;
+		}
+
+		if (actionIcon) {
+			options.actionIcon = actionIcon;
 		}
 
 		return buildResolutionTimelineEntries(structuredTimeline, options);

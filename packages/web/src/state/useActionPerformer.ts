@@ -183,7 +183,7 @@ export function useActionPerformer({
 				syncPhaseState(snapshotAfter);
 				refresh();
 				void presentResolutionOrLog({
-					action: buildResolutionActionMeta(action, stepDef, headline),
+					action: buildResolutionActionMeta(action, stepDef, headline, context),
 					logLines,
 					summaries,
 					player: {

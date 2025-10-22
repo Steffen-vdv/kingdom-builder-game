@@ -10,35 +10,42 @@ import {
 	type ActionCategoryId as ActionCategoryIdValue,
 } from './actionCategories';
 import type { Focus as FocusType } from './defs';
+import {
+	ActionId as ActionIdMap,
+	BUILDING_ACTION_ID_BY_BUILDING_ID,
+	BUILDING_ACTION_IDS,
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
+	DEVELOPMENT_ACTION_IDS,
+	POPULATION_ACTION_ID_BY_ROLE,
+	POPULATION_ACTION_IDS,
+	PopulationEvaluationId as PopulationEvaluationIdMap,
+} from './actionIds';
+import type {
+	ActionId as ActionIdType,
+	PopulationEvaluationId as PopulationEvaluationIdType,
+} from './actionIds';
 
-const ACTION_ID_MAP = {
-	build: 'build',
-	army_attack: 'army_attack',
-	develop: 'develop',
-	expand: 'expand',
-	hold_festival: 'hold_festival',
-	plow: 'plow',
-	plunder: 'plunder',
-	raise_pop: 'raise_pop',
-	royal_decree: 'royal_decree',
-	tax: 'tax',
-	till: 'till',
-} as const;
+export {
+	BUILDING_ACTION_ID_BY_BUILDING_ID,
+	BUILDING_ACTION_IDS,
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
+	DEVELOPMENT_ACTION_IDS,
+	POPULATION_ACTION_ID_BY_ROLE,
+	POPULATION_ACTION_IDS,
+};
+export const ActionId = ActionIdMap;
+export const PopulationEvaluationId = PopulationEvaluationIdMap;
+export type {
+	BuildingActionId,
+	BuildingActionIdMap,
+	DevelopmentActionId,
+	DevelopmentActionIdMap,
+	PopulationActionId,
+	PopulationActionIdMap,
+} from './actionIds';
 
-const POPULATION_EVALUATION_ID_MAP = {
-	tax: 'tax',
-} as const;
-
-export const ActionId = ACTION_ID_MAP;
-
-export type ActionId = (typeof ACTION_ID_MAP)[keyof typeof ACTION_ID_MAP];
-
-export const PopulationEvaluationId = POPULATION_EVALUATION_ID_MAP;
-
-type PopulationEvaluationIdMap = typeof POPULATION_EVALUATION_ID_MAP;
-
-export type PopulationEvaluationId =
-	PopulationEvaluationIdMap[keyof PopulationEvaluationIdMap];
+export type ActionId = ActionIdType;
+export type PopulationEvaluationId = PopulationEvaluationIdType;
 
 export interface ActionDef extends ActionConfig {
 	category?: ActionCategoryIdValue;

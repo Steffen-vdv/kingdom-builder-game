@@ -1,7 +1,11 @@
 import type { Registry } from '@kingdom-builder/protocol';
 import { Resource } from '../resources';
 import { Stat } from '../stats';
-import { DevelopmentId } from '../developments';
+import { DevelopmentId, DEVELOPMENTS } from '../developments';
+import type { DevelopmentDef } from '../developments';
+import { POPULATIONS } from '../populations';
+import type { PopulationDef } from '../populations';
+import type { PopulationRoleId } from '../populationRoles';
 import {
 	action,
 	compareRequirement,
@@ -26,8 +30,15 @@ import {
 	PopulationMethods,
 } from '../config/builderShared';
 import { Focus } from '../defs';
-import type { ActionDef } from '../actions';
-import { ActionId, PopulationEvaluationId } from '../actions';
+import {
+	ActionId,
+	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
+	POPULATION_ACTION_ID_BY_ROLE,
+	PopulationEvaluationId,
+	type ActionDef,
+	type DevelopmentActionId,
+	type PopulationActionId,
+} from '../actions';
 import {
 	ACTION_CATEGORIES,
 	ActionCategoryId,
@@ -69,24 +80,59 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.build(),
 	);
 
-	registry.add(
-		ActionId.develop,
-		action()
-			.id(ActionId.develop)
-			.name('Develop')
-			.icon('🏗️')
+	const developmentEntries: {
+		actionId: DevelopmentActionId;
+		developmentId: DevelopmentId;
+		definition: DevelopmentDef;
+	}[] = (
+		Object.entries(DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID) as [
+			DevelopmentId,
+			DevelopmentActionId,
+		][]
+	)
+		.map(([developmentId, actionId]) => {
+			const definition = DEVELOPMENTS.get(developmentId);
+			if (!definition) {
+				throw new Error(
+					`Missing development definition for id "${developmentId}".`,
+				);
+			}
+			return { actionId, developmentId, definition };
+		})
+		.filter(({ definition }) => !definition.system)
+		.sort((left, right) => {
+			const leftOrder = left.definition.order ?? 0;
+			const rightOrder = right.definition.order ?? 0;
+			if (leftOrder !== rightOrder) {
+				return leftOrder - rightOrder;
+			}
+			return left.definition.name.localeCompare(right.definition.name);
+		});
+
+	let developmentOrderOffset = 0;
+	for (const { actionId, developmentId, definition } of developmentEntries) {
+		if (!definition.icon) {
+			throw new Error(
+				`Missing icon for development definition "${developmentId}".`,
+			);
+		}
+		const builder = action()
+			.id(actionId)
+			.name(definition.name)
+			.icon(definition.icon)
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
 			.effect(
 				effect(Types.Development, DevelopmentMethods.ADD)
-					.params(developmentParams().id('$id').landId('$landId'))
+					.params(developmentParams().id(developmentId).landId('$landId'))
 					.build(),
 			)
 			.category(ActionCategoryId.Develop)
-			.order(developCategoryOrder - 1)
-			.focus(Focus.Economy)
-			.build(),
-	);
+			.order(developCategoryOrder + developmentOrderOffset);
+		builder.focus(definition.focus ?? Focus.Economy);
+		registry.add(actionId, builder.build());
+		developmentOrderOffset += 1;
+	}
 
 	registry.add(
 		ActionId.tax,
@@ -118,24 +164,44 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.build(),
 	);
 
-	registry.add(
-		ActionId.raise_pop,
-		action()
-			.id(ActionId.raise_pop)
-			.name('Hire')
-			.icon('👶')
+	const populationCapacityRequirement = compareRequirement()
+		.left(populationEvaluator())
+		.operator('lt')
+		.right(statEvaluator().key(Stat.maxPopulation))
+		.build();
+
+	const populationEntries: {
+		actionId: PopulationActionId;
+		roleId: PopulationRoleId;
+		definition: PopulationDef;
+	}[] = (
+		Object.entries(POPULATION_ACTION_ID_BY_ROLE) as [
+			PopulationRoleId,
+			PopulationActionId,
+		][]
+	).map(([roleId, actionId]) => {
+		const definition = POPULATIONS.get(roleId);
+		if (!definition) {
+			throw new Error(`Missing population definition for id "${roleId}".`);
+		}
+		return { actionId, roleId, definition };
+	});
+
+	let hireOrderOffset = 0;
+	for (const { actionId, roleId, definition } of populationEntries) {
+		if (!definition.icon) {
+			throw new Error(`Missing icon for population definition "${roleId}".`);
+		}
+		const builder = action()
+			.id(actionId)
+			.name(`Hire ${definition.name}`)
+			.icon(definition.icon)
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
-			.requirement(
-				compareRequirement()
-					.left(populationEvaluator())
-					.operator('lt')
-					.right(statEvaluator().key(Stat.maxPopulation))
-					.build(),
-			)
+			.requirement(populationCapacityRequirement)
 			.effect(
 				effect(Types.Population, PopulationMethods.ADD)
-					.params(populationParams().role('$role'))
+					.params(populationParams().role(roleId))
 					.build(),
 			)
 			.effect(
@@ -144,39 +210,38 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.build(),
 			)
 			.category(ActionCategoryId.Hire)
-			.order(hireCategoryOrder)
-			.focus(Focus.Economy)
-			.build(),
-	);
+			.order(hireCategoryOrder + hireOrderOffset)
+			.focus(Focus.Economy);
+		registry.add(actionId, builder.build());
+		hireOrderOffset += 1;
+	}
 
 	const royalDecreeDevelopGroup = actionEffectGroup('royal_decree_develop')
 		.layout('compact')
 		.option(
 			actionEffectGroupOption('royal_decree_house')
 				.icon('🏠')
-				.action(ActionId.develop)
-				.paramDevelopmentId(DevelopmentId.House)
+				.action(DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.House])
 				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_farm')
 				.icon('🌾')
-				.action(ActionId.develop)
-				.paramDevelopmentId(DevelopmentId.Farm)
+				.action(DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Farm])
 				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_outpost')
 				.icon('🏹')
-				.action(ActionId.develop)
-				.paramDevelopmentId(DevelopmentId.Outpost)
+				.action(DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Outpost])
 				.paramLandId('$landId'),
 		)
 		.option(
 			actionEffectGroupOption('royal_decree_watchtower')
 				.icon('🗼')
-				.action(ActionId.develop)
-				.paramDevelopmentId(DevelopmentId.Watchtower)
+				.action(
+					DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Watchtower],
+				)
 				.paramLandId('$landId'),
 		);
 

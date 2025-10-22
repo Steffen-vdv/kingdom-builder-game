@@ -1,3 +1,8 @@
+import type { TranslationContext } from '../translation/context';
+import {
+	formatActionTitle,
+	type ActionTitleDefinition,
+} from '../translation/formatActionTitle';
 import type { Action } from './actionTypes';
 
 function deriveResolutionActionName(
@@ -32,17 +37,29 @@ function deriveResolutionActionName(
 
 function buildResolutionActionMeta(
 	action: Action,
-	stepDef: { icon?: unknown; name?: unknown } | undefined,
+	stepDef: ActionTitleDefinition | undefined,
 	headline: string | undefined,
+	context?: TranslationContext,
 ) {
 	const actionIcon =
 		typeof stepDef?.icon === 'string' ? stepDef.icon : undefined;
+	let formattedName: string | undefined;
+	if (stepDef && context) {
+		try {
+			formattedName = formatActionTitle(stepDef, context);
+		} catch {
+			formattedName = undefined;
+		}
+	}
 	const fallbackName =
 		typeof stepDef?.name === 'string' ? stepDef.name.trim() : '';
 	const resolvedFallback = fallbackName || action.name;
+	const resolvedName =
+		formattedName ??
+		deriveResolutionActionName(headline, resolvedFallback, actionIcon);
 	return {
 		id: action.id,
-		name: deriveResolutionActionName(headline, resolvedFallback, actionIcon),
+		name: resolvedName,
 		...(actionIcon ? { icon: actionIcon } : {}),
 	};
 }

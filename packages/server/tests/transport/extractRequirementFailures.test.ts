@@ -65,10 +65,10 @@ describe('extractRequirementFailures', () => {
 				requirement: {
 					type: 'population',
 					method: 'minimum',
-					params: { role: 'citizen', amount: 2 },
+					params: { role: 'fortifier', amount: 2 },
 				},
 				details: { available: 1 },
-				message: 'Need more citizens',
+				message: 'Need more fortifiers',
 			},
 		] satisfies SessionActionRequirementList;
 		const error = { requirementFailures };

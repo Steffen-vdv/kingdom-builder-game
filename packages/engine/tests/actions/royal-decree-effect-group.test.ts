@@ -45,10 +45,37 @@ describe('royal decree action effect group', () => {
 		const group = royalDecree.effects.find(isEffectGroup)!;
 		const chosenOption = group.options[0];
 		const optionId = chosenOption.id;
-		const developmentId = String(
-			chosenOption.params?.['developmentId'] ?? chosenOption.params?.['id'],
+		const nestedAction = engineContext.actions.get(chosenOption.actionId);
+		if (!nestedAction) {
+			throw new Error(
+				`Missing nested action definition for id "${chosenOption.actionId}".`,
+			);
+		}
+		const nestedDevelopmentEffect = nestedAction.effects.find(
+			(candidate) =>
+				candidate.type === 'development' && candidate.method === 'add',
 		);
-		expect(developmentId).toBeTruthy();
+		if (!nestedDevelopmentEffect) {
+			throw new Error(
+				`Missing development:add effect for action "${nestedAction.id}".`,
+			);
+		}
+		const developmentParams = nestedDevelopmentEffect.params as {
+			id?: unknown;
+			developmentId?: unknown;
+		};
+		const effectDevelopmentId =
+			typeof developmentParams.id === 'string'
+				? developmentParams.id
+				: typeof developmentParams.developmentId === 'string'
+					? developmentParams.developmentId
+					: undefined;
+		if (!effectDevelopmentId) {
+			throw new Error(
+				`Missing development id for action "${nestedAction.id}".`,
+			);
+		}
+		const developmentId = effectDevelopmentId;
 
 		const nextLandId = `${engineContext.activePlayer.id}-L${engineContext.activePlayer.lands.length + 1}`;
 		const params = {
@@ -165,7 +192,6 @@ describe('royal decree action effect group', () => {
 			(candidate) => candidate.group.id === group.id,
 		);
 		expect(resolvedGroup?.selection?.params).toMatchObject({
-			developmentId,
 			landId: params.landId,
 		});
 	});

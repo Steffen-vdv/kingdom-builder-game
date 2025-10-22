@@ -43,17 +43,18 @@ describe('<ResolutionCard />', () => {
 		cleanup();
 	});
 	it('shows labels for action-based resolutions', () => {
+		const formattedName = 'Action - ⚙️ Basic - ⚔️ Test Action';
 		const resolution = createResolution({
 			action: {
 				id: 'action-id',
-				name: 'Test Action',
+				name: formattedName,
 				icon: '⚔️',
 			},
 			source: {
 				kind: 'action',
 				label: 'Action',
 				id: 'action-id',
-				name: 'Test Action',
+				name: formattedName,
 				icon: '⚔️',
 			},
 			actorLabel: 'Played by',
@@ -71,7 +72,10 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Action - Test Action')).toBeInTheDocument();
+		const header = screen.getByText((content) =>
+			content.includes(formattedName),
+		);
+		expect(header).toBeInTheDocument();
 		const actionPlayerLabel = screen.getByLabelText('Player');
 		expect(actionPlayerLabel).toHaveTextContent('Player One');
 	});
@@ -164,7 +168,11 @@ describe('<ResolutionCard />', () => {
 	it('renders section roots with nested cost and effect entries', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
-				{ text: '🏗️ Develop', depth: 0, kind: 'headline' },
+				{
+					text: 'Action - 🛠️ Develop - 🏠 Workshop',
+					depth: 0,
+					kind: 'headline',
+				},
 				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
 				{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
 				{ text: '🪄 Effect happens', depth: 1, kind: 'effect' },
@@ -180,7 +188,9 @@ describe('<ResolutionCard />', () => {
 		const effectsSectionContainer = effectsSection.parentElement;
 		const goldCost = screen.getByText('Gold -3');
 		const goldCostContainer = goldCost.parentElement;
-		const effectHeadline = screen.getByText('🏗️ Develop');
+		const effectHeadline = screen.getByText(
+			'Action - 🛠️ Develop - 🏠 Workshop',
+		);
 		const effectEntry = screen.getByText('🪄 Effect happens');
 		const effectHeadlineContainer = effectHeadline.parentElement;
 		const effectEntryContainer = effectEntry.parentElement;
@@ -205,7 +215,11 @@ describe('<ResolutionCard />', () => {
 
 	it('renders nested cost groups and effect hierarchies', () => {
 		const visibleTimeline: ActionLogLineDescriptor[] = [
-			{ text: '🛠️ Forge Relic', depth: 0, kind: 'headline' },
+			{
+				text: 'Action - 🛠️ Develop - ⚒️ Forge Relic',
+				depth: 0,
+				kind: 'headline',
+			},
 			{ text: '💲 Action cost', depth: 1, kind: 'cost' },
 			{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
 			{ text: 'Discounts applied', depth: 3, kind: 'cost-detail' },
@@ -219,8 +233,8 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			action: {
 				id: 'forge-relic',
-				name: 'Forge Relic',
-				icon: '🛠️',
+				name: 'Action - 🛠️ Develop - ⚒️ Forge Relic',
+				icon: '⚒️',
 			},
 			visibleTimeline,
 			visibleLines: [],
@@ -264,7 +278,9 @@ describe('<ResolutionCard />', () => {
 		expect(discountContainer).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(happinessContainer).toHaveStyle({ marginLeft: '2.625rem' });
 
-		expect(screen.queryByText('🛠️ Forge Relic')).toBeNull();
+		expect(
+			screen.queryByText('Action - 🛠️ Develop - ⚒️ Forge Relic'),
+		).toBeNull();
 
 		const group = screen.getByText('🪄 Channel the forge');
 		const effect = screen.getByText('Gain 2 Relics');

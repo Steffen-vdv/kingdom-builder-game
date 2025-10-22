@@ -12,7 +12,7 @@ import {
 	happinessTier,
 	populationParams,
 } from '../src/config/builders';
-import { ActionId } from '../src/actions';
+import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
 import { Types, PassiveMethods } from '../src/config/builderShared';
 import { RESOURCES, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
@@ -20,6 +20,11 @@ import { describe, expect, it } from 'vitest';
 
 const firstResourceKey = Object.keys(RESOURCES)[0] as ResourceKey;
 const firstStatKey = Object.keys(STATS)[0] as StatKey;
+const firstDevelopmentActionId = DEVELOPMENT_ACTION_IDS[0];
+
+if (!firstDevelopmentActionId) {
+	throw new Error('Missing development action id for builder safeguard tests.');
+}
 
 const buildTierPassiveEffect = () =>
 	effect()
@@ -48,7 +53,7 @@ describe('content builder safeguards', () => {
 	});
 
 	it('prevents duplicate action param setters', () => {
-		const builder = actionParams().id(ActionId.develop);
+		const builder = actionParams().id(firstDevelopmentActionId);
 		expect(() => builder.id('again')).toThrowError(
 			'Action effect params already set id(). Remove the extra id() call.',
 		);

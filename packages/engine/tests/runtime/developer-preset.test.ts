@@ -37,7 +37,8 @@ describe('applyDeveloperPreset', () => {
 		const happinessTarget = (player.resources[CResource.happiness] ?? 0) + 3;
 		const castleBefore = player.resources[CResource.castleHP] ?? 0;
 		const castleTarget = Math.max(castleBefore - 2, 0);
-		const citizenTarget = (player.population[PopulationRole.Citizen] ?? 0) + 2;
+		const fortifierTarget =
+			(player.population[PopulationRole.Fortifier] ?? 0) + 2;
 		const landCountTarget = initialLandCount + 1;
 		applyDeveloperPreset(ctx, {
 			playerId: player.id,
@@ -48,7 +49,7 @@ describe('applyDeveloperPreset', () => {
 			],
 			population: [
 				{ role: PopulationRole.Council, count: 0 },
-				{ role: PopulationRole.Citizen, count: citizenTarget },
+				{ role: PopulationRole.Fortifier, count: fortifierTarget },
 			],
 			landCount: landCountTarget,
 			developments: [farmstead.id, workshop.id],
@@ -58,7 +59,7 @@ describe('applyDeveloperPreset', () => {
 		expect(player.resources[CResource.happiness]).toBe(happinessTarget);
 		expect(player.resources[CResource.castleHP]).toBe(castleTarget);
 		expect(player.population[PopulationRole.Council]).toBe(0);
-		expect(player.population[PopulationRole.Citizen]).toBe(citizenTarget);
+		expect(player.population[PopulationRole.Fortifier]).toBe(fortifierTarget);
 		expect(player.lands.length).toBeGreaterThanOrEqual(landCountTarget);
 		const landIdsAfter = new Set(player.lands.map((land) => land.id));
 		let newLandCount = 0;
