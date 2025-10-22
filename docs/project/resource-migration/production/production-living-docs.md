@@ -22,20 +22,22 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
 ## 3. Work Log (append-only)
 
-| Date       | Agent         | Scope / Files | Summary of Work | Tests & Results | Follow-up Actions |
-| ---------- | ------------- | ------------- | --------------- | --------------- | ----------------- |
-| 2024-**-** | _(add entry)_ |               |                 |                 |                   |
+| Date       | Agent       | Scope / Files                                       | Summary of Work                                                                          | Tests & Results                                                      | Follow-up Actions |
+| ---------- | ----------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------- |
+| 2025-10-22 | gpt-5-codex | Resource Migration MVP - P3 - T2 — protocol schemas | Established ResourceV2 definition/group schemas, registry payload, and validation tests. | `npm run lint`; `npm run test --workspace=@kingdom-builder/protocol` | None              |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
-- **Prepared by:** _(agent name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(what is being tackled right now)_
-- **State Summary:** _(1–2 paragraphs describing current progress, outstanding decisions, and known regressions)_
-- **Next Suggested Tasks:** _(bullet list with owners if known)_
-- **Blocking Issues / Risks:** _(list or “None”)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-10-22 15:11
+- **Current Focus:** Resource Migration MVP - P3 - T2 protocol schema scaffolding
+- **State Summary:** ResourceV2 metadata and registry schemas now live in protocol with coverage for bounds reconciliation, tier tracks, group parents, and signed recent gain entries. Tests confirm happy-path parsing and representative validation failures, and lint/test suites pass, keeping downstream packages unblocked for registry integration.
+- **Next Suggested Tasks:**
+  - Finalise engine/resource registry wiring to consume the new ResourceV2 protocol shapes.
+  - Draft content builder updates that emit ResourceV2 definitions matching the protocol contract.
+- **Blocking Issues / Risks:** None
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.
