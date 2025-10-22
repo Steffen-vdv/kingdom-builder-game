@@ -126,6 +126,16 @@ export function developmentEvaluator() {
 	return new DevelopmentEvaluatorBuilder();
 }
 
+class LandEvaluatorBuilder extends EvaluatorBuilder {
+	constructor() {
+		super('land');
+	}
+}
+
+export function landEvaluator() {
+	return new LandEvaluatorBuilder();
+}
+
 export type CompareValue = number | EvaluatorDef | EvaluatorBuilder;
 
 class CompareEvaluatorBuilder extends EvaluatorBuilder<{

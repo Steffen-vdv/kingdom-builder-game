@@ -10,6 +10,7 @@ import {
 	action,
 	compareRequirement,
 	effect,
+	landEvaluator,
 	populationEvaluator,
 	resourceParams,
 	statEvaluator,
@@ -110,6 +111,12 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 		});
 
 	let developmentOrderOffset = 0;
+	const developmentSlotRequirement = compareRequirement()
+		.left(landEvaluator())
+		.operator('gt')
+		.right(0)
+		.message('Requires an available development slot.')
+		.build();
 	for (const { actionId, developmentId, definition } of developmentEntries) {
 		if (!definition.icon) {
 			throw new Error(
@@ -122,6 +129,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.icon(definition.icon)
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
+			.requirement(developmentSlotRequirement)
 			.effect(
 				effect(Types.Development, DevelopmentMethods.ADD)
 					.params(developmentParams().id(developmentId).landId('$landId'))
