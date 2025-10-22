@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { EffectDef } from '../effects';
+import { resourceV2DefinitionsPayloadSchema } from '../resourceV2/definitions';
 
 export const requirementSchema = z.object({
 	type: z.string(),
@@ -213,8 +214,12 @@ export const gameConfigSchema = z.object({
 	developments: z.array(developmentSchema).optional(),
 	populations: z.array(populationSchema).optional(),
 	phases: z.array(phaseSchema).optional(),
+	resourcesV2: resourceV2DefinitionsPayloadSchema.optional(),
 });
 
+export type ResourceV2Config = z.infer<
+	typeof resourceV2DefinitionsPayloadSchema
+>;
 export type GameConfig = z.infer<typeof gameConfigSchema>;
 
 const tierRangeSchema = z.object({

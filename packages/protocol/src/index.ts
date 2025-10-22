@@ -5,6 +5,34 @@ export { Registry } from './registry';
 export type { StepDef, PhaseDef } from './phases';
 export type { EffectDef } from './effects';
 export {
+	resourceV2BoundsSchema,
+	resourceV2DefinitionSchema,
+	resourceV2DefinitionsPayloadSchema,
+	resourceV2DisplayMetadataSchema,
+	resourceV2GlobalActionCostSchema,
+	resourceV2GroupDefinitionSchema,
+	resourceV2GroupMetadataSchema,
+	resourceV2GroupParentSchema,
+	resourceV2LimitedParentFlagSetSchema,
+	resourceV2ReconciliationSchema,
+	resourceV2TierStepSchema,
+	resourceV2TierTrackSchema,
+} from './resourceV2/definitions';
+export type {
+	ResourceV2BoundsConfig,
+	ResourceV2DefinitionConfig,
+	ResourceV2DefinitionsPayloadConfig,
+	ResourceV2DisplayMetadataConfig,
+	ResourceV2GlobalActionCostConfig,
+	ResourceV2GroupDefinitionConfig,
+	ResourceV2GroupMetadataConfig,
+	ResourceV2GroupParentConfig,
+	ResourceV2LimitedParentFlagSetConfig,
+	ResourceV2ReconciliationStrategyConfig,
+	ResourceV2TierStepConfig,
+	ResourceV2TierTrackConfig,
+} from './resourceV2/definitions';
+export {
 	applyParamsToEffects,
 	coerceActionEffectGroupChoices,
 	resolveActionEffects,
@@ -78,6 +106,7 @@ export type {
 	StartConfig,
 	StartModeConfig,
 	StartModesConfig,
+	ResourceV2Config,
 	GameConfig,
 	PhaseStepConfig,
 	PhaseConfig,

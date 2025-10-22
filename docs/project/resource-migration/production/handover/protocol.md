@@ -1,13 +1,14 @@
 # Protocol Handover
 
-> Replace this template with the latest protocol/API handover when finishing a task. Highlight compatibility impacts and pending integrations.
-
-- **Prepared by:** _(name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(protocol initiative in progress)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-10-22 17:47
+- **Current Focus:** Resource Migration MVP protocol validators
 - **State Summary:**
-  - _(bullet points covering progress, decisions, and open questions)_
+  - Added ResourceV2 definition, tier, and group schemas with clamp-only reconciliation and enforced limited parents.
+  - `validateGameConfig` now accepts optional ResourceV2 payloads alongside legacy config blocks for transition coverage.
+  - Protocol tests cover duplicate tier guards, unsupported reconciliation, and parent mutation rejections.
 - **Next Suggested Tasks:**
-  - _(bulleted action items with owners if known)_
+  - Wire engine/session consumers to read the limited parent flag set and block direct parent value mutations.
+  - Align content serialization to emit ResourceV2 payloads once downstream ingestion is ready.
 - **Risks / Blockers:**
-  - _(list items or “None”)_
+  - Confirm downstream expectations for the limited parent flag set representation (Set vs. array) before engine integration.
