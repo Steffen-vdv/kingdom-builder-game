@@ -5,6 +5,33 @@ export { Registry } from './registry';
 export type { StepDef, PhaseDef } from './phases';
 export type { EffectDef } from './effects';
 export {
+	resourceV2DefinitionSchema,
+	resourceV2DefinitionCollectionSchema,
+	resourceV2TierTrackSchema,
+	resourceV2TierStepSchema,
+	resourceV2GroupDefinitionSchema,
+	resourceV2GroupMetadataSchema,
+	resourceV2ValueEffectSchema,
+	resourceV2TransferEffectSchema,
+	resourceV2BoundAdjustmentSchema,
+	resourceV2LimitedParentFlagSetSchema,
+	resourceV2ReconciliationStrategySchema,
+} from './resourceV2/definitions';
+export type {
+	ResourceV2Definition,
+	ResourceV2DefinitionCollection,
+	ResourceV2GroupDefinition,
+	ResourceV2GroupMetadata,
+	ResourceV2GroupParentMetadata,
+	ResourceV2LimitedParentFlagSet,
+	ResourceV2ReconciliationStrategy,
+	ResourceV2TierStep,
+	ResourceV2TierTrack,
+	ResourceV2ValueEffectDefinition,
+	ResourceV2TransferEffectDefinition,
+	ResourceV2BoundAdjustmentDefinition,
+} from './resourceV2/definitions';
+export {
 	applyParamsToEffects,
 	coerceActionEffectGroupChoices,
 	resolveActionEffects,

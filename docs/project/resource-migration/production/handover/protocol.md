@@ -1,13 +1,14 @@
 # Protocol Handover
 
-> Replace this template with the latest protocol/API handover when finishing a task. Highlight compatibility impacts and pending integrations.
-
-- **Prepared by:** _(name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(protocol initiative in progress)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-02-17 12:00
+- **Current Focus:** ResourceV2 schema validation rollout for protocol consumers
 - **State Summary:**
-  - _(bullet points covering progress, decisions, and open questions)_
+  - Added ResourceV2 definition, tier track, and group schemas with clamp-only reconciliation support and limited parent enforcement.
+  - `validateGameConfig` now accepts optional ResourceV2 blocks alongside legacy payloads to ease migration.
+  - Protocol tests cover happy-path parsing plus duplicate tier, unsupported reconciliation, and missing parent flag regressions.
 - **Next Suggested Tasks:**
-  - _(bulleted action items with owners if known)_
+  - Wire ResourceV2 payloads into session responses once engine delivers the unified registry data.
+  - Update API contract docs for ResourceV2 values and coordinate serialization expectations with web translation work.
 - **Risks / Blockers:**
-  - _(list items or “None”)_
+  - Awaiting engine/content producers for live ResourceV2 payloads; validation currently depends on placeholder data.
