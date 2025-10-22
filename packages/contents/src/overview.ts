@@ -1,13 +1,5 @@
-import {
-	ActionId,
-	BUILDING_ACTION_ID_BY_BUILDING_ID,
-	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
-	POPULATION_ACTION_ID_BY_ROLE,
-} from './actions';
-import { BuildingId } from './buildingIds';
-import { DevelopmentId } from './developments';
+import { ActionId, BuildActions, DevelopActions, HireActions } from './actions';
 import { PhaseId } from './phases';
-import { PopulationRole } from './populationRoles';
 
 export type OverviewTokenCategoryName =
 	| 'actions'
@@ -69,12 +61,9 @@ const HERO_INTRO_TEXT = [
 	'Know where every resource, phase, and population surge will carry you.',
 ].join(' ');
 
-const DEFAULT_BUILD_ACTION =
-	BUILDING_ACTION_ID_BY_BUILDING_ID[BuildingId.TownCharter];
-const DEFAULT_DEVELOP_ACTION =
-	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Farm];
-const DEFAULT_HIRE_ACTION =
-	POPULATION_ACTION_ID_BY_ROLE[PopulationRole.Council];
+const DEFAULT_BUILD_ACTION = BuildActions.build_town_charter;
+const DEFAULT_DEVELOP_ACTION = DevelopActions.develop_farm;
+const DEFAULT_HIRE_ACTION = HireActions.hire_council;
 
 if (!DEFAULT_BUILD_ACTION) {
 	throw new Error('Overview requires at least one building action.');

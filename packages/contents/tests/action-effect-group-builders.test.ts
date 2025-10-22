@@ -9,16 +9,10 @@ import {
 	actionEffectGroupOption,
 } from '../src/config/builders/actionEffectGroups';
 import type { ActionEffectGroupDef } from '../src/config/builders/actionEffectGroups';
-import { DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID } from '../src/actions';
-import { DevelopmentId } from '../src/developments';
+import { DevelopActions } from '../src/actions';
 import { describe, expect, it } from 'vitest';
 
-const developFarmActionId =
-	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Farm];
-
-if (!developFarmActionId) {
-	throw new Error('Missing Farm development action id for tests.');
-}
+const developFarmActionId = DevelopActions.develop_farm;
 
 describe('action effect group builder safeguards', () => {
 	it('requires action effect groups to include options', () => {
