@@ -35,6 +35,30 @@ function clonePlayerState(player: PlayerState): PlayerState {
 	for (const key of Object.keys(player.resources)) {
 		cloned.resources[key] = player.resources[key] ?? 0;
 	}
+	for (const key of Object.keys(player.resourceValues)) {
+		cloned.resourceValues[key] = player.resourceValues[key] ?? 0;
+	}
+	for (const key of Object.keys(player.resourceLowerBounds)) {
+		cloned.resourceLowerBounds[key] = player.resourceLowerBounds[key] ?? null;
+	}
+	for (const key of Object.keys(player.resourceUpperBounds)) {
+		cloned.resourceUpperBounds[key] = player.resourceUpperBounds[key] ?? null;
+	}
+	for (const key of Object.keys(player.resourceTouched)) {
+		cloned.resourceTouched[key] = Boolean(player.resourceTouched[key]);
+	}
+	for (const key of Object.keys(player.resourceTierIds)) {
+		cloned.resourceTierIds[key] = player.resourceTierIds[key] ?? null;
+	}
+	for (const key of Object.keys(player.resourceBoundTouched)) {
+		const bounds = player.resourceBoundTouched[key];
+		if (bounds) {
+			cloned.resourceBoundTouched[key] = {
+				lower: Boolean(bounds.lower),
+				upper: Boolean(bounds.upper),
+			};
+		}
+	}
 	for (const key of Object.keys(player.stats)) {
 		cloned.stats[key] = player.stats[key] ?? 0;
 	}
@@ -84,6 +108,12 @@ function clonePlayerState(player: PlayerState): PlayerState {
 		'id',
 		'name',
 		'resources',
+		'resourceValues',
+		'resourceLowerBounds',
+		'resourceUpperBounds',
+		'resourceTouched',
+		'resourceTierIds',
+		'resourceBoundTouched',
 		'stats',
 		'statsHistory',
 		'population',
