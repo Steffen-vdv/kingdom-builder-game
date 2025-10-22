@@ -44,6 +44,49 @@ function clonePlayerState(player: PlayerState): PlayerState {
 	for (const key of Object.keys(player.population)) {
 		cloned.population[key] = player.population[key] ?? 0;
 	}
+	for (const key of Object.keys(player.resourceV2Values ?? {})) {
+		cloned.resourceV2Values[key] = player.resourceV2Values[key] ?? 0;
+	}
+	for (const key of Object.keys(player.resourceV2LowerBounds ?? {})) {
+		cloned.resourceV2LowerBounds[key] = player.resourceV2LowerBounds[key];
+	}
+	for (const key of Object.keys(player.resourceV2UpperBounds ?? {})) {
+		cloned.resourceV2UpperBounds[key] = player.resourceV2UpperBounds[key];
+	}
+	for (const key of Object.keys(player.resourceV2Touched ?? {})) {
+		cloned.resourceV2Touched[key] = Boolean(player.resourceV2Touched[key]);
+	}
+	for (const key of Object.keys(player.resourceV2BoundTouched ?? {})) {
+		cloned.resourceV2BoundTouched[key] = Boolean(
+			player.resourceV2BoundTouched[key],
+		);
+	}
+	cloned.resourceV2RecentGains = player.resourceV2RecentGains.map((gain) => ({
+		key: gain.key,
+		amount: gain.amount,
+	}));
+	for (const key of Object.keys(player.resourceV2ParentValues ?? {})) {
+		cloned.resourceV2ParentValues[key] =
+			player.resourceV2ParentValues[key] ?? 0;
+	}
+	for (const key of Object.keys(player.resourceV2ParentLowerBounds ?? {})) {
+		cloned.resourceV2ParentLowerBounds[key] =
+			player.resourceV2ParentLowerBounds[key];
+	}
+	for (const key of Object.keys(player.resourceV2ParentUpperBounds ?? {})) {
+		cloned.resourceV2ParentUpperBounds[key] =
+			player.resourceV2ParentUpperBounds[key];
+	}
+	for (const key of Object.keys(player.resourceV2ParentTouched ?? {})) {
+		cloned.resourceV2ParentTouched[key] = Boolean(
+			player.resourceV2ParentTouched[key],
+		);
+	}
+	for (const key of Object.keys(player.resourceV2ParentBoundTouched ?? {})) {
+		cloned.resourceV2ParentBoundTouched[key] = Boolean(
+			player.resourceV2ParentBoundTouched[key],
+		);
+	}
 	cloned.lands = player.lands.map((land) => cloneLand(land));
 	cloned.buildings = new Set(player.buildings);
 	cloned.actions = new Set(player.actions);
@@ -87,6 +130,19 @@ function clonePlayerState(player: PlayerState): PlayerState {
 		'stats',
 		'statsHistory',
 		'population',
+		'resourceV2',
+		'resourceV2Values',
+		'resourceV2LowerBounds',
+		'resourceV2UpperBounds',
+		'resourceV2Touched',
+		'resourceV2BoundTouched',
+		'resourceV2RecentGains',
+		'resourceV2Parents',
+		'resourceV2ParentValues',
+		'resourceV2ParentLowerBounds',
+		'resourceV2ParentUpperBounds',
+		'resourceV2ParentTouched',
+		'resourceV2ParentBoundTouched',
 		'lands',
 		'buildings',
 		'actions',
