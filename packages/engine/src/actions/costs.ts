@@ -67,17 +67,20 @@ export function getActionCosts<T extends string>(
 	actionId: T,
 	engineContext: EngineContext,
 	params?: ActionParameters<T>,
+	playerId?: PlayerId,
 ): CostBag {
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
-	const baseCosts = cloneCostBag(actionDefinition.baseCosts || {});
-	const resolved = resolveActionEffects(actionDefinition, params);
-	applyEffectCostCollectors(resolved.effects, baseCosts, engineContext);
-	const finalCosts = applyCostsWithPassives(
-		actionDefinition.id,
-		baseCosts,
-		engineContext,
-	);
-	return finalCosts;
+	return withPlayerContext(engineContext, playerId, () => {
+		const baseCosts = cloneCostBag(actionDefinition.baseCosts || {});
+		const resolved = resolveActionEffects(actionDefinition, params);
+		applyEffectCostCollectors(resolved.effects, baseCosts, engineContext);
+		const finalCosts = applyCostsWithPassives(
+			actionDefinition.id,
+			baseCosts,
+			engineContext,
+		);
+		return finalCosts;
+	});
 }
 
 function withPlayerContext<T>(

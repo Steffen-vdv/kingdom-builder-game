@@ -228,7 +228,7 @@ export async function loadActionCosts(
 	await waitForSessionRecord(sessionId, waitOptions);
 	const response = await enqueueSessionTask(sessionId, () =>
 		api.getActionCosts(
-			buildActionMetadataRequest(sessionId, actionId, params),
+			buildActionMetadataRequest(sessionId, actionId, params, playerId),
 			requestOptions,
 		),
 	);
