@@ -31,3 +31,26 @@ export {
 } from './reconciliation';
 
 export { createRuntimeResourceCatalog } from './fromContent';
+
+export {
+	initialisePlayerResourceState,
+	getResourceValue,
+	setResourceValue,
+	recalculateGroupParentValue,
+	increaseResourceLowerBound,
+	increaseResourceUpperBound,
+} from './state';
+
+export {
+	getCatalogIndexes,
+	resolveResourceDefinition,
+	clampToBounds,
+	assertInteger,
+	clearRecord,
+	ensureBoundFlags,
+	resolveTierId,
+	writeInitialState,
+	aggregateChildValues,
+} from './state-helpers';
+
+export type { CatalogIndexes, ResourceDefinitionLike } from './state-helpers';

@@ -40,19 +40,20 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P2 - T16 - Rebuilt ResourceV2 formatter tests around ordered parent/child fixtures to cover percent display, signed gains, and hover section ordering via the helper APIs.
 | npx vitest run --config vitest.web.config.ts packages/web/tests/translation/resourceV2 (pass; see chunk 55f8f0)
 | UI wiring still pending once ResourceV2 payloads feed the resource bar; keep hover layout review on deck.
+| 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/state.ts, packages/engine/src/resource-v2/state-helpers.ts, packages/engine/src/resource-v2/index.ts, packages/engine/tests/resource-v2/state.test.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T7 - Implemented ResourceV2 state initialisation/read/write helpers, refactored shared utilities, and added engine unit coverage for tiers, bounds, touched flags, and parent aggregation. | npm run check (pass; see chunk ab5b5d) | Wire helpers into engine bootstrap/effect handlers to populate state from runtime catalogs and consider additional tests around bound adjustments once integration path is defined. |
 |
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-26 18:16
-- **Current Focus:** Resource Migration MVP - P2 - T16 - Harden ResourceV2 formatter coverage
-- **State Summary:** Expanded the ResourceV2 formatter test suite to assert ordered parent/child rendering, percent-aware formatting, and signed gain emission through the helper APIs. Verified hover section ordering to guard upcoming UI consumption. The helpers remain pure logic utilities until session payloads provide ResourceV2 metadata/value feeds.
+- **Timestamp (UTC):** 2025-10-26 19:30
+- **Current Focus:** Resource Migration MVP - P2 - T7 - Engine ResourceV2 state helpers
+- **State Summary:** Added pure utilities for initialising ResourceV2 player state, reading/writing values with bounds-aware clamps, updating tier assignments, logging signed recent gains, and recalculating parent aggregates. Introduced companion unit tests covering tier resolution, touched flags, bound adjustments, and error paths to protect the helper surface ahead of runtime integration.
 - **Next Suggested Tasks:**
-  - Surface ResourceV2 metadata/value snapshots in the translation context and resource bar once protocol wiring lands, then validate UI rendering with real payloads (Owner: Web).
-  - Audit hovercard layout to ensure parent rows and child resources share consistent spacing once the UI integration begins (Owner: Web/UI).
-- **Blocking Issues / Risks:** Still waiting on protocol/session wiring to populate ResourceV2 values; without those feeds UI work cannot proceed beyond tests.
+  - Thread the new state helpers into engine bootstrap and reconciliation flows so runtime catalogs seed ResourceV2 values/bounds automatically (Owner: Engine).
+  - Extend coverage once effect handlers consume the helpers, especially around multi-resource parent updates and tier-triggered effects (Owner: Engine QA).
+- **Blocking Issues / Risks:** Helper logic still runs in isolation; pending wiring into actual gameplay loops means live data may expose edge cases such as parent/child bound conflicts. Coordinate closely with upcoming bootstrap tasks to validate against real catalogs.
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 ## 5. Notes & Decisions Archive
