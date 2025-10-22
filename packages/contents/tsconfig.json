@@ -6,14 +6,8 @@
 		"composite": true,
 		"declaration": true,
 		"paths": {
-			"@kingdom-builder/protocol": [
-				"packages/protocol/src/index",
-				"packages/protocol/dist/index"
-			],
-			"@kingdom-builder/protocol/*": [
-				"packages/protocol/src/*",
-				"packages/protocol/dist/*"
-			],
+			"@kingdom-builder/protocol": ["packages/protocol/src/index", "packages/protocol/dist/index"],
+			"@kingdom-builder/protocol/*": ["packages/protocol/src/*", "packages/protocol/dist/*"],
 			"@kingdom-builder/contents": ["packages/contents/src/index"],
 			"@kingdom-builder/contents/*": ["packages/contents/src/*"],
 			"@kingdom-builder/*": ["packages/*/src"]

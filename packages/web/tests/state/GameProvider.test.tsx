@@ -508,40 +508,25 @@ describe('GameProvider', () => {
 	});
 
 	it('exposes gameplay preference props through the game context', async () => {
-		const handleToggleAutoAcknowledge = vi.fn();
-		const handleToggleAutoPass = vi.fn();
+		const handleToggleAutoAdvance = vi.fn();
 		const capture = vi.fn();
 
 		function PreferenceSpy() {
-			const {
-				autoAcknowledgeEnabled,
-				onToggleAutoAcknowledge,
-				autoPassEnabled,
-				onToggleAutoPass,
-			} = useGameEngine();
+			const { autoAdvanceEnabled, onToggleAutoAdvance } = useGameEngine();
 			React.useEffect(() => {
 				capture({
-					autoAcknowledgeEnabled,
-					onToggleAutoAcknowledge,
-					autoPassEnabled,
-					onToggleAutoPass,
+					autoAdvanceEnabled,
+					onToggleAutoAdvance,
 				});
-			}, [
-				autoAcknowledgeEnabled,
-				onToggleAutoAcknowledge,
-				autoPassEnabled,
-				onToggleAutoPass,
-			]);
+			}, [autoAdvanceEnabled, onToggleAutoAdvance]);
 			return null;
 		}
 
 		render(
 			<GameProvider
 				playerName="Commander"
-				autoAcknowledgeEnabled
-				onToggleAutoAcknowledge={handleToggleAutoAcknowledge}
-				autoPassEnabled={false}
-				onToggleAutoPass={handleToggleAutoPass}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={handleToggleAutoAdvance}
 			>
 				<PreferenceSpy />
 			</GameProvider>,
@@ -550,16 +535,11 @@ describe('GameProvider', () => {
 		await waitFor(() => expect(capture).toHaveBeenCalled());
 
 		const lastCall = capture.mock.calls[capture.mock.calls.length - 1]?.[0];
-		expect(lastCall?.autoAcknowledgeEnabled).toBe(true);
+		expect(lastCall?.autoAdvanceEnabled).toBe(true);
 		act(() => {
-			lastCall?.onToggleAutoAcknowledge();
+			lastCall?.onToggleAutoAdvance();
 		});
-		expect(handleToggleAutoAcknowledge).toHaveBeenCalledTimes(1);
-		expect(lastCall?.autoPassEnabled).toBe(false);
-		act(() => {
-			lastCall?.onToggleAutoPass();
-		});
-		expect(handleToggleAutoPass).toHaveBeenCalledTimes(1);
+		expect(handleToggleAutoAdvance).toHaveBeenCalledTimes(1);
 	});
 
 	it('updates the active session when the dev mode prop changes', async () => {

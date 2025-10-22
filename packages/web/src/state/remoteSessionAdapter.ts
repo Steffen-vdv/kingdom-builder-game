@@ -3,6 +3,7 @@ import type {
 	SessionActionDefinitionSummary,
 	SessionActionRequirementList,
 	SessionAdvanceResult,
+	SessionPlayerId,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateResponse,
@@ -72,15 +73,21 @@ export class RemoteSessionAdapter implements SessionAdapter {
 	getActionCosts(
 		actionId: string,
 		params?: actions.ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionCostMap {
-		return this.#metadataCache.getActionCosts(actionId, params);
+		return this.#metadataCache.getActionCosts(actionId, params, playerId);
 	}
 
 	getActionRequirements(
 		actionId: string,
 		params?: actions.ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionRequirementList {
-		return this.#metadataCache.getActionRequirements(actionId, params);
+		return this.#metadataCache.getActionRequirements(
+			actionId,
+			params,
+			playerId,
+		);
 	}
 
 	getActionOptions(actionId: string): ActionEffectGroup[] {
@@ -90,24 +97,37 @@ export class RemoteSessionAdapter implements SessionAdapter {
 	readActionMetadata(
 		actionId: string,
 		params?: actions.ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionMetadataSnapshot {
-		return this.#metadataCache.readActionMetadata(actionId, params);
+		return this.#metadataCache.readActionMetadata(actionId, params, playerId);
 	}
 
 	subscribeActionMetadata(
 		actionId: string,
 		params: actions.ActionParametersPayload | undefined,
+		playerId: SessionPlayerId | undefined,
 		listener: (snapshot: SessionActionMetadataSnapshot) => void,
 	): () => void {
-		return this.#metadataSubscriptions.subscribe(actionId, params, listener);
+		return this.#metadataSubscriptions.subscribe(
+			actionId,
+			params,
+			playerId,
+			listener,
+		);
 	}
 
 	setActionCosts(
 		actionId: string,
 		costs: SessionActionCostMap,
 		params?: actions.ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): void {
-		const key = this.#metadataCache.cacheActionCosts(actionId, costs, params);
+		const key = this.#metadataCache.cacheActionCosts(
+			actionId,
+			costs,
+			params,
+			playerId,
+		);
 		this.#metadataSubscriptions.emitForKey(key);
 	}
 
@@ -115,11 +135,13 @@ export class RemoteSessionAdapter implements SessionAdapter {
 		actionId: string,
 		requirements: SessionActionRequirementList,
 		params?: actions.ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): void {
 		const key = this.#metadataCache.cacheActionRequirements(
 			actionId,
 			requirements,
 			params,
+			playerId,
 		);
 		this.#metadataSubscriptions.emitForKey(key);
 	}
@@ -200,8 +222,9 @@ export class RemoteSessionAdapter implements SessionAdapter {
 	#readActionMetadata(
 		actionId: string,
 		params: actions.ActionParametersPayload | undefined,
+		playerId: SessionPlayerId | undefined,
 	): SessionActionMetadataSnapshot {
-		return this.#metadataCache.readActionMetadata(actionId, params);
+		return this.#metadataCache.readActionMetadata(actionId, params, playerId);
 	}
 
 	cacheSimulation(
