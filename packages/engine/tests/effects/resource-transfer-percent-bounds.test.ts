@@ -91,9 +91,9 @@ describe('resource:transfer percent bounds', () => {
 			params: { key: Resource.gold, percent: 25 },
 		};
 
-		const run = (round?: 'up' | 'down') => {
+		const run = (round?: 'up' | 'down' | 'nearest', availableGold = 5) => {
 			engineContext.activePlayer.gold = 0;
-			engineContext.opponent.gold = 5;
+			engineContext.opponent.gold = availableGold;
 			const effect: EffectDef<{ key: string; percent: number }> = {
 				...base,
 				round,
@@ -116,6 +116,10 @@ describe('resource:transfer percent bounds', () => {
 		const roundedDown = run('down');
 		expect(roundedDown.attacker).toBe(1);
 		expect(roundedDown.defender).toBe(4);
+
+		const roundedNearest = run('nearest', 3);
+		expect(roundedNearest.attacker).toBe(1);
+		expect(roundedNearest.defender).toBe(2);
 	});
 });
 
