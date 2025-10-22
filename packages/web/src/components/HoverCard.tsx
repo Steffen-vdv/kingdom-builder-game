@@ -13,6 +13,7 @@ import {
 	joinClasses,
 } from './common/cardStyles';
 import { ResolutionCard } from './ResolutionCard';
+import { MultiStepIndicator } from './actions/StepBadge';
 
 const FADE_DURATION_MS = 200;
 
@@ -117,6 +118,7 @@ export default function HoverCard() {
 		renderedData.bgClass,
 	);
 	const headerRowClass = 'mb-3 flex items-start justify-between gap-4';
+	const headerTitleClass = 'flex items-center gap-2';
 	const costTextClass = joinClasses('text-right', CARD_META_TEXT_CLASS);
 	const effectsTitle = renderedData.effectsTitle ?? 'Effects';
 	const effectSummary = renderSummary(renderedData.effects);
@@ -140,6 +142,10 @@ export default function HoverCard() {
 		assets: translationContext.assets,
 	};
 
+	const multiStepIndicator = renderedData.multiStep ? (
+		<MultiStepIndicator className="mt-0.5 shrink-0" />
+	) : null;
+
 	return (
 		<div
 			data-state={transitionState}
@@ -147,7 +153,10 @@ export default function HoverCard() {
 			onMouseLeave={clearHoverCard}
 		>
 			<div className={headerRowClass}>
-				<div className={CARD_TITLE_TEXT_CLASS}>{renderedData.title}</div>
+				<div className={headerTitleClass}>
+					{multiStepIndicator}
+					<div className={CARD_TITLE_TEXT_CLASS}>{renderedData.title}</div>
+				</div>
 				<div className={costTextClass}>
 					{renderCosts(
 						renderedData.costs,

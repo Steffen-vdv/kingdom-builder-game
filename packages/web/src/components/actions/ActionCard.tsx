@@ -3,7 +3,7 @@ import { type Summary } from '../../translation';
 import type { TranslationAssets } from '../../translation/context';
 import { renderSummary, renderCosts } from '../../translation/render';
 import OptionList from './OptionList';
-import StepBadge from './StepBadge';
+import StepBadge, { MultiStepIndicator } from './StepBadge';
 import { type ActionCardOption } from './OptionCard';
 import { FOCUS_GRADIENTS } from './focusGradients';
 import { stripSummary } from './stripSummary';
@@ -59,8 +59,8 @@ export default function ActionCard({
 	onMouseLeave,
 	focus,
 	variant = 'front',
-	stepIndex,
-	stepCount,
+	stepIndex: _stepIndex,
+	stepCount: _stepCount,
 	stepLabel,
 	promptTitle,
 	promptSummary,
@@ -99,9 +99,6 @@ export default function ActionCard({
 		'dark:text-rose-300',
 	].join(' ');
 	const costBlockClass = [
-		'absolute',
-		'top-2',
-		'right-2',
 		'flex',
 		'flex-col',
 		'items-end',
@@ -111,12 +108,21 @@ export default function ActionCard({
 	const frontContentClass = [
 		'flex',
 		'h-full',
+		'w-full',
 		'flex-col',
 		'items-start',
-		'gap-2',
+		'gap-3',
 		'p-4',
 		'text-left',
 	].join(' ');
+	const frontHeaderClass = [
+		'flex',
+		'w-full',
+		'items-start',
+		'justify-between',
+		'gap-3',
+	].join(' ');
+	const titleGroupClass = ['flex', 'items-center', 'gap-2'].join(' ');
 	const promptHeaderClass = [
 		'flex',
 		'items-start',
@@ -142,6 +148,12 @@ export default function ActionCard({
 		</li>
 	);
 
+	const backBadge = <StepBadge variant={variant} stepLabel={stepLabel} />;
+	const frontMultiStepBadge =
+		variant === 'front' && multiStep ? (
+			<MultiStepIndicator className="mt-0.5 shrink-0" />
+		) : null;
+
 	return (
 		<div
 			className={containerClass}
@@ -150,13 +162,7 @@ export default function ActionCard({
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 		>
-			<StepBadge
-				stepIndex={stepIndex}
-				stepCount={stepCount}
-				stepLabel={stepLabel}
-				variant={variant}
-				multiStep={multiStep}
-			/>
+			{backBadge}
 			<div className="action-card__inner">
 				<button
 					type="button"
@@ -165,12 +171,23 @@ export default function ActionCard({
 					disabled={!interactive}
 				>
 					<div className={frontContentClass}>
-						<span className="text-base font-medium">{title}</span>
-						<div className={costBlockClass}>
-							{renderCosts(costs, playerResources, actionCostResource, upkeep, {
-								assets,
-							})}
-							{requirementBadge}
+						<div className={frontHeaderClass}>
+							<div className={titleGroupClass}>
+								{frontMultiStepBadge}
+								<span className="text-base font-medium">{title}</span>
+							</div>
+							<div className={costBlockClass}>
+								{renderCosts(
+									costs,
+									playerResources,
+									actionCostResource,
+									upkeep,
+									{
+										assets,
+									},
+								)}
+								{requirementBadge}
+							</div>
 						</div>
 						<ul className="action-card__summary">{renderedSummary}</ul>
 					</div>
