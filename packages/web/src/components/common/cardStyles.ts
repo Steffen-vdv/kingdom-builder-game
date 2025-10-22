@@ -45,7 +45,6 @@ const CONTINUE_BUTTON_CLASS = [
 	'items-center',
 	'justify-center',
 	'rounded-2xl',
-	'bg-amber-500',
 	'cursor-pointer',
 	'px-4',
 	'py-2',
@@ -53,15 +52,12 @@ const CONTINUE_BUTTON_CLASS = [
 	'font-semibold',
 	'text-white',
 	'shadow-lg',
-	'shadow-amber-500/40',
 	'transition',
-	'hover:bg-amber-400',
 	'focus:outline-none',
 	'focus-visible:ring',
-	'focus-visible:ring-amber-500/60',
 	'disabled:cursor-not-allowed',
-	'disabled:bg-amber-500/60',
 	'disabled:shadow-none',
+	'gap-2',
 ].join(' ');
 
 const CARD_TITLE_TEXT_CLASS = [

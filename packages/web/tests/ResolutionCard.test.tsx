@@ -164,6 +164,20 @@ describe('<ResolutionCard />', () => {
 		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
 	});
 
+	it('styles the acknowledgement button for next turn transitions', () => {
+		const resolution = createResolution({});
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={() => {}}
+				continueMode="next-turn"
+			/>,
+		);
+		const nextTurnButton = screen.getByRole('button', { name: 'Next Turn' });
+		expect(nextTurnButton).toHaveTextContent('≫');
+		expect(nextTurnButton.className).toContain('bg-indigo-600');
+	});
+
 	it('renders section roots with nested cost and effect entries', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
