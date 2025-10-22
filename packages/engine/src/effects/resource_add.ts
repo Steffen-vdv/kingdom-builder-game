@@ -9,6 +9,8 @@ export const resourceAdd: EffectHandler = (effect, context, multiplier = 1) => {
 		total = total >= 0 ? Math.ceil(total) : Math.floor(total);
 	} else if (effect.round === 'down') {
 		total = total >= 0 ? Math.floor(total) : Math.ceil(total);
+	} else if (effect.round === 'nearest') {
+		total = Math.round(total);
 	}
 	const current = context.activePlayer.resources[key] || 0;
 	const newVal = current + total;

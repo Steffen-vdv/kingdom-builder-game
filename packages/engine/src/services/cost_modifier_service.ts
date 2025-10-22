@@ -16,6 +16,9 @@ function applyRound(value: number, mode: RoundingMode | undefined) {
 	if (mode === 'down') {
 		return value >= 0 ? Math.floor(value) : Math.ceil(value);
 	}
+	if (mode === 'nearest') {
+		return Math.round(value);
+	}
 	return value;
 }
 
@@ -32,7 +35,7 @@ function mergeRoundInstruction(
 	}
 	const entries = Object.entries(instruction);
 	for (const [key, mode] of entries) {
-		if (mode === 'up' || mode === 'down') {
+		if (mode === 'up' || mode === 'down' || mode === 'nearest') {
 			target[key] = mode;
 		}
 	}

@@ -13,6 +13,8 @@ export const resourceRemove: EffectHandler = (
 		total = total >= 0 ? Math.ceil(total) : Math.floor(total);
 	} else if (effect.round === 'down') {
 		total = total >= 0 ? Math.floor(total) : Math.ceil(total);
+	} else if (effect.round === 'nearest') {
+		total = Math.round(total);
 	}
 	if (total < 0) {
 		total = 0;
