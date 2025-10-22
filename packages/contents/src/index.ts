@@ -72,3 +72,16 @@ export {
 	type HappinessModifierKind,
 	type HappinessTierSlug,
 } from './happinessHelpers';
+
+export {
+	resourceV2,
+	resourceGroup,
+	createResourceV2Registry,
+	createResourceGroupRegistry,
+} from './resourceV2';
+export type {
+	ResourceV2Builder,
+	ResourceGroupBuilder,
+	ResourceV2Registry,
+	ResourceGroupRegistry,
+} from './resourceV2';
