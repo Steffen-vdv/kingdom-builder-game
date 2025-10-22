@@ -1,22 +1,13 @@
 import { Registry } from '@kingdom-builder/protocol';
 
-import type {
-	ResourceV2Definition,
-	ResourceV2GroupParentMetadata,
-} from './types';
+import type { ResourceV2Definition, ResourceV2GroupParentMetadata } from './types';
 
-const DUPLICATE_RESOURCE_ID_MESSAGE =
-	'ResourceV2 registry already contains a definition for the requested id. Remove the duplicate registration.';
-const DUPLICATE_GROUP_ID_MESSAGE =
-	'ResourceV2 group registry already contains a definition for the requested id. Remove the duplicate registration.';
-const UNKNOWN_GROUP_ID_MESSAGE =
-	'ResourceV2 definition references an unknown group id. Register the group parent metadata before assigning resources.';
-const PARENT_DEFINED_MESSAGE =
-	'ResourceV2 group parents are computed, limited resources and cannot be defined directly. Remove the conflicting definition.';
-const PARENT_NOT_LIMITED_MESSAGE =
-	'ResourceV2 group parents must be marked as limited resources to enforce aggregation semantics.';
-const DUPLICATE_PARENT_ID_MESSAGE =
-	'ResourceV2 group parent id already registered for another group. Ensure each parent id is unique.';
+const DUPLICATE_RESOURCE_ID_MESSAGE = 'ResourceV2 registry already contains a definition for the requested id. Remove the duplicate registration.';
+const DUPLICATE_GROUP_ID_MESSAGE = 'ResourceV2 group registry already contains a definition for the requested id. Remove the duplicate registration.';
+const UNKNOWN_GROUP_ID_MESSAGE = 'ResourceV2 definition references an unknown group id. Register the group parent metadata before assigning resources.';
+const PARENT_DEFINED_MESSAGE = 'ResourceV2 group parents are computed, limited resources and cannot be defined directly. Remove the conflicting definition.';
+const PARENT_NOT_LIMITED_MESSAGE = 'ResourceV2 group parents must be marked as limited resources to enforce aggregation semantics.';
+const DUPLICATE_PARENT_ID_MESSAGE = 'ResourceV2 group parent id already registered for another group. Ensure each parent id is unique.';
 
 interface RegistryAdapter<T> extends Iterable<T> {
 	add(value: T): void;
@@ -70,16 +61,14 @@ class StrictRegistry<T> implements RegistryAdapter<T> {
 	}
 }
 
-export type ResourceV2DefinitionRegistry =
-	RegistryAdapter<ResourceV2Definition>;
+export type ResourceV2DefinitionRegistry = RegistryAdapter<ResourceV2Definition>;
 
 export interface ResourceV2GroupDefinition {
 	id: string;
 	parent: ResourceV2GroupParentMetadata;
 }
 
-export type ResourceV2GroupRegistry =
-	RegistryAdapter<ResourceV2GroupDefinition>;
+export type ResourceV2GroupRegistry = RegistryAdapter<ResourceV2GroupDefinition>;
 
 export interface ResourceV2GroupPresentationMetadata {
 	groupId: string;
@@ -101,23 +90,14 @@ export type ResourceV2OrderedValueEntry =
 	  };
 
 export function createResourceV2Registry(): ResourceV2DefinitionRegistry {
-	return new StrictRegistry<ResourceV2Definition>(
-		DUPLICATE_RESOURCE_ID_MESSAGE,
-		(definition) => definition.id,
-	);
+	return new StrictRegistry<ResourceV2Definition>(DUPLICATE_RESOURCE_ID_MESSAGE, (definition) => definition.id);
 }
 
 export function createResourceV2GroupRegistry(): ResourceV2GroupRegistry {
-	return new StrictRegistry<ResourceV2GroupDefinition>(
-		DUPLICATE_GROUP_ID_MESSAGE,
-		(definition) => definition.id,
-	);
+	return new StrictRegistry<ResourceV2GroupDefinition>(DUPLICATE_GROUP_ID_MESSAGE, (definition) => definition.id);
 }
 
-export function freezeOrderedValues<T>(
-	values: Iterable<T>,
-	selectOrder: (value: T) => number,
-): readonly T[] {
+export function freezeOrderedValues<T>(values: Iterable<T>, selectOrder: (value: T) => number): readonly T[] {
 	const decorated = Array.from(values, (value, index) => ({
 		value,
 		order: selectOrder(value),
@@ -134,9 +114,7 @@ export function freezeOrderedValues<T>(
 	return Object.freeze(decorated.map((entry) => entry.value));
 }
 
-export function computeGroupParentMetadata(
-	groups: ResourceV2GroupRegistry,
-): Map<string, ResourceV2GroupParentMetadata> {
+export function computeGroupParentMetadata(groups: ResourceV2GroupRegistry): Map<string, ResourceV2GroupParentMetadata> {
 	const metadata = new Map<string, ResourceV2GroupParentMetadata>();
 	const parentIds = new Set<string>();
 
@@ -155,10 +133,7 @@ export function computeGroupParentMetadata(
 	return metadata;
 }
 
-export function buildResourceV2GroupPresentationMetadata(
-	resources: ResourceV2DefinitionRegistry,
-	groups: ResourceV2GroupRegistry,
-): readonly ResourceV2GroupPresentationMetadata[] {
+export function buildResourceV2GroupPresentationMetadata(resources: ResourceV2DefinitionRegistry, groups: ResourceV2GroupRegistry): readonly ResourceV2GroupPresentationMetadata[] {
 	const parentsByGroup = computeGroupParentMetadata(groups);
 	const childrenByGroup = new Map<string, ResourceV2Definition[]>();
 
@@ -169,9 +144,7 @@ export function buildResourceV2GroupPresentationMetadata(
 		}
 
 		if (!parentsByGroup.has(group.groupId)) {
-			throw new Error(
-				`${UNKNOWN_GROUP_ID_MESSAGE} (${group.groupId}, resource: ${definition.id})`,
-			);
+			throw new Error(`${UNKNOWN_GROUP_ID_MESSAGE} (${group.groupId}, resource: ${definition.id})`);
 		}
 
 		const current = childrenByGroup.get(group.groupId);
@@ -182,9 +155,7 @@ export function buildResourceV2GroupPresentationMetadata(
 		}
 	}
 
-	const parentIds = new Set(
-		Array.from(parentsByGroup.values(), (parent) => parent.id),
-	);
+	const parentIds = new Set(Array.from(parentsByGroup.values(), (parent) => parent.id));
 
 	for (const definition of resources.values()) {
 		if (parentIds.has(definition.id)) {
@@ -195,10 +166,7 @@ export function buildResourceV2GroupPresentationMetadata(
 	const presentations: ResourceV2GroupPresentationMetadata[] = [];
 
 	for (const [groupId, parent] of parentsByGroup.entries()) {
-		const sortedChildren = freezeOrderedValues(
-			childrenByGroup.get(groupId) ?? [],
-			(definition) => definition.group?.order ?? definition.display.order,
-		);
+		const sortedChildren = freezeOrderedValues(childrenByGroup.get(groupId) ?? [], (definition) => definition.group?.order ?? definition.display.order);
 		presentations.push({
 			groupId,
 			parent,
@@ -206,27 +174,17 @@ export function buildResourceV2GroupPresentationMetadata(
 		});
 	}
 
-	return freezeOrderedValues(
-		presentations,
-		(presentation) => presentation.parent.order,
-	);
+	return freezeOrderedValues(presentations, (presentation) => presentation.parent.order);
 }
 
-export function deriveOrderedResourceV2Values(
-	resources: ResourceV2DefinitionRegistry,
-	groups: ResourceV2GroupRegistry,
-): readonly ResourceV2OrderedValueEntry[] {
-	const groupPresentations = buildResourceV2GroupPresentationMetadata(
-		resources,
-		groups,
-	);
+export function deriveOrderedResourceV2Values(resources: ResourceV2DefinitionRegistry, groups: ResourceV2GroupRegistry): readonly ResourceV2OrderedValueEntry[] {
+	const groupPresentations = buildResourceV2GroupPresentationMetadata(resources, groups);
 	const standalone = freezeOrderedValues(
 		resources.values().filter((definition) => !definition.group),
 		(definition) => definition.display.order,
 	);
 
-	const blocks: { order: number; entries: ResourceV2OrderedValueEntry[] }[] =
-		[];
+	const blocks: { order: number; entries: ResourceV2OrderedValueEntry[] }[] = [];
 
 	for (const resource of standalone) {
 		const entry: ResourceV2OrderedValueEntry = {
@@ -264,9 +222,7 @@ export function deriveOrderedResourceV2Values(
 	return Object.freeze(flattened);
 }
 
-export function buildGlobalActionCostDeclarations(
-	resources: ResourceV2DefinitionRegistry,
-): readonly ResourceV2GlobalActionCostDeclaration[] {
+export function buildGlobalActionCostDeclarations(resources: ResourceV2DefinitionRegistry): readonly ResourceV2GlobalActionCostDeclaration[] {
 	const declarationsWithOrder: {
 		order: number;
 		declaration: ResourceV2GlobalActionCostDeclaration;
@@ -285,10 +241,7 @@ export function buildGlobalActionCostDeclarations(
 		});
 	}
 
-	const ordered = freezeOrderedValues(
-		declarationsWithOrder,
-		(entry) => entry.order,
-	);
+	const ordered = freezeOrderedValues(declarationsWithOrder, (entry) => entry.order);
 
 	return Object.freeze(ordered.map((entry) => entry.declaration));
 }
