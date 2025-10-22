@@ -114,9 +114,13 @@ export default function ActionCard({
 		'flex-col',
 		'items-start',
 		'gap-2',
-		'p-4',
+		'px-4',
+		'pb-4',
+		multiStep && variant === 'front' ? 'pt-7' : 'pt-4',
 		'text-left',
-	].join(' ');
+	]
+		.filter(Boolean)
+		.join(' ');
 	const promptHeaderClass = [
 		'flex',
 		'items-start',

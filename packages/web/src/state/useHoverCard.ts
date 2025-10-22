@@ -12,6 +12,7 @@ export interface HoverCard {
 	descriptionClass?: string;
 	effectsTitle?: string;
 	bgClass?: string;
+	multiStep?: boolean | undefined;
 }
 
 interface HoverCardOptions {

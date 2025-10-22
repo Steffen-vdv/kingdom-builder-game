@@ -62,17 +62,26 @@
 		z-index: 2;
 	}
 
+	.action-card__badge--multi-step {
+		top: 0.75rem;
+		left: 0.85rem;
+	}
+
 	.action-card__badge-pill {
 		@apply rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-600 shadow-sm shadow-amber-400/30 dark:bg-slate-800/70 dark:text-amber-300;
 	}
 
 	.action-card__multi-step {
-		@apply flex items-center justify-center rounded-md border border-white/20 bg-white/55 p-0.5 text-emerald-700/90 shadow-sm shadow-emerald-200/10 dark:border-white/10 dark:bg-slate-900/70 dark:text-emerald-200/90;
+		@apply inline-flex items-center gap-1 rounded-md border border-white/25 bg-white/70 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-700/95 shadow-sm shadow-emerald-200/20 dark:border-white/10 dark:bg-slate-900/70 dark:text-emerald-200/90;
 	}
 
 	.action-card__multi-step-icon {
-		width: 0.75rem;
-		height: 0.75rem;
+		width: 0.875rem;
+		height: 0.875rem;
+	}
+
+	.action-card__multi-step-label {
+		line-height: 1;
 	}
 
 	.action-card__option {

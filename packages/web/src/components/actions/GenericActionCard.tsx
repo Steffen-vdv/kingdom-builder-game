@@ -183,6 +183,7 @@ function GenericActionCard({
 		...(description && { description }),
 		...(notImplementedDetails ?? {}),
 		bgClass: hoverBackground,
+		multiStep: hasGroups,
 	});
 	const handleMouseEnter = isPending
 		? undefined

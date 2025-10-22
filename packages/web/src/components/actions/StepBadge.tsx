@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 
 import { type ActionCardVariant } from './ActionCard';
+import MultiStepIndicator from './MultiStepIndicator';
 
 export interface StepBadgeProps {
 	stepIndex: number | undefined;
@@ -32,35 +33,8 @@ export default function StepBadge({
 		return null;
 	}
 	return (
-		<div className="action-card__badge">
-			<span
-				className="action-card__multi-step"
-				role="img"
-				aria-label="Multi-step action"
-				title="Multi-step action"
-			>
-				<svg
-					className="action-card__multi-step-icon"
-					viewBox="0 0 16 16"
-					fill="none"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path
-						d="M3.25 12.75h3.5v-3.5h3.5V5.75H13.5"
-						stroke="currentColor"
-						strokeWidth="1.25"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-					<path
-						d="M11.25 3.75L13.75 6l-2.5 2.25"
-						stroke="currentColor"
-						strokeWidth="1.25"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-				</svg>
-			</span>
+		<div className="action-card__badge action-card__badge--multi-step pointer-events-none">
+			<MultiStepIndicator />
 		</div>
 	);
 }
