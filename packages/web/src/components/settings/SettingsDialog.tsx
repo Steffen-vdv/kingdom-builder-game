@@ -239,7 +239,7 @@ export default function SettingsDialog({
 					</p>
 				</header>
 				<div className="flex flex-col gap-5">
-					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70">
+					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70 justify-center">
 						{SETTINGS_TABS.map((tab) => {
 							const isActive = activeTab === tab.id;
 							return (
