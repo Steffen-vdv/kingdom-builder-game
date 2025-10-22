@@ -50,7 +50,6 @@ interface SnapshotPlayerOptions {
 	id: SessionPlayerId;
 	name?: string;
 	aiControlled?: boolean;
-	values?: SessionPlayerStateSnapshot['values'];
 	resources?: Record<string, number>;
 	stats?: Record<string, number>;
 	statsHistory?: Record<string, boolean>;
@@ -138,7 +137,6 @@ export function createSnapshotPlayer({
 	id,
 	name = `Player ${id}`,
 	aiControlled,
-	values,
 	resources = {},
 	stats = {},
 	statsHistory = {},
@@ -154,7 +152,6 @@ export function createSnapshotPlayer({
 	const snapshot: SessionPlayerStateSnapshot = {
 		id,
 		name,
-		values: clone(values ?? ({} as SessionPlayerStateSnapshot['values'])),
 		resources: { ...resources },
 		stats: { ...stats },
 		statsHistory: { ...statsHistory },

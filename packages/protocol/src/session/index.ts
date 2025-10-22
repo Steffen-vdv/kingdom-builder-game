@@ -6,7 +6,6 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
-import type { SessionResourceValueMap } from './contracts';
 
 export type SessionPlayerId = 'A' | 'B';
 
@@ -62,7 +61,6 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
-	values?: SessionResourceValueMap;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	statsHistory: Record<string, boolean>;
@@ -134,7 +132,6 @@ export interface SessionAdvanceResult {
 }
 
 export interface PlayerSnapshotDeltaBucket {
-	values?: Record<string, number>;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	population: Record<string, number>;
@@ -334,14 +331,6 @@ export type {
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
-	SessionResourceParentValueSnapshot,
-	SessionResourceV2Definition,
-	SessionResourceV2GroupDefinition,
-	SessionResourceV2GroupParentDescriptor,
-	SessionResourceV2RegistryPayload,
-	SessionResourceValueMap,
-	SessionResourceValueSnapshot,
-	SessionResourceValueTierState,
 	SerializedRegistry,
 	SessionMetadataSnapshot,
 	SessionMetadataSnapshotResponse,

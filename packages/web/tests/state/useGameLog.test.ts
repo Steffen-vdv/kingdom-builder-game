@@ -14,7 +14,6 @@ const primaryResource = 'resource.primary';
 const createPlayer = (id: string): SessionPlayerStateSnapshot => ({
 	id,
 	name: `Player ${id}`,
-	values: {},
 	resources: { [primaryResource]: 0 },
 	stats: {},
 	statsHistory: {},

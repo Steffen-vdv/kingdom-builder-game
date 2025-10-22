@@ -56,7 +56,6 @@ const createPlayerSnapshot = (
 ): SessionPlayerStateSnapshot => ({
 	id,
 	name: `Player ${id}`,
-	values: {},
 	resources: {},
 	stats: {},
 	statsHistory: {},

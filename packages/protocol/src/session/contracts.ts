@@ -24,12 +24,6 @@ import type {
 	SimulateUpcomingPhasesResult,
 } from './index';
 import type { RuleSet } from '../services';
-import type {
-	ResourceV2Definition,
-	ResourceV2GroupDefinition,
-	ResourceV2GroupParentDescriptor,
-	ResourceV2RecentGainEntry,
-} from '../resourceV2';
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -51,45 +45,6 @@ export interface SessionResourceDefinition {
 	tags?: string[];
 }
 
-export type SessionResourceV2Definition = ResourceV2Definition;
-
-export type SessionResourceV2GroupDefinition = ResourceV2GroupDefinition;
-
-export type SessionResourceV2GroupParentDescriptor =
-	ResourceV2GroupParentDescriptor;
-
-export interface SessionResourceValueTierState {
-	trackId: string;
-	currentTierId?: string | null;
-	previousTierId?: string | null;
-	nextTierId?: string | null;
-}
-
-export interface SessionResourceParentValueSnapshot {
-	descriptor: SessionResourceV2GroupParentDescriptor;
-	amount: number;
-	touched: boolean;
-}
-
-export interface SessionResourceValueSnapshot {
-	id: string;
-	amount: number;
-	touched: boolean;
-	tier?: SessionResourceValueTierState | null;
-	parent?: SessionResourceParentValueSnapshot;
-	recentGains?: ReadonlyArray<ResourceV2RecentGainEntry>;
-}
-
-export type SessionResourceValueMap = Record<
-	string,
-	SessionResourceValueSnapshot
->;
-
-export interface SessionResourceV2RegistryPayload {
-	definitions: ReadonlyArray<SessionResourceV2Definition>;
-	groups: ReadonlyArray<SessionResourceV2GroupDefinition>;
-}
-
 export type SerializedRegistry<T> = Record<string, T>;
 
 export type SessionActionCategoryRegistry =
@@ -100,8 +55,7 @@ export interface SessionRegistriesPayload {
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;
-	resourceV2: SessionResourceV2RegistryPayload;
-	resources?: SerializedRegistry<SessionResourceDefinition>;
+	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
 }
 
@@ -127,8 +81,7 @@ export interface SessionRuntimeConfigResponse {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
-	resourceV2: SessionResourceV2RegistryPayload;
-	resources?: SerializedRegistry<SessionResourceDefinition>;
+	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
 }
 

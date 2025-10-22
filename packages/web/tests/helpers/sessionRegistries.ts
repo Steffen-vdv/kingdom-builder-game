@@ -93,14 +93,6 @@ function cloneRegistriesPayload(
 		buildings: cloneEntries(payload.buildings),
 		developments: cloneEntries(payload.developments),
 		populations: cloneEntries(payload.populations),
-		resourceV2: {
-			definitions: (payload.resourceV2?.definitions ?? []).map((definition) =>
-				structuredClone(definition),
-			),
-			groups: (payload.resourceV2?.groups ?? []).map((group) =>
-				structuredClone(group),
-			),
-		},
 		resources: Object.fromEntries(
 			Object.entries(payload.resources ?? {}).map(([key, definition]) => [
 				key,
