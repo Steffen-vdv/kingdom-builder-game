@@ -1,6 +1,7 @@
 import type { ActionEffectGroupOption } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../content';
 import type { TranslationContext } from '../context';
+import { formatActionTitle } from '../formatActionTitle';
 
 type ObjectSummaryEntry = Extract<SummaryEntry, Record<string, unknown>>;
 
@@ -111,11 +112,7 @@ function resolveActionLabel(
 ): string {
 	try {
 		const definition = context.actions.get(option.actionId);
-		const icon = typeof definition?.icon === 'string' ? definition.icon : '';
-		const name =
-			typeof definition?.name === 'string' ? definition.name : option.actionId;
-		const combined = [icon, name].filter(Boolean).join(' ').trim();
-		return combined.length > 0 ? combined : option.actionId;
+		return formatActionTitle(definition, context);
 	} catch {
 		return option.actionId;
 	}

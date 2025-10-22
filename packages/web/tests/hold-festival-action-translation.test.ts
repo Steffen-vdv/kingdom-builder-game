@@ -83,7 +83,7 @@ describe('hold festival action translation', () => {
 			);
 		expect(log).toEqual([
 			{
-				text: `${details.festival.icon} ${details.festival.name}`,
+				text: `Action - ${details.festival.icon} ${details.festival.name}`,
 				depth: 0,
 				kind: 'headline',
 			},

@@ -19,6 +19,7 @@ import type {
 	ActionLogLineDescriptor,
 	ActionLogLineKind,
 } from '../log/timeline';
+import { formatActionTitle } from '../formatActionTitle';
 
 class ActionTranslator
 	implements ContentTranslator<string, Record<string, unknown>>
@@ -69,9 +70,7 @@ class ActionTranslator
 		params?: Record<string, unknown>,
 	): ActionLogLineDescriptor[] {
 		const definition = context.actions.get(id);
-		const icon = definition.icon?.trim();
-		const label = definition.name.trim();
-		let message = icon ? `${icon} ${label}` : label;
+		let message = formatActionTitle(definition, context);
 		const extra = getActionLogHook(definition)?.(context, params);
 		if (extra) {
 			message += extra;

@@ -11,6 +11,7 @@ import {
 	type PlayerSnapshot,
 	type TranslationDiffContext,
 } from '../translation';
+import { formatActionTitle } from '../translation/formatActionTitle';
 import type { TranslationContext } from '../translation/context';
 import {
 	buildActionLogTimeline,
@@ -114,9 +115,7 @@ export function appendSubActionChanges({
 			continue;
 		}
 		subLines.push(...subDiff.summaries);
-		const icon = subStep.icon ?? '';
-		const name = subStep.name ?? trace.id;
-		const trimmed = `${[icon, name].filter(Boolean).join(' ').trim()}`;
+		const trimmed = formatActionTitle(subStep, context);
 		const index = messages.findIndex((entry) => {
 			if (entry.kind === 'subaction') {
 				if (entry.refId === trace.id) {

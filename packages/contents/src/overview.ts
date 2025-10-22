@@ -119,7 +119,6 @@ const DEFAULT_TOKENS: OverviewTokenCandidates = {
 		council: ['council'],
 		legion: ['legion'],
 		fortifier: ['fortifier'],
-		citizen: ['citizen'],
 	},
 	static: {
 		land: ['land'],
@@ -236,11 +235,6 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 				icon: 'fortifier',
 				label: 'Fortifier',
 				body: ['Cements your defenses with persistent buffs.'],
-			},
-			{
-				icon: 'citizen',
-				label: 'Citizens',
-				body: ['Wait in the wings, ready to specialize as needed.'],
 			},
 		],
 	},

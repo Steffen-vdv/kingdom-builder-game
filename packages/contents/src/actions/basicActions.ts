@@ -118,7 +118,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 		}
 		const builder = action()
 			.id(actionId)
-			.name(`Develop ${definition.name}`)
+			.name(definition.name)
 			.icon(definition.icon)
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)

@@ -85,7 +85,7 @@ describe('army attack translation log', () => {
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
 		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
 		expect(withLegacyIndent(log)).toEqual([
-			`${attack.icon} ${attack.name}`,
+			`Action - ${attack.icon} ${attack.name}`,
 			`  Attack opponent with your ${powerLabel}`,
 			`    ${absorptionLabel} damage reduction applied`,
 			`    Apply damage to opponent ${fortLabel}`,
@@ -136,7 +136,7 @@ describe('army attack translation log', () => {
 		);
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
 		expect(withLegacyIndent(log)).toEqual([
-			`${buildingAttack.icon} ${buildingAttack.name}`,
+			`Action - ${buildingAttack.icon} ${buildingAttack.name}`,
 			`  Attack opponent with your ${powerLabel}`,
 			`    ${absorptionLabel} damage reduction applied`,
 			`    Apply damage to opponent ${fortLabel}`,

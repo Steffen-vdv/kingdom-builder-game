@@ -9,6 +9,7 @@ import {
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
+import { formatActionTitle } from '../src/translation/formatActionTitle';
 import {
 	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
 	type DevelopmentActionId,
@@ -176,10 +177,7 @@ describe('royal decree translation', () => {
 					`Missing develop action definition for ${option.actionId}`,
 				);
 			}
-			const developLabel = combineLabels(
-				`${developAction.icon ?? ''} ${developAction.name ?? option.actionId}`,
-				'',
-			);
+			const developLabel = formatActionTitle(developAction, translationContext);
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
@@ -217,10 +215,7 @@ describe('royal decree translation', () => {
 					`Missing develop action definition for ${option.actionId}`,
 				);
 			}
-			const developLabel = combineLabels(
-				`${developAction.icon ?? ''} ${developAction.name ?? option.actionId}`,
-				'',
-			);
+			const developLabel = formatActionTitle(developAction, translationContext);
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
@@ -305,11 +300,13 @@ describe('royal decree translation', () => {
 				`Missing develop action definition for ${developActionId}`,
 			);
 		}
-		const developLabel = combineLabels(
-			`${developAction.icon ?? ''} ${developAction.name ?? developActionId}`,
+		const developLabel = formatActionTitle(developAction, translationContext);
+		const developmentLabel = combineLabels(
+			`${development.icon ?? ''} ${development.name ?? developmentId}`,
 			'',
 		);
-		expect(entry.title).toBe(developLabel);
+		const expectedTitle = combineLabels(developLabel, developmentLabel);
+		expect(entry.title).toBe(expectedTitle);
 		expect(entry.timelineKind).toBe('subaction');
 		expect(entry.actionId).toBe(developActionId);
 		const entryItems = Array.isArray(entry.items)

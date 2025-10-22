@@ -26,7 +26,6 @@ export const GAME_START: StartConfig = startConfig()
 				[PopulationRole.Council]: 1,
 				[PopulationRole.Legion]: 0,
 				[PopulationRole.Fortifier]: 0,
-				[PopulationRole.Citizen]: 0,
 			})
 			.lands((lands) => {
 				const developedLand = lands.land((land) => {
@@ -54,7 +53,6 @@ export const GAME_START: StartConfig = startConfig()
 						[PopulationRole.Council]: 2,
 						[PopulationRole.Legion]: 1,
 						[PopulationRole.Fortifier]: 1,
-						[PopulationRole.Citizen]: 0,
 					}),
 			)
 			.playerOverride('B', (player) =>
