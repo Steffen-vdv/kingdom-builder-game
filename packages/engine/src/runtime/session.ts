@@ -2,7 +2,10 @@ import {
 	createEngine,
 	type EngineCreationOptions,
 } from '../setup/create_engine';
-import { performAction as runAction } from '../actions/action_execution';
+import {
+	performAction as runAction,
+	simulateAction as previewAction,
+} from '../actions/action_execution';
 import { advance as runAdvance } from '../phases/advance';
 import { getActionEffectGroups } from '../actions/effect_groups';
 import {
@@ -115,6 +118,7 @@ export function createEngineSession(
 	const context = createEngine(options);
 	return {
 		performAction(actionId, params) {
+			previewAction(actionId, context, params);
 			const traces = runAction(actionId, context, params);
 			return cloneActionTraces(traces);
 		},
