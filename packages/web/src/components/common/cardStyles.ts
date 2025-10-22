@@ -40,12 +40,12 @@ const RESOLUTION_LINE_CLASS = [
 	'dark:text-slate-100',
 ].join(' ');
 
-const CONTINUE_BUTTON_CLASS = [
+const RESOLUTION_BUTTON_BASE_CLASS = [
 	'inline-flex',
 	'items-center',
 	'justify-center',
+	'gap-2',
 	'rounded-2xl',
-	'bg-amber-500',
 	'cursor-pointer',
 	'px-4',
 	'py-2',
@@ -53,16 +53,30 @@ const CONTINUE_BUTTON_CLASS = [
 	'font-semibold',
 	'text-white',
 	'shadow-lg',
-	'shadow-amber-500/40',
 	'transition',
-	'hover:bg-amber-400',
 	'focus:outline-none',
 	'focus-visible:ring',
-	'focus-visible:ring-amber-500/60',
 	'disabled:cursor-not-allowed',
-	'disabled:bg-amber-500/60',
 	'disabled:shadow-none',
 ].join(' ');
+
+const CONTINUE_BUTTON_CLASS = joinClasses(
+	RESOLUTION_BUTTON_BASE_CLASS,
+	'bg-amber-500',
+	'shadow-amber-500/40',
+	'hover:bg-amber-400',
+	'focus-visible:ring-amber-500/60',
+	'disabled:bg-amber-500/60',
+);
+
+const NEXT_TURN_BUTTON_CLASS = joinClasses(
+	RESOLUTION_BUTTON_BASE_CLASS,
+	'bg-emerald-500',
+	'shadow-emerald-500/40',
+	'hover:bg-emerald-400',
+	'focus-visible:ring-emerald-500/60',
+	'disabled:bg-emerald-500/60',
+);
 
 const CARD_TITLE_TEXT_CLASS = [
 	'text-lg',
@@ -127,6 +141,7 @@ export {
 	CARD_REQUIREMENT_LIST_CLASS,
 	CARD_TITLE_TEXT_CLASS,
 	CONTINUE_BUTTON_CLASS,
+	NEXT_TURN_BUTTON_CLASS,
 	joinClasses,
 	RESOLUTION_LINE_CLASS,
 	RESOLUTION_LINES_CLASS,

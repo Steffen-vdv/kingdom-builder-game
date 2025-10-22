@@ -114,19 +114,16 @@ describe('<PhasePanel />', () => {
 		expect(phaseStatus).toHaveTextContent(currentPhaseLabel);
 	});
 
-	it('invokes the end turn handler when allowed', () => {
+	it('omits the Next Turn button because turn changes follow resolution acknowledgements', () => {
 		mockGame.phase = {
 			...defaultPhase,
 			canEndTurn: true,
 			isAdvancing: false,
 		};
 		render(<PhasePanel />);
-		const nextTurnButton = screen.getByRole('button', {
-			name: /next turn/i,
-		});
-		expect(nextTurnButton).toBeEnabled();
-		fireEvent.click(nextTurnButton);
-		expect(mockGame.requests.advancePhase).toHaveBeenCalledTimes(1);
+		expect(
+			screen.queryByRole('button', { name: /next turn/i }),
+		).not.toBeInTheDocument();
 	});
 
 	it('shows a manual start button when awaiting player confirmation', () => {
@@ -140,28 +137,8 @@ describe('<PhasePanel />', () => {
 		fireEvent.click(startButton);
 		expect(mockGame.requests.startSession).toHaveBeenCalledTimes(1);
 		expect(
-			screen.queryByRole('button', {
-				name: /next turn/i,
-			}),
+			screen.queryByRole('button', { name: /next turn/i }),
 		).not.toBeInTheDocument();
-	});
-
-	it('disables the Next Turn button when ending the turn is blocked', () => {
-		mockGame.phase = {
-			...defaultPhase,
-			canEndTurn: false,
-		};
-		render(<PhasePanel />);
-		expect(screen.getByRole('button', { name: /next turn/i })).toBeDisabled();
-	});
-
-	it('disables the Next Turn button while phases advance', () => {
-		mockGame.phase = {
-			...defaultPhase,
-			isAdvancing: true,
-		};
-		render(<PhasePanel />);
-		expect(screen.getByRole('button', { name: /next turn/i })).toBeDisabled();
 	});
 
 	it('shows all phases with icons and highlights the active phase', () => {
