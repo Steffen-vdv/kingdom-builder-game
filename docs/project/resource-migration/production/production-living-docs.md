@@ -36,29 +36,19 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/reconciliation.ts, packages/engine/src/resource-v2/index.ts, docs/project/resource-migration/production/production-living-docs.md                                                                                                                  | Resource Migration MVP - P2 - T8 - Added reconciliation utilities that compute static/percent deltas with configurable rounding, clamp against bounds, export shared types, and documented remaining wiring steps.                            | npm run format; npm run lint; npm run check                                                      | Wire helpers into resource effect handlers and author targeted rounding/clamp unit tests.                                    |
 | 2025-10-26 | ChatGPT (gpt-5-codex) | packages/web/src/translation/resourceV2/formatters.ts, packages/web/src/translation/resourceV2/index.ts, packages/web/src/translation/index.ts, packages/web/tests/translation/resourceV2/formatters.test.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T15 - Added ResourceV2 translation helpers that turn metadata/value snapshots into summaries, hover sections, and Option A signed gain entries, exported them for reuse, and covered the pure logic with tests. | npm run format; npm run lint; npm run check                                                      | Wire helpers into the web UI once ResourceV2 values surface in session snapshots and log wiring begins.                      |
 
-| 2025-10-26 | ChatGPT (gpt-5-codex) | packages/web/tests/translation/resourceV2/formatters.test.ts, docs/project/resource-migration/production/production-living-docs.md
-| Resource Migration MVP - P2 - T16 - Rebuilt ResourceV2 formatter tests around ordered parent/child fixtures to cover percent display, signed gains, and hover section ordering via the helper APIs.
-| npx vitest run --config vitest.web.config.ts packages/web/tests/translation/resourceV2 (pass; see chunk 55f8f0)
-| UI wiring still pending once ResourceV2 payloads feed the resource bar; keep hover layout review on deck.
-| 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/effects/addRemove.ts, docs/project/resource-migration/production/production-living-docs.md |
-| Resource Migration MVP - P2 - T9 - Authored unregistered ResourceV2 add/remove handlers using reconciliation + state helpers and documented pending hook wiring.|
-| npm run format; npm run lint; npm run check (partial – stopped during engine coverage to manage task duration) |
-| Wire handlers into the effect registry, attach runtime catalogs to the engine context, and implement suppressHooks plumbing for tier/win-condition notifications.|
-| 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/state.ts, packages/engine/src/resource-v2/state-helpers.ts, packages/engine/src/resource-v2/index.ts, packages/engine/tests/resource-v2/state.test.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T7 - Implemented ResourceV2 state initialisation/read/write helpers, refactored shared utilities, and added engine unit coverage for tiers, bounds, touched flags, and parent aggregation. | npm run check (pass; see chunk ab5b5d) | Wire helpers into engine bootstrap/effect handlers to populate state from runtime catalogs and consider additional tests around bound adjustments once integration path is defined. |
-|
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-26 22:45
-- **Current Focus:** Resource Migration MVP - P2 - T9 - ResourceV2 add/remove effect handlers
-- **State Summary:** Implemented ResourceV2 `resource:add`/`resource:remove` handlers that normalise static/percent deltas, reuse reconciliation + state helpers, flag bound clamps, and keep hook suppression documented but dormant while the engine still lacks runtime catalogs on the context. Handlers remain unregistered until bootstrap wiring lands.
+- **Timestamp (UTC):** 2025-10-27 18:45
+- **Current Focus:** Resource Migration MVP - P2 - T10 - ResourceV2 transfer & upper-bound handlers
+- **State Summary:** Implemented atomic ResourceV2 transfer handling that independently reconciles donor and recipient payloads before applying a shared transfer amount, added an upper-bound increase effect that reuses state helpers without mutating limited parents, documented payload expectations, and exported both handlers pending registry hookup.
 - **Next Suggested Tasks:**
-  - Attach the runtime ResourceV2 catalog to the engine context and register the new handlers so migrated content can exercise them (Owner: Engine).
-  - Flesh out suppressHooks plumbing and tier/win-condition bridge once hook routing adapts to ResourceV2 deltas (Owner: Engine Services).
-- **Blocking Issues / Risks:** EngineContext currently exposes no ResourceV2 catalog, so any premature registration would throw. Ensure catalog initialisation and hook routing are addressed before toggling handlers on.
-- **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
+  - Thread the runtime ResourceV2 catalog onto the engine context/game state so the new handlers can resolve definitions without throwing (Owner: Engine).
+  - Register the handlers in the core effects registry and add focused unit coverage for clamp/tier interactions once runtime wiring exists (Owner: Engine QA).
+- **Blocking Issues / Risks:** Engine context still lacks an initialised `resourceCatalogV2`; invoking the handlers today will throw until bootstrap wiring lands, leaving transfer/bound adjustments untestable end-to-end.
+- **Reminder:** Plan the first live validation around the low-risk **Absorption** migration once catalog wiring is ready so transfers and bound raises can be exercised safely.
 
 ## 5. Notes & Decisions Archive
 

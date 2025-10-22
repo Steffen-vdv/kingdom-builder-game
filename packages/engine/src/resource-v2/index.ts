@@ -54,3 +54,16 @@ export {
 } from './state-helpers';
 
 export type { CatalogIndexes, ResourceDefinitionLike } from './state-helpers';
+
+export {
+	resourceV2Transfer,
+	resourceV2IncreaseUpperBound,
+} from './effects/transfer';
+
+export type {
+	ResourceV2ValueWriteOptions,
+	ResourceV2TransferEndpointPayload,
+	ResourceV2TransferEffectParams,
+	ResourceV2UpperBoundIncreaseParams,
+	ResourceV2PlayerScope,
+} from './effects/transfer';
