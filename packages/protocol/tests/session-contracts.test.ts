@@ -26,19 +26,12 @@ import type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
-	SessionResourceValueMap,
-	SessionResourceValueSnapshot,
-	SessionResourceValueTierState,
-	SerializedRegistry,
 } from '../src/session';
 import type {
 	SessionRuntimeConfigResponse,
 	SessionRunAiAction,
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
-	SessionResourceDefinition,
-	SessionResourceParentValueSnapshot,
-	SessionResourceV2RegistryPayload,
 } from '../src/session/contracts';
 
 describe('session contract schemas', () => {
@@ -109,12 +102,6 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof runtimeConfigResponseSchema>
 		>().toEqualTypeOf<SessionRuntimeConfigResponse>();
-		expectTypeOf<
-			SessionRuntimeConfigResponse['resourceV2']
-		>().toEqualTypeOf<SessionResourceV2RegistryPayload>();
-		expectTypeOf<SessionRuntimeConfigResponse['resources']>().toEqualTypeOf<
-			SerializedRegistry<SessionResourceDefinition> | undefined
-		>();
 	});
 
 	it('matches the registries payload type including action categories', () => {
@@ -125,12 +112,6 @@ describe('session contract schemas', () => {
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();
-		expectTypeOf<
-			SessionRegistriesPayload['resourceV2']
-		>().toEqualTypeOf<SessionResourceV2RegistryPayload>();
-		expectTypeOf<SessionRegistriesPayload['resources']>().toEqualTypeOf<
-			SerializedRegistry<SessionResourceDefinition> | undefined
-		>();
 	});
 });
 
@@ -138,30 +119,6 @@ describe('session player state snapshot', () => {
 	it('exposes the aiControlled flag', () => {
 		expectTypeOf<SessionPlayerStateSnapshot['aiControlled']>().toEqualTypeOf<
 			boolean | undefined
-		>();
-	});
-
-	it('includes the unified values payload and legacy compatibility', () => {
-		expectTypeOf<SessionPlayerStateSnapshot['values']>().toEqualTypeOf<
-			SessionResourceValueMap | undefined
-		>();
-		expectTypeOf<
-			NonNullable<SessionPlayerStateSnapshot['values']>[string]
-		>().toEqualTypeOf<SessionResourceValueSnapshot>();
-		expectTypeOf<SessionResourceValueSnapshot['tier']>().toEqualTypeOf<
-			SessionResourceValueTierState | null | undefined
-		>();
-		expectTypeOf<SessionResourceValueSnapshot['parent']>().toEqualTypeOf<
-			SessionResourceParentValueSnapshot | undefined
-		>();
-		expectTypeOf<SessionPlayerStateSnapshot['resources']>().toEqualTypeOf<
-			Record<string, number>
-		>();
-		expectTypeOf<SessionPlayerStateSnapshot['stats']>().toEqualTypeOf<
-			Record<string, number>
-		>();
-		expectTypeOf<SessionPlayerStateSnapshot['population']>().toEqualTypeOf<
-			Record<string, number>
 		>();
 	});
 });

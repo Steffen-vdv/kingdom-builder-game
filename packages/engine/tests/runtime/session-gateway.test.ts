@@ -211,7 +211,6 @@ describe('createLocalSessionGateway', () => {
 			developments: {},
 			populations: {},
 			resources: {},
-			resourceV2: { definitions: [], groups: [] },
 			actionCategories: {
 				[providedCategory.id]: providedCategory,
 			},
