@@ -11,6 +11,7 @@ import {
 	CARD_META_TEXT_CLASS,
 	CARD_TITLE_TEXT_CLASS,
 	CONTINUE_BUTTON_CLASS,
+	NEXT_TURN_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
 import { usePlayerAccentClasses } from './common/usePlayerAccentClasses';
@@ -65,6 +66,8 @@ interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
 	onContinue: () => void;
+	continueIntent?: 'continue' | 'next-turn';
+	continueDisabled?: boolean;
 }
 
 function resolveSourceLabels(source: ResolutionSource | undefined) {
@@ -86,6 +89,8 @@ function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
+	continueIntent = 'continue',
+	continueDisabled,
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
@@ -262,6 +267,17 @@ function ResolutionCard({
 		);
 	}
 	const shouldShowContinue = resolution.requireAcknowledgement;
+	const resolvedContinueIntent =
+		continueIntent === 'next-turn' ? 'next-turn' : 'continue';
+	const continueButtonClass =
+		resolvedContinueIntent === 'next-turn'
+			? NEXT_TURN_BUTTON_CLASS
+			: CONTINUE_BUTTON_CLASS;
+	const continueLabel =
+		resolvedContinueIntent === 'next-turn' ? 'Next Turn' : 'Continue';
+	const continueIcon = resolvedContinueIntent === 'next-turn' ? '»' : '→';
+	const isContinueDisabled =
+		Boolean(continueDisabled) || !resolution.isComplete;
 
 	return (
 		<div className={containerClass} data-state="enter">
@@ -331,10 +347,11 @@ function ResolutionCard({
 					<button
 						type="button"
 						onClick={onContinue}
-						disabled={!resolution.isComplete}
-						className={CONTINUE_BUTTON_CLASS}
+						disabled={isContinueDisabled}
+						className={continueButtonClass}
 					>
-						Continue
+						<span>{continueLabel}</span>
+						<span aria-hidden="true">{continueIcon}</span>
 					</button>
 				</div>
 			) : null}

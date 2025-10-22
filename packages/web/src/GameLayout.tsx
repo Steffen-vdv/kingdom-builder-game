@@ -133,20 +133,29 @@ export default function GameLayout() {
 				return;
 			}
 			if (key === controlKeybinds[ADVANCE_CONTROL_ID]) {
-				if (
-					resolution &&
-					resolution.requireAcknowledgement &&
-					resolution.isComplete
-				) {
+				const requireAcknowledgement = Boolean(
+					resolution?.requireAcknowledgement,
+				);
+				const isResolutionComplete = resolution?.isComplete === true;
+				const canAcknowledge = requireAcknowledgement && isResolutionComplete;
+				const canAdvanceTurn = phase.canEndTurn && !phase.isAdvancing;
+				const shouldAdvanceAfterAcknowledgement =
+					canAcknowledge &&
+					phase.isActionPhase &&
+					phase.canEndTurn &&
+					!phase.isAdvancing;
+				if (shouldAdvanceAfterAcknowledgement) {
+					event.preventDefault();
+					acknowledgeResolution();
+					void advancePhase();
+					return;
+				}
+				if (canAcknowledge) {
 					event.preventDefault();
 					acknowledgeResolution();
 					return;
 				}
-				if (
-					(!resolution || !resolution.requireAcknowledgement) &&
-					phase.canEndTurn &&
-					!phase.isAdvancing
-				) {
+				if (!requireAcknowledgement && canAdvanceTurn) {
 					event.preventDefault();
 					void advancePhase();
 				}
@@ -172,6 +181,7 @@ export default function GameLayout() {
 		isSettingsOpen,
 		phase.canEndTurn,
 		phase.isAdvancing,
+		phase.isActionPhase,
 		resolution,
 		setTimeScale,
 	]);

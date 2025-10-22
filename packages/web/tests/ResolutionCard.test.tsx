@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import {
+	cleanup,
+	render,
+	screen,
+	within,
+	fireEvent,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
@@ -162,6 +168,30 @@ describe('<ResolutionCard />', () => {
 		);
 
 		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
+	});
+
+	it('renders a Next Turn acknowledgement when requested', () => {
+		const resolution = createResolution({});
+		const handleContinue = vi.fn();
+
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={handleContinue}
+				continueIntent="next-turn"
+			/>,
+		);
+
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Next Turn',
+		});
+		expect(nextTurnButton).toBeEnabled();
+		const arrow = within(nextTurnButton).getByText('»', {
+			selector: 'span',
+		});
+		expect(arrow).toBeInTheDocument();
+		fireEvent.click(nextTurnButton);
+		expect(handleContinue).toHaveBeenCalledTimes(1);
 	});
 
 	it('renders section roots with nested cost and effect entries', () => {
