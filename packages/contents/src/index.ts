@@ -72,3 +72,31 @@ export {
 	type HappinessModifierKind,
 	type HappinessTierSlug,
 } from './happinessHelpers';
+export {
+	adjustResourceV2LowerBound,
+	adjustResourceV2UpperBound,
+	createResourceV2Builder,
+	createResourceV2GroupMetadata,
+	createResourceV2TierTrackBuilder,
+	createResourceV2VirtualParentBuilder,
+	flatDelta,
+	percentDelta,
+	resourceV2Add,
+	resourceV2Remove,
+	resourceV2Transfer,
+	ResourceV2PercentRoundingMode,
+	ResourceV2Reconciliation,
+} from './resourceV2';
+export type {
+	ResourceV2BoundMutationDefinition,
+	ResourceV2Definition,
+	ResourceV2DeltaDefinition,
+	ResourceV2EffectDefinition,
+	ResourceV2GroupMetadata,
+	ResourceV2MutationTarget,
+	ResourceV2TierStepDefinition,
+	ResourceV2TierTrackDefinition,
+	ResourceV2TransferMutationDefinition,
+	ResourceV2ValueMutationDefinition,
+	ResourceV2VirtualParentMetadata,
+} from './resourceV2';

@@ -68,6 +68,23 @@ export {
 	actionEffectGroupOptionParams,
 } from './builders/actionEffectGroups';
 
+// ResourceV2 builders enforce the MVP clamp-only reconciliation contract.
+export {
+	adjustResourceV2LowerBound,
+	adjustResourceV2UpperBound,
+	createResourceV2Builder,
+	createResourceV2GroupMetadata,
+	createResourceV2TierTrackBuilder,
+	createResourceV2VirtualParentBuilder,
+	flatDelta,
+	percentDelta,
+	resourceV2Add,
+	resourceV2Remove,
+	resourceV2Transfer,
+	ResourceV2PercentRoundingMode,
+	ResourceV2Reconciliation,
+} from '../resourceV2';
+
 export {
 	actionParams,
 	buildingParams,
