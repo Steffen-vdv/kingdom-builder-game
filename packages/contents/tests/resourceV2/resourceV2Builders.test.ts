@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-	createResourceGroupRegistry,
-	createResourceV2Registry,
-	resourceGroup,
-	resourceV2,
-	type ResourceV2TierTrack,
-} from '../../src/resourceV2';
+import { createResourceGroupRegistry, createResourceV2Registry, resourceGroup, resourceV2, type ResourceV2TierTrack } from '../../src/resourceV2';
 
 describe('resourceV2 builder', () => {
 	it('builds a fully configured resource definition', () => {
@@ -64,50 +58,24 @@ describe('resourceV2 builder', () => {
 	});
 
 	it('rejects duplicate setter calls', () => {
-		const withLabel = resourceV2('resource:duplicate-label')
-			.label('Primary')
-			.icon('icon:duplicate');
-		expect(() => withLabel.label('Again')).toThrowError(
-			'ResourceV2 builder already has label() set. Remove the duplicate call.',
-		);
+		const withLabel = resourceV2('resource:duplicate-label').label('Primary').icon('icon:duplicate');
+		expect(() => withLabel.label('Again')).toThrowError('ResourceV2 builder already has label() set. Remove the duplicate call.');
 
-		const withLowerBound = resourceV2('resource:duplicate-lower')
-			.label('Lower')
-			.icon('icon:lower')
-			.lowerBound(0);
-		expect(() => withLowerBound.lowerBound(1)).toThrowError(
-			'ResourceV2 builder already has lowerBound() set. Remove the duplicate call.',
-		);
+		const withLowerBound = resourceV2('resource:duplicate-lower').label('Lower').icon('icon:lower').lowerBound(0);
+		expect(() => withLowerBound.lowerBound(1)).toThrowError('ResourceV2 builder already has lowerBound() set. Remove the duplicate call.');
 
-		const withToggle = resourceV2('resource:duplicate-toggle')
-			.label('Toggle')
-			.icon('icon:toggle')
-			.displayAsPercent();
-		expect(() => withToggle.displayAsPercent()).toThrowError(
-			'ResourceV2 builder already toggled displayAsPercent(). Remove the duplicate call.',
-		);
+		const withToggle = resourceV2('resource:duplicate-toggle').label('Toggle').icon('icon:toggle').displayAsPercent();
+		expect(() => withToggle.displayAsPercent()).toThrowError('ResourceV2 builder already toggled displayAsPercent(). Remove the duplicate call.');
 	});
 
 	it('enforces valid bounds', () => {
-		expect(() =>
-			resourceV2('resource:bounds').lowerBound(5).upperBound(4),
-		).toThrowError(
-			'ResourceV2 builder lowerBound must be less than or equal to upperBound (5 > 4).',
-		);
+		expect(() => resourceV2('resource:bounds').lowerBound(5).upperBound(4)).toThrowError('ResourceV2 builder lowerBound must be less than or equal to upperBound (5 > 4).');
 	});
 
 	it('requires positive integer global action cost amounts', () => {
-		expect(() =>
-			resourceV2('resource:cost-int').globalActionCost(1.5),
-		).toThrowError(
-			'ResourceV2 builder expected globalCost.amount to be an integer but received 1.5.',
-		);
+		expect(() => resourceV2('resource:cost-int').globalActionCost(1.5)).toThrowError('ResourceV2 builder expected globalCost.amount to be an integer but received 1.5.');
 
-		expect(() =>
-			resourceV2('resource:cost-zero').globalActionCost(0),
-		).toThrowError(
-			'ResourceV2 builder expected globalCost.amount to be greater than 0 but received 0.',
-		);
+		expect(() => resourceV2('resource:cost-zero').globalActionCost(0)).toThrowError('ResourceV2 builder expected globalCost.amount to be greater than 0 but received 0.');
 	});
 });
 
@@ -138,18 +106,8 @@ describe('resourceV2 group builders and registries', () => {
 	});
 
 	it('keeps resource ordering and group metadata inside the resource registry', () => {
-		const wealth = resourceV2('resource:wealth')
-			.label('Wealth')
-			.icon('icon:wealth')
-			.order(1)
-			.group('group:economy', { order: 2 })
-			.build();
-		const defense = resourceV2('resource:defense')
-			.label('Defense')
-			.icon('icon:defense')
-			.order(3)
-			.group('group:military', { order: 1 })
-			.build();
+		const wealth = resourceV2('resource:wealth').label('Wealth').icon('icon:wealth').order(1).group('group:economy', { order: 2 }).build();
+		const defense = resourceV2('resource:defense').label('Defense').icon('icon:defense').order(3).group('group:military', { order: 1 }).build();
 
 		const registry = createResourceV2Registry([wealth, defense]);
 		expect(registry.byId['resource:wealth']).toBe(wealth);
