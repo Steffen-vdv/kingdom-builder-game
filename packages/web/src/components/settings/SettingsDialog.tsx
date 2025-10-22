@@ -21,7 +21,8 @@ const DIALOG_DESCRIPTION = [
 	'These selections stay with you as you explore different screens.',
 ].join(' ');
 const TAB_BUTTON_CLASS = [
-	'flex-1 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold',
+	'flex flex-1 items-center justify-center gap-2 rounded-2xl border',
+	'border-transparent px-4 py-3 text-sm font-semibold',
 	'tracking-wide transition hoverable cursor-pointer focus:outline-none',
 	'focus-visible:ring-2 focus-visible:ring-emerald-300',
 	'dark:focus-visible:ring-emerald-500/60',
@@ -37,15 +38,17 @@ const TAB_BUTTON_INACTIVE_CLASS = [
 	'dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/70',
 	'dark:hover:text-emerald-200',
 ].join(' ');
+const TAB_ICON_CLASS = 'text-lg leading-none';
 
 type SettingsTabId = 'game' | 'visual' | 'audio' | 'controls';
 
-const SETTINGS_TABS: Array<{ id: SettingsTabId; label: string }> = [
-	{ id: 'game', label: 'Game' },
-	{ id: 'visual', label: 'Visual' },
-	{ id: 'audio', label: 'Audio' },
-	{ id: 'controls', label: 'Controls' },
-];
+const SETTINGS_TABS: Array<{ id: SettingsTabId; label: string; icon: string }> =
+	[
+		{ id: 'game', label: 'Game', icon: '🎮' },
+		{ id: 'visual', label: 'Visual', icon: '🎨' },
+		{ id: 'audio', label: 'Audio', icon: '🔊' },
+		{ id: 'controls', label: 'Controls', icon: '🎛️' },
+	];
 
 const AUTO_ADVANCE_TITLE = 'Auto-advance';
 
@@ -236,7 +239,7 @@ export default function SettingsDialog({
 					</p>
 				</header>
 				<div className="flex flex-col gap-5">
-					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70">
+					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70 justify-center">
 						{SETTINGS_TABS.map((tab) => {
 							const isActive = activeTab === tab.id;
 							return (
@@ -251,7 +254,10 @@ export default function SettingsDialog({
 									onClick={() => setActiveTab(tab.id)}
 									ref={tab.id === 'game' ? initialFocusRef : undefined}
 								>
-									{tab.label}
+									<span aria-hidden className={TAB_ICON_CLASS}>
+										{tab.icon}
+									</span>
+									<span>{tab.label}</span>
 								</button>
 							);
 						})}
