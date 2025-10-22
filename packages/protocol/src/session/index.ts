@@ -6,6 +6,10 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type {
+	SessionResourceV2MetadataSnapshot,
+	SessionResourceV2ValueSnapshotMap,
+} from './resourceV2';
 
 export type SessionPlayerId = 'A' | 'B';
 
@@ -61,10 +65,8 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
+	values: SessionResourceV2ValueSnapshotMap;
 	statsHistory: Record<string, boolean>;
-	population: Record<string, number>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
@@ -132,9 +134,7 @@ export interface SessionAdvanceResult {
 }
 
 export interface PlayerSnapshotDeltaBucket {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
+	values: Record<string, number>;
 }
 
 export interface SimulateUpcomingPhasesIds {
@@ -172,11 +172,6 @@ export interface SessionRuleSnapshot {
 	tieredResourceKey: string;
 	tierDefinitions: HappinessTierDefinition[];
 	winConditions: WinConditionDefinition[];
-}
-
-export interface SessionRecentResourceGain {
-	key: string;
-	amount: number;
 }
 
 export type SessionEffectLogMap = Record<string, ReadonlyArray<unknown>>;
@@ -281,11 +276,9 @@ export interface SessionTriggerMetadata {
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
+	values?: SessionResourceV2MetadataSnapshot;
 	buildings?: Record<string, SessionMetadataDescriptor>;
 	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
@@ -296,7 +289,6 @@ export interface SessionSnapshot {
 	game: SessionGameSnapshot;
 	phases: SessionPhaseDefinition[];
 	actionCostResource: string;
-	recentResourceGains: SessionRecentResourceGain[];
 	compensations: Record<SessionPlayerId, PlayerStartConfig>;
 	rules: SessionRuleSnapshot;
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
@@ -330,7 +322,6 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SerializedRegistry,
 	SessionMetadataSnapshot,
 	SessionMetadataSnapshotResponse,
@@ -351,3 +342,20 @@ export type {
 
 export * as contracts from './contracts';
 export type { SessionGateway } from './gateway';
+export type {
+	SessionResourceV2GlobalCostReference,
+	SessionResourceV2GroupStructure,
+	SessionResourceV2GroupStructureMap,
+	SessionResourceV2MetadataSnapshot,
+	SessionResourceV2OrderedDisplayEntry,
+	SessionResourceV2RecentGain,
+	SessionResourceV2TierStatus,
+	SessionResourceV2TierStatusMap,
+	SessionResourceV2TierStepStatus,
+	SessionResourceV2TierStepStatusDisplay,
+	SessionResourceV2ValueDescriptor,
+	SessionResourceV2ValueDescriptorMap,
+	SessionResourceV2ValueSnapshot,
+	SessionResourceV2ValueSnapshotMap,
+} from './resourceV2';
+export { buildResourceV2OrderedDisplay } from './resourceV2';

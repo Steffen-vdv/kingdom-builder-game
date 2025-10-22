@@ -49,12 +49,21 @@ describe('session snapshot metadata', () => {
 		const metadata: SessionSnapshotMetadata = {
 			passiveEvaluationModifiers: {},
 			overview,
-			stats: {
-				morale: {
-					label: 'Morale',
-					displayAsPercent: true,
-					format: 'percent',
+			values: {
+				descriptors: {
+					morale: {
+						id: 'morale',
+						label: 'Morale',
+						order: 1,
+						percent: true,
+					},
 				},
+				recentGains: [
+					{
+						resourceId: 'morale',
+						amount: 2,
+					},
+				],
 			},
 		};
 		const response = {
@@ -64,8 +73,9 @@ describe('session snapshot metadata', () => {
 				actions: {},
 				buildings: {},
 				developments: {},
-				populations: {},
-				resources: {},
+				values: {},
+				resourceGroups: {},
+				globalActionCost: null,
 			},
 		};
 		const result = sessionCreateResponseSchema.parse(response);
@@ -73,7 +83,8 @@ describe('session snapshot metadata', () => {
 			result.snapshot as { metadata: SessionSnapshotMetadata }
 		).metadata;
 		expect(parsedMetadata.overview?.hero?.title).toBe('Realm Guide');
-		expect(parsedMetadata.stats?.morale?.displayAsPercent).toBe(true);
+		expect(parsedMetadata.values?.descriptors.morale?.percent).toBe(true);
+		expect(parsedMetadata.values?.recentGains?.[0]?.amount).toBe(2);
 	});
 
 	it('exposes descriptor format typing', () => {

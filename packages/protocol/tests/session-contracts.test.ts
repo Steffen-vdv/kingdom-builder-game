@@ -26,6 +26,8 @@ import type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
+	SessionResourceV2GlobalCostReference,
+	SessionResourceV2ValueSnapshotMap,
 } from '../src/session';
 import type {
 	SessionRuntimeConfigResponse,
@@ -102,6 +104,9 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof runtimeConfigResponseSchema>
 		>().toEqualTypeOf<SessionRuntimeConfigResponse>();
+		expectTypeOf<
+			SessionRuntimeConfigResponse['globalActionCost']
+		>().toEqualTypeOf<SessionResourceV2GlobalCostReference | null>();
 	});
 
 	it('matches the registries payload type including action categories', () => {
@@ -112,6 +117,9 @@ describe('session contract schemas', () => {
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();
+		expectTypeOf<
+			SessionRegistriesPayload['globalActionCost']
+		>().toEqualTypeOf<SessionResourceV2GlobalCostReference | null>();
 	});
 });
 
@@ -120,5 +128,11 @@ describe('session player state snapshot', () => {
 		expectTypeOf<SessionPlayerStateSnapshot['aiControlled']>().toEqualTypeOf<
 			boolean | undefined
 		>();
+	});
+
+	it('provides the ResourceV2 value map', () => {
+		expectTypeOf<
+			SessionPlayerStateSnapshot['values']
+		>().toEqualTypeOf<SessionResourceV2ValueSnapshotMap>();
 	});
 });
