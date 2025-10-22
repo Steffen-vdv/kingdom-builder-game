@@ -11,6 +11,18 @@ export type { ActionCategoryConfig, ActionCategoryLayout } from './config/builde
 export { POPULATION_ROLES, PopulationRole, type PopulationRoleId } from './populationRoles';
 export { Resource, type ResourceKey, RESOURCES } from './resources';
 export { Stat, type StatKey, STATS } from './stats';
+export {
+	RESOURCE_V2,
+	RESOURCE_GROUPS_V2,
+	createResourceGroupV2Registry,
+	createResourceV2Registry,
+	ResourceV2GroupId,
+	type ResourceV2GroupId as ResourceV2GroupIdValue,
+	ResourceV2GroupParentId,
+	type ResourceV2GroupParentId as ResourceV2GroupParentIdValue,
+	ResourceV2Id,
+	type ResourceV2Id as ResourceV2IdValue,
+} from './resourceV2';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
 export { UPKEEP_INFO, TRANSFER_INFO } from './assets';
