@@ -20,25 +20,37 @@ This document captures the evolving state of the Resource Migration initiative. 
 
 Update the table whenever a domain meaningfully changes. Keep comments concise and reference sections below for detail.
 
-## 3. Work Log (append-only)
+## 3. Work Logs (domain-specific, append-only)
 
-| Date       | Agent         | Scope / Files | Summary of Work | Tests & Results | Follow-up Actions |
-| ---------- | ------------- | ------------- | --------------- | --------------- | ----------------- |
-| 2024-**-** | _(add entry)_ |               |                 |                 |                   |
+All historical updates now live in domain-specific work log files. Append a dated entry to every domain you touched during a task.
 
-Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
+| Domain        | Work Log                                         |
+| ------------- | ------------------------------------------------ |
+| Content       | [content.md](./work-logs/content.md)             |
+| Engine        | [engine.md](./work-logs/engine.md)               |
+| Protocol/API  | [protocol.md](./work-logs/protocol.md)           |
+| Web UI        | [web.md](./work-logs/web.md)                     |
+| Testing       | [testing.md](./work-logs/testing.md)             |
+| Documentation | [documentation.md](./work-logs/documentation.md) |
 
-## 4. Latest Handover (overwrite each task)
+Entries remain append-only (most recent at the bottom). Reference command output chunks when relevant and keep summaries concise but traceable.
 
-- **Prepared by:** _(agent name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(what is being tackled right now)_
-- **State Summary:** _(1–2 paragraphs describing current progress, outstanding decisions, and known regressions)_
-- **Next Suggested Tasks:** _(bullet list with owners if known)_
-- **Blocking Issues / Risks:** _(list or “None”)_
-- **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
+## 4. Latest Handovers (domain-specific, overwrite on completion)
 
-Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.
+Use the per-domain handover template that matches the work you completed. Replace the entire file before you wrap up so the next agent inherits an actionable snapshot.
+
+| Domain        | Handover Template                               |
+| ------------- | ----------------------------------------------- |
+| Content       | [content.md](./handover/content.md)             |
+| Engine        | [engine.md](./handover/engine.md)               |
+| Protocol/API  | [protocol.md](./handover/protocol.md)           |
+| Web UI        | [web.md](./handover/web.md)                     |
+| Testing       | [testing.md](./handover/testing.md)             |
+| Documentation | [documentation.md](./handover/documentation.md) |
+
+Each file should hold only the latest context for that domain. Move extended discussion or rationale to the "Notes & Decisions" section as needed.
+
+**Reminder:** The first ResourceV2 migration should still target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 ## 5. Notes & Decisions Archive
 
@@ -54,6 +66,11 @@ Maintain a running list of important updates. Use subheadings with timestamps.
 - MVP delivery is limited to clamp-based reconciliation, parented ResourceGroups, mandatory add/remove/transfer/upper-bound increase effects, percent modifiers, the hook-suppression escape hatch, a single global action cost resource, unified HUD/translations, and signed gain/loss logging (Option A). All other features stay on the backlog for later phases.
 - Deferred items (value/bound breakdown capture, additional bound adjusters, Pass/Reject reconciliation, parentless groups, bound-decrease effects, comprehensive validators, tier-based shortfall replacement, extra global cost resources) are tracked in [Deferred (Post-MVP) Work](../pre-production/project-outline.md#5-deferred-post-mvp-work). Do not reintroduce these during daily task triage.
 - Phase summaries must log both gains and losses in `recentResourceGains` (Option A) so stakeholders can audit negative swings without waiting for the backlog enhancements.
+
+### 2025-10-22 – Domain-specific logging rollout
+
+- Split the production work log and handover process into per-domain files under `production/work-logs/` and `production/handover/` for clarity.
+- Updated the living document and agent instructions to direct contributors toward the new structure.
 
 ## 6. Intended Temporary Regressions
 
