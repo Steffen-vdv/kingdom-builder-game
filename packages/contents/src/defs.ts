@@ -1,9 +1,4 @@
-import type {
-	BuildingConfig,
-	DevelopmentConfig,
-	EffectDef,
-	PopulationConfig,
-} from '@kingdom-builder/protocol';
+import type { BuildingConfig, DevelopmentConfig, EffectDef, PopulationConfig } from '@kingdom-builder/protocol';
 
 export const ON_PAY_UPKEEP_STEP = 'onPayUpkeepStep';
 export const ON_GAIN_INCOME_STEP = 'onGainIncomeStep';
