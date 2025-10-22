@@ -20,6 +20,7 @@ import {
 	buildResolutionTimelineEntries,
 	normalizeModifierDescription,
 } from './ResolutionTimeline';
+import { useSoundEffectsContext } from '../state/SoundEffectsContext';
 
 interface ResolutionLabels {
 	title: string;
@@ -94,6 +95,11 @@ function ResolutionCard({
 	const playerName = playerLabel ?? 'Unknown player';
 	const resolveAccentClasses = usePlayerAccentClasses();
 	const accentClasses = resolveAccentClasses(resolution.player?.id ?? null);
+	const { playUiClick } = useSoundEffectsContext();
+	const handleContinueClick = React.useCallback(() => {
+		playUiClick();
+		onContinue();
+	}, [onContinue, playUiClick]);
 	const containerClass = joinClasses(
 		CARD_BASE_CLASS,
 		'pointer-events-auto',
@@ -339,7 +345,7 @@ function ResolutionCard({
 				<div className="mt-6 flex justify-end">
 					<button
 						type="button"
-						onClick={onContinue}
+						onClick={handleContinueClick}
 						disabled={!resolution.isComplete}
 						className={continueButtonClass}
 					>

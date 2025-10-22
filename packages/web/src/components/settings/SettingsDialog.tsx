@@ -6,6 +6,7 @@ import SettingRow from './SettingRow';
 
 import ControlBindingsTab from './ControlBindingsTab';
 import type { ControlId, ControlKeybindMap } from '../../state/keybindings';
+import { useSoundEffectsContext } from '../../state/SoundEffectsContext';
 
 const DIALOG_SURFACE_CLASS = [
 	'relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border border-white/20',
@@ -103,6 +104,7 @@ export default function SettingsDialog({
 	onResetControlKeybind,
 }: SettingsDialogProps) {
 	const [activeTab, setActiveTab] = useState<SettingsTabId>('game');
+	const { playUiClick } = useSoundEffectsContext();
 	const dialogTitleId = useId();
 	const dialogDescriptionId = useId();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -248,7 +250,10 @@ export default function SettingsDialog({
 											? TAB_BUTTON_ACTIVE_CLASS
 											: TAB_BUTTON_INACTIVE_CLASS
 									}`}
-									onClick={() => setActiveTab(tab.id)}
+									onClick={() => {
+										playUiClick();
+										setActiveTab(tab.id);
+									}}
 									ref={tab.id === 'game' ? initialFocusRef : undefined}
 								>
 									{tab.label}
