@@ -13,13 +13,35 @@ import {
 	PopulationBuilder,
 	PopulationRoleBuilder,
 	ResourceBuilder,
+	ResourceV2Builder,
+	ResourceV2GroupBuilder,
+	ResourceV2GroupParentBuilder,
+	ResourceV2TierBuilder,
+	ResourceV2TierTrackBuilder,
 	StatBuilder,
 } from './builders/domain';
+import { resourceGroup, resourceGroupParent, resourceTier, resourceTierTrack, resourceV2 } from './builders/resourceV2Builder';
 export { happinessTier, tierDisplay, tierPassiveText } from './builders/tiers';
 
 export type { ActionCategoryConfig, ActionCategoryLayout, InfoDef, PopulationRoleInfo, ResourceInfo, StatInfo } from './builders/domain';
 
-export { ActionBuilder, ActionCategoryBuilder, BaseBuilder, BuildingBuilder, DevelopmentBuilder, InfoBuilder, PopulationBuilder, PopulationRoleBuilder, ResourceBuilder, StatBuilder };
+export {
+	ActionBuilder,
+	ActionCategoryBuilder,
+	BaseBuilder,
+	BuildingBuilder,
+	DevelopmentBuilder,
+	InfoBuilder,
+	PopulationBuilder,
+	PopulationRoleBuilder,
+	ResourceBuilder,
+	ResourceV2Builder,
+	ResourceV2GroupBuilder,
+	ResourceV2GroupParentBuilder,
+	ResourceV2TierBuilder,
+	ResourceV2TierTrackBuilder,
+	StatBuilder,
+};
 
 export {
 	CompareRequirementBuilder,
@@ -71,6 +93,7 @@ export type { ActionEffectGroupDef, ActionEffectGroupOptionDef, DevelopmentIdPar
 
 export type { PhaseDef, StepDef } from './builders/startConfig';
 export { phase, playerStart, startConfig, step, toRecord } from './builders/startConfig';
+export { resourceGroup, resourceGroupParent, resourceTier, resourceTierTrack, resourceV2 };
 
 export function populationAssignmentPassiveId(role: PopulationRoleId) {
 	return `${role}_$player_$index`;
