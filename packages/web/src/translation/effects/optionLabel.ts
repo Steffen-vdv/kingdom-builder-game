@@ -154,8 +154,14 @@ export function buildActionOptionTranslation(
 	mode: EffectGroupMode,
 ): ActionOptionTranslationResult {
 	const fallback = fallbackOptionLabel(option);
-	const actionLabel = resolveActionLabel(option, context) || fallback;
+	const resolvedActionLabel = resolveActionLabel(option, context) || fallback;
+	const baseLabel =
+		resolvedActionLabel.trim().length > 0 ? resolvedActionLabel : fallback;
+	if (mode !== 'log') {
+		return { label: baseLabel, entry: baseLabel };
+	}
 	const targetLabel = resolveOptionTargetLabel(option, context);
+	const actionLabel = baseLabel;
 	if (translated.length === 0) {
 		return { label: actionLabel, entry: actionLabel };
 	}
@@ -163,7 +169,10 @@ export function buildActionOptionTranslation(
 	if (typeof first === 'undefined') {
 		return { label: actionLabel, entry: actionLabel };
 	}
-	const restEntries = translated.slice(1).map(cloneSummaryEntry);
+	const includeDetails = mode === 'log';
+	const restEntries = includeDetails
+		? translated.slice(1).map(cloneSummaryEntry)
+		: [];
 	if (typeof first === 'string') {
 		let firstEntry = first;
 		if (mode === 'log') {
@@ -174,14 +183,13 @@ export function buildActionOptionTranslation(
 		}
 		const normalizedFirst = normalizeEntryLabel(firstEntry, targetLabel);
 		const title = combineLabels(actionLabel, normalizedFirst, fallback);
-		const shouldIncludeFirstDetail =
-			restEntries.length > 0
-				? true
-				: mode === 'describe' && normalizedFirst !== targetLabel;
+		if (!includeDetails) {
+			return { label: title, entry: title };
+		}
 		const detailEntries =
 			restEntries.length > 0
 				? restEntries
-				: shouldIncludeFirstDetail
+				: normalizedFirst !== targetLabel
 					? [normalizedFirst]
 					: [];
 		if (detailEntries.length === 0) {
@@ -192,6 +200,9 @@ export function buildActionOptionTranslation(
 	const firstObject = cloneSummaryEntry(first) as ObjectSummaryEntry;
 	const normalizedTitle = normalizeEntryLabel(firstObject.title, targetLabel);
 	const combinedTitle = combineLabels(actionLabel, normalizedTitle, fallback);
+	if (!includeDetails) {
+		return { label: combinedTitle, entry: combinedTitle };
+	}
 	const entry: ObjectSummaryEntry = {
 		...firstObject,
 		title: combinedTitle,

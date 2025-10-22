@@ -435,13 +435,13 @@ describe('useActionPerformer', () => {
 				action: expect.objectContaining({
 					id: action.id,
 					icon: '⚔️',
-					name: 'Action - ⚔️ Attack',
+					name: '⚔️ Attack',
 				}),
 				source: {
 					kind: 'action',
 					label: 'Action',
 					id: action.id,
-					name: 'Action - ⚔️ Attack',
+					name: '⚔️ Attack',
 					icon: '⚔️',
 				},
 				actorLabel: 'Played by',
