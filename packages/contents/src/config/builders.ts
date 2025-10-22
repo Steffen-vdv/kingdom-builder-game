@@ -48,6 +48,21 @@ export {
 export { actionParams, buildingParams, developmentParams, landParams, passiveParams, resourceParams, statParams } from './builders/effectParams';
 
 export {
+	ResourceV2DefinitionBuilder,
+	ResourceV2GroupBuilder,
+	ResourceV2TierDefinitionBuilder,
+	ResourceV2TierTrackBuilder,
+	ResourceV2ValueChangeBuilder,
+	resourceV2Add,
+	resourceV2Definition,
+	resourceV2Group,
+	resourceV2GroupParent,
+	resourceV2Remove,
+	resourceV2Tier,
+	resourceV2TierTrack,
+} from './builders/resourceV2';
+
+export {
 	AttackParamsBuilder,
 	CostModParamsBuilder,
 	EvaluationTargetBuilder,
