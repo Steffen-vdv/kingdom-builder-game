@@ -19,7 +19,7 @@ After completing your task:
 1. Add a status update to the "Work Log" table in `production-living-docs.md` describing what you changed, tests executed, and any follow-up actions.
 2. Provide a clear handover note in the "Latest Handover" section of `production-living-docs.md` so the next agent immediately knows the project state and next priorities.
 3. If your work introduces intended temporary regressions or TODO markers, record them explicitly in the living doc.
-3.1. **Do not skip Section 6 – Intended Temporary Regressions.** Every intentional test failure or other breakage must be logged there with resolution expectations before you finish the task. Missing these notes is grounds for task rejection. Confirm the table still reflects the current state before you wrap up the task and again before invoking `make_pr`.
+   3.1. **Do not skip Section 6 – Intended Temporary Regressions.** Every intentional test failure or other breakage must be logged there with resolution expectations before you finish the task. Missing these notes is grounds for task rejection. Confirm the table still reflects the current state before you wrap up the task and again before invoking `make_pr`.
 
 ## Enforcement
 
