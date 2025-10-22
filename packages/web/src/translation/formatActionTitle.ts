@@ -5,6 +5,10 @@ type ActionTitleDefinition = Pick<ActionConfig, 'id' | 'name' | 'icon'> & {
 	category?: string | undefined;
 };
 
+interface FormatActionTitleOptions {
+	includePrefix?: boolean;
+}
+
 function combineIconLabel(icon: unknown, label: unknown): string {
 	const parts: string[] = [];
 	if (typeof icon === 'string') {
@@ -58,16 +62,21 @@ function resolveActionLabel(definition: ActionTitleDefinition): string {
 function formatActionTitle(
 	definition: ActionTitleDefinition,
 	context: TranslationContext,
+	options?: FormatActionTitleOptions,
 ): string {
-	const segments: string[] = ['Action'];
+	const includePrefix = options?.includePrefix ?? true;
+	const parts: string[] = [];
+	if (includePrefix) {
+		parts.push('Action');
+	}
 	const categoryLabel = resolveCategoryLabel(definition, context);
 	if (categoryLabel) {
-		segments.push('-', categoryLabel);
+		parts.push(categoryLabel);
 	}
 	const actionLabel = resolveActionLabel(definition);
-	segments.push('-', actionLabel);
-	return segments.join(' ').replace(/\s+/g, ' ').trim();
+	parts.push(actionLabel);
+	return parts.join(' - ').replace(/\s+/g, ' ').trim();
 }
 
 export { formatActionTitle };
-export type { ActionTitleDefinition };
+export type { ActionTitleDefinition, FormatActionTitleOptions };

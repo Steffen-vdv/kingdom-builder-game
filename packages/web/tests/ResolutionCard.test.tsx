@@ -20,7 +20,7 @@ function resolvePhaseHeader(label: string | undefined) {
 		.replace(TRAILING_PHASE_PATTERN, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	return sanitized ? `Phase - ${sanitized}` : 'Phase resolution';
+	return sanitized || 'Phase resolution';
 }
 
 function createResolution(
@@ -43,7 +43,7 @@ describe('<ResolutionCard />', () => {
 		cleanup();
 	});
 	it('shows labels for action-based resolutions', () => {
-		const formattedName = 'Action - ⚙️ Basic - ⚔️ Test Action';
+		const formattedName = '⚙️ Basic - ⚔️ Test Action';
 		const resolution = createResolution({
 			action: {
 				id: 'action-id',
@@ -169,7 +169,7 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
 				{
-					text: 'Action - 🛠️ Develop - 🏠 Workshop',
+					text: '🛠️ Develop - 🏠 Workshop',
 					depth: 0,
 					kind: 'headline',
 				},
@@ -188,9 +188,7 @@ describe('<ResolutionCard />', () => {
 		const effectsSectionContainer = effectsSection.parentElement;
 		const goldCost = screen.getByText('Gold -3');
 		const goldCostContainer = goldCost.parentElement;
-		const effectHeadline = screen.getByText(
-			'Action - 🛠️ Develop - 🏠 Workshop',
-		);
+		const effectHeadline = screen.getByText('🛠️ Develop - 🏠 Workshop');
 		const effectEntry = screen.getByText('🪄 Effect happens');
 		const effectHeadlineContainer = effectHeadline.parentElement;
 		const effectEntryContainer = effectEntry.parentElement;
@@ -216,7 +214,7 @@ describe('<ResolutionCard />', () => {
 	it('renders nested cost groups and effect hierarchies', () => {
 		const visibleTimeline: ActionLogLineDescriptor[] = [
 			{
-				text: 'Action - 🛠️ Develop - ⚒️ Forge Relic',
+				text: '🛠️ Develop - ⚒️ Forge Relic',
 				depth: 0,
 				kind: 'headline',
 			},
@@ -233,7 +231,7 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			action: {
 				id: 'forge-relic',
-				name: 'Action - 🛠️ Develop - ⚒️ Forge Relic',
+				name: '🛠️ Develop - ⚒️ Forge Relic',
 				icon: '⚒️',
 			},
 			visibleTimeline,
@@ -278,9 +276,7 @@ describe('<ResolutionCard />', () => {
 		expect(discountContainer).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(happinessContainer).toHaveStyle({ marginLeft: '2.625rem' });
 
-		expect(
-			screen.queryByText('Action - 🛠️ Develop - ⚒️ Forge Relic'),
-		).toBeNull();
+		expect(screen.getAllByText('🛠️ Develop - ⚒️ Forge Relic')).toHaveLength(1);
 
 		const group = screen.getByText('🪄 Channel the forge');
 		const effect = screen.getByText('Gain 2 Relics');

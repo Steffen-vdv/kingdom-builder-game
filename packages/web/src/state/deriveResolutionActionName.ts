@@ -46,7 +46,9 @@ function buildResolutionActionMeta(
 	let formattedName: string | undefined;
 	if (stepDef && context) {
 		try {
-			formattedName = formatActionTitle(stepDef, context);
+			formattedName = formatActionTitle(stepDef, context, {
+				includePrefix: false,
+			});
 		} catch {
 			formattedName = undefined;
 		}

@@ -34,7 +34,7 @@ function resolvePhaseHeader(label: string | undefined) {
 		.replace(TRAILING_PHASE_PATTERN, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	return sanitized ? `Phase - ${sanitized}` : 'Phase resolution';
+	return sanitized || 'Phase resolution';
 }
 
 interface HoverCardScenario {

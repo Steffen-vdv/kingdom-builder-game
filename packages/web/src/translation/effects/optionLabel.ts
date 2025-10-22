@@ -112,7 +112,7 @@ function resolveActionLabel(
 ): string {
 	try {
 		const definition = context.actions.get(option.actionId);
-		return formatActionTitle(definition, context);
+		return formatActionTitle(definition, context, { includePrefix: false });
 	} catch {
 		return option.actionId;
 	}

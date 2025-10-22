@@ -177,7 +177,11 @@ describe('royal decree translation', () => {
 					`Missing develop action definition for ${option.actionId}`,
 				);
 			}
-			const developLabel = formatActionTitle(developAction, translationContext);
+			const developLabel = formatActionTitle(
+				developAction,
+				translationContext,
+				{ includePrefix: false },
+			);
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
@@ -215,7 +219,11 @@ describe('royal decree translation', () => {
 					`Missing develop action definition for ${option.actionId}`,
 				);
 			}
-			const developLabel = formatActionTitle(developAction, translationContext);
+			const developLabel = formatActionTitle(
+				developAction,
+				translationContext,
+				{ includePrefix: false },
+			);
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
@@ -300,7 +308,9 @@ describe('royal decree translation', () => {
 				`Missing develop action definition for ${developActionId}`,
 			);
 		}
-		const developLabel = formatActionTitle(developAction, translationContext);
+		const developLabel = formatActionTitle(developAction, translationContext, {
+			includePrefix: false,
+		});
 		const developmentLabel = combineLabels(
 			`${development.icon ?? ''} ${development.name ?? developmentId}`,
 			'',

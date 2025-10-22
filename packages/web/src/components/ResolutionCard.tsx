@@ -119,6 +119,8 @@ function ResolutionCard({
 		: typeof resolution.source === 'string'
 			? resolution.source
 			: undefined;
+	const resolutionLabel =
+		resolvedSourceKind === 'phase' ? 'Phase Resolution' : 'Action Resolution';
 	const actorLabel = (resolution.actorLabel ?? '').trim();
 	const normalizedActorLabel = actorLabel ? actorLabel.toLocaleLowerCase() : '';
 	const normalizedPlayerLabel = resolvedLabels.player
@@ -135,28 +137,20 @@ function ResolutionCard({
 	const fallbackIcon = extractLeadingIcon(leadingLine);
 	const actionIcon =
 		resolution.action?.icon?.trim() || sourceIcon || fallbackIcon;
-	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
-	const normalizedResolvedTitle = resolvedLabels.title
-		.trim()
-		.toLocaleLowerCase();
-	const normalizedHeaderSubject = actorHeaderSubject
-		?.trim()
-		.toLocaleLowerCase();
-	let headerTitle = actorHeaderSubject
-		? normalizedHeaderSubject &&
-			normalizedHeaderSubject !== normalizedResolvedTitle
-			? `${resolvedLabels.title} - ${actorHeaderSubject}`
-			: actorHeaderSubject
-		: defaultTitle;
+	const defaultTitle = title ?? resolutionLabel;
+	let headerTitle = defaultTitle;
 	if (resolvedSourceKind === 'phase') {
-		const sanitizedPhaseSubject = (actorHeaderSubject || '')
+		const phaseSubjectSource =
+			actorHeaderSubject || sourceLabel || resolvedLabels.title;
+		const sanitizedPhaseSubject = (phaseSubjectSource || '')
 			.replace(LEADING_EMOJI_PATTERN, '')
 			.replace(TRAILING_PHASE_PATTERN, '')
 			.replace(/\s{2,}/g, ' ')
 			.trim();
-		headerTitle = sanitizedPhaseSubject
-			? `${SOURCE_LABELS.phase.title} - ${sanitizedPhaseSubject}`
-			: `${SOURCE_LABELS.phase.title} resolution`;
+		headerTitle =
+			sanitizedPhaseSubject || resolvedLabels.title || resolutionLabel;
+	} else {
+		headerTitle = actorHeaderSubject || actionName || defaultTitle;
 	}
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
@@ -284,7 +278,7 @@ function ResolutionCard({
 					) : null}
 					<div className="flex flex-1 items-start justify-between gap-4">
 						<div className="space-y-1">
-							<div className={headerLabelClass}>Resolution</div>
+							<div className={headerLabelClass}>{resolutionLabel}</div>
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
 						</div>
 						{resolution.player ? (
