@@ -305,6 +305,7 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
 		resources: buildResourceRegistry(),
+		resourceV2: { definitions: [], groups: [] },
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),

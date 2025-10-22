@@ -143,6 +143,7 @@ export class SessionManager {
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
+			resourceV2: { definitions: [], groups: [] },
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
@@ -168,6 +169,7 @@ export class SessionManager {
 			start: frozenStart,
 			rules: frozenRules,
 			resources: frozenResources,
+			resourceV2: { definitions: [], groups: [] },
 			primaryIconId,
 		});
 	}

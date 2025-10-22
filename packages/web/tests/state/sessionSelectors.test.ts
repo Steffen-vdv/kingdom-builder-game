@@ -85,7 +85,11 @@ describe('sessionSelectors', () => {
 	): SessionPlayerStateSnapshot => ({
 		id,
 		name: `Player ${id}`,
-		resources: { [primaryResource]: 5, ...(overrides.resources ?? {}) },
+		values: overrides.values ?? {},
+		resources: {
+			[primaryResource]: 5,
+			...(overrides.resources ?? {}),
+		},
 		stats: { ...(overrides.stats ?? {}) },
 		statsHistory: { ...(overrides.statsHistory ?? {}) },
 		population: { ...(overrides.population ?? {}) },

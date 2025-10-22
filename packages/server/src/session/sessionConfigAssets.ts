@@ -79,6 +79,10 @@ export function buildSessionAssets(
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
 		populations: freezeSerializedRegistry(cloneRegistry(populations)),
 		resources: frozenResources,
+		resourceV2: context.baseRegistries.resourceV2 ?? {
+			definitions: [],
+			groups: [],
+		},
 	};
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;

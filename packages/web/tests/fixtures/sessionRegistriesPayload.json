@@ -3,7 +3,7 @@
 		"expand": {
 			"id": "expand",
 			"name": "Expand",
-			"icon": "🌱",
+			"icon": "\ud83c\udf31",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 2
@@ -32,7 +32,7 @@
 		"develop_house": {
 			"id": "develop_house",
 			"name": "House",
-			"icon": "🏠",
+			"icon": "\ud83c\udfe0",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 3
@@ -54,7 +54,7 @@
 		"develop_farm": {
 			"id": "develop_farm",
 			"name": "Farm",
-			"icon": "🌾",
+			"icon": "\ud83c\udf3e",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 3
@@ -76,7 +76,7 @@
 		"develop_outpost": {
 			"id": "develop_outpost",
 			"name": "Outpost",
-			"icon": "🏹",
+			"icon": "\ud83c\udff9",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 3
@@ -98,7 +98,7 @@
 		"develop_watchtower": {
 			"id": "develop_watchtower",
 			"name": "Watchtower",
-			"icon": "🗼",
+			"icon": "\ud83d\uddfc",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 3
@@ -120,7 +120,7 @@
 		"tax": {
 			"id": "tax",
 			"name": "Tax",
-			"icon": "💰",
+			"icon": "\ud83d\udcb0",
 			"baseCosts": {
 				"ap": 1
 			},
@@ -163,7 +163,7 @@
 		"hire_council": {
 			"id": "hire_council",
 			"name": "Hire Council",
-			"icon": "⚖️",
+			"icon": "\u2696\ufe0f",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 5
@@ -210,7 +210,7 @@
 		"hire_legion": {
 			"id": "hire_legion",
 			"name": "Hire Legion",
-			"icon": "🎖️",
+			"icon": "\ud83c\udf96\ufe0f",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 5
@@ -257,7 +257,7 @@
 		"hire_fortifier": {
 			"id": "hire_fortifier",
 			"name": "Hire Fortifier",
-			"icon": "🔧",
+			"icon": "\ud83d\udd27",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 5
@@ -304,7 +304,7 @@
 		"royal_decree": {
 			"id": "royal_decree",
 			"name": "Royal Decree",
-			"icon": "📜",
+			"icon": "\ud83d\udcdc",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 12
@@ -332,7 +332,7 @@
 					"options": [
 						{
 							"id": "royal_decree_house",
-							"icon": "🏠",
+							"icon": "\ud83c\udfe0",
 							"actionId": "develop_house",
 							"params": {
 								"developmentId": "house",
@@ -341,7 +341,7 @@
 						},
 						{
 							"id": "royal_decree_farm",
-							"icon": "🌾",
+							"icon": "\ud83c\udf3e",
 							"actionId": "develop_farm",
 							"params": {
 								"developmentId": "farm",
@@ -350,7 +350,7 @@
 						},
 						{
 							"id": "royal_decree_outpost",
-							"icon": "🏹",
+							"icon": "\ud83c\udff9",
 							"actionId": "develop_outpost",
 							"params": {
 								"developmentId": "outpost",
@@ -359,7 +359,7 @@
 						},
 						{
 							"id": "royal_decree_watchtower",
-							"icon": "🗼",
+							"icon": "\ud83d\uddfc",
 							"actionId": "develop_watchtower",
 							"params": {
 								"developmentId": "watchtower",
@@ -387,7 +387,7 @@
 		"army_attack": {
 			"id": "army_attack",
 			"name": "Army Attack",
-			"icon": "🗡️",
+			"icon": "\ud83d\udde1\ufe0f",
 			"baseCosts": {
 				"ap": 1
 			},
@@ -464,7 +464,7 @@
 		"hold_festival": {
 			"id": "hold_festival",
 			"name": "Hold Festival",
-			"icon": "🎉",
+			"icon": "\ud83c\udf89",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 3
@@ -508,7 +508,7 @@
 					"params": {
 						"id": "hold_festival_penalty",
 						"name": "Festival Hangover",
-						"icon": "🤮",
+						"icon": "\ud83e\udd2e",
 						"onUpkeepPhase": [
 							{
 								"type": "passive",
@@ -551,7 +551,7 @@
 		"plunder": {
 			"id": "plunder",
 			"name": "Plunder",
-			"icon": "🏴‍☠️",
+			"icon": "\ud83c\udff4\u200d\u2620\ufe0f",
 			"effects": [
 				{
 					"type": "resource",
@@ -575,7 +575,7 @@
 		"plow": {
 			"id": "plow",
 			"name": "Plow",
-			"icon": "🚜",
+			"icon": "\ud83d\ude9c",
 			"baseCosts": {
 				"ap": 1,
 				"gold": 6
@@ -628,7 +628,7 @@
 		"till": {
 			"id": "till",
 			"name": "Till",
-			"icon": "🧑‍🌾",
+			"icon": "\ud83e\uddd1\u200d\ud83c\udf3e",
 			"effects": [
 				{
 					"type": "land",
@@ -640,7 +640,7 @@
 		"build_town_charter": {
 			"id": "build_town_charter",
 			"name": "Town Charter",
-			"icon": "🏘️",
+			"icon": "\ud83c\udfd8\ufe0f",
 			"effects": [
 				{
 					"type": "building",
@@ -657,7 +657,7 @@
 		"build_mill": {
 			"id": "build_mill",
 			"name": "Mill",
-			"icon": "⚙️",
+			"icon": "\u2699\ufe0f",
 			"effects": [
 				{
 					"type": "building",
@@ -674,7 +674,7 @@
 		"build_raiders_guild": {
 			"id": "build_raiders_guild",
 			"name": "Raider's Guild",
-			"icon": "🏴‍☠️",
+			"icon": "\ud83c\udff4\u200d\u2620\ufe0f",
 			"effects": [
 				{
 					"type": "building",
@@ -691,7 +691,7 @@
 		"build_plow_workshop": {
 			"id": "build_plow_workshop",
 			"name": "Plow Workshop",
-			"icon": "🏭",
+			"icon": "\ud83c\udfed",
 			"effects": [
 				{
 					"type": "building",
@@ -708,7 +708,7 @@
 		"build_market": {
 			"id": "build_market",
 			"name": "Market",
-			"icon": "🏪",
+			"icon": "\ud83c\udfea",
 			"effects": [
 				{
 					"type": "building",
@@ -725,7 +725,7 @@
 		"build_castle_walls": {
 			"id": "build_castle_walls",
 			"name": "Castle Walls",
-			"icon": "🧱",
+			"icon": "\ud83e\uddf1",
 			"effects": [
 				{
 					"type": "building",
@@ -742,7 +742,7 @@
 		"build_barracks": {
 			"id": "build_barracks",
 			"name": "Barracks",
-			"icon": "🪖",
+			"icon": "\ud83e\ude96",
 			"effects": [
 				{
 					"type": "building",
@@ -759,7 +759,7 @@
 		"build_citadel": {
 			"id": "build_citadel",
 			"name": "Citadel",
-			"icon": "🏯",
+			"icon": "\ud83c\udfef",
 			"effects": [
 				{
 					"type": "building",
@@ -776,7 +776,7 @@
 		"build_castle_gardens": {
 			"id": "build_castle_gardens",
 			"name": "Castle Gardens",
-			"icon": "🌷",
+			"icon": "\ud83c\udf37",
 			"effects": [
 				{
 					"type": "building",
@@ -793,7 +793,7 @@
 		"build_temple": {
 			"id": "build_temple",
 			"name": "Temple",
-			"icon": "⛪",
+			"icon": "\u26ea",
 			"effects": [
 				{
 					"type": "building",
@@ -810,7 +810,7 @@
 		"build_palace": {
 			"id": "build_palace",
 			"name": "Palace",
-			"icon": "👑",
+			"icon": "\ud83d\udc51",
 			"effects": [
 				{
 					"type": "building",
@@ -827,7 +827,7 @@
 		"build_great_hall": {
 			"id": "build_great_hall",
 			"name": "Great Hall",
-			"icon": "🏟️",
+			"icon": "\ud83c\udfdf\ufe0f",
 			"effects": [
 				{
 					"type": "building",
@@ -846,7 +846,7 @@
 		"town_charter": {
 			"id": "town_charter",
 			"name": "Town Charter",
-			"icon": "🏘️",
+			"icon": "\ud83c\udfd8\ufe0f",
 			"costs": {
 				"ap": 1,
 				"gold": 5
@@ -886,7 +886,7 @@
 		"mill": {
 			"id": "mill",
 			"name": "Mill",
-			"icon": "⚙️",
+			"icon": "\u2699\ufe0f",
 			"costs": {
 				"ap": 1,
 				"gold": 7
@@ -910,7 +910,7 @@
 		"raiders_guild": {
 			"id": "raiders_guild",
 			"name": "Raider's Guild",
-			"icon": "🏴‍☠️",
+			"icon": "\ud83c\udff4\u200d\u2620\ufe0f",
 			"costs": {
 				"ap": 1,
 				"gold": 8
@@ -937,7 +937,7 @@
 		"plow_workshop": {
 			"id": "plow_workshop",
 			"name": "Plow Workshop",
-			"icon": "🏭",
+			"icon": "\ud83c\udfed",
 			"costs": {
 				"ap": 1,
 				"gold": 10
@@ -956,7 +956,7 @@
 		"market": {
 			"id": "market",
 			"name": "Market",
-			"icon": "🏪",
+			"icon": "\ud83c\udfea",
 			"costs": {
 				"ap": 1,
 				"gold": 10
@@ -980,7 +980,7 @@
 		"castle_walls": {
 			"id": "castle_walls",
 			"name": "Castle Walls",
-			"icon": "🧱",
+			"icon": "\ud83e\uddf1",
 			"costs": {
 				"ap": 1,
 				"gold": 12
@@ -1017,7 +1017,7 @@
 		"barracks": {
 			"id": "barracks",
 			"name": "Barracks",
-			"icon": "🪖",
+			"icon": "\ud83e\ude96",
 			"costs": {
 				"ap": 1,
 				"gold": 12
@@ -1028,7 +1028,7 @@
 		"citadel": {
 			"id": "citadel",
 			"name": "Citadel",
-			"icon": "🏯",
+			"icon": "\ud83c\udfef",
 			"costs": {
 				"ap": 1,
 				"gold": 12
@@ -1039,7 +1039,7 @@
 		"castle_gardens": {
 			"id": "castle_gardens",
 			"name": "Castle Gardens",
-			"icon": "🌷",
+			"icon": "\ud83c\udf37",
 			"costs": {
 				"ap": 1,
 				"gold": 15
@@ -1050,7 +1050,7 @@
 		"temple": {
 			"id": "temple",
 			"name": "Temple",
-			"icon": "⛪",
+			"icon": "\u26ea",
 			"costs": {
 				"ap": 1,
 				"gold": 16
@@ -1061,7 +1061,7 @@
 		"palace": {
 			"id": "palace",
 			"name": "Palace",
-			"icon": "👑",
+			"icon": "\ud83d\udc51",
 			"costs": {
 				"ap": 1,
 				"gold": 20
@@ -1072,7 +1072,7 @@
 		"great_hall": {
 			"id": "great_hall",
 			"name": "Great Hall",
-			"icon": "🏟️",
+			"icon": "\ud83c\udfdf\ufe0f",
 			"costs": {
 				"ap": 1,
 				"gold": 22
@@ -1085,7 +1085,7 @@
 		"farm": {
 			"id": "farm",
 			"name": "Farm",
-			"icon": "🌾",
+			"icon": "\ud83c\udf3e",
 			"onGainIncomeStep": [
 				{
 					"effects": [
@@ -1112,7 +1112,7 @@
 		"house": {
 			"id": "house",
 			"name": "House",
-			"icon": "🏠",
+			"icon": "\ud83c\udfe0",
 			"onBuild": [
 				{
 					"type": "stat",
@@ -1130,7 +1130,7 @@
 		"outpost": {
 			"id": "outpost",
 			"name": "Outpost",
-			"icon": "🏹",
+			"icon": "\ud83c\udff9",
 			"onBuild": [
 				{
 					"type": "stat",
@@ -1155,7 +1155,7 @@
 		"watchtower": {
 			"id": "watchtower",
 			"name": "Watchtower",
-			"icon": "🗼",
+			"icon": "\ud83d\uddfc",
 			"onBuild": [
 				{
 					"type": "stat",
@@ -1190,7 +1190,7 @@
 		"garden": {
 			"id": "garden",
 			"name": "Garden",
-			"icon": "🌿",
+			"icon": "\ud83c\udf3f",
 			"system": true
 		}
 	},
@@ -1198,7 +1198,7 @@
 		"council": {
 			"id": "council",
 			"name": "Council",
-			"icon": "⚖️",
+			"icon": "\u2696\ufe0f",
 			"upkeep": {
 				"gold": 2
 			},
@@ -1227,7 +1227,7 @@
 		"legion": {
 			"id": "legion",
 			"name": "Legion",
-			"icon": "🎖️",
+			"icon": "\ud83c\udf96\ufe0f",
 			"upkeep": {
 				"gold": 1
 			},
@@ -1263,7 +1263,7 @@
 		"fortifier": {
 			"id": "fortifier",
 			"name": "Fortifier",
-			"icon": "🔧",
+			"icon": "\ud83d\udd27",
 			"upkeep": {
 				"gold": 1
 			},
@@ -1300,26 +1300,26 @@
 	"resources": {
 		"gold": {
 			"key": "gold",
-			"icon": "🪙",
+			"icon": "\ud83e\ude99",
 			"label": "Gold",
 			"description": "Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.",
 			"tags": ["bankruptcy-check"]
 		},
 		"ap": {
 			"key": "ap",
-			"icon": "⚡",
+			"icon": "\u26a1",
 			"label": "Action Points",
 			"description": "Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends."
 		},
 		"happiness": {
 			"key": "happiness",
-			"icon": "😊",
+			"icon": "\ud83d\ude0a",
 			"label": "Happiness",
 			"description": "Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects."
 		},
 		"castleHP": {
 			"key": "castleHP",
-			"icon": "🏰",
+			"icon": "\ud83c\udff0",
 			"label": "Castle HP",
 			"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
 			"tags": ["attack-target", "win-condition-zero"]
@@ -1330,7 +1330,7 @@
 			"id": "basic",
 			"label": "Basic",
 			"subtitle": "(Effects take place immediately, unless stated otherwise)",
-			"icon": "⚙️",
+			"icon": "\u2699\ufe0f",
 			"order": 0,
 			"layout": "grid-primary",
 			"hideWhenEmpty": false,
@@ -1341,7 +1341,7 @@
 			"id": "hire",
 			"label": "Hire",
 			"subtitle": "(Effects take place immediately and last until the population is removed or reassigned)",
-			"icon": "🧑‍🤝‍🧑",
+			"icon": "\ud83e\uddd1\u200d\ud83e\udd1d\u200d\ud83e\uddd1",
 			"order": 1,
 			"layout": "grid-primary",
 			"hideWhenEmpty": false,
@@ -1352,7 +1352,7 @@
 			"id": "develop",
 			"label": "Develop",
 			"subtitle": "(Effects take place immediately and last until the development is removed)",
-			"icon": "🛠️",
+			"icon": "\ud83d\udee0\ufe0f",
 			"order": 2,
 			"layout": "grid-secondary",
 			"hideWhenEmpty": false,
@@ -1363,12 +1363,16 @@
 			"id": "build",
 			"label": "Build",
 			"subtitle": "(Effects take place immediately build and last until the building is removed)",
-			"icon": "🏗️",
+			"icon": "\ud83c\udfd7\ufe0f",
 			"order": 3,
 			"layout": "grid-secondary",
 			"hideWhenEmpty": false,
 			"analyticsKey": "build",
 			"description": "Construction options that add new structures or unlocks."
 		}
+	},
+	"resourceV2": {
+		"definitions": [],
+		"groups": []
 	}
 }
