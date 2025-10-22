@@ -22,23 +22,24 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
 ## 3. Work Log (append-only)
 
-| Date       | Agent                 | Scope / Files                                                                                                                                              | Summary of Work                                                                                        | Tests & Results        | Follow-up Actions                                                    |
-| ---------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------- | -------------------------------------------------------------------- |
-| 2024-**-** | _(add entry)_         |                                                                                                                                                            |                                                                                                        |                        |                                                                      |
-| 2025-10-22 | ChatGPT (gpt-5-codex) | packages/contents/src/resourceV2/types.ts, packages/contents/src/resourceV2/index.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T1 - Added ResourceV2 schema type scaffolding and documented follow-ups. | _Not run (types only)_ | Confirm schema assumptions for tier metadata and group parent scope. |
+| Date       | Agent                 | Scope / Files                                                                                                                                                        | Summary of Work                                                                                                                                          | Tests & Results                 | Follow-up Actions                                                      |
+| ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
+| 2024-**-** | _(add entry)_         |                                                                                                                                                                      |                                                                                                                                                          |                                 |                                                                        |
+| 2025-10-22 | ChatGPT (gpt-5-codex) | packages/contents/src/resourceV2/types.ts, packages/contents/src/resourceV2/index.ts, docs/project/resource-migration/production/production-living-docs.md           | Resource Migration MVP - P2 - T1 - Added ResourceV2 schema type scaffolding and documented follow-ups.                                                   | _Not run (types only)_          | Confirm schema assumptions for tier metadata and group parent scope.   |
+| 2025-10-23 | ChatGPT (gpt-5-codex) | packages/contents/src/resourceV2/resourceBuilder.ts, packages/contents/src/resourceV2/index.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T2 - Implemented chainable ResourceV2 builder with validation, exported API, and captured next steps for registry helpers. | _Not run (builder scaffolding)_ | Draft registry helper adapters to adopt the builder in upcoming tasks. |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-22 15:05
-- **Current Focus:** Resource Migration MVP - P2 - T1 - Establish ResourceV2 content schema types
-- **State Summary:** Added `packages/contents/src/resourceV2/types.ts` and companion index export so downstream packages can begin referencing the unified ResourceV2 schema. The definition covers metadata, bounds, logging toggles, group placement, global cost config, and tier structures per the design doc. Documentation updated with work log context and outstanding questions.
+- **Timestamp (UTC):** 2025-10-23 11:45
+- **Current Focus:** Resource Migration MVP - P2 - T2 - Ship ResourceV2 builder API for content authors
+- **State Summary:** Implemented `resourceV2(id)` builder in `packages/contents/src/resourceV2/resourceBuilder.ts` with validation for duplicate setters, integer bounds, percent toggles, group membership, tier attachments, tags, and global action cost. Exported the builder and interface via the `resourceV2` index while leaving the legacy registry untouched. Documentation captures the API addition and highlights upcoming registry helper needs.
 - **Next Suggested Tasks:**
-  - Validate the schema with builder utilities and ensure future ResourceV2 builders map cleanly to these types (Owner: TBD).
-  - Confirm tier metadata requirements (icon/order) and group parent capabilities with design stakeholders before builder implementation (Owner: Design/Content).
-- **Blocking Issues / Risks:** Need clarification on whether group parents should inherit all ResourceV2 toggles (percent display, breakdown tracking) and if tier metadata should expose additional UI-specific fields beyond icon/order.
+  - Author registry helper utilities to compose ResourceV2 definitions via the new builder and wire them into content loading (Owner: TBD).
+  - Validate tier track authoring ergonomics and consider additional builder sugar (e.g., tier helpers) based on content designer feedback (Owner: Design/Content).
+- **Blocking Issues / Risks:** Awaiting consensus on registry helper structure to avoid churn when replacing legacy resource registration flows; ensure helper design aligns with pending engine integration work.
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.

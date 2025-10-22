@@ -10,3 +10,6 @@ export type {
 	ResourceV2GroupParent,
 	ResourceV2GroupDefinition,
 } from './types';
+
+export { resourceV2 } from './resourceBuilder';
+export type { ResourceV2Builder } from './resourceBuilder';
