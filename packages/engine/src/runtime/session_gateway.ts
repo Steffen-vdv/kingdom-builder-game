@@ -226,6 +226,7 @@ export function createLocalSessionGateway(
 			const requirements = session.getActionRequirements(
 				request.actionId,
 				params as never,
+				request.playerId,
 			);
 			return Promise.resolve({
 				sessionId,

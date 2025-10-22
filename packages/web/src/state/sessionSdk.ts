@@ -5,6 +5,7 @@ import type {
 	SessionAdvanceRequest,
 	SessionAdvanceResponse,
 	SessionCreateRequest,
+	SessionPlayerId,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateRequest,
@@ -61,8 +62,15 @@ function buildActionMetadataRequest(
 	sessionId: string,
 	actionId: string,
 	params?: ActionParametersPayload,
+	playerId?: SessionPlayerId,
 ) {
-	return params ? { sessionId, actionId, params } : { sessionId, actionId };
+	const base = params
+		? { sessionId, actionId, params }
+		: { sessionId, actionId };
+	if (playerId === undefined) {
+		return base;
+	}
+	return { ...base, playerId };
 }
 function toRemoteRecord(record: SessionStateRecord): RemoteSessionRecord {
 	return {
@@ -210,6 +218,7 @@ export async function loadActionCosts(
 	actionId: string,
 	params?: ActionParametersPayload,
 	requestOptions: GameApiRequestOptions = {},
+	playerId?: SessionPlayerId,
 ): Promise<SessionActionCostMap> {
 	const api = ensureGameApi();
 	void getAdapter(sessionId);
@@ -223,7 +232,7 @@ export async function loadActionCosts(
 			requestOptions,
 		),
 	);
-	setSessionActionCosts(sessionId, actionId, response.costs, params);
+	setSessionActionCosts(sessionId, actionId, response.costs, params, playerId);
 	return clone(response.costs);
 }
 
@@ -232,6 +241,7 @@ export async function loadActionRequirements(
 	actionId: string,
 	params?: ActionParametersPayload,
 	requestOptions: GameApiRequestOptions = {},
+	playerId?: SessionPlayerId,
 ): Promise<SessionActionRequirementList> {
 	const api = ensureGameApi();
 	void getAdapter(sessionId);
@@ -241,7 +251,7 @@ export async function loadActionRequirements(
 	await waitForSessionRecord(sessionId, waitOptions);
 	const response = await enqueueSessionTask(sessionId, () =>
 		api.getActionRequirements(
-			buildActionMetadataRequest(sessionId, actionId, params),
+			buildActionMetadataRequest(sessionId, actionId, params, playerId),
 			requestOptions,
 		),
 	);
@@ -250,6 +260,7 @@ export async function loadActionRequirements(
 		actionId,
 		response.requirements,
 		params,
+		playerId,
 	);
 	return clone(response.requirements);
 }

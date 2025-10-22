@@ -9,7 +9,7 @@ import * as translationModule from '../../../translation';
 import type { Action, DisplayPlayer } from '../types';
 import type { Summary, TranslationContext } from '../../../translation';
 import * as requirementIconModule from '../../../utils/getRequirementIcons';
-import type { PendingActionState } from '../GenericActions';
+import type { PendingActionState } from '../GenericActionEntry';
 
 const actionCardSpy = vi.fn();
 

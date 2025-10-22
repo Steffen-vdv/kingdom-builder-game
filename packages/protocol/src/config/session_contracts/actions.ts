@@ -13,7 +13,7 @@ import type {
 	SessionActionRequirementList,
 } from '../../session';
 import type { ActionParametersPayload } from '../../actions/contracts';
-import { sessionIdSchema } from './shared';
+import { sessionIdSchema, sessionPlayerIdSchema } from './shared';
 
 const actionEffectChoiceSchema = z.object({
 	optionId: z.string(),
@@ -58,6 +58,7 @@ export const sessionActionRequirementRequestSchema = z.object({
 	sessionId: sessionIdSchema,
 	actionId: z.string().min(1),
 	params: actionParametersPayloadSchema.optional(),
+	playerId: sessionPlayerIdSchema.optional(),
 });
 
 export const sessionActionRequirementResponseSchema = z.object({

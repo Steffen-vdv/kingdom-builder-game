@@ -16,6 +16,7 @@ import type {
 	SessionActionCostResponse,
 	SessionActionRequirementResponse,
 	SessionActionOptionsResponse,
+	SessionPlayerId,
 	SessionRunAiResponse,
 	SessionSimulateResponse,
 	SessionMetadataSnapshotResponse,
@@ -35,6 +36,7 @@ type ActionMetadataRequest = {
 	sessionId: string;
 	actionId: string;
 	params?: EngineActionParameters;
+	playerId?: SessionPlayerId;
 };
 
 type ActionMetadataSchema =
@@ -73,13 +75,17 @@ export class SessionTransport extends SessionTransportBase {
 		request: TransportRequest,
 	): SessionActionRequirementResponse {
 		this.requireAuthorization(request, 'session:advance');
-		const { session, sessionId, actionId, params } =
+		const { session, sessionId, actionId, params, playerId } =
 			this.parseActionMetadataRequest(
 				request,
 				sessionActionRequirementRequestSchema,
 				'Invalid action requirement request.',
 			);
-		const requirements = session.getActionRequirements(actionId, params);
+		const requirements = session.getActionRequirements(
+			actionId,
+			params,
+			playerId,
+		);
 		const response = {
 			sessionId,
 			requirements,
@@ -251,6 +257,9 @@ export class SessionTransport extends SessionTransportBase {
 			sessionId,
 			actionId,
 		};
+		if ('playerId' in parsed.data) {
+			metadataRequest.playerId = parsed.data.playerId as SessionPlayerId;
+		}
 		if ('params' in parsed.data) {
 			const normalized = parseActionParameters(
 				parsed.data.params,

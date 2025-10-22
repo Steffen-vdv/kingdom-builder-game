@@ -301,4 +301,43 @@ describe('EngineSession', () => {
 			},
 		]);
 	});
+
+	it('evaluates requirements for a specific player without changing turns', () => {
+		const requirementId = 'vitest:active-id';
+		if (!REQUIREMENTS.has(requirementId)) {
+			REQUIREMENTS.add(requirementId, (requirement, context) => ({
+				requirement,
+				message: context.activePlayer.id,
+			}));
+		}
+		const content = createContentFactory();
+		const action = content.action({
+			requirements: [
+				{
+					type: 'vitest',
+					method: 'active-id',
+				},
+			],
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		advanceToMain(session);
+		const initialSnapshot = session.getSnapshot();
+		const initialActive = initialSnapshot.game.activePlayerId;
+		const opponentId = initialSnapshot.game.opponentId;
+		const defaultRequirements = session.getActionRequirements(action.id);
+		expect(defaultRequirements[0]?.message).toBe(initialActive);
+		const opponentRequirements = session.getActionRequirements(
+			action.id,
+			undefined,
+			opponentId,
+		);
+		expect(opponentRequirements[0]?.message).toBe(opponentId);
+		const afterSnapshot = session.getSnapshot();
+		expect(afterSnapshot.game.activePlayerId).toBe(initialActive);
+	});
 });

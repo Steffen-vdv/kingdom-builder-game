@@ -77,6 +77,7 @@ export interface EngineSession {
 	getActionRequirements<T extends string>(
 		actionId: T,
 		params?: ActionParameters<T>,
+		playerId?: PlayerId,
 	): ReturnType<typeof resolveActionRequirements>;
 	getActionDefinition(actionId: string): ActionDefinitionSummary | undefined;
 	pullEffectLog<T>(key: string): T | undefined;
@@ -137,8 +138,13 @@ export function createEngineSession(
 			const costs = resolveActionCosts(actionId, context, params);
 			return { ...costs };
 		},
-		getActionRequirements(actionId, params) {
-			const requirements = resolveActionRequirements(actionId, context, params);
+		getActionRequirements(actionId, params, playerId) {
+			const requirements = resolveActionRequirements(
+				actionId,
+				context,
+				params,
+				playerId,
+			);
 			return [...requirements];
 		},
 		getActionDefinition(actionId) {

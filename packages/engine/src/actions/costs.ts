@@ -5,7 +5,7 @@ import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
 import type { RequirementFailure } from '../requirements';
 import type { CostBag } from '../services';
-import type { PlayerState } from '../state';
+import type { PlayerId, PlayerState } from '../state';
 import type { ActionParameters } from './action_parameters';
 
 function cloneCostBag(costBag: CostBag): CostBag {
@@ -80,21 +80,50 @@ export function getActionCosts<T extends string>(
 	return finalCosts;
 }
 
+function withPlayerContext<T>(
+	engineContext: EngineContext,
+	playerId: PlayerId | undefined,
+	action: () => T,
+): T {
+	if (!playerId) {
+		return action();
+	}
+	const targetIndex = engineContext.game.players.findIndex(
+		(player) => player.id === playerId,
+	);
+	if (targetIndex < 0) {
+		return action();
+	}
+	const previousIndex = engineContext.game.currentPlayerIndex;
+	if (previousIndex === targetIndex) {
+		return action();
+	}
+	engineContext.game.currentPlayerIndex = targetIndex;
+	try {
+		return action();
+	} finally {
+		engineContext.game.currentPlayerIndex = previousIndex;
+	}
+}
+
 export function getActionRequirements<T extends string>(
 	actionId: T,
 	engineContext: EngineContext,
 	_params?: ActionParameters<T>,
+	playerId?: PlayerId,
 ): RequirementFailure[] {
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
-	const failures: RequirementFailure[] = [];
-	for (const requirement of actionDefinition.requirements || []) {
-		const requirementResult = runRequirement(requirement, engineContext);
-		if (requirementResult === true) {
-			continue;
+	return withPlayerContext(engineContext, playerId, () => {
+		const failures: RequirementFailure[] = [];
+		for (const requirement of actionDefinition.requirements || []) {
+			const requirementResult = runRequirement(requirement, engineContext);
+			if (requirementResult === true) {
+				continue;
+			}
+			failures.push(requirementResult);
 		}
-		failures.push(requirementResult);
-	}
-	return failures;
+		return failures;
+	});
 }
 
 export function verifyCostAffordability(
