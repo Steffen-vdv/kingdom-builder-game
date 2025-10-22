@@ -26,115 +26,70 @@ if (!firstDevelopmentActionId) {
 	throw new Error('Missing development action id for builder safeguard tests.');
 }
 
-const buildTierPassiveEffect = () =>
-	effect()
-		.type(Types.Passive)
-		.method(PassiveMethods.ADD)
-		.params(passiveParams().id('passive:test').build())
-		.build();
+const buildTierPassiveEffect = () => effect().type(Types.Passive).method(PassiveMethods.ADD).params(passiveParams().id('passive:test').build()).build();
 
 describe('content builder safeguards', () => {
 	it('explains when an action id is missing', () => {
-		expect(() => action().name('Example').build()).toThrowError(
-			"Action is missing id(). Call id('unique-id') before build().",
-		);
+		expect(() => action().name('Example').build()).toThrowError("Action is missing id(). Call id('unique-id') before build().");
 	});
 
 	it('blocks duplicate action ids', () => {
-		expect(() => action().id('demo').id('again')).toThrowError(
-			'Action already has an id(). Remove the extra id() call.',
-		);
+		expect(() => action().id('demo').id('again')).toThrowError('Action already has an id(). Remove the extra id() call.');
 	});
 
 	it('requires action params to declare an id', () => {
-		expect(() => actionParams().build()).toThrowError(
-			'Action effect params is missing id(). Call id("your-action-id") before build().',
-		);
+		expect(() => actionParams().build()).toThrowError('Action effect params is missing id(). Call id("your-action-id") before build().');
 	});
 
 	it('prevents duplicate action param setters', () => {
 		const builder = actionParams().id(firstDevelopmentActionId);
-		expect(() => builder.id('again')).toThrowError(
-			'Action effect params already set id(). Remove the extra id() call.',
-		);
-		expect(() => actionParams().landId('$land').landId('$land')).toThrowError(
-			'Action effect params already set landId(). Remove the extra landId() call.',
-		);
+		expect(() => builder.id('again')).toThrowError('Action effect params already set id(). Remove the extra id() call.');
+		expect(() => actionParams().landId('$land').landId('$land')).toThrowError('Action effect params already set landId(). Remove the extra landId() call.');
 	});
 
 	it('reports missing action names', () => {
-		expect(() => action().id('example').build()).toThrowError(
-			"Action is missing name(). Call name('Readable name') before build().",
-		);
+		expect(() => action().id('example').build()).toThrowError("Action is missing name(). Call name('Readable name') before build().");
 	});
 
 	it('prevents mixing amount and percent for resource changes', () => {
 		const params = resourceParams().key(firstResourceKey).amount(2);
-		expect(() => params.percent(10)).toThrowError(
-			'Resource change cannot use both amount() and percent(). Choose one of them.',
-		);
+		expect(() => params.percent(10)).toThrowError('Resource change cannot use both amount() and percent(). Choose one of them.');
 	});
 
 	it('requires an amount or percent for resource changes', () => {
-		expect(() => resourceParams().key(firstResourceKey).build()).toThrowError(
-			'Resource change needs exactly one of amount() or percent(). Pick how much the resource should change.',
-		);
+		expect(() => resourceParams().key(firstResourceKey).build()).toThrowError('Resource change needs exactly one of amount() or percent(). Pick how much the resource should change.');
 	});
 
 	it('explains stat change conflicts clearly', () => {
 		const params = statParams().key(firstStatKey).percent(10);
-		expect(() => params.amount(1)).toThrowError(
-			'Stat change cannot mix amount() with percent() or percentFromStat(). Pick one approach to describe the change.',
-		);
+		expect(() => params.amount(1)).toThrowError('Stat change cannot mix amount() with percent() or percentFromStat(). Pick one approach to describe the change.');
 	});
 
 	it('flags empty effects', () => {
-		expect(() => effect().build()).toThrowError(
-			'Effect is missing type() and method(). Call effect(Types.X, Methods.Y) or add nested effect(...) calls before build().',
-		);
+		expect(() => effect().build()).toThrowError('Effect is missing type() and method(). Call effect(Types.X, Methods.Y) or add nested effect(...) calls before build().');
 	});
 
 	it('guides requirement configuration mistakes', () => {
-		expect(() => requirement().method('compare').build()).toThrowError(
-			'Requirement is missing type(). Call type("your-requirement") before build().',
-		);
-		expect(() =>
-			compareRequirement().operator('lt').right(5).build(),
-		).toThrowError(
-			'Compare requirement is missing left(). Call left(...) before build().',
-		);
-		expect(() =>
-			compareRequirement().left(1).operator('lt').build(),
-		).toThrowError(
-			'Compare requirement is missing right(). Call right(...) before build().',
-		);
-		expect(() => compareRequirement().left(1).right(2).build()).toThrowError(
-			'Compare requirement is missing operator(). Call operator(...) before build().',
-		);
+		expect(() => requirement().method('compare').build()).toThrowError('Requirement is missing type(). Call type("your-requirement") before build().');
+		expect(() => compareRequirement().operator('lt').right(5).build()).toThrowError('Compare requirement is missing left(). Call left(...) before build().');
+		expect(() => compareRequirement().left(1).operator('lt').build()).toThrowError('Compare requirement is missing right(). Call right(...) before build().');
+		expect(() => compareRequirement().left(1).right(2).build()).toThrowError('Compare requirement is missing operator(). Call operator(...) before build().');
 		expect(() => {
 			const builder = compareRequirement().left(1);
 			builder.left(2);
-		}).toThrowError(
-			'Compare requirement already set left(). Remove the extra left() call.',
-		);
+		}).toThrowError('Compare requirement already set left(). Remove the extra left() call.');
 		expect(() => {
 			const builder = compareRequirement().right(2);
 			builder.right(3);
-		}).toThrowError(
-			'Compare requirement already set right(). Remove the extra right() call.',
-		);
+		}).toThrowError('Compare requirement already set right(). Remove the extra right() call.');
 		expect(() => {
 			const builder = compareRequirement().operator('lt');
 			builder.operator('gt');
-		}).toThrowError(
-			'Compare requirement already set operator(). Remove the extra operator() call.',
-		);
+		}).toThrowError('Compare requirement already set operator(). Remove the extra operator() call.');
 	});
 
 	it('requires passives to declare an id', () => {
-		expect(() => passiveParams().build()).toThrowError(
-			'Passive effect is missing id(). Call id("your-passive-id") so it can be referenced later.',
-		);
+		expect(() => passiveParams().build()).toThrowError('Passive effect is missing id(). Call id("your-passive-id") so it can be referenced later.');
 	});
 
 	it('builds tiered resource metadata with helper', () => {
@@ -164,9 +119,7 @@ describe('content builder safeguards', () => {
 	});
 
 	it('ensures attacks have a single target', () => {
-		expect(() => attackParams().build()).toThrowError(
-			'Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.',
-		);
+		expect(() => attackParams().build()).toThrowError('Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.');
 	});
 
 	it('supports building targets for attacks', () => {
@@ -177,15 +130,11 @@ describe('content builder safeguards', () => {
 	});
 
 	it('demands transfer amounts', () => {
-		expect(() => transferParams().key(firstResourceKey).build()).toThrowError(
-			'Resource transfer is missing percent() or amount(). Call one of them to choose how much to move.',
-		);
+		expect(() => transferParams().key(firstResourceKey).build()).toThrowError('Resource transfer is missing percent() or amount(). Call one of them to choose how much to move.');
 	});
 
 	it('prevents mixing percent and amount for transfers', () => {
-		expect(() =>
-			transferParams().key(firstResourceKey).percent(25).amount(1).build(),
-		).toThrowError(
+		expect(() => transferParams().key(firstResourceKey).percent(25).amount(1).build()).toThrowError(
 			'Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().',
 		);
 	});
@@ -196,22 +145,11 @@ describe('content builder safeguards', () => {
 	});
 
 	it('requires happiness tiers to declare an id', () => {
-		expect(() =>
-			happinessTier().range(0, 1).passive(buildTierPassiveEffect()).build(),
-		).toThrowError(
-			"Happiness tier is missing id(). Call id('your-tier-id') before build().",
-		);
+		expect(() => happinessTier().range(0, 1).passive(buildTierPassiveEffect()).build()).toThrowError("Happiness tier is missing id(). Call id('your-tier-id') before build().");
 	});
 
 	it('rejects invalid happiness tier ranges', () => {
-		expect(() =>
-			happinessTier('tier:test')
-				.range(5, 3)
-				.passive(buildTierPassiveEffect())
-				.build(),
-		).toThrowError(
-			'Happiness tier range(min, max?) requires max to be greater than or equal to min.',
-		);
+		expect(() => happinessTier('tier:test').range(5, 3).passive(buildTierPassiveEffect()).build()).toThrowError('Happiness tier range(min, max?) requires max to be greater than or equal to min.');
 	});
 
 	it('allows happiness tiers to omit a passive payload', () => {
@@ -222,28 +160,17 @@ describe('content builder safeguards', () => {
 	});
 
 	it('requires tier passives to provide an id', () => {
-		expect(() =>
-			happinessTier('tier:test')
-				.range(0, 1)
-				.passive(effect().type(Types.Passive).method(PassiveMethods.ADD))
-				.build(),
-		).toThrowError(
+		expect(() => happinessTier('tier:test').range(0, 1).passive(effect().type(Types.Passive).method(PassiveMethods.ADD)).build()).toThrowError(
 			'Happiness tier passive(...) requires the passive:add effect to include params.id.',
 		);
 	});
 
 	it('verifies skipStep receives both identifiers', () => {
-		expect(() =>
-			passiveParams().id('passive:test').skipStep('', 'step'),
-		).toThrowError(
-			'Passive params skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().',
-		);
+		expect(() => passiveParams().id('passive:test').skipStep('', 'step')).toThrowError('Passive params skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().');
 	});
 	it('supports placeholder strings in population params while requiring role()', () => {
 		const params = populationParams().role('$role').build();
 		expect(params).toEqual({ role: '$role' });
-		expect(() => populationParams().build()).toThrowError(
-			'Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.',
-		);
+		expect(() => populationParams().build()).toThrowError('Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.');
 	});
 });

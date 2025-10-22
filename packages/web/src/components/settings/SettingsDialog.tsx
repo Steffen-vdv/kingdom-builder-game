@@ -6,6 +6,7 @@ import SettingRow from './SettingRow';
 
 import ControlBindingsTab from './ControlBindingsTab';
 import type { ControlId, ControlKeybindMap } from '../../state/keybindings';
+import { useSoundEffectsContext } from '../../state/SoundEffectsContext';
 
 const DIALOG_SURFACE_CLASS = [
 	'relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border border-white/20',
@@ -21,7 +22,8 @@ const DIALOG_DESCRIPTION = [
 	'These selections stay with you as you explore different screens.',
 ].join(' ');
 const TAB_BUTTON_CLASS = [
-	'flex-1 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold',
+	'flex flex-1 items-center justify-center gap-2 rounded-2xl border',
+	'border-transparent px-4 py-3 text-sm font-semibold',
 	'tracking-wide transition hoverable cursor-pointer focus:outline-none',
 	'focus-visible:ring-2 focus-visible:ring-emerald-300',
 	'dark:focus-visible:ring-emerald-500/60',
@@ -37,26 +39,23 @@ const TAB_BUTTON_INACTIVE_CLASS = [
 	'dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/70',
 	'dark:hover:text-emerald-200',
 ].join(' ');
+const TAB_ICON_CLASS = 'text-lg leading-none';
 
 type SettingsTabId = 'game' | 'visual' | 'audio' | 'controls';
 
-const SETTINGS_TABS: Array<{ id: SettingsTabId; label: string }> = [
-	{ id: 'game', label: 'Game' },
-	{ id: 'visual', label: 'Visual' },
-	{ id: 'audio', label: 'Audio' },
-	{ id: 'controls', label: 'Controls' },
-];
+const SETTINGS_TABS: Array<{ id: SettingsTabId; label: string; icon: string }> =
+	[
+		{ id: 'game', label: 'Game', icon: '🎮' },
+		{ id: 'visual', label: 'Visual', icon: '🎨' },
+		{ id: 'audio', label: 'Audio', icon: '🔊' },
+		{ id: 'controls', label: 'Controls', icon: '🎛️' },
+	];
 
-const AUTO_ACKNOWLEDGE_TITLE = 'Auto-Acknowledge Action Summaries';
+const AUTO_ADVANCE_TITLE = 'Auto-advance';
 
-const AUTO_ACKNOWLEDGE_DESCRIPTION = [
-	'Automatically acknowledge action results the moment they appear.',
-].join(' ');
-
-const AUTO_PASS_TITLE = 'Auto-end turn';
-
-const AUTO_PASS_DESCRIPTION = [
-	'End your turn for you after every available action is used.',
+const AUTO_ADVANCE_DESCRIPTION = [
+	'Skip manual continue prompts by acknowledging finished actions and',
+	'advancing automatically when your turn can proceed.',
 ].join(' ');
 
 const FOCUSABLE_ELEMENTS_SELECTOR = [
@@ -79,10 +78,8 @@ interface SettingsDialogProps {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
-	autoAcknowledgeEnabled: boolean;
-	onToggleAutoAcknowledge: () => void;
-	autoPassEnabled: boolean;
-	onToggleAutoPass: () => void;
+	autoAdvanceEnabled: boolean;
+	onToggleAutoAdvance: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	controlKeybinds: ControlKeybindMap;
@@ -101,10 +98,8 @@ export default function SettingsDialog({
 	onToggleSound,
 	backgroundAudioMuted,
 	onToggleBackgroundAudioMute,
-	autoAcknowledgeEnabled,
-	onToggleAutoAcknowledge,
-	autoPassEnabled,
-	onToggleAutoPass,
+	autoAdvanceEnabled,
+	onToggleAutoAdvance,
 	playerName,
 	onChangePlayerName,
 	controlKeybinds,
@@ -112,6 +107,7 @@ export default function SettingsDialog({
 	onResetControlKeybind,
 }: SettingsDialogProps) {
 	const [activeTab, setActiveTab] = useState<SettingsTabId>('game');
+	const { playUiClick } = useSoundEffectsContext();
 	const dialogTitleId = useId();
 	const dialogDescriptionId = useId();
 	const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -245,7 +241,7 @@ export default function SettingsDialog({
 					</p>
 				</header>
 				<div className="flex flex-col gap-5">
-					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70">
+					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70 justify-center">
 						{SETTINGS_TABS.map((tab) => {
 							const isActive = activeTab === tab.id;
 							return (
@@ -257,10 +253,16 @@ export default function SettingsDialog({
 											? TAB_BUTTON_ACTIVE_CLASS
 											: TAB_BUTTON_INACTIVE_CLASS
 									}`}
-									onClick={() => setActiveTab(tab.id)}
+									onClick={() => {
+										playUiClick();
+										setActiveTab(tab.id);
+									}}
 									ref={tab.id === 'game' ? initialFocusRef : undefined}
 								>
-									{tab.label}
+									<span aria-hidden className={TAB_ICON_CLASS}>
+										{tab.icon}
+									</span>
+									<span>{tab.label}</span>
 								</button>
 							);
 						})}
@@ -273,18 +275,11 @@ export default function SettingsDialog({
 								onSave={onChangePlayerName}
 							/>
 							<SettingRow
-								id="settings-auto-acknowledge"
-								title={AUTO_ACKNOWLEDGE_TITLE}
-								description={AUTO_ACKNOWLEDGE_DESCRIPTION}
-								checked={autoAcknowledgeEnabled}
-								onToggle={onToggleAutoAcknowledge}
-							/>
-							<SettingRow
-								id="settings-auto-pass"
-								title={AUTO_PASS_TITLE}
-								description={AUTO_PASS_DESCRIPTION}
-								checked={autoPassEnabled}
-								onToggle={onToggleAutoPass}
+								id="settings-auto-advance"
+								title={AUTO_ADVANCE_TITLE}
+								description={AUTO_ADVANCE_DESCRIPTION}
+								checked={autoAdvanceEnabled}
+								onToggle={onToggleAutoAdvance}
 							/>
 						</div>
 					)}

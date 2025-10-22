@@ -9,8 +9,7 @@ export interface AppNavigationState {
 	isMusicEnabled: boolean;
 	isSoundEnabled: boolean;
 	isBackgroundAudioMuted: boolean;
-	isAutoAcknowledgeEnabled: boolean;
-	isAutoPassEnabled: boolean;
+	isAutoAdvanceEnabled: boolean;
 	resumePoint: ResumeSessionRecord | null;
 	resumeSessionId: string | null;
 	startStandardGame: () => void;
@@ -23,8 +22,7 @@ export interface AppNavigationState {
 	toggleMusic: () => void;
 	toggleSound: () => void;
 	toggleBackgroundAudioMute: () => void;
-	toggleAutoAcknowledge: () => void;
-	toggleAutoPass: () => void;
+	toggleAutoAdvance: () => void;
 	persistResumeSession: (record: ResumeSessionRecord) => void;
 	clearResumeSession: (sessionId?: string | null) => void;
 	handleResumeSessionFailure: (options: {

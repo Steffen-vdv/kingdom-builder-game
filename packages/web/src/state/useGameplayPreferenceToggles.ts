@@ -2,11 +2,10 @@ import { useCallback, useMemo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { HistoryState } from './appHistory';
 
-type GameplayHistoryKey = 'isAutoAcknowledgeEnabled' | 'isAutoPassEnabled';
+type GameplayHistoryKey = 'isAutoAdvanceEnabled';
 
 interface PreferenceSetters {
-	setIsAutoAcknowledgeEnabled: Dispatch<SetStateAction<boolean>>;
-	setIsAutoPassEnabled: Dispatch<SetStateAction<boolean>>;
+	setIsAutoAdvanceEnabled: Dispatch<SetStateAction<boolean>>;
 }
 
 type BuildHistoryState = (overrides?: Partial<HistoryState>) => HistoryState;
@@ -15,7 +14,7 @@ type ReplaceHistoryState = (nextState: HistoryState) => void;
 export function useGameplayPreferenceToggles(
 	buildHistoryState: BuildHistoryState,
 	replaceHistoryState: ReplaceHistoryState,
-	{ setIsAutoAcknowledgeEnabled, setIsAutoPassEnabled }: PreferenceSetters,
+	{ setIsAutoAdvanceEnabled }: PreferenceSetters,
 ) {
 	const createPreferenceToggle = useCallback(
 		(setter: Dispatch<SetStateAction<boolean>>, key: GameplayHistoryKey) => {
@@ -34,19 +33,11 @@ export function useGameplayPreferenceToggles(
 		[buildHistoryState, replaceHistoryState],
 	);
 
-	const toggleAutoAcknowledge = useMemo(
+	const toggleAutoAdvance = useMemo(
 		() =>
-			createPreferenceToggle(
-				setIsAutoAcknowledgeEnabled,
-				'isAutoAcknowledgeEnabled',
-			),
-		[createPreferenceToggle, setIsAutoAcknowledgeEnabled],
+			createPreferenceToggle(setIsAutoAdvanceEnabled, 'isAutoAdvanceEnabled'),
+		[createPreferenceToggle, setIsAutoAdvanceEnabled],
 	);
 
-	const toggleAutoPass = useMemo(
-		() => createPreferenceToggle(setIsAutoPassEnabled, 'isAutoPassEnabled'),
-		[createPreferenceToggle, setIsAutoPassEnabled],
-	);
-
-	return { toggleAutoAcknowledge, toggleAutoPass } as const;
+	return { toggleAutoAdvance } as const;
 }

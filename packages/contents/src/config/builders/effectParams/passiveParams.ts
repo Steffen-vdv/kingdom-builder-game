@@ -1,25 +1,15 @@
-import type {
-	EffectConfig,
-	PassiveMetadata,
-	PhaseSkipConfig,
-} from '@kingdom-builder/protocol';
+import type { EffectConfig, PassiveMetadata, PhaseSkipConfig } from '@kingdom-builder/protocol';
 import { formatPassiveRemoval } from '../../../text';
 import type { TriggerKey } from '../../../defs';
-import type {
-	PhaseId as PhaseIdentifier,
-	PhaseStepId as PhaseStepIdentifier,
-} from '../../../phases';
+import type { PhaseId as PhaseIdentifier, PhaseStepId as PhaseStepIdentifier } from '../../../phases';
 import { ParamsBuilder, PassiveMethods, Types } from '../../builderShared';
 import type { EffectBuilder } from '../../builders';
 import { resolveEffectConfig } from './resolveEffectConfig';
 
-const PASSIVE_ID_DUPLICATE =
-	'You already set id() for this passive. Remove the duplicate id() call.';
-const PASSIVE_MISSING_ID =
-	'Passive effect is missing id(). Call id("your-passive-id") so it can be referenced later.';
+const PASSIVE_ID_DUPLICATE = 'You already set id() for this passive. Remove the duplicate id() call.';
+const PASSIVE_MISSING_ID = 'Passive effect is missing id(). Call id("your-passive-id") so it can be referenced later.';
 const PASSIVE_ID_REQUIRED_PREFIX = 'Passive ';
-const PASSIVE_ID_REQUIRED_SUFFIX =
-	' requires id(). Call id("your-passive-id") before ';
+const PASSIVE_ID_REQUIRED_SUFFIX = ' requires id(). Call id("your-passive-id") before ';
 const PASSIVE_ID_REQUIRED_END = '.';
 
 const PASSIVE_NAME_MESSAGE = 'name()';
@@ -28,20 +18,11 @@ const PASSIVE_DETAIL_MESSAGE = 'detail()';
 const PASSIVE_META_MESSAGE = 'meta()';
 
 function passiveDuplicateMessage(label: string) {
-	return (
-		`You already set ${label} for this passive. Remove the duplicate ` +
-		`${label} call.`
-	);
+	return `You already set ${label} for this passive. Remove the duplicate ` + `${label} call.`;
 }
 
 function passiveIdRequired(context: string) {
-	return (
-		PASSIVE_ID_REQUIRED_PREFIX +
-		context +
-		PASSIVE_ID_REQUIRED_SUFFIX +
-		context +
-		PASSIVE_ID_REQUIRED_END
-	);
+	return PASSIVE_ID_REQUIRED_PREFIX + context + PASSIVE_ID_REQUIRED_SUFFIX + context + PASSIVE_ID_REQUIRED_END;
 }
 
 type PassiveEffectTriggerMap = Partial<Record<TriggerKey, EffectConfig[]>>;

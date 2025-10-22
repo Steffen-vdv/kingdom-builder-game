@@ -15,10 +15,8 @@ interface GameProps {
 	onToggleSound?: () => void;
 	backgroundAudioMuted?: boolean;
 	onToggleBackgroundAudioMute?: () => void;
-	autoAcknowledgeEnabled?: boolean;
-	onToggleAutoAcknowledge?: () => void;
-	autoPassEnabled?: boolean;
-	onToggleAutoPass?: () => void;
+	autoAdvanceEnabled?: boolean;
+	onToggleAutoAdvance?: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	resumeSessionId?: string | null;
@@ -38,10 +36,8 @@ export default function Game({
 	onToggleSound = () => {},
 	backgroundAudioMuted = true,
 	onToggleBackgroundAudioMute = () => {},
-	autoAcknowledgeEnabled = false,
-	onToggleAutoAcknowledge = () => {},
-	autoPassEnabled = false,
-	onToggleAutoPass = () => {},
+	autoAdvanceEnabled = false,
+	onToggleAutoAdvance = () => {},
 	playerName,
 	onChangePlayerName,
 	resumeSessionId = null,
@@ -61,10 +57,8 @@ export default function Game({
 			onToggleSound={onToggleSound}
 			backgroundAudioMuted={backgroundAudioMuted}
 			onToggleBackgroundAudioMute={onToggleBackgroundAudioMute}
-			autoAcknowledgeEnabled={autoAcknowledgeEnabled}
-			onToggleAutoAcknowledge={onToggleAutoAcknowledge}
-			autoPassEnabled={autoPassEnabled}
-			onToggleAutoPass={onToggleAutoPass}
+			autoAdvanceEnabled={autoAdvanceEnabled}
+			onToggleAutoAdvance={onToggleAutoAdvance}
 			playerName={playerName}
 			onChangePlayerName={onChangePlayerName}
 			resumeSessionId={resumeSessionId}

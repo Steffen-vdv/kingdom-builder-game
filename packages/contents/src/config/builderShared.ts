@@ -89,11 +89,7 @@ export abstract class ParamsBuilder<P extends Params = Params> {
 
 	protected set<K extends keyof P>(key: K, value: P[K], message?: string) {
 		if (this.assigned.has(key)) {
-			throw new Error(
-				message ??
-					`You already set ${String(key)} for this configuration. ` +
-						`Remove the extra ${String(key)} call.`,
-			);
+			throw new Error(message ?? `You already set ${String(key)} for this configuration. ` + `Remove the extra ${String(key)} call.`);
 		}
 		this.params[key] = value;
 		this.assigned.add(key);

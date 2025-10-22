@@ -115,6 +115,7 @@ export type SessionUpdatePlayerNameResponse = SessionStateResponse;
 export interface SessionActionCostRequest extends SessionIdentifier {
 	actionId: string;
 	params?: ActionParametersPayload;
+	playerId?: SessionPlayerId;
 }
 
 export interface SessionActionCostResponse extends SessionIdentifier {
@@ -124,6 +125,7 @@ export interface SessionActionCostResponse extends SessionIdentifier {
 export interface SessionActionRequirementRequest extends SessionIdentifier {
 	actionId: string;
 	params?: ActionParametersPayload;
+	playerId?: SessionPlayerId;
 }
 
 export interface SessionActionRequirementResponse extends SessionIdentifier {
