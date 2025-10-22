@@ -36,18 +36,23 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/reconciliation.ts, packages/engine/src/resource-v2/index.ts, docs/project/resource-migration/production/production-living-docs.md                                                                                                                  | Resource Migration MVP - P2 - T8 - Added reconciliation utilities that compute static/percent deltas with configurable rounding, clamp against bounds, export shared types, and documented remaining wiring steps.                            | npm run format; npm run lint; npm run check                                                      | Wire helpers into resource effect handlers and author targeted rounding/clamp unit tests.                                    |
 | 2025-10-26 | ChatGPT (gpt-5-codex) | packages/web/src/translation/resourceV2/formatters.ts, packages/web/src/translation/resourceV2/index.ts, packages/web/src/translation/index.ts, packages/web/tests/translation/resourceV2/formatters.test.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T15 - Added ResourceV2 translation helpers that turn metadata/value snapshots into summaries, hover sections, and Option A signed gain entries, exported them for reuse, and covered the pure logic with tests. | npm run format; npm run lint; npm run check                                                      | Wire helpers into the web UI once ResourceV2 values surface in session snapshots and log wiring begins.                      |
 
+| 2025-10-26 | ChatGPT (gpt-5-codex) | packages/web/tests/translation/resourceV2/formatters.test.ts, docs/project/resource-migration/production/production-living-docs.md
+| Resource Migration MVP - P2 - T16 - Rebuilt ResourceV2 formatter tests around ordered parent/child fixtures to cover percent display, signed gains, and hover section ordering via the helper APIs.
+| npx vitest run --config vitest.web.config.ts packages/web/tests/translation/resourceV2 (pass; see chunk 55f8f0)
+| UI wiring still pending once ResourceV2 payloads feed the resource bar; keep hover layout review on deck.
+|
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-26 16:00
-- **Current Focus:** Resource Migration MVP - P2 - T15 - Scaffold ResourceV2 translation formatters
-- **State Summary:** Implemented pure ResourceV2 translation helpers that accept metadata/value snapshots and emit summary strings, hovercard sections, and Option A signed gain entries. Exported the APIs via the translation barrel with inline documentation and verified behaviour through targeted Vitest coverage. UI integration remains pending until session payloads expose ResourceV2 values.
+- **Timestamp (UTC):** 2025-10-26 18:16
+- **Current Focus:** Resource Migration MVP - P2 - T16 - Harden ResourceV2 formatter coverage
+- **State Summary:** Expanded the ResourceV2 formatter test suite to assert ordered parent/child rendering, percent-aware formatting, and signed gain emission through the helper APIs. Verified hover section ordering to guard upcoming UI consumption. The helpers remain pure logic utilities until session payloads provide ResourceV2 metadata/value feeds.
 - **Next Suggested Tasks:**
-  - Expose ResourceV2 metadata/value snapshots through the translation context so these helpers can power the ResourceBar and hovercards (Owner: Web).
-  - Update action log diff builders to swap legacy resource helpers for the new signed gain utilities once ResourceV2 deltas are available (Owner: Web/Engine).
-- **Blocking Issues / Risks:** Awaiting session payload updates that surface ResourceV2 values; without them the new helpers stay unused scaffolding.
+  - Surface ResourceV2 metadata/value snapshots in the translation context and resource bar once protocol wiring lands, then validate UI rendering with real payloads (Owner: Web).
+  - Audit hovercard layout to ensure parent rows and child resources share consistent spacing once the UI integration begins (Owner: Web/UI).
+- **Blocking Issues / Risks:** Still waiting on protocol/session wiring to populate ResourceV2 values; without those feeds UI work cannot proceed beyond tests.
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 ## 5. Notes & Decisions Archive
