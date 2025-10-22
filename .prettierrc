@@ -5,7 +5,7 @@
 	"printWidth": 80,
 	"overrides": [
 		{
-			"files": ["packages/content/**/*", "packages/contents/**/*"],
+			"files": ["packages/contents/**/*"],
 			"options": {
 				"printWidth": 200
 			}
