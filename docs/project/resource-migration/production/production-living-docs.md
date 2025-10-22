@@ -76,6 +76,10 @@ Maintain a running list of important updates. Use subheadings with timestamps.
 
 Track deliberate breakages created by migration steps so nobody “fixes” them prematurely.
 
+> **Red alert:** Leaving tests red or features degraded without recording them
+> here is treated as a process failure. Update this table the moment you
+> introduce (or resolve) any intentional regression.
+
 | Description  | Introduced In | Expected Resolution | Status |
 | ------------ | ------------- | ------------------- | ------ |
 | _(none yet)_ | –             | –                   | –      |

@@ -19,6 +19,9 @@ After completing your task:
 1. Append a dated entry to every relevant domain file under [`work-logs/`](./work-logs/) (Content, Engine, Protocol/API, Web, Testing, Documentation) summarizing the work, validation, and follow-ups.
 2. Replace the matching domain handover file under [`handover/`](./handover/) with the latest actionable context before you sign off.
 3. If your work introduces intended temporary regressions or TODO markers, record them explicitly in `production-living-docs.md`.
+   - **Do not skip Section 6 – Intended Temporary Regressions.** Every
+     intentional test failure or other breakage must be logged there with
+     resolution expectations before you finish the task.
 
 ## Enforcement
 

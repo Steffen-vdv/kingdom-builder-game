@@ -93,7 +93,15 @@ guide for rationale, lore, and extended background.
 4. **Honor the PR template**
    - Copy `.github/PULL_REQUEST_TEMPLATE.md` into every PR body and replace all
      placeholders with specific details before calling `make_pr`.
-5. **Respect text standards**
+5. **Track deliberate regressions**
+   - When any task intentionally leaves the workspace with failing tests or
+     other known breakages, immediately document the regression in
+     [`docs/project/resource-migration/production/production-living-docs.md`](project/resource-migration/production/production-living-docs.md)
+     under **Section 6 – Intended Temporary Regressions**. Missing these notes
+     is grounds for task rejection.
+   - Confirm the table still reflects the current state before you wrap up the
+     task and again before invoking `make_pr`.
+6. **Respect text standards**
    - Before touching player-facing copy, complete the "Before Writing Text"
      checklist in
      [`docs/text-formatting.md`](text-formatting.md#0-before-writing-text).
