@@ -138,6 +138,11 @@ describe('Action translation with population scaling', () => {
 			</RegistryMetadataProvider>,
 		);
 		const summaryText = screen.getByTestId('summary-output').textContent ?? '';
-		expect(summaryText).toMatch(/per.+Population/i);
+		const populationIcon = translationContext.assets.population.icon ?? '';
+		expect(summaryText).toMatch(/per/i);
+		if (populationIcon) {
+			expect(summaryText).toContain(populationIcon);
+		}
+		expect(summaryText).not.toMatch(/Population/i);
 	});
 });

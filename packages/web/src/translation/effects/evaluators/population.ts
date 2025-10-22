@@ -15,12 +15,14 @@ function formatSubEntries(
 ): SummaryEntry[] {
 	const { icon, label } = resolvePopulationDisplay(context, role);
 	const suffix = mode === 'summarize' ? 'per' : 'for each';
+	const display =
+		mode === 'summarize' ? icon || label : `${icon} ${label}`.trim();
 	return subEntries.map((entry) =>
 		typeof entry === 'string'
-			? `${entry} ${suffix} ${icon} ${label}`.trim()
+			? `${entry} ${suffix} ${display}`.trim()
 			: {
 					...entry,
-					title: `${entry.title} ${suffix} ${icon} ${label}`.trim(),
+					title: `${entry.title} ${suffix} ${display}`.trim(),
 				},
 	);
 }
