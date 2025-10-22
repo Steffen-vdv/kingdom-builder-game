@@ -22,23 +22,25 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
 ## 3. Work Log (append-only)
 
-| Date       | Agent         | Scope / Files | Summary of Work | Tests & Results | Follow-up Actions |
-| ---------- | ------------- | ------------- | --------------- | --------------- | ----------------- |
-| 2024-**-** | _(add entry)_ |               |                 |                 |                   |
+| Date       | Agent                 | Scope / Files                                                                                                                                                                                                                                   | Summary of Work                                                                                                                                          | Tests & Results                             | Follow-up Actions                                                                                   |
+| ---------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 2025-10-22 | ChatGPT (gpt-5-codex) | packages/contents/src/resourceV2/types.ts, packages/contents/src/resourceV2/index.ts, docs/project/resource-migration/production/production-living-docs.md                                                                                      | Resource Migration MVP - P2 - T1 - Added ResourceV2 schema type scaffolding and documented follow-ups.                                                   | _Not run (types only)_                      | Confirm schema assumptions for tier metadata and group parent scope.                                |
+| 2025-10-23 | ChatGPT (gpt-5-codex) | packages/contents/src/resourceV2/resourceBuilder.ts, packages/contents/src/resourceV2/index.ts, docs/project/resource-migration/production/production-living-docs.md                                                                            | Resource Migration MVP - P2 - T2 - Implemented chainable ResourceV2 builder with validation, exported API, and captured next steps for registry helpers. | _Not run (builder scaffolding)_             | Draft registry helper adapters to adopt the builder in upcoming tasks.                              |
+| 2025-10-24 | ChatGPT (gpt-5-codex) | packages/contents/src/resourceV2/groupBuilder.ts, packages/contents/src/resourceV2/registry.ts, packages/contents/src/resourceV2/index.ts, packages/contents/src/index.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T3 - Added ResourceV2 group builder and registry helpers with duplicate validation, exported APIs, and documented rollout. | npm run format; npm run lint; npm run check | Coordinate adoption of registry helpers in content packages and plan first migrated resource entry. |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
-- **Prepared by:** _(agent name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(what is being tackled right now)_
-- **State Summary:** _(1–2 paragraphs describing current progress, outstanding decisions, and known regressions)_
-- **Next Suggested Tasks:** _(bullet list with owners if known)_
-- **Blocking Issues / Risks:** _(list or “None”)_
+- **Prepared by:** ChatGPT (gpt-5-codex)
+- **Timestamp (UTC):** 2025-10-24 16:06
+- **Current Focus:** Resource Migration MVP - P2 - T3 - Deliver ResourceV2 group builder and registry scaffolding
+- **State Summary:** Added `resourceGroup(id)` builder with single-use parent metadata, introduced registry helpers that build ordered maps while rejecting duplicates, exported the new APIs through `resourceV2` and root content indices, and updated project documentation. Tests (`npm run format`, `npm run lint`, `npm run check`) ran immediately after these changes.
+- **Next Suggested Tasks:**
+  - Wire the registry helpers into content loading paths and replace ad-hoc resource indexing (Owner: TBD).
+  - Prepare the initial ResourceV2 migration (Absorption) using the new builders and registries to validate authoring flow (Owner: Content).
+- **Blocking Issues / Risks:** Need alignment on how the registries integrate with existing content bootstrapping to prevent double-sourcing definitions during migration.
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
-
-Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.
 
 ## 5. Notes & Decisions Archive
 
