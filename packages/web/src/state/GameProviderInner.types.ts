@@ -20,10 +20,8 @@ export interface GameProviderInnerProps {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
-	autoAcknowledgeEnabled: boolean;
-	onToggleAutoAcknowledge: () => void;
-	autoPassEnabled: boolean;
-	onToggleAutoPass: () => void;
+	autoAdvanceEnabled: boolean;
+	onToggleAutoAdvance: () => void;
 	playerName: string;
 	onChangePlayerName: (name: string) => void;
 	queue: SessionQueueHelpers;

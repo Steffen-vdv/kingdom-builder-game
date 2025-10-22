@@ -335,6 +335,7 @@
 							"icon": "🏠",
 							"actionId": "develop_house",
 							"params": {
+								"developmentId": "house",
 								"landId": "$landId"
 							}
 						},
@@ -343,6 +344,7 @@
 							"icon": "🌾",
 							"actionId": "develop_farm",
 							"params": {
+								"developmentId": "farm",
 								"landId": "$landId"
 							}
 						},
@@ -351,6 +353,7 @@
 							"icon": "🏹",
 							"actionId": "develop_outpost",
 							"params": {
+								"developmentId": "outpost",
 								"landId": "$landId"
 							}
 						},
@@ -359,6 +362,7 @@
 							"icon": "🗼",
 							"actionId": "develop_watchtower",
 							"params": {
+								"developmentId": "watchtower",
 								"landId": "$landId"
 							}
 						}

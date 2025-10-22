@@ -4,9 +4,7 @@ import type { DevelopmentId } from '../../developments';
 import { ParamsBuilder } from '../builderShared';
 import type { Params } from '../builderShared';
 
-export type DevelopmentIdParam =
-	| DevelopmentId
-	| (string & { __developmentIdParam?: never });
+export type DevelopmentIdParam = DevelopmentId | (string & { __developmentIdParam?: never });
 
 export type ActionIdParam = ActionId | (string & { __actionIdParam?: never });
 
@@ -25,11 +23,7 @@ export class ActionEffectGroupOptionBuilder {
 		}
 	}
 
-	private set<K extends keyof ActionEffectGroupOptionDef>(
-		key: K,
-		value: ActionEffectGroupOptionDef[K],
-		message: string,
-	) {
+	private set<K extends keyof ActionEffectGroupOptionDef>(key: K, value: ActionEffectGroupOptionDef[K], message: string) {
 		if (this.assigned.has(key)) {
 			throw new Error(message);
 		}
@@ -43,63 +37,35 @@ export class ActionEffectGroupOptionBuilder {
 	}
 
 	id(id: string) {
-		return this.set(
-			'id',
-			id,
-			'Action effect group option already has an id(). Remove the extra id() call.',
-		);
+		return this.set('id', id, 'Action effect group option already has an id(). Remove the extra id() call.');
 	}
 
 	label(label: string) {
-		return this.set(
-			'label',
-			label,
-			'Action effect group option already set label(). Remove the duplicate label() call.',
-		);
+		return this.set('label', label, 'Action effect group option already set label(). Remove the duplicate label() call.');
 	}
 
 	icon(icon: string) {
-		return this.set(
-			'icon',
-			icon,
-			'Action effect group option already set icon(). Remove the duplicate icon() call.',
-		);
+		return this.set('icon', icon, 'Action effect group option already set icon(). Remove the duplicate icon() call.');
 	}
 
 	summary(summary: string) {
-		return this.set(
-			'summary',
-			summary,
-			'Action effect group option already set summary(). Remove the duplicate summary() call.',
-		);
+		return this.set('summary', summary, 'Action effect group option already set summary(). Remove the duplicate summary() call.');
 	}
 
 	description(description: string) {
-		return this.set(
-			'description',
-			description,
-			'Action effect group option already set description(). Remove the duplicate description() call.',
-		);
+		return this.set('description', description, 'Action effect group option already set description(). Remove the duplicate description() call.');
 	}
 
 	action(actionId: ActionId) {
-		return this.set(
-			'actionId',
-			actionId,
-			'Action effect group option already set action(). Remove the duplicate action() call.',
-		);
+		return this.set('actionId', actionId, 'Action effect group option already set action(). Remove the duplicate action() call.');
 	}
 
 	param(key: string, value: unknown) {
 		if (this.paramsSet) {
-			throw new Error(
-				'Action effect group option already set params(...). Remove params(...) before calling param().',
-			);
+			throw new Error('Action effect group option already set params(...). Remove params(...) before calling param().');
 		}
 		if (this.paramKeys.has(key)) {
-			throw new Error(
-				`Action effect group option already set param "${key}". Remove the duplicate param() call.`,
-			);
+			throw new Error(`Action effect group option already set param "${key}". Remove the duplicate param() call.`);
 		}
 		this.paramsConfig = this.paramsConfig || {};
 		this.paramsConfig[key] = value;
@@ -121,31 +87,22 @@ export class ActionEffectGroupOptionBuilder {
 
 	params(params: Params | ParamsBuilder) {
 		if (this.paramsSet) {
-			throw new Error(
-				'Action effect group option already set params(...). Remove the duplicate params() call.',
-			);
+			throw new Error('Action effect group option already set params(...). Remove the duplicate params() call.');
 		}
 		if (this.paramKeys.size) {
-			throw new Error(
-				'Action effect group option already set individual param() values. Remove them before calling params(...).',
-			);
+			throw new Error('Action effect group option already set individual param() values. Remove them before calling params(...).');
 		}
-		this.paramsConfig =
-			params instanceof ParamsBuilder ? params.build() : params;
+		this.paramsConfig = params instanceof ParamsBuilder ? params.build() : params;
 		this.paramsSet = true;
 		return this;
 	}
 
 	build(): ActionEffectGroupOptionDef {
 		if (!this.wasSet('id')) {
-			throw new Error(
-				'Action effect group option is missing id(). Call id("your-option-id") before build().',
-			);
+			throw new Error('Action effect group option is missing id(). Call id("your-option-id") before build().');
 		}
 		if (!this.wasSet('actionId')) {
-			throw new Error(
-				'Action effect group option is missing action(). Call action("action-id") before build().',
-			);
+			throw new Error('Action effect group option is missing action(). Call action("action-id") before build().');
 		}
 
 		const built: ActionEffectGroupOptionDef = {
@@ -180,27 +137,15 @@ export class ActionEffectGroupOptionParamsBuilder extends ParamsBuilder<{
 	landId?: string;
 }> {
 	actionId(actionId: ActionIdParam) {
-		return this.set(
-			'actionId',
-			actionId,
-			'Action effect group option params already set actionId(). Remove the extra actionId() call.',
-		);
+		return this.set('actionId', actionId, 'Action effect group option params already set actionId(). Remove the extra actionId() call.');
 	}
 
 	developmentId(developmentId: DevelopmentIdParam) {
-		return this.set(
-			'developmentId',
-			developmentId,
-			'Action effect group option params already set developmentId(). Remove the extra developmentId() call.',
-		);
+		return this.set('developmentId', developmentId, 'Action effect group option params already set developmentId(). Remove the extra developmentId() call.');
 	}
 
 	landId(landId: string) {
-		return this.set(
-			'landId',
-			landId,
-			'Action effect group option params already set landId(). Remove the extra landId() call.',
-		);
+		return this.set('landId', landId, 'Action effect group option params already set landId(). Remove the extra landId() call.');
 	}
 }
 

@@ -2,6 +2,7 @@ import { Registry } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 
 import { developmentEvaluator } from './development';
+import { landEvaluator } from './land';
 import { populationEvaluator } from './population';
 import { statEvaluator } from './stat';
 import { compareEvaluator } from './compare';
@@ -22,12 +23,14 @@ export function registerCoreEvaluators(
 	registry: EvaluatorRegistry = EVALUATORS,
 ) {
 	registry.add('development', developmentEvaluator);
+	registry.add('land', landEvaluator);
 	registry.add('population', populationEvaluator);
 	registry.add('stat', statEvaluator);
 	registry.add('compare', compareEvaluator);
 }
 
 export { developmentEvaluator } from './development';
+export { landEvaluator } from './land';
 export { populationEvaluator } from './population';
 export { statEvaluator } from './stat';
 export { compareEvaluator } from './compare';

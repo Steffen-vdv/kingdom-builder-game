@@ -46,22 +46,15 @@ registerEffectFormatter('development', 'add', {
 	summarize: (effect, context) => {
 		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
 			describe: 'Add',
-			log: 'Developed',
 		}).summary;
 	},
 	describe: (effect, context) => {
 		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
 			describe: 'Add',
-			log: 'Developed',
 		}).description;
 	},
-	log: (effect, context) => {
-		return (
-			renderDevelopmentChange(effect.params?.['id'] as string, context, {
-				describe: 'Add',
-				log: 'Developed',
-			}).log || ''
-		);
+	log: () => {
+		return '';
 	},
 });
 

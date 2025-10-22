@@ -7,6 +7,7 @@ import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
 	SessionSnapshot,
+	SessionPlayerId,
 } from '@kingdom-builder/protocol/session';
 import {
 	clearSessionActionMetadataStore,
@@ -32,7 +33,7 @@ import { RemoteSessionAdapter } from '../src/state/remoteSessionAdapter';
 import { createMetadataKey } from '../src/state/actionMetadataKey';
 import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
-import type { GameApi } from '../src/services/gameApi';
+import type { GameApi, GameApiRequestOptions } from '../src/services/gameApi';
 import {
 	loadActionCosts,
 	loadActionOptions,
@@ -89,14 +90,17 @@ vi.mock('../src/state/sessionSdk', async () => {
 				_sessionId: string,
 				actionId: string,
 				params?: ActionParametersPayload,
+				_options?: GameApiRequestOptions,
+				playerId?: SessionPlayerId,
 			) => {
-				const key = createMetadataKey(actionId, params);
+				const key = createMetadataKey(actionId, params, playerId);
 				const costs = mockActionCosts.get(key) ?? {};
 				setSessionActionCostsMock(
 					mockGame.sessionId,
 					actionId,
 					costs as SessionActionCostMap,
 					params,
+					playerId,
 				);
 				return Promise.resolve(costs);
 			},
@@ -106,14 +110,17 @@ vi.mock('../src/state/sessionSdk', async () => {
 				_sessionId: string,
 				actionId: string,
 				params?: ActionParametersPayload,
+				_options?: GameApiRequestOptions,
+				playerId?: SessionPlayerId,
 			) => {
-				const key = createMetadataKey(actionId, params);
+				const key = createMetadataKey(actionId, params, playerId);
 				const requirements = mockActionRequirements.get(key) ?? [];
 				setSessionActionRequirementsMock(
 					mockGame.sessionId,
 					actionId,
 					requirements as SessionActionRequirementList,
 					params,
+					playerId,
 				);
 				return Promise.resolve(requirements);
 			},
@@ -284,6 +291,7 @@ describe('GenericActions effect group handling', () => {
 		mockActionOptions.clear();
 		clearSessionActionMetadataStore();
 		mockGame = createMockGame();
+		const activePlayerId = mockGame.selectors.sessionView.active?.id ?? 'A';
 		vi.mocked(loadActionCosts).mockClear();
 		vi.mocked(loadActionRequirements).mockClear();
 		vi.mocked(loadActionOptions).mockClear();
@@ -295,6 +303,7 @@ describe('GenericActions effect group handling', () => {
 		const royalKey = createMetadataKey(
 			mockGame.actionReferences.royalDecree.id,
 			undefined,
+			activePlayerId,
 		);
 		mockActionCosts.set(royalKey, {
 			[mockGame.actionCostResource]: 1,
@@ -341,6 +350,7 @@ describe('GenericActions effect group handling', () => {
 		const developKey = createMetadataKey(
 			mockGame.actionReferences.develop.id,
 			undefined,
+			activePlayerId,
 		);
 		mockActionCosts.set(developKey, {
 			[mockGame.actionCostResource]: 2,
@@ -349,6 +359,7 @@ describe('GenericActions effect group handling', () => {
 		const developWithParamsKey = createMetadataKey(
 			mockGame.actionReferences.develop.id,
 			{ landId: 'A-L2' },
+			activePlayerId,
 		);
 		mockActionRequirements.set(developWithParamsKey, []);
 		const royalRequirements = mockActionRequirements.get(royalKey);
@@ -357,6 +368,8 @@ describe('GenericActions effect group handling', () => {
 				mockGame.sessionId,
 				mockGame.actionReferences.royalDecree.id,
 				{ requirements: royalRequirements },
+				undefined,
+				activePlayerId,
 			);
 		}
 		seedSessionActionMetadata(
@@ -365,6 +378,8 @@ describe('GenericActions effect group handling', () => {
 			{
 				requirements: mockActionRequirements.get(developKey) ?? [],
 			},
+			undefined,
+			activePlayerId,
 		);
 		seedSessionActionMetadata(
 			mockGame.sessionId,
@@ -373,6 +388,7 @@ describe('GenericActions effect group handling', () => {
 				requirements: mockActionRequirements.get(developWithParamsKey) ?? [],
 			},
 			{ landId: 'A-L2' },
+			activePlayerId,
 		);
 		getRequirementIconsMock.mockImplementation(() => []);
 		summarizeContentMock.mockImplementation((type: unknown, id: unknown) => {
@@ -432,12 +448,14 @@ describe('GenericActions effect group handling', () => {
 				action.id,
 				undefined,
 				expect.any(Object),
+				activePlayer.id,
 			);
 			expect(loadActionRequirements).toHaveBeenCalledWith(
 				mockGame.sessionId,
 				action.id,
 				undefined,
 				expect.any(Object),
+				activePlayer.id,
 			);
 			expect(loadActionOptions).toHaveBeenCalledWith(
 				mockGame.sessionId,
