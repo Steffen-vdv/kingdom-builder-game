@@ -252,16 +252,20 @@ function adjustResourceBound(
 	const flags = ensureBoundFlags(player, resourceId);
 	flags[direction] = true;
 	if (lookup.kind === 'parent') {
+		const childIds =
+			getCatalogIndexes(catalog).groupChildren[lookup.groupId] ?? [];
+		const aggregate = aggregateChildValues(player, childIds);
 		if (direction === 'lower') {
-			const childIds =
-				getCatalogIndexes(catalog).groupChildren[lookup.groupId] ?? [];
-			const aggregate = aggregateChildValues(player, childIds);
 			if (aggregate < nextBound) {
 				throw new Error(
 					`ResourceV2 parent "${resourceId}" cannot raise lower bound beyond its aggregated child total of ${aggregate}.`,
 				);
 			}
+			return { previousBound, nextBound, valueClamped: false };
 		}
+		applyValue(context, player, catalog, lookup, resourceId, aggregate, {
+			suppressRecentEntry: true,
+		});
 		return { previousBound, nextBound, valueClamped: false };
 	}
 	const current = player.resourceValues[resourceId] ?? 0;
