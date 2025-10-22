@@ -54,12 +54,16 @@ export function formatStatChange(
 	change: SignedDelta,
 	assets: TranslationAssets,
 ): string {
-	const prefix = iconPrefix(icon);
 	const before = formatStatValue(key, change.before, assets);
 	const after = formatStatValue(key, change.after, assets);
 	const delta = formatStatValue(key, change.delta, assets);
 	const sign = change.delta >= 0 ? '+' : '';
-	return `${prefix}${label} ${sign}${delta} (${before}→${after})`;
+	const iconLabel = iconPrefix(icon).trim();
+	const parts = [iconLabel, `${sign}${delta}`.trim(), label.trim()].filter(
+		(part) => part.length > 0,
+	);
+	const summary = parts.join(' ').replace(/\s+/g, ' ').trim();
+	return `${summary} (${before}→${after})`;
 }
 
 export function formatPercentBreakdown(

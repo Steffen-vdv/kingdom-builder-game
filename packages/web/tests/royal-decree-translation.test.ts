@@ -350,6 +350,13 @@ describe('royal decree translation', () => {
 				throw new Error(`Missing development definition for ${developmentId}`);
 			}
 			expect(occurrences[0]).toContain(development.name ?? developmentId);
+			const slotAsset = translationContext.assets.slot;
+			const slotIcon = slotAsset.icon ?? '🧩';
+			const slotLabel = slotAsset.label ?? 'Development Slot';
+			const emptySlotLabel = `Empty ${slotLabel}`.replace(/\s+/g, ' ').trim();
+			expect(occurrences[0]).toContain(
+				`on ${[slotIcon, emptySlotLabel].filter(Boolean).join(' ')}`,
+			);
 		}
 	});
 });
