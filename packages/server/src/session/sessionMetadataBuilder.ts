@@ -23,6 +23,8 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SessionActionCategoryRegistry,
+	SessionResourceV2DefinitionRegistry,
+	SessionResourceV2GroupRegistry,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionSnapshotMetadata,
@@ -304,6 +306,10 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
+		resourceV2Definitions: Object.freeze(
+			{},
+		) as SessionResourceV2DefinitionRegistry,
+		resourceV2Groups: Object.freeze({}) as SessionResourceV2GroupRegistry,
 		resources: buildResourceRegistry(),
 	};
 	const metadata: StaticSessionMetadata = {

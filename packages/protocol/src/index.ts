@@ -176,6 +176,12 @@ export type {
 	SessionActionCostMap,
 	SessionRequirementFailure,
 	SessionActionRequirementList,
+	SessionResourceV2DefinitionRegistry,
+	SessionResourceV2GroupRegistry,
+	SessionResourceValueParentSnapshot,
+	SessionResourceValueSnapshot,
+	SessionResourceValueSnapshotMap,
+	SessionResourceValueTierSnapshot,
 } from './session';
 export type {
 	SessionIdentifier,

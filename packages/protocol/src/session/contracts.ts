@@ -23,6 +23,12 @@ import type {
 	SimulateUpcomingPhasesOptions,
 	SimulateUpcomingPhasesResult,
 } from './index';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+	ResourceV2GroupParentDescriptor,
+	ResourceV2RecentGainEntry,
+} from '../resourceV2';
 import type { RuleSet } from '../services';
 
 export interface SessionIdentifier {
@@ -50,12 +56,44 @@ export type SerializedRegistry<T> = Record<string, T>;
 export type SessionActionCategoryRegistry =
 	SerializedRegistry<ActionCategoryConfig>;
 
+export type SessionResourceV2DefinitionRegistry =
+	SerializedRegistry<ResourceV2Definition>;
+
+export type SessionResourceV2GroupRegistry =
+	SerializedRegistry<ResourceV2GroupDefinition>;
+
+export interface SessionResourceValueTierSnapshot {
+	trackId: string;
+	tierId: string | null;
+}
+
+export interface SessionResourceValueParentSnapshot {
+	id: string;
+	amount: number;
+	relation: ResourceV2GroupParentDescriptor['relation'];
+	descriptor?: ResourceV2GroupParentDescriptor;
+	touched: boolean;
+}
+
+export interface SessionResourceValueSnapshot {
+	amount: number;
+	touched: boolean;
+	tier?: SessionResourceValueTierSnapshot;
+	parent?: SessionResourceValueParentSnapshot;
+	recentGains: ResourceV2RecentGainEntry[];
+}
+
+export type SessionResourceValueSnapshotMap =
+	SerializedRegistry<SessionResourceValueSnapshot>;
+
 export interface SessionRegistriesPayload {
 	actions: SerializedRegistry<ActionConfig>;
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	resourceV2Definitions: SessionResourceV2DefinitionRegistry;
+	resourceV2Groups: SessionResourceV2GroupRegistry;
+	resources?: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
 }
 
@@ -81,7 +119,9 @@ export interface SessionRuntimeConfigResponse {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	resourceV2Definitions: SessionResourceV2DefinitionRegistry;
+	resourceV2Groups: SessionResourceV2GroupRegistry;
+	resources?: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
 }
 

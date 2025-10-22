@@ -16,6 +16,8 @@ import {
 	type PlayerStartConfig,
 	type SessionRegistriesPayload,
 	type SessionResourceDefinition,
+	type SessionResourceV2DefinitionRegistry,
+	type SessionResourceV2GroupRegistry,
 	type SerializedRegistry,
 } from '@kingdom-builder/protocol';
 import {
@@ -78,6 +80,12 @@ export function buildSessionAssets(
 		buildings: freezeSerializedRegistry(cloneRegistry(buildings)),
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
 		populations: freezeSerializedRegistry(cloneRegistry(populations)),
+		resourceV2Definitions: freezeSerializedRegistry(
+			{},
+		) as SessionResourceV2DefinitionRegistry,
+		resourceV2Groups: freezeSerializedRegistry(
+			{},
+		) as SessionResourceV2GroupRegistry,
 		resources: frozenResources,
 	};
 	if (context.baseRegistries.actionCategories) {

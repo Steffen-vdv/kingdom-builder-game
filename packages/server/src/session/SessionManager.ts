@@ -19,6 +19,8 @@ import type {
 	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	SessionResourceV2DefinitionRegistry,
+	SessionResourceV2GroupRegistry,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -142,6 +144,12 @@ export class SessionManager {
 			buildings: cloneRegistry(this.baseOptions.buildings),
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
+			resourceV2Definitions: freezeSerializedRegistry(
+				{},
+			) as SessionResourceV2DefinitionRegistry,
+			resourceV2Groups: freezeSerializedRegistry(
+				{},
+			) as SessionResourceV2GroupRegistry,
 			resources,
 		};
 		this.metadata = buildSessionMetadata({

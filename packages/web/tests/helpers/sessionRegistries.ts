@@ -93,6 +93,8 @@ function cloneRegistriesPayload(
 		buildings: cloneEntries(payload.buildings),
 		developments: cloneEntries(payload.developments),
 		populations: cloneEntries(payload.populations),
+		resourceV2Definitions: cloneEntries(payload.resourceV2Definitions),
+		resourceV2Groups: cloneEntries(payload.resourceV2Groups),
 		resources: Object.fromEntries(
 			Object.entries(payload.resources ?? {}).map(([key, definition]) => [
 				key,
@@ -105,6 +107,12 @@ function cloneRegistriesPayload(
 
 export function createSessionRegistriesPayload(): SessionRegistriesPayload {
 	const payload = cloneRegistriesPayload(BASE_PAYLOAD);
+	if (!payload.resourceV2Definitions) {
+		payload.resourceV2Definitions = {};
+	}
+	if (!payload.resourceV2Groups) {
+		payload.resourceV2Groups = {};
+	}
 	normalizeActionCategories(payload);
 	payload.actionCategories = createCategoryRegistry();
 	return payload;

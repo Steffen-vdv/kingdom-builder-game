@@ -32,6 +32,10 @@ import type {
 	SessionRunAiAction,
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
+	SessionResourceDefinition,
+	SessionResourceV2DefinitionRegistry,
+	SessionResourceV2GroupRegistry,
+	SessionResourceValueSnapshot,
 } from '../src/session/contracts';
 
 describe('session contract schemas', () => {
@@ -112,6 +116,15 @@ describe('session contract schemas', () => {
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();
+		expectTypeOf<
+			SessionRegistriesPayload['resourceV2Definitions']
+		>().toEqualTypeOf<SessionResourceV2DefinitionRegistry>();
+		expectTypeOf<
+			SessionRegistriesPayload['resourceV2Groups']
+		>().toEqualTypeOf<SessionResourceV2GroupRegistry>();
+		expectTypeOf<SessionRegistriesPayload['resources']>().toEqualTypeOf<
+			Record<string, SessionResourceDefinition> | undefined
+		>();
 	});
 });
 
@@ -119,6 +132,12 @@ describe('session player state snapshot', () => {
 	it('exposes the aiControlled flag', () => {
 		expectTypeOf<SessionPlayerStateSnapshot['aiControlled']>().toEqualTypeOf<
 			boolean | undefined
+		>();
+	});
+
+	it('maps values to ResourceV2-aware snapshots', () => {
+		expectTypeOf<SessionPlayerStateSnapshot['values']>().toEqualTypeOf<
+			Record<string, SessionResourceValueSnapshot> | undefined
 		>();
 	});
 });

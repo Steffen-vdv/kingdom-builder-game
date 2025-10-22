@@ -1,4 +1,5 @@
 import type { EffectDef } from '../effects';
+import type { SessionResourceValueSnapshotMap } from './contracts';
 import type {
 	HappinessTierDefinition,
 	PassiveMetadata,
@@ -64,6 +65,7 @@ export interface SessionPlayerStateSnapshot {
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	statsHistory: Record<string, boolean>;
+	values?: SessionResourceValueSnapshotMap;
 	population: Record<string, number>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
@@ -347,6 +349,12 @@ export type {
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
+	SessionResourceV2DefinitionRegistry,
+	SessionResourceV2GroupRegistry,
+	SessionResourceValueParentSnapshot,
+	SessionResourceValueSnapshot,
+	SessionResourceValueSnapshotMap,
+	SessionResourceValueTierSnapshot,
 } from './contracts';
 
 export * as contracts from './contracts';

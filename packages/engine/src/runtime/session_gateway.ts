@@ -122,8 +122,12 @@ export function createLocalSessionGateway(
 			buildings: {},
 			developments: {},
 			populations: {},
+			resourceV2Definitions: {},
+			resourceV2Groups: {},
 			resources: {},
 		}),
+		resourceV2Definitions: options.registries?.resourceV2Definitions ?? {},
+		resourceV2Groups: options.registries?.resourceV2Groups ?? {},
 		actionCategories: options.registries?.actionCategories ?? {},
 	};
 	const getRegistries = (): SessionRegistriesPayload => {
@@ -135,6 +139,12 @@ export function createLocalSessionGateway(
 			buildings: { ...baseRegistries.buildings },
 			developments: { ...baseRegistries.developments },
 			populations: { ...baseRegistries.populations },
+			resourceV2Definitions: {
+				...baseRegistries.resourceV2Definitions,
+			},
+			resourceV2Groups: {
+				...baseRegistries.resourceV2Groups,
+			},
 			resources: { ...baseRegistries.resources },
 			actionCategories: {
 				...baseRegistries.actionCategories,
