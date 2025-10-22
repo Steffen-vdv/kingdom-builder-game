@@ -12,6 +12,7 @@ import {
 	sessionSimulateRequestSchema,
 	sessionSimulateResponseSchema,
 	sessionRegistriesSchema,
+	sessionMetadataSnapshotSchema,
 	runtimeConfigResponseSchema,
 } from '../src';
 import type {
@@ -33,6 +34,10 @@ import type {
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
 } from '../src/session/contracts';
+import type {
+	SessionResourceRegistryPayload,
+	SessionResourceMetadataSnapshot,
+} from '../src/session/resourceV2';
 
 describe('session contract schemas', () => {
 	it('match action support request and response types', () => {
@@ -102,6 +107,9 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof runtimeConfigResponseSchema>
 		>().toEqualTypeOf<SessionRuntimeConfigResponse>();
+		expectTypeOf<
+			ZodInfer<typeof runtimeConfigResponseSchema>['resources']
+		>().toEqualTypeOf<SessionResourceRegistryPayload>();
 	});
 
 	it('matches the registries payload type including action categories', () => {
@@ -112,6 +120,16 @@ describe('session contract schemas', () => {
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();
+		expectTypeOf<
+			SessionRegistriesPayload['resources']
+		>().toEqualTypeOf<SessionResourceRegistryPayload>();
+	});
+
+	it('surfaces resource metadata snapshots on the session payload', () => {
+		expect(sessionMetadataSnapshotSchema).toBeDefined();
+		expectTypeOf<
+			ZodInfer<typeof sessionMetadataSnapshotSchema>['resources']
+		>().toEqualTypeOf<SessionResourceMetadataSnapshot | undefined>();
 	});
 });
 

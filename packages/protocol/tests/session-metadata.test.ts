@@ -7,6 +7,7 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 } from '../src/session';
+import type { SessionResourceMetadataSnapshot } from '../src/session/resourceV2';
 
 describe('session snapshot metadata', () => {
 	it('parses overview metadata snapshots', () => {
@@ -46,16 +47,42 @@ describe('session snapshot metadata', () => {
 				static: { game: ['game'] },
 			},
 		};
+		const descriptor = {
+			key: 'morale',
+			icon: 'morale-icon',
+			label: 'Morale',
+			description: 'Track overall morale.',
+			order: 1,
+			percent: true,
+		};
+		const resources: SessionResourceMetadataSnapshot = {
+			values: {
+				morale: {
+					descriptor,
+				},
+			},
+			groups: {},
+			tiers: {},
+			orderedDisplay: [
+				{
+					type: 'value',
+					key: 'morale',
+					descriptor,
+				},
+			],
+			recentGains: [],
+		};
 		const metadata: SessionSnapshotMetadata = {
 			passiveEvaluationModifiers: {},
 			overview,
-			stats: {
+			values: {
 				morale: {
 					label: 'Morale',
 					displayAsPercent: true,
 					format: 'percent',
 				},
 			},
+			resources,
 		};
 		const response = {
 			sessionId: 'session-123',
@@ -65,7 +92,7 @@ describe('session snapshot metadata', () => {
 				buildings: {},
 				developments: {},
 				populations: {},
-				resources: {},
+				resources: { definitions: {}, groups: {} },
 			},
 		};
 		const result = sessionCreateResponseSchema.parse(response);
@@ -73,7 +100,7 @@ describe('session snapshot metadata', () => {
 			result.snapshot as { metadata: SessionSnapshotMetadata }
 		).metadata;
 		expect(parsedMetadata.overview?.hero?.title).toBe('Realm Guide');
-		expect(parsedMetadata.stats?.morale?.displayAsPercent).toBe(true);
+		expect(parsedMetadata.values?.morale?.displayAsPercent).toBe(true);
 	});
 
 	it('exposes descriptor format typing', () => {

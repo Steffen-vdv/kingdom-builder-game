@@ -6,6 +6,11 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type {
+	SessionResourceMetadataSnapshot,
+	SessionResourceRecentGain,
+	SessionResourceValueMap,
+} from './resourceV2';
 
 export type SessionPlayerId = 'A' | 'B';
 
@@ -61,10 +66,7 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	statsHistory: Record<string, boolean>;
-	population: Record<string, number>;
+	values: SessionResourceValueMap;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
@@ -132,9 +134,7 @@ export interface SessionAdvanceResult {
 }
 
 export interface PlayerSnapshotDeltaBucket {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
+	values: Record<string, number>;
 }
 
 export interface SimulateUpcomingPhasesIds {
@@ -172,11 +172,6 @@ export interface SessionRuleSnapshot {
 	tieredResourceKey: string;
 	tierDefinitions: HappinessTierDefinition[];
 	winConditions: WinConditionDefinition[];
-}
-
-export interface SessionRecentResourceGain {
-	key: string;
-	amount: number;
 }
 
 export type SessionEffectLogMap = Record<string, ReadonlyArray<unknown>>;
@@ -281,11 +276,10 @@ export interface SessionTriggerMetadata {
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
+	values?: Record<string, SessionMetadataDescriptor>;
+	resources?: SessionResourceMetadataSnapshot;
 	buildings?: Record<string, SessionMetadataDescriptor>;
 	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
@@ -296,7 +290,7 @@ export interface SessionSnapshot {
 	game: SessionGameSnapshot;
 	phases: SessionPhaseDefinition[];
 	actionCostResource: string;
-	recentResourceGains: SessionRecentResourceGain[];
+	recentResourceGains: SessionResourceRecentGain[];
 	compensations: Record<SessionPlayerId, PlayerStartConfig>;
 	rules: SessionRuleSnapshot;
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
@@ -330,7 +324,6 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SerializedRegistry,
 	SessionMetadataSnapshot,
 	SessionMetadataSnapshotResponse,
