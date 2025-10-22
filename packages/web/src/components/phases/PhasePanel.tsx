@@ -197,6 +197,14 @@ export default function PhasePanel() {
 	const awaitingManualStart = phase.awaitingManualStart;
 	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
 	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
+	const shouldSuppressHoverCards = useMemo(
+		() =>
+			Boolean(
+				resolution &&
+					(!resolution.requireAcknowledgement || !resolution.isComplete),
+			),
+		[resolution],
+	);
 	const showPhaseHistory = useCallback(
 		(phaseSummary: PhaseSummary, resolution: ActionResolution | null) => {
 			if (phaseSummary.isActionPhase || !resolution) {
@@ -263,15 +271,26 @@ export default function PhasePanel() {
 							phaseHistory.byPhase.get(historyKey) ??
 							null;
 						const isActive = phaseDefinition.id === phase.currentPhaseId;
+						const shouldShowHoverIndicator =
+							Boolean(phaseResolution) &&
+							!phaseDefinition.isActionPhase &&
+							!shouldSuppressHoverCards;
+						const resolvedPhaseListItemClassName = [
+							phaseListItemClassName,
+							shouldShowHoverIndicator ? 'hoverable cursor-help' : '',
+						]
+							.filter(Boolean)
+							.join(' ');
+						const handlePhaseMouseEnter = shouldShowHoverIndicator
+							? () => showPhaseHistory(phaseDefinition, phaseResolution)
+							: hidePhaseHistory;
 						return (
 							<li
 								key={phaseDefinition.id}
-								className={phaseListItemClassName}
+								className={resolvedPhaseListItemClassName}
 								data-active={isActive ? 'true' : 'false'}
 								aria-current={isActive ? 'step' : undefined}
-								onMouseEnter={() =>
-									showPhaseHistory(phaseDefinition, phaseResolution)
-								}
+								onMouseEnter={handlePhaseMouseEnter}
 								onMouseLeave={hidePhaseHistory}
 							>
 								<span className={phaseListItemContentClassName}>
