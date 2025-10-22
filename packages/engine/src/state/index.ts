@@ -1,4 +1,10 @@
 import type { EffectDef } from '../effects';
+import type { ResourceV2EngineRegistry } from '../resourceV2/registry';
+import type { PlayerResourceV2State } from './resource_v2';
+import {
+	createEmptyPlayerResourceV2State,
+	createPlayerResourceV2State,
+} from './resource_v2';
 
 export const Resource: Record<string, string> = {};
 export type ResourceKey = string;
@@ -119,6 +125,7 @@ export class PlayerState {
 	statSources: Record<StatKey, Record<string, StatSourceContribution>>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
+	resourceV2: PlayerResourceV2State;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any;
 	constructor(id: PlayerId, name: string) {
@@ -164,6 +171,7 @@ export class PlayerState {
 		}
 		this.skipPhases = {};
 		this.skipSteps = {};
+		this.resourceV2 = createEmptyPlayerResourceV2State();
 	}
 }
 
@@ -187,3 +195,21 @@ export class GameState {
 		return this.players[(this.currentPlayerIndex + 1) % this.players.length]!;
 	}
 }
+
+export function initializePlayerResourceV2State(
+	player: PlayerState,
+	registry: ResourceV2EngineRegistry,
+): PlayerResourceV2State {
+	const state = createPlayerResourceV2State(registry);
+	player.resourceV2 = state;
+	return state;
+}
+
+export {
+	createPlayerResourceV2State,
+	resetRecentResourceV2Gains,
+} from './resource_v2';
+export type {
+	PlayerResourceV2State,
+	PlayerResourceV2TierState,
+} from './resource_v2';
