@@ -63,6 +63,23 @@ export {
 	phaseStepSchema,
 	phaseSchema,
 } from './config/schema';
+export {
+	resourceV2ReconciliationStrategySchema,
+	resourceV2TierStepDisplaySchema,
+	resourceV2TierStepSchema,
+	resourceV2TierTrackDisplaySchema,
+	resourceV2TierTrackSchema,
+	resourceV2DisplayMetadataSchema,
+	resourceV2BoundsConfigSchema,
+	resourceV2GroupParentMetadataSchema,
+	resourceV2GroupMetadataSchema,
+	resourceV2GlobalActionCostSchema,
+	resourceV2DefinitionSchema,
+	resourceV2DefinitionsSchema,
+	resourceV2GroupDefinitionSchema,
+	resourceV2GroupDefinitionsSchema,
+	resourceV2ConfigSchema,
+} from './resourceV2/definitions';
 export type {
 	RequirementConfig,
 	EffectConfig,
@@ -82,6 +99,21 @@ export type {
 	PhaseStepConfig,
 	PhaseConfig,
 } from './config/schema';
+export type {
+	ResourceV2ReconciliationStrategy,
+	ResourceV2TierStepDisplayConfig,
+	ResourceV2TierStepConfig,
+	ResourceV2TierTrackDisplayConfig,
+	ResourceV2TierTrackConfig,
+	ResourceV2DisplayMetadataConfig,
+	ResourceV2BoundsConfig,
+	ResourceV2GroupParentMetadataConfig,
+	ResourceV2GroupMetadataConfig,
+	ResourceV2GlobalActionCostConfig,
+	ResourceV2DefinitionConfig,
+	ResourceV2GroupDefinitionConfig,
+	ResourceV2Config,
+} from './resourceV2/definitions';
 export type {
 	PhaseSkipConfig,
 	PhaseSkipStep,
