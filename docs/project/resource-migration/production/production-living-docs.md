@@ -32,18 +32,20 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | 2025-10-25 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/types.ts, packages/engine/src/resource-v2/content-types.ts, packages/engine/src/resource-v2/fromContent.ts, packages/engine/src/resource-v2/index.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T5 - Added runtime ResourceV2 catalog types, converter with MVP validation/defaulting, and documented pending integration tasks.                                               | npm run format; npm run lint; npm run check                                 | Wire runtime catalog into engine bootstrap, finish converter tests, and confirm check pipeline in follow-up tasks.  |
 | 2025-10-25 | ChatGPT (gpt-5-codex) | packages/testing/src/factories/resourceV2.ts, packages/testing/src/index.ts, docs/project/resource-migration/production/production-living-docs.md                                                                                                          | Resource Migration MVP - P2 - T14 - Introduced ResourceV2 testing factories wrapping builders with override support and registry materialisers, plus documentation updates.                                  | npm run format; npm run lint; npm run check                                 | Integrate helpers into engine/protocol suites and expand coverage once first migrated resource lands.               |
 
+| 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/reconciliation.ts, packages/engine/src/resource-v2/index.ts, docs/project/resource-migration/production/production-living-docs.md
+| Resource Migration MVP - P2 - T8 - Added ResourceV2 reconciliation helpers for percent rounding, clamp reconciliation, and exports, then recorded follow-up wiring needs. | npm run format; npm run lint; npm run check | Hook helpers into resource effect handlers and backfill reconciliation-focused tests. |
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-25 15:30
-- **Current Focus:** Resource Migration MVP - P2 - T14 - Stand up ResourceV2 testing utilities for registries
-- **State Summary:** Added testing helpers that wrap the ResourceV2 builders to quickly author resource and group definitions with metadata, bounds, tier, and global cost overrides, plus a registry materialiser that mirrors production ordering. Exported the helpers via `@kingdom-builder/testing` and documented usage in this living doc. Validation to ensure parent overrides merge correctly happens post-build to retain builder invariants. Tests (`npm run format`, `npm run lint`, `npm run check`) verified the change set.
+- **Timestamp (UTC):** 2025-10-26 16:00
+- **Current Focus:** Resource Migration MVP - P2 - T8 - Deliver reconciliation helpers for runtime consumption
+- **State Summary:** Introduced pure reconciliation utilities that compute requested deltas from static amounts and summed percent modifiers, apply explicit rounding (`up`, `down`, `nearest`→ties up), clamp against configured bounds, and expose shared types for change parameters and modes. Exported the helpers for downstream handlers and captured follow-up wiring needs.
 - **Next Suggested Tasks:**
-  - Adopt the new testing helpers inside engine and protocol suites to replace bespoke resource fixtures (Owner: Engine/Protocol).
-  - Draft an example Absorption migration test case leveraging the factories to validate first-tier transitions (Owner: Content/Test).
-- **Blocking Issues / Risks:** Awaiting alignment on where the testing registries should plug into existing session factory helpers; coordination needed to avoid duplicated setup paths.
+  - Wire `reconcileResourceChange` into add/remove/transfer effect handlers and session state mutations (Owner: Engine).
+  - Author engine tests validating rounding/clamp combinations and preparing stubs for future Pass/Reject reconciliation (Owner: Engine/Test).
+- **Blocking Issues / Risks:** Pending integration work—effect handlers still bypass the new helpers, so ensure adoption happens before migrating live content.
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 ## 5. Notes & Decisions Archive
