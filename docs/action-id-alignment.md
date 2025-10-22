@@ -90,8 +90,7 @@ parameters specify the role being hired so role-specific passives continue to fi
 | ---------------- | --------------- | ------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `hire_council`   | `council`       | 1 AP, 5 gold  | Population < max | Grants +1 AP each gain AP step; upkeep 2 gold.【F:packages/contents/src/populations.ts†L50-L70】                 |
 | `hire_legion`    | `legion`        | 1 AP, 5 gold  | Population < max | Adds passive for +1 army strength and upkeep 1 gold.【F:packages/contents/src/populations.ts†L74-L97】           |
-| `hire_fortifier` | `fortifier`     | 1 AP, 5 gold  | Population < max | Adds passive for +1 fortification strength and upkeep 1 gold.【F:packages/contents/src/populations.ts†L99-L122】 |
-| `hire_citizen`   | `citizen`       | 1 AP, 5 gold  | Population < max | Baseline citizen with icon only; no passive hooks.【F:packages/contents/src/populations.ts†L124-L127】           |
+| `hire_fortifier` | `fortifier`     | 1 AP, 5 gold  | Population < max | Adds passive for +1 fortification strength and upkeep 1 gold.【F:packages/contents/src/populations.ts†L99-L118】 |
 
 ## Shared behaviours
 

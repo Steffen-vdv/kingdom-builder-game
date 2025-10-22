@@ -26,7 +26,7 @@ const POPULATION_ARCHETYPE_LABEL = 'Archetypes';
 const MAX_POPULATION_FALLBACK_KEY = 'maxPopulation';
 
 const NORMALIZE_PATTERN = /[\s_-]+/g;
-const POPULATION_KEYWORDS = ['population', 'citizen', 'inhabitant'];
+const POPULATION_KEYWORDS = ['population', 'inhabitant'];
 const CAPACITY_KEYWORDS = ['max', 'cap', 'capacity', 'limit', 'maximum'];
 
 const normalizeDescriptor = (value: string | undefined): string | undefined =>

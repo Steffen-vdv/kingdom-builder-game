@@ -7,6 +7,7 @@ import type { TranslationContext } from '../translation/context';
 import type { Action } from './actionTypes';
 import { SessionMirroringError, isFatalSessionError } from './sessionErrors';
 import { createFailureResolutionSnapshot } from './actionResolutionLog';
+import { getActionCategoryId } from '../utils/actionCategory';
 import type { ActionResolution } from './useActionResolution';
 
 type RequirementFailureCarrier = {
@@ -47,7 +48,8 @@ export function createActionErrorHandler({
 			return true;
 		}
 		const context = contextRef.current;
-		const icon = context.actions.get(action.id)?.icon || '';
+		const stepDefinition = context.actions.get(action.id);
+		const icon = stepDefinition?.icon || '';
 		let message = (error as Error).message || 'Action failed';
 		const executionError = error as RequirementFailureCarrier;
 		const requirementFailure =
@@ -60,13 +62,31 @@ export function createActionErrorHandler({
 		const headline = icon
 			? `Failed to play ${icon} ${action.name}`
 			: `Failed to play ${action.name}`;
-		const resolution = createFailureResolutionSnapshot({
+		const categoryId = getActionCategoryId(stepDefinition);
+		const categoryDefinition =
+			categoryId && context.actionCategories.has(categoryId)
+				? context.actionCategories.get(categoryId)
+				: undefined;
+		const resolutionOptions = {
 			action,
-			stepDefinition: context.actions.get(action.id),
 			player: { id: player.id, name: player.name },
 			detail: message,
 			headline,
-		});
+		} as {
+			action: Action;
+			stepDefinition?: { icon?: unknown; name?: unknown; category?: unknown };
+			categoryDefinition?: { icon?: unknown; title?: unknown };
+			player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
+			detail: string;
+			headline?: string;
+		};
+		if (stepDefinition) {
+			resolutionOptions.stepDefinition = stepDefinition;
+		}
+		if (categoryDefinition) {
+			resolutionOptions.categoryDefinition = categoryDefinition;
+		}
+		const resolution = createFailureResolutionSnapshot(resolutionOptions);
 		addResolutionLog(resolution);
 		return false;
 	};

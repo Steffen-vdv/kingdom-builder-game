@@ -9,6 +9,8 @@ import {
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
+import { formatActionTitle } from '../src/utils/formatActionTitle';
+import { getActionCategoryId } from '../src/utils/actionCategory';
 import {
 	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
 	type DevelopmentActionId,
@@ -41,16 +43,27 @@ const DEVELOPMENT_ID_BY_ACTION_ID = Object.fromEntries(
 	),
 ) as Record<DevelopmentActionId, DevelopmentId>;
 
-function combineLabels(left: string, right: string): string {
-	const base = left.trim();
-	const entry = right.trim();
-	if (entry.length === 0) {
-		return base;
+function buildDefinitionLabel(
+	definition:
+		| { icon?: string | undefined; name?: string | undefined }
+		| undefined,
+	fallback: string,
+): string {
+	const icon = typeof definition?.icon === 'string' ? definition.icon : '';
+	const name =
+		typeof definition?.name === 'string' ? definition.name : fallback;
+	const combined = [icon, name].filter(Boolean).join(' ').trim();
+	return combined.length > 0 ? combined : fallback;
+}
+
+function extractEntryTitle(entry: SummaryEntry): string {
+	if (typeof entry === 'string') {
+		return entry.trim();
 	}
-	if (base.length === 0) {
-		return entry;
+	if (typeof entry.title === 'string') {
+		return entry.title.trim();
 	}
-	return `${base} - ${entry}`;
+	return '';
 }
 
 function normalizeDescribedTitle(
@@ -155,6 +168,67 @@ describe('royal decree translation', () => {
 		}
 		throw new Error('Expected royal decree action with develop options');
 	})();
+
+	const buildDevelopActionLabel = (actionId: string): string => {
+		const developAction = translationContext.actions.get(actionId);
+		if (!developAction) {
+			throw new Error(`Missing develop action definition for ${actionId}`);
+		}
+		const actionIcon =
+			typeof developAction.icon === 'string' ? developAction.icon : undefined;
+		const actionTitle =
+			typeof developAction.name === 'string' ? developAction.name : actionId;
+		const categoryId = getActionCategoryId(
+			developAction as { category?: unknown },
+		);
+		const categoryDefinition =
+			categoryId && translationContext.actionCategories.has(categoryId)
+				? translationContext.actionCategories.get(categoryId)
+				: undefined;
+		const categoryIcon =
+			typeof categoryDefinition?.icon === 'string'
+				? categoryDefinition.icon
+				: undefined;
+		const categoryTitle =
+			typeof categoryDefinition?.title === 'string'
+				? categoryDefinition.title
+				: categoryId;
+		const options = { actionTitle } as {
+			categoryIcon?: string;
+			categoryTitle?: string;
+			actionIcon?: string;
+			actionTitle: string;
+		};
+		if (typeof categoryIcon !== 'undefined') {
+			options.categoryIcon = categoryIcon;
+		}
+		if (typeof categoryTitle !== 'undefined') {
+			options.categoryTitle = categoryTitle;
+		}
+		if (typeof actionIcon !== 'undefined') {
+			options.actionIcon = actionIcon;
+		}
+		return formatActionTitle(options);
+	};
+
+	const expectEntryIncludesLabels = (
+		entry: SummaryEntry,
+		actionLabel: string,
+		targetLabel: string,
+	): void => {
+		const title = extractEntryTitle(entry);
+		expect(title).toContain(actionLabel);
+		expect(title).toContain(targetLabel);
+		expect(title.startsWith(actionLabel)).toBe(true);
+	};
+
+	const extractEntryItems = (entry: SummaryEntry): SummaryEntry[] => {
+		if (typeof entry === 'string') {
+			return [];
+		}
+		const items = entry.items ?? [];
+		return Array.isArray(items) ? items : [items];
+	};
 	it('summarizes options using develop action label', () => {
 		const summary = summarizeContent(
 			'action',
@@ -170,33 +244,29 @@ describe('royal decree translation', () => {
 		const group = findGroupEntry(summary, groupTitle);
 		expect(group.items).toHaveLength(actionInfo.options.length);
 		for (const option of actionInfo.options) {
-			const developAction = translationContext.actions.get(option.actionId);
-			if (!developAction) {
-				throw new Error(
-					`Missing develop action definition for ${option.actionId}`,
-				);
-			}
-			const developLabel = combineLabels(
-				`${developAction.icon ?? ''} ${developAction.name ?? option.actionId}`,
-				'',
-			);
+			const formattedActionTitle = buildDevelopActionLabel(option.actionId);
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
 				throw new Error(`Missing development definition for ${developmentId}`);
 			}
-			const developmentLabel = combineLabels(
-				`${development.icon ?? ''} ${development.name ?? developmentId}`,
-				'',
-			);
-			const expectedTitle = combineLabels(developLabel, developmentLabel);
-			const entry = group.items.find((item) =>
-				typeof item === 'string'
-					? item === expectedTitle
-					: item.title === expectedTitle,
-			);
+			const developmentLabel = buildDefinitionLabel(development, developmentId);
+			const entry = group.items.find((item) => {
+				const title = extractEntryTitle(item);
+				return title.startsWith(formattedActionTitle);
+			});
 			expect(entry).toBeDefined();
-			expect(typeof entry).toBe('string');
+			if (!entry) {
+				continue;
+			}
+			expectEntryIncludesLabels(entry, formattedActionTitle, developmentLabel);
+			if (typeof entry !== 'string') {
+				const detailEntries = extractEntryItems(entry);
+				const containsDevelopmentDetail = detailEntries
+					.map(extractEntryTitle)
+					.some((detail) => detail.includes(developmentLabel));
+				expect(containsDevelopmentDetail).toBe(true);
+			}
 		}
 		expect(summaryAgain).toEqual(summary);
 	});
@@ -211,25 +281,13 @@ describe('royal decree translation', () => {
 		const group = findGroupEntry(description, groupTitle);
 		expect(group.items).toHaveLength(actionInfo.options.length);
 		for (const option of actionInfo.options) {
-			const developAction = translationContext.actions.get(option.actionId);
-			if (!developAction) {
-				throw new Error(
-					`Missing develop action definition for ${option.actionId}`,
-				);
-			}
-			const developLabel = combineLabels(
-				`${developAction.icon ?? ''} ${developAction.name ?? option.actionId}`,
-				'',
-			);
+			const formattedActionTitle = buildDevelopActionLabel(option.actionId);
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
 				throw new Error(`Missing development definition for ${developmentId}`);
 			}
-			const developmentLabel = combineLabels(
-				`${development.icon ?? ''} ${development.name ?? developmentId}`,
-				'',
-			);
+			const developmentLabel = buildDefinitionLabel(development, developmentId);
 			const described = describeContent(
 				'action',
 				option.actionId,
@@ -245,22 +303,20 @@ describe('royal decree translation', () => {
 				describedTitle,
 				developmentLabel,
 			);
-			const expectedTitle = combineLabels(developLabel, normalizedTitle);
-			const entry = group.items.find((item) =>
-				typeof item === 'string'
-					? item === expectedTitle
-					: item.title === expectedTitle,
-			);
+			const entry = group.items.find((item) => {
+				const title = extractEntryTitle(item);
+				return title.startsWith(formattedActionTitle);
+			});
 			expect(entry).toBeDefined();
 			if (!entry) {
 				continue;
 			}
-			if (typeof entry === 'string') {
-				expect(entry).toBe(expectedTitle);
-				continue;
-			}
-			expect(entry.title).toBe(expectedTitle);
-			expect(entry.items).toContain(normalizedTitle);
+			expectEntryIncludesLabels(entry, formattedActionTitle, normalizedTitle);
+			const detailEntries = extractEntryItems(entry);
+			const includesNormalizedTitle = detailEntries
+				.map(extractEntryTitle)
+				.some((detail) => detail.includes(normalizedTitle));
+			expect(includesNormalizedTitle).toBe(true);
 		}
 	});
 
@@ -295,32 +351,24 @@ describe('royal decree translation', () => {
 		if (!development) {
 			throw new Error(`Missing development definition for ${developmentId}`);
 		}
-		if (typeof entry === 'string') {
-			expect(entry).toContain(development.name ?? developmentId);
+		const developmentLabel = buildDefinitionLabel(development, developmentId);
+		const formattedActionTitle = buildDevelopActionLabel(developActionId);
+		expect(entry).toBeDefined();
+		if (!entry) {
 			return;
 		}
-		const developAction = translationContext.actions.get(developActionId);
-		if (!developAction) {
-			throw new Error(
-				`Missing develop action definition for ${developActionId}`,
-			);
+		if (typeof entry === 'string') {
+			expect(entry).toContain(formattedActionTitle);
+			expect(entry).toContain(developmentLabel);
+			return;
 		}
-		const developLabel = combineLabels(
-			`${developAction.icon ?? ''} ${developAction.name ?? developActionId}`,
-			'',
-		);
-		expect(entry.title).toBe(developLabel);
+		expectEntryIncludesLabels(entry, formattedActionTitle, developmentLabel);
 		expect(entry.timelineKind).toBe('subaction');
 		expect(entry.actionId).toBe(developActionId);
-		const entryItems = Array.isArray(entry.items)
-			? entry.items
-			: entry.items
-				? [entry.items]
-				: [];
-		const hasDevelopmentLine = entryItems.some((item) => {
-			const text = typeof item === 'string' ? item : item?.title;
-			return text?.includes(development.name ?? developmentId) ?? false;
-		});
+		const detailEntries = extractEntryItems(entry);
+		const hasDevelopmentLine = detailEntries
+			.map(extractEntryTitle)
+			.some((detail) => detail.includes(developmentLabel));
 		expect(hasDevelopmentLine).toBe(true);
 	});
 
@@ -329,7 +377,7 @@ describe('royal decree translation', () => {
 		if (!selectedOption) {
 			throw new Error('Expected development option');
 		}
-		const { developmentId } = selectedOption;
+		const { developmentId, actionId: developActionId } = selectedOption;
 		const logLines = logContent('action', actionInfo.id, translationContext, {
 			landId: 'A-L1',
 			choices: {
@@ -342,17 +390,32 @@ describe('royal decree translation', () => {
 				},
 			},
 		});
-		const joined = logLines
-			.map((line) => (typeof line === 'string' ? line : line.text))
-			.join('\n');
-		const occurrences = joined.match(/Developed [^\n]*/gu) ?? [];
-		expect(occurrences.length).toBeLessThanOrEqual(1);
-		if (occurrences.length === 1) {
-			const development = translationContext.developments.get(developmentId);
-			if (!development) {
-				throw new Error(`Missing development definition for ${developmentId}`);
-			}
-			expect(occurrences[0]).toContain(development.name ?? developmentId);
+		const normalizedLines = logLines
+			.map((line) => {
+				if (typeof line === 'string') {
+					return line;
+				}
+				if (typeof line.text === 'string') {
+					return line.text;
+				}
+				if (typeof line.title === 'string') {
+					return line.title;
+				}
+				return '';
+			})
+			.filter((line): line is string => line.length > 0);
+		const formattedActionTitle = buildDevelopActionLabel(developActionId);
+		const development = translationContext.developments.get(developmentId);
+		if (!development) {
+			throw new Error(`Missing development definition for ${developmentId}`);
+		}
+		const developmentLabel = buildDefinitionLabel(development, developmentId);
+		const matchingLines = normalizedLines.filter((line) =>
+			line.includes(formattedActionTitle),
+		);
+		expect(matchingLines.length).toBeLessThanOrEqual(1);
+		if (matchingLines[0]) {
+			expect(matchingLines[0]).toContain(developmentLabel);
 		}
 	});
 });

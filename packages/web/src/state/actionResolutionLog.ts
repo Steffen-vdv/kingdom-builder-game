@@ -57,7 +57,8 @@ function createResolutionLogSnapshot({
 
 interface CreateFailureResolutionOptions {
 	action: Action;
-	stepDefinition?: { icon?: unknown; name?: unknown };
+	stepDefinition?: { icon?: unknown; name?: unknown; category?: unknown };
+	categoryDefinition?: { icon?: unknown; title?: unknown };
 	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
 	detail: string;
 	headline?: string;
@@ -86,6 +87,7 @@ function resolveActionSource(
 function createFailureResolutionSnapshot({
 	action,
 	stepDefinition,
+	categoryDefinition,
 	player,
 	detail,
 	headline = 'Action failed',
@@ -100,6 +102,7 @@ function createFailureResolutionSnapshot({
 		action,
 		stepDefinition,
 		headline,
+		categoryDefinition,
 	);
 	const source = resolveActionSource(actionMeta);
 	return createResolutionLogSnapshot({

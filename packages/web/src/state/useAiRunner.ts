@@ -15,6 +15,7 @@ import { createSessionTranslationContext } from './createSessionTranslationConte
 import { snapshotPlayer, type PlayerSnapshot } from '../translation';
 import { buildActionResolution } from './buildActionResolution';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import { getActionCategoryId } from '../utils/actionCategory';
 import type { Action } from './actionTypes';
 import type {
 	ActionResolution,
@@ -141,10 +142,16 @@ async function presentAiActions({
 			resourceKeys,
 			resources: registries.resources,
 		});
+		const categoryId = getActionCategoryId(stepDefinition);
+		const categoryDefinition =
+			categoryId && translationContext.actionCategories.has(categoryId)
+				? translationContext.actionCategories.get(categoryId)
+				: undefined;
 		const actionMeta = buildResolutionActionMeta(
 			action,
 			stepDefinition,
 			resolution.headline,
+			categoryDefinition,
 		);
 		const source = {
 			kind: 'action' as const,

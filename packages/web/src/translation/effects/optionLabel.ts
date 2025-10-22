@@ -1,6 +1,8 @@
 import type { ActionEffectGroupOption } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../content';
 import type { TranslationContext } from '../context';
+import { formatActionTitle } from '../../utils/formatActionTitle';
+import { getActionCategoryId } from '../../utils/actionCategory';
 
 type ObjectSummaryEntry = Extract<SummaryEntry, Record<string, unknown>>;
 
@@ -111,11 +113,44 @@ function resolveActionLabel(
 ): string {
 	try {
 		const definition = context.actions.get(option.actionId);
-		const icon = typeof definition?.icon === 'string' ? definition.icon : '';
-		const name =
+		const actionIcon =
+			typeof definition?.icon === 'string' ? definition.icon : undefined;
+		const actionTitle =
 			typeof definition?.name === 'string' ? definition.name : option.actionId;
-		const combined = [icon, name].filter(Boolean).join(' ').trim();
-		return combined.length > 0 ? combined : option.actionId;
+		const categoryId = getActionCategoryId(
+			definition as { category?: unknown },
+		);
+		const categoryDefinition =
+			categoryId && context.actionCategories.has(categoryId)
+				? context.actionCategories.get(categoryId)
+				: undefined;
+		const categoryIcon =
+			typeof categoryDefinition?.icon === 'string'
+				? categoryDefinition.icon
+				: undefined;
+		const categoryTitle =
+			typeof categoryDefinition?.title === 'string'
+				? categoryDefinition.title
+				: categoryId;
+		const titleOptions = {
+			actionTitle,
+		} as {
+			categoryIcon?: string;
+			categoryTitle?: string;
+			actionIcon?: string;
+			actionTitle: string;
+		};
+		if (typeof categoryIcon !== 'undefined') {
+			titleOptions.categoryIcon = categoryIcon;
+		}
+		if (typeof categoryTitle !== 'undefined') {
+			titleOptions.categoryTitle = categoryTitle;
+		}
+		if (typeof actionIcon !== 'undefined') {
+			titleOptions.actionIcon = actionIcon;
+		}
+		const formatted = formatActionTitle(titleOptions);
+		return formatted || option.actionId;
 	} catch {
 		return option.actionId;
 	}

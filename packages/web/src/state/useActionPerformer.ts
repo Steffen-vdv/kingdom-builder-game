@@ -14,6 +14,7 @@ import type {
 	ShowResolutionOptions,
 } from './useActionResolution';
 import { buildResolutionActionMeta } from './deriveResolutionActionName';
+import { getActionCategoryId } from '../utils/actionCategory';
 import { createSessionTranslationContext } from './createSessionTranslationContext';
 import { performSessionAction } from './sessionSdk';
 import { markFatalSessionError, isFatalSessionError } from './sessionErrors';
@@ -182,8 +183,18 @@ export function useActionPerformer({
 				const { timeline, logLines, summaries, headline } = resolution;
 				syncPhaseState(snapshotAfter);
 				refresh();
+				const categoryId = getActionCategoryId(stepDef);
+				const categoryDefinition =
+					categoryId && context.actionCategories.has(categoryId)
+						? context.actionCategories.get(categoryId)
+						: undefined;
 				void presentResolutionOrLog({
-					action: buildResolutionActionMeta(action, stepDef, headline),
+					action: buildResolutionActionMeta(
+						action,
+						stepDef,
+						headline,
+						categoryDefinition,
+					),
 					logLines,
 					summaries,
 					player: {

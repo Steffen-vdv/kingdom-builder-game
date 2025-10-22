@@ -33,10 +33,10 @@ const syntheticData: SyntheticContent = {
 		'resource:synthetic:coin': { icon: '🪙', label: 'Synthetic Coin' },
 		'resource:synthetic:ap': { icon: '🛠️', label: 'Synthetic Action Points' },
 	},
-	populationRoleId: 'population:synthetic:citizen',
+	populationRoleId: 'population:synthetic:subject',
 	populationInfo: { icon: '👥', label: 'Synthetic Population' },
 	populationRoles: {
-		'population:synthetic:citizen': { icon: '🧑‍🌾', label: 'Synthetic Citizen' },
+		'population:synthetic:subject': { icon: '🧑‍🌾', label: 'Synthetic Subjects' },
 	},
 	landInfo: { icon: '🗺️', label: 'Synthetic Land' },
 	slotInfo: { icon: '🧱', label: 'Synthetic Slot' },

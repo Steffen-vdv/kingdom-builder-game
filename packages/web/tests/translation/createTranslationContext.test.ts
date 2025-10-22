@@ -66,9 +66,9 @@ describe('createTranslationContext', () => {
 				: undefined,
 			stats: {
 				[statKey]: {
-					label: 'Citizen Capacity',
+					label: 'Population Capacity',
 					icon: '🏯',
-					description: 'Represents how many citizens can serve the realm.',
+					description: 'Represents how much population the realm can sustain.',
 					displayAsPercent: true,
 					format: { prefix: '~', percent: true },
 				},
@@ -81,7 +81,7 @@ describe('createTranslationContext', () => {
 					description: 'Designated location for new developments.',
 				},
 				land: { icon: '🌄', label: 'Territory' },
-				population: { icon: '🧑‍🤝‍🧑', label: 'Citizens' },
+				population: { icon: '🧑‍🤝‍🧑', label: 'Population' },
 				upkeep: { icon: '🪣', label: 'Maintenance' },
 			},
 			triggers: {
@@ -250,7 +250,7 @@ describe('createTranslationContext', () => {
                             },
                             "population": {
                               "icon": "🧑‍🤝‍🧑",
-                              "label": "Citizens",
+                              "label": "Population",
                             },
                             "resource": {
                               "description": "The royal treasury fuels your ambitions.",
@@ -263,14 +263,14 @@ describe('createTranslationContext', () => {
                               "label": "Plot Slot",
                             },
                             "stat": {
-                              "description": "Represents how many citizens can serve the realm.",
+                              "description": "Represents how much population the realm can sustain.",
                               "displayAsPercent": true,
                               "format": {
                                 "percent": true,
                                 "prefix": "~",
                               },
                               "icon": "🏯",
-                              "label": "Citizen Capacity",
+                              "label": "Population Capacity",
                             },
                             "trigger": {
                               "future": "When the signal sounds",

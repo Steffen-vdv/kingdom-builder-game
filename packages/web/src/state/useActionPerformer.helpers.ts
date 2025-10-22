@@ -76,6 +76,7 @@ export async function handleMissingActionDefinition({
 		action,
 		undefined,
 		fallbackHeadline,
+		undefined,
 	);
 	const resolutionSource = {
 		kind: 'action' as const,

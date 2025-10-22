@@ -46,14 +46,14 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			action: {
 				id: 'action-id',
-				name: 'Test Action',
+				name: 'Action - ⚙️ Basic - ⚔️ Test Action',
 				icon: '⚔️',
 			},
 			source: {
 				kind: 'action',
 				label: 'Action',
 				id: 'action-id',
-				name: 'Test Action',
+				name: 'Action - ⚙️ Basic - ⚔️ Test Action',
 				icon: '⚔️',
 			},
 			actorLabel: 'Played by',
@@ -71,7 +71,9 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Action - Test Action')).toBeInTheDocument();
+		expect(
+			screen.getByText('Action - ⚙️ Basic - ⚔️ Test Action'),
+		).toBeInTheDocument();
 		const actionPlayerLabel = screen.getByLabelText('Player');
 		expect(actionPlayerLabel).toHaveTextContent('Player One');
 	});

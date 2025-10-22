@@ -142,12 +142,7 @@ function ResolutionCard({
 	const normalizedHeaderSubject = actorHeaderSubject
 		?.trim()
 		.toLocaleLowerCase();
-	let headerTitle = actorHeaderSubject
-		? normalizedHeaderSubject &&
-			normalizedHeaderSubject !== normalizedResolvedTitle
-			? `${resolvedLabels.title} - ${actorHeaderSubject}`
-			: actorHeaderSubject
-		: defaultTitle;
+	let headerTitle = defaultTitle;
 	if (resolvedSourceKind === 'phase') {
 		const sanitizedPhaseSubject = (actorHeaderSubject || '')
 			.replace(LEADING_EMOJI_PATTERN, '')
@@ -157,6 +152,14 @@ function ResolutionCard({
 		headerTitle = sanitizedPhaseSubject
 			? `${SOURCE_LABELS.phase.title} - ${sanitizedPhaseSubject}`
 			: `${SOURCE_LABELS.phase.title} resolution`;
+	} else if (actionName) {
+		headerTitle = actionName;
+	} else if (actorHeaderSubject) {
+		headerTitle =
+			normalizedHeaderSubject &&
+			normalizedHeaderSubject !== normalizedResolvedTitle
+				? `${resolvedLabels.title} - ${actorHeaderSubject}`
+				: actorHeaderSubject;
 	}
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,

@@ -52,7 +52,7 @@ const REQUIRED_ASSET_DESCRIPTORS: Record<string, SessionMetadataDescriptor> =
 		},
 		population: {
 			icon: '👥',
-			label: 'Citizens',
+			label: 'Population',
 			description: 'Track population roles and assignments.',
 		},
 		transfer: {

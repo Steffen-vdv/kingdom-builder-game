@@ -436,7 +436,7 @@ describe('useActionPerformer', () => {
 					kind: 'action',
 					label: 'Action',
 					id: action.id,
-					name: action.name,
+					name: 'Action - ⚔️ Attack',
 					icon: '⚔️',
 				},
 				actorLabel: 'Played by',

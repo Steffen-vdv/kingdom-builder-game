@@ -8,7 +8,6 @@ const POPULATION_ROLE_VALUES = [
 	PopulationRole.Council,
 	PopulationRole.Legion,
 	PopulationRole.Fortifier,
-	PopulationRole.Citizen,
 ] as const satisfies readonly PopulationRoleId[];
 
 const DEVELOPMENT_IDS = [
