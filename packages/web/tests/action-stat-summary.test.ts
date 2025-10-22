@@ -48,7 +48,7 @@ describe('action stat summaries', () => {
 		const { actionId, translationContext } = setupStatAction(BASE_STAT_EFFECTS);
 		const summary = summarizeContent('action', actionId, translationContext);
 		expect(summary).toEqual([
-			'Max 👥 +1',
+			'👥 +1 Max',
 			'🛡️ +1',
 			'🌀 +20%',
 			'⚔️ +1',
@@ -84,7 +84,7 @@ describe('action stat summaries', () => {
 			(entry): entry is string => typeof entry === 'string',
 		);
 		expect(summary).toEqual([
-			'Max 👥 +1',
+			'👥 +1 Max',
 			'🛡️ +1',
 			'🌀 +20%',
 			'⚔️ +1',
