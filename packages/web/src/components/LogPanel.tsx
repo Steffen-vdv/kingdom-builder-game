@@ -4,6 +4,7 @@ import { useGameEngine } from '../state/GameContext';
 import { useAnimate } from '../utils/useAutoAnimate';
 import { ResolutionCard } from './ResolutionCard';
 import { usePlayerAccentClasses } from './common/usePlayerAccentClasses';
+import { useSoundEffectsContext } from '../state/SoundEffectsContext';
 
 interface LogPanelProps {
 	isOpen: boolean;
@@ -18,6 +19,11 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 	const pendingScrollRef = useRef(false);
 	const noop = useCallback(() => {}, []);
 	const resolveAccentClasses = usePlayerAccentClasses();
+	const { playUiClick } = useSoundEffectsContext();
+	const handleClose = useCallback(() => {
+		playUiClick();
+		onClose();
+	}, [onClose, playUiClick]);
 	const resolvePlayerName = useCallback(
 		(playerId: string, fallback?: string | null) => {
 			const player = sessionSnapshot.game.players.find(
@@ -185,7 +191,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 			<h2 id="game-log-title" className={titleClasses}>
 				Log
 			</h2>
-			<button {...closeButtonProps} onClick={onClose}>
+			<button {...closeButtonProps} onClick={handleClose}>
 				<span aria-hidden="true">×</span>
 			</button>
 		</div>
@@ -264,7 +270,7 @@ export default function LogPanel({ isOpen, onClose }: LogPanelProps) {
 				type="button"
 				className={backdropClasses}
 				aria-label="Close log overlay"
-				onClick={onClose}
+				onClick={handleClose}
 				onKeyDown={handleBackdropKeyDown}
 			/>
 			<div className={overlayClasses}>

@@ -164,6 +164,30 @@ describe('<ResolutionCard />', () => {
 		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
 	});
 
+	it('supports rendering a next turn button variant', () => {
+		const resolution = createResolution({
+			action: {
+				id: 'action-id',
+				name: 'Final Action',
+			},
+		});
+
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={() => {}}
+				continueMode="next-turn"
+			/>,
+		);
+
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Next Turn',
+		});
+		expect(nextTurnButton).toBeInTheDocument();
+		expect(nextTurnButton.textContent ?? '').toContain('Next Turn');
+		expect(nextTurnButton.textContent ?? '').toContain('»');
+	});
+
 	it('renders section roots with nested cost and effect entries', () => {
 		const resolution = createResolution({
 			visibleTimeline: [

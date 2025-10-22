@@ -17,9 +17,7 @@ export class EffectBuilder<P extends Params = Params> {
 
 	type(type: string) {
 		if (this.typeSet) {
-			throw new Error(
-				'Effect already has type(). Remove the extra type() call.',
-			);
+			throw new Error('Effect already has type(). Remove the extra type() call.');
 		}
 		this.config.type = type;
 		this.typeSet = true;
@@ -28,9 +26,7 @@ export class EffectBuilder<P extends Params = Params> {
 
 	method(method: string) {
 		if (this.methodSet) {
-			throw new Error(
-				'Effect already has method(). Remove the extra method() call.',
-			);
+			throw new Error('Effect already has method(). Remove the extra method() call.');
 		}
 		this.config.method = method;
 		this.methodSet = true;
@@ -39,14 +35,10 @@ export class EffectBuilder<P extends Params = Params> {
 
 	param(key: string, value: unknown) {
 		if (this.paramsSet) {
-			throw new Error(
-				'Effect params(...) was already provided. Remove params(...) before calling param().',
-			);
+			throw new Error('Effect params(...) was already provided. Remove params(...) before calling param().');
 		}
 		if (this.paramKeys.has(key)) {
-			throw new Error(
-				`Effect already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`,
-			);
+			throw new Error(`Effect already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`);
 		}
 		this.config.params = this.config.params || {};
 		(this.config.params as Params)[key] = value;
@@ -56,17 +48,12 @@ export class EffectBuilder<P extends Params = Params> {
 
 	params(params: P | ParamsBuilder<P>) {
 		if (this.paramsSet) {
-			throw new Error(
-				'Effect params(...) was already provided. Remove the duplicate params() call.',
-			);
+			throw new Error('Effect params(...) was already provided. Remove the duplicate params() call.');
 		}
 		if (this.paramKeys.size) {
-			throw new Error(
-				'Effect already has individual param() values. Remove them before calling params(...).',
-			);
+			throw new Error('Effect already has individual param() values. Remove them before calling params(...).');
 		}
-		this.config.params =
-			params instanceof ParamsBuilder ? params.build() : params;
+		this.config.params = params instanceof ParamsBuilder ? params.build() : params;
 		this.paramsSet = true;
 		return this;
 	}
@@ -79,22 +66,16 @@ export class EffectBuilder<P extends Params = Params> {
 
 	evaluator(type: string, params?: Params | ParamsBuilder): this;
 	evaluator(builder: EvaluatorBuilder): this;
-	evaluator(
-		typeOrBuilder: string | EvaluatorBuilder,
-		params?: Params | ParamsBuilder,
-	) {
+	evaluator(typeOrBuilder: string | EvaluatorBuilder, params?: Params | ParamsBuilder) {
 		if (this.evaluatorSet) {
-			throw new Error(
-				'Effect already has an evaluator(). Remove the duplicate evaluator() call.',
-			);
+			throw new Error('Effect already has an evaluator(). Remove the duplicate evaluator() call.');
 		}
 		if (typeOrBuilder instanceof EvaluatorBuilder) {
 			this.config.evaluator = typeOrBuilder.build();
 		} else {
 			this.config.evaluator = {
 				type: typeOrBuilder,
-				params:
-					params instanceof ParamsBuilder ? params.build() : (params as Params),
+				params: params instanceof ParamsBuilder ? params.build() : (params as Params),
 			} as EvaluatorDef;
 		}
 		this.evaluatorSet = true;
@@ -112,9 +93,7 @@ export class EffectBuilder<P extends Params = Params> {
 
 	meta(meta: EffectConfig['meta']) {
 		if (this.metaSet) {
-			throw new Error(
-				'Effect already has meta(). Remove the duplicate meta() call.',
-			);
+			throw new Error('Effect already has meta(). Remove the duplicate meta() call.');
 		}
 		this.config.meta = meta;
 		this.metaSet = true;
@@ -127,17 +106,9 @@ export class EffectBuilder<P extends Params = Params> {
 
 	build(): EffectConfig {
 		if (!this.typeSet && !this.methodSet) {
-			const hasNestedEffects = Array.isArray(this.config.effects)
-				? this.config.effects.length > 0
-				: false;
+			const hasNestedEffects = Array.isArray(this.config.effects) ? this.config.effects.length > 0 : false;
 			if (!hasNestedEffects) {
-				throw new Error(
-					[
-						'Effect is missing type() and method().',
-						'Call effect(Types.X, Methods.Y) or add nested effect(...) calls',
-						'before build().',
-					].join(' '),
-				);
+				throw new Error(['Effect is missing type() and method().', 'Call effect(Types.X, Methods.Y) or add nested effect(...) calls', 'before build().'].join(' '));
 			}
 		}
 		return this.config;
@@ -156,7 +127,5 @@ export function effect(type?: string, method?: string) {
 }
 
 export function statAddEffect(stat: StatKey, amount: number) {
-	return effect(Types.Stat, StatMethods.ADD)
-		.params(statParams().key(stat).amount(amount).build())
-		.build();
+	return effect(Types.Stat, StatMethods.ADD).params(statParams().key(stat).amount(amount).build()).build();
 }

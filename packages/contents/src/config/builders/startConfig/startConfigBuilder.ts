@@ -1,8 +1,4 @@
-import type {
-	PlayerStartConfig,
-	StartConfig,
-	StartModeConfig,
-} from '@kingdom-builder/protocol';
+import type { PlayerStartConfig, StartConfig, StartModeConfig } from '@kingdom-builder/protocol';
 import { PlayerStartBuilder } from './playerStartBuilder';
 import { StartModeBuilder } from './startModeBuilder';
 
@@ -11,48 +7,29 @@ export class StartConfigBuilder {
 	private lastPlayerCompensationConfig: PlayerStartConfig | undefined;
 	private devModeConfig: StartModeConfig | undefined;
 
-	private resolveBuilder(
-		input:
-			| PlayerStartBuilder
-			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
-		requireComplete: boolean,
-	) {
+	private resolveBuilder(input: PlayerStartBuilder | ((builder: PlayerStartBuilder) => PlayerStartBuilder), requireComplete: boolean) {
 		if (input instanceof PlayerStartBuilder) {
 			return input;
 		}
 		const configured = input(new PlayerStartBuilder(requireComplete));
 		if (!(configured instanceof PlayerStartBuilder)) {
-			throw new Error(
-				'Start config player(...) callback must return the provided builder.',
-			);
+			throw new Error('Start config player(...) callback must return the provided builder.');
 		}
 		return configured;
 	}
 
-	player(
-		input:
-			| PlayerStartBuilder
-			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
-	) {
+	player(input: PlayerStartBuilder | ((builder: PlayerStartBuilder) => PlayerStartBuilder)) {
 		if (this.playerConfig) {
-			throw new Error(
-				'Start config already set player(...). Remove the extra player() call.',
-			);
+			throw new Error('Start config already set player(...). Remove the extra player() call.');
 		}
 		const builder = this.resolveBuilder(input, true);
 		this.playerConfig = builder.build();
 		return this;
 	}
 
-	lastPlayerCompensation(
-		input:
-			| PlayerStartBuilder
-			| ((builder: PlayerStartBuilder) => PlayerStartBuilder),
-	) {
+	lastPlayerCompensation(input: PlayerStartBuilder | ((builder: PlayerStartBuilder) => PlayerStartBuilder)) {
 		if (this.lastPlayerCompensationConfig) {
-			throw new Error(
-				'Start config already set lastPlayerCompensation(). Remove the extra call.',
-			);
+			throw new Error('Start config already set lastPlayerCompensation(). Remove the extra call.');
 		}
 		const builder = this.resolveBuilder(input, false);
 		this.lastPlayerCompensationConfig = builder.build();
@@ -61,9 +38,7 @@ export class StartConfigBuilder {
 
 	devMode(input: StartModeInput) {
 		if (this.devModeConfig) {
-			throw new Error(
-				'Start config already set devMode(...). Remove the extra call.',
-			);
+			throw new Error('Start config already set devMode(...). Remove the extra call.');
 		}
 		if (input instanceof StartModeBuilder) {
 			this.devModeConfig = input.build();
@@ -71,9 +46,7 @@ export class StartConfigBuilder {
 		}
 		const configured = input(new StartModeBuilder());
 		if (!(configured instanceof StartModeBuilder)) {
-			throw new Error(
-				'Start config devMode(...) callback must return the provided builder.',
-			);
+			throw new Error('Start config devMode(...) callback must return the provided builder.');
 		}
 		this.devModeConfig = configured.build();
 		return this;
@@ -81,9 +54,7 @@ export class StartConfigBuilder {
 
 	build(): StartConfig {
 		if (!this.playerConfig) {
-			throw new Error(
-				'Start config is missing player(...). Configure the base player first.',
-			);
+			throw new Error('Start config is missing player(...). Configure the base player first.');
 		}
 		const config: StartConfig = { player: this.playerConfig };
 		if (this.lastPlayerCompensationConfig) {

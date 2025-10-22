@@ -1,20 +1,8 @@
 import { Registry, developmentSchema } from '@kingdom-builder/protocol';
 import { Stat } from './stats';
 import { Resource } from './resources';
-import {
-	development,
-	effect,
-	resourceParams,
-	statParams,
-	developmentParams,
-	developmentEvaluator,
-} from './config/builders';
-import {
-	Types,
-	StatMethods,
-	DevelopmentMethods,
-	ResourceMethods,
-} from './config/builderShared';
+import { development, effect, resourceParams, statParams, developmentParams, developmentEvaluator } from './config/builders';
+import { Types, StatMethods, DevelopmentMethods, ResourceMethods } from './config/builderShared';
 import { Focus } from './defs';
 import type { DevelopmentDef } from './defs';
 
@@ -30,9 +18,7 @@ export const DevelopmentId = {
 export type DevelopmentId = (typeof DevelopmentId)[keyof typeof DevelopmentId];
 
 export function createDevelopmentRegistry() {
-	const registry = new Registry<DevelopmentDef>(
-		developmentSchema.passthrough(),
-	);
+	const registry = new Registry<DevelopmentDef>(developmentSchema.passthrough());
 
 	registry.add(
 		DevelopmentId.Farm,
@@ -43,11 +29,7 @@ export function createDevelopmentRegistry() {
 			.onGainIncomeStep(
 				effect()
 					.evaluator(developmentEvaluator().id('$id'))
-					.effect(
-						effect(Types.Resource, ResourceMethods.ADD)
-							.params(resourceParams().key(Resource.gold).amount(2))
-							.build(),
-					)
+					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.gold).amount(2)).build())
 					.build(),
 			)
 			.order(2)
@@ -62,11 +44,7 @@ export function createDevelopmentRegistry() {
 			.name('House')
 			.icon('🏠')
 			.populationCap(1)
-			.onBuild(
-				effect(Types.Stat, StatMethods.ADD)
-					.params(statParams().key(Stat.maxPopulation).amount(1))
-					.build(),
-			)
+			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.maxPopulation).amount(1)).build())
 			.order(1)
 			.focus(Focus.Economy)
 			.build(),
@@ -78,24 +56,14 @@ export function createDevelopmentRegistry() {
 			.id(DevelopmentId.Outpost)
 			.name('Outpost')
 			.icon('🏹')
-			.onBuild(
-				effect(Types.Stat, StatMethods.ADD)
-					.params(statParams().key(Stat.armyStrength).amount(1))
-					.build(),
-			)
-			.onBuild(
-				effect(Types.Stat, StatMethods.ADD)
-					.params(statParams().key(Stat.fortificationStrength).amount(1))
-					.build(),
-			)
+			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.armyStrength).amount(1)).build())
+			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.fortificationStrength).amount(1)).build())
 			.order(3)
 			.focus(Focus.Defense)
 			.build(),
 	);
 
-	const watchtowerRemovalParams = developmentParams()
-		.id(DevelopmentId.Watchtower)
-		.landId('$landId');
+	const watchtowerRemovalParams = developmentParams().id(DevelopmentId.Watchtower).landId('$landId');
 
 	registry.add(
 		DevelopmentId.Watchtower,
@@ -103,35 +71,15 @@ export function createDevelopmentRegistry() {
 			.id(DevelopmentId.Watchtower)
 			.name('Watchtower')
 			.icon('🗼')
-			.onBuild(
-				effect(Types.Stat, StatMethods.ADD)
-					.params(statParams().key(Stat.fortificationStrength).amount(2))
-					.build(),
-			)
-			.onBuild(
-				effect(Types.Stat, StatMethods.ADD)
-					.params(statParams().key(Stat.absorption).amount(0.5))
-					.build(),
-			)
-			.onAttackResolved(
-				effect(Types.Development, DevelopmentMethods.REMOVE)
-					.params(watchtowerRemovalParams)
-					.build(),
-			)
+			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.fortificationStrength).amount(2)).build())
+			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.absorption).amount(0.5)).build())
+			.onAttackResolved(effect(Types.Development, DevelopmentMethods.REMOVE).params(watchtowerRemovalParams).build())
 			.order(4)
 			.focus(Focus.Defense)
 			.build(),
 	);
 
-	registry.add(
-		DevelopmentId.Garden,
-		development()
-			.id(DevelopmentId.Garden)
-			.name('Garden')
-			.icon('🌿')
-			.system()
-			.build(),
-	);
+	registry.add(DevelopmentId.Garden, development().id(DevelopmentId.Garden).name('Garden').icon('🌿').system().build());
 
 	return registry;
 }
