@@ -13,7 +13,16 @@ import type {
 	DevelopmentConfig,
 	PopulationConfig,
 	Registry,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
+	ResourceV2GroupParent,
 } from '@kingdom-builder/protocol';
+import {
+	createResourceV2Factory,
+	type ResourceV2DefinitionInput,
+	type ResourceV2GroupInput,
+	type ResourceV2GroupParentInput,
+} from './resourceV2';
 
 let seq = 0;
 function nextId(prefix: string) {
@@ -27,6 +36,8 @@ export interface ContentFactory {
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
+	resourcesV2: Registry<ResourceV2Definition>;
+	resourceGroups: Registry<ResourceV2GroupMetadata>;
 	category(
 		definition?: Partial<ContentActionCategoryConfig>,
 	): ContentActionCategoryConfig;
@@ -34,6 +45,11 @@ export interface ContentFactory {
 	building(definition?: Partial<BuildingConfig>): BuildingConfig;
 	development(definition?: Partial<DevelopmentConfig>): DevelopmentConfig;
 	population(definition?: Partial<PopulationConfig>): PopulationConfig;
+	resourceV2(definition?: ResourceV2DefinitionInput): ResourceV2Definition;
+	resourceGroup(definition?: ResourceV2GroupInput): ResourceV2GroupMetadata;
+	resourceGroupParent(
+		definition?: ResourceV2GroupParentInput,
+	): ResourceV2GroupParent;
 }
 
 export function createContentFactory(): ContentFactory {
@@ -42,6 +58,14 @@ export function createContentFactory(): ContentFactory {
 	const buildings = createBuildingRegistry();
 	const developments = createDevelopmentRegistry();
 	const populations = createPopulationRegistry();
+	const resourceFactory = createResourceV2Factory(nextId);
+	const { resources: resourcesV2, groups: resourceGroups } = resourceFactory;
+	const resourceV2 = (definition?: ResourceV2DefinitionInput) =>
+		resourceFactory.createResource(definition);
+	const resourceGroup = (definition?: ResourceV2GroupInput) =>
+		resourceFactory.createGroup(definition);
+	const resourceGroupParent = (definition?: ResourceV2GroupParentInput) =>
+		resourceFactory.createParent(definition);
 
 	let nextCategoryOrder = categories.values().length;
 
@@ -156,11 +180,16 @@ export function createContentFactory(): ContentFactory {
 		buildings,
 		developments,
 		populations,
+		resourcesV2,
+		resourceGroups,
 		category,
 		action,
 		building,
 		development,
 		population,
+		resourceV2,
+		resourceGroup,
+		resourceGroupParent,
 	};
 }
 
@@ -179,3 +208,9 @@ export function toSessionActionCategoryConfig(
 		analyticsKey: definition.analyticsKey,
 	} satisfies SessionActionCategoryConfig;
 }
+
+export type {
+	ResourceV2DefinitionInput,
+	ResourceV2GroupInput,
+	ResourceV2GroupParentInput,
+} from './resourceV2';
