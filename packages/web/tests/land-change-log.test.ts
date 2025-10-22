@@ -237,10 +237,21 @@ describe('land change log formatting', () => {
 			translationContext,
 		);
 		const developmentLabel = developmentContent[0] ?? developmentId;
-		const expectedLine = formatLogHeadline(
+		const slotInfo = translationContext.assets.slot;
+		const slotIcon = slotInfo.icon?.trim() ?? '';
+		const slotLabel = slotInfo.label?.trim() ?? 'Development Slot';
+		const emptySlotLabel = `Empty ${slotLabel}`.trim();
+		const slotDisplay = [slotIcon, emptySlotLabel]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+		const headline = formatLogHeadline(
 			LOG_KEYWORDS.developed,
 			developmentLabel,
 		);
+		const expectedLine = slotDisplay
+			? `${headline} on ${slotDisplay}`
+			: headline;
 		expect(developmentLine).toBe(expectedLine);
 		const repeatDiff = diffStepSnapshots(
 			before,

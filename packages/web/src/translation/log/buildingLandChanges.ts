@@ -75,7 +75,16 @@ export function appendLandChanges(
 				continue;
 			}
 			const label = describeContent(context.developments, development);
-			changes.push(formatLogHeadline(LOG_KEYWORDS.developed, label));
+			const slotIcon = context.assets.slot.icon?.trim() ?? '';
+			const slotLabel = context.assets.slot.label?.trim() ?? 'Development Slot';
+			const emptySlotLabel = `Empty ${slotLabel}`.trim();
+			const slotDisplay = [slotIcon, emptySlotLabel]
+				.filter(Boolean)
+				.join(' ')
+				.trim();
+			const headline = formatLogHeadline(LOG_KEYWORDS.developed, label);
+			const summary = slotDisplay ? `${headline} on ${slotDisplay}` : headline;
+			changes.push(summary);
 		}
 	}
 }
