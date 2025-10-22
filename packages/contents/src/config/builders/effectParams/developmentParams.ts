@@ -2,26 +2,17 @@ import type { ActionId } from '../../../actions';
 import type { DevelopmentIdParam } from '../actionEffectGroups';
 import { ParamsBuilder } from '../../builderShared';
 
-const DEVELOPMENT_ID_DUPLICATE =
-	'You already set id() for this development effect. Remove the duplicate id() call.';
-const DEVELOPMENT_LAND_ID_DUPLICATE =
-	'You already chose a landId() for this development effect. Remove the duplicate landId() call.';
-const DEVELOPMENT_MISSING_ID =
-	'Development effect is missing id(). Call id("your-development-id") so the engine knows which development to reference.';
+const DEVELOPMENT_ID_DUPLICATE = 'You already set id() for this development effect. Remove the duplicate id() call.';
+const DEVELOPMENT_LAND_ID_DUPLICATE = 'You already chose a landId() for this development effect. Remove the duplicate landId() call.';
+const DEVELOPMENT_MISSING_ID = 'Development effect is missing id(). Call id("your-development-id") so the engine knows which development to reference.';
 
-const BUILDING_ID_DUPLICATE =
-	'Building effect params already set id(). Remove the extra id() call.';
-const BUILDING_LAND_ID_DUPLICATE =
-	'Building effect params already set landId(). Remove the extra landId() call.';
-const BUILDING_MISSING_ID =
-	'Building effect params is missing id(). Call id("your-building-id") before build().';
+const BUILDING_ID_DUPLICATE = 'Building effect params already set id(). Remove the extra id() call.';
+const BUILDING_LAND_ID_DUPLICATE = 'Building effect params already set landId(). Remove the extra landId() call.';
+const BUILDING_MISSING_ID = 'Building effect params is missing id(). Call id("your-building-id") before build().';
 
-const ACTION_ID_DUPLICATE =
-	'Action effect params already set id(). Remove the extra id() call.';
-const ACTION_LAND_ID_DUPLICATE =
-	'Action effect params already set landId(). Remove the extra landId() call.';
-const ACTION_MISSING_ID =
-	'Action effect params is missing id(). Call id("your-action-id") before build().';
+const ACTION_ID_DUPLICATE = 'Action effect params already set id(). Remove the extra id() call.';
+const ACTION_LAND_ID_DUPLICATE = 'Action effect params already set landId(). Remove the extra landId() call.';
+const ACTION_MISSING_ID = 'Action effect params is missing id(). Call id("your-action-id") before build().';
 
 class DevelopmentEffectParamsBuilder extends ParamsBuilder<{
 	id?: DevelopmentIdParam;

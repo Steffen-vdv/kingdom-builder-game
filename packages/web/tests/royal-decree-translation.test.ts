@@ -11,11 +11,6 @@ import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 import { formatActionTitle } from '../src/translation/formatActionTitle';
-import {
-	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
-	type DevelopmentActionId,
-} from '@kingdom-builder/contents/actions';
-import type { DevelopmentId } from '@kingdom-builder/contents/developments';
 
 interface ActionEffectGroupOption {
 	optionId: string;
@@ -36,12 +31,6 @@ interface RoyalDecreeActionInfo {
 	developGroup: ActionEffectGroupEntry;
 	options: ActionEffectGroupOption[];
 }
-
-const DEVELOPMENT_ID_BY_ACTION_ID = Object.fromEntries(
-	Object.entries(DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID).map(
-		([developmentId, actionId]) => [actionId, developmentId],
-	),
-) as Record<DevelopmentActionId, DevelopmentId>;
 
 function combineLabels(left: string, right: string): string {
 	const base = left.trim();
@@ -101,11 +90,7 @@ function extractGroupOptions(
 			};
 			const actionId = option.actionId as string | undefined;
 			const params = option.params;
-			const mappedDevelopmentId = actionId
-				? DEVELOPMENT_ID_BY_ACTION_ID[actionId as DevelopmentActionId]
-				: undefined;
-			const developmentId =
-				params?.developmentId ?? params?.id ?? mappedDevelopmentId;
+			const developmentId = params?.developmentId ?? params?.id;
 			if (!actionId || !developmentId) {
 				continue;
 			}

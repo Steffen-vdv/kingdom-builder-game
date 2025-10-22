@@ -1,13 +1,6 @@
-import type {
-	EffectDef,
-	PhaseConfig,
-	PhaseStepConfig,
-} from '@kingdom-builder/protocol';
+import type { EffectDef, PhaseConfig, PhaseStepConfig } from '@kingdom-builder/protocol';
 import type { TriggerKey } from '../../../defs';
-import type {
-	PhaseId as PhaseIdentifier,
-	PhaseStepId as PhaseStepIdentifier,
-} from '../../../phases';
+import type { PhaseId as PhaseIdentifier, PhaseStepId as PhaseStepIdentifier } from '../../../phases';
 
 class StepBuilder {
 	private config: PhaseStepConfig;
