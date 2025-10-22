@@ -22,6 +22,15 @@ export { RULES } from './rules';
 export { OVERVIEW_CONTENT, type OverviewContentTemplate, type OverviewHeroTemplate, type OverviewSectionTemplate, type OverviewTokenCandidates, type OverviewTokenCategoryName } from './overview';
 export { TIER_SUMMARY_STORE, type TierSummaryStore, type TierSummaryGroup } from './tieredResources';
 export { PRIMARY_ICON_ID } from './startup';
+export {
+	createResourceV2Registry,
+	createResourceGroupRegistry,
+	RESOURCE_V2_DEFINITIONS,
+	RESOURCE_V2_GROUPS,
+	type ResourceV2Registry,
+	type ResourceV2GroupRegistry,
+	type ResourceV2TopLevelEntry,
+} from './resourceV2';
 export { type ActionDef } from './actions';
 export type { ActionId as ActionIdType } from './actions';
 export type { BuildingDef } from './defs';

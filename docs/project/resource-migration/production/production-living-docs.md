@@ -36,7 +36,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
                                         | 2025-10-22 | gpt-5-codex   | packages/contents/src/config/builders/resourceV2.ts; packages/contents/src/config/builders.ts; packages/contents/tests/resourceV2.builder.test.ts; docs/project/resource-migration/production/production-living-docs.md | Introduced ResourceV2 builder suite covering definitions, tier tracks, groups, and clamp-only value changes with hook suppression metadata, plus regression tests exercising percent/global cost serialization. | `npm run lint`; `npm run test --workspace=@kingdom-builder/contents` | Plan follow-up integration for migrated resources and ensure engine handlers consume builder-generated metadata consistently. |
 
-| Resource Migration MVP - P3 - T5 | 2025-**-** | _(add entry)_ | | _(reserved for T5 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T5 | 2025-10-22 | gpt-5-codex | packages/contents/src/resourceV2/index.ts; packages/contents/src/index.ts; packages/contents/tests/resourceV2.registry.test.ts | Added ResourceV2 definition/group registries with ordering metadata, primary icon derivation, and default empty exports plus regression tests covering lookup helpers. | `npm run lint`; `npm run test --workspace=@kingdom-builder/contents` | Populate registries with migrated resources and feed startup consumers once engine integration lands. |
 | Resource Migration MVP - P3 - T6 | 2025-**-** | _(add entry)_ | | _(reserved for T6 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T7 | 2025-**-** | _(add entry)_ | | _(reserved for T7 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T8 | 2025-**-** | _(add entry)_ | | _(reserved for T8 assignee – update only this row.)_ | | |
@@ -68,13 +68,13 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** gpt-5-codex
-- **Timestamp (UTC):** 2025-10-22 18:30
-- **Current Focus:** Resource Migration MVP - P3 - T4 ResourceV2 content builders
-- **State Summary:** Content authors now have ResourceV2-focused builders for definitions, tier tracks, and group parents, plus clamp-only value change helpers that stamp hook suppression metadata. Coverage demonstrates percent formatting, global cost serialization, and reconciliation enforcement so downstream migrations can rely on the new APIs.
+- **Timestamp (UTC):** 2025-10-22 21:45
+- **Current Focus:** Resource Migration MVP - P3 - T5 ResourceV2 registries and startup metadata
+- **State Summary:** Content package now exposes ResourceV2 definition and group registries with ordering helpers, grouped lookups, and a derived primary icon candidate so downstream systems can bootstrap without legacy data. Defaults remain empty pending migrations, and unit tests cover ordering and icon fallback logic.
 - **Next Suggested Tasks:**
-  - Begin migrating a pilot resource/stat to ResourceV2 using the new builders and validate engine compatibility.
-  - Align engine effect handlers with the builder metadata (clamp reconciliation, suppressHooks reason) before enabling content rollouts.
-- **Blocking Issues / Risks:** Ensure no legacy builders reintroduce non-clamp reconciliation during interim migrations.
+  - Populate the registries with the first migrated resource/group and confirm startup metadata (ordering + primary icon) flows through to engine/web consumers.
+  - Wire engine/session bootstrap to emit the new registry payload alongside legacy resource data during the transition window.
+- **Blocking Issues / Risks:** Legacy registries still drive runtime ordering; ensure consumers switch atomically to prevent mismatched presentation while both systems coexist.
 
 ## 5. Notes & Decisions Archive
 
