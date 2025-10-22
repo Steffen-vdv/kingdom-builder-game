@@ -206,6 +206,36 @@ export const phaseSchema = z.object({
 
 export type PhaseConfig = z.infer<typeof phaseSchema>;
 
+export {
+	resourceV2DefinitionSchema,
+	resourceV2DisplayMetadataSchema,
+	resourceV2EffectSchema,
+	resourceV2GlobalActionCostSchema,
+	resourceV2GroupMetadataSchema,
+	resourceV2GroupParentSchema,
+	resourceV2HookSuppressionSchema,
+	resourceV2ReconciliationStrategySchema,
+	resourceV2RoundingModeSchema,
+	resourceV2TierDefinitionSchema,
+	resourceV2TierRangeSchema,
+	resourceV2TierTrackSchema,
+} from './resourceV2';
+
+export type {
+	ResourceV2Definition,
+	ResourceV2DisplayMetadata,
+	ResourceV2EffectConfig,
+	ResourceV2GlobalActionCostConfig,
+	ResourceV2GroupMetadata,
+	ResourceV2GroupParent,
+	ResourceV2HookSuppression,
+	ResourceV2ReconciliationStrategy,
+	ResourceV2RoundingMode,
+	ResourceV2TierDefinition,
+	ResourceV2TierRange,
+	ResourceV2TierTrack,
+} from './resourceV2';
+
 export const gameConfigSchema = z.object({
 	start: startConfigSchema.optional(),
 	actions: z.array(actionSchema).optional(),

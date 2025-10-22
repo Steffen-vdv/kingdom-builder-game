@@ -22,20 +22,22 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
 ## 3. Work Log (append-only)
 
-| Date       | Agent         | Scope / Files | Summary of Work | Tests & Results | Follow-up Actions |
-| ---------- | ------------- | ------------- | --------------- | --------------- | ----------------- |
-| 2024-**-** | _(add entry)_ |               |                 |                 |                   |
+| Date       | Agent       | Scope / Files                                                                                                                                                                                                                               | Summary of Work                                                                                                                                                      | Tests & Results                                                                                                                                                     | Follow-up Actions                                                                                                                        |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-10-22 | gpt-5-codex | packages/protocol/src/config/resourceV2.ts; packages/protocol/src/config/schema.ts; packages/protocol/src/index.ts; packages/protocol/tests/resourceV2-schema.test.ts; docs/project/resource-migration/production/production-living-docs.md | Introduced ResourceV2 configuration schemas (definitions, tier tracks, groups, reconciliation metadata) with new tests and exports. Updated living doc with results. | `npx tsc -p packages/protocol/tsconfig.json`; `npx vitest run --config vitest.protocol.config.ts` 【00f3b8†L1-L2】【5f0cc1†L1-L1】【abd5cd†L1-L2】【9a47c5†L1-L18】 | Monitor downstream consumers for schema integration needs; plan follow-up for engine/content adoption and additional validator coverage. |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
-- **Prepared by:** _(agent name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(what is being tackled right now)_
-- **State Summary:** _(1–2 paragraphs describing current progress, outstanding decisions, and known regressions)_
-- **Next Suggested Tasks:** _(bullet list with owners if known)_
-- **Blocking Issues / Risks:** _(list or “None”)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-10-22 15:16
+- **Current Focus:** ResourceV2 protocol schema scaffolding and validation fixtures.
+- **State Summary:** Established new Zod schemas covering ResourceV2 definitions, tier tracks, group parents, rounding modes, reconciliation policies, hook suppression, and global action cost metadata. Re-exported these surfaces for consumers and added targeted tests that exercise valid/invalid payloads. Repository-wide `npm run check -- --filter protocol` is not supported by the current npm-run-all version, so protocol-specific typecheck (`npx tsc -p packages/protocol/tsconfig.json`) and vitest suite (`npx vitest run --config vitest.protocol.config.ts`) were executed to confirm the additions.【00f3b8†L1-L2】【5f0cc1†L1-L1】【abd5cd†L1-L2】【9a47c5†L1-L18】
+- **Next Suggested Tasks:**
+  - Draft engine/content integration plan for consuming the new ResourceV2 schemas (owner: TBD).
+  - Extend builder/runtime validations to leverage reconciliation and hook suppression metadata once engine support lands (owner: TBD).
+- **Blocking Issues / Risks:** `npm run check -- --filter protocol` currently fails with `Invalid Option: --filter`; coordinating with tooling maintainers may be necessary if repo-level automation expects that flag.【4c4fed†L1-L5】
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.
