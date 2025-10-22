@@ -2,17 +2,9 @@ import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import { ActionEffectGroupOptionBuilder } from './actionEffectGroupOptions';
 import type { ActionEffectGroupOptionDef } from './actionEffectGroupOptions';
 
-export {
-	ActionEffectGroupOptionBuilder,
-	ActionEffectGroupOptionParamsBuilder,
-	actionEffectGroupOption,
-	actionEffectGroupOptionParams,
-} from './actionEffectGroupOptions';
+export { ActionEffectGroupOptionBuilder, ActionEffectGroupOptionParamsBuilder, actionEffectGroupOption, actionEffectGroupOptionParams } from './actionEffectGroupOptions';
 
-export type {
-	ActionEffectGroupOptionDef,
-	DevelopmentIdParam,
-} from './actionEffectGroupOptions';
+export type { ActionEffectGroupOptionDef, DevelopmentIdParam } from './actionEffectGroupOptions';
 
 export type ActionEffectGroupDef = ActionEffectGroup;
 
@@ -33,9 +25,7 @@ export class ActionEffectGroupBuilder {
 
 	id(id: string) {
 		if (this.idSet) {
-			throw new Error(
-				'Action effect group already has an id(). Remove the extra id() call.',
-			);
+			throw new Error('Action effect group already has an id(). Remove the extra id() call.');
 		}
 		this.config.id = id;
 		this.idSet = true;
@@ -44,9 +34,7 @@ export class ActionEffectGroupBuilder {
 
 	title(title: string) {
 		if (this.titleSet) {
-			throw new Error(
-				'Action effect group already has a title(). Remove the extra title() call.',
-			);
+			throw new Error('Action effect group already has a title(). Remove the extra title() call.');
 		}
 		this.config.title = title;
 		this.titleSet = true;
@@ -74,14 +62,9 @@ export class ActionEffectGroupBuilder {
 	}
 
 	option(option: ActionEffectGroupOptionBuilder | ActionEffectGroupOptionDef) {
-		const built =
-			option instanceof ActionEffectGroupOptionBuilder
-				? option.build()
-				: option;
+		const built = option instanceof ActionEffectGroupOptionBuilder ? option.build() : option;
 		if (this.optionIds.has(built.id)) {
-			throw new Error(
-				`Action effect group option id "${built.id}" already exists. Use unique option ids within a group.`,
-			);
+			throw new Error(`Action effect group option id "${built.id}" already exists. Use unique option ids within a group.`);
 		}
 		this.optionIds.add(built.id);
 		this.config.options.push(built);
@@ -90,15 +73,11 @@ export class ActionEffectGroupBuilder {
 
 	build(): ActionEffectGroupDef {
 		if (!this.idSet) {
-			throw new Error(
-				"Action effect group is missing id(). Call id('your-group-id') before build().",
-			);
+			throw new Error("Action effect group is missing id(). Call id('your-group-id') before build().");
 		}
 		this.config.title = this.config.title || 'Choose one:';
 		if (this.config.options.length === 0) {
-			throw new Error(
-				'Action effect group needs at least one option(). Add option(...) before build().',
-			);
+			throw new Error('Action effect group needs at least one option(). Add option(...) before build().');
 		}
 		return this.config as ActionEffectGroupDef;
 	}

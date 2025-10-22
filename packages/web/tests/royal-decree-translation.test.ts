@@ -6,15 +6,11 @@ import {
 	logContent,
 	type SummaryEntry,
 } from '../src/translation';
+import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 import { formatActionTitle } from '../src/translation/formatActionTitle';
-import {
-	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
-	type DevelopmentActionId,
-} from '@kingdom-builder/contents/actions';
-import type { DevelopmentId } from '@kingdom-builder/contents/developments';
 
 interface ActionEffectGroupOption {
 	optionId: string;
@@ -35,12 +31,6 @@ interface RoyalDecreeActionInfo {
 	developGroup: ActionEffectGroupEntry;
 	options: ActionEffectGroupOption[];
 }
-
-const DEVELOPMENT_ID_BY_ACTION_ID = Object.fromEntries(
-	Object.entries(DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID).map(
-		([developmentId, actionId]) => [actionId, developmentId],
-	),
-) as Record<DevelopmentActionId, DevelopmentId>;
 
 function combineLabels(left: string, right: string): string {
 	const base = left.trim();
@@ -100,11 +90,7 @@ function extractGroupOptions(
 			};
 			const actionId = option.actionId as string | undefined;
 			const params = option.params;
-			const mappedDevelopmentId = actionId
-				? DEVELOPMENT_ID_BY_ACTION_ID[actionId as DevelopmentActionId]
-				: undefined;
-			const developmentId =
-				params?.developmentId ?? params?.id ?? mappedDevelopmentId;
+			const developmentId = params?.developmentId ?? params?.id;
 			if (!actionId || !developmentId) {
 				continue;
 			}
@@ -253,11 +239,11 @@ describe('royal decree translation', () => {
 			: entry.items
 				? [entry.items]
 				: [];
-		const hasDevelopmentLine = entryItems.some((item) => {
+		const includesRedundantDevelopLine = entryItems.some((item) => {
 			const text = typeof item === 'string' ? item : item?.title;
-			return text?.includes(development.name ?? developmentId) ?? false;
+			return text?.startsWith(`${LOG_KEYWORDS.developed} `) ?? false;
 		});
-		expect(hasDevelopmentLine).toBe(true);
+		expect(includesRedundantDevelopLine).toBe(false);
 	});
 
 	it('logs royal decree develop once using develop action copy', () => {

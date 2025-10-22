@@ -8,17 +8,13 @@ describe('happiness helpers', () => {
 	it('builds additive stat effects without altering rounding', () => {
 		const amount = 0.2;
 		const config = statAddEffect(Stat.growth, amount);
-		const expected = effect(Types.Stat, StatMethods.ADD)
-			.params(statParams().key(Stat.growth).amount(amount).build())
-			.build();
+		const expected = effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.growth).amount(amount).build()).build();
 		expect(config).toEqual(expected);
 		expect(config.round).toBeUndefined();
 	});
 
 	it('delegates growth bonuses to the stat helper', () => {
 		const amount = 0.75;
-		expect(growthBonusEffect(amount)).toEqual(
-			statAddEffect(Stat.growth, amount),
-		);
+		expect(growthBonusEffect(amount)).toEqual(statAddEffect(Stat.growth, amount));
 	});
 });

@@ -1,5 +1,6 @@
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
 import type { SessionActionMetadataSnapshot } from './sessionTypes';
+import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
 import { createMetadataKey } from './actionMetadataKey';
 
 type MetadataListener = (snapshot: SessionActionMetadataSnapshot) => void;
@@ -8,6 +9,7 @@ interface ActionMetadataSubscriptionsOptions {
 	readMetadata: (
 		actionId: string,
 		params: ActionParametersPayload | undefined,
+		playerId: SessionPlayerId | undefined,
 	) => SessionActionMetadataSnapshot;
 }
 
@@ -15,7 +17,11 @@ export class ActionMetadataSubscriptions {
 	#listeners: Map<string, Set<MetadataListener>>;
 	#params: Map<
 		string,
-		{ actionId: string; params: ActionParametersPayload | undefined }
+		{
+			actionId: string;
+			params: ActionParametersPayload | undefined;
+			playerId: SessionPlayerId | undefined;
+		}
 	>;
 	#readMetadata: ActionMetadataSubscriptionsOptions['readMetadata'];
 
@@ -28,17 +34,18 @@ export class ActionMetadataSubscriptions {
 	subscribe(
 		actionId: string,
 		params: ActionParametersPayload | undefined,
+		playerId: SessionPlayerId | undefined,
 		listener: MetadataListener,
 	): () => void {
-		const key = createMetadataKey(actionId, params);
+		const key = createMetadataKey(actionId, params, playerId);
 		let listeners = this.#listeners.get(key);
 		if (!listeners) {
 			listeners = new Set();
 			this.#listeners.set(key, listeners);
-			this.#params.set(key, { actionId, params });
+			this.#params.set(key, { actionId, params, playerId });
 		}
 		listeners.add(listener);
-		listener(this.#readMetadata(actionId, params));
+		listener(this.#readMetadata(actionId, params, playerId));
 		return () => {
 			const current = this.#listeners.get(key);
 			if (!current) {
@@ -61,7 +68,11 @@ export class ActionMetadataSubscriptions {
 		if (!params) {
 			return;
 		}
-		const snapshot = this.#readMetadata(params.actionId, params.params);
+		const snapshot = this.#readMetadata(
+			params.actionId,
+			params.params,
+			params.playerId,
+		);
 		for (const listener of listeners) {
 			listener(snapshot);
 		}

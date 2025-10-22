@@ -10,7 +10,6 @@ import { logContent } from '../src/translation/content';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
 	formatIconLabel,
-	formatLogHeadline,
 	LOG_KEYWORDS,
 } from '../src/translation/log/logMessages';
 import { createSessionTranslationContext } from '../src/state/createSessionTranslationContext';
@@ -236,11 +235,24 @@ describe('land change log formatting', () => {
 			developmentId,
 			translationContext,
 		);
-		const developmentLabel = developmentContent[0] ?? developmentId;
-		const expectedLine = formatLogHeadline(
-			LOG_KEYWORDS.developed,
-			developmentLabel,
-		);
+		const developmentFirst = developmentContent[0];
+		const developmentLabel = (() => {
+			if (typeof developmentFirst === 'string') {
+				return developmentFirst.trim() || developmentId;
+			}
+			if (typeof developmentFirst === 'object' && developmentFirst) {
+				const resolved = String(developmentFirst.text ?? developmentId).trim();
+				return resolved || developmentId;
+			}
+			return developmentId;
+		})();
+		const slotLabelBase =
+			translationContext.assets.slot.label?.trim() || 'Development Slot';
+		const slotLabel = `Empty ${slotLabelBase}`.trim();
+		const slotDisplay =
+			formatIconLabel(translationContext.assets.slot.icon, slotLabel).trim() ||
+			slotLabel;
+		const expectedLine = `${LOG_KEYWORDS.developed} ${developmentLabel} on ${slotDisplay}`;
 		expect(developmentLine).toBe(expectedLine);
 		const repeatDiff = diffStepSnapshots(
 			before,

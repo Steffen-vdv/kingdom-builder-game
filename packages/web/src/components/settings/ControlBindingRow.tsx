@@ -4,6 +4,7 @@ import {
 	normalizeKeyInput,
 	type ControlDefinition,
 } from '../../state/keybindings';
+import { useSoundEffectsContext } from '../../state/SoundEffectsContext';
 
 const ROW_CLASS = [
 	'flex items-center justify-between gap-4 rounded-2xl border',
@@ -62,6 +63,7 @@ export default function ControlBindingRow({
 	onReset,
 }: ControlBindingRowProps) {
 	const [isListening, setIsListening] = useState(false);
+	const { playUiClick } = useSoundEffectsContext();
 	const buttonRef = useRef<HTMLButtonElement | null>(null);
 	const keyLabel = useMemo(() => describeKeybind(value), [value]);
 	const defaultLabel = useMemo(
@@ -119,10 +121,12 @@ export default function ControlBindingRow({
 	}, [isListening, onChange]);
 
 	const handleClick = () => {
+		playUiClick();
 		setIsListening(true);
 	};
 
 	const handleReset = () => {
+		playUiClick();
 		onReset();
 	};
 

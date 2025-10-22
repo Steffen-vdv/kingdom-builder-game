@@ -20,17 +20,10 @@ messages point you to the fix.
   for scaling rules.
 
   ```ts
-  import {
-  	effect,
-  	resourceParams,
-  	Types,
-  	ResourceMethods,
-  } from './config/builders';
+  import { effect, resourceParams, Types, ResourceMethods } from './config/builders';
   import { Resource } from './resources';
 
-  const gainGold = effect(Types.Resource, ResourceMethods.ADD)
-  	.params(resourceParams().key(Resource.gold).amount(2))
-  	.build();
+  const gainGold = effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.gold).amount(2)).build();
   ```
 
 - **Passives, developments, population effects and attacks all need a target id

@@ -11,6 +11,7 @@ import {
 	translateRequirementFailure,
 	type TranslationContext,
 } from '../../translation';
+import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
 import { type ActionCardOption } from './ActionCard';
 import type { HoverCardData } from './types';
 import { deriveActionOptionLabel } from '../../translation/effects/optionLabel';
@@ -32,6 +33,7 @@ type EffectGroupOptionsParams = {
 	clearHoverCard: () => void;
 	handleHoverCard: (data: HoverCardData) => void;
 	hoverBackground: string;
+	playerId: SessionPlayerId;
 };
 
 function resolveOptionParams(
@@ -138,6 +140,7 @@ export function useEffectGroupOptions({
 	clearHoverCard,
 	handleHoverCard,
 	hoverBackground,
+	playerId,
 }: EffectGroupOptionsParams): ActionCardOption[] | undefined {
 	const [hovered, setHovered] = useState<{
 		option: ActionEffectGroupOption;
@@ -149,8 +152,9 @@ export function useEffectGroupOptions({
 			? {
 					actionId: hovered.option.actionId,
 					params: hovered.mergedParams as ActionParametersPayload,
+					playerId,
 				}
-			: { actionId: null },
+			: { actionId: null, playerId },
 	);
 
 	useEffect(() => {

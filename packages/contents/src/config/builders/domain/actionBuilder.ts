@@ -1,8 +1,4 @@
-import type {
-	ActionEffect,
-	EffectConfig,
-	RequirementConfig,
-} from '@kingdom-builder/protocol';
+import type { ActionEffect, EffectConfig, RequirementConfig } from '@kingdom-builder/protocol';
 import type { ActionDef } from '../../../actions';
 import type { ActionCategoryId } from '../../../actionCategories';
 import type { Focus } from '../../../defs';
@@ -56,18 +52,11 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 
 	effectGroup(group: ActionEffectGroupBuilder | ActionEffectGroupDef) {
 		if (!(this instanceof ActionBuilder)) {
-			throw new Error(
-				'Action effect groups can only be used on actions. ' +
-					'Use action().effectGroup(...).',
-			);
+			throw new Error('Action effect groups can only be used on actions. ' + 'Use action().effectGroup(...).');
 		}
-		const built =
-			group instanceof ActionEffectGroupBuilder ? group.build() : group;
+		const built = group instanceof ActionEffectGroupBuilder ? group.build() : group;
 		if (this.effectGroupIds.has(built.id)) {
-			throw new Error(
-				`Action effect group id "${built.id}" already exists on this action. ` +
-					'Use unique group ids.',
-			);
+			throw new Error(`Action effect group id "${built.id}" already exists on this action. ` + 'Use unique group ids.');
 		}
 		this.effectGroupIds.add(built.id);
 		this.config.effects.push(built as ActionEffect);

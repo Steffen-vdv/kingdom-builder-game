@@ -12,16 +12,11 @@ import type {
 	ResourceV2ValueEffectDefinition,
 } from './types';
 
-const DUPLICATE_TIER_MESSAGE =
-	'ResourceV2 definitions may only configure a single tier track. Remove the duplicate tierTrack() call.';
-const CLAMP_ONLY_MESSAGE =
-	'ResourceV2 MVP only supports clamp reconciliation. Remove the unsupported reconciliation configuration.';
-const PARENT_LIMITED_MESSAGE =
-	'ResourceV2 group parents are limited resources and cannot allow direct value mutations.';
+const DUPLICATE_TIER_MESSAGE = 'ResourceV2 definitions may only configure a single tier track. Remove the duplicate tierTrack() call.';
+const CLAMP_ONLY_MESSAGE = 'ResourceV2 MVP only supports clamp reconciliation. Remove the unsupported reconciliation configuration.';
+const PARENT_LIMITED_MESSAGE = 'ResourceV2 group parents are limited resources and cannot allow direct value mutations.';
 
-function cloneTierStep(
-	step: ResourceV2TierTrack['steps'][number],
-): ResourceV2TierTrack['steps'][number] {
+function cloneTierStep(step: ResourceV2TierTrack['steps'][number]): ResourceV2TierTrack['steps'][number] {
 	const cloned: ResourceV2TierTrack['steps'][number] = {
 		id: step.id,
 		min: step.min,
@@ -55,9 +50,7 @@ function cloneTierTrack(track: ResourceV2TierTrack): ResourceV2TierTrack {
 	return cloned;
 }
 
-function cloneParentMetadata(
-	parent: ResourceV2GroupParentInput,
-): ResourceV2GroupParentMetadata {
+function cloneParentMetadata(parent: ResourceV2GroupParentInput): ResourceV2GroupParentMetadata {
 	if (parent.limited === false) {
 		throw new Error(PARENT_LIMITED_MESSAGE);
 	}
@@ -94,9 +87,7 @@ class ResourceV2GroupBuilder {
 
 	parent(parent: ResourceV2GroupParentInput) {
 		if (this.metadata.parent) {
-			throw new Error(
-				'ResourceV2 group already defines a virtual parent. Remove the extra parent() call.',
-			);
+			throw new Error('ResourceV2 group already defines a virtual parent. Remove the extra parent() call.');
 		}
 		this.metadata.parent = cloneParentMetadata(parent);
 	}
@@ -197,24 +188,16 @@ export class ResourceV2Builder {
 		return this;
 	}
 
-	group(
-		groupId: string,
-		order: number,
-		configure?: (builder: ResourceV2GroupBuilder) => void,
-	) {
+	group(groupId: string, order: number, configure?: (builder: ResourceV2GroupBuilder) => void) {
 		if (this.definition.group) {
-			throw new Error(
-				'ResourceV2 definition already assigned group metadata. Remove the duplicate group() call.',
-			);
+			throw new Error('ResourceV2 definition already assigned group metadata. Remove the duplicate group() call.');
 		}
 		const metadata: ResourceV2GroupMetadata = { groupId, order };
 		if (configure) {
 			const builder = new ResourceV2GroupBuilder(metadata);
 			configure(builder);
 		}
-		this.definition.group = metadata.parent
-			? { ...metadata, parent: { ...metadata.parent } }
-			: { ...metadata };
+		this.definition.group = metadata.parent ? { ...metadata, parent: { ...metadata.parent } } : { ...metadata };
 		return this;
 	}
 
@@ -244,13 +227,8 @@ export class ResourceV2Builder {
 	}
 }
 
-function ensureClamp(
-	reconciliation: ResourceV2ReconciliationStrategy | undefined,
-): ResourceV2ReconciliationStrategy {
-	if (
-		reconciliation !== undefined &&
-		reconciliation !== ResourceV2ReconciliationStrategy.Clamp
-	) {
+function ensureClamp(reconciliation: ResourceV2ReconciliationStrategy | undefined): ResourceV2ReconciliationStrategy {
+	if (reconciliation !== undefined && reconciliation !== ResourceV2ReconciliationStrategy.Clamp) {
 		throw new Error(CLAMP_ONLY_MESSAGE);
 	}
 	return ResourceV2ReconciliationStrategy.Clamp;
@@ -263,9 +241,7 @@ export interface ResourceV2ValueEffectOptions {
 	suppressHooks?: boolean;
 }
 
-export function resourceV2Add(
-	options: ResourceV2ValueEffectOptions,
-): ResourceV2ValueEffectDefinition {
+export function resourceV2Add(options: ResourceV2ValueEffectOptions): ResourceV2ValueEffectDefinition {
 	const reconciliation = ensureClamp(options.reconciliation);
 	const effect: ResourceV2ValueEffectDefinition = {
 		kind: 'resource:add',
@@ -279,9 +255,7 @@ export function resourceV2Add(
 	return effect;
 }
 
-export function resourceV2Remove(
-	options: ResourceV2ValueEffectOptions,
-): ResourceV2ValueEffectDefinition {
+export function resourceV2Remove(options: ResourceV2ValueEffectOptions): ResourceV2ValueEffectDefinition {
 	const reconciliation = ensureClamp(options.reconciliation);
 	const effect: ResourceV2ValueEffectDefinition = {
 		kind: 'resource:remove',
@@ -307,18 +281,14 @@ export interface ResourceV2TransferEffectOptions {
 	suppressHooks?: boolean;
 }
 
-function buildEndpoint(
-	endpoint: ResourceV2TransferEndpointOptions,
-): ResourceV2TransferEndpointDefinition {
+function buildEndpoint(endpoint: ResourceV2TransferEndpointOptions): ResourceV2TransferEndpointDefinition {
 	return {
 		resourceId: endpoint.resourceId,
 		reconciliation: ensureClamp(endpoint.reconciliation),
 	};
 }
 
-export function resourceV2Transfer(
-	options: ResourceV2TransferEffectOptions,
-): ResourceV2TransferEffectDefinition {
+export function resourceV2Transfer(options: ResourceV2TransferEffectOptions): ResourceV2TransferEffectDefinition {
 	const effect: ResourceV2TransferEffectDefinition = {
 		kind: 'resource:transfer',
 		donor: buildEndpoint(options.donor),
@@ -337,9 +307,7 @@ export interface ResourceV2BoundAdjustmentOptions {
 	reconciliation?: ResourceV2ReconciliationStrategy;
 }
 
-export function resourceV2LowerBoundIncrease(
-	options: ResourceV2BoundAdjustmentOptions,
-): ResourceV2BoundAdjustmentDefinition {
+export function resourceV2LowerBoundIncrease(options: ResourceV2BoundAdjustmentOptions): ResourceV2BoundAdjustmentDefinition {
 	return {
 		kind: 'resource:lower-bound:increase',
 		resourceId: options.resourceId,
@@ -348,9 +316,7 @@ export function resourceV2LowerBoundIncrease(
 	};
 }
 
-export function resourceV2UpperBoundIncrease(
-	options: ResourceV2BoundAdjustmentOptions,
-): ResourceV2BoundAdjustmentDefinition {
+export function resourceV2UpperBoundIncrease(options: ResourceV2BoundAdjustmentOptions): ResourceV2BoundAdjustmentDefinition {
 	return {
 		kind: 'resource:upper-bound:increase',
 		resourceId: options.resourceId,
@@ -360,9 +326,7 @@ export function resourceV2UpperBoundIncrease(
 }
 
 export function resourceV2LowerBoundDecrease(): never {
-	throw new Error(
-		'ResourceV2 MVP defers lower-bound decrease effects. Remove the resourceV2LowerBoundDecrease() call.',
-	);
+	throw new Error('ResourceV2 MVP defers lower-bound decrease effects. Remove the resourceV2LowerBoundDecrease() call.');
 }
 
 export function resourceV2(id: string): ResourceV2Builder {

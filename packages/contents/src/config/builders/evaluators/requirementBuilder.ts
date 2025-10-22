@@ -12,9 +12,7 @@ export class RequirementBuilder<P extends Params = Params> {
 
 	type(type: string) {
 		if (this.typeSet) {
-			throw new Error(
-				'Requirement already has type(). Remove the extra type() call.',
-			);
+			throw new Error('Requirement already has type(). Remove the extra type() call.');
 		}
 		this.config.type = type;
 		this.typeSet = true;
@@ -23,9 +21,7 @@ export class RequirementBuilder<P extends Params = Params> {
 
 	method(method: string) {
 		if (this.methodSet) {
-			throw new Error(
-				'Requirement already has method(). Remove the extra method() call.',
-			);
+			throw new Error('Requirement already has method(). Remove the extra method() call.');
 		}
 		this.config.method = method;
 		this.methodSet = true;
@@ -34,14 +30,10 @@ export class RequirementBuilder<P extends Params = Params> {
 
 	param(key: string, value: unknown) {
 		if (this.paramsSet) {
-			throw new Error(
-				'Requirement params(...) was already provided. Remove params(...) before calling param().',
-			);
+			throw new Error('Requirement params(...) was already provided. Remove params(...) before calling param().');
 		}
 		if (this.paramKeys.has(key)) {
-			throw new Error(
-				`Requirement already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`,
-			);
+			throw new Error(`Requirement already has a value for "${key}". Remove the duplicate param('${key}', ...) call.`);
 		}
 		this.config.params = this.config.params || {};
 		(this.config.params as Params)[key] = value;
@@ -51,14 +43,10 @@ export class RequirementBuilder<P extends Params = Params> {
 
 	params(params: P) {
 		if (this.paramsSet) {
-			throw new Error(
-				'Requirement params(...) was already provided. Remove the duplicate params() call.',
-			);
+			throw new Error('Requirement params(...) was already provided. Remove the duplicate params() call.');
 		}
 		if (this.paramKeys.size) {
-			throw new Error(
-				'Requirement already has individual param() values. Remove them before calling params(...).',
-			);
+			throw new Error('Requirement already has individual param() values. Remove them before calling params(...).');
 		}
 		this.config.params = params;
 		this.paramsSet = true;
@@ -72,14 +60,10 @@ export class RequirementBuilder<P extends Params = Params> {
 
 	build(): RequirementConfig {
 		if (!this.typeSet) {
-			throw new Error(
-				'Requirement is missing type(). Call type("your-requirement") before build().',
-			);
+			throw new Error('Requirement is missing type(). Call type("your-requirement") before build().');
 		}
 		if (!this.methodSet) {
-			throw new Error(
-				'Requirement is missing method(). Call method("your-method") before build().',
-			);
+			throw new Error('Requirement is missing method(). Call method("your-method") before build().');
 		}
 		return this.config;
 	}
@@ -120,9 +104,7 @@ export class CompareRequirementBuilder extends RequirementBuilder<{
 
 	left(value: CompareValue) {
 		if (this.leftSet) {
-			throw new Error(
-				'Compare requirement already set left(). Remove the extra left() call.',
-			);
+			throw new Error('Compare requirement already set left(). Remove the extra left() call.');
 		}
 		super.param('left', this.normalize(value));
 		this.leftSet = true;
@@ -131,9 +113,7 @@ export class CompareRequirementBuilder extends RequirementBuilder<{
 
 	right(value: CompareValue) {
 		if (this.rightSet) {
-			throw new Error(
-				'Compare requirement already set right(). Remove the extra right() call.',
-			);
+			throw new Error('Compare requirement already set right(). Remove the extra right() call.');
 		}
 		super.param('right', this.normalize(value));
 		this.rightSet = true;
@@ -142,9 +122,7 @@ export class CompareRequirementBuilder extends RequirementBuilder<{
 
 	operator(op: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne') {
 		if (this.operatorSet) {
-			throw new Error(
-				'Compare requirement already set operator(). Remove the extra operator() call.',
-			);
+			throw new Error('Compare requirement already set operator(). Remove the extra operator() call.');
 		}
 		super.param('operator', op);
 		this.operatorSet = true;
@@ -153,19 +131,13 @@ export class CompareRequirementBuilder extends RequirementBuilder<{
 
 	override build(): RequirementConfig {
 		if (!this.leftSet) {
-			throw new Error(
-				'Compare requirement is missing left(). Call left(...) before build().',
-			);
+			throw new Error('Compare requirement is missing left(). Call left(...) before build().');
 		}
 		if (!this.rightSet) {
-			throw new Error(
-				'Compare requirement is missing right(). Call right(...) before build().',
-			);
+			throw new Error('Compare requirement is missing right(). Call right(...) before build().');
 		}
 		if (!this.operatorSet) {
-			throw new Error(
-				'Compare requirement is missing operator(). Call operator(...) before build().',
-			);
+			throw new Error('Compare requirement is missing operator(). Call operator(...) before build().');
 		}
 		return super.build();
 	}

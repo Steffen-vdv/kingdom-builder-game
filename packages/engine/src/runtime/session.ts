@@ -2,7 +2,10 @@ import {
 	createEngine,
 	type EngineCreationOptions,
 } from '../setup/create_engine';
-import { performAction as runAction } from '../actions/action_execution';
+import {
+	performAction as runAction,
+	simulateAction as previewAction,
+} from '../actions/action_execution';
 import { advance as runAdvance } from '../phases/advance';
 import { getActionEffectGroups } from '../actions/effect_groups';
 import {
@@ -70,10 +73,12 @@ export interface EngineSession {
 	getActionCosts<T extends string>(
 		actionId: T,
 		params?: ActionParameters<T>,
+		playerId?: PlayerId,
 	): ReturnType<typeof resolveActionCosts>;
 	getActionRequirements<T extends string>(
 		actionId: T,
 		params?: ActionParameters<T>,
+		playerId?: PlayerId,
 	): ReturnType<typeof resolveActionRequirements>;
 	getActionDefinition(actionId: string): ActionDefinitionSummary | undefined;
 	pullEffectLog<T>(key: string): T | undefined;
@@ -115,6 +120,7 @@ export function createEngineSession(
 	const context = createEngine(options);
 	return {
 		performAction(actionId, params) {
+			previewAction(actionId, context, params);
 			const traces = runAction(actionId, context, params);
 			return cloneActionTraces(traces);
 		},
@@ -129,12 +135,17 @@ export function createEngineSession(
 			const groups = getActionEffectGroups(actionId, context);
 			return cloneActionOptions(groups);
 		},
-		getActionCosts(actionId, params) {
-			const costs = resolveActionCosts(actionId, context, params);
+		getActionCosts(actionId, params, playerId) {
+			const costs = resolveActionCosts(actionId, context, params, playerId);
 			return { ...costs };
 		},
-		getActionRequirements(actionId, params) {
-			const requirements = resolveActionRequirements(actionId, context, params);
+		getActionRequirements(actionId, params, playerId) {
+			const requirements = resolveActionRequirements(
+				actionId,
+				context,
+				params,
+				playerId,
+			);
 			return [...requirements];
 		},
 		getActionDefinition(actionId) {

@@ -2,5 +2,13 @@
 	"singleQuote": true,
 	"trailingComma": "all",
 	"useTabs": true,
-	"printWidth": 80
+	"printWidth": 80,
+	"overrides": [
+		{
+			"files": ["packages/contents/**/*"],
+			"options": {
+				"printWidth": 200
+			}
+		}
+	]
 }

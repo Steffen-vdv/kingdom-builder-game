@@ -2,8 +2,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-	AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
-	AUTO_PASS_PREFERENCE_STORAGE_KEY,
+	AUTO_ADVANCE_PREFERENCE_STORAGE_KEY,
 	getStoredGameplayPreferences,
 	useGameplayPreferences,
 } from '../../src/state/gameplayPreferences';
@@ -16,21 +15,41 @@ describe('getStoredGameplayPreferences', () => {
 	it('returns defaults when nothing is stored', () => {
 		const preferences = getStoredGameplayPreferences();
 
-		expect(preferences.autoAcknowledge).toBe(false);
-		expect(preferences.autoPass).toBe(false);
+		expect(preferences.autoAdvance).toBe(false);
 	});
 
-	it('returns stored values when available', () => {
-		window.localStorage.setItem(
-			AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
-			'true',
-		);
-		window.localStorage.setItem(AUTO_PASS_PREFERENCE_STORAGE_KEY, 'true');
+	it('returns stored value when available', () => {
+		window.localStorage.setItem(AUTO_ADVANCE_PREFERENCE_STORAGE_KEY, 'true');
 
 		const preferences = getStoredGameplayPreferences();
 
-		expect(preferences.autoAcknowledge).toBe(true);
-		expect(preferences.autoPass).toBe(true);
+		expect(preferences.autoAdvance).toBe(true);
+	});
+
+	it('migrates legacy preferences and removes old keys', () => {
+		window.localStorage.setItem(
+			'kingdom-builder.preferences.autoAcknowledge',
+			'true',
+		);
+		window.localStorage.setItem(
+			'kingdom-builder.preferences.autoPass',
+			'false',
+		);
+
+		const preferences = getStoredGameplayPreferences();
+
+		expect(preferences.autoAdvance).toBe(true);
+		expect(
+			window.localStorage.getItem(AUTO_ADVANCE_PREFERENCE_STORAGE_KEY),
+		).toBe('true');
+		expect(
+			window.localStorage.getItem(
+				'kingdom-builder.preferences.autoAcknowledge',
+			),
+		).toBeNull();
+		expect(
+			window.localStorage.getItem('kingdom-builder.preferences.autoPass'),
+		).toBeNull();
 	});
 });
 
@@ -73,30 +92,17 @@ describe('useGameplayPreferences', () => {
 	it('falls back to defaults and keeps controls usable when storage fails', () => {
 		const { result } = renderHook(() => useGameplayPreferences());
 
-		expect(result.current.isAutoAcknowledgeEnabled).toBe(false);
-		expect(result.current.isAutoPassEnabled).toBe(false);
-		expect(typeof result.current.setIsAutoAcknowledgeEnabled).toBe('function');
-		expect(typeof result.current.setIsAutoPassEnabled).toBe('function');
+		expect(result.current.isAutoAdvanceEnabled).toBe(false);
+		expect(typeof result.current.setIsAutoAdvanceEnabled).toBe('function');
 
 		expect(() => {
 			act(() => {
-				result.current.setIsAutoAcknowledgeEnabled(true);
+				result.current.setIsAutoAdvanceEnabled(true);
 			});
 		}).not.toThrow();
-		expect(result.current.isAutoAcknowledgeEnabled).toBe(true);
+		expect(result.current.isAutoAdvanceEnabled).toBe(true);
 		expect(setItemSpy).toHaveBeenCalledWith(
-			AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
-			'true',
-		);
-
-		expect(() => {
-			act(() => {
-				result.current.setIsAutoPassEnabled(true);
-			});
-		}).not.toThrow();
-		expect(result.current.isAutoPassEnabled).toBe(true);
-		expect(setItemSpy).toHaveBeenCalledWith(
-			AUTO_PASS_PREFERENCE_STORAGE_KEY,
+			AUTO_ADVANCE_PREFERENCE_STORAGE_KEY,
 			'true',
 		);
 	});

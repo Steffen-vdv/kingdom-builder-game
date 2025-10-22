@@ -22,6 +22,7 @@ import type {
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 
 const BASE: {
@@ -99,6 +100,35 @@ describe('EngineSession', () => {
 		const refreshed = session.getSnapshot();
 		const activeRefreshed = refreshed.game.players[0]!;
 		expect(activeRefreshed.resources[CResource.gold]).toBe(initialGold + 3);
+	});
+
+	it('simulates actions before executing to avoid partial failures', () => {
+		const content = createContentFactory();
+		const failingAction = content.action({
+			baseCosts: { [CResource.ap]: 1 },
+			effects: Array.from({ length: 3 }, () => ({
+				type: 'land',
+				method: LandMethods.TILL,
+			})),
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		advanceToMain(session);
+		const before = session.getSnapshot();
+		const activeBefore = before.game.players[0]!;
+		const initialAp = activeBefore.resources[CResource.ap] ?? 0;
+
+		expect(() => session.performAction(failingAction.id)).toThrow(
+			/No tillable land available/,
+		);
+
+		const after = session.getSnapshot();
+		const activeAfter = after.game.players[0]!;
+		expect(activeAfter.resources[CResource.ap]).toBe(initialAp);
 	});
 
 	it('returns immutable game snapshots', () => {
@@ -270,5 +300,44 @@ describe('EngineSession', () => {
 				message: requirementMessage,
 			},
 		]);
+	});
+
+	it('evaluates requirements for a specific player without changing turns', () => {
+		const requirementId = 'vitest:active-id';
+		if (!REQUIREMENTS.has(requirementId)) {
+			REQUIREMENTS.add(requirementId, (requirement, context) => ({
+				requirement,
+				message: context.activePlayer.id,
+			}));
+		}
+		const content = createContentFactory();
+		const action = content.action({
+			requirements: [
+				{
+					type: 'vitest',
+					method: 'active-id',
+				},
+			],
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		advanceToMain(session);
+		const initialSnapshot = session.getSnapshot();
+		const initialActive = initialSnapshot.game.activePlayerId;
+		const opponentId = initialSnapshot.game.opponentId;
+		const defaultRequirements = session.getActionRequirements(action.id);
+		expect(defaultRequirements[0]?.message).toBe(initialActive);
+		const opponentRequirements = session.getActionRequirements(
+			action.id,
+			undefined,
+			opponentId,
+		);
+		expect(opponentRequirements[0]?.message).toBe(opponentId);
+		const afterSnapshot = session.getSnapshot();
+		expect(afterSnapshot.game.activePlayerId).toBe(initialActive);
 	});
 });

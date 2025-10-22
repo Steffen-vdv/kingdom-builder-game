@@ -10,23 +10,9 @@ const ACTION_CATEGORY_ID_MAP = {
 
 const ACTION_CATEGORY_SUBTITLES = {
 	Basic: '(Effects take place immediately, unless stated otherwise)',
-	Hire: [
-		'(',
-		'Effects take place immediately and last until the population is removed',
-		' or reassigned',
-		')',
-	].join(''),
-	Develop: [
-		'(',
-		'Effects take place immediately and last until the development is removed',
-		')',
-	].join(''),
-	Build: [
-		'(',
-		'Effects take place immediately build and last until the building is',
-		' removed',
-		')',
-	].join(''),
+	Hire: ['(', 'Effects take place immediately and last until the population is removed', ' or reassigned', ')'].join(''),
+	Develop: ['(', 'Effects take place immediately and last until the development is removed', ')'].join(''),
+	Build: ['(', 'Effects take place immediately build and last until the building is', ' removed', ')'].join(''),
 } as const;
 
 const ACTION_CATEGORY_ICONS = {
@@ -38,8 +24,7 @@ const ACTION_CATEGORY_ICONS = {
 
 export const ActionCategoryId = ACTION_CATEGORY_ID_MAP;
 
-export type ActionCategoryId =
-	(typeof ActionCategoryId)[keyof typeof ActionCategoryId];
+export type ActionCategoryId = (typeof ActionCategoryId)[keyof typeof ActionCategoryId];
 
 export function createActionCategoryRegistry() {
 	const registry = new Registry<ActionCategoryConfig>();

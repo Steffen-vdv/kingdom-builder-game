@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSoundEffectsContext } from '../../state/SoundEffectsContext';
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 	variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'ghost' | 'dev';
@@ -81,9 +82,23 @@ export default function Button({
 	...rest
 }: ButtonProps) {
 	const variantClass = VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.secondary;
+	const { playUiClick } = useSoundEffectsContext();
+	const { onClick, ...restProps } = rest;
+	const handleClick = React.useCallback(
+		(event: React.MouseEvent<HTMLButtonElement>) => {
+			if (!disabled) {
+				playUiClick();
+			}
+			if (onClick) {
+				onClick(event);
+			}
+		},
+		[disabled, onClick, playUiClick],
+	);
 	const buttonClasses = [
 		'inline-flex items-center gap-3 justify-start rounded-full',
-		'px-4 py-2 text-left text-sm font-semibold leading-snug transition',
+		'px-4 py-2 text-left text-sm font-semibold leading-snug',
+		'transition',
 		'disabled:cursor-not-allowed disabled:opacity-50',
 		disabled ? '' : 'hoverable cursor-pointer',
 		variantClass,
@@ -93,10 +108,19 @@ export default function Button({
 		.filter(Boolean)
 		.join(' ');
 	return (
-		<button type={type} disabled={disabled} className={buttonClasses} {...rest}>
+		<button
+			type={type}
+			disabled={disabled}
+			className={buttonClasses}
+			onClick={handleClick}
+			{...restProps}
+		>
 			<span
 				aria-hidden
-				className="flex h-6 w-6 shrink-0 items-center justify-center text-base leading-none"
+				className={[
+					'flex h-6 w-6 shrink-0 items-center',
+					'justify-center text-base leading-none',
+				].join(' ')}
 			>
 				{icon}
 			</span>
