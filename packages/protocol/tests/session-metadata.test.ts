@@ -49,11 +49,32 @@ describe('session snapshot metadata', () => {
 		const metadata: SessionSnapshotMetadata = {
 			passiveEvaluationModifiers: {},
 			overview,
-			stats: {
+			valueDescriptors: {
 				morale: {
+					id: 'morale',
+					key: 'morale',
+					order: 1,
 					label: 'Morale',
-					displayAsPercent: true,
-					format: 'percent',
+					percent: true,
+				},
+			},
+			valueGroups: {
+				morale: {
+					id: 'morale-group',
+					order: 1,
+					parent: {
+						id: 'morale-parent',
+						order: 0,
+						label: 'Morale',
+						limited: true,
+					},
+					values: ['morale'],
+				},
+			},
+			valueTiers: {
+				morale: {
+					trackId: 'morale-track',
+					current: { id: 'steady', label: 'Steady' },
 				},
 			},
 		};
@@ -65,7 +86,9 @@ describe('session snapshot metadata', () => {
 				buildings: {},
 				developments: {},
 				populations: {},
-				resources: {},
+				values: {},
+				valueGroups: {},
+				globalActionCost: null,
 			},
 		};
 		const result = sessionCreateResponseSchema.parse(response);
@@ -73,7 +96,9 @@ describe('session snapshot metadata', () => {
 			result.snapshot as { metadata: SessionSnapshotMetadata }
 		).metadata;
 		expect(parsedMetadata.overview?.hero?.title).toBe('Realm Guide');
-		expect(parsedMetadata.stats?.morale?.displayAsPercent).toBe(true);
+		expect(parsedMetadata.valueDescriptors?.morale.percent).toBe(true);
+		expect(parsedMetadata.valueGroups?.morale.parent.label).toBe('Morale');
+		expect(parsedMetadata.valueTiers?.morale.current.id).toBe('steady');
 	});
 
 	it('exposes descriptor format typing', () => {

@@ -26,6 +26,8 @@ import type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
+	SessionResourceGroupDescriptor,
+	SessionResourceValueDescriptor,
 } from '../src/session';
 import type {
 	SessionRuntimeConfigResponse,
@@ -102,6 +104,15 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof runtimeConfigResponseSchema>
 		>().toEqualTypeOf<SessionRuntimeConfigResponse>();
+		expectTypeOf<SessionRuntimeConfigResponse['values']>().toEqualTypeOf<
+			Record<string, SessionResourceValueDescriptor>
+		>();
+		expectTypeOf<SessionRuntimeConfigResponse['valueGroups']>().toEqualTypeOf<
+			Record<string, SessionResourceGroupDescriptor>
+		>();
+		expectTypeOf<
+			SessionRuntimeConfigResponse['globalActionCost']
+		>().toEqualTypeOf<string | null>();
 	});
 
 	it('matches the registries payload type including action categories', () => {
@@ -109,6 +120,15 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof sessionRegistriesSchema>
 		>().toEqualTypeOf<SessionRegistriesPayload>();
+		expectTypeOf<SessionRegistriesPayload['values']>().toEqualTypeOf<
+			Record<string, SessionResourceValueDescriptor>
+		>();
+		expectTypeOf<SessionRegistriesPayload['valueGroups']>().toEqualTypeOf<
+			Record<string, SessionResourceGroupDescriptor>
+		>();
+		expectTypeOf<SessionRegistriesPayload['globalActionCost']>().toEqualTypeOf<
+			string | null
+		>();
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();

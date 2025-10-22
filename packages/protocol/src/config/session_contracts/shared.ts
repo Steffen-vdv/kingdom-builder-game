@@ -19,13 +19,56 @@ import type {
 } from '../../session/contracts';
 import type { SessionPlayerId } from '../../session';
 
-export const sessionResourceDefinitionSchema = z.object({
-	key: z.string(),
-	icon: z.string().optional(),
-	label: z.string().optional(),
-	description: z.string().optional(),
-	tags: z.array(z.string()).optional(),
-});
+const sessionResourceValueDescriptorSchema = z
+	.object({
+		id: z.string(),
+		key: z.string(),
+		order: z.number(),
+		icon: z.string().optional(),
+		label: z.string().optional(),
+		description: z.string().optional(),
+		percent: z.boolean().optional(),
+		groupId: z.string().optional(),
+		globalActionCost: z.boolean().optional(),
+	})
+	.passthrough();
+
+const sessionResourceGroupParentSchema = z
+	.object({
+		id: z.string(),
+		order: z.number(),
+		icon: z.string().optional(),
+		label: z.string().optional(),
+		description: z.string().optional(),
+		limited: z.boolean(),
+	})
+	.passthrough();
+
+const sessionResourceGroupDescriptorSchema = z
+	.object({
+		id: z.string(),
+		order: z.number(),
+		parent: sessionResourceGroupParentSchema,
+		values: z.array(z.string()),
+	})
+	.passthrough();
+
+const sessionResourceTierStepSchema = z
+	.object({
+		id: z.string(),
+		label: z.string().optional(),
+		summaryToken: z.string().optional(),
+	})
+	.passthrough();
+
+const sessionResourceTierStatusSchema = z
+	.object({
+		trackId: z.string(),
+		current: sessionResourceTierStepSchema,
+		next: sessionResourceTierStepSchema.optional(),
+		previous: sessionResourceTierStepSchema.optional(),
+	})
+	.passthrough();
 
 const serializedRegistrySchema = <Shape extends ZodRawShape>(
 	schema: ZodObject<Shape>,
@@ -37,7 +80,9 @@ export const sessionRegistriesSchema = z
 		buildings: serializedRegistrySchema(buildingSchema),
 		developments: serializedRegistrySchema(developmentSchema),
 		populations: serializedRegistrySchema(populationSchema),
-		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		values: serializedRegistrySchema(sessionResourceValueDescriptorSchema),
+		valueGroups: serializedRegistrySchema(sessionResourceGroupDescriptorSchema),
+		globalActionCost: z.string().nullable(),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
@@ -47,7 +92,9 @@ export const runtimeConfigResponseSchema = z
 		phases: z.array(phaseSchema),
 		start: startConfigSchema,
 		rules: ruleSetSchema,
-		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		values: serializedRegistrySchema(sessionResourceValueDescriptorSchema),
+		valueGroups: serializedRegistrySchema(sessionResourceGroupDescriptorSchema),
+		globalActionCost: z.string().nullable(),
 		primaryIconId: z.string().nullable(),
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
@@ -71,6 +118,19 @@ const sessionMetadataDescriptorSchema = z
 		format: sessionMetadataFormatSchema.optional(),
 	})
 	.passthrough();
+
+const sessionResourceValueDescriptorRecordSchema = z.record(
+	z.string(),
+	sessionResourceValueDescriptorSchema,
+);
+const sessionResourceGroupDescriptorRecordSchema = z.record(
+	z.string(),
+	sessionResourceGroupDescriptorSchema,
+);
+const sessionResourceTierStatusRecordSchema = z.record(
+	z.string(),
+	sessionResourceTierStatusSchema,
+);
 
 const sessionMetadataDescriptorRecordSchema = z.record(
 	z.string(),
@@ -177,11 +237,11 @@ const sessionOverviewMetadataSchema = z
 
 export const sessionMetadataSnapshotSchema = z
 	.object({
-		resources: sessionMetadataDescriptorRecordSchema.optional(),
-		populations: sessionMetadataDescriptorRecordSchema.optional(),
+		valueDescriptors: sessionResourceValueDescriptorRecordSchema.optional(),
+		valueGroups: sessionResourceGroupDescriptorRecordSchema.optional(),
+		valueTiers: sessionResourceTierStatusRecordSchema.optional(),
 		buildings: sessionMetadataDescriptorRecordSchema.optional(),
 		developments: sessionMetadataDescriptorRecordSchema.optional(),
-		stats: sessionMetadataDescriptorRecordSchema.optional(),
 		phases: z.record(z.string(), sessionPhaseMetadataSchema).optional(),
 		triggers: z.record(z.string(), sessionTriggerMetadataSchema).optional(),
 		assets: sessionMetadataDescriptorRecordSchema.optional(),
