@@ -1,13 +1,14 @@
 # Protocol Handover
 
-> Replace this template with the latest protocol/API handover when finishing a task. Highlight compatibility impacts and pending integrations.
-
-- **Prepared by:** _(name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(protocol initiative in progress)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-02-17 00:00
+- **Current Focus:** Resource Migration MVP – clamp-only ResourceV2 schema support in protocol
 - **State Summary:**
-  - _(bullet points covering progress, decisions, and open questions)_
+  - Added ResourceV2 definition/tier/group schemas and type exports to the protocol package.
+  - `validateGameConfig` now accepts an optional `resourceV2` block so legacy payloads remain valid during rollout.
+  - Coverage includes duplicate tier detection, clamp-only reconciliation enforcement, and limited parent validation.
 - **Next Suggested Tasks:**
-  - _(bulleted action items with owners if known)_
+  - Surface ResourceV2 definitions through session payloads once content delivers the new block.
+  - Align engine validation/runtime loaders with the protocol schema to catch config regressions early.
 - **Risks / Blockers:**
-  - _(list items or “None”)_
+  - Pending content emission of the `resourceV2` block; until then schema paths are untested against real payloads.
