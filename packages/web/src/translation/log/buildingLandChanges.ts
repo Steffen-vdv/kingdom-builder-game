@@ -56,6 +56,20 @@ export function appendLandChanges(
 		formatIconLabel(context.assets.land.icon, context.assets.land.label) ||
 		context.assets.land.label ||
 		'Land';
+	const slotIcon = (context.assets.slot.icon ?? '').trim();
+	const slotLabelSource = (
+		context.assets.slot.label ?? 'Development Slot'
+	).trim();
+	const slotLabelBase = slotLabelSource || 'Development Slot';
+	const emptySlotLabelParts: string[] = [];
+	if (slotIcon) {
+		emptySlotLabelParts.push(slotIcon);
+	}
+	const emptySlotName = `Empty ${slotLabelBase}`.trim();
+	if (emptySlotName) {
+		emptySlotLabelParts.push(emptySlotName);
+	}
+	const emptySlotLabel = emptySlotLabelParts.join(' ').trim();
 	const startingLandCount = before.lands.length;
 	let gainedLandCount = 0;
 	for (const land of after.lands) {
@@ -75,7 +89,10 @@ export function appendLandChanges(
 				continue;
 			}
 			const label = describeContent(context.developments, development);
-			changes.push(formatLogHeadline(LOG_KEYWORDS.developed, label));
+			const headline = formatLogHeadline(LOG_KEYWORDS.developed, label);
+			changes.push(
+				emptySlotLabel ? `${headline} on ${emptySlotLabel}` : headline,
+			);
 		}
 	}
 }

@@ -306,7 +306,20 @@ describe('passive log labels', () => {
 			rawLabel && typeof rawLabel === 'object'
 				? rawLabel.text
 				: (rawLabel ?? developmentId);
-		const expectedHeadline = `${LOG_KEYWORDS.developed} ${label}`;
+		const slotInfo = translationContext.assets.slot;
+		const slotLabelParts: string[] = [];
+		if (slotInfo.icon) {
+			slotLabelParts.push(slotInfo.icon);
+		}
+		const slotName = `Empty ${slotInfo.label ?? 'Development Slot'}`.trim();
+		if (slotName) {
+			slotLabelParts.push(slotName);
+		}
+		const slotLabel = slotLabelParts.join(' ').trim();
+		const expectedHeadlineBase = `${LOG_KEYWORDS.developed} ${label}`;
+		const expectedHeadline = slotLabel
+			? `${expectedHeadlineBase} on ${slotLabel}`
+			: expectedHeadlineBase;
 		expect(lines).toContain(expectedHeadline);
 		const fortificationKey =
 			harness.metadataSelectors.statMetadata.list.find((descriptor) =>
