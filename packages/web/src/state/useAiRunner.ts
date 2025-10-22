@@ -145,6 +145,7 @@ async function presentAiActions({
 			action,
 			stepDefinition,
 			resolution.headline,
+			translationContext,
 		);
 		const source = {
 			kind: 'action' as const,

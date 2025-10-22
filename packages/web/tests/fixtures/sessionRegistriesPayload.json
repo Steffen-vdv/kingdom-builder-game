@@ -31,7 +31,7 @@
 		},
 		"develop_house": {
 			"id": "develop_house",
-			"name": "Develop House",
+			"name": "House",
 			"icon": "🏠",
 			"baseCosts": {
 				"ap": 1,
@@ -53,7 +53,7 @@
 		},
 		"develop_farm": {
 			"id": "develop_farm",
-			"name": "Develop Farm",
+			"name": "Farm",
 			"icon": "🌾",
 			"baseCosts": {
 				"ap": 1,
@@ -75,7 +75,7 @@
 		},
 		"develop_outpost": {
 			"id": "develop_outpost",
-			"name": "Develop Outpost",
+			"name": "Outpost",
 			"icon": "🏹",
 			"baseCosts": {
 				"ap": 1,
@@ -97,7 +97,7 @@
 		},
 		"develop_watchtower": {
 			"id": "develop_watchtower",
-			"name": "Develop Watchtower",
+			"name": "Watchtower",
 			"icon": "🗼",
 			"baseCosts": {
 				"ap": 1,
@@ -299,53 +299,6 @@
 			],
 			"category": "hire",
 			"order": 3,
-			"focus": "economy"
-		},
-		"hire_citizen": {
-			"id": "hire_citizen",
-			"name": "Hire Citizen",
-			"icon": "👤",
-			"baseCosts": {
-				"ap": 1,
-				"gold": 5
-			},
-			"requirements": [
-				{
-					"type": "evaluator",
-					"method": "compare",
-					"params": {
-						"left": {
-							"type": "population"
-						},
-						"operator": "lt",
-						"right": {
-							"type": "stat",
-							"params": {
-								"key": "maxPopulation"
-							}
-						}
-					}
-				}
-			],
-			"effects": [
-				{
-					"type": "population",
-					"method": "add",
-					"params": {
-						"role": "citizen"
-					}
-				},
-				{
-					"type": "resource",
-					"method": "add",
-					"params": {
-						"key": "happiness",
-						"amount": 1
-					}
-				}
-			],
-			"category": "hire",
-			"order": 4,
 			"focus": "economy"
 		},
 		"royal_decree": {
@@ -1338,11 +1291,6 @@
 					}
 				}
 			]
-		},
-		"citizen": {
-			"id": "citizen",
-			"name": "Citizen",
-			"icon": "👤"
 		}
 	},
 	"resources": {

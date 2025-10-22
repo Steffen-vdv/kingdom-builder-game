@@ -121,11 +121,6 @@ export function createPopulationRegistry() {
 			.build(),
 	);
 
-	registry.add(
-		PopulationRole.Citizen,
-		population().id(PopulationRole.Citizen).name('Citizen').icon('👤').build(),
-	);
-
 	return registry;
 }
 

@@ -432,14 +432,20 @@ describe('useActionPerformer', () => {
 		expect(showResolution).toHaveBeenCalledTimes(1);
 		expect(showResolution).toHaveBeenLastCalledWith(
 			expect.objectContaining({
+				action: expect.objectContaining({
+					id: action.id,
+					icon: '⚔️',
+					name: 'Action - ⚔️ Attack',
+				}),
 				source: {
 					kind: 'action',
 					label: 'Action',
 					id: action.id,
-					name: action.name,
+					name: 'Action - ⚔️ Attack',
 					icon: '⚔️',
 				},
 				actorLabel: 'Played by',
+				lines: ['⚔️ Attack', '• 💲 Action cost', '  ↳ 🪙 Gold -1 (5→4)'],
 				timeline: [
 					{
 						text: '⚔️ Attack',
@@ -451,11 +457,13 @@ describe('useActionPerformer', () => {
 						depth: 1,
 						kind: 'cost',
 					},
-					expect.objectContaining({
+					{
+						text: '🪙 Gold -1 (5→4)',
 						depth: 2,
 						kind: 'cost-detail',
-					}),
+					},
 				],
+				summaries: [],
 			}),
 		);
 	});

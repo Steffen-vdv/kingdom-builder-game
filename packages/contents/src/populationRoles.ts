@@ -8,7 +8,6 @@ export const PopulationRole = {
 	Council: 'council',
 	Legion: 'legion',
 	Fortifier: 'fortifier',
-	Citizen: 'citizen',
 } as const;
 export type PopulationRoleId =
 	(typeof PopulationRole)[keyof typeof PopulationRole];
@@ -33,13 +32,6 @@ const defs: PopulationRoleInfo[] = [
 		.label('Fortifier')
 		.description(
 			'Fortifiers reinforce your defenses. They raise Fortification Strength and shore up the castle every Growth phase.',
-		)
-		.build(),
-	populationRole(PopulationRole.Citizen)
-		.icon('👤')
-		.label('Citizen')
-		.description(
-			'Citizens are unassigned populace who await a role. They contribute little on their own but can be trained into specialists.',
 		)
 		.build(),
 ];

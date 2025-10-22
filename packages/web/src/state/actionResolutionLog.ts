@@ -1,5 +1,7 @@
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol/session';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
+import type { TranslationContext } from '../translation/context';
+import type { ActionTitleDefinition } from '../translation/formatActionTitle';
 import type { Action } from './actionTypes';
 import {
 	buildActionLogTimeline,
@@ -57,10 +59,11 @@ function createResolutionLogSnapshot({
 
 interface CreateFailureResolutionOptions {
 	action: Action;
-	stepDefinition?: { icon?: unknown; name?: unknown };
+	stepDefinition?: ActionTitleDefinition;
 	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name'>;
 	detail: string;
 	headline?: string;
+	context?: TranslationContext;
 }
 
 function resolveActionSource(
@@ -89,6 +92,7 @@ function createFailureResolutionSnapshot({
 	player,
 	detail,
 	headline = 'Action failed',
+	context,
 }: CreateFailureResolutionOptions): ActionResolution {
 	const descriptors: ActionLogLineDescriptor[] = [
 		{ text: headline, depth: 0, kind: 'headline' },
@@ -100,6 +104,7 @@ function createFailureResolutionSnapshot({
 		action,
 		stepDefinition,
 		headline,
+		context,
 	);
 	const source = resolveActionSource(actionMeta);
 	return createResolutionLogSnapshot({
