@@ -52,6 +52,7 @@ export {
 	RequirementBuilder,
 	compareEvaluator,
 	developmentEvaluator,
+	landEvaluator,
 	effect,
 	populationEvaluator,
 	requirement,

@@ -2,6 +2,7 @@ export {
 	EvaluatorBuilder,
 	compareEvaluator,
 	developmentEvaluator,
+	landEvaluator,
 	populationEvaluator,
 	statEvaluator,
 } from './evaluatorBuilder';
