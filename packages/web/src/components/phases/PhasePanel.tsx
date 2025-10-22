@@ -67,10 +67,12 @@ const phaseListItemClassName = [
 	'flex items-center rounded-2xl border border-white/40 px-3 py-2 text-left',
 	'text-sm font-medium tracking-[0.08em] text-slate-600 transition-colors',
 	'bg-white/70 shadow-sm dark:border-white/10 dark:bg-slate-900/60',
-	'dark:text-slate-100',
+	'dark:text-slate-100 hoverable cursor-help',
 	'data-[active=true]:border-indigo-500 data-[active=true]:bg-indigo-50/80',
+	'data-[active=true]:hover:bg-indigo-50/80',
 	'data-[active=true]:text-indigo-800 dark:data-[active=true]:border-indigo-300/60',
-	'dark:data-[active=true]:bg-indigo-500/20 dark:data-[active=true]:text-white',
+	'dark:data-[active=true]:bg-indigo-500/20 dark:data-[active=true]:hover:bg-indigo-500/20',
+	'dark:data-[active=true]:text-white',
 ].join(' ');
 
 const phaseListItemContentClassName = ['flex w-full items-center gap-3'].join(
