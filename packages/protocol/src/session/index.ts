@@ -6,6 +6,13 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type {
+	SessionResourceGlobalCostReference,
+	SessionResourceRecentGain,
+	SessionResourceValueDeltaMap,
+	SessionResourceValueMetadata,
+	SessionResourceValueSnapshotMap,
+} from './resourceV2';
 
 export type SessionPlayerId = 'A' | 'B';
 
@@ -61,14 +68,12 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	statsHistory: Record<string, boolean>;
-	population: Record<string, number>;
+	values: SessionResourceValueSnapshotMap;
+	valueHistory: Record<string, boolean>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
-	statSources: Record<string, Record<string, SessionStatSourceContribution>>;
+	valueSources: Record<string, Record<string, SessionStatSourceContribution>>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	passives: SessionPassiveSummary[];
@@ -131,11 +136,7 @@ export interface SessionAdvanceResult {
 	skipped?: SessionAdvanceSkipSnapshot;
 }
 
-export interface PlayerSnapshotDeltaBucket {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
-}
+export type PlayerSnapshotDeltaBucket = SessionResourceValueDeltaMap;
 
 export interface SimulateUpcomingPhasesIds {
 	growth: string;
@@ -174,10 +175,7 @@ export interface SessionRuleSnapshot {
 	winConditions: WinConditionDefinition[];
 }
 
-export interface SessionRecentResourceGain {
-	key: string;
-	amount: number;
-}
+export type SessionRecentResourceGain = SessionResourceRecentGain;
 
 export type SessionEffectLogMap = Record<string, ReadonlyArray<unknown>>;
 
@@ -281,11 +279,9 @@ export interface SessionTriggerMetadata {
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
+	values?: SessionResourceValueMetadata;
 	buildings?: Record<string, SessionMetadataDescriptor>;
 	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
@@ -295,8 +291,8 @@ export interface SessionSnapshotMetadata {
 export interface SessionSnapshot {
 	game: SessionGameSnapshot;
 	phases: SessionPhaseDefinition[];
-	actionCostResource: string;
-	recentResourceGains: SessionRecentResourceGain[];
+	globalActionCost?: SessionResourceGlobalCostReference | null;
+	recentResourceGains: SessionResourceRecentGain[];
 	compensations: Record<SessionPlayerId, PlayerStartConfig>;
 	rules: SessionRuleSnapshot;
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
@@ -330,7 +326,7 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
+	SessionResourceRegistryPayload,
 	SerializedRegistry,
 	SessionMetadataSnapshot,
 	SessionMetadataSnapshotResponse,
@@ -351,3 +347,30 @@ export type {
 
 export * as contracts from './contracts';
 export type { SessionGateway } from './gateway';
+export type {
+	SessionResourceValueSnapshotBounds,
+	SessionResourceValueSnapshot,
+	SessionResourceValueSnapshotMap,
+	SessionResourceValueDelta,
+	SessionResourceValueDeltaMap,
+	SessionResourceGlobalCostReference,
+	SessionResourceValueDescriptor,
+	SessionResourceValueDescriptorRecord,
+	SessionResourceGroupParentDescriptor,
+	SessionResourceGroupDescriptor,
+	SessionResourceGroupDescriptorRecord,
+	SessionResourceTierStepDescriptor,
+	SessionResourceTierTrackDescriptor,
+	SessionResourceTierStatus,
+	SessionResourceTierStatusRecord,
+	SessionResourceValueMetadata,
+	SessionResourceRecentGain,
+	SessionResourceDisplayValue,
+	SessionResourceDisplayGroup,
+	SessionResourceDisplayPlan,
+} from './resourceV2';
+export {
+	createResourceDisplayPlan,
+	extractGroupChildren,
+	createValueDescriptor,
+} from './resourceV2';

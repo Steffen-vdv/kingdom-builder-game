@@ -26,12 +26,14 @@ import type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
+	SessionResourceValueSnapshotMap,
 } from '../src/session';
 import type {
 	SessionRuntimeConfigResponse,
 	SessionRunAiAction,
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
+	SessionResourceRegistryPayload,
 } from '../src/session/contracts';
 
 describe('session contract schemas', () => {
@@ -112,6 +114,9 @@ describe('session contract schemas', () => {
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();
+		expectTypeOf<
+			SessionRegistriesPayload['values']
+		>().toEqualTypeOf<SessionResourceRegistryPayload>();
 	});
 });
 
@@ -120,5 +125,11 @@ describe('session player state snapshot', () => {
 		expectTypeOf<SessionPlayerStateSnapshot['aiControlled']>().toEqualTypeOf<
 			boolean | undefined
 		>();
+	});
+
+	it('provides ResourceV2 value snapshots keyed by id', () => {
+		expectTypeOf<
+			SessionPlayerStateSnapshot['values']
+		>().toEqualTypeOf<SessionResourceValueSnapshotMap>();
 	});
 });

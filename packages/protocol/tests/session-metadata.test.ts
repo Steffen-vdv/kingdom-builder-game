@@ -6,6 +6,7 @@ import type {
 	SessionOverviewMetadata,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
+	SessionResourceValueMetadata,
 } from '../src/session';
 
 describe('session snapshot metadata', () => {
@@ -46,16 +47,56 @@ describe('session snapshot metadata', () => {
 				static: { game: ['game'] },
 			},
 		};
+		const values: SessionResourceValueMetadata = {
+			descriptors: {
+				focus: {
+					id: 'focus',
+					icon: 'focus',
+					label: 'Focus',
+					description: 'Focus on growth.',
+					order: 1,
+					percent: true,
+				},
+			},
+			groups: {
+				council: {
+					id: 'council',
+					order: 1,
+					parentId: 'council-parent',
+					parent: {
+						id: 'council-parent',
+						icon: 'crown',
+						label: 'Council',
+						description: 'Council parent.',
+						order: 0,
+						limited: true,
+					},
+					children: ['focus'],
+				},
+			},
+			tiers: {
+				focus: {
+					track: {
+						id: 'focus-track',
+						steps: [
+							{
+								id: 'focus-tier',
+								min: 0,
+								max: 10,
+								index: 0,
+							},
+						],
+					},
+					currentStepId: 'focus-tier',
+					currentStepIndex: 0,
+				},
+			},
+			globalActionCost: { resourceId: 'focus', amount: 2 },
+		};
 		const metadata: SessionSnapshotMetadata = {
 			passiveEvaluationModifiers: {},
 			overview,
-			stats: {
-				morale: {
-					label: 'Morale',
-					displayAsPercent: true,
-					format: 'percent',
-				},
-			},
+			values,
 		};
 		const response = {
 			sessionId: 'session-123',
@@ -65,7 +106,10 @@ describe('session snapshot metadata', () => {
 				buildings: {},
 				developments: {},
 				populations: {},
-				resources: {},
+				values: {
+					values: {},
+					groups: {},
+				},
 			},
 		};
 		const result = sessionCreateResponseSchema.parse(response);
@@ -73,7 +117,11 @@ describe('session snapshot metadata', () => {
 			result.snapshot as { metadata: SessionSnapshotMetadata }
 		).metadata;
 		expect(parsedMetadata.overview?.hero?.title).toBe('Realm Guide');
-		expect(parsedMetadata.stats?.morale?.displayAsPercent).toBe(true);
+		expect(parsedMetadata.values?.descriptors.focus.percent).toBe(true);
+		expect(parsedMetadata.values?.tiers?.focus.currentStepId).toBe(
+			'focus-tier',
+		);
+		expect(parsedMetadata.values?.globalActionCost?.amount).toBe(2);
 	});
 
 	it('exposes descriptor format typing', () => {

@@ -187,7 +187,7 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
+	SessionResourceRegistryPayload,
 	SerializedRegistry,
 	SessionActionCategoryRegistry,
 	SessionUpdatePlayerNameRequest,
@@ -207,6 +207,33 @@ export type {
 	SessionMetadataSnapshotResponse,
 } from './session/contracts';
 export type { SessionGateway } from './session/gateway';
+export type {
+	SessionResourceValueSnapshotBounds,
+	SessionResourceValueSnapshot,
+	SessionResourceValueSnapshotMap,
+	SessionResourceValueDelta,
+	SessionResourceValueDeltaMap,
+	SessionResourceGlobalCostReference,
+	SessionResourceValueDescriptor,
+	SessionResourceValueDescriptorRecord,
+	SessionResourceGroupParentDescriptor,
+	SessionResourceGroupDescriptor,
+	SessionResourceGroupDescriptorRecord,
+	SessionResourceTierStepDescriptor,
+	SessionResourceTierTrackDescriptor,
+	SessionResourceTierStatus,
+	SessionResourceTierStatusRecord,
+	SessionResourceValueMetadata,
+	SessionResourceRecentGain,
+	SessionResourceDisplayValue,
+	SessionResourceDisplayGroup,
+	SessionResourceDisplayPlan,
+} from './session';
+export {
+	createResourceDisplayPlan,
+	extractGroupChildren,
+	createValueDescriptor,
+} from './session';
 export type {
 	ActionEffectChoice,
 	ActionChoiceMap,
