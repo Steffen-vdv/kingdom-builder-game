@@ -20,3 +20,17 @@ export type {
 	ResourceInfo,
 	StatInfo,
 } from './infoBuilders';
+export {
+	ResourceV2Builder,
+	ResourceV2GroupBuilder,
+	ResourceV2GroupParentBuilder,
+	ResourceV2TierDefinitionBuilder,
+	ResourceV2TierTrackBuilder,
+	ResourceV2ValueDeltaBuilder,
+	resourceGroup,
+	resourceGroupParent,
+	resourceTier,
+	resourceTierTrack,
+	resourceV2,
+	resourceValueDelta,
+} from '../resourceV2Builder';

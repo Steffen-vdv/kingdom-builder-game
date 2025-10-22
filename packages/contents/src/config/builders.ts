@@ -19,7 +19,19 @@ import {
 	PopulationBuilder,
 	PopulationRoleBuilder,
 	ResourceBuilder,
+	ResourceV2Builder,
+	ResourceV2GroupBuilder,
+	ResourceV2GroupParentBuilder,
+	ResourceV2TierDefinitionBuilder,
+	ResourceV2TierTrackBuilder,
+	ResourceV2ValueDeltaBuilder,
 	StatBuilder,
+	resourceGroup,
+	resourceGroupParent,
+	resourceTier,
+	resourceTierTrack,
+	resourceV2,
+	resourceValueDelta,
 } from './builders/domain';
 export { happinessTier, tierDisplay, tierPassiveText } from './builders/tiers';
 
@@ -42,7 +54,22 @@ export {
 	PopulationBuilder,
 	PopulationRoleBuilder,
 	ResourceBuilder,
+	ResourceV2Builder,
+	ResourceV2GroupBuilder,
+	ResourceV2GroupParentBuilder,
+	ResourceV2TierDefinitionBuilder,
+	ResourceV2TierTrackBuilder,
+	ResourceV2ValueDeltaBuilder,
 	StatBuilder,
+};
+
+export {
+	resourceGroup,
+	resourceGroupParent,
+	resourceTier,
+	resourceTierTrack,
+	resourceV2,
+	resourceValueDelta,
 };
 
 export {
