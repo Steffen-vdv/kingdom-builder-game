@@ -162,7 +162,43 @@ describe('<ResolutionCard />', () => {
 			<ResolutionCard resolution={resolution} onContinue={() => {}} />,
 		);
 
-		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
+		expect(queryByRole('button', { name: /continue/i })).toBeNull();
+	});
+
+	it('renders a continue button with a single arrow when acknowledging', () => {
+		const resolution = createResolution({
+			requireAcknowledgement: true,
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		const continueButton = screen.getByRole('button', {
+			name: 'Continue',
+		});
+		expect(continueButton).toBeEnabled();
+		const arrow = within(continueButton).getByText('→');
+		expect(arrow).toHaveAttribute('aria-hidden', 'true');
+	});
+
+	it('renders a next turn button with a double arrow when advancing', () => {
+		const resolution = createResolution({
+			requireAcknowledgement: true,
+		});
+
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={() => {}}
+				continueMode="advance"
+			/>,
+		);
+
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Next Turn',
+		});
+		expect(nextTurnButton).toBeEnabled();
+		const arrow = within(nextTurnButton).getByText('»');
+		expect(arrow).toHaveAttribute('aria-hidden', 'true');
 	});
 
 	it('renders section roots with nested cost and effect entries', () => {

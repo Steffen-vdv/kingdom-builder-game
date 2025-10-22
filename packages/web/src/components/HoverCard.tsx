@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
 import {
@@ -24,6 +24,8 @@ export default function HoverCard() {
 		actionCostResource,
 		resolution: actionResolution,
 		acknowledgeResolution,
+		phase,
+		requests: { advancePhase },
 	} = useGameEngine();
 	const [renderedData, setRenderedData] = useState(data);
 	const [transitionState, setTransitionState] = useState<'enter' | 'exit'>(
@@ -97,12 +99,28 @@ export default function HoverCard() {
 
 	const resolutionTitle =
 		data?.title ?? renderedData?.title ?? 'Action resolution';
+	const shouldAdvanceOnContinue = Boolean(
+		actionResolution &&
+			actionResolution.requireAcknowledgement &&
+			actionResolution.isComplete &&
+			actionResolution.action &&
+			phase.isActionPhase &&
+			phase.canEndTurn &&
+			!phase.isAdvancing,
+	);
+	const handleResolutionContinue = useCallback(() => {
+		acknowledgeResolution();
+		if (shouldAdvanceOnContinue) {
+			void advancePhase();
+		}
+	}, [acknowledgeResolution, advancePhase, shouldAdvanceOnContinue]);
 	if (actionResolution && !data) {
 		return (
 			<ResolutionCard
 				title={resolutionTitle}
 				resolution={actionResolution}
-				onContinue={acknowledgeResolution}
+				onContinue={handleResolutionContinue}
+				continueMode={shouldAdvanceOnContinue ? 'advance' : 'acknowledge'}
 			/>
 		);
 	}

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -12,6 +12,7 @@ import { selectSessionView } from '../src/state/sessionSelectors';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 import { useActionResolution } from '../src/state/useActionResolution';
+import type { ActionResolution } from '../src/state/useActionResolution';
 import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
 import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
 import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
@@ -437,5 +438,36 @@ describe('<HoverCard />', () => {
 		});
 		await expect(resolutionPromise).resolves.toBeUndefined();
 		expect(mockGame.resolution).toBeNull();
+	});
+
+	it('advances the phase when acknowledging the final action resolution', () => {
+		const resolution: ActionResolution = {
+			lines: ['Action resolves'],
+			visibleLines: ['Action resolves'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: [],
+			source: 'action' as const,
+			requireAcknowledgement: true,
+			action: scenario.exampleAction,
+		};
+		mockGame.resolution = resolution;
+		mockGame.phase = {
+			...mockGame.phase,
+			isActionPhase: true,
+			canEndTurn: true,
+			isAdvancing: false,
+		};
+
+		render(<HoverCard />);
+
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Next Turn',
+		});
+		fireEvent.click(nextTurnButton);
+
+		expect(mockGame.acknowledgeResolution).toHaveBeenCalledTimes(1);
+		expect(mockGame.requests.advancePhase).toHaveBeenCalledTimes(1);
 	});
 });

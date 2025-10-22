@@ -47,7 +47,18 @@ function useResolutionAutomation({
 		}
 		autoAcknowledgedResolutionRef.current = resolution;
 		acknowledgeResolution();
-	}, [autoAcknowledgeEnabled, acknowledgeResolution, mountedRef, resolution]);
+		if (phaseCanEnd && !phaseIsAdvancing && resolution.action) {
+			void advancePhase();
+		}
+	}, [
+		autoAcknowledgeEnabled,
+		acknowledgeResolution,
+		mountedRef,
+		resolution,
+		phaseCanEnd,
+		phaseIsAdvancing,
+		advancePhase,
+	]);
 
 	useEffect(() => {
 		if (!autoPassEnabled) {
