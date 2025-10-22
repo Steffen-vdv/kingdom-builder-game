@@ -1,13 +1,6 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
 import { PhaseId, PhaseStepId } from './phases';
-import {
-	actionDiscountModifier,
-	growthBonusEffect,
-	happinessModifierId,
-	happinessPassiveId,
-	happinessTierId,
-	incomeModifier,
-} from './happinessHelpers';
+import { actionDiscountModifier, growthBonusEffect, happinessModifierId, happinessPassiveId, happinessTierId, incomeModifier } from './happinessHelpers';
 
 export const HAPPINESS_TIER_ICONS = {
 	despair: '😡',
@@ -53,11 +46,7 @@ export const TIER_CONFIGS: TierConfig[] = [
 				step: PhaseStepId.WarRecovery,
 			},
 		],
-		summary: joinSummary(
-			'During income step, gain 50% less 🪙 gold (rounded up).',
-			'Skip Growth phase.',
-			'Skip War Recovery step during Upkeep phase.',
-		),
+		summary: joinSummary('During income step, gain 50% less 🪙 gold (rounded up).', 'Skip Growth phase.', 'Skip War Recovery step during Upkeep phase.'),
 		removal: 'happiness is -10 or lower',
 		effects: [incomeModifier(happinessModifierId('despair', 'income'), -0.5)],
 	},
@@ -69,10 +58,7 @@ export const TIER_CONFIGS: TierConfig[] = [
 		incomeMultiplier: 0.5,
 		disableGrowth: true,
 		skipPhases: [PhaseId.Growth],
-		summary: joinSummary(
-			'During income step, gain 50% less 🪙 gold (rounded up).',
-			'Skip Growth phase.',
-		),
+		summary: joinSummary('During income step, gain 50% less 🪙 gold (rounded up).', 'Skip Growth phase.'),
 		removal: 'happiness stays between -9 and -8',
 		effects: [incomeModifier(happinessModifierId('misery', 'income'), -0.5)],
 	},
@@ -84,10 +70,7 @@ export const TIER_CONFIGS: TierConfig[] = [
 		incomeMultiplier: 0.75,
 		disableGrowth: true,
 		skipPhases: [PhaseId.Growth],
-		summary: joinSummary(
-			'During income step, gain 25% less 🪙 gold (rounded up).',
-			'Skip Growth phase.',
-		),
+		summary: joinSummary('During income step, gain 25% less 🪙 gold (rounded up).', 'Skip Growth phase.'),
 		removal: 'happiness stays between -7 and -5',
 		effects: [incomeModifier(happinessModifierId('grim', 'income'), -0.25)],
 	},
@@ -126,15 +109,9 @@ export const TIER_CONFIGS: TierConfig[] = [
 		range: { min: 5, max: 7 },
 		incomeMultiplier: 1.25,
 		buildingDiscountPct: 0.2,
-		summary: joinSummary(
-			'During income step, gain 25% more 🪙 gold (rounded up).',
-			'All actions cost 20% less 🪙 gold (rounded up).',
-		),
+		summary: joinSummary('During income step, gain 25% more 🪙 gold (rounded up).', 'All actions cost 20% less 🪙 gold (rounded up).'),
 		removal: 'happiness stays between +5 and +7',
-		effects: [
-			incomeModifier(happinessModifierId('joyful', 'income'), 0.25),
-			actionDiscountModifier(happinessModifierId('joyful', 'action-discount')),
-		],
+		effects: [incomeModifier(happinessModifierId('joyful', 'income'), 0.25), actionDiscountModifier(happinessModifierId('joyful', 'action-discount'))],
 	},
 	{
 		id: happinessTierId('elated'),
@@ -143,15 +120,9 @@ export const TIER_CONFIGS: TierConfig[] = [
 		range: { min: 8, max: 9 },
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
-		summary: joinSummary(
-			'During income step, gain 50% more 🪙 gold (rounded up).',
-			'All actions cost 20% less 🪙 gold (rounded up).',
-		),
+		summary: joinSummary('During income step, gain 50% more 🪙 gold (rounded up).', 'All actions cost 20% less 🪙 gold (rounded up).'),
 		removal: 'happiness stays between +8 and +9',
-		effects: [
-			incomeModifier(happinessModifierId('elated', 'income'), 0.5),
-			actionDiscountModifier(happinessModifierId('elated', 'action-discount')),
-		],
+		effects: [incomeModifier(happinessModifierId('elated', 'income'), 0.5), actionDiscountModifier(happinessModifierId('elated', 'action-discount'))],
 	},
 	{
 		id: happinessTierId('ecstatic'),
@@ -160,18 +131,8 @@ export const TIER_CONFIGS: TierConfig[] = [
 		range: { min: 10 },
 		incomeMultiplier: 1.5,
 		buildingDiscountPct: 0.2,
-		summary: joinSummary(
-			'During income step, gain 50% more 🪙 gold (rounded up).',
-			'All actions cost 20% less 🪙 gold (rounded up).',
-			'Gain +20% 📈 Growth.',
-		),
+		summary: joinSummary('During income step, gain 50% more 🪙 gold (rounded up).', 'All actions cost 20% less 🪙 gold (rounded up).', 'Gain +20% 📈 Growth.'),
 		removal: 'happiness is +10 or higher',
-		effects: [
-			incomeModifier(happinessModifierId('ecstatic', 'income'), 0.5),
-			actionDiscountModifier(
-				happinessModifierId('ecstatic', 'action-discount'),
-			),
-			growthBonusEffect(0.2),
-		],
+		effects: [incomeModifier(happinessModifierId('ecstatic', 'income'), 0.5), actionDiscountModifier(happinessModifierId('ecstatic', 'action-discount')), growthBonusEffect(0.2)],
 	},
 ];

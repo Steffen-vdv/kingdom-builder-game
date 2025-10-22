@@ -3,14 +3,7 @@ import type { DevelopmentDef, Focus } from '../../../defs';
 import type { ResourceKey } from '../../../resources';
 import { BaseBuilder } from './baseBuilder';
 
-type DevelopmentEffectKey =
-	| 'onBuild'
-	| 'onGrowthPhase'
-	| 'onPayUpkeepStep'
-	| 'onGainIncomeStep'
-	| 'onGainAPStep'
-	| 'onBeforeAttacked'
-	| 'onAttackResolved';
+type DevelopmentEffectKey = 'onBuild' | 'onGrowthPhase' | 'onPayUpkeepStep' | 'onGainIncomeStep' | 'onGainAPStep' | 'onBeforeAttacked' | 'onAttackResolved';
 
 export class DevelopmentBuilder extends BaseBuilder<DevelopmentDef> {
 	constructor() {

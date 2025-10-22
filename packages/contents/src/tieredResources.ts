@@ -28,6 +28,4 @@ function buildTierSummaryStore(ruleSets: RuleSet[]): TierSummaryStore {
 	return store;
 }
 
-export const TIER_SUMMARY_STORE: TierSummaryStore = buildTierSummaryStore([
-	RULES,
-]);
+export const TIER_SUMMARY_STORE: TierSummaryStore = buildTierSummaryStore([RULES]);

@@ -1,9 +1,11 @@
 import React from 'react';
 import { useGameEngine, TIME_SCALE_OPTIONS } from '../../state/GameContext';
+import { useSoundEffectsContext } from '../../state/SoundEffectsContext';
 
 export default function TimeControl() {
 	const { sessionSnapshot, timeScale, setTimeScale } = useGameEngine();
 	const devMode = sessionSnapshot.game.devMode;
+	const { playUiClick } = useSoundEffectsContext();
 
 	return (
 		<div
@@ -40,6 +42,7 @@ export default function TimeControl() {
 							aria-pressed={active}
 							onClick={() => {
 								if (!active) {
+									playUiClick();
 									setTimeScale(option);
 								}
 							}}

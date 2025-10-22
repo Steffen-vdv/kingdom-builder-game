@@ -1,25 +1,9 @@
-import {
-	ActionId,
-	BUILDING_ACTION_ID_BY_BUILDING_ID,
-	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
-	POPULATION_ACTION_ID_BY_ROLE,
-} from './actions';
-import { BuildingId } from './buildingIds';
-import { DevelopmentId } from './developments';
+import { ActionId, BuildActions, DevelopActions, HireActions } from './actions';
 import { PhaseId } from './phases';
-import { PopulationRole } from './populationRoles';
 
-export type OverviewTokenCategoryName =
-	| 'actions'
-	| 'phases'
-	| 'resources'
-	| 'stats'
-	| 'population'
-	| 'static';
+export type OverviewTokenCategoryName = 'actions' | 'phases' | 'resources' | 'stats' | 'population' | 'static';
 
-export type OverviewTokenCandidates = Partial<
-	Record<OverviewTokenCategoryName, Record<string, string[]>>
->;
+export type OverviewTokenCandidates = Partial<Record<OverviewTokenCategoryName, Record<string, string[]>>>;
 
 export type OverviewListItemTemplate = {
 	icon?: string;
@@ -45,9 +29,7 @@ export type OverviewListTemplate = {
 	items: OverviewListItemTemplate[];
 };
 
-export type OverviewSectionTemplate =
-	| OverviewParagraphTemplate
-	| OverviewListTemplate;
+export type OverviewSectionTemplate = OverviewParagraphTemplate | OverviewListTemplate;
 
 export type OverviewHeroTemplate = {
 	badgeIcon: string;
@@ -64,17 +46,11 @@ export type OverviewContentTemplate = {
 	tokens: OverviewTokenCandidates;
 };
 
-const HERO_INTRO_TEXT = [
-	'Map the rhythms of the realm before you issue your first decree.',
-	'Know where every resource, phase, and population surge will carry you.',
-].join(' ');
+const HERO_INTRO_TEXT = ['Map the rhythms of the realm before you issue your first decree.', 'Know where every resource, phase, and population surge will carry you.'].join(' ');
 
-const DEFAULT_BUILD_ACTION =
-	BUILDING_ACTION_ID_BY_BUILDING_ID[BuildingId.TownCharter];
-const DEFAULT_DEVELOP_ACTION =
-	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Farm];
-const DEFAULT_HIRE_ACTION =
-	POPULATION_ACTION_ID_BY_ROLE[PopulationRole.Council];
+const DEFAULT_BUILD_ACTION = BuildActions.build_town_charter;
+const DEFAULT_DEVELOP_ACTION = DevelopActions.develop_farm;
+const DEFAULT_HIRE_ACTION = HireActions.hire_council;
 
 if (!DEFAULT_BUILD_ACTION) {
 	throw new Error('Overview requires at least one building action.');
@@ -150,25 +126,17 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 			{
 				icon: PhaseId.Growth,
 				label: 'Growth',
-				body: [
-					'Kickstarts your engine with income and {armyStrength} Army strength.',
-					'Stacks {fortificationStrength} Fortification bonuses and triggers automatic boons.',
-				],
+				body: ['Kickstarts your engine with income and {armyStrength} Army strength.', 'Stacks {fortificationStrength} Fortification bonuses and triggers automatic boons.'],
 			},
 			{
 				icon: PhaseId.Upkeep,
 				label: 'Upkeep',
-				body: [
-					'Settles wages, ongoing effects, and any debts your realm has racked up.',
-				],
+				body: ['Settles wages, ongoing effects, and any debts your realm has racked up.'],
 			},
 			{
 				icon: PhaseId.Main,
 				label: 'Main Phase',
-				body: [
-					'Both players secretly queue actions.',
-					'Reveal them in a flurry of {ap} AP-powered maneuvers.',
-				],
+				body: ['Both players secretly queue actions.', 'Reveal them in a flurry of {ap} AP-powered maneuvers.'],
 			},
 		],
 	},
@@ -181,9 +149,7 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 			{
 				icon: 'gold',
 				label: 'Gold',
-				body: [
-					`Fuels projects like {${DEFAULT_BUILD_ACTION}}, diplomacy, and daring plays.`,
-				],
+				body: [`Fuels projects like {${DEFAULT_BUILD_ACTION}}, diplomacy, and daring plays.`],
 			},
 			{
 				icon: 'ap',
@@ -207,10 +173,7 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 		id: 'land',
 		icon: 'land',
 		title: 'Land & Developments',
-		paragraphs: [
-			'Claim {land} land and slot in {slot} developments to unlock perks.',
-			'Farms pump {gold} gold while signature projects open slots or unleash passives.',
-		],
+		paragraphs: ['Claim {land} land and slot in {slot} developments to unlock perks.', 'Farms pump {gold} gold while signature projects open slots or unleash passives.'],
 	},
 	{
 		kind: 'list',
@@ -227,9 +190,7 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 			{
 				icon: 'legion',
 				label: 'Legion',
-				body: [
-					'Reinforces {armyStrength} Army strength for devastating {army_attack} raids.',
-				],
+				body: ['Reinforces {armyStrength} Army strength for devastating {army_attack} raids.'],
 			},
 			{
 				icon: 'fortifier',

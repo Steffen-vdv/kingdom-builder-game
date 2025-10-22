@@ -14,9 +14,7 @@ describe('start config builder safeguards', () => {
 				.population({ demo: 0 })
 				.lands([])
 				.build(),
-		).toThrowError(
-			'Player start is missing resources(). Call resources(...) before build().',
-		);
+		).toThrowError('Player start is missing resources(). Call resources(...) before build().');
 	});
 
 	it('prevents duplicate player start resource setters', () => {
@@ -24,15 +22,11 @@ describe('start config builder safeguards', () => {
 			playerStart()
 				.resources({ [firstResourceKey]: 1 })
 				.resources({ [firstResourceKey]: 2 }),
-		).toThrowError(
-			'Player start already set resources(). Remove the extra resources() call.',
-		);
+		).toThrowError('Player start already set resources(). Remove the extra resources() call.');
 	});
 
 	it('demands a base player when building start configs', () => {
-		expect(() => startConfig().build()).toThrowError(
-			'Start config is missing player(...). Configure the base player first.',
-		);
+		expect(() => startConfig().build()).toThrowError('Start config is missing player(...). Configure the base player first.');
 	});
 
 	it('rejects duplicate player registrations in start configs', () => {
@@ -56,9 +50,7 @@ describe('start config builder safeguards', () => {
 						.population({ demo: 1 })
 						.lands([]),
 				),
-		).toThrowError(
-			'Start config already set player(...). Remove the extra player() call.',
-		);
+		).toThrowError('Start config already set player(...). Remove the extra player() call.');
 	});
 
 	it('supports configuring lands through builder helpers', () => {
@@ -66,13 +58,7 @@ describe('start config builder safeguards', () => {
 			.resources({ [firstResourceKey]: 1 })
 			.stats({ [firstStatKey]: 2 })
 			.population({ demo: 3 })
-			.lands((lands) =>
-				lands
-					.land((land) =>
-						land.development('demo-development').slotsMax(2).slotsUsed(1),
-					)
-					.land(),
-			)
+			.lands((lands) => lands.land((land) => land.development('demo-development').slotsMax(2).slotsUsed(1)).land())
 			.build();
 		expect(config.lands).toEqual([
 			{
@@ -106,9 +92,7 @@ describe('start config builder safeguards', () => {
 						[firstResourceKey]: 0,
 					}),
 				),
-		).toThrowError(
-			'Start config already set lastPlayerCompensation(). Remove the extra call.',
-		);
+		).toThrowError('Start config already set lastPlayerCompensation(). Remove the extra call.');
 	});
 
 	it('rejects duplicate dev mode configurations in start configs', () => {
@@ -125,9 +109,7 @@ describe('start config builder safeguards', () => {
 				)
 				.devMode((mode) => mode)
 				.devMode((mode) => mode),
-		).toThrowError(
-			'Start config already set devMode(...). Remove the extra call.',
-		);
+		).toThrowError('Start config already set devMode(...). Remove the extra call.');
 	});
 
 	it('requires dev mode callbacks to return the provided builder', () => {
@@ -145,8 +127,6 @@ describe('start config builder safeguards', () => {
 				.devMode(() => {
 					return {} as unknown as ReturnType<typeof startConfig>;
 				}),
-		).toThrowError(
-			'Start config devMode(...) callback must return the provided builder.',
-		);
+		).toThrowError('Start config devMode(...) callback must return the provided builder.');
 	});
 });

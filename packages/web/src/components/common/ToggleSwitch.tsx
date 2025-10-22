@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSoundEffectsContext } from '../../state/SoundEffectsContext';
 
 const TOGGLE_BASE_CLASS = [
 	'relative inline-flex h-7 w-14 items-center rounded-full',
@@ -36,10 +37,12 @@ export default function ToggleSwitch({
 	disabled = false,
 	...ariaProps
 }: ToggleSwitchProps) {
+	const { playUiClick } = useSoundEffectsContext();
 	const handleClick = () => {
 		if (disabled) {
 			return;
 		}
+		playUiClick();
 		onChange(!checked);
 	};
 

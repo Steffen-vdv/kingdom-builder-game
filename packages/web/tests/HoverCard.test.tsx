@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -12,6 +12,7 @@ import { selectSessionView } from '../src/state/sessionSelectors';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 import { useActionResolution } from '../src/state/useActionResolution';
+import type { ActionResolution } from '../src/state/useActionResolution';
 import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
 import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
 import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
@@ -76,10 +77,16 @@ function createHoverCardScenario(): HoverCardScenario {
 		actionCostResource;
 	const activePlayerId = 'player-1' as SessionPlayerId;
 	const opponentId = 'player-2' as SessionPlayerId;
+	const activePlayerResources: Record<string, number> = {
+		[actionCostResource]: 1,
+	};
+	if (costResource !== actionCostResource) {
+		activePlayerResources[costResource] = 5;
+	}
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
-		resources: { [costResource]: 5 },
+		resources: activePlayerResources,
 	});
 	const opponent = createSnapshotPlayer({ id: opponentId, name: 'Player Two' });
 	const sessionState = createSessionSnapshot({
@@ -145,6 +152,7 @@ beforeEach(() => {
 	scenario = createHoverCardScenario();
 	mockGame = scenario.mockGame;
 	resetResolutionState();
+	mockGame.requests.advancePhase.mockClear();
 });
 
 afterEach(() => {
@@ -253,6 +261,49 @@ describe('<HoverCard />', () => {
 		});
 		await expect(resolutionPromise).resolves.toBeUndefined();
 		expect(mockGame.resolution).toBeNull();
+	});
+
+	it('advances the turn when the final action resolution is acknowledged', () => {
+		const { actionCostResource } = scenario;
+		const activePlayer = mockGame.sessionSnapshot.game.players.find(
+			(player) => player.id === mockGame.phase.activePlayerId,
+		);
+		if (!activePlayer) {
+			throw new Error('Expected active player for next turn test');
+		}
+		activePlayer.resources[actionCostResource] = 0;
+		mockGame.phase = {
+			...mockGame.phase,
+			canEndTurn: true,
+			isAdvancing: false,
+			isActionPhase: true,
+		};
+		const resolution: ActionResolution = {
+			lines: ['Final action resolves'],
+			visibleLines: ['Final action resolves'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: [],
+			source: 'action' as const,
+			requireAcknowledgement: true,
+			action: {
+				id: 'action-id',
+				name: 'Final Action',
+			},
+			player: {
+				id: activePlayer.id,
+				name: activePlayer.name,
+			},
+		};
+		mockGame.resolution = resolution;
+		render(<HoverCard />);
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Next Turn',
+		});
+		fireEvent.click(nextTurnButton);
+		expect(mockGame.acknowledgeResolution).toHaveBeenCalledTimes(1);
+		expect(mockGame.requests.advancePhase).toHaveBeenCalledTimes(1);
 	});
 
 	it('renders formatted phase resolutions and logs phase advances', async () => {
