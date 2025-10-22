@@ -6,6 +6,7 @@ import {
 	STATS,
 	TRIGGER_INFO,
 	POPULATION_ROLES,
+	POPULATION_INFO,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
 } from '@kingdom-builder/contents';
@@ -236,6 +237,7 @@ function buildAssetMetadata(): SessionMetadataDescriptorMap {
 	assignAssetDescriptor(descriptors, 'passive', PASSIVE_INFO);
 	assignAssetDescriptor(descriptors, 'land', LAND_INFO);
 	assignAssetDescriptor(descriptors, 'slot', SLOT_INFO);
+	assignAssetDescriptor(descriptors, 'population', POPULATION_INFO);
 	assignAssetDescriptor(descriptors, 'upkeep', UPKEEP_INFO);
 	assignAssetDescriptor(descriptors, 'transfer', TRANSFER_INFO);
 	return descriptors;

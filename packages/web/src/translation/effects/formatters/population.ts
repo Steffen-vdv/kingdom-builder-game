@@ -13,7 +13,7 @@ registerEffectFormatter('population', 'add', {
 		const roleDescriptor = role
 			? selectPopulationDescriptor(context, role)
 			: base;
-		const roleIcon = roleDescriptor.icon || role || base.icon;
+		const roleIcon = roleDescriptor.icon ?? base.icon;
 		return `${base.icon}(${roleIcon}) +1`;
 	},
 	describe: (effect, context) => {
@@ -35,7 +35,7 @@ registerEffectFormatter('population', 'remove', {
 		const roleDescriptor = role
 			? selectPopulationDescriptor(context, role)
 			: base;
-		const roleIcon = roleDescriptor.icon || role || base.icon;
+		const roleIcon = roleDescriptor.icon ?? base.icon;
 		return `${base.icon}(${roleIcon}) -1`;
 	},
 	describe: (effect, context) => {

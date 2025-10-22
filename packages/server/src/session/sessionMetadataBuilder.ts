@@ -12,6 +12,7 @@ import {
 	SLOT_INFO,
 	PASSIVE_INFO,
 	DEVELOPMENTS_INFO,
+	POPULATION_INFO,
 	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
@@ -280,6 +281,10 @@ const buildAssetMetadata = () =>
 		['land', { label: LAND_INFO.label, icon: LAND_INFO.icon }],
 		['slot', { label: SLOT_INFO.label, icon: SLOT_INFO.icon }],
 		['passive', { label: PASSIVE_INFO.label, icon: PASSIVE_INFO.icon }],
+		[
+			'population',
+			{ label: POPULATION_INFO.label, icon: POPULATION_INFO.icon },
+		],
 		[
 			'developments',
 			{

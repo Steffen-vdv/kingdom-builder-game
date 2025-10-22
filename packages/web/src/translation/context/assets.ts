@@ -267,7 +267,7 @@ export function createTranslationAssets(
 	const populationAsset = mergeIconLabel(
 		undefined,
 		assetDescriptors.population,
-		'population',
+		'Population',
 	);
 	const landDescriptor = requireAssetDescriptor(assetDescriptors, 'land');
 	const landAsset = mergeIconLabel(undefined, landDescriptor, 'land');
