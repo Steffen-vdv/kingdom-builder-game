@@ -293,6 +293,30 @@ describe('ResourceV2 state', () => {
 		);
 	});
 
+	it('refreshes parent aggregate when expanding its upper bound', () => {
+		initialisePlayerResourceState(player, catalog);
+		increaseResourceUpperBound(context, player, catalog, PARENT_ID, 5);
+		setResourceValue(context, player, catalog, RESOURCE_A, 6);
+		setResourceValue(context, player, catalog, RESOURCE_B, 4);
+		expect(player.resourceValues[PARENT_ID]).toBe(5);
+
+		const outcome = increaseResourceUpperBound(
+			context,
+			player,
+			catalog,
+			PARENT_ID,
+			5,
+		);
+
+		expect(outcome).toEqual({
+			previousBound: 5,
+			nextBound: 10,
+			valueClamped: false,
+		});
+		expect(player.resourceValues[PARENT_ID]).toBe(10);
+		expect(player.resourceTouched[PARENT_ID]).toBe(true);
+	});
+
 	it('rejects updates for unknown resources', () => {
 		initialisePlayerResourceState(player, catalog);
 		expect(() =>

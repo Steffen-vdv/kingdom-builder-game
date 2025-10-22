@@ -262,6 +262,9 @@ function adjustResourceBound(
 				);
 			}
 		}
+		if (direction === 'upper') {
+			recalculateGroupParentValue(context, player, catalog, lookup.groupId);
+		}
 		return { previousBound, nextBound, valueClamped: false };
 	}
 	const current = player.resourceValues[resourceId] ?? 0;
