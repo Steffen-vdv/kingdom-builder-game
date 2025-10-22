@@ -73,6 +73,10 @@ const phaseListItemClassName = [
 	'dark:data-[active=true]:bg-indigo-500/20 dark:data-[active=true]:text-white',
 ].join(' ');
 
+const phaseListItemInteractiveClassName = ['hoverable cursor-help'].join(' ');
+
+const phaseListItemInactiveClassName = ['cursor-default'].join(' ');
+
 const phaseListItemContentClassName = ['flex w-full items-center gap-3'].join(
 	' ',
 );
@@ -263,10 +267,17 @@ export default function PhasePanel() {
 							phaseHistory.byPhase.get(historyKey) ??
 							null;
 						const isActive = phaseDefinition.id === phase.currentPhaseId;
+						const isInteractive =
+							Boolean(phaseResolution) && !phaseDefinition.isActionPhase;
 						return (
 							<li
 								key={phaseDefinition.id}
-								className={phaseListItemClassName}
+								className={[
+									phaseListItemClassName,
+									isInteractive
+										? phaseListItemInteractiveClassName
+										: phaseListItemInactiveClassName,
+								].join(' ')}
 								data-active={isActive ? 'true' : 'false'}
 								aria-current={isActive ? 'step' : undefined}
 								onMouseEnter={() =>
