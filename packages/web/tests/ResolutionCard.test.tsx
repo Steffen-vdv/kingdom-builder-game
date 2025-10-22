@@ -168,7 +168,7 @@ describe('<ResolutionCard />', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
 				{
-					text: '🛠️ Develop - 🏠 Workshop',
+					text: 'Developed 🏠 Workshop on 🧩 Empty Development Slot',
 					depth: 0,
 					kind: 'headline',
 				},
@@ -187,7 +187,9 @@ describe('<ResolutionCard />', () => {
 		const effectsSectionContainer = effectsSection.parentElement;
 		const goldCost = screen.getByText('Gold -3');
 		const goldCostContainer = goldCost.parentElement;
-		const effectHeadline = screen.getByText('🛠️ Develop - 🏠 Workshop');
+		const effectHeadline = screen.getByText(
+			'Developed 🏠 Workshop on 🧩 Empty Development Slot',
+		);
 		const effectEntry = screen.getByText('🪄 Effect happens');
 		const effectHeadlineContainer = effectHeadline.parentElement;
 		const effectEntryContainer = effectEntry.parentElement;
@@ -213,7 +215,7 @@ describe('<ResolutionCard />', () => {
 	it('renders nested cost groups and effect hierarchies', () => {
 		const visibleTimeline: ActionLogLineDescriptor[] = [
 			{
-				text: '🛠️ Develop - ⚒️ Forge Relic',
+				text: 'Developed ⚒️ Forge Relic on 🧩 Empty Development Slot',
 				depth: 0,
 				kind: 'headline',
 			},
@@ -249,6 +251,7 @@ describe('<ResolutionCard />', () => {
 		const effectsSection = screen.getByText('🪄 Effects');
 		const costSectionContainer = costSection.parentElement;
 		const effectsSectionContainer = effectsSection.parentElement;
+		const effectsTimelineList = effectsSectionContainer?.parentElement;
 
 		const goldCost = screen.getByText('Gold -3');
 		const discountGroup = screen.getByText('Discounts applied');
@@ -260,6 +263,7 @@ describe('<ResolutionCard />', () => {
 		if (
 			!costSectionContainer ||
 			!effectsSectionContainer ||
+			!effectsTimelineList ||
 			!goldCostContainer ||
 			!discountContainer ||
 			!happinessContainer
@@ -275,11 +279,30 @@ describe('<ResolutionCard />', () => {
 		expect(discountContainer).toHaveStyle({ marginLeft: '1.75rem' });
 		expect(happinessContainer).toHaveStyle({ marginLeft: '2.625rem' });
 
+		const developedSummaryText =
+			'Developed ⚒️ Forge Relic on 🧩 Empty Development Slot';
+		const developedSummaryMatches = within(effectsTimelineList).getAllByText(
+			(_, node) => node?.textContent?.includes(developedSummaryText) ?? false,
+		);
+		const developedSummary = developedSummaryMatches.find((node) => {
+			return node.parentElement?.style.marginLeft === '0.875rem';
+		});
+		if (!developedSummary) {
+			throw new Error('Expected developed summary to be present');
+		}
+		const developedSummaryContainer = developedSummary.parentElement;
+
 		expect(
-			within(effectsSectionContainer).queryByText(
-				'🛠️ Develop - ⚒️ Forge Relic',
-			),
+			within(effectsTimelineList).queryByText('🛠️ Develop - ⚒️ Forge Relic'),
 		).toBeNull();
+
+		if (!developedSummaryContainer) {
+			throw new Error('Expected developed summary to have a container');
+		}
+
+		expect(developedSummaryContainer).toHaveStyle({
+			marginLeft: '0.875rem',
+		});
 
 		const group = screen.getByText('🪄 Channel the forge');
 		const effect = screen.getByText('Gain 2 Relics');
@@ -303,11 +326,11 @@ describe('<ResolutionCard />', () => {
 		}
 
 		expect(effectsSectionContainer).not.toHaveStyle({ marginLeft: '0.875rem' });
-		expect(groupContainer).toHaveStyle({ marginLeft: '0.875rem' });
-		expect(effectContainer).toHaveStyle({ marginLeft: '1.75rem' });
-		expect(subActionContainer).toHaveStyle({ marginLeft: '2.625rem' });
-		expect(firstChangeContainer).toHaveStyle({ marginLeft: '3.5rem' });
-		expect(secondChangeContainer).toHaveStyle({ marginLeft: '3.5rem' });
+		expect(groupContainer).toHaveStyle({ marginLeft: '1.75rem' });
+		expect(effectContainer).toHaveStyle({ marginLeft: '2.625rem' });
+		expect(subActionContainer).toHaveStyle({ marginLeft: '3.5rem' });
+		expect(firstChangeContainer).toHaveStyle({ marginLeft: '4.375rem' });
+		expect(secondChangeContainer).toHaveStyle({ marginLeft: '4.375rem' });
 	});
 
 	it('normalizes modifier descriptions in structured timelines', () => {

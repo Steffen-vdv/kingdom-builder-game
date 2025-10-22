@@ -10,7 +10,6 @@ import { logContent } from '../src/translation/content';
 import { snapshotPlayer, diffStepSnapshots } from '../src/translation/log';
 import {
 	formatIconLabel,
-	formatLogHeadline,
 	LOG_KEYWORDS,
 } from '../src/translation/log/logMessages';
 import { createSessionTranslationContext } from '../src/state/createSessionTranslationContext';
@@ -38,6 +37,21 @@ const BASE_METADATA: SessionSnapshotMetadata = createEmptySnapshotMetadata({
 		passive: { label: 'Passive', icon: '✨' },
 	},
 });
+
+function renderEmptySlotLabel(slot: { icon?: string; label?: string }): string {
+	const slotIcon = slot.icon?.trim() ?? '';
+	const baseSlotLabel = slot.label?.trim() ?? 'Development Slot';
+	const hasEmptyPrefix = /(?:^|\s)empty\b/i.test(baseSlotLabel);
+	const emptySlotLabel = hasEmptyPrefix
+		? baseSlotLabel
+		: `Empty ${baseSlotLabel}`.trim();
+	const slotDisplay = [slotIcon, emptySlotLabel]
+		.filter((segment) => segment.length > 0)
+		.join(' ')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+	return slotDisplay || 'Empty Development Slot';
+}
 
 function createRuleSnapshot(resourceKey: string): SessionRuleSnapshot {
 	return {
@@ -236,11 +250,13 @@ describe('land change log formatting', () => {
 			developmentId,
 			translationContext,
 		);
-		const developmentLabel = developmentContent[0] ?? developmentId;
-		const expectedLine = formatLogHeadline(
-			LOG_KEYWORDS.developed,
-			developmentLabel,
-		);
+		const firstEntry = developmentContent[0];
+		const developmentLabel =
+			typeof firstEntry === 'object' && firstEntry !== null
+				? firstEntry.text
+				: ((firstEntry as string | undefined) ?? developmentId);
+		const slotLabel = renderEmptySlotLabel(translationContext.assets.slot);
+		const expectedLine = `${LOG_KEYWORDS.developed} ${developmentLabel} on ${slotLabel}`;
 		expect(developmentLine).toBe(expectedLine);
 		const repeatDiff = diffStepSnapshots(
 			before,

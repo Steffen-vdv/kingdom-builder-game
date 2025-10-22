@@ -127,6 +127,21 @@ function rebuildTranslationArtifacts(harness: PassiveHarness) {
 	return { translationContext, diffContext } as const;
 }
 
+function renderEmptySlotLabel(slot: { icon?: string; label?: string }): string {
+	const slotIcon = slot.icon?.trim() ?? '';
+	const baseSlotLabel = slot.label?.trim() ?? 'Development Slot';
+	const hasEmptyPrefix = /(?:^|\s)empty\b/i.test(baseSlotLabel);
+	const emptySlotLabel = hasEmptyPrefix
+		? baseSlotLabel
+		: `Empty ${baseSlotLabel}`.trim();
+	const slotDisplay = [slotIcon, emptySlotLabel]
+		.filter((segment) => segment.length > 0)
+		.join(' ')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+	return slotDisplay || 'Empty Development Slot';
+}
+
 function findBuildingId(
 	registries: PassiveHarness['registries'],
 	segment: string,
@@ -294,6 +309,7 @@ describe('passive log labels', () => {
 		const after = captureActivePlayer(harness.engine);
 		const { translationContext, diffContext } =
 			rebuildTranslationArtifacts(harness);
+		const slotLabel = renderEmptySlotLabel(translationContext.assets.slot);
 		const diffResult = diffStepSnapshots(before, after, undefined, diffContext);
 		const lines = diffResult.summaries;
 		expect(lines.some((line) => line.includes('activated'))).toBe(false);
@@ -306,7 +322,7 @@ describe('passive log labels', () => {
 			rawLabel && typeof rawLabel === 'object'
 				? rawLabel.text
 				: (rawLabel ?? developmentId);
-		const expectedHeadline = `${LOG_KEYWORDS.developed} ${label}`;
+		const expectedHeadline = `${LOG_KEYWORDS.developed} ${label} on ${slotLabel}`;
 		expect(lines).toContain(expectedHeadline);
 		const fortificationKey =
 			harness.metadataSelectors.statMetadata.list.find((descriptor) =>
