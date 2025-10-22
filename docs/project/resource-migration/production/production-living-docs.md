@@ -76,13 +76,9 @@ Maintain a running list of important updates. Use subheadings with timestamps.
 
 Track deliberate breakages created by migration steps so nobody “fixes” them prematurely.
 
-> **Red alert:** Leaving tests red or features degraded without recording them
-> here is treated as a process failure. Update this table the moment you
-> introduce (or resolve) any intentional regression.
-
-| Description  | Introduced In | Expected Resolution | Status |
-| ------------ | ------------- | ------------------- | ------ |
-| _(none yet)_ | –             | –                   | –      |
+| Description                                                                                                                                                                                                                                                           | Introduced In                                 | Expected Resolution                                                                                                                                                   | Status         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| Repository typecheck, server tests, and web tests fail because engine, server, and web layers still rely on legacy `resources`/`stats`/`population` session fields removed by the ResourceV2 schema update. Track pending end-to-end migration before re-enabling CI. | Resource Migration MVP – P4 – T6 (2025-10-22) | Complete engine/server/web integration with `SessionPlayerStateSnapshot.values`, `SessionSnapshot.recentValueChanges`, and `SessionRegistriesPayload.resourceValues`. | 🔄 In progress |
 
 ## 7. Pending Follow-ups / TODO Tracker
 
