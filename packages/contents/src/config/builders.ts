@@ -65,6 +65,20 @@ export {
 	transferParams,
 } from './builders/advancedEffectParams';
 
+export {
+	resourceV2Definition,
+	resourceV2Effect,
+	resourceV2Group,
+	resourceV2GroupParent,
+	resourceV2Tier,
+	resourceV2TierTrack,
+	ResourceV2DefinitionBuilder,
+	ResourceV2GroupBuilder,
+	ResourceV2GroupParentBuilder,
+	ResourceV2TierBuilder,
+	ResourceV2TierTrackBuilder,
+} from './builders/resourceV2';
+
 export type { AttackStatAnnotation, AttackStatRole } from './builders/advancedEffectParams';
 
 export type { ActionEffectGroupDef, ActionEffectGroupOptionDef, DevelopmentIdParam } from './builders/actionEffectGroups';
