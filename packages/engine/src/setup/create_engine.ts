@@ -9,6 +9,7 @@ import {
 	setStatKeys,
 	setPhaseKeys,
 	setPopulationRoleKeys,
+	setResourceV2Keys,
 } from '../state';
 import type {
 	ResourceKey,
@@ -18,6 +19,7 @@ import type {
 	StatSourceContribution,
 	StatSourceLink,
 } from '../state';
+import type { ResourceV2RuntimeCatalog } from '../resourcesV2';
 import { Services, PassiveManager } from '../services';
 import type { RuleSet } from '../services';
 import { EngineContext } from '../context';
@@ -61,6 +63,7 @@ export interface EngineCreationOptions {
 	rules: RuleSet;
 	config?: GameConfig;
 	devMode?: boolean;
+	resourceV2Catalog?: ResourceV2RuntimeCatalog;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -171,6 +174,7 @@ export function createEngine({
 	rules,
 	config,
 	devMode = false,
+	resourceV2Catalog,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
@@ -197,6 +201,7 @@ export function createEngine({
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
+	setResourceV2Keys(resourceV2Catalog);
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
