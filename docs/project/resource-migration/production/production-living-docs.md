@@ -39,7 +39,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T5 | 2025-10-22 | gpt-5-codex | packages/contents/src/resourceV2/index.ts; packages/contents/src/resourceV2/definitions.ts; packages/contents/src/resourceV2/groups.ts; packages/contents/src/index.ts; packages/contents/tests/resourceV2.registry.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added ResourceV2 definition/group registries with ordering metadata, primary icon derivation helpers, and initial empty arrays plus coverage validating registry lookups and fallbacks. | `npm run lint`; `npm run test --workspace=@kingdom-builder/contents` | Begin migrating pilot resources into the new registries and wire the startup icon to consume the derived candidate once content lands. |
 | Resource Migration MVP - P3 - T6 | 2025-10-22 | gpt-5-codex | packages/contents/src/index.ts; packages/contents/src/resourceV2/index.ts; packages/contents/src/startup.ts; packages/contents/README.md; packages/contents/tests/resourceV2.registry.test.ts | Exported default ResourceV2 registries/metadata for startup consumers, documented the dual-system state, and added coverage for the new helpers. | `npm run lint`; `npm run test --workspace=@kingdom-builder/contents` | Coordinate server/runtime fallbacks to forward ResourceV2 metadata and populate definitions during upcoming migrations. |
 | Resource Migration MVP - P3 - T7 | 2025-10-22 | gpt-5-codex | packages/testing/src/factories/content.ts; packages/testing/src/factories/content.test-d.ts; docs/project/resource-migration/production/production-living-docs.md | Added ResourceV2 testing factory helpers for definitions/groups with optional bounds, tier track, and global cost overrides plus type-only coverage. | `npm run lint`; `npm run build --workspace=@kingdom-builder/testing` | Expand sample registries once real ResourceV2 content lands and ensure engine/web tests adopt the new factories. |
-| Resource Migration MVP - P3 - T8 | 2025-**-** | _(add entry)_ | | _(reserved for T8 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T8 | 2025-10-22 | gpt-5-codex | packages/engine/src/resourceV2/registry.ts; packages/engine/src/index.ts; packages/engine/tests/resourceV2/registry.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added engine ResourceV2 registry loader covering definitions/groups with immutable metadata helpers and tests verifying indexing and virtual parent protection. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Integrate the registry into engine session bootstrapping and resource services once ResourceV2 state propagation begins. |
 | Resource Migration MVP - P3 - T9 | 2025-**-** | _(add entry)_ | | _(reserved for T9 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T10 | 2025-**-** | _(add entry)_ | | _(reserved for T10 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T11 | 2025-**-** | _(add entry)_ | | _(reserved for T11 assignee – update only this row.)_ | | |
@@ -68,14 +68,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-22 19:36
-**Current Focus:** Resource Migration MVP - P3 - T7 ResourceV2 testing utilities
-**State Summary:** Testing package now exposes factories that assemble ResourceV2 definitions and groups via the contents builders, including hooks for bounds, tier tracks, and global cost metadata. Type-only assertions guarantee the helpers stay JSON-serializable for engine and web consumers.
+**Timestamp (UTC):** 2025-10-22 20:03
+**Current Focus:** Resource Migration MVP - P3 - T8 Engine ResourceV2 registry loader
+**State Summary:** Engine package now owns a ResourceV2 registry that deep-freezes content payloads, indexes definitions/groups, and exposes helpers for bounds, tier tracks, and metadata flags. Focused tests cover lookup behaviour and ensure virtual group parents remain immutable.
 
 - **Next Suggested Tasks:**
-  - Update engine/web tests to consume `createResourceV2Definition`/`createResourceV2Group` instead of bespoke mocks.
-  - Populate registries with real ResourceV2 definitions/groups to validate startup pipelines end-to-end.
-- **Blocking Issues / Risks:** No runtime consumers yet exercise the helpers; ensure adoption plans align with upcoming engine integration work.
+  - Thread the new registry through engine session/setup flows so ResourceV2 state can replace legacy resource wiring.
+  - Extend services (tiered resource, cost evaluation, logging) to read breakdown flags and tier metadata from the registry.
+- **Blocking Issues / Risks:** Engine runtime still depends on legacy resource arrays; ResourceV2 data remains unused until bootstrap integration lands.
 
 ## 5. Notes & Decisions Archive
 
