@@ -31,6 +31,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | 2025-10-22                                                                                                                                                         | ChatGPT (gpt-5-codex)                         | packages/testing/src/factories/content.ts; packages/testing/src/factories/resourceV2.ts; packages/testing/tests/content-factory-resourceV2.test.ts; docs/project/resource-migration/production/production-living-docs.md                                                                                     |
 | Added ResourceV2 factory helpers to testing content factory, ensured type re-exports for compatibility, and introduced focused ResourceV2 bounds/tier/order tests. | `npm run lint` (pass); `npm run check` (pass) |
 | Monitor downstream test factories for ResourceV2 adoption needs and extend helper coverage if new inputs emerge.                                                   |
+| 2025-10-22                                                                                                                                                         | ChatGPT (gpt-5-codex)                         | packages/engine/src/resourcesV2/types.ts; packages/engine/src/resourcesV2/index.ts; packages/engine/src/index.ts; packages/engine/tests/resourcesV2-types.test.ts; docs/project/resource-migration/production/production-living-docs.md                                                                      | Added runtime ResourceV2 metadata catalog with conversion utilities covering ordering, parent mapping, percent formatting, and tier payload preservation, plus targeted engine tests.  | `npm run check` (pass)                                                                                                                                                                                              | Coordinate engine effect handlers and UI consumers to adopt the runtime catalog in upcoming migration tasks.                                      |
 | 2024-**-**                                                                                                                                                         | _(add entry)_                                 |                                                                                                                                                                                                                                                                                                              |                                                                                                                                                                                        |                                                                                                                                                                                                                     |                                                                                                                                                   |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -38,14 +39,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-22 19:14
-- **Current Focus:** ResourceV2 factory coverage & synthetic content alignment
-- **State Summary:** Ported the testing content factory to the shared ResourceV2 helpers, preserved legacy type exports, and backfilled targeted ResourceV2 unit tests covering bounds, tier track cloning, and ordering. Full `npm run lint` and `npm run check` runs are green.
+- **Timestamp (UTC):** 2025-10-22 19:40
+- **Current Focus:** Engine ResourceV2 runtime metadata & validation utilities
+- **State Summary:** Implemented the engine-side ResourceV2 runtime catalog with ordering, parent mapping, percent formatting helpers, and tier hydration, plus regression tests confirming conversions against content registries. Full `npm run check` run is green.
 - **Next Suggested Tasks:**
-  - Expand factory helpers to cover additional ResourceV2 scenarios (e.g., limited resources, global action cost variants) as migration work progresses.
-  - Audit existing synthetic fixtures to ensure they leverage the new ResourceV2 factory rather than bespoke builders.
-- **Blocking Issues / Risks:** Long `npm run check` execution time remains a friction point; keep using full runs before PRs until a filtered workflow is supported.
-- **Reminder:** Continue documenting factory changes here and ensure downstream tests source ResourceV2 data from the shared helpers.
+  - Wire the runtime catalog into engine session bootstrap so ResourceV2 definitions populate player state and services.
+  - Expose the hydrated metadata to protocol/web pipelines, replacing legacy resource/stat lookups.
+- **Blocking Issues / Risks:** Filtered `npm run check -- --filter` remains unsupported; continue running the full suite until tooling improves.
+- **Reminder:** Keep future migration work aligned with the new catalog (especially percent-formatting helpers) and update the living doc as additional runtime consumers come online.
 
 Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.
 

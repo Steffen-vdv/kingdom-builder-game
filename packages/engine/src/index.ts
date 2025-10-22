@@ -5,6 +5,11 @@ export {
 	Stat,
 	createEngine,
 } from './setup/create_engine';
+export {
+	hydrateResourceV2Metadata,
+	ResourceV2Reconciliation,
+	ResourceV2Rounding,
+} from './resourcesV2';
 export type {
 	ResourceKey,
 	StatKey,
@@ -13,6 +18,16 @@ export type {
 	StatSourceContribution,
 	StatSourceLink,
 } from './setup/create_engine';
+export type {
+	ResourceV2RuntimeCatalog,
+	ResourceV2RuntimeDefinition,
+	ResourceV2RuntimeGroup,
+	ResourceV2RuntimeGroupParent,
+	ResourceV2RuntimeTierDefinition,
+	ResourceV2RuntimeTierTrack,
+	ResourceV2ReconciliationValue,
+	ResourceV2RoundingValue,
+} from './resourcesV2';
 export {
 	createEngineSession,
 	type EngineSession,
