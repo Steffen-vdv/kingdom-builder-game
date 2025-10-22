@@ -3,6 +3,7 @@ import {
 	GameState,
 	Land,
 	PlayerState,
+	cloneResourceV2State,
 	type StatSourceContribution,
 } from '../state';
 import { cloneMeta } from '../stat_sources/meta';
@@ -47,6 +48,7 @@ function clonePlayerState(player: PlayerState): PlayerState {
 	cloned.lands = player.lands.map((land) => cloneLand(land));
 	cloned.buildings = new Set(player.buildings);
 	cloned.actions = new Set(player.actions);
+	cloned.resourceV2 = cloneResourceV2State(player.resourceV2);
 	const clonedSources = cloned.statSources;
 	for (const statKey of Object.keys(player.statSources)) {
 		const contributions = player.statSources[statKey];
@@ -93,6 +95,7 @@ function clonePlayerState(player: PlayerState): PlayerState {
 		'statSources',
 		'skipPhases',
 		'skipSteps',
+		'resourceV2',
 	]);
 	for (const [key, value] of Object.entries(player)) {
 		if (reserved.has(key)) {
