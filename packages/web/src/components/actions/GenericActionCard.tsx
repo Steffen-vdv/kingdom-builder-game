@@ -16,7 +16,7 @@ import {
 	formatMissingResources,
 	type ResourceDescriptorSelector,
 } from './utils';
-import type { PendingActionState } from './GenericActions';
+import type { PendingActionState } from './GenericActionEntry';
 import { useEffectGroupOptions } from './useEffectGroupOptions';
 import { formatIconTitle, renderIconLabel } from './iconHelpers';
 import { type Action, type DisplayPlayer, type HoverCardData } from './types';
@@ -146,6 +146,7 @@ function GenericActionCard({
 		clearHoverCard,
 		handleHoverCard,
 		hoverBackground,
+		playerId: player.id,
 	});
 	const actionIcon = typeof action.icon === 'string' ? action.icon : undefined;
 	const actionFocus = normalizeActionFocus(action.focus);

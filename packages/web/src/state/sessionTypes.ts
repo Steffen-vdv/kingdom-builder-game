@@ -30,10 +30,12 @@ export interface SessionAdapter {
 	getActionCosts(
 		actionId: string,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionCostMap;
 	getActionRequirements(
 		actionId: string,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionRequirementList;
 	getActionOptions(actionId: string): ActionEffectGroup[];
 	getActionDefinition(
@@ -42,10 +44,12 @@ export interface SessionAdapter {
 	readActionMetadata(
 		actionId: string,
 		params?: ActionParametersPayload,
+		playerId?: SessionPlayerId,
 	): SessionActionMetadataSnapshot;
 	subscribeActionMetadata(
 		actionId: string,
 		params: ActionParametersPayload | undefined,
+		playerId: SessionPlayerId | undefined,
 		listener: (snapshot: SessionActionMetadataSnapshot) => void,
 	): () => void;
 	runAiTurn(playerId: SessionPlayerId): Promise<SessionAiTurnResult>;

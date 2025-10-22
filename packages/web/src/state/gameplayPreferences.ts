@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react';
 
-export const AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY =
+export const AUTO_ADVANCE_PREFERENCE_STORAGE_KEY =
+	'kingdom-builder.preferences.autoAdvance';
+
+const LEGACY_AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY =
 	'kingdom-builder.preferences.autoAcknowledge';
-export const AUTO_PASS_PREFERENCE_STORAGE_KEY =
+const LEGACY_AUTO_PASS_PREFERENCE_STORAGE_KEY =
 	'kingdom-builder.preferences.autoPass';
 
 type PreferenceUpdater = boolean | ((previousValue: boolean) => boolean);
@@ -25,6 +28,24 @@ function readBooleanPreference(key: string, defaultValue: boolean): boolean {
 	}
 }
 
+function readBooleanPreferenceOrNull(key: string): boolean | null {
+	if (typeof window === 'undefined') {
+		return null;
+	}
+
+	try {
+		const storedValue = window.localStorage.getItem(key);
+		if (storedValue === null) {
+			return null;
+		}
+
+		return storedValue === 'true';
+	} catch (error) {
+		void error;
+		return null;
+	}
+}
+
 function writeBooleanPreference(key: string, value: boolean) {
 	if (typeof window === 'undefined') {
 		return;
@@ -35,6 +56,18 @@ function writeBooleanPreference(key: string, value: boolean) {
 	} catch (error) {
 		void error;
 		// Ignore storage exceptions (e.g., Safari private mode).
+	}
+}
+
+function removePreference(key: string) {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	try {
+		window.localStorage.removeItem(key);
+	} catch (error) {
+		void error;
 	}
 }
 
@@ -67,30 +100,42 @@ function useStoredBooleanPreference(
 }
 
 export function getStoredGameplayPreferences(): {
-	autoAcknowledge: boolean;
-	autoPass: boolean;
+	autoAdvance: boolean;
 } {
-	return {
-		autoAcknowledge: readBooleanPreference(
-			AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
-			false,
-		),
-		autoPass: readBooleanPreference(AUTO_PASS_PREFERENCE_STORAGE_KEY, false),
-	};
+	const storedAutoAdvance = readBooleanPreferenceOrNull(
+		AUTO_ADVANCE_PREFERENCE_STORAGE_KEY,
+	);
+	if (storedAutoAdvance !== null) {
+		return { autoAdvance: storedAutoAdvance };
+	}
+
+	const legacyAutoAcknowledge = readBooleanPreference(
+		LEGACY_AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
+		false,
+	);
+	const legacyAutoPass = readBooleanPreference(
+		LEGACY_AUTO_PASS_PREFERENCE_STORAGE_KEY,
+		false,
+	);
+	const legacyValue = legacyAutoAcknowledge || legacyAutoPass;
+	if (legacyAutoAcknowledge || legacyAutoPass) {
+		writeBooleanPreference(AUTO_ADVANCE_PREFERENCE_STORAGE_KEY, legacyValue);
+	}
+	removePreference(LEGACY_AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY);
+	removePreference(LEGACY_AUTO_PASS_PREFERENCE_STORAGE_KEY);
+	return { autoAdvance: legacyValue };
 }
 
 export function useGameplayPreferences() {
-	const [isAutoAcknowledgeEnabled, setIsAutoAcknowledgeEnabled] =
-		useStoredBooleanPreference(AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY, false);
-	const [isAutoPassEnabled, setIsAutoPassEnabled] = useStoredBooleanPreference(
-		AUTO_PASS_PREFERENCE_STORAGE_KEY,
-		false,
-	);
+	const storedPreferences = getStoredGameplayPreferences();
+	const [isAutoAdvanceEnabled, setIsAutoAdvanceEnabled] =
+		useStoredBooleanPreference(
+			AUTO_ADVANCE_PREFERENCE_STORAGE_KEY,
+			storedPreferences.autoAdvance,
+		);
 
 	return {
-		isAutoAcknowledgeEnabled,
-		setIsAutoAcknowledgeEnabled,
-		isAutoPassEnabled,
-		setIsAutoPassEnabled,
+		isAutoAdvanceEnabled,
+		setIsAutoAdvanceEnabled,
 	} as const;
 }

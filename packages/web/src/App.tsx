@@ -11,6 +11,7 @@ import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 import { RegistryMetadataProvider } from './contexts/RegistryMetadataContext';
 import { useOverviewMetadata } from './state/useOverviewMetadata';
+import { SoundEffectsProvider } from './state/SoundEffectsContext';
 
 export default function App() {
 	const {
@@ -21,8 +22,7 @@ export default function App() {
 		isMusicEnabled,
 		isSoundEnabled,
 		isBackgroundAudioMuted,
-		isAutoAcknowledgeEnabled,
-		isAutoPassEnabled,
+		isAutoAdvanceEnabled,
 		resumePoint,
 		resumeSessionId,
 		startStandardGame,
@@ -35,8 +35,7 @@ export default function App() {
 		toggleMusic,
 		toggleSound,
 		toggleBackgroundAudioMute,
-		toggleAutoAcknowledge,
-		toggleAutoPass,
+		toggleAutoAdvance,
 		persistResumeSession,
 		clearResumeSession,
 		handleResumeSessionFailure,
@@ -117,10 +116,8 @@ export default function App() {
 					onToggleSound={toggleSound}
 					backgroundAudioMuted={isBackgroundAudioMuted}
 					onToggleBackgroundAudioMute={toggleBackgroundAudioMute}
-					autoAcknowledgeEnabled={isAutoAcknowledgeEnabled}
-					onToggleAutoAcknowledge={toggleAutoAcknowledge}
-					autoPassEnabled={isAutoPassEnabled}
-					onToggleAutoPass={toggleAutoPass}
+					autoAdvanceEnabled={isAutoAdvanceEnabled}
+					onToggleAutoAdvance={toggleAutoAdvance}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 					resumeSessionId={resumeSessionId}
@@ -148,10 +145,8 @@ export default function App() {
 					onToggleSound={toggleSound}
 					backgroundAudioMuted={isBackgroundAudioMuted}
 					onToggleBackgroundAudioMute={toggleBackgroundAudioMute}
-					autoAcknowledgeEnabled={isAutoAcknowledgeEnabled}
-					onToggleAutoAcknowledge={toggleAutoAcknowledge}
-					autoPassEnabled={isAutoPassEnabled}
-					onToggleAutoPass={toggleAutoPass}
+					autoAdvanceEnabled={isAutoAdvanceEnabled}
+					onToggleAutoAdvance={toggleAutoAdvance}
 					playerName={playerName}
 					onChangePlayerName={setPlayerName}
 					hasStoredName={hasStoredName}
@@ -166,7 +161,9 @@ export default function App() {
 				enabled={isMusicEnabled}
 				muteWhenBackground={isBackgroundAudioMuted}
 			/>
-			{screen}
+			<SoundEffectsProvider enabled={isSoundEnabled}>
+				{screen}
+			</SoundEffectsProvider>
 		</>
 	);
 }

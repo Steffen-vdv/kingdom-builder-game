@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useGameEngine } from '../../state/GameContext';
+import { useSoundEffectsContext } from '../../state/SoundEffectsContext';
 import type { ToastVariant } from '../../state/useToasts';
 
 const TOASTER_POSITION_CLASS = [
@@ -59,6 +60,14 @@ const VARIANT_META: Record<
 
 export default function Toaster() {
 	const { toasts, dismissToast } = useGameEngine();
+	const { playUiClick } = useSoundEffectsContext();
+	const createDismissHandler = React.useCallback(
+		(toastId: number) => () => {
+			playUiClick();
+			dismissToast(toastId);
+		},
+		[dismissToast, playUiClick],
+	);
 	if (toasts.length === 0) {
 		return null;
 	}
@@ -70,6 +79,7 @@ export default function Toaster() {
 		<div className={TOASTER_POSITION_CLASS}>
 			{toasts.map((toast) => {
 				const variant = VARIANT_META[toast.variant];
+				const handleDismiss = createDismissHandler(toast.id);
 				return (
 					<div
 						key={toast.id}
@@ -87,7 +97,7 @@ export default function Toaster() {
 							</div>
 							<button
 								type="button"
-								onClick={() => dismissToast(toast.id)}
+								onClick={handleDismiss}
 								className={`${DISMISS_BUTTON_BASE_CLASS} ${variant.dismiss}`}
 								aria-label={variant.dismissLabel}
 							>

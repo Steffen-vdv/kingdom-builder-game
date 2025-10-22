@@ -3,8 +3,7 @@ import type { MutableRefObject } from 'react';
 import type { ActionResolution } from './useActionResolution';
 
 interface UseResolutionAutomationOptions {
-	autoAcknowledgeEnabled: boolean;
-	autoPassEnabled: boolean;
+	autoAdvanceEnabled: boolean;
 	acknowledgeResolution: () => void;
 	resolution: ActionResolution | null;
 	mountedRef: MutableRefObject<boolean>;
@@ -14,8 +13,7 @@ interface UseResolutionAutomationOptions {
 }
 
 function useResolutionAutomation({
-	autoAcknowledgeEnabled,
-	autoPassEnabled,
+	autoAdvanceEnabled,
 	acknowledgeResolution,
 	resolution,
 	mountedRef,
@@ -27,7 +25,7 @@ function useResolutionAutomation({
 	const autoPassTriggeredRef = useRef(false);
 
 	useEffect(() => {
-		if (!autoAcknowledgeEnabled) {
+		if (!autoAdvanceEnabled) {
 			autoAcknowledgedResolutionRef.current = null;
 			return;
 		}
@@ -47,10 +45,10 @@ function useResolutionAutomation({
 		}
 		autoAcknowledgedResolutionRef.current = resolution;
 		acknowledgeResolution();
-	}, [autoAcknowledgeEnabled, acknowledgeResolution, mountedRef, resolution]);
+	}, [autoAdvanceEnabled, acknowledgeResolution, mountedRef, resolution]);
 
 	useEffect(() => {
-		if (!autoPassEnabled) {
+		if (!autoAdvanceEnabled) {
 			autoPassTriggeredRef.current = false;
 			return;
 		}
@@ -71,7 +69,7 @@ function useResolutionAutomation({
 		autoPassTriggeredRef.current = true;
 		void advancePhase();
 	}, [
-		autoPassEnabled,
+		autoAdvanceEnabled,
 		phaseCanEnd,
 		phaseIsAdvancing,
 		resolution,

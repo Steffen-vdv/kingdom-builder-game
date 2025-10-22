@@ -74,8 +74,15 @@ export function appendLandChanges(
 			if (previous.developments.includes(development)) {
 				continue;
 			}
-			const label = describeContent(context.developments, development);
-			changes.push(formatLogHeadline(LOG_KEYWORDS.developed, label));
+			const label = describeContent(context.developments, development).trim();
+			const slotLabelBase =
+				context.assets.slot.label?.trim() || 'Development Slot';
+			const slotLabel = `Empty ${slotLabelBase}`.trim();
+			const slotDisplay =
+				formatIconLabel(context.assets.slot.icon, slotLabel).trim() ||
+				slotLabel;
+			const summary = `${LOG_KEYWORDS.developed} ${label} on ${slotDisplay}`;
+			changes.push(summary.trim());
 		}
 	}
 }

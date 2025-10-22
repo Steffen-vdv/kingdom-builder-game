@@ -4,10 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Screen } from '../../src/state/appHistory';
 import { useAppNavigation } from '../../src/state/useAppNavigation';
 import { DARK_MODE_PREFERENCE_STORAGE_KEY } from '../../src/state/darkModePreference';
-import {
-	AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
-	AUTO_PASS_PREFERENCE_STORAGE_KEY,
-} from '../../src/state/gameplayPreferences';
+import { AUTO_ADVANCE_PREFERENCE_STORAGE_KEY } from '../../src/state/gameplayPreferences';
 import {
 	RESUME_SESSION_STORAGE_KEY,
 	readStoredResumeSession,
@@ -118,16 +115,11 @@ describe('useAppNavigation', () => {
 	});
 
 	it('restores stored gameplay preferences when history is missing them', async () => {
-		window.localStorage.setItem(
-			AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY,
-			'true',
-		);
-		window.localStorage.setItem(AUTO_PASS_PREFERENCE_STORAGE_KEY, 'true');
+		window.localStorage.setItem(AUTO_ADVANCE_PREFERENCE_STORAGE_KEY, 'true');
 
 		const { result, unmount } = await renderNavigationHook();
 
-		expect(result.current.isAutoAcknowledgeEnabled).toBe(true);
-		expect(result.current.isAutoPassEnabled).toBe(true);
+		expect(result.current.isAutoAdvanceEnabled).toBe(true);
 		unmount();
 	});
 
@@ -170,30 +162,20 @@ describe('useAppNavigation', () => {
 	it('persists gameplay preferences across reloads', async () => {
 		const firstRender = await renderNavigationHook();
 
-		expect(firstRender.result.current.isAutoAcknowledgeEnabled).toBe(false);
-		expect(firstRender.result.current.isAutoPassEnabled).toBe(false);
+		expect(firstRender.result.current.isAutoAdvanceEnabled).toBe(false);
 
 		act(() => {
-			firstRender.result.current.toggleAutoAcknowledge();
+			firstRender.result.current.toggleAutoAdvance();
 		});
 
 		expect(
-			window.localStorage.getItem(AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY),
+			window.localStorage.getItem(AUTO_ADVANCE_PREFERENCE_STORAGE_KEY),
 		).toBe('true');
-
-		act(() => {
-			firstRender.result.current.toggleAutoPass();
-		});
-
-		expect(window.localStorage.getItem(AUTO_PASS_PREFERENCE_STORAGE_KEY)).toBe(
-			'true',
-		);
 
 		firstRender.unmount();
 
 		const secondRender = await renderNavigationHook();
-		expect(secondRender.result.current.isAutoAcknowledgeEnabled).toBe(true);
-		expect(secondRender.result.current.isAutoPassEnabled).toBe(true);
+		expect(secondRender.result.current.isAutoAdvanceEnabled).toBe(true);
 		secondRender.unmount();
 	});
 
@@ -204,14 +186,10 @@ describe('useAppNavigation', () => {
 			result.current.startDeveloperGame();
 		});
 
-		expect(result.current.isAutoAcknowledgeEnabled).toBe(true);
-		expect(result.current.isAutoPassEnabled).toBe(true);
+		expect(result.current.isAutoAdvanceEnabled).toBe(true);
 		expect(
-			window.localStorage.getItem(AUTO_ACKNOWLEDGE_PREFERENCE_STORAGE_KEY),
+			window.localStorage.getItem(AUTO_ADVANCE_PREFERENCE_STORAGE_KEY),
 		).toBe('true');
-		expect(window.localStorage.getItem(AUTO_PASS_PREFERENCE_STORAGE_KEY)).toBe(
-			'true',
-		);
 		unmount();
 	});
 

@@ -22,10 +22,8 @@ function createProps(
 		onToggleSound: vi.fn(),
 		backgroundAudioMuted: false,
 		onToggleBackgroundAudioMute: vi.fn(),
-		autoAcknowledgeEnabled: false,
-		onToggleAutoAcknowledge: vi.fn(),
-		autoPassEnabled: false,
-		onToggleAutoPass: vi.fn(),
+		autoAdvanceEnabled: false,
+		onToggleAutoAdvance: vi.fn(),
 		playerName: 'Traveler',
 		onChangePlayerName: vi.fn(),
 		...overrides,
@@ -102,27 +100,20 @@ describe('SettingsDialog accessibility', () => {
 	});
 
 	it('activates game toggles with provided handlers', async () => {
-		const onToggleAutoAcknowledge = vi.fn();
-		const onToggleAutoPass = vi.fn();
+		const onToggleAutoAdvance = vi.fn();
 		const props = createProps({
-			onToggleAutoAcknowledge,
-			onToggleAutoPass,
+			onToggleAutoAdvance,
 		});
 		const { rerender, unmount } = render(<SettingsDialog {...props} />);
 		const gameTab = await screen.findByRole('button', {
 			name: 'Game',
 		});
 		fireEvent.click(gameTab);
-		const acknowledgeSwitch = screen.getByRole('switch', {
-			name: 'Auto-Acknowledge Action Summaries',
+		const autoAdvanceSwitch = screen.getByRole('switch', {
+			name: 'Auto-advance',
 		});
-		const passSwitch = screen.getByRole('switch', {
-			name: 'Auto-end turn',
-		});
-		fireEvent.click(acknowledgeSwitch);
-		expect(onToggleAutoAcknowledge).toHaveBeenCalledTimes(1);
-		fireEvent.click(passSwitch);
-		expect(onToggleAutoPass).toHaveBeenCalledTimes(1);
+		fireEvent.click(autoAdvanceSwitch);
+		expect(onToggleAutoAdvance).toHaveBeenCalledTimes(1);
 		rerender(<SettingsDialog {...props} open={false} />);
 		unmount();
 	});

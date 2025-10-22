@@ -3,6 +3,7 @@ import type { ActionEffectGroup } from '@kingdom-builder/protocol';
 import type {
 	SessionActionCostMap,
 	SessionActionRequirementList,
+	SessionPlayerId,
 } from '@kingdom-builder/protocol/session';
 import { ensureGameApi } from './gameApiInstance';
 import { runAiTurn } from './sessionSdk';
@@ -30,22 +31,24 @@ export function readSessionActionMetadata(
 	sessionId: string,
 	actionId: string,
 	params?: ActionParametersPayload,
+	playerId?: SessionPlayerId,
 ): SessionActionMetadataSnapshot {
 	const adapter = getRemoteAdapter(sessionId);
 	if (!adapter) {
 		return EMPTY_SNAPSHOT;
 	}
-	return adapter.readActionMetadata(actionId, params);
+	return adapter.readActionMetadata(actionId, params, playerId);
 }
 
 export function subscribeSessionActionMetadata(
 	sessionId: string,
 	actionId: string,
 	params: ActionParametersPayload | undefined,
+	playerId: SessionPlayerId | undefined,
 	listener: (snapshot: SessionActionMetadataSnapshot) => void,
 ): () => void {
 	const adapter = ensureRemoteAdapter(sessionId);
-	return adapter.subscribeActionMetadata(actionId, params, listener);
+	return adapter.subscribeActionMetadata(actionId, params, playerId, listener);
 }
 
 export function setSessionActionCosts(
@@ -53,9 +56,10 @@ export function setSessionActionCosts(
 	actionId: string,
 	costs: SessionActionCostMap,
 	params?: ActionParametersPayload,
+	playerId?: SessionPlayerId,
 ): void {
 	const adapter = ensureRemoteAdapter(sessionId);
-	adapter.setActionCosts(actionId, costs, params);
+	adapter.setActionCosts(actionId, costs, params, playerId);
 }
 
 export function setSessionActionRequirements(
@@ -63,9 +67,10 @@ export function setSessionActionRequirements(
 	actionId: string,
 	requirements: SessionActionRequirementList,
 	params?: ActionParametersPayload,
+	playerId?: SessionPlayerId,
 ): void {
 	const adapter = ensureRemoteAdapter(sessionId);
-	adapter.setActionRequirements(actionId, requirements, params);
+	adapter.setActionRequirements(actionId, requirements, params, playerId);
 }
 
 export function setSessionActionOptions(
