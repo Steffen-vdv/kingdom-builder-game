@@ -1,14 +1,14 @@
 # Content Handover
 
 - **Prepared by:** gpt-5-codex
-- **Timestamp (UTC):** 2025-02-14 12:00
-- **Current Focus:** ResourceV2 builder scaffolding for the MVP clamp rollout.
+- **Timestamp (UTC):** 2025-02-15 12:00
+- **Current Focus:** ResourceV2 registry scaffolding and metadata aggregation for MVP rollout.
 - **State Summary:**
-  - ResourceV2 types and builders now exist with clamp-only guard rails.
-  - Config exports surface the new helpers without touching legacy registries.
-  - Focused unit tests cover tier uniqueness, clamp enforcement, and parents.
+  - Registry helpers now exist for ResourceV2 definitions and parented groups with duplicate-id protection.
+  - Metadata builders generate frozen ordered lists, parent presentations, and global cost declarations for downstream packages.
+  - New unit tests cover duplicate registration guards, parent aggregation, and ordering guarantees.
 - **Next Suggested Tasks:**
-  - Wire the builders into engine/protocol registries once runtime handlers land.
-  - Expand effect helpers after additional reconciliation strategies unlock.
+  - Hook the registries into engine/protocol bootstrap once runtime handlers and schema updates land.
+  - Extend builders/registries when non-parent groups or multiple global costs are green-lit.
 - **Risks / Blockers:**
-  - Runtime code has not consumed the new definitions yet; downstream work pending.
+  - Engine/web layers still rely on legacy registries until integration tasks consume the new helpers.

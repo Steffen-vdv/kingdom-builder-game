@@ -22,6 +22,13 @@ export {
 	resourceV2TierTrack,
 	resourceV2Transfer,
 	resourceV2UpperBoundIncrease,
+	createResourceV2Registry,
+	createResourceV2GroupRegistry,
+	freezeOrderedValues,
+	computeGroupParentMetadata,
+	buildResourceV2GroupPresentationMetadata,
+	deriveOrderedResourceV2Values,
+	buildGlobalActionCostDeclarations,
 } from './resourceV2';
 export type {
 	ResourceV2BoundAdjustmentDefinition,
@@ -39,6 +46,13 @@ export type {
 	ResourceV2ValueEffectOptions,
 	ResourceV2ReconciliationStrategy,
 	ResourceV2RoundingMode,
+	ResourceV2DefinitionRegistry,
+	ResourceV2GroupDefinition,
+	ResourceV2GroupRegistry,
+	ResourceV2GroupPresentationMetadata,
+	ResourceV2OrderedValueEntry,
+	ResourceV2GlobalActionCostDeclaration,
+	ResourceV2GlobalActionCostConfig,
 } from './resourceV2';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';

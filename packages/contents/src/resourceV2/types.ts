@@ -62,6 +62,10 @@ export interface ResourceV2GroupMetadata {
 	parent?: ResourceV2GroupParentMetadata;
 }
 
+export interface ResourceV2GlobalActionCostConfig {
+	amount: number;
+}
+
 export interface ResourceV2Definition {
 	id: string;
 	display: ResourceV2DisplayMetadata;
@@ -70,6 +74,7 @@ export interface ResourceV2Definition {
 	trackBoundBreakdown?: boolean;
 	tierTrack?: ResourceV2TierTrack;
 	group?: ResourceV2GroupMetadata;
+	globalActionCost?: ResourceV2GlobalActionCostConfig;
 }
 
 export interface ResourceV2ValueEffectDefinition {

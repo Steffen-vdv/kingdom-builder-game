@@ -128,6 +128,11 @@ export class ResourceV2Builder {
 		return this;
 	}
 
+	globalActionCost(amount: number) {
+		this.definition.globalActionCost = { amount };
+		return this;
+	}
+
 	percent(flag = true) {
 		this.definition.display.percent = flag;
 		return this;
@@ -214,6 +219,9 @@ export class ResourceV2Builder {
 						parent: { ...this.definition.group.parent },
 					}
 				: { ...this.definition.group };
+		}
+		if (this.definition.globalActionCost) {
+			result.globalActionCost = { ...this.definition.globalActionCost };
 		}
 		return result;
 	}
