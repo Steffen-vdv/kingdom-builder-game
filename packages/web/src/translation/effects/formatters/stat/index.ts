@@ -32,6 +32,17 @@ function formatStatSummarySubject(
 	return descriptor.label || statKey;
 }
 
+function appendFormatSuffix(
+	format: ReturnType<typeof selectStatDescriptor>['format'],
+	content: string,
+): string {
+	const suffix = typeof format?.prefix === 'string' ? format.prefix.trim() : '';
+	if (!suffix) {
+		return content;
+	}
+	return `${content} ${suffix}`.trim();
+}
+
 function resolveStatDescriptionParts(
 	descriptor: ReturnType<typeof selectStatDescriptor>,
 	statKey: string,
@@ -51,10 +62,9 @@ registerEffectFormatter('stat', 'add', {
 		const descriptor = selectStatDescriptor(context, statKey);
 		const amount = Number(effectDefinition.params?.['amount']);
 		const format = descriptor.format;
-		const prefix = format?.prefix ?? '';
 		const subject = formatStatSummarySubject(descriptor, statKey);
 		const change = formatSignedValue(amount, descriptor);
-		return `${prefix}${subject} ${change}`;
+		return appendFormatSuffix(format, `${subject} ${change}`);
 	},
 	describe: (effectDefinition, context) => {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
@@ -75,10 +85,9 @@ registerEffectFormatter('stat', 'remove', {
 		const descriptor = selectStatDescriptor(context, statKey);
 		const amount = -Number(effectDefinition.params?.['amount']);
 		const format = descriptor.format;
-		const prefix = format?.prefix ?? '';
 		const subject = formatStatSummarySubject(descriptor, statKey);
 		const change = formatSignedValue(amount, descriptor);
-		return `${prefix}${subject} ${change}`;
+		return appendFormatSuffix(format, `${subject} ${change}`);
 	},
 	describe: (effectDefinition, context) => {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
@@ -99,11 +108,13 @@ registerEffectFormatter('stat', 'add_pct', {
 		const descriptor = selectStatDescriptor(context, statKey);
 		const percent = effectDefinition.params?.['percent'];
 		const format = descriptor.format;
-		const prefix = format?.prefix ?? '';
 		const subject = formatStatSummarySubject(descriptor, statKey);
 		if (percent !== undefined) {
 			const percentValue = Number((Number(percent) * 100).toFixed(2));
-			return `${prefix}${subject} ${signed(percentValue)}${percentValue}%`;
+			return appendFormatSuffix(
+				format,
+				`${subject} ${signed(percentValue)}${percentValue}%`,
+			);
 		}
 		const percentageStatKey = resolveStatKey(
 			effectDefinition.params?.['percentStat'],
@@ -117,9 +128,9 @@ registerEffectFormatter('stat', 'add_pct', {
 				percentageDescriptor,
 				percentageStatKey,
 			);
-			return `${prefix}${subject} ${percentageSubject}`;
+			return appendFormatSuffix(format, `${subject} ${percentageSubject}`);
 		}
-		return `${prefix}${subject}`;
+		return appendFormatSuffix(format, subject);
 	},
 	describe: (effectDefinition, context) => {
 		const statKey = resolveStatKey(effectDefinition.params?.['key']);
