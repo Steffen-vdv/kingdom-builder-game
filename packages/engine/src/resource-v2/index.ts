@@ -15,3 +15,22 @@ export type {
 } from './types';
 
 export { createRuntimeResourceCatalog } from './fromContent';
+export {
+	initialisePlayerResourceState,
+	getResourceValue,
+	getResourceBounds,
+	setResourceValue,
+	applyResourceDelta,
+	increaseLowerBound,
+	increaseUpperBound,
+} from './state';
+export type {
+	ResourceChangeContext,
+	ResourceValueWriteOptions,
+	ResourceValueChangeResult,
+	ResourceBoundAdjustmentResult,
+} from './state';
+export type {
+	RuntimeResourceStateDefinition,
+	ResourceTierChangeResult,
+} from './state.helpers';
