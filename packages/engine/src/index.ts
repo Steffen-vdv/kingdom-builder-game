@@ -98,3 +98,14 @@ export type {
 } from './phases/advance';
 export type { PhaseDef } from './phases';
 export type { HappinessTierDefinition } from './services';
+export {
+	loadResourceV2Registry,
+	ResourceV2EngineRegistry,
+} from './resourceV2/registry';
+export type {
+	ResourceV2RegistryLoaderOptions,
+	ResourceV2ResourceRecord,
+	ResourceV2GroupRecord,
+	ResourceV2GroupParentRecord,
+	ResourceV2EntityRecord,
+} from './resourceV2/registry';
