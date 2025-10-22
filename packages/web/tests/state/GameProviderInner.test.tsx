@@ -258,10 +258,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -326,13 +324,10 @@ describe('GameProviderInner', () => {
 			getCurrentSession: () => adapter,
 			getLatestSnapshot: () => null,
 		};
-		const toggleAutoAcknowledge = vi.fn();
-		const toggleAutoPass = vi.fn();
+		const toggleAutoAdvance = vi.fn();
 		const captured: Array<{
-			autoAcknowledgeEnabled: boolean;
-			autoPassEnabled: boolean;
-			onToggleAutoAcknowledge: () => void;
-			onToggleAutoPass: () => void;
+			autoAdvanceEnabled: boolean;
+			onToggleAutoAdvance: () => void;
 		}> = [];
 
 		function PreferenceConsumer() {
@@ -342,10 +337,8 @@ describe('GameProviderInner', () => {
 					return;
 				}
 				captured.push({
-					autoAcknowledgeEnabled: value.autoAcknowledgeEnabled,
-					autoPassEnabled: value.autoPassEnabled,
-					onToggleAutoAcknowledge: value.onToggleAutoAcknowledge,
-					onToggleAutoPass: value.onToggleAutoPass,
+					autoAdvanceEnabled: value.autoAdvanceEnabled,
+					onToggleAutoAdvance: value.onToggleAutoAdvance,
 				});
 			}, [value]);
 			return null;
@@ -362,10 +355,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled
-				onToggleAutoAcknowledge={toggleAutoAcknowledge}
-				autoPassEnabled={false}
-				onToggleAutoPass={toggleAutoPass}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={toggleAutoAdvance}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -387,16 +378,11 @@ describe('GameProviderInner', () => {
 		});
 
 		const latest = captured[captured.length - 1];
-		expect(latest.autoAcknowledgeEnabled).toBe(true);
-		expect(latest.autoPassEnabled).toBe(false);
+		expect(latest.autoAdvanceEnabled).toBe(true);
 		act(() => {
-			latest.onToggleAutoAcknowledge();
+			latest.onToggleAutoAdvance();
 		});
-		act(() => {
-			latest.onToggleAutoPass();
-		});
-		expect(toggleAutoAcknowledge).toHaveBeenCalledTimes(1);
-		expect(toggleAutoPass).toHaveBeenCalledTimes(1);
+		expect(toggleAutoAdvance).toHaveBeenCalledTimes(1);
 		cleanup();
 	});
 
@@ -446,10 +432,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled={false}
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -590,10 +574,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled={false}
+				onToggleAutoAdvance={() => {}}
 				playerName={basePlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -673,10 +655,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName="Strategist"
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -732,10 +712,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName="Warlord"
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -799,10 +777,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled={false}
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -862,10 +838,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -901,10 +875,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -936,10 +908,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -970,10 +940,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -1005,10 +973,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -1068,10 +1034,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled={false}
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -1103,10 +1067,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -1168,10 +1130,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -1203,10 +1163,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -1240,10 +1198,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}
@@ -1277,10 +1233,8 @@ describe('GameProviderInner', () => {
 				onToggleSound={() => {}}
 				backgroundAudioMuted
 				onToggleBackgroundAudioMute={() => {}}
-				autoAcknowledgeEnabled={false}
-				onToggleAutoAcknowledge={() => {}}
-				autoPassEnabled
-				onToggleAutoPass={() => {}}
+				autoAdvanceEnabled
+				onToggleAutoAdvance={() => {}}
 				playerName={localPlayer.name}
 				onChangePlayerName={() => {}}
 				queue={queueHelpers}

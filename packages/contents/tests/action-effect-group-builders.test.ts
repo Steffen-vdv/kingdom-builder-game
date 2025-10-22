@@ -1,98 +1,39 @@
-import {
-	ActionBuilder,
-	action,
-	actionParams,
-	building,
-} from '../src/config/builders';
-import {
-	actionEffectGroup,
-	actionEffectGroupOption,
-} from '../src/config/builders/actionEffectGroups';
+import { ActionBuilder, action, actionParams, building } from '../src/config/builders';
+import { actionEffectGroup, actionEffectGroupOption } from '../src/config/builders/actionEffectGroups';
 import type { ActionEffectGroupDef } from '../src/config/builders/actionEffectGroups';
-import { DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID } from '../src/actions';
-import { DevelopmentId } from '../src/developments';
+import { DevelopActions } from '../src/actions';
 import { describe, expect, it } from 'vitest';
 
-const developFarmActionId =
-	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID[DevelopmentId.Farm];
-
-if (!developFarmActionId) {
-	throw new Error('Missing Farm development action id for tests.');
-}
+const developFarmActionId = DevelopActions.develop_farm;
 
 describe('action effect group builder safeguards', () => {
 	it('requires action effect groups to include options', () => {
 		const group = actionEffectGroup('choose').title('Pick a project');
-		expect(() => group.build()).toThrowError(
-			'Action effect group needs at least one option(). Add option(...) before build().',
-		);
+		expect(() => group.build()).toThrowError('Action effect group needs at least one option(). Add option(...) before build().');
 	});
 
 	it('prevents duplicate option ids within an effect group', () => {
-		const group = actionEffectGroup('choose')
-			.title('Pick a project')
-			.option(
-				actionEffectGroupOption('farm')
-					.label('Farm')
-					.action(developFarmActionId),
-			);
+		const group = actionEffectGroup('choose').title('Pick a project').option(actionEffectGroupOption('farm').label('Farm').action(developFarmActionId));
 
-		expect(() =>
-			group.option(
-				actionEffectGroupOption('farm')
-					.label('House')
-					.action(developFarmActionId),
-			),
-		).toThrowError(
+		expect(() => group.option(actionEffectGroupOption('farm').label('House').action(developFarmActionId))).toThrowError(
 			'Action effect group option id "farm" already exists. Use unique option ids within a group.',
 		);
 	});
 
 	it('prevents duplicate effect group ids on an action', () => {
 		const builder = action().id('has_group').name('Has Group');
-		builder.effectGroup(
-			actionEffectGroup('choose')
-				.title('Pick a project')
-				.option(
-					actionEffectGroupOption('farm')
-						.label('Farm')
-						.action(developFarmActionId),
-				),
-		);
+		builder.effectGroup(actionEffectGroup('choose').title('Pick a project').option(actionEffectGroupOption('farm').label('Farm').action(developFarmActionId)));
 
-		expect(() =>
-			builder.effectGroup(
-				actionEffectGroup('choose')
-					.title('Pick again')
-					.option(
-						actionEffectGroupOption('house')
-							.label('House')
-							.action(developFarmActionId),
-					),
-			),
-		).toThrowError(
+		expect(() => builder.effectGroup(actionEffectGroup('choose').title('Pick again').option(actionEffectGroupOption('house').label('House').action(developFarmActionId)))).toThrowError(
 			'Action effect group id "choose" already exists on this action. Use unique group ids.',
 		);
 	});
 
 	it('blocks attaching effect groups to non-action builders', () => {
 		const buildingBuilder = building();
-		const group = actionEffectGroup('choose')
-			.title('Pick a project')
-			.option(
-				actionEffectGroupOption('farm')
-					.label('Farm')
-					.action(developFarmActionId),
-			);
+		const group = actionEffectGroup('choose').title('Pick a project').option(actionEffectGroupOption('farm').label('Farm').action(developFarmActionId));
 
-		expect(() =>
-			(
-				ActionBuilder.prototype.effectGroup as (
-					this: ActionBuilder,
-					group: unknown,
-				) => ActionBuilder
-			).call(buildingBuilder as unknown as ActionBuilder, group),
-		).toThrowError(
+		expect(() => (ActionBuilder.prototype.effectGroup as (this: ActionBuilder, group: unknown) => ActionBuilder).call(buildingBuilder as unknown as ActionBuilder, group)).toThrowError(
 			'Action effect groups can only be used on actions. Use action().effectGroup(...).',
 		);
 	});
@@ -105,12 +46,7 @@ describe('action effect group builder safeguards', () => {
 				actionEffectGroup('choose')
 					.title('Pick a project')
 					.summary('Choose one follow-up action to resolve immediately.')
-					.option(
-						actionEffectGroupOption('farm')
-							.label('Farm')
-							.action(developFarmActionId)
-							.params(actionParams().id('farm').landId('$landId')),
-					),
+					.option(actionEffectGroupOption('farm').label('Farm').action(developFarmActionId).params(actionParams().id('farm').landId('$landId'))),
 			)
 			.build();
 

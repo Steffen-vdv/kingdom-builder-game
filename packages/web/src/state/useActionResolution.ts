@@ -22,6 +22,8 @@ interface UseActionResolutionOptions {
 	setTrackedTimeout: (callback: () => void, delay: number) => number;
 	timeScaleRef: React.MutableRefObject<number>;
 	mountedRef: React.MutableRefObject<boolean>;
+	onResolutionStart?: () => void;
+	onLineReveal?: () => void;
 }
 
 type ResolutionStateUpdater =
@@ -34,6 +36,8 @@ function useActionResolution({
 	setTrackedTimeout,
 	timeScaleRef,
 	mountedRef,
+	onResolutionStart,
+	onLineReveal,
 }: UseActionResolutionOptions) {
 	const [resolution, assignResolution] = useState<ActionResolution | null>(
 		null,
@@ -201,6 +205,9 @@ function useActionResolution({
 			}
 			sequenceRef.current += 1;
 			const sequence = sequenceRef.current;
+			if (!shouldAppend && onResolutionStart) {
+				onResolutionStart();
+			}
 			return new Promise<void>((resolve) => {
 				if (resolverRef.current) {
 					resolverRef.current();
@@ -229,6 +236,7 @@ function useActionResolution({
 					if (line === undefined || descriptor === undefined) {
 						return;
 					}
+					let appended = false;
 					setResolution((previous) => {
 						if (!previous) {
 							return previous;
@@ -246,6 +254,7 @@ function useActionResolution({
 							descriptor,
 						];
 						const isComplete = nextVisible.length >= previous.lines.length;
+						appended = true;
 						return {
 							...previous,
 							visibleLines: nextVisible,
@@ -253,6 +262,9 @@ function useActionResolution({
 							isComplete,
 						};
 					});
+					if (appended && onLineReveal) {
+						onLineReveal();
+					}
 				};
 
 				const scheduleReveal = (offset: number) => {
@@ -320,6 +332,8 @@ function useActionResolution({
 			setResolution,
 			setTrackedTimeout,
 			timeScaleRef,
+			onResolutionStart,
+			onLineReveal,
 		],
 	);
 
