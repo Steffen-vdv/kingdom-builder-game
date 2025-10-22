@@ -9,6 +9,10 @@ import {
 	startConfigSchema,
 	ruleSetSchema,
 } from '../schema';
+import {
+	resourceV2DefinitionSchema,
+	resourceV2GroupDefinitionSchema,
+} from '../../resourceV2';
 import type {
 	SessionIdentifier,
 	SessionMetadataSnapshot,
@@ -37,7 +41,15 @@ export const sessionRegistriesSchema = z
 		buildings: serializedRegistrySchema(buildingSchema),
 		developments: serializedRegistrySchema(developmentSchema),
 		populations: serializedRegistrySchema(populationSchema),
-		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		resourceV2: z
+			.object({
+				definitions: z.array(resourceV2DefinitionSchema),
+				groups: z.array(resourceV2GroupDefinitionSchema),
+			})
+			.passthrough(),
+		resources: serializedRegistrySchema(
+			sessionResourceDefinitionSchema,
+		).optional(),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
@@ -47,7 +59,15 @@ export const runtimeConfigResponseSchema = z
 		phases: z.array(phaseSchema),
 		start: startConfigSchema,
 		rules: ruleSetSchema,
-		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		resourceV2: z
+			.object({
+				definitions: z.array(resourceV2DefinitionSchema),
+				groups: z.array(resourceV2GroupDefinitionSchema),
+			})
+			.passthrough(),
+		resources: serializedRegistrySchema(
+			sessionResourceDefinitionSchema,
+		).optional(),
 		primaryIconId: z.string().nullable(),
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
