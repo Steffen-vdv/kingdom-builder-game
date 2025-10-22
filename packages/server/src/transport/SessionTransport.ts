@@ -51,13 +51,13 @@ export class SessionTransport extends SessionTransportBase {
 
 	public getActionCosts(request: TransportRequest): SessionActionCostResponse {
 		this.requireAuthorization(request, 'session:advance');
-		const { session, sessionId, actionId, params } =
+		const { session, sessionId, actionId, params, playerId } =
 			this.parseActionMetadataRequest(
 				request,
 				sessionActionCostRequestSchema,
 				'Invalid action cost request.',
 			);
-		const rawCosts = session.getActionCosts(actionId, params);
+		const rawCosts = session.getActionCosts(actionId, params, playerId);
 		const costs: Record<string, number> = {};
 		for (const [resourceKey, amount] of Object.entries(rawCosts)) {
 			if (typeof amount === 'number') {
@@ -155,7 +155,7 @@ export class SessionTransport extends SessionTransportBase {
 							) as ActionParametersPayload;
 						}
 						const costs = sanitizeCosts(
-							session.getActionCosts(actionId, params),
+							session.getActionCosts(actionId, params, playerId),
 						);
 						const traces = session.performAction(actionId, params);
 						const action = {

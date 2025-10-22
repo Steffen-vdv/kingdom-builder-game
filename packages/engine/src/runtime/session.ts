@@ -73,6 +73,7 @@ export interface EngineSession {
 	getActionCosts<T extends string>(
 		actionId: T,
 		params?: ActionParameters<T>,
+		playerId?: PlayerId,
 	): ReturnType<typeof resolveActionCosts>;
 	getActionRequirements<T extends string>(
 		actionId: T,
@@ -134,8 +135,8 @@ export function createEngineSession(
 			const groups = getActionEffectGroups(actionId, context);
 			return cloneActionOptions(groups);
 		},
-		getActionCosts(actionId, params) {
-			const costs = resolveActionCosts(actionId, context, params);
+		getActionCosts(actionId, params, playerId) {
+			const costs = resolveActionCosts(actionId, context, params, playerId);
 			return { ...costs };
 		},
 		getActionRequirements(actionId, params, playerId) {

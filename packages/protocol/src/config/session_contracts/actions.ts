@@ -47,6 +47,7 @@ export const sessionActionCostRequestSchema = z.object({
 	sessionId: sessionIdSchema,
 	actionId: z.string().min(1),
 	params: actionParametersPayloadSchema.optional(),
+	playerId: sessionPlayerIdSchema.optional(),
 });
 
 export const sessionActionCostResponseSchema = z.object({
