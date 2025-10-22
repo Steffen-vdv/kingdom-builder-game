@@ -22,20 +22,24 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
 ## 3. Work Log (append-only)
 
-| Date       | Agent         | Scope / Files | Summary of Work | Tests & Results | Follow-up Actions |
-| ---------- | ------------- | ------------- | --------------- | --------------- | ----------------- |
-| 2024-**-** | _(add entry)_ |               |                 |                 |                   |
+| Date       | Agent         | Scope / Files                                                                                             | Summary of Work                                                          | Tests & Results                             | Follow-up Actions                                                             |
+| ---------- | ------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------- | ----------------------------------------------------------------------------- |
+| 2024-**-** | _(add entry)_ |                                                                                                           |                                                                          |                                             |                                                                               |
+| 2025-10-22 | gpt-5-codex   | packages/contents/src/resourceV2/\*, docs/project/resource-migration/production/production-living-docs.md | Added ResourceV2 schema types, exports, and documented handover context. | npm run format, npm run lint, npm run check | Confirm builder API coverage and clarify global cost validation expectations. |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
-- **Prepared by:** _(agent name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(what is being tackled right now)_
-- **State Summary:** _(1–2 paragraphs describing current progress, outstanding decisions, and known regressions)_
-- **Next Suggested Tasks:** _(bullet list with owners if known)_
-- **Blocking Issues / Risks:** _(list or “None”)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-10-22 15:11
+- **Current Focus:** ResourceV2 schema scaffolding in the contents package so downstream teams can begin consuming the new definitions.
+- **State Summary:** Introduced the foundational TypeScript types for ResourceV2 metadata, tiering, global cost flags, and group definitions, with exports surfaced through the contents entry point. No builder or registry wiring exists yet, so legacy systems remain active while downstream consumers can plan migrations. Outstanding design clarifications include how global cost validation should surface and whether additional tier metadata is required for UI renderers.
+- **Next Suggested Tasks:**
+  - Implement ResourceV2 builders and registry loaders aligned with the new schema (owner TBD).
+  - Draft protocol serialization updates that emit ResourceV2 metadata for client consumption (owner TBD).
+- **Blocking Issues / Risks:**
+  - Need confirmation on the expected shape of the `globalCost` configuration (e.g., whether future reconciliation flags or multi-resource support should be anticipated in the type definitions).
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.

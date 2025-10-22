@@ -25,6 +25,16 @@ export {
 	type PopulationRoleId,
 } from './populationRoles';
 export { Resource, type ResourceKey, RESOURCES } from './resources';
+export type {
+	ResourceV2Def,
+	ResourceV2Metadata,
+	ResourceV2TierRange,
+	ResourceV2TierThreshold,
+	ResourceV2TierTrack,
+	ResourceV2GlobalCostConfig,
+	ResourceV2GroupParent,
+	ResourceV2GroupDef,
+} from './resourceV2';
 export { Stat, type StatKey, STATS } from './stats';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
