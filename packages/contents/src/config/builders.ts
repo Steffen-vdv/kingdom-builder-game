@@ -68,6 +68,25 @@ export {
 	actionEffectGroupOptionParams,
 } from './builders/actionEffectGroups';
 
+// ResourceV2 helpers intentionally enforce clamp-only reconciliation during the
+// MVP rollout. They expose hook suppression flags and tier-track
+// validation while rejecting deferred behaviours.
+export {
+	resourceV2,
+	resourceV2Add,
+	resourceV2Group,
+	resourceV2LowerBoundDecrease,
+	resourceV2LowerBoundIncrease,
+	resourceV2TierTrack,
+	resourceV2Transfer,
+	resourceV2UpperBoundDecrease,
+	resourceV2UpperBoundIncrease,
+	resourceV2Remove,
+	ResourceV2Builder,
+	ResourceV2GroupBuilder,
+	ResourceV2TierTrackBuilder,
+} from '../resourceV2';
+
 export {
 	actionParams,
 	buildingParams,

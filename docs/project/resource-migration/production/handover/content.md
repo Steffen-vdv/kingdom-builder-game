@@ -1,13 +1,19 @@
 # Content Handover
 
-> Replace this template with the latest content-domain handover before you wrap up a task. Keep the details concise and actionable so the next agent can resume immediately.
-
-- **Prepared by:** _(name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(what content thread is in flight)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-10-22 15:37
+- **Current Focus:** Resource Migration MVP – ResourceV2 builder scaffolding
 - **State Summary:**
-  - _(bullet points covering progress, decisions, and open questions)_
+  - ResourceV2 type definitions and builders live under
+    packages/contents/src/resourceV2 with clamp-only guard rails.
+  - Config exports surface the new helpers for downstream packages without
+    disturbing legacy resource/stat exports.
+  - Focused vitest coverage ensures happy-path construction and guard rails;
+    production work log updated.
 - **Next Suggested Tasks:**
-  - _(bulleted action items with owners if known)_
+  - Wire ResourceV2 builders into upcoming resource migrations and retire
+    legacy resource/stat content definitions incrementally.
+  - Implement engine and protocol handling for ResourceV2 effect definitions,
+    then expand reconciliation beyond clamp when approved.
 - **Risks / Blockers:**
-  - _(list items or “None”)_
+  - No blockers, but runtime integration is still pending before ResourceV2 content can ship to production.

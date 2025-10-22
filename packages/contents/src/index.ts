@@ -20,6 +20,35 @@ export type {
 	ActionCategoryLayout,
 } from './config/builders';
 export {
+	resourceV2,
+	resourceV2Add,
+	resourceV2Group,
+	resourceV2LowerBoundDecrease,
+	resourceV2LowerBoundIncrease,
+	resourceV2Remove,
+	resourceV2TierTrack,
+	resourceV2Transfer,
+	resourceV2UpperBoundDecrease,
+	resourceV2UpperBoundIncrease,
+	ResourceV2Builder,
+	ResourceV2GroupBuilder,
+	ResourceV2TierTrackBuilder,
+} from './resourceV2';
+export type {
+	ResourceV2Definition,
+	ResourceV2EffectDefinition,
+	ResourceV2DisplayDefinition,
+	ResourceV2BoundsDefinition,
+	ResourceV2GroupDefinition,
+	ResourceV2Reconciliation,
+	ResourceV2RoundingMode,
+	ResourceV2TierStepDisplayDefinition,
+	ResourceV2TierStepDefinition,
+	ResourceV2TierTrackDefinition,
+	ResourceV2TrackingDefinition,
+	ResourceV2VirtualParentDefinition,
+} from './resourceV2';
+export {
 	POPULATION_ROLES,
 	PopulationRole,
 	type PopulationRoleId,
