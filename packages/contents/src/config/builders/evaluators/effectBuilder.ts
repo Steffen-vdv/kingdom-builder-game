@@ -1,8 +1,19 @@
 import type { EffectConfig, EvaluatorDef } from '@kingdom-builder/protocol';
 import type { StatKey } from '../../../stats';
-import { ParamsBuilder, StatMethods, Types } from '../../builderShared';
+import { ParamsBuilder, ResourceBoundMethods, ResourceMethods, StatMethods, Types } from '../../builderShared';
 import type { Params } from '../../builderShared';
-import { statParams } from '../effectParams';
+import {
+	ResourceV2TransferEffectParamsBuilder,
+	ResourceV2UpperBoundEffectParamsBuilder,
+	ResourceV2ValueEffectParamsBuilder,
+	resourceV2TransferParams,
+	resourceV2UpperBoundParams,
+	resourceV2ValueParams,
+	statParams,
+	type ResourceV2BoundAdjustmentParams,
+	type ResourceV2TransferEffectParams,
+	type ResourceV2ValueEffectParams,
+} from '../effectParams';
 import { EvaluatorBuilder } from './evaluatorBuilder';
 
 export class EffectBuilder<P extends Params = Params> {
@@ -128,4 +139,68 @@ export function effect(type?: string, method?: string) {
 
 export function statAddEffect(stat: StatKey, amount: number) {
 	return effect(Types.Stat, StatMethods.ADD).params(statParams().key(stat).amount(amount).build()).build();
+}
+
+type ResourceValueParamsInput = ResourceV2ValueEffectParams | ResourceV2ValueEffectParamsBuilder | ((builder: ResourceV2ValueEffectParamsBuilder) => void | ResourceV2ValueEffectParamsBuilder);
+
+function resolveResourceValueParams(input: ResourceValueParamsInput): ResourceV2ValueEffectParams {
+	if (input instanceof ResourceV2ValueEffectParamsBuilder) {
+		return input.build();
+	}
+	if (typeof input === 'function') {
+		const builder = resourceV2ValueParams();
+		const result = input(builder);
+		return result instanceof ResourceV2ValueEffectParamsBuilder ? result.build() : builder.build();
+	}
+	return input;
+}
+
+type ResourceTransferParamsInput =
+	| ResourceV2TransferEffectParams
+	| ResourceV2TransferEffectParamsBuilder
+	| ((builder: ResourceV2TransferEffectParamsBuilder) => void | ResourceV2TransferEffectParamsBuilder);
+
+function resolveResourceTransferParams(input: ResourceTransferParamsInput): ResourceV2TransferEffectParams {
+	if (input instanceof ResourceV2TransferEffectParamsBuilder) {
+		return input.build();
+	}
+	if (typeof input === 'function') {
+		const builder = resourceV2TransferParams();
+		const result = input(builder);
+		return result instanceof ResourceV2TransferEffectParamsBuilder ? result.build() : builder.build();
+	}
+	return input;
+}
+
+type ResourceUpperBoundParamsInput =
+	| ResourceV2BoundAdjustmentParams
+	| ResourceV2UpperBoundEffectParamsBuilder
+	| ((builder: ResourceV2UpperBoundEffectParamsBuilder) => void | ResourceV2UpperBoundEffectParamsBuilder);
+
+function resolveResourceUpperBoundParams(input: ResourceUpperBoundParamsInput): ResourceV2BoundAdjustmentParams {
+	if (input instanceof ResourceV2UpperBoundEffectParamsBuilder) {
+		return input.build();
+	}
+	if (typeof input === 'function') {
+		const builder = resourceV2UpperBoundParams();
+		const result = input(builder);
+		return result instanceof ResourceV2UpperBoundEffectParamsBuilder ? result.build() : builder.build();
+	}
+	return input;
+}
+
+export function resourceAddEffect(params: ResourceValueParamsInput) {
+	return effect(Types.Resource, ResourceMethods.ADD).params(resolveResourceValueParams(params)).build();
+}
+
+export function resourceRemoveEffect(params: ResourceValueParamsInput) {
+	return effect(Types.Resource, ResourceMethods.REMOVE).params(resolveResourceValueParams(params)).build();
+}
+
+export function resourceTransferEffect(params: ResourceTransferParamsInput) {
+	return effect(Types.Resource, ResourceMethods.TRANSFER).params(resolveResourceTransferParams(params)).build();
+}
+
+export function resourceUpperBoundIncreaseEffect(params: ResourceUpperBoundParamsInput) {
+	return effect(Types.ResourceUpperBound, ResourceBoundMethods.INCREASE).params(resolveResourceUpperBoundParams(params)).build();
 }
