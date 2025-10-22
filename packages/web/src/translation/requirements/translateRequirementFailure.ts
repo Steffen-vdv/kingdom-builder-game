@@ -2,6 +2,7 @@ import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../context';
 import {
 	selectPopulationRoleDisplay,
+	selectSlotDisplay,
 	selectStatDisplay,
 } from '../context/assetSelectors';
 
@@ -70,6 +71,20 @@ function describeEvaluatorOperand(
 	}
 }
 
+function isLandOperand(operand: CompareOperand | undefined): boolean {
+	if (!operand || typeof operand === 'number') {
+		return false;
+	}
+	return operand.type === 'land';
+}
+
+function describeLandRequirement(context: TranslationContext): string {
+	const slot = selectSlotDisplay(context.assets);
+	const parts = [slot.icon, slot.label].filter(Boolean);
+	const detail = parts.join(' ').trim() || 'Development Slot';
+	return `Must have at least one available ${detail}`;
+}
+
 function formatOperand(
 	operand: CompareOperand | undefined,
 	context: TranslationContext,
@@ -134,6 +149,13 @@ function translateCompareRequirement(
 	const params = (failure.requirement.params ?? {}) as CompareParams;
 	const leftOperand = params.left;
 	const rightOperand = params.right;
+	if (params.operator === 'gt' && isLandOperand(leftOperand)) {
+		const rightNumber =
+			typeof rightOperand === 'number' ? rightOperand : undefined;
+		if (rightNumber === 0) {
+			return describeLandRequirement(context);
+		}
+	}
 	if (
 		params.operator === 'lt' &&
 		isGenericPopulation(leftOperand) &&
