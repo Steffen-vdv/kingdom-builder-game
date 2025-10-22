@@ -9,6 +9,11 @@ const isPhaseSourceDetail = (
 ): source is Extract<ResolutionSource, { kind: 'phase' }> =>
 	typeof source !== 'string' && source.kind === 'phase';
 
+const isActionSourceDetail = (
+	source: ResolutionSource,
+): source is Extract<ResolutionSource, { kind: 'action' }> =>
+	typeof source !== 'string' && source.kind === 'action';
+
 const resolvePhaseIdentity = (
 	source: Extract<ResolutionSource, { kind: 'phase' }>,
 ) => source.id?.trim() || source.label?.trim() || null;
@@ -55,4 +60,9 @@ function shouldAppendPhaseResolution(
 	);
 }
 
-export { resolveActorLabel, isPhaseSourceDetail, shouldAppendPhaseResolution };
+export {
+	resolveActorLabel,
+	isPhaseSourceDetail,
+	shouldAppendPhaseResolution,
+	isActionSourceDetail,
+};

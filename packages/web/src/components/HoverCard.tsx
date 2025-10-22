@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { renderSummary, renderCosts } from '../translation/render';
 import { useGameEngine } from '../state/GameContext';
 import {
@@ -13,6 +13,7 @@ import {
 	joinClasses,
 } from './common/cardStyles';
 import { ResolutionCard } from './ResolutionCard';
+import { isActionSourceDetail } from '../state/useActionResolution.helpers';
 
 const FADE_DURATION_MS = 200;
 
@@ -24,6 +25,8 @@ export default function HoverCard() {
 		actionCostResource,
 		resolution: actionResolution,
 		acknowledgeResolution,
+		phase,
+		requests: { advancePhase },
 	} = useGameEngine();
 	const [renderedData, setRenderedData] = useState(data);
 	const [transitionState, setTransitionState] = useState<'enter' | 'exit'>(
@@ -97,12 +100,44 @@ export default function HoverCard() {
 
 	const resolutionTitle =
 		data?.title ?? renderedData?.title ?? 'Action resolution';
+	const shouldAdvanceTurn = useMemo(() => {
+		if (!actionResolution) {
+			return false;
+		}
+		if (!actionResolution.requireAcknowledgement) {
+			return false;
+		}
+		const source = actionResolution.source;
+		const isActionSource = source === 'action' || isActionSourceDetail(source);
+		if (!isActionSource) {
+			return false;
+		}
+		if (!actionResolution.isComplete) {
+			return false;
+		}
+		if (!phase.isActionPhase) {
+			return false;
+		}
+		if (!phase.canEndTurn || phase.isAdvancing) {
+			return false;
+		}
+		return true;
+	}, [actionResolution, phase]);
+
+	const handleResolutionContinue = useCallback(() => {
+		acknowledgeResolution();
+		if (shouldAdvanceTurn) {
+			void advancePhase();
+		}
+	}, [acknowledgeResolution, advancePhase, shouldAdvanceTurn]);
+
 	if (actionResolution && !data) {
 		return (
 			<ResolutionCard
 				title={resolutionTitle}
 				resolution={actionResolution}
-				onContinue={acknowledgeResolution}
+				onContinue={handleResolutionContinue}
+				continueIntent={shouldAdvanceTurn ? 'advance' : 'acknowledge'}
 			/>
 		);
 	}

@@ -16,6 +16,7 @@ import {
 	SPEED_CONTROL_DEFINITIONS,
 	normalizeKeyInput,
 } from './state/keybindings';
+import { isActionSourceDetail } from './state/useActionResolution.helpers';
 
 const INTERACTIVE_ELEMENT_SELECTOR = 'button, input, textarea, select';
 const ROLE_ELEMENT_SELECTOR = '[role="button"], [role="textbox"]';
@@ -105,6 +106,17 @@ export default function GameLayout() {
 		setQuitDialogOpen(false);
 		onExit();
 	}, [onExit]);
+	const shouldAdvanceAfterAcknowledgement = Boolean(
+		resolution &&
+			resolution.requireAcknowledgement &&
+			resolution.isComplete &&
+			(resolution.source === 'action' ||
+				isActionSourceDetail(resolution.source)) &&
+			phase.isActionPhase &&
+			phase.canEndTurn &&
+			!phase.isAdvancing,
+	);
+
 	useEffect(() => {
 		if (typeof window === 'undefined') {
 			return;
@@ -140,6 +152,9 @@ export default function GameLayout() {
 				) {
 					event.preventDefault();
 					acknowledgeResolution();
+					if (shouldAdvanceAfterAcknowledgement) {
+						void advancePhase();
+					}
 					return;
 				}
 				if (
@@ -173,6 +188,7 @@ export default function GameLayout() {
 		phase.canEndTurn,
 		phase.isAdvancing,
 		resolution,
+		shouldAdvanceAfterAcknowledgement,
 		setTimeScale,
 	]);
 	const activePlayerId =

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -142,6 +142,7 @@ function resetResolutionState() {
 	mockGame.resolution = null;
 	mockGame.showResolution = vi.fn().mockResolvedValue(undefined);
 	mockGame.acknowledgeResolution = vi.fn();
+	mockGame.requests.advancePhase = vi.fn().mockResolvedValue(undefined);
 }
 
 beforeEach(() => {
@@ -256,6 +257,39 @@ describe('<HoverCard />', () => {
 		});
 		await expect(resolutionPromise).resolves.toBeUndefined();
 		expect(mockGame.resolution).toBeNull();
+	});
+
+	it('advances the turn when acknowledging the final action', () => {
+		mockGame.phase = {
+			...mockGame.phase,
+			isActionPhase: true,
+			canEndTurn: true,
+			isAdvancing: false,
+		};
+		const acknowledgeResolution = vi.fn();
+		const advancePhase = vi.fn().mockResolvedValue(undefined);
+		mockGame.acknowledgeResolution = acknowledgeResolution;
+		mockGame.requests.advancePhase = advancePhase;
+		mockGame.resolution = {
+			lines: ['Action resolved'],
+			visibleLines: ['Action resolved'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: [],
+			source: 'action',
+			requireAcknowledgement: true,
+		};
+
+		render(<HoverCard />);
+
+		const nextTurnButton = screen.getByRole('button', {
+			name: 'Next Turn',
+		});
+		expect(nextTurnButton.className).toContain('bg-indigo-500');
+		fireEvent.click(nextTurnButton);
+		expect(acknowledgeResolution).toHaveBeenCalledTimes(1);
+		expect(advancePhase).toHaveBeenCalledTimes(1);
 	});
 
 	it('renders formatted phase resolutions and logs phase advances', async () => {

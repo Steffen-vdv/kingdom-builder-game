@@ -165,6 +165,21 @@ describe('<ResolutionCard />', () => {
 		expect(queryByRole('button', { name: 'Continue' })).toBeNull();
 	});
 
+	it('renders a continue button with an arrow indicator', () => {
+		const resolution = createResolution({
+			requireAcknowledgement: true,
+		});
+
+		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
+
+		const continueButton = screen.getByRole('button', { name: 'Continue' });
+		expect(continueButton).toBeEnabled();
+		expect(continueButton.className).toContain('bg-amber-500');
+		expect(
+			within(continueButton).getByText('→', { selector: 'span' }),
+		).toBeInTheDocument();
+	});
+
 	it('renders section roots with nested cost and effect entries', () => {
 		const resolution = createResolution({
 			visibleTimeline: [
@@ -387,6 +402,27 @@ describe('<ResolutionCard />', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getByText('✨ Modifier on all actions: Increase cost by +3'),
+		).toBeInTheDocument();
+	});
+
+	it('uses the Next Turn styling when advancing the turn', () => {
+		const resolution = createResolution({
+			requireAcknowledgement: true,
+		});
+
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={() => {}}
+				continueIntent="advance"
+			/>,
+		);
+
+		const nextTurnButton = screen.getByRole('button', { name: 'Next Turn' });
+		expect(nextTurnButton).toBeEnabled();
+		expect(nextTurnButton.className).toContain('bg-indigo-500');
+		expect(
+			within(nextTurnButton).getByText('»', { selector: 'span' }),
 		).toBeInTheDocument();
 	});
 });
