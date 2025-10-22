@@ -1,4 +1,5 @@
 import type { ActionParametersPayload } from '@kingdom-builder/protocol/actions';
+import type { SessionPlayerId } from '@kingdom-builder/protocol/session';
 
 function stableSerialize(value: unknown): string {
 	if (value === null || value === undefined) {
@@ -38,6 +39,8 @@ export function serializeActionParams(
 export function createMetadataKey(
 	actionId: string,
 	params: ActionParametersPayload | undefined,
+	playerId: SessionPlayerId | undefined,
 ): string {
-	return `${actionId}:${serializeActionParams(params)}`;
+	const playerSegment = playerId ?? 'default';
+	return `${actionId}:${playerSegment}:${serializeActionParams(params)}`;
 }

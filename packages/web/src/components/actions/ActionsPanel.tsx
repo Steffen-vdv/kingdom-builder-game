@@ -58,7 +58,11 @@ function ActionAvailabilityObserver({
 	summary,
 	onChange,
 }: ActionAvailabilityObserverProps) {
-	const metadata = useActionMetadata({ actionId: action.id });
+	const playerId = player.id;
+	const metadata = useActionMetadata({
+		actionId: action.id,
+		playerId,
+	});
 	const availability = useMemo(
 		() =>
 			getActionAvailability({
