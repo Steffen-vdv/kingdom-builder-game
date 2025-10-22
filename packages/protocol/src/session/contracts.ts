@@ -24,6 +24,7 @@ import type {
 	SimulateUpcomingPhasesResult,
 } from './index';
 import type { RuleSet } from '../services';
+import type { SessionResourceRegistryPayload } from './resourceV2';
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -37,14 +38,6 @@ export interface SessionCreateRequest {
 	playerNames?: SessionPlayerNameMap;
 }
 
-export interface SessionResourceDefinition {
-	key: string;
-	icon?: string;
-	label?: string;
-	description?: string;
-	tags?: string[];
-}
-
 export type SerializedRegistry<T> = Record<string, T>;
 
 export type SessionActionCategoryRegistry =
@@ -55,17 +48,15 @@ export interface SessionRegistriesPayload {
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	resourceValues: SessionResourceRegistryPayload;
 	actionCategories?: SessionActionCategoryRegistry;
 }
 
 export type SessionMetadataSnapshot = Pick<
 	SessionSnapshotMetadata,
-	| 'resources'
-	| 'populations'
+	| 'values'
 	| 'buildings'
 	| 'developments'
-	| 'stats'
 	| 'phases'
 	| 'triggers'
 	| 'assets'
@@ -81,7 +72,7 @@ export interface SessionRuntimeConfigResponse {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	resourceValues: SessionResourceRegistryPayload;
 	primaryIconId: string | null;
 }
 

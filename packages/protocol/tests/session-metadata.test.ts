@@ -49,11 +49,14 @@ describe('session snapshot metadata', () => {
 		const metadata: SessionSnapshotMetadata = {
 			passiveEvaluationModifiers: {},
 			overview,
-			stats: {
-				morale: {
-					label: 'Morale',
-					displayAsPercent: true,
-					format: 'percent',
+			values: {
+				descriptors: {
+					morale: {
+						label: 'Morale',
+						displayAsPercent: true,
+						format: 'percent',
+						order: 10,
+					},
 				},
 			},
 		};
@@ -65,7 +68,11 @@ describe('session snapshot metadata', () => {
 				buildings: {},
 				developments: {},
 				populations: {},
-				resources: {},
+				resourceValues: {
+					definitions: {},
+					groups: {},
+					globalActionCost: null,
+				},
 			},
 		};
 		const result = sessionCreateResponseSchema.parse(response);
@@ -73,7 +80,9 @@ describe('session snapshot metadata', () => {
 			result.snapshot as { metadata: SessionSnapshotMetadata }
 		).metadata;
 		expect(parsedMetadata.overview?.hero?.title).toBe('Realm Guide');
-		expect(parsedMetadata.stats?.morale?.displayAsPercent).toBe(true);
+		expect(parsedMetadata.values?.descriptors?.morale?.displayAsPercent).toBe(
+			true,
+		);
 	});
 
 	it('exposes descriptor format typing', () => {
@@ -83,5 +92,11 @@ describe('session snapshot metadata', () => {
 		expectTypeOf<SessionMetadataDescriptor['format']>().toEqualTypeOf<
 			SessionMetadataFormat | undefined
 		>();
+	});
+
+	it('removes legacy resource metadata buckets', () => {
+		// @ts-expect-error legacy resource descriptors removed from metadata
+		const legacyResources = ({} as SessionSnapshotMetadata).resources;
+		void legacyResources;
 	});
 });

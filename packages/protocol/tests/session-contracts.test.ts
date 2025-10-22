@@ -21,17 +21,20 @@ import type {
 	SessionActionRequirementResponse,
 	SessionActionOptionsRequest,
 	SessionActionOptionsResponse,
+	SessionPlayerStateSnapshot,
+	SessionResourceValueSnapshot,
+	SessionResourceValueSnapshotMap,
 	SessionRunAiRequest,
 	SessionRunAiResponse,
 	SessionSimulateRequest,
 	SessionSimulateResponse,
-	SessionPlayerStateSnapshot,
 } from '../src/session';
 import type {
 	SessionRuntimeConfigResponse,
 	SessionRunAiAction,
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
+	SessionResourceRegistryPayload,
 } from '../src/session/contracts';
 
 describe('session contract schemas', () => {
@@ -109,7 +112,12 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof sessionRegistriesSchema>
 		>().toEqualTypeOf<SessionRegistriesPayload>();
-		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
+		type ResourceValuesPayload = SessionRegistriesPayload['resourceValues'];
+		const resourceValuesTypeCheck = expectTypeOf<ResourceValuesPayload>();
+		resourceValuesTypeCheck.toEqualTypeOf<SessionResourceRegistryPayload>();
+		type ActionCategoriesPayload = SessionRegistriesPayload['actionCategories'];
+		const actionCategoriesTypeCheck = expectTypeOf<ActionCategoriesPayload>();
+		actionCategoriesTypeCheck.toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();
 	});
@@ -120,5 +128,17 @@ describe('session player state snapshot', () => {
 		expectTypeOf<SessionPlayerStateSnapshot['aiControlled']>().toEqualTypeOf<
 			boolean | undefined
 		>();
+	});
+
+	it('uses the ResourceV2 value snapshot map and removes legacy buckets', () => {
+		expectTypeOf<
+			SessionPlayerStateSnapshot['values']
+		>().toEqualTypeOf<SessionResourceValueSnapshotMap>();
+		expectTypeOf<
+			SessionResourceValueSnapshotMap[keyof SessionResourceValueSnapshotMap]
+		>().toEqualTypeOf<SessionResourceValueSnapshot>();
+		// @ts-expect-error legacy resources map removed from snapshots
+		const legacyResources = ({} as SessionPlayerStateSnapshot).resources;
+		void legacyResources;
 	});
 });
