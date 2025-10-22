@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { createResourceGroupRegistry, createResourceV2Registry, deriveResourceV2PrimaryIconCandidate, resourceV2Definition, resourceV2Group, resourceV2GroupParent } from '../src/resourceV2';
+import {
+	RESOURCE_V2_DEFINITION_ARTIFACTS,
+	RESOURCE_V2_DEFINITION_REGISTRY,
+	RESOURCE_V2_GROUP_ARTIFACTS,
+	RESOURCE_V2_GROUP_REGISTRY,
+	createResourceGroupRegistry,
+	createResourceV2Registry,
+	deriveResourceV2PrimaryIconCandidate,
+	resourceV2Definition,
+	resourceV2Group,
+	resourceV2GroupParent,
+} from '../src/resourceV2';
 
 describe('ResourceV2 registries', () => {
 	it('builds definition lookups and ordering helpers', () => {
@@ -64,5 +75,12 @@ describe('ResourceV2 registries', () => {
 			parentId: 'economy-root',
 			icon: '💰',
 		});
+	});
+
+	it('provides default registry artifacts for startup metadata', () => {
+		expect(RESOURCE_V2_DEFINITION_ARTIFACTS.definitions).toEqual([]);
+		expect(RESOURCE_V2_DEFINITION_REGISTRY.values()).toEqual([]);
+		expect(RESOURCE_V2_GROUP_ARTIFACTS.groups).toEqual([]);
+		expect(RESOURCE_V2_GROUP_REGISTRY.values()).toEqual([]);
 	});
 });
