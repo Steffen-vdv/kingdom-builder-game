@@ -330,6 +330,16 @@ export default [
 	},
 	{
 		files: [
+			'packages/content/**/*.{ts,tsx,js,cjs,mjs}',
+			'packages/contents/**/*.{ts,tsx,js,cjs,mjs}',
+		],
+		rules: {
+			'max-len': 'off',
+			'max-lines': 'off',
+		},
+	},
+	{
+		files: [
 			'packages/contents/src/config/builders/domainBuilders.ts',
 			'packages/contents/src/config/builders/evaluators.ts',
 			'packages/contents/src/config/builders/startConfig.ts',
