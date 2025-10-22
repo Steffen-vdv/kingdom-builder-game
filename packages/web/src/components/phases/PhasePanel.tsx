@@ -1,6 +1,27 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useGameEngine } from '../../state/GameContext';
+import type { ActionResolution } from '../../state/useActionResolution';
 import Button from '../common/Button';
+
+function normalizePhaseKey(id?: string, label?: string) {
+	const trimmedId = id?.trim();
+	if (trimmedId && trimmedId.length > 0) {
+		return trimmedId;
+	}
+	const trimmedLabel = label?.trim();
+	if (trimmedLabel && trimmedLabel.length > 0) {
+		return trimmedLabel;
+	}
+	return null;
+}
+
+interface PhaseSummary {
+	id: string;
+	label: string;
+	icon: string;
+	historyKey: string;
+	isActionPhase: boolean;
+}
 
 const panelClassName = [
 	'relative flex w-full flex-col gap-6 rounded-3xl border border-white/40',
@@ -91,18 +112,67 @@ const phaseListItemLabelClassName = [
 ].join(' ');
 
 export default function PhasePanel() {
-	const { sessionSnapshot, selectors, phase, requests, resolution } =
-		useGameEngine();
+	const {
+		sessionSnapshot,
+		selectors,
+		phase,
+		requests,
+		resolution,
+		log,
+		handleHoverCard,
+		clearHoverCard,
+	} = useGameEngine();
 	const { sessionView } = selectors;
-	const phases = useMemo(
+	const phases = useMemo<PhaseSummary[]>(
 		() =>
-			sessionSnapshot.phases.map((phaseDefinition) => ({
-				id: phaseDefinition.id,
-				label: phaseDefinition.label ?? phaseDefinition.id,
-				icon: phaseDefinition.icon?.trim() ?? '',
-			})),
+			sessionSnapshot.phases.map((phaseDefinition) => {
+				const trimmedLabel = phaseDefinition.label?.trim();
+				const resolvedLabel =
+					trimmedLabel && trimmedLabel.length > 0
+						? trimmedLabel
+						: phaseDefinition.id;
+				const historyKey =
+					normalizePhaseKey(phaseDefinition.id, phaseDefinition.label) ??
+					phaseDefinition.id;
+				return {
+					id: phaseDefinition.id,
+					label: resolvedLabel,
+					icon: phaseDefinition.icon?.trim() ?? '',
+					historyKey,
+					isActionPhase: Boolean(phaseDefinition.action),
+				};
+			}),
 		[sessionSnapshot.phases],
 	);
+	const phaseHistory = useMemo(() => {
+		const byPhase = new Map<string, ActionResolution>();
+		const byPlayer = new Map<string, ActionResolution>();
+		for (let index = log.length - 1; index >= 0; index -= 1) {
+			const entry = log[index];
+			if (!entry) {
+				continue;
+			}
+			const source = entry.resolution.source;
+			if (!source || typeof source !== 'object') {
+				continue;
+			}
+			if (source.kind !== 'phase') {
+				continue;
+			}
+			const historyKey = normalizePhaseKey(source.id, source.label);
+			if (!historyKey) {
+				continue;
+			}
+			if (!byPhase.has(historyKey)) {
+				byPhase.set(historyKey, entry.resolution);
+			}
+			const playerKey = `${entry.playerId}::${historyKey}`;
+			if (!byPlayer.has(playerKey)) {
+				byPlayer.set(playerKey, entry.resolution);
+			}
+		}
+		return { byPhase, byPlayer };
+	}, [log]);
 	const currentPhaseLabel = useMemo(
 		() =>
 			phases.find(
@@ -118,6 +188,7 @@ export default function PhasePanel() {
 		}
 		return sessionSnapshot.game.players[0];
 	}, [phase.activePlayerId, sessionSnapshot.game.players]);
+	const activePlayerId = activePlayerSnapshot?.id ?? null;
 	const activePlayerName =
 		phase.activePlayerName ??
 		sessionView.active?.name ??
@@ -126,6 +197,27 @@ export default function PhasePanel() {
 	const awaitingManualStart = phase.awaitingManualStart;
 	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
 	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
+	const showPhaseHistory = useCallback(
+		(phaseSummary: PhaseSummary, resolution: ActionResolution | null) => {
+			if (phaseSummary.isActionPhase || !resolution) {
+				clearHoverCard();
+				return;
+			}
+			const baseLabel = phaseSummary.label;
+			const resolutionTitle = `${baseLabel} resolution`;
+			handleHoverCard({
+				title: resolutionTitle,
+				resolutionTitle,
+				resolution,
+				effects: [],
+				requirements: [],
+			});
+		},
+		[clearHoverCard, handleHoverCard],
+	);
+	const hidePhaseHistory = useCallback(() => {
+		clearHoverCard();
+	}, [clearHoverCard]);
 	const handleEndTurnClick = () => {
 		// Phase errors are surfaced via onFatalSessionError inside
 		// usePhaseProgress.
@@ -162,6 +254,14 @@ export default function PhasePanel() {
 				</p>
 				<ul className={phaseListClassName}>
 					{phases.map((phaseDefinition, phaseIndex) => {
+						const historyKey = phaseDefinition.historyKey;
+						const playerKey = activePlayerId
+							? `${activePlayerId}::${historyKey}`
+							: null;
+						const phaseResolution =
+							(playerKey ? phaseHistory.byPlayer.get(playerKey) : undefined) ??
+							phaseHistory.byPhase.get(historyKey) ??
+							null;
 						const isActive = phaseDefinition.id === phase.currentPhaseId;
 						return (
 							<li
@@ -169,6 +269,10 @@ export default function PhasePanel() {
 								className={phaseListItemClassName}
 								data-active={isActive ? 'true' : 'false'}
 								aria-current={isActive ? 'step' : undefined}
+								onMouseEnter={() =>
+									showPhaseHistory(phaseDefinition, phaseResolution)
+								}
+								onMouseLeave={hidePhaseHistory}
 							>
 								<span className={phaseListItemContentClassName}>
 									<span

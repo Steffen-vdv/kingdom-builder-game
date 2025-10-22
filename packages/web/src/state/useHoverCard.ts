@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Summary } from '../translation';
+import type { ActionResolution } from './useActionResolution';
 
 export interface HoverCard {
 	title: string;
@@ -13,6 +14,8 @@ export interface HoverCard {
 	effectsTitle?: string;
 	bgClass?: string;
 	multiStep?: boolean;
+	resolution?: ActionResolution;
+	resolutionTitle?: string;
 }
 
 interface HoverCardOptions {
