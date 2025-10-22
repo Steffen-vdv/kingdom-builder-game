@@ -20,6 +20,7 @@ import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
 import { useAiRunner } from './useAiRunner';
 import { useKeybindingPreferences } from './keybindings';
+import { useSoundEffectsContext } from './SoundEffectsContext';
 import type {
 	GameEngineContextValue,
 	PerformActionHandler,
@@ -125,12 +126,16 @@ export function GameProviderInner({
 		sessionSnapshot: liveSessionSnapshot,
 	});
 
+	const { playResolutionSpawn, playTranslationTick } = useSoundEffectsContext();
+
 	const { resolution, showResolution, acknowledgeResolution } =
 		useActionResolution({
 			addResolutionLog,
 			setTrackedTimeout,
 			timeScaleRef,
 			mountedRef,
+			onResolutionStart: playResolutionSpawn,
+			onLineReveal: playTranslationTick,
 		});
 
 	const handleShowResolution = useCallback(

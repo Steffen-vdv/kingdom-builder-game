@@ -16,6 +16,7 @@ import {
 	SPEED_CONTROL_DEFINITIONS,
 	normalizeKeyInput,
 } from './state/keybindings';
+import { useSoundEffectsContext } from './state/SoundEffectsContext';
 
 const INTERACTIVE_ELEMENT_SELECTOR = 'button, input, textarea, select';
 const ROLE_ELEMENT_SELECTOR = '[role="button"], [role="textbox"]';
@@ -81,12 +82,17 @@ export default function GameLayout() {
 	const [isQuitDialogOpen, setQuitDialogOpen] = useState(false);
 	const [isSettingsOpen, setSettingsOpen] = useState(false);
 	const [isLogOpen, setLogOpen] = useState(false);
+	const { playUiClick } = useSoundEffectsContext();
 	const requestQuit = useCallback(() => {
 		if (!onExit) {
 			return;
 		}
 		setQuitDialogOpen(true);
 	}, [onExit]);
+	const handleTitleClick = useCallback(() => {
+		playUiClick();
+		requestQuit();
+	}, [playUiClick, requestQuit]);
 	const closeDialog = useCallback(() => {
 		setQuitDialogOpen(false);
 	}, []);
@@ -281,7 +287,7 @@ export default function GameLayout() {
 					<h1>
 						<button
 							type="button"
-							onClick={requestQuit}
+							onClick={handleTitleClick}
 							disabled={!onExit}
 							className="cursor-pointer rounded-md border-none bg-transparent p-0 text-left text-2xl font-bold tracking-tight text-slate-900 transition hover:text-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-default disabled:opacity-100 sm:text-3xl dark:text-slate-100 dark:hover:text-slate-100/80"
 						>

@@ -11,6 +11,7 @@ import { usePlayerIdentity } from './state/playerIdentity';
 import { Screen } from './state/appHistory';
 import { RegistryMetadataProvider } from './contexts/RegistryMetadataContext';
 import { useOverviewMetadata } from './state/useOverviewMetadata';
+import { SoundEffectsProvider } from './state/SoundEffectsContext';
 
 export default function App() {
 	const {
@@ -160,7 +161,9 @@ export default function App() {
 				enabled={isMusicEnabled}
 				muteWhenBackground={isBackgroundAudioMuted}
 			/>
-			{screen}
+			<SoundEffectsProvider enabled={isSoundEnabled}>
+				{screen}
+			</SoundEffectsProvider>
 		</>
 	);
 }
