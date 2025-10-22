@@ -22,20 +22,23 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
 ## 3. Work Log (append-only)
 
-| Date       | Agent         | Scope / Files | Summary of Work | Tests & Results | Follow-up Actions |
-| ---------- | ------------- | ------------- | --------------- | --------------- | ----------------- |
-| 2024-**-** | _(add entry)_ |               |                 |                 |                   |
+| Date       | Agent                 | Scope / Files                                                                                                                                                                                               | Summary of Work                                                                       | Tests & Results                                                                                                                | Follow-up Actions                                                         |
+| ---------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| 2025-10-22 | ChatGPT (gpt-5-codex) | packages/protocol/src/config/resourceV2.ts; packages/protocol/src/config/schema.ts; packages/protocol/tests/resourceV2-schema.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added ResourceV2 schema/module exports plus validation tests for ResourceV2 payloads. | `npx tsc -p packages/protocol/tsconfig.json --pretty false` (pass); `npx vitest run --config vitest.protocol.config.ts` (pass) | Draft protocol payload integration plan building on new schema artifacts. |
+| 2024-**-** | _(add entry)_         |                                                                                                                                                                                                             |                                                                                       |                                                                                                                                |                                                                           |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
-- **Prepared by:** _(agent name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(what is being tackled right now)_
-- **State Summary:** _(1–2 paragraphs describing current progress, outstanding decisions, and known regressions)_
-- **Next Suggested Tasks:** _(bullet list with owners if known)_
-- **Blocking Issues / Risks:** _(list or “None”)_
+- **Prepared by:** ChatGPT (gpt-5-codex)
+- **Timestamp (UTC):** 2025-10-22 15:30
+- **Current Focus:** Protocol ResourceV2 schema scaffolding
+- **State Summary:** Introduced `resourceV2.ts` to define Zod schemas for ResourceV2 definitions, groups, tiering, and adjustment metadata, added re-exports, and validated representative payloads with targeted typecheck and protocol test runs (`npx tsc -p packages/protocol/tsconfig.json --pretty false`, `npx vitest run --config vitest.protocol.config.ts`).
+- **Next Suggested Tasks:**
+  - Align protocol payload builders and session registries with the new `resourceV2` schemas to surface metadata through APIs.
+  - Coordinate with content tooling to emit ResourceV2 definitions referencing the shared protocol schema.
+- **Blocking Issues / Risks:** Running `npm run check -- --filter protocol` triggers full-repo checks; rely on targeted `tsc`/`vitest` commands until scoped check support exists.
 - **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
 
 Each agent replaces this section when they finish their work so the next contributor immediately sees the latest situation. Move any longer-form discussion to the "Notes & Decisions" section.
