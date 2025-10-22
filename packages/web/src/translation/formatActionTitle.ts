@@ -55,6 +55,8 @@ function resolveActionLabel(definition: ActionTitleDefinition): string {
 	return 'Unknown action';
 }
 
+const ACTION_PREFIX_PATTERN = /^Action\s*[\p{Pd}]\s*/u;
+
 function formatActionTitle(
 	definition: ActionTitleDefinition,
 	context: TranslationContext,
@@ -69,5 +71,16 @@ function formatActionTitle(
 	return segments.join(' ').replace(/\s+/g, ' ').trim();
 }
 
-export { formatActionTitle };
+function stripActionTitlePrefix(title: string): string {
+	const trimmed = title.trim();
+	if (!trimmed) {
+		return '';
+	}
+	if (!ACTION_PREFIX_PATTERN.test(trimmed)) {
+		return trimmed;
+	}
+	return trimmed.replace(ACTION_PREFIX_PATTERN, '').trim();
+}
+
+export { formatActionTitle, stripActionTitlePrefix };
 export type { ActionTitleDefinition };

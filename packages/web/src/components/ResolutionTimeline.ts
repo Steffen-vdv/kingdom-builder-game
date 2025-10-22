@@ -195,6 +195,7 @@ function buildResolutionTimelineEntries(
 	const trimmedActionName = options?.actionName?.trim();
 	if (trimmedActionName) {
 		skipHeadlines.push(trimmedActionName);
+		skipHeadlines.push(`Action - ${trimmedActionName}`);
 	}
 	const effectEntries = adjustEntryLevels(
 		collectEffectEntries(nodes, {

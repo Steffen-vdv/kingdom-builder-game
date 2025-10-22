@@ -9,7 +9,10 @@ import {
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
-import { formatActionTitle } from '../src/translation/formatActionTitle';
+import {
+	formatActionTitle,
+	stripActionTitlePrefix,
+} from '../src/translation/formatActionTitle';
 import {
 	DEVELOPMENT_ACTION_ID_BY_DEVELOPMENT_ID,
 	type DevelopmentActionId,
@@ -178,6 +181,8 @@ describe('royal decree translation', () => {
 				);
 			}
 			const developLabel = formatActionTitle(developAction, translationContext);
+			const sanitizedDevelopLabel =
+				stripActionTitlePrefix(developLabel) || developLabel;
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
@@ -187,7 +192,10 @@ describe('royal decree translation', () => {
 				`${development.icon ?? ''} ${development.name ?? developmentId}`,
 				'',
 			);
-			const expectedTitle = combineLabels(developLabel, developmentLabel);
+			const expectedTitle = combineLabels(
+				sanitizedDevelopLabel,
+				developmentLabel,
+			);
 			const entry = group.items.find((item) =>
 				typeof item === 'string'
 					? item === expectedTitle
@@ -216,6 +224,8 @@ describe('royal decree translation', () => {
 				);
 			}
 			const developLabel = formatActionTitle(developAction, translationContext);
+			const sanitizedDevelopLabel =
+				stripActionTitlePrefix(developLabel) || developLabel;
 			const developmentId = option.developmentId as string;
 			const development = translationContext.developments.get(developmentId);
 			if (!development) {
@@ -240,7 +250,10 @@ describe('royal decree translation', () => {
 				describedTitle,
 				developmentLabel,
 			);
-			const expectedTitle = combineLabels(developLabel, normalizedTitle);
+			const expectedTitle = combineLabels(
+				sanitizedDevelopLabel,
+				normalizedTitle,
+			);
 			const entry = group.items.find((item) =>
 				typeof item === 'string'
 					? item === expectedTitle
@@ -301,11 +314,16 @@ describe('royal decree translation', () => {
 			);
 		}
 		const developLabel = formatActionTitle(developAction, translationContext);
+		const sanitizedDevelopLabel =
+			stripActionTitlePrefix(developLabel) || developLabel;
 		const developmentLabel = combineLabels(
 			`${development.icon ?? ''} ${development.name ?? developmentId}`,
 			'',
 		);
-		const expectedTitle = combineLabels(developLabel, developmentLabel);
+		const expectedTitle = combineLabels(
+			sanitizedDevelopLabel,
+			developmentLabel,
+		);
 		expect(entry.title).toBe(expectedTitle);
 		expect(entry.timelineKind).toBe('subaction');
 		expect(entry.actionId).toBe(developActionId);

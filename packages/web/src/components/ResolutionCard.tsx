@@ -19,6 +19,7 @@ import {
 	buildResolutionTimelineEntries,
 	normalizeModifierDescription,
 } from './ResolutionTimeline';
+import { stripActionTitlePrefix } from '../translation/formatActionTitle';
 
 interface ResolutionLabels {
 	title: string;
@@ -38,7 +39,6 @@ const SOURCE_LABELS: Record<'action' | 'phase', ResolutionLabels> = {
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
-const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
 
 function extractLeadingIcon(value: string | undefined) {
 	if (!value) {
@@ -99,12 +99,14 @@ function ResolutionCard({
 	);
 	const leadingLine = resolution.lines[0]?.trim() ?? '';
 
-	const fallbackActionName = leadingLine
-		.replace(/^[\s\p{Extended_Pictographic}\uFE0F\p{Pd}\p{Po}\p{So}]+/u, '')
-		.replace(/^Played\s+/u, '')
-		.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
-		.replace(/\s{2,}/g, ' ')
-		.trim();
+	const fallbackActionName = stripActionTitlePrefix(
+		leadingLine
+			.replace(/^[\s\p{Extended_Pictographic}\uFE0F\p{Pd}\p{Po}\p{So}]+/u, '')
+			.replace(/^Played\s+/u, '')
+			.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '')
+			.replace(/\s{2,}/g, ' ')
+			.trim(),
+	);
 	const sourceName = isSourceDetail(resolution.source)
 		? (resolution.source.name?.trim() ?? '')
 		: '';
@@ -112,7 +114,8 @@ function ResolutionCard({
 		? resolution.source.label
 		: undefined;
 	const rawActionName = (resolution.action?.name ?? '').trim() || sourceName;
-	const actionName = rawActionName || fallbackActionName;
+	const actionName = stripActionTitlePrefix(rawActionName) || rawActionName;
+	const resolvedActionName = actionName || fallbackActionName;
 	const resolvedLabels = resolveSourceLabels(resolution.source);
 	const resolvedSourceKind = isSourceDetail(resolution.source)
 		? resolution.source.kind
@@ -124,39 +127,32 @@ function ResolutionCard({
 	const normalizedPlayerLabel = resolvedLabels.player
 		.trim()
 		.toLocaleLowerCase();
-	const actorHeaderSubject = actionName
+	const actorHeaderSubject = resolvedActionName
 		? !actorLabel || normalizedActorLabel === normalizedPlayerLabel
-			? actionName
+			? resolvedActionName
 			: actorLabel
-		: actorLabel || actionName;
+		: actorLabel || resolvedActionName;
 	const sourceIcon = isSourceDetail(resolution.source)
 		? resolution.source.icon?.trim() || extractLeadingIcon(sourceLabel)
 		: undefined;
 	const fallbackIcon = extractLeadingIcon(leadingLine);
 	const actionIcon =
 		resolution.action?.icon?.trim() || sourceIcon || fallbackIcon;
-	const defaultTitle = title ?? `${resolvedLabels.title} resolution`;
-	const normalizedResolvedTitle = resolvedLabels.title
-		.trim()
-		.toLocaleLowerCase();
-	const normalizedHeaderSubject = actorHeaderSubject
-		?.trim()
-		.toLocaleLowerCase();
-	let headerTitle = actorHeaderSubject
-		? normalizedHeaderSubject &&
-			normalizedHeaderSubject !== normalizedResolvedTitle
-			? `${resolvedLabels.title} - ${actorHeaderSubject}`
-			: actorHeaderSubject
-		: defaultTitle;
+	const headerBaseTitle =
+		resolvedSourceKind === 'phase'
+			? SOURCE_LABELS.phase.title
+			: resolvedSourceKind === 'action'
+				? SOURCE_LABELS.action.title
+				: resolvedLabels.title;
+	const headerLabelText = `${headerBaseTitle} Resolution`;
+	const defaultTitle = title ?? headerLabelText;
+	let headerTitle = actorHeaderSubject?.trim() || defaultTitle;
 	if (resolvedSourceKind === 'phase') {
 		const sanitizedPhaseSubject = (actorHeaderSubject || '')
 			.replace(LEADING_EMOJI_PATTERN, '')
-			.replace(TRAILING_PHASE_PATTERN, '')
 			.replace(/\s{2,}/g, ' ')
 			.trim();
-		headerTitle = sanitizedPhaseSubject
-			? `${SOURCE_LABELS.phase.title} - ${sanitizedPhaseSubject}`
-			: `${SOURCE_LABELS.phase.title} resolution`;
+		headerTitle = sanitizedPhaseSubject || SOURCE_LABELS.phase.title;
 	}
 	const headerLabelClass = joinClasses(
 		CARD_LABEL_CLASS,
@@ -263,11 +259,15 @@ function ResolutionCard({
 		const textClass = isSectionRoot
 			? timelineTextClass
 			: nestedTimelineTextClass;
+		const rawText = entry.text;
+		const displayText = isSectionRoot
+			? rawText
+			: stripActionTitlePrefix(rawText) || rawText;
 
 		return (
 			<div key={entry.key} className={timelineItemClass} style={itemIndent}>
 				<span className={markerClass} aria-hidden="true" />
-				<div className={textClass}>{entry.text}</div>
+				<div className={textClass}>{displayText}</div>
 			</div>
 		);
 	}
@@ -284,7 +284,7 @@ function ResolutionCard({
 					) : null}
 					<div className="flex flex-1 items-start justify-between gap-4">
 						<div className="space-y-1">
-							<div className={headerLabelClass}>Resolution</div>
+							<div className={headerLabelClass}>{headerLabelText}</div>
 							<div className={CARD_TITLE_TEXT_CLASS}>{headerTitle}</div>
 						</div>
 						{resolution.player ? (

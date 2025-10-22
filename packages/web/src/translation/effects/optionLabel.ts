@@ -1,7 +1,10 @@
 import type { ActionEffectGroupOption } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../content';
 import type { TranslationContext } from '../context';
-import { formatActionTitle } from '../formatActionTitle';
+import {
+	formatActionTitle,
+	stripActionTitlePrefix,
+} from '../formatActionTitle';
 
 type ObjectSummaryEntry = Extract<SummaryEntry, Record<string, unknown>>;
 
@@ -112,7 +115,9 @@ function resolveActionLabel(
 ): string {
 	try {
 		const definition = context.actions.get(option.actionId);
-		return formatActionTitle(definition, context);
+		const formatted = formatActionTitle(definition, context);
+		const stripped = stripActionTitlePrefix(formatted);
+		return stripped || formatted;
 	} catch {
 		return option.actionId;
 	}
@@ -184,6 +189,9 @@ export function buildActionOptionTranslation(
 				: shouldIncludeFirstDetail
 					? [normalizedFirst]
 					: [];
+		if (mode !== 'log') {
+			return { label: title, entry: title };
+		}
 		if (detailEntries.length === 0) {
 			return { label: title, entry: title };
 		}
@@ -192,6 +200,9 @@ export function buildActionOptionTranslation(
 	const firstObject = cloneSummaryEntry(first) as ObjectSummaryEntry;
 	const normalizedTitle = normalizeEntryLabel(firstObject.title, targetLabel);
 	const combinedTitle = combineLabels(actionLabel, normalizedTitle, fallback);
+	if (mode !== 'log') {
+		return { label: combinedTitle, entry: combinedTitle };
+	}
 	const entry: ObjectSummaryEntry = {
 		...firstObject,
 		title: combinedTitle,

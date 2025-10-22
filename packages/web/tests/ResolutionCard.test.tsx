@@ -9,18 +9,16 @@ import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
-const TRAILING_PHASE_PATTERN = /\bPhase\b$/iu;
 
 function resolvePhaseHeader(label: string | undefined) {
 	if (!label) {
-		return 'Phase resolution';
+		return 'Phase';
 	}
 	const sanitized = label
 		.replace(LEADING_EMOJI_PATTERN, '')
-		.replace(TRAILING_PHASE_PATTERN, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
-	return sanitized ? `Phase - ${sanitized}` : 'Phase resolution';
+	return sanitized || 'Phase';
 }
 
 function createResolution(
@@ -44,6 +42,7 @@ describe('<ResolutionCard />', () => {
 	});
 	it('shows labels for action-based resolutions', () => {
 		const formattedName = 'Action - ⚙️ Basic - ⚔️ Test Action';
+		const expectedHeader = '⚙️ Basic - ⚔️ Test Action';
 		const resolution = createResolution({
 			action: {
 				id: 'action-id',
@@ -72,10 +71,8 @@ describe('<ResolutionCard />', () => {
 			/>,
 		);
 
-		const header = screen.getByText((content) =>
-			content.includes(formattedName),
-		);
-		expect(header).toBeInTheDocument();
+		expect(screen.getByText('Action Resolution')).toBeInTheDocument();
+		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
 		const actionPlayerLabel = screen.getByLabelText('Player');
 		expect(actionPlayerLabel).toHaveTextContent('Player One');
 	});
@@ -97,6 +94,7 @@ describe('<ResolutionCard />', () => {
 		render(<ResolutionCard resolution={resolution} onContinue={() => {}} />);
 
 		const expectedHeader = resolvePhaseHeader(resolution.source.label);
+		expect(screen.getByText('Phase Resolution')).toBeInTheDocument();
 		expect(screen.getByText(expectedHeader)).toBeInTheDocument();
 		const phasePlayerLabel = screen.getByLabelText('Player');
 		expect(phasePlayerLabel).toHaveTextContent('Player Two');
@@ -188,9 +186,7 @@ describe('<ResolutionCard />', () => {
 		const effectsSectionContainer = effectsSection.parentElement;
 		const goldCost = screen.getByText('Gold -3');
 		const goldCostContainer = goldCost.parentElement;
-		const effectHeadline = screen.getByText(
-			'Action - 🛠️ Develop - 🏠 Workshop',
-		);
+		const effectHeadline = screen.getByText('🛠️ Develop - 🏠 Workshop');
 		const effectEntry = screen.getByText('🪄 Effect happens');
 		const effectHeadlineContainer = effectHeadline.parentElement;
 		const effectEntryContainer = effectEntry.parentElement;
