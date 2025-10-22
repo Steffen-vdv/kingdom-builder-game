@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import {
+	cleanup,
+	render,
+	screen,
+	within,
+	fireEvent,
+} from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { ResolutionCard } from '../src/components/ResolutionCard';
@@ -39,6 +45,38 @@ describe('<ResolutionCard />', () => {
 	afterEach(() => {
 		cleanup();
 	});
+	it('renders a Continue button with a single arrow icon', () => {
+		const resolution = createResolution({});
+		const onContinue = vi.fn();
+		render(<ResolutionCard resolution={resolution} onContinue={onContinue} />);
+		const continueButton = screen.getByRole('button', { name: 'Continue' });
+		expect(continueButton).toBeEnabled();
+		const arrow = within(continueButton).getByText('→', { selector: 'span' });
+		expect(arrow).toHaveAttribute('aria-hidden', 'true');
+		fireEvent.click(continueButton);
+		expect(onContinue).toHaveBeenCalledTimes(1);
+	});
+
+	it('renders a Next Turn button that acknowledges and advances the turn', () => {
+		const resolution = createResolution({});
+		const onContinue = vi.fn();
+		const onAdvance = vi.fn();
+		render(
+			<ResolutionCard
+				resolution={resolution}
+				onContinue={onContinue}
+				continueMode="advance-turn"
+				onAdvanceTurn={onAdvance}
+			/>,
+		);
+		const nextTurnButton = screen.getByRole('button', { name: 'Next Turn' });
+		const arrow = within(nextTurnButton).getByText('»', { selector: 'span' });
+		expect(arrow).toHaveAttribute('aria-hidden', 'true');
+		fireEvent.click(nextTurnButton);
+		expect(onContinue).toHaveBeenCalledTimes(1);
+		expect(onAdvance).toHaveBeenCalledTimes(1);
+	});
+
 	it('shows labels for action-based resolutions', () => {
 		const formattedName = '⚙️ Basic - ⚔️ Test Action';
 		const resolution = createResolution({

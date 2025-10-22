@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import HoverCard from '../src/components/HoverCard';
@@ -11,7 +11,10 @@ import {
 import { selectSessionView } from '../src/state/sessionSelectors';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
-import { useActionResolution } from '../src/state/useActionResolution';
+import {
+	useActionResolution,
+	type ActionResolution,
+} from '../src/state/useActionResolution';
 import { ACTION_EFFECT_DELAY } from '../src/state/useGameLog';
 import { formatPhaseResolution } from '../src/state/formatPhaseResolution';
 import { createTranslationDiffContext } from '../src/translation/log/resourceSources/context';
@@ -253,6 +256,41 @@ describe('<HoverCard />', () => {
 		});
 		await expect(resolutionPromise).resolves.toBeUndefined();
 		expect(mockGame.resolution).toBeNull();
+	});
+
+	it('shows a Next Turn button when acknowledging the final action', () => {
+		mockGame.phase = {
+			...mockGame.phase,
+			canEndTurn: true,
+			isAdvancing: false,
+			isActionPhase: true,
+		};
+		mockGame.requests.advancePhase.mockClear();
+		mockGame.acknowledgeResolution = vi.fn();
+		const activePlayer = mockGame.sessionSnapshot.game.players[0];
+		if (!activePlayer) {
+			throw new Error('Expected an active player');
+		}
+		const resolution: ActionResolution = {
+			lines: ['Resolved Test Action'],
+			visibleLines: ['Resolved Test Action'],
+			timeline: [],
+			visibleTimeline: [],
+			isComplete: true,
+			summaries: [],
+			source: 'action',
+			requireAcknowledgement: true,
+			player: { id: activePlayer.id, name: activePlayer.name },
+			action: { id: 'action-test', name: 'Test Action' },
+		};
+		mockGame.resolution = resolution;
+		render(<HoverCard />);
+		const nextTurnButton = screen.getByRole('button', { name: 'Next Turn' });
+		expect(nextTurnButton).toBeEnabled();
+		expect(screen.getByText('»', { selector: 'span' })).toBeInTheDocument();
+		fireEvent.click(nextTurnButton);
+		expect(mockGame.acknowledgeResolution).toHaveBeenCalledTimes(1);
+		expect(mockGame.requests.advancePhase).toHaveBeenCalledTimes(1);
 	});
 
 	it('renders formatted phase resolutions and logs phase advances', async () => {

@@ -116,8 +116,7 @@ export default function PhasePanel() {
 		sessionSnapshot,
 		selectors,
 		phase,
-		requests,
-		resolution,
+		requests: { startSession },
 		log,
 		handleHoverCard,
 		clearHoverCard,
@@ -195,8 +194,6 @@ export default function PhasePanel() {
 		activePlayerSnapshot?.name ??
 		'Player';
 	const awaitingManualStart = phase.awaitingManualStart;
-	const canEndTurn = phase.canEndTurn && !phase.isAdvancing;
-	const shouldHideNextTurn = Boolean(resolution?.requireAcknowledgement);
 	const showPhaseHistory = useCallback(
 		(phaseSummary: PhaseSummary, resolution: ActionResolution | null) => {
 			if (phaseSummary.isActionPhase || !resolution) {
@@ -208,7 +205,6 @@ export default function PhasePanel() {
 			handleHoverCard({
 				title: resolutionTitle,
 				resolutionTitle,
-				resolution,
 				effects: [],
 				requirements: [],
 			});
@@ -218,13 +214,8 @@ export default function PhasePanel() {
 	const hidePhaseHistory = useCallback(() => {
 		clearHoverCard();
 	}, [clearHoverCard]);
-	const handleEndTurnClick = () => {
-		// Phase errors are surfaced via onFatalSessionError inside
-		// usePhaseProgress.
-		void requests.advancePhase();
-	};
 	const handleStartSessionClick = () => {
-		void requests.startSession();
+		void startSession();
 	};
 	return (
 		<section className={panelClassName}>
@@ -307,28 +298,13 @@ export default function PhasePanel() {
 					})}
 				</ul>
 			</div>
-			{shouldHideNextTurn ? null : (
+			{awaitingManualStart ? (
 				<div className="flex justify-end pt-2">
-					{awaitingManualStart ? (
-						<Button
-							variant="success"
-							onClick={handleStartSessionClick}
-							icon="🚀"
-						>
-							Let's go!
-						</Button>
-					) : (
-						<Button
-							variant="primary"
-							disabled={!canEndTurn}
-							onClick={handleEndTurnClick}
-							icon="⏭️"
-						>
-							Next Turn
-						</Button>
-					)}
+					<Button variant="success" onClick={handleStartSessionClick} icon="🚀">
+						Let's go!
+					</Button>
 				</div>
-			)}
+			) : null}
 		</section>
 	);
 }

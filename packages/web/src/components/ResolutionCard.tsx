@@ -10,15 +10,20 @@ import {
 	CARD_LABEL_CLASS,
 	CARD_META_TEXT_CLASS,
 	CARD_TITLE_TEXT_CLASS,
-	CONTINUE_BUTTON_CLASS,
+	RESOLUTION_BUTTON_BASE_CLASS,
+	RESOLUTION_CONTINUE_BUTTON_CLASS,
+	RESOLUTION_NEXT_TURN_BUTTON_CLASS,
 	joinClasses,
 } from './common/cardStyles';
 import { usePlayerAccentClasses } from './common/usePlayerAccentClasses';
 import {
 	buildTimelineTree,
 	buildResolutionTimelineEntries,
-	normalizeModifierDescription,
 } from './ResolutionTimeline';
+import {
+	buildFallbackResolutionLines,
+	type FallbackResolutionLine,
+} from './parseResolutionLines';
 
 interface ResolutionLabels {
 	title: string;
@@ -65,6 +70,8 @@ interface ResolutionCardProps {
 	title?: string;
 	resolution: ActionResolution;
 	onContinue: () => void;
+	continueMode?: 'acknowledge' | 'advance-turn';
+	onAdvanceTurn?: () => void;
 }
 
 function resolveSourceLabels(source: ResolutionSource | undefined) {
@@ -86,6 +93,8 @@ function ResolutionCard({
 	title,
 	resolution,
 	onContinue,
+	continueMode = 'acknowledge',
+	onAdvanceTurn,
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
 	const playerName = playerLabel ?? 'Unknown player';
@@ -209,38 +218,10 @@ function ResolutionCard({
 
 	const fallbackLines = React.useMemo(() => {
 		if (resolution.visibleTimeline.length > 0) {
-			return [] as { depth: number; text: string }[];
+			return [] as FallbackResolutionLine[];
 		}
 
-		function parseLine(line: string) {
-			const patterns = [
-				/^(?: {3})/,
-				/^(?:[ \t]*[•▪‣◦●]\s+)/u,
-				/^(?:[ \t]*[↳➜➤➣]\s+)/u,
-			];
-
-			let remaining = line;
-			let depth = 0;
-			let matched = true;
-
-			while (matched) {
-				matched = false;
-				for (const pattern of patterns) {
-					const match = remaining.match(pattern);
-					if (match && match[0].length > 0) {
-						remaining = remaining.slice(match[0].length);
-						depth += 1;
-						matched = true;
-						break;
-					}
-				}
-			}
-
-			const text = normalizeModifierDescription(remaining.trimStart());
-			return { depth, text };
-		}
-
-		return resolution.visibleLines.map((line) => parseLine(line));
+		return buildFallbackResolutionLines(resolution.visibleLines);
 	}, [resolution.visibleLines, resolution.visibleTimeline]);
 	const hasStructuredTimeline = timelineEntries.length > 0;
 
@@ -262,6 +243,26 @@ function ResolutionCard({
 		);
 	}
 	const shouldShowContinue = resolution.requireAcknowledgement;
+	const shouldUseNextTurnButton =
+		shouldShowContinue &&
+		continueMode === 'advance-turn' &&
+		typeof onAdvanceTurn === 'function';
+	const continueButtonClass = joinClasses(
+		RESOLUTION_BUTTON_BASE_CLASS,
+		shouldUseNextTurnButton
+			? RESOLUTION_NEXT_TURN_BUTTON_CLASS
+			: RESOLUTION_CONTINUE_BUTTON_CLASS,
+	);
+	const continueButtonLabel = shouldUseNextTurnButton
+		? 'Next Turn'
+		: 'Continue';
+	const continueButtonArrow = shouldUseNextTurnButton ? '»' : '→';
+	const handleContinueClick = () => {
+		onContinue();
+		if (shouldUseNextTurnButton && onAdvanceTurn) {
+			void onAdvanceTurn();
+		}
+	};
 
 	return (
 		<div className={containerClass} data-state="enter">
@@ -330,11 +331,14 @@ function ResolutionCard({
 				<div className="mt-6 flex justify-end">
 					<button
 						type="button"
-						onClick={onContinue}
+						onClick={handleContinueClick}
 						disabled={!resolution.isComplete}
-						className={CONTINUE_BUTTON_CLASS}
+						className={continueButtonClass}
 					>
-						Continue
+						<span>{continueButtonLabel}</span>
+						<span aria-hidden="true" className="text-base leading-none">
+							{continueButtonArrow}
+						</span>
 					</button>
 				</div>
 			) : null}
