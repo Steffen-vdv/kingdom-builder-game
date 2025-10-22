@@ -14,7 +14,14 @@ const effectSchemaInternal: z.ZodType<EffectDef> = z.lazy(() =>
 		params: z.record(z.string(), z.unknown()).optional(),
 		effects: z.array(effectSchemaInternal).optional(),
 		evaluator: evaluatorSchema.optional(),
-		round: z.enum(['up', 'down']).optional(),
+		round: z.enum(['up', 'down', 'nearest']).optional(),
+		reconciliation: z
+			.object({
+				onValue: z.enum(['clamp', 'pass', 'reject']).optional(),
+				onBounds: z.enum(['clamp', 'pass', 'reject']).optional(),
+			})
+			.optional(),
+		suppressHooks: z.boolean().optional(),
 		meta: z.record(z.string(), z.unknown()).optional(),
 	}),
 );
