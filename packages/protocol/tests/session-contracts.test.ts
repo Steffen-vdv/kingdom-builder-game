@@ -26,6 +26,10 @@ import type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
+	SessionResourceV2GlobalActionCostReference,
+	SessionResourceV2GroupDescriptor,
+	SessionResourceV2OrderedValueEntry,
+	SessionResourceV2ValueDescriptor,
 } from '../src/session';
 import type {
 	SessionRuntimeConfigResponse,
@@ -102,6 +106,18 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof runtimeConfigResponseSchema>
 		>().toEqualTypeOf<SessionRuntimeConfigResponse>();
+		expectTypeOf<SessionRuntimeConfigResponse['values']>().toEqualTypeOf<
+			Record<string, SessionResourceV2ValueDescriptor>
+		>();
+		expectTypeOf<SessionRuntimeConfigResponse['valueGroups']>().toEqualTypeOf<
+			Record<string, SessionResourceV2GroupDescriptor> | undefined
+		>();
+		expectTypeOf<SessionRuntimeConfigResponse['orderedValues']>().toEqualTypeOf<
+			readonly SessionResourceV2OrderedValueEntry[] | undefined
+		>();
+		expectTypeOf<
+			SessionRuntimeConfigResponse['globalActionCost']
+		>().toEqualTypeOf<SessionResourceV2GlobalActionCostReference | null>();
 	});
 
 	it('matches the registries payload type including action categories', () => {
@@ -109,6 +125,18 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof sessionRegistriesSchema>
 		>().toEqualTypeOf<SessionRegistriesPayload>();
+		expectTypeOf<SessionRegistriesPayload['values']>().toEqualTypeOf<
+			Record<string, SessionResourceV2ValueDescriptor>
+		>();
+		expectTypeOf<SessionRegistriesPayload['valueGroups']>().toEqualTypeOf<
+			Record<string, SessionResourceV2GroupDescriptor> | undefined
+		>();
+		expectTypeOf<SessionRegistriesPayload['orderedValues']>().toEqualTypeOf<
+			readonly SessionResourceV2OrderedValueEntry[] | undefined
+		>();
+		expectTypeOf<SessionRegistriesPayload['globalActionCost']>().toEqualTypeOf<
+			SessionResourceV2GlobalActionCostReference | null | undefined
+		>();
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();

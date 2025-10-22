@@ -23,6 +23,12 @@ import type {
 	SimulateUpcomingPhasesOptions,
 	SimulateUpcomingPhasesResult,
 } from './index';
+import type {
+	SessionResourceV2GlobalActionCostReference,
+	SessionResourceV2GroupDescriptor,
+	SessionResourceV2OrderedValueEntry,
+	SessionResourceV2ValueDescriptor,
+} from './resourceV2';
 import type { RuleSet } from '../services';
 
 export interface SessionIdentifier {
@@ -37,14 +43,6 @@ export interface SessionCreateRequest {
 	playerNames?: SessionPlayerNameMap;
 }
 
-export interface SessionResourceDefinition {
-	key: string;
-	icon?: string;
-	label?: string;
-	description?: string;
-	tags?: string[];
-}
-
 export type SerializedRegistry<T> = Record<string, T>;
 
 export type SessionActionCategoryRegistry =
@@ -55,17 +53,18 @@ export interface SessionRegistriesPayload {
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
 	populations: SerializedRegistry<PopulationConfig>;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	values: SerializedRegistry<SessionResourceV2ValueDescriptor>;
+	valueGroups?: SerializedRegistry<SessionResourceV2GroupDescriptor>;
+	orderedValues?: readonly SessionResourceV2OrderedValueEntry[];
+	globalActionCost?: SessionResourceV2GlobalActionCostReference | null;
 	actionCategories?: SessionActionCategoryRegistry;
 }
 
 export type SessionMetadataSnapshot = Pick<
 	SessionSnapshotMetadata,
-	| 'resources'
-	| 'populations'
+	| 'values'
 	| 'buildings'
 	| 'developments'
-	| 'stats'
 	| 'phases'
 	| 'triggers'
 	| 'assets'
@@ -81,7 +80,10 @@ export interface SessionRuntimeConfigResponse {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	values: SerializedRegistry<SessionResourceV2ValueDescriptor>;
+	valueGroups?: SerializedRegistry<SessionResourceV2GroupDescriptor>;
+	orderedValues?: readonly SessionResourceV2OrderedValueEntry[];
+	globalActionCost: SessionResourceV2GlobalActionCostReference | null;
 	primaryIconId: string | null;
 }
 
