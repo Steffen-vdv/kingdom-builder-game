@@ -11,6 +11,7 @@ import {
 	LAND_INFO,
 	SLOT_INFO,
 	PASSIVE_INFO,
+	POPULATION_INFO,
 	DEVELOPMENTS_INFO,
 	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
@@ -277,6 +278,10 @@ const buildTriggerMetadata = () =>
 
 const buildAssetMetadata = () =>
 	createMetadataRecord([
+		[
+			'population',
+			{ label: POPULATION_INFO.label, icon: POPULATION_INFO.icon },
+		],
 		['land', { label: LAND_INFO.label, icon: LAND_INFO.icon }],
 		['slot', { label: SLOT_INFO.label, icon: SLOT_INFO.icon }],
 		['passive', { label: PASSIVE_INFO.label, icon: PASSIVE_INFO.icon }],

@@ -5,6 +5,7 @@ import {
 	SLOT_INFO,
 	STATS,
 	TRIGGER_INFO,
+	POPULATION_INFO,
 	POPULATION_ROLES,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
@@ -233,6 +234,7 @@ function buildTriggerDescriptor(
 
 function buildAssetMetadata(): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
+	assignAssetDescriptor(descriptors, 'population', POPULATION_INFO);
 	assignAssetDescriptor(descriptors, 'passive', PASSIVE_INFO);
 	assignAssetDescriptor(descriptors, 'land', LAND_INFO);
 	assignAssetDescriptor(descriptors, 'slot', SLOT_INFO);
