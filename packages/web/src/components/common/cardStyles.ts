@@ -40,12 +40,12 @@ const RESOLUTION_LINE_CLASS = [
 	'dark:text-slate-100',
 ].join(' ');
 
-const CONTINUE_BUTTON_CLASS = [
+const CARD_BUTTON_BASE_CLASS = [
 	'inline-flex',
 	'items-center',
 	'justify-center',
+	'gap-2',
 	'rounded-2xl',
-	'bg-amber-500',
 	'cursor-pointer',
 	'px-4',
 	'py-2',
@@ -53,15 +53,29 @@ const CONTINUE_BUTTON_CLASS = [
 	'font-semibold',
 	'text-white',
 	'shadow-lg',
-	'shadow-amber-500/40',
 	'transition',
-	'hover:bg-amber-400',
 	'focus:outline-none',
 	'focus-visible:ring',
-	'focus-visible:ring-amber-500/60',
 	'disabled:cursor-not-allowed',
-	'disabled:bg-amber-500/60',
 	'disabled:shadow-none',
+].join(' ');
+
+const CONTINUE_BUTTON_CLASS = [
+	CARD_BUTTON_BASE_CLASS,
+	'bg-amber-500',
+	'shadow-amber-500/40',
+	'hover:bg-amber-400',
+	'focus-visible:ring-amber-500/60',
+	'disabled:bg-amber-500/60',
+].join(' ');
+
+const NEXT_TURN_BUTTON_CLASS = [
+	CARD_BUTTON_BASE_CLASS,
+	'bg-amber-600',
+	'shadow-amber-600/40',
+	'hover:bg-amber-500',
+	'focus-visible:ring-amber-600/60',
+	'disabled:bg-amber-600/60',
 ].join(' ');
 
 const CARD_TITLE_TEXT_CLASS = [
@@ -121,12 +135,14 @@ export {
 	CARD_ALERT_TEXT_CLASS,
 	CARD_BASE_CLASS,
 	CARD_BODY_TEXT_CLASS,
+	CARD_BUTTON_BASE_CLASS,
 	CARD_LABEL_CLASS,
 	CARD_LIST_CLASS,
 	CARD_META_TEXT_CLASS,
 	CARD_REQUIREMENT_LIST_CLASS,
 	CARD_TITLE_TEXT_CLASS,
 	CONTINUE_BUTTON_CLASS,
+	NEXT_TURN_BUTTON_CLASS,
 	joinClasses,
 	RESOLUTION_LINE_CLASS,
 	RESOLUTION_LINES_CLASS,
