@@ -19,13 +19,19 @@ const FADE_DURATION_MS = 200;
 
 export default function HoverCard() {
 	const {
-		hoverCard: data,
+		hoverCard: rawHoverCard,
 		clearHoverCard,
 		translationContext,
 		actionCostResource,
 		resolution: actionResolution,
 		acknowledgeResolution,
 	} = useGameEngine();
+	const shouldSuppressHoverCards = Boolean(
+		actionResolution &&
+			(!actionResolution.requireAcknowledgement ||
+				!actionResolution.isComplete),
+	);
+	const data = shouldSuppressHoverCards ? null : rawHoverCard;
 	const [renderedData, setRenderedData] = useState(data);
 	const [transitionState, setTransitionState] = useState<'enter' | 'exit'>(
 		data ? 'enter' : 'exit',
@@ -110,6 +116,17 @@ export default function HoverCard() {
 
 	if (!renderedData) {
 		return null;
+	}
+
+	if (renderedData.resolution) {
+		const historicTitle = renderedData.resolutionTitle ?? renderedData.title;
+		return (
+			<ResolutionCard
+				title={historicTitle}
+				resolution={renderedData.resolution}
+				onContinue={() => {}}
+			/>
+		);
 	}
 
 	const cardContainerClass = joinClasses(
