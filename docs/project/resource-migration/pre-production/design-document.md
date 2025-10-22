@@ -53,7 +53,8 @@ Create **ResourceV2**, a unified definition and runtime model that expresses eve
 
 - Engine tracks whether each resource has ever changed from its initial state (for UI visibility).
 - `onGain` and `onLoss` events emit whenever a non-zero delta occurs. Payload: `{ resourceId, amount }` where `amount` is positive.
-- Effects may opt out of hook emission when they explicitly request **suppressed notifications** to avoid recursive triggers (e.g., "on gain gold, gain +1 gold" boosters). Suppression is an escape hatch—default behaviour emits hooks, and validation will highlight excessive use.
+- Effects may opt out of hook emission when they explicitly request **suppressed notifications**. The suppressor is an opt-in flag on individual effect definitions (`suppressHooks: true`) that skips both `onGain` and `onLoss` dispatch for the resolving delta. Builders wire this flag through to the engine; runtime ignores the field when absent, so the default remains "emit hooks".
+- Suppression exists solely to prevent recursive trigger loops (e.g., "on gain gold, gain +1 gold" boosters that would otherwise self-trigger). Designers should reach for content fixes or trigger guards first; the flag is an escape hatch for carefully documented exceptions, not a routine optimisation.
 - Zero-delta operations (after rounding or reconciliation) do not emit hooks, update history, or log recent gains.
 - `recentResourceGains` records signed entries per evaluation cycle for both gains and losses; zero values are skipped.
 
@@ -123,7 +124,7 @@ Key rules:
   - One tier track per resource.
   - Explicit rounding on percent operations.
   - Explicit reconciliation strategies whenever bounds exist in the relevant direction.
-  - Hook-suppression flags are optional; when present, builders confirm they are only applied to effect definitions that document their recursion risk.
+  - Hook-suppression flags are optional; when present, builders surface configuration for effect authors and validate that the flag is justified (e.g., documented recursion risk) rather than a convenience toggle.
   - Ban on configuring global cost resources as explicit action costs.
   - Prevention of effects targeting Limited ResourceV2 parents with value mutations.
 - Citizens concept removed; designers must specify exact resources when creating or moving units.
