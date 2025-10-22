@@ -8,9 +8,9 @@ import {
 	withStatSourceFrames,
 } from '../stat_sources';
 import { landAdd } from './land_add';
-import { resourceAdd } from './resource_add';
-import { resourceRemove } from './resource_remove';
-import { resourceTransfer } from './resource_transfer';
+import { resourceAdd as legacyResourceAdd } from './resource_add';
+import { resourceRemove as legacyResourceRemove } from './resource_remove';
+import { resourceTransfer as legacyResourceTransfer } from './resource_transfer';
 import { buildingAdd, collectBuildingAddCosts } from './building_add';
 import { buildingRemove } from './building_remove';
 import { statAdd } from './stat_add';
@@ -29,6 +29,15 @@ import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
 import { attackPerform } from './attack';
+import {
+	isResourceV2TransferEffect,
+	isResourceV2UpperBoundIncreaseEffect,
+	isResourceV2ValueEffect,
+	resourceV2Add,
+	resourceV2Remove,
+	resourceV2Transfer,
+	resourceV2UpperBoundIncrease,
+} from '../resourceV2/effects';
 
 export interface EffectHandler<
 	P extends Record<string, unknown> = Record<string, unknown>,
@@ -46,14 +55,63 @@ export interface EffectCostCollector {
 export class EffectCostRegistry extends Registry<EffectCostCollector> {}
 export const EFFECT_COST_COLLECTORS = new EffectCostRegistry();
 
+const resourceAddHandler: EffectHandler = (effect, engineContext, mult = 1) => {
+	if (isResourceV2ValueEffect(effect)) {
+		resourceV2Add(effect, engineContext, mult);
+		return;
+	}
+	legacyResourceAdd(effect, engineContext, mult);
+};
+
+const resourceRemoveHandler: EffectHandler = (
+	effect,
+	engineContext,
+	mult = 1,
+) => {
+	if (isResourceV2ValueEffect(effect)) {
+		resourceV2Remove(effect, engineContext, mult);
+		return;
+	}
+	legacyResourceRemove(effect, engineContext, mult);
+};
+
+const resourceTransferHandler: EffectHandler = (
+	effect,
+	engineContext,
+	mult = 1,
+) => {
+	if (isResourceV2TransferEffect(effect)) {
+		resourceV2Transfer(effect, engineContext, mult);
+		return;
+	}
+	legacyResourceTransfer(effect, engineContext, mult);
+};
+
+const resourceUpperBoundIncreaseHandler: EffectHandler = (
+	effect,
+	engineContext,
+	mult = 1,
+) => {
+	if (!isResourceV2UpperBoundIncreaseEffect(effect)) {
+		throw new Error(
+			'resource:upper-bound:increase requires ResourceV2 parameters.',
+		);
+	}
+	resourceV2UpperBoundIncrease(effect, engineContext, mult);
+};
+
 export function registerCoreEffects(
 	registry: EffectRegistry = EFFECTS,
 	costRegistry: EffectCostRegistry = EFFECT_COST_COLLECTORS,
 ) {
 	registry.add('land:add', landAdd);
-	registry.add('resource:add', resourceAdd);
-	registry.add('resource:remove', resourceRemove);
-	registry.add('resource:transfer', resourceTransfer);
+	registry.add('resource:add', resourceAddHandler);
+	registry.add('resource:remove', resourceRemoveHandler);
+	registry.add('resource:transfer', resourceTransferHandler);
+	registry.add(
+		'resource:upper-bound:increase',
+		resourceUpperBoundIncreaseHandler,
+	);
 	registry.add('building:add', buildingAdd);
 	registry.add('building:remove', buildingRemove);
 	registry.add('stat:add', statAdd);
@@ -115,9 +173,9 @@ export function runEffects(
 
 export {
 	landAdd,
-	resourceAdd,
-	resourceRemove,
-	resourceTransfer,
+	legacyResourceAdd as resourceAdd,
+	legacyResourceRemove as resourceRemove,
+	legacyResourceTransfer as resourceTransfer,
 	buildingAdd,
 	buildingRemove,
 	statAdd,
