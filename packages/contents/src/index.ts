@@ -26,6 +26,35 @@ export {
 } from './populationRoles';
 export { Resource, type ResourceKey, RESOURCES } from './resources';
 export { Stat, type StatKey, STATS } from './stats';
+export {
+	ResourceV2Builder,
+	ResourceV2TierTrackBuilder,
+	resourceV2,
+	resourceV2Add,
+	resourceV2LowerBoundDecrease,
+	resourceV2LowerBoundIncrease,
+	resourceV2Remove,
+	resourceV2TierTrack,
+	resourceV2Transfer,
+	resourceV2UpperBoundIncrease,
+} from './resourceV2';
+export type {
+	ResourceV2BoundAdjustmentDefinition,
+	ResourceV2BoundAdjustmentOptions,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
+	ResourceV2GroupParentInput,
+	ResourceV2GroupParentMetadata,
+	ResourceV2TierTrack,
+	ResourceV2TransferEffectDefinition,
+	ResourceV2TransferEffectOptions,
+	ResourceV2TransferEndpointDefinition,
+	ResourceV2TransferEndpointOptions,
+	ResourceV2ValueEffectDefinition,
+	ResourceV2ValueEffectOptions,
+	ResourceV2ReconciliationStrategy,
+	ResourceV2RoundingMode,
+} from './resourceV2';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
 export { UPKEEP_INFO, TRANSFER_INFO } from './assets';

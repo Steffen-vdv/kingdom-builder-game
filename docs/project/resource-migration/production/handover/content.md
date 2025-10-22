@@ -1,13 +1,14 @@
 # Content Handover
 
-> Replace this template with the latest content-domain handover before you wrap up a task. Keep the details concise and actionable so the next agent can resume immediately.
-
-- **Prepared by:** _(name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(what content thread is in flight)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-02-14 12:00
+- **Current Focus:** ResourceV2 builder scaffolding for the MVP clamp rollout.
 - **State Summary:**
-  - _(bullet points covering progress, decisions, and open questions)_
+  - ResourceV2 types and builders now exist with clamp-only guard rails.
+  - Config exports surface the new helpers without touching legacy registries.
+  - Focused unit tests cover tier uniqueness, clamp enforcement, and parents.
 - **Next Suggested Tasks:**
-  - _(bulleted action items with owners if known)_
+  - Wire the builders into engine/protocol registries once runtime handlers land.
+  - Expand effect helpers after additional reconciliation strategies unlock.
 - **Risks / Blockers:**
-  - _(list items or “None”)_
+  - Runtime code has not consumed the new definitions yet; downstream work pending.

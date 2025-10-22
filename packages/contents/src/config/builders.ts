@@ -8,6 +8,21 @@ import type {
 import type { ResourceKey } from '../resources';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
+import {
+	resourceV2,
+	resourceV2Add,
+	resourceV2LowerBoundDecrease,
+	resourceV2LowerBoundIncrease,
+	resourceV2Remove,
+	resourceV2TierTrack,
+	resourceV2Transfer,
+	resourceV2UpperBoundIncrease,
+	type ResourceV2BoundAdjustmentDefinition,
+	type ResourceV2Definition,
+	type ResourceV2TierTrack,
+	type ResourceV2TransferEffectDefinition,
+	type ResourceV2ValueEffectDefinition,
+} from '../resourceV2';
 import { CompareRequirementBuilder } from './builders/evaluators';
 import {
 	ActionBuilder,
@@ -43,6 +58,28 @@ export {
 	PopulationRoleBuilder,
 	ResourceBuilder,
 	StatBuilder,
+};
+
+// ResourceV2 builders intentionally expose only clamp reconciliation helpers
+// during the MVP. Downstream content should continue to call the legacy
+// builders for non-migrated tracks.
+export {
+	resourceV2,
+	resourceV2Add,
+	resourceV2LowerBoundDecrease,
+	resourceV2LowerBoundIncrease,
+	resourceV2Remove,
+	resourceV2TierTrack,
+	resourceV2Transfer,
+	resourceV2UpperBoundIncrease,
+};
+
+export type {
+	ResourceV2BoundAdjustmentDefinition,
+	ResourceV2Definition,
+	ResourceV2TierTrack,
+	ResourceV2TransferEffectDefinition,
+	ResourceV2ValueEffectDefinition,
 };
 
 export {
