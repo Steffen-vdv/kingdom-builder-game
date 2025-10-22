@@ -4,6 +4,7 @@ import {
 	summarizeContent,
 	formatEffectGroups,
 	logContent,
+	splitSummary,
 	type SummaryEntry,
 } from '../src/translation';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
@@ -73,6 +74,26 @@ function findGroupEntry(
 		throw new Error('Expected effect group entry');
 	}
 	return group;
+}
+
+function normalizeSummaryEntry(entry: SummaryEntry): unknown {
+	if (typeof entry === 'string') {
+		return entry;
+	}
+	return {
+		title: entry.title,
+		items: entry.items.map(normalizeSummaryEntry),
+	};
+}
+
+function stripInstallationSummary(entries: SummaryEntry[]): SummaryEntry[] {
+	if (entries.length === 1) {
+		const [first] = entries;
+		if (typeof first !== 'string') {
+			return first.items;
+		}
+	}
+	return entries;
 }
 
 function isActionEffectGroup(entry: unknown): entry is ActionEffectGroupEntry {
@@ -253,11 +274,42 @@ describe('royal decree translation', () => {
 			: entry.items
 				? [entry.items]
 				: [];
-		const hasDevelopmentLine = entryItems.some((item) => {
-			const text = typeof item === 'string' ? item : item?.title;
-			return text?.includes(development.name ?? developmentId) ?? false;
-		});
-		expect(hasDevelopmentLine).toBe(true);
+		const slotAsset = translationContext.assets.slot ?? {};
+		const slotIcon = (slotAsset.icon ?? '🧩').trim();
+		const slotLabel = (slotAsset.label ?? 'Development Slot').trim();
+		const slotText = [slotIcon, slotLabel].filter(Boolean).join(' ').trim();
+		const developmentEntry = entryItems.find(
+			(
+				item,
+			): item is Extract<
+				SummaryEntry,
+				{ title: string; items: SummaryEntry[] }
+			> =>
+				typeof item === 'object' &&
+				item !== null &&
+				typeof (item as { title?: unknown }).title === 'string' &&
+				((item as { title: string }).title.startsWith('Developed ') ||
+					(item as { title: string }).title.includes(
+						development.name ?? developmentId,
+					)),
+		);
+		expect(developmentEntry).toBeDefined();
+		if (!developmentEntry) {
+			throw new Error('Expected development log entry');
+		}
+		expect(developmentEntry.title).toContain(development.name ?? developmentId);
+		expect(developmentEntry.title).toContain(` on ${slotText}`);
+		const normalizedItems = developmentEntry.items.map(normalizeSummaryEntry);
+		const developmentSummary = describeContent(
+			'development',
+			developmentId,
+			translationContext,
+		);
+		const { effects: developmentEffects } = splitSummary(developmentSummary);
+		const expectedItems = stripInstallationSummary(developmentEffects).map(
+			normalizeSummaryEntry,
+		);
+		expect(normalizedItems).toEqual(expectedItems);
 	});
 
 	it('logs royal decree develop once using develop action copy', () => {
@@ -289,6 +341,11 @@ describe('royal decree translation', () => {
 				throw new Error(`Missing development definition for ${developmentId}`);
 			}
 			expect(occurrences[0]).toContain(development.name ?? developmentId);
+			const slotAsset = translationContext.assets.slot ?? {};
+			const slotIcon = (slotAsset.icon ?? '🧩').trim();
+			const slotLabel = (slotAsset.label ?? 'Development Slot').trim();
+			const slotText = [slotIcon, slotLabel].filter(Boolean).join(' ').trim();
+			expect(occurrences[0]).toContain(` on ${slotText}`);
 		}
 	});
 });
