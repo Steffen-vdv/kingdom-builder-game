@@ -6,8 +6,8 @@ set -e
 # Run lint-staged on changed files
 npx lint-staged
 
-# Run the full typecheck + lint suite before tests so config regressions fail fast
-npm run check
+# Run the lighter CI check pipeline before tests to avoid redundant executions
+npm run check:ci
 
 # Run the fast Vitest suite without redundant lint/type checks
 npm run test:quick
