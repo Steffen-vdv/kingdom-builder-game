@@ -41,20 +41,24 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | npx vitest run --config vitest.web.config.ts packages/web/tests/translation/resourceV2 (pass; see chunk 55f8f0)
 | UI wiring still pending once ResourceV2 payloads feed the resource bar; keep hover layout review on deck.
 | 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/state.ts, packages/engine/src/resource-v2/state-helpers.ts, packages/engine/src/resource-v2/index.ts, packages/engine/tests/resource-v2/state.test.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T7 - Implemented ResourceV2 state initialisation/read/write helpers, refactored shared utilities, and added engine unit coverage for tiers, bounds, touched flags, and parent aggregation. | npm run check (pass; see chunk ab5b5d) | Wire helpers into engine bootstrap/effect handlers to populate state from runtime catalogs and consider additional tests around bound adjustments once integration path is defined. |
+| 2025-10-27 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/effects/transfer.ts, packages/engine/src/resource-v2/index.ts, docs/project/resource-migration/production/production-living-docs.md |
+| Resource Migration MVP - P2 - T10 - Authored ResourceV2 transfer and upper-bound effect handlers that compose reconciliation/state helpers, documented payload contracts, and exported them pending registry wiring. |
+| npm run format; npm run lint; npm run check |
+| Thread runtime catalog/state access into engine context and register the new handlers once bootstrap wiring lands. |
 |
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-26 19:30
-- **Current Focus:** Resource Migration MVP - P2 - T7 - Engine ResourceV2 state helpers
-- **State Summary:** Added pure utilities for initialising ResourceV2 player state, reading/writing values with bounds-aware clamps, updating tier assignments, logging signed recent gains, and recalculating parent aggregates. Introduced companion unit tests covering tier resolution, touched flags, bound adjustments, and error paths to protect the helper surface ahead of runtime integration.
+- **Timestamp (UTC):** 2025-10-27 18:45
+- **Current Focus:** Resource Migration MVP - P2 - T10 - ResourceV2 transfer & upper-bound handlers
+- **State Summary:** Implemented atomic ResourceV2 transfer handling that independently reconciles donor and recipient payloads before applying a shared transfer amount, added an upper-bound increase effect that reuses state helpers without mutating limited parents, documented payload expectations, and exported both handlers pending registry hookup.
 - **Next Suggested Tasks:**
-  - Thread the new state helpers into engine bootstrap and reconciliation flows so runtime catalogs seed ResourceV2 values/bounds automatically (Owner: Engine).
-  - Extend coverage once effect handlers consume the helpers, especially around multi-resource parent updates and tier-triggered effects (Owner: Engine QA).
-- **Blocking Issues / Risks:** Helper logic still runs in isolation; pending wiring into actual gameplay loops means live data may expose edge cases such as parent/child bound conflicts. Coordinate closely with upcoming bootstrap tasks to validate against real catalogs.
-- **Reminder:** First ResourceV2 migration should target **Absorption** because it is a small, low-risk stat that exercises the pipeline without touching population flows.
+  - Thread the runtime ResourceV2 catalog onto the engine context/game state so the new handlers can resolve definitions without throwing (Owner: Engine).
+  - Register the handlers in the core effects registry and add focused unit coverage for clamp/tier interactions once runtime wiring exists (Owner: Engine QA).
+- **Blocking Issues / Risks:** Engine context still lacks an initialised `resourceCatalogV2`; invoking the handlers today will throw until bootstrap wiring lands, leaving transfer/bound adjustments untestable end-to-end.
+- **Reminder:** Plan the first live validation around the low-risk **Absorption** migration once catalog wiring is ready so transfers and bound raises can be exercised safely.
 
 ## 5. Notes & Decisions Archive
 
