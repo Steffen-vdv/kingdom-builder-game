@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import type { EffectDef } from '../effects';
 
+import { effectSchema } from './effect_schemas';
+
+export { effectSchema, evaluatorSchema } from './effect_schemas';
+
 export const requirementSchema = z.object({
 	type: z.string(),
 	method: z.string(),
@@ -10,26 +14,9 @@ export const requirementSchema = z.object({
 
 export type RequirementConfig = z.infer<typeof requirementSchema>;
 
-const costBagSchema = z.record(z.string(), z.number());
-
-const evaluatorSchema = z.object({
-	type: z.string(),
-	params: z.record(z.string(), z.unknown()).optional(),
-});
-
-export const effectSchema: z.ZodType<EffectDef> = z.lazy(() =>
-	z.object({
-		type: z.string().optional(),
-		method: z.string().optional(),
-		params: z.record(z.string(), z.unknown()).optional(),
-		effects: z.array(effectSchema).optional(),
-		evaluator: evaluatorSchema.optional(),
-		round: z.enum(['up', 'down']).optional(),
-		meta: z.record(z.string(), z.unknown()).optional(),
-	}),
-);
-
 export type EffectConfig = EffectDef;
+
+const costBagSchema = z.record(z.string(), z.number());
 
 const actionCategoryLayoutSchema = z.enum([
 	'grid-primary',
@@ -305,6 +292,47 @@ export const ruleSetSchema = z.object({
 	winConditions: z.array(winConditionDefinitionSchema),
 	corePhaseIds: corePhaseIdsSchema.optional(),
 });
+
+export {
+	resourceV2RoundingModeSchema,
+	resourceV2ReconciliationStrategySchema,
+	resourceV2HookSuppressionSchema,
+	resourceV2GlobalActionCostSchema,
+	resourceV2TierRangeSchema,
+	resourceV2TierPassivePreviewSchema,
+	resourceV2TierTextTokensSchema,
+	resourceV2TierDisplayMetadataSchema,
+	resourceV2TierDefinitionSchema,
+	resourceV2TierTrackSchema,
+	resourceV2BaseDefinitionSchema,
+	resourceV2GroupParentSchema,
+	resourceV2DefinitionSchema,
+	resourceV2GroupMetadataSchema,
+	resourceV2ValueDeltaSchema,
+	resourceV2TransferSchema,
+	resourceV2BoundAdjustmentSchema,
+	resourceV2EffectSchema,
+} from './resourceV2';
+
+export type {
+	ResourceV2RoundingMode,
+	ResourceV2ReconciliationStrategy,
+	ResourceV2HookSuppression,
+	ResourceV2GlobalActionCost,
+	ResourceV2TierRange,
+	ResourceV2TierPassivePreview,
+	ResourceV2TierTextTokens,
+	ResourceV2TierDisplayMetadata,
+	ResourceV2TierDefinition,
+	ResourceV2TierTrack,
+	ResourceV2BaseDefinition,
+	ResourceV2GroupParent,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
+	ResourceV2ValueDelta,
+	ResourceV2Transfer,
+	ResourceV2BoundAdjustment,
+} from './resourceV2';
 
 export function validateGameConfig(config: unknown): GameConfig {
 	return gameConfigSchema.parse(config);
