@@ -329,9 +329,7 @@ export default [
 		},
 	},
 	{
-		files: [
-			'packages/contents/**/*.{ts,tsx,js,cjs,mjs}',
-		],
+		files: ['packages/contents/**/*.{ts,tsx,js,cjs,mjs}'],
 		rules: {
 			'max-len': 'off',
 			'max-lines': 'off',
