@@ -40,10 +40,8 @@ export interface GameProviderProps {
 	onToggleSound?: () => void;
 	backgroundAudioMuted?: boolean;
 	onToggleBackgroundAudioMute?: () => void;
-	autoAcknowledgeEnabled?: boolean;
-	onToggleAutoAcknowledge?: () => void;
-	autoPassEnabled?: boolean;
-	onToggleAutoPass?: () => void;
+	autoAdvanceEnabled?: boolean;
+	onToggleAutoAdvance?: () => void;
 	playerName?: string;
 	onChangePlayerName?: (name: string) => void;
 	resumeSessionId?: string | null;
@@ -117,10 +115,8 @@ export interface GameEngineContextValue {
 	onToggleSound: () => void;
 	backgroundAudioMuted: boolean;
 	onToggleBackgroundAudioMute: () => void;
-	autoAcknowledgeEnabled: boolean;
-	onToggleAutoAcknowledge: () => void;
-	autoPassEnabled: boolean;
-	onToggleAutoPass: () => void;
+	autoAdvanceEnabled: boolean;
+	onToggleAutoAdvance: () => void;
 	timeScale: TimeScale;
 	setTimeScale: (value: TimeScale) => void;
 	controlKeybinds: ControlKeybindMap;

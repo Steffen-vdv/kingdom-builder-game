@@ -65,10 +65,8 @@ export default function GameLayout() {
 		onToggleSound,
 		backgroundAudioMuted,
 		onToggleBackgroundAudioMute,
-		autoAcknowledgeEnabled,
-		onToggleAutoAcknowledge,
-		autoPassEnabled,
-		onToggleAutoPass,
+		autoAdvanceEnabled,
+		onToggleAutoAdvance,
 		playerName,
 		onChangePlayerName,
 		phase,
@@ -253,10 +251,8 @@ export default function GameLayout() {
 				onToggleSound={onToggleSound}
 				backgroundAudioMuted={backgroundAudioMuted}
 				onToggleBackgroundAudioMute={onToggleBackgroundAudioMute}
-				autoAcknowledgeEnabled={autoAcknowledgeEnabled}
-				onToggleAutoAcknowledge={onToggleAutoAcknowledge}
-				autoPassEnabled={autoPassEnabled}
-				onToggleAutoPass={onToggleAutoPass}
+				autoAdvanceEnabled={autoAdvanceEnabled}
+				onToggleAutoAdvance={onToggleAutoAdvance}
 				playerName={playerName}
 				onChangePlayerName={onChangePlayerName}
 				controlKeybinds={controlKeybinds}
