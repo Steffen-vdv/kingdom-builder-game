@@ -1,8 +1,8 @@
 import { describe, expect, it, expectTypeOf } from 'vitest';
 import type { infer as ZodInfer } from 'zod';
 
-import { actionCategorySchema } from '../src';
-import type { ActionCategoryConfig } from '../src';
+import { actionCategorySchema, effectSchema } from '../src';
+import type { ActionCategoryConfig, EffectConfig } from '../src';
 
 describe('action category schema', () => {
 	it('matches the exported config type', () => {
@@ -39,5 +39,61 @@ describe('action category schema', () => {
 				layout: 'grid-tertiary',
 			}),
 		).toThrow();
+	});
+});
+
+describe('effect schema', () => {
+	it('accepts effect metadata configuration', () => {
+		const effect: EffectConfig = {
+			type: 'resource',
+			method: 'adjust',
+			params: { resource: 'gold', amount: 5 },
+			round: 'nearest',
+			reconciliation: {
+				onValue: 'clamp',
+				onBounds: 'pass',
+			},
+			suppressHooks: true,
+			meta: { tag: 'test-effect' },
+		};
+
+		expect(effectSchema.parse(effect)).toEqual(effect);
+	});
+
+	it('allows partial reconciliation metadata', () => {
+		const effect: EffectConfig = {
+			method: 'noop',
+			reconciliation: {
+				onBounds: 'reject',
+			},
+		};
+
+		expect(effectSchema.parse(effect)).toEqual(effect);
+	});
+
+	it('rejects unknown rounding modes', () => {
+		const effect = {
+			round: 'ceil',
+		} as unknown as EffectConfig;
+
+		expect(() => effectSchema.parse(effect)).toThrow();
+	});
+
+	it('rejects invalid reconciliation strategies', () => {
+		const effect = {
+			reconciliation: {
+				onValue: 'min',
+			},
+		} as unknown as EffectConfig;
+
+		expect(() => effectSchema.parse(effect)).toThrow();
+	});
+
+	it('rejects non-boolean hook suppression flags', () => {
+		const effect = {
+			suppressHooks: 'yes',
+		} as unknown as EffectConfig;
+
+		expect(() => effectSchema.parse(effect)).toThrow();
 	});
 });

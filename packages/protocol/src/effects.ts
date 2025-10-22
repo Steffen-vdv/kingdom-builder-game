@@ -8,6 +8,13 @@ export interface EffectDef<
 	params?: P | undefined;
 	effects?: EffectDef[] | undefined;
 	evaluator?: EvaluatorDef | undefined;
-	round?: 'up' | 'down' | undefined;
+	round?: 'up' | 'down' | 'nearest' | undefined;
+	reconciliation?:
+		| {
+				onValue?: 'clamp' | 'pass' | 'reject' | undefined;
+				onBounds?: 'clamp' | 'pass' | 'reject' | undefined;
+		  }
+		| undefined;
+	suppressHooks?: boolean | undefined;
 	meta?: Record<string, unknown> | undefined;
 }

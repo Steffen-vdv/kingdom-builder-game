@@ -30,6 +30,8 @@ export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
 		newValue = newValue >= 0 ? Math.ceil(newValue) : Math.floor(newValue);
 	} else if (effect.round === 'down') {
 		newValue = newValue >= 0 ? Math.floor(newValue) : Math.ceil(newValue);
+	} else if (effect.round === 'nearest') {
+		newValue = Math.round(newValue);
 	}
 	if (newValue < 0) {
 		newValue = 0;
