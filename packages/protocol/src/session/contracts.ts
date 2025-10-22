@@ -24,6 +24,10 @@ import type {
 	SimulateUpcomingPhasesResult,
 } from './index';
 import type { RuleSet } from '../services';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+} from '../resourceV2';
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -50,6 +54,12 @@ export type SerializedRegistry<T> = Record<string, T>;
 export type SessionActionCategoryRegistry =
 	SerializedRegistry<ActionCategoryConfig>;
 
+export type SessionResourceV2DefinitionRegistry =
+	ReadonlyArray<ResourceV2Definition>;
+
+export type SessionResourceV2GroupRegistry =
+	ReadonlyArray<ResourceV2GroupDefinition>;
+
 export interface SessionRegistriesPayload {
 	actions: SerializedRegistry<ActionConfig>;
 	buildings: SerializedRegistry<BuildingConfig>;
@@ -57,6 +67,8 @@ export interface SessionRegistriesPayload {
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
+	resourceDefinitions?: SessionResourceV2DefinitionRegistry;
+	resourceGroups?: SessionResourceV2GroupRegistry;
 }
 
 export type SessionMetadataSnapshot = Pick<
@@ -83,6 +95,8 @@ export interface SessionRuntimeConfigResponse {
 	rules: RuleSet;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
+	resourceDefinitions?: SessionResourceV2DefinitionRegistry;
+	resourceGroups?: SessionResourceV2GroupRegistry;
 }
 
 export interface SessionCreateResponse {

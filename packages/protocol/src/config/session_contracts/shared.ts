@@ -18,6 +18,10 @@ import type {
 	SessionRuntimeConfigResponse,
 } from '../../session/contracts';
 import type { SessionPlayerId } from '../../session';
+import {
+	resourceV2DefinitionSchema,
+	resourceV2GroupDefinitionSchema,
+} from '../../resourceV2';
 
 export const sessionResourceDefinitionSchema = z.object({
 	key: z.string(),
@@ -39,6 +43,8 @@ export const sessionRegistriesSchema = z
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
+		resourceDefinitions: z.array(resourceV2DefinitionSchema).optional(),
+		resourceGroups: z.array(resourceV2GroupDefinitionSchema).optional(),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 
@@ -49,6 +55,8 @@ export const runtimeConfigResponseSchema = z
 		rules: ruleSetSchema,
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		primaryIconId: z.string().nullable(),
+		resourceDefinitions: z.array(resourceV2DefinitionSchema).optional(),
+		resourceGroups: z.array(resourceV2GroupDefinitionSchema).optional(),
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
 

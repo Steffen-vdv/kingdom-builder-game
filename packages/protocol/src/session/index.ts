@@ -6,6 +6,10 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type {
+	ResourceV2BoundsMetadata,
+	ResourceV2RecentGainEntry,
+} from '../resourceV2';
 
 export type SessionPlayerId = 'A' | 'B';
 
@@ -37,6 +41,33 @@ export interface SessionStatSourceContribution {
 	meta: SessionStatSourceMeta;
 }
 
+export interface SessionResourceTierStateSnapshot {
+	trackId?: string;
+	tierId?: string;
+	nextTierId?: string;
+	previousTierId?: string;
+}
+
+export interface SessionResourceValueParentSnapshot {
+	id: string;
+	amount: number;
+	touched: boolean;
+	bounds?: ResourceV2BoundsMetadata;
+}
+
+export interface SessionResourceValueSnapshot {
+	amount: number;
+	touched: boolean;
+	tier?: SessionResourceTierStateSnapshot;
+	parent?: SessionResourceValueParentSnapshot;
+	recentGains: ReadonlyArray<ResourceV2RecentGainEntry>;
+}
+
+export type SessionResourceValueSnapshotMap = Record<
+	string,
+	SessionResourceValueSnapshot
+>;
+
 export interface SessionLandSnapshot {
 	id: string;
 	slotsMax: number;
@@ -61,6 +92,7 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
+	values?: SessionResourceValueSnapshotMap;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	statsHistory: Record<string, boolean>;

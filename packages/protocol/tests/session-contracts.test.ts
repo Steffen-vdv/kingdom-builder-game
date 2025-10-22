@@ -26,12 +26,15 @@ import type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
+	SessionResourceValueSnapshot,
 } from '../src/session';
 import type {
 	SessionRuntimeConfigResponse,
 	SessionRunAiAction,
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
+	SessionResourceV2DefinitionRegistry,
+	SessionResourceV2GroupRegistry,
 } from '../src/session/contracts';
 
 describe('session contract schemas', () => {
@@ -102,6 +105,12 @@ describe('session contract schemas', () => {
 		expectTypeOf<
 			ZodInfer<typeof runtimeConfigResponseSchema>
 		>().toEqualTypeOf<SessionRuntimeConfigResponse>();
+		expectTypeOf<
+			SessionRuntimeConfigResponse['resourceDefinitions']
+		>().toEqualTypeOf<SessionResourceV2DefinitionRegistry | undefined>();
+		expectTypeOf<
+			SessionRuntimeConfigResponse['resourceGroups']
+		>().toEqualTypeOf<SessionResourceV2GroupRegistry | undefined>();
 	});
 
 	it('matches the registries payload type including action categories', () => {
@@ -112,6 +121,26 @@ describe('session contract schemas', () => {
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();
+		expectTypeOf<
+			SessionRegistriesPayload['resourceDefinitions']
+		>().toEqualTypeOf<SessionResourceV2DefinitionRegistry | undefined>();
+		expectTypeOf<SessionRegistriesPayload['resourceGroups']>().toEqualTypeOf<
+			SessionResourceV2GroupRegistry | undefined
+		>();
+	});
+
+	it('parses registries with resource definition payloads', () => {
+		const payload = sessionRegistriesSchema.parse({
+			actions: {},
+			buildings: {},
+			developments: {},
+			populations: {},
+			resources: {},
+			resourceDefinitions: [],
+			resourceGroups: [],
+		});
+		expect(payload.resourceDefinitions).toEqual([]);
+		expect(payload.resourceGroups).toEqual([]);
 	});
 });
 
@@ -119,6 +148,21 @@ describe('session player state snapshot', () => {
 	it('exposes the aiControlled flag', () => {
 		expectTypeOf<SessionPlayerStateSnapshot['aiControlled']>().toEqualTypeOf<
 			boolean | undefined
+		>();
+	});
+
+	it('tracks unified resource values and optional legacy payloads', () => {
+		expectTypeOf<SessionPlayerStateSnapshot['values']>().toEqualTypeOf<
+			Record<string, SessionResourceValueSnapshot> | undefined
+		>();
+		expectTypeOf<SessionPlayerStateSnapshot['resources']>().toEqualTypeOf<
+			Record<string, number>
+		>();
+		expectTypeOf<SessionPlayerStateSnapshot['stats']>().toEqualTypeOf<
+			Record<string, number>
+		>();
+		expectTypeOf<SessionPlayerStateSnapshot['population']>().toEqualTypeOf<
+			Record<string, number>
 		>();
 	});
 });
