@@ -9,6 +9,11 @@ import {
 	startConfigSchema,
 	ruleSetSchema,
 } from '../schema';
+import {
+	resourceV2DefinitionSchema,
+	resourceV2GroupDefinitionSchema,
+	resourceV2GroupParentSchema,
+} from '../../resourceV2/definitions';
 import type {
 	SessionIdentifier,
 	SessionMetadataSnapshot,
@@ -18,14 +23,6 @@ import type {
 	SessionRuntimeConfigResponse,
 } from '../../session/contracts';
 import type { SessionPlayerId } from '../../session';
-
-export const sessionResourceDefinitionSchema = z.object({
-	key: z.string(),
-	icon: z.string().optional(),
-	label: z.string().optional(),
-	description: z.string().optional(),
-	tags: z.array(z.string()).optional(),
-});
 
 const serializedRegistrySchema = <Shape extends ZodRawShape>(
 	schema: ZodObject<Shape>,
@@ -37,7 +34,9 @@ export const sessionRegistriesSchema = z
 		buildings: serializedRegistrySchema(buildingSchema),
 		developments: serializedRegistrySchema(developmentSchema),
 		populations: serializedRegistrySchema(populationSchema),
-		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		resources: serializedRegistrySchema(resourceV2DefinitionSchema),
+		resourceGroups: serializedRegistrySchema(resourceV2GroupDefinitionSchema),
+		globalActionCostResourceId: z.string().nullable(),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
@@ -47,7 +46,9 @@ export const runtimeConfigResponseSchema = z
 		phases: z.array(phaseSchema),
 		start: startConfigSchema,
 		rules: ruleSetSchema,
-		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		resources: serializedRegistrySchema(resourceV2DefinitionSchema),
+		resourceGroups: serializedRegistrySchema(resourceV2GroupDefinitionSchema),
+		globalActionCostResourceId: z.string().nullable(),
 		primaryIconId: z.string().nullable(),
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
@@ -76,6 +77,101 @@ const sessionMetadataDescriptorRecordSchema = z.record(
 	z.string(),
 	sessionMetadataDescriptorSchema,
 );
+
+const sessionResourceV2ValueDescriptorSchema = z
+	.object({
+		label: z.string().optional(),
+		icon: z.string().optional(),
+		description: z.string().optional(),
+		order: z.number(),
+		percent: z.boolean().optional(),
+	})
+	.passthrough();
+
+const sessionResourceV2TierStepDisplaySchema = z
+	.object({
+		label: z.string().optional(),
+		summaryToken: z.string().optional(),
+	})
+	.passthrough();
+
+const sessionResourceV2TierStepStatusSchema = z
+	.object({
+		id: z.string(),
+		min: z.number(),
+		max: z.number().optional(),
+		display: sessionResourceV2TierStepDisplaySchema.optional(),
+		active: z.boolean(),
+	})
+	.passthrough();
+
+const sessionResourceV2TierTrackDisplaySchema = z
+	.object({
+		title: z.string().optional(),
+		summaryToken: z.string().optional(),
+	})
+	.passthrough();
+
+const sessionResourceV2TierStatusSchema = z
+	.object({
+		trackId: z.string(),
+		activeStepId: z.string().optional(),
+		display: sessionResourceV2TierTrackDisplaySchema.optional(),
+		steps: z.array(sessionResourceV2TierStepStatusSchema),
+	})
+	.passthrough();
+
+const sessionResourceV2ValueMetadataSchema = z
+	.object({
+		descriptor: sessionResourceV2ValueDescriptorSchema,
+		groupId: z.string().optional(),
+		tier: sessionResourceV2TierStatusSchema.optional(),
+	})
+	.passthrough();
+
+const sessionResourceV2MetadataMapSchema = z.record(
+	z.string(),
+	sessionResourceV2ValueMetadataSchema,
+);
+
+const sessionResourceV2GroupPresentationSchema = z
+	.object({
+		groupId: z.string(),
+		parent: resourceV2GroupParentSchema,
+		children: z.array(z.string()),
+	})
+	.passthrough();
+
+const sessionResourceV2ValueEntrySchema = z
+	.object({
+		kind: z.literal('value'),
+		resourceId: z.string(),
+		descriptor: sessionResourceV2ValueDescriptorSchema,
+	})
+	.passthrough();
+
+const sessionResourceV2GroupParentEntrySchema = z
+	.object({
+		kind: z.literal('group-parent'),
+		resourceId: z.string(),
+		groupId: z.string(),
+		descriptor: resourceV2GroupParentSchema,
+		children: z.array(z.string()),
+	})
+	.passthrough();
+
+const sessionResourceV2OrderedValueEntrySchema = z.union([
+	sessionResourceV2ValueEntrySchema,
+	sessionResourceV2GroupParentEntrySchema,
+]);
+
+const sessionResourceV2MetadataSchema = z
+	.object({
+		descriptors: sessionResourceV2MetadataMapSchema,
+		groups: z.array(sessionResourceV2GroupPresentationSchema).optional(),
+		orderedValues: z.array(sessionResourceV2OrderedValueEntrySchema).optional(),
+	})
+	.passthrough();
 
 const sessionPhaseStepMetadataSchema = z
 	.object({
@@ -177,11 +273,9 @@ const sessionOverviewMetadataSchema = z
 
 export const sessionMetadataSnapshotSchema = z
 	.object({
-		resources: sessionMetadataDescriptorRecordSchema.optional(),
-		populations: sessionMetadataDescriptorRecordSchema.optional(),
+		values: sessionResourceV2MetadataSchema.optional(),
 		buildings: sessionMetadataDescriptorRecordSchema.optional(),
 		developments: sessionMetadataDescriptorRecordSchema.optional(),
-		stats: sessionMetadataDescriptorRecordSchema.optional(),
 		phases: z.record(z.string(), sessionPhaseMetadataSchema).optional(),
 		triggers: z.record(z.string(), sessionTriggerMetadataSchema).optional(),
 		assets: sessionMetadataDescriptorRecordSchema.optional(),

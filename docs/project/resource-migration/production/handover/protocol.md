@@ -1,14 +1,14 @@
 # Protocol Handover
 
 - **Prepared by:** gpt-5-codex
-- **Timestamp (UTC):** 2025-10-22 17:47
-- **Current Focus:** Resource Migration MVP protocol validators
+- **Timestamp (UTC):** 2025-10-23 15:12
+- **Current Focus:** Resource Migration MVP session contract migration
 - **State Summary:**
-  - Added ResourceV2 definition, tier, and group schemas with clamp-only reconciliation and enforced limited parents.
-  - `validateGameConfig` now accepts optional ResourceV2 payloads alongside legacy config blocks for transition coverage.
-  - Protocol tests cover duplicate tier guards, unsupported reconciliation, and parent mutation rejections.
+  - Session payloads now expose a unified `values` map plus ResourceV2 metadata (descriptors, groups, tier status, ordered blocks).
+  - Registry and runtime config responses include ResourceGroup definitions and the single global action cost resource id.
+  - Protocol schemas and tests verify the new ResourceV2 surfaces, removing legacy resource/stat/population fields.
 - **Next Suggested Tasks:**
-  - Wire engine/session consumers to read the limited parent flag set and block direct parent value mutations.
-  - Align content serialization to emit ResourceV2 payloads once downstream ingestion is ready.
+  - Update engine/session snapshot builders to populate `values`, `valueHistory`, and `valueSources` while dropping legacy maps.
+  - Coordinate web selectors/fixtures to read the ResourceV2 metadata payloads and recent value change contract.
 - **Risks / Blockers:**
-  - Confirm downstream expectations for the limited parent flag set representation (Set vs. array) before engine integration.
+  - Downstream packages still compile against legacy fields; expect breaking changes until engine/web migrations land.

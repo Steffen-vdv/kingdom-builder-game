@@ -6,25 +6,30 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type {
+	SessionResourceV2MetadataSnapshot,
+	SessionResourceV2RecentValueChange,
+	SessionResourceV2ValueSnapshotMap,
+} from './resourceV2';
 
 export type SessionPlayerId = 'A' | 'B';
 
-export type SessionStatSourceLink = {
+export type SessionValueSourceLink = {
 	type?: string;
 	id?: string;
 	detail?: string;
 	extra?: Record<string, unknown>;
 };
 
-export interface SessionStatSourceMeta {
+export interface SessionValueSourceMeta {
 	key: string;
 	longevity: 'ongoing' | 'permanent';
 	kind?: string;
 	id?: string;
 	detail?: string;
 	instance?: string;
-	dependsOn?: SessionStatSourceLink[];
-	removal?: SessionStatSourceLink;
+	dependsOn?: SessionValueSourceLink[];
+	removal?: SessionValueSourceLink;
 	effect?: {
 		type?: string;
 		method?: string;
@@ -32,9 +37,9 @@ export interface SessionStatSourceMeta {
 	extra?: Record<string, unknown>;
 }
 
-export interface SessionStatSourceContribution {
+export interface SessionValueSourceContribution {
 	amount: number;
-	meta: SessionStatSourceMeta;
+	meta: SessionValueSourceMeta;
 }
 
 export interface SessionLandSnapshot {
@@ -61,14 +66,12 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	statsHistory: Record<string, boolean>;
-	population: Record<string, number>;
+	values: SessionResourceV2ValueSnapshotMap;
+	valueHistory: Record<string, boolean>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
-	statSources: Record<string, Record<string, SessionStatSourceContribution>>;
+	valueSources: Record<string, Record<string, SessionValueSourceContribution>>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	passives: SessionPassiveSummary[];
@@ -132,9 +135,7 @@ export interface SessionAdvanceResult {
 }
 
 export interface PlayerSnapshotDeltaBucket {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
+	values: Record<string, number>;
 }
 
 export interface SimulateUpcomingPhasesIds {
@@ -174,10 +175,7 @@ export interface SessionRuleSnapshot {
 	winConditions: WinConditionDefinition[];
 }
 
-export interface SessionRecentResourceGain {
-	key: string;
-	amount: number;
-}
+export type SessionRecentResourceGain = SessionResourceV2RecentValueChange;
 
 export type SessionEffectLogMap = Record<string, ReadonlyArray<unknown>>;
 
@@ -281,11 +279,9 @@ export interface SessionTriggerMetadata {
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
+	values?: SessionResourceV2MetadataSnapshot;
 	buildings?: Record<string, SessionMetadataDescriptor>;
 	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
@@ -330,7 +326,6 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SerializedRegistry,
 	SessionMetadataSnapshot,
 	SessionMetadataSnapshotResponse,
@@ -348,6 +343,33 @@ export type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 } from './contracts';
+
+export type {
+	SessionResourceV2ValueSnapshot,
+	SessionResourceV2ValueSnapshotMap,
+	SessionResourceV2ValueDescriptor,
+	SessionResourceV2GroupParentDescriptor,
+	SessionResourceV2GroupPresentation,
+	SessionResourceV2TierStepStatus,
+	SessionResourceV2TierStepStatusDisplay,
+	SessionResourceV2TierTrackDisplay,
+	SessionResourceV2TierStatus,
+	SessionResourceV2ValueMetadata,
+	SessionResourceV2MetadataMap,
+	SessionResourceV2MetadataSnapshot,
+	SessionResourceV2RecentValueChange,
+	SessionResourceV2ValueEntry,
+	SessionResourceV2GroupParentEntry,
+	SessionResourceV2OrderedValueEntry,
+	SessionResourceV2OrderedValueBlock,
+} from './resourceV2';
+
+export {
+	createResourceV2ValueEntry,
+	createResourceV2GroupParentEntry,
+	isResourceV2GroupParentEntry,
+	flattenResourceV2OrderedBlocks,
+} from './resourceV2';
 
 export * as contracts from './contracts';
 export type { SessionGateway } from './gateway';

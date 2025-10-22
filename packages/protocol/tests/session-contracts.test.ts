@@ -26,13 +26,17 @@ import type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
+	SessionResourceV2ValueSnapshotMap,
+	SessionValueSourceContribution,
 } from '../src/session';
 import type {
 	SessionRuntimeConfigResponse,
 	SessionRunAiAction,
 	SessionRegistriesPayload,
 	SessionActionCategoryRegistry,
+	SerializedRegistry,
 } from '../src/session/contracts';
+import type { ResourceV2GroupDefinitionConfig } from '../src/resourceV2/definitions';
 
 describe('session contract schemas', () => {
 	it('match action support request and response types', () => {
@@ -112,6 +116,12 @@ describe('session contract schemas', () => {
 		expectTypeOf<SessionRegistriesPayload['actionCategories']>().toEqualTypeOf<
 			SessionActionCategoryRegistry | undefined
 		>();
+		expectTypeOf<SessionRegistriesPayload['resourceGroups']>().toEqualTypeOf<
+			SerializedRegistry<ResourceV2GroupDefinitionConfig>
+		>();
+		expectTypeOf<
+			SessionRegistriesPayload['globalActionCostResourceId']
+		>().toEqualTypeOf<string | null>();
 	});
 });
 
@@ -119,6 +129,18 @@ describe('session player state snapshot', () => {
 	it('exposes the aiControlled flag', () => {
 		expectTypeOf<SessionPlayerStateSnapshot['aiControlled']>().toEqualTypeOf<
 			boolean | undefined
+		>();
+	});
+
+	it('exposes ResourceV2-aligned value surfaces', () => {
+		expectTypeOf<
+			SessionPlayerStateSnapshot['values']
+		>().toEqualTypeOf<SessionResourceV2ValueSnapshotMap>();
+		expectTypeOf<SessionPlayerStateSnapshot['valueHistory']>().toEqualTypeOf<
+			Record<string, boolean>
+		>();
+		expectTypeOf<SessionPlayerStateSnapshot['valueSources']>().toEqualTypeOf<
+			Record<string, Record<string, SessionValueSourceContribution>>
 		>();
 	});
 });

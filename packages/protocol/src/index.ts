@@ -175,6 +175,23 @@ export type {
 	SessionActionCostMap,
 	SessionRequirementFailure,
 	SessionActionRequirementList,
+	SessionResourceV2ValueSnapshot,
+	SessionResourceV2ValueSnapshotMap,
+	SessionResourceV2ValueDescriptor,
+	SessionResourceV2GroupParentDescriptor,
+	SessionResourceV2GroupPresentation,
+	SessionResourceV2TierStepStatus,
+	SessionResourceV2TierStepStatusDisplay,
+	SessionResourceV2TierTrackDisplay,
+	SessionResourceV2TierStatus,
+	SessionResourceV2ValueMetadata,
+	SessionResourceV2MetadataMap,
+	SessionResourceV2MetadataSnapshot,
+	SessionResourceV2RecentValueChange,
+	SessionResourceV2ValueEntry,
+	SessionResourceV2GroupParentEntry,
+	SessionResourceV2OrderedValueEntry,
+	SessionResourceV2OrderedValueBlock,
 } from './session';
 export type {
 	SessionIdentifier,
@@ -187,7 +204,6 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SerializedRegistry,
 	SessionActionCategoryRegistry,
 	SessionUpdatePlayerNameRequest,
@@ -206,6 +222,12 @@ export type {
 	SessionRuntimeConfigResponse,
 	SessionMetadataSnapshotResponse,
 } from './session/contracts';
+export {
+	createResourceV2ValueEntry,
+	createResourceV2GroupParentEntry,
+	isResourceV2GroupParentEntry,
+	flattenResourceV2OrderedBlocks,
+} from './session';
 export type { SessionGateway } from './session/gateway';
 export type {
 	ActionEffectChoice,
