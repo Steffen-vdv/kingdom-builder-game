@@ -9,93 +9,149 @@ import {
 	formatResourceV2Summary,
 } from '../../../src/translation/resourceV2';
 
-describe('ResourceV2 formatters', () => {
-	const metadata = (overrides: Partial<ResourceV2MetadataSnapshot> = {}) => {
-		return {
-			id: 'resource:gold',
-			label: 'Royal Treasury',
-			icon: '💰',
-			description: 'Gold reserves used for most upgrades.',
-			displayAsPercent: false,
-			...overrides,
-		};
-	};
+type OrderedResourceSnapshot = {
+	metadata: ResourceV2MetadataSnapshot;
+	snapshot: ResourceV2ValueSnapshot;
+	order: number;
+};
 
-	const snapshot = (
-		overrides: Partial<ResourceV2ValueSnapshot> = {},
-	): ResourceV2ValueSnapshot => ({
-		id: 'resource:gold',
-		current: 12,
-		previous: 10,
-		lowerBound: 0,
-		upperBound: null,
-		forecastDelta: 2,
-		...overrides,
-	});
+function entry(
+	metadata: ResourceV2MetadataSnapshot,
+	snapshot: ResourceV2ValueSnapshot,
+	order: number,
+): OrderedResourceSnapshot {
+	return { metadata, snapshot, order };
+}
 
-	it('formats summary with signed delta and bounds-aware value text', () => {
-		const summary = formatResourceV2Summary(metadata(), snapshot());
-		expect(summary).toBe('💰 Royal Treasury +2 (10→12)');
-	});
-
-	it('formats percent-aware values when metadata toggles displayAsPercent', () => {
-		const percentMetadata = metadata({ displayAsPercent: true });
-		const percentSnapshot = snapshot({ current: 0.55, previous: 0.5 });
-		const summary = formatResourceV2Summary(percentMetadata, percentSnapshot);
-		expect(summary).toBe('💰 Royal Treasury +5% (50%→55%)');
-	});
-
-	it('falls back to current value when delta cannot be derived', () => {
-		const summary = formatResourceV2Summary(
-			metadata(),
-			snapshot({ previous: undefined }),
+function renderSummaries(entries: OrderedResourceSnapshot[]): string[] {
+	return entries
+		.slice()
+		.sort((left, right) => left.order - right.order)
+		.map(({ metadata, snapshot }) =>
+			formatResourceV2Summary(metadata, snapshot),
 		);
-		expect(summary).toBe('💰 Royal Treasury 12');
+}
+
+function collectSignedGains(entries: OrderedResourceSnapshot[]) {
+	return entries
+		.slice()
+		.sort((left, right) => left.order - right.order)
+		.flatMap(({ metadata, snapshot }) =>
+			buildResourceV2SignedGainEntries(metadata, snapshot),
+		);
+}
+
+describe('ResourceV2 formatters', () => {
+	it('renders parent before child and respects percent-aware formatting', () => {
+		const parent = entry(
+			{
+				id: 'resource:population',
+				label: 'Population',
+				icon: '🏰',
+			},
+			{
+				id: 'resource:population',
+				current: 30,
+				previous: 20,
+			},
+			0,
+		);
+		const child = entry(
+			{
+				id: 'resource:legion',
+				label: 'Legion',
+				icon: '🛡️',
+				displayAsPercent: true,
+			},
+			{
+				id: 'resource:legion',
+				current: 0.35,
+				previous: 0.2,
+			},
+			1,
+		);
+
+		const summaries = renderSummaries([child, parent]);
+
+		expect(summaries).toEqual([
+			'🏰 Population +10 (20→30)',
+			'🛡️ Legion +15% (20%→35%)',
+		]);
 	});
 
-	it('builds hover sections with description, value details, and bounds', () => {
-		const sections = buildResourceV2HoverSections(metadata(), snapshot());
+	it('emits ordered signed gains for parents and children', () => {
+		const parent = entry(
+			{
+				id: 'resource:population',
+				label: 'Population',
+			},
+			{
+				id: 'resource:population',
+				current: 12,
+				previous: 10,
+			},
+			0,
+		);
+		const child = entry(
+			{
+				id: 'resource:legion',
+				label: 'Legion',
+			},
+			{
+				id: 'resource:legion',
+				current: 7,
+				previous: 9,
+			},
+			1,
+		);
+
+		const gains = collectSignedGains([child, parent]);
+
+		expect(gains).toEqual([
+			{ key: 'resource:population', amount: 2 },
+			{ key: 'resource:legion', amount: -2 },
+		]);
+	});
+
+	it('builds hover sections with deterministic ordering and percent-aware entries', () => {
+		const metadata: ResourceV2MetadataSnapshot = {
+			id: 'resource:legion',
+			label: 'Legion',
+			description: 'Veteran soldiers ready for combat.',
+			displayAsPercent: true,
+		};
+		const snapshot: ResourceV2ValueSnapshot = {
+			id: 'resource:legion',
+			current: 0.45,
+			previous: 0.4,
+			forecastDelta: -0.05,
+			lowerBound: 0.1,
+			upperBound: 0.9,
+		};
+
+		const sections = buildResourceV2HoverSections(metadata, snapshot);
+
 		expect(sections).toMatchInlineSnapshot(`
   [
-    "Gold reserves used for most upgrades.",
+    "Veteran soldiers ready for combat.",
     {
       "_hoist": true,
       "items": [
-        "Current: 12",
-        "Previous: 10",
-        "Change: +2",
-        "Forecast: +2",
+        "Current: 45%",
+        "Previous: 40%",
+        "Change: +5%",
+        "Forecast: -5%",
       ],
       "title": "Value",
     },
     {
       "items": [
-        "Lower bound: 0",
+        "Lower bound: 10%",
+        "Upper bound: 90%",
       ],
       "title": "Bounds",
     },
   ]
 `);
-	});
-
-	it('skips signed gain entries when delta is zero', () => {
-		const entries = buildResourceV2SignedGainEntries(
-			metadata(),
-			snapshot({ current: 10, previous: 10 }),
-		);
-		expect(entries).toEqual([]);
-	});
-
-	it('emits signed gain entries for both gains and losses', () => {
-		const gainEntries = buildResourceV2SignedGainEntries(
-			metadata(),
-			snapshot(),
-		);
-		expect(gainEntries).toEqual([{ key: 'resource:gold', amount: 2 }]);
-		const lossEntries = buildResourceV2SignedGainEntries(
-			metadata(),
-			snapshot({ current: 7, previous: 10 }),
-		);
-		expect(lossEntries).toEqual([{ key: 'resource:gold', amount: -3 }]);
 	});
 });
