@@ -178,6 +178,14 @@ export function deriveResourceV2PrimaryIconCandidate(
 	return groupArtifacts.primaryIconCandidate;
 }
 
+export const RESOURCE_V2_DEFINITION_ARTIFACTS = createResourceV2Registry();
+
+export const RESOURCE_V2_DEFINITION_REGISTRY = RESOURCE_V2_DEFINITION_ARTIFACTS.registry;
+
+export const RESOURCE_V2_GROUP_ARTIFACTS = createResourceGroupRegistry();
+
+export const RESOURCE_V2_GROUP_REGISTRY = RESOURCE_V2_GROUP_ARTIFACTS.registry;
+
 export { RESOURCE_V2_DEFINITIONS } from './definitions';
 export { RESOURCE_V2_GROUPS } from './groups';
 export { resourceV2Add, resourceV2Definition, resourceV2Group, resourceV2GroupParent, resourceV2Remove, resourceV2Tier, resourceV2TierTrack } from '../config/builders/resourceV2';

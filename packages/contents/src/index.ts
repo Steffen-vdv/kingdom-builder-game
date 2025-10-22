@@ -14,7 +14,11 @@ export {
 	createResourceGroupRegistry,
 	createResourceV2Registry,
 	deriveResourceV2PrimaryIconCandidate,
+	RESOURCE_V2_DEFINITION_ARTIFACTS,
+	RESOURCE_V2_DEFINITION_REGISTRY,
 	RESOURCE_V2_DEFINITIONS,
+	RESOURCE_V2_GROUP_ARTIFACTS,
+	RESOURCE_V2_GROUP_REGISTRY,
 	RESOURCE_V2_GROUPS,
 	resourceV2Add,
 	resourceV2Definition,
@@ -40,7 +44,8 @@ export { GAME_START } from './game';
 export { RULES } from './rules';
 export { OVERVIEW_CONTENT, type OverviewContentTemplate, type OverviewHeroTemplate, type OverviewSectionTemplate, type OverviewTokenCandidates, type OverviewTokenCategoryName } from './overview';
 export { TIER_SUMMARY_STORE, type TierSummaryStore, type TierSummaryGroup } from './tieredResources';
-export { PRIMARY_ICON_ID } from './startup';
+export { PRIMARY_ICON_ID, RESOURCE_V2_STARTUP_METADATA } from './startup';
+export type { ResourceV2StartupMetadata } from './startup';
 export { type ActionDef } from './actions';
 export type { ActionId as ActionIdType } from './actions';
 export type { BuildingDef } from './defs';

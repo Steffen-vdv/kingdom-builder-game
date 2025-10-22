@@ -54,6 +54,20 @@ Following this checklist keeps the content registry clean and prevents confusing
 runtime failures. The tests in `packages/contents/tests/builder-validations.test.ts`
 cover the most common mistakes so new messages stay informative.
 
+## ResourceV2 builders (preview)
+
+Resource migrations will happen incrementally. The new `resourceV2*` builder
+family is already available in `src/config/builders/resourceV2.ts` for designers
+to define upcoming resources, tier tracks, and groups. The exported
+`RESOURCE_V2_STARTUP_METADATA` helper in `src/startup.ts` surfaces the empty
+definition/group registries so downstream packages can begin wiring the new
+shapes without waiting for populated content.
+
+During this interim period, keep using the legacy `Resource`, `Stat`, and
+population registries for live data. Actual migrations will drop concrete
+ResourceV2 definitions into `src/resourceV2` in future tasks once the engine and
+web consumers are ready.
+
 ## Happiness thresholds
 
 The happiness tier builder lives in `packages/contents/src/rules.ts`. When
