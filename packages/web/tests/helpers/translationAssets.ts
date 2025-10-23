@@ -7,6 +7,8 @@ export function createDefaultTranslationAssets() {
 		{
 			populations: registries.populations,
 			resources: registries.resources,
+			resourceDefinitions: registries.resourceDefinitions,
+			resourceGroups: registries.resourceGroups,
 		},
 		metadata,
 		{ rules: ruleSnapshot },

@@ -6,6 +6,7 @@ import type {
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
+import { createResourceV2Selectors } from '../resourceV2/selectors';
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
@@ -97,21 +98,57 @@ function buildPopulationMap(
 function buildResourceMap(
 	resources: SessionRegistries['resources'],
 	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
+	resourceSelectors: ReturnType<typeof createResourceV2Selectors>,
 ): Readonly<Record<string, TranslationIconLabel>> {
-	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [key, definition] of Object.entries(resources)) {
-		const entry: TranslationIconLabel = {};
-		if (definition.icon !== undefined) {
-			entry.icon = definition.icon;
+	const mutableEntries = new Map<string, TranslationIconLabel>();
+
+	for (const [id, entry] of resourceSelectors.nodes.entries()) {
+		const base: TranslationIconLabel = {};
+		if (entry.display?.icon !== undefined) {
+			base.icon = entry.display.icon;
 		}
-		entry.label = definition.label ?? definition.key ?? key;
-		if (definition.description !== undefined) {
-			entry.description = definition.description;
+		if (entry.display?.name !== undefined) {
+			base.label = entry.display.name;
 		}
-		const descriptor = descriptors?.[key];
-		entries[key] = mergeIconLabel(entry, descriptor, entry.label ?? key);
+		if (entry.display?.description !== undefined) {
+			base.description = entry.display.description;
+		}
+		if (entry.display?.displayAsPercent !== undefined) {
+			base.displayAsPercent = entry.display.displayAsPercent;
+		}
+		mutableEntries.set(id, base);
 	}
-	return Object.freeze(entries);
+
+	for (const [key, definition] of Object.entries(resources)) {
+		const base = mutableEntries.get(key) ?? {};
+		if (base.icon === undefined && definition.icon !== undefined) {
+			base.icon = definition.icon;
+		}
+		if (base.label === undefined) {
+			base.label = definition.label ?? definition.key ?? key;
+		}
+		if (
+			base.description === undefined &&
+			definition.description !== undefined
+		) {
+			base.description = definition.description;
+		}
+		mutableEntries.set(key, base);
+	}
+
+	const record: Record<string, TranslationIconLabel> = {};
+	const descriptorKeys = descriptors ? Object.keys(descriptors) : [];
+	const allKeys = new Set<string>([
+		...mutableEntries.keys(),
+		...descriptorKeys,
+	]);
+	for (const key of allKeys) {
+		const base = mutableEntries.get(key);
+		const descriptor = descriptors?.[key];
+		const fallback = base?.label ?? key;
+		record[key] = mergeIconLabel(base, descriptor, fallback);
+	}
+	return Object.freeze(record);
 }
 
 function buildStatMap(
@@ -234,7 +271,10 @@ function requireMetadataRecord(
 }
 
 export function createTranslationAssets(
-	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
+	registries: Pick<
+		SessionRegistries,
+		'populations' | 'resources' | 'resourceDefinitions' | 'resourceGroups'
+	>,
 	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
@@ -262,7 +302,15 @@ export function createTranslationAssets(
 		registries.populations,
 		populationMetadata,
 	);
-	const resources = buildResourceMap(registries.resources, resourceMetadata);
+	const resourceSelectors = createResourceV2Selectors(
+		registries.resourceDefinitions,
+		registries.resourceGroups,
+	);
+	const resources = buildResourceMap(
+		registries.resources,
+		resourceMetadata,
+		resourceSelectors,
+	);
 	const stats = buildStatMap(statMetadata);
 	const populationAsset = mergeIconLabel(
 		undefined,
@@ -308,5 +356,6 @@ export function createTranslationAssets(
 		triggers,
 		tierSummaries,
 		formatPassiveRemoval: formatRemoval,
+		resourceV2: resourceSelectors,
 	});
 }

@@ -50,7 +50,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T16 | 2025-10-24 | gpt-5-codex | packages/engine/src/log.ts; packages/engine/src/runtime/player_snapshot.ts; packages/engine/src/runtime/engine_snapshot.ts; packages/engine/src/resourceV2/service.ts; packages/server/src/transport/engineTraceNormalizer.ts; packages/server/tests/engineTraceNormalizer.test.ts; packages/protocol/src/actions/contracts.ts; packages/protocol/src/config/action_contracts.ts; packages/protocol/tests/session-contracts.test.ts; packages/engine/tests/runtime/session.test.ts; tests/integration/resourceV2-snapshot.test.ts; docs/project/resource-migration/production/production-living-docs.md | Populated ResourceV2 player values and metadata across engine session snapshots and action traces, normalized server traces with deep-cloned value maps, and added regression coverage for ordering, parent rollups, and recent gain history. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine`; `npm run test:integration` | Coordinate client/web consumers to adopt the ResourceV2 trace payloads and schedule retirement of the legacy resource/stat mirrors once downstream adoption is complete. |
 | Resource Migration MVP - P3 - T17 | 2025-10-24 | gpt-5-codex | packages/server/src/session/SessionManager.ts; packages/server/src/session/sessionConfigAssets.ts; packages/server/src/session/sessionMetadataBuilder.ts; packages/server/src/transport/SessionTransportBase.ts; packages/server/tests/**/\*.ts; docs/project/resource-migration/production/production-living-docs.md | Propagated ResourceV2 definition/group registries and default value maps through session gateways, expanded HTTP transport coverage for legacy compatibility, and refreshed project docs. | `npm run lint`; `npm run test --workspace=@kingdom-builder/server` | Coordinate web/client consumers to adopt dual registry payloads and schedule removal of legacy-only fallbacks once downstream adoption is confirmed. |
 | Resource Migration MVP - P3 - T18 | 2025-10-24 | gpt-5-codex | tests/integration/resourceV2-server-session.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added public server integration specs that spin up Fastify, create sessions via HttpSessionGateway, assert ResourceV2 registries/value maps/recent gains with legacy resource/stat data, and document coverage/results. | `npm run lint`; `npm run test:integration` | Extend ResourceV2 HTTP coverage to AI turn/metadata endpoints and coordinate web/client adoption of the dual payloads. |
-| Resource Migration MVP - P3 - T19 | 2025-**-** | _(add entry)_ | | _(reserved for T19 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T19 | 2025-10-24 | gpt-5-codex | packages/web/src/translation/resourceV2/selectors.ts; packages/web/src/translation/context/assets.ts; packages/web/src/translation/context/assetSelectors.ts; packages/web/src/translation/context/createTranslationContext.ts; packages/web/src/translation/context/types.ts; packages/web/src/state/sessionRegistries.ts; packages/web/src/utils/stats/format.ts; packages/web/tests/** | Introduced ResourceV2 metadata selectors covering percent flags, bounds, tier tracks, and global costs, piped registries/groups into translation assets/hooks with legacy fallbacks, and added translator test fixtures validating ResourceV2 selectors. | `npm run lint --workspace=@kingdom-builder/web`; `npm run test --workspace=@kingdom-builder/web` _(fails: Vite cannot resolve @kingdom-builder/engine`/`@kingdom-builder/testing entries in sandbox workspace)_ | Build/publish the engine/testing workspaces so Vitest can resolve their exports, then re-run the web suite and extend selector coverage for parent-only metadata and multi-tier tracks. |
 | Resource Migration MVP - P3 - T20 | 2025-**-** | _(add entry)_ | | _(reserved for T20 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T21 | 2025-**-** | _(add entry)_ | | _(reserved for T21 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T22 | 2025-**-** | _(add entry)_ | | _(reserved for T22 assignee – update only this row.)_ | | |
@@ -60,7 +60,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T26 | 2025-**-** | _(add entry)_ | | _(reserved for T26 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T27 | 2025-**-** | _(add entry)_ | | _(reserved for T27 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T28 | 2025-**-** | _(add entry)_ | | _(reserved for T28 assignee – update only this row.)_ | | |
-| Resource Migration MVP - P3 - T29 | 2025-**-** | _(add entry)_ | | _(reserved for T29 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T29 | 2025-**-\*\* | _(add entry)_ | | _(reserved for T29 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T30 | 2025-\*\*-\*\* | _(add entry)_ | | \_(reserved for T30 assignee – update only this row.)\_ | | |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -68,15 +68,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-24 22:15
-**Current Focus:** Resource Migration MVP - P3 - T18 Public server ResourceV2 session integration
-**State Summary:** Fastify-backed integration specs now spin up the public server, create sessions through HttpSessionGateway, confirm ResourceV2 registries/value maps/recent gain logs ship with legacy resources/stats, and verify parent mutation attempts return the expected conflict response.
+**Timestamp (UTC):** 2025-10-24 23:45
+**Current Focus:** Resource Migration MVP - P3 - T19 Web translation metadata migration
+**State Summary:** Web translators now clone ResourceV2 definition/group registries into translation assets, expose selectors for percent formatting, bounds, tier tracks, and global action costs, and surface the metadata through session registries, context helpers, and stats formatting while keeping legacy fallbacks online during migration.
 
 - **Next Suggested Tasks:**
-  - Extend HTTP integration coverage to AI turns, simulation, and metadata endpoints to ensure ResourceV2 payloads persist across all session flows.
-  - Update web/client consumers and snapshot mappers to expect ResourceV2 value maps alongside legacy data, adding dual-path regression tests.
-  - Audit server error translation for additional ResourceV2 guardrails (e.g., bound increases) so clients receive consistent protocol messaging.
-- **Blocking Issues / Risks:** Downstream clients still rely on legacy-only payloads; coordinate adoption timelines so dual-delivery coverage lands before legacy fields are deprecated.
+  - Resolve Vitest package resolution for `@kingdom-builder/engine`/`@kingdom-builder/testing` so the full web suite can pass and backfill coverage for multi-tier and parent-only metadata cases.
+  - Plumb the new `resourceV2` selector outputs into UI components (resource bars, overview tokens, tier tracks) and deprecate ad-hoc percent formatting hooks.
+  - Coordinate with engine/server teams on removing legacy resource/stat dependencies once ResourceV2 selectors are wired through downstream views.
+- **Blocking Issues / Risks:** The web test runner cannot currently resolve `@kingdom-builder/engine` and `@kingdom-builder/testing` packages, preventing end-to-end verification of the translation changes.
 
 ## 5. Notes & Decisions Archive
 

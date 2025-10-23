@@ -3,6 +3,11 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
+import type {
+	ResourceV2BoundsMetadata,
+	ResourceV2TierTrackDefinition,
+} from '@kingdom-builder/protocol';
+import type { ResourceV2GlobalActionCostDisplay } from '../resourceV2/selectors';
 
 interface IconLabelDisplay {
 	icon?: string;
@@ -87,4 +92,31 @@ export function selectTierSummary(
 		return undefined;
 	}
 	return assets?.tierSummaries?.[token];
+}
+
+export function resourceDisplaysAsPercent(
+	assets: TranslationAssets | undefined,
+	resourceId: string,
+): boolean {
+	return assets?.resourceV2.displaysAsPercent(resourceId) ?? false;
+}
+
+export function selectResourceBounds(
+	assets: TranslationAssets | undefined,
+	resourceId: string,
+): ResourceV2BoundsMetadata | undefined {
+	return assets?.resourceV2.selectBounds(resourceId);
+}
+
+export function selectResourceTierTrack(
+	assets: TranslationAssets | undefined,
+	resourceId: string,
+): ResourceV2TierTrackDefinition | undefined {
+	return assets?.resourceV2.selectTierTrack(resourceId);
+}
+
+export function selectGlobalActionCost(
+	assets: TranslationAssets | undefined,
+): ResourceV2GlobalActionCostDisplay | undefined {
+	return assets?.resourceV2.selectGlobalActionCost();
 }

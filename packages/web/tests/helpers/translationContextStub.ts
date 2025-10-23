@@ -6,6 +6,7 @@ import type {
 	TranslationPlayer,
 	TranslationRegistry,
 } from '../../src/translation/context';
+import { createResourceV2Selectors } from '../../src/translation/resourceV2/selectors';
 import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
@@ -25,6 +26,7 @@ const EMPTY_ASSETS: TranslationAssets = {
 	tierSummaries: {},
 	formatPassiveRemoval: (description: string) =>
 		`Active as long as ${description}`,
+	resourceV2: createResourceV2Selectors(),
 };
 
 const EMPTY_PASSIVES: TranslationPassives = {

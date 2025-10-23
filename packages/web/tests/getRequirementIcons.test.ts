@@ -73,6 +73,7 @@ const createTranslationContext = (
 		formatPassiveRemoval:
 			assetOverrides.formatPassiveRemoval ??
 			((description: string) => baseAssets.formatPassiveRemoval(description)),
+		resourceV2: baseAssets.resourceV2,
 	};
 	return {
 		actions: new Map([

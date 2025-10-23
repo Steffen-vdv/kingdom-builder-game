@@ -29,6 +29,8 @@ interface UseCompensationLoggerOptions {
 		| 'developments'
 		| 'populations'
 		| 'resources'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>;
 }
 

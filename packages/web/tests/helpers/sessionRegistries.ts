@@ -100,6 +100,12 @@ function cloneRegistriesPayload(
 			]),
 		),
 		actionCategories: cloneEntries(payload.actionCategories),
+		resourceDefinitions: (payload.resourceDefinitions ?? []).map((definition) =>
+			structuredClone(definition),
+		),
+		resourceGroups: (payload.resourceGroups ?? []).map((group) =>
+			structuredClone(group),
+		),
 	};
 }
 

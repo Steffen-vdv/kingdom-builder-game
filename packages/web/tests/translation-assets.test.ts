@@ -9,6 +9,8 @@ describe('translation assets', () => {
 			{
 				populations: registries.populations,
 				resources: registries.resources,
+				resourceDefinitions: registries.resourceDefinitions,
+				resourceGroups: registries.resourceGroups,
 			},
 			metadata,
 			{ rules: ruleSnapshot },
@@ -37,15 +39,18 @@ describe('translation assets', () => {
 			assets: { ...metadata.assets },
 		};
 		delete metadataWithoutLand.assets.land;
-		expect(() =>
+		const typedMetadata = metadataWithoutLand as typeof metadata;
+		const createAssets = () =>
 			createTranslationAssets(
 				{
 					populations: registries.populations,
 					resources: registries.resources,
+					resourceDefinitions: registries.resourceDefinitions,
+					resourceGroups: registries.resourceGroups,
 				},
-				metadataWithoutLand as typeof metadata,
+				typedMetadata,
 				{ rules: ruleSnapshot },
-			),
-		).toThrowError(/assets\.land/);
+			);
+		expect(createAssets).toThrowError(/assets\.land/);
 	});
 });
