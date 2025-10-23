@@ -6,6 +6,7 @@ import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
 import PassiveDisplay from './PassiveDisplay';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import ResourceHud from '../resources/ResourceHud';
 
 interface PlayerPanelProps {
 	player: SessionPlayerStateSnapshot;
@@ -72,6 +73,9 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	]
 		.filter(Boolean)
 		.join(' ');
+	const hasResourceV2 = Boolean(
+		player.values && Object.keys(player.values).length > 0,
+	);
 	return (
 		<div ref={panelRef} className={panelClassName}>
 			<h3 className="text-lg font-semibold tracking-tight">
@@ -86,7 +90,11 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				ref={animateBar}
 				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
 			>
-				<ResourceBar player={player} />
+				{hasResourceV2 ? (
+					<ResourceHud player={player} />
+				) : (
+					<ResourceBar player={player} />
+				)}
 				<PopulationInfo player={player} />
 			</div>
 			<div ref={animateSections} className="flex flex-col gap-2">
