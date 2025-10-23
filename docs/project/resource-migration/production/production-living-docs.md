@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-23 10:34
-- **Current Focus:** Resource Migration MVP - P2 - T19 - Happiness ResourceV2 tier migration scaffold
-- **State Summary:** Added the Happiness ResourceV2 definition with a tier track generated from `TIER_CONFIGS`, preserving passive enter/exit effects and descriptive summaries. Documented the change in [`./worklogs/T19-happiness-tier.md`](./worklogs/T19-happiness-tier.md) after validating tier thresholds against the legacy rules config.
+- **Timestamp (UTC):** 2025-10-27 14:05
+- **Current Focus:** Resource Migration MVP - P2 - T20 - Stat Resource Definitions
+- **State Summary:** Added ResourceV2 definitions for Max Population, Army Strength, Fortification Strength, Absorption, Growth, and War Weariness, preserving legacy descriptions and percent-formatting flags. Captured bound and formatting decisions in [`worklogs/T20-stat-defs.md`](../../../../worklogs/T20-stat-defs.md).
 - **Next Suggested Tasks:**
-  - Plan registry wiring so the Happiness ResourceV2 metadata can ship alongside the existing legacy happiness track during the transition.
-  - Update integration tests and synthetic fixtures to consume tier data from the ResourceV2 catalog once the engine exposes the new metadata maps.
-  - Coordinate naming/order decisions for future tiered resources to keep definition conventions consistent with the new happiness entry.
-- **Blocking Issues / Risks:** ResourceV2 registries still lack happiness wiring, so downstream consumers cannot exercise the new tier track until the bootstrap path is implemented.
+  - Confirm identifier/grouping conventions for stat resources once registry wiring begins so downstream consumers can load them predictably.
+  - Wire the new definitions into the ResourceV2 registry alongside existing legacy stat data for parallel testing.
+  - Audit translation surfaces to ensure percent formatting is respected when ResourceV2 stats replace the legacy metadata.
+- **Blocking Issues / Risks:** ResourceV2 registries still lack stat wiring, so the new definitions remain unused until the bootstrap path lands.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
