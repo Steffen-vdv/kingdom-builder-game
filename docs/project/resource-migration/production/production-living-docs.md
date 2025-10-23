@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 14:05
-- **Current Focus:** Resource Migration MVP - P2 - T20 - Stat Resource Definitions
-- **State Summary:** Added ResourceV2 definitions for Max Population, Army Strength, Fortification Strength, Absorption, Growth, and War Weariness, preserving legacy descriptions and percent-formatting flags. Captured bound and formatting decisions in [`worklogs/T20-stat-defs.md`](../../../../worklogs/T20-stat-defs.md).
+- **Timestamp (UTC):** 2025-10-27 15:20
+- **Current Focus:** Resource Migration MVP - P2 - T21 - Population Resource Definitions
+- **State Summary:** Authored ResourceV2 definitions for Council, Legion, and Fortifier populations using the legacy metadata for icon/label/description parity, and introduced a Population group with a virtual parent (`resource:population:total`) to aggregate child role values. Details recorded in [`worklogs/T21-population-resources.md`](../../../../worklogs/T21-population-resources.md).
 - **Next Suggested Tasks:**
-  - Confirm identifier/grouping conventions for stat resources once registry wiring begins so downstream consumers can load them predictably.
-  - Wire the new definitions into the ResourceV2 registry alongside existing legacy stat data for parallel testing.
-  - Audit translation surfaces to ensure percent formatting is respected when ResourceV2 stats replace the legacy metadata.
-- **Blocking Issues / Risks:** ResourceV2 registries still lack stat wiring, so the new definitions remain unused until the bootstrap path lands.
+  - Validate group ordering conventions against upcoming core resource and stat groups before registries go live.
+  - Decide whether an explicit citizen/unassigned population resource is required for MVP parity.
+  - Begin wiring the population resource definitions into the ResourceV2 registries once the registry loader exists.
+- **Blocking Issues / Risks:** ResourceV2 registry wiring is still pending, so the new definitions are not yet surfaced to runtime consumers.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
