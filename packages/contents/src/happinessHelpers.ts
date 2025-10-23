@@ -2,8 +2,8 @@ import type { EffectConfig } from '@kingdom-builder/protocol';
 import { costModParams, developmentTarget, resultModParams, statAddEffect, effect } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './config/builderShared';
 import type { passiveParams } from './config/builders';
-import { Resource } from './resources';
-import { Stat } from './stats';
+import type { ResourceKey } from './resources';
+import type { StatKey } from './stats';
 
 export type HappinessTierSlug = 'despair' | 'misery' | 'grim' | 'unrest' | 'steady' | 'content' | 'joyful' | 'elated' | 'ecstatic';
 
@@ -20,9 +20,12 @@ const DEVELOPMENT_EVALUATION = developmentTarget();
 export const incomeModifier = (id: string, percent: number) =>
 	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(DEVELOPMENT_EVALUATION).percent(percent).build()).build();
 
-export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).key(Resource.gold).percent(-0.2).build()).build();
+const GOLD_RESOURCE_KEY: ResourceKey = 'gold';
+const GROWTH_STAT_KEY: StatKey = 'growth';
 
-export const growthBonusEffect = (amount: number) => statAddEffect(Stat.growth, amount);
+export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).key(GOLD_RESOURCE_KEY).percent(-0.2).build()).build();
+
+export const growthBonusEffect = (amount: number) => statAddEffect(GROWTH_STAT_KEY, amount);
 
 type TierPassiveEffectOptions = {
 	tierId: string;
