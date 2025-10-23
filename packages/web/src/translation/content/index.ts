@@ -24,3 +24,4 @@ import './building';
 import './land';
 import './tier';
 import './population';
+import '../resourceV2';
