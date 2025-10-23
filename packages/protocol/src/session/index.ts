@@ -1,5 +1,11 @@
 import type { EffectDef } from '../effects';
 import type {
+	SessionPlayerResourceV2Snapshot,
+	SessionResourceV2GroupSnapshot,
+	SessionResourceV2MetadataSnapshot,
+} from './resourceV2';
+import type { SessionOverviewMetadata } from './overview';
+import type {
 	HappinessTierDefinition,
 	PassiveMetadata,
 	PhaseSkipConfig,
@@ -72,6 +78,7 @@ export interface SessionPlayerStateSnapshot {
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	passives: SessionPassiveSummary[];
+	resourceV2?: SessionPlayerResourceV2Snapshot;
 }
 
 export interface SessionGameConclusionSnapshot {
@@ -201,61 +208,6 @@ export interface SessionMetadataDescriptor {
 	format?: SessionMetadataFormat;
 }
 
-export type SessionOverviewTokenCategoryName =
-	| 'actions'
-	| 'phases'
-	| 'resources'
-	| 'stats'
-	| 'population'
-	| 'static';
-
-export type SessionOverviewTokenMap = Partial<
-	Record<SessionOverviewTokenCategoryName, Record<string, string[]>>
->;
-
-export interface SessionOverviewHero {
-	badgeIcon?: string;
-	badgeLabel?: string;
-	title?: string;
-	intro?: string;
-	paragraph?: string;
-	tokens?: Record<string, string>;
-}
-
-export interface SessionOverviewListItem {
-	icon?: string;
-	label: string;
-	body: string[];
-}
-
-export interface SessionOverviewParagraphSection {
-	kind: 'paragraph';
-	id: string;
-	icon: string;
-	title: string;
-	span?: boolean;
-	paragraphs: string[];
-}
-
-export interface SessionOverviewListSection {
-	kind: 'list';
-	id: string;
-	icon: string;
-	title: string;
-	span?: boolean;
-	items: SessionOverviewListItem[];
-}
-
-export type SessionOverviewSection =
-	| SessionOverviewParagraphSection
-	| SessionOverviewListSection;
-
-export interface SessionOverviewMetadata {
-	hero?: SessionOverviewHero;
-	sections?: SessionOverviewSection[];
-	tokens?: SessionOverviewTokenMap;
-}
-
 export interface SessionPhaseStepMetadata {
 	id: string;
 	label?: string;
@@ -301,6 +253,11 @@ export interface SessionSnapshot {
 	rules: SessionRuleSnapshot;
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
 	metadata: SessionSnapshotMetadata;
+	resourceMetadata?: Record<string, SessionResourceV2MetadataSnapshot>;
+	resourceGroups?: Record<string, SessionResourceV2GroupSnapshot>;
+	orderedResourceIds?: string[];
+	orderedResourceGroupIds?: string[];
+	parentIdByResourceId?: Record<string, string>;
 }
 
 export interface SessionActionDefinitionSummary {
@@ -348,6 +305,24 @@ export type {
 	SessionSimulateRequest,
 	SessionSimulateResponse,
 } from './contracts';
+
+export type {
+	SessionPlayerResourceV2Snapshot,
+	SessionResourceV2GroupParentSnapshot,
+	SessionResourceV2GroupSnapshot,
+	SessionResourceV2MetadataSnapshot,
+} from './resourceV2';
+
+export type {
+	SessionOverviewHero,
+	SessionOverviewListItem,
+	SessionOverviewListSection,
+	SessionOverviewMetadata,
+	SessionOverviewParagraphSection,
+	SessionOverviewSection,
+	SessionOverviewTokenCategoryName,
+	SessionOverviewTokenMap,
+} from './overview';
 
 export * as contracts from './contracts';
 export type { SessionGateway } from './gateway';

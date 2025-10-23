@@ -6,6 +6,7 @@ import {
 	developmentSchema,
 	populationSchema,
 	phaseSchema,
+	resourceV2GroupMetadataSchema,
 	startConfigSchema,
 	ruleSetSchema,
 } from '../schema';
@@ -39,6 +40,9 @@ export const sessionRegistriesSchema = z
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
+		resourceGroups: serializedRegistrySchema(
+			resourceV2GroupMetadataSchema,
+		).optional(),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 
