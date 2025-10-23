@@ -8,8 +8,8 @@ import {
 	withStatSourceFrames,
 } from '../stat_sources';
 import { landAdd } from './land_add';
-import { resourceAdd } from './resource_add';
-import { resourceRemove } from './resource_remove';
+import { resourceAdd as legacyResourceAdd } from './resource_add';
+import { resourceRemove as legacyResourceRemove } from './resource_remove';
 import { resourceTransfer } from './resource_transfer';
 import { buildingAdd, collectBuildingAddCosts } from './building_add';
 import { buildingRemove } from './building_remove';
@@ -29,6 +29,20 @@ import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
 import { attackPerform } from './attack';
+import {
+	createResourceV2AwareHandler,
+	resourceV2AddHandler,
+	resourceV2RemoveHandler,
+} from '../resourceV2/effects';
+
+const resourceAdd = createResourceV2AwareHandler(
+	legacyResourceAdd,
+	resourceV2AddHandler,
+);
+const resourceRemove = createResourceV2AwareHandler(
+	legacyResourceRemove,
+	resourceV2RemoveHandler,
+);
 
 export interface EffectHandler<
 	P extends Record<string, unknown> = Record<string, unknown>,

@@ -23,6 +23,7 @@ export interface PlayerResourceV2State {
 	readonly parentChildren: Record<string, ReadonlyArray<string>>;
 	readonly childToParent: Record<string, string | undefined>;
 	readonly recentDeltas: Record<string, number>;
+	readonly hookSuppressions: Record<string, boolean>;
 }
 
 export function createEmptyPlayerResourceV2State(): PlayerResourceV2State {
@@ -36,6 +37,7 @@ export function createEmptyPlayerResourceV2State(): PlayerResourceV2State {
 		parentChildren: {},
 		childToParent: {},
 		recentDeltas: {},
+		hookSuppressions: {},
 	};
 }
 
@@ -52,6 +54,7 @@ export function createPlayerResourceV2State(
 	const parentChildren: Record<string, ReadonlyArray<string>> = {};
 	const childToParent: Record<string, string | undefined> = {};
 	const recentDeltas: Record<string, number> = {};
+	const hookSuppressions: Record<string, boolean> = {};
 
 	for (const resourceId of resourceIds) {
 		amounts[resourceId] = 0;
@@ -61,6 +64,7 @@ export function createPlayerResourceV2State(
 			registry.getTierTrack(resourceId),
 		);
 		recentDeltas[resourceId] = 0;
+		hookSuppressions[resourceId] = false;
 
 		const parentRecord = registry.getGroupParentForResource(resourceId);
 		childToParent[resourceId] = parentRecord?.id;
@@ -90,6 +94,9 @@ export function createPlayerResourceV2State(
 		defineBooleanAggregate(touched, parentId, () =>
 			frozenChildren.some((childId) => Boolean(touched[childId])),
 		);
+		defineBooleanAggregate(hookSuppressions, parentId, () =>
+			frozenChildren.every((childId) => Boolean(hookSuppressions[childId])),
+		);
 	}
 
 	return {
@@ -102,6 +109,7 @@ export function createPlayerResourceV2State(
 		parentChildren,
 		childToParent,
 		recentDeltas,
+		hookSuppressions,
 	};
 }
 
@@ -118,6 +126,81 @@ export function resetRecentResourceV2Gains(
 		state.recentDeltas[resourceId] = 0;
 	}
 	return entries;
+}
+
+export interface ApplyResourceV2DeltaOptions {
+	suppressHooks?: boolean;
+}
+
+export interface ApplyResourceV2DeltaResult {
+	readonly appliedDelta: number;
+	readonly previousAmount: number;
+	readonly nextAmount: number;
+	readonly wasClamped: boolean;
+}
+
+export function applyResourceV2Delta(
+	state: PlayerResourceV2State,
+	resourceId: string,
+	delta: number,
+	options: ApplyResourceV2DeltaOptions = {},
+): ApplyResourceV2DeltaResult {
+	if (!Number.isFinite(delta)) {
+		throw new Error(
+			`ResourceV2 delta for "${resourceId}" must be a finite number. Received: ${delta}.`,
+		);
+	}
+
+	if (!Number.isInteger(delta)) {
+		throw new Error(
+			`ResourceV2 delta for "${resourceId}" must resolve to an integer. Received: ${delta}.`,
+		);
+	}
+
+	const current = state.amounts[resourceId];
+	if (current === undefined) {
+		throw new Error(
+			`ResourceV2 state does not contain resource "${resourceId}".`,
+		);
+	}
+
+	const bounds = state.bounds[resourceId];
+	let next = current + delta;
+	let wasClamped = false;
+	if (bounds) {
+		const { lowerBound, upperBound } = bounds;
+		if (typeof lowerBound === 'number' && next < lowerBound) {
+			next = lowerBound;
+			wasClamped = true;
+		}
+		if (typeof upperBound === 'number' && next > upperBound) {
+			next = upperBound;
+			wasClamped = true;
+		}
+	}
+
+	const appliedDelta = next - current;
+	if (appliedDelta === 0) {
+		return {
+			appliedDelta: 0,
+			previousAmount: current,
+			nextAmount: current,
+			wasClamped,
+		};
+	}
+
+	state.amounts[resourceId] = next;
+	state.touched[resourceId] = true;
+	state.recentDeltas[resourceId] =
+		(state.recentDeltas[resourceId] ?? 0) + appliedDelta;
+	state.hookSuppressions[resourceId] = Boolean(options.suppressHooks);
+
+	return {
+		appliedDelta,
+		previousAmount: current,
+		nextAmount: next,
+		wasClamped,
+	};
 }
 
 function defineNumericAggregate(

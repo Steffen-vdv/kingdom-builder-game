@@ -140,6 +140,14 @@ describe('State classes', () => {
 			'ResourceV2 parent "parent:alpha" touched state is derived from child resources.',
 		);
 
+		expect(state.hookSuppressions[resourceA.id]).toBe(false);
+		state.hookSuppressions[resourceA.id] = true;
+		expect(state.hookSuppressions['parent:alpha']).toBe(false);
+		state.hookSuppressions[resourceB.id] = true;
+		expect(state.hookSuppressions['parent:alpha']).toBe(true);
+		state.hookSuppressions[resourceB.id] = false;
+		state.hookSuppressions[resourceA.id] = false;
+
 		expect(state.bounds[resourceA.id]).toEqual({ lowerBound: 0 });
 		expect(state.bounds['parent:alpha']).toEqual({
 			lowerBound: 0,

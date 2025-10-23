@@ -40,9 +40,9 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T6 | 2025-10-22 | gpt-5-codex | packages/contents/src/index.ts; packages/contents/src/resourceV2/index.ts; packages/contents/src/startup.ts; packages/contents/README.md; packages/contents/tests/resourceV2.registry.test.ts | Exported default ResourceV2 registries/metadata for startup consumers, documented the dual-system state, and added coverage for the new helpers. | `npm run lint`; `npm run test --workspace=@kingdom-builder/contents` | Coordinate server/runtime fallbacks to forward ResourceV2 metadata and populate definitions during upcoming migrations. |
 | Resource Migration MVP - P3 - T7 | 2025-10-22 | gpt-5-codex | packages/testing/src/factories/content.ts; packages/testing/src/factories/content.test-d.ts; docs/project/resource-migration/production/production-living-docs.md | Added ResourceV2 testing factory helpers for definitions/groups with optional bounds, tier track, and global cost overrides plus type-only coverage. | `npm run lint`; `npm run build --workspace=@kingdom-builder/testing` | Expand sample registries once real ResourceV2 content lands and ensure engine/web tests adopt the new factories. |
 | Resource Migration MVP - P3 - T8 | 2025-10-22 | gpt-5-codex | packages/engine/src/resourceV2/registry.ts; packages/engine/src/index.ts; packages/engine/tests/resourceV2/registry.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added engine ResourceV2 registry loader covering definitions/groups with immutable metadata helpers and tests verifying indexing and virtual parent protection. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Integrate the registry into engine session bootstrapping and resource services once ResourceV2 state propagation begins. |
-| Resource Migration MVP - P3 - T9 | 2025-10-23 | gpt-5-codex | packages/engine/src/state/index.ts; packages/engine/src/state/resource*v2.ts; packages/engine/tests/state/state.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added PlayerState ResourceV2 runtime scaffolding with registry-driven initialization, read-only parent aggregation, signed recent gain reset helpers, and coverage validating dual-system behaviour. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Wire ResourceV2 state mutations into effect handlers and snapshot serialization to replace legacy fields in upcoming tasks. |
-| Resource Migration MVP - P3 - T10 | 2025-**-** | *(add entry)_ | | _(reserved for T10 assignee – update only this row.)_ | | |
-| Resource Migration MVP - P3 - T11 | 2025-**-** | _(add entry)_ | | _(reserved for T11 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T9 | 2025-10-23 | gpt-5-codex | packages/engine/src/state/index.ts; packages/engine/src/state/resource\*v2.ts; packages/engine/tests/state/state.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added PlayerState ResourceV2 runtime scaffolding with registry-driven initialization, read-only parent aggregation, signed recent gain reset helpers, and coverage validating dual-system behaviour. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Wire ResourceV2 state mutations into effect handlers and snapshot serialization to replace legacy fields in upcoming tasks. |
+| Resource Migration MVP - P3 - T10 | 2025-10-23 | gpt-5-codex | packages/engine/src/resourceV2/effects/value*change.ts; packages/engine/src/resourceV2/effects/index.ts; packages/engine/src/effects/index.ts; packages/engine/src/state/resource_v2.ts; packages/engine/src/state/index.ts; packages/engine/tests/resourceV2/resource-effects.test.ts; packages/engine/tests/state/state.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added ResourceV2-specific resource add/remove handlers with clamp reconciliation, percent rounding, hook suppression tracking, and state utilities plus unit coverage for rounding, clamps, and recent deltas. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Follow up by wiring ResourceV2 hook emissions/logging into services and updating snapshots to consume the new recent delta records. |
+| Resource Migration MVP - P3 - T11 | 2025-**-** | *(add entry)_ | | _(reserved for T11 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T12 | 2025-**-** | _(add entry)_ | | _(reserved for T12 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T13 | 2025-**-** | _(add entry)_ | | _(reserved for T13 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T14 | 2025-**-** | _(add entry)_ | | _(reserved for T14 assignee – update only this row.)_ | | |
@@ -68,14 +68,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-23 18:45
-**Current Focus:** Resource Migration MVP - P3 - T9 Player ResourceV2 state scaffolding
-**State Summary:** PlayerState now owns ResourceV2 runtime state seeded from registry metadata, protects parent aggregates as read-only sums, exposes tier placeholders, and provides signed recent gain reset helpers while keeping legacy fields available.
+**Timestamp (UTC):** 2025-10-23 22:55
+**Current Focus:** Resource Migration MVP - P3 - T10 ResourceV2 resource effect handlers
+**State Summary:** ResourceV2 add/remove effects now route through dedicated handlers that respect clamp reconciliation, explicit percent rounding, hook suppression flags, and the new state utilities for recent delta tracking while legacy resource handlers remain untouched for the migration overlap.
 
 - **Next Suggested Tasks:**
-  - Thread ResourceV2 state mutations through effect handlers/services so `resourceV2.recentDeltas`, touched flags, and tier state stay synchronized with value changes.
-  - Extend snapshot serialization to emit ResourceV2 value maps alongside legacy data for clients.
-- **Blocking Issues / Risks:** ResourceV2 recent delta tracking and snapshots still rely on legacy resource change hooks until integration tasks land.
+  - Surface ResourceV2 gain/loss hook dispatch and logging by consuming the recorded suppression flags and recent delta map in the services layer.
+  - Update snapshot/protocol serialization to expose ResourceV2 recent gains so front-end summaries can pivot away from the legacy resource fields.
+- **Blocking Issues / Risks:** None currently; coordinate upcoming hook/logging work with existing `context.recentResourceGains` consumers to avoid double counting during the transition.
 
 ## 5. Notes & Decisions Archive
 
