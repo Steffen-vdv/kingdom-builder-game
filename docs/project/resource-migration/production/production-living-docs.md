@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 10:00
-- **Current Focus:** Resource Migration MVP - P2 - T18 - Core ResourceV2 definitions for gold/AP/castle HP
-- **State Summary:** Authored baseline ResourceV2 definitions for the three core resources with clamp-to-zero lower bounds and the action point global cost flag. Logged follow-up questions about identifier naming, ordering, and gold debt handling in [`./worklogs/T18-core-resource-defs.md`](./worklogs/T18-core-resource-defs.md).
+- **Timestamp (UTC):** 2025-10-23 10:34
+- **Current Focus:** Resource Migration MVP - P2 - T19 - Happiness ResourceV2 tier migration scaffold
+- **State Summary:** Added the Happiness ResourceV2 definition with a tier track generated from `TIER_CONFIGS`, preserving passive enter/exit effects and descriptive summaries. Documented the change in [`./worklogs/T19-happiness-tier.md`](./worklogs/T19-happiness-tier.md) after validating tier thresholds against the legacy rules config.
 - **Next Suggested Tasks:**
-  - Confirm final naming scheme for migrated ResourceV2 ids so downstream wiring can rely on stable keys.
-  - Validate gold’s lower-bound behaviour (debt vs. clamp) before hooking definitions into live registries.
-  - Decide desired ordering/aggregation approach for core definitions ahead of registry integration work.
-- **Blocking Issues / Risks:** Pending decisions on id scheme and gold debt rules could force follow-up refactors if deferred too long.
+  - Plan registry wiring so the Happiness ResourceV2 metadata can ship alongside the existing legacy happiness track during the transition.
+  - Update integration tests and synthetic fixtures to consume tier data from the ResourceV2 catalog once the engine exposes the new metadata maps.
+  - Coordinate naming/order decisions for future tiered resources to keep definition conventions consistent with the new happiness entry.
+- **Blocking Issues / Risks:** ResourceV2 registries still lack happiness wiring, so downstream consumers cannot exercise the new tier track until the bootstrap path is implemented.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
