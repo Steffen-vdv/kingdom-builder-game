@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 20:10
-- **Current Focus:** Resource Migration MVP - P2 - T35 - Passive Content ResourceV2 Migration
-- **State Summary:** Migrated building and development passives to the ResourceV2 change payloads, replacing `resourceParams`/`statParams` with inline helpers that emit `resourceId` metadata while preserving legacy keys. Updates live in [`packages/contents/src/buildings.ts`](../../../../packages/contents/src/buildings.ts), [`packages/contents/src/developments.ts`](../../../../packages/contents/src/developments.ts), and are documented in [`worklogs/T35-passive-content.md`](../../../../worklogs/T35-passive-content.md).
+- **Timestamp (UTC):** 2025-10-27 23:45
+- **Current Focus:** Resource Migration MVP - P2 - T36 - Population & Phase ResourceV2 Migration
+- **State Summary:** Added shared ResourceV2 change helpers and rewired population/phase content to emit the new payloads. See [`packages/contents/src/helpers/resourceV2Effects.ts`](../../../../packages/contents/src/helpers/resourceV2Effects.ts), [`packages/contents/src/populations.ts`](../../../../packages/contents/src/populations.ts), [`packages/contents/src/phases.ts`](../../../../packages/contents/src/phases.ts), and [`worklogs/T36-population-phase.md`](../../../../worklogs/T36-population-phase.md).
 - **Next Suggested Tasks:**
-  - Port population and hire content to the same ResourceV2 builders so all passive effects share the new payload shape.
-  - Deduplicate the temporary amount helpers once remaining modules migrate, ideally centralising them in a shared utility.
-  - Resume investigating long-running `npm run check` workflows so we can capture full test coverage without manual aborts.
-- **Blocking Issues / Risks:** Repository typecheck/test orchestration still expects prebuilt `packages/**/dist` outputs and comprehensive coverage runs; `npm run check` remains impractically long without those artifacts, forcing manual aborts during vitest coverage.
+  - Extend the helper usage to remaining content (actions, hire flows, etc.) so legacy `resourceParams`/`statParams` usages disappear.
+  - Audit engine consumers to confirm they read the ResourceV2 change metadata emitted by phase-driven stat deltas.
+  - Prioritise test pipeline tuning; `npm run check` still stalls on engine coverage and requires manual interruption.
+- **Blocking Issues / Risks:** Engine coverage under `npm run check` continues to run for tens of minutes; today’s run was aborted after ~30s of queued vitest files (see chunk 402953†L1-L82) and remains a productivity drag.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
