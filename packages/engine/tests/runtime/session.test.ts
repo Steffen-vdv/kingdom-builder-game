@@ -198,6 +198,31 @@ describe('EngineSession', () => {
 		expect(refreshed[0]?.options[0]?.id).toBe(originalOptionId);
 	});
 
+	it('summarizes action definitions and omits unknown actions', () => {
+		const content = createContentFactory();
+		const systemAction = content.action({
+			name: 'System Action',
+			system: true,
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+
+		const summary = session.getActionDefinition(systemAction.id);
+		expect(summary).toEqual({
+			id: systemAction.id,
+			name: systemAction.name,
+			system: true,
+		});
+
+		expect(() => session.getActionDefinition('missing-action')).toThrow(
+			'Unknown id: missing-action',
+		);
+	});
+
 	it('clones effect log entries when pulled from the session', () => {
 		const session = createTestSession();
 		const entry = { detail: { amount: 7 } };
