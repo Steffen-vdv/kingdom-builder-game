@@ -13,7 +13,7 @@ import {
 	populationParams,
 } from '../src/config/builders';
 import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
-import { Types, PassiveMethods } from '../src/config/builderShared';
+import { Types, PassiveMethods, ResourceMethods } from '../src/config/builderShared';
 import { RESOURCES, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
 import { describe, expect, it } from 'vitest';
@@ -67,6 +67,11 @@ describe('content builder safeguards', () => {
 
 	it('flags empty effects', () => {
 		expect(() => effect().build()).toThrowError('Effect is missing type() and method(). Call effect(Types.X, Methods.Y) or add nested effect(...) calls before build().');
+	});
+
+	it('requires both type and method for direct effects', () => {
+		expect(() => effect().type(Types.Resource).build()).toThrowError('Effect has type() but is missing method(). Call method(...) before build().');
+		expect(() => effect().method(ResourceMethods.ADD).build()).toThrowError('Effect has method() but is missing type(). Call type(...) before build().');
 	});
 
 	it('guides requirement configuration mistakes', () => {

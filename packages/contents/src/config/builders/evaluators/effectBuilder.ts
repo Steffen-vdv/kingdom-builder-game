@@ -1,8 +1,8 @@
 import type { EffectConfig, EvaluatorDef } from '@kingdom-builder/protocol';
-import type { StatKey } from '../../../stats';
-import { ParamsBuilder, StatMethods, Types } from '../../builderShared';
+import { getStatResourceV2Id, type StatKey } from '../../../stats';
+import { resourceChange } from '../../../resourceV2';
+import { ParamsBuilder, ResourceV2Methods, Types } from '../../builderShared';
 import type { Params } from '../../builderShared';
-import { statParams } from '../effectParams';
 import { EvaluatorBuilder } from './evaluatorBuilder';
 
 export class EffectBuilder<P extends Params = Params> {
@@ -100,12 +100,13 @@ export class EffectBuilder<P extends Params = Params> {
 		return this;
 	}
 
-	allowShortfall() {
-		return this.meta({ allowShortfall: true });
-	}
-
 	build(): EffectConfig {
-		if (!this.typeSet && !this.methodSet) {
+		const hasType = this.typeSet;
+		const hasMethod = this.methodSet;
+		if (hasType !== hasMethod) {
+			throw new Error(hasType ? 'Effect has type() but is missing method(). Call method(...) before build().' : 'Effect has method() but is missing type(). Call type(...) before build().');
+		}
+		if (!hasType && !hasMethod) {
 			const hasNestedEffects = Array.isArray(this.config.effects) ? this.config.effects.length > 0 : false;
 			if (!hasNestedEffects) {
 				throw new Error(['Effect is missing type() and method().', 'Call effect(Types.X, Methods.Y) or add nested effect(...) calls', 'before build().'].join(' '));
@@ -127,5 +128,7 @@ export function effect(type?: string, method?: string) {
 }
 
 export function statAddEffect(stat: StatKey, amount: number) {
-	return effect(Types.Stat, StatMethods.ADD).params(statParams().key(stat).amount(amount).build()).build();
+	const resourceId = getStatResourceV2Id(stat);
+	const params = resourceChange(resourceId).amount(amount).build();
+	return effect(Types.ResourceV2, ResourceV2Methods.ADD).params(params).build();
 }
