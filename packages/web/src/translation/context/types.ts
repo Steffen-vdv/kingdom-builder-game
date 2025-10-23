@@ -12,6 +12,7 @@ import type {
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
 import type { SessionMetadataFormat } from '@kingdom-builder/protocol/session';
+import type { ResourceV2MetadataSelectors } from '../resourceV2/selectors';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that
@@ -74,6 +75,7 @@ export interface TranslationAssets {
 	readonly triggers: Readonly<Record<string, TranslationTriggerAsset>>;
 	readonly tierSummaries: Readonly<Record<string, string>>;
 	formatPassiveRemoval(description: string): string;
+	readonly resourceV2: ResourceV2MetadataSelectors;
 }
 
 /**

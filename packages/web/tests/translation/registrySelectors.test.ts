@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { selectStatDescriptor } from '../../src/translation/effects/registrySelectors';
 import type { TranslationAssets } from '../../src/translation/context';
+import { createResourceV2Selectors } from '../../src/translation/resourceV2/selectors';
 
 type AssetOverrides = Partial<TranslationAssets> & {
 	stats?: TranslationAssets['stats'];
+	resourceV2?: TranslationAssets['resourceV2'];
 };
 
 function createAssets(overrides: AssetOverrides = {}): TranslationAssets {
@@ -21,6 +23,7 @@ function createAssets(overrides: AssetOverrides = {}): TranslationAssets {
 		tierSummaries: overrides.tierSummaries ?? {},
 		formatPassiveRemoval:
 			overrides.formatPassiveRemoval ?? ((description: string) => description),
+		resourceV2: overrides.resourceV2 ?? createResourceV2Selectors(),
 	} as TranslationAssets;
 }
 

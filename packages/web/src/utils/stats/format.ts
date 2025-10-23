@@ -54,6 +54,9 @@ export function statDisplaysAsPercent(
 	if (format && typeof format === 'object') {
 		return Boolean(format.percent);
 	}
+	if (assets?.resourceV2?.displaysAsPercent(key)) {
+		return true;
+	}
 	return false;
 }
 

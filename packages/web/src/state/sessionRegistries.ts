@@ -10,6 +10,8 @@ import {
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type PopulationConfig,
+	type ResourceV2Definition,
+	type ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionRegistriesPayload,
@@ -96,6 +98,32 @@ function createActionCategoryRegistry(
 	return registry;
 }
 
+function cloneResourceV2Definitions(
+	definitions: ReadonlyArray<ResourceV2Definition> | undefined,
+): ReadonlyArray<ResourceV2Definition> {
+	if (!definitions || definitions.length === 0) {
+		return Object.freeze([]);
+	}
+	const cloned = definitions.map((definition) => {
+		const copy = structuredClone(definition);
+		return Object.freeze(copy);
+	});
+	return Object.freeze(cloned);
+}
+
+function cloneResourceV2Groups(
+	groups: ReadonlyArray<ResourceV2GroupDefinition> | undefined,
+): ReadonlyArray<ResourceV2GroupDefinition> {
+	if (!groups || groups.length === 0) {
+		return Object.freeze([]);
+	}
+	const cloned = groups.map((group) => {
+		const copy = structuredClone(group);
+		return Object.freeze(copy);
+	});
+	return Object.freeze(cloned);
+}
+
 export interface SessionRegistries {
 	actions: Registry<ActionConfig>;
 	actionCategories: Registry<ActionCategoryConfig>;
@@ -103,6 +131,8 @@ export interface SessionRegistries {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: Record<string, SessionResourceDefinition>;
+	resourceDefinitions: ReadonlyArray<ResourceV2Definition>;
+	resourceGroups: ReadonlyArray<ResourceV2GroupDefinition>;
 }
 
 export function deserializeSessionRegistries(
@@ -126,6 +156,10 @@ export function deserializeSessionRegistries(
 			populationSchema.passthrough(),
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
+		resourceDefinitions: cloneResourceV2Definitions(
+			payload.resourceDefinitions,
+		),
+		resourceGroups: cloneResourceV2Groups(payload.resourceGroups),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),
 	};
 }
