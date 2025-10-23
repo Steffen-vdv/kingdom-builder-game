@@ -35,10 +35,14 @@ import { SessionActionExecutionHandler } from './handlers/SessionActionExecution
 import { SessionPlayerNameUpdateHandler } from './handlers/SessionPlayerNameUpdateHandler.js';
 export { PLAYER_NAME_MAX_LENGTH } from './playerNameHelpers.js';
 export interface SessionTransportOptions {
-	sessionManager: SessionManager;
-	idFactory?: TransportIdFactory;
-	authMiddleware?: AuthMiddleware;
+        sessionManager: SessionManager;
+        idFactory?: TransportIdFactory;
+        authMiddleware?: AuthMiddleware;
 }
+
+const typedStructuredClone = <Value>(value: Value): Value => {
+        return structuredClone(value) as Value;
+};
 export class SessionTransportBase {
 	protected readonly sessionManager: SessionManager;
 
@@ -226,11 +230,20 @@ export class SessionTransportBase {
 		}
 		return context.roles.includes('admin');
 	}
-	protected buildStateResponse(
-		sessionId: string,
-		snapshot: SessionSnapshot,
-	): SessionStateResponse {
-		const clonedSnapshot = structuredClone(snapshot);
+        protected buildStateResponse(
+                sessionId: string,
+                snapshot: SessionSnapshot,
+        ): SessionStateResponse {
+                const clonedSnapshot = typedStructuredClone(snapshot) as SessionSnapshot & {
+                        recentResourceGains?: SessionSnapshot['recentValueChanges'];
+                };
+		if (
+			clonedSnapshot.recentValueChanges === undefined &&
+			clonedSnapshot.recentResourceGains !== undefined
+		) {
+			clonedSnapshot.recentValueChanges = clonedSnapshot.recentResourceGains;
+			delete clonedSnapshot.recentResourceGains;
+		}
 		clonedSnapshot.metadata = mergeSessionMetadata({
 			baseMetadata: this.sessionManager.getSessionMetadata(sessionId),
 			snapshotMetadata: clonedSnapshot.metadata,

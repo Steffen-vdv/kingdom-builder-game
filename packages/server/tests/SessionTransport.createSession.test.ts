@@ -19,7 +19,7 @@ function expectDescriptorMetadata(
 	if (!metadata) {
 		return;
 	}
-	expect(Object.keys(metadata.stats ?? {})).not.toHaveLength(0);
+	expect(Object.keys(metadata.values?.descriptors ?? {})).not.toHaveLength(0);
 	expect(Object.keys(metadata.triggers ?? {})).not.toHaveLength(0);
 	expect(metadata.overview).toBeDefined();
 }
@@ -39,7 +39,7 @@ const authorizedHeaders = {
 
 describe('SessionTransport createSession', () => {
 	it('creates sessions and applies player preferences', () => {
-		const { manager } = createSyntheticSessionManager();
+		const { manager, costKey } = createSyntheticSessionManager();
 		const idFactory = vi.fn().mockReturnValue('transport-session');
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -57,6 +57,11 @@ describe('SessionTransport createSession', () => {
 		expectSnapshotMetadata(response.snapshot.metadata);
 		expectDescriptorMetadata(response.snapshot.metadata);
 		expect(response.snapshot.game.devMode).toBe(true);
+		expect(response.registries.resourceValues.globalActionCost).toEqual({
+			resourceId: costKey,
+			amount: 1,
+		});
+		expect(Array.isArray(response.snapshot.recentValueChanges)).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
@@ -207,7 +212,11 @@ describe('SessionTransport createSession', () => {
 			new Set(factory.populations.keys()),
 		);
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
-		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
-		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(registries.resourceValues.definitions[costKey]).toBeDefined();
+		expect(registries.resourceValues.definitions[gainKey]).toBeDefined();
+		expect(registries.resourceValues.globalActionCost).toEqual({
+			resourceId: costKey,
+			amount: 1,
+		});
 	});
 });

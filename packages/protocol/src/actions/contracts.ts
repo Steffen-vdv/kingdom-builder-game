@@ -6,6 +6,13 @@ import type {
 } from '../session';
 import type { SessionIdentifier } from '../session/contracts';
 
+export interface ActionResourceValueSnapshot {
+	kind: 'resource' | 'group-parent';
+	value: number;
+	parentId?: string;
+	children?: readonly string[];
+}
+
 export interface ActionEffectChoice {
 	optionId: string;
 	params?: Record<string, unknown>;
@@ -30,6 +37,8 @@ export interface ActionTraceLandSnapshot {
 }
 
 export interface ActionPlayerSnapshot {
+	values: Record<string, ActionResourceValueSnapshot>;
+	orderedValueIds: readonly string[];
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	buildings: string[];

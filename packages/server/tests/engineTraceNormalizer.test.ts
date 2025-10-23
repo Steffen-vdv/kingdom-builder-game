@@ -9,6 +9,15 @@ import type {
 describe('engineTraceNormalizer', () => {
 	it('deeply clones player snapshots when normalizing traces', () => {
 		const before: EnginePlayerSnapshot = {
+			values: {
+				gold: { kind: 'resource', value: 5, parentId: 'economy' },
+				economy: {
+					kind: 'group-parent',
+					value: 5,
+					children: ['gold'],
+				},
+			},
+			orderedValueIds: ['economy', 'gold'],
 			resources: { gold: 5 },
 			stats: { strength: 2 },
 			buildings: ['tower'],
@@ -33,6 +42,15 @@ describe('engineTraceNormalizer', () => {
 			],
 		};
 		const after: EnginePlayerSnapshot = {
+			values: {
+				gold: { kind: 'resource', value: 7, parentId: 'economy' },
+				economy: {
+					kind: 'group-parent',
+					value: 7,
+					children: ['gold'],
+				},
+			},
+			orderedValueIds: ['economy', 'gold'],
 			resources: { gold: 7 },
 			stats: { strength: 3 },
 			buildings: ['tower', 'barracks'],
@@ -56,6 +74,13 @@ describe('engineTraceNormalizer', () => {
 		const [normalized] = traces;
 		expect(normalized.before).not.toBe(before);
 		expect(normalized.after).not.toBe(after);
+		expect(normalized.before.values).toEqual(before.values);
+		expect(normalized.before.values).not.toBe(before.values);
+		expect(normalized.before.values.economy?.children).not.toBe(
+			before.values.economy?.children,
+		);
+		expect(normalized.before.orderedValueIds).toEqual(before.orderedValueIds);
+		expect(normalized.before.orderedValueIds).not.toBe(before.orderedValueIds);
 		expect(normalized.before.resources).toEqual(before.resources);
 		expect(normalized.after.buildings).toEqual(after.buildings);
 		expect(normalized.before.lands[0]).not.toBe(before.lands[0]);

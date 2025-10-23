@@ -1,8 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type {
-	SessionMetadataDescriptor,
-	SessionTriggerMetadata,
-} from '@kingdom-builder/protocol';
+import type { SessionTriggerMetadata } from '@kingdom-builder/protocol';
 import { createSyntheticSessionManager } from './helpers/createSyntheticSessionManager.js';
 import * as metadataModule from '../src/session/buildSessionMetadata.js';
 import { mergeSessionMetadata } from '../src/session/mergeSessionMetadata.js';
@@ -29,7 +26,8 @@ describe('SessionManager', () => {
 		expectSnapshotMetadata(mergedMetadata);
 		expectStaticMetadata(staticMetadata);
 		const [activePlayer] = snapshot.game.players;
-		expect(activePlayer?.resources[costKey]).toBeDefined();
+		expect(activePlayer?.resources?.[costKey]).toBeDefined();
+		expect(mergedMetadata.values?.descriptors?.[gainKey]).toBeDefined();
 		expect(snapshot.rules.tieredResourceKey).toBe(gainKey);
 		expect(snapshot.game.devMode).toBe(true);
 	});
@@ -88,19 +86,20 @@ describe('SessionManager', () => {
 		const baseline = manager.getMetadata();
 		expectStaticMetadata(baseline);
 		expect(buildSpy).toHaveBeenCalledTimes(1);
-		expect(baseline.resources?.[costKey]).toBeDefined();
+		expect(baseline.values?.descriptors?.[costKey]).toBeDefined();
 		const triggerKeys = Object.keys(baseline.triggers ?? {});
 		expect(triggerKeys.length).toBeGreaterThan(0);
-		const statKeys = Object.keys(baseline.stats ?? {});
-		expect(statKeys.length).toBeGreaterThan(0);
 		const heroTokens = baseline.overview?.hero?.tokens ?? {};
 		const overviewTokenKeys = Object.keys(heroTokens);
 		expect(overviewTokenKeys.length).toBeGreaterThan(0);
 		const mutated = manager.getMetadata();
 		expect(mutated).not.toBe(baseline);
 		expect(mutated).toEqual(baseline);
-		if (mutated.resources) {
-			mutated.resources[costKey] = { label: 'changed' };
+		if (mutated.values?.descriptors) {
+			mutated.values.descriptors[costKey] = {
+				...(mutated.values.descriptors[costKey] ?? {}),
+				label: 'changed',
+			};
 		}
 		const [triggerKey] = triggerKeys;
 		if (mutated.triggers && triggerKey) {
@@ -111,27 +110,15 @@ describe('SessionManager', () => {
 			};
 			mutated.triggers[triggerKey] = descriptor;
 		}
-		const [statKey] = statKeys;
-		if (mutated.stats && statKey) {
-			const original = mutated.stats[statKey];
-			const descriptor: SessionMetadataDescriptor = {
-				...(original ?? {}),
-				label: 'changed',
-			};
-			mutated.stats[statKey] = descriptor;
-		}
 		const [overviewTokenKey] = overviewTokenKeys;
 		if (mutated.overview?.hero?.tokens && overviewTokenKey) {
 			mutated.overview.hero.tokens[overviewTokenKey] = 'changed';
 		}
 		const next = manager.getMetadata();
 		expect(next).toEqual(baseline);
-		expect(next.resources?.[costKey]?.label).not.toBe('changed');
+		expect(next.values?.descriptors?.[costKey]?.label).not.toBe('changed');
 		if (triggerKey) {
 			expect(next.triggers?.[triggerKey]?.label).not.toBe('changed');
-		}
-		if (statKey) {
-			expect(next.stats?.[statKey]?.label).not.toBe('changed');
 		}
 		if (overviewTokenKey) {
 			expect(next.overview?.hero?.tokens?.[overviewTokenKey]).not.toBe(
@@ -142,7 +129,7 @@ describe('SessionManager', () => {
 	});
 
 	it('exposes a frozen runtime configuration snapshot', () => {
-		const { manager, phases, start, rules, gainKey, primaryIconId } =
+		const { manager, phases, start, rules, gainKey, costKey, primaryIconId } =
 			createSyntheticSessionManager();
 		const runtimeConfig = manager.getRuntimeConfig();
 		expect(runtimeConfig.phases).toEqual(phases);
@@ -156,12 +143,18 @@ describe('SessionManager', () => {
 		expect(Object.isFrozen(runtimeConfig.phases)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.start)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.rules)).toBe(true);
-		expect(Object.isFrozen(runtimeConfig.resources)).toBe(true);
-		const resourceEntry = runtimeConfig.resources[gainKey];
+		expect(Object.isFrozen(runtimeConfig.resourceValues.definitions)).toBe(
+			true,
+		);
+		const resourceEntry = runtimeConfig.resourceValues.definitions[gainKey];
 		if (!resourceEntry) {
 			throw new Error('Missing synthetic resource definition.');
 		}
 		expect(Object.isFrozen(resourceEntry)).toBe(true);
+		expect(runtimeConfig.resourceValues.globalActionCost).toEqual({
+			resourceId: costKey,
+			amount: 1,
+		});
 		expect(manager.getRuntimeConfig()).toBe(runtimeConfig);
 	});
 

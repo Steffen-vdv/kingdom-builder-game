@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { ActionTrace } from '@kingdom-builder/protocol';
+import type { ActionTrace as EngineActionTrace } from '@kingdom-builder/engine';
 import { SessionTransport } from '../src/transport/SessionTransport.js';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
@@ -46,9 +46,11 @@ describe('SessionTransport runAiTurn', () => {
 		if (playerId === null) {
 			throw new Error('No AI controller was available.');
 		}
-		const fakeTrace: ActionTrace = {
+		const fakeTrace: EngineActionTrace = {
 			id: 'trace',
 			before: {
+				values: {},
+				orderedValueIds: [],
 				resources: {},
 				stats: {},
 				buildings: [],
@@ -56,6 +58,8 @@ describe('SessionTransport runAiTurn', () => {
 				passives: [],
 			},
 			after: {
+				values: {},
+				orderedValueIds: [],
 				resources: {},
 				stats: {},
 				buildings: [],
@@ -96,10 +100,13 @@ describe('SessionTransport runAiTurn', () => {
 		expect(action.costs).toEqual({ gold: 2 });
 		expect(Array.isArray(action.traces)).toBe(true);
 		expect(action.traces.length).toBeGreaterThan(0);
+		const [trace] = action.traces;
+		expect(trace?.before.values).toEqual({});
+		expect(Array.isArray(trace?.before.orderedValueIds)).toBe(true);
 		expect(result.phaseComplete).toBe(true);
 		expectSnapshotMetadata(result.snapshot.metadata);
 		expect(result.snapshot.game.currentPhase).toBeDefined();
-		expect(Array.isArray(result.snapshot.recentResourceGains)).toBe(true);
+		expect(Array.isArray(result.snapshot.recentValueChanges)).toBe(true);
 		expect(Object.keys(result.registries.actions)).not.toHaveLength(0);
 		expectStaticMetadata(manager.getMetadata());
 		expect(runSpy).toHaveBeenCalledWith(playerId, expect.any(Object));

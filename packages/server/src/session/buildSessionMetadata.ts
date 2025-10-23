@@ -3,10 +3,7 @@ import {
 	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
 	SLOT_INFO,
-	STATS,
 	TRIGGER_INFO,
-	POPULATION_INFO,
-	POPULATION_ROLES,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
 } from '@kingdom-builder/contents';
@@ -14,15 +11,20 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PhaseConfig,
-	PopulationConfig,
 	Registry,
-	SerializedRegistry,
 	SessionMetadataDescriptor,
 	SessionMetadataSnapshot,
 	SessionPhaseMetadata,
 	SessionTriggerMetadata,
-	SessionResourceDefinition,
+	SessionResourceGroupDescriptor,
+	SessionResourceRegistryPayload,
+	SessionResourceValueDescriptor,
+	SessionResourceValueMetadata,
 } from '@kingdom-builder/protocol';
+import {
+        deriveOrderedSessionResourceValues,
+        freezeResourceMetadataByOrder,
+} from '@kingdom-builder/protocol/session';
 
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
 type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
@@ -30,24 +32,23 @@ type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
 export type SessionStaticMetadataPayload = SessionMetadataSnapshot;
 
 export interface BuildSessionMetadataOptions {
-	buildings: Registry<BuildingConfig>;
-	developments: Registry<DevelopmentConfig>;
-	populations: Registry<PopulationConfig>;
-	resources: SerializedRegistry<SessionResourceDefinition>;
-	phases: ReadonlyArray<PhaseConfig>;
+        buildings: Registry<BuildingConfig>;
+        developments: Registry<DevelopmentConfig>;
+        resourceValues: SessionResourceRegistryPayload;
+        phases: ReadonlyArray<PhaseConfig>;
 }
+
+const typedStructuredClone = <Value>(value: Value): Value => {
+        return structuredClone(value) as Value;
+};
 
 export function buildSessionMetadata(
 	options: BuildSessionMetadataOptions,
 ): SessionStaticMetadataPayload {
 	const metadata: SessionStaticMetadataPayload = {};
-	const resourceMetadata = buildResourceMetadata(options.resources);
-	if (hasEntries(resourceMetadata)) {
-		metadata.resources = resourceMetadata;
-	}
-	const populationMetadata = buildPopulationMetadata(options.populations);
-	if (hasEntries(populationMetadata)) {
-		metadata.populations = populationMetadata;
+	const valuesMetadata = buildResourceValueMetadata(options.resourceValues);
+	if (hasValueMetadata(valuesMetadata)) {
+		metadata.values = valuesMetadata;
 	}
 	const buildingMetadata = buildRegistryMetadata(options.buildings);
 	if (hasEntries(buildingMetadata)) {
@@ -56,10 +57,6 @@ export function buildSessionMetadata(
 	const developmentMetadata = buildRegistryMetadata(options.developments);
 	if (hasEntries(developmentMetadata)) {
 		metadata.developments = developmentMetadata;
-	}
-	const statMetadata = buildStatMetadata();
-	if (hasEntries(statMetadata)) {
-		metadata.stats = statMetadata;
 	}
 	const phaseMetadata = buildPhaseMetadata(options.phases);
 	if (hasEntries(phaseMetadata)) {
@@ -73,33 +70,9 @@ export function buildSessionMetadata(
 	if (hasEntries(assetMetadata)) {
 		metadata.assets = assetMetadata;
 	}
-	const overviewMetadata = structuredClone(OVERVIEW_CONTENT);
-	metadata.overview = overviewMetadata;
-	return metadata;
-}
-
-function buildResourceMetadata(
-	resources: SerializedRegistry<SessionResourceDefinition>,
-): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
-	for (const key of Object.keys(resources)) {
-		const definition = resources[key];
-		if (!definition) {
-			continue;
-		}
-		const descriptor: SessionMetadataDescriptor = {};
-		if (definition.label) {
-			descriptor.label = definition.label;
-		}
-		if (definition.icon) {
-			descriptor.icon = definition.icon;
-		}
-		if (definition.description) {
-			descriptor.description = definition.description;
-		}
-		descriptors[key] = descriptor;
-	}
-	return descriptors;
+        const overviewMetadata = typedStructuredClone(OVERVIEW_CONTENT);
+        metadata.overview = overviewMetadata;
+        return metadata;
 }
 
 function buildRegistryMetadata<
@@ -119,52 +92,6 @@ function buildRegistryMetadata<
 			descriptor.description = definition.description;
 		}
 		descriptors[id] = descriptor;
-	}
-	return descriptors;
-}
-
-function buildPopulationMetadata(
-	registry: Registry<PopulationConfig>,
-): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
-	for (const [id, definition] of registry.entries()) {
-		const descriptor: SessionMetadataDescriptor = { label: definition.name };
-		if (definition.icon) {
-			descriptor.icon = definition.icon;
-		}
-		const description = (definition as { description?: string }).description;
-		if (description) {
-			descriptor.description = description;
-		} else {
-			const roleInfo = POPULATION_ROLES[id as keyof typeof POPULATION_ROLES];
-			if (roleInfo?.description) {
-				descriptor.description = roleInfo.description;
-			}
-		}
-		descriptors[id] = descriptor;
-	}
-	return descriptors;
-}
-
-function buildStatMetadata(): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
-	const statKeys = Object.keys(STATS) as Array<keyof typeof STATS>;
-	for (const key of statKeys) {
-		const info = STATS[key];
-		const descriptor: SessionMetadataDescriptor = {
-			label: info.label,
-			description: info.description,
-		};
-		if (info.icon) {
-			descriptor.icon = info.icon;
-		}
-		if (info.displayAsPercent) {
-			descriptor.displayAsPercent = info.displayAsPercent;
-		}
-		if (info.addFormat) {
-			descriptor.format = { ...info.addFormat };
-		}
-		descriptors[key] = descriptor;
 	}
 	return descriptors;
 }
@@ -234,7 +161,6 @@ function buildTriggerDescriptor(
 
 function buildAssetMetadata(): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
-	assignAssetDescriptor(descriptors, 'population', POPULATION_INFO);
 	assignAssetDescriptor(descriptors, 'passive', PASSIVE_INFO);
 	assignAssetDescriptor(descriptors, 'land', LAND_INFO);
 	assignAssetDescriptor(descriptors, 'slot', SLOT_INFO);
@@ -268,4 +194,99 @@ function assignAssetDescriptor(
 
 function hasEntries<T>(value: Record<string, T>): boolean {
 	return Object.keys(value).length > 0;
+}
+
+function hasValueMetadata(value: SessionResourceValueMetadata): boolean {
+	return (
+		Boolean(value.descriptors && Object.keys(value.descriptors).length > 0) ||
+		Boolean(value.groups && Object.keys(value.groups).length > 0) ||
+		Boolean(value.ordered && value.ordered.length > 0)
+	);
+}
+
+function buildResourceValueMetadata(
+        registry: SessionResourceRegistryPayload,
+): SessionResourceValueMetadata {
+        const descriptors: Record<string, SessionResourceValueDescriptor> = {};
+        const groups: Record<string, SessionResourceGroupDescriptor> = {};
+
+        const definitionEntries = Object.entries(
+                registry.definitions,
+        ) as Array<[string, typeof registry.definitions[string]]>;
+        for (const [id, definition] of definitionEntries) {
+                const descriptor: SessionResourceValueDescriptor = {
+                        id,
+                        label: definition.display.label,
+                        icon: definition.display.icon,
+                        description: definition.display.description,
+			order: definition.display.order,
+		};
+		if (definition.display.percent) {
+			descriptor.displayAsPercent = true;
+		}
+		if (definition.group) {
+			descriptor.groupId = definition.group.groupId;
+		}
+		descriptors[id] = Object.freeze(descriptor);
+	}
+
+        const childrenByGroup = new Map<
+                string,
+                Array<{ id: string; order: number }>
+        >();
+        for (const definition of Object.values(registry.definitions)) {
+                const group = definition.group;
+                if (!group) {
+                        continue;
+                }
+                const order = group.order ?? definition.display.order;
+		const existing = childrenByGroup.get(group.groupId);
+		if (existing) {
+			existing.push({ id: definition.id, order });
+		} else {
+			childrenByGroup.set(group.groupId, [{ id: definition.id, order }]);
+		}
+	}
+
+        const groupEntries = Object.entries(
+                registry.groups,
+        ) as Array<[string, typeof registry.groups[string]]>;
+        for (const [groupId, definition] of groupEntries) {
+                const parent = definition.parent;
+                const orderedChildren = freezeResourceMetadataByOrder(
+                        childrenByGroup.get(groupId) ?? [],
+                        (entry) => entry.order,
+                ).map((entry) => entry.id);
+		const descriptor: SessionResourceGroupDescriptor = {
+			groupId,
+			parent: {
+				id: parent.id,
+				label: parent.label,
+				icon: parent.icon,
+				description: parent.description,
+				order: parent.order,
+				limited: parent.limited,
+			},
+			children: orderedChildren,
+			order: parent.order,
+		};
+		groups[groupId] = Object.freeze(descriptor);
+	}
+
+	const ordered = deriveOrderedSessionResourceValues(
+		descriptors,
+		Object.values(groups),
+	);
+
+	const metadata: SessionResourceValueMetadata = {};
+	if (Object.keys(descriptors).length > 0) {
+		metadata.descriptors = Object.freeze(descriptors);
+	}
+	if (Object.keys(groups).length > 0) {
+		metadata.groups = Object.freeze(groups);
+	}
+	if (ordered.length > 0) {
+		metadata.ordered = ordered;
+	}
+	return metadata;
 }

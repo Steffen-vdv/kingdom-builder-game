@@ -1,12 +1,12 @@
 import fastify from 'fastify';
 import { describe, it, expect, vi } from 'vitest';
 import type {
-	ActionTrace,
 	SessionSnapshot,
 	SessionRuntimeConfigResponse,
 	SessionMetadataSnapshotResponse,
 	SessionRegistriesPayload,
 } from '@kingdom-builder/protocol';
+import type { ActionTrace as EngineActionTrace } from '@kingdom-builder/engine';
 import { createTokenAuthMiddleware } from '../src/auth/tokenAuthMiddleware.js';
 import {
 	createSessionTransportPlugin,
@@ -51,6 +51,7 @@ describe('FastifySessionTransport', () => {
 			manager,
 			actionId,
 			gainKey,
+			costKey,
 			phases,
 			start,
 			rules,
@@ -74,11 +75,12 @@ describe('FastifySessionTransport', () => {
 			rules,
 			primaryIconId,
 			factory,
+			costKey,
 		};
 	}
 
 	it('creates sessions over HTTP', async () => {
-		const { app, manager } = await createServer();
+		const { app, manager, costKey } = await createServer();
 		const response = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -89,6 +91,11 @@ describe('FastifySessionTransport', () => {
 		const body = response.json() as SessionResponse;
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.devMode).toBe(true);
+		expect(Array.isArray(body.snapshot.recentValueChanges)).toBe(true);
+		expect(body.registries.resourceValues.globalActionCost).toEqual({
+			resourceId: costKey,
+			amount: 1,
+		});
 		expectStaticMetadata(manager.getSessionMetadata(body.sessionId));
 		await app.close();
 	});
@@ -114,6 +121,7 @@ describe('FastifySessionTransport', () => {
 		const snapshot = snapshotResponse.json() as SnapshotResponse;
 		expectSnapshotMetadata(snapshot.snapshot.metadata);
 		expect(snapshot.snapshot.game.players).toHaveLength(2);
+		expect(Array.isArray(snapshot.snapshot.recentValueChanges)).toBe(true);
 		expectStaticMetadata(manager.getSessionMetadata(sessionId));
 		await app.close();
 	});
@@ -205,9 +213,7 @@ describe('FastifySessionTransport', () => {
 		expect(metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,
 		);
-		expect(metadata.populations?.[populationId]?.label).toBe(
-			populationOverride.name,
-		);
+		expect(metadata.values?.descriptors?.[gainKey]?.label).toBeDefined();
 		const metadataResponse = await app.inject({
 			method: 'GET',
 			url: '/metadata',
@@ -222,9 +228,9 @@ describe('FastifySessionTransport', () => {
 		expect(metadataBody.metadata.buildings?.[buildingId]?.label).toBe(
 			buildingOverride.name,
 		);
-		expect(metadataBody.metadata.populations?.[populationId]?.label).toBe(
-			populationOverride.name,
-		);
+		expect(
+			metadataBody.metadata.values?.descriptors?.[gainKey]?.label,
+		).toBeDefined();
 		expect(metadataBody.metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,
 		);
@@ -236,8 +242,16 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('returns the runtime configuration without authentication', async () => {
-		const { app, manager, gainKey, phases, start, rules, primaryIconId } =
-			await createServer();
+		const {
+			app,
+			manager,
+			gainKey,
+			costKey,
+			phases,
+			start,
+			rules,
+			primaryIconId,
+		} = await createServer();
 		const response = await app.inject({
 			method: 'GET',
 			url: '/runtime-config',
@@ -248,8 +262,12 @@ describe('FastifySessionTransport', () => {
 		expect(body.start).toEqual(start);
 		expect(body.rules).toEqual(rules);
 		expect(body.primaryIconId).toBe(primaryIconId);
-		const resource = body.resources[gainKey];
+		const resource = body.resourceValues.definitions[gainKey];
 		expect(resource).toBeDefined();
+		expect(body.resourceValues.globalActionCost).toEqual({
+			resourceId: costKey,
+			amount: 1,
+		});
 		expect(body).toEqual(manager.getRuntimeConfig());
 		await app.close();
 	});
@@ -316,6 +334,7 @@ describe('FastifySessionTransport', () => {
 		const advanceBody = advanceResponse.json() as SnapshotResponse;
 		expectSnapshotMetadata(advanceBody.snapshot.metadata);
 		expect(advanceBody.snapshot.game.currentPhase).toBe('end');
+		expect(Array.isArray(advanceBody.snapshot.recentValueChanges)).toBe(true);
 		expectStaticMetadata(manager.getSessionMetadata(sessionId));
 		await app.close();
 	});
@@ -345,6 +364,7 @@ describe('FastifySessionTransport', () => {
 		const devModeBody = devModeResponse.json() as SnapshotResponse;
 		expectSnapshotMetadata(devModeBody.snapshot.metadata);
 		expect(devModeBody.snapshot.game.devMode).toBe(true);
+		expect(Array.isArray(devModeBody.snapshot.recentValueChanges)).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
@@ -368,6 +388,7 @@ describe('FastifySessionTransport', () => {
 		const body = updateResponse.json() as SnapshotResponse;
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.players[0]?.name).toBe('Captain');
+		expect(Array.isArray(body.snapshot.recentValueChanges)).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
@@ -393,8 +414,15 @@ describe('FastifySessionTransport', () => {
 		};
 		expect(actionBody.status).toBe('success');
 		expectSnapshotMetadata(actionBody.snapshot.metadata);
+		const changes = actionBody.snapshot.recentValueChanges ?? [];
+		expect(changes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: gainKey, amount: 1 }),
+			]),
+		);
 		const [player] = actionBody.snapshot.game.players;
-		expect(player?.resources[gainKey]).toBe(1);
+		expect(player?.resources?.[gainKey]).toBe(1);
+		expect(Array.isArray(actionBody.snapshot.recentValueChanges)).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
@@ -511,9 +539,11 @@ describe('FastifySessionTransport', () => {
 		if (playerId === null) {
 			throw new Error('No AI controller was available.');
 		}
-		const fakeTrace: ActionTrace = {
+		const fakeTrace: EngineActionTrace = {
 			id: 'trace',
 			before: {
+				values: {},
+				orderedValueIds: [],
 				resources: {},
 				stats: {},
 				buildings: [],
@@ -521,6 +551,8 @@ describe('FastifySessionTransport', () => {
 				passives: [],
 			},
 			after: {
+				values: {},
+				orderedValueIds: [],
 				resources: {},
 				stats: {},
 				buildings: [],
@@ -567,13 +599,22 @@ describe('FastifySessionTransport', () => {
 		expect(body.ranTurn).toBe(true);
 		expect(Array.isArray(body.actions)).toBe(true);
 		expect(body.actions).toHaveLength(1);
-		expect(body.actions[0]?.costs).toEqual({ gold: 3 });
-		expect(Array.isArray(body.actions[0]?.traces)).toBe(true);
-		expect(body.actions[0]?.traces.length).toBeGreaterThan(0);
+		const [firstAction] = body.actions as Array<{
+			costs: Record<string, number>;
+			traces: Array<{
+				before: { values: Record<string, unknown>; orderedValueIds: string[] };
+			}>;
+		}>;
+		expect(firstAction?.costs).toEqual({ gold: 3 });
+		expect(Array.isArray(firstAction?.traces)).toBe(true);
+		expect(firstAction?.traces.length).toBeGreaterThan(0);
+		const [firstTrace] = firstAction?.traces ?? [];
+		expect(firstTrace?.before.values).toEqual({});
+		expect(Array.isArray(firstTrace?.before.orderedValueIds)).toBe(true);
 		expect(body.phaseComplete).toBe(true);
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.currentPhase).toBeDefined();
-		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);
+		expect(Array.isArray(body.snapshot.recentValueChanges)).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
 		expect(body.registries.actions).toBeDefined();
 		expect(runSpy).toHaveBeenCalledWith(playerId, expect.any(Object));

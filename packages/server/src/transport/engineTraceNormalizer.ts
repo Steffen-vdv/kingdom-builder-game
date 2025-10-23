@@ -21,7 +21,25 @@ export function normalizeActionTraces(
 function normalizePlayerSnapshot(
 	snapshot: EnginePlayerSnapshot,
 ): ActionExecuteSuccessResponse['traces'][number]['before'] {
+	const normalizedValues: NonNullable<
+		ActionExecuteSuccessResponse['traces'][number]['before']['values']
+	> = {};
+	for (const [valueId, value] of Object.entries(snapshot.values ?? {})) {
+		const clone: (typeof normalizedValues)[string] = {
+			kind: value.kind,
+			value: value.value,
+		};
+		if (value.parentId !== undefined) {
+			clone.parentId = value.parentId;
+		}
+		if (value.children !== undefined) {
+			clone.children = [...value.children];
+		}
+		normalizedValues[valueId] = clone;
+	}
 	return {
+		values: normalizedValues,
+		orderedValueIds: [...(snapshot.orderedValueIds ?? [])],
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
 		buildings: [...snapshot.buildings],

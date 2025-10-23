@@ -1,36 +1,34 @@
 import {
-	Registry,
-	actionSchema,
-	buildingSchema,
-	developmentSchema,
-	populationSchema,
-	validateGameConfig,
-	type ActionConfig,
-	type BuildingConfig,
-	type DevelopmentConfig,
-	type PopulationConfig,
-	type GameConfig,
-	type PhaseConfig,
-	type StartConfig,
-	type RuleSet,
-	type PlayerStartConfig,
-	type SessionRegistriesPayload,
-	type SessionResourceDefinition,
-	type SerializedRegistry,
+        Registry,
+        actionSchema,
+        buildingSchema,
+        developmentSchema,
+        populationSchema,
+        validateGameConfig,
+        type ActionConfig,
+        type BuildingConfig,
+        type DevelopmentConfig,
+        type PopulationConfig,
+        type GameConfig,
+        type PhaseConfig,
+        type StartConfig,
+        type RuleSet,
+        type SessionRegistriesPayload,
+        type ResourceV2DefinitionConfig,
+        type ResourceV2GroupDefinitionConfig,
+        type SessionResourceRegistryPayload,
 } from '@kingdom-builder/protocol';
-import {
-	RESOURCES,
-	type ActionCategoryConfig,
-} from '@kingdom-builder/contents';
+import { type ActionCategoryConfig } from '@kingdom-builder/contents';
 import type { ZodType } from 'zod';
 import {
 	buildSessionMetadata,
 	type SessionStaticMetadataPayload,
 } from './buildSessionMetadata.js';
-import { cloneRegistry, freezeSerializedRegistry } from './registryUtils.js';
-
-export type SessionResourceRegistry =
-	SerializedRegistry<SessionResourceDefinition>;
+import {
+	cloneRegistry,
+	freezeSerializedRegistry,
+	buildResourceValueRegistryPayload,
+} from './registryUtils.js';
 
 export interface SessionBaseOptions {
 	actions: Registry<ActionConfig>;
@@ -41,11 +39,12 @@ export interface SessionBaseOptions {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
+	resourceDefinitions: Iterable<ResourceV2DefinitionConfig>;
+	resourceGroups: Iterable<ResourceV2GroupDefinitionConfig>;
 }
 
 interface OverrideContext {
 	baseOptions: SessionBaseOptions;
-	resourceOverrides: SessionResourceRegistry | undefined;
 	baseRegistries: SessionRegistriesPayload;
 	baseMetadata: SessionStaticMetadataPayload;
 }
@@ -66,95 +65,53 @@ export function buildSessionAssets(
 	const validated = validateGameConfig(config);
 	const { actions, buildings, developments, populations } =
 		applyConfigRegistries(validated, context.baseOptions);
-	const startConfig = validated.start ?? context.baseOptions.start;
 	const phases = validated.phases ?? context.baseOptions.phases;
-	const resources = buildResourceRegistry(
-		context.resourceOverrides,
-		startConfig,
-	);
-	const frozenResources = freezeSerializedRegistry(structuredClone(resources));
+	const resourceDefinitions = validated.resourcesV2?.definitions
+		? validated.resourcesV2.definitions
+		: context.baseOptions.resourceDefinitions;
+	const resourceGroups = validated.resourcesV2?.groups
+		? validated.resourcesV2.groups
+		: context.baseOptions.resourceGroups;
+	const resourceValues = buildResourceValueRegistryPayload({
+		definitions: resourceDefinitions,
+		groups: resourceGroups,
+	});
 	const registries: SessionRegistriesPayload = {
 		actions: freezeSerializedRegistry(cloneRegistry(actions)),
 		buildings: freezeSerializedRegistry(cloneRegistry(buildings)),
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
 		populations: freezeSerializedRegistry(cloneRegistry(populations)),
-		resources: frozenResources,
-	};
+		resourceValues,
+	} satisfies SessionRegistriesPayload;
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;
 	}
 	const metadata = buildSessionMetadata({
 		buildings,
 		developments,
-		populations,
-		resources: frozenResources,
+		resourceValues,
 		phases,
 	});
 	return { registries, metadata };
 }
 
-export function buildResourceRegistry(
-	overrides: SessionResourceRegistry | undefined,
-	startConfig: StartConfig,
-): SessionResourceRegistry {
-	const registry = new Map<string, SessionResourceDefinition>();
-	const applyOverride = (source: SessionResourceRegistry | undefined): void => {
-		if (!source) {
-			return;
-		}
-		for (const [key, definition] of Object.entries(source)) {
-			registry.set(key, structuredClone(definition));
-		}
-	};
-	applyOverride(overrides);
-	const addKey = (key: string): void => {
-		if (registry.has(key)) {
-			return;
-		}
-		const info = RESOURCES[key as keyof typeof RESOURCES];
-		if (info) {
-			const definition: SessionResourceDefinition = {
-				key: info.key,
-				icon: info.icon,
-				label: info.label,
-				description: info.description,
-			};
-			if (info.tags && info.tags.length > 0) {
-				definition.tags = [...info.tags];
-			}
-			registry.set(key, definition);
-			return;
-		}
-		registry.set(key, { key });
-	};
-	const addFromStart = (config: PlayerStartConfig | undefined): void => {
-		if (!config?.resources) {
-			return;
-		}
-		for (const key of Object.keys(config.resources)) {
-			addKey(key);
-		}
-	};
-	addFromStart(startConfig.player);
-	if (startConfig.players) {
-		for (const playerConfig of Object.values(startConfig.players)) {
-			addFromStart(playerConfig);
-		}
+export function buildResourceValueRegistry(
+	overrides: SessionResourceRegistryPayload | undefined,
+	baseDefinitions: Iterable<ResourceV2DefinitionConfig>,
+	baseGroups: Iterable<ResourceV2GroupDefinitionConfig>,
+): SessionResourceRegistryPayload {
+	if (!overrides) {
+		return buildResourceValueRegistryPayload({
+			definitions: baseDefinitions,
+			groups: baseGroups,
+		});
 	}
-	if (startConfig.modes) {
-		for (const mode of Object.values(startConfig.modes)) {
-			if (!mode) {
-				continue;
-			}
-			addFromStart(mode.player);
-			if (mode.players) {
-				for (const modePlayer of Object.values(mode.players)) {
-					addFromStart(modePlayer);
-				}
-			}
-		}
-	}
-	return Object.fromEntries(registry.entries());
+	return buildResourceValueRegistryPayload({
+		definitions: overrides.definitions
+			? Object.values(overrides.definitions)
+			: baseDefinitions,
+		groups: overrides.groups ? Object.values(overrides.groups) : baseGroups,
+	});
 }
 
 function applyConfigRegistries(

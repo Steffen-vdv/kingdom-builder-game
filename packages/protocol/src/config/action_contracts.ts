@@ -36,6 +36,13 @@ const passiveMetadataSchema = z.object({
 	removal: passiveRemovalMetadataSchema.optional(),
 });
 
+const actionResourceValueSnapshotSchema = z.object({
+	kind: z.enum(['resource', 'group-parent']),
+	value: z.number(),
+	parentId: z.string().optional(),
+	children: z.array(z.string()).optional(),
+});
+
 const sessionPassiveSummarySchema = z.object({
 	id: z.string(),
 	name: z.string().optional(),
@@ -69,6 +76,8 @@ export const actionTraceLandSnapshotSchema = z.object({
 });
 
 export const actionPlayerSnapshotSchema = z.object({
+	values: z.record(z.string(), actionResourceValueSnapshotSchema),
+	orderedValueIds: z.array(z.string()),
 	resources: z.record(z.string(), z.number()),
 	stats: z.record(z.string(), z.number()),
 	buildings: z.array(z.string()),

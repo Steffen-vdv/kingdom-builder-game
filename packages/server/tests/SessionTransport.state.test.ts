@@ -16,7 +16,7 @@ function expectDescriptorMetadata(
 	if (!metadata) {
 		return;
 	}
-	expect(Object.keys(metadata.stats ?? {})).not.toHaveLength(0);
+	expect(Object.keys(metadata.values?.descriptors ?? {})).not.toHaveLength(0);
 	expect(Object.keys(metadata.triggers ?? {})).not.toHaveLength(0);
 	expect(metadata.overview).toBeDefined();
 }
@@ -58,9 +58,14 @@ describe('SessionTransport session state', () => {
 		expectSnapshotMetadata(state.snapshot.metadata);
 		expectDescriptorMetadata(state.snapshot.metadata);
 		expect(state.registries.actions[actionId]).toBeDefined();
+		expect(Array.isArray(state.snapshot.recentValueChanges)).toBe(true);
 		expectStaticMetadata(manager.getMetadata());
-		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
-		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(state.registries.resourceValues.definitions[costKey]).toBeDefined();
+		expect(state.registries.resourceValues.definitions[gainKey]).toBeDefined();
+		expect(state.registries.resourceValues.globalActionCost).toEqual({
+			resourceId: costKey,
+			amount: 1,
+		});
 	});
 
 	it('throws when a session cannot be located', () => {

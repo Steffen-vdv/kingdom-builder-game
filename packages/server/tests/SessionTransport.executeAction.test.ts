@@ -50,8 +50,15 @@ describe('SessionTransport executeAction', () => {
 		});
 		expect(result.status).toBe('success');
 		expectSnapshotMetadata(result.snapshot.metadata);
+		expect(Array.isArray(result.snapshot.recentValueChanges)).toBe(true);
+		const changes = result.snapshot.recentValueChanges ?? [];
+		expect(changes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ key: gainKey, amount: 1 }),
+			]),
+		);
 		const [player] = result.snapshot.game.players;
-		expect(player?.resources[gainKey]).toBe(1);
+		expect(player?.resources?.[gainKey]).toBe(1);
 		expectStaticMetadata(manager.getMetadata());
 		expect(Array.isArray(result.traces)).toBe(true);
 		expect(result.costs).toEqual(expectedCosts);

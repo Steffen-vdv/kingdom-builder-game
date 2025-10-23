@@ -21,14 +21,18 @@ import { mergeSessionMetadata } from '../../session/mergeSessionMetadata.js';
 type AuthorizationCallback = (role: AuthRole) => AuthContext;
 
 type AttachHttpStatus = <T extends object>(
-	payload: T,
-	status: number,
+        payload: T,
+        status: number,
 ) => TransportHttpResponse<T>;
 
 interface SessionActionExecutionContext {
-	request: TransportRequest;
-	requireAuthorization: AuthorizationCallback;
+        request: TransportRequest;
+        requireAuthorization: AuthorizationCallback;
 }
+
+const typedStructuredClone = <Value>(value: Value): Value => {
+        return structuredClone(value) as Value;
+};
 
 export class SessionActionExecutionHandler {
 	private readonly sessionManager: SessionManager;
@@ -43,12 +47,12 @@ export class SessionActionExecutionHandler {
 		this.attachHttpStatus = options.attachHttpStatus;
 	}
 
-	public async handle(
-		context: SessionActionExecutionContext,
-	): Promise<
-		| TransportHttpResponse<ActionExecuteSuccessResponse>
-		| TransportHttpResponse<ActionExecuteErrorResponse>
-	> {
+        public async handle(
+                context: SessionActionExecutionContext,
+        ): Promise<
+                | TransportHttpResponse<ActionExecuteSuccessResponse>
+                | TransportHttpResponse<ActionExecuteErrorResponse>
+        > {
 		const parsed = actionExecuteRequestSchema.safeParse(context.request.body);
 		if (!parsed.success) {
 			const response = actionExecuteErrorResponseSchema.parse({
@@ -79,12 +83,23 @@ export class SessionActionExecutionHandler {
 					costs[resourceKey] = amount;
 				}
 			}
-			const result = await session.enqueue(() => {
-				const traces = session.performAction(actionId, normalizedParams);
-				const snapshot = session.getSnapshot();
-				return { traces, snapshot };
-			});
-			const snapshot = structuredClone(result.snapshot);
+                        const result = await session.enqueue(() => {
+                                const traces = session.performAction(actionId, normalizedParams);
+                                const snapshot = session.getSnapshot();
+                                return { traces, snapshot };
+                        });
+                        const snapshot = typedStructuredClone(
+                                result.snapshot,
+                        ) as typeof result.snapshot & {
+                                recentResourceGains?: typeof result.snapshot.recentValueChanges;
+                        };
+			if (
+				snapshot.recentValueChanges === undefined &&
+				snapshot.recentResourceGains !== undefined
+			) {
+				snapshot.recentValueChanges = snapshot.recentResourceGains;
+				delete snapshot.recentResourceGains;
+			}
 			snapshot.metadata = mergeSessionMetadata({
 				baseMetadata: this.sessionManager.getMetadata(),
 				snapshotMetadata: snapshot.metadata,

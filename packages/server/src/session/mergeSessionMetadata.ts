@@ -1,51 +1,49 @@
 import type {
-	SessionSnapshotMetadata,
-	SessionOverviewMetadata,
-	SessionOverviewHero,
-	SessionOverviewTokenMap,
+        SessionSnapshotMetadata,
+        SessionOverviewMetadata,
+        SessionOverviewHero,
+        SessionOverviewTokenMap,
+        SessionResourceValueMetadata,
+        SessionResourceValueDescriptor,
+        SessionResourceGroupDescriptor,
 } from '@kingdom-builder/protocol';
 import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 
 type MetadataRecord<T> = Record<string, T>;
 
 interface MergeSessionMetadataOptions {
-	baseMetadata: SessionStaticMetadataPayload;
-	snapshotMetadata: SessionSnapshotMetadata;
+        baseMetadata: SessionStaticMetadataPayload;
+        snapshotMetadata: SessionSnapshotMetadata;
 }
 
+const typedStructuredClone = <Value>(value: Value): Value => {
+        return structuredClone(value) as Value;
+};
+
 export function mergeSessionMetadata({
-	baseMetadata,
-	snapshotMetadata,
+        baseMetadata,
+        snapshotMetadata,
 }: MergeSessionMetadataOptions): SessionSnapshotMetadata {
-	const baseClone = structuredClone(
-		baseMetadata,
-	) as Partial<SessionSnapshotMetadata>;
-	const merged: SessionSnapshotMetadata = {
-		...baseClone,
-		passiveEvaluationModifiers: structuredClone(
-			snapshotMetadata.passiveEvaluationModifiers,
-		),
-	};
-	if (snapshotMetadata.effectLogs !== undefined) {
-		merged.effectLogs = structuredClone(snapshotMetadata.effectLogs);
-	}
-	const resources = mergeRecord(
-		baseClone.resources,
-		snapshotMetadata.resources,
-	);
-	if (resources !== undefined) {
-		merged.resources = resources;
+        const baseClone = typedStructuredClone(baseMetadata) as Partial<
+                SessionSnapshotMetadata
+        >;
+        const merged: SessionSnapshotMetadata = {
+                ...baseClone,
+                passiveEvaluationModifiers: typedStructuredClone(
+                        snapshotMetadata.passiveEvaluationModifiers,
+                ),
+        };
+        if (snapshotMetadata.effectLogs !== undefined) {
+                merged.effectLogs = typedStructuredClone(snapshotMetadata.effectLogs);
+        }
+        const values = mergeResourceValueMetadata(
+                baseClone.values,
+                snapshotMetadata.values,
+        );
+	if (values !== undefined) {
+		merged.values = values;
 	} else {
-		delete merged.resources;
-	}
-	const populations = mergeRecord(
-		baseClone.populations,
-		snapshotMetadata.populations,
-	);
-	if (populations !== undefined) {
-		merged.populations = populations;
-	} else {
-		delete merged.populations;
+		delete merged.values;
 	}
 	const buildings = mergeRecord(
 		baseClone.buildings,
@@ -64,12 +62,6 @@ export function mergeSessionMetadata({
 		merged.developments = developments;
 	} else {
 		delete merged.developments;
-	}
-	const stats = mergeRecord(baseClone.stats, snapshotMetadata.stats);
-	if (stats !== undefined) {
-		merged.stats = stats;
-	} else {
-		delete merged.stats;
 	}
 	const phases = mergeRecord(baseClone.phases, snapshotMetadata.phases);
 	if (phases !== undefined) {
@@ -99,43 +91,131 @@ export function mergeSessionMetadata({
 }
 
 function mergeRecord<T>(
-	base: MetadataRecord<T> | undefined,
-	overrides: MetadataRecord<T> | undefined,
+        base: MetadataRecord<T> | undefined,
+        overrides: MetadataRecord<T> | undefined,
 ): MetadataRecord<T> | undefined {
-	if (!base && !overrides) {
+        if (!base && !overrides) {
+                return undefined;
+        }
+        const cloneBase = base
+                ? typedStructuredClone(base)
+                : ({} as MetadataRecord<T>);
+        if (!overrides) {
+                return cloneBase;
+        }
+        for (const [key, value] of Object.entries(overrides)) {
+                cloneBase[key] = typedStructuredClone(value);
+        }
+        return cloneBase;
+}
+
+function mergeResourceValueRecord<
+	T extends SessionResourceValueDescriptor | SessionResourceGroupDescriptor,
+>(
+	base: Record<string, T> | undefined,
+	overrides: Record<string, T> | undefined,
+): Record<string, T> | undefined {
+	return mergeRecord(base, overrides);
+}
+
+function mergeResourceValueMetadata(
+	base: SessionResourceValueMetadata | undefined,
+	overrides: SessionResourceValueMetadata | undefined,
+): SessionResourceValueMetadata | undefined {
+        if (!base && !overrides) {
+                return undefined;
+        }
+        const result: SessionResourceValueMetadata = {};
+        if (base?.descriptors) {
+                result.descriptors = typedStructuredClone(base.descriptors);
+        }
+        if (base?.groups) {
+                result.groups = typedStructuredClone(base.groups);
+        }
+        if (base?.tiers) {
+                result.tiers = typedStructuredClone(base.tiers);
+        }
+        if (base?.ordered) {
+                result.ordered = typedStructuredClone(base.ordered);
+        }
+        if (base?.recent) {
+                result.recent = typedStructuredClone(base.recent);
+        }
+
+        if (!overrides) {
+                return result;
+        }
+
+	const descriptors = mergeResourceValueRecord(
+		result.descriptors,
+		overrides.descriptors,
+	);
+	if (descriptors) {
+		result.descriptors = descriptors;
+	} else {
+		delete result.descriptors;
+	}
+
+	const groups = mergeResourceValueRecord(result.groups, overrides.groups);
+	if (groups) {
+		result.groups = groups;
+	} else {
+		delete result.groups;
+	}
+
+        if (overrides.tiers) {
+                result.tiers = mergeRecord(result.tiers, overrides.tiers);
+        } else if (result.tiers) {
+                result.tiers = typedStructuredClone(result.tiers);
+        }
+
+        if (overrides.ordered) {
+                result.ordered = typedStructuredClone(overrides.ordered);
+        }
+
+        if (overrides.recent) {
+                result.recent = typedStructuredClone(overrides.recent);
+        } else {
+                delete result.recent;
+        }
+
+	if (
+		!result.descriptors &&
+		!result.groups &&
+		!result.tiers &&
+		!result.ordered &&
+		!result.recent
+	) {
 		return undefined;
 	}
-	const cloneBase = base ? structuredClone(base) : ({} as MetadataRecord<T>);
-	if (!overrides) {
-		return cloneBase;
-	}
-	for (const [key, value] of Object.entries(overrides)) {
-		cloneBase[key] = structuredClone(value);
-	}
-	return cloneBase;
+	return result;
 }
 
 function mergeOverview(
-	base: SessionOverviewMetadata | undefined,
-	overrides: SessionOverviewMetadata | undefined,
+        base: SessionOverviewMetadata | undefined,
+        overrides: SessionOverviewMetadata | undefined,
 ): SessionOverviewMetadata | undefined {
-	if (!base && !overrides) {
-		return undefined;
-	}
-	const result: SessionOverviewMetadata = base ? structuredClone(base) : {};
-	if (!overrides) {
-		return result;
-	}
-	if (overrides.hero) {
-		const heroBase = result.hero ? structuredClone(result.hero) : {};
-		const hero: SessionOverviewHero = {
-			...heroBase,
-			...structuredClone(overrides.hero),
-		};
-		if (overrides.hero.tokens || heroBase.tokens) {
-			const heroTokens = mergeStringRecord(
-				heroBase.tokens,
-				overrides.hero.tokens,
+        if (!base && !overrides) {
+                return undefined;
+        }
+        const result: SessionOverviewMetadata = base
+                ? typedStructuredClone(base)
+                : {};
+        if (!overrides) {
+                return result;
+        }
+        if (overrides.hero) {
+                const heroBase = result.hero
+                        ? typedStructuredClone(result.hero)
+                        : {};
+                const hero: SessionOverviewHero = {
+                        ...heroBase,
+                        ...typedStructuredClone(overrides.hero),
+                };
+                if (overrides.hero.tokens || heroBase.tokens) {
+                        const heroTokens = mergeStringRecord(
+                                heroBase.tokens,
+                                overrides.hero.tokens,
 			);
 			if (heroTokens !== undefined) {
 				hero.tokens = heroTokens;
@@ -144,14 +224,14 @@ function mergeOverview(
 			}
 		}
 		result.hero = hero;
-	}
-	if (overrides.sections !== undefined) {
-		result.sections = structuredClone(overrides.sections);
-	}
-	if (overrides.tokens || result.tokens) {
-		const mergedTokens = mergeTokenMap(result.tokens, overrides.tokens);
-		if (mergedTokens !== undefined) {
-			result.tokens = mergedTokens;
+        }
+        if (overrides.sections !== undefined) {
+                result.sections = typedStructuredClone(overrides.sections);
+        }
+        if (overrides.tokens || result.tokens) {
+                const mergedTokens = mergeTokenMap(result.tokens, overrides.tokens);
+                if (mergedTokens !== undefined) {
+                        result.tokens = mergedTokens;
 		} else {
 			delete result.tokens;
 		}
@@ -160,49 +240,53 @@ function mergeOverview(
 }
 
 function mergeStringRecord(
-	base: Record<string, string> | undefined,
-	overrides: Record<string, string> | undefined,
+        base: Record<string, string> | undefined,
+        overrides: Record<string, string> | undefined,
 ): Record<string, string> | undefined {
-	if (!base && !overrides) {
-		return undefined;
-	}
-	const result = base ? structuredClone(base) : ({} as Record<string, string>);
-	if (!overrides) {
-		return result;
-	}
-	for (const [key, value] of Object.entries(overrides)) {
-		result[key] = value;
+        if (!base && !overrides) {
+                return undefined;
+        }
+        const result = base
+                ? typedStructuredClone(base)
+                : ({} as Record<string, string>);
+        if (!overrides) {
+                return result;
+        }
+        for (const [key, value] of Object.entries(overrides)) {
+                result[key] = value;
 	}
 	return result;
 }
 
 function mergeTokenMap(
-	base: SessionOverviewTokenMap | undefined,
-	overrides: SessionOverviewTokenMap | undefined,
+        base: SessionOverviewTokenMap | undefined,
+        overrides: SessionOverviewTokenMap | undefined,
 ): SessionOverviewTokenMap | undefined {
-	if (!base && !overrides) {
-		return undefined;
-	}
-	const result: SessionOverviewTokenMap = base ? structuredClone(base) : {};
-	if (!overrides) {
-		return result;
-	}
-	for (const [category, entries] of Object.entries(overrides)) {
-		const categoryKey = category as keyof SessionOverviewTokenMap;
-		if (!entries) {
-			delete result[categoryKey];
-			continue;
-		}
-		const baseEntries = result[categoryKey];
-		if (!baseEntries) {
-			result[categoryKey] = structuredClone(entries);
-			continue;
-		}
-		const mergedEntries = structuredClone(baseEntries);
-		for (const [tokenKey, values] of Object.entries(entries)) {
-			mergedEntries[tokenKey] = structuredClone(values);
-		}
-		result[categoryKey] = mergedEntries;
-	}
-	return result;
+        if (!base && !overrides) {
+                return undefined;
+        }
+        const result: SessionOverviewTokenMap = base
+                ? typedStructuredClone(base)
+                : {};
+        if (!overrides) {
+                return result;
+        }
+        for (const [category, entries] of Object.entries(overrides)) {
+                const categoryKey = category as keyof SessionOverviewTokenMap;
+                if (!entries) {
+                        delete result[categoryKey];
+                        continue;
+                }
+                const baseEntries = result[categoryKey];
+                if (!baseEntries) {
+                        result[categoryKey] = typedStructuredClone(entries);
+                        continue;
+                }
+                const mergedEntries = typedStructuredClone(baseEntries);
+                for (const [tokenKey, values] of Object.entries(entries)) {
+                        mergedEntries[tokenKey] = typedStructuredClone(values);
+                }
+                result[categoryKey] = mergedEntries;
+        }
+        return result;
 }
