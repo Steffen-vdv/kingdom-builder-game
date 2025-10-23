@@ -10,6 +10,7 @@ import { Types, PopulationMethods, ResourceMethods } from '../config/builderShar
 import { Focus } from '../defs';
 import { PopulationRole } from '../populationRoles';
 import type { PopulationRoleId } from '../populationRoles';
+import type { ResourceChangeEffectParams } from '../resourceV2';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -22,6 +23,29 @@ const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 const hireCategoryOrder = categoryOrder('Hire');
 
 const populationCapacityRequirement = compareRequirement().left(populationEvaluator()).operator('lt').right(statEvaluator().key(Stat.maxPopulation)).build();
+
+function createHappinessGain() {
+	const params = resourceParams().key(Resource.happiness).amount(1).build();
+	const { resourceId, change, reconciliation, suppressHooks } = params;
+	const payload: ResourceChangeEffectParams = {
+		resourceId,
+		change,
+		...(reconciliation ? { reconciliation } : {}),
+		...(suppressHooks ? { suppressHooks: true } : {}),
+	};
+	return { params, change: payload };
+}
+
+function buildPopulationAddParams(role: PopulationRoleId, happinessChange: ResourceChangeEffectParams) {
+	const baseParams = populationParams().role(role).build();
+	const params: typeof baseParams & {
+		happinessChanges: readonly ResourceChangeEffectParams[];
+	} = {
+		...baseParams,
+		happinessChanges: [happinessChange],
+	};
+	return params;
+}
 
 function requirePopulation(role: PopulationRoleId) {
 	const definition = POPULATIONS.get(role);
@@ -40,6 +64,7 @@ function requirePopulation(role: PopulationRoleId) {
 
 export function registerHireActions(registry: Registry<ActionDef>) {
 	const council = requirePopulation(PopulationRole.Council);
+	const councilHappiness = createHappinessGain();
 	registry.add(
 		HireActionId.hire_council,
 		action()
@@ -49,8 +74,8 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Council)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+			.effect(effect(Types.Population, PopulationMethods.ADD).params(buildPopulationAddParams(PopulationRole.Council, councilHappiness.change)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(councilHappiness.params).build())
 			.category(ActionCategory.Hire)
 			.order(hireCategoryOrder + 0)
 			.focus(Focus.Economy)
@@ -58,6 +83,7 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 	);
 
 	const legion = requirePopulation(PopulationRole.Legion);
+	const legionHappiness = createHappinessGain();
 	registry.add(
 		HireActionId.hire_legion,
 		action()
@@ -67,8 +93,8 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Legion)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+			.effect(effect(Types.Population, PopulationMethods.ADD).params(buildPopulationAddParams(PopulationRole.Legion, legionHappiness.change)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(legionHappiness.params).build())
 			.category(ActionCategory.Hire)
 			.order(hireCategoryOrder + 1)
 			.focus(Focus.Economy)
@@ -76,6 +102,7 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 	);
 
 	const fortifier = requirePopulation(PopulationRole.Fortifier);
+	const fortifierHappiness = createHappinessGain();
 	registry.add(
 		HireActionId.hire_fortifier,
 		action()
@@ -85,8 +112,8 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Fortifier)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+			.effect(effect(Types.Population, PopulationMethods.ADD).params(buildPopulationAddParams(PopulationRole.Fortifier, fortifierHappiness.change)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(fortifierHappiness.params).build())
 			.category(ActionCategory.Hire)
 			.order(hireCategoryOrder + 2)
 			.focus(Focus.Economy)

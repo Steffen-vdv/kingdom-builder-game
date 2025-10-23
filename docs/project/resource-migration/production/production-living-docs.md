@@ -44,12 +44,12 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 17:45
-- **Current Focus:** Resource Migration MVP - P2 - T33 - Build & Develop Actions ResourceV2 Migration
-- **State Summary:** Added ResourceV2 construction/upkeep change payload metadata to every build and develop action, bridged through the new helpers in [`packages/contents/src/actions/buildActions.ts`](../../../../packages/contents/src/actions/buildActions.ts) and [`developActions.ts`](../../../../packages/contents/src/actions/developActions.ts), and captured the rollout in [`worklogs/T33-build-develop-actions.md`](../../../../worklogs/T33-build-develop-actions.md).
+- **Timestamp (UTC):** 2025-10-27 19:10
+- **Current Focus:** Resource Migration MVP - P2 - T34 - Hire Actions ResourceV2 Migration
+- **State Summary:** Emitted ResourceV2 happiness change payloads for every hire action, threading the metadata through `happinessChanges` on the population add params and reusing the same payload for the visible happiness gain effect in [`packages/contents/src/actions/hireActions.ts`](../../../../packages/contents/src/actions/hireActions.ts). Documented the rollout in [`worklogs/T34-hire-actions.md`](../../../../worklogs/T34-hire-actions.md).
 - **Next Suggested Tasks:**
-  - Extend the same ResourceV2 payload annotations to population and hire actions once their builders are ready.
-  - Coordinate with engine transport owners so the new `construction`/`upkeep` metadata feeds upcoming session logs before deprecating legacy cost collectors.
+  - Expose the new hire `happinessChanges` metadata to engine/content consumers so hire-driven morale shifts surface in session logs.
+  - Continue migrating remaining population-related actions to ResourceV2 change payloads (e.g., assignment passives) once handler support lands.
   - Rebuild the protocol/contents `dist` bundles (or update tooling) so repository typechecks no longer require pre-generated artifacts during `npm run check`.
 - **Blocking Issues / Risks:** `npm run check` currently fails because the monorepo typecheck expects prebuilt `packages/**/dist` artifacts; cleaning those directories (needed to keep ESLint happy) causes `tsc -b` to abort. Investigate adding a build step or ignore list so lint/typecheck can coexist.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
