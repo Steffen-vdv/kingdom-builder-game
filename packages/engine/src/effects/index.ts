@@ -29,6 +29,10 @@ import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
 import { attackPerform } from './attack';
+import { resourceV2Add } from './resource_v2_add';
+import { resourceV2Remove } from './resource_v2_remove';
+import { resourceV2Transfer } from './resource_v2_transfer';
+import { resourceV2UpperBoundIncrease } from './resource_v2_upper_bound_increase';
 
 export interface EffectHandler<
 	P extends Record<string, unknown> = Record<string, unknown>,
@@ -135,5 +139,9 @@ export {
 	actionAdd,
 	actionRemove,
 	actionPerform,
+	resourceV2Add,
+	resourceV2Remove,
+	resourceV2Transfer,
+	resourceV2UpperBoundIncrease,
 };
 export type { EffectDef } from '@kingdom-builder/protocol';
