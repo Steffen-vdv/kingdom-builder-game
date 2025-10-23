@@ -19,7 +19,10 @@ import {
 	type ResourceV2TierDefinition,
 	type ResourceV2TierTrack,
 } from '@kingdom-builder/protocol';
-
+import {
+	buildResourceV2SessionMetadata,
+	type ResourceV2SessionMetadata,
+} from './resourceV2Metadata';
 type ResourceV2TierTrackInput =
 	| ResourceV2TierTrack
 	| ResourceV2TierTrackBuilder
@@ -28,7 +31,6 @@ type ResourceV2TierInput =
 	| ResourceV2TierDefinition
 	| ResourceV2TierBuilder
 	| ((builder: ResourceV2TierBuilder) => ResourceV2TierBuilder);
-
 export type ResourceV2DefinitionInput =
 	| ResourceV2Definition
 	| ResourceV2Builder
@@ -40,14 +42,12 @@ type ResourceV2DefinitionFactoryOptions = Partial<
 	tierTrack?: ResourceV2TierTrackInput;
 	globalActionCost?: number | ResourceV2Definition['globalActionCost'];
 };
-
 export type ResourceV2GroupParentInput =
 	| ResourceV2GroupParent
 	| ResourceV2GroupParentBuilder
 	| ((builder: ResourceV2GroupParentBuilder) => ResourceV2GroupParentBuilder)
 	| ResourceV2GroupParentFactoryOptions;
 type ResourceV2GroupParentFactoryOptions = Partial<ResourceV2GroupParent>;
-
 export type ResourceV2GroupInput =
 	| ResourceV2GroupMetadata
 	| ResourceV2GroupBuilder
@@ -58,21 +58,17 @@ type ResourceV2GroupFactoryOptions = Partial<
 > & {
 	parent?: ResourceV2GroupParentInput;
 };
-
 const isBuilder = <T>(
 	value: unknown,
 	ctor: abstract new (...args: never[]) => T,
 ): value is T => typeof value === 'object' && value instanceof ctor;
-
 const clone = <T>(value: T): T => structuredClone(value);
-
 const buildTier = (tier: ResourceV2TierInput): ResourceV2TierDefinition =>
 	typeof tier === 'function'
 		? tier(new ResourceV2TierBuilder()).build()
 		: isBuilder(tier, ResourceV2TierBuilder)
 			? tier.build()
 			: clone(tier);
-
 const buildTierTrack = (
 	track: ResourceV2TierTrackInput,
 ): ResourceV2TierTrack => {
@@ -85,7 +81,6 @@ const buildTierTrack = (
 	const cloned = clone(track);
 	return { ...cloned, tiers: cloned.tiers.map((tier) => buildTier(tier)) };
 };
-
 const isResourceV2Definition = (
 	value: unknown,
 ): value is ResourceV2Definition =>
@@ -94,7 +89,6 @@ const isResourceV2Definition = (
 	typeof (value as { id?: unknown }).id === 'string' &&
 	typeof (value as { name?: unknown }).name === 'string' &&
 	typeof (value as { order?: unknown }).order === 'number';
-
 const isResourceV2Group = (value: unknown): value is ResourceV2GroupMetadata =>
 	typeof value === 'object' &&
 	value !== null &&
@@ -102,7 +96,6 @@ const isResourceV2Group = (value: unknown): value is ResourceV2GroupMetadata =>
 	typeof (value as { name?: unknown }).name === 'string' &&
 	typeof (value as { order?: unknown }).order === 'number' &&
 	Array.isArray((value as { children?: unknown }).children);
-
 const isResourceV2GroupParent = (
 	value: unknown,
 ): value is ResourceV2GroupParent =>
@@ -111,7 +104,6 @@ const isResourceV2GroupParent = (
 	typeof (value as { id?: unknown }).id === 'string' &&
 	typeof (value as { name?: unknown }).name === 'string' &&
 	typeof (value as { order?: unknown }).order === 'number';
-
 const nextOrder = <T extends { order: number }>(values: T[]): number =>
 	values.reduce((max, entry) => Math.max(max, entry.order), -1) + 1;
 
@@ -128,6 +120,7 @@ export interface ResourceV2Factory {
 	createResource(definition?: ResourceV2DefinitionInput): ResourceV2Definition;
 	createGroup(definition?: ResourceV2GroupInput): ResourceV2GroupMetadata;
 	createParent(definition?: ResourceV2GroupParentInput): ResourceV2GroupParent;
+	buildSessionMetadata(): ResourceV2SessionMetadata;
 }
 
 export function createResourceV2Factory(
@@ -337,11 +330,17 @@ export function createResourceV2Factory(
 		definition: ResourceV2GroupParentInput = {},
 	): ResourceV2GroupParent => buildResourceGroupParent(definition);
 
+	const buildSessionMetadata = (): ResourceV2SessionMetadata =>
+		buildResourceV2SessionMetadata(resources.values(), groups.values());
+
 	return {
 		resources,
 		groups,
 		createResource,
 		createGroup,
 		createParent,
+		buildSessionMetadata,
 	};
 }
+
+export type { ResourceV2SessionMetadata } from './resourceV2Metadata';
