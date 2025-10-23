@@ -19,3 +19,5 @@ export type { ResourceGroupBuilder } from './groupBuilder';
 
 export { createResourceV2Registry, createResourceGroupRegistry } from './registry';
 export type { ResourceV2Registry, ResourceGroupRegistry } from './registry';
+
+export { RESOURCE_V2_REGISTRY, RESOURCE_GROUP_V2_REGISTRY, buildResourceCatalogV2 } from './catalog';
