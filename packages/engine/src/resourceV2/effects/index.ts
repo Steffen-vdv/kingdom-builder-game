@@ -3,24 +3,31 @@ import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EffectHandler } from '../../effects';
 import type {
 	PlayerResourceV2State,
-	ResourceV2HookSuppressionMeta,
 	ResourceV2ValueChangeRequest,
 } from '../../state';
 import { applyResourceV2ValueChange } from '../../state';
-
-type ResourceV2RoundingMode = 'up' | 'down' | 'nearest';
-
-interface ResourceV2EffectParams extends Record<string, unknown> {
-	readonly id: string;
-	readonly amount?: number;
-	readonly percent?: number;
-}
-
-interface ResourceV2EffectMeta extends Record<string, unknown> {
-	readonly reconciliation?: 'clamp';
-	readonly suppressHooks?: ResourceV2HookSuppressionMeta;
-	readonly usesPercent?: true;
-}
+import type { ResourceV2EffectMeta, ResourceV2EffectParams } from './shared';
+import {
+	assertKnownResource,
+	resolvePercentDelta,
+	resolveRounding,
+} from './shared';
+export {
+	isResourceV2ResourceTransferEffect,
+	resourceV2TransferHandler,
+} from './transfer';
+export {
+	isResourceV2UpperBoundIncreaseEffect,
+	resourceV2IncreaseUpperBoundHandler,
+} from './upper_bound';
+export type {
+	ResourceV2TransferEffect,
+	ResourceV2TransferEffectMeta,
+} from './transfer';
+export type {
+	ResourceV2UpperBoundIncreaseEffect,
+	ResourceV2UpperBoundIncreaseEffectMeta,
+} from './upper_bound';
 
 type ResourceV2ResourceChangeEffect = EffectDef<ResourceV2EffectParams> & {
 	readonly params: ResourceV2EffectParams;
@@ -129,9 +136,7 @@ function resolveResourceChangeDelta(
 	assertKnownResource(state, params.id);
 
 	if (Object.prototype.hasOwnProperty.call(state.parentChildren, params.id)) {
-		throw new Error(
-			`ResourceV2 parent "${params.id}" amount is derived from child resources.`,
-		);
+		throw new Error(`ResourceV2 parent "${params.id}" is child-derived.`);
 	}
 
 	if (params.amount !== undefined) {
@@ -150,9 +155,7 @@ function resolveResourceChangeDelta(
 		);
 	}
 
-	throw new Error(
-		'ResourceV2 change is missing amount or percent configuration.',
-	);
+	throw new Error('ResourceV2 change missing amount or percent.');
 }
 
 function resolveAmountDelta(
@@ -165,56 +168,4 @@ function resolveAmountDelta(
 		throw new Error('ResourceV2 change resolved to a non-finite amount.');
 	}
 	return kind === 'remove' ? -total : total;
-}
-
-function resolvePercentDelta(
-	state: PlayerResourceV2State,
-	resourceId: string,
-	percent: number,
-	mult: number,
-	rounding: ResourceV2RoundingMode,
-	kind: ResourceChangeKind,
-): number {
-	const current = state.amounts[resourceId] ?? 0;
-	const totalPercent = percent * mult;
-	const raw = (current * totalPercent) / 100;
-	const rounded = round(raw, rounding);
-	if (!Number.isFinite(rounded)) {
-		throw new Error(
-			'ResourceV2 percent change resolved to a non-finite amount.',
-		);
-	}
-	return kind === 'remove' ? -rounded : rounded;
-}
-
-function round(value: number, mode: ResourceV2RoundingMode): number {
-	if (mode === 'up') {
-		return value >= 0 ? Math.ceil(value) : Math.floor(value);
-	}
-
-	if (mode === 'down') {
-		return value >= 0 ? Math.floor(value) : Math.ceil(value);
-	}
-
-	const floored = Math.floor(value);
-	const fractional = value - floored;
-	if (fractional < 0.5) {
-		return floored;
-	}
-
-	return Math.ceil(value);
-}
-
-function resolveRounding(round?: EffectDef['round']): ResourceV2RoundingMode {
-	if (round === 'up' || round === 'down') {
-		return round;
-	}
-
-	return 'nearest';
-}
-
-function assertKnownResource(state: PlayerResourceV2State, id: string) {
-	if (!Object.prototype.hasOwnProperty.call(state.amounts, id)) {
-		throw new Error(`Unknown ResourceV2 resource id: ${id}`);
-	}
 }
