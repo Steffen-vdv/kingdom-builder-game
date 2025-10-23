@@ -1,3 +1,4 @@
+import type { ResourceV2ValueDelta } from '@kingdom-builder/protocol';
 import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
 
@@ -19,6 +20,20 @@ export const resourceRemove: EffectHandler = (
 	if (total < 0) {
 		total = 0;
 	}
+	const resourceService = engineContext.services.resourceV2;
+	if (resourceService.hasDefinition(key)) {
+		const delta: ResourceV2ValueDelta = {
+			resourceId: key,
+			amount: total,
+		};
+		resourceService.removeValue(
+			engineContext,
+			engineContext.activePlayer,
+			delta,
+			1,
+		);
+		return;
+	}
 	const player = engineContext.activePlayer;
 	const have = player.resources[key] || 0;
 	const allowShortfall = Boolean(effect.meta?.['allowShortfall']);
@@ -26,6 +41,14 @@ export const resourceRemove: EffectHandler = (
 	if (!allowShortfall && have < removed) {
 		throw new Error(`Insufficient ${key}: need ${removed}, have ${have}`);
 	}
-	player.resources[key] = have - removed;
+	const next = have - removed;
+	player.resources[key] = next;
+	const applied = next - have;
+	if (applied !== 0) {
+		engineContext.recentResourceGains.push({
+			key,
+			amount: applied,
+		});
+	}
 	engineContext.services.handleResourceChange(engineContext, player, key);
 };

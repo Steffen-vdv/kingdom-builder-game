@@ -1,3 +1,4 @@
+import type { ResourceV2Transfer } from '@kingdom-builder/protocol';
 import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
 import type { ResourceGain } from '../services';
@@ -31,6 +32,54 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 		percent: requestedPercent,
 		amount: requestedAmount,
 	} = effect.params!;
+	const resourceService = context.services.resourceV2;
+	const defender = context.opponent;
+	const attacker = context.activePlayer;
+	if (resourceService.hasDefinition(key)) {
+		if (requestedAmount !== undefined) {
+			const modifiers: ResourceGain[] = [{ key, amount: requestedAmount }];
+			context.passives.runEvaluationMods(
+				TRANSFER_AMOUNT_EVALUATION_TARGET,
+				context,
+				modifiers,
+			);
+			const initial = modifiers[0]?.amount ?? 0;
+			let amount = initial;
+			if (amount < 0) {
+				amount = 0;
+			}
+			const available = resourceService.getValue(defender, key);
+			if (available >= 0 && amount > available) {
+				amount = available;
+			}
+			if (amount === 0) {
+				return;
+			}
+			const transfer: ResourceV2Transfer = {
+				amount,
+				from: { resourceId: key },
+				to: { resourceId: key },
+			};
+			resourceService.transferValue(context, defender, attacker, transfer, 1);
+			return;
+		}
+		const base = requestedPercent ?? 25;
+		const modifiers: ResourceGain[] = [{ key, amount: base }];
+		context.passives.runEvaluationMods(
+			TRANSFER_PCT_EVALUATION_TARGET,
+			context,
+			modifiers,
+		);
+		const percent = modifiers[0]!.amount;
+		const transfer: ResourceV2Transfer = {
+			percent,
+			from: { resourceId: key },
+			to: { resourceId: key },
+			...(effect.round ? { rounding: effect.round } : {}),
+		};
+		resourceService.transferValue(context, defender, attacker, transfer, 1);
+		return;
+	}
 	if (requestedAmount !== undefined) {
 		const modifiers: ResourceGain[] = [{ key, amount: requestedAmount }];
 		context.passives.runEvaluationMods(
@@ -38,20 +87,37 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 			context,
 			modifiers,
 		);
-		let amount = modifiers[0]!.amount;
+		const initial = modifiers[0]?.amount ?? 0;
+		let amount = initial;
 		if (amount < 0) {
 			amount = 0;
 		}
-		const defender = context.opponent;
-		const attacker = context.activePlayer;
-		const available = defender.resources[key] || 0;
-		if (available >= 0 && amount > available) {
-			amount = available;
+		const defenderAvailable = defender.resources[key] || 0;
+		if (defenderAvailable >= 0 && amount > defenderAvailable) {
+			amount = defenderAvailable;
 		}
-		defender.resources[key] = available - amount;
-		attacker.resources[key] = (attacker.resources[key] || 0) + amount;
+		const defenderBefore = defenderAvailable;
+		const attackerBefore = attacker.resources[key] || 0;
+		defender.resources[key] = defenderAvailable - amount;
+		attacker.resources[key] = attackerBefore + amount;
 		context.services.handleResourceChange(context, defender, key);
 		context.services.handleResourceChange(context, attacker, key);
+		const defenderNext = defender.resources[key] || 0;
+		const defenderDelta = defenderNext - defenderBefore;
+		if (defenderDelta !== 0) {
+			context.recentResourceGains.push({
+				key,
+				amount: defenderDelta,
+			});
+		}
+		const attackerNext = attacker.resources[key] || 0;
+		const attackerDelta = attackerNext - attackerBefore;
+		if (attackerDelta !== 0) {
+			context.recentResourceGains.push({
+				key,
+				amount: attackerDelta,
+			});
+		}
 		return;
 	}
 	const base = requestedPercent ?? 25;
@@ -61,9 +127,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 		context,
 		modifiers,
 	);
-	const percent = modifiers[0]!.amount;
-	const defender = context.opponent;
-	const attacker = context.activePlayer;
+	const percent = modifiers[0]?.amount ?? 0;
 	const available = defender.resources[key] || 0;
 	const raw = (available * percent) / 100;
 	let amount: number;
@@ -80,8 +144,26 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 	if (available >= 0 && amount > available) {
 		amount = available;
 	}
+	const defenderBefore = available;
+	const attackerBefore = attacker.resources[key] || 0;
 	defender.resources[key] = available - amount;
-	attacker.resources[key] = (attacker.resources[key] || 0) + amount;
+	attacker.resources[key] = attackerBefore + amount;
 	context.services.handleResourceChange(context, defender, key);
 	context.services.handleResourceChange(context, attacker, key);
+	const defenderNext = defender.resources[key] || 0;
+	const defenderDelta = defenderNext - defenderBefore;
+	if (defenderDelta !== 0) {
+		context.recentResourceGains.push({
+			key,
+			amount: defenderDelta,
+		});
+	}
+	const attackerNext = attacker.resources[key] || 0;
+	const attackerDelta = attackerNext - attackerBefore;
+	if (attackerDelta !== 0) {
+		context.recentResourceGains.push({
+			key,
+			amount: attackerDelta,
+		});
+	}
 };
