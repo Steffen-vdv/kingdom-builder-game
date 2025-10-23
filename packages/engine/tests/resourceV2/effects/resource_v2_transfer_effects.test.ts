@@ -23,8 +23,8 @@ type ResourceGroupDefinitions = ReadonlyArray<
 
 describe('ResourceV2 transfer handler', () => {
 	function createContext(
-			overrides: DefinitionOverrides = {},
-			groups: ResourceGroupDefinitions = [],
+		overrides: DefinitionOverrides = {},
+		groups: ResourceGroupDefinitions = [],
 	) {
 		const definition = createResourceV2Definition(overrides);
 		const registry = loadResourceV2Registry({
@@ -221,7 +221,6 @@ describe('ResourceV2 transfer handler', () => {
 	});
 });
 
-
 describe('ResourceV2 upper bound increase handler', () => {
 	it('raises upper bounds without altering current values', () => {
 		const definition = createResourceV2Definition({
@@ -254,11 +253,11 @@ describe('ResourceV2 upper bound increase handler', () => {
 		expect(state.amounts[resourceId]).toBe(4);
 	});
 
-        it('updates parent bounds without mutating derived totals', () => {
-                const group = createResourceV2Group({
-                        children: ['child-a', 'child-b'],
-                        parentBounds: { upperBound: 6 },
-                });
+	it('updates parent bounds without mutating derived totals', () => {
+		const group = createResourceV2Group({
+			children: ['child-a', 'child-b'],
+			parentBounds: { upperBound: 6 },
+		});
 		const childA = createResourceV2Definition({
 			id: 'child-a',
 			group: { groupId: group.id, order: 0 },
@@ -291,36 +290,36 @@ describe('ResourceV2 upper bound increase handler', () => {
 
 		resourceV2IncreaseUpperBoundHandler(effect, context, 1);
 
-                expect(state.bounds[parentId]).toEqual({ upperBound: 10 });
-                expect(state.amounts[parentId]).toBe(beforeTotal);
-        });
+		expect(state.bounds[parentId]).toEqual({ upperBound: 10 });
+		expect(state.amounts[parentId]).toBe(beforeTotal);
+	});
 
-        it('ignores increases that resolve to zero', () => {
-                const definition = createResourceV2Definition({
-                        bounds: { lowerBound: 0, upperBound: 4 },
-                });
-                const registry = loadResourceV2Registry({
-                        resources: [definition],
-                });
-                const player = new PlayerState('A', 'Alice');
-                const state = initializePlayerResourceV2State(player, registry);
-                const context = {
-                        activePlayer: player,
-                } as unknown as EngineContext;
-                const resourceId = definition.id;
+	it('ignores increases that resolve to zero', () => {
+		const definition = createResourceV2Definition({
+			bounds: { lowerBound: 0, upperBound: 4 },
+		});
+		const registry = loadResourceV2Registry({
+			resources: [definition],
+		});
+		const player = new PlayerState('A', 'Alice');
+		const state = initializePlayerResourceV2State(player, registry);
+		const context = {
+			activePlayer: player,
+		} as unknown as EngineContext;
+		const resourceId = definition.id;
 
-                const effect: EffectDef = {
-                        type: 'resource',
-                        method: 'upper-bound:increase',
-                        params: { id: resourceId, amount: 3 },
-                        meta: { reconciliation: 'clamp' },
-                };
+		const effect: EffectDef = {
+			type: 'resource',
+			method: 'upper-bound:increase',
+			params: { id: resourceId, amount: 3 },
+			meta: { reconciliation: 'clamp' },
+		};
 
-                resourceV2IncreaseUpperBoundHandler(effect, context, 0);
+		resourceV2IncreaseUpperBoundHandler(effect, context, 0);
 
-                expect(state.bounds[resourceId]).toEqual({
-                        lowerBound: 0,
-                        upperBound: 4,
-                });
-        });
+		expect(state.bounds[resourceId]).toEqual({
+			lowerBound: 0,
+			upperBound: 4,
+		});
+	});
 });
