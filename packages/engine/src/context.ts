@@ -12,6 +12,11 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
+import type {
+	ResourceV2Metadata,
+	ResourceV2Runtime,
+	ResourceV2State,
+} from './resourceV2';
 
 export class EngineContext {
 	constructor(
@@ -41,6 +46,9 @@ export class EngineContext {
 	statAddPctAccums: Record<string, number> = {};
 	actionTraces: ActionTrace[] = [];
 	statSourceStack: StatSourceFrame[] = [];
+	resourceV2Metadata?: ResourceV2Metadata;
+	resourceV2?: ResourceV2Runtime;
+	resourceV2States?: Map<PlayerId, ResourceV2State>;
 
 	private _effectLogs: Map<string, unknown[]> = new Map();
 

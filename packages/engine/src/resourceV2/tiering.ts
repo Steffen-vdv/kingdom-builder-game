@@ -84,12 +84,12 @@ function runEffectSequence(
 	if (!effectIds || effectIds.length === 0 || !resolver || !context) {
 		return;
 	}
-        for (const effectId of effectIds) {
-                const effects = resolver(effectId);
-                if (effects && effects.length > 0) {
-                        runEffects([...effects], context);
-                }
-        }
+	for (const effectId of effectIds) {
+		const effects = resolver(effectId);
+		if (effects && effects.length > 0) {
+			runEffects([...effects], context);
+		}
+	}
 }
 
 function removeStepPassives(
@@ -158,14 +158,14 @@ export function applyResourceTiering({
 
 	if (recordTransition) {
 		tier.touched = true;
-                const transition: ResourceV2RecentTierTransition = {
-                        resourceId,
-                        trackId: tier.trackId,
-                        ...(previousStepId ? { fromStepId: previousStepId } : {}),
-                        ...(nextStepId ? { toStepId: nextStepId } : {}),
-                };
-                state.recentTierTransitions.push(transition);
-        }
+		const transition: ResourceV2RecentTierTransition = {
+			resourceId,
+			trackId: tier.trackId,
+			...(previousStepId ? { fromStepId: previousStepId } : {}),
+			...(nextStepId ? { toStepId: nextStepId } : {}),
+		};
+		state.recentTierTransitions.push(transition);
+	}
 }
 
 export function initialiseResourceTierState(state: ResourceV2State): void {
