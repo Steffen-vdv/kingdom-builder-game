@@ -22,6 +22,7 @@ import {
 	type ResourceV2DefinitionInput,
 	type ResourceV2GroupInput,
 	type ResourceV2GroupParentInput,
+	type ResourceV2SessionMetadata,
 } from './resourceV2';
 
 let seq = 0;
@@ -50,6 +51,7 @@ export interface ContentFactory {
 	resourceGroupParent(
 		definition?: ResourceV2GroupParentInput,
 	): ResourceV2GroupParent;
+	buildResourceV2Metadata(): ResourceV2SessionMetadata;
 }
 
 export function createContentFactory(): ContentFactory {
@@ -66,6 +68,7 @@ export function createContentFactory(): ContentFactory {
 		resourceFactory.createGroup(definition);
 	const resourceGroupParent = (definition?: ResourceV2GroupParentInput) =>
 		resourceFactory.createParent(definition);
+	const buildResourceV2Metadata = () => resourceFactory.buildSessionMetadata();
 
 	let nextCategoryOrder = categories.values().length;
 
@@ -190,6 +193,7 @@ export function createContentFactory(): ContentFactory {
 		resourceV2,
 		resourceGroup,
 		resourceGroupParent,
+		buildResourceV2Metadata,
 	};
 }
 
@@ -213,4 +217,5 @@ export type {
 	ResourceV2DefinitionInput,
 	ResourceV2GroupInput,
 	ResourceV2GroupParentInput,
+	ResourceV2SessionMetadata,
 } from './resourceV2';
