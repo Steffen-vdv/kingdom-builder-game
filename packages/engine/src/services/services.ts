@@ -1,4 +1,5 @@
 import type { ResourceKey, PlayerId, PlayerState } from '../state';
+import { readPlayerResourceValue } from '../state';
 import type { EngineContext } from '../context';
 import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
 import { runEffects } from '../effects';
@@ -43,7 +44,7 @@ export class Services {
 		if (tierKey !== this.tieredResource.resourceKey) {
 			return;
 		}
-		const value = player.resources[tierKey] ?? 0;
+		const value = readPlayerResourceValue(player, tierKey);
 		const nextTier = this.tieredResource.definition(value);
 		const currentTier = this.activeTiers.get(player.id);
 		if (currentTier?.id === nextTier?.id) {

@@ -228,9 +228,11 @@ export function createEngine({
 		'Opponent',
 		resourceBootstrap.playerFactory,
 	);
+	const actionCostPointer = resourceBootstrap.globalActionCost;
 	const actionCostResource =
-		resourceBootstrap.actionCostResource ??
-		determineCommonActionCostResource(actions);
+		actionCostPointer?.resourceId ?? determineCommonActionCostResource(actions);
+	const actionCostAmount =
+		actionCostPointer?.amount ?? rules.defaultActionAPCost;
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
 		startConfig.players?.['A'],
@@ -264,6 +266,7 @@ export function createEngine({
 		phases,
 		actionCostResource,
 		compensationMap,
+		actionCostAmount,
 	);
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;

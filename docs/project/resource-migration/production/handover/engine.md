@@ -1,16 +1,18 @@
 # Engine Handover
 
 - **Prepared by:** gpt-5-codex
-- **Timestamp (UTC):** 2025-10-27 18:05
-- **Current Focus:** Resource Migration MVP – Engine bootstrap & runtime context integration for ResourceV2
+- **Timestamp (UTC):** 2025-10-29 21:05
+- **Current Focus:** Resource Migration MVP – ResourceV2 logging alignment & global action cost enforcement
 - **State Summary:**
 - - Added `packages/engine/src/resourceV2/metadata.ts` to convert content-provided ResourceV2 definitions/groups into engine metadata (ordered ids, parent-child maps, global cost pointers).
 - - Added `packages/engine/src/resourceV2/state.ts` to hold ResourceV2 value/bound/tier/touched state, enforce clamp reconciliation, and aggregate limited parent totals.
 - - Exposed the new APIs via `packages/engine/src/resourceV2/index.ts` and `packages/engine/src/index.ts`; authored `packages/engine/tests/resourceV2/state.test.ts` covering initialization, touched flags, and parent invariants.
 - - Implemented `packages/engine/src/resourceV2/effects.ts` plus dispatcher wiring so ResourceV2 add/remove/transfer/upper-bound handlers respect evaluation modifiers, rounding, clamp reconciliation, and hook suppression. Expanded `packages/engine/tests/resourceV2/effects.test.ts` to cover zero-delta suppression and sanitisation paths.
 - - Built tiering runtime support in `packages/engine/src/resourceV2/tiering.ts`, plumbed hook suppression + tier state logging through `resourceV2/effects.ts` and `resourceV2/state.ts`, and authored `packages/engine/tests/resourceV2/tiering.test.ts` for transitions, overlap guards, and logging helpers.
-- - Ran `npm run format` and `npm run test:coverage:engine` (branch gate now passing, see chunk `ed6c10`).
+- - Ran `npm run format` and `npm run test:coverage:engine` (branch gate now passing, see chunk `982966`).
 - - Updated `packages/engine/src/state/index.ts` and `packages/engine/src/setup/create_engine.ts` so engine bootstrap consumes ResourceV2 registries, seeds player stores, keeps legacy shims in sync, and exposes metadata/runtime hooks via `EngineContext`. Added `packages/engine/tests/setup/create-engine-resourceV2.test.ts` covering initialization and missing-definition errors.
+- - Refined engine logging and diff helpers to respect ResourceV2 ordering, emit signed Option A recent value changes, and apply global action cost pointers while removing the legacy `allowShortfall` flag. Added scenario coverage in `packages/engine/tests/actions/global-action-cost.test.ts` and `packages/engine/tests/logging/resource-diff-order.test.ts`.
+- - Adjusted royal decree happiness scenarios to provision the non-shortfall resource minimum expected by the new enforcement rules and reconfirmed coverage with the passing chunk above.
 - **Next Suggested Tasks:**
   - Extend session snapshot/registry payload builders to include ResourceV2 values and metadata for clients.
   - Coordinate with repo owners on the outstanding lint violations or introduce a scoped suppression so CI can pass once ResourceV2 integration stabilizes.

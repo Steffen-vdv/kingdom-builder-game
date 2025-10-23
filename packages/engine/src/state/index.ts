@@ -319,6 +319,23 @@ export class PlayerState {
 	}
 }
 
+export function readPlayerResourceValue(
+	player: PlayerState,
+	key: ResourceKey,
+): number {
+	if (player.resourceV2?.blueprint.values.has(key)) {
+		return getResourceValue(player.resourceV2, key);
+	}
+	return player.resources[key] ?? 0;
+}
+
+export function readPlayerStatValue(player: PlayerState, key: StatKey): number {
+	if (player.resourceV2?.blueprint.values.has(key)) {
+		return getResourceValue(player.resourceV2, key);
+	}
+	return player.stats[key] ?? 0;
+}
+
 export class GameState {
 	turn = 1;
 	currentPlayerIndex = 0; // multi-player friendly

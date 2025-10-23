@@ -6,6 +6,7 @@ import type { EffectDef } from '../effects';
 import type { RequirementFailure } from '../requirements';
 import type { CostBag } from '../services';
 import type { PlayerId, PlayerState } from '../state';
+import { readPlayerResourceValue } from '../state';
 import type { ActionParameters } from './action_parameters';
 
 function cloneCostBag(costBag: CostBag): CostBag {
@@ -36,7 +37,7 @@ export function applyCostsWithPassives(
 	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
 		defaultedCosts[primaryCostKey] = actionDefinition.system
 			? 0
-			: engineContext.services.rules.defaultActionAPCost;
+			: engineContext.actionCostAmount;
 	}
 	return engineContext.passives.applyCostMods(
 		actionDefinition.id,
@@ -138,7 +139,7 @@ export function verifyCostAffordability(
 ): true | string {
 	for (const resourceKey of Object.keys(costs)) {
 		const requiredAmount = costs[resourceKey] ?? 0;
-		const availableAmount = playerState.resources[resourceKey] ?? 0;
+		const availableAmount = readPlayerResourceValue(playerState, resourceKey);
 		if (availableAmount < requiredAmount) {
 			const shortageDetail = `Insufficient ${resourceKey}: need ${requiredAmount}`;
 			return `${shortageDetail}, have ${availableAmount}`;

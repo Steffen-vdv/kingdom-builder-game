@@ -13,7 +13,6 @@ describe('resource removal penalties', () => {
 					type: 'resource',
 					method: 'remove',
 					params: { key: Resource.happiness, amount: 1 },
-					meta: { allowShortfall: true },
 				},
 			],
 		});
@@ -45,7 +44,6 @@ describe('resource removal penalties', () => {
 							method: 'remove',
 							round: 'up',
 							params: { key: Resource.happiness, amount: 0.5 },
-							meta: { allowShortfall: true },
 						},
 					],
 				},
@@ -68,8 +66,10 @@ describe('resource removal penalties', () => {
 
 		engineContext.activePlayer.ap = cost;
 
-		performAction(action.id, engineContext);
+		expect(() => {
+			performAction(action.id, engineContext);
+		}).toThrow(/Insufficient/);
 
-		expect(engineContext.activePlayer.resources[Resource.happiness]).toBe(-1);
+		expect(engineContext.activePlayer.resources[Resource.happiness]).toBe(0);
 	});
 });

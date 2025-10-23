@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { advance, performAction } from '../../src';
 import { createTestEngine } from '../helpers';
+import { Resource as CResource } from '@kingdom-builder/contents';
 
 interface EffectGroup {
 	id: string;
@@ -35,6 +36,20 @@ describe('royal decree auto land targeting', () => {
 			.find(([, def]) => def.effects.some(isEffectGroup))!;
 		const group = royalDecree.effects.find(isEffectGroup)!;
 		const option = group.options[0]!;
+		const happinessPenalty = royalDecree.effects
+			.filter(
+				(effect) => effect.type === 'resource' && effect.method === 'remove',
+			)
+			.reduce((total, effect) => {
+				const params = effect.params as
+					| { key?: string; amount?: number }
+					| undefined;
+				return params?.key === CResource.happiness
+					? total + (params.amount ?? 0)
+					: total;
+			}, 0);
+		engineContext.activePlayer.resources[CResource.happiness] =
+			happinessPenalty;
 		const nestedAction = engineContext.actions.get(option.actionId);
 		if (!nestedAction) {
 			throw new Error(

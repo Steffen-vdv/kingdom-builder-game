@@ -4,6 +4,7 @@ import {
 } from '../services/passive_helpers';
 import { cloneEffectList } from '../utils';
 import type { EngineContext } from '../context';
+import type { SessionResourceRecentChange } from '@kingdom-builder/protocol';
 import type { EffectDef } from '../effects';
 import type {
 	AdvanceResult,
@@ -142,6 +143,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const metadata: SessionSnapshotMetadata = effectLogs
 		? { passiveEvaluationModifiers, effectLogs }
 		: { passiveEvaluationModifiers };
+	const recentValueChanges = buildRecentValueChanges(context);
 	return {
 		game: {
 			turn: context.game.turn,
@@ -169,15 +171,45 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,
-		recentResourceGains: context.recentResourceGains.map((gain) => ({
-			key: gain.key,
-			amount: gain.amount,
-		})),
+		recentValueChanges,
 		compensations: cloneCompensations(context.compensations),
 		rules,
 		passiveRecords: clonePassiveRecords(context),
 		metadata,
 	};
+}
+
+function buildRecentValueChanges(
+	context: EngineContext,
+): SessionResourceRecentChange[] {
+	const entries: SessionResourceRecentChange[] = context.recentResourceGains
+		.filter((gain) => gain.amount !== 0)
+		.map((gain) => ({
+			resourceId: gain.key,
+			amount: gain.amount,
+		}));
+	const metadata = context.resourceV2Metadata;
+	if (!metadata) {
+		return entries;
+	}
+	const orderIndex = new Map<string, number>();
+	metadata.orderedValueIds.forEach((id, index) => {
+		orderIndex.set(id, index);
+	});
+	return entries.slice().sort((left, right) => {
+		const leftIndex = orderIndex.get(left.resourceId);
+		const rightIndex = orderIndex.get(right.resourceId);
+		if (leftIndex !== undefined && rightIndex !== undefined) {
+			return leftIndex - rightIndex;
+		}
+		if (leftIndex !== undefined) {
+			return -1;
+		}
+		if (rightIndex !== undefined) {
+			return 1;
+		}
+		return left.resourceId.localeCompare(right.resourceId);
+	});
 }
 
 function cloneRuleSnapshot(context: EngineContext): SessionRuleSnapshot {

@@ -86,8 +86,26 @@ describe('royal decree action effect group', () => {
 		} as const;
 
 		const costs = getActionCosts(actionId, engineContext, params);
+		const happinessPenalty = engineContext.actions
+			.get(actionId)
+			.effects.filter(
+				(effect) => effect.type === 'resource' && effect.method === 'remove',
+			)
+			.reduce((total, effect) => {
+				const params = effect.params as
+					| { key?: string; amount?: number }
+					| undefined;
+				return params?.key === CResource.happiness
+					? total + (params.amount ?? 0)
+					: total;
+			}, 0);
+
 		engineContext.activePlayer.ap = costs[CResource.ap] ?? 0;
 		engineContext.activePlayer.gold = costs[CResource.gold] ?? 0;
+		engineContext.activePlayer.resources[CResource.happiness] = Math.max(
+			happinessPenalty,
+			costs[CResource.happiness] ?? 0,
+		);
 
 		const beforeLands = engineContext.activePlayer.lands.length;
 		const beforeHappiness =
@@ -141,19 +159,6 @@ describe('royal decree action effect group', () => {
 				happinessGain += (effect.params as { amount?: number })?.amount ?? 0;
 			}
 		}
-		const happinessPenalty = engineContext.actions
-			.get(actionId)
-			.effects.filter(
-				(effect) => effect.type === 'resource' && effect.method === 'remove',
-			)
-			.reduce((total, effect) => {
-				const params = effect.params as
-					| { key?: string; amount?: number }
-					| undefined;
-				return params?.key === CResource.happiness
-					? total + (params.amount ?? 0)
-					: total;
-			}, 0);
 		expect(engineContext.activePlayer.resources[CResource.happiness]).toBe(
 			beforeHappiness + happinessGain - happinessPenalty,
 		);

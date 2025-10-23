@@ -33,6 +33,7 @@ export class EngineContext {
 			A: {},
 			B: {},
 		},
+		public actionCostAmount = 0,
 	) {}
 	aiSystem?: AISystem;
 	recentResourceGains: {

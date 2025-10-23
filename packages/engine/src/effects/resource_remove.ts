@@ -1,5 +1,6 @@
 import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
+import { readPlayerResourceValue } from '../state';
 
 export const resourceRemove: EffectHandler = (
 	effect,
@@ -18,12 +19,16 @@ export const resourceRemove: EffectHandler = (
 		total = 0;
 	}
 	const player = engineContext.activePlayer;
-	const have = player.resources[key] || 0;
-	const allowShortfall = Boolean(effect.meta?.['allowShortfall']);
+	const before = readPlayerResourceValue(player, key);
 	const removed = total;
-	if (!allowShortfall && have < removed) {
-		throw new Error(`Insufficient ${key}: need ${removed}, have ${have}`);
+	if (before < removed) {
+		throw new Error(`Insufficient ${key}: need ${removed}, have ${before}`);
 	}
-	player.resources[key] = have - removed;
+	const next = before - removed;
+	player.resources[key] = next;
+	const actualDelta = next - before;
+	if (actualDelta !== 0) {
+		engineContext.recentResourceGains.push({ key, amount: actualDelta });
+	}
 	engineContext.services.handleResourceChange(engineContext, player, key);
 };

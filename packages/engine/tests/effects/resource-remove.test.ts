@@ -10,6 +10,7 @@ import {
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import { runEffects } from '../../src/effects/index.ts';
 
 describe('resource:remove effect', () => {
 	it('decrements a resource via action effect', () => {
@@ -115,5 +116,27 @@ describe('resource:remove effect', () => {
 		engineContext.activePlayer.ap = cost;
 		performAction('round_down_remove', engineContext);
 		expect(engineContext.activePlayer.gold).toBe(before - total);
+	});
+
+	it('records negative recent gains when resources are removed', () => {
+		const engineContext = createTestEngine();
+		advance(engineContext);
+		engineContext.activePlayer.resources[CResource.gold] = 4;
+		engineContext.recentResourceGains = [];
+
+		runEffects(
+			[
+				{
+					type: 'resource',
+					method: 'remove',
+					params: { key: CResource.gold, amount: 3 },
+				},
+			],
+			engineContext,
+		);
+
+		expect(engineContext.recentResourceGains).toEqual([
+			{ key: CResource.gold, amount: -3 },
+		]);
 	});
 });

@@ -1,5 +1,6 @@
 import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
+import { readPlayerResourceValue } from '../state';
 
 export const resourceAdd: EffectHandler = (effect, context, multiplier = 1) => {
 	const key = effect.params!['key'] as ResourceKey;
@@ -10,12 +11,16 @@ export const resourceAdd: EffectHandler = (effect, context, multiplier = 1) => {
 	} else if (effect.round === 'down') {
 		total = total >= 0 ? Math.floor(total) : Math.ceil(total);
 	}
-	const current = context.activePlayer.resources[key] || 0;
-	const newVal = current + total;
 	const player = context.activePlayer;
-	player.resources[key] = newVal < 0 ? 0 : newVal;
-	if (total > 0) {
-		context.recentResourceGains.push({ key, amount: total });
+	const before = readPlayerResourceValue(player, key);
+	let next = before + total;
+	if (next < 0) {
+		next = 0;
+	}
+	player.resources[key] = next;
+	const actualDelta = next - before;
+	if (actualDelta !== 0) {
+		context.recentResourceGains.push({ key, amount: actualDelta });
 	}
 	context.services.handleResourceChange(context, player, key);
 };

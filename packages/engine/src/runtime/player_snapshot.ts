@@ -155,6 +155,9 @@ export function snapshotPlayer(
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 	return {
+		values: { ...snapshot.values },
+		valueKinds: { ...snapshot.valueKinds },
+		valueOrder: [...snapshot.valueOrder],
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
 		buildings: [...snapshot.buildings],
