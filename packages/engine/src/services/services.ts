@@ -1,4 +1,9 @@
-import type { ResourceKey, PlayerId, PlayerState } from '../state';
+import type {
+	ResourceKey,
+	PlayerId,
+	PlayerState,
+	ResourceV2Key,
+} from '../state';
 import type { EngineContext } from '../context';
 import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
 import { runEffects } from '../effects';
@@ -7,6 +12,8 @@ import { PopCapService } from './pop_cap_service';
 import { WinConditionService } from './win_condition_service';
 import type { HappinessTierDefinition } from './tiered_resource_types';
 import type { RuleSet } from './services_types';
+import { ResourceV2Service } from './resourceV2_service';
+import { getResourceV2Definition } from '../state';
 
 type Context = EngineContext;
 type TierResource = ResourceKey;
@@ -15,6 +22,7 @@ export class Services {
 	tieredResource: TieredResourceService;
 	popcap: PopCapService;
 	winCondition: WinConditionService;
+	resourceV2: ResourceV2Service;
 	private activeTiers: Map<PlayerId, HappinessTierDefinition> = new Map();
 
 	constructor(
@@ -24,6 +32,9 @@ export class Services {
 		this.tieredResource = new TieredResourceService(rules);
 		this.popcap = new PopCapService(rules, developments);
 		this.winCondition = new WinConditionService(rules.winConditions ?? []);
+		this.resourceV2 = new ResourceV2Service((context, player, resourceId) =>
+			this.handleResourceV2Change(context, player, resourceId),
+		);
 	}
 
 	handleResourceChange(
@@ -33,6 +44,48 @@ export class Services {
 	) {
 		this.handleTieredResourceChange(context, player, key);
 		this.winCondition.evaluateResourceChange(context, player, key);
+	}
+
+	private handleResourceV2Change(
+		context: Context,
+		player: PlayerState,
+		resourceId: ResourceV2Key,
+	): void {
+		const definition = getResourceV2Definition(resourceId);
+		const tierKey = this.tieredResource.resourceKey;
+		if (resourceId === tierKey) {
+			this.handleTieredResourceChange(context, player, tierKey);
+		}
+		const legacyKey = this.resolveLegacyResourceKey(
+			player,
+			resourceId,
+			definition,
+		);
+		if (legacyKey) {
+			this.winCondition.evaluateResourceChange(context, player, legacyKey);
+			if (legacyKey !== tierKey) {
+				this.handleTieredResourceChange(context, player, legacyKey);
+			}
+			return;
+		}
+		if (resourceId !== tierKey) {
+			return;
+		}
+	}
+
+	private resolveLegacyResourceKey(
+		player: PlayerState,
+		resourceId: ResourceV2Key,
+		definition: ReturnType<typeof getResourceV2Definition>,
+	): ResourceKey | undefined {
+		const metadataKey = definition?.metadata?.legacyResourceKey;
+		if (typeof metadataKey === 'string') {
+			return metadataKey;
+		}
+		if (Object.prototype.hasOwnProperty.call(player.resources, resourceId)) {
+			return resourceId;
+		}
+		return undefined;
 	}
 
 	handleTieredResourceChange(

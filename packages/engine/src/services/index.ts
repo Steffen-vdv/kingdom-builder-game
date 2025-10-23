@@ -37,3 +37,4 @@ export type { PhaseSkipConfig, PhaseSkipStep } from './passive_types';
 export { PopCapService } from './pop_cap_service';
 export { Services } from './services';
 export type { RuleSet, CorePhaseIds } from './services_types';
+export { ResourceV2Service } from './resourceV2_service';
