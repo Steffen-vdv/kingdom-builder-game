@@ -93,6 +93,7 @@ export type {
 	StartModeConfig,
 	StartModesConfig,
 	GameConfig,
+	ResourceV2CatalogSnapshot,
 	PhaseStepConfig,
 	PhaseConfig,
 } from './config/schema';
