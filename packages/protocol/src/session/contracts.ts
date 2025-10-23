@@ -9,6 +9,7 @@ import type {
 	PhaseConfig,
 	StartConfig,
 } from '../config/schema';
+import type { ResourceV2GroupMetadata } from '../config/resourceV2';
 import type {
 	ActionParametersPayload,
 	ActionTrace,
@@ -57,6 +58,7 @@ export interface SessionRegistriesPayload {
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
+	resourceGroups?: SerializedRegistry<ResourceV2GroupMetadata>;
 }
 
 export type SessionMetadataSnapshot = Pick<

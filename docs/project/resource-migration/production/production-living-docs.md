@@ -51,6 +51,11 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
                                                                                 | Enforced ResourceV2 global action cost metadata in engine state/action processing, routed engine context defaults through the catalog, and added regression coverage for overrides, system exemptions, and duplicate content. | `npm run check -- --filter engine` (fails: npm-run-all rejects `--filter`; chunk `4de5b2†L1-L5`); `npm run check` (pass; chunk `27f64f†L1-L169`) |
                               | Monitor future content updates to ensure exactly one ResourceV2 global cost resource and plan script support for targeted checks once `npm-run-all` gains filtering. |
 
+| 2025-10-26 | ChatGPT (gpt-5-codex) | packages/protocol/src/session/index.ts; packages/protocol/src/session/contracts.ts; packages/protocol/src/config/session_contracts/shared.ts; packages/protocol/src/index.ts; packages/protocol/tests/session-snapshot-resourceV2.test.ts; docs/project/resource-migration/production/production-living-docs.md |
+
+                                                                                | Extended protocol session snapshots with ResourceV2 state, ordering metadata, and optional registry group payloads plus regression coverage for mixed legacy/new serialization. | `npm run check -- --filter protocol` (fails: npm-run-all rejects `--filter`; chunk `d6c336†L1-L12`); `npx vitest run --config vitest.protocol.config.ts` (pass; chunk `2d9766†L1-L33`) |
+                              | Align engine/server snapshot emitters to populate the new ResourceV2 fields end-to-end and update web selectors once transports supply the richer payloads. |
+
 | 2024-**-** | _(add entry)_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -58,14 +63,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-25 12:22
-- **Current Focus:** ResourceV2 global action cost enforcement
-- **State Summary:** Engine state now caches the catalog-defined global action cost with duplicate guards, non-system actions consume that shared cost without overrides, and engine setup derives `actionCostResource` from ResourceV2 metadata with legacy fallback. Regression tests cover enforcement, exemptions, and invalid content, and a full `npm run check` cycle passed after the new suite landed.
+- **Timestamp (UTC):** 2025-10-26 14:15
+- **Current Focus:** Protocol snapshot ResourceV2 expansion
+- **State Summary:** Session contracts now expose ResourceV2 player values, ordered resource/group metadata, and optional registry group payloads while keeping legacy buckets intact for migration overlap; protocol tests cover mixed legacy + V2 serialization.
 - **Next Suggested Tasks:**
-  - Remove the legacy action-cost fallback once all catalogs supply ResourceV2 metadata and automation confirms single global entries.
-  - Coordinate with content owners to flag exactly one ResourceV2 entry as the global action cost and surface catalog validation tooling if needed.
-- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag, preventing targeted `npm run check` slices.
-- **Reminder:** Resource authoring must prevent per-action overrides when the global flag is present; watch for catalog violations during ingestion.
+  - Teach the engine snapshot builder and server transport to populate the new ResourceV2 fields so clients can consume live catalog/values data.
+  - Update web metadata selectors to hydrate from the richer protocol payload once server wiring lands, ensuring legacy paths remain until migration completes.
+- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag, preventing targeted `npm run check` slices; downstream systems do not yet emit the new ResourceV2 fields.
+- **Reminder:** Keep legacy `resources`/`stats`/`population` payloads stable until every consumer has switched to the ResourceV2 structures.
 
 ## 5. Notes & Decisions Archive
 
