@@ -1,6 +1,7 @@
 import { useEffect, useRef, type FC } from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import ResourceBar from './ResourceBar';
+import ResourceHud from '../resources/ResourceHud';
 import PopulationInfo from './PopulationInfo';
 import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
@@ -72,6 +73,9 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	]
 		.filter(Boolean)
 		.join(' ');
+	const hasResourceValues = Boolean(
+		player.values && Object.keys(player.values).length > 0,
+	);
 	return (
 		<div ref={panelRef} className={panelClassName}>
 			<h3 className="text-lg font-semibold tracking-tight">
@@ -86,7 +90,11 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				ref={animateBar}
 				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
 			>
-				<ResourceBar player={player} />
+				{hasResourceValues ? (
+					<ResourceHud player={player} />
+				) : (
+					<ResourceBar player={player} />
+				)}
 				<PopulationInfo player={player} />
 			</div>
 			<div ref={animateSections} className="flex flex-col gap-2">
