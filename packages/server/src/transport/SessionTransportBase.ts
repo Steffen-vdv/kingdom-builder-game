@@ -231,6 +231,21 @@ export class SessionTransportBase {
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
 		const clonedSnapshot = structuredClone(snapshot);
+		if ('recentResourceGains' in clonedSnapshot) {
+			const gains =
+				(
+					clonedSnapshot as unknown as {
+						recentResourceGains?: Array<{ key: string; amount: number }>;
+					}
+				).recentResourceGains ?? [];
+			clonedSnapshot.recentValueChanges = gains.map((gain) => ({
+				resourceId: gain.key,
+				amount: gain.amount,
+			}));
+			delete (clonedSnapshot as Record<string, unknown>).recentResourceGains;
+		} else if (!clonedSnapshot.recentValueChanges) {
+			clonedSnapshot.recentValueChanges = [];
+		}
 		clonedSnapshot.metadata = mergeSessionMetadata({
 			baseMetadata: this.sessionManager.getSessionMetadata(sessionId),
 			snapshotMetadata: clonedSnapshot.metadata,

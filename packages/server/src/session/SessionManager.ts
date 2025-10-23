@@ -19,26 +19,33 @@ import type {
 	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	ResourceV2DefinitionConfig,
+	ResourceV2GroupDefinitionConfig,
 } from '@kingdom-builder/protocol';
+import type { SessionResourceRegistryPayload } from '@kingdom-builder/protocol/session/resourceV2';
 import {
 	buildSessionMetadata,
 	type SessionStaticMetadataPayload,
 } from './buildSessionMetadata.js';
 import {
+	buildDefaultResourceDefinitions,
+	buildDefaultResourceGroups,
+} from './resourceRegistryDefaults.js';
+import {
 	cloneActionCategoryRegistry,
 	cloneRegistry,
+	cloneResourceRegistryPayload,
+	createResourceRegistryPayload,
+	freezeResourceRegistryPayload,
 	freezeSerializedRegistry,
 } from './registryUtils.js';
 import {
 	buildSessionAssets,
-	buildResourceRegistry,
 	type SessionBaseOptions,
-	type SessionResourceRegistry,
 } from './sessionConfigAssets.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
 type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
-	resourceRegistry?: SessionResourceRegistry;
 	actionCategoryRegistry?: SessionActionCategoryRegistry;
 	primaryIconId?: string | null;
 };
@@ -47,7 +54,7 @@ type SessionRuntimeConfig = {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
-	resources: SessionResourceRegistry;
+	resourceValues: SessionResourceRegistryPayload;
 	primaryIconId: string | null;
 };
 
@@ -88,8 +95,6 @@ export class SessionManager {
 
 	private readonly metadata: SessionStaticMetadataPayload;
 
-	private readonly resourceOverrides: SessionResourceRegistry | undefined;
-
 	private readonly runtimeConfig: SessionRuntimeConfig;
 
 	public constructor(options: SessionManagerOptions = {}) {
@@ -100,7 +105,8 @@ export class SessionManager {
 			engineOptions = {},
 		} = options;
 		const {
-			resourceRegistry,
+			resourceDefinitions: resourceDefinitionOverrides,
+			resourceGroups: resourceGroupOverrides,
 			actionCategoryRegistry,
 			primaryIconId: primaryIconOverride,
 			...engineOverrides
@@ -110,6 +116,20 @@ export class SessionManager {
 		this.now = now;
 		const baseActionCategories =
 			engineOverrides.actionCategories ?? ACTION_CATEGORIES;
+		const overrideResourceDefinitions = resourceDefinitionOverrides
+			? Array.from(resourceDefinitionOverrides)
+			: undefined;
+		const baseResourceDefinitions: ReadonlyArray<ResourceV2DefinitionConfig> =
+			(overrideResourceDefinitions?.length ?? 0) > 0
+				? overrideResourceDefinitions
+				: buildDefaultResourceDefinitions();
+		const overrideResourceGroups = resourceGroupOverrides
+			? Array.from(resourceGroupOverrides)
+			: undefined;
+		const baseResourceGroups: ReadonlyArray<ResourceV2GroupDefinitionConfig> =
+			(overrideResourceGroups?.length ?? 0) > 0
+				? overrideResourceGroups
+				: buildDefaultResourceGroups();
 		this.baseOptions = {
 			actions: engineOverrides.actions ?? ACTIONS,
 			actionCategories: baseActionCategories,
@@ -119,16 +139,17 @@ export class SessionManager {
 			phases: engineOverrides.phases ?? PHASES,
 			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
+			resourceDefinitions: baseResourceDefinitions,
+			resourceGroups: baseResourceGroups,
 		};
 		const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
-		const resourceOverrideSnapshot = resourceRegistry
-			? freezeSerializedRegistry(structuredClone(resourceRegistry))
-			: undefined;
-		this.resourceOverrides = resourceOverrideSnapshot;
-		const resources = buildResourceRegistry(
-			this.resourceOverrides,
-			this.baseOptions.start,
-		);
+		const resourceValues: SessionResourceRegistryPayload =
+			freezeResourceRegistryPayload(
+				createResourceRegistryPayload(
+					this.baseOptions.resourceDefinitions,
+					this.baseOptions.resourceGroups,
+				),
+			);
 		const actionCategories = actionCategoryRegistry
 			? (freezeSerializedRegistry(
 					structuredClone(actionCategoryRegistry),
@@ -142,13 +163,12 @@ export class SessionManager {
 			buildings: cloneRegistry(this.baseOptions.buildings),
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
-			resources,
+			resourceValues,
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
 			developments: this.baseOptions.developments,
-			populations: this.baseOptions.populations,
-			resources,
+			resourceValues,
 			phases: this.baseOptions.phases,
 		});
 		const frozenPhases = Object.freeze(
@@ -160,14 +180,15 @@ export class SessionManager {
 		const frozenRules = Object.freeze(
 			structuredClone(this.baseOptions.rules),
 		) as unknown as RuleSet;
-		const frozenResources = freezeSerializedRegistry(
-			structuredClone(resources),
-		) as SessionResourceRegistry;
+		const frozenResourceValues: SessionResourceRegistryPayload =
+			freezeResourceRegistryPayload(
+				cloneResourceRegistryPayload(resourceValues),
+			);
 		this.runtimeConfig = Object.freeze({
 			phases: frozenPhases,
 			start: frozenStart,
 			rules: frozenRules,
-			resources: frozenResources,
+			resourceValues: frozenResourceValues,
 			primaryIconId,
 		});
 	}
@@ -203,7 +224,6 @@ export class SessionManager {
 		const { registries, metadata } = buildSessionAssets(
 			{
 				baseOptions: this.baseOptions,
-				resourceOverrides: this.resourceOverrides,
 				baseRegistries: this.registries,
 				baseMetadata: this.metadata,
 			},

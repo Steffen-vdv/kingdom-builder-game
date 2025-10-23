@@ -205,9 +205,8 @@ describe('FastifySessionTransport', () => {
 		expect(metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,
 		);
-		expect(metadata.populations?.[populationId]?.label).toBe(
-			populationOverride.name,
-		);
+		expect(metadata.values?.descriptors).toBeDefined();
+		expect((metadata as Record<string, unknown>).populations).toBeUndefined();
 		const metadataResponse = await app.inject({
 			method: 'GET',
 			url: '/metadata',
@@ -222,12 +221,13 @@ describe('FastifySessionTransport', () => {
 		expect(metadataBody.metadata.buildings?.[buildingId]?.label).toBe(
 			buildingOverride.name,
 		);
-		expect(metadataBody.metadata.populations?.[populationId]?.label).toBe(
-			populationOverride.name,
-		);
 		expect(metadataBody.metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,
 		);
+		expect(metadataBody.metadata.values?.descriptors).toBeDefined();
+		expect(
+			(metadataBody.metadata as Record<string, unknown>).populations,
+		).toBeUndefined();
 		expect(manager.getSessionRegistries(body.sessionId)).toEqual(
 			body.registries,
 		);
@@ -248,8 +248,9 @@ describe('FastifySessionTransport', () => {
 		expect(body.start).toEqual(start);
 		expect(body.rules).toEqual(rules);
 		expect(body.primaryIconId).toBe(primaryIconId);
-		const resource = body.resources[gainKey];
-		expect(resource).toBeDefined();
+		expect(
+			body.resourceValues.definitions[gainKey]?.display?.label,
+		).toBeDefined();
 		expect(body).toEqual(manager.getRuntimeConfig());
 		await app.close();
 	});
@@ -573,7 +574,10 @@ describe('FastifySessionTransport', () => {
 		expect(body.phaseComplete).toBe(true);
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.currentPhase).toBeDefined();
-		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);
+		expect(Array.isArray(body.snapshot.recentValueChanges)).toBe(true);
+		expect(
+			(body.snapshot as Record<string, unknown>).recentResourceGains,
+		).toBeUndefined();
 		expectStaticMetadata(manager.getMetadata());
 		expect(body.registries.actions).toBeDefined();
 		expect(runSpy).toHaveBeenCalledWith(playerId, expect.any(Object));

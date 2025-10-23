@@ -4,6 +4,7 @@ import type {
 	SessionOverviewHero,
 	SessionOverviewTokenMap,
 } from '@kingdom-builder/protocol';
+import type { SessionResourceValueMetadata } from '@kingdom-builder/protocol/session/resourceV2';
 import type { SessionStaticMetadataPayload } from './buildSessionMetadata.js';
 
 type MetadataRecord<T> = Record<string, T>;
@@ -13,39 +14,32 @@ interface MergeSessionMetadataOptions {
 	snapshotMetadata: SessionSnapshotMetadata;
 }
 
+const clone = <Value>(value: Value): Value => {
+	return structuredClone(value);
+};
+
 export function mergeSessionMetadata({
 	baseMetadata,
 	snapshotMetadata,
 }: MergeSessionMetadataOptions): SessionSnapshotMetadata {
-	const baseClone = structuredClone(
-		baseMetadata,
-	) as Partial<SessionSnapshotMetadata>;
+	const baseClone = clone(baseMetadata) as Partial<SessionSnapshotMetadata>;
 	const merged: SessionSnapshotMetadata = {
 		...baseClone,
-		passiveEvaluationModifiers: structuredClone(
+		passiveEvaluationModifiers: clone(
 			snapshotMetadata.passiveEvaluationModifiers,
 		),
 	};
 	if (snapshotMetadata.effectLogs !== undefined) {
-		merged.effectLogs = structuredClone(snapshotMetadata.effectLogs);
+		merged.effectLogs = clone(snapshotMetadata.effectLogs);
 	}
-	const resources = mergeRecord(
-		baseClone.resources,
-		snapshotMetadata.resources,
+	const values = mergeResourceValueMetadata(
+		baseClone.values,
+		snapshotMetadata.values,
 	);
-	if (resources !== undefined) {
-		merged.resources = resources;
+	if (values !== undefined) {
+		merged.values = values;
 	} else {
-		delete merged.resources;
-	}
-	const populations = mergeRecord(
-		baseClone.populations,
-		snapshotMetadata.populations,
-	);
-	if (populations !== undefined) {
-		merged.populations = populations;
-	} else {
-		delete merged.populations;
+		delete merged.values;
 	}
 	const buildings = mergeRecord(
 		baseClone.buildings,
@@ -64,12 +58,6 @@ export function mergeSessionMetadata({
 		merged.developments = developments;
 	} else {
 		delete merged.developments;
-	}
-	const stats = mergeRecord(baseClone.stats, snapshotMetadata.stats);
-	if (stats !== undefined) {
-		merged.stats = stats;
-	} else {
-		delete merged.stats;
 	}
 	const phases = mergeRecord(baseClone.phases, snapshotMetadata.phases);
 	if (phases !== undefined) {
@@ -98,6 +86,33 @@ export function mergeSessionMetadata({
 	return merged;
 }
 
+function mergeResourceValueMetadata(
+	base: SessionResourceValueMetadata | undefined,
+	overrides: SessionResourceValueMetadata | undefined,
+): SessionResourceValueMetadata | undefined {
+	if (!base && !overrides) {
+		return undefined;
+	}
+	const descriptors = mergeRecord(base?.descriptors, overrides?.descriptors);
+	const groups = mergeRecord(base?.groups, overrides?.groups);
+	const tiers = mergeRecord(base?.tiers, overrides?.tiers);
+	const orderedSource = overrides?.ordered ?? base?.ordered;
+	const ordered = orderedSource ? clone(orderedSource) : undefined;
+	const recentSource = overrides?.recent ?? base?.recent;
+	const recent = recentSource ? clone(recentSource) : undefined;
+	if (!descriptors && !groups && !tiers && !ordered && !recent) {
+		return undefined;
+	}
+	const metadata: SessionResourceValueMetadata = {
+		...(descriptors ? { descriptors } : {}),
+		...(groups ? { groups } : {}),
+		...(tiers ? { tiers } : {}),
+		...(ordered ? { ordered } : {}),
+		...(recent ? { recent } : {}),
+	};
+	return metadata;
+}
+
 function mergeRecord<T>(
 	base: MetadataRecord<T> | undefined,
 	overrides: MetadataRecord<T> | undefined,
@@ -105,12 +120,12 @@ function mergeRecord<T>(
 	if (!base && !overrides) {
 		return undefined;
 	}
-	const cloneBase = base ? structuredClone(base) : ({} as MetadataRecord<T>);
+	const cloneBase: MetadataRecord<T> = base ? clone(base) : {};
 	if (!overrides) {
 		return cloneBase;
 	}
 	for (const [key, value] of Object.entries(overrides)) {
-		cloneBase[key] = structuredClone(value);
+		cloneBase[key] = clone(value);
 	}
 	return cloneBase;
 }
@@ -122,15 +137,15 @@ function mergeOverview(
 	if (!base && !overrides) {
 		return undefined;
 	}
-	const result: SessionOverviewMetadata = base ? structuredClone(base) : {};
+	const result: SessionOverviewMetadata = base ? clone(base) : {};
 	if (!overrides) {
 		return result;
 	}
 	if (overrides.hero) {
-		const heroBase = result.hero ? structuredClone(result.hero) : {};
+		const heroBase = result.hero ? clone(result.hero) : {};
 		const hero: SessionOverviewHero = {
 			...heroBase,
-			...structuredClone(overrides.hero),
+			...clone(overrides.hero),
 		};
 		if (overrides.hero.tokens || heroBase.tokens) {
 			const heroTokens = mergeStringRecord(
@@ -146,7 +161,7 @@ function mergeOverview(
 		result.hero = hero;
 	}
 	if (overrides.sections !== undefined) {
-		result.sections = structuredClone(overrides.sections);
+		result.sections = clone(overrides.sections);
 	}
 	if (overrides.tokens || result.tokens) {
 		const mergedTokens = mergeTokenMap(result.tokens, overrides.tokens);
@@ -166,7 +181,7 @@ function mergeStringRecord(
 	if (!base && !overrides) {
 		return undefined;
 	}
-	const result = base ? structuredClone(base) : ({} as Record<string, string>);
+	const result: Record<string, string> = base ? clone(base) : {};
 	if (!overrides) {
 		return result;
 	}
