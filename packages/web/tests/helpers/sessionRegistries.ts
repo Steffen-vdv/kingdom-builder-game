@@ -88,6 +88,14 @@ function cloneRegistriesPayload(
 			]),
 		);
 	};
+	const cloneResourceDefinitionList = <T>(
+		values: ReadonlyArray<T> | undefined,
+	) => {
+		if (!values) {
+			return undefined;
+		}
+		return values.map((value) => structuredClone(value));
+	};
 	return {
 		actions: cloneEntries(payload.actions),
 		buildings: cloneEntries(payload.buildings),
@@ -100,6 +108,10 @@ function cloneRegistriesPayload(
 			]),
 		),
 		actionCategories: cloneEntries(payload.actionCategories),
+		resourceDefinitions: cloneResourceDefinitionList(
+			payload.resourceDefinitions,
+		),
+		resourceGroups: cloneResourceDefinitionList(payload.resourceGroups),
 	};
 }
 

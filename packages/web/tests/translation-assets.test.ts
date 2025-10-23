@@ -3,12 +3,14 @@ import { createTranslationAssets } from '../src/translation/context/assets';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 
 describe('translation assets', () => {
-	it('uses provided metadata descriptors for critical assets and stats', () => {
+	it('uses metadata descriptors for core assets and stats', () => {
 		const { registries, metadata, ruleSnapshot } = createTestSessionScaffold();
 		const assets = createTranslationAssets(
 			{
 				populations: registries.populations,
 				resources: registries.resources,
+				resourceDefinitions: registries.resourceDefinitions,
+				resourceGroups: registries.resourceGroups,
 			},
 			metadata,
 			{ rules: ruleSnapshot },
@@ -37,13 +39,16 @@ describe('translation assets', () => {
 			assets: { ...metadata.assets },
 		};
 		delete metadataWithoutLand.assets.land;
+		const metadataCast = metadataWithoutLand as typeof metadata;
 		expect(() =>
 			createTranslationAssets(
 				{
 					populations: registries.populations,
 					resources: registries.resources,
+					resourceDefinitions: registries.resourceDefinitions,
+					resourceGroups: registries.resourceGroups,
 				},
-				metadataWithoutLand as typeof metadata,
+				metadataCast,
 				{ rules: ruleSnapshot },
 			),
 		).toThrowError(/assets\.land/);

@@ -10,6 +10,8 @@ import {
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type PopulationConfig,
+	type ResourceV2Definition,
+	type ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionRegistriesPayload,
@@ -103,11 +105,27 @@ export interface SessionRegistries {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: Record<string, SessionResourceDefinition>;
+	resourceDefinitions: ReadonlyArray<ResourceV2Definition>;
+	resourceGroups: ReadonlyArray<ResourceV2GroupDefinition>;
 }
 
 export function deserializeSessionRegistries(
 	payload: SessionRegistriesPayload,
 ): SessionRegistries {
+	const cloneResourceV2Definitions = (
+		definitions: ReadonlyArray<ResourceV2Definition> | undefined,
+	): ReadonlyArray<ResourceV2Definition> => {
+		const list = definitions ? [...definitions] : [];
+		return Object.freeze(list);
+	};
+
+	const cloneResourceV2Groups = (
+		groups: ReadonlyArray<ResourceV2GroupDefinition> | undefined,
+	): ReadonlyArray<ResourceV2GroupDefinition> => {
+		const list = groups ? [...groups] : [];
+		return Object.freeze(list);
+	};
+
 	return {
 		actions: createRegistryFromPayload(
 			payload.actions ?? {},
@@ -127,9 +145,17 @@ export function deserializeSessionRegistries(
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),
+		resourceDefinitions: cloneResourceV2Definitions(
+			payload.resourceDefinitions,
+		),
+		resourceGroups: cloneResourceV2Groups(payload.resourceGroups),
 	};
 }
 
 export function extractResourceKeys(registries: SessionRegistries): string[] {
-	return Object.keys(registries.resources);
+	const legacyKeys = Object.keys(registries.resources);
+	if (legacyKeys.length > 0) {
+		return legacyKeys;
+	}
+	return registries.resourceDefinitions.map((definition) => definition.id);
 }

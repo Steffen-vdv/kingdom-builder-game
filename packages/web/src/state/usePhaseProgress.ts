@@ -28,6 +28,8 @@ interface PhaseProgressOptions {
 		| 'developments'
 		| 'resources'
 		| 'populations'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	onFatalSessionError?: ((error: unknown) => void) | undefined;

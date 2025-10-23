@@ -36,6 +36,8 @@ interface UseActionPerformerOptions {
 		| 'developments'
 		| 'resources'
 		| 'populations'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>;
 	addResolutionLog: (resolution: ActionResolution) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;

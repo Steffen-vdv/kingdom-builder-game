@@ -42,6 +42,8 @@ export function createTranslationContext(
 		| 'developments'
 		| 'populations'
 		| 'resources'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>,
 	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,

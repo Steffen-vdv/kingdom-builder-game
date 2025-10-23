@@ -192,6 +192,8 @@ function applyRegistries(
 	mergeRegistryEntries(record.registries.developments, next.developments);
 	mergeRegistryEntries(record.registries.populations, next.populations);
 	applyResourceRegistry(record.registries.resources, next.resources);
+	record.registries.resourceDefinitions = next.resourceDefinitions;
+	record.registries.resourceGroups = next.resourceGroups;
 	const keys = extractResourceKeys(record.registries);
 	record.resourceKeys.splice(0, record.resourceKeys.length, ...keys);
 }

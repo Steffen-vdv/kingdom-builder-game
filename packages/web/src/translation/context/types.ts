@@ -6,6 +6,8 @@ import type {
 	EffectDef,
 	PlayerStartConfig,
 	PopulationConfig,
+	ResourceV2BoundsMetadata,
+	ResourceV2TierTrackDefinition,
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerId,
@@ -48,6 +50,31 @@ export interface TranslationIconLabel {
 	format?: SessionMetadataFormat;
 }
 
+export interface TranslationResourceV2Display {
+	label: string;
+	icon?: string;
+	description?: string;
+	displayAsPercent?: boolean;
+}
+
+export interface TranslationResourceV2GlobalCostInfo {
+	amount: number;
+	label: string;
+	icon?: string;
+}
+
+export interface TranslationResourceV2Selectors {
+	readonly keys: ReadonlyArray<string>;
+	has(id: string): boolean;
+	selectDisplay(id: string): TranslationResourceV2Display | undefined;
+	selectPercentFormat(id: string): boolean | undefined;
+	selectBounds(id: string): ResourceV2BoundsMetadata | undefined;
+	selectTierTrack(id: string): ResourceV2TierTrackDefinition | undefined;
+	selectGlobalCostInfo(
+		id: string,
+	): TranslationResourceV2GlobalCostInfo | undefined;
+}
+
 export interface TranslationModifierInfo {
 	icon?: string;
 	label?: string;
@@ -73,6 +100,7 @@ export interface TranslationAssets {
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
 	readonly triggers: Readonly<Record<string, TranslationTriggerAsset>>;
 	readonly tierSummaries: Readonly<Record<string, string>>;
+	readonly resourceV2: TranslationResourceV2Selectors;
 	formatPassiveRemoval(description: string): string;
 }
 

@@ -12,6 +12,7 @@ import type {
 	TranslationIconLabel,
 	TranslationTriggerAsset,
 } from './types';
+import { createResourceV2Selectors } from '../resourceV2/selectors';
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
 
@@ -97,19 +98,43 @@ function buildPopulationMap(
 function buildResourceMap(
 	resources: SessionRegistries['resources'],
 	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
+	resourceV2: ReturnType<typeof createResourceV2Selectors>,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [key, definition] of Object.entries(resources)) {
+	const keys = new Set<string>([...Object.keys(resources), ...resourceV2.keys]);
+	for (const key of keys) {
 		const entry: TranslationIconLabel = {};
-		if (definition.icon !== undefined) {
-			entry.icon = definition.icon;
-		}
-		entry.label = definition.label ?? definition.key ?? key;
-		if (definition.description !== undefined) {
-			entry.description = definition.description;
+		const v2Display = resourceV2.selectDisplay(key);
+		if (v2Display) {
+			entry.label = v2Display.label;
+			if (v2Display.icon !== undefined) {
+				entry.icon = v2Display.icon;
+			}
+			if (v2Display.description !== undefined) {
+				entry.description = v2Display.description;
+			}
+			if (v2Display.displayAsPercent !== undefined) {
+				entry.displayAsPercent = v2Display.displayAsPercent;
+			}
+		} else {
+			const definition = resources[key];
+			if (definition?.icon !== undefined) {
+				entry.icon = definition.icon;
+			}
+			const labelFromDefinition = definition?.label ?? definition?.key;
+			entry.label = labelFromDefinition ?? key;
+			if (definition?.description !== undefined) {
+				entry.description = definition.description;
+			}
 		}
 		const descriptor = descriptors?.[key];
-		entries[key] = mergeIconLabel(entry, descriptor, entry.label ?? key);
+		const fallbackDefinition = resources[key];
+		const fallbackLabel =
+			entry.label ??
+			fallbackDefinition?.label ??
+			fallbackDefinition?.key ??
+			key;
+		entries[key] = mergeIconLabel(entry, descriptor, fallbackLabel);
 	}
 	return Object.freeze(entries);
 }
@@ -234,7 +259,10 @@ function requireMetadataRecord(
 }
 
 export function createTranslationAssets(
-	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
+	registries: Pick<
+		SessionRegistries,
+		'populations' | 'resources' | 'resourceDefinitions' | 'resourceGroups'
+	>,
 	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
@@ -262,7 +290,15 @@ export function createTranslationAssets(
 		registries.populations,
 		populationMetadata,
 	);
-	const resources = buildResourceMap(registries.resources, resourceMetadata);
+	const resourceV2 = createResourceV2Selectors(
+		registries.resourceDefinitions,
+		registries.resourceGroups,
+	);
+	const resources = buildResourceMap(
+		registries.resources,
+		resourceMetadata,
+		resourceV2,
+	);
 	const stats = buildStatMap(statMetadata);
 	const populationAsset = mergeIconLabel(
 		undefined,
@@ -307,6 +343,7 @@ export function createTranslationAssets(
 		modifiers,
 		triggers,
 		tierSummaries,
+		resourceV2,
 		formatPassiveRemoval: formatRemoval,
 	});
 }

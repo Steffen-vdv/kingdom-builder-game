@@ -6,6 +6,7 @@ import type {
 	SessionResourceDefinition,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
+import type { TranslationResourceV2Selectors } from '../translation/context';
 
 export interface RegistryMetadataDescriptor {
 	id: string;
@@ -202,14 +203,24 @@ const mergeRegistryEntries = <TDefinition extends { id: string }>(
 const mergeResourceEntries = (
 	resources: Record<string, SessionResourceDefinition>,
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
+	resourceSelectors: TranslationResourceV2Selectors,
 ): Iterable<readonly [string, RegistryMetadataDescriptor]> => {
 	const entries: Array<readonly [string, RegistryMetadataDescriptor]> = [];
 	const processed = new Set<string>();
-	for (const [key, definition] of Object.entries(resources)) {
+	const keys = new Set<string>([
+		...Object.keys(resources),
+		...resourceSelectors.keys,
+	]);
+	for (const key of keys) {
+		const definition = resources[key];
+		const display = resourceSelectors.selectDisplay(key);
+		const label = display?.label ?? definition?.label ?? definition?.key ?? key;
+		const icon = display?.icon ?? definition?.icon;
+		const description = display?.description ?? definition?.description;
 		const descriptor = createRegistryDescriptor(key, metadata?.[key], {
-			label: definition.label ?? definition.key ?? key,
-			icon: definition.icon,
-			description: definition.description,
+			label,
+			icon,
+			description,
 		});
 		entries.push([key, descriptor]);
 		processed.add(key);
@@ -228,9 +239,14 @@ const mergeResourceEntries = (
 export const buildResourceMetadata = (
 	resources: Record<string, SessionResourceDefinition>,
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
+	resourceSelectors: TranslationResourceV2Selectors,
 ): MetadataLookup<RegistryMetadataDescriptor> =>
-	createLookup(mergeResourceEntries(resources, metadata), (id: string) =>
-		createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
+	createLookup(
+		mergeResourceEntries(resources, metadata, resourceSelectors),
+		(id: string) =>
+			createRegistryDescriptor(id, undefined, {
+				label: formatLabel(id),
+			}),
 	);
 
 export const buildRegistryMetadata = <

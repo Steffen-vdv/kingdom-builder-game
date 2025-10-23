@@ -12,6 +12,7 @@ import type {
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
+import type { TranslationResourceV2Selectors } from '../translation/context';
 import type { DefinitionLookup } from './registryMetadataLookups';
 import {
 	createAssetMetadataSelector,
@@ -47,6 +48,7 @@ export interface RegistryMetadataContextValue {
 	statMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	phaseMetadataLookup: MetadataLookup<PhaseMetadata>;
 	triggerMetadataLookup: MetadataLookup<TriggerMetadata>;
+	resourceV2Selectors: TranslationResourceV2Selectors;
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	actionCategoryMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	populationMetadata: MetadataSelector<RegistryMetadataDescriptor>;
@@ -84,6 +86,8 @@ interface RegistryMetadataProviderProps {
 		| 'buildings'
 		| 'developments'
 		| 'populations'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>;
 	metadata?: SessionSnapshotMetadata | null;
 	children: React.ReactNode;
@@ -125,6 +129,7 @@ export function RegistryMetadataProvider({
 	} = useDefinitionLookups(registries);
 	const {
 		resourceMetadataLookup,
+		resourceSelectors,
 		actionCategoryMetadataLookup,
 		populationMetadataLookup,
 		buildingMetadataLookup,
@@ -219,6 +224,7 @@ export function RegistryMetadataProvider({
 				slotMetadata,
 				passiveMetadata,
 				overviewContent,
+				resourceV2Selectors: resourceSelectors,
 			}),
 		[
 			resourceLookup,
@@ -228,6 +234,7 @@ export function RegistryMetadataProvider({
 			developmentLookup,
 			populationLookup,
 			resourceMetadataLookup,
+			resourceSelectors,
 			actionCategoryMetadataLookup,
 			populationMetadataLookup,
 			buildingMetadataLookup,
@@ -275,6 +282,9 @@ export function useOptionalRegistryMetadata(): OptionalRegistryMetadataValue {
 export const useResourceMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().resourceMetadata;
+
+export const useResourceV2Selectors = (): TranslationResourceV2Selectors =>
+	useRegistryMetadata().resourceV2Selectors;
 
 export const usePopulationMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>

@@ -24,6 +24,7 @@ import {
 	buildStatMetadata,
 	buildTriggerMetadata,
 } from './registryMetadataDescriptors';
+import { createResourceV2Selectors } from '../translation/resourceV2/selectors';
 import {
 	extractDescriptorRecord,
 	extractPhaseRecord,
@@ -161,6 +162,7 @@ export const useDefinitionLookups = (
 
 interface MetadataLookups {
 	readonly resourceMetadataLookup: ReturnType<typeof buildResourceMetadata>;
+	readonly resourceSelectors: ReturnType<typeof createResourceV2Selectors>;
 	readonly actionCategoryMetadataLookup: ReturnType<
 		typeof buildRegistryMetadata
 	>;
@@ -184,13 +186,20 @@ export const useMetadataLookups = (
 		| 'buildings'
 		| 'developments'
 		| 'populations'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>,
 	overrides: DescriptorOverrides,
 ): MetadataLookups =>
 	useMemo(() => {
+		const resourceSelectors = createResourceV2Selectors(
+			registries.resourceDefinitions,
+			registries.resourceGroups,
+		);
 		const resourceMetadataLookup = buildResourceMetadata(
 			registries.resources,
 			overrides.resources,
+			resourceSelectors,
 		);
 		const actionCategoryMetadataLookup = buildRegistryMetadata(
 			registries.actionCategories,
@@ -214,6 +223,7 @@ export const useMetadataLookups = (
 		const assetDescriptors = overrides.assets;
 		return Object.freeze({
 			resourceMetadataLookup,
+			resourceSelectors,
 			actionCategoryMetadataLookup,
 			populationMetadataLookup,
 			buildingMetadataLookup,
@@ -230,4 +240,6 @@ export const useMetadataLookups = (
 		registries.developments,
 		registries.populations,
 		registries.resources,
+		registries.resourceDefinitions,
+		registries.resourceGroups,
 	]);

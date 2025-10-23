@@ -20,6 +20,7 @@ import {
 	type AssetMetadataSelector,
 	type MetadataSelector,
 } from '../../src/contexts/registryMetadataSelectors';
+import { createResourceV2Selectors } from '../../src/translation/resourceV2/selectors';
 
 export interface TestRegistryMetadataSelectors {
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
@@ -37,13 +38,23 @@ export interface TestRegistryMetadataSelectors {
 export function createTestRegistryMetadata(
 	registries: Pick<
 		SessionRegistries,
-		'resources' | 'populations' | 'buildings' | 'developments'
+		| 'resources'
+		| 'populations'
+		| 'buildings'
+		| 'developments'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>,
 	metadata: SessionSnapshotMetadata,
 ): TestRegistryMetadataSelectors {
+	const resourceSelectors = createResourceV2Selectors(
+		registries.resourceDefinitions,
+		registries.resourceGroups,
+	);
 	const resourceMetadataLookup = buildResourceMetadata(
 		registries.resources,
 		extractDescriptorRecord(metadata, 'resources'),
+		resourceSelectors,
 	);
 	const populationMetadataLookup = buildRegistryMetadata(
 		registries.populations,
