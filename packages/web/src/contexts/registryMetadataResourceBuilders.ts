@@ -1,4 +1,7 @@
-import type { ResourceV2GroupMetadata } from '@kingdom-builder/protocol';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
+} from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionResourceDefinition,
@@ -23,6 +26,12 @@ export interface BuildResourceMetadataOptions {
 		| undefined;
 	orderedResourceIds?: ReadonlyArray<string> | undefined;
 	parentIdByResourceId?: Readonly<Record<string, string>> | undefined;
+	resourceDefinitions?:
+		| Readonly<Record<string, ResourceV2Definition>>
+		| undefined;
+	statMetadata?:
+		| Readonly<Record<string, SessionMetadataDescriptor>>
+		| undefined;
 }
 
 const compareDescriptorOrder = (
@@ -72,6 +81,8 @@ export const buildResourceMetadata = (
 ): MetadataLookup<RegistryMetadataDescriptor> => {
 	const resourceMetadata = options.resourceMetadata ?? {};
 	const parentIdByResourceId = options.parentIdByResourceId ?? {};
+	const resourceDefinitions = options.resourceDefinitions ?? {};
+	const statMetadata = options.statMetadata ?? {};
 	const ids = new Set<string>();
 	for (const key of Object.keys(resources)) {
 		ids.add(key);
@@ -80,6 +91,12 @@ export const buildResourceMetadata = (
 		for (const key of Object.keys(metadata)) {
 			ids.add(key);
 		}
+	}
+	for (const key of Object.keys(resourceDefinitions)) {
+		ids.add(key);
+	}
+	for (const key of Object.keys(statMetadata)) {
+		ids.add(key);
 	}
 	for (const key of Object.keys(resourceMetadata)) {
 		ids.add(key);
@@ -92,28 +109,44 @@ export const buildResourceMetadata = (
 	const descriptors = new Map<string, RegistryMetadataDescriptor>();
 	for (const id of ids) {
 		const definition = resources[id];
+		const resourceDefinition = resourceDefinitions[id];
 		const descriptorMetadata = metadata?.[id];
+		const statDescriptor = statMetadata[id];
+		const mergedDescriptorMetadata = descriptorMetadata ?? statDescriptor;
 		const snapshot = resourceMetadata[id];
 		const fallback: RegistryDescriptorFallback = {
-			label: snapshot?.name ?? definition?.label ?? definition?.key ?? id,
-			icon: snapshot?.icon ?? definition?.icon,
-			description: snapshot?.description ?? definition?.description,
-			metadata: snapshot?.metadata,
-			limited: snapshot?.limited,
-			groupId: snapshot?.groupId,
+			label:
+				snapshot?.name ??
+				resourceDefinition?.name ??
+				definition?.label ??
+				definition?.key ??
+				id,
+			icon: snapshot?.icon ?? resourceDefinition?.icon ?? definition?.icon,
+			description:
+				snapshot?.description ??
+				resourceDefinition?.description ??
+				definition?.description,
+			metadata: snapshot?.metadata ?? resourceDefinition?.metadata,
+			limited: snapshot?.limited ?? resourceDefinition?.limited,
+			groupId: snapshot?.groupId ?? resourceDefinition?.groupId,
 			parentId: snapshot?.parentId ?? parentIdByResourceId[id],
-			isPercent: snapshot?.isPercent,
-			trackValueBreakdown: snapshot?.trackValueBreakdown,
-			trackBoundBreakdown: snapshot?.trackBoundBreakdown,
-			lowerBound: snapshot?.lowerBound,
-			upperBound: snapshot?.upperBound,
-			tierTrack: snapshot?.tierTrack,
-			globalActionCost: snapshot?.globalActionCost,
-			order: snapshot?.order,
+			isPercent: snapshot?.isPercent ?? resourceDefinition?.isPercent,
+			trackValueBreakdown:
+				snapshot?.trackValueBreakdown ??
+				resourceDefinition?.trackValueBreakdown,
+			trackBoundBreakdown:
+				snapshot?.trackBoundBreakdown ??
+				resourceDefinition?.trackBoundBreakdown,
+			lowerBound: snapshot?.lowerBound ?? resourceDefinition?.lowerBound,
+			upperBound: snapshot?.upperBound ?? resourceDefinition?.upperBound,
+			tierTrack: snapshot?.tierTrack ?? resourceDefinition?.tierTrack,
+			globalActionCost:
+				snapshot?.globalActionCost ?? resourceDefinition?.globalActionCost,
+			order: snapshot?.order ?? resourceDefinition?.order,
 		};
 		const descriptor = createRegistryDescriptor(
 			id,
-			descriptorMetadata,
+			mergedDescriptorMetadata,
 			fallback,
 		);
 		descriptors.set(id, descriptor);

@@ -137,7 +137,7 @@ export function RegistryMetadataProvider({
 		buildingLookup,
 		developmentLookup,
 		populationLookup,
-	} = useDefinitionLookups(registries);
+	} = useDefinitionLookups(registries, descriptorOverrides);
 	const {
 		resourceMetadataLookup,
 		resourceGroupMetadataLookup,
