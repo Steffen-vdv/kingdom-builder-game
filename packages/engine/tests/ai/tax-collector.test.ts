@@ -68,6 +68,66 @@ describe('tax collector AI controller', () => {
 		expect(endPhase).toHaveBeenCalledTimes(1);
 	});
 
+	it('ignores other players turns', async () => {
+		const { engineContext, controller } = createControllerFixture();
+		const opponentIndex = engineContext.game.players.findIndex(
+			(player) => player.id !== engineContext.activePlayer.id,
+		);
+		engineContext.game.currentPlayerIndex = opponentIndex;
+
+		const perform = vi.fn();
+		const endPhase = vi.fn();
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+		});
+
+		expect(perform).not.toHaveBeenCalled();
+		expect(endPhase).not.toHaveBeenCalled();
+	});
+
+	it('skips phases without action definitions', async () => {
+		const { engineContext, controller } = createControllerFixture();
+		const noopPhase = {
+			id: 'noop-phase',
+			steps: [],
+		} as (typeof engineContext.phases)[number];
+		engineContext.phases = [...engineContext.phases, noopPhase];
+		engineContext.game.phaseIndex = engineContext.phases.length - 1;
+		engineContext.game.currentPhase = noopPhase.id;
+		engineContext.game.currentStep = '';
+
+		const perform = vi.fn();
+		const endPhase = vi.fn();
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+		});
+
+		expect(perform).not.toHaveBeenCalled();
+		expect(endPhase).not.toHaveBeenCalled();
+	});
+
+	it('returns when no action cost resource is configured', async () => {
+		const { engineContext, controller } = createControllerFixture();
+		// Simulate an engine misconfiguration without an action point resource.
+		engineContext.actionCostResource =
+			'' as unknown as typeof engineContext.actionCostResource;
+
+		const perform = vi.fn();
+		const endPhase = vi.fn();
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+		});
+
+		expect(perform).not.toHaveBeenCalled();
+		expect(endPhase).not.toHaveBeenCalled();
+	});
+
 	it('stops when continuation declines without advancing', async () => {
 		const { engineContext, apKey, controller } = createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
@@ -130,6 +190,94 @@ describe('tax collector AI controller', () => {
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+	});
+
+	it('finishes the phase when the tax action is unavailable', async () => {
+		const { engineContext, apKey, controller } = createControllerFixture();
+		const originalGet = engineContext.actions.get.bind(engineContext.actions);
+		vi.spyOn(engineContext.actions, 'get').mockImplementation(((id: string) => {
+			if (id === TAX_ACTION_ID) {
+				return undefined as unknown as ReturnType<typeof originalGet>;
+			}
+			return originalGet(id);
+		}) as typeof engineContext.actions.get);
+		const perform = vi.fn();
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
+		const endPhase = vi.fn(() => advance(engineContext));
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+			shouldAdvancePhase,
+		});
+
+		expect(perform).not.toHaveBeenCalled();
+		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
+		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
+		expect(endPhase).toHaveBeenCalledTimes(1);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+	});
+
+	it('finishes the phase when the tax action is system-only and locked', async () => {
+		const { engineContext, apKey, controller } = createControllerFixture();
+		const definition = engineContext.actions.get(TAX_ACTION_ID);
+		expect(definition).toBeDefined();
+		if (definition) {
+			definition.system = true;
+		}
+		engineContext.activePlayer.actions.delete(TAX_ACTION_ID);
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
+		const endPhase = vi.fn(() => advance(engineContext));
+
+		await controller(engineContext, {
+			performAction: vi.fn(),
+			advance: endPhase,
+			shouldAdvancePhase,
+		});
+
+		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
+		expect(endPhase).toHaveBeenCalledTimes(1);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+	});
+
+	it('recovers from action failures by ending the phase', async () => {
+		const { engineContext, apKey, controller } = createControllerFixture();
+		const perform = vi.fn(() => {
+			throw new Error('boom');
+		});
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
+		const endPhase = vi.fn(() => advance(engineContext));
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+			shouldAdvancePhase,
+		});
+
+		expect(perform).toHaveBeenCalledTimes(1);
+		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
+		expect(endPhase).toHaveBeenCalledTimes(1);
+		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+	});
+
+	it('leaves the phase active when advancement is denied', async () => {
+		const { engineContext, apKey, controller } = createControllerFixture();
+		const perform = vi.fn((actionId: string) =>
+			performAction(actionId, engineContext),
+		);
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(false);
+		const endPhase = vi.fn(() => advance(engineContext));
+
+		await controller(engineContext, {
+			performAction: perform,
+			advance: endPhase,
+			shouldAdvancePhase,
+		});
+
+		expect(perform).toHaveBeenCalledTimes(2);
+		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
+		expect(endPhase).not.toHaveBeenCalled();
 		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
 	});
 });
