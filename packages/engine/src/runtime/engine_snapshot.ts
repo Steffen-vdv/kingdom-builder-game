@@ -25,6 +25,7 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 	SessionEffectLogMap,
+	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol';
 import type { PassiveRecordSnapshot } from './types';
 import {
@@ -123,6 +124,46 @@ function cloneEffectLogs(
 	return result;
 }
 
+function buildResourceMetadata(
+	context: EngineContext,
+): Record<string, SessionMetadataDescriptor> | undefined {
+	const registry = context.resourceV2.getRegistry?.();
+	if (!registry) {
+		return undefined;
+	}
+	const descriptors: Record<string, SessionMetadataDescriptor> = {};
+	type ResourceDisplay = {
+		name: string;
+		icon?: string;
+		description?: string;
+		displayAsPercent?: boolean;
+	};
+	const assignDescriptor = (id: string, display: ResourceDisplay) => {
+		const descriptor: SessionMetadataDescriptor = {
+			label: display.name,
+		};
+		if (display.icon !== undefined) {
+			descriptor.icon = display.icon;
+		}
+		if (display.description !== undefined) {
+			descriptor.description = display.description;
+		}
+		if (display.displayAsPercent !== undefined) {
+			descriptor.displayAsPercent = display.displayAsPercent;
+		}
+		descriptors[id] = descriptor;
+	};
+	for (const resourceId of registry.resourceIds) {
+		const record = registry.getResource(resourceId);
+		assignDescriptor(resourceId, record.display);
+	}
+	for (const parentId of registry.parentIds) {
+		const record = registry.getParent(parentId);
+		assignDescriptor(parentId, record.display);
+	}
+	return Object.keys(descriptors).length > 0 ? descriptors : undefined;
+}
+
 function snapshotEvaluationModifiers(
 	context: EngineContext,
 ): SessionPassiveEvaluationModifierMap {
@@ -142,6 +183,13 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const metadata: SessionSnapshotMetadata = effectLogs
 		? { passiveEvaluationModifiers, effectLogs }
 		: { passiveEvaluationModifiers };
+	const resourceMetadata = buildResourceMetadata(context);
+	if (resourceMetadata) {
+		metadata.resources = {
+			...(metadata.resources ?? {}),
+			...resourceMetadata,
+		};
+	}
 	return {
 		game: {
 			turn: context.game.turn,

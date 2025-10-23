@@ -27,7 +27,9 @@ import type {
 	SessionSimulateResponse,
 	SessionPlayerStateSnapshot,
 	SessionResourceValueSnapshot,
+	SessionResourceValueSnapshotMap,
 } from '../src/session';
+import type { ActionPlayerSnapshot } from '../src/actions';
 import type {
 	SessionRuntimeConfigResponse,
 	SessionRunAiAction,
@@ -163,6 +165,14 @@ describe('session player state snapshot', () => {
 		>();
 		expectTypeOf<SessionPlayerStateSnapshot['population']>().toEqualTypeOf<
 			Record<string, number>
+		>();
+	});
+});
+
+describe('action player snapshot', () => {
+	it('includes unified ResourceV2 values alongside legacy payloads', () => {
+		expectTypeOf<ActionPlayerSnapshot['values']>().toEqualTypeOf<
+			SessionResourceValueSnapshotMap | undefined
 		>();
 	});
 });

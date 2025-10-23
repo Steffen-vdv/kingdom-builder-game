@@ -3,6 +3,7 @@ import type {
 	SessionRequirementFailure,
 	SessionSnapshot,
 	SessionPassiveSummary,
+	SessionResourceValueSnapshotMap,
 } from '../session';
 import type { SessionIdentifier } from '../session/contracts';
 
@@ -30,6 +31,7 @@ export interface ActionTraceLandSnapshot {
 }
 
 export interface ActionPlayerSnapshot {
+	values?: SessionResourceValueSnapshotMap;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	buildings: string[];
