@@ -6,7 +6,6 @@ import type {
 	ResourceV2HookSuppressionMeta,
 	ResourceV2ValueChangeRequest,
 } from '../../state';
-import { applyResourceV2ValueChange } from '../../state';
 import type { ResourceV2EffectParams } from './shared';
 import {
 	assertKnownResource,
@@ -68,8 +67,9 @@ export const resourceV2TransferHandler: EffectHandler<
 			? { suppressHooks: effect.meta.donor.suppressHooks }
 			: {}),
 	};
-	const appliedRemoval = applyResourceV2ValueChange(
-		donorState,
+	const appliedRemoval = engineContext.resourceV2.applyValueChange(
+		engineContext,
+		donor,
 		resourceId,
 		donorChange,
 	);
@@ -83,7 +83,12 @@ export const resourceV2TransferHandler: EffectHandler<
 			: {}),
 	};
 
-	applyResourceV2ValueChange(recipientState, resourceId, recipientChange);
+	engineContext.resourceV2.applyValueChange(
+		engineContext,
+		recipient,
+		resourceId,
+		recipientChange,
+	);
 };
 
 export function isResourceV2ResourceTransferEffect(

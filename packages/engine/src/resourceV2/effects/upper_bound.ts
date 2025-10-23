@@ -1,7 +1,4 @@
-import type {
-	EffectDef,
-	ResourceV2BoundsMetadata,
-} from '@kingdom-builder/protocol';
+import type { EffectDef } from '@kingdom-builder/protocol';
 
 import type { EffectHandler } from '../../effects';
 import { assertKnownResource } from './shared';
@@ -36,9 +33,12 @@ export const resourceV2IncreaseUpperBoundHandler: EffectHandler<
 		return;
 	}
 
-	const current = state.bounds[resourceId];
-	const nextBounds = createUpdatedBounds(current, totalIncrease);
-	state.bounds[resourceId] = nextBounds;
+	engineContext.resourceV2.increaseUpperBound(
+		engineContext,
+		player,
+		resourceId,
+		totalIncrease,
+	);
 };
 
 export function isResourceV2UpperBoundIncreaseEffect(
@@ -87,18 +87,4 @@ function resolveUpperBoundIncrease(
 	}
 
 	return total;
-}
-
-function createUpdatedBounds(
-	current: ResourceV2BoundsMetadata | undefined,
-	increase: number,
-): ResourceV2BoundsMetadata {
-	const upper = current?.upperBound ?? 0;
-	const nextUpper = upper + increase;
-	const lowerBound = current?.lowerBound;
-	const next: ResourceV2BoundsMetadata =
-		lowerBound !== undefined
-			? { lowerBound, upperBound: nextUpper }
-			: { upperBound: nextUpper };
-	return next;
 }
