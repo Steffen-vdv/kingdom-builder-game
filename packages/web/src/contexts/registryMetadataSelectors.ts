@@ -1,5 +1,10 @@
 import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol';
-import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
+import type {
+	SessionResourceV2GroupParentSnapshot,
+	SessionResourceV2GroupSnapshot,
+	SessionResourceV2MetadataSnapshot,
+	SessionSnapshotMetadata,
+} from '@kingdom-builder/protocol/session';
 import type {
 	AssetMetadata,
 	MetadataLookup,
@@ -20,6 +25,9 @@ export interface AssetMetadataSelector {
 
 const freezeArray = <T>(values: T[]): ReadonlyArray<T> =>
 	Object.freeze(values.slice());
+
+const EMPTY_STRING_ARRAY: ReadonlyArray<string> = Object.freeze([]);
+const EMPTY_STRING_RECORD: Readonly<Record<string, string>> = Object.freeze({});
 
 export const createMetadataSelector = <TDescriptor extends { id: string }>(
 	lookup: MetadataLookup<TDescriptor>,
@@ -97,11 +105,83 @@ const toMetadataDescriptorRecord = (
 	return record as Record<string, SessionMetadataDescriptor>;
 };
 
+const toSnapshotRecord = <TSnapshot>(
+	value: unknown,
+): Record<string, TSnapshot> | undefined => {
+	const record = toUnknownRecord(value);
+	if (!record) {
+		return undefined;
+	}
+	for (const entry of Object.values(record)) {
+		if (typeof entry !== 'object' || entry === null) {
+			return undefined;
+		}
+	}
+	return record as Record<string, TSnapshot>;
+};
+
+const toStringArray = (value: unknown): ReadonlyArray<string> | undefined => {
+	if (!Array.isArray(value)) {
+		return undefined;
+	}
+	if (value.length === 0) {
+		return EMPTY_STRING_ARRAY;
+	}
+	const entries = value.filter(
+		(entry): entry is string => typeof entry === 'string',
+	);
+	if (entries.length === 0) {
+		return EMPTY_STRING_ARRAY;
+	}
+	return Object.freeze(entries.slice());
+};
+
+const toStringRecord = (
+	value: unknown,
+): Readonly<Record<string, string>> | undefined => {
+	const record = toUnknownRecord(value);
+	if (!record) {
+		return undefined;
+	}
+	const entries: Record<string, string> = {};
+	for (const [key, entry] of Object.entries(record)) {
+		if (typeof entry !== 'string') {
+			continue;
+		}
+		entries[key] = entry;
+	}
+	if (Object.keys(entries).length === 0) {
+		return EMPTY_STRING_RECORD;
+	}
+	return Object.freeze(entries);
+};
+
 export const extractDescriptorRecord = (
 	snapshot: SessionSnapshotMetadata,
 	key: string,
 ): Record<string, SessionMetadataDescriptor> | undefined =>
 	toMetadataDescriptorRecord(readMetadataEntry(snapshot, key));
+
+export const extractResourceMetadataRecord = (
+	snapshot: SessionSnapshotMetadata,
+): Record<string, SessionResourceV2MetadataSnapshot> | undefined =>
+	toSnapshotRecord<SessionResourceV2MetadataSnapshot>(
+		readMetadataEntry(snapshot, 'resourceMetadata'),
+	);
+
+export const extractResourceGroupRecord = (
+	snapshot: SessionSnapshotMetadata,
+): Record<string, SessionResourceV2GroupSnapshot> | undefined =>
+	toSnapshotRecord<SessionResourceV2GroupSnapshot>(
+		readMetadataEntry(snapshot, 'resourceGroups'),
+	);
+
+export const extractResourceGroupParentRecord = (
+	snapshot: SessionSnapshotMetadata,
+): Record<string, SessionResourceV2GroupParentSnapshot> | undefined =>
+	toSnapshotRecord<SessionResourceV2GroupParentSnapshot>(
+		readMetadataEntry(snapshot, 'resourceGroupParents'),
+	);
 
 export const extractPhaseRecord = (
 	snapshot: SessionSnapshotMetadata,
@@ -122,3 +202,22 @@ export const extractTriggerRecord = (
 	}
 	return record as SessionSnapshotMetadata['triggers'];
 };
+
+export const extractOrderedResourceIds = (
+	snapshot: SessionSnapshotMetadata,
+): ReadonlyArray<string> | undefined =>
+	toStringArray(readMetadataEntry(snapshot, 'orderedResourceIds'));
+
+export const extractOrderedResourceGroupIds = (
+	snapshot: SessionSnapshotMetadata,
+): ReadonlyArray<string> | undefined =>
+	toStringArray(readMetadataEntry(snapshot, 'orderedResourceGroupIds'));
+
+export const extractParentIdByResourceId = (
+	snapshot: SessionSnapshotMetadata,
+): Readonly<Record<string, string>> | undefined =>
+	toStringRecord(readMetadataEntry(snapshot, 'parentIdByResourceId'));
+
+export const EMPTY_ORDERED_RESOURCE_IDS = EMPTY_STRING_ARRAY;
+export const EMPTY_ORDERED_RESOURCE_GROUP_IDS = EMPTY_STRING_ARRAY;
+export const EMPTY_PARENT_ID_BY_RESOURCE_ID = EMPTY_STRING_RECORD;

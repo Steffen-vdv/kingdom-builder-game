@@ -10,6 +10,8 @@ import {
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type PopulationConfig,
+	type ResourceV2Definition,
+	type ResourceV2GroupMetadata,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionRegistriesPayload,
@@ -59,6 +61,17 @@ function cloneResourceRegistry(
 	);
 }
 
+function cloneRegistryRecord<TDefinition>(
+	definitions: Record<string, TDefinition>,
+): Record<string, TDefinition> {
+	return Object.fromEntries(
+		Object.entries(definitions).map(([key, definition]) => [
+			key,
+			clone(definition),
+		]),
+	);
+}
+
 function cloneActionCategoryDefinition(
 	definition: ActionCategoryConfig,
 ): ActionCategoryConfig {
@@ -103,6 +116,8 @@ export interface SessionRegistries {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: Record<string, SessionResourceDefinition>;
+	resourcesV2: Record<string, ResourceV2Definition>;
+	resourceGroups: Record<string, ResourceV2GroupMetadata>;
 }
 
 export function deserializeSessionRegistries(
@@ -126,6 +141,8 @@ export function deserializeSessionRegistries(
 			populationSchema.passthrough(),
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
+		resourcesV2: cloneRegistryRecord(payload.resourcesV2 ?? {}),
+		resourceGroups: cloneRegistryRecord(payload.resourceGroups ?? {}),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),
 	};
 }

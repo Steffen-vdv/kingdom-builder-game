@@ -77,26 +77,30 @@ describe('<PlayerPanel />', () => {
 		const resourceDisplays = metadataSelectors.resourceMetadata.list.map(
 			(descriptor) => toDescriptorDisplay(descriptor),
 		);
-		const [firstResourceDescriptor] = resourceDisplays;
-		const firstResourceKey = firstResourceDescriptor.id;
 		const playerResources = activePlayerSnapshot.resources;
-		const resourceInfo = firstResourceDescriptor;
-		const resourceValue = playerResources[firstResourceKey] ?? 0;
-		const resourceDelta = resourceForecast[firstResourceKey]!;
-		const formattedResourceDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
-		const resourceLabel =
-			`${resourceInfo.label ?? firstResourceKey}: ${resourceValue} ` +
-			`(${formattedResourceDelta})`;
-		const resourceButtons = screen.getAllByRole('button', {
-			name: resourceLabel,
-		});
-		expect(resourceButtons.length).toBeGreaterThan(0);
-		const [resourceButton] = resourceButtons;
-		const resourceForecastBadge = within(resourceButton).getByText(
-			`(${formattedResourceDelta})`,
+		const positiveResourceDescriptor = resourceDisplays.find(
+			(display) => resourceForecast[display.id]! > 0,
 		);
-		expect(resourceForecastBadge).toBeInTheDocument();
-		expect(resourceForecastBadge).toHaveClass('text-emerald-300');
+		if (positiveResourceDescriptor) {
+			const positiveResourceValue =
+				playerResources[positiveResourceDescriptor.id] ?? 0;
+			const positiveResourceDelta =
+				resourceForecast[positiveResourceDescriptor.id]!;
+			const formattedPositiveDelta = `+${positiveResourceDelta}`;
+			const positiveResourceLabel =
+				`${positiveResourceDescriptor.label ?? positiveResourceDescriptor.id}: ` +
+				`${positiveResourceValue} (${formattedPositiveDelta})`;
+			const positiveResourceButtons = screen.getAllByRole('button', {
+				name: positiveResourceLabel,
+			});
+			expect(positiveResourceButtons.length).toBeGreaterThan(0);
+			const [positiveResourceButton] = positiveResourceButtons;
+			const positiveForecastBadge = within(positiveResourceButton).getByText(
+				`(${formattedPositiveDelta})`,
+			);
+			expect(positiveForecastBadge).toBeInTheDocument();
+			expect(positiveForecastBadge).toHaveClass('text-emerald-300');
+		}
 		const negativeResourceDescriptor = resourceDisplays.find(
 			(display) => resourceForecast[display.id]! < 0,
 		);

@@ -163,6 +163,8 @@ function createTestSetup(): TestSetup {
 		developments: factory.developments,
 		populations: factory.populations,
 		resources: { [resourceKey]: resource },
+		resourcesV2: {},
+		resourceGroups: {},
 	};
 	return {
 		registries,

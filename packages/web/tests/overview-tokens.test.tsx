@@ -31,6 +31,8 @@ describe('buildOverviewIconSet', () => {
 			gold: { key: 'gold', label: 'Gold', icon: '🥇' },
 			ap: { key: 'ap', label: 'AP', icon: '⚡' },
 		},
+		resourcesV2: {},
+		resourceGroups: {},
 	};
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
