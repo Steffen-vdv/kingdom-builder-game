@@ -4,16 +4,20 @@ import {
 	Phase,
 	PopulationRole,
 	Stat,
+	ResourceV2Parent,
 	GameState,
 	setResourceKeys,
 	setStatKeys,
 	setPhaseKeys,
 	setPopulationRoleKeys,
+	initializePlayerResourceV2State,
+	setResourceV2ParentKeys,
 } from '../state';
 import type {
 	ResourceKey,
 	StatKey,
 	PopulationRoleId,
+	ResourceV2ParentId,
 	StatSourceMeta,
 	StatSourceContribution,
 	StatSourceLink,
@@ -21,7 +25,10 @@ import type {
 import { Services, PassiveManager } from '../services';
 import { ResourceV2Service } from '../resourceV2/service';
 import { ResourceV2TierService } from '../resourceV2/tier_service';
-import type { ResourceV2EngineRegistry } from '../resourceV2/registry';
+import {
+	loadResourceV2Registry,
+	type ResourceV2EngineRegistry,
+} from '../resourceV2/registry';
 import type { RuleSet } from '../services';
 import { EngineContext } from '../context';
 import { registerCoreEffects } from '../effects';
@@ -45,6 +52,8 @@ import {
 	type PopulationConfig as PopulationDef,
 	type StartConfig,
 	type PhaseConfig,
+	type ResourceV2Definition,
+	type ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import {
 	applyPlayerStartConfiguration,
@@ -53,6 +62,7 @@ import {
 	initializePlayerActions,
 } from './player_setup';
 import { resolveStartConfigForMode } from './start_config_resolver';
+import { RESOURCE_V2_STARTUP_METADATA } from '@kingdom-builder/contents/registries/resourceV2';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
@@ -74,6 +84,11 @@ type EngineRegistries = {
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
 	populations: Registry<PopulationDef>;
+};
+
+type ResourceV2ConfigOverrides = {
+	resourceDefinitions?: ReadonlyArray<ResourceV2Definition>;
+	resourceGroups?: ReadonlyArray<ResourceV2GroupDefinition>;
 };
 
 function validatePhases(
@@ -175,13 +190,29 @@ export function createEngine({
 	rules,
 	config,
 	devMode = false,
-	resourceV2Registry,
+	resourceV2Registry: resourceV2RegistryOverride,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();
+	const defaultResourceV2Definitions =
+		RESOURCE_V2_STARTUP_METADATA.definitions.definitions;
+	const defaultResourceV2Groups = RESOURCE_V2_STARTUP_METADATA.groups.groups;
+	let resourceDefinitionOverrides:
+		| ReadonlyArray<ResourceV2Definition>
+		| undefined;
+	let resourceGroupOverrides:
+		| ReadonlyArray<ResourceV2GroupDefinition>
+		| undefined;
 	let startConfig = start;
 	if (config) {
+		const configOverrides = config as unknown as ResourceV2ConfigOverrides;
+		if (configOverrides.resourceDefinitions) {
+			resourceDefinitionOverrides = configOverrides.resourceDefinitions;
+		}
+		if (configOverrides.resourceGroups) {
+			resourceGroupOverrides = configOverrides.resourceGroups;
+		}
 		const validatedConfig = validateGameConfig(config);
 		({ actions, buildings, developments, populations } = overrideRegistries(
 			validatedConfig,
@@ -195,28 +226,43 @@ export function createEngine({
 		if (validatedConfig.start) {
 			startConfig = validatedConfig.start;
 		}
+		const resourceOverrides = validatedConfig as ValidatedConfig &
+			ResourceV2ConfigOverrides;
+		if (!resourceDefinitionOverrides && resourceOverrides.resourceDefinitions) {
+			resourceDefinitionOverrides = resourceOverrides.resourceDefinitions;
+		}
+		if (!resourceGroupOverrides && resourceOverrides.resourceGroups) {
+			resourceGroupOverrides = resourceOverrides.resourceGroups;
+		}
 	}
+	const resourceV2Definitions =
+		resourceDefinitionOverrides ?? defaultResourceV2Definitions;
+	const resourceV2Groups = resourceGroupOverrides ?? defaultResourceV2Groups;
 	validatePhases(phases);
+	const activeResourceV2Registry =
+		resourceV2RegistryOverride ??
+		loadResourceV2Registry({
+			resources: resourceV2Definitions,
+			groups: resourceV2Groups,
+		});
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
 	setResourceKeys(Object.keys(startConfig.player.resources || {}));
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
+	setResourceV2ParentKeys([...activeResourceV2Registry.parentIds]);
 	const services = new Services(rules, developments);
 	const resourceV2TierService = new ResourceV2TierService();
 	services.setResourceV2TierService(resourceV2TierService);
 	const resourceV2Service = new ResourceV2Service(
-		undefined,
+		activeResourceV2Registry,
 		resourceV2TierService,
 	);
-	if (resourceV2Registry) {
-		resourceV2Service.setRegistry(resourceV2Registry);
-	}
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
 	const actionCostResource = determineCommonActionCostResource(
 		actions,
-		resourceV2Registry,
+		activeResourceV2Registry,
 	);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
@@ -248,6 +294,8 @@ export function createEngine({
 	const aiSystem = createAISystem({ performAction, advance });
 	aiSystem.register(playerTwo.id, createTaxCollectorController(playerTwo.id));
 	engineContext.aiSystem = aiSystem;
+	initializePlayerResourceV2State(playerOne, activeResourceV2Registry);
+	initializePlayerResourceV2State(playerTwo, activeResourceV2Registry);
 	applyPlayerStartConfiguration(playerOne, startConfig.player, rules);
 	applyPlayerStartConfiguration(playerOne, playerACompensation, rules);
 	applyPlayerStartConfiguration(playerTwo, startConfig.player, rules);
@@ -263,12 +311,13 @@ export function createEngine({
 	return engineContext;
 }
 
-export { Resource, Phase, PopulationRole, Stat };
+export { Resource, Phase, PopulationRole, Stat, ResourceV2Parent };
 export type {
 	RuleSet,
 	ResourceKey,
 	StatKey,
 	PopulationRoleId,
+	ResourceV2ParentId,
 	StatSourceMeta,
 	StatSourceContribution,
 	StatSourceLink,
