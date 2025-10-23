@@ -1,6 +1,7 @@
 import type { EffectDef } from '../effects';
 import type {
 	SessionPlayerResourceV2Snapshot,
+	SessionResourceV2GroupParentSnapshot,
 	SessionResourceV2GroupSnapshot,
 	SessionResourceV2MetadataSnapshot,
 } from './resourceV2';
@@ -242,6 +243,12 @@ export interface SessionSnapshotMetadata {
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
 	overview?: SessionOverviewMetadata;
+	resourceMetadata?: Record<string, SessionResourceV2MetadataSnapshot>;
+	resourceGroups?: Record<string, SessionResourceV2GroupSnapshot>;
+	resourceGroupParents?: Record<string, SessionResourceV2GroupParentSnapshot>;
+	orderedResourceIds?: string[];
+	orderedResourceGroupIds?: string[];
+	parentIdByResourceId?: Record<string, string>;
 }
 
 export interface SessionSnapshot {

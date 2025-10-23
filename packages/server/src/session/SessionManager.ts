@@ -182,13 +182,20 @@ export class SessionManager {
 		if (frozenResourceGroups) {
 			this.registries.resourceGroups = frozenResourceGroups;
 		}
-		this.metadata = buildSessionMetadata({
+		const metadataOptions: Parameters<typeof buildSessionMetadata>[0] = {
 			buildings: this.baseOptions.buildings,
 			developments: this.baseOptions.developments,
 			populations: this.baseOptions.populations,
 			resources,
 			phases: this.baseOptions.phases,
-		});
+		};
+		if (frozenResourceV2) {
+			metadataOptions.resourcesV2 = frozenResourceV2;
+		}
+		if (frozenResourceGroups) {
+			metadataOptions.resourceGroups = frozenResourceGroups;
+		}
+		this.metadata = buildSessionMetadata(metadataOptions);
 		const frozenPhases = Object.freeze(
 			structuredClone(this.baseOptions.phases),
 		) as unknown as PhaseConfig[];

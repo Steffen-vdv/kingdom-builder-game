@@ -108,13 +108,20 @@ export function buildSessionAssets(
 			);
 		}
 	}
-	const metadata = buildSessionMetadata({
+	const metadataOptions: Parameters<typeof buildSessionMetadata>[0] = {
 		buildings,
 		developments,
 		populations,
 		resources: frozenResources,
 		phases,
-	});
+	};
+	if (registries.resourcesV2) {
+		metadataOptions.resourcesV2 = registries.resourcesV2;
+	}
+	if (registries.resourceGroups) {
+		metadataOptions.resourceGroups = registries.resourceGroups;
+	}
+	const metadata = buildSessionMetadata(metadataOptions);
 	return { registries, metadata };
 }
 

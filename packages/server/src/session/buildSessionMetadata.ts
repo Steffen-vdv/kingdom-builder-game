@@ -16,24 +16,33 @@ import type {
 	PhaseConfig,
 	PopulationConfig,
 	Registry,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
 	SerializedRegistry,
 	SessionMetadataDescriptor,
 	SessionMetadataSnapshot,
 	SessionPhaseMetadata,
-	SessionTriggerMetadata,
 	SessionResourceDefinition,
+	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol';
+import {
+	buildResourceV2Metadata,
+	type SessionResourceV2StaticMetadata,
+} from './resourceMetadataBuilders.js';
 
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
 type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
 
-export type SessionStaticMetadataPayload = SessionMetadataSnapshot;
+export type SessionStaticMetadataPayload = SessionMetadataSnapshot &
+	SessionResourceV2StaticMetadata;
 
 export interface BuildSessionMetadataOptions {
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
+	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	resourceGroups?: SerializedRegistry<ResourceV2GroupMetadata>;
 	phases: ReadonlyArray<PhaseConfig>;
 }
 
@@ -72,6 +81,29 @@ export function buildSessionMetadata(
 	const assetMetadata = buildAssetMetadata();
 	if (hasEntries(assetMetadata)) {
 		metadata.assets = assetMetadata;
+	}
+	const resourceV2Metadata = buildResourceV2Metadata(
+		options.resourcesV2,
+		options.resourceGroups,
+	);
+	if (hasEntries(resourceV2Metadata.resourceMetadata)) {
+		metadata.resourceMetadata = resourceV2Metadata.resourceMetadata;
+	}
+	if (hasEntries(resourceV2Metadata.resourceGroups)) {
+		metadata.resourceGroups = resourceV2Metadata.resourceGroups;
+	}
+	if (hasEntries(resourceV2Metadata.resourceGroupParents)) {
+		metadata.resourceGroupParents = resourceV2Metadata.resourceGroupParents;
+	}
+	if (hasEntries(resourceV2Metadata.parentIdByResourceId)) {
+		metadata.parentIdByResourceId = resourceV2Metadata.parentIdByResourceId;
+	}
+	if (resourceV2Metadata.orderedResourceIds?.length) {
+		metadata.orderedResourceIds = resourceV2Metadata.orderedResourceIds;
+	}
+	if (resourceV2Metadata.orderedResourceGroupIds?.length) {
+		metadata.orderedResourceGroupIds =
+			resourceV2Metadata.orderedResourceGroupIds;
 	}
 	const overviewMetadata = structuredClone(OVERVIEW_CONTENT);
 	metadata.overview = overviewMetadata;
@@ -266,6 +298,8 @@ function assignAssetDescriptor(
 	target[key] = descriptor;
 }
 
-function hasEntries<T>(value: Record<string, T>): boolean {
-	return Object.keys(value).length > 0;
+function hasEntries<T>(
+	value: Record<string, T> | undefined | null,
+): value is Record<string, T> {
+	return !!value && Object.keys(value).length > 0;
 }

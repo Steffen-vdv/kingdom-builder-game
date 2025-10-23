@@ -7,7 +7,10 @@ import {
 	populationSchema,
 	phaseSchema,
 	resourceV2DefinitionSchema,
+	resourceV2GlobalActionCostSchema,
 	resourceV2GroupMetadataSchema,
+	resourceV2GroupParentSchema,
+	resourceV2TierTrackSchema,
 	startConfigSchema,
 	ruleSetSchema,
 } from '../schema';
@@ -84,6 +87,59 @@ const sessionMetadataDescriptorRecordSchema = z.record(
 	z.string(),
 	sessionMetadataDescriptorSchema,
 );
+
+const sessionResourceV2MetadataSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		order: z.number().int(),
+		isPercent: z.boolean(),
+		trackValueBreakdown: z.boolean(),
+		trackBoundBreakdown: z.boolean(),
+		metadata: z.record(z.string(), z.unknown()).optional(),
+		limited: z.boolean().optional(),
+		groupId: z.string().optional(),
+		parentId: z.string().optional(),
+		icon: z.string().optional(),
+		description: z.string().optional(),
+		lowerBound: z.number().optional(),
+		upperBound: z.number().optional(),
+		tierTrack: resourceV2TierTrackSchema.optional(),
+		globalActionCost: resourceV2GlobalActionCostSchema.optional(),
+	})
+	.passthrough();
+
+const sessionResourceV2GroupParentSnapshotSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		order: z.number().int(),
+		relation: resourceV2GroupParentSchema.shape.relation,
+		isPercent: z.boolean(),
+		trackValueBreakdown: z.boolean(),
+		trackBoundBreakdown: z.boolean(),
+		metadata: z.record(z.string(), z.unknown()).optional(),
+		limited: z.boolean().optional(),
+		icon: z.string().optional(),
+		description: z.string().optional(),
+		lowerBound: z.number().optional(),
+		upperBound: z.number().optional(),
+		tierTrack: resourceV2TierTrackSchema.optional(),
+	})
+	.passthrough();
+
+const sessionResourceV2GroupSnapshotSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		order: z.number().int(),
+		children: z.array(z.string()).min(1),
+		metadata: z.record(z.string(), z.unknown()).optional(),
+		icon: z.string().optional(),
+		description: z.string().optional(),
+		parent: sessionResourceV2GroupParentSnapshotSchema.optional(),
+	})
+	.passthrough();
 
 const sessionPhaseStepMetadataSchema = z
 	.object({
@@ -194,7 +250,20 @@ export const sessionMetadataSnapshotSchema = z
 		triggers: z.record(z.string(), sessionTriggerMetadataSchema).optional(),
 		assets: sessionMetadataDescriptorRecordSchema.optional(),
 		overview: sessionOverviewMetadataSchema.optional(),
+		resourceMetadata: z
+			.record(z.string(), sessionResourceV2MetadataSchema)
+			.optional(),
+		resourceGroups: z
+			.record(z.string(), sessionResourceV2GroupSnapshotSchema)
+			.optional(),
+		resourceGroupParents: z
+			.record(z.string(), sessionResourceV2GroupParentSnapshotSchema)
+			.optional(),
+		orderedResourceIds: z.array(z.string()).optional(),
+		orderedResourceGroupIds: z.array(z.string()).optional(),
+		parentIdByResourceId: z.record(z.string(), z.string()).optional(),
 	})
+	.passthrough()
 	.transform((value) => value as SessionMetadataSnapshot);
 
 export const sessionMetadataSnapshotResponseSchema = z

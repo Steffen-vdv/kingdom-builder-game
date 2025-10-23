@@ -76,6 +76,12 @@ export type SessionMetadataSnapshot = Pick<
 	| 'triggers'
 	| 'assets'
 	| 'overview'
+	| 'resourceMetadata'
+	| 'resourceGroups'
+	| 'resourceGroupParents'
+	| 'orderedResourceIds'
+	| 'orderedResourceGroupIds'
+	| 'parentIdByResourceId'
 >;
 
 export interface SessionMetadataSnapshotResponse {
