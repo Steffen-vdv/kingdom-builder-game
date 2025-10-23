@@ -33,8 +33,8 @@ describe('session registries ResourceV2 integration', () => {
 		const clonedDefinition = resourcesV2?.[firstResourceId];
 		const originalDefinition =
 			RESOURCE_V2[firstResourceId as keyof typeof RESOURCE_V2];
-                expect(clonedDefinition).toEqual(originalDefinition);
-                expect(clonedDefinition).not.toBe(originalDefinition);
+		expect(clonedDefinition).toEqual(originalDefinition);
+		expect(clonedDefinition).not.toBe(originalDefinition);
 		if (clonedDefinition?.metadata && originalDefinition?.metadata) {
 			expect(clonedDefinition.metadata).not.toBe(originalDefinition.metadata);
 		}
@@ -58,8 +58,8 @@ describe('session registries ResourceV2 integration', () => {
 		const clonedGroup = resourceGroups?.[firstGroupId];
 		const originalGroup =
 			RESOURCE_GROUPS_V2[firstGroupId as keyof typeof RESOURCE_GROUPS_V2];
-                expect(clonedGroup).toEqual(originalGroup);
-                expect(clonedGroup).not.toBe(originalGroup);
+		expect(clonedGroup).toEqual(originalGroup);
+		expect(clonedGroup).not.toBe(originalGroup);
 		if (clonedGroup?.metadata && originalGroup?.metadata) {
 			expect(clonedGroup.metadata).not.toBe(originalGroup.metadata);
 		}
