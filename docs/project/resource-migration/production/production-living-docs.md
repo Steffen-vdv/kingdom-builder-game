@@ -45,6 +45,12 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
                                                                                 | Bridged legacy resource add/remove/transfer handlers to ResourceV2 service, introduced shared recent-gain flush logic, updated test helpers, and added hybrid regression coverage plus documentation. | `npx vitest run packages/engine/tests/effects/resource-legacy-bridge.test.ts` (pass; chunk `d075fc†L1-L27`); `npm run check -- --filter engine` (fails: npm-run-all rejects `--filter`; chunk `cff087†L1-L5`) |
                               | Re-run full `npm run check` / `npm run test` once the filter flag is fixed to reconfirm suite health post-bridge. |
 
+| 2025-10-25
+| ChatGPT (gpt-5-codex) | packages/engine/src/actions/costs.ts; packages/engine/src/setup/create_engine.ts; packages/engine/src/state/index.ts; packages/engine/tests/action-costs-resourceV2.test.ts; docs/project/resource-migration/production/production-living-docs.md
+
+                                                                                | Enforced ResourceV2 global action cost metadata in engine state/action processing, routed engine context defaults through the catalog, and added regression coverage for overrides, system exemptions, and duplicate content. | `npm run check -- --filter engine` (fails: npm-run-all rejects `--filter`; chunk `4de5b2†L1-L5`); `npm run check` (pass; chunk `27f64f†L1-L169`) |
+                              | Monitor future content updates to ensure exactly one ResourceV2 global cost resource and plan script support for targeted checks once `npm-run-all` gains filtering. |
+
 | 2024-**-** | _(add entry)_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -52,14 +58,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-25 11:39
-- **Current Focus:** Legacy resource bridge to ResourceV2 service
-- **State Summary:** Legacy resource add/remove/transfer handlers now detect ResourceV2 definitions, delegate through the ResourceV2 service, and share a recent-gains flush wrapper so logging stays consistent without duplicating history. Tests cover mixed legacy/V2 flows, and helpers accept V2 catalogs. Targeted Vitest suite passes, but filtered `npm run check` still fails because `npm-run-all` rejects `--filter`.
+- **Timestamp (UTC):** 2025-10-25 12:22
+- **Current Focus:** ResourceV2 global action cost enforcement
+- **State Summary:** Engine state now caches the catalog-defined global action cost with duplicate guards, non-system actions consume that shared cost without overrides, and engine setup derives `actionCostResource` from ResourceV2 metadata with legacy fallback. Regression tests cover enforcement, exemptions, and invalid content, and a full `npm run check` cycle passed after the new suite landed.
 - **Next Suggested Tasks:**
-  - Restore full `npm run check` / `npm run test` coverage once the workspace filtering flag is fixed.
-  - Audit additional legacy effects that manipulate resources to ensure they also flush ResourceV2 gains when migrated.
-- **Blocking Issues / Risks:** Workspace-level `--filter` flag remains unsupported; plan for longer verification cycles or update scripts.
-- **Reminder:** When new ResourceV2 content lands, confirm the bridge correctly captures signed deltas in game logs.
+  - Remove the legacy action-cost fallback once all catalogs supply ResourceV2 metadata and automation confirms single global entries.
+  - Coordinate with content owners to flag exactly one ResourceV2 entry as the global action cost and surface catalog validation tooling if needed.
+- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag, preventing targeted `npm run check` slices.
+- **Reminder:** Resource authoring must prevent per-action overrides when the global flag is present; watch for catalog violations during ingestion.
 
 ## 5. Notes & Decisions Archive
 
