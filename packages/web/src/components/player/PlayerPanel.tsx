@@ -1,11 +1,13 @@
 import { useEffect, useRef, type FC } from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import ResourceBar from './ResourceBar';
+import ResourceHud from '../resources/ResourceHud';
 import PopulationInfo from './PopulationInfo';
 import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
 import PassiveDisplay from './PassiveDisplay';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import { useGameEngine } from '../../state/GameContext';
 
 interface PlayerPanelProps {
 	player: SessionPlayerStateSnapshot;
@@ -24,6 +26,9 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	const heightCallbackRef = useRef<typeof onHeightChange | null>(null);
 	const animateBar = useAnimate<HTMLDivElement>();
 	const animateSections = useAnimate<HTMLDivElement>();
+	const { translationContext } = useGameEngine();
+	const resourceNodes = translationContext.assets.resourceV2.nodes;
+	const hasResourceHud = Boolean(player.values && resourceNodes.size > 0);
 	useEffect(() => {
 		heightCallbackRef.current = onHeightChange;
 	}, [onHeightChange]);
@@ -86,7 +91,11 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				ref={animateBar}
 				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
 			>
-				<ResourceBar player={player} />
+				{hasResourceHud ? (
+					<ResourceHud player={player} />
+				) : (
+					<ResourceBar player={player} />
+				)}
 				<PopulationInfo player={player} />
 			</div>
 			<div ref={animateSections} className="flex flex-col gap-2">
