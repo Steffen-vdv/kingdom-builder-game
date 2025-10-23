@@ -1,11 +1,13 @@
 import type { AttackTarget, EffectConfig, EffectDef } from '@kingdom-builder/protocol';
 import type { ActionId } from '../../actions';
 import type { ResourceKey } from '../../resources';
+import { getResourceV2Id } from '../../resources';
 import type { StatKey } from '../../stats';
 import type { PopulationRoleId } from '../../populationRoles';
-import { ParamsBuilder } from '../builderShared';
+import { ParamsBuilder, type Params } from '../builderShared';
 import { resolveEffectConfig } from './effectParams';
 import type { EffectBuilder } from '../builders';
+import { resourceTransfer, transferEndpoint, type ResourceTransferEndpointBuilder, type ResourceV2TransferEffectParams } from '../../resourceV2';
 
 export class CostModParamsBuilder extends ParamsBuilder<{
 	id?: string;
@@ -184,33 +186,88 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	}
 }
 export const attackParams = () => new AttackParamsBuilder();
-export class TransferParamsBuilder extends ParamsBuilder<{
-	key?: ResourceKey;
-	percent?: number;
-	amount?: number;
-}> {
+type TransferMode = 'amount' | 'percent' | undefined;
+
+type TransferEffectParams = ResourceV2TransferEffectParams &
+	Params & {
+		key: ResourceKey;
+		percent?: number;
+		amount?: number;
+	};
+
+export class TransferParamsBuilder extends ParamsBuilder<TransferEffectParams> {
+	private resourceKey?: ResourceKey;
+	private resourceId?: string;
+	private donorBuilder?: ResourceTransferEndpointBuilder;
+	private recipientBuilder?: ResourceTransferEndpointBuilder;
+	private mode: TransferMode;
+	private amountValue?: number;
+	private percentValue?: number;
+
 	key(key: ResourceKey) {
-		return this.set('key', key, 'You already chose a resource with key(). Remove the extra key() call.');
+		if (this.resourceKey) {
+			throw new Error('You already chose a resource with key(). Remove the extra key() call.');
+		}
+		const resourceId = getResourceV2Id(key);
+		this.resourceKey = key;
+		this.resourceId = resourceId;
+		this.donorBuilder = transferEndpoint(resourceId).player('opponent');
+		this.recipientBuilder = transferEndpoint(resourceId).player('active');
+		return this;
 	}
+
+	private ensureEndpoints(method: string) {
+		if (!this.resourceKey || !this.resourceId || !this.donorBuilder || !this.recipientBuilder) {
+			throw new Error(`Resource transfer ${method} requires key() before it can be configured.`);
+		}
+	}
+
 	percent(percent: number) {
-		return this.set('percent', percent, 'You already set percent() for this transfer. Remove the duplicate percent() call.');
+		this.ensureEndpoints('percent()');
+		if (this.mode === 'amount') {
+			throw new Error('Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().');
+		}
+		if (this.mode === 'percent') {
+			throw new Error('You already set percent() for this transfer. Remove the duplicate percent() call.');
+		}
+		this.mode = 'percent';
+		this.percentValue = percent;
+		this.donorBuilder!.change((change) => change.percent(-percent));
+		this.recipientBuilder!.change((change) => change.percent(percent));
+		return this;
 	}
+
 	amount(amount: number) {
-		return this.set('amount', amount, 'You already set amount() for this transfer. Remove the duplicate amount() call.');
+		this.ensureEndpoints('amount()');
+		if (this.mode === 'percent') {
+			throw new Error('Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().');
+		}
+		if (this.mode === 'amount') {
+			throw new Error('You already set amount() for this transfer. Remove the duplicate amount() call.');
+		}
+		this.mode = 'amount';
+		this.amountValue = amount;
+		this.donorBuilder!.change((change) => change.amount(-amount));
+		this.recipientBuilder!.change((change) => change.amount(amount));
+		return this;
 	}
 
 	override build() {
-		if (!this.wasSet('key')) {
+		if (!this.resourceKey || !this.resourceId || !this.donorBuilder || !this.recipientBuilder) {
 			throw new Error('Resource transfer is missing key(). Call key(Resource.yourChoice) to pick the resource to move.');
 		}
-		const hasPercent = this.wasSet('percent');
-		const hasAmount = this.wasSet('amount');
-		if (!hasPercent && !hasAmount) {
+		if (!this.mode) {
 			throw new Error('Resource transfer is missing percent() or amount(). Call one of them to choose how much to move.');
 		}
-		if (hasPercent && hasAmount) {
-			throw new Error('Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().');
-		}
+		const donor = this.donorBuilder.build();
+		const recipient = this.recipientBuilder.build();
+		const transferParams = resourceTransfer().donor(donor).recipient(recipient).build();
+		const legacyFields = this.mode === 'amount' ? { amount: this.amountValue! } : { percent: this.percentValue! };
+		this.params = {
+			...transferParams,
+			key: this.resourceKey,
+			...legacyFields,
+		} as TransferEffectParams;
 		return super.build();
 	}
 }

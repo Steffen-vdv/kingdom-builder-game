@@ -16,7 +16,11 @@ const RESOURCE_V2_ID_BY_KEY = {
 	[Resource.castleHP]: 'resource:core:castle-hp',
 } as const satisfies Record<ResourceKey, string>;
 
-type ResourceV2Id = (typeof RESOURCE_V2_ID_BY_KEY)[ResourceKey];
+export type ResourceV2Id = (typeof RESOURCE_V2_ID_BY_KEY)[ResourceKey];
+
+export function getResourceV2Id(resource: ResourceKey): ResourceV2Id {
+	return RESOURCE_V2_ID_BY_KEY[resource];
+}
 
 const RESOURCE_KEY_BY_V2_ID = Object.fromEntries(Object.entries(RESOURCE_V2_ID_BY_KEY).map(([key, id]) => [id, key as ResourceKey])) as Record<ResourceV2Id, ResourceKey>;
 
