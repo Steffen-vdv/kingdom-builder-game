@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 15:20
-- **Current Focus:** Resource Migration MVP - P2 - T21 - Population Resource Definitions
-- **State Summary:** Authored ResourceV2 definitions for Council, Legion, and Fortifier populations using the legacy metadata for icon/label/description parity, and introduced a Population group with a virtual parent (`resource:population:total`) to aggregate child role values. Details recorded in [`worklogs/T21-population-resources.md`](../../../../worklogs/T21-population-resources.md).
+- **Timestamp (UTC):** 2025-10-27 19:00
+- **Current Focus:** Resource Migration MVP - P2 - T22 - Resource Catalog Registries
+- **State Summary:** Combined the core, happiness, stat, and population ResourceV2 definitions into ordered arrays, materialised reusable registries plus a `buildResourceCatalogV2()` helper, and exported them through the contents package. Ordering choices and follow-ups captured in [`worklogs/T22-resource-catalog.md`](../../../../worklogs/T22-resource-catalog.md).
 - **Next Suggested Tasks:**
-  - Validate group ordering conventions against upcoming core resource and stat groups before registries go live.
-  - Decide whether an explicit citizen/unassigned population resource is required for MVP parity.
-  - Begin wiring the population resource definitions into the ResourceV2 registries once the registry loader exists.
-- **Blocking Issues / Risks:** ResourceV2 registry wiring is still pending, so the new definitions are not yet surfaced to runtime consumers.
+  - Thread the new registries into the engine/runtime bootstrap so ResourceV2 data flows beyond content.
+  - Audit UI expectations for HUD ordering before additional ResourceGroups land, adjusting the catalog order if required.
+  - Plan population citizen/unassigned handling once registry consumers clarify whether an explicit resource is necessary.
+- **Blocking Issues / Risks:** Runtime consumers still rely on legacy registries until wiring tasks complete, so none of the new ResourceV2 catalog data is visible yet.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
