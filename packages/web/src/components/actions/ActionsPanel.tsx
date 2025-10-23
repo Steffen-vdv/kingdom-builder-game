@@ -5,6 +5,7 @@ import { hasAiController } from '../../state/sessionAi';
 import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
+import { selectGlobalActionCost } from '../../translation/context/assetSelectors';
 import type { TranslationActionCategoryDefinition } from '../../translation/context/types';
 import BasicOptions from './BasicOptions';
 import ActionCategoryHeader, {
@@ -31,6 +32,18 @@ import {
 	type ActionAvailabilityResult,
 } from './getActionAvailability';
 import { summarizeActionWithInstallation } from './actionSummaryHelpers';
+
+const COST_AMOUNT_FORMATTER = new Intl.NumberFormat('en-US', {
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 2,
+});
+
+function formatCostBaseAmount(value: number): string {
+	if (Number.isInteger(value)) {
+		return value.toString();
+	}
+	return COST_AMOUNT_FORMATTER.format(value);
+}
 
 interface CategoryEntry {
 	id: string;
@@ -107,12 +120,29 @@ export default function ActionsPanel() {
 			resourceMetadata.select(resourceKey),
 		[resourceMetadata],
 	);
-	const actionCostDescriptor = useMemo(
-		() => selectResourceDescriptor(actionCostResource),
-		[selectResourceDescriptor, actionCostResource],
+	const globalCostDisplay = selectGlobalActionCost(translationContext.assets);
+	const primaryCostKey = globalCostDisplay?.resourceId ?? actionCostResource;
+	type ResourceDescriptor = ReturnType<typeof selectResourceDescriptor>;
+	const actionCostDescriptor: ResourceDescriptor | undefined = useMemo(() => {
+		if (!primaryCostKey) {
+			return undefined;
+		}
+		return selectResourceDescriptor(primaryCostKey);
+	}, [selectResourceDescriptor, primaryCostKey]);
+	const actionCostIcon = globalCostDisplay?.icon ?? actionCostDescriptor?.icon;
+	const actionCostLabel =
+		globalCostDisplay?.label ??
+		actionCostDescriptor?.label ??
+		primaryCostKey ??
+		'Action Cost';
+	const actionCostTooltip =
+		globalCostDisplay?.description ?? actionCostDescriptor?.description;
+	const actionCostAmountLabel = formatCostBaseAmount(
+		globalCostDisplay?.amount ?? 1,
 	);
-	const actionCostIcon = actionCostDescriptor.icon;
-	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
+	const actionCostIconSegment = actionCostIcon ? `${actionCostIcon} ` : '';
+	const actionCostSummary = `${actionCostAmountLabel} ${actionCostIconSegment}${actionCostLabel} each`;
+	const actionCostTitle = actionCostTooltip ?? undefined;
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = sessionView.active;
 	if (!player) {
@@ -398,10 +428,8 @@ export default function ActionsPanel() {
 			<div className={HEADER_CLASSES}>
 				<h2 className={TITLE_CLASSES}>
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
-					<span className={COST_LABEL_CLASSES}>
-						(1 {actionCostIcon ?? ''}
-						{actionCostIcon ? ' ' : ''}
-						{actionCostLabel} each)
+					<span className={COST_LABEL_CLASSES} title={actionCostTitle}>
+						({actionCostSummary})
 					</span>
 				</h2>
 				<div className="flex flex-wrap items-center gap-2">
