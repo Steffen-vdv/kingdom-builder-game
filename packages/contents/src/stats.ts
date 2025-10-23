@@ -22,6 +22,10 @@ const STAT_V2_ID_BY_KEY = {
 
 type StatV2Id = (typeof STAT_V2_ID_BY_KEY)[StatKey];
 
+export function getStatResourceV2Id(stat: StatKey): StatV2Id {
+	return STAT_V2_ID_BY_KEY[stat];
+}
+
 const STAT_KEY_BY_V2_ID = Object.fromEntries(Object.entries(STAT_V2_ID_BY_KEY).map(([key, id]) => [id, key as StatKey])) as Record<StatV2Id, StatKey>;
 
 const STAT_OVERRIDES: Partial<Record<StatKey, Pick<StatInfo, 'addFormat' | 'capacity'>>> = {
