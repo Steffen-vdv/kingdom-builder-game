@@ -7,6 +7,7 @@ import { PopCapService } from './pop_cap_service';
 import { WinConditionService } from './win_condition_service';
 import type { HappinessTierDefinition } from './tiered_resource_types';
 import type { RuleSet } from './services_types';
+import type { ResourceV2TierService } from '../resourceV2/tier_service';
 
 type Context = EngineContext;
 type TierResource = ResourceKey;
@@ -16,6 +17,7 @@ export class Services {
 	popcap: PopCapService;
 	winCondition: WinConditionService;
 	private activeTiers: Map<PlayerId, HappinessTierDefinition> = new Map();
+	private resourceV2TierService: ResourceV2TierService | undefined;
 
 	constructor(
 		public rules: RuleSet,
@@ -110,10 +112,25 @@ export class Services {
 		context.game.currentPlayerIndex = previousIndex;
 	}
 
+	setResourceV2TierService(service: ResourceV2TierService | undefined) {
+		this.resourceV2TierService = service;
+	}
+
+	initializeResourceV2TierPassives(context: EngineContext) {
+		this.resourceV2TierService?.initialize(context);
+	}
+
+	getResourceV2TierService(): ResourceV2TierService | undefined {
+		return this.resourceV2TierService;
+	}
+
 	clone(developments: Registry<DevelopmentConfig>): Services {
 		const cloned = new Services(this.rules, developments);
 		cloned.activeTiers = new Map(this.activeTiers);
 		cloned.winCondition = this.winCondition.clone();
+		if (this.resourceV2TierService) {
+			cloned.resourceV2TierService = this.resourceV2TierService.clone();
+		}
 		return cloned;
 	}
 }

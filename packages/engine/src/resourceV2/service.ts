@@ -4,6 +4,7 @@ import type { EngineContext } from '../context';
 import type { PlayerState, ResourceV2ValueChangeRequest } from '../state';
 import { applyResourceV2ValueChange } from '../state';
 import type { ResourceV2EngineRegistry } from './registry';
+import type { ResourceV2TierService } from './tier_service';
 
 export interface ResourceV2HookPayload {
 	readonly resourceId: string;
@@ -18,13 +19,28 @@ export class ResourceV2Service {
 	private registry: ResourceV2EngineRegistry | undefined;
 	private readonly onGainHooks = new Set<ResourceV2Hook>();
 	private readonly onLossHooks = new Set<ResourceV2Hook>();
+	private tierService: ResourceV2TierService | undefined;
 
-	constructor(registry?: ResourceV2EngineRegistry) {
+	constructor(
+		registry?: ResourceV2EngineRegistry,
+		tierService?: ResourceV2TierService,
+	) {
 		this.registry = registry;
+		if (tierService) {
+			this.setTierService(tierService);
+		}
 	}
 
 	setRegistry(registry: ResourceV2EngineRegistry) {
 		this.registry = registry;
+		this.tierService?.setRegistry(registry);
+	}
+
+	setTierService(tierService: ResourceV2TierService) {
+		this.tierService = tierService;
+		if (this.registry) {
+			tierService.setRegistry(this.registry);
+		}
 	}
 
 	registerOnGain(hook: ResourceV2Hook): () => void {
@@ -74,6 +90,8 @@ export class ResourceV2Service {
 			}
 		}
 
+		this.tierService?.handleValueChange(context, player, resourceId);
+
 		return applied;
 	}
 
@@ -95,8 +113,8 @@ export class ResourceV2Service {
 		this.markBoundHistory(state, resourceId);
 	}
 
-	clone(): ResourceV2Service {
-		const clone = new ResourceV2Service(this.registry);
+	clone(tierService?: ResourceV2TierService): ResourceV2Service {
+		const clone = new ResourceV2Service(this.registry, tierService);
 		for (const hook of this.onGainHooks) {
 			clone.onGainHooks.add(hook);
 		}
