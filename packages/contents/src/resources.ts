@@ -1,4 +1,5 @@
-import { resource, type ResourceInfo, toRecord } from './config/builders';
+import type { ResourceInfo } from './config/builders';
+import { RESOURCE_V2_REGISTRY, type ResourceV2Definition } from './resourceV2';
 
 export const Resource = {
 	gold: 'gold',
@@ -8,32 +9,38 @@ export const Resource = {
 } as const;
 export type ResourceKey = (typeof Resource)[keyof typeof Resource];
 
-const defs: ResourceInfo[] = [
-	resource(Resource.gold)
-		.icon('🪙')
-		.label('Gold')
-		.description(
-			'Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.',
-		)
-		.tag('bankruptcy-check')
-		.build(),
-	resource(Resource.ap)
-		.icon('⚡')
-		.label('Action Points')
-		.description('Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends.')
-		.build(),
-	resource(Resource.happiness)
-		.icon('😊')
-		.label('Happiness')
-		.description('Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects.')
-		.build(),
-	resource(Resource.castleHP)
-		.icon('🏰')
-		.label('Castle HP')
-		.description('Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.')
-		.tag('attack-target')
-		.tag('win-condition-zero')
-		.build(),
-];
+const RESOURCE_V2_ID_BY_KEY = {
+	[Resource.gold]: 'resource:core:gold',
+	[Resource.ap]: 'resource:core:action-points',
+	[Resource.happiness]: 'resource:core:happiness',
+	[Resource.castleHP]: 'resource:core:castle-hp',
+} as const satisfies Record<ResourceKey, string>;
 
-export const RESOURCES: Record<ResourceKey, ResourceInfo> = toRecord(defs) as Record<ResourceKey, ResourceInfo>;
+type ResourceV2Id = (typeof RESOURCE_V2_ID_BY_KEY)[ResourceKey];
+
+const RESOURCE_KEY_BY_V2_ID = Object.fromEntries(Object.entries(RESOURCE_V2_ID_BY_KEY).map(([key, id]) => [id, key as ResourceKey])) as Record<ResourceV2Id, ResourceKey>;
+
+function toLegacyResourceInfo(key: ResourceKey, definition: ResourceV2Definition): ResourceInfo {
+	const info: ResourceInfo = {
+		key,
+		icon: definition.icon,
+		label: definition.label,
+		description: definition.description ?? '',
+	};
+	if (definition.tags?.length) {
+		info.tags = [...definition.tags];
+	}
+	return info;
+}
+
+const resourceEntries: [ResourceKey, ResourceInfo][] = [];
+
+for (const definition of RESOURCE_V2_REGISTRY.ordered) {
+	const key = RESOURCE_KEY_BY_V2_ID[definition.id as ResourceV2Id];
+	if (!key) {
+		continue;
+	}
+	resourceEntries.push([key, toLegacyResourceInfo(key, definition)]);
+}
+
+export const RESOURCES = Object.fromEntries(resourceEntries) as Record<ResourceKey, ResourceInfo>;

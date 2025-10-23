@@ -1,4 +1,3 @@
-import { POPULATION_ROLES, PopulationRole } from '../../populationRoles';
 import { resourceGroup } from '../groupBuilder';
 import { resourceV2 } from '../resourceBuilder';
 import type { ResourceV2Definition, ResourceV2GroupDefinition } from '../types';
@@ -7,9 +6,23 @@ const POPULATION_GROUP_ID = 'population';
 const POPULATION_PARENT_ID = 'resource:population:total';
 const POPULATION_GROUP_ORDER = 3;
 
-const COUNCIL_INFO = POPULATION_ROLES[PopulationRole.Council];
-const LEGION_INFO = POPULATION_ROLES[PopulationRole.Legion];
-const FORTIFIER_INFO = POPULATION_ROLES[PopulationRole.Fortifier];
+const COUNCIL_INFO = {
+	icon: '⚖️',
+	label: 'Council',
+	description: 'The Council advises the crown and generates Action Points during the Growth phase. Keeping them employed fuels your economy.',
+};
+
+const LEGION_INFO = {
+	icon: '🎖️',
+	label: 'Legion',
+	description: 'Legions lead your forces, boosting Army Strength and training troops each Growth phase.',
+};
+
+const FORTIFIER_INFO = {
+	icon: '🔧',
+	label: 'Fortifier',
+	description: 'Fortifiers reinforce your defenses. They raise Fortification Strength and shore up the castle every Growth phase.',
+};
 
 export const POPULATION_RESOURCE_DEFINITIONS: readonly ResourceV2Definition[] = [
 	resourceV2('resource:population:role:council')
