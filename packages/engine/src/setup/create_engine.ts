@@ -20,6 +20,7 @@ import type {
 } from '../state';
 import { Services, PassiveManager } from '../services';
 import { ResourceV2Service } from '../resourceV2/service';
+import { ResourceV2TierService } from '../resourceV2/tier_service';
 import type { RuleSet } from '../services';
 import { EngineContext } from '../context';
 import { registerCoreEffects } from '../effects';
@@ -199,7 +200,12 @@ export function createEngine({
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
 	const services = new Services(rules, developments);
-	const resourceV2Service = new ResourceV2Service();
+	const resourceV2TierService = new ResourceV2TierService();
+	services.setResourceV2TierService(resourceV2TierService);
+	const resourceV2Service = new ResourceV2Service(
+		undefined,
+		resourceV2TierService,
+	);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
 	const actionCostResource = determineCommonActionCostResource(actions);
@@ -244,6 +250,7 @@ export function createEngine({
 	engineContext.game.currentStep = phases[0]?.steps[0]?.id || '';
 	engineContext.game.devMode = devMode;
 	services.initializeTierPassives(engineContext);
+	services.initializeResourceV2TierPassives(engineContext);
 	return engineContext;
 }
 

@@ -130,7 +130,8 @@ function cloneGameState(game: GameState): GameState {
 export function cloneEngineContext(source: EngineContext): EngineContext {
 	const clonedGame = cloneGameState(source.game);
 	const clonedServices = source.services.clone(source.developments);
-	const clonedResourceV2 = source.resourceV2.clone();
+	const tierService = clonedServices.getResourceV2TierService();
+	const clonedResourceV2 = source.resourceV2.clone(tierService);
 	const clonedPassives = source.passives.clone();
 	const compensations = structuredClone(source.compensations);
 	const cloned = new EngineContext(
