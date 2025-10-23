@@ -14,3 +14,30 @@ export interface ResourcePercentChangeParameters {
 }
 
 export type ResourceChangeParameters = ResourceAmountChangeParameters | ResourcePercentChangeParameters;
+
+export type ResourceV2PlayerScope = 'active' | 'opponent';
+
+export interface ResourceV2ValueWriteOptions {
+	readonly suppressTouched?: boolean;
+	readonly suppressRecentEntry?: boolean;
+	readonly skipTierUpdate?: boolean;
+}
+
+export interface ResourceV2TransferEndpointPayload {
+	readonly player?: ResourceV2PlayerScope;
+	readonly resourceId: string;
+	readonly change: ResourceChangeParameters;
+	readonly reconciliationMode?: ResourceReconciliationMode;
+	readonly options?: ResourceV2ValueWriteOptions;
+}
+
+export interface ResourceV2TransferEffectParams {
+	readonly donor: ResourceV2TransferEndpointPayload;
+	readonly recipient: ResourceV2TransferEndpointPayload;
+}
+
+export interface ResourceV2UpperBoundIncreaseParams {
+	readonly player?: ResourceV2PlayerScope;
+	readonly resourceId: string;
+	readonly delta: number;
+}

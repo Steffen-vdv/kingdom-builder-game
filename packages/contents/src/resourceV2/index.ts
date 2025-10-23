@@ -23,7 +23,7 @@ export type { ResourceV2Registry, ResourceGroupRegistry } from './registry';
 export { RESOURCE_V2_REGISTRY, RESOURCE_GROUP_V2_REGISTRY, buildResourceCatalogV2 } from './catalog';
 export type { ResourceCatalogV2 } from './catalog';
 
-export { resourceChange } from './effects';
+export { resourceChange, resourceTransfer, transferEndpoint, increaseUpperBound } from './effects';
 export type {
 	ResourceChangeBuilder,
 	ResourceChangeEffectParams,
@@ -32,4 +32,12 @@ export type {
 	ResourcePercentChangeParameters,
 	ResourceChangeRoundingMode,
 	ResourceReconciliationMode,
+	ResourceTransferBuilder,
+	ResourceTransferEndpointBuilder,
+	ResourceV2TransferEffectParams,
+	ResourceV2TransferEndpointPayload,
+	ResourceUpperBoundIncreaseBuilder,
+	ResourceV2UpperBoundIncreaseParams,
+	ResourceV2ValueWriteOptions,
+	ResourceV2PlayerScope,
 } from './effects';
