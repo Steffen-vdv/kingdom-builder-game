@@ -31,8 +31,12 @@ import { actionPerform } from './action_perform';
 import { attackPerform } from './attack';
 import {
 	isResourceV2ResourceChangeEffect,
+	isResourceV2ResourceTransferEffect,
+	isResourceV2UpperBoundIncreaseEffect,
 	resourceV2AddHandler,
+	resourceV2IncreaseUpperBoundHandler,
 	resourceV2RemoveHandler,
+	resourceV2TransferHandler,
 } from '../resourceV2/effects';
 
 const resourceAddDispatcher: EffectHandler = (effect, engineContext, mult) => {
@@ -53,6 +57,33 @@ const resourceRemoveDispatcher: EffectHandler = (
 		return;
 	}
 	resourceRemove(effect, engineContext, mult);
+};
+
+type LegacyResourceTransferEffect = Parameters<typeof resourceTransfer>[0];
+
+const resourceTransferDispatcher: EffectHandler = (
+	effect,
+	engineContext,
+	mult,
+) => {
+	if (isResourceV2ResourceTransferEffect(effect)) {
+		resourceV2TransferHandler(effect, engineContext, mult);
+		return;
+	}
+
+	resourceTransfer(effect as LegacyResourceTransferEffect, engineContext, mult);
+};
+
+const resourceUpperBoundIncreaseDispatcher: EffectHandler = (
+	effect,
+	engineContext,
+	mult,
+) => {
+	if (isResourceV2UpperBoundIncreaseEffect(effect)) {
+		resourceV2IncreaseUpperBoundHandler(effect, engineContext, mult);
+		return;
+	}
+	throw new Error('Upper-bound dispatcher requires ResourceV2 effect.');
 };
 
 export interface EffectHandler<
@@ -78,7 +109,11 @@ export function registerCoreEffects(
 	registry.add('land:add', landAdd);
 	registry.add('resource:add', resourceAddDispatcher);
 	registry.add('resource:remove', resourceRemoveDispatcher);
-	registry.add('resource:transfer', resourceTransfer);
+	registry.add('resource:transfer', resourceTransferDispatcher);
+	registry.add(
+		'resource:upper-bound:increase',
+		resourceUpperBoundIncreaseDispatcher,
+	);
 	registry.add('building:add', buildingAdd);
 	registry.add('building:remove', buildingRemove);
 	registry.add('stat:add', statAdd);
