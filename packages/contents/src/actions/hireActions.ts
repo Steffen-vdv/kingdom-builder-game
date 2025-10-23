@@ -1,6 +1,6 @@
 import type { Registry } from '@kingdom-builder/protocol';
-import { Resource } from '../resources';
-import { Stat } from '../stats';
+import { Resource, getResourceV2Id } from '../resources';
+import { Stat, getStatResourceV2Id } from '../stats';
 import { POPULATIONS } from '../populations';
 import type { ActionDef } from '../actions';
 import { HireActionId } from '../actionIds';
@@ -10,6 +10,7 @@ import { Types, PopulationMethods, ResourceMethods } from '../config/builderShar
 import { Focus } from '../defs';
 import { PopulationRole } from '../populationRoles';
 import type { PopulationRoleId } from '../populationRoles';
+import { resourceChange, type ResourceChangeEffectParams } from '../resourceV2';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -22,6 +23,25 @@ const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 const hireCategoryOrder = categoryOrder('Hire');
 
 const populationCapacityRequirement = compareRequirement().left(populationEvaluator()).operator('lt').right(statEvaluator().key(Stat.maxPopulation)).build();
+
+const HAPPINESS_CHANGE: ResourceChangeEffectParams = resourceChange(getResourceV2Id(Resource.happiness)).amount(1).build();
+
+const LEGION_PASSIVE_CHANGES: readonly ResourceChangeEffectParams[] = [resourceChange(getStatResourceV2Id(Stat.armyStrength)).amount(1).build()];
+
+const FORTIFIER_PASSIVE_CHANGES: readonly ResourceChangeEffectParams[] = [resourceChange(getStatResourceV2Id(Stat.fortificationStrength)).amount(1).build()];
+
+function buildHappinessEffectParams() {
+	return resourceParams().key(Resource.happiness).amount(1).build();
+}
+
+function buildHirePopulationParams(role: PopulationRoleId, extraResourceChanges: readonly ResourceChangeEffectParams[] = []) {
+	const params = populationParams().role(role).build();
+	const resourceChanges: ResourceChangeEffectParams[] = [HAPPINESS_CHANGE, ...extraResourceChanges];
+	return {
+		...params,
+		resourceChanges,
+	};
+}
 
 function requirePopulation(role: PopulationRoleId) {
 	const definition = POPULATIONS.get(role);
@@ -49,8 +69,8 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Council)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+			.effect(effect(Types.Population, PopulationMethods.ADD).params(buildHirePopulationParams(PopulationRole.Council)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(buildHappinessEffectParams()).build())
 			.category(ActionCategory.Hire)
 			.order(hireCategoryOrder + 0)
 			.focus(Focus.Economy)
@@ -67,8 +87,8 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Legion)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+			.effect(effect(Types.Population, PopulationMethods.ADD).params(buildHirePopulationParams(PopulationRole.Legion, LEGION_PASSIVE_CHANGES)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(buildHappinessEffectParams()).build())
 			.category(ActionCategory.Hire)
 			.order(hireCategoryOrder + 1)
 			.focus(Focus.Economy)
@@ -85,8 +105,8 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 5)
 			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Fortifier)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+			.effect(effect(Types.Population, PopulationMethods.ADD).params(buildHirePopulationParams(PopulationRole.Fortifier, FORTIFIER_PASSIVE_CHANGES)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(buildHappinessEffectParams()).build())
 			.category(ActionCategory.Hire)
 			.order(hireCategoryOrder + 2)
 			.focus(Focus.Economy)
