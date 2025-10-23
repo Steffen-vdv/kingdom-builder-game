@@ -4,6 +4,7 @@ import type {
 	ResourceV2StateParentDefinition,
 	ResourceV2StateValueDefinition,
 } from './metadata';
+import { initialiseResourceTierState } from './tiering';
 
 export interface ResourceV2ValueBoundsState {
 	lowerBound?: number;
@@ -16,11 +17,30 @@ export interface ResourceV2TierProgressState {
 	max?: number;
 }
 
+export interface ResourceV2TierStepState {
+	readonly id: string;
+	readonly index: number;
+	readonly min: number;
+	readonly max?: number;
+	readonly label?: string;
+}
+
+export interface ResourceV2RecentTierTransition {
+	readonly resourceId: string;
+	readonly trackId: string;
+	readonly fromStepId?: string;
+	readonly toStepId?: string;
+}
+
 export interface ResourceV2TierState {
 	readonly trackId: string;
+	readonly steps: readonly ResourceV2TierStepState[];
 	currentStepId?: string;
 	currentStepIndex?: number;
+	previousStepId?: string;
+	nextStepId?: string;
 	progress?: ResourceV2TierProgressState;
+	touched: boolean;
 }
 
 export interface ResourceV2MutableValueState {
@@ -52,6 +72,7 @@ export type ResourceV2ValueState = Readonly<ResourceV2MutableStateValue>;
 export interface ResourceV2State {
 	readonly blueprint: ResourceV2StateBlueprint;
 	readonly values: Map<string, ResourceV2MutableStateValue>;
+	recentTierTransitions: ResourceV2RecentTierTransition[];
 }
 
 export interface InitializeResourceV2StateOptions {
@@ -74,11 +95,21 @@ function cloneBounds(
 function createTierState(
 	definition: ResourceV2StateValueDefinition,
 ): ResourceV2TierState | undefined {
-	if (!definition.tierTrack) {
+	const track = definition.tierTrack;
+	if (!track) {
 		return undefined;
 	}
+        const steps: ResourceV2TierStepState[] = track.steps.map((step, index) => ({
+                id: step.id,
+                index,
+                min: step.min,
+                ...(step.max !== undefined ? { max: step.max } : {}),
+                ...(step.display?.label ? { label: step.display.label } : {}),
+        }));
 	return {
-		trackId: definition.tierTrack.id,
+		trackId: track.id,
+		steps,
+		touched: false,
 	} satisfies ResourceV2TierState;
 }
 
@@ -203,6 +234,7 @@ export function createResourceV2State(
 	const state: ResourceV2State = {
 		blueprint,
 		values,
+		recentTierTransitions: [],
 	};
 
 	if (options.values) {
@@ -228,7 +260,21 @@ export function createResourceV2State(
 		recomputeParentValue(state, parentId, false);
 	}
 
+	initialiseResourceTierState(state);
+
 	return state;
+}
+
+export function clearResourceTierTouches(state: ResourceV2State): void {
+	for (const value of state.values.values()) {
+		if (value.tier) {
+			value.tier.touched = false;
+		}
+	}
+}
+
+export function clearRecentTierTransitions(state: ResourceV2State): void {
+	state.recentTierTransitions = [];
 }
 
 export function getResourceValue(state: ResourceV2State, id: string): number {

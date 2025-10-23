@@ -18,6 +18,8 @@ export {
 	isResourceTouched,
 	markResourceUntouched,
 	clearResourceTouches,
+	clearResourceTierTouches,
+	clearRecentTierTransitions,
 	setResourceValue,
 	adjustResourceValue,
 	isLimitedResource,
@@ -31,6 +33,8 @@ export type {
 	ResourceV2State,
 	ResourceV2TierProgressState,
 	ResourceV2TierState,
+	ResourceV2TierStepState,
+	ResourceV2RecentTierTransition,
 	ResourceV2ValueBoundsState,
 	ResourceV2ValueState,
 } from './state';

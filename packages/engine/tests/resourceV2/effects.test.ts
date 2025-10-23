@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { Registry, type EffectDef } from '@kingdom-builder/protocol';
+import {
+	Registry,
+	type ActionConfig,
+	type BuildingConfig,
+	type DevelopmentConfig,
+	type EffectDef,
+	type PhaseConfig,
+	type PopulationConfig,
+	type RuleSet,
+} from '@kingdom-builder/protocol';
 
 import { EngineContext } from '../../src/context';
 import { GameState } from '../../src/state';
@@ -23,14 +32,6 @@ import {
 	type ResourceV2ValueEffectParams,
 } from '../../src/resourceV2/effects';
 import { Services, PassiveManager } from '../../src/services';
-import type {
-	ActionConfig,
-	BuildingConfig,
-	DevelopmentConfig,
-	PhaseConfig,
-	PopulationConfig,
-	RuleSet,
-} from '@kingdom-builder/protocol';
 
 describe('ResourceV2 effects', () => {
 	let metadata: ResourceV2Metadata;
@@ -41,20 +42,13 @@ describe('ResourceV2 effects', () => {
 
 	beforeEach(() => {
 		const factory = createContentFactory();
-		const group = factory.resourceGroup({
-			id: 'elemental',
-			parentId: 'elemental-total',
-			parentLabel: 'Elemental Balance',
-			parentDescription: 'Aggregated elemental alignment.',
-		});
+		const group = factory.resourceGroup();
 		const alpha = factory.resourceDefinition({
-			id: 'alpha',
 			configure: (builder) => {
 				builder.lowerBound(0).upperBound(20).group(group.id, 1);
 			},
 		});
 		const beta = factory.resourceDefinition({
-			id: 'beta',
 			configure: (builder) => {
 				builder.lowerBound(0).upperBound(5).group(group.id, 2);
 			},
@@ -76,11 +70,12 @@ describe('ResourceV2 effects', () => {
 
 	function createEngineContext(hooks?: ResourceV2Runtime['hooks']) {
 		const game = new GameState('Player', 'Opponent');
+		const actionResourceId = alphaId;
 		const rules: RuleSet = {
 			defaultActionAPCost: 1,
 			absorptionCapPct: 0,
 			absorptionRounding: 'down',
-			tieredResourceKey: 'ap',
+			tieredResourceKey: actionResourceId,
 			tierDefinitions: [],
 			slotsPerNewLand: 1,
 			maxSlotsPerLand: 1,
@@ -105,7 +100,7 @@ describe('ResourceV2 effects', () => {
 			populations,
 			passives,
 			phases,
-			'ap',
+			actionResourceId,
 			{ A: {}, B: {} },
 		);
 		const runtime: ResourceV2Runtime = { state, ...(hooks ? { hooks } : {}) };
@@ -115,8 +110,12 @@ describe('ResourceV2 effects', () => {
 	}
 
 	it('adds amounts with evaluation modifiers and logs signed deltas', () => {
+		const onGain = vi.fn();
+		const onLoss = vi.fn();
 		const onValueChange = vi.fn();
 		const { context, passives } = createEngineContext({
+			onGain,
+			onLoss,
 			onValueChange,
 		});
 		passives.registerEvaluationModifier('global', 'resourceV2:value', () => ({
@@ -137,13 +136,16 @@ describe('ResourceV2 effects', () => {
 		resourceV2Add(effect, context, 1);
 
 		expect(getResourceValue(state, alphaId)).toBe(11);
+		expect(onGain).toHaveBeenCalledWith(context, alphaId, 6);
+		expect(onLoss).not.toHaveBeenCalled();
 		expect(onValueChange).toHaveBeenCalledWith(context, alphaId, 6);
 		expect(context.recentResourceGains).toEqual([{ key: alphaId, amount: 6 }]);
 	});
 
 	it('suppresses hooks when configured', () => {
-		const onValueChange = vi.fn();
-		const { context } = createEngineContext({ onValueChange });
+		const onGain = vi.fn();
+		const onLoss = vi.fn();
+		const { context } = createEngineContext({ onGain, onLoss });
 		const effect: EffectDef<ResourceV2ValueEffectParams> = {
 			type: 'resource',
 			method: 'add',
@@ -158,7 +160,8 @@ describe('ResourceV2 effects', () => {
 		resourceV2Add(effect, context, 1);
 
 		expect(getResourceValue(state, alphaId)).toBe(8);
-		expect(onValueChange).not.toHaveBeenCalled();
+		expect(onGain).not.toHaveBeenCalled();
+		expect(onLoss).not.toHaveBeenCalled();
 		expect(context.recentResourceGains).toEqual([{ key: alphaId, amount: 3 }]);
 	});
 
@@ -180,10 +183,94 @@ describe('ResourceV2 effects', () => {
 			},
 		};
 
+		const onLoss = vi.fn();
+		const runtime = (
+			context as EngineContext & { resourceV2: ResourceV2Runtime }
+		).resourceV2;
+		runtime.hooks = { onLoss };
+
 		resourceV2Remove(effect, context, 1);
 
 		expect(getResourceValue(state, alphaId)).toBe(7);
+		expect(onLoss).toHaveBeenCalledWith(context, alphaId, 3);
 		expect(context.recentResourceGains).toEqual([{ key: alphaId, amount: -3 }]);
+	});
+
+	it('skips hooks and logs when adjustments clamp to zero delta', () => {
+		state = createResourceV2State(metadata, {
+			values: {
+				[alphaId]: 0,
+				[betaId]: 3,
+			},
+		});
+		const onGain = vi.fn();
+		const onLoss = vi.fn();
+		const onValueChange = vi.fn();
+		const { context } = createEngineContext({ onGain, onLoss, onValueChange });
+
+		const effect: EffectDef<ResourceV2ValueEffectParams> = {
+			type: 'resource',
+			method: 'remove',
+			params: {
+				resourceId: alphaId,
+				payload: { kind: 'amount', amount: 5 },
+				reconciliation: 'clamp',
+			},
+		};
+
+		resourceV2Remove(effect, context, 1);
+
+		expect(getResourceValue(state, alphaId)).toBe(0);
+		expect(onGain).not.toHaveBeenCalled();
+		expect(onLoss).not.toHaveBeenCalled();
+		expect(onValueChange).not.toHaveBeenCalled();
+		expect(context.recentResourceGains).toEqual([]);
+	});
+
+	it('ignores negative addition amounts after normalisation', () => {
+		const onGain = vi.fn();
+		const onLoss = vi.fn();
+		const onValueChange = vi.fn();
+		const { context } = createEngineContext({ onGain, onLoss, onValueChange });
+
+		const effect: EffectDef<ResourceV2ValueEffectParams> = {
+			type: 'resource',
+			method: 'add',
+			params: {
+				resourceId: alphaId,
+				payload: { kind: 'amount', amount: -7 },
+				reconciliation: 'clamp',
+			},
+		};
+
+		resourceV2Add(effect, context, 1);
+
+		expect(getResourceValue(state, alphaId)).toBe(5);
+		expect(onGain).not.toHaveBeenCalled();
+		expect(onLoss).not.toHaveBeenCalled();
+		expect(onValueChange).not.toHaveBeenCalled();
+		expect(context.recentResourceGains).toEqual([]);
+	});
+
+	it('ignores non-finite addition amounts', () => {
+		const onGain = vi.fn();
+		const { context } = createEngineContext({ onGain });
+
+		const effect: EffectDef<ResourceV2ValueEffectParams> = {
+			type: 'resource',
+			method: 'add',
+			params: {
+				resourceId: alphaId,
+				payload: { kind: 'amount', amount: Number.NaN },
+				reconciliation: 'clamp',
+			},
+		};
+
+		resourceV2Add(effect, context, 1);
+
+		expect(getResourceValue(state, alphaId)).toBe(5);
+		expect(onGain).not.toHaveBeenCalled();
+		expect(context.recentResourceGains).toEqual([]);
 	});
 
 	it('transfers amounts while respecting donor and recipient bounds', () => {
@@ -193,8 +280,10 @@ describe('ResourceV2 effects', () => {
 				[betaId]: 3,
 			},
 		});
+		const onGain = vi.fn();
+		const onLoss = vi.fn();
 		const onValueChange = vi.fn();
-		const { context } = createEngineContext({ onValueChange });
+		const { context } = createEngineContext({ onGain, onLoss, onValueChange });
 		const effect: EffectDef<ResourceV2TransferEffectParams> = {
 			type: 'resource',
 			method: 'transfer',
@@ -209,6 +298,8 @@ describe('ResourceV2 effects', () => {
 
 		expect(getResourceValue(state, alphaId)).toBe(6);
 		expect(getResourceValue(state, betaId)).toBe(5);
+		expect(onLoss).toHaveBeenCalledWith(context, alphaId, 2);
+		expect(onGain).toHaveBeenCalledWith(context, betaId, 2);
 		expect(onValueChange.mock.calls).toEqual([
 			[context, alphaId, -2],
 			[context, betaId, 2],
