@@ -1,8 +1,9 @@
 import type { EffectConfig, EvaluatorDef } from '@kingdom-builder/protocol';
 import type { StatKey } from '../../../stats';
-import { ParamsBuilder, StatMethods, Types } from '../../builderShared';
+import { resourceChange } from '../../../resourceV2';
+import { ParamsBuilder, ResourceMethods, Types } from '../../builderShared';
+import { resolveStatResourceV2Id } from '../../statResourceIds';
 import type { Params } from '../../builderShared';
-import { statParams } from '../effectParams';
 import { EvaluatorBuilder } from './evaluatorBuilder';
 
 export class EffectBuilder<P extends Params = Params> {
@@ -100,10 +101,6 @@ export class EffectBuilder<P extends Params = Params> {
 		return this;
 	}
 
-	allowShortfall() {
-		return this.meta({ allowShortfall: true });
-	}
-
 	build(): EffectConfig {
 		if (!this.typeSet && !this.methodSet) {
 			const hasNestedEffects = Array.isArray(this.config.effects) ? this.config.effects.length > 0 : false;
@@ -116,6 +113,9 @@ export class EffectBuilder<P extends Params = Params> {
 }
 
 export function effect(type?: string, method?: string) {
+	if (method && !type) {
+		throw new Error('effect() requires a type when method() is provided. Pass both arguments or chain type() first.');
+	}
 	const builder = new EffectBuilder();
 	if (type) {
 		builder.type(type);
@@ -127,5 +127,9 @@ export function effect(type?: string, method?: string) {
 }
 
 export function statAddEffect(stat: StatKey, amount: number) {
-	return effect(Types.Stat, StatMethods.ADD).params(statParams().key(stat).amount(amount).build()).build();
+	const resourceId = resolveStatResourceV2Id(stat);
+	const params = resourceChange(resourceId).amount(amount).build();
+	return effect(Types.Resource, ResourceMethods.ADD)
+		.params(params as unknown as Params)
+		.build();
 }

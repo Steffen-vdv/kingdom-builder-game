@@ -1,5 +1,8 @@
 import type { StatInfo } from './config/builders';
 import { RESOURCE_V2_REGISTRY, type ResourceV2Definition } from './resourceV2';
+import { STAT_RESOURCE_V2_IDS, type StatResourceV2Id } from './config/statResourceIds';
+
+export { resolveStatResourceV2Id } from './config/statResourceIds';
 
 export const Stat = {
 	maxPopulation: 'maxPopulation',
@@ -11,16 +14,9 @@ export const Stat = {
 } as const;
 export type StatKey = (typeof Stat)[keyof typeof Stat];
 
-const STAT_V2_ID_BY_KEY = {
-	[Stat.maxPopulation]: 'resource:stat:max-population',
-	[Stat.armyStrength]: 'resource:stat:army-strength',
-	[Stat.fortificationStrength]: 'resource:stat:fortification-strength',
-	[Stat.absorption]: 'resource:stat:absorption',
-	[Stat.growth]: 'resource:stat:growth',
-	[Stat.warWeariness]: 'resource:stat:war-weariness',
-} as const satisfies Record<StatKey, string>;
+const STAT_V2_ID_BY_KEY = STAT_RESOURCE_V2_IDS as Record<StatKey, StatResourceV2Id>;
 
-type StatV2Id = (typeof STAT_V2_ID_BY_KEY)[StatKey];
+type StatV2Id = StatResourceV2Id;
 
 const STAT_KEY_BY_V2_ID = Object.fromEntries(Object.entries(STAT_V2_ID_BY_KEY).map(([key, id]) => [id, key as StatKey])) as Record<StatV2Id, StatKey>;
 

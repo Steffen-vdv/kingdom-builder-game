@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 18:00
-- **Current Focus:** Resource Migration MVP - P2 - T29 - Transfer & Bound Builders
-- **State Summary:** Authored transfer endpoint/effect builders and an upper-bound increase builder that match the engine payload contract, exported them through `@kingdom-builder/contents/resourceV2`, and added unit tests plus [`worklogs/T29-transfer-bound-builders.md`](../../../../worklogs/T29-transfer-bound-builders.md) for validation notes.
+- **Timestamp (UTC):** 2025-10-29 02:00
+- **Current Focus:** Resource Migration MVP - P2 - T30 - Effect Builder Core Alignment
+- **State Summary:** Removed the effect builder’s `allowShortfall()` shim, introduced ResourceV2 bound enums, tightened the `effect()` guard, and migrated `statAddEffect()` to the ResourceV2 change helper. See [`worklogs/T30-effect-core.md`](../../../../worklogs/T30-effect-core.md) for validation notes and downstream targets.
 - **Next Suggested Tasks:**
-  - Thread the new builders into upcoming content migrations (e.g., plunder actions) so authors stop hand-writing transfer payloads.
-  - Confirm protocol/web translation layers recognise the new transfer/bound payloads once integrated with content definitions.
-  - Plan follow-up for hook suppression handling once engine-side wiring lands.
-- **Blocking Issues / Risks:** None discovered today; pending follow-up on hook suppression once engine support exists.
+  - Migrate remaining `statParams()` call sites in developments, populations, and phases to ResourceV2 change builders.
+  - Redirect engine `resource:add`/`resource:remove` registration to the ResourceV2 handlers before expanding helper coverage.
+  - Extend content usage of the new bound method enums once upper-bound adjustments progress beyond prototype status.
+- **Blocking Issues / Risks:** Engine still honours the legacy `allowShortfall` flag; removal depends on the tier-based replacement tracked in the backlog.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
