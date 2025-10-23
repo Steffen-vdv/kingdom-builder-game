@@ -1,14 +1,16 @@
 import { Registry, TRANSFER_PCT_EVALUATION_ID, TRANSFER_PCT_EVALUATION_TYPE, buildingSchema } from '@kingdom-builder/protocol';
 import { ActionId, PopulationEvaluationId } from './actionIds';
-import { Resource } from './resources';
-import { Stat } from './stats';
+import { Resource, getResourceV2Id } from './resources';
+import { Stat, getStatResourceV2Id } from './stats';
 import { DevelopmentId } from './developments';
-import { building, effect, resourceParams, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams, statParams } from './config/builders';
+import { building, effect, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods, StatMethods } from './config/builderShared';
+import type { Params } from './config/builderShared';
 import { Focus } from './defs';
 import { BuildingId as BuildingIdMap } from './buildingIds';
 import type { BuildingId as BuildingIdType } from './buildingIds';
 import type { BuildingDef } from './defs';
+import { resourceChange } from './resourceV2';
 export const BuildingId = BuildingIdMap;
 export type BuildingId = BuildingIdType;
 export function createBuildingRegistry() {
@@ -25,7 +27,11 @@ export function createBuildingRegistry() {
 			.onBuild(
 				effect(Types.ResultMod, ResultModMethods.ADD)
 					.params(resultModParams().id('tc_expand_result').actionId(ActionId.expand))
-					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+					.effect(
+						effect(Types.Resource, ResourceMethods.ADD)
+							.params(resourceChange(getResourceV2Id(Resource.happiness)).amount(1).build() as unknown as Params)
+							.build(),
+					)
 					.build(),
 			)
 			.focus(Focus.Economy)
@@ -97,8 +103,16 @@ export function createBuildingRegistry() {
 			.onBuild(
 				effect(Types.Passive, PassiveMethods.ADD)
 					.param('id', 'castle_walls_bonus')
-					.effect(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.fortificationStrength).amount(5)).build())
-					.effect(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.absorption).amount(0.2)).build())
+					.effect(
+						effect(Types.Stat, StatMethods.ADD)
+							.params(resourceChange(getStatResourceV2Id(Stat.fortificationStrength)).amount(5).build() as unknown as Params)
+							.build(),
+					)
+					.effect(
+						effect(Types.Stat, StatMethods.ADD)
+							.params(resourceChange(getStatResourceV2Id(Stat.absorption)).amount(0.2).build() as unknown as Params)
+							.build(),
+					)
 					.build(),
 			)
 			.focus(Focus.Defense)

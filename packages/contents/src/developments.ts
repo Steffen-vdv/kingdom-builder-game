@@ -1,10 +1,12 @@
 import { Registry, developmentSchema } from '@kingdom-builder/protocol';
-import { Stat } from './stats';
-import { Resource } from './resources';
-import { development, effect, resourceParams, statParams, developmentParams, developmentEvaluator } from './config/builders';
+import { Stat, getStatResourceV2Id } from './stats';
+import { Resource, getResourceV2Id } from './resources';
+import { development, effect, developmentParams, developmentEvaluator } from './config/builders';
 import { Types, StatMethods, DevelopmentMethods, ResourceMethods } from './config/builderShared';
+import type { Params } from './config/builderShared';
 import { Focus } from './defs';
 import type { DevelopmentDef } from './defs';
+import { resourceChange } from './resourceV2';
 
 export type { DevelopmentDef } from './defs';
 
@@ -29,7 +31,11 @@ export function createDevelopmentRegistry() {
 			.onGainIncomeStep(
 				effect()
 					.evaluator(developmentEvaluator().id('$id'))
-					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.gold).amount(2)).build())
+					.effect(
+						effect(Types.Resource, ResourceMethods.ADD)
+							.params(resourceChange(getResourceV2Id(Resource.gold)).amount(2).build() as unknown as Params)
+							.build(),
+					)
 					.build(),
 			)
 			.order(2)
@@ -44,7 +50,11 @@ export function createDevelopmentRegistry() {
 			.name('House')
 			.icon('🏠')
 			.populationCap(1)
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.maxPopulation).amount(1)).build())
+			.onBuild(
+				effect(Types.Stat, StatMethods.ADD)
+					.params(resourceChange(getStatResourceV2Id(Stat.maxPopulation)).amount(1).build() as unknown as Params)
+					.build(),
+			)
 			.order(1)
 			.focus(Focus.Economy)
 			.build(),
@@ -56,8 +66,16 @@ export function createDevelopmentRegistry() {
 			.id(DevelopmentId.Outpost)
 			.name('Outpost')
 			.icon('🏹')
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.armyStrength).amount(1)).build())
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.fortificationStrength).amount(1)).build())
+			.onBuild(
+				effect(Types.Stat, StatMethods.ADD)
+					.params(resourceChange(getStatResourceV2Id(Stat.armyStrength)).amount(1).build() as unknown as Params)
+					.build(),
+			)
+			.onBuild(
+				effect(Types.Stat, StatMethods.ADD)
+					.params(resourceChange(getStatResourceV2Id(Stat.fortificationStrength)).amount(1).build() as unknown as Params)
+					.build(),
+			)
 			.order(3)
 			.focus(Focus.Defense)
 			.build(),
@@ -71,8 +89,16 @@ export function createDevelopmentRegistry() {
 			.id(DevelopmentId.Watchtower)
 			.name('Watchtower')
 			.icon('🗼')
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.fortificationStrength).amount(2)).build())
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.absorption).amount(0.5)).build())
+			.onBuild(
+				effect(Types.Stat, StatMethods.ADD)
+					.params(resourceChange(getStatResourceV2Id(Stat.fortificationStrength)).amount(2).build() as unknown as Params)
+					.build(),
+			)
+			.onBuild(
+				effect(Types.Stat, StatMethods.ADD)
+					.params(resourceChange(getStatResourceV2Id(Stat.absorption)).amount(0.5).build() as unknown as Params)
+					.build(),
+			)
 			.onAttackResolved(effect(Types.Development, DevelopmentMethods.REMOVE).params(watchtowerRemovalParams).build())
 			.order(4)
 			.focus(Focus.Defense)
