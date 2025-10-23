@@ -31,7 +31,7 @@ async function bootstrap() {
 	try {
 		const config = await getRuntimeContentConfig();
 		const iconResolution = resolvePrimaryIcon(
-			config.resources,
+			config.resourceValues,
 			config.primaryIconId,
 		);
 		if (iconResolution.icon) {

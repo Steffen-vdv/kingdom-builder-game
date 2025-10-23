@@ -1,13 +1,14 @@
 # Web Handover
 
-> Replace this template with the latest web/UI handover before wrapping a task. Include validation steps and user-facing implications.
-
-- **Prepared by:** _(name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(web initiative underway)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-10-23 16:08
+- **Current Focus:** Resource Migration MVP – ResourceV2 translation readiness
 - **State Summary:**
-  - _(bullet points covering progress, decisions, and open questions)_
+  - ResourceV2 formatters supply summary, detail, and log copy using standardized verbs for value snapshots, tiers, and grouped parents.
+  - Runtime config bootstrap and favicon resolution now read the `resourceValues` registry payload, matching protocol output.
+  - Vitest web suite passes (`npm run test:web`), covering new ResourceV2 translator helpers and runtime config cloning.
 - **Next Suggested Tasks:**
-  - _(bulleted action items with owners if known)_
+  - Audit HUD components still keyed on legacy `registries.resources` maps and outline their migration path to ResourceV2 descriptors.
+  - Add integration coverage feeding ResourceV2 metadata from runtime config through translation contexts once remaining components switch over.
 - **Risks / Blockers:**
-  - _(list items or “None”)_
+  - None identified.

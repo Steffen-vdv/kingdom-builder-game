@@ -5,14 +5,14 @@ import type {
 	SessionRuntimeConfigResponse,
 } from '@kingdom-builder/protocol';
 import { runtimeConfigResponseSchema } from '@kingdom-builder/protocol';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import type { SessionResourceRegistryPayload } from '@kingdom-builder/protocol/session';
 import { clone } from '../state/clone';
 
 export interface RuntimeContentConfig {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
-	resources: Record<string, SessionResourceDefinition>;
+	resourceValues: SessionResourceRegistryPayload;
 	primaryIconId?: string | null;
 }
 
@@ -22,18 +22,16 @@ declare global {
 	var __KINGDOM_BUILDER_CONFIG__: RuntimeConfigSource | undefined;
 }
 
-function normalizeResourceDefinitions(
-	resources: Record<string, SessionResourceDefinition> | undefined,
-): Record<string, SessionResourceDefinition> {
-	if (!resources) {
-		return {};
-	}
-	return Object.fromEntries(
-		Object.entries(resources).map(([key, definition]) => [
-			key,
-			clone(definition),
-		]),
-	);
+const DEFAULT_RESOURCE_VALUES: SessionResourceRegistryPayload = {
+	definitions: {},
+	groups: {},
+	globalActionCost: null,
+};
+
+function normalizeResourceValues(
+	resourceValues: SessionResourceRegistryPayload | undefined,
+): SessionResourceRegistryPayload {
+	return clone(resourceValues ?? DEFAULT_RESOURCE_VALUES);
 }
 
 function readRuntimeConfig(): RuntimeConfigSource | undefined {
@@ -93,8 +91,8 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 			const rules = overrides?.rules
 				? clone(overrides.rules)
 				: clone(base.rules);
-			const resources = normalizeResourceDefinitions(
-				overrides?.resources ?? base.resources,
+			const resourceValues = normalizeResourceValues(
+				overrides?.resourceValues ?? base.resourceValues,
 			);
 			const primaryIconId =
 				overrides?.primaryIconId ?? base.primaryIconId ?? null;
@@ -102,7 +100,7 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 				phases,
 				start,
 				rules,
-				resources,
+				resourceValues,
 				primaryIconId,
 			};
 			Object.freeze(config);
