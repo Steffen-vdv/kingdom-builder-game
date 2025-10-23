@@ -12,6 +12,7 @@ import {
 } from './diffFormatting';
 import { type PlayerSnapshot } from './snapshots';
 import type { TranslationAssets } from '../context';
+import { selectResourceDisplay } from '../context/assetSelectors';
 export {
 	appendBuildingChanges,
 	appendLandChanges,
@@ -31,11 +32,10 @@ function describeResourceChange(
 	if (change.delta === 0) {
 		return undefined;
 	}
-	const info = assets.resources[key];
-	const label = info?.label ?? key;
-	const base = formatResourceChange(label, info?.icon, change);
+	const display = selectResourceDisplay(assets, key);
+	const base = formatResourceChange(display.label, display.icon, change);
 	const resourceSourceArgs: Parameters<typeof formatResourceSource> = [
-		info?.icon,
+		display.icon,
 		key,
 		change,
 		sources?.[key],

@@ -12,7 +12,11 @@ import {
 	type TranslationDiffContext,
 } from '../translation';
 import { formatActionTitle } from '../translation/formatActionTitle';
-import type { TranslationContext } from '../translation/context';
+import type {
+	TranslationAssets,
+	TranslationContext,
+} from '../translation/context';
+import { selectResourceDisplay } from '../translation/context/assetSelectors';
 import {
 	buildActionLogTimeline,
 	buildDevelopActionLogTimeline,
@@ -22,7 +26,7 @@ import {
 } from './actionLogFormat';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
-import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
+import type { SessionResourceKey } from './sessionTypes';
 import type { ActionDiffChange } from '../translation/log/diff';
 
 /**
@@ -44,7 +48,6 @@ export interface BuildActionResolutionOptions {
 	translationContext: TranslationContext;
 	diffContext: TranslationDiffContext;
 	resourceKeys: readonly SessionResourceKey[];
-	resources: SessionRegistries['resources'];
 }
 
 export interface BuildActionResolutionResult {
@@ -146,13 +149,13 @@ export function appendSubActionChanges({
 interface BuildActionCostLinesOptions {
 	costs: Partial<Record<SessionResourceKey, number | undefined>>;
 	beforeResources: Partial<Record<SessionResourceKey, number | undefined>>;
-	resources: SessionRegistries['resources'];
+	assets: TranslationAssets;
 }
 
 export function buildActionCostLines({
 	costs,
 	beforeResources,
-	resources,
+	assets,
 }: BuildActionCostLinesOptions): ActionLogLineDescriptor[] {
 	const costLines: ActionLogLineDescriptor[] = [];
 	const costKeys = Object.keys(costs);
@@ -161,9 +164,9 @@ export function buildActionCostLines({
 		if (!costAmount) {
 			continue;
 		}
-		const info = resources[key];
-		const icon = info?.icon ? `${info.icon} ` : '';
-		const label = info?.label ?? key;
+		const display = selectResourceDisplay(assets, key);
+		const icon = display.icon ? `${display.icon} ` : '';
+		const label = display.label ?? key;
 		const beforeAmount = beforeResources[key] ?? 0;
 		const afterAmount = beforeAmount - costAmount;
 		const costDelta = `${beforeAmount}→${afterAmount}`;
@@ -251,7 +254,6 @@ export function buildActionResolution({
 	translationContext,
 	diffContext,
 	resourceKeys,
-	resources,
 }: BuildActionResolutionOptions): BuildActionResolutionResult {
 	const stepEffects = resolveActionEffects(actionDefinition, params);
 	const diffOptions = translationContext.rules.tieredResourceKey
@@ -275,7 +277,7 @@ export function buildActionResolution({
 	const costLines = buildActionCostLines({
 		costs,
 		beforeResources: before.resources,
-		resources,
+		assets: translationContext.assets,
 	});
 	if (costLines.length) {
 		const header: ActionLogLineDescriptor = {

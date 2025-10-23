@@ -179,7 +179,6 @@ export function useActionPerformer({
 					translationContext: context,
 					diffContext,
 					resourceKeys,
-					resources: registries.resources,
 				});
 				const { timeline, logLines, summaries, headline } = resolution;
 				syncPhaseState(snapshotAfter);

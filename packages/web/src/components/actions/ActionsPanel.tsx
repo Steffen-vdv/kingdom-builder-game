@@ -107,12 +107,24 @@ export default function ActionsPanel() {
 			resourceMetadata.select(resourceKey),
 		[resourceMetadata],
 	);
+	const globalCostDisplay =
+		translationContext.assets.resourceV2.selectGlobalActionCost();
 	const actionCostDescriptor = useMemo(
 		() => selectResourceDescriptor(actionCostResource),
 		[selectResourceDescriptor, actionCostResource],
 	);
-	const actionCostIcon = actionCostDescriptor.icon;
-	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
+	const fallbackLabel =
+		actionCostDescriptor.label ?? actionCostResource ?? 'Action Cost';
+	const actionCostLabel = globalCostDisplay?.label ?? fallbackLabel;
+	const actionCostIcon = globalCostDisplay?.icon ?? actionCostDescriptor.icon;
+	const actionCostAmount = globalCostDisplay?.amount ?? 1;
+	const actionCostDescription =
+		globalCostDisplay?.description ?? actionCostDescriptor.description;
+	const actionCostHeaderText = [
+		String(actionCostAmount),
+		...(actionCostIcon ? [actionCostIcon] : []),
+		...(actionCostLabel ? [actionCostLabel] : []),
+	].join(' ');
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = sessionView.active;
 	if (!player) {
@@ -398,10 +410,8 @@ export default function ActionsPanel() {
 			<div className={HEADER_CLASSES}>
 				<h2 className={TITLE_CLASSES}>
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
-					<span className={COST_LABEL_CLASSES}>
-						(1 {actionCostIcon ?? ''}
-						{actionCostIcon ? ' ' : ''}
-						{actionCostLabel} each)
+					<span className={COST_LABEL_CLASSES} title={actionCostDescription}>
+						({actionCostHeaderText} each)
 					</span>
 				</h2>
 				<div className="flex flex-wrap items-center gap-2">

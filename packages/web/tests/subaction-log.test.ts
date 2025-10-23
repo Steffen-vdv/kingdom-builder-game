@@ -5,7 +5,6 @@ import {
 	getActionCosts,
 	type ActionTrace,
 } from '@kingdom-builder/engine';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
@@ -195,16 +194,6 @@ describe('sub-action logging', () => {
 		if (!actionDefinition) {
 			return;
 		}
-		const resourceDefinitions = Object.fromEntries(
-			Object.entries(SYNTHETIC_RESOURCES).map(([key, info]) => [
-				key,
-				{
-					key,
-					icon: info.icon,
-					label: info.label,
-				} satisfies SessionResourceDefinition,
-			]),
-		) as Record<string, SessionResourceDefinition>;
 		const resolution = buildActionResolution({
 			actionId: synthetic.plow.id,
 			actionDefinition,
@@ -215,7 +204,6 @@ describe('sub-action logging', () => {
 			translationContext,
 			diffContext,
 			resourceKeys: RESOURCE_KEYS,
-			resources: resourceDefinitions,
 		});
 		expect(resolution.messages).toEqual(messages);
 		expect(resolution.summaries).toEqual(filtered);

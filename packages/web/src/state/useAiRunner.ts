@@ -139,7 +139,6 @@ async function presentAiActions({
 			translationContext,
 			diffContext,
 			resourceKeys,
-			resources: registries.resources,
 		});
 		const actionMeta = buildResolutionActionMeta(
 			action,

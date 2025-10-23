@@ -32,10 +32,37 @@ function coerceIconLabel(
 	return result;
 }
 
+function coerceResourceV2IconLabel(
+	source: ReturnType<TranslationAssets['resourceV2']['nodes']['get']>,
+	fallbackLabel: string,
+): IconLabelDisplay | undefined {
+	if (!source?.display) {
+		return undefined;
+	}
+	const { icon, name, description } = source.display;
+	const label = name ?? fallbackLabel;
+	const result: IconLabelDisplay = { label };
+	if (icon !== undefined) {
+		result.icon = icon;
+	}
+	if (description !== undefined) {
+		result.description = description;
+	}
+	return result;
+}
+
 export function selectResourceDisplay(
 	assets: TranslationAssets | undefined,
 	resourceKey: string,
 ): IconLabelDisplay {
+	const resourceV2Entry = assets?.resourceV2.nodes.get(resourceKey);
+	const resourceV2Display = coerceResourceV2IconLabel(
+		resourceV2Entry,
+		resourceKey,
+	);
+	if (resourceV2Display) {
+		return resourceV2Display;
+	}
 	const info = assets?.resources?.[resourceKey];
 	return coerceIconLabel(info, resourceKey);
 }
