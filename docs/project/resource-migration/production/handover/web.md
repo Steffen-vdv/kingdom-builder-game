@@ -1,13 +1,14 @@
 # Web Handover
 
-> Replace this template with the latest web/UI handover before wrapping a task. Include validation steps and user-facing implications.
-
-- **Prepared by:** _(name)_
-- **Timestamp (UTC):** _(yyyy-mm-dd hh:mm)_
-- **Current Focus:** _(web initiative underway)_
+- **Prepared by:** gpt-5-codex
+- **Timestamp (UTC):** 2025-10-29 15:14
+- **Current Focus:** ResourceV2 translation integration & readiness
 - **State Summary:**
-  - _(bullet points covering progress, decisions, and open questions)_
+  - Registered `resourceV2:values` translator with helpers for value summaries, tier states, group parents, and signed recent gains.
+  - Added targeted unit coverage ensuring standalone and grouped resources, tier transitions, and global action cost messaging render consistently.
+  - Updated Vitest config to include translation-layer test directories; `npm run format` executed successfully.
 - **Next Suggested Tasks:**
-  - _(bulleted action items with owners if known)_
+  - Investigate failing `tests/startup/runtimeConfig.test.ts` suite; runtime config fetch currently returns invalid payload when running `npm run test:web`.
+  - Wire translator usage into UI components once ResourceV2 session payloads land in web state (follow-up once context migrations occur).
 - **Risks / Blockers:**
-  - _(list items or “None”)_
+  - Web tests require stable runtime config fixture; ensure CI has deterministic response before enabling suite.

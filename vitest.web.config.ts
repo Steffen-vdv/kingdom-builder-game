@@ -7,7 +7,11 @@ export default mergeConfig(
 	defineConfig({
 		test: {
 			root: path.resolve(__dirname, 'packages/web'),
-			include: ['tests/**/*.test.ts', 'src/startup/**/*.test.ts'],
+			include: [
+				'tests/**/*.test.ts',
+				'src/startup/**/*.test.ts',
+				'src/translation/**/__tests__/**/*.test.ts',
+			],
 		},
 	}),
 );
