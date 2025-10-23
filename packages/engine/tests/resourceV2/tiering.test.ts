@@ -159,6 +159,7 @@ describe('ResourceV2 tiering', () => {
 			passives,
 			phases,
 			resourceId,
+			rules.defaultActionAPCost,
 			{ A: {}, B: {} },
 		);
 		const runtime: ResourceV2Runtime = {

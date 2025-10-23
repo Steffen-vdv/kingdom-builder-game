@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { advance, performAction } from '../../src';
 import { createTestEngine } from '../helpers';
+import { Resource as CResource } from '@kingdom-builder/contents';
 
 interface EffectGroup {
 	id: string;
@@ -29,6 +30,7 @@ describe('royal decree auto land targeting', () => {
 		const beforeLandCount = engineContext.activePlayer.lands.length;
 		engineContext.activePlayer.gold = 12;
 		engineContext.activePlayer.ap = 1;
+		engineContext.activePlayer.resources[CResource.happiness] = 10;
 
 		const [actionId, royalDecree] = engineContext.actions
 			.entries()

@@ -34,9 +34,11 @@ export function applyCostsWithPassives(
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
 	const primaryCostKey = engineContext.actionCostResource;
 	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
-		defaultedCosts[primaryCostKey] = actionDefinition.system
+		const baseAmount = actionDefinition.system
 			? 0
-			: engineContext.services.rules.defaultActionAPCost;
+			: engineContext.actionCostAmount ||
+				engineContext.services.rules.defaultActionAPCost;
+		defaultedCosts[primaryCostKey] = baseAmount;
 	}
 	return engineContext.passives.applyCostMods(
 		actionDefinition.id,

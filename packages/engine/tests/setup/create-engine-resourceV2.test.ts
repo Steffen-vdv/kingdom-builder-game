@@ -52,7 +52,7 @@ describe('createEngine – ResourceV2 integration', () => {
 				.label('Alpha')
 				.description('Primary resource.')
 				.order(1)
-				.globalActionCost({ amount: 1 })
+				.globalActionCost(1)
 				.build(),
 		);
 		resourceDefinitions.add(
@@ -102,6 +102,7 @@ describe('createEngine – ResourceV2 integration', () => {
 		expect(context.resourceV2Metadata).toBeDefined();
 		expect(context.resourceV2).toBeDefined();
 		expect(context.actionCostResource).toBe('alpha');
+		expect(context.actionCostAmount).toBe(1);
 		const player = context.game.players[0]!;
 		expect(player.resourceV2).toBeDefined();
 		expect(player.resources.alpha).toBe(4);
