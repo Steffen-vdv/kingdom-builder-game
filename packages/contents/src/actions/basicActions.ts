@@ -65,7 +65,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 				effect()
 					.evaluator(populationEvaluator().id(PopulationEvaluationId.tax))
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.gold).amount(4)).build())
-					.effect(effect(Types.Resource, ResourceMethods.REMOVE).round('up').params(resourceParams().key(Resource.happiness).amount(0.5)).meta({ allowShortfall: true }).build())
+					.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(0.5).reconciliation()).build())
 					.build(),
 			)
 			.category(ActionCategory.Basic)
@@ -112,7 +112,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.expand)).build())
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.till).landId('$landId')).build())
 			.effectGroup(royalDecreeDevelopGroup)
-			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3)).meta({ allowShortfall: true }).build())
+			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3).reconciliation()).build())
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 5)
 			.focus(Focus.Economy)
@@ -156,14 +156,14 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.cost(Resource.gold, 3)
 			.requirement(compareRequirement().left(statEvaluator().key(Stat.warWeariness)).operator('eq').right(0).build())
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(3)).build())
-			.effect(effect(Types.Stat, StatMethods.REMOVE).params(statParams().key(Stat.fortificationStrength).amount(3)).build())
+			.effect(effect(Types.Stat, StatMethods.REMOVE).params(statParams().key(Stat.fortificationStrength).amount(3).reconciliation()).build())
 			.effect(
 				effect(Types.Passive, PassiveMethods.ADD)
 					.params(passiveParams().id('hold_festival_penalty').name('Festival Hangover').icon('🤮').removeOnUpkeepStep())
 					.effect(
 						effect(Types.ResultMod, ResultModMethods.ADD)
 							.params(resultModParams().id('hold_festival_attack_happiness_penalty').actionId(ActionId.army_attack))
-							.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3)).meta({ allowShortfall: true }).build())
+							.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3).reconciliation()).build())
 							.build(),
 					)
 					.build(),
