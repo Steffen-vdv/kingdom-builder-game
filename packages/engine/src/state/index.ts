@@ -92,10 +92,16 @@ export interface PlayerResourceV2State {
 	recentGains: PlayerResourceV2RecentGain[];
 }
 
+export interface ResourceV2GlobalActionCostRuntime {
+	resourceId: ResourceV2Key;
+	amount: number;
+}
+
 let resourceV2Catalog: ResourceV2RuntimeCatalog | undefined;
 let resourceV2OrderedIds: ResourceV2Key[] = [];
 let resourceV2Definitions: Record<ResourceV2Key, ResourceV2RuntimeDefinition> =
 	{};
+let resourceV2GlobalActionCost: ResourceV2GlobalActionCostRuntime | undefined;
 
 const resetResourceV2Registry = () => {
 	for (const key of Object.keys(ResourceV2)) {
@@ -104,6 +110,7 @@ const resetResourceV2Registry = () => {
 	resourceV2Catalog = undefined;
 	resourceV2OrderedIds = [];
 	resourceV2Definitions = {};
+	resourceV2GlobalActionCost = undefined;
 };
 
 const createResourceV2Record = <T>(
@@ -128,6 +135,7 @@ export function setResourceV2Keys(catalog?: ResourceV2RuntimeCatalog): void {
 	resourceV2Catalog = catalog;
 	resourceV2OrderedIds = [...catalog.orderedResourceIds];
 	resourceV2Definitions = {};
+	const candidates: ResourceV2RuntimeDefinition[] = [];
 	for (const id of resourceV2OrderedIds) {
 		const definition = catalog.resourcesById[id];
 		if (!definition) {
@@ -135,11 +143,49 @@ export function setResourceV2Keys(catalog?: ResourceV2RuntimeCatalog): void {
 		}
 		ResourceV2[id] = id;
 		resourceV2Definitions[id] = definition;
+		if (definition.globalActionCost) {
+			candidates.push(definition);
+		}
+	}
+	if (candidates.length > 1) {
+		const ids = candidates
+			.map((definition) => definition.id)
+			.sort()
+			.join(', ');
+		throw new Error(
+			'Multiple ResourceV2 definitions declare globalActionCost: ' +
+				ids +
+				'. Only one resource can define a global action cost.',
+		);
+	}
+	if (candidates.length === 1) {
+		const definition = candidates[0];
+		if (!definition) {
+			return;
+		}
+		const amount = definition.globalActionCost?.amount;
+		if (amount === undefined) {
+			throw new Error(
+				'ResourceV2 definition ' +
+					definition.id +
+					' is missing a globalActionCost amount.',
+			);
+		}
+		resourceV2GlobalActionCost = {
+			resourceId: definition.id,
+			amount,
+		} satisfies ResourceV2GlobalActionCostRuntime;
 	}
 }
 
 export function getResourceV2Catalog(): ResourceV2RuntimeCatalog | undefined {
 	return resourceV2Catalog;
+}
+
+export function getResourceV2GlobalActionCost():
+	| ResourceV2GlobalActionCostRuntime
+	| undefined {
+	return resourceV2GlobalActionCost;
 }
 
 export function getResourceV2Keys(): ResourceV2Key[] {

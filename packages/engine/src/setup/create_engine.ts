@@ -10,6 +10,7 @@ import {
 	setPhaseKeys,
 	setPopulationRoleKeys,
 	setResourceV2Keys,
+	getResourceV2GlobalActionCost,
 } from '../state';
 import type {
 	ResourceKey,
@@ -205,7 +206,10 @@ export function createEngine({
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
-	const actionCostResource = determineCommonActionCostResource(actions);
+	const globalActionCost = getResourceV2GlobalActionCost();
+	const actionCostResource = globalActionCost
+		? globalActionCost.resourceId
+		: determineCommonActionCostResource(actions);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
 		startConfig.players?.['A'],

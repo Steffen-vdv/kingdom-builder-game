@@ -5,7 +5,11 @@ import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
 import type { RequirementFailure } from '../requirements';
 import type { CostBag } from '../services';
-import type { PlayerId, PlayerState } from '../state';
+import {
+	getResourceV2GlobalActionCost,
+	type PlayerId,
+	type PlayerState,
+} from '../state';
 import type { ActionParameters } from './action_parameters';
 
 function cloneCostBag(costBag: CostBag): CostBag {
@@ -32,8 +36,28 @@ export function applyCostsWithPassives(
 ): CostBag {
 	const defaultedCosts = cloneCostBag(baseCosts);
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
+	const actionDefinitionId = actionDefinition.id ?? actionId;
 	const primaryCostKey = engineContext.actionCostResource;
-	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
+	const globalActionCost = getResourceV2GlobalActionCost();
+	if (globalActionCost && primaryCostKey) {
+		if (primaryCostKey !== globalActionCost.resourceId) {
+			throw new Error(
+				`Engine context actionCostResource (${primaryCostKey}) does not align with the global action cost resource (${globalActionCost.resourceId}).`,
+			);
+		}
+		if (actionDefinition.system) {
+			if (defaultedCosts[primaryCostKey] === undefined) {
+				defaultedCosts[primaryCostKey] = 0;
+			}
+		} else {
+			if (defaultedCosts[primaryCostKey] !== undefined) {
+				throw new Error(
+					`Action ${actionDefinitionId} cannot override the global action cost resource ${primaryCostKey}. Remove the baseCosts entry or disable the globalActionCost flag on the resource.`,
+				);
+			}
+			defaultedCosts[primaryCostKey] = globalActionCost.amount;
+		}
+	} else if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
 		defaultedCosts[primaryCostKey] = actionDefinition.system
 			? 0
 			: engineContext.services.rules.defaultActionAPCost;
