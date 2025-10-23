@@ -53,4 +53,43 @@ describe('createEngine validation', () => {
 				'" includes a step without an id.',
 		);
 	});
+
+	it('throws when the phases array contains an undefined entry', () => {
+		const invalidPhases = [...PHASES];
+		invalidPhases[0] = undefined as unknown as PhaseDef;
+
+		const createEngineWithUndefinedPhase = () =>
+			createTestEngine({ phases: invalidPhases as PhaseDef[] });
+
+		expect(createEngineWithUndefinedPhase).toThrowError(
+			'Cannot create engine: phases array contains an undefined entry.',
+		);
+	});
+
+	it('throws when a phase includes an undefined step', () => {
+		const [firstPhase] = PHASES;
+		if (!firstPhase) {
+			throw new Error('Test requires at least one phase definition.');
+		}
+
+		const invalidPhases = PHASES.map((phase) => {
+			if (phase.id !== firstPhase.id) {
+				return phase;
+			}
+
+			const steps = [...phase.steps];
+			steps[0] = undefined as unknown as (typeof steps)[number];
+
+			return { ...phase, steps } satisfies PhaseDef;
+		});
+
+		const createEngineWithUndefinedStep = () =>
+			createTestEngine({ phases: invalidPhases });
+
+		expect(createEngineWithUndefinedStep).toThrowError(
+			'Cannot create engine: phase "' +
+				firstPhase.id +
+				'" includes an undefined step.',
+		);
+	});
 });
