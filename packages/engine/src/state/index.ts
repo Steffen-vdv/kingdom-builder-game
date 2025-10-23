@@ -208,8 +208,11 @@ export function initializePlayerResourceV2State(
 export {
 	createPlayerResourceV2State,
 	resetRecentResourceV2Gains,
+	applyResourceV2ValueChange,
 } from './resource_v2';
 export type {
 	PlayerResourceV2State,
 	PlayerResourceV2TierState,
+	ResourceV2HookSuppressionMeta,
+	ResourceV2ValueChangeRequest,
 } from './resource_v2';

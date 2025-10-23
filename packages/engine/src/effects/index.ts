@@ -29,6 +29,31 @@ import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
 import { attackPerform } from './attack';
+import {
+	isResourceV2ResourceChangeEffect,
+	resourceV2AddHandler,
+	resourceV2RemoveHandler,
+} from '../resourceV2/effects';
+
+const resourceAddDispatcher: EffectHandler = (effect, engineContext, mult) => {
+	if (isResourceV2ResourceChangeEffect(effect)) {
+		resourceV2AddHandler(effect, engineContext, mult);
+		return;
+	}
+	resourceAdd(effect, engineContext, mult);
+};
+
+const resourceRemoveDispatcher: EffectHandler = (
+	effect,
+	engineContext,
+	mult,
+) => {
+	if (isResourceV2ResourceChangeEffect(effect)) {
+		resourceV2RemoveHandler(effect, engineContext, mult);
+		return;
+	}
+	resourceRemove(effect, engineContext, mult);
+};
 
 export interface EffectHandler<
 	P extends Record<string, unknown> = Record<string, unknown>,
@@ -51,8 +76,8 @@ export function registerCoreEffects(
 	costRegistry: EffectCostRegistry = EFFECT_COST_COLLECTORS,
 ) {
 	registry.add('land:add', landAdd);
-	registry.add('resource:add', resourceAdd);
-	registry.add('resource:remove', resourceRemove);
+	registry.add('resource:add', resourceAddDispatcher);
+	registry.add('resource:remove', resourceRemoveDispatcher);
 	registry.add('resource:transfer', resourceTransfer);
 	registry.add('building:add', buildingAdd);
 	registry.add('building:remove', buildingRemove);

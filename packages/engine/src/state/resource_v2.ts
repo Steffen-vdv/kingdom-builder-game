@@ -23,6 +23,17 @@ export interface PlayerResourceV2State {
 	readonly parentChildren: Record<string, ReadonlyArray<string>>;
 	readonly childToParent: Record<string, string | undefined>;
 	readonly recentDeltas: Record<string, number>;
+	readonly hookSuppressions: Record<string, string | undefined>;
+}
+
+export interface ResourceV2HookSuppressionMeta {
+	readonly reason: string;
+}
+
+export interface ResourceV2ValueChangeRequest {
+	readonly delta: number;
+	readonly reconciliation: 'clamp';
+	readonly suppressHooks?: ResourceV2HookSuppressionMeta;
 }
 
 export function createEmptyPlayerResourceV2State(): PlayerResourceV2State {
@@ -36,6 +47,7 @@ export function createEmptyPlayerResourceV2State(): PlayerResourceV2State {
 		parentChildren: {},
 		childToParent: {},
 		recentDeltas: {},
+		hookSuppressions: {},
 	};
 }
 
@@ -52,6 +64,7 @@ export function createPlayerResourceV2State(
 	const parentChildren: Record<string, ReadonlyArray<string>> = {};
 	const childToParent: Record<string, string | undefined> = {};
 	const recentDeltas: Record<string, number> = {};
+	const hookSuppressions: Record<string, string | undefined> = {};
 
 	for (const resourceId of resourceIds) {
 		amounts[resourceId] = 0;
@@ -61,6 +74,7 @@ export function createPlayerResourceV2State(
 			registry.getTierTrack(resourceId),
 		);
 		recentDeltas[resourceId] = 0;
+		hookSuppressions[resourceId] = undefined;
 
 		const parentRecord = registry.getGroupParentForResource(resourceId);
 		childToParent[resourceId] = parentRecord?.id;
@@ -83,6 +97,7 @@ export function createPlayerResourceV2State(
 		parentChildren[parentId] = frozenChildren;
 		bounds[parentId] = registry.getBounds(parentId);
 		tiers[parentId] = createInitialTierState(registry.getTierTrack(parentId));
+		hookSuppressions[parentId] = undefined;
 
 		defineNumericAggregate(amounts, parentId, () =>
 			frozenChildren.reduce((sum, childId) => sum + (amounts[childId] ?? 0), 0),
@@ -102,6 +117,7 @@ export function createPlayerResourceV2State(
 		parentChildren,
 		childToParent,
 		recentDeltas,
+		hookSuppressions,
 	};
 }
 
@@ -120,6 +136,61 @@ export function resetRecentResourceV2Gains(
 	return entries;
 }
 
+export function applyResourceV2ValueChange(
+	state: PlayerResourceV2State,
+	resourceId: string,
+	change: ResourceV2ValueChangeRequest,
+): number {
+	if (!Object.prototype.hasOwnProperty.call(state.amounts, resourceId)) {
+		throw new Error('Unknown ResourceV2 resource id: ' + resourceId);
+	}
+
+	const suppressionReason = change.suppressHooks?.reason;
+	state.hookSuppressions[resourceId] = suppressionReason;
+
+	if (change.delta === 0) {
+		return 0;
+	}
+
+	if (Object.prototype.hasOwnProperty.call(state.parentChildren, resourceId)) {
+		throw new Error(
+			'ResourceV2 parent "' +
+				resourceId +
+				'" amount is derived from child resources.',
+		);
+	}
+
+	const current = state.amounts[resourceId] ?? 0;
+	let next = current + change.delta;
+
+	if (change.reconciliation !== 'clamp') {
+		throw new Error(
+			'ResourceV2 change only supports clamp reconciliation during MVP.',
+		);
+	}
+
+	const bounds = state.bounds[resourceId];
+	if (bounds?.lowerBound !== undefined && next < bounds.lowerBound) {
+		next = bounds.lowerBound;
+	}
+
+	if (bounds?.upperBound !== undefined && next > bounds.upperBound) {
+		next = bounds.upperBound;
+	}
+
+	const applied = next - current;
+	if (applied === 0) {
+		return 0;
+	}
+
+	state.amounts[resourceId] = next;
+	state.touched[resourceId] = true;
+	state.recentDeltas[resourceId] =
+		(state.recentDeltas[resourceId] ?? 0) + applied;
+
+	return applied;
+}
+
 function defineNumericAggregate(
 	record: Record<string, number>,
 	id: string,
@@ -129,7 +200,9 @@ function defineNumericAggregate(
 		get: getter,
 		set: () => {
 			throw new Error(
-				`ResourceV2 parent "${id}" amount is derived from child resources.`,
+				'ResourceV2 parent "' +
+					id +
+					'" amount is derived from child resources.',
 			);
 		},
 		enumerable: true,
@@ -146,7 +219,9 @@ function defineBooleanAggregate(
 		get: getter,
 		set: () => {
 			throw new Error(
-				`ResourceV2 parent "${id}" touched state is derived from child resources.`,
+				'ResourceV2 parent "' +
+					id +
+					'" touched state is derived from child resources.',
 			);
 		},
 		enumerable: true,
