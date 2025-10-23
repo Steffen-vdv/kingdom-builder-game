@@ -1,4 +1,7 @@
-import type { ResourceV2BoundsMetadata } from '@kingdom-builder/protocol';
+import type {
+	ResourceV2BoundsMetadata,
+	ResourceV2GlobalActionCostMetadata,
+} from '@kingdom-builder/protocol';
 
 import type { EngineContext } from '../context';
 import type { PlayerState, ResourceV2ValueChangeRequest } from '../state';
@@ -122,6 +125,23 @@ export class ResourceV2Service {
 			clone.onLossHooks.add(hook);
 		}
 		return clone;
+	}
+
+	hasGlobalActionCost(resourceId: string): boolean {
+		const record = this.registry?.findResource(resourceId);
+		if (!record) {
+			return false;
+		}
+		return record.globalActionCost !== undefined;
+	}
+
+	getGlobalActionCost(
+		resourceId: string,
+	): ResourceV2GlobalActionCostMetadata | undefined {
+		if (!this.hasGlobalActionCost(resourceId)) {
+			return undefined;
+		}
+		return this.registry?.getGlobalActionCost(resourceId);
 	}
 
 	private emitHooks(

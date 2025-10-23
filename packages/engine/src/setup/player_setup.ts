@@ -2,6 +2,7 @@ import { Land, Stat } from '../state';
 import type { PlayerState, StatKey, ResourceKey } from '../state';
 import type { RuleSet } from '../services';
 import { applyStatDelta } from '../stat_sources';
+import type { ResourceV2EngineRegistry } from '../resourceV2/registry';
 import type {
 	ActionConfig as ActionDef,
 	PlayerStartConfig,
@@ -128,7 +129,31 @@ export function initializePlayerActions(
 
 export function determineCommonActionCostResource(
 	actions: Registry<ActionDef>,
+	resourceV2Registry?: ResourceV2EngineRegistry,
 ): ResourceKey {
+	if (resourceV2Registry) {
+		const flagged: string[] = [];
+		for (const resourceId of resourceV2Registry.resourceIds) {
+			const hasGlobalActionCost =
+				resourceV2Registry.hasGlobalActionCost(resourceId);
+			if (hasGlobalActionCost) {
+				flagged.push(resourceId);
+			}
+		}
+		if (flagged.length > 1) {
+			const listed = flagged.join('", "');
+			const message = [
+				'Multiple ResourceV2 definitions',
+				`("${listed}") declare global action cost metadata.`,
+				'Configure exactly one globalActionCost',
+				'resource before creating the engine.',
+			].join(' ');
+			throw new Error(message);
+		}
+		if (flagged.length === 1) {
+			return flagged[0] as ResourceKey;
+		}
+	}
 	let intersection: string[] | null = null;
 	for (const [, actionDefinition] of actions.entries()) {
 		if (actionDefinition.system) {

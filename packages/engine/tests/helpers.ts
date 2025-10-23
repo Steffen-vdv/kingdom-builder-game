@@ -18,6 +18,7 @@ import type {
 	StartConfig,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../src/phases.ts';
+import type { ResourceV2EngineRegistry } from '../src/resourceV2/registry.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -35,9 +36,17 @@ const BASE: {
 	start: GAME_START,
 };
 
-type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
+type EngineOverrides = Partial<typeof BASE> & {
+	rules?: RuleSet;
+	resourceV2Registry?: ResourceV2EngineRegistry;
+};
 
 export function createTestEngine(overrides: EngineOverrides = {}) {
-	const { rules, ...rest } = overrides;
-	return createEngine({ ...BASE, ...rest, rules: rules ?? RULES });
+	const { rules, resourceV2Registry, ...rest } = overrides;
+	return createEngine({
+		...BASE,
+		...rest,
+		rules: rules ?? RULES,
+		resourceV2Registry,
+	});
 }

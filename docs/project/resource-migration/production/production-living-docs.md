@@ -45,7 +45,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T11 | 2025-10-23 | gpt-5-codex | packages/engine/src/resourceV2/effects/index.ts; packages/engine/src/effects/index.ts; packages/engine/tests/resourceV2/effects/resource_v2_transfer_effects.test.ts; docs/project/resource-migration/production/production-living-docs.md | Implemented ResourceV2 transfer handling with donor/recipient reconciliation, added upper-bound increase metadata updates, and introduced coverage for clamp, percent, and parent guard scenarios. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Wire ResourceV2 transfers into services/snapshot hooks and extend builder APIs for transfer/bound effects. |
 | Resource Migration MVP - P3 - T12 | 2025-10-23 | gpt-5-codex | packages/engine/src/resourceV2/service.ts; packages/engine/src/context.ts; packages/engine/src/resourceV2/effects/*; packages/engine/tests/resourceV2/**/\*.test.ts | Added a ResourceV2 service that centralizes value/bound updates, hook emission, and recent gain logging; wired EngineContext/effect handlers to use it; and extended tests for hook suppression, signed logging, and bound history tracking. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Follow up by populating the service with real registry data during engine bootstrap and updating snapshots/UI to consume new history flags. |
 | Resource Migration MVP - P3 - T13 | 2025-10-24 | gpt-5-codex | packages/engine/src/resourceV2/tier_service.ts; packages/engine/src/resourceV2/service.ts; packages/engine/src/services/services.ts; packages/engine/src/setup/create_engine.ts; packages/engine/src/actions/context_clone.ts; packages/engine/tests/resourceV2/tier_service.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added a ResourceV2 tier management service that evaluates tier tracks, fires enter/exit effects, refreshes passive metadata, and wires into engine services and clones; created targeted tier transition tests. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Coordinate upcoming registry bootstrap so the service receives live content definitions and verify downstream systems consume the refreshed passive metadata. |
-| Resource Migration MVP - P3 - T14 | 2025-**-** | _(add entry)_ | | _(reserved for T14 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T14 | 2025-10-24 | gpt-5-codex | packages/engine/src/actions/costs.ts; packages/engine/src/resourceV2/service.ts; packages/engine/src/setup/player_setup.ts; packages/engine/src/setup/create_engine.ts; packages/engine/tests/actions/costs.global-action-cost.test.ts; packages/engine/tests/helpers.ts; docs/project/resource-migration/production/production-living-docs.md | Enforced ResourceV2 global action cost metadata in engine cost resolution, wired optional registry support, and added coverage for overrides and modifiers. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Feed the live ResourceV2 registry into engine/session creation and confirm downstream clients respect the enforced cost. |
 | Resource Migration MVP - P3 - T15 | 2025-**-** | _(add entry)_ | | _(reserved for T15 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T16 | 2025-**-** | _(add entry)_ | | _(reserved for T16 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T17 | 2025-**-** | _(add entry)_ | | _(reserved for T17 assignee – update only this row.)_ | | |
@@ -68,14 +68,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-24 12:16
-**Current Focus:** Resource Migration MVP - P3 - T13 ResourceV2 tier orchestration
-**State Summary:** Added a ResourceV2 tier service that recalculates tier tracks on value changes, runs enter/exit effects, synchronizes passive detail/meta, and propagates through service cloning/startup. Engine bootstrap now registers the tier service and tests cover tier transitions and redundant updates.
+**Timestamp (UTC):** 2025-10-24 15:45
+**Current Focus:** Resource Migration MVP - P3 - T14 ResourceV2 global cost enforcement
+**State Summary:** Engine cost resolution now pulls the ResourceV2 global action cost metadata for the designated resource, automatically applies it to non-system actions, and blocks per-action overrides. Engine creation accepts an optional ResourceV2 registry to supply the metadata, and new tests cover automatic application, override rejection, and modifier interactions.
 
 - **Next Suggested Tasks:**
-  - Feed the real ResourceV2 registry into the tier service during session creation so live content drives tier evaluation.
-  - Audit downstream consumers (snapshots, web HUD) to ensure they surface the new tier metadata and passive labels.
-- **Blocking Issues / Risks:** Tier metadata remains inert until the registry is loaded at runtime, so UI/serialization work must align once registry wiring lands.
+  - Inject the live ResourceV2 registry into engine and session bootstrap so production contexts benefit from the enforced global cost.
+  - Update action content to drop redundant baseCosts entries for the global resource once registry wiring is live.
+- **Blocking Issues / Risks:** Until the registry is passed into engine creation outside of tests, the enforcement remains inactive for live sessions and designers could still define conflicting costs without immediate feedback.
 
 ## 5. Notes & Decisions Archive
 
