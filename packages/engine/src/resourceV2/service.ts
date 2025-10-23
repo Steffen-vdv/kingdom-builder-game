@@ -127,9 +127,20 @@ export class ResourceV2Service {
 		return clone;
 	}
 
+	hasGlobalActionCost(resourceId: string): boolean {
+		const record = this.registry?.findResource(resourceId);
+		if (!record) {
+			return false;
+		}
+		return record.globalActionCost !== undefined;
+	}
+
 	getGlobalActionCost(
 		resourceId: string,
 	): ResourceV2GlobalActionCostMetadata | undefined {
+		if (!this.hasGlobalActionCost(resourceId)) {
+			return undefined;
+		}
 		return this.registry?.getGlobalActionCost(resourceId);
 	}
 

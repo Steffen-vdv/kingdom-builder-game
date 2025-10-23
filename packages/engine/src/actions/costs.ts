@@ -33,9 +33,12 @@ function applyPrimaryCost(
 	engineContext: EngineContext,
 	primaryCostKey: ResourceKey,
 ) {
-	const globalCost =
-		engineContext.resourceV2.getGlobalActionCost(primaryCostKey);
-	if (globalCost) {
+	if (engineContext.resourceV2.hasGlobalActionCost(primaryCostKey)) {
+		const globalCost =
+			engineContext.resourceV2.getGlobalActionCost(primaryCostKey);
+		if (!globalCost) {
+			return;
+		}
 		if (actionDefinition.system) {
 			if (defaultedCosts[primaryCostKey] === undefined) {
 				defaultedCosts[primaryCostKey] = 0;

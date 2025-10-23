@@ -100,4 +100,24 @@ describe('global action cost enforcement', () => {
 			(globalResource.globalActionCost?.amount ?? 0) - 1,
 		);
 	});
+
+	it('preserves legacy costs when the registry omits the primary resource', () => {
+		const content = createContentFactory();
+		const action = content.action();
+		const unrelatedResource = createResourceV2Definition();
+		const registry = loadResourceV2Registry({
+			resources: [unrelatedResource],
+		});
+		const engineContext = createTestEngine({
+			actions: content.actions,
+			resourceV2Registry: registry,
+		});
+
+		const primaryCostKey = engineContext.actionCostResource;
+		const costs = getActionCosts(action.id, engineContext);
+
+		expect(costs[primaryCostKey]).toBe(
+			engineContext.services.rules.defaultActionAPCost,
+		);
+	});
 });
