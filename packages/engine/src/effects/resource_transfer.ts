@@ -21,7 +21,7 @@ interface TransferParams extends Record<string, unknown> {
 	amount?: number;
 }
 
-export const resourceTransfer: EffectHandler<TransferParams> = (
+export const resourceTransfer: EffectHandler = (
 	effect,
 	context,
 	_multiplier = 1,
@@ -30,7 +30,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 		key,
 		percent: requestedPercent,
 		amount: requestedAmount,
-	} = effect.params!;
+	} = effect.params! as TransferParams;
 	if (requestedAmount !== undefined) {
 		const modifiers: ResourceGain[] = [{ key, amount: requestedAmount }];
 		context.passives.runEvaluationMods(

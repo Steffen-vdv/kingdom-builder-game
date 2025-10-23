@@ -7,8 +7,21 @@ import type {
 	ResourceV2ValueChangeRequest,
 } from '../../state';
 import { applyResourceV2ValueChange } from '../../state';
+import type { ResourceV2RoundingMode } from './common';
+import {
+	assertResourceSupportsDirectMutations,
+	resolveRounding,
+	round,
+} from './common';
 
-type ResourceV2RoundingMode = 'up' | 'down' | 'nearest';
+export {
+	isResourceV2TransferEffect,
+	resourceV2TransferHandler,
+} from './transfer';
+export {
+	isResourceV2UpperBoundIncreaseEffect,
+	resourceV2UpperBoundIncreaseHandler,
+} from './upper_bound_increase';
 
 interface ResourceV2EffectParams extends Record<string, unknown> {
 	readonly id: string;
@@ -24,7 +37,9 @@ interface ResourceV2EffectMeta extends Record<string, unknown> {
 
 type ResourceV2ResourceChangeEffect = EffectDef<ResourceV2EffectParams> & {
 	readonly params: ResourceV2EffectParams;
-	readonly meta: ResourceV2EffectMeta & { readonly reconciliation: 'clamp' };
+	readonly meta: ResourceV2EffectMeta & {
+		readonly reconciliation: 'clamp';
+	};
 };
 
 export function isResourceV2ResourceChangeEffect(
@@ -75,7 +90,7 @@ export const resourceV2AddHandler: EffectHandler<ResourceV2EffectParams> = (
 	mult = 1,
 ) => {
 	if (!isResourceV2ResourceChangeEffect(effect)) {
-		throw new Error('resourceV2AddHandler received non-ResourceV2 effect.');
+		throw new Error('resourceV2AddHandler expected a ResourceV2 effect.');
 	}
 
 	const player = engineContext.activePlayer;
@@ -99,7 +114,7 @@ export const resourceV2RemoveHandler: EffectHandler<ResourceV2EffectParams> = (
 	mult = 1,
 ) => {
 	if (!isResourceV2ResourceChangeEffect(effect)) {
-		throw new Error('resourceV2RemoveHandler received non-ResourceV2 effect.');
+		throw new Error('resourceV2RemoveHandler expected a ResourceV2 effect.');
 	}
 
 	const player = engineContext.activePlayer;
@@ -126,13 +141,7 @@ function resolveResourceChangeDelta(
 	kind: ResourceChangeKind,
 ): number {
 	const params = effect.params;
-	assertKnownResource(state, params.id);
-
-	if (Object.prototype.hasOwnProperty.call(state.parentChildren, params.id)) {
-		throw new Error(
-			`ResourceV2 parent "${params.id}" amount is derived from child resources.`,
-		);
-	}
+	assertResourceSupportsDirectMutations(state, params.id);
 
 	if (params.amount !== undefined) {
 		return resolveAmountDelta(params.amount, mult, kind);
@@ -180,41 +189,7 @@ function resolvePercentDelta(
 	const raw = (current * totalPercent) / 100;
 	const rounded = round(raw, rounding);
 	if (!Number.isFinite(rounded)) {
-		throw new Error(
-			'ResourceV2 percent change resolved to a non-finite amount.',
-		);
+		throw new Error('Percent change resolved to a non-finite amount.');
 	}
 	return kind === 'remove' ? -rounded : rounded;
-}
-
-function round(value: number, mode: ResourceV2RoundingMode): number {
-	if (mode === 'up') {
-		return value >= 0 ? Math.ceil(value) : Math.floor(value);
-	}
-
-	if (mode === 'down') {
-		return value >= 0 ? Math.floor(value) : Math.ceil(value);
-	}
-
-	const floored = Math.floor(value);
-	const fractional = value - floored;
-	if (fractional < 0.5) {
-		return floored;
-	}
-
-	return Math.ceil(value);
-}
-
-function resolveRounding(round?: EffectDef['round']): ResourceV2RoundingMode {
-	if (round === 'up' || round === 'down') {
-		return round;
-	}
-
-	return 'nearest';
-}
-
-function assertKnownResource(state: PlayerResourceV2State, id: string) {
-	if (!Object.prototype.hasOwnProperty.call(state.amounts, id)) {
-		throw new Error(`Unknown ResourceV2 resource id: ${id}`);
-	}
 }
