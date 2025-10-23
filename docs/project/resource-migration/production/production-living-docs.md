@@ -10,13 +10,13 @@ This document captures the evolving state of the Resource Migration initiative. 
 
 ## 2. High-Level Status Snapshot
 
-| Area         | Current State | Owner | Notes                          |
-| ------------ | ------------- | ----- | ------------------------------ |
-| Engine       | _TBD_         | –     | Pending implementation plan.   |
-| Content      | _TBD_         | –     | Legacy systems intact.         |
-| Protocol/API | _TBD_         | –     | Awaiting design sign-off.      |
-| Web UI       | _TBD_         | –     | Pending migration strategy.    |
-| Testing      | _TBD_         | –     | Unified test plan not started. |
+| Area         | Current State | Owner | Notes                                                       |
+| ------------ | ------------- | ----- | ----------------------------------------------------------- |
+| Engine       | _TBD_         | –     | Pending implementation plan.                                |
+| Content      | In progress   | –     | Legacy exports bridged to ResourceV2 registry (T23 bridge). |
+| Protocol/API | _TBD_         | –     | Awaiting design sign-off.                                   |
+| Web UI       | _TBD_         | –     | Pending migration strategy.                                 |
+| Testing      | _TBD_         | –     | Unified test plan not started.                              |
 
 Update the table whenever a domain meaningfully changes. Keep comments concise and reference sections below for detail.
 
@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 19:00
-- **Current Focus:** Resource Migration MVP - P2 - T22 - Resource Catalog Registries
-- **State Summary:** Combined the core, happiness, stat, and population ResourceV2 definitions into ordered arrays, materialised reusable registries plus a `buildResourceCatalogV2()` helper, and exported them through the contents package. Ordering choices and follow-ups captured in [`worklogs/T22-resource-catalog.md`](../../../../worklogs/T22-resource-catalog.md).
+- **Timestamp (UTC):** 2025-10-27 22:00
+- **Current Focus:** Resource Migration MVP - P2 - T23 - Legacy Builder Bridge
+- **State Summary:** Replaced the legacy builder-driven `Resource`, `Stat`, and `PopulationRole` exports with adapters that read from the ordered `RESOURCE_V2_REGISTRY`, preserving legacy keys while aligning with the new catalog. Manual overrides for stat capacity/formatting remain isolated in the bridge. Full notes live in [`worklogs/T23-legacy-bridge.md`](../../../../worklogs/T23-legacy-bridge.md).
 - **Next Suggested Tasks:**
-  - Thread the new registries into the engine/runtime bootstrap so ResourceV2 data flows beyond content.
-  - Audit UI expectations for HUD ordering before additional ResourceGroups land, adjusting the catalog order if required.
-  - Plan population citizen/unassigned handling once registry consumers clarify whether an explicit resource is necessary.
-- **Blocking Issues / Risks:** Runtime consumers still rely on legacy registries until wiring tasks complete, so none of the new ResourceV2 catalog data is visible yet.
+  - Expand ResourceV2 metadata (or equivalent helpers) so stat capacity and formatting no longer require manual overrides.
+  - Begin auditing engine/web consumers that rely on legacy keys to map out the identifier migration plan.
+  - Retire the `resource/stat/populationRole` builder helpers once downstream content can source metadata purely from ResourceV2.
+- **Blocking Issues / Risks:** Legacy consumers still depend on the old key names; the new bridge enforces ordering but additional schema fields may be needed before we can drop the overrides.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
