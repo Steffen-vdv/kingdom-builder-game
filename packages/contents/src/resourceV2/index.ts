@@ -22,3 +22,14 @@ export type { ResourceV2Registry, ResourceGroupRegistry } from './registry';
 
 export { RESOURCE_V2_REGISTRY, RESOURCE_GROUP_V2_REGISTRY, buildResourceCatalogV2 } from './catalog';
 export type { ResourceCatalogV2 } from './catalog';
+
+export { resourceChange } from './effects';
+export type {
+	ResourceChangeBuilder,
+	ResourceChangeEffectParams,
+	ResourceChangeParameters,
+	ResourceAmountChangeParameters,
+	ResourcePercentChangeParameters,
+	ResourceChangeRoundingMode,
+	ResourceReconciliationMode,
+} from './effects';
