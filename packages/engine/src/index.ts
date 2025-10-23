@@ -3,12 +3,14 @@ export {
 	Phase,
 	PopulationRole,
 	Stat,
+	ResourceV2Parent,
 	createEngine,
 } from './setup/create_engine';
 export type {
 	ResourceKey,
 	StatKey,
 	PopulationRoleId,
+	ResourceV2ParentId,
 	StatSourceMeta,
 	StatSourceContribution,
 	StatSourceLink,

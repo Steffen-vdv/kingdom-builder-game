@@ -50,6 +50,17 @@ export function setPopulationRoleKeys(keys: string[]) {
 	}
 }
 
+export const ResourceV2Parent: Record<string, string> = {};
+export type ResourceV2ParentId = string;
+export function setResourceV2ParentKeys(keys: string[]) {
+	for (const key of Object.keys(ResourceV2Parent)) {
+		delete ResourceV2Parent[key];
+	}
+	for (const id of keys) {
+		ResourceV2Parent[id.charAt(0).toUpperCase() + id.slice(1)] = id;
+	}
+}
+
 export interface StatSourceLink {
 	type?: string;
 	id?: string;

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { createEngineSession, type EngineSession } from '../../src/index.ts';
+import {
+	createEngineSession,
+	loadResourceV2Registry,
+	type EngineSession,
+	type ResourceV2EngineRegistry,
+} from '../../src/index.ts';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -21,7 +26,11 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
-import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	createContentFactory,
+	createResourceV2Definition,
+	createResourceV2Group,
+} from '@kingdom-builder/testing';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 
@@ -41,10 +50,13 @@ const BASE: {
 	start: GAME_START,
 };
 
-type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
+type EngineOverrides = Partial<typeof BASE> & {
+	rules?: RuleSet;
+	resourceV2Registry?: ResourceV2EngineRegistry;
+};
 
 function createTestSession(overrides: EngineOverrides = {}) {
-	const { rules, ...rest } = overrides;
+	const { rules, resourceV2Registry, ...rest } = overrides;
 	return createEngineSession({
 		actions: rest.actions ?? BASE.actions,
 		buildings: rest.buildings ?? BASE.buildings,
@@ -53,6 +65,7 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		phases: rest.phases ?? BASE.phases,
 		start: rest.start ?? BASE.start,
 		rules: rules ?? RULES,
+		resourceV2Registry,
 	});
 }
 
@@ -196,6 +209,43 @@ describe('EngineSession', () => {
 			pulled.detail.amount = 99;
 		}
 		expect(entry.detail.amount).toBe(7);
+	});
+
+	it('includes ResourceV2 values in player snapshots', () => {
+		const resource = createResourceV2Definition({
+			id: 'resource:v2',
+			group: { groupId: 'group:v2', order: 1 },
+		});
+		const group = createResourceV2Group({
+			id: 'group:v2',
+			children: [resource.id],
+			parentId: 'parent:v2',
+		});
+		const registry = loadResourceV2Registry({
+			resources: [resource],
+			groups: [group],
+		});
+		const start = JSON.parse(JSON.stringify(GAME_START)) as StartConfig;
+		(
+			start.player as StartConfig['player'] & {
+				resourceV2?: Record<string, number>;
+			}
+		).resourceV2 = { [resource.id]: 4 };
+
+		const session = createTestSession({
+			start,
+			resourceV2Registry: registry,
+		});
+
+		const snapshot = session.getSnapshot();
+		const player = snapshot.game.players[0]!;
+		expect(player.values).toBeDefined();
+		const values = player.values!;
+		expect(values[resource.id]?.amount).toBe(4);
+		expect(values[resource.id]?.touched).toBe(false);
+		expect(values[resource.id]?.recentGains).toEqual([]);
+		expect(values[resource.id]?.parent?.id).toBe(group.parent.id);
+		expect(values[group.parent.id]?.amount).toBe(4);
 	});
 
 	it('returns cloned passive evaluation modifier maps', () => {

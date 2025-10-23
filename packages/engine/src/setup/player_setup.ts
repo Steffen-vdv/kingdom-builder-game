@@ -10,6 +10,36 @@ import type {
 } from '@kingdom-builder/protocol';
 import { START_STAT_SOURCE_META } from './stat_source_meta';
 
+interface PlayerStartResourceV2Config extends PlayerStartConfig {
+	resourceV2?: Record<string, number | undefined>;
+}
+
+function getPlayerStartResourceV2Config(
+	config: PlayerStartConfig,
+): Record<string, number | undefined> | undefined {
+	const candidate = (config as PlayerStartResourceV2Config).resourceV2;
+	if (!candidate) {
+		return undefined;
+	}
+	return candidate;
+}
+
+function clampToBounds(
+	value: number,
+	bounds: PlayerState['resourceV2']['bounds'][string] | undefined,
+): number {
+	const minimum = bounds?.lowerBound;
+	const maximum = bounds?.upperBound;
+	let result = value;
+	if (minimum !== undefined && result < minimum) {
+		result = minimum;
+	}
+	if (maximum !== undefined && result > maximum) {
+		result = maximum;
+	}
+	return result;
+}
+
 function cloneEffectList<EffectType extends object>(
 	effectList: EffectType[] | undefined,
 ): EffectType[] {
@@ -78,6 +108,35 @@ export function applyPlayerStartConfiguration(
 			playerState.lands.push(land);
 		});
 	}
+
+	const resourceV2Config = getPlayerStartResourceV2Config(config);
+	if (resourceV2Config) {
+		const { resourceV2 } = playerState;
+		for (const [resourceId, rawValue] of Object.entries(resourceV2Config)) {
+			const hasAmount = Object.prototype.hasOwnProperty.call(
+				resourceV2.amounts,
+				resourceId,
+			);
+			if (!hasAmount) {
+				continue;
+			}
+			if (
+				Object.prototype.hasOwnProperty.call(
+					resourceV2.parentChildren,
+					resourceId,
+				)
+			) {
+				continue;
+			}
+			const clamped = clampToBounds(
+				rawValue ?? 0,
+				resourceV2.bounds[resourceId],
+			);
+			resourceV2.amounts[resourceId] = clamped;
+			resourceV2.recentDeltas[resourceId] = 0;
+			resourceV2.hookSuppressions[resourceId] = undefined;
+		}
+	}
 }
 
 export function diffPlayerStartConfiguration(
@@ -107,6 +166,20 @@ export function diffPlayerStartConfiguration(
 		}
 		diff.stats = diff.stats || {};
 		diff.stats[statKey] = overrideValue;
+	}
+	const baseResourceV2 = getPlayerStartResourceV2Config(baseConfig) || {};
+	const overrideResourceV2 =
+		getPlayerStartResourceV2Config(overrideConfig) || {};
+	for (const [resourceId, value] of Object.entries(overrideResourceV2)) {
+		const baseValue = baseResourceV2[resourceId] ?? 0;
+		const overrideValue = value ?? 0;
+		if (overrideValue === baseValue) {
+			continue;
+		}
+		(diff as PlayerStartResourceV2Config).resourceV2 =
+			(diff as PlayerStartResourceV2Config).resourceV2 || {};
+		(diff as PlayerStartResourceV2Config).resourceV2![resourceId] =
+			overrideValue;
 	}
 	return diff;
 }
