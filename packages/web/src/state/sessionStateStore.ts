@@ -178,6 +178,20 @@ function applyResourceRegistry(
 	}
 }
 
+function applyDefinitionRecord<TDefinition>(
+	target: Record<string, TDefinition>,
+	source: Record<string, TDefinition>,
+): void {
+	for (const key of Object.keys(target)) {
+		if (!(key in source)) {
+			delete target[key];
+		}
+	}
+	for (const [key, definition] of Object.entries(source)) {
+		target[key] = clone(definition);
+	}
+}
+
 function applyRegistries(
 	record: SessionStateRecord,
 	payload: SessionRegistriesPayload,
@@ -192,8 +206,9 @@ function applyRegistries(
 	mergeRegistryEntries(record.registries.developments, next.developments);
 	mergeRegistryEntries(record.registries.populations, next.populations);
 	applyResourceRegistry(record.registries.resources, next.resources);
-	const keys = extractResourceKeys(record.registries);
-	record.resourceKeys.splice(0, record.resourceKeys.length, ...keys);
+	applyDefinitionRecord(record.registries.resourcesV2, next.resourcesV2);
+	applyDefinitionRecord(record.registries.resourceGroups, next.resourceGroups);
+	syncResourceKeys(record);
 }
 
 function applyMetadata(
@@ -201,6 +216,25 @@ function applyMetadata(
 	metadata: SessionSnapshotMetadata,
 ): void {
 	record.metadata = clone(metadata);
+	syncResourceKeys(record);
+}
+
+function syncResourceKeys(record: SessionStateRecord): void {
+	const orderedResourceIds = Array.isArray(record.metadata.orderedResourceIds)
+		? record.metadata.orderedResourceIds
+		: Array.isArray(record.snapshot.orderedResourceIds)
+			? record.snapshot.orderedResourceIds
+			: undefined;
+	if (orderedResourceIds && orderedResourceIds.length > 0) {
+		record.resourceKeys.splice(
+			0,
+			record.resourceKeys.length,
+			...orderedResourceIds,
+		);
+		return;
+	}
+	const keys = extractResourceKeys(record.registries);
+	record.resourceKeys.splice(0, record.resourceKeys.length, ...keys);
 }
 
 export function initializeSessionState(
@@ -209,15 +243,17 @@ export function initializeSessionState(
 	const snapshot = clone(response.snapshot);
 	const ruleSnapshot = clone(response.snapshot.rules);
 	const registries = deserializeSessionRegistries(response.registries);
+	const metadata = clone(response.snapshot.metadata);
 	const record: SessionStateRecord = {
 		sessionId: response.sessionId,
 		snapshot,
 		ruleSnapshot,
 		registries,
-		resourceKeys: extractResourceKeys(registries),
-		metadata: clone(response.snapshot.metadata),
+		resourceKeys: [],
+		metadata,
 		queueSeed: Promise.resolve(),
 	};
+	syncResourceKeys(record);
 	records.set(response.sessionId, record);
 	notifyRecordWaiters(response.sessionId, record);
 	return record;

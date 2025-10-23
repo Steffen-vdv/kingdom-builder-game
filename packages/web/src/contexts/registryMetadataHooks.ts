@@ -5,22 +5,30 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionResourceDefinition,
+	SessionResourceV2GroupParentSnapshot,
+	SessionResourceV2GroupSnapshot,
+	SessionResourceV2MetadataSnapshot,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
 import {
 	createRegistryLookup,
 	createResourceLookup,
+	createFrozenRecordLookup,
 	type DefinitionLookup,
 } from './registryMetadataLookups';
 import {
 	buildPhaseMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
+	buildResourceGroupMetadata,
+	buildResourceGroupParentMetadata,
 	buildStatMetadata,
 	buildTriggerMetadata,
 } from './registryMetadataDescriptors';
@@ -28,21 +36,50 @@ import {
 	extractDescriptorRecord,
 	extractPhaseRecord,
 	extractTriggerRecord,
+	extractResourceMetadataRecord,
+	extractResourceGroupRecord,
+	extractResourceGroupParentRecord,
+	extractOrderedResourceIds,
+	extractOrderedResourceGroupIds,
+	extractParentIdByResourceId,
+	EMPTY_ORDERED_RESOURCE_GROUP_IDS,
+	EMPTY_ORDERED_RESOURCE_IDS,
+	EMPTY_PARENT_ID_BY_RESOURCE_ID,
 } from './registryMetadataSelectors';
 
 export interface DescriptorOverrides {
-	readonly resources?: ReturnType<typeof extractDescriptorRecord>;
-	readonly actionCategories?: ReturnType<typeof extractDescriptorRecord>;
-	readonly populations?: ReturnType<typeof extractDescriptorRecord>;
-	readonly buildings?: ReturnType<typeof extractDescriptorRecord>;
-	readonly developments?: ReturnType<typeof extractDescriptorRecord>;
-	readonly stats?: ReturnType<typeof extractDescriptorRecord>;
-	readonly assets?: ReturnType<typeof extractDescriptorRecord>;
-	readonly phases?: ReturnType<typeof extractPhaseRecord>;
-	readonly triggers?: ReturnType<typeof extractTriggerRecord>;
+	readonly resources?: ReturnType<typeof extractDescriptorRecord> | undefined;
+	readonly actionCategories?:
+		| ReturnType<typeof extractDescriptorRecord>
+		| undefined;
+	readonly populations?: ReturnType<typeof extractDescriptorRecord> | undefined;
+	readonly buildings?: ReturnType<typeof extractDescriptorRecord> | undefined;
+	readonly developments?:
+		| ReturnType<typeof extractDescriptorRecord>
+		| undefined;
+	readonly stats?: ReturnType<typeof extractDescriptorRecord> | undefined;
+	readonly assets?: ReturnType<typeof extractDescriptorRecord> | undefined;
+	readonly phases?: ReturnType<typeof extractPhaseRecord> | undefined;
+	readonly triggers?: ReturnType<typeof extractTriggerRecord> | undefined;
+	readonly resourceMetadata?:
+		| Record<string, SessionResourceV2MetadataSnapshot>
+		| undefined;
+	readonly resourceGroups?:
+		| Record<string, SessionResourceV2GroupSnapshot>
+		| undefined;
+	readonly resourceGroupParents?:
+		| Record<string, SessionResourceV2GroupParentSnapshot>
+		| undefined;
+	readonly orderedResourceIds: ReadonlyArray<string>;
+	readonly orderedResourceGroupIds: ReadonlyArray<string>;
+	readonly parentIdByResourceId: Readonly<Record<string, string>>;
 }
 
-const EMPTY_DESCRIPTOR_OVERRIDES: DescriptorOverrides = Object.freeze({});
+const EMPTY_DESCRIPTOR_OVERRIDES: DescriptorOverrides = Object.freeze({
+	orderedResourceIds: EMPTY_ORDERED_RESOURCE_IDS,
+	orderedResourceGroupIds: EMPTY_ORDERED_RESOURCE_GROUP_IDS,
+	parentIdByResourceId: EMPTY_PARENT_ID_BY_RESOURCE_ID,
+} satisfies DescriptorOverrides);
 
 export const useDescriptorOverrides = (
 	snapshotMetadata: SessionSnapshotMetadata | null,
@@ -63,15 +100,29 @@ export const useDescriptorOverrides = (
 			}
 			return value;
 		};
-		return Object.freeze({
+		const resourceMetadataRecord =
+			extractResourceMetadataRecord(snapshotMetadata);
+		const resourceGroupRecord = extractResourceGroupRecord(snapshotMetadata);
+		const resourceGroupParentRecord =
+			extractResourceGroupParentRecord(snapshotMetadata);
+		const actionCategoryRecord = extractDescriptorRecord(
+			snapshotMetadata,
+			'actionCategories',
+		);
+		const orderedResourceIds =
+			extractOrderedResourceIds(snapshotMetadata) ?? EMPTY_ORDERED_RESOURCE_IDS;
+		const orderedResourceGroupIds =
+			extractOrderedResourceGroupIds(snapshotMetadata) ??
+			EMPTY_ORDERED_RESOURCE_GROUP_IDS;
+		const parentIdByResourceId =
+			extractParentIdByResourceId(snapshotMetadata) ??
+			EMPTY_PARENT_ID_BY_RESOURCE_ID;
+		const overrides: DescriptorOverrides = {
 			resources: requireDescriptorRecord(
 				extractDescriptorRecord(snapshotMetadata, 'resources'),
 				'resources',
 			),
-			actionCategories: extractDescriptorRecord(
-				snapshotMetadata,
-				'actionCategories',
-			),
+			actionCategories: actionCategoryRecord ?? undefined,
 			populations: requireDescriptorRecord(
 				extractDescriptorRecord(snapshotMetadata, 'populations'),
 				'populations',
@@ -100,11 +151,20 @@ export const useDescriptorOverrides = (
 				extractTriggerRecord(snapshotMetadata),
 				'triggers',
 			),
-		});
+			resourceMetadata: resourceMetadataRecord ?? undefined,
+			resourceGroups: resourceGroupRecord ?? undefined,
+			resourceGroupParents: resourceGroupParentRecord ?? undefined,
+			orderedResourceIds,
+			orderedResourceGroupIds,
+			parentIdByResourceId,
+		} satisfies DescriptorOverrides;
+		return Object.freeze(overrides) as DescriptorOverrides;
 	}, [snapshotMetadata]);
 
 interface DefinitionLookups {
 	readonly resourceLookup: DefinitionLookup<SessionResourceDefinition>;
+	readonly resourceV2Lookup: DefinitionLookup<ResourceV2Definition>;
+	readonly resourceGroupLookup: DefinitionLookup<ResourceV2GroupMetadata>;
 	readonly actionLookup: DefinitionLookup<ActionConfig>;
 	readonly actionCategoryLookup: DefinitionLookup<ActionCategoryConfig>;
 	readonly buildingLookup: DefinitionLookup<BuildingConfig>;
@@ -118,6 +178,8 @@ export const useDefinitionLookups = (
 		| 'actions'
 		| 'actionCategories'
 		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroups'
 		| 'buildings'
 		| 'developments'
 		| 'populations'
@@ -125,6 +187,14 @@ export const useDefinitionLookups = (
 ): DefinitionLookups =>
 	useMemo(() => {
 		const resourceLookup = createResourceLookup(registries.resources);
+		const resourceV2Lookup = createFrozenRecordLookup(
+			registries.resourcesV2,
+			'resource v2',
+		);
+		const resourceGroupLookup = createFrozenRecordLookup(
+			registries.resourceGroups,
+			'resource group',
+		);
 		const actionLookup = createRegistryLookup(registries.actions, 'action');
 		const actionCategoryLookup = createRegistryLookup(
 			registries.actionCategories,
@@ -144,6 +214,8 @@ export const useDefinitionLookups = (
 		);
 		return Object.freeze({
 			resourceLookup,
+			resourceV2Lookup,
+			resourceGroupLookup,
 			actionLookup,
 			actionCategoryLookup,
 			buildingLookup,
@@ -157,10 +229,18 @@ export const useDefinitionLookups = (
 		registries.developments,
 		registries.populations,
 		registries.resources,
+		registries.resourcesV2,
+		registries.resourceGroups,
 	]);
 
 interface MetadataLookups {
 	readonly resourceMetadataLookup: ReturnType<typeof buildResourceMetadata>;
+	readonly resourceGroupMetadataLookup: ReturnType<
+		typeof buildResourceGroupMetadata
+	>;
+	readonly resourceGroupParentMetadataLookup: ReturnType<
+		typeof buildResourceGroupParentMetadata
+	>;
 	readonly actionCategoryMetadataLookup: ReturnType<
 		typeof buildRegistryMetadata
 	>;
@@ -173,6 +253,9 @@ interface MetadataLookups {
 	readonly assetDescriptors:
 		| Readonly<Record<string, SessionMetadataDescriptor>>
 		| undefined;
+	readonly orderedResourceIds: ReadonlyArray<string>;
+	readonly orderedResourceGroupIds: ReadonlyArray<string>;
+	readonly parentIdByResourceId: Readonly<Record<string, string>>;
 }
 
 export const useMetadataLookups = (
@@ -181,6 +264,7 @@ export const useMetadataLookups = (
 		| 'actions'
 		| 'actionCategories'
 		| 'resources'
+		| 'resourceGroups'
 		| 'buildings'
 		| 'developments'
 		| 'populations'
@@ -191,6 +275,20 @@ export const useMetadataLookups = (
 		const resourceMetadataLookup = buildResourceMetadata(
 			registries.resources,
 			overrides.resources,
+			{
+				resourceMetadata: overrides.resourceMetadata,
+				orderedResourceIds: overrides.orderedResourceIds,
+				parentIdByResourceId: overrides.parentIdByResourceId,
+			},
+		);
+		const resourceGroupMetadataLookup = buildResourceGroupMetadata(
+			registries.resourceGroups,
+			overrides.resourceGroups,
+			overrides.orderedResourceGroupIds,
+		);
+		const resourceGroupParentMetadataLookup = buildResourceGroupParentMetadata(
+			registries.resourceGroups,
+			overrides.resourceGroupParents,
 		);
 		const actionCategoryMetadataLookup = buildRegistryMetadata(
 			registries.actionCategories,
@@ -214,6 +312,8 @@ export const useMetadataLookups = (
 		const assetDescriptors = overrides.assets;
 		return Object.freeze({
 			resourceMetadataLookup,
+			resourceGroupMetadataLookup,
+			resourceGroupParentMetadataLookup,
 			actionCategoryMetadataLookup,
 			populationMetadataLookup,
 			buildingMetadataLookup,
@@ -222,6 +322,9 @@ export const useMetadataLookups = (
 			phaseMetadataLookup,
 			triggerMetadataLookup,
 			assetDescriptors,
+			orderedResourceIds: overrides.orderedResourceIds,
+			orderedResourceGroupIds: overrides.orderedResourceGroupIds,
+			parentIdByResourceId: overrides.parentIdByResourceId,
 		});
 	}, [
 		overrides,
@@ -230,4 +333,5 @@ export const useMetadataLookups = (
 		registries.developments,
 		registries.populations,
 		registries.resources,
+		registries.resourceGroups,
 	]);

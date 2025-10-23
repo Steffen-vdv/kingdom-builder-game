@@ -37,6 +37,8 @@ describe('<Overview />', () => {
 					icon: '⚡',
 				},
 			},
+			resourcesV2: {},
+			resourceGroups: {},
 		};
 		const metadata: SessionSnapshotMetadata = {
 			passiveEvaluationModifiers: {},

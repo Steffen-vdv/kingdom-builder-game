@@ -5,6 +5,8 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionOverviewMetadata,
@@ -34,12 +36,16 @@ import {
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
+	resourcesV2: DefinitionLookup<ResourceV2Definition>;
+	resourceGroups: DefinitionLookup<ResourceV2GroupMetadata>;
 	actions: DefinitionLookup<ActionConfig>;
 	actionCategories: DefinitionLookup<ActionCategoryConfig>;
 	buildings: DefinitionLookup<BuildingConfig>;
 	developments: DefinitionLookup<DevelopmentConfig>;
 	populations: DefinitionLookup<PopulationConfig>;
 	resourceMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
+	resourceGroupMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
+	resourceGroupParentMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	actionCategoryMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	populationMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	buildingMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
@@ -48,6 +54,8 @@ export interface RegistryMetadataContextValue {
 	phaseMetadataLookup: MetadataLookup<PhaseMetadata>;
 	triggerMetadataLookup: MetadataLookup<TriggerMetadata>;
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
+	resourceGroupMetadata: MetadataSelector<RegistryMetadataDescriptor>;
+	resourceGroupParentMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	actionCategoryMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	populationMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	buildingMetadata: MetadataSelector<RegistryMetadataDescriptor>;
@@ -59,6 +67,9 @@ export interface RegistryMetadataContextValue {
 	slotMetadata: AssetMetadataSelector;
 	passiveMetadata: AssetMetadataSelector;
 	overviewContent: SessionOverviewMetadata;
+	orderedResourceIds: ReadonlyArray<string>;
+	orderedResourceGroupIds: ReadonlyArray<string>;
+	parentIdByResourceId: Readonly<Record<string, string>>;
 }
 
 type SnapshotMetadataWithOverview = SessionSnapshotMetadata & {
@@ -81,6 +92,8 @@ interface RegistryMetadataProviderProps {
 		| 'actions'
 		| 'actionCategories'
 		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroups'
 		| 'buildings'
 		| 'developments'
 		| 'populations'
@@ -117,6 +130,8 @@ export function RegistryMetadataProvider({
 	const descriptorOverrides = useDescriptorOverrides(metadataWithOverview);
 	const {
 		resourceLookup,
+		resourceV2Lookup,
+		resourceGroupLookup,
 		actionLookup,
 		actionCategoryLookup,
 		buildingLookup,
@@ -125,6 +140,8 @@ export function RegistryMetadataProvider({
 	} = useDefinitionLookups(registries);
 	const {
 		resourceMetadataLookup,
+		resourceGroupMetadataLookup,
+		resourceGroupParentMetadataLookup,
 		actionCategoryMetadataLookup,
 		populationMetadataLookup,
 		buildingMetadataLookup,
@@ -132,6 +149,9 @@ export function RegistryMetadataProvider({
 		statMetadataLookup,
 		phaseMetadataLookup,
 		triggerMetadataLookup,
+		orderedResourceIds,
+		orderedResourceGroupIds,
+		parentIdByResourceId,
 	} = useMetadataLookups(registries, descriptorOverrides);
 	const landDescriptor = useMemo(
 		() => resolveAssetDescriptor('land', land),
@@ -148,6 +168,14 @@ export function RegistryMetadataProvider({
 	const resourceMetadata = useMemo(
 		() => createMetadataSelector(resourceMetadataLookup),
 		[resourceMetadataLookup],
+	);
+	const resourceGroupMetadata = useMemo(
+		() => createMetadataSelector(resourceGroupMetadataLookup),
+		[resourceGroupMetadataLookup],
+	);
+	const resourceGroupParentMetadata = useMemo(
+		() => createMetadataSelector(resourceGroupParentMetadataLookup),
+		[resourceGroupParentMetadataLookup],
 	);
 	const actionCategoryMetadata = useMemo(
 		() => createMetadataSelector(actionCategoryMetadataLookup),
@@ -194,12 +222,16 @@ export function RegistryMetadataProvider({
 		() =>
 			Object.freeze({
 				resources: resourceLookup,
+				resourcesV2: resourceV2Lookup,
+				resourceGroups: resourceGroupLookup,
 				actions: actionLookup,
 				actionCategories: actionCategoryLookup,
 				buildings: buildingLookup,
 				developments: developmentLookup,
 				populations: populationLookup,
 				resourceMetadataLookup,
+				resourceGroupMetadataLookup,
+				resourceGroupParentMetadataLookup,
 				actionCategoryMetadataLookup,
 				populationMetadataLookup,
 				buildingMetadataLookup,
@@ -208,6 +240,8 @@ export function RegistryMetadataProvider({
 				phaseMetadataLookup,
 				triggerMetadataLookup,
 				resourceMetadata,
+				resourceGroupMetadata,
+				resourceGroupParentMetadata,
 				actionCategoryMetadata,
 				populationMetadata,
 				buildingMetadata,
@@ -219,15 +253,22 @@ export function RegistryMetadataProvider({
 				slotMetadata,
 				passiveMetadata,
 				overviewContent,
+				orderedResourceIds,
+				orderedResourceGroupIds,
+				parentIdByResourceId,
 			}),
 		[
 			resourceLookup,
+			resourceV2Lookup,
+			resourceGroupLookup,
 			actionLookup,
 			actionCategoryLookup,
 			buildingLookup,
 			developmentLookup,
 			populationLookup,
 			resourceMetadataLookup,
+			resourceGroupMetadataLookup,
+			resourceGroupParentMetadataLookup,
 			actionCategoryMetadataLookup,
 			populationMetadataLookup,
 			buildingMetadataLookup,
@@ -236,6 +277,8 @@ export function RegistryMetadataProvider({
 			phaseMetadataLookup,
 			triggerMetadataLookup,
 			resourceMetadata,
+			resourceGroupMetadata,
+			resourceGroupParentMetadata,
 			actionCategoryMetadata,
 			populationMetadata,
 			buildingMetadata,
@@ -247,6 +290,9 @@ export function RegistryMetadataProvider({
 			slotMetadata,
 			passiveMetadata,
 			overviewContent,
+			orderedResourceIds,
+			orderedResourceGroupIds,
+			parentIdByResourceId,
 		],
 	);
 	return (
@@ -272,48 +318,6 @@ export function useOptionalRegistryMetadata(): OptionalRegistryMetadataValue {
 	return useContext(RegistryMetadataContext);
 }
 
-export const useResourceMetadata =
-	(): MetadataSelector<RegistryMetadataDescriptor> =>
-		useRegistryMetadata().resourceMetadata;
-
-export const usePopulationMetadata =
-	(): MetadataSelector<RegistryMetadataDescriptor> =>
-		useRegistryMetadata().populationMetadata;
-
-export const useActionCategoryMetadata =
-	(): MetadataSelector<RegistryMetadataDescriptor> =>
-		useRegistryMetadata().actionCategoryMetadata;
-
-export const useBuildingMetadata =
-	(): MetadataSelector<RegistryMetadataDescriptor> =>
-		useRegistryMetadata().buildingMetadata;
-
-export const useDevelopmentMetadata =
-	(): MetadataSelector<RegistryMetadataDescriptor> =>
-		useRegistryMetadata().developmentMetadata;
-
-export const useStatMetadata =
-	(): MetadataSelector<RegistryMetadataDescriptor> =>
-		useRegistryMetadata().statMetadata;
-
-export const usePhaseMetadata = (): MetadataSelector<PhaseMetadata> =>
-	useRegistryMetadata().phaseMetadata;
-
-export const useTriggerMetadata = (): MetadataSelector<TriggerMetadata> =>
-	useRegistryMetadata().triggerMetadata;
-
-export const useLandMetadata = (): AssetMetadataSelector =>
-	useRegistryMetadata().landMetadata;
-
-export const useSlotMetadata = (): AssetMetadataSelector =>
-	useRegistryMetadata().slotMetadata;
-
-export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
-	useRegistryMetadata().passiveMetadata;
-
-export const useOverviewContent = (): SessionOverviewMetadata =>
-	useRegistryMetadata().overviewContent;
-
 export type {
 	RegistryMetadataDescriptor,
 	TriggerMetadata,
@@ -326,3 +330,4 @@ export type {
 	AssetMetadataSelector,
 	MetadataSelector,
 } from './registryMetadataSelectors';
+export * from './registryMetadataContextSelectors';

@@ -67,6 +67,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
 | 2025-10-29 | ChatGPT (gpt-5-codex) | packages/protocol/src/config/session*contracts/shared.ts; packages/protocol/src/session/contracts.ts; packages/server/src/session/SessionManager.ts; packages/server/tests/FastifySessionTransport.test.ts; packages/server/tests/SessionManager.test.ts; packages/server/tests/helpers/createSyntheticSessionManager.ts; packages/server/tests/session-runtime-config-resourceV2.test.ts; packages/web/src/startup/runtimeConfig.ts; packages/web/tests/startup/runtimeConfig.test.ts | Bundled ResourceV2 definitions and groups into runtime config responses, extended server cloning utilities to freeze the new registries, updated web normalization fallbacks, and added regression coverage for server/web payload handling. | `npm run check` (pass; chunk `1ecc78†L1-L110`) | Coordinate frontend consumers to hydrate ResourceV2 catalogs from runtime config and monitor downstream selectors for legacy fallback reliance. |
 | 2025-10-30 | ChatGPT (gpt-5-codex) | packages/testing/src/factories/resourceV2.ts; packages/testing/src/factories/resourceV2Metadata.ts; packages/testing/src/factories/content.ts; packages/testing/tests/session-resourceV2-support.test.ts; packages/web/tests/helpers/sessionSnapshot.ts; packages/web/tests/helpers/sessionFixtures.ts; docs/project/resource-migration/production/production-living-docs.md | Refactored testing ResourceV2 builders to delegate session metadata generation to a shared helper, added regression coverage for default and custom ResourceV2 snapshots, and split web session snapshot utilities to reuse the metadata-aware helpers. | `npm run check` (pass; engine chunk `9c939f†L1-L173`, protocol chunk `839f57†L1-L78`, integration chunk `9aa947†L1-L28`, web chunk `5bc4ef†L1-L42`, server chunk `32c85d†L1-L29`) | Expand integration coverage around server/web ResourceV2 hydration (e.g., snapshot hydration and registry contexts) once downstream consumers are updated. |
+| 2025-10-31 | ChatGPT (gpt-5-codex) | `packages/web/src/state/sessionRegistries.ts`; `packages/web/src/state/sessionStateStore.ts`; `packages/web/src/contexts/RegistryMetadataContext.tsx`; `packages/web/src/contexts/registryMetadataHooks.ts`; `packages/web/src/state/__tests__/sessionRegistries.resourceV2.test.tsx`; `docs/project/resource-migration/production/production-living-docs.md` | Wired ResourceV2 definitions/groups into web registries and metadata contexts, refreshed selectors/hooks for ordered keys and parent descriptors, and expanded tests for ResourceV2 normalization and memoization. | `npx tsc --build packages/protocol/tsconfig.json --force` (pass; chunk `2a804d†L1-L2`); `npm run check` (pass; chunk `cf46fe†L1-L66`) | Monitor UI components consuming legacy resource registries for follow-up refactors now that ResourceV2 selectors are available. |
 | 2024-**-** | *(add entry)\_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -74,14 +75,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-30 17:20
-- **Current Focus:** Test fixture parity for ResourceV2 session metadata across protocol/server/web suites
-- **State Summary:** Shared testing factories now build ResourceV2 session metadata through a reusable helper, regression tests cover default registries and custom tiered resources, and web snapshot fixtures share cloning utilities to keep legacy/new snapshot fields aligned.
+- **Timestamp (UTC):** 2025-10-31 19:15
+- **Current Focus:** Web registry normalization for ResourceV2 metadata and selector parity with legacy registries
+- **State Summary:** Web session registries now clone ResourceV2 definitions/groups alongside legacy data, contexts expose ordered ids/parent descriptors through memoized selectors, and ResourceV2-specific tests validate cloning plus lookup memoization.
 - **Next Suggested Tasks:**
-  - Extend server/web integration tests to exercise ResourceV2 metadata hydration end-to-end (SessionTransport + runtime config consumers).
-  - Begin migrating UI selectors to consume `resourceMetadata`/`resourceGroups` in addition to legacy `resources` maps to verify dual-path behaviour.
-- **Blocking Issues / Risks:** `npm run check` remains lengthy because workspace filtering is unavailable; monitor for drift between session metadata helpers and runtime config payloads as downstream consumers adopt the new structure.
-- **Reminder:** Continue populating legacy `resources`/`stats` fields until all transports and UI paths complete the ResourceV2 migration.
+  - Audit UI components (resource bar, overview, log formatters) to adopt the new ResourceV2 selectors and ensure legacy fallbacks remain intact.
+  - Expand integration coverage to confirm parent descriptors and tier tracks render correctly once UI wiring is complete.
+- **Blocking Issues / Risks:** `npm run check` remains long-running without workspace filtering; keep verifying protocol build artifacts before checks to avoid incremental build churn.
+- **Reminder:** Preserve legacy `resources`/`stats` metadata until downstream consumers are fully migrated to ResourceV2 lookups.
 
 ## 5. Notes & Decisions Archive
 

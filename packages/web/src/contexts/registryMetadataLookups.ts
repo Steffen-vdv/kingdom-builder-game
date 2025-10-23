@@ -1,5 +1,6 @@
 import type { Registry } from '@kingdom-builder/protocol';
 import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import { clone } from '../state/clone';
 
 export interface DefinitionLookup<TDefinition> {
 	readonly record: Readonly<Record<string, TDefinition>>;
@@ -79,28 +80,40 @@ export const createRegistryLookup = <TDefinition extends { id: string }>(
 ): DefinitionLookup<TDefinition> =>
 	createRegistryDefinitionLookup(registry, definitionType);
 
-const createResourceRecord = (
-	resources: Record<string, SessionResourceDefinition>,
-): Readonly<Record<string, SessionResourceDefinition>> => {
-	const record: Record<string, SessionResourceDefinition> = {};
-	for (const [key, definition] of Object.entries(resources)) {
-		record[key] = Object.freeze({ ...definition });
+const freezeDefinition = <TDefinition>(
+	definition: TDefinition,
+): TDefinition => {
+	if (typeof definition === 'object' && definition !== null) {
+		const cloned = clone(definition);
+		return Object.freeze(cloned as TDefinition);
 	}
-	const frozenRecord = Object.freeze(record);
-	return frozenRecord;
+	return definition;
 };
 
-export const createResourceLookup = (
-	resources: Record<string, SessionResourceDefinition>,
-): DefinitionLookup<SessionResourceDefinition> => {
-	const record = createResourceRecord(resources);
+const createDefinitionRecord = <TDefinition>(
+	definitions: Record<string, TDefinition>,
+	cloneEntry: (definition: TDefinition) => TDefinition = freezeDefinition,
+): Readonly<Record<string, TDefinition>> => {
+	const record: Record<string, TDefinition> = {};
+	for (const [key, definition] of Object.entries(definitions)) {
+		record[key] = cloneEntry(definition);
+	}
+	return Object.freeze(record);
+};
+
+const createRecordLookup = <TDefinition>(
+	definitions: Record<string, TDefinition>,
+	definitionType: string,
+	cloneEntry: (definition: TDefinition) => TDefinition = freezeDefinition,
+): DefinitionLookup<TDefinition> => {
+	const record = createDefinitionRecord(definitions, cloneEntry);
 	const entryList = Object.entries(record).map((entry) =>
 		Object.freeze([entry[0], entry[1]] as const),
 	);
 	const frozenEntries = freezeEntries(entryList);
 	const values = freezeArray(entryList.map(([, definition]) => definition));
 	const keys = freezeArray(Object.keys(record));
-	const lookup: DefinitionLookup<SessionResourceDefinition> = {
+	const lookup: DefinitionLookup<TDefinition> = {
 		record,
 		get(id: string) {
 			return record[id];
@@ -108,7 +121,7 @@ export const createResourceLookup = (
 		getOrThrow(id: string) {
 			const value = record[id];
 			if (!value) {
-				throw new Error(`Unknown resource definition: ${id}`);
+				throw new Error(`Unknown ${definitionType} definition: ${id}`);
 			}
 			return value;
 		},
@@ -125,6 +138,16 @@ export const createResourceLookup = (
 			return keys;
 		},
 	};
-	const frozenLookup = Object.freeze(lookup);
-	return frozenLookup;
+	return Object.freeze(lookup);
 };
+
+export const createResourceLookup = (
+	resources: Record<string, SessionResourceDefinition>,
+): DefinitionLookup<SessionResourceDefinition> =>
+	createRecordLookup(resources, 'resource');
+
+export const createFrozenRecordLookup = <TDefinition>(
+	definitions: Record<string, TDefinition>,
+	definitionType: string,
+): DefinitionLookup<TDefinition> =>
+	createRecordLookup(definitions, definitionType);
