@@ -65,15 +65,15 @@ export function applyValueDelta(
 		}
 		runtime.hooks?.onValueChange?.(context, resourceId, actualDelta);
 	}
-        const resolveEffects = runtime.tiering?.resolveEffects
-                ? (id: string) => runtime.tiering?.resolveEffects?.(id)
-                : undefined;
-        applyResourceTiering({
-                state: runtime.state,
-                resourceId,
-                context,
-                ...(resolveEffects ? { resolveEffects } : {}),
-        });
+	const resolveEffects = runtime.tiering?.resolveEffects
+		? (id: string) => runtime.tiering?.resolveEffects?.(id)
+		: undefined;
+	applyResourceTiering({
+		state: runtime.state,
+		resourceId,
+		context,
+		...(resolveEffects ? { resolveEffects } : {}),
+	});
 	return actualDelta;
 }
 

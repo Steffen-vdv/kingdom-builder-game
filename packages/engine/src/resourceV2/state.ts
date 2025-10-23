@@ -99,13 +99,13 @@ function createTierState(
 	if (!track) {
 		return undefined;
 	}
-        const steps: ResourceV2TierStepState[] = track.steps.map((step, index) => ({
-                id: step.id,
-                index,
-                min: step.min,
-                ...(step.max !== undefined ? { max: step.max } : {}),
-                ...(step.display?.label ? { label: step.display.label } : {}),
-        }));
+	const steps: ResourceV2TierStepState[] = track.steps.map((step, index) => ({
+		id: step.id,
+		index,
+		min: step.min,
+		...(step.max !== undefined ? { max: step.max } : {}),
+		...(step.display?.label ? { label: step.display.label } : {}),
+	}));
 	return {
 		trackId: track.id,
 		steps,

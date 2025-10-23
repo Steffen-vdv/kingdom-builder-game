@@ -35,6 +35,8 @@ import {
 	buildingSchema,
 	developmentSchema,
 	populationSchema,
+	type ResourceV2DefinitionConfig,
+	type ResourceV2GroupDefinitionConfig,
 	type PlayerStartConfig,
 	type ActionConfig as ActionDef,
 	type BuildingConfig as BuildingDef,
@@ -50,6 +52,7 @@ import {
 	initializePlayerActions,
 } from './player_setup';
 import { resolveStartConfigForMode } from './start_config_resolver';
+import { prepareResourceV2Bootstrap } from './resource_v2_bootstrap';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
@@ -61,6 +64,8 @@ export interface EngineCreationOptions {
 	rules: RuleSet;
 	config?: GameConfig;
 	devMode?: boolean;
+	resourceDefinitions?: Iterable<ResourceV2DefinitionConfig>;
+	resourceGroups?: Iterable<ResourceV2GroupDefinitionConfig>;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -128,6 +133,10 @@ function buildRegistry<DefinitionType extends { id: string }>(
 	return registry;
 }
 
+function toArray<T>(iterable: Iterable<T> | undefined): T[] {
+	return iterable ? Array.from(iterable) : [];
+}
+
 function overrideRegistries(
 	validatedConfig: ValidatedConfig,
 	currentRegistries: EngineRegistries,
@@ -171,11 +180,15 @@ export function createEngine({
 	rules,
 	config,
 	devMode = false,
+	resourceDefinitions,
+	resourceGroups,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();
 	let startConfig = start;
+	let resourceDefinitionSource = toArray(resourceDefinitions);
+	let resourceGroupSource = toArray(resourceGroups);
 	if (config) {
 		const validatedConfig = validateGameConfig(config);
 		({ actions, buildings, developments, populations } = overrideRegistries(
@@ -187,6 +200,12 @@ export function createEngine({
 				populations,
 			},
 		));
+		if (validatedConfig.resourcesV2?.definitions) {
+			resourceDefinitionSource = [...validatedConfig.resourcesV2.definitions];
+		}
+		if (validatedConfig.resourcesV2?.groups) {
+			resourceGroupSource = [...validatedConfig.resourcesV2.groups];
+		}
 		if (validatedConfig.start) {
 			startConfig = validatedConfig.start;
 		}
@@ -197,10 +216,21 @@ export function createEngine({
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
+	const resourceBootstrap = prepareResourceV2Bootstrap({
+		definitions: resourceDefinitionSource,
+		groups: resourceGroupSource,
+		startConfig,
+	});
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
-	const gameState = new GameState('Player', 'Opponent');
-	const actionCostResource = determineCommonActionCostResource(actions);
+	const gameState = new GameState(
+		'Player',
+		'Opponent',
+		resourceBootstrap.playerFactory,
+	);
+	const actionCostResource =
+		resourceBootstrap.actionCostResource ??
+		determineCommonActionCostResource(actions);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
 		startConfig.players?.['A'],
@@ -209,10 +239,20 @@ export function createEngine({
 		startConfig.player,
 		startConfig.players?.['B'],
 	);
-	const compensationMap = {
+	if (resourceBootstrap.hasResourceV2) {
+		resourceBootstrap.validatePlayerStart(
+			playerACompensation,
+			'start.players["A"]',
+		);
+		resourceBootstrap.validatePlayerStart(
+			playerBCompensation,
+			'start.players["B"]',
+		);
+	}
+	const compensationMap: Record<'A' | 'B', PlayerStartConfig> = {
 		A: playerACompensation,
 		B: playerBCompensation,
-	} as Record<'A' | 'B', PlayerStartConfig>;
+	};
 	const engineContext = new EngineContext(
 		gameState,
 		services,
@@ -227,6 +267,7 @@ export function createEngine({
 	);
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
+	resourceBootstrap.attachRuntime(engineContext);
 	const aiSystem = createAISystem({ performAction, advance });
 	aiSystem.register(playerTwo.id, createTaxCollectorController(playerTwo.id));
 	engineContext.aiSystem = aiSystem;

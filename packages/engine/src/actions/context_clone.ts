@@ -32,6 +32,9 @@ function cloneLand(land: Land): Land {
 
 function clonePlayerState(player: PlayerState): PlayerState {
 	const cloned = new PlayerState(player.id, player.name);
+	if (player.resourceV2) {
+		cloned.resourceV2 = structuredClone(player.resourceV2);
+	}
 	for (const key of Object.keys(player.resources)) {
 		cloned.resources[key] = player.resources[key] ?? 0;
 	}

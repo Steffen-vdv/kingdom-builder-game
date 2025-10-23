@@ -1,4 +1,11 @@
 import type { EffectDef } from '../effects';
+import {
+	createResourceV2State,
+	getResourceValue,
+	setResourceValue,
+	type ResourceV2State,
+	type ResourceV2StateBlueprint,
+} from '../resourceV2';
 
 export const Resource: Record<string, string> = {};
 export type ResourceKey = string;
@@ -72,6 +79,22 @@ export interface StatSourceContribution {
 	meta: StatSourceMeta;
 }
 
+export interface PlayerStateResourceV2LegacyKeys {
+	resources?: readonly ResourceKey[];
+	stats?: readonly StatKey[];
+	population?: readonly PopulationRoleId[];
+}
+
+export interface PlayerStateResourceV2Options {
+	blueprint: ResourceV2StateBlueprint;
+	initialValues?: Record<string, number>;
+	legacy?: PlayerStateResourceV2LegacyKeys;
+}
+
+export interface PlayerStateOptions {
+	resourceV2?: PlayerStateResourceV2Options;
+}
+
 export type PlayerId = 'A' | 'B';
 
 export interface GameConclusion {
@@ -119,14 +142,38 @@ export class PlayerState {
 	statSources: Record<StatKey, Record<string, StatSourceContribution>>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
+	resourceV2?: ResourceV2State;
+	private readonly resourceLegacyKeys: ReadonlySet<ResourceKey>;
+	private readonly statLegacyKeys: ReadonlySet<StatKey>;
+	private readonly populationLegacyKeys: ReadonlySet<PopulationRoleId>;
+	private readonly resourceFallback: Record<string, number> = {};
+	private readonly statFallback: Record<string, number> = {};
+	private readonly populationFallback: Record<string, number> = {};
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any;
-	constructor(id: PlayerId, name: string) {
+	constructor(id: PlayerId, name: string, options: PlayerStateOptions = {}) {
 		this.id = id;
 		this.name = name;
-		this.resources = {};
-		for (const key of Object.values(Resource)) {
-			this.resources[key] = 0;
+		const resourceKeys: ResourceKey[] = Object.values(Resource);
+		const statKeys: StatKey[] = Object.values(Stat);
+		const populationKeys: PopulationRoleId[] = Object.values(PopulationRole);
+		const legacyConfig = options.resourceV2?.legacy ?? {};
+		this.resourceLegacyKeys = new Set(legacyConfig.resources ?? resourceKeys);
+		this.statLegacyKeys = new Set(legacyConfig.stats ?? statKeys);
+		this.populationLegacyKeys = new Set(
+			legacyConfig.population ?? populationKeys,
+		);
+		if (options.resourceV2?.blueprint) {
+			this.resourceV2 = createResourceV2State(options.resourceV2.blueprint, {
+				values: options.resourceV2.initialValues,
+			});
+		}
+		this.resources = this.createLegacyShim(
+			Array.from(this.resourceLegacyKeys),
+			this.resourceFallback,
+			'resource',
+		);
+		for (const key of resourceKeys) {
 			Object.defineProperty(this, key, {
 				get: () => this.resources[key],
 				set: (value: number) => {
@@ -136,14 +183,22 @@ export class PlayerState {
 				configurable: true,
 			});
 		}
-		this.stats = {};
+		this.stats = this.createLegacyShim(
+			Array.from(this.statLegacyKeys),
+			this.statFallback,
+			'stat',
+			(key, value) => {
+				if (value !== 0) {
+					this.statsHistory[key] = true;
+				}
+			},
+		);
 		this.statsHistory = {};
 		this.statSources = {} as Record<
 			StatKey,
 			Record<string, StatSourceContribution>
 		>;
-		for (const key of Object.values(Stat)) {
-			this.stats[key] = 0;
+		for (const key of statKeys) {
 			this.statsHistory[key] = false;
 			this.statSources[key] = {};
 			Object.defineProperty(this, key, {
@@ -158,12 +213,109 @@ export class PlayerState {
 				configurable: true,
 			});
 		}
-		this.population = {};
-		for (const key of Object.values(PopulationRole)) {
-			this.population[key] = 0;
-		}
+		this.population = this.createLegacyShim(
+			Array.from(this.populationLegacyKeys),
+			this.populationFallback,
+			'population',
+		);
+		this.lands = [];
+		this.buildings = new Set();
+		this.actions = new Set();
 		this.skipPhases = {};
 		this.skipSteps = {};
+		if (this.resourceV2) {
+			this.initialiseLegacyStatsHistory();
+		}
+	}
+
+	private initialiseLegacyStatsHistory() {
+		if (!this.resourceV2) {
+			return;
+		}
+		for (const key of this.statLegacyKeys) {
+			const value = getResourceValue(this.resourceV2, key);
+			if (value !== 0) {
+				this.statsHistory[key] = true;
+			}
+		}
+	}
+
+	private createLegacyShim<KeyType extends string>(
+		keys: readonly KeyType[],
+		fallback: Record<string, number>,
+		category: 'resource' | 'stat' | 'population',
+		onWrite?: (key: KeyType, value: number) => void,
+	): Record<KeyType, number> {
+		const shim: Record<KeyType, number> = {};
+		for (const key of keys) {
+			if (!(key in fallback)) {
+				fallback[key] = 0;
+			}
+			Object.defineProperty(shim, key, {
+				get: () => this.readLegacyValue(key, fallback),
+				set: (value: number) => {
+					const next = this.writeLegacyValue(key, value, fallback, category);
+					if (onWrite) {
+						onWrite(key, next);
+					}
+				},
+				enumerable: true,
+				configurable: true,
+			});
+		}
+		return shim;
+	}
+
+	private readLegacyValue(
+		key: string,
+		fallback: Record<string, number>,
+	): number {
+		if (!this.resourceV2) {
+			return fallback[key] ?? 0;
+		}
+		const definition = this.resourceV2.blueprint.values.get(key);
+		if (!definition) {
+			return fallback[key] ?? 0;
+		}
+		return getResourceValue(this.resourceV2, key);
+	}
+
+	private writeLegacyValue(
+		key: string,
+		value: number,
+		fallback: Record<string, number>,
+		category: 'resource' | 'stat' | 'population',
+	): number {
+		if (!this.resourceV2) {
+			fallback[key] = value;
+			return value;
+		}
+		const definition = this.resourceV2.blueprint.values.get(key);
+		if (!definition) {
+			fallback[key] = value;
+			return value;
+		}
+		if (definition.kind !== 'resource') {
+			throw new Error(
+				`Cannot directly assign legacy ${category} value for limited ResourceV2 parent: ${key}`,
+			);
+		}
+		const next = setResourceValue(this.resourceV2, key, value);
+		fallback[key] = next;
+		return next;
+	}
+
+	handleResourceV2ValueChange(resourceId: string): void {
+		if (!this.resourceV2) {
+			return;
+		}
+		const statKey: StatKey = resourceId;
+		if (this.statLegacyKeys.has(statKey)) {
+			const value = getResourceValue(this.resourceV2, statKey);
+			if (value !== 0) {
+				this.statsHistory[statKey] = true;
+			}
+		}
 	}
 }
 
@@ -177,8 +329,13 @@ export class GameState {
 	devMode = false;
 	conclusion?: GameConclusion;
 	players: PlayerState[];
-	constructor(aName = 'Player', bName = 'Opponent') {
-		this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];
+	constructor(
+		aName = 'Player',
+		bName = 'Opponent',
+		playerFactory: (id: PlayerId, name: string) => PlayerState = (id, name) =>
+			new PlayerState(id, name),
+	) {
+		this.players = [playerFactory('A', aName), playerFactory('B', bName)];
 	}
 	get active(): PlayerState {
 		return this.players[this.currentPlayerIndex]!;
