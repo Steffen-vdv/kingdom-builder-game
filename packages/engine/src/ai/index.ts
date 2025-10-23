@@ -121,7 +121,9 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			await dependencies.advance(engineContext);
 		};
 
-		const definition = engineContext.actions.get(TAX_ACTION_ID);
+		const definition = engineContext.actions.has(TAX_ACTION_ID)
+			? engineContext.actions.get(TAX_ACTION_ID)
+			: undefined;
 		if (!definition) {
 			await finishActionPhaseAsync();
 			return;
