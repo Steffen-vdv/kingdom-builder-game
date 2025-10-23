@@ -44,6 +44,14 @@ export const resourceV2TransferHandler: EffectHandler<
 	const resourceId = effect.params.id;
 
 	assertKnownResource(recipientState, resourceId);
+	if (
+		Object.prototype.hasOwnProperty.call(
+			recipientState.parentChildren,
+			resourceId,
+		)
+	) {
+		throw new Error(`ResourceV2 parent "${resourceId}" is child-derived.`);
+	}
 
 	const requested = resolveTransferRequest(effect, donorState, mult);
 	const amount = resolveTransferAmount(

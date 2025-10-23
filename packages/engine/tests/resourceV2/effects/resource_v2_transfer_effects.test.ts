@@ -219,6 +219,33 @@ describe('ResourceV2 transfer handler', () => {
 
 		expect(attemptTransfer).toThrow('ResourceV2 parent');
 	});
+
+	it('does not mutate donor resources when the recipient rejects the transfer', () => {
+		const { definition, activeState, opponentState, context } = createContext();
+		const resourceId = definition.id;
+		opponentState.amounts[resourceId] = 7;
+		activeState.amounts[resourceId] = 1;
+		const donorBefore = opponentState.amounts[resourceId];
+
+		activeState.parentChildren[resourceId] = Object.freeze(['synthetic-child']);
+
+		const effect: EffectDef = {
+			type: 'resource',
+			method: 'transfer',
+			params: { id: resourceId, amount: 3 },
+			meta: {
+				donor: { reconciliation: 'clamp' },
+				recipient: { reconciliation: 'clamp' },
+			},
+		};
+
+		const attemptTransfer = () => resourceV2TransferHandler(effect, context, 1);
+
+		expect(attemptTransfer).toThrow('ResourceV2 parent');
+
+		expect(opponentState.amounts[resourceId]).toBe(donorBefore);
+		expect(opponentState.recentDeltas[resourceId]).toBe(0);
+	});
 });
 
 describe('ResourceV2 upper bound increase handler', () => {
