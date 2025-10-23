@@ -4,13 +4,11 @@ import type { EngineContext } from '../context';
 import type { ActionTrace, PlayerSnapshot } from '../log';
 import type { Land, PlayerId, PlayerState } from '../state';
 import type { PassiveSummary } from '../services';
-import type {
-	SessionResourceTierStateSnapshot,
-	SessionResourceValueParentSnapshot,
-	SessionResourceValueSnapshot,
-	SessionResourceValueSnapshotMap,
-} from '@kingdom-builder/protocol';
 import type { LandSnapshot, PlayerStateSnapshot } from './types';
+import {
+	cloneResourceV2ValueSnapshotMap,
+	createResourceV2ValueSnapshotMap,
+} from './resource_v2_snapshot';
 
 type StatSnapshotBucket = PlayerStateSnapshot['statSources'][string];
 
@@ -111,112 +109,6 @@ function cloneSkipSteps(skipSteps: PlayerState['skipSteps']): SkipSteps {
 	);
 }
 
-function cloneResourceTierState(
-	tierState: PlayerState['resourceV2']['tiers'][string] | undefined,
-): SessionResourceTierStateSnapshot | undefined {
-	if (!tierState) {
-		return undefined;
-	}
-	const snapshot: SessionResourceTierStateSnapshot = {};
-	if (tierState.trackId !== undefined) {
-		snapshot.trackId = tierState.trackId;
-	}
-	if (tierState.tierId !== undefined) {
-		snapshot.tierId = tierState.tierId;
-	}
-	if (tierState.nextTierId !== undefined) {
-		snapshot.nextTierId = tierState.nextTierId;
-	}
-	if (tierState.previousTierId !== undefined) {
-		snapshot.previousTierId = tierState.previousTierId;
-	}
-	return snapshot;
-}
-
-function cloneResourceParent(
-	state: PlayerState['resourceV2'],
-	parentId: string,
-): SessionResourceValueParentSnapshot | undefined {
-	const amount = state.amounts[parentId];
-	if (amount === undefined) {
-		return undefined;
-	}
-	const snapshot: SessionResourceValueParentSnapshot = {
-		id: parentId,
-		amount: amount ?? 0,
-		touched: Boolean(state.touched[parentId]),
-	};
-	const bounds = state.bounds[parentId];
-	if (bounds) {
-		snapshot.bounds = { ...bounds };
-	}
-	return snapshot;
-}
-
-function createRecentResourceGains(
-	state: PlayerState['resourceV2'],
-	resourceId: string,
-): ReadonlyArray<{ resourceId: string; delta: number }> {
-	const delta = state.recentDeltas[resourceId] ?? 0;
-	if (delta === 0) {
-		return [];
-	}
-	return [{ resourceId, delta }];
-}
-
-function cloneResourceValue(
-	state: PlayerState['resourceV2'],
-	resourceId: string,
-): SessionResourceValueSnapshot {
-	const snapshot: SessionResourceValueSnapshot = {
-		amount: state.amounts[resourceId] ?? 0,
-		touched: Boolean(state.touched[resourceId]),
-		recentGains: createRecentResourceGains(state, resourceId),
-	};
-	const tier = cloneResourceTierState(state.tiers[resourceId]);
-	if (tier) {
-		snapshot.tier = tier;
-	}
-	const parentId = state.childToParent[resourceId];
-	if (parentId) {
-		const parentSnapshot = cloneResourceParent(state, parentId);
-		if (parentSnapshot) {
-			snapshot.parent = parentSnapshot;
-		}
-	}
-	return snapshot;
-}
-
-function snapshotResourceValues(
-	player: PlayerState,
-): SessionResourceValueSnapshotMap | undefined {
-	const state = player.resourceV2;
-	const { resourceIds, parentIds } = state;
-	if (resourceIds.length === 0 && parentIds.length === 0) {
-		return undefined;
-	}
-	const values: SessionResourceValueSnapshotMap = {};
-	for (const resourceId of resourceIds) {
-		values[resourceId] = cloneResourceValue(state, resourceId);
-	}
-	for (const parentId of parentIds) {
-		if (Object.prototype.hasOwnProperty.call(values, parentId)) {
-			continue;
-		}
-		const tier = cloneResourceTierState(state.tiers[parentId]);
-		const snapshot: SessionResourceValueSnapshot = {
-			amount: state.amounts[parentId] ?? 0,
-			touched: Boolean(state.touched[parentId]),
-			recentGains: [],
-		};
-		if (tier) {
-			snapshot.tier = tier;
-		}
-		values[parentId] = snapshot;
-	}
-	return values;
-}
-
 function cloneLand(land: Land): LandSnapshot {
 	const snapshot: LandSnapshot = {
 		id: land.id,
@@ -247,7 +139,7 @@ export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
-	const values = snapshotResourceValues(player);
+	const values = createResourceV2ValueSnapshotMap(player);
 	return {
 		id: player.id,
 		name: player.name,
@@ -268,9 +160,13 @@ export function snapshotPlayer(
 }
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
+	const clonedValues = snapshot.values
+		? cloneResourceV2ValueSnapshotMap(snapshot.values)
+		: undefined;
 	return {
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
+		...(clonedValues ? { values: clonedValues } : {}),
 		buildings: [...snapshot.buildings],
 		lands: snapshot.lands.map((land) => ({
 			id: land.id,

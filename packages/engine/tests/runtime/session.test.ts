@@ -212,40 +212,143 @@ describe('EngineSession', () => {
 	});
 
 	it('includes ResourceV2 values in player snapshots', () => {
+		const childId = 'resource:v2';
+		const parentId = 'parent:v2';
+		const childTierLow = 'tier:low';
+		const childTierHigh = 'tier:high';
+		const parentTierLow = 'parent-tier:low';
+		const parentTierHigh = 'parent-tier:high';
 		const resource = createResourceV2Definition({
-			id: 'resource:v2',
+			id: childId,
 			group: { groupId: 'group:v2', order: 1 },
+			tierTrack: (track) => {
+				track.tierWith(childTierLow, (tier) => {
+					tier.range(0, 10);
+				});
+				track.tierWith(childTierHigh, (tier) => {
+					tier.range(10);
+				});
+			},
 		});
 		const group = createResourceV2Group({
 			id: 'group:v2',
 			children: [resource.id],
-			parentId: 'parent:v2',
+			parentId,
+			parentTierTrack: (track) => {
+				track.tierWith(parentTierLow, (tier) => {
+					tier.range(0, 10);
+				});
+				track.tierWith(parentTierHigh, (tier) => {
+					tier.range(10);
+				});
+			},
 		});
 		const registry = loadResourceV2Registry({
 			resources: [resource],
 			groups: [group],
 		});
-		const start = JSON.parse(JSON.stringify(GAME_START)) as StartConfig;
-		(
-			start.player as StartConfig['player'] & {
-				resourceV2?: Record<string, number>;
-			}
-		).resourceV2 = { [resource.id]: 4 };
+		const content = createContentFactory();
+		const gain = content.action({
+			effects: [
+				{
+					type: 'resource',
+					method: 'add',
+					params: {
+						id: resource.id,
+						amount: 7,
+					},
+					meta: { reconciliation: 'clamp' },
+				},
+			],
+		});
+		const gainWithTrace = content.action({
+			effects: [
+				{
+					type: 'action',
+					method: 'perform',
+					params: { id: gain.id },
+				},
+			],
+		});
+		const start: StartConfig = JSON.parse(JSON.stringify(GAME_START));
+		const startPlayer = start.player as StartConfig['player'] & {
+			resourceV2?: Record<string, number>;
+		};
+		startPlayer.resourceV2 = { [resource.id]: 4 };
 
 		const session = createTestSession({
+			actions: content.actions,
 			start,
 			resourceV2Registry: registry,
 		});
 
-		const snapshot = session.getSnapshot();
-		const player = snapshot.game.players[0]!;
+		const initial = session.getSnapshot();
+		const player = initial.game.players[0]!;
 		expect(player.values).toBeDefined();
 		const values = player.values!;
-		expect(values[resource.id]?.amount).toBe(4);
-		expect(values[resource.id]?.touched).toBe(false);
-		expect(values[resource.id]?.recentGains).toEqual([]);
-		expect(values[resource.id]?.parent?.id).toBe(group.parent.id);
-		expect(values[group.parent.id]?.amount).toBe(4);
+		expect(Object.keys(values)).toEqual([childId, parentId]);
+		const childValue = values[childId];
+		const parentValue = values[parentId];
+		expect(childValue?.amount).toBe(4);
+		expect(childValue?.touched).toBe(false);
+		expect(childValue?.recentGains).toEqual([]);
+		expect(childValue?.parent?.id).toBe(parentId);
+		expect(parentValue?.amount).toBe(4);
+		expect(parentValue?.touched).toBe(false);
+		expect(parentValue?.recentGains).toEqual([]);
+		expect(parentValue?.parent).toBeUndefined();
+		const trackId = `${childId}_tierTrack`;
+		expect(childValue?.tier).toEqual({
+			trackId,
+			tierId: childTierLow,
+			nextTierId: childTierHigh,
+		});
+		const parentTrackId = `${parentId}_tierTrack`;
+		expect(parentValue?.tier).toEqual({
+			trackId: parentTrackId,
+			tierId: parentTierLow,
+			nextTierId: parentTierHigh,
+		});
+
+		advanceToMain(session);
+		const traces = session.performAction(gainWithTrace.id);
+		expect(traces).toHaveLength(1);
+		const firstTrace = traces[0]!;
+		const beforeChild = firstTrace.before.values?.[childId];
+		const afterChild = firstTrace.after.values?.[childId];
+		expect(beforeChild?.amount).toBe(4);
+		expect(beforeChild?.recentGains).toEqual([]);
+		expect(afterChild?.amount).toBe(11);
+		expect(afterChild?.recentGains).toEqual([
+			{ resourceId: childId, delta: 7 },
+		]);
+		expect(afterChild?.touched).toBe(true);
+		expect(afterChild?.tier).toEqual({
+			trackId,
+			tierId: childTierHigh,
+			previousTierId: childTierLow,
+		});
+
+		const after = session.getSnapshot();
+		const updated = after.game.players[0]!;
+		const updatedValues = updated.values!;
+		const updatedChild = updatedValues[childId];
+		const updatedParent = updatedValues[parentId];
+		expect(updatedChild?.amount).toBe(11);
+		expect(updatedParent?.amount).toBe(11);
+		expect(updatedParent?.touched).toBe(true);
+		expect(updatedParent?.tier).toEqual({
+			trackId: parentTrackId,
+			tierId: parentTierHigh,
+			previousTierId: parentTierLow,
+		});
+		expect(updatedChild?.recentGains).toEqual([
+			{ resourceId: childId, delta: 7 },
+		]);
+		expect(updatedParent?.recentGains).toEqual([]);
+		expect(after.recentResourceGains).toEqual(
+			expect.arrayContaining([{ key: childId, amount: 7 }]),
+		);
 	});
 
 	it('returns cloned passive evaluation modifier maps', () => {

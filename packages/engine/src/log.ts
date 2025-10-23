@@ -1,8 +1,11 @@
 import type { EngineContext } from './context';
 import type { PlayerState } from './state';
 import type { PassiveSummary } from './services';
+import type { SessionResourceValueSnapshotMap } from '@kingdom-builder/protocol';
+import { createResourceV2ValueSnapshotMap } from './runtime/resource_v2_snapshot';
 
 export interface PlayerSnapshot {
+	values?: SessionResourceValueSnapshotMap;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	buildings: string[];
@@ -19,7 +22,9 @@ export function snapshotPlayer(
 	player: PlayerState,
 	engineContext: EngineContext,
 ): PlayerSnapshot {
+	const values = createResourceV2ValueSnapshotMap(player);
 	return {
+		...(values ? { values } : {}),
 		resources: { ...player.resources },
 		stats: { ...player.stats },
 		buildings: Array.from(player.buildings),
