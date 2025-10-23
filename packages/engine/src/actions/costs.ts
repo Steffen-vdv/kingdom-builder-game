@@ -36,7 +36,7 @@ export function applyCostsWithPassives(
 	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
 		const baseAmount = actionDefinition.system
 			? 0
-			: engineContext.actionCostAmount ||
+			: engineContext.actionCostAmount ??
 				engineContext.services.rules.defaultActionAPCost;
 		defaultedCosts[primaryCostKey] = baseAmount;
 	}
