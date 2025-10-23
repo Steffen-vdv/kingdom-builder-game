@@ -18,7 +18,7 @@ describe('buildSessionMetadata', () => {
 		expect(Object.isFrozen(clonedAction)).toBe(true);
 	});
 
-	it('copies stat formatting metadata', () => {
+	it('provides ResourceV2 descriptors for stat values', () => {
 		const { metadata } = buildSessionMetadata();
 		const [statId, statInfo] =
 			Object.entries(STATS).find(([, info]) => info.addFormat) ?? [];
@@ -26,13 +26,13 @@ describe('buildSessionMetadata', () => {
 		if (!statId || !statInfo) {
 			throw new Error('Expected stats with formatting in content definitions.');
 		}
-		const statMetadata = metadata.stats?.[statId];
-		expect(statMetadata).toBeDefined();
-		expect((statMetadata as { format?: unknown })?.format).toEqual(
-			statInfo.addFormat,
-		);
+		const descriptor = metadata.values?.descriptors?.[statId];
+		expect(descriptor).toBeDefined();
+		expect(descriptor?.label).toBe(statInfo.label);
+		expect(descriptor?.icon).toBe(statInfo.icon);
+		expect(descriptor?.description).toBe(statInfo.description);
 		if (statInfo.displayAsPercent !== undefined) {
-			expect(statMetadata?.displayAsPercent).toBe(statInfo.displayAsPercent);
+			expect(descriptor?.displayAsPercent).toBe(statInfo.displayAsPercent);
 		}
 	});
 

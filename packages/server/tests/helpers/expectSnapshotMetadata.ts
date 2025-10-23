@@ -10,6 +10,14 @@ export function expectSnapshotMetadata(
 		return;
 	}
 	expect(metadata.passiveEvaluationModifiers).toBeDefined();
+	const valueMetadata = metadata.values;
+	expect(valueMetadata).toBeDefined();
+	expect((metadata as Record<string, unknown>).resources).toBeUndefined();
+	expect((metadata as Record<string, unknown>).stats).toBeUndefined();
+	expect((metadata as Record<string, unknown>).populations).toBeUndefined();
+	if (valueMetadata?.descriptors) {
+		expect(Object.keys(valueMetadata.descriptors).length).toBeGreaterThan(0);
+	}
 	expect(metadata.assets).toBeDefined();
 	expect(metadata.assets?.upkeep?.icon).toBeDefined();
 	expect(metadata.assets?.transfer?.icon).toBeDefined();
@@ -18,12 +26,13 @@ export function expectSnapshotMetadata(
 export function expectStaticMetadata(
 	metadata: SessionStaticMetadataPayload,
 ): void {
-	const statKeys = Object.keys(metadata.stats ?? {});
-	expect(statKeys.length).toBeGreaterThan(0);
-	const hasPercentStat = Object.values(metadata.stats ?? {}).some(
-		(descriptor) => descriptor?.displayAsPercent === true,
-	);
-	expect(hasPercentStat).toBe(true);
+	const valueDescriptors = Object.keys(metadata.values?.descriptors ?? {});
+	expect(valueDescriptors.length).toBeGreaterThan(0);
+	const orderedValues = metadata.values?.ordered ?? [];
+	expect(orderedValues.length).toBeGreaterThan(0);
+	expect((metadata as Record<string, unknown>).resources).toBeUndefined();
+	expect((metadata as Record<string, unknown>).stats).toBeUndefined();
+	expect((metadata as Record<string, unknown>).populations).toBeUndefined();
 	const triggerKeys = Object.keys(metadata.triggers ?? {});
 	expect(triggerKeys.length).toBeGreaterThan(0);
 	expect(metadata.overview).toBeDefined();

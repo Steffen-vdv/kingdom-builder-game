@@ -19,7 +19,8 @@ function expectDescriptorMetadata(
 	if (!metadata) {
 		return;
 	}
-	expect(Object.keys(metadata.stats ?? {})).not.toHaveLength(0);
+	const valueKeys = Object.keys(metadata.values?.descriptors ?? {});
+	expect(valueKeys).not.toHaveLength(0);
 	expect(Object.keys(metadata.triggers ?? {})).not.toHaveLength(0);
 	expect(metadata.overview).toBeDefined();
 }
@@ -57,6 +58,10 @@ describe('SessionTransport createSession', () => {
 		expectSnapshotMetadata(response.snapshot.metadata);
 		expectDescriptorMetadata(response.snapshot.metadata);
 		expect(response.snapshot.game.devMode).toBe(true);
+		expect(Array.isArray(response.snapshot.recentValueChanges)).toBe(true);
+		expect(
+			(response.snapshot as Record<string, unknown>).recentResourceGains,
+		).toBeUndefined();
 		expectStaticMetadata(manager.getMetadata());
 		const [playerA, playerB] = response.snapshot.game.players;
 		expect(playerA?.name).toBe('Alpha');
@@ -207,7 +212,15 @@ describe('SessionTransport createSession', () => {
 			new Set(factory.populations.keys()),
 		);
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
-		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
-		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(registries.resourceValues.definitions[costKey]).toMatchObject({
+			id: costKey,
+		});
+		expect(registries.resourceValues.definitions[gainKey]).toMatchObject({
+			id: gainKey,
+		});
+		expect(registries.resourceValues.globalActionCost).toEqual({
+			resourceId: costKey,
+			amount: 1,
+		});
 	});
 });
