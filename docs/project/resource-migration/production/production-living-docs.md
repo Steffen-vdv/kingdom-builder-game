@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 17:45
-- **Current Focus:** Resource Migration MVP - P2 - T33 - Build & Develop Actions ResourceV2 Migration
-- **State Summary:** Added ResourceV2 construction/upkeep change payload metadata to every build and develop action, bridged through the new helpers in [`packages/contents/src/actions/buildActions.ts`](../../../../packages/contents/src/actions/buildActions.ts) and [`developActions.ts`](../../../../packages/contents/src/actions/developActions.ts), and captured the rollout in [`worklogs/T33-build-develop-actions.md`](../../../../worklogs/T33-build-develop-actions.md).
+- **Timestamp (UTC):** 2025-10-27 20:10
+- **Current Focus:** Resource Migration MVP - P2 - T35 - Passive Content ResourceV2 Migration
+- **State Summary:** Migrated building and development passives to the ResourceV2 change payloads, replacing `resourceParams`/`statParams` with inline helpers that emit `resourceId` metadata while preserving legacy keys. Updates live in [`packages/contents/src/buildings.ts`](../../../../packages/contents/src/buildings.ts), [`packages/contents/src/developments.ts`](../../../../packages/contents/src/developments.ts), and are documented in [`worklogs/T35-passive-content.md`](../../../../worklogs/T35-passive-content.md).
 - **Next Suggested Tasks:**
-  - Extend the same ResourceV2 payload annotations to population and hire actions once their builders are ready.
-  - Coordinate with engine transport owners so the new `construction`/`upkeep` metadata feeds upcoming session logs before deprecating legacy cost collectors.
-  - Rebuild the protocol/contents `dist` bundles (or update tooling) so repository typechecks no longer require pre-generated artifacts during `npm run check`.
-- **Blocking Issues / Risks:** `npm run check` currently fails because the monorepo typecheck expects prebuilt `packages/**/dist` artifacts; cleaning those directories (needed to keep ESLint happy) causes `tsc -b` to abort. Investigate adding a build step or ignore list so lint/typecheck can coexist.
+  - Port population and hire content to the same ResourceV2 builders so all passive effects share the new payload shape.
+  - Deduplicate the temporary amount helpers once remaining modules migrate, ideally centralising them in a shared utility.
+  - Resume investigating long-running `npm run check` workflows so we can capture full test coverage without manual aborts.
+- **Blocking Issues / Risks:** Repository typecheck/test orchestration still expects prebuilt `packages/**/dist` outputs and comprehensive coverage runs; `npm run check` remains impractically long without those artifacts, forcing manual aborts during vitest coverage.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
