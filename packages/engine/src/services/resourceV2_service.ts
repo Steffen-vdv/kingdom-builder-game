@@ -17,32 +17,16 @@ import {
 	resolveRounding,
 	roundValue,
 } from './resourceV2_math';
-type HookPayload = {
-	player: PlayerState;
-	resourceId: ResourceV2Key;
-	amount: number;
-};
-type ResourceV2Hook = (context: EngineContext, payload: HookPayload) => void;
-type ResourceV2ChangeReason = 'value' | 'lowerBound' | 'upperBound';
-
-export interface ResourceV2Change {
-	reason: ResourceV2ChangeReason;
-	previousValue: number;
-	newValue: number;
-	delta: number;
-	suppressHooks: boolean;
-	previousBound?: number;
-	newBound?: number;
-}
-
-export interface ResourceV2ChangeHandler {
-	(
-		context: EngineContext,
-		player: PlayerState,
-		resourceId: ResourceV2Key,
-		change: ResourceV2Change,
-	): void;
-}
+import type {
+	ResourceV2Change,
+	ResourceV2ChangeHandler,
+	ResourceV2Hook,
+} from './resourceV2_types';
+export type {
+	ResourceV2Change,
+	ResourceV2ChangeHandler,
+	ResourceV2Hook,
+} from './resourceV2_types';
 
 export class ResourceV2Service {
 	private definitions: Record<ResourceV2Key, ResourceV2RuntimeDefinition> = {};
@@ -142,29 +126,37 @@ export class ResourceV2Service {
 		transfer: ResourceV2Transfer,
 		multiplier = 1,
 	): number {
+		const { from, to, suppressHooks } = transfer;
+		const hookSuppressed = Boolean(suppressHooks);
 		const planned = this.resolveTransferAmount(donor, transfer, multiplier);
 		if (planned <= 0) {
 			return 0;
 		}
-		const removed = this.applyDelta(
-			context,
-			donor,
-			transfer.from.resourceId,
-			-planned,
-			{
-				reconciliation: transfer.from.reconciliation,
-				suppressHooks: Boolean(transfer.suppressHooks),
-			},
-		);
+		const removed = this.applyDelta(context, donor, from.resourceId, -planned, {
+			reconciliation: from.reconciliation,
+			suppressHooks: hookSuppressed,
+		});
 		const donated = Math.abs(removed);
 		if (donated <= 0) {
 			return 0;
 		}
-		this.applyDelta(context, recipient, transfer.to.resourceId, donated, {
-			reconciliation: transfer.to.reconciliation,
-			suppressHooks: Boolean(transfer.suppressHooks),
-		});
-		return donated;
+		const received = this.applyDelta(
+			context,
+			recipient,
+			to.resourceId,
+			donated,
+			{
+				reconciliation: to.reconciliation,
+				suppressHooks: hookSuppressed,
+			},
+		);
+		if (received < donated) {
+			this.applyDelta(context, donor, from.resourceId, donated - received, {
+				reconciliation: from.reconciliation,
+				suppressHooks: hookSuppressed,
+			});
+		}
+		return received;
 	}
 
 	adjustBound(
