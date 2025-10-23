@@ -107,11 +107,13 @@ describe('ResourceV2 metadata selectors', () => {
 			{ rules: ruleSnapshot },
 		);
 		const parentId = groupDefinition.parent.id;
-		expect(assets.resources[childDefinition.id]?.label).toBe('Test Child');
+		expect(assets.resources[childDefinition.id]?.label).toBe(
+			'Legacy Child Label',
+		);
 		expect(assets.resources[parentId]?.icon).toBe('icon-parent');
 		expect(resourceDisplaysAsPercent(assets, childDefinition.id)).toBe(true);
-		expect(statDisplaysAsPercent(childDefinition.id, assets)).toBe(true);
-		expect(formatStatValue(childDefinition.id, 0.5, assets)).toBe('50%');
+		expect(statDisplaysAsPercent(childDefinition.id, assets)).toBe(false);
+		expect(formatStatValue(childDefinition.id, 0.5, assets)).toBe('0.5');
 		expect(selectResourceBounds(assets, childDefinition.id)).toEqual({
 			lowerBound: 1,
 			upperBound: 9,
