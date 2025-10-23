@@ -8,6 +8,8 @@ import {
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
+	RESOURCE_GROUPS_V2,
+	RESOURCE_V2,
 	PHASES,
 	GAME_START,
 	RULES,
@@ -19,6 +21,10 @@ import type {
 	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
+	Registry,
+	SerializedRegistry,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -27,6 +33,8 @@ import {
 import {
 	cloneActionCategoryRegistry,
 	cloneRegistry,
+	cloneResourceV2GroupRegistry,
+	cloneResourceV2Registry,
 	freezeSerializedRegistry,
 } from './registryUtils.js';
 import {
@@ -37,9 +45,19 @@ import {
 } from './sessionConfigAssets.js';
 type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 
+type ResourceV2RegistrySource =
+	| Registry<ResourceV2Definition>
+	| SerializedRegistry<ResourceV2Definition>;
+
+type ResourceV2GroupRegistrySource =
+	| Registry<ResourceV2GroupMetadata>
+	| SerializedRegistry<ResourceV2GroupMetadata>;
+
 type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
 	actionCategoryRegistry?: SessionActionCategoryRegistry;
+	resourcesV2?: ResourceV2RegistrySource;
+	resourceGroups?: ResourceV2GroupRegistrySource;
 	primaryIconId?: string | null;
 };
 
@@ -102,6 +120,8 @@ export class SessionManager {
 		const {
 			resourceRegistry,
 			actionCategoryRegistry,
+			resourcesV2: resourceV2Override,
+			resourceGroups: resourceGroupOverride,
 			primaryIconId: primaryIconOverride,
 			...engineOverrides
 		} = engineOptions;
@@ -129,6 +149,18 @@ export class SessionManager {
 			this.resourceOverrides,
 			this.baseOptions.start,
 		);
+		const baseResourceV2 = cloneResourceV2Registry(
+			resourceV2Override ?? RESOURCE_V2,
+		);
+		const baseResourceGroups = cloneResourceV2GroupRegistry(
+			resourceGroupOverride ?? RESOURCE_GROUPS_V2,
+		);
+		const frozenResourceV2 = baseResourceV2
+			? freezeSerializedRegistry(structuredClone(baseResourceV2))
+			: undefined;
+		const frozenResourceGroups = baseResourceGroups
+			? freezeSerializedRegistry(structuredClone(baseResourceGroups))
+			: undefined;
 		const actionCategories = actionCategoryRegistry
 			? (freezeSerializedRegistry(
 					structuredClone(actionCategoryRegistry),
@@ -144,6 +176,12 @@ export class SessionManager {
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
 		};
+		if (frozenResourceV2) {
+			this.registries.resourcesV2 = frozenResourceV2;
+		}
+		if (frozenResourceGroups) {
+			this.registries.resourceGroups = frozenResourceGroups;
+		}
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
 			developments: this.baseOptions.developments,

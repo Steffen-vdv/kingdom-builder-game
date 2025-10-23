@@ -56,6 +56,11 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
                                                                                 | Extended protocol session snapshots with ResourceV2 state, ordering metadata, and optional registry group payloads plus regression coverage for mixed legacy/new serialization. | `npm run check -- --filter protocol` (fails: npm-run-all rejects `--filter`; chunk `d6c336†L1-L12`); `npx vitest run --config vitest.protocol.config.ts` (pass; chunk `2d9766†L1-L33`) |
                               | Align engine/server snapshot emitters to populate the new ResourceV2 fields end-to-end and update web selectors once transports supply the richer payloads. |
 
+| 2025-10-27 | ChatGPT (gpt-5-codex) | packages/protocol/src/session/contracts.ts; packages/protocol/src/config/session_contracts/shared.ts; packages/server/src/session/SessionManager.ts; packages/server/src/session/sessionConfigAssets.ts; packages/server/src/session/registryUtils.ts; packages/server/tests/session-registry-resourceV2.test.ts |
+
+                                                                                | Added ResourceV2 definition/group cloning for session registries, exposed the payload in server responses, and documented the migration status with new regression coverage. | `npm run format`; `npm run lint`; `npm run check -- --filter server` (fails: npm-run-all rejects `--filter`; chunk `fcc0f2†L1-L2`) |
+                              | Coordinate with web/session consumers to hydrate against the new ResourceV2 registries and ensure engine snapshots reuse the server catalog to avoid divergence. |
+
 | 2024-**-** | _(add entry)_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -63,14 +68,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-26 14:15
-- **Current Focus:** Protocol snapshot ResourceV2 expansion
-- **State Summary:** Session contracts now expose ResourceV2 player values, ordered resource/group metadata, and optional registry group payloads while keeping legacy buckets intact for migration overlap; protocol tests cover mixed legacy + V2 serialization.
+- **Timestamp (UTC):** 2025-10-27 17:45
+- **Current Focus:** Server session registries ResourceV2 exposure
+- **State Summary:** Protocol registries now accept ResourceV2 definitions, and the server clones/sorts ResourceV2 catalog and group metadata into every session payload while tolerating missing data; regression coverage ensures ordering and clone safety.
 - **Next Suggested Tasks:**
-  - Teach the engine snapshot builder and server transport to populate the new ResourceV2 fields so clients can consume live catalog/values data.
-  - Update web metadata selectors to hydrate from the richer protocol payload once server wiring lands, ensuring legacy paths remain until migration completes.
-- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag, preventing targeted `npm run check` slices; downstream systems do not yet emit the new ResourceV2 fields.
-- **Reminder:** Keep legacy `resources`/`stats`/`population` payloads stable until every consumer has switched to the ResourceV2 structures.
+  - Update web session registry consumers to hydrate ResourceV2 catalogs/groups and fall back gracefully while legacy paths remain.
+  - Feed the same catalog through engine snapshot/runtime wiring so value emissions reuse the shared ordering.
+- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag, so `npm run check -- --filter …` fails; client layers have not yet adopted the new registries.
+- **Reminder:** Maintain legacy registry fields until all transports and UI paths migrate to the ResourceV2 payload.
 
 ## 5. Notes & Decisions Archive
 
