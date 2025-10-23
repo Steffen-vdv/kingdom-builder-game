@@ -31,6 +31,13 @@ function mergePlayerStartConfig(
 	if (resources) {
 		merged.resources = resources;
 	}
+	const valuesV2 = mergeNumericRecord(
+		baseConfig?.valuesV2,
+		overrideConfig?.valuesV2,
+	);
+	if (valuesV2) {
+		merged.valuesV2 = valuesV2;
+	}
 	const stats = mergeNumericRecord(baseConfig?.stats, overrideConfig?.stats);
 	if (stats) {
 		merged.stats = stats;
@@ -41,6 +48,20 @@ function mergePlayerStartConfig(
 	);
 	if (population) {
 		merged.population = population;
+	}
+	const lowerBounds = mergeNumericRecord(
+		baseConfig?.resourceLowerBoundsV2,
+		overrideConfig?.resourceLowerBoundsV2,
+	);
+	if (lowerBounds) {
+		merged.resourceLowerBoundsV2 = lowerBounds;
+	}
+	const upperBounds = mergeNumericRecord(
+		baseConfig?.resourceUpperBoundsV2,
+		overrideConfig?.resourceUpperBoundsV2,
+	);
+	if (upperBounds) {
+		merged.resourceUpperBoundsV2 = upperBounds;
 	}
 	if (overrideConfig?.lands) {
 		merged.lands = structuredClone(overrideConfig.lands);

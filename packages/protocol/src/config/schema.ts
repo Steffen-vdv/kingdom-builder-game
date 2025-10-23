@@ -10,7 +10,9 @@ export const requirementSchema = z.object({
 
 export type RequirementConfig = z.infer<typeof requirementSchema>;
 
-const costBagSchema = z.record(z.string(), z.number());
+const numericRecordSchema = z.record(z.string(), z.number());
+
+const costBagSchema = numericRecordSchema;
 
 const evaluatorSchema = z.object({
 	type: z.string(),
@@ -158,9 +160,12 @@ const landStartSchema = z.object({
 });
 
 const playerStartSchema = z.object({
-	resources: z.record(z.string(), z.number()).optional(),
-	stats: z.record(z.string(), z.number()).optional(),
-	population: z.record(z.string(), z.number()).optional(),
+	resources: numericRecordSchema.optional(),
+	stats: numericRecordSchema.optional(),
+	population: numericRecordSchema.optional(),
+	valuesV2: numericRecordSchema.optional(),
+	resourceLowerBoundsV2: numericRecordSchema.optional(),
+	resourceUpperBoundsV2: numericRecordSchema.optional(),
 	lands: z.array(landStartSchema).optional(),
 });
 
@@ -206,6 +211,17 @@ export const phaseSchema = z.object({
 
 export type PhaseConfig = z.infer<typeof phaseSchema>;
 
+const resourceCatalogV2Schema = z.object({
+	resources: z.object({
+		byId: z.record(z.string(), z.unknown()),
+		ordered: z.array(z.unknown()),
+	}),
+	groups: z.object({
+		byId: z.record(z.string(), z.unknown()),
+		ordered: z.array(z.unknown()),
+	}),
+});
+
 export const gameConfigSchema = z.object({
 	start: startConfigSchema.optional(),
 	actions: z.array(actionSchema).optional(),
@@ -213,6 +229,7 @@ export const gameConfigSchema = z.object({
 	developments: z.array(developmentSchema).optional(),
 	populations: z.array(populationSchema).optional(),
 	phases: z.array(phaseSchema).optional(),
+	resourceCatalogV2: resourceCatalogV2Schema.optional(),
 });
 
 export type GameConfig = z.infer<typeof gameConfigSchema>;

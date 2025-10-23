@@ -127,13 +127,20 @@ export function buildResourceRegistry(
 		}
 		registry.set(key, { key });
 	};
-	const addFromStart = (config: PlayerStartConfig | undefined): void => {
-		if (!config?.resources) {
+	const addFromRecord = (record: Record<string, number> | undefined): void => {
+		if (!record) {
 			return;
 		}
-		for (const key of Object.keys(config.resources)) {
+		for (const key of Object.keys(record)) {
 			addKey(key);
 		}
+	};
+	const addFromStart = (config: PlayerStartConfig | undefined): void => {
+		if (!config) {
+			return;
+		}
+		addFromRecord(config.resources);
+		addFromRecord(config.valuesV2);
 	};
 	addFromStart(startConfig.player);
 	if (startConfig.players) {

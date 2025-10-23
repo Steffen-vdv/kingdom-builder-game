@@ -30,6 +30,19 @@ export function applyPlayerStartConfiguration(
 	for (const [resourceKey, value] of Object.entries(config.resources || {})) {
 		playerState.resources[resourceKey] = value ?? 0;
 	}
+	for (const [resourceId, value] of Object.entries(config.valuesV2 || {})) {
+		playerState.resourceValues[resourceId] = value ?? 0;
+	}
+	for (const [resourceId, value] of Object.entries(
+		config.resourceLowerBoundsV2 || {},
+	)) {
+		playerState.resourceLowerBounds[resourceId] = value ?? null;
+	}
+	for (const [resourceId, value] of Object.entries(
+		config.resourceUpperBoundsV2 || {},
+	)) {
+		playerState.resourceUpperBounds[resourceId] = value ?? null;
+	}
 	for (const [statKey, value] of Object.entries(config.stats || {})) {
 		if (!isStatKey(statKey)) {
 			continue;
@@ -106,6 +119,37 @@ export function diffPlayerStartConfiguration(
 		}
 		diff.stats = diff.stats || {};
 		diff.stats[statKey] = overrideValue;
+	}
+	for (const [resourceId, value] of Object.entries(
+		overrideConfig.valuesV2 || {},
+	)) {
+		const baseValue = baseConfig.valuesV2?.[resourceId] ?? 0;
+		const overrideValue = value ?? 0;
+		if (overrideValue === baseValue) {
+			continue;
+		}
+		diff.valuesV2 = diff.valuesV2 || {};
+		diff.valuesV2[resourceId] = overrideValue;
+	}
+	for (const [resourceId, value] of Object.entries(
+		overrideConfig.resourceLowerBoundsV2 || {},
+	)) {
+		const baseValue = baseConfig.resourceLowerBoundsV2?.[resourceId];
+		if (baseValue === value) {
+			continue;
+		}
+		diff.resourceLowerBoundsV2 = diff.resourceLowerBoundsV2 || {};
+		diff.resourceLowerBoundsV2[resourceId] = value;
+	}
+	for (const [resourceId, value] of Object.entries(
+		overrideConfig.resourceUpperBoundsV2 || {},
+	)) {
+		const baseValue = baseConfig.resourceUpperBoundsV2?.[resourceId];
+		if (baseValue === value) {
+			continue;
+		}
+		diff.resourceUpperBoundsV2 = diff.resourceUpperBoundsV2 || {};
+		diff.resourceUpperBoundsV2[resourceId] = value;
 	}
 	return diff;
 }
