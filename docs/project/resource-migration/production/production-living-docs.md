@@ -61,6 +61,11 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
                                                                                 | Added ResourceV2 definition/group cloning for session registries, exposed the payload in server responses, and documented the migration status with new regression coverage. | `npm run format`; `npm run lint`; `npm run check -- --filter server` (fails: npm-run-all rejects `--filter`; chunk `fcc0f2†L1-L2`) |
                               | Coordinate with web/session consumers to hydrate against the new ResourceV2 registries and ensure engine snapshots reuse the server catalog to avoid divergence. |
 
+| 2025-10-27 | ChatGPT (gpt-5-codex) | packages/server/src/session/buildSessionMetadata.ts; packages/server/tests/session-metadata-resourceV2.test.ts; docs/project/resource-migration/production/production-living-docs.md |
+| Derived ResourceV2 descriptor overrides from the new registries, merged them with legacy metadata, and expanded regression coverage for ordered resources/groups and percent/parent lookups. |
+| `npm run test --workspace @kingdom-builder/server` (pass; chunk `be3579†L1-L17`); `npm run check -- --filter server` (fails: npm-run-all rejects `--filter`; chunk `3fba7b†L1-L12`) |
+| Ensure web metadata selectors consume the enriched descriptors and revisit full `npm run check` once filtering or alternative targeted commands are available. |
+
 | 2024-**-** | _(add entry)_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -68,14 +73,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 17:45
-- **Current Focus:** Server session registries ResourceV2 exposure
-- **State Summary:** Protocol registries now accept ResourceV2 definitions, and the server clones/sorts ResourceV2 catalog and group metadata into every session payload while tolerating missing data; regression coverage ensures ordering and clone safety.
+- **Timestamp (UTC):** 2025-10-27 21:30
+- **Current Focus:** Server metadata bridge between legacy resources and ResourceV2
+- **State Summary:** Session metadata now merges ResourceV2 registry descriptors (labels, icons, percent flags, parent totals) into `metadata.resources` alongside legacy definitions while continuing to expose the structured `resourceMetadata`/`resourceGroups` payload. Tests cover ordering, grouping, and descriptor duplication safeguards.
 - **Next Suggested Tasks:**
-  - Update web session registry consumers to hydrate ResourceV2 catalogs/groups and fall back gracefully while legacy paths remain.
-  - Feed the same catalog through engine snapshot/runtime wiring so value emissions reuse the shared ordering.
-- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag, so `npm run check -- --filter …` fails; client layers have not yet adopted the new registries.
-- **Reminder:** Maintain legacy registry fields until all transports and UI paths migrate to the ResourceV2 payload.
+  - Update web metadata selectors and HUD panels to rely on the enriched descriptors (including parent totals) and confirm fallbacks behave while legacy stats persist.
+  - Coordinate with engine snapshot builders so ResourceV2 state emission reuses the same descriptor ordering to avoid duplication work downstream.
+- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag for `npm run check`, limiting targeted runs; UI layers still consume only legacy resource descriptors.
+- **Reminder:** Keep legacy `resources`/`stats` metadata populated until downstream clients fully migrate to ResourceV2 fields.
 
 ## 5. Notes & Decisions Archive
 

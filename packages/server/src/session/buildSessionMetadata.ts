@@ -15,6 +15,8 @@ import type {
 	DevelopmentConfig,
 	PhaseConfig,
 	PopulationConfig,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
 	Registry,
 	SerializedRegistry,
 	SessionMetadataDescriptor,
@@ -22,7 +24,10 @@ import type {
 	SessionPhaseMetadata,
 	SessionTriggerMetadata,
 	SessionResourceDefinition,
+	SessionResourceV2GroupSnapshot,
+	SessionResourceV2MetadataSnapshot,
 } from '@kingdom-builder/protocol';
+import { buildResourceV2Metadata } from './resourceV2MetadataBuilder.js';
 
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
 type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
@@ -34,6 +39,8 @@ export interface BuildSessionMetadataOptions {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
+	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	resourceGroups?: SerializedRegistry<ResourceV2GroupMetadata>;
 	phases: ReadonlyArray<PhaseConfig>;
 }
 
@@ -41,9 +48,37 @@ export function buildSessionMetadata(
 	options: BuildSessionMetadataOptions,
 ): SessionStaticMetadataPayload {
 	const metadata: SessionStaticMetadataPayload = {};
-	const resourceMetadata = buildResourceMetadata(options.resources);
-	if (hasEntries(resourceMetadata)) {
-		metadata.resources = resourceMetadata;
+	const legacyResourceDescriptors = buildResourceMetadata(options.resources);
+	const resourceV2Metadata = buildResourceV2Metadata(
+		options.resourcesV2,
+		options.resourceGroups,
+	);
+	const resourceV2Descriptors = buildResourceV2Descriptors(
+		resourceV2Metadata.resourceMetadata,
+		resourceV2Metadata.resourceGroups,
+	);
+	const mergedResourceDescriptors = mergeDescriptorMaps(
+		legacyResourceDescriptors,
+		resourceV2Descriptors,
+	);
+	if (hasEntries(mergedResourceDescriptors)) {
+		metadata.resources = mergedResourceDescriptors;
+	}
+	if (hasEntries(resourceV2Metadata.resourceMetadata)) {
+		metadata.resourceMetadata = resourceV2Metadata.resourceMetadata;
+	}
+	if (hasEntries(resourceV2Metadata.resourceGroups)) {
+		metadata.resourceGroups = resourceV2Metadata.resourceGroups;
+	}
+	if (resourceV2Metadata.orderedResourceIds.length > 0) {
+		metadata.orderedResourceIds = resourceV2Metadata.orderedResourceIds;
+	}
+	if (resourceV2Metadata.orderedResourceGroupIds.length > 0) {
+		metadata.orderedResourceGroupIds =
+			resourceV2Metadata.orderedResourceGroupIds;
+	}
+	if (hasEntries(resourceV2Metadata.parentIdByResourceId)) {
+		metadata.parentIdByResourceId = resourceV2Metadata.parentIdByResourceId;
 	}
 	const populationMetadata = buildPopulationMetadata(options.populations);
 	if (hasEntries(populationMetadata)) {
@@ -98,6 +133,46 @@ function buildResourceMetadata(
 			descriptor.description = definition.description;
 		}
 		descriptors[key] = descriptor;
+	}
+	return descriptors;
+}
+
+function buildResourceV2Descriptors(
+	resources: Record<string, SessionResourceV2MetadataSnapshot>,
+	groups: Record<string, SessionResourceV2GroupSnapshot>,
+): SessionMetadataDescriptorMap {
+	const descriptors: SessionMetadataDescriptorMap = {};
+	for (const descriptor of Object.values(resources)) {
+		const entry: SessionMetadataDescriptor = { label: descriptor.name };
+		if (descriptor.icon) {
+			entry.icon = descriptor.icon;
+		}
+		if (descriptor.description) {
+			entry.description = descriptor.description;
+		}
+		if (descriptor.isPercent) {
+			entry.displayAsPercent = true;
+		}
+		descriptors[descriptor.id] = entry;
+	}
+	for (const group of Object.values(groups)) {
+		const parent = group.parent;
+		if (!parent) {
+			continue;
+		}
+		const parentDescriptor: SessionMetadataDescriptor = {
+			label: parent.name,
+		};
+		if (parent.icon) {
+			parentDescriptor.icon = parent.icon;
+		}
+		if (parent.description) {
+			parentDescriptor.description = parent.description;
+		}
+		if (parent.isPercent) {
+			parentDescriptor.displayAsPercent = true;
+		}
+		descriptors[parent.id] = parentDescriptor;
 	}
 	return descriptors;
 }
@@ -268,4 +343,16 @@ function assignAssetDescriptor(
 
 function hasEntries<T>(value: Record<string, T>): boolean {
 	return Object.keys(value).length > 0;
+}
+
+function mergeDescriptorMaps(
+	...maps: ReadonlyArray<SessionMetadataDescriptorMap>
+): SessionMetadataDescriptorMap {
+	const merged: SessionMetadataDescriptorMap = {};
+	for (const map of maps) {
+		for (const [id, descriptor] of Object.entries(map)) {
+			merged[id] = descriptor;
+		}
+	}
+	return merged;
 }
