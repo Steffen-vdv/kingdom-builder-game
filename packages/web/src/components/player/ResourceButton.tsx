@@ -10,17 +10,29 @@ export interface ResourceButtonProps {
 	forecastDelta?: number;
 	onShow: (resourceId: string) => void;
 	onHide: () => void;
+	formatValue?: (value: number) => string;
+	formatDelta?: (delta: number) => string;
 }
 
-const formatDelta = (delta: number) => {
-	const absolute = Math.abs(delta);
-	const formatted = Number.isInteger(absolute)
-		? absolute.toString()
-		: absolute.toLocaleString(undefined, {
-				maximumFractionDigits: 2,
-				minimumFractionDigits: 0,
-			});
-	return `${delta > 0 ? '+' : '-'}${formatted}`;
+const formatNumericValue = (value: number): string => {
+	if (!Number.isFinite(value)) {
+		return '0';
+	}
+	if (Number.isInteger(value)) {
+		return value.toString();
+	}
+	return value.toLocaleString(undefined, {
+		maximumFractionDigits: 2,
+		minimumFractionDigits: 0,
+	});
+};
+
+const defaultFormatValue = (value: number): string => formatNumericValue(value);
+
+const defaultFormatDelta = (delta: number): string => {
+	const absolute = formatNumericValue(Math.abs(delta));
+	const prefix = delta >= 0 ? '+' : '-';
+	return `${prefix}${absolute}`;
 };
 
 const RESOURCE_FORECAST_BADGE_CLASS =
@@ -36,16 +48,21 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 	forecastDelta,
 	onShow,
 	onHide,
+	formatValue,
+	formatDelta,
 }) => {
 	const changes = useValueChangeIndicators(value);
+	const resolveValue = formatValue ?? defaultFormatValue;
+	const resolveDelta = formatDelta ?? defaultFormatDelta;
 	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
-		formatDelta(delta),
+		resolveDelta(delta),
 	);
 	const iconLabel = icon ?? '❔';
 	const resolvedLabel = label || resourceId;
+	const formattedValue = resolveValue(value);
 	const ariaLabel = forecastDisplay
-		? `${resolvedLabel}: ${value} ${forecastDisplay.label}`
-		: `${resolvedLabel}: ${value}`;
+		? `${resolvedLabel}: ${formattedValue} ${forecastDisplay.label}`
+		: `${resolvedLabel}: ${formattedValue}`;
 	const handleShow = React.useCallback(() => {
 		onShow(resourceId);
 	}, [onShow, resourceId]);
@@ -62,7 +79,7 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 			aria-label={ariaLabel}
 		>
 			{iconLabel}
-			{value}
+			{formattedValue}
 			{forecastDisplay && (
 				<span
 					className={[
@@ -84,7 +101,7 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 					}`}
 					aria-hidden="true"
 				>
-					{formatDelta(change.delta)}
+					{resolveDelta(change.delta)}
 				</span>
 			))}
 		</button>

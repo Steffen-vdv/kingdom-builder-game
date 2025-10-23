@@ -6,6 +6,21 @@ export interface DescriptorDisplay {
 	label: string;
 	icon?: string;
 	description?: string;
+	displayAsPercent?: boolean;
+	metadata?: Readonly<Record<string, unknown>>;
+	limited?: boolean;
+	groupId?: string;
+	parentId?: string;
+	isPercent?: boolean;
+	trackValueBreakdown?: boolean;
+	trackBoundBreakdown?: boolean;
+	lowerBound?: number;
+	upperBound?: number;
+	tierTrack?: RegistryMetadataDescriptor['tierTrack'];
+	globalActionCost?: RegistryMetadataDescriptor['globalActionCost'];
+	relation?: RegistryMetadataDescriptor['relation'];
+	children?: RegistryMetadataDescriptor['children'];
+	order?: number;
 }
 
 const resolveLabel = (label: string | undefined, fallback: string): string => {
@@ -28,6 +43,51 @@ export const toDescriptorDisplay = (
 	}
 	if (descriptor.description !== undefined) {
 		entry.description = descriptor.description;
+	}
+	if (descriptor.displayAsPercent !== undefined) {
+		entry.displayAsPercent = descriptor.displayAsPercent;
+	}
+	if (descriptor.metadata !== undefined) {
+		entry.metadata = descriptor.metadata;
+	}
+	if (descriptor.limited !== undefined) {
+		entry.limited = descriptor.limited;
+	}
+	if (descriptor.groupId !== undefined) {
+		entry.groupId = descriptor.groupId;
+	}
+	if (descriptor.parentId !== undefined) {
+		entry.parentId = descriptor.parentId;
+	}
+	if (descriptor.isPercent !== undefined) {
+		entry.isPercent = descriptor.isPercent;
+	}
+	if (descriptor.trackValueBreakdown !== undefined) {
+		entry.trackValueBreakdown = descriptor.trackValueBreakdown;
+	}
+	if (descriptor.trackBoundBreakdown !== undefined) {
+		entry.trackBoundBreakdown = descriptor.trackBoundBreakdown;
+	}
+	if (descriptor.lowerBound !== undefined) {
+		entry.lowerBound = descriptor.lowerBound;
+	}
+	if (descriptor.upperBound !== undefined) {
+		entry.upperBound = descriptor.upperBound;
+	}
+	if (descriptor.tierTrack !== undefined) {
+		entry.tierTrack = descriptor.tierTrack;
+	}
+	if (descriptor.globalActionCost !== undefined) {
+		entry.globalActionCost = descriptor.globalActionCost;
+	}
+	if (descriptor.relation !== undefined) {
+		entry.relation = descriptor.relation;
+	}
+	if (descriptor.children !== undefined) {
+		entry.children = descriptor.children;
+	}
+	if (descriptor.order !== undefined) {
+		entry.order = descriptor.order;
 	}
 	return entry;
 };

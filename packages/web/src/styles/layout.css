@@ -40,6 +40,18 @@
 		z-index: 1;
 	}
 
+	.resource-group {
+		@apply flex flex-wrap items-center gap-2;
+	}
+
+	.resource-group__header {
+		@apply text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300;
+	}
+
+	.resource-group__items {
+		@apply flex flex-wrap items-center gap-2;
+	}
+
 	.info-bar__icon {
 		@apply absolute left-3 flex h-6 w-6 items-center justify-center rounded-full text-base;
 		background: radial-gradient(
