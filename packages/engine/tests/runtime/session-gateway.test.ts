@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
 	createEngineSession,
 	createLocalSessionGateway,
 } from '../../src/index.ts';
+import type { EngineSession } from '../../src/runtime/session.ts';
 import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
@@ -102,6 +103,7 @@ function createGateway(options?: GatewayOptions) {
 		rules: RULES,
 	});
 	return {
+		session,
 		gateway: createLocalSessionGateway(session, options),
 		actionIds: {
 			gainGold: gainGold.id,
@@ -227,5 +229,96 @@ describe('createLocalSessionGateway', () => {
 		expect(fetched.registries.actionCategories).toEqual({
 			[providedCategory.id]: providedCategory,
 		});
+	});
+
+	it('rejects requests targeting unknown sessions', async () => {
+		const { gateway } = createGateway();
+		const created = await gateway.createSession();
+		expect(() =>
+			gateway.fetchSnapshot({
+				sessionId: `${created.sessionId}-mismatch`,
+			}),
+		).toThrowError(/Unknown session/);
+	});
+
+	it('uses manual registry cloning when structuredClone is unavailable', async () => {
+		const content = createContentFactory();
+		const providedCategory = toSessionActionCategoryConfig(content.category());
+		const syntheticAction = content.action();
+		const registries: SessionRegistriesPayload = {
+			actions: {},
+			buildings: {},
+			developments: {},
+			populations: {},
+			resources: {},
+			actionCategories: {
+				[providedCategory.id]: providedCategory,
+			},
+		};
+		const snapshot = {
+			game: { players: [], devMode: false },
+			registries: {},
+			metadata: {},
+			recentResourceGains: [],
+			recentStatGains: [],
+			recentPassiveRegistrations: [],
+		} as unknown;
+		const stubSession = {
+			setDevMode: vi.fn(),
+			updatePlayerName: vi.fn(),
+			getSnapshot: vi.fn().mockReturnValue(snapshot),
+			advancePhase: vi.fn(),
+			getActionCosts: vi.fn(),
+			performAction: vi.fn(),
+			simulateUpcomingPhases: vi.fn(),
+			runAiTurn: vi.fn(),
+		} as unknown as EngineSession;
+		const gateway = createLocalSessionGateway(stubSession, {
+			sessionId: 'manual-session',
+			registries,
+		});
+		const created = await gateway.createSession();
+		expect(created.sessionId).toBe('manual-session');
+		expect(created.registries).toEqual(registries);
+		const original = globalThis.structuredClone;
+		vi.stubGlobal('structuredClone', undefined as never);
+		try {
+			created.registries.actions[syntheticAction.id] = {
+				id: syntheticAction.id,
+			} as never;
+			const fetched = await gateway.fetchSnapshot({
+				sessionId: 'manual-session',
+			});
+			expect(fetched.registries).toEqual(registries);
+		} finally {
+			vi.unstubAllGlobals();
+			expect(globalThis.structuredClone).toBe(original);
+		}
+	});
+
+	it('filters non-numeric resource costs when performing actions', async () => {
+		const { gateway, actionIds, session } = createGateway();
+		const { sessionId } = await gateway.createSession();
+		const costs = {
+			[RESOURCE_AP]: 2,
+			invalid: null,
+		} as Record<string, number | null>;
+		const costSpy = vi
+			.spyOn(session, 'getActionCosts')
+			.mockReturnValue(costs as never);
+		const performSpy = vi.spyOn(session, 'performAction').mockReturnValue([]);
+		const response = await gateway.performAction({
+			sessionId,
+			actionId: actionIds.gainGold,
+		});
+		expect(response.status).toBe('success');
+		if (response.status === 'success') {
+			expect(response.costs).toEqual({
+				[RESOURCE_AP]: 2,
+			});
+		}
+		expect(costSpy).toHaveBeenCalled();
+		expect(performSpy).toHaveBeenCalledWith(actionIds.gainGold, undefined);
+		vi.restoreAllMocks();
 	});
 });
