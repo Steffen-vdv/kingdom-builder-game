@@ -27,6 +27,11 @@ export type {
 	HappinessTierDefinition,
 	TierPassivePreview,
 } from './tiered_resource_types';
+export { ResourceV2Service } from './resourceV2_service';
+export type {
+	ResourceV2Change,
+	ResourceV2ChangeHandler,
+} from './resourceV2_service';
 export type {
 	WinConditionDefinition,
 	WinConditionDisplay,
