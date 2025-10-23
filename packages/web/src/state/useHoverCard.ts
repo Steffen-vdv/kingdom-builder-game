@@ -14,6 +14,7 @@ export interface HoverCard {
 	effectsTitle?: string;
 	bgClass?: string;
 	multiStep?: boolean;
+	hideActionCostResource?: boolean;
 	resolution?: ActionResolution;
 	resolutionTitle?: string;
 }

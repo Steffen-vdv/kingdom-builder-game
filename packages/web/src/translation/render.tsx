@@ -35,14 +35,24 @@ export function renderCosts(
 	resources: Record<string, number>,
 	actionCostResource?: string,
 	upkeep?: Record<string, number | undefined>,
-	options?: { showFreeLabel?: boolean; assets?: TranslationAssets },
+	options?: {
+		showFreeLabel?: boolean;
+		assets?: TranslationAssets;
+		hideActionCostResource?: boolean;
+	},
 ) {
 	const showFreeLabel = options?.showFreeLabel ?? true;
 	const assets = options?.assets;
-	const entries = Object.entries(costs || {}).filter(
-		([resourceKey]) =>
-			!actionCostResource || resourceKey !== actionCostResource,
-	);
+	const hideActionCostResource = Boolean(options?.hideActionCostResource);
+	const entries = Object.entries(costs || {}).filter(([resourceKey]) => {
+		if (!actionCostResource) {
+			return true;
+		}
+		if (!hideActionCostResource) {
+			return true;
+		}
+		return resourceKey !== actionCostResource;
+	});
 	const upkeepEntries = Object.entries(upkeep || {});
 	if (entries.length === 0 && upkeepEntries.length === 0) {
 		if (!showFreeLabel) {

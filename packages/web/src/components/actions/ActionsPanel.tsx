@@ -113,6 +113,9 @@ export default function ActionsPanel() {
 	);
 	const actionCostIcon = actionCostDescriptor.icon;
 	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
+	const globalActionCost = actionCostDescriptor.globalActionCost;
+	const actionCostAmount = globalActionCost?.amount ?? 1;
+	const showGlobalActionCostLabel = Boolean(globalActionCost);
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = sessionView.active;
 	if (!player) {
@@ -398,11 +401,13 @@ export default function ActionsPanel() {
 			<div className={HEADER_CLASSES}>
 				<h2 className={TITLE_CLASSES}>
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
-					<span className={COST_LABEL_CLASSES}>
-						(1 {actionCostIcon ?? ''}
-						{actionCostIcon ? ' ' : ''}
-						{actionCostLabel} each)
-					</span>
+					{showGlobalActionCostLabel ? (
+						<span className={COST_LABEL_CLASSES}>
+							({actionCostAmount} {actionCostIcon ?? ''}
+							{actionCostIcon ? ' ' : ''}
+							{actionCostLabel} each)
+						</span>
+					) : null}
 				</h2>
 				<div className="flex flex-wrap items-center gap-2">
 					{viewingOpponent && (

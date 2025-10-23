@@ -18,6 +18,7 @@ export interface ActionCardProps {
 	costs: Record<string, number>;
 	playerResources: Record<string, number>;
 	actionCostResource: string;
+	hideActionCostResource?: boolean | undefined;
 	upkeep?: Record<string, number> | undefined;
 	summary?: Summary | undefined;
 	implemented?: boolean | undefined;
@@ -47,6 +48,7 @@ export default function ActionCard({
 	costs,
 	playerResources,
 	actionCostResource,
+	hideActionCostResource = false,
 	upkeep,
 	summary,
 	implemented = true,
@@ -184,6 +186,7 @@ export default function ActionCard({
 									upkeep,
 									{
 										assets,
+										hideActionCostResource,
 									},
 								)}
 								{requirementBadge}

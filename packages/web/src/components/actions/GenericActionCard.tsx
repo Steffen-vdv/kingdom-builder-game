@@ -137,6 +137,11 @@ function GenericActionCard({
 				description: 'Not implemented yet',
 				descriptionClass: 'italic text-red-600',
 			};
+	const actionCostDescriptor = useMemo(
+		() => selectResourceDescriptor(actionCostResource),
+		[selectResourceDescriptor, actionCostResource],
+	);
+	const hideActionCostResource = Boolean(actionCostDescriptor.globalActionCost);
 	const optionCards = useEffectGroupOptions({
 		currentGroup,
 		pendingParams: pending?.params,
@@ -184,6 +189,7 @@ function GenericActionCard({
 		...(description && { description }),
 		...(notImplementedDetails ?? {}),
 		bgClass: hoverBackground,
+		...(hideActionCostResource ? { hideActionCostResource: true } : {}),
 		...(hasGroups ? { multiStep: true } : {}),
 	});
 	const handleMouseEnter = isPending
@@ -206,6 +212,7 @@ function GenericActionCard({
 			enabled={cardEnabled}
 			tooltip={title}
 			focus={actionFocus}
+			hideActionCostResource={hideActionCostResource}
 			assets={translationContext.assets}
 			variant={isPending ? 'back' : 'front'}
 			multiStep={hasGroups}

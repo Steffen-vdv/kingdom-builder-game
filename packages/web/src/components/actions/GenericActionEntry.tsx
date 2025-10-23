@@ -87,8 +87,17 @@ export function GenericActionEntry({
 		if (!metadata.costs) {
 			return null;
 		}
-		return sumNonActionCosts(actionCosts, actionCostResource);
-	}, [metadata.costs, actionCosts, actionCostResource]);
+		return sumNonActionCosts(
+			actionCosts,
+			actionCostResource,
+			selectResourceDescriptor,
+		);
+	}, [
+		metadata.costs,
+		actionCosts,
+		actionCostResource,
+		selectResourceDescriptor,
+	]);
 	const cleanupTotal = useMemo(() => {
 		if (!metadata.costs) {
 			return null;

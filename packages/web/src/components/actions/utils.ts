@@ -21,12 +21,17 @@ export function playerHasRequiredResources(
 export function sumNonActionCosts(
 	costs: Record<string, number | undefined> | undefined,
 	actionCostResource: string,
+	selectResourceDescriptor?: ResourceDescriptorSelector,
 ): number {
 	if (!costs) {
 		return 0;
 	}
+	const hasGlobalActionCost = Boolean(
+		actionCostResource &&
+			selectResourceDescriptor?.(actionCostResource).globalActionCost,
+	);
 	return Object.entries(costs).reduce((sum, [resourceKey, requiredAmount]) => {
-		if (resourceKey === actionCostResource) {
+		if (hasGlobalActionCost && resourceKey === actionCostResource) {
 			return sum;
 		}
 		const neededAmount = Number(requiredAmount ?? 0);
