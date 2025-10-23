@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createEngineSession, type EngineSession } from '../../src/index.ts';
+import { TAX_ACTION_ID } from '../../src/ai/index.ts';
 import {
 	ACTIONS,
 	BUILDINGS,
@@ -339,5 +340,120 @@ describe('EngineSession', () => {
 		expect(opponentRequirements[0]?.message).toBe(opponentId);
 		const afterSnapshot = session.getSnapshot();
 		expect(afterSnapshot.game.activePlayerId).toBe(initialActive);
+	});
+
+	it('summarizes action definitions and exposes system flags', () => {
+		const content = createContentFactory();
+		const publicAction = content.action({ name: 'Public' });
+		const systemAction = content.action({
+			name: 'System Action',
+			system: true,
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		const publicSummary = session.getActionDefinition(publicAction.id);
+		expect(publicSummary).toEqual({
+			id: publicAction.id,
+			name: publicAction.name,
+		});
+		const systemSummary = session.getActionDefinition(systemAction.id);
+		expect(systemSummary).toEqual({
+			id: systemAction.id,
+			name: systemAction.name,
+			system: true,
+		});
+	});
+
+	it('toggles the developer mode flag inside the game snapshot', () => {
+		const session = createTestSession();
+		expect(session.getSnapshot().game.devMode).toBe(false);
+		session.setDevMode(true);
+		expect(session.getSnapshot().game.devMode).toBe(true);
+		session.setDevMode(false);
+		expect(session.getSnapshot().game.devMode).toBe(false);
+	});
+
+	it('runs registered AI controllers and reports controller availability', async () => {
+		const session = createTestSession();
+		advanceToMain(session);
+		const snapshot = session.getSnapshot();
+		const opponentId = snapshot.game.opponentId;
+		let guard = 0;
+		while (guard < 40) {
+			const state = session.getSnapshot().game;
+			if (
+				state.activePlayerId === opponentId &&
+				state.currentPhase === PhaseId.Main
+			) {
+				break;
+			}
+			session.advancePhase();
+			guard += 1;
+		}
+		let performed = 0;
+		let advanced = 0;
+		const executed = await session.runAiTurn(opponentId, {
+			performAction: (actionId) => {
+				performed += 1;
+				expect(actionId).toBe(TAX_ACTION_ID);
+				return Promise.resolve();
+			},
+			advance: () => {
+				advanced += 1;
+				return Promise.resolve();
+			},
+			continueAfterAction: () => false,
+		});
+		expect(executed).toBe(true);
+		expect(performed).toBeGreaterThan(0);
+		expect(advanced).toBe(0);
+		const missing = await session.runAiTurn('spectator');
+		expect(missing).toBe(false);
+		expect(session.hasAiController(opponentId)).toBe(true);
+		expect(session.hasAiController('spectator')).toBe(false);
+	});
+
+	it('simulates upcoming phases without sharing mutable structures', () => {
+		const session = createTestSession();
+		const activePlayerId = session.getSnapshot().game.activePlayerId;
+		const result = session.simulateUpcomingPhases(activePlayerId);
+		result.steps.length = 0;
+		result.delta.resources.vitest = 99;
+		const refreshed = session.simulateUpcomingPhases(activePlayerId);
+		expect(refreshed.steps.length).toBeGreaterThan(0);
+		expect(refreshed.delta.resources).not.toHaveProperty('vitest');
+	});
+
+	it('returns cloned rule snapshots that resist external mutation', () => {
+		const session = createTestSession();
+		const snapshot = session.getRuleSnapshot();
+		expect(snapshot.tierDefinitions.length).toBeGreaterThan(0);
+		expect(snapshot.winConditions.length).toBeGreaterThan(0);
+		snapshot.tierDefinitions[0]!.range.min = -999;
+		snapshot.winConditions[0]!.id = 'mutated';
+		const refreshed = session.getRuleSnapshot();
+		expect(refreshed.tierDefinitions[0]!.range.min).not.toBe(-999);
+		expect(refreshed.winConditions[0]!.id).not.toBe('mutated');
+	});
+
+	it('updates player names when the player exists and ignores unknown ids', () => {
+		const session = createTestSession();
+		const before = session.getSnapshot();
+		const active = before.game.players[0]!;
+		session.updatePlayerName(active.id, 'Navigator');
+		session.updatePlayerName('unknown-player', 'Ignored');
+		const after = session.getSnapshot();
+		expect(after.game.players[0]!.name).toBe('Navigator');
+		const opponent = after.game.players[1]!;
+		expect(opponent.name).not.toBe('Ignored');
+	});
+
+	it('returns undefined when pulling effect logs that do not exist', () => {
+		const session = createTestSession();
+		expect(session.pullEffectLog('missing')).toBeUndefined();
 	});
 });
