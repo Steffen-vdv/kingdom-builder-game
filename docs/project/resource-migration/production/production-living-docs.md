@@ -37,21 +37,29 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 |                                                                                                                                                                                                     |
 | Implemented ResourceV2 effect handlers delegating to `ResourceV2Service`, exported the modules, and added comprehensive unit coverage for rounding, suppression metadata, and multi-step transfers. | `npm run check` (pass; chunk `d0a6a3†L1-L75`) |
 | Register the new handlers in the core registry, migrate content to call them, and extend coverage for additional reconciliation scenarios.                                                          |
-| 2024-**-**                                                                                                                                                                                          | _(add entry)_                                 | –                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | –                                                                                                                                                                                                                                                   | –                                                                                                                                                                                                                     | –                                                                                                                                                                           |
+
+| 2025-10-25
+| ChatGPT (gpt-5-codex) | packages
+/engine/src/effects/index.ts; packages/engine/src/effects/resource_add.ts; packages/engine/src/effects/resource_remove.ts; packages/engine/src/effects/resource_transfer.ts; packages/engine/tests/helpers.ts; packages/engine/tests/effects/resource-legacy-bridge.test.ts; docs/project/resource-migration/production/production-living-docs.md |
+
+                                                                                | Bridged legacy resource add/remove/transfer handlers to ResourceV2 service, introduced shared recent-gain flush logic, updated test helpers, and added hybrid regression coverage plus documentation. | `npx vitest run packages/engine/tests/effects/resource-legacy-bridge.test.ts` (pass; chunk `d075fc†L1-L27`); `npm run check -- --filter engine` (fails: npm-run-all rejects `--filter`; chunk `cff087†L1-L5`) |
+                              | Re-run full `npm run check` / `npm run test` once the filter flag is fixed to reconfirm suite health post-bridge. |
+
+| 2024-**-** | _(add entry)_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-24 23:59
-- **Current Focus:** Engine ResourceV2 effect handlers & registry wiring
-- **State Summary:** New ResourceV2 effect handlers (add/remove/transfer/upper-bound) now delegate to the shared service, are exported for future registration, and ship with focused tests covering percent rounding, reconciliation metadata, and hook suppression. Full `npm run check` passes (`d0a6a3†L1-L75`), but filtered runs remain unavailable (`a22881†L1-L2`).
+- **Timestamp (UTC):** 2025-10-25 11:39
+- **Current Focus:** Legacy resource bridge to ResourceV2 service
+- **State Summary:** Legacy resource add/remove/transfer handlers now detect ResourceV2 definitions, delegate through the ResourceV2 service, and share a recent-gains flush wrapper so logging stays consistent without duplicating history. Tests cover mixed legacy/V2 flows, and helpers accept V2 catalogs. Targeted Vitest suite passes, but filtered `npm run check` still fails because `npm-run-all` rejects `--filter`.
 - **Next Suggested Tasks:**
-  - Register the ResourceV2 handlers in the engine effects registry and update content to consume them instead of legacy variants.
-  - Expand coverage for mixed reconciliation and percent-removal scenarios once additional content pathways are migrated.
-- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag, so expect longer cycles while the full `npm run check` executes for verification.
-- **Reminder:** Coordinate upcoming registry updates and documentation to ensure downstream teams know how to target the new handlers once registered.
+  - Restore full `npm run check` / `npm run test` coverage once the workspace filtering flag is fixed.
+  - Audit additional legacy effects that manipulate resources to ensure they also flush ResourceV2 gains when migrated.
+- **Blocking Issues / Risks:** Workspace-level `--filter` flag remains unsupported; plan for longer verification cycles or update scripts.
+- **Reminder:** When new ResourceV2 content lands, confirm the bridge correctly captures signed deltas in game logs.
 
 ## 5. Notes & Decisions Archive
 

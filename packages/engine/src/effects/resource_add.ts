@@ -1,3 +1,4 @@
+import type { ResourceV2ValueDelta } from '@kingdom-builder/protocol';
 import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
 
@@ -12,12 +13,23 @@ export const resourceAdd: EffectHandler = (effect, context, multiplier = 1) => {
 	} else if (effect.round === 'nearest') {
 		total = Math.round(total);
 	}
+	const resourceService = context.services.resourceV2;
+	if (resourceService.hasDefinition(key)) {
+		const delta: ResourceV2ValueDelta = {
+			resourceId: key,
+			amount: total,
+		};
+		resourceService.addValue(context, context.activePlayer, delta, 1);
+		return;
+	}
 	const current = context.activePlayer.resources[key] || 0;
 	const newVal = current + total;
 	const player = context.activePlayer;
-	player.resources[key] = newVal < 0 ? 0 : newVal;
-	if (total > 0) {
-		context.recentResourceGains.push({ key, amount: total });
+	const next = newVal < 0 ? 0 : newVal;
+	player.resources[key] = next;
+	const applied = next - current;
+	if (applied !== 0) {
+		context.recentResourceGains.push({ key, amount: applied });
 	}
 	context.services.handleResourceChange(context, player, key);
 };
