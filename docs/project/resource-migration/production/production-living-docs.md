@@ -10,13 +10,13 @@ This document captures the evolving state of the Resource Migration initiative. 
 
 ## 2. High-Level Status Snapshot
 
-| Area         | Current State | Owner | Notes                                                       |
-| ------------ | ------------- | ----- | ----------------------------------------------------------- |
-| Engine       | _TBD_         | –     | Pending implementation plan.                                |
-| Content      | In progress   | –     | Legacy exports bridged to ResourceV2 registry (T23 bridge). |
-| Protocol/API | _TBD_         | –     | Awaiting design sign-off.                                   |
-| Web UI       | _TBD_         | –     | Pending migration strategy.                                 |
-| Testing      | _TBD_         | –     | Unified test plan not started.                              |
+| Area         | Current State   | Owner | Notes                                                                                         |
+| ------------ | --------------- | ----- | --------------------------------------------------------------------------------------------- |
+| Engine       | _TBD_           | –     | Pending implementation plan.                                                                  |
+| Content      | Nearing handoff | –     | Resource catalog, start payloads, and content actions now emit ResourceV2 metadata (T18–T36). |
+| Protocol/API | _TBD_           | –     | Awaiting design sign-off.                                                                     |
+| Web UI       | _TBD_           | –     | Pending migration strategy.                                                                   |
+| Testing      | _TBD_           | –     | Unified test plan not started.                                                                |
 
 Update the table whenever a domain meaningfully changes. Keep comments concise and reference sections below for detail.
 
@@ -44,15 +44,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 23:45
-- **Current Focus:** Resource Migration MVP - P2 - T36 - Population & Phase ResourceV2 Migration
-- **State Summary:** Added shared ResourceV2 change helpers and rewired population/phase content to emit the new payloads. See [`packages/contents/src/helpers/resourceV2Effects.ts`](../../../../packages/contents/src/helpers/resourceV2Effects.ts), [`packages/contents/src/populations.ts`](../../../../packages/contents/src/populations.ts), [`packages/contents/src/phases.ts`](../../../../packages/contents/src/phases.ts), and [`worklogs/T36-population-phase.md`](../../../../worklogs/T36-population-phase.md).
+- **Timestamp (UTC):** 2025-10-28 00:15
+- **Current Focus:** Resource Migration MVP - P2 - T37 - Content Aggregation
+- **State Summary:** Consolidated T18–T36 content migrations. ResourceV2 catalog coverage now spans core/happiness/stat/population tracks, start payload builders mirror the catalog, and all player-facing content (actions, passives, phases) emits ResourceV2 change metadata alongside legacy shims. See [`docs/project/resource-migration/production/worklogs/T18-core-resource-defs.md`](./worklogs/T18-core-resource-defs.md), [`docs/project/resource-migration/production/worklogs/T19-happiness-tier.md`](./worklogs/T19-happiness-tier.md), and [`worklogs/T20-stat-defs.md`](../../../../worklogs/T20-stat-defs.md) through [`worklogs/T36-population-phase.md`](../../../../worklogs/T36-population-phase.md) for task-level details.
 - **Next Suggested Tasks:**
-  - Extend the helper usage to remaining content (actions, hire flows, etc.) so legacy `resourceParams`/`statParams` usages disappear.
-  - Audit engine consumers to confirm they read the ResourceV2 change metadata emitted by phase-driven stat deltas.
-  - Prioritise test pipeline tuning; `npm run check` still stalls on engine coverage and requires manual interruption.
-- **Blocking Issues / Risks:** Engine coverage under `npm run check` continues to run for tens of minutes; today’s run was aborted after ~30s of queued vitest files (see chunk 402953†L1-L82) and remains a productivity drag.
-- **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
+  - Coordinate with engine owners on adopting ResourceV2 payloads so legacy bridges (`resourceParams`/`statParams`) can be retired safely.
+  - Expose ResourceV2 catalog snapshots and start payloads through runtime/session responses to unlock protocol and web integration.
+  - Address persistent `npm run check` instability (engine coverage timeouts, missing `dist` artifacts) before the next integration wave.
+- **Blocking Issues / Risks:** Engine coverage within `npm run check` still requires manual interruption, and missing build artefacts continue to break type-checking for content contributors without a prepublish step.
+- **Reminder:** Keep landing per-task worklogs and tag follow-up engineering questions in [`worklogs/T37-content-aggregation.md`](../../../../worklogs/T37-content-aggregation.md) until engine/runtime ownership is confirmed.
 
 ## 5. Notes & Decisions Archive
 
