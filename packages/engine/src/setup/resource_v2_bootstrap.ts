@@ -3,7 +3,6 @@ import type {
 	PlayerId,
 	PlayerStateOptions,
 	PlayerStateResourceV2LegacyKeys,
-	ResourceKey,
 } from '../state';
 import {
 	createResourceV2StateBlueprint,
@@ -28,7 +27,7 @@ interface ResourceV2BootstrapOptions {
 interface ResourceV2BootstrapResult {
 	readonly hasResourceV2: boolean;
 	readonly metadata?: ResourceV2Metadata;
-	readonly actionCostResource?: ResourceKey;
+	readonly actionCost?: { resourceId: string; amount: number };
 	readonly playerFactory: (id: PlayerId, name: string) => PlayerState;
 	readonly validatePlayerStart: (
 		config: PlayerStartConfig | undefined,
@@ -146,11 +145,16 @@ export function prepareResourceV2Bootstrap({
 			},
 		},
 	};
-	const globalActionCost = metadata.globalActionCosts?.[0]?.resourceId;
+	const globalActionCost = metadata.globalActionCosts?.[0];
 	return {
 		hasResourceV2: true,
 		metadata,
-		actionCostResource: globalActionCost,
+		actionCost: globalActionCost
+			? {
+					resourceId: globalActionCost.resourceId,
+					amount: globalActionCost.amount,
+				}
+			: undefined,
 		playerFactory: (id, name) =>
 			new PlayerState(id, name, playerOptionsById[id] ?? {}),
 		validatePlayerStart: (config, label) =>

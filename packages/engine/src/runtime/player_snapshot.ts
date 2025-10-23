@@ -1,7 +1,7 @@
 import { cloneEffectList } from '../utils';
 import { cloneMeta } from '../stat_sources/meta';
 import type { EngineContext } from '../context';
-import type { ActionTrace, PlayerSnapshot } from '../log';
+import type { ActionTrace, PlayerSnapshot, PlayerSnapshotValue } from '../log';
 import type { Land, PlayerId, PlayerState } from '../state';
 import type { PassiveSummary } from '../services';
 import type { LandSnapshot, PlayerStateSnapshot } from './types';
@@ -155,6 +155,8 @@ export function snapshotPlayer(
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 	return {
+		values: cloneSnapshotValues(snapshot.values),
+		orderedValueIds: [...snapshot.orderedValueIds],
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
 		buildings: [...snapshot.buildings],
@@ -166,6 +168,30 @@ function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 		})),
 		passives: snapshot.passives.map((passive) => ({ ...passive })),
 	};
+}
+
+function cloneSnapshotValues(
+	values: Record<string, PlayerSnapshotValue>,
+): Record<string, PlayerSnapshotValue> {
+	const cloned: Record<string, PlayerSnapshotValue> = {};
+	for (const [key, value] of Object.entries(values)) {
+		cloned[key] = cloneSnapshotValue(value);
+	}
+	return cloned;
+}
+
+function cloneSnapshotValue(value: PlayerSnapshotValue): PlayerSnapshotValue {
+	const cloned: PlayerSnapshotValue = {
+		kind: value.kind,
+		value: value.value,
+	};
+	if (value.parentId !== undefined) {
+		cloned.parentId = value.parentId;
+	}
+	if (value.children) {
+		cloned.children = [...value.children];
+	}
+	return cloned;
 }
 
 export function cloneActionTraces(traces: ActionTrace[]): ActionTrace[] {

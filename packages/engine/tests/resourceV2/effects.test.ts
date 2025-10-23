@@ -101,6 +101,7 @@ describe('ResourceV2 effects', () => {
 			passives,
 			phases,
 			actionResourceId,
+			rules.defaultActionAPCost,
 			{ A: {}, B: {} },
 		);
 		const runtime: ResourceV2Runtime = { state, ...(hooks ? { hooks } : {}) };

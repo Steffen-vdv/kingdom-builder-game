@@ -19,11 +19,11 @@ export const resourceRemove: EffectHandler = (
 	}
 	const player = engineContext.activePlayer;
 	const have = player.resources[key] || 0;
-	const allowShortfall = Boolean(effect.meta?.['allowShortfall']);
 	const removed = total;
-	if (!allowShortfall && have < removed) {
+	if (have < removed) {
 		throw new Error(`Insufficient ${key}: need ${removed}, have ${have}`);
 	}
 	player.resources[key] = have - removed;
+	engineContext.recentResourceGains.push({ key, amount: -removed });
 	engineContext.services.handleResourceChange(engineContext, player, key);
 };

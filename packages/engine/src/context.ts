@@ -29,6 +29,7 @@ export class EngineContext {
 		public passives: PassiveManager,
 		public phases: PhaseDef[],
 		public actionCostResource: ResourceKey,
+		public actionCostAmount: number,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},

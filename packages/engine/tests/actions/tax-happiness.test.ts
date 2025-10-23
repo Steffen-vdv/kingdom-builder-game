@@ -13,7 +13,6 @@ describe('resource removal penalties', () => {
 					type: 'resource',
 					method: 'remove',
 					params: { key: Resource.happiness, amount: 1 },
-					meta: { allowShortfall: true },
 				},
 			],
 		});
@@ -30,7 +29,7 @@ describe('resource removal penalties', () => {
 		expect(after).toBe(before - 1);
 	});
 
-	it('aggregates evaluator penalties before rounding when shortfalls are allowed', () => {
+	it('aggregates evaluator penalties before rounding and blocks shortfalls', () => {
 		const content = createContentFactory();
 		const action = content.action({
 			effects: [
@@ -45,7 +44,6 @@ describe('resource removal penalties', () => {
 							method: 'remove',
 							round: 'up',
 							params: { key: Resource.happiness, amount: 0.5 },
-							meta: { allowShortfall: true },
 						},
 					],
 				},
@@ -68,8 +66,8 @@ describe('resource removal penalties', () => {
 
 		engineContext.activePlayer.ap = cost;
 
-		performAction(action.id, engineContext);
-
-		expect(engineContext.activePlayer.resources[Resource.happiness]).toBe(-1);
+		expect(() => performAction(action.id, engineContext)).toThrow(
+			/Insufficient/,
+		);
 	});
 });

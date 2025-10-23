@@ -1,19 +1,24 @@
 # Engine Handover
 
 - **Prepared by:** gpt-5-codex
-- **Timestamp (UTC):** 2025-10-27 18:05
-- **Current Focus:** Resource Migration MVP – Engine bootstrap & runtime context integration for ResourceV2
+- **Timestamp (UTC):** 2025-10-28 11:50
+- **Current Focus:** Resource Migration MVP – ResourceV2 logging alignment & global action cost enforcement
 - **State Summary:**
+- - Refactored `packages/engine/src/log.ts`, snapshot helpers, and attack diff utilities to consume ResourceV2 metadata ordering, surface signed deltas, and respect parent/child group presentation for recent gains.
+- - Enforced the ResourceV2 global action cost pointer by wiring `EngineContext.actionCostAmount` through action execution, setup bootstrap, and player setup utilities; updated tests to drop legacy `allowShortfall` assumptions.
 - - Added `packages/engine/src/resourceV2/metadata.ts` to convert content-provided ResourceV2 definitions/groups into engine metadata (ordered ids, parent-child maps, global cost pointers).
 - - Added `packages/engine/src/resourceV2/state.ts` to hold ResourceV2 value/bound/tier/touched state, enforce clamp reconciliation, and aggregate limited parent totals.
 - - Exposed the new APIs via `packages/engine/src/resourceV2/index.ts` and `packages/engine/src/index.ts`; authored `packages/engine/tests/resourceV2/state.test.ts` covering initialization, touched flags, and parent invariants.
 - - Implemented `packages/engine/src/resourceV2/effects.ts` plus dispatcher wiring so ResourceV2 add/remove/transfer/upper-bound handlers respect evaluation modifiers, rounding, clamp reconciliation, and hook suppression. Expanded `packages/engine/tests/resourceV2/effects.test.ts` to cover zero-delta suppression and sanitisation paths.
 - - Built tiering runtime support in `packages/engine/src/resourceV2/tiering.ts`, plumbed hook suppression + tier state logging through `resourceV2/effects.ts` and `resourceV2/state.ts`, and authored `packages/engine/tests/resourceV2/tiering.test.ts` for transitions, overlap guards, and logging helpers.
-- - Ran `npm run format` and `npm run test:coverage:engine` (branch gate now passing, see chunk `ed6c10`).
+- - Updated passive/phase helpers to read from ResourceV2 shims so processing pipelines keep working while legacy fields phase out.
+- - Expanded action cost, royal decree, and attack snapshot tests (plus new `packages/engine/tests/effects/attack-snapshot-diff.test.ts`) to assert the ResourceV2-aware logging strings and cost enforcement.
+- - Ran `npm run format` and `npm run test:coverage:engine` (branch gate passing, see chunk `e5f21c`).
 - - Updated `packages/engine/src/state/index.ts` and `packages/engine/src/setup/create_engine.ts` so engine bootstrap consumes ResourceV2 registries, seeds player stores, keeps legacy shims in sync, and exposes metadata/runtime hooks via `EngineContext`. Added `packages/engine/tests/setup/create-engine-resourceV2.test.ts` covering initialization and missing-definition errors.
 - **Next Suggested Tasks:**
-  - Extend session snapshot/registry payload builders to include ResourceV2 values and metadata for clients.
-  - Coordinate with repo owners on the outstanding lint violations or introduce a scoped suppression so CI can pass once ResourceV2 integration stabilizes.
-  - Begin migrating legacy resource/stat effect handlers to the ResourceV2 runtime starting with the Absorption pilot described in the design doc.
+  - Extend session snapshot/registry payload builders to include ResourceV2 diffs so the web log renders the new ordering without extra mapping.
+  - Audit web logging translators against the signed-delta format to avoid duplicate signs or mismatched parentheses.
+  - Continue migrating remaining legacy effect handlers to ResourceV2 runtime, prioritising absorption/tax pipelines from the design doc.
 - **Risks / Blockers:**
-  - Lint gate currently blocks due to repo-wide unsafe-type rules (`npm run lint` output in chunk `d414ab`). Need resolution before CI can turn green for Resource Migration branches.
+  - Lint gate still blocked by repository-wide unsafe-type rules (`npm run lint`, chunk `d414ab`); no change this pass.
+  - UI translators have not yet been validated against Option A log formatting; downstream consumers may need updates once engine snapshots ship.
