@@ -6,6 +6,7 @@ import { isActionPhaseActive } from '../../utils/isActionPhaseActive';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
 import type { TranslationActionCategoryDefinition } from '../../translation/context/types';
+import { selectResourceV2GlobalCostLabel } from '../../translation/resourceV2';
 import BasicOptions from './BasicOptions';
 import ActionCategoryHeader, {
 	type ActionCategoryDescriptor,
@@ -111,8 +112,20 @@ export default function ActionsPanel() {
 		() => selectResourceDescriptor(actionCostResource),
 		[selectResourceDescriptor, actionCostResource],
 	);
-	const actionCostIcon = actionCostDescriptor.icon;
-	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
+	const globalCostInfo = useMemo(
+		() =>
+			actionCostResource
+				? selectResourceV2GlobalCostLabel(
+						translationContext,
+						actionCostResource,
+					)
+				: undefined,
+		[translationContext, actionCostResource],
+	);
+	const actionCostIcon = globalCostInfo?.icon ?? actionCostDescriptor.icon;
+	const actionCostLabel =
+		globalCostInfo?.label ?? actionCostDescriptor.label ?? actionCostResource;
+	const actionCostAmount = globalCostInfo?.amount ?? 1;
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = sessionView.active;
 	if (!player) {
@@ -399,7 +412,7 @@ export default function ActionsPanel() {
 				<h2 className={TITLE_CLASSES}>
 					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
 					<span className={COST_LABEL_CLASSES}>
-						(1 {actionCostIcon ?? ''}
+						({actionCostAmount} {actionCostIcon ?? ''}
 						{actionCostIcon ? ' ' : ''}
 						{actionCostLabel} each)
 					</span>

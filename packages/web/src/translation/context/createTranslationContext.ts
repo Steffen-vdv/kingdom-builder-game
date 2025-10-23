@@ -8,6 +8,7 @@ import type {
 import type { SessionRegistries } from '../../state/sessionRegistries';
 import { createTranslationAssets } from './assets';
 import type { TranslationContext, TranslationPassives } from './types';
+import { createTranslationResourceV2Registry } from '../resourceV2';
 import {
 	cloneCompensations,
 	cloneEvaluationModifiers,
@@ -42,6 +43,8 @@ export function createTranslationContext(
 		| 'developments'
 		| 'populations'
 		| 'resources'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>,
 	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,
@@ -95,8 +98,13 @@ export function createTranslationContext(
 			return evaluationMods;
 		},
 	});
+	const resourceV2 = createTranslationResourceV2Registry(
+		registries.resourceDefinitions,
+		registries.resourceGroups,
+	);
 	const assets = createTranslationAssets(registries, metadata, {
 		rules: options.ruleSnapshot,
+		resourceV2,
 	});
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
@@ -178,5 +186,6 @@ export function createTranslationContext(
 		compensations: cloneCompensations(session.compensations),
 		rules: ruleSnapshot,
 		assets,
+		resourceV2,
 	});
 }

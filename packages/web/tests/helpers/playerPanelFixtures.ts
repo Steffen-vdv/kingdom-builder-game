@@ -5,6 +5,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
 import { createTranslationAssets } from '../../src/translation/context/assets';
+import { createTranslationResourceV2Registry } from '../../src/translation/resourceV2';
 import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
@@ -32,10 +33,14 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		phases,
 		ruleSnapshot,
 	} = createTestSessionScaffold();
+	const resourceV2 = createTranslationResourceV2Registry(
+		sessionRegistries.resourceDefinitions,
+		sessionRegistries.resourceGroups,
+	);
 	const translationAssets = createTranslationAssets(
 		sessionRegistries,
 		sessionMetadata,
-		{ rules: ruleSnapshot },
+		{ rules: ruleSnapshot, resourceV2 },
 	);
 	const resourceKeys = Object.keys(sessionRegistries.resources);
 	const resourceValues = resourceKeys.reduce<Record<string, number>>(

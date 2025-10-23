@@ -1,9 +1,6 @@
 import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
-import type {
-	AssetMetadata,
-	MetadataLookup,
-} from './registryMetadataDescriptors';
+import type { AssetMetadata, MetadataLookup } from './registryMetadataTypes';
 
 export interface MetadataSelector<TDescriptor extends { id: string }> {
 	readonly byId: Readonly<Record<string, TDescriptor>>;

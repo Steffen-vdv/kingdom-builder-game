@@ -10,6 +10,8 @@ import {
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type PopulationConfig,
+	type ResourceV2Definition,
+	type ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionRegistriesPayload,
@@ -17,6 +19,11 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import type { ZodType } from 'zod';
 import { clone } from './clone';
+
+const EMPTY_RESOURCE_V2_DEFINITIONS: ReadonlyArray<ResourceV2Definition> =
+	Object.freeze([]);
+const EMPTY_RESOURCE_V2_GROUPS: ReadonlyArray<ResourceV2GroupDefinition> =
+	Object.freeze([]);
 
 function createRegistryFromPayload<DefinitionType>(
 	entries: Record<string, DefinitionType>,
@@ -103,6 +110,26 @@ export interface SessionRegistries {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: Record<string, SessionResourceDefinition>;
+	resourceDefinitions: ReadonlyArray<ResourceV2Definition>;
+	resourceGroups: ReadonlyArray<ResourceV2GroupDefinition>;
+}
+
+function cloneResourceV2Definitions(
+	definitions: ReadonlyArray<ResourceV2Definition> | undefined,
+): ReadonlyArray<ResourceV2Definition> {
+	if (!definitions) {
+		return EMPTY_RESOURCE_V2_DEFINITIONS;
+	}
+	return Object.freeze(definitions.map((definition) => clone(definition)));
+}
+
+function cloneResourceV2Groups(
+	groups: ReadonlyArray<ResourceV2GroupDefinition> | undefined,
+): ReadonlyArray<ResourceV2GroupDefinition> {
+	if (!groups) {
+		return EMPTY_RESOURCE_V2_GROUPS;
+	}
+	return Object.freeze(groups.map((group) => clone(group)));
 }
 
 export function deserializeSessionRegistries(
@@ -127,6 +154,10 @@ export function deserializeSessionRegistries(
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),
+		resourceDefinitions: cloneResourceV2Definitions(
+			payload.resourceDefinitions,
+		),
+		resourceGroups: cloneResourceV2Groups(payload.resourceGroups),
 	};
 }
 

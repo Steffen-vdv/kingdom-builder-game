@@ -29,6 +29,7 @@ import {
 	extractPhaseRecord,
 	extractTriggerRecord,
 } from './registryMetadataSelectors';
+import { createTranslationResourceV2Registry } from '../translation/resourceV2';
 
 export interface DescriptorOverrides {
 	readonly resources?: ReturnType<typeof extractDescriptorRecord>;
@@ -56,10 +57,13 @@ export const useDescriptorOverrides = (
 			descriptorKey: string,
 		): TValue => {
 			if (value === undefined) {
-				throw new Error(
-					`Session snapshot metadata is missing the "${descriptorKey}" ` +
-						'descriptors. Ensure metadata includes this record.',
-				);
+				const messageSegments = [
+					'Session snapshot metadata',
+					'is missing the',
+					`"${descriptorKey}" descriptors.`,
+					'Ensure metadata includes this record.',
+				];
+				throw new Error(messageSegments.join(' '));
 			}
 			return value;
 		};
@@ -184,13 +188,20 @@ export const useMetadataLookups = (
 		| 'buildings'
 		| 'developments'
 		| 'populations'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>,
 	overrides: DescriptorOverrides,
 ): MetadataLookups =>
 	useMemo(() => {
+		const resourceV2 = createTranslationResourceV2Registry(
+			registries.resourceDefinitions,
+			registries.resourceGroups,
+		);
 		const resourceMetadataLookup = buildResourceMetadata(
 			registries.resources,
 			overrides.resources,
+			resourceV2,
 		);
 		const actionCategoryMetadataLookup = buildRegistryMetadata(
 			registries.actionCategories,
@@ -229,5 +240,7 @@ export const useMetadataLookups = (
 		registries.buildings,
 		registries.developments,
 		registries.populations,
+		registries.resourceDefinitions,
+		registries.resourceGroups,
 		registries.resources,
 	]);

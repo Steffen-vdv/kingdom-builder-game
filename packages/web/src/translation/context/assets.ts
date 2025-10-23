@@ -1,7 +1,5 @@
-import type { PopulationConfig } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
-	SessionMetadataFormat,
 	SessionRuleSnapshot,
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
@@ -10,110 +8,15 @@ import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
 	TranslationIconLabel,
+	TranslationResourceV2Registry,
 	TranslationTriggerAsset,
 } from './types';
-const formatRemoval = (description: string) =>
-	`Active as long as ${description}`;
-
-type FormatAwareDescriptor = SessionMetadataDescriptor & {
-	displayAsPercent?: boolean;
-	format?: SessionMetadataFormat;
-};
-
-function mergeIconLabel(
-	base: TranslationIconLabel | undefined,
-	descriptor: SessionMetadataDescriptor | undefined,
-	fallbackLabel: string,
-): TranslationIconLabel {
-	const entry: TranslationIconLabel = {};
-	const icon = descriptor?.icon ?? base?.icon;
-	if (icon !== undefined) {
-		entry.icon = icon;
-	}
-	const label = descriptor?.label ?? base?.label ?? fallbackLabel;
-	if (label !== undefined) {
-		entry.label = label;
-	}
-	const description = descriptor?.description ?? base?.description;
-	if (description !== undefined) {
-		entry.description = description;
-	}
-	const percentFlag = (descriptor as FormatAwareDescriptor | undefined)
-		?.displayAsPercent;
-	if (percentFlag !== undefined) {
-		entry.displayAsPercent = percentFlag;
-	} else if (base?.displayAsPercent !== undefined) {
-		entry.displayAsPercent = base.displayAsPercent;
-	}
-	const format = (descriptor as FormatAwareDescriptor | undefined)?.format;
-	const baseFormat = base?.format;
-	const appliedFormat = format ?? baseFormat;
-	if (appliedFormat !== undefined) {
-		if (typeof appliedFormat === 'string') {
-			entry.format = appliedFormat;
-		} else {
-			entry.format = Object.freeze({ ...appliedFormat });
-		}
-	}
-	return Object.freeze(entry);
-}
-
-function toIconLabel(
-	definition: Partial<PopulationConfig> & {
-		id?: string;
-		icon?: string | undefined;
-		name?: string | undefined;
-		label?: string | undefined;
-		description?: string | undefined;
-	},
-	fallbackId: string,
-): TranslationIconLabel {
-	const label = definition.name ?? definition.label ?? fallbackId;
-	const entry: TranslationIconLabel = {};
-	if (definition.icon !== undefined) {
-		entry.icon = definition.icon;
-	}
-	if (label !== undefined) {
-		entry.label = label;
-	}
-	if (definition.description !== undefined) {
-		entry.description = definition.description;
-	}
-	return Object.freeze(entry);
-}
-
-function buildPopulationMap(
-	registry: SessionRegistries['populations'],
-	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
-): Readonly<Record<string, TranslationIconLabel>> {
-	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [id, definition] of registry.entries()) {
-		const base = toIconLabel(definition, id);
-		entries[id] = mergeIconLabel(base, descriptors?.[id], base.label ?? id);
-	}
-	return Object.freeze(entries);
-}
-
-function buildResourceMap(
-	resources: SessionRegistries['resources'],
-	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
-): Readonly<Record<string, TranslationIconLabel>> {
-	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [key, definition] of Object.entries(resources)) {
-		const entry: TranslationIconLabel = {};
-		if (definition.icon !== undefined) {
-			entry.icon = definition.icon;
-		}
-		entry.label = definition.label ?? definition.key ?? key;
-		if (definition.description !== undefined) {
-			entry.description = definition.description;
-		}
-		const descriptor = descriptors?.[key];
-		entries[key] = mergeIconLabel(entry, descriptor, entry.label ?? key);
-	}
-	return Object.freeze(entries);
-}
-
+import {
+	buildPopulationMap,
+	buildResourceMap,
+	formatRemoval,
+	mergeIconLabel,
+} from './assetHelpers';
 function buildStatMap(
 	descriptors: Readonly<Record<string, SessionMetadataDescriptor>>,
 ): Readonly<Record<string, TranslationIconLabel>> {
@@ -206,7 +109,7 @@ function requireAssetDescriptor(
 	const descriptor = descriptors[key];
 	if (!descriptor) {
 		throw new Error(
-			`Session metadata is missing a descriptor for assets.${key}.`,
+			`Session metadata is missing a descriptor for assets.` + `${key}.`,
 		);
 	}
 	return descriptor;
@@ -226,8 +129,11 @@ function requireMetadataRecord(
 	const record = metadata[key];
 	if (!record) {
 		throw new Error(
-			`Session metadata must include ${key} descriptors to build ` +
-				'translation assets.',
+			[
+				'Session metadata must include',
+				`${key} descriptors`,
+				'to build translation assets.',
+			].join(' '),
 		);
 	}
 	return record as Record<string, unknown>;
@@ -236,7 +142,10 @@ function requireMetadataRecord(
 export function createTranslationAssets(
 	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
 	metadata: SessionSnapshotMetadata,
-	options?: { rules?: SessionRuleSnapshot },
+	options?: {
+		rules?: SessionRuleSnapshot;
+		resourceV2?: TranslationResourceV2Registry;
+	},
 ): TranslationAssets {
 	const populationMetadata = requireMetadataRecord(
 		metadata,
@@ -262,7 +171,11 @@ export function createTranslationAssets(
 		registries.populations,
 		populationMetadata,
 	);
-	const resources = buildResourceMap(registries.resources, resourceMetadata);
+	const resources = buildResourceMap(
+		registries.resources,
+		resourceMetadata,
+		options?.resourceV2,
+	);
 	const stats = buildStatMap(statMetadata);
 	const populationAsset = mergeIconLabel(
 		undefined,

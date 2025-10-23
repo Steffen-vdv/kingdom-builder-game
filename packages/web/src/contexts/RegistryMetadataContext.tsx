@@ -24,13 +24,13 @@ import {
 	useDescriptorOverrides,
 	useMetadataLookups,
 } from './registryMetadataHooks';
-import {
-	resolveAssetDescriptor,
-	type MetadataLookup,
-	type PhaseMetadata,
-	type RegistryMetadataDescriptor,
-	type TriggerMetadata,
-} from './registryMetadataDescriptors';
+import { resolveAssetDescriptor } from './registryMetadataDescriptors';
+import type {
+	MetadataLookup,
+	PhaseMetadata,
+	RegistryMetadataDescriptor,
+	TriggerMetadata,
+} from './registryMetadataTypes';
 
 export interface RegistryMetadataContextValue {
 	resources: DefinitionLookup<SessionResourceDefinition>;
@@ -84,6 +84,8 @@ interface RegistryMetadataProviderProps {
 		| 'buildings'
 		| 'developments'
 		| 'populations'
+		| 'resourceDefinitions'
+		| 'resourceGroups'
 	>;
 	metadata?: SessionSnapshotMetadata | null;
 	children: React.ReactNode;

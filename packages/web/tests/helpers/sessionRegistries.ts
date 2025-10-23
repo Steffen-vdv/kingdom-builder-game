@@ -6,6 +6,7 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol/session';
+import { RESOURCE_V2_STARTUP_METADATA } from '@kingdom-builder/contents/registries/resourceV2';
 import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
@@ -100,6 +101,12 @@ function cloneRegistriesPayload(
 			]),
 		),
 		actionCategories: cloneEntries(payload.actionCategories),
+		resourceDefinitions: (payload.resourceDefinitions ?? []).map((definition) =>
+			structuredClone(definition),
+		),
+		resourceGroups: (payload.resourceGroups ?? []).map((group) =>
+			structuredClone(group),
+		),
 	};
 }
 
@@ -107,6 +114,19 @@ export function createSessionRegistriesPayload(): SessionRegistriesPayload {
 	const payload = cloneRegistriesPayload(BASE_PAYLOAD);
 	normalizeActionCategories(payload);
 	payload.actionCategories = createCategoryRegistry();
+	if (
+		!payload.resourceDefinitions ||
+		payload.resourceDefinitions.length === 0
+	) {
+		payload.resourceDefinitions = structuredClone(
+			RESOURCE_V2_STARTUP_METADATA.definitions.orderedDefinitions ?? [],
+		);
+	}
+	if (!payload.resourceGroups || payload.resourceGroups.length === 0) {
+		payload.resourceGroups = structuredClone(
+			RESOURCE_V2_STARTUP_METADATA.groups.orderedGroups ?? [],
+		);
+	}
 	return payload;
 }
 

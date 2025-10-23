@@ -7,10 +7,12 @@ import {
 	buildStatMetadata,
 	buildTriggerMetadata,
 	resolveAssetDescriptor,
-	type RegistryMetadataDescriptor,
-	type PhaseMetadata,
-	type TriggerMetadata,
 } from '../../src/contexts/registryMetadataDescriptors';
+import type {
+	RegistryMetadataDescriptor,
+	PhaseMetadata,
+	TriggerMetadata,
+} from '../../src/contexts/registryMetadataTypes';
 import {
 	createAssetMetadataSelector,
 	createMetadataSelector,

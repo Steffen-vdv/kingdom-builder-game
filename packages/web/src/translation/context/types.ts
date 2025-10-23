@@ -6,6 +6,13 @@ import type {
 	EffectDef,
 	PlayerStartConfig,
 	PopulationConfig,
+	ResourceV2BoundsMetadata,
+	ResourceV2Definition,
+	ResourceV2DisplayMetadata,
+	ResourceV2GlobalActionCostMetadata,
+	ResourceV2GroupDefinition,
+	ResourceV2GroupParentDescriptor,
+	ResourceV2TierTrackDefinition,
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerId,
@@ -74,6 +81,42 @@ export interface TranslationAssets {
 	readonly triggers: Readonly<Record<string, TranslationTriggerAsset>>;
 	readonly tierSummaries: Readonly<Record<string, string>>;
 	formatPassiveRemoval(description: string): string;
+}
+
+export interface TranslationResourceV2Resource {
+	readonly id: ResourceV2Definition['id'];
+	readonly display: ResourceV2DisplayMetadata;
+	readonly bounds?: ResourceV2BoundsMetadata;
+	readonly tierTrack?: ResourceV2TierTrackDefinition;
+	readonly globalActionCost?: ResourceV2GlobalActionCostMetadata;
+	readonly groupId?: ResourceV2GroupDefinition['id'];
+	readonly parentId?: ResourceV2GroupParentDescriptor['id'];
+	readonly trackValueBreakdown: boolean;
+	readonly trackBoundBreakdown: boolean;
+}
+
+export interface TranslationResourceV2Parent {
+	readonly id: ResourceV2GroupParentDescriptor['id'];
+	readonly display: ResourceV2DisplayMetadata;
+	readonly bounds?: ResourceV2BoundsMetadata;
+	readonly tierTrack?: ResourceV2TierTrackDefinition;
+	readonly trackValueBreakdown: boolean;
+	readonly trackBoundBreakdown: boolean;
+}
+
+export interface TranslationResourceV2Registry {
+	listResources(): readonly TranslationResourceV2Resource[];
+	listParents(): readonly TranslationResourceV2Parent[];
+	getResource(id: string): TranslationResourceV2Resource | undefined;
+	getParent(id: string): TranslationResourceV2Parent | undefined;
+	getParentForResource(id: string): TranslationResourceV2Parent | undefined;
+	hasResource(id: string): boolean;
+}
+
+export interface TranslationResourceV2GlobalCostLabel {
+	readonly label: string;
+	readonly icon?: string;
+	readonly amount?: number;
 }
 
 /**
@@ -174,4 +217,5 @@ export interface TranslationContext {
 	pullEffectLog<T>(key: string): T | undefined;
 	readonly actionCostResource?: string;
 	readonly assets: TranslationAssets;
+	readonly resourceV2: TranslationResourceV2Registry;
 }
