@@ -17,6 +17,7 @@ export default defineConfig({
 				__dirname,
 				'packages/protocol/src',
 			),
+			'@kingdom-builder/server': path.resolve(__dirname, 'packages/server/src'),
 			'@kingdom-builder/web': path.resolve(__dirname, 'packages/web/src'),
 		},
 	},
