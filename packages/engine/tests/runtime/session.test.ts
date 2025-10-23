@@ -248,6 +248,66 @@ describe('EngineSession', () => {
 		expect(values[group.parent.id]?.amount).toBe(4);
 	});
 
+	it('orders ResourceV2 children before parents and surfaces metadata', () => {
+		const childA = createResourceV2Definition({
+			id: 'resource:alpha',
+			name: 'Alpha',
+			group: { groupId: 'group:pair', order: 2 },
+		});
+		const childB = createResourceV2Definition({
+			id: 'resource:beta',
+			name: 'Beta',
+			group: { groupId: 'group:pair', order: 1 },
+		});
+		const group = createResourceV2Group({
+			id: 'group:pair',
+			children: [childB.id, childA.id],
+			parentId: 'parent:pair',
+			parentName: 'Parent Pair',
+			parentDescription: 'Parent descriptor',
+		});
+		const registry = loadResourceV2Registry({
+			resources: [childB, childA],
+			groups: [group],
+		});
+		const start = JSON.parse(JSON.stringify(GAME_START)) as StartConfig;
+		(
+			start.player as StartConfig['player'] & {
+				resourceV2?: Record<string, number>;
+			}
+		).resourceV2 = {
+			[childB.id]: 5,
+			[childA.id]: 3,
+		};
+
+		const session = createTestSession({
+			start,
+			resourceV2Registry: registry,
+		});
+
+		const snapshot = session.getSnapshot();
+		const player = snapshot.game.players[0]!;
+		const values = player.values ?? {};
+		expect(Object.keys(values)).toEqual([
+			childB.id,
+			childA.id,
+			group.parent.id,
+		]);
+		const parentAmount = values[group.parent.id]?.amount ?? 0;
+		expect(parentAmount).toBe(
+			(values[childB.id]?.amount ?? 0) + (values[childA.id]?.amount ?? 0),
+		);
+		expect(values[childB.id]?.recentGains).toEqual([]);
+		const resourceMetadata = snapshot.metadata.resources ?? {};
+		expect(resourceMetadata[childB.id]).toMatchObject({
+			label: childB.display.name,
+		});
+		expect(resourceMetadata[group.parent.id]).toMatchObject({
+			label: group.parent.display.name,
+			description: group.parent.display.description,
+		});
+	});
+
 	it('returns cloned passive evaluation modifier maps', () => {
 		const session = createTestSession();
 		const mods = session.getPassiveEvaluationMods();

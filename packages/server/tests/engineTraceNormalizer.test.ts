@@ -9,6 +9,25 @@ import type {
 describe('engineTraceNormalizer', () => {
 	it('deeply clones player snapshots when normalizing traces', () => {
 		const before: EnginePlayerSnapshot = {
+			values: {
+				'resource:alpha': {
+					amount: 4,
+					touched: true,
+					recentGains: [{ resourceId: 'resource:alpha', delta: 2 }],
+					tier: { tierId: 'tier:1' },
+					parent: {
+						id: 'resource:parent',
+						amount: 9,
+						touched: true,
+						bounds: { upperBound: 20 },
+					},
+				},
+				'resource:parent': {
+					amount: 9,
+					touched: true,
+					recentGains: [],
+				},
+			},
 			resources: { gold: 5 },
 			stats: { strength: 2 },
 			buildings: ['tower'],
@@ -33,6 +52,23 @@ describe('engineTraceNormalizer', () => {
 			],
 		};
 		const after: EnginePlayerSnapshot = {
+			values: {
+				'resource:alpha': {
+					amount: 7,
+					touched: true,
+					recentGains: [{ resourceId: 'resource:alpha', delta: 3 }],
+					parent: {
+						id: 'resource:parent',
+						amount: 12,
+						touched: true,
+					},
+				},
+				'resource:parent': {
+					amount: 12,
+					touched: true,
+					recentGains: [],
+				},
+			},
 			resources: { gold: 7 },
 			stats: { strength: 3 },
 			buildings: ['tower', 'barracks'],
@@ -72,6 +108,12 @@ describe('engineTraceNormalizer', () => {
 			},
 		});
 		expect(normalized.after.passives[0]).toEqual({ id: 'passive:2' });
+		expect(normalized.before.values).not.toBe(before.values);
+		expect(normalized.before.values).toEqual(before.values);
+		expect(normalized.after.values).toEqual(after.values);
+		expect(normalized.after.values?.['resource:alpha']?.recentGains).not.toBe(
+			after.values?.['resource:alpha']?.recentGains,
+		);
 	});
 });
 

@@ -18,6 +18,10 @@ import type {
 	SessionRequirementFailure,
 	SessionSnapshot,
 } from '../session';
+import {
+	resourceV2BoundsMetadataSchema,
+	resourceV2RecentGainEntrySchema,
+} from '../resourceV2';
 
 const passiveSourceMetadataSchema = z.object({
 	type: z.string(),
@@ -68,7 +72,36 @@ export const actionTraceLandSnapshotSchema = z.object({
 	developments: z.array(z.string()),
 });
 
+const sessionResourceTierStateSchema = z
+	.object({
+		trackId: z.string().optional(),
+		tierId: z.string().optional(),
+		nextTierId: z.string().optional(),
+		previousTierId: z.string().optional(),
+	})
+	.passthrough();
+
+const sessionResourceParentSchema = z.object({
+	id: z.string(),
+	amount: z.number(),
+	touched: z.boolean(),
+	bounds: resourceV2BoundsMetadataSchema.optional(),
+});
+
+const sessionResourceValueSnapshotSchema = z.object({
+	amount: z.number(),
+	touched: z.boolean(),
+	tier: sessionResourceTierStateSchema.optional(),
+	parent: sessionResourceParentSchema.optional(),
+	recentGains: z.array(resourceV2RecentGainEntrySchema).readonly(),
+});
+
+const sessionResourceValueSnapshotMapSchema = z
+	.record(z.string(), sessionResourceValueSnapshotSchema)
+	.transform((value) => value as ActionPlayerSnapshot['values']);
+
 export const actionPlayerSnapshotSchema = z.object({
+	values: sessionResourceValueSnapshotMapSchema.optional(),
 	resources: z.record(z.string(), z.number()),
 	stats: z.record(z.string(), z.number()),
 	buildings: z.array(z.string()),

@@ -187,7 +187,7 @@ function cloneResourceValue(
 	return snapshot;
 }
 
-function snapshotResourceValues(
+export function snapshotResourceValues(
 	player: PlayerState,
 ): SessionResourceValueSnapshotMap | undefined {
 	const state = player.resourceV2;
@@ -215,6 +215,43 @@ function snapshotResourceValues(
 		values[parentId] = snapshot;
 	}
 	return values;
+}
+
+function cloneResourceValueSnapshotMap(
+	values: SessionResourceValueSnapshotMap | undefined,
+): SessionResourceValueSnapshotMap | undefined {
+	if (!values) {
+		return undefined;
+	}
+	const cloned: SessionResourceValueSnapshotMap = {};
+	for (const [resourceId, snapshot] of Object.entries(values)) {
+		const clonedSnapshot: SessionResourceValueSnapshot = {
+			amount: snapshot.amount,
+			touched: snapshot.touched,
+			recentGains: snapshot.recentGains.map((entry) => ({
+				resourceId: entry.resourceId,
+				delta: entry.delta,
+			})),
+		};
+		if (snapshot.tier) {
+			clonedSnapshot.tier = { ...snapshot.tier };
+		}
+		if (snapshot.parent) {
+			const parentSnapshot: SessionResourceValueParentSnapshot = {
+				id: snapshot.parent.id,
+				amount: snapshot.parent.amount,
+				touched: snapshot.parent.touched,
+			};
+			if (snapshot.parent.bounds) {
+				parentSnapshot.bounds = {
+					...snapshot.parent.bounds,
+				};
+			}
+			clonedSnapshot.parent = parentSnapshot;
+		}
+		cloned[resourceId] = clonedSnapshot;
+	}
+	return cloned;
 }
 
 function cloneLand(land: Land): LandSnapshot {
@@ -268,7 +305,9 @@ export function snapshotPlayer(
 }
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
+	const values = cloneResourceValueSnapshotMap(snapshot.values);
 	return {
+		...(values ? { values } : {}),
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
 		buildings: [...snapshot.buildings],

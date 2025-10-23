@@ -21,7 +21,9 @@ export function normalizeActionTraces(
 function normalizePlayerSnapshot(
 	snapshot: EnginePlayerSnapshot,
 ): ActionExecuteSuccessResponse['traces'][number]['before'] {
+	const values = snapshot.values ? structuredClone(snapshot.values) : undefined;
 	return {
+		...(values ? { values } : {}),
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
 		buildings: [...snapshot.buildings],
