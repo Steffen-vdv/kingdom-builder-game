@@ -48,7 +48,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T14 | 2025-10-24 | gpt-5-codex | packages/engine/src/actions/costs.ts; packages/engine/src/resourceV2/service.ts; packages/engine/src/setup/player_setup.ts; packages/engine/src/setup/create_engine.ts; packages/engine/tests/actions/costs.global-action-cost.test.ts; packages/engine/tests/helpers.ts; docs/project/resource-migration/production/production-living-docs.md | Enforced ResourceV2 global action cost metadata in engine cost resolution, wired optional registry support, and added coverage for overrides and modifiers. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Feed the live ResourceV2 registry into engine/session creation and confirm downstream clients respect the enforced cost. |
 | Resource Migration MVP - P3 - T15 | 2025-10-23 | gpt-5-codex | packages/engine/src/setup/create_engine.ts; packages/engine/src/setup/player_setup.ts; packages/engine/src/runtime/player_snapshot.ts; packages/contents/src/registries/resourceV2.ts; packages/engine/tests/config/create_engine-config-overrides.test.ts; packages/engine/tests/runtime/session.test.ts; packages/engine/src/state/index.ts; packages/engine/src/index.ts; packages/engine/tsconfig.json | Wired engine bootstrap to load ResourceV2 definition/group registries from contents or config overrides, initialize player ResourceV2 stores with parent keys and start values, export the parent registry, and expose ResourceV2 snapshots alongside legacy fields. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` (re-run 2025-10-23) | Verify downstream session serializers and web consumers read the new ResourceV2 snapshot payload before removing legacy resource/stat copies; add guard coverage ensuring parent registries populate during engine creation. |
 | Resource Migration MVP - P3 - T16 | 2025-10-24 | gpt-5-codex | packages/engine/src/log.ts; packages/engine/src/runtime/player_snapshot.ts; packages/engine/src/runtime/engine_snapshot.ts; packages/engine/src/resourceV2/service.ts; packages/server/src/transport/engineTraceNormalizer.ts; packages/server/tests/engineTraceNormalizer.test.ts; packages/protocol/src/actions/contracts.ts; packages/protocol/src/config/action_contracts.ts; packages/protocol/tests/session-contracts.test.ts; packages/engine/tests/runtime/session.test.ts; tests/integration/resourceV2-snapshot.test.ts; docs/project/resource-migration/production/production-living-docs.md | Populated ResourceV2 player values and metadata across engine session snapshots and action traces, normalized server traces with deep-cloned value maps, and added regression coverage for ordering, parent rollups, and recent gain history. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine`; `npm run test:integration` | Coordinate client/web consumers to adopt the ResourceV2 trace payloads and schedule retirement of the legacy resource/stat mirrors once downstream adoption is complete. |
-| Resource Migration MVP - P3 - T17 | 2025-**-** | _(add entry)_ | | _(reserved for T17 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T17 | 2025-10-24 | gpt-5-codex | packages/server/src/session/SessionManager.ts; packages/server/src/session/sessionConfigAssets.ts; packages/server/src/session/sessionMetadataBuilder.ts; packages/server/src/transport/SessionTransportBase.ts; packages/server/tests/**/\*.ts; docs/project/resource-migration/production/production-living-docs.md | Propagated ResourceV2 definition/group registries and default value maps through session gateways, expanded HTTP transport coverage for legacy compatibility, and refreshed project docs. | `npm run lint`; `npm run test --workspace=@kingdom-builder/server` | Coordinate web/client consumers to adopt dual registry payloads and schedule removal of legacy-only fallbacks once downstream adoption is confirmed. |
 | Resource Migration MVP - P3 - T18 | 2025-**-** | _(add entry)_ | | _(reserved for T18 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T19 | 2025-**-** | _(add entry)_ | | _(reserved for T19 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T20 | 2025-**-** | _(add entry)_ | | _(reserved for T20 assignee – update only this row.)_ | | |
@@ -61,22 +61,22 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T27 | 2025-**-** | _(add entry)_ | | _(reserved for T27 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T28 | 2025-**-** | _(add entry)_ | | _(reserved for T28 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T29 | 2025-**-** | _(add entry)_ | | _(reserved for T29 assignee – update only this row.)_ | | |
-| Resource Migration MVP - P3 - T30 | 2025-**-\*\* | _(add entry)_ | | \_(reserved for T30 assignee – update only this row.)\_ | | |
+| Resource Migration MVP - P3 - T30 | 2025-\*\*-\*\* | _(add entry)_ | | \_(reserved for T30 assignee – update only this row.)\_ | | |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-24 18:00
-**Current Focus:** Resource Migration MVP - P3 - T16 ResourceV2 snapshot serialization
-**State Summary:** Engine session snapshots and action traces now include cloned ResourceV2 value maps with parent descriptors, tier status, and recent gain history while keeping legacy fields intact. Server normalization and integration tests cover ordering and rollups so downstream adopters can rely on the new payload.
+**Timestamp (UTC):** 2025-10-24 19:30
+**Current Focus:** Resource Migration MVP - P3 - T17 Server session ResourceV2 exposure
+**State Summary:** Server session creation, state polling, and metadata endpoints now return both legacy registries and ResourceV2 definition/group payloads with guaranteed value maps, and gateway tests assert compatibility with legacy clients.
 
 - **Next Suggested Tasks:**
-  - Update web/session consumers to render ResourceV2 values and metadata alongside legacy payloads during the transition.
-  - Extend translation/logging flows to surface `recentGains` so legacy delta helpers can be retired confidently.
-  - Plan the removal of redundant `resources`/`stats` mirrors once clients confirm adoption of the ResourceV2 payloads.
-- **Blocking Issues / Risks:** Web/state layers still depend on legacy resource/stat fields; coordinate rollout to avoid duplicate UI work and ensure registry metadata stays synchronized.
+  - Update web/session consumers to render ResourceV2 registries and value maps, falling back to legacy fields only when absent.
+  - Audit cache layers and downstream DTOs outside the server workspace to ensure ResourceV2 payloads propagate consistently.
+  - Plan the deprecation window for legacy resource/stat payloads once client adoption metrics confirm readiness.
+- **Blocking Issues / Risks:** Downstream clients still depend on legacy-only payloads; coordinate staged rollout messaging to avoid regressions during the dual-delivery period.
 
 ## 5. Notes & Decisions Archive
 

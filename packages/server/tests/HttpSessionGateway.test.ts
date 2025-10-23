@@ -47,6 +47,8 @@ describe('HttpSessionGateway', () => {
 			developments: {},
 			populations: {},
 			resources: {},
+			resourceDefinitions: [],
+			resourceGroups: [],
 		};
 	}
 
@@ -76,7 +78,33 @@ describe('HttpSessionGateway', () => {
 		expect(response.registries.actionCategories).toEqual(
 			createRegistries().actionCategories,
 		);
+		expect(Array.isArray(response.registries.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(response.registries.resourceGroups)).toBe(true);
 		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('parses legacy registries without ResourceV2 payloads', async () => {
+		const fetch = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) => {
+			const payload = {
+				sessionId: 'legacy-session',
+				snapshot: {
+					game: { devMode: false },
+				},
+				registries: {
+					actions: {},
+					buildings: {},
+					developments: {},
+					populations: {},
+					resources: {},
+				},
+			};
+			return Promise.resolve(jsonResponse(payload, { status: 201 }));
+		});
+		const gateway = createGateway({ fetch });
+		const response = await gateway.createSession();
+		expect(response.sessionId).toBe('legacy-session');
+		expect(response.registries.resourceDefinitions).toBeUndefined();
+		expect(response.registries.resourceGroups).toBeUndefined();
 	});
 
 	it('throws transport errors for non-success responses', async () => {
@@ -126,6 +154,8 @@ describe('HttpSessionGateway', () => {
 		expect(response.registries.actionCategories).toEqual(
 			createRegistries().actionCategories,
 		);
+		expect(Array.isArray(response.registries.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(response.registries.resourceGroups)).toBe(true);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 

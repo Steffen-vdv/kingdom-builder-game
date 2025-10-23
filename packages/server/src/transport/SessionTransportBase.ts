@@ -231,6 +231,11 @@ export class SessionTransportBase {
 		snapshot: SessionSnapshot,
 	): SessionStateResponse {
 		const clonedSnapshot = structuredClone(snapshot);
+		for (const player of clonedSnapshot.game.players) {
+			if (!player.values) {
+				player.values = {};
+			}
+		}
 		clonedSnapshot.metadata = mergeSessionMetadata({
 			baseMetadata: this.sessionManager.getSessionMetadata(sessionId),
 			snapshotMetadata: clonedSnapshot.metadata,

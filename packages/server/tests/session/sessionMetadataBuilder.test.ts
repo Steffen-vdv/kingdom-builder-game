@@ -16,6 +16,10 @@ describe('buildSessionMetadata', () => {
 		expect(clonedAction).not.toBe(actionDef);
 		expect(clonedAction).toEqual(actionDef);
 		expect(Object.isFrozen(clonedAction)).toBe(true);
+		expect(Array.isArray(registries.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(registries.resourceGroups)).toBe(true);
+		expect(Object.isFrozen(registries.resourceDefinitions)).toBe(true);
+		expect(Object.isFrozen(registries.resourceGroups)).toBe(true);
 	});
 
 	it('copies stat formatting metadata', () => {

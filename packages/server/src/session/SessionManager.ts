@@ -12,6 +12,7 @@ import {
 	GAME_START,
 	RULES,
 	PRIMARY_ICON_ID,
+	RESOURCE_V2_STARTUP_METADATA,
 } from '@kingdom-builder/contents';
 import type {
 	SessionRegistriesPayload,
@@ -19,6 +20,10 @@ import type {
 	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	SessionResourceV2DefinitionRegistry,
+	SessionResourceV2GroupRegistry,
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -40,6 +45,8 @@ type EngineSessionOptions = Parameters<typeof createEngineSession>[0];
 type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
 	actionCategoryRegistry?: SessionActionCategoryRegistry;
+	resourceDefinitionRegistry?: SessionResourceV2DefinitionRegistry;
+	resourceGroupRegistry?: SessionResourceV2GroupRegistry;
 	primaryIconId?: string | null;
 };
 
@@ -49,6 +56,8 @@ type SessionRuntimeConfig = {
 	rules: RuleSet;
 	resources: SessionResourceRegistry;
 	primaryIconId: string | null;
+	resourceDefinitions: SessionResourceV2DefinitionRegistry;
+	resourceGroups: SessionResourceV2GroupRegistry;
 };
 
 type SessionRecord = {
@@ -58,6 +67,26 @@ type SessionRecord = {
 	registries: SessionRegistriesPayload;
 	metadata: SessionStaticMetadataPayload;
 };
+
+function normalizeResourceDefinitionRegistry(
+	override: SessionResourceV2DefinitionRegistry | undefined,
+	fallback: ReadonlyArray<ResourceV2Definition> | undefined,
+): SessionResourceV2DefinitionRegistry {
+	const source = override ?? fallback ?? [];
+	const cloned = source.map((definition) =>
+		Object.freeze(structuredClone(definition)),
+	);
+	return Object.freeze(cloned) as SessionResourceV2DefinitionRegistry;
+}
+
+function normalizeResourceGroupRegistry(
+	override: SessionResourceV2GroupRegistry | undefined,
+	fallback: ReadonlyArray<ResourceV2GroupDefinition> | undefined,
+): SessionResourceV2GroupRegistry {
+	const source = override ?? fallback ?? [];
+	const cloned = source.map((group) => Object.freeze(structuredClone(group)));
+	return Object.freeze(cloned) as SessionResourceV2GroupRegistry;
+}
 
 export interface SessionManagerOptions {
 	maxIdleDurationMs?: number;
@@ -90,6 +119,10 @@ export class SessionManager {
 
 	private readonly resourceOverrides: SessionResourceRegistry | undefined;
 
+	private readonly resourceDefinitions: SessionResourceV2DefinitionRegistry;
+
+	private readonly resourceGroups: SessionResourceV2GroupRegistry;
+
 	private readonly runtimeConfig: SessionRuntimeConfig;
 
 	public constructor(options: SessionManagerOptions = {}) {
@@ -102,6 +135,8 @@ export class SessionManager {
 		const {
 			resourceRegistry,
 			actionCategoryRegistry,
+			resourceDefinitionRegistry,
+			resourceGroupRegistry,
 			primaryIconId: primaryIconOverride,
 			...engineOverrides
 		} = engineOptions;
@@ -125,6 +160,16 @@ export class SessionManager {
 			? freezeSerializedRegistry(structuredClone(resourceRegistry))
 			: undefined;
 		this.resourceOverrides = resourceOverrideSnapshot;
+		const resourceDefinitions = normalizeResourceDefinitionRegistry(
+			resourceDefinitionRegistry,
+			RESOURCE_V2_STARTUP_METADATA.definitions.orderedDefinitions,
+		);
+		const resourceGroups = normalizeResourceGroupRegistry(
+			resourceGroupRegistry,
+			RESOURCE_V2_STARTUP_METADATA.groups.orderedGroups,
+		);
+		this.resourceDefinitions = resourceDefinitions;
+		this.resourceGroups = resourceGroups;
 		const resources = buildResourceRegistry(
 			this.resourceOverrides,
 			this.baseOptions.start,
@@ -143,6 +188,8 @@ export class SessionManager {
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
+			resourceDefinitions,
+			resourceGroups,
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
@@ -169,6 +216,8 @@ export class SessionManager {
 			rules: frozenRules,
 			resources: frozenResources,
 			primaryIconId,
+			resourceDefinitions,
+			resourceGroups,
 		});
 	}
 
@@ -206,6 +255,8 @@ export class SessionManager {
 				resourceOverrides: this.resourceOverrides,
 				baseRegistries: this.registries,
 				baseMetadata: this.metadata,
+				resourceDefinitions: this.resourceDefinitions,
+				resourceGroups: this.resourceGroups,
 			},
 			config,
 		);
@@ -237,7 +288,13 @@ export class SessionManager {
 		sessionId: string,
 	): ReturnType<EngineSession['getSnapshot']> {
 		const session = this.requireSession(sessionId);
-		return session.getSnapshot();
+		const snapshot = session.getSnapshot();
+		for (const player of snapshot.game.players) {
+			if (!player.values) {
+				player.values = {};
+			}
+		}
+		return snapshot;
 	}
 
 	public getRuleSnapshot(

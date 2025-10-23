@@ -206,8 +206,18 @@ describe('SessionTransport createSession', () => {
 		expect(new Set(Object.keys(registries.populations))).toEqual(
 			new Set(factory.populations.keys()),
 		);
-		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
-		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
-		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(registries.actions[actionId]).toMatchObject({
+			id: actionId,
+		});
+		expect(registries.resources[costKey]).toMatchObject({
+			key: costKey,
+		});
+		expect(registries.resources[gainKey]).toMatchObject({
+			key: gainKey,
+		});
+		expect(Array.isArray(registries.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(registries.resourceGroups)).toBe(true);
+		const [playerSnapshot] = response.snapshot.game.players;
+		expect(playerSnapshot?.values).toBeDefined();
 	});
 });

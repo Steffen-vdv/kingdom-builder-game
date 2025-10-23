@@ -15,6 +15,7 @@ import {
 	DEVELOPMENTS_INFO,
 	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
+	RESOURCE_V2_STARTUP_METADATA,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
 import type {
@@ -23,6 +24,8 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SessionActionCategoryRegistry,
+	SessionResourceV2DefinitionRegistry,
+	SessionResourceV2GroupRegistry,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionSnapshotMetadata,
@@ -298,6 +301,14 @@ const cloneOverviewContent = () =>
 	deepFreeze(structuredClone(OVERVIEW_CONTENT));
 
 export const buildSessionMetadata = (): SessionMetadataBuildResult => {
+	const resourceDefinitions = deepFreeze(
+		structuredClone(
+			RESOURCE_V2_STARTUP_METADATA.definitions.orderedDefinitions ?? [],
+		),
+	) as unknown as SessionResourceV2DefinitionRegistry;
+	const resourceGroups = deepFreeze(
+		structuredClone(RESOURCE_V2_STARTUP_METADATA.groups.orderedGroups ?? []),
+	) as unknown as SessionResourceV2GroupRegistry;
 	const registries: SessionRegistriesPayload = {
 		actions: cloneRegistry(ACTIONS),
 		actionCategories: cloneActionCategoryRegistry(),
@@ -305,6 +316,8 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
 		resources: buildResourceRegistry(),
+		resourceDefinitions,
+		resourceGroups,
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),
