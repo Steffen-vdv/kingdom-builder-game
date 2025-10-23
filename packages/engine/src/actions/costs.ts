@@ -1,6 +1,7 @@
 import { EFFECT_COST_COLLECTORS } from '../effects';
 import { runRequirement } from '../requirements';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
+import type { ActionConfig as ActionDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
 import type { RequirementFailure } from '../requirements';
@@ -25,6 +26,54 @@ function getActionDefinitionOrThrow(
 	return actionDefinition;
 }
 
+function enforceGlobalActionCost(
+	actionId: string,
+	actionDefinition: ActionDef,
+	costBag: CostBag,
+	engineContext: EngineContext,
+) {
+	const primaryCostKey = engineContext.actionCostResource;
+	if (!primaryCostKey) {
+		return;
+	}
+
+	const metadata = engineContext.resourceV2.getGlobalActionCost(primaryCostKey);
+	const configuredAmount = costBag[primaryCostKey];
+
+	if (!metadata) {
+		if (configuredAmount === undefined) {
+			const { defaultActionAPCost } = engineContext.services.rules;
+			const defaultCost = defaultActionAPCost;
+			costBag[primaryCostKey] = actionDefinition.system ? 0 : defaultCost;
+		}
+		return;
+	}
+
+	if (actionDefinition.system) {
+		costBag[primaryCostKey] = 0;
+		return;
+	}
+
+	const actionLabel = actionDefinition.id ?? actionId;
+
+	if (configuredAmount === undefined) {
+		const detail =
+			`Action "${actionLabel}" omitted the global action cost resource ` +
+			`"${primaryCostKey}" (expected ${metadata.amount}).`;
+		throw new Error(detail);
+	}
+
+	if (configuredAmount !== metadata.amount) {
+		const detail =
+			`Action "${actionLabel}" attempted to override the global action ` +
+			`cost resource "${primaryCostKey}". Expected ${metadata.amount}, ` +
+			`received ${configuredAmount}.`;
+		throw new Error(detail);
+	}
+
+	costBag[primaryCostKey] = metadata.amount;
+}
+
 export function applyCostsWithPassives(
 	actionId: string,
 	baseCosts: CostBag,
@@ -32,12 +81,12 @@ export function applyCostsWithPassives(
 ): CostBag {
 	const defaultedCosts = cloneCostBag(baseCosts);
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
-	const primaryCostKey = engineContext.actionCostResource;
-	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
-		defaultedCosts[primaryCostKey] = actionDefinition.system
-			? 0
-			: engineContext.services.rules.defaultActionAPCost;
-	}
+	enforceGlobalActionCost(
+		actionId,
+		actionDefinition,
+		defaultedCosts,
+		engineContext,
+	);
 	return engineContext.passives.applyCostMods(
 		actionDefinition.id,
 		defaultedCosts,
