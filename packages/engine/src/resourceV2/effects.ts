@@ -1,81 +1,30 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
+import { getResourceValueState } from './state';
 import {
-	adjustResourceValue,
-	getResourceValue,
-	getResourceValueState,
-	type ResourceV2MutableStateValue,
-	type ResourceV2State,
-} from './state';
+	computeDonorLimit,
+	computeRecipientCapacity,
+	normaliseAddAmount,
+} from './value_helpers';
+import type {
+	ResourceV2BoundAdjustmentParams,
+	ResourceV2ReconciliationStrategy,
+	ResourceV2TransferEffectParams,
+	ResourceV2ValueEffectParams,
+	ResourceV2ValuePayload,
+} from './value_types';
 
 import type { EffectHandler } from '../effects';
-
-export type ResourceV2ReconciliationStrategy = 'clamp';
-export type ResourceV2RoundingMode = 'up' | 'down' | 'nearest';
-
-export type ResourceV2ValuePayload =
-	| { kind: 'amount'; amount: number }
-	| { kind: 'percent'; percent: number; rounding: ResourceV2RoundingMode };
-
-export interface ResourceV2ValueEffectParams {
-	resourceId: string;
-	payload: ResourceV2ValuePayload;
-	reconciliation: ResourceV2ReconciliationStrategy;
-	suppressHooks?: boolean;
-}
-
-export interface ResourceV2TransferEndpointParams {
-	resourceId: string;
-	reconciliation: ResourceV2ReconciliationStrategy;
-}
-
-export interface ResourceV2TransferEffectParams {
-	donor: ResourceV2TransferEndpointParams;
-	recipient: ResourceV2TransferEndpointParams;
-	payload: ResourceV2ValuePayload;
-	suppressHooks?: boolean;
-}
-
-export interface ResourceV2BoundAdjustmentParams {
-	resourceId: string;
-	amount: number;
-	reconciliation: ResourceV2ReconciliationStrategy;
-}
-
-export interface ResourceV2RuntimeHooks {
-	onValueChange?(
-		context: EngineContext,
-		resourceId: string,
-		delta: number,
-	): void;
-	onUpperBoundIncrease?(
-		context: EngineContext,
-		resourceId: string,
-		amount: number,
-		nextBound: number | undefined,
-	): void;
-}
-
-export interface ResourceV2Runtime {
-	state: ResourceV2State;
-	hooks?: ResourceV2RuntimeHooks;
-}
-
-interface ResourceV2ContextCarrier {
-	resourceV2?: ResourceV2Runtime;
-}
-
-const VALUE_EVALUATION_TARGET = 'resourceV2:value';
-const TRANSFER_DONOR_TARGET = 'resourceV2:transfer:donor';
-const TRANSFER_RECIPIENT_TARGET = 'resourceV2:transfer:recipient';
-
-function getRuntime(context: EngineContext): ResourceV2Runtime {
-	const carrier = context as EngineContext & ResourceV2ContextCarrier;
-	if (!carrier.resourceV2) {
-		throw new Error('ResourceV2 state not initialised on the engine context.');
-	}
-	return carrier.resourceV2;
-}
+import {
+	TRANSFER_DONOR_TARGET,
+	TRANSFER_RECIPIENT_TARGET,
+	applyEvaluationModifiers,
+	applyValueDelta,
+	computeValueDelta,
+	computeTransferBaseAmount,
+	ensureChildResource,
+} from './effect_runtime';
+import { getResourceV2Runtime } from './runtime';
 
 function isClamp(
 	strategy: ResourceV2ReconciliationStrategy | undefined,
@@ -106,170 +55,6 @@ function resolveSuppressHooks(
 	}
 	const metaFlag = effect.meta?.['suppressHooks'];
 	return typeof metaFlag === 'boolean' ? metaFlag : false;
-}
-
-function roundUp(value: number): number {
-	return value >= 0 ? Math.ceil(value) : Math.floor(value);
-}
-
-function roundDown(value: number): number {
-	return value >= 0 ? Math.floor(value) : Math.ceil(value);
-}
-
-function roundNearest(value: number): number {
-	if (!Number.isFinite(value) || value === 0) {
-		return 0;
-	}
-	const abs = Math.abs(value);
-	const floor = Math.floor(abs);
-	const fraction = abs - floor;
-	const increment = fraction >= 0.5 ? 1 : 0;
-	const rounded = floor + increment;
-	return value > 0 ? rounded : -rounded;
-}
-
-function applyPercentRounding(
-	value: number,
-	mode: ResourceV2RoundingMode,
-): number {
-	if (mode === 'up') {
-		return roundUp(value);
-	}
-	if (mode === 'down') {
-		return roundDown(value);
-	}
-	return roundNearest(value);
-}
-
-function cloneGain(amount: number, resourceId: string) {
-	return [{ key: resourceId, amount }];
-}
-
-function applyEvaluationModifiers(
-	context: EngineContext,
-	target: string,
-	resourceId: string,
-	baseAmount: number,
-): number {
-	if (!Number.isFinite(baseAmount) || baseAmount === 0) {
-		return baseAmount;
-	}
-	const gains = cloneGain(baseAmount, resourceId);
-	context.passives.runEvaluationMods(target, context, gains);
-	context.passives.runEvaluationMods(`${target}:${resourceId}`, context, gains);
-	return gains[0]!.amount;
-}
-
-function applyValueDelta(
-	context: EngineContext,
-	resourceId: string,
-	delta: number,
-	suppressHooks: boolean,
-): number {
-	if (!Number.isFinite(delta) || delta === 0) {
-		return 0;
-	}
-	const runtime = getRuntime(context);
-	const before = getResourceValue(runtime.state, resourceId);
-	const next = adjustResourceValue(runtime.state, resourceId, delta);
-	const actualDelta = next - before;
-	if (actualDelta === 0) {
-		return 0;
-	}
-	context.recentResourceGains.push({ key: resourceId, amount: actualDelta });
-	if (!suppressHooks) {
-		runtime.hooks?.onValueChange?.(context, resourceId, actualDelta);
-	}
-	return actualDelta;
-}
-
-function ensureChildResource(
-	node: ResourceV2MutableStateValue,
-	resourceId: string,
-) {
-	if (node.limited) {
-		throw new Error(
-			`Cannot directly mutate limited ResourceV2 parent value: ${resourceId}`,
-		);
-	}
-}
-
-function normaliseAddAmount(amount: number): number {
-	if (!Number.isFinite(amount)) {
-		return 0;
-	}
-	return amount < 0 ? 0 : amount;
-}
-
-function normaliseRemoveAmount(amount: number): number {
-	if (!Number.isFinite(amount)) {
-		return 0;
-	}
-	return amount > 0 ? 0 : amount;
-}
-
-function computePercentDelta(
-	current: number,
-	payload: Extract<ResourceV2ValuePayload, { kind: 'percent' }>,
-	multiplier: number,
-): number {
-	const totalPercent = payload.percent * multiplier;
-	if (!Number.isFinite(totalPercent) || totalPercent === 0) {
-		return 0;
-	}
-	const raw = (current * totalPercent) / 100;
-	return applyPercentRounding(raw, payload.rounding);
-}
-
-function computeValueDelta(
-	context: EngineContext,
-	params: ResourceV2ValueEffectParams,
-	multiplier: number,
-	mode: 'add' | 'remove',
-): number {
-	const runtime = getRuntime(context);
-	const node = getResourceValueState(runtime.state, params.resourceId);
-	ensureChildResource(node, params.resourceId);
-	const baseAmount =
-		params.payload.kind === 'amount'
-			? params.payload.amount * multiplier
-			: computePercentDelta(node.value, params.payload, multiplier);
-	const adjusted = applyEvaluationModifiers(
-		context,
-		VALUE_EVALUATION_TARGET,
-		params.resourceId,
-		baseAmount,
-	);
-	if (mode === 'add') {
-		return normaliseAddAmount(adjusted);
-	}
-	return normaliseRemoveAmount(-Math.abs(adjusted));
-}
-
-function computeTransferBaseAmount(
-	donorValue: number,
-	payload: ResourceV2ValuePayload,
-	multiplier: number,
-): number {
-	if (payload.kind === 'amount') {
-		return payload.amount * multiplier;
-	}
-	const percentDelta = computePercentDelta(donorValue, payload, multiplier);
-	return Math.abs(percentDelta);
-}
-
-function computeDonorLimit(node: ResourceV2MutableStateValue): number {
-	if (node.bounds.lowerBound === undefined) {
-		return node.value;
-	}
-	return Math.max(0, node.value - node.bounds.lowerBound);
-}
-
-function computeRecipientCapacity(node: ResourceV2MutableStateValue): number {
-	if (node.bounds.upperBound === undefined) {
-		return Number.POSITIVE_INFINITY;
-	}
-	return Math.max(0, node.bounds.upperBound - node.value);
 }
 
 export function resourceV2Add(
@@ -313,7 +98,7 @@ export function resourceV2Transfer(
 	const params = effect.params!;
 	ensureClamp(params.donor?.reconciliation);
 	ensureClamp(params.recipient?.reconciliation);
-	const runtime = getRuntime(context);
+	const runtime = getResourceV2Runtime(context);
 	const donorNode = getResourceValueState(
 		runtime.state,
 		params.donor.resourceId,
@@ -421,7 +206,7 @@ export function resourceV2UpperBoundIncrease(
 ) {
 	const params = effect.params!;
 	ensureClamp(params.reconciliation);
-	const runtime = getRuntime(context);
+	const runtime = getResourceV2Runtime(context);
 	const node = getResourceValueState(runtime.state, params.resourceId);
 	const amount = params.amount * multiplier;
 	if (!Number.isFinite(amount) || amount <= 0) {
@@ -514,3 +299,19 @@ export function isResourceV2UpperBoundIncreaseEffect(
 
 export type ResourceV2EffectHandler<P extends Record<string, unknown>> =
 	EffectHandler<P>;
+
+export type {
+	ResourceV2BoundAdjustmentParams,
+	ResourceV2ReconciliationStrategy,
+	ResourceV2RoundingMode,
+	ResourceV2TransferEffectParams,
+	ResourceV2TransferEndpointParams,
+	ResourceV2ValueEffectParams,
+	ResourceV2ValuePayload,
+} from './value_types';
+
+export type {
+	ResourceV2Runtime,
+	ResourceV2RuntimeHooks,
+	ResourceV2TieringRuntime,
+} from './runtime';
