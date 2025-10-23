@@ -15,6 +15,8 @@ import {
 	DEVELOPMENTS_INFO,
 	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
+	RESOURCE_V2,
+	RESOURCE_GROUPS_V2,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
 import type {
@@ -24,6 +26,10 @@ import type {
 	SessionResourceDefinition,
 	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
+import {
+	cloneResourceV2GroupRegistry,
+	cloneResourceV2Registry,
+} from './registryUtils.js';
 import type {
 	SessionSnapshotMetadata,
 	SessionMetadataDescriptor,
@@ -125,6 +131,17 @@ const buildResourceRegistry =
 		}
 		return deepFreeze(entries);
 	};
+
+const cloneResourceV2Registries = () =>
+	deepFreeze(cloneResourceV2Registry(RESOURCE_V2));
+
+const cloneResourceGroupMetadata = () => {
+	const cloned = cloneResourceV2GroupRegistry(RESOURCE_GROUPS_V2);
+	if (!cloned) {
+		return undefined;
+	}
+	return deepFreeze(cloned);
+};
 
 const createMetadataRecord = <T>(entries: Iterable<readonly [string, T]>) => {
 	const record: Record<string, T> = {};
@@ -298,6 +315,7 @@ const cloneOverviewContent = () =>
 	deepFreeze(structuredClone(OVERVIEW_CONTENT));
 
 export const buildSessionMetadata = (): SessionMetadataBuildResult => {
+	const resourceGroups = cloneResourceGroupMetadata();
 	const registries: SessionRegistriesPayload = {
 		actions: cloneRegistry(ACTIONS),
 		actionCategories: cloneActionCategoryRegistry(),
@@ -305,7 +323,11 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
 		resources: buildResourceRegistry(),
+		resourcesV2: cloneResourceV2Registries(),
 	};
+	if (resourceGroups) {
+		registries.resourceGroups = resourceGroups;
+	}
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),
 		populations: buildPopulationMetadata(),

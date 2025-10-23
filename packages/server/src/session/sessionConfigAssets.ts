@@ -27,7 +27,12 @@ import {
 	buildSessionMetadata,
 	type SessionStaticMetadataPayload,
 } from './buildSessionMetadata.js';
-import { cloneRegistry, freezeSerializedRegistry } from './registryUtils.js';
+import {
+	cloneRegistry,
+	cloneResourceV2GroupRegistry,
+	cloneResourceV2Registry,
+	freezeSerializedRegistry,
+} from './registryUtils.js';
 
 export type SessionResourceRegistry =
 	SerializedRegistry<SessionResourceDefinition>;
@@ -82,6 +87,17 @@ export function buildSessionAssets(
 	};
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;
+	}
+	if (context.baseRegistries.resourcesV2) {
+		registries.resourcesV2 = freezeSerializedRegistry(
+			cloneResourceV2Registry(context.baseRegistries.resourcesV2),
+		);
+	}
+	const clonedResourceGroups = context.baseRegistries.resourceGroups
+		? cloneResourceV2GroupRegistry(context.baseRegistries.resourceGroups)
+		: undefined;
+	if (clonedResourceGroups) {
+		registries.resourceGroups = freezeSerializedRegistry(clonedResourceGroups);
 	}
 	const metadata = buildSessionMetadata({
 		buildings,

@@ -137,6 +137,13 @@ describe('session snapshot ResourceV2 compatibility', () => {
 			developments: {},
 			populations: {},
 			resources: {},
+			resourcesV2: {
+				absorption: {
+					id: 'absorption',
+					name: 'Absorption',
+					order: 7,
+				},
+			},
 			resourceGroups: {
 				energy: {
 					id: 'energy',
@@ -148,6 +155,7 @@ describe('session snapshot ResourceV2 compatibility', () => {
 		});
 
 		expectTypeOf<typeof payload>().toEqualTypeOf<SessionRegistriesPayload>();
+		expect(payload.resourcesV2?.absorption?.name).toBe('Absorption');
 		expect(payload.resourceGroups?.energy?.children).toEqual(['absorption']);
 	});
 });

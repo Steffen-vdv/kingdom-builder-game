@@ -12,6 +12,8 @@ import {
 	GAME_START,
 	RULES,
 	PRIMARY_ICON_ID,
+	RESOURCE_V2,
+	RESOURCE_GROUPS_V2,
 } from '@kingdom-builder/contents';
 import type {
 	SessionRegistriesPayload,
@@ -27,6 +29,8 @@ import {
 import {
 	cloneActionCategoryRegistry,
 	cloneRegistry,
+	cloneResourceV2GroupRegistry,
+	cloneResourceV2Registry,
 	freezeSerializedRegistry,
 } from './registryUtils.js';
 import {
@@ -136,14 +140,21 @@ export class SessionManager {
 			: (freezeSerializedRegistry(
 					cloneActionCategoryRegistry(this.baseOptions.actionCategories),
 				) as SessionActionCategoryRegistry);
-		this.registries = {
+		const resourcesV2 = cloneResourceV2Registry(RESOURCE_V2);
+		const resourceGroups = cloneResourceV2GroupRegistry(RESOURCE_GROUPS_V2);
+		const registries: SessionRegistriesPayload = {
 			actions: cloneRegistry(this.baseOptions.actions),
 			actionCategories,
 			buildings: cloneRegistry(this.baseOptions.buildings),
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
+			resourcesV2,
 		};
+		if (resourceGroups) {
+			registries.resourceGroups = resourceGroups;
+		}
+		this.registries = registries;
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
 			developments: this.baseOptions.developments,

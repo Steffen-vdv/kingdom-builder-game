@@ -3,6 +3,12 @@ import type {
 	SerializedRegistry,
 	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
+	ResourceV2TierTrack,
+	ResourceV2GroupParent,
+} from '@kingdom-builder/protocol/config/resourceV2';
 import type { ActionCategoryConfig as ContentActionCategoryConfig } from '@kingdom-builder/contents';
 
 export const cloneRegistry = <DefinitionType>(
@@ -13,6 +19,89 @@ export const cloneRegistry = <DefinitionType>(
 	for (const [id, definition] of entries) {
 		result[id] = structuredClone(definition);
 	}
+	return result;
+};
+
+const cloneMetadataRecord = <Value extends Record<string, unknown> | undefined>(
+	metadata: Value,
+): Value => {
+	if (!metadata) {
+		return metadata;
+	}
+	return structuredClone(metadata);
+};
+
+const cloneTierTrack = (tierTrack: ResourceV2TierTrack | undefined) => {
+	if (!tierTrack) {
+		return tierTrack;
+	}
+	const clone = structuredClone(tierTrack);
+	clone.tiers = clone.tiers.map((tier) => structuredClone(tier));
+	return clone;
+};
+
+const cloneResourceV2Definition = (
+	definition: ResourceV2Definition,
+): ResourceV2Definition => {
+	const clone = structuredClone(definition);
+	clone.metadata = cloneMetadataRecord(clone.metadata);
+	clone.tierTrack = cloneTierTrack(clone.tierTrack);
+	return clone;
+};
+
+const cloneResourceV2GroupParent = (
+	parent: ResourceV2GroupParent | undefined,
+): ResourceV2GroupParent | undefined => {
+	if (!parent) {
+		return parent;
+	}
+	const clone = structuredClone(parent);
+	clone.metadata = cloneMetadataRecord(clone.metadata);
+	clone.tierTrack = cloneTierTrack(clone.tierTrack);
+	return clone;
+};
+
+const byOrder = <Definition extends { order: number }>(
+	left: Definition,
+	right: Definition,
+) => left.order - right.order;
+
+export const cloneResourceV2Registry = (
+	registry: Record<string, ResourceV2Definition>,
+): SerializedRegistry<ResourceV2Definition> => {
+	const entries = Object.entries(registry);
+	const result: SerializedRegistry<ResourceV2Definition> = {};
+	entries
+		.map(
+			([id, definition]) =>
+				[id, cloneResourceV2Definition(definition)] as const,
+		)
+		.sort(([, left], [, right]) => byOrder(left, right))
+		.forEach(([id, definition]) => {
+			result[id] = definition;
+		});
+	return result;
+};
+
+export const cloneResourceV2GroupRegistry = (
+	registry: Record<string, ResourceV2GroupMetadata>,
+): SerializedRegistry<ResourceV2GroupMetadata> | undefined => {
+	const entries = Object.entries(registry);
+	if (entries.length === 0) {
+		return undefined;
+	}
+	const result: SerializedRegistry<ResourceV2GroupMetadata> = {};
+	entries
+		.map(([id, definition]) => {
+			const clone: ResourceV2GroupMetadata = structuredClone(definition);
+			clone.metadata = cloneMetadataRecord(clone.metadata);
+			clone.parent = cloneResourceV2GroupParent(definition.parent);
+			return [id, clone] as const;
+		})
+		.sort(([, left], [, right]) => byOrder(left, right))
+		.forEach(([id, definition]) => {
+			result[id] = definition;
+		});
 	return result;
 };
 

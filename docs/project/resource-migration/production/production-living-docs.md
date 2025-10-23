@@ -56,6 +56,10 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
                                                                                 | Extended protocol session snapshots with ResourceV2 state, ordering metadata, and optional registry group payloads plus regression coverage for mixed legacy/new serialization. | `npm run check -- --filter protocol` (fails: npm-run-all rejects `--filter`; chunk `d6c336†L1-L12`); `npx vitest run --config vitest.protocol.config.ts` (pass; chunk `2d9766†L1-L33`) |
                               | Align engine/server snapshot emitters to populate the new ResourceV2 fields end-to-end and update web selectors once transports supply the richer payloads. |
 
+| 2025-10-27 | ChatGPT (gpt-5-codex) | packages/server/src/session/registryUtils.ts; packages/server/src/session/SessionManager.ts; packages/server/src/session/sessionConfigAssets.ts; packages/server/src/session/sessionMetadataBuilder.ts; packages/server/tests/session-registry-resourceV2.test.ts; packages/protocol/src/session/contracts.ts; packages/protocol/src/config/session_contracts/shared.ts; packages/protocol/tests/session-snapshot-resourceV2.test.ts; docs/project/resource-migration/production/production-living-docs.md |
+
+                                                                                | Wired ResourceV2 definition & group registries into session payload builders, ensured cloning preserves ordering/metadata, and documented rollout context. | `npm run check -- --filter server` (fails: npm-run-all rejects `--filter`; chunk `7a31d7†L1-L10`) | Coordinate client and engine consumers to read `resourcesV2`/`resourceGroups` payloads and schedule removal of legacy `resources` once adoption completes. |
+
 | 2024-**-** | _(add entry)_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -63,14 +67,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-26 14:15
-- **Current Focus:** Protocol snapshot ResourceV2 expansion
-- **State Summary:** Session contracts now expose ResourceV2 player values, ordered resource/group metadata, and optional registry group payloads while keeping legacy buckets intact for migration overlap; protocol tests cover mixed legacy + V2 serialization.
+- **Timestamp (UTC):** 2025-10-27 16:45
+- **Current Focus:** Server session registry ResourceV2 wiring
+- **State Summary:** Session transports now clone and expose ResourceV2 definitions and group metadata alongside legacy registries, protocol schemas accept the new fields, and server tests cover ordering plus empty-registry fallbacks.
 - **Next Suggested Tasks:**
-  - Teach the engine snapshot builder and server transport to populate the new ResourceV2 fields so clients can consume live catalog/values data.
-  - Update web metadata selectors to hydrate from the richer protocol payload once server wiring lands, ensuring legacy paths remain until migration completes.
-- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag, preventing targeted `npm run check` slices; downstream systems do not yet emit the new ResourceV2 fields.
-- **Reminder:** Keep legacy `resources`/`stats`/`population` payloads stable until every consumer has switched to the ResourceV2 structures.
+  - Update engine snapshot builders and session gateways to propagate the ResourceV2 registries so runtime consumers can drop legacy lookups.
+  - Teach the web session registry store/selectors to hydrate from `resourcesV2`/`resourceGroups` while maintaining dual support until rollout completes.
+- **Blocking Issues / Risks:** `npm-run-all` still rejects the `--filter` flag so targeted `npm run check` slices require full-run fallbacks; downstream clients are still reading only the legacy `resources` payload.
+- **Reminder:** Keep the legacy `resources` map intact until engine and web consumers finish migrating to the new structures.
 
 ## 5. Notes & Decisions Archive
 
