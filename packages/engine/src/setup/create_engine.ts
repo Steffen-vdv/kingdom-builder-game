@@ -19,6 +19,7 @@ import type {
 	StatSourceLink,
 } from '../state';
 import { Services, PassiveManager } from '../services';
+import { ResourceV2Service } from '../resourceV2/service';
 import type { RuleSet } from '../services';
 import { EngineContext } from '../context';
 import { registerCoreEffects } from '../effects';
@@ -198,6 +199,7 @@ export function createEngine({
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
 	const services = new Services(rules, developments);
+	const resourceV2Service = new ResourceV2Service();
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
 	const actionCostResource = determineCommonActionCostResource(actions);
@@ -216,6 +218,7 @@ export function createEngine({
 	const engineContext = new EngineContext(
 		gameState,
 		services,
+		resourceV2Service,
 		actions,
 		buildings,
 		developments,

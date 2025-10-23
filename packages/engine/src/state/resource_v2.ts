@@ -18,6 +18,7 @@ export interface PlayerResourceV2State {
 	readonly parentIds: ReadonlyArray<string>;
 	readonly amounts: Record<string, number>;
 	readonly touched: Record<string, boolean>;
+	readonly boundHistory: Record<string, boolean>;
 	readonly bounds: Record<string, ResourceV2BoundsMetadata | undefined>;
 	readonly tiers: Record<string, PlayerResourceV2TierState | undefined>;
 	readonly parentChildren: Record<string, ReadonlyArray<string>>;
@@ -42,6 +43,7 @@ export function createEmptyPlayerResourceV2State(): PlayerResourceV2State {
 		parentIds: Object.freeze([] as string[]),
 		amounts: {},
 		touched: {},
+		boundHistory: {},
 		bounds: {},
 		tiers: {},
 		parentChildren: {},
@@ -59,6 +61,7 @@ export function createPlayerResourceV2State(
 
 	const amounts: Record<string, number> = {};
 	const touched: Record<string, boolean> = {};
+	const boundHistory: Record<string, boolean> = {};
 	const bounds: Record<string, ResourceV2BoundsMetadata | undefined> = {};
 	const tiers: Record<string, PlayerResourceV2TierState | undefined> = {};
 	const parentChildren: Record<string, ReadonlyArray<string>> = {};
@@ -69,6 +72,7 @@ export function createPlayerResourceV2State(
 	for (const resourceId of resourceIds) {
 		amounts[resourceId] = 0;
 		touched[resourceId] = false;
+		boundHistory[resourceId] = false;
 		bounds[resourceId] = registry.getBounds(resourceId);
 		tiers[resourceId] = createInitialTierState(
 			registry.getTierTrack(resourceId),
@@ -97,6 +101,7 @@ export function createPlayerResourceV2State(
 		parentChildren[parentId] = frozenChildren;
 		bounds[parentId] = registry.getBounds(parentId);
 		tiers[parentId] = createInitialTierState(registry.getTierTrack(parentId));
+		boundHistory[parentId] = false;
 		hookSuppressions[parentId] = undefined;
 
 		defineNumericAggregate(amounts, parentId, () =>
@@ -112,6 +117,7 @@ export function createPlayerResourceV2State(
 		parentIds,
 		amounts,
 		touched,
+		boundHistory,
 		bounds,
 		tiers,
 		parentChildren,

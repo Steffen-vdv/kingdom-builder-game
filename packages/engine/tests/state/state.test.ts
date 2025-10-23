@@ -145,6 +145,8 @@ describe('State classes', () => {
 			lowerBound: 0,
 			upperBound: 50,
 		});
+		expect(state.boundHistory[resourceA.id]).toBe(false);
+		expect(state.boundHistory['parent:alpha']).toBe(false);
 		expect(state.childToParent[resourceA.id]).toBe('parent:alpha');
 		expect(state.childToParent[resourceB.id]).toBe('parent:alpha');
 		expect(state.childToParent[looseResource.id]).toBeUndefined();

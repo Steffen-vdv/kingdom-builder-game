@@ -15,6 +15,7 @@ import {
 	createResourceV2Group,
 } from '@kingdom-builder/testing';
 import type { EngineContext } from '../../../src/context.ts';
+import { ResourceV2Service } from '../../../src/resourceV2/service.ts';
 
 type DefinitionOverrides = Parameters<typeof createResourceV2Definition>[0];
 type ResourceGroupDefinitions = ReadonlyArray<
@@ -36,9 +37,15 @@ describe('ResourceV2 transfer handler', () => {
 		const opponent = new PlayerState('B', 'Bob');
 		const activeState = initializePlayerResourceV2State(active, registry);
 		const opponentState = initializePlayerResourceV2State(opponent, registry);
+		const service = new ResourceV2Service(registry);
 		const context = {
 			activePlayer: active,
 			opponent,
+			resourceV2: service,
+			recentResourceGains: [] as {
+				key: string;
+				amount: number;
+			}[],
 		} as unknown as EngineContext;
 
 		return {
@@ -49,6 +56,7 @@ describe('ResourceV2 transfer handler', () => {
 			activeState,
 			opponentState,
 			context,
+			service,
 		};
 	}
 
@@ -88,6 +96,47 @@ describe('ResourceV2 transfer handler', () => {
 		expect(activeState.touched[resourceId]).toBe(true);
 		expect(opponentState.hookSuppressions[resourceId]).toBe('donor guard');
 		expect(activeState.hookSuppressions[resourceId]).toBe('recipient guard');
+	});
+
+	it('emits hooks for both players but logs recipient gain only', () => {
+		const { definition, activeState, opponentState, context, service } =
+			createContext();
+		const resourceId = definition.id;
+		opponentState.amounts[resourceId] = 5;
+		activeState.amounts[resourceId] = 0;
+		const gainCalls: Array<{
+			amount: number;
+			playerId: string;
+		}> = [];
+		const lossCalls: Array<{
+			amount: number;
+			playerId: string;
+		}> = [];
+		service.registerOnGain(({ amount, player }) => {
+			gainCalls.push({ amount, playerId: player.id });
+		});
+		service.registerOnLoss(({ amount, player }) => {
+			lossCalls.push({ amount, playerId: player.id });
+		});
+		context.recentResourceGains = [];
+
+		const effect: EffectDef = {
+			type: 'resource',
+			method: 'transfer',
+			params: { id: resourceId, amount: 2 },
+			meta: {
+				donor: { reconciliation: 'clamp' },
+				recipient: { reconciliation: 'clamp' },
+			},
+		};
+
+		resourceV2TransferHandler(effect, context, 1);
+
+		expect(gainCalls).toEqual([{ amount: 2, playerId: 'A' }]);
+		expect(lossCalls).toEqual([{ amount: 2, playerId: 'B' }]);
+		expect(context.recentResourceGains).toEqual([
+			{ key: resourceId, amount: 2 },
+		]);
 	});
 
 	it('clamps transfers when donor or recipient hit bounds', () => {
@@ -200,9 +249,15 @@ describe('ResourceV2 transfer handler', () => {
 		const opponent = new PlayerState('B', 'Bob');
 		initializePlayerResourceV2State(active, registry);
 		initializePlayerResourceV2State(opponent, registry);
+		const service = new ResourceV2Service(registry);
 		const context = {
 			activePlayer: active,
 			opponent,
+			resourceV2: service,
+			recentResourceGains: [] as {
+				key: string;
+				amount: number;
+			}[],
 		} as unknown as EngineContext;
 
 		const effect: EffectDef = {
@@ -252,14 +307,21 @@ describe('ResourceV2 upper bound increase handler', () => {
 	it('raises upper bounds without altering current values', () => {
 		const definition = createResourceV2Definition({
 			bounds: { lowerBound: 0, upperBound: 5 },
+			trackBoundBreakdown: true,
 		});
 		const registry = loadResourceV2Registry({
 			resources: [definition],
 		});
 		const player = new PlayerState('A', 'Alice');
 		const state = initializePlayerResourceV2State(player, registry);
+		const service = new ResourceV2Service(registry);
 		const context = {
 			activePlayer: player,
+			resourceV2: service,
+			recentResourceGains: [] as {
+				key: string;
+				amount: number;
+			}[],
 		} as unknown as EngineContext;
 		const resourceId = definition.id;
 		state.amounts[resourceId] = 4;
@@ -278,12 +340,47 @@ describe('ResourceV2 upper bound increase handler', () => {
 			upperBound: 11,
 		});
 		expect(state.amounts[resourceId]).toBe(4);
+		expect(state.boundHistory[resourceId]).toBe(true);
+	});
+
+	it('skips bound history updates when tracking is disabled', () => {
+		const definition = createResourceV2Definition({
+			bounds: { upperBound: 5 },
+			trackBoundBreakdown: false,
+		});
+		const registry = loadResourceV2Registry({
+			resources: [definition],
+		});
+		const player = new PlayerState('A', 'Alice');
+		const state = initializePlayerResourceV2State(player, registry);
+		const service = new ResourceV2Service(registry);
+		const context = {
+			activePlayer: player,
+			resourceV2: service,
+			recentResourceGains: [] as {
+				key: string;
+				amount: number;
+			}[],
+		} as unknown as EngineContext;
+
+		const effect: EffectDef = {
+			type: 'resource',
+			method: 'upper-bound:increase',
+			params: { id: definition.id, amount: 3 },
+			meta: { reconciliation: 'clamp' },
+		};
+
+		resourceV2IncreaseUpperBoundHandler(effect, context, 1);
+
+		expect(state.bounds[definition.id]).toEqual({ upperBound: 8 });
+		expect(state.boundHistory[definition.id]).toBe(false);
 	});
 
 	it('updates parent bounds without mutating derived totals', () => {
 		const group = createResourceV2Group({
 			children: ['child-a', 'child-b'],
 			parentBounds: { upperBound: 6 },
+			parentTrackBoundBreakdown: true,
 		});
 		const childA = createResourceV2Definition({
 			id: 'child-a',
@@ -299,8 +396,14 @@ describe('ResourceV2 upper bound increase handler', () => {
 		});
 		const player = new PlayerState('A', 'Alice');
 		const state = initializePlayerResourceV2State(player, registry);
+		const service = new ResourceV2Service(registry);
 		const context = {
 			activePlayer: player,
+			resourceV2: service,
+			recentResourceGains: [] as {
+				key: string;
+				amount: number;
+			}[],
 		} as unknown as EngineContext;
 
 		state.amounts['child-a'] = 3;
@@ -319,6 +422,7 @@ describe('ResourceV2 upper bound increase handler', () => {
 
 		expect(state.bounds[parentId]).toEqual({ upperBound: 10 });
 		expect(state.amounts[parentId]).toBe(beforeTotal);
+		expect(state.boundHistory[parentId]).toBe(true);
 	});
 
 	it('ignores increases that resolve to zero', () => {
@@ -330,8 +434,14 @@ describe('ResourceV2 upper bound increase handler', () => {
 		});
 		const player = new PlayerState('A', 'Alice');
 		const state = initializePlayerResourceV2State(player, registry);
+		const service = new ResourceV2Service(registry);
 		const context = {
 			activePlayer: player,
+			resourceV2: service,
+			recentResourceGains: [] as {
+				key: string;
+				amount: number;
+			}[],
 		} as unknown as EngineContext;
 		const resourceId = definition.id;
 

@@ -12,11 +12,13 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
+import type { ResourceV2Service } from './resourceV2/service';
 
 export class EngineContext {
 	constructor(
 		public game: GameState,
 		public services: Services,
+		public resourceV2: ResourceV2Service,
 		public actions: Registry<ActionDef>,
 		public buildings: Registry<BuildingDef>,
 		public developments: Registry<DevelopmentDef>,

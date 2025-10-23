@@ -5,7 +5,6 @@ import type {
 	PlayerResourceV2State,
 	ResourceV2ValueChangeRequest,
 } from '../../state';
-import { applyResourceV2ValueChange } from '../../state';
 import type { ResourceV2EffectMeta, ResourceV2EffectParams } from './shared';
 import {
 	assertKnownResource,
@@ -97,7 +96,12 @@ export const resourceV2AddHandler: EffectHandler<ResourceV2EffectParams> = (
 			: {}),
 	};
 
-	applyResourceV2ValueChange(state, effect.params.id, change);
+	engineContext.resourceV2.applyValueChange(
+		engineContext,
+		player,
+		effect.params.id,
+		change,
+	);
 };
 
 export const resourceV2RemoveHandler: EffectHandler<ResourceV2EffectParams> = (
@@ -121,7 +125,12 @@ export const resourceV2RemoveHandler: EffectHandler<ResourceV2EffectParams> = (
 			: {}),
 	};
 
-	applyResourceV2ValueChange(state, effect.params.id, change);
+	engineContext.resourceV2.applyValueChange(
+		engineContext,
+		player,
+		effect.params.id,
+		change,
+	);
 };
 
 type ResourceChangeKind = 'add' | 'remove';

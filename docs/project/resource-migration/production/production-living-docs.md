@@ -43,7 +43,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T9 | 2025-10-23 | gpt-5-codex | packages/engine/src/state/index.ts; packages/engine/src/state/resource\*v2.ts; packages/engine/tests/state/state.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added PlayerState ResourceV2 runtime scaffolding with registry-driven initialization, read-only parent aggregation, signed recent gain reset helpers, and coverage validating dual-system behaviour. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Wire ResourceV2 state mutations into effect handlers and snapshot serialization to replace legacy fields in upcoming tasks. |
 | Resource Migration MVP - P3 - T10 | 2025-10-23 | gpt-5-codex | packages/engine/src/resourceV2/effects/index.ts; packages/engine/src/effects/index.ts; packages/engine/src/state/resource\*v2.ts; packages/engine/tests/resourceV2/effects/resource*v2_effects.test.ts; docs/project/resource-migration/production/production-living-docs.md | Implemented ResourceV2 add/remove effect handlers with clamp reconciliation, percent rounding, touched/recent delta logging, and hook suppression tracking plus coverage for rounding, clamping, and suppression flags. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Next tie ResourceV2 deltas into snapshot serialization and service-driven hook dispatch so suppressed flags and tier updates propagate. |
 | Resource Migration MVP - P3 - T11 | 2025-10-23 | gpt-5-codex | packages/engine/src/resourceV2/effects/index.ts; packages/engine/src/effects/index.ts; packages/engine/tests/resourceV2/effects/resource_v2_transfer_effects.test.ts; docs/project/resource-migration/production/production-living-docs.md | Implemented ResourceV2 transfer handling with donor/recipient reconciliation, added upper-bound increase metadata updates, and introduced coverage for clamp, percent, and parent guard scenarios. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Wire ResourceV2 transfers into services/snapshot hooks and extend builder APIs for transfer/bound effects. |
-| Resource Migration MVP - P3 - T12 | 2025-**-** | *(add entry)_ | | _(reserved for T12 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T12 | 2025-10-23 | gpt-5-codex | packages/engine/src/resourceV2/service.ts; packages/engine/src/context.ts; packages/engine/src/resourceV2/effects/*; packages/engine/tests/resourceV2/**/\*.test.ts | Added a ResourceV2 service that centralizes value/bound updates, hook emission, and recent gain logging; wired EngineContext/effect handlers to use it; and extended tests for hook suppression, signed logging, and bound history tracking. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Follow up by populating the service with real registry data during engine bootstrap and updating snapshots/UI to consume new history flags. |
 | Resource Migration MVP - P3 - T13 | 2025-**-** | _(add entry)_ | | _(reserved for T13 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T14 | 2025-**-** | _(add entry)_ | | _(reserved for T14 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T15 | 2025-**-** | _(add entry)_ | | _(reserved for T15 assignee – update only this row.)_ | | |
@@ -61,21 +61,21 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T27 | 2025-**-** | _(add entry)_ | | _(reserved for T27 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T28 | 2025-**-** | _(add entry)_ | | _(reserved for T28 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T29 | 2025-**-** | _(add entry)_ | | _(reserved for T29 assignee – update only this row.)_ | | |
-| Resource Migration MVP - P3 - T30 | 2025-**-** | _(add entry)_ | | _(reserved for T30 assignee – update only this row.)\_ | | |
+| Resource Migration MVP - P3 - T30 | 2025-**-\*\* | _(add entry)_ | | \_(reserved for T30 assignee – update only this row.)\_ | | |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-23 22:10
-**Current Focus:** Resource Migration MVP - P3 - T11 ResourceV2 transfer & bound handlers
-**State Summary:** Added ResourceV2 `resource:transfer` and `resource:upper-bound:increase` handlers with independent donor/recipient reconciliation, parent protections, and bound metadata updates alongside targeted unit coverage for clamp and percent scenarios.
+**Timestamp (UTC):** 2025-10-23 23:45
+**Current Focus:** Resource Migration MVP - P3 - T12 ResourceV2 service integration
+**State Summary:** Introduced a dedicated ResourceV2 service that applies value/bound changes, emits onGain/onLoss hooks (respecting suppression), and records signed recent gains/touched history. EngineContext now owns the service, core handlers delegate to it, and tests cover hook emission, suppression, and bound history tracking.
 
 - **Next Suggested Tasks:**
-  - Route ResourceV2 transfer deltas into services/snapshot hooks so downstream logging and tiers stop depending on legacy resource change events.
-  - Extend ResourceV2 builder APIs/content wiring to emit transfer/bound meta expected by the new handlers.
-- **Blocking Issues / Risks:** Legacy hook dispatch still powers tier/passive updates and recent gain summaries until services consume the ResourceV2 change stream, so downstream systems remain unaware of transfer-bound adjustments.
+  - Load the real ResourceV2 registry into the service during engine setup so content-driven metadata (hook tracking, history flags) is honored outside tests.
+  - Extend engine snapshots/web consumers to surface bound/value history flags and recent signed deltas.
+- **Blocking Issues / Risks:** Until the registry is wired in and snapshots consume the new flags, downstream systems still lack visibility into ResourceV2 history even though the service tracks it.
 
 ## 5. Notes & Decisions Archive
 
