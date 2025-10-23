@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-23 18:34
-- **Current Focus:** Resource Migration MVP - P2 - T32 - Basic Actions ResourceV2 Migration
-- **State Summary:** Migrated the basic action happiness penalties to ResourceV2 change payloads, removed legacy `allowShortfall`/rounding metadata in favour of clamp reconciliation, updated the Hold Festival fortification penalty to the ResourceV2 stat builder, and logged notes in [`worklogs/T32-basic-actions.md`](../../../../worklogs/T32-basic-actions.md).
+- **Timestamp (UTC):** 2025-10-27 17:45
+- **Current Focus:** Resource Migration MVP - P2 - T33 - Build & Develop Actions ResourceV2 Migration
+- **State Summary:** Added ResourceV2 construction/upkeep change payload metadata to every build and develop action, bridged through the new helpers in [`packages/contents/src/actions/buildActions.ts`](../../../../packages/contents/src/actions/buildActions.ts) and [`developActions.ts`](../../../../packages/contents/src/actions/developActions.ts), and captured the rollout in [`worklogs/T33-build-develop-actions.md`](../../../../worklogs/T33-build-develop-actions.md).
 - **Next Suggested Tasks:**
-  - Audit remaining content modules (develop/build/population definitions) that still emit legacy resource/stat payloads and queue their ResourceV2 migrations.
-  - Verify the engine tax happiness evaluator matches the new clamp-only payloads once ResourceV2 handlers fully replace the legacy stack.
-  - Transition Plunder to the ResourceV2 transfer builders after follow-up wiring lands.
-- **Blocking Issues / Risks:** Pending confirmation that evaluator aggregation matches expectations without effect-level rounding once ResourceV2 handlers are in place. `npm run check` currently fails in the monorepo due to `developmentTarget()` not resolving during vitest bootstrap (TypeError thrown from `packages/contents/src/happinessHelpers.ts`).
+  - Extend the same ResourceV2 payload annotations to population and hire actions once their builders are ready.
+  - Coordinate with engine transport owners so the new `construction`/`upkeep` metadata feeds upcoming session logs before deprecating legacy cost collectors.
+  - Rebuild the protocol/contents `dist` bundles (or update tooling) so repository typechecks no longer require pre-generated artifacts during `npm run check`.
+- **Blocking Issues / Risks:** `npm run check` currently fails because the monorepo typecheck expects prebuilt `packages/**/dist` artifacts; cleaning those directories (needed to keep ESLint happy) causes `tsc -b` to abort. Investigate adding a build step or ignore list so lint/typecheck can coexist.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
