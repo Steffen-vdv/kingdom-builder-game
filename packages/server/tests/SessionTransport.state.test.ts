@@ -59,8 +59,16 @@ describe('SessionTransport session state', () => {
 		expectDescriptorMetadata(state.snapshot.metadata);
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expectStaticMetadata(manager.getMetadata());
-		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
-		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(state.registries.resources[costKey]).toMatchObject({
+			key: costKey,
+		});
+		expect(state.registries.resources[gainKey]).toMatchObject({
+			key: gainKey,
+		});
+		expect(Array.isArray(state.registries.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(state.registries.resourceGroups)).toBe(true);
+		const [playerSnapshot] = state.snapshot.game.players;
+		expect(playerSnapshot?.values).toBeDefined();
 	});
 
 	it('throws when a session cannot be located', () => {

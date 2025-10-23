@@ -250,6 +250,8 @@ describe('FastifySessionTransport', () => {
 		expect(body.primaryIconId).toBe(primaryIconId);
 		const resource = body.resources[gainKey];
 		expect(resource).toBeDefined();
+		expect(Array.isArray(body.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(body.resourceGroups)).toBe(true);
 		expect(body).toEqual(manager.getRuntimeConfig());
 		await app.close();
 	});
@@ -263,6 +265,8 @@ describe('FastifySessionTransport', () => {
 		expect(response.statusCode).toBe(200);
 		const body = response.json() as SessionMetadataSnapshotResponse;
 		expect(body.registries).toEqual(manager.getRegistries());
+		expect(Array.isArray(body.registries.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(body.registries.resourceGroups)).toBe(true);
 		expectStaticMetadata(body.metadata);
 		expect(body.metadata).toEqual(manager.getMetadata());
 		await app.close();

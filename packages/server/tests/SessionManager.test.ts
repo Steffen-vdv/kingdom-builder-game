@@ -28,8 +28,13 @@ describe('SessionManager', () => {
 		});
 		expectSnapshotMetadata(mergedMetadata);
 		expectStaticMetadata(staticMetadata);
+		const registries = manager.getRegistries();
+		expect(Array.isArray(registries.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(registries.resourceGroups)).toBe(true);
 		const [activePlayer] = snapshot.game.players;
 		expect(activePlayer?.resources[costKey]).toBeDefined();
+		expect(activePlayer?.values).toBeDefined();
+		expect(activePlayer?.values && typeof activePlayer.values).toBe('object');
 		expect(snapshot.rules.tieredResourceKey).toBe(gainKey);
 		expect(snapshot.game.devMode).toBe(true);
 	});
@@ -157,6 +162,10 @@ describe('SessionManager', () => {
 		expect(Object.isFrozen(runtimeConfig.start)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.rules)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.resources)).toBe(true);
+		expect(Array.isArray(runtimeConfig.resourceDefinitions)).toBe(true);
+		expect(Array.isArray(runtimeConfig.resourceGroups)).toBe(true);
+		expect(Object.isFrozen(runtimeConfig.resourceDefinitions)).toBe(true);
+		expect(Object.isFrozen(runtimeConfig.resourceGroups)).toBe(true);
 		const resourceEntry = runtimeConfig.resources[gainKey];
 		if (!resourceEntry) {
 			throw new Error('Missing synthetic resource definition.');

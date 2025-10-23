@@ -16,6 +16,8 @@ import {
 	type PlayerStartConfig,
 	type SessionRegistriesPayload,
 	type SessionResourceDefinition,
+	type SessionResourceV2DefinitionRegistry,
+	type SessionResourceV2GroupRegistry,
 	type SerializedRegistry,
 } from '@kingdom-builder/protocol';
 import {
@@ -48,6 +50,8 @@ interface OverrideContext {
 	resourceOverrides: SessionResourceRegistry | undefined;
 	baseRegistries: SessionRegistriesPayload;
 	baseMetadata: SessionStaticMetadataPayload;
+	resourceDefinitions: SessionResourceV2DefinitionRegistry;
+	resourceGroups: SessionResourceV2GroupRegistry;
 }
 
 export function buildSessionAssets(
@@ -83,6 +87,8 @@ export function buildSessionAssets(
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;
 	}
+	registries.resourceDefinitions = context.resourceDefinitions;
+	registries.resourceGroups = context.resourceGroups;
 	const metadata = buildSessionMetadata({
 		buildings,
 		developments,
