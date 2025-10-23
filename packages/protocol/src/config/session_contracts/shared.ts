@@ -6,6 +6,7 @@ import {
 	developmentSchema,
 	populationSchema,
 	phaseSchema,
+	resourceV2DefinitionSchema,
 	resourceV2GroupMetadataSchema,
 	startConfigSchema,
 	ruleSetSchema,
@@ -40,6 +41,9 @@ export const sessionRegistriesSchema = z
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
+		resourcesV2: serializedRegistrySchema(
+			resourceV2DefinitionSchema,
+		).optional(),
 		resourceGroups: serializedRegistrySchema(
 			resourceV2GroupMetadataSchema,
 		).optional(),
