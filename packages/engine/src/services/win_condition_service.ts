@@ -5,6 +5,7 @@ import type {
 	WinConditionResult,
 	WinConditionTrigger,
 } from './win_condition_types';
+import type { ResourceV2Service } from './resourceV2_service';
 
 function compareThreshold(
 	comparison: WinConditionTrigger['comparison'],
@@ -39,9 +40,14 @@ function resolveWinner(
 
 export class WinConditionService {
 	private readonly definitions: WinConditionDefinition[];
+	private readonly resourceV2: ResourceV2Service | undefined;
 
-	constructor(definitions: WinConditionDefinition[] | undefined) {
+	constructor(
+		definitions: WinConditionDefinition[] | undefined,
+		resourceV2?: ResourceV2Service,
+	) {
 		this.definitions = definitions ? [...definitions] : [];
+		this.resourceV2 = resourceV2;
 	}
 
 	evaluateResourceChange(
@@ -72,8 +78,11 @@ export class WinConditionService {
 		}
 	}
 
-	clone(): WinConditionService {
-		return new WinConditionService(structuredClone(this.definitions));
+	clone(resourceV2?: ResourceV2Service): WinConditionService {
+		return new WinConditionService(
+			structuredClone(this.definitions),
+			resourceV2,
+		);
 	}
 
 	private matchesTrigger(
@@ -86,10 +95,10 @@ export class WinConditionService {
 			if (!opponent) {
 				return false;
 			}
-			const value = opponent.resources[trigger.key] ?? 0;
+			const value = this.getResourceValue(opponent, trigger.key);
 			return compareThreshold(trigger.comparison, value, trigger.value);
 		}
-		const value = subject.resources[trigger.key] ?? 0;
+		const value = this.getResourceValue(subject, trigger.key);
 		return compareThreshold(trigger.comparison, value, trigger.value);
 	}
 
@@ -120,5 +129,12 @@ export class WinConditionService {
 		subject: PlayerState,
 	): PlayerState | undefined {
 		return context.game.players.find((player) => player.id !== subject.id);
+	}
+
+	private getResourceValue(player: PlayerState, key: ResourceKey): number {
+		if (this.resourceV2?.hasDefinition(key)) {
+			return this.resourceV2.getValue(player, key);
+		}
+		return player.resources[key] ?? 0;
 	}
 }
