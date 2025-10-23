@@ -184,16 +184,27 @@ export const useDefinitionLookups = (
 		| 'developments'
 		| 'populations'
 	>,
-): DefinitionLookups =>
-	useMemo(() => {
-		const resourceLookup = createResourceLookup(registries.resources);
+	ordering?: {
+		readonly orderedResourceIds?: ReadonlyArray<string>;
+		readonly orderedResourceGroupIds?: ReadonlyArray<string>;
+	},
+): DefinitionLookups => {
+	const orderedResourceIds = ordering?.orderedResourceIds;
+	const orderedResourceGroupIds = ordering?.orderedResourceGroupIds;
+	return useMemo(() => {
+		const resourceLookup = createResourceLookup(
+			registries.resources,
+			orderedResourceIds,
+		);
 		const resourceV2Lookup = createFrozenRecordLookup(
 			registries.resourcesV2,
 			'resource v2',
+			orderedResourceIds,
 		);
 		const resourceGroupLookup = createFrozenRecordLookup(
 			registries.resourceGroups,
 			'resource group',
+			orderedResourceGroupIds,
 		);
 		const actionLookup = createRegistryLookup(registries.actions, 'action');
 		const actionCategoryLookup = createRegistryLookup(
@@ -231,7 +242,10 @@ export const useDefinitionLookups = (
 		registries.resources,
 		registries.resourcesV2,
 		registries.resourceGroups,
+		orderedResourceIds,
+		orderedResourceGroupIds,
 	]);
+};
 
 interface MetadataLookups {
 	readonly resourceMetadataLookup: ReturnType<typeof buildResourceMetadata>;
@@ -264,6 +278,7 @@ export const useMetadataLookups = (
 		| 'actions'
 		| 'actionCategories'
 		| 'resources'
+		| 'resourcesV2'
 		| 'resourceGroups'
 		| 'buildings'
 		| 'developments'
@@ -277,6 +292,8 @@ export const useMetadataLookups = (
 			overrides.resources,
 			{
 				resourceMetadata: overrides.resourceMetadata,
+				resourceDefinitions: registries.resourcesV2,
+				statMetadata: overrides.stats,
 				orderedResourceIds: overrides.orderedResourceIds,
 				parentIdByResourceId: overrides.parentIdByResourceId,
 			},
@@ -333,5 +350,6 @@ export const useMetadataLookups = (
 		registries.developments,
 		registries.populations,
 		registries.resources,
+		registries.resourcesV2,
 		registries.resourceGroups,
 	]);

@@ -101,18 +101,45 @@ const createDefinitionRecord = <TDefinition>(
 	return Object.freeze(record);
 };
 
+const orderEntries = <TDefinition>(
+	record: Readonly<Record<string, TDefinition>>,
+	orderedKeys: ReadonlyArray<string> | undefined,
+): ReadonlyArray<readonly [string, TDefinition]> => {
+	if (!orderedKeys || orderedKeys.length === 0) {
+		const baseEntries = Object.entries(record).map((entry) =>
+			Object.freeze([entry[0], entry[1]] as const),
+		);
+		return freezeEntries(baseEntries);
+	}
+	const entries: Array<readonly [string, TDefinition]> = [];
+	const seen = new Set<string>();
+	for (const key of orderedKeys) {
+		if (!Object.prototype.hasOwnProperty.call(record, key)) {
+			continue;
+		}
+		const definition = record[key]!;
+		entries.push(Object.freeze([key, definition] as const));
+		seen.add(key);
+	}
+	for (const [key, definition] of Object.entries(record)) {
+		if (seen.has(key)) {
+			continue;
+		}
+		entries.push(Object.freeze([key, definition] as const));
+	}
+	return freezeEntries(entries);
+};
+
 const createRecordLookup = <TDefinition>(
 	definitions: Record<string, TDefinition>,
 	definitionType: string,
 	cloneEntry: (definition: TDefinition) => TDefinition = freezeDefinition,
+	orderedKeys?: ReadonlyArray<string>,
 ): DefinitionLookup<TDefinition> => {
 	const record = createDefinitionRecord(definitions, cloneEntry);
-	const entryList = Object.entries(record).map((entry) =>
-		Object.freeze([entry[0], entry[1]] as const),
-	);
-	const frozenEntries = freezeEntries(entryList);
-	const values = freezeArray(entryList.map(([, definition]) => definition));
-	const keys = freezeArray(Object.keys(record));
+	const frozenEntries = orderEntries(record, orderedKeys);
+	const values = freezeArray(frozenEntries.map(([, definition]) => definition));
+	const keys = freezeArray(frozenEntries.map(([key]) => key));
 	const lookup: DefinitionLookup<TDefinition> = {
 		record,
 		get(id: string) {
@@ -143,11 +170,30 @@ const createRecordLookup = <TDefinition>(
 
 export const createResourceLookup = (
 	resources: Record<string, SessionResourceDefinition>,
+	orderedKeys?: ReadonlyArray<string>,
 ): DefinitionLookup<SessionResourceDefinition> =>
-	createRecordLookup(resources, 'resource');
+	createRecordLookup(resources, 'resource', freezeDefinition, orderedKeys);
 
 export const createFrozenRecordLookup = <TDefinition>(
 	definitions: Record<string, TDefinition>,
 	definitionType: string,
+	orderedKeys?: ReadonlyArray<string>,
 ): DefinitionLookup<TDefinition> =>
-	createRecordLookup(definitions, definitionType);
+	createRecordLookup(
+		definitions,
+		definitionType,
+		freezeDefinition,
+		orderedKeys,
+	);
+
+export const createOrderedFrozenRecordLookup = <TDefinition>(
+	definitions: Record<string, TDefinition>,
+	definitionType: string,
+	orderedKeys: ReadonlyArray<string> | undefined,
+): DefinitionLookup<TDefinition> =>
+	createRecordLookup(
+		definitions,
+		definitionType,
+		freezeDefinition,
+		orderedKeys,
+	);
