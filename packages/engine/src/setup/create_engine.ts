@@ -21,6 +21,7 @@ import type {
 import { Services, PassiveManager } from '../services';
 import { ResourceV2Service } from '../resourceV2/service';
 import { ResourceV2TierService } from '../resourceV2/tier_service';
+import type { ResourceV2EngineRegistry } from '../resourceV2/registry';
 import type { RuleSet } from '../services';
 import { EngineContext } from '../context';
 import { registerCoreEffects } from '../effects';
@@ -63,6 +64,7 @@ export interface EngineCreationOptions {
 	rules: RuleSet;
 	config?: GameConfig;
 	devMode?: boolean;
+	resourceV2Registry?: ResourceV2EngineRegistry;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -173,6 +175,7 @@ export function createEngine({
 	rules,
 	config,
 	devMode = false,
+	resourceV2Registry,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
@@ -206,9 +209,15 @@ export function createEngine({
 		undefined,
 		resourceV2TierService,
 	);
+	if (resourceV2Registry) {
+		resourceV2Service.setRegistry(resourceV2Registry);
+	}
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
-	const actionCostResource = determineCommonActionCostResource(actions);
+	const actionCostResource = determineCommonActionCostResource(
+		actions,
+		resourceV2Registry,
+	);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
 		startConfig.players?.['A'],
