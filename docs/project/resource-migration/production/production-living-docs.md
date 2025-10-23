@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 18:00
-- **Current Focus:** Resource Migration MVP - P2 - T29 - Transfer & Bound Builders
-- **State Summary:** Authored transfer endpoint/effect builders and an upper-bound increase builder that match the engine payload contract, exported them through `@kingdom-builder/contents/resourceV2`, and added unit tests plus [`worklogs/T29-transfer-bound-builders.md`](../../../../worklogs/T29-transfer-bound-builders.md) for validation notes.
+- **Timestamp (UTC):** 2025-10-23 18:34
+- **Current Focus:** Resource Migration MVP - P2 - T32 - Basic Actions ResourceV2 Migration
+- **State Summary:** Migrated the basic action happiness penalties to ResourceV2 change payloads, removed legacy `allowShortfall`/rounding metadata in favour of clamp reconciliation, updated the Hold Festival fortification penalty to the ResourceV2 stat builder, and logged notes in [`worklogs/T32-basic-actions.md`](../../../../worklogs/T32-basic-actions.md).
 - **Next Suggested Tasks:**
-  - Thread the new builders into upcoming content migrations (e.g., plunder actions) so authors stop hand-writing transfer payloads.
-  - Confirm protocol/web translation layers recognise the new transfer/bound payloads once integrated with content definitions.
-  - Plan follow-up for hook suppression handling once engine-side wiring lands.
-- **Blocking Issues / Risks:** None discovered today; pending follow-up on hook suppression once engine support exists.
+  - Audit remaining content modules (develop/build/population definitions) that still emit legacy resource/stat payloads and queue their ResourceV2 migrations.
+  - Verify the engine tax happiness evaluator matches the new clamp-only payloads once ResourceV2 handlers fully replace the legacy stack.
+  - Transition Plunder to the ResourceV2 transfer builders after follow-up wiring lands.
+- **Blocking Issues / Risks:** Pending confirmation that evaluator aggregation matches expectations without effect-level rounding once ResourceV2 handlers are in place. `npm run check` currently fails in the monorepo due to `developmentTarget()` not resolving during vitest bootstrap (TypeError thrown from `packages/contents/src/happinessHelpers.ts`).
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
