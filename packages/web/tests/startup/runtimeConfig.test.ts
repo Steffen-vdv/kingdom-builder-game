@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { SessionRuntimeConfigResponse } from '@kingdom-builder/protocol';
 import type { RuntimeContentConfig } from '../../src/startup/runtimeConfig';
 
 const runtimeModulePath = '../../src/startup/runtimeConfig';
@@ -6,7 +7,7 @@ const globalScope = globalThis as {
 	__KINGDOM_BUILDER_CONFIG__?: Partial<RuntimeContentConfig> | undefined;
 };
 
-const baseResponse = {
+const baseResponse: SessionRuntimeConfigResponse = {
 	phases: [
 		{
 			id: 'phase:main',
@@ -58,7 +59,7 @@ describe('getRuntimeContentConfig', () => {
 	});
 
 	function mockSuccessfulFetch(
-		payload: typeof baseResponse = baseResponse,
+		payload: SessionRuntimeConfigResponse = baseResponse,
 	): void {
 		fetchMock.mockResolvedValue({
 			ok: true,
@@ -77,6 +78,8 @@ describe('getRuntimeContentConfig', () => {
 		expect(config.phases).toEqual(baseResponse.phases);
 		expect(config.phases).not.toBe(baseResponse.phases);
 		expect(config.resources.gold).toEqual(baseResponse.resources.gold);
+		expect(config.resourcesV2).toEqual({});
+		expect(config.resourceGroups).toEqual({});
 	});
 
 	it('applies runtime overrides from the global scope', async () => {
@@ -87,12 +90,66 @@ describe('getRuntimeContentConfig', () => {
 				gold: { key: 'gold', icon: 'override-icon' },
 				extra: { key: 'extra' },
 			},
+			resourcesV2: {
+				gold: { id: 'gold', name: 'Gold', order: 0, isPercent: false },
+			},
+			resourceGroups: {
+				wealth: {
+					id: 'wealth',
+					name: 'Wealth',
+					order: 1,
+					children: ['gold'],
+				},
+			},
 		};
 		const { getRuntimeContentConfig } = await import(runtimeModulePath);
 		const config = await getRuntimeContentConfig();
 		expect(config.primaryIconId).toBe('custom-primary');
 		expect(config.resources.extra).toEqual({ key: 'extra' });
 		expect(config.resources.gold?.icon).toBe('override-icon');
+		expect(config.resourcesV2.gold).toEqual({
+			id: 'gold',
+			name: 'Gold',
+			order: 0,
+			isPercent: false,
+		});
+		expect(config.resourceGroups.wealth).toEqual({
+			id: 'wealth',
+			name: 'Wealth',
+			order: 1,
+			children: ['gold'],
+		});
+	});
+
+	it('merges server-provided resourceV2 registries', async () => {
+		mockSuccessfulFetch({
+			...baseResponse,
+			resourcesV2: {
+				gold: { id: 'gold', name: 'Gold', order: 0, isPercent: false },
+			},
+			resourceGroups: {
+				wealth: {
+					id: 'wealth',
+					name: 'Wealth',
+					order: 1,
+					children: ['gold'],
+				},
+			},
+		});
+		const { getRuntimeContentConfig } = await import(runtimeModulePath);
+		const config = await getRuntimeContentConfig();
+		expect(config.resourcesV2.gold).toEqual({
+			id: 'gold',
+			name: 'Gold',
+			order: 0,
+			isPercent: false,
+		});
+		expect(config.resourceGroups.wealth).toEqual({
+			id: 'wealth',
+			name: 'Wealth',
+			order: 1,
+			children: ['gold'],
+		});
 	});
 
 	it('throws when the runtime configuration request fails', async () => {

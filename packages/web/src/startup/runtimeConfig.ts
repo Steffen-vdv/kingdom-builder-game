@@ -3,6 +3,8 @@ import type {
 	RuleSet,
 	StartConfig,
 	SessionRuntimeConfigResponse,
+	ResourceV2Definition,
+	ResourceV2GroupMetadata,
 } from '@kingdom-builder/protocol';
 import { runtimeConfigResponseSchema } from '@kingdom-builder/protocol';
 import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
@@ -13,6 +15,8 @@ export interface RuntimeContentConfig {
 	start: StartConfig;
 	rules: RuleSet;
 	resources: Record<string, SessionResourceDefinition>;
+	resourcesV2: Record<string, ResourceV2Definition>;
+	resourceGroups: Record<string, ResourceV2GroupMetadata>;
 	primaryIconId?: string | null;
 }
 
@@ -33,6 +37,31 @@ function normalizeResourceDefinitions(
 			key,
 			clone(definition),
 		]),
+	);
+}
+
+function normalizeResourceV2Definitions(
+	resources: Record<string, ResourceV2Definition> | undefined,
+): Record<string, ResourceV2Definition> {
+	if (!resources) {
+		return {};
+	}
+	return Object.fromEntries(
+		Object.entries(resources).map(([key, definition]) => [
+			key,
+			clone(definition),
+		]),
+	);
+}
+
+function normalizeResourceGroupMetadata(
+	groups: Record<string, ResourceV2GroupMetadata> | undefined,
+): Record<string, ResourceV2GroupMetadata> {
+	if (!groups) {
+		return {};
+	}
+	return Object.fromEntries(
+		Object.entries(groups).map(([key, definition]) => [key, clone(definition)]),
 	);
 }
 
@@ -96,6 +125,12 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 			const resources = normalizeResourceDefinitions(
 				overrides?.resources ?? base.resources,
 			);
+			const resourcesV2 = normalizeResourceV2Definitions(
+				overrides?.resourcesV2 ?? base.resourcesV2,
+			);
+			const resourceGroups = normalizeResourceGroupMetadata(
+				overrides?.resourceGroups ?? base.resourceGroups,
+			);
 			const primaryIconId =
 				overrides?.primaryIconId ?? base.primaryIconId ?? null;
 			const config: RuntimeContentConfig = {
@@ -103,6 +138,8 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 				start,
 				rules,
 				resources,
+				resourcesV2,
+				resourceGroups,
 				primaryIconId,
 			};
 			Object.freeze(config);

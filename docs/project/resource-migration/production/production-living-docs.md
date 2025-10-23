@@ -65,20 +65,21 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | | Derived ResourceV2 descriptors, ordering, and parent/group metadata from registries via new helpers, updated session payload wiring, and added regression coverage for cloning and duplication guards. | `npm run format`; `npm run lint`; `npm run check` (pass; chunk `c213cb†L1-L12`) |
 | | Coordinate downstream API consumers to adopt `resourceMetadata`/`resourceGroups` lookups and monitor web hydration performance once richer payloads land. |
 
-| 2024-**-** | _(add entry)_ | – | – | – | – |
+| 2025-10-29 | ChatGPT (gpt-5-codex) | packages/protocol/src/config/session*contracts/shared.ts; packages/protocol/src/session/contracts.ts; packages/server/src/session/SessionManager.ts; packages/server/tests/FastifySessionTransport.test.ts; packages/server/tests/SessionManager.test.ts; packages/server/tests/helpers/createSyntheticSessionManager.ts; packages/server/tests/session-runtime-config-resourceV2.test.ts; packages/web/src/startup/runtimeConfig.ts; packages/web/tests/startup/runtimeConfig.test.ts | Bundled ResourceV2 definitions and groups into runtime config responses, extended server cloning utilities to freeze the new registries, updated web normalization fallbacks, and added regression coverage for server/web payload handling. | `npm run check` (pass; chunk `1ecc78†L1-L110`) | Coordinate frontend consumers to hydrate ResourceV2 catalogs from runtime config and monitor downstream selectors for legacy fallback reliance. |
+| 2024-**-** | *(add entry)\_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 15:31
-- **Current Focus:** Server session metadata ResourceV2 descriptor hydration
-- **State Summary:** Session metadata now derives ResourceV2 descriptors, ordering, and parent/group relationships directly from the shared registries via a dedicated builder; protocol shapes and server wiring emit the richer payload alongside legacy fields, and regression coverage guards cloning and duplication edge cases.
+- **Timestamp (UTC):** 2025-10-29 16:05
+- **Current Focus:** Runtime configuration transport parity for ResourceV2 registries
+- **State Summary:** Runtime config responses now ship ResourceV2 definitions/groups alongside legacy registries, server cloning utilities keep payloads frozen per session, and web bootstrap normalizes the richer payload with fallbacks to preserve legacy clients; regression coverage spans protocol schema, transport endpoints, and frontend hydration.
 - **Next Suggested Tasks:**
-  - Update web session consumers to prefer `resourceMetadata`/`resourceGroups` while gracefully falling back to legacy stats during migration.
-  - Feed the enriched catalog through engine snapshot exports so runtime value emissions share the same ordering metadata.
-- **Blocking Issues / Risks:** `npm-run-all` still lacks `--filter` support, so targeted `npm run check -- --filter …` invocations remain unavailable; coordination with web layer is required to avoid payload bloat in HUD renders.
+  - Wire the newly delivered ResourceV2 runtime registries into web selectors/contexts so UI consumers stop depending on snapshot metadata copies.
+  - Audit engine snapshot emitters to confirm ResourceV2 catalogs match the runtime-config ordering/grouping before rolling back legacy resource lists.
+- **Blocking Issues / Risks:** Long-running `npm run check` remains required because workspace filtering is unsupported; coordinate UI integration to ensure dual legacy/ResourceV2 paths do not double-hydrate data or inflate bundle size.
 - **Reminder:** Continue populating legacy `resources`/`stats` fields until all transports and UI paths complete the ResourceV2 migration.
 
 ## 5. Notes & Decisions Archive
