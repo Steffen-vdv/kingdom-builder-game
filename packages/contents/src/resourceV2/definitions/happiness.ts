@@ -9,6 +9,11 @@ type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
 
 const HAPPINESS_RESOURCE_ID = 'resource:core:happiness' as const;
 const HAPPINESS_TIER_TRACK_ID = `${HAPPINESS_RESOURCE_ID}:tier-track` as const;
+const HAPPINESS_TIER_TRACK_METADATA = {
+	id: HAPPINESS_TIER_TRACK_ID,
+	label: 'Happiness Outlook',
+	icon: '😊',
+} as const;
 
 const happinessSummaryToken = (slug: string) => `happiness.tier.summary.${slug}`;
 
@@ -41,6 +46,8 @@ const HAPPINESS_TIERS: readonly ResourceV2TierDefinition[] = TIER_CONFIGS.map((c
 		config.skipSteps?.forEach(({ phase, step }) => params.skipStep(phase, step));
 		const passiveEffect = createTierPassiveEffect({
 			tierId: config.id,
+			resourceId: HAPPINESS_RESOURCE_ID,
+			tierTrackMetadata: HAPPINESS_TIER_TRACK_METADATA,
 			summary: config.summary,
 			summaryToken,
 			removalDetail: config.removal,
@@ -66,11 +73,7 @@ export const HAPPINESS_RESOURCE_DEFINITION = resourceV2(HAPPINESS_RESOURCE_ID)
 	.label('Happiness')
 	.description('Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects.')
 	.tierTrack({
-		metadata: {
-			id: HAPPINESS_TIER_TRACK_ID,
-			label: 'Happiness Outlook',
-			icon: '😊',
-		},
+		metadata: HAPPINESS_TIER_TRACK_METADATA,
 		tiers: HAPPINESS_TIERS,
 	})
 	.build();
