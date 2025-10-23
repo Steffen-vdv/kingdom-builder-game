@@ -44,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 22:00
-- **Current Focus:** Resource Migration MVP - P2 - T23 - Legacy Builder Bridge
-- **State Summary:** Replaced the legacy builder-driven `Resource`, `Stat`, and `PopulationRole` exports with adapters that read from the ordered `RESOURCE_V2_REGISTRY`, preserving legacy keys while aligning with the new catalog. Manual overrides for stat capacity/formatting remain isolated in the bridge. Full notes live in [`worklogs/T23-legacy-bridge.md`](../../../../worklogs/T23-legacy-bridge.md).
+- **Timestamp (UTC):** 2025-10-27 23:30
+- **Current Focus:** Resource Migration MVP - P2 - T28 - Effect Change Builder
+- **State Summary:** Introduced the chainable `resourceChange()` builder for ResourceV2 add/remove effects and exported it through the ResourceV2 barrel so content authors stop inlining param objects. Known validation gaps (unsupported reconciliation modes, loose percent rounding checks) are captured in [`worklogs/T28-effect-builder.md`](../../../../worklogs/T28-effect-builder.md).
 - **Next Suggested Tasks:**
-  - Expand ResourceV2 metadata (or equivalent helpers) so stat capacity and formatting no longer require manual overrides.
-  - Begin auditing engine/web consumers that rely on legacy keys to map out the identifier migration plan.
-  - Retire the `resource/stat/populationRole` builder helpers once downstream content can source metadata purely from ResourceV2.
-- **Blocking Issues / Risks:** Legacy consumers still depend on the old key names; the new bridge enforces ordering but additional schema fields may be needed before we can drop the overrides.
+  - Wire the new builder into the upcoming action/building migrations so effect authors stop hand-crafting ResourceV2 payloads.
+  - Decide whether reconciliation authoring should forbid `pass`/`reject` until engine support lands or rely on later validation.
+  - Backfill automated tests around the builder once ResourceV2 content definitions start consuming it.
+- **Blocking Issues / Risks:** Builder currently trusts authors to avoid unsupported reconciliation modes; misconfigured content will still fail at runtime until we tighten validation.
 - **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
