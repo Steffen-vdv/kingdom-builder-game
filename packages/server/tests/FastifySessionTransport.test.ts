@@ -250,7 +250,14 @@ describe('FastifySessionTransport', () => {
 		expect(body.primaryIconId).toBe(primaryIconId);
 		const resource = body.resources[gainKey];
 		expect(resource).toBeDefined();
-		expect(body).toEqual(manager.getRuntimeConfig());
+		const runtimeConfig = manager.getRuntimeConfig();
+		expect(body).toEqual(runtimeConfig);
+		if (runtimeConfig.resourcesV2) {
+			expect(body.resourcesV2).toEqual(runtimeConfig.resourcesV2);
+		}
+		if (runtimeConfig.resourceGroups) {
+			expect(body.resourceGroups).toEqual(runtimeConfig.resourceGroups);
+		}
 		await app.close();
 	});
 

@@ -66,6 +66,8 @@ type SessionRuntimeConfig = {
 	start: StartConfig;
 	rules: RuleSet;
 	resources: SessionResourceRegistry;
+	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	resourceGroups?: SerializedRegistry<ResourceV2GroupMetadata>;
 	primaryIconId: string | null;
 };
 
@@ -208,13 +210,20 @@ export class SessionManager {
 		const frozenResources = freezeSerializedRegistry(
 			structuredClone(resources),
 		) as SessionResourceRegistry;
-		this.runtimeConfig = Object.freeze({
+		const runtimeConfig: SessionRuntimeConfig = {
 			phases: frozenPhases,
 			start: frozenStart,
 			rules: frozenRules,
 			resources: frozenResources,
 			primaryIconId,
-		});
+		};
+		if (frozenResourceV2) {
+			runtimeConfig.resourcesV2 = frozenResourceV2;
+		}
+		if (frozenResourceGroups) {
+			runtimeConfig.resourceGroups = frozenResourceGroups;
+		}
+		this.runtimeConfig = Object.freeze(runtimeConfig) as SessionRuntimeConfig;
 	}
 
 	public createSession(

@@ -59,6 +59,12 @@ export const runtimeConfigResponseSchema = z
 		start: startConfigSchema,
 		rules: ruleSetSchema,
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		resourcesV2: serializedRegistrySchema(
+			resourceV2DefinitionSchema,
+		).optional(),
+		resourceGroups: serializedRegistrySchema(
+			resourceV2GroupMetadataSchema,
+		).optional(),
 		primaryIconId: z.string().nullable(),
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);

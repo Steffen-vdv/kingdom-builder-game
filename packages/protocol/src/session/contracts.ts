@@ -94,6 +94,8 @@ export interface SessionRuntimeConfigResponse {
 	start: StartConfig;
 	rules: RuleSet;
 	resources: SerializedRegistry<SessionResourceDefinition>;
+	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	resourceGroups?: SerializedRegistry<ResourceV2GroupMetadata>;
 	primaryIconId: string | null;
 }
 

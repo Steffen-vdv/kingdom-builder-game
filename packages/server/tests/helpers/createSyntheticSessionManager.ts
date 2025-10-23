@@ -110,22 +110,31 @@ export function createSyntheticSessionManager(
 		winConditions: [],
 	};
 	const { engineOptions: engineOverrides = {}, ...rest } = options;
+	const { resourcesV2, resourceGroups, ...engineOverridesRest } =
+		engineOverrides;
 	const defaultPrimaryIconId = gainKey;
 	const engineOptions: NonNullable<SessionManagerOptions['engineOptions']> = {
-		actions: engineOverrides.actions ?? factory.actions,
-		actionCategories: engineOverrides.actionCategories ?? factory.categories,
-		buildings: engineOverrides.buildings ?? factory.buildings,
-		developments: engineOverrides.developments ?? factory.developments,
-		populations: engineOverrides.populations ?? factory.populations,
-		phases: engineOverrides.phases ?? phases,
-		start: engineOverrides.start ?? start,
-		rules: engineOverrides.rules ?? rules,
-		resourceRegistry: engineOverrides.resourceRegistry ?? {
+		actions: engineOverridesRest.actions ?? factory.actions,
+		actionCategories:
+			engineOverridesRest.actionCategories ?? factory.categories,
+		buildings: engineOverridesRest.buildings ?? factory.buildings,
+		developments: engineOverridesRest.developments ?? factory.developments,
+		populations: engineOverridesRest.populations ?? factory.populations,
+		phases: engineOverridesRest.phases ?? phases,
+		start: engineOverridesRest.start ?? start,
+		rules: engineOverridesRest.rules ?? rules,
+		resourceRegistry: engineOverridesRest.resourceRegistry ?? {
 			[costKey]: { key: costKey },
 			[gainKey]: { key: gainKey },
 		},
-		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
+		primaryIconId: engineOverridesRest.primaryIconId ?? defaultPrimaryIconId,
 	};
+	if (resourcesV2 !== undefined) {
+		engineOptions.resourcesV2 = resourcesV2;
+	}
+	if (resourceGroups !== undefined) {
+		engineOptions.resourceGroups = resourceGroups;
+	}
 	const manager = new SessionManager({
 		...rest,
 		engineOptions,
