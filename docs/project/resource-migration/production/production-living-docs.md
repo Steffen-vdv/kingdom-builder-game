@@ -44,14 +44,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 09:00
-- **Current Focus:** Resource Migration MVP - P2 - T17 - Process rework for parallel task logging
-- **State Summary:** Introduced per-task worklog files (`./worklogs/TXX-<slug>.md`) to prevent clashes in the shared Work Log. See [`./worklogs/T17-process-rework.md`](./worklogs/T17-process-rework.md) for the inaugural entry; future tasks must follow the same protocol.
+- **Timestamp (UTC):** 2025-10-28 10:00
+- **Current Focus:** Resource Migration MVP - P2 - T18 - Core ResourceV2 definitions for gold/AP/castle HP
+- **State Summary:** Authored baseline ResourceV2 definitions for the three core resources with clamp-to-zero lower bounds and the action point global cost flag. Logged follow-up questions about identifier naming, ordering, and gold debt handling in [`./worklogs/T18-core-resource-defs.md`](./worklogs/T18-core-resource-defs.md).
 - **Next Suggested Tasks:**
-  - Aggregator: backfill existing Work Log rows using the historical table, then ingest new per-task files as they land to keep the timeline current.
-  - All contributors: create a worklog file before completing your handover and reference it here so the aggregator knows what to merge.
-- **Blocking Issues / Risks:** None introduced; coordination risk drops once everyone adopts the file-based workflow.
-- **Reminder:** Do not delete the [`./worklogs/`](./worklogs/) directory (tracked via `.gitkeep`); it is now part of the official process.
+  - Confirm final naming scheme for migrated ResourceV2 ids so downstream wiring can rely on stable keys.
+  - Validate gold’s lower-bound behaviour (debt vs. clamp) before hooking definitions into live registries.
+  - Decide desired ordering/aggregation approach for core definitions ahead of registry integration work.
+- **Blocking Issues / Risks:** Pending decisions on id scheme and gold debt rules could force follow-up refactors if deferred too long.
+- **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
 
 ## 5. Notes & Decisions Archive
 
