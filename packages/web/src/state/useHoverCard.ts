@@ -16,6 +16,7 @@ export interface HoverCard {
 	multiStep?: boolean;
 	resolution?: ActionResolution;
 	resolutionTitle?: string;
+	showGlobalActionCost?: boolean;
 }
 
 interface HoverCardOptions {

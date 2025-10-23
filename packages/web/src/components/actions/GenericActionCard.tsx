@@ -82,6 +82,11 @@ function GenericActionCard({
 			}),
 		[metadata, player, canInteract, summary],
 	);
+	const actionCostDescriptor = useMemo(
+		() => selectResourceDescriptor(actionCostResource),
+		[selectResourceDescriptor, actionCostResource],
+	);
+	const showGlobalActionCost = Boolean(actionCostDescriptor.globalActionCost);
 	const { costs, cleanup: cleanupCosts } = availability;
 	const costsLoading = metadata.loading.costs;
 	const requirementsLoading = metadata.loading.requirements;
@@ -185,6 +190,7 @@ function GenericActionCard({
 		...(notImplementedDetails ?? {}),
 		bgClass: hoverBackground,
 		...(hasGroups ? { multiStep: true } : {}),
+		...(showGlobalActionCost ? { showGlobalActionCost: true } : {}),
 	});
 	const handleMouseEnter = isPending
 		? undefined
@@ -198,6 +204,7 @@ function GenericActionCard({
 			costs={costs}
 			playerResources={player.resources}
 			actionCostResource={actionCostResource}
+			showGlobalActionCost={showGlobalActionCost}
 			upkeep={hasCleanupCosts ? cleanupCosts : undefined}
 			requirements={requirements}
 			requirementIcons={requirementIcons}

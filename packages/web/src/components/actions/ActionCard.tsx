@@ -18,6 +18,7 @@ export interface ActionCardProps {
 	costs: Record<string, number>;
 	playerResources: Record<string, number>;
 	actionCostResource: string;
+	showGlobalActionCost?: boolean | undefined;
 	upkeep?: Record<string, number> | undefined;
 	summary?: Summary | undefined;
 	implemented?: boolean | undefined;
@@ -47,6 +48,7 @@ export default function ActionCard({
 	costs,
 	playerResources,
 	actionCostResource,
+	showGlobalActionCost = false,
 	upkeep,
 	summary,
 	implemented = true,
@@ -180,7 +182,7 @@ export default function ActionCard({
 								{renderCosts(
 									costs,
 									playerResources,
-									actionCostResource,
+									showGlobalActionCost ? undefined : actionCostResource,
 									upkeep,
 									{
 										assets,

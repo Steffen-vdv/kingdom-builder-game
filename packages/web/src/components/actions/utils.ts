@@ -4,6 +4,36 @@ export type ResourceDescriptorSelector = (
 	resourceKey: string,
 ) => RegistryMetadataDescriptor;
 
+interface GlobalCostOptions {
+	actionCostResource?: string;
+}
+
+const selectDescriptorSafely = (
+	selector: ResourceDescriptorSelector,
+	resourceKey: string,
+): RegistryMetadataDescriptor | undefined => {
+	try {
+		return selector(resourceKey);
+	} catch {
+		return undefined;
+	}
+};
+
+export const isGlobalActionCostResource = (
+	resourceKey: string,
+	selector: ResourceDescriptorSelector,
+	options?: GlobalCostOptions,
+): boolean => {
+	const descriptor = selectDescriptorSafely(selector, resourceKey);
+	if (descriptor?.globalActionCost) {
+		return true;
+	}
+	if (options?.actionCostResource) {
+		return resourceKey === options.actionCostResource;
+	}
+	return false;
+};
+
 export function playerHasRequiredResources(
 	playerResources: Record<string, number>,
 	costs: Record<string, number>,
@@ -20,13 +50,14 @@ export function playerHasRequiredResources(
 
 export function sumNonActionCosts(
 	costs: Record<string, number | undefined> | undefined,
-	actionCostResource: string,
+	selector: ResourceDescriptorSelector,
+	options?: GlobalCostOptions,
 ): number {
 	if (!costs) {
 		return 0;
 	}
 	return Object.entries(costs).reduce((sum, [resourceKey, requiredAmount]) => {
-		if (resourceKey === actionCostResource) {
+		if (isGlobalActionCostResource(resourceKey, selector, options)) {
 			return sum;
 		}
 		const neededAmount = Number(requiredAmount ?? 0);

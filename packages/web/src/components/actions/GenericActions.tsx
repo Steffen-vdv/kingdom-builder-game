@@ -194,7 +194,11 @@ function GenericActions({
 				action,
 				index,
 				metrics: actionSortMetrics[action.id],
-				fallbackCost: sumNonActionCosts(action.baseCosts, actionCostResource),
+				fallbackCost: sumNonActionCosts(
+					action.baseCosts,
+					selectResourceDescriptor,
+					{ actionCostResource },
+				),
 			}))
 			.sort((first, second) => {
 				const firstCost = first.metrics?.cost ?? first.fallbackCost;
@@ -216,7 +220,12 @@ function GenericActions({
 				return first.index - second.index;
 			})
 			.map((entry) => entry.action);
-	}, [actions, actionSortMetrics, actionCostResource]);
+	}, [
+		actions,
+		actionSortMetrics,
+		actionCostResource,
+		selectResourceDescriptor,
+	]);
 
 	return (
 		<>
