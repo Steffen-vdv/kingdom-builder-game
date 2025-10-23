@@ -10,13 +10,13 @@ This document captures the evolving state of the Resource Migration initiative. 
 
 ## 2. High-Level Status Snapshot
 
-| Area         | Current State | Owner | Notes                                                       |
-| ------------ | ------------- | ----- | ----------------------------------------------------------- |
-| Engine       | _TBD_         | –     | Pending implementation plan.                                |
-| Content      | In progress   | –     | Legacy exports bridged to ResourceV2 registry (T23 bridge). |
-| Protocol/API | _TBD_         | –     | Awaiting design sign-off.                                   |
-| Web UI       | _TBD_         | –     | Pending migration strategy.                                 |
-| Testing      | _TBD_         | –     | Unified test plan not started.                              |
+| Area         | Current State                         | Owner | Notes                                                                                                                                       |
+| ------------ | ------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Engine       | _TBD_                                 | –     | Pending implementation plan.                                                                                                                |
+| Content      | Milestone: ResourceV2 payloads seeded | –     | Core definitions, start configs, actions, passives, and phases now emit ResourceV2 metadata (T18–T36). Engine/runtime wiring still pending. |
+| Protocol/API | _TBD_                                 | –     | Awaiting design sign-off.                                                                                                                   |
+| Web UI       | _TBD_                                 | –     | Pending migration strategy.                                                                                                                 |
+| Testing      | _TBD_                                 | –     | Unified test plan not started.                                                                                                              |
 
 Update the table whenever a domain meaningfully changes. Keep comments concise and reference sections below for detail.
 
@@ -38,21 +38,22 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | 2025-10-26 | ChatGPT (gpt-5-codex) | packages/engine/src/resource-v2/reconciliation.ts, packages/engine/src/resource-v2/index.ts, docs/project/resource-migration/production/production-living-docs.md                                                                                                                  | Resource Migration MVP - P2 - T8 - Added reconciliation utilities that compute static/percent deltas with configurable rounding, clamp against bounds, export shared types, and documented remaining wiring steps.                            | npm run format; npm run lint; npm run check                                                                | Wire helpers into resource effect handlers and author targeted rounding/clamp unit tests.                                              |
 | 2025-10-26 | ChatGPT (gpt-5-codex) | packages/web/src/translation/resourceV2/formatters.ts, packages/web/src/translation/resourceV2/index.ts, packages/web/src/translation/index.ts, packages/web/tests/translation/resourceV2/formatters.test.ts, docs/project/resource-migration/production/production-living-docs.md | Resource Migration MVP - P2 - T15 - Added ResourceV2 translation helpers that turn metadata/value snapshots into summaries, hover sections, and Option A signed gain entries, exported them for reuse, and covered the pure logic with tests. | npm run format; npm run lint; npm run check                                                                | Wire helpers into the web UI once ResourceV2 values surface in session snapshots and log wiring begins.                                |
 | 2025-10-27 | ChatGPT (gpt-5-codex) | packages/engine/tests/resource-v2/state-helpers.test.ts, packages/engine/tests/resource-v2/effects-handlers.test.ts, docs/project/resource-migration/production/production-living-docs.md                                                                                          | Resource Migration MVP - P2 - T11 - Authored ResourceV2 state helper and handler tests covering clamp rounding, tier tracking, touched/bound flags, signed logging, and transfer options using runtime catalogs from the new converters.      | npx vitest run --config vitest.engine.config.ts packages/engine/tests/resource-v2 (pass; see chunk be9f1f) | Backfill tier-transition coverage for mixed transfers and parent bound changes once runtime catalog wiring reaches the engine context. |
+| 2025-10-28 | ChatGPT (gpt-5-codex) | docs/project/resource-migration/production/production-living-docs.md, worklogs/T18-core-resource-defs.md – worklogs/T36-population-phase.md                                                                                                                                        | Resource Migration MVP - P2 - T37 - Consolidated content-side migration status covering ResourceV2 definitions, catalog/bridge wiring, start payloads, builders, and action/passive migrations; captured outstanding engineering questions.   | _Documentation only_                                                                                       | See `worklogs/T37-content-aggregation.md` for unresolved engine/runtime decisions needed to unblock rollout.                           |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 23:45
-- **Current Focus:** Resource Migration MVP - P2 - T36 - Population & Phase ResourceV2 Migration
-- **State Summary:** Added shared ResourceV2 change helpers and rewired population/phase content to emit the new payloads. See [`packages/contents/src/helpers/resourceV2Effects.ts`](../../../../packages/contents/src/helpers/resourceV2Effects.ts), [`packages/contents/src/populations.ts`](../../../../packages/contents/src/populations.ts), [`packages/contents/src/phases.ts`](../../../../packages/contents/src/phases.ts), and [`worklogs/T36-population-phase.md`](../../../../worklogs/T36-population-phase.md).
+- **Timestamp (UTC):** 2025-10-28 18:15
+- **Current Focus:** Resource Migration MVP - P2 - T37 - Content aggregation & handover
+- **State Summary:** Consolidated T18–T36 outcomes: all content definitions (core, stats, happiness, population), catalog bridges, start payloads, builders, actions, passives, and phase helpers now emit ResourceV2 change metadata alongside legacy fields. Outstanding items documented in [`worklogs/T37-content-aggregation.md`](../../../../worklogs/T37-content-aggregation.md).
 - **Next Suggested Tasks:**
-  - Extend the helper usage to remaining content (actions, hire flows, etc.) so legacy `resourceParams`/`statParams` usages disappear.
-  - Audit engine consumers to confirm they read the ResourceV2 change metadata emitted by phase-driven stat deltas.
-  - Prioritise test pipeline tuning; `npm run check` still stalls on engine coverage and requires manual interruption.
-- **Blocking Issues / Risks:** Engine coverage under `npm run check` continues to run for tens of minutes; today’s run was aborted after ~30s of queued vitest files (see chunk 402953†L1-L82) and remains a productivity drag.
-- **Reminder:** Keep using dedicated worklog files for each task and flag them here so the aggregator can sync the shared Work Log without conflicts.
+  - Coordinate with engine/runtime owners to consume ResourceV2 payloads (change/transfer/bound) so the legacy bridges can retire.
+  - Expose ResourceV2 registries, bounds, and values through session bootstrap and web translators to unlock UI integration.
+  - Resolve lingering validation decisions (negative balance support, percent-from-stat handling) before widening authoring access.
+- **Blocking Issues / Risks:** `npm run check` remains slow due to engine coverage; prior runs required manual aborts (see recent worklogs) and continue to impede verification.
+- **Reminder:** Keep referencing individual worklogs for granular detail and document new questions in task-specific files for aggregation.
 
 ## 5. Notes & Decisions Archive
 
