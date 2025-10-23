@@ -19,7 +19,7 @@ function expectDescriptorMetadata(
 	if (!metadata) {
 		return;
 	}
-	expect(Object.keys(metadata.stats ?? {})).not.toHaveLength(0);
+	expect(Object.keys(metadata.values?.descriptors ?? {})).not.toHaveLength(0);
 	expect(Object.keys(metadata.triggers ?? {})).not.toHaveLength(0);
 	expect(metadata.overview).toBeDefined();
 }
@@ -207,7 +207,8 @@ describe('SessionTransport createSession', () => {
 			new Set(factory.populations.keys()),
 		);
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
-		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
-		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		const definitions = registries.resourceValues.definitions;
+		expect(definitions[costKey]).toBeDefined();
+		expect(definitions[gainKey]).toBeDefined();
 	});
 });

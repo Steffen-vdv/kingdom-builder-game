@@ -4,8 +4,6 @@ import {
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
-	RESOURCES,
-	STATS,
 	PHASES,
 	TRIGGER_INFO,
 	LAND_INFO,
@@ -13,7 +11,6 @@ import {
 	PASSIVE_INFO,
 	POPULATION_INFO,
 	DEVELOPMENTS_INFO,
-	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
@@ -21,7 +18,6 @@ import type {
 	Registry,
 	SerializedRegistry,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
 import type {
@@ -31,19 +27,22 @@ import type {
 	SessionPhaseStepMetadata,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
+import {
+	buildResourceValueMetadata as createResourceValueMetadata,
+	deepFreeze,
+} from './resourceValueMetadata.js';
 
 type RegistryDefinition<T> = SerializedRegistry<T>;
 
 type StaticSessionMetadata = Pick<
 	SessionSnapshotMetadata,
-	| 'resources'
-	| 'populations'
+	| 'values'
 	| 'buildings'
 	| 'developments'
-	| 'stats'
 	| 'phases'
 	| 'triggers'
 	| 'assets'
+	| 'overview'
 >;
 
 export interface SessionMetadataBuildResult {
@@ -51,22 +50,6 @@ export interface SessionMetadataBuildResult {
 	readonly metadata: StaticSessionMetadata;
 	readonly overviewContent: OverviewContentTemplate;
 }
-
-const deepFreeze = <T>(value: T): T => {
-	if (Array.isArray(value)) {
-		for (const entry of value) {
-			deepFreeze(entry);
-		}
-		return Object.freeze(value) as unknown as T;
-	}
-	if (value && typeof value === 'object') {
-		for (const entry of Object.values(value as Record<string, unknown>)) {
-			deepFreeze(entry);
-		}
-		return Object.freeze(value);
-	}
-	return value;
-};
 
 const cloneRegistry = <DefinitionType>(
 	registry: Registry<DefinitionType>,
@@ -104,28 +87,6 @@ const cloneActionCategoryRegistry = (): SessionActionCategoryRegistry => {
 	return deepFreeze(entries);
 };
 
-const buildResourceRegistry =
-	(): RegistryDefinition<SessionResourceDefinition> => {
-		const entries: RegistryDefinition<SessionResourceDefinition> = {};
-		for (const info of Object.values(RESOURCES)) {
-			const definition: SessionResourceDefinition = { key: info.key };
-			if (info.icon) {
-				definition.icon = info.icon;
-			}
-			if (info.label) {
-				definition.label = info.label;
-			}
-			if (info.description) {
-				definition.description = info.description;
-			}
-			if (info.tags && info.tags.length > 0) {
-				definition.tags = [...info.tags];
-			}
-			entries[info.key] = definition;
-		}
-		return deepFreeze(entries);
-	};
-
 const createMetadataRecord = <T>(entries: Iterable<readonly [string, T]>) => {
 	const record: Record<string, T> = {};
 	for (const [id, descriptor] of entries) {
@@ -133,30 +94,6 @@ const createMetadataRecord = <T>(entries: Iterable<readonly [string, T]>) => {
 	}
 	return deepFreeze(record);
 };
-
-const buildResourceMetadata = () =>
-	createMetadataRecord(
-		Object.values(RESOURCES).map((info) => [
-			info.key,
-			{
-				label: info.label,
-				icon: info.icon,
-				description: info.description,
-			},
-		]),
-	);
-
-const buildPopulationMetadata = () =>
-	createMetadataRecord(
-		Object.entries(POPULATION_ROLES).map(([id, info]) => [
-			id,
-			{
-				label: info.label,
-				icon: info.icon,
-				description: info.description,
-			},
-		]),
-	);
 
 const buildBuildingMetadata = () =>
 	createMetadataRecord(
@@ -197,24 +134,6 @@ const buildDevelopmentMetadata = () =>
 				?.description;
 			if (typeof description === 'string') {
 				descriptor.description = description;
-			}
-			return [id, descriptor] as const;
-		}),
-	);
-
-const buildStatMetadata = () =>
-	createMetadataRecord<SessionMetadataDescriptor>(
-		Object.entries(STATS).map(([id, info]) => {
-			const descriptor: SessionMetadataDescriptor = {
-				label: info.label,
-				icon: info.icon,
-				description: info.description,
-			};
-			if (info.displayAsPercent) {
-				descriptor.displayAsPercent = info.displayAsPercent;
-			}
-			if (info.addFormat) {
-				descriptor.format = { ...info.addFormat };
 			}
 			return [id, descriptor] as const;
 		}),
@@ -297,6 +216,13 @@ const buildAssetMetadata = () =>
 const cloneOverviewContent = () =>
 	deepFreeze(structuredClone(OVERVIEW_CONTENT));
 
+const EMPTY_RESOURCE_REGISTRY: SessionRegistriesPayload['resourceValues'] =
+	Object.freeze({
+		definitions: Object.freeze({}),
+		groups: Object.freeze({}),
+		globalActionCost: null,
+	});
+
 export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 	const registries: SessionRegistriesPayload = {
 		actions: cloneRegistry(ACTIONS),
@@ -304,21 +230,27 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
-		resources: buildResourceRegistry(),
+		resourceValues: EMPTY_RESOURCE_REGISTRY,
 	};
+
 	const metadata: StaticSessionMetadata = {
-		resources: buildResourceMetadata(),
-		populations: buildPopulationMetadata(),
 		buildings: buildBuildingMetadata(),
 		developments: buildDevelopmentMetadata(),
-		stats: buildStatMetadata(),
 		phases: buildPhaseMetadata(),
 		triggers: buildTriggerMetadata(),
 		assets: buildAssetMetadata(),
+		overview: cloneOverviewContent(),
 	};
+	const values = createResourceValueMetadata([], []);
+	if (values) {
+		metadata.values = values;
+	}
+	const overviewContent = cloneOverviewContent();
 	return Object.freeze({
 		registries,
-		metadata,
-		overviewContent: cloneOverviewContent(),
+		metadata: deepFreeze(metadata),
+		overviewContent,
 	});
 };
+
+export { buildResourceValueMetadata } from './resourceValueMetadata.js';

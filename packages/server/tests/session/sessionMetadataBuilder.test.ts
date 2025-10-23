@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
 	ACTIONS,
-	STATS,
 	TRIGGER_INFO,
 	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
@@ -18,22 +17,9 @@ describe('buildSessionMetadata', () => {
 		expect(Object.isFrozen(clonedAction)).toBe(true);
 	});
 
-	it('copies stat formatting metadata', () => {
+	it('omits value metadata when content definitions are unavailable', () => {
 		const { metadata } = buildSessionMetadata();
-		const [statId, statInfo] =
-			Object.entries(STATS).find(([, info]) => info.addFormat) ?? [];
-		expect(statId).toBeDefined();
-		if (!statId || !statInfo) {
-			throw new Error('Expected stats with formatting in content definitions.');
-		}
-		const statMetadata = metadata.stats?.[statId];
-		expect(statMetadata).toBeDefined();
-		expect((statMetadata as { format?: unknown })?.format).toEqual(
-			statInfo.addFormat,
-		);
-		if (statInfo.displayAsPercent !== undefined) {
-			expect(statMetadata?.displayAsPercent).toBe(statInfo.displayAsPercent);
-		}
+		expect(metadata.values).toBeUndefined();
 	});
 
 	it('includes trigger metadata from content definitions', () => {

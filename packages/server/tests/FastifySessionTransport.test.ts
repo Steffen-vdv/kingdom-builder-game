@@ -123,7 +123,6 @@ describe('FastifySessionTransport', () => {
 		const [actionId] = factory.actions.entries()[0];
 		const [buildingId] = factory.buildings.entries()[0];
 		const [developmentId] = factory.developments.entries()[0];
-		const [populationId] = factory.populations.entries()[0];
 		const actions = factory.actions
 			.entries()
 			.map(([, definition]) => structuredClone(definition));
@@ -133,9 +132,18 @@ describe('FastifySessionTransport', () => {
 		const developments = factory.developments
 			.entries()
 			.map(([, definition]) => structuredClone(definition));
+		const [populationId] = factory.populations.entries()[0];
 		const populations = factory.populations
 			.entries()
 			.map(([, definition]) => structuredClone(definition));
+		const populationOverride = populations.find(
+			(definition) => definition.id === populationId,
+		);
+		expect(populationOverride).toBeDefined();
+		if (!populationOverride) {
+			throw new Error('Missing population override.');
+		}
+		populationOverride.name = `${populationOverride.name} (override)`;
 		const actionOverride = actions.find(
 			(definition) => definition.id === actionId,
 		);
@@ -164,14 +172,6 @@ describe('FastifySessionTransport', () => {
 			throw new Error('Missing development override.');
 		}
 		developmentOverride.name = `${developmentOverride.name} (override)`;
-		const populationOverride = populations.find(
-			(definition) => definition.id === populationId,
-		);
-		expect(populationOverride).toBeDefined();
-		if (!populationOverride) {
-			throw new Error('Missing population override.');
-		}
-		populationOverride.name = `${populationOverride.name} (override)`;
 		const startOverride = structuredClone(start);
 		startOverride.player.resources[gainKey] =
 			(startOverride.player.resources?.[gainKey] ?? 0) + 5;
@@ -197,17 +197,15 @@ describe('FastifySessionTransport', () => {
 		expect(body.registries.developments[developmentId].name).toBe(
 			developmentOverride.name,
 		);
+		const metadata = body.snapshot.metadata;
 		expect(body.registries.populations[populationId].name).toBe(
 			populationOverride.name,
 		);
-		const metadata = body.snapshot.metadata;
 		expect(metadata.buildings?.[buildingId]?.label).toBe(buildingOverride.name);
 		expect(metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,
 		);
-		expect(metadata.populations?.[populationId]?.label).toBe(
-			populationOverride.name,
-		);
+		expect(metadata.values?.descriptors[gainKey]?.id).toBe(gainKey);
 		const metadataResponse = await app.inject({
 			method: 'GET',
 			url: '/metadata',
@@ -222,11 +220,11 @@ describe('FastifySessionTransport', () => {
 		expect(metadataBody.metadata.buildings?.[buildingId]?.label).toBe(
 			buildingOverride.name,
 		);
-		expect(metadataBody.metadata.populations?.[populationId]?.label).toBe(
-			populationOverride.name,
-		);
 		expect(metadataBody.metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,
+		);
+		expect(metadataBody.metadata.values?.descriptors[gainKey]?.id).toBe(
+			gainKey,
 		);
 		expect(manager.getSessionRegistries(body.sessionId)).toEqual(
 			body.registries,
@@ -248,7 +246,7 @@ describe('FastifySessionTransport', () => {
 		expect(body.start).toEqual(start);
 		expect(body.rules).toEqual(rules);
 		expect(body.primaryIconId).toBe(primaryIconId);
-		const resource = body.resources[gainKey];
+		const resource = body.resourceValues.definitions[gainKey];
 		expect(resource).toBeDefined();
 		expect(body).toEqual(manager.getRuntimeConfig());
 		await app.close();
@@ -573,7 +571,8 @@ describe('FastifySessionTransport', () => {
 		expect(body.phaseComplete).toBe(true);
 		expectSnapshotMetadata(body.snapshot.metadata);
 		expect(body.snapshot.game.currentPhase).toBeDefined();
-		expect(Array.isArray(body.snapshot.recentResourceGains)).toBe(true);
+		expect(Array.isArray(body.snapshot.recentValueChanges)).toBe(true);
+		expect(body.snapshot.recentResourceGains).toBeUndefined();
 		expectStaticMetadata(manager.getMetadata());
 		expect(body.registries.actions).toBeDefined();
 		expect(runSpy).toHaveBeenCalledWith(playerId, expect.any(Object));

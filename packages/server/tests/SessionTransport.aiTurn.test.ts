@@ -99,7 +99,8 @@ describe('SessionTransport runAiTurn', () => {
 		expect(result.phaseComplete).toBe(true);
 		expectSnapshotMetadata(result.snapshot.metadata);
 		expect(result.snapshot.game.currentPhase).toBeDefined();
-		expect(Array.isArray(result.snapshot.recentResourceGains)).toBe(true);
+		expect(Array.isArray(result.snapshot.recentValueChanges)).toBe(true);
+		expect(result.snapshot.recentResourceGains).toBeUndefined();
 		expect(Object.keys(result.registries.actions)).not.toHaveLength(0);
 		expectStaticMetadata(manager.getMetadata());
 		expect(runSpy).toHaveBeenCalledWith(playerId, expect.any(Object));

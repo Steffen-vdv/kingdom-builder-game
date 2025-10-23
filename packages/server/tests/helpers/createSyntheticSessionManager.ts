@@ -43,6 +43,18 @@ export function createSyntheticSessionManager(
 	const factory = createContentFactory();
 	const costKey = 'synthetic:cost';
 	const gainKey = 'synthetic:gain';
+	factory.resourceDefinition({
+		id: costKey,
+		label: costKey,
+		order: 0,
+		configure: (builder) => builder.globalActionCost(1),
+	});
+	factory.resourceDefinition({
+		id: gainKey,
+		label: gainKey,
+		order: 1,
+		configure: (builder) => builder.percent(),
+	});
 	const action = factory.action({
 		baseCosts: { [costKey]: 1 },
 		effects: [
@@ -120,10 +132,11 @@ export function createSyntheticSessionManager(
 		phases: engineOverrides.phases ?? phases,
 		start: engineOverrides.start ?? start,
 		rules: engineOverrides.rules ?? rules,
-		resourceRegistry: engineOverrides.resourceRegistry ?? {
-			[costKey]: { key: costKey },
-			[gainKey]: { key: gainKey },
-		},
+		resourceDefinitions:
+			engineOverrides.resourceDefinitions ??
+			factory.resourceDefinitions.values(),
+		resourceGroups:
+			engineOverrides.resourceGroups ?? factory.resourceGroups.values(),
 		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
 	};
 	const manager = new SessionManager({

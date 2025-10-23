@@ -5,7 +5,6 @@ import type { SessionStaticMetadataPayload } from '../../src/session/buildSessio
 
 function createBaseMetadata(): SessionStaticMetadataPayload {
 	return {
-		passiveEvaluationModifiers: {},
 		assets: {
 			upkeep: { icon: 'base-upkeep-icon', label: 'Upkeep' },
 			transfer: { icon: 'base-transfer-icon', label: 'Transfer' },

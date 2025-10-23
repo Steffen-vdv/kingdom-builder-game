@@ -88,19 +88,22 @@ describe('SessionManager', () => {
 		const baseline = manager.getMetadata();
 		expectStaticMetadata(baseline);
 		expect(buildSpy).toHaveBeenCalledTimes(1);
-		expect(baseline.resources?.[costKey]).toBeDefined();
+		expect(baseline.values?.descriptors?.[costKey]).toBeDefined();
 		const triggerKeys = Object.keys(baseline.triggers ?? {});
 		expect(triggerKeys.length).toBeGreaterThan(0);
-		const statKeys = Object.keys(baseline.stats ?? {});
-		expect(statKeys.length).toBeGreaterThan(0);
+		const descriptorKeys = Object.keys(baseline.values?.descriptors ?? {});
+		expect(descriptorKeys.length).toBeGreaterThan(0);
 		const heroTokens = baseline.overview?.hero?.tokens ?? {};
 		const overviewTokenKeys = Object.keys(heroTokens);
 		expect(overviewTokenKeys.length).toBeGreaterThan(0);
 		const mutated = manager.getMetadata();
 		expect(mutated).not.toBe(baseline);
 		expect(mutated).toEqual(baseline);
-		if (mutated.resources) {
-			mutated.resources[costKey] = { label: 'changed' };
+		if (mutated.values?.descriptors) {
+			mutated.values.descriptors[costKey] = {
+				...mutated.values.descriptors[costKey],
+				label: 'changed',
+			};
 		}
 		const [triggerKey] = triggerKeys;
 		if (mutated.triggers && triggerKey) {
@@ -111,14 +114,14 @@ describe('SessionManager', () => {
 			};
 			mutated.triggers[triggerKey] = descriptor;
 		}
-		const [statKey] = statKeys;
-		if (mutated.stats && statKey) {
-			const original = mutated.stats[statKey];
+		const [descriptorKey] = descriptorKeys;
+		if (mutated.values?.descriptors && descriptorKey) {
+			const original = mutated.values.descriptors[descriptorKey];
 			const descriptor: SessionMetadataDescriptor = {
 				...(original ?? {}),
 				label: 'changed',
 			};
-			mutated.stats[statKey] = descriptor;
+			mutated.values.descriptors[descriptorKey] = descriptor;
 		}
 		const [overviewTokenKey] = overviewTokenKeys;
 		if (mutated.overview?.hero?.tokens && overviewTokenKey) {
@@ -126,12 +129,14 @@ describe('SessionManager', () => {
 		}
 		const next = manager.getMetadata();
 		expect(next).toEqual(baseline);
-		expect(next.resources?.[costKey]?.label).not.toBe('changed');
+		expect(next.values?.descriptors?.[costKey]?.label).not.toBe('changed');
 		if (triggerKey) {
 			expect(next.triggers?.[triggerKey]?.label).not.toBe('changed');
 		}
-		if (statKey) {
-			expect(next.stats?.[statKey]?.label).not.toBe('changed');
+		if (descriptorKey) {
+			expect(next.values?.descriptors?.[descriptorKey]?.label).not.toBe(
+				'changed',
+			);
 		}
 		if (overviewTokenKey) {
 			expect(next.overview?.hero?.tokens?.[overviewTokenKey]).not.toBe(
@@ -156,8 +161,8 @@ describe('SessionManager', () => {
 		expect(Object.isFrozen(runtimeConfig.phases)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.start)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.rules)).toBe(true);
-		expect(Object.isFrozen(runtimeConfig.resources)).toBe(true);
-		const resourceEntry = runtimeConfig.resources[gainKey];
+		expect(Object.isFrozen(runtimeConfig.resourceValues)).toBe(true);
+		const resourceEntry = runtimeConfig.resourceValues.definitions[gainKey];
 		if (!resourceEntry) {
 			throw new Error('Missing synthetic resource definition.');
 		}

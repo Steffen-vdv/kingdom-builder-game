@@ -27,6 +27,22 @@ describe('HttpSessionGateway', () => {
 	}
 
 	function createRegistries(): SessionRegistriesPayload {
+		const resourceValues: SessionRegistriesPayload['resourceValues'] = {
+			definitions: {
+				'synthetic:cost': {
+					id: 'synthetic:cost',
+					display: {
+						icon: 'icon-resource-cost',
+						label: 'Synthetic Cost',
+						description: 'Synthetic cost resource used in tests.',
+						order: 0,
+					},
+					globalActionCost: { amount: 1 },
+				},
+			},
+			groups: {},
+			globalActionCost: { resourceId: 'synthetic:cost', amount: 1 },
+		};
 		return {
 			actions: {},
 			actionCategories: {
@@ -46,7 +62,7 @@ describe('HttpSessionGateway', () => {
 			buildings: {},
 			developments: {},
 			populations: {},
-			resources: {},
+			resourceValues,
 		};
 	}
 

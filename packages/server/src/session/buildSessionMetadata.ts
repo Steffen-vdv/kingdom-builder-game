@@ -3,10 +3,8 @@ import {
 	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
 	SLOT_INFO,
-	STATS,
 	TRIGGER_INFO,
 	POPULATION_INFO,
-	POPULATION_ROLES,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
 } from '@kingdom-builder/contents';
@@ -14,26 +12,35 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PhaseConfig,
-	PopulationConfig,
 	Registry,
-	SerializedRegistry,
 	SessionMetadataDescriptor,
 	SessionMetadataSnapshot,
 	SessionPhaseMetadata,
 	SessionTriggerMetadata,
-	SessionResourceDefinition,
+	ResourceV2DefinitionConfig,
+	ResourceV2GroupDefinitionConfig,
 } from '@kingdom-builder/protocol';
+import { buildResourceValueMetadata } from './sessionMetadataBuilder.js';
 
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
 type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
 
-export type SessionStaticMetadataPayload = SessionMetadataSnapshot;
+export type SessionStaticMetadataPayload = Pick<
+	SessionMetadataSnapshot,
+	| 'values'
+	| 'buildings'
+	| 'developments'
+	| 'phases'
+	| 'triggers'
+	| 'assets'
+	| 'overview'
+>;
 
 export interface BuildSessionMetadataOptions {
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
-	populations: Registry<PopulationConfig>;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	resourceDefinitions: Iterable<ResourceV2DefinitionConfig>;
+	resourceGroups: Iterable<ResourceV2GroupDefinitionConfig>;
 	phases: ReadonlyArray<PhaseConfig>;
 }
 
@@ -41,13 +48,12 @@ export function buildSessionMetadata(
 	options: BuildSessionMetadataOptions,
 ): SessionStaticMetadataPayload {
 	const metadata: SessionStaticMetadataPayload = {};
-	const resourceMetadata = buildResourceMetadata(options.resources);
-	if (hasEntries(resourceMetadata)) {
-		metadata.resources = resourceMetadata;
-	}
-	const populationMetadata = buildPopulationMetadata(options.populations);
-	if (hasEntries(populationMetadata)) {
-		metadata.populations = populationMetadata;
+	const values = buildResourceValueMetadata(
+		options.resourceDefinitions,
+		options.resourceGroups,
+	);
+	if (values) {
+		metadata.values = values;
 	}
 	const buildingMetadata = buildRegistryMetadata(options.buildings);
 	if (hasEntries(buildingMetadata)) {
@@ -56,10 +62,6 @@ export function buildSessionMetadata(
 	const developmentMetadata = buildRegistryMetadata(options.developments);
 	if (hasEntries(developmentMetadata)) {
 		metadata.developments = developmentMetadata;
-	}
-	const statMetadata = buildStatMetadata();
-	if (hasEntries(statMetadata)) {
-		metadata.stats = statMetadata;
 	}
 	const phaseMetadata = buildPhaseMetadata(options.phases);
 	if (hasEntries(phaseMetadata)) {
@@ -76,30 +78,6 @@ export function buildSessionMetadata(
 	const overviewMetadata = structuredClone(OVERVIEW_CONTENT);
 	metadata.overview = overviewMetadata;
 	return metadata;
-}
-
-function buildResourceMetadata(
-	resources: SerializedRegistry<SessionResourceDefinition>,
-): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
-	for (const key of Object.keys(resources)) {
-		const definition = resources[key];
-		if (!definition) {
-			continue;
-		}
-		const descriptor: SessionMetadataDescriptor = {};
-		if (definition.label) {
-			descriptor.label = definition.label;
-		}
-		if (definition.icon) {
-			descriptor.icon = definition.icon;
-		}
-		if (definition.description) {
-			descriptor.description = definition.description;
-		}
-		descriptors[key] = descriptor;
-	}
-	return descriptors;
 }
 
 function buildRegistryMetadata<
@@ -119,52 +97,6 @@ function buildRegistryMetadata<
 			descriptor.description = definition.description;
 		}
 		descriptors[id] = descriptor;
-	}
-	return descriptors;
-}
-
-function buildPopulationMetadata(
-	registry: Registry<PopulationConfig>,
-): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
-	for (const [id, definition] of registry.entries()) {
-		const descriptor: SessionMetadataDescriptor = { label: definition.name };
-		if (definition.icon) {
-			descriptor.icon = definition.icon;
-		}
-		const description = (definition as { description?: string }).description;
-		if (description) {
-			descriptor.description = description;
-		} else {
-			const roleInfo = POPULATION_ROLES[id as keyof typeof POPULATION_ROLES];
-			if (roleInfo?.description) {
-				descriptor.description = roleInfo.description;
-			}
-		}
-		descriptors[id] = descriptor;
-	}
-	return descriptors;
-}
-
-function buildStatMetadata(): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
-	const statKeys = Object.keys(STATS) as Array<keyof typeof STATS>;
-	for (const key of statKeys) {
-		const info = STATS[key];
-		const descriptor: SessionMetadataDescriptor = {
-			label: info.label,
-			description: info.description,
-		};
-		if (info.icon) {
-			descriptor.icon = info.icon;
-		}
-		if (info.displayAsPercent) {
-			descriptor.displayAsPercent = info.displayAsPercent;
-		}
-		if (info.addFormat) {
-			descriptor.format = { ...info.addFormat };
-		}
-		descriptors[key] = descriptor;
 	}
 	return descriptors;
 }

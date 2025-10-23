@@ -29,23 +29,12 @@ export function mergeSessionMetadata({
 	if (snapshotMetadata.effectLogs !== undefined) {
 		merged.effectLogs = structuredClone(snapshotMetadata.effectLogs);
 	}
-	const resources = mergeRecord(
-		baseClone.resources,
-		snapshotMetadata.resources,
-	);
-	if (resources !== undefined) {
-		merged.resources = resources;
+	if (snapshotMetadata.values !== undefined) {
+		merged.values = structuredClone(snapshotMetadata.values);
+	} else if (baseClone.values !== undefined) {
+		merged.values = structuredClone(baseClone.values);
 	} else {
-		delete merged.resources;
-	}
-	const populations = mergeRecord(
-		baseClone.populations,
-		snapshotMetadata.populations,
-	);
-	if (populations !== undefined) {
-		merged.populations = populations;
-	} else {
-		delete merged.populations;
+		delete merged.values;
 	}
 	const buildings = mergeRecord(
 		baseClone.buildings,
@@ -64,12 +53,6 @@ export function mergeSessionMetadata({
 		merged.developments = developments;
 	} else {
 		delete merged.developments;
-	}
-	const stats = mergeRecord(baseClone.stats, snapshotMetadata.stats);
-	if (stats !== undefined) {
-		merged.stats = stats;
-	} else {
-		delete merged.stats;
 	}
 	const phases = mergeRecord(baseClone.phases, snapshotMetadata.phases);
 	if (phases !== undefined) {
