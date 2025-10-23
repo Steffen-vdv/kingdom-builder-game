@@ -36,6 +36,10 @@ export class ResourceV2Service {
 		this.tierService?.setRegistry(registry);
 	}
 
+	getRegistry(): ResourceV2EngineRegistry | undefined {
+		return this.registry;
+	}
+
 	setTierService(tierService: ResourceV2TierService) {
 		this.tierService = tierService;
 		if (this.registry) {

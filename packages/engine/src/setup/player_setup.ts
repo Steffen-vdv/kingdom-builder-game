@@ -7,6 +7,7 @@ import type {
 	PlayerStartConfig,
 	Registry,
 } from '@kingdom-builder/protocol';
+import type { ResourceV2EngineRegistry } from '../resourceV2/registry';
 import { START_STAT_SOURCE_META } from './stat_source_meta';
 
 function cloneEffectList<EffectType extends object>(
@@ -128,7 +129,12 @@ export function initializePlayerActions(
 
 export function determineCommonActionCostResource(
 	actions: Registry<ActionDef>,
+	resourceV2Registry?: ResourceV2EngineRegistry,
 ): ResourceKey {
+	const globalCost = resourceV2Registry?.getGlobalActionCostResource();
+	if (globalCost) {
+		return globalCost.resourceId;
+	}
 	let intersection: string[] | null = null;
 	for (const [, actionDefinition] of actions.entries()) {
 		if (actionDefinition.system) {

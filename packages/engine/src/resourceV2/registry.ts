@@ -54,6 +54,9 @@ export class ResourceV2EngineRegistry {
 	>();
 	private readonly resourcesByGroup: Map<string, ReadonlyArray<string>>;
 	private readonly groupsByParent: Map<string, ReadonlyArray<string>>;
+	private globalActionCostResource:
+		| { id: string; metadata: ResourceV2GlobalActionCostMetadata }
+		| undefined;
 
 	readonly resourceIds: ReadonlyArray<string>;
 	readonly groupIds: ReadonlyArray<string>;
@@ -72,6 +75,23 @@ export class ResourceV2EngineRegistry {
 			}
 			this.resourceRecords.set(record.id, record);
 			this.entityRecords.set(record.id, record);
+
+			if (record.globalActionCost) {
+				const existingGlobalCost = this.globalActionCostResource;
+				if (existingGlobalCost) {
+					const conflictMessage = [
+						'ResourceV2 registry already configured',
+						'a global action cost resource',
+						'"' + existingGlobalCost.id + '".',
+						'Cannot register "' + record.id + '".',
+					].join(' ');
+					throw new Error(conflictMessage);
+				}
+				this.globalActionCostResource = {
+					id: record.id,
+					metadata: record.globalActionCost,
+				};
+			}
 
 			if (record.hasTierTrack && record.tierTrack) {
 				this.tierDefinitions.set(
@@ -212,6 +232,21 @@ export class ResourceV2EngineRegistry {
 
 	tracksBoundBreakdown(id: string): boolean {
 		return this.getEntity(id).trackBoundBreakdown;
+	}
+
+	getGlobalActionCostResource():
+		| {
+				resourceId: string;
+				metadata: ResourceV2GlobalActionCostMetadata;
+		  }
+		| undefined {
+		if (!this.globalActionCostResource) {
+			return undefined;
+		}
+		return {
+			resourceId: this.globalActionCostResource.id,
+			metadata: this.globalActionCostResource.metadata,
+		};
 	}
 
 	getGlobalActionCost(

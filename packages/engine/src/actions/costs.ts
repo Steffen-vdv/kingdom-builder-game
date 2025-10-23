@@ -12,6 +12,61 @@ function cloneCostBag(costBag: CostBag): CostBag {
 	return { ...costBag };
 }
 
+interface GlobalActionCostSettings {
+	readonly resourceId: string;
+	readonly amount: number;
+}
+
+function resolveGlobalActionCostSettings(
+	engineContext: EngineContext,
+): GlobalActionCostSettings | undefined {
+	const registry = engineContext.resourceV2.getRegistry?.();
+	if (!registry) {
+		return undefined;
+	}
+	const metadata = registry.getGlobalActionCostResource();
+	if (!metadata) {
+		return undefined;
+	}
+	return {
+		resourceId: metadata.resourceId,
+		amount: metadata.metadata.amount,
+	};
+}
+
+function hasOwnCostEntry(
+	costs: Record<string, number> | undefined,
+	resourceId: string,
+): boolean {
+	if (!costs) {
+		return false;
+	}
+	return Object.prototype.hasOwnProperty.call(costs, resourceId);
+}
+
+function assertNoGlobalActionCostOverride(
+	actionDefinition: {
+		baseCosts?: Record<string, number> | undefined;
+		id?: string;
+	},
+	settings: GlobalActionCostSettings,
+	actionId: string,
+): void {
+	if (!hasOwnCostEntry(actionDefinition.baseCosts, settings.resourceId)) {
+		return;
+	}
+	const identifier = actionDefinition.id ?? actionId;
+	const message = [
+		'Action "' +
+			identifier +
+			'" cannot override global action cost resource "' +
+			settings.resourceId +
+			'".',
+		'Remove the baseCosts entry to rely on ResourceV2 metadata.',
+	].join(' ');
+	throw new Error(message);
+}
+
 function getActionDefinitionOrThrow(
 	actionId: string,
 	engineContext: EngineContext,
@@ -32,11 +87,53 @@ export function applyCostsWithPassives(
 ): CostBag {
 	const defaultedCosts = cloneCostBag(baseCosts);
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
-	const primaryCostKey = engineContext.actionCostResource;
-	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
-		defaultedCosts[primaryCostKey] = actionDefinition.system
-			? 0
-			: engineContext.services.rules.defaultActionAPCost;
+	const globalCost = resolveGlobalActionCostSettings(engineContext);
+	if (globalCost) {
+		const resourceId = globalCost.resourceId;
+		assertNoGlobalActionCostOverride(actionDefinition, globalCost, actionId);
+		const expected = actionDefinition.system ? 0 : globalCost.amount;
+		const existing = defaultedCosts[resourceId];
+		if (existing === undefined) {
+			defaultedCosts[resourceId] = expected;
+		} else if (existing !== expected) {
+			const identifier = actionDefinition.id ?? actionId;
+			const message = [
+				'Action "' +
+					identifier +
+					'" attempted to set global action cost "' +
+					resourceId +
+					'" to ' +
+					existing +
+					'. Metadata requires ' +
+					expected +
+					'.',
+				'Use cost modifiers instead of overriding the base cost.',
+			].join(' ');
+			throw new Error(message);
+		} else {
+			defaultedCosts[resourceId] = expected;
+		}
+		if (
+			engineContext.actionCostResource &&
+			engineContext.actionCostResource !== resourceId
+		) {
+			const message = [
+				'Engine context actionCostResource "' +
+					engineContext.actionCostResource +
+					'" does not match',
+				'ResourceV2 global action cost resource "' + resourceId + '".',
+			].join(' ');
+			throw new Error(message);
+		}
+		engineContext.actionCostResource = resourceId;
+	} else {
+		const primaryCostKey = engineContext.actionCostResource;
+		if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
+			const rules = engineContext.services.rules;
+			const defaultActionCost = rules.defaultActionAPCost;
+			const baseActionCost = actionDefinition.system ? 0 : defaultActionCost;
+			defaultedCosts[primaryCostKey] = baseActionCost;
+		}
 	}
 	return engineContext.passives.applyCostMods(
 		actionDefinition.id,

@@ -21,6 +21,7 @@ import type {
 import { Services, PassiveManager } from '../services';
 import { ResourceV2Service } from '../resourceV2/service';
 import { ResourceV2TierService } from '../resourceV2/tier_service';
+import type { ResourceV2EngineRegistry } from '../resourceV2/registry';
 import type { RuleSet } from '../services';
 import { EngineContext } from '../context';
 import { registerCoreEffects } from '../effects';
@@ -61,6 +62,7 @@ export interface EngineCreationOptions {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
+	resourceV2Registry?: ResourceV2EngineRegistry;
 	config?: GameConfig;
 	devMode?: boolean;
 }
@@ -171,6 +173,7 @@ export function createEngine({
 	phases,
 	start,
 	rules,
+	resourceV2Registry,
 	config,
 	devMode = false,
 }: EngineCreationOptions) {
@@ -203,12 +206,15 @@ export function createEngine({
 	const resourceV2TierService = new ResourceV2TierService();
 	services.setResourceV2TierService(resourceV2TierService);
 	const resourceV2Service = new ResourceV2Service(
-		undefined,
+		resourceV2Registry,
 		resourceV2TierService,
 	);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
-	const actionCostResource = determineCommonActionCostResource(actions);
+	const actionCostResource = determineCommonActionCostResource(
+		actions,
+		resourceV2Registry,
+	);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
 		startConfig.players?.['A'],
