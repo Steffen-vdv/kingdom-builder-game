@@ -24,6 +24,14 @@ type StatV2Id = (typeof STAT_V2_ID_BY_KEY)[StatKey];
 
 const STAT_KEY_BY_V2_ID = Object.fromEntries(Object.entries(STAT_V2_ID_BY_KEY).map(([key, id]) => [id, key as StatKey])) as Record<StatV2Id, StatKey>;
 
+export function getStatResourceV2Id(stat: StatKey) {
+	const id = STAT_V2_ID_BY_KEY[stat];
+	if (!id) {
+		throw new Error(`Unknown stat key "${stat}" does not map to a ResourceV2 id.`);
+	}
+	return id;
+}
+
 const STAT_OVERRIDES: Partial<Record<StatKey, Pick<StatInfo, 'addFormat' | 'capacity'>>> = {
 	[Stat.maxPopulation]: {
 		capacity: true,

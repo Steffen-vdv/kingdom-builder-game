@@ -65,7 +65,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 				effect()
 					.evaluator(populationEvaluator().id(PopulationEvaluationId.tax))
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.gold).amount(4)).build())
-					.effect(effect(Types.Resource, ResourceMethods.REMOVE).round('up').params(resourceParams().key(Resource.happiness).amount(0.5)).allowShortfall().build())
+					.effect(effect(Types.Resource, ResourceMethods.REMOVE).round('up').params(resourceParams().key(Resource.happiness).amount(0.5)).build())
 					.build(),
 			)
 			.category(ActionCategory.Basic)
@@ -112,7 +112,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.expand)).build())
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.till).landId('$landId')).build())
 			.effectGroup(royalDecreeDevelopGroup)
-			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3)).allowShortfall().build())
+			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3)).build())
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 5)
 			.focus(Focus.Economy)
@@ -163,7 +163,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.effect(
 						effect(Types.ResultMod, ResultModMethods.ADD)
 							.params(resultModParams().id('hold_festival_attack_happiness_penalty').actionId(ActionId.army_attack))
-							.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3)).allowShortfall().build())
+							.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3)).build())
 							.build(),
 					)
 					.build(),

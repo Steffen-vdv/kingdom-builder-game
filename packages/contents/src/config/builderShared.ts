@@ -1,6 +1,7 @@
 export const Types = {
 	Land: 'land',
 	Resource: 'resource',
+	ResourceV2: 'resource_v2',
 	Building: 'building',
 	Development: 'development',
 	Passive: 'passive',
@@ -21,6 +22,16 @@ export const ResourceMethods = {
 	ADD: 'add',
 	REMOVE: 'remove',
 	TRANSFER: 'transfer',
+} as const;
+
+export const ResourceV2Methods = {
+	ADD: 'add',
+	REMOVE: 'remove',
+	TRANSFER: 'transfer',
+} as const;
+
+export const ResourceV2BoundMethods = {
+	INCREASE_UPPER_BOUND: 'increase_upper_bound',
 } as const;
 
 export const BuildingMethods = {
