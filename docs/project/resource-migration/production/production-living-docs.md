@@ -1,6 +1,6 @@
 # Resource Migration Project – Production Living Document
 
-This document captures the evolving state of the Resource Migration initiative. Every agent **must** read the entire file before making changes and must append their own update when finishing a task.
+This document captures the evolving state of the Resource Migration initiative. Every agent **must** read the entire file before making changes. Task-level updates now live in dedicated Markdown files under [`./worklogs/`](./worklogs/) (see directory README for the required template); do **not** edit the shared Work Log table directly. Instead, create a new per-task file, reference it in your handover notes, and allow the designated aggregator to merge highlights back into the table.
 
 ## 1. Quick Context
 
@@ -22,6 +22,8 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 
 ## 3. Work Log (append-only)
 
+> ⚠️ Parallel contributors: keep this table stable. Add your notes to [`./worklogs/`](./worklogs/) and notify the aggregator via the Latest Handover section so they can roll the details forward without risking merge conflicts.
+
 | Date       | Agent                 | Scope / Files                                                                                                                                                                                                                                                                      | Summary of Work                                                                                                                                                                                                                               | Tests & Results                                                                                            | Follow-up Actions                                                                                                                      |
 | ---------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | 2025-10-22 | ChatGPT (gpt-5-codex) | packages/contents/src/resourceV2/types.ts, packages/contents/src/resourceV2/index.ts, docs/project/resource-migration/production/production-living-docs.md                                                                                                                         | Resource Migration MVP - P2 - T1 - Added ResourceV2 schema type scaffolding and documented follow-ups.                                                                                                                                        | _Not run (types only)_                                                                                     | Confirm schema assumptions for tier metadata and group parent scope.                                                                   |
@@ -42,14 +44,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-27 20:50
-- **Current Focus:** Resource Migration MVP - P2 - T11 - ResourceV2 handler regression suites
-- **State Summary:** Added targeted ResourceV2 unit suites that instantiate runtime catalogs via the new converters, covering state helper utilities plus add/remove/transfer/upper-bound handlers for rounding, clamp flags, tier stability, and signed Option A logging to unblock downstream QA.
+- **Timestamp (UTC):** 2025-10-28 09:00
+- **Current Focus:** Resource Migration MVP - P2 - T17 - Process rework for parallel task logging
+- **State Summary:** Introduced per-task worklog files (`./worklogs/TXX-<slug>.md`) to prevent clashes in the shared Work Log. See [`./worklogs/T17-process-rework.md`](./worklogs/T17-process-rework.md) for the inaugural entry; future tasks must follow the same protocol.
 - **Next Suggested Tasks:**
-  - Extend coverage to cross-tier transfer scenarios and parent-tier transitions once runtime context wiring lands (Owner: Engine QA).
-  - Wire the runtime catalog onto the EngineContext/game bootstrap so handlers can run outside of tests (Owner: Engine).
-- **Blocking Issues / Risks:** Runtime catalog still is not threaded onto live engine contexts; effect handlers will continue throwing in integration flows until bootstrap work completes.
-- **Reminder:** Coordinate upcoming absorption migration dry-run once runtime wiring exists so live tier transitions and transfer hooks receive end-to-end validation.
+  - Aggregator: backfill existing Work Log rows using the historical table, then ingest new per-task files as they land to keep the timeline current.
+  - All contributors: create a worklog file before completing your handover and reference it here so the aggregator knows what to merge.
+- **Blocking Issues / Risks:** None introduced; coordination risk drops once everyone adopts the file-based workflow.
+- **Reminder:** Do not delete the [`./worklogs/`](./worklogs/) directory (tracked via `.gitkeep`); it is now part of the official process.
 
 ## 5. Notes & Decisions Archive
 
