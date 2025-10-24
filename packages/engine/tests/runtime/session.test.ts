@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createEngineSession, type EngineSession } from '../../src/index.ts';
 import {
 	ACTIONS,
@@ -28,6 +28,7 @@ import type { RuleSet } from '../../src/services';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
+import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
 
 const BASE: {
@@ -77,6 +78,21 @@ function advanceToMain(session: EngineSession) {
 		session.advancePhase();
 	}
 	throw new Error('Failed to reach main phase');
+}
+
+function advanceToPlayerMain(session: EngineSession, playerId: string) {
+	const limit = BASE.phases.length * 20;
+	for (let step = 0; step < limit; step += 1) {
+		const snapshot = session.getSnapshot();
+		if (
+			snapshot.game.currentPhase === PhaseId.Main &&
+			snapshot.game.activePlayerId === playerId
+		) {
+			return;
+		}
+		session.advancePhase();
+	}
+	throw new Error(`Failed to reach main phase for ${playerId}`);
 }
 
 describe('EngineSession', () => {
@@ -350,4 +366,230 @@ describe('EngineSession', () => {
 		const afterSnapshot = session.getSnapshot();
 		expect(afterSnapshot.game.activePlayerId).toBe(initialActive);
 	});
+
+	it('summarizes action definitions with optional system flags', () => {
+		const content = createContentFactory();
+		const categorized = content.action({
+			system: true,
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		const definition = session.getActionDefinition(categorized.id);
+		expect(definition).toEqual({
+			id: categorized.id,
+			name: categorized.name,
+			system: true,
+		});
+	});
+
+	it('throws for unknown action definitions', () => {
+		const session = createTestSession();
+		const missingAction = createContentFactory().action();
+		expect(() => session.getActionDefinition(missingAction.id)).toThrowError(
+			/Unknown id/,
+		);
+	});
+
+	it('returns undefined when pulling an unknown effect log key', () => {
+		const session = createTestSession();
+		expect(session.pullEffectLog('missing:log')).toBeUndefined();
+	});
+
+	it('allows toggling developer mode directly on the session', () => {
+		const session = createTestSession();
+		expect(session.getSnapshot().game.devMode).toBe(false);
+		session.setDevMode(true);
+		expect(session.getSnapshot().game.devMode).toBe(true);
+	});
+
+	it('runs AI turns with dependency overrides and reports success', async () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const aiPlayer = snapshot.game.players[1];
+		if (!aiPlayer) {
+			throw new Error('Expected an AI-controlled player.');
+		}
+		const ranTurn = await session.runAiTurn(aiPlayer.id, {
+			performAction(actionId, engineContext) {
+				const resourceKey = engineContext.actionCostResource;
+				if (resourceKey) {
+					engineContext.activePlayer.resources[resourceKey] = 0;
+				}
+				return undefined;
+			},
+			continueAfterAction() {
+				return false;
+			},
+			shouldAdvancePhase() {
+				return false;
+			},
+		});
+		expect(ranTurn).toBe(true);
+	});
+
+	it('returns false when no AI controller is registered for a player', async () => {
+		const session = createTestSession();
+		expect(session.hasAiController('A')).toBe(false);
+		await expect(session.runAiTurn('A')).resolves.toBe(false);
+	});
+
+	it('runs enqueued tasks in order', async () => {
+		const session = createTestSession();
+		const order: number[] = [];
+		const first = session.enqueue(async () => {
+			order.push(1);
+			await Promise.resolve();
+			return 'first';
+		});
+		const second = session.enqueue(() => {
+			order.push(2);
+			return 'second';
+		});
+		await expect(first).resolves.toBe('first');
+		await expect(second).resolves.toBe('second');
+		expect(order).toEqual([1, 2]);
+	});
+
+	it('returns cloned simulation results for upcoming phases', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const activeId = snapshot.game.activePlayerId;
+		const result = session.simulateUpcomingPhases(activeId);
+		expect(result.steps.length).toBeGreaterThan(0);
+		const firstStep = result.steps[0];
+		if (!firstStep) {
+			throw new Error('Expected at least one simulation step.');
+		}
+		firstStep.player.resources[CResource.gold] = 999;
+		const refreshed = session.simulateUpcomingPhases(activeId);
+		expect(refreshed.steps[0]?.player.resources[CResource.gold]).not.toBe(999);
+	});
+
+	it('supports primitive effect log entries without mutation', () => {
+		const session = createTestSession();
+		session.pushEffectLog('test:primitive', 42);
+		expect(session.pullEffectLog<number>('test:primitive')).toBe(42);
+	});
+});
+
+it('toggles developer mode without leaking mutable snapshots', () => {
+	const session = createTestSession();
+	const initial = session.getSnapshot();
+	expect(initial.game.devMode).toBe(false);
+	session.setDevMode(true);
+	const enabled = session.getSnapshot();
+	expect(enabled.game.devMode).toBe(true);
+	enabled.game.devMode = false;
+	expect(session.getSnapshot().game.devMode).toBe(true);
+	session.setDevMode(false);
+	expect(session.getSnapshot().game.devMode).toBe(false);
+});
+
+it('updates player names only when ids match existing entries', () => {
+	const session = createTestSession();
+	const first = session.getSnapshot().game.players[0]!;
+	const originalName = first.name;
+	const renamed = `${originalName}-renamed`;
+	session.updatePlayerName(first.id, renamed);
+	const afterRename = session.getSnapshot();
+	expect(afterRename.game.players[0]!.name).toBe(renamed);
+	const missingId = `${first.id}-missing`;
+	session.updatePlayerName(missingId, 'ignored');
+	expect(session.getSnapshot().game.players[0]!.name).toBe(renamed);
+});
+
+it('returns cloned rule snapshots for tier definitions and win conditions', () => {
+	const customRules = structuredClone(RULES);
+	const session = createTestSession({ rules: customRules });
+	const snapshot = session.getRuleSnapshot();
+	const tierId = snapshot.tierDefinitions[0]?.id;
+	if (!tierId) {
+		throw new Error('Expected at least one tier definition');
+	}
+	snapshot.tierDefinitions[0]!.id = `${tierId}-mutated`;
+	if (snapshot.winConditions.length === 0) {
+		throw new Error('Expected at least one win condition');
+	}
+	snapshot.winConditions[0]!.result.subject = 'defeat';
+	const refreshed = session.getRuleSnapshot();
+	expect(refreshed.tierDefinitions[0]!.id).toBe(
+		customRules.tierDefinitions[0]!.id,
+	);
+	expect(refreshed.winConditions[0]!.result.subject).toBe(
+		customRules.winConditions[0]!.result.subject,
+	);
+});
+
+it('returns cloned simulation previews for upcoming phases', () => {
+	const session = createTestSession();
+	const activeId = session.getSnapshot().game.activePlayerId;
+	const preview = session.simulateUpcomingPhases(activeId);
+	preview.steps.length = 0;
+	preview.delta.resources.extra = 99;
+	preview.before.resources = {};
+	const refreshed = session.simulateUpcomingPhases(activeId);
+	expect(refreshed.steps.length).toBeGreaterThan(0);
+	expect(refreshed.delta.resources.extra).toBeUndefined();
+	expect(Object.keys(refreshed.before.resources).length).toBeGreaterThan(0);
+});
+
+it('delegates AI turns with overrides while preserving controllers', async () => {
+	const content = createContentFactory();
+	const taxAction = content.action({
+		id: TAX_ACTION_ID,
+		baseCosts: { [CResource.ap]: 1 },
+		effects: [
+			{
+				type: 'resource',
+				method: 'add',
+				params: { key: CResource.gold, amount: 1 },
+			},
+		],
+	});
+	void taxAction;
+	const session = createTestSession({
+		actions: content.actions,
+		buildings: content.buildings,
+		developments: content.developments,
+		populations: content.populations,
+	});
+	const initial = session.getSnapshot();
+	const opponentId = initial.game.opponentId;
+	const activeId = initial.game.activePlayerId;
+	expect(session.hasAiController(opponentId)).toBe(true);
+	expect(session.hasAiController(activeId)).toBe(false);
+	advanceToPlayerMain(session, opponentId);
+	session.applyDeveloperPreset({
+		playerId: opponentId,
+		resources: [{ key: CResource.ap, target: 1 }],
+	});
+	const performSpy = vi.fn<
+		Parameters<PerformActionFn>,
+		ReturnType<PerformActionFn>
+	>((actionId, engineContext) => {
+		const apKey = engineContext.actionCostResource;
+		const current = engineContext.activePlayer.resources[apKey] ?? 0;
+		engineContext.activePlayer.resources[apKey] = Math.max(0, current - 1);
+		return [];
+	});
+	const continueAfterAction = vi.fn().mockResolvedValue(true);
+	const shouldAdvancePhase = vi.fn().mockResolvedValue(false);
+	const advanceOverride = vi.fn();
+	const result = await session.runAiTurn(opponentId, {
+		performAction: performSpy,
+		advance: advanceOverride,
+		continueAfterAction,
+		shouldAdvancePhase,
+	});
+	expect(result).toBe(true);
+	expect(performSpy).toHaveBeenCalledTimes(1);
+	expect(continueAfterAction).toHaveBeenCalledTimes(1);
+	expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
+	expect(advanceOverride).not.toHaveBeenCalled();
+	const inactiveResult = await session.runAiTurn(activeId);
+	expect(inactiveResult).toBe(false);
 });
