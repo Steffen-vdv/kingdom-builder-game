@@ -213,6 +213,24 @@ describe('server entrypoint', () => {
 		}
 	});
 
+	it('warns when tokens are missing and the dev token is disabled via env', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		process.env.KB_SERVER_ALLOW_DEV_TOKEN = 'false';
+		const module = await import('../src/index.js');
+		const result = await module.startServer({
+			host: '127.0.0.1',
+			port: 0,
+		});
+		try {
+			expect(warn).toHaveBeenCalledWith(
+				expect.stringContaining('Authentication tokens are not configured.'),
+			);
+		} finally {
+			warn.mockRestore();
+			await result.app.close();
+		}
+	});
+
 	it('throws actionable errors when authentication is missing in production', async () => {
 		const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {});
 		process.env.NODE_ENV = 'production';
@@ -234,5 +252,43 @@ describe('server entrypoint', () => {
 				tokens: { '': { userId: 'nobody' } },
 			}),
 		).rejects.toThrow(/empty token strings/);
+	});
+
+	it('sets the exit code when auto-start fails', async () => {
+		const modulePath = fileURLToPath(
+			new URL('../src/index.ts', import.meta.url),
+		);
+		process.argv = ['/usr/bin/node', modulePath];
+		delete process.env.KB_SERVER_DISABLE_AUTOSTART;
+		process.env.KB_SERVER_AUTH_TOKENS = JSON.stringify({
+			'autostart-token': {
+				userId: 'autostart',
+				roles: ['admin'],
+			},
+		});
+		const log = createTestLogger();
+		const error = new Error('listen failed');
+		const listen = vi.fn().mockRejectedValue(error);
+		const register = vi.fn().mockResolvedValue(undefined);
+		const close = vi.fn().mockResolvedValue(undefined);
+		const fastifyMock = vi.fn(() => ({
+			register,
+			listen,
+			close,
+			log,
+		}));
+		vi.doMock('fastify', () => ({
+			__esModule: true,
+			default: fastifyMock,
+		}));
+		await import('../src/index.js');
+		await new Promise((resolve) => setImmediate(resolve));
+		expect(log.error).toHaveBeenCalledWith(
+			error,
+			'Failed to start Kingdom Builder server.',
+		);
+		expect(close).toHaveBeenCalled();
+		expect(process.exitCode).toBe(1);
+		process.exitCode = undefined;
 	});
 });
