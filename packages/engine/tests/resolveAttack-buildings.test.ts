@@ -3,6 +3,40 @@ import { resolveAttack, runEffects } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	RESOURCE_V2_DEFINITION_ARTIFACTS,
+	ResourceV2Id,
+} from '@kingdom-builder/contents';
+
+type TestEngineContext = ReturnType<typeof createTestEngine>;
+type TestPlayer = TestEngineContext['activePlayer'];
+
+const ABSORPTION_ID = (() => {
+	const definition =
+		RESOURCE_V2_DEFINITION_ARTIFACTS.definitionsById[ResourceV2Id.Absorption];
+	if (!definition) {
+		throw new Error(
+			'Missing Absorption ResourceV2 definition in startup metadata.',
+		);
+	}
+	return definition.id;
+})();
+
+function setAbsorption(
+	context: TestEngineContext,
+	player: TestPlayer,
+	value: number,
+) {
+	const current = player.resourceV2.amounts[ABSORPTION_ID] ?? 0;
+	const delta = value - current;
+	if (delta === 0) {
+		return;
+	}
+	context.resourceV2.applyValueChange(context, player, ABSORPTION_ID, {
+		delta,
+		reconciliation: 'clamp',
+	});
+}
 
 describe('resolveAttack buildings', () => {
 	it('keeps buildings intact when damage is fully mitigated', () => {
@@ -24,7 +58,7 @@ describe('resolveAttack buildings', () => {
 			engineContext,
 		);
 		engineContext.game.currentPlayerIndex = 0;
-		defender.absorption = 1;
+		setAbsorption(engineContext, defender, 1);
 		defender.fortificationStrength = 0;
 
 		const castleBefore = defender.resources[Resource.castleHP];
@@ -111,7 +145,7 @@ describe('resolveAttack buildings', () => {
 		);
 		engineContext.game.currentPlayerIndex = 0;
 
-		defender.absorption = 0.9;
+		setAbsorption(engineContext, defender, 0.9);
 		defender.fortificationStrength = 10;
 		const castleBefore = defender.resources[Resource.castleHP];
 

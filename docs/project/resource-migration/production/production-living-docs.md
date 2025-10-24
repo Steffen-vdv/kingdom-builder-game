@@ -59,7 +59,7 @@ docs/project/resource-migration/production/production-living-docs.md | Introduce
 add/remove/transfer sequences, verifying bounds, touched propagation, recent gain resets, and tier transition hook ordering,
 then logged the results in the production living doc. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` |
 Extend property scenarios with percent-based reconciliation and multi-resource tier tracks once those mechanics are supported. |
-| Resource Migration MVP - P3 - T24 | 2025-**-** | _(add entry)_ | | _(reserved for T24 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T24 | 2025-10-24 | gpt-5-codex | docs/architecture/attack_effects.md; packages/contents/src/resourceV2/definitions.ts; packages/contents/src/resourceV2/index.ts; packages/contents/src/index.ts; packages/contents/src/stats.ts; packages/contents/src/game.ts; packages/contents/src/actions/basicActions.ts; packages/contents/src/buildings.ts; packages/contents/src/developments.ts; packages/contents/tests/resourceV2.registry.test.ts; packages/engine/src/effects/attack/resolve.ts; packages/engine/tests/resolveAttack.test.ts; packages/engine/tests/resolveAttack-buildings.test.ts; packages/engine/tests/attack-zero-damage-no-effects.test.ts; packages/engine/tests/absorption-cap.test.ts; packages/engine/tests/effects/stat-add-pct-step-reset.test.ts | Migrated the Absorption stat into ResourceV2 with percent formatting, tier metadata, and registry exports; updated content builders/effects and engine logic/tests to resolve the new resource id via registries while preserving legacy fallbacks. | `npm run lint`; `npm run test --workspace=@kingdom-builder/contents`; `npm run test --workspace=@kingdom-builder/engine` | Monitor remaining code for lingering `Stat.absorption` usages and plan removal of the engine's legacy absorption fallback once downstream consumers finish migrating. |
 | Resource Migration MVP - P3 - T25 | 2025-**-** | _(add entry)_ | | _(reserved for T25 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T26 | 2025-**-** | _(add entry)_ | | _(reserved for T26 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T27 | 2025-**-** | _(add entry)_ | | _(reserved for T27 assignee – update only this row.)_ | | |
@@ -72,14 +72,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-24 09:23
-**Current Focus:** Resource Migration MVP - P3 - T23 ResourceV2 reconciliation property suite
-**State Summary:** Added a Fast-Check property harness that randomizes ResourceV2 add, remove, and transfer operations for both players, asserting clamped bounds and touched propagation (including parent aggregates), recent gain reset alignment, and tier service hook ordering. Captured tier hook emissions through a test-only effect to confirm the handover documentation.
+**Timestamp (UTC):** 2025-10-24 10:06
+**Current Focus:** Resource Migration MVP - P3 - T24 Absorption ResourceV2 migration
+**State Summary:** Absorption now lives in the ResourceV2 registry with percent formatting, tier track metadata, and startup exports. All content definitions reference `ResourceV2Id.Absorption` and resourceV2 builders, while engine attack resolution/tests resolve the resource id through registries with a temporary legacy fallback. Lint plus contents/engine suites are green post-migration.
 
 - **Next Suggested Tasks:**
-  - Extend the property suite to percent-based deltas, multi-resource tier tracks, and snapshot serialization when those paths land.
-  - Mix hook suppression metadata with tier transitions once additional reconciliation modes or hooks arrive.
-- **Blocking Issues / Risks:** None; lint and engine suites are green and the property run adds roughly 1.2s to the engine test cycle.
+  - Audit remaining packages (server/web) for `Stat.absorption` usage and migrate them to ResourceV2 helpers.
+  - Remove the engine's legacy absorption fallback once all callers supply ResourceV2 state.
+- **Blocking Issues / Risks:** None observed; all required commands completed successfully.
 
 ## 5. Notes & Decisions Archive
 
