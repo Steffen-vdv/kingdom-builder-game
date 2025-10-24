@@ -340,4 +340,31 @@ describe('EngineSession', () => {
 		const afterSnapshot = session.getSnapshot();
 		expect(afterSnapshot.game.activePlayerId).toBe(initialActive);
 	});
+
+	it('summarizes action definitions with optional system flags', () => {
+		const content = createContentFactory();
+		const categorized = content.action({
+			system: true,
+		});
+		const session = createTestSession({
+			actions: content.actions,
+			buildings: content.buildings,
+			developments: content.developments,
+			populations: content.populations,
+		});
+		const definition = session.getActionDefinition(categorized.id);
+		expect(definition).toEqual({
+			id: categorized.id,
+			name: categorized.name,
+			system: true,
+		});
+	});
+
+	it('throws for unknown action definitions', () => {
+		const session = createTestSession();
+		const missingAction = createContentFactory().action();
+		expect(() => session.getActionDefinition(missingAction.id)).toThrowError(
+			/Unknown id/,
+		);
+	});
 });
