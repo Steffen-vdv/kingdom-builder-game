@@ -8,14 +8,63 @@ import type { EngineContext } from '../../context';
 import { withStatSourceFrames } from '../../stat_sources';
 import { collectTriggerEffects } from '../../triggers';
 import type { PlayerState } from '../../state';
+import type { ResourceV2EngineRegistry } from '../../resourceV2/registry';
 import {
 	attackTargetHandlers,
 	type AttackTargetHandlerMeta,
 } from '../attack_target_handlers';
 
+const ABSORPTION_ID_CACHE = new WeakMap<
+	ResourceV2EngineRegistry,
+	string | null
+>();
+
 interface AttackResolution {
 	damageDealt: number;
 	evaluation: AttackEvaluationLog;
+}
+
+function resolveAbsorptionResourceId(
+	context: EngineContext,
+): string | undefined {
+	const registry = context.resourceV2.getRegistry();
+	if (!registry) {
+		return undefined;
+	}
+
+	const cached = ABSORPTION_ID_CACHE.get(registry);
+	if (cached !== undefined) {
+		return cached ?? undefined;
+	}
+
+	const resolved = registry.resourceIds.find((id) => {
+		const record = registry.findResource(id);
+		const name = record?.display.name;
+		return typeof name === 'string' && name.toLowerCase() === 'absorption';
+	});
+	ABSORPTION_ID_CACHE.set(registry, resolved ?? null);
+	return resolved;
+}
+
+function readAbsorptionValue(
+	defender: PlayerState,
+	context: EngineContext,
+): number {
+	const resourceId = resolveAbsorptionResourceId(context);
+	if (resourceId) {
+		const resourceValue = defender.resourceV2.amounts[resourceId];
+		if (typeof resourceValue === 'number' && resourceValue !== 0) {
+			return resourceValue;
+		}
+	}
+
+	const legacyStore = defender as Record<string, unknown>;
+	const legacyValue = legacyStore['absorption'];
+	if (typeof legacyValue === 'number') {
+		return legacyValue;
+	}
+
+	return 0;
 }
 
 function applyAbsorption(
@@ -70,10 +119,11 @@ export function resolveAttack(
 
 	context.game.currentPlayerIndex = originalIndex;
 
+	const absorptionBase = readAbsorptionValue(defender, context);
 	const absorption = options.ignoreAbsorption
 		? 0
 		: Math.min(
-				(defender.absorption as number) || 0,
+				Math.max(absorptionBase, 0),
 				context.services.rules.absorptionCapPct,
 			);
 	const damageAfterAbsorption = options.ignoreAbsorption

@@ -27,12 +27,14 @@ export {
 	resourceV2Remove,
 	resourceV2Tier,
 	resourceV2TierTrack,
+	ResourceV2Id,
 	type ResourceV2DefinitionPrimaryIconCandidate,
 	type ResourceV2DefinitionRegistryArtifacts,
 	type ResourceV2GroupParentPrimaryIconCandidate,
 	type ResourceV2GroupRegistryArtifacts,
 	type ResourceV2PrimaryIconCandidate,
 } from './resourceV2';
+export type { ResourceV2IdKey } from './resourceV2';
 export { Stat, type StatKey, STATS } from './stats';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
