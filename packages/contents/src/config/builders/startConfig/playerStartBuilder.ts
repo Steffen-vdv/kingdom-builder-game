@@ -7,23 +7,13 @@ export interface PlayerStartBuilderOptions {
 }
 
 export class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
-	private mirroredValuesFromResources = false;
-
 	constructor(private readonly requireComplete: boolean) {
-		super({
-			valuesV2: {},
-			resourceLowerBoundsV2: {},
-			resourceUpperBoundsV2: {},
-		} as PlayerStartConfig);
+		super();
 	}
 
 	resources(values: Record<string, number>) {
 		if (!values) {
 			throw new Error('Player start resources() needs a record. Use {} when nothing changes.');
-		}
-		if (!this.wasSet('valuesV2')) {
-			this.mirroredValuesFromResources = true;
-			this.params.valuesV2 = { ...values };
 		}
 		return this.set('resources', { ...values }, 'Player start already set resources(). Remove the extra resources() call.');
 	}
@@ -40,27 +30,6 @@ export class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 			throw new Error('Player start population() needs a record. Use {} when empty.');
 		}
 		return this.set('population', { ...values }, 'Player start already set population(). Remove the extra population() call.');
-	}
-
-	valuesV2(values: Record<string, number>) {
-		if (!values) {
-			throw new Error('Player start valuesV2() needs a record. Use {} when nothing changes.');
-		}
-		this.mirroredValuesFromResources = false;
-		return this.set('valuesV2', { ...values }, 'Player start already set valuesV2(). Remove the extra valuesV2() call.');
-	}
-
-	resourceBoundsV2(bounds: PlayerStartResourceBoundsInput) {
-		if (!bounds) {
-			throw new Error('Player start resourceBoundsV2() needs configuration. Use {} when bounds stay defaulted.');
-		}
-		if (bounds.lower) {
-			this.set('resourceLowerBoundsV2', { ...bounds.lower }, 'Player start already set resourceBoundsV2(). Remove the extra resourceBoundsV2() call.');
-		}
-		if (bounds.upper) {
-			this.set('resourceUpperBoundsV2', { ...bounds.upper }, 'Player start already set resourceBoundsV2(). Remove the extra resourceBoundsV2() call.');
-		}
-		return this;
 	}
 
 	lands(input: PlayerStartLandsInput) {
@@ -98,18 +67,6 @@ export class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 			if (!this.wasSet('lands')) {
 				throw new Error('Player start is missing lands(). Call lands(...) before build().');
 			}
-			if (!this.params.valuesV2) {
-				throw new Error('Player start is missing valuesV2(). Call valuesV2(...) before build().');
-			}
-			if (!this.params.resourceLowerBoundsV2) {
-				throw new Error('Player start is missing resourceBoundsV2() lower map. Call resourceBoundsV2(...) before build().');
-			}
-			if (!this.params.resourceUpperBoundsV2) {
-				throw new Error('Player start is missing resourceBoundsV2() upper map. Call resourceBoundsV2(...) before build().');
-			}
-		}
-		if (!this.wasSet('valuesV2') && this.mirroredValuesFromResources && this.params.resources) {
-			this.params.valuesV2 = { ...this.params.resources };
 		}
 		return super.build();
 	}
@@ -118,11 +75,6 @@ export class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 type PlayerStartLandsBuilderCallback = (builder: PlayerStartLandsBuilder) => PlayerStartLandsBuilder;
 
 type PlayerStartLandsInput = NonNullable<PlayerStartConfig['lands']> | PlayerStartLandsBuilder | PlayerStartLandsBuilderCallback;
-
-export interface PlayerStartResourceBoundsInput {
-	lower?: Record<string, number>;
-	upper?: Record<string, number>;
-}
 
 export function playerStart(options?: PlayerStartBuilderOptions) {
 	return new PlayerStartBuilder(options?.requireComplete ?? true);

@@ -1,36 +1,16 @@
 import { Registry, TRANSFER_PCT_EVALUATION_ID, TRANSFER_PCT_EVALUATION_TYPE, buildingSchema } from '@kingdom-builder/protocol';
 import { ActionId, PopulationEvaluationId } from './actionIds';
-import { Resource, getResourceV2Id } from './resources';
-import type { ResourceKey } from './resources';
-import { Stat, getStatResourceV2Id } from './stats';
-import type { StatKey } from './stats';
+import { Resource } from './resources';
+import { Stat } from './stats';
 import { DevelopmentId } from './developments';
-import { building, effect, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams } from './config/builders';
+import { building, effect, resourceParams, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams, statParams } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods, StatMethods } from './config/builderShared';
 import { Focus } from './defs';
 import { BuildingId as BuildingIdMap } from './buildingIds';
 import type { BuildingId as BuildingIdType } from './buildingIds';
 import type { BuildingDef } from './defs';
-import { resourceChange } from './resourceV2';
 export const BuildingId = BuildingIdMap;
 export type BuildingId = BuildingIdType;
-
-function resourceAmountParams(resource: ResourceKey, amount: number) {
-	return {
-		...resourceChange(getResourceV2Id(resource)).amount(amount).build(),
-		key: resource,
-		amount,
-	};
-}
-
-function statAmountParams(stat: StatKey, amount: number) {
-	return {
-		...resourceChange(getStatResourceV2Id(stat)).amount(amount).build(),
-		key: stat,
-		amount,
-	};
-}
-
 export function createBuildingRegistry() {
 	const schema = buildingSchema.passthrough();
 	const registry = new Registry<BuildingDef>(schema);
@@ -45,7 +25,7 @@ export function createBuildingRegistry() {
 			.onBuild(
 				effect(Types.ResultMod, ResultModMethods.ADD)
 					.params(resultModParams().id('tc_expand_result').actionId(ActionId.expand))
-					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.happiness, 1)).build())
+					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
 					.build(),
 			)
 			.focus(Focus.Economy)
@@ -117,8 +97,8 @@ export function createBuildingRegistry() {
 			.onBuild(
 				effect(Types.Passive, PassiveMethods.ADD)
 					.param('id', 'castle_walls_bonus')
-					.effect(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.fortificationStrength, 5)).build())
-					.effect(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.absorption, 0.2)).build())
+					.effect(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.fortificationStrength).amount(5)).build())
+					.effect(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.absorption).amount(0.2)).build())
 					.build(),
 			)
 			.focus(Focus.Defense)

@@ -8,14 +8,9 @@ import {
 	withStatSourceFrames,
 } from '../stat_sources';
 import { landAdd } from './land_add';
-import {
-	resourceAddV2,
-	resourceRemoveV2,
-} from '../resource-v2/effects/addRemove';
-import {
-	resourceV2IncreaseUpperBound,
-	resourceV2Transfer,
-} from '../resource-v2/effects/transfer';
+import { resourceAdd } from './resource_add';
+import { resourceRemove } from './resource_remove';
+import { resourceTransfer } from './resource_transfer';
 import { buildingAdd, collectBuildingAddCosts } from './building_add';
 import { buildingRemove } from './building_remove';
 import { statAdd } from './stat_add';
@@ -56,10 +51,9 @@ export function registerCoreEffects(
 	costRegistry: EffectCostRegistry = EFFECT_COST_COLLECTORS,
 ) {
 	registry.add('land:add', landAdd);
-	registry.add('resource:add', resourceAddV2);
-	registry.add('resource:remove', resourceRemoveV2);
-	registry.add('resource:transfer', resourceV2Transfer);
-	registry.add('resource:upper-bound:increase', resourceV2IncreaseUpperBound);
+	registry.add('resource:add', resourceAdd);
+	registry.add('resource:remove', resourceRemove);
+	registry.add('resource:transfer', resourceTransfer);
 	registry.add('building:add', buildingAdd);
 	registry.add('building:remove', buildingRemove);
 	registry.add('stat:add', statAdd);
@@ -121,10 +115,9 @@ export function runEffects(
 
 export {
 	landAdd,
-	resourceAddV2,
-	resourceRemoveV2,
-	resourceV2IncreaseUpperBound,
-	resourceV2Transfer,
+	resourceAdd,
+	resourceRemove,
+	resourceTransfer,
 	buildingAdd,
 	buildingRemove,
 	statAdd,

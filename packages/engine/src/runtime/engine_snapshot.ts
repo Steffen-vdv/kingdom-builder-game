@@ -25,7 +25,6 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 	SessionEffectLogMap,
-	SessionResourceCatalogV2,
 } from '@kingdom-builder/protocol';
 import type { PassiveRecordSnapshot } from './types';
 import {
@@ -143,8 +142,6 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const metadata: SessionSnapshotMetadata = effectLogs
 		? { passiveEvaluationModifiers, effectLogs }
 		: { passiveEvaluationModifiers };
-	const resourceCatalogV2: SessionResourceCatalogV2 | undefined =
-		context.game.resourceCatalogV2;
 	return {
 		game: {
 			turn: context.game.turn,
@@ -169,7 +166,6 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 						},
 					}
 				: {}),
-			...(resourceCatalogV2 ? { resourceCatalogV2 } : {}),
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,

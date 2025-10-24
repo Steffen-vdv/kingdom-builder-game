@@ -33,28 +33,10 @@ export function applyCostsWithPassives(
 	const defaultedCosts = cloneCostBag(baseCosts);
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
 	const primaryCostKey = engineContext.actionCostResource;
-	if (primaryCostKey) {
-		const globalAmount = engineContext.actionCostAmount;
-		if (globalAmount !== null) {
-			if (
-				Object.prototype.hasOwnProperty.call(defaultedCosts, primaryCostKey)
-			) {
-				const override = defaultedCosts[primaryCostKey];
-				if (!actionDefinition.system && override !== undefined) {
-					const label = actionDefinition.id ?? actionId;
-					throw new Error(
-						`Action ${label} may not override global cost resource ${primaryCostKey}.`,
-					);
-				}
-			}
-			defaultedCosts[primaryCostKey] = actionDefinition.system
-				? 0
-				: globalAmount;
-		} else if (defaultedCosts[primaryCostKey] === undefined) {
-			defaultedCosts[primaryCostKey] = actionDefinition.system
-				? 0
-				: engineContext.services.rules.defaultActionAPCost;
-		}
+	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
+		defaultedCosts[primaryCostKey] = actionDefinition.system
+			? 0
+			: engineContext.services.rules.defaultActionAPCost;
 	}
 	return engineContext.passives.applyCostMods(
 		actionDefinition.id,

@@ -17,6 +17,7 @@ describe('development:add effect', () => {
 			],
 		});
 		const action = content.action({
+			baseCosts: { [CResource.ap]: 1 },
 			effects: [
 				{
 					type: 'development',

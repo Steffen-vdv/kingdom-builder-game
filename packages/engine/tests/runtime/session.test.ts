@@ -11,10 +11,6 @@ import {
 	RULES,
 	Resource as CResource,
 } from '@kingdom-builder/contents';
-import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -29,7 +25,6 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
-import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -38,7 +33,6 @@ const BASE: {
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
 	start: StartConfig;
-	resourceCatalogV2: RuntimeResourceContent;
 } = {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
@@ -46,10 +40,6 @@ const BASE: {
 	populations: POPULATIONS,
 	phases: PHASES,
 	start: GAME_START,
-	resourceCatalogV2: {
-		resources: RESOURCE_V2_REGISTRY,
-		groups: RESOURCE_GROUP_V2_REGISTRY,
-	},
 };
 
 type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
@@ -64,7 +54,6 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		phases: rest.phases ?? BASE.phases,
 		start: rest.start ?? BASE.start,
 		rules: rules ?? RULES,
-		resourceCatalogV2: rest.resourceCatalogV2 ?? BASE.resourceCatalogV2,
 	});
 }
 
@@ -132,6 +121,7 @@ describe('EngineSession', () => {
 	it('simulates actions before executing to avoid partial failures', () => {
 		const content = createContentFactory();
 		const failingAction = content.action({
+			baseCosts: { [CResource.ap]: 1 },
 			effects: Array.from({ length: 3 }, () => ({
 				type: 'land',
 				method: LandMethods.TILL,
