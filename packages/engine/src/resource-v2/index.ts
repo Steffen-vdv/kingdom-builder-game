@@ -61,6 +61,8 @@ export {
 	resourceV2IncreaseUpperBound,
 } from './effects/transfer';
 
+export { resourceAddV2, resourceRemoveV2 } from './effects/addRemove';
+
 export type {
 	ResourceV2ValueWriteOptions,
 	ResourceV2TransferEndpointPayload,
