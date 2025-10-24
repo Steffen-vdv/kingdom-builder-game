@@ -54,10 +54,12 @@ describe('createEngine validation', () => {
 		);
 	});
 
-	it('throws when the phases array includes an undefined entry', () => {
-		const invalidPhases = [undefined, ...PHASES] as unknown as PhaseDef[];
+	it('throws when phases include an undefined entry', () => {
+		const invalidPhases = [...PHASES, undefined] as (PhaseDef | undefined)[];
 		const createEngineWithUndefinedPhase = () =>
-			createTestEngine({ phases: invalidPhases });
+			createTestEngine({
+				phases: invalidPhases as unknown as PhaseDef[],
+			});
 		expect(createEngineWithUndefinedPhase).toThrowError(
 			'Cannot create engine: phases array contains an undefined entry.',
 		);
@@ -72,9 +74,13 @@ describe('createEngine validation', () => {
 			if (phase.id !== firstPhase.id) {
 				return phase;
 			}
+			const steps = [...phase.steps, undefined] as (
+				| PhaseDef['steps'][number]
+				| undefined
+			)[];
 			return {
 				...phase,
-				steps: [undefined, ...phase.steps] as unknown as PhaseDef['steps'],
+				steps: steps as unknown as PhaseDef['steps'],
 			};
 		});
 		const createEngineWithUndefinedStep = () =>
