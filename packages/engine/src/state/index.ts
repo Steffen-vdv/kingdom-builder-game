@@ -1,12 +1,145 @@
 import type { EffectDef } from '../effects';
 import type { RuntimeResourceCatalog } from '../resource-v2';
 
+type LegacyKeyKind = 'resource' | 'stat' | 'population';
+
+interface LegacyWriteOptions {
+	readonly suppressHistory?: boolean;
+}
+
+const resourceV2IdByLegacyKey: Record<string, string> = {};
+const statV2IdByLegacyKey: Record<string, string> = {};
+const populationV2IdByLegacyKey: Record<string, string> = {};
+
+let activeResourceCatalog: RuntimeResourceCatalog | undefined;
+
+const RESOURCE_SLUG_OVERRIDES: Record<string, string> = {
+	ap: 'action-points',
+};
+
+function clearStringMap(record: Record<string, string>): void {
+	for (const key of Object.keys(record)) {
+		delete record[key];
+	}
+}
+
+function splitIntoSegments(value: string): string[] {
+	const match = value.match(/([A-Z]+(?=[A-Z][a-z]|$)|[A-Z]?[a-z]+|[0-9]+)/g);
+	return match ? match : [value];
+}
+
+function toSlug(value: string): string {
+	return splitIntoSegments(value)
+		.map((segment) => segment.toLowerCase())
+		.join('-');
+}
+
+function deriveSlug(kind: LegacyKeyKind, key: string): string {
+	if (kind === 'resource') {
+		const override = RESOURCE_SLUG_OVERRIDES[key];
+		if (override) {
+			return override;
+		}
+	}
+	return toSlug(key);
+}
+
+function deriveId(kind: LegacyKeyKind, key: string): string {
+	const slug = deriveSlug(kind, key);
+	if (kind === 'resource') {
+		return `resource:core:${slug}`;
+	}
+	if (kind === 'stat') {
+		return `resource:stat:${slug}`;
+	}
+	return `resource:population:role:${slug}`;
+}
+
+function parseCatalogResourceId(resourceId: string): {
+	kind: LegacyKeyKind | null;
+	slug: string | null;
+} {
+	if (!resourceId.startsWith('resource:')) {
+		return { kind: null, slug: null };
+	}
+	const parts = resourceId.split(':');
+	const domain = parts[1];
+	if (domain === 'core') {
+		return { kind: 'resource', slug: parts.slice(2).join(':') || null };
+	}
+	if (domain === 'stat') {
+		return { kind: 'stat', slug: parts.slice(2).join(':') || null };
+	}
+	if (domain === 'population') {
+		if (parts[2] === 'role' && parts[3]) {
+			return { kind: 'population', slug: parts.slice(3).join(':') || null };
+		}
+		return { kind: null, slug: null };
+	}
+	return { kind: null, slug: null };
+}
+
+function findMatchingCatalogId(
+	kind: LegacyKeyKind,
+	key: string,
+): string | null {
+	if (!activeResourceCatalog) {
+		return null;
+	}
+	const slug = deriveSlug(kind, key);
+	for (const definition of activeResourceCatalog.resources.ordered) {
+		const parsed = parseCatalogResourceId(definition.id);
+		if (parsed.kind !== kind) {
+			continue;
+		}
+		if (parsed.slug === slug) {
+			return definition.id;
+		}
+	}
+	return null;
+}
+
+function resolveLegacyKeyId(kind: LegacyKeyKind, key: string): string {
+	const map =
+		kind === 'resource'
+			? resourceV2IdByLegacyKey
+			: kind === 'stat'
+				? statV2IdByLegacyKey
+				: populationV2IdByLegacyKey;
+	const cached = map[key];
+	if (cached) {
+		return cached;
+	}
+	const derived = deriveId(kind, key);
+	let resolved = derived;
+	if (activeResourceCatalog) {
+		if (!activeResourceCatalog.resources.byId[derived]) {
+			const fallback = findMatchingCatalogId(kind, key);
+			if (fallback) {
+				resolved = fallback;
+			}
+		}
+	}
+	map[key] = resolved;
+	return resolved;
+}
+
+function setActiveResourceCatalog(
+	catalog: RuntimeResourceCatalog | undefined,
+): void {
+	activeResourceCatalog = catalog;
+	clearStringMap(resourceV2IdByLegacyKey);
+	clearStringMap(statV2IdByLegacyKey);
+	clearStringMap(populationV2IdByLegacyKey);
+}
+
 export const Resource: Record<string, string> = {};
 export type ResourceKey = string;
 export function setResourceKeys(keys: string[]) {
 	for (const key of Object.keys(Resource)) {
 		delete Resource[key];
 	}
+	clearStringMap(resourceV2IdByLegacyKey);
 	for (const key of keys) {
 		Resource[key] = key;
 	}
@@ -18,6 +151,7 @@ export function setStatKeys(keys: string[]) {
 	for (const key of Object.keys(Stat)) {
 		delete Stat[key];
 	}
+	clearStringMap(statV2IdByLegacyKey);
 	for (const key of keys) {
 		Stat[key] = key;
 	}
@@ -40,6 +174,7 @@ export function setPopulationRoleKeys(keys: string[]) {
 	for (const key of Object.keys(PopulationRole)) {
 		delete PopulationRole[key];
 	}
+	clearStringMap(populationV2IdByLegacyKey);
 	for (const id of keys) {
 		PopulationRole[id.charAt(0).toUpperCase() + id.slice(1)] = id;
 	}
@@ -139,14 +274,9 @@ export class PlayerState {
 		this.resourceTierIds = {};
 		this.resourceBoundTouched = {};
 		for (const key of Object.values(Resource)) {
-			this.resources[key] = 0;
-			Object.defineProperty(this, key, {
-				get: () => this.resources[key],
-				set: (value: number) => {
-					this.resources[key] = value;
-				},
-				enumerable: false,
-				configurable: true,
+			this.initialiseLegacyValue('resource', key);
+			this.defineLegacyAccessor(this.resources, 'resource', key, {
+				defineOnSelf: true,
 			});
 		}
 		this.stats = {};
@@ -156,27 +286,73 @@ export class PlayerState {
 			Record<string, StatSourceContribution>
 		>;
 		for (const key of Object.values(Stat)) {
-			this.stats[key] = 0;
 			this.statsHistory[key] = false;
 			this.statSources[key] = {};
+			this.initialiseLegacyValue('stat', key);
+			this.defineLegacyAccessor(this.stats, 'stat', key, {
+				defineOnSelf: true,
+			});
+		}
+		this.population = {};
+		for (const key of Object.values(PopulationRole)) {
+			this.initialiseLegacyValue('population', key);
+			this.defineLegacyAccessor(this.population, 'population', key);
+		}
+		this.skipPhases = {};
+		this.skipSteps = {};
+	}
+
+	private readLegacyValue(kind: LegacyKeyKind, key: string): number {
+		const resourceId = resolveLegacyKeyId(kind, key);
+		return this.resourceValues[resourceId] ?? 0;
+	}
+
+	private writeLegacyValue(
+		kind: LegacyKeyKind,
+		key: string,
+		value: number,
+		options: LegacyWriteOptions = {},
+	): void {
+		const resourceId = resolveLegacyKeyId(kind, key);
+		const nextValue = value ?? 0;
+		this.resourceValues[resourceId] = nextValue;
+		if (kind === 'stat' && !options.suppressHistory && nextValue !== 0) {
+			this.statsHistory[key] = true;
+		}
+	}
+
+	private initialiseLegacyValue(
+		kind: LegacyKeyKind,
+		key: string,
+		value = 0,
+	): void {
+		this.writeLegacyValue(kind, key, value, { suppressHistory: true });
+	}
+
+	private defineLegacyAccessor(
+		container: Record<string, number>,
+		kind: LegacyKeyKind,
+		key: string,
+		options: { defineOnSelf?: boolean } = {},
+	): void {
+		Object.defineProperty(container, key, {
+			get: () => this.readLegacyValue(kind, key),
+			set: (value: number) => {
+				this.writeLegacyValue(kind, key, value);
+			},
+			enumerable: true,
+			configurable: true,
+		});
+		if (options.defineOnSelf) {
 			Object.defineProperty(this, key, {
-				get: () => this.stats[key],
+				get: () => this.readLegacyValue(kind, key),
 				set: (value: number) => {
-					this.stats[key] = value;
-					if (value !== 0) {
-						this.statsHistory[key] = true;
-					}
+					this.writeLegacyValue(kind, key, value);
 				},
 				enumerable: false,
 				configurable: true,
 			});
 		}
-		this.population = {};
-		for (const key of Object.values(PopulationRole)) {
-			this.population[key] = 0;
-		}
-		this.skipPhases = {};
-		this.skipSteps = {};
 	}
 }
 
@@ -190,9 +366,16 @@ export class GameState {
 	devMode = false;
 	conclusion?: GameConclusion;
 	players: PlayerState[];
-	resourceCatalogV2?: RuntimeResourceCatalog;
+	private _resourceCatalogV2: RuntimeResourceCatalog | undefined;
 	constructor(aName = 'Player', bName = 'Opponent') {
 		this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];
+	}
+	get resourceCatalogV2(): RuntimeResourceCatalog | undefined {
+		return this._resourceCatalogV2;
+	}
+	set resourceCatalogV2(catalog: RuntimeResourceCatalog | undefined) {
+		this._resourceCatalogV2 = catalog;
+		setActiveResourceCatalog(catalog);
 	}
 	get active(): PlayerState {
 		return this.players[this.currentPlayerIndex]!;
