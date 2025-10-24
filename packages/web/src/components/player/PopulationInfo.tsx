@@ -5,80 +5,24 @@ import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import { GENERAL_STAT_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
 import {
-	usePopulationMetadata,
-	useStatMetadata,
-} from '../../contexts/RegistryMetadataContext';
-import {
-	formatDescriptorSummary,
-	formatIconLabel,
-	toAssetDisplay,
-	toDescriptorDisplay,
-	type DescriptorDisplay,
-} from './registryDisplays';
+	buildResourceV2HoverSections,
+	type ResourceV2MetadataSnapshot,
+	type ResourceV2ValueSnapshot,
+} from '../../translation';
+import { formatResourceMagnitude } from './ResourceButton';
 import StatButton from './StatButton';
-
-const createDisplayMap = (descriptors: DescriptorDisplay[]) =>
-	new Map(
-		descriptors.map((descriptor) => [descriptor.id, descriptor] as const),
-	);
+import {
+	createForecastMap,
+	createResourceSnapshot,
+	formatResourceTitle,
+	getLegacyMapping,
+	getResourceIdForLegacy,
+	toDescriptorFromMetadata,
+} from './resourceV2Snapshots';
+import type { SummaryGroup } from '../../translation/content/types';
 
 const POPULATION_ARCHETYPE_LABEL = 'Archetypes';
-const MAX_POPULATION_FALLBACK_KEY = 'maxPopulation';
-
-const NORMALIZE_PATTERN = /[\s_-]+/g;
-const POPULATION_KEYWORDS = ['population', 'inhabitant', 'specialist'];
-const CAPACITY_KEYWORDS = ['max', 'cap', 'capacity', 'limit', 'maximum'];
-
-const normalizeDescriptor = (value: string | undefined): string | undefined =>
-	value?.toLowerCase().replace(NORMALIZE_PATTERN, ' ').trim();
-
-const matchesPopulationCapacity = (value: string | undefined): boolean => {
-	const normalized = normalizeDescriptor(value);
-	if (!normalized) {
-		return false;
-	}
-	const hasPopulationKeyword = POPULATION_KEYWORDS.some((keyword) =>
-		normalized.includes(keyword),
-	);
-	if (!hasPopulationKeyword) {
-		return false;
-	}
-	return CAPACITY_KEYWORDS.some((keyword) => normalized.includes(keyword));
-};
-
-const resolveMaxPopulationKey = (
-	descriptors: DescriptorDisplay[],
-	assets: Readonly<Record<string, { label?: string }>>,
-	player: SessionPlayerStateSnapshot,
-): string => {
-	for (const descriptor of descriptors) {
-		if (
-			matchesPopulationCapacity(descriptor.id) ||
-			matchesPopulationCapacity(descriptor.label)
-		) {
-			return descriptor.id;
-		}
-	}
-	for (const [statKey, info] of Object.entries(assets)) {
-		if (
-			matchesPopulationCapacity(statKey) ||
-			matchesPopulationCapacity(info?.label)
-		) {
-			return statKey;
-		}
-	}
-	for (const statKey of Object.keys(player.stats ?? {})) {
-		if (matchesPopulationCapacity(statKey)) {
-			return statKey;
-		}
-	}
-	for (const statKey of Object.keys(player.statsHistory ?? {})) {
-		if (matchesPopulationCapacity(statKey)) {
-			return statKey;
-		}
-	}
-	return MAX_POPULATION_FALLBACK_KEY;
-};
+const MAX_POPULATION_LEGACY_KEY = 'maxPopulation';
 
 const ROLE_BUTTON_CLASSES = [
 	'cursor-help rounded-full border border-white/40 bg-white/40 px-2 py-1',
@@ -90,72 +34,223 @@ interface PopulationInfoProps {
 	player: SessionPlayerStateSnapshot;
 }
 
+interface ResourceEntry {
+	metadata: ResourceV2MetadataSnapshot;
+	snapshot: ResourceV2ValueSnapshot;
+}
+
 const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const { handleHoverCard, clearHoverCard, translationContext } =
 		useGameEngine();
-	const assets = translationContext.assets;
-	const populationMetadata = usePopulationMetadata();
-	const statMetadata = useStatMetadata();
-	const populationDescriptors = React.useMemo(
-		() => populationMetadata.list.map(toDescriptorDisplay),
-		[populationMetadata],
-	);
-	const populationDisplayMap = React.useMemo(
-		() => createDisplayMap(populationDescriptors),
-		[populationDescriptors],
-	);
-	const statDescriptors = React.useMemo(
-		() => statMetadata.list.map(toDescriptorDisplay),
-		[statMetadata],
-	);
-	const statDisplayMap = React.useMemo(
-		() => createDisplayMap(statDescriptors),
-		[statDescriptors],
-	);
+	const resourceCatalog = translationContext.resourcesV2;
 	const forecast = useNextTurnForecast();
-	const playerForecast = forecast[player.id] ?? {
-		resources: {},
-		stats: {},
-		population: {},
-	};
-	const popEntries = Object.entries(player.population).filter(
-		([, populationCount]) => populationCount > 0,
-	);
-	const currentPop = popEntries.reduce(
-		(sum, [, populationCount]) => sum + populationCount,
-		0,
-	);
-	const hasPopulationRoles = popEntries.length > 0;
-
-	const translationPlayer =
-		translationContext.activePlayer.id === player.id
-			? translationContext.activePlayer
-			: translationContext.opponent.id === player.id
-				? translationContext.opponent
-				: undefined;
-	const maxPopulationKey = React.useMemo(
+	const playerForecast = forecast[player.id];
+	const populationRoleDefinitions = React.useMemo(
 		() =>
-			resolveMaxPopulationKey(
-				statDescriptors,
-				translationContext.assets.stats,
-				player,
-			),
-		[player, statDescriptors, translationContext.assets.stats],
+			resourceCatalog
+				? resourceCatalog.resources.ordered.filter((definition) =>
+						definition.id.includes(':population:role:'),
+					)
+				: [],
+		[resourceCatalog],
 	);
-
-	const maxPopulation = (() => {
-		const direct = player.stats?.[maxPopulationKey];
-		if (typeof direct === 'number') {
-			return direct;
+	const populationRoleIds = React.useMemo(
+		() => populationRoleDefinitions.map((definition) => definition.id),
+		[populationRoleDefinitions],
+	);
+	const populationGroupDefinition = React.useMemo(() => {
+		if (!resourceCatalog) {
+			return undefined;
 		}
-		return translationPlayer?.stats?.[maxPopulationKey] ?? 0;
-	})();
-
-	const populationInfo = React.useMemo(
-		() => toAssetDisplay(assets.population, 'population'),
-		[assets.population],
+		for (const definition of populationRoleDefinitions) {
+			if (definition.groupId) {
+				return resourceCatalog.groups.byId[definition.groupId];
+			}
+		}
+		return undefined;
+	}, [populationRoleDefinitions, resourceCatalog]);
+	const populationParentId = populationGroupDefinition?.parent?.id;
+	const statDefinitions = React.useMemo(
+		() =>
+			resourceCatalog
+				? resourceCatalog.resources.ordered.filter((definition) =>
+						definition.id.includes(':stat:'),
+					)
+				: [],
+		[resourceCatalog],
 	);
-
+	const forecastMap = React.useMemo(
+		() =>
+			createForecastMap(playerForecast, populationParentId, populationRoleIds),
+		[playerForecast, populationParentId, populationRoleIds],
+	);
+	const snapshotContext = React.useMemo(
+		() =>
+			({
+				player,
+				forecastMap,
+				signedGains: translationContext.signedResourceGains,
+				populationRoleIds,
+				...(populationParentId ? { populationParentId } : {}),
+			}) satisfies Parameters<typeof createResourceSnapshot>[1],
+		[
+			player,
+			forecastMap,
+			translationContext.signedResourceGains,
+			populationRoleIds,
+			populationParentId,
+		],
+	);
+	const populationEntries = React.useMemo<ResourceEntry[]>(
+		() =>
+			populationRoleDefinitions.map((definition) => ({
+				metadata: translationContext.resourceMetadataV2.get(definition.id),
+				snapshot: createResourceSnapshot(definition.id, snapshotContext),
+			})),
+		[
+			populationRoleDefinitions,
+			snapshotContext,
+			translationContext.resourceMetadataV2,
+		],
+	);
+	const statEntries = React.useMemo<ResourceEntry[]>(
+		() =>
+			statDefinitions.map((definition) => ({
+				metadata: translationContext.resourceMetadataV2.get(definition.id),
+				snapshot: createResourceSnapshot(definition.id, snapshotContext),
+			})),
+		[statDefinitions, snapshotContext, translationContext.resourceMetadataV2],
+	);
+	const statEntryMap = React.useMemo(
+		() =>
+			new Map(statEntries.map((entry) => [entry.snapshot.id, entry] as const)),
+		[statEntries],
+	);
+	const populationTotalEntry = React.useMemo(() => {
+		if (!populationParentId) {
+			return undefined;
+		}
+		const metadata =
+			translationContext.resourceMetadataV2.get(populationParentId);
+		const snapshot = createResourceSnapshot(
+			populationParentId,
+			snapshotContext,
+		);
+		return { metadata, snapshot } satisfies ResourceEntry;
+	}, [
+		populationParentId,
+		snapshotContext,
+		translationContext.resourceMetadataV2,
+	]);
+	const populationGroupMetadata = React.useMemo(() => {
+		if (!populationGroupDefinition) {
+			return undefined;
+		}
+		return translationContext.resourceGroupMetadataV2.get(
+			populationGroupDefinition.id,
+		);
+	}, [populationGroupDefinition, translationContext.resourceGroupMetadataV2]);
+	const populationGroupMetadataSnapshot = React.useMemo(
+		() =>
+			populationGroupMetadata
+				? ({ ...populationGroupMetadata } as ResourceV2MetadataSnapshot)
+				: undefined,
+		[populationGroupMetadata],
+	);
+	const populationSummaries = React.useMemo(() => {
+		return populationEntries.map((entry) => {
+			const descriptor = toDescriptorFromMetadata(entry.metadata);
+			const base = [descriptor.icon, descriptor.label]
+				.filter((part) => part && String(part).trim().length > 0)
+				.join(' ')
+				.trim();
+			if (descriptor.description) {
+				return `${base} - ${descriptor.description}`.trim();
+			}
+			return base;
+		});
+	}, [populationEntries]);
+	const populationCardSections = React.useMemo(() => {
+		const sections: (string | SummaryGroup)[] = [];
+		if (populationTotalEntry) {
+			sections.push(
+				...buildResourceV2HoverSections(
+					populationTotalEntry.metadata,
+					populationTotalEntry.snapshot,
+				),
+			);
+		}
+		populationSummaries.forEach((summary) => sections.push(summary));
+		return sections;
+	}, [populationSummaries, populationTotalEntry]);
+	const showPopulationCard = React.useCallback(() => {
+		const metadata =
+			populationGroupMetadataSnapshot ??
+			(populationTotalEntry ? populationTotalEntry.metadata : undefined);
+		if (!metadata) {
+			return;
+		}
+		handleHoverCard({
+			title: formatResourceTitle(metadata),
+			effects: populationCardSections,
+			effectsTitle: POPULATION_ARCHETYPE_LABEL,
+			requirements: [],
+			...(metadata.description
+				? { description: metadata.description ?? undefined }
+				: {}),
+			bgClass: PLAYER_INFO_CARD_BG,
+		});
+	}, [
+		handleHoverCard,
+		populationCardSections,
+		populationGroupMetadataSnapshot,
+		populationTotalEntry,
+	]);
+	const populationRoleButtons = React.useMemo(
+		() =>
+			populationEntries
+				.filter((entry) => entry.snapshot.current > 0)
+				.map((entry, index) => {
+					const handleRoleFocus = (event: React.SyntheticEvent) => {
+						event.stopPropagation();
+						const effects = buildResourceV2HoverSections(
+							entry.metadata,
+							entry.snapshot,
+						);
+						handleHoverCard({
+							title: formatResourceTitle(entry.metadata),
+							effects,
+							requirements: [],
+							bgClass: PLAYER_INFO_CARD_BG,
+						});
+					};
+					const handleRoleLeave = (event: React.SyntheticEvent) => {
+						event.stopPropagation();
+						showPopulationCard();
+					};
+					return (
+						<React.Fragment key={entry.snapshot.id}>
+							{index > 0 && ','}
+							<button
+								type="button"
+								className={ROLE_BUTTON_CLASSES}
+								onMouseEnter={handleRoleFocus}
+								onMouseLeave={handleRoleLeave}
+								onFocus={handleRoleFocus}
+								onBlur={handleRoleLeave}
+								onClick={handleRoleFocus}
+								aria-label={`${entry.metadata.label}: ${entry.snapshot.current}`}
+							>
+								{entry.metadata.icon && (
+									<span aria-hidden="true">{entry.metadata.icon}</span>
+								)}
+								{entry.snapshot.current}
+							</button>
+						</React.Fragment>
+					);
+				}),
+		[handleHoverCard, populationEntries, showPopulationCard],
+	);
 	const showGeneralStatCard = () =>
 		handleHoverCard({
 			title: `${GENERAL_STAT_INFO.icon} ${GENERAL_STAT_INFO.label}`,
@@ -164,93 +259,73 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			description: GENERAL_STAT_INFO.description,
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
-
-	const showPopulationCard = () =>
-		handleHoverCard({
-			title: formatIconLabel(populationInfo),
-			effects: populationDescriptors.map((descriptor) =>
-				formatDescriptorSummary(descriptor),
-			),
-			effectsTitle: POPULATION_ARCHETYPE_LABEL,
-			requirements: [],
-			...(populationInfo.description
-				? { description: populationInfo.description }
-				: {}),
-			bgClass: PLAYER_INFO_CARD_BG,
-		});
-
-	const createRoleHoverHandlers = (roleDisplay: DescriptorDisplay) => {
-		const showRoleCard = () =>
-			handleHoverCard({
-				title: formatIconLabel(roleDisplay),
-				effects: [],
-				requirements: [],
-				...(roleDisplay.description
-					? { description: roleDisplay.description }
-					: {}),
-				bgClass: PLAYER_INFO_CARD_BG,
-			});
-		const handleRoleFocus = (event: React.SyntheticEvent) => {
-			event.stopPropagation();
-			showRoleCard();
-		};
-		const handleRoleLeave = (event: React.SyntheticEvent) => {
-			event.stopPropagation();
-			showPopulationCard();
-		};
-
-		return { handleRoleFocus, handleRoleLeave };
-	};
-
-	const populationRoleButtons = popEntries.map(([role, count], index) => {
-		const descriptor =
-			populationDisplayMap.get(role) ??
-			toDescriptorDisplay(populationMetadata.select(role));
-		const { handleRoleFocus: onRoleFocus, handleRoleLeave: onRoleLeave } =
-			createRoleHoverHandlers(descriptor);
-
-		return (
-			<React.Fragment key={role}>
-				{index > 0 && ','}
-				<button
-					type="button"
-					className={ROLE_BUTTON_CLASSES}
-					onMouseEnter={onRoleFocus}
-					onMouseLeave={onRoleLeave}
-					onFocus={onRoleFocus}
-					onBlur={onRoleLeave}
-					onClick={onRoleFocus}
-					aria-label={`${descriptor.label}: ${count}`}
-				>
-					{descriptor.icon && <span aria-hidden="true">{descriptor.icon}</span>}
-					{count}
-				</button>
-			</React.Fragment>
-		);
-	});
-
 	const showStatCard = React.useCallback(
-		(statKey: string) => {
-			const descriptor =
-				statDisplayMap.get(statKey) ??
-				toDescriptorDisplay(statMetadata.select(statKey));
+		(resourceId: string) => {
+			const entry = statEntryMap.get(resourceId);
+			if (!entry) {
+				return;
+			}
+			const legacyMapping = getLegacyMapping(resourceId);
+			const statKey =
+				legacyMapping?.bucket === 'stats' ? legacyMapping.key : resourceId;
 			const breakdown = getStatBreakdownSummary(
 				statKey,
 				player,
 				translationContext,
 			);
+			const sections = buildResourceV2HoverSections(
+				entry.metadata,
+				entry.snapshot,
+			);
+			const effects = breakdown.length
+				? ([...sections, { title: 'Breakdown', items: breakdown }] as (
+						| string
+						| SummaryGroup
+					)[])
+				: sections;
 			handleHoverCard({
-				title: formatIconLabel(descriptor),
-				effects: breakdown,
-				effectsTitle: 'Breakdown',
+				title: formatResourceTitle(entry.metadata),
+				effects,
 				requirements: [],
-				...(descriptor.description
-					? { description: descriptor.description }
+				...(entry.metadata.description
+					? { description: entry.metadata.description }
 					: {}),
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-		[handleHoverCard, player, statDisplayMap, statMetadata, translationContext],
+		[handleHoverCard, player, statEntryMap, translationContext],
+	);
+	const populationTotal = populationTotalEntry?.snapshot.current ?? 0;
+	const maxPopulationId = React.useMemo(
+		() =>
+			getResourceIdForLegacy('stats', MAX_POPULATION_LEGACY_KEY) ??
+			MAX_POPULATION_LEGACY_KEY,
+		[],
+	);
+	const maxPopulationEntry = statEntryMap.get(maxPopulationId);
+	const maxPopulation = maxPopulationEntry?.snapshot.current ?? 0;
+	const populationDisplayMetadata = React.useMemo(() => {
+		if (populationTotalEntry?.metadata) {
+			return populationTotalEntry.metadata;
+		}
+		if (populationGroupMetadataSnapshot) {
+			return populationGroupMetadataSnapshot;
+		}
+		return {
+			id: populationParentId ?? 'population',
+			label: 'Population',
+		} as ResourceV2MetadataSnapshot;
+	}, [
+		populationGroupMetadataSnapshot,
+		populationParentId,
+		populationTotalEntry,
+	]);
+	const maxPopulationMetadata = React.useMemo(
+		() => maxPopulationEntry?.metadata ?? populationDisplayMetadata,
+		[maxPopulationEntry, populationDisplayMetadata],
+	);
+	const statEntriesForDisplay = statEntries.filter(
+		(entry) => entry.snapshot.id !== maxPopulationId,
 	);
 
 	return (
@@ -282,11 +357,14 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 					}
 				}}
 			>
-				{populationInfo.icon && (
-					<span aria-hidden="true">{populationInfo.icon}</span>
+				{populationDisplayMetadata.icon && (
+					<span aria-hidden="true">{populationDisplayMetadata.icon}</span>
 				)}
-				{currentPop}/{maxPopulation}
-				{hasPopulationRoles && (
+				{`${formatResourceMagnitude(
+					populationTotal,
+					populationDisplayMetadata,
+				)}/${formatResourceMagnitude(maxPopulation, maxPopulationMetadata)}`}
+				{populationRoleButtons.length > 0 && (
 					<>
 						{' ('}
 						{populationRoleButtons}
@@ -294,39 +372,15 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 					</>
 				)}
 			</div>
-			{Object.entries(player.stats)
-				.filter(([statKey, statValue]) => {
-					if (statKey === maxPopulationKey) {
-						return false;
-					}
-					if (statValue !== 0) {
-						return true;
-					}
-					return Boolean(player.statsHistory?.[statKey]);
-				})
-				.map(([statKey, statValue]) => {
-					const descriptor =
-						statDisplayMap.get(statKey) ??
-						toDescriptorDisplay(statMetadata.select(statKey));
-					const nextTurnStat = playerForecast.stats[statKey];
-					return (
-						<StatButton
-							key={statKey}
-							statKey={statKey}
-							value={statValue}
-							label={descriptor.label}
-							{...(descriptor.icon !== undefined
-								? { icon: descriptor.icon }
-								: {})}
-							{...(typeof nextTurnStat === 'number'
-								? { forecastDelta: nextTurnStat }
-								: {})}
-							onShow={showStatCard}
-							onHide={clearHoverCard}
-							assets={assets}
-						/>
-					);
-				})}
+			{statEntriesForDisplay.map((entry) => (
+				<StatButton
+					key={entry.snapshot.id}
+					metadata={entry.metadata}
+					snapshot={entry.snapshot}
+					onShow={showStatCard}
+					onHide={clearHoverCard}
+				/>
+			))}
 		</div>
 	);
 };

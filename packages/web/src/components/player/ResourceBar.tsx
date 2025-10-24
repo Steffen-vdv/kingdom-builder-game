@@ -10,16 +10,21 @@ import {
 	type TierEntryDisplayConfig,
 } from './buildTierEntries';
 import type { SummaryGroup } from '../../translation/content/types';
-import ResourceButton, { type ResourceButtonProps } from './ResourceButton';
+import ResourceButton, { formatResourceMagnitude } from './ResourceButton';
+import { usePassiveAssetMetadata } from '../../contexts/RegistryMetadataContext';
 import {
-	usePassiveAssetMetadata,
-	useResourceMetadata,
-} from '../../contexts/RegistryMetadataContext';
+	buildResourceV2HoverSections,
+	type ResourceV2MetadataSnapshot,
+	type ResourceV2ValueSnapshot,
+} from '../../translation';
 import {
-	formatIconLabel,
-	toDescriptorDisplay,
-	type DescriptorDisplay,
-} from './registryDisplays';
+	createForecastMap,
+	createResourceSnapshot,
+	formatResourceTitle,
+	getResourceIdForLegacy,
+	toDescriptorFromMetadata,
+} from './resourceV2Snapshots';
+import { toDescriptorDisplay } from './registryDisplays';
 
 interface ResourceBarProps {
 	player: SessionPlayerStateSnapshot;
@@ -44,49 +49,80 @@ function findTierForValue(
 	return match;
 }
 
+interface ResourceEntry {
+	metadata: ResourceV2MetadataSnapshot;
+	snapshot: ResourceV2ValueSnapshot;
+}
+
 const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 	const { translationContext, handleHoverCard, clearHoverCard, ruleSnapshot } =
 		useGameEngine();
-	const resourceMetadata = useResourceMetadata();
 	const passiveAssetMetadata = usePassiveAssetMetadata();
 	const passiveAsset = React.useMemo(
 		() => toDescriptorDisplay(passiveAssetMetadata.select()),
 		[passiveAssetMetadata],
 	);
+	const resourceCatalog = translationContext.resourcesV2;
 	const forecast = useNextTurnForecast();
-	const playerForecast = forecast[player.id] ?? {
-		resources: {},
-		stats: {},
-		population: {},
-	};
-	const resourceDescriptors = React.useMemo(
-		() => resourceMetadata.list.map(toDescriptorDisplay),
-		[resourceMetadata],
+	const playerForecast = forecast[player.id];
+	const forecastMap = React.useMemo(
+		() => createForecastMap(playerForecast),
+		[playerForecast],
 	);
-	const resourceDescriptorMap = React.useMemo(() => {
-		const pairs = resourceDescriptors.map(
-			(descriptor) => [descriptor.id, descriptor] as const,
-		);
-		return new Map(pairs);
-	}, [resourceDescriptors]);
+	const snapshotContext = React.useMemo(
+		() => ({
+			player,
+			forecastMap,
+			signedGains: translationContext.signedResourceGains,
+		}),
+		[player, forecastMap, translationContext.signedResourceGains],
+	);
+	const resourceEntries = React.useMemo<ResourceEntry[]>(() => {
+		if (!resourceCatalog) {
+			return [];
+		}
+		return resourceCatalog.resources.ordered
+			.filter((definition) => {
+				const { id } = definition;
+				if (id.includes(':stat:')) {
+					return false;
+				}
+				if (id.includes(':population:role:')) {
+					return false;
+				}
+				return true;
+			})
+			.map((definition) => {
+				const metadata = translationContext.resourceMetadataV2.get(
+					definition.id,
+				);
+				const snapshot = createResourceSnapshot(definition.id, snapshotContext);
+				return { metadata, snapshot } satisfies ResourceEntry;
+			});
+	}, [resourceCatalog, snapshotContext, translationContext.resourceMetadataV2]);
+	const resourceMap = React.useMemo(
+		() =>
+			new Map(
+				resourceEntries.map((entry) => [entry.snapshot.id, entry] as const),
+			),
+		[resourceEntries],
+	);
 	const tiers = ruleSnapshot.tierDefinitions;
-	const happinessKey = ruleSnapshot.tieredResourceKey;
-	const tieredResourceDescriptor: DescriptorDisplay | undefined =
-		React.useMemo(() => {
-			if (!happinessKey) {
-				return undefined;
-			}
-			const cached = resourceDescriptorMap.get(happinessKey);
-			if (cached) {
-				return cached;
-			}
-			return toDescriptorDisplay(resourceMetadata.select(happinessKey));
-		}, [happinessKey, resourceDescriptorMap, resourceMetadata]);
+	const happinessLegacyKey = ruleSnapshot.tieredResourceKey;
+	const happinessResourceId = React.useMemo(() => {
+		if (!happinessLegacyKey) {
+			return undefined;
+		}
+		const resolved = getResourceIdForLegacy('resources', happinessLegacyKey);
+		return resolved ?? happinessLegacyKey;
+	}, [happinessLegacyKey]);
+
 	const showHappinessCard = React.useCallback(
-		(value: number) => {
-			const activeTier = findTierForValue(tiers, value);
+		(entry: ResourceEntry) => {
+			const descriptor = toDescriptorFromMetadata(entry.metadata);
+			const activeTier = findTierForValue(tiers, entry.snapshot.current);
 			const tierConfig: TierEntryDisplayConfig = {
-				tieredResource: tieredResourceDescriptor,
+				tieredResource: descriptor,
 				passiveAsset,
 				translationContext,
 			};
@@ -94,10 +130,6 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 				tierConfig.activeId = activeTier.id;
 			}
 			const { summaries } = buildTierEntries(tiers, tierConfig);
-			const descriptor = tieredResourceDescriptor ?? {
-				id: happinessKey ?? 'resource',
-				label: 'Happiness',
-			};
 			const activeIndex = summaries.findIndex((summary) => summary.active);
 			const higherSummary =
 				activeIndex > 0 ? summaries[activeIndex - 1] : undefined;
@@ -126,7 +158,12 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 				if (thresholdValue === undefined) {
 					return baseTitle;
 				}
-				const suffix = `${thresholdValue}${orientation === 'higher' ? '+' : '-'}`;
+				const formatted = formatResourceMagnitude(
+					thresholdValue,
+					entry.metadata,
+				);
+				const suffix =
+					orientation === 'higher' ? `${formatted}+` : `${formatted}-`;
 				const rangeParts = [descriptor.icon ?? '❔', suffix]
 					.filter((part) => part && String(part).trim().length > 0)
 					.join(' ')
@@ -162,22 +199,23 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 					title: formatTierTitle(lowerSummary, 'lower'),
 				});
 			}
+			const baseSections = buildResourceV2HoverSections(
+				entry.metadata,
+				entry.snapshot,
+			);
+			const effects = [...baseSections, ...tierEntries];
 			handleHoverCard({
-				title: formatIconLabel(descriptor),
-				effects: tierEntries,
-				effectsTitle: `Happiness thresholds (current: ${value})`,
+				title: formatResourceTitle(entry.metadata),
+				effects,
+				effectsTitle: `Happiness thresholds (current: ${formatResourceMagnitude(
+					entry.snapshot.current,
+					entry.metadata,
+				)})`,
 				requirements: [],
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-		[
-			handleHoverCard,
-			happinessKey,
-			passiveAsset,
-			tieredResourceDescriptor,
-			tiers,
-			translationContext,
-		],
+		[handleHoverCard, passiveAsset, tiers, translationContext],
 	);
 	const showGeneralResourceCard = () =>
 		handleHoverCard({
@@ -190,33 +228,27 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
 	const handleShowResource = React.useCallback(
-		(resourceKey: string) => {
-			const descriptor = resourceDescriptorMap.get(resourceKey);
-			if (!descriptor) {
+		(resourceId: string) => {
+			const entry = resourceMap.get(resourceId);
+			if (!entry) {
 				return;
 			}
-			if (happinessKey && resourceKey === happinessKey) {
-				const resourceValue = player.resources[resourceKey] ?? 0;
-				showHappinessCard(resourceValue);
+			if (happinessResourceId && resourceId === happinessResourceId) {
+				showHappinessCard(entry);
 				return;
 			}
+			const effects = buildResourceV2HoverSections(
+				entry.metadata,
+				entry.snapshot,
+			);
 			handleHoverCard({
-				title: formatIconLabel(descriptor),
-				effects: [],
+				title: formatResourceTitle(entry.metadata),
+				effects,
 				requirements: [],
-				...(descriptor.description
-					? { description: descriptor.description }
-					: {}),
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-		[
-			happinessKey,
-			handleHoverCard,
-			player.resources,
-			resourceDescriptorMap,
-			showHappinessCard,
-		],
+		[handleHoverCard, happinessResourceId, resourceMap, showHappinessCard],
 	);
 
 	return (
@@ -233,23 +265,15 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 			>
 				{GENERAL_RESOURCE_ICON}
 			</button>
-			{resourceDescriptors.map((descriptor) => {
-				const resourceKey = descriptor.id;
-				const resourceValue = player.resources[resourceKey] ?? 0;
-				const nextTurnDelta = playerForecast.resources[resourceKey];
-				const buttonProps: ResourceButtonProps = {
-					resourceId: resourceKey,
-					label: descriptor.label,
-					value: resourceValue,
-					onShow: handleShowResource,
-					onHide: clearHoverCard,
-					...(descriptor.icon !== undefined ? { icon: descriptor.icon } : {}),
-					...(typeof nextTurnDelta === 'number'
-						? { forecastDelta: nextTurnDelta }
-						: {}),
-				};
-				return <ResourceButton key={resourceKey} {...buttonProps} />;
-			})}
+			{resourceEntries.map((entry) => (
+				<ResourceButton
+					key={entry.snapshot.id}
+					metadata={entry.metadata}
+					snapshot={entry.snapshot}
+					onShow={handleShowResource}
+					onHide={clearHoverCard}
+				/>
+			))}
 		</div>
 	);
 };
