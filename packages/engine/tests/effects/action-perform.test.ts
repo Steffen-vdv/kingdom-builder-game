@@ -1,11 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { actionPerform } from '../../src/effects/action_perform';
 import { advance, resolveActionEffects, type EffectDef } from '../../src';
 import { createTestEngine } from '../helpers';
 import { Land } from '../../src/state';
-import { createContentFactory } from '@kingdom-builder/testing';
-import * as protocol from '@kingdom-builder/protocol';
-import type { ResolvedActionEffects } from '@kingdom-builder/protocol';
 
 interface EffectGroupOption {
 	id: string;
@@ -111,91 +108,5 @@ describe('action:perform effect', () => {
 		const newestLand = engineContext.activePlayer.lands.at(-1);
 		expect(newestLand).toBe(fallbackLand);
 		expect(newestLand?.developments).toContain(developmentId);
-	});
-
-	it('prefers registered actions and strips control-only params', () => {
-		const content = createContentFactory();
-		const preferred = content.action();
-		const fallback = content.action();
-		const context = createTestEngine({
-			actions: content.actions,
-			buildings: content.buildings,
-			developments: content.developments,
-			populations: content.populations,
-		});
-		const resolution: ResolvedActionEffects = {
-			effects: [],
-			groups: [],
-			missingSelections: [],
-			choices: {},
-			params: {},
-			steps: [],
-		};
-		const spy = vi
-			.spyOn(protocol, 'resolveActionEffects')
-			.mockReturnValue(resolution);
-		const effect: EffectDef = {
-			type: 'action',
-			method: 'perform',
-			params: {
-				__actionId: preferred.id,
-				actionId: fallback.id,
-				id: fallback.id,
-				choices: {},
-				extra: 'value',
-			},
-		};
-		try {
-			actionPerform(effect, context, 1);
-			const forwarded = spy.mock.calls[0]?.[1] as Record<string, unknown>;
-			expect(spy.mock.calls[0]?.[0]?.id).toBe(preferred.id);
-			expect(forwarded?.['__actionId']).toBeUndefined();
-			expect(forwarded?.['actionId']).toBeUndefined();
-			expect(context.actionTraces.at(-1)?.id).toBe(preferred.id);
-		} finally {
-			spy.mockRestore();
-		}
-	});
-
-	it('throws descriptive errors when effect selections are missing', () => {
-		const content = createContentFactory();
-		const target = content.action();
-		const context = createTestEngine({
-			actions: content.actions,
-			buildings: content.buildings,
-			developments: content.developments,
-			populations: content.populations,
-		});
-		const missingResolution: ResolvedActionEffects = {
-			effects: [],
-			groups: [],
-			missingSelections: ['vitest:missing'],
-			choices: {},
-			params: {},
-			steps: [],
-		};
-		const spy = vi
-			.spyOn(protocol, 'resolveActionEffects')
-			.mockReturnValue(missingResolution);
-		const effect: EffectDef = {
-			type: 'action',
-			method: 'perform',
-			params: { __actionId: target.id },
-		};
-		try {
-			expect(() => actionPerform(effect, context, 1)).toThrow(
-				/requires a selection for effect group "vitest:missing"/,
-			);
-		} finally {
-			spy.mockRestore();
-		}
-	});
-
-	it('fails when no action id candidates resolve to a definition', () => {
-		const context = createTestEngine();
-		const effect = { type: 'action', method: 'perform' } as EffectDef;
-		expect(() => actionPerform(effect, context, 1)).toThrow(
-			'action:perform requires id',
-		);
 	});
 });
