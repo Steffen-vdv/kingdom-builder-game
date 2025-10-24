@@ -32,6 +32,7 @@ function cloneLand(land: Land): Land {
 
 function clonePlayerState(player: PlayerState): PlayerState {
 	const cloned = new PlayerState(player.id, player.name);
+	cloned.copyLegacyMappingsFrom(player);
 	for (const key of Object.keys(player.resources)) {
 		cloned.resources[key] = player.resources[key] ?? 0;
 	}
