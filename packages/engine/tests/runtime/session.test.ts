@@ -116,7 +116,6 @@ describe('EngineSession', () => {
 	it('simulates actions before executing to avoid partial failures', () => {
 		const content = createContentFactory();
 		const failingAction = content.action({
-			baseCosts: { [CResource.ap]: 1 },
 			effects: Array.from({ length: 3 }, () => ({
 				type: 'land',
 				method: LandMethods.TILL,

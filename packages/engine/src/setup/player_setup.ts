@@ -1,5 +1,5 @@
 import { Land, Stat } from '../state';
-import type { PlayerState, StatKey, ResourceKey } from '../state';
+import type { PlayerState, StatKey } from '../state';
 import type { RuleSet } from '../services';
 import { applyStatDelta } from '../stat_sources';
 import type { RuntimeResourceCatalog } from '../resource-v2';
@@ -261,24 +261,5 @@ export function initializePlayerActions(
 	}
 }
 
-export function determineCommonActionCostResource(
-	actions: Registry<ActionDef>,
-): ResourceKey {
-	let intersection: string[] | null = null;
-	for (const [, actionDefinition] of actions.entries()) {
-		if (actionDefinition.system) {
-			continue;
-		}
-		const costKeys = Object.keys(actionDefinition.baseCosts || {});
-		if (!costKeys.length) {
-			continue;
-		}
-		intersection = intersection
-			? intersection.filter((key) => costKeys.includes(key))
-			: costKeys;
-	}
-	if (intersection && intersection.length > 0) {
-		return intersection[0] as ResourceKey;
-	}
-	return '' as ResourceKey;
-}
+export type { ActionCostConfiguration } from './action_cost_resolver';
+export { determineCommonActionCostResource } from './action_cost_resolver';
