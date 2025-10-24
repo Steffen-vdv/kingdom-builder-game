@@ -52,15 +52,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-31 22:45
-- **Current Focus:** Resource Migration MVP - P2 - T55 - Web translation ResourceV2 adoption
+- **Timestamp (UTC):** 2025-11-01 00:30
+- **Current Focus:** Resource Migration MVP - P2 - T56 - Web tests ResourceV2 alignment
 - **State Summary:**
-  - Web translation diff builders now consume ResourceV2 snapshots for summaries, hovercards, and signed gain logs. Legacy resource/stat helpers are routed through the shared mapping shim so suffix formatting and track-by-key lookups remain stable. See [`./worklogs/T55-web-translation.md`](./worklogs/T55-web-translation.md).
-  - Player snapshot cloning, translation contexts, and UI snapshot helpers propagate `valuesV2`/`resourceBoundsV2` so ResourceV2 metadata powers action logs, phase summaries, and recent gain widgets.
-  - TypeScript compilation passes after normalising `ResourceV2ValueSnapshot` construction, but repository `npm run check` still halts during engine coverage because of the existing `developmentTarget` regression in contents.
+  - Web translation, component, and integration suites now seed ResourceV2 catalogs via the shared testing factories and exercise `valuesV2`/metadata flows. See [`./worklogs/T56-web-tests.md`](./worklogs/T56-web-tests.md).
+  - ResourceBar coverage verifies happiness tiers with catalog-driven formatting (icons, formatted thresholds) and ResourceV2 hover sections instead of legacy descriptor fallbacks.
+  - Log, resolution, and timeline tests expect icon-prefixed ResourceV2 summaries/stat labels, removing brittle legacy string assertions.
 - **Next Suggested Tasks:**
-  - Fix `packages/contents/src/happinessHelpers.ts` to restore the `developmentTarget` helper (or backfill a compatibility wrapper) and rerun `npm run check` for a clean green pipeline.
-  - Add targeted tests covering `appendResourceChanges`/`appendStatChanges` with ResourceV2-only data to confirm suffix formatting for legacy keys stays correct.
+  - Fix `packages/contents/src/happinessHelpers.ts` (or add a compatibility wrapper) so `npm run check` clears the existing `developmentTarget` regression and the refreshed web tests can run in CI.
+  - Expand web diff/log coverage to include tiered resource group hovercards once session transports surface ResourceV2 group metadata.
   - Audit server/session transports to ensure signed ResourceV2 deltas reach the web client, enabling the HUD migration to rely solely on the new payloads.
 - **Blocking Issues / Risks:** Repository `npm run check` continues to fail due to the known `developmentTarget` TypeError, so downstream verifications depend on that fix landing.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.

@@ -247,36 +247,40 @@ describe('useGameLog', () => {
 			id: 'growth',
 		};
 		const firstResolution: ActionResolution = {
-			lines: ['Growth Phase', '    Gold +2'],
-			visibleLines: ['Growth Phase', '    Gold +2'],
+			lines: ['Growth Phase', '    🪙 Gold +2'],
+			visibleLines: ['Growth Phase', '    🪙 Gold +2'],
 			timeline: [
 				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
-				{ text: 'Gold +2', depth: 1, kind: 'effect' },
+				{ text: '🪙 Gold +2', depth: 1, kind: 'effect' },
 			],
 			visibleTimeline: [
 				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
-				{ text: 'Gold +2', depth: 1, kind: 'effect' },
+				{ text: '🪙 Gold +2', depth: 1, kind: 'effect' },
 			],
 			isComplete: true,
-			summaries: ['Gold +2'],
+			summaries: ['🪙 Gold +2'],
 			source,
 			requireAcknowledgement: false,
 		};
 		const secondResolution: ActionResolution = {
-			lines: ['Growth Phase', '    Gold +2', '    Army +1'],
-			visibleLines: ['Growth Phase', '    Gold +2', '    Army +1'],
+			lines: ['Growth Phase', '    🪙 Gold +2', '    ⚔️ Army Strength +1'],
+			visibleLines: [
+				'Growth Phase',
+				'    🪙 Gold +2',
+				'    ⚔️ Army Strength +1',
+			],
 			timeline: [
 				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
-				{ text: 'Gold +2', depth: 1, kind: 'effect' },
-				{ text: 'Army +1', depth: 1, kind: 'effect' },
+				{ text: '🪙 Gold +2', depth: 1, kind: 'effect' },
+				{ text: '⚔️ Army Strength +1', depth: 1, kind: 'effect' },
 			],
 			visibleTimeline: [
 				{ text: 'Growth Phase', depth: 0, kind: 'headline' },
-				{ text: 'Gold +2', depth: 1, kind: 'effect' },
-				{ text: 'Army +1', depth: 1, kind: 'effect' },
+				{ text: '🪙 Gold +2', depth: 1, kind: 'effect' },
+				{ text: '⚔️ Army Strength +1', depth: 1, kind: 'effect' },
 			],
 			isComplete: true,
-			summaries: ['Gold +2', 'Army +1'],
+			summaries: ['🪙 Gold +2', '⚔️ Army Strength +1'],
 			source,
 			requireAcknowledgement: false,
 		};

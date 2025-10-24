@@ -1,9 +1,15 @@
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import type {
 	SessionPlayerId,
+	SessionResourceCatalogV2,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { describe, expect, it } from 'vitest';
+import {
+	createResourceV2Registries,
+	resourceV2Definition,
+	resourceV2GroupDefinition,
+} from '@kingdom-builder/testing';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
@@ -28,42 +34,39 @@ describe('createTranslationContext', () => {
 		const [developmentId] = registries.developments.keys();
 		const resourceV2Id = 'resource:gold';
 		const resourceGroupV2Id = 'resource-group:economy';
-		const resourceDefinitionV2 = Object.freeze({
-			id: resourceV2Id,
-			label: 'Gold Reserve',
-			icon: '🥇',
-			description: 'Vaulted wealth for the crown.',
-			order: 0,
-			resolvedOrder: 0,
-			tags: [],
-			lowerBound: 0,
-			upperBound: null,
-			displayAsPercent: false,
-			trackValueBreakdown: false,
-			trackBoundBreakdown: false,
-			groupId: resourceGroupV2Id,
-			groupOrder: 0,
-			resolvedGroupOrder: 0,
-		});
-		const resourceGroupDefinitionV2 = Object.freeze({
-			id: resourceGroupV2Id,
-			order: 0,
-			resolvedOrder: 0,
-			parent: {
-				id: resourceGroupV2Id,
-				label: 'Economic Portfolio',
-				icon: '💹',
-				description: 'Summary of treasury holdings.',
-				order: 0,
-				resolvedOrder: 0,
-				tags: [],
-				lowerBound: 0,
-				upperBound: null,
-				displayAsPercent: false,
-				trackValueBreakdown: false,
-				trackBoundBreakdown: false,
-			},
-		});
+		const { resources: resourceRegistryV2, groups: resourceGroupRegistryV2 } =
+			createResourceV2Registries({
+				resources: [
+					resourceV2Definition({
+						id: resourceV2Id,
+						metadata: {
+							label: 'Gold Reserve',
+							icon: '🥇',
+							description: 'Vaulted wealth for the crown.',
+							order: 0,
+							group: { id: resourceGroupV2Id, order: 0 },
+						},
+						bounds: { lowerBound: 0 },
+					}),
+				],
+				groups: [
+					resourceV2GroupDefinition({
+						id: resourceGroupV2Id,
+						order: 0,
+						parent: {
+							label: 'Economic Portfolio',
+							icon: '💹',
+							description: 'Summary of treasury holdings.',
+							order: 0,
+							lowerBound: 0,
+						},
+					}),
+				],
+			});
+		const resourceCatalogV2: SessionResourceCatalogV2 = Object.freeze({
+			resources: resourceRegistryV2,
+			groups: resourceGroupRegistryV2,
+		}) as SessionResourceCatalogV2;
 		const phases: SessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
@@ -215,16 +218,7 @@ describe('createTranslationContext', () => {
 				players,
 				activePlayerId: 'A',
 				opponentId: 'B',
-				resourceCatalogV2: {
-					resources: {
-						ordered: [resourceDefinitionV2],
-						byId: { [resourceV2Id]: resourceDefinitionV2 },
-					},
-					groups: {
-						ordered: [resourceGroupDefinitionV2],
-						byId: { [resourceGroupV2Id]: resourceGroupDefinitionV2 },
-					},
-				},
+				resourceCatalogV2,
 			},
 			phases,
 			actionCostResource: resourceKey,
