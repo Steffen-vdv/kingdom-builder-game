@@ -72,6 +72,9 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | 2025-11-02 | ChatGPT (gpt-5-codex) | packages/web/src/components/player/ResourceBar.tsx; packages/web/src/components/player/ResourceBar.display.ts; packages/web/src/components/player/ResourceBar.happiness.ts; packages/web/src/components/player/ResourceButton.tsx; packages/web/src/components/player/registryDisplays.ts; packages/web/src/components/player/**tests**/ResourceBar.resourceV2.test.tsx; packages/web/src/styles/layout.css; docs/project/resource-migration/production/production-living-docs.md | Refactored ResourceBar to render ResourceV2 groupings with parent hovercards, percent-aware formatting, and legacy fallbacks; added shared helpers/styles and ResourceV2-focused snapshot coverage. | `npm run check` (pass; chunk `e9e9cd†L1-L68`) | Verify overview/passive panels adopt the new grouping helpers and extend legacy-path regression coverage for ResourceBar consumers. |
 | 2025-11-03 | ChatGPT (gpt-5-codex) | packages/web/src/components/actions/{ActionCard.tsx,GenericActionCard.tsx,GenericActionEntry.tsx,GenericActions.tsx,utils.ts}; packages/web/src/components/HoverCard.tsx; packages/web/src/state/useHoverCard.ts; packages/web/src/components/actions/**tests**/GenericActionCard.resourceV2.test.tsx; docs/project/resource-migration/production/production-living-docs.md | Surfaced ResourceV2 global action cost descriptors across action cards and hovercards, updated cost sorting helpers to consult metadata, and added targeted UI coverage for global-cost warnings. | `npm run check -- --filter web` (fails: invalid option); `npx vitest run --config vitest.web.config.ts packages/web/src/components/actions/__tests__/GenericActionCard.resourceV2.test.tsx` (pass; chunk `c144a5†L1-L17`) | Coordinate a full `npm run check` once workspace filtering lands and have QA verify global-cost icons/tooltips across action panels and hover overlays. |
 | 2025-11-04 | ChatGPT (gpt-5-codex) | packages/engine/src/context.ts; packages/engine/src/effects/index.ts; packages/engine/src/services/resourceV2_service.ts; packages/engine/src/state/index.ts; packages/engine/tests/resourceV2-logging.test.ts; packages/engine/tests/resourceV2-service.test.ts; packages/engine/tests/state-resourceV2.test.ts; docs/project/resource-migration/production/production-living-docs.md | Wired EngineContext to capture ResourceV2 gain/loss hooks, removed per-player recent gain buffers, ensured suppressHooks skips logging, and added regression coverage for signed deltas and history tracking to satisfy audit logging requirements. | `npx vitest run --config vitest.engine.config.ts packages/engine/tests/resourceV2-logging.test.ts packages/engine/tests/resourceV2-service.test.ts packages/engine/tests/state-resourceV2.test.ts` (pass; chunk `a52b16†L1-L34`); `npm run check -- --filter engine` (fails: invalid option; chunk `07057d†L1-L12`) | Investigate options for scoped `npm run check` execution so engine-only tasks can avoid full-suite runs; monitor audit log consumers for integration with the new signed delta stream. |
+| 2025-11-05 | ChatGPT (gpt-5-codex) | packages/contents/src/resourceV2/definitions.ts; packages/contents/src/resourceV2/index.ts; packages/contents/tests/resourceV2-definitions.test.ts; docs/project/resource-migration/production/production-living-docs.md |
+| | Added ResourceV2 definitions scaffold with shared freeze/order helpers, re-export wiring, and placeholder tests to prep migrations. | `npm run format`; `npm run check` (pass; chunk `de3ef0†L1-L45`) |
+| | Populate the scaffold with migrated definitions and extend downstream builders/tests to reuse the shared helpers. |
 | 2024-**-** | *(add entry)\_ | – | – | – | – |
 
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
@@ -79,14 +82,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-11-04 08:40
-- **Current Focus:** Engine-side ResourceV2 logging parity and audit readiness
-- **State Summary:** EngineContext now subscribes to ResourceV2 gain/loss hooks, emits signed deltas into `recentResourceGains`, honors `suppressHooks`, and removes legacy per-player buffers—fulfilling the MVP audit logging requirement and backed by new targeted tests.
+- **Timestamp (UTC):** 2025-11-05 09:25
+- **Current Focus:** Content-side ResourceV2 migration scaffolding
+- **State Summary:** Added empty ResourceV2 definition and group scaffolds with shared ordering/metadata freeze helpers, re-exported them through the contents index, and introduced placeholder tests to confirm clean loading ahead of migrations.
 - **Next Suggested Tasks:**
-  - Expose the signed ResourceV2 history stream to session snapshots and UI log renderers so the audit data surfaces end-to-end.
-  - Prototype a scoped `npm run check` workflow (or document a substitute) to keep engine-only iterations from invoking the full repository suite.
-- **Blocking Issues / Risks:** `npm run check -- --filter <workspace>` is still rejected by `npm-run-all`, so full-suite runs remain costly; coordinated fix or documented workaround is needed for engine tasks.
-- **Reminder:** Have QA verify that ResourceV2 gains and losses (including suppressed hooks) appear correctly in resolution summaries once downstream consumers adopt the new logging stream.
+  - Seed the scaffolds with the first migrated ResourceV2 definitions and groups using the shared helpers.
+  - Align content builder utilities and downstream registries/tests to consume the scaffold helpers for consistent ordering and metadata freezing.
+- **Blocking Issues / Risks:** `npm run check -- --filter <workspace>` remains unsupported by `npm-run-all`, so full `npm run check` executions are still required until tooling changes land.
+- **Reminder:** Coordinate with engine and web owners before populating the scaffolds to avoid drift and keep runtime registries/tests synchronized.
 
 ## 5. Notes & Decisions Archive
 

@@ -1,5 +1,7 @@
 import { Registry, type ResourceV2Definition, type ResourceV2GroupMetadata, resourceV2DefinitionSchema, resourceV2GroupMetadataSchema } from '@kingdom-builder/protocol';
 
+export * from './definitions';
+
 import { resourceGroup, resourceGroupParent, resourceV2 } from '../config/builders';
 
 export const ResourceV2Id = {
