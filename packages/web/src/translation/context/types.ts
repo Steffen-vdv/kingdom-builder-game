@@ -6,12 +6,15 @@ import type {
 	EffectDef,
 	PlayerStartConfig,
 	PopulationConfig,
+	SessionMetadataFormat,
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerId,
+	SessionRecentResourceGain,
+	SessionResourceBoundsV2,
+	SessionResourceCatalogV2,
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
-import type { SessionMetadataFormat } from '@kingdom-builder/protocol/session';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that
@@ -119,6 +122,31 @@ export interface TranslationPassives {
 	readonly evaluationMods: TranslationPassiveModifierMap;
 }
 
+export interface TranslationResourceV2Metadata {
+	readonly id: string;
+	readonly label: string;
+	readonly icon?: string;
+	readonly description?: string | null;
+	readonly displayAsPercent?: boolean;
+	readonly format?: SessionMetadataFormat;
+}
+
+export interface TranslationResourceV2MetadataSelectors {
+	list(): readonly TranslationResourceV2Metadata[];
+	get(id: string): TranslationResourceV2Metadata;
+	has(id: string): boolean;
+}
+
+export interface TranslationSignedResourceGainSelectors {
+	list(): readonly SessionRecentResourceGain[];
+	positives(): readonly SessionRecentResourceGain[];
+	negatives(): readonly SessionRecentResourceGain[];
+	forResource(id: string): readonly SessionRecentResourceGain[];
+	sumForResource(id: string): number;
+}
+
+export type TranslationResourceCatalogV2 = SessionResourceCatalogV2 | undefined;
+
 /**
  * Minimal phase metadata consumed by translation renderers.
  */
@@ -148,6 +176,8 @@ export interface TranslationPlayer {
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	population: Record<string, number>;
+	resourcesV2?: Readonly<Record<string, number>>;
+	resourceBoundsV2?: Readonly<Record<string, SessionResourceBoundsV2>>;
 }
 
 /**
@@ -174,4 +204,8 @@ export interface TranslationContext {
 	pullEffectLog<T>(key: string): T | undefined;
 	readonly actionCostResource?: string;
 	readonly assets: TranslationAssets;
+	readonly resourcesV2: TranslationResourceCatalogV2;
+	readonly resourceMetadataV2: TranslationResourceV2MetadataSelectors;
+	readonly resourceGroupMetadataV2: TranslationResourceV2MetadataSelectors;
+	readonly signedResourceGains: TranslationSignedResourceGainSelectors;
 }

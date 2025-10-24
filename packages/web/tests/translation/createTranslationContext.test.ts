@@ -26,6 +26,44 @@ describe('createTranslationContext', () => {
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
+		const resourceV2Id = 'resource:gold';
+		const resourceGroupV2Id = 'resource-group:economy';
+		const resourceDefinitionV2 = Object.freeze({
+			id: resourceV2Id,
+			label: 'Gold Reserve',
+			icon: '🥇',
+			description: 'Vaulted wealth for the crown.',
+			order: 0,
+			resolvedOrder: 0,
+			tags: [],
+			lowerBound: 0,
+			upperBound: null,
+			displayAsPercent: false,
+			trackValueBreakdown: false,
+			trackBoundBreakdown: false,
+			groupId: resourceGroupV2Id,
+			groupOrder: 0,
+			resolvedGroupOrder: 0,
+		});
+		const resourceGroupDefinitionV2 = Object.freeze({
+			id: resourceGroupV2Id,
+			order: 0,
+			resolvedOrder: 0,
+			parent: {
+				id: resourceGroupV2Id,
+				label: 'Economic Portfolio',
+				icon: '💹',
+				description: 'Summary of treasury holdings.',
+				order: 0,
+				resolvedOrder: 0,
+				tags: [],
+				lowerBound: 0,
+				upperBound: null,
+				displayAsPercent: false,
+				trackValueBreakdown: false,
+				trackBoundBreakdown: false,
+			},
+		});
 		const phases: SessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
@@ -54,6 +92,21 @@ describe('createTranslationContext', () => {
 					label: 'Royal Treasury',
 					icon: '💰',
 					description: 'The royal treasury fuels your ambitions.',
+				},
+			},
+			resourcesV2: {
+				[resourceV2Id]: {
+					label: 'V2 Treasury',
+					icon: '🏦',
+					description: 'Translation metadata for ResourceV2.',
+					displayAsPercent: true,
+					format: { prefix: '+', percent: true },
+				},
+			},
+			resourceGroupsV2: {
+				[resourceGroupV2Id]: {
+					label: 'Economic Overview',
+					icon: '📊',
 				},
 			},
 			populations: populationId
@@ -108,9 +161,13 @@ describe('createTranslationContext', () => {
 			id: config.id,
 			name: config.name,
 			resources: { [resourceKey]: config.resource },
+			valuesV2: { [resourceV2Id]: config.resource },
 			stats: { [statKey]: config.stat },
 			statsHistory: {},
 			population: { [populationId]: config.population },
+			resourceBoundsV2: {
+				[resourceV2Id]: { lowerBound: 0, upperBound: 20 },
+			},
 			lands: [],
 			buildings: config.buildings ?? [],
 			actions: [actionId],
@@ -143,6 +200,7 @@ describe('createTranslationContext', () => {
 				resource: 5,
 				stat: 1,
 				population: 1,
+				passives: [],
 			}),
 		];
 		const session: SessionSnapshot = {
@@ -157,10 +215,23 @@ describe('createTranslationContext', () => {
 				players,
 				activePlayerId: 'A',
 				opponentId: 'B',
+				resourceCatalogV2: {
+					resources: {
+						ordered: [resourceDefinitionV2],
+						byId: { [resourceV2Id]: resourceDefinitionV2 },
+					},
+					groups: {
+						ordered: [resourceGroupDefinitionV2],
+						byId: { [resourceGroupV2Id]: resourceGroupDefinitionV2 },
+					},
+				},
 			},
 			phases,
 			actionCostResource: resourceKey,
-			recentResourceGains: [{ key: resourceKey, amount: 3 }],
+			recentResourceGains: [
+				{ key: resourceKey, amount: 3 },
+				{ key: resourceV2Id, amount: -2 },
+			],
 			compensations: {
 				A: compensation(2),
 				B: compensation(1),
@@ -186,6 +257,19 @@ describe('createTranslationContext', () => {
 				B: [],
 			},
 			metadata,
+			resourceMetadataV2: {
+				[resourceV2Id]: {
+					label: 'Catalog Gold',
+					icon: '🥇',
+					description: 'Catalog-provided metadata.',
+				},
+			},
+			resourceGroupMetadataV2: {
+				[resourceGroupV2Id]: {
+					label: 'Catalog Economy',
+					icon: '💼',
+				},
+			},
 		};
 		const context = createTranslationContext(session, registries, metadata, {
 			ruleSnapshot: session.rules,
@@ -209,6 +293,22 @@ describe('createTranslationContext', () => {
 				opponent: context.opponent.id,
 			},
 			recentResourceGains: context.recentResourceGains,
+			resourcesV2: {
+				resource: context.resourcesV2?.resources.byId[resourceV2Id],
+				group: context.resourcesV2?.groups.byId[resourceGroupV2Id],
+			},
+			resourceMetadataV2: {
+				resource: context.resourceMetadataV2.get(resourceV2Id),
+				group: context.resourceGroupMetadataV2.get(resourceGroupV2Id),
+				fallback: context.resourceMetadataV2.get('resource:missing'),
+				hasExisting: context.resourceMetadataV2.has(resourceV2Id),
+			},
+			signedResourceGains: {
+				list: context.signedResourceGains.list(),
+				positives: context.signedResourceGains.positives(),
+				negatives: context.signedResourceGains.negatives(),
+				sumLegacy: context.signedResourceGains.sumForResource(resourceKey),
+			},
 			compensations: context.compensations,
 			registries: {
 				action: { id: actionId, has: context.actions.has(actionId) },
@@ -241,130 +341,216 @@ describe('createTranslationContext', () => {
 			},
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
-			{
-			  "actionCostResource": "gold",
-			  "assets": {
-			    "passive": {
-			      "icon": "✨",
-			      "label": "Passive Aura",
-			    },
-			    "population": {
-			      "icon": "🧑‍🤝‍🧑",
-			      "label": "Population",
-			    },
-			    "resource": {
-			      "description": "The royal treasury fuels your ambitions.",
-			      "icon": "💰",
-			      "label": "Royal Treasury",
-			    },
-			    "slot": {
-			      "description": "Designated location for new developments.",
-			      "icon": "📦",
-			      "label": "Plot Slot",
-			    },
-			    "stat": {
-			      "description": "Represents how many specialists can serve the realm.",
-			      "displayAsPercent": true,
-			      "format": {
-			        "percent": true,
-			        "prefix": "~",
-			      },
-			      "icon": "🏯",
-			      "label": "Population Capacity",
-			    },
-			    "trigger": {
-			      "future": "When the signal sounds",
-			      "icon": "🔔",
-			      "label": "Signal Trigger",
-			      "past": "Signal",
-			    },
-			  },
-			  "compensations": {
-			    "A": {
-			      "resources": {
-			        "gold": 2,
-			      },
-			    },
-			    "B": {
-			      "resources": {
-			        "gold": 1,
-			      },
-			    },
-			  },
-			  "passives": {
-			    "definition": {
-			      "icon": "🌱",
-			      "id": "passive-a",
-			      "meta": {
-			        "source": {
-			          "icon": "🏘️",
-			        },
-			      },
-			      "owner": "A",
-			    },
-			    "definitions": [
-			      "passive-a",
-			    ],
-			    "descriptor": {
-			      "icon": "🌱",
-			      "meta": {
-			        "source": {
-			          "icon": "🏘️",
-			        },
-			      },
-			    },
-			    "evaluationMods": [
-			      [
-			        "gold",
-			        [
-			          "modifier",
-			        ],
-			      ],
-			    ],
-			    "list": [
-			      "passive-a",
-			    ],
-			    "owned": [
-			      "passive-a",
-			    ],
-			  },
-			  "phases": [
-			    "phase.alpha",
-			  ],
-			  "players": {
-			    "active": "A",
-			    "opponent": "B",
-			  },
-			  "recentResourceGains": [
-			    {
-			      "amount": 3,
-			      "key": "gold",
-			    },
-			  ],
-			  "registries": {
-			    "action": {
-			      "has": true,
-			      "id": "expand",
-			    },
-			    "building": {
-			      "has": true,
-			      "id": "town_charter",
-			    },
-			    "development": {
-			      "has": true,
-			      "id": "farm",
-			    },
-			    "population": {
-			      "has": true,
-			      "id": "council",
-			    },
-			  },
-			  "rules": {
-			    "tierDefinitions": [],
-			    "tieredResourceKey": "gold",
-			    "winConditions": [],
-			  },
-			}
-		`);
+                        {
+                          "actionCostResource": "gold",
+                          "assets": {
+                            "passive": {
+                              "icon": "✨",
+                              "label": "Passive Aura",
+                            },
+                            "population": {
+                              "icon": "🧑‍🤝‍🧑",
+                              "label": "Population",
+                            },
+                            "resource": {
+                              "description": "The royal treasury fuels your ambitions.",
+                              "icon": "💰",
+                              "label": "Royal Treasury",
+                            },
+                            "slot": {
+                              "description": "Designated location for new developments.",
+                              "icon": "📦",
+                              "label": "Plot Slot",
+                            },
+                            "stat": {
+                              "description": "Represents how many specialists can serve the realm.",
+                              "displayAsPercent": true,
+                              "format": {
+                                "percent": true,
+                                "prefix": "~",
+                              },
+                              "icon": "🏯",
+                              "label": "Population Capacity",
+                            },
+                            "trigger": {
+                              "future": "When the signal sounds",
+                              "icon": "🔔",
+                              "label": "Signal Trigger",
+                              "past": "Signal",
+                            },
+                          },
+                          "compensations": {
+                            "A": {
+                              "resources": {
+                                "gold": 2,
+                              },
+                            },
+                            "B": {
+                              "resources": {
+                                "gold": 1,
+                              },
+                            },
+                          },
+                          "passives": {
+                            "definition": {
+                              "icon": "🌱",
+                              "id": "passive-a",
+                              "meta": {
+                                "source": {
+                                  "icon": "🏘️",
+                                },
+                              },
+                              "owner": "A",
+                            },
+                            "definitions": [
+                              "passive-a",
+                            ],
+                            "descriptor": {
+                              "icon": "🌱",
+                              "meta": {
+                                "source": {
+                                  "icon": "🏘️",
+                                },
+                              },
+                            },
+                            "evaluationMods": [
+                              [
+                                "gold",
+                                [
+                                  "modifier",
+                                ],
+                              ],
+                            ],
+                            "list": [
+                              "passive-a",
+                            ],
+                            "owned": [
+                              "passive-a",
+                            ],
+                          },
+                          "phases": [
+                            "phase.alpha",
+                          ],
+                          "players": {
+                            "active": "A",
+                            "opponent": "B",
+                          },
+                          "recentResourceGains": [
+                            {
+                              "amount": 3,
+                              "key": "gold",
+                            },
+                            {
+                              "amount": -2,
+                              "key": "resource:gold",
+                            },
+                          ],
+                          "resourcesV2": {
+                            "group": {
+                              "id": "resource-group:economy",
+                              "order": 0,
+                              "parent": {
+                                "description": "Summary of treasury holdings.",
+                                "displayAsPercent": false,
+                                "icon": "💹",
+                                "id": "resource-group:economy",
+                                "label": "Economic Portfolio",
+                                "lowerBound": 0,
+                                "order": 0,
+                                "resolvedOrder": 0,
+                                "tags": [],
+                                "trackBoundBreakdown": false,
+                                "trackValueBreakdown": false,
+                                "upperBound": null,
+                              },
+                              "resolvedOrder": 0,
+                            },
+                            "resource": {
+                              "description": "Vaulted wealth for the crown.",
+                              "displayAsPercent": false,
+                              "groupId": "resource-group:economy",
+                              "groupOrder": 0,
+                              "icon": "🥇",
+                              "id": "resource:gold",
+                              "label": "Gold Reserve",
+                              "lowerBound": 0,
+                              "order": 0,
+                              "resolvedGroupOrder": 0,
+                              "resolvedOrder": 0,
+                              "tags": [],
+                              "trackBoundBreakdown": false,
+                              "trackValueBreakdown": false,
+                              "upperBound": null,
+                            },
+                          },
+                          "resourceMetadataV2": {
+                            "fallback": {
+                              "id": "resource:missing",
+                              "label": "resource:missing",
+                            },
+                            "group": {
+                              "description": "Summary of treasury holdings.",
+                              "icon": "💼",
+                              "id": "resource-group:economy",
+                              "label": "Catalog Economy",
+                            },
+                            "hasExisting": true,
+                            "resource": {
+                              "description": "Catalog-provided metadata.",
+                              "icon": "🥇",
+                              "id": "resource:gold",
+                              "label": "Catalog Gold",
+                            },
+                          },
+                          "registries": {
+                            "action": {
+                              "has": true,
+                              "id": "expand",
+                            },
+                            "building": {
+                              "has": true,
+                              "id": "town_charter",
+                            },
+                            "development": {
+                              "has": true,
+                              "id": "farm",
+                            },
+                            "population": {
+                              "has": true,
+                              "id": "council",
+                            },
+                          },
+                          "rules": {
+                            "tierDefinitions": [],
+                            "tieredResourceKey": "gold",
+                            "winConditions": [],
+                          },
+                          "signedResourceGains": {
+                            "list": [
+                              {
+                                "amount": 3,
+                                "key": "gold",
+                              },
+                              {
+                                "amount": -2,
+                                "key": "resource:gold",
+                              },
+                            ],
+                            "negatives": [
+                              {
+                                "amount": -2,
+                                "key": "resource:gold",
+                              },
+                            ],
+                            "positives": [
+                              {
+                                "amount": 3,
+                                "key": "gold",
+                              },
+                            ],
+                            "sumLegacy": 3,
+                          },
+                        }
+                `);
 	});
 });
