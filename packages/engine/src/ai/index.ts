@@ -2,6 +2,7 @@ import type { EngineContext } from '../context';
 import type { PlayerId } from '../state';
 import type { ActionParams, AdvanceResult } from '../index';
 import type { ActionTrace } from '../log';
+import { getResourceValue, setResourceValue } from '../resource-v2';
 
 export const TAX_ACTION_ID = 'tax';
 
@@ -96,6 +97,28 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		if (!actionPointResourceKey) {
 			return;
 		}
+		const resourceCatalog = engineContext.resourceCatalogV2;
+		const actionPointResourceId = engineContext.activePlayer.getResourceV2Id(
+			actionPointResourceKey,
+		);
+
+		const readActionPoints = () =>
+			getResourceValue(engineContext.activePlayer, actionPointResourceId);
+
+		const writeActionPoints = (value: number) => {
+			if (resourceCatalog) {
+				setResourceValue(
+					engineContext,
+					engineContext.activePlayer,
+					resourceCatalog,
+					actionPointResourceId,
+					value,
+					{ suppressRecentEntry: true },
+				);
+				return;
+			}
+			engineContext.activePlayer.resources[actionPointResourceKey] = value;
+		};
 
 		const continueAfterAction =
 			dependencies.continueAfterAction ?? (() => true);
@@ -109,10 +132,9 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 			if (!activePhase?.action) {
 				return;
 			}
-			const remaining =
-				engineContext.activePlayer.resources[actionPointResourceKey];
-			if (typeof remaining === 'number' && remaining > 0) {
-				engineContext.activePlayer.resources[actionPointResourceKey] = 0;
+			const remaining = readActionPoints();
+			if (remaining > 0) {
+				writeActionPoints(0);
 			}
 			const shouldAdvance = await shouldAdvancePhase(engineContext);
 			if (!shouldAdvance) {
@@ -139,7 +161,7 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		while (
 			engineContext.activePlayer.id === playerId &&
 			engineContext.phases[engineContext.game.phaseIndex]?.action &&
-			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) > 0
+			readActionPoints() > 0
 		) {
 			try {
 				const result = await dependencies.performAction(
@@ -164,7 +186,7 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		if (
 			engineContext.activePlayer.id === playerId &&
 			engineContext.phases[engineContext.game.phaseIndex]?.action &&
-			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) === 0
+			readActionPoints() === 0
 		) {
 			await finishActionPhaseAsync();
 		}

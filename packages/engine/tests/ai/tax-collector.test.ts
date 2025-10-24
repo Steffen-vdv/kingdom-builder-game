@@ -7,6 +7,7 @@ import {
 } from '../../src/ai/index';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers';
+import { getResourceValue, setResourceValue } from '../../src/resource-v2';
 
 describe('tax collector AI controller', () => {
 	function createControllerFixture(actionPoints: number = 2) {
@@ -39,17 +40,32 @@ describe('tax collector AI controller', () => {
 			engineContext.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
 
 		const apKey = engineContext.actionCostResource;
-		engineContext.activePlayer.resources[apKey] = actionPoints;
+		const catalog = engineContext.resourceCatalogV2;
+		if (!catalog) {
+			throw new Error(
+				'Resource catalog is not initialised for the test engine.',
+			);
+		}
+		const apResourceId = engineContext.activePlayer.getResourceV2Id(apKey);
+		setResourceValue(
+			engineContext,
+			engineContext.activePlayer,
+			catalog,
+			apResourceId,
+			actionPoints,
+			{ suppressRecentEntry: true },
+		);
 
 		const controller = createTaxCollectorController(
 			engineContext.activePlayer.id,
 		);
 
-		return { engineContext, apKey, controller } as const;
+		return { engineContext, apKey, apResourceId, controller } as const;
 	}
 
 	it('collects tax until AP are spent then ends the turn', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, apResourceId, controller } =
+			createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -63,7 +79,7 @@ describe('tax collector AI controller', () => {
 		expect(perform).toHaveBeenCalledTimes(2);
 		expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, engineContext);
 		expect(perform).toHaveBeenNthCalledWith(2, TAX_ACTION_ID, engineContext);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(getResourceValue(engineContext.activePlayer, apResourceId)).toBe(0);
 		expect(endPhase).toHaveBeenCalledTimes(1);
 	});
 
@@ -123,7 +139,8 @@ describe('tax collector AI controller', () => {
 	});
 
 	it('stops when continuation declines without advancing', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, apResourceId, controller } =
+			createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -148,11 +165,12 @@ describe('tax collector AI controller', () => {
 		);
 		expect(shouldAdvancePhase).not.toHaveBeenCalled();
 		expect(endPhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resources[apKey]).toBe(1);
+		expect(getResourceValue(engineContext.activePlayer, apResourceId)).toBe(1);
 	});
 
 	it('continues through the full turn when callbacks allow', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, apResourceId, controller } =
+			createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -184,11 +202,12 @@ describe('tax collector AI controller', () => {
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(getResourceValue(engineContext.activePlayer, apResourceId)).toBe(0);
 	});
 
 	it('advances the phase when the tax action definition is missing', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, apResourceId, controller } =
+			createControllerFixture();
 		engineContext.actions.remove(TAX_ACTION_ID);
 		const perform = vi.fn();
 		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
@@ -203,11 +222,12 @@ describe('tax collector AI controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(getResourceValue(engineContext.activePlayer, apResourceId)).toBe(0);
 	});
 
 	it('advances when system-only tax action is unavailable to the player', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, apResourceId, controller } =
+			createControllerFixture();
 		const definition = engineContext.actions.get(TAX_ACTION_ID);
 		if (!definition) {
 			throw new Error('Tax action not found');
@@ -227,11 +247,12 @@ describe('tax collector AI controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(getResourceValue(engineContext.activePlayer, apResourceId)).toBe(0);
 	});
 
 	it('clears remaining AP without advancing when phase advancement is denied', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, apResourceId, controller } =
+			createControllerFixture();
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -247,11 +268,12 @@ describe('tax collector AI controller', () => {
 		expect(perform).toHaveBeenCalledTimes(2);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(endPhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(getResourceValue(engineContext.activePlayer, apResourceId)).toBe(0);
 	});
 
 	it('finishes the phase when performAction throws', async () => {
-		const { engineContext, apKey, controller } = createControllerFixture();
+		const { engineContext, apResourceId, controller } =
+			createControllerFixture();
 		const perform = vi.fn().mockRejectedValue(new Error('fail'));
 		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
 		const endPhase = vi.fn(() => advance(engineContext));
@@ -264,6 +286,6 @@ describe('tax collector AI controller', () => {
 
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(getResourceValue(engineContext.activePlayer, apResourceId)).toBe(0);
 	});
 });
