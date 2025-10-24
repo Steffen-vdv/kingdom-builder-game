@@ -44,15 +44,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 00:15
-- **Current Focus:** Resource Migration MVP - P2 - T37 - Content Aggregation
-- **State Summary:** Consolidated T18–T36 content migrations. ResourceV2 catalog coverage now spans core/happiness/stat/population tracks, start payload builders mirror the catalog, and all player-facing content (actions, passives, phases) emits ResourceV2 change metadata alongside legacy shims. See [`docs/project/resource-migration/production/worklogs/T18-core-resource-defs.md`](./worklogs/T18-core-resource-defs.md), [`docs/project/resource-migration/production/worklogs/T19-happiness-tier.md`](./worklogs/T19-happiness-tier.md), and [`worklogs/T20-stat-defs.md`](../../../../worklogs/T20-stat-defs.md) through [`worklogs/T36-population-phase.md`](../../../../worklogs/T36-population-phase.md) for task-level details.
+- **Timestamp (UTC):** 2025-10-28 18:45
+- **Current Focus:** Resource Migration MVP - P2 - T38 - Engine Bootstrap
+- **State Summary:** Bootstrapped the engine with the canonical ResourceV2 catalog, storing the runtime catalog on `GameState`/`EngineContext` so effect handlers can resolve metadata without manual test wiring. Cloning helpers now preserve the reference, setting up future session exposure. Details live in [`worklogs/T38-engine-bootstrap.md`](../../../../worklogs/T38-engine-bootstrap.md).
 - **Next Suggested Tasks:**
-  - Coordinate with engine owners on adopting ResourceV2 payloads so legacy bridges (`resourceParams`/`statParams`) can be retired safely.
-  - Expose ResourceV2 catalog snapshots and start payloads through runtime/session responses to unlock protocol and web integration.
-  - Address persistent `npm run check` instability (engine coverage timeouts, missing `dist` artifacts) before the next integration wave.
-- **Blocking Issues / Risks:** Engine coverage within `npm run check` still requires manual interruption, and missing build artefacts continue to break type-checking for content contributors without a prepublish step.
-- **Reminder:** Keep landing per-task worklogs and tag follow-up engineering questions in [`worklogs/T37-content-aggregation.md`](../../../../worklogs/T37-content-aggregation.md) until engine/runtime ownership is confirmed.
+  - Initialise player ResourceV2 values and bounds during bootstrap using the runtime catalog and start payloads.
+  - Extend session snapshot and transport payloads to surface the ResourceV2 catalog/metadata so protocol and web clients can adopt it.
+  - Backfill tests for config-driven catalog overrides once `GameConfig.resourceCatalogV2` snapshots start landing.
+- **Blocking Issues / Risks:** `npm run check` remains lengthy because of engine coverage; continue documenting runtime until coverage optimisation lands.
+- **Reminder:** Keep landing per-task worklogs and tag follow-up engineering questions in [`worklogs/T38-engine-bootstrap.md`](../../../../worklogs/T38-engine-bootstrap.md) until runtime/session integration wraps.
 
 ## 5. Notes & Decisions Archive
 

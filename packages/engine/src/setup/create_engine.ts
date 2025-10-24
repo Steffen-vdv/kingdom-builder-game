@@ -25,6 +25,10 @@ import { registerCoreEffects } from '../effects';
 import { registerCoreEvaluators } from '../evaluators';
 import { registerCoreRequirements } from '../requirements';
 import { Registry } from '@kingdom-builder/protocol';
+import {
+	RESOURCE_GROUP_V2_REGISTRY,
+	RESOURCE_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import { createAISystem, createTaxCollectorController } from '../ai';
 import { performAction } from '../actions/action_execution';
 import { advance } from '../phases/advance';
@@ -50,6 +54,7 @@ import {
 	initializePlayerActions,
 } from './player_setup';
 import { resolveStartConfigForMode } from './start_config_resolver';
+import { createRuntimeResourceCatalog } from '../resource-v2';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
@@ -175,6 +180,11 @@ export function createEngine({
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();
+	type RuntimeCatalogInput = Parameters<typeof createRuntimeResourceCatalog>[0];
+	let resourceCatalogInput: RuntimeCatalogInput = {
+		resources: RESOURCE_V2_REGISTRY as RuntimeCatalogInput['resources'],
+		groups: RESOURCE_GROUP_V2_REGISTRY as RuntimeCatalogInput['groups'],
+	};
 	let startConfig = start;
 	if (config) {
 		const validatedConfig = validateGameConfig(config);
@@ -190,6 +200,14 @@ export function createEngine({
 		if (validatedConfig.start) {
 			startConfig = validatedConfig.start;
 		}
+		if (validatedConfig.resourceCatalogV2) {
+			resourceCatalogInput = {
+				resources: validatedConfig.resourceCatalogV2
+					.resources as RuntimeCatalogInput['resources'],
+				groups: validatedConfig.resourceCatalogV2
+					.groups as RuntimeCatalogInput['groups'],
+			};
+		}
 	}
 	validatePhases(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
@@ -197,9 +215,11 @@ export function createEngine({
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
+	const resourceCatalogV2 = createRuntimeResourceCatalog(resourceCatalogInput);
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
+	gameState.resourceCatalogV2 = resourceCatalogV2;
 	const actionCostResource = determineCommonActionCostResource(actions);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
@@ -225,6 +245,7 @@ export function createEngine({
 		actionCostResource,
 		compensationMap,
 	);
+	engineContext.resourceCatalogV2 = resourceCatalogV2;
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
 	const aiSystem = createAISystem({ performAction, advance });

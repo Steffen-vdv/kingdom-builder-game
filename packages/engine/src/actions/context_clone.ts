@@ -154,6 +154,9 @@ function cloneGameState(game: GameState): GameState {
 	cloned.stepIndex = game.stepIndex;
 	cloned.devMode = game.devMode;
 	cloned.players = game.players.map((player) => clonePlayerState(player));
+	if (game.resourceCatalogV2 !== undefined) {
+		cloned.resourceCatalogV2 = game.resourceCatalogV2;
+	}
 	return cloned;
 }
 
@@ -176,6 +179,9 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 	);
 	if (source.aiSystem) {
 		cloned.aiSystem = source.aiSystem;
+	}
+	if (source.resourceCatalogV2 !== undefined) {
+		cloned.resourceCatalogV2 = source.resourceCatalogV2;
 	}
 	cloned.statAddPctBases = { ...source.statAddPctBases };
 	cloned.statAddPctAccums = { ...source.statAddPctAccums };

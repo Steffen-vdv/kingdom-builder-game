@@ -20,6 +20,9 @@
 		"types": ["vitest", "node"],
 		"baseUrl": ".",
 		"paths": {
+			"@kingdom-builder/contents/registries/*": [
+				"packages/contents/dist/registries/*"
+			],
 			"@kingdom-builder/engine/*": ["packages/engine/src/*"],
 			"@kingdom-builder/protocol": ["packages/protocol/src/index"],
 			"@kingdom-builder/protocol/*": ["packages/protocol/src/*"],
