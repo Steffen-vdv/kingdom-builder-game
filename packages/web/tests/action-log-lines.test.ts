@@ -37,18 +37,18 @@ describe('action log line formatting', () => {
 			{ text: '💰 Tax', depth: 0, kind: 'headline' },
 		];
 		const changes: ActionDiffChange[] = [
-			{ summary: 'Gold +3' },
-			{ summary: 'Happiness -1' },
+			{ summary: '🪙 Gold +3' },
+			{ summary: '😊 Happiness -1' },
 		];
 		expect(formatDevelopActionLogLines(messages, changes)).toEqual([
 			'💰 Tax',
-			'• Gold +3',
-			'• Happiness -1',
+			'• 🪙 Gold +3',
+			'• 😊 Happiness -1',
 		]);
 		expect(formatActionLogLines(messages, changes)).toEqual([
 			'💰 Tax',
-			'• Gold +3',
-			'• Happiness -1',
+			'• 🪙 Gold +3',
+			'• 😊 Happiness -1',
 		]);
 	});
 
@@ -56,14 +56,14 @@ describe('action log line formatting', () => {
 		const messages: ActionLogLineDescriptor[] = [
 			{ text: 'Phase start', depth: 0, kind: 'headline' },
 		];
-		const changes: ActionDiffChange[] = [{ summary: 'Gold +3' }];
+		const changes: ActionDiffChange[] = [{ summary: '🪙 Gold +3' }];
 		expect(buildActionLogTimeline(messages, changes)).toEqual([
 			{ text: 'Phase start', depth: 0, kind: 'headline' },
-			{ text: 'Gold +3', depth: 1, kind: 'effect' },
+			{ text: '🪙 Gold +3', depth: 1, kind: 'effect' },
 		]);
 		expect(formatActionLogLines(messages, changes)).toEqual([
 			'Phase start',
-			'• Gold +3',
+			'• 🪙 Gold +3',
 		]);
 	});
 });
