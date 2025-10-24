@@ -53,7 +53,7 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T19 | 2025-10-24 | gpt-5-codex | packages/web/src/translation/resourceV2/selectors.ts; packages/web/src/translation/context/assets.ts; packages/web/src/translation/context/assetSelectors.ts; packages/web/src/translation/context/createTranslationContext.ts; packages/web/src/translation/context/types.ts; packages/web/src/state/sessionRegistries.ts; packages/web/src/utils/stats/format.ts; packages/web/tests/** | Introduced ResourceV2 metadata selectors covering percent flags, bounds, tier tracks, and global costs, piped registries/groups into translation assets/hooks with legacy fallbacks, and added translator test fixtures validating ResourceV2 selectors. | `npm run lint --workspace=@kingdom-builder/web`; `npm run test --workspace=@kingdom-builder/web` _(fails: Vite cannot resolve @kingdom-builder/engine`/`@kingdom-builder/testing entries in sandbox workspace)_ | Build/publish the engine/testing workspaces so Vitest can resolve their exports, then re-run the web suite and extend selector coverage for parent-only metadata and multi-tier tracks. |
 | Resource Migration MVP - P3 - T20 | 2025-10-23 | gpt-5-codex | packages/web/src/components/resources/ResourceHud.tsx; packages/web/src/components/player/PlayerPanel.tsx; packages/web/tests/components/resources/ResourceHud.test.tsx; docs/project/resource-migration/production/production-living-docs.md | Replaced the player panel HUD with the ResourceV2-aware implementation, preserved the legacy bar fallback, and added coverage for grouping, percent formatting, and badges while documenting the rollout. | `npm run test --workspace=@kingdom-builder/web` (passes after building engine/testing/contents packages) | Monitor dual-render quirks under StrictMode and expand tests for untouched parent visibility once additional fixtures exist. |
 | Resource Migration MVP - P3 - T21 | 2025-10-23 | gpt-5-codex | packages/web/src/components/actions/ActionsPanel.tsx; packages/web/src/translation/render.tsx; packages/web/src/translation/log/diffSections.ts; packages/web/src/translation/resourceV2/costSummary.ts; packages/web/tests/components/actions/ActionCostSummary.test.tsx; docs/project/resource-migration/production/production-living-docs.md | Surfaced ResourceV2 action cost metadata in the actions panel/hover/log translators, introduced shared cost summary helpers, and added targeted UI regression tests. | `npm run lint --workspace=@kingdom-builder/web`; `npm run test --workspace=@kingdom-builder/web` _(fails: Vitest cannot resolve @kingdom-builder/engine/testing packages in sandbox)_ | Build/publish engine/testing workspaces locally before rerunning Vitest; extend hovercard/log coverage once dependencies are available. |
-| Resource Migration MVP - P3 - T22 | 2025-**-** | _(add entry)_ | | _(reserved for T22 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T22 | 2025-10-24 | gpt-5-codex | packages/engine/tests/resourceV2/effects/resource_v2_handler_combinations.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added targeted ResourceV2 handler tests combining clamp reconciliation, percent rounding, hook suppression, parent aggregation, transfers, and bound escalations to expand regression coverage. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Extend scenarios to legacy/stat hybrid resources once migration content lands and keep parity checks between service hooks and recent gain tracking. |
 | Resource Migration MVP - P3 - T23 | 2025-**-** | _(add entry)_ | | _(reserved for T23 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T24 | 2025-**-** | _(add entry)_ | | _(reserved for T24 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T25 | 2025-**-** | _(add entry)_ | | _(reserved for T25 assignee – update only this row.)_ | | |
@@ -68,15 +68,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-23 21:24
-**Current Focus:** Resource Migration MVP - P3 - T21 Action UI cost migration
-**State Summary:** Action panels, translators, and logs now source ResourceV2 global cost metadata via shared summary helpers while retaining legacy fallbacks; hovercard/log formatting adopts ResourceV2 icons/labels, and focused UI tests cover base/modifier/suppressed cost scenarios. Linting is green, and Vitest currently fails in the sandbox because the `@kingdom-builder/engine`/`@kingdom-builder/testing` workspaces are not built.
+**Timestamp (UTC):** 2025-10-24 08:55
+**Current Focus:** Resource Migration MVP - P3 - T22 ResourceV2 handler regression coverage
+**State Summary:** Added a consolidated Vitest suite that drives ResourceV2 add/remove/transfer/upper-bound handlers through clamp reconciliation, percent rounding modes, hook suppression metadata, parent aggregation, and limited-resource transfers. All new tests pass alongside existing suites with linting clean.
 
 - **Next Suggested Tasks:**
-  - Build/publish the engine/testing workspaces locally before re-running the full Vitest suite to unblock the pending ResourceV2 UI tests.
-  - Expand hovercard/log regression coverage once dependency builds resolve and ResourceV2 session data can be mocked end-to-end.
-  - Coordinate remaining action surfaces (resolution prompts, overview summaries) to reuse the cost summary helper and retire legacy per-resource loops.
-- **Blocking Issues / Risks:** Vitest cannot resolve `@kingdom-builder/engine` and `@kingdom-builder/testing` entries in the sandbox environment until those packages are built.
+  - Mirror these handler scenarios against live content once migrated resources land to ensure factory fixtures stay representative.
+  - Extend coverage for hook emission when suppression is absent and confirm tier/bound history flags surface in snapshots.
+  - Evaluate legacy ResourceV1 interactions to guarantee dual-system parity during migration.
+- **Blocking Issues / Risks:** None at this time; lint and targeted engine Vitest suites are passing.
 
 ## 5. Notes & Decisions Archive
 
