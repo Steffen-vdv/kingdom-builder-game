@@ -10,6 +10,12 @@ import {
 	setPhaseKeys,
 	setPopulationRoleKeys,
 } from '../state';
+import {
+	RESOURCE_GROUP_V2_REGISTRY,
+	RESOURCE_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
+import { createRuntimeResourceCatalog } from '../resource-v2';
+import type { RuntimeResourceContent } from '../resource-v2/fromContent';
 import type {
 	ResourceKey,
 	StatKey,
@@ -71,6 +77,8 @@ type EngineRegistries = {
 	developments: Registry<DevelopmentDef>;
 	populations: Registry<PopulationDef>;
 };
+
+type ResourceCatalogContent = RuntimeResourceContent;
 
 function validatePhases(
 	phases: PhaseConfig[] | undefined,
@@ -175,6 +183,10 @@ export function createEngine({
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();
+	let resourceCatalogContent: ResourceCatalogContent = {
+		resources: RESOURCE_V2_REGISTRY,
+		groups: RESOURCE_GROUP_V2_REGISTRY,
+	};
 	let startConfig = start;
 	if (config) {
 		const validatedConfig = validateGameConfig(config);
@@ -190,6 +202,10 @@ export function createEngine({
 		if (validatedConfig.start) {
 			startConfig = validatedConfig.start;
 		}
+		if (validatedConfig.resourceCatalogV2) {
+			resourceCatalogContent =
+				validatedConfig.resourceCatalogV2 as ResourceCatalogContent;
+		}
 	}
 	validatePhases(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
@@ -199,7 +215,11 @@ export function createEngine({
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
+	const resourceCatalogV2 = createRuntimeResourceCatalog(
+		resourceCatalogContent,
+	);
 	const gameState = new GameState('Player', 'Opponent');
+	gameState.resourceCatalogV2 = resourceCatalogV2;
 	const actionCostResource = determineCommonActionCostResource(actions);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
@@ -225,6 +245,7 @@ export function createEngine({
 		actionCostResource,
 		compensationMap,
 	);
+	engineContext.resourceCatalogV2 = resourceCatalogV2;
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
 	const aiSystem = createAISystem({ performAction, advance });

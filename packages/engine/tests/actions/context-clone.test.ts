@@ -110,6 +110,10 @@ describe('cloneEngineContext', () => {
 		expect(cloned).not.toBe(engineContext);
 		expect(cloned.aiSystem).toBe(aiSystem);
 		expect(cloned.actions).toBe(engineContext.actions);
+		expect(cloned.resourceCatalogV2).toBe(engineContext.resourceCatalogV2);
+		expect(cloned.game.resourceCatalogV2).toBe(
+			engineContext.game.resourceCatalogV2,
+		);
 		expect(cloned.game).not.toBe(engineContext.game);
 		const clonedPlayer = cloned.game.players[0]!;
 		expect(clonedPlayer).not.toBe(player);
