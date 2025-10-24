@@ -44,15 +44,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 09:10
-- **Current Focus:** Resource Migration MVP - P2 - T39 - Player State Resource Proxy
-- **State Summary:** PlayerState now proxies legacy `resources`, `stats`, and `population` accessors into the ResourceV2 value/bound maps, keeps dynamic property definitions aligned with catalog keys, and migrates legacy mappings during cloning. See [`worklogs/T39-playerstate.md`](../../../../worklogs/T39-playerstate.md) for details, tests, and follow-ups.
+- **Timestamp (UTC):** 2025-10-28 15:30
+- **Current Focus:** Resource Migration MVP - P2 - T41 - Global Action Cost Enforcement
+- **State Summary:** Engine setup now resolves the primary action-cost resource directly from the ResourceV2 catalog, records the configured amount on the context, and rejects per-action overrides (including collector contributions). Legacy intersection logic still backstops scenarios without a global flag. See [`worklogs/T41-global-cost.md`](../../../../worklogs/T41-global-cost.md) for implementation notes, updated test coverage, and follow-up items.
 - **Next Suggested Tasks:**
-  - Update engine start configuration wiring to seed ResourceV2 values/bounds via the new legacy mapping utilities before legacy bags are removed.
-  - Extend other legacy bridges (snapshots, requirement evaluators, etc.) to consume the proxy mappings so we can drop duplicate state later in the migration.
-  - Stabilise `npm run check` by resolving the `developmentTarget()` TypeError thrown during the engine coverage stage and rerun the suite to completion.
-- **Blocking Issues / Risks:** `npm run check` currently fails with `TypeError: (0 , developmentTarget) is not a function` originating from `packages/contents/src/happinessHelpers.ts` while running engine coverage. The failure predates this task and still needs resolution.
-- **Reminder:** Keep per-task worklogs current and coordinate follow-up bridge updates via `worklogs/T39-playerstate.md` until migration coverage expands.
+  - Audit content builders/fixtures to remove explicit Action Point costs so catalog enforcement remains authoritative.
+  - Thread the resolved global cost amount through session snapshots or metadata payloads if clients need to display the configured value without inferring it from the catalog.
+  - Stabilise `npm run check` by resolving the longstanding `developmentTarget()` TypeError raised during engine coverage before broadening automated enforcement.
+- **Blocking Issues / Risks:** `npm run check` still aborts with `TypeError: (0 , developmentTarget) is not a function` from `packages/contents/src/happinessHelpers.ts`. The regression predates this task; resolution is required before enforcing ResourceV2 changes repository-wide.
+- **Reminder:** Continue logging work in per-task files and coordinate catalog rollouts so downstream teams can update UI/translation layers against the new global cost contract.
 
 ## 5. Notes & Decisions Archive
 
