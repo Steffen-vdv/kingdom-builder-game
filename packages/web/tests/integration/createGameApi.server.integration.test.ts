@@ -93,6 +93,9 @@ describe.skipIf(!runIntegration)(
 
 			expect(Object.keys(metadata.registries.actions)).not.toHaveLength(0);
 			expect(metadata.metadata.assets).toBeDefined();
+			expect(
+				Object.keys(metadata.registries.resourcesV2 ?? {}),
+			).not.toHaveLength(0);
 		});
 		it('runs AI turns and simulations via HTTP endpoints', async () => {
 			const api = createApi();

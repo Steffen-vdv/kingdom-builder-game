@@ -7,6 +7,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { createSessionRegistries } from './sessionRegistries';
 import { createEmptySnapshotMetadata } from './sessionFixtures';
+import { createTestResourceCatalogV2 } from './resourceV2Catalog';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
 interface PhaseOrderEntry {
@@ -126,6 +127,9 @@ export interface TestSessionScaffold {
 	ruleSnapshot: SessionRuleSnapshot;
 	tierPassiveId: string;
 	neutralTierId: string;
+	resourceCatalogV2: NonNullable<SessionSnapshot['game']['resourceCatalogV2']>;
+	resourceMetadataV2: Record<string, SessionMetadataDescriptor>;
+	resourceGroupMetadataV2: Record<string, SessionMetadataDescriptor>;
 }
 
 const buildResourceMetadata = (
@@ -304,6 +308,19 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 			tokens: {},
 		},
 	});
+	const {
+		catalog: resourceCatalogV2,
+		metadata: resourceMetadataV2,
+		groupMetadata: resourceGroupMetadataV2,
+	} = createTestResourceCatalogV2();
+	metadata.resourcesV2 = {
+		...(metadata.resourcesV2 ?? {}),
+		...resourceMetadataV2,
+	};
+	metadata.resourceGroupsV2 = {
+		...(metadata.resourceGroupsV2 ?? {}),
+		...resourceGroupMetadataV2,
+	};
 	const phases = buildPhaseDefinitions(PHASE_ORDER);
 	const tieredResourceKey = resourceKeys[0] ?? 'resource-0';
 	const ruleSnapshot = buildRuleSnapshot(tieredResourceKey);
@@ -314,5 +331,8 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		ruleSnapshot,
 		tierPassiveId: TIER_PASSIVE_ID,
 		neutralTierId: NEUTRAL_TIER_ID,
+		resourceCatalogV2,
+		resourceMetadataV2,
+		resourceGroupMetadataV2,
 	};
 }

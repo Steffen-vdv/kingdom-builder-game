@@ -5,6 +5,7 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ResourceBar from '../src/components/player/ResourceBar';
 import { describeEffects, splitSummary } from '../src/translation';
+import { getResourceIdForLegacy } from '../src/translation/resourceV2';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type {
@@ -77,6 +78,11 @@ function createResourceBarScenario() {
 		resourceKeys.find((key) => key !== happinessKey) ??
 		resourceKeys[0] ??
 		happinessKey;
+	const happinessResourceId =
+		getResourceIdForLegacy('resources', happinessKey) ?? happinessKey;
+	const actionResourceId =
+		getResourceIdForLegacy('resources', actionCostResource) ??
+		actionCostResource;
 	const tierDefinitions: TierDefinition[] = [
 		{
 			id: 'tier.strained',
@@ -163,10 +169,15 @@ function createResourceBarScenario() {
 		id: activePlayerId,
 		name: 'Player One',
 		resources: { [happinessKey]: 6 },
+		valuesV2: { [happinessResourceId]: 6, [actionResourceId]: 0 },
+		resourceBoundsV2: {
+			[happinessResourceId]: { lowerBound: 0, upperBound: null },
+		},
 	});
 	const opponent = createSnapshotPlayer({
 		id: opponentId,
 		name: 'Player Two',
+		valuesV2: { [happinessResourceId]: 0, [actionResourceId]: 0 },
 	});
 	const metadata = structuredClone(scaffold.metadata);
 	const sessionState = createSessionSnapshot({
@@ -177,6 +188,9 @@ function createResourceBarScenario() {
 		actionCostResource,
 		ruleSnapshot,
 		metadata,
+		resourceCatalogV2: scaffold.resourceCatalogV2,
+		resourceMetadataV2: scaffold.resourceMetadataV2,
+		resourceGroupMetadataV2: scaffold.resourceGroupMetadataV2,
 	});
 	const { mockGame, handleHoverCard, clearHoverCard, registries } =
 		createPassiveGame(sessionState, {
