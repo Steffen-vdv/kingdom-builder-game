@@ -551,12 +551,26 @@ describe('GameProviderInner', () => {
 			if (!activePlayer) {
 				return null;
 			}
+			const metadata = React.useMemo(
+				() => ({
+					id: 'resource:test',
+					label: 'Test Resource',
+					icon: 'Ⓡ',
+				}),
+				[],
+			);
+			const current = activePlayer.resources[resourceKey] ?? 0;
+			const snapshot = React.useMemo(
+				() => ({
+					id: metadata.id,
+					current,
+				}),
+				[metadata.id, current],
+			);
 			return (
 				<ResourceButton
-					resourceId={resourceKey}
-					label="Test Resource"
-					icon="Ⓡ"
-					value={activePlayer.resources[resourceKey] ?? 0}
+					metadata={metadata}
+					snapshot={snapshot}
 					onShow={() => {}}
 					onHide={() => {}}
 				/>
@@ -593,7 +607,7 @@ describe('GameProviderInner', () => {
 		);
 
 		await screen.findByRole('button', {
-			name: 'Test Resource: 4',
+			name: 'Ⓡ Test Resource 4',
 		});
 
 		const syncPhaseState = capturedPerformerOptions?.syncPhaseState as
@@ -606,7 +620,7 @@ describe('GameProviderInner', () => {
 		});
 
 		const increasedButton = await screen.findByRole('button', {
-			name: 'Test Resource: 6',
+			name: 'Ⓡ Test Resource 6',
 		});
 		expect(within(increasedButton).getByText('+2')).toBeInTheDocument();
 
@@ -616,7 +630,7 @@ describe('GameProviderInner', () => {
 
 		await waitFor(() => {
 			const resourceButton = screen.getByRole('button', {
-				name: 'Test Resource: 4',
+				name: 'Ⓡ Test Resource 4',
 			});
 			expect(within(resourceButton).getByText('+2')).toBeInTheDocument();
 			expect(within(resourceButton).getByText('-2')).toBeInTheDocument();

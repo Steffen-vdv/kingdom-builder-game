@@ -1,27 +1,20 @@
 import React from 'react';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 import { getForecastDisplay } from '../../utils/forecast';
+import {
+	formatResourceV2Delta,
+	formatResourceV2Summary,
+	formatResourceV2Value,
+	type ResourceV2MetadataSnapshot,
+	type ResourceV2ValueSnapshot,
+} from '../../translation/resourceV2';
 
 export interface ResourceButtonProps {
-	resourceId: string;
-	label: string;
-	icon?: string;
-	value: number;
-	forecastDelta?: number;
-	onShow: (resourceId: string) => void;
+	metadata: ResourceV2MetadataSnapshot;
+	snapshot: ResourceV2ValueSnapshot;
+	onShow: () => void;
 	onHide: () => void;
 }
-
-const formatDelta = (delta: number) => {
-	const absolute = Math.abs(delta);
-	const formatted = Number.isInteger(absolute)
-		? absolute.toString()
-		: absolute.toLocaleString(undefined, {
-				maximumFractionDigits: 2,
-				minimumFractionDigits: 0,
-			});
-	return `${delta > 0 ? '+' : '-'}${formatted}`;
-};
 
 const RESOURCE_FORECAST_BADGE_CLASS =
 	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
@@ -29,40 +22,35 @@ const RESOURCE_FORECAST_BADGE_THEME_CLASS =
 	'bg-slate-800/70 dark:bg-slate-100/10';
 
 const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
-	resourceId,
-	label,
-	icon,
-	value,
-	forecastDelta,
+	metadata,
+	snapshot,
 	onShow,
 	onHide,
 }) => {
-	const changes = useValueChangeIndicators(value);
-	const forecastDisplay = getForecastDisplay(forecastDelta, (delta) =>
-		formatDelta(delta),
+	const { current, forecastDelta } = snapshot;
+	const changes = useValueChangeIndicators(current);
+	const resolvedForecastDelta =
+		typeof forecastDelta === 'number' ? forecastDelta : undefined;
+	const forecastDisplay = getForecastDisplay(resolvedForecastDelta, (delta) =>
+		formatResourceV2Delta(metadata, delta),
 	);
-	const iconLabel = icon ?? '❔';
-	const resolvedLabel = label || resourceId;
-	const ariaLabel = forecastDisplay
-		? `${resolvedLabel}: ${value} ${forecastDisplay.label}`
-		: `${resolvedLabel}: ${value}`;
-	const handleShow = React.useCallback(() => {
-		onShow(resourceId);
-	}, [onShow, resourceId]);
+	const iconLabel = metadata.icon ?? '❔';
+	const valueLabel = formatResourceV2Value(metadata, current);
+	const ariaLabel = formatResourceV2Summary(metadata, snapshot);
 
 	return (
 		<button
 			type="button"
 			className="bar-item hoverable cursor-help relative overflow-visible"
-			onMouseEnter={handleShow}
+			onMouseEnter={onShow}
 			onMouseLeave={onHide}
-			onFocus={handleShow}
+			onFocus={onShow}
 			onBlur={onHide}
-			onClick={handleShow}
+			onClick={onShow}
 			aria-label={ariaLabel}
 		>
 			{iconLabel}
-			{value}
+			{valueLabel}
 			{forecastDisplay && (
 				<span
 					className={[
@@ -84,7 +72,7 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 					}`}
 					aria-hidden="true"
 				>
-					{formatDelta(change.delta)}
+					{formatResourceV2Delta(metadata, change.delta)}
 				</span>
 			))}
 		</button>

@@ -52,17 +52,17 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-31 21:15
-- **Current Focus:** Resource Migration MVP - P2 - T52 - Integration test ResourceV2 assertions
+- **Timestamp (UTC):** 2025-11-01 21:25
+- **Current Focus:** Resource Migration MVP - P2 - T54 - Player HUD ResourceV2 migration
 - **State Summary:**
-  - Integration and regression suites now bootstrap the runtime ResourceV2 catalog inside shared helpers and assert player `valuesV2` maps, session catalog metadata, and translation descriptors. See [`./worklogs/T52-integration-tests.md`](./worklogs/T52-integration-tests.md) for details.
-  - Legacy resource/stat mirrors remain in place purely for compatibility expectations, but new assertions keep ResourceV2 payloads authoritative across action traces, simulated outcomes, and happiness tier snapshots.
-  - Session and translation harnesses populate `resourcesV2` metadata alongside legacy descriptors so downstream web work can adopt the new payloads without additional scaffolding.
+  - Player-facing resource, stat, and population bars now render directly from ResourceV2 metadata/value snapshots using the dedicated `translation/resourceV2` formatter exports; hovercards and badges display signed gains via the shared display helper. See [`./worklogs/T54-player-ui.md`](../../../../../worklogs/T54-player-ui.md) for task notes.
+  - New `resourceV2Display` utilities normalize bounds, deltas, and forecast data to keep HUD components and hovercards aligned with signed logging expectations while maintaining legacy resolver fallbacks for mixed payloads.
+  - `npm run lint` passes with the updated imports; `npm run check` still aborts under the existing `developmentTarget` regression in `packages/contents/src/happinessHelpers.ts`, matching prior repository handovers.
 - **Next Suggested Tasks:**
-  - Repair the `packages/contents/src/happinessHelpers.ts` `developmentTarget` regression so `npm run check` can finish successfully, then rerun the repository suite.
-  - Wire server/session transports to emit ResourceV2 metadata and value maps in live responses to validate against the updated client tests.
-  - Begin swapping web HUD/translation bindings to ResourceV2 once transports deliver the new payloads, keeping signed gain/loss logging intact.
-- **Blocking Issues / Risks:** Repository `npm run check` still fails because of the unresolved `developmentTarget` helper regression, preventing a clean verification run after the test updates.
+  - Add targeted unit tests for `resourceV2Display` and the updated HUD components to exercise bound/forecast formatting and hovercard grouping edge cases.
+  - Unblock the `developmentTarget` helper regression so `npm run check` can complete successfully and restore repository verification.
+  - Coordinate server/session transport updates to broadcast ResourceV2 metadata/value maps, ensuring the new HUD bindings stay consistent with live payloads.
+- **Blocking Issues / Risks:** Repository `npm run check` continues to fail because of the unresolved `developmentTarget` helper regression.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.
 
 ## 5. Notes & Decisions Archive
