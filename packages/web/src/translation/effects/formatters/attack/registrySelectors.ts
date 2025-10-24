@@ -51,6 +51,19 @@ export function selectAttackResourceDescriptor(
 	return { icon, label };
 }
 
+export function selectAttackResourceV2Descriptor(
+	context: ResourceCarrier,
+	resourceId: string,
+): AttackRegistryDescriptor {
+	const assets = readAssets(context);
+	const metadata = assets?.resourceV2.nodes.get(resourceId);
+	const display = metadata?.display;
+	const fallbackLabel = humanizeIdentifier(resourceId) || resourceId;
+	const label = coerceLabel(display?.name, fallbackLabel);
+	const icon = coerceIcon(display?.icon);
+	return { icon, label };
+}
+
 export function selectAttackStatDescriptor(
 	context: StatCarrier,
 	statKey: string,

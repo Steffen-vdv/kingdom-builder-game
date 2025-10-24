@@ -213,6 +213,30 @@ export function initializePlayerResourceV2State(
 ): PlayerResourceV2State {
 	const state = createPlayerResourceV2State(registry);
 	player.resourceV2 = state;
+	for (const resourceId of state.resourceIds) {
+		const isParentResource = Object.prototype.hasOwnProperty.call(
+			state.parentChildren,
+			resourceId,
+		);
+		if (isParentResource) {
+			continue;
+		}
+		const playerHasAccessor = Object.prototype.hasOwnProperty.call(
+			player,
+			resourceId,
+		);
+		if (playerHasAccessor) {
+			continue;
+		}
+		Object.defineProperty(player, resourceId, {
+			get: () => player.resourceV2.amounts[resourceId] ?? 0,
+			set: (value: number) => {
+				player.resourceV2.amounts[resourceId] = value;
+			},
+			enumerable: false,
+			configurable: true,
+		});
+	}
 	return state;
 }
 

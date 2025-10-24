@@ -19,6 +19,7 @@ export const SYNTH_RESOURCE_IDS = {
 	gold: 'gold',
 	happiness: 'happiness',
 	castleHP: 'castleHP',
+	absorption: 'absorption',
 	tier: 'tierResource',
 } as const;
 
@@ -49,6 +50,11 @@ export const SYNTH_RESOURCE_METADATA: Record<
 		icon: '🏰',
 		label: 'Castle HP',
 	},
+	[SYNTH_RESOURCE_IDS.absorption]: {
+		key: SYNTH_RESOURCE_IDS.absorption,
+		icon: '🌀',
+		label: 'Absorption',
+	},
 	[SYNTH_RESOURCE_IDS.tier]: {
 		key: SYNTH_RESOURCE_IDS.tier,
 		icon: '🎖️',
@@ -58,7 +64,6 @@ export const SYNTH_RESOURCE_METADATA: Record<
 
 export const SYNTH_STAT_IDS = {
 	armyStrength: 'armyStrength',
-	absorption: 'absorption',
 	fortificationStrength: 'fortificationStrength',
 	warWeariness: 'warWeariness',
 } as const;
@@ -74,11 +79,6 @@ export const SYNTH_STAT_METADATA: Record<
 		key: SYNTH_STAT_IDS.armyStrength,
 		icon: '⚔️',
 		label: 'Army Strength',
-	},
-	[SYNTH_STAT_IDS.absorption]: {
-		key: SYNTH_STAT_IDS.absorption,
-		icon: '🛡️',
-		label: 'Absorption',
 	},
 	[SYNTH_STAT_IDS.fortificationStrength]: {
 		key: SYNTH_STAT_IDS.fortificationStrength,
@@ -96,7 +96,8 @@ export type CombatStatConfig = {
 	key: string;
 	icon: string;
 	label: string;
-	baseKey: SyntheticStatKey;
+	paramKey: string;
+	source: 'stat' | 'resourceV2';
 };
 
 export const SYNTH_ATTACK: SyntheticAction = {
@@ -134,19 +135,22 @@ export const COMBAT_STAT_CONFIG: Record<CombatStatKey, CombatStatConfig> = {
 		key: 'synthetic:valor',
 		icon: '⚔️',
 		label: 'Valor',
-		baseKey: SYNTH_STAT_IDS.armyStrength,
+		paramKey: SYNTH_STAT_IDS.armyStrength,
+		source: 'stat',
 	},
 	absorption: {
 		key: 'synthetic:veil',
 		icon: '🌫️',
 		label: 'Veil',
-		baseKey: SYNTH_STAT_IDS.absorption,
+		paramKey: SYNTH_RESOURCE_IDS.absorption,
+		source: 'resourceV2',
 	},
 	fortification: {
 		key: 'synthetic:rampart',
 		icon: '🧱',
 		label: 'Rampart',
-		baseKey: SYNTH_STAT_IDS.fortificationStrength,
+		paramKey: SYNTH_STAT_IDS.fortificationStrength,
+		source: 'stat',
 	},
 };
 
@@ -175,7 +179,6 @@ export const START: StartConfig = {
 		},
 		stats: {
 			[SYNTH_STAT_IDS.armyStrength]: 0,
-			[SYNTH_STAT_IDS.absorption]: 0,
 			[SYNTH_STAT_IDS.fortificationStrength]: 0,
 			[SYNTH_STAT_IDS.warWeariness]: 0,
 		},

@@ -80,7 +80,7 @@ export {
 	transferParams,
 } from './builders/advancedEffectParams';
 
-export type { AttackStatAnnotation, AttackStatRole } from './builders/advancedEffectParams';
+export type { AttackStatAnnotation, AttackStatRole, AttackStatSource } from './builders/advancedEffectParams';
 
 export type { ActionEffectGroupDef, ActionEffectGroupOptionDef, DevelopmentIdParam } from './builders/actionEffectGroups';
 

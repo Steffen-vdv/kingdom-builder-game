@@ -143,20 +143,24 @@ export function buildAttackEffect(
 				},
 	};
 	const stats = descriptor.stats ?? ['power', 'absorption', 'fortification'];
-	const annotations = [] as AttackParams['stats'];
+	const annotations: NonNullable<AttackParams['stats']> = [];
 	for (const role of stats) {
 		const config = COMBAT_STAT_CONFIG[role];
 		if (!config) {
 			continue;
 		}
-		annotations?.push({
+		const annotation: NonNullable<AttackParams['stats']>[number] = {
 			role,
-			key: config.key,
+			key: config.paramKey,
 			label: config.label,
 			icon: config.icon,
-		});
+		};
+		if (config.source === 'resourceV2') {
+			(annotation as { source: 'resourceV2' }).source = 'resourceV2';
+		}
+		annotations.push(annotation);
 	}
-	if (annotations && annotations.length > 0) {
+	if (annotations.length > 0) {
 		params.stats = annotations;
 	}
 	if (descriptor.attacker?.length || descriptor.defender?.length) {

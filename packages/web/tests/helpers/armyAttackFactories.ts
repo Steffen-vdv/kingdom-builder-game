@@ -41,9 +41,15 @@ const originalStatEntries = new Map<string, SyntheticDescriptor | undefined>();
 
 function overrideStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
-	originalStatEntries.set(config.key, SYNTH_STAT_METADATA[config.key]);
-	SYNTH_STAT_METADATA[config.key] = {
-		key: config.key,
+	if (config.source !== 'stat') {
+		return;
+	}
+	originalStatEntries.set(
+		config.paramKey,
+		SYNTH_STAT_METADATA[config.paramKey],
+	);
+	SYNTH_STAT_METADATA[config.paramKey] = {
+		key: config.paramKey,
 		icon: config.icon,
 		label: config.label,
 	};
@@ -51,11 +57,14 @@ function overrideStat(key: CombatStatKey) {
 
 function restoreStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
-	const original = originalStatEntries.get(config.key);
+	if (config.source !== 'stat') {
+		return;
+	}
+	const original = originalStatEntries.get(config.paramKey);
 	if (original) {
-		SYNTH_STAT_METADATA[config.key] = original;
+		SYNTH_STAT_METADATA[config.paramKey] = original;
 	} else {
-		delete SYNTH_STAT_METADATA[config.key];
+		delete SYNTH_STAT_METADATA[config.paramKey];
 	}
 }
 

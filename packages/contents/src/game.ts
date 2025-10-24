@@ -18,7 +18,6 @@ export const GAME_START: StartConfig = startConfig()
 				[Stat.maxPopulation]: 1,
 				[Stat.armyStrength]: 0,
 				[Stat.fortificationStrength]: 0,
-				[Stat.absorption]: 0,
 				[Stat.growth]: 0.25,
 				[Stat.warWeariness]: 0,
 			})

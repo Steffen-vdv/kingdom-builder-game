@@ -4,7 +4,6 @@ export const Stat = {
 	maxPopulation: 'maxPopulation',
 	armyStrength: 'armyStrength',
 	fortificationStrength: 'fortificationStrength',
-	absorption: 'absorption',
 	growth: 'growth',
 	warWeariness: 'warWeariness',
 } as const;
@@ -23,13 +22,6 @@ const defs: StatInfo[] = [
 		.icon('🛡️')
 		.label('Fortification Strength')
 		.description('Fortification Strength measures the resilience of your defenses. It reduces damage taken when enemies assault your castle.')
-		.build(),
-	stat(Stat.absorption)
-		.icon('🌀')
-		.label('Absorption')
-		.description('Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.')
-		.displayAsPercent()
-		.addFormat({ percent: true })
 		.build(),
 	stat(Stat.growth)
 		.icon('📈')

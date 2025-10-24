@@ -18,7 +18,10 @@ import {
 	DEFAULT_ATTACK_ABSORPTION_STAT_KEY,
 	DEFAULT_ATTACK_FORTIFICATION_STAT_KEY,
 } from './defaultKeys';
-import { selectAttackStatDescriptor } from './registrySelectors';
+import {
+	selectAttackResourceV2Descriptor,
+	selectAttackStatDescriptor,
+} from './registrySelectors';
 
 const ATTACK_STAT_ROLES: AttackStatRole[] = [
 	'power',
@@ -32,11 +35,21 @@ const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, AttackStatKey> = {
 	fortification: DEFAULT_ATTACK_FORTIFICATION_STAT_KEY,
 };
 
+const DEFAULT_ATTACK_STAT_SOURCES: Record<
+	AttackStatRole,
+	'stat' | 'resourceV2'
+> = {
+	power: 'stat',
+	absorption: 'resourceV2',
+	fortification: 'stat',
+};
+
 type RawAttackStatParam = {
 	role?: unknown;
 	key?: unknown;
 	label?: unknown;
 	icon?: unknown;
+	source?: unknown;
 };
 
 type AttackStatOverrides = Partial<
@@ -58,10 +71,13 @@ function buildStatDescriptor(
 	role: AttackStatRole,
 	key: AttackStatKey | undefined,
 	overrides: AttackStatOverrides,
+	source: 'stat' | 'resourceV2',
 	context: TranslationContext,
 ): AttackStatDescriptor {
 	const baseDescriptor = key
-		? selectAttackStatDescriptor(context, key)
+		? source === 'resourceV2'
+			? selectAttackResourceV2Descriptor(context, key)
+			: selectAttackStatDescriptor(context, key)
 		: undefined;
 	const label =
 		overrides.label ??
@@ -100,10 +116,12 @@ function resolveAttackStats(
 			if (icon !== undefined) {
 				overrides.icon = icon;
 			}
+			const source = entry.source === 'resourceV2' ? 'resourceV2' : 'stat';
 			stats[role] = buildStatDescriptor(
 				role,
 				key,
 				overrides,
+				source,
 				translationContext,
 			);
 		}
@@ -111,7 +129,14 @@ function resolveAttackStats(
 	}
 	for (const role of ATTACK_STAT_ROLES) {
 		const key = DEFAULT_ATTACK_STAT_KEYS[role];
-		stats[role] = buildStatDescriptor(role, key, {}, translationContext);
+		const source = DEFAULT_ATTACK_STAT_SOURCES[role] ?? 'stat';
+		stats[role] = buildStatDescriptor(
+			role,
+			key,
+			{},
+			source,
+			translationContext,
+		);
 	}
 	return stats;
 }

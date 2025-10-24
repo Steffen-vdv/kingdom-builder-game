@@ -132,7 +132,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(
 						attackParams()
 							.powerStat(Stat.armyStrength)
-							.absorptionStat(Stat.absorption)
+							.absorptionResource('absorption')
 							.fortificationStat(Stat.fortificationStrength)
 							.targetResource(Resource.castleHP)
 							.onDamageAttacker(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.plunder)).build()),

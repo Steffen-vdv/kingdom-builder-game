@@ -3,24 +3,38 @@ import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceV2Add } from '@kingdom-builder/contents';
 
-function makeAbsorptionEffect(amount: number): EffectDef {
-	return {
-		type: 'stat',
-		method: 'add',
-		params: { key: Stat.absorption, amount },
-	};
+function makeAbsorptionEffect(resourceId: string, amount: number): EffectDef {
+	return resourceV2Add(resourceId).amount(amount).build();
+}
+
+function resolveAbsorptionId(
+	engineContext: ReturnType<typeof createTestEngine>,
+): string {
+	const registry = engineContext.resourceV2.getRegistry();
+	if (!registry) {
+		throw new Error('ResourceV2 registry is not available.');
+	}
+	for (const id of registry.resourceIds) {
+		const definition = registry.getResource(id);
+		if (definition.display?.name === 'Absorption') {
+			return id;
+		}
+	}
+	throw new Error('Absorption resource not registered.');
 }
 
 describe('resolveAttack', () => {
 	it('runs onBeforeAttacked triggers before damage calc', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.activePlayer;
+		const absorptionId = resolveAbsorptionId(engineContext);
 		engineContext.passives.addPassive(
 			{
 				id: 'shield',
 				effects: [],
-				onBeforeAttacked: [makeAbsorptionEffect(0.5)],
+				onBeforeAttacked: [makeAbsorptionEffect(absorptionId, 0.5)],
 			},
 			engineContext,
 		);
@@ -154,6 +168,15 @@ describe('resolveAttack', () => {
 		const engineContext = createTestEngine();
 		const attacker = engineContext.activePlayer;
 		const defender = engineContext.game.opponent;
+		const absorptionId = resolveAbsorptionId(engineContext);
+		const addFortification = (amount: number): EffectDef => ({
+			type: 'stat',
+			method: 'add',
+			params: {
+				key: Stat.fortificationStrength,
+				amount,
+			},
+		});
 		engineContext.game.currentPlayerIndex = 1;
 		// switch to defender to add passive
 		engineContext.passives.addPassive(
@@ -161,34 +184,12 @@ describe('resolveAttack', () => {
 				id: 'bastion',
 				effects: [],
 				onBeforeAttacked: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
-					{
-						type: 'stat',
-						method: 'add',
-						params: {
-							key: Stat.fortificationStrength,
-							amount: 1,
-						},
-					},
+					makeAbsorptionEffect(absorptionId, 0.5),
+					addFortification(1),
 				],
 				onAttackResolved: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
-					{
-						type: 'stat',
-						method: 'add',
-						params: {
-							key: Stat.fortificationStrength,
-							amount: 5,
-						},
-					},
+					makeAbsorptionEffect(absorptionId, 0.5),
+					addFortification(5),
 				],
 			},
 			engineContext,
