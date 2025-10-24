@@ -11,13 +11,11 @@ import {
 import {
 	resourceAddV2,
 	resourceRemoveV2,
-} from '../../src/resource-v2/effects/addRemove.ts';
-import {
 	resourceV2Transfer,
 	resourceV2IncreaseUpperBound,
 	type ResourceV2TransferEffectParams,
 	type ResourceV2UpperBoundIncreaseParams,
-} from '../../src/resource-v2/effects/transfer.ts';
+} from '../../src/resource-v2/index.ts';
 import {
 	resourceV2Definition,
 	resourceV2GroupDefinition,

@@ -56,6 +56,10 @@ export {
 
 export type { CatalogIndexes, ResourceDefinitionLike } from './state-helpers';
 
+export { resourceAddV2, resourceRemoveV2 } from './effects/addRemove';
+
+export type { ResourceEffectParams } from './effects/addRemove';
+
 export {
 	resourceV2Transfer,
 	resourceV2IncreaseUpperBound,
