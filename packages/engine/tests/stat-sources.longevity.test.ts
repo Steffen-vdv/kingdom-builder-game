@@ -18,7 +18,9 @@ describe('stat sources longevity', () => {
 		const engineContext = createTestEngine();
 		const player = engineContext.activePlayer;
 
-		const growthSources = Object.values(player.statSources[Stat.growth] ?? {});
+		const growthId = player.getStatResourceV2Id(Stat.growth);
+		const armyStrengthId = player.getStatResourceV2Id(Stat.armyStrength);
+		const growthSources = Object.values(player.statSources[growthId] ?? {});
 		expect(growthSources.length).toBeGreaterThan(0);
 		const growthTotal = growthSources.reduce(
 			(sum, entry) => sum + entry.amount,
@@ -41,7 +43,7 @@ describe('stat sources longevity', () => {
 		);
 
 		const getPopulationEntries = () =>
-			Object.values(player.statSources[Stat.armyStrength] ?? {}).filter(
+			Object.values(player.statSources[armyStrengthId] ?? {}).filter(
 				(entry) => entry.meta.kind === 'population',
 			);
 		const [passiveEntry] = getPopulationEntries();
@@ -74,7 +76,7 @@ describe('stat sources longevity', () => {
 		);
 
 		const phaseEntry = Object.values(
-			player.statSources[Stat.armyStrength] ?? {},
+			player.statSources[armyStrengthId] ?? {},
 		).find((entry) => entry.meta.kind === 'phase');
 		expect(phaseEntry?.amount).toBe(1);
 		expect(phaseEntry?.meta.detail).toBe(PhaseStepId.RaiseStrength);
@@ -82,7 +84,7 @@ describe('stat sources longevity', () => {
 		expect(phaseEntry?.meta.dependsOn).toEqual(
 			expect.arrayContaining([
 				{ type: 'population', id: PopulationRole.Legion },
-				{ type: 'stat', id: Stat.growth },
+				{ type: 'stat', id: growthId },
 			]),
 		);
 

@@ -52,14 +52,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-30 13:40
-- **Current Focus:** Resource Migration MVP - P2 - T44 - Services ResourceV2 Integration
-- **State Summary:** Tiered resource, win condition, and population cap services now source values and tier metadata from the Runtime ResourceV2 catalog, emit signed deltas via `recentResourceGains`, and map legacy keys through PlayerState lookups. See [`./worklogs/T44-services.md`](./worklogs/T44-services.md) for implementation notes and follow-ups.
+- **Timestamp (UTC):** 2025-10-30 18:05
+- **Current Focus:** Resource Migration MVP - P2 - T45 - Stat Sources ResourceV2 Mapping
+- **State Summary:** Stat source utilities now resolve contributions and dependency metadata using ResourceV2 ids, and PlayerState synchronises stat history through the new touched flags. Clones/simulations have been updated accordingly. See [`./worklogs/T45-stat-sources.md`](./worklogs/T45-stat-sources.md) for details.
 - **Next Suggested Tasks:**
-  - Wire the updated ResourceV2 identifiers into downstream session payloads and translators once catalog snapshots are exposed to consumers.
-  - Audit remaining service callers for direct legacy key usage and pivot them to the new ResourceV2 helpers.
-  - Continue tracking the contents-side `developmentTarget()` regression so the full `npm run check` pipeline can close.
-- **Blocking Issues / Risks:** Repository check remains blocked by `TypeError: (0 , developmentTarget) is not a function` from `packages/contents/src/happinessHelpers.ts`; engine services cannot fully retire legacy bridges until that content helper is restored.
+  - Update evaluator dependency collectors once upstream payloads emit ResourceV2 stat ids so compare chains surface canonical identifiers without PlayerState lookups.
+  - Audit downstream consumers (protocol payloads, UI translators) for assumptions about legacy stat keys in `statSources` and adapt them to the ResourceV2 map.
+  - Re-run the full repository check after the outstanding `developmentTarget` TypeError is resolved to confirm suite stability.
+- **Blocking Issues / Risks:** `npm run check` remains blocked by `TypeError: (0 , developmentTarget) is not a function` in `packages/contents/src/happinessHelpers.ts`, preventing an end-to-end verification pass.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.
 
 ## 5. Notes & Decisions Archive

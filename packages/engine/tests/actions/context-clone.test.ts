@@ -52,6 +52,8 @@ describe('cloneEngineContext', () => {
 		player.population[CPopulationRole.Council] = undefined as never;
 		player.stats[CStat.armyStrength] = 3;
 		player.statsHistory[CStat.armyStrength] = true;
+		const armyStrengthId = player.getStatResourceV2Id(CStat.armyStrength);
+		const happinessId = player.getStatResourceV2Id(CStat.happiness);
 
 		const land = player.lands[0]!;
 		land.upkeep = { [CResource.gold]: 1 };
@@ -87,11 +89,11 @@ describe('cloneEngineContext', () => {
 			extra: { note: 'tracked' },
 			effect: { type: 'resource', method: 'add' },
 		};
-		player.statSources[CStat.armyStrength]['source-id'] = {
+		player.statSources[armyStrengthId]['source-id'] = {
 			amount: 5,
 			meta: statSourceMeta,
 		};
-		player.statSources[CStat.happiness] = undefined as never;
+		player.statSources[happinessId] = undefined as never;
 
 		const phaseId = engineContext.phases[0]!.id;
 		const stepId = engineContext.phases[0]!.steps[0]!.id;
@@ -141,13 +143,13 @@ describe('cloneEngineContext', () => {
 		expect(clonedPlayer.stats[CStat.armyStrength]).toBe(3);
 		expect(clonedPlayer.population[CPopulationRole.Legion]).toBe(2);
 		expect(clonedPlayer.population[CPopulationRole.Council]).toBe(0);
-		expect(clonedPlayer.statSources[CStat.armyStrength]['source-id']).not.toBe(
-			player.statSources[CStat.armyStrength]['source-id'],
+		expect(clonedPlayer.statSources[armyStrengthId]['source-id']).not.toBe(
+			player.statSources[armyStrengthId]['source-id'],
 		);
 		expect(
-			clonedPlayer.statSources[CStat.armyStrength]['source-id']?.meta,
-		).not.toBe(player.statSources[CStat.armyStrength]['source-id']?.meta);
-		expect(clonedPlayer.statSources[CStat.happiness]).toEqual({});
+			clonedPlayer.statSources[armyStrengthId]['source-id']?.meta,
+		).not.toBe(player.statSources[armyStrengthId]['source-id']?.meta);
+		expect(clonedPlayer.statSources[happinessId]).toEqual({});
 		expect(clonedPlayer.skipPhases).not.toBe(player.skipPhases);
 		expect(clonedPlayer.skipSteps).not.toBe(player.skipSteps);
 		expect(clonedPlayer.customMethod).toBe(player.customMethod);

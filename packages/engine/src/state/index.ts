@@ -365,13 +365,13 @@ export class PlayerState {
 	lands: Land[] = [];
 	buildings: Set<string> = new Set();
 	actions: Set<string> = new Set();
-	statSources: Record<StatKey, Record<string, StatSourceContribution>>;
+	statSources: Record<string, Record<string, StatSourceContribution>>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any;
 	private legacyResourceToResourceId: Partial<Record<ResourceKey, string>> = {};
-	private legacyStatToResourceId: Partial<Record<StatKey, string>> = {};
+	private legacyStatToResourceId: Partial<Record<string, string>> = {};
 	private legacyPopulationToResourceId: Partial<
 		Record<PopulationRoleId, string>
 	> = {};
@@ -389,7 +389,7 @@ export class PlayerState {
 		this.stats = {};
 		this.statsHistory = {};
 		this.statSources = {} as Record<
-			StatKey,
+			string,
 			Record<string, StatSourceContribution>
 		>;
 		this.syncLegacyStatAccessors();
@@ -407,8 +407,12 @@ export class PlayerState {
 		return this.getResourceV2IdForResource(key);
 	}
 
-	private getResourceV2IdForStat(key: StatKey): string {
+	private getResourceV2IdForStat(key: string): string {
 		return this.legacyStatToResourceId[key] ?? key;
+	}
+
+	getStatResourceV2Id(key: string): string {
+		return this.getResourceV2IdForStat(key);
 	}
 
 	private getResourceV2IdForPopulation(key: PopulationRoleId): string {
@@ -448,8 +452,9 @@ export class PlayerState {
 			if (!Object.prototype.hasOwnProperty.call(this.statsHistory, key)) {
 				this.statsHistory[key] = false;
 			}
-			if (!Object.prototype.hasOwnProperty.call(this.statSources, key)) {
-				this.statSources[key] = {};
+			const resourceId = this.getResourceV2IdForStat(key);
+			if (!Object.prototype.hasOwnProperty.call(this.statSources, resourceId)) {
+				this.statSources[resourceId] = {};
 			}
 			const getter = (): number => this.getLegacyStatValue(key);
 			const setter = (value: number): void => {
@@ -505,8 +510,12 @@ export class PlayerState {
 
 	private setLegacyStatValue(key: StatKey, value: number): void {
 		const resourceId = this.getResourceV2IdForStat(key);
+		const previous = this.resourceValues[resourceId] ?? 0;
 		this.resourceValues[resourceId] = value;
-		if (value !== 0) {
+		if (previous !== value) {
+			this.resourceTouched[resourceId] = true;
+		}
+		if (this.resourceTouched[resourceId]) {
 			this.statsHistory[key] = true;
 		}
 	}
@@ -578,6 +587,12 @@ export class PlayerState {
 			rehomeBooleanRecord(this.resourceTouched, previousId, nextId);
 			rehomeNullableStringRecord(this.resourceTierIds, previousId, nextId);
 			rehomeBoundTouchedRecord(this.resourceBoundTouched, previousId, nextId);
+			if (Object.prototype.hasOwnProperty.call(this.statSources, previousId)) {
+				const existing = this.statSources[previousId];
+				const target = this.statSources[nextId] ?? {};
+				this.statSources[nextId] = { ...target, ...existing };
+				delete this.statSources[previousId];
+			}
 		}
 	}
 }
