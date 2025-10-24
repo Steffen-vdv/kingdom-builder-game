@@ -1,6 +1,7 @@
 import type { EvaluatorHandler } from './index';
 import type { EngineContext } from '../context';
 import type { StatKey } from '../state';
+import { getResourceValue } from '../resource-v2';
 
 export interface StatEvaluatorParams extends Record<string, unknown> {
 	key: StatKey;
@@ -11,5 +12,6 @@ export const statEvaluator: EvaluatorHandler<number, StatEvaluatorParams> = (
 	engineContext: EngineContext,
 ) => {
 	const key = definition.params?.key as StatKey;
-	return engineContext.activePlayer.stats[key] || 0;
+	const resourceId = engineContext.activePlayer.getStatResourceV2Id(key);
+	return getResourceValue(engineContext.activePlayer, resourceId);
 };
