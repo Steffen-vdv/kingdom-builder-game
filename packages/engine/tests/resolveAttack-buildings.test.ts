@@ -1,8 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { resolveAttack, runEffects } from '../src/index.ts';
-import { createTestEngine } from './helpers.ts';
+import {
+	createTestEngine,
+	getAbsorptionResourceId,
+	setPlayerResourceV2Amount,
+} from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+
+const ABSORPTION_RESOURCE_ID = getAbsorptionResourceId();
 
 describe('resolveAttack buildings', () => {
 	it('keeps buildings intact when damage is fully mitigated', () => {
@@ -24,7 +30,12 @@ describe('resolveAttack buildings', () => {
 			engineContext,
 		);
 		engineContext.game.currentPlayerIndex = 0;
-		defender.absorption = 1;
+		setPlayerResourceV2Amount(
+			engineContext,
+			defender,
+			ABSORPTION_RESOURCE_ID,
+			1,
+		);
 		defender.fortificationStrength = 0;
 
 		const castleBefore = defender.resources[Resource.castleHP];
@@ -111,7 +122,12 @@ describe('resolveAttack buildings', () => {
 		);
 		engineContext.game.currentPlayerIndex = 0;
 
-		defender.absorption = 0.9;
+		setPlayerResourceV2Amount(
+			engineContext,
+			defender,
+			ABSORPTION_RESOURCE_ID,
+			0.9,
+		);
 		defender.fortificationStrength = 10;
 		const castleBefore = defender.resources[Resource.castleHP];
 

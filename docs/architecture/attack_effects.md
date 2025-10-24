@@ -12,7 +12,10 @@ Use the builder helpers to annotate each role:
 effect('attack', 'perform').params(
 	attackParams()
 		.powerStat(Stat.armyStrength)
-		.absorptionStat(Stat.absorption)
+		.absorptionStat('absorption', {
+			icon: '🌀',
+			label: 'Absorption',
+		})
 		.fortificationStat(Stat.fortificationStrength)
 		.targetResource(Resource.castleHP),
 );

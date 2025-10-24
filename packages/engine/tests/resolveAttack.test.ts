@@ -1,14 +1,29 @@
 import { describe, it, expect } from 'vitest';
 import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
-import { createTestEngine } from './helpers.ts';
+import {
+	createTestEngine,
+	getAbsorptionResourceId,
+	setPlayerResourceV2Amount,
+} from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 
+const ABSORPTION_RESOURCE_ID = getAbsorptionResourceId();
+
 function makeAbsorptionEffect(amount: number): EffectDef {
+	return {
+		type: 'resource',
+		method: 'add',
+		params: { id: ABSORPTION_RESOURCE_ID, amount },
+		meta: { reconciliation: 'clamp' },
+	};
+}
+
+function makeFortificationEffect(amount: number): EffectDef {
 	return {
 		type: 'stat',
 		method: 'add',
-		params: { key: Stat.absorption, amount },
+		params: { key: Stat.fortificationStrength, amount },
 	};
 }
 
@@ -60,7 +75,12 @@ describe('resolveAttack', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.game.opponent;
 		engineContext.services.rules.absorptionRounding = 'up';
-		defender.absorption = 0.5;
+		setPlayerResourceV2Amount(
+			engineContext,
+			defender,
+			ABSORPTION_RESOURCE_ID,
+			0.5,
+		);
 		const start = defender.resources[Resource.castleHP];
 		const result = resolveAttack(defender, 1, engineContext, {
 			type: 'resource',
@@ -74,7 +94,12 @@ describe('resolveAttack', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.game.opponent;
 		engineContext.services.rules.absorptionRounding = 'nearest';
-		defender.absorption = 0.6;
+		setPlayerResourceV2Amount(
+			engineContext,
+			defender,
+			ABSORPTION_RESOURCE_ID,
+			0.6,
+		);
 		const result = resolveAttack(defender, 1, engineContext, {
 			type: 'resource',
 			key: Resource.castleHP,
@@ -85,7 +110,12 @@ describe('resolveAttack', () => {
 	it('can ignore absorption and fortification when options specify', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.game.opponent;
-		defender.absorption = 0.5;
+		setPlayerResourceV2Amount(
+			engineContext,
+			defender,
+			ABSORPTION_RESOURCE_ID,
+			0.5,
+		);
 		defender.stats[Stat.fortificationStrength] = 5;
 		const result = resolveAttack(
 			defender,
@@ -146,7 +176,7 @@ describe('resolveAttack', () => {
 		expect(result.damageDealt).toBe(0);
 		expect(defender.resources[Resource.castleHP]).toBe(10);
 		expect(defender.fortificationStrength).toBe(0);
-		expect(defender.absorption).toBe(0);
+		expect(defender.resourceV2.amounts[ABSORPTION_RESOURCE_ID]).toBe(0);
 		expect(defender.gold).toBe(beforeGold + 1);
 	});
 
@@ -161,34 +191,12 @@ describe('resolveAttack', () => {
 				id: 'bastion',
 				effects: [],
 				onBeforeAttacked: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
-					{
-						type: 'stat',
-						method: 'add',
-						params: {
-							key: Stat.fortificationStrength,
-							amount: 1,
-						},
-					},
+					makeAbsorptionEffect(0.5),
+					makeFortificationEffect(1),
 				],
 				onAttackResolved: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
-					{
-						type: 'stat',
-						method: 'add',
-						params: {
-							key: Stat.fortificationStrength,
-							amount: 5,
-						},
-					},
+					makeAbsorptionEffect(0.5),
+					makeFortificationEffect(5),
 				],
 			},
 			engineContext,
@@ -226,7 +234,7 @@ describe('resolveAttack', () => {
 		const expected = Math.max(0, reduced - 1);
 		expect(result.damageDealt).toBe(expected);
 		expect(defender.resources[Resource.castleHP]).toBe(startHP - expected);
-		expect(defender.absorption).toBe(1);
+		expect(defender.resourceV2.amounts[ABSORPTION_RESOURCE_ID]).toBe(1);
 		expect(defender.fortificationStrength).toBe(5);
 	});
 

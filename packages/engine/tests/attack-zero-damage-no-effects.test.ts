@@ -1,10 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef, type AttackLog } from '../src/index.ts';
 import { Resource } from '../src/state/index.ts';
-import { createTestEngine } from './helpers.ts';
+import {
+	createTestEngine,
+	getAbsorptionResourceId,
+	setPlayerResourceV2Amount,
+} from './helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 const attackLogKey = 'attack:perform';
+
+const ABSORPTION_RESOURCE_ID = getAbsorptionResourceId();
 
 describe('attack:perform', () => {
 	it('skips onDamage effects when damage is fully absorbed', () => {
@@ -13,7 +19,12 @@ describe('attack:perform', () => {
 		const defender = engineContext.opponent;
 
 		attacker.armyStrength = 1;
-		defender.absorption = 1;
+		setPlayerResourceV2Amount(
+			engineContext,
+			defender,
+			ABSORPTION_RESOURCE_ID,
+			1,
+		);
 		defender.fortificationStrength = 0;
 
 		const previousState = {
@@ -98,7 +109,12 @@ describe('attack:perform', () => {
 		engineContext.game.currentPlayerIndex = 0;
 
 		attacker.armyStrength = 2;
-		defender.absorption = 1;
+		setPlayerResourceV2Amount(
+			engineContext,
+			defender,
+			ABSORPTION_RESOURCE_ID,
+			1,
+		);
 
 		const effect: EffectDef = {
 			type: 'attack',

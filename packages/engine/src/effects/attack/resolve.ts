@@ -8,6 +8,7 @@ import type { EngineContext } from '../../context';
 import { withStatSourceFrames } from '../../stat_sources';
 import { collectTriggerEffects } from '../../triggers';
 import type { PlayerState } from '../../state';
+import type { ResourceV2EngineRegistry } from '../../resourceV2/registry';
 import {
 	attackTargetHandlers,
 	type AttackTargetHandlerMeta,
@@ -16,6 +17,44 @@ import {
 interface AttackResolution {
 	damageDealt: number;
 	evaluation: AttackEvaluationLog;
+}
+
+const absorptionIdCache = new WeakMap<ResourceV2EngineRegistry, string>();
+
+function resolveAbsorptionResourceId(
+	registry: ResourceV2EngineRegistry | undefined,
+): string | undefined {
+	if (!registry) {
+		return undefined;
+	}
+
+	const cached = absorptionIdCache.get(registry);
+	if (cached) {
+		return cached;
+	}
+
+	for (const resourceId of registry.resourceIds) {
+		const record = registry.getResource(resourceId);
+		if (record.display.name === 'Absorption') {
+			absorptionIdCache.set(registry, record.id);
+			return record.id;
+		}
+	}
+
+	return undefined;
+}
+
+function readAbsorptionValue(
+	player: PlayerState,
+	context: EngineContext,
+): number {
+	const service = context.resourceV2;
+	const registry = service.getRegistry?.();
+	const resourceId = resolveAbsorptionResourceId(registry);
+	if (!resourceId) {
+		return 0;
+	}
+	return player.resourceV2.amounts[resourceId] ?? 0;
 }
 
 function applyAbsorption(
@@ -70,12 +109,10 @@ export function resolveAttack(
 
 	context.game.currentPlayerIndex = originalIndex;
 
+	const absorptionValue = readAbsorptionValue(defender, context);
 	const absorption = options.ignoreAbsorption
 		? 0
-		: Math.min(
-				(defender.absorption as number) || 0,
-				context.services.rules.absorptionCapPct,
-			);
+		: Math.min(absorptionValue, context.services.rules.absorptionCapPct);
 	const damageAfterAbsorption = options.ignoreAbsorption
 		? damage
 		: applyAbsorption(

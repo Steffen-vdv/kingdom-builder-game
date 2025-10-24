@@ -78,8 +78,9 @@ describe('ResourceV2 registries', () => {
 	});
 
 	it('provides default registry artifacts for startup metadata', () => {
-		expect(RESOURCE_V2_DEFINITION_ARTIFACTS.definitions).toEqual([]);
-		expect(RESOURCE_V2_DEFINITION_REGISTRY.values()).toEqual([]);
+		const defaultDefinitionIds = RESOURCE_V2_DEFINITION_ARTIFACTS.definitions.map((definition) => definition.id);
+		expect(defaultDefinitionIds).toContain('absorption');
+		expect(RESOURCE_V2_DEFINITION_REGISTRY.values().map((definition) => definition.id)).toEqual(defaultDefinitionIds);
 		expect(RESOURCE_V2_GROUP_ARTIFACTS.groups).toEqual([]);
 		expect(RESOURCE_V2_GROUP_REGISTRY.values()).toEqual([]);
 	});
