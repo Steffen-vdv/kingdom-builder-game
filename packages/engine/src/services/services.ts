@@ -1,4 +1,4 @@
-import type { ResourceKey, PlayerId, PlayerState } from '../state';
+import type { PlayerId, PlayerState } from '../state';
 import type { EngineContext } from '../context';
 import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
 import { runEffects } from '../effects';
@@ -9,13 +9,14 @@ import type { HappinessTierDefinition } from './tiered_resource_types';
 import type { RuleSet } from './services_types';
 
 type Context = EngineContext;
-type TierResource = ResourceKey;
+type ResourceIdentifier = string;
 
 export class Services {
 	tieredResource: TieredResourceService;
 	popcap: PopCapService;
 	winCondition: WinConditionService;
 	private activeTiers: Map<PlayerId, HappinessTierDefinition> = new Map();
+	private tierResourceValues: Map<PlayerId, number> = new Map();
 
 	constructor(
 		public rules: RuleSet,
@@ -29,7 +30,7 @@ export class Services {
 	handleResourceChange(
 		context: Context,
 		player: PlayerState,
-		key: TierResource,
+		key: ResourceIdentifier,
 	) {
 		this.handleTieredResourceChange(context, player, key);
 		this.winCondition.evaluateResourceChange(context, player, key);
@@ -38,15 +39,36 @@ export class Services {
 	handleTieredResourceChange(
 		context: Context,
 		player: PlayerState,
-		tierKey: TierResource,
+		resourceIdentifier: ResourceIdentifier,
 	) {
-		if (tierKey !== this.tieredResource.resourceKey) {
+		if (!this.tieredResource.matches(resourceIdentifier)) {
 			return;
 		}
-		const value = player.resources[tierKey] ?? 0;
-		const nextTier = this.tieredResource.definition(value);
+		const previousValue = this.tierResourceValues.get(player.id) ?? null;
+		const value = this.tieredResource.valueFor(player);
+		const nextTier = this.tieredResource.tierFor(player);
 		const currentTier = this.activeTiers.get(player.id);
-		if (currentTier?.id === nextTier?.id) {
+		const tierChanged = currentTier?.id !== nextTier?.id;
+		const valueChanged = previousValue === null || previousValue !== value;
+		if (!tierChanged && !valueChanged) {
+			return;
+		}
+		if (valueChanged && previousValue !== null) {
+			const delta = value - previousValue;
+			if (delta !== 0) {
+				const alreadyLogged = context.recentResourceGains.some((entry) =>
+					this.tieredResource.matches(entry.key),
+				);
+				if (!alreadyLogged) {
+					context.recentResourceGains.push({
+						key: this.tieredResource.getLogIdentifier(),
+						amount: delta,
+					});
+				}
+			}
+		}
+		if (!tierChanged) {
+			this.tierResourceValues.set(player.id, value);
 			return;
 		}
 		const originalIndex = context.game.currentPlayerIndex;
@@ -97,10 +119,11 @@ export class Services {
 				context.game.currentPlayerIndex = originalIndex;
 			}
 		}
+		this.tierResourceValues.set(player.id, value);
 	}
 
 	initializeTierPassives(context: EngineContext) {
-		const resourceKey = this.tieredResource.resourceKey;
+		const resourceKey = this.tieredResource.resourceId;
 		const previousIndex = context.game.currentPlayerIndex;
 		context.game.players.forEach((_player, index) => {
 			context.game.currentPlayerIndex = index;
@@ -113,6 +136,7 @@ export class Services {
 	clone(developments: Registry<DevelopmentConfig>): Services {
 		const cloned = new Services(this.rules, developments);
 		cloned.activeTiers = new Map(this.activeTiers);
+		cloned.tierResourceValues = new Map(this.tierResourceValues);
 		cloned.winCondition = this.winCondition.clone();
 		return cloned;
 	}

@@ -403,6 +403,10 @@ export class PlayerState {
 		return this.legacyResourceToResourceId[key] ?? key;
 	}
 
+	getResourceV2Id(key: ResourceKey): string {
+		return this.getResourceV2IdForResource(key);
+	}
+
 	private getResourceV2IdForStat(key: StatKey): string {
 		return this.legacyStatToResourceId[key] ?? key;
 	}

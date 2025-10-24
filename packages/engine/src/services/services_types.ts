@@ -1,4 +1,5 @@
 import type { ResourceKey } from '../state';
+import type { RuntimeResourceTierTrackMetadata } from '../resource-v2';
 import type { HappinessTierDefinition } from './tiered_resource_types';
 import type { WinConditionDefinition } from './win_condition_types';
 
@@ -12,6 +13,8 @@ export type RuleSet = {
 	absorptionCapPct: number;
 	absorptionRounding: 'down' | 'up' | 'nearest';
 	tieredResourceKey: ResourceKey;
+	tieredResourceId?: string;
+	tierTrackMetadata?: RuntimeResourceTierTrackMetadata;
 	tierDefinitions: HappinessTierDefinition[];
 	slotsPerNewLand: number;
 	maxSlotsPerLand: number;
