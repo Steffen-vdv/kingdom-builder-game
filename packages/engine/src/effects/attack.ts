@@ -24,11 +24,44 @@ export type {
 	AttackEvaluationTargetLog,
 } from '@kingdom-builder/protocol';
 export { resolveAttack } from './attack/resolve';
+type RawAttackStatParam = {
+	role?: unknown;
+	key?: unknown;
+};
+
+type AttackEffectParams = {
+	target?: AttackTarget;
+	stats?: RawAttackStatParam[];
+	ignoreAbsorption?: boolean;
+	ignoreFortification?: boolean;
+	onDamage?: { attacker?: EffectDef[]; defender?: EffectDef[] };
+};
+
+function resolveAbsorptionResourceId(
+	stats: RawAttackStatParam[] | undefined,
+): string | undefined {
+	if (!Array.isArray(stats)) {
+		return undefined;
+	}
+
+	for (const entry of stats) {
+		if (!entry || typeof entry !== 'object') {
+			continue;
+		}
+
+		if (entry.role === 'absorption' && typeof entry.key === 'string') {
+			return entry.key;
+		}
+	}
+
+	return undefined;
+}
+
 export const attackPerform: EffectHandler = (effectDefinition, context) => {
 	const attacker = context.activePlayer;
 	const defender = context.opponent;
-	const effectParams = effectDefinition.params || {};
-	const target = effectParams['target'] as AttackTarget | undefined;
+	const effectParams = (effectDefinition.params || {}) as AttackEffectParams;
+	const target = effectParams.target;
 	if (!target) {
 		return;
 	}
@@ -42,9 +75,21 @@ export const attackPerform: EffectHandler = (effectDefinition, context) => {
 	context.passives.runEvaluationMods('attack:power', context, powerModifiers);
 	const modifiedDamage = powerModifiers[0]!.amount;
 
-	const { onDamage, ...calcOptions } = effectParams as {
-		onDamage?: { attacker?: EffectDef[]; defender?: EffectDef[] };
-	} & AttackCalcOptions;
+	const absorptionResourceId = resolveAbsorptionResourceId(effectParams.stats);
+	const calcOptions: AttackCalcOptions = {
+		...(effectParams.ignoreAbsorption !== undefined
+			? {
+					ignoreAbsorption: effectParams.ignoreAbsorption,
+				}
+			: {}),
+		...(effectParams.ignoreFortification !== undefined
+			? {
+					ignoreFortification: effectParams.ignoreFortification,
+				}
+			: {}),
+		...(absorptionResourceId ? { absorptionResourceId } : {}),
+	};
+	const { onDamage } = effectParams;
 
 	const result = resolveAttack(
 		defender,

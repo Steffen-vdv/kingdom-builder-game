@@ -104,7 +104,7 @@ export const populationParams = () => new PopulationEffectParamsBuilder();
 export type AttackStatRole = 'power' | 'absorption' | 'fortification';
 export type AttackStatAnnotation = {
 	role: AttackStatRole;
-	key: StatKey;
+	key: string;
 	label?: string;
 	icon?: string;
 };
@@ -139,7 +139,7 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	ignoreFortification(flag = true) {
 		return this.set('ignoreFortification', flag);
 	}
-	stat(role: AttackStatRole, key: StatKey, overrides: { label?: string; icon?: string } = {}) {
+	stat(role: AttackStatRole, key: string, overrides: { label?: string; icon?: string } = {}) {
 		const stats = this.params.stats || (this.params.stats = []);
 		const existingIndex = stats.findIndex((item) => item.role === role);
 		const annotation: AttackStatAnnotation = {
@@ -157,7 +157,7 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	powerStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
 		return this.stat('power', key, overrides);
 	}
-	absorptionStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
+	absorptionStat(key: string, overrides?: { label?: string; icon?: string }) {
 		return this.stat('absorption', key, overrides);
 	}
 	fortificationStat(key: StatKey, overrides?: { label?: string; icon?: string }) {

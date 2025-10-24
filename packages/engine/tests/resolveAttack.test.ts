@@ -3,12 +3,66 @@ import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { ResourceV2Id } from '@kingdom-builder/contents';
+
+const ABSORPTION_ID = ResourceV2Id.Absorption;
+
+function ensureAbsorptionRegistered(
+	engineContext: ReturnType<typeof createTestEngine>,
+): string {
+	const registry = engineContext.resourceV2.getRegistry();
+	if (!registry) {
+		throw new Error('ResourceV2 registry is not initialized.');
+	}
+	registry.getResource(ABSORPTION_ID);
+	return ABSORPTION_ID;
+}
 
 function makeAbsorptionEffect(amount: number): EffectDef {
 	return {
-		type: 'stat',
+		type: 'resource',
 		method: 'add',
-		params: { key: Stat.absorption, amount },
+		params: { id: ABSORPTION_ID, amount },
+		meta: { reconciliation: 'clamp' },
+	};
+}
+
+function setAbsorption(
+	engineContext: ReturnType<typeof createTestEngine>,
+	player: ReturnType<typeof createTestEngine>['activePlayer'],
+	value: number,
+): void {
+	const id = ensureAbsorptionRegistered(engineContext);
+	const current = player.resourceV2.amounts[id] ?? 0;
+	const delta = value - current;
+	if (delta === 0) {
+		return;
+	}
+	const originalIndex = engineContext.game.currentPlayerIndex;
+	const playerIndex = engineContext.game.players.indexOf(player);
+	engineContext.game.currentPlayerIndex = playerIndex;
+	engineContext.resourceV2.applyValueChange(engineContext, player, id, {
+		delta,
+		reconciliation: 'clamp',
+	});
+	engineContext.game.currentPlayerIndex = originalIndex;
+}
+
+function getAbsorption(
+	engineContext: ReturnType<typeof createTestEngine>,
+	player: ReturnType<typeof createTestEngine>['activePlayer'],
+): number {
+	const id = ensureAbsorptionRegistered(engineContext);
+	return player.resourceV2.amounts[id] ?? 0;
+}
+
+function absorptionOptions<T extends Record<string, unknown>>(
+	engineContext: ReturnType<typeof createTestEngine>,
+	overrides: T = {} as T,
+): T & { absorptionResourceId: string } {
+	return {
+		absorptionResourceId: ensureAbsorptionRegistered(engineContext),
+		...overrides,
 	};
 }
 
@@ -24,10 +78,16 @@ describe('resolveAttack', () => {
 			},
 			engineContext,
 		);
-		const result = resolveAttack(defender, 10, engineContext, {
-			type: 'resource',
-			key: Resource.castleHP,
-		});
+		const result = resolveAttack(
+			defender,
+			10,
+			engineContext,
+			{
+				type: 'resource',
+				key: Resource.castleHP,
+			},
+			absorptionOptions(engineContext),
+		);
 		expect(result.damageDealt).toBe(5);
 	});
 
@@ -40,10 +100,16 @@ describe('resolveAttack', () => {
 		attacker.gold = 0;
 		const startHP = defender.resources[Resource.castleHP];
 		const startGold = defender.gold;
-		const result = resolveAttack(defender, 5, engineContext, {
-			type: 'resource',
-			key: Resource.castleHP,
-		});
+		const result = resolveAttack(
+			defender,
+			5,
+			engineContext,
+			{
+				type: 'resource',
+				key: Resource.castleHP,
+			},
+			absorptionOptions(engineContext),
+		);
 		expect(result.damageDealt).toBe(4);
 		expect(defender.resources[Resource.castleHP]).toBe(
 			startHP - result.damageDealt,
@@ -60,12 +126,18 @@ describe('resolveAttack', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.game.opponent;
 		engineContext.services.rules.absorptionRounding = 'up';
-		defender.absorption = 0.5;
+		setAbsorption(engineContext, defender, 0.5);
 		const start = defender.resources[Resource.castleHP];
-		const result = resolveAttack(defender, 1, engineContext, {
-			type: 'resource',
-			key: Resource.castleHP,
-		});
+		const result = resolveAttack(
+			defender,
+			1,
+			engineContext,
+			{
+				type: 'resource',
+				key: Resource.castleHP,
+			},
+			absorptionOptions(engineContext),
+		);
 		expect(result.damageDealt).toBe(1);
 		expect(defender.resources[Resource.castleHP]).toBe(start - 1);
 	});
@@ -74,28 +146,34 @@ describe('resolveAttack', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.game.opponent;
 		engineContext.services.rules.absorptionRounding = 'nearest';
-		defender.absorption = 0.6;
-		const result = resolveAttack(defender, 1, engineContext, {
-			type: 'resource',
-			key: Resource.castleHP,
-		});
+		setAbsorption(engineContext, defender, 0.6);
+		const result = resolveAttack(
+			defender,
+			1,
+			engineContext,
+			{
+				type: 'resource',
+				key: Resource.castleHP,
+			},
+			absorptionOptions(engineContext),
+		);
 		expect(result.damageDealt).toBe(0);
 	});
 
 	it('can ignore absorption and fortification when options specify', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.game.opponent;
-		defender.absorption = 0.5;
+		setAbsorption(engineContext, defender, 0.5);
 		defender.stats[Stat.fortificationStrength] = 5;
 		const result = resolveAttack(
 			defender,
 			10,
 			engineContext,
 			{ type: 'resource', key: Resource.castleHP },
-			{
+			absorptionOptions(engineContext, {
 				ignoreAbsorption: true,
 				ignoreFortification: true,
-			},
+			}),
 		);
 		expect(result.damageDealt).toBe(10);
 		expect(defender.fortificationStrength).toBe(5);
@@ -139,14 +217,20 @@ describe('resolveAttack', () => {
 		);
 		engineContext.game.currentPlayerIndex = 0;
 		const beforeGold = defender.gold;
-		const result = resolveAttack(defender, 4, engineContext, {
-			type: 'resource',
-			key: Resource.castleHP,
-		});
+		const result = resolveAttack(
+			defender,
+			4,
+			engineContext,
+			{
+				type: 'resource',
+				key: Resource.castleHP,
+			},
+			absorptionOptions(engineContext),
+		);
 		expect(result.damageDealt).toBe(0);
 		expect(defender.resources[Resource.castleHP]).toBe(10);
 		expect(defender.fortificationStrength).toBe(0);
-		expect(defender.absorption).toBe(0);
+		expect(getAbsorption(engineContext, defender)).toBe(0);
 		expect(defender.gold).toBe(beforeGold + 1);
 	});
 
@@ -161,11 +245,7 @@ describe('resolveAttack', () => {
 				id: 'bastion',
 				effects: [],
 				onBeforeAttacked: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
+					makeAbsorptionEffect(0.5),
 					{
 						type: 'stat',
 						method: 'add',
@@ -176,11 +256,7 @@ describe('resolveAttack', () => {
 					},
 				],
 				onAttackResolved: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
+					makeAbsorptionEffect(0.5),
 					{
 						type: 'stat',
 						method: 'add',
@@ -214,6 +290,7 @@ describe('resolveAttack', () => {
 				type: 'resource',
 				key: Resource.castleHP,
 			},
+			absorptionOptions(engineContext),
 		);
 		const rounding = engineContext.services.rules.absorptionRounding;
 		const base = attacker.armyStrength as number;
@@ -226,7 +303,7 @@ describe('resolveAttack', () => {
 		const expected = Math.max(0, reduced - 1);
 		expect(result.damageDealt).toBe(expected);
 		expect(defender.resources[Resource.castleHP]).toBe(startHP - expected);
-		expect(defender.absorption).toBe(1);
+		expect(getAbsorption(engineContext, defender)).toBe(1);
 		expect(defender.fortificationStrength).toBe(5);
 	});
 
@@ -235,10 +312,16 @@ describe('resolveAttack', () => {
 		const defender = engineContext.game.opponent;
 		const startHp = defender.resources[Resource.castleHP];
 		expect(engineContext.game.conclusion).toBeUndefined();
-		resolveAttack(defender, startHp, engineContext, {
-			type: 'resource',
-			key: Resource.castleHP,
-		});
+		resolveAttack(
+			defender,
+			startHp,
+			engineContext,
+			{
+				type: 'resource',
+				key: Resource.castleHP,
+			},
+			absorptionOptions(engineContext),
+		);
 		expect(engineContext.game.conclusion?.conditionId).toBe('castle-destroyed');
 		expect(engineContext.game.conclusion?.winnerId).toBe(
 			engineContext.game.active.id,

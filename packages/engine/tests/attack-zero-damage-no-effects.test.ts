@@ -1,8 +1,49 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef, type AttackLog } from '../src/index.ts';
-import { Resource } from '../src/state/index.ts';
+import { Resource, Stat } from '../src/state/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { ResourceV2Id } from '@kingdom-builder/contents';
+
+const ABSORPTION_ID = ResourceV2Id.Absorption;
+
+function ensureAbsorptionRegistered(
+	engineContext: ReturnType<typeof createTestEngine>,
+): string {
+	const registry = engineContext.resourceV2.getRegistry();
+	if (!registry) {
+		throw new Error('ResourceV2 registry is not initialized.');
+	}
+	registry.getResource(ABSORPTION_ID);
+	return ABSORPTION_ID;
+}
+
+function setAbsorption(
+	engineContext: ReturnType<typeof createTestEngine>,
+	player: ReturnType<typeof createTestEngine>['activePlayer'],
+	value: number,
+): void {
+	const id = ensureAbsorptionRegistered(engineContext);
+	const current = player.resourceV2.amounts[id] ?? 0;
+	const delta = value - current;
+	if (delta === 0) {
+		return;
+	}
+	const originalIndex = engineContext.game.currentPlayerIndex;
+	const playerIndex = engineContext.game.players.indexOf(player);
+	engineContext.game.currentPlayerIndex = playerIndex;
+	engineContext.resourceV2.applyValueChange(engineContext, player, id, {
+		delta,
+		reconciliation: 'clamp',
+	});
+	engineContext.game.currentPlayerIndex = originalIndex;
+}
+
+const DEFAULT_ATTACK_STATS = [
+	{ role: 'power', key: Stat.armyStrength },
+	{ role: 'absorption', key: ABSORPTION_ID },
+	{ role: 'fortification', key: Stat.fortificationStrength },
+];
 
 const attackLogKey = 'attack:perform';
 
@@ -13,7 +54,7 @@ describe('attack:perform', () => {
 		const defender = engineContext.opponent;
 
 		attacker.armyStrength = 1;
-		defender.absorption = 1;
+		setAbsorption(engineContext, defender, 1);
 		defender.fortificationStrength = 0;
 
 		const previousState = {
@@ -34,6 +75,7 @@ describe('attack:perform', () => {
 			method: 'perform',
 			params: {
 				target: { type: 'resource', key: Resource.castleHP },
+				stats: DEFAULT_ATTACK_STATS,
 				onDamage: {
 					attacker: [
 						{
@@ -98,13 +140,14 @@ describe('attack:perform', () => {
 		engineContext.game.currentPlayerIndex = 0;
 
 		attacker.armyStrength = 2;
-		defender.absorption = 1;
+		setAbsorption(engineContext, defender, 1);
 
 		const effect: EffectDef = {
 			type: 'attack',
 			method: 'perform',
 			params: {
 				target: { type: 'building', id: workshop.id },
+				stats: DEFAULT_ATTACK_STATS,
 				onDamage: {
 					attacker: [
 						{

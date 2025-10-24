@@ -23,6 +23,7 @@ export type AttackTarget =
 export interface AttackCalcOptions {
 	ignoreAbsorption?: boolean;
 	ignoreFortification?: boolean;
+	absorptionResourceId?: string;
 }
 
 export type AttackLogOwner = 'attacker' | 'defender';

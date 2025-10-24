@@ -1,8 +1,9 @@
 import { Registry, developmentSchema } from '@kingdom-builder/protocol';
 import { Stat } from './stats';
 import { Resource } from './resources';
-import { development, effect, resourceParams, statParams, developmentParams, developmentEvaluator } from './config/builders';
+import { development, effect, resourceParams, statParams, developmentParams, developmentEvaluator, resourceV2Add } from './config/builders';
 import { Types, StatMethods, DevelopmentMethods, ResourceMethods } from './config/builderShared';
+import { ResourceV2Id } from './resourceV2';
 import { Focus } from './defs';
 import type { DevelopmentDef } from './defs';
 
@@ -72,7 +73,7 @@ export function createDevelopmentRegistry() {
 			.name('Watchtower')
 			.icon('🗼')
 			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.fortificationStrength).amount(2)).build())
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.absorption).amount(0.5)).build())
+			.onBuild(resourceV2Add(ResourceV2Id.Absorption).amount(0.5).build())
 			.onAttackResolved(effect(Types.Development, DevelopmentMethods.REMOVE).params(watchtowerRemovalParams).build())
 			.order(4)
 			.focus(Focus.Defense)

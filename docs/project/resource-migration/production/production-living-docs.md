@@ -59,7 +59,7 @@ docs/project/resource-migration/production/production-living-docs.md | Introduce
 add/remove/transfer sequences, verifying bounds, touched propagation, recent gain resets, and tier transition hook ordering,
 then logged the results in the production living doc. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` |
 Extend property scenarios with percent-based reconciliation and multi-resource tier tracks once those mechanics are supported. |
-| Resource Migration MVP - P3 - T24 | 2025-**-** | _(add entry)_ | | _(reserved for T24 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T24 | 2025-10-24 | gpt-5-codex | packages/contents/src/resourceV2/definitions.ts; packages/contents/src/actions/basicActions.ts; packages/engine/src/effects/attack.ts; docs/project/resource-migration/production/production-living-docs.md | Migrated Absorption to ResourceV2 definitions, replaced content/engine hooks to resolve the new id, and refreshed docs/tests for the pilot migration. | `npm run lint`; `npm run test --workspace=@kingdom-builder/contents`; `npm run test --workspace=@kingdom-builder/engine` | Remove the legacy absorption stat fallback once remaining resources move to ResourceV2 and update dependent tooling. |
 | Resource Migration MVP - P3 - T25 | 2025-**-** | _(add entry)_ | | _(reserved for T25 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T26 | 2025-**-** | _(add entry)_ | | _(reserved for T26 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T27 | 2025-**-** | _(add entry)_ | | _(reserved for T27 assignee – update only this row.)_ | | |
@@ -72,14 +72,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-24 09:23
-**Current Focus:** Resource Migration MVP - P3 - T23 ResourceV2 reconciliation property suite
-**State Summary:** Added a Fast-Check property harness that randomizes ResourceV2 add, remove, and transfer operations for both players, asserting clamped bounds and touched propagation (including parent aggregates), recent gain reset alignment, and tier service hook ordering. Captured tier hook emissions through a test-only effect to confirm the handover documentation.
+**Timestamp (UTC):** 2025-10-24 10:05
+**Current Focus:** Resource Migration MVP - P3 - T24 Absorption ResourceV2 migration
+**State Summary:** Defined the Absorption ResourceV2 entry with percent display and baseline tier track, replaced legacy `Stat.absorption` references across contents/engine/tests, and validated the new registries through contents and engine suites. Updated the living doc to log the pilot migration.
 
 - **Next Suggested Tasks:**
-  - Extend the property suite to percent-based deltas, multi-resource tier tracks, and snapshot serialization when those paths land.
-  - Mix hook suppression metadata with tier transitions once additional reconciliation modes or hooks arrive.
-- **Blocking Issues / Risks:** None; lint and engine suites are green and the property run adds roughly 1.2s to the engine test cycle.
+  - Migrate the next resource candidates (e.g., Fortification Strength) to ResourceV2 and prune the remaining stat fallbacks.
+  - Update session serialization/UI translators to remove dual-system safeguards once additional resources convert successfully.
+- **Blocking Issues / Risks:** None; lint plus contents and engine workspaces are green post-migration.
 
 ## 5. Notes & Decisions Archive
 

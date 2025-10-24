@@ -2,6 +2,18 @@ import { describe, it, expect, vi } from 'vitest';
 import { resolveAttack } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource } from '../src/state/index.ts';
+import { ResourceV2Id } from '@kingdom-builder/contents';
+
+const ABSORPTION_ID = ResourceV2Id.Absorption;
+
+function absorptionOptions(engineContext: ReturnType<typeof createTestEngine>) {
+	const registry = engineContext.resourceV2.getRegistry();
+	if (!registry) {
+		throw new Error('ResourceV2 registry is not initialized.');
+	}
+	registry.getResource(ABSORPTION_ID);
+	return { absorptionResourceId: ABSORPTION_ID };
+}
 import {
 	attackTargetHandlers,
 	type AttackTargetHandler,
@@ -54,7 +66,13 @@ describe('resolveAttack target handlers', () => {
 		attackTargetHandlers.resource = stubHandler;
 
 		try {
-			const result = resolveAttack(defender, 2, engineContext, target);
+			const result = resolveAttack(
+				defender,
+				2,
+				engineContext,
+				target,
+				absorptionOptions(engineContext),
+			);
 			expect(applySpy).toHaveBeenCalledTimes(1);
 			expect(buildSpy).toHaveBeenCalledTimes(1);
 			const [applyTarget, appliedDamage] = applySpy.mock.calls[0]!;

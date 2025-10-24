@@ -70,12 +70,20 @@ export function resolveAttack(
 
 	context.game.currentPlayerIndex = originalIndex;
 
-	const absorption = options.ignoreAbsorption
-		? 0
-		: Math.min(
-				(defender.absorption as number) || 0,
-				context.services.rules.absorptionCapPct,
-			);
+	let absorption = 0;
+	if (!options.ignoreAbsorption) {
+		const resourceId = options.absorptionResourceId;
+		if (resourceId) {
+			const state = defender.resourceV2;
+			if (Object.prototype.hasOwnProperty.call(state.amounts, resourceId)) {
+				absorption = state.amounts[resourceId] ?? 0;
+			}
+		} else if ('absorption' in defender) {
+			absorption = (defender.absorption as number) || 0;
+		}
+
+		absorption = Math.min(absorption, context.services.rules.absorptionCapPct);
+	}
 	const damageAfterAbsorption = options.ignoreAbsorption
 		? damage
 		: applyAbsorption(
