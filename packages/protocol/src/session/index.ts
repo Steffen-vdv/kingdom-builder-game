@@ -86,16 +86,18 @@ export interface SessionPlayerStateSnapshot {
 	statsHistory: Record<string, boolean>;
 	population: Record<string, number>;
 	/**
-	 * Optional ResourceV2 value map. Will be populated once the session
-	 * engine emits ResourceV2 snapshots alongside the legacy
-	 * resource/stat/population sets.
+	 * ResourceV2 value map mirrored directly from the engine snapshot.
+	 * Post-migration transports populate this for every player; legacy
+	 * servers may omit the field entirely, so transitional clients should
+	 * continue to guard against {@link undefined}.
 	 */
 	valuesV2?: Record<string, number>;
 	/**
-	 * Optional ResourceV2 bound map mirroring the player's effective
-	 * lower/upper bounds for each resource id. Emitted alongside
-	 * {@link valuesV2} so clients can clamp projections without consulting
-	 * legacy resource fields.
+	 * ResourceV2 lower/upper bound map aligned with {@link valuesV2}. This
+	 * accompanies the player snapshot whenever ResourceV2 data is enabled
+	 * so consumers can clamp projections without inspecting legacy
+	 * resource sets. Remains optional only for compatibility with
+	 * pre-migration servers.
 	 */
 	resourceBoundsV2?: Record<string, SessionResourceBoundsV2>;
 	lands: SessionLandSnapshot[];
@@ -126,6 +128,11 @@ export interface SessionGameSnapshot {
 	activePlayerId: SessionPlayerId;
 	opponentId: SessionPlayerId;
 	conclusion?: SessionGameConclusionSnapshot;
+	/**
+	 * Session-level ResourceV2 catalog. ResourceV2-enabled sessions always
+	 * emit this structure; older transports may omit it until they adopt
+	 * the unified catalog payloads.
+	 */
 	resourceCatalogV2?: SessionResourceCatalogV2;
 }
 
