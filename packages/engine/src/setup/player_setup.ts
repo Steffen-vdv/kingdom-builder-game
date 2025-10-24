@@ -7,6 +7,7 @@ import {
 	initialisePlayerResourceState,
 	setResourceValue,
 } from '../resource-v2';
+import { mapResourceIdToLegacyKey } from '../resource-v2/legacyMapping';
 import type {
 	ActionConfig as ActionDef,
 	PlayerStartConfig,
@@ -261,9 +262,65 @@ export function initializePlayerActions(
 	}
 }
 
+export interface ActionCostResolution {
+	resource: ResourceKey;
+	globalAmount: number | null;
+}
+
+function resolveLegacyResourceKey(
+	resourceId: string,
+	catalog: RuntimeResourceCatalog,
+): ResourceKey {
+	if (!catalog) {
+		throw new Error(
+			'ResourceV2 catalog is required to resolve global action cost resource ids.',
+		);
+	}
+	return mapResourceIdToLegacyKey(resourceId, catalog);
+}
+
+function resolveGlobalCost(
+	catalog: RuntimeResourceCatalog | undefined,
+): { resourceId: string; amount: number } | null {
+	if (!catalog) {
+		return null;
+	}
+	for (const definition of catalog.resources.ordered) {
+		if (definition.globalCost) {
+			return {
+				resourceId: definition.id,
+				amount: definition.globalCost.amount,
+			};
+		}
+	}
+	return null;
+}
+
 export function determineCommonActionCostResource(
 	actions: Registry<ActionDef>,
-): ResourceKey {
+	resourceCatalog?: RuntimeResourceCatalog,
+): ActionCostResolution {
+	const globalCost = resolveGlobalCost(resourceCatalog);
+	if (globalCost) {
+		const resourceKey = resolveLegacyResourceKey(
+			globalCost.resourceId,
+			resourceCatalog!,
+		);
+		for (const [actionId, actionDefinition] of actions.entries()) {
+			if (actionDefinition.system) {
+				continue;
+			}
+			const override = actionDefinition.baseCosts?.[resourceKey];
+			if (override !== undefined && override !== globalCost.amount) {
+				const id = actionDefinition.id ?? actionId;
+				throw new Error(
+					`Action "${id}" overrides global cost resource "${resourceKey}" with ${override}. ` +
+						'Global action cost resources cannot be overridden per action.',
+				);
+			}
+		}
+		return { resource: resourceKey, globalAmount: globalCost.amount };
+	}
 	let intersection: string[] | null = null;
 	for (const [, actionDefinition] of actions.entries()) {
 		if (actionDefinition.system) {
@@ -278,7 +335,8 @@ export function determineCommonActionCostResource(
 			: costKeys;
 	}
 	if (intersection && intersection.length > 0) {
-		return intersection[0] as ResourceKey;
+		const resource = intersection[0] as ResourceKey;
+		return { resource, globalAmount: null };
 	}
-	return '' as ResourceKey;
+	return { resource: '' as ResourceKey, globalAmount: null };
 }

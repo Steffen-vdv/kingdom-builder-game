@@ -44,15 +44,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 09:10
-- **Current Focus:** Resource Migration MVP - P2 - T39 - Player State Resource Proxy
-- **State Summary:** PlayerState now proxies legacy `resources`, `stats`, and `population` accessors into the ResourceV2 value/bound maps, keeps dynamic property definitions aligned with catalog keys, and migrates legacy mappings during cloning. See [`worklogs/T39-playerstate.md`](../../../../worklogs/T39-playerstate.md) for details, tests, and follow-ups.
+- **Timestamp (UTC):** 2025-10-28 12:40
+- **Current Focus:** Resource Migration MVP - P2 - T41 - Global Action Cost Enforcement
+- **State Summary:** Engine bootstrap now sources the global action cost directly from the ResourceV2 catalog, maps it back to the legacy resource key, and records the catalog amount on `EngineContext` so passive-aware cost calculations respect the unified data flow. The building cost collector reads ResourceV2 construction payloads before falling back to legacy maps. See [`worklogs/T41-global-cost.md`](../../../../worklogs/T41-global-cost.md) for full notes and follow-ups.
 - **Next Suggested Tasks:**
-  - Update engine start configuration wiring to seed ResourceV2 values/bounds via the new legacy mapping utilities before legacy bags are removed.
-  - Extend other legacy bridges (snapshots, requirement evaluators, etc.) to consume the proxy mappings so we can drop duplicate state later in the migration.
-  - Stabilise `npm run check` by resolving the `developmentTarget()` TypeError thrown during the engine coverage stage and rerun the suite to completion.
-- **Blocking Issues / Risks:** `npm run check` currently fails with `TypeError: (0 , developmentTarget) is not a function` originating from `packages/contents/src/happinessHelpers.ts` while running engine coverage. The failure predates this task and still needs resolution.
-- **Reminder:** Keep per-task worklogs current and coordinate follow-up bridge updates via `worklogs/T39-playerstate.md` until migration coverage expands.
+  - Surface the global action cost amount in session snapshots once the web client begins consuming ResourceV2 metadata.
+  - Audit existing action definitions to remove redundant legacy action point entries now that the catalog enforces the baseline cost.
+  - Resolve the longstanding `vitest` coverage stall so `npm run check` can complete without manual interruption.
+- **Blocking Issues / Risks:** The engine coverage run within `npm run check` still stalls after dozens of queued suites (see chunk 7d50bc), preventing the command from finishing. Investigate the root cause before the enforcement task closes.
+- **Reminder:** Capture any additional enforcement rules in task worklogs and coordinate catalog-dependent updates through the production doc before touching content registries.
 
 ## 5. Notes & Decisions Archive
 

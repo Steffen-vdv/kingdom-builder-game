@@ -176,6 +176,7 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		clonedPassives,
 		source.phases,
 		source.actionCostResource,
+		source.actionCostAmount,
 		compensations,
 	);
 	if (source.aiSystem) {

@@ -1,4 +1,10 @@
 import type { EffectHandler, EffectCostCollector } from '.';
+import { mapResourceIdToLegacyKey } from '../resource-v2/legacyMapping';
+
+interface ResourceChangeEffectParams {
+	readonly resourceId: string;
+	readonly change?: { type: string; amount?: number };
+}
 
 export const buildingAdd: EffectHandler = (
 	effect,
@@ -42,6 +48,28 @@ export const collectBuildingAddCosts: EffectCostCollector = (
 ) => {
 	const id = effect.params?.['id'] as string;
 	if (!id) {
+		return;
+	}
+	const catalog = context.resourceCatalogV2;
+	const construction = effect.params?.['construction'] as
+		| ResourceChangeEffectParams[]
+		| undefined;
+	if (catalog && Array.isArray(construction)) {
+		for (const change of construction) {
+			if (!change || !change.resourceId) {
+				continue;
+			}
+			const config = change.change;
+			if (!config || config.type !== 'amount') {
+				continue;
+			}
+			const amount = config.amount ?? 0;
+			if (!Number.isFinite(amount) || amount === 0) {
+				continue;
+			}
+			const key = mapResourceIdToLegacyKey(change.resourceId, catalog);
+			base[key] = (base[key] ?? 0) + amount;
+		}
 		return;
 	}
 	const building = context.buildings.get(id);

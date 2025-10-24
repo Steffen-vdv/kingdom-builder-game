@@ -29,9 +29,10 @@ describe('action cost helpers', () => {
 			engineContext,
 		);
 
-		expect(standardCosts[apKey]).toBe(
-			engineContext.services.rules.defaultActionAPCost,
-		);
+		const expectedAmount =
+			engineContext.actionCostAmount ??
+			engineContext.services.rules.defaultActionAPCost;
+		expect(standardCosts[apKey]).toBe(expectedAmount);
 		expect(systemCosts[apKey]).toBe(0);
 	});
 

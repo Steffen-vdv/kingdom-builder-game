@@ -241,7 +241,8 @@ export function createEngine({
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
 	gameState.resourceCatalogV2 = runtimeResourceCatalog;
-	const actionCostResource = determineCommonActionCostResource(actions);
+	const { resource: actionCostResource, globalAmount: globalActionCostAmount } =
+		determineCommonActionCostResource(actions, runtimeResourceCatalog);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
 		startConfig.players?.['A'],
@@ -264,6 +265,7 @@ export function createEngine({
 		passiveManager,
 		phases,
 		actionCostResource,
+		globalActionCostAmount,
 		compensationMap,
 	);
 	engineContext.resourceCatalogV2 = runtimeResourceCatalog;
