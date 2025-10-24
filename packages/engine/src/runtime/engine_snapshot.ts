@@ -26,6 +26,7 @@ import type {
 	SessionSnapshotMetadata,
 	SessionEffectLogMap,
 	SessionResourceCatalogV2,
+	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol';
 import type { PassiveRecordSnapshot } from './types';
 import {
@@ -33,6 +34,7 @@ import {
 	deepClone,
 	snapshotPlayer,
 } from './player_snapshot';
+import type { RuntimeResourceCatalog } from '../resource-v2';
 
 function clonePhaseStep(step: StepDef): SessionPhaseStepDefinition {
 	const cloned: SessionPhaseStepDefinition = { id: step.id };
@@ -135,16 +137,82 @@ function snapshotEvaluationModifiers(
 	return result;
 }
 
+function buildResourceMetadata(
+	catalog: RuntimeResourceCatalog | undefined,
+): Record<string, SessionMetadataDescriptor> | undefined {
+	if (!catalog) {
+		return undefined;
+	}
+	const descriptors: Record<string, SessionMetadataDescriptor> = {};
+	for (const definition of catalog.resources.ordered) {
+		const descriptor: SessionMetadataDescriptor = {
+			label: definition.label,
+		};
+		if (definition.icon) {
+			descriptor.icon = definition.icon;
+		}
+		if (definition.description) {
+			descriptor.description = definition.description;
+		}
+		if (definition.displayAsPercent) {
+			descriptor.displayAsPercent = true;
+		}
+		descriptors[definition.id] = descriptor;
+	}
+	return Object.keys(descriptors).length > 0 ? descriptors : undefined;
+}
+
+function buildResourceGroupMetadata(
+	catalog: RuntimeResourceCatalog | undefined,
+): Record<string, SessionMetadataDescriptor> | undefined {
+	if (!catalog) {
+		return undefined;
+	}
+	const descriptors: Record<string, SessionMetadataDescriptor> = {};
+	for (const group of catalog.groups.ordered) {
+		const parent = group.parent;
+		if (!parent) {
+			continue;
+		}
+		const descriptor: SessionMetadataDescriptor = {
+			label: parent.label,
+		};
+		if (parent.icon) {
+			descriptor.icon = parent.icon;
+		}
+		if (parent.description) {
+			descriptor.description = parent.description;
+		}
+		if (parent.displayAsPercent) {
+			descriptor.displayAsPercent = true;
+		}
+		descriptors[parent.id] = descriptor;
+	}
+	return Object.keys(descriptors).length > 0 ? descriptors : undefined;
+}
+
 export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const conclusion = context.game.conclusion;
 	const rules = cloneRuleSnapshot(context);
 	const effectLogs = cloneEffectLogs(context);
 	const passiveEvaluationModifiers = snapshotEvaluationModifiers(context);
-	const metadata: SessionSnapshotMetadata = effectLogs
+	const runtimeResourceCatalog = context.game.resourceCatalogV2;
+	const resourceMetadataV2 = buildResourceMetadata(runtimeResourceCatalog);
+	const resourceGroupMetadataV2 = buildResourceGroupMetadata(
+		runtimeResourceCatalog,
+	);
+	const metadataBase: SessionSnapshotMetadata = effectLogs
 		? { passiveEvaluationModifiers, effectLogs }
 		: { passiveEvaluationModifiers };
+	const metadata: SessionSnapshotMetadata = {
+		...metadataBase,
+		...(resourceMetadataV2 ? { resourcesV2: resourceMetadataV2 } : {}),
+		...(resourceGroupMetadataV2
+			? { resourceGroupsV2: resourceGroupMetadataV2 }
+			: {}),
+	};
 	const resourceCatalogV2: SessionResourceCatalogV2 | undefined =
-		context.game.resourceCatalogV2;
+		runtimeResourceCatalog as unknown as SessionResourceCatalogV2 | undefined;
 	return {
 		game: {
 			turn: context.game.turn,
@@ -181,6 +249,8 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 		rules,
 		passiveRecords: clonePassiveRecords(context),
 		metadata,
+		...(resourceMetadataV2 ? { resourceMetadataV2 } : {}),
+		...(resourceGroupMetadataV2 ? { resourceGroupMetadataV2 } : {}),
 	};
 }
 

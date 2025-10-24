@@ -34,7 +34,7 @@ export class EngineContext {
 	resourceCatalogV2?: RuntimeResourceCatalog;
 	aiSystem?: AISystem;
 	recentResourceGains: {
-		key: ResourceKey;
+		key: string;
 		amount: number;
 	}[] = [];
 	// Cache base values for stat:add_pct per turn/phase/step to ensure
