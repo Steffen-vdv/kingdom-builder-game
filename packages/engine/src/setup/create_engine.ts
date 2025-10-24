@@ -272,10 +272,25 @@ export function createEngine({
 	const aiSystem = createAISystem({ performAction, advance });
 	aiSystem.register(playerTwo.id, createTaxCollectorController(playerTwo.id));
 	engineContext.aiSystem = aiSystem;
-	applyPlayerStartConfiguration(playerOne, startConfig.player, rules);
-	applyPlayerStartConfiguration(playerOne, playerACompensation, rules);
-	applyPlayerStartConfiguration(playerTwo, startConfig.player, rules);
-	applyPlayerStartConfiguration(playerTwo, playerBCompensation, rules);
+	if (!runtimeResourceCatalog) {
+		throw new Error(
+			'createEngine requires a ResourceV2 catalog to apply start configurations.',
+		);
+	}
+	applyPlayerStartConfiguration(playerOne, startConfig.player, rules, {
+		resourceCatalog: runtimeResourceCatalog,
+		initialiseResources: true,
+	});
+	applyPlayerStartConfiguration(playerOne, playerACompensation, rules, {
+		resourceCatalog: runtimeResourceCatalog,
+	});
+	applyPlayerStartConfiguration(playerTwo, startConfig.player, rules, {
+		resourceCatalog: runtimeResourceCatalog,
+		initialiseResources: true,
+	});
+	applyPlayerStartConfiguration(playerTwo, playerBCompensation, rules, {
+		resourceCatalog: runtimeResourceCatalog,
+	});
 	initializePlayerActions(playerOne, actions);
 	initializePlayerActions(playerTwo, actions);
 	engineContext.game.currentPlayerIndex = 0;

@@ -2,6 +2,12 @@ import { Land, Stat } from '../state';
 import type { PlayerState, StatKey, ResourceKey } from '../state';
 import type { RuleSet } from '../services';
 import { applyStatDelta } from '../stat_sources';
+import type { RuntimeResourceCatalog } from '../resource-v2';
+import {
+	ensureBoundFlags,
+	initialisePlayerResourceState,
+	setResourceValue,
+} from '../resource-v2';
 import type {
 	ActionConfig as ActionDef,
 	PlayerStartConfig,
@@ -22,31 +28,119 @@ function isStatKey(key: string): key is StatKey {
 	return key in Stat;
 }
 
+interface ApplyPlayerStartConfigurationOptions {
+	resourceCatalog?: RuntimeResourceCatalog;
+	initialiseResources?: boolean;
+}
+
 export function applyPlayerStartConfiguration(
 	playerState: PlayerState,
 	config: PlayerStartConfig,
 	rules: RuleSet,
+	options: ApplyPlayerStartConfigurationOptions = {},
 ): void {
-	for (const [resourceKey, value] of Object.entries(config.resources || {})) {
-		playerState.resources[resourceKey] = value ?? 0;
+	const { resourceCatalog, initialiseResources = false } = options;
+	if (resourceCatalog && initialiseResources) {
+		initialisePlayerResourceState(playerState, resourceCatalog);
 	}
-	for (const [statKey, value] of Object.entries(config.stats || {})) {
-		if (!isStatKey(statKey)) {
-			continue;
+	const statKeys = Object.keys(playerState.stats);
+	const previousStatValues: Record<string, number> = {};
+	for (const statKey of statKeys) {
+		previousStatValues[statKey] = playerState.stats[statKey] ?? 0;
+	}
+	if (resourceCatalog) {
+		const valuesV2Entries = Object.entries(config.valuesV2 || {});
+		for (const [resourceId, rawValue] of valuesV2Entries) {
+			const value = rawValue ?? 0;
+			setResourceValue(null, playerState, resourceCatalog, resourceId, value, {
+				suppressTouched: true,
+				suppressRecentEntry: true,
+			});
 		}
-		const statValue = value ?? 0;
-		const previousValue = playerState.stats[statKey] ?? 0;
-		playerState.stats[statKey] = statValue;
-		if (statValue !== 0) {
+		const lowerBoundsEntries = Object.entries(
+			config.resourceLowerBoundsV2 || {},
+		);
+		for (const [resourceId, rawBound] of lowerBoundsEntries) {
+			if (typeof rawBound !== 'number') {
+				continue;
+			}
+			playerState.resourceLowerBounds[resourceId] = rawBound;
+			const flags = ensureBoundFlags(playerState, resourceId);
+			flags.lower = true;
+			const currentValue = playerState.resourceValues[resourceId];
+			if (typeof currentValue === 'number' && currentValue < rawBound) {
+				setResourceValue(
+					null,
+					playerState,
+					resourceCatalog,
+					resourceId,
+					rawBound,
+					{
+						suppressTouched: true,
+						suppressRecentEntry: true,
+					},
+				);
+			}
+		}
+		const upperBoundsEntries = Object.entries(
+			config.resourceUpperBoundsV2 || {},
+		);
+		for (const [resourceId, rawBound] of upperBoundsEntries) {
+			if (typeof rawBound !== 'number') {
+				continue;
+			}
+			playerState.resourceUpperBounds[resourceId] = rawBound;
+			const flags = ensureBoundFlags(playerState, resourceId);
+			flags.upper = true;
+			const currentValue = playerState.resourceValues[resourceId];
+			if (typeof currentValue === 'number' && currentValue > rawBound) {
+				setResourceValue(
+					null,
+					playerState,
+					resourceCatalog,
+					resourceId,
+					rawBound,
+					{
+						suppressTouched: true,
+						suppressRecentEntry: true,
+					},
+				);
+			}
+		}
+	}
+	const applyLegacyBags = !resourceCatalog || !config.valuesV2;
+	if (applyLegacyBags) {
+		for (const [resourceKey, value] of Object.entries(config.resources || {})) {
+			playerState.resources[resourceKey] = value ?? 0;
+		}
+		for (const [statKey, value] of Object.entries(config.stats || {})) {
+			if (!isStatKey(statKey)) {
+				continue;
+			}
+			playerState.stats[statKey] = value ?? 0;
+		}
+		for (const [roleId, value] of Object.entries(config.population || {})) {
+			playerState.population[roleId] = value ?? 0;
+		}
+	}
+	for (const statKey of statKeys) {
+		const previousValue = previousStatValues[statKey] ?? 0;
+		const nextValue = playerState.stats[statKey] ?? 0;
+		if (nextValue !== 0) {
 			playerState.statsHistory[statKey] = true;
 		}
-		const delta = statValue - previousValue;
+		const delta = nextValue - previousValue;
 		if (delta !== 0) {
 			applyStatDelta(playerState, statKey, delta, START_STAT_SOURCE_META);
 		}
 	}
-	for (const [roleId, value] of Object.entries(config.population || {})) {
-		playerState.population[roleId] = value ?? 0;
+	if (!applyLegacyBags) {
+		for (const [roleId, value] of Object.entries(config.population || {})) {
+			if (value === undefined || value === null) {
+				continue;
+			}
+			playerState.population[roleId] = value;
+		}
 	}
 	if (config.lands) {
 		config.lands.forEach((landConfig, index) => {
@@ -106,6 +200,39 @@ export function diffPlayerStartConfiguration(
 		}
 		diff.stats = diff.stats || {};
 		diff.stats[statKey] = overrideValue;
+	}
+	for (const [resourceId, value] of Object.entries(
+		overrideConfig.valuesV2 || {},
+	)) {
+		const baseValue = baseConfig.valuesV2?.[resourceId] ?? 0;
+		const overrideValue = value ?? 0;
+		if (overrideValue === baseValue) {
+			continue;
+		}
+		diff.valuesV2 = diff.valuesV2 || {};
+		diff.valuesV2[resourceId] = overrideValue;
+	}
+	for (const [resourceId, value] of Object.entries(
+		overrideConfig.resourceLowerBoundsV2 || {},
+	)) {
+		const baseValue = baseConfig.resourceLowerBoundsV2?.[resourceId] ?? 0;
+		const overrideValue = value ?? 0;
+		if (overrideValue === baseValue) {
+			continue;
+		}
+		diff.resourceLowerBoundsV2 = diff.resourceLowerBoundsV2 || {};
+		diff.resourceLowerBoundsV2[resourceId] = overrideValue;
+	}
+	for (const [resourceId, value] of Object.entries(
+		overrideConfig.resourceUpperBoundsV2 || {},
+	)) {
+		const baseValue = baseConfig.resourceUpperBoundsV2?.[resourceId] ?? 0;
+		const overrideValue = value ?? 0;
+		if (overrideValue === baseValue) {
+			continue;
+		}
+		diff.resourceUpperBoundsV2 = diff.resourceUpperBoundsV2 || {};
+		diff.resourceUpperBoundsV2[resourceId] = overrideValue;
 	}
 	return diff;
 }
