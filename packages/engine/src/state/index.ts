@@ -82,6 +82,7 @@ export type ResourceV2Key = string;
 export interface PlayerResourceV2RecentGain {
 	key: ResourceV2Key;
 	amount: number;
+	suppressHooks: boolean;
 }
 
 export interface PlayerResourceV2State {
@@ -255,11 +256,12 @@ export function logPlayerResourceV2Gain(
 	state: PlayerResourceV2State,
 	key: ResourceV2Key,
 	amount: number,
+	suppressHooks: boolean,
 ): void {
 	if (amount === 0) {
 		return;
 	}
-	state.recentGains.push({ key, amount });
+	state.recentGains.push({ key, amount, suppressHooks });
 }
 
 export function resetPlayerResourceV2RecentGains(
@@ -392,8 +394,12 @@ export class PlayerState {
 		return Boolean(this.resourceV2.touched[key]);
 	}
 
-	logResourceV2Gain(key: ResourceV2Key, amount: number): void {
-		logPlayerResourceV2Gain(this.resourceV2, key, amount);
+	logResourceV2Gain(
+		key: ResourceV2Key,
+		amount: number,
+		suppressHooks = false,
+	): void {
+		logPlayerResourceV2Gain(this.resourceV2, key, amount, suppressHooks);
 	}
 
 	resetRecentResourceV2Gains(): void {

@@ -12,6 +12,11 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
+import type { ResourceGain } from './services/passive_types';
+
+type RecentResourceGainEntry = ResourceGain & {
+	source: 'resource' | 'resourceV2';
+};
 
 export class EngineContext {
 	constructor(
@@ -30,10 +35,7 @@ export class EngineContext {
 		},
 	) {}
 	aiSystem?: AISystem;
-	recentResourceGains: {
-		key: ResourceKey;
-		amount: number;
-	}[] = [];
+	recentResourceGains: RecentResourceGainEntry[] = [];
 	// Cache base values for stat:add_pct per turn/phase/step to ensure
 	// additive scaling when effects are evaluated multiple times in the
 	// same step (e.g. multiple leaders raising strength).

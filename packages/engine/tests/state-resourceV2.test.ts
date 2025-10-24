@@ -97,7 +97,7 @@ describe('PlayerState ResourceV2 integration', () => {
 		clone.upperBounds[key] = 20;
 		clone.touched[key] = false;
 		clone.recentGains[0]!.amount = 42;
-		clone.recentGains.push({ key, amount: -3 });
+		clone.recentGains.push({ key, amount: -3, suppressHooks: false });
 
 		expect(player.getResourceV2Value(key)).toBe(5);
 		expect(player.getResourceV2LowerBound(key)).toBe(1);

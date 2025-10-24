@@ -108,6 +108,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 			context.recentResourceGains.push({
 				key,
 				amount: defenderDelta,
+				source: 'resource',
 			});
 		}
 		const attackerNext = attacker.resources[key] || 0;
@@ -116,6 +117,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 			context.recentResourceGains.push({
 				key,
 				amount: attackerDelta,
+				source: 'resource',
 			});
 		}
 		return;
@@ -156,6 +158,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 		context.recentResourceGains.push({
 			key,
 			amount: defenderDelta,
+			source: 'resource',
 		});
 	}
 	const attackerNext = attacker.resources[key] || 0;
@@ -164,6 +167,7 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 		context.recentResourceGains.push({
 			key,
 			amount: attackerDelta,
+			source: 'resource',
 		});
 	}
 };

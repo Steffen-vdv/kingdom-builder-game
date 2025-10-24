@@ -48,6 +48,7 @@ export const resourceRemove: EffectHandler = (
 		engineContext.recentResourceGains.push({
 			key,
 			amount: applied,
+			source: 'resource',
 		});
 	}
 	engineContext.services.handleResourceChange(engineContext, player, key);

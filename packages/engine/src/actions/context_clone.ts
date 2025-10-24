@@ -155,6 +155,7 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 	cloned.recentResourceGains = source.recentResourceGains.map((gain) => ({
 		key: gain.key,
 		amount: gain.amount,
+		source: gain.source,
 	}));
 	cloned.statSourceStack = [...source.statSourceStack];
 	return cloned;

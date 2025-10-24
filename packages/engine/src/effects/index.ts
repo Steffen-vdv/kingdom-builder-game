@@ -57,9 +57,13 @@ const flushResourceV2RecentGains = (context: EngineContext) => {
 			continue;
 		}
 		for (const entry of recent) {
+			if (entry.suppressHooks) {
+				continue;
+			}
 			context.recentResourceGains.push({
 				key: entry.key,
 				amount: entry.amount,
+				source: 'resourceV2',
 			});
 		}
 		player.resetRecentResourceV2Gains();

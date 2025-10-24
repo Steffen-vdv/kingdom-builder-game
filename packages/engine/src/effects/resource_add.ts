@@ -29,7 +29,11 @@ export const resourceAdd: EffectHandler = (effect, context, multiplier = 1) => {
 	player.resources[key] = next;
 	const applied = next - current;
 	if (applied !== 0) {
-		context.recentResourceGains.push({ key, amount: applied });
+		context.recentResourceGains.push({
+			key,
+			amount: applied,
+			source: 'resource',
+		});
 	}
 	context.services.handleResourceChange(context, player, key);
 };
