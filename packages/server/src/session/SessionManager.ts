@@ -23,6 +23,9 @@ import type {
 	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	SerializedRegistry,
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -36,6 +39,7 @@ import {
 import {
 	buildSessionAssets,
 	buildResourceRegistry,
+	buildResourceV2Registries,
 	type SessionBaseOptions,
 	type SessionResourceRegistry,
 } from './sessionConfigAssets.js';
@@ -53,6 +57,8 @@ type SessionRuntimeConfig = {
 	rules: RuleSet;
 	resources: SessionResourceRegistry;
 	primaryIconId: string | null;
+	resourcesV2: SerializedRegistry<ResourceV2Definition>;
+	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
 };
 
 type SessionRecord = {
@@ -137,6 +143,9 @@ export class SessionManager {
 			this.resourceOverrides,
 			this.baseOptions.start,
 		);
+		const { resourcesV2, resourceGroupsV2 } = buildResourceV2Registries(
+			this.baseOptions.resourceCatalogV2,
+		);
 		const actionCategories = actionCategoryRegistry
 			? (freezeSerializedRegistry(
 					structuredClone(actionCategoryRegistry),
@@ -151,6 +160,8 @@ export class SessionManager {
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
+			resourcesV2,
+			resourceGroupsV2,
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
@@ -177,6 +188,8 @@ export class SessionManager {
 			rules: frozenRules,
 			resources: frozenResources,
 			primaryIconId,
+			resourcesV2,
+			resourceGroupsV2,
 		});
 	}
 

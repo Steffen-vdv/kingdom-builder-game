@@ -209,5 +209,7 @@ describe('SessionTransport createSession', () => {
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
 		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(registries.resourcesV2).toBeDefined();
+		expect(registries.resourceGroupsV2).toBeDefined();
 	});
 });

@@ -61,6 +61,33 @@ describe('SessionTransport simulateUpcomingPhases', () => {
 		});
 	});
 
+	it('includes ResourceV2 payloads in simulation snapshots', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		if (!session) {
+			throw new Error('Expected engine session to exist.');
+		}
+		const snapshot = session.getSnapshot();
+		const playerId = snapshot.game.players[0]?.id;
+		if (!playerId) {
+			throw new Error('Expected player id from snapshot.');
+		}
+		const response = await transport.simulateUpcomingPhases({
+			body: { sessionId, playerId },
+			headers: authorizedHeaders,
+		});
+		expect(response.result.before.valuesV2).toBeDefined();
+		expect(response.result.after.valuesV2).toBeDefined();
+	});
+
 	it('validates simulation payloads', async () => {
 		const { manager } = createSyntheticSessionManager();
 		const transport = new SessionTransport({

@@ -157,11 +157,15 @@ describe('SessionManager', () => {
 		expect(Object.isFrozen(runtimeConfig.start)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.rules)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.resources)).toBe(true);
+		expect(Object.isFrozen(runtimeConfig.resourcesV2)).toBe(true);
+		expect(Object.isFrozen(runtimeConfig.resourceGroupsV2)).toBe(true);
 		const resourceEntry = runtimeConfig.resources[gainKey];
 		if (!resourceEntry) {
 			throw new Error('Missing synthetic resource definition.');
 		}
 		expect(Object.isFrozen(resourceEntry)).toBe(true);
+		expect(runtimeConfig.resourcesV2).toBeDefined();
+		expect(runtimeConfig.resourceGroupsV2).toBeDefined();
 		expect(manager.getRuntimeConfig()).toBe(runtimeConfig);
 	});
 

@@ -559,7 +559,7 @@ describe('FastifySessionTransport', () => {
 		const body = response.json() as SnapshotResponse & {
 			sessionId: string;
 			ranTurn: boolean;
-			registries: { actions: Record<string, unknown> };
+			registries: SessionRegistriesPayload;
 			actions: unknown[];
 			phaseComplete: boolean;
 		};

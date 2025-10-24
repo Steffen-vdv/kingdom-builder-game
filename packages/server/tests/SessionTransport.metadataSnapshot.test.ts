@@ -26,6 +26,8 @@ describe('SessionTransport metadata snapshots', () => {
 		const snapshot = transport.getMetadataSnapshot();
 		expect(snapshot.metadata).toEqual(manager.getMetadata());
 		expect(snapshot.registries).toEqual(manager.getRegistries());
+		expect(snapshot.registries.resourcesV2).toBeDefined();
+		expect(snapshot.registries.resourceGroupsV2).toBeDefined();
 	});
 
 	it('returns session metadata when a session id is provided', () => {
@@ -43,5 +45,7 @@ describe('SessionTransport metadata snapshots', () => {
 		expect(snapshot.registries).toEqual(
 			manager.getSessionRegistries(sessionId),
 		);
+		expect(snapshot.registries.resourcesV2).toBeDefined();
+		expect(snapshot.registries.resourceGroupsV2).toBeDefined();
 	});
 });
