@@ -23,4 +23,18 @@ describe('EngineContext enqueue', () => {
 		await engineContext.enqueue(() => advance(engineContext));
 		expect(order).toEqual([1, 2, 3]);
 	});
+
+	it('continues scheduling after a rejected task', async () => {
+		const engineContext = createTestEngine();
+		const events: string[] = [];
+		const failingTask = engineContext.enqueue(() => {
+			events.push('before-error');
+			throw new Error('enqueue failure');
+		});
+		await expect(failingTask).rejects.toThrow('enqueue failure');
+		await engineContext.enqueue(() => {
+			events.push('after-error');
+		});
+		expect(events).toEqual(['before-error', 'after-error']);
+	});
 });
