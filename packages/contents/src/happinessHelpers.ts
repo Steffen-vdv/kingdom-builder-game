@@ -1,11 +1,9 @@
-import type { EffectConfig, PassiveMetadata } from '@kingdom-builder/protocol';
-import type { ResourceV2TierTrackMetadata } from './resourceV2';
+import type { EffectConfig } from '@kingdom-builder/protocol';
 import { costModParams, developmentTarget, resultModParams, statAddEffect, effect } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './config/builderShared';
-import { formatPassiveRemoval } from './text';
 import type { passiveParams } from './config/builders';
-import type { ResourceKey } from './resources';
-import type { StatKey } from './stats';
+import { Resource } from './resources';
+import { Stat } from './stats';
 
 export type HappinessTierSlug = 'despair' | 'misery' | 'grim' | 'unrest' | 'steady' | 'content' | 'joyful' | 'elated' | 'ecstatic';
 
@@ -22,17 +20,12 @@ const DEVELOPMENT_EVALUATION = developmentTarget();
 export const incomeModifier = (id: string, percent: number) =>
 	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(DEVELOPMENT_EVALUATION).percent(percent).build()).build();
 
-const GOLD_RESOURCE_KEY: ResourceKey = 'gold';
-const GROWTH_STAT_KEY: StatKey = 'growth';
+export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).key(Resource.gold).percent(-0.2).build()).build();
 
-export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).key(GOLD_RESOURCE_KEY).percent(-0.2).build()).build();
-
-export const growthBonusEffect = (amount: number) => statAddEffect(GROWTH_STAT_KEY, amount);
+export const growthBonusEffect = (amount: number) => statAddEffect(Stat.growth, amount);
 
 type TierPassiveEffectOptions = {
 	tierId: string;
-	resourceId: string;
-	tierTrackMetadata: ResourceV2TierTrackMetadata;
 	summary: string;
 	summaryToken?: string;
 	removalDetail: string;
@@ -42,13 +35,7 @@ type TierPassiveEffectOptions = {
 	name?: string;
 };
 
-type TierPassiveMetadata = PassiveMetadata & {
-	resourceId: string;
-	tierTrack: ResourceV2TierTrackMetadata;
-	tierId: string;
-};
-
-export function createTierPassiveEffect({ tierId, resourceId, tierTrackMetadata, summary, summaryToken, removalDetail, params, effects = [], icon, name }: TierPassiveEffectOptions) {
+export function createTierPassiveEffect({ tierId, summary, summaryToken, removalDetail, params, effects = [], icon, name }: TierPassiveEffectOptions) {
 	params.detail(summaryToken ?? summary);
 	if (name) {
 		params.name(name);
@@ -56,23 +43,26 @@ export function createTierPassiveEffect({ tierId, resourceId, tierTrackMetadata,
 	if (icon) {
 		params.icon(icon);
 	}
-	const removalText = formatPassiveRemoval(removalDetail);
-	const metadata: TierPassiveMetadata = {
-		resourceId,
-		tierTrack: tierTrackMetadata,
+	const tieredSource: {
+		tierId: string;
+		removalDetail: string;
+		summaryToken?: string;
+		name?: string;
+		icon?: string;
+	} = {
 		tierId,
-		source: {
-			type: 'tiered-resource',
-			id: tierId,
-			...(summaryToken ? { labelToken: summaryToken } : {}),
-			...(icon ? { icon } : {}),
-		},
-		removal: {
-			token: removalDetail,
-			text: removalText,
-		},
+		removalDetail,
 	};
-	params.meta(metadata);
+	if (summaryToken) {
+		tieredSource.summaryToken = summaryToken;
+	}
+	if (name) {
+		tieredSource.name = name;
+	}
+	if (icon) {
+		tieredSource.icon = icon;
+	}
+	params.tieredResourceSource(tieredSource);
 	const builder = effect().type(Types.Passive).method(PassiveMethods.ADD).params(params);
 	effects.forEach((entry) => builder.effect(entry));
 	return builder;

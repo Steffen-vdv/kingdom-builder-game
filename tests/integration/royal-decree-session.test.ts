@@ -11,10 +11,6 @@ import {
 	Resource,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
-import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
 
 interface EffectGroupOption {
 	id: string;
@@ -45,10 +41,6 @@ describe('royal decree via session', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
-			resourceCatalogV2: {
-				resources: RESOURCE_V2_REGISTRY,
-				groups: RESOURCE_GROUP_V2_REGISTRY,
-			},
 		});
 		let snapshot = session.getSnapshot();
 		while (snapshot.game.currentPhase !== 'main') {

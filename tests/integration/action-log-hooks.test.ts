@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createEngineSession } from '@kingdom-builder/engine';
 import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
-import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -29,11 +25,6 @@ function extractLineText(entry: TimelineEntry | undefined): string {
 }
 
 const BASE_REGISTRIES_PAYLOAD = createSessionRegistriesPayload();
-
-const BASE_RESOURCE_CATALOG = Object.freeze({
-	resources: RESOURCE_V2_REGISTRY,
-	groups: RESOURCE_GROUP_V2_REGISTRY,
-});
 
 function createSessionRegistries(): SessionRegistries {
 	const payload = JSON.parse(
@@ -249,7 +240,6 @@ describe('content-driven action log hooks', () => {
 				phases: PHASES,
 				start: GAME_START,
 				rules: RULES,
-				resourceCatalogV2: BASE_RESOURCE_CATALOG,
 			});
 			const snapshot = session.getSnapshot();
 			const metadata = ensureTranslationMetadata(snapshot.metadata, registries);

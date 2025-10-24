@@ -23,14 +23,6 @@ export const ResourceMethods = {
 	TRANSFER: 'transfer',
 } as const;
 
-export const ResourceLowerBoundMethods = {
-	INCREASE: 'lower-bound:increase',
-} as const;
-
-export const ResourceUpperBoundMethods = {
-	INCREASE: 'upper-bound:increase',
-} as const;
-
 export const BuildingMethods = {
 	ADD: 'add',
 	REMOVE: 'remove',

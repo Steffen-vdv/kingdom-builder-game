@@ -11,7 +11,6 @@ export const requirementSchema = z.object({
 export type RequirementConfig = z.infer<typeof requirementSchema>;
 
 const costBagSchema = z.record(z.string(), z.number());
-const numericRecordSchema = z.record(z.string(), z.number());
 
 const evaluatorSchema = z.object({
 	type: z.string(),
@@ -147,95 +146,6 @@ export const populationSchema = z.object({
 
 export type PopulationConfig = z.infer<typeof populationSchema>;
 
-const resourceV2TierThresholdSchema = z.object({
-	min: z.number().optional(),
-	max: z.number().optional(),
-});
-
-const resourceV2TierDefinitionSchema = z.object({
-	id: z.string(),
-	label: z.string(),
-	icon: z.string().optional(),
-	description: z.string().optional(),
-	order: z.number().optional(),
-	threshold: resourceV2TierThresholdSchema,
-	enterEffects: z.array(effectSchema).optional(),
-	exitEffects: z.array(effectSchema).optional(),
-});
-
-const resourceV2TierTrackMetadataSchema = z.object({
-	id: z.string(),
-	label: z.string(),
-	icon: z.string().optional(),
-	description: z.string().optional(),
-	order: z.number().optional(),
-});
-
-const resourceV2TierTrackSchema = z.object({
-	metadata: resourceV2TierTrackMetadataSchema,
-	tiers: z.array(resourceV2TierDefinitionSchema),
-});
-
-const resourceV2MetadataSchema = z.object({
-	id: z.string(),
-	label: z.string(),
-	icon: z.string(),
-	description: z.string().optional(),
-	order: z.number().optional(),
-	tags: z.array(z.string()).optional(),
-});
-
-const resourceV2BoundsSchema = z.object({
-	lowerBound: z.number().optional(),
-	upperBound: z.number().optional(),
-});
-
-const resourceV2DefinitionSchema = resourceV2MetadataSchema
-	.merge(resourceV2BoundsSchema)
-	.extend({
-		displayAsPercent: z.boolean().optional(),
-		trackValueBreakdown: z.boolean().optional(),
-		trackBoundBreakdown: z.boolean().optional(),
-		groupId: z.string().optional(),
-		groupOrder: z.number().optional(),
-		globalCost: z
-			.object({
-				amount: z.number(),
-			})
-			.optional(),
-		tierTrack: resourceV2TierTrackSchema.optional(),
-	});
-
-const resourceV2GroupParentSchema = resourceV2MetadataSchema
-	.merge(resourceV2BoundsSchema)
-	.extend({
-		displayAsPercent: z.boolean().optional(),
-		trackValueBreakdown: z.boolean().optional(),
-		trackBoundBreakdown: z.boolean().optional(),
-		tierTrack: resourceV2TierTrackSchema.optional(),
-	});
-
-const resourceV2GroupDefinitionSchema = z.object({
-	id: z.string(),
-	order: z.number().optional(),
-	parent: resourceV2GroupParentSchema.optional(),
-});
-
-const resourceV2RegistrySchema = z.object({
-	byId: z.record(z.string(), resourceV2DefinitionSchema),
-	ordered: z.array(resourceV2DefinitionSchema),
-});
-
-const resourceV2GroupRegistrySchema = z.object({
-	byId: z.record(z.string(), resourceV2GroupDefinitionSchema),
-	ordered: z.array(resourceV2GroupDefinitionSchema),
-});
-
-const resourceCatalogV2Schema = z.object({
-	resources: resourceV2RegistrySchema,
-	groups: resourceV2GroupRegistrySchema,
-});
-
 const landStartSchema = z.object({
 	developments: z.array(z.string()).optional(),
 	slotsMax: z.number().optional(),
@@ -248,12 +158,9 @@ const landStartSchema = z.object({
 });
 
 const playerStartSchema = z.object({
-	resources: numericRecordSchema.optional(),
-	stats: numericRecordSchema.optional(),
-	population: numericRecordSchema.optional(),
-	valuesV2: numericRecordSchema.optional(),
-	resourceLowerBoundsV2: numericRecordSchema.optional(),
-	resourceUpperBoundsV2: numericRecordSchema.optional(),
+	resources: z.record(z.string(), z.number()).optional(),
+	stats: z.record(z.string(), z.number()).optional(),
+	population: z.record(z.string(), z.number()).optional(),
 	lands: z.array(landStartSchema).optional(),
 });
 
@@ -306,10 +213,7 @@ export const gameConfigSchema = z.object({
 	developments: z.array(developmentSchema).optional(),
 	populations: z.array(populationSchema).optional(),
 	phases: z.array(phaseSchema).optional(),
-	resourceCatalogV2: resourceCatalogV2Schema.optional(),
 });
-
-export type ResourceV2CatalogSnapshot = z.infer<typeof resourceCatalogV2Schema>;
 
 export type GameConfig = z.infer<typeof gameConfigSchema>;
 

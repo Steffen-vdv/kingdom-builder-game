@@ -1,14 +1,9 @@
 import type { RuleSet } from '@kingdom-builder/protocol';
-import type { ResourceV2TierTrackMetadata } from './resourceV2';
+import type { ResourceKey } from './resources';
 import { RULES } from './rules';
 
 export type TierSummaryGroup = Map<string, string>;
-export type TierSummaryStore = Map<string, TierSummaryGroup>;
-
-type TierMetadataRuleSet = RuleSet & {
-	tieredResourceId?: string;
-	tierTrackMetadata?: ResourceV2TierTrackMetadata;
-};
+export type TierSummaryStore = Map<ResourceKey, TierSummaryGroup>;
 
 function extractTierSummaries(ruleSet: RuleSet): TierSummaryGroup {
 	const summaries: TierSummaryGroup = new Map();
@@ -22,19 +17,12 @@ function extractTierSummaries(ruleSet: RuleSet): TierSummaryGroup {
 	return summaries;
 }
 
-function buildTierSummaryStore(ruleSets: TierMetadataRuleSet[]): TierSummaryStore {
+function buildTierSummaryStore(ruleSets: RuleSet[]): TierSummaryStore {
 	const store: TierSummaryStore = new Map();
 	ruleSets.forEach((ruleSet) => {
 		const summaries = extractTierSummaries(ruleSet);
 		if (summaries.size > 0) {
-			store.set(ruleSet.tieredResourceKey, summaries);
-			if (ruleSet.tieredResourceId) {
-				store.set(ruleSet.tieredResourceId, summaries);
-			}
-			const metadataId = ruleSet.tierTrackMetadata?.id;
-			if (metadataId) {
-				store.set(metadataId, summaries);
-			}
+			store.set(ruleSet.tieredResourceKey as ResourceKey, summaries);
 		}
 	});
 	return store;

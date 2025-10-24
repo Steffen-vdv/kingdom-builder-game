@@ -18,6 +18,7 @@ describe('resource and stat bounds', () => {
 		actions.add('lower_fort', {
 			id: 'lower_fort',
 			name: 'Lower Fort',
+			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'stat',
@@ -46,6 +47,7 @@ describe('resource and stat bounds', () => {
 		actions.add('lose_gold', {
 			id: 'lose_gold',
 			name: 'Lose Gold',
+			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'resource',
@@ -73,6 +75,7 @@ describe('resource and stat bounds', () => {
 		actions.add('bad_add', {
 			id: 'bad_add',
 			name: 'Bad Add',
+			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'stat',

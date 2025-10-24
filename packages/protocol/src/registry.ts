@@ -36,8 +36,4 @@ export class Registry<T> {
 	keys(): string[] {
 		return Array.from(this.map.keys());
 	}
-
-	remove(id: string): boolean {
-		return this.map.delete(id);
-	}
 }

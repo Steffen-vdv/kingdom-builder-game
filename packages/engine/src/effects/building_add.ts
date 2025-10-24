@@ -46,14 +46,6 @@ export const collectBuildingAddCosts: EffectCostCollector = (
 	}
 	const building = context.buildings.get(id);
 	for (const costKey of Object.keys(building.costs)) {
-		if (
-			context.actionCostAmount !== null &&
-			costKey === context.actionCostResource
-		) {
-			throw new Error(
-				`Building ${id} may not configure costs for global action cost resource ${costKey}.`,
-			);
-		}
 		const baseCost = base[costKey] || 0;
 		const buildingCost = building.costs[costKey] || 0;
 		base[costKey] = baseCost + buildingCost;

@@ -17,6 +17,7 @@ describe('resource:remove effect', () => {
 		actions.add('pay_gold', {
 			id: 'pay_gold',
 			name: 'Pay Gold',
+			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'resource',
@@ -47,6 +48,7 @@ describe('resource:remove effect', () => {
 		actions.add('round_up_remove', {
 			id: 'round_up_remove',
 			name: 'Round Up Remove',
+			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'resource',
@@ -59,6 +61,7 @@ describe('resource:remove effect', () => {
 		actions.add('round_down_remove', {
 			id: 'round_down_remove',
 			name: 'Round Down Remove',
+			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'resource',

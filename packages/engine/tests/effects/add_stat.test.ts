@@ -5,7 +5,11 @@ import {
 	advance,
 	getActionCosts,
 } from '../../src/index.ts';
-import { createActionRegistry, Stat as CStat } from '@kingdom-builder/contents';
+import {
+	createActionRegistry,
+	Resource as CResource,
+	Stat as CStat,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 
 describe('stat:add effect', () => {
@@ -14,6 +18,7 @@ describe('stat:add effect', () => {
 		actionRegistry.add('train_army', {
 			id: 'train_army',
 			name: 'Train Army',
+			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'stat',
