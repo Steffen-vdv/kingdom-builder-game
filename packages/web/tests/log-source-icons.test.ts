@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
+import { buildResourceCatalogV2 } from '@kingdom-builder/testing';
 import type { StartConfig } from '@kingdom-builder/protocol';
 import {
 	snapshotPlayer,
@@ -65,6 +66,7 @@ function createLogHarness(
 		})),
 		start: startConfig,
 		rules: scaffold.ruleSnapshot,
+		resourceCatalogV2: buildResourceCatalogV2(),
 	});
 	const engineSnapshot = snapshotEngine(engine);
 	engineSnapshot.metadata = structuredClone(

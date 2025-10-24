@@ -6,6 +6,7 @@ import {
 	type Summary,
 } from '../src/translation/content';
 import { createEngine } from '@kingdom-builder/engine';
+import { buildResourceCatalogV2 } from '@kingdom-builder/testing';
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -14,6 +15,7 @@ vi.mock('@kingdom-builder/engine', async () => {
 describe('plow workshop translation', () => {
 	it('includes action card and omits Immediately', () => {
 		const synthetic = createSyntheticPlowContent();
+		const resourceCatalogV2 = buildResourceCatalogV2();
 		const engineContext = createEngine({
 			actions: synthetic.factory.actions,
 			buildings: synthetic.factory.buildings,
@@ -22,6 +24,7 @@ describe('plow workshop translation', () => {
 			phases: synthetic.phases,
 			start: synthetic.start,
 			rules: synthetic.rules,
+			resourceCatalogV2,
 		});
 		const summary = describeContent(
 			'building',

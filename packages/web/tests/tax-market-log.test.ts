@@ -19,6 +19,7 @@ import {
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_ASSETS,
 } from './fixtures/syntheticTaxLog';
+import { buildResourceCatalogV2 } from '@kingdom-builder/testing';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -98,6 +99,7 @@ function asTimelineLines(
 describe('tax action logging with market', () => {
 	it('shows population and market sources in gold gain', () => {
 		const scenario = createSyntheticTaxScenario();
+		const resourceCatalogV2 = buildResourceCatalogV2();
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
 			buildings: scenario.factory.buildings,
@@ -106,6 +108,7 @@ describe('tax action logging with market', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(

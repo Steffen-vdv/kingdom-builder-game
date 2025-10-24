@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, advance } from '@kingdom-builder/engine';
+import { buildResourceCatalogV2 } from '@kingdom-builder/contents';
 import type {
 	PhaseConfig,
 	RuleSet,
@@ -63,6 +64,7 @@ describe('Turn cycle integration', () => {
 			phases,
 			start,
 			rules,
+			resourceCatalogV2: buildResourceCatalogV2(),
 		});
 
 		while (engineContext.game.currentPhase !== phaseIds.main) {

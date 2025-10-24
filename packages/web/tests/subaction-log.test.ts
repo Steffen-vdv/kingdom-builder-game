@@ -13,6 +13,7 @@ import {
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_PASSIVE_INFO,
 } from './fixtures/syntheticPlow';
+import { buildResourceCatalogV2 } from '@kingdom-builder/testing';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -100,6 +101,7 @@ function filterChangeTree(
 describe('sub-action logging', () => {
 	it('nests sub-action effects under the triggering action', () => {
 		const synthetic = createSyntheticPlowContent();
+		const resourceCatalogV2 = buildResourceCatalogV2();
 		const engineContext = createEngine({
 			actions: synthetic.factory.actions,
 			buildings: synthetic.factory.buildings,
@@ -108,6 +110,7 @@ describe('sub-action logging', () => {
 			phases: synthetic.phases,
 			start: synthetic.start,
 			rules: synthetic.rules,
+			resourceCatalogV2,
 		});
 		const baseAssets = createDefaultTranslationAssets();
 		engineContext.assets = {

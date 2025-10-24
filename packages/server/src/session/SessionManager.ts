@@ -12,6 +12,7 @@ import {
 	GAME_START,
 	RULES,
 	PRIMARY_ICON_ID,
+	buildResourceCatalogV2,
 } from '@kingdom-builder/contents';
 import type {
 	SessionRegistriesPayload,
@@ -41,6 +42,7 @@ type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 	resourceRegistry?: SessionResourceRegistry;
 	actionCategoryRegistry?: SessionActionCategoryRegistry;
 	primaryIconId?: string | null;
+	resourceCatalogV2?: ReturnType<typeof buildResourceCatalogV2>;
 };
 
 type SessionRuntimeConfig = {
@@ -89,6 +91,7 @@ export class SessionManager {
 	private readonly metadata: SessionStaticMetadataPayload;
 
 	private readonly resourceOverrides: SessionResourceRegistry | undefined;
+	private readonly resourceCatalogV2: ReturnType<typeof buildResourceCatalogV2>;
 
 	private readonly runtimeConfig: SessionRuntimeConfig;
 
@@ -103,13 +106,20 @@ export class SessionManager {
 			resourceRegistry,
 			actionCategoryRegistry,
 			primaryIconId: primaryIconOverride,
+			resourceCatalogV2: resourceCatalogOverride,
 			...engineOverrides
 		} = engineOptions;
+		this.resourceCatalogV2 = resourceCatalogOverride
+			? structuredClone(resourceCatalogOverride)
+			: buildResourceCatalogV2();
 		this.maxIdleDurationMs = maxIdleDurationMs;
 		this.maxSessions = maxSessions;
 		this.now = now;
 		const baseActionCategories =
 			engineOverrides.actionCategories ?? ACTION_CATEGORIES;
+		if (resourceCatalogOverride) {
+			this.resourceCatalogV2 = resourceCatalogOverride;
+		}
 		this.baseOptions = {
 			actions: engineOverrides.actions ?? ACTIONS,
 			actionCategories: baseActionCategories,
@@ -192,6 +202,7 @@ export class SessionManager {
 			this.baseOptions;
 		const sessionOptions: EngineSessionOptions = {
 			...engineBaseOptions,
+			resourceCatalogV2: this.resourceCatalogV2,
 			devMode,
 		};
 		if (config !== undefined) {

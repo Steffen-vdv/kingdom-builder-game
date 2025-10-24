@@ -20,6 +20,7 @@ import {
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_LAND_INFO,
 } from './fixtures/syntheticTaxLog';
+import { buildResourceCatalogV2 } from '@kingdom-builder/testing';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -44,6 +45,7 @@ function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
 describe('log resource sources', () => {
 	it('ignores opponent mills when logging farm gains', () => {
 		const scenario = createSyntheticTaxScenario();
+		const resourceCatalogV2 = buildResourceCatalogV2();
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
 			buildings: scenario.factory.buildings,
@@ -52,6 +54,7 @@ describe('log resource sources', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		// Give opponent a mill
@@ -105,6 +108,7 @@ describe('log resource sources', () => {
 
 	it('logs market bonus when taxing population', () => {
 		const scenario = createSyntheticTaxScenario();
+		const resourceCatalogV2 = buildResourceCatalogV2();
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
 			buildings: scenario.factory.buildings,
@@ -113,6 +117,7 @@ describe('log resource sources', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(
@@ -160,6 +165,7 @@ describe('log resource sources', () => {
 
 	it('includes upkeep sources when paying upkeep', () => {
 		const scenario = createSyntheticTaxScenario();
+		const resourceCatalogV2 = buildResourceCatalogV2();
 		const engineContext = createEngine({
 			actions: scenario.factory.actions,
 			buildings: scenario.factory.buildings,
@@ -168,6 +174,7 @@ describe('log resource sources', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(

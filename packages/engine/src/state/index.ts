@@ -1,4 +1,5 @@
 import type { EffectDef } from '../effects';
+import type { RuntimeResourceCatalog } from '../resource-v2';
 
 export const Resource: Record<string, string> = {};
 export type ResourceKey = string;
@@ -188,6 +189,7 @@ export class GameState {
 	stepIndex = 0;
 	devMode = false;
 	conclusion?: GameConclusion;
+	resourceCatalogV2: RuntimeResourceCatalog | undefined;
 	players: PlayerState[];
 	constructor(aName = 'Player', bName = 'Opponent') {
 		this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];

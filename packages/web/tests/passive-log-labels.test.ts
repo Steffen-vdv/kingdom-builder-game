@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createEngine, runEffects } from '@kingdom-builder/engine';
+import { buildResourceCatalogV2 } from '@kingdom-builder/testing';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -74,6 +75,7 @@ function createPassiveHarness(
 		})),
 		start: startConfig,
 		rules: scaffold.ruleSnapshot,
+		resourceCatalogV2: buildResourceCatalogV2(),
 	});
 	const snapshot = snapshotEngine(engine);
 	const appliedMetadata = structuredClone(

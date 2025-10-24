@@ -13,6 +13,7 @@ import {
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_ASSETS,
 } from './fixtures/syntheticTaxLog';
+import { buildResourceCatalogV2 } from '@kingdom-builder/testing';
 import {
 	snapshotPlayer,
 	diffStepSnapshots,
@@ -113,6 +114,7 @@ describe('action cost and reward logging', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2: buildResourceCatalogV2(),
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		engineContext.activePlayer.actions.add(refundAction.id);

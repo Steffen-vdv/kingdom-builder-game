@@ -9,6 +9,7 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	buildResourceCatalogV2,
 } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
@@ -46,6 +47,7 @@ export function createTestContext(
 		phases: PHASES,
 		start: GAME_START,
 		rules: RULES,
+		resourceCatalogV2: buildResourceCatalogV2(),
 	});
 	if (overrides) {
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {

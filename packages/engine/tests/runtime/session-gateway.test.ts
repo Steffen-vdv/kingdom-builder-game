@@ -14,6 +14,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
+import { buildResourceCatalogV2 } from '@kingdom-builder/contents';
 
 const RESOURCE_AP = 'test:resource:ap';
 const RESOURCE_GOLD = 'test:resource:gold';
@@ -100,6 +101,7 @@ function createGateway(options?: GatewayOptions) {
 		phases: PHASES,
 		start: START,
 		rules: RULES,
+		resourceCatalogV2: buildResourceCatalogV2(),
 	});
 	return {
 		gateway: createLocalSessionGateway(session, options),

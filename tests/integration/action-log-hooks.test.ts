@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { createEngineSession } from '@kingdom-builder/engine';
-import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
+import {
+	PHASES,
+	GAME_START,
+	RULES,
+	buildResourceCatalogV2,
+} from '@kingdom-builder/contents';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -240,6 +245,7 @@ describe('content-driven action log hooks', () => {
 				phases: PHASES,
 				start: GAME_START,
 				rules: RULES,
+				resourceCatalogV2: buildResourceCatalogV2(),
 			});
 			const snapshot = session.getSnapshot();
 			const metadata = ensureTranslationMetadata(snapshot.metadata, registries);

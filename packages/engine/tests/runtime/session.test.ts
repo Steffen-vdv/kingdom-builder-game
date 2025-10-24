@@ -10,6 +10,7 @@ import {
 	GAME_START,
 	RULES,
 	Resource as CResource,
+	buildResourceCatalogV2,
 } from '@kingdom-builder/contents';
 import type {
 	ActionConfig as ActionDef,
@@ -41,10 +42,15 @@ const BASE: {
 	start: GAME_START,
 };
 
-type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
+const BASE_RESOURCE_CATALOG_V2 = buildResourceCatalogV2();
+
+type EngineOverrides = Partial<typeof BASE> & {
+	rules?: RuleSet;
+	resourceCatalogV2?: typeof BASE_RESOURCE_CATALOG_V2;
+};
 
 function createTestSession(overrides: EngineOverrides = {}) {
-	const { rules, ...rest } = overrides;
+	const { rules, resourceCatalogV2, ...rest } = overrides;
 	return createEngineSession({
 		actions: rest.actions ?? BASE.actions,
 		buildings: rest.buildings ?? BASE.buildings,
@@ -53,6 +59,7 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		phases: rest.phases ?? BASE.phases,
 		start: rest.start ?? BASE.start,
 		rules: rules ?? RULES,
+		resourceCatalogV2: resourceCatalogV2 ?? BASE_RESOURCE_CATALOG_V2,
 	});
 }
 

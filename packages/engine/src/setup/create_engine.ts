@@ -28,6 +28,7 @@ import { Registry } from '@kingdom-builder/protocol';
 import { createAISystem, createTaxCollectorController } from '../ai';
 import { performAction } from '../actions/action_execution';
 import { advance } from '../phases/advance';
+import { createRuntimeResourceCatalog } from '../resource-v2';
 import {
 	validateGameConfig,
 	type GameConfig,
@@ -61,9 +62,19 @@ export interface EngineCreationOptions {
 	rules: RuleSet;
 	config?: GameConfig;
 	devMode?: boolean;
+	resourceCatalogV2?: RuntimeResourceCatalogContent;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
+
+type RuntimeResourceCatalogContent = Parameters<
+	typeof createRuntimeResourceCatalog
+>[0];
+
+const EMPTY_RUNTIME_RESOURCE_CONTENT: RuntimeResourceCatalogContent = {
+	resources: { byId: {}, ordered: [] },
+	groups: { byId: {}, ordered: [] },
+};
 
 type EngineRegistries = {
 	actions: Registry<ActionDef>;
@@ -171,11 +182,14 @@ export function createEngine({
 	rules,
 	config,
 	devMode = false,
+	resourceCatalogV2: catalogOverride,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();
 	let startConfig = start;
+	let resourceCatalogContent: RuntimeResourceCatalogContent =
+		catalogOverride ?? EMPTY_RUNTIME_RESOURCE_CONTENT;
 	if (config) {
 		const validatedConfig = validateGameConfig(config);
 		({ actions, buildings, developments, populations } = overrideRegistries(
@@ -190,6 +204,10 @@ export function createEngine({
 		if (validatedConfig.start) {
 			startConfig = validatedConfig.start;
 		}
+		if (validatedConfig.resourceCatalogV2) {
+			resourceCatalogContent =
+				validatedConfig.resourceCatalogV2 as RuntimeResourceCatalogContent;
+		}
 	}
 	validatePhases(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
@@ -197,9 +215,13 @@ export function createEngine({
 	setStatKeys(Object.keys(startConfig.player.stats || {}));
 	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
+	const resourceCatalogV2 = createRuntimeResourceCatalog(
+		resourceCatalogContent,
+	);
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState('Player', 'Opponent');
+	gameState.resourceCatalogV2 = resourceCatalogV2;
 	const actionCostResource = determineCommonActionCostResource(actions);
 	const playerACompensation = diffPlayerStartConfiguration(
 		startConfig.player,
@@ -225,6 +247,7 @@ export function createEngine({
 		actionCostResource,
 		compensationMap,
 	);
+	engineContext.resourceCatalogV2 = resourceCatalogV2;
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
 	const aiSystem = createAISystem({ performAction, advance });

@@ -2,7 +2,11 @@ import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '../../src/services/index.ts';
-import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
+import {
+	PhaseTrigger,
+	RULES,
+	buildResourceCatalogV2,
+} from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 const resourceKeys = {
@@ -45,6 +49,7 @@ const STARTING_COUNCILS = 1;
 
 export function createPhaseTestEnvironment() {
 	const content = createContentFactory();
+	const resourceCatalogV2 = buildResourceCatalogV2();
 
 	const farm = content.development({
 		id: 'synthetic:development:farm',
@@ -219,6 +224,7 @@ export function createPhaseTestEnvironment() {
 		phases,
 		start,
 		rules,
+		resourceCatalogV2,
 	});
 
 	return {

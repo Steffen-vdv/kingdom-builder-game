@@ -3,10 +3,12 @@ import {
 	createResourceV2Registry,
 	resourceGroup,
 	resourceV2,
+	buildResourceCatalogV2 as buildDefaultResourceCatalogV2,
 	type ResourceGroupBuilder,
 	type ResourceGroupRegistry,
 	type ResourceV2Builder,
 	type ResourceV2Registry,
+	type ResourceCatalogV2,
 } from '@kingdom-builder/contents';
 
 type ResourceV2Definition = ReturnType<ResourceV2Builder['build']>;
@@ -232,4 +234,8 @@ export function createResourceV2Registries(
 		resources: createResourceV2Registry(resources),
 		groups: createResourceGroupRegistry(groups),
 	};
+}
+
+export function buildResourceCatalogV2(): ResourceCatalogV2 {
+	return buildDefaultResourceCatalogV2();
 }

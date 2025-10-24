@@ -10,6 +10,7 @@ import {
 	RULES,
 	Resource,
 	PopulationRole,
+	buildResourceCatalogV2,
 } from '@kingdom-builder/contents';
 
 describe('dev mode start configuration', () => {
@@ -22,6 +23,7 @@ describe('dev mode start configuration', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			resourceCatalogV2: buildResourceCatalogV2(),
 			devMode: true,
 		});
 		const snapshot = session.getSnapshot();

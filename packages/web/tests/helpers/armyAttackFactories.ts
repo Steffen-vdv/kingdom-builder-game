@@ -1,6 +1,9 @@
 import { createEngine } from '@kingdom-builder/engine';
+import {
+	buildResourceCatalogV2,
+	createContentFactory,
+} from '@kingdom-builder/testing';
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { createContentFactory } from '@kingdom-builder/testing';
 import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol/session';
 
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
@@ -74,6 +77,7 @@ export function teardownStatOverrides() {
 
 function createBaseEngine() {
 	const factory = createContentFactory();
+	const resourceCatalogV2 = buildResourceCatalogV2();
 	const engineContext = createEngine({
 		actions: factory.actions,
 		buildings: factory.buildings,
@@ -82,6 +86,7 @@ function createBaseEngine() {
 		phases: PHASES,
 		start: START,
 		rules: RULES,
+		resourceCatalogV2,
 	});
 	return { factory, engineContext } as const;
 }
