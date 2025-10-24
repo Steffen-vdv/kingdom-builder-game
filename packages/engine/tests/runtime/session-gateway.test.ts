@@ -18,7 +18,11 @@ import { REQUIREMENTS } from '../../src/requirements/index.ts';
 const RESOURCE_AP = 'test:resource:ap';
 const RESOURCE_GOLD = 'test:resource:gold';
 const PHASE_MAIN = 'test:phase:main';
+const PHASE_GROWTH = 'test:phase:growth';
+const PHASE_UPKEEP = 'test:phase:upkeep';
 const STEP_MAIN = 'test:step:main';
+const STEP_GROWTH = 'test:step:growth';
+const STEP_UPKEEP = 'test:step:upkeep';
 
 const FAILURE_REQUIREMENT_ID = 'vitest:fail';
 const FAILURE_MESSAGE = 'Requirement failed for gateway test';
@@ -32,9 +36,17 @@ if (!REQUIREMENTS.has(FAILURE_REQUIREMENT_ID)) {
 
 const PHASES: PhaseDef[] = [
 	{
+		id: PHASE_GROWTH,
+		steps: [{ id: STEP_GROWTH }],
+	},
+	{
 		id: PHASE_MAIN,
 		action: true,
 		steps: [{ id: STEP_MAIN }],
+	},
+	{
+		id: PHASE_UPKEEP,
+		steps: [{ id: STEP_UPKEEP }],
 	},
 ];
 
@@ -66,6 +78,10 @@ const RULES: RuleSet = {
 	maxSlotsPerLand: 1,
 	basePopulationCap: 5,
 	winConditions: [],
+	corePhaseIds: {
+		growth: PHASE_GROWTH,
+		upkeep: PHASE_UPKEEP,
+	},
 };
 
 type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
@@ -178,7 +194,7 @@ describe('createLocalSessionGateway', () => {
 		const { gateway } = createGateway();
 		const { sessionId } = await gateway.createSession();
 		const advanced = await gateway.advancePhase({ sessionId });
-		expect(advanced.advance.phase).toBe(PHASE_MAIN);
+		expect(advanced.advance.phase).toBe(PHASE_GROWTH);
 		advanced.advance.player.resources[RESOURCE_GOLD] = 45;
 		advanced.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 64;
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
@@ -227,5 +243,71 @@ describe('createLocalSessionGateway', () => {
 		expect(fetched.registries.actionCategories).toEqual({
 			[providedCategory.id]: providedCategory,
 		});
+	});
+
+	it('ignores empty player name overrides and unknown identifiers', async () => {
+		const { gateway } = createGateway();
+		const created = await gateway.createSession({
+			playerNames: { A: 'Hero', B: '' },
+		});
+		expect(created.snapshot.game.players[0]?.name).toBe('Hero');
+		expect(created.snapshot.game.players[1]?.name).toBe('Opponent');
+	});
+
+	it('rejects requests that reference an unknown session id', async () => {
+		const { gateway } = createGateway();
+		await gateway.createSession();
+		expect(() =>
+			gateway.fetchSnapshot({ sessionId: 'unknown-session' }),
+		).toThrowError('Unknown session: unknown-session');
+	});
+
+	it('provides costs, requirements, options, and simulations through the gateway', async () => {
+		const { gateway, actionIds } = createGateway();
+		const created = await gateway.createSession();
+		const { sessionId } = created;
+		const costResponse = await gateway.getActionCosts({
+			sessionId,
+			actionId: actionIds.gainGold,
+		});
+		expect(costResponse.costs[RESOURCE_AP]).toBe(1);
+		const requirementResponse = await gateway.getActionRequirements({
+			sessionId,
+			actionId: actionIds.gainGold,
+		});
+		expect(requirementResponse.requirements).toEqual([]);
+		const optionsResponse = await gateway.getActionOptions({
+			sessionId,
+			actionId: actionIds.gainGold,
+		});
+		expect(Array.isArray(optionsResponse.groups)).toBe(true);
+		const simulationResponse = await gateway.simulateUpcomingPhases({
+			sessionId,
+			playerId: created.snapshot.game.activePlayerId,
+		});
+		expect(simulationResponse.result.steps.length).toBeGreaterThan(0);
+	});
+
+	it('runs AI turns through the gateway without leaking responses', async () => {
+		const { gateway } = createGateway();
+		const created = await gateway.createSession();
+		const aiPlayer = created.snapshot.game.players[1];
+		if (!aiPlayer) {
+			throw new Error('Expected an AI-controlled player.');
+		}
+		const response = await gateway.runAiTurn({
+			sessionId: created.sessionId,
+			playerId: aiPlayer.id,
+		});
+		expect(response.ranTurn).toBe(true);
+		response.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 999;
+		const refreshed = await gateway.fetchSnapshot({
+			sessionId: created.sessionId,
+		});
+		const baselineGold =
+			created.snapshot.game.players[0]?.resources[RESOURCE_GOLD];
+		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
+			baselineGold,
+		);
 	});
 });
