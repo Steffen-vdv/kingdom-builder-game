@@ -62,15 +62,15 @@ export interface SessionRegistriesPayload {
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
 	/**
-	 * Optional ResourceV2 registry of concrete resources. Present once the
-	 * session transport exposes ResourceV2 payloads alongside the legacy
-	 * resource/stat/population records.
+	 * ResourceV2 registry of concrete resources. Treated as first-class by
+	 * post-migration clients, but remains optional for compatibility with
+	 * sessions serialized before the rollout completed.
 	 */
 	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
 	/**
-	 * Optional ResourceV2 registry of group definitions (including virtual
-	 * parents). Currently unused until the migration pipeline begins
-	 * emitting ResourceV2 structures.
+	 * ResourceV2 registry of group definitions (including virtual parents).
+	 * Available for group-aware UIs while continuing to permit legacy
+	 * sessions that predate the migration to omit the field.
 	 */
 	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
@@ -100,15 +100,16 @@ export interface SessionRuntimeConfigResponse {
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
 	/**
-	 * Optional ResourceV2 registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourcesV2}. Remains undefined until
-	 * runtime wiring for ResourceV2 is ready.
+	 * Runtime ResourceV2 registry snapshot mirroring the registries
+	 * payload. Present for migrated sessions; legacy sessions may still
+	 * omit it while the transport rollout finalizes.
 	 */
 	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
 	/**
-	 * Optional ResourceV2 group registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Reserved for
-	 * future ResourceV2 rollouts.
+	 * Runtime ResourceV2 group registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Included when the
+	 * session transport publishes group data but optional for backwards
+	 * compatibility.
 	 */
 	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }

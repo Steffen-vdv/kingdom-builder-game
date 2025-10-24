@@ -86,18 +86,18 @@ export interface SessionPlayerStateSnapshot {
 	statsHistory: Record<string, boolean>;
 	population: Record<string, number>;
 	/**
-	 * Optional ResourceV2 value map. Will be populated once the session
-	 * engine emits ResourceV2 snapshots alongside the legacy
-	 * resource/stat/population sets.
+	 * ResourceV2 value map mirrored directly from the engine snapshot.
+	 * Post-migration every payload includes this alongside the legacy
+	 * resource/stat/population maps so clients can rely on the new keys
+	 * without defensive null checks.
 	 */
-	valuesV2?: Record<string, number>;
+	valuesV2: Record<string, number>;
 	/**
-	 * Optional ResourceV2 bound map mirroring the player's effective
-	 * lower/upper bounds for each resource id. Emitted alongside
-	 * {@link valuesV2} so clients can clamp projections without consulting
-	 * legacy resource fields.
+	 * ResourceV2 bound map mirroring the player's effective lower/upper
+	 * bounds for each resource id. Populated with {@link valuesV2} and kept
+	 * in sync with the engine snapshot to support bound projections.
 	 */
-	resourceBoundsV2?: Record<string, SessionResourceBoundsV2>;
+	resourceBoundsV2: Record<string, SessionResourceBoundsV2>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
@@ -126,7 +126,12 @@ export interface SessionGameSnapshot {
 	activePlayerId: SessionPlayerId;
 	opponentId: SessionPlayerId;
 	conclusion?: SessionGameConclusionSnapshot;
-	resourceCatalogV2?: SessionResourceCatalogV2;
+	/**
+	 * ResourceV2 catalog describing the resources/groups active in the
+	 * session. Always present now that the engine publishes ResourceV2
+	 * payloads for every snapshot.
+	 */
+	resourceCatalogV2: SessionResourceCatalogV2;
 }
 
 export interface SessionAdvanceSkipSourceSnapshot {
@@ -321,13 +326,15 @@ export interface SessionSnapshotMetadata {
 	developments?: Record<string, SessionMetadataDescriptor>;
 	stats?: Record<string, SessionMetadataDescriptor>;
 	/**
-	 * Optional ResourceV2 metadata map. Introduced for the migration work
-	 * and remains unset until ResourceV2 values surface in snapshots.
+	 * ResourceV2 metadata map. Considered canonical once ResourceV2 values
+	 * land in session snapshots, though legacy sessions created before the
+	 * rollout may omit it.
 	 */
 	resourcesV2?: Record<string, SessionMetadataDescriptor>;
 	/**
-	 * Optional ResourceV2 group metadata map. Mirrors
-	 * {@link resourcesV2} but scoped to group/parent descriptors.
+	 * ResourceV2 group metadata map mirroring {@link resourcesV2} but
+	 * scoped to group/parent descriptors. Provided for migrated sessions;
+	 * older payloads may leave it undefined.
 	 */
 	resourceGroupsV2?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
@@ -346,16 +353,15 @@ export interface SessionSnapshot {
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
 	metadata: SessionSnapshotMetadata;
 	/**
-	 * Optional ResourceV2 metadata snapshot that mirrors
-	 * {@link SessionSnapshotMetadata.resourcesV2}. Reserved for the
-	 * migration rollout so consumers can opt-in without waiting for the
-	 * legacy metadata map to change shape.
+	 * ResourceV2 metadata snapshot mirroring
+	 * {@link SessionSnapshotMetadata.resourcesV2}. Included by migrated
+	 * transports; legacy sessions may not provide it.
 	 */
 	resourceMetadataV2?: Record<string, SessionMetadataDescriptor>;
 	/**
-	 * Optional ResourceV2 group metadata snapshot that mirrors
-	 * {@link SessionSnapshotMetadata.resourceGroupsV2}. Will be populated
-	 * once ResourceV2 groups ship through the session pipeline.
+	 * ResourceV2 group metadata snapshot mirroring
+	 * {@link SessionSnapshotMetadata.resourceGroupsV2}. Present for
+	 * sessions that publish ResourceV2 groups; omitted by legacy payloads.
 	 */
 	resourceGroupMetadataV2?: Record<string, SessionMetadataDescriptor>;
 }

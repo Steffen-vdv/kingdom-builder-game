@@ -197,6 +197,11 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const effectLogs = cloneEffectLogs(context);
 	const passiveEvaluationModifiers = snapshotEvaluationModifiers(context);
 	const runtimeResourceCatalog = context.game.resourceCatalogV2;
+	if (!runtimeResourceCatalog) {
+		throw new Error(
+			'Engine snapshot requires resourceCatalogV2 to be populated before serialization.',
+		);
+	}
 	const resourceMetadataV2 = buildResourceMetadata(runtimeResourceCatalog);
 	const resourceGroupMetadataV2 = buildResourceGroupMetadata(
 		runtimeResourceCatalog,
@@ -211,8 +216,8 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 			? { resourceGroupsV2: resourceGroupMetadataV2 }
 			: {}),
 	};
-	const resourceCatalogV2: SessionResourceCatalogV2 | undefined =
-		runtimeResourceCatalog as unknown as SessionResourceCatalogV2 | undefined;
+	const resourceCatalogV2 =
+		runtimeResourceCatalog as unknown as SessionResourceCatalogV2;
 	return {
 		game: {
 			turn: context.game.turn,
@@ -237,7 +242,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 						},
 					}
 				: {}),
-			...(resourceCatalogV2 ? { resourceCatalogV2 } : {}),
+			resourceCatalogV2,
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,
