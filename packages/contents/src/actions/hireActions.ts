@@ -4,12 +4,21 @@ import { Stat } from '../stats';
 import { POPULATIONS } from '../populations';
 import type { ActionDef } from '../actions';
 import { HireActionId } from '../actionIds';
+import type { PopulationActionId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
 import { action, compareRequirement, effect, populationEvaluator, populationParams, resourceParams, statEvaluator } from '../config/builders';
 import { Types, PopulationMethods, ResourceMethods } from '../config/builderShared';
 import { Focus } from '../defs';
 import { PopulationRole } from '../populationRoles';
 import type { PopulationRoleId } from '../populationRoles';
+
+const HAPPINESS_REWARD_AMOUNT = 1;
+
+interface HireActionConfig {
+	id: PopulationActionId;
+	role: PopulationRoleId;
+	orderOffset: number;
+}
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -23,7 +32,13 @@ const hireCategoryOrder = categoryOrder('Hire');
 
 const populationCapacityRequirement = compareRequirement().left(populationEvaluator()).operator('lt').right(statEvaluator().key(Stat.maxPopulation)).build();
 
-function requirePopulation(role: PopulationRoleId) {
+const hireActionConfigs: readonly HireActionConfig[] = [
+	{ id: HireActionId.hire_council, role: PopulationRole.Council, orderOffset: 0 },
+	{ id: HireActionId.hire_legion, role: PopulationRole.Legion, orderOffset: 1 },
+	{ id: HireActionId.hire_fortifier, role: PopulationRole.Fortifier, orderOffset: 2 },
+];
+
+function requirePopulation(role: PopulationRoleId): { name: string; icon: string } {
 	const definition = POPULATIONS.get(role);
 	if (!definition) {
 		throw new Error(`Missing population definition for id "${role}".`);
@@ -38,58 +53,31 @@ function requirePopulation(role: PopulationRoleId) {
 	return { name, icon };
 }
 
+function createHireEffects(role: PopulationRoleId) {
+	const populationEffect = effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(role)).build();
+	const happinessEffect = effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(HAPPINESS_REWARD_AMOUNT)).build();
+	return { populationEffect, happinessEffect };
+}
+
 export function registerHireActions(registry: Registry<ActionDef>) {
-	const council = requirePopulation(PopulationRole.Council);
-	registry.add(
-		HireActionId.hire_council,
-		action()
-			.id(HireActionId.hire_council)
-			.name(`Hire ${council.name}`)
-			.icon(council.icon)
-			.cost(Resource.ap, 1)
-			.cost(Resource.gold, 5)
-			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Council)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
-			.category(ActionCategory.Hire)
-			.order(hireCategoryOrder + 0)
-			.focus(Focus.Economy)
-			.build(),
-	);
-
-	const legion = requirePopulation(PopulationRole.Legion);
-	registry.add(
-		HireActionId.hire_legion,
-		action()
-			.id(HireActionId.hire_legion)
-			.name(`Hire ${legion.name}`)
-			.icon(legion.icon)
-			.cost(Resource.ap, 1)
-			.cost(Resource.gold, 5)
-			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Legion)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
-			.category(ActionCategory.Hire)
-			.order(hireCategoryOrder + 1)
-			.focus(Focus.Economy)
-			.build(),
-	);
-
-	const fortifier = requirePopulation(PopulationRole.Fortifier);
-	registry.add(
-		HireActionId.hire_fortifier,
-		action()
-			.id(HireActionId.hire_fortifier)
-			.name(`Hire ${fortifier.name}`)
-			.icon(fortifier.icon)
-			.cost(Resource.ap, 1)
-			.cost(Resource.gold, 5)
-			.requirement(populationCapacityRequirement)
-			.effect(effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(PopulationRole.Fortifier)).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
-			.category(ActionCategory.Hire)
-			.order(hireCategoryOrder + 2)
-			.focus(Focus.Economy)
-			.build(),
-	);
+	hireActionConfigs.forEach(({ id, role, orderOffset }) => {
+		const { name, icon } = requirePopulation(role);
+		const { populationEffect, happinessEffect } = createHireEffects(role);
+		registry.add(
+			id,
+			action()
+				.id(id)
+				.name(`Hire ${name}`)
+				.icon(icon)
+				.cost(Resource.ap, 1)
+				.cost(Resource.gold, 5)
+				.requirement(populationCapacityRequirement)
+				.effect(populationEffect)
+				.effect(happinessEffect)
+				.category(ActionCategory.Hire)
+				.order(hireCategoryOrder + orderOffset)
+				.focus(Focus.Economy)
+				.build(),
+		);
+	});
 }

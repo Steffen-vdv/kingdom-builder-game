@@ -11,6 +11,10 @@ import {
 	Resource,
 	PopulationRole,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 
 describe('dev mode start configuration', () => {
 	it('applies content-driven overrides when dev mode is enabled', () => {
@@ -22,6 +26,10 @@ describe('dev mode start configuration', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			resourceCatalogV2: {
+				resources: RESOURCE_V2_REGISTRY,
+				groups: RESOURCE_GROUP_V2_REGISTRY,
+			},
 			devMode: true,
 		});
 		const snapshot = session.getSnapshot();
