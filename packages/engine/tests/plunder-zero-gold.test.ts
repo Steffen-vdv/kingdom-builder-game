@@ -14,7 +14,6 @@ describe('plunder action with zero opponent resource', () => {
 	it("doesn't modify resources when opponent has none", () => {
 		const content = createContentFactory();
 		const action = content.action({
-			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'resource',

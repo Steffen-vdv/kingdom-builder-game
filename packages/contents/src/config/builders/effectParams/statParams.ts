@@ -1,5 +1,8 @@
+import type { ResourceChangeBuilder, ResourceChangeEffectParams, ResourceChangeRoundingMode, ResourceReconciliationMode } from '../../../resourceV2';
+import { resourceChange } from '../../../resourceV2';
 import type { StatKey } from '../../../stats';
-import { ParamsBuilder } from '../../builderShared';
+import { getStatResourceV2Id } from '../../../stats';
+import { ParamsBuilder, type Params } from '../../builderShared';
 
 const STAT_KEY_DUPLICATE = 'You already chose a stat with key(). Remove the extra key() call.';
 const STAT_AMOUNT_EXCLUSIVE = 'Stat change cannot mix amount() with percent() or percentFromStat(). Pick one approach to describe the change.';
@@ -11,40 +14,126 @@ const STAT_PERCENT_FROM_STAT_DUPLICATE = 'You already chose a stat source with p
 const STAT_MISSING_KEY = 'Stat change is missing key(). Call key(Stat.yourChoice) to decide which stat should change.';
 const STAT_MISSING_AMOUNT = 'Stat change needs amount(), percent(), or percentFromStat(). Choose one to describe how the stat should change.';
 
-class StatEffectParamsBuilder extends ParamsBuilder<{
-	key?: StatKey;
-	amount?: number;
-	percent?: number;
-	percentStat?: StatKey;
-}> {
+type StatResourceEffectParams = ResourceChangeEffectParams &
+	Params & {
+		key: StatKey;
+		amount?: number;
+		percent?: number;
+		percentStat?: StatKey;
+	};
+
+type StatChangeMode = 'amount' | 'percent' | 'percentStat' | undefined;
+
+class StatEffectParamsBuilder extends ParamsBuilder<StatResourceEffectParams> {
+	private statKey?: StatKey;
+	private resourceId?: string;
+	private changeBuilder?: ResourceChangeBuilder;
+	private mode: StatChangeMode;
+	private amountValue?: number;
+	private percentValue?: number;
+	private percentStatKey?: StatKey;
+
 	key(key: StatKey) {
-		return this.set('key', key, STAT_KEY_DUPLICATE);
+		if (this.statKey) {
+			throw new Error(STAT_KEY_DUPLICATE);
+		}
+		const resourceId = getStatResourceV2Id(key);
+		this.statKey = key;
+		this.resourceId = resourceId;
+		this.changeBuilder = resourceChange(resourceId);
+		return this;
 	}
+
+	private ensureBuilder(method: string) {
+		if (!this.changeBuilder || !this.statKey || !this.resourceId) {
+			throw new Error(`Stat change ${method} requires key() before it can be configured.`);
+		}
+	}
+
 	amount(amount: number) {
-		if (this.wasSet('percent') || this.wasSet('percentStat')) {
+		this.ensureBuilder('amount()');
+		if (this.mode && this.mode !== 'amount') {
 			throw new Error(STAT_AMOUNT_EXCLUSIVE);
 		}
-		return this.set('amount', amount, STAT_AMOUNT_DUPLICATE);
+		if (this.mode === 'amount') {
+			throw new Error(STAT_AMOUNT_DUPLICATE);
+		}
+		this.mode = 'amount';
+		this.amountValue = amount;
+		this.changeBuilder!.amount(amount);
+		return this;
 	}
+
 	percent(percent: number) {
-		if (this.wasSet('amount') || this.wasSet('percentStat')) {
+		this.ensureBuilder('percent()');
+		if (this.mode && this.mode !== 'percent') {
 			throw new Error(STAT_PERCENT_EXCLUSIVE);
 		}
-		return this.set('percent', percent, STAT_PERCENT_DUPLICATE);
+		if (this.mode === 'percent') {
+			throw new Error(STAT_PERCENT_DUPLICATE);
+		}
+		this.mode = 'percent';
+		this.percentValue = percent;
+		this.changeBuilder!.percent(percent);
+		return this;
 	}
+
 	percentFromStat(stat: StatKey) {
-		if (this.wasSet('amount') || this.wasSet('percent')) {
+		this.ensureBuilder('percentFromStat()');
+		if (this.mode && this.mode !== 'percentStat') {
 			throw new Error(STAT_PERCENT_FROM_STAT_EXCLUSIVE);
 		}
-		return this.set('percentStat', stat, STAT_PERCENT_FROM_STAT_DUPLICATE);
+		if (this.mode === 'percentStat') {
+			throw new Error(STAT_PERCENT_FROM_STAT_DUPLICATE);
+		}
+		this.mode = 'percentStat';
+		this.percentStatKey = stat;
+		this.changeBuilder!.percent(0);
+		return this;
 	}
+
+	roundingMode(mode: ResourceChangeRoundingMode) {
+		this.ensureBuilder('roundingMode()');
+		if (this.mode !== 'percent' && this.mode !== 'percentStat') {
+			throw new Error('roundingMode() is only available after configuring percent() or percentFromStat().');
+		}
+		this.changeBuilder!.roundingMode(mode);
+		return this;
+	}
+
+	reconciliation(mode?: ResourceReconciliationMode) {
+		this.ensureBuilder('reconciliation()');
+		this.changeBuilder!.reconciliation(mode);
+		return this;
+	}
+
+	suppressHooks(enabled = true) {
+		this.ensureBuilder('suppressHooks()');
+		this.changeBuilder!.suppressHooks(enabled);
+		return this;
+	}
+
 	override build() {
-		if (!this.wasSet('key')) {
+		if (!this.changeBuilder || !this.statKey || !this.resourceId) {
 			throw new Error(STAT_MISSING_KEY);
 		}
-		if (!this.wasSet('amount') && !this.wasSet('percent') && !this.wasSet('percentStat')) {
+		if (!this.mode) {
 			throw new Error(STAT_MISSING_AMOUNT);
 		}
+		const built = this.changeBuilder.build();
+		const legacyParams: { amount?: number; percent?: number; percentStat?: StatKey } = {};
+		if (this.mode === 'amount') {
+			legacyParams.amount = this.amountValue!;
+		} else if (this.mode === 'percent') {
+			legacyParams.percent = this.percentValue!;
+		} else if (this.mode === 'percentStat') {
+			legacyParams.percentStat = this.percentStatKey!;
+		}
+		this.params = {
+			...built,
+			key: this.statKey,
+			...legacyParams,
+		} as StatResourceEffectParams;
 		return super.build();
 	}
 }
