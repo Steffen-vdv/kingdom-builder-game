@@ -2,6 +2,8 @@ import { Registry, type ResourceV2Definition, type ResourceV2GroupMetadata, reso
 
 import { resourceGroup, resourceGroupParent, resourceV2 } from '../config/builders';
 
+export * from './definitions';
+
 export const ResourceV2Id = {
 	Gold: 'gold',
 	ActionPoints: 'actionPoints',
