@@ -52,14 +52,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-29 18:45
-- **Current Focus:** Resource Migration MVP - P2 - T43 - Population Handlers ResourceV2 Sync
-- **State Summary:** Engine population handlers now clamp through ResourceV2 helpers, enforce catalog lookups, and keep legacy maps mirrored via the new PlayerState bridges. Global cost enforcement and effect registry wiring landed earlier this cycle. See [`./worklogs/T43-population-handlers.md`](./worklogs/T43-population-handlers.md) for coverage and follow-ups.
+- **Timestamp (UTC):** 2025-10-30 13:40
+- **Current Focus:** Resource Migration MVP - P2 - T44 - Services ResourceV2 Integration
+- **State Summary:** Tiered resource, win condition, and population cap services now source values and tier metadata from the Runtime ResourceV2 catalog, emit signed deltas via `recentResourceGains`, and map legacy keys through PlayerState lookups. See [`./worklogs/T44-services.md`](./worklogs/T44-services.md) for implementation notes and follow-ups.
 - **Next Suggested Tasks:**
-  - Unblock `npm run check` by restoring the `developmentTarget()` helper used in contents happiness coverage.
-  - Thread ResourceV2 catalog snapshots and player values through protocol/web clients so translators can replace legacy wiring.
-  - Begin retiring legacy resource/stat bridges once ResourceV2 payloads are authoritative across engine and session snapshots.
-- **Blocking Issues / Risks:** Repository check still fails with `TypeError: (0 , developmentTarget) is not a function` from `packages/contents/src/happinessHelpers.ts`, preventing full suite execution. Legacy cost/population shims must remain until that regression is resolved.
+  - Wire the updated ResourceV2 identifiers into downstream session payloads and translators once catalog snapshots are exposed to consumers.
+  - Audit remaining service callers for direct legacy key usage and pivot them to the new ResourceV2 helpers.
+  - Continue tracking the contents-side `developmentTarget()` regression so the full `npm run check` pipeline can close.
+- **Blocking Issues / Risks:** Repository check remains blocked by `TypeError: (0 , developmentTarget) is not a function` from `packages/contents/src/happinessHelpers.ts`; engine services cannot fully retire legacy bridges until that content helper is restored.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.
 
 ## 5. Notes & Decisions Archive
