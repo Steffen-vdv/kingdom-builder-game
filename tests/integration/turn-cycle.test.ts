@@ -5,7 +5,11 @@ import type {
 	RuleSet,
 	StartConfig,
 } from '@kingdom-builder/protocol';
-import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	createContentFactory,
+	createResourceV2Registries,
+	resourceV2Definition,
+} from '@kingdom-builder/testing';
 
 const resources = {
 	ap: 'turn:resource:ap',
@@ -52,6 +56,22 @@ const rules: RuleSet = {
 	winConditions: [],
 };
 
+const { resources: turnResourcesV2, groups: turnResourceGroupsV2 } =
+	createResourceV2Registries({
+		resources: [
+			resourceV2Definition({
+				id: 'resource:turn:turn-resource-ap',
+				metadata: { label: 'Turn Action Points', icon: '⚡' },
+				bounds: { lowerBound: 0 },
+			}),
+			resourceV2Definition({
+				id: 'resource:turn:turn-resource-gold',
+				metadata: { label: 'Turn Gold', icon: '🪙' },
+				bounds: { lowerBound: 0 },
+			}),
+		],
+	});
+
 describe('Turn cycle integration', () => {
 	it('advances players through all phases sequentially', () => {
 		const content = createContentFactory();
@@ -63,6 +83,10 @@ describe('Turn cycle integration', () => {
 			phases,
 			start,
 			rules,
+			resourceCatalogV2: {
+				resources: turnResourcesV2,
+				groups: turnResourceGroupsV2,
+			},
 		});
 
 		while (engineContext.game.currentPhase !== phaseIds.main) {

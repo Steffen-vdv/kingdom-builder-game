@@ -74,6 +74,10 @@ describe('Action translation with population scaling', () => {
 						...session.metadata.resources,
 						[resourceKey]: { label: 'Civic Gold', icon: '🪙' },
 					},
+					resourcesV2: {
+						...session.metadata.resourcesV2,
+						[resourceKey]: { label: 'Civic Gold', icon: '🪙' },
+					},
 				};
 			});
 		render(
@@ -123,6 +127,10 @@ describe('Action translation with population scaling', () => {
 					assets: {
 						...session.metadata.assets,
 						population: { label: 'Population' },
+					},
+					resourcesV2: {
+						...session.metadata.resourcesV2,
+						[resourceKey]: { label: 'Levy Gold' },
 					},
 				};
 			});
