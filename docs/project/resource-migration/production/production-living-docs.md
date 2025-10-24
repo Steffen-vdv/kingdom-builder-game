@@ -52,13 +52,13 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-31 03:20
-- **Current Focus:** Resource Migration MVP - P2 - T47 - AI Evaluators ResourceV2 alignment
-- **State Summary:** Automated AI loops and evaluator handlers now resolve action points and stat requirements through ResourceV2 ids, ensuring legality checks consume the unified `resourceValues` map. See [`./worklogs/T47-ai-evaluators.md`](./worklogs/T47-ai-evaluators.md) for task-level details.
+- **Timestamp (UTC):** 2025-10-31 04:25
+- **Current Focus:** Resource Migration MVP - P2 - T48 - Engine cleanup of legacy resource accessors
+- **State Summary:** Legacy engine paths (developer presets, logging/snapshots, triggers, and resource/population effects) now flow through ResourceV2 helpers instead of touching `player.resources`/`stats`/`population` directly. Resource mutations call `setResourceValue` when the runtime catalog is present, with fallbacks for pre-migration bootstraps. See [`./worklogs/T48-engine-cleanup.md`](./worklogs/T48-engine-cleanup.md) for task notes.
 - **Next Suggested Tasks:**
-  - Extend cost verification/deduction helpers to use ResourceV2 setters so action execution paths no longer rely on legacy `resources` proxies.
-  - Audit passive modifiers and trigger handlers for remaining stat/resource reads that bypass `resourceValues`, queueing follow-up migrations as needed.
-  - Re-run the full repository check once the `developmentTarget` TypeError is cleared to validate AI and requirement flows together.
+  - Convert remaining engine services (e.g., win-condition and tier utilities) to consume ResourceV2 ids exclusively so downstream consumers no longer rely on legacy keys.
+  - Audit effect registries for any lingering `player.population` writes, especially custom handlers introduced by content tasks, and queue follow-up cleanups.
+  - Once the `developmentTarget` TypeError is cleared, rerun `npm run check` to confirm ResourceV2 setters integrate cleanly with repository-wide tests.
 - **Blocking Issues / Risks:** `npm run check` remains blocked by `TypeError: (0 , developmentTarget) is not a function` in `packages/contents/src/happinessHelpers.ts`, preventing an end-to-end verification pass.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.
 

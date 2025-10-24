@@ -1,6 +1,7 @@
 import type { EffectHandler } from '.';
 import type { ResourceKey } from '../state';
 import type { ResourceGain } from '../services';
+import { getResourceValue, setResourceValue } from '../resource-v2';
 
 export const TRANSFER_PCT_EVALUATION_TYPE = 'transfer_pct';
 export const TRANSFER_PCT_EVALUATION_ID = 'percent';
@@ -44,14 +45,45 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 		}
 		const defender = context.opponent;
 		const attacker = context.activePlayer;
-		const available = defender.resources[key] || 0;
+		const defenderResourceId = defender.getResourceV2Id(key);
+		const attackerResourceId = attacker.getResourceV2Id(key);
+		const available = getResourceValue(defender, defenderResourceId);
 		if (available >= 0 && amount > available) {
 			amount = available;
 		}
-		defender.resources[key] = available - amount;
-		attacker.resources[key] = (attacker.resources[key] || 0) + amount;
-		context.services.handleResourceChange(context, defender, key);
-		context.services.handleResourceChange(context, attacker, key);
+		const defenderTarget = available - amount;
+		const attackerCurrent = getResourceValue(attacker, attackerResourceId);
+		const attackerTarget = attackerCurrent + amount;
+		const catalog = context.resourceCatalogV2;
+		if (catalog) {
+			setResourceValue(
+				context,
+				defender,
+				catalog,
+				defenderResourceId,
+				defenderTarget,
+			);
+			setResourceValue(
+				context,
+				attacker,
+				catalog,
+				attackerResourceId,
+				attackerTarget,
+			);
+		} else {
+			defender.resourceValues[defenderResourceId] = defenderTarget;
+			attacker.resourceValues[attackerResourceId] = attackerTarget;
+		}
+		context.services.handleResourceChange(
+			context,
+			defender,
+			defenderResourceId,
+		);
+		context.services.handleResourceChange(
+			context,
+			attacker,
+			attackerResourceId,
+		);
 		return;
 	}
 	const base = requestedPercent ?? 25;
@@ -64,7 +96,9 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 	const percent = modifiers[0]!.amount;
 	const defender = context.opponent;
 	const attacker = context.activePlayer;
-	const available = defender.resources[key] || 0;
+	const defenderResourceId = defender.getResourceV2Id(key);
+	const attackerResourceId = attacker.getResourceV2Id(key);
+	const available = getResourceValue(defender, defenderResourceId);
 	const raw = (available * percent) / 100;
 	let amount: number;
 	if (effect.round === 'up') {
@@ -80,8 +114,29 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 	if (available >= 0 && amount > available) {
 		amount = available;
 	}
-	defender.resources[key] = available - amount;
-	attacker.resources[key] = (attacker.resources[key] || 0) + amount;
-	context.services.handleResourceChange(context, defender, key);
-	context.services.handleResourceChange(context, attacker, key);
+	const defenderTarget = available - amount;
+	const attackerCurrent = getResourceValue(attacker, attackerResourceId);
+	const attackerTarget = attackerCurrent + amount;
+	const catalog = context.resourceCatalogV2;
+	if (catalog) {
+		setResourceValue(
+			context,
+			defender,
+			catalog,
+			defenderResourceId,
+			defenderTarget,
+		);
+		setResourceValue(
+			context,
+			attacker,
+			catalog,
+			attackerResourceId,
+			attackerTarget,
+		);
+	} else {
+		defender.resourceValues[defenderResourceId] = defenderTarget;
+		attacker.resourceValues[attackerResourceId] = attackerTarget;
+	}
+	context.services.handleResourceChange(context, defender, defenderResourceId);
+	context.services.handleResourceChange(context, attacker, attackerResourceId);
 };

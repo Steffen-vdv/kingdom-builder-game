@@ -2,13 +2,9 @@ import { cloneEffectList } from '../utils';
 import { cloneMeta } from '../stat_sources/meta';
 import type { EngineContext } from '../context';
 import type { ActionTrace, PlayerSnapshot } from '../log';
-import type {
-	Land,
-	PlayerId,
-	PlayerState,
-	ResourceKey,
-	StatKey,
-} from '../state';
+import type { Land, PlayerId, PlayerState } from '../state';
+import { PopulationRole, Resource, Stat } from '../state';
+import { getResourceValue } from '../resource-v2';
 import type { PassiveSummary } from '../services';
 import type { LandSnapshot, PlayerStateSnapshot } from './types';
 import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
@@ -170,20 +166,29 @@ function deriveLegacyResourceRecord(
 	player: PlayerState,
 ): Record<string, number> {
 	const snapshot: Record<string, number> = {};
-	for (const key of Object.keys(player.resources)) {
-		const resourceKey: ResourceKey = key;
+	for (const resourceKey of Object.values(Resource)) {
 		const resourceId = player.getResourceV2Id(resourceKey);
-		snapshot[resourceKey] = player.resourceValues[resourceId] ?? 0;
+		snapshot[resourceKey] = getResourceValue(player, resourceId);
 	}
 	return snapshot;
 }
 
 function deriveLegacyStatRecord(player: PlayerState): Record<string, number> {
 	const snapshot: Record<string, number> = {};
-	for (const key of Object.keys(player.stats)) {
-		const statKey: StatKey = key;
+	for (const statKey of Object.values(Stat)) {
 		const resourceId = player.getStatResourceV2Id(statKey);
-		snapshot[statKey] = player.resourceValues[resourceId] ?? 0;
+		snapshot[statKey] = getResourceValue(player, resourceId);
+	}
+	return snapshot;
+}
+
+function deriveLegacyPopulationRecord(
+	player: PlayerState,
+): Record<string, number> {
+	const snapshot: Record<string, number> = {};
+	for (const role of Object.values(PopulationRole)) {
+		const resourceId = player.getPopulationResourceV2Id(role);
+		snapshot[role] = getResourceValue(player, resourceId);
 	}
 	return snapshot;
 }
@@ -201,7 +206,7 @@ export function snapshotPlayer(
 		resources: deriveLegacyResourceRecord(player),
 		stats: deriveLegacyStatRecord(player),
 		statsHistory: { ...player.statsHistory },
-		population: { ...player.population },
+		population: deriveLegacyPopulationRecord(player),
 		valuesV2,
 		resourceBoundsV2,
 		lands: player.lands.map((land) => cloneLand(land)),

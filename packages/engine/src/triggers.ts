@@ -2,7 +2,9 @@ import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
+import { PopulationRole } from './state';
 import type { StatSourceFrame } from './stat_sources';
+import { getResourceValue } from './resource-v2';
 
 export interface TriggerEffectBundle {
 	effects: EffectDef[];
@@ -49,10 +51,11 @@ export function collectTriggerEffects(
 	player: PlayerState = engineContext.activePlayer,
 ): TriggerEffectBundle[] {
 	const bundles: TriggerEffectBundle[] = [];
-	for (const [role, count] of Object.entries(player.population)) {
+	for (const role of Object.values(PopulationRole)) {
 		const populationDefinition = engineContext.populations.get(role);
+		const resourceId = player.getPopulationResourceV2Id(role);
+		const qty = getResourceValue(player, resourceId);
 		if (trigger === 'onPayUpkeepStep' && populationDefinition?.upkeep) {
-			const qty = Number(count);
 			for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
 				pushUpkeepEffect(
 					bundles,
@@ -67,7 +70,7 @@ export function collectTriggerEffects(
 			const clones: EffectDef[] = [];
 			for (
 				let populationIndex = 0;
-				populationIndex < Number(count);
+				populationIndex < Number(qty);
 				populationIndex++
 			) {
 				clones.push(...list.map(cloneEffect));
