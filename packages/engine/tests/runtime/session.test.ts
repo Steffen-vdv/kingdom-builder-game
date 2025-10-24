@@ -367,4 +367,85 @@ describe('EngineSession', () => {
 			/Unknown id/,
 		);
 	});
+
+	it('returns undefined when pulling an unknown effect log key', () => {
+		const session = createTestSession();
+		expect(session.pullEffectLog('missing:log')).toBeUndefined();
+	});
+
+	it('allows toggling developer mode directly on the session', () => {
+		const session = createTestSession();
+		expect(session.getSnapshot().game.devMode).toBe(false);
+		session.setDevMode(true);
+		expect(session.getSnapshot().game.devMode).toBe(true);
+	});
+
+	it('runs AI turns with dependency overrides and reports success', async () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const aiPlayer = snapshot.game.players[1];
+		if (!aiPlayer) {
+			throw new Error('Expected an AI-controlled player.');
+		}
+		const ranTurn = await session.runAiTurn(aiPlayer.id, {
+			performAction(actionId, engineContext) {
+				const resourceKey = engineContext.actionCostResource;
+				if (resourceKey) {
+					engineContext.activePlayer.resources[resourceKey] = 0;
+				}
+				return undefined;
+			},
+			continueAfterAction() {
+				return false;
+			},
+			shouldAdvancePhase() {
+				return false;
+			},
+		});
+		expect(ranTurn).toBe(true);
+	});
+
+	it('returns false when no AI controller is registered for a player', async () => {
+		const session = createTestSession();
+		expect(session.hasAiController('A')).toBe(false);
+		await expect(session.runAiTurn('A')).resolves.toBe(false);
+	});
+
+	it('runs enqueued tasks in order', async () => {
+		const session = createTestSession();
+		const order: number[] = [];
+		const first = session.enqueue(async () => {
+			order.push(1);
+			await Promise.resolve();
+			return 'first';
+		});
+		const second = session.enqueue(() => {
+			order.push(2);
+			return 'second';
+		});
+		await expect(first).resolves.toBe('first');
+		await expect(second).resolves.toBe('second');
+		expect(order).toEqual([1, 2]);
+	});
+
+	it('returns cloned simulation results for upcoming phases', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const activeId = snapshot.game.activePlayerId;
+		const result = session.simulateUpcomingPhases(activeId);
+		expect(result.steps.length).toBeGreaterThan(0);
+		const firstStep = result.steps[0];
+		if (!firstStep) {
+			throw new Error('Expected at least one simulation step.');
+		}
+		firstStep.player.resources[CResource.gold] = 999;
+		const refreshed = session.simulateUpcomingPhases(activeId);
+		expect(refreshed.steps[0]?.player.resources[CResource.gold]).not.toBe(999);
+	});
+
+	it('supports primitive effect log entries without mutation', () => {
+		const session = createTestSession();
+		session.pushEffectLog('test:primitive', 42);
+		expect(session.pullEffectLog<number>('test:primitive')).toBe(42);
+	});
 });
