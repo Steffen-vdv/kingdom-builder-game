@@ -62,15 +62,16 @@ export interface SessionRegistriesPayload {
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
 	/**
-	 * Optional ResourceV2 registry of concrete resources. Present once the
-	 * session transport exposes ResourceV2 payloads alongside the legacy
-	 * resource/stat/population records.
+	 * ResourceV2 registry of concrete resources. ResourceV2-aware
+	 * transports populate this alongside legacy registries; the field is
+	 * optional purely for backwards compatibility with pre-migration
+	 * servers.
 	 */
 	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
 	/**
-	 * Optional ResourceV2 registry of group definitions (including virtual
-	 * parents). Currently unused until the migration pipeline begins
-	 * emitting ResourceV2 structures.
+	 * ResourceV2 registry of group definitions (including virtual parents).
+	 * Presence mirrors {@link resourcesV2}; clients should treat it as a
+	 * first-class payload in migrated environments.
 	 */
 	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
@@ -100,15 +101,17 @@ export interface SessionRuntimeConfigResponse {
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
 	/**
-	 * Optional ResourceV2 registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourcesV2}. Remains undefined until
-	 * runtime wiring for ResourceV2 is ready.
+	 * ResourceV2 registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourcesV2}. Legacy runtimes may
+	 * still omit it, but migrated servers emit this alongside legacy
+	 * registries.
 	 */
 	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
 	/**
-	 * Optional ResourceV2 group registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Reserved for
-	 * future ResourceV2 rollouts.
+	 * ResourceV2 group registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Provided whenever
+	 * ResourceV2 data is active; optional only for compatibility with
+	 * legacy transports.
 	 */
 	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
