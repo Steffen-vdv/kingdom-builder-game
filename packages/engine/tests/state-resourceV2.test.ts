@@ -43,8 +43,6 @@ describe('PlayerState ResourceV2 integration', () => {
 		const { catalog } = bootstrapResourceV2();
 		const player = new PlayerState('A', 'Tester');
 
-		expect(player.resourceV2.recentGains).toEqual([]);
-
 		for (const id of catalog.orderedResourceIds) {
 			const runtime = catalog.resourcesById[id];
 			expect(runtime).toBeDefined();
@@ -87,8 +85,6 @@ describe('PlayerState ResourceV2 integration', () => {
 		player.setResourceV2Value(key, 5);
 		player.setResourceV2LowerBound(key, 1);
 		player.setResourceV2UpperBound(key, 12);
-		player.logResourceV2Gain(key, 5);
-
 		const clone: PlayerResourceV2State = cloneResourceV2State(
 			player.resourceV2,
 		);
@@ -96,14 +92,10 @@ describe('PlayerState ResourceV2 integration', () => {
 		clone.lowerBounds[key] = 0;
 		clone.upperBounds[key] = 20;
 		clone.touched[key] = false;
-		clone.recentGains[0]!.amount = 42;
-		clone.recentGains.push({ key, amount: -3 });
 
 		expect(player.getResourceV2Value(key)).toBe(5);
 		expect(player.getResourceV2LowerBound(key)).toBe(1);
 		expect(player.getResourceV2UpperBound(key)).toBe(12);
 		expect(player.hasResourceV2BeenTouched(key)).toBe(true);
-		expect(player.resourceV2.recentGains).toHaveLength(1);
-		expect(player.resourceV2.recentGains[0]?.amount).toBe(5);
 	});
 });

@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { hydrateResourceV2Metadata } from '../src/resourcesV2/index.ts';
-import {
-	PlayerState,
-	setResourceV2Keys,
-	type PlayerState as PlayerStateType,
-} from '../src/state/index.ts';
+import { PlayerState, setResourceV2Keys } from '../src/state/index.ts';
 import { ResourceV2Service } from '../src/services/resourceV2_service.ts';
 import type { EngineContext } from '../src/context.ts';
 
@@ -42,16 +38,6 @@ const ensureResourceId = (ids: string[]): string => {
 	return first;
 };
 
-const expectRecentGain = (
-	player: PlayerStateType,
-	key: string,
-	amount: number,
-) => {
-	const entry = player.resourceV2.recentGains.at(-1);
-	expect(entry?.key).toBe(key);
-	expect(entry?.amount).toBe(amount);
-};
-
 describe('ResourceV2Service', () => {
 	beforeEach(resetResourceV2Registry);
 
@@ -72,7 +58,6 @@ describe('ResourceV2Service', () => {
 		});
 		expect(delta).toBe(upperBound);
 		expect(player.getResourceV2Value(resourceId)).toBe(upperBound);
-		expectRecentGain(player, resourceId, upperBound);
 	});
 
 	it('transfers the applied amount between donor and recipient players', () => {
@@ -95,8 +80,6 @@ describe('ResourceV2Service', () => {
 		expect(transferred).toBe(10);
 		expect(player.getResourceV2Value(resourceId)).toBe(0);
 		expect(opponent.getResourceV2Value(resourceId)).toBe(14);
-		expectRecentGain(player, resourceId, -10);
-		expectRecentGain(opponent, resourceId, 10);
 	});
 
 	it('emits gain and loss hooks unless suppressed', () => {

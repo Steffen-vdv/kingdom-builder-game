@@ -295,7 +295,6 @@ export class ResourceV2Service {
 			return 0;
 		}
 		player.setResourceV2Value(resourceId, next);
-		player.logResourceV2Gain(resourceId, applied);
 		if (!options.suppressHooks) {
 			this.emitHook(applied, context, player, resourceId);
 		}
