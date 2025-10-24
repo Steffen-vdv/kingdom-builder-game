@@ -54,7 +54,11 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | Resource Migration MVP - P3 - T20 | 2025-10-23 | gpt-5-codex | packages/web/src/components/resources/ResourceHud.tsx; packages/web/src/components/player/PlayerPanel.tsx; packages/web/tests/components/resources/ResourceHud.test.tsx; docs/project/resource-migration/production/production-living-docs.md | Replaced the player panel HUD with the ResourceV2-aware implementation, preserved the legacy bar fallback, and added coverage for grouping, percent formatting, and badges while documenting the rollout. | `npm run test --workspace=@kingdom-builder/web` (passes after building engine/testing/contents packages) | Monitor dual-render quirks under StrictMode and expand tests for untouched parent visibility once additional fixtures exist. |
 | Resource Migration MVP - P3 - T21 | 2025-10-23 | gpt-5-codex | packages/web/src/components/actions/ActionsPanel.tsx; packages/web/src/translation/render.tsx; packages/web/src/translation/log/diffSections.ts; packages/web/src/translation/resourceV2/costSummary.ts; packages/web/tests/components/actions/ActionCostSummary.test.tsx; docs/project/resource-migration/production/production-living-docs.md | Surfaced ResourceV2 action cost metadata in the actions panel/hover/log translators, introduced shared cost summary helpers, and added targeted UI regression tests. | `npm run lint --workspace=@kingdom-builder/web`; `npm run test --workspace=@kingdom-builder/web` _(fails: Vitest cannot resolve @kingdom-builder/engine/testing packages in sandbox)_ | Build/publish engine/testing workspaces locally before rerunning Vitest; extend hovercard/log coverage once dependencies are available. |
 | Resource Migration MVP - P3 - T22 | 2025-10-24 | gpt-5-codex | packages/engine/tests/resourceV2/effects/resource_v2_handler_combinations.test.ts; docs/project/resource-migration/production/production-living-docs.md | Added targeted ResourceV2 handler combination tests covering clamp/percent/hook suppression mixes, parent aggregation, and safeguards preventing limited parent mutations during transfers. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` | Expand coverage when additional reconciliation modes or hook semantics ship beyond clamp-only MVP. |
-| Resource Migration MVP - P3 - T23 | 2025-**-** | _(add entry)_ | | _(reserved for T23 assignee – update only this row.)_ | | |
+| Resource Migration MVP - P3 - T23 | 2025-10-24 | gpt-5-codex | packages/engine/tests/resourceV2.reconciliation.prop.test.ts;
+docs/project/resource-migration/production/production-living-docs.md | Introduced Fast-Check property coverage that randomizes
+add/remove/transfer sequences, verifying bounds, touched propagation, recent gain resets, and tier transition hook ordering,
+then logged the results in the production living doc. | `npm run lint`; `npm run test --workspace=@kingdom-builder/engine` |
+Extend property scenarios with percent-based reconciliation and multi-resource tier tracks once those mechanics are supported. |
 | Resource Migration MVP - P3 - T24 | 2025-**-** | _(add entry)_ | | _(reserved for T24 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T25 | 2025-**-** | _(add entry)_ | | _(reserved for T25 assignee – update only this row.)_ | | |
 | Resource Migration MVP - P3 - T26 | 2025-**-** | _(add entry)_ | | _(reserved for T26 assignee – update only this row.)_ | | |
@@ -68,15 +72,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 **Prepared by:** gpt-5-codex
-**Timestamp (UTC):** 2025-10-24 08:51
-**Current Focus:** Resource Migration MVP - P3 - T22 Resource handler clamp/percent coverage
-**State Summary:** Engine tests now exercise add/remove/transfer/upper-bound handlers with clamp reconciliation, percent rounding, and hook suppression combinations, including parent aggregation rollups and guard rails preventing transfers from mutating derived parents. Lint and engine suites are green.
+**Timestamp (UTC):** 2025-10-24 09:23
+**Current Focus:** Resource Migration MVP - P3 - T23 ResourceV2 reconciliation property suite
+**State Summary:** Added a Fast-Check property harness that randomizes ResourceV2 add, remove, and transfer operations for both players, asserting clamped bounds and touched propagation (including parent aggregates), recent gain reset alignment, and tier service hook ordering. Captured tier hook emissions through a test-only effect to confirm the handover documentation.
 
 - **Next Suggested Tasks:**
-  - Extend transfer scenarios once Pass/Reject reconciliation or multi-resource tiers leave MVP scope.
-  - Introduce property-based coverage exploring randomized percent/rounding combinations across multi-child parents.
-  - Audit hook suppression metadata propagation through session logs before layering additional hook types.
-- **Blocking Issues / Risks:** None. Suites currently pass end-to-end.
+  - Extend the property suite to percent-based deltas, multi-resource tier tracks, and snapshot serialization when those paths land.
+  - Mix hook suppression metadata with tier transitions once additional reconciliation modes or hooks arrive.
+- **Blocking Issues / Risks:** None; lint and engine suites are green and the property run adds roughly 1.2s to the engine test cycle.
 
 ## 5. Notes & Decisions Archive
 
