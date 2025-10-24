@@ -9,9 +9,13 @@ import type {
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerId,
+	SessionResourceBoundsV2,
+	SessionResourceCatalogV2,
+	SessionRecentResourceGain,
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
 import type { SessionMetadataFormat } from '@kingdom-builder/protocol/session';
+import type { ResourceV2MetadataSnapshot } from '../resourceV2';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that
@@ -46,6 +50,21 @@ export interface TranslationIconLabel {
 	description?: string;
 	displayAsPercent?: boolean;
 	format?: SessionMetadataFormat;
+}
+
+export interface TranslationResourceV2MetadataSelectors {
+	has(id: string): boolean;
+	get(id: string): ResourceV2MetadataSnapshot | undefined;
+	list(): readonly ResourceV2MetadataSnapshot[];
+}
+
+export interface TranslationResourceV2SignedGainSelectors {
+	list(): readonly SessionRecentResourceGain[];
+	amount(id: string): number | undefined;
+	buildEntries(
+		owner: SessionPlayerId,
+		metadata: ResourceV2MetadataSnapshot,
+	): readonly SessionRecentResourceGain[];
 }
 
 export interface TranslationModifierInfo {
@@ -148,6 +167,8 @@ export interface TranslationPlayer {
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	population: Record<string, number>;
+	valuesV2?: Readonly<Record<string, number>>;
+	resourceBoundsV2?: Readonly<Record<string, SessionResourceBoundsV2>>;
 }
 
 /**
@@ -166,6 +187,10 @@ export interface TranslationContext {
 	readonly activePlayer: TranslationPlayer;
 	readonly opponent: TranslationPlayer;
 	readonly rules: SessionRuleSnapshot;
+	readonly resourceCatalogV2?: SessionResourceCatalogV2;
+	readonly resourceMetadataV2: TranslationResourceV2MetadataSelectors;
+	readonly resourceGroupMetadataV2: TranslationResourceV2MetadataSelectors;
+	readonly resourceSignedGains: TranslationResourceV2SignedGainSelectors;
 	readonly recentResourceGains: ReadonlyArray<{
 		key: string;
 		amount: number;

@@ -21,6 +21,12 @@ import {
 	wrapRegistry,
 } from './contextHelpers';
 import {
+	cloneResourceCatalogV2,
+	createResourceGroupMetadataSelectors,
+	createResourceMetadataSelectors,
+	createResourceSignedGainSelectors,
+} from './resourceV2Helpers';
+import {
 	EMPTY_PASSIVE_DEFINITIONS,
 	cloneRuleSnapshot,
 	mapPassiveDefinitionLists,
@@ -54,6 +60,17 @@ export function createTranslationContext(
 	if (!activePlayer || !opponent) {
 		throw new Error('Unable to resolve active players from session snapshot.');
 	}
+	const resourceCatalogV2 = cloneResourceCatalogV2(
+		session.game.resourceCatalogV2,
+	);
+	const resourceMetadataSelectors = createResourceMetadataSelectors(
+		resourceCatalogV2,
+		session.resourceMetadataV2 ?? metadata.resourcesV2,
+	);
+	const resourceGroupMetadataSelectors = createResourceGroupMetadataSelectors(
+		resourceCatalogV2,
+		session.resourceGroupMetadataV2 ?? metadata.resourceGroupsV2,
+	);
 	const passives = mapPassives(session.game.players);
 	const passiveDescriptors = mapPassiveDescriptors(passives);
 	const evaluationMods = cloneEvaluationModifiers(
@@ -95,6 +112,13 @@ export function createTranslationContext(
 			return evaluationMods;
 		},
 	});
+	const recentResourceGains = cloneRecentResourceGains(
+		session.recentResourceGains,
+	);
+	const resourceSignedGains = createResourceSignedGainSelectors(
+		players,
+		recentResourceGains,
+	);
 	const assets = createTranslationAssets(registries, metadata, {
 		rules: options.ruleSnapshot,
 	});
@@ -174,7 +198,11 @@ export function createTranslationContext(
 			return next as T;
 		},
 		actionCostResource: session.actionCostResource,
-		recentResourceGains: cloneRecentResourceGains(session.recentResourceGains),
+		...(resourceCatalogV2 ? { resourceCatalogV2 } : {}),
+		resourceMetadataV2: resourceMetadataSelectors,
+		resourceGroupMetadataV2: resourceGroupMetadataSelectors,
+		resourceSignedGains,
+		recentResourceGains,
 		compensations: cloneCompensations(session.compensations),
 		rules: ruleSnapshot,
 		assets,
