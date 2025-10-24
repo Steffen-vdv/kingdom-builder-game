@@ -6,27 +6,27 @@ export interface ContentOrderedRegistry<T extends { id: string }> {
 }
 
 export interface ContentTierThreshold {
-	readonly min?: number;
-	readonly max?: number;
+	readonly min?: number | undefined;
+	readonly max?: number | undefined;
 }
 
 export interface ContentTierDefinition {
 	readonly id: string;
 	readonly label: string;
-	readonly icon?: string;
-	readonly description?: string;
-	readonly order?: number;
+	readonly icon?: string | undefined;
+	readonly description?: string | undefined;
+	readonly order?: number | undefined;
 	readonly threshold: ContentTierThreshold;
-	readonly enterEffects?: readonly EffectDef[];
-	readonly exitEffects?: readonly EffectDef[];
+	readonly enterEffects?: readonly EffectDef[] | undefined;
+	readonly exitEffects?: readonly EffectDef[] | undefined;
 }
 
 export interface ContentTierTrackMetadata {
 	readonly id: string;
 	readonly label: string;
-	readonly icon?: string;
-	readonly description?: string;
-	readonly order?: number;
+	readonly icon?: string | undefined;
+	readonly description?: string | undefined;
+	readonly order?: number | undefined;
 }
 
 export interface ContentTierTrack {
@@ -35,44 +35,44 @@ export interface ContentTierTrack {
 }
 
 export interface ContentBounds {
-	readonly lowerBound?: number;
-	readonly upperBound?: number;
+	readonly lowerBound?: number | undefined;
+	readonly upperBound?: number | undefined;
 }
 
 export interface ContentMetadata {
 	readonly id: string;
 	readonly label: string;
 	readonly icon: string;
-	readonly description?: string;
-	readonly order?: number;
-	readonly tags?: readonly string[];
+	readonly description?: string | undefined;
+	readonly order?: number | undefined;
+	readonly tags?: readonly string[] | undefined;
 }
 
 export interface ContentResourceDefinition
 	extends ContentMetadata,
 		ContentBounds {
-	readonly displayAsPercent?: boolean;
-	readonly trackValueBreakdown?: boolean;
-	readonly trackBoundBreakdown?: boolean;
-	readonly groupId?: string;
-	readonly groupOrder?: number;
-	readonly globalCost?: { amount: number };
-	readonly tierTrack?: ContentTierTrack;
-	readonly reconciliation?: string;
+	readonly displayAsPercent?: boolean | undefined;
+	readonly trackValueBreakdown?: boolean | undefined;
+	readonly trackBoundBreakdown?: boolean | undefined;
+	readonly groupId?: string | undefined;
+	readonly groupOrder?: number | undefined;
+	readonly globalCost?: { amount: number } | undefined;
+	readonly tierTrack?: ContentTierTrack | undefined;
+	readonly reconciliation?: string | undefined;
 }
 
 export interface ContentResourceGroupParent
 	extends ContentMetadata,
 		ContentBounds {
-	readonly displayAsPercent?: boolean;
-	readonly trackValueBreakdown?: boolean;
-	readonly trackBoundBreakdown?: boolean;
-	readonly tierTrack?: ContentTierTrack;
-	readonly reconciliation?: string;
+	readonly displayAsPercent?: boolean | undefined;
+	readonly trackValueBreakdown?: boolean | undefined;
+	readonly trackBoundBreakdown?: boolean | undefined;
+	readonly tierTrack?: ContentTierTrack | undefined;
+	readonly reconciliation?: string | undefined;
 }
 
 export interface ContentResourceGroupDefinition {
 	readonly id: string;
-	readonly order?: number;
-	readonly parent?: ContentResourceGroupParent;
+	readonly order?: number | undefined;
+	readonly parent?: ContentResourceGroupParent | undefined;
 }

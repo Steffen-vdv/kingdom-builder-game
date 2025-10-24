@@ -11,6 +11,7 @@ import type {
 	Registry,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
+import type { RuntimeResourceCatalog } from './resource-v2';
 import type { ActionTrace } from './log';
 
 export class EngineContext {
@@ -30,6 +31,7 @@ export class EngineContext {
 		},
 	) {}
 	aiSystem?: AISystem;
+	resourceCatalogV2?: RuntimeResourceCatalog;
 	recentResourceGains: {
 		key: ResourceKey;
 		amount: number;

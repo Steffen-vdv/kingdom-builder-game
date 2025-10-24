@@ -1,0 +1,1 @@
+export { RESOURCE_V2_REGISTRY, RESOURCE_GROUP_V2_REGISTRY } from '../resourceV2';
