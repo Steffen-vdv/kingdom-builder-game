@@ -3,6 +3,7 @@ import { runEffects } from '.';
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import { withStatSourceFrames } from '../stat_sources';
 import type { PopulationRoleId } from '../state';
+import { getResourceValue } from '../resource-v2';
 import { setPopulationRoleValue } from './population_resource';
 
 export const populationAdd: EffectHandler = (effect, context, mult = 1) => {
@@ -15,7 +16,8 @@ export const populationAdd: EffectHandler = (effect, context, mult = 1) => {
 	while (iterationIndex < iterations) {
 		const player = context.activePlayer;
 		const populationDefinition = context.populations.get(role);
-		const current = player.population[role] ?? 0;
+		const resourceId = player.getPopulationResourceV2Id(role);
+		const current = getResourceValue(player, resourceId);
 		const { changed, nextValue } = setPopulationRoleValue(
 			context,
 			role,

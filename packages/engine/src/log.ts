@@ -1,5 +1,7 @@
 import type { EngineContext } from './context';
-import type { PlayerState, ResourceKey, StatKey } from './state';
+import type { PlayerState } from './state';
+import { Resource, Stat } from './state';
+import { getResourceValue } from './resource-v2';
 import type { PassiveSummary } from './services';
 import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
 
@@ -48,20 +50,18 @@ function deriveLegacyResourceRecord(
 	player: PlayerState,
 ): Record<string, number> {
 	const snapshot: Record<string, number> = {};
-	for (const key of Object.keys(player.resources)) {
-		const resourceKey: ResourceKey = key;
+	for (const resourceKey of Object.values(Resource)) {
 		const resourceId = player.getResourceV2Id(resourceKey);
-		snapshot[resourceKey] = player.resourceValues[resourceId] ?? 0;
+		snapshot[resourceKey] = getResourceValue(player, resourceId);
 	}
 	return snapshot;
 }
 
 function deriveLegacyStatRecord(player: PlayerState): Record<string, number> {
 	const snapshot: Record<string, number> = {};
-	for (const key of Object.keys(player.stats)) {
-		const statKey: StatKey = key;
+	for (const statKey of Object.values(Stat)) {
 		const resourceId = player.getStatResourceV2Id(statKey);
-		snapshot[statKey] = player.resourceValues[resourceId] ?? 0;
+		snapshot[statKey] = getResourceValue(player, resourceId);
 	}
 	return snapshot;
 }
