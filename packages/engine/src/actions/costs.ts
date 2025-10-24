@@ -156,9 +156,10 @@ export function verifyCostAffordability(
 ): true | string {
 	for (const resourceKey of Object.keys(costs)) {
 		const requiredAmount = costs[resourceKey] ?? 0;
-		const availableAmount = playerState.resources[resourceKey] ?? 0;
+		const resourceId = playerState.getResourceV2Id(resourceKey);
+		const availableAmount = playerState.resourceValues[resourceId] ?? 0;
 		if (availableAmount < requiredAmount) {
-			const shortageDetail = `Insufficient ${resourceKey}: need ${requiredAmount}`;
+			const shortageDetail = `Insufficient ${resourceId}: need ${requiredAmount}`;
 			return `${shortageDetail}, have ${availableAmount}`;
 		}
 	}
@@ -172,12 +173,15 @@ export function deductCostsFromPlayer(
 ): void {
 	for (const resourceKey of Object.keys(costs)) {
 		const amount = costs[resourceKey] ?? 0;
-		playerState.resources[resourceKey] =
-			(playerState.resources[resourceKey] || 0) - amount;
+		const resourceId = playerState.getResourceV2Id(resourceKey);
+		const currentValue = playerState.resourceValues[resourceId] ?? 0;
+		const nextValue = currentValue - amount;
+		playerState.resourceValues[resourceId] = nextValue;
+		playerState.resourceTouched[resourceId] = true;
 		engineContext.services.handleResourceChange(
 			engineContext,
 			playerState,
-			resourceKey,
+			resourceId,
 		);
 	}
 }

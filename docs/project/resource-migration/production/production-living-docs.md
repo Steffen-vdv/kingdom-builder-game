@@ -52,14 +52,14 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-30 18:05
-- **Current Focus:** Resource Migration MVP - P2 - T45 - Stat Sources ResourceV2 Mapping
-- **State Summary:** Stat source utilities now resolve contributions and dependency metadata using ResourceV2 ids, and PlayerState synchronises stat history through the new touched flags. Clones/simulations have been updated accordingly. See [`./worklogs/T45-stat-sources.md`](./worklogs/T45-stat-sources.md) for details.
+- **Timestamp (UTC):** 2025-10-30 22:45
+- **Current Focus:** Resource Migration MVP - P2 - T47 - AI evaluators & requirements ResourceV2 parity
+- **State Summary:** Automated AI turns, evaluator handlers, and action cost requirements now resolve resource and stat values through `PlayerState.resourceValues`, eliminating reliance on legacy stat/resource maps. Updated tests cover the new ResourceV2 plumbing. See [`./worklogs/T47-ai-evaluators.md`](./worklogs/T47-ai-evaluators.md) for command history and follow-ups.
 - **Next Suggested Tasks:**
-  - Update evaluator dependency collectors once upstream payloads emit ResourceV2 stat ids so compare chains surface canonical identifiers without PlayerState lookups.
-  - Audit downstream consumers (protocol payloads, UI translators) for assumptions about legacy stat keys in `statSources` and adapt them to the ResourceV2 map.
-  - Re-run the full repository check after the outstanding `developmentTarget` TypeError is resolved to confirm suite stability.
-- **Blocking Issues / Risks:** `npm run check` remains blocked by `TypeError: (0 , developmentTarget) is not a function` in `packages/contents/src/happinessHelpers.ts`, preventing an end-to-end verification pass.
+  - Align remaining resource effect handlers and service callbacks to emit ResourceV2 identifiers so downstream change notifications stay consistent.
+  - Backfill evaluator dependency collectors once contents emit ResourceV2 stat ids to remove transitional PlayerState lookups.
+  - Coordinate with contents owners on the `developmentTarget` helper regression and rerun `npm run check` once the TypeError is cleared.
+- **Blocking Issues / Risks:** `npm run check` still fails with `TypeError: (0 , developmentTarget) is not a function` from `packages/contents/src/happinessHelpers.ts`, so full-suite verification remains blocked.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.
 
 ## 5. Notes & Decisions Archive

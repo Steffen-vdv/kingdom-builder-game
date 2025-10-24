@@ -50,14 +50,15 @@ describe('AISystem with tax collector controller', () => {
 			engineContext.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
 
 		const apKey = engineContext.actionCostResource;
-		engineContext.activePlayer.resources[apKey] = actionPoints;
+		const apId = engineContext.activePlayer.getResourceV2Id(apKey);
+		engineContext.activePlayer.resourceValues[apId] = actionPoints;
 		engineContext.activePlayer.actions.add(TAX_ACTION_ID);
 
-		return { engineContext, apKey, actionPhaseIndex } as const;
+		return { engineContext, apKey, apId, actionPhaseIndex } as const;
 	}
 
 	it('runs registered controller draining AP and advancing phase', async () => {
-		const { engineContext, apKey, actionPhaseIndex } = createEngineFixture(2);
+		const { engineContext, apId, actionPhaseIndex } = createEngineFixture(2);
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -88,7 +89,7 @@ describe('AISystem with tax collector controller', () => {
 		expect(continueAfterAction).toHaveBeenCalledTimes(2);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apId]).toBe(0);
 		expect(engineContext.game.phaseIndex).not.toBe(actionPhaseIndex);
 	});
 
@@ -180,7 +181,7 @@ describe('AISystem with tax collector controller', () => {
 	});
 
 	it('finishes the phase when the tax action is locked to the system', async () => {
-		const { engineContext, apKey } = createEngineFixture(2, {
+		const { engineContext, apId } = createEngineFixture(2, {
 			action: { system: true },
 		});
 		const perform = vi.fn();
@@ -203,11 +204,11 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apId]).toBe(0);
 	});
 
 	it('terminates the loop when continuation declines further actions', async () => {
-		const { engineContext, apKey } = createEngineFixture(3);
+		const { engineContext, apId } = createEngineFixture(3);
 		const perform = vi.fn((actionId: string) =>
 			performAction(actionId, engineContext),
 		);
@@ -229,11 +230,11 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(continueAfterAction).toHaveBeenCalledTimes(1);
 		expect(advancePhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resources[apKey]).toBe(2);
+		expect(engineContext.activePlayer.resourceValues[apId]).toBe(2);
 	});
 
 	it('recovers from action errors by draining AP and advancing', async () => {
-		const { engineContext, apKey } = createEngineFixture(2);
+		const { engineContext, apId } = createEngineFixture(2);
 		const error = new Error('boom');
 		const perform = vi.fn(() => {
 			throw error;
@@ -255,6 +256,6 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apId]).toBe(0);
 	});
 });

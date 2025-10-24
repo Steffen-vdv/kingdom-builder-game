@@ -96,10 +96,19 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		if (!actionPointResourceKey) {
 			return;
 		}
+		const actionPointResourceId = engineContext.activePlayer.getResourceV2Id(
+			actionPointResourceKey,
+		);
+		if (!actionPointResourceId) {
+			return;
+		}
 
 		const continueAfterAction =
 			dependencies.continueAfterAction ?? (() => true);
 		const shouldAdvancePhase = dependencies.shouldAdvancePhase ?? (() => true);
+
+		const readRemaining = () =>
+			engineContext.activePlayer.resourceValues[actionPointResourceId] ?? 0;
 
 		const finishActionPhaseAsync = async () => {
 			if (engineContext.activePlayer.id !== playerId) {
@@ -110,9 +119,11 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 				return;
 			}
 			const remaining =
-				engineContext.activePlayer.resources[actionPointResourceKey];
+				engineContext.activePlayer.resourceValues[actionPointResourceId];
 			if (typeof remaining === 'number' && remaining > 0) {
-				engineContext.activePlayer.resources[actionPointResourceKey] = 0;
+				engineContext.activePlayer.resourceValues[actionPointResourceId] = 0;
+				engineContext.activePlayer.resourceTouched[actionPointResourceId] =
+					true;
 			}
 			const shouldAdvance = await shouldAdvancePhase(engineContext);
 			if (!shouldAdvance) {
@@ -139,7 +150,7 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		while (
 			engineContext.activePlayer.id === playerId &&
 			engineContext.phases[engineContext.game.phaseIndex]?.action &&
-			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) > 0
+			readRemaining() > 0
 		) {
 			try {
 				const result = await dependencies.performAction(
@@ -164,7 +175,7 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		if (
 			engineContext.activePlayer.id === playerId &&
 			engineContext.phases[engineContext.game.phaseIndex]?.action &&
-			(engineContext.activePlayer.resources[actionPointResourceKey] ?? 0) === 0
+			readRemaining() === 0
 		) {
 			await finishActionPhaseAsync();
 		}

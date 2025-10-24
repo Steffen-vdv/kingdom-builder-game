@@ -11,5 +11,10 @@ export const statEvaluator: EvaluatorHandler<number, StatEvaluatorParams> = (
 	engineContext: EngineContext,
 ) => {
 	const key = definition.params?.key as StatKey;
-	return engineContext.activePlayer.stats[key] || 0;
+	if (!key) {
+		return 0;
+	}
+	const resourceId = engineContext.activePlayer.getStatResourceV2Id(key);
+	const value = engineContext.activePlayer.resourceValues[resourceId];
+	return typeof value === 'number' ? value : 0;
 };
