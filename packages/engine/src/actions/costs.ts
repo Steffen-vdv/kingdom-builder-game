@@ -33,10 +33,20 @@ export function applyCostsWithPassives(
 	const defaultedCosts = cloneCostBag(baseCosts);
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
 	const primaryCostKey = engineContext.actionCostResource;
-	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
-		defaultedCosts[primaryCostKey] = actionDefinition.system
-			? 0
-			: engineContext.services.rules.defaultActionAPCost;
+	if (primaryCostKey) {
+		const resourceCatalog = engineContext.resourceCatalogV2;
+		const globalCostConfig = resourceCatalog
+			? resourceCatalog.resources.byId[primaryCostKey]?.globalCost
+			: undefined;
+		if (globalCostConfig) {
+			const existing = defaultedCosts[primaryCostKey] ?? 0;
+			const baseAmount = actionDefinition.system ? 0 : globalCostConfig.amount;
+			defaultedCosts[primaryCostKey] = baseAmount + existing;
+		} else if (defaultedCosts[primaryCostKey] === undefined) {
+			defaultedCosts[primaryCostKey] = actionDefinition.system
+				? 0
+				: engineContext.services.rules.defaultActionAPCost;
+		}
 	}
 	return engineContext.passives.applyCostMods(
 		actionDefinition.id,

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource, RULES } from '@kingdom-builder/contents';
 import {
 	applyCostsWithPassives,
 	getActionCosts,
@@ -9,14 +9,27 @@ import {
 } from '../../src/actions/costs.ts';
 import type { PlayerId } from '../../src/state/index.ts';
 import { createTestEngine } from '../helpers.ts';
+import { determineCommonActionCostResource } from '../../src/setup/player_setup.ts';
 
 describe('action cost helpers', () => {
-	it('applies default AP cost only for non-system actions', () => {
+	it('applies the global action cost amount when configured', () => {
 		const content = createContentFactory();
 		const standardAction = content.action({ baseCosts: {} });
 		const systemAction = content.action({ baseCosts: {}, system: true });
-		const engineContext = createTestEngine({ actions: content.actions });
+		const engineContext = createTestEngine({
+			actions: content.actions,
+			rules: { ...RULES, defaultActionAPCost: 37 },
+		});
 		const apKey = engineContext.actionCostResource;
+		const globalCostAmount =
+			engineContext.resourceCatalogV2?.resources.byId[apKey]?.globalCost
+				?.amount;
+
+		expect(globalCostAmount).toBeDefined();
+		if (globalCostAmount === undefined) {
+			throw new Error('Global action cost amount was not initialised.');
+		}
+		expect(globalCostAmount).not.toBe(RULES.defaultActionAPCost);
 
 		const standardCosts = applyCostsWithPassives(
 			standardAction.id,
@@ -29,10 +42,25 @@ describe('action cost helpers', () => {
 			engineContext,
 		);
 
-		expect(standardCosts[apKey]).toBe(
-			engineContext.services.rules.defaultActionAPCost,
-		);
+		expect(standardCosts[apKey]).toBe(globalCostAmount);
 		expect(systemCosts[apKey]).toBe(0);
+	});
+
+	it('rejects per-action overrides for the global action cost resource', () => {
+		const engineContext = createTestEngine();
+		const catalog = engineContext.resourceCatalogV2!;
+		const globalResourceId = engineContext.actionCostResource;
+		const content = createContentFactory();
+		content.action({
+			id: 'override-test',
+			baseCosts: { [globalResourceId]: 5 },
+		});
+
+		expect(() =>
+			determineCommonActionCostResource(content.actions, catalog),
+		).toThrowError(
+			`Action "override-test" overrides the global action cost resource "${globalResourceId}". Remove per-action baseCosts for globally-priced resources.`,
+		);
 	});
 
 	it('resolves costs for alternate players without mutating state', () => {

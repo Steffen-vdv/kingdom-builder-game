@@ -263,7 +263,40 @@ export function initializePlayerActions(
 
 export function determineCommonActionCostResource(
 	actions: Registry<ActionDef>,
+	resourceCatalog?: RuntimeResourceCatalog,
 ): ResourceKey {
+	let globalCostResourceId: string | null = null;
+	if (resourceCatalog) {
+		const definitionWithGlobalCost = resourceCatalog.resources.ordered.find(
+			(definition) => definition.globalCost,
+		);
+		if (definitionWithGlobalCost) {
+			globalCostResourceId = definitionWithGlobalCost.id;
+		}
+	}
+
+	if (globalCostResourceId !== null) {
+		const resolvedGlobalCostResourceId: string = globalCostResourceId;
+		for (const [actionId, actionDefinition] of actions.entries()) {
+			if (actionDefinition.system) {
+				continue;
+			}
+			if (
+				actionDefinition.baseCosts &&
+				Object.prototype.hasOwnProperty.call(
+					actionDefinition.baseCosts,
+					globalCostResourceId,
+				)
+			) {
+				const resolvedId = actionDefinition.id ?? actionId;
+				throw new Error(
+					`Action "${resolvedId}" overrides the global action cost resource "${globalCostResourceId}". Remove per-action baseCosts for globally-priced resources.`,
+				);
+			}
+		}
+		return resolvedGlobalCostResourceId;
+	}
+
 	let intersection: string[] | null = null;
 	for (const [, actionDefinition] of actions.entries()) {
 		if (actionDefinition.system) {
@@ -278,7 +311,10 @@ export function determineCommonActionCostResource(
 			: costKeys;
 	}
 	if (intersection && intersection.length > 0) {
-		return intersection[0] as ResourceKey;
+		const [firstKey] = intersection;
+		if (firstKey !== undefined) {
+			return firstKey;
+		}
 	}
-	return '' as ResourceKey;
+	return '';
 }

@@ -44,15 +44,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 09:10
-- **Current Focus:** Resource Migration MVP - P2 - T39 - Player State Resource Proxy
-- **State Summary:** PlayerState now proxies legacy `resources`, `stats`, and `population` accessors into the ResourceV2 value/bound maps, keeps dynamic property definitions aligned with catalog keys, and migrates legacy mappings during cloning. See [`worklogs/T39-playerstate.md`](../../../../worklogs/T39-playerstate.md) for details, tests, and follow-ups.
+- **Timestamp (UTC):** 2025-10-28 16:30
+- **Current Focus:** Resource Migration MVP - P2 - T41 - Global Action Cost Enforcement
+- **State Summary:** Engine bootstrap now discovers the global action cost resource from the runtime ResourceV2 catalog, blocks per-action overrides, and defaults cost calculations to the catalog-defined amount. See [`worklogs/T41-global-cost.md`](../../../../worklogs/T41-global-cost.md) for implementation notes, test attempts, and follow-ups.
 - **Next Suggested Tasks:**
-  - Update engine start configuration wiring to seed ResourceV2 values/bounds via the new legacy mapping utilities before legacy bags are removed.
-  - Extend other legacy bridges (snapshots, requirement evaluators, etc.) to consume the proxy mappings so we can drop duplicate state later in the migration.
-  - Stabilise `npm run check` by resolving the `developmentTarget()` TypeError thrown during the engine coverage stage and rerun the suite to completion.
-- **Blocking Issues / Risks:** `npm run check` currently fails with `TypeError: (0 , developmentTarget) is not a function` originating from `packages/contents/src/happinessHelpers.ts` while running engine coverage. The failure predates this task and still needs resolution.
-- **Reminder:** Keep per-task worklogs current and coordinate follow-up bridge updates via `worklogs/T39-playerstate.md` until migration coverage expands.
+  - Thread the catalog-backed global cost enforcement through downstream consumers (AI heuristics, session snapshots, passive modifiers) to eliminate lingering assumptions about legacy resource keys.
+  - Capture the explicit stack trace for the `developmentTarget()` coverage failure once the engine suite progresses far enough so future agents can link it directly in the living document.
+  - Audit web/UI affordances that still reference legacy action point defaults and migrate them to use ResourceV2 metadata before we remove the bridge fields.
+- **Blocking Issues / Risks:** `npm run check` remains blocked by the pre-existing `TypeError: (0 , developmentTarget) is not a function` emitted during engine coverage (see prior tasks); the suite was interrupted after ~36 seconds in this run once it reached the long-running coverage stage.
+- **Reminder:** Keep per-task worklogs current and coordinate follow-up bridge updates via the latest worklogs until migration coverage expands.
 
 ## 5. Notes & Decisions Archive
 
