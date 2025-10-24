@@ -139,6 +139,8 @@ describe('appendStatChanges', () => {
 			player,
 			raiseStrengthEffects,
 			assets,
+			translationContext.resourceMetadataV2,
+			translationContext.signedResourceGains,
 		);
 		const statDescriptor = selectStatDescriptor(
 			translationContext,
@@ -224,7 +226,16 @@ describe('appendStatChanges', () => {
 			),
 		};
 		const changes: string[] = [];
-		appendStatChanges(changes, before, after, player, step, fallbackAssets);
+		appendStatChanges(
+			changes,
+			before,
+			after,
+			player,
+			step,
+			fallbackAssets,
+			translationContext.resourceMetadataV2,
+			translationContext.signedResourceGains,
+		);
 		const entry = changes.find((line) => line.includes(primaryStatId));
 		expect(entry).toBeDefined();
 		expect(entry?.includes(primaryStatId)).toBe(true);

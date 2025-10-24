@@ -17,6 +17,7 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import type { ZodType } from 'zod';
 import { clone } from './clone';
+import { getResourceIdForLegacy } from '../translation/resourceV2';
 
 function createRegistryFromPayload<DefinitionType>(
 	entries: Record<string, DefinitionType>,
@@ -131,5 +132,10 @@ export function deserializeSessionRegistries(
 }
 
 export function extractResourceKeys(registries: SessionRegistries): string[] {
-	return Object.keys(registries.resources);
+	const keys = new Set<string>();
+	for (const key of Object.keys(registries.resources)) {
+		const resourceId = getResourceIdForLegacy('resources', key) ?? key;
+		keys.add(resourceId);
+	}
+	return Array.from(keys);
 }

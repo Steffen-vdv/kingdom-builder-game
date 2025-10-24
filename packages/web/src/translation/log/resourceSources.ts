@@ -1,5 +1,6 @@
 import { type EffectDef } from '@kingdom-builder/protocol';
 import { type StepEffects } from './statBreakdown';
+import { getResourceIdForLegacy } from '../resourceV2';
 import { appendMetaSourceIcons } from './resourceSources/meta';
 import { appendEvaluatorModifiers } from './resourceSources/modifiers';
 import { type ResourceSourceEntry } from './resourceSources/types';
@@ -28,10 +29,17 @@ function findNestedResource(effect: EffectDef): EffectDef | undefined {
 	return undefined;
 }
 
+function normalizeResourceKey(key: string): string {
+	return getResourceIdForLegacy('resources', key) ?? key;
+}
+
 function readResourceKey(effect: EffectDef): string | undefined {
 	const params = effect.params;
 	const key = params?.['key'];
-	return typeof key === 'string' ? key : undefined;
+	if (typeof key !== 'string') {
+		return undefined;
+	}
+	return normalizeResourceKey(key);
 }
 
 function appendEvaluatorIcons(

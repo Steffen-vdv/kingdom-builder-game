@@ -35,6 +35,7 @@ import { LOG_KEYWORDS } from '../src/translation/log/logMessages';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import type { ActionDiffChange } from '../src/translation/log/diff';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
+import { getResourceIdForLegacy } from '../src/translation/resourceV2';
 
 function asTimelineLines(
 	entries: readonly (string | ActionLogLineDescriptor)[],
@@ -58,9 +59,9 @@ function asTimelineLines(
 	return lines;
 }
 
-const RESOURCE_KEYS = Object.keys(
-	SYNTHETIC_RESOURCES,
-) as (keyof typeof SYNTHETIC_RESOURCES)[];
+const RESOURCE_KEYS = Object.keys(SYNTHETIC_RESOURCES).map((key) => {
+	return getResourceIdForLegacy('resources', key) ?? key;
+});
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');

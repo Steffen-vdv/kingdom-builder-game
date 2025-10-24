@@ -5,6 +5,7 @@ import type {
 	SessionPassiveSummary,
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
+	SessionResourceBoundsV2,
 } from '@kingdom-builder/protocol';
 import {
 	appendResourceChanges,
@@ -15,9 +16,11 @@ import {
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
 import { createTranslationDiffContext } from './resourceSources/context';
+import { getResourceIdForLegacy } from '../resourceV2';
 import type {
 	TranslationActionCategoryRegistry,
 	TranslationAssets,
+	TranslationContext,
 } from '../context';
 
 export interface PlayerSnapshot {
@@ -32,6 +35,8 @@ export interface PlayerSnapshot {
 		developments: string[];
 	}>;
 	passives: SessionPassiveSummary[];
+	valuesV2?: Record<string, number>;
+	resourceBoundsV2?: Record<string, SessionResourceBoundsV2>;
 }
 
 type SnapshotInput =
@@ -67,6 +72,14 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 		return {};
 	})();
 	const passives = 'passives' in playerState ? [...playerState.passives] : [];
+	const valuesV2 =
+		'valuesV2' in playerState && playerState.valuesV2
+			? { ...playerState.valuesV2 }
+			: undefined;
+	const resourceBoundsV2 =
+		'resourceBoundsV2' in playerState && playerState.resourceBoundsV2
+			? structuredClone(playerState.resourceBoundsV2)
+			: undefined;
 	return {
 		resources: { ...playerState.resources },
 		stats: { ...playerState.stats },
@@ -74,6 +87,8 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 		buildings: buildingList,
 		lands,
 		passives,
+		...(valuesV2 ? { valuesV2 } : {}),
+		...(resourceBoundsV2 ? { resourceBoundsV2 } : {}),
 	};
 }
 
@@ -81,10 +96,34 @@ export function collectResourceKeys(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
 ): string[] {
-	return Object.keys({
-		...previousSnapshot.resources,
-		...nextSnapshot.resources,
-	});
+	const ids = new Set<string>();
+	for (const snapshot of [previousSnapshot, nextSnapshot]) {
+		const values = snapshot.valuesV2;
+		if (!values) {
+			continue;
+		}
+		for (const id of Object.keys(values)) {
+			ids.add(id);
+		}
+	}
+	if (ids.size > 0) {
+		return Array.from(ids);
+	}
+	const buckets: Array<['resources' | 'stats', Record<string, number>]> = [
+		['resources', previousSnapshot.resources],
+		['resources', nextSnapshot.resources],
+		['stats', previousSnapshot.stats],
+		['stats', nextSnapshot.stats],
+	];
+	for (const [bucket, record] of buckets) {
+		for (const key of Object.keys(record)) {
+			const id = getResourceIdForLegacy(bucket, key);
+			if (id) {
+				ids.add(id);
+			}
+		}
+	}
+	return Array.from(ids);
 }
 
 interface DiffContext extends SnapshotContext {
@@ -103,6 +142,10 @@ interface DiffContext extends SnapshotContext {
 	};
 	actionCategories: TranslationActionCategoryRegistry;
 	assets: TranslationAssets;
+	resourcesV2: TranslationContext['resourcesV2'];
+	resourceMetadataV2: TranslationContext['resourceMetadataV2'];
+	resourceGroupMetadataV2: TranslationContext['resourceGroupMetadataV2'];
+	signedResourceGains: TranslationContext['signedResourceGains'];
 }
 
 export function diffSnapshots(
@@ -112,11 +155,23 @@ export function diffSnapshots(
 	resourceKeys: string[] = collectResourceKeys(previousSnapshot, nextSnapshot),
 ): string[] {
 	const changeSummaries: string[] = [];
+	const diffContext = createTranslationDiffContext({
+		activePlayer: context.activePlayer,
+		buildings: context.buildings,
+		developments: context.developments,
+		actionCategories: context.actionCategories,
+		passives: context.passives,
+		assets: context.assets,
+		resourcesV2: context.resourcesV2,
+		resourceMetadataV2: context.resourceMetadataV2,
+		resourceGroupMetadataV2: context.resourceGroupMetadataV2,
+		signedResourceGains: context.signedResourceGains,
+	});
 	const resourceChanges = appendResourceChanges(
 		previousSnapshot,
 		nextSnapshot,
 		resourceKeys,
-		context.assets,
+		diffContext,
 	);
 	for (const change of resourceChanges) {
 		changeSummaries.push(change.summary);
@@ -128,11 +183,9 @@ export function diffSnapshots(
 		nextSnapshot,
 		undefined,
 		context.assets,
+		diffContext.resourceMetadataV2,
+		diffContext.signedResourceGains,
 	);
-	const diffContext = createTranslationDiffContext({
-		...context,
-		actionCategories: context.actionCategories,
-	});
 	appendBuildingChanges(
 		changeSummaries,
 		previousSnapshot,

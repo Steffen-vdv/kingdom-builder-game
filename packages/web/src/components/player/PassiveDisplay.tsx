@@ -26,6 +26,7 @@ import {
 	useResourceMetadata,
 } from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from './registryDisplays';
+import { getResourceIdForLegacy } from '../../translation/resourceV2';
 
 function normalizeEffectList(
 	value: unknown,
@@ -105,12 +106,19 @@ export default function PassiveDisplay({
 
 	const tierDefinitions = ruleSnapshot.tierDefinitions;
 	const happinessKey = ruleSnapshot.tieredResourceKey;
+	const happinessResourceId = React.useMemo(() => {
+		if (!happinessKey) {
+			return undefined;
+		}
+		const resolved = getResourceIdForLegacy('resources', happinessKey);
+		return resolved ?? happinessKey;
+	}, [happinessKey]);
 	const tieredResourceDescriptor = React.useMemo(
 		() =>
-			happinessKey
-				? toDescriptorDisplay(resourceMetadata.select(happinessKey))
+			happinessResourceId
+				? toDescriptorDisplay(resourceMetadata.select(happinessResourceId))
 				: undefined,
-		[happinessKey, resourceMetadata],
+		[happinessResourceId, resourceMetadata],
 	);
 	const tierByPassiveId = React.useMemo(
 		() =>

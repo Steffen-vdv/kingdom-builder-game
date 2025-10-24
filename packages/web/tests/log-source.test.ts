@@ -12,7 +12,6 @@ import {
 	SYNTHETIC_IDS,
 	SYNTHETIC_RESOURCES,
 	SYNTHETIC_RESOURCE_KEYS,
-	type SyntheticResourceKey,
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_STEP_IDS,
 	SYNTHETIC_POPULATION_INFO,
@@ -25,11 +24,12 @@ import {
 	diffStepSnapshots,
 	createTranslationDiffContext,
 } from '../src/translation/log';
+import { getResourceIdForLegacy } from '../src/translation/resourceV2';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 
-const RESOURCE_KEYS = Object.keys(
-	SYNTHETIC_RESOURCES,
-) as SyntheticResourceKey[];
+const RESOURCE_KEYS = Object.keys(SYNTHETIC_RESOURCES).map((key) => {
+	return getResourceIdForLegacy('resources', key) ?? key;
+});
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');

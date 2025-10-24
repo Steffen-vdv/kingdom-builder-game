@@ -9,8 +9,8 @@ import type {
 import type {
 	ResourceV2MetadataSnapshot,
 	ResourceV2ValueSnapshot,
-} from '../../translation';
-import type { TranslationSignedResourceGainSelectors } from '../../translation/context';
+} from './formatters';
+import type { TranslationSignedResourceGainSelectors } from '../context';
 
 type LegacyBucket = 'resources' | 'stats' | 'population';
 

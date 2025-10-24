@@ -22,6 +22,7 @@ import type {
 	ResolutionSource,
 	ShowResolutionOptions,
 } from './useActionResolution';
+import { getResourceIdForLegacy } from '../translation/resourceV2';
 
 function isPhaseSourceDetail(
 	source: ResolutionSource,
@@ -141,6 +142,10 @@ export async function advanceToActionPhase({
 				(step) => step.id === advanceResult.step,
 			);
 			const stepDefinition = stepDefinitionAfter ?? stepDefinitionBefore;
+			const tierKey = translationContext.rules.tieredResourceKey;
+			const normalizedTierKey = tierKey
+				? (getResourceIdForLegacy('resources', tierKey) ?? tierKey)
+				: undefined;
 			const formatted = formatPhaseResolution({
 				advance: advanceResult,
 				before,
@@ -149,9 +154,7 @@ export async function advanceToActionPhase({
 				resourceKeys,
 				...(phaseDefinition ? { phaseDefinition } : {}),
 				...(stepDefinition ? { stepDefinition } : {}),
-				...(translationContext.rules.tieredResourceKey
-					? { tieredResourceKey: translationContext.rules.tieredResourceKey }
-					: {}),
+				...(normalizedTierKey ? { tieredResourceKey: normalizedTierKey } : {}),
 			});
 			let outputLines = formatted.lines;
 			if (isPhaseSourceDetail(formatted.source)) {

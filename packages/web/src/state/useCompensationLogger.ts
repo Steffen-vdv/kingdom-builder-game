@@ -15,6 +15,7 @@ import {
 	buildActionLogTimeline,
 	formatActionLogLines,
 } from './actionLogFormat';
+import { getResourceIdForLegacy } from '../translation/resourceV2';
 
 interface UseCompensationLoggerOptions {
 	sessionId: string;
@@ -101,9 +102,12 @@ export function useCompensationLogger({
 					id: player.id,
 				},
 			};
-			const tieredResourceOptions = baseTranslationContext.rules
-				.tieredResourceKey
-				? { tieredResourceKey: baseTranslationContext.rules.tieredResourceKey }
+			const tierKey = baseTranslationContext.rules.tieredResourceKey;
+			const normalizedTierKey = tierKey
+				? (getResourceIdForLegacy('resources', tierKey) ?? tierKey)
+				: undefined;
+			const tieredResourceOptions = normalizedTierKey
+				? { tieredResourceKey: normalizedTierKey }
 				: undefined;
 			const diffResult = diffStepSnapshots(
 				before,

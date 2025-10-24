@@ -22,6 +22,7 @@ import {
 } from './actionLogFormat';
 import type { ActionLogLineDescriptor } from '../translation/log/timeline';
 import { LOG_KEYWORDS } from '../translation/log/logMessages';
+import { getResourceIdForLegacy } from '../translation/resourceV2';
 import type { SessionRegistries, SessionResourceKey } from './sessionTypes';
 import type { ActionDiffChange } from '../translation/log/diff';
 
@@ -100,8 +101,12 @@ export function appendSubActionChanges({
 		}
 		const subResolved = resolveActionEffects(subStep);
 		const tieredResourceKey = context.rules?.tieredResourceKey;
-		const subDiffOptions = tieredResourceKey
-			? { tieredResourceKey }
+		const normalizedTierKey = tieredResourceKey
+			? (getResourceIdForLegacy('resources', tieredResourceKey) ??
+				tieredResourceKey)
+			: undefined;
+		const subDiffOptions = normalizedTierKey
+			? { tieredResourceKey: normalizedTierKey }
 			: undefined;
 		const subDiff = diffStepSnapshots(
 			snapshotPlayer(trace.before),
@@ -254,8 +259,14 @@ export function buildActionResolution({
 	resources,
 }: BuildActionResolutionOptions): BuildActionResolutionResult {
 	const stepEffects = resolveActionEffects(actionDefinition, params);
-	const diffOptions = translationContext.rules.tieredResourceKey
-		? { tieredResourceKey: translationContext.rules.tieredResourceKey }
+	const normalizedTierKey = translationContext.rules.tieredResourceKey
+		? (getResourceIdForLegacy(
+				'resources',
+				translationContext.rules.tieredResourceKey,
+			) ?? translationContext.rules.tieredResourceKey)
+		: undefined;
+	const diffOptions = normalizedTierKey
+		? { tieredResourceKey: normalizedTierKey }
 		: undefined;
 	const changeDiff = diffStepSnapshots(
 		before,

@@ -23,7 +23,7 @@ import {
 	formatResourceTitle,
 	getResourceIdForLegacy,
 	toDescriptorFromMetadata,
-} from './resourceV2Snapshots';
+} from '../../translation/resourceV2';
 import { toDescriptorDisplay } from './registryDisplays';
 
 interface ResourceBarProps {

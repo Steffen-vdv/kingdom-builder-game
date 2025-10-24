@@ -18,7 +18,7 @@ import {
 	getLegacyMapping,
 	getResourceIdForLegacy,
 	toDescriptorFromMetadata,
-} from './resourceV2Snapshots';
+} from '../../translation/resourceV2';
 import type { SummaryGroup } from '../../translation/content/types';
 
 const POPULATION_ARCHETYPE_LABEL = 'Archetypes';

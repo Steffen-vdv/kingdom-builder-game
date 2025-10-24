@@ -71,6 +71,13 @@ function formatSignedMagnitude(
 	return `${sign}${formatted}`;
 }
 
+export function formatResourceV2SignedMagnitude(
+	value: number,
+	metadata: ResourceV2MetadataSnapshot,
+): string {
+	return formatSignedMagnitude(value, metadata);
+}
+
 function computeDelta(snapshot: ResourceV2ValueSnapshot): number | undefined {
 	if (typeof snapshot.delta === 'number') {
 		return snapshot.delta;

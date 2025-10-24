@@ -207,6 +207,10 @@ export function createSessionTranslationDiffContext(
 			translationContext.actionCategories as unknown as TranslationDiffContext['actionCategories'],
 		passives,
 		assets: translationContext.assets,
+		resourcesV2: translationContext.resourcesV2,
+		resourceMetadataV2: translationContext.resourceMetadataV2,
+		resourceGroupMetadataV2: translationContext.resourceGroupMetadataV2,
+		signedResourceGains: translationContext.signedResourceGains,
 		evaluate,
 	};
 }

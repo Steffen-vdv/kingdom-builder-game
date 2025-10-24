@@ -68,7 +68,7 @@ export function diffStepSnapshots(
 		previousSnapshot,
 		nextSnapshot,
 		resourceKeys,
-		diffContext.assets,
+		diffContext,
 		sources,
 		{ trackByKey: resourceNodes },
 	);
@@ -85,6 +85,8 @@ export function diffStepSnapshots(
 		nextSnapshot,
 		stepEffects,
 		diffContext.assets,
+		diffContext.resourceMetadataV2,
+		diffContext.signedResourceGains,
 	);
 	for (const summary of statChanges) {
 		if (!summary || !summary.trim()) {

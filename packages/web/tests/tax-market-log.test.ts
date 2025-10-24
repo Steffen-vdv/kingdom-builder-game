@@ -25,6 +25,7 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import { getResourceIdForLegacy } from '../src/translation/resourceV2';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
 	appendSubActionChanges,
@@ -34,9 +35,9 @@ import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import type { ActionDiffChange } from '../src/translation/log/diff';
 
-const RESOURCE_KEYS = Object.keys(
-	SYNTHETIC_RESOURCES,
-) as SyntheticResourceKey[];
+const RESOURCE_KEYS = Object.keys(SYNTHETIC_RESOURCES).map((key) => {
+	return getResourceIdForLegacy('resources', key) ?? key;
+});
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');

@@ -14,6 +14,7 @@ import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { ResolutionSource } from './useActionResolution';
 import { formatDetailText } from '../utils/stats/format';
 import type { SessionResourceKey } from './sessionTypes';
+import { getResourceIdForLegacy } from '../translation/resourceV2';
 
 interface FormatPhaseResolutionOptions {
 	advance: SessionAdvanceResult;
@@ -128,7 +129,13 @@ export function formatPhaseResolution({
 		: stepDefinition?.effects?.length
 			? { effects: stepDefinition.effects }
 			: undefined;
-	const diffOptions = tieredResourceKey ? { tieredResourceKey } : undefined;
+	const normalizedTierKey = tieredResourceKey
+		? (getResourceIdForLegacy('resources', tieredResourceKey) ??
+			tieredResourceKey)
+		: undefined;
+	const diffOptions = normalizedTierKey
+		? { tieredResourceKey: normalizedTierKey }
+		: undefined;
 	const diffResult = diffStepSnapshots(
 		before,
 		resolvedAfter,

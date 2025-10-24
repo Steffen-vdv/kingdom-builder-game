@@ -23,27 +23,16 @@ export function iconPrefix(icon?: string): string {
 	return icon ? `${icon} ` : '';
 }
 
-export function formatResourceChange(
-	label: string,
-	icon: string | undefined,
-	change: SignedDelta,
-): string {
-	const prefix = iconPrefix(icon);
-	const signed = signedNumber(change.delta);
-	return `${prefix}${label} ${signed} (${change.before}→${change.after})`;
-}
-
 export function formatResourceSource(
 	icon: string | undefined,
 	fallback: string,
-	change: SignedDelta,
+	deltaText: string | undefined,
 	source: string | undefined,
 ): string | undefined {
-	if (!source) {
+	if (!source || !deltaText) {
 		return undefined;
 	}
 	const symbol = icon || fallback;
-	const deltaText = signedNumber(change.delta);
 	return ` (${symbol}${deltaText} from ${source})`;
 }
 
