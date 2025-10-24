@@ -2,6 +2,8 @@ import { Registry, type ResourceV2Definition, type ResourceV2GroupMetadata, reso
 
 import { resourceGroup, resourceGroupParent, resourceV2 } from '../config/builders';
 
+import { RESOURCE_V2_MIGRATION_SCAFFOLD } from './definitions';
+
 export const ResourceV2Id = {
 	Gold: 'gold',
 	ActionPoints: 'actionPoints',
@@ -138,6 +140,7 @@ export function createResourceV2Registry(): FrozenRecord<ResourceV2Id, ResourceV
 			.order(9)
 			.lowerBound(0)
 			.build(),
+		...RESOURCE_V2_MIGRATION_SCAFFOLD.definitions,
 	]);
 
 	definitions.forEach((definition) => {
@@ -199,6 +202,7 @@ export function createResourceGroupV2Registry(): FrozenRecord<ResourceV2GroupId,
 			.parent(castleDefenseParent)
 			.children([ResourceV2Id.CastleHP, ResourceV2Id.FortificationStrength])
 			.build(),
+		...RESOURCE_V2_MIGRATION_SCAFFOLD.groups,
 	]);
 
 	groups.forEach((group) => {
@@ -223,3 +227,5 @@ export function createResourceGroupV2Registry(): FrozenRecord<ResourceV2GroupId,
 export const RESOURCE_V2 = createResourceV2Registry();
 
 export const RESOURCE_GROUPS_V2 = createResourceGroupV2Registry();
+
+export * from './definitions';

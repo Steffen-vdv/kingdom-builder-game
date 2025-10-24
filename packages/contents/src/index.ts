@@ -14,8 +14,12 @@ export { Stat, type StatKey, STATS } from './stats';
 export {
 	RESOURCE_V2,
 	RESOURCE_GROUPS_V2,
+	RESOURCE_V2_MIGRATION_SCAFFOLD,
+	createMigrationScaffold,
 	createResourceGroupV2Registry,
 	createResourceV2Registry,
+	createOrderAllocator,
+	reuseMetadata,
 	ResourceV2GroupId,
 	type ResourceV2GroupId as ResourceV2GroupIdValue,
 	ResourceV2GroupParentId,
