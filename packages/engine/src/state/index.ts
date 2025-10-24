@@ -7,12 +7,6 @@ interface LegacyWriteOptions {
 	readonly suppressHistory?: boolean;
 }
 
-const resourceV2IdByLegacyKey: Record<string, string> = {};
-const statV2IdByLegacyKey: Record<string, string> = {};
-const populationV2IdByLegacyKey: Record<string, string> = {};
-
-let activeResourceCatalog: RuntimeResourceCatalog | undefined;
-
 const RESOURCE_SLUG_OVERRIDES: Record<string, string> = {
 	ap: 'action-points',
 };
@@ -82,12 +76,13 @@ function parseCatalogResourceId(resourceId: string): {
 function findMatchingCatalogId(
 	kind: LegacyKeyKind,
 	key: string,
+	catalog: RuntimeResourceCatalog | undefined,
 ): string | null {
-	if (!activeResourceCatalog) {
+	if (!catalog) {
 		return null;
 	}
 	const slug = deriveSlug(kind, key);
-	for (const definition of activeResourceCatalog.resources.ordered) {
+	for (const definition of catalog.resources.ordered) {
 		const parsed = parseCatalogResourceId(definition.id);
 		if (parsed.kind !== kind) {
 			continue;
@@ -99,47 +94,12 @@ function findMatchingCatalogId(
 	return null;
 }
 
-function resolveLegacyKeyId(kind: LegacyKeyKind, key: string): string {
-	const map =
-		kind === 'resource'
-			? resourceV2IdByLegacyKey
-			: kind === 'stat'
-				? statV2IdByLegacyKey
-				: populationV2IdByLegacyKey;
-	const cached = map[key];
-	if (cached) {
-		return cached;
-	}
-	const derived = deriveId(kind, key);
-	let resolved = derived;
-	if (activeResourceCatalog) {
-		if (!activeResourceCatalog.resources.byId[derived]) {
-			const fallback = findMatchingCatalogId(kind, key);
-			if (fallback) {
-				resolved = fallback;
-			}
-		}
-	}
-	map[key] = resolved;
-	return resolved;
-}
-
-function setActiveResourceCatalog(
-	catalog: RuntimeResourceCatalog | undefined,
-): void {
-	activeResourceCatalog = catalog;
-	clearStringMap(resourceV2IdByLegacyKey);
-	clearStringMap(statV2IdByLegacyKey);
-	clearStringMap(populationV2IdByLegacyKey);
-}
-
 export const Resource: Record<string, string> = {};
 export type ResourceKey = string;
 export function setResourceKeys(keys: string[]) {
 	for (const key of Object.keys(Resource)) {
 		delete Resource[key];
 	}
-	clearStringMap(resourceV2IdByLegacyKey);
 	for (const key of keys) {
 		Resource[key] = key;
 	}
@@ -151,7 +111,6 @@ export function setStatKeys(keys: string[]) {
 	for (const key of Object.keys(Stat)) {
 		delete Stat[key];
 	}
-	clearStringMap(statV2IdByLegacyKey);
 	for (const key of keys) {
 		Stat[key] = key;
 	}
@@ -174,7 +133,6 @@ export function setPopulationRoleKeys(keys: string[]) {
 	for (const key of Object.keys(PopulationRole)) {
 		delete PopulationRole[key];
 	}
-	clearStringMap(populationV2IdByLegacyKey);
 	for (const id of keys) {
 		PopulationRole[id.charAt(0).toUpperCase() + id.slice(1)] = id;
 	}
@@ -263,6 +221,10 @@ export class PlayerState {
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any;
+	private legacyResourceIdByKey: Record<string, string> = {};
+	private legacyStatIdByKey: Record<string, string> = {};
+	private legacyPopulationIdByKey: Record<string, string> = {};
+	private resourceCatalog: RuntimeResourceCatalog | undefined;
 	constructor(id: PlayerId, name: string) {
 		this.id = id;
 		this.name = name;
@@ -302,8 +264,15 @@ export class PlayerState {
 		this.skipSteps = {};
 	}
 
+	setResourceCatalog(catalog: RuntimeResourceCatalog | undefined): void {
+		this.resourceCatalog = catalog;
+		clearStringMap(this.legacyResourceIdByKey);
+		clearStringMap(this.legacyStatIdByKey);
+		clearStringMap(this.legacyPopulationIdByKey);
+	}
+
 	private readLegacyValue(kind: LegacyKeyKind, key: string): number {
-		const resourceId = resolveLegacyKeyId(kind, key);
+		const resourceId = this.resolveLegacyKeyId(kind, key);
 		return this.resourceValues[resourceId] ?? 0;
 	}
 
@@ -313,7 +282,7 @@ export class PlayerState {
 		value: number,
 		options: LegacyWriteOptions = {},
 	): void {
-		const resourceId = resolveLegacyKeyId(kind, key);
+		const resourceId = this.resolveLegacyKeyId(kind, key);
 		const nextValue = value ?? 0;
 		this.resourceValues[resourceId] = nextValue;
 		if (kind === 'stat' && !options.suppressHistory && nextValue !== 0) {
@@ -354,6 +323,37 @@ export class PlayerState {
 			});
 		}
 	}
+
+	private resolveLegacyKeyId(kind: LegacyKeyKind, key: string): string {
+		const map = this.getLegacyIdCache(kind);
+		const cached = map[key];
+		if (cached) {
+			return cached;
+		}
+		const derived = deriveId(kind, key);
+		let resolved = derived;
+		const catalog = this.resourceCatalog;
+		if (catalog) {
+			if (!catalog.resources.byId[derived]) {
+				const fallback = findMatchingCatalogId(kind, key, catalog);
+				if (fallback) {
+					resolved = fallback;
+				}
+			}
+		}
+		map[key] = resolved;
+		return resolved;
+	}
+
+	private getLegacyIdCache(kind: LegacyKeyKind): Record<string, string> {
+		if (kind === 'resource') {
+			return this.legacyResourceIdByKey;
+		}
+		if (kind === 'stat') {
+			return this.legacyStatIdByKey;
+		}
+		return this.legacyPopulationIdByKey;
+	}
 }
 
 export class GameState {
@@ -375,7 +375,9 @@ export class GameState {
 	}
 	set resourceCatalogV2(catalog: RuntimeResourceCatalog | undefined) {
 		this._resourceCatalogV2 = catalog;
-		setActiveResourceCatalog(catalog);
+		for (const player of this.players) {
+			player.setResourceCatalog(catalog);
+		}
 	}
 	get active(): PlayerState {
 		return this.players[this.currentPlayerIndex]!;
