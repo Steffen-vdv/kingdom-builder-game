@@ -21,11 +21,20 @@ import {
 	wrapRegistry,
 } from './contextHelpers';
 import {
+	buildResourceV2MetadataRegistry,
+	createResourceV2MetadataSelectors,
+	wrapResourceCatalogV2,
+} from './resourceV2Helpers';
+import {
 	EMPTY_PASSIVE_DEFINITIONS,
 	cloneRuleSnapshot,
 	mapPassiveDefinitionLists,
 	mapPassiveDefinitionLookup,
 } from './passiveDefinitions';
+import {
+	buildResourceV2SignedGainEntries,
+	type ResourceV2ValueSnapshot,
+} from '../resourceV2';
 
 type TranslationContextOptions = {
 	ruleSnapshot: SessionRuleSnapshot;
@@ -97,6 +106,30 @@ export function createTranslationContext(
 	});
 	const assets = createTranslationAssets(registries, metadata, {
 		rules: options.ruleSnapshot,
+	});
+	const resourceCatalog = wrapResourceCatalogV2(session.game.resourceCatalogV2);
+	const resourceMetadataDescriptors =
+		session.resourceMetadataV2 ?? metadata.resourcesV2;
+	const resourceMetadataRegistry = buildResourceV2MetadataRegistry(
+		session.game.resourceCatalogV2,
+		resourceMetadataDescriptors,
+	);
+	const resourceMetadataSelectors = createResourceV2MetadataSelectors(
+		resourceMetadataRegistry,
+	);
+	const resourceSignedGainBuilder = Object.freeze({
+		fromSnapshot(snapshot: ResourceV2ValueSnapshot) {
+			const metadataEntry = resourceMetadataRegistry.map.get(snapshot.id);
+			if (!metadataEntry) {
+				return [];
+			}
+			return buildResourceV2SignedGainEntries(metadataEntry, snapshot);
+		},
+	});
+	const resourceV2 = Object.freeze({
+		catalog: resourceCatalog,
+		metadata: resourceMetadataSelectors,
+		signedGains: resourceSignedGainBuilder,
 	});
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
@@ -176,6 +209,7 @@ export function createTranslationContext(
 		actionCostResource: session.actionCostResource,
 		recentResourceGains: cloneRecentResourceGains(session.recentResourceGains),
 		compensations: cloneCompensations(session.compensations),
+		resourceV2,
 		rules: ruleSnapshot,
 		assets,
 	});

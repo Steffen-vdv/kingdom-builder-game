@@ -5,6 +5,7 @@ import type {
 	SessionPassiveEvaluationModifierMap,
 	SessionPassiveSummary,
 	SessionPlayerId,
+	SessionResourceBoundsV2,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import type {
@@ -71,12 +72,16 @@ export function toPassiveDescriptor(
 export function clonePlayer(
 	player: SessionSnapshot['game']['players'][number],
 ): TranslationPlayer {
+	const valuesV2 = cloneResourceValuesV2(player.valuesV2);
+	const resourceBoundsV2 = cloneResourceBoundsV2(player.resourceBoundsV2);
 	return Object.freeze({
 		id: player.id,
 		name: player.name,
 		resources: cloneRecord(player.resources),
 		stats: cloneRecord(player.stats),
 		population: cloneRecord(player.population),
+		...(valuesV2 ? { valuesV2 } : {}),
+		...(resourceBoundsV2 ? { resourceBoundsV2 } : {}),
 	});
 }
 
@@ -234,4 +239,33 @@ export function cloneEvaluationModifiers(
 			new Map(keys.map((key) => [key, true])) as ReadonlyMap<string, unknown>,
 		]),
 	);
+}
+
+export function cloneResourceValuesV2(
+	values?: Record<string, number>,
+): Readonly<Record<string, number>> | undefined {
+	if (!values) {
+		return undefined;
+	}
+	return Object.freeze({ ...values });
+}
+
+export function cloneResourceBoundsV2(
+	bounds?: Record<string, SessionResourceBoundsV2>,
+): Readonly<Record<string, SessionResourceBoundsV2>> | undefined {
+	if (!bounds) {
+		return undefined;
+	}
+	const cloned = Object.fromEntries(
+		Object.entries(bounds).map(([id, entry]) => [
+			id,
+			Object.freeze({
+				lowerBound: entry.lowerBound ?? null,
+				upperBound: entry.upperBound ?? null,
+			}) as SessionResourceBoundsV2,
+		]),
+	);
+	return Object.freeze(cloned) as Readonly<
+		Record<string, SessionResourceBoundsV2>
+	>;
 }

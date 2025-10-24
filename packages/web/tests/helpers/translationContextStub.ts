@@ -83,6 +83,8 @@ export function toTranslationPlayer(
 		resources: Record<string, number>;
 		population: Record<string, number>;
 		stats?: Record<string, number>;
+		valuesV2?: Readonly<Record<string, number>>;
+		resourceBoundsV2?: TranslationPlayer['resourceBoundsV2'];
 	},
 ): TranslationPlayer {
 	return {
@@ -91,6 +93,17 @@ export function toTranslationPlayer(
 		resources: { ...player.resources },
 		stats: { ...(player.stats ?? {}) },
 		population: { ...player.population },
+		...(player.valuesV2 ? { valuesV2: { ...player.valuesV2 } } : {}),
+		...(player.resourceBoundsV2
+			? {
+					resourceBoundsV2: Object.fromEntries(
+						Object.entries(player.resourceBoundsV2).map(([id, entry]) => [
+							id,
+							{ ...entry },
+						]),
+					),
+				}
+			: {}),
 	};
 }
 
@@ -131,5 +144,21 @@ export function createTranslationContextStub(
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
 		assets: EMPTY_ASSETS,
+		resourceV2: {
+			catalog: null,
+			metadata: {
+				get() {
+					return undefined;
+				},
+				list() {
+					return Object.freeze([]);
+				},
+			},
+			signedGains: {
+				fromSnapshot() {
+					return [];
+				},
+			},
+		},
 	};
 }

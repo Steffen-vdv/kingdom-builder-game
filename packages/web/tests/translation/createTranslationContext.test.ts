@@ -23,6 +23,7 @@ describe('createTranslationContext', () => {
 		};
 		const statKey = 'maxPopulation';
 		const [populationId] = registries.populations.keys();
+		const resourceV2Id = 'resource.v2.gold';
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
@@ -64,6 +65,14 @@ describe('createTranslationContext', () => {
 						},
 					}
 				: undefined,
+			resourcesV2: {
+				[resourceV2Id]: {
+					label: 'Treasury (Unified)',
+					icon: '🪙',
+					description: 'Unified gold supply.',
+					format: { prefix: '$' },
+				},
+			},
 			stats: {
 				[statKey]: {
 					label: 'Population Capacity',
@@ -104,6 +113,11 @@ describe('createTranslationContext', () => {
 			population: number;
 			buildings?: string[];
 			passives?: SessionSnapshot['game']['players'][number]['passives'];
+			valuesV2?: Record<string, number>;
+			resourceBoundsV2?: Record<
+				string,
+				{ lowerBound: number | null; upperBound: number | null }
+			>;
 		}): SessionSnapshot['game']['players'][number] => ({
 			id: config.id,
 			name: config.name,
@@ -111,6 +125,8 @@ describe('createTranslationContext', () => {
 			stats: { [statKey]: config.stat },
 			statsHistory: {},
 			population: { [populationId]: config.population },
+			valuesV2: config.valuesV2,
+			resourceBoundsV2: config.resourceBoundsV2,
 			lands: [],
 			buildings: config.buildings ?? [],
 			actions: [actionId],
@@ -126,6 +142,10 @@ describe('createTranslationContext', () => {
 				resource: 7,
 				stat: 3,
 				population: 2,
+				valuesV2: { [resourceV2Id]: 125 },
+				resourceBoundsV2: {
+					[resourceV2Id]: { lowerBound: 0, upperBound: null },
+				},
 				buildings: [buildingId],
 				passives: [
 					{
@@ -143,8 +163,36 @@ describe('createTranslationContext', () => {
 				resource: 5,
 				stat: 1,
 				population: 1,
+				valuesV2: { [resourceV2Id]: 97 },
+				resourceBoundsV2: {
+					[resourceV2Id]: { lowerBound: 0, upperBound: 150 },
+				},
 			}),
 		];
+		const resourceDefinitionV2 = {
+			id: resourceV2Id,
+			label: 'Treasury (Unified)',
+			icon: '🪙',
+			description: 'Unified gold supply.',
+			order: null,
+			resolvedOrder: 0,
+			tags: [],
+			lowerBound: 0,
+			upperBound: null,
+			displayAsPercent: false,
+			trackValueBreakdown: false,
+			trackBoundBreakdown: false,
+			groupId: null,
+			groupOrder: null,
+			resolvedGroupOrder: null,
+		} as const;
+		const resourceCatalogV2 = {
+			resources: {
+				ordered: [resourceDefinitionV2],
+				byId: { [resourceV2Id]: resourceDefinitionV2 },
+			},
+			groups: { ordered: [], byId: {} },
+		} as const;
 		const session: SessionSnapshot = {
 			game: {
 				turn: 4,
@@ -157,6 +205,7 @@ describe('createTranslationContext', () => {
 				players,
 				activePlayerId: 'A',
 				opponentId: 'B',
+				resourceCatalogV2,
 			},
 			phases,
 			actionCostResource: resourceKey,
@@ -186,6 +235,7 @@ describe('createTranslationContext', () => {
 				B: [],
 			},
 			metadata,
+			resourceMetadataV2: metadata.resourcesV2,
 		};
 		const context = createTranslationContext(session, registries, metadata, {
 			ruleSnapshot: session.rules,
@@ -231,6 +281,23 @@ describe('createTranslationContext', () => {
 				population: context.assets.population,
 			},
 			rules: context.rules,
+			resourceV2: {
+				catalogHasResource:
+					context.resourceV2.catalog?.hasResource(resourceV2Id) ?? false,
+				metadata: context.resourceV2.metadata.get(resourceV2Id),
+				metadataList: context.resourceV2.metadata.list(),
+				signedGain: context.resourceV2.signedGains.fromSnapshot({
+					id: resourceV2Id,
+					current: 125,
+					previous: 120,
+					lowerBound:
+						context.activePlayer.resourceBoundsV2?.[resourceV2Id]?.lowerBound ??
+						null,
+					upperBound:
+						context.activePlayer.resourceBoundsV2?.[resourceV2Id]?.upperBound ??
+						null,
+				}),
+			},
 			passives: {
 				list: context.passives.list().map(({ id }) => id),
 				owned: context.passives.list(activeId).map(({ id }) => id),
@@ -359,11 +426,40 @@ describe('createTranslationContext', () => {
 			      "id": "council",
 			    },
 			  },
-			  "rules": {
-			    "tierDefinitions": [],
-			    "tieredResourceKey": "gold",
-			    "winConditions": [],
-			  },
+                          "rules": {
+                            "tierDefinitions": [],
+                            "tieredResourceKey": "gold",
+                            "winConditions": [],
+                          },
+                          "resourceV2": {
+                            "catalogHasResource": true,
+                            "metadata": {
+                              "description": "Unified gold supply.",
+                              "format": {
+                                "prefix": "$",
+                              },
+                              "icon": "🪙",
+                              "id": "resource.v2.gold",
+                              "label": "Treasury (Unified)",
+                            },
+                            "metadataList": [
+                              {
+                                "description": "Unified gold supply.",
+                                "format": {
+                                  "prefix": "$",
+                                },
+                                "icon": "🪙",
+                                "id": "resource.v2.gold",
+                                "label": "Treasury (Unified)",
+                              },
+                            ],
+                            "signedGain": [
+                              {
+                                "amount": 5,
+                                "key": "resource.v2.gold",
+                              },
+                            ],
+                          },
 			}
 		`);
 	});

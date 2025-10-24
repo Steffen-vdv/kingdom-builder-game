@@ -9,9 +9,19 @@ import type {
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerId,
+	SessionResourceBoundsV2,
+	SessionResourceDefinitionV2,
+	SessionResourceGroupDefinitionV2,
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
-import type { SessionMetadataFormat } from '@kingdom-builder/protocol/session';
+import type {
+	SessionMetadataFormat,
+	SessionRecentResourceGain,
+} from '@kingdom-builder/protocol/session';
+import type {
+	ResourceV2MetadataSnapshot,
+	ResourceV2ValueSnapshot,
+} from '../resourceV2';
 
 /**
  * Lightweight registry surface exposed to translators. Only lookup helpers that
@@ -148,6 +158,32 @@ export interface TranslationPlayer {
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	population: Record<string, number>;
+	valuesV2?: Readonly<Record<string, number>>;
+	resourceBoundsV2?: Readonly<Record<string, SessionResourceBoundsV2>>;
+}
+
+export interface TranslationResourceV2Catalog {
+	getResource(id: string): SessionResourceDefinitionV2;
+	hasResource(id: string): boolean;
+	listResources(): readonly SessionResourceDefinitionV2[];
+	getGroup(id: string): SessionResourceGroupDefinitionV2;
+	hasGroup(id: string): boolean;
+	listGroups(): readonly SessionResourceGroupDefinitionV2[];
+}
+
+export interface TranslationResourceV2MetadataSelectors {
+	get(id: string): ResourceV2MetadataSnapshot | undefined;
+	list(): readonly ResourceV2MetadataSnapshot[];
+}
+
+export interface TranslationResourceV2SignedGainBuilder {
+	fromSnapshot(snapshot: ResourceV2ValueSnapshot): SessionRecentResourceGain[];
+}
+
+export interface TranslationResourceV2 {
+	readonly catalog: TranslationResourceV2Catalog | null;
+	readonly metadata: TranslationResourceV2MetadataSelectors;
+	readonly signedGains: TranslationResourceV2SignedGainBuilder;
 }
 
 /**
@@ -165,6 +201,7 @@ export interface TranslationContext {
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;
 	readonly opponent: TranslationPlayer;
+	readonly resourceV2: TranslationResourceV2;
 	readonly rules: SessionRuleSnapshot;
 	readonly recentResourceGains: ReadonlyArray<{
 		key: string;
