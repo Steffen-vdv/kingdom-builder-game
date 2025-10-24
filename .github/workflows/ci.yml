@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, 'project/**', 'codex/**']
+    branches: [main, 'project/**', 'codex/**', 'dependabot/**']
 
 env:
   # Kill the slow audit/fund calls that were timing out (503) in your logs
