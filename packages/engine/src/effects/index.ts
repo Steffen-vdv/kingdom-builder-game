@@ -50,39 +50,14 @@ export interface EffectCostCollector {
 export class EffectCostRegistry extends Registry<EffectCostCollector> {}
 export const EFFECT_COST_COLLECTORS = new EffectCostRegistry();
 
-const flushResourceV2RecentGains = (context: EngineContext) => {
-	for (const player of context.game.players) {
-		const recent = player.resourceV2.recentGains;
-		if (!recent.length) {
-			continue;
-		}
-		for (const entry of recent) {
-			context.recentResourceGains.push({
-				key: entry.key,
-				amount: entry.amount,
-			});
-		}
-		player.resetRecentResourceV2Gains();
-	}
-};
-
-function withResourceV2Logging<P extends Record<string, unknown>>(
-	handler: EffectHandler<P>,
-): EffectHandler<P> {
-	return (effect: EffectDef<P>, engineContext: EngineContext, mult: number) => {
-		handler(effect, engineContext, mult);
-		flushResourceV2RecentGains(engineContext);
-	};
-}
-
 export function registerCoreEffects(
 	registry: EffectRegistry = EFFECTS,
 	costRegistry: EffectCostRegistry = EFFECT_COST_COLLECTORS,
 ) {
 	registry.add('land:add', landAdd);
-	registry.add('resource:add', withResourceV2Logging(resourceAdd));
-	registry.add('resource:remove', withResourceV2Logging(resourceRemove));
-	registry.add('resource:transfer', withResourceV2Logging(resourceTransfer));
+	registry.add('resource:add', resourceAdd);
+	registry.add('resource:remove', resourceRemove);
+	registry.add('resource:transfer', resourceTransfer);
 	registry.add('building:add', buildingAdd);
 	registry.add('building:remove', buildingRemove);
 	registry.add('stat:add', statAdd);
@@ -104,15 +79,12 @@ export function registerCoreEffects(
 	registry.add('action:perform', actionPerform);
 	registry.add('attack:perform', attackPerform);
 
-	registry.add('resource_v2:add', withResourceV2Logging(resourceV2Add));
-	registry.add('resource_v2:remove', withResourceV2Logging(resourceV2Remove));
-	registry.add(
-		'resource_v2:transfer',
-		withResourceV2Logging(resourceV2Transfer),
-	);
+	registry.add('resource_v2:add', resourceV2Add);
+	registry.add('resource_v2:remove', resourceV2Remove);
+	registry.add('resource_v2:transfer', resourceV2Transfer);
 	registry.add(
 		'resource_v2:upper_bound_increase',
-		withResourceV2Logging(resourceV2UpperBoundIncrease),
+		resourceV2UpperBoundIncrease,
 	);
 
 	costRegistry.add('building:add', collectBuildingAddCosts);

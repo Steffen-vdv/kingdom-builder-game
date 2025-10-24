@@ -79,17 +79,11 @@ export interface StatSourceContribution {
 export const ResourceV2: Record<string, string> = {};
 export type ResourceV2Key = string;
 
-export interface PlayerResourceV2RecentGain {
-	key: ResourceV2Key;
-	amount: number;
-}
-
 export interface PlayerResourceV2State {
 	values: Record<ResourceV2Key, number>;
 	lowerBounds: Record<ResourceV2Key, number | undefined>;
 	upperBounds: Record<ResourceV2Key, number | undefined>;
 	touched: Record<ResourceV2Key, boolean>;
-	recentGains: PlayerResourceV2RecentGain[];
 }
 
 export interface ResourceV2GlobalActionCostRuntime {
@@ -204,7 +198,6 @@ export function createPlayerResourceV2State(): PlayerResourceV2State {
 		lowerBounds: createResourceV2Record((definition) => definition.lowerBound),
 		upperBounds: createResourceV2Record((definition) => definition.upperBound),
 		touched: createResourceV2Record(() => false),
-		recentGains: [],
 	};
 }
 
@@ -216,7 +209,6 @@ export function cloneResourceV2State(
 		lowerBounds: { ...state.lowerBounds },
 		upperBounds: { ...state.upperBounds },
 		touched: { ...state.touched },
-		recentGains: state.recentGains.map((gain) => ({ ...gain })),
 	};
 }
 
@@ -249,23 +241,6 @@ export function setPlayerResourceV2UpperBound(
 	bound: number | undefined,
 ): void {
 	state.upperBounds[key] = bound;
-}
-
-export function logPlayerResourceV2Gain(
-	state: PlayerResourceV2State,
-	key: ResourceV2Key,
-	amount: number,
-): void {
-	if (amount === 0) {
-		return;
-	}
-	state.recentGains.push({ key, amount });
-}
-
-export function resetPlayerResourceV2RecentGains(
-	state: PlayerResourceV2State,
-): void {
-	state.recentGains = [];
 }
 
 export type PlayerId = 'A' | 'B';
@@ -390,14 +365,6 @@ export class PlayerState {
 
 	hasResourceV2BeenTouched(key: ResourceV2Key): boolean {
 		return Boolean(this.resourceV2.touched[key]);
-	}
-
-	logResourceV2Gain(key: ResourceV2Key, amount: number): void {
-		logPlayerResourceV2Gain(this.resourceV2, key, amount);
-	}
-
-	resetRecentResourceV2Gains(): void {
-		resetPlayerResourceV2RecentGains(this.resourceV2);
 	}
 }
 

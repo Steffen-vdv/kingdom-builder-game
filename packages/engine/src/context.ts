@@ -28,10 +28,12 @@ export class EngineContext {
 			A: {},
 			B: {},
 		},
-	) {}
+	) {
+		this.initializeLogging();
+	}
 	aiSystem?: AISystem;
 	recentResourceGains: {
-		key: ResourceKey;
+		key: string;
 		amount: number;
 	}[] = [];
 	// Cache base values for stat:add_pct per turn/phase/step to ensure
@@ -45,6 +47,35 @@ export class EngineContext {
 	private _effectLogs: Map<string, unknown[]> = new Map();
 
 	private _queue: Promise<unknown> = Promise.resolve();
+
+	private registerResourceV2Logging() {
+		const resourceV2 = this.services.resourceV2;
+		if (!resourceV2) {
+			return;
+		}
+		resourceV2.onGain((context, payload) => {
+			if (context !== this || payload.amount === 0) {
+				return;
+			}
+			this.recentResourceGains.push({
+				key: payload.resourceId,
+				amount: payload.amount,
+			});
+		});
+		resourceV2.onLoss((context, payload) => {
+			if (context !== this || payload.amount === 0) {
+				return;
+			}
+			this.recentResourceGains.push({
+				key: payload.resourceId,
+				amount: -payload.amount,
+			});
+		});
+	}
+
+	private initializeLogging() {
+		this.registerResourceV2Logging();
+	}
 	enqueue<T>(taskFactory: () => Promise<T> | T): Promise<T> {
 		const nextTask = this._queue.then(() => taskFactory());
 		this._queue = nextTask.catch(() => {});
