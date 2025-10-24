@@ -44,15 +44,15 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-28 00:15
-- **Current Focus:** Resource Migration MVP - P2 - T37 - Content Aggregation
-- **State Summary:** Consolidated T18–T36 content migrations. ResourceV2 catalog coverage now spans core/happiness/stat/population tracks, start payload builders mirror the catalog, and all player-facing content (actions, passives, phases) emits ResourceV2 change metadata alongside legacy shims. See [`docs/project/resource-migration/production/worklogs/T18-core-resource-defs.md`](./worklogs/T18-core-resource-defs.md), [`docs/project/resource-migration/production/worklogs/T19-happiness-tier.md`](./worklogs/T19-happiness-tier.md), and [`worklogs/T20-stat-defs.md`](../../../../worklogs/T20-stat-defs.md) through [`worklogs/T36-population-phase.md`](../../../../worklogs/T36-population-phase.md) for task-level details.
+- **Timestamp (UTC):** 2025-10-28 09:10
+- **Current Focus:** Resource Migration MVP - P2 - T39 - Player State Resource Proxy
+- **State Summary:** PlayerState now proxies legacy `resources`, `stats`, and `population` accessors into the ResourceV2 value/bound maps, keeps dynamic property definitions aligned with catalog keys, and migrates legacy mappings during cloning. See [`worklogs/T39-playerstate.md`](../../../../worklogs/T39-playerstate.md) for details, tests, and follow-ups.
 - **Next Suggested Tasks:**
-  - Coordinate with engine owners on adopting ResourceV2 payloads so legacy bridges (`resourceParams`/`statParams`) can be retired safely.
-  - Expose ResourceV2 catalog snapshots and start payloads through runtime/session responses to unlock protocol and web integration.
-  - Address persistent `npm run check` instability (engine coverage timeouts, missing `dist` artifacts) before the next integration wave.
-- **Blocking Issues / Risks:** Engine coverage within `npm run check` still requires manual interruption, and missing build artefacts continue to break type-checking for content contributors without a prepublish step.
-- **Reminder:** Keep landing per-task worklogs and tag follow-up engineering questions in [`worklogs/T37-content-aggregation.md`](../../../../worklogs/T37-content-aggregation.md) until engine/runtime ownership is confirmed.
+  - Update engine start configuration wiring to seed ResourceV2 values/bounds via the new legacy mapping utilities before legacy bags are removed.
+  - Extend other legacy bridges (snapshots, requirement evaluators, etc.) to consume the proxy mappings so we can drop duplicate state later in the migration.
+  - Stabilise `npm run check` by resolving the `developmentTarget()` TypeError thrown during the engine coverage stage and rerun the suite to completion.
+- **Blocking Issues / Risks:** `npm run check` currently fails with `TypeError: (0 , developmentTarget) is not a function` originating from `packages/contents/src/happinessHelpers.ts` while running engine coverage. The failure predates this task and still needs resolution.
+- **Reminder:** Keep per-task worklogs current and coordinate follow-up bridge updates via `worklogs/T39-playerstate.md` until migration coverage expands.
 
 ## 5. Notes & Decisions Archive
 
