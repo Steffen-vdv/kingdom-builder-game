@@ -165,6 +165,19 @@ describe('EngineSession', () => {
 		expect(next.game.players[0]!.resources[CResource.gold]).not.toBe(999);
 	});
 
+	it('includes ResourceV2 data alongside legacy snapshots', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const catalog = snapshot.game.resourceCatalogV2;
+		expect(catalog).toBeDefined();
+		const player = snapshot.game.players[0]!;
+		expect(player.valuesV2).toBeDefined();
+		const goldLegacy = player.resources[CResource.gold];
+		expect(goldLegacy).toBeDefined();
+		expect(player.valuesV2?.['resource:core:gold']).toBe(goldLegacy);
+		expect(catalog?.resources.byId['resource:core:gold']?.label).toBeDefined();
+	});
+
 	it('provides cloned advance results', () => {
 		const session = createTestSession();
 		const result = session.advancePhase();
@@ -460,6 +473,8 @@ describe('EngineSession', () => {
 		const activeId = snapshot.game.activePlayerId;
 		const result = session.simulateUpcomingPhases(activeId);
 		expect(result.steps.length).toBeGreaterThan(0);
+		expect(result.before.valuesV2).toBeDefined();
+		expect(result.after.valuesV2).toBeDefined();
 		const firstStep = result.steps[0];
 		if (!firstStep) {
 			throw new Error('Expected at least one simulation step.');
