@@ -2,9 +2,16 @@ import { cloneEffectList } from '../utils';
 import { cloneMeta } from '../stat_sources/meta';
 import type { EngineContext } from '../context';
 import type { ActionTrace, PlayerSnapshot } from '../log';
-import type { Land, PlayerId, PlayerState } from '../state';
+import type {
+	Land,
+	PlayerId,
+	PlayerState,
+	ResourceKey,
+	StatKey,
+} from '../state';
 import type { PassiveSummary } from '../services';
 import type { LandSnapshot, PlayerStateSnapshot } from './types';
+import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
 
 type StatSnapshotBucket = PlayerStateSnapshot['statSources'][string];
 
@@ -131,18 +138,72 @@ function cloneLand(land: Land): LandSnapshot {
 	return snapshot;
 }
 
+function cloneValuesV2(
+	values: PlayerState['resourceValues'],
+): Record<string, number> {
+	const snapshot: Record<string, number> = {};
+	for (const [resourceId, value] of Object.entries(values)) {
+		snapshot[resourceId] = value ?? 0;
+	}
+	return snapshot;
+}
+
+function buildResourceBoundsSnapshot(
+	player: PlayerState,
+): Record<string, SessionResourceBoundsV2> {
+	const snapshot: Record<string, SessionResourceBoundsV2> = {};
+	const keys = new Set(
+		Object.keys(player.resourceValues).concat(
+			Object.keys(player.resourceLowerBounds),
+			Object.keys(player.resourceUpperBounds),
+		),
+	);
+	for (const resourceId of keys) {
+		const lower = player.resourceLowerBounds[resourceId] ?? null;
+		const upper = player.resourceUpperBounds[resourceId] ?? null;
+		snapshot[resourceId] = { lowerBound: lower, upperBound: upper };
+	}
+	return snapshot;
+}
+
+function deriveLegacyResourceRecord(
+	player: PlayerState,
+): Record<string, number> {
+	const snapshot: Record<string, number> = {};
+	for (const key of Object.keys(player.resources)) {
+		const resourceKey: ResourceKey = key;
+		const resourceId = player.getResourceV2Id(resourceKey);
+		snapshot[resourceKey] = player.resourceValues[resourceId] ?? 0;
+	}
+	return snapshot;
+}
+
+function deriveLegacyStatRecord(player: PlayerState): Record<string, number> {
+	const snapshot: Record<string, number> = {};
+	for (const key of Object.keys(player.stats)) {
+		const statKey: StatKey = key;
+		const resourceId = player.getStatResourceV2Id(statKey);
+		snapshot[statKey] = player.resourceValues[resourceId] ?? 0;
+	}
+	return snapshot;
+}
+
 export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
+	const valuesV2 = cloneValuesV2(player.resourceValues);
+	const resourceBoundsV2 = buildResourceBoundsSnapshot(player);
 	return {
 		id: player.id,
 		name: player.name,
 		aiControlled: Boolean(context.aiSystem?.has(player.id)),
-		resources: { ...player.resources },
-		stats: { ...player.stats },
+		resources: deriveLegacyResourceRecord(player),
+		stats: deriveLegacyStatRecord(player),
 		statsHistory: { ...player.statsHistory },
 		population: { ...player.population },
+		valuesV2,
+		resourceBoundsV2,
 		lands: player.lands.map((land) => cloneLand(land)),
 		buildings: Array.from(player.buildings),
 		actions: Array.from(player.actions),
@@ -157,6 +218,17 @@ function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 	return {
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
+		valuesV2: { ...snapshot.valuesV2 },
+		resourceBoundsV2: snapshot.resourceBoundsV2
+			? Object.fromEntries(
+					Object.entries(snapshot.resourceBoundsV2).map(
+						([resourceId, bounds]) => [
+							resourceId,
+							{ lowerBound: bounds.lowerBound, upperBound: bounds.upperBound },
+						],
+					),
+				)
+			: {},
 		buildings: [...snapshot.buildings],
 		lands: snapshot.lands.map((land) => ({
 			id: land.id,

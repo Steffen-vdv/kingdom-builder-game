@@ -14,8 +14,11 @@ export const resourceAdd: EffectHandler = (effect, context, multiplier = 1) => {
 	const newVal = current + total;
 	const player = context.activePlayer;
 	player.resources[key] = newVal < 0 ? 0 : newVal;
-	if (total > 0) {
-		context.recentResourceGains.push({ key, amount: total });
+	if (total !== 0) {
+		context.recentResourceGains.push({
+			key: player.getResourceV2Id(key),
+			amount: total,
+		});
 	}
 	context.services.handleResourceChange(context, player, key);
 };

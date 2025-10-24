@@ -6,7 +6,10 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
-import type { SessionResourceCatalogV2 } from './resourceCatalogV2';
+import type {
+	SessionResourceCatalogV2,
+	SessionResourceBoundsV2,
+} from './resourceCatalogV2';
 
 export type {
 	SessionResourceTierThresholdV2,
@@ -88,6 +91,13 @@ export interface SessionPlayerStateSnapshot {
 	 * resource/stat/population sets.
 	 */
 	valuesV2?: Record<string, number>;
+	/**
+	 * Optional ResourceV2 bound map mirroring the player's effective
+	 * lower/upper bounds for each resource id. Emitted alongside
+	 * {@link valuesV2} so clients can clamp projections without consulting
+	 * legacy resource fields.
+	 */
+	resourceBoundsV2?: Record<string, SessionResourceBoundsV2>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
