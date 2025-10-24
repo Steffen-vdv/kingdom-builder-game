@@ -5,6 +5,11 @@ import type {
 	RuleSet,
 	StartConfig,
 } from '@kingdom-builder/protocol';
+import {
+	resourceV2,
+	createResourceV2Registry,
+	createResourceGroupRegistry,
+} from '@kingdom-builder/contents/resourceV2';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 const resources = {
@@ -27,6 +32,7 @@ const phases: PhaseConfig[] = [
 const start: StartConfig = {
 	player: {
 		resources: { [resources.ap]: 0, [resources.gold]: 0 },
+		valuesV2: { [resources.ap]: 0, [resources.gold]: 0 },
 		stats: {},
 		population: {},
 		lands: [],
@@ -63,6 +69,21 @@ describe('Turn cycle integration', () => {
 			phases,
 			start,
 			rules,
+			resourceCatalogV2: {
+				resources: createResourceV2Registry([
+					resourceV2(resources.ap)
+						.label('Turn AP')
+						.icon('⚡')
+						.lowerBound(0)
+						.build(),
+					resourceV2(resources.gold)
+						.label('Turn Gold')
+						.icon('🪙')
+						.lowerBound(0)
+						.build(),
+				]),
+				groups: createResourceGroupRegistry([]),
+			},
 		});
 
 		while (engineContext.game.currentPhase !== phaseIds.main) {

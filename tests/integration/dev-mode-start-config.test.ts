@@ -11,6 +11,7 @@ import {
 	Resource,
 	PopulationRole,
 } from '@kingdom-builder/contents';
+import { getResourceV2Id } from '@kingdom-builder/contents/resources';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
@@ -38,11 +39,14 @@ describe('dev mode start configuration', () => {
 			throw new Error('Expected both players to be present at game start');
 		}
 		expect(snapshot.game.devMode).toBe(true);
-		expect(player.resources[Resource.gold]).toBe(100);
-		expect(player.resources[Resource.happiness]).toBe(10);
+		const goldResourceId = getResourceV2Id(Resource.gold);
+		const happinessResourceId = getResourceV2Id(Resource.happiness);
+		expect(player.valuesV2?.[goldResourceId]).toBe(100);
+		expect(player.valuesV2?.[happinessResourceId]).toBe(10);
 		expect(player.population[PopulationRole.Council]).toBe(2);
 		expect(player.population[PopulationRole.Legion]).toBe(1);
 		expect(player.population[PopulationRole.Fortifier]).toBe(1);
-		expect(opponent.resources[Resource.castleHP]).toBe(1);
+		const castleResourceId = getResourceV2Id(Resource.castleHP);
+		expect(opponent.valuesV2?.[castleResourceId]).toBe(1);
 	});
 });

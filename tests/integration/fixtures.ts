@@ -9,10 +9,21 @@ import {
 	GAME_START,
 	RULES,
 	RESOURCES,
+	Resource,
+	type ResourceKey,
 } from '@kingdom-builder/contents';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
+
+const RESOURCE_CATALOG_V2 = Object.freeze({
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
+});
 
 type EngineForTest = ReturnType<typeof createEngine>;
 
@@ -22,16 +33,52 @@ function deepClone<T>(value: T): T {
 
 function clonePlayer(player: PlayerState) {
 	const copy = new PlayerState(player.id, player.name);
-	copy.resources = deepClone(player.resources);
-	copy.stats = deepClone(player.stats);
-	copy.population = deepClone(player.population);
+	copy.copyLegacyMappingsFrom(player);
+	copy.resourceValues = deepClone(player.resourceValues);
+	copy.resourceLowerBounds = deepClone(player.resourceLowerBounds);
+	copy.resourceUpperBounds = deepClone(player.resourceUpperBounds);
+	copy.resourceTouched = deepClone(player.resourceTouched);
+	copy.resourceTierIds = deepClone(player.resourceTierIds);
+	copy.resourceBoundTouched = deepClone(player.resourceBoundTouched);
+	for (const key of Object.values(Resource)) {
+		copy.resources[key] = player.resources[key];
+	}
+	copy.statsHistory = deepClone(player.statsHistory);
+	for (const [statKey, value] of Object.entries(player.stats)) {
+		copy.stats[statKey as keyof typeof player.stats] = value;
+	}
+	for (const [role, value] of Object.entries(player.population)) {
+		copy.population[role as keyof typeof player.population] = value as number;
+	}
 	copy.lands = player.lands.map((landState) => {
 		const newLand = new Land(landState.id, landState.slotsMax);
 		newLand.slotsUsed = landState.slotsUsed;
 		newLand.developments = [...landState.developments];
+		if (landState.upkeep) {
+			newLand.upkeep = { ...landState.upkeep };
+		}
+		if (landState.onPayUpkeepStep) {
+			newLand.onPayUpkeepStep = landState.onPayUpkeepStep.map((effect) => ({
+				...effect,
+			}));
+		}
+		if (landState.onGainIncomeStep) {
+			newLand.onGainIncomeStep = landState.onGainIncomeStep.map((effect) => ({
+				...effect,
+			}));
+		}
+		if (landState.onGainAPStep) {
+			newLand.onGainAPStep = landState.onGainAPStep.map((effect) => ({
+				...effect,
+			}));
+		}
 		return newLand;
 	});
 	copy.buildings = new Set([...player.buildings]);
+	copy.actions = new Set([...player.actions]);
+	copy.statSources = deepClone(player.statSources);
+	copy.skipPhases = deepClone(player.skipPhases);
+	copy.skipSteps = deepClone(player.skipSteps);
 	return copy;
 }
 
@@ -46,12 +93,16 @@ export function createTestContext(
 		phases: PHASES,
 		start: GAME_START,
 		rules: RULES,
+		resourceCatalogV2: RESOURCE_CATALOG_V2,
 	});
 	if (overrides) {
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
 			const value = overrides[key];
 			if (value !== undefined) {
-				engineContext.activePlayer.resources[key] = value;
+				const resourceId = engineContext.activePlayer.getResourceV2Id(
+					key as ResourceKey,
+				);
+				engineContext.activePlayer.resourceValues[resourceId] = value;
 			}
 		}
 	}
@@ -71,28 +122,22 @@ export function simulateEffects(
 		engineContext.passives.runResultMods(actionId, dummyCtx);
 	}
 
-	const resources: Record<string, number> = {};
-	for (const key of Object.keys(before.resources)) {
+	const valuesV2: Record<string, number> = {};
+	const resourceIds = new Set([
+		...Object.keys(before.resourceValues),
+		...Object.keys(dummy.resourceValues),
+	]);
+	for (const resourceId of resourceIds) {
 		const delta =
-			dummy.resources[key as keyof typeof dummy.resources] -
-			before.resources[key as keyof typeof before.resources];
+			(dummy.resourceValues[resourceId] ?? 0) -
+			(before.resourceValues[resourceId] ?? 0);
 		if (delta !== 0) {
-			resources[key] = delta;
-		}
-	}
-
-	const stats: Record<string, number> = {};
-	for (const key of Object.keys(before.stats)) {
-		const delta =
-			dummy.stats[key as keyof typeof dummy.stats] -
-			before.stats[key as keyof typeof before.stats];
-		if (delta !== 0) {
-			stats[key] = delta;
+			valuesV2[resourceId] = delta;
 		}
 	}
 
 	const land = dummy.lands.length - before.lands.length;
-	return { resources, stats, land };
+	return { valuesV2, land };
 }
 
 export function getActionOutcome(id: string, engineContext: EngineForTest) {

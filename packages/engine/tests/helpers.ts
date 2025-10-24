@@ -7,6 +7,8 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
 } from '@kingdom-builder/contents';
 import type {
 	ActionConfig as ActionDef,
@@ -39,5 +41,13 @@ type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
 
 export function createTestEngine(overrides: EngineOverrides = {}) {
 	const { rules, ...rest } = overrides;
-	return createEngine({ ...BASE, ...rest, rules: rules ?? RULES });
+	return createEngine({
+		...BASE,
+		...rest,
+		rules: rules ?? RULES,
+		resourceCatalogV2: {
+			resources: RESOURCE_V2_REGISTRY,
+			groups: RESOURCE_GROUP_V2_REGISTRY,
+		},
+	});
 }

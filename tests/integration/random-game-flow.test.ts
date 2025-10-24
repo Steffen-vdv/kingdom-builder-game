@@ -42,16 +42,16 @@ describe('random action flow', () => {
 			) {
 				expect(engineContext.game.currentPhase).toBe(mainPhase);
 				const hasAvailableCost = () => {
-					const { resources } = engineContext.activePlayer;
-					return (resources[costKey] ?? 0) > 0;
+					const player = engineContext.activePlayer;
+					return (player.resourceValues[costKey] ?? 0) > 0;
 				};
 				while (hasAvailableCost()) {
-					const playerResources = engineContext.activePlayer.resources;
+					const playerValues = engineContext.activePlayer.resourceValues;
 					const randomIndex = Math.floor(rng() * actionIds.length);
 					const actionId = actionIds[randomIndex];
 					const costs = getActionCosts(actionId, engineContext);
-					const beforeCost = playerResources[costKey];
-					const beforeGain = playerResources[gainKey];
+					const beforeCost = playerValues[costKey] ?? 0;
+					const beforeGain = playerValues[gainKey] ?? 0;
 					const action = actionRegistry.get(actionId)!;
 					const gain = (
 						action.effects.find(
@@ -59,19 +59,19 @@ describe('random action flow', () => {
 						)!.params as { amount: number }
 					).amount;
 					performAction(actionId, engineContext);
-					expect(playerResources[costKey]).toBe(
+					expect(playerValues[costKey]).toBe(
 						beforeCost - (costs[costKey] ?? 0),
 					);
-					expect(playerResources[gainKey]).toBe(beforeGain + gain);
+					expect(playerValues[gainKey]).toBe(beforeGain + gain);
 				}
 				const currentIndex = engineContext.game.currentPlayerIndex;
 				advance(engineContext);
 				expect(engineContext.game.currentPhase).toBe(endPhase);
 				expect(engineContext.game.currentPlayerIndex).toBe(currentIndex);
 				const player = engineContext.activePlayer;
-				const beforeRegen = player.resources[costKey];
+				const beforeRegen = player.resourceValues[costKey] ?? 0;
 				advance(engineContext);
-				expect(player.resources[costKey]).toBe(beforeRegen + regenAmount);
+				expect(player.resourceValues[costKey]).toBe(beforeRegen + regenAmount);
 				expect(engineContext.game.currentPhase).toBe(mainPhase);
 				expect(engineContext.game.currentPlayerIndex).toBe(
 					(currentIndex + 1) % engineContext.game.players.length,

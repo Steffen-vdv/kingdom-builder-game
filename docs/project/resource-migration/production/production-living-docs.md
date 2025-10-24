@@ -52,17 +52,17 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-31 16:10
-- **Current Focus:** Resource Migration MVP - P2 - T49 - Engine aggregation and readiness summary
+- **Timestamp (UTC):** 2025-10-24 18:25
+- **Current Focus:** Resource Migration MVP - P2 - T52 - Integration Test ResourceV2 Migration
 - **State Summary:**
-  - Engine runtime is now ResourceV2-first end to end: bootstrap, player start overrides, global costs, population handlers, services, AI loops, and logging/snapshots all operate on the runtime catalog introduced in T38–T48.
-  - Runtime payloads (values, bounds, metadata, signed deltas) are emitted through session/player snapshots; legacy bags persist as derived mirrors until downstream consumers finish migrating.
-  - Remaining adoption depends on protocol/web transports surfacing the new ResourceV2 fields so the existing web translators/tests can replace legacy bindings. See [`./worklogs/T49-engine-aggregation.md`](./worklogs/T49-engine-aggregation.md) for aggregation notes.
+  - Integration and regression suites now hydrate the ResourceV2 runtime catalog via fixtures, asserting `valuesV2` diffs instead of legacy `resources`/`stats` mirrors. See [`../../../../worklogs/T52-integration-tests.md`](../../../../worklogs/T52-integration-tests.md) for coverage details.
+  - Synthetic contexts and engine test helpers forward ResourceV2 registries so newly migrated assertions remain content-driven.
+  - Protocol snapshots remain unchanged; legacy fields persist until downstream transports surface ResourceV2 payloads.
 - **Next Suggested Tasks:**
-  - Patch `packages/contents/src/happinessHelpers.ts` to restore the `developmentTarget` helper and unblock `npm run check`.
-  - Extend server/session transports to publish `resourceCatalogV2`, `valuesV2`, `resourceBoundsV2`, and Option A logging diffs to clients, then confirm protocol snapshots mirror the runtime payloads.
-  - Coordinate with web to swap translators and HUD bindings to ResourceV2 once the new payloads land, preserving signed gain/loss presentation.
-- **Blocking Issues / Risks:** The known `TypeError: (0 , developmentTarget) is not a function` still aborts repository checks, preventing a clean verification run before handoff. Downstream transports also lag the new fields, which keeps the web rollout paused.
+  - Restore `developmentTarget` in `packages/contents/src/happinessHelpers.ts` so `npm run check` can finish without the current TypeError.
+  - Audit remaining protocol/web suites for legacy `resources`/`stats` expectations once transports expose `valuesV2` and catalog data.
+  - Capture follow-up coverage for ResourceV2 bound/tier flows when transports deliver the new payloads.
+- **Blocking Issues / Risks:** Repository checks continue to fail with `TypeError: (0 , developmentTarget) is not a function` during engine coverage; the regression also affects prior tasks that depend on contents helpers.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.
 
 ## 5. Notes & Decisions Archive
