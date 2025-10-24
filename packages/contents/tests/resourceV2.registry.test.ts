@@ -5,6 +5,7 @@ import {
 	RESOURCE_V2_DEFINITION_REGISTRY,
 	RESOURCE_V2_GROUP_ARTIFACTS,
 	RESOURCE_V2_GROUP_REGISTRY,
+	ResourceV2Id,
 	createResourceGroupRegistry,
 	createResourceV2Registry,
 	deriveResourceV2PrimaryIconCandidate,
@@ -78,9 +79,11 @@ describe('ResourceV2 registries', () => {
 	});
 
 	it('provides default registry artifacts for startup metadata', () => {
-		expect(RESOURCE_V2_DEFINITION_ARTIFACTS.definitions).toEqual([]);
-		expect(RESOURCE_V2_DEFINITION_REGISTRY.values()).toEqual([]);
-		expect(RESOURCE_V2_GROUP_ARTIFACTS.groups).toEqual([]);
-		expect(RESOURCE_V2_GROUP_REGISTRY.values()).toEqual([]);
+		const defaultDefinitions = RESOURCE_V2_DEFINITION_ARTIFACTS.definitions;
+		expect(defaultDefinitions.map((definition) => definition.id)).toEqual([ResourceV2Id.Absorption]);
+		expect(RESOURCE_V2_DEFINITION_REGISTRY.values()).toEqual(defaultDefinitions);
+		const defaultGroups = RESOURCE_V2_GROUP_ARTIFACTS.groups;
+		expect(defaultGroups).toEqual([]);
+		expect(RESOURCE_V2_GROUP_REGISTRY.values()).toEqual(defaultGroups);
 	});
 });

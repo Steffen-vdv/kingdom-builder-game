@@ -3,12 +3,33 @@ import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	RESOURCE_V2_DEFINITION_ARTIFACTS,
+	resourceV2Add,
+} from '@kingdom-builder/contents';
+
+const ABSORPTION_RESOURCE_ID = (() => {
+	const definitions = RESOURCE_V2_DEFINITION_ARTIFACTS.orderedDefinitions;
+	const definition = definitions.find(
+		(entry) => entry.display.name === 'Absorption',
+	);
+	if (!definition) {
+		const message =
+			'Missing Absorption ResourceV2 definition for resolveAttack tests.';
+		throw new Error(message);
+	}
+	return definition.id;
+})();
 
 function makeAbsorptionEffect(amount: number): EffectDef {
+	return resourceV2Add(ABSORPTION_RESOURCE_ID).amount(amount).build();
+}
+
+function makeFortificationGainEffect(amount: number): EffectDef {
 	return {
 		type: 'stat',
 		method: 'add',
-		params: { key: Stat.absorption, amount },
+		params: { key: Stat.fortificationStrength, amount },
 	};
 }
 
@@ -161,34 +182,12 @@ describe('resolveAttack', () => {
 				id: 'bastion',
 				effects: [],
 				onBeforeAttacked: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
-					{
-						type: 'stat',
-						method: 'add',
-						params: {
-							key: Stat.fortificationStrength,
-							amount: 1,
-						},
-					},
+					makeAbsorptionEffect(0.5),
+					makeFortificationGainEffect(1),
 				],
 				onAttackResolved: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
-					{
-						type: 'stat',
-						method: 'add',
-						params: {
-							key: Stat.fortificationStrength,
-							amount: 5,
-						},
-					},
+					makeAbsorptionEffect(0.5),
+					makeFortificationGainEffect(5),
 				],
 			},
 			engineContext,

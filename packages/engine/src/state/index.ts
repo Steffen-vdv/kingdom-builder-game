@@ -4,6 +4,7 @@ import type { PlayerResourceV2State } from './resource_v2';
 import {
 	createEmptyPlayerResourceV2State,
 	createPlayerResourceV2State,
+	applyResourceV2ValueChange,
 } from './resource_v2';
 
 export const Resource: Record<string, string> = {};
@@ -213,7 +214,75 @@ export function initializePlayerResourceV2State(
 ): PlayerResourceV2State {
 	const state = createPlayerResourceV2State(registry);
 	player.resourceV2 = state;
+	attachResourceV2Accessors(player, state);
 	return state;
+}
+
+const RESOURCE_V2_FINITE_VALUE_MESSAGE =
+	'ResourceV2 value must be a finite number.';
+
+function assertResourceV2Finite(value: number) {
+	if (Number.isFinite(value)) {
+		return;
+	}
+	const message = RESOURCE_V2_FINITE_VALUE_MESSAGE;
+	throw new Error(message);
+}
+
+function formatParentDerivedMessage(id: string) {
+	return (
+		'ResourceV2 parent "' + id + '" amount is derived from child resources.'
+	);
+}
+
+function attachResourceV2Accessors(
+	player: PlayerState,
+	state: PlayerResourceV2State,
+) {
+	const defined = new Set<string>();
+	const candidateIds = [...state.resourceIds, ...state.parentIds];
+	for (const id of candidateIds) {
+		if (defined.has(id)) {
+			continue;
+		}
+		defined.add(id);
+		if (Object.prototype.hasOwnProperty.call(player, id)) {
+			continue;
+		}
+		const descriptor = Object.getOwnPropertyDescriptor(player, id);
+		if (descriptor) {
+			continue;
+		}
+		if (Object.prototype.hasOwnProperty.call(state.parentChildren, id)) {
+			Object.defineProperty(player, id, {
+				get: () => state.amounts[id] ?? 0,
+				set: () => {
+					throw new Error(formatParentDerivedMessage(id));
+				},
+				enumerable: false,
+				configurable: true,
+			});
+			continue;
+		}
+		Object.defineProperty(player, id, {
+			get: () => state.amounts[id] ?? 0,
+			set: (value: number) => {
+				const current = state.amounts[id] ?? 0;
+				assertResourceV2Finite(value);
+				const delta = value - current;
+				if (delta === 0) {
+					state.hookSuppressions[id] = undefined;
+					return;
+				}
+				applyResourceV2ValueChange(state, id, {
+					delta,
+					reconciliation: 'clamp',
+				});
+			},
+			enumerable: false,
+			configurable: true,
+		});
+	}
 }
 
 export {

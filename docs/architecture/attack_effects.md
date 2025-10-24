@@ -12,7 +12,7 @@ Use the builder helpers to annotate each role:
 effect('attack', 'perform').params(
 	attackParams()
 		.powerStat(Stat.armyStrength)
-		.absorptionStat(Stat.absorption)
+		.absorptionResource(ResourceV2Id.Absorption)
 		.fortificationStat(Stat.fortificationStrength)
 		.targetResource(Resource.castleHP),
 );
@@ -36,4 +36,4 @@ of icons.
 Synthetic content used in tests should register custom stat IDs (via the
 `attackParams().powerStat(...)` helpers) to ensure formatting logic remains
 robust. Avoid asserting against hard-coded `⚔️/🌀/🛡️` icons; derive expectations
-from the annotated stat metadata instead.
+from the annotated stat or ResourceV2 metadata instead.

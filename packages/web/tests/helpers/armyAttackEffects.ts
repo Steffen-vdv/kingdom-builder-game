@@ -154,6 +154,7 @@ export function buildAttackEffect(
 			key: config.key,
 			label: config.label,
 			icon: config.icon,
+			source: config.source,
 		});
 	}
 	if (annotations && annotations.length > 0) {

@@ -102,9 +102,12 @@ export class PopulationEffectParamsBuilder extends ParamsBuilder<{
 export const populationParams = () => new PopulationEffectParamsBuilder();
 
 export type AttackStatRole = 'power' | 'absorption' | 'fortification';
+export type AttackStatSource = 'stat' | 'resourceV2';
+
 export type AttackStatAnnotation = {
 	role: AttackStatRole;
-	key: StatKey;
+	key: string;
+	source?: AttackStatSource;
 	label?: string;
 	icon?: string;
 };
@@ -139,12 +142,13 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	ignoreFortification(flag = true) {
 		return this.set('ignoreFortification', flag);
 	}
-	stat(role: AttackStatRole, key: StatKey, overrides: { label?: string; icon?: string } = {}) {
+	private setAnnotation(role: AttackStatRole, key: string, source: AttackStatSource, overrides: { label?: string; icon?: string } = {}) {
 		const stats = this.params.stats || (this.params.stats = []);
 		const existingIndex = stats.findIndex((item) => item.role === role);
 		const annotation: AttackStatAnnotation = {
 			role,
 			key,
+			source,
 			...overrides,
 		};
 		if (existingIndex >= 0) {
@@ -155,13 +159,16 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 		return this;
 	}
 	powerStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
-		return this.stat('power', key, overrides);
+		return this.setAnnotation('power', key, 'stat', overrides);
 	}
 	absorptionStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
-		return this.stat('absorption', key, overrides);
+		return this.setAnnotation('absorption', key, 'stat', overrides);
+	}
+	absorptionResource(resourceId: string, overrides?: { label?: string; icon?: string }) {
+		return this.setAnnotation('absorption', resourceId, 'resourceV2', overrides);
 	}
 	fortificationStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
-		return this.stat('fortification', key, overrides);
+		return this.setAnnotation('fortification', key, 'stat', overrides);
 	}
 	onDamageAttacker(...effects: Array<EffectConfig | EffectBuilder>) {
 		const onDamage = this.ensureOnDamage();

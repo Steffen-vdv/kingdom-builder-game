@@ -20,6 +20,7 @@ export {
 	RESOURCE_V2_GROUP_ARTIFACTS,
 	RESOURCE_V2_GROUP_REGISTRY,
 	RESOURCE_V2_GROUPS,
+	ResourceV2Id,
 	resourceV2Add,
 	resourceV2Definition,
 	resourceV2Group,

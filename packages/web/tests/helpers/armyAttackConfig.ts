@@ -97,6 +97,7 @@ export type CombatStatConfig = {
 	icon: string;
 	label: string;
 	baseKey: SyntheticStatKey;
+	source: 'stat' | 'resourceV2';
 };
 
 export const SYNTH_ATTACK: SyntheticAction = {
@@ -135,18 +136,21 @@ export const COMBAT_STAT_CONFIG: Record<CombatStatKey, CombatStatConfig> = {
 		icon: '⚔️',
 		label: 'Valor',
 		baseKey: SYNTH_STAT_IDS.armyStrength,
+		source: 'stat',
 	},
 	absorption: {
 		key: 'synthetic:veil',
 		icon: '🌫️',
 		label: 'Veil',
 		baseKey: SYNTH_STAT_IDS.absorption,
+		source: 'resourceV2',
 	},
 	fortification: {
 		key: 'synthetic:rampart',
 		icon: '🧱',
 		label: 'Rampart',
 		baseKey: SYNTH_STAT_IDS.fortificationStrength,
+		source: 'stat',
 	},
 };
 

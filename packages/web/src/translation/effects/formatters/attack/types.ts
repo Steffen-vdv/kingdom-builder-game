@@ -25,6 +25,7 @@ export type AttackStatDescriptor = {
 	label: string;
 	icon?: string;
 	key?: AttackStatKey;
+	source?: 'stat' | 'resourceV2';
 };
 
 export type AttackStatContext = Partial<
