@@ -6,6 +6,23 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type { SessionResourceCatalogV2 } from './resourceCatalogV2';
+
+export type {
+	SessionResourceTierThresholdV2,
+	SessionResourceTierDefinitionV2,
+	SessionResourceTierTrackMetadataV2,
+	SessionResourceTierTrackV2,
+	SessionResourceMetadataV2,
+	SessionResourceBoundsV2,
+	SessionResourceGlobalCostConfigV2,
+	SessionResourceDefinitionV2,
+	SessionResourceGroupParentV2,
+	SessionResourceGroupDefinitionV2,
+	SessionResourceRegistryV2,
+	SessionResourceGroupRegistryV2,
+	SessionResourceCatalogV2,
+} from './resourceCatalogV2';
 
 export type SessionPlayerId = 'A' | 'B';
 
@@ -99,6 +116,7 @@ export interface SessionGameSnapshot {
 	activePlayerId: SessionPlayerId;
 	opponentId: SessionPlayerId;
 	conclusion?: SessionGameConclusionSnapshot;
+	resourceCatalogV2?: SessionResourceCatalogV2;
 }
 
 export interface SessionAdvanceSkipSourceSnapshot {
