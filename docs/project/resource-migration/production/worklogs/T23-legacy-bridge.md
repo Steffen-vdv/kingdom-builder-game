@@ -6,6 +6,19 @@
 - Preserved legacy-only metadata by layering targeted overrides (e.g., stat capacity and display formats) on top of the ResourceV2 definitions so downstream consumers remain unaffected.
 - Added a dedicated map between legacy keys and ResourceV2 identifiers to keep the bridge explicit and easy to retire once consumers adopt the new schema end to end.
 
+## Touched Files
+
+- docs/project/resource-migration/production/production-living-docs.md
+- packages/contents/src/populationRoles.ts
+- packages/contents/src/resourceV2/definitions/population.ts
+- packages/contents/src/resources.ts
+- packages/contents/src/stats.ts
+- docs/project/resource-migration/production/worklogs/T23-legacy-bridge.md
+
+## Tests
+
+- _Not run – legacy bridge refactor pending engine adoption_
+
 ## Decisions
 
 - Iterate the ordered ResourceV2 registry to guarantee the legacy records always follow the canonical catalog ordering rather than maintaining bespoke arrays that could drift.

@@ -7,6 +7,18 @@
 - Reconciliation defaults to `clamp` and rejects unsupported modes until future phases unlock additional strategies.
 - Percent changes accept one or more modifiers; rounding is optional and enforced to follow a prior `percent()` call.
 
+## Touched Files
+
+- packages/contents/src/resourceV2/effects/changeBuilder.ts
+- packages/contents/src/resourceV2/effects/index.ts
+- packages/contents/src/resourceV2/effects/types.ts
+- packages/contents/src/resourceV2/index.ts
+- docs/project/resource-migration/production/worklogs/T28-effect-builder.md
+
+## Tests
+
+- _Not run – builder scaffolding only_
+
 ## Validation Gaps
 
 - The builder only checks that numeric inputs are finite; it does **not** currently enforce integer values or non-negative magnitudes for additive changes.

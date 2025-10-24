@@ -6,6 +6,16 @@
 - Extended the game configuration schema to ingest precomputed ResourceV2 catalog snapshots, allowing transports to seed upgraded clients without breaking older loaders.
 - Exported the catalog snapshot type so downstream packages can share a single contract when wiring migration-aware bootstrapping flows.
 
+## Touched Files
+
+- packages/protocol/src/config/schema.ts
+- packages/protocol/src/index.ts
+- docs/project/resource-migration/production/worklogs/T25-protocol-start-schema.md
+
+## Tests
+
+- _Not run – schema additions only_
+
 ## Decisions
 
 - Chose structured Zod schemas for ResourceV2 catalog snapshots (registry ordering plus metadata) to mirror the content builder output and keep runtime validation strict during the migration window.

@@ -9,7 +9,7 @@
 
 - packages/engine/src/actions/context_clone.ts
 - packages/engine/src/state/index.ts
-- worklogs/T39-playerstate.md
+- docs/project/resource-migration/production/worklogs/T39-playerstate.md
 
 ## Tests
 

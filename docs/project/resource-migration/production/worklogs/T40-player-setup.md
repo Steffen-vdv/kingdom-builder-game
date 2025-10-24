@@ -10,7 +10,7 @@
 
 - packages/engine/src/setup/create_engine.ts
 - packages/engine/src/setup/player_setup.ts
-- worklogs/T40-player-setup.md
+- docs/project/resource-migration/production/worklogs/T40-player-setup.md
 
 ## Tests
 

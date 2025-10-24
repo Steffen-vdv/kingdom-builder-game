@@ -6,6 +6,19 @@
 - Expanded the shared tier summary store to index happiness tiers by both the legacy key and the new tier track metadata id, enabling future consumers to resolve summaries via ResourceV2 identifiers without losing current behaviour.
 - Pointed the primary content icon to the ResourceV2 castle HP identifier with validation against the catalog so designers can rely on the new id scheme while keeping legacy fallbacks documented.
 
+## Touched Files
+
+- packages/contents/src/happinessHelpers.ts
+- packages/contents/src/resourceV2/definitions/happiness.ts
+- packages/contents/src/rules.ts
+- packages/contents/src/startup.ts
+- packages/contents/src/tieredResources.ts
+- docs/project/resource-migration/production/worklogs/T24-rules-alignment.md
+
+## Tests
+
+- _Not run – rules metadata alignment only_
+
 ## Decisions
 
 - Preserved the legacy `tieredResourceKey` value in `RULES` to avoid breaking engine consumers while attaching the ResourceV2 id and tier track metadata as supplemental fields for the migration.
