@@ -411,6 +411,10 @@ export class PlayerState {
 		return this.legacyPopulationToResourceId[key] ?? key;
 	}
 
+	getPopulationResourceV2Id(key: PopulationRoleId): string {
+		return this.getResourceV2IdForPopulation(key);
+	}
+
 	private syncLegacyResourceAccessors(): ResourceKey[] {
 		const resourceKeys = Object.values(Resource);
 		for (const key of resourceKeys) {
