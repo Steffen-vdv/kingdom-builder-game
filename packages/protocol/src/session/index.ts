@@ -86,11 +86,12 @@ export interface SessionPlayerStateSnapshot {
 	statsHistory: Record<string, boolean>;
 	population: Record<string, number>;
 	/**
-	 * Optional ResourceV2 value map. Will be populated once the session
-	 * engine emits ResourceV2 snapshots alongside the legacy
-	 * resource/stat/population sets.
+	 * ResourceV2 value map for the player. This is the canonical source of
+	 * resource amounts after the Resource Migration MVP rollout. Legacy
+	 * `resources`/`stats`/`population` records remain available for
+	 * backwards compatibility but are derived from these values.
 	 */
-	valuesV2?: Record<string, number>;
+	valuesV2: Record<string, number>;
 	/**
 	 * Optional ResourceV2 bound map mirroring the player's effective
 	 * lower/upper bounds for each resource id. Emitted alongside
@@ -126,7 +127,12 @@ export interface SessionGameSnapshot {
 	activePlayerId: SessionPlayerId;
 	opponentId: SessionPlayerId;
 	conclusion?: SessionGameConclusionSnapshot;
-	resourceCatalogV2?: SessionResourceCatalogV2;
+	/**
+	 * Runtime ResourceV2 catalog snapshot. Present on all modern engine
+	 * snapshots and required for consumers that operate on ResourceV2 ids
+	 * or metadata.
+	 */
+	resourceCatalogV2: SessionResourceCatalogV2;
 }
 
 export interface SessionAdvanceSkipSourceSnapshot {
@@ -321,13 +327,17 @@ export interface SessionSnapshotMetadata {
 	developments?: Record<string, SessionMetadataDescriptor>;
 	stats?: Record<string, SessionMetadataDescriptor>;
 	/**
-	 * Optional ResourceV2 metadata map. Introduced for the migration work
-	 * and remains unset until ResourceV2 values surface in snapshots.
+	 * ResourceV2 metadata map keyed by resource id. Populated on modern
+	 * snapshots alongside {@link SessionPlayerStateSnapshot.valuesV2} and
+	 * {@link SessionGameSnapshot.resourceCatalogV2}. Remains optional to
+	 * preserve compatibility with archived pre-migration payloads.
 	 */
 	resourcesV2?: Record<string, SessionMetadataDescriptor>;
 	/**
-	 * Optional ResourceV2 group metadata map. Mirrors
-	 * {@link resourcesV2} but scoped to group/parent descriptors.
+	 * ResourceV2 group metadata map that mirrors {@link resourcesV2} but
+	 * is scoped to group/parent descriptors. Optional only for legacy
+	 * payload archives; new snapshots always include it when the runtime
+	 * catalog defines groups.
 	 */
 	resourceGroupsV2?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;

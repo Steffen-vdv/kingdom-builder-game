@@ -62,15 +62,15 @@ export interface SessionRegistriesPayload {
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
 	/**
-	 * Optional ResourceV2 registry of concrete resources. Present once the
-	 * session transport exposes ResourceV2 payloads alongside the legacy
-	 * resource/stat/population records.
+	 * ResourceV2 registry of concrete resources. Modern session transports
+	 * populate this alongside the legacy registries; the optional flag
+	 * remains only so older payload archives continue to type-check.
 	 */
 	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
 	/**
-	 * Optional ResourceV2 registry of group definitions (including virtual
-	 * parents). Currently unused until the migration pipeline begins
-	 * emitting ResourceV2 structures.
+	 * ResourceV2 registry of group definitions (including virtual parents).
+	 * Emitted with every post-migration registry payload. Optional purely
+	 * for backwards compatibility with pre-migration fixtures.
 	 */
 	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
@@ -82,6 +82,8 @@ export type SessionMetadataSnapshot = Pick<
 	| 'buildings'
 	| 'developments'
 	| 'stats'
+	| 'resourcesV2'
+	| 'resourceGroupsV2'
 	| 'phases'
 	| 'triggers'
 	| 'assets'
@@ -100,15 +102,15 @@ export interface SessionRuntimeConfigResponse {
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
 	/**
-	 * Optional ResourceV2 registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourcesV2}. Remains undefined until
-	 * runtime wiring for ResourceV2 is ready.
+	 * ResourceV2 registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourcesV2}. Optional only when
+	 * reading archived payloads created before the migration rollout.
 	 */
 	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
 	/**
-	 * Optional ResourceV2 group registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Reserved for
-	 * future ResourceV2 rollouts.
+	 * ResourceV2 group registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Post-migration
+	 * transports always provide this; legacy archives may omit it.
 	 */
 	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
