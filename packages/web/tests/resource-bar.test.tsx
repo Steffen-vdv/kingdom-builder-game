@@ -17,13 +17,13 @@ import {
 } from './helpers/sessionFixtures';
 import { selectSessionView } from '../src/state/sessionSelectors';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
-import { createTestRegistryMetadata } from './helpers/registryMetadata';
-import {
-	formatIconLabel,
-	toDescriptorDisplay,
-} from '../src/components/player/registryDisplays';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
+import {
+	getLegacyMapping,
+	getResourceIdForLegacy,
+} from '../src/translation/resourceV2';
+import { formatResourceTitle } from '../src/components/player/resourceV2Snapshots';
 
 type MockGame = GameEngineContextValue;
 type TierDefinition = SessionRuleSnapshot['tierDefinitions'][number];
@@ -71,8 +71,12 @@ function normalizeSummary(summary: string | undefined): string[] {
 
 function createResourceBarScenario() {
 	const scaffold = createTestSessionScaffold();
+	const { resourceCatalogV2, resourceMetadataV2, resourceGroupMetadataV2 } =
+		scaffold;
 	const resourceKeys = Object.keys(scaffold.registries.resources);
 	const happinessKey = scaffold.ruleSnapshot.tieredResourceKey;
+	const happinessResourceId =
+		getResourceIdForLegacy('resources', happinessKey) ?? happinessKey;
 	const actionCostResource =
 		resourceKeys.find((key) => key !== happinessKey) ??
 		resourceKeys[0] ??
@@ -159,14 +163,55 @@ function createResourceBarScenario() {
 	};
 	const activePlayerId = 'player-1' as SessionPlayerId;
 	const opponentId = 'player-2' as SessionPlayerId;
+	const buildResourceSnapshots = (legacyResources: Record<string, number>) => {
+		if (!resourceCatalogV2) {
+			return { valuesV2: {}, resourceBoundsV2: {} };
+		}
+		const valuesV2: Record<string, number> = {};
+		const resourceBoundsV2: Record<
+			string,
+			{ lowerBound: number | null; upperBound: number | null }
+		> = {};
+		for (const definition of resourceCatalogV2.resources.ordered) {
+			resourceBoundsV2[definition.id] = {
+				lowerBound: definition.lowerBound ?? null,
+				upperBound: definition.upperBound ?? null,
+			};
+			const mapping = getLegacyMapping(definition.id);
+			if (mapping?.bucket === 'resources') {
+				const legacyValue = legacyResources[mapping.key];
+				if (typeof legacyValue === 'number') {
+					valuesV2[definition.id] = legacyValue;
+				}
+			}
+		}
+		return { valuesV2, resourceBoundsV2 };
+	};
+	const activeResources: Record<string, number> = {
+		[happinessKey]: 6,
+		[actionCostResource]: 2,
+	};
+	const { valuesV2: activeValuesV2, resourceBoundsV2: activeBoundsV2 } =
+		buildResourceSnapshots(activeResources);
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
-		resources: { [happinessKey]: 6 },
+		resources: activeResources,
+		valuesV2: activeValuesV2,
+		resourceBoundsV2: activeBoundsV2,
 	});
+	const opponentResources: Record<string, number> = {
+		[happinessKey]: 4,
+		[actionCostResource]: 1,
+	};
+	const { valuesV2: opponentValuesV2, resourceBoundsV2: opponentBoundsV2 } =
+		buildResourceSnapshots(opponentResources);
 	const opponent = createSnapshotPlayer({
 		id: opponentId,
 		name: 'Player Two',
+		resources: opponentResources,
+		valuesV2: opponentValuesV2,
+		resourceBoundsV2: opponentBoundsV2,
 	});
 	const metadata = structuredClone(scaffold.metadata);
 	const sessionState = createSessionSnapshot({
@@ -177,6 +222,9 @@ function createResourceBarScenario() {
 		actionCostResource,
 		ruleSnapshot,
 		metadata,
+		resourceCatalogV2,
+		resourceMetadataV2,
+		resourceGroupMetadataV2,
 	});
 	const { mockGame, handleHoverCard, clearHoverCard, registries } =
 		createPassiveGame(sessionState, {
@@ -189,18 +237,14 @@ function createResourceBarScenario() {
 	mockGame.sessionSnapshot = sessionState;
 	mockGame.handleHoverCard = handleHoverCard;
 	mockGame.clearHoverCard = clearHoverCard;
-	const metadataSelectors = createTestRegistryMetadata(
-		registries,
-		sessionState.metadata,
-	);
 	return {
 		mockGame: mockGame as MockGame,
 		registries,
 		metadata: sessionState.metadata,
 		ruleSnapshot,
 		happinessKey,
+		happinessResourceId,
 		activePlayer,
-		metadataSelectors,
 		sessionState,
 		sessionView,
 		handleHoverCard,
@@ -223,8 +267,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 			metadata,
 			ruleSnapshot,
 			happinessKey,
+			happinessResourceId,
 			activePlayer,
-			metadataSelectors,
 			handleHoverCard,
 		} = scenario;
 		currentGame = mockGame;
@@ -233,24 +277,28 @@ describe('<ResourceBar /> happiness hover card', () => {
 				<ResourceBar player={activePlayer} />
 			</RegistryMetadataProvider>,
 		);
-		const resourceDescriptor = toDescriptorDisplay(
-			metadataSelectors.resourceMetadata.select(happinessKey),
+		const resourceMetadata =
+			mockGame.translationContext.resourceMetadataV2.get(happinessResourceId);
+		const resourceValue =
+			activePlayer.valuesV2?.[happinessResourceId] ??
+			activePlayer.resources[happinessKey] ??
+			0;
+		const formattedValue = formatResourceMagnitude(
+			resourceValue,
+			resourceMetadata,
 		);
-		const resourceValue = activePlayer.resources[happinessKey] ?? 0;
-		const button = screen.getByRole('button', {
-			name: `${resourceDescriptor.label}: ${resourceValue}`,
-		});
-		const descriptorIcon = resourceDescriptor.icon;
-		expect(descriptorIcon).toBeDefined();
-		expect(button).toHaveTextContent(descriptorIcon as string);
+		const button = screen.getByLabelText(
+			`${resourceMetadata.label}: ${formattedValue}`,
+		);
+		expect(button.textContent).toContain(resourceMetadata.icon ?? '❔');
 		fireEvent.mouseEnter(button);
 		expect(handleHoverCard).toHaveBeenCalled();
 		const hoverCard = handleHoverCard.mock.calls.at(-1)?.[0];
 		expect(hoverCard).toBeTruthy();
-		expect(hoverCard?.title).toBe(formatIconLabel(resourceDescriptor));
+		expect(hoverCard?.title).toBe(formatResourceTitle(resourceMetadata));
 		expect(hoverCard?.description).toBeUndefined();
 		expect(hoverCard?.effectsTitle).toBe(
-			`Happiness thresholds (current: ${resourceValue})`,
+			`Happiness thresholds (current: ${formattedValue})`,
 		);
 		const tierEntries = (hoverCard?.effects ?? []).filter(
 			(section): section is SummaryGroupLike =>
@@ -273,7 +321,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const orderedTiers = [...tiers].sort(
 			(a, b) => getRangeStart(b) - getRangeStart(a),
 		);
-		const tierResourceIcon = resourceDescriptor.icon ?? '❔';
+		const tierResourceIcon = resourceMetadata.icon ?? '❔';
 		const activeTierIndex = orderedTiers.findIndex((tier) => {
 			const { min, max } = tier.range;
 			return valueInRange(resourceValue, min, max);

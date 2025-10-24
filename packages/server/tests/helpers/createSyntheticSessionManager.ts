@@ -1,6 +1,10 @@
 import { SessionManager } from '../../src/session/SessionManager.js';
 import type { SessionManagerOptions } from '../../src/session/SessionManager.js';
-import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	createContentFactory,
+	createResourceV2Registries,
+	resourceV2Definition,
+} from '@kingdom-builder/testing';
 import type { EngineSession } from '@kingdom-builder/engine';
 import {
 	happinessTier,
@@ -43,6 +47,38 @@ export function createSyntheticSessionManager(
 	const factory = createContentFactory();
 	const costKey = 'synthetic:cost';
 	const gainKey = 'synthetic:gain';
+	const costResourceId = 'resource:synthetic:cost';
+	const gainResourceId = 'resource:synthetic:gain';
+	const { resources: resourceCatalogResources, groups: resourceCatalogGroups } =
+		createResourceV2Registries({
+			resources: [
+				resourceV2Definition({
+					id: costResourceId,
+					metadata: {
+						label: 'Synthetic Action Cost',
+						icon: '⚡',
+						description:
+							'Action points allocated to synthetic session commands.',
+						order: 0,
+					},
+					bounds: { lowerBound: 0 },
+				}),
+				resourceV2Definition({
+					id: gainResourceId,
+					metadata: {
+						label: 'Synthetic Gain',
+						icon: '🪙',
+						description: 'Rewards granted by synthetic session resolutions.',
+						order: 1,
+					},
+					bounds: { lowerBound: 0 },
+				}),
+			],
+		});
+	const resourceCatalogV2 = {
+		resources: resourceCatalogResources,
+		groups: resourceCatalogGroups,
+	};
 	const action = factory.action({
 		baseCosts: { [costKey]: 1 },
 		effects: [
@@ -77,6 +113,14 @@ export function createSyntheticSessionManager(
 	const start: StartConfig = {
 		player: {
 			resources: { [costKey]: 1, [gainKey]: 0 },
+			valuesV2: {
+				[costResourceId]: 1,
+				[gainResourceId]: 0,
+			},
+			resourceLowerBoundsV2: {
+				[costResourceId]: 0,
+				[gainResourceId]: 0,
+			},
 			stats: {},
 			population: {},
 			lands: [],
@@ -124,6 +168,7 @@ export function createSyntheticSessionManager(
 			[costKey]: { key: costKey },
 			[gainKey]: { key: gainKey },
 		},
+		resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? resourceCatalogV2,
 		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
 	};
 	const manager = new SessionManager({

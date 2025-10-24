@@ -3,11 +3,13 @@ import type {
 	SessionPhaseMetadata,
 	SessionRuleSnapshot,
 	SessionSnapshot,
+	SessionResourceCatalogV2,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 import { createSessionRegistries } from './sessionRegistries';
 import { createEmptySnapshotMetadata } from './sessionFixtures';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { createResourceV2CatalogFixture } from './resourceV2CatalogFixture';
 
 interface PhaseOrderEntry {
 	id: string;
@@ -126,6 +128,9 @@ export interface TestSessionScaffold {
 	ruleSnapshot: SessionRuleSnapshot;
 	tierPassiveId: string;
 	neutralTierId: string;
+	resourceCatalogV2: SessionResourceCatalogV2;
+	resourceMetadataV2: Record<string, SessionMetadataDescriptor>;
+	resourceGroupMetadataV2: Record<string, SessionMetadataDescriptor>;
 }
 
 const buildResourceMetadata = (
@@ -212,78 +217,6 @@ const buildStatMetadata = (): Record<string, SessionMetadataDescriptor> => ({
 	},
 });
 
-const buildPhaseDefinitions = (
-	entries: readonly PhaseOrderEntry[],
-): SessionSnapshot['phases'] =>
-	entries.map(({ id, metadata }) => ({
-		id,
-		label: metadata.label,
-		icon: metadata.icon,
-		action: metadata.action ?? false,
-		steps: (metadata.steps ?? []).map((step) => ({
-			id: step.id,
-			title: step.label,
-			icon: step.icon,
-			triggers: step.triggers,
-		})),
-	}));
-
-const buildPhaseMetadata = (): Record<string, SessionPhaseMetadata> => {
-	const descriptors: Record<string, SessionPhaseMetadata> = {};
-	for (const entry of PHASE_ORDER) {
-		descriptors[entry.id] = entry.metadata;
-	}
-	return descriptors;
-};
-
-const buildRuleSnapshot = (resourceKey: string): SessionRuleSnapshot => ({
-	tieredResourceKey: resourceKey,
-	tierDefinitions: [
-		{
-			id: 'tier.joyous',
-			range: { min: 0, max: 3 },
-			effect: { incomeMultiplier: 1 },
-			preview: {
-				id: TIER_PASSIVE_ID,
-				effects: [
-					{
-						type: 'resource',
-						method: 'add',
-						params: {
-							key: resourceKey,
-							amount: 1,
-						},
-					},
-				],
-			},
-			text: {
-				summary: 'Gain a steady stream of happiness.',
-				removal: 'Joy fades from the realm.',
-			},
-			display: {
-				title: 'Joyous Celebration',
-				icon: '🎉',
-				summaryToken: 'tier.joyous.summary',
-				removalCondition: 'Population remains joyful.',
-			},
-		},
-		{
-			id: NEUTRAL_TIER_ID,
-			range: { min: 4 },
-			effect: { incomeMultiplier: 1 },
-			text: {
-				summary: 'Hold the line without bonuses.',
-				removal: 'Stability crumbles.',
-			},
-			display: {
-				title: 'Steady Resolve',
-				summaryToken: 'tier.neutral.summary',
-			},
-		},
-	],
-	winConditions: [],
-});
-
 export function createTestSessionScaffold(): TestSessionScaffold {
 	const registries = createSessionRegistries();
 	const resourceKeys = Object.keys(registries.resources);
@@ -291,6 +224,11 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 	const populationMetadata = buildPopulationMetadata(registries);
 	const statMetadata = buildStatMetadata();
 	const phaseMetadata = buildPhaseMetadata();
+	const {
+		catalog: resourceCatalogV2,
+		metadata: resourceMetadataV2,
+		groupMetadata: resourceGroupMetadataV2,
+	} = createResourceV2CatalogFixture();
 	const metadata: SessionSnapshot['metadata'] = createEmptySnapshotMetadata({
 		resources: resourceMetadata,
 		populations: populationMetadata,
@@ -298,6 +236,8 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		phases: phaseMetadata,
 		triggers: { ...TRIGGER_METADATA },
 		assets: { ...ASSET_METADATA },
+		resourcesV2: resourceMetadataV2,
+		resourceGroupsV2: resourceGroupMetadataV2,
 		overviewContent: {
 			hero: { title: 'Session Overview', tokens: {} },
 			sections: [],
@@ -314,5 +254,8 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		ruleSnapshot,
 		tierPassiveId: TIER_PASSIVE_ID,
 		neutralTierId: NEUTRAL_TIER_ID,
+		resourceCatalogV2,
+		resourceMetadataV2,
+		resourceGroupMetadataV2,
 	};
 }

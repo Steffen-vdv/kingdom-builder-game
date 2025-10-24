@@ -10,14 +10,18 @@ import type {
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
+	SessionResourceBoundsV2,
+	SessionResourceCatalogV2,
+	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol/session';
-
-const clone = <T>(value: T): T => {
-	if (typeof structuredClone === 'function') {
-		return structuredClone(value);
-	}
-	return JSON.parse(JSON.stringify(value)) as T;
-};
+import {
+	cloneValue as clone,
+	cloneLands,
+	clonePassives,
+	cloneSkipPhases,
+	cloneSkipSteps,
+	cloneStatSources,
+} from './sessionCloneUtils';
 
 export const createEmptySnapshotMetadata = (
 	overrides: Partial<SessionSnapshotMetadata> = {},
@@ -51,6 +55,8 @@ interface SnapshotPlayerOptions {
 	name?: string;
 	aiControlled?: boolean;
 	resources?: Record<string, number>;
+	valuesV2?: Record<string, number>;
+	resourceBoundsV2?: Record<string, SessionResourceBoundsV2>;
 	stats?: Record<string, number>;
 	statsHistory?: Record<string, boolean>;
 	population?: Record<string, number>;
@@ -63,81 +69,13 @@ interface SnapshotPlayerOptions {
 	passives?: SessionPlayerStateSnapshot['passives'];
 }
 
-function cloneStatSources(
-	statSources: SessionPlayerStateSnapshot['statSources'],
-): SessionPlayerStateSnapshot['statSources'] {
-	const cloneSources: SessionPlayerStateSnapshot['statSources'] = {};
-	for (const [statId, contributions] of Object.entries(statSources)) {
-		const clonedContributions: Record<
-			string,
-			{ amount: number; meta: unknown }
-		> = {};
-		for (const [sourceId, entry] of Object.entries(contributions)) {
-			clonedContributions[sourceId] = {
-				amount: entry.amount,
-				meta: clone(entry.meta),
-			};
-		}
-		cloneSources[statId] = clonedContributions;
-	}
-	return cloneSources;
-}
-
-function cloneSkipPhases(
-	skipPhases: SessionPlayerStateSnapshot['skipPhases'],
-): SessionPlayerStateSnapshot['skipPhases'] {
-	const cloned: SessionPlayerStateSnapshot['skipPhases'] = {};
-	for (const [phaseId, sources] of Object.entries(skipPhases)) {
-		cloned[phaseId] = { ...sources };
-	}
-	return cloned;
-}
-
-function cloneSkipSteps(
-	skipSteps: SessionPlayerStateSnapshot['skipSteps'],
-): SessionPlayerStateSnapshot['skipSteps'] {
-	const cloned: SessionPlayerStateSnapshot['skipSteps'] = {};
-	for (const [phaseId, stepMap] of Object.entries(skipSteps)) {
-		const clonedStepMap: Record<string, Record<string, true>> = {};
-		for (const [stepId, sources] of Object.entries(stepMap)) {
-			clonedStepMap[stepId] = { ...sources };
-		}
-		cloned[phaseId] = clonedStepMap;
-	}
-	return cloned;
-}
-
-function cloneLands(lands: SessionLandSnapshot[]): SessionLandSnapshot[] {
-	return lands.map((land) => ({
-		...land,
-		developments: [...land.developments],
-		upkeep: land.upkeep ? { ...land.upkeep } : undefined,
-		onPayUpkeepStep: land.onPayUpkeepStep
-			? land.onPayUpkeepStep.map((effect) => ({ ...effect }))
-			: undefined,
-		onGainIncomeStep: land.onGainIncomeStep
-			? land.onGainIncomeStep.map((effect) => ({ ...effect }))
-			: undefined,
-		onGainAPStep: land.onGainAPStep
-			? land.onGainAPStep.map((effect) => ({ ...effect }))
-			: undefined,
-	}));
-}
-
-function clonePassives(
-	passives: SessionPlayerStateSnapshot['passives'],
-): SessionPlayerStateSnapshot['passives'] {
-	return passives.map((passive) => ({
-		...passive,
-		meta: passive.meta ? { ...passive.meta } : undefined,
-	}));
-}
-
 export function createSnapshotPlayer({
 	id,
 	name = `Player ${id}`,
 	aiControlled,
 	resources = {},
+	valuesV2,
+	resourceBoundsV2,
 	stats = {},
 	statsHistory = {},
 	population = {},
@@ -153,6 +91,20 @@ export function createSnapshotPlayer({
 		id,
 		name,
 		resources: { ...resources },
+		...(valuesV2 ? { valuesV2: { ...valuesV2 } } : {}),
+		...(resourceBoundsV2
+			? {
+					resourceBoundsV2: Object.fromEntries(
+						Object.entries(resourceBoundsV2).map(([resourceId, bounds]) => [
+							resourceId,
+							{
+								lowerBound: bounds.lowerBound ?? null,
+								upperBound: bounds.upperBound ?? null,
+							},
+						]),
+					),
+				}
+			: {}),
 		stats: { ...stats },
 		statsHistory: { ...statsHistory },
 		population: { ...population },
@@ -256,6 +208,9 @@ interface SessionSnapshotOptions {
 	stepIndex?: number;
 	devMode?: boolean;
 	metadata?: SessionSnapshotMetadata;
+	resourceCatalogV2?: SessionResourceCatalogV2;
+	resourceMetadataV2?: Record<string, SessionMetadataDescriptor>;
+	resourceGroupMetadataV2?: Record<string, SessionMetadataDescriptor>;
 }
 
 export function createSessionSnapshot({
@@ -275,6 +230,9 @@ export function createSessionSnapshot({
 	stepIndex = 0,
 	devMode = false,
 	metadata: metadataOverride,
+	resourceCatalogV2,
+	resourceMetadataV2,
+	resourceGroupMetadataV2,
 }: SessionSnapshotOptions): SessionSnapshot {
 	const phase = phases[phaseIndex] ?? phases[0];
 	const resolvedCurrentPhase =
@@ -315,19 +273,32 @@ export function createSessionSnapshot({
 					tokens: {},
 				} satisfies SessionOverviewMetadata,
 			});
-	return {
-		game: {
-			turn,
-			currentPlayerIndex: activeIndex === -1 ? 0 : activeIndex,
-			currentPhase: resolvedCurrentPhase,
-			currentStep: resolvedCurrentStep,
-			phaseIndex,
-			stepIndex,
-			devMode,
-			players: players.map((player) => ({ ...player })),
-			activePlayerId,
-			opponentId,
-		},
+	const game: SessionSnapshot['game'] = {
+		turn,
+		currentPlayerIndex: activeIndex === -1 ? 0 : activeIndex,
+		currentPhase: resolvedCurrentPhase,
+		currentStep: resolvedCurrentStep,
+		phaseIndex,
+		stepIndex,
+		devMode,
+		players: players.map((player) => ({ ...player })),
+		activePlayerId,
+		opponentId,
+	};
+	if (resourceCatalogV2) {
+		game.resourceCatalogV2 = {
+			resources: {
+				ordered: [...resourceCatalogV2.resources.ordered],
+				byId: { ...resourceCatalogV2.resources.byId },
+			},
+			groups: {
+				ordered: [...resourceCatalogV2.groups.ordered],
+				byId: { ...resourceCatalogV2.groups.byId },
+			},
+		};
+	}
+	const snapshot: SessionSnapshot = {
+		game,
 		phases: phases.map((phaseDefinition) => ({
 			...phaseDefinition,
 			...(phaseDefinition.steps
@@ -348,4 +319,11 @@ export function createSessionSnapshot({
 		passiveRecords: normalizedPassiveRecords,
 		metadata,
 	} satisfies SessionSnapshot;
+	if (resourceMetadataV2) {
+		snapshot.resourceMetadataV2 = { ...resourceMetadataV2 };
+	}
+	if (resourceGroupMetadataV2) {
+		snapshot.resourceGroupMetadataV2 = { ...resourceGroupMetadataV2 };
+	}
+	return snapshot;
 }
