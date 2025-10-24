@@ -6,6 +6,23 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type { SessionResourceCatalogV2 } from './resourceCatalogV2';
+
+export type {
+	SessionResourceTierThresholdV2,
+	SessionResourceTierDefinitionV2,
+	SessionResourceTierTrackMetadataV2,
+	SessionResourceTierTrackV2,
+	SessionResourceMetadataV2,
+	SessionResourceBoundsV2,
+	SessionResourceGlobalCostConfigV2,
+	SessionResourceDefinitionV2,
+	SessionResourceGroupParentV2,
+	SessionResourceGroupDefinitionV2,
+	SessionResourceRegistryV2,
+	SessionResourceGroupRegistryV2,
+	SessionResourceCatalogV2,
+} from './resourceCatalogV2';
 
 export type SessionPlayerId = 'A' | 'B';
 
@@ -65,6 +82,12 @@ export interface SessionPlayerStateSnapshot {
 	stats: Record<string, number>;
 	statsHistory: Record<string, boolean>;
 	population: Record<string, number>;
+	/**
+	 * Optional ResourceV2 value map. Will be populated once the session
+	 * engine emits ResourceV2 snapshots alongside the legacy
+	 * resource/stat/population sets.
+	 */
+	valuesV2?: Record<string, number>;
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
@@ -93,6 +116,7 @@ export interface SessionGameSnapshot {
 	activePlayerId: SessionPlayerId;
 	opponentId: SessionPlayerId;
 	conclusion?: SessionGameConclusionSnapshot;
+	resourceCatalogV2?: SessionResourceCatalogV2;
 }
 
 export interface SessionAdvanceSkipSourceSnapshot {
@@ -286,6 +310,16 @@ export interface SessionSnapshotMetadata {
 	buildings?: Record<string, SessionMetadataDescriptor>;
 	developments?: Record<string, SessionMetadataDescriptor>;
 	stats?: Record<string, SessionMetadataDescriptor>;
+	/**
+	 * Optional ResourceV2 metadata map. Introduced for the migration work
+	 * and remains unset until ResourceV2 values surface in snapshots.
+	 */
+	resourcesV2?: Record<string, SessionMetadataDescriptor>;
+	/**
+	 * Optional ResourceV2 group metadata map. Mirrors
+	 * {@link resourcesV2} but scoped to group/parent descriptors.
+	 */
+	resourceGroupsV2?: Record<string, SessionMetadataDescriptor>;
 	phases?: Record<string, SessionPhaseMetadata>;
 	triggers?: Record<string, SessionTriggerMetadata>;
 	assets?: Record<string, SessionMetadataDescriptor>;
@@ -301,6 +335,19 @@ export interface SessionSnapshot {
 	rules: SessionRuleSnapshot;
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
 	metadata: SessionSnapshotMetadata;
+	/**
+	 * Optional ResourceV2 metadata snapshot that mirrors
+	 * {@link SessionSnapshotMetadata.resourcesV2}. Reserved for the
+	 * migration rollout so consumers can opt-in without waiting for the
+	 * legacy metadata map to change shape.
+	 */
+	resourceMetadataV2?: Record<string, SessionMetadataDescriptor>;
+	/**
+	 * Optional ResourceV2 group metadata snapshot that mirrors
+	 * {@link SessionSnapshotMetadata.resourceGroupsV2}. Will be populated
+	 * once ResourceV2 groups ship through the session pipeline.
+	 */
+	resourceGroupMetadataV2?: Record<string, SessionMetadataDescriptor>;
 }
 
 export interface SessionActionDefinitionSummary {

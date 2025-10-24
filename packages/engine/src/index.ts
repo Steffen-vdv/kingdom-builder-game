@@ -13,6 +13,7 @@ export type {
 	StatSourceContribution,
 	StatSourceLink,
 } from './setup/create_engine';
+export type { RuntimeResourceContent } from './resource-v2';
 export {
 	createEngineSession,
 	type EngineSession,

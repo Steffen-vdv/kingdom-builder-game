@@ -24,6 +24,10 @@ import type {
 	SimulateUpcomingPhasesResult,
 } from './index';
 import type { RuleSet } from '../services';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+} from '../resource-v2';
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -57,6 +61,18 @@ export interface SessionRegistriesPayload {
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
+	/**
+	 * Optional ResourceV2 registry of concrete resources. Present once the
+	 * session transport exposes ResourceV2 payloads alongside the legacy
+	 * resource/stat/population records.
+	 */
+	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	/**
+	 * Optional ResourceV2 registry of group definitions (including virtual
+	 * parents). Currently unused until the migration pipeline begins
+	 * emitting ResourceV2 structures.
+	 */
+	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
 
 export type SessionMetadataSnapshot = Pick<
@@ -83,6 +99,18 @@ export interface SessionRuntimeConfigResponse {
 	rules: RuleSet;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
+	/**
+	 * Optional ResourceV2 registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourcesV2}. Remains undefined until
+	 * runtime wiring for ResourceV2 is ready.
+	 */
+	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	/**
+	 * Optional ResourceV2 group registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Reserved for
+	 * future ResourceV2 rollouts.
+	 */
+	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
 
 export interface SessionCreateResponse {

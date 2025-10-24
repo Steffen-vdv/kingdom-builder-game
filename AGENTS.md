@@ -16,6 +16,18 @@
 ▶ **Extended guidance, architecture lore, and gameplay reference begin in
 Section&nbsp;1 below.**
 
+### Temporary Notice – Resource Migration Project
+
+Agents assigned to the **Resource Migration** initiative must read the
+documentation under `docs/project/resource-migration/` before starting work:
+
+- Pre-production: intent, design, and stakeholder overview.
+- Production: living status doc and agent instructions (update these after each
+  task).
+- Post-production: launch checklist (review when approaching rollout).
+
+Failure to acknowledge these resources will result in task rejection.
+
 ---
 
 ## 1. Core Agent Principles

@@ -3,6 +3,7 @@ import { runEffects } from '.';
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import { withStatSourceFrames } from '../stat_sources';
 import type { PopulationRoleId } from '../state';
+import { setPopulationRoleValue } from './population_resource';
 
 export const populationRemove: EffectHandler = (effect, context, mult = 1) => {
 	const role = effect.params?.['role'] as PopulationRoleId;
@@ -46,7 +47,10 @@ export const populationRemove: EffectHandler = (effect, context, mult = 1) => {
 			];
 			withStatSourceFrames(context, frames, () => runEffects(effects, context));
 		}
-		player.population[role] = current - 1;
+		const { changed } = setPopulationRoleValue(context, role, current - 1);
+		if (!changed) {
+			return;
+		}
 		iterationIndex++;
 	}
 };
