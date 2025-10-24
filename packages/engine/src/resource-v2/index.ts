@@ -31,6 +31,7 @@ export {
 } from './reconciliation';
 
 export { createRuntimeResourceCatalog } from './fromContent';
+export type { RuntimeResourceContent } from './fromContent';
 
 export {
 	initialisePlayerResourceState,
