@@ -6,6 +6,17 @@
 - Mirrored legacy `resources()` calls into `valuesV2` by default and seeded empty ResourceV2 bound maps so older configurations keep working while transports adopt the new fields.
 - Backed the new surface area with validation tests covering automatic mirroring, explicit bound configuration, and duplicate guardrails.
 
+## Touched Files
+
+- packages/contents/src/config/builders/startConfig/index.ts
+- packages/contents/src/config/builders/startConfig/playerStartBuilder.ts
+- packages/contents/tests/start-config-builder-validations.test.ts
+- docs/project/resource-migration/production/worklogs/T26-start-builder.md
+
+## Tests
+
+- _Not run – awaiting full contents suite once downstream consumers wire the new setters_
+
 ## Decisions
 
 - Defaulted all ResourceV2 maps to empty objects when the builder is constructed, then gated mutation through the existing `set()` helper to preserve the one-shot semantics content authors expect.

@@ -10,7 +10,7 @@
 
 - packages/contents/src/actions/buildActions.ts
 - packages/contents/src/actions/developActions.ts
-- worklogs/T33-build-develop-actions.md
+- docs/project/resource-migration/production/worklogs/T33-build-develop-actions.md
 
 ## Tests
 

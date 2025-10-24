@@ -4,6 +4,15 @@
 
 - Consolidated the content-side ResourceV2 migration (T18–T36) to highlight remaining engine-facing gaps and ensure the living doc reflects completion of catalog, start payload, and content action rewrites.
 
+## Touched Files
+
+- docs/project/resource-migration/production/production-living-docs.md
+- docs/project/resource-migration/production/worklogs/T37-content-aggregation.md
+
+## Tests
+
+- _Not run – documentation aggregation only_
+
 ## Unresolved Engineering Questions
 
 1. **Resource bounds & debt handling (T18, T32):** Can the engine confirm whether gold—and other spendable tracks—must allow negative balances, or should the clamp-to-zero behaviour remain enforced when ResourceV2 payloads arrive?
@@ -15,6 +24,6 @@
 
 ## Linked Worklogs
 
-- [`docs/project/resource-migration/production/worklogs/T18-core-resource-defs.md`](docs/project/resource-migration/production/worklogs/T18-core-resource-defs.md)
-- [`docs/project/resource-migration/production/worklogs/T19-happiness-tier.md`](docs/project/resource-migration/production/worklogs/T19-happiness-tier.md)
-- [`worklogs/T20-stat-defs.md`](T20-stat-defs.md) through [`worklogs/T36-population-phase.md`](T36-population-phase.md)
+- [`docs/project/resource-migration/production/worklogs/T18-core-resource-defs.md`](./T18-core-resource-defs.md)
+- [`docs/project/resource-migration/production/worklogs/T19-happiness-tier.md`](./T19-happiness-tier.md)
+- [`docs/project/resource-migration/production/worklogs/T20-stat-defs.md`](./T20-stat-defs.md) through [`docs/project/resource-migration/production/worklogs/T36-population-phase.md`](./T36-population-phase.md)

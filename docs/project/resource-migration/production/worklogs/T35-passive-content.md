@@ -10,7 +10,7 @@
 
 - packages/contents/src/buildings.ts
 - packages/contents/src/developments.ts
-- worklogs/T35-passive-content.md
+- docs/project/resource-migration/production/worklogs/T35-passive-content.md
 - docs/project/resource-migration/production/production-living-docs.md
 
 ## Tests

@@ -6,6 +6,18 @@
 - Materialised reusable ResourceV2 and group registries plus a builder helper that recreates the catalog on demand.
 - Exposed the new registries and builder through the package indexes while retaining all legacy exports intact.
 
+## Touched Files
+
+- docs/project/resource-migration/production/production-living-docs.md
+- packages/contents/src/index.ts
+- packages/contents/src/resourceV2/catalog.ts
+- packages/contents/src/resourceV2/index.ts
+- docs/project/resource-migration/production/worklogs/T22-resource-catalog.md
+
+## Tests
+
+- _Not run – catalog assembly only_
+
 ## Decisions
 
 - **Ordering:** Established the catalog order as Core → Happiness → Stats → Population roles so consumers see economic tracks first, followed by morale, long-term stats, and finally group-scoped population resources. The population group retains its explicit order of 3 to leave room for future stat groupings ahead of it.

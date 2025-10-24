@@ -8,7 +8,7 @@
 ## Touched Files
 
 - packages/contents/src/actions/basicActions.ts
-- worklogs/T32-basic-actions.md
+- docs/project/resource-migration/production/worklogs/T32-basic-actions.md
 - docs/project/resource-migration/production/production-living-docs.md
 
 ## Tests

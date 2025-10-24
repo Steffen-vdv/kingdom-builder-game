@@ -23,7 +23,7 @@
 - packages/engine/tests/effects/resource-remove.test.ts
 - packages/engine/tests/plunder-zero-gold.test.ts
 - packages/engine/tests/runtime/session.test.ts
-- worklogs/T41-global-cost.md
+- docs/project/resource-migration/production/worklogs/T41-global-cost.md
 
 ## Tests
 

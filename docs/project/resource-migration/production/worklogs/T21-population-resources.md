@@ -5,6 +5,17 @@
 - Added ResourceV2 definitions for Council, Legion, and Fortifier using the legacy population role metadata for icons, labels, and descriptions.
 - Introduced a Population resource group with a virtual parent that aggregates the role tracks for total staffing visibility.
 
+## Touched Files
+
+- docs/project/resource-migration/production/production-living-docs.md
+- packages/contents/src/resourceV2/definitions/index.ts
+- packages/contents/src/resourceV2/definitions/population.ts
+- docs/project/resource-migration/production/worklogs/T21-population-resources.md
+
+## Tests
+
+- _Not run – content definition updates only_
+
 ## Decisions
 
 - **Identifiers & ordering:** Chose the `resource:population:role:<role>` id pattern with sequential orders (1–3) so registries surface roles in the existing Council → Legion → Fortifier order.

@@ -13,7 +13,7 @@
 - packages/engine/src/effects/population_resource.ts
 - packages/engine/src/state/index.ts
 - packages/engine/tests/effects/population.test.ts
-- worklogs/T43-population-handlers.md
+- docs/project/resource-migration/production/worklogs/T43-population-handlers.md
 
 ## Tests
 

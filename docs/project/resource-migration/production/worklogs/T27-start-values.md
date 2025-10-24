@@ -6,6 +6,15 @@
 - Added reusable helpers that translate legacy start values into ResourceV2 identifiers, capture catalog-derived bounds, and fail fast when mismatches surface.
 - Updated dev-mode presets and the last-player compensation override to seed ResourceV2 payloads alongside the existing legacy fields.
 
+## Touched Files
+
+- packages/contents/src/game.ts
+- docs/project/resource-migration/production/worklogs/T27-start-values.md
+
+## Tests
+
+- _Not run – start payload mirroring only_
+
 ## Decisions
 
 - Stored the legacy start payloads as named constants in `game.ts` so both the legacy and V2 projections share a single source of truth during the migration window.

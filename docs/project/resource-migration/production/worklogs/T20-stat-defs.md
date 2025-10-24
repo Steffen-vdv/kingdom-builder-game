@@ -5,6 +5,17 @@
 - Migrated core stat metadata into ResourceV2 definitions, preserving legacy descriptions and percent display flags.
 - Established baseline zero floor bounds for each stat to mirror existing non-negative behaviour expectations.
 
+## Touched Files
+
+- docs/project/resource-migration/production/production-living-docs.md
+- packages/contents/src/resourceV2/definitions/index.ts
+- packages/contents/src/resourceV2/definitions/stats.ts
+- docs/project/resource-migration/production/worklogs/T20-stat-defs.md
+
+## Tests
+
+- _Not run – content definition updates only_
+
 ## Decisions
 
 - **Lower bounds:** Set to `0` for all stat resources to preserve the legacy clamp-to-zero behaviour seen across stat consumers.

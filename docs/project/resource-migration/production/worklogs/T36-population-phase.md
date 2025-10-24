@@ -11,7 +11,7 @@
 - packages/contents/src/helpers/resourceV2Effects.ts
 - packages/contents/src/populations.ts
 - packages/contents/src/phases.ts
-- worklogs/T36-population-phase.md
+- docs/project/resource-migration/production/worklogs/T36-population-phase.md
 - docs/project/resource-migration/production/production-living-docs.md
 
 ## Tests

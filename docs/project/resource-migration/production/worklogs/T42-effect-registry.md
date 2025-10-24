@@ -10,7 +10,7 @@
 ## Touched Files
 
 - packages/engine/src/effects/index.ts
-- worklogs/T42-effect-registry.md
+- docs/project/resource-migration/production/worklogs/T42-effect-registry.md
 
 ## Tests
 

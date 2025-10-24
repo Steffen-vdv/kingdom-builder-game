@@ -9,7 +9,7 @@
 ## Touched Files
 
 - packages/contents/src/actions/hireActions.ts
-- worklogs/T34-hire-actions.md
+- docs/project/resource-migration/production/worklogs/T34-hire-actions.md
 
 ## Tests
 
