@@ -6,6 +6,7 @@ import {
 	PHASES,
 	RULES,
 } from '@kingdom-builder/contents';
+import type { StatKey } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { simulateUpcomingPhases } from '../../src';
 
@@ -17,7 +18,8 @@ function sanitizePlayerState(context: ReturnType<typeof createTestEngine>) {
 	for (const key of Object.keys(player.stats)) {
 		player.stats[key] = 0;
 		player.statsHistory[key] = false;
-		player.statSources[key] = {};
+		const statId = player.getStatResourceV2Id(key as StatKey);
+		player.statSources[statId] = {};
 	}
 	for (const key of Object.keys(player.population)) {
 		player.population[key] = 0;
