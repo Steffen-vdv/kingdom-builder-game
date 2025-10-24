@@ -10,13 +10,13 @@ This document captures the evolving state of the Resource Migration initiative. 
 
 ## 2. High-Level Status Snapshot
 
-| Area         | Current State       | Owner | Notes                                                                                                                                              |
-| ------------ | ------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Engine       | In progress         | –     | Runtime catalog, player state/setup, global cost, and population handlers now run on ResourceV2 (T38–T43); coverage blocked by contents TypeError. |
-| Content      | MVP scope complete  | –     | Catalog, start payloads, actions, passives, and phases emit ResourceV2 payloads end to end (T18–T36).                                              |
-| Protocol/API | In progress         | –     | Start schemas and session surfaces expose ResourceV2 catalog snapshots and payload maps (T25, T38).                                                |
-| Web UI       | Pending integration | –     | Waiting on session payload rollout before translators can replace legacy resource wiring.                                                          |
-| Testing      | Blocked             | –     | `npm run check` still fails with `developmentTarget` TypeError; targeted suites pass individually.                                                 |
+| Area         | Current State              | Owner | Notes                                                                                                                                                                            |
+| ------------ | -------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Engine       | Migrated (runtime ready)   | –     | Runtime catalog, player state/setup, services, AI, and logging now operate on ResourceV2 (T38–T48). Full-suite check remains blocked by contents `developmentTarget` regression. |
+| Content      | MVP scope complete         | –     | Catalog, start payloads, actions, passives, and phases emit ResourceV2 payloads end to end (T18–T36).                                                                            |
+| Protocol/API | In progress                | –     | Start schemas and session surfaces expose ResourceV2 payloads, but transports still need to push the new runtime fields and ResourceV2 diffs downstream (follow-ups from T46).   |
+| Web UI       | Pending integration        | –     | Translators/tests exist for ResourceV2 values (T15); waiting on session payload rollout and logging diffs before swapping UI bindings.                                           |
+| Testing      | Blocked (known regression) | –     | `npm run check` fails with `TypeError: (0 , developmentTarget) is not a function`; rerun once contents helper is patched.                                                        |
 
 Update the table whenever a domain meaningfully changes. Keep comments concise and reference sections below for detail.
 
@@ -52,14 +52,17 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-10-31 04:25
-- **Current Focus:** Resource Migration MVP - P2 - T48 - Engine cleanup of legacy resource accessors
-- **State Summary:** Legacy engine paths (developer presets, logging/snapshots, triggers, and resource/population effects) now flow through ResourceV2 helpers instead of touching `player.resources`/`stats`/`population` directly. Resource mutations call `setResourceValue` when the runtime catalog is present, with fallbacks for pre-migration bootstraps. See [`./worklogs/T48-engine-cleanup.md`](./worklogs/T48-engine-cleanup.md) for task notes.
+- **Timestamp (UTC):** 2025-10-31 16:10
+- **Current Focus:** Resource Migration MVP - P2 - T49 - Engine aggregation and readiness summary
+- **State Summary:**
+  - Engine runtime is now ResourceV2-first end to end: bootstrap, player start overrides, global costs, population handlers, services, AI loops, and logging/snapshots all operate on the runtime catalog introduced in T38–T48.
+  - Runtime payloads (values, bounds, metadata, signed deltas) are emitted through session/player snapshots; legacy bags persist as derived mirrors until downstream consumers finish migrating.
+  - Remaining adoption depends on protocol/web transports surfacing the new ResourceV2 fields so the existing web translators/tests can replace legacy bindings. See [`./worklogs/T49-engine-aggregation.md`](./worklogs/T49-engine-aggregation.md) for aggregation notes.
 - **Next Suggested Tasks:**
-  - Convert remaining engine services (e.g., win-condition and tier utilities) to consume ResourceV2 ids exclusively so downstream consumers no longer rely on legacy keys.
-  - Audit effect registries for any lingering `player.population` writes, especially custom handlers introduced by content tasks, and queue follow-up cleanups.
-  - Once the `developmentTarget` TypeError is cleared, rerun `npm run check` to confirm ResourceV2 setters integrate cleanly with repository-wide tests.
-- **Blocking Issues / Risks:** `npm run check` remains blocked by `TypeError: (0 , developmentTarget) is not a function` in `packages/contents/src/happinessHelpers.ts`, preventing an end-to-end verification pass.
+  - Patch `packages/contents/src/happinessHelpers.ts` to restore the `developmentTarget` helper and unblock `npm run check`.
+  - Extend server/session transports to publish `resourceCatalogV2`, `valuesV2`, `resourceBoundsV2`, and Option A logging diffs to clients, then confirm protocol snapshots mirror the runtime payloads.
+  - Coordinate with web to swap translators and HUD bindings to ResourceV2 once the new payloads land, preserving signed gain/loss presentation.
+- **Blocking Issues / Risks:** The known `TypeError: (0 , developmentTarget) is not a function` still aborts repository checks, preventing a clean verification run before handoff. Downstream transports also lag the new fields, which keeps the web rollout paused.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.
 
 ## 5. Notes & Decisions Archive
