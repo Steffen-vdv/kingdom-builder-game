@@ -107,8 +107,12 @@ export class ResourceV2ParentTracker {
 		if (next === previous) {
 			return;
 		}
+		const delta = next - previous;
+		options.player.logResourceV2Gain(parentId, delta, {
+			suppressed: options.suppressHooks,
+		});
 		if (!options.suppressHooks) {
-			options.emitHook(next - previous, parentId);
+			options.emitHook(delta, parentId);
 		}
 		options.onChange?.(parentId, previous, next, options.suppressHooks);
 	}

@@ -84,6 +84,10 @@ export interface PlayerResourceV2RecentGain {
 	amount: number;
 }
 
+export interface ResourceV2GainLogOptions {
+	suppressed?: boolean;
+}
+
 export interface PlayerResourceV2State {
 	values: Record<ResourceV2Key, number>;
 	lowerBounds: Record<ResourceV2Key, number | undefined>;
@@ -255,8 +259,9 @@ export function logPlayerResourceV2Gain(
 	state: PlayerResourceV2State,
 	key: ResourceV2Key,
 	amount: number,
+	options?: ResourceV2GainLogOptions,
 ): void {
-	if (amount === 0) {
+	if (amount === 0 || options?.suppressed) {
 		return;
 	}
 	state.recentGains.push({ key, amount });
@@ -392,8 +397,12 @@ export class PlayerState {
 		return Boolean(this.resourceV2.touched[key]);
 	}
 
-	logResourceV2Gain(key: ResourceV2Key, amount: number): void {
-		logPlayerResourceV2Gain(this.resourceV2, key, amount);
+	logResourceV2Gain(
+		key: ResourceV2Key,
+		amount: number,
+		options?: ResourceV2GainLogOptions,
+	): void {
+		logPlayerResourceV2Gain(this.resourceV2, key, amount, options);
 	}
 
 	resetRecentResourceV2Gains(): void {

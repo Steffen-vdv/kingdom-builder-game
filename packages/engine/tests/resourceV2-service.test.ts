@@ -14,6 +14,7 @@ const createStubContext = (): EngineContext =>
 		game: {
 			players: [],
 		},
+		recordRecentResourceGain: () => {},
 	}) as unknown as EngineContext;
 
 const bootstrapService = () => {
@@ -47,9 +48,9 @@ const expectRecentGain = (
 	key: string,
 	amount: number,
 ) => {
-	const entry = player.resourceV2.recentGains.at(-1);
-	expect(entry?.key).toBe(key);
-	expect(entry?.amount).toBe(amount);
+	expect(player.resourceV2.recentGains).toEqual(
+		expect.arrayContaining([{ key, amount }]),
+	);
 };
 
 describe('ResourceV2Service', () => {

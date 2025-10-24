@@ -50,6 +50,12 @@ export class EngineContext {
 		this._queue = nextTask.catch(() => {});
 		return nextTask;
 	}
+	recordRecentResourceGain(key: ResourceKey, amount: number): void {
+		if (amount === 0) {
+			return;
+		}
+		this.recentResourceGains.push({ key, amount });
+	}
 	pushEffectLog(key: string, data: unknown): void {
 		const existingEntries = this._effectLogs.get(key);
 		if (existingEntries) {

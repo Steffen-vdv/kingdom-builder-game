@@ -44,6 +44,7 @@ const createHarness = (): TestHarness => {
 		activePlayer: player,
 		opponent,
 		recentResourceGains: [],
+		recordRecentResourceGain: () => {},
 	} as unknown as EngineContext;
 	return { catalog, service, context, player, opponent };
 };

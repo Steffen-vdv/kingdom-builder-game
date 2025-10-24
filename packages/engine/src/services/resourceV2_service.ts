@@ -295,7 +295,9 @@ export class ResourceV2Service {
 			return 0;
 		}
 		player.setResourceV2Value(resourceId, next);
-		player.logResourceV2Gain(resourceId, applied);
+		player.logResourceV2Gain(resourceId, applied, {
+			suppressed: Boolean(options.suppressHooks),
+		});
 		if (!options.suppressHooks) {
 			this.emitHook(applied, context, player, resourceId);
 		}
@@ -332,6 +334,7 @@ export class ResourceV2Service {
 		player: PlayerState,
 		resourceId: ResourceV2Key,
 	): void {
+		context.recordRecentResourceGain(resourceId, delta);
 		const hooks = delta > 0 ? this.gainHooks : this.lossHooks;
 		const amount = Math.abs(delta);
 		for (const hook of hooks) {

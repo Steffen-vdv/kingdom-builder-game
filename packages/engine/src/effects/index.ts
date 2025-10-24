@@ -52,15 +52,8 @@ export const EFFECT_COST_COLLECTORS = new EffectCostRegistry();
 
 const flushResourceV2RecentGains = (context: EngineContext) => {
 	for (const player of context.game.players) {
-		const recent = player.resourceV2.recentGains;
-		if (!recent.length) {
+		if (player.resourceV2.recentGains.length === 0) {
 			continue;
-		}
-		for (const entry of recent) {
-			context.recentResourceGains.push({
-				key: entry.key,
-				amount: entry.amount,
-			});
 		}
 		player.resetRecentResourceV2Gains();
 	}

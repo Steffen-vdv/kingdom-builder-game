@@ -104,20 +104,10 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 		context.services.handleResourceChange(context, attacker, key);
 		const defenderNext = defender.resources[key] || 0;
 		const defenderDelta = defenderNext - defenderBefore;
-		if (defenderDelta !== 0) {
-			context.recentResourceGains.push({
-				key,
-				amount: defenderDelta,
-			});
-		}
+		context.recordRecentResourceGain(key, defenderDelta);
 		const attackerNext = attacker.resources[key] || 0;
 		const attackerDelta = attackerNext - attackerBefore;
-		if (attackerDelta !== 0) {
-			context.recentResourceGains.push({
-				key,
-				amount: attackerDelta,
-			});
-		}
+		context.recordRecentResourceGain(key, attackerDelta);
 		return;
 	}
 	const base = requestedPercent ?? 25;
@@ -152,18 +142,8 @@ export const resourceTransfer: EffectHandler<TransferParams> = (
 	context.services.handleResourceChange(context, attacker, key);
 	const defenderNext = defender.resources[key] || 0;
 	const defenderDelta = defenderNext - defenderBefore;
-	if (defenderDelta !== 0) {
-		context.recentResourceGains.push({
-			key,
-			amount: defenderDelta,
-		});
-	}
+	context.recordRecentResourceGain(key, defenderDelta);
 	const attackerNext = attacker.resources[key] || 0;
 	const attackerDelta = attackerNext - attackerBefore;
-	if (attackerDelta !== 0) {
-		context.recentResourceGains.push({
-			key,
-			amount: attackerDelta,
-		});
-	}
+	context.recordRecentResourceGain(key, attackerDelta);
 };
