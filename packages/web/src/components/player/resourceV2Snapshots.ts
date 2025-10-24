@@ -1,6 +1,3 @@
-import { Resource, getResourceV2Id } from '@kingdom-builder/contents/resources';
-import { PopulationRole } from '@kingdom-builder/contents/populationRoles';
-import { Stat, getStatResourceV2Id } from '@kingdom-builder/contents/stats';
 import type {
 	PlayerSnapshotDeltaBucket,
 	SessionPlayerStateSnapshot,
@@ -11,39 +8,11 @@ import type {
 	ResourceV2ValueSnapshot,
 } from '../../translation';
 import type { TranslationSignedResourceGainSelectors } from '../../translation/context';
-
-type LegacyBucket = 'resources' | 'stats' | 'population';
-
-interface LegacyMapping {
-	bucket: LegacyBucket;
-	key: string;
-}
-
-const RESOURCE_V2_TO_LEGACY = new Map<string, LegacyMapping>();
-const LEGACY_TO_RESOURCE_V2 = new Map<string, string>();
-
-function registerLegacyMapping(
-	bucket: LegacyBucket,
-	key: string,
-	resourceId: string,
-): void {
-	RESOURCE_V2_TO_LEGACY.set(resourceId, { bucket, key });
-	LEGACY_TO_RESOURCE_V2.set(`${bucket}#${key}`, resourceId);
-}
-
-for (const key of Object.values(Resource)) {
-	registerLegacyMapping('resources', key, getResourceV2Id(key));
-}
-
-for (const key of Object.values(Stat)) {
-	registerLegacyMapping('stats', key, getStatResourceV2Id(key));
-}
-
-const POPULATION_ROLE_PREFIX = 'resource:population:role:' as const;
-
-for (const role of Object.values(PopulationRole)) {
-	registerLegacyMapping('population', role, `${POPULATION_ROLE_PREFIX}${role}`);
-}
+import {
+	getLegacyMapping,
+	getResourceIdForLegacy as getResourceIdForLegacyInternal,
+	type LegacyResourceBucket,
+} from '../common/resourceV2Mappings';
 
 interface SnapshotContext {
 	player: SessionPlayerStateSnapshot;
@@ -57,7 +26,7 @@ function resolveLegacyValue(
 	player: SessionPlayerStateSnapshot,
 	resourceId: string,
 ): number | undefined {
-	const mapping = RESOURCE_V2_TO_LEGACY.get(resourceId);
+	const mapping = getLegacyMapping(resourceId);
 	if (!mapping) {
 		return undefined;
 	}
@@ -97,7 +66,7 @@ function sumPopulationRoles(
 	}
 	let legacyTotal = 0;
 	for (const roleId of populationRoleIds) {
-		const mapping = RESOURCE_V2_TO_LEGACY.get(roleId);
+		const mapping = getLegacyMapping(roleId);
 		if (!mapping) {
 			continue;
 		}
@@ -159,7 +128,7 @@ export function createForecastMap(
 	if (!forecast) {
 		return map;
 	}
-	const buckets: LegacyBucket[] = ['resources', 'stats', 'population'];
+	const buckets: LegacyResourceBucket[] = ['resources', 'stats', 'population'];
 	for (const bucket of buckets) {
 		const entries = forecast[bucket];
 		if (!entries) {
@@ -169,7 +138,7 @@ export function createForecastMap(
 			if (typeof delta !== 'number') {
 				continue;
 			}
-			const resourceId = LEGACY_TO_RESOURCE_V2.get(`${bucket}#${legacyKey}`);
+			const resourceId = getResourceIdForLegacyInternal(bucket, legacyKey);
 			if (resourceId) {
 				map.set(resourceId, delta);
 			}
@@ -252,16 +221,10 @@ export function toDescriptorFromMetadata(
 }
 
 export function getResourceIdForLegacy(
-	bucket: LegacyBucket,
+	bucket: LegacyResourceBucket,
 	key: string,
 ): string | undefined {
-	return LEGACY_TO_RESOURCE_V2.get(`${bucket}#${key}`);
-}
-
-export function getLegacyMapping(
-	resourceId: string,
-): LegacyMapping | undefined {
-	return RESOURCE_V2_TO_LEGACY.get(resourceId);
+	return getResourceIdForLegacyInternal(bucket, key);
 }
 
 export function formatResourceTitle(
@@ -273,3 +236,5 @@ export function formatResourceTitle(
 	}
 	return base;
 }
+
+export { getLegacyMapping } from '../common/resourceV2Mappings';

@@ -8,6 +8,7 @@ import {
 	type EvaluatorIconRenderer,
 } from './resourceSources/evaluators';
 import { type TranslationDiffContext } from './resourceSources/context';
+import { inferResourceIdFromLegacy } from '../../components/common/resourceV2Mappings';
 
 function ensureEntry(
 	map: Record<string, ResourceSourceEntry>,
@@ -28,10 +29,20 @@ function findNestedResource(effect: EffectDef): EffectDef | undefined {
 	return undefined;
 }
 
-function readResourceKey(effect: EffectDef): string | undefined {
+function readResourceId(effect: EffectDef): string | undefined {
 	const params = effect.params;
+	const resourceId = params?.['resourceId'];
+	if (typeof resourceId === 'string' && resourceId.length > 0) {
+		return resourceId;
+	}
 	const key = params?.['key'];
-	return typeof key === 'string' ? key : undefined;
+	if (typeof key === 'string') {
+		if (key.includes(':')) {
+			return key;
+		}
+		return inferResourceIdFromLegacy(key) ?? undefined;
+	}
+	return undefined;
 }
 
 function appendEvaluatorIcons(
@@ -58,7 +69,7 @@ function handleEvaluatorEffect(
 	if (!nestedResource) {
 		return;
 	}
-	const key = readResourceKey(nestedResource);
+	const key = readResourceId(nestedResource);
 	if (!key) {
 		return;
 	}
@@ -75,7 +86,7 @@ function handleDirectResourceEffect(
 	map: Record<string, ResourceSourceEntry>,
 	context: TranslationDiffContext,
 ) {
-	const key = readResourceKey(effect);
+	const key = readResourceId(effect);
 	if (!key) {
 		return;
 	}

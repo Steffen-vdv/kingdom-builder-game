@@ -15,6 +15,10 @@ import {
 	buildActionLogTimeline,
 	formatActionLogLines,
 } from './actionLogFormat';
+import {
+	getResourceIdForLegacy,
+	type LegacyResourceBucket,
+} from '../components/common/resourceV2Mappings';
 
 interface UseCompensationLoggerOptions {
 	sessionId: string;
@@ -82,17 +86,46 @@ export function useCompensationLogger({
 					developments: [...land.developments],
 				})),
 				passives: [...after.passives],
+				...(after.resourcesV2 ? { resourcesV2: { ...after.resourcesV2 } } : {}),
+				...(after.resourceBoundsV2
+					? {
+							resourceBoundsV2: Object.fromEntries(
+								Object.entries(after.resourceBoundsV2).map(([id, entry]) => [
+									id,
+									{ ...entry },
+								]),
+							),
+						}
+					: {}),
+			};
+			const adjustResourceV2 = (
+				bucket: LegacyResourceBucket,
+				key: string,
+				delta: number,
+			) => {
+				const resourceId = getResourceIdForLegacy(bucket, key);
+				if (!resourceId || !before.resourcesV2) {
+					return;
+				}
+				const current = before.resourcesV2[resourceId] ?? 0;
+				before.resourcesV2[resourceId] = current - delta;
 			};
 			for (const [resourceKey, resourceDelta] of Object.entries(
 				compensation.resources || {},
 			)) {
 				before.resources[resourceKey] =
 					(before.resources[resourceKey] || 0) - (resourceDelta ?? 0);
+				if (typeof resourceDelta === 'number') {
+					adjustResourceV2('resources', resourceKey, resourceDelta);
+				}
 			}
 			for (const [statKey, statDelta] of Object.entries(
 				compensation.stats || {},
 			)) {
 				before.stats[statKey] = (before.stats[statKey] || 0) - (statDelta ?? 0);
+				if (typeof statDelta === 'number') {
+					adjustResourceV2('stats', statKey, statDelta);
+				}
 			}
 			const diffContext: TranslationDiffContext = {
 				...baseDiffContext,

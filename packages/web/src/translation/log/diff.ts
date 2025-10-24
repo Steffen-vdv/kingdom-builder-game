@@ -1,21 +1,27 @@
+import {
+	inferResourceIdFromLegacy,
+	type LegacyResourceBucket,
+} from '../../components/common/resourceV2Mappings';
 import { collectResourceSources } from './resourceSources';
 import { type TranslationDiffContext } from './resourceSources/context';
 import {
-	appendResourceChanges,
-	appendStatChanges,
+	appendResourceV2Changes,
 	appendBuildingChanges,
 	appendLandChanges,
 	appendSlotChanges,
+	normalizeResourceIds,
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
-import { collectResourceKeys, type PlayerSnapshot } from './snapshots';
+import { type PlayerSnapshot } from './snapshots';
 import { type StepEffects } from './statBreakdown';
 
 export interface ActionDiffChange {
 	summary: string;
 	children?: ActionDiffChange[];
 	meta?: {
-		resourceKey?: string;
+		resourceId?: string;
+		legacyKey?: string;
+		legacyBucket?: LegacyResourceBucket;
 	};
 }
 
@@ -56,42 +62,31 @@ export function diffStepSnapshots(
 	nextSnapshot: PlayerSnapshot,
 	stepEffects: StepEffects,
 	diffContext: TranslationDiffContext,
-	resourceKeys: string[] = collectResourceKeys(previousSnapshot, nextSnapshot),
+	legacyResourceKeys?: string[],
 	options: DiffStepSnapshotsOptions = {},
 ): DiffStepSnapshotsResult {
 	const changeTree: ActionDiffChange[] = [];
 	const summarySet = new Set<string>();
 	const sources = collectResourceSources(stepEffects, diffContext);
 	const resourceNodes = new Map<string, ActionDiffChange>();
-
-	const resourceChanges = appendResourceChanges(
+	const resourceIds = normalizeResourceIds(
+		legacyResourceKeys,
+		diffContext,
 		previousSnapshot,
 		nextSnapshot,
-		resourceKeys,
-		diffContext.assets,
+	);
+
+	const resourceChanges = appendResourceV2Changes(
+		previousSnapshot,
+		nextSnapshot,
+		resourceIds,
+		diffContext,
 		sources,
-		{ trackByKey: resourceNodes },
+		{ trackById: resourceNodes, step: stepEffects },
 	);
 	for (const change of resourceChanges) {
 		changeTree.push(change);
 		summarySet.add(change.summary);
-	}
-
-	const statChanges: string[] = [];
-	appendStatChanges(
-		statChanges,
-		previousSnapshot,
-		nextSnapshot,
-		nextSnapshot,
-		stepEffects,
-		diffContext.assets,
-	);
-	for (const summary of statChanges) {
-		if (!summary || !summary.trim()) {
-			continue;
-		}
-		changeTree.push(createChangeNode(summary));
-		summarySet.add(summary);
 	}
 
 	const buildingChanges: string[] = [];
@@ -134,12 +129,15 @@ export function diffStepSnapshots(
 		summarySet.add(summary);
 	}
 
+	const tieredResourceId = options.tieredResourceKey
+		? options.tieredResourceKey.includes(':')
+			? options.tieredResourceKey
+			: inferResourceIdFromLegacy(options.tieredResourceKey)
+		: undefined;
 	const passiveOptions = {
 		resourceNodes,
 		existingSummaries: summarySet,
-		...(options.tieredResourceKey
-			? { tieredResourceKey: options.tieredResourceKey }
-			: {}),
+		...(tieredResourceId ? { tieredResourceId } : {}),
 	};
 	const passiveChanges = appendPassiveChanges(
 		previousSnapshot,

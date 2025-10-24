@@ -34,7 +34,7 @@ function decoratePassiveLabel(
 
 interface PassiveChangeOptions {
 	resourceNodes?: Map<string, ActionDiffChange>;
-	tieredResourceKey?: string;
+	tieredResourceId?: string;
 	existingSummaries?: Set<string>;
 }
 
@@ -71,10 +71,10 @@ export function appendPassiveChanges(
 		const sourceType = passive.meta?.source?.type?.trim();
 		if (
 			sourceType === 'tiered-resource' &&
-			options?.tieredResourceKey &&
-			options.resourceNodes?.has(options.tieredResourceKey)
+			options?.tieredResourceId &&
+			options.resourceNodes?.has(options.tieredResourceId)
 		) {
-			const parent = options.resourceNodes.get(options.tieredResourceKey);
+			const parent = options.resourceNodes.get(options.tieredResourceId);
 			if (parent) {
 				if (!parent.children) {
 					parent.children = [];
