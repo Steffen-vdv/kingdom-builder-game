@@ -42,9 +42,42 @@ export const attackPerform: EffectHandler = (effectDefinition, context) => {
 	context.passives.runEvaluationMods('attack:power', context, powerModifiers);
 	const modifiedDamage = powerModifiers[0]!.amount;
 
-	const { onDamage, ...calcOptions } = effectParams as {
-		onDamage?: { attacker?: EffectDef[]; defender?: EffectDef[] };
-	} & AttackCalcOptions;
+	const onDamage = effectParams['onDamage'] as
+		| { attacker?: EffectDef[]; defender?: EffectDef[] }
+		| undefined;
+	const absorptionParam = effectParams['absorptionResourceId'];
+	const explicitAbsorptionId =
+		typeof absorptionParam === 'string' ? absorptionParam : undefined;
+	const calcOptions: AttackCalcOptions = {
+		ignoreAbsorption: Boolean(effectParams['ignoreAbsorption']),
+		ignoreFortification: Boolean(effectParams['ignoreFortification']),
+	};
+
+	if (explicitAbsorptionId) {
+		calcOptions.absorptionResourceId = explicitAbsorptionId;
+	} else {
+		const stats = effectParams['stats'];
+		if (Array.isArray(stats)) {
+			const resourceEntry = stats.find((entry) => {
+				if (!entry || typeof entry !== 'object') {
+					return false;
+				}
+				const typed = entry as {
+					role?: unknown;
+					kind?: unknown;
+					key?: unknown;
+				};
+				return (
+					typed.role === 'absorption' &&
+					typed.kind === 'resource-v2' &&
+					typeof typed.key === 'string'
+				);
+			}) as { key?: string } | undefined;
+			if (resourceEntry?.key) {
+				calcOptions.absorptionResourceId = resourceEntry.key;
+			}
+		}
+	}
 
 	const result = resolveAttack(
 		defender,

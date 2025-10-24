@@ -8,6 +8,7 @@ import type { SummaryEntry } from '../../../content';
 
 export type AttackResourceKey = string;
 export type AttackStatKey = string;
+export type AttackStatKind = 'stat' | 'resource-v2';
 
 export type Mode = 'summarize' | 'describe';
 
@@ -25,6 +26,7 @@ export type AttackStatDescriptor = {
 	label: string;
 	icon?: string;
 	key?: AttackStatKey;
+	kind?: AttackStatKind;
 };
 
 export type AttackStatContext = Partial<

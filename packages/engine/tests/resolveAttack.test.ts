@@ -3,12 +3,17 @@ import { resolveAttack, runEffects, type EffectDef } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
 import { Resource, Stat } from '../src/state/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceV2Add, ResourceV2Id } from '@kingdom-builder/contents';
 
 function makeAbsorptionEffect(amount: number): EffectDef {
+	return resourceV2Add(ResourceV2Id.Absorption).amount(amount).build();
+}
+
+function makeFortificationEffect(amount: number): EffectDef {
 	return {
 		type: 'stat',
 		method: 'add',
-		params: { key: Stat.absorption, amount },
+		params: { key: Stat.fortificationStrength, amount },
 	};
 }
 
@@ -161,34 +166,12 @@ describe('resolveAttack', () => {
 				id: 'bastion',
 				effects: [],
 				onBeforeAttacked: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
-					{
-						type: 'stat',
-						method: 'add',
-						params: {
-							key: Stat.fortificationStrength,
-							amount: 1,
-						},
-					},
+					makeAbsorptionEffect(0.5),
+					makeFortificationEffect(1),
 				],
 				onAttackResolved: [
-					{
-						type: 'stat',
-						method: 'add',
-						params: { key: Stat.absorption, amount: 0.5 },
-					},
-					{
-						type: 'stat',
-						method: 'add',
-						params: {
-							key: Stat.fortificationStrength,
-							amount: 5,
-						},
-					},
+					makeAbsorptionEffect(0.5),
+					makeFortificationEffect(5),
 				],
 			},
 			engineContext,

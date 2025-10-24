@@ -30,14 +30,6 @@ const REQUIRED_STAT_DESCRIPTORS: Record<string, SessionMetadataDescriptor> =
 			description:
 				'Fortification Strength measures the resilience of your defenses. It reduces damage taken when enemies assault your castle.',
 		},
-		absorption: {
-			icon: '🌀',
-			label: 'Absorption',
-			description:
-				'Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.',
-			displayAsPercent: true,
-			format: { percent: true },
-		},
 		growth: {
 			icon: '📈',
 			label: 'Growth',

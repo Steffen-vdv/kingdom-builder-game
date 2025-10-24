@@ -9,6 +9,7 @@ import {
 import {
 	type AttackStatContext,
 	type AttackStatDescriptor,
+	type AttackStatKind,
 	type AttackStatRole,
 	type AttackStatKey,
 	DEFAULT_ATTACK_STAT_LABELS,
@@ -18,7 +19,10 @@ import {
 	DEFAULT_ATTACK_ABSORPTION_STAT_KEY,
 	DEFAULT_ATTACK_FORTIFICATION_STAT_KEY,
 } from './defaultKeys';
-import { selectAttackStatDescriptor } from './registrySelectors';
+import {
+	selectAttackResourceDescriptor,
+	selectAttackStatDescriptor,
+} from './registrySelectors';
 
 const ATTACK_STAT_ROLES: AttackStatRole[] = [
 	'power',
@@ -32,11 +36,18 @@ const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, AttackStatKey> = {
 	fortification: DEFAULT_ATTACK_FORTIFICATION_STAT_KEY,
 };
 
+const DEFAULT_ATTACK_STAT_KINDS: Record<AttackStatRole, AttackStatKind> = {
+	power: 'stat',
+	absorption: 'resource-v2',
+	fortification: 'stat',
+};
+
 type RawAttackStatParam = {
 	role?: unknown;
 	key?: unknown;
 	label?: unknown;
 	icon?: unknown;
+	kind?: unknown;
 };
 
 type AttackStatOverrides = Partial<
@@ -59,16 +70,19 @@ function buildStatDescriptor(
 	key: AttackStatKey | undefined,
 	overrides: AttackStatOverrides,
 	context: TranslationContext,
+	kind: AttackStatKind,
 ): AttackStatDescriptor {
 	const baseDescriptor = key
-		? selectAttackStatDescriptor(context, key)
+		? kind === 'resource-v2'
+			? selectAttackResourceDescriptor(context, key)
+			: selectAttackStatDescriptor(context, key)
 		: undefined;
 	const label =
 		overrides.label ??
 		baseDescriptor?.label ??
 		DEFAULT_ATTACK_STAT_LABELS[role];
 	const icon = overrides.icon ?? baseDescriptor?.icon ?? '';
-	const descriptor: AttackStatDescriptor = { role, label, icon };
+	const descriptor: AttackStatDescriptor = { role, label, icon, kind };
 	if (key !== undefined) {
 		descriptor.key = key;
 	}
@@ -93,6 +107,10 @@ function resolveAttackStats(
 			const key = typeof entry.key === 'string' ? entry.key : undefined;
 			const label = typeof entry.label === 'string' ? entry.label : undefined;
 			const icon = typeof entry.icon === 'string' ? entry.icon : undefined;
+			const kind =
+				entry.kind === 'resource-v2' || entry.kind === 'stat'
+					? (entry.kind as AttackStatKind)
+					: DEFAULT_ATTACK_STAT_KINDS[role];
 			const overrides: AttackStatOverrides = {};
 			if (label !== undefined) {
 				overrides.label = label;
@@ -105,13 +123,15 @@ function resolveAttackStats(
 				key,
 				overrides,
 				translationContext,
+				kind,
 			);
 		}
 		return stats;
 	}
 	for (const role of ATTACK_STAT_ROLES) {
 		const key = DEFAULT_ATTACK_STAT_KEYS[role];
-		stats[role] = buildStatDescriptor(role, key, {}, translationContext);
+		const kind = DEFAULT_ATTACK_STAT_KINDS[role];
+		stats[role] = buildStatDescriptor(role, key, {}, translationContext, kind);
 	}
 	return stats;
 }

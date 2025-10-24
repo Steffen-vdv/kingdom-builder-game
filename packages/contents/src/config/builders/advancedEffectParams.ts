@@ -102,9 +102,11 @@ export class PopulationEffectParamsBuilder extends ParamsBuilder<{
 export const populationParams = () => new PopulationEffectParamsBuilder();
 
 export type AttackStatRole = 'power' | 'absorption' | 'fortification';
+export type AttackStatKind = 'stat' | 'resource-v2';
 export type AttackStatAnnotation = {
 	role: AttackStatRole;
-	key: StatKey;
+	key: string;
+	kind?: AttackStatKind;
 	label?: string;
 	icon?: string;
 };
@@ -113,6 +115,7 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	ignoreAbsorption?: boolean;
 	ignoreFortification?: boolean;
 	stats?: AttackStatAnnotation[];
+	absorptionResourceId?: string;
 	onDamage?: {
 		attacker?: EffectDef[];
 		defender?: EffectDef[];
@@ -139,12 +142,13 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	ignoreFortification(flag = true) {
 		return this.set('ignoreFortification', flag);
 	}
-	stat(role: AttackStatRole, key: StatKey, overrides: { label?: string; icon?: string } = {}) {
+	stat(role: AttackStatRole, key: string, overrides: { label?: string; icon?: string } = {}, kind: AttackStatKind = 'stat') {
 		const stats = this.params.stats || (this.params.stats = []);
 		const existingIndex = stats.findIndex((item) => item.role === role);
 		const annotation: AttackStatAnnotation = {
 			role,
 			key,
+			kind,
 			...overrides,
 		};
 		if (existingIndex >= 0) {
@@ -159,6 +163,10 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	}
 	absorptionStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
 		return this.stat('absorption', key, overrides);
+	}
+	absorptionResource(resourceId: string, overrides?: { label?: string; icon?: string }) {
+		this.params.absorptionResourceId = resourceId;
+		return this.stat('absorption', resourceId, overrides, 'resource-v2');
 	}
 	fortificationStat(key: StatKey, overrides?: { label?: string; icon?: string }) {
 		return this.stat('fortification', key, overrides);

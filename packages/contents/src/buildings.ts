@@ -3,12 +3,13 @@ import { ActionId, PopulationEvaluationId } from './actionIds';
 import { Resource } from './resources';
 import { Stat } from './stats';
 import { DevelopmentId } from './developments';
-import { building, effect, resourceParams, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams, statParams } from './config/builders';
+import { actionParams, building, costModParams, developmentTarget, effect, evaluationTarget, populationTarget, resourceParams, resourceV2Add, resultModParams, statParams } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods, StatMethods } from './config/builderShared';
 import { Focus } from './defs';
 import { BuildingId as BuildingIdMap } from './buildingIds';
 import type { BuildingId as BuildingIdType } from './buildingIds';
 import type { BuildingDef } from './defs';
+import { ResourceV2Id } from './resourceV2';
 export const BuildingId = BuildingIdMap;
 export type BuildingId = BuildingIdType;
 export function createBuildingRegistry() {
@@ -98,7 +99,7 @@ export function createBuildingRegistry() {
 				effect(Types.Passive, PassiveMethods.ADD)
 					.param('id', 'castle_walls_bonus')
 					.effect(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.fortificationStrength).amount(5)).build())
-					.effect(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.absorption).amount(0.2)).build())
+					.effect(resourceV2Add(ResourceV2Id.Absorption).amount(0.2).build())
 					.build(),
 			)
 			.focus(Focus.Defense)

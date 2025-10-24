@@ -1,6 +1,7 @@
 import type { Registry } from '@kingdom-builder/protocol';
 import { Resource } from '../resources';
 import { Stat } from '../stats';
+import { ResourceV2Id } from '../resourceV2';
 import { DevelopmentId } from '../developments';
 import { PopulationRole } from '../populationRoles';
 import type { ActionDef } from '../actions';
@@ -132,7 +133,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(
 						attackParams()
 							.powerStat(Stat.armyStrength)
-							.absorptionStat(Stat.absorption)
+							.absorptionResource(ResourceV2Id.Absorption)
 							.fortificationStat(Stat.fortificationStrength)
 							.targetResource(Resource.castleHP)
 							.onDamageAttacker(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.plunder)).build()),

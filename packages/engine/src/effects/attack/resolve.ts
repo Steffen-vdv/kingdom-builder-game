@@ -70,12 +70,13 @@ export function resolveAttack(
 
 	context.game.currentPlayerIndex = originalIndex;
 
+	const absorptionResourceId = options.absorptionResourceId;
+	const absorptionValue = absorptionResourceId
+		? (defender.resourceV2.amounts[absorptionResourceId] ?? 0)
+		: (defender.absorption as number) || 0;
 	const absorption = options.ignoreAbsorption
 		? 0
-		: Math.min(
-				(defender.absorption as number) || 0,
-				context.services.rules.absorptionCapPct,
-			);
+		: Math.min(absorptionValue, context.services.rules.absorptionCapPct);
 	const damageAfterAbsorption = options.ignoreAbsorption
 		? damage
 		: applyAbsorption(

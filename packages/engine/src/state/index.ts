@@ -213,7 +213,38 @@ export function initializePlayerResourceV2State(
 ): PlayerResourceV2State {
 	const state = createPlayerResourceV2State(registry);
 	player.resourceV2 = state;
+	linkResourceV2Accessors(player, registry, state);
 	return state;
+}
+
+function linkResourceV2Accessors(
+	player: PlayerState,
+	registry: ResourceV2EngineRegistry,
+	state: PlayerResourceV2State,
+) {
+	for (const resourceId of registry.resourceIds) {
+		Object.defineProperty(player, resourceId, {
+			get: () => state.amounts[resourceId] ?? 0,
+			set: (value: number) => {
+				state.amounts[resourceId] = value;
+				state.touched[resourceId] = true;
+			},
+			enumerable: false,
+			configurable: true,
+		});
+	}
+	for (const parentId of registry.parentIds) {
+		Object.defineProperty(player, parentId, {
+			get: () => state.amounts[parentId] ?? 0,
+			set: () => {
+				throw new Error(
+					`ResourceV2 parent "${parentId}" amount is derived from child resources.`,
+				);
+			},
+			enumerable: false,
+			configurable: true,
+		});
+	}
 }
 
 export {

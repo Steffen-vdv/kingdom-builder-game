@@ -14,6 +14,7 @@ export {
 	createResourceGroupRegistry,
 	createResourceV2Registry,
 	deriveResourceV2PrimaryIconCandidate,
+	ResourceV2Id,
 	RESOURCE_V2_DEFINITION_ARTIFACTS,
 	RESOURCE_V2_DEFINITION_REGISTRY,
 	RESOURCE_V2_DEFINITIONS,
