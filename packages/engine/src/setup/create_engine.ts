@@ -272,10 +272,30 @@ export function createEngine({
 	const aiSystem = createAISystem({ performAction, advance });
 	aiSystem.register(playerTwo.id, createTaxCollectorController(playerTwo.id));
 	engineContext.aiSystem = aiSystem;
-	applyPlayerStartConfiguration(playerOne, startConfig.player, rules);
-	applyPlayerStartConfiguration(playerOne, playerACompensation, rules);
-	applyPlayerStartConfiguration(playerTwo, startConfig.player, rules);
-	applyPlayerStartConfiguration(playerTwo, playerBCompensation, rules);
+	applyPlayerStartConfiguration(
+		playerOne,
+		startConfig.player,
+		rules,
+		runtimeResourceCatalog,
+	);
+	applyPlayerStartConfiguration(
+		playerOne,
+		playerACompensation,
+		rules,
+		runtimeResourceCatalog,
+	);
+	applyPlayerStartConfiguration(
+		playerTwo,
+		startConfig.player,
+		rules,
+		runtimeResourceCatalog,
+	);
+	applyPlayerStartConfiguration(
+		playerTwo,
+		playerBCompensation,
+		rules,
+		runtimeResourceCatalog,
+	);
 	initializePlayerActions(playerOne, actions);
 	initializePlayerActions(playerTwo, actions);
 	engineContext.game.currentPlayerIndex = 0;
