@@ -6,7 +6,7 @@ import {
 	TRANSFER_AMOUNT_EVALUATION_TYPE,
 	TRANSFER_PCT_EVALUATION_ID,
 	TRANSFER_PCT_EVALUATION_TYPE,
-} from '../../src/effects/resource_transfer.ts';
+} from '@kingdom-builder/protocol';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
 
