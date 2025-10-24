@@ -30,7 +30,11 @@ describe('Building stat bonuses', () => {
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(true);
 		for (const s of stats) {
+			const resourceId = engineContext.activePlayer.getStatResourceV2Id(s.key);
 			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
+				before[s.key] + s.amount,
+			);
+			expect(engineContext.activePlayer.resourceValues[resourceId]).toBeCloseTo(
 				before[s.key] + s.amount,
 			);
 		}
@@ -42,7 +46,11 @@ describe('Building stat bonuses', () => {
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(false);
 		for (const s of stats) {
+			const resourceId = engineContext.activePlayer.getStatResourceV2Id(s.key);
 			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
+				before[s.key],
+			);
+			expect(engineContext.activePlayer.resourceValues[resourceId]).toBeCloseTo(
 				before[s.key],
 			);
 		}
@@ -54,7 +62,11 @@ describe('Building stat bonuses', () => {
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(false);
 		for (const s of stats) {
+			const resourceId = engineContext.activePlayer.getStatResourceV2Id(s.key);
 			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
+				before[s.key],
+			);
+			expect(engineContext.activePlayer.resourceValues[resourceId]).toBeCloseTo(
 				before[s.key],
 			);
 		}

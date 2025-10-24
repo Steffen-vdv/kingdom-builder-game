@@ -10,6 +10,10 @@ import {
 	RULES,
 	RESOURCES,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
@@ -22,7 +26,11 @@ function deepClone<T>(value: T): T {
 
 function clonePlayer(player: PlayerState) {
 	const copy = new PlayerState(player.id, player.name);
+	copy.copyLegacyMappingsFrom(player);
 	copy.resources = deepClone(player.resources);
+	copy.resourceValues = deepClone(player.resourceValues);
+	copy.resourceLowerBounds = deepClone(player.resourceLowerBounds);
+	copy.resourceUpperBounds = deepClone(player.resourceUpperBounds);
 	copy.stats = deepClone(player.stats);
 	copy.population = deepClone(player.population);
 	copy.lands = player.lands.map((landState) => {
@@ -46,6 +54,10 @@ export function createTestContext(
 		phases: PHASES,
 		start: GAME_START,
 		rules: RULES,
+		resourceCatalogV2: {
+			resources: RESOURCE_V2_REGISTRY,
+			groups: RESOURCE_GROUP_V2_REGISTRY,
+		},
 	});
 	if (overrides) {
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
@@ -91,8 +103,22 @@ export function simulateEffects(
 		}
 	}
 
+	const valuesV2: Record<string, number> = {};
+	const beforeKeys = new Set(
+		Object.keys(before.resourceValues).concat(
+			Object.keys(dummy.resourceValues),
+		),
+	);
+	for (const key of beforeKeys) {
+		const delta =
+			(dummy.resourceValues[key] ?? 0) - (before.resourceValues[key] ?? 0);
+		if (delta !== 0) {
+			valuesV2[key] = delta;
+		}
+	}
+
 	const land = dummy.lands.length - before.lands.length;
-	return { resources, stats, land };
+	return { resources, stats, valuesV2, land };
 }
 
 export function getActionOutcome(id: string, engineContext: EngineForTest) {
