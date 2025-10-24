@@ -35,6 +35,8 @@ import {
 import { createStatMetadata, humanizeId } from './statMetadata';
 import { initializeSessionState } from '../../../src/state/sessionStateStore';
 import { toRegistriesPayload } from './registriesPayload';
+import { createResourceV2TestScenario } from '../resourceV2Scenario';
+import { createParticipant, toPlayerSnapshot } from './participants';
 
 const POPULATION_ICON_FALLBACK = '👥';
 
@@ -68,51 +70,6 @@ function pickResourceKey(
 	return fallback;
 }
 
-function createParticipant(
-	id: string,
-	name: string,
-	baseResources: Record<string, number>,
-	initialPopulation: Record<string, number>,
-	actionIds: string[],
-) {
-	return {
-		id,
-		name,
-		resources: { ...baseResources },
-		population: { ...initialPopulation },
-		lands: [],
-		buildings: new Set<string>(),
-		actions: new Set(actionIds),
-	};
-}
-
-function toPlayerSnapshot(
-	participant: ReturnType<typeof createParticipant>,
-	capacityStat: string,
-): SessionSnapshot['game']['players'][number] {
-	return {
-		id: participant.id,
-		name: participant.name,
-		resources: { ...participant.resources },
-		stats: { [capacityStat]: 3 },
-		statsHistory: {},
-		population: { ...participant.population },
-		lands: participant.lands.map((land) => ({
-			...land,
-			slotsMax: land.slotsFree,
-			slotsUsed: 0,
-			tilled: false,
-			developments: [],
-		})),
-		buildings: Array.from(participant.buildings),
-		actions: Array.from(participant.actions),
-		statSources: {},
-		skipPhases: {},
-		skipSteps: {},
-		passives: [],
-	};
-}
-
 export function createActionsPanelGame({
 	populationRoles,
 	showBuilding = false,
@@ -123,6 +80,7 @@ export function createActionsPanelGame({
 	placeholders,
 }: ActionsPanelGameOptions = {}): ActionsPanelTestHarness {
 	const sessionRegistries = createSessionRegistries();
+	const resourceScenario = createResourceV2TestScenario();
 	const resourceSelection: ResourceSelectionContext = {
 		registries: sessionRegistries,
 		usedResourceKeys: new Set<string>(),
@@ -180,6 +138,8 @@ export function createActionsPanelGame({
 		baseResources,
 		content.initialPopulation,
 		content.actionIds,
+		resourceScenario.playerValues,
+		resourceScenario.playerBounds,
 	);
 	const opponent = createParticipant(
 		'B',
@@ -187,6 +147,8 @@ export function createActionsPanelGame({
 		baseResources,
 		content.initialPopulation,
 		[],
+		resourceScenario.opponentValues,
+		resourceScenario.playerBounds,
 	);
 	const actionDefinitions = [
 		content.raisePopulationAction,
@@ -219,14 +181,22 @@ export function createActionsPanelGame({
 			name: player.name,
 			resources: player.resources,
 			population: player.population,
+			resourcesV2: player.valuesV2,
+			resourceBoundsV2: player.resourceBoundsV2,
 		}),
 		opponent: toTranslationPlayer({
 			id: opponent.id,
 			name: opponent.name,
 			resources: opponent.resources,
 			population: opponent.population,
+			resourcesV2: opponent.valuesV2,
+			resourceBoundsV2: opponent.resourceBoundsV2,
 		}),
 		actionCostResource,
+		resourceCatalog: resourceScenario.catalog,
+		resourceMetadata: resourceScenario.resourceMetadata,
+		resourceGroupMetadata: resourceScenario.resourceGroupMetadata,
+		signedResourceGains: resourceScenario.recentGains,
 	});
 	const ruleSnapshot = {
 		tieredResourceKey,
@@ -253,10 +223,11 @@ export function createActionsPanelGame({
 			players: [playerSnapshot, opponentSnapshot],
 			activePlayerId: player.id,
 			opponentId: opponent.id,
+			resourceCatalogV2: resourceScenario.catalog,
 		},
 		phases: [phaseDefinition],
 		actionCostResource,
-		recentResourceGains: [],
+		recentResourceGains: resourceScenario.recentGains,
 		compensations: {} as Record<string, PlayerStartConfig>,
 		rules: ruleSnapshot,
 		passiveRecords: {
@@ -264,6 +235,8 @@ export function createActionsPanelGame({
 			[opponent.id]: [],
 		},
 		metadata: createEmptySnapshotMetadata(),
+		resourceMetadataV2: resourceScenario.resourceMetadata,
+		resourceGroupMetadataV2: resourceScenario.resourceGroupMetadata,
 	};
 	sessionRegistries.actions = actionsRegistry;
 	sessionRegistries.buildings = buildingsRegistry;
@@ -315,6 +288,7 @@ export function createActionsPanelGame({
 	}
 	sessionState.metadata = createEmptySnapshotMetadata({
 		resources: resourceDescriptors,
+		resourcesV2: resourceScenario.resourceMetadata,
 		populations: populationDescriptors,
 		stats: Object.fromEntries(statMetadataEntries),
 		assets: {
@@ -327,6 +301,7 @@ export function createActionsPanelGame({
 			sections: [],
 			tokens: {},
 		},
+		resourceGroupsV2: resourceScenario.resourceGroupMetadata,
 	});
 	initializeSessionState({
 		sessionId,

@@ -1,6 +1,11 @@
 import fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+	createResourceV2Registries,
+	resourceV2Definition,
+	resourceV2GroupDefinition,
+} from '@kingdom-builder/testing';
 import { createGameApi } from '../../src/services/gameApi';
 import {
 	createSessionTransportPlugin,
@@ -31,7 +36,29 @@ describe.skipIf(!runIntegration)(
 		let costKey: string;
 		let manager: ReturnType<typeof createSyntheticSessionManager>['manager'];
 		beforeAll(async () => {
-			const result = createSyntheticSessionManager();
+			const resourceGroupDefinition = resourceV2GroupDefinition({
+				parent: {
+					label: 'Integration Economy',
+					icon: '💼',
+					description: 'Synthetic grouping for integration tests.',
+				},
+			});
+			const resourceDefinition = resourceV2Definition({
+				metadata: {
+					label: 'Integration Gold',
+					icon: '🪙',
+					description: 'Synthetic resource for integration tests.',
+					group: { id: resourceGroupDefinition.id },
+				},
+				bounds: { lowerBound: 0 },
+			});
+			const resourceCatalogV2 = createResourceV2Registries({
+				resources: [resourceDefinition],
+				groups: [resourceGroupDefinition],
+			});
+			const result = createSyntheticSessionManager({
+				engineOptions: { resourceCatalogV2 },
+			});
 			({ manager, actionId, costKey } = result);
 			server = fastify();
 			const options: FastifySessionTransportOptions = {

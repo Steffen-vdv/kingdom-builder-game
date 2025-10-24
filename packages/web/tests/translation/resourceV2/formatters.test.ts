@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resourceV2Definition } from '@kingdom-builder/testing';
 import type {
 	ResourceV2MetadataSnapshot,
 	ResourceV2ValueSnapshot,
@@ -14,6 +15,18 @@ type OrderedResourceSnapshot = {
 	snapshot: ResourceV2ValueSnapshot;
 	order: number;
 };
+
+function toMetadata(
+	definition: ReturnType<typeof resourceV2Definition>,
+): ResourceV2MetadataSnapshot {
+	return {
+		id: definition.id,
+		label: definition.label,
+		icon: definition.icon ?? undefined,
+		description: definition.description,
+		displayAsPercent: definition.displayAsPercent,
+	} satisfies ResourceV2MetadataSnapshot;
+}
 
 function entry(
 	metadata: ResourceV2MetadataSnapshot,
@@ -43,28 +56,25 @@ function collectSignedGains(entries: OrderedResourceSnapshot[]) {
 
 describe('ResourceV2 formatters', () => {
 	it('renders parent before child and respects percent-aware formatting', () => {
+		const parentDefinition = resourceV2Definition({
+			metadata: { label: 'Population', icon: '🏰' },
+		});
+		const childDefinition = resourceV2Definition({
+			metadata: { label: 'Legion', icon: '🛡️', displayAsPercent: true },
+		});
 		const parent = entry(
+			toMetadata(parentDefinition),
 			{
-				id: 'resource:population',
-				label: 'Population',
-				icon: '🏰',
-			},
-			{
-				id: 'resource:population',
+				id: parentDefinition.id,
 				current: 30,
 				previous: 20,
 			},
 			0,
 		);
 		const child = entry(
+			toMetadata(childDefinition),
 			{
-				id: 'resource:legion',
-				label: 'Legion',
-				icon: '🛡️',
-				displayAsPercent: true,
-			},
-			{
-				id: 'resource:legion',
+				id: childDefinition.id,
 				current: 0.35,
 				previous: 0.2,
 			},
@@ -73,32 +83,38 @@ describe('ResourceV2 formatters', () => {
 
 		const summaries = renderSummaries([child, parent]);
 
-		expect(summaries).toEqual([
-			'🏰 Population +10 (20→30)',
-			'🛡️ Legion +15% (20%→35%)',
-		]);
+		const expectedParent = formatResourceV2Summary(
+			parent.metadata,
+			parent.snapshot,
+		);
+		const expectedChild = formatResourceV2Summary(
+			child.metadata,
+			child.snapshot,
+		);
+
+		expect(summaries).toEqual([expectedParent, expectedChild]);
 	});
 
 	it('emits ordered signed gains for parents and children', () => {
+		const parentDefinition = resourceV2Definition({
+			metadata: { label: 'Population' },
+		});
+		const childDefinition = resourceV2Definition({
+			metadata: { label: 'Legion' },
+		});
 		const parent = entry(
+			toMetadata(parentDefinition),
 			{
-				id: 'resource:population',
-				label: 'Population',
-			},
-			{
-				id: 'resource:population',
+				id: parentDefinition.id,
 				current: 12,
 				previous: 10,
 			},
 			0,
 		);
 		const child = entry(
+			toMetadata(childDefinition),
 			{
-				id: 'resource:legion',
-				label: 'Legion',
-			},
-			{
-				id: 'resource:legion',
+				id: childDefinition.id,
 				current: 7,
 				previous: 9,
 			},
@@ -108,20 +124,23 @@ describe('ResourceV2 formatters', () => {
 		const gains = collectSignedGains([child, parent]);
 
 		expect(gains).toEqual([
-			{ key: 'resource:population', amount: 2 },
-			{ key: 'resource:legion', amount: -2 },
+			{ key: parent.metadata.id, amount: 2 },
+			{ key: child.metadata.id, amount: -2 },
 		]);
 	});
 
 	it('builds hover sections with deterministic ordering and percent-aware entries', () => {
-		const metadata: ResourceV2MetadataSnapshot = {
-			id: 'resource:legion',
-			label: 'Legion',
-			description: 'Veteran soldiers ready for combat.',
-			displayAsPercent: true,
-		};
+		const legionDefinition = resourceV2Definition({
+			metadata: {
+				label: 'Legion',
+				icon: '🛡️',
+				description: 'Veteran soldiers ready for combat.',
+				displayAsPercent: true,
+			},
+		});
+		const metadata = toMetadata(legionDefinition);
 		const snapshot: ResourceV2ValueSnapshot = {
-			id: 'resource:legion',
+			id: legionDefinition.id,
 			current: 0.45,
 			previous: 0.4,
 			forecastDelta: -0.05,

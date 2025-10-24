@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
+import { createResourceV2TestScenario } from '../helpers/resourceV2Scenario';
 
 describe('createTranslationContext', () => {
 	it('derives a translation context snapshot', () => {
@@ -17,6 +18,13 @@ describe('createTranslationContext', () => {
 				'Expected test registries to expose at least one resource.',
 			);
 		}
+		const resourceScenario = createResourceV2TestScenario();
+		const [primaryResource] = resourceScenario.resourceDefinitions;
+		const resourceV2Id = primaryResource?.id;
+		const resourceGroupV2Id = resourceScenario.groupDefinition.id;
+		if (!resourceV2Id) {
+			throw new Error('Expected ResourceV2 definitions to be available.');
+		}
 		registries.resources[resourceKey] = {
 			...registries.resources[resourceKey],
 			label: undefined,
@@ -26,44 +34,6 @@ describe('createTranslationContext', () => {
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
-		const resourceV2Id = 'resource:gold';
-		const resourceGroupV2Id = 'resource-group:economy';
-		const resourceDefinitionV2 = Object.freeze({
-			id: resourceV2Id,
-			label: 'Gold Reserve',
-			icon: '🥇',
-			description: 'Vaulted wealth for the crown.',
-			order: 0,
-			resolvedOrder: 0,
-			tags: [],
-			lowerBound: 0,
-			upperBound: null,
-			displayAsPercent: false,
-			trackValueBreakdown: false,
-			trackBoundBreakdown: false,
-			groupId: resourceGroupV2Id,
-			groupOrder: 0,
-			resolvedGroupOrder: 0,
-		});
-		const resourceGroupDefinitionV2 = Object.freeze({
-			id: resourceGroupV2Id,
-			order: 0,
-			resolvedOrder: 0,
-			parent: {
-				id: resourceGroupV2Id,
-				label: 'Economic Portfolio',
-				icon: '💹',
-				description: 'Summary of treasury holdings.',
-				order: 0,
-				resolvedOrder: 0,
-				tags: [],
-				lowerBound: 0,
-				upperBound: null,
-				displayAsPercent: false,
-				trackValueBreakdown: false,
-				trackBoundBreakdown: false,
-			},
-		});
 		const phases: SessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
@@ -94,21 +64,8 @@ describe('createTranslationContext', () => {
 					description: 'The royal treasury fuels your ambitions.',
 				},
 			},
-			resourcesV2: {
-				[resourceV2Id]: {
-					label: 'V2 Treasury',
-					icon: '🏦',
-					description: 'Translation metadata for ResourceV2.',
-					displayAsPercent: true,
-					format: { prefix: '+', percent: true },
-				},
-			},
-			resourceGroupsV2: {
-				[resourceGroupV2Id]: {
-					label: 'Economic Overview',
-					icon: '📊',
-				},
-			},
+			resourcesV2: resourceScenario.resourceMetadata,
+			resourceGroupsV2: resourceScenario.resourceGroupMetadata,
 			populations: populationId
 				? {
 						[populationId]: {
@@ -155,19 +112,30 @@ describe('createTranslationContext', () => {
 			resource: number;
 			stat: number;
 			population: number;
+			valuesV2: Record<string, number>;
+			boundsV2: Record<
+				string,
+				{ lowerBound: number | null; upperBound: number | null }
+			>;
 			buildings?: string[];
 			passives?: SessionSnapshot['game']['players'][number]['passives'];
 		}): SessionSnapshot['game']['players'][number] => ({
 			id: config.id,
 			name: config.name,
 			resources: { [resourceKey]: config.resource },
-			valuesV2: { [resourceV2Id]: config.resource },
+			valuesV2: { ...config.valuesV2 },
 			stats: { [statKey]: config.stat },
 			statsHistory: {},
 			population: { [populationId]: config.population },
-			resourceBoundsV2: {
-				[resourceV2Id]: { lowerBound: 0, upperBound: 20 },
-			},
+			resourceBoundsV2: Object.fromEntries(
+				Object.entries(config.boundsV2).map(([id, entry]) => [
+					id,
+					{
+						lowerBound: entry.lowerBound ?? null,
+						upperBound: entry.upperBound ?? null,
+					},
+				]),
+			),
 			lands: [],
 			buildings: config.buildings ?? [],
 			actions: [actionId],
@@ -183,6 +151,8 @@ describe('createTranslationContext', () => {
 				resource: 7,
 				stat: 3,
 				population: 2,
+				valuesV2: resourceScenario.playerValues,
+				boundsV2: resourceScenario.playerBounds,
 				buildings: [buildingId],
 				passives: [
 					{
@@ -200,6 +170,8 @@ describe('createTranslationContext', () => {
 				resource: 5,
 				stat: 1,
 				population: 1,
+				valuesV2: resourceScenario.opponentValues,
+				boundsV2: resourceScenario.playerBounds,
 				passives: [],
 			}),
 		];
@@ -230,7 +202,7 @@ describe('createTranslationContext', () => {
 			actionCostResource: resourceKey,
 			recentResourceGains: [
 				{ key: resourceKey, amount: 3 },
-				{ key: resourceV2Id, amount: -2 },
+				...resourceScenario.recentGains,
 			],
 			compensations: {
 				A: compensation(2),
@@ -257,19 +229,8 @@ describe('createTranslationContext', () => {
 				B: [],
 			},
 			metadata,
-			resourceMetadataV2: {
-				[resourceV2Id]: {
-					label: 'Catalog Gold',
-					icon: '🥇',
-					description: 'Catalog-provided metadata.',
-				},
-			},
-			resourceGroupMetadataV2: {
-				[resourceGroupV2Id]: {
-					label: 'Catalog Economy',
-					icon: '💼',
-				},
-			},
+			resourceMetadataV2: resourceScenario.resourceMetadata,
+			resourceGroupMetadataV2: resourceScenario.resourceGroupMetadata,
 		};
 		const context = createTranslationContext(session, registries, metadata, {
 			ruleSnapshot: session.rules,
@@ -285,272 +246,60 @@ describe('createTranslationContext', () => {
 			Array.from(modifiers.keys()),
 		]);
 		const activeId = players[0]?.id ?? 'A';
-		const contextSnapshot = {
-			actionCostResource: context.actionCostResource,
-			phases: context.phases.map((phase) => phase.id),
-			players: {
-				active: context.activePlayer.id,
-				opponent: context.opponent.id,
-			},
-			recentResourceGains: context.recentResourceGains,
-			resourcesV2: {
-				resource: context.resourcesV2?.resources.byId[resourceV2Id],
-				group: context.resourcesV2?.groups.byId[resourceGroupV2Id],
-			},
-			resourceMetadataV2: {
-				resource: context.resourceMetadataV2.get(resourceV2Id),
-				group: context.resourceGroupMetadataV2.get(resourceGroupV2Id),
-				fallback: context.resourceMetadataV2.get('resource:missing'),
-				hasExisting: context.resourceMetadataV2.has(resourceV2Id),
-			},
-			signedResourceGains: {
-				list: context.signedResourceGains.list(),
-				positives: context.signedResourceGains.positives(),
-				negatives: context.signedResourceGains.negatives(),
-				sumLegacy: context.signedResourceGains.sumForResource(resourceKey),
-			},
-			compensations: context.compensations,
-			registries: {
-				action: { id: actionId, has: context.actions.has(actionId) },
-				building: { id: buildingId, has: context.buildings.has(buildingId) },
-				development: {
-					id: developmentId,
-					has: context.developments.has(developmentId),
-				},
-				population: {
-					id: populationId,
-					has: context.populations.has(populationId),
-				},
-			},
-			assets: {
-				passive: context.assets.passive,
-				slot: context.assets.slot,
-				resource: context.assets.resources[resourceKey],
-				stat: context.assets.stats[statKey],
-				trigger: context.assets.triggers[triggerId],
-				population: context.assets.population,
-			},
-			rules: context.rules,
-			passives: {
-				list: context.passives.list().map(({ id }) => id),
-				owned: context.passives.list(activeId).map(({ id }) => id),
-				descriptor: context.passives.get(passiveId, activeId),
-				definition: context.passives.getDefinition(passiveId, activeId),
-				definitions: context.passives.definitions(activeId).map(({ id }) => id),
-				evaluationMods: evaluationSnapshot,
-			},
-		};
-		expect(contextSnapshot).toMatchInlineSnapshot(`
-                        {
-                          "actionCostResource": "gold",
-                          "assets": {
-                            "passive": {
-                              "icon": "✨",
-                              "label": "Passive Aura",
-                            },
-                            "population": {
-                              "icon": "🧑‍🤝‍🧑",
-                              "label": "Population",
-                            },
-                            "resource": {
-                              "description": "The royal treasury fuels your ambitions.",
-                              "icon": "💰",
-                              "label": "Royal Treasury",
-                            },
-                            "slot": {
-                              "description": "Designated location for new developments.",
-                              "icon": "📦",
-                              "label": "Plot Slot",
-                            },
-                            "stat": {
-                              "description": "Represents how many specialists can serve the realm.",
-                              "displayAsPercent": true,
-                              "format": {
-                                "percent": true,
-                                "prefix": "~",
-                              },
-                              "icon": "🏯",
-                              "label": "Population Capacity",
-                            },
-                            "trigger": {
-                              "future": "When the signal sounds",
-                              "icon": "🔔",
-                              "label": "Signal Trigger",
-                              "past": "Signal",
-                            },
-                          },
-                          "compensations": {
-                            "A": {
-                              "resources": {
-                                "gold": 2,
-                              },
-                            },
-                            "B": {
-                              "resources": {
-                                "gold": 1,
-                              },
-                            },
-                          },
-                          "passives": {
-                            "definition": {
-                              "icon": "🌱",
-                              "id": "passive-a",
-                              "meta": {
-                                "source": {
-                                  "icon": "🏘️",
-                                },
-                              },
-                              "owner": "A",
-                            },
-                            "definitions": [
-                              "passive-a",
-                            ],
-                            "descriptor": {
-                              "icon": "🌱",
-                              "meta": {
-                                "source": {
-                                  "icon": "🏘️",
-                                },
-                              },
-                            },
-                            "evaluationMods": [
-                              [
-                                "gold",
-                                [
-                                  "modifier",
-                                ],
-                              ],
-                            ],
-                            "list": [
-                              "passive-a",
-                            ],
-                            "owned": [
-                              "passive-a",
-                            ],
-                          },
-                          "phases": [
-                            "phase.alpha",
-                          ],
-                          "players": {
-                            "active": "A",
-                            "opponent": "B",
-                          },
-                          "recentResourceGains": [
-                            {
-                              "amount": 3,
-                              "key": "gold",
-                            },
-                            {
-                              "amount": -2,
-                              "key": "resource:gold",
-                            },
-                          ],
-                          "resourcesV2": {
-                            "group": {
-                              "id": "resource-group:economy",
-                              "order": 0,
-                              "parent": {
-                                "description": "Summary of treasury holdings.",
-                                "displayAsPercent": false,
-                                "icon": "💹",
-                                "id": "resource-group:economy",
-                                "label": "Economic Portfolio",
-                                "lowerBound": 0,
-                                "order": 0,
-                                "resolvedOrder": 0,
-                                "tags": [],
-                                "trackBoundBreakdown": false,
-                                "trackValueBreakdown": false,
-                                "upperBound": null,
-                              },
-                              "resolvedOrder": 0,
-                            },
-                            "resource": {
-                              "description": "Vaulted wealth for the crown.",
-                              "displayAsPercent": false,
-                              "groupId": "resource-group:economy",
-                              "groupOrder": 0,
-                              "icon": "🥇",
-                              "id": "resource:gold",
-                              "label": "Gold Reserve",
-                              "lowerBound": 0,
-                              "order": 0,
-                              "resolvedGroupOrder": 0,
-                              "resolvedOrder": 0,
-                              "tags": [],
-                              "trackBoundBreakdown": false,
-                              "trackValueBreakdown": false,
-                              "upperBound": null,
-                            },
-                          },
-                          "resourceMetadataV2": {
-                            "fallback": {
-                              "id": "resource:missing",
-                              "label": "resource:missing",
-                            },
-                            "group": {
-                              "description": "Summary of treasury holdings.",
-                              "icon": "💼",
-                              "id": "resource-group:economy",
-                              "label": "Catalog Economy",
-                            },
-                            "hasExisting": true,
-                            "resource": {
-                              "description": "Catalog-provided metadata.",
-                              "icon": "🥇",
-                              "id": "resource:gold",
-                              "label": "Catalog Gold",
-                            },
-                          },
-                          "registries": {
-                            "action": {
-                              "has": true,
-                              "id": "expand",
-                            },
-                            "building": {
-                              "has": true,
-                              "id": "town_charter",
-                            },
-                            "development": {
-                              "has": true,
-                              "id": "farm",
-                            },
-                            "population": {
-                              "has": true,
-                              "id": "council",
-                            },
-                          },
-                          "rules": {
-                            "tierDefinitions": [],
-                            "tieredResourceKey": "gold",
-                            "winConditions": [],
-                          },
-                          "signedResourceGains": {
-                            "list": [
-                              {
-                                "amount": 3,
-                                "key": "gold",
-                              },
-                              {
-                                "amount": -2,
-                                "key": "resource:gold",
-                              },
-                            ],
-                            "negatives": [
-                              {
-                                "amount": -2,
-                                "key": "resource:gold",
-                              },
-                            ],
-                            "positives": [
-                              {
-                                "amount": 3,
-                                "key": "gold",
-                              },
-                            ],
-                            "sumLegacy": 3,
-                          },
-                        }
-                `);
+		const resourceMetadata = context.resourceMetadataV2.get(resourceV2Id);
+		const groupMetadata =
+			context.resourceGroupMetadataV2.get(resourceGroupV2Id);
+		const expectedResourceGain = resourceScenario.recentGains
+			.filter((gain) => gain.key === resourceV2Id)
+			.reduce((sum, gain) => sum + gain.amount, 0);
+		expect(context.actionCostResource).toBe(resourceKey);
+		expect(context.resourcesV2?.resources.byId[resourceV2Id]?.id).toBe(
+			resourceV2Id,
+		);
+		expect(context.resourcesV2?.groups.byId[resourceGroupV2Id]?.id).toBe(
+			resourceGroupV2Id,
+		);
+		expect(resourceMetadata.label).toBe(
+			resourceScenario.resourceMetadata[resourceV2Id].label,
+		);
+		expect(groupMetadata.label).toBe(
+			resourceScenario.resourceGroupMetadata[resourceGroupV2Id].label,
+		);
+		expect(context.resourceMetadataV2.has(resourceV2Id)).toBe(true);
+		expect(context.resourceMetadataV2.get('resource:missing').label).toBe(
+			'resource:missing',
+		);
+		expect(context.recentResourceGains).toEqual([
+			{ key: resourceKey, amount: 3 },
+			...resourceScenario.recentGains,
+		]);
+		expect(context.signedResourceGains.sumForResource(resourceKey)).toBe(3);
+		expect(
+			context.signedResourceGains.sumForResource(resourceV2Id),
+		).toBeCloseTo(expectedResourceGain);
+		expect(context.activePlayer.resourcesV2?.[resourceV2Id]).toBe(
+			resourceScenario.playerValues[resourceV2Id],
+		);
+		expect(context.activePlayer.resourceBoundsV2?.[resourceV2Id]).toEqual({
+			lowerBound: resourceScenario.playerBounds[resourceV2Id].lowerBound,
+			upperBound: resourceScenario.playerBounds[resourceV2Id].upperBound,
+		});
+		expect(context.assets.resources[resourceKey].label).toBe('Royal Treasury');
+		expect(context.compensations.A?.resources?.[resourceKey]).toBe(2);
+		expect(context.actions.has(actionId)).toBe(true);
+		expect(context.buildings.has(buildingId)).toBe(true);
+		expect(context.developments.has(developmentId)).toBe(true);
+		expect(context.populations.has(populationId)).toBe(true);
+		expect(context.activePlayer.id).toBe('A');
+		expect(context.opponent.id).toBe('B');
+		expect(context.phases.map((phase) => phase.id)).toContain(
+			firstPhase?.id ?? 'phase',
+		);
+		expect(context.passives.list().map(({ id }) => id)).toContain(passiveId);
+		expect(context.passives.get(passiveId, activeId)).toBeDefined();
+		expect(context.passives.getDefinition(passiveId, activeId)?.id).toBe(
+			passiveId,
+		);
+		expect(evaluationSnapshot).toEqual([[resourceKey, ['modifier']]]);
 	});
 });

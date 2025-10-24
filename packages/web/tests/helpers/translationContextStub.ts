@@ -8,9 +8,19 @@ import type {
 	TranslationResourceCatalogV2,
 	TranslationResourceV2Metadata,
 	TranslationResourceV2MetadataSelectors,
-	TranslationSignedResourceGainSelectors,
 } from '../../src/translation/context';
-import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
+import type {
+	SessionMetadataDescriptor,
+	SessionResourceBoundsV2,
+	SessionResourceCatalogV2,
+	SessionRuleSnapshot,
+} from '@kingdom-builder/protocol/session';
+import type { SessionRecentResourceGain } from '@kingdom-builder/protocol';
+import {
+	createResourceV2GroupMetadataSelectors,
+	createResourceV2MetadataSelectors,
+	createSignedResourceGainSelectors,
+} from '../../src/translation/context/resourceV2';
 
 const EMPTY_MODIFIERS = new Map<string, ReadonlyMap<string, unknown>>();
 
@@ -67,14 +77,7 @@ const EMPTY_RESOURCE_METADATA: TranslationResourceV2MetadataSelectors =
 
 const EMPTY_GAIN_ARRAY = Object.freeze([] as { key: string; amount: number }[]);
 
-const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors =
-	Object.freeze({
-		list: () => EMPTY_GAIN_ARRAY,
-		positives: () => EMPTY_GAIN_ARRAY,
-		negatives: () => EMPTY_GAIN_ARRAY,
-		forResource: (_id: string) => EMPTY_GAIN_ARRAY,
-		sumForResource: () => 0,
-	});
+const EMPTY_SIGNED_RESOURCE_GAINS = createSignedResourceGainSelectors([]);
 
 const EMPTY_ACTION_CATEGORIES: TranslationActionCategoryRegistry = {
 	get(id: string) {
@@ -114,15 +117,32 @@ export function toTranslationPlayer(
 		resources: Record<string, number>;
 		population: Record<string, number>;
 		stats?: Record<string, number>;
+		resourcesV2?: Record<string, number>;
+		resourceBoundsV2?: Record<string, SessionResourceBoundsV2>;
 	},
 ): TranslationPlayer {
-	return {
+	const translationPlayer: TranslationPlayer = {
 		id: player.id,
 		name: player.name,
 		resources: { ...player.resources },
 		stats: { ...(player.stats ?? {}) },
 		population: { ...player.population },
 	};
+	if (player.resourcesV2) {
+		translationPlayer.resourcesV2 = { ...player.resourcesV2 };
+	}
+	if (player.resourceBoundsV2) {
+		translationPlayer.resourceBoundsV2 = Object.fromEntries(
+			Object.entries(player.resourceBoundsV2).map(([id, entry]) => [
+				id,
+				{
+					lowerBound: entry.lowerBound ?? null,
+					upperBound: entry.upperBound ?? null,
+				},
+			]),
+		);
+	}
+	return translationPlayer;
 }
 
 export function createTranslationContextStub(
@@ -135,6 +155,10 @@ export function createTranslationContextStub(
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: SessionRuleSnapshot;
+		resourceCatalog?: SessionResourceCatalogV2;
+		resourceMetadata?: Record<string, SessionMetadataDescriptor>;
+		resourceGroupMetadata?: Record<string, SessionMetadataDescriptor>;
+		signedResourceGains?: readonly SessionRecentResourceGain[];
 	},
 ): TranslationContext {
 	const rules: SessionRuleSnapshot =
@@ -144,6 +168,27 @@ export function createTranslationContextStub(
 			tierDefinitions: [],
 			winConditions: [],
 		} as SessionRuleSnapshot);
+	const resourceCatalog = options.resourceCatalog;
+	const resourceMetadataSelectors = resourceCatalog
+		? createResourceV2MetadataSelectors(
+				resourceCatalog,
+				options.resourceMetadata,
+				options.resourceMetadata,
+			)
+		: EMPTY_RESOURCE_METADATA;
+	const resourceGroupMetadataSelectors = resourceCatalog
+		? createResourceV2GroupMetadataSelectors(
+				resourceCatalog,
+				options.resourceGroupMetadata,
+				options.resourceGroupMetadata,
+			)
+		: EMPTY_RESOURCE_METADATA;
+	const signedResourceGains = options.signedResourceGains
+		? createSignedResourceGainSelectors(options.signedResourceGains)
+		: EMPTY_SIGNED_RESOURCE_GAINS;
+	const recentResourceGains = options.signedResourceGains
+		? Object.freeze([...options.signedResourceGains])
+		: EMPTY_GAIN_ARRAY;
 	return {
 		actions: options.actions,
 		actionCategories: options.actionCategories ?? EMPTY_ACTION_CATEGORIES,
@@ -159,12 +204,12 @@ export function createTranslationContextStub(
 			return undefined;
 		},
 		actionCostResource: options.actionCostResource,
-		recentResourceGains: [],
+		recentResourceGains,
 		compensations: { A: {}, B: {} },
 		assets: EMPTY_ASSETS,
-		resourcesV2: EMPTY_RESOURCE_CATALOG,
-		resourceMetadataV2: EMPTY_RESOURCE_METADATA,
-		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
-		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,
+		resourcesV2: resourceCatalog ?? EMPTY_RESOURCE_CATALOG,
+		resourceMetadataV2: resourceMetadataSelectors,
+		resourceGroupMetadataV2: resourceGroupMetadataSelectors,
+		signedResourceGains,
 	};
 }
