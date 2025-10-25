@@ -6,11 +6,12 @@ import type { ActionDef } from '../actions';
 import { HireActionId } from '../actionIds';
 import type { PopulationActionId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
-import { action, compareRequirement, effect, populationEvaluator, populationParams, resourceParams, statEvaluator } from '../config/builders';
+import { action, compareRequirement, effect, populationEvaluator, populationParams, statEvaluator } from '../config/builders';
 import { Types, PopulationMethods, ResourceMethods } from '../config/builderShared';
 import { Focus } from '../defs';
 import { PopulationRole } from '../populationRoles';
 import type { PopulationRoleId } from '../populationRoles';
+import { resourceAmountChange } from '../helpers/resourceV2Effects';
 
 const HAPPINESS_REWARD_AMOUNT = 1;
 
@@ -55,7 +56,8 @@ function requirePopulation(role: PopulationRoleId): { name: string; icon: string
 
 function createHireEffects(role: PopulationRoleId) {
 	const populationEffect = effect(Types.Population, PopulationMethods.ADD).params(populationParams().role(role)).build();
-	const happinessEffect = effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(HAPPINESS_REWARD_AMOUNT)).build();
+	const happinessParams = resourceAmountChange(Resource.happiness, HAPPINESS_REWARD_AMOUNT);
+	const happinessEffect = effect(Types.Resource, ResourceMethods.ADD).params(happinessParams).build();
 	return { populationEffect, happinessEffect };
 }
 

@@ -9,9 +9,7 @@ import {
 	compareRequirement,
 	effect,
 	populationEvaluator,
-	resourceParams,
 	statEvaluator,
-	statParams,
 	actionParams,
 	actionEffectGroup,
 	actionEffectGroupOption,
@@ -19,13 +17,13 @@ import {
 	attackParams,
 	passiveParams,
 	resultModParams,
-	transferParams,
 	costModParams,
 } from '../config/builders';
 import { ActionMethods, AttackMethods, PassiveMethods, ResourceMethods, Types, StatMethods, CostModMethods, LandMethods, ResultModMethods } from '../config/builderShared';
 import { Focus } from '../defs';
 import { ActionId, DevelopActionId, PopulationEvaluationId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
+import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent, statAmountChange } from '../helpers/resourceV2Effects';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -47,7 +45,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 2)
 			.effect(effect(Types.Land, LandMethods.ADD).param('count', 1).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.happiness, 1)).build())
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 1)
 			.focus(Focus.Economy)
@@ -64,8 +62,12 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.effect(
 				effect()
 					.evaluator(populationEvaluator().id(PopulationEvaluationId.tax))
-					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.gold).amount(4)).build())
-					.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(0.5).reconciliation()).build())
+					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.gold, 4)).build())
+					.effect(
+						effect(Types.Resource, ResourceMethods.REMOVE)
+							.params(resourceAmountChange(Resource.happiness, 0.5, (change) => change.reconciliation()))
+							.build(),
+					)
 					.build(),
 			)
 			.category(ActionCategory.Basic)
@@ -112,7 +114,11 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.expand)).build())
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.till).landId('$landId')).build())
 			.effectGroup(royalDecreeDevelopGroup)
-			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3).reconciliation()).build())
+			.effect(
+				effect(Types.Resource, ResourceMethods.REMOVE)
+					.params(resourceAmountChange(Resource.happiness, 3, (change) => change.reconciliation()))
+					.build(),
+			)
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 5)
 			.focus(Focus.Economy)
@@ -139,7 +145,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.effect(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.warWeariness).amount(1)).build())
+			.effect(effect(Types.Stat, StatMethods.ADD).params(statAmountChange(Stat.warWeariness, 1)).build())
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 6)
 			.focus(Focus.Aggressive)
@@ -155,15 +161,23 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
 			.requirement(compareRequirement().left(statEvaluator().key(Stat.warWeariness)).operator('eq').right(0).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(3)).build())
-			.effect(effect(Types.Stat, StatMethods.REMOVE).params(statParams().key(Stat.fortificationStrength).amount(3).reconciliation()).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.happiness, 3)).build())
+			.effect(
+				effect(Types.Stat, StatMethods.REMOVE)
+					.params(statAmountChange(Stat.fortificationStrength, 3, (change) => change.reconciliation()))
+					.build(),
+			)
 			.effect(
 				effect(Types.Passive, PassiveMethods.ADD)
 					.params(passiveParams().id('hold_festival_penalty').name('Festival Hangover').icon('🤮').removeOnUpkeepStep())
 					.effect(
 						effect(Types.ResultMod, ResultModMethods.ADD)
 							.params(resultModParams().id('hold_festival_attack_happiness_penalty').actionId(ActionId.army_attack))
-							.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3).reconciliation()).build())
+							.effect(
+								effect(Types.Resource, ResourceMethods.REMOVE)
+									.params(resourceAmountChange(Resource.happiness, 3, (change) => change.reconciliation()))
+									.build(),
+							)
 							.build(),
 					)
 					.build(),
@@ -181,8 +195,8 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.name('Plunder')
 			.icon('🏴‍☠️')
 			.system()
-			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(transferParams().key(Resource.happiness).amount(1)).build())
-			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(transferParams().key(Resource.gold).percent(25)).build())
+			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferAmount(Resource.happiness, 1)).build())
+			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferPercent(Resource.gold, 25)).build())
 			.category(ActionCategory.Basic)
 			.focus(Focus.Aggressive)
 			.build(),
