@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createResourceGroupRegistry, createResourceV2Registry, resourceGroup, resourceV2, type ResourceV2TierTrack } from '../../src/resourceV2';
+import { createResourceGroupRegistry, resourceV2, type ResourceV2TierTrack } from '../../src/resourceV2';
+import { createResourceV2Registries, resourceV2Definition, resourceV2GroupDefinition } from '@kingdom-builder/testing';
 
 describe('resourceV2 builder', () => {
 	it('builds a fully configured resource definition', () => {
@@ -57,6 +58,13 @@ describe('resourceV2 builder', () => {
 		});
 	});
 
+	it('supports configuring bounds via the combined setter', () => {
+		const definition = resourceV2('resource:combined-bounds').label('Combined Bounds').icon('icon:bounds').bounds(1, 5).build();
+
+		expect(definition.lowerBound).toBe(1);
+		expect(definition.upperBound).toBe(5);
+	});
+
 	it('rejects duplicate setter calls', () => {
 		const withLabel = resourceV2('resource:duplicate-label').label('Primary').icon('icon:duplicate');
 		expect(() => withLabel.label('Again')).toThrowError('ResourceV2 builder already has label() set. Remove the duplicate call.');
@@ -81,16 +89,20 @@ describe('resourceV2 builder', () => {
 
 describe('resourceV2 group builders and registries', () => {
 	it('preserves parent metadata and ordering through the group registry', () => {
-		const economy = resourceGroup('group:economy')
-			.order(2)
-			.parent({
+		const economy = resourceV2GroupDefinition({
+			id: 'group:economy',
+			order: 2,
+			parent: {
 				id: 'resource:gold',
 				label: 'Economy',
 				icon: 'icon:gold',
 				description: 'Financial resources and income.',
-			})
-			.build();
-		const military = resourceGroup('group:military').order(3).build();
+			},
+		});
+		const military = resourceV2GroupDefinition({
+			id: 'group:military',
+			order: 3,
+		});
 
 		expect(economy.parent).toEqual({
 			id: 'resource:gold',
@@ -106,16 +118,37 @@ describe('resourceV2 group builders and registries', () => {
 	});
 
 	it('keeps resource ordering and group metadata inside the resource registry', () => {
-		const wealth = resourceV2('resource:wealth').label('Wealth').icon('icon:wealth').order(1).group('group:economy', { order: 2 }).build();
-		const defense = resourceV2('resource:defense').label('Defense').icon('icon:defense').order(3).group('group:military', { order: 1 }).build();
+		const economy = resourceV2GroupDefinition({ id: 'group:economy' });
+		const military = resourceV2GroupDefinition({ id: 'group:military' });
+		const wealth = resourceV2Definition({
+			id: 'resource:wealth',
+			metadata: {
+				label: 'Wealth',
+				icon: 'icon:wealth',
+				order: 1,
+				group: { id: economy.id, order: 2 },
+			},
+		});
+		const defense = resourceV2Definition({
+			id: 'resource:defense',
+			metadata: {
+				label: 'Defense',
+				icon: 'icon:defense',
+				order: 3,
+				group: { id: military.id, order: 1 },
+			},
+		});
 
-		const registry = createResourceV2Registry([wealth, defense]);
+		const { resources: registry } = createResourceV2Registries({
+			resources: [wealth, defense],
+			groups: [economy, military],
+		});
 		expect(registry.byId['resource:wealth']).toBe(wealth);
 		expect(registry.byId['resource:defense']).toBe(defense);
 		expect(registry.ordered).toEqual([wealth, defense]);
-		expect(wealth.groupId).toBe('group:economy');
+		expect(wealth.groupId).toBe(economy.id);
 		expect(wealth.groupOrder).toBe(2);
-		expect(defense.groupId).toBe('group:military');
+		expect(defense.groupId).toBe(military.id);
 		expect(defense.groupOrder).toBe(1);
 	});
 });

@@ -1,0 +1,5 @@
+# Resource Migration MVP - P2 - T57 - Unit test refresh
+
+- Reworked `packages/contents/tests/resourceV2/resourceV2Builders.test.ts` to cover the combined bounds setter while sourcing registry fixtures from the ResourceV2 testing factories, reducing manual builder boilerplate.
+- Rebuilt `packages/engine/tests/resource-v2/state.test.ts` around the shared ResourceV2 definition/group factories and runtime catalog materialiser, exercising tier transitions, transfers, and bound adjustments against the v2 state helpers.
+- Ran `npx prettier --write packages/contents/tests/resourceV2/resourceV2Builders.test.ts packages/engine/tests/resource-v2/state.test.ts` to normalise formatting and attempted focused vitest runs; both `npx vitest run --config vitest.config.ts packages/contents/tests/resourceV2/resourceV2Builders.test.ts` and `npm run test:coverage:engine -- --run tests/resource-v2/state.test.ts` failed in this environment because the shared contents registries/evaluators are not initialised outside the full suite.
