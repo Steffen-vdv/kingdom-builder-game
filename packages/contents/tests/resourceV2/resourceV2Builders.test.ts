@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createResourceGroupRegistry, createResourceV2Registry, resourceGroup, resourceV2, type ResourceV2TierTrack } from '../../src/resourceV2';
+import { createResourceGroupRegistry, createResourceV2Registry, resourceV2, type ResourceV2TierTrack } from '../../src/resourceV2';
+import { resourceV2Definition, resourceV2GroupDefinition } from '@kingdom-builder/testing';
 
 describe('resourceV2 builder', () => {
 	it('builds a fully configured resource definition', () => {
@@ -81,16 +82,20 @@ describe('resourceV2 builder', () => {
 
 describe('resourceV2 group builders and registries', () => {
 	it('preserves parent metadata and ordering through the group registry', () => {
-		const economy = resourceGroup('group:economy')
-			.order(2)
-			.parent({
+		const economy = resourceV2GroupDefinition({
+			id: 'group:economy',
+			order: 2,
+			parent: {
 				id: 'resource:gold',
 				label: 'Economy',
 				icon: 'icon:gold',
 				description: 'Financial resources and income.',
-			})
-			.build();
-		const military = resourceGroup('group:military').order(3).build();
+			},
+		});
+		const military = resourceV2GroupDefinition({
+			id: 'group:military',
+			order: 3,
+		});
 
 		expect(economy.parent).toEqual({
 			id: 'resource:gold',
@@ -106,8 +111,24 @@ describe('resourceV2 group builders and registries', () => {
 	});
 
 	it('keeps resource ordering and group metadata inside the resource registry', () => {
-		const wealth = resourceV2('resource:wealth').label('Wealth').icon('icon:wealth').order(1).group('group:economy', { order: 2 }).build();
-		const defense = resourceV2('resource:defense').label('Defense').icon('icon:defense').order(3).group('group:military', { order: 1 }).build();
+		const wealth = resourceV2Definition({
+			id: 'resource:wealth',
+			metadata: {
+				label: 'Wealth',
+				icon: 'icon:wealth',
+				order: 1,
+				group: { id: 'group:economy', order: 2 },
+			},
+		});
+		const defense = resourceV2Definition({
+			id: 'resource:defense',
+			metadata: {
+				label: 'Defense',
+				icon: 'icon:defense',
+				order: 3,
+				group: { id: 'group:military', order: 1 },
+			},
+		});
 
 		const registry = createResourceV2Registry([wealth, defense]);
 		expect(registry.byId['resource:wealth']).toBe(wealth);
