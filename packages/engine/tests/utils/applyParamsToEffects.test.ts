@@ -8,31 +8,39 @@ describe('applyParamsToEffects', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: '$key', amount: '$amount' },
+				params: {
+					resourceId: '$resourceId',
+					change: '$change',
+				},
 				evaluator: { type: 'dummy', params: { times: '$count' } },
 				effects: [
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: '$nestedKey', amount: '$nestedAmount' },
+						params: {
+							resourceId: '$nestedResourceId',
+							change: '$nestedChange',
+						},
 					},
 				],
 			},
 		];
 		const params = {
-			key: Resource.gold,
-			amount: 2,
+			resourceId: Resource.gold,
+			change: { type: 'amount', amount: 2 },
 			count: 3,
-			nestedKey: Resource.ap,
-			nestedAmount: 1,
+			nestedResourceId: Resource.ap,
+			nestedChange: { type: 'amount', amount: 1 },
 		};
 		const applied = applyParamsToEffects(effects, params);
 		const effect = applied[0]!;
-		expect(effect.params?.key).toBe(params.key);
-		expect(effect.params?.amount).toBe(params.amount);
+		expect(effect.params?.resourceId).toBe(params.resourceId);
+		expect(effect.params?.change).toEqual(params.change);
 		expect(effect.evaluator?.params?.times).toBe(params.count);
-		expect(effect.effects?.[0]?.params?.key).toBe(params.nestedKey);
-		expect(effect.effects?.[0]?.params?.amount).toBe(params.nestedAmount);
+		expect(effect.effects?.[0]?.params?.resourceId).toBe(
+			params.nestedResourceId,
+		);
+		expect(effect.effects?.[0]?.params?.change).toEqual(params.nestedChange);
 	});
 
 	it('leaves non-placeholder strings untouched', () => {
@@ -40,11 +48,16 @@ describe('applyParamsToEffects', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: 'static', amount: '$amount' },
+				params: {
+					resourceId: 'static',
+					change: '$amount',
+				},
 			},
 		];
-		const applied = applyParamsToEffects(effects, { amount: 5 });
-		expect(applied[0]?.params?.key).toBe('static');
-		expect(applied[0]?.params?.amount).toBe(5);
+		const applied = applyParamsToEffects(effects, {
+			amount: { type: 'amount', amount: 5 },
+		});
+		expect(applied[0]?.params?.resourceId).toBe('static');
+		expect(applied[0]?.params?.change).toEqual({ type: 'amount', amount: 5 });
 	});
 });

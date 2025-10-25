@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, advance, Resource } from '../../src/index.ts';
 import { PhaseId } from '@kingdom-builder/contents';
+import { getResourceV2Id } from '@kingdom-builder/contents/resources';
+import {
+	resourceTransfer,
+	transferEndpoint,
+	type ResourceV2TransferEffectParams,
+} from '@kingdom-builder/contents/resourceV2';
 import {
 	TRANSFER_AMOUNT_EVALUATION_ID,
 	TRANSFER_AMOUNT_EVALUATION_TYPE,
@@ -18,10 +24,25 @@ describe('resource:transfer percent bounds', () => {
 		}
 		engineContext.game.currentPlayerIndex = 0;
 
-		const transfer: EffectDef<{ key: string; percent: number }> = {
+		const goldResourceId = getResourceV2Id(Resource.gold);
+
+		const transfer: EffectDef<ResourceV2TransferEffectParams> = {
 			type: 'resource',
 			method: 'transfer',
-			params: { key: Resource.gold, percent: 50 },
+			params: resourceTransfer()
+				.donor(
+					transferEndpoint(goldResourceId)
+						.player('opponent')
+						.change((change) => change.percent(-0.5))
+						.build(),
+				)
+				.recipient(
+					transferEndpoint(goldResourceId)
+						.player('active')
+						.change((change) => change.percent(0.5))
+						.build(),
+				)
+				.build(),
 		};
 		const addBoost: EffectDef<{ id: string }> = {
 			type: 'result_mod',
@@ -85,16 +106,29 @@ describe('resource:transfer percent bounds', () => {
 		}
 		engineContext.game.currentPlayerIndex = 0;
 
-		const base: EffectDef<{ key: string; percent: number }> = {
+		const base: EffectDef<ResourceV2TransferEffectParams> = {
 			type: 'resource',
 			method: 'transfer',
-			params: { key: Resource.gold, percent: 25 },
+			params: resourceTransfer()
+				.donor(
+					transferEndpoint(goldResourceId)
+						.player('opponent')
+						.change((change) => change.percent(-0.25))
+						.build(),
+				)
+				.recipient(
+					transferEndpoint(goldResourceId)
+						.player('active')
+						.change((change) => change.percent(0.25))
+						.build(),
+				)
+				.build(),
 		};
 
 		const run = (round?: 'up' | 'down') => {
 			engineContext.activePlayer.gold = 0;
 			engineContext.opponent.gold = 5;
-			const effect: EffectDef<{ key: string; percent: number }> = {
+			const effect: EffectDef<ResourceV2TransferEffectParams> = {
 				...base,
 				round,
 			};
@@ -127,10 +161,25 @@ describe('resource:transfer amount behaviour', () => {
 		}
 		engineContext.game.currentPlayerIndex = 0;
 
-		const transfer: EffectDef<{ key: string; amount: number }> = {
+		const happinessResourceId = getResourceV2Id(Resource.happiness);
+
+		const transfer: EffectDef<ResourceV2TransferEffectParams> = {
 			type: 'resource',
 			method: 'transfer',
-			params: { key: Resource.happiness, amount: 2 },
+			params: resourceTransfer()
+				.donor(
+					transferEndpoint(happinessResourceId)
+						.player('opponent')
+						.change((change) => change.amount(-2))
+						.build(),
+				)
+				.recipient(
+					transferEndpoint(happinessResourceId)
+						.player('active')
+						.change((change) => change.amount(2))
+						.build(),
+				)
+				.build(),
 		};
 		const addBoost: EffectDef<{ id: string }> = {
 			type: 'result_mod',
@@ -191,10 +240,23 @@ describe('resource:transfer amount behaviour', () => {
 		}
 		engineContext.game.currentPlayerIndex = 0;
 
-		const transfer: EffectDef<{ key: string; amount: number }> = {
+		const transfer: EffectDef<ResourceV2TransferEffectParams> = {
 			type: 'resource',
 			method: 'transfer',
-			params: { key: Resource.happiness, amount: 1 },
+			params: resourceTransfer()
+				.donor(
+					transferEndpoint(happinessResourceId)
+						.player('opponent')
+						.change((change) => change.amount(-1))
+						.build(),
+				)
+				.recipient(
+					transferEndpoint(happinessResourceId)
+						.player('active')
+						.change((change) => change.amount(1))
+						.build(),
+				)
+				.build(),
 		};
 
 		engineContext.activePlayer.happiness = 0;

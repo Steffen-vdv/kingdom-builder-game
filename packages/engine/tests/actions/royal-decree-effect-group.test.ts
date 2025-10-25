@@ -8,6 +8,8 @@ import {
 } from '../../src';
 import { createTestEngine } from '../helpers';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
+import { getResourceV2Id } from '@kingdom-builder/contents/resources';
+import { type ResourceChangeEffectParams } from '@kingdom-builder/contents/resourceV2';
 
 interface EffectGroupOption {
 	id: string;
@@ -129,16 +131,21 @@ describe('royal decree action effect group', () => {
 		expect(traceIds).toEqual(expect.arrayContaining(expectedNested));
 
 		let happinessGain = 0;
+		const happinessResourceId = getResourceV2Id(CResource.happiness);
 		for (const nestedId of expectedNested) {
 			const nested = engineContext.actions.get(nestedId);
 			const effect = nested.effects.find(
 				(candidate) =>
 					candidate.type === 'resource' &&
 					candidate.method === 'add' &&
-					(candidate.params as { key?: string }).key === CResource.happiness,
+					(candidate.params as ResourceChangeEffectParams | undefined)
+						?.resourceId === happinessResourceId,
 			);
 			if (effect) {
-				happinessGain += (effect.params as { amount?: number })?.amount ?? 0;
+				const params = effect.params as ResourceChangeEffectParams;
+				if (params.change.type === 'amount') {
+					happinessGain += params.change.amount;
+				}
 			}
 		}
 		const happinessPenalty = engineContext.actions
@@ -147,12 +154,14 @@ describe('royal decree action effect group', () => {
 				(effect) => effect.type === 'resource' && effect.method === 'remove',
 			)
 			.reduce((total, effect) => {
-				const params = effect.params as
-					| { key?: string; amount?: number }
-					| undefined;
-				return params?.key === CResource.happiness
-					? total + (params.amount ?? 0)
-					: total;
+				const params = effect.params as ResourceChangeEffectParams | undefined;
+				if (params?.resourceId !== happinessResourceId) {
+					return total;
+				}
+				if (params.change.type === 'amount') {
+					return total + params.change.amount;
+				}
+				return total;
 			}, 0);
 		expect(engineContext.activePlayer.resources[CResource.happiness]).toBe(
 			beforeHappiness + happinessGain - happinessPenalty,
