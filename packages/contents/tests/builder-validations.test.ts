@@ -14,7 +14,7 @@ import {
 } from '../src/config/builders';
 import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
 import { Types, PassiveMethods } from '../src/config/builderShared';
-import { RESOURCES, type ResourceKey } from '../src/resources';
+import { RESOURCES, getResourceV2Id, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
 import { describe, expect, it } from 'vitest';
 
@@ -141,7 +141,40 @@ describe('content builder safeguards', () => {
 
 	it('supports static transfer amounts', () => {
 		const params = transferParams().key(firstResourceKey).amount(2).build();
-		expect(params).toEqual({ key: firstResourceKey, amount: 2 });
+		const resourceId = getResourceV2Id(firstResourceKey);
+		expect(params).toEqual({
+			key: firstResourceKey,
+			amount: 2,
+			donor: {
+				player: 'opponent',
+				resourceId,
+				change: { type: 'amount', amount: -2 },
+			},
+			recipient: {
+				player: 'active',
+				resourceId,
+				change: { type: 'amount', amount: 2 },
+			},
+		});
+	});
+
+	it('supports percent-based transfers', () => {
+		const params = transferParams().key(firstResourceKey).percent(25).build();
+		const resourceId = getResourceV2Id(firstResourceKey);
+		expect(params).toEqual({
+			key: firstResourceKey,
+			percent: 25,
+			donor: {
+				player: 'opponent',
+				resourceId,
+				change: { type: 'percent', modifiers: [-25] },
+			},
+			recipient: {
+				player: 'active',
+				resourceId,
+				change: { type: 'percent', modifiers: [25] },
+			},
+		});
 	});
 
 	it('requires happiness tiers to declare an id', () => {
