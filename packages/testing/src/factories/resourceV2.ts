@@ -7,7 +7,7 @@ import {
 	type ResourceGroupRegistry,
 	type ResourceV2Builder,
 	type ResourceV2Registry,
-} from '@kingdom-builder/contents';
+} from '@kingdom-builder/contents/resourceV2';
 
 type ResourceV2Definition = ReturnType<ResourceV2Builder['build']>;
 type ResourceV2GroupDefinition = ReturnType<ResourceGroupBuilder['build']>;

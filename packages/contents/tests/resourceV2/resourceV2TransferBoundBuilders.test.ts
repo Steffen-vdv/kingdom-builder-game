@@ -1,6 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { ResourceV2TransferEndpointPayload } from '../../src/resourceV2';
 
-import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '../src/resourceV2';
+const contentsModulePromise = import('../../src/resourceV2/index.ts');
+
+vi.mock('@kingdom-builder/contents', () =>
+	contentsModulePromise.then((module) => ({
+		resourceV2: module.resourceV2,
+		resourceGroup: module.resourceGroup,
+		createResourceV2Registry: module.createResourceV2Registry,
+		createResourceGroupRegistry: module.createResourceGroupRegistry,
+	})),
+);
+
+await import('../../src/resourceV2/catalog');
+const { increaseUpperBound, resourceTransfer, transferEndpoint } = await import('../../src/resourceV2');
 
 describe('ResourceV2 transfer builders', () => {
 	it('builds donor and recipient payloads with change helpers', () => {
@@ -31,6 +44,20 @@ describe('ResourceV2 transfer builders', () => {
 		expect(params.recipient).not.toBe(recipient);
 	});
 
+	it('captures reconciliation mode when change builders request it', () => {
+		const donor = transferEndpoint('resource:gold')
+			.change((change) => change.amount(-4).reconciliation())
+			.build();
+
+		expect(donor.reconciliationMode).toBe('clamp');
+	});
+
+	it('rejects change builders that attempt to suppress hooks', () => {
+		expect(() => transferEndpoint('resource:gold').change((change) => change.amount(-2).suppressHooks())).toThrowError(
+			'ResourceV2 transfer endpoint builder does not support suppressHooks(). Remove the suppressHooks() call when configuring donor/recipient changes.',
+		);
+	});
+
 	it('rejects unsupported reconciliation modes', () => {
 		expect(() =>
 			transferEndpoint('resource:gold').reconciliation('reject').change({
@@ -45,6 +72,18 @@ describe('ResourceV2 transfer builders', () => {
 
 		expect(() => resourceTransfer().build()).toThrowError('ResourceV2 transfer builder requires donor() before build().');
 		expect(() => resourceTransfer().donor(donor).build()).toThrowError('ResourceV2 transfer builder requires recipient() before build().');
+	});
+
+	it('validates boolean flags on transfer options when cloning payloads', () => {
+		const donor = transferEndpoint('resource:gold').change({ type: 'amount', amount: -1 }).build();
+		const malformedOptions: ResourceV2TransferEndpointPayload = {
+			...donor,
+			options: {
+				suppressTouched: 'true' as unknown as boolean,
+			},
+		};
+
+		expect(() => resourceTransfer().donor(malformedOptions)).toThrowError('ResourceV2 transfer builder expected options.suppressTouched to be boolean when provided.');
 	});
 });
 

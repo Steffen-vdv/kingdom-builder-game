@@ -201,6 +201,45 @@ describe('ResourceV2 effect handlers', () => {
 		expect(ctx.opponent.resourceTierIds[ctx.vaultId]).toBe('tier-low');
 	});
 
+	it('rejects unsupported reconciliation modes for transfer participants', () => {
+		const effect: EffectDef<ResourceV2TransferEffectParams> = {
+			params: {
+				donor: {
+					resourceId: ctx.oreId,
+					change: { type: 'amount', amount: -1 },
+					reconciliationMode: 'reject',
+				},
+				recipient: {
+					resourceId: ctx.vaultId,
+					change: { type: 'amount', amount: 1 },
+				},
+			},
+		};
+
+		expect(() => resourceV2Transfer(effect, ctx.context)).toThrowError(
+			`ResourceV2 effect for "${ctx.oreId}" only supports clamp reconciliation during MVP scope (received "reject").`,
+		);
+	});
+
+	it('prevents transfers targeting limited parent resources', () => {
+		const effect: EffectDef<ResourceV2TransferEffectParams> = {
+			params: {
+				donor: {
+					resourceId: ctx.parentId,
+					change: { type: 'amount', amount: -1 },
+				},
+				recipient: {
+					resourceId: ctx.vaultId,
+					change: { type: 'amount', amount: 1 },
+				},
+			},
+		};
+
+		expect(() => resourceV2Transfer(effect, ctx.context)).toThrowError(
+			`ResourceV2 transfer cannot target limited parent resource "${ctx.parentId}".`,
+		);
+	});
+
 	it('raises resource upper bounds through the dedicated handler', () => {
 		const effect: EffectDef<ResourceV2UpperBoundIncreaseParams> = {
 			params: {

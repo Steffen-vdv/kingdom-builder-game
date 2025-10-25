@@ -1,6 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { ResourceV2TierTrack } from '../../src/resourceV2';
 
-import { createResourceGroupRegistry, createResourceV2Registry, resourceGroup, resourceV2, type ResourceV2TierTrack } from '../../src/resourceV2';
+const contentsModulePromise = import('../../src/resourceV2/index.ts');
+
+vi.mock('@kingdom-builder/contents', () =>
+	contentsModulePromise.then((module) => ({
+		resourceV2: module.resourceV2,
+		resourceGroup: module.resourceGroup,
+		createResourceV2Registry: module.createResourceV2Registry,
+		createResourceGroupRegistry: module.createResourceGroupRegistry,
+	})),
+);
+
+await import('../../src/resourceV2/catalog');
+const { resourceGroup, resourceV2 } = await import('../../src/resourceV2');
+const { createResourceV2Registries, resourceV2Definition, resourceV2GroupDefinition } = await import('@kingdom-builder/testing/factories/resourceV2');
 
 describe('resourceV2 builder', () => {
 	it('builds a fully configured resource definition', () => {
@@ -99,23 +113,58 @@ describe('resourceV2 group builders and registries', () => {
 			description: 'Financial resources and income.',
 		});
 
-		const registry = createResourceGroupRegistry([economy, military]);
-		expect(registry.byId['group:economy']).toBe(economy);
-		expect(registry.byId['group:military']).toBe(military);
-		expect(registry.ordered).toEqual([economy, military]);
+		const { groups } = createResourceV2Registries({
+			groups: [economy, military],
+		});
+
+		expect(groups.byId['group:economy']).toEqual(economy);
+		expect(groups.byId['group:military']).toEqual(military);
+		expect(groups.ordered).toEqual([economy, military]);
 	});
 
 	it('keeps resource ordering and group metadata inside the resource registry', () => {
-		const wealth = resourceV2('resource:wealth').label('Wealth').icon('icon:wealth').order(1).group('group:economy', { order: 2 }).build();
-		const defense = resourceV2('resource:defense').label('Defense').icon('icon:defense').order(3).group('group:military', { order: 1 }).build();
+		const economy = resourceV2GroupDefinition({
+			id: 'group:economy',
+			order: 2,
+			parent: {
+				id: 'resource:gold',
+				label: 'Economy',
+				icon: 'icon:gold',
+			},
+		});
+		const military = resourceV2GroupDefinition({
+			id: 'group:military',
+			order: 3,
+		});
 
-		const registry = createResourceV2Registry([wealth, defense]);
-		expect(registry.byId['resource:wealth']).toBe(wealth);
-		expect(registry.byId['resource:defense']).toBe(defense);
-		expect(registry.ordered).toEqual([wealth, defense]);
-		expect(wealth.groupId).toBe('group:economy');
+		const wealth = resourceV2Definition({
+			id: 'resource:wealth',
+			metadata: {
+				label: 'Wealth',
+				icon: 'icon:wealth',
+				group: { id: economy.id, order: 2 },
+			},
+		});
+		const defense = resourceV2Definition({
+			id: 'resource:defense',
+			metadata: {
+				label: 'Defense',
+				icon: 'icon:defense',
+				group: { id: military.id, order: 1 },
+			},
+		});
+
+		const { resources } = createResourceV2Registries({
+			resources: [wealth, defense],
+			groups: [economy, military],
+		});
+
+		expect(resources.byId['resource:wealth']).toEqual(wealth);
+		expect(resources.byId['resource:defense']).toEqual(defense);
+		expect(resources.ordered).toEqual([wealth, defense]);
+		expect(wealth.groupId).toBe(economy.id);
 		expect(wealth.groupOrder).toBe(2);
-		expect(defense.groupId).toBe('group:military');
+		expect(defense.groupId).toBe(military.id);
 		expect(defense.groupOrder).toBe(1);
 	});
 });
