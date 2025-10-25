@@ -1,164 +1,112 @@
 import { describe, it, beforeEach, expect } from 'vitest';
+import {
+	resourceV2Definition,
+	resourceV2GroupDefinition,
+	createResourceV2Registries,
+} from '@kingdom-builder/testing';
 import { PlayerState } from '../../src/state/index.ts';
 import type { EngineContext } from '../../src/context.ts';
 import {
+	createRuntimeResourceCatalog,
 	initialisePlayerResourceState,
 	setResourceValue,
 	recalculateGroupParentValue,
 	increaseResourceLowerBound,
 	increaseResourceUpperBound,
-} from '../../src/resource-v2/state.ts';
-import type {
-	RuntimeResourceCatalog,
-	RuntimeResourceDefinition,
-	RuntimeResourceGroup,
-	RuntimeResourceGroupParent,
-	RuntimeResourceTierDefinition,
-	RuntimeResourceTierTrack,
-} from '../../src/resource-v2/types.ts';
-
-function createTier(
-	id: string,
-	min: number | null,
-	max: number | null,
-	order: number,
-): RuntimeResourceTierDefinition {
-	return {
-		id,
-		label: `${id}-label`,
-		icon: `${id}-icon`,
-		description: `${id}-description`,
-		order,
-		resolvedOrder: order,
-		threshold: { min, max },
-		enterEffects: [],
-		exitEffects: [],
-	};
-}
-
-function createTierTrack(id: string): RuntimeResourceTierTrack {
-	return {
-		metadata: {
-			id,
-			label: `${id}-label`,
-			icon: `${id}-icon`,
-			description: `${id}-description`,
-			order: null,
-			resolvedOrder: 0,
-		},
-		tiers: [
-			createTier(`${id}-low`, null, 3, 0),
-			createTier(`${id}-mid`, 4, 7, 1),
-			createTier(`${id}-high`, 8, null, 2),
-		],
-	};
-}
-
-function createResource(
-	id: string,
-	groupId: string | null,
-	lowerBound: number | null,
-	upperBound: number | null,
-	trackId: string,
-): RuntimeResourceDefinition {
-	return {
-		id,
-		label: `${id}-label`,
-		icon: `${id}-icon`,
-		description: `${id}-description`,
-		order: null,
-		resolvedOrder: 0,
-		tags: [],
-		lowerBound,
-		upperBound,
-		displayAsPercent: false,
-		trackValueBreakdown: false,
-		trackBoundBreakdown: false,
-		groupId,
-		groupOrder: null,
-		resolvedGroupOrder: null,
-		globalCost: undefined,
-		tierTrack: createTierTrack(trackId),
-	};
-}
-
-function createParent(
-	id: string,
-	lowerBound: number | null,
-	upperBound: number | null,
-): RuntimeResourceGroupParent {
-	return {
-		id,
-		label: `${id}-label`,
-		icon: `${id}-icon`,
-		description: `${id}-description`,
-		order: null,
-		resolvedOrder: 0,
-		tags: [],
-		lowerBound,
-		upperBound,
-		displayAsPercent: false,
-		trackValueBreakdown: false,
-		trackBoundBreakdown: false,
-		tierTrack: createTierTrack(`${id}-track`),
-	};
-}
+} from '../../src/resource-v2/index.ts';
 
 const RESOURCE_A = 'resource-a';
 const RESOURCE_B = 'resource-b';
 const PARENT_ID = 'resource-parent';
 const GROUP_ID = 'resource-group';
 const NO_PARENT_GROUP_ID = 'no-parent-group';
+const RESOURCE_A_TRACK_ID = `${RESOURCE_A}-track`;
+const RESOURCE_B_TRACK_ID = `${RESOURCE_B}-track`;
+const PARENT_TRACK_ID = `${PARENT_ID}-track`;
 
-const resourceA = createResource(
-	RESOURCE_A,
-	GROUP_ID,
-	0,
-	null,
-	`${RESOURCE_A}-track`,
-);
-const resourceB = createResource(
-	RESOURCE_B,
-	GROUP_ID,
-	0,
-	4,
-	`${RESOURCE_B}-track`,
-);
-const parent = createParent(PARENT_ID, 0, null);
-const groupWithParent: RuntimeResourceGroup = {
-	id: GROUP_ID,
-	order: null,
-	resolvedOrder: 0,
-	parent,
-};
-const groupWithoutParent: RuntimeResourceGroup = {
-	id: NO_PARENT_GROUP_ID,
-	order: null,
-	resolvedOrder: 1,
-};
+function tierThreshold(min: number | null, max: number | null) {
+	const threshold: { min?: number; max?: number } = {};
+	if (min !== null) {
+		threshold.min = min;
+	}
+	if (max !== null) {
+		threshold.max = max;
+	}
+	return threshold;
+}
 
-const catalog: RuntimeResourceCatalog = {
-	resources: {
-		byId: {
-			[RESOURCE_A]: resourceA,
-			[RESOURCE_B]: resourceB,
+function createTierTrack(id: string) {
+	return {
+		metadata: {
+			id,
+			label: `${id}-label`,
+			icon: `${id}-icon`,
+			description: `${id}-description`,
 		},
-		ordered: [resourceA, resourceB],
-	},
-	groups: {
-		byId: {
-			[GROUP_ID]: groupWithParent,
-			[NO_PARENT_GROUP_ID]: groupWithoutParent,
+		tiers: [
+			{
+				id: `${id}-low`,
+				label: `${id}-low-label`,
+				icon: `${id}-low-icon`,
+				description: `${id}-low-description`,
+				threshold: tierThreshold(null, 3),
+			},
+			{
+				id: `${id}-mid`,
+				label: `${id}-mid-label`,
+				icon: `${id}-mid-icon`,
+				description: `${id}-mid-description`,
+				threshold: tierThreshold(4, 7),
+			},
+			{
+				id: `${id}-high`,
+				label: `${id}-high-label`,
+				icon: `${id}-high-icon`,
+				description: `${id}-high-description`,
+				threshold: tierThreshold(8, null),
+			},
+		],
+	} as const;
+}
+
+function createCatalog() {
+	const groupWithParent = resourceV2GroupDefinition({
+		id: GROUP_ID,
+		parent: {
+			id: PARENT_ID,
+			lowerBound: 0,
+			tierTrack: createTierTrack(PARENT_TRACK_ID),
 		},
-		ordered: [groupWithParent, groupWithoutParent],
-	},
-};
+	});
+	const groupWithoutParent = resourceV2GroupDefinition({
+		id: NO_PARENT_GROUP_ID,
+	});
+	const resourceA = resourceV2Definition({
+		id: RESOURCE_A,
+		metadata: { group: { id: groupWithParent.id } },
+		bounds: { lowerBound: 0 },
+		tierTrack: createTierTrack(RESOURCE_A_TRACK_ID),
+	});
+	const resourceB = resourceV2Definition({
+		id: RESOURCE_B,
+		metadata: { group: { id: groupWithParent.id } },
+		bounds: { lowerBound: 0, upperBound: 4 },
+		tierTrack: createTierTrack(RESOURCE_B_TRACK_ID),
+	});
+	const registries = createResourceV2Registries({
+		resources: [resourceA, resourceB],
+		groups: [groupWithParent, groupWithoutParent],
+	});
+	return createRuntimeResourceCatalog(registries);
+}
 
 describe('ResourceV2 state', () => {
 	let player: PlayerState;
 	let context: EngineContext;
+	let catalog: ReturnType<typeof createCatalog>;
 
 	beforeEach(() => {
+		catalog = createCatalog();
 		player = new PlayerState('A', 'Tester');
 		context = { recentResourceGains: [] } as unknown as EngineContext;
 	});
@@ -177,13 +125,15 @@ describe('ResourceV2 state', () => {
 		expect(player.resourceLowerBounds[RESOURCE_A]).toBe(0);
 		expect(player.resourceUpperBounds[RESOURCE_A]).toBeNull();
 		expect(player.resourceTouched[RESOURCE_A]).toBe(false);
-		expect(player.resourceTierIds[RESOURCE_A]).toBe(`${RESOURCE_A}-track-low`);
+		expect(player.resourceTierIds[RESOURCE_A]).toBe(
+			`${RESOURCE_A_TRACK_ID}-low`,
+		);
 		expect(player.resourceBoundTouched[RESOURCE_A]).toEqual({
 			lower: false,
 			upper: false,
 		});
 		expect(player.resourceValues[PARENT_ID]).toBe(0);
-		expect(player.resourceTierIds[PARENT_ID]).toBe(`${PARENT_ID}-track-low`);
+		expect(player.resourceTierIds[PARENT_ID]).toBe(`${PARENT_TRACK_ID}-low`);
 	});
 
 	it('writes resource values, recalculates tiers, and logs recent gains', () => {
@@ -193,17 +143,40 @@ describe('ResourceV2 state', () => {
 		expect(nextValue).toBe(8);
 		expect(player.resourceValues[RESOURCE_A]).toBe(8);
 		expect(player.resourceTouched[RESOURCE_A]).toBe(true);
-		expect(player.resourceTierIds[RESOURCE_A]).toBe(`${RESOURCE_A}-track-high`);
+		expect(player.resourceTierIds[RESOURCE_A]).toBe(
+			`${RESOURCE_A_TRACK_ID}-high`,
+		);
 		expect(context.recentResourceGains).toEqual([
 			{ key: RESOURCE_A, amount: 8 },
 		]);
 		expect(player.resourceValues[PARENT_ID]).toBe(8);
 		expect(player.resourceTouched[PARENT_ID]).toBe(true);
-		expect(player.resourceTierIds[PARENT_ID]).toBe(`${PARENT_ID}-track-high`);
+		expect(player.resourceTierIds[PARENT_ID]).toBe(`${PARENT_TRACK_ID}-high`);
 
 		const repeat = setResourceValue(context, player, catalog, RESOURCE_A, 8);
 		expect(repeat).toBe(8);
 		expect(context.recentResourceGains).toHaveLength(1);
+	});
+
+	it('respects suppression options for tier updates and logging', () => {
+		initialisePlayerResourceState(player, catalog);
+		context.recentResourceGains.length = 0;
+
+		const result = setResourceValue(context, player, catalog, RESOURCE_A, 6, {
+			suppressTouched: true,
+			suppressRecentEntry: true,
+			skipTierUpdate: true,
+		});
+
+		expect(result).toBe(6);
+		expect(player.resourceTouched[RESOURCE_A]).toBe(false);
+		expect(player.resourceTierIds[RESOURCE_A]).toBe(
+			`${RESOURCE_A_TRACK_ID}-low`,
+		);
+		expect(context.recentResourceGains).toHaveLength(0);
+		expect(player.resourceValues[PARENT_ID]).toBe(6);
+		expect(player.resourceTouched[PARENT_ID]).toBe(false);
+		expect(player.resourceTierIds[PARENT_ID]).toBe(`${PARENT_TRACK_ID}-low`);
 	});
 
 	it('recalculates parent values on demand', () => {

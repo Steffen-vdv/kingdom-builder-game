@@ -52,17 +52,17 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-11-01 00:30
-- **Current Focus:** Resource Migration MVP - P2 - T56 - Web tests ResourceV2 alignment
+- **Timestamp (UTC):** 2025-11-01 01:45
+- **Current Focus:** Resource Migration MVP - P2 - T57 - Unit tests ResourceV2 alignment
 - **State Summary:**
-  - Web translation, component, and integration suites now seed ResourceV2 catalogs via the shared testing factories and exercise `valuesV2`/metadata flows. See [`./worklogs/T56-web-tests.md`](./worklogs/T56-web-tests.md).
-  - ResourceBar coverage verifies happiness tiers with catalog-driven formatting (icons, formatted thresholds) and ResourceV2 hover sections instead of legacy descriptor fallbacks.
-  - Log, resolution, and timeline tests expect icon-prefixed ResourceV2 summaries/stat labels, removing brittle legacy string assertions.
+  - Engine and contents ResourceV2 suites now lean on the shared testing factories/builders, covering the new `bounds()` helper, transfer options, and suppression/tier flows (see [`./worklogs/T57-unit-tests.md`](./worklogs/T57-unit-tests.md)).
+  - ResourceV2 state tests exercise parent aggregates, skip-tier behaviour, and transfer logging so future handlers keep parity with runtime helpers.
+  - Targeted engine runs still reproduce the `developmentTarget` TypeError, documenting the repository-wide blocker until the helper is patched.
 - **Next Suggested Tasks:**
-  - Fix `packages/contents/src/happinessHelpers.ts` (or add a compatibility wrapper) so `npm run check` clears the existing `developmentTarget` regression and the refreshed web tests can run in CI.
-  - Expand web diff/log coverage to include tiered resource group hovercards once session transports surface ResourceV2 group metadata.
-  - Audit server/session transports to ensure signed ResourceV2 deltas reach the web client, enabling the HUD migration to rely solely on the new payloads.
-- **Blocking Issues / Risks:** Repository `npm run check` continues to fail due to the known `developmentTarget` TypeError, so downstream verifications depend on that fix landing.
+  - Patch `packages/contents/src/happinessHelpers.ts` (or provide a compatibility shim) so `developmentTarget()` is callable during Vitest execution and `npm run check` can succeed.
+  - Expand engine transfer coverage to include mixed percent/amount donors and parent-tier recalculations once the blocker is cleared.
+  - Coordinate with transport owners so session payloads surface ResourceV2 group metadata ahead of the remaining web/UI migrations.
+- **Blocking Issues / Risks:** Repository `npm run check` continues to fail due to the `developmentTarget` TypeError until the contents helper is fixed; downstream verifications remain gated.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` up to date and flag downstream owners when new runtime data surfaces so adoption stays coordinated.
 
 ## 5. Notes & Decisions Archive

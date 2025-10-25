@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createResourceGroupRegistry, createResourceV2Registry, resourceGroup, resourceV2, type ResourceV2TierTrack } from '../../src/resourceV2';
+import { createResourceGroupRegistry, createResourceV2Registry, resourceGroup, resourceV2, type ResourceV2TierTrack } from '@kingdom-builder/contents';
 
 describe('resourceV2 builder', () => {
 	it('builds a fully configured resource definition', () => {
@@ -28,8 +28,7 @@ describe('resourceV2 builder', () => {
 			.description('Keep your citizens on task.')
 			.order(3)
 			.displayAsPercent()
-			.lowerBound(0)
-			.upperBound(10)
+			.bounds(0, 10)
 			.trackValueBreakdown()
 			.trackBoundBreakdown()
 			.group('group:efficiency', { order: 2 })
@@ -55,6 +54,21 @@ describe('resourceV2 builder', () => {
 			tierTrack,
 			globalCost: { amount: 5 },
 		});
+	});
+
+	it('configures bounds through the combined helper and blocks duplicates', () => {
+		const definition = resourceV2('resource:bounded').label('Bounded Resource').icon('icon:bounded').bounds(2, 8).build();
+
+		expect(definition.lowerBound).toBe(2);
+		expect(definition.upperBound).toBe(8);
+
+		const withLower = resourceV2('resource:lower-set').label('Lower Set').icon('icon:lower-set').lowerBound(1);
+
+		expect(() => withLower.bounds(0)).toThrowError('ResourceV2 builder already has lowerBound() set. Remove the duplicate call.');
+
+		const withBounds = resourceV2('resource:bounds-set').label('Bounds Set').icon('icon:bounds-set').bounds(0, 5);
+
+		expect(() => withBounds.upperBound(10)).toThrowError('ResourceV2 builder already has upperBound() set. Remove the duplicate call.');
 	});
 
 	it('rejects duplicate setter calls', () => {

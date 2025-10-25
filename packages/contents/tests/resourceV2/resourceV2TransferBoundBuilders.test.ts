@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '../src/resourceV2';
+import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '@kingdom-builder/contents';
 
 describe('ResourceV2 transfer builders', () => {
 	it('builds donor and recipient payloads with change helpers', () => {
@@ -38,6 +38,31 @@ describe('ResourceV2 transfer builders', () => {
 				amount: -1,
 			}),
 		).toThrowError('ResourceV2 transfer endpoint builder reconciliation mode "reject" is not supported yet. Supported modes: clamp.');
+	});
+
+	it('normalises percent changes and rejects empty modifier lists', () => {
+		const endpoint = transferEndpoint('resource:focus').change({
+			type: 'percent',
+			modifiers: [0.25, -0.1],
+		});
+
+		expect(endpoint.build().change).toEqual({
+			type: 'percent',
+			modifiers: [0.25, -0.1],
+		});
+
+		expect(() =>
+			transferEndpoint('resource:focus').change({
+				type: 'percent',
+				modifiers: [],
+			}),
+		).toThrowError('ResourceV2 transfer endpoint builder percent change requires at least one modifier.');
+	});
+
+	it('rejects suppressHooks when configuring donor or recipient changes', () => {
+		expect(() => transferEndpoint('resource:focus').change((change) => change.amount(-2).suppressHooks())).toThrowError(
+			'ResourceV2 transfer endpoint builder does not support suppressHooks(). Remove the suppressHooks() call when configuring donor/recipient changes.',
+		);
 	});
 
 	it('requires donor and recipient payloads before build', () => {
