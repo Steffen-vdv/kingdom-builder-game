@@ -1,5 +1,6 @@
 import { formatStatValue } from '../../utils/stats';
 import type { TranslationAssets } from '../context';
+import type { ResourceV2MetadataSnapshot } from '../resourceV2';
 
 export interface SignedDelta {
 	before: number;
@@ -34,15 +35,14 @@ export function formatResourceChange(
 }
 
 export function formatResourceSource(
-	icon: string | undefined,
-	fallback: string,
+	metadata: ResourceV2MetadataSnapshot,
 	change: SignedDelta,
 	source: string | undefined,
 ): string | undefined {
 	if (!source) {
 		return undefined;
 	}
-	const symbol = icon || fallback;
+	const symbol = metadata.icon || metadata.label || metadata.id;
 	const deltaText = signedNumber(change.delta);
 	return ` (${symbol}${deltaText} from ${source})`;
 }

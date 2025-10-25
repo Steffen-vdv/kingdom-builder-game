@@ -28,6 +28,10 @@ describe('Action edge cases', () => {
 			new RegExp(`Insufficient ${resourceKey}`),
 		);
 		expect(engineContext.activePlayer.resources[resourceKey]).toBe(amount - 1);
+		const resourceId = engineContext.activePlayer.getResourceV2Id(resourceKey);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
+			amount - 1,
+		);
 	});
 
 	it('rejects actions when a primary resource is exhausted', () => {
@@ -44,6 +48,11 @@ describe('Action edge cases', () => {
 			new RegExp(`Insufficient ${primaryKey}`),
 		);
 		expect(engineContext.activePlayer.resources[primaryKey]).toBe(
+			primaryAmount - 1,
+		);
+		const primaryResourceId =
+			engineContext.activePlayer.getResourceV2Id(primaryKey);
+		expect(engineContext.activePlayer.resourceValues[primaryResourceId]).toBe(
 			primaryAmount - 1,
 		);
 	});

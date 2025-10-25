@@ -5,6 +5,7 @@ import type {
 	SessionPassiveSummary,
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
+	SessionResourceBoundsV2,
 } from '@kingdom-builder/protocol';
 import {
 	appendResourceChanges,
@@ -18,6 +19,7 @@ import { createTranslationDiffContext } from './resourceSources/context';
 import type {
 	TranslationActionCategoryRegistry,
 	TranslationAssets,
+	TranslationResourceV2MetadataSelectors,
 } from '../context';
 
 export interface PlayerSnapshot {
@@ -32,6 +34,8 @@ export interface PlayerSnapshot {
 		developments: string[];
 	}>;
 	passives: SessionPassiveSummary[];
+	valuesV2?: Record<string, number>;
+	resourceBoundsV2?: Record<string, SessionResourceBoundsV2>;
 }
 
 type SnapshotInput =
@@ -67,6 +71,22 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 		return {};
 	})();
 	const passives = 'passives' in playerState ? [...playerState.passives] : [];
+	const valuesV2 =
+		'valuesV2' in playerState && playerState.valuesV2
+			? { ...playerState.valuesV2 }
+			: undefined;
+	const resourceBoundsV2 =
+		'resourceBoundsV2' in playerState && playerState.resourceBoundsV2
+			? Object.fromEntries(
+					Object.entries(playerState.resourceBoundsV2).map(([id, entry]) => [
+						id,
+						{
+							lowerBound: entry.lowerBound ?? null,
+							upperBound: entry.upperBound ?? null,
+						} satisfies SessionResourceBoundsV2,
+					]),
+				)
+			: undefined;
 	return {
 		resources: { ...playerState.resources },
 		stats: { ...playerState.stats },
@@ -74,6 +94,8 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 		buildings: buildingList,
 		lands,
 		passives,
+		...(valuesV2 ? { valuesV2 } : {}),
+		...(resourceBoundsV2 ? { resourceBoundsV2 } : {}),
 	};
 }
 
@@ -81,10 +103,20 @@ export function collectResourceKeys(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
 ): string[] {
-	return Object.keys({
-		...previousSnapshot.resources,
-		...nextSnapshot.resources,
-	});
+	const keys = new Set<string>();
+	for (const key of Object.keys(previousSnapshot.resources)) {
+		keys.add(key);
+	}
+	for (const key of Object.keys(nextSnapshot.resources)) {
+		keys.add(key);
+	}
+	for (const key of Object.keys(previousSnapshot.valuesV2 ?? {})) {
+		keys.add(key);
+	}
+	for (const key of Object.keys(nextSnapshot.valuesV2 ?? {})) {
+		keys.add(key);
+	}
+	return Array.from(keys);
 }
 
 interface DiffContext extends SnapshotContext {
@@ -103,6 +135,7 @@ interface DiffContext extends SnapshotContext {
 	};
 	actionCategories: TranslationActionCategoryRegistry;
 	assets: TranslationAssets;
+	resourceMetadataV2: TranslationResourceV2MetadataSelectors;
 }
 
 export function diffSnapshots(
@@ -117,6 +150,7 @@ export function diffSnapshots(
 		nextSnapshot,
 		resourceKeys,
 		context.assets,
+		context.resourceMetadataV2,
 	);
 	for (const change of resourceChanges) {
 		changeSummaries.push(change.summary);
@@ -128,6 +162,7 @@ export function diffSnapshots(
 		nextSnapshot,
 		undefined,
 		context.assets,
+		context.resourceMetadataV2,
 	);
 	const diffContext = createTranslationDiffContext({
 		...context,

@@ -4,12 +4,16 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import ResourceBar from '../src/components/player/ResourceBar';
+import { formatResourceMagnitude } from '../src/components/player/ResourceButton';
+import { formatResourceTitle } from '../src/components/player/resourceV2Snapshots';
 import { describeEffects, splitSummary } from '../src/translation';
 import { MAX_TIER_SUMMARY_LINES } from '../src/components/player/buildTierEntries';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type {
 	SessionPlayerId,
 	SessionRuleSnapshot,
+	SessionResourceCatalogV2,
+	SessionSnapshot,
 } from '@kingdom-builder/protocol';
 import {
 	createSessionSnapshot,
@@ -17,13 +21,13 @@ import {
 } from './helpers/sessionFixtures';
 import { selectSessionView } from '../src/state/sessionSelectors';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
-import { createTestRegistryMetadata } from './helpers/registryMetadata';
-import {
-	formatIconLabel,
-	toDescriptorDisplay,
-} from '../src/components/player/registryDisplays';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createPassiveGame } from './helpers/createPassiveDisplayGame';
+import {
+	createResourceV2Registries,
+	resourceV2Definition,
+} from '@kingdom-builder/testing';
+import { getResourceIdForLegacy } from '../src/translation/resourceV2';
 
 type MockGame = GameEngineContextValue;
 type TierDefinition = SessionRuleSnapshot['tierDefinitions'][number];
@@ -77,6 +81,9 @@ function createResourceBarScenario() {
 		resourceKeys.find((key) => key !== happinessKey) ??
 		resourceKeys[0] ??
 		happinessKey;
+	const happinessResourceId =
+		getResourceIdForLegacy('resources', happinessKey) ??
+		`resource:test:${happinessKey}`;
 	const tierDefinitions: TierDefinition[] = [
 		{
 			id: 'tier.strained',
@@ -159,16 +166,74 @@ function createResourceBarScenario() {
 	};
 	const activePlayerId = 'player-1' as SessionPlayerId;
 	const opponentId = 'player-2' as SessionPlayerId;
-	const activePlayer = createSnapshotPlayer({
-		id: activePlayerId,
-		name: 'Player One',
-		resources: { [happinessKey]: 6 },
-	});
-	const opponent = createSnapshotPlayer({
-		id: opponentId,
-		name: 'Player Two',
-	});
+	const happinessDescriptor = scaffold.metadata.resources?.[happinessKey];
+
+	const { resources: resourceRegistry, groups: resourceGroupRegistry } =
+		createResourceV2Registries({
+			resources: [
+				resourceV2Definition({
+					id: happinessResourceId,
+					metadata: {
+						label: happinessDescriptor?.label ?? 'Happiness',
+						icon: happinessDescriptor?.icon ?? '🙂',
+						description: happinessDescriptor?.description ?? undefined,
+						displayAsPercent: happinessDescriptor?.displayAsPercent,
+					},
+					bounds: { lowerBound: 0, upperBound: 20 },
+				}),
+			],
+		});
+	const resourceCatalogV2: SessionResourceCatalogV2 = {
+		resources: resourceRegistry,
+		groups: resourceGroupRegistry,
+	};
+	const resourceMetadataV2 = {
+		[happinessResourceId]: {
+			label: 'Catalog Happiness',
+			icon: happinessDescriptor?.icon ?? '🙂',
+			description: 'Catalog-provided metadata for happiness.',
+			...(happinessDescriptor?.displayAsPercent !== undefined
+				? { displayAsPercent: happinessDescriptor.displayAsPercent }
+				: {}),
+			...(happinessDescriptor?.format
+				? { format: happinessDescriptor.format }
+				: {}),
+		},
+	};
 	const metadata = structuredClone(scaffold.metadata);
+	metadata.resourcesV2 = {
+		[happinessResourceId]: {
+			label: 'UI Happiness',
+			icon: '😊',
+			description: 'Translation metadata for happiness resource.',
+			...(happinessDescriptor?.displayAsPercent !== undefined
+				? { displayAsPercent: happinessDescriptor.displayAsPercent }
+				: {}),
+			...(happinessDescriptor?.format
+				? { format: happinessDescriptor.format }
+				: {}),
+		},
+	};
+	metadata.resourceGroupsV2 = metadata.resourceGroupsV2 ?? {};
+
+	const createPlayer = (
+		id: SessionPlayerId,
+		name: string,
+		resource: number,
+	): SessionSnapshot['game']['players'][number] =>
+		createSnapshotPlayer({
+			id,
+			name,
+			resources: { [happinessKey]: resource },
+			valuesV2: { [happinessResourceId]: resource },
+			resourceBoundsV2: {
+				[happinessResourceId]: { lowerBound: 0, upperBound: 20 },
+			},
+		});
+
+	const activePlayer = createPlayer(activePlayerId, 'Player One', 6);
+	const opponent = createPlayer(opponentId, 'Player Two', 4);
+
 	const sessionState = createSessionSnapshot({
 		players: [activePlayer, opponent],
 		activePlayerId,
@@ -177,6 +242,8 @@ function createResourceBarScenario() {
 		actionCostResource,
 		ruleSnapshot,
 		metadata,
+		resourceCatalogV2,
+		resourceMetadataV2,
 	});
 	const { mockGame, handleHoverCard, clearHoverCard, registries } =
 		createPassiveGame(sessionState, {
@@ -189,18 +256,17 @@ function createResourceBarScenario() {
 	mockGame.sessionSnapshot = sessionState;
 	mockGame.handleHoverCard = handleHoverCard;
 	mockGame.clearHoverCard = clearHoverCard;
-	const metadataSelectors = createTestRegistryMetadata(
-		registries,
-		sessionState.metadata,
-	);
 	return {
 		mockGame: mockGame as MockGame,
 		registries,
 		metadata: sessionState.metadata,
 		ruleSnapshot,
 		happinessKey,
-		activePlayer,
-		metadataSelectors,
+		happinessResourceId,
+		activePlayer:
+			sessionState.game.players.find(
+				(player) => player.id === activePlayerId,
+			) ?? activePlayer,
 		sessionState,
 		sessionView,
 		handleHoverCard,
@@ -223,8 +289,8 @@ describe('<ResourceBar /> happiness hover card', () => {
 			metadata,
 			ruleSnapshot,
 			happinessKey,
+			happinessResourceId,
 			activePlayer,
-			metadataSelectors,
 			handleHoverCard,
 		} = scenario;
 		currentGame = mockGame;
@@ -233,24 +299,36 @@ describe('<ResourceBar /> happiness hover card', () => {
 				<ResourceBar player={activePlayer} />
 			</RegistryMetadataProvider>,
 		);
-		const resourceDescriptor = toDescriptorDisplay(
-			metadataSelectors.resourceMetadata.select(happinessKey),
+		const resourceMetadataSnapshot =
+			mockGame.translationContext.resourceMetadataV2.get(happinessResourceId);
+		expect(resourceMetadataSnapshot).toBeDefined();
+		if (!resourceMetadataSnapshot) {
+			throw new Error('Expected happiness ResourceV2 metadata.');
+		}
+		const resourceValue =
+			activePlayer.valuesV2?.[happinessResourceId] ??
+			activePlayer.resources[happinessKey] ??
+			0;
+		const formattedValue = formatResourceMagnitude(
+			resourceValue,
+			resourceMetadataSnapshot,
 		);
-		const resourceValue = activePlayer.resources[happinessKey] ?? 0;
 		const button = screen.getByRole('button', {
-			name: `${resourceDescriptor.label}: ${resourceValue}`,
+			name: `${resourceMetadataSnapshot.label}: ${formattedValue}`,
 		});
-		const descriptorIcon = resourceDescriptor.icon;
-		expect(descriptorIcon).toBeDefined();
-		expect(button).toHaveTextContent(descriptorIcon as string);
+		if (resourceMetadataSnapshot.icon) {
+			expect(button).toHaveTextContent(resourceMetadataSnapshot.icon);
+		}
 		fireEvent.mouseEnter(button);
 		expect(handleHoverCard).toHaveBeenCalled();
 		const hoverCard = handleHoverCard.mock.calls.at(-1)?.[0];
 		expect(hoverCard).toBeTruthy();
-		expect(hoverCard?.title).toBe(formatIconLabel(resourceDescriptor));
+		expect(hoverCard?.title).toBe(
+			formatResourceTitle(resourceMetadataSnapshot),
+		);
 		expect(hoverCard?.description).toBeUndefined();
 		expect(hoverCard?.effectsTitle).toBe(
-			`Happiness thresholds (current: ${resourceValue})`,
+			`Happiness thresholds (current: ${formattedValue})`,
 		);
 		const tierEntries = (hoverCard?.effects ?? []).filter(
 			(section): section is SummaryGroupLike =>
@@ -273,7 +351,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 		const orderedTiers = [...tiers].sort(
 			(a, b) => getRangeStart(b) - getRangeStart(a),
 		);
-		const tierResourceIcon = resourceDescriptor.icon ?? '❔';
+		const tierResourceIcon = resourceMetadataSnapshot.icon ?? '❔';
 		const activeTierIndex = orderedTiers.findIndex((tier) => {
 			const { min, max } = tier.range;
 			return valueInRange(resourceValue, min, max);
@@ -305,12 +383,20 @@ describe('<ResourceBar /> happiness hover card', () => {
 						? tier.range.min
 						: (tier.range.max ?? tier.range.min);
 				if (threshold !== undefined) {
-					const thresholdSuffix = `${threshold}${
-						orientation === 'higher' ? '+' : '-'
-					}`;
-					const expectedLabel = tierResourceIcon
-						? `${tierResourceIcon} ${thresholdSuffix}`
-						: thresholdSuffix;
+					const formattedThreshold = formatResourceMagnitude(
+						threshold,
+						resourceMetadataSnapshot,
+					);
+					const suffix =
+						orientation === 'higher'
+							? `${formattedThreshold}+`
+							: `${formattedThreshold}-`;
+					const expectedLabel = [tierResourceIcon, suffix]
+						.filter((part): part is string =>
+							Boolean(part && part.trim().length > 0),
+						)
+						.join(' ')
+						.trim();
 					expect(title.includes(expectedLabel)).toBe(true);
 					expect(title.includes('(')).toBe(true);
 				}

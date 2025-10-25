@@ -17,7 +17,6 @@ describe('resource:add effect', () => {
 		actions.add('grant_gold', {
 			id: 'grant_gold',
 			name: 'Grant Gold',
-			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'resource',
@@ -48,7 +47,6 @@ describe('resource:add effect', () => {
 		actions.add('round_up', {
 			id: 'round_up',
 			name: 'Round Up',
-			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'resource',
@@ -61,7 +59,6 @@ describe('resource:add effect', () => {
 		actions.add('round_down', {
 			id: 'round_down',
 			name: 'Round Down',
-			baseCosts: { [CResource.ap]: 0 },
 			effects: [
 				{
 					type: 'resource',

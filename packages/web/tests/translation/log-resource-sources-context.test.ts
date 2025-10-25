@@ -75,6 +75,11 @@ describe('translation diff resource source context', () => {
 				formatPassiveRemoval: (description: string) =>
 					`Active as long as ${description}`,
 			},
+			resourceMetadataV2: {
+				list: () => [],
+				get: (id: string) => ({ id, label: id }),
+				has: () => false,
+			},
 			evaluate: evaluateMock,
 		};
 		const step: StepEffects = {

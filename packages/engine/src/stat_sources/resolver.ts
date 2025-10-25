@@ -15,8 +15,9 @@ export function resolveStatSourceMeta(
 	context: EngineContext,
 	statKey: StatKey,
 ): StatSourceMeta {
+	const resourceId = context.activePlayer.getStatResourceV2Id(statKey);
 	const meta: StatSourceMeta = {
-		key: createStatSourceKey(effectDefinition, statKey),
+		key: createStatSourceKey(effectDefinition, resourceId),
 		longevity: 'permanent',
 	};
 	const effectInfo: StatSourceMeta['effect'] = {};
@@ -35,7 +36,7 @@ export function resolveStatSourceMeta(
 			mergeMeta(meta, partialMeta);
 		}
 	}
-	const effectMeta = extractMetaFromEffect(effectDefinition, statKey);
+	const effectMeta = extractMetaFromEffect(effectDefinition, resourceId);
 	if (effectMeta) {
 		mergeMeta(meta, effectMeta);
 	}
@@ -51,9 +52,10 @@ export function applyStatDelta(
 	if (Math.abs(delta) < STAT_SOURCE_EPSILON) {
 		return;
 	}
+	const resourceId = playerState.getStatResourceV2Id(statKey);
 	const playerStatSources = playerState.statSources;
 	const sources =
-		playerStatSources[statKey] ?? (playerStatSources[statKey] = {});
+		playerStatSources[resourceId] ?? (playerStatSources[resourceId] = {});
 	const existingEntry = sources[meta.key];
 	const normalizedDelta = Math.abs(delta) < STAT_SOURCE_EPSILON ? 0 : delta;
 	if (!existingEntry) {
@@ -84,6 +86,7 @@ export function recordEffectStatDelta(
 	if (Math.abs(delta) < STAT_SOURCE_EPSILON) {
 		return;
 	}
+	const resourceId = context.activePlayer.getStatResourceV2Id(statKey);
 	const meta = resolveStatSourceMeta(effectDefinition, context, statKey);
 	if (
 		effectDefinition.type === 'stat' &&
@@ -97,8 +100,17 @@ export function recordEffectStatDelta(
 				? params['percentStat'].trim()
 				: '';
 		if (percentStatKey) {
-			appendDependencyLink(meta, { type: 'stat', id: percentStatKey });
+			const activePlayer = context.activePlayer;
+			const percentStatId = activePlayer.getStatResourceV2Id(percentStatKey);
+			appendDependencyLink(meta, {
+				type: 'stat',
+				id: percentStatId,
+			});
 		}
 	}
 	applyStatDelta(context.activePlayer, statKey, delta, meta);
+	context.activePlayer.resourceTouched[resourceId] = true;
+	context.activePlayer.statsHistory[statKey] = Boolean(
+		context.activePlayer.resourceTouched[resourceId],
+	);
 }

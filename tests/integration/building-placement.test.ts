@@ -38,6 +38,7 @@ describe('Building placement integration', () => {
 		expect(expandAfter).not.toEqual(expandBefore);
 
 		const resPre = { ...engineContext.activePlayer.resources };
+		const v2Pre = { ...engineContext.activePlayer.resourceValues };
 		const statsPre = { ...engineContext.activePlayer.stats };
 		const landPre = engineContext.activePlayer.lands.length;
 
@@ -45,14 +46,26 @@ describe('Building placement integration', () => {
 
 		for (const [key, cost] of Object.entries(expandAfter.costs)) {
 			const gain = expandAfter.results.resources[key] || 0;
+			const resourceId = engineContext.activePlayer.getResourceV2Id(key);
+			const v2Gain = expandAfter.results.valuesV2[resourceId] || 0;
+			expect(v2Gain).toBe(gain);
 			expect(engineContext.activePlayer.resources[key]).toBe(
 				resPre[key] - cost + gain,
+			);
+			expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
+				(v2Pre[resourceId] ?? 0) - cost + v2Gain,
 			);
 		}
 		for (const [key, gain] of Object.entries(expandAfter.results.resources)) {
 			if (expandAfter.costs[key] === undefined) {
+				const resourceId = engineContext.activePlayer.getResourceV2Id(key);
+				const v2Gain = expandAfter.results.valuesV2[resourceId] ?? 0;
+				expect(v2Gain).toBe(gain);
 				expect(engineContext.activePlayer.resources[key]).toBe(
 					resPre[key] + gain,
+				);
+				expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
+					(v2Pre[resourceId] ?? 0) + v2Gain,
 				);
 			}
 		}

@@ -1,5 +1,19 @@
 export * as session from './session';
 export * as actions from './actions';
+export * as resourceV2 from './resource-v2';
+
+export type {
+	ResourceV2Bounds,
+	ResourceV2Definition,
+	ResourceV2GlobalCostConfig,
+	ResourceV2GroupDefinition,
+	ResourceV2GroupParent,
+	ResourceV2Metadata,
+	ResourceV2TierDefinition,
+	ResourceV2TierThreshold,
+	ResourceV2TierTrack,
+	ResourceV2TierTrackMetadata,
+} from './resource-v2';
 
 export { Registry } from './registry';
 export type { StepDef, PhaseDef } from './phases';
@@ -79,6 +93,7 @@ export type {
 	StartModeConfig,
 	StartModesConfig,
 	GameConfig,
+	ResourceV2CatalogSnapshot,
 	PhaseStepConfig,
 	PhaseConfig,
 } from './config/schema';
@@ -112,6 +127,19 @@ export type {
 	SessionPlayerStateSnapshot,
 	SessionGameConclusionSnapshot,
 	SessionGameSnapshot,
+	SessionResourceCatalogV2,
+	SessionResourceRegistryV2,
+	SessionResourceGroupRegistryV2,
+	SessionResourceDefinitionV2,
+	SessionResourceGroupDefinitionV2,
+	SessionResourceGroupParentV2,
+	SessionResourceMetadataV2,
+	SessionResourceBoundsV2,
+	SessionResourceGlobalCostConfigV2,
+	SessionResourceTierTrackV2,
+	SessionResourceTierTrackMetadataV2,
+	SessionResourceTierDefinitionV2,
+	SessionResourceTierThresholdV2,
 	SessionAdvanceSkipSourceSnapshot,
 	SessionAdvanceSkipSnapshot,
 	SessionPhaseStepDefinition,

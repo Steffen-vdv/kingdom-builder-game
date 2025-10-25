@@ -11,6 +11,10 @@ import {
 	RULES,
 	Resource as CResource,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -25,6 +29,7 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
+import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -33,6 +38,7 @@ const BASE: {
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
 	start: StartConfig;
+	resourceCatalogV2: RuntimeResourceContent;
 } = {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
@@ -40,6 +46,10 @@ const BASE: {
 	populations: POPULATIONS,
 	phases: PHASES,
 	start: GAME_START,
+	resourceCatalogV2: {
+		resources: RESOURCE_V2_REGISTRY,
+		groups: RESOURCE_GROUP_V2_REGISTRY,
+	},
 };
 
 type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
@@ -54,6 +64,7 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		phases: rest.phases ?? BASE.phases,
 		start: rest.start ?? BASE.start,
 		rules: rules ?? RULES,
+		resourceCatalogV2: rest.resourceCatalogV2 ?? BASE.resourceCatalogV2,
 	});
 }
 
@@ -121,7 +132,6 @@ describe('EngineSession', () => {
 	it('simulates actions before executing to avoid partial failures', () => {
 		const content = createContentFactory();
 		const failingAction = content.action({
-			baseCosts: { [CResource.ap]: 1 },
 			effects: Array.from({ length: 3 }, () => ({
 				type: 'land',
 				method: LandMethods.TILL,
@@ -153,6 +163,19 @@ describe('EngineSession', () => {
 		snapshot.game.players[0]!.resources[CResource.gold] = 999;
 		const next = session.getSnapshot();
 		expect(next.game.players[0]!.resources[CResource.gold]).not.toBe(999);
+	});
+
+	it('includes ResourceV2 data alongside legacy snapshots', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const catalog = snapshot.game.resourceCatalogV2;
+		expect(catalog).toBeDefined();
+		const player = snapshot.game.players[0]!;
+		expect(player.valuesV2).toBeDefined();
+		const goldLegacy = player.resources[CResource.gold];
+		expect(goldLegacy).toBeDefined();
+		expect(player.valuesV2?.['resource:core:gold']).toBe(goldLegacy);
+		expect(catalog?.resources.byId['resource:core:gold']?.label).toBeDefined();
 	});
 
 	it('provides cloned advance results', () => {
@@ -450,6 +473,8 @@ describe('EngineSession', () => {
 		const activeId = snapshot.game.activePlayerId;
 		const result = session.simulateUpcomingPhases(activeId);
 		expect(result.steps.length).toBeGreaterThan(0);
+		expect(result.before.valuesV2).toBeDefined();
+		expect(result.after.valuesV2).toBeDefined();
 		const firstStep = result.steps[0];
 		if (!firstStep) {
 			throw new Error('Expected at least one simulation step.');

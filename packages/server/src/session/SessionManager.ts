@@ -13,6 +13,10 @@ import {
 	RULES,
 	PRIMARY_ICON_ID,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	SessionRegistriesPayload,
 	PhaseConfig,
@@ -119,6 +123,10 @@ export class SessionManager {
 			phases: engineOverrides.phases ?? PHASES,
 			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
+			resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? {
+				resources: RESOURCE_V2_REGISTRY,
+				groups: RESOURCE_GROUP_V2_REGISTRY,
+			},
 		};
 		const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
 		const resourceOverrideSnapshot = resourceRegistry

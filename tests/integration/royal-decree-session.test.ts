@@ -11,6 +11,11 @@ import {
 	Resource,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
+import { getResourceV2Id } from '@kingdom-builder/contents/resources';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 
 interface EffectGroupOption {
 	id: string;
@@ -41,12 +46,21 @@ describe('royal decree via session', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			resourceCatalogV2: {
+				resources: RESOURCE_V2_REGISTRY,
+				groups: RESOURCE_GROUP_V2_REGISTRY,
+			},
 		});
 		let snapshot = session.getSnapshot();
 		while (snapshot.game.currentPhase !== 'main') {
 			session.advancePhase();
 			snapshot = session.getSnapshot();
 		}
+		const goldId = getResourceV2Id(Resource.gold);
+		expect(
+			snapshot.game.resourceCatalogV2?.resources.byId[goldId],
+		).toBeDefined();
+		expect(snapshot.game.players[0]?.valuesV2?.[goldId]).toBeDefined();
 		const withGroup = ACTIONS.entries().find(([, def]) =>
 			def.effects.some(isEffectGroup),
 		);

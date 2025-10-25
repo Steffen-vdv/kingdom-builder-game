@@ -14,7 +14,7 @@ describe('actions with synthetic content', () => {
 	it('pays costs and applies resource effects', () => {
 		const content = createContentFactory();
 		const actionDefinition = content.action({
-			baseCosts: { [CResource.ap]: 1, [CResource.gold]: 2 },
+			baseCosts: { [CResource.gold]: 2 },
 			effects: [
 				{
 					type: 'resource',
@@ -51,7 +51,6 @@ describe('actions with synthetic content', () => {
 			],
 		});
 		const buildAction = content.action({
-			baseCosts: { [CResource.ap]: 1 },
 			effects: [
 				{ type: 'building', method: 'add', params: { id: building.id } },
 			],
@@ -86,7 +85,7 @@ describe('actions with synthetic content', () => {
 			],
 		});
 		const developAction = content.action({
-			baseCosts: { [CResource.ap]: 1, [CResource.gold]: 1 },
+			baseCosts: { [CResource.gold]: 1 },
 			effects: [
 				{
 					type: 'development',

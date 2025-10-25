@@ -45,7 +45,7 @@ export {
 	actionEffectGroupOptionParams,
 } from './builders/actionEffectGroups';
 
-export { actionParams, buildingParams, developmentParams, landParams, passiveParams, resourceParams, statParams } from './builders/effectParams';
+export { actionParams, buildingParams, developmentParams, landParams, passiveParams } from './builders/effectParams';
 
 export {
 	AttackParamsBuilder,
@@ -54,7 +54,6 @@ export {
 	EvaluationTargetTypes,
 	PopulationEffectParamsBuilder,
 	ResultModParamsBuilder,
-	TransferParamsBuilder,
 	attackParams,
 	costModParams,
 	developmentTarget,
@@ -62,7 +61,6 @@ export {
 	populationParams,
 	populationTarget,
 	resultModParams,
-	transferParams,
 } from './builders/advancedEffectParams';
 
 export type { AttackStatAnnotation, AttackStatRole } from './builders/advancedEffectParams';

@@ -28,6 +28,7 @@ import {
 	type SessionStaticMetadataPayload,
 } from './buildSessionMetadata.js';
 import { cloneRegistry, freezeSerializedRegistry } from './registryUtils.js';
+import type { RuntimeResourceContent } from '@kingdom-builder/engine';
 
 export type SessionResourceRegistry =
 	SerializedRegistry<SessionResourceDefinition>;
@@ -41,6 +42,7 @@ export interface SessionBaseOptions {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
+	resourceCatalogV2: RuntimeResourceContent;
 }
 
 interface OverrideContext {

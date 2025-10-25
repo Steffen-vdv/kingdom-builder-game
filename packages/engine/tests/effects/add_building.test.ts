@@ -1,8 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { buildingAdd, type EffectDef } from '../../src/effects/index.ts';
+import { collectBuildingAddCosts } from '../../src/effects/building_add.ts';
+import type { EngineContext } from '../../src/context';
 
 describe('building:add effect', () => {
 	it('adds building and applies its passives', () => {
@@ -158,5 +161,83 @@ describe('building:add effect', () => {
 		const afterRemoval =
 			getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 		expect(afterRemoval).toBe(baseCost);
+	});
+
+	it('adds passives for new structures and reports duplicate installations', () => {
+		const content = createContentFactory();
+		const building = content.building({
+			onBuild: [
+				{
+					type: 'resource',
+					method: 'add',
+					params: { key: CResource.gold, amount: 1 },
+				},
+			],
+		});
+		const addPassive = vi.fn();
+		const context = {
+			activePlayer: {
+				buildings: new Set<string>(),
+			},
+			buildings: {
+				get: vi.fn().mockReturnValue(building),
+			},
+			passives: {
+				addPassive,
+			},
+		} as unknown as EngineContext;
+		const effect: EffectDef = {
+			type: 'building',
+			method: 'add',
+			params: { id: building.id },
+		};
+		buildingAdd(effect, context, 1);
+		expect(context.activePlayer.buildings.has(building.id)).toBe(true);
+		expect(addPassive).toHaveBeenCalledTimes(1);
+		const [passiveConfig, , meta] = addPassive.mock.calls[0];
+		expect(passiveConfig).toEqual({
+			id: building.id,
+			effects: building.onBuild,
+		});
+		expect(meta.frames?.()).toEqual({
+			kind: 'building',
+			id: building.id,
+			longevity: 'ongoing',
+			dependsOn: [{ type: 'building', id: building.id }],
+			removal: { type: 'building', id: building.id, detail: 'removed' },
+		});
+		expect(() => buildingAdd(effect, context, 1)).toThrow(
+			`Building ${building.id} already built`,
+		);
+		expect(addPassive).toHaveBeenCalledTimes(1);
+	});
+
+	it('collects building costs when requested and ignores undefined ids', () => {
+		const content = createContentFactory();
+		const building = content.building();
+		const base: Record<string, number> = {};
+		const context = {
+			buildings: {
+				get: vi.fn().mockReturnValue(building),
+			},
+		} as unknown as EngineContext;
+		const effectWithId: EffectDef = {
+			type: 'building',
+			method: 'add',
+			params: { id: building.id },
+		};
+		collectBuildingAddCosts(effectWithId, base, context);
+		for (const [key, value] of Object.entries(building.costs)) {
+			expect(base[key]).toBe(value ?? 0);
+		}
+		const emptyBase: Record<string, number> = {};
+		const getSpy = vi.fn();
+		collectBuildingAddCosts(
+			{ type: 'building', method: 'add', params: {} } as EffectDef,
+			emptyBase,
+			{ buildings: { get: getSpy } } as unknown as EngineContext,
+		);
+		expect(getSpy).not.toHaveBeenCalled();
+		expect(emptyBase).toEqual({});
 	});
 });

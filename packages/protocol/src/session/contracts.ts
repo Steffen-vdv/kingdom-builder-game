@@ -24,6 +24,10 @@ import type {
 	SimulateUpcomingPhasesResult,
 } from './index';
 import type { RuleSet } from '../services';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+} from '../resource-v2';
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -57,6 +61,19 @@ export interface SessionRegistriesPayload {
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
+	/**
+	 * ResourceV2 registry of concrete resources. ResourceV2-aware
+	 * transports populate this alongside legacy registries; the field is
+	 * optional purely for backwards compatibility with pre-migration
+	 * servers.
+	 */
+	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	/**
+	 * ResourceV2 registry of group definitions (including virtual parents).
+	 * Presence mirrors {@link resourcesV2}; clients should treat it as a
+	 * first-class payload in migrated environments.
+	 */
+	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
 
 export type SessionMetadataSnapshot = Pick<
@@ -83,6 +100,20 @@ export interface SessionRuntimeConfigResponse {
 	rules: RuleSet;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
+	/**
+	 * ResourceV2 registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourcesV2}. Legacy runtimes may
+	 * still omit it, but migrated servers emit this alongside legacy
+	 * registries.
+	 */
+	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	/**
+	 * ResourceV2 group registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Provided whenever
+	 * ResourceV2 data is active; optional only for compatibility with
+	 * legacy transports.
+	 */
+	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
 }
 
 export interface SessionCreateResponse {
