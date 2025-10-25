@@ -8,101 +8,12 @@ import {
 	increaseResourceLowerBound,
 	increaseResourceUpperBound,
 } from '../../src/resource-v2/state.ts';
-import type {
-	RuntimeResourceCatalog,
-	RuntimeResourceDefinition,
-	RuntimeResourceGroup,
-	RuntimeResourceGroupParent,
-	RuntimeResourceTierDefinition,
-	RuntimeResourceTierTrack,
-} from '../../src/resource-v2/types.ts';
-
-function createTier(
-	id: string,
-	min: number | null,
-	max: number | null,
-	order: number,
-): RuntimeResourceTierDefinition {
-	return {
-		id,
-		label: `${id}-label`,
-		icon: `${id}-icon`,
-		description: `${id}-description`,
-		order,
-		resolvedOrder: order,
-		threshold: { min, max },
-		enterEffects: [],
-		exitEffects: [],
-	};
-}
-
-function createTierTrack(id: string): RuntimeResourceTierTrack {
-	return {
-		metadata: {
-			id,
-			label: `${id}-label`,
-			icon: `${id}-icon`,
-			description: `${id}-description`,
-			order: null,
-			resolvedOrder: 0,
-		},
-		tiers: [
-			createTier(`${id}-low`, null, 3, 0),
-			createTier(`${id}-mid`, 4, 7, 1),
-			createTier(`${id}-high`, 8, null, 2),
-		],
-	};
-}
-
-function createResource(
-	id: string,
-	groupId: string | null,
-	lowerBound: number | null,
-	upperBound: number | null,
-	trackId: string,
-): RuntimeResourceDefinition {
-	return {
-		id,
-		label: `${id}-label`,
-		icon: `${id}-icon`,
-		description: `${id}-description`,
-		order: null,
-		resolvedOrder: 0,
-		tags: [],
-		lowerBound,
-		upperBound,
-		displayAsPercent: false,
-		trackValueBreakdown: false,
-		trackBoundBreakdown: false,
-		groupId,
-		groupOrder: null,
-		resolvedGroupOrder: null,
-		globalCost: undefined,
-		tierTrack: createTierTrack(trackId),
-	};
-}
-
-function createParent(
-	id: string,
-	lowerBound: number | null,
-	upperBound: number | null,
-): RuntimeResourceGroupParent {
-	return {
-		id,
-		label: `${id}-label`,
-		icon: `${id}-icon`,
-		description: `${id}-description`,
-		order: null,
-		resolvedOrder: 0,
-		tags: [],
-		lowerBound,
-		upperBound,
-		displayAsPercent: false,
-		trackValueBreakdown: false,
-		trackBoundBreakdown: false,
-		tierTrack: createTierTrack(`${id}-track`),
-	};
-}
+import { createRuntimeResourceCatalog } from '../../src/resource-v2/index.ts';
+import {
+	createResourceV2Registries,
+	resourceV2Definition,
+	resourceV2GroupDefinition,
+} from '@kingdom-builder/testing';
 
 const RESOURCE_A = 'resource-a';
 const RESOURCE_B = 'resource-b';
@@ -110,49 +21,95 @@ const PARENT_ID = 'resource-parent';
 const GROUP_ID = 'resource-group';
 const NO_PARENT_GROUP_ID = 'no-parent-group';
 
-const resourceA = createResource(
-	RESOURCE_A,
-	GROUP_ID,
-	0,
-	null,
-	`${RESOURCE_A}-track`,
-);
-const resourceB = createResource(
-	RESOURCE_B,
-	GROUP_ID,
-	0,
-	4,
-	`${RESOURCE_B}-track`,
-);
-const parent = createParent(PARENT_ID, 0, null);
-const groupWithParent: RuntimeResourceGroup = {
-	id: GROUP_ID,
-	order: null,
-	resolvedOrder: 0,
-	parent,
-};
-const groupWithoutParent: RuntimeResourceGroup = {
-	id: NO_PARENT_GROUP_ID,
-	order: null,
-	resolvedOrder: 1,
-};
+function createTierTrack(id: string) {
+	return {
+		metadata: {
+			id,
+			label: `${id}-label`,
+			icon: `${id}-icon`,
+			description: `${id}-description`,
+		},
+		tiers: [
+			{
+				id: `${id}-low`,
+				label: `${id}-low-label`,
+				icon: `${id}-low-icon`,
+				description: `${id}-low-description`,
+				threshold: { max: 3 },
+				enterEffects: [],
+				exitEffects: [],
+			},
+			{
+				id: `${id}-mid`,
+				label: `${id}-mid-label`,
+				icon: `${id}-mid-icon`,
+				description: `${id}-mid-description`,
+				threshold: { min: 4, max: 7 },
+				enterEffects: [],
+				exitEffects: [],
+			},
+			{
+				id: `${id}-high`,
+				label: `${id}-high-label`,
+				icon: `${id}-high-icon`,
+				description: `${id}-high-description`,
+				threshold: { min: 8 },
+				enterEffects: [],
+				exitEffects: [],
+			},
+		],
+	} as const;
+}
 
-const catalog: RuntimeResourceCatalog = {
-	resources: {
-		byId: {
-			[RESOURCE_A]: resourceA,
-			[RESOURCE_B]: resourceB,
-		},
-		ordered: [resourceA, resourceB],
+const resourceATrack = createTierTrack(`${RESOURCE_A}-track`);
+const resourceBTrack = createTierTrack(`${RESOURCE_B}-track`);
+const parentTrack = createTierTrack(`${PARENT_ID}-track`);
+
+const groupWithParentDefinition = resourceV2GroupDefinition({
+	id: GROUP_ID,
+	parent: {
+		id: PARENT_ID,
+		label: `${PARENT_ID}-label`,
+		icon: `${PARENT_ID}-icon`,
+		description: `${PARENT_ID}-description`,
+		lowerBound: 0,
+		tierTrack: parentTrack,
 	},
-	groups: {
-		byId: {
-			[GROUP_ID]: groupWithParent,
-			[NO_PARENT_GROUP_ID]: groupWithoutParent,
-		},
-		ordered: [groupWithParent, groupWithoutParent],
+});
+
+const groupWithoutParentDefinition = resourceV2GroupDefinition({
+	id: NO_PARENT_GROUP_ID,
+	order: 1,
+});
+
+const resourceADefinition = resourceV2Definition({
+	id: RESOURCE_A,
+	metadata: {
+		group: { id: groupWithParentDefinition.id },
 	},
-};
+	bounds: { lowerBound: 0 },
+	tierTrack: resourceATrack,
+});
+
+const resourceBDefinition = resourceV2Definition({
+	id: RESOURCE_B,
+	metadata: {
+		group: { id: groupWithParentDefinition.id },
+	},
+	bounds: { lowerBound: 0, upperBound: 4 },
+	tierTrack: resourceBTrack,
+});
+
+const { resources: resourceRegistry, groups: groupRegistry } =
+	createResourceV2Registries({
+		resources: [resourceADefinition, resourceBDefinition],
+		groups: [groupWithParentDefinition, groupWithoutParentDefinition],
+	});
+
+const catalog = createRuntimeResourceCatalog({
+	resources: resourceRegistry,
+	groups: groupRegistry,
+});
 
 describe('ResourceV2 state', () => {
 	let player: PlayerState;

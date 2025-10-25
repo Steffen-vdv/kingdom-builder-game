@@ -14,7 +14,7 @@ import {
 } from '../src/config/builders';
 import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
 import { Types, PassiveMethods } from '../src/config/builderShared';
-import { RESOURCES, type ResourceKey } from '../src/resources';
+import { RESOURCES, getResourceV2Id, type ResourceKey } from '../src/resources';
 import { STATS, type StatKey } from '../src/stats';
 import { describe, expect, it } from 'vitest';
 
@@ -139,9 +139,38 @@ describe('content builder safeguards', () => {
 		);
 	});
 
-	it('supports static transfer amounts', () => {
+	it('builds ResourceV2 change payloads with reconciliation metadata', () => {
+		const resourceId = getResourceV2Id(firstResourceKey);
+		const params = resourceParams().key(firstResourceKey).amount(3).reconciliation().suppressHooks().build();
+
+		expect(params).toEqual({
+			key: firstResourceKey,
+			amount: 3,
+			resourceId,
+			change: { type: 'amount', amount: 3 },
+			reconciliation: 'clamp',
+			suppressHooks: true,
+		});
+	});
+
+	it('supports static transfer amounts with ResourceV2 endpoint payloads', () => {
+		const resourceId = getResourceV2Id(firstResourceKey);
 		const params = transferParams().key(firstResourceKey).amount(2).build();
-		expect(params).toEqual({ key: firstResourceKey, amount: 2 });
+
+		expect(params).toEqual({
+			key: firstResourceKey,
+			amount: 2,
+			donor: {
+				player: 'opponent',
+				resourceId,
+				change: { type: 'amount', amount: -2 },
+			},
+			recipient: {
+				player: 'active',
+				resourceId,
+				change: { type: 'amount', amount: 2 },
+			},
+		});
 	});
 
 	it('requires happiness tiers to declare an id', () => {
