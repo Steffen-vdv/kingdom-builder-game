@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
 	createRuntimeResourceCatalog,
 	clampToBounds,
@@ -16,7 +16,30 @@ import {
 	resourceV2Definition,
 	resourceV2GroupDefinition,
 	createResourceV2Registries,
-} from '@kingdom-builder/testing';
+} from '@kingdom-builder/testing/factories/resourceV2';
+
+vi.mock('@kingdom-builder/contents/happinessHelpers', () => ({
+	happinessTierId: (slug: string) => `mock-happiness-tier:${slug}`,
+	happinessPassiveId: (slug: string) => `mock-happiness-passive:${slug}`,
+	happinessModifierId: (slug: string, kind: string) =>
+		`mock-happiness:${slug}:${kind}`,
+	incomeModifier: () => ({ type: 'mock-income' }),
+	actionDiscountModifier: () => ({ type: 'mock-discount' }),
+	growthBonusEffect: (amount: number) => ({ type: 'mock-growth', amount }),
+	createTierPassiveEffect: () => ({ type: 'mock-tier-passive' }),
+}));
+
+vi.mock('@kingdom-builder/contents/resources', () => ({
+	Resource: {},
+	RESOURCES: {},
+	getResourceV2Id: (key: string) => key,
+}));
+
+vi.mock('@kingdom-builder/contents/stats', () => ({
+	Stat: {},
+	STATS: {},
+	getStatResourceV2Id: (key: string) => key,
+}));
 
 const tierTrack = {
 	metadata: {

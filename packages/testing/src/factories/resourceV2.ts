@@ -1,18 +1,24 @@
 import {
 	createResourceGroupRegistry,
 	createResourceV2Registry,
-	resourceGroup,
-	resourceV2,
-	type ResourceGroupBuilder,
 	type ResourceGroupRegistry,
-	type ResourceV2Builder,
 	type ResourceV2Registry,
-} from '@kingdom-builder/contents';
+} from '@kingdom-builder/contents/resourceV2/registry';
+import {
+	resourceGroup,
+	type ResourceGroupBuilder,
+} from '@kingdom-builder/contents/resourceV2/groupBuilder';
+import {
+	resourceV2,
+	type ResourceV2Builder,
+} from '@kingdom-builder/contents/resourceV2/resourceBuilder';
+import type {
+	ResourceV2TierTrack,
+	ResourceV2GroupParent,
+} from '@kingdom-builder/contents/resourceV2/types';
 
 type ResourceV2Definition = ReturnType<ResourceV2Builder['build']>;
 type ResourceV2GroupDefinition = ReturnType<ResourceGroupBuilder['build']>;
-type ResourceV2TierTrack = Parameters<ResourceV2Builder['tierTrack']>[0];
-type ResourceV2GroupParent = NonNullable<ResourceV2GroupDefinition['parent']>;
 
 let seq = 0;
 function nextId(prefix: string) {

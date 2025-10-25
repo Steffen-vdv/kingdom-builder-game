@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, expect } from 'vitest';
+import { describe, it, beforeEach, expect, vi } from 'vitest';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../../src/context.ts';
 import { PlayerState } from '../../src/state/index.ts';
@@ -22,7 +22,30 @@ import {
 	resourceV2Definition,
 	resourceV2GroupDefinition,
 	createResourceV2Registries,
-} from '@kingdom-builder/testing';
+} from '@kingdom-builder/testing/factories/resourceV2';
+
+vi.mock('@kingdom-builder/contents/happinessHelpers', () => ({
+	happinessTierId: (slug: string) => `mock-happiness-tier:${slug}`,
+	happinessPassiveId: (slug: string) => `mock-happiness-passive:${slug}`,
+	happinessModifierId: (slug: string, kind: string) =>
+		`mock-happiness:${slug}:${kind}`,
+	incomeModifier: () => ({ type: 'mock-income' }),
+	actionDiscountModifier: () => ({ type: 'mock-discount' }),
+	growthBonusEffect: (amount: number) => ({ type: 'mock-growth', amount }),
+	createTierPassiveEffect: () => ({ type: 'mock-tier-passive' }),
+}));
+
+vi.mock('@kingdom-builder/contents/resources', () => ({
+	Resource: {},
+	RESOURCES: {},
+	getResourceV2Id: (key: string) => key,
+}));
+
+vi.mock('@kingdom-builder/contents/stats', () => ({
+	Stat: {},
+	STATS: {},
+	getStatResourceV2Id: (key: string) => key,
+}));
 
 const tierTrack = {
 	metadata: {
@@ -199,6 +222,26 @@ describe('ResourceV2 effect handlers', () => {
 		expect(ctx.active.resourceTouched[ctx.oreId]).toBe(true);
 		expect(ctx.opponent.resourceTouched[ctx.vaultId]).toBe(false);
 		expect(ctx.opponent.resourceTierIds[ctx.vaultId]).toBe('tier-low');
+	});
+
+	it('rejects transfer payloads that request unsupported reconciliation modes', () => {
+		const effect: EffectDef<ResourceV2TransferEffectParams> = {
+			params: {
+				donor: {
+					resourceId: ctx.oreId,
+					change: { type: 'amount', amount: -1 },
+					reconciliationMode: 'reject',
+				},
+				recipient: {
+					resourceId: ctx.vaultId,
+					change: { type: 'amount', amount: 1 },
+				},
+			},
+		};
+
+		expect(() => resourceV2Transfer(effect, ctx.context)).toThrowError(
+			`ResourceV2 effect for "${ctx.oreId}" only supports clamp reconciliation during MVP scope (received "reject").`,
+		);
 	});
 
 	it('raises resource upper bounds through the dedicated handler', () => {

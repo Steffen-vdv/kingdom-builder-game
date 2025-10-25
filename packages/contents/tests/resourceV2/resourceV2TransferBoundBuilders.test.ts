@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '../src/resourceV2';
+import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '../../src/resourceV2/effects';
 
 describe('ResourceV2 transfer builders', () => {
 	it('builds donor and recipient payloads with change helpers', () => {
@@ -31,6 +31,21 @@ describe('ResourceV2 transfer builders', () => {
 		expect(params.recipient).not.toBe(recipient);
 	});
 
+	it('propagates reconciliation config from change builders and direct setters', () => {
+		const payload = transferEndpoint('resource:mana')
+			.player('opponent')
+			.change((change) => change.amount(4).reconciliation('clamp'))
+			.reconciliation()
+			.build();
+
+		expect(payload).toEqual({
+			player: 'opponent',
+			resourceId: 'resource:mana',
+			change: { type: 'amount', amount: 4 },
+			reconciliationMode: 'clamp',
+		});
+	});
+
 	it('rejects unsupported reconciliation modes', () => {
 		expect(() =>
 			transferEndpoint('resource:gold').reconciliation('reject').change({
@@ -38,6 +53,12 @@ describe('ResourceV2 transfer builders', () => {
 				amount: -1,
 			}),
 		).toThrowError('ResourceV2 transfer endpoint builder reconciliation mode "reject" is not supported yet. Supported modes: clamp.');
+	});
+
+	it('rejects suppressHooks requests within change builders', () => {
+		expect(() => transferEndpoint('resource:gold').change((change) => change.amount(-2).suppressHooks())).toThrowError(
+			'ResourceV2 transfer endpoint builder does not support suppressHooks(). Remove the suppressHooks() call when configuring donor/recipient changes.',
+		);
 	});
 
 	it('requires donor and recipient payloads before build', () => {
