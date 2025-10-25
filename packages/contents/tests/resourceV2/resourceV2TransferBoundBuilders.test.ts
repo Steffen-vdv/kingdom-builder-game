@@ -40,11 +40,64 @@ describe('ResourceV2 transfer builders', () => {
 		).toThrowError('ResourceV2 transfer endpoint builder reconciliation mode "reject" is not supported yet. Supported modes: clamp.');
 	});
 
+	it('configures change payloads via builder callbacks and omits false flags', () => {
+		const donor = transferEndpoint('resource:ore')
+			.change((change) => change.amount(-4).reconciliation())
+			.suppressTouched(false)
+			.suppressRecentEntry()
+			.build();
+
+		expect(donor).toEqual({
+			resourceId: 'resource:ore',
+			change: { type: 'amount', amount: -4 },
+			reconciliationMode: 'clamp',
+			options: { suppressRecentEntry: true },
+		});
+
+		const recipient = transferEndpoint('resource:joy')
+			.player('opponent')
+			.change((change) => change.percent(1.25).roundingMode('down'))
+			.skipTierUpdate()
+			.build();
+
+		expect(recipient).toEqual({
+			player: 'opponent',
+			resourceId: 'resource:joy',
+			change: { type: 'percent', modifiers: [1.25], roundingMode: 'down' },
+			options: { skipTierUpdate: true },
+		});
+
+		const params = resourceTransfer().donor(donor).recipient(recipient).build();
+
+		expect(params).toEqual({
+			donor: {
+				resourceId: 'resource:ore',
+				change: { type: 'amount', amount: -4 },
+				reconciliationMode: 'clamp',
+				options: { suppressRecentEntry: true },
+			},
+			recipient: {
+				player: 'opponent',
+				resourceId: 'resource:joy',
+				change: { type: 'percent', modifiers: [1.25], roundingMode: 'down' },
+				options: { skipTierUpdate: true },
+			},
+		});
+		expect(params.donor).not.toBe(donor);
+		expect(params.recipient).not.toBe(recipient);
+	});
+
 	it('requires donor and recipient payloads before build', () => {
 		const donor: ResourceV2TransferEndpointPayload = transferEndpoint('resource:gold').change({ type: 'amount', amount: -1 }).build();
 
 		expect(() => resourceTransfer().build()).toThrowError('ResourceV2 transfer builder requires donor() before build().');
 		expect(() => resourceTransfer().donor(donor).build()).toThrowError('ResourceV2 transfer builder requires recipient() before build().');
+	});
+
+	it('rejects transfer changes that suppress hooks', () => {
+		expect(() => transferEndpoint('resource:gold').change((change) => change.amount(-2).suppressHooks())).toThrowError(
+			'ResourceV2 transfer endpoint builder does not support suppressHooks(). Remove the suppressHooks() call when configuring donor/recipient changes.',
+		);
 	});
 });
 
