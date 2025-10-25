@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '../src/resourceV2';
+import { increaseUpperBound, resourceChange, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '../../src/resourceV2';
 
 describe('ResourceV2 transfer builders', () => {
 	it('builds donor and recipient payloads with change helpers', () => {
 		const donor = transferEndpoint('resource:gold')
 			.player('active')
 			.change((change) => change.amount(-3))
+			.reconciliation('clamp')
 			.suppressTouched()
 			.build();
 		const recipient = transferEndpoint('resource:happiness').player('opponent').change({ type: 'amount', amount: 5 }).suppressRecentEntry().skipTierUpdate().build();
@@ -15,6 +16,7 @@ describe('ResourceV2 transfer builders', () => {
 			player: 'active',
 			resourceId: 'resource:gold',
 			change: { type: 'amount', amount: -3 },
+			reconciliationMode: 'clamp',
 			options: { suppressTouched: true },
 		});
 		expect(recipient).toEqual({
@@ -29,6 +31,23 @@ describe('ResourceV2 transfer builders', () => {
 		expect(params).toEqual({ donor, recipient });
 		expect(params.donor).not.toBe(donor);
 		expect(params.recipient).not.toBe(recipient);
+		expect(params.donor.reconciliationMode).toBe('clamp');
+	});
+
+	it('normalises percent transfer changes configured via builder callbacks', () => {
+		const endpoint = transferEndpoint('resource:focus')
+			.change((change) => change.percent(0.5).percent(-0.25).roundingMode('down').reconciliation('clamp'))
+			.build();
+
+		expect(endpoint).toEqual({
+			resourceId: 'resource:focus',
+			change: {
+				type: 'percent',
+				modifiers: [0.5, -0.25],
+				roundingMode: 'down',
+			},
+			reconciliationMode: 'clamp',
+		});
 	});
 
 	it('rejects unsupported reconciliation modes', () => {
@@ -45,6 +64,18 @@ describe('ResourceV2 transfer builders', () => {
 
 		expect(() => resourceTransfer().build()).toThrowError('ResourceV2 transfer builder requires donor() before build().');
 		expect(() => resourceTransfer().donor(donor).build()).toThrowError('ResourceV2 transfer builder requires recipient() before build().');
+	});
+
+	it('prevents configurators from overriding resource ids', () => {
+		expect(() => transferEndpoint('resource:gold').change(() => resourceChange('resource:stone').amount(-2))).toThrowError(
+			'ResourceV2 transfer endpoint builder change() cannot override the resourceId. Expected "resource:gold" but received "resource:stone".',
+		);
+	});
+
+	it('rejects suppressHooks usage for transfer change builders', () => {
+		expect(() => transferEndpoint('resource:gold').change((change) => change.amount(-1).suppressHooks())).toThrowError(
+			'ResourceV2 transfer endpoint builder does not support suppressHooks(). Remove the suppressHooks() call when configuring donor/recipient changes.',
+		);
 	});
 });
 
