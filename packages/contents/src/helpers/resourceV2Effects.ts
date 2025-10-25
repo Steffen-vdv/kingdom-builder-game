@@ -1,5 +1,5 @@
-import type { ResourceChangeBuilder, ResourceChangeEffectParams } from '../resourceV2';
-import { resourceChange } from '../resourceV2';
+import type { ResourceChangeBuilder, ResourceChangeEffectParams, ResourceV2TransferEffectParams } from '../resourceV2';
+import { resourceChange, resourceTransfer, transferEndpoint } from '../resourceV2';
 import type { ResourceKey } from '../resources';
 import { getResourceV2Id } from '../resources';
 import type { StatKey } from '../stats';
@@ -23,6 +23,13 @@ type StatPercentFromStatParams = ResourceChangeEffectParams &
 	Record<string, unknown> & {
 		key: StatKey;
 		percentStat: StatKey;
+	};
+
+type ResourceTransferParams = ResourceV2TransferEffectParams &
+	Record<string, unknown> & {
+		key: ResourceKey;
+		amount?: number;
+		percent?: number;
 	};
 
 function configureBuilder(builder: ResourceChangeBuilder, configure?: ChangeBuilderConfigurator) {
@@ -61,5 +68,41 @@ export function statPercentFromStatChange(target: StatKey, source: StatKey, conf
 		...builder.build(),
 		key: target,
 		percentStat: source,
+	};
+}
+
+export function resourceTransferAmount(resource: ResourceKey, amount: number): ResourceTransferParams {
+	const resourceId = getResourceV2Id(resource);
+	const donor = transferEndpoint(resourceId)
+		.player('opponent')
+		.change((change) => change.amount(-amount))
+		.build();
+	const recipient = transferEndpoint(resourceId)
+		.player('active')
+		.change((change) => change.amount(amount))
+		.build();
+	const transfer = resourceTransfer().donor(donor).recipient(recipient).build();
+	return {
+		...transfer,
+		key: resource,
+		amount,
+	};
+}
+
+export function resourceTransferPercent(resource: ResourceKey, percent: number): ResourceTransferParams {
+	const resourceId = getResourceV2Id(resource);
+	const donor = transferEndpoint(resourceId)
+		.player('opponent')
+		.change((change) => change.percent(-percent))
+		.build();
+	const recipient = transferEndpoint(resourceId)
+		.player('active')
+		.change((change) => change.percent(percent))
+		.build();
+	const transfer = resourceTransfer().donor(donor).recipient(recipient).build();
+	return {
+		...transfer,
+		key: resource,
+		percent,
 	};
 }
