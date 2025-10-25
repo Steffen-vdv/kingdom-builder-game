@@ -8,7 +8,7 @@
 ## Touched Files
 
 - docs/project/resource-migration/production/production-living-docs.md
-- worklogs/T49-engine-aggregation.md
+- docs/project/resource-migration/production/worklogs/T49-engine-aggregation.md
 
 ## Tests
 
