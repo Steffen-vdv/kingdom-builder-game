@@ -137,6 +137,13 @@ export class SessionManager {
 			this.resourceOverrides,
 			this.baseOptions.start,
 		);
+		const resourceCatalog = this.baseOptions.resourceCatalogV2;
+		const resourcesV2 = freezeSerializedRegistry(
+			structuredClone(resourceCatalog.resources.byId),
+		);
+		const resourceGroupsV2 = freezeSerializedRegistry(
+			structuredClone(resourceCatalog.groups.byId),
+		);
 		const actionCategories = actionCategoryRegistry
 			? (freezeSerializedRegistry(
 					structuredClone(actionCategoryRegistry),
@@ -151,6 +158,8 @@ export class SessionManager {
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
+			resourcesV2,
+			resourceGroupsV2,
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
@@ -177,6 +186,8 @@ export class SessionManager {
 			rules: frozenRules,
 			resources: frozenResources,
 			primaryIconId,
+			resourcesV2,
+			resourceGroupsV2,
 		});
 	}
 

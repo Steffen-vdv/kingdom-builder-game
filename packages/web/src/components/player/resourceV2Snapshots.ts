@@ -166,7 +166,7 @@ export function createResourceSnapshot(
 		populationParentId,
 	} = context;
 	const bounds = resolveBounds(player.resourceBoundsV2, resourceId);
-	let current = player.valuesV2?.[resourceId];
+	let current = player.valuesV2[resourceId];
 	if (typeof current !== 'number') {
 		if (populationParentId && resourceId === populationParentId) {
 			current = sumPopulationRoles(player, populationRoleIds);

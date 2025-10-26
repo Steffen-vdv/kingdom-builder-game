@@ -188,15 +188,15 @@ describe('createLocalSessionGateway', () => {
 		});
 		const created = await gateway.createSession();
 		const registries = created.registries;
-		registries.resourcesV2![resourceId]!.label = 'Mutated gold';
-		registries.resourceGroupsV2![groupId]!.label = 'Mutated group';
+		registries.resourcesV2[resourceId]!.label = 'Mutated gold';
+		registries.resourceGroupsV2[groupId]!.label = 'Mutated group';
 		const fetched = await gateway.fetchSnapshot({
 			sessionId: created.sessionId,
 		});
-		expect(fetched.registries.resourcesV2?.[resourceId]?.label).not.toBe(
+		expect(fetched.registries.resourcesV2[resourceId]?.label).not.toBe(
 			'Mutated gold',
 		);
-		expect(fetched.registries.resourceGroupsV2?.[groupId]?.label).not.toBe(
+		expect(fetched.registries.resourceGroupsV2[groupId]?.label).not.toBe(
 			'Mutated group',
 		);
 	});

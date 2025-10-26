@@ -60,7 +60,7 @@ function resolveBounds(
 	snapshot: PlayerSnapshot,
 	resourceId: string,
 ): Pick<ResourceV2ValueSnapshot, 'lowerBound' | 'upperBound'> {
-	const bounds = snapshot.resourceBoundsV2?.[resourceId];
+	const bounds = snapshot.resourceBoundsV2[resourceId];
 	if (!bounds) {
 		return {};
 	}

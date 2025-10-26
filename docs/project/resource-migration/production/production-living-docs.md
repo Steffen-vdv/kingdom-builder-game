@@ -14,7 +14,7 @@ This document captures the evolving state of the Resource Migration initiative. 
 | ------------ | ----------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Engine       | Migrated (runtime ready)      | –     | Runtime catalog, player state/setup, services, AI, and logging now operate on ResourceV2 (T38–T48). Full-suite check remains blocked by contents `developmentTarget` regression. |
 | Content      | MVP scope complete            | –     | Catalog, start payloads, actions, passives, and phases emit ResourceV2 payloads end to end (T18–T36).                                                                            |
-| Protocol/API | Transport-aligned             | –     | Session contracts document ResourceV2 registries/values and transports now mirror the catalogs across gateway responses; flip optional flags once data is emitted by default.    |
+| Protocol/API | Transport-aligned             | –     | Session contracts now require ResourceV2 registries/values and transports emit them by default across gateway responses.                                                         |
 | Web UI       | Migrated (awaiting live data) | –     | Translation context, player UI, and diff helpers now consume ResourceV2 metadata end-to-end; final HUD verification depends on transports surfacing signed deltas in sessions.   |
 | Testing      | Updated (regression pending)  | –     | Integration, unit, and web suites assert ResourceV2 builders/catalogs, but `npm run check` still fails from the pre-existing `developmentTarget` TypeError.                      |
 
@@ -48,21 +48,22 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | 2025-10-29 | ChatGPT (gpt-5-codex) | packages/engine/src/setup/create*engine.ts, packages/engine/src/state/index.ts, packages/protocol/src/session/resourceCatalogV2.ts | Resource Migration MVP - P2 - T38–T40 - Wired the runtime catalog through engine bootstrap, player state proxies, and start overrides (see ./worklogs/T38-engine-bootstrap.md, ./worklogs/T39-playerstate.md, ./worklogs/T40-player-setup.md). | npm run format; npm run lint; npm run check *(fails: `developmentTarget` TypeError during engine coverage)_ | Stabilise `developmentTarget` helper and expand engine tests around the new ResourceV2 bootstrap path. |
 | 2025-10-29 | ChatGPT (gpt-5-codex) | packages/engine/src/actions/costs.ts, packages/engine/src/effects/index.ts, packages/engine/src/effects/population_add.ts | Resource Migration MVP - P2 - T41–T43 - Enforced catalog-driven global costs, re-registered ResourceV2 handlers, and synced population effects (see ./worklogs/T41-global-cost.md, ./worklogs/T42-effect-registry.md, ./worklogs/T43-population-handlers.md). | npm run format; npm run lint; npm run check _(fails: `developmentTarget` TypeError during engine coverage)\_ | Remove legacy cost/population shims once `developmentTarget` regression is fixed and ResourceV2 payloads are fully enforced. |
 | 2025-11-01 | ChatGPT (gpt-5-codex) | docs/project/resource-migration/production/production-living-docs.md, docs/project/resource-migration/production/worklogs/T58-final-aggregation.md | Resource Migration MVP - P2 - T58 - Consolidated T50–T57 protocol, transport, web, and test updates into the living doc and flagged final-phase cleanup priorities. | _Not run – documentation aggregation only_ | Resolve `developmentTarget` failure, default ResourceV2 session fields before flipping to required, and smoke-test HUD once transports emit signed deltas. |
+| 2025-11-02 | ChatGPT (gpt-5-codex) | packages/protocol/src/session/_, packages/engine/src/runtime/_, packages/web/src/translation/\*_/_, tests/\*, docs/project/resource-migration/production/worklogs/T62-resource-contract.md | Resource Migration MVP - P2 - T62 - Required ResourceV2 session payloads enforced across protocol, engine transports, translation context, and tests (see ./worklogs/T62-resource-contract.md). | npm run format; npm run lint; npm run check | Monitor downstream consumers for lingering optional ResourceV2 assumptions. |
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-11-01 18:00
-- **Current Focus:** Resource Migration MVP - P2 - T58 - Final aggregation
+- **Timestamp (UTC):** 2025-11-02 12:00
+- **Current Focus:** Resource Migration MVP - P2 - T62 - ResourceV2 session contract hardening
 - **State Summary:**
-  - Protocol session contracts (T50) now document ResourceV2 registries/values, and session transports (T51) mirror the catalogs plus player `valuesV2` maps across every gateway response.
-  - Integration suites (T52) bootstrap runtime catalogs, while web translation context, UI layers, and diff helpers (T53–T55) read ResourceV2 metadata end-to-end.
-  - Web/UI tests (T56) and unit suites (T57) assert ResourceV2 factories, signed deltas, and hover formatting using the shared builders. See [`./worklogs/T58-final-aggregation.md`](./worklogs/T58-final-aggregation.md) for the consolidated notes.
+  - Protocol session contracts and runtime config responses now require ResourceV2 registries/catalogs, and engine transports populate the fields unconditionally (see [`./worklogs/T62-resource-contract.md`](./worklogs/T62-resource-contract.md)).
+  - Translation context, UI helpers, and integration tests consume the guaranteed ResourceV2 payloads without legacy fallbacks, keeping HUD copy aligned with the unified catalog.
+  - Outstanding blockers remain limited to the historic `developmentTarget` TypeError during `npm run check` runs.
 - **Next Suggested Tasks:**
   - Repair `packages/contents/src/happinessHelpers.ts` (or add a compatibility wrapper) to eliminate the `developmentTarget` TypeError so `npm run check` completes.
-  - Default ResourceV2 session fields in transports, then flip the protocol optional flags to required and update fixtures accordingly.
-  - Run dev-mode HUD/translation smoke checks once transports emit signed ResourceV2 deltas and group metadata in live responses.
+  - Smoke-test HUD/translation flows in dev mode now that ResourceV2 payloads are always present and signed deltas surface through transports.
+  - Begin pruning legacy Resource/Stat fallback helpers once downstream packages confirm exclusive ResourceV2 consumption.
 - **Blocking Issues / Risks:** Repository `npm run check` still fails because of the pre-existing `developmentTarget` regression, delaying full-suite validation.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` current so downstream owners can continue the final cleanup without re-reading individual task logs.
 
@@ -96,7 +97,7 @@ Use this table for short-lived reminders that do not warrant their own ticket ye
 | Item                                                                            | Owner | Due / Trigger                                            | Status  |
 | ------------------------------------------------------------------------------- | ----- | -------------------------------------------------------- | ------- |
 | Repair `developmentTarget` helper to unblock `npm run check`.                   | –     | Before final phase sign-off                              | Open    |
-| Default ResourceV2 session fields and flip protocol optional flags to required. | –     | After transports emit ResourceV2 data by default         | Pending |
+| Default ResourceV2 session fields and flip protocol optional flags to required. | –     | Completed via T62                                        | Done    |
 | Run HUD/translation smoke tests with live ResourceV2 deltas.                    | –     | Once transports surface signed deltas and group metadata | Pending |
 
 ## 8. Reference

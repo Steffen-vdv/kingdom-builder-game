@@ -1325,6 +1325,46 @@
 			"tags": ["attack-target", "win-condition-zero"]
 		}
 	},
+	"resourcesV2": {
+		"resource:core:gold": {
+			"id": "resource:core:gold",
+			"label": "Gold",
+			"icon": "💰",
+			"description": null,
+			"order": 0,
+			"resolvedOrder": 0,
+			"tags": [],
+			"lowerBound": null,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": null,
+			"groupOrder": null,
+			"resolvedGroupOrder": null
+		}
+	},
+	"resourceGroupsV2": {
+		"resource-group:core": {
+			"id": "resource-group:core",
+			"order": 0,
+			"resolvedOrder": 0,
+			"parent": {
+				"id": "resource-group:core",
+				"label": "Core Resources",
+				"icon": "🏰",
+				"description": null,
+				"order": 0,
+				"resolvedOrder": 0,
+				"tags": [],
+				"lowerBound": null,
+				"upperBound": null,
+				"displayAsPercent": false,
+				"trackValueBreakdown": false,
+				"trackBoundBreakdown": false
+			}
+		}
+	},
 	"actionCategories": {
 		"basic": {
 			"id": "basic",
