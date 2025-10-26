@@ -100,6 +100,8 @@ function cloneRegistriesPayload(
 			]),
 		),
 		actionCategories: cloneEntries(payload.actionCategories),
+		resourcesV2: cloneEntries(payload.resourcesV2),
+		resourceGroupsV2: cloneEntries(payload.resourceGroupsV2),
 	};
 }
 

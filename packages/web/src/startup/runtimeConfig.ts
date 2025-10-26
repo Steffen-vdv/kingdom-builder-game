@@ -1,11 +1,13 @@
 import type {
 	PhaseConfig,
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
 	RuleSet,
-	StartConfig,
+	SessionResourceDefinition,
 	SessionRuntimeConfigResponse,
+	StartConfig,
 } from '@kingdom-builder/protocol';
 import { runtimeConfigResponseSchema } from '@kingdom-builder/protocol';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
 import { clone } from '../state/clone';
 
 export interface RuntimeContentConfig {
@@ -13,6 +15,8 @@ export interface RuntimeContentConfig {
 	start: StartConfig;
 	rules: RuleSet;
 	resources: Record<string, SessionResourceDefinition>;
+	resourcesV2: Record<string, ResourceV2Definition>;
+	resourceGroupsV2: Record<string, ResourceV2GroupDefinition>;
 	primaryIconId?: string | null;
 }
 
@@ -33,6 +37,17 @@ function normalizeResourceDefinitions(
 			key,
 			clone(definition),
 		]),
+	);
+}
+
+function normalizeResourceCatalogDefinitions<DefinitionType>(
+	registry: Record<string, DefinitionType> | undefined,
+): Record<string, DefinitionType> {
+	if (!registry) {
+		return {};
+	}
+	return Object.fromEntries(
+		Object.entries(registry).map(([id, definition]) => [id, clone(definition)]),
 	);
 }
 
@@ -96,6 +111,12 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 			const resources = normalizeResourceDefinitions(
 				overrides?.resources ?? base.resources,
 			);
+			const resourcesV2 = normalizeResourceCatalogDefinitions(
+				overrides?.resourcesV2 ?? base.resourcesV2,
+			);
+			const resourceGroupsV2 = normalizeResourceCatalogDefinitions(
+				overrides?.resourceGroupsV2 ?? base.resourceGroupsV2,
+			);
 			const primaryIconId =
 				overrides?.primaryIconId ?? base.primaryIconId ?? null;
 			const config: RuntimeContentConfig = {
@@ -103,6 +124,8 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 				start,
 				rules,
 				resources,
+				resourcesV2,
+				resourceGroupsV2,
 				primaryIconId,
 			};
 			Object.freeze(config);

@@ -138,6 +138,7 @@ describe('content happiness tiers', () => {
 				tier,
 			]),
 		);
+		const happinessResourceId = player.getResourceV2Id(Resource.happiness);
 		const samples = [
 			{ value: -10, label: 'despair' },
 			{ value: -8, label: 'misery' },
@@ -183,6 +184,7 @@ describe('content happiness tiers', () => {
 
 			snapshot[sample.label] = {
 				happiness: sample.value,
+				resourceV2: player.resourceValues[happinessResourceId],
 				passives,
 				skipPhases: JSON.parse(JSON.stringify(player.skipPhases)),
 				skipSteps: JSON.parse(JSON.stringify(player.skipSteps)),
@@ -192,54 +194,63 @@ describe('content happiness tiers', () => {
 		expect(snapshot).toEqual({
 			content: {
 				happiness: 3,
+				resourceV2: 3,
 				passives: passivesByTier.content,
 				skipPhases: skipPhasesByTier.content ?? {},
 				skipSteps: skipStepsByTier.content ?? {},
 			},
 			despair: {
 				happiness: -10,
+				resourceV2: -10,
 				passives: passivesByTier.despair,
 				skipPhases: skipPhasesByTier.despair ?? {},
 				skipSteps: skipStepsByTier.despair ?? {},
 			},
 			ecstatic: {
 				happiness: 10,
+				resourceV2: 10,
 				passives: passivesByTier.ecstatic,
 				skipPhases: skipPhasesByTier.ecstatic ?? {},
 				skipSteps: skipStepsByTier.ecstatic ?? {},
 			},
 			elated: {
 				happiness: 8,
+				resourceV2: 8,
 				passives: passivesByTier.elated,
 				skipPhases: skipPhasesByTier.elated ?? {},
 				skipSteps: skipStepsByTier.elated ?? {},
 			},
 			grim: {
 				happiness: -5,
+				resourceV2: -5,
 				passives: passivesByTier.grim,
 				skipPhases: skipPhasesByTier.grim ?? {},
 				skipSteps: skipStepsByTier.grim ?? {},
 			},
 			joyful: {
 				happiness: 5,
+				resourceV2: 5,
 				passives: passivesByTier.joyful,
 				skipPhases: skipPhasesByTier.joyful ?? {},
 				skipSteps: skipStepsByTier.joyful ?? {},
 			},
 			misery: {
 				happiness: -8,
+				resourceV2: -8,
 				passives: passivesByTier.misery,
 				skipPhases: skipPhasesByTier.misery ?? {},
 				skipSteps: skipStepsByTier.misery ?? {},
 			},
 			steady: {
 				happiness: 0,
+				resourceV2: 0,
 				passives: passivesByTier.steady,
 				skipPhases: skipPhasesByTier.steady ?? {},
 				skipSteps: skipStepsByTier.steady ?? {},
 			},
 			unrest: {
 				happiness: -3,
+				resourceV2: -3,
 				passives: passivesByTier.unrest,
 				skipPhases: skipPhasesByTier.unrest ?? {},
 				skipSteps: skipStepsByTier.unrest ?? {},

@@ -1,5 +1,5 @@
 import type { EffectDef } from '../effects';
-import type { StatKey, StatSourceLink, StatSourceMeta } from '../state';
+import type { StatSourceLink, StatSourceMeta } from '../state';
 import {
 	cloneStatSourceLink,
 	mergeLinkCollections,
@@ -89,17 +89,17 @@ export function mergeMeta(
 
 export function createStatSourceKey(
 	effectDefinition: EffectDef,
-	statKey: StatKey,
+	resourceId: string,
 ): string {
 	const typeSegment = effectDefinition.type ?? 'stat';
 	const methodSegment = effectDefinition.method ?? 'change';
-	const keySegments = [typeSegment, methodSegment, statKey];
+	const keySegments = [typeSegment, methodSegment, resourceId];
 	return keySegments.join(':');
 }
 
 export function extractMetaFromEffect(
 	effectDefinition: EffectDef,
-	statKey: StatKey,
+	resourceId: string,
 ): StatSourceMetaPartial | undefined {
 	const rawValue = effectDefinition.meta?.['statSource'];
 	const rawMeta = isPlainObject(rawValue) ? rawValue : undefined;
@@ -182,7 +182,7 @@ export function extractMetaFromEffect(
 		partialMeta.effect = effectInfo;
 	}
 	if (!partialMeta.key) {
-		partialMeta.key = createStatSourceKey(effectDefinition, statKey);
+		partialMeta.key = createStatSourceKey(effectDefinition, resourceId);
 	}
 	if (!partialMeta.longevity) {
 		partialMeta.longevity = 'permanent';

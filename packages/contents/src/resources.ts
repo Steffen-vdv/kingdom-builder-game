@@ -1,39 +1,32 @@
-import { resource, type ResourceInfo, toRecord } from './config/builders';
+import type { ResourceInfo } from './config/builders/domain/infoBuilders';
+import type { ResourceV2Definition } from './resourceV2';
+import { RESOURCE_V2_REGISTRY } from './registries/resourceV2';
+import { RESOURCE_KEY_BY_V2_ID } from './resourceKeys';
+import type { ResourceKey, ResourceV2Id } from './resourceKeys';
 
-export const Resource = {
-	gold: 'gold',
-	ap: 'ap',
-	happiness: 'happiness',
-	castleHP: 'castleHP',
-} as const;
-export type ResourceKey = (typeof Resource)[keyof typeof Resource];
+export { Resource, type ResourceKey, type ResourceV2Id, getResourceV2Id } from './resourceKeys';
 
-const defs: ResourceInfo[] = [
-	resource(Resource.gold)
-		.icon('🪙')
-		.label('Gold')
-		.description(
-			'Gold is the foundational currency of the realm. It is earned through developments and actions and spent to fund buildings, recruit population or pay for powerful plays. A healthy treasury keeps your options open.',
-		)
-		.tag('bankruptcy-check')
-		.build(),
-	resource(Resource.ap)
-		.icon('⚡')
-		.label('Action Points')
-		.description('Action Points govern how many actions you can perform during your turn. Plan carefully: once you run out of AP, your main phase ends.')
-		.build(),
-	resource(Resource.happiness)
-		.icon('😊')
-		.label('Happiness')
-		.description('Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects.')
-		.build(),
-	resource(Resource.castleHP)
-		.icon('🏰')
-		.label('Castle HP')
-		.description('Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.')
-		.tag('attack-target')
-		.tag('win-condition-zero')
-		.build(),
-];
+function toLegacyResourceInfo(key: ResourceKey, definition: ResourceV2Definition): ResourceInfo {
+	const info: ResourceInfo = {
+		key,
+		icon: definition.icon,
+		label: definition.label,
+		description: definition.description ?? '',
+	};
+	if (definition.tags?.length) {
+		info.tags = [...definition.tags];
+	}
+	return info;
+}
 
-export const RESOURCES: Record<ResourceKey, ResourceInfo> = toRecord(defs) as Record<ResourceKey, ResourceInfo>;
+const resourceEntries: [ResourceKey, ResourceInfo][] = [];
+
+for (const definition of RESOURCE_V2_REGISTRY.ordered) {
+	const key = RESOURCE_KEY_BY_V2_ID[definition.id as ResourceV2Id];
+	if (!key) {
+		continue;
+	}
+	resourceEntries.push([key, toLegacyResourceInfo(key, definition)]);
+}
+
+export const RESOURCES = Object.fromEntries(resourceEntries) as Record<ResourceKey, ResourceInfo>;

@@ -12,6 +12,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
+import type { RuntimeResourceCatalog } from './resource-v2';
 
 export class EngineContext {
 	constructor(
@@ -24,6 +25,8 @@ export class EngineContext {
 		public passives: PassiveManager,
 		public phases: PhaseDef[],
 		public actionCostResource: ResourceKey,
+		public actionCostAmount: number | null,
+		public resourceCatalogV2: RuntimeResourceCatalog,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},
@@ -31,7 +34,7 @@ export class EngineContext {
 	) {}
 	aiSystem?: AISystem;
 	recentResourceGains: {
-		key: ResourceKey;
+		key: string;
 		amount: number;
 	}[] = [];
 	// Cache base values for stat:add_pct per turn/phase/step to ensure

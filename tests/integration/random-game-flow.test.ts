@@ -31,6 +31,8 @@ describe('random action flow', () => {
 		const regenAmount = (regenEffect?.params as { amount: number }).amount;
 		const rng = createRng(42);
 		const initialTurn = engineContext.game.turn;
+		const costResourceId = engineContext.activePlayer.getResourceV2Id(costKey);
+		const gainResourceId = engineContext.activePlayer.getResourceV2Id(gainKey);
 		const turns = 3;
 		const actionRegistry = engineContext.actions;
 
@@ -63,6 +65,12 @@ describe('random action flow', () => {
 						beforeCost - (costs[costKey] ?? 0),
 					);
 					expect(playerResources[gainKey]).toBe(beforeGain + gain);
+					expect(
+						engineContext.activePlayer.resourceValues[costResourceId],
+					).toBe(beforeCost - (costs[costKey] ?? 0));
+					expect(
+						engineContext.activePlayer.resourceValues[gainResourceId],
+					).toBe(beforeGain + gain);
 				}
 				const currentIndex = engineContext.game.currentPlayerIndex;
 				advance(engineContext);
@@ -72,6 +80,9 @@ describe('random action flow', () => {
 				const beforeRegen = player.resources[costKey];
 				advance(engineContext);
 				expect(player.resources[costKey]).toBe(beforeRegen + regenAmount);
+				expect(player.resourceValues[costResourceId]).toBe(
+					beforeRegen + regenAmount,
+				);
 				expect(engineContext.game.currentPhase).toBe(mainPhase);
 				expect(engineContext.game.currentPlayerIndex).toBe(
 					(currentIndex + 1) % engineContext.game.players.length,

@@ -84,6 +84,10 @@ describe('Building translation with population bonus', () => {
 							icon: councilRole.icon,
 						},
 					},
+					resourcesV2: {
+						...session.metadata.resourcesV2,
+						gold: { label: 'Refined Gold', icon: '🪙' },
+					},
 				};
 			});
 		const modifierInfo = translationContext.assets.modifiers.result ?? {
@@ -134,6 +138,10 @@ describe('Building translation with population bonus', () => {
 					resources: {
 						...session.metadata.resources,
 						gold: { label: 'City Gold', icon: undefined },
+					},
+					resourcesV2: {
+						...session.metadata.resourcesV2,
+						gold: { label: 'City Gold' },
 					},
 				};
 			});

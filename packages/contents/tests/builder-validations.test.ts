@@ -1,25 +1,8 @@
-import {
-	action,
-	resourceParams,
-	statParams,
-	actionParams,
-	effect,
-	requirement,
-	compareRequirement,
-	passiveParams,
-	attackParams,
-	transferParams,
-	happinessTier,
-	populationParams,
-} from '../src/config/builders';
+import { action, actionParams, effect, requirement, compareRequirement, passiveParams, attackParams, happinessTier, populationParams } from '../src/config/builders';
 import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
 import { Types, PassiveMethods } from '../src/config/builderShared';
-import { RESOURCES, type ResourceKey } from '../src/resources';
-import { STATS, type StatKey } from '../src/stats';
 import { describe, expect, it } from 'vitest';
 
-const firstResourceKey = Object.keys(RESOURCES)[0] as ResourceKey;
-const firstStatKey = Object.keys(STATS)[0] as StatKey;
 const firstDevelopmentActionId = DEVELOPMENT_ACTION_IDS[0];
 
 if (!firstDevelopmentActionId) {
@@ -49,20 +32,6 @@ describe('content builder safeguards', () => {
 
 	it('reports missing action names', () => {
 		expect(() => action().id('example').build()).toThrowError("Action is missing name(). Call name('Readable name') before build().");
-	});
-
-	it('prevents mixing amount and percent for resource changes', () => {
-		const params = resourceParams().key(firstResourceKey).amount(2);
-		expect(() => params.percent(10)).toThrowError('Resource change cannot use both amount() and percent(). Choose one of them.');
-	});
-
-	it('requires an amount or percent for resource changes', () => {
-		expect(() => resourceParams().key(firstResourceKey).build()).toThrowError('Resource change needs exactly one of amount() or percent(). Pick how much the resource should change.');
-	});
-
-	it('explains stat change conflicts clearly', () => {
-		const params = statParams().key(firstStatKey).percent(10);
-		expect(() => params.amount(1)).toThrowError('Stat change cannot mix amount() with percent() or percentFromStat(). Pick one approach to describe the change.');
 	});
 
 	it('flags empty effects', () => {
@@ -127,21 +96,6 @@ describe('content builder safeguards', () => {
 		expect(params).toEqual({
 			target: { type: 'building', id: 'test-building' },
 		});
-	});
-
-	it('demands transfer amounts', () => {
-		expect(() => transferParams().key(firstResourceKey).build()).toThrowError('Resource transfer is missing percent() or amount(). Call one of them to choose how much to move.');
-	});
-
-	it('prevents mixing percent and amount for transfers', () => {
-		expect(() => transferParams().key(firstResourceKey).percent(25).amount(1).build()).toThrowError(
-			'Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().',
-		);
-	});
-
-	it('supports static transfer amounts', () => {
-		const params = transferParams().key(firstResourceKey).amount(2).build();
-		expect(params).toEqual({ key: firstResourceKey, amount: 2 });
 	});
 
 	it('requires happiness tiers to declare an id', () => {

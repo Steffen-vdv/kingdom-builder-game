@@ -1,6 +1,7 @@
 import type { PlayerId, PopulationRoleId, ResourceKey } from '../state';
 import type { EngineContext } from '../context';
 import { runEffects, type EffectDef } from '../effects';
+import { getResourceValue } from '../resource-v2';
 
 export interface DeveloperPopulationPlanEntry {
 	role: PopulationRoleId;
@@ -35,7 +36,8 @@ function ensureResource(
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	const current = player.resources[key] ?? 0;
+	const resourceId = player.getResourceV2Id(key);
+	const current = getResourceValue(player, resourceId);
 	if (current === target) {
 		return;
 	}
@@ -58,7 +60,8 @@ function ensurePopulation(
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	const current = player.population[role] ?? 0;
+	const resourceId = player.getPopulationResourceV2Id(role);
+	const current = getResourceValue(player, resourceId);
 	if (current === target) {
 		return;
 	}

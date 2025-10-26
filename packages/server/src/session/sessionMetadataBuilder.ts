@@ -17,6 +17,10 @@ import {
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_GROUP_V2_REGISTRY,
+	RESOURCE_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	Registry,
 	SerializedRegistry,
@@ -103,6 +107,13 @@ const cloneActionCategoryRegistry = (): SessionActionCategoryRegistry => {
 	}
 	return deepFreeze(entries);
 };
+
+const cloneResourceCatalogRegistry = <DefinitionType>(registry: {
+	byId: Record<string, DefinitionType>;
+}): RegistryDefinition<DefinitionType> =>
+	deepFreeze(
+		structuredClone(registry.byId),
+	) as RegistryDefinition<DefinitionType>;
 
 const buildResourceRegistry =
 	(): RegistryDefinition<SessionResourceDefinition> => {
@@ -305,6 +316,8 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
 		resources: buildResourceRegistry(),
+		resourcesV2: cloneResourceCatalogRegistry(RESOURCE_V2_REGISTRY),
+		resourceGroupsV2: cloneResourceCatalogRegistry(RESOURCE_GROUP_V2_REGISTRY),
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),

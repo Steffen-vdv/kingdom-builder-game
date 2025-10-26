@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { PhaseId, Resource, RULES } from '@kingdom-builder/contents';
+import type { StatKey } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import { simulateUpcomingPhases } from '../../src';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 function resetPlayerState(context: ReturnType<typeof createTestEngine>) {
 	const player = context.game.players[0]!;
@@ -11,7 +13,8 @@ function resetPlayerState(context: ReturnType<typeof createTestEngine>) {
 	for (const key of Object.keys(player.stats)) {
 		player.stats[key] = 0;
 		player.statsHistory[key] = false;
-		player.statSources[key] = {};
+		const statId = player.getStatResourceV2Id(key as StatKey);
+		player.statSources[statId] = {};
 	}
 	for (const key of Object.keys(player.population)) {
 		player.population[key] = 0;
@@ -42,7 +45,10 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: Resource.gold, amount: goldGain },
+				params: resourceAmountParams({
+					key: Resource.gold,
+					amount: goldGain,
+				}),
 			},
 		];
 		land.upkeep = { [Resource.gold]: upkeepCost };
@@ -71,7 +77,10 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: Resource.gold, amount: 3 },
+				params: resourceAmountParams({
+					key: Resource.gold,
+					amount: 3,
+				}),
 			},
 		];
 		const result = simulateUpcomingPhases(context, player.id, {
@@ -93,7 +102,7 @@ describe('simulateUpcomingPhases (runtime)', () => {
 		firstStep.effects.push({
 			type: 'resource',
 			method: 'add',
-			params: { key: Resource.gold, amount: 1 },
+			params: resourceAmountParams({ key: Resource.gold, amount: 1 }),
 		});
 		expect(context.game.players[0]!.resources[Resource.gold]).toBe(
 			player.resources[Resource.gold],

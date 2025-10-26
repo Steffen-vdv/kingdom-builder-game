@@ -22,6 +22,10 @@ import {
 	Types,
 	PassiveMethods,
 } from '@kingdom-builder/contents/config/builderShared';
+import {
+	createResourceV2Registries,
+	resourceV2Definition,
+} from '@kingdom-builder/testing';
 
 export function createSyntheticContext() {
 	const costKey = 'r0';
@@ -129,6 +133,22 @@ export function createSyntheticContext() {
 		winConditions: [],
 	};
 
+	const { resources: resourcesV2, groups: resourceGroupsV2 } =
+		createResourceV2Registries({
+			resources: [
+				resourceV2Definition({
+					id: 'resource:synthetic:r0',
+					metadata: { label: 'Synthetic AP', icon: '⚡' },
+					bounds: { lowerBound: 0 },
+				}),
+				resourceV2Definition({
+					id: 'resource:synthetic:r1',
+					metadata: { label: 'Synthetic Gain', icon: '🪙' },
+					bounds: { lowerBound: 0 },
+				}),
+			],
+		});
+
 	const engineContext = createEngine({
 		actions: actionsReg,
 		buildings,
@@ -137,6 +157,10 @@ export function createSyntheticContext() {
 		phases,
 		start,
 		rules,
+		resourceCatalogV2: {
+			resources: resourcesV2,
+			groups: resourceGroupsV2,
+		},
 	});
 
 	return { engineContext, actions, phases, costKey, gainKey, start };

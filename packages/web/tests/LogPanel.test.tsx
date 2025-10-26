@@ -98,7 +98,7 @@ beforeEach(() => {
 	const timeline: ActionLogLineDescriptor[] = [
 		{ text: '🛡️ Heroic Deed', depth: 0, kind: 'headline' },
 		{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-		{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
+		{ text: '🪙 Gold -3', depth: 2, kind: 'cost-detail' },
 		{ text: '🪄 Empower the realm', depth: 1, kind: 'effect' },
 		{ text: 'Gain 2 Glory', depth: 2, kind: 'effect' },
 	];
