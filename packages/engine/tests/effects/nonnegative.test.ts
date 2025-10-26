@@ -11,6 +11,10 @@ import {
 	Stat as CStat,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import {
+	resourceAmountParams,
+	statAmountParams,
+} from '../helpers/resourceV2Params.ts';
 
 describe('resource and stat bounds', () => {
 	it('clamps stat removal to zero', () => {
@@ -22,7 +26,7 @@ describe('resource and stat bounds', () => {
 				{
 					type: 'stat',
 					method: 'remove',
-					params: { key: CStat.fortificationStrength, amount: 3 },
+					params: statAmountParams(CStat.fortificationStrength, 3),
 				},
 			],
 		});
@@ -50,7 +54,7 @@ describe('resource and stat bounds', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: -5 },
+					params: resourceAmountParams(CResource.gold, -5),
 				},
 			],
 		});
@@ -77,7 +81,7 @@ describe('resource and stat bounds', () => {
 				{
 					type: 'stat',
 					method: 'add',
-					params: { key: CStat.armyStrength, amount: -4 },
+					params: statAmountParams(CStat.armyStrength, -4),
 				},
 			],
 		});

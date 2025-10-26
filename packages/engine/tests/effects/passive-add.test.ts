@@ -3,6 +3,10 @@ import { runEffects } from '../../src/index.ts';
 import { Resource, Stat } from '../../src/state/index.ts';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
+import {
+	resourceAmountParams,
+	statAmountParams,
+} from '../helpers/resourceV2Params.ts';
 
 describe('passive:add effect', () => {
 	it('applies nested effects and registers phase triggers', () => {
@@ -16,28 +20,28 @@ describe('passive:add effect', () => {
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: resourceAmountParams(Resource.gold, 1),
 					},
 				],
 				onUpkeepPhase: [
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: resourceAmountParams(Resource.gold, 1),
 					},
 				],
 				onBeforeAttacked: [
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: resourceAmountParams(Resource.gold, 1),
 					},
 				],
 				onAttackResolved: [
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: resourceAmountParams(Resource.gold, 1),
 					},
 				],
 			},
@@ -45,7 +49,7 @@ describe('passive:add effect', () => {
 				{
 					type: 'stat',
 					method: 'add',
-					params: { key: Stat.armyStrength, amount: 1 },
+					params: statAmountParams(Stat.armyStrength, 1),
 				},
 			],
 		};

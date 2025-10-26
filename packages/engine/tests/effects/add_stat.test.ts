@@ -7,6 +7,7 @@ import {
 } from '../../src/index.ts';
 import { createActionRegistry, Stat as CStat } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import { statAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('stat:add effect', () => {
 	it('increments a stat via action effect', () => {
@@ -18,7 +19,7 @@ describe('stat:add effect', () => {
 				{
 					type: 'stat',
 					method: 'add',
-					params: { key: CStat.armyStrength, amount: 3 },
+					params: statAmountParams(CStat.armyStrength, 3),
 				},
 			],
 		});

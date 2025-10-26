@@ -4,6 +4,7 @@ import { PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
 import type { ResourceGain } from '../../src/services/passive_types.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const TARGET_TYPE = 'custom';
 const TARGET_ID = 'income';
@@ -31,7 +32,7 @@ describe('result_mod evaluation modifiers', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.happiness, amount: 3 },
+					params: resourceAmountParams(Resource.happiness, 3),
 				},
 			],
 			round: { [Resource.gold]: 'up' },
