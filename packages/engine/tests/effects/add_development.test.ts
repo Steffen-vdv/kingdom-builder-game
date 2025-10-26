@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('development:add effect', () => {
@@ -12,7 +13,7 @@ describe('development:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 2 },
+					params: resourceAmountParams(CResource.gold, 2),
 				},
 			],
 		});
@@ -41,7 +42,7 @@ describe('development:add effect', () => {
 		const beforeSlots = land.slotsUsed;
 		const gain = development.onBuild?.find(
 			(e) => e.type === 'resource' && e.method === 'add',
-		)?.params?.['amount'] as number;
+		)?.params?.change?.amount as number;
 		performAction(action.id, engineContext, {
 			id: development.id,
 			landId: land.id,

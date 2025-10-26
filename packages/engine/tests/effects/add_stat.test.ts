@@ -7,6 +7,7 @@ import {
 } from '../../src/index.ts';
 import { createActionRegistry, Stat as CStat } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import { statAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('stat:add effect', () => {
 	it('increments a stat via action effect', () => {
@@ -18,7 +19,7 @@ describe('stat:add effect', () => {
 				{
 					type: 'stat',
 					method: 'add',
-					params: { key: CStat.armyStrength, amount: 3 },
+					params: statAmountParams(CStat.armyStrength, 3),
 				},
 			],
 		});
@@ -32,7 +33,7 @@ describe('stat:add effect', () => {
 				effect.type === 'stat' &&
 				effect.method === 'add' &&
 				effect.params?.key === CStat.armyStrength,
-		)?.params?.amount as number;
+		)?.params?.change?.amount as number;
 		const actionCosts = getActionCosts('train_army', engineContext);
 		engineContext.activePlayer.ap = actionCosts[Resource.ap] ?? 0;
 		performAction('train_army', engineContext);

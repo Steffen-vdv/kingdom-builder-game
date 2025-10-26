@@ -10,6 +10,7 @@ import {
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('resource:remove effect', () => {
 	it('decrements a resource via action effect', () => {
@@ -21,7 +22,7 @@ describe('resource:remove effect', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: CResource.gold, amount: 3 },
+					params: resourceAmountParams(CResource.gold, 3),
 				},
 			],
 		});
@@ -35,7 +36,7 @@ describe('resource:remove effect', () => {
 				effect.type === 'resource' &&
 				effect.method === 'remove' &&
 				effect.params?.key === CResource.gold,
-		)?.params?.amount as number;
+		)?.params?.change?.amount as number;
 		const cost = getActionCosts('pay_gold', engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;
 		performAction('pay_gold', engineContext);
@@ -51,7 +52,7 @@ describe('resource:remove effect', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: CResource.gold, amount: 1.2 },
+					params: resourceAmountParams(CResource.gold, 1.2),
 					round: 'up',
 				},
 			],
@@ -63,7 +64,7 @@ describe('resource:remove effect', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: CResource.gold, amount: 1.8 },
+					params: resourceAmountParams(CResource.gold, 1.8),
 					round: 'down',
 				},
 			],
@@ -81,7 +82,7 @@ describe('resource:remove effect', () => {
 					effect.method === 'remove' &&
 					effect.params?.key === CResource.gold,
 			);
-		let total = (foundEffect?.params?.amount as number) || 0;
+		let total = (foundEffect?.params?.change?.amount as number) || 0;
 		if (foundEffect?.round === 'up') {
 			total = total >= 0 ? Math.ceil(total) : Math.floor(total);
 		} else if (foundEffect?.round === 'down') {
@@ -102,7 +103,7 @@ describe('resource:remove effect', () => {
 					effect.method === 'remove' &&
 					effect.params?.key === CResource.gold,
 			);
-		total = (foundEffect?.params?.amount as number) || 0;
+		total = (foundEffect?.params?.change?.amount as number) || 0;
 		if (foundEffect?.round === 'up') {
 			total = total >= 0 ? Math.ceil(total) : Math.floor(total);
 		} else if (foundEffect?.round === 'down') {

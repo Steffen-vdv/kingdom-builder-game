@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { runEffects, advance, Resource } from '../../src/index.ts';
 import { PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
 import type { ResourceGain } from '../../src/services/passive_types.ts';
 
@@ -31,7 +32,7 @@ describe('result_mod evaluation modifiers', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.happiness, amount: 3 },
+					params: resourceAmountParams(Resource.happiness, 3),
 				},
 			],
 			round: { [Resource.gold]: 'up' },

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef } from '../src/index.ts';
 import { Stat } from '../src/state/index.ts';
 import { createTestEngine } from './helpers.ts';
+import { resourcePercentParams } from './helpers/resourceV2Params.ts';
 
 describe('stat:add_pct additive scaling', () => {
 	it('adds multiple percentages from the original base in the same step', () => {
@@ -15,12 +16,12 @@ describe('stat:add_pct additive scaling', () => {
 			{
 				type: 'stat',
 				method: 'add_pct',
-				params: { key: Stat.armyStrength, percent: pct1 },
+				params: resourcePercentParams(Stat.armyStrength, pct1),
 			},
 			{
 				type: 'stat',
 				method: 'add_pct',
-				params: { key: Stat.armyStrength, percent: pct2 },
+				params: resourcePercentParams(Stat.armyStrength, pct2),
 			},
 		];
 

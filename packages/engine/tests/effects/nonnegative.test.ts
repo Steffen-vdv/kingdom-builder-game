@@ -11,6 +11,10 @@ import {
 	Stat as CStat,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import {
+	resourceAmountParams,
+	statAmountParams,
+} from '../helpers/resourceV2Params.ts';
 
 describe('resource and stat bounds', () => {
 	it('clamps stat removal to zero', () => {
@@ -22,7 +26,7 @@ describe('resource and stat bounds', () => {
 				{
 					type: 'stat',
 					method: 'remove',
-					params: { key: CStat.fortificationStrength, amount: 3 },
+					params: statAmountParams(CStat.fortificationStrength, 3),
 				},
 			],
 		});
@@ -32,7 +36,7 @@ describe('resource and stat bounds', () => {
 		const actionDef = actions.get('lower_fort');
 		const effectAmount = actionDef.effects.find(
 			(effect) => effect.type === 'stat',
-		)?.params?.amount as number;
+		)?.params?.change?.amount as number;
 		engineContext.activePlayer.stats[CStat.fortificationStrength] =
 			effectAmount - 1;
 		const cost = getActionCosts('lower_fort', engineContext)[Resource.ap] ?? 0;
@@ -50,7 +54,7 @@ describe('resource and stat bounds', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: -5 },
+					params: resourceAmountParams(CResource.gold, -5),
 				},
 			],
 		});
@@ -60,7 +64,7 @@ describe('resource and stat bounds', () => {
 		const actionDef = actions.get('lose_gold');
 		const effectAmount = actionDef.effects.find(
 			(effect) => effect.type === 'resource',
-		)?.params?.amount as number;
+		)?.params?.change?.amount as number;
 		engineContext.activePlayer.gold = 1;
 		const cost = getActionCosts('lose_gold', engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;
@@ -77,7 +81,7 @@ describe('resource and stat bounds', () => {
 				{
 					type: 'stat',
 					method: 'add',
-					params: { key: CStat.armyStrength, amount: -4 },
+					params: statAmountParams(CStat.armyStrength, -4),
 				},
 			],
 		});
@@ -87,7 +91,7 @@ describe('resource and stat bounds', () => {
 		const actionDef = actions.get('bad_add');
 		const effectAmount = actionDef.effects.find(
 			(effect) => effect.type === 'stat',
-		)?.params?.amount as number;
+		)?.params?.change?.amount as number;
 		const before = engineContext.activePlayer.armyStrength;
 		const cost = getActionCosts('bad_add', engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;

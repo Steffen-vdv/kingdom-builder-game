@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects } from '../../src/effects/index.ts';
 import { createTestEngine } from '../helpers.ts';
+import { resourcePercentParams } from '../helpers/resourceV2Params.ts';
 import { Stat } from '../../src/state/index.ts';
 
 describe('stat:add_pct effect', () => {
@@ -11,7 +12,7 @@ describe('stat:add_pct effect', () => {
 		const effect = {
 			type: 'stat',
 			method: 'add_pct',
-			params: { key: Stat.absorption, percent: 0.5 },
+			params: resourcePercentParams(Stat.absorption, 0.5),
 		} as const;
 		runEffects([effect], engineContext);
 		expect(engineContext.activePlayer.stats[Stat.absorption]).toBeCloseTo(0.3);
