@@ -36,6 +36,11 @@ const passiveMetadataSchema = z.object({
 	removal: passiveRemovalMetadataSchema.optional(),
 });
 
+const sessionResourceBoundsV2Schema = z.object({
+	lowerBound: z.number().nullable(),
+	upperBound: z.number().nullable(),
+});
+
 const sessionPassiveSummarySchema = z.object({
 	id: z.string(),
 	name: z.string().optional(),
@@ -74,6 +79,8 @@ export const actionPlayerSnapshotSchema = z.object({
 	buildings: z.array(z.string()),
 	lands: z.array(actionTraceLandSnapshotSchema),
 	passives: z.array(sessionPassiveSummarySchema),
+	valuesV2: z.record(z.string(), z.number()),
+	resourceBoundsV2: z.record(z.string(), sessionResourceBoundsV2Schema),
 });
 
 export const actionTraceSchema = z.object({

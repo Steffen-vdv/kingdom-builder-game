@@ -224,16 +224,12 @@ function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
 		valuesV2: { ...snapshot.valuesV2 },
-		resourceBoundsV2: snapshot.resourceBoundsV2
-			? Object.fromEntries(
-					Object.entries(snapshot.resourceBoundsV2).map(
-						([resourceId, bounds]) => [
-							resourceId,
-							{ lowerBound: bounds.lowerBound, upperBound: bounds.upperBound },
-						],
-					),
-				)
-			: {},
+		resourceBoundsV2: Object.fromEntries(
+			Object.entries(snapshot.resourceBoundsV2).map(([resourceId, bounds]) => [
+				resourceId,
+				{ lowerBound: bounds.lowerBound, upperBound: bounds.upperBound },
+			]),
+		),
 		buildings: [...snapshot.buildings],
 		lands: snapshot.lands.map((land) => ({
 			id: land.id,

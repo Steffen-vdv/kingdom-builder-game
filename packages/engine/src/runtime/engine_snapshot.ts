@@ -138,11 +138,8 @@ function snapshotEvaluationModifiers(
 }
 
 function buildResourceMetadata(
-	catalog: RuntimeResourceCatalog | undefined,
-): Record<string, SessionMetadataDescriptor> | undefined {
-	if (!catalog) {
-		return undefined;
-	}
+	catalog: RuntimeResourceCatalog,
+): Record<string, SessionMetadataDescriptor> {
 	const descriptors: Record<string, SessionMetadataDescriptor> = {};
 	for (const definition of catalog.resources.ordered) {
 		const descriptor: SessionMetadataDescriptor = {
@@ -159,15 +156,12 @@ function buildResourceMetadata(
 		}
 		descriptors[definition.id] = descriptor;
 	}
-	return Object.keys(descriptors).length > 0 ? descriptors : undefined;
+	return descriptors;
 }
 
 function buildResourceGroupMetadata(
-	catalog: RuntimeResourceCatalog | undefined,
-): Record<string, SessionMetadataDescriptor> | undefined {
-	if (!catalog) {
-		return undefined;
-	}
+	catalog: RuntimeResourceCatalog,
+): Record<string, SessionMetadataDescriptor> {
 	const descriptors: Record<string, SessionMetadataDescriptor> = {};
 	for (const group of catalog.groups.ordered) {
 		const parent = group.parent;
@@ -188,7 +182,7 @@ function buildResourceGroupMetadata(
 		}
 		descriptors[parent.id] = descriptor;
 	}
-	return Object.keys(descriptors).length > 0 ? descriptors : undefined;
+	return descriptors;
 }
 
 export function snapshotEngine(context: EngineContext): SessionSnapshot {
@@ -197,6 +191,11 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const effectLogs = cloneEffectLogs(context);
 	const passiveEvaluationModifiers = snapshotEvaluationModifiers(context);
 	const runtimeResourceCatalog = context.game.resourceCatalogV2;
+	if (!runtimeResourceCatalog) {
+		throw new Error(
+			'ResourceV2 catalog is required when snapshotting engine state.',
+		);
+	}
 	const resourceMetadataV2 = buildResourceMetadata(runtimeResourceCatalog);
 	const resourceGroupMetadataV2 = buildResourceGroupMetadata(
 		runtimeResourceCatalog,
@@ -206,13 +205,11 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 		: { passiveEvaluationModifiers };
 	const metadata: SessionSnapshotMetadata = {
 		...metadataBase,
-		...(resourceMetadataV2 ? { resourcesV2: resourceMetadataV2 } : {}),
-		...(resourceGroupMetadataV2
-			? { resourceGroupsV2: resourceGroupMetadataV2 }
-			: {}),
+		resourcesV2: resourceMetadataV2,
+		resourceGroupsV2: resourceGroupMetadataV2,
 	};
-	const resourceCatalogV2: SessionResourceCatalogV2 | undefined =
-		runtimeResourceCatalog as unknown as SessionResourceCatalogV2 | undefined;
+	const resourceCatalogV2 =
+		runtimeResourceCatalog as unknown as SessionResourceCatalogV2;
 	return {
 		game: {
 			turn: context.game.turn,
@@ -237,7 +234,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 						},
 					}
 				: {}),
-			...(resourceCatalogV2 ? { resourceCatalogV2 } : {}),
+			resourceCatalogV2,
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,
@@ -249,8 +246,8 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 		rules,
 		passiveRecords: clonePassiveRecords(context),
 		metadata,
-		...(resourceMetadataV2 ? { resourceMetadataV2 } : {}),
-		...(resourceGroupMetadataV2 ? { resourceGroupMetadataV2 } : {}),
+		resourceMetadataV2,
+		resourceGroupMetadataV2,
 	};
 }
 

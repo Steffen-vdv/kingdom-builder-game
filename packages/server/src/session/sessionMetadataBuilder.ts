@@ -17,6 +17,10 @@ import {
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	Registry,
 	SerializedRegistry,
@@ -24,6 +28,10 @@ import type {
 	SessionResourceDefinition,
 	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+} from '@kingdom-builder/protocol/resource-v2';
 import type {
 	SessionSnapshotMetadata,
 	SessionMetadataDescriptor,
@@ -122,6 +130,24 @@ const buildResourceRegistry =
 				definition.tags = [...info.tags];
 			}
 			entries[info.key] = definition;
+		}
+		return deepFreeze(entries);
+	};
+
+const buildResourceV2Registry =
+	(): SerializedRegistry<ResourceV2Definition> => {
+		const entries: SerializedRegistry<ResourceV2Definition> = {};
+		for (const definition of RESOURCE_V2_REGISTRY.ordered) {
+			entries[definition.id] = deepFreeze(structuredClone(definition));
+		}
+		return deepFreeze(entries);
+	};
+
+const buildResourceGroupV2Registry =
+	(): SerializedRegistry<ResourceV2GroupDefinition> => {
+		const entries: SerializedRegistry<ResourceV2GroupDefinition> = {};
+		for (const definition of RESOURCE_GROUP_V2_REGISTRY.ordered) {
+			entries[definition.id] = deepFreeze(structuredClone(definition));
 		}
 		return deepFreeze(entries);
 	};
@@ -305,6 +331,8 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
 		resources: buildResourceRegistry(),
+		resourcesV2: buildResourceV2Registry(),
+		resourceGroupsV2: buildResourceGroupV2Registry(),
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),

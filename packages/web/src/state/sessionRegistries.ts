@@ -15,6 +15,10 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol/session';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+} from '@kingdom-builder/protocol/resource-v2';
 import type { ZodType } from 'zod';
 import { clone } from './clone';
 
@@ -55,6 +59,17 @@ function cloneResourceRegistry(
 		Object.entries(resources).map(([key, definition]) => [
 			key,
 			cloneResourceDefinition(definition),
+		]),
+	);
+}
+
+function cloneResourceV2Registry<DefinitionType>(
+	resources: Record<string, DefinitionType>,
+): Record<string, DefinitionType> {
+	return Object.fromEntries(
+		Object.entries(resources).map(([key, definition]) => [
+			key,
+			structuredClone(definition),
 		]),
 	);
 }
@@ -103,6 +118,8 @@ export interface SessionRegistries {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: Record<string, SessionResourceDefinition>;
+	resourcesV2: Record<string, ResourceV2Definition>;
+	resourceGroupsV2: Record<string, ResourceV2GroupDefinition>;
 }
 
 export function deserializeSessionRegistries(
@@ -127,6 +144,12 @@ export function deserializeSessionRegistries(
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),
+		resourcesV2: cloneResourceV2Registry<ResourceV2Definition>(
+			payload.resourcesV2,
+		),
+		resourceGroupsV2: cloneResourceV2Registry<ResourceV2GroupDefinition>(
+			payload.resourceGroupsV2,
+		),
 	};
 }
 

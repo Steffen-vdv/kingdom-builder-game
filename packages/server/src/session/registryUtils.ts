@@ -53,3 +53,15 @@ export const freezeSerializedRegistry = <DefinitionType>(
 	}
 	return Object.freeze(registry) as SerializedRegistry<DefinitionType>;
 };
+
+export const cloneResourceCatalogRegistry = <
+	DefinitionType extends { id: string },
+>(registry: {
+	ordered: readonly DefinitionType[];
+}): SerializedRegistry<DefinitionType> => {
+	const entries: SerializedRegistry<DefinitionType> = {};
+	for (const definition of registry.ordered) {
+		entries[definition.id] = structuredClone(definition);
+	}
+	return entries;
+};

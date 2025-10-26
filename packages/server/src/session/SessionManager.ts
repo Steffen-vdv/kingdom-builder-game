@@ -23,7 +23,12 @@ import type {
 	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	SerializedRegistry,
 } from '@kingdom-builder/protocol';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+} from '@kingdom-builder/protocol/resource-v2';
 import {
 	buildSessionMetadata,
 	type SessionStaticMetadataPayload,
@@ -32,6 +37,7 @@ import {
 	cloneActionCategoryRegistry,
 	cloneRegistry,
 	freezeSerializedRegistry,
+	cloneResourceCatalogRegistry,
 } from './registryUtils.js';
 import {
 	buildSessionAssets,
@@ -52,6 +58,8 @@ type SessionRuntimeConfig = {
 	start: StartConfig;
 	rules: RuleSet;
 	resources: SessionResourceRegistry;
+	resourcesV2: SerializedRegistry<ResourceV2Definition>;
+	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
 	primaryIconId: string | null;
 };
 
@@ -144,6 +152,16 @@ export class SessionManager {
 			: (freezeSerializedRegistry(
 					cloneActionCategoryRegistry(this.baseOptions.actionCategories),
 				) as SessionActionCategoryRegistry);
+		const resourcesV2 = freezeSerializedRegistry(
+			cloneResourceCatalogRegistry(
+				this.baseOptions.resourceCatalogV2.resources,
+			) as SerializedRegistry<ResourceV2Definition>,
+		);
+		const resourceGroupsV2 = freezeSerializedRegistry(
+			cloneResourceCatalogRegistry(
+				this.baseOptions.resourceCatalogV2.groups,
+			) as SerializedRegistry<ResourceV2GroupDefinition>,
+		);
 		this.registries = {
 			actions: cloneRegistry(this.baseOptions.actions),
 			actionCategories,
@@ -151,6 +169,8 @@ export class SessionManager {
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
+			resourcesV2,
+			resourceGroupsV2,
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
@@ -168,14 +188,20 @@ export class SessionManager {
 		const frozenRules = Object.freeze(
 			structuredClone(this.baseOptions.rules),
 		) as unknown as RuleSet;
-		const frozenResources = freezeSerializedRegistry(
+		const frozenResources: SessionResourceRegistry = freezeSerializedRegistry(
 			structuredClone(resources),
-		) as SessionResourceRegistry;
+		);
+		const frozenResourcesV2: SerializedRegistry<ResourceV2Definition> =
+			freezeSerializedRegistry(structuredClone(resourcesV2));
+		const frozenResourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition> =
+			freezeSerializedRegistry(structuredClone(resourceGroupsV2));
 		this.runtimeConfig = Object.freeze({
 			phases: frozenPhases,
 			start: frozenStart,
 			rules: frozenRules,
 			resources: frozenResources,
+			resourcesV2: frozenResourcesV2,
+			resourceGroupsV2: frozenResourceGroupsV2,
 			primaryIconId,
 		});
 	}

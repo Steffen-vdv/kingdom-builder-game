@@ -36,7 +36,13 @@ interface PresentAiActionsOptions {
 	resourceKeys: readonly SessionResourceKey[];
 	fallbackRegistries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		| 'actions'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
+		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroupsV2'
 	>;
 }
 
@@ -53,6 +59,13 @@ function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 			developments: [...land.developments],
 		})),
 		passives: snapshot.passives.map((entry) => ({ ...entry })),
+		valuesV2: { ...snapshot.valuesV2 },
+		resourceBoundsV2: Object.fromEntries(
+			Object.entries(snapshot.resourceBoundsV2).map(([id, bounds]) => [
+				id,
+				{ ...bounds },
+			]),
+		),
 	};
 }
 
@@ -197,7 +210,13 @@ interface UseAiRunnerOptions {
 	addResolutionLog: (resolution: ActionResolution) => void;
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		| 'actions'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
+		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroupsV2'
 	>;
 	resourceKeys: readonly SessionResourceKey[];
 	actionCostResource: SessionResourceKey;

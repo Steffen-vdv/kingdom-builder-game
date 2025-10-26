@@ -35,6 +35,19 @@ const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors = {
 	sumForResource: () => 0,
 };
 
+const EMPTY_RESOURCE_CATALOG: TranslationContext['resourcesV2'] = Object.freeze(
+	{
+		resources: Object.freeze({
+			ordered: Object.freeze([]),
+			byId: Object.freeze({}) as Record<string, never>,
+		}),
+		groups: Object.freeze({
+			ordered: Object.freeze([]),
+			byId: Object.freeze({}) as Record<string, never>,
+		}),
+	},
+) as TranslationContext['resourcesV2'];
+
 const createTranslationContext = (
 	requirements: unknown[],
 	assetOverrides: Partial<TranslationAssets> = {},
@@ -123,6 +136,8 @@ const createTranslationContext = (
 			resources: {},
 			stats: {},
 			population: {},
+			resourcesV2: Object.freeze({}),
+			resourceBoundsV2: Object.freeze({}),
 		},
 		opponent: {
 			id: 'B',
@@ -130,6 +145,8 @@ const createTranslationContext = (
 			resources: {},
 			stats: {},
 			population: {},
+			resourcesV2: Object.freeze({}),
+			resourceBoundsV2: Object.freeze({}),
 		},
 		rules: {
 			tierDefinitions: [],
@@ -141,7 +158,7 @@ const createTranslationContext = (
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
 		assets: mergedAssets,
-		resourcesV2: undefined,
+		resourcesV2: EMPTY_RESOURCE_CATALOG,
 		resourceMetadataV2: EMPTY_RESOURCE_METADATA,
 		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
 		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,

@@ -27,7 +27,11 @@ import {
 	buildSessionMetadata,
 	type SessionStaticMetadataPayload,
 } from './buildSessionMetadata.js';
-import { cloneRegistry, freezeSerializedRegistry } from './registryUtils.js';
+import {
+	cloneRegistry,
+	freezeSerializedRegistry,
+	cloneResourceCatalogRegistry,
+} from './registryUtils.js';
 import type { RuntimeResourceContent } from '@kingdom-builder/engine';
 
 export type SessionResourceRegistry =
@@ -75,12 +79,22 @@ export function buildSessionAssets(
 		startConfig,
 	);
 	const frozenResources = freezeSerializedRegistry(structuredClone(resources));
+	const frozenResourcesV2 = freezeSerializedRegistry(
+		cloneResourceCatalogRegistry(
+			context.baseOptions.resourceCatalogV2.resources,
+		),
+	);
+	const frozenResourceGroupsV2 = freezeSerializedRegistry(
+		cloneResourceCatalogRegistry(context.baseOptions.resourceCatalogV2.groups),
+	);
 	const registries: SessionRegistriesPayload = {
 		actions: freezeSerializedRegistry(cloneRegistry(actions)),
 		buildings: freezeSerializedRegistry(cloneRegistry(buildings)),
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
 		populations: freezeSerializedRegistry(cloneRegistry(populations)),
 		resources: frozenResources,
+		resourcesV2: frozenResourcesV2,
+		resourceGroupsV2: frozenResourceGroupsV2,
 	};
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;

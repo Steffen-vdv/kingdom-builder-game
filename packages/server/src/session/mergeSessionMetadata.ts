@@ -38,6 +38,24 @@ export function mergeSessionMetadata({
 	} else {
 		delete merged.resources;
 	}
+	const resourcesV2 = mergeRecord(
+		baseClone.resourcesV2,
+		snapshotMetadata.resourcesV2,
+	);
+	if (resourcesV2 !== undefined) {
+		merged.resourcesV2 = resourcesV2;
+	} else {
+		delete merged.resourcesV2;
+	}
+	const resourceGroupsV2 = mergeRecord(
+		baseClone.resourceGroupsV2,
+		snapshotMetadata.resourceGroupsV2,
+	);
+	if (resourceGroupsV2 !== undefined) {
+		merged.resourceGroupsV2 = resourceGroupsV2;
+	} else {
+		delete merged.resourceGroupsV2;
+	}
 	const populations = mergeRecord(
 		baseClone.populations,
 		snapshotMetadata.populations,

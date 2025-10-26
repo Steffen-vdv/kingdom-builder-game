@@ -12,20 +12,14 @@ import type {
 } from './types';
 
 export function cloneResourceValuesV2(
-	values?: Record<string, number>,
-): Readonly<Record<string, number>> | undefined {
-	if (!values) {
-		return undefined;
-	}
+	values: Record<string, number>,
+): Readonly<Record<string, number>> {
 	return Object.freeze({ ...values });
 }
 
 export function cloneResourceBoundsV2(
-	bounds?: Record<string, SessionResourceBoundsV2>,
-): Readonly<Record<string, SessionResourceBoundsV2>> | undefined {
-	if (!bounds) {
-		return undefined;
-	}
+	bounds: Record<string, SessionResourceBoundsV2>,
+): Readonly<Record<string, SessionResourceBoundsV2>> {
 	const cloned = Object.fromEntries(
 		Object.entries(bounds).map(([id, entry]) => [
 			id,
@@ -66,11 +60,8 @@ function cloneResourceCatalogRegistryV2<TDefinition extends { id: string }>(
 }
 
 export function cloneResourceCatalogV2(
-	catalog: SessionResourceCatalogV2 | undefined,
+	catalog: SessionResourceCatalogV2,
 ): TranslationResourceCatalogV2 {
-	if (!catalog) {
-		return undefined;
-	}
 	const resources = cloneResourceCatalogRegistryV2(catalog.resources);
 	const groups = cloneResourceCatalogRegistryV2(catalog.groups);
 	return Object.freeze({

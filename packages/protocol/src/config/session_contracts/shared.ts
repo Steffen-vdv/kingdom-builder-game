@@ -31,6 +31,20 @@ const serializedRegistrySchema = <Shape extends ZodRawShape>(
 	schema: ZodObject<Shape>,
 ) => z.record(z.string(), schema.passthrough());
 
+const resourceV2DefinitionSchema = z
+	.object({
+		id: z.string(),
+		label: z.string(),
+		icon: z.string(),
+	})
+	.passthrough();
+
+const resourceV2GroupDefinitionSchema = z
+	.object({
+		id: z.string(),
+	})
+	.passthrough();
+
 export const sessionRegistriesSchema = z
 	.object({
 		actions: serializedRegistrySchema(actionSchema),
@@ -39,6 +53,8 @@ export const sessionRegistriesSchema = z
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
+		resourcesV2: serializedRegistrySchema(resourceV2DefinitionSchema),
+		resourceGroupsV2: serializedRegistrySchema(resourceV2GroupDefinitionSchema),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 
@@ -49,6 +65,8 @@ export const runtimeConfigResponseSchema = z
 		rules: ruleSetSchema,
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		primaryIconId: z.string().nullable(),
+		resourcesV2: serializedRegistrySchema(resourceV2DefinitionSchema),
+		resourceGroupsV2: serializedRegistrySchema(resourceV2GroupDefinitionSchema),
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
 

@@ -26,6 +26,15 @@ export function toRegistriesPayload(
 				return [key, cloneValue(definition)];
 			}),
 		);
+	const cloneResourceCatalog = <DefinitionType>(
+		entries: Record<string, DefinitionType>,
+	) =>
+		Object.fromEntries(
+			Object.entries(entries).map(([id, definition]) => [
+				id,
+				cloneValue(definition),
+			]),
+		);
 	return {
 		actions: toEntries(registries.actions),
 		actionCategories: toEntries(
@@ -39,5 +48,7 @@ export function toRegistriesPayload(
 			registries.populations as SessionRegistries['actions'],
 		),
 		resources: cloneResources(),
+		resourcesV2: cloneResourceCatalog(registries.resourcesV2),
+		resourceGroupsV2: cloneResourceCatalog(registries.resourceGroupsV2),
 	};
 }

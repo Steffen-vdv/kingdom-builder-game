@@ -131,8 +131,8 @@ function ensureTranslationMetadata(
 		stats: { ...(metadata.stats ?? {}) },
 		assets: { ...(metadata.assets ?? {}) },
 		triggers: { ...(metadata.triggers ?? {}) },
-		resourcesV2: { ...(metadata.resourcesV2 ?? {}) },
-		resourceGroupsV2: { ...(metadata.resourceGroupsV2 ?? {}) },
+		resourcesV2: { ...metadata.resourcesV2 },
+		resourceGroupsV2: { ...metadata.resourceGroupsV2 },
 	};
 	const resourceDescriptors = enriched.resources ?? {};
 	for (const [key, definition] of Object.entries(registries.resources)) {
@@ -149,7 +149,7 @@ function ensureTranslationMetadata(
 		resourceDescriptors[key] = descriptor;
 	}
 	enriched.resources = resourceDescriptors;
-	const resourceV2Descriptors = enriched.resourcesV2 ?? {};
+	const resourceV2Descriptors = enriched.resourcesV2;
 	for (const [key, descriptor] of Object.entries(resourceDescriptors)) {
 		const existing = resourceV2Descriptors[key] ?? {};
 		resourceV2Descriptors[key] = { ...descriptor, ...existing };

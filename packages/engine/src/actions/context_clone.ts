@@ -162,9 +162,10 @@ function cloneGameState(game: GameState): GameState {
 	cloned.stepIndex = game.stepIndex;
 	cloned.devMode = game.devMode;
 	cloned.players = game.players.map((player) => clonePlayerState(player));
-	if (game.resourceCatalogV2) {
-		cloned.resourceCatalogV2 = game.resourceCatalogV2;
+	if (!game.resourceCatalogV2) {
+		throw new Error('Cannot clone game state without a ResourceV2 catalog.');
 	}
+	cloned.resourceCatalogV2 = game.resourceCatalogV2;
 	return cloned;
 }
 
@@ -189,10 +190,13 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 	if (source.aiSystem) {
 		cloned.aiSystem = source.aiSystem;
 	}
-	if (source.resourceCatalogV2) {
-		cloned.resourceCatalogV2 = source.resourceCatalogV2;
-		cloned.game.resourceCatalogV2 = source.resourceCatalogV2;
+	if (!source.resourceCatalogV2) {
+		throw new Error(
+			'Cannot clone engine context without a ResourceV2 catalog.',
+		);
 	}
+	cloned.resourceCatalogV2 = source.resourceCatalogV2;
+	cloned.game.resourceCatalogV2 = source.resourceCatalogV2;
 	cloned.statAddPctBases = { ...source.statAddPctBases };
 	cloned.statAddPctAccums = { ...source.statAddPctAccums };
 	cloned.recentResourceGains = source.recentResourceGains.map((gain) => ({

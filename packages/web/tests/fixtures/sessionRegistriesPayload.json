@@ -1370,5 +1370,7 @@
 			"analyticsKey": "build",
 			"description": "Construction options that add new structures or unlocks."
 		}
-	}
+	},
+	"resourcesV2": {},
+	"resourceGroupsV2": {}
 }

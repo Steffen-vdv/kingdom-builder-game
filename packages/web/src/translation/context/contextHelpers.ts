@@ -72,16 +72,14 @@ export function toPassiveDescriptor(
 export function clonePlayer(
 	player: SessionSnapshot['game']['players'][number],
 ): TranslationPlayer {
-	const resourcesV2 = cloneResourceValuesV2(player.valuesV2);
-	const resourceBoundsV2 = cloneResourceBoundsV2(player.resourceBoundsV2);
 	return Object.freeze({
 		id: player.id,
 		name: player.name,
 		resources: cloneRecord(player.resources),
 		stats: cloneRecord(player.stats),
 		population: cloneRecord(player.population),
-		...(resourcesV2 ? { resourcesV2 } : {}),
-		...(resourceBoundsV2 ? { resourceBoundsV2 } : {}),
+		resourcesV2: cloneResourceValuesV2(player.valuesV2),
+		resourceBoundsV2: cloneResourceBoundsV2(player.resourceBoundsV2),
 	});
 }
 

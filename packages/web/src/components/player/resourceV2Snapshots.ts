@@ -52,17 +52,15 @@ function sumPopulationRoles(
 		return 0;
 	}
 	const valuesV2 = player.valuesV2;
-	if (valuesV2) {
-		let total = 0;
-		for (const roleId of populationRoleIds) {
-			const entry = valuesV2[roleId];
-			if (typeof entry === 'number') {
-				total += entry;
-			}
+	let total = 0;
+	for (const roleId of populationRoleIds) {
+		const entry = valuesV2[roleId];
+		if (typeof entry === 'number') {
+			total += entry;
 		}
-		if (total !== 0) {
-			return total;
-		}
+	}
+	if (total !== 0) {
+		return total;
 	}
 	let legacyTotal = 0;
 	for (const roleId of populationRoleIds) {
@@ -166,7 +164,7 @@ export function createResourceSnapshot(
 		populationParentId,
 	} = context;
 	const bounds = resolveBounds(player.resourceBoundsV2, resourceId);
-	let current = player.valuesV2?.[resourceId];
+	let current = player.valuesV2[resourceId];
 	if (typeof current !== 'number') {
 		if (populationParentId && resourceId === populationParentId) {
 			current = sumPopulationRoles(player, populationRoleIds);
