@@ -17,10 +17,8 @@ export const happinessPassiveId = (slug: HappinessTierSlug) => `passive:happines
 
 export const happinessModifierId = (slug: HappinessTierSlug, kind: HappinessModifierKind) => `happiness:${slug}:${kind}`;
 
-const DEVELOPMENT_EVALUATION = developmentTarget();
-
 export const incomeModifier = (id: string, percent: number) =>
-	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(DEVELOPMENT_EVALUATION).percent(percent).build()).build();
+	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(developmentTarget()).percent(percent).build()).build();
 
 const GOLD_RESOURCE_KEY: ResourceKey = 'gold';
 const GROWTH_STAT_KEY: StatKey = 'growth';
