@@ -1,7 +1,7 @@
 import { Registry, TRANSFER_PCT_EVALUATION_ID, TRANSFER_PCT_EVALUATION_TYPE, buildingSchema } from '@kingdom-builder/protocol';
 import { ActionId, PopulationEvaluationId } from './actionIds';
-import { Resource, getResourceV2Id } from './resources';
-import type { ResourceKey } from './resources';
+import { Resource, getResourceV2Id } from './resourceKeys';
+import type { ResourceKey } from './resourceKeys';
 import { Stat, getStatResourceV2Id } from './stats';
 import type { StatKey } from './stats';
 import { DevelopmentId } from './developments';

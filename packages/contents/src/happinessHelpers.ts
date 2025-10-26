@@ -4,7 +4,7 @@ import { costModParams, developmentTarget, resultModParams, statAddEffect, effec
 import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './config/builderShared';
 import { formatPassiveRemoval } from './text';
 import type { passiveParams } from './config/builders';
-import type { ResourceKey } from './resources';
+import type { ResourceKey } from './resourceKeys';
 import type { StatKey } from './stats';
 
 export type HappinessTierSlug = 'despair' | 'misery' | 'grim' | 'unrest' | 'steady' | 'content' | 'joyful' | 'elated' | 'ecstatic';

@@ -7,7 +7,7 @@ import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../action
 import { action, buildingParams, effect } from '../config/builders';
 import { Types, BuildingMethods } from '../config/builderShared';
 import { Focus, type BuildingDef } from '../defs';
-import { getResourceV2Id, type ResourceKey } from '../resources';
+import { getResourceV2Id, type ResourceKey } from '../resourceKeys';
 import { resourceChange, type ResourceChangeEffectParams } from '../resourceV2';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {

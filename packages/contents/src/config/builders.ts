@@ -1,5 +1,5 @@
 import type { WinConditionDefinition, WinConditionDisplay, WinConditionResult, WinConditionTrigger, WinConditionOutcome } from '@kingdom-builder/protocol';
-import type { ResourceKey } from '../resources';
+import type { ResourceKey } from '../resourceKeys';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
 import { CompareRequirementBuilder } from './builders/evaluators';
