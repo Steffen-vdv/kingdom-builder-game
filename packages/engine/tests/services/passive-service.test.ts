@@ -3,6 +3,7 @@ import { Resource as CResource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { getActionCosts } from '../../src';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('PassiveManager', () => {
 	it('applies and unregisters cost modifiers', () => {
@@ -94,11 +95,17 @@ describe('PassiveManager', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 2 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 2,
+					}),
 				},
 			],
 		};
 		const before = engineContext.activePlayer.gold;
+		const resourceId = engineContext.activePlayer.getResourceV2Id(
+			CResource.gold,
+		);
 		engineContext.passives.addPassive(passive, engineContext);
 		expect(
 			engineContext.passives
@@ -106,6 +113,9 @@ describe('PassiveManager', () => {
 				.some((entry) => entry.id === 'shiny'),
 		).toBe(true);
 		expect(engineContext.activePlayer.gold).toBe(before + 2);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
+			before + 2,
+		);
 		engineContext.passives.removePassive('shiny', engineContext);
 		expect(
 			engineContext.passives
@@ -113,6 +123,7 @@ describe('PassiveManager', () => {
 				.some((entry) => entry.id === 'shiny'),
 		).toBe(false);
 		expect(engineContext.activePlayer.gold).toBe(before);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(before);
 		engineContext.passives.removePassive('unknown', engineContext);
 	});
 

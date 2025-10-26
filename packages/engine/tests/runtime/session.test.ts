@@ -30,6 +30,7 @@ import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -98,12 +99,16 @@ function advanceToPlayerMain(session: EngineSession, playerId: string) {
 describe('EngineSession', () => {
 	it('performs actions without exposing the context', () => {
 		const content = createContentFactory();
+		const gainParams = resourceAmountParams({
+			key: CResource.gold,
+			amount: 3,
+		});
 		const gainGold = content.action({
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 3 },
+					params: gainParams,
 				},
 			],
 		});
@@ -117,16 +122,21 @@ describe('EngineSession', () => {
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
 		const initialGold = activeBefore.resources[CResource.gold] ?? 0;
+		const gainAmount = gainParams.amount;
 		const traces = session.performAction(gainGold.id);
 		const after = session.getSnapshot();
 		const activeAfter = after.game.players[0]!;
-		expect(activeAfter.resources[CResource.gold]).toBe(initialGold + 3);
+		expect(activeAfter.resources[CResource.gold]).toBe(
+			initialGold + gainAmount,
+		);
 		if (traces.length > 0) {
 			traces[0]!.after.resources[CResource.gold] = 999;
 		}
 		const refreshed = session.getSnapshot();
 		const activeRefreshed = refreshed.game.players[0]!;
-		expect(activeRefreshed.resources[CResource.gold]).toBe(initialGold + 3);
+		expect(activeRefreshed.resources[CResource.gold]).toBe(
+			initialGold + gainAmount,
+		);
 	});
 
 	it('simulates actions before executing to avoid partial failures', () => {
@@ -554,6 +564,10 @@ it('returns cloned simulation previews for upcoming phases', () => {
 
 it('delegates AI turns with overrides while preserving controllers', async () => {
 	const content = createContentFactory();
+	const gainParams = resourceAmountParams({
+		key: CResource.gold,
+		amount: 1,
+	});
 	const taxAction = content.action({
 		id: TAX_ACTION_ID,
 		baseCosts: { [CResource.ap]: 1 },
@@ -561,7 +575,7 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: CResource.gold, amount: 1 },
+				params: gainParams,
 			},
 		],
 	});

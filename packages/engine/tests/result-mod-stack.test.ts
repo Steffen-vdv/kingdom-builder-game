@@ -3,6 +3,7 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { performAction, advance } from '../src';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from './helpers';
+import { resourceAmountParams } from './helpers/resourceV2Params.ts';
 
 describe('result modifiers', () => {
 	it('stack for the same action', () => {
@@ -12,12 +13,24 @@ describe('result modifiers', () => {
 		const modGainB = 3;
 
 		const content = createContentFactory();
+		const baseGainParams = resourceAmountParams({
+			key: resourceKey,
+			amount: baseGain,
+		});
+		const modGainParamsA = resourceAmountParams({
+			key: resourceKey,
+			amount: modGainA,
+		});
+		const modGainParamsB = resourceAmountParams({
+			key: resourceKey,
+			amount: modGainB,
+		});
 		const action = content.action({
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: resourceKey, amount: baseGain },
+					params: baseGainParams,
 				},
 			],
 		});
@@ -33,7 +46,7 @@ describe('result modifiers', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: resourceKey, amount: modGainA },
+							params: modGainParamsA,
 						},
 					],
 				},
@@ -51,7 +64,7 @@ describe('result modifiers', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: resourceKey, amount: modGainB },
+							params: modGainParamsB,
 						},
 					],
 				},
@@ -67,9 +80,11 @@ describe('result modifiers', () => {
 		engineContext.passives.addPassive(passiveB, engineContext);
 
 		const before = engineContext.activePlayer.resources[resourceKey] ?? 0;
+		const resourceId = engineContext.activePlayer.getResourceV2Id(resourceKey);
 		performAction(action.id, engineContext);
 		const after = engineContext.activePlayer.resources[resourceKey] ?? 0;
 
 		expect(after).toBe(before + baseGain + modGainA + modGainB);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(after);
 	});
 });

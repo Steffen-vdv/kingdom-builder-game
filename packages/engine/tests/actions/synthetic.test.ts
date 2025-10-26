@@ -3,6 +3,7 @@ import { performAction, advance, getActionCosts } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -13,13 +14,17 @@ function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 describe('actions with synthetic content', () => {
 	it('pays costs and applies resource effects', () => {
 		const content = createContentFactory();
+		const gainParams = resourceAmountParams({
+			key: CResource.gold,
+			amount: 5,
+		});
 		const actionDefinition = content.action({
 			baseCosts: { [CResource.gold]: 2 },
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 5 },
+					params: gainParams,
 				},
 			],
 		});
@@ -29,24 +34,31 @@ describe('actions with synthetic content', () => {
 		engineContext.activePlayer.ap = costs[CResource.ap] ?? 0;
 		engineContext.activePlayer.gold = costs[CResource.gold] ?? 0;
 		const beforeGold = engineContext.activePlayer.gold;
-		const gain = actionDefinition.effects.find(
-			(effect) => effect.type === 'resource' && effect.method === 'add',
-		)?.params?.['amount'] as number;
+		const gain = gainParams.amount;
 		performAction(actionDefinition.id, engineContext);
-		expect(engineContext.activePlayer.gold).toBe(
-			beforeGold - (costs[CResource.gold] ?? 0) + gain,
+		const expected = beforeGold - (costs[CResource.gold] ?? 0) + gain;
+		expect(engineContext.activePlayer.gold).toBe(expected);
+		const resourceId = engineContext.activePlayer.getResourceV2Id(
+			CResource.gold,
+		);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
+			expected,
 		);
 	});
 
 	it('builds a building and applies its onBuild effects', () => {
 		const content = createContentFactory();
+		const onBuildGain = resourceAmountParams({
+			key: CResource.gold,
+			amount: 2,
+		});
 		const building = content.building({
 			costs: { [CResource.gold]: 3 },
 			onBuild: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 2 },
+					params: onBuildGain,
 				},
 			],
 		});
@@ -63,24 +75,31 @@ describe('actions with synthetic content', () => {
 		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
 		engineContext.activePlayer.gold = cost[CResource.gold] ?? 0;
 		const beforeGold = engineContext.activePlayer.gold;
-		const gain = building.onBuild?.find(
-			(effect) => effect.type === 'resource' && effect.method === 'add',
-		)?.params?.['amount'] as number;
+		const gain = onBuildGain.amount;
 		performAction(buildAction.id, engineContext, { id: building.id });
 		expect(engineContext.activePlayer.buildings.has(building.id)).toBe(true);
-		expect(engineContext.activePlayer.gold).toBe(
-			beforeGold - (cost[CResource.gold] ?? 0) + gain,
+		const expected = beforeGold - (cost[CResource.gold] ?? 0) + gain;
+		expect(engineContext.activePlayer.gold).toBe(expected);
+		const resourceId = engineContext.activePlayer.getResourceV2Id(
+			CResource.gold,
+		);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
+			expected,
 		);
 	});
 
 	it('adds a development and runs its onBuild effects', () => {
 		const content = createContentFactory();
+		const developmentGain = resourceAmountParams({
+			key: CResource.gold,
+			amount: 1,
+		});
 		const development = content.development({
 			onBuild: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 1 },
+					params: developmentGain,
 				},
 			],
 		});
@@ -107,17 +126,20 @@ describe('actions with synthetic content', () => {
 		engineContext.activePlayer.gold = cost[CResource.gold] ?? 0;
 		const beforeGold = engineContext.activePlayer.gold;
 		const beforeSlots = land.slotsUsed;
-		const gain = development.onBuild?.find(
-			(effect) => effect.type === 'resource' && effect.method === 'add',
-		)?.params?.['amount'] as number;
+		const gain = developmentGain.amount;
 		performAction(developAction.id, engineContext, {
 			id: development.id,
 			landId: land.id,
 		});
 		expect(land.developments).toContain(development.id);
 		expect(land.slotsUsed).toBe(beforeSlots + 1);
-		expect(engineContext.activePlayer.gold).toBe(
-			beforeGold - (cost[CResource.gold] ?? 0) + gain,
+		const expected = beforeGold - (cost[CResource.gold] ?? 0) + gain;
+		expect(engineContext.activePlayer.gold).toBe(expected);
+		const resourceId = engineContext.activePlayer.getResourceV2Id(
+			CResource.gold,
+		);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
+			expected,
 		);
 	});
 });

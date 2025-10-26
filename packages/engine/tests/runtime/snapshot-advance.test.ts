@@ -4,6 +4,10 @@ import type { AdvanceResult, AdvanceSkip } from '../../src/phases/advance';
 import type { PassiveMetadata } from '../../src/services';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { createTestEngine } from '../helpers';
+import {
+	resourceAmountParams,
+	statAmountParams,
+} from '../helpers/resourceV2Params.ts';
 
 function getFirstKey(source: Record<string, unknown>): string {
 	const [first] = Object.keys(source);
@@ -18,15 +22,27 @@ describe('snapshotAdvance', () => {
 		const statKey = getFirstKey(activePlayer.stats);
 		const developmentEntry = context.developments.entries()[0];
 		const developmentId = developmentEntry?.[0] ?? 'test:development';
+		const resourceGain = resourceAmountParams({
+			key: resourceKey,
+			amount: 3,
+		});
+		const nestedStatGain = statAmountParams({
+			key: statKey,
+			amount: 1,
+		});
+		const chainedGainParams = resourceAmountParams({
+			key: resourceKey,
+			amount: 1,
+		});
 		const outerEffect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: resourceKey, amount: 3 },
+			params: resourceGain,
 			effects: [
 				{
 					type: 'stat',
 					method: 'add',
-					params: { key: statKey, amount: 1 },
+					params: nestedStatGain,
 					meta: { tag: 'nested' },
 				},
 			],
@@ -36,7 +52,7 @@ describe('snapshotAdvance', () => {
 		const chainedEffect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: resourceKey, amount: 1 },
+			params: chainedGainParams,
 			meta: { sequence: [1, 2, 3] },
 		};
 		const skipMeta: PassiveMetadata = {
@@ -75,7 +91,10 @@ describe('snapshotAdvance', () => {
 		snapshot.player.resources[resourceKey] =
 			(snapshot.player.resources[resourceKey] ?? 0) + 999;
 		snapshot.effects[0]!.method = 'mutated-method';
-		snapshot.effects[0]!.params = { key: resourceKey, amount: 99 };
+		snapshot.effects[0]!.params = resourceAmountParams({
+			key: resourceKey,
+			amount: 99,
+		});
 		snapshot.effects[0]!.effects = [];
 		snapshot.effects.push({ type: 'mutated' });
 		if (firstSource) {
@@ -94,10 +113,7 @@ describe('snapshotAdvance', () => {
 		expect(original.player.resources[resourceKey]).toBe(originalResource);
 		expect(original.effects).toHaveLength(2);
 		expect(original.effects[0]?.method).toBe('add');
-		expect(original.effects[0]?.params).toEqual({
-			key: resourceKey,
-			amount: 3,
-		});
+		expect(original.effects[0]?.params).toEqual(resourceGain);
 		expect(original.skipped?.sources).toHaveLength(2);
 		expect(original.skipped?.sources[0]?.detail).toBe('Primary detail');
 		expect(original.skipped?.sources[0]?.meta?.source?.icon).toBe('🛡️');
@@ -109,10 +125,14 @@ describe('snapshotAdvance', () => {
 		const context = createTestEngine();
 		const activePlayer = context.activePlayer;
 		const resourceKey = getFirstKey(activePlayer.resources);
+		const singleGain = resourceAmountParams({
+			key: resourceKey,
+			amount: 2,
+		});
 		const singleEffect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: resourceKey, amount: 2 },
+			params: singleGain,
 		};
 		const original: AdvanceResult = {
 			phase: context.game.currentPhase,
