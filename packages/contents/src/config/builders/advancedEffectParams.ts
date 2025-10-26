@@ -53,7 +53,9 @@ export class EvaluationTargetBuilder extends ParamsBuilder<{
 	}
 }
 export const evaluationTarget = (type: EvaluationTargetTypes | string) => new EvaluationTargetBuilder(type);
-export const developmentTarget = () => evaluationTarget(EvaluationTargetTypes.Development);
+export function developmentTarget() {
+	return evaluationTarget(EvaluationTargetTypes.Development);
+}
 export const populationTarget = () => evaluationTarget(EvaluationTargetTypes.Population);
 export class ResultModParamsBuilder extends ParamsBuilder<{
 	id?: string;
