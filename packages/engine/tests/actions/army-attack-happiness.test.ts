@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { advance } from '../../src/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
-import { Resource } from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/contents/resourceKeys';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers.ts';
 import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
