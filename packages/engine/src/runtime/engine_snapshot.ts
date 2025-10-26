@@ -36,6 +36,43 @@ import {
 } from './player_snapshot';
 import type { RuntimeResourceCatalog } from '../resource-v2';
 
+function toSessionResourceCatalog(
+	catalog: RuntimeResourceCatalog | undefined,
+): SessionResourceCatalogV2 {
+	if (!catalog) {
+		return {
+			resources: { ordered: [], byId: {} },
+			groups: { ordered: [], byId: {} },
+		} satisfies SessionResourceCatalogV2;
+	}
+	const resources = {
+		ordered: catalog.resources.ordered.map((definition) =>
+			structuredClone(definition),
+		),
+		byId: Object.fromEntries(
+			Object.entries(catalog.resources.byId).map(([id, definition]) => [
+				id,
+				structuredClone(definition),
+			]),
+		),
+	} as unknown as SessionResourceCatalogV2['resources'];
+	const groups = {
+		ordered: catalog.groups.ordered.map((definition) =>
+			structuredClone(definition),
+		),
+		byId: Object.fromEntries(
+			Object.entries(catalog.groups.byId).map(([id, definition]) => [
+				id,
+				structuredClone(definition),
+			]),
+		),
+	} as unknown as SessionResourceCatalogV2['groups'];
+	return {
+		resources,
+		groups,
+	} satisfies SessionResourceCatalogV2;
+}
+
 function clonePhaseStep(step: StepDef): SessionPhaseStepDefinition {
 	const cloned: SessionPhaseStepDefinition = { id: step.id };
 	if (step.title !== undefined) {
@@ -211,8 +248,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 			? { resourceGroupsV2: resourceGroupMetadataV2 }
 			: {}),
 	};
-	const resourceCatalogV2: SessionResourceCatalogV2 | undefined =
-		runtimeResourceCatalog as unknown as SessionResourceCatalogV2 | undefined;
+	const resourceCatalogV2 = toSessionResourceCatalog(runtimeResourceCatalog);
 	return {
 		game: {
 			turn: context.game.turn,
@@ -237,7 +273,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 						},
 					}
 				: {}),
-			...(resourceCatalogV2 ? { resourceCatalogV2 } : {}),
+			resourceCatalogV2,
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,

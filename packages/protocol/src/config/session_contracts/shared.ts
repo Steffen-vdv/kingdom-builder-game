@@ -39,6 +39,8 @@ export const sessionRegistriesSchema = z
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
+		resourcesV2: z.record(z.string(), z.unknown()),
+		resourceGroupsV2: z.record(z.string(), z.unknown()),
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 
@@ -48,6 +50,8 @@ export const runtimeConfigResponseSchema = z
 		start: startConfigSchema,
 		rules: ruleSetSchema,
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
+		resourcesV2: z.record(z.string(), z.unknown()),
+		resourceGroupsV2: z.record(z.string(), z.unknown()),
 		primaryIconId: z.string().nullable(),
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);

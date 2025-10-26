@@ -26,6 +26,17 @@ const EMPTY_RESOURCE_METADATA: TranslationResourceV2MetadataSelectors = {
 	has: () => false,
 };
 
+const EMPTY_RESOURCE_CATALOG = Object.freeze({
+	resources: Object.freeze({
+		ordered: Object.freeze([]),
+		byId: Object.freeze({}) as Record<string, never>,
+	}),
+	groups: Object.freeze({
+		ordered: Object.freeze([]),
+		byId: Object.freeze({}) as Record<string, never>,
+	}),
+}) as TranslationContext['resourcesV2'];
+
 const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors = {
 	list: () => Object.freeze([] as { key: string; amount: number }[]),
 	positives: () => Object.freeze([] as { key: string; amount: number }[]),
@@ -141,7 +152,7 @@ const createTranslationContext = (
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
 		assets: mergedAssets,
-		resourcesV2: undefined,
+		resourcesV2: EMPTY_RESOURCE_CATALOG,
 		resourceMetadataV2: EMPTY_RESOURCE_METADATA,
 		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
 		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,

@@ -306,7 +306,7 @@ describe('<ResourceBar /> happiness hover card', () => {
 			throw new Error('Expected happiness ResourceV2 metadata.');
 		}
 		const resourceValue =
-			activePlayer.valuesV2?.[happinessResourceId] ??
+			activePlayer.valuesV2[happinessResourceId] ??
 			activePlayer.resources[happinessKey] ??
 			0;
 		const formattedValue = formatResourceMagnitude(

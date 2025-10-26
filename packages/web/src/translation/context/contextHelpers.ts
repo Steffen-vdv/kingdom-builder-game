@@ -80,8 +80,8 @@ export function clonePlayer(
 		resources: cloneRecord(player.resources),
 		stats: cloneRecord(player.stats),
 		population: cloneRecord(player.population),
-		...(resourcesV2 ? { resourcesV2 } : {}),
-		...(resourceBoundsV2 ? { resourceBoundsV2 } : {}),
+		resourcesV2,
+		resourceBoundsV2,
 	});
 }
 

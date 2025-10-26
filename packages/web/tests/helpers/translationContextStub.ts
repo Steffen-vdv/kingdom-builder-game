@@ -49,7 +49,16 @@ const EMPTY_PASSIVES: TranslationPassives = {
 	},
 };
 
-const EMPTY_RESOURCE_CATALOG: TranslationResourceCatalogV2 = undefined;
+const EMPTY_RESOURCE_CATALOG: TranslationResourceCatalogV2 = Object.freeze({
+	resources: Object.freeze({
+		ordered: Object.freeze([]),
+		byId: Object.freeze({}) as Record<string, never>,
+	}),
+	groups: Object.freeze({
+		ordered: Object.freeze([]),
+		byId: Object.freeze({}) as Record<string, never>,
+	}),
+});
 
 const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceV2Metadata[] =
 	Object.freeze([]);
@@ -114,14 +123,29 @@ export function toTranslationPlayer(
 		resources: Record<string, number>;
 		population: Record<string, number>;
 		stats?: Record<string, number>;
+		valuesV2?: Record<string, number>;
+		resourceBoundsV2?: TranslationPlayer['resourceBoundsV2'];
 	},
 ): TranslationPlayer {
+	const valuesV2 = structuredClone(player.valuesV2 ?? {});
+	const resourceBoundsV2: TranslationPlayer['resourceBoundsV2'] =
+		Object.fromEntries(
+			Object.entries(player.resourceBoundsV2 ?? {}).map(([id, bounds]) => [
+				id,
+				{
+					lowerBound: bounds?.lowerBound ?? null,
+					upperBound: bounds?.upperBound ?? null,
+				},
+			]),
+		);
 	return {
 		id: player.id,
 		name: player.name,
 		resources: { ...player.resources },
 		stats: { ...(player.stats ?? {}) },
 		population: { ...player.population },
+		valuesV2,
+		resourceBoundsV2,
 	};
 }
 

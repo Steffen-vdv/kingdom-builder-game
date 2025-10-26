@@ -48,20 +48,21 @@ Update the table whenever a domain meaningfully changes. Keep comments concise a
 | 2025-10-29 | ChatGPT (gpt-5-codex) | packages/engine/src/setup/create*engine.ts, packages/engine/src/state/index.ts, packages/protocol/src/session/resourceCatalogV2.ts | Resource Migration MVP - P2 - T38–T40 - Wired the runtime catalog through engine bootstrap, player state proxies, and start overrides (see ./worklogs/T38-engine-bootstrap.md, ./worklogs/T39-playerstate.md, ./worklogs/T40-player-setup.md). | npm run format; npm run lint; npm run check *(fails: `developmentTarget` TypeError during engine coverage)_ | Stabilise `developmentTarget` helper and expand engine tests around the new ResourceV2 bootstrap path. |
 | 2025-10-29 | ChatGPT (gpt-5-codex) | packages/engine/src/actions/costs.ts, packages/engine/src/effects/index.ts, packages/engine/src/effects/population_add.ts | Resource Migration MVP - P2 - T41–T43 - Enforced catalog-driven global costs, re-registered ResourceV2 handlers, and synced population effects (see ./worklogs/T41-global-cost.md, ./worklogs/T42-effect-registry.md, ./worklogs/T43-population-handlers.md). | npm run format; npm run lint; npm run check _(fails: `developmentTarget` TypeError during engine coverage)\_ | Remove legacy cost/population shims once `developmentTarget` regression is fixed and ResourceV2 payloads are fully enforced. |
 | 2025-11-01 | ChatGPT (gpt-5-codex) | docs/project/resource-migration/production/production-living-docs.md, docs/project/resource-migration/production/worklogs/T58-final-aggregation.md | Resource Migration MVP - P2 - T58 - Consolidated T50–T57 protocol, transport, web, and test updates into the living doc and flagged final-phase cleanup priorities. | _Not run – documentation aggregation only_ | Resolve `developmentTarget` failure, default ResourceV2 session fields before flipping to required, and smoke-test HUD once transports emit signed deltas. |
+| 2025-11-02 | ChatGPT (gpt-5-codex) | packages/protocol/src/session/_, packages/engine/src/runtime/\*\*/_, packages/server/src/session/**/\*, packages/web/src/state/**/_ | Resource Migration MVP - P2 - T62 - Hardened ResourceV2 session payloads across protocol, engine, server, and web (see ./worklogs/T62-resource-contract.md). | npm run format; npm run check _(fails: known `developmentTarget` TypeError during contents coverage; see chunk 42f100†L1-L120)\* | Repair `developmentTarget` helper and run HUD/translation smoke tests once transports emit signed ResourceV2 deltas. |
 Append new rows chronologically (most recent at the bottom). Include command outputs or references to terminal chunks when relevant.
 
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-11-01 18:00
-- **Current Focus:** Resource Migration MVP - P2 - T58 - Final aggregation
+- **Timestamp (UTC):** 2025-11-02 20:00
+- **Current Focus:** Resource Migration MVP - P2 - T62 - ResourceV2 Payload Hardening
 - **State Summary:**
-  - Protocol session contracts (T50) now document ResourceV2 registries/values, and session transports (T51) mirror the catalogs plus player `valuesV2` maps across every gateway response.
-  - Integration suites (T52) bootstrap runtime catalogs, while web translation context, UI layers, and diff helpers (T53–T55) read ResourceV2 metadata end-to-end.
-  - Web/UI tests (T56) and unit suites (T57) assert ResourceV2 factories, signed deltas, and hover formatting using the shared builders. See [`./worklogs/T58-final-aggregation.md`](./worklogs/T58-final-aggregation.md) for the consolidated notes.
+  - ResourceV2 registries, player `valuesV2`/`resourceBoundsV2`, and session-level `resourceCatalogV2` are now required throughout protocol contracts, engine snapshots, and server transports; every snapshot pathway emits them by default. See [`./worklogs/T62-resource-contract.md`](./worklogs/T62-resource-contract.md) for implementation notes.
+  - Web translation context, UI helpers, and supporting tests/fixtures now assume ResourceV2 data is always present, with new clone utilities keeping snapshots consistent across the client surface.
+  - Repository checks still trip the longstanding `developmentTarget` TypeError in the contents suite despite the contract hardening, leaving the global `npm run check` pipeline red.
 - **Next Suggested Tasks:**
   - Repair `packages/contents/src/happinessHelpers.ts` (or add a compatibility wrapper) to eliminate the `developmentTarget` TypeError so `npm run check` completes.
-  - Default ResourceV2 session fields in transports, then flip the protocol optional flags to required and update fixtures accordingly.
+  - Add regression coverage that exercises the always-on ResourceV2 registries across engine/server transports once the check pipeline is stable.
   - Run dev-mode HUD/translation smoke checks once transports emit signed ResourceV2 deltas and group metadata in live responses.
 - **Blocking Issues / Risks:** Repository `npm run check` still fails because of the pre-existing `developmentTarget` regression, delaying full-suite validation.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` current so downstream owners can continue the final cleanup without re-reading individual task logs.
@@ -93,11 +94,11 @@ Track deliberate breakages created by migration steps so nobody “fixes” them
 
 Use this table for short-lived reminders that do not warrant their own ticket yet.
 
-| Item                                                                            | Owner | Due / Trigger                                            | Status  |
-| ------------------------------------------------------------------------------- | ----- | -------------------------------------------------------- | ------- |
-| Repair `developmentTarget` helper to unblock `npm run check`.                   | –     | Before final phase sign-off                              | Open    |
-| Default ResourceV2 session fields and flip protocol optional flags to required. | –     | After transports emit ResourceV2 data by default         | Pending |
-| Run HUD/translation smoke tests with live ResourceV2 deltas.                    | –     | Once transports surface signed deltas and group metadata | Pending |
+| Item                                                                            | Owner | Due / Trigger                                            | Status   |
+| ------------------------------------------------------------------------------- | ----- | -------------------------------------------------------- | -------- |
+| Repair `developmentTarget` helper to unblock `npm run check`.                   | –     | Before final phase sign-off                              | Open     |
+| Default ResourceV2 session fields and flip protocol optional flags to required. | –     | After transports emit ResourceV2 data by default         | Complete |
+| Run HUD/translation smoke tests with live ResourceV2 deltas.                    | –     | Once transports surface signed deltas and group metadata | Pending  |
 
 ## 8. Reference
 

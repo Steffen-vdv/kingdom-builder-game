@@ -15,6 +15,10 @@ import type {
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol/session';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+} from '@kingdom-builder/protocol/resource-v2';
 import type { ZodType } from 'zod';
 import { clone } from './clone';
 
@@ -103,6 +107,90 @@ export interface SessionRegistries {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: Record<string, SessionResourceDefinition>;
+	resourcesV2: Record<string, ResourceV2Definition>;
+	resourceGroupsV2: Record<string, ResourceV2GroupDefinition>;
+}
+
+function cloneResourceV2Definition(
+	definition: ResourceV2Definition,
+): ResourceV2Definition {
+	const cloned: ResourceV2Definition = {
+		id: definition.id,
+		label: definition.label,
+		icon: definition.icon,
+	};
+	if (definition.description !== undefined) {
+		cloned.description = definition.description;
+	}
+	if (definition.order !== undefined) {
+		cloned.order = definition.order;
+	}
+	if (definition.tags && definition.tags.length > 0) {
+		cloned.tags = [...definition.tags];
+	}
+	if (definition.lowerBound !== undefined) {
+		cloned.lowerBound = definition.lowerBound;
+	}
+	if (definition.upperBound !== undefined) {
+		cloned.upperBound = definition.upperBound;
+	}
+	if (definition.displayAsPercent !== undefined) {
+		cloned.displayAsPercent = definition.displayAsPercent;
+	}
+	if (definition.trackValueBreakdown !== undefined) {
+		cloned.trackValueBreakdown = definition.trackValueBreakdown;
+	}
+	if (definition.trackBoundBreakdown !== undefined) {
+		cloned.trackBoundBreakdown = definition.trackBoundBreakdown;
+	}
+	if (definition.groupId !== undefined) {
+		cloned.groupId = definition.groupId;
+	}
+	if (definition.groupOrder !== undefined) {
+		cloned.groupOrder = definition.groupOrder;
+	}
+	if (definition.globalCost) {
+		cloned.globalCost = { amount: definition.globalCost.amount };
+	}
+	if (definition.tierTrack) {
+		cloned.tierTrack = clone(definition.tierTrack);
+	}
+	return cloned;
+}
+
+function cloneResourceGroupDefinition(
+	definition: ResourceV2GroupDefinition,
+): ResourceV2GroupDefinition {
+	const cloned: ResourceV2GroupDefinition = { id: definition.id };
+	if (definition.order !== undefined) {
+		cloned.order = definition.order;
+	}
+	if (definition.parent) {
+		cloned.parent = clone(definition.parent);
+	}
+	return cloned;
+}
+
+function cloneResourceV2Registry(
+	resources: Record<string, ResourceV2Definition>,
+): Record<string, ResourceV2Definition> {
+	return Object.fromEntries(
+		Object.entries(resources).map(([id, definition]) => [
+			id,
+			cloneResourceV2Definition(definition),
+		]),
+	);
+}
+
+function cloneResourceGroupRegistry(
+	groups: Record<string, ResourceV2GroupDefinition>,
+): Record<string, ResourceV2GroupDefinition> {
+	return Object.fromEntries(
+		Object.entries(groups).map(([id, definition]) => [
+			id,
+			cloneResourceGroupDefinition(definition),
+		]),
+	);
 }
 
 export function deserializeSessionRegistries(
@@ -126,6 +214,10 @@ export function deserializeSessionRegistries(
 			populationSchema.passthrough(),
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
+		resourcesV2: cloneResourceV2Registry(payload.resourcesV2 ?? {}),
+		resourceGroupsV2: cloneResourceGroupRegistry(
+			payload.resourceGroupsV2 ?? {},
+		),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),
 	};
 }

@@ -75,8 +75,8 @@ export function createSnapshotPlayer({
 	stats = {},
 	statsHistory = {},
 	population = {},
-	valuesV2,
-	resourceBoundsV2,
+	valuesV2 = {},
+	resourceBoundsV2 = {},
 	lands = [],
 	buildings = [],
 	actions = [],
@@ -103,19 +103,15 @@ export function createSnapshotPlayer({
 	if (aiControlled !== undefined) {
 		snapshot.aiControlled = aiControlled;
 	}
-	if (valuesV2) {
-		snapshot.valuesV2 = { ...valuesV2 };
+	snapshot.valuesV2 = { ...valuesV2 };
+	const normalizedBounds: Record<string, SessionResourceBoundsV2> = {};
+	for (const [id, bounds] of Object.entries(resourceBoundsV2)) {
+		normalizedBounds[id] = {
+			lowerBound: bounds?.lowerBound ?? null,
+			upperBound: bounds?.upperBound ?? null,
+		};
 	}
-	if (resourceBoundsV2) {
-		const normalizedBounds: Record<string, SessionResourceBoundsV2> = {};
-		for (const [id, bounds] of Object.entries(resourceBoundsV2)) {
-			normalizedBounds[id] = {
-				lowerBound: bounds.lowerBound !== undefined ? bounds.lowerBound : null,
-				upperBound: bounds.upperBound !== undefined ? bounds.upperBound : null,
-			};
-		}
-		snapshot.resourceBoundsV2 = normalizedBounds;
-	}
+	snapshot.resourceBoundsV2 = normalizedBounds;
 	return snapshot;
 }
 
@@ -227,7 +223,10 @@ export function createSessionSnapshot({
 	stepIndex = 0,
 	devMode = false,
 	metadata: metadataOverride,
-	resourceCatalogV2,
+	resourceCatalogV2 = {
+		resources: { ordered: [], byId: {} },
+		groups: { ordered: [], byId: {} },
+	},
 	resourceMetadataV2,
 	resourceGroupMetadataV2,
 }: SessionSnapshotOptions): SessionSnapshot {
@@ -270,9 +269,7 @@ export function createSessionSnapshot({
 					tokens: {},
 				} satisfies SessionOverviewMetadata,
 			});
-	const resourceCatalog = resourceCatalogV2
-		? clone(resourceCatalogV2)
-		: undefined;
+	const resourceCatalog = clone(resourceCatalogV2);
 	const snapshot: SessionSnapshot = {
 		game: {
 			turn,
@@ -285,7 +282,7 @@ export function createSessionSnapshot({
 			players: players.map((player) => ({ ...player })),
 			activePlayerId,
 			opponentId,
-			...(resourceCatalog ? { resourceCatalogV2: resourceCatalog } : {}),
+			resourceCatalogV2: resourceCatalog,
 		},
 		phases: phases.map((phaseDefinition) => ({
 			...phaseDefinition,

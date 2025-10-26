@@ -58,9 +58,9 @@ describe('royal decree via session', () => {
 		}
 		const goldId = getResourceV2Id(Resource.gold);
 		expect(
-			snapshot.game.resourceCatalogV2?.resources.byId[goldId],
+			snapshot.game.resourceCatalogV2.resources.byId[goldId],
 		).toBeDefined();
-		expect(snapshot.game.players[0]?.valuesV2?.[goldId]).toBeDefined();
+		expect(snapshot.game.players[0]?.valuesV2[goldId]).toBeDefined();
 		const withGroup = ACTIONS.entries().find(([, def]) =>
 			def.effects.some(isEffectGroup),
 		);

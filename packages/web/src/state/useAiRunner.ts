@@ -26,6 +26,7 @@ import type {
 	SessionResourceKey,
 	SessionAiTurnResult,
 } from './sessionTypes';
+import { clonePlayerSnapshot } from './clonePlayerSnapshot';
 
 interface PresentAiActionsOptions {
 	result: SessionAiTurnResult;
@@ -36,24 +37,14 @@ interface PresentAiActionsOptions {
 	resourceKeys: readonly SessionResourceKey[];
 	fallbackRegistries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		| 'actions'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
+		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroupsV2'
 	>;
-}
-
-function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
-	return {
-		resources: { ...snapshot.resources },
-		stats: { ...snapshot.stats },
-		population: { ...snapshot.population },
-		buildings: [...snapshot.buildings],
-		lands: snapshot.lands.map((land) => ({
-			id: land.id,
-			slotsMax: land.slotsMax,
-			slotsUsed: land.slotsUsed,
-			developments: [...land.developments],
-		})),
-		passives: snapshot.passives.map((entry) => ({ ...entry })),
-	};
 }
 
 async function presentAiActions({
@@ -197,7 +188,13 @@ interface UseAiRunnerOptions {
 	addResolutionLog: (resolution: ActionResolution) => void;
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		| 'actions'
+		| 'buildings'
+		| 'developments'
+		| 'populations'
+		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroupsV2'
 	>;
 	resourceKeys: readonly SessionResourceKey[];
 	actionCostResource: SessionResourceKey;

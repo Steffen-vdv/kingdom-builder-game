@@ -62,18 +62,16 @@ export interface SessionRegistriesPayload {
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
 	/**
-	 * ResourceV2 registry of concrete resources. ResourceV2-aware
-	 * transports populate this alongside legacy registries; the field is
-	 * optional purely for backwards compatibility with pre-migration
-	 * servers.
+	 * ResourceV2 registry of concrete resources. Always populated alongside
+	 * legacy registries now that ResourceV2 has fully launched.
 	 */
-	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	resourcesV2: SerializedRegistry<ResourceV2Definition>;
 	/**
 	 * ResourceV2 registry of group definitions (including virtual parents).
-	 * Presence mirrors {@link resourcesV2}; clients should treat it as a
-	 * first-class payload in migrated environments.
+	 * Emitted for every transport so clients can rely on group metadata
+	 * without legacy fallbacks.
 	 */
-	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
+	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
 }
 
 export type SessionMetadataSnapshot = Pick<
@@ -102,18 +100,16 @@ export interface SessionRuntimeConfigResponse {
 	primaryIconId: string | null;
 	/**
 	 * ResourceV2 registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourcesV2}. Legacy runtimes may
-	 * still omit it, but migrated servers emit this alongside legacy
-	 * registries.
+	 * {@link SessionRegistriesPayload.resourcesV2}. Always included so
+	 * clients can hydrate the catalog without probing for optional data.
 	 */
-	resourcesV2?: SerializedRegistry<ResourceV2Definition>;
+	resourcesV2: SerializedRegistry<ResourceV2Definition>;
 	/**
 	 * ResourceV2 group registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Provided whenever
-	 * ResourceV2 data is active; optional only for compatibility with
-	 * legacy transports.
+	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Required for full
+	 * catalog reconstruction across transports.
 	 */
-	resourceGroupsV2?: SerializedRegistry<ResourceV2GroupDefinition>;
+	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
 }
 
 export interface SessionCreateResponse {
