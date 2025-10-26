@@ -8,6 +8,7 @@ import { cloneEngineContext } from '../../src/actions/context_clone.ts';
 import { createAISystem } from '../../src/ai/index.ts';
 import type { StatSourceFrame } from '../../src/stat_sources/index.ts';
 import { createTestEngine } from '../helpers.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('cloneEngineContext', () => {
 	it('clones player state and optional engine context fields', () => {
@@ -30,30 +31,32 @@ describe('cloneEngineContext', () => {
 		engineContext.statSourceStack.push(frame);
 
 		const player = engineContext.activePlayer;
+		const goldResourceId = player.getResourceV2Id(CResource.gold);
 		player.resources[CResource.gold] = 10;
-		player.resourceValues[CResource.gold] = 5;
-		player.resourceLowerBounds[CResource.gold] = 0;
-		player.resourceUpperBounds[CResource.gold] = 20;
-		player.resourceTouched[CResource.gold] = true;
-		player.resourceTierIds[CResource.gold] = 'tier-1';
-		player.resourceBoundTouched[CResource.gold] = {
+		player.resourceValues[goldResourceId] = 5;
+		player.resourceLowerBounds[goldResourceId] = 0;
+		player.resourceUpperBounds[goldResourceId] = 20;
+		player.resourceTouched[goldResourceId] = true;
+		player.resourceTierIds[goldResourceId] = 'tier-1';
+		player.resourceBoundTouched[goldResourceId] = {
 			lower: true,
 			upper: false,
 		};
 		const fallbackResource = CResource.happiness;
+		const fallbackResourceId = player.getResourceV2Id(fallbackResource);
 		player.resources[fallbackResource] = undefined as never;
-		player.resourceValues[fallbackResource] = undefined as never;
-		player.resourceLowerBounds[fallbackResource] = undefined as never;
-		player.resourceUpperBounds[fallbackResource] = undefined as never;
-		player.resourceTouched[fallbackResource] = undefined as never;
-		player.resourceTierIds[fallbackResource] = undefined as never;
-		player.resourceBoundTouched[fallbackResource] = undefined as never;
+		player.resourceValues[fallbackResourceId] = undefined as never;
+		player.resourceLowerBounds[fallbackResourceId] = undefined as never;
+		player.resourceUpperBounds[fallbackResourceId] = undefined as never;
+		player.resourceTouched[fallbackResourceId] = undefined as never;
+		player.resourceTierIds[fallbackResourceId] = undefined as never;
+		player.resourceBoundTouched[fallbackResourceId] = undefined as never;
 		player.population[CPopulationRole.Legion] = 2;
 		player.population[CPopulationRole.Council] = undefined as never;
 		player.stats[CStat.armyStrength] = 3;
 		player.statsHistory[CStat.armyStrength] = true;
 		const armyStrengthId = player.getStatResourceV2Id(CStat.armyStrength);
-		const happinessId = player.getStatResourceV2Id(CStat.happiness);
+		const happinessStatId = player.getStatResourceV2Id(CStat.happiness);
 
 		const land = player.lands[0]!;
 		land.upkeep = { [CResource.gold]: 1 };
@@ -61,21 +64,30 @@ describe('cloneEngineContext', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: CResource.gold, amount: 1 },
+				params: resourceAmountParams({
+					key: CResource.gold,
+					amount: 1,
+				}),
 			},
 		];
 		land.onGainIncomeStep = [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: CResource.gold, amount: 2 },
+				params: resourceAmountParams({
+					key: CResource.gold,
+					amount: 2,
+				}),
 			},
 		];
 		land.onGainAPStep = [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: engineContext.actionCostResource, amount: 1 },
+				params: resourceAmountParams({
+					key: engineContext.actionCostResource,
+					amount: 1,
+				}),
 			},
 		];
 		land.developments.push('custom-development');
@@ -93,7 +105,7 @@ describe('cloneEngineContext', () => {
 			amount: 5,
 			meta: statSourceMeta,
 		};
-		player.statSources[happinessId] = undefined as never;
+		player.statSources[happinessStatId] = undefined as never;
 
 		const phaseId = engineContext.phases[0]!.id;
 		const stepId = engineContext.phases[0]!.steps[0]!.id;
@@ -126,20 +138,22 @@ describe('cloneEngineContext', () => {
 		expect(clonedLand.onGainAPStep).not.toBe(land.onGainAPStep);
 		expect(clonedPlayer.actions.has(actionId)).toBe(true);
 		expect(clonedPlayer.buildings.has('custom-building')).toBe(true);
-		expect(clonedPlayer.resourceLowerBounds[CResource.gold]).toBe(0);
-		expect(clonedPlayer.resourceUpperBounds[CResource.gold]).toBe(20);
-		expect(clonedPlayer.resourceTierIds[CResource.gold]).toBe('tier-1');
-		expect(clonedPlayer.resourceBoundTouched[CResource.gold]).toEqual({
+		expect(clonedPlayer.resourceLowerBounds[goldResourceId]).toBe(0);
+		expect(clonedPlayer.resourceUpperBounds[goldResourceId]).toBe(20);
+		expect(clonedPlayer.resourceTierIds[goldResourceId]).toBe('tier-1');
+		expect(clonedPlayer.resourceBoundTouched[goldResourceId]).toEqual({
 			lower: true,
 			upper: false,
 		});
 		expect(clonedPlayer.resources[fallbackResource]).toBe(0);
-		expect(clonedPlayer.resourceValues[fallbackResource]).toBe(0);
-		expect(clonedPlayer.resourceLowerBounds[fallbackResource]).toBeNull();
-		expect(clonedPlayer.resourceUpperBounds[fallbackResource]).toBeNull();
-		expect(clonedPlayer.resourceTouched[fallbackResource]).toBe(false);
-		expect(clonedPlayer.resourceTierIds[fallbackResource]).toBeNull();
-		expect(clonedPlayer.resourceBoundTouched[fallbackResource]).toBeUndefined();
+		expect(clonedPlayer.resourceValues[fallbackResourceId]).toBe(0);
+		expect(clonedPlayer.resourceLowerBounds[fallbackResourceId]).toBeNull();
+		expect(clonedPlayer.resourceUpperBounds[fallbackResourceId]).toBeNull();
+		expect(clonedPlayer.resourceTouched[fallbackResourceId]).toBe(false);
+		expect(clonedPlayer.resourceTierIds[fallbackResourceId]).toBeNull();
+		expect(
+			clonedPlayer.resourceBoundTouched[fallbackResourceId],
+		).toBeUndefined();
 		expect(clonedPlayer.stats[CStat.armyStrength]).toBe(3);
 		expect(clonedPlayer.population[CPopulationRole.Legion]).toBe(2);
 		expect(clonedPlayer.population[CPopulationRole.Council]).toBe(0);
@@ -149,7 +163,7 @@ describe('cloneEngineContext', () => {
 		expect(
 			clonedPlayer.statSources[armyStrengthId]['source-id']?.meta,
 		).not.toBe(player.statSources[armyStrengthId]['source-id']?.meta);
-		expect(clonedPlayer.statSources[happinessId]).toEqual({});
+		expect(clonedPlayer.statSources[happinessStatId]).toEqual({});
 		expect(clonedPlayer.skipPhases).not.toBe(player.skipPhases);
 		expect(clonedPlayer.skipSteps).not.toBe(player.skipSteps);
 		expect(clonedPlayer.customMethod).toBe(player.customMethod);

@@ -30,6 +30,7 @@ import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -103,7 +104,10 @@ describe('EngineSession', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 3 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 3,
+					}),
 				},
 			],
 		});
@@ -561,7 +565,10 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: CResource.gold, amount: 1 },
+				params: resourceAmountParams({
+					key: CResource.gold,
+					amount: 1,
+				}),
 			},
 		],
 	});
