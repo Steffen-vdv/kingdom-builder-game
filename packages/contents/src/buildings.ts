@@ -51,7 +51,7 @@ export function createBuildingRegistry() {
 			.focus(Focus.Economy)
 			.build(),
 	);
-	const millFarmResultParams = resultModParams().id('mill_farm_bonus').evaluation(developmentTarget().id(DevelopmentId.Farm)).amount(1);
+	const millFarmResultParams = resultModParams().id('mill_farm_bonus').evaluation(developmentTarget().id(DevelopmentId.Farm)).amount(1).build();
 
 	registry.add(
 		BuildingId.Mill,
