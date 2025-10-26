@@ -21,10 +21,6 @@ import type {
 	RuntimeResourceBounds,
 } from '../types';
 
-interface ResourceCatalogCarrier {
-	readonly resourceCatalogV2?: RuntimeResourceCatalog;
-}
-
 export type ResourceV2PlayerScope = 'active' | 'opponent';
 
 export interface ResourceV2ValueWriteOptions extends Record<string, unknown> {
@@ -108,15 +104,7 @@ interface TransferParticipantContext {
 }
 
 function requireRuntimeCatalog(context: EngineContext): RuntimeResourceCatalog {
-	const carrier = context.game as EngineContext['game'] &
-		ResourceCatalogCarrier;
-	const catalog = carrier.resourceCatalogV2;
-	if (!catalog) {
-		throw new Error(
-			'ResourceV2 runtime catalog is not initialised on the current game state.',
-		);
-	}
-	return catalog;
+	return context.resourceCatalogV2;
 }
 
 function resolvePlayer(

@@ -4,6 +4,10 @@ import { createTestEngine } from '../helpers.ts';
 describe('EngineContext', () => {
 	it('manages effect logs and cloning behaviour', () => {
 		const engineContext = createTestEngine();
+		expect(engineContext.resourceCatalogV2).toBeDefined();
+		expect(engineContext.game.resourceCatalogV2).toBe(
+			engineContext.resourceCatalogV2,
+		);
 		const key = 'effect';
 
 		expect(engineContext.pullEffectLog(key)).toBeUndefined();
@@ -29,6 +33,10 @@ describe('EngineContext', () => {
 
 	it('serializes queued tasks even after failures', async () => {
 		const engineContext = createTestEngine();
+		expect(engineContext.resourceCatalogV2).toBeDefined();
+		expect(engineContext.game.resourceCatalogV2).toBe(
+			engineContext.resourceCatalogV2,
+		);
 		const order: string[] = [];
 
 		const first = engineContext.enqueue(async () => {

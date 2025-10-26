@@ -108,16 +108,11 @@ function createTestContext(): TestContext {
 
 	const baseContext = {
 		game: { resourceCatalogV2: catalog },
+		resourceCatalogV2: catalog,
 		activePlayer: active,
 		opponent,
 		recentResourceGains: [] as { key: string; amount: number }[],
 	} as unknown as EngineContext;
-
-	(
-		baseContext.game as EngineContext['game'] & {
-			resourceCatalogV2?: typeof catalog;
-		}
-	).resourceCatalogV2 = catalog;
 
 	return {
 		context: baseContext,

@@ -26,12 +26,12 @@ export class EngineContext {
 		public phases: PhaseDef[],
 		public actionCostResource: ResourceKey,
 		public actionCostAmount: number | null,
+		public resourceCatalogV2: RuntimeResourceCatalog,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},
 		},
 	) {}
-	resourceCatalogV2?: RuntimeResourceCatalog;
 	aiSystem?: AISystem;
 	recentResourceGains: {
 		key: string;
