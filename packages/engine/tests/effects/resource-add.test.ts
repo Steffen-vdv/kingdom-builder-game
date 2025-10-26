@@ -10,6 +10,12 @@ import {
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import {
+	resourceAmountParams,
+	resourcePercentParams,
+	type ResourceAmountParamsResult,
+	type ResourcePercentParamsResult,
+} from '../helpers/resourceV2Params.ts';
 
 describe('resource:add effect', () => {
 	it('increments a resource via action effect', () => {
@@ -21,7 +27,10 @@ describe('resource:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 3 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 3,
+					}),
 				},
 			],
 		});
@@ -30,12 +39,13 @@ describe('resource:add effect', () => {
 		engineContext.game.currentPlayerIndex = 0;
 		const before = engineContext.activePlayer.gold;
 		const actionDefinition = actions.get('grant_gold');
-		const amount = actionDefinition.effects.find(
+		const params = actionDefinition.effects.find(
 			(effect) =>
 				effect.type === 'resource' &&
 				effect.method === 'add' &&
 				effect.params?.key === CResource.gold,
-		)?.params?.amount as number;
+		)?.params as ResourceAmountParamsResult | undefined;
+		const amount = params?.amount ?? 0;
 		const cost = getActionCosts('grant_gold', engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;
 		performAction('grant_gold', engineContext);
@@ -51,8 +61,11 @@ describe('resource:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 1.2 },
-					round: 'up',
+					params: resourcePercentParams({
+						key: CResource.gold,
+						percent: 0.24,
+						roundingMode: 'up',
+					}),
 				},
 			],
 		});
@@ -63,8 +76,11 @@ describe('resource:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 1.8 },
-					round: 'down',
+					params: resourcePercentParams({
+						key: CResource.gold,
+						percent: 0.18,
+						roundingMode: 'down',
+					}),
 				},
 			],
 		});
@@ -72,44 +88,39 @@ describe('resource:add effect', () => {
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 
-		let before = engineContext.activePlayer.gold;
-		let foundEffect = actions
+		const roundUpParams = actions
 			.get('round_up')
 			.effects.find(
 				(effect) =>
 					effect.type === 'resource' &&
 					effect.method === 'add' &&
 					effect.params?.key === CResource.gold,
-			);
-		let total = (foundEffect?.params?.amount as number) || 0;
-		if (foundEffect?.round === 'up') {
-			total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-		} else if (foundEffect?.round === 'down') {
-			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
-		}
-		let cost = getActionCosts('round_up', engineContext)[Resource.ap] ?? 0;
-		engineContext.activePlayer.ap = cost;
+			)?.params as ResourcePercentParamsResult | undefined;
+		const roundUpBase = 5;
+		engineContext.activePlayer.gold = roundUpBase;
+		engineContext.activePlayer.ap =
+			getActionCosts('round_up', engineContext)[Resource.ap] ?? 0;
+		const roundUpDelta = roundUpParams?.reconciledDelta?.(roundUpBase) ?? 0;
 		performAction('round_up', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(before + total);
+		expect(engineContext.activePlayer.gold).toBe(roundUpBase + roundUpDelta);
 
-		before = engineContext.activePlayer.gold;
-		foundEffect = actions
+		const roundDownParams = actions
 			.get('round_down')
 			.effects.find(
 				(effect) =>
 					effect.type === 'resource' &&
 					effect.method === 'add' &&
 					effect.params?.key === CResource.gold,
-			);
-		total = (foundEffect?.params?.amount as number) || 0;
-		if (foundEffect?.round === 'up') {
-			total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-		} else if (foundEffect?.round === 'down') {
-			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
-		}
-		cost = getActionCosts('round_down', engineContext)[Resource.ap] ?? 0;
-		engineContext.activePlayer.ap = cost;
+			)?.params as ResourcePercentParamsResult | undefined;
+		const roundDownBase = 11;
+		engineContext.activePlayer.gold = roundDownBase;
+		engineContext.activePlayer.ap =
+			getActionCosts('round_down', engineContext)[Resource.ap] ?? 0;
+		const roundDownDelta =
+			roundDownParams?.reconciledDelta?.(roundDownBase) ?? 0;
 		performAction('round_down', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(before + total);
+		expect(engineContext.activePlayer.gold).toBe(
+			roundDownBase + roundDownDelta,
+		);
 	});
 });

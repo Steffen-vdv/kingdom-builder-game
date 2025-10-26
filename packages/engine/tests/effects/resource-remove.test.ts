@@ -10,6 +10,12 @@ import {
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import {
+	resourceAmountParams,
+	resourcePercentParams,
+	type ResourceAmountParamsResult,
+	type ResourcePercentParamsResult,
+} from '../helpers/resourceV2Params.ts';
 
 describe('resource:remove effect', () => {
 	it('decrements a resource via action effect', () => {
@@ -21,7 +27,10 @@ describe('resource:remove effect', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: CResource.gold, amount: 3 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 3,
+					}),
 				},
 			],
 		});
@@ -30,12 +39,13 @@ describe('resource:remove effect', () => {
 		engineContext.game.currentPlayerIndex = 0;
 		const before = engineContext.activePlayer.gold;
 		const actionDefinition = actions.get('pay_gold');
-		const amount = actionDefinition.effects.find(
+		const params = actionDefinition.effects.find(
 			(effect) =>
 				effect.type === 'resource' &&
 				effect.method === 'remove' &&
 				effect.params?.key === CResource.gold,
-		)?.params?.amount as number;
+		)?.params as ResourceAmountParamsResult | undefined;
+		const amount = params?.amount ?? 0;
 		const cost = getActionCosts('pay_gold', engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;
 		performAction('pay_gold', engineContext);
@@ -51,8 +61,11 @@ describe('resource:remove effect', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: CResource.gold, amount: 1.2 },
-					round: 'up',
+					params: resourcePercentParams({
+						key: CResource.gold,
+						percent: 0.26,
+						roundingMode: 'up',
+					}),
 				},
 			],
 		});
@@ -63,8 +76,11 @@ describe('resource:remove effect', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: CResource.gold, amount: 1.8 },
-					round: 'down',
+					params: resourcePercentParams({
+						key: CResource.gold,
+						percent: 0.36,
+						roundingMode: 'down',
+					}),
 				},
 			],
 		});
@@ -72,45 +88,40 @@ describe('resource:remove effect', () => {
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 
-		let before = engineContext.activePlayer.gold;
-		let foundEffect = actions
+		const roundUpParams = actions
 			.get('round_up_remove')
 			.effects.find(
 				(effect) =>
 					effect.type === 'resource' &&
 					effect.method === 'remove' &&
 					effect.params?.key === CResource.gold,
-			);
-		let total = (foundEffect?.params?.amount as number) || 0;
-		if (foundEffect?.round === 'up') {
-			total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-		} else if (foundEffect?.round === 'down') {
-			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
-		}
-		let cost =
+			)?.params as ResourcePercentParamsResult | undefined;
+		const roundUpBase = 7;
+		engineContext.activePlayer.gold = roundUpBase;
+		engineContext.activePlayer.ap =
 			getActionCosts('round_up_remove', engineContext)[Resource.ap] ?? 0;
-		engineContext.activePlayer.ap = cost;
+		const roundUpDelta =
+			roundUpParams?.reconciledDelta?.(roundUpBase, 'remove') ?? 0;
 		performAction('round_up_remove', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(before - total);
+		expect(engineContext.activePlayer.gold).toBe(roundUpBase + roundUpDelta);
 
-		before = engineContext.activePlayer.gold;
-		foundEffect = actions
+		const roundDownParams = actions
 			.get('round_down_remove')
 			.effects.find(
 				(effect) =>
 					effect.type === 'resource' &&
 					effect.method === 'remove' &&
 					effect.params?.key === CResource.gold,
-			);
-		total = (foundEffect?.params?.amount as number) || 0;
-		if (foundEffect?.round === 'up') {
-			total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-		} else if (foundEffect?.round === 'down') {
-			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
-		}
-		cost = getActionCosts('round_down_remove', engineContext)[Resource.ap] ?? 0;
-		engineContext.activePlayer.ap = cost;
+			)?.params as ResourcePercentParamsResult | undefined;
+		const roundDownBase = 9;
+		engineContext.activePlayer.gold = roundDownBase;
+		engineContext.activePlayer.ap =
+			getActionCosts('round_down_remove', engineContext)[Resource.ap] ?? 0;
+		const roundDownDelta =
+			roundDownParams?.reconciledDelta?.(roundDownBase, 'remove') ?? 0;
 		performAction('round_down_remove', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(before - total);
+		expect(engineContext.activePlayer.gold).toBe(
+			roundDownBase + roundDownDelta,
+		);
 	});
 });

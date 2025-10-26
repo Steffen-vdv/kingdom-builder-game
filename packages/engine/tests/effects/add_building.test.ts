@@ -6,6 +6,7 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import { buildingAdd, type EffectDef } from '../../src/effects/index.ts';
 import { collectBuildingAddCosts } from '../../src/effects/building_add.ts';
 import type { EngineContext } from '../../src/context';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('building:add effect', () => {
 	it('adds building and applies its passives', () => {
@@ -170,7 +171,10 @@ describe('building:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 1 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 1,
+					}),
 				},
 			],
 		});
