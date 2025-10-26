@@ -10,10 +10,15 @@ import {
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
+import {
+	resourceAmountParams,
+	resourcePercentParams,
+} from '../helpers/resourceV2Params.ts';
 
 describe('resource:add effect', () => {
 	it('increments a resource via action effect', () => {
 		const actions = createActionRegistry();
+		const params = resourceAmountParams(CResource.gold, 3);
 		actions.add('grant_gold', {
 			id: 'grant_gold',
 			name: 'Grant Gold',
@@ -21,7 +26,7 @@ describe('resource:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 3 },
+					params,
 				},
 			],
 		});
@@ -29,13 +34,7 @@ describe('resource:add effect', () => {
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 		const before = engineContext.activePlayer.gold;
-		const actionDefinition = actions.get('grant_gold');
-		const amount = actionDefinition.effects.find(
-			(effect) =>
-				effect.type === 'resource' &&
-				effect.method === 'add' &&
-				effect.params?.key === CResource.gold,
-		)?.params?.amount as number;
+		const amount = params.amount;
 		const cost = getActionCosts('grant_gold', engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;
 		performAction('grant_gold', engineContext);
@@ -44,6 +43,9 @@ describe('resource:add effect', () => {
 
 	it('rounds fractional amounts according to round setting', () => {
 		const actions = createActionRegistry();
+		const roundUpParams = resourcePercentParams(CResource.gold, 0.12, {
+			roundingMode: 'up',
+		});
 		actions.add('round_up', {
 			id: 'round_up',
 			name: 'Round Up',
@@ -51,10 +53,12 @@ describe('resource:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 1.2 },
-					round: 'up',
+					params: roundUpParams,
 				},
 			],
+		});
+		const roundDownParams = resourcePercentParams(CResource.gold, 0.18, {
+			roundingMode: 'down',
 		});
 		actions.add('round_down', {
 			id: 'round_down',
@@ -63,8 +67,7 @@ describe('resource:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 1.8 },
-					round: 'down',
+					params: roundDownParams,
 				},
 			],
 		});
@@ -73,43 +76,17 @@ describe('resource:add effect', () => {
 		engineContext.game.currentPlayerIndex = 0;
 
 		let before = engineContext.activePlayer.gold;
-		let foundEffect = actions
-			.get('round_up')
-			.effects.find(
-				(effect) =>
-					effect.type === 'resource' &&
-					effect.method === 'add' &&
-					effect.params?.key === CResource.gold,
-			);
-		let total = (foundEffect?.params?.amount as number) || 0;
-		if (foundEffect?.round === 'up') {
-			total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-		} else if (foundEffect?.round === 'down') {
-			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
-		}
+		const roundUpDelta = roundUpParams.resolveDelta(before);
 		let cost = getActionCosts('round_up', engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;
 		performAction('round_up', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(before + total);
+		expect(engineContext.activePlayer.gold).toBe(before + roundUpDelta);
 
 		before = engineContext.activePlayer.gold;
-		foundEffect = actions
-			.get('round_down')
-			.effects.find(
-				(effect) =>
-					effect.type === 'resource' &&
-					effect.method === 'add' &&
-					effect.params?.key === CResource.gold,
-			);
-		total = (foundEffect?.params?.amount as number) || 0;
-		if (foundEffect?.round === 'up') {
-			total = total >= 0 ? Math.ceil(total) : Math.floor(total);
-		} else if (foundEffect?.round === 'down') {
-			total = total >= 0 ? Math.floor(total) : Math.ceil(total);
-		}
+		const roundDownDelta = roundDownParams.resolveDelta(before);
 		cost = getActionCosts('round_down', engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;
 		performAction('round_down', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(before + total);
+		expect(engineContext.activePlayer.gold).toBe(before + roundDownDelta);
 	});
 });

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Resource as CResource } from '@kingdom-builder/contents';
 import { runEffects } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const EVALUATION_TARGET = 'test:evaluation';
 const [EVALUATION_TYPE, EVALUATION_ID] = EVALUATION_TARGET.split(':');
@@ -10,6 +11,7 @@ describe('result_mod evaluation modifiers', () => {
 	it('applies nested effects, adjustments, and percent modifiers for evaluations', () => {
 		const [primaryResource, secondaryResource] = Object.values(CResource);
 		const engineContext = createTestEngine();
+		const nestedParams = resourceAmountParams(primaryResource, 1);
 		const effect = {
 			type: 'result_mod' as const,
 			method: 'add' as const,
@@ -28,7 +30,7 @@ describe('result_mod evaluation modifiers', () => {
 				{
 					type: 'resource' as const,
 					method: 'add' as const,
-					params: { key: primaryResource, amount: 1 },
+					params: nestedParams,
 				},
 			],
 		};

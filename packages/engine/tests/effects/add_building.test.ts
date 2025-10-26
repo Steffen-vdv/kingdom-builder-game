@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { performAction, getActionCosts, advance } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { buildingAdd, type EffectDef } from '../../src/effects/index.ts';
 import { collectBuildingAddCosts } from '../../src/effects/building_add.ts';
@@ -165,12 +166,13 @@ describe('building:add effect', () => {
 
 	it('adds passives for new structures and reports duplicate installations', () => {
 		const content = createContentFactory();
+		const passiveParams = resourceAmountParams(CResource.gold, 1);
 		const building = content.building({
 			onBuild: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 1 },
+					params: passiveParams,
 				},
 			],
 		});
