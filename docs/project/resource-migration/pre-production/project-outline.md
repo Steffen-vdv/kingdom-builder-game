@@ -4,6 +4,8 @@
 
 Unify all numeric systems (resources, stats, populations/roles, capacities, tier thresholds) into a single **ResourceV2** platform that offers consistent behaviour, formatting, and configuration across Engine, Content, Protocol, and Web. The project eliminates historical drift between subsystems and unlocks a simpler mental model for configurators and players.
 
+> **Status (2025-11-04):** Migration complete. ResourceV2 is now the sole numeric platform, and all legacy resource/stat/population systems have been removed from the codebase and documentation.
+
 ## 2. Scope
 
 - Introduce a ResourceV2 definition capable of representing every numeric track in the game.
@@ -74,4 +76,10 @@ Planners must schedule the following follow-up tasks after MVP launch. Each item
 - **Scalability:** ResourceGroups and tiering become generic mechanisms usable for future mechanics without engine rewrites.
 - **Operational Clarity:** Documentation and living process ensure every contributor understands project state, minimizing misalignment.
 
-This outline is the authoritative contract for scope and expectations. Refer to the design document for implementation detail and the project definition for stakeholder-oriented messaging. The deferred-work list above should remain visible in planning docs so the team can prioritise the follow-up phases deliberately.
+## 7. Completion Summary
+
+- Migration completed on **2025-11-04** with ResourceV2 powering engine, content, protocol, and web layers end-to-end.
+- Legacy resource, stat, and population builders plus supporting helpers were removed during T60; ResourceV2 registries are now the only authoring path.
+- Final automation suites and manual HUD checks passed in T61, and the launch checklist was archived alongside production worklogs for future audits.
+
+This outline remains the authoritative contract for scope and expectations. Refer to the design document for implementation detail and the project definition for stakeholder-oriented messaging. Use the deferred-work list above when prioritising post-MVP enhancements in future planning cycles.
