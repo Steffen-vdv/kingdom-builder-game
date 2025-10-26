@@ -3,6 +3,10 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { performAction, advance } from '../src';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from './helpers';
+import {
+	resourceAmountParams,
+	type ResourceAmountParamsResult,
+} from './helpers/resourceV2Params.ts';
 
 describe('result modifiers', () => {
 	it('stack for the same action', () => {
@@ -17,7 +21,10 @@ describe('result modifiers', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: resourceKey, amount: baseGain },
+					params: resourceAmountParams({
+						key: resourceKey,
+						amount: baseGain,
+					}),
 				},
 			],
 		});
@@ -33,7 +40,10 @@ describe('result modifiers', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: resourceKey, amount: modGainA },
+							params: resourceAmountParams({
+								key: resourceKey,
+								amount: modGainA,
+							}),
 						},
 					],
 				},
@@ -51,7 +61,10 @@ describe('result modifiers', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: resourceKey, amount: modGainB },
+							params: resourceAmountParams({
+								key: resourceKey,
+								amount: modGainB,
+							}),
 						},
 					],
 				},
@@ -66,10 +79,17 @@ describe('result modifiers', () => {
 		engineContext.passives.addPassive(passiveA, engineContext);
 		engineContext.passives.addPassive(passiveB, engineContext);
 
-		const before = engineContext.activePlayer.resources[resourceKey] ?? 0;
+		const resourceId = engineContext.activePlayer.getResourceV2Id(resourceKey);
+		const before = engineContext.activePlayer.resourceValues[resourceId] ?? 0;
 		performAction(action.id, engineContext);
-		const after = engineContext.activePlayer.resources[resourceKey] ?? 0;
+		const after = engineContext.activePlayer.resourceValues[resourceId] ?? 0;
+		const gain =
+			(
+				action.effects.find(
+					(effect) => effect.type === 'resource' && effect.method === 'add',
+				)?.params as ResourceAmountParamsResult | undefined
+			)?.amount ?? 0;
 
-		expect(after).toBe(before + baseGain + modGainA + modGainB);
+		expect(after).toBe(before + gain + modGainA + modGainB);
 	});
 });

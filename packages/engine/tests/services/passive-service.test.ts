@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Resource as CResource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import { getActionCosts } from '../../src';
 import { createContentFactory } from '@kingdom-builder/testing';
 
@@ -94,7 +95,10 @@ describe('PassiveManager', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 2 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 2,
+					}),
 				},
 			],
 		};

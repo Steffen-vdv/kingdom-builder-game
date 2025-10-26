@@ -3,6 +3,7 @@ import { performAction, advance, getActionCosts } from '../../src/index.ts';
 import { Resource, PopulationRole } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('resource removal penalties', () => {
 	it('reduces happiness when configured as a removal effect', () => {
@@ -12,7 +13,10 @@ describe('resource removal penalties', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: Resource.happiness, amount: 1 },
+					params: resourceAmountParams({
+						key: Resource.happiness,
+						amount: 1,
+					}),
 					meta: { allowShortfall: true },
 				},
 			],
@@ -21,12 +25,14 @@ describe('resource removal penalties', () => {
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 		engineContext.activePlayer.resources[Resource.happiness] = 2;
-		const before =
-			engineContext.activePlayer.resources[Resource.happiness] ?? 0;
+		const resourceId = engineContext.activePlayer.getResourceV2Id(
+			Resource.happiness,
+		);
+		const before = engineContext.activePlayer.resourceValues[resourceId] ?? 0;
 		const cost = getActionCosts(action.id, engineContext)[Resource.ap] ?? 0;
 		engineContext.activePlayer.ap = cost;
 		performAction(action.id, engineContext);
-		const after = engineContext.activePlayer.resources[Resource.happiness] ?? 0;
+		const after = engineContext.activePlayer.resourceValues[resourceId] ?? 0;
 		expect(after).toBe(before - 1);
 	});
 
@@ -44,7 +50,10 @@ describe('resource removal penalties', () => {
 							type: 'resource',
 							method: 'remove',
 							round: 'up',
-							params: { key: Resource.happiness, amount: 0.5 },
+							params: resourceAmountParams({
+								key: Resource.happiness,
+								amount: 0.5,
+							}),
 							meta: { allowShortfall: true },
 						},
 					],
@@ -56,13 +65,16 @@ describe('resource removal penalties', () => {
 		engineContext.game.currentPlayerIndex = 0;
 		engineContext.activePlayer.population[PopulationRole.Council] = 2;
 		engineContext.activePlayer.resources[Resource.happiness] = 2;
+		const resourceId = engineContext.activePlayer.getResourceV2Id(
+			Resource.happiness,
+		);
 		const cost = getActionCosts(action.id, engineContext)[Resource.ap] ?? 0;
 
 		engineContext.activePlayer.ap = cost;
 
 		performAction(action.id, engineContext);
 
-		expect(engineContext.activePlayer.resources[Resource.happiness]).toBe(1);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(1);
 
 		engineContext.activePlayer.resources[Resource.happiness] = 0;
 
@@ -70,6 +82,6 @@ describe('resource removal penalties', () => {
 
 		performAction(action.id, engineContext);
 
-		expect(engineContext.activePlayer.resources[Resource.happiness]).toBe(-1);
+		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(-1);
 	});
 });

@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { performAction, advance, getActionCosts } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
+import {
+	resourceAmountParams,
+	type ResourceAmountParamsResult,
+} from '../helpers/resourceV2Params.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 function toMain(engineContext: ReturnType<typeof createTestEngine>) {
@@ -19,7 +23,10 @@ describe('actions with synthetic content', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 5 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 5,
+					}),
 				},
 			],
 		});
@@ -29,9 +36,12 @@ describe('actions with synthetic content', () => {
 		engineContext.activePlayer.ap = costs[CResource.ap] ?? 0;
 		engineContext.activePlayer.gold = costs[CResource.gold] ?? 0;
 		const beforeGold = engineContext.activePlayer.gold;
-		const gain = actionDefinition.effects.find(
-			(effect) => effect.type === 'resource' && effect.method === 'add',
-		)?.params?.['amount'] as number;
+		const gain =
+			(
+				actionDefinition.effects.find(
+					(effect) => effect.type === 'resource' && effect.method === 'add',
+				)?.params as ResourceAmountParamsResult | undefined
+			)?.amount ?? 0;
 		performAction(actionDefinition.id, engineContext);
 		expect(engineContext.activePlayer.gold).toBe(
 			beforeGold - (costs[CResource.gold] ?? 0) + gain,
@@ -46,7 +56,10 @@ describe('actions with synthetic content', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 2 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 2,
+					}),
 				},
 			],
 		});
@@ -63,9 +76,12 @@ describe('actions with synthetic content', () => {
 		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
 		engineContext.activePlayer.gold = cost[CResource.gold] ?? 0;
 		const beforeGold = engineContext.activePlayer.gold;
-		const gain = building.onBuild?.find(
-			(effect) => effect.type === 'resource' && effect.method === 'add',
-		)?.params?.['amount'] as number;
+		const gain =
+			(
+				building.onBuild?.find(
+					(effect) => effect.type === 'resource' && effect.method === 'add',
+				)?.params as ResourceAmountParamsResult | undefined
+			)?.amount ?? 0;
 		performAction(buildAction.id, engineContext, { id: building.id });
 		expect(engineContext.activePlayer.buildings.has(building.id)).toBe(true);
 		expect(engineContext.activePlayer.gold).toBe(
@@ -80,7 +96,10 @@ describe('actions with synthetic content', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 1 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 1,
+					}),
 				},
 			],
 		});
@@ -107,9 +126,12 @@ describe('actions with synthetic content', () => {
 		engineContext.activePlayer.gold = cost[CResource.gold] ?? 0;
 		const beforeGold = engineContext.activePlayer.gold;
 		const beforeSlots = land.slotsUsed;
-		const gain = development.onBuild?.find(
-			(effect) => effect.type === 'resource' && effect.method === 'add',
-		)?.params?.['amount'] as number;
+		const gain =
+			(
+				development.onBuild?.find(
+					(effect) => effect.type === 'resource' && effect.method === 'add',
+				)?.params as ResourceAmountParamsResult | undefined
+			)?.amount ?? 0;
 		performAction(developAction.id, engineContext, {
 			id: development.id,
 			landId: land.id,

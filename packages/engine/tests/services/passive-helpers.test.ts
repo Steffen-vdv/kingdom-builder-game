@@ -3,6 +3,10 @@ import { Resource } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { PlayerState } from '../../src/state';
 import {
+	resourceAmountParams,
+	type ResourceAmountParamsResult,
+} from '../helpers/resourceV2Params.ts';
+import {
 	clearSkipFlags,
 	clonePassiveMetadata,
 	clonePassiveRecord,
@@ -32,7 +36,10 @@ describe('passive helpers', () => {
 		const nestedEffect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: Resource.gold, amount: 3 },
+			params: resourceAmountParams({
+				key: Resource.gold,
+				amount: 3,
+			}),
 		};
 		const record: PassiveRecord = {
 			id: building.id,
@@ -46,15 +53,18 @@ describe('passive helpers', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: Resource.gold, amount: 1 },
+					params: resourceAmountParams({
+						key: Resource.gold,
+						amount: 1,
+					}),
 					effects: [
 						{
 							type: 'resource',
 							method: 'add',
-							params: {
+							params: resourceAmountParams({
 								key: Resource.gold,
 								amount: 2,
-							},
+							}),
 						},
 					],
 				},
@@ -102,7 +112,8 @@ describe('passive helpers', () => {
 		expect(recordClone.frames).not.toBe(record.frames);
 
 		recordClone.frames.push(() => ({ mark: true }));
-		(recordClone.effects?.[0]?.params as { amount: number }).amount = 12;
+		(recordClone.effects?.[0]?.params as ResourceAmountParamsResult).amount =
+			12;
 		const clonedNested = (
 			recordClone.customData as {
 				nested: Array<{ value: { deep: unknown[] } }>;
@@ -116,10 +127,12 @@ describe('passive helpers', () => {
 		});
 
 		expect(record.frames).toHaveLength(1);
-		expect(record.effects?.[0]?.params).toEqual({
-			key: Resource.gold,
-			amount: 3,
-		});
+		expect(record.effects?.[0]?.params).toEqual(
+			resourceAmountParams({
+				key: Resource.gold,
+				amount: 3,
+			}),
+		);
 		const originalNested = (
 			record.customData as { nested: Array<{ value: { deep: unknown[] } }> }
 		).nested[0]!.value.deep[1] as { label: string };
@@ -131,12 +144,18 @@ describe('passive helpers', () => {
 		const base: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: Resource.gold, amount: 2 },
+			params: resourceAmountParams({
+				key: Resource.gold,
+				amount: 2,
+			}),
 			effects: [
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: Resource.gold, amount: 1 },
+					params: resourceAmountParams({
+						key: Resource.gold,
+						amount: 1,
+					}),
 				},
 				{
 					type: 'meta',
@@ -145,10 +164,10 @@ describe('passive helpers', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: {
+							params: resourceAmountParams({
 								key: Resource.gold,
 								amount: 4,
-							},
+							}),
 						},
 					],
 				},

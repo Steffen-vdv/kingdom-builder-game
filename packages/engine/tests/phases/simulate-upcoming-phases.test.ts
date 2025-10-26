@@ -8,6 +8,7 @@ import {
 } from '@kingdom-builder/contents';
 import type { StatKey } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import { simulateUpcomingPhases } from '../../src';
 
 function sanitizePlayerState(context: ReturnType<typeof createTestEngine>) {
@@ -48,14 +49,20 @@ describe('simulateUpcomingPhases', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: Resource.gold, amount: goldGain },
+				params: resourceAmountParams({
+					key: Resource.gold,
+					amount: goldGain,
+				}),
 			},
 		];
 		land.onGainAPStep = [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: Resource.ap, amount: apGain },
+				params: resourceAmountParams({
+					key: Resource.ap,
+					amount: apGain,
+				}),
 			},
 		];
 		const beforePhase = context.game.currentPhase;
@@ -132,7 +139,10 @@ describe('simulateUpcomingPhases', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: Resource.gold, amount: goldGain },
+				params: resourceAmountParams({
+					key: Resource.gold,
+					amount: goldGain,
+				}),
 			},
 		];
 		land.upkeep = { [Resource.gold]: upkeepCost };

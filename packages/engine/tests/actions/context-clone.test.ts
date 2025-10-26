@@ -8,6 +8,7 @@ import { cloneEngineContext } from '../../src/actions/context_clone.ts';
 import { createAISystem } from '../../src/ai/index.ts';
 import type { StatSourceFrame } from '../../src/stat_sources/index.ts';
 import { createTestEngine } from '../helpers.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('cloneEngineContext', () => {
 	it('clones player state and optional engine context fields', () => {
@@ -61,21 +62,30 @@ describe('cloneEngineContext', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: CResource.gold, amount: 1 },
+				params: resourceAmountParams({
+					key: CResource.gold,
+					amount: 1,
+				}),
 			},
 		];
 		land.onGainIncomeStep = [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: CResource.gold, amount: 2 },
+				params: resourceAmountParams({
+					key: CResource.gold,
+					amount: 2,
+				}),
 			},
 		];
 		land.onGainAPStep = [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: engineContext.actionCostResource, amount: 1 },
+				params: resourceAmountParams({
+					key: engineContext.actionCostResource,
+					amount: 1,
+				}),
 			},
 		];
 		land.developments.push('custom-development');

@@ -19,6 +19,7 @@ import type {
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const RESOURCE_AP = 'test:resource:ap';
 const RESOURCE_GOLD = 'test:resource:gold';
@@ -104,7 +105,10 @@ function createGateway(options?: GatewayOptions) {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: RESOURCE_GOLD, amount: 2 },
+				params: resourceAmountParams({
+					key: RESOURCE_GOLD,
+					amount: 2,
+				}),
 			},
 		],
 	});
