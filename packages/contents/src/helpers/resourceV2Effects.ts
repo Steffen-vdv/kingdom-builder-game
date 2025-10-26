@@ -1,7 +1,7 @@
 import type { ResourceChangeBuilder, ResourceChangeEffectParams, ResourceV2TransferEffectParams } from '../resourceV2';
 import { resourceChange, resourceTransfer, transferEndpoint } from '../resourceV2';
-import type { ResourceKey } from '../resources';
-import { getResourceV2Id } from '../resources';
+import type { ResourceKey } from '../resourceKeys';
+import { getResourceV2Id } from '../resourceKeys';
 import type { StatKey } from '../stats';
 import { getStatResourceV2Id } from '../stats';
 

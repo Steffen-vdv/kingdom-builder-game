@@ -1,8 +1,8 @@
 import { Registry, developmentSchema } from '@kingdom-builder/protocol';
 import { Stat, getStatResourceV2Id } from './stats';
 import type { StatKey } from './stats';
-import { Resource, getResourceV2Id } from './resources';
-import type { ResourceKey } from './resources';
+import { Resource, getResourceV2Id } from './resourceKeys';
+import type { ResourceKey } from './resourceKeys';
 import { development, effect, developmentParams, developmentEvaluator } from './config/builders';
 import { Types, StatMethods, DevelopmentMethods, ResourceMethods } from './config/builderShared';
 import { Focus } from './defs';

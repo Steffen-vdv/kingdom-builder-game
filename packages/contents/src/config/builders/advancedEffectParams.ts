@@ -1,6 +1,6 @@
 import type { AttackTarget, EffectConfig, EffectDef } from '@kingdom-builder/protocol';
 import type { ActionId } from '../../actions';
-import type { ResourceKey } from '../../resources';
+import type { ResourceKey } from '../../resourceKeys';
 import type { StatKey } from '../../stats';
 import type { PopulationRoleId } from '../../populationRoles';
 import { ParamsBuilder } from '../builderShared';

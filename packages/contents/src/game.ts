@@ -1,18 +1,13 @@
 import { startConfig, playerStart } from './config/builders';
 import type { PlayerStartResourceBoundsInput } from './config/builders/startConfig/playerStartBuilder';
-import { Resource, type ResourceKey } from './resources';
+import { Resource, type ResourceKey, RESOURCE_V2_ID_BY_KEY } from './resourceKeys';
 import { Stat, type StatKey } from './stats';
 import { PopulationRole, type PopulationRoleId } from './populationRoles';
 import { DevelopmentId } from './developments';
 import { RESOURCE_V2_REGISTRY } from './resourceV2';
 import type { StartConfig } from '@kingdom-builder/protocol';
 
-const RESOURCE_V2_ID_BY_RESOURCE_KEY = {
-	[Resource.gold]: 'resource:core:gold',
-	[Resource.ap]: 'resource:core:action-points',
-	[Resource.happiness]: 'resource:core:happiness',
-	[Resource.castleHP]: 'resource:core:castle-hp',
-} as const satisfies Record<ResourceKey, string>;
+const RESOURCE_V2_ID_BY_RESOURCE_KEY = RESOURCE_V2_ID_BY_KEY;
 
 const RESOURCE_V2_ID_BY_STAT_KEY = {
 	[Stat.maxPopulation]: 'resource:stat:max-population',

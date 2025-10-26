@@ -1,5 +1,5 @@
 import type { Registry } from '@kingdom-builder/protocol';
-import { Resource } from '../resources';
+import { Resource } from '../resourceKeys';
 import { Stat } from '../stats';
 import { DevelopmentId } from '../developments';
 import { PopulationRole } from '../populationRoles';

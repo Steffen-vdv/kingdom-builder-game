@@ -1,6 +1,6 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
 import type { BuildingDef, Focus } from '../../../defs';
-import type { ResourceKey } from '../../../resources';
+import type { ResourceKey } from '../../../resourceKeys';
 import { BaseBuilder } from './baseBuilder';
 
 type BuildingEffectKey = 'onBuild' | 'onGrowthPhase' | 'onUpkeepPhase' | 'onPayUpkeepStep' | 'onGainIncomeStep' | 'onGainAPStep' | 'onBeforeAttacked' | 'onAttackResolved';
