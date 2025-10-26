@@ -7,9 +7,19 @@ import {
 	setStatKeys,
 } from '../../src/state/index.ts';
 import { Resource, Stat } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
+import { createRuntimeResourceCatalog } from '../../src/resource-v2/index.ts';
 
 setResourceKeys(Object.values(Resource));
 setStatKeys(Object.values(Stat));
+
+const RUNTIME_RESOURCE_CATALOG = createRuntimeResourceCatalog({
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
+});
 
 describe('State classes', () => {
 	it('calculates free slots on land', () => {
@@ -44,7 +54,7 @@ describe('State classes', () => {
 	});
 
 	it('provides active and opponent players', () => {
-		const game = new GameState('Alice', 'Bob');
+		const game = new GameState(RUNTIME_RESOURCE_CATALOG, 'Alice', 'Bob');
 		expect(game.active.id).toBe('A');
 		expect(game.opponent.id).toBe('B');
 		game.currentPlayerIndex = 1;

@@ -239,8 +239,7 @@ export function createEngine({
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
-	const gameState = new GameState('Player', 'Opponent');
-	gameState.resourceCatalogV2 = runtimeResourceCatalog;
+	const gameState = new GameState(runtimeResourceCatalog, 'Player', 'Opponent');
 	const actionCostConfig = determineCommonActionCostResource(
 		actions,
 		runtimeResourceCatalog,
@@ -268,9 +267,9 @@ export function createEngine({
 		phases,
 		actionCostConfig.resource,
 		actionCostConfig.amount,
+		runtimeResourceCatalog,
 		compensationMap,
 	);
-	engineContext.resourceCatalogV2 = runtimeResourceCatalog;
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
 	const aiSystem = createAISystem({ performAction, advance });

@@ -33,31 +33,25 @@ export function setPopulationRoleValue(
 	const resourceId = player.getPopulationResourceV2Id(role);
 	const previousValue = getResourceValue(player, resourceId);
 	const catalog = context.resourceCatalogV2;
-	let nextValue: number;
 	const coercedTarget = coerceTargetValue(target);
-	if (!catalog) {
-		nextValue = Math.max(0, coercedTarget);
-		player.resourceValues[resourceId] = nextValue;
-	} else {
-		const lookup = resolveResourceDefinition(catalog, resourceId);
-		if (!lookup) {
-			throw new Error(
-				`Population role "${role}" does not map to a ResourceV2 entry in the runtime catalog.`,
-			);
-		}
-		if (lookup.kind !== 'resource') {
-			throw new Error(
-				`Population role "${role}" cannot mutate parent resource "${resourceId}"; parent values are derived from children.`,
-			);
-		}
-		nextValue = setResourceValue(
-			context,
-			player,
-			catalog,
-			resourceId,
-			coercedTarget,
+	const lookup = resolveResourceDefinition(catalog, resourceId);
+	if (!lookup) {
+		throw new Error(
+			`Population role "${role}" does not map to a ResourceV2 entry in the runtime catalog.`,
 		);
 	}
+	if (lookup.kind !== 'resource') {
+		throw new Error(
+			`Population role "${role}" cannot mutate parent resource "${resourceId}"; parent values are derived from children.`,
+		);
+	}
+	const nextValue = setResourceValue(
+		context,
+		player,
+		catalog,
+		resourceId,
+		coercedTarget,
+	);
 	return {
 		previousValue,
 		nextValue,

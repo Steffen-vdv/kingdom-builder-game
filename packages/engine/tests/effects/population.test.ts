@@ -31,11 +31,6 @@ describe('population effects', () => {
 		expect(engineContext.activePlayer.population[role.id]).toBe(added);
 		const catalog = engineContext.resourceCatalogV2;
 		expect(catalog).toBeDefined();
-		if (!catalog) {
-			throw new Error(
-				'Resource catalog expected to be initialised in test context.',
-			);
-		}
 		const resourceId = engineContext.activePlayer.getPopulationResourceV2Id(
 			role.id,
 		);

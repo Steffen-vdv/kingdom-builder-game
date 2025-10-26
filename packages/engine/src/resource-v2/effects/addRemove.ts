@@ -55,18 +55,7 @@ const DEFAULT_RECONCILIATION_MODE: ResourceReconciliationMode = 'clamp';
 type ResourceEffectKind = 'add' | 'remove';
 
 function expectRuntimeCatalog(context: EngineContext): RuntimeResourceCatalog {
-	const catalog = (
-		context as EngineContext & {
-			resourceCatalogV2?: RuntimeResourceCatalog;
-		}
-	).resourceCatalogV2;
-	if (!catalog) {
-		throw new Error(
-			'ResourceV2 effects require EngineContext.resourceCatalogV2 to be ' +
-				'initialised before execution.',
-		);
-	}
-	return catalog;
+	return context.resourceCatalogV2;
 }
 
 function normaliseChange(

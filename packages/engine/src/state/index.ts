@@ -607,9 +607,14 @@ export class GameState {
 	devMode = false;
 	conclusion?: GameConclusion;
 	players: PlayerState[];
-	private _resourceCatalogV2: RuntimeResourceCatalog | undefined;
-	constructor(aName = 'Player', bName = 'Opponent') {
+	private _resourceCatalogV2!: RuntimeResourceCatalog;
+	constructor(
+		resourceCatalogV2: RuntimeResourceCatalog,
+		aName = 'Player',
+		bName = 'Opponent',
+	) {
 		this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];
+		this.resourceCatalogV2 = resourceCatalogV2;
 	}
 	get active(): PlayerState {
 		return this.players[this.currentPlayerIndex]!;
@@ -617,14 +622,11 @@ export class GameState {
 	get opponent(): PlayerState {
 		return this.players[(this.currentPlayerIndex + 1) % this.players.length]!;
 	}
-	get resourceCatalogV2(): RuntimeResourceCatalog | undefined {
+	get resourceCatalogV2(): RuntimeResourceCatalog {
 		return this._resourceCatalogV2;
 	}
-	set resourceCatalogV2(catalog: RuntimeResourceCatalog | undefined) {
+	set resourceCatalogV2(catalog: RuntimeResourceCatalog) {
 		this._resourceCatalogV2 = catalog;
-		if (!catalog) {
-			return;
-		}
 		for (const player of this.players) {
 			player.syncLegacyResourceCatalog(catalog);
 		}
