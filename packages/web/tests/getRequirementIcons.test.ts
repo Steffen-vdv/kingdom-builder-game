@@ -123,6 +123,8 @@ const createTranslationContext = (
 			resources: {},
 			stats: {},
 			population: {},
+			resourcesV2: {},
+			resourceBoundsV2: {},
 		},
 		opponent: {
 			id: 'B',
@@ -130,6 +132,8 @@ const createTranslationContext = (
 			resources: {},
 			stats: {},
 			population: {},
+			resourcesV2: {},
+			resourceBoundsV2: {},
 		},
 		rules: {
 			tierDefinitions: [],
@@ -141,7 +145,10 @@ const createTranslationContext = (
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
 		assets: mergedAssets,
-		resourcesV2: undefined,
+		resourcesV2: {
+			resources: { ordered: [], byId: {} },
+			groups: { ordered: [], byId: {} },
+		},
 		resourceMetadataV2: EMPTY_RESOURCE_METADATA,
 		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
 		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,

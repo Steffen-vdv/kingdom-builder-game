@@ -54,6 +54,8 @@ interface AdvanceToActionPhaseOptions {
 		| 'developments'
 		| 'populations'
 		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroupsV2'
 	>;
 	onFatalSessionError?: (error: unknown) => void;
 	forceAdvance?: boolean;

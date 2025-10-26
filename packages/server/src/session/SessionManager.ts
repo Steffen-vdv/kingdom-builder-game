@@ -23,6 +23,9 @@ import type {
 	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	SerializedRegistry,
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -31,6 +34,7 @@ import {
 import {
 	cloneActionCategoryRegistry,
 	cloneRegistry,
+	snapshotResourceCatalogFromContent,
 	freezeSerializedRegistry,
 } from './registryUtils.js';
 import {
@@ -53,6 +57,8 @@ type SessionRuntimeConfig = {
 	rules: RuleSet;
 	resources: SessionResourceRegistry;
 	primaryIconId: string | null;
+	resourcesV2: SerializedRegistry<ResourceV2Definition>;
+	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
 };
 
 type SessionRecord = {
@@ -144,6 +150,15 @@ export class SessionManager {
 			: (freezeSerializedRegistry(
 					cloneActionCategoryRegistry(this.baseOptions.actionCategories),
 				) as SessionActionCategoryRegistry);
+		const resourceCatalogSnapshot = snapshotResourceCatalogFromContent(
+			this.baseOptions.resourceCatalogV2,
+		);
+		const resourcesV2 = freezeSerializedRegistry(
+			resourceCatalogSnapshot.resources,
+		);
+		const resourceGroupsV2 = freezeSerializedRegistry(
+			resourceCatalogSnapshot.groups,
+		);
 		this.registries = {
 			actions: cloneRegistry(this.baseOptions.actions),
 			actionCategories,
@@ -151,6 +166,8 @@ export class SessionManager {
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
+			resourcesV2,
+			resourceGroupsV2,
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
@@ -159,24 +176,29 @@ export class SessionManager {
 			resources,
 			phases: this.baseOptions.phases,
 		});
-		const frozenPhases = Object.freeze(
-			structuredClone(this.baseOptions.phases),
-		) as unknown as PhaseConfig[];
-		const frozenStart = Object.freeze(
-			structuredClone(this.baseOptions.start),
-		) as unknown as StartConfig;
-		const frozenRules = Object.freeze(
-			structuredClone(this.baseOptions.rules),
-		) as unknown as RuleSet;
+		const frozenPhases = structuredClone(this.baseOptions.phases);
+		Object.freeze(frozenPhases);
+		const frozenStart = structuredClone(this.baseOptions.start);
+		Object.freeze(frozenStart);
+		const frozenRules = structuredClone(this.baseOptions.rules);
+		Object.freeze(frozenRules);
 		const frozenResources = freezeSerializedRegistry(
 			structuredClone(resources),
-		) as SessionResourceRegistry;
+		);
+		const frozenResourcesV2 = freezeSerializedRegistry(
+			structuredClone(resourcesV2),
+		);
+		const frozenResourceGroupsV2 = freezeSerializedRegistry(
+			structuredClone(resourceGroupsV2),
+		);
 		this.runtimeConfig = Object.freeze({
 			phases: frozenPhases,
 			start: frozenStart,
 			rules: frozenRules,
 			resources: frozenResources,
 			primaryIconId,
+			resourcesV2: frozenResourcesV2,
+			resourceGroupsV2: frozenResourceGroupsV2,
 		});
 	}
 

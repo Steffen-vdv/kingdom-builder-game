@@ -174,8 +174,8 @@ describe('EngineSession', () => {
 		expect(player.valuesV2).toBeDefined();
 		const goldLegacy = player.resources[CResource.gold];
 		expect(goldLegacy).toBeDefined();
-		expect(player.valuesV2?.['resource:core:gold']).toBe(goldLegacy);
-		expect(catalog?.resources.byId['resource:core:gold']?.label).toBeDefined();
+		expect(player.valuesV2['resource:core:gold']).toBe(goldLegacy);
+		expect(catalog.resources.byId['resource:core:gold']?.label).toBeDefined();
 	});
 
 	it('provides cloned advance results', () => {

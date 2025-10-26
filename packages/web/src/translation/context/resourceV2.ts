@@ -12,20 +12,14 @@ import type {
 } from './types';
 
 export function cloneResourceValuesV2(
-	values?: Record<string, number>,
-): Readonly<Record<string, number>> | undefined {
-	if (!values) {
-		return undefined;
-	}
+	values: Record<string, number>,
+): Readonly<Record<string, number>> {
 	return Object.freeze({ ...values });
 }
 
 export function cloneResourceBoundsV2(
-	bounds?: Record<string, SessionResourceBoundsV2>,
-): Readonly<Record<string, SessionResourceBoundsV2>> | undefined {
-	if (!bounds) {
-		return undefined;
-	}
+	bounds: Record<string, SessionResourceBoundsV2>,
+): Readonly<Record<string, SessionResourceBoundsV2>> {
 	const cloned = Object.fromEntries(
 		Object.entries(bounds).map(([id, entry]) => [
 			id,
@@ -66,11 +60,8 @@ function cloneResourceCatalogRegistryV2<TDefinition extends { id: string }>(
 }
 
 export function cloneResourceCatalogV2(
-	catalog: SessionResourceCatalogV2 | undefined,
+	catalog: SessionResourceCatalogV2,
 ): TranslationResourceCatalogV2 {
-	if (!catalog) {
-		return undefined;
-	}
 	const resources = cloneResourceCatalogRegistryV2(catalog.resources);
 	const groups = cloneResourceCatalogRegistryV2(catalog.groups);
 	return Object.freeze({
@@ -211,13 +202,13 @@ export function createResourceV2MetadataSelectors(
 			if (seen.has(id)) {
 				continue;
 			}
-			const definition = catalog?.resources.byId[id];
+			const definition = catalog.resources.byId[id];
 			entries.push([id, createMetadataEntry(id, definition, descriptor)]);
 			seen.add(id);
 		}
 	}
 	const factory: MetadataFactory = (id, descriptor) => {
-		const definition = catalog?.resources.byId[id];
+		const definition = catalog.resources.byId[id];
 		return createMetadataEntry(id, definition, descriptor);
 	};
 	return createMetadataSelectors(entries, descriptorRecords, factory);
@@ -253,7 +244,7 @@ export function createResourceV2GroupMetadataSelectors(
 			if (seen.has(id)) {
 				continue;
 			}
-			const definition = catalog?.groups.byId[id];
+			const definition = catalog.groups.byId[id];
 			entries.push([
 				id,
 				createMetadataEntry(id, definition?.parent, descriptor),
@@ -262,7 +253,7 @@ export function createResourceV2GroupMetadataSelectors(
 		}
 	}
 	const factory: MetadataFactory = (id, descriptor) => {
-		const definition = catalog?.groups.byId[id];
+		const definition = catalog.groups.byId[id];
 		return createMetadataEntry(id, definition?.parent, descriptor);
 	};
 	return createMetadataSelectors(entries, descriptorRecords, factory);

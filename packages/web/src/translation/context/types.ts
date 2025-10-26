@@ -145,7 +145,7 @@ export interface TranslationSignedResourceGainSelectors {
 	sumForResource(id: string): number;
 }
 
-export type TranslationResourceCatalogV2 = SessionResourceCatalogV2 | undefined;
+export type TranslationResourceCatalogV2 = SessionResourceCatalogV2;
 
 /**
  * Minimal phase metadata consumed by translation renderers.
@@ -176,8 +176,8 @@ export interface TranslationPlayer {
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	population: Record<string, number>;
-	resourcesV2?: Readonly<Record<string, number>>;
-	resourceBoundsV2?: Readonly<Record<string, SessionResourceBoundsV2>>;
+	resourcesV2: Readonly<Record<string, number>>;
+	resourceBoundsV2: Readonly<Record<string, SessionResourceBoundsV2>>;
 }
 
 /**

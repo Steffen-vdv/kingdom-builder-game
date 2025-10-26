@@ -34,8 +34,8 @@ export interface PlayerSnapshot {
 		developments: string[];
 	}>;
 	passives: SessionPassiveSummary[];
-	valuesV2?: Record<string, number>;
-	resourceBoundsV2?: Record<string, SessionResourceBoundsV2>;
+	valuesV2: Record<string, number>;
+	resourceBoundsV2: Record<string, SessionResourceBoundsV2>;
 }
 
 type SnapshotInput =
@@ -71,12 +71,9 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 		return {};
 	})();
 	const passives = 'passives' in playerState ? [...playerState.passives] : [];
-	const valuesV2 =
-		'valuesV2' in playerState && playerState.valuesV2
-			? { ...playerState.valuesV2 }
-			: undefined;
+	const valuesV2 = 'valuesV2' in playerState ? { ...playerState.valuesV2 } : {};
 	const resourceBoundsV2 =
-		'resourceBoundsV2' in playerState && playerState.resourceBoundsV2
+		'resourceBoundsV2' in playerState
 			? Object.fromEntries(
 					Object.entries(playerState.resourceBoundsV2).map(([id, entry]) => [
 						id,
@@ -86,7 +83,7 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 						} satisfies SessionResourceBoundsV2,
 					]),
 				)
-			: undefined;
+			: {};
 	return {
 		resources: { ...playerState.resources },
 		stats: { ...playerState.stats },
@@ -94,8 +91,8 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 		buildings: buildingList,
 		lands,
 		passives,
-		...(valuesV2 ? { valuesV2 } : {}),
-		...(resourceBoundsV2 ? { resourceBoundsV2 } : {}),
+		valuesV2,
+		resourceBoundsV2,
 	};
 }
 
@@ -110,10 +107,10 @@ export function collectResourceKeys(
 	for (const key of Object.keys(nextSnapshot.resources)) {
 		keys.add(key);
 	}
-	for (const key of Object.keys(previousSnapshot.valuesV2 ?? {})) {
+	for (const key of Object.keys(previousSnapshot.valuesV2)) {
 		keys.add(key);
 	}
-	for (const key of Object.keys(nextSnapshot.valuesV2 ?? {})) {
+	for (const key of Object.keys(nextSnapshot.valuesV2)) {
 		keys.add(key);
 	}
 	return Array.from(keys);

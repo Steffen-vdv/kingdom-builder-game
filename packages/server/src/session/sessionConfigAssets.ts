@@ -17,6 +17,8 @@ import {
 	type SessionRegistriesPayload,
 	type SessionResourceDefinition,
 	type SerializedRegistry,
+	type ResourceV2Definition,
+	type ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import {
 	RESOURCES,
@@ -74,13 +76,42 @@ export function buildSessionAssets(
 		context.resourceOverrides,
 		startConfig,
 	);
-	const frozenResources = freezeSerializedRegistry(structuredClone(resources));
+	const frozenResources = freezeSerializedRegistry(
+		structuredClone<SessionResourceRegistry>(resources),
+	);
+	const baseResourcesV2 = freezeSerializedRegistry(
+		structuredClone<SerializedRegistry<ResourceV2Definition>>(
+			context.baseRegistries.resourcesV2,
+		),
+	);
+	const baseResourceGroupsV2 = freezeSerializedRegistry(
+		structuredClone<SerializedRegistry<ResourceV2GroupDefinition>>(
+			context.baseRegistries.resourceGroupsV2,
+		),
+	);
+	const overrideCatalog = validated.resourceCatalogV2;
+	let resourcesV2 = baseResourcesV2;
+	let resourceGroupsV2 = baseResourceGroupsV2;
+	if (overrideCatalog) {
+		resourcesV2 = freezeSerializedRegistry(
+			structuredClone(
+				overrideCatalog.resources.byId,
+			) as SerializedRegistry<ResourceV2Definition>,
+		);
+		resourceGroupsV2 = freezeSerializedRegistry(
+			structuredClone(
+				overrideCatalog.groups.byId,
+			) as SerializedRegistry<ResourceV2GroupDefinition>,
+		);
+	}
 	const registries: SessionRegistriesPayload = {
 		actions: freezeSerializedRegistry(cloneRegistry(actions)),
 		buildings: freezeSerializedRegistry(cloneRegistry(buildings)),
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
 		populations: freezeSerializedRegistry(cloneRegistry(populations)),
 		resources: frozenResources,
+		resourcesV2,
+		resourceGroupsV2,
 	};
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;

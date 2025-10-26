@@ -170,6 +170,8 @@ interface SessionTranslationContextInput {
 		| 'developments'
 		| 'populations'
 		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroupsV2'
 	>;
 }
 

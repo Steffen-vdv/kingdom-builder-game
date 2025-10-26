@@ -37,7 +37,7 @@ function resolveResourceValue(
 	mapping?: ResourceV2LegacyMapping,
 ): number | undefined {
 	const values = snapshot.valuesV2;
-	if (values && typeof values[resourceId] === 'number') {
+	if (typeof values[resourceId] === 'number') {
 		return values[resourceId];
 	}
 	const resolvedMapping = mapping ?? getLegacyMapping(resourceId);
@@ -60,7 +60,7 @@ function resolveBounds(
 	snapshot: PlayerSnapshot,
 	resourceId: string,
 ): Pick<ResourceV2ValueSnapshot, 'lowerBound' | 'upperBound'> {
-	const bounds = snapshot.resourceBoundsV2?.[resourceId];
+	const bounds = snapshot.resourceBoundsV2[resourceId];
 	if (!bounds) {
 		return {};
 	}

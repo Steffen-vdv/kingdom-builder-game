@@ -17,12 +17,18 @@ import {
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	Registry,
 	SerializedRegistry,
 	SessionRegistriesPayload,
 	SessionResourceDefinition,
 	SessionActionCategoryRegistry,
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionSnapshotMetadata,
@@ -305,6 +311,12 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
 		resources: buildResourceRegistry(),
+		resourcesV2: deepFreeze(
+			structuredClone(RESOURCE_V2_REGISTRY.byId),
+		) as SerializedRegistry<ResourceV2Definition>,
+		resourceGroupsV2: deepFreeze(
+			structuredClone(RESOURCE_GROUP_V2_REGISTRY.byId),
+		) as SerializedRegistry<ResourceV2GroupDefinition>,
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),

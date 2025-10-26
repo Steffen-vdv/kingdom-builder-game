@@ -35,6 +35,8 @@ interface UseActionPerformerOptions {
 		| 'buildings'
 		| 'developments'
 		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroupsV2'
 		| 'populations'
 	>;
 	addResolutionLog: (resolution: ActionResolution) => void;

@@ -27,6 +27,8 @@ interface PhaseProgressOptions {
 		| 'buildings'
 		| 'developments'
 		| 'resources'
+		| 'resourcesV2'
+		| 'resourceGroupsV2'
 		| 'populations'
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;

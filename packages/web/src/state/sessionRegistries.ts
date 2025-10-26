@@ -103,6 +103,8 @@ export interface SessionRegistries {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	resources: Record<string, SessionResourceDefinition>;
+	resourcesV2: SessionRegistriesPayload['resourcesV2'];
+	resourceGroupsV2: SessionRegistriesPayload['resourceGroupsV2'];
 }
 
 export function deserializeSessionRegistries(
@@ -126,6 +128,8 @@ export function deserializeSessionRegistries(
 			populationSchema.passthrough(),
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
+		resourcesV2: clone(payload.resourcesV2),
+		resourceGroupsV2: clone(payload.resourceGroupsV2),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),
 	};
 }

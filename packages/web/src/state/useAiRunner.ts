@@ -27,6 +27,17 @@ import type {
 	SessionAiTurnResult,
 } from './sessionTypes';
 
+type RequiredSessionRegistries = Pick<
+	SessionRegistries,
+	| 'actions'
+	| 'buildings'
+	| 'developments'
+	| 'populations'
+	| 'resources'
+	| 'resourcesV2'
+	| 'resourceGroupsV2'
+>;
+
 interface PresentAiActionsOptions {
 	result: SessionAiTurnResult;
 	previousSnapshot: SessionSnapshot;
@@ -34,10 +45,7 @@ interface PresentAiActionsOptions {
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	addResolutionLog: (resolution: ActionResolution) => void;
 	resourceKeys: readonly SessionResourceKey[];
-	fallbackRegistries: Pick<
-		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
-	>;
+	fallbackRegistries: RequiredSessionRegistries;
 }
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
@@ -45,6 +53,16 @@ function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
 		population: { ...snapshot.population },
+		valuesV2: { ...snapshot.valuesV2 },
+		resourceBoundsV2: Object.fromEntries(
+			Object.entries(snapshot.resourceBoundsV2).map(([id, bounds]) => [
+				id,
+				{
+					lowerBound: bounds.lowerBound,
+					upperBound: bounds.upperBound,
+				},
+			]),
+		),
 		buildings: [...snapshot.buildings],
 		lands: snapshot.lands.map((land) => ({
 			id: land.id,
@@ -195,10 +213,7 @@ interface UseAiRunnerOptions {
 	mountedRef: MutableRefObject<boolean>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	addResolutionLog: (resolution: ActionResolution) => void;
-	registries: Pick<
-		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
-	>;
+	registries: RequiredSessionRegistries;
 	resourceKeys: readonly SessionResourceKey[];
 	actionCostResource: SessionResourceKey;
 	onFatalSessionError?: (error: unknown) => void;

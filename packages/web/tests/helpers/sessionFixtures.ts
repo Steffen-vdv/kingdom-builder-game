@@ -85,6 +85,16 @@ export function createSnapshotPlayer({
 	skipSteps = {},
 	passives = [],
 }: SnapshotPlayerOptions): SessionPlayerStateSnapshot {
+	const normalizedValuesV2 = valuesV2 ? { ...valuesV2 } : {};
+	const normalizedBounds: Record<string, SessionResourceBoundsV2> = {};
+	if (resourceBoundsV2) {
+		for (const [id, bounds] of Object.entries(resourceBoundsV2)) {
+			normalizedBounds[id] = {
+				lowerBound: bounds.lowerBound !== undefined ? bounds.lowerBound : null,
+				upperBound: bounds.upperBound !== undefined ? bounds.upperBound : null,
+			};
+		}
+	}
 	const snapshot: SessionPlayerStateSnapshot = {
 		id,
 		name,
@@ -92,6 +102,8 @@ export function createSnapshotPlayer({
 		stats: { ...stats },
 		statsHistory: { ...statsHistory },
 		population: { ...population },
+		valuesV2: normalizedValuesV2,
+		resourceBoundsV2: normalizedBounds,
 		lands: cloneLands(lands),
 		buildings: [...buildings],
 		actions: [...actions],
@@ -102,19 +114,6 @@ export function createSnapshotPlayer({
 	};
 	if (aiControlled !== undefined) {
 		snapshot.aiControlled = aiControlled;
-	}
-	if (valuesV2) {
-		snapshot.valuesV2 = { ...valuesV2 };
-	}
-	if (resourceBoundsV2) {
-		const normalizedBounds: Record<string, SessionResourceBoundsV2> = {};
-		for (const [id, bounds] of Object.entries(resourceBoundsV2)) {
-			normalizedBounds[id] = {
-				lowerBound: bounds.lowerBound !== undefined ? bounds.lowerBound : null,
-				upperBound: bounds.upperBound !== undefined ? bounds.upperBound : null,
-			};
-		}
-		snapshot.resourceBoundsV2 = normalizedBounds;
 	}
 	return snapshot;
 }
@@ -270,9 +269,12 @@ export function createSessionSnapshot({
 					tokens: {},
 				} satisfies SessionOverviewMetadata,
 			});
-	const resourceCatalog = resourceCatalogV2
+	const resourceCatalog: SessionResourceCatalogV2 = resourceCatalogV2
 		? clone(resourceCatalogV2)
-		: undefined;
+		: ({
+				resources: { ordered: [], byId: {} },
+				groups: { ordered: [], byId: {} },
+			} as SessionResourceCatalogV2);
 	const snapshot: SessionSnapshot = {
 		game: {
 			turn,
@@ -285,7 +287,7 @@ export function createSessionSnapshot({
 			players: players.map((player) => ({ ...player })),
 			activePlayerId,
 			opponentId,
-			...(resourceCatalog ? { resourceCatalogV2: resourceCatalog } : {}),
+			resourceCatalogV2: resourceCatalog,
 		},
 		phases: phases.map((phaseDefinition) => ({
 			...phaseDefinition,
