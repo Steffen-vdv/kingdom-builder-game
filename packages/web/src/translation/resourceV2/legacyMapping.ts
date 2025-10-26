@@ -1,4 +1,7 @@
-import { Resource, getResourceV2Id } from '@kingdom-builder/contents/resources';
+import {
+	Resource,
+	getResourceV2Id,
+} from '@kingdom-builder/contents/resourceKeys';
 import { PopulationRole } from '@kingdom-builder/contents/populationRoles';
 import { Stat, getStatResourceV2Id } from '@kingdom-builder/contents/stats';
 

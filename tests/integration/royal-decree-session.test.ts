@@ -8,10 +8,12 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
-	Resource,
-	type ResourceKey,
 } from '@kingdom-builder/contents';
-import { getResourceV2Id } from '@kingdom-builder/contents/resources';
+import {
+	Resource,
+	getResourceV2Id,
+	type ResourceKey,
+} from '@kingdom-builder/contents/resourceKeys';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
