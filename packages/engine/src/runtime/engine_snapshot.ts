@@ -211,8 +211,8 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 			? { resourceGroupsV2: resourceGroupMetadataV2 }
 			: {}),
 	};
-	const resourceCatalogV2: SessionResourceCatalogV2 | undefined =
-		runtimeResourceCatalog as unknown as SessionResourceCatalogV2 | undefined;
+	const resourceCatalogV2 =
+		runtimeResourceCatalog as unknown as SessionResourceCatalogV2;
 	return {
 		game: {
 			turn: context.game.turn,
@@ -237,7 +237,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 						},
 					}
 				: {}),
-			...(resourceCatalogV2 ? { resourceCatalogV2 } : {}),
+			resourceCatalogV2,
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,

@@ -49,13 +49,13 @@ describe('dev mode start configuration', () => {
 		expect(player.population[PopulationRole.Legion]).toBe(1);
 		expect(player.population[PopulationRole.Fortifier]).toBe(1);
 		expect(opponent.resources[Resource.castleHP]).toBe(1);
-		expect(player.valuesV2?.[goldId]).toBe(100);
-		expect(player.valuesV2?.[happinessId]).toBe(10);
-		expect(player.valuesV2?.[apId]).toBeGreaterThanOrEqual(1);
-		expect(player.resourceBoundsV2?.[goldId]?.lowerBound).toBe(0);
-		expect(opponent.valuesV2?.[castleId]).toBe(1);
+		expect(player.valuesV2[goldId]).toBe(100);
+		expect(player.valuesV2[happinessId]).toBe(10);
+		expect(player.valuesV2[apId]).toBeGreaterThanOrEqual(1);
+		expect(player.resourceBoundsV2[goldId]?.lowerBound).toBe(0);
+		expect(opponent.valuesV2[castleId]).toBe(1);
 		expect(
-			snapshot.game.resourceCatalogV2?.resources.byId[goldId],
+			snapshot.game.resourceCatalogV2.resources.byId[goldId],
 		).toBeDefined();
 	});
 });

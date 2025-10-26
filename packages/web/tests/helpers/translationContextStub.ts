@@ -49,7 +49,10 @@ const EMPTY_PASSIVES: TranslationPassives = {
 	},
 };
 
-const EMPTY_RESOURCE_CATALOG: TranslationResourceCatalogV2 = undefined;
+const EMPTY_RESOURCE_CATALOG: TranslationResourceCatalogV2 = Object.freeze({
+	resources: { byId: {}, ordered: [] },
+	groups: { byId: {}, ordered: [] },
+});
 
 const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceV2Metadata[] =
 	Object.freeze([]);

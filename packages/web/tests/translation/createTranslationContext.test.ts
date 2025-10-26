@@ -288,8 +288,8 @@ describe('createTranslationContext', () => {
 			},
 			recentResourceGains: context.recentResourceGains,
 			resourcesV2: {
-				resource: context.resourcesV2?.resources.byId[resourceV2Id],
-				group: context.resourcesV2?.groups.byId[resourceGroupV2Id],
+				resource: context.resourcesV2.resources.byId[resourceV2Id],
+				group: context.resourcesV2.groups.byId[resourceGroupV2Id],
 			},
 			resourceMetadataV2: {
 				resource: context.resourceMetadataV2.get(resourceV2Id),
