@@ -4,6 +4,7 @@ import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '../../src/services/index.ts';
 import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const resourceKeys = {
 	ap: 'synthetic:resource:ap',
@@ -52,7 +53,10 @@ export function createPhaseTestEnvironment() {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: resourceKeys.gold, amount: FARM_INCOME },
+				params: resourceAmountParams({
+					key: resourceKeys.gold,
+					amount: FARM_INCOME,
+				}),
 			},
 		],
 	});
@@ -63,14 +67,20 @@ export function createPhaseTestEnvironment() {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: resourceKeys.ap, amount: AP_GAIN_PER_COUNCIL },
+				params: resourceAmountParams({
+					key: resourceKeys.ap,
+					amount: AP_GAIN_PER_COUNCIL,
+				}),
 			},
 		],
 		onPayUpkeepStep: [
 			{
 				type: 'resource',
 				method: 'remove',
-				params: { key: resourceKeys.gold, amount: COUNCIL_UPKEEP },
+				params: resourceAmountParams({
+					key: resourceKeys.gold,
+					amount: COUNCIL_UPKEEP,
+				}),
 			},
 		],
 	});
@@ -89,7 +99,10 @@ export function createPhaseTestEnvironment() {
 			{
 				type: 'resource',
 				method: 'remove',
-				params: { key: resourceKeys.gold, amount: LEGION_UPKEEP },
+				params: resourceAmountParams({
+					key: resourceKeys.gold,
+					amount: LEGION_UPKEEP,
+				}),
 			},
 		],
 	});
@@ -108,7 +121,10 @@ export function createPhaseTestEnvironment() {
 			{
 				type: 'resource',
 				method: 'remove',
-				params: { key: resourceKeys.gold, amount: FORTIFIER_UPKEEP },
+				params: resourceAmountParams({
+					key: resourceKeys.gold,
+					amount: FORTIFIER_UPKEEP,
+				}),
 			},
 		],
 	});

@@ -8,6 +8,7 @@ import {
 } from '../../src';
 import { createTestEngine } from '../helpers';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
+import { type ResourceAmountParamsResult } from '../helpers/resourceV2Params.ts';
 
 interface EffectGroupOption {
 	id: string;
@@ -90,9 +91,16 @@ describe('royal decree action effect group', () => {
 		engineContext.activePlayer.gold = costs[CResource.gold] ?? 0;
 
 		const beforeLands = engineContext.activePlayer.lands.length;
+		const happinessResourceId = engineContext.activePlayer.getResourceV2Id(
+			CResource.happiness,
+		);
+		const goldResourceId = engineContext.activePlayer.getResourceV2Id(
+			CResource.gold,
+		);
 		const beforeHappiness =
-			engineContext.activePlayer.resources[CResource.happiness] ?? 0;
-		const beforeGold = engineContext.activePlayer.gold;
+			engineContext.activePlayer.resourceValues[happinessResourceId] ?? 0;
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[goldResourceId] ?? 0;
 		const tilledBefore = engineContext.activePlayer.lands.filter(
 			(land) => land.tilled,
 		).length;
@@ -138,7 +146,9 @@ describe('royal decree action effect group', () => {
 					(candidate.params as { key?: string }).key === CResource.happiness,
 			);
 			if (effect) {
-				happinessGain += (effect.params as { amount?: number })?.amount ?? 0;
+				happinessGain +=
+					(effect.params as ResourceAmountParamsResult | undefined)?.amount ??
+					0;
 			}
 		}
 		const happinessPenalty = engineContext.actions
@@ -147,20 +157,20 @@ describe('royal decree action effect group', () => {
 				(effect) => effect.type === 'resource' && effect.method === 'remove',
 			)
 			.reduce((total, effect) => {
-				const params = effect.params as
-					| { key?: string; amount?: number }
-					| undefined;
+				const params = effect.params as ResourceAmountParamsResult | undefined;
 				return params?.key === CResource.happiness
 					? total + (params.amount ?? 0)
 					: total;
 			}, 0);
-		expect(engineContext.activePlayer.resources[CResource.happiness]).toBe(
+		const afterHappiness =
+			engineContext.activePlayer.resourceValues[happinessResourceId] ?? 0;
+		expect(afterHappiness).toBe(
 			beforeHappiness + happinessGain - happinessPenalty,
 		);
 
-		expect(engineContext.activePlayer.gold).toBe(
-			beforeGold - (costs[CResource.gold] ?? 0),
-		);
+		const afterGold =
+			engineContext.activePlayer.resourceValues[goldResourceId] ?? 0;
+		expect(afterGold).toBe(beforeGold - (costs[CResource.gold] ?? 0));
 
 		const resolved = resolveActionEffects(
 			engineContext.actions.get(actionId),

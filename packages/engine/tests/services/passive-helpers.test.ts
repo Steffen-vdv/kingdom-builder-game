@@ -15,6 +15,7 @@ import type {
 	PhaseSkipConfig,
 } from '../../src/services/passive_types';
 import type { EffectDef } from '../../src/effects';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('passive helpers', () => {
 	it('deeply clones passive records and metadata while pruning undefined', () => {
@@ -29,10 +30,14 @@ describe('passive helpers', () => {
 			},
 			removal: { text: 'remove-token' },
 		};
+		const nestedParams = resourceAmountParams({
+			key: Resource.gold,
+			amount: 3,
+		});
 		const nestedEffect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: Resource.gold, amount: 3 },
+			params: nestedParams,
 		};
 		const record: PassiveRecord = {
 			id: building.id,
@@ -46,15 +51,18 @@ describe('passive helpers', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: Resource.gold, amount: 1 },
+					params: resourceAmountParams({
+						key: Resource.gold,
+						amount: 1,
+					}),
 					effects: [
 						{
 							type: 'resource',
 							method: 'add',
-							params: {
+							params: resourceAmountParams({
 								key: Resource.gold,
 								amount: 2,
-							},
+							}),
 						},
 					],
 				},
@@ -116,7 +124,7 @@ describe('passive helpers', () => {
 		});
 
 		expect(record.frames).toHaveLength(1);
-		expect(record.effects?.[0]?.params).toEqual({
+		expect(record.effects?.[0]?.params).toMatchObject({
 			key: Resource.gold,
 			amount: 3,
 		});
@@ -128,15 +136,22 @@ describe('passive helpers', () => {
 	});
 
 	it('recursively flips add/remove methods in reverseEffect', () => {
+		const baseAddParams = resourceAmountParams({
+			key: Resource.gold,
+			amount: 2,
+		});
 		const base: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: Resource.gold, amount: 2 },
+			params: baseAddParams,
 			effects: [
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: Resource.gold, amount: 1 },
+					params: resourceAmountParams({
+						key: Resource.gold,
+						amount: 1,
+					}),
 				},
 				{
 					type: 'meta',
@@ -145,10 +160,10 @@ describe('passive helpers', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: {
+							params: resourceAmountParams({
 								key: Resource.gold,
 								amount: 4,
-							},
+							}),
 						},
 					],
 				},

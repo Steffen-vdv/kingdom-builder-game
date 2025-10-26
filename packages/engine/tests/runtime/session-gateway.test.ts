@@ -7,6 +7,7 @@ import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
 } from '@kingdom-builder/testing';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
@@ -104,7 +105,10 @@ function createGateway(options?: GatewayOptions) {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: RESOURCE_GOLD, amount: 2 },
+				params: resourceAmountParams({
+					key: RESOURCE_GOLD,
+					amount: 2,
+				}),
 			},
 		],
 	});
