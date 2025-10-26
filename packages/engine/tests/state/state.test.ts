@@ -7,6 +7,16 @@ import {
 	setStatKeys,
 } from '../../src/state/index.ts';
 import { Resource, Stat } from '@kingdom-builder/contents';
+import { createRuntimeResourceCatalog } from '../../src/resource-v2/index.ts';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
+
+const TEST_RUNTIME_CATALOG = createRuntimeResourceCatalog({
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
+});
 
 setResourceKeys(Object.values(Resource));
 setStatKeys(Object.values(Stat));
@@ -44,7 +54,7 @@ describe('State classes', () => {
 	});
 
 	it('provides active and opponent players', () => {
-		const game = new GameState('Alice', 'Bob');
+		const game = new GameState(TEST_RUNTIME_CATALOG, 'Alice', 'Bob');
 		expect(game.active.id).toBe('A');
 		expect(game.opponent.id).toBe('B');
 		game.currentPlayerIndex = 1;

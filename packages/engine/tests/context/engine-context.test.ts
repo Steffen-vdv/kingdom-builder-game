@@ -4,6 +4,9 @@ import { createTestEngine } from '../helpers.ts';
 describe('EngineContext', () => {
 	it('manages effect logs and cloning behaviour', () => {
 		const engineContext = createTestEngine();
+		expect(
+			engineContext.resourceCatalogV2.resources.ordered.length,
+		).toBeGreaterThan(0);
 		const key = 'effect';
 
 		expect(engineContext.pullEffectLog(key)).toBeUndefined();

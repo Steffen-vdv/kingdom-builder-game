@@ -100,26 +100,19 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		const actionPointResourceId = engineContext.activePlayer.getResourceV2Id(
 			actionPointResourceKey,
 		);
-		const resolveCatalog = () =>
-			engineContext.resourceCatalogV2 ?? engineContext.game.resourceCatalogV2;
 		const readActionPoints = () =>
 			getResourceValue(engineContext.activePlayer, actionPointResourceId);
 		const writeActionPoints = (value: number) => {
-			const catalog = resolveCatalog();
-			if (catalog) {
-				setResourceValue(
-					engineContext,
-					engineContext.activePlayer,
-					catalog,
-					actionPointResourceId,
-					value,
-					{
-						suppressRecentEntry: true,
-					},
-				);
-				return;
-			}
-			engineContext.activePlayer.resources[actionPointResourceKey] = value;
+			setResourceValue(
+				engineContext,
+				engineContext.activePlayer,
+				engineContext.resourceCatalogV2,
+				actionPointResourceId,
+				value,
+				{
+					suppressRecentEntry: true,
+				},
+			);
 		};
 
 		if (!actionPointResourceId) {

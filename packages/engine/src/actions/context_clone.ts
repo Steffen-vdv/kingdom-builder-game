@@ -153,7 +153,8 @@ function cloneGameState(game: GameState): GameState {
 	const [firstName = 'Player', secondName = 'Opponent'] = game.players.map(
 		(player) => player.name,
 	);
-	const cloned = new GameState(firstName, secondName);
+	const catalog = game.resourceCatalogV2;
+	const cloned = new GameState(catalog, firstName, secondName);
 	cloned.turn = game.turn;
 	cloned.currentPlayerIndex = game.currentPlayerIndex;
 	cloned.currentPhase = game.currentPhase;
@@ -162,11 +163,6 @@ function cloneGameState(game: GameState): GameState {
 	cloned.stepIndex = game.stepIndex;
 	cloned.devMode = game.devMode;
 	cloned.players = game.players.map((player) => clonePlayerState(player));
-	const catalog = game.resourceCatalogV2;
-	if (!catalog) {
-		throw new Error('cloneGameState requires a ResourceV2 catalog.');
-	}
-	cloned.resourceCatalogV2 = catalog;
 	return cloned;
 }
 
@@ -175,6 +171,7 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 	const clonedServices = source.services.clone(source.developments);
 	const clonedPassives = source.passives.clone();
 	const compensations = structuredClone(source.compensations);
+	const runtimeCatalog = source.resourceCatalogV2;
 	const cloned = new EngineContext(
 		clonedGame,
 		clonedServices,
@@ -187,16 +184,11 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		source.actionCostResource,
 		source.actionCostAmount,
 		compensations,
+		runtimeCatalog,
 	);
 	if (source.aiSystem) {
 		cloned.aiSystem = source.aiSystem;
 	}
-	const runtimeCatalog = source.resourceCatalogV2;
-	if (!runtimeCatalog) {
-		throw new Error('cloneEngineContext requires a ResourceV2 catalog.');
-	}
-	cloned.resourceCatalogV2 = runtimeCatalog;
-	cloned.game.resourceCatalogV2 = runtimeCatalog;
 	cloned.statAddPctBases = { ...source.statAddPctBases };
 	cloned.statAddPctAccums = { ...source.statAddPctAccums };
 	cloned.recentResourceGains = source.recentResourceGains.map((gain) => ({

@@ -44,10 +44,7 @@ import {
 	Registry,
 	type ResourceV2CatalogSnapshot,
 } from '@kingdom-builder/protocol';
-import {
-	createRuntimeResourceCatalog,
-	type RuntimeResourceCatalog,
-} from '../resource-v2';
+import { createRuntimeResourceCatalog } from '../resource-v2';
 import {
 	applyPlayerStartConfiguration,
 	diffPlayerStartConfiguration,
@@ -204,7 +201,6 @@ export function createEngine({
 	let startConfig = start;
 	let runtimeResourceContent: RuntimeResourceContent | undefined =
 		resourceCatalogV2;
-	let runtimeResourceCatalog: RuntimeResourceCatalog | undefined;
 	if (config) {
 		const validatedConfig = validateGameConfig(config);
 		({ actions, buildings, developments, populations } = overrideRegistries(
@@ -230,7 +226,9 @@ export function createEngine({
 			'createEngine requires resourceCatalogV2 content when no GameConfig override is provided.',
 		);
 	}
-	runtimeResourceCatalog = createRuntimeResourceCatalog(runtimeResourceContent);
+	const runtimeResourceCatalog = createRuntimeResourceCatalog(
+		runtimeResourceContent,
+	);
 	validatePhases(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
 	setResourceKeys(Object.keys(startConfig.player.resources || {}));
@@ -239,8 +237,7 @@ export function createEngine({
 	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
-	const gameState = new GameState('Player', 'Opponent');
-	gameState.resourceCatalogV2 = runtimeResourceCatalog;
+	const gameState = new GameState(runtimeResourceCatalog, 'Player', 'Opponent');
 	const actionCostConfig = determineCommonActionCostResource(
 		actions,
 		runtimeResourceCatalog,
@@ -269,8 +266,8 @@ export function createEngine({
 		actionCostConfig.resource,
 		actionCostConfig.amount,
 		compensationMap,
+		runtimeResourceCatalog,
 	);
-	engineContext.resourceCatalogV2 = runtimeResourceCatalog;
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
 	const aiSystem = createAISystem({ performAction, advance });

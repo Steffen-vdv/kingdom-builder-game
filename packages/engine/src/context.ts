@@ -13,7 +13,6 @@ import type {
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
 import type { RuntimeResourceCatalog } from './resource-v2';
-
 export class EngineContext {
 	constructor(
 		public game: GameState,
@@ -30,8 +29,8 @@ export class EngineContext {
 			A: {},
 			B: {},
 		},
+		public resourceCatalogV2: RuntimeResourceCatalog,
 	) {}
-	resourceCatalogV2?: RuntimeResourceCatalog;
 	aiSystem?: AISystem;
 	recentResourceGains: {
 		key: string;
