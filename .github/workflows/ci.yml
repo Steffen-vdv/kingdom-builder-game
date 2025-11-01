@@ -56,7 +56,7 @@ jobs:
           done
 
       - run: npm run test:coverage:engine
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: coverage-engine
           path: coverage/
@@ -79,7 +79,7 @@ jobs:
           done
 
       - run: npm run test:coverage:protocol
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: coverage-protocol
           path: coverage/
@@ -102,7 +102,7 @@ jobs:
           done
 
       - run: npm run test:integration
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: coverage-integration
           path: coverage/
@@ -144,7 +144,7 @@ jobs:
           done
 
       - run: npm run test:coverage:server
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: coverage-server
           path: packages/server/coverage/
