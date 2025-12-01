@@ -4,6 +4,7 @@ import type {
 	ResourceReconciliationMode,
 } from '../../src/resource-v2/reconciliation.ts';
 import { computeRequestedResourceDelta } from '../../src/resource-v2/reconciliation.ts';
+import { getResourceV2Id, getStatResourceV2Id, type ResourceKey, type StatKey } from '@kingdom-builder/contents';
 
 interface BaseResourceParamsInput {
 	readonly key: string;
@@ -58,7 +59,16 @@ export interface StatAmountParamsResult {
 }
 
 function resolveResourceId(input: BaseResourceParamsInput): string {
-	return input.resourceId ?? input.key;
+	if (input.resourceId) {
+		return input.resourceId;
+	}
+	// Convert legacy ResourceKey to ResourceV2 ID
+	try {
+		return getResourceV2Id(input.key as ResourceKey);
+	} catch {
+		// If conversion fails, assume it's already a ResourceV2 ID
+		return input.key;
+	}
 }
 
 export function resourceAmountParams(
@@ -144,7 +154,16 @@ export function resourcePercentParams(
 export function statAmountParams(
 	input: StatAmountParamsInput,
 ): StatAmountParamsResult {
-	const statId = input.statId ?? input.key;
+	let statId = input.statId;
+	if (!statId) {
+		// Convert legacy StatKey to stat ResourceV2 ID
+		try {
+			statId = getStatResourceV2Id(input.key as StatKey);
+		} catch {
+			// If conversion fails, assume it's already a stat ResourceV2 ID
+			statId = input.key;
+		}
+	}
 	const amount = input.amount;
 	return {
 		key: input.key,
