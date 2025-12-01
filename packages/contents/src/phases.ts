@@ -3,34 +3,11 @@ import type { PopulationRoleId } from './populationRoles';
 import { effect, phase, step, populationEvaluator, compareEvaluator, statEvaluator, type PhaseDef } from './config/builders';
 import { Types, StatMethods } from './config/builderShared';
 import { statAmountChange, statPercentFromStatChange } from './helpers/resourceV2Effects';
-import { ON_GAIN_AP_STEP, ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP, type TriggerKey } from './defs';
+import { ON_GAIN_AP_STEP, ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP } from './defs';
+import { PhaseId, PhaseStepId, PhaseTrigger } from './phaseTypes';
 
-export const PhaseId = {
-	Growth: 'growth',
-	Upkeep: 'upkeep',
-	Main: 'main',
-} as const;
-
-export type PhaseId = (typeof PhaseId)[keyof typeof PhaseId];
-
-export const PhaseStepId = {
-	ResolveDynamicTriggers: 'resolve-dynamic-triggers',
-	GainIncome: 'gain-income',
-	GainActionPoints: 'gain-ap',
-	RaiseStrength: 'raise-strength',
-	PayUpkeep: 'pay-upkeep',
-	WarRecovery: 'war-recovery',
-	Main: 'main',
-} as const;
-
-export type PhaseStepId = (typeof PhaseStepId)[keyof typeof PhaseStepId];
-
-export const PhaseTrigger = {
-	OnGrowthPhase: 'onGrowthPhase',
-	OnUpkeepPhase: 'onUpkeepPhase',
-} as const satisfies Record<string, TriggerKey>;
-
-export type PhaseTrigger = (typeof PhaseTrigger)[keyof typeof PhaseTrigger];
+export { PhaseId, PhaseStepId, PhaseTrigger };
+export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTrigger as PhaseTriggerKey } from './phaseTypes';
 
 const LEGION_ROLE: PopulationRoleId = 'legion';
 const FORTIFIER_ROLE: PopulationRoleId = 'fortifier';

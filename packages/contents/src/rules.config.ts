@@ -1,5 +1,5 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
-import { PhaseId, PhaseStepId } from './phases';
+import { PhaseId, PhaseStepId } from './phaseTypes';
 import { actionDiscountModifier, growthBonusEffect, happinessModifierId, happinessPassiveId, happinessTierId, incomeModifier } from './happinessHelpers';
 
 export const HAPPINESS_TIER_ICONS = {

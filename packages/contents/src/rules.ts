@@ -1,5 +1,5 @@
 import type { HappinessTierDefinition, RuleSet } from '@kingdom-builder/protocol';
-import { PhaseId } from './phases';
+import { PhaseId } from './phaseTypes';
 import { createTierPassiveEffect } from './happinessHelpers';
 import { happinessTier, passiveParams, winCondition } from './config/builders';
 import { formatPassiveRemoval } from './text';

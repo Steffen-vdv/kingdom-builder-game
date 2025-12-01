@@ -66,7 +66,7 @@ describe('SessionTransport createSession', () => {
 	it('skips blank player name entries when applying preferences', () => {
 		const { manager } = createSyntheticSessionManager();
 		const originalCreate = manager.createSession.bind(manager);
-		let updateSpy: ReturnType<typeof vi.spyOn> | undefined;
+		let updateSpy: ReturnType<typeof vi.spyOn>;
 		vi.spyOn(manager, 'createSession').mockImplementation(
 			(sessionId, options) => {
 				const session = originalCreate(sessionId, options);

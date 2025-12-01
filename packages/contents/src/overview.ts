@@ -1,5 +1,5 @@
 import { ActionId, BuildActions, DevelopActions, HireActions } from './actions';
-import { PhaseId } from './phases';
+import { PhaseId } from './phaseTypes';
 
 export type OverviewTokenCategoryName = 'actions' | 'phases' | 'resources' | 'stats' | 'population' | 'static';
 
