@@ -148,7 +148,12 @@ function applyResourceEffect(
 	if (!params) {
 		throw new Error('ResourceV2 effect is missing required params.');
 	}
-	const { resourceId, change: rawChange, reconciliation, suppressHooks } = params;
+	const {
+		resourceId,
+		change: rawChange,
+		reconciliation,
+		suppressHooks,
+	} = params;
 
 	if (typeof resourceId !== 'string' || !resourceId.length) {
 		throw new Error(
