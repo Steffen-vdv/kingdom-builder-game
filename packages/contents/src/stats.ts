@@ -61,14 +61,30 @@ function toLegacyStatInfo(key: StatKey, definition: ResourceV2Definition): StatI
 	return info;
 }
 
-const statEntries: [StatKey, StatInfo][] = [];
+// Lazy initialization to avoid circular dependency during module load
+let cachedStats: Record<StatKey, StatInfo> | null = null;
 
-for (const definition of RESOURCE_V2_REGISTRY.ordered) {
-	const key = STAT_KEY_BY_V2_ID[definition.id as StatV2Id];
-	if (!key) {
-		continue;
+function getStats(): Record<StatKey, StatInfo> {
+	if (cachedStats) {
+		return cachedStats;
 	}
-	statEntries.push([key, toLegacyStatInfo(key, definition)]);
+
+	const statEntries: [StatKey, StatInfo][] = [];
+
+	for (const definition of RESOURCE_V2_REGISTRY.ordered) {
+		const key = STAT_KEY_BY_V2_ID[definition.id as StatV2Id];
+		if (!key) {
+			continue;
+		}
+		statEntries.push([key, toLegacyStatInfo(key, definition)]);
+	}
+
+	cachedStats = Object.fromEntries(statEntries) as Record<StatKey, StatInfo>;
+	return cachedStats;
 }
 
-export const STATS = Object.fromEntries(statEntries) as Record<StatKey, StatInfo>;
+export const STATS = new Proxy({} as Record<StatKey, StatInfo>, {
+	get(target, prop) {
+		return getStats()[prop as StatKey];
+	},
+});

@@ -3,8 +3,8 @@ import { PhaseId } from './phaseTypes';
 import { createTierPassiveEffect } from './happinessHelpers';
 import { happinessTier, passiveParams, winCondition } from './config/builders';
 import { formatPassiveRemoval } from './text';
-import { HAPPINESS_TIER_ICONS, TIER_CONFIGS, type TierConfig } from './rules.config';
-import { HAPPINESS_RESOURCE_DEFINITION } from './resourceV2/definitions';
+import { HAPPINESS_TIER_ICONS, getTierConfigs, type TierConfig } from './rules.config';
+import { getHappinessResourceDefinition } from './resourceV2/definitions';
 import type { ResourceV2TierDefinition, ResourceV2TierTrackMetadata } from './resourceV2';
 
 type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
@@ -19,6 +19,7 @@ function formatTierName(slug: HappinessTierSlug) {
 
 const happinessSummaryToken = (slug: string) => `happiness.tier.summary.${slug}`;
 
+const HAPPINESS_RESOURCE_DEFINITION = getHappinessResourceDefinition();
 const happinessTierTrack = HAPPINESS_RESOURCE_DEFINITION.tierTrack;
 
 if (!happinessTierTrack) {
@@ -80,7 +81,7 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 	return builder.build();
 }
 
-const tierDefinitions: HappinessTierDefinition[] = TIER_CONFIGS.map((config) => buildTierDefinition(config));
+const tierDefinitions: HappinessTierDefinition[] = getTierConfigs().map((config) => buildTierDefinition(config));
 
 const WIN_CONDITIONS = [
 	winCondition('castle-destroyed')
