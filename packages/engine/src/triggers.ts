@@ -1,4 +1,5 @@
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
+import { Resource, getResourceV2Id, type ResourceKey } from '@kingdom-builder/contents';
 import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
@@ -17,12 +18,16 @@ function pushUpkeepEffect(
 	key: string,
 	amount: number,
 ) {
+	const resourceId = getResourceV2Id(key as ResourceKey);
 	bundles.push({
 		effects: [
 			{
 				type: 'resource',
 				method: 'remove',
-				params: { key, amount },
+				params: {
+					resourceId,
+					change: { type: 'amount', amount },
+				},
 				meta: { source },
 			},
 		],
