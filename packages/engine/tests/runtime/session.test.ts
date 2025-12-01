@@ -560,7 +560,7 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 	const content = createContentFactory();
 	const taxAction = content.action({
 		id: TAX_ACTION_ID,
-		baseCosts: { [CResource.ap]: 1 },
+		baseCosts: {},
 		effects: [
 			{
 				type: 'resource',

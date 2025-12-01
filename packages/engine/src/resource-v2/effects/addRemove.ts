@@ -148,12 +148,20 @@ function applyResourceEffect(
 	if (!params) {
 		throw new Error('ResourceV2 effect is missing required params.');
 	}
-	const {
-		resourceId,
-		change: rawChange,
-		reconciliation,
-		suppressHooks,
-	} = params;
+	let { resourceId, change: rawChange, reconciliation, suppressHooks } = params;
+
+	// Backwards compatibility: if resourceId is missing but key is present, try to resolve it
+	if ((!resourceId || !resourceId.length) && (params as any).key) {
+		const legacyKey = (params as any).key;
+		// Check if the rules have a tieredResourceId mapping for this legacy key
+		if (
+			context.rules?.tieredResourceKey === legacyKey &&
+			context.rules?.tieredResourceId
+		) {
+			resourceId = context.rules.tieredResourceId;
+		}
+	}
+
 	if (typeof resourceId !== 'string' || !resourceId.length) {
 		throw new Error('ResourceV2 effect expected a non-empty resourceId.');
 	}

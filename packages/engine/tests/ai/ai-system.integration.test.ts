@@ -23,7 +23,7 @@ describe('AISystem with tax collector controller', () => {
 		const content = createContentFactory();
 		content.action({
 			id: TAX_ACTION_ID,
-			baseCosts: { [CResource.ap]: 1 },
+			baseCosts: {},
 			effects: [
 				{
 					type: 'resource',
