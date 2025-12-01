@@ -63,10 +63,7 @@ function requireDevelopment(id: DevelopmentId): DevelopmentWithIdentity {
 	return { ...definition, name, icon } as DevelopmentWithIdentity;
 }
 
-const COMMON_DEVELOPMENT_COSTS: readonly ResourceAmount[] = [
-	{ resource: Resource.ap, amount: 1 },
-	{ resource: Resource.gold, amount: 3 },
-];
+const COMMON_DEVELOPMENT_COSTS: readonly ResourceAmount[] = [{ resource: Resource.gold, amount: 3 }];
 
 function buildDevelopParams(definition: DevelopmentWithIdentity, id: DevelopmentId) {
 	const baseParams = developmentParams().id(id).landId('$landId').build();
@@ -93,7 +90,6 @@ export function registerDevelopActions(registry: Registry<ActionDef>) {
 			.id(DevelopActionId.develop_house)
 			.name(house.name)
 			.icon(house.icon)
-			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(buildDevelopParams(house, DevelopmentId.House)).build())
@@ -110,7 +106,6 @@ export function registerDevelopActions(registry: Registry<ActionDef>) {
 			.id(DevelopActionId.develop_farm)
 			.name(farm.name)
 			.icon(farm.icon)
-			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(buildDevelopParams(farm, DevelopmentId.Farm)).build())
@@ -127,7 +122,6 @@ export function registerDevelopActions(registry: Registry<ActionDef>) {
 			.id(DevelopActionId.develop_outpost)
 			.name(outpost.name)
 			.icon(outpost.icon)
-			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(buildDevelopParams(outpost, DevelopmentId.Outpost)).build())
@@ -144,7 +138,6 @@ export function registerDevelopActions(registry: Registry<ActionDef>) {
 			.id(DevelopActionId.develop_watchtower)
 			.name(watchtower.name)
 			.icon(watchtower.icon)
-			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
 			.requirement(developmentSlotRequirement)
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).params(buildDevelopParams(watchtower, DevelopmentId.Watchtower)).build())

@@ -39,7 +39,9 @@ function applyValue(
 	value: number,
 	options: ApplyValueOptions = {},
 ): number {
-	assertInteger(value, `"${resourceId}" value`);
+	if (!lookup.definition.allowDecimal) {
+		assertInteger(value, `"${resourceId}" value`);
+	}
 	const {
 		suppressTouched = false,
 		suppressRecentEntry = false,

@@ -49,6 +49,7 @@ export interface ResourceV2TierTrack {
 
 export interface ResourceV2Definition extends ResourceV2Metadata, ResourceV2Bounds {
 	displayAsPercent?: boolean;
+	allowDecimal?: boolean;
 	trackValueBreakdown?: boolean;
 	trackBoundBreakdown?: boolean;
 	groupId?: string;

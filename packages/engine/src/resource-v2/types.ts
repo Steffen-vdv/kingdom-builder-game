@@ -54,6 +54,7 @@ export interface RuntimeResourceDefinition
 	extends RuntimeResourceMetadata,
 		RuntimeResourceBounds {
 	readonly displayAsPercent: boolean;
+	readonly allowDecimal: boolean;
 	readonly trackValueBreakdown: boolean;
 	readonly trackBoundBreakdown: boolean;
 	readonly groupId: string | null;
@@ -67,6 +68,7 @@ export interface RuntimeResourceGroupParent
 	extends RuntimeResourceMetadata,
 		RuntimeResourceBounds {
 	readonly displayAsPercent: boolean;
+	readonly allowDecimal: boolean;
 	readonly trackValueBreakdown: boolean;
 	readonly trackBoundBreakdown: boolean;
 	readonly tierTrack?: RuntimeResourceTierTrack;
