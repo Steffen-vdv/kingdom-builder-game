@@ -13,17 +13,20 @@ import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 function sanitizePlayerState(context: ReturnType<typeof createTestEngine>) {
 	const player = context.game.players[0]!;
+	// Reset ResourceV2 values (the actual storage)
 	for (const key of Object.keys(player.resources)) {
-		player.resources[key] = 0;
+		const resourceId = player.getResourceV2Id(key);
+		player.resourceValues[resourceId] = 0;
 	}
 	for (const key of Object.keys(player.stats)) {
-		player.stats[key] = 0;
-		player.statsHistory[key] = false;
 		const statId = player.getStatResourceV2Id(key as StatKey);
+		player.resourceValues[statId] = 0;
+		player.statsHistory[key] = false;
 		player.statSources[statId] = {};
 	}
 	for (const key of Object.keys(player.population)) {
-		player.population[key] = 0;
+		const populationResourceId = player.getPopulationResourceV2Id(key);
+		player.resourceValues[populationResourceId] = 0;
 	}
 	player.buildings.clear();
 	player.actions.clear();
@@ -107,9 +110,9 @@ describe('simulateUpcomingPhases', () => {
 		const player = sanitizePlayerState(context);
 		const land = player.lands[0]!;
 		const upkeepCost = 3;
-		player.resources[Resource.gold] = 10;
+		player.resourceValues[player.getResourceV2Id(Resource.gold)] = 10;
 		land.upkeep = { [Resource.gold]: upkeepCost };
-		player.population[PopulationRole.Council] = 1;
+		player.resourceValues[player.getPopulationResourceV2Id(PopulationRole.Council)] = 1;
 		const result = simulateUpcomingPhases(context, player.id, {
 			phaseIds: {
 				growth: PhaseId.Growth,
@@ -146,7 +149,7 @@ describe('simulateUpcomingPhases', () => {
 			},
 		];
 		land.upkeep = { [Resource.gold]: upkeepCost };
-		player.resources[Resource.gold] = 10;
+		player.resourceValues[player.getResourceV2Id(Resource.gold)] = 10;
 		const result = simulateUpcomingPhases(context, player.id);
 		const relevantPhases = result.steps
 			.filter((step) => step.player.id === player.id)
