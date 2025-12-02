@@ -1,6 +1,7 @@
 import { Resource } from '../state';
 import type { ResourceKey } from '../state';
 import type { RuntimeResourceCatalog } from '../resource-v2';
+import { RESOURCE_KEY_BY_V2_ID } from '@kingdom-builder/contents/resourceKeys';
 import type {
 	Registry,
 	ActionConfig as ActionDef,
@@ -77,6 +78,13 @@ function resolveLegacyResourceKey(
 	resourceId: string,
 	label: string | null | undefined,
 ): ResourceKey | null {
+	// First, check if there's a direct mapping for known ResourceV2 IDs
+	const directMapping = RESOURCE_KEY_BY_V2_ID[resourceId as keyof typeof RESOURCE_KEY_BY_V2_ID];
+	if (directMapping) {
+		return directMapping;
+	}
+
+	// Fall back to heuristic matching for unknown/synthetic resources
 	const legacyKeys: ResourceKey[] = Object.values(Resource);
 	const normalizedByKey = new Map<ResourceKey, string>();
 	for (const key of legacyKeys) {

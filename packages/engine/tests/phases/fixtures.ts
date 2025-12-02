@@ -5,6 +5,10 @@ import type { RuleSet } from '../../src/services/index.ts';
 import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 
 const resourceKeys = {
 	ap: 'synthetic:resource:ap',
@@ -235,6 +239,10 @@ export function createPhaseTestEnvironment() {
 		phases,
 		start,
 		rules,
+		resourceCatalogV2: {
+			resources: RESOURCE_V2_REGISTRY,
+			groups: RESOURCE_GROUP_V2_REGISTRY,
+		},
 	});
 
 	return {
