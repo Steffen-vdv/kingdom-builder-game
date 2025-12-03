@@ -33,28 +33,19 @@ Follow this workflow before authoring new copy or extending translators:
 
 ### Implementation checklist
 
-Use these prompts while developing and when filling out the PR template:
+Use these prompts while developing:
 
-1. Link the translator(s) or formatter(s) you extended from the inventories in
+1. Check the translator and formatter inventories in
    [Section 2](#2-content-translator-inventory) and
-   [Section 3](#3-effect-formatter-inventory) so reviewers can audit reuse.
-2. Enumerate every canonical keyword, icon, or helper you touched from
-   [Section 4](#4-canonical-keywords-icons--helper-utilities) to prove you
-   pulled from the approved tables.
+   [Section 3](#3-effect-formatter-inventory) for existing handlers to reuse.
+2. Use canonical keywords, icons, and helpers from
+   [Section 4](#4-canonical-keywords-icons--helper-utilities).
 3. When a visual surface needs new icons, labels, or descriptions, update the
    relevant definitions in `@kingdom-builder/contents` and rerun
    `npm run generate:snapshots` instead of patching fallback metadata in
    `packages/web`.
 4. Confirm that you reviewed the Summary, Description, and Log voices for each
    affected surface and adjusted copy to match the definitions above.
-
-> **Quick reference — paste into your PR description**
->
-> - [ ] Linked the translator(s)/formatter(s) reused, referencing Sections 2–3.
-> - [ ] Listed every canonical keyword/icon/helper touched from Section 4.
-> - [ ] Updated `@kingdom-builder/contents` (not web fallbacks) for new icons,
->       labels, or descriptions and reran `npm run generate:snapshots`.
-> - [ ] Confirmed Summary/Description/Log voices were audited for affected UI.
 
 ## 1. Translation Pipeline Overview
 

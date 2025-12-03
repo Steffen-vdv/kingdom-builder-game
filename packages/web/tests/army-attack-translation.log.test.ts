@@ -25,16 +25,6 @@ vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
 });
 
-function withLegacyIndent(
-	entries: readonly (string | ActionLogLineDescriptor)[],
-): string[] {
-	return entries.map((entry) =>
-		typeof entry === 'string'
-			? entry
-			: `${'  '.repeat(entry.depth)}${entry.text}`,
-	);
-}
-
 beforeAll(() => {
 	setupStatOverrides();
 });
@@ -90,17 +80,41 @@ describe('army attack translation log', () => {
 			throw new Error('Missing attack definition');
 		}
 		const attackHeadline = formatActionTitle(attackDefinition, translation);
-		expect(withLegacyIndent(log)).toEqual([
-			attackHeadline,
-			`  Attack opponent with your ${powerLabel}`,
-			`    ${absorptionLabel} damage reduction applied`,
-			`    Apply damage to opponent ${fortLabel}`,
-			`    If opponent ${fortLabel} falls to 0, overflow remaining damage onto opponent ${castleLabel}`,
-			`  On opponent ${castleLabel} damage`,
-			`    ${plunder.icon} ${plunder.name}`,
-			`      Transfer ${PLUNDER_HAPPINESS_AMOUNT} of opponent's ${happiness.icon}${happiness.label} to you`,
-			`      Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}${gold.label} to you`,
-		]);
+
+		expect(log).toHaveLength(9);
+		expect(log[0]).toEqual(attackHeadline);
+		expect(log[1]).toMatchObject({
+			text: `Attack opponent with your ${powerLabel}`,
+			depth: 1,
+		});
+		expect(log[2]).toMatchObject({
+			text: `${absorptionLabel} damage reduction applied`,
+			depth: 2,
+		});
+		expect(log[3]).toMatchObject({
+			text: `Apply damage to opponent ${fortLabel}`,
+			depth: 2,
+		});
+		expect(log[4]).toMatchObject({
+			text: `If opponent ${fortLabel} falls to 0, overflow remaining damage onto opponent ${castleLabel}`,
+			depth: 2,
+		});
+		expect(log[5]).toMatchObject({
+			text: `On opponent ${castleLabel} damage`,
+			depth: 1,
+		});
+		expect(log[6]).toMatchObject({
+			text: `${plunder.icon} ${plunder.name}`,
+			depth: 2,
+		});
+		expect(log[7]).toMatchObject({
+			text: `Transfer ${PLUNDER_HAPPINESS_AMOUNT} of opponent's ${happiness.icon}${happiness.label} to you`,
+			depth: 3,
+		});
+		expect(log[8]).toMatchObject({
+			text: `Transfer ${PLUNDER_PERCENT}% of opponent's ${gold.icon}${gold.label} to you`,
+			depth: 3,
+		});
 	});
 
 	it('logs building attack action with destruction evaluation', () => {
@@ -149,14 +163,32 @@ describe('army attack translation log', () => {
 			buildingAttackDefinition,
 			translation,
 		);
-		expect(withLegacyIndent(log)).toEqual([
-			buildingAttackHeadline,
-			`  Attack opponent with your ${powerLabel}`,
-			`    ${absorptionLabel} damage reduction applied`,
-			`    Apply damage to opponent ${fortLabel}`,
-			`    If opponent ${fortLabel} falls to 0, use remaining damage to attempt to destroy opponent ${buildingDisplay}`,
-			`  On opponent ${buildingDisplay} destruction`,
-			`    ${gold.icon}+${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
-		]);
+
+		expect(log).toHaveLength(7);
+		expect(log[0]).toEqual(buildingAttackHeadline);
+		expect(log[1]).toMatchObject({
+			text: `Attack opponent with your ${powerLabel}`,
+			depth: 1,
+		});
+		expect(log[2]).toMatchObject({
+			text: `${absorptionLabel} damage reduction applied`,
+			depth: 2,
+		});
+		expect(log[3]).toMatchObject({
+			text: `Apply damage to opponent ${fortLabel}`,
+			depth: 2,
+		});
+		expect(log[4]).toMatchObject({
+			text: `If opponent ${fortLabel} falls to 0, use remaining damage to attempt to destroy opponent ${buildingDisplay}`,
+			depth: 2,
+		});
+		expect(log[5]).toMatchObject({
+			text: `On opponent ${buildingDisplay} destruction`,
+			depth: 1,
+		});
+		expect(log[6]).toMatchObject({
+			text: `${gold.icon}+${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
+			depth: 2,
+		});
 	});
 });

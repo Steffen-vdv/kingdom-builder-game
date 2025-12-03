@@ -3,15 +3,12 @@
 ## Quick Start Summary
 
 - Start with [`docs/agent-quick-start.md`](docs/agent-quick-start.md) for the
-  mandatory workflow, coding rules, and PR process.
-- For player-facing copy, complete Section 0 ("Before Writing Text") in
-  [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text) and
-  paste its quick-reference checklist into your PR body.
+  mandatory workflow and coding rules.
+- For player-facing copy, review
+  [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text).
 - Always load game data from content packages or registries and create synthetic
   fixtures through `createContentFactory()` in tests.
-- Run `npm run lint`, `npm run format`, and `npm run check` before submitting a
-  PR, and copy `.github/PULL_REQUEST_TEMPLATE.md` verbatim into the PR body
-  before calling `make_pr`.
+- Run `npm run lint`, `npm run format`, and `npm run check` before committing.
 
 ▶ **Extended guidance, architecture lore, and gameplay reference begin in
 Section&nbsp;1 below.**
@@ -105,19 +102,11 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Legacy files above 350 lines remain until refactored; new code should respect
   the limit, but `*.test.ts` files are exempt.
 
-### 2.3 Pull Request Submission Protocol
+### 2.3 Pre-Commit Checklist
 
-- Every time you call the `make_pr` tool, copy the full contents of
-  `.github/PULL_REQUEST_TEMPLATE.md` into the PR body and replace every
-  placeholder with the specific information for the current change set.
-- Do not trim sections from the template or leave HTML comments/placeholder
-  markers in place; fill out each required section completely.
-- Reviewers will immediately bounce any PR whose description omits a section
-  from the template or leaves placeholders unaddressed, so confirm compliance
-  before invoking `make_pr`.
-- Never commit, push, or call `make_pr` until `npm run format`, `npm run lint`,
-  `npm run check`, and `npm run verify` have finished without errors. Fix every
-  reported issue—including spacing drift back to tabs—before you stage files.
+- Never commit or push until `npm run format`, `npm run lint`, `npm run check`,
+  and `npm run verify` have finished without errors.
+- Fix every reported issue—including spacing drift back to tabs—before staging.
 
 #### Coding Standards Checklist
 
@@ -171,13 +160,12 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   fresh artifacts. When the hook reports a tooling failure (e.g., `ENOENT`,
   missing dependencies) and executes the fallback command
   (`npm run check && npm run test:coverage`), document the underlying issue in
-  your PR body before calling `make_pr`.
+  your commit message.
 
 - If the verification script is unavailable in your environment, fall back to
   running `npm run check && npm run test:coverage` manually. Coverage runs may
   be skipped only when a change is strictly documentation-only or a pure
-  content typo fix—call out the exception explicitly in the PR body so
-  reviewers know it was intentional.
+  content typo fix.
 
 - The Husky pre-commit hook runs `lint-staged` followed by `npm run test:quick`.
   GitHub Actions executes `npm run test:ci` (coverage) and `npm run build` for
