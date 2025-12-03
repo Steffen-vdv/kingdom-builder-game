@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
 	performAction,
-	Resource,
 	advance,
 	getActionCosts,
 } from '../../src/index.ts';
-import { createActionRegistry, Stat as CStat } from '@kingdom-builder/contents';
+import {
+	createActionRegistry,
+	Stat as CStat,
+	Resource as CResource,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import {
 	statAmountParams,
@@ -32,7 +35,8 @@ describe('stat:add effect', () => {
 		const engineContext = createTestEngine({ actions: actionRegistry });
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
-		const armyStrengthBefore = engineContext.activePlayer.armyStrength;
+		const armyStrengthBefore =
+			engineContext.activePlayer.resourceValues[CStat.armyStrength] ?? 0;
 		const trainingActionDefinition = actionRegistry.get('train_army');
 		const params = trainingActionDefinition.effects.find(
 			(effect) =>
@@ -42,10 +46,11 @@ describe('stat:add effect', () => {
 		)?.params as StatAmountParamsResult | undefined;
 		const armyStrengthIncrease = params?.amount ?? 0;
 		const actionCosts = getActionCosts('train_army', engineContext);
-		engineContext.activePlayer.ap = actionCosts[Resource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			actionCosts[CResource.ap] ?? 0;
 		performAction('train_army', engineContext);
-		expect(engineContext.activePlayer.armyStrength).toBe(
-			armyStrengthBefore + armyStrengthIncrease,
-		);
+		expect(
+			engineContext.activePlayer.resourceValues[CStat.armyStrength],
+		).toBe(armyStrengthBefore + armyStrengthIncrease);
 	});
 });
