@@ -17,6 +17,53 @@ AI-assisted development. The codebase uses npm workspaces with five packages:
 | server   | Fastify HTTP transport, session management, auth |
 | web      | Vite + React client                              |
 
+## Request Verification Protocol
+
+**Never implement without verification.** Before starting any task, complete
+this checklist:
+
+1. **Critically assess the request** – Identify what is being asked, what
+   success looks like, and what constraints apply. Flag ambiguities.
+2. **Inspect the codebase** – Search for existing patterns, conventions, and
+   related code. Understand how similar problems were solved before.
+3. **Verify completeness** – Confirm you have all information needed: target
+   behavior, edge cases, affected files, and acceptance criteria.
+4. **Prevent assumptions** – Do not fill in gaps with guesses or "reasonable
+   defaults." Do not add creative flourishes unless explicitly requested.
+5. **Ask before implementing** – If any step above is unsatisfactory, **stop**
+   and ask clarifying questions. Do not proceed until answers are provided.
+
+### When to block implementation
+
+Stop and ask clarifying questions when:
+
+- The desired end state is ambiguous (e.g., "fix the color" but no target color)
+- Multiple valid approaches exist and no preference was stated
+- The request conflicts with existing patterns or conventions
+- Required values, behaviors, or constraints are missing
+- You would need to invent or assume something not in the codebase or request
+
+### How to ask
+
+Present questions as a numbered list. For each question:
+
+- State what information is missing
+- Explain why it matters
+- Offer your assumption or understanding (if any) for the user to confirm,
+  correct, or expand upon
+
+**Example:**
+
+> Before I implement this, I need clarification:
+>
+> 1. **Target color**: What color should the button be? I see save buttons use
+>    green (`--color-success`) elsewhere, but this isn't a save action.
+> 2. **Dark mode variant**: Should it use the same color in both themes, or a
+>    different shade for dark mode?
+> 3. **Hover/active states**: Should these follow the existing button patterns?
+
+Only proceed once the user confirms, corrects, or provides the missing details.
+
 ## Essential Commands
 
 ```bash
