@@ -82,7 +82,7 @@ describe('army attack translation log', () => {
 		const attackHeadline = formatActionTitle(attackDefinition, translation);
 
 		expect(log).toHaveLength(9);
-		expect(log[0]).toEqual(attackHeadline);
+		expect(log[0]).toMatchObject({ text: attackHeadline, depth: 0 });
 		expect(log[1]).toMatchObject({
 			text: `Attack opponent with your ${powerLabel}`,
 			depth: 1,
@@ -165,7 +165,7 @@ describe('army attack translation log', () => {
 		);
 
 		expect(log).toHaveLength(7);
-		expect(log[0]).toEqual(buildingAttackHeadline);
+		expect(log[0]).toMatchObject({ text: buildingAttackHeadline, depth: 0 });
 		expect(log[1]).toMatchObject({
 			text: `Attack opponent with your ${powerLabel}`,
 			depth: 1,
