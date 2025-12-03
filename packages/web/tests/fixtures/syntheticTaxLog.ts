@@ -63,7 +63,10 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 3 },
+				params: {
+					resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+					change: { type: 'amount', amount: 3 },
+				},
 				meta: {
 					source: {
 						type: 'development',
@@ -82,7 +85,10 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 1 },
+				params: {
+					resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+					change: { type: 'amount', amount: 1 },
+				},
 				meta: {
 					source: {
 						type: 'building',
@@ -107,7 +113,10 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 3 },
+				params: {
+					resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+					change: { type: 'amount', amount: 3 },
+				},
 				meta: {
 					source: {
 						type: 'population',
@@ -119,7 +128,10 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 1 },
+				params: {
+					resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+					change: { type: 'amount', amount: 1 },
+				},
 				meta: {
 					source: {
 						type: 'building',
