@@ -46,7 +46,7 @@ export function createSyntheticSessionManager(
 	const costResourceId = 'resource:synthetic:cost';
 	const gainResourceId = 'resource:synthetic:gain';
 	const action = factory.action({
-		baseCosts: { [costKey]: 1 },
+		baseCosts: { [costResourceId]: 1 },
 		effects: [
 			{
 				type: 'resource',

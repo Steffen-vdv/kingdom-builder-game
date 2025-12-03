@@ -39,7 +39,7 @@ export function createSyntheticContext() {
 		{
 			id: 'a1',
 			name: 'a1',
-			baseCosts: { [costKey]: 1 },
+			baseCosts: { [costResourceId]: 1 },
 			effects: [
 				{
 					type: 'resource',
@@ -54,7 +54,7 @@ export function createSyntheticContext() {
 		{
 			id: 'a2',
 			name: 'a2',
-			baseCosts: { [costKey]: 1 },
+			baseCosts: { [costResourceId]: 1 },
 			effects: [
 				{
 					type: 'resource',
@@ -69,7 +69,7 @@ export function createSyntheticContext() {
 		{
 			id: 'a3',
 			name: 'a3',
-			baseCosts: { [costKey]: 1 },
+			baseCosts: { [costResourceId]: 1 },
 			effects: [
 				{
 					type: 'resource',

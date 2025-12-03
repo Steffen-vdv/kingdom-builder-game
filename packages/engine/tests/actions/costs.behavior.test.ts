@@ -73,16 +73,16 @@ describe('action cost helpers', () => {
 	it('validates affordability and deducts resources with notifications', () => {
 		const engineContext = createTestEngine();
 		const player = engineContext.activePlayer;
-		player.resources[CResource.gold] = 1;
+		player.resourceValues[CResource.gold] = 1;
 		const costs = { [CResource.gold]: 3 };
 
 		const result = verifyCostAffordability(costs, player);
 		expect(result).toContain('Insufficient');
 
-		player.resources[CResource.gold] = 5;
+		player.resourceValues[CResource.gold] = 5;
 		const handler = vi.spyOn(engineContext.services, 'handleResourceChange');
 		deductCostsFromPlayer(costs, player, engineContext);
-		expect(player.resources[CResource.gold]).toBe(2);
+		expect(player.resourceValues[CResource.gold]).toBe(2);
 		expect(handler).toHaveBeenCalledWith(engineContext, player, CResource.gold);
 	});
 });

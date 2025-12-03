@@ -53,9 +53,9 @@ export type PassiveRecord = PassiveSummary & {
 	[trigger: string]: unknown;
 };
 
-export type CostBag = { [resourceKey in ResourceKey]?: number };
-export type CostModifierFlat = Partial<Record<ResourceKey, number>>;
-export type CostModifierPercent = Partial<Record<ResourceKey, number>>;
+export type CostBag = Record<string, number>;
+export type CostModifierFlat = Record<string, number>;
+export type CostModifierPercent = Record<string, number>;
 export type RoundingMode = 'up' | 'down';
 export type RoundingInstruction =
 	| RoundingMode
