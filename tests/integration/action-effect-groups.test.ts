@@ -6,7 +6,7 @@ import {
 } from '@kingdom-builder/engine';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import { logContent } from '@kingdom-builder/web/translation/content';
-import { Resource } from '@kingdom-builder/contents/resourceKeys';
+import { Resource, getResourceV2Id } from '@kingdom-builder/contents';
 import { createTestEngine } from '../../packages/engine/tests/helpers';
 import {
 	Registry,
@@ -29,7 +29,10 @@ describe('action effect groups integration', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.gold, amount: rewardAmount },
+					params: {
+						resourceId: getResourceV2Id(Resource.gold),
+						change: { type: 'amount', amount: rewardAmount },
+					},
 				},
 			],
 		};
@@ -41,7 +44,10 @@ describe('action effect groups integration', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.happiness, amount: 1 },
+					params: {
+						resourceId: getResourceV2Id(Resource.happiness),
+						change: { type: 'amount', amount: 1 },
+					},
 				},
 			],
 		};
