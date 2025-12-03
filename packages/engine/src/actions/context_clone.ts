@@ -3,9 +3,6 @@ import {
 	GameState,
 	Land,
 	PlayerState,
-	PopulationRole,
-	Resource,
-	Stat,
 	type StatSourceContribution,
 } from '../state';
 import { cloneMeta } from '../stat_sources/meta';
@@ -37,7 +34,7 @@ function cloneLand(land: Land): Land {
 function clonePlayerState(player: PlayerState): PlayerState {
 	const cloned = new PlayerState(player.id, player.name);
 	cloned.copyLegacyMappingsFrom(player);
-	for (const key of Object.values(Resource)) {
+	for (const key of Object.keys(player.resources)) {
 		const resourceId = player.getResourceV2Id(key);
 		cloned.resources[key] = getResourceValue(player, resourceId);
 	}
@@ -65,14 +62,14 @@ function clonePlayerState(player: PlayerState): PlayerState {
 			};
 		}
 	}
-	for (const key of Object.values(Stat)) {
+	for (const key of Object.keys(player.stats)) {
 		const resourceId = player.getStatResourceV2Id(key);
 		cloned.stats[key] = getResourceValue(player, resourceId);
 	}
 	for (const key of Object.keys(player.statsHistory)) {
 		cloned.statsHistory[key] = Boolean(player.statsHistory[key]);
 	}
-	for (const key of Object.values(PopulationRole)) {
+	for (const key of Object.keys(player.population)) {
 		const resourceId = player.getPopulationResourceV2Id(key);
 		cloned.population[key] = getResourceValue(player, resourceId);
 	}
