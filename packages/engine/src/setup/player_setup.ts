@@ -1,5 +1,6 @@
-import { Land, Stat } from '../state';
+import { Land } from '../state';
 import type { PlayerState, StatKey } from '../state';
+import { Stat } from '@kingdom-builder/contents';
 import type { RuleSet } from '../services';
 import { applyStatDelta } from '../stat_sources';
 import type { RuntimeResourceCatalog } from '../resource-v2';
