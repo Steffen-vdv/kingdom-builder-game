@@ -88,9 +88,10 @@ describe('action effect groups integration', () => {
 				'Test setup failed: effect group should require a choice',
 			);
 		}
-		engineContext.activePlayer.resources[Resource.ap] = 5;
-		engineContext.activePlayer.resources[Resource.gold] = 0;
-		engineContext.activePlayer.resources[Resource.happiness] = 0;
+		const player = engineContext.activePlayer;
+		player.resourceValues[getResourceV2Id(Resource.ap)] = 5;
+		player.resourceValues[getResourceV2Id(Resource.gold)] = 0;
+		player.resourceValues[getResourceV2Id(Resource.happiness)] = 0;
 		return { engineContext, chooser, group, rewardAmount };
 	}
 
@@ -110,9 +111,9 @@ describe('action effect groups integration', () => {
 				[group.id]: { optionId: 'gold_reward' },
 			},
 		} as const;
-		const beforeGold = engineContext.activePlayer.resources[Resource.gold];
+		const beforeGold = engineContext.activePlayer.resourceValues[getResourceV2Id(Resource.gold)] ?? 0;
 		const traces = performAction(chooser.id, engineContext, params);
-		expect(engineContext.activePlayer.resources[Resource.gold]).toBe(
+		expect(engineContext.activePlayer.resourceValues[getResourceV2Id(Resource.gold)]).toBe(
 			beforeGold + rewardAmount,
 		);
 		expect(traces).toHaveLength(1);
