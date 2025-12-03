@@ -33,10 +33,12 @@ describe('actions with synthetic content', () => {
 		const engineContext = createTestEngine(content);
 		toMain(engineContext);
 		const costs = getActionCosts(actionDefinition.id, engineContext);
-		engineContext.activePlayer.ap = costs[CResource.ap] ?? 0;
-		engineContext.activePlayer.gold = costs[CResource.gold] ?? 0;
-		const goldId = engineContext.activePlayer.getResourceV2Id(CResource.gold);
-		const beforeGold = engineContext.activePlayer.resourceValues[goldId] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			costs[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.gold] =
+			costs[CResource.gold] ?? 0;
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		const gain =
 			(
 				actionDefinition.effects.find(
@@ -44,7 +46,8 @@ describe('actions with synthetic content', () => {
 				)?.params as ResourceAmountParamsResult | undefined
 			)?.amount ?? 0;
 		performAction(actionDefinition.id, engineContext);
-		const afterGold = engineContext.activePlayer.resourceValues[goldId] ?? 0;
+		const afterGold =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		expect(afterGold).toBe(beforeGold - (costs[CResource.gold] ?? 0) + gain);
 	});
 
@@ -73,10 +76,12 @@ describe('actions with synthetic content', () => {
 		const cost = getActionCosts(buildAction.id, engineContext, {
 			id: building.id,
 		});
-		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
-		engineContext.activePlayer.gold = cost[CResource.gold] ?? 0;
-		const goldId = engineContext.activePlayer.getResourceV2Id(CResource.gold);
-		const beforeGold = engineContext.activePlayer.resourceValues[goldId] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.gold] =
+			cost[CResource.gold] ?? 0;
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		const gain =
 			(
 				building.onBuild?.find(
@@ -85,7 +90,8 @@ describe('actions with synthetic content', () => {
 			)?.amount ?? 0;
 		performAction(buildAction.id, engineContext, { id: building.id });
 		expect(engineContext.activePlayer.buildings.has(building.id)).toBe(true);
-		const afterGold = engineContext.activePlayer.resourceValues[goldId] ?? 0;
+		const afterGold =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		expect(afterGold).toBe(beforeGold - (cost[CResource.gold] ?? 0) + gain);
 	});
 
@@ -122,10 +128,12 @@ describe('actions with synthetic content', () => {
 			id: development.id,
 			landId: land.id,
 		});
-		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
-		engineContext.activePlayer.gold = cost[CResource.gold] ?? 0;
-		const goldId = engineContext.activePlayer.getResourceV2Id(CResource.gold);
-		const beforeGold = engineContext.activePlayer.resourceValues[goldId] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.gold] =
+			cost[CResource.gold] ?? 0;
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		const beforeSlots = land.slotsUsed;
 		const gain =
 			(
@@ -139,7 +147,8 @@ describe('actions with synthetic content', () => {
 		});
 		expect(land.developments).toContain(development.id);
 		expect(land.slotsUsed).toBe(beforeSlots + 1);
-		const afterGold = engineContext.activePlayer.resourceValues[goldId] ?? 0;
+		const afterGold =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		expect(afterGold).toBe(beforeGold - (cost[CResource.gold] ?? 0) + gain);
 	});
 });
