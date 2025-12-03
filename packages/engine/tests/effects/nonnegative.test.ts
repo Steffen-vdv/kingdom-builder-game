@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
 	performAction,
-	Resource,
 	advance,
 	getActionCosts,
+	getResourceValue,
 } from '../../src/index.ts';
 import {
 	createActionRegistry,
@@ -43,12 +43,15 @@ describe('resource and stat bounds', () => {
 			(effect) => effect.type === 'stat',
 		)?.params as StatAmountParamsResult | undefined;
 		const effectAmount = statParams?.amount ?? 0;
-		engineContext.activePlayer.stats[CStat.fortificationStrength] =
+		engineContext.activePlayer.resourceValues[CStat.fortificationStrength] =
 			effectAmount - 1;
-		const cost = getActionCosts('lower_fort', engineContext)[Resource.ap] ?? 0;
-		engineContext.activePlayer.ap = cost;
+		const cost =
+			getActionCosts('lower_fort', engineContext)[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('lower_fort', engineContext);
-		expect(engineContext.activePlayer.fortificationStrength).toBe(0);
+		expect(
+			getResourceValue(engineContext.activePlayer, CStat.fortificationStrength),
+		).toBe(0);
 	});
 
 	it('clamps resource additions to zero', () => {
@@ -75,11 +78,13 @@ describe('resource and stat bounds', () => {
 			(effect) => effect.type === 'resource',
 		)?.params as ResourceAmountParamsResult | undefined;
 		const effectAmount = resourceParams?.amount ?? 0;
-		engineContext.activePlayer.gold = 1;
-		const cost = getActionCosts('lose_gold', engineContext)[Resource.ap] ?? 0;
-		engineContext.activePlayer.ap = cost;
+		engineContext.activePlayer.resourceValues[CResource.gold] = 1;
+		const cost = getActionCosts('lose_gold', engineContext)[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('lose_gold', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(Math.max(1 + effectAmount, 0));
+		expect(
+			getResourceValue(engineContext.activePlayer, CResource.gold),
+		).toBe(Math.max(1 + effectAmount, 0));
 	});
 
 	it('clamps negative stat additions to zero', () => {
@@ -105,12 +110,15 @@ describe('resource and stat bounds', () => {
 		const addParams = actionDef.effects.find((effect) => effect.type === 'stat')
 			?.params as StatAmountParamsResult | undefined;
 		const effectAmount = addParams?.amount ?? 0;
-		const before = engineContext.activePlayer.armyStrength;
-		const cost = getActionCosts('bad_add', engineContext)[Resource.ap] ?? 0;
-		engineContext.activePlayer.ap = cost;
-		performAction('bad_add', engineContext);
-		expect(engineContext.activePlayer.armyStrength).toBe(
-			Math.max(before + effectAmount, 0),
+		const before = getResourceValue(
+			engineContext.activePlayer,
+			CStat.armyStrength,
 		);
+		const cost = getActionCosts('bad_add', engineContext)[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
+		performAction('bad_add', engineContext);
+		expect(
+			getResourceValue(engineContext.activePlayer, CStat.armyStrength),
+		).toBe(Math.max(before + effectAmount, 0));
 	});
 });

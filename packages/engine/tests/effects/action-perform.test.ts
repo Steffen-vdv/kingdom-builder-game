@@ -6,6 +6,7 @@ import { Land } from '../../src/state';
 import { createContentFactory } from '@kingdom-builder/testing';
 import * as protocol from '@kingdom-builder/protocol';
 import type { ResolvedActionEffects } from '@kingdom-builder/protocol';
+import { Resource as CResource } from '@kingdom-builder/contents';
 
 interface EffectGroupOption {
 	id: string;
@@ -35,8 +36,8 @@ describe('action:perform effect', () => {
 	it('uses the declared action when id points at a development', () => {
 		const engineContext = createTestEngine();
 		toMain(engineContext);
-		engineContext.activePlayer.ap = 5;
-		engineContext.activePlayer.gold = 20;
+		engineContext.activePlayer.resourceValues[CResource.ap] = 5;
+		engineContext.activePlayer.resourceValues[CResource.gold] = 20;
 		const newLandId = `${engineContext.activePlayer.id}-L${engineContext.activePlayer.lands.length + 1}`;
 		const fallbackLand = new Land(newLandId, 2, true);
 		engineContext.activePlayer.lands.push(fallbackLand);
