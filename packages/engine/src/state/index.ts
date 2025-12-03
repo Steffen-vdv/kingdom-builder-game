@@ -1,5 +1,6 @@
 import type { EffectDef } from '../effects';
 import type { RuntimeResourceCatalog } from '../resource-v2';
+import { Resource, Stat } from '@kingdom-builder/contents';
 
 export type ResourceKey = string;
 export type StatKey = string;

@@ -45,6 +45,7 @@ import {
 	initializePlayerActions,
 } from './player_setup';
 import { resolveStartConfigForMode } from './start_config_resolver';
+import { Resource, Stat } from '@kingdom-builder/contents';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
@@ -298,7 +299,7 @@ export function createEngine({
 	return engineContext;
 }
 
-export { Resource, Phase, PopulationRole, Stat };
+export { Resource, PopulationRole, Stat };
 export type {
 	RuleSet,
 	ResourceKey,

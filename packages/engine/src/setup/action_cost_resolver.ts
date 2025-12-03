@@ -12,6 +12,7 @@ export interface ActionCostConfiguration {
 function assertNoGlobalCostOverrides(
 	actions: Registry<ActionDef>,
 	resourceId: string,
+	resourceCatalog: RuntimeResourceCatalog,
 ): void {
 	const violations: string[] = [];
 	for (const [actionId, actionDefinition] of actions.entries()) {
@@ -19,15 +20,19 @@ function assertNoGlobalCostOverrides(
 			continue;
 		}
 		const baseCosts = actionDefinition.baseCosts || {};
-		if (Object.keys(baseCosts).length > 0) {
-			const label = actionDefinition.id ?? actionId;
-			violations.push(label);
+		for (const costKey of Object.keys(baseCosts)) {
+			const costResourceId = resourceCatalog.resources.byId[costKey];
+			if (costResourceId && costResourceId.id === resourceId) {
+				const label = actionDefinition.id ?? actionId;
+				violations.push(label);
+				break;
+			}
 		}
 	}
 	if (violations.length > 0) {
 		throw new Error(
 			`Global action cost resource ${resourceId} forbids per-action overrides. ` +
-				`Remove baseCosts entries from: ${violations.join(', ')}`,
+				`Remove baseCosts entries for this resource from: ${violations.join(', ')}`,
 		);
 	}
 }
@@ -52,8 +57,8 @@ export function determineCommonActionCostResource(
 			globalCostAmount = definition.globalCost.amount;
 		}
 	}
-	if (globalResourceId && globalCostAmount !== null) {
-		assertNoGlobalCostOverrides(actions, globalResourceId);
+	if (globalResourceId && globalCostAmount !== null && resourceCatalog) {
+		assertNoGlobalCostOverrides(actions, globalResourceId, resourceCatalog);
 		return { resourceId: globalResourceId, amount: globalCostAmount };
 	}
 
