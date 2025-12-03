@@ -63,12 +63,12 @@ function resolveResourceId(input: BaseResourceParamsInput): string {
 		return input.resourceId;
 	}
 	// Convert legacy ResourceKey to ResourceV2 ID
-	try {
-		return getResourceV2Id(input.key as ResourceKey);
-	} catch {
-		// If conversion fails, assume it's already a ResourceV2 ID
-		return input.key;
+	const converted = getResourceV2Id(input.key as ResourceKey);
+	if (converted) {
+		return converted;
 	}
+	// If conversion returns undefined, assume input.key is already a ResourceV2 ID
+	return input.key;
 }
 
 export function resourceAmountParams(
@@ -157,10 +157,11 @@ export function statAmountParams(
 	let statId = input.statId;
 	if (!statId) {
 		// Convert legacy StatKey to stat ResourceV2 ID
-		try {
-			statId = getStatResourceV2Id(input.key as StatKey);
-		} catch {
-			// If conversion fails, assume it's already a stat ResourceV2 ID
+		const converted = getStatResourceV2Id(input.key as StatKey);
+		if (converted) {
+			statId = converted;
+		} else {
+			// If conversion returns undefined, assume input.key is already a stat ResourceV2 ID
 			statId = input.key;
 		}
 	}
