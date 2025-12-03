@@ -1,10 +1,11 @@
 import type { EngineContext } from './context';
 import type { PlayerState } from './state';
-import { getResourceValue } from './resource-v2';
 import type { PassiveSummary } from './services';
 import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
 
 export interface PlayerSnapshot {
+	// All values are now unified in valuesV2 - resources/stats are kept for
+	// backward compatibility but contain the same data
 	resources: Record<string, number>;
 	stats: Record<string, number>;
 	valuesV2: Record<string, number>;
@@ -45,34 +46,17 @@ function buildResourceBoundsSnapshot(
 	return snapshot;
 }
 
-function deriveLegacyResourceRecord(
-	player: PlayerState,
-): Record<string, number> {
-	const snapshot: Record<string, number> = {};
-	for (const resourceKey of Object.keys(player.resources)) {
-		const resourceId = player.getResourceV2Id(resourceKey);
-		snapshot[resourceKey] = getResourceValue(player, resourceId);
-	}
-	return snapshot;
-}
-
-function deriveLegacyStatRecord(player: PlayerState): Record<string, number> {
-	const snapshot: Record<string, number> = {};
-	for (const statKey of Object.keys(player.stats)) {
-		const resourceId = player.getStatResourceV2Id(statKey);
-		snapshot[statKey] = getResourceValue(player, resourceId);
-	}
-	return snapshot;
-}
-
 export function snapshotPlayer(
 	player: PlayerState,
 	engineContext: EngineContext,
 ): PlayerSnapshot {
+	// All values live in valuesV2 now - resources/stats point to the same data
+	// for backward compatibility with consumers that haven't migrated yet
+	const valuesV2 = cloneValuesV2(player);
 	return {
-		resources: deriveLegacyResourceRecord(player),
-		stats: deriveLegacyStatRecord(player),
-		valuesV2: cloneValuesV2(player),
+		resources: valuesV2,
+		stats: valuesV2,
+		valuesV2,
 		resourceBoundsV2: buildResourceBoundsSnapshot(player),
 		buildings: Array.from(player.buildings),
 		lands: player.lands.map((land) => ({

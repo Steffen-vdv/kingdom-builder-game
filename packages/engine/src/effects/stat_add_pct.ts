@@ -11,7 +11,8 @@ export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
 	} else {
 		const statKey = effect.params!['percentStat'] as StatKey | undefined;
 		if (statKey) {
-			percent = context.activePlayer.stats[statKey] || 0;
+			// statKey is now a ResourceV2 ID - use resourceValues directly
+			percent = context.activePlayer.resourceValues[statKey] || 0;
 		} else {
 			percent = 0;
 		}
@@ -24,12 +25,15 @@ export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
 		`${context.game.turn}:${context.game.currentPhase}:` +
 		`${context.game.currentStep}:${key}`;
 	if (!(cacheKey in context.statAddPctBases)) {
-		context.statAddPctBases[cacheKey] = context.activePlayer.stats[key] || 0;
+		// key is now a ResourceV2 ID - use resourceValues directly
+		context.statAddPctBases[cacheKey] =
+			context.activePlayer.resourceValues[key] || 0;
 		context.statAddPctAccums[cacheKey] = 0;
 	}
 
 	const base = context.statAddPctBases[cacheKey]!;
-	const before = context.activePlayer.stats[key] || 0;
+	// key is now a ResourceV2 ID - use resourceValues directly
+	const before = context.activePlayer.resourceValues[key] || 0;
 	context.statAddPctAccums[cacheKey]! += base * percent * multiplier;
 	let newValue = base + context.statAddPctAccums[cacheKey]!;
 	if (effect.round === 'up') {
@@ -40,7 +44,8 @@ export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
 	if (newValue < 0) {
 		newValue = 0;
 	}
-	context.activePlayer.stats[key] = newValue;
+	// key is now a ResourceV2 ID - use resourceValues directly
+	context.activePlayer.resourceValues[key] = newValue;
 	if (newValue !== 0) {
 		context.activePlayer.statsHistory[key] = true;
 	}

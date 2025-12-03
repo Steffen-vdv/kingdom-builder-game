@@ -3,8 +3,6 @@ import { cloneMeta } from '../stat_sources/meta';
 import type { EngineContext } from '../context';
 import type { ActionTrace, PlayerSnapshot } from '../log';
 import type { Land, PlayerId, PlayerState } from '../state';
-import { PopulationRole, Resource, Stat } from '@kingdom-builder/contents';
-import { getResourceValue } from '../resource-v2';
 import type { PassiveSummary } from '../services';
 import type { LandSnapshot, PlayerStateSnapshot } from './types';
 import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
@@ -162,51 +160,22 @@ function buildResourceBoundsSnapshot(
 	return snapshot;
 }
 
-function deriveLegacyResourceRecord(
-	player: PlayerState,
-): Record<string, number> {
-	const snapshot: Record<string, number> = {};
-	for (const resourceKey of Object.values(Resource)) {
-		const resourceId = player.getResourceV2Id(resourceKey);
-		snapshot[resourceKey] = getResourceValue(player, resourceId);
-	}
-	return snapshot;
-}
-
-function deriveLegacyStatRecord(player: PlayerState): Record<string, number> {
-	const snapshot: Record<string, number> = {};
-	for (const statKey of Object.values(Stat)) {
-		const resourceId = player.getStatResourceV2Id(statKey);
-		snapshot[statKey] = getResourceValue(player, resourceId);
-	}
-	return snapshot;
-}
-
-function deriveLegacyPopulationRecord(
-	player: PlayerState,
-): Record<string, number> {
-	const snapshot: Record<string, number> = {};
-	for (const role of Object.values(PopulationRole)) {
-		const resourceId = player.getPopulationResourceV2Id(role);
-		snapshot[role] = getResourceValue(player, resourceId);
-	}
-	return snapshot;
-}
-
 export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
+	// All values are unified in valuesV2 - resources/stats/population point to
+	// the same data for backward compatibility with consumers
 	const valuesV2 = cloneValuesV2(player.resourceValues);
 	const resourceBoundsV2 = buildResourceBoundsSnapshot(player);
 	return {
 		id: player.id,
 		name: player.name,
 		aiControlled: Boolean(context.aiSystem?.has(player.id)),
-		resources: deriveLegacyResourceRecord(player),
-		stats: deriveLegacyStatRecord(player),
+		resources: valuesV2,
+		stats: valuesV2,
 		statsHistory: { ...player.statsHistory },
-		population: deriveLegacyPopulationRecord(player),
+		population: valuesV2,
 		valuesV2,
 		resourceBoundsV2,
 		lands: player.lands.map((land) => cloneLand(land)),

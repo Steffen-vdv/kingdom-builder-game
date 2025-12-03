@@ -33,11 +33,7 @@ function cloneLand(land: Land): Land {
 
 function clonePlayerState(player: PlayerState): PlayerState {
 	const cloned = new PlayerState(player.id, player.name);
-	cloned.copyLegacyMappingsFrom(player);
-	for (const key of Object.keys(player.resources)) {
-		const resourceId = player.getResourceV2Id(key);
-		cloned.resources[key] = getResourceValue(player, resourceId);
-	}
+	// Clone all resource values (now unified - includes resources, stats, population)
 	for (const key of Object.keys(player.resourceValues)) {
 		cloned.resourceValues[key] = player.resourceValues[key] ?? 0;
 	}
@@ -62,16 +58,8 @@ function clonePlayerState(player: PlayerState): PlayerState {
 			};
 		}
 	}
-	for (const key of Object.keys(player.stats)) {
-		const resourceId = player.getStatResourceV2Id(key);
-		cloned.stats[key] = getResourceValue(player, resourceId);
-	}
 	for (const key of Object.keys(player.statsHistory)) {
 		cloned.statsHistory[key] = Boolean(player.statsHistory[key]);
-	}
-	for (const key of Object.keys(player.population)) {
-		const resourceId = player.getPopulationResourceV2Id(key);
-		cloned.population[key] = getResourceValue(player, resourceId);
 	}
 	cloned.lands = player.lands.map((land) => cloneLand(land));
 	cloned.buildings = new Set(player.buildings);
@@ -112,16 +100,13 @@ function clonePlayerState(player: PlayerState): PlayerState {
 	const reserved = new Set([
 		'id',
 		'name',
-		'resources',
 		'resourceValues',
 		'resourceLowerBounds',
 		'resourceUpperBounds',
 		'resourceTouched',
 		'resourceTierIds',
 		'resourceBoundTouched',
-		'stats',
 		'statsHistory',
-		'population',
 		'lands',
 		'buildings',
 		'actions',

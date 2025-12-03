@@ -72,6 +72,7 @@ export class PlayerState {
 	resourceTouched: Record<string, boolean>;
 	resourceTierIds: Record<string, string | null>;
 	resourceBoundTouched: Record<string, { lower: boolean; upper: boolean }>;
+	statsHistory: Record<string, boolean>;
 	statSources: Record<string, Record<string, StatSourceContribution>>;
 	lands: Land[] = [];
 	buildings: Set<string> = new Set();
@@ -90,27 +91,13 @@ export class PlayerState {
 		this.resourceTouched = {};
 		this.resourceTierIds = {};
 		this.resourceBoundTouched = {};
+		this.statsHistory = {};
 		this.statSources = {} as Record<
 			string,
 			Record<string, StatSourceContribution>
 		>;
 		this.skipPhases = {};
 		this.skipSteps = {};
-	}
-
-	/** Returns the ResourceV2 ID for a resource key (identity - keys are V2) */
-	getResourceV2Id(resourceKey: ResourceKey): string {
-		return resourceKey;
-	}
-
-	/** Returns the ResourceV2 ID for a stat key (identity - keys are V2) */
-	getStatResourceV2Id(statKey: StatKey): string {
-		return statKey;
-	}
-
-	/** Returns the ResourceV2 ID for a population role (identity - keys are V2) */
-	getPopulationResourceV2Id(roleId: PopulationRoleId): string {
-		return roleId;
 	}
 }
 
