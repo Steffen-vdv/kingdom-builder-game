@@ -74,10 +74,10 @@ describe('result modifiers', () => {
 		engineContext.passives.addPassive(passiveA, engineContext);
 		engineContext.passives.addPassive(passiveB, engineContext);
 
-		const resourceId = engineContext.activePlayer.getResourceV2Id(resourceKey);
-		const before = engineContext.activePlayer.resourceValues[resourceId] ?? 0;
+		// CResource values ARE ResourceV2 IDs directly - no mapper needed
+		const before = engineContext.activePlayer.resourceValues[resourceKey] ?? 0;
 		performAction(action.id, engineContext);
-		const after = engineContext.activePlayer.resourceValues[resourceId] ?? 0;
+		const after = engineContext.activePlayer.resourceValues[resourceKey] ?? 0;
 
 		expect(after).toBe(before + baseGain + modGainA + modGainB);
 	});

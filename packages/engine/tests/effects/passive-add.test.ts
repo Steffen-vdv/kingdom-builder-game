@@ -69,12 +69,15 @@ describe('passive:add effect', () => {
 			],
 		};
 
-		const before = engineContext.activePlayer.stats[Stat.armyStrength];
+		// Stat values ARE ResourceV2 IDs - access via resourceValues
+		const before = engineContext.activePlayer.resourceValues[Stat.armyStrength];
 		runEffects([effect], engineContext);
-		expect(engineContext.activePlayer.stats[Stat.armyStrength]).toBe(
+		expect(engineContext.activePlayer.resourceValues[Stat.armyStrength]).toBe(
 			before + 1,
 		);
 		engineContext.passives.removePassive('temp', engineContext);
-		expect(engineContext.activePlayer.stats[Stat.armyStrength]).toBe(before);
+		expect(
+			engineContext.activePlayer.resourceValues[Stat.armyStrength],
+		).toBe(before);
 	});
 });

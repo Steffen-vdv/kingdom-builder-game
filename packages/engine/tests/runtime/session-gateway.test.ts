@@ -11,6 +11,7 @@ import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
+	Resource as CResource,
 } from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	StartConfig,
@@ -21,8 +22,9 @@ import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
 
-const RESOURCE_AP = 'test:resource:ap';
-const RESOURCE_GOLD = 'test:resource:gold';
+// Use actual ResourceV2 IDs - they ARE the resource keys directly
+const RESOURCE_AP = CResource.ap;
+const RESOURCE_GOLD = CResource.gold;
 const PHASE_MAIN = 'test:phase:main';
 const PHASE_GROWTH = 'test:phase:growth';
 const PHASE_UPKEEP = 'test:phase:upkeep';

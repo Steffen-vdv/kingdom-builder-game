@@ -7,7 +7,8 @@ describe('stat:add_pct additive scaling', () => {
 	it('adds multiple percentages from the original base in the same step', () => {
 		const engineContext = createTestEngine();
 		const base = 10;
-		engineContext.activePlayer.stats[Stat.armyStrength] = base;
+		// Stat values ARE ResourceV2 IDs - access via resourceValues
+		engineContext.activePlayer.resourceValues[Stat.armyStrength] = base;
 
 		const pct1 = 0.2;
 		const pct2 = 0.4;
@@ -27,12 +28,12 @@ describe('stat:add_pct additive scaling', () => {
 		runEffects(effects, engineContext);
 
 		const expected = base * (1 + pct1 + pct2);
-		expect(engineContext.activePlayer.stats[Stat.armyStrength]).toBeCloseTo(
-			expected,
-		);
+		expect(
+			engineContext.activePlayer.resourceValues[Stat.armyStrength],
+		).toBeCloseTo(expected);
 		const sequential = base * (1 + pct1) * (1 + pct2);
-		expect(engineContext.activePlayer.stats[Stat.armyStrength]).not.toBeCloseTo(
-			sequential,
-		);
+		expect(
+			engineContext.activePlayer.resourceValues[Stat.armyStrength],
+		).not.toBeCloseTo(sequential);
 	});
 });
