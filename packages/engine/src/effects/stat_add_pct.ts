@@ -4,11 +4,17 @@ import { recordEffectStatDelta } from '../stat_sources';
 
 export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
 	const key = effect.params!['key'] as StatKey;
-	let percent = effect.params!['percent'] as number | undefined;
-	if (percent === undefined) {
-		const statKey = effect.params!['percentStat'] as StatKey;
-		const statValue = context.activePlayer.stats[statKey] || 0;
-		percent = statValue;
+	const rawPercent = effect.params!['percent'] as number | undefined;
+	let percent: number;
+	if (rawPercent !== undefined) {
+		percent = rawPercent;
+	} else {
+		const statKey = effect.params!['percentStat'] as StatKey | undefined;
+		if (statKey) {
+			percent = context.activePlayer.stats[statKey] || 0;
+		} else {
+			percent = 0;
+		}
 	}
 
 	// Use a cache keyed by turn/phase/step so multiple evaluations in the

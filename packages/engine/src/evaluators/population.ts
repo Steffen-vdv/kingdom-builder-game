@@ -14,7 +14,7 @@ export const populationEvaluator: EvaluatorHandler<
 	if (role) {
 		return engineContext.activePlayer.population[role] || 0;
 	}
-	return Object.values(engineContext.activePlayer.population).reduce(
+	return Object.values(engineContext.activePlayer.population).reduce<number>(
 		(total, count) => total + Number(count || 0),
 		0,
 	);

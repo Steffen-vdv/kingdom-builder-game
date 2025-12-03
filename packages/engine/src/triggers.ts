@@ -1,8 +1,8 @@
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
+import { PopulationRole } from '@kingdom-builder/contents';
 import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
-import { PopulationRole } from './state';
 import type { StatSourceFrame } from './stat_sources';
 import { getResourceValue } from './resource-v2';
 
