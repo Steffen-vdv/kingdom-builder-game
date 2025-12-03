@@ -97,6 +97,21 @@ export class PlayerState {
 		this.skipPhases = {};
 		this.skipSteps = {};
 	}
+
+	/** Returns the ResourceV2 ID for a resource key (identity - keys are V2) */
+	getResourceV2Id(resourceKey: ResourceKey): string {
+		return resourceKey;
+	}
+
+	/** Returns the ResourceV2 ID for a stat key (identity - keys are V2) */
+	getStatResourceV2Id(statKey: StatKey): string {
+		return statKey;
+	}
+
+	/** Returns the ResourceV2 ID for a population role (identity - keys are V2) */
+	getPopulationResourceV2Id(roleId: PopulationRoleId): string {
+		return roleId;
+	}
 }
 
 export class GameState {
