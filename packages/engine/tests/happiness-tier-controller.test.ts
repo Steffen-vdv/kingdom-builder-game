@@ -134,8 +134,8 @@ describe('happiness tier controller', () => {
 					type: 'resource',
 					method: 'remove',
 					params: {
-						key: tierResourceKey,
-						amount: 3,
+						resourceId: tierResourceId,
+						change: { type: 'amount', amount: 3 },
 					},
 				},
 			],
