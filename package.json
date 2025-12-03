@@ -66,7 +66,7 @@
 		"@types/react-dom": "^19.2.3",
 		"@typescript-eslint/eslint-plugin": "^8.48.0",
 		"@typescript-eslint/parser": "^8.46.1",
-		"@vitejs/plugin-react": "^5.0.4",
+		"@vitejs/plugin-react": "^5.1.1",
 		"@vitest/coverage-v8": "^4.0.5",
 		"autoprefixer": "^10.4.21",
 		"cross-env": "^10.1.0",
@@ -84,9 +84,9 @@
 		"postcss": "^8.5.6",
 		"prettier": "^3.7.3",
 		"tailwindcss": "^4.1.16",
-		"tsx": "^4.19.2",
+		"tsx": "^4.21.0",
 		"typescript": "5.9.3",
-		"vite": "^7.1.12",
+		"vite": "^7.2.6",
 		"vitest": "^4.0.2"
 	},
 	"lint-staged": {
