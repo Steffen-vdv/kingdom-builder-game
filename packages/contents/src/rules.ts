@@ -6,6 +6,7 @@ import { formatPassiveRemoval } from './text';
 import { HAPPINESS_TIER_ICONS, getTierConfigs, type TierConfig } from './rules.config';
 import { getHappinessResourceDefinition } from './resourceV2/definitions';
 import type { ResourceV2TierDefinition, ResourceV2TierTrackMetadata } from './resourceV2';
+import { Resource } from './resourceKeys';
 
 type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
 
@@ -85,10 +86,10 @@ const tierDefinitions: HappinessTierDefinition[] = getTierConfigs().map((config)
 
 const WIN_CONDITIONS = [
 	winCondition('castle-destroyed')
-		.resourceAtMost('castleHP', 0)
+		.resourceAtMost(Resource.castleHP, 0)
 		.subjectDefeat()
 		.opponentVictory()
-		.display((display) => display.icon('castleHP').victory('The enemy stronghold collapses—your banners fly victorious!').defeat('Your castle lies in ruins. The siege is lost.'))
+		.display((display) => display.icon(Resource.castleHP).victory('The enemy stronghold collapses—your banners fly victorious!').defeat('Your castle lies in ruins. The siege is lost.'))
 		.build(),
 ];
 
@@ -96,7 +97,7 @@ export const RULES = {
 	defaultActionAPCost: 1,
 	absorptionCapPct: 1,
 	absorptionRounding: 'down',
-	tieredResourceKey: 'happiness',
+	tieredResourceKey: Resource.happiness,
 	tierDefinitions,
 	slotsPerNewLand: 1,
 	maxSlotsPerLand: 2,

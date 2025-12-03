@@ -4,8 +4,8 @@ import { costModParams, developmentTarget, resultModParams, statAddEffect, effec
 import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './config/builderShared';
 import { formatPassiveRemoval } from './text';
 import type { passiveParams } from './config/builders';
-import type { ResourceKey } from './resourceKeys';
-import type { StatKey } from './stats';
+import { Resource, type ResourceKey } from './resourceKeys';
+import { Stat, type StatKey } from './stats';
 
 export type HappinessTierSlug = 'despair' | 'misery' | 'grim' | 'unrest' | 'steady' | 'content' | 'joyful' | 'elated' | 'ecstatic';
 
@@ -20,8 +20,8 @@ export const happinessModifierId = (slug: HappinessTierSlug, kind: HappinessModi
 export const incomeModifier = (id: string, percent: number) =>
 	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(developmentTarget()).percent(percent).build()).build();
 
-const GOLD_RESOURCE_KEY: ResourceKey = 'gold';
-const GROWTH_STAT_KEY: StatKey = 'growth';
+const GOLD_RESOURCE_KEY: ResourceKey = Resource.gold;
+const GROWTH_STAT_KEY: StatKey = Stat.growth;
 
 export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).key(GOLD_RESOURCE_KEY).percent(-0.2).build()).build();
 
