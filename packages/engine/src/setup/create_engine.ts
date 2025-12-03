@@ -223,8 +223,6 @@ export function createEngine({
 	runtimeResourceCatalog = createRuntimeResourceCatalog(runtimeResourceContent);
 	validatePhases(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
-	// Legacy setters removed - ResourceV2 catalog provides all resource metadata
-	// Initialize PopulationRole for triggers.ts compatibility
 	for (const role of Object.keys(startConfig.player.population || {})) {
 		PopulationRole[role.charAt(0).toUpperCase() + role.slice(1)] = role;
 	}

@@ -1,6 +1,3 @@
-// Legacy exports for backwards compatibility
-// These are being phased out in favor of RESOURCE_V2_REGISTRY
-
 export const Stat = {
 	maxPopulation: 'maxPopulation',
 	armyStrength: 'armyStrength',
@@ -25,5 +22,3 @@ export type StatV2Id = (typeof STAT_V2_ID_BY_KEY)[StatKey];
 export function getStatResourceV2Id(stat: StatKey): StatV2Id {
 	return STAT_V2_ID_BY_KEY[stat];
 }
-
-// STATS export removed - use RESOURCE_V2_REGISTRY instead

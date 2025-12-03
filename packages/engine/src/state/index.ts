@@ -1,14 +1,11 @@
 import type { EffectDef } from '../effects';
 import type { RuntimeResourceCatalog } from '../resource-v2';
 
-// Legacy types kept for backwards compatibility during migration
 export type ResourceKey = string;
 export type StatKey = string;
 export type PhaseId = string;
 export type PopulationRoleId = string;
 
-// PopulationRole object kept temporarily for triggers.ts
-// TODO: Migrate triggers.ts to use population IDs directly
 export const PopulationRole: Record<string, string> = {};
 
 function toHyphenatedCamel(value: string): string {
