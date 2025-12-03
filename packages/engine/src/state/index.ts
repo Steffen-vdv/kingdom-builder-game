@@ -1,49 +1,15 @@
 import type { EffectDef } from '../effects';
 import type { RuntimeResourceCatalog } from '../resource-v2';
 
-export const Resource: Record<string, string> = {};
+// Legacy types kept for backwards compatibility during migration
 export type ResourceKey = string;
-export function setResourceKeys(keys: string[]) {
-	for (const key of Object.keys(Resource)) {
-		delete Resource[key];
-	}
-	for (const key of keys) {
-		Resource[key] = key;
-	}
-}
-
-export const Stat: Record<string, string> = {};
 export type StatKey = string;
-export function setStatKeys(keys: string[]) {
-	for (const key of Object.keys(Stat)) {
-		delete Stat[key];
-	}
-	for (const key of keys) {
-		Stat[key] = key;
-	}
-}
-
-export const Phase: Record<string, string> = {};
 export type PhaseId = string;
-export function setPhaseKeys(keys: string[]) {
-	for (const key of Object.keys(Phase)) {
-		delete Phase[key];
-	}
-	for (const id of keys) {
-		Phase[id.charAt(0).toUpperCase() + id.slice(1)] = id;
-	}
-}
-
-export const PopulationRole: Record<string, string> = {};
 export type PopulationRoleId = string;
-export function setPopulationRoleKeys(keys: string[]) {
-	for (const key of Object.keys(PopulationRole)) {
-		delete PopulationRole[key];
-	}
-	for (const id of keys) {
-		PopulationRole[id.charAt(0).toUpperCase() + id.slice(1)] = id;
-	}
-}
+
+// PopulationRole object kept temporarily for triggers.ts
+// TODO: Migrate triggers.ts to use population IDs directly
+export const PopulationRole: Record<string, string> = {};
 
 function toHyphenatedCamel(value: string): string {
 	let result = '';

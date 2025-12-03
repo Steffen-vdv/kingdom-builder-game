@@ -1,15 +1,5 @@
 import type { ZodType } from 'zod';
-import {
-	Resource,
-	Phase,
-	PopulationRole,
-	Stat,
-	GameState,
-	setResourceKeys,
-	setStatKeys,
-	setPhaseKeys,
-	setPopulationRoleKeys,
-} from '../state';
+import { GameState, PopulationRole } from '../state';
 import type {
 	ResourceKey,
 	StatKey,
@@ -233,10 +223,11 @@ export function createEngine({
 	runtimeResourceCatalog = createRuntimeResourceCatalog(runtimeResourceContent);
 	validatePhases(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
-	setResourceKeys(Object.keys(startConfig.player.resources || {}));
-	setStatKeys(Object.keys(startConfig.player.stats || {}));
-	setPhaseKeys(phases.map((phaseDefinition) => phaseDefinition.id));
-	setPopulationRoleKeys(Object.keys(startConfig.player.population || {}));
+	// Legacy setters removed - ResourceV2 catalog provides all resource metadata
+	// Initialize PopulationRole for triggers.ts compatibility
+	for (const role of Object.keys(startConfig.player.population || {})) {
+		PopulationRole[role.charAt(0).toUpperCase() + role.slice(1)] = role;
+	}
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState(runtimeResourceCatalog, 'Player', 'Opponent');
