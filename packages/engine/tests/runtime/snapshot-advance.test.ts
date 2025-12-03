@@ -81,8 +81,9 @@ describe('snapshotAdvance', () => {
 		expect(snapshot.player).not.toBe(original.player);
 		expect(snapshot.effects).not.toBe(original.effects);
 		expect(snapshot.skipped?.sources).not.toBe(original.skipped?.sources);
-		snapshot.player.resourceValues[resourceKey] =
-			(snapshot.player.resourceValues[resourceKey] ?? 0) + 999;
+		// Snapshot uses valuesV2, not resourceValues
+		snapshot.player.valuesV2[resourceKey] =
+			(snapshot.player.valuesV2[resourceKey] ?? 0) + 999;
 		snapshot.effects[0]!.method = 'mutated-method';
 		snapshot.effects[0]!.params = resourceAmountParams({
 			key: resourceKey,
@@ -140,8 +141,9 @@ describe('snapshotAdvance', () => {
 		const originalValue = activePlayer.resourceValues[resourceKey] ?? 0;
 		const snapshot = snapshotAdvance(context, original);
 		expect(snapshot.skipped).toBeUndefined();
-		snapshot.player.resourceValues[resourceKey] =
-			(snapshot.player.resourceValues[resourceKey] ?? 0) + 100;
+		// Snapshot uses valuesV2, not resourceValues
+		snapshot.player.valuesV2[resourceKey] =
+			(snapshot.player.valuesV2[resourceKey] ?? 0) + 100;
 		snapshot.effects[0]!.method = 'remove';
 		snapshot.effects.push({ type: 'extra' });
 		expect(original.skipped).toBeUndefined();

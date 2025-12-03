@@ -107,8 +107,8 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			context.game.players.find((candidate) => candidate.id === player.id),
 		);
 		expect(firstStep.effects[0]).not.toBe(originalEffect);
-		// Use resourceValues since resources is gone
-		firstStep.player.resourceValues[CResource.gold] = 99;
+		// Snapshot uses valuesV2, not resourceValues
+		firstStep.player.valuesV2[CResource.gold] = 99;
 		firstStep.effects.push({
 			type: 'resource',
 			method: 'add',
@@ -118,7 +118,7 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			player.resourceValues[CResource.gold],
 		);
 		expect(land.onGainIncomeStep).toHaveLength(1);
-		expect(firstStep.player.resourceValues[CResource.gold]).toBe(99);
+		expect(firstStep.player.valuesV2[CResource.gold]).toBe(99);
 	});
 
 	it('enforces iteration limits to prevent runaway simulations', () => {
