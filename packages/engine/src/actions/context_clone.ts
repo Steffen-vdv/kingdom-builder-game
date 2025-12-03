@@ -181,7 +181,7 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		source.populations,
 		clonedPassives,
 		source.phases,
-		source.actionCostResource,
+		source.actionCostResourceId,
 		source.actionCostAmount,
 		source.resourceCatalogV2,
 		compensations,
