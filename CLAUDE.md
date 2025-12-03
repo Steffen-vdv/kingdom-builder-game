@@ -57,6 +57,25 @@ Never bypass these hooks. Fix failures locally before committing.
 | Naming      | Descriptive identifiers; camelCase/PascalCase          |
 | Indentation | Tabs (not spaces)                                      |
 
+## File Operations
+
+**Always read files before editing or writing to them.** The Edit tool will
+reject changes to files that haven't been read in the current session. This
+prevents blind edits and ensures you understand the current file state:
+
+```
+# Correct workflow
+1. Read the file first
+2. Understand its structure and content
+3. Make targeted edits
+
+# Incorrect - will fail
+Edit a file without reading it first → Error: "File has not been read yet"
+```
+
+When modifying multiple files, read each one before editing. This avoids wasted
+round-trips and keeps context accurate.
+
 ## Content-Driven Architecture
 
 **Never hardcode game data.** All resource keys, stat values, icons, and labels
