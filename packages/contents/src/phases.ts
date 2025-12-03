@@ -1,5 +1,5 @@
-import type { StatKey } from './stats';
-import type { PopulationRoleId } from './populationRoles';
+import { Stat, type StatKey } from './stats';
+import { PopulationRole, type PopulationRoleId } from './populationRoles';
 import { effect, phase, step, populationEvaluator, compareEvaluator, statEvaluator, type PhaseDef } from './config/builders';
 import { Types, StatMethods } from './config/builderShared';
 import { statAmountChange, statPercentFromStatChange } from './helpers/resourceV2Effects';
@@ -9,13 +9,13 @@ import { PhaseId, PhaseStepId, PhaseTrigger } from './phaseTypes';
 export { PhaseId, PhaseStepId, PhaseTrigger };
 export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTrigger as PhaseTriggerKey } from './phaseTypes';
 
-const LEGION_ROLE: PopulationRoleId = 'legion';
-const FORTIFIER_ROLE: PopulationRoleId = 'fortifier';
+const LEGION_ROLE: PopulationRoleId = PopulationRole.Legion;
+const FORTIFIER_ROLE: PopulationRoleId = PopulationRole.Fortifier;
 
-const ARMY_STRENGTH_STAT: StatKey = 'armyStrength';
-const FORTIFICATION_STRENGTH_STAT: StatKey = 'fortificationStrength';
-const GROWTH_STAT: StatKey = 'growth';
-const WAR_WEARINESS_STAT: StatKey = 'warWeariness';
+const ARMY_STRENGTH_STAT: StatKey = Stat.armyStrength;
+const FORTIFICATION_STRENGTH_STAT: StatKey = Stat.fortificationStrength;
+const GROWTH_STAT: StatKey = Stat.growth;
+const WAR_WEARINESS_STAT: StatKey = Stat.warWeariness;
 
 export const PHASES: PhaseDef[] = [
 	phase(PhaseId.Growth)

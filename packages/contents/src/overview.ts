@@ -1,5 +1,8 @@
 import { ActionId, BuildActions, DevelopActions, HireActions } from './actions';
 import { PhaseId } from './phaseTypes';
+import { Resource } from './resourceKeys';
+import { Stat } from './stats';
+import { PopulationRole } from './populationRoles';
 
 export type OverviewTokenCategoryName = 'actions' | 'phases' | 'resources' | 'stats' | 'population' | 'static';
 
@@ -82,19 +85,19 @@ const DEFAULT_TOKENS: OverviewTokenCandidates = {
 		[PhaseId.Main]: [PhaseId.Main],
 	},
 	resources: {
-		gold: ['gold'],
-		ap: ['ap'],
-		happiness: ['happiness'],
-		castleHP: ['castleHP'],
+		gold: [Resource.gold],
+		ap: [Resource.ap],
+		happiness: [Resource.happiness],
+		castleHP: [Resource.castleHP],
 	},
 	stats: {
-		armyStrength: ['armyStrength'],
-		fortificationStrength: ['fortificationStrength'],
+		armyStrength: [Stat.armyStrength],
+		fortificationStrength: [Stat.fortificationStrength],
 	},
 	population: {
-		council: ['council'],
-		legion: ['legion'],
-		fortifier: ['fortifier'],
+		council: [PopulationRole.Council],
+		legion: [PopulationRole.Legion],
+		fortifier: [PopulationRole.Fortifier],
 	},
 	static: {
 		land: ['land'],
@@ -106,7 +109,7 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 	{
 		kind: 'paragraph',
 		id: 'objective',
-		icon: 'castleHP',
+		icon: Resource.castleHP,
 		title: 'Your Objective',
 		span: true,
 		paragraphs: [
@@ -143,26 +146,26 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 	{
 		kind: 'list',
 		id: 'resources',
-		icon: 'gold',
+		icon: Resource.gold,
 		title: 'Resources',
 		items: [
 			{
-				icon: 'gold',
+				icon: Resource.gold,
 				label: 'Gold',
 				body: [`Fuels projects like {${DEFAULT_BUILD_ACTION}}, diplomacy, and daring plays.`],
 			},
 			{
-				icon: 'ap',
+				icon: Resource.ap,
 				label: 'Action Points',
 				body: ['Are the energy for every turn in the {main} Main phase.'],
 			},
 			{
-				icon: 'happiness',
+				icon: Resource.happiness,
 				label: 'Happiness',
 				body: ['Keeps the populace cheering instead of rioting.'],
 			},
 			{
-				icon: 'castleHP',
+				icon: Resource.castleHP,
 				label: 'Castle HP',
 				body: ['Is your lifeline—lose it and the dynasty topples.'],
 			},
@@ -178,22 +181,22 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 	{
 		kind: 'list',
 		id: 'population',
-		icon: 'council',
+		icon: PopulationRole.Council,
 		title: 'Population Roles',
 		span: true,
 		items: [
 			{
-				icon: 'council',
+				icon: PopulationRole.Council,
 				label: 'Council',
 				body: ['Rallies extra {ap} Action Points each round.'],
 			},
 			{
-				icon: 'legion',
+				icon: PopulationRole.Legion,
 				label: 'Legion',
 				body: ['Reinforces {armyStrength} Army strength for devastating {army_attack} raids.'],
 			},
 			{
-				icon: 'fortifier',
+				icon: PopulationRole.Fortifier,
 				label: 'Fortifier',
 				body: ['Cements your defenses with persistent buffs.'],
 			},
