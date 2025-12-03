@@ -91,8 +91,11 @@ guide for rationale, lore, and extended background.
      Update the content package (not web-layer fallbacks) so every layer stays
      in sync.
 4. **Honor the PR template**
-   - Copy `.github/PULL_REQUEST_TEMPLATE.md` into every PR body and replace all
-     placeholders with specific details before calling `make_pr`.
+   - Copy `.github/PULL_REQUEST_TEMPLATE.md` into every PR body.
+   - **DELETE every `<!-- ... -->` HTML comment** and replace it with actual
+     content describing your specific changes. No `<!--` or `-->` markers should
+     remain. See [`AGENTS.md` §2.3](../AGENTS.md#23-pull-request-submission-protocol)
+     for a before/after example.
 5. **Respect text standards**
    - Before touching player-facing copy, complete the "Before Writing Text"
      checklist in

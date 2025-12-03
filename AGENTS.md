@@ -98,14 +98,50 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Every time you call the `make_pr` tool, copy the full contents of
   `.github/PULL_REQUEST_TEMPLATE.md` into the PR body and replace every
   placeholder with the specific information for the current change set.
-- Do not trim sections from the template or leave HTML comments/placeholder
-  markers in place; fill out each required section completely.
+- **Placeholders are HTML comments** (`<!-- ... -->`). You must DELETE each
+  comment entirely and write actual content in its place. Do NOT leave any
+  `<!--` or `-->` markers in the final PR body.
 - Reviewers will immediately bounce any PR whose description omits a section
   from the template or leaves placeholders unaddressed, so confirm compliance
   before invoking `make_pr`.
 - Never commit, push, or call `make_pr` until `npm run format`, `npm run lint`,
   `npm run check`, and `npm run verify` have finished without errors. Fix every
   reported issue—including spacing drift back to tabs—before you stage files.
+
+#### PR Template Filling Example
+
+The template contains HTML comment placeholders that must be replaced:
+
+**Before (template with placeholders):**
+```markdown
+## Summary
+
+<!-- Provide a concise summary of the changes. -->
+
+## Player experience briefing (required)
+
+<!-- Describe, in non-technical language, what a player will notice. -->
+
+1. **File length limits respected:** <!-- Prove no created or updated files exceed max length rules. -->
+```
+
+**After (properly filled):**
+```markdown
+## Summary
+
+Add a new "Fortify" action that lets players increase castle defenses.
+
+## Player experience briefing (required)
+
+Players will see a new "Fortify" button in the action panel during the Main
+phase. Clicking it spends 3 gold to add +2 fortification to their castle.
+
+1. **File length limits respected:** All modified files remain under 350 lines.
+   `packages/contents/src/actions.ts` is now 287 lines.
+```
+
+Notice how each `<!-- ... -->` comment is completely removed and replaced with
+actual descriptive content specific to the change set.
 
 #### Coding Standards Checklist
 

@@ -86,8 +86,11 @@ must come from `@kingdom-builder/contents`:
 
 1. Run `npm run format`, `npm run lint`, `npm run check`, and `npm run verify`
 2. Copy `.github/PULL_REQUEST_TEMPLATE.md` into the PR body
-3. Fill all sections—reviewers bounce PRs with incomplete templates
-4. For text changes, complete the checklist from
+3. **DELETE every HTML comment placeholder** (`<!-- ... -->`) and replace with
+   actual content describing your specific changes. Do NOT leave any `<!--` or
+   `-->` markers. See `AGENTS.md` §2.3 for a before/after example.
+4. Fill all sections—reviewers bounce PRs with incomplete templates
+5. For text changes, complete the checklist from
    [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text)
 
 ## Common Patterns
