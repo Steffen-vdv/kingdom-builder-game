@@ -60,9 +60,9 @@ export function applyPlayerStartConfiguration(
 	}
 	const shouldSnapshotStats = Boolean(
 		resourceCatalog &&
-			(config.valuesV2 ||
-				config.resourceLowerBoundsV2 ||
-				config.resourceUpperBoundsV2),
+		(config.valuesV2 ||
+			config.resourceLowerBoundsV2 ||
+			config.resourceUpperBoundsV2),
 	);
 	let statSnapshotBeforeResourceOverrides: Map<StatKey, number> | null = null;
 	if (shouldSnapshotStats) {

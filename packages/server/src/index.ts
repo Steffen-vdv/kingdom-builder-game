@@ -57,8 +57,7 @@ export {
 	type AuthMiddleware,
 } from './auth/tokenAuthMiddleware.js';
 
-export interface StartServerOptions
-	extends Partial<FastifySessionTransportOptions> {
+export interface StartServerOptions extends Partial<FastifySessionTransportOptions> {
 	host?: string;
 	port?: number;
 	logger?: FastifyServerOptions['logger'];

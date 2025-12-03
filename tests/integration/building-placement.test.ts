@@ -23,7 +23,8 @@ describe('Building placement integration', () => {
 		}
 		const firstResourceId = Object.keys(buildCosts)[0]!;
 		const expandCostForFirstResource = Object.keys(expandBefore.costs)[0]!;
-		player.resourceValues[firstResourceId] += expandBefore.costs[expandCostForFirstResource] ?? 0;
+		player.resourceValues[firstResourceId] +=
+			expandBefore.costs[expandCostForFirstResource] ?? 0;
 		const v2Before = { ...player.resourceValues };
 
 		performAction(buildActionId, engineContext, { id: buildingId });
@@ -50,7 +51,9 @@ describe('Building placement integration', () => {
 				(v2Pre[resourceId] ?? 0) - cost + v2Gain,
 			);
 		}
-		for (const [resourceId, gain] of Object.entries(expandAfter.results.resources)) {
+		for (const [resourceId, gain] of Object.entries(
+			expandAfter.results.resources,
+		)) {
 			if (expandAfter.costs[resourceId] === undefined) {
 				const v2Gain = expandAfter.results.valuesV2[resourceId] ?? 0;
 				expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(

@@ -37,8 +37,12 @@ describe('applyParamsToEffects', () => {
 		expect(effect.params?.resourceId).toBe(params.resourceId);
 		expect(effect.params?.change?.amount).toBe(params.amount);
 		expect(effect.evaluator?.params?.times).toBe(params.count);
-		expect(effect.effects?.[0]?.params?.resourceId).toBe(params.nestedResourceId);
-		expect(effect.effects?.[0]?.params?.change?.amount).toBe(params.nestedAmount);
+		expect(effect.effects?.[0]?.params?.resourceId).toBe(
+			params.nestedResourceId,
+		);
+		expect(effect.effects?.[0]?.params?.change?.amount).toBe(
+			params.nestedAmount,
+		);
 	});
 
 	it('leaves non-placeholder strings untouched', () => {

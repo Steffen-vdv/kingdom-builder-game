@@ -13,11 +13,7 @@ interface ResourceV2StartValues {
 	readonly upperBounds: Record<string, number>;
 }
 
-function buildResourceV2StartValues(
-	resources?: Record<string, number>,
-	stats?: Record<string, number>,
-	population?: Record<string, number>,
-): ResourceV2StartValues {
+function buildResourceV2StartValues(resources?: Record<string, number>, stats?: Record<string, number>, population?: Record<string, number>): ResourceV2StartValues {
 	const values: Record<string, number> = {};
 	const lowerBounds: Record<string, number> = {};
 	const upperBounds: Record<string, number> = {};
@@ -85,11 +81,7 @@ const PLAYER_START_POPULATION = {
 	[PopulationRole.Fortifier]: 0,
 } as const satisfies Record<PopulationRoleId, number>;
 
-const PLAYER_START_V2 = buildResourceV2StartValues(
-	PLAYER_START_RESOURCES,
-	PLAYER_START_STATS,
-	PLAYER_START_POPULATION,
-);
+const PLAYER_START_V2 = buildResourceV2StartValues(PLAYER_START_RESOURCES, PLAYER_START_STATS, PLAYER_START_POPULATION);
 
 const DEV_MODE_PLAYER_RESOURCES = {
 	[Resource.gold]: 100,
@@ -104,27 +96,19 @@ const DEV_MODE_PLAYER_POPULATION = {
 	[PopulationRole.Fortifier]: 1,
 } as const satisfies Record<PopulationRoleId, number>;
 
-const DEV_MODE_PLAYER_V2 = buildResourceV2StartValues(
-	DEV_MODE_PLAYER_RESOURCES,
-	undefined,
-	DEV_MODE_PLAYER_POPULATION,
-);
+const DEV_MODE_PLAYER_V2 = buildResourceV2StartValues(DEV_MODE_PLAYER_RESOURCES, undefined, DEV_MODE_PLAYER_POPULATION);
 
 const DEV_MODE_PLAYER_OVERRIDE_B_RESOURCES = {
 	[Resource.castleHP]: 1,
 } as const satisfies Partial<Record<ResourceKey, number>>;
 
-const DEV_MODE_PLAYER_OVERRIDE_B_V2 = buildResourceV2StartValues(
-	DEV_MODE_PLAYER_OVERRIDE_B_RESOURCES,
-);
+const DEV_MODE_PLAYER_OVERRIDE_B_V2 = buildResourceV2StartValues(DEV_MODE_PLAYER_OVERRIDE_B_RESOURCES);
 
 const LAST_PLAYER_COMPENSATION_RESOURCES = {
 	[Resource.ap]: 1,
 } as const satisfies Partial<Record<ResourceKey, number>>;
 
-const LAST_PLAYER_COMPENSATION_V2 = buildResourceV2StartValues(
-	LAST_PLAYER_COMPENSATION_RESOURCES,
-);
+const LAST_PLAYER_COMPENSATION_V2 = buildResourceV2StartValues(LAST_PLAYER_COMPENSATION_RESOURCES);
 
 export const GAME_START: StartConfig = startConfig()
 	.player(

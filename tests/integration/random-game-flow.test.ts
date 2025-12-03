@@ -32,9 +32,8 @@ describe('random action flow', () => {
 		const regenEffect = (effects || []).find(
 			(e) => e.type === 'resource' && e.method === 'add',
 		);
-		const regenAmount = (
-			regenEffect?.params as { change: { amount: number } }
-		).change.amount;
+		const regenAmount = (regenEffect?.params as { change: { amount: number } })
+			.change.amount;
 		const rng = createRng(42);
 		const initialTurn = engineContext.game.turn;
 		const costResourceId = engineContext.activePlayer.getResourceV2Id(costKey);
@@ -64,9 +63,8 @@ describe('random action flow', () => {
 					const gainEffect = action.effects.find(
 						(e) => e.type === 'resource' && e.method === 'add',
 					)!;
-					const gain = (
-						gainEffect.params as { change: { amount: number } }
-					).change.amount;
+					const gain = (gainEffect.params as { change: { amount: number } })
+						.change.amount;
 					performAction(actionId, engineContext);
 					expect(playerResources[costKey]).toBe(
 						beforeCost - (costs[costKey] ?? 0),
