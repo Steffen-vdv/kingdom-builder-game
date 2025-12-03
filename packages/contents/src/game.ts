@@ -1,82 +1,50 @@
 import { startConfig, playerStart } from './config/builders';
 import type { PlayerStartResourceBoundsInput } from './config/builders/startConfig/playerStartBuilder';
-import { Resource, type ResourceKey, RESOURCE_V2_ID_BY_KEY } from './resourceKeys';
+import { Resource, type ResourceKey } from './resourceKeys';
 import { Stat, type StatKey } from './stats';
 import { PopulationRole, type PopulationRoleId } from './populationRoles';
 import { DevelopmentId } from './developments';
 import { RESOURCE_V2_REGISTRY } from './resourceV2';
 import type { StartConfig } from '@kingdom-builder/protocol';
 
-const RESOURCE_V2_ID_BY_RESOURCE_KEY = RESOURCE_V2_ID_BY_KEY;
-
-const RESOURCE_V2_ID_BY_STAT_KEY = {
-	[Stat.maxPopulation]: 'resource:stat:max-population',
-	[Stat.armyStrength]: 'resource:stat:army-strength',
-	[Stat.fortificationStrength]: 'resource:stat:fortification-strength',
-	[Stat.absorption]: 'resource:stat:absorption',
-	[Stat.growth]: 'resource:stat:growth',
-	[Stat.warWeariness]: 'resource:stat:war-weariness',
-} as const satisfies Record<StatKey, string>;
-
-const RESOURCE_V2_ID_BY_POPULATION_ROLE = {
-	[PopulationRole.Council]: 'resource:population:role:council',
-	[PopulationRole.Legion]: 'resource:population:role:legion',
-	[PopulationRole.Fortifier]: 'resource:population:role:fortifier',
-} as const satisfies Record<PopulationRoleId, string>;
-
-interface LegacyStartValues {
-	readonly resources?: Record<string, number>;
-	readonly stats?: Record<string, number>;
-	readonly population?: Record<string, number>;
-}
-
 interface ResourceV2StartValues {
 	readonly values: Record<string, number>;
 	readonly lowerBounds: Record<string, number>;
 	readonly upperBounds: Record<string, number>;
-	readonly mismatches: string[];
 }
 
-function buildResourceV2StartValues(legacy: LegacyStartValues): ResourceV2StartValues {
+function buildResourceV2StartValues(
+	resources?: Record<string, number>,
+	stats?: Record<string, number>,
+	population?: Record<string, number>,
+): ResourceV2StartValues {
 	const values: Record<string, number> = {};
 	const lowerBounds: Record<string, number> = {};
 	const upperBounds: Record<string, number> = {};
-	const mismatches: string[] = [];
 
-	function mirror<K extends string>(legacyMap: Record<K, number> | undefined, idMap: Record<K, string>, scope: string) {
-		if (!legacyMap) {
+	function processMap(map: Record<string, number> | undefined) {
+		if (!map) {
 			return;
 		}
-		for (const [legacyKey, value] of Object.entries(legacyMap) as Array<[K, number]>) {
-			const resourceId = idMap[legacyKey];
-			if (!resourceId) {
-				mismatches.push(`${scope}:${legacyKey} missing ResourceV2 id`);
-				continue;
-			}
-			const definition = RESOURCE_V2_REGISTRY.byId[resourceId];
-			if (!definition) {
-				mismatches.push(`${scope}:${legacyKey} missing catalog entry for ${resourceId}`);
-				continue;
-			}
-			if (values[resourceId] !== undefined && values[resourceId] !== value) {
-				mismatches.push(`${scope}:${legacyKey} value ${value} mismatches ResourceV2 value ${values[resourceId]} for ${resourceId}`);
-				continue;
-			}
+		for (const [resourceId, value] of Object.entries(map)) {
 			values[resourceId] = value;
-			if (typeof definition.lowerBound === 'number') {
-				lowerBounds[resourceId] = definition.lowerBound;
-			}
-			if (typeof definition.upperBound === 'number') {
-				upperBounds[resourceId] = definition.upperBound;
+			const definition = RESOURCE_V2_REGISTRY.byId[resourceId];
+			if (definition) {
+				if (typeof definition.lowerBound === 'number') {
+					lowerBounds[resourceId] = definition.lowerBound;
+				}
+				if (typeof definition.upperBound === 'number') {
+					upperBounds[resourceId] = definition.upperBound;
+				}
 			}
 		}
 	}
 
-	mirror(legacy.resources as Record<ResourceKey, number> | undefined, RESOURCE_V2_ID_BY_RESOURCE_KEY, 'resource');
-	mirror(legacy.stats as Record<StatKey, number> | undefined, RESOURCE_V2_ID_BY_STAT_KEY, 'stat');
-	mirror(legacy.population as Record<PopulationRoleId, number> | undefined, RESOURCE_V2_ID_BY_POPULATION_ROLE, 'population');
+	processMap(resources);
+	processMap(stats);
+	processMap(population);
 
-	return { values, lowerBounds, upperBounds, mismatches };
+	return { values, lowerBounds, upperBounds };
 }
 
 function toResourceBoundsInput(values: ResourceV2StartValues): PlayerStartResourceBoundsInput | undefined {
@@ -93,12 +61,6 @@ function toResourceBoundsInput(values: ResourceV2StartValues): PlayerStartResour
 		bounds.upper = values.upperBounds;
 	}
 	return bounds;
-}
-
-function assertNoResourceV2Mismatches(context: string, mismatches: string[]) {
-	if (mismatches.length > 0) {
-		throw new Error(`${context} ResourceV2 mismatches: ${mismatches.join('; ')}`);
-	}
 }
 
 const PLAYER_START_RESOURCES = {
@@ -123,12 +85,11 @@ const PLAYER_START_POPULATION = {
 	[PopulationRole.Fortifier]: 0,
 } as const satisfies Record<PopulationRoleId, number>;
 
-const PLAYER_START_V2 = buildResourceV2StartValues({
-	resources: PLAYER_START_RESOURCES,
-	stats: PLAYER_START_STATS,
-	population: PLAYER_START_POPULATION,
-});
-assertNoResourceV2Mismatches('Base player start', PLAYER_START_V2.mismatches);
+const PLAYER_START_V2 = buildResourceV2StartValues(
+	PLAYER_START_RESOURCES,
+	PLAYER_START_STATS,
+	PLAYER_START_POPULATION,
+);
 
 const DEV_MODE_PLAYER_RESOURCES = {
 	[Resource.gold]: 100,
@@ -143,29 +104,27 @@ const DEV_MODE_PLAYER_POPULATION = {
 	[PopulationRole.Fortifier]: 1,
 } as const satisfies Record<PopulationRoleId, number>;
 
-const DEV_MODE_PLAYER_V2 = buildResourceV2StartValues({
-	resources: DEV_MODE_PLAYER_RESOURCES,
-	population: DEV_MODE_PLAYER_POPULATION,
-});
-assertNoResourceV2Mismatches('Dev mode player start', DEV_MODE_PLAYER_V2.mismatches);
+const DEV_MODE_PLAYER_V2 = buildResourceV2StartValues(
+	DEV_MODE_PLAYER_RESOURCES,
+	undefined,
+	DEV_MODE_PLAYER_POPULATION,
+);
 
 const DEV_MODE_PLAYER_OVERRIDE_B_RESOURCES = {
 	[Resource.castleHP]: 1,
 } as const satisfies Partial<Record<ResourceKey, number>>;
 
-const DEV_MODE_PLAYER_OVERRIDE_B_V2 = buildResourceV2StartValues({
-	resources: DEV_MODE_PLAYER_OVERRIDE_B_RESOURCES,
-});
-assertNoResourceV2Mismatches('Dev mode player override B', DEV_MODE_PLAYER_OVERRIDE_B_V2.mismatches);
+const DEV_MODE_PLAYER_OVERRIDE_B_V2 = buildResourceV2StartValues(
+	DEV_MODE_PLAYER_OVERRIDE_B_RESOURCES,
+);
 
 const LAST_PLAYER_COMPENSATION_RESOURCES = {
 	[Resource.ap]: 1,
 } as const satisfies Partial<Record<ResourceKey, number>>;
 
-const LAST_PLAYER_COMPENSATION_V2 = buildResourceV2StartValues({
-	resources: LAST_PLAYER_COMPENSATION_RESOURCES,
-});
-assertNoResourceV2Mismatches('Last player compensation', LAST_PLAYER_COMPENSATION_V2.mismatches);
+const LAST_PLAYER_COMPENSATION_V2 = buildResourceV2StartValues(
+	LAST_PLAYER_COMPENSATION_RESOURCES,
+);
 
 export const GAME_START: StartConfig = startConfig()
 	.player(

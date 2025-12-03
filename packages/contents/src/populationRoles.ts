@@ -2,21 +2,29 @@ import type { PopulationRoleInfo } from './config/builders';
 import { RESOURCE_V2_REGISTRY, type ResourceV2Definition } from './resourceV2';
 
 export const PopulationRole = {
-	Council: 'council',
-	Legion: 'legion',
-	Fortifier: 'fortifier',
+	Council: 'resource:population:role:council',
+	Legion: 'resource:population:role:legion',
+	Fortifier: 'resource:population:role:fortifier',
 } as const;
-export type PopulationRoleId = (typeof PopulationRole)[keyof typeof PopulationRole];
 
-const POPULATION_ROLE_V2_ID_BY_KEY = {
-	[PopulationRole.Council]: 'resource:population:role:council',
-	[PopulationRole.Legion]: 'resource:population:role:legion',
-	[PopulationRole.Fortifier]: 'resource:population:role:fortifier',
-} as const satisfies Record<PopulationRoleId, string>;
+export type PopulationRoleV2Id = (typeof PopulationRole)[keyof typeof PopulationRole];
+export type PopulationRoleId = PopulationRoleV2Id;
 
-type PopulationRoleV2Id = (typeof POPULATION_ROLE_V2_ID_BY_KEY)[PopulationRoleId];
+const LEGACY_POPULATION_ROLE_KEY_MAP = {
+	council: PopulationRole.Council,
+	legion: PopulationRole.Legion,
+	fortifier: PopulationRole.Fortifier,
+} as const;
 
-const POPULATION_ROLE_KEY_BY_V2_ID = Object.fromEntries(Object.entries(POPULATION_ROLE_V2_ID_BY_KEY).map(([key, id]) => [id, key as PopulationRoleId])) as Record<PopulationRoleV2Id, PopulationRoleId>;
+export function legacyPopulationRoleKeyToResourceV2Id(legacyKey: string): string {
+	return LEGACY_POPULATION_ROLE_KEY_MAP[legacyKey as keyof typeof LEGACY_POPULATION_ROLE_KEY_MAP] ?? legacyKey;
+}
+
+const POPULATION_ROLE_KEY_BY_V2_ID = {
+	[PopulationRole.Council]: PopulationRole.Council,
+	[PopulationRole.Legion]: PopulationRole.Legion,
+	[PopulationRole.Fortifier]: PopulationRole.Fortifier,
+} as const satisfies Record<PopulationRoleId, PopulationRoleV2Id>;
 
 function toLegacyPopulationRoleInfo(key: PopulationRoleId, definition: ResourceV2Definition): PopulationRoleInfo {
 	return {
