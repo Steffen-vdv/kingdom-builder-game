@@ -9,7 +9,7 @@ export type { PhaseDef, StepDef } from './config/builders';
 export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTrigger as PhaseTriggerKey } from './phases';
 export type { ActionCategoryConfig, ActionCategoryLayout } from './config/builders';
 export { POPULATION_ROLES, PopulationRole, type PopulationRoleId } from './populationRoles';
-export { Resource, type ResourceKey, type ResourceV2Id, getResourceV2Id, RESOURCES } from './resources';
+export { Resource, type ResourceKey, type ResourceV2Id, getResourceV2Id, RESOURCES, RESOURCE_KEY_BY_V2_ID } from './resources';
 export { Stat, type StatKey, type StatV2Id, getStatResourceV2Id, STATS } from './stats';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';

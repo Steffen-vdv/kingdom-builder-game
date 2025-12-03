@@ -46,10 +46,13 @@ function ensureResource(
 		return;
 	}
 	const method = target > current ? 'add' : 'remove';
-	const effect: EffectDef<{ key: ResourceKey; amount: number }> = {
+	const effect: EffectDef = {
 		type: 'resource',
 		method,
-		params: { key, amount },
+		params: {
+			resourceId,
+			change: { type: 'amount', amount },
+		},
 	};
 	applyEffect(context, effect);
 }

@@ -1,5 +1,4 @@
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
-import { Resource, getResourceV2Id, type ResourceKey } from '@kingdom-builder/contents';
 import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
@@ -14,11 +13,12 @@ export interface TriggerEffectBundle {
 
 function pushUpkeepEffect(
 	bundles: TriggerEffectBundle[],
+	player: PlayerState,
 	source: Record<string, unknown>,
 	key: string,
 	amount: number,
 ) {
-	const resourceId = getResourceV2Id(key as ResourceKey);
+	const resourceId = player.getResourceV2Id(key);
 	bundles.push({
 		effects: [
 			{
@@ -64,6 +64,7 @@ export function collectTriggerEffects(
 			for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
 				pushUpkeepEffect(
 					bundles,
+					player,
 					{ type: 'population', id: role, count: qty },
 					key,
 					amount * qty,
@@ -95,7 +96,13 @@ export function collectTriggerEffects(
 	for (const land of player.lands) {
 		if (trigger === 'onPayUpkeepStep' && land.upkeep) {
 			for (const [key, amount] of Object.entries(land.upkeep)) {
-				pushUpkeepEffect(bundles, { type: 'land', id: land.id }, key, amount);
+				pushUpkeepEffect(
+					bundles,
+					player,
+					{ type: 'land', id: land.id },
+					key,
+					amount,
+				);
 			}
 		}
 		const landList = getEffects(land, trigger);
@@ -115,6 +122,7 @@ export function collectTriggerEffects(
 				)) {
 					pushUpkeepEffect(
 						bundles,
+						player,
 						{ type: 'development', id, landId: land.id },
 						key,
 						amount,
@@ -144,7 +152,13 @@ export function collectTriggerEffects(
 		const buildingDefinition = engineContext.buildings.get(id);
 		if (trigger === 'onPayUpkeepStep' && buildingDefinition?.upkeep) {
 			for (const [key, amount] of Object.entries(buildingDefinition.upkeep)) {
-				pushUpkeepEffect(bundles, { type: 'building', id }, key, amount);
+				pushUpkeepEffect(
+					bundles,
+					player,
+					{ type: 'building', id },
+					key,
+					amount,
+				);
 			}
 		}
 		const list = getEffects(buildingDefinition, trigger);

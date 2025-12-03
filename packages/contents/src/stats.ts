@@ -20,7 +20,7 @@ const STAT_V2_ID_BY_KEY = {
 	[Stat.warWeariness]: 'resource:stat:war-weariness',
 } as const satisfies Record<StatKey, string>;
 
-type StatV2Id = (typeof STAT_V2_ID_BY_KEY)[StatKey];
+export type StatV2Id = (typeof STAT_V2_ID_BY_KEY)[StatKey];
 
 export function getStatResourceV2Id(stat: StatKey): StatV2Id {
 	return STAT_V2_ID_BY_KEY[stat];

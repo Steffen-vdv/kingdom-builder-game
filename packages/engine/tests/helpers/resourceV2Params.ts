@@ -4,7 +4,12 @@ import type {
 	ResourceReconciliationMode,
 } from '../../src/resource-v2/reconciliation.ts';
 import { computeRequestedResourceDelta } from '../../src/resource-v2/reconciliation.ts';
-import { getResourceV2Id, getStatResourceV2Id, type ResourceKey, type StatKey } from '@kingdom-builder/contents';
+import {
+	getResourceV2Id,
+	getStatResourceV2Id,
+	type ResourceKey,
+	type StatKey,
+} from '@kingdom-builder/contents';
 
 interface BaseResourceParamsInput {
 	readonly key: string;
@@ -161,7 +166,7 @@ export function statAmountParams(
 		if (converted) {
 			statId = converted;
 		} else {
-			// If conversion returns undefined, assume input.key is already a stat ResourceV2 ID
+			// If undefined, assume key is already a stat ResourceV2 ID
 			statId = input.key;
 		}
 	}

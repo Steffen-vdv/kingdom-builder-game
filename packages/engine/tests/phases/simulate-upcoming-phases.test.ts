@@ -112,7 +112,9 @@ describe('simulateUpcomingPhases', () => {
 		const upkeepCost = 3;
 		player.resourceValues[player.getResourceV2Id(Resource.gold)] = 10;
 		land.upkeep = { [Resource.gold]: upkeepCost };
-		player.resourceValues[player.getPopulationResourceV2Id(PopulationRole.Council)] = 1;
+		player.resourceValues[
+			player.getPopulationResourceV2Id(PopulationRole.Council)
+		] = 1;
 		const result = simulateUpcomingPhases(context, player.id, {
 			phaseIds: {
 				growth: PhaseId.Growth,

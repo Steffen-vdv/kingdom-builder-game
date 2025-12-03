@@ -4,7 +4,7 @@ import { RESOURCE_V2_REGISTRY } from './registries/resourceV2';
 import { RESOURCE_KEY_BY_V2_ID } from './resourceKeys';
 import type { ResourceKey, ResourceV2Id } from './resourceKeys';
 
-export { Resource, type ResourceKey, type ResourceV2Id, getResourceV2Id } from './resourceKeys';
+export { Resource, type ResourceKey, type ResourceV2Id, getResourceV2Id, RESOURCE_KEY_BY_V2_ID } from './resourceKeys';
 
 function toLegacyResourceInfo(key: ResourceKey, definition: ResourceV2Definition): ResourceInfo {
 	const info: ResourceInfo = {

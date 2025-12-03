@@ -30,6 +30,8 @@ import {
 export function createSyntheticContext() {
 	const costKey = 'r0';
 	const gainKey = 'r1';
+	const costResourceId = 'resource:synthetic:r0';
+	const gainResourceId = 'resource:synthetic:r1';
 	const startAp = 3;
 
 	const actionsReg = new Registry<ActionConfig>(actionSchema);
@@ -42,7 +44,10 @@ export function createSyntheticContext() {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: gainKey, amount: 1 },
+					params: {
+						resourceId: gainResourceId,
+						change: { type: 'amount', amount: 1 },
+					},
 				},
 			],
 		},
@@ -54,7 +59,10 @@ export function createSyntheticContext() {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: gainKey, amount: 2 },
+					params: {
+						resourceId: gainResourceId,
+						change: { type: 'amount', amount: 2 },
+					},
 				},
 			],
 		},
@@ -66,7 +74,10 @@ export function createSyntheticContext() {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: gainKey, amount: 3 },
+					params: {
+						resourceId: gainResourceId,
+						change: { type: 'amount', amount: 3 },
+					},
 				},
 			],
 		},
@@ -88,7 +99,10 @@ export function createSyntheticContext() {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: costKey, amount: startAp },
+							params: {
+								resourceId: costResourceId,
+								change: { type: 'amount', amount: startAp },
+							},
 						},
 					],
 				},
