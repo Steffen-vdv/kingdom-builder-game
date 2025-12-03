@@ -15,8 +15,8 @@ export const populationRemove: EffectHandler = (effect, context, mult = 1) => {
 	let iterationIndex = 0;
 	while (iterationIndex < iterations) {
 		const player = context.activePlayer;
-		const resourceId = player.getPopulationResourceV2Id(role);
-		const current = getResourceValue(player, resourceId);
+		// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
+		const current = getResourceValue(player, role);
 		if (current <= 0) {
 			return;
 		}

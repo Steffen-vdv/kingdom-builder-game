@@ -16,8 +16,8 @@ export const populationAdd: EffectHandler = (effect, context, mult = 1) => {
 	while (iterationIndex < iterations) {
 		const player = context.activePlayer;
 		const populationDefinition = context.populations.get(role);
-		const resourceId = player.getPopulationResourceV2Id(role);
-		const current = getResourceValue(player, resourceId);
+		// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
+		const current = getResourceValue(player, role);
 		const { changed, nextValue } = setPopulationRoleValue(
 			context,
 			role,

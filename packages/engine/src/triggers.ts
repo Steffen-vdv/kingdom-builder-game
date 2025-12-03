@@ -13,12 +13,12 @@ export interface TriggerEffectBundle {
 
 function pushUpkeepEffect(
 	bundles: TriggerEffectBundle[],
-	player: PlayerState,
+	_player: PlayerState,
 	source: Record<string, unknown>,
-	key: string,
+	resourceId: string,
 	amount: number,
 ) {
-	const resourceId = player.getResourceV2Id(key);
+	// resourceId IS the ResourceV2 ID directly (no mapper needed)
 	bundles.push({
 		effects: [
 			{
@@ -58,8 +58,8 @@ export function collectTriggerEffects(
 	const bundles: TriggerEffectBundle[] = [];
 	for (const role of Object.values(PopulationRole)) {
 		const populationDefinition = engineContext.populations.get(role);
-		const resourceId = player.getPopulationResourceV2Id(role);
-		const qty = getResourceValue(player, resourceId);
+		// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
+		const qty = getResourceValue(player, role);
 		if (trigger === 'onPayUpkeepStep' && populationDefinition?.upkeep) {
 			for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
 				pushUpkeepEffect(

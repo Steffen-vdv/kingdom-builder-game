@@ -63,16 +63,14 @@ export const resultMod: EffectHandler<ResultModParams> = (
 					if (amount !== undefined) {
 						for (const gainEntry of gains) {
 							if (gainEntry.amount > 0) {
-								const resourceId = innerContext.activePlayer.getResourceV2Id(
-									gainEntry.key,
-								);
+								// key IS the ResourceV2 ID directly (no mapper needed)
 								runEffects(
 									[
 										{
 											type: 'resource',
 											method: 'add',
 											params: {
-												resourceId,
+												resourceId: gainEntry.key,
 												change: { type: 'amount', amount },
 											},
 										},

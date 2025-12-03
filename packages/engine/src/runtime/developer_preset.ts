@@ -32,11 +32,11 @@ function applyEffect(
 
 function ensureResource(
 	context: EngineContext,
-	key: ResourceKey,
+	resourceId: ResourceKey,
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	const resourceId = player.getResourceV2Id(key);
+	// resourceId IS the ResourceV2 ID directly (no mapper needed)
 	const current = getResourceValue(player, resourceId);
 	if (current === target) {
 		return;
@@ -63,8 +63,8 @@ function ensurePopulation(
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	const resourceId = player.getPopulationResourceV2Id(role);
-	const current = getResourceValue(player, resourceId);
+	// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
+	const current = getResourceValue(player, role);
 	if (current === target) {
 		return;
 	}

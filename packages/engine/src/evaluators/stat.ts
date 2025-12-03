@@ -11,7 +11,7 @@ export const statEvaluator: EvaluatorHandler<number, StatEvaluatorParams> = (
 	definition,
 	engineContext: EngineContext,
 ) => {
+	// key IS the ResourceV2 ID (e.g. 'resource:stat:army-strength')
 	const key = definition.params?.key as StatKey;
-	const resourceId = engineContext.activePlayer.getStatResourceV2Id(key);
-	return getResourceValue(engineContext.activePlayer, resourceId);
+	return getResourceValue(engineContext.activePlayer, key);
 };
