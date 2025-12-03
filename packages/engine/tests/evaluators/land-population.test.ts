@@ -19,12 +19,16 @@ describe('evaluators', () => {
 
 	it('totals population counts and filters by role when provided', () => {
 		const context = createTestEngine();
-		const roleIds = Object.keys(context.activePlayer.population);
+		// Population roles ARE ResourceV2 IDs - get them from resourceValues keys
+		const roleIds = Object.keys(context.activePlayer.resourceValues).filter(
+			(key) => key.startsWith('resource:population:'),
+		);
 		const focusRole = roleIds[0]!;
 		const secondaryRole = roleIds.find((entry) => entry !== focusRole);
-		context.activePlayer.population[focusRole] = 3;
+		// Population values accessed via resourceValues
+		context.activePlayer.resourceValues[focusRole] = 3;
 		if (secondaryRole) {
-			context.activePlayer.population[secondaryRole] = 2;
+			context.activePlayer.resourceValues[secondaryRole] = 2;
 		}
 		const total = populationEvaluator({ params: {} } as never, context);
 		expect(total).toBe(secondaryRole ? 5 : 3);

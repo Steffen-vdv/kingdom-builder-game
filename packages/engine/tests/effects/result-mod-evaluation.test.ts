@@ -36,7 +36,9 @@ describe('result_mod evaluation modifiers', () => {
 				},
 			],
 		};
-		const before = engineContext.activePlayer.resources[primaryResource] ?? 0;
+		// PlayerState uses resourceValues for all resources
+		const before =
+			engineContext.activePlayer.resourceValues[primaryResource] ?? 0;
 		runEffects([effect], engineContext);
 
 		const gains = [
@@ -55,7 +57,8 @@ describe('result_mod evaluation modifiers', () => {
 			key: secondaryResource ?? primaryResource,
 			amount: -2,
 		});
-		const after = engineContext.activePlayer.resources[primaryResource] ?? 0;
+		const after =
+			engineContext.activePlayer.resourceValues[primaryResource] ?? 0;
 		expect(after - before).toBe(3);
 
 		runEffects(

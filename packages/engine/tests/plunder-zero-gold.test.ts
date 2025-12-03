@@ -24,11 +24,15 @@ describe('plunder action with zero opponent resource', () => {
 		});
 		const context = createTestEngine(content);
 		toMain(context);
-		context.opponent.resources[CResource.gold] = 0;
-		const beforeAttacker = context.activePlayer.resources[CResource.gold] ?? 0;
-		const beforeDefender = context.opponent.resources[CResource.gold] ?? 0;
+		// PlayerState uses resourceValues for all resources
+		context.opponent.resourceValues[CResource.gold] = 0;
+		const beforeAttacker =
+			context.activePlayer.resourceValues[CResource.gold] ?? 0;
+		const beforeDefender = context.opponent.resourceValues[CResource.gold] ?? 0;
 		expect(() => performAction(action.id, context)).not.toThrow();
-		expect(context.activePlayer.resources[CResource.gold]).toBe(beforeAttacker);
-		expect(context.opponent.resources[CResource.gold]).toBe(beforeDefender);
+		expect(context.activePlayer.resourceValues[CResource.gold]).toBe(
+			beforeAttacker,
+		);
+		expect(context.opponent.resourceValues[CResource.gold]).toBe(beforeDefender);
 	});
 });

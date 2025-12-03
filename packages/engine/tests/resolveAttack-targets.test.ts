@@ -18,8 +18,9 @@ describe('resolveAttack target handlers', () => {
 		};
 
 		const originalHandler = attackTargetHandlers.resource;
+		// PlayerState uses resourceValues for all resources
 		const mutation = {
-			before: defender.resources[target.key] ?? 0,
+			before: defender.resourceValues[target.key] ?? 0,
 			after: 3,
 		};
 		const applySpy = vi.fn<typeof originalHandler.applyDamage>(
