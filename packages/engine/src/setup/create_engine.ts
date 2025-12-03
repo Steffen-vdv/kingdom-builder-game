@@ -254,7 +254,7 @@ export function createEngine({
 		populations,
 		passiveManager,
 		phases,
-		actionCostConfig.resource,
+		actionCostConfig.resourceId,
 		actionCostConfig.amount,
 		runtimeResourceCatalog,
 		compensationMap,

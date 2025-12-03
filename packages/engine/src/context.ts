@@ -24,7 +24,7 @@ export class EngineContext {
 		public populations: Registry<PopulationDef>,
 		public passives: PassiveManager,
 		public phases: PhaseDef[],
-		public actionCostResource: ResourceKey,
+		public actionCostResourceId: string,
 		public actionCostAmount: number | null,
 		public resourceCatalogV2: RuntimeResourceCatalog,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
@@ -32,6 +32,10 @@ export class EngineContext {
 			B: {},
 		},
 	) {}
+
+	get actionCostResource(): ResourceKey {
+		return this.actionCostResourceId;
+	}
 	aiSystem?: AISystem;
 	recentResourceGains: {
 		key: string;
