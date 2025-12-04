@@ -1,20 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import {
-	Land,
-	PlayerState,
-	GameState,
-	setResourceKeys,
-	setStatKeys,
-} from '../../src/state/index.ts';
+import { Land, PlayerState, GameState } from '../../src/state/index.ts';
 import { Resource, Stat } from '@kingdom-builder/contents';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
 } from '@kingdom-builder/contents/registries/resourceV2';
 import { createRuntimeResourceCatalog } from '../../src/resource-v2/index.ts';
-
-setResourceKeys(Object.values(Resource));
-setStatKeys(Object.values(Stat));
 
 const RUNTIME_RESOURCE_CATALOG = createRuntimeResourceCatalog({
 	resources: RESOURCE_V2_REGISTRY,
