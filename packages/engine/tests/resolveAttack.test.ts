@@ -209,8 +209,7 @@ describe('resolveAttack', () => {
 			engineContext,
 		);
 		const startHP = defender.resourceValues[CResource.castleHP] ?? 0;
-		const armyStrength =
-			attacker.resourceValues[CStat.armyStrength] as number;
+		const armyStrength = attacker.resourceValues[CStat.armyStrength] as number;
 		const result = resolveAttack(defender, armyStrength, engineContext, {
 			type: 'resource',
 			key: CResource.castleHP,

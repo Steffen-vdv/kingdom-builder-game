@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-	performAction,
-	advance,
-	getActionCosts,
-} from '../../src/index.ts';
+import { performAction, advance, getActionCosts } from '../../src/index.ts';
 import {
 	createActionRegistry,
 	Stat as CStat,
@@ -49,8 +45,8 @@ describe('stat:add effect', () => {
 		engineContext.activePlayer.resourceValues[CResource.ap] =
 			actionCosts[CResource.ap] ?? 0;
 		performAction('train_army', engineContext);
-		expect(
-			engineContext.activePlayer.resourceValues[CStat.armyStrength],
-		).toBe(armyStrengthBefore + armyStrengthIncrease);
+		expect(engineContext.activePlayer.resourceValues[CStat.armyStrength]).toBe(
+			armyStrengthBefore + armyStrengthIncrease,
+		);
 	});
 });

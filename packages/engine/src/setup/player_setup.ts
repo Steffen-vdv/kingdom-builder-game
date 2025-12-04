@@ -1,6 +1,5 @@
 import { Land } from '../state';
 import type { PlayerState, StatKey } from '../state';
-import { Stat } from '@kingdom-builder/contents';
 import type { RuleSet } from '../services';
 import { applyStatDelta } from '../stat_sources';
 import type { RuntimeResourceCatalog } from '../resource-v2';
@@ -25,10 +24,6 @@ function cloneEffectList<EffectType extends object>(
 	return effectList.map((effect) => ({ ...effect }));
 }
 
-function isStatKey(key: string): key is StatKey {
-	return key in Stat;
-}
-
 export function applyPlayerStartConfiguration(
 	playerState: PlayerState,
 	config: PlayerStartConfig,
@@ -40,13 +35,18 @@ export function applyPlayerStartConfiguration(
 	}
 	// Apply resources via ResourceV2 API (keys are now ResourceV2 IDs)
 	if (resourceCatalog) {
-		for (const [resourceId, value] of Object.entries(
-			config.resources || {},
-		)) {
-			setResourceValue(null, playerState, resourceCatalog, resourceId, value ?? 0, {
-				suppressTouched: true,
-				suppressRecentEntry: true,
-			});
+		for (const [resourceId, value] of Object.entries(config.resources || {})) {
+			setResourceValue(
+				null,
+				playerState,
+				resourceCatalog,
+				resourceId,
+				value ?? 0,
+				{
+					suppressTouched: true,
+					suppressRecentEntry: true,
+				},
+			);
 		}
 		// Apply stats via ResourceV2 API (stat keys are now ResourceV2 IDs)
 		for (const [statId, value] of Object.entries(config.stats || {})) {

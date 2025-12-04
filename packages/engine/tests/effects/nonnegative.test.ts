@@ -45,8 +45,7 @@ describe('resource and stat bounds', () => {
 		const effectAmount = statParams?.amount ?? 0;
 		engineContext.activePlayer.resourceValues[CStat.fortificationStrength] =
 			effectAmount - 1;
-		const cost =
-			getActionCosts('lower_fort', engineContext)[CResource.ap] ?? 0;
+		const cost = getActionCosts('lower_fort', engineContext)[CResource.ap] ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('lower_fort', engineContext);
 		expect(
@@ -82,9 +81,9 @@ describe('resource and stat bounds', () => {
 		const cost = getActionCosts('lose_gold', engineContext)[CResource.ap] ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('lose_gold', engineContext);
-		expect(
-			getResourceValue(engineContext.activePlayer, CResource.gold),
-		).toBe(Math.max(1 + effectAmount, 0));
+		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
+			Math.max(1 + effectAmount, 0),
+		);
 	});
 
 	it('clamps negative stat additions to zero', () => {

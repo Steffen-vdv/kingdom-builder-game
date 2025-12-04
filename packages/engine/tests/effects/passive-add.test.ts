@@ -76,8 +76,8 @@ describe('passive:add effect', () => {
 			before + 1,
 		);
 		engineContext.passives.removePassive('temp', engineContext);
-		expect(
-			engineContext.activePlayer.resourceValues[Stat.armyStrength],
-		).toBe(before);
+		expect(engineContext.activePlayer.resourceValues[Stat.armyStrength]).toBe(
+			before,
+		);
 	});
 });

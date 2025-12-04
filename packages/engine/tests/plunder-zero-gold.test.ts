@@ -33,6 +33,8 @@ describe('plunder action with zero opponent resource', () => {
 		expect(context.activePlayer.resourceValues[CResource.gold]).toBe(
 			beforeAttacker,
 		);
-		expect(context.opponent.resourceValues[CResource.gold]).toBe(beforeDefender);
+		expect(context.opponent.resourceValues[CResource.gold]).toBe(
+			beforeDefender,
+		);
 	});
 });
