@@ -45,6 +45,7 @@ export interface RaidersGuildSyntheticContext {
 
 const tierResourceKey = 'synthetic:tier';
 const syntheticGoldKey = 'gold';
+const syntheticGoldResourceId = 'resource:synthetic:gold';
 
 const SYNTHETIC_PHASES: SessionSnapshot['phases'] = [
 	{
@@ -133,7 +134,10 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: syntheticGoldKey, amount: 2 },
+				params: {
+					resourceId: syntheticGoldResourceId,
+					change: { type: 'amount', amount: 2 },
+				},
 			},
 		],
 	});
@@ -206,7 +210,10 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: syntheticGoldKey, amount: 1 },
+						params: {
+							resourceId: syntheticGoldResourceId,
+							change: { type: 'amount', amount: 1 },
+						},
 					},
 				],
 			},

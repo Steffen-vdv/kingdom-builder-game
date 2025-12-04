@@ -6,24 +6,22 @@ import {
 	PHASES,
 	RULES,
 } from '@kingdom-builder/contents';
-import type { StatKey } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { simulateUpcomingPhases } from '../../src';
 import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 function sanitizePlayerState(context: ReturnType<typeof createTestEngine>) {
 	const player = context.game.players[0]!;
-	for (const key of Object.keys(player.resources)) {
-		player.resources[key] = 0;
+	// Keys ARE ResourceV2 IDs directly - no mapper needed
+	// Reset all ResourceV2 values (the unified storage)
+	for (const key of Object.keys(player.resourceValues)) {
+		player.resourceValues[key] = 0;
 	}
-	for (const key of Object.keys(player.stats)) {
-		player.stats[key] = 0;
+	for (const key of Object.keys(player.statsHistory)) {
 		player.statsHistory[key] = false;
-		const statId = player.getStatResourceV2Id(key as StatKey);
-		player.statSources[statId] = {};
 	}
-	for (const key of Object.keys(player.population)) {
-		player.population[key] = 0;
+	for (const key of Object.keys(player.statSources)) {
+		player.statSources[key] = {};
 	}
 	player.buildings.clear();
 	player.actions.clear();
@@ -107,9 +105,10 @@ describe('simulateUpcomingPhases', () => {
 		const player = sanitizePlayerState(context);
 		const land = player.lands[0]!;
 		const upkeepCost = 3;
-		player.resources[Resource.gold] = 10;
+		// Keys ARE ResourceV2 IDs directly - no mapper needed
+		player.resourceValues[Resource.gold] = 10;
 		land.upkeep = { [Resource.gold]: upkeepCost };
-		player.population[PopulationRole.Council] = 1;
+		player.resourceValues[PopulationRole.Council] = 1;
 		const result = simulateUpcomingPhases(context, player.id, {
 			phaseIds: {
 				growth: PhaseId.Growth,
@@ -146,7 +145,8 @@ describe('simulateUpcomingPhases', () => {
 			},
 		];
 		land.upkeep = { [Resource.gold]: upkeepCost };
-		player.resources[Resource.gold] = 10;
+		// Keys ARE ResourceV2 IDs directly - no mapper needed
+		player.resourceValues[Resource.gold] = 10;
 		const result = simulateUpcomingPhases(context, player.id);
 		const relevantPhases = result.steps
 			.filter((step) => step.player.id === player.id)

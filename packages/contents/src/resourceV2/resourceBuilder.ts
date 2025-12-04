@@ -27,6 +27,7 @@ export interface ResourceV2Builder {
 	description(description: string): this;
 	order(order: number): this;
 	displayAsPercent(enabled?: boolean): this;
+	allowDecimal(enabled?: boolean): this;
 	lowerBound(value: number): this;
 	upperBound(value: number): this;
 	bounds(lower?: number, upper?: number): this;
@@ -68,7 +69,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 		this.setKeys.add(key as string);
 	}
 
-	private setToggle(key: 'displayAsPercent' | 'trackValueBreakdown' | 'trackBoundBreakdown', value: boolean) {
+	private setToggle(key: 'displayAsPercent' | 'allowDecimal' | 'trackValueBreakdown' | 'trackBoundBreakdown', value: boolean) {
 		if (this.setToggles.has(key)) {
 			throw new Error(`${builderName} already toggled ${key}(). Remove the duplicate call.`);
 		}
@@ -107,6 +108,12 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 	displayAsPercent(enabled = true) {
 		const resolved = enabled ?? true;
 		this.setToggle('displayAsPercent', resolved);
+		return this;
+	}
+
+	allowDecimal(enabled = true) {
+		const resolved = enabled ?? true;
+		this.setToggle('allowDecimal', resolved);
 		return this;
 	}
 

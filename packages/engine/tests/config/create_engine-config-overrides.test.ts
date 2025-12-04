@@ -58,9 +58,10 @@ describe('createEngine configuration overrides', () => {
 		expect(engine.developments.keys()).toEqual(factory.developments.keys());
 		expect(engine.populations.keys()).toEqual(factory.populations.keys());
 		const [playerA, playerB] = engine.game.players;
-		expect(playerA.resources[Resource.gold]).toBe(13);
-		expect(playerB.resources[Resource.gold]).toBe(17);
-		expect(playerA.population[customPopulation.id]).toBe(1);
+		// PlayerState uses resourceValues for all resources/population
+		expect(playerA.resourceValues[Resource.gold]).toBe(13);
+		expect(playerB.resourceValues[Resource.gold]).toBe(17);
+		expect(playerA.resourceValues[customPopulation.id]).toBe(1);
 		const createdAction = engine.actions.get(customAction.id);
 		const baseCosts = createdAction.baseCosts || {};
 		expect(baseCosts[Resource.gold]).toBe(3);
@@ -97,7 +98,7 @@ describe('createEngine configuration overrides', () => {
 		const devGold = GAME_START.modes?.dev?.player?.resources?.[goldKey];
 		if (typeof devGold === 'number') {
 			const [playerA] = engine.game.players;
-			expect(playerA.resources[goldKey]).toBe(devGold);
+			expect(playerA.resourceValues[goldKey]).toBe(devGold);
 		}
 	});
 });

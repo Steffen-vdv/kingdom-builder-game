@@ -31,8 +31,8 @@ describe('cloneEngineContext', () => {
 		engineContext.statSourceStack.push(frame);
 
 		const player = engineContext.activePlayer;
-		const goldResourceId = player.getResourceV2Id(CResource.gold);
-		player.resources[CResource.gold] = 10;
+		// CResource.gold IS the ResourceV2 ID directly
+		const goldResourceId = CResource.gold;
 		player.resourceValues[goldResourceId] = 5;
 		player.resourceLowerBounds[goldResourceId] = 0;
 		player.resourceUpperBounds[goldResourceId] = 20;
@@ -43,20 +43,22 @@ describe('cloneEngineContext', () => {
 			upper: false,
 		};
 		const fallbackResource = CResource.happiness;
-		const fallbackResourceId = player.getResourceV2Id(fallbackResource);
-		player.resources[fallbackResource] = undefined as never;
+		// CResource.happiness IS the ResourceV2 ID directly
+		const fallbackResourceId = fallbackResource;
 		player.resourceValues[fallbackResourceId] = undefined as never;
 		player.resourceLowerBounds[fallbackResourceId] = undefined as never;
 		player.resourceUpperBounds[fallbackResourceId] = undefined as never;
 		player.resourceTouched[fallbackResourceId] = undefined as never;
 		player.resourceTierIds[fallbackResourceId] = undefined as never;
 		player.resourceBoundTouched[fallbackResourceId] = undefined as never;
-		player.population[CPopulationRole.Legion] = 2;
-		player.population[CPopulationRole.Council] = undefined as never;
-		player.stats[CStat.armyStrength] = 3;
+		// CPopulationRole.Legion IS the ResourceV2 ID directly
+		player.resourceValues[CPopulationRole.Legion] = 2;
+		player.resourceValues[CPopulationRole.Council] = undefined as never;
+		// CStat.armyStrength IS the ResourceV2 ID directly
+		player.resourceValues[CStat.armyStrength] = 3;
 		player.statsHistory[CStat.armyStrength] = true;
-		const armyStrengthId = player.getStatResourceV2Id(CStat.armyStrength);
-		const happinessStatId = player.getStatResourceV2Id(CStat.happiness);
+		const armyStrengthId = CStat.armyStrength;
+		const happinessStatId = CStat.happiness;
 
 		const land = player.lands[0]!;
 		land.upkeep = { [CResource.gold]: 1 };
@@ -145,7 +147,6 @@ describe('cloneEngineContext', () => {
 			lower: true,
 			upper: false,
 		});
-		expect(clonedPlayer.resources[fallbackResource]).toBe(0);
 		expect(clonedPlayer.resourceValues[fallbackResourceId]).toBe(0);
 		expect(clonedPlayer.resourceLowerBounds[fallbackResourceId]).toBeNull();
 		expect(clonedPlayer.resourceUpperBounds[fallbackResourceId]).toBeNull();
@@ -154,9 +155,9 @@ describe('cloneEngineContext', () => {
 		expect(
 			clonedPlayer.resourceBoundTouched[fallbackResourceId],
 		).toBeUndefined();
-		expect(clonedPlayer.stats[CStat.armyStrength]).toBe(3);
-		expect(clonedPlayer.population[CPopulationRole.Legion]).toBe(2);
-		expect(clonedPlayer.population[CPopulationRole.Council]).toBe(0);
+		expect(clonedPlayer.resourceValues[CStat.armyStrength]).toBe(3);
+		expect(clonedPlayer.resourceValues[CPopulationRole.Legion]).toBe(2);
+		expect(clonedPlayer.resourceValues[CPopulationRole.Council]).toBe(0);
 		expect(clonedPlayer.statSources[armyStrengthId]['source-id']).not.toBe(
 			player.statSources[armyStrengthId]['source-id'],
 		);

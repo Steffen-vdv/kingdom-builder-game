@@ -71,7 +71,6 @@ export function createBuildingRegistry() {
 			.name("Raider's Guild")
 			.icon('🏴‍☠️')
 			.cost(Resource.gold, 8)
-			.cost(Resource.ap, 1)
 			.upkeep(Resource.gold, 1)
 			.onBuild(
 				effect(Types.ResultMod, ResultModMethods.ADD)

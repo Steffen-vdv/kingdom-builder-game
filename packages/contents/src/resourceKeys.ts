@@ -1,23 +1,24 @@
 export const Resource = {
-	gold: 'gold',
-	ap: 'ap',
-	happiness: 'happiness',
-	castleHP: 'castleHP',
+	gold: 'resource:core:gold',
+	ap: 'resource:core:action-points',
+	happiness: 'resource:core:happiness',
+	castleHP: 'resource:core:castle-hp',
 } as const;
 
-export type ResourceKey = (typeof Resource)[keyof typeof Resource];
+export type ResourceV2Id = (typeof Resource)[keyof typeof Resource];
+export type ResourceKey = ResourceV2Id;
 
-export const RESOURCE_V2_ID_BY_KEY = {
-	[Resource.gold]: 'resource:core:gold',
-	[Resource.ap]: 'resource:core:action-points',
-	[Resource.happiness]: 'resource:core:happiness',
-	[Resource.castleHP]: 'resource:core:castle-hp',
-} as const satisfies Record<ResourceKey, string>;
-
-export type ResourceV2Id = (typeof RESOURCE_V2_ID_BY_KEY)[ResourceKey];
-
-export function getResourceV2Id(resource: ResourceKey): ResourceV2Id {
-	return RESOURCE_V2_ID_BY_KEY[resource];
+export function getResourceV2Id(resource: ResourceV2Id): ResourceV2Id {
+	return resource;
 }
 
-export const RESOURCE_KEY_BY_V2_ID = Object.fromEntries(Object.entries(RESOURCE_V2_ID_BY_KEY).map(([key, id]) => [id, key as ResourceKey])) as Record<ResourceV2Id, ResourceKey>;
+const LEGACY_KEY_MAP = {
+	gold: Resource.gold,
+	ap: Resource.ap,
+	happiness: Resource.happiness,
+	castleHP: Resource.castleHP,
+} as const;
+
+export function legacyKeyToResourceV2Id(legacyKey: string): string {
+	return LEGACY_KEY_MAP[legacyKey as keyof typeof LEGACY_KEY_MAP] ?? legacyKey;
+}

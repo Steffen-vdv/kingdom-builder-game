@@ -71,7 +71,6 @@ export function registerHireActions(registry: Registry<ActionDef>) {
 				.id(id)
 				.name(`Hire ${name}`)
 				.icon(icon)
-				.cost(Resource.ap, 1)
 				.cost(Resource.gold, 5)
 				.requirement(populationCapacityRequirement)
 				.effect(populationEffect)

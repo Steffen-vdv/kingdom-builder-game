@@ -18,15 +18,16 @@ describe('stat sources longevity', () => {
 		const engineContext = createTestEngine();
 		const player = engineContext.activePlayer;
 
-		const growthId = player.getStatResourceV2Id(Stat.growth);
-		const armyStrengthId = player.getStatResourceV2Id(Stat.armyStrength);
+		// Stat values ARE ResourceV2 IDs directly - no mapper needed
+		const growthId = Stat.growth;
+		const armyStrengthId = Stat.armyStrength;
 		const growthSources = Object.values(player.statSources[growthId] ?? {});
 		expect(growthSources.length).toBeGreaterThan(0);
 		const growthTotal = growthSources.reduce(
 			(sum, entry) => sum + entry.amount,
 			0,
 		);
-		expect(growthTotal).toBeCloseTo(player.stats[Stat.growth]);
+		expect(growthTotal).toBeCloseTo(player.resourceValues[Stat.growth]);
 		expect(
 			growthSources.some((entry) => entry.meta.longevity === 'permanent'),
 		).toBe(true);

@@ -43,13 +43,18 @@ export function createSyntheticSessionManager(
 	const factory = createContentFactory();
 	const costKey = 'synthetic:cost';
 	const gainKey = 'synthetic:gain';
+	const costResourceId = 'resource:synthetic:cost';
+	const gainResourceId = 'resource:synthetic:gain';
 	const action = factory.action({
-		baseCosts: { [costKey]: 1 },
+		baseCosts: { [costResourceId]: 1 },
 		effects: [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: gainKey, amount: 1 },
+				params: {
+					resourceId: gainResourceId,
+					change: { type: 'amount', amount: 1 },
+				},
 			},
 		],
 	});
@@ -65,8 +70,8 @@ export function createSyntheticSessionManager(
 							type: 'resource',
 							method: 'add',
 							params: {
-								key: costKey,
-								amount: 1,
+								resourceId: costResourceId,
+								change: { type: 'amount', amount: 1 },
 							},
 						},
 					],

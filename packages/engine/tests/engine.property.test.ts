@@ -50,8 +50,9 @@ describe('engine property invariants', () => {
 					const costs = getActionCosts(action.id, engineContext, {
 						id: building.id,
 					});
+					// PlayerState uses resourceValues for all resources
 					for (const [key, amount] of Object.entries(costs)) {
-						engineContext.activePlayer.resources[key] = amount;
+						engineContext.activePlayer.resourceValues[key] = amount;
 					}
 					const before = snapshotPlayer(
 						engineContext.activePlayer,
@@ -62,9 +63,11 @@ describe('engine property invariants', () => {
 					expect(engineContext.activePlayer.buildings.has(building.id)).toBe(
 						true,
 					);
-					for (const key of Object.keys(engineContext.activePlayer.resources)) {
+					for (const key of Object.keys(
+						engineContext.activePlayer.resourceValues,
+					)) {
 						expect(
-							engineContext.activePlayer.resources[key],
+							engineContext.activePlayer.resourceValues[key],
 						).toBeGreaterThanOrEqual(0);
 					}
 					for (const key of new Set([
@@ -75,7 +78,9 @@ describe('engine property invariants', () => {
 							(before.resources[key] ?? 0) -
 							(costs[key] ?? 0) +
 							(gains[key] ?? 0);
-						expect(engineContext.activePlayer.resources[key]).toBe(expected);
+						expect(engineContext.activePlayer.resourceValues[key]).toBe(
+							expected,
+						);
 					}
 					expect(before).toEqual(beforeCopy);
 					expect(before.buildings.includes(building.id)).toBe(false);

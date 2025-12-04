@@ -2,9 +2,18 @@ import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '../../src/services/index.ts';
-import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
+import {
+	PhaseTrigger,
+	RULES,
+	resourceV2,
+	createResourceV2Registry,
+} from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 
 const resourceKeys = {
 	ap: 'synthetic:resource:ap',
@@ -227,6 +236,55 @@ export function createPhaseTestEnvironment() {
 		winConditions: RULES.winConditions,
 	};
 
+	// Create synthetic ResourceV2 definitions for testing
+	const syntheticResourceDefs = [
+		resourceV2(resourceKeys.ap)
+			.label('Action Points')
+			.icon('⚡')
+			.lowerBound(0)
+			.build(),
+		resourceV2(resourceKeys.gold)
+			.label('Gold')
+			.icon('💰')
+			.lowerBound(0)
+			.build(),
+		resourceV2(statKeys.army)
+			.label('Army Strength')
+			.icon('⚔️')
+			.lowerBound(0)
+			.build(),
+		resourceV2(statKeys.fort)
+			.label('Fort Strength')
+			.icon('🏰')
+			.lowerBound(0)
+			.build(),
+		resourceV2(statKeys.growth)
+			.label('Growth')
+			.icon('📈')
+			.lowerBound(0)
+			.allowDecimal()
+			.build(),
+		resourceV2(statKeys.war)
+			.label('War Weariness')
+			.icon('😟')
+			.lowerBound(0)
+			.build(),
+		resourceV2(council.id).label('Council').icon('👔').lowerBound(0).build(),
+		resourceV2(legion.id).label('Legion').icon('🛡️').lowerBound(0).build(),
+		resourceV2(fortifier.id)
+			.label('Fortifier')
+			.icon('🏗️')
+			.lowerBound(0)
+			.build(),
+	];
+
+	// Create combined registry with real + synthetic resources
+	const allResourceDefs = [
+		...RESOURCE_V2_REGISTRY.ordered,
+		...syntheticResourceDefs,
+	];
+	const testResourceRegistry = createResourceV2Registry(allResourceDefs);
+
 	const engineContext = createEngine({
 		actions: content.actions,
 		buildings: content.buildings,
@@ -235,6 +293,10 @@ export function createPhaseTestEnvironment() {
 		phases,
 		start,
 		rules,
+		resourceCatalogV2: {
+			resources: testResourceRegistry,
+			groups: RESOURCE_GROUP_V2_REGISTRY,
+		},
 	});
 
 	return {

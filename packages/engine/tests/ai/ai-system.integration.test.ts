@@ -23,7 +23,7 @@ describe('AISystem with tax collector controller', () => {
 		const content = createContentFactory();
 		content.action({
 			id: TAX_ACTION_ID,
-			baseCosts: { [CResource.ap]: 1 },
+			baseCosts: {},
 			effects: [
 				{
 					type: 'resource',
@@ -54,7 +54,8 @@ describe('AISystem with tax collector controller', () => {
 			engineContext.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
 
 		const apKey = engineContext.actionCostResource;
-		engineContext.activePlayer.resources[apKey] = actionPoints;
+		// PlayerState uses resourceValues, not resources
+		engineContext.activePlayer.resourceValues[apKey] = actionPoints;
 		engineContext.activePlayer.actions.add(TAX_ACTION_ID);
 
 		return { engineContext, apKey, actionPhaseIndex } as const;
@@ -92,7 +93,7 @@ describe('AISystem with tax collector controller', () => {
 		expect(continueAfterAction).toHaveBeenCalledTimes(2);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 		expect(engineContext.game.phaseIndex).not.toBe(actionPhaseIndex);
 	});
 
@@ -207,7 +208,7 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 	});
 
 	it('terminates the loop when continuation declines further actions', async () => {
@@ -233,7 +234,7 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(continueAfterAction).toHaveBeenCalledTimes(1);
 		expect(advancePhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resources[apKey]).toBe(2);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(2);
 	});
 
 	it('recovers from action errors by draining AP and advancing', async () => {
@@ -259,6 +260,6 @@ describe('AISystem with tax collector controller', () => {
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 	});
 });

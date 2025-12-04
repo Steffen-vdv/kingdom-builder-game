@@ -53,9 +53,10 @@ function flattenSummary(entries: Summary): string[] {
 	return lines;
 }
 
-class TierTranslator
-	implements ContentTranslator<HappinessTierDefinition, Record<string, never>>
-{
+class TierTranslator implements ContentTranslator<
+	HappinessTierDefinition,
+	Record<string, never>
+> {
 	summarize(
 		tier: HappinessTierDefinition,
 		context: TranslationContext,

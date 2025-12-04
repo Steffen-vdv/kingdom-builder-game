@@ -25,15 +25,16 @@ describe('population effects', () => {
 			advance(engineContext);
 		}
 		let cost = getActionCosts(add.id, engineContext);
-		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
 		performAction(add.id, engineContext);
 		const added = add.effects.filter((e) => e.method === 'add').length;
-		expect(engineContext.activePlayer.population[role.id]).toBe(added);
+		// role.id IS the ResourceV2 ID
+		expect(engineContext.activePlayer.resourceValues[role.id]).toBe(added);
 		const catalog = engineContext.resourceCatalogV2;
 		expect(catalog).toBeDefined();
-		const resourceId = engineContext.activePlayer.getPopulationResourceV2Id(
-			role.id,
-		);
+		// role.id IS the resourceId directly
+		const resourceId = role.id;
 		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(added);
 		const indexes = getCatalogIndexes(catalog);
 		const parentId = catalog.groups.ordered.find((group) => {
@@ -45,10 +46,11 @@ describe('population effects', () => {
 			expect(engineContext.activePlayer.resourceValues[parentId]).toBe(added);
 		}
 		cost = getActionCosts(remove.id, engineContext);
-		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
 		performAction(remove.id, engineContext);
 		const removed = remove.effects.filter((e) => e.method === 'remove').length;
-		expect(engineContext.activePlayer.population[role.id]).toBe(
+		expect(engineContext.activePlayer.resourceValues[role.id]).toBe(
 			added - removed,
 		);
 		expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(

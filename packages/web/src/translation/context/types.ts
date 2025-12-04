@@ -38,8 +38,7 @@ export interface TranslationActionCategoryDefinition {
 	readonly analyticsKey?: string;
 }
 
-export interface TranslationActionCategoryRegistry
-	extends TranslationRegistry<TranslationActionCategoryDefinition> {
+export interface TranslationActionCategoryRegistry extends TranslationRegistry<TranslationActionCategoryDefinition> {
 	list(): readonly TranslationActionCategoryDefinition[];
 }
 

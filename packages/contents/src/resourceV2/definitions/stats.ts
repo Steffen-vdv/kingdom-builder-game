@@ -25,6 +25,7 @@ export const STAT_RESOURCE_DEFINITIONS: readonly ResourceV2Definition[] = [
 		.label('Absorption')
 		.description('Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.')
 		.displayAsPercent()
+		.allowDecimal()
 		.lowerBound(0)
 		.build(),
 	resourceV2('resource:stat:growth')
@@ -34,6 +35,7 @@ export const STAT_RESOURCE_DEFINITIONS: readonly ResourceV2Definition[] = [
 			'Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase.',
 		)
 		.displayAsPercent()
+		.allowDecimal()
 		.lowerBound(0)
 		.build(),
 	resourceV2('resource:stat:war-weariness')

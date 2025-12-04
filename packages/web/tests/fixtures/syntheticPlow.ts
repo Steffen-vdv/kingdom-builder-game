@@ -77,7 +77,10 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: 'happiness', amount: 1 },
+				params: {
+					resourceId: 'resource:synthetic:happiness',
+					change: { type: 'amount', amount: 1 },
+				},
 			},
 		],
 	});

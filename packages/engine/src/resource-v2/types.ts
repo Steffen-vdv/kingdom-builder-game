@@ -51,9 +51,9 @@ export interface RuntimeResourceGlobalCostConfig {
 }
 
 export interface RuntimeResourceDefinition
-	extends RuntimeResourceMetadata,
-		RuntimeResourceBounds {
+	extends RuntimeResourceMetadata, RuntimeResourceBounds {
 	readonly displayAsPercent: boolean;
+	readonly allowDecimal: boolean;
 	readonly trackValueBreakdown: boolean;
 	readonly trackBoundBreakdown: boolean;
 	readonly groupId: string | null;
@@ -64,9 +64,9 @@ export interface RuntimeResourceDefinition
 }
 
 export interface RuntimeResourceGroupParent
-	extends RuntimeResourceMetadata,
-		RuntimeResourceBounds {
+	extends RuntimeResourceMetadata, RuntimeResourceBounds {
 	readonly displayAsPercent: boolean;
+	readonly allowDecimal: boolean;
 	readonly trackValueBreakdown: boolean;
 	readonly trackBoundBreakdown: boolean;
 	readonly tierTrack?: RuntimeResourceTierTrack;

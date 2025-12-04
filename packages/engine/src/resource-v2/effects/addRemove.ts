@@ -154,8 +154,11 @@ function applyResourceEffect(
 		reconciliation,
 		suppressHooks,
 	} = params;
+
 	if (typeof resourceId !== 'string' || !resourceId.length) {
-		throw new Error('ResourceV2 effect expected a non-empty resourceId.');
+		throw new Error(
+			`ResourceV2 effect expected a non-empty resourceId. Received: ${JSON.stringify(params)}`,
+		);
 	}
 	const catalog = expectRuntimeCatalog(context);
 	const definitionLookup = resolveResourceDefinition(catalog, resourceId);

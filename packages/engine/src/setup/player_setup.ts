@@ -1,9 +1,11 @@
-import { Land, Stat } from '../state';
+import { Land } from '../state';
 import type { PlayerState, StatKey } from '../state';
+import { Stat } from '@kingdom-builder/contents';
 import type { RuleSet } from '../services';
 import { applyStatDelta } from '../stat_sources';
 import type { RuntimeResourceCatalog } from '../resource-v2';
 import {
+	getResourceValue,
 	initialisePlayerResourceState,
 	setResourceValue,
 } from '../resource-v2';
@@ -36,32 +38,42 @@ export function applyPlayerStartConfiguration(
 	if (resourceCatalog && Object.keys(playerState.resourceValues).length === 0) {
 		initialisePlayerResourceState(playerState, resourceCatalog);
 	}
-	for (const [resourceKey, value] of Object.entries(config.resources || {})) {
-		playerState.resources[resourceKey] = value ?? 0;
-	}
-	for (const [statKey, value] of Object.entries(config.stats || {})) {
-		if (!isStatKey(statKey)) {
-			continue;
+	// Apply resources via ResourceV2 API (keys are now ResourceV2 IDs)
+	if (resourceCatalog) {
+		for (const [resourceId, value] of Object.entries(
+			config.resources || {},
+		)) {
+			setResourceValue(null, playerState, resourceCatalog, resourceId, value ?? 0, {
+				suppressTouched: true,
+				suppressRecentEntry: true,
+			});
 		}
-		const statValue = value ?? 0;
-		const previousValue = playerState.stats[statKey] ?? 0;
-		playerState.stats[statKey] = statValue;
-		if (statValue !== 0) {
-			playerState.statsHistory[statKey] = true;
+		// Apply stats via ResourceV2 API (stat keys are now ResourceV2 IDs)
+		for (const [statId, value] of Object.entries(config.stats || {})) {
+			const statValue = value ?? 0;
+			const previousValue = playerState.resourceValues[statId] ?? 0;
+			setResourceValue(null, playerState, resourceCatalog, statId, statValue, {
+				suppressTouched: true,
+				suppressRecentEntry: true,
+			});
+			const delta = statValue - previousValue;
+			if (delta !== 0) {
+				applyStatDelta(playerState, statId, delta, START_STAT_SOURCE_META);
+			}
 		}
-		const delta = statValue - previousValue;
-		if (delta !== 0) {
-			applyStatDelta(playerState, statKey, delta, START_STAT_SOURCE_META);
+		// Apply population via ResourceV2 API (role IDs are now ResourceV2 IDs)
+		for (const [roleId, value] of Object.entries(config.population || {})) {
+			setResourceValue(null, playerState, resourceCatalog, roleId, value ?? 0, {
+				suppressTouched: true,
+				suppressRecentEntry: true,
+			});
 		}
-	}
-	for (const [roleId, value] of Object.entries(config.population || {})) {
-		playerState.population[roleId] = value ?? 0;
 	}
 	const shouldSnapshotStats = Boolean(
 		resourceCatalog &&
-			(config.valuesV2 ||
-				config.resourceLowerBoundsV2 ||
-				config.resourceUpperBoundsV2),
+		(config.valuesV2 ||
+			config.resourceLowerBoundsV2 ||
+			config.resourceUpperBoundsV2),
 	);
 	let statSnapshotBeforeResourceOverrides: Map<StatKey, number> | null = null;
 	if (shouldSnapshotStats) {
@@ -69,7 +81,7 @@ export function applyPlayerStartConfiguration(
 		for (const statKey of Object.keys(playerState.statsHistory)) {
 			statSnapshotBeforeResourceOverrides.set(
 				statKey,
-				playerState.stats[statKey] ?? 0,
+				getResourceValue(playerState, statKey),
 			);
 		}
 	}
@@ -157,7 +169,7 @@ export function applyPlayerStartConfiguration(
 			statKey,
 			previousValue,
 		] of statSnapshotBeforeResourceOverrides) {
-			const nextValue = playerState.stats[statKey] ?? 0;
+			const nextValue = getResourceValue(playerState, statKey);
 			if (nextValue !== 0) {
 				playerState.statsHistory[statKey] = true;
 			}

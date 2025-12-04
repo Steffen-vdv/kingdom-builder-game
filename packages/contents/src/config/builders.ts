@@ -32,9 +32,10 @@ export {
 	effect,
 	populationEvaluator,
 	requirement,
-	statAddEffect,
 	statEvaluator,
 } from './builders/evaluators';
+
+export { statAddEffect } from '../helpers/statEffects';
 
 export {
 	ActionEffectGroupBuilder,

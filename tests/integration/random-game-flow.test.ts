@@ -23,12 +23,17 @@ describe('random action flow', () => {
 		const endPhase = phases[1].id;
 		const endStep = phases[1].steps[0];
 		const effects = endStep.effects as
-			| { type?: string; method?: string; params?: { amount: number } }[]
+			| {
+					type?: string;
+					method?: string;
+					params?: { change: { amount: number } };
+			  }[]
 			| undefined;
 		const regenEffect = (effects || []).find(
 			(e) => e.type === 'resource' && e.method === 'add',
 		);
-		const regenAmount = (regenEffect?.params as { amount: number }).amount;
+		const regenAmount = (regenEffect?.params as { change: { amount: number } })
+			.change.amount;
 		const rng = createRng(42);
 		const initialTurn = engineContext.game.turn;
 		const costResourceId = engineContext.activePlayer.getResourceV2Id(costKey);
@@ -55,11 +60,11 @@ describe('random action flow', () => {
 					const beforeCost = playerResources[costKey];
 					const beforeGain = playerResources[gainKey];
 					const action = actionRegistry.get(actionId)!;
-					const gain = (
-						action.effects.find(
-							(e) => e.type === 'resource' && e.method === 'add',
-						)!.params as { amount: number }
-					).amount;
+					const gainEffect = action.effects.find(
+						(e) => e.type === 'resource' && e.method === 'add',
+					)!;
+					const gain = (gainEffect.params as { change: { amount: number } })
+						.change.amount;
 					performAction(actionId, engineContext);
 					expect(playerResources[costKey]).toBe(
 						beforeCost - (costs[costKey] ?? 0),

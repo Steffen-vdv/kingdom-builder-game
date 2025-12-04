@@ -1,7 +1,5 @@
 import type { EffectConfig, EvaluatorDef } from '@kingdom-builder/protocol';
-import { getStatResourceV2Id, type StatKey } from '../../../stats';
-import { resourceChange } from '../../../resourceV2';
-import { ParamsBuilder, ResourceMethods, Types } from '../../builderShared';
+import { ParamsBuilder } from '../../builderShared';
 import type { Params } from '../../builderShared';
 import { EvaluatorBuilder } from './evaluatorBuilder';
 
@@ -123,12 +121,4 @@ export function effect(type?: string, method?: string) {
 		builder.method(method);
 	}
 	return builder;
-}
-
-export function statAddEffect(stat: StatKey, amount: number) {
-	const resourceId = getStatResourceV2Id(stat);
-	const params = resourceChange(resourceId).amount(amount).build();
-	return effect(Types.Resource, ResourceMethods.ADD)
-		.params(params as unknown as Params)
-		.build();
 }

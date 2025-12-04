@@ -1,8 +1,8 @@
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
+import { PopulationRole } from '@kingdom-builder/contents';
 import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
-import { PopulationRole } from './state';
 import type { StatSourceFrame } from './stat_sources';
 import { getResourceValue } from './resource-v2';
 
@@ -13,16 +13,21 @@ export interface TriggerEffectBundle {
 
 function pushUpkeepEffect(
 	bundles: TriggerEffectBundle[],
+	_player: PlayerState,
 	source: Record<string, unknown>,
-	key: string,
+	resourceId: string,
 	amount: number,
 ) {
+	// resourceId IS the ResourceV2 ID directly (no mapper needed)
 	bundles.push({
 		effects: [
 			{
 				type: 'resource',
 				method: 'remove',
-				params: { key, amount },
+				params: {
+					resourceId,
+					change: { type: 'amount', amount },
+				},
 				meta: { source },
 			},
 		],
@@ -53,12 +58,13 @@ export function collectTriggerEffects(
 	const bundles: TriggerEffectBundle[] = [];
 	for (const role of Object.values(PopulationRole)) {
 		const populationDefinition = engineContext.populations.get(role);
-		const resourceId = player.getPopulationResourceV2Id(role);
-		const qty = getResourceValue(player, resourceId);
+		// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
+		const qty = getResourceValue(player, role);
 		if (trigger === 'onPayUpkeepStep' && populationDefinition?.upkeep) {
 			for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
 				pushUpkeepEffect(
 					bundles,
+					player,
 					{ type: 'population', id: role, count: qty },
 					key,
 					amount * qty,
@@ -90,7 +96,13 @@ export function collectTriggerEffects(
 	for (const land of player.lands) {
 		if (trigger === 'onPayUpkeepStep' && land.upkeep) {
 			for (const [key, amount] of Object.entries(land.upkeep)) {
-				pushUpkeepEffect(bundles, { type: 'land', id: land.id }, key, amount);
+				pushUpkeepEffect(
+					bundles,
+					player,
+					{ type: 'land', id: land.id },
+					key,
+					amount,
+				);
 			}
 		}
 		const landList = getEffects(land, trigger);
@@ -110,6 +122,7 @@ export function collectTriggerEffects(
 				)) {
 					pushUpkeepEffect(
 						bundles,
+						player,
 						{ type: 'development', id, landId: land.id },
 						key,
 						amount,
@@ -139,7 +152,13 @@ export function collectTriggerEffects(
 		const buildingDefinition = engineContext.buildings.get(id);
 		if (trigger === 'onPayUpkeepStep' && buildingDefinition?.upkeep) {
 			for (const [key, amount] of Object.entries(buildingDefinition.upkeep)) {
-				pushUpkeepEffect(bundles, { type: 'building', id }, key, amount);
+				pushUpkeepEffect(
+					bundles,
+					player,
+					{ type: 'building', id },
+					key,
+					amount,
+				);
 			}
 		}
 		const list = getEffects(buildingDefinition, trigger);

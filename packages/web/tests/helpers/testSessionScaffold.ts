@@ -250,8 +250,8 @@ const buildRuleSnapshot = (resourceKey: string): SessionRuleSnapshot => ({
 						type: 'resource',
 						method: 'add',
 						params: {
-							key: resourceKey,
-							amount: 1,
+							resourceId: resourceKey,
+							change: { type: 'amount', amount: 1 },
 						},
 					},
 				],

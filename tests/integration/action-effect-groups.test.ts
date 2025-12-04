@@ -6,7 +6,7 @@ import {
 } from '@kingdom-builder/engine';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import { logContent } from '@kingdom-builder/web/translation/content';
-import { Resource } from '@kingdom-builder/contents/resourceKeys';
+import { Resource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../../packages/engine/tests/helpers';
 import {
 	Registry,
@@ -29,7 +29,10 @@ describe('action effect groups integration', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.gold, amount: rewardAmount },
+					params: {
+						resourceId: Resource.gold,
+						change: { type: 'amount', amount: rewardAmount },
+					},
 				},
 			],
 		};
@@ -41,7 +44,10 @@ describe('action effect groups integration', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.happiness, amount: 1 },
+					params: {
+						resourceId: Resource.happiness,
+						change: { type: 'amount', amount: 1 },
+					},
 				},
 			],
 		};
@@ -82,9 +88,10 @@ describe('action effect groups integration', () => {
 				'Test setup failed: effect group should require a choice',
 			);
 		}
-		engineContext.activePlayer.resources[Resource.ap] = 5;
-		engineContext.activePlayer.resources[Resource.gold] = 0;
-		engineContext.activePlayer.resources[Resource.happiness] = 0;
+		const player = engineContext.activePlayer;
+		player.resourceValues[Resource.ap] = 5;
+		player.resourceValues[Resource.gold] = 0;
+		player.resourceValues[Resource.happiness] = 0;
 		return { engineContext, chooser, group, rewardAmount };
 	}
 
@@ -104,9 +111,10 @@ describe('action effect groups integration', () => {
 				[group.id]: { optionId: 'gold_reward' },
 			},
 		} as const;
-		const beforeGold = engineContext.activePlayer.resources[Resource.gold];
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[Resource.gold] ?? 0;
 		const traces = performAction(chooser.id, engineContext, params);
-		expect(engineContext.activePlayer.resources[Resource.gold]).toBe(
+		expect(engineContext.activePlayer.resourceValues[Resource.gold]).toBe(
 			beforeGold + rewardAmount,
 		);
 		expect(traces).toHaveLength(1);
@@ -115,12 +123,9 @@ describe('action effect groups integration', () => {
 			(trace.after.resources[Resource.gold] ?? 0) -
 			(trace.before.resources[Resource.gold] ?? 0);
 		expect(delta).toBe(rewardAmount);
-		const resourceId = engineContext.activePlayer.getResourceV2Id(
-			Resource.gold,
-		);
 		const v2Delta =
-			(trace.after.valuesV2[resourceId] ?? 0) -
-			(trace.before.valuesV2[resourceId] ?? 0);
+			(trace.after.valuesV2[Resource.gold] ?? 0) -
+			(trace.before.valuesV2[Resource.gold] ?? 0);
 		expect(v2Delta).toBe(rewardAmount);
 	});
 

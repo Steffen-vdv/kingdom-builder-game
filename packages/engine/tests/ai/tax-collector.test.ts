@@ -43,7 +43,8 @@ describe('tax collector AI controller', () => {
 			engineContext.phases[actionPhaseIndex]!.steps[0]?.id ?? '';
 
 		const apKey = engineContext.actionCostResource;
-		engineContext.activePlayer.resources[apKey] = actionPoints;
+		// PlayerState uses resourceValues, not resources
+		engineContext.activePlayer.resourceValues[apKey] = actionPoints;
 
 		const controller = createTaxCollectorController(
 			engineContext.activePlayer.id,
@@ -67,7 +68,7 @@ describe('tax collector AI controller', () => {
 		expect(perform).toHaveBeenCalledTimes(2);
 		expect(perform).toHaveBeenNthCalledWith(1, TAX_ACTION_ID, engineContext);
 		expect(perform).toHaveBeenNthCalledWith(2, TAX_ACTION_ID, engineContext);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 		expect(endPhase).toHaveBeenCalledTimes(1);
 	});
 
@@ -152,7 +153,7 @@ describe('tax collector AI controller', () => {
 		);
 		expect(shouldAdvancePhase).not.toHaveBeenCalled();
 		expect(endPhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resources[apKey]).toBe(1);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(1);
 	});
 
 	it('continues through the full turn when callbacks allow', async () => {
@@ -188,7 +189,7 @@ describe('tax collector AI controller', () => {
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 	});
 
 	it('advances the phase when the tax action definition is missing', async () => {
@@ -207,7 +208,7 @@ describe('tax collector AI controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 	});
 
 	it('advances when system-only tax action is unavailable to the player', async () => {
@@ -231,7 +232,7 @@ describe('tax collector AI controller', () => {
 		expect(perform).not.toHaveBeenCalled();
 		expect(shouldAdvancePhase).toHaveBeenCalledWith(engineContext);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 	});
 
 	it('clears remaining AP without advancing when phase advancement is denied', async () => {
@@ -251,7 +252,7 @@ describe('tax collector AI controller', () => {
 		expect(perform).toHaveBeenCalledTimes(2);
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(endPhase).not.toHaveBeenCalled();
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 	});
 
 	it('finishes the phase when performAction throws', async () => {
@@ -268,6 +269,6 @@ describe('tax collector AI controller', () => {
 
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(endPhase).toHaveBeenCalledTimes(1);
-		expect(engineContext.activePlayer.resources[apKey]).toBe(0);
+		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 	});
 });

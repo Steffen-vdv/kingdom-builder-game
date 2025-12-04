@@ -50,8 +50,8 @@ const createFestivalActions = () => {
 				type: 'resource',
 				method: 'add',
 				params: {
-					key: SYNTHETIC_RESOURCES.happiness.id,
-					amount: 4,
+					resourceId: SYNTHETIC_RESOURCES.happiness.id,
+					change: { type: 'amount', amount: 4 },
 				},
 			},
 			{
@@ -90,8 +90,8 @@ const createFestivalActions = () => {
 								type: 'resource',
 								method: 'remove',
 								params: {
-									key: SYNTHETIC_RESOURCES.happiness.id,
-									amount: 2,
+									resourceId: SYNTHETIC_RESOURCES.happiness.id,
+									change: { type: 'amount', amount: 2 },
 								},
 							},
 						],
@@ -124,7 +124,10 @@ export const createSyntheticFestivalScenario =
 		const upkeepPenalty = {
 			type: 'resource',
 			method: 'remove',
-			params: { key: SYNTHETIC_RESOURCES.happiness.id, amount: 2 },
+			params: {
+				resourceId: SYNTHETIC_RESOURCES.happiness.id,
+				change: { type: 'amount', amount: 2 },
+			},
 		} satisfies EffectDef;
 		const passiveRecords = {
 			[active.id]: [

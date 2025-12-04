@@ -58,7 +58,11 @@ export interface StatAmountParamsResult {
 }
 
 function resolveResourceId(input: BaseResourceParamsInput): string {
-	return input.resourceId ?? input.key;
+	if (input.resourceId) {
+		return input.resourceId;
+	}
+	// Keys ARE ResourceV2 IDs directly - no mapper needed
+	return input.key;
 }
 
 export function resourceAmountParams(
@@ -144,6 +148,7 @@ export function resourcePercentParams(
 export function statAmountParams(
 	input: StatAmountParamsInput,
 ): StatAmountParamsResult {
+	// Keys ARE ResourceV2 IDs directly - no mapper needed
 	const statId = input.statId ?? input.key;
 	const amount = input.amount;
 	return {

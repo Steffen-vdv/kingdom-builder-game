@@ -49,9 +49,9 @@ export interface ContentMetadata {
 }
 
 export interface ContentResourceDefinition
-	extends ContentMetadata,
-		ContentBounds {
+	extends ContentMetadata, ContentBounds {
 	readonly displayAsPercent?: boolean;
+	readonly allowDecimal?: boolean;
 	readonly trackValueBreakdown?: boolean;
 	readonly trackBoundBreakdown?: boolean;
 	readonly groupId?: string;
@@ -62,9 +62,9 @@ export interface ContentResourceDefinition
 }
 
 export interface ContentResourceGroupParent
-	extends ContentMetadata,
-		ContentBounds {
+	extends ContentMetadata, ContentBounds {
 	readonly displayAsPercent?: boolean;
+	readonly allowDecimal?: boolean;
 	readonly trackValueBreakdown?: boolean;
 	readonly trackBoundBreakdown?: boolean;
 	readonly tierTrack?: ContentTierTrack;

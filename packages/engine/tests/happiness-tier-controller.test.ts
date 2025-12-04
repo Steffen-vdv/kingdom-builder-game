@@ -19,7 +19,7 @@ describe('happiness tier controller', () => {
 
 		const engineContext = createTestEngine({ rules: customRules });
 		const player = engineContext.activePlayer;
-		const happinessKey = customRules.tieredResourceKey;
+		const happinessResourceId = customRules.tieredResourceId!;
 		const lowPassiveId = customRules.tierDefinitions[0]!.preview?.id ?? '';
 		const highPassiveId = customRules.tierDefinitions[1]!.preview?.id ?? '';
 
@@ -35,8 +35,8 @@ describe('happiness tier controller', () => {
 					type: 'resource',
 					method: 'add',
 					params: {
-						key: happinessKey,
-						amount: 5,
+						resourceId: happinessResourceId,
+						change: { type: 'amount', amount: 5 },
 					},
 				},
 			],
@@ -67,8 +67,8 @@ describe('happiness tier controller', () => {
 					type: 'resource',
 					method: 'remove',
 					params: {
-						key: happinessKey,
-						amount: 5,
+						resourceId: happinessResourceId,
+						change: { type: 'amount', amount: 5 },
 					},
 				},
 			],
@@ -81,7 +81,7 @@ describe('happiness tier controller', () => {
 
 	it('stacks tier passive costs with external adjustments', () => {
 		const customRules = createTierCostRules();
-		const tierResourceKey = customRules.tieredResourceKey;
+		const tierResourceId = customRules.tieredResourceId!;
 		const content = createContentFactory();
 		const costAction = content.action({
 			baseCosts: { [CResource.gold]: 20 },
@@ -111,8 +111,8 @@ describe('happiness tier controller', () => {
 					type: 'resource',
 					method: 'add',
 					params: {
-						key: tierResourceKey,
-						amount: 3,
+						resourceId: tierResourceId,
+						change: { type: 'amount', amount: 3 },
 					},
 				},
 			],
@@ -134,8 +134,8 @@ describe('happiness tier controller', () => {
 					type: 'resource',
 					method: 'remove',
 					params: {
-						key: tierResourceKey,
-						amount: 3,
+						resourceId: tierResourceId,
+						change: { type: 'amount', amount: 3 },
 					},
 				},
 			],

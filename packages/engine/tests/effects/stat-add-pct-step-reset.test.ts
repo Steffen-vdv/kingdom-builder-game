@@ -6,7 +6,8 @@ import { Stat } from '../../src/state/index.ts';
 describe('stat:add_pct effect', () => {
 	it('resets cached base between steps', () => {
 		const engineContext = createTestEngine();
-		engineContext.activePlayer.stats[Stat.absorption] = 0.2;
+		// Stat values ARE ResourceV2 IDs - access via resourceValues
+		engineContext.activePlayer.resourceValues[Stat.absorption] = 0.2;
 		engineContext.game.currentStep = 's1';
 		const effect = {
 			type: 'stat',
@@ -14,9 +15,13 @@ describe('stat:add_pct effect', () => {
 			params: { key: Stat.absorption, percent: 0.5 },
 		} as const;
 		runEffects([effect], engineContext);
-		expect(engineContext.activePlayer.stats[Stat.absorption]).toBeCloseTo(0.3);
+		expect(
+			engineContext.activePlayer.resourceValues[Stat.absorption],
+		).toBeCloseTo(0.3);
 		engineContext.game.currentStep = 's2';
 		runEffects([effect], engineContext);
-		expect(engineContext.activePlayer.stats[Stat.absorption]).toBeCloseTo(0.45);
+		expect(
+			engineContext.activePlayer.resourceValues[Stat.absorption],
+		).toBeCloseTo(0.45);
 	});
 });

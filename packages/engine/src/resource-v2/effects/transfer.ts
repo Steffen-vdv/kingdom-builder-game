@@ -41,8 +41,10 @@ export interface ResourceV2ValueWriteOptions extends Record<string, unknown> {
 	readonly skipTierUpdate?: boolean;
 }
 
-export interface ResourceV2TransferEndpointPayload
-	extends Record<string, unknown> {
+export interface ResourceV2TransferEndpointPayload extends Record<
+	string,
+	unknown
+> {
 	/**
 	 * Player scope to resolve. Defaults to the active player when omitted.
 	 */
@@ -61,8 +63,10 @@ export interface ResourceV2TransferEndpointPayload
 	readonly options?: ResourceV2ValueWriteOptions;
 }
 
-export interface ResourceV2TransferEffectParams
-	extends Record<string, unknown> {
+export interface ResourceV2TransferEffectParams extends Record<
+	string,
+	unknown
+> {
 	/**
 	 * Resource configuration describing the donor side of the transfer.
 	 * The donor must request a negative delta (amount removal).
@@ -77,8 +81,10 @@ export interface ResourceV2TransferEffectParams
 	readonly recipient: ResourceV2TransferEndpointPayload;
 }
 
-export interface ResourceV2UpperBoundIncreaseParams
-	extends Record<string, unknown> {
+export interface ResourceV2UpperBoundIncreaseParams extends Record<
+	string,
+	unknown
+> {
 	/**
 	 * Player scope to resolve. Defaults to the active player.
 	 */
