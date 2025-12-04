@@ -6,6 +6,7 @@ import {
 } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceAmountParams } from './helpers/resourceV2Params.ts';
 
 const attackLogKey = 'attack:perform';
 
@@ -42,24 +43,36 @@ describe('attack:perform', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: CResource.gold, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.gold,
+								amount: 1,
+							}),
 						},
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: CResource.happiness, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.happiness,
+								amount: 1,
+							}),
 						},
 					],
 					defender: [
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: CResource.gold, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.gold,
+								amount: 1,
+							}),
 						},
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: CResource.happiness, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.happiness,
+								amount: 1,
+							}),
 						},
 					],
 				},
@@ -121,7 +134,10 @@ describe('attack:perform', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: CResource.gold, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.gold,
+								amount: 1,
+							}),
 						},
 					],
 				},
@@ -160,14 +176,20 @@ describe('attack:perform', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: CResource.happiness, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.happiness,
+								amount: 1,
+							}),
 						},
 					],
 					defender: [
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: CResource.happiness, amount: -1 },
+							params: resourceAmountParams({
+								key: CResource.happiness,
+								amount: -1,
+							}),
 						},
 					],
 				},

@@ -200,9 +200,10 @@ function applyResourceEffect(
 		}
 	}
 	setResourceValue(context, player, catalog, resourceId, result.finalValue);
-	if (suppressHooks) {
-		// TODO(Resource Migration): honour suppressHooks once the
-		// ResourceV2 hook plumbing lands.
+	if (!suppressHooks && context.services) {
+		// Notify services about the resource change to trigger tier
+		// passive swaps and win condition checks.
+		context.services.handleResourceChange(context, player, resourceId);
 	}
 	return result;
 }
