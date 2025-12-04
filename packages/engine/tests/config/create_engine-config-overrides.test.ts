@@ -6,13 +6,23 @@ import {
 	GAME_START,
 	PHASES,
 	POPULATIONS,
+	PopulationRole,
 	Resource,
 	RULES,
 	Stat,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createEngine } from '../../src/index.ts';
 import type { StartConfig } from '@kingdom-builder/protocol';
+
+const resourceCatalogV2 = {
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
+};
 
 describe('createEngine configuration overrides', () => {
 	it('applies registry overrides and start configuration', () => {
@@ -22,7 +32,9 @@ describe('createEngine configuration overrides', () => {
 		});
 		factory.building();
 		factory.development();
-		const customPopulation = factory.population();
+		factory.population(); // Add to factory registry for override test
+		// Use a real population role from the registry for start config
+		const populationRoleId = PopulationRole.Council;
 		const customStart: StartConfig = {
 			player: {
 				resources: {
@@ -30,7 +42,7 @@ describe('createEngine configuration overrides', () => {
 					[Resource.ap]: 0,
 				},
 				stats: { [Stat.maxPopulation]: 2 },
-				population: { [customPopulation.id]: 1 },
+				population: { [populationRoleId]: 1 },
 			},
 			players: {
 				A: { resources: { [Resource.gold]: 13 } },
@@ -45,6 +57,7 @@ describe('createEngine configuration overrides', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			resourceCatalogV2,
 			config: {
 				actions: factory.actions.values(),
 				buildings: factory.buildings.values(),
@@ -61,7 +74,7 @@ describe('createEngine configuration overrides', () => {
 		// PlayerState uses resourceValues for all resources/population
 		expect(playerA.resourceValues[Resource.gold]).toBe(13);
 		expect(playerB.resourceValues[Resource.gold]).toBe(17);
-		expect(playerA.resourceValues[customPopulation.id]).toBe(1);
+		expect(playerA.resourceValues[populationRoleId]).toBe(1);
 		const createdAction = engine.actions.get(customAction.id);
 		const baseCosts = createdAction.baseCosts || {};
 		expect(baseCosts[Resource.gold]).toBe(3);
@@ -84,6 +97,7 @@ describe('createEngine configuration overrides', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			resourceCatalogV2,
 			config: {
 				actions: [],
 				buildings: [],

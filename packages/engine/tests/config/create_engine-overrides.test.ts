@@ -2,12 +2,21 @@ import { describe, it, expect } from 'vitest';
 import { createEngine } from '../../src/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { Resource as CResource } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	GameConfig,
 	RuleSet,
 	StartConfig,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
+
+const resourceCatalogV2 = {
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
+};
 
 // Use actual ResourceV2 IDs - they ARE the resource keys directly
 const RESOURCE_AP = CResource.ap;
@@ -79,6 +88,7 @@ describe('createEngine config overrides', () => {
 			phases: PHASES,
 			start: START,
 			rules: RULES,
+			resourceCatalogV2,
 			config,
 		});
 		expect(engine.actions).not.toBe(baseContent.actions);
@@ -105,6 +115,7 @@ describe('createEngine config overrides', () => {
 			phases: PHASES,
 			start: START,
 			rules: RULES,
+			resourceCatalogV2,
 			config,
 		});
 		expect(engine.actions).toBe(baseContent.actions);

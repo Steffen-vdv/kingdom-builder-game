@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { Stat } from '@kingdom-builder/contents';
 import { runEffects } from '../../src/effects/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import { Stat } from '../../src/state/index.ts';
 
 describe('stat:add_pct effect', () => {
 	it('resets cached base between steps', () => {

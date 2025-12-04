@@ -1,5 +1,4 @@
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
-import { PopulationRole } from '@kingdom-builder/contents';
 import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
@@ -56,7 +55,8 @@ export function collectTriggerEffects(
 	player: PlayerState = engineContext.activePlayer,
 ): TriggerEffectBundle[] {
 	const bundles: TriggerEffectBundle[] = [];
-	for (const role of Object.values(PopulationRole)) {
+	// Iterate over all registered populations, not just the PopulationRole enum
+	for (const role of engineContext.populations.keys()) {
 		const populationDefinition = engineContext.populations.get(role);
 		// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
 		const qty = getResourceValue(player, role);

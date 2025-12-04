@@ -75,6 +75,10 @@ describe('development:add effect', () => {
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
 			advance(engineContext);
 		}
+		// Give player AP to pass cost check so we can verify the land error
+		const cost = getActionCosts(action.id, engineContext);
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
 		expect(() => performAction(action.id, engineContext)).toThrow(
 			/Land missing not found/,
 		);
@@ -98,6 +102,13 @@ describe('development:add effect', () => {
 		}
 		const land = engineContext.activePlayer.lands[0];
 		land.slotsUsed = land.slotsMax;
+		// Give player AP to pass cost check so we can verify the slots error
+		const cost = getActionCosts(action.id, engineContext, {
+			id: development.id,
+			landId: land.id,
+		});
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
 		expect(() =>
 			performAction(action.id, engineContext, {
 				id: development.id,
