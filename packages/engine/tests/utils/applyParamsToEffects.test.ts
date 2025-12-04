@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
-import { getResourceV2Id, Resource } from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/contents';
 
 describe('applyParamsToEffects', () => {
 	it('replaces placeholders in params, evaluator and nested effects', () => {
@@ -25,11 +25,12 @@ describe('applyParamsToEffects', () => {
 				],
 			},
 		];
+		// Resource values ARE ResourceV2 IDs directly - no mapper needed
 		const params = {
-			resourceId: getResourceV2Id(Resource.gold),
+			resourceId: Resource.gold,
 			amount: 2,
 			count: 3,
-			nestedResourceId: getResourceV2Id(Resource.ap),
+			nestedResourceId: Resource.ap,
 			nestedAmount: 1,
 		};
 		const applied = applyParamsToEffects(effects, params);

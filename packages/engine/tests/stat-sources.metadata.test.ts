@@ -102,9 +102,9 @@ describe('stat sources metadata', () => {
 			]),
 		);
 
-		const armyStrengthId = player.getStatResourceV2Id(Stat.armyStrength);
+		// Stat values ARE ResourceV2 IDs directly - no mapper needed
 		applyStatDelta(player, Stat.armyStrength, 2, meta);
-		const initialEntry = player.statSources[armyStrengthId]?.[meta.key];
+		const initialEntry = player.statSources[Stat.armyStrength]?.[meta.key];
 		expect(initialEntry?.amount).toBe(2);
 		expect(initialEntry?.meta.longevity).toBe('ongoing');
 
@@ -138,7 +138,7 @@ describe('stat sources metadata', () => {
 		);
 
 		applyStatDelta(player, Stat.armyStrength, 1, updateMeta);
-		const merged = player.statSources[armyStrengthId]?.[meta.key];
+		const merged = player.statSources[Stat.armyStrength]?.[meta.key];
 		expect(merged?.amount).toBe(3);
 		expect(merged?.meta.longevity).toBe('ongoing');
 		expect(merged?.meta.extra).toEqual({
@@ -165,7 +165,7 @@ describe('stat sources metadata', () => {
 		);
 
 		applyStatDelta(player, Stat.armyStrength, -3, updateMeta);
-		expect(player.statSources[armyStrengthId]?.[meta.key]).toBeUndefined();
+		expect(player.statSources[Stat.armyStrength]?.[meta.key]).toBeUndefined();
 	});
 
 	it('records evaluator dependencies and percent-based stat deltas', () => {
@@ -200,16 +200,16 @@ describe('stat sources metadata', () => {
 			method: 'add_pct',
 			params: { key: Stat.armyStrength, percent: 25, percentStat: Stat.growth },
 		};
-		const armyStrengthId = player.getStatResourceV2Id(Stat.armyStrength);
+		// Stat values ARE ResourceV2 IDs directly - no mapper needed
 		recordEffectStatDelta(pctEffect, engineContext, Stat.armyStrength, 1);
 		const pctEntry = Object.values(
-			player.statSources[armyStrengthId] ?? {},
+			player.statSources[Stat.armyStrength] ?? {},
 		).find((entry) => entry.meta.effect?.method === 'add_pct');
 		expect(pctEntry?.meta.dependsOn).toEqual(
 			expect.arrayContaining([
 				{
 					type: 'stat',
-					id: player.getStatResourceV2Id(Stat.growth),
+					id: Stat.growth,
 				},
 			]),
 		);
