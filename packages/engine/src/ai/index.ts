@@ -93,13 +93,11 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		if (!currentPhaseDefinition?.action) {
 			return;
 		}
-		const actionPointResourceKey = engineContext.actionCostResource;
-		if (!actionPointResourceKey) {
+		// actionCostResource IS the ResourceV2 ID (e.g. 'resource:core:ap')
+		const actionPointResourceId = engineContext.actionCostResource;
+		if (!actionPointResourceId) {
 			return;
 		}
-		const actionPointResourceId = engineContext.activePlayer.getResourceV2Id(
-			actionPointResourceKey,
-		);
 		const catalog = engineContext.resourceCatalogV2;
 		const readActionPoints = () =>
 			getResourceValue(engineContext.activePlayer, actionPointResourceId);

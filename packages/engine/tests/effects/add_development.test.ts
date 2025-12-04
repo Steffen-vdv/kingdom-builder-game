@@ -40,8 +40,10 @@ describe('development:add effect', () => {
 			id: development.id,
 			landId: land.id,
 		});
-		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
-		const beforeGold = engineContext.activePlayer.gold;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		const beforeSlots = land.slotsUsed;
 		const gain = development.onBuild?.find(
 			(e) => e.type === 'resource' && e.method === 'add',
@@ -52,7 +54,9 @@ describe('development:add effect', () => {
 		});
 		expect(land.developments).toContain(development.id);
 		expect(land.slotsUsed).toBe(beforeSlots + 1);
-		expect(engineContext.activePlayer.gold).toBe(beforeGold + gain);
+		expect(engineContext.activePlayer.resourceValues[CResource.gold]).toBe(
+			beforeGold + gain,
+		);
 	});
 
 	it('throws if land does not exist', () => {

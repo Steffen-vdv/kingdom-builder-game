@@ -19,7 +19,7 @@ import {
 	type SerializedRegistry,
 } from '@kingdom-builder/protocol';
 import {
-	RESOURCES,
+	RESOURCE_V2_REGISTRY,
 	type ActionCategoryConfig,
 } from '@kingdom-builder/contents';
 import type { ZodType } from 'zod';
@@ -122,16 +122,18 @@ export function buildResourceRegistry(
 		if (registry.has(key)) {
 			return;
 		}
-		const info = RESOURCES[key as keyof typeof RESOURCES];
-		if (info) {
+		const resource = RESOURCE_V2_REGISTRY.byId[key];
+		if (resource) {
 			const definition: SessionResourceDefinition = {
-				key: info.key,
-				icon: info.icon,
-				label: info.label,
-				description: info.description,
+				key: resource.id,
+				icon: resource.icon,
+				label: resource.label,
 			};
-			if (info.tags && info.tags.length > 0) {
-				definition.tags = [...info.tags];
+			if (resource.description) {
+				definition.description = resource.description;
+			}
+			if (resource.tags && resource.tags.length > 0) {
+				definition.tags = [...resource.tags];
 			}
 			registry.set(key, definition);
 			return;

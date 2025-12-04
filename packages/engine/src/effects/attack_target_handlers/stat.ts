@@ -9,10 +9,11 @@ const statHandler: AttackTargetHandler<
 		return target.key;
 	},
 	applyDamage(target, damage, _engineContext, defender) {
-		const before = defender.stats[target.key] || 0;
+		// target.key is now a ResourceV2 ID - use resourceValues directly
+		const before = defender.resourceValues[target.key] || 0;
 		const after = Math.max(0, before - damage);
 		if (damage > 0) {
-			defender.stats[target.key] = after;
+			defender.resourceValues[target.key] = after;
 		}
 		return { before, after };
 	},

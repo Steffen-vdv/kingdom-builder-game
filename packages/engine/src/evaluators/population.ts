@@ -1,6 +1,8 @@
 import type { EvaluatorHandler } from './index';
 import type { EngineContext } from '../context';
 import type { PopulationRoleId } from '../state';
+import { PopulationRole } from '@kingdom-builder/contents';
+import { getResourceValue } from '../resource-v2';
 
 export interface PopulationEvaluatorParams extends Record<string, unknown> {
 	role?: PopulationRoleId;
@@ -12,10 +14,13 @@ export const populationEvaluator: EvaluatorHandler<
 > = (definition, engineContext: EngineContext) => {
 	const role = definition.params?.role;
 	if (role) {
-		return engineContext.activePlayer.population[role] || 0;
+		// role is now a ResourceV2 ID - use resourceValues directly
+		return engineContext.activePlayer.resourceValues[role] || 0;
 	}
-	return Object.values(engineContext.activePlayer.population).reduce(
-		(total, count) => total + Number(count || 0),
-		0,
-	);
+	// Sum all population role values using the PopulationRole enum
+	let total = 0;
+	for (const roleId of Object.values(PopulationRole)) {
+		total += getResourceValue(engineContext.activePlayer, roleId);
+	}
+	return total;
 };

@@ -118,6 +118,11 @@ describe('EngineSession', () => {
 			populations: content.populations,
 		});
 		advanceToMain(session);
+		// Ensure player has enough AP to perform the action
+		session.applyDeveloperPreset({
+			playerId: session.getSnapshot().game.activePlayerId,
+			resources: [{ key: CResource.ap, target: 5 }],
+		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
 		const initialGold = activeBefore.resources[CResource.gold] ?? 0;
@@ -148,6 +153,11 @@ describe('EngineSession', () => {
 			populations: content.populations,
 		});
 		advanceToMain(session);
+		// Ensure player has enough AP so the action fails on land availability, not AP
+		session.applyDeveloperPreset({
+			playerId: session.getSnapshot().game.activePlayerId,
+			resources: [{ key: CResource.ap, target: 5 }],
+		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
 		const initialAp = activeBefore.resources[CResource.ap] ?? 0;
@@ -244,10 +254,13 @@ describe('EngineSession', () => {
 	it('returns cloned passive evaluation modifier maps', () => {
 		const session = createTestSession();
 		const mods = session.getPassiveEvaluationMods();
-		expect(mods.size).toBe(0);
+		// Store initial size - content may register some mods at start
+		const initialSize = mods.size;
 		mods.set('test:target', new Map());
 		const refreshed = session.getPassiveEvaluationMods();
 		expect(refreshed).not.toBe(mods);
+		// Verify mutation didn't affect the source
+		expect(refreshed.size).toBe(initialSize);
 		expect(refreshed.has('test:target')).toBe(false);
 	});
 
@@ -434,7 +447,8 @@ describe('EngineSession', () => {
 			performAction(actionId, engineContext) {
 				const resourceKey = engineContext.actionCostResource;
 				if (resourceKey) {
-					engineContext.activePlayer.resources[resourceKey] = 0;
+					// PlayerState uses resourceValues, not resources
+					engineContext.activePlayer.resourceValues[resourceKey] = 0;
 				}
 				return undefined;
 			},
@@ -594,8 +608,9 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 		ReturnType<PerformActionFn>
 	>((actionId, engineContext) => {
 		const apKey = engineContext.actionCostResource;
-		const current = engineContext.activePlayer.resources[apKey] ?? 0;
-		engineContext.activePlayer.resources[apKey] = Math.max(0, current - 1);
+		// PlayerState uses resourceValues, not resources
+		const current = engineContext.activePlayer.resourceValues[apKey] ?? 0;
+		engineContext.activePlayer.resourceValues[apKey] = Math.max(0, current - 1);
 		return [];
 	});
 	const continueAfterAction = vi.fn().mockResolvedValue(true);

@@ -30,7 +30,8 @@ export function setPopulationRoleValue(
 	target: number,
 ): PopulationValueUpdateResult {
 	const player = context.activePlayer;
-	const resourceId = player.getPopulationResourceV2Id(role);
+	// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
+	const resourceId = role;
 	const previousValue = getResourceValue(player, resourceId);
 	const catalog = context.resourceCatalogV2;
 	const coercedTarget = coerceTargetValue(target);

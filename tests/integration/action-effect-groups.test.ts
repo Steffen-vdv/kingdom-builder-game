@@ -111,7 +111,8 @@ describe('action effect groups integration', () => {
 				[group.id]: { optionId: 'gold_reward' },
 			},
 		} as const;
-		const beforeGold = engineContext.activePlayer.resourceValues[Resource.gold] ?? 0;
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[Resource.gold] ?? 0;
 		const traces = performAction(chooser.id, engineContext, params);
 		expect(engineContext.activePlayer.resourceValues[Resource.gold]).toBe(
 			beforeGold + rewardAmount,

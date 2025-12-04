@@ -39,8 +39,10 @@ describe('building:add effect', () => {
 		const before =
 			getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 		const cost = getActionCosts(grant.id, engineContext, { id: building.id });
-		engineContext.activePlayer.gold = cost[CResource.gold] ?? 0;
-		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.gold] =
+			cost[CResource.gold] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
 		performAction(grant.id, engineContext, { id: building.id });
 		const after = getActionCosts(target.id, engineContext)[CResource.gold] ?? 0;
 		const bonus = building.onBuild?.find(
@@ -64,19 +66,19 @@ describe('building:add effect', () => {
 		}
 		const cost = getActionCosts(grant.id, engineContext, { id: building.id });
 		for (const [key, value] of Object.entries(cost)) {
-			engineContext.activePlayer.resources[key] = (value ?? 0) * 2;
+			engineContext.activePlayer.resourceValues[key] = (value ?? 0) * 2;
 		}
 
 		performAction(grant.id, engineContext, { id: building.id });
 
 		const actionKey = engineContext.actionCostResource as string;
-		engineContext.activePlayer.resources[actionKey] = 5;
-		engineContext.activePlayer.resources[CResource.gold] = 10;
+		engineContext.activePlayer.resourceValues[actionKey] = 5;
+		engineContext.activePlayer.resourceValues[CResource.gold] = 10;
 		expect(() =>
 			performAction(grant.id, engineContext, { id: building.id }),
 		).toThrow(`Building ${building.id} already built`);
-		expect(engineContext.activePlayer.resources[actionKey]).toBe(5);
-		expect(engineContext.activePlayer.resources[CResource.gold]).toBe(10);
+		expect(engineContext.activePlayer.resourceValues[actionKey]).toBe(5);
+		expect(engineContext.activePlayer.resourceValues[CResource.gold]).toBe(10);
 	});
 
 	it('allows rebuilding after the structure is removed', () => {
@@ -99,13 +101,13 @@ describe('building:add effect', () => {
 		const cost = getActionCosts(build.id, engineContext, { id: building.id });
 		const actionKey = engineContext.actionCostResource as string;
 		for (const [key, value] of Object.entries(cost)) {
-			engineContext.activePlayer.resources[key] = (value ?? 0) * 3;
+			engineContext.activePlayer.resourceValues[key] = (value ?? 0) * 3;
 		}
 
 		performAction(build.id, engineContext, { id: building.id });
 		performAction(demolish.id, engineContext, { id: building.id });
 
-		engineContext.activePlayer.resources[actionKey] = 5;
+		engineContext.activePlayer.resourceValues[actionKey] = 5;
 		performAction(build.id, engineContext, { id: building.id });
 
 		expect(engineContext.activePlayer.buildings.has(building.id)).toBe(true);
@@ -146,8 +148,8 @@ describe('building:add effect', () => {
 			advance(engineContext);
 		}
 
-		for (const key of Object.keys(engineContext.activePlayer.resources)) {
-			engineContext.activePlayer.resources[key] = 10;
+		for (const key of Object.values(CResource)) {
+			engineContext.activePlayer.resourceValues[key] = 10;
 		}
 
 		const baseCost =

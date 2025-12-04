@@ -116,7 +116,7 @@ export class WinConditionService {
 
 	private resolveTriggerResourceId(
 		trigger: WinConditionTrigger,
-		player: PlayerState,
+		_player: PlayerState,
 	): string {
 		const resourceTrigger = trigger as WinConditionTrigger & {
 			resourceId?: string;
@@ -124,7 +124,8 @@ export class WinConditionService {
 		if (resourceTrigger.resourceId && resourceTrigger.resourceId.length > 0) {
 			return resourceTrigger.resourceId;
 		}
-		return player.getResourceV2Id(resourceTrigger.key);
+		// key IS the ResourceV2 ID directly (no mapper needed)
+		return resourceTrigger.key;
 	}
 
 	private getTriggerResourceValue(

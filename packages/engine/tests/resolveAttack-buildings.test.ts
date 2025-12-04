@@ -27,7 +27,8 @@ describe('resolveAttack buildings', () => {
 		defender.absorption = 1;
 		defender.fortificationStrength = 0;
 
-		const castleBefore = defender.resources[Resource.castleHP];
+		// PlayerState uses resourceValues for all resources
+		const castleBefore = defender.resourceValues[Resource.castleHP];
 		const result = resolveAttack(defender, 3, engineContext, {
 			type: 'building',
 			id: bastion.id,
@@ -35,7 +36,7 @@ describe('resolveAttack buildings', () => {
 
 		expect(result.damageDealt).toBe(0);
 		expect(defender.buildings.has(bastion.id)).toBe(true);
-		expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
+		expect(defender.resourceValues[Resource.castleHP]).toBe(castleBefore);
 		expect(result.evaluation.target.type).toBe('building');
 		if (result.evaluation.target.type === 'building') {
 			expect(result.evaluation.target.existed).toBe(true);
@@ -72,7 +73,7 @@ describe('resolveAttack buildings', () => {
 		);
 		engineContext.game.currentPlayerIndex = 0;
 
-		const castleBefore = defender.resources[Resource.castleHP];
+		const castleBefore = defender.resourceValues[Resource.castleHP];
 		expect(defender.fortificationStrength).toBe(3);
 
 		const result = resolveAttack(defender, 5, engineContext, {
@@ -82,7 +83,7 @@ describe('resolveAttack buildings', () => {
 
 		expect(result.damageDealt).toBe(2);
 		expect(defender.buildings.has(fortress.id)).toBe(false);
-		expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
+		expect(defender.resourceValues[Resource.castleHP]).toBe(castleBefore);
 		expect(defender.fortificationStrength).toBe(0);
 		expect(result.evaluation.target.type).toBe('building');
 		if (result.evaluation.target.type === 'building') {
@@ -113,7 +114,7 @@ describe('resolveAttack buildings', () => {
 
 		defender.absorption = 0.9;
 		defender.fortificationStrength = 10;
-		const castleBefore = defender.resources[Resource.castleHP];
+		const castleBefore = defender.resourceValues[Resource.castleHP];
 
 		const result = resolveAttack(
 			defender,
@@ -130,7 +131,7 @@ describe('resolveAttack buildings', () => {
 		expect(result.evaluation.absorption.ignored).toBe(true);
 		expect(result.evaluation.fortification.ignored).toBe(true);
 		expect(defender.fortificationStrength).toBe(10);
-		expect(defender.resources[Resource.castleHP]).toBe(castleBefore);
+		expect(defender.resourceValues[Resource.castleHP]).toBe(castleBefore);
 		expect(defender.buildings.has(stronghold.id)).toBe(false);
 		expect(result.evaluation.target.type).toBe('building');
 		if (result.evaluation.target.type === 'building') {

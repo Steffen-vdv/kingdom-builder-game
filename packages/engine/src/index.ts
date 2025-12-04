@@ -14,6 +14,7 @@ export type {
 	StatSourceLink,
 } from './setup/create_engine';
 export type { RuntimeResourceContent } from './resource-v2';
+export { getResourceValue, setResourceValue } from './resource-v2';
 export {
 	createEngineSession,
 	type EngineSession,

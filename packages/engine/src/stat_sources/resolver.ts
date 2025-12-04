@@ -15,9 +15,9 @@ export function resolveStatSourceMeta(
 	context: EngineContext,
 	statKey: StatKey,
 ): StatSourceMeta {
-	const resourceId = context.activePlayer.getStatResourceV2Id(statKey);
+	// statKey is now directly a ResourceV2 ID
 	const meta: StatSourceMeta = {
-		key: createStatSourceKey(effectDefinition, resourceId),
+		key: createStatSourceKey(effectDefinition, statKey),
 		longevity: 'permanent',
 	};
 	const effectInfo: StatSourceMeta['effect'] = {};
@@ -36,7 +36,8 @@ export function resolveStatSourceMeta(
 			mergeMeta(meta, partialMeta);
 		}
 	}
-	const effectMeta = extractMetaFromEffect(effectDefinition, resourceId);
+	// statKey is now directly a ResourceV2 ID, use it directly
+	const effectMeta = extractMetaFromEffect(effectDefinition, statKey);
 	if (effectMeta) {
 		mergeMeta(meta, effectMeta);
 	}
@@ -52,7 +53,8 @@ export function applyStatDelta(
 	if (Math.abs(delta) < STAT_SOURCE_EPSILON) {
 		return;
 	}
-	const resourceId = playerState.getStatResourceV2Id(statKey);
+	// statKey is now directly a ResourceV2 ID
+	const resourceId = statKey;
 	const playerStatSources = playerState.statSources;
 	const sources =
 		playerStatSources[resourceId] ?? (playerStatSources[resourceId] = {});
@@ -86,7 +88,8 @@ export function recordEffectStatDelta(
 	if (Math.abs(delta) < STAT_SOURCE_EPSILON) {
 		return;
 	}
-	const resourceId = context.activePlayer.getStatResourceV2Id(statKey);
+	// statKey is now directly a ResourceV2 ID
+	const resourceId = statKey;
 	const meta = resolveStatSourceMeta(effectDefinition, context, statKey);
 	if (
 		effectDefinition.type === 'stat' &&
@@ -101,7 +104,8 @@ export function recordEffectStatDelta(
 				: '';
 		if (percentStatKey) {
 			const activePlayer = context.activePlayer;
-			const percentStatId = activePlayer.getStatResourceV2Id(percentStatKey);
+			// percentStatKey is already a ResourceV2 ID
+			const percentStatId = percentStatKey;
 			appendDependencyLink(meta, {
 				type: 'stat',
 				id: percentStatId,

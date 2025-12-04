@@ -8,12 +8,13 @@ describe('absorption cap', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.game.opponent;
 		defender.absorption = 1.5;
-		const start = defender.resources[Resource.castleHP];
+		// PlayerState uses resourceValues for all resources
+		const start = defender.resourceValues[Resource.castleHP];
 		const result = resolveAttack(defender, 5, engineContext, {
 			type: 'resource',
 			key: Resource.castleHP,
 		});
 		expect(result.damageDealt).toBe(0);
-		expect(defender.resources[Resource.castleHP]).toBe(start);
+		expect(defender.resourceValues[Resource.castleHP]).toBe(start);
 	});
 });

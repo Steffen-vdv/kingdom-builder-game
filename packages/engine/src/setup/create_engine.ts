@@ -1,5 +1,5 @@
 import type { ZodType } from 'zod';
-import { GameState, PopulationRole } from '../state';
+import { GameState } from '../state';
 import type {
 	ResourceKey,
 	StatKey,
@@ -45,7 +45,12 @@ import {
 	initializePlayerActions,
 } from './player_setup';
 import { resolveStartConfigForMode } from './start_config_resolver';
-import { Resource, Stat } from '@kingdom-builder/contents';
+import {
+	PhaseId as Phase,
+	PopulationRole,
+	Resource,
+	Stat,
+} from '@kingdom-builder/contents';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
@@ -224,9 +229,6 @@ export function createEngine({
 	runtimeResourceCatalog = createRuntimeResourceCatalog(runtimeResourceContent);
 	validatePhases(phases);
 	startConfig = resolveStartConfigForMode(startConfig, devMode);
-	for (const role of Object.keys(startConfig.player.population || {})) {
-		PopulationRole[role.charAt(0).toUpperCase() + role.slice(1)] = role;
-	}
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState(runtimeResourceCatalog, 'Player', 'Opponent');
@@ -299,7 +301,7 @@ export function createEngine({
 	return engineContext;
 }
 
-export { Resource, PopulationRole, Stat };
+export { Phase, PopulationRole, Resource, Stat };
 export type {
 	RuleSet,
 	ResourceKey,

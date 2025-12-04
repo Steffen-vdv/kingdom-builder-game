@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
 	performAction,
-	Resource,
 	advance,
 	getActionCosts,
+	getResourceValue,
 } from '../../src/index.ts';
 import {
 	createActionRegistry,
@@ -37,7 +37,7 @@ describe('resource:remove effect', () => {
 		const engineContext = createTestEngine({ actions });
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
-		const before = engineContext.activePlayer.gold;
+		const before = getResourceValue(engineContext.activePlayer, CResource.gold);
 		const actionDefinition = actions.get('pay_gold');
 		const params = actionDefinition.effects.find(
 			(effect) =>
@@ -46,10 +46,12 @@ describe('resource:remove effect', () => {
 				effect.params?.key === CResource.gold,
 		)?.params as ResourceAmountParamsResult | undefined;
 		const amount = params?.amount ?? 0;
-		const cost = getActionCosts('pay_gold', engineContext)[Resource.ap] ?? 0;
-		engineContext.activePlayer.ap = cost;
+		const cost = getActionCosts('pay_gold', engineContext)[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('pay_gold', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(before - amount);
+		expect(
+			getResourceValue(engineContext.activePlayer, CResource.gold),
+		).toBe(before - amount);
 	});
 
 	it('rounds fractional amounts according to round setting', () => {
@@ -97,13 +99,15 @@ describe('resource:remove effect', () => {
 					effect.params?.key === CResource.gold,
 			)?.params as ResourcePercentParamsResult | undefined;
 		const roundUpBase = 7;
-		engineContext.activePlayer.gold = roundUpBase;
-		engineContext.activePlayer.ap =
-			getActionCosts('round_up_remove', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.gold] = roundUpBase;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			getActionCosts('round_up_remove', engineContext)[CResource.ap] ?? 0;
 		const roundUpDelta =
 			roundUpParams?.reconciledDelta?.(roundUpBase, 'remove') ?? 0;
 		performAction('round_up_remove', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(roundUpBase + roundUpDelta);
+		expect(
+			getResourceValue(engineContext.activePlayer, CResource.gold),
+		).toBe(roundUpBase + roundUpDelta);
 
 		const roundDownParams = actions
 			.get('round_down_remove')
@@ -114,14 +118,14 @@ describe('resource:remove effect', () => {
 					effect.params?.key === CResource.gold,
 			)?.params as ResourcePercentParamsResult | undefined;
 		const roundDownBase = 9;
-		engineContext.activePlayer.gold = roundDownBase;
-		engineContext.activePlayer.ap =
-			getActionCosts('round_down_remove', engineContext)[Resource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.gold] = roundDownBase;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			getActionCosts('round_down_remove', engineContext)[CResource.ap] ?? 0;
 		const roundDownDelta =
 			roundDownParams?.reconciledDelta?.(roundDownBase, 'remove') ?? 0;
 		performAction('round_down_remove', engineContext);
-		expect(engineContext.activePlayer.gold).toBe(
-			roundDownBase + roundDownDelta,
-		);
+		expect(
+			getResourceValue(engineContext.activePlayer, CResource.gold),
+		).toBe(roundDownBase + roundDownDelta);
 	});
 });

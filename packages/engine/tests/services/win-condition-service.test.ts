@@ -30,14 +30,14 @@ describe('WinConditionService', () => {
 		});
 		const subject = engineContext.game.players[0]!;
 		const opponent = engineContext.game.players[1]!;
-		subject.resources[resourceKey] = 4;
+		subject.resourceValues[resourceKey] = 4;
 		engineContext.services.winCondition.evaluateResourceChange(
 			engineContext,
 			subject,
 			resourceKey,
 		);
 		expect(engineContext.game.conclusion).toBeUndefined();
-		subject.resources[resourceKey] = 5;
+		subject.resourceValues[resourceKey] = 5;
 		engineContext.services.winCondition.evaluateResourceChange(
 			engineContext,
 			subject,
@@ -69,14 +69,14 @@ describe('WinConditionService', () => {
 		});
 		const subject = engineContext.game.players[0]!;
 		const opponent = engineContext.game.players[1]!;
-		opponent.resources[resourceKey] = 5;
+		opponent.resourceValues[resourceKey] = 5;
 		engineContext.services.winCondition.evaluateResourceChange(
 			engineContext,
 			subject,
 			resourceKey,
 		);
 		expect(engineContext.game.conclusion).toBeUndefined();
-		opponent.resources[resourceKey] = 1;
+		opponent.resourceValues[resourceKey] = 1;
 		engineContext.services.winCondition.evaluateResourceChange(
 			engineContext,
 			subject,
@@ -115,7 +115,7 @@ describe('WinConditionService', () => {
 			triggeredBy: opponent.id,
 		};
 		engineContext.game.conclusion = { ...existingConclusion };
-		subject.resources[resourceKey] = 10;
+		subject.resourceValues[resourceKey] = 10;
 		engineContext.services.winCondition.evaluateResourceChange(
 			engineContext,
 			subject,
@@ -146,7 +146,7 @@ describe('WinConditionService', () => {
 		(
 			clone as unknown as { definitions: WinConditionDefinition[] }
 		).definitions[0]!.trigger.value = 100;
-		subject.resources[resourceKey] = winCondition.trigger.value;
+		subject.resourceValues[resourceKey] = winCondition.trigger.value;
 		engineContext.services.winCondition.evaluateResourceChange(
 			engineContext,
 			subject,

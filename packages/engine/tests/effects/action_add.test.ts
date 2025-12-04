@@ -27,7 +27,8 @@ describe('action:add effect', () => {
 			grantingActionDefinition.id,
 			engineContext,
 		);
-		engineContext.activePlayer.ap = grantActionCosts[CResource.ap] ?? 0;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			grantActionCosts[CResource.ap] ?? 0;
 		performAction(grantingActionDefinition.id, engineContext);
 		expect(
 			engineContext.activePlayer.actions.has(extraActionDefinition.id),
