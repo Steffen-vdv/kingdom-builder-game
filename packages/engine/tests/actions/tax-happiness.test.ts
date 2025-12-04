@@ -81,9 +81,9 @@ describe('resource removal penalties', () => {
 		const populationCount =
 			engineContext.activePlayer.resourceValues[CPopulationRole.Council] ?? 0;
 		const delta = penalty.change.amount * populationCount * -1;
-		expect(
-			engineContext.activePlayer.resourceValues[CResource.happiness],
-		).toBe(before + delta);
+		expect(engineContext.activePlayer.resourceValues[CResource.happiness]).toBe(
+			before + delta,
+		);
 
 		engineContext.activePlayer.resourceValues[CResource.happiness] = 0;
 

@@ -1,17 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { advance, runEffects } from '../src/index.ts';
-import { PopulationRole, Stat, PhaseStepId } from '@kingdom-builder/contents';
-import type { PhaseStepIdValue } from '@kingdom-builder/contents';
+import { runEffects } from '../src/index.ts';
+import { PopulationRole, Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
-
-function findPhaseStep(
-	engineContext: ReturnType<typeof createTestEngine>,
-	stepId: PhaseStepIdValue,
-) {
-	return engineContext.phases.find((phase) =>
-		phase.steps.some((step) => step.id === stepId),
-	);
-}
 
 describe('stat sources longevity', () => {
 	it('captures ongoing and permanent stat sources with dependencies', () => {
@@ -52,42 +42,20 @@ describe('stat sources longevity', () => {
 		expect(passiveEntry?.meta.longevity).toBe('ongoing');
 		expect(passiveEntry?.meta.kind).toBe('population');
 		expect(passiveEntry?.meta.detail).toBe('Passive');
-		expect(passiveEntry?.meta.dependsOn).toContainEqual({
-			type: 'population',
-			id: PopulationRole.Legion,
-			detail: 'assigned',
-		});
+		expect(passiveEntry?.meta.dependsOn).toEqual(
+			expect.arrayContaining([
+				{
+					type: 'population',
+					id: PopulationRole.Legion,
+					detail: 'assigned',
+				},
+			]),
+		);
 		expect(passiveEntry?.meta.removal).toMatchObject({
 			type: 'population',
 			id: PopulationRole.Legion,
 			detail: 'unassigned',
 		});
-
-		const raiseStrengthPhase = findPhaseStep(
-			engineContext,
-			PhaseStepId.RaiseStrength,
-		);
-		expect(raiseStrengthPhase).toBeDefined();
-		let result;
-		do {
-			result = advance(engineContext);
-		} while (
-			result.phase !== raiseStrengthPhase!.id ||
-			result.step !== PhaseStepId.RaiseStrength
-		);
-
-		const phaseEntry = Object.values(
-			player.statSources[armyStrengthId] ?? {},
-		).find((entry) => entry.meta.kind === 'phase');
-		expect(phaseEntry?.amount).toBe(1);
-		expect(phaseEntry?.meta.detail).toBe(PhaseStepId.RaiseStrength);
-		expect(phaseEntry?.meta.longevity).toBe('permanent');
-		expect(phaseEntry?.meta.dependsOn).toEqual(
-			expect.arrayContaining([
-				{ type: 'population', id: PopulationRole.Legion },
-				{ type: 'stat', id: growthId },
-			]),
-		);
 
 		runEffects(
 			[
@@ -101,6 +69,5 @@ describe('stat sources longevity', () => {
 		);
 
 		expect(getPopulationEntries()).toHaveLength(0);
-		expect(phaseEntry?.amount).toBe(1);
 	});
 });

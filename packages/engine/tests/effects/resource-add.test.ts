@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
 	performAction,
-	Resource,
 	advance,
 	getActionCosts,
 	getResourceValue,
@@ -47,13 +46,12 @@ describe('resource:add effect', () => {
 				effect.params?.key === CResource.gold,
 		)?.params as ResourceAmountParamsResult | undefined;
 		const amount = params?.amount ?? 0;
-		const cost =
-			getActionCosts('grant_gold', engineContext)[CResource.ap] ?? 0;
+		const cost = getActionCosts('grant_gold', engineContext)[CResource.ap] ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('grant_gold', engineContext);
-		expect(
-			getResourceValue(engineContext.activePlayer, CResource.gold),
-		).toBe(before + amount);
+		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
+			before + amount,
+		);
 	});
 
 	it('rounds fractional amounts according to round setting', () => {
@@ -106,9 +104,9 @@ describe('resource:add effect', () => {
 			getActionCosts('round_up', engineContext)[CResource.ap] ?? 0;
 		const roundUpDelta = roundUpParams?.reconciledDelta?.(roundUpBase) ?? 0;
 		performAction('round_up', engineContext);
-		expect(
-			getResourceValue(engineContext.activePlayer, CResource.gold),
-		).toBe(roundUpBase + roundUpDelta);
+		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
+			roundUpBase + roundUpDelta,
+		);
 
 		const roundDownParams = actions
 			.get('round_down')
@@ -125,8 +123,8 @@ describe('resource:add effect', () => {
 		const roundDownDelta =
 			roundDownParams?.reconciledDelta?.(roundDownBase) ?? 0;
 		performAction('round_down', engineContext);
-		expect(
-			getResourceValue(engineContext.activePlayer, CResource.gold),
-		).toBe(roundDownBase + roundDownDelta);
+		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
+			roundDownBase + roundDownDelta,
+		);
 	});
 });

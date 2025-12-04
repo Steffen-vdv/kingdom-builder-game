@@ -49,9 +49,9 @@ describe('resource:remove effect', () => {
 		const cost = getActionCosts('pay_gold', engineContext)[CResource.ap] ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('pay_gold', engineContext);
-		expect(
-			getResourceValue(engineContext.activePlayer, CResource.gold),
-		).toBe(before - amount);
+		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
+			before - amount,
+		);
 	});
 
 	it('rounds fractional amounts according to round setting', () => {
@@ -105,9 +105,9 @@ describe('resource:remove effect', () => {
 		const roundUpDelta =
 			roundUpParams?.reconciledDelta?.(roundUpBase, 'remove') ?? 0;
 		performAction('round_up_remove', engineContext);
-		expect(
-			getResourceValue(engineContext.activePlayer, CResource.gold),
-		).toBe(roundUpBase + roundUpDelta);
+		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
+			roundUpBase + roundUpDelta,
+		);
 
 		const roundDownParams = actions
 			.get('round_down_remove')
@@ -124,8 +124,8 @@ describe('resource:remove effect', () => {
 		const roundDownDelta =
 			roundDownParams?.reconciledDelta?.(roundDownBase, 'remove') ?? 0;
 		performAction('round_down_remove', engineContext);
-		expect(
-			getResourceValue(engineContext.activePlayer, CResource.gold),
-		).toBe(roundDownBase + roundDownDelta);
+		expect(getResourceValue(engineContext.activePlayer, CResource.gold)).toBe(
+			roundDownBase + roundDownDelta,
+		);
 	});
 });

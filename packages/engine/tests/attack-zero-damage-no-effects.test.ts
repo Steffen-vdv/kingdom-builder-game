@@ -186,8 +186,7 @@ describe('attack:perform', () => {
 		);
 		expect(defenderEntries).toHaveLength(1);
 		const defenderDiffs = defenderEntries[0]!.defender.filter(
-			(diff) =>
-				diff.type === 'resource' && diff.key === CResource.happiness,
+			(diff) => diff.type === 'resource' && diff.key === CResource.happiness,
 		);
 		expect(defenderDiffs).toHaveLength(1);
 		expect(defenderDiffs[0]!.before).toBe(3);
