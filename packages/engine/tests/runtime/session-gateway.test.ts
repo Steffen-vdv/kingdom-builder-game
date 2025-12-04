@@ -11,8 +11,8 @@ import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
-	Resource as CResource,
 } from '@kingdom-builder/contents/registries/resourceV2';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import type {
 	StartConfig,
 	RuleSet,

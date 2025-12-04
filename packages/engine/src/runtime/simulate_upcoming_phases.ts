@@ -74,6 +74,7 @@ function buildDelta(
 	const toDelta = (
 		sourceBefore: Record<string, number>,
 		sourceAfter: Record<string, number>,
+		filter?: (key: string) => boolean,
 	) => {
 		const result: Record<string, number> = {};
 		const keys = new Set([
@@ -81,6 +82,9 @@ function buildDelta(
 			...Object.keys(sourceAfter),
 		]);
 		for (const key of keys) {
+			if (filter && !filter(key)) {
+				continue;
+			}
 			const diff = (sourceAfter[key] ?? 0) - (sourceBefore[key] ?? 0);
 			if (diff !== 0) {
 				result[key] = diff;
@@ -88,10 +92,14 @@ function buildDelta(
 		}
 		return result;
 	};
+	// Filter deltas by ResourceV2 namespace to maintain backward compatibility
+	const isResource = (key: string) => key.startsWith('resource:core:');
+	const isStat = (key: string) => key.startsWith('resource:stat:');
+	const isPopulation = (key: string) => key.startsWith('resource:population:');
 	return {
-		resources: toDelta(before.resources, after.resources),
-		stats: toDelta(before.stats, after.stats),
-		population: toDelta(before.population, after.population),
+		resources: toDelta(before.resources, after.resources, isResource),
+		stats: toDelta(before.stats, after.stats, isStat),
+		population: toDelta(before.population, after.population, isPopulation),
 	};
 }
 

@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { resolveAttack } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { Resource } from '../src/state/index.ts';
+import { Resource, Stat } from '@kingdom-builder/contents';
 
 describe('absorption cap', () => {
 	it('caps absorption at 100%', () => {
 		const engineContext = createTestEngine();
 		const defender = engineContext.game.opponent;
-		defender.absorption = 1.5;
+		defender.resourceValues[Stat.absorption] = 1.5;
 		// PlayerState uses resourceValues for all resources
 		const start = defender.resourceValues[Resource.castleHP];
 		const result = resolveAttack(defender, 5, engineContext, {

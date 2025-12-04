@@ -3,6 +3,7 @@ import type {
 	AttackEvaluationLog,
 	AttackTarget,
 } from '@kingdom-builder/protocol';
+import { Stat } from '@kingdom-builder/contents';
 import { runEffects } from '..';
 import type { EngineContext } from '../../context';
 import { withStatSourceFrames } from '../../stat_sources';
@@ -73,7 +74,7 @@ export function resolveAttack(
 	const absorption = options.ignoreAbsorption
 		? 0
 		: Math.min(
-				(defender.absorption as number) || 0,
+				defender.resourceValues[Stat.absorption] || 0,
 				context.services.rules.absorptionCapPct,
 			);
 	const damageAfterAbsorption = options.ignoreAbsorption
@@ -84,7 +85,7 @@ export function resolveAttack(
 				context.services.rules.absorptionRounding,
 			);
 
-	const fortBefore = (defender.fortificationStrength as number) || 0;
+	const fortBefore = defender.resourceValues[Stat.fortificationStrength] || 0;
 	const fortDamage = options.ignoreFortification
 		? 0
 		: Math.min(fortBefore, damageAfterAbsorption);
@@ -92,7 +93,7 @@ export function resolveAttack(
 		? fortBefore
 		: Math.max(0, fortBefore - fortDamage);
 	if (!options.ignoreFortification) {
-		defender.fortificationStrength = fortAfter;
+		defender.resourceValues[Stat.fortificationStrength] = fortAfter;
 	}
 
 	const targetDamage = Math.max(0, damageAfterAbsorption - fortDamage);
@@ -130,8 +131,8 @@ export function resolveAttack(
 		);
 	}
 
-	if ((defender.fortificationStrength || 0) < 0) {
-		defender.fortificationStrength = 0;
+	if ((defender.resourceValues[Stat.fortificationStrength] || 0) < 0) {
+		defender.resourceValues[Stat.fortificationStrength] = 0;
 	}
 
 	if (afterAttackTriggers.length > 0) {

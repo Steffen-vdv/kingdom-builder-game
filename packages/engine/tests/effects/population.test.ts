@@ -30,8 +30,7 @@ describe('population effects', () => {
 			advance(engineContext);
 		}
 		// Get initial population count
-		const initialCount =
-			engineContext.activePlayer.resourceValues[roleId] ?? 0;
+		const initialCount = engineContext.activePlayer.resourceValues[roleId] ?? 0;
 		let cost = getActionCosts(add.id, engineContext);
 		engineContext.activePlayer.resourceValues[CResource.ap] =
 			cost[CResource.ap] ?? 0;

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef } from '../src/index.ts';
-import { Stat } from '../src/state/index.ts';
+import { Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 
 describe('stat:add_pct additive scaling', () => {
