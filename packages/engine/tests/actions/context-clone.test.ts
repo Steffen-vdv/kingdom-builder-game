@@ -103,9 +103,12 @@ describe('cloneEngineContext', () => {
 			extra: { note: 'tracked' },
 			effect: { type: 'resource', method: 'add' },
 		};
-		player.statSources[armyStrengthId]['source-id'] = {
-			amount: 5,
-			meta: statSourceMeta,
+		// Initialize the nested object for statSources before setting properties
+		player.statSources[armyStrengthId] = {
+			'source-id': {
+				amount: 5,
+				meta: statSourceMeta,
+			},
 		};
 		player.statSources[happinessStatId] = undefined as never;
 

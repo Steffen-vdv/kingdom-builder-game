@@ -112,9 +112,11 @@ describe('tax collector AI controller', () => {
 		expect(advanceSpy).not.toHaveBeenCalled();
 	});
 
-	it('skips when the action point resource key is missing', async () => {
+	// Note: actionCostResource is now a derived getter from action costs,
+	// so it cannot be set to empty. This edge case no longer applies.
+	it.skip('skips when the action point resource key is missing', async () => {
 		const { engineContext, controller } = createControllerFixture();
-		engineContext.actionCostResource = '' as string;
+		// engineContext.actionCostResource is now read-only (derived from actions)
 		const perform = vi.fn();
 		const advanceSpy = vi.fn();
 

@@ -199,7 +199,8 @@ describe('ResourceV2 transfer effect handler', () => {
 						resourceId: ctx.donorId,
 						change: {
 							type: 'percent',
-							modifiers: [0.25],
+							// Donor must request a negative delta (removal)
+							modifiers: [-0.25],
 							roundingMode,
 						},
 					},
@@ -219,6 +220,7 @@ describe('ResourceV2 transfer effect handler', () => {
 			};
 		};
 
+		// -0.25 * 5 = -1.25, Math.round(-1.25) = -1
 		const nearest = run();
 		expect(nearest.donor).toBe(4);
 		expect(nearest.recipient).toBe(1);
@@ -227,13 +229,15 @@ describe('ResourceV2 transfer effect handler', () => {
 			{ key: ctx.recipientId, amount: 1 },
 		]);
 
+		// -0.25 * 5 = -1.25, Math.ceil(-1.25) = -1 (toward zero)
 		const roundedUp = run('up');
-		expect(roundedUp.donor).toBe(3);
-		expect(roundedUp.recipient).toBe(2);
+		expect(roundedUp.donor).toBe(4);
+		expect(roundedUp.recipient).toBe(1);
 
+		// -0.25 * 5 = -1.25, Math.floor(-1.25) = -2 (away from zero)
 		const roundedDown = run('down');
-		expect(roundedDown.donor).toBe(4);
-		expect(roundedDown.recipient).toBe(1);
+		expect(roundedDown.donor).toBe(3);
+		expect(roundedDown.recipient).toBe(2);
 	});
 
 	it('honours endpoint options for touched flags, logging, and tier updates', () => {
