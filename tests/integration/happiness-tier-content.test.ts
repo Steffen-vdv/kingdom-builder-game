@@ -4,6 +4,7 @@ import {
 	happinessPassiveId,
 	type HappinessTierSlug,
 } from '@kingdom-builder/contents';
+import { setResourceValue } from '@kingdom-builder/engine';
 import { createTestContext } from './fixtures';
 import { translateTierSummary } from '../../packages/web/src/translation/content/tierSummaries';
 import { createTranslationContextForEngine } from '../../packages/web/tests/helpers/createTranslationContextForEngine';
@@ -138,7 +139,8 @@ describe('content happiness tiers', () => {
 				tier,
 			]),
 		);
-		const happinessResourceId = player.getResourceV2Id(Resource.happiness);
+		// Resource.happiness is already the ResourceV2 ID (resource:core:happiness)
+		const happinessResourceId = Resource.happiness;
 		const samples = [
 			{ value: -10, label: 'despair' },
 			{ value: -8, label: 'misery' },
@@ -154,7 +156,14 @@ describe('content happiness tiers', () => {
 		const snapshot: Record<string, unknown> = {};
 
 		for (const sample of samples) {
-			player.resources[Resource.happiness] = sample.value;
+			// Use setResourceValue to properly update tier IDs
+			setResourceValue(
+				engineContext,
+				player,
+				engineContext.resourceCatalogV2,
+				Resource.happiness,
+				sample.value,
+			);
 			engineContext.services.handleTieredResourceChange(
 				engineContext,
 				player,

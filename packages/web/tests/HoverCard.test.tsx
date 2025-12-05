@@ -350,6 +350,8 @@ describe('<HoverCard />', () => {
 				resources,
 				stats: {},
 				population: {},
+				valuesV2: {},
+				resourceBoundsV2: {},
 				buildings: [],
 				lands: [],
 				passives: [],
@@ -409,8 +411,10 @@ describe('<HoverCard />', () => {
 			},
 			buildings: factory.buildings,
 			developments: factory.developments,
+			actionCategories: mockGame.translationContext.actionCategories,
 			passives: { evaluationMods: new Map(), get: () => undefined },
 			assets: mockGame.translationContext.assets,
+			resourceMetadataV2: mockGame.translationContext.resourceMetadataV2,
 		});
 		const formatted = formatPhaseResolution({
 			advance,

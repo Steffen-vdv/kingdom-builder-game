@@ -77,7 +77,7 @@ const serializeError = (error: Error, seen: WeakSet<object>): unknown => {
 	if (error.stack) {
 		result.stack = error.stack;
 	}
-	const cause = (error as Error & { cause?: unknown }).cause;
+	const cause = error.cause;
 	if (cause !== undefined) {
 		result.cause = serializeUnknown(cause, seen);
 	}

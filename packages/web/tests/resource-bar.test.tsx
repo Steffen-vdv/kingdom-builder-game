@@ -81,9 +81,12 @@ function createResourceBarScenario() {
 		resourceKeys.find((key) => key !== happinessKey) ??
 		resourceKeys[0] ??
 		happinessKey;
-	const happinessResourceId =
-		getResourceIdForLegacy('resources', happinessKey) ??
-		`resource:test:${happinessKey}`;
+	// tieredResourceKey is already a V2 ID (e.g., 'resource:core:happiness')
+	// Check if it looks like a V2 ID, otherwise try to resolve from legacy
+	const happinessResourceId = happinessKey.startsWith('resource:')
+		? happinessKey
+		: (getResourceIdForLegacy('resources', happinessKey) ??
+			`resource:test:${happinessKey}`);
 	const tierDefinitions: TierDefinition[] = [
 		{
 			id: 'tier.strained',
@@ -330,9 +333,18 @@ describe('<ResourceBar /> happiness hover card', () => {
 		expect(hoverCard?.effectsTitle).toBe(
 			`Happiness thresholds (current: ${formattedValue})`,
 		);
+		// Filter for tier entries only (exclude Value, Bounds, etc.)
+		// Tier titles are formatted as "icon name (range)" so we check if the
+		// title contains one of the tier names
+		const tierNames = ruleSnapshot.tierDefinitions
+			.map((tier) => tier.display?.title)
+			.filter(Boolean);
 		const tierEntries = (hoverCard?.effects ?? []).filter(
 			(section): section is SummaryGroupLike =>
-				Boolean(section) && typeof section === 'object',
+				Boolean(section) &&
+				typeof section === 'object' &&
+				typeof section.title === 'string' &&
+				tierNames.some((name) => section.title.includes(name)),
 		);
 		expect(tierEntries).toHaveLength(3);
 		const titles = tierEntries.map((entry) => entry?.title ?? '');

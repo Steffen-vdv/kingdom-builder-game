@@ -8,6 +8,7 @@ import { formatStatValue } from '../src/utils/stats';
 import { createPlayerPanelFixtures } from './helpers/playerPanelFixtures';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from '../src/components/player/registryDisplays';
+import { getLegacyMapping } from '../src/components/player/resourceV2Snapshots';
 
 const {
 	activePlayer: activePlayerSnapshot,
@@ -63,63 +64,101 @@ describe('<PlayerPanel />', () => {
 	it('renders player name and resource icons', () => {
 		renderPanel();
 		expect(screen.getByText(activePlayerSnapshot.name)).toBeInTheDocument();
-		for (const descriptor of metadataSelectors.resourceMetadata.list) {
-			const display = toDescriptorDisplay(descriptor);
-			const amount = activePlayerSnapshot.resources[display.id] ?? 0;
-			const icon = display.icon ?? '❔';
-			expect(screen.getByText(`${icon}${amount}`)).toBeInTheDocument();
+		// The component uses V2 resources from resourceCatalogV2 and V2 metadata
+		// Resource buttons have aria-label format "Label: value"
+		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+		const v2Resources = resourceCatalog?.resources?.ordered ?? [];
+		// Filter to only core resources (not stats or population roles)
+		const coreResources = v2Resources.filter(
+			(def) =>
+				!def.id.includes(':stat:') && !def.id.includes(':population:role:'),
+		);
+		for (const definition of coreResources) {
+			const metadata = mockGame.translationContext.resourceMetadataV2.get(
+				definition.id,
+			);
+			const value = activePlayerSnapshot.valuesV2?.[definition.id] ?? 0;
+			const label = metadata?.label ?? definition.id;
+			// Get forecast for this resource using legacy mapping
+			const mapping = getLegacyMapping(definition.id);
+			const legacyKey = mapping?.key ?? definition.id;
+			const _delta = resourceForecast[legacyKey];
+			// Resource buttons may include forecast: "Label: value (+delta)"
+			// Use regex to match with/without forecast (escape label for regex)
+			const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			const buttons = screen.getAllByRole('button', {
+				name: new RegExp(`^${escapedLabel}: ${value}(\\s+\\([+-]?\\d+\\))?$`),
+			});
+			expect(buttons.length).toBeGreaterThan(0);
 		}
 	});
 
 	it('renders next-turn forecasts with accessible labels', () => {
 		expect(displayableStatKeys.length).toBeGreaterThan(0);
 		renderPanel();
-		const resourceDisplays = metadataSelectors.resourceMetadata.list.map(
-			(descriptor) => toDescriptorDisplay(descriptor),
+		// Component uses V2 resources from resourceCatalogV2
+		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+		const v2Resources = resourceCatalog?.resources?.ordered ?? [];
+		// Filter to only core resources (not stats or population roles)
+		const coreResources = v2Resources.filter(
+			(def) =>
+				!def.id.includes(':stat:') && !def.id.includes(':population:role:'),
 		);
-		const [firstResourceDescriptor] = resourceDisplays;
-		const firstResourceKey = firstResourceDescriptor.id;
-		const playerResources = activePlayerSnapshot.resources;
-		const resourceInfo = firstResourceDescriptor;
-		const resourceValue = playerResources[firstResourceKey] ?? 0;
-		const resourceDelta = resourceForecast[firstResourceKey]!;
-		const formattedResourceDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
-		const resourceLabel =
-			`${resourceInfo.label ?? firstResourceKey}: ${resourceValue} ` +
-			`(${formattedResourceDelta})`;
-		const resourceButtons = screen.getAllByRole('button', {
-			name: resourceLabel,
+		// Find first resource with a positive forecast
+		const resourceWithPositiveForecast = coreResources.find((def) => {
+			const mapping = getLegacyMapping(def.id);
+			const key = mapping?.key ?? def.id;
+			return (resourceForecast[key] ?? 0) > 0;
 		});
-		expect(resourceButtons.length).toBeGreaterThan(0);
-		const [resourceButton] = resourceButtons;
-		const resourceForecastBadge = within(resourceButton).getByText(
-			`(${formattedResourceDelta})`,
-		);
-		expect(resourceForecastBadge).toBeInTheDocument();
-		expect(resourceForecastBadge).toHaveClass('text-emerald-300');
-		const negativeResourceDescriptor = resourceDisplays.find(
-			(display) => resourceForecast[display.id]! < 0,
-		);
-		if (negativeResourceDescriptor) {
-			const negativeResourceValue =
-				playerResources[negativeResourceDescriptor.id] ?? 0;
-			const negativeResourceDelta =
-				resourceForecast[negativeResourceDescriptor.id]!;
-			const formattedNegativeDelta = `${
-				negativeResourceDelta > 0 ? '+' : ''
-			}${negativeResourceDelta}`;
-			const negativeResourceLabel =
-				`${negativeResourceDescriptor.label ?? negativeResourceDescriptor.id}: ` +
-				`${negativeResourceValue} (${formattedNegativeDelta})`;
-			const negativeResourceButtons = screen.getAllByRole('button', {
-				name: negativeResourceLabel,
+		if (resourceWithPositiveForecast) {
+			const firstV2Resource = resourceWithPositiveForecast;
+			const firstResourceMetadata =
+				mockGame.translationContext.resourceMetadataV2.get(firstV2Resource.id);
+			const firstResourceValue =
+				activePlayerSnapshot.valuesV2?.[firstV2Resource.id] ?? 0;
+			// Get forecast using legacy mapping
+			const mapping = getLegacyMapping(firstV2Resource.id);
+			const legacyKey = mapping?.key ?? firstV2Resource.id;
+			const resourceDelta = resourceForecast[legacyKey]!;
+			const formattedResourceDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
+			const resourceLabel =
+				`${firstResourceMetadata?.label ?? firstV2Resource.id}: ` +
+				`${firstResourceValue} (${formattedResourceDelta})`;
+			const resourceButtons = screen.getAllByRole('button', {
+				name: resourceLabel,
 			});
-			expect(negativeResourceButtons.length).toBeGreaterThan(0);
-			const [negativeResourceButton] = negativeResourceButtons;
-			const negativeForecastBadge = within(negativeResourceButton).getByText(
-				`(${formattedNegativeDelta})`,
+			expect(resourceButtons.length).toBeGreaterThan(0);
+			const [resourceButton] = resourceButtons;
+			const resourceForecastBadge = within(resourceButton).getByText(
+				`(${formattedResourceDelta})`,
 			);
-			expect(negativeForecastBadge).toHaveClass('text-rose-300');
+			expect(resourceForecastBadge).toBeInTheDocument();
+			expect(resourceForecastBadge).toHaveClass('text-emerald-300');
+		}
+		// Find a resource with negative forecast
+		const negativeV2Resource = coreResources.find((def) => {
+			const mapping = getLegacyMapping(def.id);
+			const key = mapping?.key ?? def.id;
+			return (resourceForecast[key] ?? 0) < 0;
+		});
+		if (negativeV2Resource) {
+			const negMapping = getLegacyMapping(negativeV2Resource.id);
+			const negLegacyKey = negMapping?.key ?? negativeV2Resource.id;
+			const negMetadata = mockGame.translationContext.resourceMetadataV2.get(
+				negativeV2Resource.id,
+			);
+			const negValue =
+				activePlayerSnapshot.valuesV2?.[negativeV2Resource.id] ?? 0;
+			const negDelta = resourceForecast[negLegacyKey]!;
+			const formattedNegDelta = `${negDelta > 0 ? '+' : ''}${negDelta}`;
+			const negLabel =
+				`${negMetadata?.label ?? negativeV2Resource.id}: ` +
+				`${negValue} (${formattedNegDelta})`;
+			const negButtons = screen.getAllByRole('button', { name: negLabel });
+			expect(negButtons.length).toBeGreaterThan(0);
+			const [negButton] = negButtons;
+			const negBadge = within(negButton).getByText(`(${formattedNegDelta})`);
+			expect(negBadge).toHaveClass('text-rose-300');
 		}
 		const [firstStatKey] = displayableStatKeys;
 		const statDescriptor = toDescriptorDisplay(

@@ -153,7 +153,7 @@ describe('EngineSession', () => {
 			populations: content.populations,
 		});
 		advanceToMain(session);
-		// Ensure player has enough AP so the action fails on land availability, not AP
+		// Ensure player has enough AP so action fails on land, not AP
 		session.applyDeveloperPreset({
 			playerId: session.getSnapshot().game.activePlayerId,
 			resources: [{ key: CResource.ap, target: 5 }],

@@ -24,7 +24,7 @@ describe('action effect groups integration', () => {
 		const rewardAction: ActionConfig = {
 			id: 'reward_action',
 			name: 'Grant Gold',
-			baseCosts: { [Resource.ap]: 0 },
+			baseCosts: {},
 			effects: [
 				{
 					type: 'resource',
@@ -39,7 +39,7 @@ describe('action effect groups integration', () => {
 		const alternateAction: ActionConfig = {
 			id: 'mood_action',
 			name: 'Lift Morale',
-			baseCosts: { [Resource.ap]: 0 },
+			baseCosts: {},
 			effects: [
 				{
 					type: 'resource',
@@ -67,7 +67,7 @@ describe('action effect groups integration', () => {
 		const chooser: ActionConfig = {
 			id: 'royal_directive',
 			name: 'Royal directive',
-			baseCosts: { [Resource.ap]: 0 },
+			baseCosts: {},
 			effects: [group],
 		};
 		const actions = new Registry<ActionConfig>();
@@ -98,7 +98,8 @@ describe('action effect groups integration', () => {
 	it('requires explicit selections for effect groups', () => {
 		const { engineContext, chooser, group } = setup();
 		const costBag = getActionCosts(chooser.id, engineContext);
-		expect(costBag[Resource.ap] ?? 0).toBe(0);
+		// AP cost is now applied globally by the action cost system (1 AP default)
+		expect(costBag[Resource.ap] ?? 0).toBe(1);
 		expect(() => performAction(chooser.id, engineContext)).toThrowError(
 			new RegExp(group.id),
 		);

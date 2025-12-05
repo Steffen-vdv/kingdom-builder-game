@@ -19,9 +19,7 @@ const CATEGORY_REMAP = new Map([
 	['building', 'build'],
 ]);
 
-function createCategoryRegistry():
-	| SessionRegistriesPayload['actionCategories']
-	| undefined {
+function createCategoryRegistry(): SessionRegistriesPayload['actionCategories'] {
 	const factory = createContentFactory();
 	const entries = factory.categories.entries();
 	if (entries.length === 0) {
@@ -118,4 +116,23 @@ export function createSessionRegistries(): SessionRegistries {
 
 export function createResourceKeys(): ResourceKey[] {
 	return Object.keys(BASE_PAYLOAD.resources ?? {}) as ResourceKey[];
+}
+
+// Helper to create ResourceV2 catalog content for engine initialization
+export function createResourceV2CatalogContent() {
+	const payload = cloneRegistriesPayload(BASE_PAYLOAD);
+	const resourcesV2 = payload.resourcesV2 ?? {};
+	const resourceGroupsV2 = payload.resourceGroupsV2 ?? {};
+
+	// Convert to ordered registry format expected by createRuntimeResourceCatalog
+	const resources = {
+		ordered: Object.values(resourcesV2),
+		byId: resourcesV2,
+	};
+	const groups = {
+		ordered: Object.values(resourceGroupsV2),
+		byId: resourceGroupsV2,
+	};
+
+	return { resources, groups };
 }

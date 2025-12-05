@@ -12,14 +12,20 @@ import type {
 } from './types';
 
 export function cloneResourceValuesV2(
-	values: Record<string, number>,
+	values: Record<string, number> | undefined,
 ): Readonly<Record<string, number>> {
+	if (!values) {
+		return Object.freeze({});
+	}
 	return Object.freeze({ ...values });
 }
 
 export function cloneResourceBoundsV2(
-	bounds: Record<string, SessionResourceBoundsV2>,
+	bounds: Record<string, SessionResourceBoundsV2> | undefined,
 ): Readonly<Record<string, SessionResourceBoundsV2>> {
+	if (!bounds) {
+		return Object.freeze({});
+	}
 	const cloned = Object.fromEntries(
 		Object.entries(bounds).map(([id, entry]) => [
 			id,
@@ -74,7 +80,7 @@ type MetadataRecord = Record<string, SessionMetadataDescriptor> | undefined;
 
 function cloneMetadataFormat(
 	descriptor: SessionMetadataDescriptor | undefined,
-): SessionMetadataDescriptor['format'] | undefined {
+): SessionMetadataDescriptor['format'] {
 	const format = descriptor?.format;
 	if (format === undefined) {
 		return undefined;

@@ -140,10 +140,11 @@ export function resolveTierId(
 	}
 	for (const tier of track.tiers) {
 		const { min, max } = tier.threshold;
-		if (min !== null && value < min) {
+		// Use loose inequality (!=) to treat both null and undefined as "no bound"
+		if (min != null && value < min) {
 			continue;
 		}
-		if (max !== null && value > max) {
+		if (max != null && value > max) {
 			continue;
 		}
 		return tier.id;

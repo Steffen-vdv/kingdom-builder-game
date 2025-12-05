@@ -6,6 +6,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { EffectDef, EffectHandler } from '.';
 import type { ResourceGain } from '../services';
+import { Stat } from '@kingdom-builder/contents';
 import { runEffects } from '.';
 import { snapshotPlayer } from '../log';
 import { attackTargetHandlers } from './attack_target_handlers';
@@ -33,7 +34,8 @@ export const attackPerform: EffectHandler = (effectDefinition, context) => {
 		return;
 	}
 
-	const baseDamage = (attacker.armyStrength as number) || 0;
+	const baseDamage =
+		(attacker.resourceValues[Stat.armyStrength] as number) || 0;
 	const targetHandler = attackTargetHandlers[target.type];
 	const evaluationKey = targetHandler.getEvaluationModifierKey(target as never);
 	const powerModifiers: ResourceGain[] = [

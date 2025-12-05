@@ -53,7 +53,8 @@ describe('dev mode start configuration', () => {
 		expect(opponent.resources[Resource.castleHP]).toBe(1);
 		expect(player.valuesV2[goldId]).toBe(100);
 		expect(player.valuesV2[happinessId]).toBe(10);
-		expect(player.valuesV2[apId]).toBeGreaterThanOrEqual(1);
+		// AP starts at 0; it is granted during the Growth phase by Council members
+		expect(player.valuesV2[apId]).toBe(0);
 		expect(player.resourceBoundsV2[goldId]?.lowerBound).toBe(0);
 		expect(opponent.valuesV2[castleId]).toBe(1);
 		expect(

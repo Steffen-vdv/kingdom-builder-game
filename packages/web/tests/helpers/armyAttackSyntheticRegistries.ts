@@ -1,77 +1,84 @@
 import { vi } from 'vitest';
 
-import {
-	SYNTH_RESOURCE_IDS,
-	SYNTH_RESOURCE_METADATA,
-	SYNTH_STAT_IDS,
-	SYNTH_STAT_METADATA,
-	SYNTH_BUILDING,
-	COMBAT_STAT_CONFIG,
-} from './armyAttackConfig';
-
-type SyntheticBuilding = typeof SYNTH_BUILDING;
-
-type SimpleRegistry<Definition extends { id: string }> = {
-	add(id: string, definition: Definition): void;
-	get(id: string): Definition;
-	has(id: string): boolean;
-	keys(): string[];
-	entries(): Array<[string, Definition]>;
-};
-
-function createSimpleRegistry<Definition extends { id: string }>(
-	definitions: Definition[],
-): SimpleRegistry<Definition> {
-	const items = new Map<string, Definition>();
-	for (const definition of definitions) {
-		items.set(definition.id, definition);
-	}
-	return {
-		add(id, definition) {
-			items.set(id, definition);
-		},
-		get(id) {
-			const value = items.get(id);
-			if (!value) {
-				throw new Error(`Missing registry entry: ${id}`);
-			}
-			return value;
-		},
-		has(id) {
-			return items.has(id);
-		},
-		keys() {
-			return Array.from(items.keys());
-		},
-		entries() {
-			return Array.from(items.entries());
-		},
-	};
-}
-
-const syntheticContent = (() => {
+// Use vi.hoisted() so the syntheticContent is available when vi.mock runs
+const syntheticContent = vi.hoisted(() => {
+	const resourceIds = {
+		ap: 'ap',
+		gold: 'gold',
+		happiness: 'happiness',
+		castleHP: 'castleHP',
+		tier: 'tierResource',
+	} as const;
+	const statIds = {
+		armyStrength: 'armyStrength',
+		absorption: 'absorption',
+		fortificationStrength: 'fortificationStrength',
+		warWeariness: 'warWeariness',
+	} as const;
+	const combatStatConfig = {
+		power: { key: 'synthetic:valor' },
+		absorption: { key: 'synthetic:veil' },
+		fortification: { key: 'synthetic:rampart' },
+	} as const;
 	const resourceEnum: Record<string, string> = {};
-	for (const [property, key] of Object.entries(SYNTH_RESOURCE_IDS)) {
+	for (const [property, key] of Object.entries(resourceIds)) {
 		resourceEnum[property] = key;
 	}
 	const statEnum: Record<string, string> = {};
-	for (const [property, key] of Object.entries(SYNTH_STAT_IDS)) {
+	for (const [property, key] of Object.entries(statIds)) {
 		statEnum[property] = key;
 	}
-	for (const config of Object.values(COMBAT_STAT_CONFIG)) {
+	for (const config of Object.values(combatStatConfig)) {
 		statEnum[config.key] = config.key;
 	}
-	const buildingRegistry = createSimpleRegistry<SyntheticBuilding>([
-		{ ...SYNTH_BUILDING },
-	]);
+	const synthBuilding = {
+		id: 'synthetic:stronghold',
+		name: 'Training Stronghold',
+		icon: '🏯',
+	};
+	const buildingRegistry = {
+		add(_id: string, _definition: unknown) {},
+		get(id: string) {
+			if (id === synthBuilding.id) {
+				return synthBuilding;
+			}
+			throw new Error(`Missing registry entry: ${id}`);
+		},
+		has(id: string) {
+			return id === synthBuilding.id;
+		},
+		keys() {
+			return [synthBuilding.id];
+		},
+		entries() {
+			return [[synthBuilding.id, synthBuilding] as const];
+		},
+	};
+	const synthResourceMeta = {
+		ap: { key: 'ap', icon: '⚙️', label: 'Action Points' },
+		gold: { key: 'gold', icon: '🪙', label: 'Gold' },
+		happiness: { key: 'happiness', icon: '😊', label: 'Happiness' },
+		castleHP: { key: 'castleHP', icon: '🏰', label: 'Castle HP' },
+		tierResource: { key: 'tierResource', icon: '🎖️', label: 'Tier Resource' },
+	};
+	const synthStatMeta = {
+		armyStrength: { key: 'armyStrength', icon: '⚔️', label: 'Army Strength' },
+		absorption: { key: 'absorption', icon: '🛡️', label: 'Absorption' },
+		fortificationStrength: {
+			key: 'fortificationStrength',
+			icon: '🏯',
+			label: 'Fortification',
+		},
+		warWeariness: { key: 'warWeariness', icon: '💤', label: 'War Weariness' },
+	};
 	return {
 		Resource: resourceEnum,
 		Stat: statEnum,
-		RESOURCES: SYNTH_RESOURCE_METADATA,
-		STATS: SYNTH_STAT_METADATA,
+		RESOURCES: synthResourceMeta,
+		STATS: synthStatMeta,
 		BUILDINGS: buildingRegistry,
 	};
-})();
+});
 
 vi.mock('@kingdom-builder/contents', async () => {
 	const actual = (await vi.importActual('@kingdom-builder/contents')) as Record<

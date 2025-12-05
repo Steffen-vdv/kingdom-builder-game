@@ -38,6 +38,7 @@ export interface TranslationActionCategoryDefinition {
 	readonly analyticsKey?: string;
 }
 
+// eslint-disable-next-line max-len
 export interface TranslationActionCategoryRegistry extends TranslationRegistry<TranslationActionCategoryDefinition> {
 	list(): readonly TranslationActionCategoryDefinition[];
 }

@@ -11,7 +11,10 @@ import * as TranslationModule from '../../src/translation';
 import type * as TranslationTypes from '../../src/translation';
 import type { SessionResourceKey } from '../../src/state/sessionTypes';
 import type { ActionResolution } from '../../src/state/useActionResolution';
-import { createSessionRegistries } from '../helpers/sessionRegistries';
+import {
+	createSessionRegistries,
+	createResourceV2CatalogContent,
+} from '../helpers/sessionRegistries';
 import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 
 vi.mock('../../src/translation', async () => {
@@ -71,6 +74,7 @@ function createSessionState(
 ): SessionSnapshot {
 	const playerA = createPlayer('A', 'Player A', resourceKey);
 	const playerB = createPlayer('B', 'Player B', resourceKey);
+	const resourceCatalogV2 = createResourceV2CatalogContent();
 	return {
 		game: {
 			turn,
@@ -83,6 +87,7 @@ function createSessionState(
 			players: [playerA, playerB],
 			activePlayerId: 'A',
 			opponentId: 'B',
+			resourceCatalogV2,
 		},
 		phases: [],
 		actionCostResource: resourceKey,

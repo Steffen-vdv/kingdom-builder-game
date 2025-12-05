@@ -22,6 +22,7 @@ import {
 	TIER_RESOURCE_KEY,
 	SYNTH_RESOURCE_METADATA,
 	SYNTH_STAT_METADATA,
+	SYNTH_RESOURCE_CATALOG_V2,
 	type CombatStatKey,
 	type SyntheticDescriptor,
 } from './armyAttackConfig';
@@ -82,6 +83,7 @@ function createBaseEngine() {
 		phases: PHASES,
 		start: START,
 		rules: RULES,
+		resourceCatalogV2: SYNTH_RESOURCE_CATALOG_V2,
 	});
 	return { factory, engineContext } as const;
 }

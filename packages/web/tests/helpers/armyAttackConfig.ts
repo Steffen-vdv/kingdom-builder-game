@@ -1,4 +1,9 @@
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
+import {
+	createResourceV2Registries,
+	resourceV2Definition,
+	resourceV2GroupDefinition,
+} from '@kingdom-builder/testing';
 
 export type SyntheticAction = {
 	id: string;
@@ -195,3 +200,102 @@ export const RULES: RuleSet = {
 	basePopulationCap: 1,
 	winConditions: [],
 };
+
+// Create ResourceV2 catalog for synthetic test resources
+const coreGroup = resourceV2GroupDefinition({
+	id: 'resource-group:core',
+	order: 0,
+});
+
+const statGroup = resourceV2GroupDefinition({
+	id: 'resource-group:stat',
+	order: 1,
+});
+
+const synthResourceV2Definitions = [
+	resourceV2Definition({
+		id: SYNTH_RESOURCE_IDS.ap,
+		metadata: {
+			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.ap].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.ap].icon,
+			group: { id: coreGroup.id, order: 0 },
+		},
+		bounds: { lowerBound: 0 },
+		globalCost: 1,
+	}),
+	resourceV2Definition({
+		id: SYNTH_RESOURCE_IDS.gold,
+		metadata: {
+			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.gold].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.gold].icon,
+			group: { id: coreGroup.id, order: 1 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+	resourceV2Definition({
+		id: SYNTH_RESOURCE_IDS.happiness,
+		metadata: {
+			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.happiness].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.happiness].icon,
+			group: { id: coreGroup.id, order: 2 },
+		},
+	}),
+	resourceV2Definition({
+		id: SYNTH_RESOURCE_IDS.castleHP,
+		metadata: {
+			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP].icon,
+			group: { id: coreGroup.id, order: 3 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+	resourceV2Definition({
+		id: SYNTH_RESOURCE_IDS.tier,
+		metadata: {
+			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.tier].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.tier].icon,
+			group: { id: coreGroup.id, order: 4 },
+		},
+	}),
+	resourceV2Definition({
+		id: SYNTH_STAT_IDS.armyStrength,
+		metadata: {
+			label: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.armyStrength].label,
+			icon: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.armyStrength].icon,
+			group: { id: statGroup.id, order: 0 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+	resourceV2Definition({
+		id: SYNTH_STAT_IDS.absorption,
+		metadata: {
+			label: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.absorption].label,
+			icon: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.absorption].icon,
+			group: { id: statGroup.id, order: 1 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+	resourceV2Definition({
+		id: SYNTH_STAT_IDS.fortificationStrength,
+		metadata: {
+			label: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.fortificationStrength].label,
+			icon: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.fortificationStrength].icon,
+			group: { id: statGroup.id, order: 2 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+	resourceV2Definition({
+		id: SYNTH_STAT_IDS.warWeariness,
+		metadata: {
+			label: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.warWeariness].label,
+			icon: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.warWeariness].icon,
+			group: { id: statGroup.id, order: 3 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+];
+
+export const SYNTH_RESOURCE_CATALOG_V2 = createResourceV2Registries({
+	resources: synthResourceV2Definitions,
+	groups: [coreGroup, statGroup],
+});

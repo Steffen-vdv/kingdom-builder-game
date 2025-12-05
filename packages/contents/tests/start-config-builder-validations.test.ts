@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { startConfig, playerStart } from '../src/config/builders';
-import { RESOURCES, type ResourceKey } from '../src/resources';
-import { STATS, type StatKey } from '../src/stats';
+import { Resource, type ResourceKey } from '../src/resourceKeys';
+import { Stat, type StatKey } from '../src/stats';
 
-const firstResourceKey = Object.keys(RESOURCES)[0] as ResourceKey;
-const firstStatKey = Object.keys(STATS)[0] as StatKey;
+const firstResourceKey = Object.values(Resource)[0] as ResourceKey;
+const firstStatKey = Object.values(Stat)[0] as StatKey;
 
 describe('start config builder safeguards', () => {
 	it('requires player start to configure each section', () => {

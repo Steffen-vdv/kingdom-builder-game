@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { resolveAttack } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { Resource } from '../src/state/index.ts';
+import { Resource } from '@kingdom-builder/contents';
 import {
 	attackTargetHandlers,
 	type AttackTargetHandler,

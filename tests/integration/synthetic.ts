@@ -28,7 +28,8 @@ import {
 } from '@kingdom-builder/testing';
 
 export function createSyntheticContext() {
-	const costKey = 'r0';
+	// Legacy keys kept for docs but unused - V2 IDs are used
+	const _costKey = 'r0';
 	const gainKey = 'r1';
 	const costResourceId = 'resource:synthetic:r0';
 	const gainResourceId = 'resource:synthetic:r1';
@@ -112,7 +113,7 @@ export function createSyntheticContext() {
 
 	const start: StartConfig = {
 		player: {
-			resources: { [costKey]: startAp, [gainKey]: 0 },
+			resources: { [costResourceId]: startAp, [gainResourceId]: 0 },
 			stats: {},
 			population: {},
 			lands: [],
@@ -177,5 +178,12 @@ export function createSyntheticContext() {
 		},
 	});
 
-	return { engineContext, actions, phases, costKey, gainKey, start };
+	return {
+		engineContext,
+		actions,
+		phases,
+		costKey: costResourceId,
+		gainKey: gainResourceId,
+		start,
+	};
 }

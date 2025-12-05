@@ -12,8 +12,8 @@ import {
 } from '@kingdom-builder/testing';
 
 const resources = {
-	ap: 'turn:resource:ap',
-	gold: 'turn:resource:gold',
+	ap: 'resource:turn:turn-resource-ap',
+	gold: 'resource:turn:turn-resource-gold',
 } as const;
 
 const phaseIds = {

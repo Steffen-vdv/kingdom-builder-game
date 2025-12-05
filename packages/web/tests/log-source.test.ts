@@ -19,6 +19,7 @@ import {
 	SYNTHETIC_POPULATION_ROLES,
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_LAND_INFO,
+	SYNTHETIC_RESOURCE_CATALOG_V2,
 } from './fixtures/syntheticTaxLog';
 import {
 	snapshotPlayer,
@@ -26,6 +27,10 @@ import {
 	createTranslationDiffContext,
 } from '../src/translation/log';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
+import {
+	cloneResourceCatalogV2,
+	createResourceV2MetadataSelectors,
+} from '../src/translation/context';
 
 const RESOURCE_KEYS = Object.keys(
 	SYNTHETIC_RESOURCES,
@@ -41,6 +46,22 @@ function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
 	);
 }
 
+function makeTranslationDiffContext(
+	engineContext: ReturnType<typeof createEngine>,
+) {
+	const catalogV2 = cloneResourceCatalogV2(SYNTHETIC_RESOURCE_CATALOG_V2);
+	const resourceMetadataV2 = createResourceV2MetadataSelectors(catalogV2);
+	return createTranslationDiffContext({
+		activePlayer: captureActivePlayer(engineContext),
+		buildings: engineContext.buildings,
+		developments: engineContext.developments,
+		actionCategories: { list: () => [], get: () => null, has: () => false },
+		passives: null,
+		assets: SYNTHETIC_ASSETS,
+		resourceMetadataV2,
+	});
+}
+
 describe('log resource sources', () => {
 	it('ignores opponent mills when logging farm gains', () => {
 		const scenario = createSyntheticTaxScenario();
@@ -52,6 +73,7 @@ describe('log resource sources', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2: scenario.resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		// Give opponent a mill
@@ -81,7 +103,7 @@ describe('log resource sources', () => {
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = captureActivePlayer(engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = makeTranslationDiffContext(engineContext);
 		const diffResult = diffStepSnapshots(
 			before,
 			after,
@@ -113,6 +135,7 @@ describe('log resource sources', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2: scenario.resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(
@@ -135,7 +158,7 @@ describe('log resource sources', () => {
 		const before = captureActivePlayer(engineContext);
 		performAction(SYNTHETIC_IDS.taxAction, engineContext);
 		const after = captureActivePlayer(engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = makeTranslationDiffContext(engineContext);
 		const taxDiff = diffStepSnapshots(
 			before,
 			after,
@@ -168,6 +191,7 @@ describe('log resource sources', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2: scenario.resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(
@@ -193,7 +217,7 @@ describe('log resource sources', () => {
 		}
 		const effects = bundles.flatMap((bundle) => bundle.effects);
 		const after = captureActivePlayer(engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		const translationDiffContext = makeTranslationDiffContext(engineContext);
 		const upkeepDiff = diffStepSnapshots(
 			before,
 			after,
@@ -211,7 +235,11 @@ describe('log resource sources', () => {
 		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = afterCoins - beforeCoins;
 		const icons = effects
-			.filter((eff) => eff.params?.['key'] === SYNTHETIC_RESOURCE_KEYS.coin)
+			.filter(
+				(eff) =>
+					eff.params?.['key'] === SYNTHETIC_RESOURCE_KEYS.coin ||
+					eff.params?.['resourceId'] === SYNTHETIC_RESOURCE_KEYS.coin,
+			)
 			.map((eff) => {
 				const source = (
 					eff.meta as {
@@ -261,11 +289,13 @@ describe('log resource sources', () => {
 			engineContext.buildings.get(SYNTHETIC_IDS.raidersGuild)?.icon || '';
 		expect(raidersGuildIcon).not.toBe('');
 		expect(icons).toContain(raidersGuildIcon);
-		const zeroPopulationIcons = Object.entries(
-			engineContext.activePlayer.population,
-		)
-			.filter(([, count]) => count === 0)
-			.map(([role]) => engineContext.populations.get(role)?.icon)
+		// In ResourceV2, population counts are stored in resourceValues
+		const zeroPopulationIcons = engineContext.populations
+			.keys()
+			.filter(
+				(role) => (engineContext.activePlayer.resourceValues[role] ?? 0) === 0,
+			)
+			.map((role) => engineContext.populations.get(role)?.icon)
 			.filter((icon): icon is string => Boolean(icon));
 		for (const icon of zeroPopulationIcons) {
 			expect(icons).not.toContain(icon);

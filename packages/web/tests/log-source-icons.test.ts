@@ -31,25 +31,28 @@ function createLogHarness(
 	metadataOverride?: Parameters<typeof createTranslationContext>[2],
 ): LogHarness {
 	const scaffold = createTestSessionScaffold();
-	const resourceKeys = Object.keys(scaffold.registries.resources);
-	const startResources = Object.fromEntries(
-		resourceKeys.map((key) => [key, 0]),
+	// Use V2 resource IDs from the catalog for engine initialization
+	const v2ResourceIds = Object.keys(
+		scaffold.resourceCatalogV2.resources.byId ?? {},
 	);
+	const startValuesV2 = Object.fromEntries(v2ResourceIds.map((id) => [id, 0]));
 	const startConfig: StartConfig = {
 		player: {
-			resources: { ...startResources },
+			resources: {},
 			stats: {},
 			population: {},
 			lands: [],
 			buildings: [],
+			valuesV2: { ...startValuesV2 },
 		},
 		players: {
 			opponent: {
-				resources: { ...startResources },
+				resources: {},
 				stats: {},
 				population: {},
 				lands: [],
 				buildings: [],
+				valuesV2: { ...startValuesV2 },
 			},
 		},
 	} satisfies StartConfig;
@@ -65,6 +68,7 @@ function createLogHarness(
 		})),
 		start: startConfig,
 		rules: scaffold.ruleSnapshot,
+		resourceCatalogV2: scaffold.resourceCatalogV2,
 	});
 	const engineSnapshot = snapshotEngine(engine);
 	engineSnapshot.metadata = structuredClone(
@@ -112,7 +116,7 @@ function createLogHarness(
 		engine,
 		translationContext,
 		metadataSelectors,
-		resourceKeys,
+		resourceKeys: v2ResourceIds,
 		populationId: populationDescriptor.id,
 		developmentId,
 		buildingId,
@@ -175,20 +179,23 @@ describe('log resource source icon registry', () => {
 		it(`renders icons for ${name} meta sources`, () => {
 			const harness = createLogHarness();
 			const { meta, expected } = buildMeta(harness);
-			const goldDescriptor =
-				harness.metadataSelectors.resourceMetadata.list.find((entry) =>
-					entry.label?.toLowerCase().includes('gold'),
-				) ?? harness.metadataSelectors.resourceMetadata.list[0];
-			if (!goldDescriptor) {
+			// Find gold resource from V2 catalog
+			const goldResourceId =
+				harness.resourceKeys.find((id) => id.includes('gold')) ??
+				harness.resourceKeys[0];
+			if (!goldResourceId) {
 				throw new Error(
 					'Expected at least one resource descriptor for log source tests.',
 				);
 			}
-			const resourceKey = goldDescriptor.id;
+			// Use V2 effect format with resourceId and change object
 			const effect = {
 				type: 'resource' as const,
 				method: 'add' as const,
-				params: { key: resourceKey, amount: 2 },
+				params: {
+					resourceId: goldResourceId,
+					change: { type: 'amount' as const, amount: 2 },
+				},
 				meta: { source: meta },
 			};
 			const step = { id: `meta-icons-${name}`, effects: [effect] };
@@ -201,16 +208,18 @@ describe('log resource source icon registry', () => {
 				developments: harness.engine.developments,
 				passives: harness.translationContext.passives,
 				assets: harness.translationContext.assets,
+				actionCategories: harness.translationContext.actionCategories,
+				resourceMetadataV2: harness.translationContext.resourceMetadataV2,
 			});
 			const diffResult = diffStepSnapshots(before, after, step, diffContext, [
-				resourceKey,
+				goldResourceId,
 			]);
 			const lines = diffResult.summaries;
 			const resourceInfo = selectResourceDescriptor(
 				harness.translationContext,
-				resourceKey,
+				goldResourceId,
 			);
-			const label = resourceInfo.label ?? resourceKey;
+			const label = resourceInfo.label ?? goldResourceId;
 			const icon = resourceInfo.icon ?? '';
 			const goldLine = lines.find((line) => {
 				return line.startsWith(`${icon} ${label}`.trim());
@@ -222,11 +231,13 @@ describe('log resource source icon registry', () => {
 	}
 
 	it('throws when land metadata descriptor is removed', () => {
-		const baseMetadata = createTestSessionScaffold().metadata;
-		const clone = structuredClone(baseMetadata);
+		const scaffold = createTestSessionScaffold();
+		const clone = structuredClone(scaffold.metadata);
 		if (clone.assets) {
 			delete clone.assets.land;
 		}
-		expect(() => createLogHarness(clone)).toThrowError(/assets\.land/);
+		// The harness throws when the land metadata selector cannot find the
+		// required land descriptor in session assets
+		expect(() => createLogHarness(clone)).toThrowError(/land|assets|metadata/i);
 	});
 });

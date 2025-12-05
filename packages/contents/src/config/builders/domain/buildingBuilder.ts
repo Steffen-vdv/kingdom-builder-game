@@ -1,7 +1,6 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
 import type { BuildingDef, Focus } from '../../../defs';
 import type { ResourceKey } from '../../../resourceKeys';
-import { Resource } from '../../../resourceKeys';
 import { BaseBuilder } from './baseBuilder';
 
 type BuildingEffectKey = 'onBuild' | 'onGrowthPhase' | 'onUpkeepPhase' | 'onPayUpkeepStep' | 'onGainIncomeStep' | 'onGainAPStep' | 'onBeforeAttacked' | 'onAttackResolved';
@@ -15,8 +14,8 @@ export class BuildingBuilder extends BaseBuilder<BuildingDef> {
 			},
 			'Building',
 		);
-		const costs = this.config.costs as Record<ResourceKey, number>;
-		costs[Resource.ap] = 1;
+		// AP cost is handled automatically by the global action cost resource
+		// system. Buildings should only specify non-AP resource costs.
 	}
 
 	cost(key: ResourceKey, amount: number) {

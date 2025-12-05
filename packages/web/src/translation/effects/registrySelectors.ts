@@ -122,7 +122,16 @@ export function selectResourceDescriptor(
 		return cached;
 	}
 	const assets = context.assets;
-	const entry = assets?.resources?.[key];
+	// Check legacy resources first
+	const legacyEntry = assets?.resources?.[key];
+	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:synthetic:gold')
+	const v2Context = context as {
+		resourceMetadataV2?: {
+			get?: (id: string) => { icon?: string; label?: string } | undefined;
+		};
+	};
+	const v2Entry = v2Context.resourceMetadataV2?.get?.(key);
+	const entry = legacyEntry ?? v2Entry;
 	const fallbackLabel = humanizeIdentifier(key) || key;
 	const label = coerceLabel(entry?.label, fallbackLabel);
 	const icon = coerceIcon(entry?.icon, '');

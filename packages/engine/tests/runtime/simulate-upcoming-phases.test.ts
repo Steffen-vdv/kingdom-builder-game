@@ -27,6 +27,13 @@ function resetPlayerState(context: ReturnType<typeof createTestEngine>) {
 	for (const roleId of Object.values(CPopulationRole)) {
 		player.resourceValues[roleId] = 0;
 	}
+	// Reset phase/step skip flags
+	for (const key of Object.keys(player.skipPhases)) {
+		player.skipPhases[key] = {};
+	}
+	for (const key of Object.keys(player.skipSteps)) {
+		player.skipSteps[key] = {};
+	}
 	player.buildings.clear();
 	player.actions.clear();
 	for (const land of player.lands) {

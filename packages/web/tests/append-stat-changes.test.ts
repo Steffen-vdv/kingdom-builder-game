@@ -15,6 +15,7 @@ import {
 	selectPopulationDescriptor,
 	selectStatDescriptor,
 } from '../src/translation/effects/registrySelectors';
+import { getResourceIdForLegacy } from '../src/translation/resourceV2/legacyMapping';
 
 function createTranslationSetup() {
 	const scaffold = createTestSessionScaffold();
@@ -85,6 +86,11 @@ describe('appendStatChanges', () => {
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: {
+				[primaryStatId]: 4,
+				[secondaryStatId]: 20,
+			},
+			resourceBoundsV2: {},
 		};
 		const after: PlayerSnapshot = {
 			resources: {},
@@ -96,6 +102,11 @@ describe('appendStatChanges', () => {
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: {
+				[primaryStatId]: 5,
+				[secondaryStatId]: 20,
+			},
+			resourceBoundsV2: {},
 		};
 		const player: PlayerSnapshot = {
 			resources: {},
@@ -109,6 +120,12 @@ describe('appendStatChanges', () => {
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: {
+				[primaryStatId]: 5,
+				[secondaryStatId]: 25,
+				[populationId]: 2,
+			},
+			resourceBoundsV2: {},
 		};
 		const raiseStrengthEffects: StepEffects = {
 			effects: [
@@ -182,6 +199,8 @@ describe('appendStatChanges', () => {
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: { [primaryStatId]: 1 },
+			resourceBoundsV2: {},
 		};
 		const after: PlayerSnapshot = {
 			resources: {},
@@ -190,6 +209,8 @@ describe('appendStatChanges', () => {
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: { [primaryStatId]: 3 },
+			resourceBoundsV2: {},
 		};
 		const player: PlayerSnapshot = {
 			resources: {},
@@ -198,6 +219,12 @@ describe('appendStatChanges', () => {
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: {
+				[primaryStatId]: 3,
+				[secondaryStatId]: 4,
+				[populationId]: 1,
+			},
+			resourceBoundsV2: {},
 		};
 		const step: StepEffects = {
 			effects: [
@@ -224,6 +251,27 @@ describe('appendStatChanges', () => {
 				}),
 			),
 		};
+		// Create a metadata selector that returns the raw ID as label for
+		// primaryStatId to test fallback behavior
+		const baseMetadata = translationContext.resourceMetadataV2;
+		// Convert legacy stat key to V2 ID for comparison
+		const primaryStatV2Id =
+			getResourceIdForLegacy('stats', primaryStatId) ?? primaryStatId;
+		const fallbackMetadata = {
+			get(id: string) {
+				if (id === primaryStatV2Id) {
+					// Return minimal metadata with ID as label and no icon
+					return { id, label: id };
+				}
+				return baseMetadata.get(id);
+			},
+			list() {
+				return baseMetadata.list();
+			},
+			has(id: string) {
+				return baseMetadata.has(id);
+			},
+		};
 		const changes: string[] = [];
 		appendStatChanges(
 			changes,
@@ -232,10 +280,11 @@ describe('appendStatChanges', () => {
 			player,
 			step,
 			fallbackAssets,
-			translationContext.resourceMetadataV2,
+			fallbackMetadata,
 		);
-		const entry = changes.find((line) => line.includes(primaryStatId));
+		// Output should contain the V2 ID since we use it as the fallback label
+		const entry = changes.find((line) => line.includes(primaryStatV2Id));
 		expect(entry).toBeDefined();
-		expect(entry?.includes(primaryStatId)).toBe(true);
+		expect(entry?.includes(primaryStatV2Id)).toBe(true);
 	});
 });

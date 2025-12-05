@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { RESOURCES } from '@kingdom-builder/contents/resources';
-import type { ResourceKey } from '@kingdom-builder/contents/resourceKeys';
+import {
+	Resource,
+	type ResourceKey,
+} from '@kingdom-builder/contents/resourceKeys';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import {
@@ -10,7 +12,7 @@ import {
 } from '../../src/session/registryUtils.js';
 
 function getFirstResourceKey(): ResourceKey {
-	const [key] = Object.keys(RESOURCES) as ResourceKey[];
+	const [key] = Object.values(Resource) as ResourceKey[];
 	if (!key) {
 		throw new Error('Expected at least one resource in contents.');
 	}

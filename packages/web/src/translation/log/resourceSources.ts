@@ -30,7 +30,8 @@ function findNestedResource(effect: EffectDef): EffectDef | undefined {
 
 function readResourceKey(effect: EffectDef): string | undefined {
 	const params = effect.params;
-	const key = params?.['key'];
+	// Check for both legacy 'key' and ResourceV2 'resourceId'
+	const key = params?.['key'] ?? params?.['resourceId'];
 	return typeof key === 'string' ? key : undefined;
 }
 

@@ -7,7 +7,6 @@ import {
 } from '../state';
 import { cloneMeta } from '../stat_sources/meta';
 import { cloneEffectList } from '../utils';
-import { getResourceValue } from '../resource-v2';
 
 function cloneLand(land: Land): Land {
 	const cloned = new Land(land.id, land.slotsMax, land.tilled);
@@ -33,7 +32,7 @@ function cloneLand(land: Land): Land {
 
 function clonePlayerState(player: PlayerState): PlayerState {
 	const cloned = new PlayerState(player.id, player.name);
-	// Clone all resource values (now unified - includes resources, stats, population)
+	// Clone all unified resource values (resources, stats, population)
 	for (const key of Object.keys(player.resourceValues)) {
 		cloned.resourceValues[key] = player.resourceValues[key] ?? 0;
 	}

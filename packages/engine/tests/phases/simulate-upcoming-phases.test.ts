@@ -23,6 +23,13 @@ function sanitizePlayerState(context: ReturnType<typeof createTestEngine>) {
 	for (const key of Object.keys(player.statSources)) {
 		player.statSources[key] = {};
 	}
+	// Reset phase/step skip flags
+	for (const key of Object.keys(player.skipPhases)) {
+		player.skipPhases[key] = {};
+	}
+	for (const key of Object.keys(player.skipSteps)) {
+		player.skipSteps[key] = {};
+	}
 	player.buildings.clear();
 	player.actions.clear();
 	for (const land of player.lands) {

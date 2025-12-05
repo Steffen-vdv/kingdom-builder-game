@@ -21,7 +21,7 @@ const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
 type SessionMetadataFormat = ResourceV2MetadataSnapshot['format'];
 
 type FormatDescriptor =
-	| SessionMetadataFormat
+	| NonNullable<SessionMetadataFormat>
 	| { prefix?: string | null; percent?: boolean | null }
 	| undefined;
 

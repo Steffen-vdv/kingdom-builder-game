@@ -112,14 +112,22 @@ describe('resolveAttack', () => {
 				{
 					type: 'stat',
 					method: 'add',
-					params: { key: CStat.fortificationStrength, statId: CStat.fortificationStrength, amount: 4 },
+					params: {
+						key: CStat.fortificationStrength,
+						statId: CStat.fortificationStrength,
+						amount: 4,
+					},
 				},
 			],
 			onAttackResolved: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, resourceId: CResource.gold, change: { type: 'amount', amount: 1 } },
+					params: {
+						key: CResource.gold,
+						resourceId: CResource.gold,
+						change: { type: 'amount', amount: 1 },
+					},
 				},
 			],
 		});
@@ -167,7 +175,11 @@ describe('resolveAttack', () => {
 					{
 						type: 'stat',
 						method: 'add',
-						params: { key: CStat.absorption, statId: CStat.absorption, amount: 0.5 },
+						params: {
+							key: CStat.absorption,
+							statId: CStat.absorption,
+							amount: 0.5,
+						},
 					},
 					{
 						type: 'stat',
@@ -183,7 +195,11 @@ describe('resolveAttack', () => {
 					{
 						type: 'stat',
 						method: 'add',
-						params: { key: CStat.absorption, statId: CStat.absorption, amount: 0.5 },
+						params: {
+							key: CStat.absorption,
+							statId: CStat.absorption,
+							amount: 0.5,
+						},
 					},
 					{
 						type: 'stat',
@@ -205,7 +221,11 @@ describe('resolveAttack', () => {
 				{
 					type: 'stat',
 					method: 'add',
-					params: { key: CStat.armyStrength, statId: CStat.armyStrength, amount: 5 },
+					params: {
+						key: CStat.armyStrength,
+						statId: CStat.armyStrength,
+						amount: 5,
+					},
 				},
 			],
 			engineContext,

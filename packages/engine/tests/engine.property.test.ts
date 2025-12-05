@@ -4,6 +4,7 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { advance, performAction, getActionCosts, snapshotPlayer } from '../src';
+import { resourceAmountParams } from './helpers/resourceV2Params';
 
 function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -11,7 +12,10 @@ function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	}
 }
 
-const resourceKeys = Object.values(CResource);
+// Filter out AP since it's the global action cost and can't be overridden
+const resourceKeys = Object.values(CResource).filter(
+	(key) => key !== CResource.ap,
+);
 const resourceKeyArb = fc.constantFrom(...resourceKeys);
 const resourceMapArb = fc.dictionary(
 	resourceKeyArb,
@@ -22,7 +26,7 @@ function toResourceEffects(map: Record<string, number>) {
 	return Object.entries(map).map(([key, amount]) => ({
 		type: 'resource' as const,
 		method: 'add' as const,
-		params: { key, amount },
+		params: resourceAmountParams({ key, amount }),
 	}));
 }
 

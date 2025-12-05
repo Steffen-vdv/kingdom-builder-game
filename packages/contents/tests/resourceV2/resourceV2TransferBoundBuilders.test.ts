@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '../src/resourceV2';
+import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceV2TransferEndpointPayload } from '../../src/resourceV2';
 
 describe('ResourceV2 transfer builders', () => {
 	it('builds donor and recipient payloads with change helpers', () => {

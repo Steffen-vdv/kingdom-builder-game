@@ -11,8 +11,8 @@ import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
-	Resource as CResource,
 } from '@kingdom-builder/contents/registries/resourceV2';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import type {
 	StartConfig,
 	RuleSet,
@@ -101,8 +101,9 @@ type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
 
 function createGateway(options?: GatewayOptions) {
 	const content = createContentFactory();
+	// AP cost is now handled globally via resourceCatalog.globalCost,
+	// so we don't specify baseCosts for AP (it's auto-applied)
 	const gainGold = content.action({
-		baseCosts: { [RESOURCE_AP]: 1 },
 		effects: [
 			{
 				type: 'resource',
@@ -115,7 +116,6 @@ function createGateway(options?: GatewayOptions) {
 		],
 	});
 	const failingAction = content.action({
-		baseCosts: { [RESOURCE_AP]: 1 },
 		requirements: [
 			{
 				type: 'vitest',
