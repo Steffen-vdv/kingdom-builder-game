@@ -12,7 +12,7 @@ function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	}
 }
 
-// Filter out AP since it's the global action cost resource and can't be overridden
+// Filter out AP since it's the global action cost and can't be overridden
 const resourceKeys = Object.values(CResource).filter(
 	(key) => key !== CResource.ap,
 );

@@ -180,10 +180,16 @@ describe('army attack translation summary', () => {
 		const rewardEffect = (onDamage.attacker ?? []).find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'resource' &&
-				(effectDef.params as { key?: string }).key === SYNTH_RESOURCE_IDS.gold,
+				((effectDef.params as { key?: string }).key ===
+					SYNTH_RESOURCE_IDS.gold ||
+					(effectDef.params as { resourceId?: string }).resourceId ===
+						SYNTH_RESOURCE_IDS.gold),
 		);
-		const rewardAmount =
-			(rewardEffect?.params as { amount?: number })?.amount ?? 0;
+		// Support both legacy (amount) and V2 (change.amount) formats
+		const changeObj = (rewardEffect?.params as { change?: { amount?: number } })
+			?.change;
+		const legacyAmount = (rewardEffect?.params as { amount?: number })?.amount;
+		const rewardAmount = changeObj?.amount ?? legacyAmount ?? 0;
 
 		const summary = summarizeContent('action', buildingAttack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';

@@ -10,7 +10,10 @@ function toMain(context: ReturnType<typeof createTestEngine>) {
 	}
 }
 
-function grantAP(context: ReturnType<typeof createTestEngine>, actionId: string) {
+function grantAP(
+	context: ReturnType<typeof createTestEngine>,
+	actionId: string,
+) {
 	const costs = getActionCosts(actionId, context);
 	for (const [key, amount] of Object.entries(costs)) {
 		context.activePlayer.resourceValues[key] = amount;

@@ -177,13 +177,25 @@ export const getSyntheticFestivalDetails = (
 	const festival = registries.actions.get(festivalActionId);
 	const happinessEff = festival.effects.find(
 		(e: EffectDef) => e.type === 'resource',
-	) as EffectDef<{ key: SyntheticResourceId; amount: number }>;
-	const happinessInfo = translation.assets.resources[happinessEff.params.key] ??
-		resources[happinessEff.params.key] ?? {
+	) as EffectDef<{
+		key?: SyntheticResourceId;
+		resourceId?: string;
+		amount?: number;
+		change?: { amount: number };
+	}>;
+	// Support both legacy (key) and V2 (resourceId) formats
+	const happinessKey =
+		happinessEff.params.resourceId ?? happinessEff.params.key ?? '';
+	const happinessInfo = translation.assets.resources[happinessKey] ??
+		resources[happinessKey as SyntheticResourceId] ??
+		translation.resourceMetadataV2?.get?.(happinessKey) ?? {
 			icon: '',
-			label: happinessEff.params.key,
+			label: happinessKey,
 		};
-	const happinessAmt = Number(happinessEff.params.amount);
+	// Support both legacy (amount) and V2 (change.amount) formats
+	const happinessAmt = Number(
+		happinessEff.params.change?.amount ?? happinessEff.params.amount,
+	);
 	const fortEff = festival.effects.find(
 		(e: EffectDef) => e.type === 'stat',
 	) as EffectDef<{ key: string; amount: number }>;
@@ -208,12 +220,16 @@ export const getSyntheticFestivalDetails = (
 	const innerRes = resMod.effects?.find(
 		(e: EffectDef) =>
 			e.type === 'resource' &&
-			(e.params as { key?: string }).key === SYNTHETIC_RESOURCES.happiness.id,
-	) as EffectDef<{ amount: number }>;
+			((e.params as { key?: string }).key ===
+				SYNTHETIC_RESOURCES.happiness.id ||
+				(e.params as { resourceId?: string }).resourceId ===
+					SYNTHETIC_RESOURCES.happiness.id),
+	) as EffectDef<{ amount: number; change?: { amount: number } }>;
+	// Support both legacy (amount) and V2 (change.amount) formats
+	const innerChange = innerRes.params?.change;
+	const innerRawAmt = innerChange?.amount ?? innerRes.params.amount;
 	const penaltyAmt =
-		innerRes.method === 'remove'
-			? -Number(innerRes.params.amount)
-			: Number(innerRes.params.amount);
+		innerRes.method === 'remove' ? -Number(innerRawAmt) : Number(innerRawAmt);
 	const armyAttack = registries.actions.get(attackActionId);
 	const upkeepPhase = scenario.session.phases.find((phase) =>
 		phase.steps?.some((step) => step.triggers?.includes(ON_UPKEEP_PHASE)),

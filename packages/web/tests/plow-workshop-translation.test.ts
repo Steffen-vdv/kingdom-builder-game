@@ -22,6 +22,7 @@ describe('plow workshop translation', () => {
 			phases: synthetic.phases,
 			start: synthetic.start,
 			rules: synthetic.rules,
+			resourceCatalogV2: synthetic.resourceCatalogV2,
 		});
 		const summary = describeContent(
 			'building',

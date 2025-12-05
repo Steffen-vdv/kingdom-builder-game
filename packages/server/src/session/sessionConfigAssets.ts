@@ -141,11 +141,16 @@ export function buildResourceRegistry(
 		registry.set(key, { key });
 	};
 	const addFromStart = (config: PlayerStartConfig | undefined): void => {
-		if (!config?.resources) {
-			return;
+		if (config?.resources) {
+			for (const key of Object.keys(config.resources)) {
+				addKey(key);
+			}
 		}
-		for (const key of Object.keys(config.resources)) {
-			addKey(key);
+		// Also check valuesV2 for V2 resource IDs
+		if (config?.valuesV2) {
+			for (const key of Object.keys(config.valuesV2)) {
+				addKey(key);
+			}
 		}
 	};
 	addFromStart(startConfig.player);

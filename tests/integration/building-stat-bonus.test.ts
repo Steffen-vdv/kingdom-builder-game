@@ -19,22 +19,20 @@ describe('Building stat bonuses', () => {
 			id: buildingId,
 		});
 		for (const [key, cost] of Object.entries(buildCosts)) {
-			engineContext.activePlayer.resources[key] = cost ?? 0;
+			engineContext.activePlayer.resourceValues[key] = cost ?? 0;
 		}
 		const before: Record<string, number> = {};
 		for (const s of stats) {
-			before[s.key] = engineContext.activePlayer.stats[s.key];
+			// s.key is already a ResourceV2 ID (resource:stat:*)
+			before[s.key] = engineContext.activePlayer.resourceValues[s.key] ?? 0;
 		}
 
 		performAction(buildActionId, engineContext, { id: buildingId });
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(true);
 		for (const s of stats) {
-			const resourceId = engineContext.activePlayer.getStatResourceV2Id(s.key);
-			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
-				before[s.key] + s.amount,
-			);
-			expect(engineContext.activePlayer.resourceValues[resourceId]).toBeCloseTo(
+			// s.key is already a ResourceV2 ID (resource:stat:*)
+			expect(engineContext.activePlayer.resourceValues[s.key]).toBeCloseTo(
 				before[s.key] + s.amount,
 			);
 		}
@@ -46,11 +44,7 @@ describe('Building stat bonuses', () => {
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(false);
 		for (const s of stats) {
-			const resourceId = engineContext.activePlayer.getStatResourceV2Id(s.key);
-			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
-				before[s.key],
-			);
-			expect(engineContext.activePlayer.resourceValues[resourceId]).toBeCloseTo(
+			expect(engineContext.activePlayer.resourceValues[s.key]).toBeCloseTo(
 				before[s.key],
 			);
 		}
@@ -62,11 +56,7 @@ describe('Building stat bonuses', () => {
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(false);
 		for (const s of stats) {
-			const resourceId = engineContext.activePlayer.getStatResourceV2Id(s.key);
-			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
-				before[s.key],
-			);
-			expect(engineContext.activePlayer.resourceValues[resourceId]).toBeCloseTo(
+			expect(engineContext.activePlayer.resourceValues[s.key]).toBeCloseTo(
 				before[s.key],
 			);
 		}

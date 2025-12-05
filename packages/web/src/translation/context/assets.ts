@@ -1,7 +1,6 @@
 import type { PopulationConfig } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
-	SessionMetadataFormat,
 	SessionRuleSnapshot,
 	SessionSnapshotMetadata,
 	SessionTriggerMetadata,
@@ -14,11 +13,6 @@ import type {
 } from './types';
 const formatRemoval = (description: string) =>
 	`Active as long as ${description}`;
-
-type FormatAwareDescriptor = SessionMetadataDescriptor & {
-	displayAsPercent?: boolean;
-	format?: SessionMetadataFormat;
-};
 
 function mergeIconLabel(
 	base: TranslationIconLabel | undefined,
@@ -38,14 +32,13 @@ function mergeIconLabel(
 	if (description !== undefined) {
 		entry.description = description;
 	}
-	const percentFlag = (descriptor as FormatAwareDescriptor | undefined)
-		?.displayAsPercent;
+	const percentFlag = descriptor?.displayAsPercent;
 	if (percentFlag !== undefined) {
 		entry.displayAsPercent = percentFlag;
 	} else if (base?.displayAsPercent !== undefined) {
 		entry.displayAsPercent = base.displayAsPercent;
 	}
-	const format = (descriptor as FormatAwareDescriptor | undefined)?.format;
+	const format = descriptor?.format;
 	const baseFormat = base?.format;
 	const appliedFormat = format ?? baseFormat;
 	if (appliedFormat !== undefined) {

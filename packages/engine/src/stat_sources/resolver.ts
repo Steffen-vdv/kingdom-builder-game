@@ -103,7 +103,6 @@ export function recordEffectStatDelta(
 				? params['percentStat'].trim()
 				: '';
 		if (percentStatKey) {
-			const activePlayer = context.activePlayer;
 			// percentStatKey is already a ResourceV2 ID
 			const percentStatId = percentStatKey;
 			appendDependencyLink(meta, {

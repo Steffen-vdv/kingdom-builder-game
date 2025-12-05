@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
 	ACTIONS,
-	STATS,
 	TRIGGER_INFO,
 	OVERVIEW_CONTENT,
 } from '@kingdom-builder/contents';
+import { RESOURCE_V2_REGISTRY } from '@kingdom-builder/contents/registries/resourceV2';
 import { buildSessionMetadata } from '../../src/session/sessionMetadataBuilder.js';
 
 describe('buildSessionMetadata', () => {
@@ -20,20 +20,22 @@ describe('buildSessionMetadata', () => {
 
 	it('copies stat formatting metadata', () => {
 		const { metadata } = buildSessionMetadata();
-		const [statId, statInfo] =
-			Object.entries(STATS).find(([, info]) => info.addFormat) ?? [];
-		expect(statId).toBeDefined();
-		if (!statId || !statInfo) {
-			throw new Error('Expected stats with formatting in content definitions.');
-		}
-		const statMetadata = metadata.stats?.[statId];
-		expect(statMetadata).toBeDefined();
-		expect((statMetadata as { format?: unknown })?.format).toEqual(
-			statInfo.addFormat,
+		// Find a stat resource with displayAsPercent in the V2 registry
+		const statWithPercent = RESOURCE_V2_REGISTRY.ordered.find(
+			(resource) =>
+				resource.id.startsWith('resource:stat:') && resource.displayAsPercent,
 		);
-		if (statInfo.displayAsPercent !== undefined) {
-			expect(statMetadata?.displayAsPercent).toBe(statInfo.displayAsPercent);
+		expect(statWithPercent).toBeDefined();
+		if (!statWithPercent) {
+			throw new Error(
+				'Expected stats with displayAsPercent in content definitions.',
+			);
 		}
+		const statMetadata = metadata.stats?.[statWithPercent.id];
+		expect(statMetadata).toBeDefined();
+		expect(statMetadata?.displayAsPercent).toBe(
+			statWithPercent.displayAsPercent,
+		);
 	});
 
 	it('includes trigger metadata from content definitions', () => {

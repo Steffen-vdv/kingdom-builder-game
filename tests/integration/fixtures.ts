@@ -26,13 +26,16 @@ function deepClone<T>(value: T): T {
 
 function clonePlayer(player: PlayerState) {
 	const copy = new PlayerState(player.id, player.name);
-	copy.copyLegacyMappingsFrom(player);
-	copy.resources = deepClone(player.resources);
 	copy.resourceValues = deepClone(player.resourceValues);
 	copy.resourceLowerBounds = deepClone(player.resourceLowerBounds);
 	copy.resourceUpperBounds = deepClone(player.resourceUpperBounds);
-	copy.stats = deepClone(player.stats);
-	copy.population = deepClone(player.population);
+	copy.resourceTouched = deepClone(player.resourceTouched);
+	copy.resourceTierIds = deepClone(player.resourceTierIds);
+	copy.resourceBoundTouched = deepClone(player.resourceBoundTouched);
+	copy.statsHistory = deepClone(player.statsHistory);
+	copy.statSources = deepClone(player.statSources);
+	copy.skipPhases = deepClone(player.skipPhases);
+	copy.skipSteps = deepClone(player.skipSteps);
 	copy.lands = player.lands.map((landState) => {
 		const newLand = new Land(landState.id, landState.slotsMax);
 		newLand.slotsUsed = landState.slotsUsed;
@@ -40,6 +43,7 @@ function clonePlayer(player: PlayerState) {
 		return newLand;
 	});
 	copy.buildings = new Set([...player.buildings]);
+	copy.actions = new Set([...player.actions]);
 	return copy;
 }
 
@@ -63,7 +67,9 @@ export function createTestContext(
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
 			const value = overrides[key];
 			if (value !== undefined) {
-				engineContext.activePlayer.resources[key] = value;
+				// RESOURCES values are already ResourceV2 IDs (e.g., resource:core:gold)
+				const resourceId = RESOURCES[key];
+				engineContext.activePlayer.resourceValues[resourceId] = value;
 			}
 		}
 	}
@@ -83,26 +89,6 @@ export function simulateEffects(
 		engineContext.passives.runResultMods(actionId, dummyCtx);
 	}
 
-	const resources: Record<string, number> = {};
-	for (const key of Object.keys(before.resources)) {
-		const delta =
-			dummy.resources[key as keyof typeof dummy.resources] -
-			before.resources[key as keyof typeof before.resources];
-		if (delta !== 0) {
-			resources[key] = delta;
-		}
-	}
-
-	const stats: Record<string, number> = {};
-	for (const key of Object.keys(before.stats)) {
-		const delta =
-			dummy.stats[key as keyof typeof dummy.stats] -
-			before.stats[key as keyof typeof before.stats];
-		if (delta !== 0) {
-			stats[key] = delta;
-		}
-	}
-
 	const valuesV2: Record<string, number> = {};
 	const beforeKeys = new Set(
 		Object.keys(before.resourceValues).concat(
@@ -114,6 +100,18 @@ export function simulateEffects(
 			(dummy.resourceValues[key] ?? 0) - (before.resourceValues[key] ?? 0);
 		if (delta !== 0) {
 			valuesV2[key] = delta;
+		}
+	}
+
+	// Derive legacy resources (resource:core:*) and stats (resource:stat:*)
+	// from valuesV2 for backward compatibility
+	const resources: Record<string, number> = {};
+	const stats: Record<string, number> = {};
+	for (const [key, delta] of Object.entries(valuesV2)) {
+		if (key.startsWith('resource:core:')) {
+			resources[key] = delta;
+		} else if (key.startsWith('resource:stat:')) {
+			stats[key] = delta;
 		}
 	}
 

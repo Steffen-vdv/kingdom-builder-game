@@ -61,10 +61,28 @@ export type ActionDefinition = {
 
 function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 	if (descriptor.method === 'transfer') {
+		// V2 transfer requires donor and recipient payloads
+		const hasPercent = descriptor.percent !== undefined;
+		// Percent change uses modifiers (values are fractions like 0.4 for 40%)
+		const percentFraction =
+			descriptor.percent !== undefined ? descriptor.percent / 100 : 0;
+		const recipientChange = hasPercent
+			? {
+					type: 'percent' as const,
+					modifiers: [percentFraction] as readonly number[],
+				}
+			: { type: 'amount' as const, amount: descriptor.amount ?? 0 };
+		const donorChange = hasPercent
+			? {
+					type: 'percent' as const,
+					modifiers: [-percentFraction] as readonly number[],
+				}
+			: { type: 'amount' as const, amount: -(descriptor.amount ?? 0) };
 		return {
 			type: 'resource',
 			method: 'transfer',
 			params: {
+				// Legacy params for translation formatter
 				key: descriptor.key,
 				...(descriptor.percent !== undefined
 					? { percent: descriptor.percent }
@@ -72,6 +90,17 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 				...(descriptor.amount !== undefined
 					? { amount: descriptor.amount }
 					: {}),
+				// V2 params for engine execution
+				donor: {
+					player: 'opponent' as const,
+					resourceId: descriptor.key,
+					change: donorChange,
+				},
+				recipient: {
+					player: 'active' as const,
+					resourceId: descriptor.key,
+					change: recipientChange,
+				},
 			},
 		};
 	}
@@ -79,8 +108,8 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 		type: 'resource',
 		method: descriptor.method,
 		params: {
-			key: descriptor.key,
-			amount: descriptor.amount ?? 0,
+			resourceId: descriptor.key,
+			change: { type: 'amount', amount: descriptor.amount ?? 0 },
 		},
 	};
 }
@@ -178,6 +207,7 @@ export function buildAttackEffect(
 export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	attack: {
 		meta: SYNTH_ATTACK,
+		system: true,
 		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 1 },
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
@@ -193,6 +223,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	},
 	buildingAttack: {
 		meta: SYNTH_BUILDING_ATTACK,
+		system: true,
 		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 1 },
 		attack: {
 			target: { building: SYNTH_BUILDING.id },
@@ -226,6 +257,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 	},
 	partial: {
 		meta: SYNTH_PARTIAL_ATTACK,
+		system: true,
 		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 0 },
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },

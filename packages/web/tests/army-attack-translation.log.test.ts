@@ -15,7 +15,6 @@ import {
 	PLUNDER_HAPPINESS_AMOUNT,
 	BUILDING_REWARD_GOLD,
 } from './helpers/armyAttackFactories';
-import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import {
 	selectAttackBuildingDescriptor,
 	selectAttackResourceDescriptor,
@@ -56,13 +55,15 @@ describe('army attack translation log', () => {
 			Resource.happiness,
 		);
 
-		engineContext.activePlayer.resources[Resource.ap] = 1;
-		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
-		engineContext.activePlayer.resources[Resource.happiness] = 2;
-		engineContext.activePlayer.resources[Resource.gold] = 7;
-		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
-		engineContext.opponent.resources[Resource.happiness] = 5;
-		engineContext.opponent.resources[Resource.gold] = 25;
+		engineContext.activePlayer.resourceValues[Resource.ap] = 1;
+		engineContext.activePlayer.resourceValues[Stat.armyStrength] = 2;
+		engineContext.activePlayer.resourceValues[Resource.happiness] = 2;
+		engineContext.activePlayer.resourceValues[Resource.gold] = 7;
+		engineContext.opponent.resourceValues[Stat.fortificationStrength] = 1;
+		engineContext.opponent.resourceValues[Resource.happiness] = 5;
+		engineContext.opponent.resourceValues[Resource.gold] = 25;
+		engineContext.activePlayer.actions.add(attack.id);
+		engineContext.activePlayer.actions.add(plunder.id);
 
 		performAction(attack.id, engineContext);
 
@@ -140,11 +141,12 @@ describe('army attack translation log', () => {
 			building.id,
 		);
 
-		engineContext.activePlayer.resources[Resource.ap] = 1;
-		engineContext.activePlayer.stats[Stat.armyStrength] = 3;
-		engineContext.activePlayer.resources[Resource.gold] = 0;
-		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
+		engineContext.activePlayer.resourceValues[Resource.ap] = 1;
+		engineContext.activePlayer.resourceValues[Stat.armyStrength] = 3;
+		engineContext.activePlayer.resourceValues[Resource.gold] = 0;
+		engineContext.opponent.resourceValues[Stat.fortificationStrength] = 1;
 		engineContext.opponent.buildings.add(building.id);
+		engineContext.activePlayer.actions.add(buildingAttack.id);
 
 		performAction(buildingAttack.id, engineContext);
 		const log = logContent('action', buildingAttack.id, translation);

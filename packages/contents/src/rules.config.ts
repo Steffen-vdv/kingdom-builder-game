@@ -46,7 +46,7 @@ export function getTierConfigs(): TierConfig[] {
 			id: happinessTierId('despair'),
 			passiveId: happinessPassiveId('despair'),
 			slug: 'despair',
-			range: { min: -10 },
+			range: { min: Number.MIN_SAFE_INTEGER, max: -10 },
 			incomeMultiplier: 0.5,
 			disableGrowth: true,
 			skipPhases: [PhaseId.Growth],

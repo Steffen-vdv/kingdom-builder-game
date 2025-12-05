@@ -60,7 +60,11 @@ export function collectTriggerEffects(
 		const populationDefinition = engineContext.populations.get(role);
 		// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
 		const qty = getResourceValue(player, role);
-		if (trigger === 'onPayUpkeepStep' && populationDefinition?.upkeep) {
+		if (
+			trigger === 'onPayUpkeepStep' &&
+			populationDefinition?.upkeep &&
+			qty > 0
+		) {
 			for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
 				pushUpkeepEffect(
 					bundles,

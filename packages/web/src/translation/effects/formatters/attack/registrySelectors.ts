@@ -42,7 +42,16 @@ export function selectAttackResourceDescriptor(
 	resourceKey: string,
 ): AttackRegistryDescriptor {
 	const assets = readAssets(context);
-	const entry = assets?.resources?.[resourceKey];
+	// Check legacy resources first
+	const legacyEntry = assets?.resources?.[resourceKey];
+	// Check ResourceV2 metadata for V2 keys
+	const v2Context = context as {
+		resourceMetadataV2?: {
+			get?: (id: string) => { icon?: string; label?: string } | undefined;
+		};
+	};
+	const v2Entry = v2Context.resourceMetadataV2?.get?.(resourceKey);
+	const entry = legacyEntry ?? v2Entry;
 	const label = coerceLabel(
 		entry?.label,
 		humanizeIdentifier(resourceKey) || resourceKey,

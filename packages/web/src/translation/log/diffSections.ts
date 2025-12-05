@@ -165,6 +165,21 @@ function describeStatBreakdown(
 		totalValue,
 	);
 }
+const STAT_V2_PREFIX = 'resource:stat:';
+
+function isResourceKey(key: string): boolean {
+	// Exclude stat keys - they're handled by appendStatChanges
+	if (key.startsWith(STAT_V2_PREFIX)) {
+		return false;
+	}
+	// Exclude legacy stat keys that can be mapped to V2 stat ids
+	const statV2Id = getResourceIdForLegacy('stats', key);
+	if (statV2Id !== undefined) {
+		return false;
+	}
+	return true;
+}
+
 export function appendResourceChanges(
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
@@ -175,7 +190,9 @@ export function appendResourceChanges(
 	options?: { trackByKey?: Map<string, ActionDiffChange> },
 ): ActionDiffChange[] {
 	const changes: ActionDiffChange[] = [];
-	for (const key of resourceKeys) {
+	// Filter out stat keys - they're handled by appendStatChanges
+	const filteredKeys = resourceKeys.filter(isResourceKey);
+	for (const key of filteredKeys) {
 		const resourceId = getResourceIdForLegacy('resources', key) ?? key;
 		const metadata = metadataSelectors.get(resourceId);
 		const summary = describeResourceChange(
@@ -200,6 +217,50 @@ export function appendResourceChanges(
 	}
 	return changes;
 }
+
+function isStatResourceKey(key: string): boolean {
+	// Check if it's a V2 stat key or a legacy stat key that can be mapped
+	if (key.startsWith(STAT_V2_PREFIX)) {
+		return true;
+	}
+	const v2Id = getResourceIdForLegacy('stats', key);
+	return v2Id !== undefined;
+}
+
+function collectStatKeys(
+	before: PlayerSnapshot,
+	after: PlayerSnapshot,
+): string[] {
+	const keys = new Set<string>();
+	// Collect legacy stat keys
+	for (const key of Object.keys(before.stats)) {
+		if (isStatResourceKey(key)) {
+			keys.add(key);
+		}
+	}
+	for (const key of Object.keys(after.stats)) {
+		if (isStatResourceKey(key)) {
+			keys.add(key);
+		}
+	}
+	// Collect V2 stat keys from valuesV2
+	if (before.valuesV2) {
+		for (const key of Object.keys(before.valuesV2)) {
+			if (key.startsWith(STAT_V2_PREFIX)) {
+				keys.add(key);
+			}
+		}
+	}
+	if (after.valuesV2) {
+		for (const key of Object.keys(after.valuesV2)) {
+			if (key.startsWith(STAT_V2_PREFIX)) {
+				keys.add(key);
+			}
+		}
+	}
+	return Array.from(keys);
+}
+
 export function appendStatChanges(
 	changes: string[],
 	before: PlayerSnapshot,
@@ -209,7 +270,9 @@ export function appendStatChanges(
 	assets: TranslationAssets,
 	metadataSelectors: TranslationResourceV2MetadataSelectors,
 ) {
-	for (const key of Object.keys(after.stats)) {
+	// Collect stat keys from both legacy stats and V2 valuesV2
+	const statKeys = collectStatKeys(before, after);
+	for (const key of statKeys) {
 		const resourceId = getResourceIdForLegacy('stats', key) ?? key;
 		const metadata = metadataSelectors.get(resourceId);
 		const mapping: ResourceV2LegacyMapping | undefined = getLegacyMapping(

@@ -12,6 +12,17 @@ import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
 import { createTestSessionScaffold } from './testSessionScaffold';
 
+// Helper to build V2 ID for core resources
+function getCoreResourceV2Id(legacyKey: string): string {
+	return `resource:core:${legacyKey}`;
+}
+
+// Helper to build V2 ID for stats (camelCase to kebab-case)
+function getStatV2Id(legacyKey: string): string {
+	const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+	return `resource:stat:${kebab}`;
+}
+
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
 	mockGame: GameEngineContextValue;
@@ -31,6 +42,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		metadata: sessionMetadata,
 		phases,
 		ruleSnapshot,
+		resourceCatalogV2,
 	} = createTestSessionScaffold();
 	const translationAssets = createTranslationAssets(
 		sessionRegistries,
@@ -64,6 +76,14 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		}
 		statIndex += 1;
 	}
+	// Build valuesV2 from legacy resources and stats using V2 IDs
+	const valuesV2: Record<string, number> = {};
+	for (const [key, value] of Object.entries(resourceValues)) {
+		valuesV2[getCoreResourceV2Id(key)] = value;
+	}
+	for (const [key, value] of Object.entries(stats)) {
+		valuesV2[getStatV2Id(key)] = value;
+	}
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
@@ -71,6 +91,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		stats,
 		statsHistory,
 		population: {},
+		valuesV2,
 	});
 	const opponent = createSnapshotPlayer({
 		id: opponentId,
@@ -87,6 +108,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
 		metadata: sessionMetadata,
+		resourceCatalogV2,
 	});
 	const translationContext = createTranslationContext(
 		sessionState,

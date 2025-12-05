@@ -39,8 +39,13 @@ describe('Building placement integration', () => {
 		const expandAfter = getActionOutcome(actionId, engineContext);
 		expect(expandAfter).not.toEqual(expandBefore);
 
+		// Ensure player has enough resources (including AP) for the expand action
+		for (const [resourceId, cost] of Object.entries(expandAfter.costs)) {
+			player.resourceValues[resourceId] =
+				(player.resourceValues[resourceId] || 0) + (cost ?? 0);
+		}
+
 		const v2Pre = { ...player.resourceValues };
-		const statsPre = { ...player.stats };
 		const landPre = engineContext.activePlayer.lands.length;
 
 		performAction(actionId, engineContext);
@@ -51,9 +56,7 @@ describe('Building placement integration', () => {
 				(v2Pre[resourceId] ?? 0) - cost + v2Gain,
 			);
 		}
-		for (const [resourceId, gain] of Object.entries(
-			expandAfter.results.resources,
-		)) {
+		for (const [resourceId] of Object.entries(expandAfter.results.resources)) {
 			if (expandAfter.costs[resourceId] === undefined) {
 				const v2Gain = expandAfter.results.valuesV2[resourceId] ?? 0;
 				expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
@@ -64,8 +67,13 @@ describe('Building placement integration', () => {
 		expect(engineContext.activePlayer.lands.length).toBe(
 			landPre + expandAfter.results.land,
 		);
-		for (const [key, gain] of Object.entries(expandAfter.results.stats)) {
-			expect(engineContext.activePlayer.stats[key]).toBe(statsPre[key] + gain);
+		// Stat deltas are now stored with ResourceV2 IDs (resource:stat:*)
+		for (const [resourceId, gain] of Object.entries(
+			expandAfter.results.stats,
+		)) {
+			expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
+				(v2Pre[resourceId] ?? 0) + gain,
+			);
 		}
 	});
 });

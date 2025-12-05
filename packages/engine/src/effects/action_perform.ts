@@ -5,6 +5,7 @@ import { withStatSourceFrames } from '../stat_sources';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionParameters } from '../actions/action_parameters';
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 type ActionPerformParams = ActionParameters<string> & {
 	__actionId?: string;
 	actionId?: string;

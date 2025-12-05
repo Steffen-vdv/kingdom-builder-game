@@ -52,7 +52,7 @@ export class EvaluationTargetBuilder extends ParamsBuilder<{
 		return this.set('id', id);
 	}
 }
-export const evaluationTarget = (type: EvaluationTargetTypes | string) => new EvaluationTargetBuilder(type);
+export const evaluationTarget = (type: string) => new EvaluationTargetBuilder(type);
 export function developmentTarget() {
 	return evaluationTarget(EvaluationTargetTypes.Development);
 }

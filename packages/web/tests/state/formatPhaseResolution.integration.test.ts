@@ -12,14 +12,30 @@ import type {
 	SessionPhaseStepDefinition,
 } from '@kingdom-builder/protocol/session';
 import { createDefaultTranslationAssets } from '../helpers/translationAssets';
-import { createSessionRegistries } from '../helpers/sessionRegistries';
+import {
+	createSessionRegistries,
+	createResourceV2CatalogContent,
+} from '../helpers/sessionRegistries';
 import type { SessionResourceKey } from '../../src/state/sessionTypes';
+import type { TranslationActionCategoryRegistry } from '../../src/translation/context';
+import {
+	cloneResourceCatalogV2,
+	createResourceV2MetadataSelectors,
+} from '../../src/translation/context';
 
 const translationAssets = createDefaultTranslationAssets();
 const baseRegistries = createSessionRegistries();
 const primaryResource =
 	(Object.keys(baseRegistries.resources) as SessionResourceKey[])[0] ??
 	('resource-fallback' as SessionResourceKey);
+
+const resourceCatalogV2 = createResourceV2CatalogContent();
+const catalogClone = cloneResourceCatalogV2(resourceCatalogV2);
+const resourceMetadataV2 = createResourceV2MetadataSelectors(catalogClone);
+const actionCategories: TranslationActionCategoryRegistry = {
+	categories: new Map(),
+	get: () => undefined,
+};
 
 function createPlayerSnapshot(
 	resources: Record<string, number> = {},
@@ -106,6 +122,8 @@ describe('formatPhaseResolution integration', () => {
 			developments: factory.developments,
 			passives: { evaluationMods: new Map(), get: () => undefined },
 			assets: translationAssets,
+			actionCategories,
+			resourceMetadataV2,
 		});
 
 		const result: PhaseResolutionFormatResult = formatPhaseResolution({
@@ -159,6 +177,8 @@ describe('formatPhaseResolution integration', () => {
 			developments: factory.developments,
 			passives: { evaluationMods: new Map(), get: () => undefined },
 			assets: translationAssets,
+			actionCategories,
+			resourceMetadataV2,
 		});
 
 		const result = formatPhaseResolution({
