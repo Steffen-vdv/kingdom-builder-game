@@ -1,7 +1,7 @@
 import { Stat, type StatKey } from './stats';
 import { PopulationRole, type PopulationRoleId } from './populationRoles';
 import { effect, phase, step, populationEvaluator, compareEvaluator, statEvaluator, type PhaseDef } from './config/builders';
-import { Types, StatMethods } from './config/builderShared';
+import { Types, StatMethods, ResourceMethods } from './config/builderShared';
 import { statAmountChange, statPercentFromStatChange } from './helpers/resourceV2Effects';
 import { ON_GAIN_AP_STEP, ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP } from './defs';
 import { PhaseId, PhaseStepId, PhaseTrigger } from './phaseTypes';
@@ -52,7 +52,7 @@ export const PHASES: PhaseDef[] = [
 				.effect(
 					effect()
 						.evaluator(compareEvaluator().left(statEvaluator().key(WAR_WEARINESS_STAT)).operator('gt').right(0))
-						.effect(effect(Types.Stat, StatMethods.REMOVE).params(statAmountChange(WAR_WEARINESS_STAT, 1)).build())
+						.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(statAmountChange(WAR_WEARINESS_STAT, 1)).build())
 						.build(),
 				),
 		)

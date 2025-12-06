@@ -214,7 +214,7 @@ export function createPartialStatEngineContext() {
 }
 
 export function getStat(
-	context: Pick<TranslationContext, 'assets'>,
+	context: Pick<TranslationContext, 'resourceMetadataV2'>,
 	key: string,
 ): AttackRegistryDescriptor {
 	return selectAttackStatDescriptor(context, key);

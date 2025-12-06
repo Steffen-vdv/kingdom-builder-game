@@ -3,9 +3,9 @@ import {
 	GameState,
 	Land,
 	PlayerState,
-	type StatSourceContribution,
+	type ResourceSourceContribution,
 } from '../state';
-import { cloneMeta } from '../stat_sources/meta';
+import { cloneMeta } from '../resource_sources/meta';
 import { cloneEffectList } from '../utils';
 
 function cloneLand(land: Land): Land {
@@ -60,14 +60,14 @@ function clonePlayerState(player: PlayerState): PlayerState {
 	cloned.lands = player.lands.map((land) => cloneLand(land));
 	cloned.buildings = new Set(player.buildings);
 	cloned.actions = new Set(player.actions);
-	const clonedSources = cloned.statSources;
-	for (const statKey of Object.keys(player.statSources)) {
-		const contributions = player.statSources[statKey];
+	const clonedSources = cloned.resourceSources;
+	for (const resourceKey of Object.keys(player.resourceSources)) {
+		const contributions = player.resourceSources[resourceKey];
 		if (!contributions) {
-			clonedSources[statKey] = {};
+			clonedSources[resourceKey] = {};
 			continue;
 		}
-		const next: Record<string, StatSourceContribution> = {};
+		const next: Record<string, ResourceSourceContribution> = {};
 		for (const sourceKey of Object.keys(contributions)) {
 			const contribution = contributions[sourceKey]!;
 			next[sourceKey] = {
@@ -75,7 +75,7 @@ function clonePlayerState(player: PlayerState): PlayerState {
 				meta: cloneMeta(contribution.meta),
 			};
 		}
-		clonedSources[statKey] = next;
+		clonedSources[resourceKey] = next;
 	}
 	cloned.skipPhases = Object.fromEntries(
 		Object.entries(player.skipPhases).map(([phaseId, flags]) => [
@@ -105,7 +105,7 @@ function clonePlayerState(player: PlayerState): PlayerState {
 		'lands',
 		'buildings',
 		'actions',
-		'statSources',
+		'resourceSources',
 		'skipPhases',
 		'skipSteps',
 	]);
@@ -173,6 +173,6 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		key: gain.key,
 		amount: gain.amount,
 	}));
-	cloned.statSourceStack = [...source.statSourceStack];
+	cloned.resourceSourceStack = [...source.resourceSourceStack];
 	return cloned;
 }

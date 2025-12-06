@@ -47,8 +47,6 @@ export type {
 	BuildingAttackEvaluationTargetLog,
 	AttackEvaluationTargetLog,
 	AttackEvaluationLog,
-	AttackResourceDiff,
-	AttackStatDiff,
 	AttackPlayerDiff,
 	AttackOnDamageLogEntry,
 	AttackLog,
@@ -119,9 +117,9 @@ export type {
 } from './services';
 export type {
 	SessionPlayerId,
-	SessionStatSourceLink,
-	SessionStatSourceMeta,
-	SessionStatSourceContribution,
+	SessionResourceSourceLink,
+	SessionResourceSourceMeta,
+	SessionResourceSourceContribution,
 	SessionLandSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerStateSnapshot,

@@ -10,11 +10,11 @@ export const clone = <T>(value: T): T => {
 	return JSON.parse(JSON.stringify(value)) as T;
 };
 
-export function cloneStatSources(
-	statSources: SessionPlayerStateSnapshot['statSources'],
-): SessionPlayerStateSnapshot['statSources'] {
-	const cloneSources: SessionPlayerStateSnapshot['statSources'] = {};
-	for (const [statId, contributions] of Object.entries(statSources)) {
+export function cloneResourceSources(
+	resourceSources: SessionPlayerStateSnapshot['resourceSources'],
+): SessionPlayerStateSnapshot['resourceSources'] {
+	const cloneSources: SessionPlayerStateSnapshot['resourceSources'] = {};
+	for (const [resourceId, contributions] of Object.entries(resourceSources)) {
 		const clonedContributions: Record<
 			string,
 			{ amount: number; meta: unknown }
@@ -25,7 +25,7 @@ export function cloneStatSources(
 				meta: clone(entry.meta),
 			};
 		}
-		cloneSources[statId] = clonedContributions;
+		cloneSources[resourceId] = clonedContributions;
 	}
 	return cloneSources;
 }

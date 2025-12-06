@@ -1,18 +1,20 @@
 import type { EffectHandler } from '.';
-import type { StatKey } from '../state';
-import { recordEffectStatDelta } from '../stat_sources';
+import type { ResourceKey } from '../state';
+import { recordEffectResourceDelta } from '../resource_sources';
 
 export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
-	const key = effect.params!['key'] as StatKey;
+	const key = effect.params!['key'] as ResourceKey;
 	const rawPercent = effect.params!['percent'] as number | undefined;
 	let percent: number;
 	if (rawPercent !== undefined) {
 		percent = rawPercent;
 	} else {
-		const statKey = effect.params!['percentStat'] as StatKey | undefined;
-		if (statKey) {
-			// statKey is now a ResourceV2 ID - use resourceValues directly
-			percent = context.activePlayer.resourceValues[statKey] || 0;
+		const percentResourceKey = effect.params!['percentStat'] as
+			| ResourceKey
+			| undefined;
+		if (percentResourceKey) {
+			// percentResourceKey is a ResourceV2 ID - use resourceValues directly
+			percent = context.activePlayer.resourceValues[percentResourceKey] || 0;
 		} else {
 			percent = 0;
 		}
@@ -51,6 +53,6 @@ export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
 	}
 	const delta = newValue - before;
 	if (delta !== 0) {
-		recordEffectStatDelta(effect, context, key, delta);
+		recordEffectResourceDelta(effect, context, key, delta);
 	}
 };

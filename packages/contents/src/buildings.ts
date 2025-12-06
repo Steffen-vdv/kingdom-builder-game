@@ -6,7 +6,7 @@ import { Stat, getStatResourceV2Id } from './stats';
 import type { StatKey } from './stats';
 import { DevelopmentId } from './developments';
 import { building, effect, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams } from './config/builders';
-import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods, StatMethods } from './config/builderShared';
+import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods } from './config/builderShared';
 import { Focus } from './defs';
 import { BuildingId as BuildingIdMap } from './buildingIds';
 import type { BuildingId as BuildingIdType } from './buildingIds';
@@ -116,8 +116,8 @@ export function createBuildingRegistry() {
 			.onBuild(
 				effect(Types.Passive, PassiveMethods.ADD)
 					.param('id', 'castle_walls_bonus')
-					.effect(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.fortificationStrength, 5)).build())
-					.effect(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.absorption, 0.2)).build())
+					.effect(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.fortificationStrength, 5)).build())
+					.effect(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.absorption, 0.2)).build())
 					.build(),
 			)
 			.focus(Focus.Defense)

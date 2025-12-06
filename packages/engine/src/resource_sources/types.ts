@@ -3,34 +3,39 @@ import type { EngineContext } from '../context';
 import type { EvaluatorDef } from '../evaluators';
 import type {
 	PlayerState,
-	StatKey,
-	StatSourceLink,
-	StatSourceMeta,
+	ResourceKey,
+	ResourceSourceLink,
+	ResourceSourceMeta,
 } from '../state';
 
-export const STAT_SOURCE_EPSILON = 1e-9;
+export const RESOURCE_SOURCE_EPSILON = 1e-9;
 
-export interface StatSourceMetaPartial {
+export interface ResourceSourceMetaPartial {
 	key?: string;
 	longevity?: 'ongoing' | 'permanent';
 	kind?: string;
 	id?: string;
 	detail?: string;
 	instance?: string;
-	dependsOn?: StatSourceLink[];
-	removal?: StatSourceLink;
+	dependsOn?: ResourceSourceLink[];
+	removal?: ResourceSourceLink;
 	effect?: { type?: string; method?: string };
 	extra?: Record<string, unknown>;
 }
 
-export type StatSourceFrame = (
+export type ResourceSourceFrame = (
 	effectDefinition: EffectDef,
 	context: EngineContext,
-	statKey: StatKey,
-) => StatSourceMetaPartial | undefined;
+	resourceKey: ResourceKey,
+) => ResourceSourceMetaPartial | undefined;
 
-export type { PlayerState, StatKey, StatSourceLink, StatSourceMeta };
+export type {
+	PlayerState,
+	ResourceKey,
+	ResourceSourceLink,
+	ResourceSourceMeta,
+};
 
 export interface EvaluatorDependencyCollector {
-	(evaluator: EvaluatorDef): StatSourceLink[];
+	(evaluator: EvaluatorDef): ResourceSourceLink[];
 }

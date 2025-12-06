@@ -1,7 +1,7 @@
 import { Land } from '../state';
-import type { PlayerState, StatKey } from '../state';
+import type { PlayerState, ResourceKey } from '../state';
 import type { RuleSet } from '../services';
-import { applyStatDelta } from '../stat_sources';
+import { applyResourceDelta } from '../resource_sources';
 import type { RuntimeResourceCatalog } from '../resource-v2';
 import {
 	getResourceValue,
@@ -13,7 +13,7 @@ import type {
 	PlayerStartConfig,
 	Registry,
 } from '@kingdom-builder/protocol';
-import { START_STAT_SOURCE_META } from './stat_source_meta';
+import { START_RESOURCE_SOURCE_META } from './resource_source_meta';
 
 function cloneEffectList<EffectType extends object>(
 	effectList: EffectType[] | undefined,
@@ -58,7 +58,12 @@ export function applyPlayerStartConfiguration(
 			});
 			const delta = statValue - previousValue;
 			if (delta !== 0) {
-				applyStatDelta(playerState, statId, delta, START_STAT_SOURCE_META);
+				applyResourceDelta(
+					playerState,
+					statId,
+					delta,
+					START_RESOURCE_SOURCE_META,
+				);
 			}
 		}
 		// Apply population via ResourceV2 API (role IDs are now ResourceV2 IDs)
@@ -75,13 +80,13 @@ export function applyPlayerStartConfiguration(
 			config.resourceLowerBoundsV2 ||
 			config.resourceUpperBoundsV2),
 	);
-	let statSnapshotBeforeResourceOverrides: Map<StatKey, number> | null = null;
+	let resourceSnapshotBeforeOverrides: Map<ResourceKey, number> | null = null;
 	if (shouldSnapshotStats) {
-		statSnapshotBeforeResourceOverrides = new Map<StatKey, number>();
-		for (const statKey of Object.keys(playerState.resourceTouched)) {
-			statSnapshotBeforeResourceOverrides.set(
-				statKey,
-				getResourceValue(playerState, statKey),
+		resourceSnapshotBeforeOverrides = new Map<ResourceKey, number>();
+		for (const resourceKey of Object.keys(playerState.resourceTouched)) {
+			resourceSnapshotBeforeOverrides.set(
+				resourceKey,
+				getResourceValue(playerState, resourceKey),
 			);
 		}
 	}
@@ -164,18 +169,23 @@ export function applyPlayerStartConfiguration(
 			);
 		}
 	}
-	if (statSnapshotBeforeResourceOverrides) {
+	if (resourceSnapshotBeforeOverrides) {
 		for (const [
-			statKey,
+			resourceKey,
 			previousValue,
-		] of statSnapshotBeforeResourceOverrides) {
-			const nextValue = getResourceValue(playerState, statKey);
+		] of resourceSnapshotBeforeOverrides) {
+			const nextValue = getResourceValue(playerState, resourceKey);
 			if (nextValue !== 0) {
-				playerState.resourceTouched[statKey] = true;
+				playerState.resourceTouched[resourceKey] = true;
 			}
 			const delta = nextValue - previousValue;
 			if (delta !== 0) {
-				applyStatDelta(playerState, statKey, delta, START_STAT_SOURCE_META);
+				applyResourceDelta(
+					playerState,
+					resourceKey,
+					delta,
+					START_RESOURCE_SOURCE_META,
+				);
 			}
 		}
 	}

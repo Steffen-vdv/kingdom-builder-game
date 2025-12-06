@@ -34,26 +34,14 @@ function isMeaningfulDelta(delta: number): boolean {
 function resolveResourceValue(
 	snapshot: PlayerSnapshot,
 	resourceId: string,
-	mapping?: ResourceV2LegacyMapping,
+	_mapping?: ResourceV2LegacyMapping,
 ): number | undefined {
+	// Use valuesV2 directly - all resources, stats, and population are unified
 	const values = snapshot.valuesV2;
 	if (values && typeof values[resourceId] === 'number') {
 		return values[resourceId];
 	}
-	const resolvedMapping = mapping ?? getLegacyMapping(resourceId);
-	if (!resolvedMapping) {
-		return undefined;
-	}
-	if (resolvedMapping.bucket === 'resources') {
-		const value = snapshot.resources[resolvedMapping.key];
-		return typeof value === 'number' ? value : undefined;
-	}
-	if (resolvedMapping.bucket === 'stats') {
-		const value = snapshot.stats[resolvedMapping.key];
-		return typeof value === 'number' ? value : undefined;
-	}
-	const value = snapshot.population[resolvedMapping.key];
-	return typeof value === 'number' ? value : undefined;
+	return undefined;
 }
 
 function resolveBounds(
@@ -137,26 +125,43 @@ function describeResourceChange(
 function describeStatBreakdown(
 	key: string,
 	change: SignedDelta,
-	player: Pick<PlayerSnapshot, 'population' | 'stats'>,
+	player: Pick<PlayerSnapshot, 'valuesV2'>,
 	step: StepEffects,
 	assets: TranslationAssets,
+	metadataSelectors: TranslationResourceV2MetadataSelectors,
 ): string | undefined {
 	const breakdown = findStatPctBreakdown(step, key);
 	if (!breakdown || change.delta <= 0) {
 		return undefined;
 	}
 	const role = breakdown.role;
-	const count = player.population[role] ?? 0;
+	// Role can be a V2 id (resource:population:role:legion) or legacy short key
+	// If it's already a V2 id, use it directly; otherwise construct the V2 id
+	const populationKey = role.startsWith('resource:population:')
+		? role
+		: `resource:population:role:${role}`;
+	const count = player.valuesV2?.[populationKey] ?? 0;
+	// Use V2 metadata for population icon, fallback to legacy assets
+	const popMetadata = metadataSelectors.get(populationKey);
 	const popIcon =
-		assets.populations[role]?.icon ?? assets.population.icon ?? '';
+		popMetadata?.icon ??
+		assets.populations[role]?.icon ??
+		assets.population.icon ??
+		'';
 	const pctStat = breakdown.percentStat;
-	const growth = player.stats[pctStat] ?? 0;
-	const growthIcon = assets.stats[pctStat]?.icon ?? '';
+	// Stats are now in valuesV2
+	const growth = player.valuesV2?.[pctStat] ?? 0;
+	// Use V2 metadata for stat icon, fallback to legacy assets
+	const pctStatMetadata = metadataSelectors.get(pctStat);
+	const growthIcon = pctStatMetadata?.icon ?? assets.stats[pctStat]?.icon ?? '';
 	const growthValue = formatStatValue(breakdown.percentStat, growth, assets);
 	const baseValue = formatStatValue(key, change.before, assets);
 	const totalValue = formatStatValue(key, change.after, assets);
+	// Use V2 metadata for target stat icon, fallback to legacy assets
+	const statMetadata = metadataSelectors.get(key);
+	const statIcon = statMetadata?.icon ?? assets.stats[key]?.icon ?? '';
 	return formatPercentBreakdown(
-		assets.stats[key]?.icon ?? '',
+		statIcon,
 		baseValue,
 		popIcon,
 		count,
@@ -218,44 +223,20 @@ export function appendResourceChanges(
 	return changes;
 }
 
-function isStatResourceKey(key: string): boolean {
-	// Check if it's a V2 stat key or a legacy stat key that can be mapped
-	if (key.startsWith(STAT_V2_PREFIX)) {
-		return true;
-	}
-	const v2Id = getResourceIdForLegacy('stats', key);
-	return v2Id !== undefined;
-}
-
 function collectStatKeys(
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
 ): string[] {
 	const keys = new Set<string>();
-	// Collect legacy stat keys
-	for (const key of Object.keys(before.stats)) {
-		if (isStatResourceKey(key)) {
+	// Collect stat keys from valuesV2
+	for (const key of Object.keys(before.valuesV2 ?? {})) {
+		if (key.startsWith(STAT_V2_PREFIX)) {
 			keys.add(key);
 		}
 	}
-	for (const key of Object.keys(after.stats)) {
-		if (isStatResourceKey(key)) {
+	for (const key of Object.keys(after.valuesV2 ?? {})) {
+		if (key.startsWith(STAT_V2_PREFIX)) {
 			keys.add(key);
-		}
-	}
-	// Collect V2 stat keys from valuesV2
-	if (before.valuesV2) {
-		for (const key of Object.keys(before.valuesV2)) {
-			if (key.startsWith(STAT_V2_PREFIX)) {
-				keys.add(key);
-			}
-		}
-	}
-	if (after.valuesV2) {
-		for (const key of Object.keys(after.valuesV2)) {
-			if (key.startsWith(STAT_V2_PREFIX)) {
-				keys.add(key);
-			}
 		}
 	}
 	return Array.from(keys);
@@ -265,7 +246,7 @@ export function appendStatChanges(
 	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
-	player: Pick<PlayerSnapshot, 'population' | 'stats'>,
+	player: Pick<PlayerSnapshot, 'valuesV2'>,
 	step: StepEffects,
 	assets: TranslationAssets,
 	metadataSelectors: TranslationResourceV2MetadataSelectors,
@@ -296,6 +277,7 @@ export function appendStatChanges(
 			player,
 			step,
 			assets,
+			metadataSelectors,
 		);
 		if (breakdown) {
 			changes.push(`${summary}${breakdown}`);

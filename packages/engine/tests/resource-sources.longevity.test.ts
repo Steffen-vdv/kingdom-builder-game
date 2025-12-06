@@ -3,15 +3,15 @@ import { runEffects } from '../src/index.ts';
 import { PopulationRole, Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 
-describe('stat sources longevity', () => {
-	it('captures ongoing and permanent stat sources with dependencies', () => {
+describe('resource sources longevity', () => {
+	it('captures ongoing and permanent resource sources with dependencies', () => {
 		const engineContext = createTestEngine();
 		const player = engineContext.activePlayer;
 
 		// Stat values ARE ResourceV2 IDs directly - no mapper needed
 		const growthId = Stat.growth;
 		const armyStrengthId = Stat.armyStrength;
-		const growthSources = Object.values(player.statSources[growthId] ?? {});
+		const growthSources = Object.values(player.resourceSources[growthId] ?? {});
 		expect(growthSources.length).toBeGreaterThan(0);
 		const growthTotal = growthSources.reduce(
 			(sum, entry) => sum + entry.amount,
@@ -34,7 +34,7 @@ describe('stat sources longevity', () => {
 		);
 
 		const getPopulationEntries = () =>
-			Object.values(player.statSources[armyStrengthId] ?? {}).filter(
+			Object.values(player.resourceSources[armyStrengthId] ?? {}).filter(
 				(entry) => entry.meta.kind === 'population',
 			);
 		const [passiveEntry] = getPopulationEntries();

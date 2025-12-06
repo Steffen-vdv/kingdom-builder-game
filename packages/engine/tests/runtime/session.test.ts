@@ -562,12 +562,14 @@ it('returns cloned simulation previews for upcoming phases', () => {
 	const activeId = session.getSnapshot().game.activePlayerId;
 	const preview = session.simulateUpcomingPhases(activeId);
 	preview.steps.length = 0;
-	preview.delta.resources.extra = 99;
-	preview.before.resources = {};
+	(preview.delta.valuesV2 as Record<string, unknown>).extra = 99;
+	preview.before.valuesV2 = {};
 	const refreshed = session.simulateUpcomingPhases(activeId);
 	expect(refreshed.steps.length).toBeGreaterThan(0);
-	expect(refreshed.delta.resources.extra).toBeUndefined();
-	expect(Object.keys(refreshed.before.resources).length).toBeGreaterThan(0);
+	expect(
+		(refreshed.delta.valuesV2 as Record<string, unknown>).extra,
+	).toBeUndefined();
+	expect(Object.keys(refreshed.before.valuesV2).length).toBeGreaterThan(0);
 });
 
 it('delegates AI turns with overrides while preserving controllers', async () => {

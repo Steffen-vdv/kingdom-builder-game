@@ -4,7 +4,7 @@ import { Resource } from './resourceKeys';
 import { Stat } from './stats';
 import { population, effect, populationEvaluator, passiveParams, populationAssignmentPassiveId } from './config/builders';
 import { resourceAmountChange, statAmountChange } from './helpers/resourceV2Effects';
-import { Types, ResourceMethods, PassiveMethods, StatMethods } from './config/builderShared';
+import { Types, ResourceMethods, PassiveMethods } from './config/builderShared';
 import type { PopulationDef } from './defs';
 
 export type { PopulationDef } from './defs';
@@ -45,7 +45,9 @@ export function createPopulationRegistry() {
 			.name('Legion')
 			.icon('🎖️')
 			.upkeep(Resource.gold, 1)
-			.onAssigned(effect(Types.Passive, PassiveMethods.ADD).params(LEGION_ASSIGNMENT_PASSIVE_PARAMS).effect(effect(Types.Stat, StatMethods.ADD).params(LEGION_STRENGTH_GAIN_PARAMS).build()).build())
+			.onAssigned(
+				effect(Types.Passive, PassiveMethods.ADD).params(LEGION_ASSIGNMENT_PASSIVE_PARAMS).effect(effect(Types.Resource, ResourceMethods.ADD).params(LEGION_STRENGTH_GAIN_PARAMS).build()).build(),
+			)
 			.onUnassigned(effect(Types.Passive, PassiveMethods.REMOVE).params(LEGION_ASSIGNMENT_PASSIVE_PARAMS).build())
 			.build(),
 	);
@@ -58,7 +60,10 @@ export function createPopulationRegistry() {
 			.icon('🔧')
 			.upkeep(Resource.gold, 1)
 			.onAssigned(
-				effect(Types.Passive, PassiveMethods.ADD).params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS).effect(effect(Types.Stat, StatMethods.ADD).params(FORTIFIER_STRENGTH_GAIN_PARAMS).build()).build(),
+				effect(Types.Passive, PassiveMethods.ADD)
+					.params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS)
+					.effect(effect(Types.Resource, ResourceMethods.ADD).params(FORTIFIER_STRENGTH_GAIN_PARAMS).build())
+					.build(),
 			)
 			.onUnassigned(effect(Types.Passive, PassiveMethods.REMOVE).params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS).build())
 			.build(),

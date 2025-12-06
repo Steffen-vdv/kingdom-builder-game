@@ -5,8 +5,8 @@ import { EVALUATORS } from '../evaluators';
 import type { CostBag } from '../services';
 import {
 	collectEvaluatorDependencies,
-	withStatSourceFrames,
-} from '../stat_sources';
+	withResourceSourceFrames,
+} from '../resource_sources';
 import { landAdd } from './land_add';
 import {
 	resourceAddV2,
@@ -107,7 +107,7 @@ export function runEffects(
 				continue;
 			}
 			engineContext.recentResourceGains = [];
-			withStatSourceFrames(engineContext, frame, () => {
+			withResourceSourceFrames(engineContext, frame, () => {
 				runEffects(effect.effects || [], engineContext, total);
 			});
 			const gains = [...engineContext.recentResourceGains];

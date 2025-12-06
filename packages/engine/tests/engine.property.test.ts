@@ -79,7 +79,7 @@ describe('engine property invariants', () => {
 						...Object.keys(gains),
 					])) {
 						const expected =
-							(before.resources[key] ?? 0) -
+							(before.valuesV2[key] ?? 0) -
 							(costs[key] ?? 0) +
 							(gains[key] ?? 0);
 						expect(engineContext.activePlayer.resourceValues[key]).toBe(

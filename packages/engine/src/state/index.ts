@@ -2,26 +2,30 @@ import type { EffectDef } from '../effects';
 import type { RuntimeResourceCatalog } from '../resource-v2';
 
 export type ResourceKey = string;
-export type StatKey = string;
+/** @deprecated Use ResourceKey instead */
+export type StatKey = ResourceKey;
 export type PhaseId = string;
 export type PopulationRoleId = string;
 
-export interface StatSourceLink {
+export interface ResourceSourceLink {
 	type?: string;
 	id?: string;
 	detail?: string;
 	extra?: Record<string, unknown>;
 }
 
-export interface StatSourceMeta {
+/** @deprecated Use ResourceSourceLink instead */
+export type StatSourceLink = ResourceSourceLink;
+
+export interface ResourceSourceMeta {
 	key: string;
 	longevity: 'ongoing' | 'permanent';
 	kind?: string;
 	id?: string;
 	detail?: string;
 	instance?: string;
-	dependsOn?: StatSourceLink[];
-	removal?: StatSourceLink;
+	dependsOn?: ResourceSourceLink[];
+	removal?: ResourceSourceLink;
 	effect?: {
 		type?: string;
 		method?: string;
@@ -29,10 +33,16 @@ export interface StatSourceMeta {
 	extra?: Record<string, unknown>;
 }
 
-export interface StatSourceContribution {
+/** @deprecated Use ResourceSourceMeta instead */
+export type StatSourceMeta = ResourceSourceMeta;
+
+export interface ResourceSourceContribution {
 	amount: number;
-	meta: StatSourceMeta;
+	meta: ResourceSourceMeta;
 }
+
+/** @deprecated Use ResourceSourceContribution instead */
+export type StatSourceContribution = ResourceSourceContribution;
 
 export type PlayerId = 'A' | 'B';
 
@@ -72,7 +82,7 @@ export class PlayerState {
 	resourceTouched: Record<string, boolean>;
 	resourceTierIds: Record<string, string | null>;
 	resourceBoundTouched: Record<string, { lower: boolean; upper: boolean }>;
-	statSources: Record<string, Record<string, StatSourceContribution>>;
+	resourceSources: Record<string, Record<string, ResourceSourceContribution>>;
 	lands: Land[] = [];
 	buildings: Set<string> = new Set();
 	actions: Set<string> = new Set();
@@ -90,9 +100,9 @@ export class PlayerState {
 		this.resourceTouched = {};
 		this.resourceTierIds = {};
 		this.resourceBoundTouched = {};
-		this.statSources = {} as Record<
+		this.resourceSources = {} as Record<
 			string,
-			Record<string, StatSourceContribution>
+			Record<string, ResourceSourceContribution>
 		>;
 		this.skipPhases = {};
 		this.skipSteps = {};

@@ -29,22 +29,22 @@ export type {
 
 export type SessionPlayerId = 'A' | 'B';
 
-export type SessionStatSourceLink = {
+export type SessionResourceSourceLink = {
 	type?: string;
 	id?: string;
 	detail?: string;
 	extra?: Record<string, unknown>;
 };
 
-export interface SessionStatSourceMeta {
+export interface SessionResourceSourceMeta {
 	key: string;
 	longevity: 'ongoing' | 'permanent';
 	kind?: string;
 	id?: string;
 	detail?: string;
 	instance?: string;
-	dependsOn?: SessionStatSourceLink[];
-	removal?: SessionStatSourceLink;
+	dependsOn?: SessionResourceSourceLink[];
+	removal?: SessionResourceSourceLink;
 	effect?: {
 		type?: string;
 		method?: string;
@@ -52,9 +52,9 @@ export interface SessionStatSourceMeta {
 	extra?: Record<string, unknown>;
 }
 
-export interface SessionStatSourceContribution {
+export interface SessionResourceSourceContribution {
 	amount: number;
-	meta: SessionStatSourceMeta;
+	meta: SessionResourceSourceMeta;
 }
 
 export interface SessionLandSnapshot {
@@ -100,7 +100,10 @@ export interface SessionPlayerStateSnapshot {
 	lands: SessionLandSnapshot[];
 	buildings: string[];
 	actions: string[];
-	statSources: Record<string, Record<string, SessionStatSourceContribution>>;
+	resourceSources: Record<
+		string,
+		Record<string, SessionResourceSourceContribution>
+	>;
 	skipPhases: Record<string, Record<string, true>>;
 	skipSteps: Record<string, Record<string, Record<string, true>>>;
 	passives: SessionPassiveSummary[];
@@ -169,9 +172,8 @@ export interface SessionAdvanceResult {
 }
 
 export interface PlayerSnapshotDeltaBucket {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
+	/** All resource changes keyed by ResourceV2 id. */
+	valuesV2: Record<string, number>;
 }
 
 export interface SimulateUpcomingPhasesIds {

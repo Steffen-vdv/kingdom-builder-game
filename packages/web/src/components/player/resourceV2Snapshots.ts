@@ -10,7 +10,6 @@ import type {
 import {
 	getLegacyMapping as selectLegacyMapping,
 	getResourceIdForLegacy as selectResourceIdForLegacy,
-	type ResourceV2LegacyBucket as LegacyBucket,
 } from '../../translation/resourceV2';
 import type { TranslationSignedResourceGainSelectors } from '../../translation/context';
 
@@ -125,24 +124,15 @@ export function createForecastMap(
 	populationRoleIds?: readonly string[],
 ): Map<string, number> {
 	const map = new Map<string, number>();
-	if (!forecast) {
+	if (!forecast || !forecast.valuesV2) {
 		return map;
 	}
-	const buckets: LegacyBucket[] = ['resources', 'stats', 'population'];
-	for (const bucket of buckets) {
-		const entries = forecast[bucket];
-		if (!entries) {
+	// Forecast delta uses unified valuesV2
+	for (const [resourceId, delta] of Object.entries(forecast.valuesV2)) {
+		if (typeof delta !== 'number') {
 			continue;
 		}
-		for (const [legacyKey, delta] of Object.entries(entries)) {
-			if (typeof delta !== 'number') {
-				continue;
-			}
-			const resourceId = selectResourceIdForLegacy(bucket, legacyKey);
-			if (resourceId) {
-				map.set(resourceId, delta);
-			}
-		}
+		map.set(resourceId, delta);
 	}
 	if (populationParentId) {
 		const total = sumForecastForPopulation(map, populationRoleIds);

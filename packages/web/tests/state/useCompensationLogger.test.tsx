@@ -61,7 +61,7 @@ function createPlayer(
 		lands: [],
 		buildings: [],
 		actions: [],
-		statSources: {},
+		resourceSources: {},
 		skipPhases: {},
 		skipSteps: {},
 		passives: [],

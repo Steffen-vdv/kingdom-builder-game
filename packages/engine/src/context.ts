@@ -1,7 +1,7 @@
 import type { GameState, ResourceKey, PlayerId } from './state';
 import type { AISystem } from './ai';
 import type { Services, PassiveManager } from './services';
-import type { StatSourceFrame } from './stat_sources';
+import type { ResourceSourceFrame } from './resource_sources';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -47,7 +47,7 @@ export class EngineContext {
 	statAddPctBases: Record<string, number> = {};
 	statAddPctAccums: Record<string, number> = {};
 	actionTraces: ActionTrace[] = [];
-	statSourceStack: StatSourceFrame[] = [];
+	resourceSourceStack: ResourceSourceFrame[] = [];
 
 	private _effectLogs: Map<string, unknown[]> = new Map();
 

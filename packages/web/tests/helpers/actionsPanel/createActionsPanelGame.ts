@@ -106,7 +106,7 @@ function toPlayerSnapshot(
 		})),
 		buildings: Array.from(participant.buildings),
 		actions: Array.from(participant.actions),
-		statSources: {},
+		resourceSources: {},
 		skipPhases: {},
 		skipSteps: {},
 		passives: [],

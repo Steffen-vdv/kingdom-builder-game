@@ -1,8 +1,8 @@
 import { runEffects } from '../effects';
 import type { EngineContext } from '../context';
 import type { PlayerId } from '../state';
-import { withStatSourceFrames } from '../stat_sources';
-import type { StatSourceFrame } from '../stat_sources';
+import { withResourceSourceFrames } from '../resource_sources';
+import type { ResourceSourceFrame } from '../resource_sources';
 import { CostModifierService } from './cost_modifier_service';
 import { ResultModifierService } from './result_modifier_service';
 import { EvaluationModifierService } from './evaluation_modifier_service';
@@ -51,8 +51,8 @@ export class PassiveManager {
 	}
 
 	private ensureFrameList(
-		frames?: StatSourceFrame | StatSourceFrame[],
-	): StatSourceFrame[] {
+		frames?: ResourceSourceFrame | ResourceSourceFrame[],
+	): ResourceSourceFrame[] {
 		if (!frames) {
 			return [];
 		}
@@ -135,15 +135,19 @@ export class PassiveManager {
 		passive: PassivePayload,
 		context: EngineContext,
 		options?: {
-			frames?: StatSourceFrame | StatSourceFrame[];
+			frames?: ResourceSourceFrame | ResourceSourceFrame[];
 			detail?: string;
 			meta?: PassiveMetadata;
 		},
 	) {
 		const key = this.makeKey(passive.id, context.activePlayer.id);
 		const providedFrames = this.ensureFrameList(options?.frames);
-		const passiveFrame: StatSourceFrame = (_effect, _context, statKey) => ({
-			key: `passive:${key}:${statKey}`,
+		const passiveFrame: ResourceSourceFrame = (
+			_effect,
+			_context,
+			resourceKey,
+		) => ({
+			key: `passive:${key}:${resourceKey}`,
 			instance: key,
 			detail: options?.detail ?? passive.name ?? 'Passive',
 			longevity: 'ongoing' as const,
@@ -164,7 +168,7 @@ export class PassiveManager {
 		this.passives.set(key, record);
 		const setupEffects = record.effects;
 		if (setupEffects && setupEffects.length > 0) {
-			withStatSourceFrames(context, frames, () =>
+			withResourceSourceFrames(context, frames, () =>
 				runEffects(setupEffects, context),
 			);
 		}
@@ -179,7 +183,7 @@ export class PassiveManager {
 		clearSkipFlags(context.activePlayer, passive.id, passive.skip);
 		const teardownEffects = passive.effects;
 		if (teardownEffects && teardownEffects.length > 0) {
-			withStatSourceFrames(context, passive.frames, () =>
+			withResourceSourceFrames(context, passive.frames, () =>
 				runEffects(teardownEffects.map(reverseEffect), context),
 			);
 		}

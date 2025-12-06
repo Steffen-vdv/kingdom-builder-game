@@ -3,14 +3,14 @@ export {
 	evaluatorDependencyCollectorRegistry,
 	registerEvaluatorDependencyCollector,
 } from './dependencies';
-export { withStatSourceFrames } from './frames';
+export { withResourceSourceFrames } from './frames';
 export {
-	applyStatDelta,
-	recordEffectStatDelta,
-	resolveStatSourceMeta,
+	applyResourceDelta,
+	recordEffectResourceDelta,
+	resolveResourceSourceMeta,
 } from './resolver';
 export type {
-	StatSourceFrame,
-	StatSourceMetaPartial,
+	ResourceSourceFrame,
+	ResourceSourceMetaPartial,
 	EvaluatorDependencyCollector,
 } from './types';

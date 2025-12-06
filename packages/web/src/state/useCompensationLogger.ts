@@ -73,9 +73,7 @@ export function useCompensationLogger({
 			const after: PlayerSnapshot = snapshotPlayer(player);
 			const before: PlayerSnapshot = {
 				...after,
-				resources: { ...after.resources },
-				stats: { ...after.stats },
-				population: { ...after.population },
+				valuesV2: { ...after.valuesV2 },
 				buildings: [...after.buildings],
 				lands: after.lands.map((land) => ({
 					...land,
@@ -83,16 +81,19 @@ export function useCompensationLogger({
 				})),
 				passives: [...after.passives],
 			};
+			// Apply compensation deltas to compute the before state
+			// Compensation uses ResourceV2 keys directly
 			for (const [resourceKey, resourceDelta] of Object.entries(
 				compensation.resources || {},
 			)) {
-				before.resources[resourceKey] =
-					(before.resources[resourceKey] || 0) - (resourceDelta ?? 0);
+				before.valuesV2[resourceKey] =
+					(before.valuesV2[resourceKey] || 0) - (resourceDelta ?? 0);
 			}
 			for (const [statKey, statDelta] of Object.entries(
 				compensation.stats || {},
 			)) {
-				before.stats[statKey] = (before.stats[statKey] || 0) - (statDelta ?? 0);
+				before.valuesV2[statKey] =
+					(before.valuesV2[statKey] || 0) - (statDelta ?? 0);
 			}
 			const diffContext: TranslationDiffContext = {
 				...baseDiffContext,

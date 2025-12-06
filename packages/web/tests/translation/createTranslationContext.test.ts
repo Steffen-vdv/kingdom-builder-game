@@ -174,7 +174,7 @@ describe('createTranslationContext', () => {
 			lands: [],
 			buildings: config.buildings ?? [],
 			actions: [actionId],
-			statSources: {},
+			resourceSources: {},
 			skipPhases: {},
 			skipSteps: {},
 			passives: config.passives ?? [],

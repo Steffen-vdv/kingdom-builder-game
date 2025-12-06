@@ -42,9 +42,6 @@ interface PresentAiActionsOptions {
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 	return {
-		resources: { ...snapshot.resources },
-		stats: { ...snapshot.stats },
-		population: { ...snapshot.population },
 		valuesV2: { ...snapshot.valuesV2 },
 		resourceBoundsV2: Object.fromEntries(
 			Object.entries(snapshot.resourceBoundsV2).map(([id, bounds]) => [

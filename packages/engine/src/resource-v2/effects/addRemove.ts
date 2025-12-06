@@ -1,6 +1,7 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../../context';
 import type { PlayerState } from '../../state';
+import { recordEffectResourceDelta } from '../../resource_sources';
 import { setResourceValue, getResourceValue } from '../state';
 import { ensureBoundFlags, resolveResourceDefinition } from '../state-helpers';
 import {
@@ -200,6 +201,12 @@ function applyResourceEffect(
 		}
 	}
 	setResourceValue(context, player, catalog, resourceId, result.finalValue);
+	// Track resource source deltas for UI breakdowns. Only run when the
+	// context includes the source stack (full engine runs).
+	const delta = result.finalValue - currentValue;
+	if (delta !== 0 && Array.isArray(context.resourceSourceStack)) {
+		recordEffectResourceDelta(effect, context, resourceId, delta);
+	}
 	if (!suppressHooks && context.services) {
 		// Notify services about the resource change to trigger tier
 		// passive swaps and win condition checks.

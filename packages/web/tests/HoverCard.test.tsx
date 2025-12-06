@@ -21,6 +21,7 @@ import type { SessionPlayerId } from '@kingdom-builder/protocol';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { legacyKeyToResourceV2Id } from '@kingdom-builder/contents/resourceKeys';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
@@ -346,11 +347,17 @@ describe('<HoverCard />', () => {
 		const createPlayerSnapshot = (
 			resources: Record<string, number>,
 		): PlayerSnapshot => {
+			// Convert legacy keys to V2 ids for valuesV2
+			const valuesV2: Record<string, number> = {};
+			for (const [key, value] of Object.entries(resources)) {
+				const v2Id = legacyKeyToResourceV2Id(key);
+				valuesV2[v2Id] = value;
+			}
 			return {
 				resources,
 				stats: {},
 				population: {},
-				valuesV2: {},
+				valuesV2,
 				resourceBoundsV2: {},
 				buildings: [],
 				lands: [],
@@ -369,7 +376,7 @@ describe('<HoverCard />', () => {
 			lands: [],
 			buildings: [],
 			actions: [],
-			statSources: {},
+			resourceSources: {},
 			skipPhases: {},
 			skipSteps: {},
 			passives: [],
