@@ -241,10 +241,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	onValueIncrease(...effects: EffectDef[]) {
 		if (this.onValueIncreaseSet) {
-			throw new Error(
-				`${builderName} already configured onValueIncrease(). ` +
-					'Remove the duplicate call.',
-			);
+			throw new Error(`${builderName} already configured onValueIncrease(). ` + 'Remove the duplicate call.');
 		}
 		this.definition.onValueIncrease = effects;
 		this.onValueIncreaseSet = true;
@@ -253,10 +250,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 
 	onValueDecrease(...effects: EffectDef[]) {
 		if (this.onValueDecreaseSet) {
-			throw new Error(
-				`${builderName} already configured onValueDecrease(). ` +
-					'Remove the duplicate call.',
-			);
+			throw new Error(`${builderName} already configured onValueDecrease(). ` + 'Remove the duplicate call.');
 		}
 		this.definition.onValueDecrease = effects;
 		this.onValueDecreaseSet = true;

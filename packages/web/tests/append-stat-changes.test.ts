@@ -105,11 +105,14 @@ describe('appendStatChanges', () => {
 					},
 					effects: [
 						{
-							type: 'stat',
-							method: 'add_pct',
+							type: 'resource',
+							method: 'add',
 							params: {
-								key: primaryStatId,
-								percentStat: secondaryStatId,
+								resourceId: primaryStatId,
+								change: {
+									type: 'percentFromResource',
+									sourceResourceId: secondaryStatId,
+								},
 							},
 						},
 					],
@@ -196,11 +199,14 @@ describe('appendStatChanges', () => {
 					evaluator: { type: 'population', params: { role: populationId } },
 					effects: [
 						{
-							type: 'stat',
-							method: 'add_pct',
+							type: 'resource',
+							method: 'add',
 							params: {
-								key: primaryStatId,
-								percentStat: secondaryStatId,
+								resourceId: primaryStatId,
+								change: {
+									type: 'percentFromResource',
+									sourceResourceId: secondaryStatId,
+								},
 							},
 						},
 					],

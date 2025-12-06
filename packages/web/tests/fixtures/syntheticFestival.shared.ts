@@ -92,6 +92,20 @@ export const createFestivalMetadata = (): SessionSnapshotMetadata =>
 			upkeep: FALLBACK_UPKEEP,
 		},
 		resources: { ...RESOURCE_LOOKUP },
+		resourcesV2: {
+			[SYNTHETIC_RESOURCES.actionPoints.id]: {
+				icon: SYNTHETIC_RESOURCES.actionPoints.icon,
+				label: SYNTHETIC_RESOURCES.actionPoints.label,
+			},
+			[SYNTHETIC_RESOURCES.happiness.id]: {
+				icon: SYNTHETIC_RESOURCES.happiness.icon,
+				label: SYNTHETIC_RESOURCES.happiness.label,
+			},
+			[FORTIFICATION_STAT_KEY]: {
+				icon: '🛡️',
+				label: 'Fortification Strength',
+			},
+		},
 		stats: {
 			[FORTIFICATION_STAT_KEY]: {
 				icon: '🛡️',

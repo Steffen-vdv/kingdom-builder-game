@@ -67,7 +67,8 @@ export interface RuntimeResourceTriggers {
 }
 
 export interface RuntimeResourceDefinition
-	extends RuntimeResourceMetadata,
+	extends
+		RuntimeResourceMetadata,
 		RuntimeResourceBounds,
 		RuntimeResourceTriggers {
 	readonly displayAsPercent: boolean;

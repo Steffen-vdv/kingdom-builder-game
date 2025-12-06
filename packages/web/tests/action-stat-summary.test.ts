@@ -9,6 +9,27 @@ type StatEffectScenario = {
 	amount: number;
 };
 
+// V2 stat resource IDs - must match testResourceV2Metadata.ts
+const V2_STAT_IDS = {
+	maxPopulation: 'resource:stat:max-population',
+	fortificationStrength: 'resource:stat:fortification-strength',
+	absorption: 'resource:stat:absorption',
+	armyStrength: 'resource:stat:army-strength',
+} as const;
+
+// Map legacy stat keys to ResourceV2 IDs
+const STAT_KEY_MAP: Record<string, string> = {
+	maxPopulation: V2_STAT_IDS.maxPopulation,
+	fortificationStrength: V2_STAT_IDS.fortificationStrength,
+	absorption: V2_STAT_IDS.absorption,
+	armyStrength: V2_STAT_IDS.armyStrength,
+	// Handle capitalized variants
+	MaxPopulation: V2_STAT_IDS.maxPopulation,
+	FortificationStrength: V2_STAT_IDS.fortificationStrength,
+	Absorption: V2_STAT_IDS.absorption,
+	ArmyStrength: V2_STAT_IDS.armyStrength,
+};
+
 function setupStatAction(statEffects: StatEffectScenario[]) {
 	const factory = createContentFactory();
 	let actionId: string | undefined;
@@ -18,9 +39,12 @@ function setupStatAction(statEffects: StatEffectScenario[]) {
 				name: 'Stat Showcase',
 				icon: '🧮',
 				effects: statEffects.map(({ key, method, amount }) => ({
-					type: 'stat',
+					type: 'resource',
 					method,
-					params: { key, amount },
+					params: {
+						resourceId: STAT_KEY_MAP[key] ?? key,
+						change: { type: 'amount', amount },
+					},
 				})),
 			});
 			actionId = showcaseAction.id;

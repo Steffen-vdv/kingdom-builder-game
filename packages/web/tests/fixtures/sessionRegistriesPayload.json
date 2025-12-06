@@ -449,11 +449,11 @@
 					}
 				},
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "resource:stat:war-weariness",
-						"amount": 1
+						"resourceId": "resource:stat:war-weariness",
+						"change": { "type": "amount", "amount": 1 }
 					}
 				}
 			],
@@ -495,11 +495,11 @@
 					}
 				},
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "remove",
 					"params": {
-						"key": "resource:stat:fortification-strength",
-						"amount": 3
+						"resourceId": "resource:stat:fortification-strength",
+						"change": { "type": "amount", "amount": 3 }
 					}
 				},
 				{
@@ -994,19 +994,19 @@
 					},
 					"effects": [
 						{
-							"type": "stat",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "resource:stat:fortification-strength",
-								"amount": 5
+								"resourceId": "resource:stat:fortification-strength",
+								"change": { "type": "amount", "amount": 5 }
 							}
 						},
 						{
-							"type": "stat",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "resource:stat:absorption",
-								"amount": 0.2
+								"resourceId": "resource:stat:absorption",
+								"change": { "type": "amount", "amount": 0.2 }
 							}
 						}
 					]
@@ -1115,11 +1115,11 @@
 			"icon": "🏠",
 			"onBuild": [
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "resource:stat:max-population",
-						"amount": 1
+						"resourceId": "resource:stat:max-population",
+						"change": { "type": "amount", "amount": 1 }
 					}
 				}
 			],
@@ -1133,19 +1133,19 @@
 			"icon": "🏹",
 			"onBuild": [
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "resource:stat:army-strength",
-						"amount": 1
+						"resourceId": "resource:stat:army-strength",
+						"change": { "type": "amount", "amount": 1 }
 					}
 				},
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "resource:stat:fortification-strength",
-						"amount": 1
+						"resourceId": "resource:stat:fortification-strength",
+						"change": { "type": "amount", "amount": 1 }
 					}
 				}
 			],
@@ -1158,19 +1158,19 @@
 			"icon": "🗼",
 			"onBuild": [
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "resource:stat:fortification-strength",
-						"amount": 2
+						"resourceId": "resource:stat:fortification-strength",
+						"change": { "type": "amount", "amount": 2 }
 					}
 				},
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "resource:stat:absorption",
-						"amount": 0.5
+						"resourceId": "resource:stat:absorption",
+						"change": { "type": "amount", "amount": 0.5 }
 					}
 				}
 			],
@@ -1240,11 +1240,11 @@
 					},
 					"effects": [
 						{
-							"type": "stat",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "resource:stat:army-strength",
-								"amount": 1
+								"resourceId": "resource:stat:army-strength",
+								"change": { "type": "amount", "amount": 1 }
 							}
 						}
 					]
@@ -1276,11 +1276,11 @@
 					},
 					"effects": [
 						{
-							"type": "stat",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "resource:stat:fortification-strength",
-								"amount": 1
+								"resourceId": "resource:stat:fortification-strength",
+								"change": { "type": "amount", "amount": 1 }
 							}
 						}
 					]
@@ -1457,6 +1457,7 @@
 			"lowerBound": 0,
 			"upperBound": null,
 			"displayAsPercent": true,
+			"allowDecimal": true,
 			"trackValueBreakdown": false,
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:stats",
@@ -1474,6 +1475,7 @@
 			"lowerBound": 0,
 			"upperBound": null,
 			"displayAsPercent": true,
+			"allowDecimal": true,
 			"trackValueBreakdown": false,
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:stats",
@@ -1584,6 +1586,7 @@
 				"lowerBound": null,
 				"upperBound": null,
 				"displayAsPercent": false,
+				"allowDecimal": true,
 				"trackValueBreakdown": false,
 				"trackBoundBreakdown": false
 			}

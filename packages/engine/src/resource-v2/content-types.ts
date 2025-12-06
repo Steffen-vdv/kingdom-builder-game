@@ -57,9 +57,7 @@ export interface ContentResourceTriggers {
 }
 
 export interface ContentResourceDefinition
-	extends ContentMetadata,
-		ContentBounds,
-		ContentResourceTriggers {
+	extends ContentMetadata, ContentBounds, ContentResourceTriggers {
 	readonly displayAsPercent?: boolean;
 	readonly allowDecimal?: boolean;
 	readonly trackValueBreakdown?: boolean;

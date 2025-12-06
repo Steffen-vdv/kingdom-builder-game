@@ -69,15 +69,12 @@ export class Services {
 			// Run onValueIncrease triggers for each unit added
 			for (let i = 0; i < iterations; i++) {
 				const index = currentValue - iterations + i + 1;
-				const effects = applyParamsToEffects(
-					[...definition.onValueIncrease],
-					{
-						delta: 1,
-						index,
-						player: player.id,
-						resourceId,
-					},
-				);
+				const effects = applyParamsToEffects([...definition.onValueIncrease], {
+					delta: 1,
+					index,
+					player: player.id,
+					resourceId,
+				});
 				const frames = [
 					() => ({
 						kind: 'resource' as const,
@@ -107,15 +104,12 @@ export class Services {
 			// so we compute indices based on what they would have been
 			for (let i = 0; i < iterations; i++) {
 				const index = currentValue + iterations - i;
-				const effects = applyParamsToEffects(
-					[...definition.onValueDecrease],
-					{
-						delta: -1,
-						index,
-						player: player.id,
-						resourceId,
-					},
-				);
+				const effects = applyParamsToEffects([...definition.onValueDecrease], {
+					delta: -1,
+					index,
+					player: player.id,
+					resourceId,
+				});
 				const frames = [
 					() => ({
 						kind: 'resource' as const,

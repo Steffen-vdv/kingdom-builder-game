@@ -64,10 +64,7 @@ export interface ResourceV2Triggers {
 	onValueDecrease?: readonly EffectDef[];
 }
 
-export interface ResourceV2Definition
-	extends ResourceV2Metadata,
-		ResourceV2Bounds,
-		ResourceV2Triggers {
+export interface ResourceV2Definition extends ResourceV2Metadata, ResourceV2Bounds, ResourceV2Triggers {
 	displayAsPercent?: boolean;
 	allowDecimal?: boolean;
 	trackValueBreakdown?: boolean;
