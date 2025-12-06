@@ -11,7 +11,6 @@ import {
 	PASSIVE_INFO,
 	POPULATION_INFO,
 	DEVELOPMENTS_INFO,
-	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
@@ -159,14 +158,21 @@ const buildResourceMetadata = () =>
 
 const buildPopulationMetadata = () =>
 	createMetadataRecord(
-		Object.entries(POPULATION_ROLES).map(([id, info]) => [
-			id,
-			{
-				label: info.label,
-				icon: info.icon,
-				description: info.description,
-			},
-		]),
+		POPULATIONS.entries().map(([id, definition]) => {
+			const resource = RESOURCE_V2_REGISTRY.byId[id];
+			const descriptor: SessionMetadataDescriptor = {
+				label: resource?.label ?? definition.name ?? id,
+			};
+			if (resource?.icon) {
+				descriptor.icon = resource.icon;
+			} else if (definition.icon) {
+				descriptor.icon = definition.icon;
+			}
+			if (resource?.description) {
+				descriptor.description = resource.description;
+			}
+			return [id, descriptor] as const;
+		}),
 	);
 
 const buildBuildingMetadata = () =>

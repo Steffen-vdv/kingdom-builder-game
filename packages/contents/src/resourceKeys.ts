@@ -11,14 +11,3 @@ export type ResourceKey = ResourceV2Id;
 export function getResourceV2Id(resource: ResourceV2Id): ResourceV2Id {
 	return resource;
 }
-
-const LEGACY_KEY_MAP = {
-	gold: Resource.gold,
-	ap: Resource.ap,
-	happiness: Resource.happiness,
-	castleHP: Resource.castleHP,
-} as const;
-
-export function legacyKeyToResourceV2Id(legacyKey: string): string {
-	return LEGACY_KEY_MAP[legacyKey as keyof typeof LEGACY_KEY_MAP] ?? legacyKey;
-}

@@ -238,4 +238,36 @@ describe('SessionTransport action metadata', () => {
 			}
 		}
 	});
+
+	it('rejects actions when getActionDefinition returns undefined', () => {
+		const { manager, actionId } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		vi.spyOn(session, 'getActionDefinition').mockReturnValue(undefined);
+		const attempt = () =>
+			transport.getActionCosts({
+				body: { sessionId, actionId },
+				headers: authorizedHeaders,
+			});
+		expect(attempt).toThrowError(TransportError);
+		try {
+			attempt();
+		} catch (error) {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('NOT_FOUND');
+				expect(error.message).toContain('was not found');
+			}
+		}
+	});
 });

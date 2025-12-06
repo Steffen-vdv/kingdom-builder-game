@@ -99,4 +99,211 @@ describe('mergeSessionMetadata', () => {
 		expect(merged.assets?.transfer?.icon).toBe('base-transfer-icon');
 		expect(baseMetadata.assets?.upkeep?.icon).toBe('base-upkeep-icon');
 	});
+
+	it('deletes resources when both base and snapshot are undefined', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.resources).toBeUndefined();
+	});
+
+	it('deletes populations when merged result is undefined', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.populations).toBeUndefined();
+	});
+
+	it('deletes hero.tokens when merged result is undefined', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				hero: {},
+			},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				hero: {},
+			},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.overview?.hero?.tokens).toBeUndefined();
+	});
+
+	it('deletes result.tokens when merged result is undefined', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+			overview: {},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			overview: {},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.overview?.tokens).toBeUndefined();
+	});
+
+	it('deletes token category when override is undefined', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				tokens: {
+					upkeep: {
+						cost: { icon: 'base-cost' },
+					},
+				},
+			},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				tokens: {
+					upkeep: undefined,
+				} as never,
+			},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.overview?.tokens?.upkeep).toBeUndefined();
+	});
+
+	it('adds new token category from overrides', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				tokens: {},
+			},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				tokens: {
+					transfer: {
+						amount: { icon: 'new-transfer' },
+					},
+				},
+			},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.overview?.tokens?.transfer?.amount?.icon).toBe(
+			'new-transfer',
+		);
+	});
+
+	it('includes effectLogs from snapshot when present', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			effectLogs: [{ effectId: 'test', message: 'test log' }],
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.effectLogs).toBeDefined();
+		expect(merged.effectLogs?.[0]?.effectId).toBe('test');
+	});
+
+	it('returns base only when overrides are not provided', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+			resources: {
+				gold: { label: 'Gold', icon: '💰' },
+			},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.resources?.gold?.label).toBe('Gold');
+	});
+
+	it('clones base overview when no override is provided', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				hero: {
+					tokens: { key: { icon: 'base-icon' } },
+				},
+			},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.overview?.hero?.tokens?.key?.icon).toBe('base-icon');
+	});
+
+	it('creates overview from scratch when base is missing', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				hero: {
+					tokens: { newKey: { icon: 'new-icon' } },
+				},
+			},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.overview?.hero?.tokens?.newKey?.icon).toBe('new-icon');
+	});
+
+	it('overrides sections when provided in snapshot', () => {
+		const baseMetadata: SessionStaticMetadataPayload = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				sections: [{ title: 'Base Section' }],
+			},
+		};
+		const snapshot: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			overview: {
+				sections: [{ title: 'Snapshot Section' }],
+			},
+		};
+		const merged = mergeSessionMetadata({
+			baseMetadata,
+			snapshotMetadata: snapshot,
+		});
+		expect(merged.overview?.sections?.[0]?.title).toBe('Snapshot Section');
+	});
 });

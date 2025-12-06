@@ -5,7 +5,6 @@ import {
 	SLOT_INFO,
 	TRIGGER_INFO,
 	POPULATION_INFO,
-	POPULATION_ROLES,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
 	RESOURCE_V2_REGISTRY,
@@ -128,18 +127,23 @@ function buildPopulationMetadata(
 ): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
 	for (const [id, definition] of registry.entries()) {
-		const descriptor: SessionMetadataDescriptor = { label: definition.name };
+		const resource = RESOURCE_V2_REGISTRY.byId[id];
+		// Prefer definition name (custom overrides) over V2 registry label
+		const descriptor: SessionMetadataDescriptor = {
+			label: definition.name ?? resource?.label,
+		};
+		// Prefer definition icon over V2 registry icon
 		if (definition.icon) {
 			descriptor.icon = definition.icon;
+		} else if (resource?.icon) {
+			descriptor.icon = resource.icon;
 		}
+		// Prefer definition description over V2 registry description
 		const description = (definition as { description?: string }).description;
 		if (description) {
 			descriptor.description = description;
-		} else {
-			const roleInfo = POPULATION_ROLES[id as keyof typeof POPULATION_ROLES];
-			if (roleInfo?.description) {
-				descriptor.description = roleInfo.description;
-			}
+		} else if (resource?.description) {
+			descriptor.description = resource.description;
 		}
 		descriptors[id] = descriptor;
 	}

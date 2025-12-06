@@ -20,11 +20,17 @@ export type SyntheticDescriptor = {
 };
 
 export const SYNTH_RESOURCE_IDS = {
+	// Core resources
 	ap: 'ap',
 	gold: 'gold',
 	happiness: 'happiness',
 	castleHP: 'castleHP',
 	tier: 'tierResource',
+	// Stats (also resources in V2)
+	armyStrength: 'armyStrength',
+	absorption: 'absorption',
+	fortificationStrength: 'fortificationStrength',
+	warWeariness: 'warWeariness',
 } as const;
 
 export type SyntheticResourceKey =
@@ -59,39 +65,23 @@ export const SYNTH_RESOURCE_METADATA: Record<
 		icon: '🎖️',
 		label: 'Tier Resource',
 	},
-};
-
-export const SYNTH_STAT_IDS = {
-	armyStrength: 'armyStrength',
-	absorption: 'absorption',
-	fortificationStrength: 'fortificationStrength',
-	warWeariness: 'warWeariness',
-} as const;
-
-export type SyntheticStatKey =
-	(typeof SYNTH_STAT_IDS)[keyof typeof SYNTH_STAT_IDS];
-
-export const SYNTH_STAT_METADATA: Record<
-	SyntheticStatKey,
-	SyntheticDescriptor
-> = {
-	[SYNTH_STAT_IDS.armyStrength]: {
-		key: SYNTH_STAT_IDS.armyStrength,
+	[SYNTH_RESOURCE_IDS.armyStrength]: {
+		key: SYNTH_RESOURCE_IDS.armyStrength,
 		icon: '⚔️',
 		label: 'Army Strength',
 	},
-	[SYNTH_STAT_IDS.absorption]: {
-		key: SYNTH_STAT_IDS.absorption,
+	[SYNTH_RESOURCE_IDS.absorption]: {
+		key: SYNTH_RESOURCE_IDS.absorption,
 		icon: '🛡️',
 		label: 'Absorption',
 	},
-	[SYNTH_STAT_IDS.fortificationStrength]: {
-		key: SYNTH_STAT_IDS.fortificationStrength,
+	[SYNTH_RESOURCE_IDS.fortificationStrength]: {
+		key: SYNTH_RESOURCE_IDS.fortificationStrength,
 		icon: '🏯',
 		label: 'Fortification',
 	},
-	[SYNTH_STAT_IDS.warWeariness]: {
-		key: SYNTH_STAT_IDS.warWeariness,
+	[SYNTH_RESOURCE_IDS.warWeariness]: {
+		key: SYNTH_RESOURCE_IDS.warWeariness,
 		icon: '💤',
 		label: 'War Weariness',
 	},
@@ -101,7 +91,7 @@ export type CombatStatConfig = {
 	key: string;
 	icon: string;
 	label: string;
-	baseKey: SyntheticStatKey;
+	baseKey: SyntheticResourceKey;
 };
 
 export const SYNTH_ATTACK: SyntheticAction = {
@@ -139,19 +129,19 @@ export const COMBAT_STAT_CONFIG: Record<CombatStatKey, CombatStatConfig> = {
 		key: 'synthetic:valor',
 		icon: '⚔️',
 		label: 'Valor',
-		baseKey: SYNTH_STAT_IDS.armyStrength,
+		baseKey: SYNTH_RESOURCE_IDS.armyStrength,
 	},
 	absorption: {
 		key: 'synthetic:veil',
 		icon: '🌫️',
 		label: 'Veil',
-		baseKey: SYNTH_STAT_IDS.absorption,
+		baseKey: SYNTH_RESOURCE_IDS.absorption,
 	},
 	fortification: {
 		key: 'synthetic:rampart',
 		icon: '🧱',
 		label: 'Rampart',
-		baseKey: SYNTH_STAT_IDS.fortificationStrength,
+		baseKey: SYNTH_RESOURCE_IDS.fortificationStrength,
 	},
 };
 
@@ -179,10 +169,10 @@ export const START: StartConfig = {
 			[SYNTH_RESOURCE_IDS.castleHP]: 12,
 		},
 		stats: {
-			[SYNTH_STAT_IDS.armyStrength]: 0,
-			[SYNTH_STAT_IDS.absorption]: 0,
-			[SYNTH_STAT_IDS.fortificationStrength]: 0,
-			[SYNTH_STAT_IDS.warWeariness]: 0,
+			[SYNTH_RESOURCE_IDS.armyStrength]: 0,
+			[SYNTH_RESOURCE_IDS.absorption]: 0,
+			[SYNTH_RESOURCE_IDS.fortificationStrength]: 0,
+			[SYNTH_RESOURCE_IDS.warWeariness]: 0,
 		},
 		population: {},
 		lands: [],
@@ -258,37 +248,39 @@ const synthResourceV2Definitions = [
 		},
 	}),
 	resourceV2Definition({
-		id: SYNTH_STAT_IDS.armyStrength,
+		id: SYNTH_RESOURCE_IDS.armyStrength,
 		metadata: {
-			label: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.armyStrength].label,
-			icon: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.armyStrength].icon,
+			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.armyStrength].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.armyStrength].icon,
 			group: { id: statGroup.id, order: 0 },
 		},
 		bounds: { lowerBound: 0 },
 	}),
 	resourceV2Definition({
-		id: SYNTH_STAT_IDS.absorption,
+		id: SYNTH_RESOURCE_IDS.absorption,
 		metadata: {
-			label: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.absorption].label,
-			icon: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.absorption].icon,
+			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.absorption].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.absorption].icon,
 			group: { id: statGroup.id, order: 1 },
 		},
 		bounds: { lowerBound: 0 },
 	}),
 	resourceV2Definition({
-		id: SYNTH_STAT_IDS.fortificationStrength,
+		id: SYNTH_RESOURCE_IDS.fortificationStrength,
 		metadata: {
-			label: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.fortificationStrength].label,
-			icon: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.fortificationStrength].icon,
+			label:
+				SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.fortificationStrength].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.fortificationStrength]
+				.icon,
 			group: { id: statGroup.id, order: 2 },
 		},
 		bounds: { lowerBound: 0 },
 	}),
 	resourceV2Definition({
-		id: SYNTH_STAT_IDS.warWeariness,
+		id: SYNTH_RESOURCE_IDS.warWeariness,
 		metadata: {
-			label: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.warWeariness].label,
-			icon: SYNTH_STAT_METADATA[SYNTH_STAT_IDS.warWeariness].icon,
+			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.warWeariness].label,
+			icon: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.warWeariness].icon,
 			group: { id: statGroup.id, order: 3 },
 		},
 		bounds: { lowerBound: 0 },

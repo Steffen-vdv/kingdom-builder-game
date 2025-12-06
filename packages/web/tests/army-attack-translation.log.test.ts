@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 
 import './helpers/armyAttackSyntheticRegistries';
 import { logContent } from '../src/translation/content';
-import { Resource, Stat, performAction } from '@kingdom-builder/engine';
+import { performAction } from '@kingdom-builder/engine';
 import { formatActionTitle } from '../src/translation/formatActionTitle';
 import {
 	createSyntheticEngineContext,
@@ -15,6 +15,7 @@ import {
 	PLUNDER_HAPPINESS_AMOUNT,
 	BUILDING_REWARD_GOLD,
 } from './helpers/armyAttackFactories';
+import { SYNTH_RESOURCE_IDS } from './helpers/armyAttackConfig';
 import {
 	selectAttackBuildingDescriptor,
 	selectAttackResourceDescriptor,
@@ -38,7 +39,7 @@ describe('army attack translation log', () => {
 			createSyntheticEngineContext();
 		const castle = selectAttackResourceDescriptor(
 			translation,
-			Resource.castleHP,
+			SYNTH_RESOURCE_IDS.castleHP,
 		);
 		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
 		const absorptionStat = getStat(
@@ -49,19 +50,25 @@ describe('army attack translation log', () => {
 			translation,
 			SYNTH_COMBAT_STATS.fortification.key,
 		)!;
-		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
+		const gold = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.gold,
+		);
 		const happiness = selectAttackResourceDescriptor(
 			translation,
-			Resource.happiness,
+			SYNTH_RESOURCE_IDS.happiness,
 		);
 
-		engineContext.activePlayer.resourceValues[Resource.ap] = 1;
-		engineContext.activePlayer.resourceValues[Stat.armyStrength] = 2;
-		engineContext.activePlayer.resourceValues[Resource.happiness] = 2;
-		engineContext.activePlayer.resourceValues[Resource.gold] = 7;
-		engineContext.opponent.resourceValues[Stat.fortificationStrength] = 1;
-		engineContext.opponent.resourceValues[Resource.happiness] = 5;
-		engineContext.opponent.resourceValues[Resource.gold] = 25;
+		engineContext.activePlayer.resourceValues[SYNTH_RESOURCE_IDS.ap] = 1;
+		engineContext.activePlayer.resourceValues[SYNTH_RESOURCE_IDS.armyStrength] =
+			2;
+		engineContext.activePlayer.resourceValues[SYNTH_RESOURCE_IDS.happiness] = 2;
+		engineContext.activePlayer.resourceValues[SYNTH_RESOURCE_IDS.gold] = 7;
+		engineContext.opponent.resourceValues[
+			SYNTH_RESOURCE_IDS.fortificationStrength
+		] = 1;
+		engineContext.opponent.resourceValues[SYNTH_RESOURCE_IDS.happiness] = 5;
+		engineContext.opponent.resourceValues[SYNTH_RESOURCE_IDS.gold] = 25;
 		engineContext.activePlayer.actions.add(attack.id);
 		engineContext.activePlayer.actions.add(plunder.id);
 
@@ -75,7 +82,11 @@ describe('army attack translation log', () => {
 			'Absorption',
 		);
 		const fortLabel = iconLabel(fortStat.icon, fortStat.label, 'Fortification');
-		const castleLabel = iconLabel(castle.icon, castle.label, Resource.castleHP);
+		const castleLabel = iconLabel(
+			castle.icon,
+			castle.label,
+			SYNTH_RESOURCE_IDS.castleHP,
+		);
 		const attackDefinition = translation.actions.get(attack.id);
 		if (!attackDefinition) {
 			throw new Error('Missing attack definition');
@@ -130,7 +141,10 @@ describe('army attack translation log', () => {
 			translation,
 			SYNTH_COMBAT_STATS.fortification.key,
 		)!;
-		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
+		const gold = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.gold,
+		);
 		const buildingDescriptor = selectAttackBuildingDescriptor(
 			translation,
 			building.id,
@@ -141,10 +155,13 @@ describe('army attack translation log', () => {
 			building.id,
 		);
 
-		engineContext.activePlayer.resourceValues[Resource.ap] = 1;
-		engineContext.activePlayer.resourceValues[Stat.armyStrength] = 3;
-		engineContext.activePlayer.resourceValues[Resource.gold] = 0;
-		engineContext.opponent.resourceValues[Stat.fortificationStrength] = 1;
+		engineContext.activePlayer.resourceValues[SYNTH_RESOURCE_IDS.ap] = 1;
+		engineContext.activePlayer.resourceValues[SYNTH_RESOURCE_IDS.armyStrength] =
+			3;
+		engineContext.activePlayer.resourceValues[SYNTH_RESOURCE_IDS.gold] = 0;
+		engineContext.opponent.resourceValues[
+			SYNTH_RESOURCE_IDS.fortificationStrength
+		] = 1;
 		engineContext.opponent.buildings.add(building.id);
 		engineContext.activePlayer.actions.add(buildingAttack.id);
 
