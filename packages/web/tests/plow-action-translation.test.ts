@@ -6,6 +6,7 @@ import {
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_RESOURCES,
+	SYNTHETIC_RESOURCES_V2,
 	registerSyntheticPlowResources,
 } from './fixtures/syntheticPlow';
 import {
@@ -80,6 +81,13 @@ function createTranslationHarness() {
 				return [key, { icon: info.icon, label: info.label }];
 			}),
 		);
+	// ResourceV2 metadata for translation layer
+	const resourceMetadataV2: Record<string, SessionMetadataDescriptor> =
+		Object.fromEntries(
+			Object.entries(SYNTHETIC_RESOURCES_V2).map(([key, info]) => {
+				return [key, { icon: info.icon, label: info.label }];
+			}),
+		);
 	const session = createSessionSnapshot({
 		players: [activePlayer, opponent],
 		activePlayerId: activePlayer.id,
@@ -108,6 +116,8 @@ function createTranslationHarness() {
 				},
 			},
 		}),
+		resourceCatalogV2: synthetic.resourceCatalogV2,
+		resourceMetadataV2,
 	});
 	const translation = createTranslationContext(
 		session,
@@ -134,8 +144,10 @@ describe('plow action translation', () => {
 		);
 		const modKey = (costMod?.params as { key?: string })?.key ?? '';
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		const resourceDescriptor = translation.assets.resources?.[modKey] ?? {};
-		const modIcon = resourceDescriptor.icon ?? '';
+		// Check both legacy and V2 metadata for the resource icon
+		const legacyDescriptor = translation.assets.resources?.[modKey];
+		const v2Descriptor = translation.resourceMetadataV2?.get?.(modKey);
+		const modIcon = legacyDescriptor?.icon ?? v2Descriptor?.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
 		const modifierIcon = modifierInfo.icon ?? '✨';
 		expect(summary).toEqual([
@@ -183,8 +195,10 @@ describe('plow action translation', () => {
 		);
 		const modKey = (costMod?.params as { key?: string })?.key ?? '';
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		const resourceDescriptor = translation.assets.resources?.[modKey] ?? {};
-		const modIcon = resourceDescriptor.icon ?? '';
+		// Check both legacy and V2 metadata for the resource icon
+		const legacyDescriptor = translation.assets.resources?.[modKey];
+		const v2Descriptor = translation.resourceMetadataV2?.get?.(modKey);
+		const modIcon = legacyDescriptor?.icon ?? v2Descriptor?.icon ?? '';
 		const passiveName = ((plowPassive as { name?: string })?.name ??
 			SYNTHETIC_PASSIVE_INFO.label) as string;
 		const passiveIcon = ((plowPassive as { icon?: string })?.icon ??
@@ -199,10 +213,19 @@ describe('plow action translation', () => {
 		const expandHap = expand.effects.find(
 			(e: EffectDef) =>
 				e.type === 'resource' &&
-				(e.params as { key?: string }).key === 'happiness',
+				((e.params as { key?: string }).key === 'happiness' ||
+					(e.params as { resourceId?: string }).resourceId ===
+						'resource:synthetic:happiness'),
 		);
-		const hapAmt = (expandHap?.params as { amount?: number })?.amount ?? 0;
-		const hapDescriptor = translation.assets.resources?.happiness ?? {};
+		const hapChange = (expandHap?.params as { change?: { amount?: number } })
+			?.change;
+		const hapLegacyAmt = (expandHap?.params as { amount?: number })?.amount;
+		const hapAmt = hapChange?.amount ?? hapLegacyAmt ?? 0;
+		const hapLegacyDesc = translation.assets.resources?.happiness;
+		const hapV2Desc = translation.resourceMetadataV2?.get?.(
+			'resource:synthetic:happiness',
+		);
+		const hapDescriptor = hapLegacyDesc ?? hapV2Desc ?? {};
 		const hapLabel = hapDescriptor.label ?? 'happiness';
 		const hapIcon = hapDescriptor.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
@@ -220,7 +243,7 @@ describe('plow action translation', () => {
 				title: `${expand.icon} ${expand.name}`,
 				items: [
 					`${landIcon} ${landCount >= 0 ? '+' : ''}${landCount} ${landLabel}`,
-					`${hapIcon}${hapAmt >= 0 ? '+' : ''}${hapAmt} ${hapLabel}`,
+					`${hapIcon} ${hapAmt >= 0 ? '+' : ''}${hapAmt} ${hapLabel}`,
 				],
 			},
 			{

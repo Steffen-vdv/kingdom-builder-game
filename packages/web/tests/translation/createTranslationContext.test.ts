@@ -1,9 +1,15 @@
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import type {
 	SessionPlayerId,
+	SessionResourceCatalogV2,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { describe, expect, it } from 'vitest';
+import {
+	createResourceV2Registries,
+	resourceV2Definition,
+	resourceV2GroupDefinition,
+} from '@kingdom-builder/testing';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
 import { createSessionRegistries } from '../helpers/sessionRegistries';
@@ -26,6 +32,41 @@ describe('createTranslationContext', () => {
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
+		const resourceV2Id = 'resource:gold';
+		const resourceGroupV2Id = 'resource-group:economy';
+		const { resources: resourceRegistryV2, groups: resourceGroupRegistryV2 } =
+			createResourceV2Registries({
+				resources: [
+					resourceV2Definition({
+						id: resourceV2Id,
+						metadata: {
+							label: 'Gold Reserve',
+							icon: '🥇',
+							description: 'Vaulted wealth for the crown.',
+							order: 0,
+							group: { id: resourceGroupV2Id, order: 0 },
+						},
+						bounds: { lowerBound: 0 },
+					}),
+				],
+				groups: [
+					resourceV2GroupDefinition({
+						id: resourceGroupV2Id,
+						order: 0,
+						parent: {
+							label: 'Economic Portfolio',
+							icon: '💹',
+							description: 'Summary of treasury holdings.',
+							order: 0,
+							lowerBound: 0,
+						},
+					}),
+				],
+			});
+		const resourceCatalogV2: SessionResourceCatalogV2 = Object.freeze({
+			resources: resourceRegistryV2,
+			groups: resourceGroupRegistryV2,
+		}) as SessionResourceCatalogV2;
 		const phases: SessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
@@ -54,6 +95,21 @@ describe('createTranslationContext', () => {
 					label: 'Royal Treasury',
 					icon: '💰',
 					description: 'The royal treasury fuels your ambitions.',
+				},
+			},
+			resourcesV2: {
+				[resourceV2Id]: {
+					label: 'V2 Treasury',
+					icon: '🏦',
+					description: 'Translation metadata for ResourceV2.',
+					displayAsPercent: true,
+					format: { prefix: '+', percent: true },
+				},
+			},
+			resourceGroupsV2: {
+				[resourceGroupV2Id]: {
+					label: 'Economic Overview',
+					icon: '📊',
 				},
 			},
 			populations: populationId
@@ -108,13 +164,17 @@ describe('createTranslationContext', () => {
 			id: config.id,
 			name: config.name,
 			resources: { [resourceKey]: config.resource },
+			valuesV2: { [resourceV2Id]: config.resource },
 			stats: { [statKey]: config.stat },
-			statsHistory: {},
+			resourceTouchedV2: {},
 			population: { [populationId]: config.population },
+			resourceBoundsV2: {
+				[resourceV2Id]: { lowerBound: 0, upperBound: 20 },
+			},
 			lands: [],
 			buildings: config.buildings ?? [],
 			actions: [actionId],
-			statSources: {},
+			resourceSources: {},
 			skipPhases: {},
 			skipSteps: {},
 			passives: config.passives ?? [],
@@ -143,6 +203,7 @@ describe('createTranslationContext', () => {
 				resource: 5,
 				stat: 1,
 				population: 1,
+				passives: [],
 			}),
 		];
 		const session: SessionSnapshot = {
@@ -157,10 +218,14 @@ describe('createTranslationContext', () => {
 				players,
 				activePlayerId: 'A',
 				opponentId: 'B',
+				resourceCatalogV2,
 			},
 			phases,
 			actionCostResource: resourceKey,
-			recentResourceGains: [{ key: resourceKey, amount: 3 }],
+			recentResourceGains: [
+				{ key: resourceKey, amount: 3 },
+				{ key: resourceV2Id, amount: -2 },
+			],
 			compensations: {
 				A: compensation(2),
 				B: compensation(1),
@@ -186,6 +251,19 @@ describe('createTranslationContext', () => {
 				B: [],
 			},
 			metadata,
+			resourceMetadataV2: {
+				[resourceV2Id]: {
+					label: 'Catalog Gold',
+					icon: '🥇',
+					description: 'Catalog-provided metadata.',
+				},
+			},
+			resourceGroupMetadataV2: {
+				[resourceGroupV2Id]: {
+					label: 'Catalog Economy',
+					icon: '💼',
+				},
+			},
 		};
 		const context = createTranslationContext(session, registries, metadata, {
 			ruleSnapshot: session.rules,
@@ -209,6 +287,22 @@ describe('createTranslationContext', () => {
 				opponent: context.opponent.id,
 			},
 			recentResourceGains: context.recentResourceGains,
+			resourcesV2: {
+				resource: context.resourcesV2.resources.byId[resourceV2Id],
+				group: context.resourcesV2.groups.byId[resourceGroupV2Id],
+			},
+			resourceMetadataV2: {
+				resource: context.resourceMetadataV2.get(resourceV2Id),
+				group: context.resourceGroupMetadataV2.get(resourceGroupV2Id),
+				fallback: context.resourceMetadataV2.get('resource:missing'),
+				hasExisting: context.resourceMetadataV2.has(resourceV2Id),
+			},
+			signedResourceGains: {
+				list: context.signedResourceGains.list(),
+				positives: context.signedResourceGains.positives(),
+				negatives: context.signedResourceGains.negatives(),
+				sumLegacy: context.signedResourceGains.sumForResource(resourceKey),
+			},
 			compensations: context.compensations,
 			registries: {
 				action: { id: actionId, has: context.actions.has(actionId) },
@@ -340,6 +434,10 @@ describe('createTranslationContext', () => {
 			      "amount": 3,
 			      "key": "gold",
 			    },
+			    {
+			      "amount": -2,
+			      "key": "resource:gold",
+			    },
 			  ],
 			  "registries": {
 			    "action": {
@@ -359,10 +457,79 @@ describe('createTranslationContext', () => {
 			      "id": "council",
 			    },
 			  },
+			  "resourceMetadataV2": {
+			    "fallback": {
+			      "id": "resource:missing",
+			      "label": "resource:missing",
+			    },
+			    "group": {
+			      "description": "Summary of treasury holdings.",
+			      "icon": "💼",
+			      "id": "resource-group:economy",
+			      "label": "Catalog Economy",
+			    },
+			    "hasExisting": true,
+			    "resource": {
+			      "description": "Catalog-provided metadata.",
+			      "groupId": "resource-group:economy",
+			      "icon": "🥇",
+			      "id": "resource:gold",
+			      "label": "Catalog Gold",
+			    },
+			  },
+			  "resourcesV2": {
+			    "group": {
+			      "id": "resource-group:economy",
+			      "order": 0,
+			      "parent": {
+			        "description": "Summary of treasury holdings.",
+			        "icon": "💹",
+			        "id": "resource-group:economy_parent",
+			        "label": "Economic Portfolio",
+			        "lowerBound": 0,
+			        "order": 0,
+			      },
+			    },
+			    "resource": {
+			      "description": "Vaulted wealth for the crown.",
+			      "groupId": "resource-group:economy",
+			      "groupOrder": 0,
+			      "icon": "🥇",
+			      "id": "resource:gold",
+			      "label": "Gold Reserve",
+			      "lowerBound": 0,
+			      "order": 0,
+			    },
+			  },
 			  "rules": {
 			    "tierDefinitions": [],
 			    "tieredResourceKey": "gold",
 			    "winConditions": [],
+			  },
+			  "signedResourceGains": {
+			    "list": [
+			      {
+			        "amount": 3,
+			        "key": "gold",
+			      },
+			      {
+			        "amount": -2,
+			        "key": "resource:gold",
+			      },
+			    ],
+			    "negatives": [
+			      {
+			        "amount": -2,
+			        "key": "resource:gold",
+			      },
+			    ],
+			    "positives": [
+			      {
+			        "amount": 3,
+			        "key": "gold",
+			      },
+			    ],
+			    "sumLegacy": 3,
 			  },
 			}
 		`);

@@ -1,5 +1,8 @@
 import {
 	createContentFactory,
+	createResourceV2Registries,
+	resourceV2Definition,
+	resourceV2GroupDefinition,
 	type ContentFactory,
 } from '@kingdom-builder/testing';
 import type { PhaseDef, StartConfig } from './syntheticTaxData';
@@ -43,11 +46,60 @@ export const SYNTHETIC_ASSETS = {
 		`Active as long as ${description}`,
 };
 
+// Create ResourceV2 catalog for synthetic test resources
+const coreGroup = resourceV2GroupDefinition({
+	id: 'resource-group:synthetic',
+	order: 0,
+});
+
+const populationGroup = resourceV2GroupDefinition({
+	id: 'resource-group:synthetic:population',
+	order: 1,
+});
+
+const synthResourceV2Definitions = [
+	resourceV2Definition({
+		id: SYNTHETIC_RESOURCE_KEYS.coin,
+		metadata: {
+			label: SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin].label,
+			icon: SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin].icon,
+			group: { id: coreGroup.id, order: 0 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+	resourceV2Definition({
+		id: SYNTHETIC_RESOURCE_KEYS.actionPoints,
+		metadata: {
+			label: SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.actionPoints].label,
+			icon: SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.actionPoints].icon,
+			group: { id: coreGroup.id, order: 1 },
+		},
+		bounds: { lowerBound: 0 },
+		globalCost: 1,
+	}),
+	// Population role resource
+	resourceV2Definition({
+		id: SYNTHETIC_POPULATION_ROLE_ID,
+		metadata: {
+			label: SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID].label,
+			icon: SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID].icon,
+			group: { id: populationGroup.id, order: 0 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+];
+
+export const SYNTHETIC_RESOURCE_CATALOG_V2 = createResourceV2Registries({
+	resources: synthResourceV2Definitions,
+	groups: [coreGroup, populationGroup],
+});
+
 export interface SyntheticTaxScenario {
 	factory: ContentFactory;
 	phases: PhaseDef[];
 	start: StartConfig;
 	rules: typeof SYNTHETIC_RULES;
+	resourceCatalogV2: typeof SYNTHETIC_RESOURCE_CATALOG_V2;
 }
 
 export function createSyntheticTaxScenario(): SyntheticTaxScenario {
@@ -63,7 +115,10 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 3 },
+				params: {
+					resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+					change: { type: 'amount', amount: 3 },
+				},
 				meta: {
 					source: {
 						type: 'development',
@@ -82,7 +137,10 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 1 },
+				params: {
+					resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+					change: { type: 'amount', amount: 1 },
+				},
 				meta: {
 					source: {
 						type: 'building',
@@ -100,14 +158,15 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 		id: SYNTHETIC_IDS.taxAction,
 		name: 'Synthetic Levy',
 		icon: '📜',
-		baseCosts: {
-			[SYNTHETIC_RESOURCE_KEYS.actionPoints]: 1,
-		},
+		baseCosts: {},
 		effects: [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 3 },
+				params: {
+					resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+					change: { type: 'amount', amount: 3 },
+				},
 				meta: {
 					source: {
 						type: 'population',
@@ -119,7 +178,10 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 1 },
+				params: {
+					resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+					change: { type: 'amount', amount: 1 },
+				},
 				meta: {
 					source: {
 						type: 'building',
@@ -166,12 +228,14 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 	];
 	const start: StartConfig = {
 		player: {
-			resources: {
+			resources: {},
+			stats: {},
+			population: {},
+			valuesV2: {
 				[SYNTHETIC_RESOURCE_KEYS.coin]: 10,
 				[SYNTHETIC_RESOURCE_KEYS.actionPoints]: 5,
+				[SYNTHETIC_POPULATION_ROLE_ID]: 1,
 			},
-			stats: {},
-			population: { [SYNTHETIC_POPULATION_ROLE_ID]: 1 },
 			lands: [
 				{
 					id: SYNTHETIC_IDS.homeLand,
@@ -183,5 +247,11 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			],
 		},
 	};
-	return { factory, phases, start, rules: SYNTHETIC_RULES };
+	return {
+		factory,
+		phases,
+		start,
+		rules: SYNTHETIC_RULES,
+		resourceCatalogV2: SYNTHETIC_RESOURCE_CATALOG_V2,
+	};
 }

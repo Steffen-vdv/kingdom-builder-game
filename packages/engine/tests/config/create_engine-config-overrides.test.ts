@@ -6,13 +6,23 @@ import {
 	GAME_START,
 	PHASES,
 	POPULATIONS,
+	PopulationRole,
 	Resource,
 	RULES,
 	Stat,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createEngine } from '../../src/index.ts';
 import type { StartConfig } from '@kingdom-builder/protocol';
+
+const resourceCatalogV2 = {
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
+};
 
 describe('createEngine configuration overrides', () => {
 	it('applies registry overrides and start configuration', () => {
@@ -22,15 +32,17 @@ describe('createEngine configuration overrides', () => {
 		});
 		factory.building();
 		factory.development();
-		const customPopulation = factory.population();
+		factory.population(); // Add to factory registry for override test
+		// Use a real population role from the registry for start config
+		const populationRoleId = PopulationRole.Council;
 		const customStart: StartConfig = {
 			player: {
 				resources: {
 					[Resource.gold]: 11,
 					[Resource.ap]: 0,
 				},
-				stats: { [Stat.maxPopulation]: 2 },
-				population: { [customPopulation.id]: 1 },
+				stats: { [Stat.populationMax]: 2 },
+				population: { [populationRoleId]: 1 },
 			},
 			players: {
 				A: { resources: { [Resource.gold]: 13 } },
@@ -45,6 +57,7 @@ describe('createEngine configuration overrides', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			resourceCatalogV2,
 			config: {
 				actions: factory.actions.values(),
 				buildings: factory.buildings.values(),
@@ -58,9 +71,10 @@ describe('createEngine configuration overrides', () => {
 		expect(engine.developments.keys()).toEqual(factory.developments.keys());
 		expect(engine.populations.keys()).toEqual(factory.populations.keys());
 		const [playerA, playerB] = engine.game.players;
-		expect(playerA.resources[Resource.gold]).toBe(13);
-		expect(playerB.resources[Resource.gold]).toBe(17);
-		expect(playerA.population[customPopulation.id]).toBe(1);
+		// PlayerState uses resourceValues for all resources/population
+		expect(playerA.resourceValues[Resource.gold]).toBe(13);
+		expect(playerB.resourceValues[Resource.gold]).toBe(17);
+		expect(playerA.resourceValues[populationRoleId]).toBe(1);
 		const createdAction = engine.actions.get(customAction.id);
 		const baseCosts = createdAction.baseCosts || {};
 		expect(baseCosts[Resource.gold]).toBe(3);
@@ -83,6 +97,7 @@ describe('createEngine configuration overrides', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			resourceCatalogV2,
 			config: {
 				actions: [],
 				buildings: [],
@@ -97,7 +112,7 @@ describe('createEngine configuration overrides', () => {
 		const devGold = GAME_START.modes?.dev?.player?.resources?.[goldKey];
 		if (typeof devGold === 'number') {
 			const [playerA] = engine.game.players;
-			expect(playerA.resources[goldKey]).toBe(devGold);
+			expect(playerA.resourceValues[goldKey]).toBe(devGold);
 		}
 	});
 });

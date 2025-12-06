@@ -13,13 +13,18 @@ import {
 	cloneEvaluationModifiers,
 	clonePassiveSummary,
 	clonePlayer,
-	cloneRecentResourceGains,
 	flattenPassives,
 	mapPassives,
 	mapPassiveDescriptors,
 	wrapActionCategoryRegistry,
 	wrapRegistry,
 } from './contextHelpers';
+import {
+	cloneResourceCatalogV2,
+	createResourceV2GroupMetadataSelectors,
+	createResourceV2MetadataSelectors,
+	createSignedResourceGainSelectors,
+} from './resourceV2';
 import {
 	EMPTY_PASSIVE_DEFINITIONS,
 	cloneRuleSnapshot,
@@ -98,6 +103,22 @@ export function createTranslationContext(
 	const assets = createTranslationAssets(registries, metadata, {
 		rules: options.ruleSnapshot,
 	});
+	const resourceCatalogV2 = cloneResourceCatalogV2(
+		session.game.resourceCatalogV2,
+	);
+	const resourceMetadataV2 = createResourceV2MetadataSelectors(
+		resourceCatalogV2,
+		session.resourceMetadataV2 ?? metadata.resourcesV2,
+		metadata.resourcesV2,
+	);
+	const resourceGroupMetadataV2 = createResourceV2GroupMetadataSelectors(
+		resourceCatalogV2,
+		session.resourceGroupMetadataV2 ?? metadata.resourceGroupsV2,
+		metadata.resourceGroupsV2,
+	);
+	const signedResourceGains = createSignedResourceGainSelectors(
+		session.recentResourceGains ?? [],
+	);
 	return Object.freeze({
 		actions: wrapRegistry(registries.actions),
 		actionCategories: wrapActionCategoryRegistry(registries.actionCategories),
@@ -174,9 +195,13 @@ export function createTranslationContext(
 			return next as T;
 		},
 		actionCostResource: session.actionCostResource,
-		recentResourceGains: cloneRecentResourceGains(session.recentResourceGains),
+		recentResourceGains: signedResourceGains.list(),
 		compensations: cloneCompensations(session.compensations),
 		rules: ruleSnapshot,
 		assets,
+		resourcesV2: resourceCatalogV2,
+		resourceMetadataV2,
+		resourceGroupMetadataV2,
+		signedResourceGains,
 	});
 }

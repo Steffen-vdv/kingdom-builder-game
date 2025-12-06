@@ -5,10 +5,11 @@ import type {
 	SessionPassiveSummary,
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
+	SessionResourceBoundsV2,
 } from '@kingdom-builder/protocol';
 import {
 	appendResourceChanges,
-	appendStatChanges,
+	appendPercentBreakdownChanges,
 	appendBuildingChanges,
 	appendLandChanges,
 	appendSlotChanges,
@@ -18,12 +19,10 @@ import { createTranslationDiffContext } from './resourceSources/context';
 import type {
 	TranslationActionCategoryRegistry,
 	TranslationAssets,
+	TranslationResourceV2MetadataSelectors,
 } from '../context';
 
 export interface PlayerSnapshot {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
 	buildings: string[];
 	lands: Array<{
 		id: string;
@@ -32,6 +31,8 @@ export interface PlayerSnapshot {
 		developments: string[];
 	}>;
 	passives: SessionPassiveSummary[];
+	valuesV2: Record<string, number>;
+	resourceBoundsV2: Record<string, SessionResourceBoundsV2>;
 }
 
 type SnapshotInput =
@@ -60,20 +61,29 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 		slotsUsed: land.slotsUsed,
 		developments: [...land.developments],
 	}));
-	const population = (() => {
-		if ('population' in playerState) {
-			return { ...playerState.population };
-		}
-		return {};
-	})();
 	const passives = 'passives' in playerState ? [...playerState.passives] : [];
+	const valuesV2 =
+		'valuesV2' in playerState && playerState.valuesV2
+			? { ...playerState.valuesV2 }
+			: {};
+	const resourceBoundsV2 =
+		'resourceBoundsV2' in playerState && playerState.resourceBoundsV2
+			? Object.fromEntries(
+					Object.entries(playerState.resourceBoundsV2).map(([id, entry]) => [
+						id,
+						{
+							lowerBound: entry.lowerBound ?? null,
+							upperBound: entry.upperBound ?? null,
+						} satisfies SessionResourceBoundsV2,
+					]),
+				)
+			: {};
 	return {
-		resources: { ...playerState.resources },
-		stats: { ...playerState.stats },
-		population,
 		buildings: buildingList,
 		lands,
 		passives,
+		valuesV2,
+		resourceBoundsV2,
 	};
 }
 
@@ -81,10 +91,15 @@ export function collectResourceKeys(
 	previousSnapshot: PlayerSnapshot,
 	nextSnapshot: PlayerSnapshot,
 ): string[] {
-	return Object.keys({
-		...previousSnapshot.resources,
-		...nextSnapshot.resources,
-	});
+	const keys = new Set<string>();
+	// Collect keys from valuesV2 (unified resources, stats, population)
+	for (const key of Object.keys(previousSnapshot.valuesV2)) {
+		keys.add(key);
+	}
+	for (const key of Object.keys(nextSnapshot.valuesV2)) {
+		keys.add(key);
+	}
+	return Array.from(keys);
 }
 
 interface DiffContext extends SnapshotContext {
@@ -103,6 +118,7 @@ interface DiffContext extends SnapshotContext {
 	};
 	actionCategories: TranslationActionCategoryRegistry;
 	assets: TranslationAssets;
+	resourceMetadataV2: TranslationResourceV2MetadataSelectors;
 }
 
 export function diffSnapshots(
@@ -117,17 +133,19 @@ export function diffSnapshots(
 		nextSnapshot,
 		resourceKeys,
 		context.assets,
+		context.resourceMetadataV2,
 	);
 	for (const change of resourceChanges) {
 		changeSummaries.push(change.summary);
 	}
-	appendStatChanges(
+	appendPercentBreakdownChanges(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,
 		nextSnapshot,
 		undefined,
 		context.assets,
+		context.resourceMetadataV2,
 	);
 	const diffContext = createTranslationDiffContext({
 		...context,

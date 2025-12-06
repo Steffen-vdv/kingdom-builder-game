@@ -4,8 +4,6 @@ import {
 	BUILDINGS,
 	DEVELOPMENTS,
 	POPULATIONS,
-	RESOURCES,
-	STATS,
 	PHASES,
 	TRIGGER_INFO,
 	LAND_INFO,
@@ -13,10 +11,14 @@ import {
 	PASSIVE_INFO,
 	POPULATION_INFO,
 	DEVELOPMENTS_INFO,
-	POPULATION_ROLES,
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_CATEGORY_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+	RESOURCE_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	Registry,
 	SerializedRegistry,
@@ -104,24 +106,31 @@ const cloneActionCategoryRegistry = (): SessionActionCategoryRegistry => {
 	return deepFreeze(entries);
 };
 
+const cloneResourceCatalogRegistry = <DefinitionType>(registry: {
+	byId: Record<string, DefinitionType>;
+}): RegistryDefinition<DefinitionType> =>
+	deepFreeze(
+		structuredClone(registry.byId),
+	) as RegistryDefinition<DefinitionType>;
+
 const buildResourceRegistry =
 	(): RegistryDefinition<SessionResourceDefinition> => {
 		const entries: RegistryDefinition<SessionResourceDefinition> = {};
-		for (const info of Object.values(RESOURCES)) {
-			const definition: SessionResourceDefinition = { key: info.key };
-			if (info.icon) {
-				definition.icon = info.icon;
+		for (const resource of RESOURCE_V2_REGISTRY.ordered) {
+			const definition: SessionResourceDefinition = { key: resource.id };
+			if (resource.icon) {
+				definition.icon = resource.icon;
 			}
-			if (info.label) {
-				definition.label = info.label;
+			if (resource.label) {
+				definition.label = resource.label;
 			}
-			if (info.description) {
-				definition.description = info.description;
+			if (resource.description) {
+				definition.description = resource.description;
 			}
-			if (info.tags && info.tags.length > 0) {
-				definition.tags = [...info.tags];
+			if (resource.tags && resource.tags.length > 0) {
+				definition.tags = [...resource.tags];
 			}
-			entries[info.key] = definition;
+			entries[resource.id] = definition;
 		}
 		return deepFreeze(entries);
 	};
@@ -136,26 +145,35 @@ const createMetadataRecord = <T>(entries: Iterable<readonly [string, T]>) => {
 
 const buildResourceMetadata = () =>
 	createMetadataRecord(
-		Object.values(RESOURCES).map((info) => [
-			info.key,
-			{
-				label: info.label,
-				icon: info.icon,
-				description: info.description,
-			},
-		]),
+		RESOURCE_V2_REGISTRY.ordered.map((resource) => {
+			const entry: SessionMetadataDescriptor = {
+				label: resource.label,
+				icon: resource.icon,
+			};
+			if (resource.description) {
+				entry.description = resource.description;
+			}
+			return [resource.id, entry] as const;
+		}),
 	);
 
 const buildPopulationMetadata = () =>
 	createMetadataRecord(
-		Object.entries(POPULATION_ROLES).map(([id, info]) => [
-			id,
-			{
-				label: info.label,
-				icon: info.icon,
-				description: info.description,
-			},
-		]),
+		POPULATIONS.entries().map(([id, definition]) => {
+			const resource = RESOURCE_V2_REGISTRY.byId[id];
+			const descriptor: SessionMetadataDescriptor = {
+				label: resource?.label ?? definition.name ?? id,
+			};
+			if (resource?.icon) {
+				descriptor.icon = resource.icon;
+			} else if (definition.icon) {
+				descriptor.icon = definition.icon;
+			}
+			if (resource?.description) {
+				descriptor.description = resource.description;
+			}
+			return [id, descriptor] as const;
+		}),
 	);
 
 const buildBuildingMetadata = () =>
@@ -204,20 +222,21 @@ const buildDevelopmentMetadata = () =>
 
 const buildStatMetadata = () =>
 	createMetadataRecord<SessionMetadataDescriptor>(
-		Object.entries(STATS).map(([id, info]) => {
-			const descriptor: SessionMetadataDescriptor = {
-				label: info.label,
-				icon: info.icon,
-				description: info.description,
-			};
-			if (info.displayAsPercent) {
-				descriptor.displayAsPercent = info.displayAsPercent;
-			}
-			if (info.addFormat) {
-				descriptor.format = { ...info.addFormat };
-			}
-			return [id, descriptor] as const;
-		}),
+		RESOURCE_V2_REGISTRY.ordered
+			.filter((resource) => resource.id.startsWith('resource:core:'))
+			.map((resource) => {
+				const descriptor: SessionMetadataDescriptor = {
+					label: resource.label,
+					icon: resource.icon,
+				};
+				if (resource.description) {
+					descriptor.description = resource.description;
+				}
+				if (resource.displayAsPercent) {
+					descriptor.displayAsPercent = resource.displayAsPercent;
+				}
+				return [resource.id, descriptor] as const;
+			}),
 	);
 
 const toPhaseStepMetadata = (step: unknown): SessionPhaseStepMetadata => {
@@ -305,6 +324,11 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
 		resources: buildResourceRegistry(),
+		resourcesV2: cloneResourceCatalogRegistry(RESOURCE_V2_REGISTRY),
+		resourceGroupsV2: cloneResourceCatalogRegistry(RESOURCE_GROUP_V2_REGISTRY),
+		resourceCategoriesV2: cloneResourceCatalogRegistry(
+			RESOURCE_CATEGORY_V2_REGISTRY,
+		),
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),

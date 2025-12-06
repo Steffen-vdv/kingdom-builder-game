@@ -1,0 +1,250 @@
+import React from 'react';
+import type {
+	SessionPlayerStateSnapshot,
+	SessionResourceCategoryDefinitionV2,
+	SessionResourceCategoryItemV2,
+	SessionResourceDefinitionV2,
+} from '@kingdom-builder/protocol';
+import { useGameEngine } from '../../state/GameContext';
+import { useNextTurnForecast } from '../../state/useNextTurnForecast';
+import {
+	buildResourceV2HoverSections,
+	type ResourceV2MetadataSnapshot,
+	type ResourceV2ValueSnapshot,
+} from '../../translation';
+import ResourceButton, { formatResourceMagnitude } from './ResourceButton';
+import {
+	createForecastMap,
+	createResourceSnapshot,
+	formatResourceTitle,
+} from './resourceV2Snapshots';
+import { PLAYER_INFO_CARD_BG } from './infoCards';
+import ResourceGroupDisplay from './ResourceGroupDisplay';
+
+interface ResourceCategoryRowProps {
+	category: SessionResourceCategoryDefinitionV2;
+	player: SessionPlayerStateSnapshot;
+}
+
+function buildBoundResourceMap(
+	definitions: readonly SessionResourceDefinitionV2[],
+): Map<string, SessionResourceDefinitionV2> {
+	const map = new Map<string, SessionResourceDefinitionV2>();
+	for (const definition of definitions) {
+		if (definition.boundOf) {
+			map.set(definition.boundOf.resourceId, definition);
+		}
+	}
+	return map;
+}
+
+const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
+	category,
+	player,
+}) => {
+	const { handleHoverCard, clearHoverCard, translationContext } =
+		useGameEngine();
+	const resourceCatalog = translationContext.resourcesV2;
+	const forecast = useNextTurnForecast();
+	const playerForecast = forecast[player.id];
+
+	const forecastMap = React.useMemo(
+		() => createForecastMap(playerForecast),
+		[playerForecast],
+	);
+
+	const snapshotContext = React.useMemo(
+		() => ({
+			player,
+			forecastMap,
+			signedGains: translationContext.signedResourceGains,
+		}),
+		[player, forecastMap, translationContext.signedResourceGains],
+	);
+
+	const boundResourceMap = React.useMemo(
+		() =>
+			resourceCatalog
+				? buildBoundResourceMap(resourceCatalog.resources.ordered)
+				: new Map<string, SessionResourceDefinitionV2>(),
+		[resourceCatalog],
+	);
+
+	const showResourceCard = React.useCallback(
+		(resourceId: string) => {
+			if (!resourceCatalog) {
+				return;
+			}
+			const definition = resourceCatalog.resources.byId[resourceId];
+			if (!definition) {
+				return;
+			}
+			const metadata = translationContext.resourceMetadataV2.get(resourceId);
+			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
+			const effects = buildResourceV2HoverSections(metadata, snapshot);
+			handleHoverCard({
+				title: formatResourceTitle(metadata),
+				effects,
+				requirements: [],
+				...(metadata.description ? { description: metadata.description } : {}),
+				bgClass: PLAYER_INFO_CARD_BG,
+			});
+		},
+		[
+			handleHoverCard,
+			resourceCatalog,
+			snapshotContext,
+			translationContext.resourceMetadataV2,
+		],
+	);
+
+	const renderResource = React.useCallback(
+		(resourceId: string): React.ReactNode => {
+			if (!resourceCatalog) {
+				return null;
+			}
+			const definition = resourceCatalog.resources.byId[resourceId];
+			if (!definition) {
+				return null;
+			}
+			// Skip resources that have boundOf - they display with their target
+			if (definition.boundOf) {
+				return null;
+			}
+
+			const metadata = translationContext.resourceMetadataV2.get(resourceId);
+			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
+
+			// Check if there's a bound resource for this resource
+			const boundDef = boundResourceMap.get(resourceId);
+			if (boundDef) {
+				const boundMetadata = translationContext.resourceMetadataV2.get(
+					boundDef.id,
+				);
+				const boundSnapshot = createResourceSnapshot(
+					boundDef.id,
+					snapshotContext,
+				);
+
+				return (
+					<ResourceWithBoundButton
+						key={resourceId}
+						metadata={metadata}
+						snapshot={snapshot}
+						boundMetadata={boundMetadata}
+						boundSnapshot={boundSnapshot}
+						boundType={boundDef.boundOf?.boundType ?? 'upper'}
+						onShow={showResourceCard}
+						onHide={clearHoverCard}
+					/>
+				);
+			}
+
+			return (
+				<ResourceButton
+					key={resourceId}
+					metadata={metadata}
+					snapshot={snapshot}
+					onShow={showResourceCard}
+					onHide={clearHoverCard}
+				/>
+			);
+		},
+		[
+			resourceCatalog,
+			snapshotContext,
+			translationContext.resourceMetadataV2,
+			boundResourceMap,
+			showResourceCard,
+			clearHoverCard,
+		],
+	);
+
+	const renderCategoryItem = React.useCallback(
+		(item: SessionResourceCategoryItemV2): React.ReactNode => {
+			if (item.type === 'resource') {
+				return renderResource(item.id);
+			}
+			if (item.type === 'group') {
+				return (
+					<ResourceGroupDisplay
+						key={item.id}
+						groupId={item.id}
+						player={player}
+					/>
+				);
+			}
+			return null;
+		},
+		[renderResource, player],
+	);
+
+	const categoryIcon = category.icon ?? '';
+
+	return (
+		<div className="info-bar resource-category-row">
+			{categoryIcon && (
+				<span className="info-bar__icon" aria-hidden="true">
+					{categoryIcon}
+				</span>
+			)}
+			{category.contents.map((item) => renderCategoryItem(item))}
+		</div>
+	);
+};
+
+interface ResourceWithBoundButtonProps {
+	metadata: ResourceV2MetadataSnapshot;
+	snapshot: ResourceV2ValueSnapshot;
+	boundMetadata: ResourceV2MetadataSnapshot;
+	boundSnapshot: ResourceV2ValueSnapshot;
+	boundType: 'upper' | 'lower';
+	onShow: (resourceId: string) => void;
+	onHide: () => void;
+}
+
+const ResourceWithBoundButton: React.FC<ResourceWithBoundButtonProps> = ({
+	metadata,
+	snapshot,
+	boundMetadata,
+	boundSnapshot,
+	boundType,
+	onShow,
+	onHide,
+}) => {
+	const handleShow = React.useCallback(() => {
+		onShow(snapshot.id);
+	}, [onShow, snapshot.id]);
+
+	const iconLabel = metadata.icon ?? '?';
+	const currentValue = formatResourceMagnitude(snapshot.current, metadata);
+	const boundValue = formatResourceMagnitude(
+		boundSnapshot.current,
+		boundMetadata,
+	);
+
+	const displayValue =
+		boundType === 'upper'
+			? `${currentValue}/${boundValue}`
+			: `${boundValue}/${currentValue}`;
+
+	const ariaLabel = `${metadata.label}: ${displayValue}`;
+
+	return (
+		<button
+			type="button"
+			className="bar-item hoverable cursor-help relative overflow-visible"
+			onMouseEnter={handleShow}
+			onMouseLeave={onHide}
+			onFocus={handleShow}
+			onBlur={onHide}
+			onClick={handleShow}
+			aria-label={ariaLabel}
+		>
+			<span aria-hidden="true">{iconLabel}</span>
+			{displayValue}
+		</button>
+	);
+};
+
+export default ResourceCategoryRow;

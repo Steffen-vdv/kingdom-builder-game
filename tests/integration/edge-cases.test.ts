@@ -18,16 +18,18 @@ describe('Action edge cases', () => {
 		const engineContext = createTestContext();
 		const { actionId, costs } = getActionWithMultipleCosts(engineContext);
 		for (const [key, amount] of Object.entries(costs)) {
-			engineContext.activePlayer.resources[key] = amount ?? 0;
+			engineContext.activePlayer.resourceValues[key] = amount ?? 0;
 		}
 		const entries = Object.entries(costs);
 		const resourceKey = entries[1][0];
 		const amount = entries[1][1] ?? 0;
-		engineContext.activePlayer.resources[resourceKey] = amount - 1;
+		engineContext.activePlayer.resourceValues[resourceKey] = amount - 1;
 		expect(() => performAction(actionId, engineContext)).toThrow(
 			new RegExp(`Insufficient ${resourceKey}`),
 		);
-		expect(engineContext.activePlayer.resources[resourceKey]).toBe(amount - 1);
+		expect(engineContext.activePlayer.resourceValues[resourceKey]).toBe(
+			amount - 1,
+		);
 	});
 
 	it('rejects actions when a primary resource is exhausted', () => {
@@ -37,13 +39,13 @@ describe('Action edge cases', () => {
 		const primaryKey = entries[0][0];
 		const primaryAmount = entries[0][1] ?? 0;
 		for (const [key, amount] of entries.slice(1)) {
-			engineContext.activePlayer.resources[key] = amount ?? 0;
+			engineContext.activePlayer.resourceValues[key] = amount ?? 0;
 		}
-		engineContext.activePlayer.resources[primaryKey] = primaryAmount - 1;
+		engineContext.activePlayer.resourceValues[primaryKey] = primaryAmount - 1;
 		expect(() => performAction(actionId, engineContext)).toThrow(
 			new RegExp(`Insufficient ${primaryKey}`),
 		);
-		expect(engineContext.activePlayer.resources[primaryKey]).toBe(
+		expect(engineContext.activePlayer.resourceValues[primaryKey]).toBe(
 			primaryAmount - 1,
 		);
 	});

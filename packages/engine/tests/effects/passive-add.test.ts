@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects } from '../../src/index.ts';
-import { Resource, Stat } from '../../src/state/index.ts';
+import { Resource, Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('passive:add effect', () => {
 	it('applies nested effects and registers phase triggers', () => {
@@ -16,46 +17,64 @@ describe('passive:add effect', () => {
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: resourceAmountParams({
+							key: Resource.gold,
+							amount: 1,
+						}),
 					},
 				],
 				onUpkeepPhase: [
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: resourceAmountParams({
+							key: Resource.gold,
+							amount: 1,
+						}),
 					},
 				],
 				onBeforeAttacked: [
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: resourceAmountParams({
+							key: Resource.gold,
+							amount: 1,
+						}),
 					},
 				],
 				onAttackResolved: [
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: Resource.gold, amount: 1 },
+						params: resourceAmountParams({
+							key: Resource.gold,
+							amount: 1,
+						}),
 					},
 				],
 			},
 			effects: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
-					params: { key: Stat.armyStrength, amount: 1 },
+					params: resourceAmountParams({
+						key: Stat.armyStrength,
+						amount: 1,
+					}),
 				},
 			],
 		};
 
-		const before = engineContext.activePlayer.stats[Stat.armyStrength];
+		// Stat values ARE ResourceV2 IDs - access via resourceValues
+		const before = engineContext.activePlayer.resourceValues[Stat.armyStrength];
 		runEffects([effect], engineContext);
-		expect(engineContext.activePlayer.stats[Stat.armyStrength]).toBe(
+		expect(engineContext.activePlayer.resourceValues[Stat.armyStrength]).toBe(
 			before + 1,
 		);
 		engineContext.passives.removePassive('temp', engineContext);
-		expect(engineContext.activePlayer.stats[Stat.armyStrength]).toBe(before);
+		expect(engineContext.activePlayer.resourceValues[Stat.armyStrength]).toBe(
+			before,
+		);
 	});
 });

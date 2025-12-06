@@ -197,7 +197,7 @@ describe('<ResolutionCard />', () => {
 					kind: 'headline',
 				},
 				{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-				{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
+				{ text: '🪙 Gold -3', depth: 2, kind: 'cost-detail' },
 				{ text: '🪄 Effect happens', depth: 1, kind: 'effect' },
 			],
 			visibleLines: [],
@@ -209,7 +209,7 @@ describe('<ResolutionCard />', () => {
 		const effectsSection = screen.getByText('🪄 Effects');
 		const costSectionContainer = costSection.parentElement;
 		const effectsSectionContainer = effectsSection.parentElement;
-		const goldCost = screen.getByText('Gold -3');
+		const goldCost = screen.getByText('🪙 Gold -3');
 		const goldCostContainer = goldCost.parentElement;
 		const effectHeadline = screen.getByText('🛠️ Develop - 🏠 Workshop');
 		const effectEntry = screen.getByText('🪄 Effect happens');
@@ -242,14 +242,14 @@ describe('<ResolutionCard />', () => {
 				kind: 'headline',
 			},
 			{ text: '💲 Action cost', depth: 1, kind: 'cost' },
-			{ text: 'Gold -3', depth: 2, kind: 'cost-detail' },
+			{ text: '🪙 Gold -3', depth: 2, kind: 'cost-detail' },
 			{ text: 'Discounts applied', depth: 3, kind: 'cost-detail' },
-			{ text: 'Happiness -1', depth: 4, kind: 'cost-detail' },
+			{ text: '😊 Happiness -1', depth: 4, kind: 'cost-detail' },
 			{ text: '🪄 Channel the forge', depth: 1, kind: 'group' },
 			{ text: 'Gain 2 Relics', depth: 2, kind: 'effect' },
 			{ text: 'Summon guardian golem', depth: 3, kind: 'subaction' },
-			{ text: 'Army +1', depth: 4, kind: 'effect' },
-			{ text: 'Fortification +1', depth: 4, kind: 'effect' },
+			{ text: '⚔️ Army Strength +1', depth: 4, kind: 'effect' },
+			{ text: '🛡️ Fortification Strength +1', depth: 4, kind: 'effect' },
 		];
 		const resolution = createResolution({
 			action: {
@@ -274,9 +274,9 @@ describe('<ResolutionCard />', () => {
 		const costSectionContainer = costSection.parentElement;
 		const effectsSectionContainer = effectsSection.parentElement;
 
-		const goldCost = screen.getByText('Gold -3');
+		const goldCost = screen.getByText('🪙 Gold -3');
 		const discountGroup = screen.getByText('Discounts applied');
-		const happinessCost = screen.getByText('Happiness -1');
+		const happinessCost = screen.getByText('😊 Happiness -1');
 		const goldCostContainer = goldCost.parentElement;
 		const discountContainer = discountGroup.parentElement;
 		const happinessContainer = happinessCost.parentElement;
@@ -308,8 +308,8 @@ describe('<ResolutionCard />', () => {
 		const group = screen.getByText('🪄 Channel the forge');
 		const effect = screen.getByText('Gain 2 Relics');
 		const subAction = screen.getByText('Summon guardian golem');
-		const firstChange = screen.getByText('Army +1');
-		const secondChange = screen.getByText('Fortification +1');
+		const firstChange = screen.getByText('⚔️ Army Strength +1');
+		const secondChange = screen.getByText('🛡️ Fortification Strength +1');
 		const groupContainer = group.parentElement;
 		const effectContainer = effect.parentElement;
 		const subActionContainer = subAction.parentElement;
@@ -368,7 +368,7 @@ describe('<ResolutionCard />', () => {
 			visibleLines: [
 				'Growth Phase begins',
 				'   Gain +1 population',
-				'   • Bonus: Gold +2',
+				'   • Bonus: 🪙 Gold +2',
 				'      ↳ Triggered follow-up',
 			],
 		});
@@ -381,7 +381,7 @@ describe('<ResolutionCard />', () => {
 		const resolutionSteps = screen.getByText('Growth Phase begins');
 		const firstLine = resolutionSteps.parentElement;
 		const secondLine = screen.getByText('Gain +1 population').parentElement;
-		const bonusLine = screen.getByText('Bonus: Gold +2').parentElement;
+		const bonusLine = screen.getByText('Bonus: 🪙 Gold +2').parentElement;
 		const followUpLine = screen.getByText('Triggered follow-up').parentElement;
 
 		if (!firstLine || !secondLine || !bonusLine || !followUpLine) {

@@ -27,35 +27,6 @@ function coerceIconLabel(
 	return result;
 }
 
-export function selectResourceDisplay(
-	assets: TranslationAssets | undefined,
-	resourceKey: string,
-): IconLabelDisplay {
-	const info = assets?.resources?.[resourceKey];
-	return coerceIconLabel(info, resourceKey);
-}
-
-export function selectStatDisplay(
-	assets: TranslationAssets | undefined,
-	statKey: string,
-): IconLabelDisplay {
-	const info = assets?.stats?.[statKey];
-	return coerceIconLabel(info, statKey);
-}
-
-export function selectPopulationRoleDisplay(
-	assets: TranslationAssets | undefined,
-	roleId: string | undefined,
-): IconLabelDisplay {
-	if (roleId) {
-		const entry = assets?.populations?.[roleId];
-		if (entry) {
-			return coerceIconLabel(entry, roleId);
-		}
-	}
-	return coerceIconLabel(assets?.population, roleId ?? 'Population');
-}
-
 export function selectSlotDisplay(
 	assets: TranslationAssets | undefined,
 ): IconLabelDisplay {

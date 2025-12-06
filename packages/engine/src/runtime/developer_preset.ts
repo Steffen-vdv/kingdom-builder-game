@@ -1,6 +1,7 @@
 import type { PlayerId, PopulationRoleId, ResourceKey } from '../state';
 import type { EngineContext } from '../context';
 import { runEffects, type EffectDef } from '../effects';
+import { getResourceValue } from '../resource-v2';
 
 export interface DeveloperPopulationPlanEntry {
 	role: PopulationRoleId;
@@ -31,11 +32,12 @@ function applyEffect(
 
 function ensureResource(
 	context: EngineContext,
-	key: ResourceKey,
+	resourceId: ResourceKey,
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	const current = player.resources[key] ?? 0;
+	// resourceId IS the ResourceV2 ID directly (no mapper needed)
+	const current = getResourceValue(player, resourceId);
 	if (current === target) {
 		return;
 	}
@@ -44,10 +46,13 @@ function ensureResource(
 		return;
 	}
 	const method = target > current ? 'add' : 'remove';
-	const effect: EffectDef<{ key: ResourceKey; amount: number }> = {
+	const effect: EffectDef = {
 		type: 'resource',
 		method,
-		params: { key, amount },
+		params: {
+			resourceId,
+			change: { type: 'amount', amount },
+		},
 	};
 	applyEffect(context, effect);
 }
@@ -58,18 +63,22 @@ function ensurePopulation(
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	const current = player.population[role] ?? 0;
+	// role IS the ResourceV2 ID (e.g. 'resource:core:council')
+	const current = getResourceValue(player, role);
 	if (current === target) {
 		return;
 	}
 	const delta = target - current;
 	const method = delta > 0 ? 'add' : 'remove';
-	const effect: EffectDef<{ role: PopulationRoleId }> = {
-		type: 'population',
+	const effect: EffectDef = {
+		type: 'resource',
 		method,
-		params: { role },
+		params: {
+			resourceId: role,
+			change: { type: 'amount', amount: Math.abs(delta) },
+		},
 	};
-	applyEffect(context, effect, Math.abs(delta));
+	applyEffect(context, effect);
 }
 
 function ensureLandCount(context: EngineContext, target: number): void {

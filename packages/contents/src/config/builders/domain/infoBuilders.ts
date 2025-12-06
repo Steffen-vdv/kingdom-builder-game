@@ -1,5 +1,5 @@
 import type { PopulationRoleId } from '../../../populationRoles';
-import type { ResourceKey } from '../../../resources';
+import type { ResourceKey } from '../../../resourceKeys';
 import type { StatKey } from '../../../stats';
 
 export interface InfoDef {

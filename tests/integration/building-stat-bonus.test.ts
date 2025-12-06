@@ -6,32 +6,32 @@ import {
 } from '@kingdom-builder/engine';
 import {
 	createTestContext,
-	getBuildingWithStatBonuses,
+	getBuildingWithResourceBonuses,
 	getBuildActionId,
 } from './fixtures';
 
-describe('Building stat bonuses', () => {
-	it('applies and removes stat bonuses when built and removed', () => {
-		const { buildingId, stats } = getBuildingWithStatBonuses();
+describe('Building resource bonuses', () => {
+	it('applies and removes resource bonuses when built and removed', () => {
+		const { buildingId, resources } = getBuildingWithResourceBonuses();
 		const engineContext = createTestContext();
 		const buildActionId = getBuildActionId(engineContext, buildingId);
 		const buildCosts = getActionCosts(buildActionId, engineContext, {
 			id: buildingId,
 		});
 		for (const [key, cost] of Object.entries(buildCosts)) {
-			engineContext.activePlayer.resources[key] = cost ?? 0;
+			engineContext.activePlayer.resourceValues[key] = cost ?? 0;
 		}
 		const before: Record<string, number> = {};
-		for (const s of stats) {
-			before[s.key] = engineContext.activePlayer.stats[s.key];
+		for (const r of resources) {
+			before[r.key] = engineContext.activePlayer.resourceValues[r.key] ?? 0;
 		}
 
 		performAction(buildActionId, engineContext, { id: buildingId });
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(true);
-		for (const s of stats) {
-			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
-				before[s.key] + s.amount,
+		for (const r of resources) {
+			expect(engineContext.activePlayer.resourceValues[r.key]).toBeCloseTo(
+				before[r.key] + r.amount,
 			);
 		}
 
@@ -41,9 +41,9 @@ describe('Building stat bonuses', () => {
 		);
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(false);
-		for (const s of stats) {
-			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
-				before[s.key],
+		for (const r of resources) {
+			expect(engineContext.activePlayer.resourceValues[r.key]).toBeCloseTo(
+				before[r.key],
 			);
 		}
 
@@ -53,9 +53,9 @@ describe('Building stat bonuses', () => {
 		);
 
 		expect(engineContext.activePlayer.buildings.has(buildingId)).toBe(false);
-		for (const s of stats) {
-			expect(engineContext.activePlayer.stats[s.key]).toBeCloseTo(
-				before[s.key],
+		for (const r of resources) {
+			expect(engineContext.activePlayer.resourceValues[r.key]).toBeCloseTo(
+				before[r.key],
 			);
 		}
 	});

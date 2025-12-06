@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents/resourceKeys';
 import type { EngineContext } from '../../src/context';
 import { EvaluationModifierService } from '../../src/services/evaluation_modifier_service';
 

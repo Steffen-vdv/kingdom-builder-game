@@ -1,5 +1,5 @@
 import type { WinConditionDefinition, WinConditionDisplay, WinConditionResult, WinConditionTrigger, WinConditionOutcome } from '@kingdom-builder/protocol';
-import type { ResourceKey } from '../resources';
+import type { ResourceKey } from '../resourceKeys';
 import type { StatKey } from '../stats';
 import type { PopulationRoleId } from '../populationRoles';
 import { CompareRequirementBuilder } from './builders/evaluators';
@@ -28,13 +28,13 @@ export {
 	RequirementBuilder,
 	compareEvaluator,
 	developmentEvaluator,
-	landEvaluator,
 	effect,
-	populationEvaluator,
+	landEvaluator,
 	requirement,
-	statAddEffect,
-	statEvaluator,
+	resourceEvaluator,
 } from './builders/evaluators';
+
+export { statAddEffect } from '../helpers/statEffects';
 
 export {
 	ActionEffectGroupBuilder,
@@ -45,7 +45,7 @@ export {
 	actionEffectGroupOptionParams,
 } from './builders/actionEffectGroups';
 
-export { actionParams, buildingParams, developmentParams, landParams, passiveParams, resourceParams, statParams } from './builders/effectParams';
+export { actionParams, buildingParams, developmentParams, landParams, passiveParams } from './builders/effectParams';
 
 export {
 	AttackParamsBuilder,
@@ -54,7 +54,6 @@ export {
 	EvaluationTargetTypes,
 	PopulationEffectParamsBuilder,
 	ResultModParamsBuilder,
-	TransferParamsBuilder,
 	attackParams,
 	costModParams,
 	developmentTarget,
@@ -62,7 +61,6 @@ export {
 	populationParams,
 	populationTarget,
 	resultModParams,
-	transferParams,
 } from './builders/advancedEffectParams';
 
 export type { AttackStatAnnotation, AttackStatRole } from './builders/advancedEffectParams';

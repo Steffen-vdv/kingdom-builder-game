@@ -6,7 +6,6 @@ import {
 	summarizeContent,
 	type SummaryEntry,
 } from '../src/translation';
-import { selectResourceDisplay } from '../src/translation/context/assetSelectors';
 import { buildSyntheticTranslationContext } from './helpers/createSyntheticTranslationContext';
 
 interface SelfReferentialDevelopment {
@@ -59,8 +58,11 @@ function collectResourceKeys(
 			typeof effect.params === 'object' &&
 			effect.params !== null
 		) {
-			const params = effect.params as { key?: string };
-			if (typeof params.key === 'string') {
+			// V2 format: resourceId instead of key
+			const params = effect.params as { key?: string; resourceId?: string };
+			if (typeof params.resourceId === 'string') {
+				keys.add(params.resourceId);
+			} else if (typeof params.key === 'string') {
 				keys.add(params.key);
 			}
 		}
@@ -125,11 +127,9 @@ describe('development translation', () => {
 		expect(strings.some((line) => /\+2/u.test(line))).toBe(true);
 		const [resourceKey] = [...resourceKeys];
 		if (resourceKey) {
-			const resourceDisplay = selectResourceDisplay(
-				translationContext.assets,
-				resourceKey,
-			);
-			const resourceLabel = resourceDisplay.label ?? resourceKey;
+			// Use V2 metadata for resource label lookup (matches formatter behavior)
+			const metadata = translationContext.resourceMetadataV2.get(resourceKey);
+			const resourceLabel = metadata.label ?? resourceKey;
 			expect(strings.some((line) => line.includes(resourceLabel))).toBe(true);
 		}
 		const prohibited = strings.filter((line) => {

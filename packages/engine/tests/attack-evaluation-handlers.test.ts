@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { runEffects } from '../src/index.ts';
 import { attackTargetHandlers } from '../src/effects/attack_handlers.ts';
-import { Resource } from '../src/state/index.ts';
+import { Resource, Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 
@@ -9,7 +9,7 @@ describe('attack:perform evaluation handlers', () => {
 	it('delegates modifier keys for resource targets to handler', () => {
 		const engineContext = createTestEngine();
 		const attacker = engineContext.activePlayer;
-		attacker.armyStrength = 2;
+		attacker.resourceValues[Stat.armyStrength] = 2;
 
 		const target = { type: 'resource', key: Resource.castleHP } as const;
 		const resourceHandler = attackTargetHandlers.resource;
@@ -48,7 +48,7 @@ describe('attack:perform evaluation handlers', () => {
 		const workshop = content.building({});
 		const engineContext = createTestEngine({ buildings: content.buildings });
 		const attacker = engineContext.activePlayer;
-		attacker.armyStrength = 3;
+		attacker.resourceValues[Stat.armyStrength] = 3;
 
 		const target = { type: 'building', id: workshop.id } as const;
 		const buildingHandler = attackTargetHandlers.building;

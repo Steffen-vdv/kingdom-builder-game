@@ -1,18 +1,20 @@
 import { Registry, populationSchema } from '@kingdom-builder/protocol';
 import { PopulationRole } from './populationRoles';
-import { Resource } from './resources';
+import { Resource } from './resourceKeys';
 import { Stat } from './stats';
-import { population, effect, resourceParams, statParams, populationEvaluator, passiveParams, populationAssignmentPassiveId } from './config/builders';
-import { Types, ResourceMethods, PassiveMethods, StatMethods } from './config/builderShared';
+import { population, effect, resourceEvaluator, passiveParams, populationAssignmentPassiveId } from './config/builders';
+import { resourceAmountChange } from './helpers/resourceV2Effects';
+import { resourceChange } from './resourceV2';
+import { Types, ResourceMethods, PassiveMethods } from './config/builderShared';
 import type { PopulationDef } from './defs';
 
 export type { PopulationDef } from './defs';
 
-const COUNCIL_AP_GAIN_PARAMS = resourceParams().key(Resource.ap).amount(1).build();
+const COUNCIL_AP_GAIN_PARAMS = resourceAmountChange(Resource.ap, 1);
 
-const LEGION_STRENGTH_GAIN_PARAMS = statParams().key(Stat.armyStrength).amount(1).build();
+const LEGION_STRENGTH_GAIN_PARAMS = resourceChange(Stat.armyStrength).amount(1).build();
 
-const FORTIFIER_STRENGTH_GAIN_PARAMS = statParams().key(Stat.fortificationStrength).amount(1).build();
+const FORTIFIER_STRENGTH_GAIN_PARAMS = resourceChange(Stat.fortificationStrength).amount(1).build();
 
 const LEGION_ASSIGNMENT_PASSIVE_PARAMS = passiveParams().id(populationAssignmentPassiveId(PopulationRole.Legion)).build();
 
@@ -30,7 +32,7 @@ export function createPopulationRegistry() {
 			.upkeep(Resource.gold, 2)
 			.onGainAPStep(
 				effect()
-					.evaluator(populationEvaluator().param('id', PopulationRole.Council).role(PopulationRole.Council))
+					.evaluator(resourceEvaluator().param('id', PopulationRole.Council).resourceId(PopulationRole.Council))
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(COUNCIL_AP_GAIN_PARAMS).build())
 					.build(),
 			)
@@ -44,7 +46,9 @@ export function createPopulationRegistry() {
 			.name('Legion')
 			.icon('🎖️')
 			.upkeep(Resource.gold, 1)
-			.onAssigned(effect(Types.Passive, PassiveMethods.ADD).params(LEGION_ASSIGNMENT_PASSIVE_PARAMS).effect(effect(Types.Stat, StatMethods.ADD).params(LEGION_STRENGTH_GAIN_PARAMS).build()).build())
+			.onAssigned(
+				effect(Types.Passive, PassiveMethods.ADD).params(LEGION_ASSIGNMENT_PASSIVE_PARAMS).effect(effect(Types.Resource, ResourceMethods.ADD).params(LEGION_STRENGTH_GAIN_PARAMS).build()).build(),
+			)
 			.onUnassigned(effect(Types.Passive, PassiveMethods.REMOVE).params(LEGION_ASSIGNMENT_PASSIVE_PARAMS).build())
 			.build(),
 	);
@@ -57,7 +61,10 @@ export function createPopulationRegistry() {
 			.icon('🔧')
 			.upkeep(Resource.gold, 1)
 			.onAssigned(
-				effect(Types.Passive, PassiveMethods.ADD).params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS).effect(effect(Types.Stat, StatMethods.ADD).params(FORTIFIER_STRENGTH_GAIN_PARAMS).build()).build(),
+				effect(Types.Passive, PassiveMethods.ADD)
+					.params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS)
+					.effect(effect(Types.Resource, ResourceMethods.ADD).params(FORTIFIER_STRENGTH_GAIN_PARAMS).build())
+					.build(),
 			)
 			.onUnassigned(effect(Types.Passive, PassiveMethods.REMOVE).params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS).build())
 			.build(),

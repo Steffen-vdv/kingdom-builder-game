@@ -1,9 +1,9 @@
 import React from 'react';
-import type { TranslationAssets } from './context';
-import {
-	selectResourceDisplay,
-	selectUpkeepDisplay,
-} from './context/assetSelectors';
+import type {
+	TranslationAssets,
+	TranslationResourceV2MetadataSelectors,
+} from './context';
+import { selectUpkeepDisplay } from './context/assetSelectors';
 import type { Summary } from './content';
 
 export function renderSummary(summary: Summary | undefined): React.ReactNode {
@@ -30,15 +30,22 @@ export function renderSummary(summary: Summary | undefined): React.ReactNode {
 	});
 }
 
+interface RenderCostsOptions {
+	showFreeLabel?: boolean;
+	assets?: TranslationAssets;
+	resourceMetadataV2?: TranslationResourceV2MetadataSelectors;
+}
+
 export function renderCosts(
 	costs: Record<string, number | undefined> | undefined,
 	resources: Record<string, number>,
 	actionCostResource?: string,
 	upkeep?: Record<string, number | undefined>,
-	options?: { showFreeLabel?: boolean; assets?: TranslationAssets },
+	options?: RenderCostsOptions,
 ) {
 	const showFreeLabel = options?.showFreeLabel ?? true;
 	const assets = options?.assets;
+	const resourceMetadata = options?.resourceMetadataV2;
 	const entries = Object.entries(costs || {}).filter(
 		([resourceKey]) =>
 			!actionCostResource || resourceKey !== actionCostResource,
@@ -54,6 +61,16 @@ export function renderCosts(
 			</div>
 		);
 	}
+
+	const getResourceDisplay = (resourceKey: string) => {
+		if (resourceMetadata) {
+			const metadata = resourceMetadata.get(resourceKey);
+			return { icon: metadata.icon, label: metadata.label };
+		}
+		// Fallback to resource key as label
+		return { icon: undefined, label: resourceKey };
+	};
+
 	return (
 		<div
 			className={[
@@ -73,7 +90,7 @@ export function renderCosts(
 							}`}
 						>
 							{(() => {
-								const display = selectResourceDisplay(assets, resourceKey);
+								const display = getResourceDisplay(resourceKey);
 								const prefix = display.icon
 									? `${display.icon}`
 									: `${display.label} `;
@@ -94,7 +111,7 @@ export function renderCosts(
 					{upkeepEntries.map(([resourceKey, upkeepAmount]) => (
 						<span key={resourceKey} className="whitespace-nowrap">
 							{(() => {
-								const display = selectResourceDisplay(assets, resourceKey);
+								const display = getResourceDisplay(resourceKey);
 								const prefix = display.icon
 									? `${display.icon}`
 									: `${display.label} `;

@@ -1,17 +1,16 @@
-import type { TranslationAssets, TranslationContext } from '../../../context';
+import type { TranslationContext } from '../../../context';
 import { humanizeIdentifier } from '../../stringUtils';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
-type AssetsCarrier =
-	| Pick<TranslationContext, 'assets'>
-	| { assets?: TranslationAssets };
+type ResourceV2MetadataCarrier = {
+	resourceMetadataV2?: {
+		get?: (id: string) => { icon?: string; label?: string } | undefined;
+		list?: () => ReadonlyArray<{ id: string }>;
+	};
+};
 
-type BuildingCarrier = Pick<TranslationContext, 'buildings'> & AssetsCarrier;
-
-type ResourceCarrier = AssetsCarrier;
-
-type StatCarrier = AssetsCarrier;
+type BuildingCarrier = Pick<TranslationContext, 'buildings'>;
 
 function coerceString(value: unknown): string | undefined {
 	if (typeof value !== 'string') {
@@ -29,20 +28,15 @@ function coerceIcon(value: unknown): string {
 	return coerceString(value) ?? '';
 }
 
-function readAssets(context: AssetsCarrier): TranslationAssets | undefined {
-	return 'assets' in context ? context.assets : undefined;
-}
-
 function freezeKeys<T extends string>(keys: string[]): ReadonlyArray<T> {
 	return Object.freeze(keys) as ReadonlyArray<T>;
 }
 
 export function selectAttackResourceDescriptor(
-	context: ResourceCarrier,
+	context: ResourceV2MetadataCarrier,
 	resourceKey: string,
 ): AttackRegistryDescriptor {
-	const assets = readAssets(context);
-	const entry = assets?.resources?.[resourceKey];
+	const entry = context.resourceMetadataV2?.get?.(resourceKey);
 	const label = coerceLabel(
 		entry?.label,
 		humanizeIdentifier(resourceKey) || resourceKey,
@@ -52,11 +46,11 @@ export function selectAttackResourceDescriptor(
 }
 
 export function selectAttackStatDescriptor(
-	context: StatCarrier,
+	context: ResourceV2MetadataCarrier,
 	statKey: string,
 ): AttackRegistryDescriptor {
-	const assets = readAssets(context);
-	const entry = assets?.stats?.[statKey];
+	// Stats are unified with resources in ResourceV2
+	const entry = context.resourceMetadataV2?.get?.(statKey);
 	const fallbackLabel = humanizeIdentifier(statKey) || statKey;
 	const label = coerceLabel(entry?.label, fallbackLabel);
 	const icon = coerceIcon(entry?.icon);
@@ -83,15 +77,8 @@ export function selectAttackBuildingDescriptor(
 }
 
 export function listAttackResourceKeys(
-	context: ResourceCarrier,
+	context: ResourceV2MetadataCarrier,
 ): ReadonlyArray<string> {
-	const assets = readAssets(context);
-	return freezeKeys(Object.keys(assets?.resources ?? {}));
-}
-
-export function listAttackStatKeys(
-	context: StatCarrier,
-): ReadonlyArray<string> {
-	const assets = readAssets(context);
-	return freezeKeys(Object.keys(assets?.stats ?? {}));
+	const entries = context.resourceMetadataV2?.list?.() ?? [];
+	return freezeKeys(entries.map((entry) => entry.id));
 }
