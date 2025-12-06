@@ -1,19 +1,22 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
+# POSIX-compliant pre-push hook for husky v9 compatibility
 
-set -euo pipefail
+set -eu
 
 log_buffer="$(mktemp -t kingdom-verify.XXXXXX)"
 trap 'rm -f "$log_buffer"' EXIT
 
-if npm run verify 2>&1 | tee "$log_buffer"; then
+# Run verify and capture exit status without pipefail
+verify_status=0
+{ npm run verify 2>&1 || verify_status=$?; } | tee "$log_buffer"
+
+if [ "$verify_status" = "0" ]; then
   exit 0
 fi
 
-verify_status=${PIPESTATUS[0]}
-
 environment_error_pattern='ENOENT|ERR_MODULE_NOT_FOUND|Cannot find module'
-environment_error_pattern+='|Missing script: verify'
-environment_error_pattern+='|is not recognized as an internal or external command'
+environment_error_pattern="$environment_error_pattern|Missing script: verify"
+environment_error_pattern="$environment_error_pattern|is not recognized as an internal or external command"
 
 if grep -Eq "$environment_error_pattern" "$log_buffer"; then
   echo "npm run verify is unavailable in this environment; falling back to" >&2
