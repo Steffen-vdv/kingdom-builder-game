@@ -33,10 +33,12 @@ function detectPctEffect(
 ): StatPctBreakdown | undefined {
 	// V2 format: type 'resource' with change.type 'percentFromResource'
 	if (effect.type === 'resource') {
-		const params = effect.params as {
-			resourceId?: string;
-			change?: V2PercentChange;
-		} | undefined;
+		const params = effect.params as
+			| {
+					resourceId?: string;
+					change?: V2PercentChange;
+			  }
+			| undefined;
 		if (params?.resourceId !== statKey) {
 			return undefined;
 		}

@@ -89,11 +89,7 @@ describe('army attack translation summary', () => {
 
 	it('describes plunder effects under on-damage entry', () => {
 		const { translation, plunder } = createSyntheticEngineContext();
-		const description = describeContent(
-			'action',
-			SYNTH_ATTACK.id,
-			translation,
-		);
+		const description = describeContent('action', SYNTH_ATTACK.id, translation);
 		const onDamage = description.find(
 			(entry) =>
 				typeof entry === 'object' &&

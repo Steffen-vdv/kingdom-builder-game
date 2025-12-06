@@ -199,7 +199,8 @@ export const getSyntheticFestivalDetails = (
 	const fortEff = festival.effects.find(
 		(e: EffectDef) =>
 			e.type === 'resource' &&
-			(e.params as { resourceId?: string }).resourceId === FORTIFICATION_STAT_KEY,
+			(e.params as { resourceId?: string }).resourceId ===
+				FORTIFICATION_STAT_KEY,
 	) as EffectDef<{ resourceId: string; change: { amount: number } }>;
 	const fortInfo = translation.assets.stats[fortEff.params.resourceId] ??
 		translation.assets.stats[FORTIFICATION_STAT_KEY] ?? {

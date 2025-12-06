@@ -13,7 +13,9 @@ function getResourceId(params: Record<string, unknown> | undefined): string {
 	if (typeof donor?.resourceId === 'string') {
 		return donor.resourceId;
 	}
-	const recipient = params?.['recipient'] as { resourceId?: string } | undefined;
+	const recipient = params?.['recipient'] as
+		| { resourceId?: string }
+		| undefined;
 	if (typeof recipient?.resourceId === 'string') {
 		return recipient.resourceId;
 	}

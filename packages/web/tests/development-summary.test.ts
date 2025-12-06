@@ -60,9 +60,9 @@ describe('development summary', () => {
 				const triggerEntries = Object.keys(session.metadata.triggers ?? {});
 				triggerId = triggerEntries[0] ?? 'trigger.synthetic';
 				// Use V2 resource keys
-				const resourceId = Object.keys(
-					session.metadata.resourcesV2 ?? {},
-				)[0] ?? 'resource:core:gold';
+				const resourceId =
+					Object.keys(session.metadata.resourcesV2 ?? {})[0] ??
+					'resource:core:gold';
 				effectResourceId = resourceId;
 				// V2 format: resourceId and change.amount
 				const nestedEffect: EffectDef<Record<string, unknown>> = {
