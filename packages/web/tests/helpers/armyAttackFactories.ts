@@ -21,7 +21,7 @@ import {
 	PLUNDER_PERCENT,
 	TIER_RESOURCE_KEY,
 	SYNTH_RESOURCE_METADATA,
-	SYNTH_STAT_METADATA,
+	SYNTH_RESOURCE_CATALOG_V2,
 	type CombatStatKey,
 	type SyntheticDescriptor,
 } from './armyAttackConfig';
@@ -41,8 +41,8 @@ const originalStatEntries = new Map<string, SyntheticDescriptor | undefined>();
 
 function overrideStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
-	originalStatEntries.set(config.key, SYNTH_STAT_METADATA[config.key]);
-	SYNTH_STAT_METADATA[config.key] = {
+	originalStatEntries.set(config.key, SYNTH_RESOURCE_METADATA[config.key]);
+	SYNTH_RESOURCE_METADATA[config.key] = {
 		key: config.key,
 		icon: config.icon,
 		label: config.label,
@@ -53,9 +53,9 @@ function restoreStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
 	const original = originalStatEntries.get(config.key);
 	if (original) {
-		SYNTH_STAT_METADATA[config.key] = original;
+		SYNTH_RESOURCE_METADATA[config.key] = original;
 	} else {
-		delete SYNTH_STAT_METADATA[config.key];
+		delete SYNTH_RESOURCE_METADATA[config.key];
 	}
 }
 
@@ -82,6 +82,7 @@ function createBaseEngine() {
 		phases: PHASES,
 		start: START,
 		rules: RULES,
+		resourceCatalogV2: SYNTH_RESOURCE_CATALOG_V2,
 	});
 	return { factory, engineContext } as const;
 }
@@ -129,7 +130,7 @@ export function createSyntheticEngineContext() {
 	const attack = buildAction(factory, ACTION_DEFS.attack);
 	const buildingAttack = buildAction(factory, ACTION_DEFS.buildingAttack);
 	const statMetadata = Object.fromEntries(
-		Object.entries(SYNTH_STAT_METADATA).map(([key, descriptor]) => {
+		Object.entries(SYNTH_RESOURCE_METADATA).map(([key, descriptor]) => {
 			const entry: SessionMetadataDescriptor = {};
 			if (descriptor.icon !== undefined) {
 				entry.icon = descriptor.icon;
@@ -173,14 +174,14 @@ export function createSyntheticEngineContext() {
 		building,
 		buildingAttack,
 		resourceMetadata: SYNTH_RESOURCE_METADATA,
-		statMetadata: SYNTH_STAT_METADATA,
+		statMetadata: SYNTH_RESOURCE_METADATA,
 	} as const;
 }
 export function createPartialStatEngineContext() {
 	const { factory, engineContext } = createBaseEngine();
 	const attack = buildAction(factory, ACTION_DEFS.partial);
 	const statMetadata = Object.fromEntries(
-		Object.entries(SYNTH_STAT_METADATA).map(([key, descriptor]) => {
+		Object.entries(SYNTH_RESOURCE_METADATA).map(([key, descriptor]) => {
 			const entry: SessionMetadataDescriptor = {};
 			if (descriptor.icon !== undefined) {
 				entry.icon = descriptor.icon;
@@ -207,12 +208,12 @@ export function createPartialStatEngineContext() {
 		translation,
 		attack,
 		resourceMetadata: SYNTH_RESOURCE_METADATA,
-		statMetadata: SYNTH_STAT_METADATA,
+		statMetadata: SYNTH_RESOURCE_METADATA,
 	} as const;
 }
 
 export function getStat(
-	context: Pick<TranslationContext, 'assets'>,
+	context: Pick<TranslationContext, 'resourceMetadataV2'>,
 	key: string,
 ): AttackRegistryDescriptor {
 	return selectAttackStatDescriptor(context, key);
@@ -249,17 +250,17 @@ const suppressedStatEntries = new Map<
 
 export function suppressSyntheticStatDescriptor(statKey: string) {
 	if (!suppressedStatEntries.has(statKey)) {
-		suppressedStatEntries.set(statKey, SYNTH_STAT_METADATA[statKey]);
+		suppressedStatEntries.set(statKey, SYNTH_RESOURCE_METADATA[statKey]);
 	}
-	delete SYNTH_STAT_METADATA[statKey];
+	delete SYNTH_RESOURCE_METADATA[statKey];
 }
 
 export function restoreSyntheticStatDescriptor(statKey: string) {
 	const original = suppressedStatEntries.get(statKey);
 	if (original) {
-		SYNTH_STAT_METADATA[statKey] = original;
+		SYNTH_RESOURCE_METADATA[statKey] = original;
 	} else {
-		delete SYNTH_STAT_METADATA[statKey];
+		delete SYNTH_RESOURCE_METADATA[statKey];
 	}
 	suppressedStatEntries.delete(statKey);
 }

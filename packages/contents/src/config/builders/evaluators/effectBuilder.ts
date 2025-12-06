@@ -1,8 +1,6 @@
 import type { EffectConfig, EvaluatorDef } from '@kingdom-builder/protocol';
-import type { StatKey } from '../../../stats';
-import { ParamsBuilder, StatMethods, Types } from '../../builderShared';
+import { ParamsBuilder } from '../../builderShared';
 import type { Params } from '../../builderShared';
-import { statParams } from '../effectParams';
 import { EvaluatorBuilder } from './evaluatorBuilder';
 
 export class EffectBuilder<P extends Params = Params> {
@@ -100,11 +98,10 @@ export class EffectBuilder<P extends Params = Params> {
 		return this;
 	}
 
-	allowShortfall() {
-		return this.meta({ allowShortfall: true });
-	}
-
 	build(): EffectConfig {
+		if (this.typeSet !== this.methodSet) {
+			throw new Error('Effect requires both type() and method() before build(). Remove the incomplete configuration.');
+		}
 		if (!this.typeSet && !this.methodSet) {
 			const hasNestedEffects = Array.isArray(this.config.effects) ? this.config.effects.length > 0 : false;
 			if (!hasNestedEffects) {
@@ -124,8 +121,4 @@ export function effect(type?: string, method?: string) {
 		builder.method(method);
 	}
 	return builder;
-}
-
-export function statAddEffect(stat: StatKey, amount: number) {
-	return effect(Types.Stat, StatMethods.ADD).params(statParams().key(stat).amount(amount).build()).build();
 }

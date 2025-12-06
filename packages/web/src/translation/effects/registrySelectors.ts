@@ -98,11 +98,16 @@ export function selectPopulationDescriptor(
 		cache.set(cacheKey, fallback);
 		return fallback;
 	}
-	const assets = context.assets;
-	const entry = assets?.populations?.[role];
-	const icon = coerceIcon(entry?.icon, fallback.icon);
+	// Use V2 metadata for population descriptors - use role ID directly
+	const v2Context = context as {
+		resourceMetadataV2?: {
+			get?: (id: string) => { icon?: string; label?: string } | undefined;
+		};
+	};
+	const v2Entry = v2Context.resourceMetadataV2?.get?.(role);
+	const icon = coerceIcon(v2Entry?.icon, fallback.icon);
 	const fallbackLabel = humanizeIdentifier(role) || fallback.label;
-	const label = coerceLabel(entry?.label, fallbackLabel);
+	const label = coerceLabel(v2Entry?.label, fallbackLabel);
 	const descriptor = { icon, label } satisfies RegistryDescriptor;
 	cache.set(cacheKey, descriptor);
 	return descriptor;
@@ -122,7 +127,16 @@ export function selectResourceDescriptor(
 		return cached;
 	}
 	const assets = context.assets;
-	const entry = assets?.resources?.[key];
+	// Check legacy resources first
+	const legacyEntry = assets?.resources?.[key];
+	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:synthetic:gold')
+	const v2Context = context as {
+		resourceMetadataV2?: {
+			get?: (id: string) => { icon?: string; label?: string } | undefined;
+		};
+	};
+	const v2Entry = v2Context.resourceMetadataV2?.get?.(key);
+	const entry = legacyEntry ?? v2Entry;
 	const fallbackLabel = humanizeIdentifier(key) || key;
 	const label = coerceLabel(entry?.label, fallbackLabel);
 	const icon = coerceIcon(entry?.icon, '');
@@ -207,13 +221,23 @@ export function selectStatDescriptor(
 	}
 	const assets = context.assets;
 	const { entry, resolved } = resolveStatEntry(assets, key);
+	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:core:army-strength')
+	const v2Context = context as {
+		resourceMetadataV2?: {
+			get?: (id: string) => { icon?: string; label?: string } | undefined;
+		};
+	};
+	const v2Entry = v2Context.resourceMetadataV2?.get?.(key);
+	// Prefer legacy entry, then V2 entry
+	const effectiveEntry = entry ?? v2Entry;
 	const statLabelFallback = humanizeIdentifier(resolved);
 	const fallbackLabel =
 		statLabelFallback && statLabelFallback.length > 0
 			? statLabelFallback
 			: resolved;
-	const label = coerceLabel(entry?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon, resolved);
+	const label = coerceLabel(effectiveEntry?.label, fallbackLabel);
+	// For icon, use empty string as fallback instead of the key
+	const icon = coerceIcon(effectiveEntry?.icon, '');
 	const format = resolveStatFormat(entry);
 	const descriptor: StatRegistryDescriptor = {
 		icon,

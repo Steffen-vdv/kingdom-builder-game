@@ -19,7 +19,7 @@ import {
 	type SerializedRegistry,
 } from '@kingdom-builder/protocol';
 import {
-	RESOURCES,
+	RESOURCE_V2_REGISTRY,
 	type ActionCategoryConfig,
 } from '@kingdom-builder/contents';
 import type { ZodType } from 'zod';
@@ -28,6 +28,7 @@ import {
 	type SessionStaticMetadataPayload,
 } from './buildSessionMetadata.js';
 import { cloneRegistry, freezeSerializedRegistry } from './registryUtils.js';
+import type { RuntimeResourceContent } from '@kingdom-builder/engine';
 
 export type SessionResourceRegistry =
 	SerializedRegistry<SessionResourceDefinition>;
@@ -41,6 +42,7 @@ export interface SessionBaseOptions {
 	phases: PhaseConfig[];
 	start: StartConfig;
 	rules: RuleSet;
+	resourceCatalogV2: RuntimeResourceContent;
 }
 
 interface OverrideContext {
@@ -72,6 +74,16 @@ export function buildSessionAssets(
 		context.resourceOverrides,
 		startConfig,
 	);
+	const resourceCatalog = context.baseOptions.resourceCatalogV2;
+	const resourcesV2 = freezeSerializedRegistry(
+		structuredClone(resourceCatalog.resources.byId),
+	);
+	const resourceGroupsV2 = freezeSerializedRegistry(
+		structuredClone(resourceCatalog.groups.byId),
+	);
+	const resourceCategoriesV2 = freezeSerializedRegistry(
+		structuredClone(resourceCatalog.categories?.byId ?? {}),
+	);
 	const frozenResources = freezeSerializedRegistry(structuredClone(resources));
 	const registries: SessionRegistriesPayload = {
 		actions: freezeSerializedRegistry(cloneRegistry(actions)),
@@ -79,6 +91,9 @@ export function buildSessionAssets(
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
 		populations: freezeSerializedRegistry(cloneRegistry(populations)),
 		resources: frozenResources,
+		resourcesV2,
+		resourceGroupsV2,
+		resourceCategoriesV2,
 	};
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;
@@ -111,16 +126,18 @@ export function buildResourceRegistry(
 		if (registry.has(key)) {
 			return;
 		}
-		const info = RESOURCES[key as keyof typeof RESOURCES];
-		if (info) {
+		const resource = RESOURCE_V2_REGISTRY.byId[key];
+		if (resource) {
 			const definition: SessionResourceDefinition = {
-				key: info.key,
-				icon: info.icon,
-				label: info.label,
-				description: info.description,
+				key: resource.id,
+				icon: resource.icon,
+				label: resource.label,
 			};
-			if (info.tags && info.tags.length > 0) {
-				definition.tags = [...info.tags];
+			if (resource.description) {
+				definition.description = resource.description;
+			}
+			if (resource.tags && resource.tags.length > 0) {
+				definition.tags = [...resource.tags];
 			}
 			registry.set(key, definition);
 			return;
@@ -128,11 +145,16 @@ export function buildResourceRegistry(
 		registry.set(key, { key });
 	};
 	const addFromStart = (config: PlayerStartConfig | undefined): void => {
-		if (!config?.resources) {
-			return;
+		if (config?.resources) {
+			for (const key of Object.keys(config.resources)) {
+				addKey(key);
+			}
 		}
-		for (const key of Object.keys(config.resources)) {
-			addKey(key);
+		// Also check valuesV2 for V2 resource IDs
+		if (config?.valuesV2) {
+			for (const key of Object.keys(config.valuesV2)) {
+				addKey(key);
+			}
 		}
 	};
 	addFromStart(startConfig.player);

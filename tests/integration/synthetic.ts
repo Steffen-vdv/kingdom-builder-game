@@ -22,10 +22,17 @@ import {
 	Types,
 	PassiveMethods,
 } from '@kingdom-builder/contents/config/builderShared';
+import {
+	createResourceV2Registries,
+	resourceV2Definition,
+} from '@kingdom-builder/testing';
 
 export function createSyntheticContext() {
-	const costKey = 'r0';
+	// Legacy keys kept for docs but unused - V2 IDs are used
+	const _costKey = 'r0';
 	const gainKey = 'r1';
+	const costResourceId = 'resource:synthetic:r0';
+	const gainResourceId = 'resource:synthetic:r1';
 	const startAp = 3;
 
 	const actionsReg = new Registry<ActionConfig>(actionSchema);
@@ -33,36 +40,45 @@ export function createSyntheticContext() {
 		{
 			id: 'a1',
 			name: 'a1',
-			baseCosts: { [costKey]: 1 },
+			baseCosts: { [costResourceId]: 1 },
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: gainKey, amount: 1 },
+					params: {
+						resourceId: gainResourceId,
+						change: { type: 'amount', amount: 1 },
+					},
 				},
 			],
 		},
 		{
 			id: 'a2',
 			name: 'a2',
-			baseCosts: { [costKey]: 1 },
+			baseCosts: { [costResourceId]: 1 },
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: gainKey, amount: 2 },
+					params: {
+						resourceId: gainResourceId,
+						change: { type: 'amount', amount: 2 },
+					},
 				},
 			],
 		},
 		{
 			id: 'a3',
 			name: 'a3',
-			baseCosts: { [costKey]: 1 },
+			baseCosts: { [costResourceId]: 1 },
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: gainKey, amount: 3 },
+					params: {
+						resourceId: gainResourceId,
+						change: { type: 'amount', amount: 3 },
+					},
 				},
 			],
 		},
@@ -84,7 +100,10 @@ export function createSyntheticContext() {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: costKey, amount: startAp },
+							params: {
+								resourceId: costResourceId,
+								change: { type: 'amount', amount: startAp },
+							},
 						},
 					],
 				},
@@ -94,7 +113,7 @@ export function createSyntheticContext() {
 
 	const start: StartConfig = {
 		player: {
-			resources: { [costKey]: startAp, [gainKey]: 0 },
+			resources: { [costResourceId]: startAp, [gainResourceId]: 0 },
 			stats: {},
 			population: {},
 			lands: [],
@@ -129,6 +148,22 @@ export function createSyntheticContext() {
 		winConditions: [],
 	};
 
+	const { resources: resourcesV2, groups: resourceGroupsV2 } =
+		createResourceV2Registries({
+			resources: [
+				resourceV2Definition({
+					id: 'resource:synthetic:r0',
+					metadata: { label: 'Synthetic AP', icon: '⚡' },
+					bounds: { lowerBound: 0 },
+				}),
+				resourceV2Definition({
+					id: 'resource:synthetic:r1',
+					metadata: { label: 'Synthetic Gain', icon: '🪙' },
+					bounds: { lowerBound: 0 },
+				}),
+			],
+		});
+
 	const engineContext = createEngine({
 		actions: actionsReg,
 		buildings,
@@ -137,7 +172,18 @@ export function createSyntheticContext() {
 		phases,
 		start,
 		rules,
+		resourceCatalogV2: {
+			resources: resourcesV2,
+			groups: resourceGroupsV2,
+		},
 	});
 
-	return { engineContext, actions, phases, costKey, gainKey, start };
+	return {
+		engineContext,
+		actions,
+		phases,
+		costKey: costResourceId,
+		gainKey: gainResourceId,
+		start,
+	};
 }

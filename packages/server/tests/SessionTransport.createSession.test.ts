@@ -66,7 +66,7 @@ describe('SessionTransport createSession', () => {
 	it('skips blank player name entries when applying preferences', () => {
 		const { manager } = createSyntheticSessionManager();
 		const originalCreate = manager.createSession.bind(manager);
-		let updateSpy: ReturnType<typeof vi.spyOn> | undefined;
+		let updateSpy: ReturnType<typeof vi.spyOn>;
 		vi.spyOn(manager, 'createSession').mockImplementation(
 			(sessionId, options) => {
 				const session = originalCreate(sessionId, options);
@@ -209,5 +209,86 @@ describe('SessionTransport createSession', () => {
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
 		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
 		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+	});
+
+	it('accepts custom session configuration', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('config-session'),
+			authMiddleware: middleware,
+		});
+		const response = transport.createSession({
+			body: {
+				config: { aiPlayers: { B: true } },
+			},
+			headers: authorizedHeaders,
+		});
+		expect(response.sessionId).toBe('config-session');
+		expectSnapshotMetadata(response.snapshot.metadata);
+	});
+
+	it('wraps session creation failures in transport errors', () => {
+		const { manager } = createSyntheticSessionManager();
+		vi.spyOn(manager, 'createSession').mockImplementation(() => {
+			throw new Error('Creation failed');
+		});
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('fail-session'),
+			authMiddleware: middleware,
+		});
+		let thrown: unknown;
+		try {
+			transport.createSession({
+				body: {},
+				headers: authorizedHeaders,
+			});
+		} catch (error) {
+			thrown = error;
+		}
+		expect(thrown).toBeInstanceOf(TransportError);
+		if (thrown instanceof TransportError) {
+			expect(thrown.code).toBe('CONFLICT');
+			expect(thrown.message).toBe('Failed to create session.');
+		}
+	});
+
+	it('validates session creation request payloads', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('invalid-session'),
+			authMiddleware: middleware,
+		});
+		// Invalid body type
+		let thrown: unknown;
+		try {
+			transport.createSession({
+				body: { devMode: 'not-a-boolean' },
+				headers: authorizedHeaders,
+			});
+		} catch (error) {
+			thrown = error;
+		}
+		expect(thrown).toBeInstanceOf(TransportError);
+		if (thrown instanceof TransportError) {
+			expect(thrown.code).toBe('INVALID_REQUEST');
+		}
+	});
+
+	it('creates sessions without player names', () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			idFactory: vi.fn().mockReturnValue('no-names-session'),
+			authMiddleware: middleware,
+		});
+		const response = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		expect(response.sessionId).toBe('no-names-session');
+		expectSnapshotMetadata(response.snapshot.metadata);
 	});
 });

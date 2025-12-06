@@ -1,7 +1,7 @@
 import type { GameState, ResourceKey, PlayerId } from './state';
 import type { AISystem } from './ai';
 import type { Services, PassiveManager } from './services';
-import type { StatSourceFrame } from './stat_sources';
+import type { ResourceSourceFrame } from './resource_sources';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -12,6 +12,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
+import type { RuntimeResourceCatalog } from './resource-v2';
 
 export class EngineContext {
 	constructor(
@@ -23,24 +24,32 @@ export class EngineContext {
 		public populations: Registry<PopulationDef>,
 		public passives: PassiveManager,
 		public phases: PhaseDef[],
-		public actionCostResource: ResourceKey,
+		public actionCostResourceId: string,
+		public actionCostAmount: number | null,
+		public resourceCatalogV2: RuntimeResourceCatalog,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},
 		},
 	) {}
+
+	get actionCostResource(): ResourceKey {
+		return this.actionCostResourceId;
+	}
 	aiSystem?: AISystem;
 	recentResourceGains: {
-		key: ResourceKey;
+		key: string;
 		amount: number;
 	}[] = [];
-	// Cache base values for stat:add_pct per turn/phase/step to ensure
-	// additive scaling when effects are evaluated multiple times in the
-	// same step (e.g. multiple leaders raising strength).
-	statAddPctBases: Record<string, number> = {};
-	statAddPctAccums: Record<string, number> = {};
+	/**
+	 * Cache base values for additive percent changes per turn/phase/step.
+	 * Multiple percent changes in the same step scale additively from the
+	 * original base value rather than compounding.
+	 */
+	resourcePercentBases: Record<string, number> = {};
+	resourcePercentAccums: Record<string, number> = {};
 	actionTraces: ActionTrace[] = [];
-	statSourceStack: StatSourceFrame[] = [];
+	resourceSourceStack: ResourceSourceFrame[] = [];
 
 	private _effectLogs: Map<string, unknown[]> = new Map();
 

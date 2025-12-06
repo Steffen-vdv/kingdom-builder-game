@@ -79,11 +79,11 @@ function createPlayer(
 			[primaryPopulation]: index,
 			...(overridePopulation ?? {}),
 		},
-		statsHistory: {},
+		resourceTouchedV2: {},
 		lands: [],
 		buildings: [],
 		actions: [],
-		statSources: {},
+		resourceSources: {},
 		skipPhases: {},
 		skipSteps: {},
 		passives: [],
@@ -93,17 +93,17 @@ function createPlayer(
 
 function createDelta(amount: number): PlayerSnapshotDeltaBucket {
 	return {
-		resources: { [primaryResource]: amount },
-		stats: { [primaryStat]: amount * 2 },
-		population: { [primaryPopulation]: amount },
+		valuesV2: {
+			[primaryResource]: amount,
+			[primaryStat]: amount * 2,
+			[primaryPopulation]: amount,
+		},
 	};
 }
 
 function cloneEmptyDelta(): PlayerSnapshotDeltaBucket {
 	return {
-		resources: {},
-		stats: {},
-		population: {},
+		valuesV2: {},
 	};
 }
 

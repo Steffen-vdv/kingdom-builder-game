@@ -1,5 +1,5 @@
 import type { Registry } from '@kingdom-builder/protocol';
-import { Resource } from '../resources';
+import { Resource } from '../resourceKeys';
 import { Stat } from '../stats';
 import { DevelopmentId } from '../developments';
 import { PopulationRole } from '../populationRoles';
@@ -8,10 +8,7 @@ import {
 	action,
 	compareRequirement,
 	effect,
-	populationEvaluator,
-	resourceParams,
-	statEvaluator,
-	statParams,
+	resourceEvaluator,
 	actionParams,
 	actionEffectGroup,
 	actionEffectGroupOption,
@@ -19,13 +16,14 @@ import {
 	attackParams,
 	passiveParams,
 	resultModParams,
-	transferParams,
 	costModParams,
 } from '../config/builders';
-import { ActionMethods, AttackMethods, PassiveMethods, ResourceMethods, Types, StatMethods, CostModMethods, LandMethods, ResultModMethods } from '../config/builderShared';
+import { ActionMethods, AttackMethods, PassiveMethods, ResourceMethods, Types, CostModMethods, LandMethods, ResultModMethods } from '../config/builderShared';
 import { Focus } from '../defs';
 import { ActionId, DevelopActionId, PopulationEvaluationId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
+import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent } from '../helpers/resourceV2Effects';
+import { resourceChange } from '../resourceV2';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -44,10 +42,9 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.id(ActionId.expand)
 			.name('Expand')
 			.icon('🌱')
-			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 2)
 			.effect(effect(Types.Land, LandMethods.ADD).param('count', 1).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(1)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.happiness, 1)).build())
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 1)
 			.focus(Focus.Economy)
@@ -60,12 +57,16 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.id(ActionId.tax)
 			.name('Tax')
 			.icon('💰')
-			.cost(Resource.ap, 1)
 			.effect(
 				effect()
-					.evaluator(populationEvaluator().id(PopulationEvaluationId.tax))
-					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.gold).amount(4)).build())
-					.effect(effect(Types.Resource, ResourceMethods.REMOVE).round('up').params(resourceParams().key(Resource.happiness).amount(0.5)).allowShortfall().build())
+					// Use parent resource that auto-sums population roles
+					.evaluator(resourceEvaluator().resourceId(Stat.populationTotal).id(PopulationEvaluationId.tax))
+					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.gold, 4)).build())
+					.effect(
+						effect(Types.Resource, ResourceMethods.REMOVE)
+							.params(resourceAmountChange(Resource.happiness, 0.5, (change) => change.reconciliation()))
+							.build(),
+					)
 					.build(),
 			)
 			.category(ActionCategory.Basic)
@@ -107,12 +108,15 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.id(ActionId.royal_decree)
 			.name('Royal Decree')
 			.icon('📜')
-			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 12)
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.expand)).build())
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.till).landId('$landId')).build())
 			.effectGroup(royalDecreeDevelopGroup)
-			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3)).allowShortfall().build())
+			.effect(
+				effect(Types.Resource, ResourceMethods.REMOVE)
+					.params(resourceAmountChange(Resource.happiness, 3, (change) => change.reconciliation()))
+					.build(),
+			)
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 5)
 			.focus(Focus.Economy)
@@ -125,8 +129,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.id(ActionId.army_attack)
 			.name('Army Attack')
 			.icon('🗡️')
-			.cost(Resource.ap, 1)
-			.requirement(compareRequirement().left(statEvaluator().key(Stat.warWeariness)).operator('lt').right(populationEvaluator().role(PopulationRole.Legion)).build())
+			.requirement(compareRequirement().left(resourceEvaluator().resourceId(Stat.warWeariness)).operator('lt').right(resourceEvaluator().resourceId(PopulationRole.Legion)).build())
 			.effect(
 				effect(Types.Attack, AttackMethods.PERFORM)
 					.params(
@@ -139,7 +142,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.effect(effect(Types.Stat, StatMethods.ADD).params(statParams().key(Stat.warWeariness).amount(1)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Stat.warWeariness).amount(1).build()).build())
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 6)
 			.focus(Focus.Aggressive)
@@ -152,18 +155,21 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.id(ActionId.hold_festival)
 			.name('Hold Festival')
 			.icon('🎉')
-			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 3)
-			.requirement(compareRequirement().left(statEvaluator().key(Stat.warWeariness)).operator('eq').right(0).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceParams().key(Resource.happiness).amount(3)).build())
-			.effect(effect(Types.Stat, StatMethods.REMOVE).params(statParams().key(Stat.fortificationStrength).amount(3)).build())
+			.requirement(compareRequirement().left(resourceEvaluator().resourceId(Stat.warWeariness)).operator('eq').right(0).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.happiness, 3)).build())
+			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(Stat.fortificationStrength).amount(3).reconciliation().build()).build())
 			.effect(
 				effect(Types.Passive, PassiveMethods.ADD)
 					.params(passiveParams().id('hold_festival_penalty').name('Festival Hangover').icon('🤮').removeOnUpkeepStep())
 					.effect(
 						effect(Types.ResultMod, ResultModMethods.ADD)
 							.params(resultModParams().id('hold_festival_attack_happiness_penalty').actionId(ActionId.army_attack))
-							.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceParams().key(Resource.happiness).amount(3)).allowShortfall().build())
+							.effect(
+								effect(Types.Resource, ResourceMethods.REMOVE)
+									.params(resourceAmountChange(Resource.happiness, 3, (change) => change.reconciliation()))
+									.build(),
+							)
 							.build(),
 					)
 					.build(),
@@ -181,8 +187,8 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.name('Plunder')
 			.icon('🏴‍☠️')
 			.system()
-			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(transferParams().key(Resource.happiness).amount(1)).build())
-			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(transferParams().key(Resource.gold).percent(25)).build())
+			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferAmount(Resource.happiness, 1)).build())
+			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferPercent(Resource.gold, 25)).build())
 			.category(ActionCategory.Basic)
 			.focus(Focus.Aggressive)
 			.build(),
@@ -197,7 +203,6 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.name('Plow')
 			.icon('🚜')
 			.system()
-			.cost(Resource.ap, 1)
 			.cost(Resource.gold, 6)
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.expand)).build())
 			.effect(effect(Types.Action, ActionMethods.PERFORM).params(actionParams().id(ActionId.till)).build())

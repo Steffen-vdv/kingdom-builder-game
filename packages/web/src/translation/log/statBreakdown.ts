@@ -13,18 +13,48 @@ function resolvePopulationRole(
 	effect: EffectDef,
 	currentRole: string | undefined,
 ): string | undefined {
-	if (effect.evaluator?.type !== 'population') {
+	const evaluator = effect.evaluator;
+	// Handle both legacy 'population' and new 'resource' evaluator types
+	if (evaluator?.type !== 'population' && evaluator?.type !== 'resource') {
 		return currentRole;
 	}
-	const params = effect.evaluator.params as StringRecord | undefined;
-	return params?.['role'] ?? currentRole;
+	const params = evaluator.params as StringRecord | undefined;
+	// Check for resourceId (V2) or role (legacy)
+	return params?.['resourceId'] ?? params?.['role'] ?? currentRole;
 }
+
+// V2 percent change params
+type V2PercentChange = {
+	type: 'percentFromResource';
+	sourceResourceId: string;
+};
 
 function detectPctEffect(
 	effect: EffectDef,
 	statKey: string,
 	role: string | undefined,
 ): StatPctBreakdown | undefined {
+	// V2 format: type 'resource' with change.type 'percentFromResource'
+	if (effect.type === 'resource') {
+		const params = effect.params as
+			| {
+					resourceId?: string;
+					change?: V2PercentChange;
+			  }
+			| undefined;
+		if (params?.resourceId !== statKey) {
+			return undefined;
+		}
+		const change = params?.change;
+		if (change?.type !== 'percentFromResource' || !change.sourceResourceId) {
+			return undefined;
+		}
+		if (!role) {
+			return undefined;
+		}
+		return { role, percentStat: change.sourceResourceId };
+	}
+	// Legacy format: type 'stat' with method 'add_pct'
 	if (effect.type !== 'stat' || effect.method !== 'add_pct') {
 		return undefined;
 	}

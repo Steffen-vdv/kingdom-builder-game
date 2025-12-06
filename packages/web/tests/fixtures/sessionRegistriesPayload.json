@@ -180,7 +180,7 @@
 						"right": {
 							"type": "stat",
 							"params": {
-								"key": "maxPopulation"
+								"key": "resource:core:max-population"
 							}
 						}
 					}
@@ -227,7 +227,7 @@
 						"right": {
 							"type": "stat",
 							"params": {
-								"key": "maxPopulation"
+								"key": "resource:core:max-population"
 							}
 						}
 					}
@@ -274,7 +274,7 @@
 						"right": {
 							"type": "stat",
 							"params": {
-								"key": "maxPopulation"
+								"key": "resource:core:max-population"
 							}
 						}
 					}
@@ -399,7 +399,7 @@
 						"left": {
 							"type": "stat",
 							"params": {
-								"key": "warWeariness"
+								"key": "resource:core:war-weariness"
 							}
 						},
 						"operator": "lt",
@@ -420,15 +420,15 @@
 						"stats": [
 							{
 								"role": "power",
-								"key": "armyStrength"
+								"key": "resource:core:army-strength"
 							},
 							{
 								"role": "absorption",
-								"key": "absorption"
+								"key": "resource:core:absorption"
 							},
 							{
 								"role": "fortification",
-								"key": "fortificationStrength"
+								"key": "resource:core:fortification-strength"
 							}
 						],
 						"target": {
@@ -449,11 +449,11 @@
 					}
 				},
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "warWeariness",
-						"amount": 1
+						"resourceId": "resource:core:war-weariness",
+						"change": { "type": "amount", "amount": 1 }
 					}
 				}
 			],
@@ -477,7 +477,7 @@
 						"left": {
 							"type": "stat",
 							"params": {
-								"key": "warWeariness"
+								"key": "resource:core:war-weariness"
 							}
 						},
 						"operator": "eq",
@@ -495,11 +495,11 @@
 					}
 				},
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "remove",
 					"params": {
-						"key": "fortificationStrength",
-						"amount": 3
+						"resourceId": "resource:core:fortification-strength",
+						"change": { "type": "amount", "amount": 3 }
 					}
 				},
 				{
@@ -994,19 +994,19 @@
 					},
 					"effects": [
 						{
-							"type": "stat",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "fortificationStrength",
-								"amount": 5
+								"resourceId": "resource:core:fortification-strength",
+								"change": { "type": "amount", "amount": 5 }
 							}
 						},
 						{
-							"type": "stat",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "absorption",
-								"amount": 0.2
+								"resourceId": "resource:core:absorption",
+								"change": { "type": "amount", "amount": 0.2 }
 							}
 						}
 					]
@@ -1093,8 +1093,8 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "gold",
-								"amount": 2
+								"resourceId": "resource:core:gold",
+								"change": { "type": "amount", "amount": 2 }
 							}
 						}
 					],
@@ -1115,11 +1115,11 @@
 			"icon": "🏠",
 			"onBuild": [
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "maxPopulation",
-						"amount": 1
+						"resourceId": "resource:core:max-population",
+						"change": { "type": "amount", "amount": 1 }
 					}
 				}
 			],
@@ -1133,19 +1133,19 @@
 			"icon": "🏹",
 			"onBuild": [
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "armyStrength",
-						"amount": 1
+						"resourceId": "resource:core:army-strength",
+						"change": { "type": "amount", "amount": 1 }
 					}
 				},
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "fortificationStrength",
-						"amount": 1
+						"resourceId": "resource:core:fortification-strength",
+						"change": { "type": "amount", "amount": 1 }
 					}
 				}
 			],
@@ -1158,19 +1158,19 @@
 			"icon": "🗼",
 			"onBuild": [
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "fortificationStrength",
-						"amount": 2
+						"resourceId": "resource:core:fortification-strength",
+						"change": { "type": "amount", "amount": 2 }
 					}
 				},
 				{
-					"type": "stat",
+					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "absorption",
-						"amount": 0.5
+						"resourceId": "resource:core:absorption",
+						"change": { "type": "amount", "amount": 0.5 }
 					}
 				}
 			],
@@ -1240,11 +1240,11 @@
 					},
 					"effects": [
 						{
-							"type": "stat",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "armyStrength",
-								"amount": 1
+								"resourceId": "resource:core:army-strength",
+								"change": { "type": "amount", "amount": 1 }
 							}
 						}
 					]
@@ -1276,11 +1276,11 @@
 					},
 					"effects": [
 						{
-							"type": "stat",
+							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "fortificationStrength",
-								"amount": 1
+								"resourceId": "resource:core:fortification-strength",
+								"change": { "type": "amount", "amount": 1 }
 							}
 						}
 					]
@@ -1323,6 +1323,339 @@
 			"label": "Castle HP",
 			"description": "Castle HP represents the durability of your stronghold. If it ever drops to zero, your kingdom falls and the game is lost.",
 			"tags": ["attack-target", "win-condition-zero"]
+		}
+	},
+	"resourcesV2": {
+		"resource:core:gold": {
+			"id": "resource:core:gold",
+			"label": "Gold",
+			"icon": "💰",
+			"description": null,
+			"order": 0,
+			"resolvedOrder": 0,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": null,
+			"groupOrder": null,
+			"resolvedGroupOrder": null
+		},
+		"resource:core:ap": {
+			"id": "resource:core:ap",
+			"label": "Action Points",
+			"icon": "⚡",
+			"description": null,
+			"order": 1,
+			"resolvedOrder": 1,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": null,
+			"groupOrder": null,
+			"resolvedGroupOrder": null,
+			"globalCost": { "amount": 1 }
+		},
+		"resource:core:happiness": {
+			"id": "resource:core:happiness",
+			"label": "Happiness",
+			"icon": "😊",
+			"description": null,
+			"order": 2,
+			"resolvedOrder": 2,
+			"tags": [],
+			"lowerBound": null,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": null,
+			"groupOrder": null,
+			"resolvedGroupOrder": null
+		},
+		"resource:core:castleHP": {
+			"id": "resource:core:castleHP",
+			"label": "Castle HP",
+			"icon": "🏰",
+			"description": null,
+			"order": 3,
+			"resolvedOrder": 3,
+			"tags": ["attack-target", "win-condition-zero"],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": null,
+			"groupOrder": null,
+			"resolvedGroupOrder": null
+		},
+		"resource:core:max-population": {
+			"id": "resource:core:max-population",
+			"label": "Max Population",
+			"icon": "👥",
+			"description": "Determines how many specialists the realm can sustain.",
+			"order": 0,
+			"resolvedOrder": 100,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:stats",
+			"groupOrder": 0,
+			"resolvedGroupOrder": 0
+		},
+		"resource:core:army-strength": {
+			"id": "resource:core:army-strength",
+			"label": "Army Strength",
+			"icon": "⚔️",
+			"description": "Measures combat readiness.",
+			"order": 1,
+			"resolvedOrder": 101,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:stats",
+			"groupOrder": 1,
+			"resolvedGroupOrder": 1
+		},
+		"resource:core:fortification-strength": {
+			"id": "resource:core:fortification-strength",
+			"label": "Fortification Strength",
+			"icon": "🛡️",
+			"description": "Determines defensive strength.",
+			"order": 2,
+			"resolvedOrder": 102,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:stats",
+			"groupOrder": 2,
+			"resolvedGroupOrder": 2
+		},
+		"resource:core:absorption": {
+			"id": "resource:core:absorption",
+			"label": "Absorption",
+			"icon": "🌀",
+			"description": "Reduces incoming damage by a percentage.",
+			"order": 3,
+			"resolvedOrder": 103,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": true,
+			"allowDecimal": true,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:stats",
+			"groupOrder": 3,
+			"resolvedGroupOrder": 3
+		},
+		"resource:core:growth": {
+			"id": "resource:core:growth",
+			"label": "Growth Rate",
+			"icon": "🌿",
+			"description": "Improves how quickly strength stats increase.",
+			"order": 4,
+			"resolvedOrder": 104,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": true,
+			"allowDecimal": true,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:stats",
+			"groupOrder": 4,
+			"resolvedGroupOrder": 4
+		},
+		"resource:core:war-weariness": {
+			"id": "resource:core:war-weariness",
+			"label": "War Weariness",
+			"icon": "💤",
+			"description": "Tracks fatigue from protracted conflict.",
+			"order": 5,
+			"resolvedOrder": 105,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:stats",
+			"groupOrder": 5,
+			"resolvedGroupOrder": 5
+		},
+		"resource:core:council": {
+			"id": "resource:core:council",
+			"label": "Council",
+			"icon": "⚖️",
+			"description": "Advisors who grant action points.",
+			"order": 0,
+			"resolvedOrder": 200,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:population:roles",
+			"groupOrder": 0,
+			"resolvedGroupOrder": 0
+		},
+		"resource:core:legion": {
+			"id": "resource:core:legion",
+			"label": "Legion",
+			"icon": "🎖️",
+			"description": "Warriors who increase army strength.",
+			"order": 1,
+			"resolvedOrder": 201,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:population:roles",
+			"groupOrder": 1,
+			"resolvedGroupOrder": 1
+		},
+		"resource:core:fortifier": {
+			"id": "resource:core:fortifier",
+			"label": "Fortifier",
+			"icon": "🔧",
+			"description": "Builders who increase fortification strength.",
+			"order": 2,
+			"resolvedOrder": 202,
+			"tags": [],
+			"lowerBound": 0,
+			"upperBound": null,
+			"displayAsPercent": false,
+			"trackValueBreakdown": false,
+			"trackBoundBreakdown": false,
+			"groupId": "resource-group:population:roles",
+			"groupOrder": 2,
+			"resolvedGroupOrder": 2
+		}
+	},
+	"resourceGroupsV2": {
+		"resource-group:core": {
+			"id": "resource-group:core",
+			"order": 0,
+			"resolvedOrder": 0,
+			"parent": {
+				"id": "resource-group:core",
+				"label": "Core Resources",
+				"icon": "🏰",
+				"description": null,
+				"order": 0,
+				"resolvedOrder": 0,
+				"tags": [],
+				"lowerBound": null,
+				"upperBound": null,
+				"displayAsPercent": false,
+				"trackValueBreakdown": false,
+				"trackBoundBreakdown": false
+			}
+		},
+		"resource-group:stats": {
+			"id": "resource-group:stats",
+			"order": 1,
+			"resolvedOrder": 1,
+			"parent": {
+				"id": "resource-group:stats",
+				"label": "Stats",
+				"icon": "📊",
+				"description": null,
+				"order": 1,
+				"resolvedOrder": 1,
+				"tags": [],
+				"lowerBound": null,
+				"upperBound": null,
+				"displayAsPercent": false,
+				"allowDecimal": true,
+				"trackValueBreakdown": false,
+				"trackBoundBreakdown": false
+			}
+		},
+		"resource-group:population": {
+			"id": "resource-group:population",
+			"order": 2,
+			"resolvedOrder": 2,
+			"parent": {
+				"id": "resource:core:total",
+				"label": "Population",
+				"icon": "👥",
+				"description": "Total population count.",
+				"order": 2,
+				"resolvedOrder": 2,
+				"tags": [],
+				"lowerBound": 0,
+				"upperBound": null,
+				"displayAsPercent": false,
+				"trackValueBreakdown": false,
+				"trackBoundBreakdown": false
+			}
+		},
+		"resource-group:population:roles": {
+			"id": "resource-group:population:roles",
+			"order": 3,
+			"resolvedOrder": 3,
+			"parent": {
+				"id": "resource:core:total",
+				"label": "Population Roles",
+				"icon": "👥",
+				"description": "Assigned population roles.",
+				"order": 3,
+				"resolvedOrder": 3,
+				"tags": [],
+				"lowerBound": 0,
+				"upperBound": null,
+				"displayAsPercent": false,
+				"trackValueBreakdown": false,
+				"trackBoundBreakdown": false
+			}
+		}
+	},
+	"resourceCategoriesV2": {
+		"category:primary": {
+			"id": "category:primary",
+			"label": "Primary Resources",
+			"icon": "💎",
+			"description": "Core currencies and vital stats.",
+			"order": 0,
+			"resolvedOrder": 0,
+			"contents": [
+				{ "type": "resource", "id": "resource:core:gold" },
+				{ "type": "resource", "id": "resource:core:ap" },
+				{ "type": "resource", "id": "resource:core:happiness" },
+				{ "type": "resource", "id": "resource:core:castleHP" }
+			]
+		},
+		"category:secondary": {
+			"id": "category:secondary",
+			"label": "Secondary Resources",
+			"icon": "📊",
+			"description": "Stats and population.",
+			"order": 1,
+			"resolvedOrder": 1,
+			"contents": [
+				{ "type": "group", "id": "resource-group:stats" },
+				{ "type": "group", "id": "resource-group:population:roles" }
+			]
 		}
 	},
 	"actionCategories": {

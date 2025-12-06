@@ -24,24 +24,30 @@ describe('action effect groups integration', () => {
 		const rewardAction: ActionConfig = {
 			id: 'reward_action',
 			name: 'Grant Gold',
-			baseCosts: { [Resource.ap]: 0 },
+			baseCosts: {},
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.gold, amount: rewardAmount },
+					params: {
+						resourceId: Resource.gold,
+						change: { type: 'amount', amount: rewardAmount },
+					},
 				},
 			],
 		};
 		const alternateAction: ActionConfig = {
 			id: 'mood_action',
 			name: 'Lift Morale',
-			baseCosts: { [Resource.ap]: 0 },
+			baseCosts: {},
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: Resource.happiness, amount: 1 },
+					params: {
+						resourceId: Resource.happiness,
+						change: { type: 'amount', amount: 1 },
+					},
 				},
 			],
 		};
@@ -61,7 +67,7 @@ describe('action effect groups integration', () => {
 		const chooser: ActionConfig = {
 			id: 'royal_directive',
 			name: 'Royal directive',
-			baseCosts: { [Resource.ap]: 0 },
+			baseCosts: {},
 			effects: [group],
 		};
 		const actions = new Registry<ActionConfig>();
@@ -82,16 +88,18 @@ describe('action effect groups integration', () => {
 				'Test setup failed: effect group should require a choice',
 			);
 		}
-		engineContext.activePlayer.resources[Resource.ap] = 5;
-		engineContext.activePlayer.resources[Resource.gold] = 0;
-		engineContext.activePlayer.resources[Resource.happiness] = 0;
+		const player = engineContext.activePlayer;
+		player.resourceValues[Resource.ap] = 5;
+		player.resourceValues[Resource.gold] = 0;
+		player.resourceValues[Resource.happiness] = 0;
 		return { engineContext, chooser, group, rewardAmount };
 	}
 
 	it('requires explicit selections for effect groups', () => {
 		const { engineContext, chooser, group } = setup();
 		const costBag = getActionCosts(chooser.id, engineContext);
-		expect(costBag[Resource.ap] ?? 0).toBe(0);
+		// AP cost is now applied globally by the action cost system (1 AP default)
+		expect(costBag[Resource.ap] ?? 0).toBe(1);
 		expect(() => performAction(chooser.id, engineContext)).toThrowError(
 			new RegExp(group.id),
 		);
@@ -104,16 +112,17 @@ describe('action effect groups integration', () => {
 				[group.id]: { optionId: 'gold_reward' },
 			},
 		} as const;
-		const beforeGold = engineContext.activePlayer.resources[Resource.gold];
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[Resource.gold] ?? 0;
 		const traces = performAction(chooser.id, engineContext, params);
-		expect(engineContext.activePlayer.resources[Resource.gold]).toBe(
+		expect(engineContext.activePlayer.resourceValues[Resource.gold]).toBe(
 			beforeGold + rewardAmount,
 		);
 		expect(traces).toHaveLength(1);
 		const trace = traces[0];
 		const delta =
-			(trace.after.resources[Resource.gold] ?? 0) -
-			(trace.before.resources[Resource.gold] ?? 0);
+			(trace.after.valuesV2[Resource.gold] ?? 0) -
+			(trace.before.valuesV2[Resource.gold] ?? 0);
 		expect(delta).toBe(rewardAmount);
 	});
 

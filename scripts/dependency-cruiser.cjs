@@ -35,7 +35,7 @@ module.exports = {
 				path: '^packages/engine/src',
 			},
 			to: {
-				path: '^packages/contents/src/(?!registries?/).+',
+				path: '^packages/contents/src/(?!registries?/|index\\.ts$).+',
 			},
 		},
 	],

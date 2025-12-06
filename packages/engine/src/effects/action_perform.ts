@@ -1,10 +1,11 @@
 import type { EffectHandler } from '.';
 import { runEffects } from '.';
 import { snapshotPlayer } from '../log';
-import { withStatSourceFrames } from '../stat_sources';
+import { withResourceSourceFrames } from '../resource_sources';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { ActionParameters } from '../actions/action_parameters';
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 type ActionPerformParams = ActionParameters<string> & {
 	__actionId?: string;
 	actionId?: string;
@@ -81,10 +82,10 @@ export const actionPerform: EffectHandler = (effect, context, mult = 1) => {
 			].join(' ');
 			throw new Error(message);
 		}
-		withStatSourceFrames(
+		withResourceSourceFrames(
 			context,
-			(_effect, _context, statKey) => ({
-				key: `action:${actionDefinition.id}:${statKey}`,
+			(_effect, _context, resourceKey) => ({
+				key: `action:${actionDefinition.id}:${resourceKey}`,
 				kind: 'action',
 				id: actionDefinition.id,
 				detail: 'Resolution',

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { resolveAttack } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { Resource } from '../src/state/index.ts';
+import { Resource } from '@kingdom-builder/contents';
 import {
 	attackTargetHandlers,
 	type AttackTargetHandler,
@@ -18,8 +18,9 @@ describe('resolveAttack target handlers', () => {
 		};
 
 		const originalHandler = attackTargetHandlers.resource;
+		// PlayerState uses resourceValues for all resources
 		const mutation = {
-			before: defender.resources[target.key] ?? 0,
+			before: defender.resourceValues[target.key] ?? 0,
 			after: 3,
 		};
 		const applySpy = vi.fn<typeof originalHandler.applyDamage>(

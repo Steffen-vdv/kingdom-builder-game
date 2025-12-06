@@ -10,6 +10,10 @@ import {
 	RULES,
 	RESOURCES,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
@@ -22,9 +26,16 @@ function deepClone<T>(value: T): T {
 
 function clonePlayer(player: PlayerState) {
 	const copy = new PlayerState(player.id, player.name);
-	copy.resources = deepClone(player.resources);
-	copy.stats = deepClone(player.stats);
-	copy.population = deepClone(player.population);
+	copy.resourceValues = deepClone(player.resourceValues);
+	copy.resourceLowerBounds = deepClone(player.resourceLowerBounds);
+	copy.resourceUpperBounds = deepClone(player.resourceUpperBounds);
+	copy.resourceTouched = deepClone(player.resourceTouched);
+	copy.resourceTierIds = deepClone(player.resourceTierIds);
+	copy.resourceBoundTouched = deepClone(player.resourceBoundTouched);
+	copy.resourceTouchedV2 = deepClone(player.resourceTouchedV2);
+	copy.resourceSources = deepClone(player.resourceSources);
+	copy.skipPhases = deepClone(player.skipPhases);
+	copy.skipSteps = deepClone(player.skipSteps);
 	copy.lands = player.lands.map((landState) => {
 		const newLand = new Land(landState.id, landState.slotsMax);
 		newLand.slotsUsed = landState.slotsUsed;
@@ -32,6 +43,7 @@ function clonePlayer(player: PlayerState) {
 		return newLand;
 	});
 	copy.buildings = new Set([...player.buildings]);
+	copy.actions = new Set([...player.actions]);
 	return copy;
 }
 
@@ -46,12 +58,18 @@ export function createTestContext(
 		phases: PHASES,
 		start: GAME_START,
 		rules: RULES,
+		resourceCatalogV2: {
+			resources: RESOURCE_V2_REGISTRY,
+			groups: RESOURCE_GROUP_V2_REGISTRY,
+		},
 	});
 	if (overrides) {
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
 			const value = overrides[key];
 			if (value !== undefined) {
-				engineContext.activePlayer.resources[key] = value;
+				// RESOURCES values are already ResourceV2 IDs (e.g., resource:core:gold)
+				const resourceId = RESOURCES[key];
+				engineContext.activePlayer.resourceValues[resourceId] = value;
 			}
 		}
 	}
@@ -71,28 +89,25 @@ export function simulateEffects(
 		engineContext.passives.runResultMods(actionId, dummyCtx);
 	}
 
-	const resources: Record<string, number> = {};
-	for (const key of Object.keys(before.resources)) {
+	const valuesV2: Record<string, number> = {};
+	const beforeKeys = new Set(
+		Object.keys(before.resourceValues).concat(
+			Object.keys(dummy.resourceValues),
+		),
+	);
+	for (const key of beforeKeys) {
 		const delta =
-			dummy.resources[key as keyof typeof dummy.resources] -
-			before.resources[key as keyof typeof before.resources];
+			(dummy.resourceValues[key] ?? 0) - (before.resourceValues[key] ?? 0);
 		if (delta !== 0) {
-			resources[key] = delta;
+			valuesV2[key] = delta;
 		}
 	}
 
-	const stats: Record<string, number> = {};
-	for (const key of Object.keys(before.stats)) {
-		const delta =
-			dummy.stats[key as keyof typeof dummy.stats] -
-			before.stats[key as keyof typeof before.stats];
-		if (delta !== 0) {
-			stats[key] = delta;
-		}
-	}
+	// All V2 resources are unified - just use valuesV2 directly
+	const resources: Record<string, number> = { ...valuesV2 };
 
 	const land = dummy.lands.length - before.lands.length;
-	return { resources, stats, land };
+	return { resources, valuesV2, land };
 }
 
 export function getActionOutcome(id: string, engineContext: EngineForTest) {
@@ -163,31 +178,47 @@ export function getBuildingWithActionMods() {
 	throw new Error('No building with action mods found');
 }
 
-export function getBuildingWithStatBonuses() {
+export function getBuildingWithResourceBonuses() {
 	for (const [id, def] of BUILDINGS.entries()) {
 		const passive = findEffect(
 			def.onBuild ?? [],
 			(e) => e.type === 'passive' && e.method === 'add',
 		);
 		if (passive) {
-			const stats = ((passive as { effects?: EffectDef[] }).effects || [])
-				.filter(
-					(e): e is EffectDef<{ key: string; amount: number }> =>
-						e.type === 'stat' &&
-						e.method === 'add' &&
-						typeof (e.params as { key?: unknown }).key === 'string' &&
-						typeof (e.params as { amount?: unknown }).amount === 'number',
-				)
-				.map((e) => ({
-					key: (e.params as { key: string }).key,
-					amount: (e.params as { amount: number }).amount,
-				}));
-			if (stats.length > 0) {
-				return { buildingId: id, stats };
+			const passiveEffects =
+				(passive as { effects?: EffectDef[] }).effects || [];
+			// Look for ResourceV2 add effects
+			const resources = passiveEffects
+				.filter((e): e is EffectDef => {
+					if (e.type !== 'resource' || e.method !== 'add') {
+						return false;
+					}
+					const params = e.params as {
+						resourceId?: string;
+						change?: { type: string; amount?: number };
+					};
+					return (
+						typeof params?.resourceId === 'string' &&
+						params?.change?.type === 'amount' &&
+						typeof params.change.amount === 'number'
+					);
+				})
+				.map((e) => {
+					const params = e.params as {
+						resourceId: string;
+						change: { amount: number };
+					};
+					return {
+						key: params.resourceId,
+						amount: params.change.amount,
+					};
+				});
+			if (resources.length > 0) {
+				return { buildingId: id, resources };
 			}
 		}
 	}
-	throw new Error('No building with stat bonuses found');
+	throw new Error('No building with resource bonuses found');
 }
 
 export function getActionWithMultipleCosts(engineContext: EngineForTest) {

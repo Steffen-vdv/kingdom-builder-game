@@ -551,12 +551,18 @@ describe('GameProviderInner', () => {
 			if (!activePlayer) {
 				return null;
 			}
+			const resourceValue = activePlayer.resources[resourceKey] ?? 0;
 			return (
 				<ResourceButton
-					resourceId={resourceKey}
-					label="Test Resource"
-					icon="Ⓡ"
-					value={activePlayer.resources[resourceKey] ?? 0}
+					metadata={{
+						id: resourceKey,
+						label: 'Test Resource',
+						icon: 'Ⓡ',
+					}}
+					snapshot={{
+						id: resourceKey,
+						current: resourceValue,
+					}}
 					onShow={() => {}}
 					onHide={() => {}}
 				/>

@@ -2,8 +2,21 @@ import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '../../src/services/index.ts';
-import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
+import {
+	PhaseTrigger,
+	RULES,
+	resourceV2,
+	createResourceV2Registry,
+} from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	resourceAmountParams,
+	resourcePercentFromResourceParams,
+} from '../helpers/resourceV2Params.ts';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 
 const resourceKeys = {
 	ap: 'synthetic:resource:ap',
@@ -52,7 +65,10 @@ export function createPhaseTestEnvironment() {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: resourceKeys.gold, amount: FARM_INCOME },
+				params: resourceAmountParams({
+					key: resourceKeys.gold,
+					amount: FARM_INCOME,
+				}),
 			},
 		],
 	});
@@ -63,14 +79,20 @@ export function createPhaseTestEnvironment() {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: resourceKeys.ap, amount: AP_GAIN_PER_COUNCIL },
+				params: resourceAmountParams({
+					key: resourceKeys.ap,
+					amount: AP_GAIN_PER_COUNCIL,
+				}),
 			},
 		],
 		onPayUpkeepStep: [
 			{
 				type: 'resource',
 				method: 'remove',
-				params: { key: resourceKeys.gold, amount: COUNCIL_UPKEEP },
+				params: resourceAmountParams({
+					key: resourceKeys.gold,
+					amount: COUNCIL_UPKEEP,
+				}),
 			},
 		],
 	});
@@ -79,17 +101,24 @@ export function createPhaseTestEnvironment() {
 		id: 'synthetic:population:legion',
 		onGrowthPhase: [
 			{
-				type: 'stat',
-				method: 'add_pct',
-				params: { key: statKeys.army, percentStat: statKeys.growth },
-				round: 'up',
+				type: 'resource',
+				method: 'add',
+				params: resourcePercentFromResourceParams({
+					key: statKeys.army,
+					sourceResourceId: statKeys.growth,
+					roundingMode: 'up',
+					additive: true,
+				}),
 			},
 		],
 		onPayUpkeepStep: [
 			{
 				type: 'resource',
 				method: 'remove',
-				params: { key: resourceKeys.gold, amount: LEGION_UPKEEP },
+				params: resourceAmountParams({
+					key: resourceKeys.gold,
+					amount: LEGION_UPKEEP,
+				}),
 			},
 		],
 	});
@@ -98,17 +127,24 @@ export function createPhaseTestEnvironment() {
 		id: 'synthetic:population:fortifier',
 		onGrowthPhase: [
 			{
-				type: 'stat',
-				method: 'add_pct',
-				params: { key: statKeys.fort, percentStat: statKeys.growth },
-				round: 'up',
+				type: 'resource',
+				method: 'add',
+				params: resourcePercentFromResourceParams({
+					key: statKeys.fort,
+					sourceResourceId: statKeys.growth,
+					roundingMode: 'up',
+					additive: true,
+				}),
 			},
 		],
 		onPayUpkeepStep: [
 			{
 				type: 'resource',
 				method: 'remove',
-				params: { key: resourceKeys.gold, amount: FORTIFIER_UPKEEP },
+				params: resourceAmountParams({
+					key: resourceKeys.gold,
+					amount: FORTIFIER_UPKEEP,
+				}),
 			},
 		],
 	});
@@ -140,16 +176,22 @@ export function createPhaseTestEnvironment() {
 							evaluator: {
 								type: 'compare',
 								params: {
-									left: { type: 'stat', params: { key: statKeys.war } },
+									left: {
+										type: 'resource',
+										params: { resourceId: statKeys.war },
+									},
 									operator: 'gt',
 									right: 0,
 								},
 							},
 							effects: [
 								{
-									type: 'stat',
+									type: 'resource',
 									method: 'remove',
-									params: { key: statKeys.war, amount: 1 },
+									params: {
+										resourceId: statKeys.war,
+										change: { type: 'amount', amount: 1 },
+									},
 								},
 							],
 						},
@@ -211,6 +253,55 @@ export function createPhaseTestEnvironment() {
 		winConditions: RULES.winConditions,
 	};
 
+	// Create synthetic ResourceV2 definitions for testing
+	const syntheticResourceDefs = [
+		resourceV2(resourceKeys.ap)
+			.label('Action Points')
+			.icon('⚡')
+			.lowerBound(0)
+			.build(),
+		resourceV2(resourceKeys.gold)
+			.label('Gold')
+			.icon('💰')
+			.lowerBound(0)
+			.build(),
+		resourceV2(statKeys.army)
+			.label('Army Strength')
+			.icon('⚔️')
+			.lowerBound(0)
+			.build(),
+		resourceV2(statKeys.fort)
+			.label('Fort Strength')
+			.icon('🏰')
+			.lowerBound(0)
+			.build(),
+		resourceV2(statKeys.growth)
+			.label('Growth')
+			.icon('📈')
+			.lowerBound(0)
+			.allowDecimal()
+			.build(),
+		resourceV2(statKeys.war)
+			.label('War Weariness')
+			.icon('😟')
+			.lowerBound(0)
+			.build(),
+		resourceV2(council.id).label('Council').icon('👔').lowerBound(0).build(),
+		resourceV2(legion.id).label('Legion').icon('🛡️').lowerBound(0).build(),
+		resourceV2(fortifier.id)
+			.label('Fortifier')
+			.icon('🏗️')
+			.lowerBound(0)
+			.build(),
+	];
+
+	// Create combined registry with real + synthetic resources
+	const allResourceDefs = [
+		...RESOURCE_V2_REGISTRY.ordered,
+		...syntheticResourceDefs,
+	];
+	const testResourceRegistry = createResourceV2Registry(allResourceDefs);
+
 	const engineContext = createEngine({
 		actions: content.actions,
 		buildings: content.buildings,
@@ -219,6 +310,10 @@ export function createPhaseTestEnvironment() {
 		phases,
 		start,
 		rules,
+		resourceCatalogV2: {
+			resources: testResourceRegistry,
+			groups: RESOURCE_GROUP_V2_REGISTRY,
+		},
 	});
 
 	return {

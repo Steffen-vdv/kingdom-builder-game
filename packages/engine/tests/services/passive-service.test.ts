@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents/resourceKeys';
 import { createTestEngine } from '../helpers';
 import { getActionCosts } from '../../src';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('PassiveManager', () => {
 	it('applies and unregisters cost modifiers', () => {
@@ -81,11 +82,16 @@ describe('PassiveManager', () => {
 		engineContext.passives.registerResultModifier(
 			'happy',
 			(_unusedActionResult, innerEngineContext) => {
-				innerEngineContext.activePlayer.happiness += 1;
+				innerEngineContext.activePlayer.resourceValues[CResource.happiness] =
+					(innerEngineContext.activePlayer.resourceValues[
+						CResource.happiness
+					] ?? 0) + 1;
 			},
 		);
 		engineContext.passives.runResultMods(action.id, engineContext);
-		expect(engineContext.activePlayer.happiness).toBe(1);
+		expect(engineContext.activePlayer.resourceValues[CResource.happiness]).toBe(
+			1,
+		);
 		engineContext.passives.unregisterResultModifier('happy');
 
 		const passive = {
@@ -94,25 +100,34 @@ describe('PassiveManager', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 2 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 2,
+					}),
 				},
 			],
 		};
-		const before = engineContext.activePlayer.gold;
+		// CResource.gold IS the ResourceV2 ID
+		const before =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		engineContext.passives.addPassive(passive, engineContext);
 		expect(
 			engineContext.passives
 				.list(engineContext.activePlayer.id)
 				.some((entry) => entry.id === 'shiny'),
 		).toBe(true);
-		expect(engineContext.activePlayer.gold).toBe(before + 2);
+		expect(engineContext.activePlayer.resourceValues[CResource.gold]).toBe(
+			before + 2,
+		);
 		engineContext.passives.removePassive('shiny', engineContext);
 		expect(
 			engineContext.passives
 				.list(engineContext.activePlayer.id)
 				.some((entry) => entry.id === 'shiny'),
 		).toBe(false);
-		expect(engineContext.activePlayer.gold).toBe(before);
+		expect(engineContext.activePlayer.resourceValues[CResource.gold]).toBe(
+			before,
+		);
 		engineContext.passives.removePassive('unknown', engineContext);
 	});
 

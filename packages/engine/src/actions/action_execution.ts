@@ -1,5 +1,5 @@
 import { runEffects } from '../effects';
-import { withStatSourceFrames } from '../stat_sources';
+import { withResourceSourceFrames } from '../resource_sources';
 import { runRequirement } from '../requirements';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../context';
@@ -121,10 +121,10 @@ function executeAction<T extends string>(
 	}
 	deductCostsFromPlayer(finalCosts, engineContext.activePlayer, engineContext);
 	const passiveManager = engineContext.passives;
-	withStatSourceFrames(
+	withResourceSourceFrames(
 		engineContext,
-		(_effect, _context, statKey) => ({
-			key: `action:${actionDefinition.id}:${statKey}`,
+		(_effect, _context, resourceKey) => ({
+			key: `action:${actionDefinition.id}:${resourceKey}`,
 			kind: 'action',
 			id: actionDefinition.id,
 			detail: 'Resolution',

@@ -9,8 +9,12 @@ import {
 	PhaseId,
 	GAME_START,
 	RULES,
-	Resource as CResource,
 } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents/resourceKeys';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -25,6 +29,8 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
+import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -33,6 +39,7 @@ const BASE: {
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
 	start: StartConfig;
+	resourceCatalogV2: RuntimeResourceContent;
 } = {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
@@ -40,6 +47,10 @@ const BASE: {
 	populations: POPULATIONS,
 	phases: PHASES,
 	start: GAME_START,
+	resourceCatalogV2: {
+		resources: RESOURCE_V2_REGISTRY,
+		groups: RESOURCE_GROUP_V2_REGISTRY,
+	},
 };
 
 type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
@@ -54,6 +65,7 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		phases: rest.phases ?? BASE.phases,
 		start: rest.start ?? BASE.start,
 		rules: rules ?? RULES,
+		resourceCatalogV2: rest.resourceCatalogV2 ?? BASE.resourceCatalogV2,
 	});
 }
 
@@ -92,7 +104,10 @@ describe('EngineSession', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 3 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 3,
+					}),
 				},
 			],
 		});
@@ -103,6 +118,11 @@ describe('EngineSession', () => {
 			populations: content.populations,
 		});
 		advanceToMain(session);
+		// Ensure player has enough AP to perform the action
+		session.applyDeveloperPreset({
+			playerId: session.getSnapshot().game.activePlayerId,
+			resources: [{ key: CResource.ap, target: 5 }],
+		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
 		const initialGold = activeBefore.resources[CResource.gold] ?? 0;
@@ -121,7 +141,6 @@ describe('EngineSession', () => {
 	it('simulates actions before executing to avoid partial failures', () => {
 		const content = createContentFactory();
 		const failingAction = content.action({
-			baseCosts: { [CResource.ap]: 1 },
 			effects: Array.from({ length: 3 }, () => ({
 				type: 'land',
 				method: LandMethods.TILL,
@@ -134,6 +153,11 @@ describe('EngineSession', () => {
 			populations: content.populations,
 		});
 		advanceToMain(session);
+		// Ensure player has enough AP so action fails on land, not AP
+		session.applyDeveloperPreset({
+			playerId: session.getSnapshot().game.activePlayerId,
+			resources: [{ key: CResource.ap, target: 5 }],
+		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
 		const initialAp = activeBefore.resources[CResource.ap] ?? 0;
@@ -153,6 +177,19 @@ describe('EngineSession', () => {
 		snapshot.game.players[0]!.resources[CResource.gold] = 999;
 		const next = session.getSnapshot();
 		expect(next.game.players[0]!.resources[CResource.gold]).not.toBe(999);
+	});
+
+	it('includes ResourceV2 data alongside legacy snapshots', () => {
+		const session = createTestSession();
+		const snapshot = session.getSnapshot();
+		const catalog = snapshot.game.resourceCatalogV2;
+		expect(catalog).toBeDefined();
+		const player = snapshot.game.players[0]!;
+		expect(player.valuesV2).toBeDefined();
+		const goldLegacy = player.resources[CResource.gold];
+		expect(goldLegacy).toBeDefined();
+		expect(player.valuesV2['resource:core:gold']).toBe(goldLegacy);
+		expect(catalog.resources.byId['resource:core:gold']?.label).toBeDefined();
 	});
 
 	it('provides cloned advance results', () => {
@@ -217,10 +254,13 @@ describe('EngineSession', () => {
 	it('returns cloned passive evaluation modifier maps', () => {
 		const session = createTestSession();
 		const mods = session.getPassiveEvaluationMods();
-		expect(mods.size).toBe(0);
+		// Store initial size - content may register some mods at start
+		const initialSize = mods.size;
 		mods.set('test:target', new Map());
 		const refreshed = session.getPassiveEvaluationMods();
 		expect(refreshed).not.toBe(mods);
+		// Verify mutation didn't affect the source
+		expect(refreshed.size).toBe(initialSize);
 		expect(refreshed.has('test:target')).toBe(false);
 	});
 
@@ -407,7 +447,8 @@ describe('EngineSession', () => {
 			performAction(actionId, engineContext) {
 				const resourceKey = engineContext.actionCostResource;
 				if (resourceKey) {
-					engineContext.activePlayer.resources[resourceKey] = 0;
+					// PlayerState uses resourceValues, not resources
+					engineContext.activePlayer.resourceValues[resourceKey] = 0;
 				}
 				return undefined;
 			},
@@ -450,6 +491,8 @@ describe('EngineSession', () => {
 		const activeId = snapshot.game.activePlayerId;
 		const result = session.simulateUpcomingPhases(activeId);
 		expect(result.steps.length).toBeGreaterThan(0);
+		expect(result.before.valuesV2).toBeDefined();
+		expect(result.after.valuesV2).toBeDefined();
 		const firstStep = result.steps[0];
 		if (!firstStep) {
 			throw new Error('Expected at least one simulation step.');
@@ -519,24 +562,29 @@ it('returns cloned simulation previews for upcoming phases', () => {
 	const activeId = session.getSnapshot().game.activePlayerId;
 	const preview = session.simulateUpcomingPhases(activeId);
 	preview.steps.length = 0;
-	preview.delta.resources.extra = 99;
-	preview.before.resources = {};
+	(preview.delta.valuesV2 as Record<string, unknown>).extra = 99;
+	preview.before.valuesV2 = {};
 	const refreshed = session.simulateUpcomingPhases(activeId);
 	expect(refreshed.steps.length).toBeGreaterThan(0);
-	expect(refreshed.delta.resources.extra).toBeUndefined();
-	expect(Object.keys(refreshed.before.resources).length).toBeGreaterThan(0);
+	expect(
+		(refreshed.delta.valuesV2 as Record<string, unknown>).extra,
+	).toBeUndefined();
+	expect(Object.keys(refreshed.before.valuesV2).length).toBeGreaterThan(0);
 });
 
 it('delegates AI turns with overrides while preserving controllers', async () => {
 	const content = createContentFactory();
 	const taxAction = content.action({
 		id: TAX_ACTION_ID,
-		baseCosts: { [CResource.ap]: 1 },
+		baseCosts: {},
 		effects: [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: CResource.gold, amount: 1 },
+				params: resourceAmountParams({
+					key: CResource.gold,
+					amount: 1,
+				}),
 			},
 		],
 	});
@@ -562,8 +610,9 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 		ReturnType<PerformActionFn>
 	>((actionId, engineContext) => {
 		const apKey = engineContext.actionCostResource;
-		const current = engineContext.activePlayer.resources[apKey] ?? 0;
-		engineContext.activePlayer.resources[apKey] = Math.max(0, current - 1);
+		// PlayerState uses resourceValues, not resources
+		const current = engineContext.activePlayer.resourceValues[apKey] ?? 0;
+		engineContext.activePlayer.resourceValues[apKey] = Math.max(0, current - 1);
 		return [];
 	});
 	const continueAfterAction = vi.fn().mockResolvedValue(true);

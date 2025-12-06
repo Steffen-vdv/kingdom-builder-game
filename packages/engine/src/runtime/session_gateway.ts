@@ -116,15 +116,17 @@ export function createLocalSessionGateway(
 	options: LocalSessionGatewayOptions = {},
 ): SessionGateway {
 	const sessionId = options.sessionId ?? 'local-session';
+	const registries = options.registries;
 	const baseRegistries: SessionRegistriesPayload = {
-		...(options.registries ?? {
-			actions: {},
-			buildings: {},
-			developments: {},
-			populations: {},
-			resources: {},
-		}),
-		actionCategories: options.registries?.actionCategories ?? {},
+		actions: registries?.actions ?? {},
+		buildings: registries?.buildings ?? {},
+		developments: registries?.developments ?? {},
+		populations: registries?.populations ?? {},
+		resources: registries?.resources ?? {},
+		actionCategories: registries?.actionCategories ?? {},
+		resourcesV2: registries?.resourcesV2 ?? {},
+		resourceGroupsV2: registries?.resourceGroupsV2 ?? {},
+		resourceCategoriesV2: registries?.resourceCategoriesV2 ?? {},
 	};
 	const getRegistries = (): SessionRegistriesPayload => {
 		if (typeof structuredClone === 'function') {
@@ -139,6 +141,9 @@ export function createLocalSessionGateway(
 			actionCategories: {
 				...baseRegistries.actionCategories,
 			},
+			resourcesV2: { ...baseRegistries.resourcesV2 },
+			resourceGroupsV2: { ...baseRegistries.resourceGroupsV2 },
+			resourceCategoriesV2: { ...baseRegistries.resourceCategoriesV2 },
 		};
 	};
 	return {

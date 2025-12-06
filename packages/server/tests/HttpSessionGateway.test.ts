@@ -47,6 +47,9 @@ describe('HttpSessionGateway', () => {
 			developments: {},
 			populations: {},
 			resources: {},
+			resourcesV2: {},
+			resourceGroupsV2: {},
+			resourceCategoriesV2: {},
 		};
 	}
 

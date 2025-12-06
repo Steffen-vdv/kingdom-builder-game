@@ -109,8 +109,8 @@ function buildActionLog(
 	}
 	const items: SummaryEntry[] = [];
 	entry.defender.forEach((diff) => {
-		const summary =
-			diff.type === 'resource' ? transferSummaries.get(diff.key) : undefined;
+		// Transfer summaries are keyed by ResourceV2 key
+		const summary = transferSummaries.get(diff.key);
 		let options;
 		if (summary?.percent !== undefined) {
 			options = { percent: summary.percent } as const;

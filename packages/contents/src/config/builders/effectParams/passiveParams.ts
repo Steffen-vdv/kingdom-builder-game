@@ -1,7 +1,7 @@
 import type { EffectConfig, PassiveMetadata, PhaseSkipConfig } from '@kingdom-builder/protocol';
 import { formatPassiveRemoval } from '../../../text';
 import type { TriggerKey } from '../../../defs';
-import type { PhaseId as PhaseIdentifier, PhaseStepId as PhaseStepIdentifier } from '../../../phases';
+import type { PhaseId as PhaseIdentifier, PhaseStepId as PhaseStepIdentifier } from '../../../phaseTypes';
 import { ParamsBuilder, PassiveMethods, Types } from '../../builderShared';
 import type { EffectBuilder } from '../../builders';
 import { resolveEffectConfig } from './resolveEffectConfig';

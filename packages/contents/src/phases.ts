@@ -1,35 +1,14 @@
 import { Stat } from './stats';
 import { PopulationRole } from './populationRoles';
-import { effect, phase, step, populationEvaluator, statParams, compareEvaluator, statEvaluator, type PhaseDef } from './config/builders';
-import { Types, StatMethods } from './config/builderShared';
-import { ON_GAIN_AP_STEP, ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP, type TriggerKey } from './defs';
+import { effect, phase, step, compareEvaluator, resourceEvaluator, type PhaseDef } from './config/builders';
+import { Types, ResourceMethods } from './config/builderShared';
+import { resourcePercentFromResourceChange } from './helpers/resourceV2Effects';
+import { resourceChange } from './resourceV2';
+import { ON_GAIN_AP_STEP, ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP } from './defs';
+import { PhaseId, PhaseStepId, PhaseTrigger } from './phaseTypes';
 
-export const PhaseId = {
-	Growth: 'growth',
-	Upkeep: 'upkeep',
-	Main: 'main',
-} as const;
-
-export type PhaseId = (typeof PhaseId)[keyof typeof PhaseId];
-
-export const PhaseStepId = {
-	ResolveDynamicTriggers: 'resolve-dynamic-triggers',
-	GainIncome: 'gain-income',
-	GainActionPoints: 'gain-ap',
-	RaiseStrength: 'raise-strength',
-	PayUpkeep: 'pay-upkeep',
-	WarRecovery: 'war-recovery',
-	Main: 'main',
-} as const;
-
-export type PhaseStepId = (typeof PhaseStepId)[keyof typeof PhaseStepId];
-
-export const PhaseTrigger = {
-	OnGrowthPhase: 'onGrowthPhase',
-	OnUpkeepPhase: 'onUpkeepPhase',
-} as const satisfies Record<string, TriggerKey>;
-
-export type PhaseTrigger = (typeof PhaseTrigger)[keyof typeof PhaseTrigger];
+export { PhaseId, PhaseStepId, PhaseTrigger };
+export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTrigger as PhaseTriggerKey } from './phaseTypes';
 
 export const PHASES: PhaseDef[] = [
 	phase(PhaseId.Growth)
@@ -43,14 +22,22 @@ export const PHASES: PhaseDef[] = [
 				.title('Raise Strength')
 				.effect(
 					effect()
-						.evaluator(populationEvaluator().role(PopulationRole.Legion))
-						.effect(effect(Types.Stat, StatMethods.ADD_PCT).params(statParams().key(Stat.armyStrength).percentFromStat(Stat.growth)).round('up').build())
+						.evaluator(resourceEvaluator().resourceId(PopulationRole.Legion))
+						.effect(
+							effect(Types.Resource, ResourceMethods.ADD)
+								.params(resourcePercentFromResourceChange(Stat.armyStrength, Stat.growth, { roundingMode: 'up', additive: true }))
+								.build(),
+						)
 						.build(),
 				)
 				.effect(
 					effect()
-						.evaluator(populationEvaluator().role(PopulationRole.Fortifier))
-						.effect(effect(Types.Stat, StatMethods.ADD_PCT).params(statParams().key(Stat.fortificationStrength).percentFromStat(Stat.growth)).round('up').build())
+						.evaluator(resourceEvaluator().resourceId(PopulationRole.Fortifier))
+						.effect(
+							effect(Types.Resource, ResourceMethods.ADD)
+								.params(resourcePercentFromResourceChange(Stat.fortificationStrength, Stat.growth, { roundingMode: 'up', additive: true }))
+								.build(),
+						)
 						.build(),
 				),
 		)
@@ -65,8 +52,8 @@ export const PHASES: PhaseDef[] = [
 				.title('War recovery')
 				.effect(
 					effect()
-						.evaluator(compareEvaluator().left(statEvaluator().key(Stat.warWeariness)).operator('gt').right(0))
-						.effect(effect(Types.Stat, StatMethods.REMOVE).params(statParams().key(Stat.warWeariness).amount(1)).build())
+						.evaluator(compareEvaluator().left(resourceEvaluator().resourceId(Stat.warWeariness)).operator('gt').right(0))
+						.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(Stat.warWeariness).amount(1).build()).build())
 						.build(),
 				),
 		)
