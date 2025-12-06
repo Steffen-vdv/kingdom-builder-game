@@ -19,11 +19,7 @@ type StatAmountParams = ResourceChangeEffectParams &
 		amount: number;
 	};
 
-type StatPercentFromStatParams = ResourceChangeEffectParams &
-	Record<string, unknown> & {
-		key: StatKey;
-		percentStat: StatKey;
-	};
+type ResourcePercentFromResourceParams = ResourceChangeEffectParams & Record<string, unknown>;
 
 type ResourceTransferParams = ResourceV2TransferEffectParams &
 	Record<string, unknown> & {
@@ -60,15 +56,25 @@ export function statAmountChange(stat: StatKey, amount: number, configure?: Chan
 	};
 }
 
-export function statPercentFromStatChange(target: StatKey, source: StatKey, configure?: ChangeBuilderConfigurator): StatPercentFromStatParams {
-	const builder = resourceChange(getStatResourceV2Id(target));
-	builder.percent(0);
-	configureBuilder(builder, configure);
+export function resourcePercentFromResourceChange(
+	targetResourceId: string,
+	sourceResourceId: string,
+	options?: { roundingMode?: 'up' | 'down'; additive?: boolean },
+): ResourcePercentFromResourceParams {
 	return {
-		...builder.build(),
-		key: target,
-		percentStat: source,
+		resourceId: targetResourceId,
+		change: {
+			type: 'percentFromResource',
+			sourceResourceId,
+			...(options?.roundingMode ? { roundingMode: options.roundingMode } : {}),
+			...(options?.additive !== undefined ? { additive: options.additive } : {}),
+		},
 	};
+}
+
+/** @deprecated Use resourcePercentFromResourceChange instead */
+export function statPercentFromStatChange(target: StatKey, source: StatKey): ResourcePercentFromResourceParams {
+	return resourcePercentFromResourceChange(getStatResourceV2Id(target), getStatResourceV2Id(source), { additive: true });
 }
 
 export function resourceTransferAmount(resource: ResourceKey, amount: number): ResourceTransferParams {

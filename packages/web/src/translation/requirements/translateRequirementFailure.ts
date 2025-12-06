@@ -1,10 +1,6 @@
 import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../context';
-import {
-	selectPopulationRoleDisplay,
-	selectSlotDisplay,
-	selectStatDisplay,
-} from '../context/assetSelectors';
+import { selectSlotDisplay } from '../context/assetSelectors';
 
 type EvaluatorOperand = {
 	type?: string;
@@ -24,34 +20,24 @@ type OperandDescription = {
 	label: string;
 };
 
-function describeStatOperand(
+/**
+ * Describes any resource-based evaluator operand using ResourceV2 metadata.
+ * All resources (including what were formerly "stats" and "population")
+ * use the unified ResourceV2 registry for labels and icons.
+ */
+function describeResourceOperand(
 	params: Record<string, unknown> | undefined,
 	context: TranslationContext,
 ): OperandDescription {
 	const resourceId = params?.['resourceId'];
 	if (typeof resourceId === 'string') {
-		const stat = selectStatDisplay(context.assets, resourceId);
-		if (stat.icon) {
-			return { icon: stat.icon, label: stat.label };
+		const metadata = context.resourceMetadataV2.get(resourceId);
+		if (metadata.icon) {
+			return { icon: metadata.icon, label: metadata.label };
 		}
-		return { label: stat.label };
+		return { label: metadata.label };
 	}
-	return { label: 'Stat' };
-}
-
-function describePopulationOperand(
-	params: Record<string, unknown> | undefined,
-	context: TranslationContext,
-): OperandDescription {
-	const resourceId = params?.['resourceId'];
-	const descriptor = selectPopulationRoleDisplay(
-		context.assets,
-		typeof resourceId === 'string' ? resourceId : undefined,
-	);
-	if (descriptor.icon) {
-		return { icon: descriptor.icon, label: descriptor.label };
-	}
-	return { label: descriptor.label };
+	return { label: 'Value' };
 }
 
 function describeEvaluatorOperand(
@@ -61,14 +47,16 @@ function describeEvaluatorOperand(
 	if (!operand || typeof operand === 'number') {
 		return { label: 'Value' };
 	}
-	switch (operand.type) {
-		case 'stat':
-			return describeStatOperand(operand.params, context);
-		case 'population':
-			return describePopulationOperand(operand.params, context);
-		default:
-			return { label: operand.type ?? 'Value' };
+	// Land evaluator has its own display
+	if (operand.type === 'land') {
+		const slot = selectSlotDisplay(context.assets);
+		return { icon: slot.icon, label: slot.label || 'Land' };
 	}
+	// All resource evaluators use ResourceV2 metadata (returns 'Value' if no id)
+	if (operand.type === 'resource') {
+		return describeResourceOperand(operand.params, context);
+	}
+	return { label: 'Value' };
 }
 
 function isLandOperand(operand: CompareOperand | undefined): boolean {
@@ -101,28 +89,6 @@ function formatOperand(
 	return base;
 }
 
-function isGenericPopulation(operand: CompareOperand | undefined): boolean {
-	if (!operand || typeof operand === 'number') {
-		return false;
-	}
-	if (operand.type !== 'population') {
-		return false;
-	}
-	const resourceId = operand.params?.['resourceId'];
-	return typeof resourceId !== 'string';
-}
-
-function isMaxPopulationStat(operand: CompareOperand | undefined): boolean {
-	if (!operand || typeof operand === 'number') {
-		return false;
-	}
-	if (operand.type !== 'stat') {
-		return false;
-	}
-	const resourceId = operand.params?.['resourceId'];
-	return resourceId === 'maxPopulation';
-}
-
 function operatorPhrase(operator: CompareParams['operator']): string {
 	switch (operator) {
 		case 'lt':
@@ -149,6 +115,7 @@ function translateCompareRequirement(
 	const params = (failure.requirement.params ?? {}) as CompareParams;
 	const leftOperand = params.left;
 	const rightOperand = params.right;
+	// Special case for land availability check
 	if (params.operator === 'gt' && isLandOperand(leftOperand)) {
 		const rightNumber =
 			typeof rightOperand === 'number' ? rightOperand : undefined;
@@ -156,22 +123,7 @@ function translateCompareRequirement(
 			return describeLandRequirement(context);
 		}
 	}
-	if (
-		params.operator === 'lt' &&
-		isGenericPopulation(leftOperand) &&
-		isMaxPopulationStat(rightOperand)
-	) {
-		const leftValue = failure.details?.['left'];
-		const rightValue = failure.details?.['right'];
-		const current = typeof leftValue === 'number' ? leftValue : undefined;
-		const capacity = typeof rightValue === 'number' ? rightValue : undefined;
-		const stat = selectStatDisplay(context.assets, 'maxPopulation');
-		const prefix = stat.icon ? `${stat.icon} ` : '';
-		if (typeof current === 'number' && typeof capacity === 'number') {
-			return `${prefix}Population is at capacity (${current}/${capacity})`;
-		}
-		return `${prefix}Population is at capacity`;
-	}
+	// Generic formatting using ResourceV2 metadata for labels
 	const left = formatOperand(leftOperand, context, failure.details?.['left']);
 	const right = formatOperand(
 		rightOperand,

@@ -50,11 +50,20 @@ function normaliseChange(change: ResourceChangeParameters): ResourceChangeParame
 		return { type: 'amount', amount: change.amount };
 	}
 
+	if (change.type === 'percentFromResource') {
+		return {
+			type: 'percentFromResource',
+			sourceResourceId: change.sourceResourceId,
+			...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+			...(change.additive !== undefined ? { additive: change.additive } : {}),
+		};
+	}
+
 	if (change.modifiers.length === 0) {
 		throw new Error(`${ENDPOINT_BUILDER_NAME} percent change requires at least one modifier.`);
 	}
 
-	const modifiers = change.modifiers.map((modifier, index) => {
+	const modifiers = change.modifiers.map((modifier: number, index: number) => {
 		ensureFinite(modifier, `percent modifier at position ${index}`);
 		return modifier;
 	});

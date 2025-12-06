@@ -15,7 +15,7 @@ describe('evaluator:compare requirement', () => {
 		engineContext.activePlayer.resourceValues[Stat.maxPopulation] = 2;
 		const requirement = {
 			params: {
-				left: { type: 'stat', params: { key: Stat.maxPopulation } },
+				left: { type: 'stat', params: { resourceId: Stat.maxPopulation } },
 				right: 1,
 				operator: 'gt',
 			},

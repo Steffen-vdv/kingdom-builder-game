@@ -9,7 +9,7 @@ import {
 	compareRequirement,
 	effect,
 	populationEvaluator,
-	statEvaluator,
+	resourceEvaluator,
 	actionParams,
 	actionEffectGroup,
 	actionEffectGroupOption,
@@ -23,7 +23,8 @@ import { ActionMethods, AttackMethods, PassiveMethods, ResourceMethods, Types, C
 import { Focus } from '../defs';
 import { ActionId, DevelopActionId, PopulationEvaluationId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
-import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent, statAmountChange } from '../helpers/resourceV2Effects';
+import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent } from '../helpers/resourceV2Effects';
+import { resourceChange } from '../resourceV2';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -128,7 +129,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.id(ActionId.army_attack)
 			.name('Army Attack')
 			.icon('🗡️')
-			.requirement(compareRequirement().left(statEvaluator().key(Stat.warWeariness)).operator('lt').right(populationEvaluator().role(PopulationRole.Legion)).build())
+			.requirement(compareRequirement().left(resourceEvaluator().resourceId(Stat.warWeariness)).operator('lt').right(resourceEvaluator().resourceId(PopulationRole.Legion)).build())
 			.effect(
 				effect(Types.Attack, AttackMethods.PERFORM)
 					.params(
@@ -141,7 +142,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(statAmountChange(Stat.warWeariness, 1)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Stat.warWeariness).amount(1).build()).build())
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 6)
 			.focus(Focus.Aggressive)
@@ -155,13 +156,9 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.name('Hold Festival')
 			.icon('🎉')
 			.cost(Resource.gold, 3)
-			.requirement(compareRequirement().left(statEvaluator().key(Stat.warWeariness)).operator('eq').right(0).build())
+			.requirement(compareRequirement().left(resourceEvaluator().resourceId(Stat.warWeariness)).operator('eq').right(0).build())
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.happiness, 3)).build())
-			.effect(
-				effect(Types.Resource, ResourceMethods.REMOVE)
-					.params(statAmountChange(Stat.fortificationStrength, 3, (change) => change.reconciliation()))
-					.build(),
-			)
+			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(Stat.fortificationStrength).amount(3).reconciliation().build()).build())
 			.effect(
 				effect(Types.Passive, PassiveMethods.ADD)
 					.params(passiveParams().id('hold_festival_penalty').name('Festival Hangover').icon('🤮').removeOnUpkeepStep())

@@ -28,8 +28,6 @@ function getResourceV2Icon(
 }
 
 export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
-	stat: getResourceV2Icon,
-	population: getResourceV2Icon,
 	resource: getResourceV2Icon,
 	land: (_params, translationContext) => {
 		const icon = selectSlotDisplay(translationContext.assets).icon;

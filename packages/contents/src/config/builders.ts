@@ -32,6 +32,7 @@ export {
 	effect,
 	populationEvaluator,
 	requirement,
+	resourceEvaluator,
 	statEvaluator,
 } from './builders/evaluators';
 

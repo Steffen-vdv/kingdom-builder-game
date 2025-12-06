@@ -1,21 +1,14 @@
-import { Stat, type StatKey } from './stats';
-import { PopulationRole, type PopulationRoleId } from './populationRoles';
-import { effect, phase, step, populationEvaluator, compareEvaluator, statEvaluator, type PhaseDef } from './config/builders';
-import { Types, StatMethods, ResourceMethods } from './config/builderShared';
-import { statAmountChange, statPercentFromStatChange } from './helpers/resourceV2Effects';
+import { Stat } from './stats';
+import { PopulationRole } from './populationRoles';
+import { effect, phase, step, compareEvaluator, resourceEvaluator, type PhaseDef } from './config/builders';
+import { Types, ResourceMethods } from './config/builderShared';
+import { resourcePercentFromResourceChange } from './helpers/resourceV2Effects';
+import { resourceChange } from './resourceV2';
 import { ON_GAIN_AP_STEP, ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP } from './defs';
 import { PhaseId, PhaseStepId, PhaseTrigger } from './phaseTypes';
 
 export { PhaseId, PhaseStepId, PhaseTrigger };
 export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTrigger as PhaseTriggerKey } from './phaseTypes';
-
-const LEGION_ROLE: PopulationRoleId = PopulationRole.Legion;
-const FORTIFIER_ROLE: PopulationRoleId = PopulationRole.Fortifier;
-
-const ARMY_STRENGTH_STAT: StatKey = Stat.armyStrength;
-const FORTIFICATION_STRENGTH_STAT: StatKey = Stat.fortificationStrength;
-const GROWTH_STAT: StatKey = Stat.growth;
-const WAR_WEARINESS_STAT: StatKey = Stat.warWeariness;
 
 export const PHASES: PhaseDef[] = [
 	phase(PhaseId.Growth)
@@ -29,14 +22,22 @@ export const PHASES: PhaseDef[] = [
 				.title('Raise Strength')
 				.effect(
 					effect()
-						.evaluator(populationEvaluator().role(LEGION_ROLE))
-						.effect(effect(Types.Stat, StatMethods.ADD_PCT).params(statPercentFromStatChange(ARMY_STRENGTH_STAT, GROWTH_STAT)).round('up').build())
+						.evaluator(resourceEvaluator().resourceId(PopulationRole.Legion))
+						.effect(
+							effect(Types.Resource, ResourceMethods.ADD)
+								.params(resourcePercentFromResourceChange(Stat.armyStrength, Stat.growth, { roundingMode: 'up', additive: true }))
+								.build(),
+						)
 						.build(),
 				)
 				.effect(
 					effect()
-						.evaluator(populationEvaluator().role(FORTIFIER_ROLE))
-						.effect(effect(Types.Stat, StatMethods.ADD_PCT).params(statPercentFromStatChange(FORTIFICATION_STRENGTH_STAT, GROWTH_STAT)).round('up').build())
+						.evaluator(resourceEvaluator().resourceId(PopulationRole.Fortifier))
+						.effect(
+							effect(Types.Resource, ResourceMethods.ADD)
+								.params(resourcePercentFromResourceChange(Stat.fortificationStrength, Stat.growth, { roundingMode: 'up', additive: true }))
+								.build(),
+						)
 						.build(),
 				),
 		)
@@ -51,8 +52,8 @@ export const PHASES: PhaseDef[] = [
 				.title('War recovery')
 				.effect(
 					effect()
-						.evaluator(compareEvaluator().left(statEvaluator().key(WAR_WEARINESS_STAT)).operator('gt').right(0))
-						.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(statAmountChange(WAR_WEARINESS_STAT, 1)).build())
+						.evaluator(compareEvaluator().left(resourceEvaluator().resourceId(Stat.warWeariness)).operator('gt').right(0))
+						.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(Stat.warWeariness).amount(1).build()).build())
 						.build(),
 				),
 		)

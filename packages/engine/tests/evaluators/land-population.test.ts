@@ -33,13 +33,13 @@ describe('evaluators', () => {
 		const total = populationEvaluator({ params: {} } as never, context);
 		expect(total).toBe(secondaryRole ? 5 : 3);
 		const targeted = populationEvaluator(
-			{ params: { role: focusRole } } as never,
+			{ params: { resourceId: focusRole } } as never,
 			context,
 		);
 		expect(targeted).toBe(3);
 		const missingRole = `${focusRole}-missing`;
 		const missingTotal = populationEvaluator(
-			{ params: { role: missingRole } } as never,
+			{ params: { resourceId: missingRole } } as never,
 			context,
 		);
 		expect(missingTotal).toBe(0);
