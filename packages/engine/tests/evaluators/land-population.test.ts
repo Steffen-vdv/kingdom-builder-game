@@ -3,6 +3,7 @@ import { landEvaluator } from '../../src/evaluators/land.ts';
 import { populationEvaluator } from '../../src/evaluators/population.ts';
 import { createTestEngine } from '../helpers.ts';
 import { Land } from '../../src/state';
+import { PopulationRole } from '@kingdom-builder/contents';
 
 describe('evaluators', () => {
 	it('counts total available land slots with negative usage guarded', () => {
@@ -19,10 +20,8 @@ describe('evaluators', () => {
 
 	it('totals population counts and filters by role when provided', () => {
 		const context = createTestEngine();
-		// Population roles ARE ResourceV2 IDs - get them from resourceValues keys
-		const roleIds = Object.keys(context.activePlayer.resourceValues).filter(
-			(key) => key.startsWith('resource:population:'),
-		);
+		// Get population role IDs from contents (not by parsing resourceValues keys)
+		const roleIds = Object.values(PopulationRole);
 		const focusRole = roleIds[0]!;
 		const secondaryRole = roleIds.find((entry) => entry !== focusRole);
 		// Population values accessed via resourceValues
