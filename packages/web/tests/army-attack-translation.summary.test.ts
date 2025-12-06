@@ -55,13 +55,17 @@ describe('army attack translation summary', () => {
 			translation,
 			Stat.warWeariness,
 		);
+		// V2 format: stats are now resources with resourceId
 		const warEffect = attack.effects.find(
 			(effectDef: EffectDef) =>
-				effectDef.type === 'stat' &&
-				(effectDef.params as { key?: string }).key ===
+				effectDef.type === 'resource' &&
+				(effectDef.params as { resourceId?: string }).resourceId ===
 					SYNTH_STAT_IDS.warWeariness,
 		);
-		const warAmt = (warEffect?.params as { amount?: number })?.amount ?? 0;
+		// V2 format: amount is in change.amount
+		const warChange = (warEffect?.params as { change?: { amount?: number } })
+			?.change;
+		const warAmt = warChange?.amount ?? 0;
 		const summary = summarizeContent('action', attack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
@@ -84,11 +88,11 @@ describe('army attack translation summary', () => {
 	});
 
 	it('describes plunder effects under on-damage entry', () => {
-		const { engineContext, plunder } = createSyntheticEngineContext();
+		const { translation, plunder } = createSyntheticEngineContext();
 		const description = describeContent(
 			'action',
 			SYNTH_ATTACK.id,
-			engineContext,
+			translation,
 		);
 		const onDamage = description.find(
 			(entry) =>

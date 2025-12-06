@@ -1,10 +1,23 @@
 import { registerEffectFormatter } from '../factory';
 import type { TranslationResourceV2Metadata } from '../../context/types';
 
-// Extract resourceId from V2 format only
+// Extract resourceId from V2 format - check direct param, then donor/recipient
 function getResourceId(params: Record<string, unknown> | undefined): string {
+	// Direct resourceId (add/remove effects)
 	const resourceId = params?.['resourceId'];
-	return typeof resourceId === 'string' ? resourceId : '';
+	if (typeof resourceId === 'string') {
+		return resourceId;
+	}
+	// Transfer effects have resourceId inside donor/recipient
+	const donor = params?.['donor'] as { resourceId?: string } | undefined;
+	if (typeof donor?.resourceId === 'string') {
+		return donor.resourceId;
+	}
+	const recipient = params?.['recipient'] as { resourceId?: string } | undefined;
+	if (typeof recipient?.resourceId === 'string') {
+		return recipient.resourceId;
+	}
+	return '';
 }
 
 // Extract amount from V2 change format only

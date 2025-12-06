@@ -188,8 +188,9 @@ describe('army attack translation log', () => {
 			text: `On opponent ${buildingDisplay} destruction`,
 			depth: 1,
 		});
+		// V2 format adds space after icon
 		expect(log[6]).toMatchObject({
-			text: `${gold.icon}+${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
+			text: `${gold.icon} +${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
 			depth: 2,
 		});
 	});
