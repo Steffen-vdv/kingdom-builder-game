@@ -28,9 +28,6 @@ import {
 } from '@kingdom-builder/testing';
 
 export function createSyntheticContext() {
-	// Legacy keys kept for docs but unused - V2 IDs are used
-	const _costKey = 'r0';
-	const gainKey = 'r1';
 	const costResourceId = 'resource:synthetic:r0';
 	const gainResourceId = 'resource:synthetic:r1';
 	const startAp = 3;
@@ -124,7 +121,7 @@ export function createSyntheticContext() {
 		defaultActionAPCost: 1,
 		absorptionCapPct: 1,
 		absorptionRounding: 'down',
-		tieredResourceKey: gainKey,
+		tieredResourceKey: gainResourceId,
 		tierDefinitions: [
 			happinessTier('synthetic:happiness:baseline')
 				.range(0)
@@ -182,8 +179,8 @@ export function createSyntheticContext() {
 		engineContext,
 		actions,
 		phases,
-		costKey: costResourceId,
-		gainKey: gainResourceId,
+		costResourceId,
+		gainResourceId,
 		start,
 	};
 }

@@ -188,6 +188,64 @@ When encountering legacy code:
 Any PR introducing or maintaining legacy patterns will be rejected. When in
 doubt, check if your code references concepts that should be unified resources.
 
+## Tech Debt Prevention Policy
+
+**MANDATORY: Clean as you go. No exceptions.**
+
+This project has suffered from agents leaving deprecated code, compatibility
+shims, and "temporary" workarounds scattered throughout the codebase. Cleaning
+up this mess is tedious, error-prone, and wastes everyone's time. **Do not
+contribute to this problem.**
+
+### The Rule
+
+When you introduce a new pattern, API, or abstraction that replaces an existing
+one:
+
+1. **Migrate all usages immediately** — Find every reference to the old pattern
+   and update it to use the new one. This happens in the same PR, not "later."
+2. **Delete the old code** — Remove the deprecated function, class, or pattern
+   entirely. Do not mark it `@deprecated`. Do not add compatibility wrappers.
+   Do not leave it "for reference." Delete it.
+3. **Update tests** — Tests that relied on the old pattern must be updated to
+   use the new one. No test should reference deleted code.
+
+### Why This Matters
+
+Leaving deprecated code around creates:
+
+- **Confusion**: Which pattern should new code use? Both exist, so both get
+  used, and now you have inconsistency.
+- **Maintenance burden**: Someone (probably a future AI agent) will eventually
+  have to audit and clean this up. That's wasted effort.
+- **Broken mental models**: The codebase becomes harder to understand when it
+  contains multiple ways to do the same thing.
+
+### What NOT To Do
+
+❌ Add `@deprecated` JSDoc annotations and call it done
+❌ Create "legacy" wrappers that delegate to new implementations
+❌ Leave commented-out old code "for reference"
+❌ Add TODO comments promising to migrate "later"
+❌ Merge a PR that introduces a new pattern without migrating all usages
+
+### What TO Do
+
+✅ When creating `resourceEvaluator()`, delete `statEvaluator()` and
+`populationEvaluator()` in the same commit
+✅ When renaming `costKey` to `costResourceId`, update all 20+ test files in the
+same PR
+✅ When moving from V1 to V2 APIs, remove V1 entirely once V2 is working
+
+### Accountability
+
+If you encounter deprecated markers, compatibility layers, or TODO comments
+about migration during your work, **clean them up**. Don't perpetuate the mess.
+The agent who left that debt didn't follow this policy — you should.
+
+This isn't optional. PRs that add new deprecations or compatibility shims
+without completing the full migration will be rejected.
+
 ## Package Boundaries
 
 - **Web** → imports only from engine's public API via server HTTP calls

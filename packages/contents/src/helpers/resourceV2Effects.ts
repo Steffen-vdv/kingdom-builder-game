@@ -72,11 +72,6 @@ export function resourcePercentFromResourceChange(
 	};
 }
 
-/** @deprecated Use resourcePercentFromResourceChange instead */
-export function statPercentFromStatChange(target: StatKey, source: StatKey): ResourcePercentFromResourceParams {
-	return resourcePercentFromResourceChange(getStatResourceV2Id(target), getStatResourceV2Id(source), { additive: true });
-}
-
 export function resourceTransferAmount(resource: ResourceKey, amount: number): ResourceTransferParams {
 	const resourceId = getResourceV2Id(resource);
 	const donor = transferEndpoint(resourceId)

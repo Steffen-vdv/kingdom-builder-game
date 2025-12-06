@@ -32,8 +32,8 @@ export type SyntheticSessionManagerOptions = Omit<
 export interface SyntheticSessionManagerResult {
 	manager: SessionManager;
 	factory: ContentFactory;
-	costKey: string;
-	gainKey: string;
+	costResourceId: string;
+	gainResourceId: string;
 	actionId: string;
 	phases: PhaseConfig[];
 	start: StartConfig;
@@ -47,9 +47,6 @@ export function createSyntheticSessionManager(
 	const factory = createContentFactory();
 	const costResourceId = 'resource:synthetic:cost';
 	const gainResourceId = 'resource:synthetic:gain';
-	// Legacy keys are deprecated but kept for backwards compatibility
-	const costKey = costResourceId;
-	const gainKey = gainResourceId;
 	// Create ResourceV2 definitions for the synthetic resources
 	const { resources, groups } = createResourceV2Registries({
 		resources: [
@@ -163,8 +160,8 @@ export function createSyntheticSessionManager(
 	return {
 		manager,
 		factory,
-		costKey,
-		gainKey,
+		costResourceId,
+		gainResourceId,
 		actionId: action.id,
 		phases,
 		start,

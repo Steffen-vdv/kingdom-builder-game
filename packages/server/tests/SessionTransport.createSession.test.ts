@@ -181,7 +181,7 @@ describe('SessionTransport createSession', () => {
 	});
 
 	it('includes base registries in session responses', () => {
-		const { manager, factory, costKey, gainKey, actionId } =
+		const { manager, factory, costResourceId, gainResourceId, actionId } =
 			createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -207,8 +207,12 @@ describe('SessionTransport createSession', () => {
 			new Set(factory.populations.keys()),
 		);
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
-		expect(registries.resources[costKey]).toMatchObject({ key: costKey });
-		expect(registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(registries.resources[costResourceId]).toMatchObject({
+			key: costResourceId,
+		});
+		expect(registries.resources[gainResourceId]).toMatchObject({
+			key: gainResourceId,
+		});
 	});
 
 	it('accepts custom session configuration', () => {

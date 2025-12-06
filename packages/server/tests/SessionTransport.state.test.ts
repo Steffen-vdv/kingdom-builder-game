@@ -36,7 +36,7 @@ const authorizedHeaders = {
 
 describe('SessionTransport session state', () => {
 	it('returns session state snapshots', () => {
-		const { manager, actionId, costKey, gainKey } =
+		const { manager, actionId, costResourceId, gainResourceId } =
 			createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
@@ -59,8 +59,12 @@ describe('SessionTransport session state', () => {
 		expectDescriptorMetadata(state.snapshot.metadata);
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expectStaticMetadata(manager.getMetadata());
-		expect(state.registries.resources[costKey]).toMatchObject({ key: costKey });
-		expect(state.registries.resources[gainKey]).toMatchObject({ key: gainKey });
+		expect(state.registries.resources[costResourceId]).toMatchObject({
+			key: costResourceId,
+		});
+		expect(state.registries.resources[gainResourceId]).toMatchObject({
+			key: gainResourceId,
+		});
 	});
 
 	it('throws when a session cannot be located', () => {
