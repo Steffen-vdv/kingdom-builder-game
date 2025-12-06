@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { collectEvaluatorDependencies } from '../src/stat_sources.ts';
+import { collectEvaluatorDependencies } from '../src/resource_sources.ts';
 
-describe('stat source evaluator dependencies', () => {
+describe('resource source evaluator dependencies', () => {
 	it('returns [] when the evaluator is missing or unhandled', () => {
 		expect(collectEvaluatorDependencies(undefined)).toEqual([]);
 		const missingCollector = collectEvaluatorDependencies({
@@ -27,11 +27,11 @@ describe('stat source evaluator dependencies', () => {
 		expect(populationDependencies).toEqual([
 			{ type: 'population', id: population.id },
 		]);
-		const statDependencies = collectEvaluatorDependencies({
-			type: 'stat',
+		const resourceDependencies = collectEvaluatorDependencies({
+			type: 'resource',
 			params: ['not-an-object'] as unknown as Record<string, unknown>,
 		});
-		expect(statDependencies).toEqual([]);
+		expect(resourceDependencies).toEqual([]);
 	});
 
 	it('collects nested compare dependencies and skips numbers', () => {

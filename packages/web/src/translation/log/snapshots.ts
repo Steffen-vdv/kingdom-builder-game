@@ -23,9 +23,6 @@ import type {
 } from '../context';
 
 export interface PlayerSnapshot {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
 	buildings: string[];
 	lands: Array<{
 		id: string;
@@ -64,12 +61,6 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 		slotsUsed: land.slotsUsed,
 		developments: [...land.developments],
 	}));
-	const population = (() => {
-		if ('population' in playerState) {
-			return { ...playerState.population };
-		}
-		return {};
-	})();
 	const passives = 'passives' in playerState ? [...playerState.passives] : [];
 	const valuesV2 =
 		'valuesV2' in playerState && playerState.valuesV2
@@ -88,9 +79,6 @@ export function snapshotPlayer(playerState: SnapshotInput): PlayerSnapshot {
 				)
 			: {};
 	return {
-		resources: { ...playerState.resources },
-		stats: { ...playerState.stats },
-		population,
 		buildings: buildingList,
 		lands,
 		passives,
@@ -104,12 +92,7 @@ export function collectResourceKeys(
 	nextSnapshot: PlayerSnapshot,
 ): string[] {
 	const keys = new Set<string>();
-	for (const key of Object.keys(previousSnapshot.resources)) {
-		keys.add(key);
-	}
-	for (const key of Object.keys(nextSnapshot.resources)) {
-		keys.add(key);
-	}
+	// Collect keys from valuesV2 (unified resources, stats, population)
 	for (const key of Object.keys(previousSnapshot.valuesV2)) {
 		keys.add(key);
 	}

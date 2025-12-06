@@ -30,8 +30,8 @@ export interface ActionTraceLandSnapshot {
 }
 
 export interface ActionPlayerSnapshot {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
+	/** Unified ResourceV2 values (resources, stats, population). */
+	valuesV2: Record<string, number>;
 	buildings: string[];
 	lands: ActionTraceLandSnapshot[];
 	passives: SessionPassiveSummary[];

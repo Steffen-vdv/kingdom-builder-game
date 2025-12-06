@@ -2,12 +2,12 @@ import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
-import type { StatSourceFrame } from './stat_sources';
+import type { ResourceSourceFrame } from './resource_sources';
 import { getResourceValue } from './resource-v2';
 
 export interface TriggerEffectBundle {
 	effects: EffectDef[];
-	frames?: StatSourceFrame | StatSourceFrame[];
+	frames?: ResourceSourceFrame | ResourceSourceFrame[];
 }
 
 function pushUpkeepEffect(

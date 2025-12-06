@@ -1,7 +1,7 @@
 import type { GameState, ResourceKey, PlayerId } from './state';
 import type { AISystem } from './ai';
 import type { Services, PassiveManager } from './services';
-import type { StatSourceFrame } from './stat_sources';
+import type { ResourceSourceFrame } from './resource_sources';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -41,13 +41,15 @@ export class EngineContext {
 		key: string;
 		amount: number;
 	}[] = [];
-	// Cache base values for stat:add_pct per turn/phase/step to ensure
-	// additive scaling when effects are evaluated multiple times in the
-	// same step (e.g. multiple leaders raising strength).
-	statAddPctBases: Record<string, number> = {};
-	statAddPctAccums: Record<string, number> = {};
+	/**
+	 * Cache base values for additive percent changes per turn/phase/step.
+	 * Multiple percent changes in the same step scale additively from the
+	 * original base value rather than compounding.
+	 */
+	resourcePercentBases: Record<string, number> = {};
+	resourcePercentAccums: Record<string, number> = {};
 	actionTraces: ActionTrace[] = [];
-	statSourceStack: StatSourceFrame[] = [];
+	resourceSourceStack: ResourceSourceFrame[] = [];
 
 	private _effectLogs: Map<string, unknown[]> = new Map();
 

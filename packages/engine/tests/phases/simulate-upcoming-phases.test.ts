@@ -20,8 +20,8 @@ function sanitizePlayerState(context: ReturnType<typeof createTestEngine>) {
 	for (const key of Object.keys(player.resourceTouched)) {
 		player.resourceTouched[key] = false;
 	}
-	for (const key of Object.keys(player.statSources)) {
-		player.statSources[key] = {};
+	for (const key of Object.keys(player.resourceSources)) {
+		player.resourceSources[key] = {};
 	}
 	// Reset phase/step skip flags
 	for (const key of Object.keys(player.skipPhases)) {
@@ -80,10 +80,8 @@ describe('simulateUpcomingPhases', () => {
 		});
 		expect(context.game.currentPhase).toBe(beforePhase);
 		expect(context.game.currentPlayerIndex).toBe(beforePlayerIndex);
-		expect(result.delta.resources[Resource.gold]).toBe(goldGain);
-		expect(result.delta.resources[Resource.ap]).toBe(apGain);
-		expect(result.delta.stats).toEqual({});
-		expect(result.delta.population).toEqual({});
+		expect(result.delta.valuesV2[Resource.gold]).toBe(goldGain);
+		expect(result.delta.valuesV2[Resource.ap]).toBe(apGain);
 	});
 
 	it('treats skip flags as completing the affected phases', () => {
@@ -98,7 +96,7 @@ describe('simulateUpcomingPhases', () => {
 				upkeep: PhaseId.Upkeep,
 			},
 		});
-		expect(result.delta.resources).toEqual({});
+		expect(result.delta.valuesV2).toEqual({});
 		expect(
 			result.steps.some((step) => step.skipped?.phaseId === PhaseId.Growth),
 		).toBe(true);
@@ -126,10 +124,10 @@ describe('simulateUpcomingPhases', () => {
 			context.populations.get(PopulationRole.Council)?.upkeep?.[
 				Resource.gold
 			] ?? 0;
-		expect(result.delta.resources[Resource.gold]).toBe(
+		expect(result.delta.valuesV2[Resource.gold]).toBe(
 			-(upkeepCost + councilUpkeep),
 		);
-		expect(result.after.resources[Resource.gold]).toBe(
+		expect(result.after.valuesV2[Resource.gold]).toBe(
 			10 - upkeepCost - councilUpkeep,
 		);
 	});
@@ -160,7 +158,7 @@ describe('simulateUpcomingPhases', () => {
 			.map((step) => step.phase);
 		expect(relevantPhases).toContain(PhaseId.Growth);
 		expect(relevantPhases).toContain(PhaseId.Upkeep);
-		expect(result.delta.resources[Resource.gold]).toBe(goldGain - upkeepCost);
+		expect(result.delta.valuesV2[Resource.gold]).toBe(goldGain - upkeepCost);
 	});
 
 	it('throws when rule metadata omits core phase ids', () => {

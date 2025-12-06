@@ -18,7 +18,7 @@ import {
 	clonePassives,
 	cloneSkipPhases,
 	cloneSkipSteps,
-	cloneStatSources,
+	cloneResourceSources,
 } from './sessionCloneHelpers';
 
 const EMPTY_RESOURCE_CATALOG_V2: SessionResourceCatalogV2 = Object.freeze({
@@ -66,7 +66,7 @@ interface SnapshotPlayerOptions {
 	lands?: SessionPlayerStateSnapshot['lands'];
 	buildings?: string[];
 	actions?: string[];
-	statSources?: SessionPlayerStateSnapshot['statSources'];
+	resourceSources?: SessionPlayerStateSnapshot['resourceSources'];
 	skipPhases?: SessionPlayerStateSnapshot['skipPhases'];
 	skipSteps?: SessionPlayerStateSnapshot['skipSteps'];
 	passives?: SessionPlayerStateSnapshot['passives'];
@@ -85,7 +85,7 @@ export function createSnapshotPlayer({
 	lands = [],
 	buildings = [],
 	actions = [],
-	statSources = {},
+	resourceSources = {},
 	skipPhases = {},
 	skipSteps = {},
 	passives = [],
@@ -100,7 +100,7 @@ export function createSnapshotPlayer({
 		lands: cloneLands(lands),
 		buildings: [...buildings],
 		actions: [...actions],
-		statSources: cloneStatSources(statSources),
+		resourceSources: cloneResourceSources(resourceSources),
 		skipPhases: cloneSkipPhases(skipPhases),
 		skipSteps: cloneSkipSteps(skipSteps),
 		passives: clonePassives(passives),

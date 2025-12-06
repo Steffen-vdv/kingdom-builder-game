@@ -1,9 +1,9 @@
 import type { EngineContext } from '../context';
-import type { StatSourceFrame } from './types';
+import type { ResourceSourceFrame } from './types';
 
-export function withStatSourceFrames<T>(
+export function withResourceSourceFrames<T>(
 	context: EngineContext,
-	frameDefinitions: StatSourceFrame | StatSourceFrame[] | undefined,
+	frameDefinitions: ResourceSourceFrame | ResourceSourceFrame[] | undefined,
 	execute: () => T,
 ): T {
 	const frameList = Array.isArray(frameDefinitions)
@@ -12,13 +12,13 @@ export function withStatSourceFrames<T>(
 			? [frameDefinitions]
 			: [];
 	for (const frame of frameList) {
-		context.statSourceStack.push(frame);
+		context.resourceSourceStack.push(frame);
 	}
 	try {
 		return execute();
 	} finally {
 		for (let index = 0; index < frameList.length; index += 1) {
-			context.statSourceStack.pop();
+			context.resourceSourceStack.pop();
 		}
 	}
 }

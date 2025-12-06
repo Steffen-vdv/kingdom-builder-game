@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import { formatDiffCommon } from '../src/translation/effects/formatters/attack/shared';
 import {
 	listAttackResourceKeys,
-	listAttackStatKeys,
 	selectAttackResourceDescriptor,
 	selectAttackStatDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
@@ -34,8 +33,7 @@ describe('attack diff formatters registry', () => {
 			translation,
 			resourceKey,
 		);
-		const diff: Extract<AttackPlayerDiff, { type: 'resource' }> = {
-			type: 'resource',
+		const diff: AttackPlayerDiff = {
 			key: resourceKey,
 			before: 2,
 			after: 5,
@@ -50,10 +48,10 @@ describe('attack diff formatters registry', () => {
 
 	it('formats stat diffs using the registered formatter', () => {
 		const { translation } = createSyntheticEngineContext();
-		const statKey = getFirst(listAttackStatKeys(translation));
+		// In V2, stats and resources are unified - use explicit stat key
+		const statKey = SYNTH_STAT_IDS.armyStrength;
 		const statInfo = selectAttackStatDescriptor(translation, statKey);
-		const diff: Extract<AttackPlayerDiff, { type: 'stat' }> = {
-			type: 'stat',
+		const diff: AttackPlayerDiff = {
 			key: statKey,
 			before: 4,
 			after: 9,
@@ -72,8 +70,7 @@ describe('attack diff formatters registry', () => {
 		delete SYNTH_RESOURCE_METADATA[resourceKey];
 		try {
 			const { translation } = createSyntheticEngineContext();
-			const diff: Extract<AttackPlayerDiff, { type: 'resource' }> = {
-				type: 'resource',
+			const diff: AttackPlayerDiff = {
 				key: resourceKey,
 				before: 1,
 				after: 4,
@@ -101,8 +98,7 @@ describe('attack diff formatters registry', () => {
 		suppressSyntheticStatDescriptor(statKey);
 		try {
 			const { translation } = createSyntheticEngineContext();
-			const diff: Extract<AttackPlayerDiff, { type: 'stat' }> = {
-				type: 'stat',
+			const diff: AttackPlayerDiff = {
 				key: statKey,
 				before: 6,
 				after: 7,
@@ -120,17 +116,18 @@ describe('attack diff formatters registry', () => {
 		}
 	});
 
-	it('throws a clear error when a diff type has no registered formatter', () => {
+	it('formats diff using metadata-driven display', () => {
 		const { translation } = createSyntheticEngineContext();
-		const unsupportedDiff = {
-			type: 'unknown',
-			key: 'mystery',
+		// Test that formatting works without type discrimination
+		const diff: AttackPlayerDiff = {
+			key: 'unknown:test:key',
 			before: 0,
 			after: 1,
-		} as unknown as AttackPlayerDiff;
+		};
 
-		expect(() =>
-			formatDiffCommon('Oops', unsupportedDiff, translation),
-		).toThrow(/Unsupported attack diff type: unknown/);
+		// Should not throw, should format using key fallback
+		const formatted = formatDiffCommon('Test', diff, translation);
+		expect(formatted.startsWith('Test:')).toBe(true);
+		expect(formatted).toContain('+1');
 	});
 });

@@ -6,7 +6,7 @@ import type {
 import { Stat } from '@kingdom-builder/contents';
 import { runEffects } from '..';
 import type { EngineContext } from '../../context';
-import { withStatSourceFrames } from '../../stat_sources';
+import { withResourceSourceFrames } from '../../resource_sources';
 import { collectTriggerEffects } from '../../triggers';
 import type { PlayerState } from '../../state';
 import {
@@ -60,7 +60,7 @@ export function resolveAttack(
 	);
 
 	for (const triggerBundle of beforeAttackTriggers) {
-		withStatSourceFrames(context, triggerBundle.frames, () =>
+		withResourceSourceFrames(context, triggerBundle.frames, () =>
 			runEffects(triggerBundle.effects, context),
 		);
 	}
@@ -126,7 +126,7 @@ export function resolveAttack(
 	);
 
 	for (const triggerBundle of afterAttackTriggers) {
-		withStatSourceFrames(context, triggerBundle.frames, () =>
+		withResourceSourceFrames(context, triggerBundle.frames, () =>
 			runEffects(triggerBundle.effects, context),
 		);
 	}

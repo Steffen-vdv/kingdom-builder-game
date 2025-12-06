@@ -33,7 +33,7 @@ function clonePlayer(player: PlayerState) {
 	copy.resourceTierIds = deepClone(player.resourceTierIds);
 	copy.resourceBoundTouched = deepClone(player.resourceBoundTouched);
 	copy.resourceTouchedV2 = deepClone(player.resourceTouchedV2);
-	copy.statSources = deepClone(player.statSources);
+	copy.resourceSources = deepClone(player.resourceSources);
 	copy.skipPhases = deepClone(player.skipPhases);
 	copy.skipSteps = deepClone(player.skipSteps);
 	copy.lands = player.lands.map((landState) => {
@@ -187,31 +187,47 @@ export function getBuildingWithActionMods() {
 	throw new Error('No building with action mods found');
 }
 
-export function getBuildingWithStatBonuses() {
+export function getBuildingWithResourceBonuses() {
 	for (const [id, def] of BUILDINGS.entries()) {
 		const passive = findEffect(
 			def.onBuild ?? [],
 			(e) => e.type === 'passive' && e.method === 'add',
 		);
 		if (passive) {
-			const stats = ((passive as { effects?: EffectDef[] }).effects || [])
-				.filter(
-					(e): e is EffectDef<{ key: string; amount: number }> =>
-						e.type === 'stat' &&
-						e.method === 'add' &&
-						typeof (e.params as { key?: unknown }).key === 'string' &&
-						typeof (e.params as { amount?: unknown }).amount === 'number',
-				)
-				.map((e) => ({
-					key: (e.params as { key: string }).key,
-					amount: (e.params as { amount: number }).amount,
-				}));
-			if (stats.length > 0) {
-				return { buildingId: id, stats };
+			const passiveEffects =
+				(passive as { effects?: EffectDef[] }).effects || [];
+			// Look for ResourceV2 add effects
+			const resources = passiveEffects
+				.filter((e): e is EffectDef => {
+					if (e.type !== 'resource' || e.method !== 'add') {
+						return false;
+					}
+					const params = e.params as {
+						resourceId?: string;
+						change?: { type: string; amount?: number };
+					};
+					return (
+						typeof params?.resourceId === 'string' &&
+						params?.change?.type === 'amount' &&
+						typeof params.change.amount === 'number'
+					);
+				})
+				.map((e) => {
+					const params = e.params as {
+						resourceId: string;
+						change: { amount: number };
+					};
+					return {
+						key: params.resourceId,
+						amount: params.change.amount,
+					};
+				});
+			if (resources.length > 0) {
+				return { buildingId: id, resources };
 			}
 		}
 	}
-	throw new Error('No building with stat bonuses found');
+	throw new Error('No building with resource bonuses found');
 }
 
 export function getActionWithMultipleCosts(engineContext: EngineForTest) {

@@ -2,19 +2,19 @@ import { describe, it, expect } from 'vitest';
 import { PopulationRole, Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import {
-	resolveStatSourceMeta,
-	applyStatDelta,
-	withStatSourceFrames,
+	resolveResourceSourceMeta,
+	applyResourceDelta,
+	withResourceSourceFrames,
 	collectEvaluatorDependencies,
-	recordEffectStatDelta,
+	recordEffectResourceDelta,
 	registerEvaluatorDependencyCollector,
 	evaluatorDependencyCollectorRegistry,
-} from '../src/stat_sources.ts';
+} from '../src/resource_sources.ts';
 import type { EffectDef } from '../src/effects/index.ts';
-import type { EvaluatorDependencyCollector } from '../src/stat_sources.ts';
+import type { EvaluatorDependencyCollector } from '../src/resource_sources.ts';
 
-describe('stat sources metadata', () => {
-	it('merges frame metadata with effect overrides when recording stat deltas', () => {
+describe('resource sources metadata', () => {
+	it('merges frame metadata with effect overrides when recording deltas', () => {
 		const engineContext = createTestEngine();
 		const player = engineContext.activePlayer;
 		const firstPhase = engineContext.phases[0];
@@ -38,11 +38,11 @@ describe('stat sources metadata', () => {
 		});
 
 		const effect: EffectDef = {
-			type: 'stat',
+			type: 'resource',
 			method: 'add',
 			params: { key: Stat.armyStrength, amount: 2 },
 			meta: {
-				statSource: {
+				resourceSource: {
 					key: 'custom-source',
 					longevity: 'permanent',
 					id: PopulationRole.Legion,
@@ -65,8 +65,8 @@ describe('stat sources metadata', () => {
 			},
 		};
 
-		const meta = withStatSourceFrames(engineContext, frame, () =>
-			resolveStatSourceMeta(effect, engineContext, Stat.armyStrength),
+		const meta = withResourceSourceFrames(engineContext, frame, () =>
+			resolveResourceSourceMeta(effect, engineContext, Stat.armyStrength),
 		);
 
 		expect(meta).toMatchObject({
@@ -76,7 +76,7 @@ describe('stat sources metadata', () => {
 			id: PopulationRole.Legion,
 			detail: 'Passive bonus',
 			instance: '7',
-			effect: { type: 'stat', method: 'add' },
+			effect: { type: 'resource', method: 'add' },
 		});
 		expect(meta.removal).toMatchObject({
 			type: 'phase',
@@ -103,23 +103,23 @@ describe('stat sources metadata', () => {
 		);
 
 		// Stat values ARE ResourceV2 IDs directly - no mapper needed
-		applyStatDelta(player, Stat.armyStrength, 2, meta);
-		const initialEntry = player.statSources[Stat.armyStrength]?.[meta.key];
+		applyResourceDelta(player, Stat.armyStrength, 2, meta);
+		const initialEntry = player.resourceSources[Stat.armyStrength]?.[meta.key];
 		expect(initialEntry?.amount).toBe(2);
 		expect(initialEntry?.meta.longevity).toBe('ongoing');
 
-		const updateMeta = withStatSourceFrames(
+		const updateMeta = withResourceSourceFrames(
 			engineContext,
 			() => ({
-				dependsOn: [{ type: 'stat', id: Stat.growth }],
+				dependsOn: [{ type: 'resource', id: Stat.growth }],
 				extra: { updateTag: 'gamma' },
 			}),
 			() =>
-				resolveStatSourceMeta(
+				resolveResourceSourceMeta(
 					{
 						...effect,
 						meta: {
-							statSource: {
+							resourceSource: {
 								key: meta.key,
 								longevity: 'permanent',
 								dependsOn: [
@@ -137,8 +137,8 @@ describe('stat sources metadata', () => {
 				),
 		);
 
-		applyStatDelta(player, Stat.armyStrength, 1, updateMeta);
-		const merged = player.statSources[Stat.armyStrength]?.[meta.key];
+		applyResourceDelta(player, Stat.armyStrength, 1, updateMeta);
+		const merged = player.resourceSources[Stat.armyStrength]?.[meta.key];
 		expect(merged?.amount).toBe(3);
 		expect(merged?.meta.longevity).toBe('ongoing');
 		expect(merged?.meta.extra).toEqual({
@@ -160,15 +160,17 @@ describe('stat sources metadata', () => {
 					detail: firstStep?.id,
 					extra: { reason: 'phase' },
 				},
-				{ type: 'stat', id: Stat.growth },
+				{ type: 'resource', id: Stat.growth },
 			]),
 		);
 
-		applyStatDelta(player, Stat.armyStrength, -3, updateMeta);
-		expect(player.statSources[Stat.armyStrength]?.[meta.key]).toBeUndefined();
+		applyResourceDelta(player, Stat.armyStrength, -3, updateMeta);
+		expect(
+			player.resourceSources[Stat.armyStrength]?.[meta.key],
+		).toBeUndefined();
 	});
 
-	it('records evaluator dependencies and percent-based stat deltas', () => {
+	it('records evaluator dependencies and percent-based resource deltas', () => {
 		const engineContext = createTestEngine();
 		const player = engineContext.activePlayer;
 		const developmentId = engineContext.developments.keys()[0];
@@ -182,7 +184,7 @@ describe('stat sources metadata', () => {
 					type: 'compare',
 					params: {
 						left: { type: 'development', params: { id: developmentId } },
-						right: { type: 'stat', params: { key: Stat.growth } },
+						right: { type: 'resource', params: { key: Stat.growth } },
 					},
 				},
 			},
@@ -191,24 +193,28 @@ describe('stat sources metadata', () => {
 			expect.arrayContaining([
 				{ type: 'population', id: PopulationRole.Legion },
 				{ type: 'development', id: developmentId },
-				{ type: 'stat', id: Stat.growth },
+				{ type: 'resource', id: Stat.growth },
 			]),
 		);
 
 		const pctEffect: EffectDef = {
-			type: 'stat',
+			type: 'resource',
 			method: 'add_pct',
-			params: { key: Stat.armyStrength, percent: 25, percentStat: Stat.growth },
+			params: {
+				key: Stat.armyStrength,
+				percent: 25,
+				percentResourceId: Stat.growth,
+			},
 		};
 		// Stat values ARE ResourceV2 IDs directly - no mapper needed
-		recordEffectStatDelta(pctEffect, engineContext, Stat.armyStrength, 1);
+		recordEffectResourceDelta(pctEffect, engineContext, Stat.armyStrength, 1);
 		const pctEntry = Object.values(
-			player.statSources[Stat.armyStrength] ?? {},
+			player.resourceSources[Stat.armyStrength] ?? {},
 		).find((entry) => entry.meta.effect?.method === 'add_pct');
 		expect(pctEntry?.meta.dependsOn).toEqual(
 			expect.arrayContaining([
 				{
-					type: 'stat',
+					type: 'resource',
 					id: Stat.growth,
 				},
 			]),
@@ -216,25 +222,28 @@ describe('stat sources metadata', () => {
 	});
 
 	it('allows overriding evaluator dependency collectors via the registry', () => {
-		const originalCollector = evaluatorDependencyCollectorRegistry.get('stat');
+		const originalCollector =
+			evaluatorDependencyCollectorRegistry.get('resource');
 		const customCollector: EvaluatorDependencyCollector = () => [
-			{ type: 'stat', id: Stat.armyStrength },
+			{ type: 'resource', id: Stat.armyStrength },
 		];
 
-		registerEvaluatorDependencyCollector('stat', customCollector);
+		registerEvaluatorDependencyCollector('resource', customCollector);
 
 		try {
 			const dependencies = collectEvaluatorDependencies({
-				type: 'stat',
+				type: 'resource',
 				params: { key: Stat.growth },
 			});
 
-			expect(dependencies).toEqual([{ type: 'stat', id: Stat.armyStrength }]);
+			expect(dependencies).toEqual([
+				{ type: 'resource', id: Stat.armyStrength },
+			]);
 		} finally {
 			if (originalCollector) {
-				registerEvaluatorDependencyCollector('stat', originalCollector);
+				registerEvaluatorDependencyCollector('resource', originalCollector);
 			} else {
-				evaluatorDependencyCollectorRegistry.delete('stat');
+				evaluatorDependencyCollectorRegistry.delete('resource');
 			}
 		}
 	});

@@ -55,19 +55,23 @@ describe('army attack translation summary', () => {
 			translation,
 			Stat.warWeariness,
 		);
+		// V2 format: stats are now resources with resourceId
 		const warEffect = attack.effects.find(
 			(effectDef: EffectDef) =>
-				effectDef.type === 'stat' &&
-				(effectDef.params as { key?: string }).key ===
+				effectDef.type === 'resource' &&
+				(effectDef.params as { resourceId?: string }).resourceId ===
 					SYNTH_STAT_IDS.warWeariness,
 		);
-		const warAmt = (warEffect?.params as { amount?: number })?.amount ?? 0;
+		// V2 format: amount is in change.amount
+		const warChange = (warEffect?.params as { change?: { amount?: number } })
+			?.change;
+		const warAmt = warChange?.amount ?? 0;
 		const summary = summarizeContent('action', attack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
 		const warSubject =
 			warWeariness.icon || warWeariness.label || Stat.warWeariness;
-		const warChange = `${warAmt >= 0 ? '+' : '-'}${Math.abs(warAmt)}`;
+		const warChangeStr = `${warAmt >= 0 ? '+' : '-'}${Math.abs(warAmt)}`;
 		expect(summary[0]).toBe(`${powerSummary}${targetSummary}`);
 		const damageSummary = summary[1];
 		if (typeof damageSummary !== 'object' || damageSummary === null) {
@@ -80,16 +84,12 @@ describe('army attack translation summary', () => {
 			(item) => typeof item === 'string' && item.includes(plunder.name),
 		);
 		expect(plunderLine).toBe(`⚔️${plunder.icon} ${plunder.name}`);
-		expect(summary[2]).toBe(`${warSubject} ${warChange}`);
+		expect(summary[2]).toBe(`${warSubject} ${warChangeStr}`);
 	});
 
 	it('describes plunder effects under on-damage entry', () => {
-		const { engineContext, plunder } = createSyntheticEngineContext();
-		const description = describeContent(
-			'action',
-			SYNTH_ATTACK.id,
-			engineContext,
-		);
+		const { translation, plunder } = createSyntheticEngineContext();
+		const description = describeContent('action', SYNTH_ATTACK.id, translation);
 		const onDamage = description.find(
 			(entry) =>
 				typeof entry === 'object' &&
@@ -193,11 +193,12 @@ describe('army attack translation summary', () => {
 
 		const summary = summarizeContent('action', buildingAttack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
+		// V2 format adds space after icon for readability
 		expect(summary).toEqual([
 			`${powerSummary}${summaryTarget}`,
 			{
 				title: `${summaryTarget}💥`,
-				items: [`⚔️${gold.icon}+${rewardAmount}`],
+				items: [`⚔️${gold.icon} +${rewardAmount}`],
 			},
 		]);
 	});

@@ -7,11 +7,11 @@ import {
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import {
-	statAmountParams,
-	type StatAmountParamsResult,
+	resourceAmountParams,
+	type ResourceAmountParamsResult,
 } from '../helpers/resourceV2Params.ts';
 
-describe('stat:add effect', () => {
+describe('resource:add effect for stats', () => {
 	it('increments a stat via action effect', () => {
 		const actionRegistry = createActionRegistry();
 		actionRegistry.add('train_army', {
@@ -19,9 +19,9 @@ describe('stat:add effect', () => {
 			name: 'Train Army',
 			effects: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
-					params: statAmountParams({
+					params: resourceAmountParams({
 						key: CStat.armyStrength,
 						amount: 3,
 					}),
@@ -36,10 +36,10 @@ describe('stat:add effect', () => {
 		const trainingActionDefinition = actionRegistry.get('train_army');
 		const params = trainingActionDefinition.effects.find(
 			(effect) =>
-				effect.type === 'stat' &&
+				effect.type === 'resource' &&
 				effect.method === 'add' &&
 				effect.params?.key === CStat.armyStrength,
-		)?.params as StatAmountParamsResult | undefined;
+		)?.params as ResourceAmountParamsResult | undefined;
 		const armyStrengthIncrease = params?.amount ?? 0;
 		const actionCosts = getActionCosts('train_army', engineContext);
 		engineContext.activePlayer.resourceValues[CResource.ap] =

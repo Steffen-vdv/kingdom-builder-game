@@ -6,7 +6,7 @@ import {
 } from '@kingdom-builder/contents';
 import { cloneEngineContext } from '../../src/actions/context_clone.ts';
 import { createAISystem } from '../../src/ai/index.ts';
-import type { StatSourceFrame } from '../../src/stat_sources/index.ts';
+import type { ResourceSourceFrame } from '../../src/resource_sources/index.ts';
 import { createTestEngine } from '../helpers.ts';
 import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
@@ -18,17 +18,17 @@ describe('cloneEngineContext', () => {
 			advance: vi.fn(),
 		});
 		engineContext.aiSystem = aiSystem;
-		engineContext.statAddPctBases.example = 3;
-		engineContext.statAddPctAccums.example = 4;
+		engineContext.resourcePercentBases.example = 3;
+		engineContext.resourcePercentAccums.example = 4;
 		engineContext.recentResourceGains.push({
 			key: CResource.gold,
 			amount: 2,
 		});
-		const frame: StatSourceFrame = () => ({
+		const frame: ResourceSourceFrame = () => ({
 			key: 'frame-meta',
 			longevity: 'ongoing',
 		});
-		engineContext.statSourceStack.push(frame);
+		engineContext.resourceSourceStack.push(frame);
 
 		const player = engineContext.activePlayer;
 		// CResource.gold IS the ResourceV2 ID directly
@@ -97,20 +97,20 @@ describe('cloneEngineContext', () => {
 		player.buildings.add('custom-building');
 		const actionId = 'custom-action';
 		player.actions.add(actionId);
-		const statSourceMeta = {
+		const resourceSourceMeta = {
 			key: 'meta-id',
 			longevity: 'ongoing' as const,
 			extra: { note: 'tracked' },
 			effect: { type: 'resource', method: 'add' },
 		};
-		// Initialize the nested object for statSources before setting properties
-		player.statSources[armyStrengthId] = {
+		// Initialize the nested object for resourceSources before setting properties
+		player.resourceSources[armyStrengthId] = {
 			'source-id': {
 				amount: 5,
-				meta: statSourceMeta,
+				meta: resourceSourceMeta,
 			},
 		};
-		player.statSources[happinessStatId] = undefined as never;
+		player.resourceSources[happinessStatId] = undefined as never;
 
 		const phaseId = engineContext.phases[0]!.id;
 		const stepId = engineContext.phases[0]!.steps[0]!.id;
@@ -161,30 +161,40 @@ describe('cloneEngineContext', () => {
 		expect(clonedPlayer.resourceValues[CStat.armyStrength]).toBe(3);
 		expect(clonedPlayer.resourceValues[CPopulationRole.Legion]).toBe(2);
 		expect(clonedPlayer.resourceValues[CPopulationRole.Council]).toBe(0);
-		expect(clonedPlayer.statSources[armyStrengthId]['source-id']).not.toBe(
-			player.statSources[armyStrengthId]['source-id'],
+		expect(clonedPlayer.resourceSources[armyStrengthId]['source-id']).not.toBe(
+			player.resourceSources[armyStrengthId]['source-id'],
 		);
 		expect(
-			clonedPlayer.statSources[armyStrengthId]['source-id']?.meta,
-		).not.toBe(player.statSources[armyStrengthId]['source-id']?.meta);
-		expect(clonedPlayer.statSources[happinessStatId]).toEqual({});
+			clonedPlayer.resourceSources[armyStrengthId]['source-id']?.meta,
+		).not.toBe(player.resourceSources[armyStrengthId]['source-id']?.meta);
+		expect(clonedPlayer.resourceSources[happinessStatId]).toEqual({});
 		expect(clonedPlayer.skipPhases).not.toBe(player.skipPhases);
 		expect(clonedPlayer.skipSteps).not.toBe(player.skipSteps);
 		expect(clonedPlayer.customMethod).toBe(player.customMethod);
 		expect(clonedPlayer.customData).toEqual(player.customData);
 		expect(clonedPlayer.customData).not.toBe(player.customData);
 		expect(clonedPlayer.nonCloneable).toBe(player.nonCloneable);
-		expect(cloned.statAddPctBases).not.toBe(engineContext.statAddPctBases);
-		expect(cloned.statAddPctBases).toEqual(engineContext.statAddPctBases);
-		expect(cloned.statAddPctAccums).not.toBe(engineContext.statAddPctAccums);
-		expect(cloned.statAddPctAccums).toEqual(engineContext.statAddPctAccums);
+		expect(cloned.resourcePercentBases).not.toBe(
+			engineContext.resourcePercentBases,
+		);
+		expect(cloned.resourcePercentBases).toEqual(
+			engineContext.resourcePercentBases,
+		);
+		expect(cloned.resourcePercentAccums).not.toBe(
+			engineContext.resourcePercentAccums,
+		);
+		expect(cloned.resourcePercentAccums).toEqual(
+			engineContext.resourcePercentAccums,
+		);
 		expect(cloned.recentResourceGains).not.toBe(
 			engineContext.recentResourceGains,
 		);
 		expect(cloned.recentResourceGains).toEqual(
 			engineContext.recentResourceGains,
 		);
-		expect(cloned.statSourceStack).not.toBe(engineContext.statSourceStack);
-		expect(cloned.statSourceStack[0]).toBe(frame);
+		expect(cloned.resourceSourceStack).not.toBe(
+			engineContext.resourceSourceStack,
+		);
+		expect(cloned.resourceSourceStack[0]).toBe(frame);
 	});
 });

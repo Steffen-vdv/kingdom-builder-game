@@ -55,11 +55,11 @@ const createFestivalActions = () => {
 				},
 			},
 			{
-				type: 'stat',
+				type: 'resource',
 				method: 'remove',
 				params: {
-					key: FORTIFICATION_STAT_KEY,
-					amount: 2,
+					resourceId: FORTIFICATION_STAT_KEY,
+					change: { type: 'amount', amount: 2 },
 				},
 			},
 			{
@@ -197,17 +197,20 @@ export const getSyntheticFestivalDetails = (
 		happinessEff.params.change?.amount ?? happinessEff.params.amount,
 	);
 	const fortEff = festival.effects.find(
-		(e: EffectDef) => e.type === 'stat',
-	) as EffectDef<{ key: string; amount: number }>;
-	const fortInfo = translation.assets.stats[fortEff.params.key] ??
+		(e: EffectDef) =>
+			e.type === 'resource' &&
+			(e.params as { resourceId?: string }).resourceId ===
+				FORTIFICATION_STAT_KEY,
+	) as EffectDef<{ resourceId: string; change: { amount: number } }>;
+	const fortInfo = translation.assets.stats[fortEff.params.resourceId] ??
 		translation.assets.stats[FORTIFICATION_STAT_KEY] ?? {
 			icon: '',
-			label: fortEff.params.key,
+			label: fortEff.params.resourceId,
 		};
 	const fortAmt =
 		fortEff.method === 'remove'
-			? -Number(fortEff.params.amount)
-			: Number(fortEff.params.amount);
+			? -Number(fortEff.params.change.amount)
+			: Number(fortEff.params.change.amount);
 	const passive = festival.effects.find(
 		(e: EffectDef) => e.type === 'passive',
 	) as EffectDef;

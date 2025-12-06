@@ -4,10 +4,10 @@ import type { PassiveSummary } from './services';
 import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
 
 export interface PlayerSnapshot {
-	// All values are now unified in valuesV2 - resources/stats are kept for
-	// backward compatibility but contain the same data
-	resources: Record<string, number>;
-	stats: Record<string, number>;
+	/**
+	 * Unified ResourceV2 value map containing all resources, stats, and
+	 * population counts keyed by their V2 identifiers.
+	 */
 	valuesV2: Record<string, number>;
 	resourceBoundsV2: Record<string, SessionResourceBoundsV2>;
 	buildings: string[];
@@ -50,13 +50,8 @@ export function snapshotPlayer(
 	player: PlayerState,
 	engineContext: EngineContext,
 ): PlayerSnapshot {
-	// All values live in valuesV2 now - resources/stats point to the same data
-	// for backward compatibility with consumers that haven't migrated yet
-	const valuesV2 = cloneValuesV2(player);
 	return {
-		resources: valuesV2,
-		stats: valuesV2,
-		valuesV2,
+		valuesV2: cloneValuesV2(player),
 		resourceBoundsV2: buildResourceBoundsSnapshot(player),
 		buildings: Array.from(player.buildings),
 		lands: player.lands.map((land) => ({

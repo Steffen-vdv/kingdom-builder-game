@@ -29,9 +29,12 @@ describe('snapshotAdvance', () => {
 			params: outerParams,
 			effects: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
-					params: { key: statKey, amount: 1 },
+					params: {
+						resourceId: statKey,
+						change: { type: 'amount', amount: 1 },
+					},
 					meta: { tag: 'nested' },
 				},
 			],

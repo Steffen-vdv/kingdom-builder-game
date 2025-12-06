@@ -50,12 +50,11 @@ describe('resolveAttack buildings', () => {
 		const fortress = content.building({
 			onBuild: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
 					params: {
-						key: Stat.fortificationStrength,
-						statId: Stat.fortificationStrength,
-						amount: 3,
+						resourceId: Stat.fortificationStrength,
+						change: { type: 'amount', amount: 3 },
 					},
 				},
 			],

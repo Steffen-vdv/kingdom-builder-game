@@ -63,7 +63,7 @@ const createPlayerSnapshot = (
 	lands: [],
 	buildings: [],
 	actions: [],
-	statSources: {},
+	resourceSources: {},
 	skipPhases: {},
 	skipSteps: {},
 	passives: [],

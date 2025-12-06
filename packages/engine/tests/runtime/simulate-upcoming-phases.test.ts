@@ -18,7 +18,7 @@ function resetPlayerState(context: ReturnType<typeof createTestEngine>) {
 	}
 	for (const statId of Object.values(CStat)) {
 		player.resourceValues[statId] = 0;
-		player.statSources[statId] = {};
+		player.resourceSources[statId] = {};
 	}
 	// Reset resourceTouched using stat IDs as keys
 	for (const statId of Object.values(CStat)) {
@@ -73,7 +73,7 @@ describe('simulateUpcomingPhases (runtime)', () => {
 		const result = simulateUpcomingPhases(context, player.id);
 
 		expect(result.playerId).toBe(player.id);
-		expect(result.delta.resources[CResource.gold]).toBe(goldGain - upkeepCost);
+		expect(result.delta.valuesV2[CResource.gold]).toBe(goldGain - upkeepCost);
 		expect(
 			result.steps
 				.filter((step) => step.player.id === player.id)

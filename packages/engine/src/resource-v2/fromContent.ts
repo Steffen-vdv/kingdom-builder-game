@@ -318,6 +318,12 @@ export function createRuntimeResourceCatalog({
 		}
 
 		const tierTrack = normalizeTierTrack(definition.tierTrack, context);
+		const onValueIncrease = Object.freeze([
+			...(definition.onValueIncrease ?? []),
+		]);
+		const onValueDecrease = Object.freeze([
+			...(definition.onValueDecrease ?? []),
+		]);
 		const runtimeDefinition: RuntimeResourceDefinition = Object.freeze({
 			...metadata,
 			...bounds,
@@ -328,6 +334,8 @@ export function createRuntimeResourceCatalog({
 			groupId,
 			groupOrder: groupOrderValue,
 			resolvedGroupOrder,
+			onValueIncrease,
+			onValueDecrease,
 			...(globalCost ? { globalCost } : {}),
 			...(tierTrack ? { tierTrack } : {}),
 		});

@@ -29,7 +29,7 @@ const createPlayer = (id: string): SessionPlayerStateSnapshot => ({
 	],
 	buildings: [],
 	actions: [],
-	statSources: {},
+	resourceSources: {},
 	skipPhases: {},
 	skipSteps: {},
 	passives: [],

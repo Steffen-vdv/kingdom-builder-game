@@ -17,9 +17,11 @@ export interface SimulateUpcomingPhasesOptions {
 }
 
 export interface PlayerSnapshotDeltaBucket {
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
+	/**
+	 * All resource changes keyed by ResourceV2 id.
+	 * This replaces the legacy resources/stats/population separation.
+	 */
+	valuesV2: Record<string, number>;
 }
 
 export interface SimulateUpcomingPhasesResult {
@@ -71,36 +73,18 @@ function buildDelta(
 	before: PlayerStateSnapshot,
 	after: PlayerStateSnapshot,
 ): PlayerSnapshotDeltaBucket {
-	const toDelta = (
-		sourceBefore: Record<string, number>,
-		sourceAfter: Record<string, number>,
-		filter?: (key: string) => boolean,
-	) => {
-		const result: Record<string, number> = {};
-		const keys = new Set([
-			...Object.keys(sourceBefore),
-			...Object.keys(sourceAfter),
-		]);
-		for (const key of keys) {
-			if (filter && !filter(key)) {
-				continue;
-			}
-			const diff = (sourceAfter[key] ?? 0) - (sourceBefore[key] ?? 0);
-			if (diff !== 0) {
-				result[key] = diff;
-			}
+	const valuesV2: Record<string, number> = {};
+	const keys = new Set([
+		...Object.keys(before.valuesV2),
+		...Object.keys(after.valuesV2),
+	]);
+	for (const key of keys) {
+		const diff = (after.valuesV2[key] ?? 0) - (before.valuesV2[key] ?? 0);
+		if (diff !== 0) {
+			valuesV2[key] = diff;
 		}
-		return result;
-	};
-	// Filter deltas by ResourceV2 namespace to maintain backward compatibility
-	const isResource = (key: string) => key.startsWith('resource:core:');
-	const isStat = (key: string) => key.startsWith('resource:stat:');
-	const isPopulation = (key: string) => key.startsWith('resource:population:');
-	return {
-		resources: toDelta(before.resources, after.resources, isResource),
-		stats: toDelta(before.stats, after.stats, isStat),
-		population: toDelta(before.population, after.population, isPopulation),
-	};
+	}
+	return { valuesV2 };
 }
 
 function hasReachedIterationLimit(iterations: number, limit: number): boolean {

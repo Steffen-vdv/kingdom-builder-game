@@ -1,13 +1,13 @@
 import type { EffectDef } from '../effects';
-import type { StatSourceLink, StatSourceMeta } from '../state';
+import type { ResourceSourceLink, ResourceSourceMeta } from '../state';
 import {
-	cloneStatSourceLink,
+	cloneResourceSourceLink,
 	mergeLinkCollections,
 	normalizeLink,
 	normalizeLinks,
 	isPlainObject,
 } from './link_helpers';
-import type { StatSourceMetaPartial } from './types';
+import type { ResourceSourceMetaPartial } from './types';
 
 function mergeExtraData(
 	baseExtra: Record<string, unknown> | undefined,
@@ -20,13 +20,13 @@ function mergeExtraData(
 }
 
 export function mergeMeta(
-	baseMeta: StatSourceMeta,
-	incomingMeta?: StatSourceMetaPartial | StatSourceMeta,
+	baseMeta: ResourceSourceMeta,
+	incomingMeta?: ResourceSourceMetaPartial | ResourceSourceMeta,
 ): void {
 	if (!incomingMeta) {
 		return;
 	}
-	const partialMeta = incomingMeta as StatSourceMetaPartial;
+	const partialMeta = incomingMeta as ResourceSourceMetaPartial;
 	if (partialMeta.key) {
 		baseMeta.key = partialMeta.key;
 	}
@@ -60,13 +60,13 @@ export function mergeMeta(
 		}
 	}
 	if (partialMeta.removal && !baseMeta.removal) {
-		const removalClone = cloneStatSourceLink(partialMeta.removal);
+		const removalClone = cloneResourceSourceLink(partialMeta.removal);
 		if (removalClone) {
 			baseMeta.removal = removalClone;
 		}
 	}
 	if (partialMeta.effect) {
-		const effectInfo: NonNullable<StatSourceMeta['effect']> = {
+		const effectInfo: NonNullable<ResourceSourceMeta['effect']> = {
 			...(baseMeta.effect || {}),
 		};
 		if (partialMeta.effect.type) {
@@ -87,11 +87,11 @@ export function mergeMeta(
 	}
 }
 
-export function createStatSourceKey(
+export function createResourceSourceKey(
 	effectDefinition: EffectDef,
 	resourceId: string,
 ): string {
-	const typeSegment = effectDefinition.type ?? 'stat';
+	const typeSegment = effectDefinition.type ?? 'resource';
 	const methodSegment = effectDefinition.method ?? 'change';
 	const keySegments = [typeSegment, methodSegment, resourceId];
 	return keySegments.join(':');
@@ -100,13 +100,13 @@ export function createStatSourceKey(
 export function extractMetaFromEffect(
 	effectDefinition: EffectDef,
 	resourceId: string,
-): StatSourceMetaPartial | undefined {
-	const rawValue = effectDefinition.meta?.['statSource'];
+): ResourceSourceMetaPartial | undefined {
+	const rawValue = effectDefinition.meta?.['resourceSource'];
 	const rawMeta = isPlainObject(rawValue) ? rawValue : undefined;
 	if (!rawMeta) {
 		return undefined;
 	}
-	const partialMeta: StatSourceMetaPartial = {};
+	const partialMeta: ResourceSourceMetaPartial = {};
 	if (typeof rawMeta['key'] === 'string' && rawMeta['key'].trim()) {
 		partialMeta.key = rawMeta['key'].trim();
 	}
@@ -171,7 +171,7 @@ export function extractMetaFromEffect(
 	if (extraEntries.length > 0) {
 		partialMeta.extra = Object.fromEntries(extraEntries);
 	}
-	const effectInfo: StatSourceMetaPartial['effect'] = {};
+	const effectInfo: ResourceSourceMetaPartial['effect'] = {};
 	if (effectDefinition.type) {
 		effectInfo.type = effectDefinition.type;
 	}
@@ -182,7 +182,7 @@ export function extractMetaFromEffect(
 		partialMeta.effect = effectInfo;
 	}
 	if (!partialMeta.key) {
-		partialMeta.key = createStatSourceKey(effectDefinition, resourceId);
+		partialMeta.key = createResourceSourceKey(effectDefinition, resourceId);
 	}
 	if (!partialMeta.longevity) {
 		partialMeta.longevity = 'permanent';
@@ -190,8 +190,8 @@ export function extractMetaFromEffect(
 	return partialMeta;
 }
 
-export function cloneMeta(meta: StatSourceMeta): StatSourceMeta {
-	const clonedMeta: StatSourceMeta = {
+export function cloneMeta(meta: ResourceSourceMeta): ResourceSourceMeta {
+	const clonedMeta: ResourceSourceMeta = {
 		key: meta.key,
 		longevity: meta.longevity,
 	};
@@ -209,13 +209,13 @@ export function cloneMeta(meta: StatSourceMeta): StatSourceMeta {
 	}
 	if (meta.dependsOn) {
 		clonedMeta.dependsOn = meta.dependsOn
-			.map((dependency) => cloneStatSourceLink(dependency))
-			.filter((dependency): dependency is StatSourceLink =>
+			.map((dependency) => cloneResourceSourceLink(dependency))
+			.filter((dependency): dependency is ResourceSourceLink =>
 				Boolean(dependency),
 			);
 	}
 	if (meta.removal) {
-		const removalClone = cloneStatSourceLink(meta.removal);
+		const removalClone = cloneResourceSourceLink(meta.removal);
 		if (removalClone) {
 			clonedMeta.removal = removalClone;
 		}

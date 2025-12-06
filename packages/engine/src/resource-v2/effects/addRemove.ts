@@ -1,6 +1,7 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type { EngineContext } from '../../context';
 import type { PlayerState } from '../../state';
+import { recordEffectResourceDelta } from '../../resource_sources';
 import { setResourceValue, getResourceValue } from '../state';
 import { ensureBoundFlags, resolveResourceDefinition } from '../state-helpers';
 import {
@@ -40,9 +41,17 @@ interface PercentResourceEffectParams extends BaseResourceEffectParams {
 	readonly change: Extract<ResourceChangeParameters, { type: 'percent' }>;
 }
 
+interface PercentFromResourceEffectParams extends BaseResourceEffectParams {
+	readonly change: Extract<
+		ResourceChangeParameters,
+		{ type: 'percentFromResource' }
+	>;
+}
+
 export type ResourceEffectParams =
 	| AmountResourceEffectParams
-	| PercentResourceEffectParams;
+	| PercentResourceEffectParams
+	| PercentFromResourceEffectParams;
 
 type ResourceEffectHandler = (
 	effect: EffectDef<ResourceEffectParams>,
@@ -70,6 +79,23 @@ function normaliseChange(
 		}
 		return { type: 'amount', amount };
 	}
+	if (change.type === 'percentFromResource') {
+		if (
+			typeof change.sourceResourceId !== 'string' ||
+			!change.sourceResourceId.length
+		) {
+			throw new Error(
+				'ResourceV2 percentFromResource change requires a non-empty ' +
+					'sourceResourceId.',
+			);
+		}
+		return {
+			type: 'percentFromResource',
+			sourceResourceId: change.sourceResourceId,
+			...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+			...(change.additive !== undefined ? { additive: change.additive } : {}),
+		};
+	}
 	const modifiers = change.modifiers.map((modifier) => {
 		if (!Number.isFinite(modifier)) {
 			throw new Error(
@@ -82,6 +108,7 @@ function normaliseChange(
 		type: 'percent',
 		modifiers,
 		...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+		...(change.additive !== undefined ? { additive: change.additive } : {}),
 	};
 }
 
@@ -95,10 +122,23 @@ function scaleChange(
 	if (change.type === 'amount') {
 		return { type: 'amount', amount: change.amount * multiplier };
 	}
+	if (change.type === 'percentFromResource') {
+		// percentFromResource scaling is handled in reconciliation via
+		// the multiplier parameter, not by modifying the change itself.
+		// The multiplier affects how many times the percent is applied.
+		return {
+			type: 'percentFromResource',
+			sourceResourceId: change.sourceResourceId,
+			multiplier,
+			...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+			...(change.additive !== undefined ? { additive: change.additive } : {}),
+		};
+	}
 	return {
 		type: 'percent',
 		modifiers: change.modifiers.map((modifier) => modifier * multiplier),
 		...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+		...(change.additive !== undefined ? { additive: change.additive } : {}),
 	};
 }
 
@@ -112,10 +152,22 @@ function applySign(
 	if (change.type === 'amount') {
 		return { type: 'amount', amount: -change.amount };
 	}
+	if (change.type === 'percentFromResource') {
+		// For remove, we negate via a negative multiplier
+		const currentMult = change.multiplier ?? 1;
+		return {
+			type: 'percentFromResource',
+			sourceResourceId: change.sourceResourceId,
+			multiplier: -currentMult,
+			...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+			...(change.additive !== undefined ? { additive: change.additive } : {}),
+		};
+	}
 	return {
 		type: 'percent',
 		modifiers: change.modifiers.map((modifier) => -modifier),
 		...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+		...(change.additive !== undefined ? { additive: change.additive } : {}),
 	};
 }
 
@@ -135,6 +187,90 @@ function resolveEffectiveBounds(
 			typeof upperOverride === 'number'
 				? upperOverride
 				: (definitionBounds.upperBound ?? null),
+	};
+}
+
+/**
+ * Build a cache key for additive percent changes. Multiple percent changes
+ * in the same turn/phase/step use additive accumulation from the original
+ * base value rather than compounding.
+ */
+function buildAdditiveCacheKey(context: EngineContext, resourceId: string) {
+	return (
+		`${context.game.turn}:${context.game.currentPhase}:` +
+		`${context.game.currentStep}:${resourceId}`
+	);
+}
+
+/**
+ * Apply an additive percent change using step-based caching. Multiple
+ * percent changes in the same step scale from the original base value
+ * rather than compounding.
+ */
+function applyAdditivePercentChange(
+	context: EngineContext,
+	player: PlayerState,
+	catalog: RuntimeResourceCatalog,
+	resourceId: string,
+	requestedDelta: number,
+	bounds: RuntimeResourceBounds,
+	effect: EffectDef<ResourceEffectParams>,
+	roundingMode: 'up' | 'down' | 'nearest' | undefined,
+): ResourceReconciliationResult {
+	const cacheKey = buildAdditiveCacheKey(context, resourceId);
+	const bases = context.resourcePercentBases;
+	const accums = context.resourcePercentAccums;
+
+	// Initialize cache on first access in this step
+	if (!(cacheKey in bases)) {
+		bases[cacheKey] = getResourceValue(player, resourceId);
+		accums[cacheKey] = 0;
+	}
+
+	const base = bases[cacheKey]!;
+	const before = getResourceValue(player, resourceId);
+
+	// Accumulate the delta from the original base
+	accums[cacheKey]! += requestedDelta;
+
+	// Compute new value from base + accumulated delta
+	let newValue = base + accums[cacheKey]!;
+
+	// Apply rounding
+	if (roundingMode === 'up') {
+		newValue = newValue >= 0 ? Math.ceil(newValue) : Math.floor(newValue);
+	} else if (roundingMode === 'down') {
+		newValue = newValue >= 0 ? Math.floor(newValue) : Math.ceil(newValue);
+	}
+
+	// Apply bounds
+	const lowerBound = bounds.lowerBound;
+	const upperBound = bounds.upperBound;
+	let clampedToLowerBound = false;
+	let clampedToUpperBound = false;
+
+	if (lowerBound !== null && newValue < lowerBound) {
+		newValue = lowerBound;
+		clampedToLowerBound = true;
+	}
+	if (upperBound !== null && newValue > upperBound) {
+		newValue = upperBound;
+		clampedToUpperBound = true;
+	}
+
+	setResourceValue(context, player, catalog, resourceId, newValue);
+
+	const delta = newValue - before;
+	if (delta !== 0 && Array.isArray(context.resourceSourceStack)) {
+		recordEffectResourceDelta(effect, context, resourceId, delta);
+	}
+
+	return {
+		requestedDelta,
+		appliedDelta: delta,
+		finalValue: newValue,
+		clampedToLowerBound,
+		clampedToUpperBound,
 	};
 }
 
@@ -184,11 +320,78 @@ function applyResourceEffect(
 	);
 	const reconciliationMode = reconciliation ?? DEFAULT_RECONCILIATION_MODE;
 	const currentValue = getResourceValue(player, resourceId);
+
+	// Create getResourceValue callback for percentFromResource changes
+	const getResourceValueFn = (id: string) => getResourceValue(player, id);
+
+	// Handle additive percent changes with step-based caching
+	const isAdditivePercent =
+		(change.type === 'percentFromResource' && change.additive) ||
+		(change.type === 'percent' && change.additive);
+
+	if (isAdditivePercent) {
+		// For additive percent changes, we need to use the cached base value
+		// (from the first access in this step) rather than currentValue.
+		// This ensures multiple percent effects are additive from the original
+		// base, not compounding from the updated value.
+		const cacheKeyForBase = buildAdditiveCacheKey(context, resourceId);
+		const bases = context.resourcePercentBases;
+		// Peek at the cached base, or use currentValue if this is the first access
+		const baseForDelta =
+			cacheKeyForBase in bases ? bases[cacheKeyForBase]! : currentValue;
+
+		// For additive percent changes, compute the RAW (unrounded) delta.
+		// Rounding should only happen once at the end after all deltas are
+		// accumulated, not on each individual delta.
+		let rawDelta: number;
+		if (change.type === 'percentFromResource') {
+			const percent = getResourceValueFn(change.sourceResourceId) || 0;
+			const mult = change.multiplier ?? 1;
+			rawDelta = percent * baseForDelta * mult;
+		} else {
+			// percent type
+			rawDelta =
+				change.modifiers.reduce((sum, mod) => sum + mod, 0) * baseForDelta;
+		}
+
+		const result = applyAdditivePercentChange(
+			context,
+			player,
+			catalog,
+			resourceId,
+			rawDelta,
+			bounds,
+			effect,
+			change.roundingMode,
+		);
+
+		if (result.clampedToLowerBound || result.clampedToUpperBound) {
+			const flags = ensureBoundFlags(player, resourceId);
+			if (result.clampedToLowerBound) {
+				flags.lower = true;
+			}
+			if (result.clampedToUpperBound) {
+				flags.upper = true;
+			}
+		}
+
+		if (!suppressHooks && context.services) {
+			context.services.handleResourceChange(
+				context,
+				player,
+				resourceId,
+				result.appliedDelta,
+			);
+		}
+		return result;
+	}
+
 	const result = reconcileResourceChange({
 		currentValue,
 		change,
 		bounds,
 		reconciliationMode,
+		getResourceValue: getResourceValueFn,
 	});
 	if (result.clampedToLowerBound || result.clampedToUpperBound) {
 		const flags = ensureBoundFlags(player, resourceId);
@@ -200,10 +403,16 @@ function applyResourceEffect(
 		}
 	}
 	setResourceValue(context, player, catalog, resourceId, result.finalValue);
+	// Track resource source deltas for UI breakdowns. Only run when the
+	// context includes the source stack (full engine runs).
+	const delta = result.finalValue - currentValue;
+	if (delta !== 0 && Array.isArray(context.resourceSourceStack)) {
+		recordEffectResourceDelta(effect, context, resourceId, delta);
+	}
 	if (!suppressHooks && context.services) {
 		// Notify services about the resource change to trigger tier
-		// passive swaps and win condition checks.
-		context.services.handleResourceChange(context, player, resourceId);
+		// passive swaps, win condition checks, and population triggers.
+		context.services.handleResourceChange(context, player, resourceId, delta);
 	}
 	return result;
 }

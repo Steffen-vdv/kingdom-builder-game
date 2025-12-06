@@ -50,8 +50,27 @@ export interface RuntimeResourceGlobalCostConfig {
 	readonly amount: number;
 }
 
+/**
+ * Triggers that run when a resource value changes.
+ */
+export interface RuntimeResourceTriggers {
+	/**
+	 * Effects to run when this resource's value increases.
+	 * Runs once per unit of increase.
+	 */
+	readonly onValueIncrease: readonly EffectDef[];
+	/**
+	 * Effects to run when this resource's value decreases.
+	 * Runs once per unit of decrease.
+	 */
+	readonly onValueDecrease: readonly EffectDef[];
+}
+
 export interface RuntimeResourceDefinition
-	extends RuntimeResourceMetadata, RuntimeResourceBounds {
+	extends
+		RuntimeResourceMetadata,
+		RuntimeResourceBounds,
+		RuntimeResourceTriggers {
 	readonly displayAsPercent: boolean;
 	readonly allowDecimal: boolean;
 	readonly trackValueBreakdown: boolean;

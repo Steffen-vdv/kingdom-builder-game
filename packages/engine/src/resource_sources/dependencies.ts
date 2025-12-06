@@ -1,5 +1,5 @@
 import type { EvaluatorDef } from '../evaluators';
-import type { StatSourceLink } from '../state';
+import type { ResourceSourceLink } from '../state';
 import { isPlainObject } from './link_helpers';
 import type { EvaluatorDependencyCollector } from './types';
 
@@ -17,7 +17,7 @@ export function registerEvaluatorDependencyCollector(
 
 function collectFromEvaluatorDefinition(
 	evaluatorDefinition: EvaluatorDef | number | undefined,
-): StatSourceLink[] {
+): ResourceSourceLink[] {
 	if (!evaluatorDefinition || typeof evaluatorDefinition === 'number') {
 		return [];
 	}
@@ -54,15 +54,17 @@ const developmentCollector: EvaluatorDependencyCollector = (evaluator) => {
 		: [];
 };
 
-const statCollector: EvaluatorDependencyCollector = (evaluator) => {
+const resourceCollector: EvaluatorDependencyCollector = (evaluator) => {
 	const evaluatorParams = isPlainObject(evaluator.params)
 		? evaluator.params
 		: undefined;
-	const statIdentifier =
+	const resourceIdentifier =
 		typeof evaluatorParams?.['key'] === 'string'
 			? evaluatorParams['key'].trim()
 			: '';
-	return statIdentifier ? [{ type: 'stat', id: statIdentifier }] : [];
+	return resourceIdentifier
+		? [{ type: 'resource', id: resourceIdentifier }]
+		: [];
 };
 
 const compareCollector: EvaluatorDependencyCollector = (evaluator) => {
@@ -83,12 +85,12 @@ const compareCollector: EvaluatorDependencyCollector = (evaluator) => {
 
 registerEvaluatorDependencyCollector('population', populationCollector);
 registerEvaluatorDependencyCollector('development', developmentCollector);
-registerEvaluatorDependencyCollector('stat', statCollector);
+registerEvaluatorDependencyCollector('resource', resourceCollector);
 registerEvaluatorDependencyCollector('compare', compareCollector);
 
 export function collectEvaluatorDependencies(
 	evaluatorDefinition: EvaluatorDef | undefined,
-): StatSourceLink[] {
+): ResourceSourceLink[] {
 	if (!evaluatorDefinition) {
 		return [];
 	}

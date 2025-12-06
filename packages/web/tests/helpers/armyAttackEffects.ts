@@ -124,9 +124,12 @@ function buildActionEffect(descriptor: ActionEffectDescriptor): EffectDef {
 
 function buildStatEffect(descriptor: StatEffectDescriptor): EffectDef {
 	return {
-		type: 'stat',
+		type: 'resource',
 		method: 'add',
-		params: { key: descriptor.key, amount: descriptor.amount },
+		params: {
+			resourceId: descriptor.key,
+			change: { type: 'amount', amount: descriptor.amount },
+		},
 	};
 }
 

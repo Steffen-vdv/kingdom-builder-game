@@ -115,8 +115,8 @@ describe('log resource sources', () => {
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const farmIcon =
 			engineContext.developments.get(SYNTHETIC_IDS.farmDevelopment)?.icon || '';
-		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const beforeCoins = before.valuesV2[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.valuesV2[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = afterCoins - beforeCoins;
 		const expectedFarmIncomeLine =
 			`${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}` +
@@ -231,8 +231,8 @@ describe('log resource sources', () => {
 			line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
 		expect(goldLine).toBeTruthy();
-		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const beforeCoins = before.valuesV2[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.valuesV2[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = afterCoins - beforeCoins;
 		const icons = effects
 			.filter(

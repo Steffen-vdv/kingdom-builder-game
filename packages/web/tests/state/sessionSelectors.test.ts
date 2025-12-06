@@ -107,7 +107,7 @@ describe('sessionSelectors', () => {
 		],
 		buildings: overrides.buildings ?? [],
 		actions: overrides.actions ?? [],
-		statSources: overrides.statSources ?? {},
+		resourceSources: overrides.resourceSources ?? {},
 		skipPhases: overrides.skipPhases ?? {},
 		skipSteps: overrides.skipSteps ?? {},
 		passives: overrides.passives ?? [],

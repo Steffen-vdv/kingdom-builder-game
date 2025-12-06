@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef } from '../src/index.ts';
 import { Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
+import { resourcePercentParams } from './helpers/resourceV2Params.ts';
 
-describe('stat:add_pct additive scaling', () => {
+describe('resource:add additive percent scaling', () => {
 	it('adds multiple percentages from the original base in the same step', () => {
 		const engineContext = createTestEngine();
 		const base = 10;
@@ -14,14 +15,22 @@ describe('stat:add_pct additive scaling', () => {
 		const pct2 = 0.4;
 		const effects: EffectDef[] = [
 			{
-				type: 'stat',
-				method: 'add_pct',
-				params: { key: Stat.armyStrength, percent: pct1 },
+				type: 'resource',
+				method: 'add',
+				params: resourcePercentParams({
+					key: Stat.armyStrength,
+					percent: pct1,
+					additive: true,
+				}),
 			},
 			{
-				type: 'stat',
-				method: 'add_pct',
-				params: { key: Stat.armyStrength, percent: pct2 },
+				type: 'resource',
+				method: 'add',
+				params: resourcePercentParams({
+					key: Stat.armyStrength,
+					percent: pct2,
+					additive: true,
+				}),
 			},
 		];
 

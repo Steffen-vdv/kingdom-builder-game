@@ -1,4 +1,4 @@
-import type { StatSourceLink, StatSourceMeta } from '../state';
+import type { ResourceSourceLink, ResourceSourceMeta } from '../state';
 
 export function isPlainObject(
 	value: unknown,
@@ -9,13 +9,13 @@ export function isPlainObject(
 	return true;
 }
 
-export function cloneStatSourceLink(
-	link: StatSourceLink | undefined,
-): StatSourceLink | undefined {
+export function cloneResourceSourceLink(
+	link: ResourceSourceLink | undefined,
+): ResourceSourceLink | undefined {
 	if (!link) {
 		return undefined;
 	}
-	const clonedLink: StatSourceLink = {};
+	const clonedLink: ResourceSourceLink = {};
 	if (link.type) {
 		clonedLink.type = link.type;
 	}
@@ -31,9 +31,9 @@ export function cloneStatSourceLink(
 	return clonedLink;
 }
 
-export function statSourceLinksEqual(
-	first: StatSourceLink,
-	second: StatSourceLink,
+export function resourceSourceLinksEqual(
+	first: ResourceSourceLink,
+	second: ResourceSourceLink,
 ): boolean {
 	return (
 		first.type === second.type &&
@@ -43,22 +43,22 @@ export function statSourceLinksEqual(
 }
 
 export function mergeLinkCollections(
-	baseLinks: StatSourceLink[] | undefined,
-	incomingLinks: StatSourceLink[] | undefined,
-): StatSourceLink[] | undefined {
+	baseLinks: ResourceSourceLink[] | undefined,
+	incomingLinks: ResourceSourceLink[] | undefined,
+): ResourceSourceLink[] | undefined {
 	if (!incomingLinks || incomingLinks.length === 0) {
 		return baseLinks;
 	}
 	const mergedLinks = baseLinks
-		? baseLinks.map((link) => cloneStatSourceLink(link)!)
+		? baseLinks.map((link) => cloneResourceSourceLink(link)!)
 		: [];
 	for (const incomingLink of incomingLinks) {
-		const normalizedLink = cloneStatSourceLink(incomingLink);
+		const normalizedLink = cloneResourceSourceLink(incomingLink);
 		if (!normalizedLink) {
 			continue;
 		}
 		const hasExistingMatch = mergedLinks.some((existingLink) =>
-			statSourceLinksEqual(existingLink, normalizedLink),
+			resourceSourceLinksEqual(existingLink, normalizedLink),
 		);
 		if (!hasExistingMatch) {
 			mergedLinks.push(normalizedLink);
@@ -68,27 +68,27 @@ export function mergeLinkCollections(
 }
 
 export function appendDependencyLink(
-	meta: StatSourceMeta,
-	link: StatSourceLink,
+	meta: ResourceSourceMeta,
+	link: ResourceSourceLink,
 ): void {
-	const normalizedLink = cloneStatSourceLink(link);
+	const normalizedLink = cloneResourceSourceLink(link);
 	if (!normalizedLink) {
 		return;
 	}
 	const existingDependencies = meta.dependsOn || [];
 	const alreadyTracked = existingDependencies.some((dependencyLink) =>
-		statSourceLinksEqual(dependencyLink, normalizedLink),
+		resourceSourceLinksEqual(dependencyLink, normalizedLink),
 	);
 	if (!alreadyTracked) {
 		meta.dependsOn = [...existingDependencies, normalizedLink];
 	}
 }
 
-export function normalizeLink(value: unknown): StatSourceLink | undefined {
+export function normalizeLink(value: unknown): ResourceSourceLink | undefined {
 	if (!isPlainObject(value)) {
 		return undefined;
 	}
-	const normalizedLink: StatSourceLink = {};
+	const normalizedLink: ResourceSourceLink = {};
 	if (typeof value.type === 'string' && value.type.trim()) {
 		normalizedLink.type = value.type.trim();
 	}
@@ -107,13 +107,15 @@ export function normalizeLink(value: unknown): StatSourceLink | undefined {
 	return Object.keys(normalizedLink).length > 0 ? normalizedLink : undefined;
 }
 
-export function normalizeLinks(value: unknown): StatSourceLink[] | undefined {
+export function normalizeLinks(
+	value: unknown,
+): ResourceSourceLink[] | undefined {
 	if (!value) {
 		return undefined;
 	}
 	const rawList = Array.isArray(value) ? value : [value];
 	const normalizedList = rawList
 		.map((entry) => normalizeLink(entry))
-		.filter((entry): entry is StatSourceLink => Boolean(entry));
+		.filter((entry): entry is ResourceSourceLink => Boolean(entry));
 	return normalizedList.length > 0 ? normalizedList : undefined;
 }

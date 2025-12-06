@@ -18,7 +18,7 @@ const createFallbackPlayer = (
 	lands: [],
 	buildings: [],
 	actions: [],
-	statSources: {},
+	resourceSources: {},
 	skipPhases: {},
 	skipSteps: {},
 	passives: [],

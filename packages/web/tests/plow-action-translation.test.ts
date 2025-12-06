@@ -243,7 +243,7 @@ describe('plow action translation', () => {
 				title: `${expand.icon} ${expand.name}`,
 				items: [
 					`${landIcon} ${landCount >= 0 ? '+' : ''}${landCount} ${landLabel}`,
-					`${hapIcon}${hapAmt >= 0 ? '+' : ''}${hapAmt} ${hapLabel}`,
+					`${hapIcon} ${hapAmt >= 0 ? '+' : ''}${hapAmt} ${hapLabel}`,
 				],
 			},
 			{

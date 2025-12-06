@@ -9,7 +9,10 @@ import {
 	createResourceV2Registry,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import {
+	resourceAmountParams,
+	resourcePercentFromResourceParams,
+} from '../helpers/resourceV2Params.ts';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
@@ -98,10 +101,14 @@ export function createPhaseTestEnvironment() {
 		id: 'synthetic:population:legion',
 		onGrowthPhase: [
 			{
-				type: 'stat',
-				method: 'add_pct',
-				params: { key: statKeys.army, percentStat: statKeys.growth },
-				round: 'up',
+				type: 'resource',
+				method: 'add',
+				params: resourcePercentFromResourceParams({
+					key: statKeys.army,
+					sourceResourceId: statKeys.growth,
+					roundingMode: 'up',
+					additive: true,
+				}),
 			},
 		],
 		onPayUpkeepStep: [
@@ -120,10 +127,14 @@ export function createPhaseTestEnvironment() {
 		id: 'synthetic:population:fortifier',
 		onGrowthPhase: [
 			{
-				type: 'stat',
-				method: 'add_pct',
-				params: { key: statKeys.fort, percentStat: statKeys.growth },
-				round: 'up',
+				type: 'resource',
+				method: 'add',
+				params: resourcePercentFromResourceParams({
+					key: statKeys.fort,
+					sourceResourceId: statKeys.growth,
+					roundingMode: 'up',
+					additive: true,
+				}),
 			},
 		],
 		onPayUpkeepStep: [
@@ -172,9 +183,12 @@ export function createPhaseTestEnvironment() {
 							},
 							effects: [
 								{
-									type: 'stat',
+									type: 'resource',
 									method: 'remove',
-									params: { key: statKeys.war, amount: 1 },
+									params: resourceAmountParams({
+										key: statKeys.war,
+										amount: 1,
+									}),
 								},
 							],
 						},

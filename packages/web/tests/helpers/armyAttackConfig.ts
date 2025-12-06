@@ -293,6 +293,34 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
+	// Combat stat config keys for attack effects
+	resourceV2Definition({
+		id: COMBAT_STAT_CONFIG.power.key,
+		metadata: {
+			label: COMBAT_STAT_CONFIG.power.label,
+			icon: COMBAT_STAT_CONFIG.power.icon,
+			group: { id: statGroup.id, order: 4 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+	resourceV2Definition({
+		id: COMBAT_STAT_CONFIG.absorption.key,
+		metadata: {
+			label: COMBAT_STAT_CONFIG.absorption.label,
+			icon: COMBAT_STAT_CONFIG.absorption.icon,
+			group: { id: statGroup.id, order: 5 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
+	resourceV2Definition({
+		id: COMBAT_STAT_CONFIG.fortification.key,
+		metadata: {
+			label: COMBAT_STAT_CONFIG.fortification.label,
+			icon: COMBAT_STAT_CONFIG.fortification.icon,
+			group: { id: statGroup.id, order: 6 },
+		},
+		bounds: { lowerBound: 0 },
+	}),
 ];
 
 export const SYNTH_RESOURCE_CATALOG_V2 = createResourceV2Registries({

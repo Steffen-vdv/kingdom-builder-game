@@ -47,7 +47,24 @@ export interface ResourceV2TierTrack {
 	tiers: readonly ResourceV2TierDefinition[];
 }
 
-export interface ResourceV2Definition extends ResourceV2Metadata, ResourceV2Bounds {
+/**
+ * Triggers that run when a resource value changes.
+ * Effects receive `{ delta, index, player, resourceId }` params.
+ */
+export interface ResourceV2Triggers {
+	/**
+	 * Effects to run when the resource value increases.
+	 * Runs once per unit of increase.
+	 */
+	onValueIncrease?: readonly EffectDef[];
+	/**
+	 * Effects to run when the resource value decreases.
+	 * Runs once per unit of decrease.
+	 */
+	onValueDecrease?: readonly EffectDef[];
+}
+
+export interface ResourceV2Definition extends ResourceV2Metadata, ResourceV2Bounds, ResourceV2Triggers {
 	displayAsPercent?: boolean;
 	allowDecimal?: boolean;
 	trackValueBreakdown?: boolean;

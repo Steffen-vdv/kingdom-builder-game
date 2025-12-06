@@ -19,7 +19,7 @@ import {
 	resultModParams,
 	costModParams,
 } from '../config/builders';
-import { ActionMethods, AttackMethods, PassiveMethods, ResourceMethods, Types, StatMethods, CostModMethods, LandMethods, ResultModMethods } from '../config/builderShared';
+import { ActionMethods, AttackMethods, PassiveMethods, ResourceMethods, Types, CostModMethods, LandMethods, ResultModMethods } from '../config/builderShared';
 import { Focus } from '../defs';
 import { ActionId, DevelopActionId, PopulationEvaluationId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
@@ -141,7 +141,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					)
 					.build(),
 			)
-			.effect(effect(Types.Stat, StatMethods.ADD).params(statAmountChange(Stat.warWeariness, 1)).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(statAmountChange(Stat.warWeariness, 1)).build())
 			.category(ActionCategory.Basic)
 			.order(basicCategoryOrder + 6)
 			.focus(Focus.Aggressive)
@@ -158,7 +158,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.requirement(compareRequirement().left(statEvaluator().key(Stat.warWeariness)).operator('eq').right(0).build())
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.happiness, 3)).build())
 			.effect(
-				effect(Types.Stat, StatMethods.REMOVE)
+				effect(Types.Resource, ResourceMethods.REMOVE)
 					.params(statAmountChange(Stat.fortificationStrength, 3, (change) => change.reconciliation()))
 					.build(),
 			)

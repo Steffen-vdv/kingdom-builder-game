@@ -4,7 +4,7 @@ import type { StatKey } from './stats';
 import { Resource, getResourceV2Id } from './resourceKeys';
 import type { ResourceKey } from './resourceKeys';
 import { development, effect, developmentParams, developmentEvaluator } from './config/builders';
-import { Types, StatMethods, DevelopmentMethods, ResourceMethods } from './config/builderShared';
+import { Types, DevelopmentMethods, ResourceMethods } from './config/builderShared';
 import { Focus } from './defs';
 import type { DevelopmentDef } from './defs';
 import { resourceChange } from './resourceV2';
@@ -63,7 +63,7 @@ export function createDevelopmentRegistry() {
 			.name('House')
 			.icon('🏠')
 			.populationCap(1)
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.maxPopulation, 1)).build())
+			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.maxPopulation, 1)).build())
 			.order(1)
 			.focus(Focus.Economy)
 			.build(),
@@ -75,8 +75,8 @@ export function createDevelopmentRegistry() {
 			.id(DevelopmentId.Outpost)
 			.name('Outpost')
 			.icon('🏹')
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.armyStrength, 1)).build())
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.fortificationStrength, 1)).build())
+			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.armyStrength, 1)).build())
+			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.fortificationStrength, 1)).build())
 			.order(3)
 			.focus(Focus.Defense)
 			.build(),
@@ -90,8 +90,8 @@ export function createDevelopmentRegistry() {
 			.id(DevelopmentId.Watchtower)
 			.name('Watchtower')
 			.icon('🗼')
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.fortificationStrength, 2)).build())
-			.onBuild(effect(Types.Stat, StatMethods.ADD).params(statAmountParams(Stat.absorption, 0.5)).build())
+			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.fortificationStrength, 2)).build())
+			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.absorption, 0.5)).build())
 			.onAttackResolved(effect(Types.Development, DevelopmentMethods.REMOVE).params(watchtowerRemovalParams).build())
 			.order(4)
 			.focus(Focus.Defense)

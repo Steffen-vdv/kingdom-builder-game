@@ -3,10 +3,7 @@ import { runEffects } from '../../src/index.ts';
 import { Resource, Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
-import {
-	resourceAmountParams,
-	statAmountParams,
-} from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('passive:add effect', () => {
 	it('applies nested effects and registers phase triggers', () => {
@@ -59,9 +56,9 @@ describe('passive:add effect', () => {
 			},
 			effects: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
-					params: statAmountParams({
+					params: resourceAmountParams({
 						key: Stat.armyStrength,
 						amount: 1,
 					}),
