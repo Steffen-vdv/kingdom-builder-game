@@ -5,9 +5,9 @@
 		"outDir": "dist",
 		"composite": true,
 		"declaration": true,
-		"rootDirs": ["src", "../protocol/src"]
+		"rootDirs": ["src", "../protocol/src", "../contents/src"]
 	},
 	"include": ["src"],
 	"exclude": ["dist", "tests"],
-	"references": [{ "path": "../protocol" }]
+	"references": [{ "path": "../protocol" }, { "path": "../contents" }]
 }

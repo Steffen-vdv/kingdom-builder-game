@@ -86,8 +86,8 @@ describe('formatPhaseResolution', () => {
 		const diffContext = {} as TranslationDiffContext;
 		const resourceKeys = ['gold' as SessionResourceKey];
 		diffStepSnapshotsMock.mockReturnValue({
-			tree: [{ summary: 'Gold +2 (5→7)' }],
-			summaries: ['Gold +2 (5→7)'],
+			tree: [{ summary: '🪙 Gold +2 (5→7)' }],
+			summaries: ['🪙 Gold +2 (5→7)'],
 		});
 
 		const result = formatPhaseResolution({
@@ -116,8 +116,8 @@ describe('formatPhaseResolution', () => {
 			id: 'growth',
 		});
 		expect(result.actorLabel).toBe('🌱 Growth Phase');
-		expect(result.lines).toEqual(['🌱 Growth Phase', '    Gold +2 (5→7)']);
-		expect(result.summaries).toEqual(['Gold +2 (5→7)']);
+		expect(result.lines).toEqual(['🌱 Growth Phase', '    🪙 Gold +2 (5→7)']);
+		expect(result.summaries).toEqual(['🪙 Gold +2 (5→7)']);
 	});
 
 	it('falls back to definition effects when advance has none', () => {
@@ -141,8 +141,8 @@ describe('formatPhaseResolution', () => {
 		const before = createPlayerSnapshot({ gold: 5 });
 		const after = createPlayerSnapshot({ gold: 6 });
 		diffStepSnapshotsMock.mockReturnValue({
-			tree: [{ summary: 'Gold +1 (5→6)' }],
-			summaries: ['Gold +1 (5→6)'],
+			tree: [{ summary: '🪙 Gold +1 (5→6)' }],
+			summaries: ['🪙 Gold +1 (5→6)'],
 		});
 
 		formatPhaseResolution({

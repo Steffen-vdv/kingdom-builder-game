@@ -19,6 +19,10 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import {
+	createResourceV2MetadataSelectors,
+	cloneResourceCatalogV2,
+} from '../src/translation/context/resourceV2';
 import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
@@ -94,14 +98,16 @@ describe('action cost and reward logging', () => {
 			name: 'Synthetic Refund',
 			icon: '♻️',
 			baseCosts: {
-				[SYNTHETIC_RESOURCE_KEYS.actionPoints]: 1,
 				[SYNTHETIC_RESOURCE_KEYS.coin]: 4,
 			},
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: SYNTHETIC_RESOURCE_KEYS.coin, amount: 6 },
+					params: {
+						resourceId: SYNTHETIC_RESOURCE_KEYS.coin,
+						change: { type: 'amount', amount: 6 },
+					},
 				},
 			],
 		});
@@ -113,6 +119,7 @@ describe('action cost and reward logging', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2: scenario.resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		engineContext.activePlayer.actions.add(refundAction.id);
@@ -123,7 +130,22 @@ describe('action cost and reward logging', () => {
 		const costs = getActionCosts(refundAction.id, engineContext);
 		performAction(refundAction.id, engineContext);
 		const after = captureActivePlayer(engineContext);
-		const diffContext = createTranslationDiffContext(engineContext);
+		const resourceMetadataV2 = createResourceV2MetadataSelectors(
+			cloneResourceCatalogV2(scenario.resourceCatalogV2),
+		);
+		const diffContext = createTranslationDiffContext({
+			activePlayer: {
+				id: engineContext.activePlayer.id,
+				population: engineContext.activePlayer.population ?? {},
+				lands: engineContext.activePlayer.lands ?? [],
+			},
+			buildings: engineContext.buildings,
+			developments: engineContext.developments,
+			actionCategories: { get: () => undefined, has: () => false },
+			passives: { evaluationMods: new Map() },
+			assets: SYNTHETIC_ASSETS,
+			resourceMetadataV2,
+		});
 		const actionDefinition = engineContext.actions.get(refundAction.id);
 		if (!actionDefinition) {
 			throw new Error('Missing refund action definition');
@@ -148,7 +170,7 @@ describe('action cost and reward logging', () => {
 			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
-			const beforeAmount = before.resources[key] ?? 0;
+			const beforeAmount = before.valuesV2?.[key] ?? 0;
 			const afterAmount = beforeAmount - amount;
 			costLines.push({
 				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
@@ -178,8 +200,8 @@ describe('action cost and reward logging', () => {
 			line.includes(`${coinInfo.icon} ${coinInfo.label} -${coinCost} `),
 		);
 		expect(costEntry).toBeDefined();
-		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const beforeCoins = before.valuesV2?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.valuesV2?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const rewardLine = filtered.find(
 			(line) =>
 				line.startsWith(`${coinInfo.icon} ${coinInfo.label}`) &&

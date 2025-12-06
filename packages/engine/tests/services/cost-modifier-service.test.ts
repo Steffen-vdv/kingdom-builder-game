@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents/resourceKeys';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { getActionCosts } from '../../src';
 import { createTestEngine } from '../helpers';
@@ -8,9 +8,9 @@ import { CostModifierService } from '../../src/services/cost_modifier_service';
 describe('CostModifierService', () => {
 	it('applies per-resource percent modifiers with object round instructions', () => {
 		const content = createContentFactory();
-		const resourceKeys = Object.values(CResource);
-		const resourceA = resourceKeys[0];
-		const resourceB = resourceKeys[1] ?? resourceKeys[0];
+		// Use gold and happiness - not AP which is a global cost resource
+		const resourceA = CResource.gold;
+		const resourceB = CResource.happiness;
 		const action = content.action({
 			baseCosts: {
 				[resourceA]: 7,
@@ -71,9 +71,9 @@ describe('CostModifierService', () => {
 
 	it('unregisters modifiers and keeps clones independent', () => {
 		const content = createContentFactory();
-		const resourceKeys = Object.values(CResource);
-		const resourceA = resourceKeys[0];
-		const resourceB = resourceKeys[1] ?? resourceKeys[0];
+		// Use gold and happiness - not AP which is a global cost resource
+		const resourceA = CResource.gold;
+		const resourceB = CResource.happiness;
 		const action = content.action({
 			baseCosts: {
 				[resourceA]: 6,

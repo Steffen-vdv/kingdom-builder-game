@@ -12,6 +12,17 @@ import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
 import { createTestSessionScaffold } from './testSessionScaffold';
 
+// Helper to build V2 ID for core resources
+function getCoreResourceV2Id(legacyKey: string): string {
+	return `resource:core:${legacyKey}`;
+}
+
+// Helper to build V2 ID for stats (camelCase to kebab-case)
+function getStatV2Id(legacyKey: string): string {
+	const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+	return `resource:core:${kebab}`;
+}
+
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
 	mockGame: GameEngineContextValue;
@@ -31,6 +42,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		metadata: sessionMetadata,
 		phases,
 		ruleSnapshot,
+		resourceCatalogV2,
 	} = createTestSessionScaffold();
 	const translationAssets = createTranslationAssets(
 		sessionRegistries,
@@ -46,7 +58,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		{},
 	);
 	const stats: Record<string, number> = {};
-	const statsHistory: Record<string, boolean> = {};
+	const resourceTouchedV2: Record<string, boolean> = {};
 	let statIndex = 0;
 	const statEntries = Object.entries(translationAssets.stats);
 	const maxPopulationKey =
@@ -60,17 +72,26 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		const value = statIndex % 2 === 0 ? statIndex + 1 : 0;
 		stats[statKey] = value;
 		if (value === 0) {
-			statsHistory[statKey] = true;
+			resourceTouchedV2[statKey] = true;
 		}
 		statIndex += 1;
+	}
+	// Build valuesV2 from legacy resources and stats using V2 IDs
+	const valuesV2: Record<string, number> = {};
+	for (const [key, value] of Object.entries(resourceValues)) {
+		valuesV2[getCoreResourceV2Id(key)] = value;
+	}
+	for (const [key, value] of Object.entries(stats)) {
+		valuesV2[getStatV2Id(key)] = value;
 	}
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
 		resources: resourceValues,
 		stats,
-		statsHistory,
+		resourceTouchedV2,
 		population: {},
+		valuesV2,
 	});
 	const opponent = createSnapshotPlayer({
 		id: opponentId,
@@ -87,6 +108,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
 		metadata: sessionMetadata,
+		resourceCatalogV2,
 	});
 	const translationContext = createTranslationContext(
 		sessionState,
@@ -179,7 +201,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			if (statValue !== 0) {
 				return true;
 			}
-			return Boolean(activePlayer.statsHistory?.[statKey]);
+			return Boolean(activePlayer.resourceTouchedV2?.[statKey]);
 		})
 		.map(([statKey]) => statKey);
 	const statForecast = displayableStatKeys.reduce<Record<string, number>>(

@@ -95,7 +95,7 @@ function toPlayerSnapshot(
 		name: participant.name,
 		resources: { ...participant.resources },
 		stats: { [capacityStat]: 3 },
-		statsHistory: {},
+		resourceTouchedV2: {},
 		population: { ...participant.population },
 		lands: participant.lands.map((land) => ({
 			...land,
@@ -106,7 +106,7 @@ function toPlayerSnapshot(
 		})),
 		buildings: Array.from(participant.buildings),
 		actions: Array.from(participant.actions),
-		statSources: {},
+		resourceSources: {},
 		skipPhases: {},
 		skipSteps: {},
 		passives: [],

@@ -2,7 +2,7 @@ import { collectResourceSources } from './resourceSources';
 import { type TranslationDiffContext } from './resourceSources/context';
 import {
 	appendResourceChanges,
-	appendStatChanges,
+	appendPercentBreakdownChanges,
 	appendBuildingChanges,
 	appendLandChanges,
 	appendSlotChanges,
@@ -69,6 +69,7 @@ export function diffStepSnapshots(
 		nextSnapshot,
 		resourceKeys,
 		diffContext.assets,
+		diffContext.resourceMetadataV2,
 		sources,
 		{ trackByKey: resourceNodes },
 	);
@@ -77,16 +78,17 @@ export function diffStepSnapshots(
 		summarySet.add(change.summary);
 	}
 
-	const statChanges: string[] = [];
-	appendStatChanges(
-		statChanges,
+	const percentBreakdownChanges: string[] = [];
+	appendPercentBreakdownChanges(
+		percentBreakdownChanges,
 		previousSnapshot,
 		nextSnapshot,
 		nextSnapshot,
 		stepEffects,
 		diffContext.assets,
+		diffContext.resourceMetadataV2,
 	);
-	for (const summary of statChanges) {
+	for (const summary of percentBreakdownChanges) {
 		if (!summary || !summary.trim()) {
 			continue;
 		}

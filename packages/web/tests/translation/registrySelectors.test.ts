@@ -68,7 +68,8 @@ describe('registrySelectors – selectStatDescriptor', () => {
 		const context = createContext();
 		const descriptor = selectStatDescriptor(context, statKey);
 		expect(descriptor.label).toBe('Mystery Stat');
-		expect(descriptor.icon).toBe(statKey);
+		// Icon falls back to empty string when not found
+		expect(descriptor.icon).toBe('');
 		const repeat = selectStatDescriptor(context, statKey);
 		expect(repeat).toBe(descriptor);
 		const otherContext = createContext();

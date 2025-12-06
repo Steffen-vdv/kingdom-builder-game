@@ -1,18 +1,7 @@
-export {
-	Resource,
-	Phase,
-	PopulationRole,
-	Stat,
-	createEngine,
-} from './setup/create_engine';
-export type {
-	ResourceKey,
-	StatKey,
-	PopulationRoleId,
-	StatSourceMeta,
-	StatSourceContribution,
-	StatSourceLink,
-} from './setup/create_engine';
+export { createEngine } from './setup/create_engine';
+export type { ResourceKey, PopulationRoleId } from './setup/create_engine';
+export type { RuntimeResourceContent } from './resource-v2';
+export { getResourceValue, setResourceValue } from './resource-v2';
 export {
 	createEngineSession,
 	type EngineSession,

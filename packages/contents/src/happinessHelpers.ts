@@ -1,9 +1,11 @@
-import type { EffectConfig } from '@kingdom-builder/protocol';
+import type { EffectConfig, PassiveMetadata } from '@kingdom-builder/protocol';
+import type { ResourceV2TierTrackMetadata } from './resourceV2';
 import { costModParams, developmentTarget, resultModParams, statAddEffect, effect } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './config/builderShared';
+import { formatPassiveRemoval } from './text';
 import type { passiveParams } from './config/builders';
-import { Resource } from './resources';
-import { Stat } from './stats';
+import { Resource, type ResourceKey } from './resourceKeys';
+import { Stat, type StatKey } from './stats';
 
 export type HappinessTierSlug = 'despair' | 'misery' | 'grim' | 'unrest' | 'steady' | 'content' | 'joyful' | 'elated' | 'ecstatic';
 
@@ -15,17 +17,20 @@ export const happinessPassiveId = (slug: HappinessTierSlug) => `passive:happines
 
 export const happinessModifierId = (slug: HappinessTierSlug, kind: HappinessModifierKind) => `happiness:${slug}:${kind}`;
 
-const DEVELOPMENT_EVALUATION = developmentTarget();
-
 export const incomeModifier = (id: string, percent: number) =>
-	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(DEVELOPMENT_EVALUATION).percent(percent).build()).build();
+	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(developmentTarget()).percent(percent).build()).build();
 
-export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).key(Resource.gold).percent(-0.2).build()).build();
+const GOLD_RESOURCE_KEY: ResourceKey = Resource.gold;
+const GROWTH_STAT_KEY: StatKey = Stat.growth;
 
-export const growthBonusEffect = (amount: number) => statAddEffect(Stat.growth, amount);
+export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).key(GOLD_RESOURCE_KEY).percent(-0.2).build()).build();
+
+export const growthBonusEffect = (amount: number) => statAddEffect(GROWTH_STAT_KEY, amount);
 
 type TierPassiveEffectOptions = {
 	tierId: string;
+	resourceId: string;
+	tierTrackMetadata: ResourceV2TierTrackMetadata;
 	summary: string;
 	summaryToken?: string;
 	removalDetail: string;
@@ -35,7 +40,13 @@ type TierPassiveEffectOptions = {
 	name?: string;
 };
 
-export function createTierPassiveEffect({ tierId, summary, summaryToken, removalDetail, params, effects = [], icon, name }: TierPassiveEffectOptions) {
+type TierPassiveMetadata = PassiveMetadata & {
+	resourceId: string;
+	tierTrack: ResourceV2TierTrackMetadata;
+	tierId: string;
+};
+
+export function createTierPassiveEffect({ tierId, resourceId, tierTrackMetadata, summary, summaryToken, removalDetail, params, effects = [], icon, name }: TierPassiveEffectOptions) {
 	params.detail(summaryToken ?? summary);
 	if (name) {
 		params.name(name);
@@ -43,26 +54,23 @@ export function createTierPassiveEffect({ tierId, summary, summaryToken, removal
 	if (icon) {
 		params.icon(icon);
 	}
-	const tieredSource: {
-		tierId: string;
-		removalDetail: string;
-		summaryToken?: string;
-		name?: string;
-		icon?: string;
-	} = {
+	const removalText = formatPassiveRemoval(removalDetail);
+	const metadata: TierPassiveMetadata = {
+		resourceId,
+		tierTrack: tierTrackMetadata,
 		tierId,
-		removalDetail,
+		source: {
+			type: 'tiered-resource',
+			id: tierId,
+			...(summaryToken ? { labelToken: summaryToken } : {}),
+			...(icon ? { icon } : {}),
+		},
+		removal: {
+			token: removalDetail,
+			text: removalText,
+		},
 	};
-	if (summaryToken) {
-		tieredSource.summaryToken = summaryToken;
-	}
-	if (name) {
-		tieredSource.name = name;
-	}
-	if (icon) {
-		tieredSource.icon = icon;
-	}
-	params.tieredResourceSource(tieredSource);
+	params.meta(metadata);
 	const builder = effect().type(Types.Passive).method(PassiveMethods.ADD).params(params);
 	effects.forEach((entry) => builder.effect(entry));
 	return builder;

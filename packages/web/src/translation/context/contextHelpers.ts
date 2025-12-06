@@ -15,6 +15,7 @@ import type {
 	TranslationPlayer,
 	TranslationRegistry,
 } from './types';
+import { cloneResourceBoundsV2, cloneResourceValuesV2 } from './resourceV2';
 
 export function cloneRecord<T>(record: Record<string, T>): Record<string, T> {
 	return Object.freeze({ ...record });
@@ -71,12 +72,16 @@ export function toPassiveDescriptor(
 export function clonePlayer(
 	player: SessionSnapshot['game']['players'][number],
 ): TranslationPlayer {
+	const resourcesV2 = cloneResourceValuesV2(player.valuesV2);
+	const resourceBoundsV2 = cloneResourceBoundsV2(player.resourceBoundsV2);
 	return Object.freeze({
 		id: player.id,
 		name: player.name,
 		resources: cloneRecord(player.resources),
 		stats: cloneRecord(player.stats),
 		population: cloneRecord(player.population),
+		resourcesV2,
+		resourceBoundsV2,
 	});
 }
 

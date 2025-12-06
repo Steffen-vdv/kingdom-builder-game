@@ -1,4 +1,4 @@
-import type { SessionStatSourceMeta as StatSourceMeta } from '@kingdom-builder/protocol';
+import type { SessionResourceSourceMeta as StatSourceMeta } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationTriggerAsset } from '../../translation/context';
 import { formatPhaseStep } from './format';

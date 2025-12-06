@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SessionStatSourceLink as StatSourceLink } from '@kingdom-builder/protocol';
+import type { SessionResourceSourceLink as StatSourceLink } from '@kingdom-builder/protocol';
 import { getStatBreakdownSummary } from '../src/utils/stats';
 import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
 import { createSessionRegistries } from './helpers/sessionRegistries';
@@ -240,7 +240,7 @@ describe('stat breakdown summary', () => {
 			{ type: 'population', id: populationId },
 			{ type: 'resource', id: resourceKey },
 		];
-		player.statSources[primaryStatKey] = {
+		player.resourceSources[primaryStatKey] = {
 			ongoing: {
 				amount: 1,
 				meta: {
@@ -324,7 +324,7 @@ describe('stat breakdown summary', () => {
 	it('omits removal suffix from build sources', () => {
 		const setup = createStatBreakdownSetup();
 		const { translationContext, player, primaryStatKey, actionId } = setup;
-		player.statSources[primaryStatKey] = {
+		player.resourceSources[primaryStatKey] = {
 			build: {
 				amount: 2,
 				meta: {
@@ -356,7 +356,7 @@ describe('stat breakdown summary', () => {
 	it('falls back gracefully when stat metadata is missing', () => {
 		const setup = createStatBreakdownSetup();
 		const { translationContext, player, primaryStatKey } = setup;
-		player.statSources[primaryStatKey] = {
+		player.resourceSources[primaryStatKey] = {
 			bonus: {
 				amount: 2,
 				meta: {

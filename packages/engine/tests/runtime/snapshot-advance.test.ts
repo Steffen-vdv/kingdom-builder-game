@@ -4,39 +4,51 @@ import type { AdvanceResult, AdvanceSkip } from '../../src/phases/advance';
 import type { PassiveMetadata } from '../../src/services';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { createTestEngine } from '../helpers';
-
-function getFirstKey(source: Record<string, unknown>): string {
-	const [first] = Object.keys(source);
-	return first ?? 'test:key';
-}
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import {
+	Resource as CResource,
+	Stat as CStat,
+} from '@kingdom-builder/contents';
 
 describe('snapshotAdvance', () => {
 	it('clones advance results with skip metadata and complex effects', () => {
 		const context = createTestEngine();
 		const activePlayer = context.activePlayer;
-		const resourceKey = getFirstKey(activePlayer.resources);
-		const statKey = getFirstKey(activePlayer.stats);
+		// Use known ResourceV2 IDs directly
+		const resourceKey = CResource.gold;
+		const statKey = CStat.armyStrength;
 		const developmentEntry = context.developments.entries()[0];
 		const developmentId = developmentEntry?.[0] ?? 'test:development';
+		const outerParams = resourceAmountParams({
+			key: resourceKey,
+			amount: 3,
+		});
 		const outerEffect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: resourceKey, amount: 3 },
+			params: outerParams,
 			effects: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
-					params: { key: statKey, amount: 1 },
+					params: {
+						resourceId: statKey,
+						change: { type: 'amount', amount: 1 },
+					},
 					meta: { tag: 'nested' },
 				},
 			],
 			evaluator: { type: 'development', params: { id: developmentId } },
 			meta: { tier: 'outer' },
 		};
+		const chainedParams = resourceAmountParams({
+			key: resourceKey,
+			amount: 1,
+		});
 		const chainedEffect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: resourceKey, amount: 1 },
+			params: chainedParams,
 			meta: { sequence: [1, 2, 3] },
 		};
 		const skipMeta: PassiveMetadata = {
@@ -66,16 +78,20 @@ describe('snapshotAdvance', () => {
 		};
 		const originalPhase = context.game.currentPhase;
 		const originalStep = context.game.currentStep;
-		const originalResource = activePlayer.resources[resourceKey];
+		const originalResource = activePlayer.resourceValues[resourceKey] ?? 0;
 		const snapshot = snapshotAdvance(context, original);
 		const firstSource = snapshot.skipped?.sources[0];
 		expect(snapshot.player).not.toBe(original.player);
 		expect(snapshot.effects).not.toBe(original.effects);
 		expect(snapshot.skipped?.sources).not.toBe(original.skipped?.sources);
-		snapshot.player.resources[resourceKey] =
-			(snapshot.player.resources[resourceKey] ?? 0) + 999;
+		// Snapshot uses valuesV2, not resourceValues
+		snapshot.player.valuesV2[resourceKey] =
+			(snapshot.player.valuesV2[resourceKey] ?? 0) + 999;
 		snapshot.effects[0]!.method = 'mutated-method';
-		snapshot.effects[0]!.params = { key: resourceKey, amount: 99 };
+		snapshot.effects[0]!.params = resourceAmountParams({
+			key: resourceKey,
+			amount: 99,
+		});
 		snapshot.effects[0]!.effects = [];
 		snapshot.effects.push({ type: 'mutated' });
 		if (firstSource) {
@@ -90,11 +106,11 @@ describe('snapshotAdvance', () => {
 		snapshot.skipped?.sources.push({ id: 'source:mutated' });
 		expect(context.game.currentPhase).toBe(originalPhase);
 		expect(context.game.currentStep).toBe(originalStep);
-		expect(activePlayer.resources[resourceKey]).toBe(originalResource);
-		expect(original.player.resources[resourceKey]).toBe(originalResource);
+		expect(activePlayer.resourceValues[resourceKey]).toBe(originalResource);
+		expect(original.player.resourceValues[resourceKey]).toBe(originalResource);
 		expect(original.effects).toHaveLength(2);
 		expect(original.effects[0]?.method).toBe('add');
-		expect(original.effects[0]?.params).toEqual({
+		expect(original.effects[0]?.params).toMatchObject({
 			key: resourceKey,
 			amount: 3,
 		});
@@ -108,11 +124,16 @@ describe('snapshotAdvance', () => {
 	it('omits skip data when advance results do not include skip info', () => {
 		const context = createTestEngine();
 		const activePlayer = context.activePlayer;
-		const resourceKey = getFirstKey(activePlayer.resources);
+		// Use known ResourceV2 ID directly
+		const resourceKey = CResource.gold;
+		const singleParams = resourceAmountParams({
+			key: resourceKey,
+			amount: 2,
+		});
 		const singleEffect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: resourceKey, amount: 2 },
+			params: singleParams,
 		};
 		const original: AdvanceResult = {
 			phase: context.game.currentPhase,
@@ -120,17 +141,18 @@ describe('snapshotAdvance', () => {
 			effects: [singleEffect],
 			player: activePlayer,
 		};
-		const originalValue = activePlayer.resources[resourceKey];
+		const originalValue = activePlayer.resourceValues[resourceKey] ?? 0;
 		const snapshot = snapshotAdvance(context, original);
 		expect(snapshot.skipped).toBeUndefined();
-		snapshot.player.resources[resourceKey] =
-			(snapshot.player.resources[resourceKey] ?? 0) + 100;
+		// Snapshot uses valuesV2, not resourceValues
+		snapshot.player.valuesV2[resourceKey] =
+			(snapshot.player.valuesV2[resourceKey] ?? 0) + 100;
 		snapshot.effects[0]!.method = 'remove';
 		snapshot.effects.push({ type: 'extra' });
 		expect(original.skipped).toBeUndefined();
 		expect(original.effects).toHaveLength(1);
 		expect(original.effects[0]?.method).toBe('add');
-		expect(activePlayer.resources[resourceKey]).toBe(originalValue);
-		expect(original.player.resources[resourceKey]).toBe(originalValue);
+		expect(activePlayer.resourceValues[resourceKey]).toBe(originalValue);
+		expect(original.player.resourceValues[resourceKey]).toBe(originalValue);
 	});
 });

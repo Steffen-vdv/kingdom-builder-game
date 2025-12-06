@@ -3,8 +3,7 @@ import type { EngineContext } from '../context';
 
 import { developmentEvaluator } from './development';
 import { landEvaluator } from './land';
-import { populationEvaluator } from './population';
-import { statEvaluator } from './stat';
+import { resourceEvaluator } from './resource';
 import { compareEvaluator } from './compare';
 import type { EvaluatorDef } from '@kingdom-builder/protocol';
 
@@ -24,14 +23,12 @@ export function registerCoreEvaluators(
 ) {
 	registry.add('development', developmentEvaluator);
 	registry.add('land', landEvaluator);
-	registry.add('population', populationEvaluator);
-	registry.add('stat', statEvaluator);
+	registry.add('resource', resourceEvaluator);
 	registry.add('compare', compareEvaluator);
 }
 
 export { developmentEvaluator } from './development';
 export { landEvaluator } from './land';
-export { populationEvaluator } from './population';
-export { statEvaluator } from './stat';
+export { resourceEvaluator } from './resource';
 export { compareEvaluator } from './compare';
 export type { EvaluatorDef } from '@kingdom-builder/protocol';

@@ -274,7 +274,7 @@ export function buildActionResolution({
 	const messages = ensureTimelineLines(rawMessages);
 	const costLines = buildActionCostLines({
 		costs,
-		beforeResources: before.resources,
+		beforeResources: before.valuesV2,
 		resources,
 	});
 	if (costLines.length) {

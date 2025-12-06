@@ -1,6 +1,6 @@
 import type { AttackTarget, EffectConfig, EffectDef } from '@kingdom-builder/protocol';
 import type { ActionId } from '../../actions';
-import type { ResourceKey } from '../../resources';
+import type { ResourceKey } from '../../resourceKeys';
 import type { StatKey } from '../../stats';
 import type { PopulationRoleId } from '../../populationRoles';
 import { ParamsBuilder } from '../builderShared';
@@ -52,8 +52,10 @@ export class EvaluationTargetBuilder extends ParamsBuilder<{
 		return this.set('id', id);
 	}
 }
-export const evaluationTarget = (type: EvaluationTargetTypes | string) => new EvaluationTargetBuilder(type);
-export const developmentTarget = () => evaluationTarget(EvaluationTargetTypes.Development);
+export const evaluationTarget = (type: string) => new EvaluationTargetBuilder(type);
+export function developmentTarget() {
+	return evaluationTarget(EvaluationTargetTypes.Development);
+}
 export const populationTarget = () => evaluationTarget(EvaluationTargetTypes.Population);
 export class ResultModParamsBuilder extends ParamsBuilder<{
 	id?: string;
@@ -184,34 +186,3 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	}
 }
 export const attackParams = () => new AttackParamsBuilder();
-export class TransferParamsBuilder extends ParamsBuilder<{
-	key?: ResourceKey;
-	percent?: number;
-	amount?: number;
-}> {
-	key(key: ResourceKey) {
-		return this.set('key', key, 'You already chose a resource with key(). Remove the extra key() call.');
-	}
-	percent(percent: number) {
-		return this.set('percent', percent, 'You already set percent() for this transfer. Remove the duplicate percent() call.');
-	}
-	amount(amount: number) {
-		return this.set('amount', amount, 'You already set amount() for this transfer. Remove the duplicate amount() call.');
-	}
-
-	override build() {
-		if (!this.wasSet('key')) {
-			throw new Error('Resource transfer is missing key(). Call key(Resource.yourChoice) to pick the resource to move.');
-		}
-		const hasPercent = this.wasSet('percent');
-		const hasAmount = this.wasSet('amount');
-		if (!hasPercent && !hasAmount) {
-			throw new Error('Resource transfer is missing percent() or amount(). Call one of them to choose how much to move.');
-		}
-		if (hasPercent && hasAmount) {
-			throw new Error('Resource transfer cannot use both percent() and amount(). Remove one of the calls before build().');
-		}
-		return super.build();
-	}
-}
-export const transferParams = () => new TransferParamsBuilder();

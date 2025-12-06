@@ -15,7 +15,7 @@ import {
 } from './helpers/sessionFixtures';
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
-import { selectResourceDisplay } from '../src/translation/context/assetSelectors';
+// selectResourceDisplay removed - use V2 metadata instead
 import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import { ownerLabel } from '../src/translation/effects/formatters/attackFormatterUtils';
@@ -87,6 +87,14 @@ function createTestSetup(): TestSetup {
 				description: 'Minted test currency.',
 			},
 		},
+		// V2 metadata is used by selectAttackResourceDescriptor
+		resourcesV2: {
+			[resourceKey]: {
+				label: 'Auric Coin',
+				icon: '🪙',
+				description: 'Minted test currency.',
+			},
+		},
 		assets: {
 			land: { label: 'Territory', icon: '🗺️' },
 			slot: { label: 'Development Slot', icon: '🧩' },
@@ -115,15 +123,13 @@ function createTestSetup(): TestSetup {
 		},
 	);
 	const metadataSelectors = createTestRegistryMetadata(registries, metadata);
-	const resourceDisplay = selectResourceDisplay(
-		translationContext.assets,
-		resourceKey,
-	);
+	// Use V2 metadata for resource display
+	const v2Metadata = translationContext.resourceMetadataV2.get(resourceKey);
 	const resourceDescriptor =
 		metadataSelectors.resourceMetadata.select(resourceKey);
-	const labelSource = resourceDisplay.label ?? resourceDescriptor.label;
-	const customResourceLabel = resourceDisplay.icon
-		? `${resourceDisplay.icon} ${labelSource}`
+	const labelSource = v2Metadata?.label ?? resourceDescriptor.label;
+	const customResourceLabel = v2Metadata?.icon
+		? `${v2Metadata.icon} ${labelSource}`
 		: labelSource;
 	const diffDescriptor = selectAttackResourceDescriptor(
 		translationContext,
@@ -291,11 +297,17 @@ describe('attack on-damage formatter registry', () => {
 			],
 		};
 
+		// Create a mutated context with empty V2 metadata to test fallback
 		const mutatedContext = {
 			...translationContext,
 			assets: {
 				...translationContext.assets,
 				resources: {},
+			},
+			resourceMetadataV2: {
+				get: () => undefined,
+				list: () => [],
+				has: () => false,
 			},
 		} as typeof translationContext;
 		const fallbackDescriptor = selectAttackResourceDescriptor(

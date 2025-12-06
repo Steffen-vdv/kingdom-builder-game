@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
 import { formatStatValue } from '../src/utils/stats';
 import type { EffectDef, SessionPlayerId } from '@kingdom-builder/protocol';
-import {
-	createTranslationContext,
-	selectStatDisplay,
-} from '../src/translation/context';
+import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import {
 	createSessionSnapshot,
@@ -93,7 +90,8 @@ describe('modifier percent formatting', () => {
 
 	it('falls back to raw numbers when percent metadata is missing', () => {
 		const { context } = createContext();
-		const fallbackDisplay = selectStatDisplay(context.assets, 'unknown-stat');
+		// ResourceV2 metadata returns the id as label when resource is unknown
+		const fallbackDisplay = context.resourceMetadataV2.get('unknown-stat');
 		expect(fallbackDisplay.label).toBe('unknown-stat');
 		const fallbackValue = formatStatValue('unknown-stat', 0.5, context.assets);
 		expect(fallbackValue).toBe('0.5');

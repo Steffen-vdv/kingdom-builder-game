@@ -3,12 +3,11 @@ import {
 	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
 	SLOT_INFO,
-	STATS,
 	TRIGGER_INFO,
 	POPULATION_INFO,
-	POPULATION_ROLES,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
+	RESOURCE_V2_REGISTRY,
 } from '@kingdom-builder/contents';
 import type {
 	BuildingConfig,
@@ -128,18 +127,23 @@ function buildPopulationMetadata(
 ): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
 	for (const [id, definition] of registry.entries()) {
-		const descriptor: SessionMetadataDescriptor = { label: definition.name };
+		const resource = RESOURCE_V2_REGISTRY.byId[id];
+		// Prefer definition name (custom overrides) over V2 registry label
+		const descriptor: SessionMetadataDescriptor = {
+			label: definition.name ?? resource?.label,
+		};
+		// Prefer definition icon over V2 registry icon
 		if (definition.icon) {
 			descriptor.icon = definition.icon;
+		} else if (resource?.icon) {
+			descriptor.icon = resource.icon;
 		}
+		// Prefer definition description over V2 registry description
 		const description = (definition as { description?: string }).description;
 		if (description) {
 			descriptor.description = description;
-		} else {
-			const roleInfo = POPULATION_ROLES[id as keyof typeof POPULATION_ROLES];
-			if (roleInfo?.description) {
-				descriptor.description = roleInfo.description;
-			}
+		} else if (resource?.description) {
+			descriptor.description = resource.description;
 		}
 		descriptors[id] = descriptor;
 	}
@@ -148,23 +152,23 @@ function buildPopulationMetadata(
 
 function buildStatMetadata(): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
-	const statKeys = Object.keys(STATS) as Array<keyof typeof STATS>;
-	for (const key of statKeys) {
-		const info = STATS[key];
+	for (const resource of RESOURCE_V2_REGISTRY.ordered) {
+		if (!resource.id.startsWith('resource:core:')) {
+			continue;
+		}
 		const descriptor: SessionMetadataDescriptor = {
-			label: info.label,
-			description: info.description,
+			label: resource.label,
 		};
-		if (info.icon) {
-			descriptor.icon = info.icon;
+		if (resource.description) {
+			descriptor.description = resource.description;
 		}
-		if (info.displayAsPercent) {
-			descriptor.displayAsPercent = info.displayAsPercent;
+		if (resource.icon) {
+			descriptor.icon = resource.icon;
 		}
-		if (info.addFormat) {
-			descriptor.format = { ...info.addFormat };
+		if (resource.displayAsPercent) {
+			descriptor.displayAsPercent = resource.displayAsPercent;
 		}
-		descriptors[key] = descriptor;
+		descriptors[resource.id] = descriptor;
 	}
 	return descriptors;
 }

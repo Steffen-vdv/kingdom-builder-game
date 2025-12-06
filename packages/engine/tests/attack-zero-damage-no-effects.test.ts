@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef, type AttackLog } from '../src/index.ts';
-import { Resource } from '../src/state/index.ts';
+import {
+	Resource as CResource,
+	Stat as CStat,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceAmountParams } from './helpers/resourceV2Params.ts';
 
 const attackLogKey = 'attack:perform';
 
@@ -12,20 +16,20 @@ describe('attack:perform', () => {
 		const attacker = engineContext.activePlayer;
 		const defender = engineContext.opponent;
 
-		attacker.armyStrength = 1;
-		defender.absorption = 1;
-		defender.fortificationStrength = 0;
+		attacker.resourceValues[CStat.armyStrength] = 1;
+		defender.resourceValues[CStat.absorption] = 1;
+		defender.resourceValues[CStat.fortificationStrength] = 0;
 
 		const previousState = {
 			attacker: {
-				hp: attacker.resources[Resource.castleHP],
-				gold: attacker.gold,
-				happiness: attacker.happiness,
+				hp: attacker.resourceValues[CResource.castleHP] ?? 0,
+				gold: attacker.resourceValues[CResource.gold] ?? 0,
+				happiness: attacker.resourceValues[CResource.happiness] ?? 0,
 			},
 			defender: {
-				hp: defender.resources[Resource.castleHP],
-				gold: defender.gold,
-				happiness: defender.happiness,
+				hp: defender.resourceValues[CResource.castleHP] ?? 0,
+				gold: defender.resourceValues[CResource.gold] ?? 0,
+				happiness: defender.resourceValues[CResource.happiness] ?? 0,
 			},
 		};
 
@@ -33,30 +37,42 @@ describe('attack:perform', () => {
 			type: 'attack',
 			method: 'perform',
 			params: {
-				target: { type: 'resource', key: Resource.castleHP },
+				target: { type: 'resource', key: CResource.castleHP },
 				onDamage: {
 					attacker: [
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: Resource.gold, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.gold,
+								amount: 1,
+							}),
 						},
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: Resource.happiness, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.happiness,
+								amount: 1,
+							}),
 						},
 					],
 					defender: [
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: Resource.gold, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.gold,
+								amount: 1,
+							}),
 						},
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: Resource.happiness, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.happiness,
+								amount: 1,
+							}),
 						},
 					],
 				},
@@ -65,16 +81,24 @@ describe('attack:perform', () => {
 
 		runEffects([effect], engineContext);
 
-		expect(attacker.resources[Resource.castleHP]).toBe(
+		expect(attacker.resourceValues[CResource.castleHP]).toBe(
 			previousState.attacker.hp,
 		);
-		expect(attacker.gold).toBe(previousState.attacker.gold);
-		expect(attacker.happiness).toBe(previousState.attacker.happiness);
-		expect(defender.resources[Resource.castleHP]).toBe(
+		expect(attacker.resourceValues[CResource.gold]).toBe(
+			previousState.attacker.gold,
+		);
+		expect(attacker.resourceValues[CResource.happiness]).toBe(
+			previousState.attacker.happiness,
+		);
+		expect(defender.resourceValues[CResource.castleHP]).toBe(
 			previousState.defender.hp,
 		);
-		expect(defender.gold).toBe(previousState.defender.gold);
-		expect(defender.happiness).toBe(previousState.defender.happiness);
+		expect(defender.resourceValues[CResource.gold]).toBe(
+			previousState.defender.gold,
+		);
+		expect(defender.resourceValues[CResource.happiness]).toBe(
+			previousState.defender.happiness,
+		);
 	});
 
 	it('skips onDamage effects when buildings survive attacks', () => {
@@ -97,8 +121,8 @@ describe('attack:perform', () => {
 		);
 		engineContext.game.currentPlayerIndex = 0;
 
-		attacker.armyStrength = 2;
-		defender.absorption = 1;
+		attacker.resourceValues[CStat.armyStrength] = 2;
+		defender.resourceValues[CStat.absorption] = 1;
 
 		const effect: EffectDef = {
 			type: 'attack',
@@ -110,7 +134,10 @@ describe('attack:perform', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: Resource.gold, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.gold,
+								amount: 1,
+							}),
 						},
 					],
 				},
@@ -135,28 +162,34 @@ describe('attack:perform', () => {
 		const attacker = engineContext.activePlayer;
 		const defender = engineContext.opponent;
 
-		attacker.armyStrength = 3;
-		attacker.happiness = 1;
-		defender.happiness = 3;
+		attacker.resourceValues[CStat.armyStrength] = 3;
+		attacker.resourceValues[CResource.happiness] = 1;
+		defender.resourceValues[CResource.happiness] = 3;
 
 		const effect: EffectDef = {
 			type: 'attack',
 			method: 'perform',
 			params: {
-				target: { type: 'resource', key: Resource.castleHP },
+				target: { type: 'resource', key: CResource.castleHP },
 				onDamage: {
 					attacker: [
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: Resource.happiness, amount: 1 },
+							params: resourceAmountParams({
+								key: CResource.happiness,
+								amount: 1,
+							}),
 						},
 					],
 					defender: [
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: Resource.happiness, amount: -1 },
+							params: resourceAmountParams({
+								key: CResource.happiness,
+								amount: -1,
+							}),
 						},
 					],
 				},
@@ -165,8 +198,8 @@ describe('attack:perform', () => {
 
 		runEffects([effect], engineContext);
 
-		expect(attacker.happiness).toBe(2);
-		expect(defender.happiness).toBe(2);
+		expect(attacker.resourceValues[CResource.happiness]).toBe(2);
+		expect(defender.resourceValues[CResource.happiness]).toBe(2);
 
 		const attackLog = engineContext.pullEffectLog<AttackLog>(attackLogKey);
 		expect(attackLog).toBeDefined();
@@ -175,7 +208,7 @@ describe('attack:perform', () => {
 		);
 		expect(defenderEntries).toHaveLength(1);
 		const defenderDiffs = defenderEntries[0]!.defender.filter(
-			(diff) => diff.type === 'resource' && diff.key === Resource.happiness,
+			(diff) => diff.key === CResource.happiness,
 		);
 		expect(defenderDiffs).toHaveLength(1);
 		expect(defenderDiffs[0]!.before).toBe(3);

@@ -1,50 +1,18 @@
-import { stat, type StatInfo, toRecord } from './config/builders';
-
 export const Stat = {
-	maxPopulation: 'maxPopulation',
-	armyStrength: 'armyStrength',
-	fortificationStrength: 'fortificationStrength',
-	absorption: 'absorption',
-	growth: 'growth',
-	warWeariness: 'warWeariness',
+	/** Maximum population capacity */
+	populationMax: 'resource:core:max-population',
+	/** Parent resource aggregating all population roles (auto-computed sum) */
+	populationTotal: 'resource:core:total',
+	armyStrength: 'resource:core:army-strength',
+	fortificationStrength: 'resource:core:fortification-strength',
+	absorption: 'resource:core:absorption',
+	growth: 'resource:core:growth',
+	warWeariness: 'resource:core:war-weariness',
 } as const;
-export type StatKey = (typeof Stat)[keyof typeof Stat];
 
-const defs: StatInfo[] = [
-	stat(Stat.maxPopulation)
-		.icon('👥')
-		.label('Max Population')
-		.description('Max Population determines how many subjects your kingdom can sustain. Expand infrastructure or build houses to increase it.')
-		.capacity()
-		.addFormat({ prefix: 'Max ' })
-		.build(),
-	stat(Stat.armyStrength).icon('⚔️').label('Army Strength').description('Army Strength reflects the overall power of your military forces. A higher value makes your attacks more formidable.').build(),
-	stat(Stat.fortificationStrength)
-		.icon('🛡️')
-		.label('Fortification Strength')
-		.description('Fortification Strength measures the resilience of your defenses. It reduces damage taken when enemies assault your castle.')
-		.build(),
-	stat(Stat.absorption)
-		.icon('🌀')
-		.label('Absorption')
-		.description('Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.')
-		.displayAsPercent()
-		.addFormat({ percent: true })
-		.build(),
-	stat(Stat.growth)
-		.icon('📈')
-		.label('Growth')
-		.description(
-			'Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase.',
-		)
-		.displayAsPercent()
-		.addFormat({ percent: true })
-		.build(),
-	stat(Stat.warWeariness)
-		.icon('💤')
-		.label('War Weariness')
-		.description('War Weariness reflects the fatigue from prolonged conflict. High weariness can sap morale and hinder wartime efforts.')
-		.build(),
-];
+export type StatV2Id = (typeof Stat)[keyof typeof Stat];
+export type StatKey = StatV2Id;
 
-export const STATS: Record<StatKey, StatInfo> = toRecord(defs) as Record<StatKey, StatInfo>;
+export function getStatResourceV2Id(stat: StatKey): StatV2Id {
+	return stat;
+}

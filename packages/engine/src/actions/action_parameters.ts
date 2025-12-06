@@ -31,6 +31,7 @@ type BaseActionParameters<T extends string> = T extends keyof ActionParameterMap
 	? ActionParameterMap[T]
 	: Record<string, unknown>;
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type ActionParameters<T extends string> = BaseActionParameters<T> & {
 	choices?: ActionEffectGroupChoiceMap;
 };

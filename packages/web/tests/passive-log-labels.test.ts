@@ -40,9 +40,10 @@ function createPassiveHarness(
 	metadataOverride?: Parameters<typeof createTranslationContext>[2],
 ): PassiveHarness {
 	const scaffold = createTestSessionScaffold();
-	const resourceKeys = Object.keys(scaffold.registries.resources);
+	// Use ResourceV2 IDs for start resources
+	const resourceV2Keys = Object.keys(scaffold.resourceCatalogV2.resources.byId);
 	const startResources = Object.fromEntries(
-		resourceKeys.map((key) => [key, 0]),
+		resourceV2Keys.map((key) => [key, 0]),
 	);
 	const startConfig = {
 		player: {
@@ -74,6 +75,7 @@ function createPassiveHarness(
 		})),
 		start: startConfig,
 		rules: scaffold.ruleSnapshot,
+		resourceCatalogV2: scaffold.resourceCatalogV2,
 	});
 	const snapshot = snapshotEngine(engine);
 	const appliedMetadata = structuredClone(
@@ -126,6 +128,8 @@ function rebuildTranslationArtifacts(harness: PassiveHarness) {
 		developments: harness.engine.developments,
 		passives: translationContext.passives,
 		assets: translationContext.assets,
+		actionCategories: translationContext.actionCategories,
+		resourceMetadataV2: translationContext.resourceMetadataV2,
 	});
 	return { translationContext, diffContext } as const;
 }
@@ -162,7 +166,7 @@ describe('passive log labels', () => {
 		const happinessKey = harness.ruleSnapshot.tieredResourceKey;
 		const setHappiness = (value: number) => {
 			const { engine } = harness;
-			engine.activePlayer.resources[happinessKey] = value;
+			engine.activePlayer.resourceValues[happinessKey] = value;
 			engine.services.handleTieredResourceChange(
 				engine,
 				engine.activePlayer,
@@ -357,20 +361,20 @@ describe('passive log labels', () => {
 		}
 		const harness = createPassiveHarness(metadataOverride);
 		const happinessKey = harness.ruleSnapshot.tieredResourceKey;
-		harness.engine.activePlayer.resources[happinessKey] = 0;
+		harness.engine.activePlayer.resourceValues[happinessKey] = 0;
 		harness.engine.services.handleTieredResourceChange(
 			harness.engine,
 			harness.engine.activePlayer,
 			happinessKey,
 		);
-		harness.engine.activePlayer.resources[happinessKey] = 6;
+		harness.engine.activePlayer.resourceValues[happinessKey] = 6;
 		harness.engine.services.handleTieredResourceChange(
 			harness.engine,
 			harness.engine.activePlayer,
 			happinessKey,
 		);
 		const before = captureActivePlayer(harness.engine);
-		harness.engine.activePlayer.resources[happinessKey] = 0;
+		harness.engine.activePlayer.resourceValues[happinessKey] = 0;
 		harness.engine.services.handleTieredResourceChange(
 			harness.engine,
 			harness.engine.activePlayer,

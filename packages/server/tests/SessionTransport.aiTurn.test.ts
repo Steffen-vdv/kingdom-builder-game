@@ -49,15 +49,13 @@ describe('SessionTransport runAiTurn', () => {
 		const fakeTrace: ActionTrace = {
 			id: 'trace',
 			before: {
-				resources: {},
-				stats: {},
+				valuesV2: {},
 				buildings: [],
 				lands: [],
 				passives: [],
 			},
 			after: {
-				resources: {},
-				stats: {},
+				valuesV2: {},
 				buildings: [],
 				lands: [],
 				passives: [],
@@ -173,5 +171,172 @@ describe('SessionTransport runAiTurn', () => {
 				expect(error.code).toBe('INVALID_REQUEST');
 			}
 		});
+	});
+
+	it('wraps AI execution errors in transport errors', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const playerId = findAiPlayerId(session);
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No AI controller was available.');
+		}
+		vi.spyOn(session, 'enqueue').mockImplementation(() => {
+			throw new Error('AI execution failed');
+		});
+		const attempt = transport.runAiTurn({
+			body: { sessionId, playerId },
+			headers: authorizedHeaders,
+		});
+		await expect(attempt).rejects.toBeInstanceOf(TransportError);
+		await attempt.catch((error) => {
+			if (error instanceof TransportError) {
+				expect(error.code).toBe('CONFLICT');
+				expect(error.message).toBe('Failed to execute AI turn.');
+			}
+		});
+	});
+
+	it('includes params in action records when available', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const playerId = findAiPlayerId(session);
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No AI controller was available.');
+		}
+		const fakeTrace: ActionTrace = {
+			id: 'trace',
+			before: {
+				valuesV2: {},
+				buildings: [],
+				lands: [],
+				passives: [],
+			},
+			after: {
+				valuesV2: {},
+				buildings: [],
+				lands: [],
+				passives: [],
+			},
+		};
+		vi.spyOn(session, 'performAction').mockReturnValue([fakeTrace]);
+		vi.spyOn(session, 'getActionCosts').mockReturnValue({});
+		const testParams = { choices: { primary: { optionId: 'test' } } };
+		vi.spyOn(session, 'runAiTurn').mockImplementation(
+			async (_player, overrides) => {
+				if (!overrides) {
+					return true;
+				}
+				await overrides.performAction?.('action', {} as never, testParams);
+				return true;
+			},
+		);
+		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+			return await factory();
+		});
+		const result = await transport.runAiTurn({
+			body: { sessionId, playerId },
+			headers: authorizedHeaders,
+		});
+		expect(result.actions).toHaveLength(1);
+		expect(result.actions[0].params).toEqual(testParams);
+	});
+
+	it('handles AI turns that do not perform any actions', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const playerId = findAiPlayerId(session);
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No AI controller was available.');
+		}
+		vi.spyOn(session, 'runAiTurn').mockImplementation(
+			async (_player, overrides) => {
+				if (overrides) {
+					await overrides.advance?.({} as never);
+				}
+				return true;
+			},
+		);
+		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+			return await factory();
+		});
+		const result = await transport.runAiTurn({
+			body: { sessionId, playerId },
+			headers: authorizedHeaders,
+		});
+		expect(result.actions).toHaveLength(0);
+		expect(result.phaseComplete).toBe(true);
+		expect(result.ranTurn).toBe(true);
+	});
+
+	it('returns false ranTurn when AI chooses not to act', async () => {
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const playerId = findAiPlayerId(session);
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No AI controller was available.');
+		}
+		vi.spyOn(session, 'runAiTurn').mockResolvedValue(false);
+		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+			return await factory();
+		});
+		const result = await transport.runAiTurn({
+			body: { sessionId, playerId },
+			headers: authorizedHeaders,
+		});
+		expect(result.ranTurn).toBe(false);
+		expect(result.actions).toHaveLength(0);
+		expect(result.phaseComplete).toBe(false);
 	});
 });

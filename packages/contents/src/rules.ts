@@ -1,12 +1,15 @@
-import type { RuleSet, HappinessTierDefinition } from '@kingdom-builder/protocol';
-import { PhaseId } from './phases';
+import type { HappinessTierDefinition, RuleSet } from '@kingdom-builder/protocol';
+import { PhaseId } from './phaseTypes';
 import { createTierPassiveEffect } from './happinessHelpers';
 import { happinessTier, passiveParams, winCondition } from './config/builders';
-import { Resource } from './resources';
 import { formatPassiveRemoval } from './text';
-import { HAPPINESS_TIER_ICONS, TIER_CONFIGS, type TierConfig } from './rules.config';
+import { HAPPINESS_TIER_ICONS, getTierConfigs, type TierConfig } from './rules.config';
+import { getHappinessResourceDefinition } from './resourceV2/definitions';
+import type { ResourceV2TierDefinition, ResourceV2TierTrackMetadata } from './resourceV2';
+import { Resource } from './resourceKeys';
 
 type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
+
 function formatTierName(slug: HappinessTierSlug) {
 	return slug
 		.split(/[-_]/g)
@@ -17,9 +20,33 @@ function formatTierName(slug: HappinessTierSlug) {
 
 const happinessSummaryToken = (slug: string) => `happiness.tier.summary.${slug}`;
 
+const HAPPINESS_RESOURCE_DEFINITION = getHappinessResourceDefinition();
+const happinessTierTrack = HAPPINESS_RESOURCE_DEFINITION.tierTrack;
+
+if (!happinessTierTrack) {
+	throw new Error('Happiness resource is missing tier track metadata.');
+}
+
+const HAPPINESS_RESOURCE_ID = HAPPINESS_RESOURCE_DEFINITION.id;
+const HAPPINESS_TIER_TRACK_METADATA: ResourceV2TierTrackMetadata = happinessTierTrack.metadata;
+
+const HAPPINESS_RESOURCE_TIERS = new Map<string, ResourceV2TierDefinition>();
+for (const tier of happinessTierTrack.tiers) {
+	HAPPINESS_RESOURCE_TIERS.set(tier.id, tier);
+}
+
+function resolveResourceTier(config: TierConfig): ResourceV2TierDefinition {
+	const tier = HAPPINESS_RESOURCE_TIERS.get(config.id);
+	if (!tier) {
+		throw new Error(`Missing ResourceV2 tier definition for "${config.id}".`);
+	}
+	return tier;
+}
+
 function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
-	const icon = HAPPINESS_TIER_ICONS[config.slug];
-	const name = formatTierName(config.slug);
+	const tierDefinition = resolveResourceTier(config);
+	const icon = tierDefinition.icon ?? HAPPINESS_TIER_ICONS[config.slug];
+	const name = tierDefinition.label ?? formatTierName(config.slug);
 	const summaryToken = happinessSummaryToken(config.slug);
 	const builder = happinessTier(config.id)
 		.range(config.range.min, config.range.max)
@@ -34,6 +61,8 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 		});
 		const passive = createTierPassiveEffect({
 			tierId: config.id,
+			resourceId: HAPPINESS_RESOURCE_ID,
+			tierTrackMetadata: HAPPINESS_TIER_TRACK_METADATA,
 			summary: config.summary,
 			summaryToken,
 			removalDetail: config.removal,
@@ -53,18 +82,18 @@ function buildTierDefinition(config: TierConfig): HappinessTierDefinition {
 	return builder.build();
 }
 
-const tierDefinitions: HappinessTierDefinition[] = TIER_CONFIGS.map((config) => buildTierDefinition(config));
+const tierDefinitions: HappinessTierDefinition[] = getTierConfigs().map((config) => buildTierDefinition(config));
 
 const WIN_CONDITIONS = [
 	winCondition('castle-destroyed')
 		.resourceAtMost(Resource.castleHP, 0)
 		.subjectDefeat()
 		.opponentVictory()
-		.display((display) => display.icon('castleHP').victory('The enemy stronghold collapses—your banners fly victorious!').defeat('Your castle lies in ruins. The siege is lost.'))
+		.display((display) => display.icon(Resource.castleHP).victory('The enemy stronghold collapses—your banners fly victorious!').defeat('Your castle lies in ruins. The siege is lost.'))
 		.build(),
 ];
 
-export const RULES: RuleSet = {
+export const RULES = {
 	defaultActionAPCost: 1,
 	absorptionCapPct: 1,
 	absorptionRounding: 'down',
@@ -78,4 +107,9 @@ export const RULES: RuleSet = {
 		growth: PhaseId.Growth,
 		upkeep: PhaseId.Upkeep,
 	},
+	tieredResourceId: HAPPINESS_RESOURCE_ID,
+	tierTrackMetadata: HAPPINESS_TIER_TRACK_METADATA,
+} satisfies RuleSet & {
+	tieredResourceId: string;
+	tierTrackMetadata: ResourceV2TierTrackMetadata;
 };

@@ -1,6 +1,4 @@
 import type { EvaluatorDef } from '@kingdom-builder/protocol';
-import type { PopulationRoleId } from '../../../populationRoles';
-import type { StatKey } from '../../../stats';
 import type { DevelopmentIdParam } from '../actionEffectGroups';
 import { ParamsBuilder } from '../../builderShared';
 import type { Params } from '../../builderShared';
@@ -57,42 +55,26 @@ export class EvaluatorBuilder<P extends Params = Params> {
 	}
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents */
-type PopulationEvaluatorId = PopulationRoleId | string;
-
-class PopulationEvaluatorBuilder extends EvaluatorBuilder<{
-	id?: PopulationEvaluatorId;
-	role?: PopulationRoleId;
+class ResourceEvaluatorBuilder extends EvaluatorBuilder<{
+	resourceId?: string;
+	id?: string;
 }> {
 	constructor() {
-		super('population');
+		super('resource');
 	}
 
-	id(populationId: PopulationEvaluatorId) {
-		return this.param('id', populationId);
+	resourceId(resourceId: string) {
+		return this.param('resourceId', resourceId);
 	}
 
-	role(role: PopulationRoleId) {
-		return this.param('role', role);
-	}
-}
-
-export function populationEvaluator() {
-	return new PopulationEvaluatorBuilder();
-}
-
-class StatEvaluatorBuilder extends EvaluatorBuilder<{ key?: StatKey }> {
-	constructor() {
-		super('stat');
-	}
-
-	key(key: StatKey) {
-		return this.param('key', key);
+	/** Set an evaluation ID for modifier targeting */
+	id(evaluationId: string) {
+		return this.param('id', evaluationId);
 	}
 }
 
-export function statEvaluator() {
-	return new StatEvaluatorBuilder();
+export function resourceEvaluator() {
+	return new ResourceEvaluatorBuilder();
 }
 
 class DevelopmentEvaluatorBuilder extends EvaluatorBuilder<{

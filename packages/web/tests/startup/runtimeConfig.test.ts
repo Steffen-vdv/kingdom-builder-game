@@ -6,6 +6,36 @@ const globalScope = globalThis as {
 	__KINGDOM_BUILDER_CONFIG__?: Partial<RuntimeContentConfig> | undefined;
 };
 
+const baseResourceV2 = {
+	id: 'resource:core:gold',
+	label: 'Gold',
+	icon: '💰',
+	description: 'Gold resource',
+	order: 0,
+	tags: [],
+	displayAsPercent: false,
+	trackValueBreakdown: false,
+	trackBoundBreakdown: false,
+	groupId: 'resource-group:core',
+	groupOrder: 0,
+} as const;
+
+const baseResourceGroupV2 = {
+	id: 'resource-group:core',
+	order: 0,
+	parent: {
+		id: 'resource-group:core',
+		label: 'Core Resources',
+		icon: '🏰',
+		description: 'Core resources',
+		order: 0,
+		tags: [],
+		displayAsPercent: false,
+		trackValueBreakdown: false,
+		trackBoundBreakdown: false,
+	},
+} as const;
+
 const baseResponse = {
 	phases: [
 		{
@@ -35,6 +65,13 @@ const baseResponse = {
 	resources: {
 		gold: { key: 'gold', icon: 'gold-icon' },
 	},
+	resourcesV2: {
+		'resource:core:gold': baseResourceV2,
+	},
+	resourceGroupsV2: {
+		'resource-group:core': baseResourceGroupV2,
+	},
+	resourceCategoriesV2: {},
 	primaryIconId: 'gold',
 } as const;
 
