@@ -4,7 +4,6 @@ import './helpers/armyAttackSyntheticRegistries';
 
 import type { SummaryEntry } from '../src/translation/content';
 import { summarizeContent, describeContent } from '../src/translation/content';
-import { Resource, Stat } from '@kingdom-builder/engine';
 import type { EffectDef } from './helpers/armyAttackFactories';
 import {
 	createSyntheticEngineContext,
@@ -21,7 +20,6 @@ import {
 import {
 	SYNTH_RESOURCE_IDS,
 	SYNTH_RESOURCE_METADATA,
-	SYNTH_STAT_IDS,
 	COMBAT_STAT_CONFIG,
 } from './helpers/armyAttackConfig';
 import {
@@ -48,19 +46,19 @@ describe('army attack translation summary', () => {
 		const { translation, attack, plunder } = createSyntheticEngineContext();
 		const castle = selectAttackResourceDescriptor(
 			translation,
-			Resource.castleHP,
+			SYNTH_RESOURCE_IDS.castleHP,
 		);
 		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
 		const warWeariness = selectAttackStatDescriptor(
 			translation,
-			Stat.warWeariness,
+			SYNTH_RESOURCE_IDS.warWeariness,
 		);
 		// V2 format: stats are now resources with resourceId
 		const warEffect = attack.effects.find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'resource' &&
 				(effectDef.params as { resourceId?: string }).resourceId ===
-					SYNTH_STAT_IDS.warWeariness,
+					SYNTH_RESOURCE_IDS.warWeariness,
 		);
 		// V2 format: amount is in change.amount
 		const warChange = (warEffect?.params as { change?: { amount?: number } })
@@ -70,7 +68,9 @@ describe('army attack translation summary', () => {
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
 		const targetSummary = castle.icon || castle.label;
 		const warSubject =
-			warWeariness.icon || warWeariness.label || Stat.warWeariness;
+			warWeariness.icon ||
+			warWeariness.label ||
+			SYNTH_RESOURCE_IDS.warWeariness;
 		const warChangeStr = `${warAmt >= 0 ? '+' : '-'}${Math.abs(warAmt)}`;
 		expect(summary[0]).toBe(`${powerSummary}${targetSummary}`);
 		const damageSummary = summary[1];
@@ -118,7 +118,7 @@ describe('army attack translation summary', () => {
 			const { translation, attack } = createPartialStatEngineContext();
 			const castle = selectAttackResourceDescriptor(
 				translation,
-				Resource.castleHP,
+				SYNTH_RESOURCE_IDS.castleHP,
 			);
 			const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
 			const fallbackLabel =
@@ -128,7 +128,7 @@ describe('army attack translation summary', () => {
 			const targetDisplay = iconLabel(
 				castle.icon,
 				castle.label,
-				Resource.castleHP,
+				SYNTH_RESOURCE_IDS.castleHP,
 			);
 
 			const summary = summarizeContent('action', attack.id, translation);
@@ -164,7 +164,10 @@ describe('army attack translation summary', () => {
 		const { translation, buildingAttack, building } =
 			createSyntheticEngineContext();
 		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
-		const gold = selectAttackResourceDescriptor(translation, Resource.gold);
+		const gold = selectAttackResourceDescriptor(
+			translation,
+			SYNTH_RESOURCE_IDS.gold,
+		);
 		const buildingDescriptor = selectAttackBuildingDescriptor(
 			translation,
 			building.id,

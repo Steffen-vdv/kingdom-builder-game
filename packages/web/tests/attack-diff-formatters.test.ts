@@ -15,7 +15,6 @@ import {
 import {
 	SYNTH_RESOURCE_IDS,
 	SYNTH_RESOURCE_METADATA,
-	SYNTH_STAT_IDS,
 } from './helpers/armyAttackConfig';
 
 const getFirst = <T>(values: readonly T[]): T => {
@@ -49,7 +48,7 @@ describe('attack diff formatters registry', () => {
 	it('formats stat diffs using the registered formatter', () => {
 		const { translation } = createSyntheticEngineContext();
 		// In V2, stats and resources are unified - use explicit stat key
-		const statKey = SYNTH_STAT_IDS.armyStrength;
+		const statKey = SYNTH_RESOURCE_IDS.armyStrength;
 		const statInfo = selectAttackStatDescriptor(translation, statKey);
 		const diff: AttackPlayerDiff = {
 			key: statKey,
@@ -94,7 +93,7 @@ describe('attack diff formatters registry', () => {
 	});
 
 	it('falls back to stat key when descriptor metadata is missing', () => {
-		const statKey = SYNTH_STAT_IDS.armyStrength;
+		const statKey = SYNTH_RESOURCE_IDS.armyStrength;
 		suppressSyntheticStatDescriptor(statKey);
 		try {
 			const { translation } = createSyntheticEngineContext();

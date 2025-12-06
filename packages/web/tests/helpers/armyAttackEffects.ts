@@ -8,7 +8,6 @@ import {
 	SYNTH_BUILDING,
 	COMBAT_STAT_CONFIG,
 	SYNTH_RESOURCE_IDS,
-	SYNTH_STAT_IDS,
 	PLUNDER_HAPPINESS_AMOUNT,
 	WAR_WEARINESS_GAIN,
 	BUILDING_REWARD_GOLD,
@@ -219,7 +218,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 		extra: [
 			{
 				kind: 'stat',
-				key: SYNTH_STAT_IDS.warWeariness,
+				key: SYNTH_RESOURCE_IDS.warWeariness,
 				amount: WAR_WEARINESS_GAIN,
 			},
 		],

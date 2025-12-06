@@ -21,7 +21,6 @@ import type { SessionPlayerId } from '@kingdom-builder/protocol';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { SessionAdvanceResult } from '@kingdom-builder/protocol/session';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { legacyKeyToResourceV2Id } from '@kingdom-builder/contents/resourceKeys';
 
 const LEADING_EMOJI_PATTERN =
 	/^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/u;
@@ -324,9 +323,13 @@ describe('<HoverCard />', () => {
 		if (!activePlayerView) {
 			throw new Error('Expected active player for phase resolution test');
 		}
-		const availableResourceKeys = Object.keys(
-			mockGame.translationContext.assets.resources,
-		);
+		// Use V2 resource IDs from resourceMetadataV2 - ungrouped resources
+		// are in the resource bar and suitable for diffing
+		const resourceMetadataV2 = mockGame.translationContext.resourceMetadataV2;
+		const availableResourceKeys = resourceMetadataV2
+			.list()
+			.filter((metadata) => metadata.groupId === null)
+			.map((metadata) => metadata.id);
 		const resourceKey =
 			availableResourceKeys.find(
 				(key) => key !== scenario.actionCostResource,
@@ -334,17 +337,12 @@ describe('<HoverCard />', () => {
 		const createPlayerSnapshot = (
 			resources: Record<string, number>,
 		): PlayerSnapshot => {
-			// Convert legacy keys to V2 ids for valuesV2
-			const valuesV2: Record<string, number> = {};
-			for (const [key, value] of Object.entries(resources)) {
-				const v2Id = legacyKeyToResourceV2Id(key);
-				valuesV2[v2Id] = value;
-			}
+			// Resources are already V2 IDs, copy directly to valuesV2
 			return {
 				resources,
 				stats: {},
 				population: {},
-				valuesV2,
+				valuesV2: { ...resources },
 				resourceBoundsV2: {},
 				buildings: [],
 				lands: [],

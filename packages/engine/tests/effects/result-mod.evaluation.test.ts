@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { runEffects, advance, Resource } from '../../src/index.ts';
-import { PhaseId } from '@kingdom-builder/contents';
+import { runEffects, advance } from '../../src/index.ts';
+import { PhaseId, Resource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
 import type { ResourceGain } from '../../src/services/passive_types.ts';

@@ -2,8 +2,6 @@ import type { EffectDef } from '../effects';
 import type { RuntimeResourceCatalog } from '../resource-v2';
 
 export type ResourceKey = string;
-/** @deprecated Use ResourceKey instead */
-export type StatKey = ResourceKey;
 export type PhaseId = string;
 export type PopulationRoleId = string;
 
@@ -13,9 +11,6 @@ export interface ResourceSourceLink {
 	detail?: string;
 	extra?: Record<string, unknown>;
 }
-
-/** @deprecated Use ResourceSourceLink instead */
-export type StatSourceLink = ResourceSourceLink;
 
 export interface ResourceSourceMeta {
 	key: string;
@@ -33,16 +28,10 @@ export interface ResourceSourceMeta {
 	extra?: Record<string, unknown>;
 }
 
-/** @deprecated Use ResourceSourceMeta instead */
-export type StatSourceMeta = ResourceSourceMeta;
-
 export interface ResourceSourceContribution {
 	amount: number;
 	meta: ResourceSourceMeta;
 }
-
-/** @deprecated Use ResourceSourceContribution instead */
-export type StatSourceContribution = ResourceSourceContribution;
 
 export type PlayerId = 'A' | 'B';
 

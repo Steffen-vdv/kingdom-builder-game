@@ -16,16 +16,3 @@ export type StatKey = StatV2Id;
 export function getStatResourceV2Id(stat: StatKey): StatV2Id {
 	return stat;
 }
-
-const LEGACY_STAT_KEY_MAP = {
-	maxPopulation: Stat.populationMax,
-	armyStrength: Stat.armyStrength,
-	fortificationStrength: Stat.fortificationStrength,
-	absorption: Stat.absorption,
-	growth: Stat.growth,
-	warWeariness: Stat.warWeariness,
-} as const;
-
-export function legacyStatKeyToResourceV2Id(legacyKey: string): string {
-	return LEGACY_STAT_KEY_MAP[legacyKey as keyof typeof LEGACY_STAT_KEY_MAP] ?? legacyKey;
-}
