@@ -2,10 +2,12 @@
 
 ## 0) Preface
 
-This repository has been entirely brought to life through AI (ChatGPT Codex). The
-technical and conceptual vision of the game was invented and curated by a human,
-but every single line of code (bar some `.md` files) were generated solely by
-AI, through a human-curated iterative process. Agents should begin with
+This repository has been entirely brought to life through AI. The technical and
+conceptual vision of the game was invented and curated by a human, but every
+single line of code (bar some `.md` files) were generated solely by AI, through
+a human-curated iterative process. The project began with ChatGPT Codex, and
+Claude joined the development effort later to continue building out the game.
+Agents should begin with
 [`docs/agent-quick-start.md`](docs/agent-quick-start.md) for the mandatory
 workflow and then consult the consolidated `AGENTS.md` at the repository root
 for detailed guidance and lore.

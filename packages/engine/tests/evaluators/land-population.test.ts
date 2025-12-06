@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { landEvaluator } from '../../src/evaluators/land.ts';
-import { populationEvaluator } from '../../src/evaluators/population.ts';
+import { resourceEvaluator } from '../../src/evaluators/resource.ts';
 import { createTestEngine } from '../helpers.ts';
 import { Land } from '../../src/state';
+import { PopulationRole, Stat } from '@kingdom-builder/contents';
+import { setResourceValue } from '../../src/resource-v2';
 
 describe('evaluators', () => {
 	it('counts total available land slots with negative usage guarded', () => {
@@ -17,28 +19,44 @@ describe('evaluators', () => {
 		expect(total).toBe(2);
 	});
 
-	it('totals population counts and filters by role when provided', () => {
+	it('totals population via parent resource and filters by role when provided', () => {
 		const context = createTestEngine();
-		// Population roles ARE ResourceV2 IDs - get them from resourceValues keys
-		const roleIds = Object.keys(context.activePlayer.resourceValues).filter(
-			(key) => key.startsWith('resource:population:'),
-		);
+		// Get population role IDs from contents
+		const roleIds = Object.values(PopulationRole);
 		const focusRole = roleIds[0]!;
 		const secondaryRole = roleIds.find((entry) => entry !== focusRole);
-		// Population values accessed via resourceValues
-		context.activePlayer.resourceValues[focusRole] = 3;
+		// Use setResourceValue to properly trigger parent recalculation
+		setResourceValue(
+			context,
+			context.activePlayer,
+			context.resourceCatalogV2,
+			focusRole,
+			3,
+		);
 		if (secondaryRole) {
-			context.activePlayer.resourceValues[secondaryRole] = 2;
+			setResourceValue(
+				context,
+				context.activePlayer,
+				context.resourceCatalogV2,
+				secondaryRole,
+				2,
+			);
 		}
-		const total = populationEvaluator({ params: {} } as never, context);
+		// Total population uses parent resource that auto-sums children
+		const total = resourceEvaluator(
+			{ params: { resourceId: Stat.populationTotal } } as never,
+			context,
+		);
 		expect(total).toBe(secondaryRole ? 5 : 3);
-		const targeted = populationEvaluator(
+		// Individual role lookup
+		const targeted = resourceEvaluator(
 			{ params: { resourceId: focusRole } } as never,
 			context,
 		);
 		expect(targeted).toBe(3);
+		// Missing role returns 0
 		const missingRole = `${focusRole}-missing`;
-		const missingTotal = populationEvaluator(
+		const missingTotal = resourceEvaluator(
 			{ params: { resourceId: missingRole } } as never,
 			context,
 		);

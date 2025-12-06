@@ -6,7 +6,7 @@ import type { ActionDef } from '../actions';
 import { HireActionId } from '../actionIds';
 import type { PopulationActionId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
-import { action, compareRequirement, effect, populationEvaluator, populationParams, resourceEvaluator } from '../config/builders';
+import { action, compareRequirement, effect, populationParams, resourceEvaluator } from '../config/builders';
 import { Types, PopulationMethods, ResourceMethods } from '../config/builderShared';
 import { Focus } from '../defs';
 import { PopulationRole } from '../populationRoles';
@@ -31,7 +31,8 @@ const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 
 const hireCategoryOrder = categoryOrder('Hire');
 
-const populationCapacityRequirement = compareRequirement().left(populationEvaluator()).operator('lt').right(resourceEvaluator().resourceId(Stat.maxPopulation)).build();
+// Compare total population (parent aggregates children) vs max population capacity
+const populationCapacityRequirement = compareRequirement().left(resourceEvaluator().resourceId(Stat.populationTotal)).operator('lt').right(resourceEvaluator().resourceId(Stat.populationMax)).build();
 
 const hireActionConfigs: readonly HireActionConfig[] = [
 	{ id: HireActionId.hire_council, role: PopulationRole.Council, orderOffset: 0 },

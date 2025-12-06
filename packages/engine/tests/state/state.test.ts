@@ -23,10 +23,10 @@ describe('State classes', () => {
 	it('updates resources and stats via resourceValues', () => {
 		const player = new PlayerState('A', 'Alice');
 		player.resourceValues[Resource.gold] = 5;
-		player.resourceValues[Stat.maxPopulation] = 3;
+		player.resourceValues[Stat.populationMax] = 3;
 		player.resourceValues[Stat.warWeariness] = 2;
 		expect(player.resourceValues[Resource.gold]).toBe(5);
-		expect(player.resourceValues[Stat.maxPopulation]).toBe(3);
+		expect(player.resourceValues[Stat.populationMax]).toBe(3);
 		expect(player.resourceValues[Stat.warWeariness]).toBe(2);
 	});
 

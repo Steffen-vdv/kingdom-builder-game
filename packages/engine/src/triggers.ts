@@ -58,7 +58,7 @@ export function collectTriggerEffects(
 	// Iterate over all registered populations, not just the PopulationRole enum
 	for (const role of engineContext.populations.keys()) {
 		const populationDefinition = engineContext.populations.get(role);
-		// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
+		// role IS the ResourceV2 ID (e.g. 'resource:core:council')
 		const qty = getResourceValue(player, role);
 		if (
 			trigger === 'onPayUpkeepStep' &&

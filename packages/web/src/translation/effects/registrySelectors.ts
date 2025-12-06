@@ -98,23 +98,16 @@ export function selectPopulationDescriptor(
 		cache.set(cacheKey, fallback);
 		return fallback;
 	}
-	const assets = context.assets;
-	const entry = assets?.populations?.[role];
-	// Check ResourceV2 metadata for V2 keys
+	// Use V2 metadata for population descriptors - use role ID directly
 	const v2Context = context as {
 		resourceMetadataV2?: {
 			get?: (id: string) => { icon?: string; label?: string } | undefined;
 		};
 	};
-	// Role can be a V2 id or a short key - try both
-	const v2Key = role.startsWith('resource:population:')
-		? role
-		: `resource:population:role:${role}`;
-	const v2Entry = v2Context.resourceMetadataV2?.get?.(v2Key);
-	const effectiveEntry = entry ?? v2Entry;
-	const icon = coerceIcon(effectiveEntry?.icon, fallback.icon);
+	const v2Entry = v2Context.resourceMetadataV2?.get?.(role);
+	const icon = coerceIcon(v2Entry?.icon, fallback.icon);
 	const fallbackLabel = humanizeIdentifier(role) || fallback.label;
-	const label = coerceLabel(effectiveEntry?.label, fallbackLabel);
+	const label = coerceLabel(v2Entry?.label, fallbackLabel);
 	const descriptor = { icon, label } satisfies RegistryDescriptor;
 	cache.set(cacheKey, descriptor);
 	return descriptor;
@@ -228,7 +221,7 @@ export function selectStatDescriptor(
 	}
 	const assets = context.assets;
 	const { entry, resolved } = resolveStatEntry(assets, key);
-	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:stat:army-strength')
+	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:core:army-strength')
 	const v2Context = context as {
 		resourceMetadataV2?: {
 			get?: (id: string) => { icon?: string; label?: string } | undefined;

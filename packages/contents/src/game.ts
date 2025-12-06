@@ -66,14 +66,15 @@ const PLAYER_START_RESOURCES = {
 	[Resource.castleHP]: 10,
 } as const satisfies Record<ResourceKey, number>;
 
+// Start stats exclude populationTotal - it's a derived/aggregate resource
 const PLAYER_START_STATS = {
-	[Stat.maxPopulation]: 1,
+	[Stat.populationMax]: 1,
 	[Stat.armyStrength]: 0,
 	[Stat.fortificationStrength]: 0,
 	[Stat.absorption]: 0,
 	[Stat.growth]: 0.25,
 	[Stat.warWeariness]: 0,
-} as const satisfies Record<StatKey, number>;
+} as const satisfies Partial<Record<StatKey, number>>;
 
 const PLAYER_START_POPULATION = {
 	[PopulationRole.Council]: 1,

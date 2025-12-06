@@ -3,26 +3,36 @@ import { appendStatChanges } from '../src/translation/log/diffSections';
 import { type PlayerSnapshot } from '../src/translation/log';
 import { type StepEffects } from '../src/translation/log/statBreakdown';
 import { formatPercentBreakdown } from '../src/translation/log/diffFormatting';
-import { formatStatValue } from '../src/utils/stats';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createTranslationContext } from '../src/translation/context';
+import type { TranslationContext } from '../src/translation/context';
 import {
 	selectPopulationDescriptor,
 	selectStatDescriptor,
 } from '../src/translation/effects/registrySelectors';
 
-// V2 stat keys for testing - these match the resource:stat: prefix format
+// Format value using V2 metadata like describeStatBreakdown does
+function formatV2Value(
+	id: string,
+	value: number,
+	context: TranslationContext,
+): string {
+	const meta = context.resourceMetadataV2.get(id);
+	return meta?.displayAsPercent ? `${value * 100}%` : String(value);
+}
+
+// V2 stat keys for testing - these match the resource:core: prefix format
 const V2_STAT_KEYS = {
-	armyStrength: 'resource:stat:army-strength',
-	growth: 'resource:stat:growth',
+	armyStrength: 'resource:core:army-strength',
+	growth: 'resource:core:growth',
 } as const;
 
 // V2 population key for testing
-const V2_POPULATION_KEY = 'resource:population:role:legion';
+const V2_POPULATION_KEY = 'resource:core:legion';
 
 function createTranslationSetup() {
 	const scaffold = createTestSessionScaffold();
@@ -100,8 +110,8 @@ describe('appendStatChanges', () => {
 			effects: [
 				{
 					evaluator: {
-						type: 'population',
-						params: { role: populationId },
+						type: 'resource',
+						params: { resourceId: populationId },
 					},
 					effects: [
 						{
@@ -148,18 +158,27 @@ describe('appendStatChanges', () => {
 		const legionIcon = populationDescriptor.icon ?? '';
 		const growthIcon = secondaryStatDescriptor.icon ?? '';
 		const armyIcon = statDescriptor.icon ?? '';
+		// Use V2-aware formatting to match describeStatBreakdown behavior
 		const breakdown = formatPercentBreakdown(
 			armyIcon || '',
-			formatStatValue(primaryStatId, before.valuesV2[primaryStatId], assets),
+			formatV2Value(
+				primaryStatId,
+				before.valuesV2[primaryStatId],
+				translationContext,
+			),
 			legionIcon,
 			player.valuesV2[populationId] ?? 0,
 			growthIcon,
-			formatStatValue(
+			formatV2Value(
 				secondaryStatId,
 				player.valuesV2[secondaryStatId],
-				assets,
+				translationContext,
 			),
-			formatStatValue(primaryStatId, after.valuesV2[primaryStatId], assets),
+			formatV2Value(
+				primaryStatId,
+				after.valuesV2[primaryStatId],
+				translationContext,
+			),
 		);
 		expect(line?.endsWith(breakdown)).toBe(true);
 	});
@@ -196,7 +215,7 @@ describe('appendStatChanges', () => {
 		const step: StepEffects = {
 			effects: [
 				{
-					evaluator: { type: 'population', params: { role: populationId } },
+					evaluator: { type: 'resource', params: { resourceId: populationId } },
 					effects: [
 						{
 							type: 'resource',

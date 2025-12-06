@@ -149,7 +149,7 @@ function buildPopulationMetadata(
 function buildStatMetadata(): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
 	for (const resource of RESOURCE_V2_REGISTRY.ordered) {
-		if (!resource.id.startsWith('resource:stat:')) {
+		if (!resource.id.startsWith('resource:core:')) {
 			continue;
 		}
 		const descriptor: SessionMetadataDescriptor = {

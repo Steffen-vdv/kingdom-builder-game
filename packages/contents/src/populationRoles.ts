@@ -2,9 +2,9 @@ import type { PopulationRoleInfo } from './config/builders';
 import { RESOURCE_V2_REGISTRY, type ResourceV2Definition } from './resourceV2';
 
 export const PopulationRole = {
-	Council: 'resource:population:role:council',
-	Legion: 'resource:population:role:legion',
-	Fortifier: 'resource:population:role:fortifier',
+	Council: 'resource:core:council',
+	Legion: 'resource:core:legion',
+	Fortifier: 'resource:core:fortifier',
 } as const;
 
 export type PopulationRoleV2Id = (typeof PopulationRole)[keyof typeof PopulationRole];

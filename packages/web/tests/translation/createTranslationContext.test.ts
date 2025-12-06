@@ -471,6 +471,7 @@ describe('createTranslationContext', () => {
 			    "hasExisting": true,
 			    "resource": {
 			      "description": "Catalog-provided metadata.",
+			      "groupId": "resource-group:economy",
 			      "icon": "🥇",
 			      "id": "resource:gold",
 			      "label": "Catalog Gold",

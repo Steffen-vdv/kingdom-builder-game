@@ -23,7 +23,7 @@ describe('buildSessionMetadata', () => {
 		// Find a stat resource with displayAsPercent in the V2 registry
 		const statWithPercent = RESOURCE_V2_REGISTRY.ordered.find(
 			(resource) =>
-				resource.id.startsWith('resource:stat:') && resource.displayAsPercent,
+				resource.id.startsWith('resource:core:') && resource.displayAsPercent,
 		);
 		expect(statWithPercent).toBeDefined();
 		if (!statWithPercent) {

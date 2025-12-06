@@ -7,11 +7,12 @@ describe('PopulationTranslator metadata usage', () => {
 	it('logs population role display using ResourceV2 metadata', () => {
 		const { translationContext } = buildSyntheticTranslationContext();
 		const translator = new PopulationTranslator();
-		// Get population role IDs from ResourceV2 metadata
+		// Get grouped resource IDs from ResourceV2 metadata (abstract filtering)
+		// Uses groupId to find grouped resources without hardcoding specific IDs
 		const roleIds = translationContext.resourceMetadataV2
 			.list()
-			.filter((m) => m.id.includes('population'))
-			.map((m) => m.id);
+			.filter((meta) => meta.groupId !== null && meta.groupId !== undefined)
+			.map((meta) => meta.id);
 		const roleId = roleIds[0];
 		expect(roleId, 'expected synthetic population role').toBeTruthy();
 		const log = translator.log(roleId!, translationContext);

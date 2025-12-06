@@ -20,7 +20,7 @@ function getCoreResourceV2Id(legacyKey: string): string {
 // Helper to build V2 ID for stats (camelCase to kebab-case)
 function getStatV2Id(legacyKey: string): string {
 	const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-	return `resource:stat:${kebab}`;
+	return `resource:core:${kebab}`;
 }
 
 export interface PlayerPanelFixtures {

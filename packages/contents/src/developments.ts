@@ -63,7 +63,7 @@ export function createDevelopmentRegistry() {
 			.name('House')
 			.icon('🏠')
 			.populationCap(1)
-			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.maxPopulation, 1)).build())
+			.onBuild(effect(Types.Resource, ResourceMethods.ADD).params(statAmountParams(Stat.populationMax, 1)).build())
 			.order(1)
 			.focus(Focus.Economy)
 			.build(),

@@ -13,11 +13,14 @@ function resolvePopulationRole(
 	effect: EffectDef,
 	currentRole: string | undefined,
 ): string | undefined {
-	if (effect.evaluator?.type !== 'population') {
+	const evaluator = effect.evaluator;
+	// Handle both legacy 'population' and new 'resource' evaluator types
+	if (evaluator?.type !== 'population' && evaluator?.type !== 'resource') {
 		return currentRole;
 	}
-	const params = effect.evaluator.params as StringRecord | undefined;
-	return params?.['resourceId'] ?? currentRole;
+	const params = evaluator.params as StringRecord | undefined;
+	// Check for resourceId (V2) or role (legacy)
+	return params?.['resourceId'] ?? params?.['role'] ?? currentRole;
 }
 
 // V2 percent change params
