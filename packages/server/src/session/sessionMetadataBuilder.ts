@@ -216,7 +216,7 @@ const buildDevelopmentMetadata = () =>
 const buildStatMetadata = () =>
 	createMetadataRecord<SessionMetadataDescriptor>(
 		RESOURCE_V2_REGISTRY.ordered
-			.filter((resource) => resource.id.startsWith('resource:stat:'))
+			.filter((resource) => resource.id.startsWith('resource:core:'))
 			.map((resource) => {
 				const descriptor: SessionMetadataDescriptor = {
 					label: resource.label,

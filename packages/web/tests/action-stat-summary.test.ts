@@ -11,10 +11,10 @@ type StatEffectScenario = {
 
 // V2 stat resource IDs - must match testResourceV2Metadata.ts
 const V2_STAT_IDS = {
-	maxPopulation: 'resource:stat:max-population',
-	fortificationStrength: 'resource:stat:fortification-strength',
-	absorption: 'resource:stat:absorption',
-	armyStrength: 'resource:stat:army-strength',
+	maxPopulation: 'resource:core:max-population',
+	fortificationStrength: 'resource:core:fortification-strength',
+	absorption: 'resource:core:absorption',
+	armyStrength: 'resource:core:army-strength',
 } as const;
 
 // Map legacy stat keys to ResourceV2 IDs

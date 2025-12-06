@@ -2,8 +2,9 @@ import { Registry, populationSchema } from '@kingdom-builder/protocol';
 import { PopulationRole } from './populationRoles';
 import { Resource } from './resourceKeys';
 import { Stat } from './stats';
-import { population, effect, populationEvaluator, passiveParams, populationAssignmentPassiveId } from './config/builders';
-import { resourceAmountChange, statAmountChange } from './helpers/resourceV2Effects';
+import { population, effect, resourceEvaluator, passiveParams, populationAssignmentPassiveId } from './config/builders';
+import { resourceAmountChange } from './helpers/resourceV2Effects';
+import { resourceChange } from './resourceV2';
 import { Types, ResourceMethods, PassiveMethods } from './config/builderShared';
 import type { PopulationDef } from './defs';
 
@@ -11,9 +12,9 @@ export type { PopulationDef } from './defs';
 
 const COUNCIL_AP_GAIN_PARAMS = resourceAmountChange(Resource.ap, 1);
 
-const LEGION_STRENGTH_GAIN_PARAMS = statAmountChange(Stat.armyStrength, 1);
+const LEGION_STRENGTH_GAIN_PARAMS = resourceChange(Stat.armyStrength).amount(1).build();
 
-const FORTIFIER_STRENGTH_GAIN_PARAMS = statAmountChange(Stat.fortificationStrength, 1);
+const FORTIFIER_STRENGTH_GAIN_PARAMS = resourceChange(Stat.fortificationStrength).amount(1).build();
 
 const LEGION_ASSIGNMENT_PASSIVE_PARAMS = passiveParams().id(populationAssignmentPassiveId(PopulationRole.Legion)).build();
 
@@ -31,7 +32,7 @@ export function createPopulationRegistry() {
 			.upkeep(Resource.gold, 2)
 			.onGainAPStep(
 				effect()
-					.evaluator(populationEvaluator().param('id', PopulationRole.Council).role(PopulationRole.Council))
+					.evaluator(resourceEvaluator().param('id', PopulationRole.Council).resourceId(PopulationRole.Council))
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(COUNCIL_AP_GAIN_PARAMS).build())
 					.build(),
 			)

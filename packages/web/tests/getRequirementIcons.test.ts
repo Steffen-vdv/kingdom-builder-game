@@ -20,12 +20,6 @@ const EMPTY_REGISTRY = {
 const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceV2Metadata[] =
 	Object.freeze([]);
 
-const EMPTY_RESOURCE_METADATA: TranslationResourceV2MetadataSelectors = {
-	list: () => EMPTY_RESOURCE_METADATA_LIST,
-	get: (id: string) => ({ id, label: id }),
-	has: () => false,
-};
-
 const EMPTY_RESOURCE_CATALOG = Object.freeze({
 	resources: { byId: {}, ordered: [] },
 	groups: { byId: {}, ordered: [] },
@@ -40,8 +34,15 @@ const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors = {
 	sumForResource: () => 0,
 };
 
+// ResourceV2 IDs for test fixtures
+const RESOURCE_IDS = {
+	warWeariness: 'resource:stat:war-weariness',
+	legion: 'resource:population:role:legion',
+} as const;
+
 const createTranslationContext = (
 	requirements: unknown[],
+	resourceV2Overrides: Record<string, { icon?: string; label: string }> = {},
 	assetOverrides: Partial<TranslationAssets> = {},
 ): TranslationContext => {
 	const baseAssets = createDefaultTranslationAssets();
@@ -100,6 +101,19 @@ const createTranslationContext = (
 			assetOverrides.formatPassiveRemoval ??
 			((description: string) => baseAssets.formatPassiveRemoval(description)),
 	};
+
+	const resourceMetadataV2: TranslationResourceV2MetadataSelectors = {
+		list: () => EMPTY_RESOURCE_METADATA_LIST,
+		get: (id: string) => {
+			const override = resourceV2Overrides[id];
+			if (override) {
+				return { id, ...override };
+			}
+			return { id, label: id };
+		},
+		has: (id: string) => id in resourceV2Overrides,
+	};
+
 	return {
 		actions: new Map([
 			[
@@ -147,24 +161,21 @@ const createTranslationContext = (
 		compensations: { A: {}, B: {} },
 		assets: mergedAssets,
 		resourcesV2: EMPTY_RESOURCE_CATALOG,
-		resourceMetadataV2: EMPTY_RESOURCE_METADATA,
-		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
+		resourceMetadataV2,
+		resourceGroupMetadataV2: {
+			list: () => EMPTY_RESOURCE_METADATA_LIST,
+			get: (id: string) => ({ id, label: id }),
+			has: () => false,
+		},
 		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,
 	} satisfies TranslationContext;
 };
 
 describe('getRequirementIcons', () => {
 	it('includes icons derived from evaluator compare requirements', () => {
-		const statKey = 'mock-stat';
-		const populationId = 'mock-role';
-		const iconAssets: Partial<TranslationAssets> = {
-			stats: {
-				[statKey]: { icon: '📊' },
-			},
-			populations: {
-				[populationId]: { icon: '👥' },
-			},
-			population: {},
+		const resourceV2Metadata = {
+			[RESOURCE_IDS.warWeariness]: { icon: '📊', label: 'War Weariness' },
+			[RESOURCE_IDS.legion]: { icon: '👥', label: 'Legion' },
 		};
 
 		const translationContext = createTranslationContext(
@@ -174,17 +185,17 @@ describe('getRequirementIcons', () => {
 					method: 'compare',
 					params: {
 						left: {
-							type: 'stat',
-							params: { key: statKey },
+							type: 'resource',
+							params: { resourceId: RESOURCE_IDS.warWeariness },
 						},
 						right: {
-							type: 'population',
-							params: { role: populationId },
+							type: 'resource',
+							params: { resourceId: RESOURCE_IDS.legion },
 						},
 					},
 				},
 			],
-			iconAssets,
+			resourceV2Metadata,
 		);
 
 		const icons = getRequirementIcons('test-action', translationContext);
@@ -213,7 +224,7 @@ describe('getRequirementIcons', () => {
 		unregister();
 	});
 
-	it('returns default population icon when specific metadata is missing', () => {
+	it('returns empty array when resourceId is missing', () => {
 		const translationContext = createTranslationContext(
 			[
 				{
@@ -221,24 +232,20 @@ describe('getRequirementIcons', () => {
 					method: 'compare',
 					params: {
 						left: {
-							type: 'population',
-							params: { role: 'unknown-role' },
+							type: 'resource',
+							params: {},
 						},
 					},
 				},
 			],
-			{
-				population: {
-					icon: '👤',
-				},
-			},
+			{},
 		);
 
 		const icons = getRequirementIcons('test-action', translationContext);
-		expect(icons).toEqual(['👤']);
+		expect(icons).toEqual([]);
 	});
 
-	it('uses generic population icon when role is unspecified', () => {
+	it('returns empty array when evaluator type is unknown', () => {
 		const translationContext = createTranslationContext(
 			[
 				{
@@ -246,20 +253,17 @@ describe('getRequirementIcons', () => {
 					method: 'compare',
 					params: {
 						left: {
-							type: 'population',
+							type: 'unknown',
+							params: { resourceId: 'some-id' },
 						},
 					},
 				},
 			],
-			{
-				population: {
-					icon: '🧑',
-				},
-			},
+			{},
 		);
 
 		const icons = getRequirementIcons('test-action', translationContext);
-		expect(icons).toContain('🧑');
+		expect(icons).toEqual([]);
 	});
 
 	it('handles unknown actions without throwing', () => {

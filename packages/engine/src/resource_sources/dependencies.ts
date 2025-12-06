@@ -30,17 +30,6 @@ function collectFromEvaluatorDefinition(
 	return collector(evaluatorDefinition);
 }
 
-const populationCollector: EvaluatorDependencyCollector = (evaluator) => {
-	const evaluatorParams = isPlainObject(evaluator.params)
-		? evaluator.params
-		: undefined;
-	const roleIdentifier =
-		typeof evaluatorParams?.['role'] === 'string'
-			? evaluatorParams['role'].trim()
-			: '';
-	return roleIdentifier ? [{ type: 'population', id: roleIdentifier }] : [];
-};
-
 const developmentCollector: EvaluatorDependencyCollector = (evaluator) => {
 	const evaluatorParams = isPlainObject(evaluator.params)
 		? evaluator.params
@@ -58,13 +47,11 @@ const resourceCollector: EvaluatorDependencyCollector = (evaluator) => {
 	const evaluatorParams = isPlainObject(evaluator.params)
 		? evaluator.params
 		: undefined;
-	const resourceIdentifier =
-		typeof evaluatorParams?.['key'] === 'string'
-			? evaluatorParams['key'].trim()
+	const resourceId =
+		typeof evaluatorParams?.['resourceId'] === 'string'
+			? evaluatorParams['resourceId'].trim()
 			: '';
-	return resourceIdentifier
-		? [{ type: 'resource', id: resourceIdentifier }]
-		: [];
+	return resourceId ? [{ type: 'resource', id: resourceId }] : [];
 };
 
 const compareCollector: EvaluatorDependencyCollector = (evaluator) => {
@@ -83,7 +70,6 @@ const compareCollector: EvaluatorDependencyCollector = (evaluator) => {
 	return [...leftDependencies, ...rightDependencies];
 };
 
-registerEvaluatorDependencyCollector('population', populationCollector);
 registerEvaluatorDependencyCollector('development', developmentCollector);
 registerEvaluatorDependencyCollector('resource', resourceCollector);
 registerEvaluatorDependencyCollector('compare', compareCollector);

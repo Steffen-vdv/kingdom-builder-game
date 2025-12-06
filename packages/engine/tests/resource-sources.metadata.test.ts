@@ -176,22 +176,26 @@ describe('resource sources metadata', () => {
 		const developmentId = engineContext.developments.keys()[0];
 		expect(developmentId).toBeDefined();
 
+		// Use resource evaluator for all resource types (stats, population, etc.)
 		const dependencies = collectEvaluatorDependencies({
 			type: 'compare',
 			params: {
-				left: { type: 'population', params: { role: PopulationRole.Legion } },
+				left: {
+					type: 'resource',
+					params: { resourceId: PopulationRole.Legion },
+				},
 				right: {
 					type: 'compare',
 					params: {
 						left: { type: 'development', params: { id: developmentId } },
-						right: { type: 'resource', params: { key: Stat.growth } },
+						right: { type: 'resource', params: { resourceId: Stat.growth } },
 					},
 				},
 			},
 		});
 		expect(dependencies).toEqual(
 			expect.arrayContaining([
-				{ type: 'population', id: PopulationRole.Legion },
+				{ type: 'resource', id: PopulationRole.Legion },
 				{ type: 'development', id: developmentId },
 				{ type: 'resource', id: Stat.growth },
 			]),
@@ -201,7 +205,7 @@ describe('resource sources metadata', () => {
 			type: 'resource',
 			method: 'add_pct',
 			params: {
-				key: Stat.armyStrength,
+				resourceId: Stat.armyStrength,
 				percent: 25,
 				percentResourceId: Stat.growth,
 			},

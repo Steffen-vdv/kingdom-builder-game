@@ -48,14 +48,14 @@ function resolveMaxPopulationKey(metadata: PopulationInfoScenario['metadata']) {
 
 // Build V2 ID for population role
 function getPopulationRoleV2Id(legacyKey: string): string {
-	return `resource:population:role:${legacyKey}`;
+	return `resource:core:${legacyKey}`;
 }
 
 // Build V2 ID for stat
 function getStatV2Id(legacyKey: string): string {
 	// Convert camelCase to kebab-case for stat IDs
 	const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-	return `resource:stat:${kebab}`;
+	return `resource:core:${kebab}`;
 }
 
 function createPopulationInfoScenario(

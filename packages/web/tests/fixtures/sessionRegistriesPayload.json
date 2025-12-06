@@ -180,7 +180,7 @@
 						"right": {
 							"type": "stat",
 							"params": {
-								"key": "resource:stat:max-population"
+								"key": "resource:core:max-population"
 							}
 						}
 					}
@@ -227,7 +227,7 @@
 						"right": {
 							"type": "stat",
 							"params": {
-								"key": "resource:stat:max-population"
+								"key": "resource:core:max-population"
 							}
 						}
 					}
@@ -274,7 +274,7 @@
 						"right": {
 							"type": "stat",
 							"params": {
-								"key": "resource:stat:max-population"
+								"key": "resource:core:max-population"
 							}
 						}
 					}
@@ -399,7 +399,7 @@
 						"left": {
 							"type": "stat",
 							"params": {
-								"key": "resource:stat:war-weariness"
+								"key": "resource:core:war-weariness"
 							}
 						},
 						"operator": "lt",
@@ -420,15 +420,15 @@
 						"stats": [
 							{
 								"role": "power",
-								"key": "resource:stat:army-strength"
+								"key": "resource:core:army-strength"
 							},
 							{
 								"role": "absorption",
-								"key": "resource:stat:absorption"
+								"key": "resource:core:absorption"
 							},
 							{
 								"role": "fortification",
-								"key": "resource:stat:fortification-strength"
+								"key": "resource:core:fortification-strength"
 							}
 						],
 						"target": {
@@ -452,7 +452,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"resourceId": "resource:stat:war-weariness",
+						"resourceId": "resource:core:war-weariness",
 						"change": { "type": "amount", "amount": 1 }
 					}
 				}
@@ -477,7 +477,7 @@
 						"left": {
 							"type": "stat",
 							"params": {
-								"key": "resource:stat:war-weariness"
+								"key": "resource:core:war-weariness"
 							}
 						},
 						"operator": "eq",
@@ -498,7 +498,7 @@
 					"type": "resource",
 					"method": "remove",
 					"params": {
-						"resourceId": "resource:stat:fortification-strength",
+						"resourceId": "resource:core:fortification-strength",
 						"change": { "type": "amount", "amount": 3 }
 					}
 				},
@@ -997,7 +997,7 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"resourceId": "resource:stat:fortification-strength",
+								"resourceId": "resource:core:fortification-strength",
 								"change": { "type": "amount", "amount": 5 }
 							}
 						},
@@ -1005,7 +1005,7 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"resourceId": "resource:stat:absorption",
+								"resourceId": "resource:core:absorption",
 								"change": { "type": "amount", "amount": 0.2 }
 							}
 						}
@@ -1118,7 +1118,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"resourceId": "resource:stat:max-population",
+						"resourceId": "resource:core:max-population",
 						"change": { "type": "amount", "amount": 1 }
 					}
 				}
@@ -1136,7 +1136,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"resourceId": "resource:stat:army-strength",
+						"resourceId": "resource:core:army-strength",
 						"change": { "type": "amount", "amount": 1 }
 					}
 				},
@@ -1144,7 +1144,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"resourceId": "resource:stat:fortification-strength",
+						"resourceId": "resource:core:fortification-strength",
 						"change": { "type": "amount", "amount": 1 }
 					}
 				}
@@ -1161,7 +1161,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"resourceId": "resource:stat:fortification-strength",
+						"resourceId": "resource:core:fortification-strength",
 						"change": { "type": "amount", "amount": 2 }
 					}
 				},
@@ -1169,7 +1169,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"resourceId": "resource:stat:absorption",
+						"resourceId": "resource:core:absorption",
 						"change": { "type": "amount", "amount": 0.5 }
 					}
 				}
@@ -1243,7 +1243,7 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"resourceId": "resource:stat:army-strength",
+								"resourceId": "resource:core:army-strength",
 								"change": { "type": "amount", "amount": 1 }
 							}
 						}
@@ -1279,7 +1279,7 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"resourceId": "resource:stat:fortification-strength",
+								"resourceId": "resource:core:fortification-strength",
 								"change": { "type": "amount", "amount": 1 }
 							}
 						}
@@ -1395,8 +1395,8 @@
 			"groupOrder": null,
 			"resolvedGroupOrder": null
 		},
-		"resource:stat:max-population": {
-			"id": "resource:stat:max-population",
+		"resource:core:max-population": {
+			"id": "resource:core:max-population",
 			"label": "Max Population",
 			"icon": "👥",
 			"description": "Determines how many specialists the realm can sustain.",
@@ -1412,8 +1412,8 @@
 			"groupOrder": 0,
 			"resolvedGroupOrder": 0
 		},
-		"resource:stat:army-strength": {
-			"id": "resource:stat:army-strength",
+		"resource:core:army-strength": {
+			"id": "resource:core:army-strength",
 			"label": "Army Strength",
 			"icon": "⚔️",
 			"description": "Measures combat readiness.",
@@ -1429,8 +1429,8 @@
 			"groupOrder": 1,
 			"resolvedGroupOrder": 1
 		},
-		"resource:stat:fortification-strength": {
-			"id": "resource:stat:fortification-strength",
+		"resource:core:fortification-strength": {
+			"id": "resource:core:fortification-strength",
 			"label": "Fortification Strength",
 			"icon": "🛡️",
 			"description": "Determines defensive strength.",
@@ -1446,8 +1446,8 @@
 			"groupOrder": 2,
 			"resolvedGroupOrder": 2
 		},
-		"resource:stat:absorption": {
-			"id": "resource:stat:absorption",
+		"resource:core:absorption": {
+			"id": "resource:core:absorption",
 			"label": "Absorption",
 			"icon": "🌀",
 			"description": "Reduces incoming damage by a percentage.",
@@ -1464,8 +1464,8 @@
 			"groupOrder": 3,
 			"resolvedGroupOrder": 3
 		},
-		"resource:stat:growth": {
-			"id": "resource:stat:growth",
+		"resource:core:growth": {
+			"id": "resource:core:growth",
 			"label": "Growth Rate",
 			"icon": "🌿",
 			"description": "Improves how quickly strength stats increase.",
@@ -1482,8 +1482,8 @@
 			"groupOrder": 4,
 			"resolvedGroupOrder": 4
 		},
-		"resource:stat:war-weariness": {
-			"id": "resource:stat:war-weariness",
+		"resource:core:war-weariness": {
+			"id": "resource:core:war-weariness",
 			"label": "War Weariness",
 			"icon": "💤",
 			"description": "Tracks fatigue from protracted conflict.",
@@ -1499,8 +1499,8 @@
 			"groupOrder": 5,
 			"resolvedGroupOrder": 5
 		},
-		"resource:population:role:council": {
-			"id": "resource:population:role:council",
+		"resource:core:council": {
+			"id": "resource:core:council",
 			"label": "Council",
 			"icon": "⚖️",
 			"description": "Advisors who grant action points.",
@@ -1516,8 +1516,8 @@
 			"groupOrder": 0,
 			"resolvedGroupOrder": 0
 		},
-		"resource:population:role:legion": {
-			"id": "resource:population:role:legion",
+		"resource:core:legion": {
+			"id": "resource:core:legion",
 			"label": "Legion",
 			"icon": "🎖️",
 			"description": "Warriors who increase army strength.",
@@ -1533,8 +1533,8 @@
 			"groupOrder": 1,
 			"resolvedGroupOrder": 1
 		},
-		"resource:population:role:fortifier": {
-			"id": "resource:population:role:fortifier",
+		"resource:core:fortifier": {
+			"id": "resource:core:fortifier",
 			"label": "Fortifier",
 			"icon": "🔧",
 			"description": "Builders who increase fortification strength.",
@@ -1596,7 +1596,7 @@
 			"order": 2,
 			"resolvedOrder": 2,
 			"parent": {
-				"id": "resource:population:total",
+				"id": "resource:core:total",
 				"label": "Population",
 				"icon": "👥",
 				"description": "Total population count.",
@@ -1615,7 +1615,7 @@
 			"order": 3,
 			"resolvedOrder": 3,
 			"parent": {
-				"id": "resource:population:total",
+				"id": "resource:core:total",
 				"label": "Population Roles",
 				"icon": "👥",
 				"description": "Assigned population roles.",

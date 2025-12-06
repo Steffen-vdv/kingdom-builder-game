@@ -99,6 +99,7 @@ function createMetadataEntry(
 				icon?: string;
 				description?: string | null;
 				displayAsPercent?: boolean;
+				groupId?: string | null;
 		  }
 		| undefined,
 	descriptor: SessionMetadataDescriptor | undefined,
@@ -111,6 +112,7 @@ function createMetadataEntry(
 		description?: string | null;
 		displayAsPercent?: boolean;
 		format?: SessionMetadataDescriptor['format'];
+		groupId?: string | null;
 	} = { id, label };
 	const icon = descriptor?.icon ?? base?.icon;
 	if (icon !== undefined) {
@@ -131,6 +133,10 @@ function createMetadataEntry(
 	const format = cloneMetadataFormat(descriptor);
 	if (format !== undefined) {
 		entry.format = format;
+	}
+	const groupId = base?.groupId;
+	if (groupId !== undefined) {
+		entry.groupId = groupId;
 	}
 	return Object.freeze(entry) as TranslationResourceV2Metadata;
 }

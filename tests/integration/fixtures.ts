@@ -103,20 +103,11 @@ export function simulateEffects(
 		}
 	}
 
-	// Derive legacy resources (resource:core:*) and stats (resource:stat:*)
-	// from valuesV2 for backward compatibility
-	const resources: Record<string, number> = {};
-	const stats: Record<string, number> = {};
-	for (const [key, delta] of Object.entries(valuesV2)) {
-		if (key.startsWith('resource:core:')) {
-			resources[key] = delta;
-		} else if (key.startsWith('resource:stat:')) {
-			stats[key] = delta;
-		}
-	}
+	// All V2 resources are unified - just use valuesV2 directly
+	const resources: Record<string, number> = { ...valuesV2 };
 
 	const land = dummy.lands.length - before.lands.length;
-	return { resources, stats, valuesV2, land };
+	return { resources, valuesV2, land };
 }
 
 export function getActionOutcome(id: string, engineContext: EngineForTest) {

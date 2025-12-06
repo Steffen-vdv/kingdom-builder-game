@@ -63,7 +63,7 @@ function ensurePopulation(
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	// role IS the ResourceV2 ID (e.g. 'resource:population:role:council')
+	// role IS the ResourceV2 ID (e.g. 'resource:core:council')
 	const current = getResourceValue(player, role);
 	if (current === target) {
 		return;

@@ -28,11 +28,10 @@ export {
 	RequirementBuilder,
 	compareEvaluator,
 	developmentEvaluator,
-	landEvaluator,
 	effect,
-	populationEvaluator,
+	landEvaluator,
 	requirement,
-	statEvaluator,
+	resourceEvaluator,
 } from './builders/evaluators';
 
 export { statAddEffect } from '../helpers/statEffects';

@@ -47,34 +47,23 @@ interface HoverCardScenario {
 	sessionState: ReturnType<typeof createSessionSnapshot>;
 }
 
-function ensureIconDescriptor(
-	metadata: HoverCardScenario['mockGame']['translationContext']['assets']['resources'],
-	resourceKey: string,
-	fallbackIcon: string,
-): string {
-	const descriptor = metadata[resourceKey];
-	if (descriptor?.icon) {
-		return descriptor.icon;
-	}
-	metadata[resourceKey] = {
-		label: descriptor?.label ?? `Resource ${resourceKey}`,
-		icon: fallbackIcon,
-	};
-	return fallbackIcon;
-}
-
 function createHoverCardScenario(): HoverCardScenario {
 	const scaffold = createTestSessionScaffold();
-	const resourceKeys = Object.keys(scaffold.registries.resources);
+	// Use ungrouped V2 resource IDs from the catalog
+	// Resources with groupId = null/undefined are in ResourceBar
+	// Resources with a groupId are managed by other components
+	const v2ResourceIds = scaffold.resourceCatalogV2.resources.ordered
+		.filter((def) => def.groupId === null || def.groupId === undefined)
+		.map((def) => def.id);
 	const metadata = structuredClone(scaffold.metadata);
 	const actionCostResource =
-		resourceKeys.find(
+		v2ResourceIds.find(
 			(key) => key !== scaffold.ruleSnapshot.tieredResourceKey,
 		) ??
-		resourceKeys[0] ??
+		v2ResourceIds[0] ??
 		scaffold.ruleSnapshot.tieredResourceKey;
 	const costResource =
-		resourceKeys.find((key) => key !== actionCostResource) ??
+		v2ResourceIds.find((key) => key !== actionCostResource) ??
 		actionCostResource;
 	const activePlayerId = 'player-1' as SessionPlayerId;
 	const opponentId = 'player-2' as SessionPlayerId;
@@ -108,11 +97,9 @@ function createHoverCardScenario(): HoverCardScenario {
 	mockGame.selectors.sessionView = sessionView;
 	mockGame.sessionSnapshot = sessionState;
 	const translationContext = mockGame.translationContext;
-	const costIcon = ensureIconDescriptor(
-		translationContext.assets.resources,
-		costResource,
-		'🪙',
-	);
+	// Get icon from V2 metadata instead of legacy assets
+	const costMetadata = translationContext.resourceMetadataV2.get(costResource);
+	const costIcon = costMetadata?.icon ?? '🪙';
 	const actionEntries = Array.from(scaffold.registries.actions.entries());
 	const [exampleActionId, exampleActionDefinition] =
 		actionEntries.find(([, definition]) => definition.icon) ??

@@ -20,12 +20,13 @@ describe('resource source evaluator dependencies', () => {
 	it('trims identifiers and ignores non-object parameters', () => {
 		const factory = createContentFactory();
 		const population = factory.population();
+		// Population roles now use 'resource' evaluator type
 		const populationDependencies = collectEvaluatorDependencies({
-			type: 'population',
-			params: { role: `  ${population.id}  ` },
+			type: 'resource',
+			params: { resourceId: `  ${population.id}  ` },
 		});
 		expect(populationDependencies).toEqual([
-			{ type: 'population', id: population.id },
+			{ type: 'resource', id: population.id },
 		]);
 		const resourceDependencies = collectEvaluatorDependencies({
 			type: 'resource',
@@ -38,6 +39,7 @@ describe('resource source evaluator dependencies', () => {
 		const factory = createContentFactory();
 		const development = factory.development();
 		const population = factory.population();
+		// Population roles now use 'resource' evaluator type
 		const dependencies = collectEvaluatorDependencies({
 			type: 'compare',
 			params: {
@@ -50,8 +52,8 @@ describe('resource source evaluator dependencies', () => {
 							params: { id: ` ${development.id} ` },
 						},
 						right: {
-							type: 'population',
-							params: { role: population.id },
+							type: 'resource',
+							params: { resourceId: population.id },
 						},
 					},
 				},
@@ -59,7 +61,7 @@ describe('resource source evaluator dependencies', () => {
 		});
 		expect(dependencies).toEqual([
 			{ type: 'development', id: development.id },
-			{ type: 'population', id: population.id },
+			{ type: 'resource', id: population.id },
 		]);
 		const noParams = collectEvaluatorDependencies({
 			type: 'compare',

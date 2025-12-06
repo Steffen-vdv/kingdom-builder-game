@@ -12,10 +12,11 @@ describe('evaluator:compare requirement', () => {
 			advance(engineContext);
 		}
 		// Stat values ARE ResourceV2 IDs - access via resourceValues
-		engineContext.activePlayer.resourceValues[Stat.maxPopulation] = 2;
+		engineContext.activePlayer.resourceValues[Stat.populationMax] = 2;
+		// Use resource evaluator for stats (everything is a resource)
 		const requirement = {
 			params: {
-				left: { type: 'stat', params: { key: Stat.maxPopulation } },
+				left: { type: 'resource', params: { resourceId: Stat.populationMax } },
 				right: 1,
 				operator: 'gt',
 			},
