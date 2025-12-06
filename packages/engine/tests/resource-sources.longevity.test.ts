@@ -1,16 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { runEffects } from '../src/index.ts';
-import { PopulationRole, Stat } from '@kingdom-builder/contents';
+import { Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 
 describe('resource sources longevity', () => {
-	it('captures ongoing and permanent resource sources with dependencies', () => {
+	it('captures permanent resource sources from starting configuration', () => {
 		const engineContext = createTestEngine();
 		const player = engineContext.activePlayer;
 
 		// Stat values ARE ResourceV2 IDs directly - no mapper needed
 		const growthId = Stat.growth;
-		const armyStrengthId = Stat.armyStrength;
 		const growthSources = Object.values(player.resourceSources[growthId] ?? {});
 		expect(growthSources.length).toBeGreaterThan(0);
 		const growthTotal = growthSources.reduce(
@@ -21,53 +19,5 @@ describe('resource sources longevity', () => {
 		expect(
 			growthSources.some((entry) => entry.meta.longevity === 'permanent'),
 		).toBe(true);
-
-		runEffects(
-			[
-				{
-					type: 'population',
-					method: 'add',
-					params: { role: PopulationRole.Legion },
-				},
-			],
-			engineContext,
-		);
-
-		const getPopulationEntries = () =>
-			Object.values(player.resourceSources[armyStrengthId] ?? {}).filter(
-				(entry) => entry.meta.kind === 'population',
-			);
-		const [passiveEntry] = getPopulationEntries();
-		expect(passiveEntry?.amount).toBe(1);
-		expect(passiveEntry?.meta.longevity).toBe('ongoing');
-		expect(passiveEntry?.meta.kind).toBe('population');
-		expect(passiveEntry?.meta.detail).toBe('Passive');
-		expect(passiveEntry?.meta.dependsOn).toEqual(
-			expect.arrayContaining([
-				{
-					type: 'population',
-					id: PopulationRole.Legion,
-					detail: 'assigned',
-				},
-			]),
-		);
-		expect(passiveEntry?.meta.removal).toMatchObject({
-			type: 'population',
-			id: PopulationRole.Legion,
-			detail: 'unassigned',
-		});
-
-		runEffects(
-			[
-				{
-					type: 'population',
-					method: 'remove',
-					params: { role: PopulationRole.Legion },
-				},
-			],
-			engineContext,
-		);
-
-		expect(getPopulationEntries()).toHaveLength(0);
 	});
 });

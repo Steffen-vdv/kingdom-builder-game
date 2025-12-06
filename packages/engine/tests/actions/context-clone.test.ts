@@ -18,8 +18,8 @@ describe('cloneEngineContext', () => {
 			advance: vi.fn(),
 		});
 		engineContext.aiSystem = aiSystem;
-		engineContext.statAddPctBases.example = 3;
-		engineContext.statAddPctAccums.example = 4;
+		engineContext.resourcePercentBases.example = 3;
+		engineContext.resourcePercentAccums.example = 4;
 		engineContext.recentResourceGains.push({
 			key: CResource.gold,
 			amount: 2,
@@ -174,10 +174,18 @@ describe('cloneEngineContext', () => {
 		expect(clonedPlayer.customData).toEqual(player.customData);
 		expect(clonedPlayer.customData).not.toBe(player.customData);
 		expect(clonedPlayer.nonCloneable).toBe(player.nonCloneable);
-		expect(cloned.statAddPctBases).not.toBe(engineContext.statAddPctBases);
-		expect(cloned.statAddPctBases).toEqual(engineContext.statAddPctBases);
-		expect(cloned.statAddPctAccums).not.toBe(engineContext.statAddPctAccums);
-		expect(cloned.statAddPctAccums).toEqual(engineContext.statAddPctAccums);
+		expect(cloned.resourcePercentBases).not.toBe(
+			engineContext.resourcePercentBases,
+		);
+		expect(cloned.resourcePercentBases).toEqual(
+			engineContext.resourcePercentBases,
+		);
+		expect(cloned.resourcePercentAccums).not.toBe(
+			engineContext.resourcePercentAccums,
+		);
+		expect(cloned.resourcePercentAccums).toEqual(
+			engineContext.resourcePercentAccums,
+		);
 		expect(cloned.recentResourceGains).not.toBe(
 			engineContext.recentResourceGains,
 		);

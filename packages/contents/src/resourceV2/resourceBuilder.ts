@@ -1,3 +1,4 @@
+import type { EffectDef } from '@kingdom-builder/protocol';
 import type { ResourceV2Definition, ResourceV2TierTrack } from './types';
 
 interface ResourceGroupOptions {
@@ -37,6 +38,16 @@ export interface ResourceV2Builder {
 	tags(...tags: ReadonlyArray<string | readonly string[]>): this;
 	tierTrack(track: ResourceV2TierTrack): this;
 	globalActionCost(amount: number): this;
+	/**
+	 * Effects to run when this resource's value increases.
+	 * Runs once per unit of increase.
+	 */
+	onValueIncrease(...effects: EffectDef[]): this;
+	/**
+	 * Effects to run when this resource's value decreases.
+	 * Runs once per unit of decrease.
+	 */
+	onValueDecrease(...effects: EffectDef[]): this;
 	build(): ResourceV2Definition;
 }
 
@@ -53,6 +64,8 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 	private tagsSet = false;
 	private tierTrackSet = false;
 	private globalCostSet = false;
+	private onValueIncreaseSet = false;
+	private onValueDecreaseSet = false;
 
 	constructor(id: string) {
 		if (!id) {
@@ -223,6 +236,30 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 		assertPositiveInteger(amount, 'globalCost.amount');
 		this.definition.globalCost = { amount };
 		this.globalCostSet = true;
+		return this;
+	}
+
+	onValueIncrease(...effects: EffectDef[]) {
+		if (this.onValueIncreaseSet) {
+			throw new Error(
+				`${builderName} already configured onValueIncrease(). ` +
+					'Remove the duplicate call.',
+			);
+		}
+		this.definition.onValueIncrease = effects;
+		this.onValueIncreaseSet = true;
+		return this;
+	}
+
+	onValueDecrease(...effects: EffectDef[]) {
+		if (this.onValueDecreaseSet) {
+			throw new Error(
+				`${builderName} already configured onValueDecrease(). ` +
+					'Remove the duplicate call.',
+			);
+		}
+		this.definition.onValueDecrease = effects;
+		this.onValueDecreaseSet = true;
 		return this;
 	}
 

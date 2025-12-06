@@ -13,9 +13,7 @@ import {
 import { createTestEngine } from '../helpers.ts';
 import {
 	resourceAmountParams,
-	statAmountParams,
 	type ResourceAmountParamsResult,
-	type StatAmountParamsResult,
 } from '../helpers/resourceV2Params.ts';
 
 describe('resource and stat bounds', () => {
@@ -26,9 +24,9 @@ describe('resource and stat bounds', () => {
 			name: 'Lower Fort',
 			effects: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'remove',
-					params: statAmountParams({
+					params: resourceAmountParams({
 						key: CStat.fortificationStrength,
 						amount: 3,
 					}),
@@ -39,10 +37,10 @@ describe('resource and stat bounds', () => {
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 		const actionDef = actions.get('lower_fort');
-		const statParams = actionDef.effects.find(
-			(effect) => effect.type === 'stat',
-		)?.params as StatAmountParamsResult | undefined;
-		const effectAmount = statParams?.amount ?? 0;
+		const resourceParams = actionDef.effects.find(
+			(effect) => effect.type === 'resource',
+		)?.params as ResourceAmountParamsResult | undefined;
+		const effectAmount = resourceParams?.amount ?? 0;
 		engineContext.activePlayer.resourceValues[CStat.fortificationStrength] =
 			effectAmount - 1;
 		const cost = getActionCosts('lower_fort', engineContext)[CResource.ap] ?? 0;
@@ -93,9 +91,9 @@ describe('resource and stat bounds', () => {
 			name: 'Bad Add',
 			effects: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
-					params: statAmountParams({
+					params: resourceAmountParams({
 						key: CStat.armyStrength,
 						amount: -4,
 					}),
@@ -106,8 +104,9 @@ describe('resource and stat bounds', () => {
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 		const actionDef = actions.get('bad_add');
-		const addParams = actionDef.effects.find((effect) => effect.type === 'stat')
-			?.params as StatAmountParamsResult | undefined;
+		const addParams = actionDef.effects.find(
+			(effect) => effect.type === 'resource',
+		)?.params as ResourceAmountParamsResult | undefined;
 		const effectAmount = addParams?.amount ?? 0;
 		const before = getResourceValue(
 			engineContext.activePlayer,

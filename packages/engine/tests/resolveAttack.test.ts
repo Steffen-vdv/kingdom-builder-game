@@ -9,9 +9,12 @@ import { createContentFactory } from '@kingdom-builder/testing';
 
 function makeAbsorptionEffect(amount: number): EffectDef {
 	return {
-		type: 'stat',
+		type: 'resource',
 		method: 'add',
-		params: { key: CStat.absorption, statId: CStat.absorption, amount },
+		params: {
+			resourceId: CStat.absorption,
+			change: { type: 'amount', amount },
+		},
 	};
 }
 
@@ -110,12 +113,11 @@ describe('resolveAttack', () => {
 		const tower = content.development({
 			onBeforeAttacked: [
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
 					params: {
-						key: CStat.fortificationStrength,
-						statId: CStat.fortificationStrength,
-						amount: 4,
+						resourceId: CStat.fortificationStrength,
+						change: { type: 'amount', amount: 4 },
 					},
 				},
 			],
@@ -173,41 +175,37 @@ describe('resolveAttack', () => {
 				effects: [],
 				onBeforeAttacked: [
 					{
-						type: 'stat',
+						type: 'resource',
 						method: 'add',
 						params: {
-							key: CStat.absorption,
-							statId: CStat.absorption,
-							amount: 0.5,
+							resourceId: CStat.absorption,
+							change: { type: 'amount', amount: 0.5 },
 						},
 					},
 					{
-						type: 'stat',
+						type: 'resource',
 						method: 'add',
 						params: {
-							key: CStat.fortificationStrength,
-							statId: CStat.fortificationStrength,
-							amount: 1,
+							resourceId: CStat.fortificationStrength,
+							change: { type: 'amount', amount: 1 },
 						},
 					},
 				],
 				onAttackResolved: [
 					{
-						type: 'stat',
+						type: 'resource',
 						method: 'add',
 						params: {
-							key: CStat.absorption,
-							statId: CStat.absorption,
-							amount: 0.5,
+							resourceId: CStat.absorption,
+							change: { type: 'amount', amount: 0.5 },
 						},
 					},
 					{
-						type: 'stat',
+						type: 'resource',
 						method: 'add',
 						params: {
-							key: CStat.fortificationStrength,
-							statId: CStat.fortificationStrength,
-							amount: 5,
+							resourceId: CStat.fortificationStrength,
+							change: { type: 'amount', amount: 5 },
 						},
 					},
 				],
@@ -219,12 +217,11 @@ describe('resolveAttack', () => {
 		runEffects(
 			[
 				{
-					type: 'stat',
+					type: 'resource',
 					method: 'add',
 					params: {
-						key: CStat.armyStrength,
-						statId: CStat.armyStrength,
-						amount: 5,
+						resourceId: CStat.armyStrength,
+						change: { type: 'amount', amount: 5 },
 					},
 				},
 			],

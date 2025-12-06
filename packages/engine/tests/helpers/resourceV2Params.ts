@@ -20,6 +20,7 @@ interface ResourcePercentParamsInput extends BaseResourceParamsInput {
 	readonly percent?: number;
 	readonly modifiers?: readonly number[];
 	readonly roundingMode?: ResourceChangeRoundingMode;
+	readonly additive?: boolean;
 }
 
 interface BaseResourceParamsResult {
@@ -117,6 +118,7 @@ export function resourcePercentParams(
 		type: 'percent',
 		modifiers,
 		...(input.roundingMode ? { roundingMode: input.roundingMode } : {}),
+		...(input.additive !== undefined ? { additive: input.additive } : {}),
 	};
 
 	const reconciledDelta = (
@@ -157,4 +159,46 @@ export function statAmountParams(
 		amount,
 		change: { type: 'amount', amount },
 	} satisfies StatAmountParamsResult;
+}
+
+interface PercentFromResourceParamsInput extends BaseResourceParamsInput {
+	readonly sourceResourceId: string;
+	readonly roundingMode?: ResourceChangeRoundingMode;
+	readonly additive?: boolean;
+	readonly multiplier?: number;
+}
+
+export interface PercentFromResourceParamsResult {
+	readonly key: string;
+	readonly resourceId: string;
+	readonly change: Extract<
+		ResourceChangeParameters,
+		{ type: 'percentFromResource' }
+	>;
+	readonly reconciliation?: ResourceReconciliationMode;
+	readonly suppressHooks?: boolean;
+}
+
+export function resourcePercentFromResourceParams(
+	input: PercentFromResourceParamsInput,
+): PercentFromResourceParamsResult {
+	const resourceId = resolveResourceId(input);
+	const change: Extract<
+		ResourceChangeParameters,
+		{ type: 'percentFromResource' }
+	> = {
+		type: 'percentFromResource',
+		sourceResourceId: input.sourceResourceId,
+		...(input.roundingMode ? { roundingMode: input.roundingMode } : {}),
+		...(input.additive !== undefined ? { additive: input.additive } : {}),
+		...(input.multiplier !== undefined ? { multiplier: input.multiplier } : {}),
+	};
+
+	return {
+		key: input.key,
+		resourceId,
+		change,
+		...(input.reconciliation ? { reconciliation: input.reconciliation } : {}),
+		...(input.suppressHooks ? { suppressHooks: input.suppressHooks } : {}),
+	};
 }

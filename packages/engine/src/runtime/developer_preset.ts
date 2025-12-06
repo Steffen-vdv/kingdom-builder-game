@@ -70,12 +70,15 @@ function ensurePopulation(
 	}
 	const delta = target - current;
 	const method = delta > 0 ? 'add' : 'remove';
-	const effect: EffectDef<{ role: PopulationRoleId }> = {
-		type: 'population',
+	const effect: EffectDef = {
+		type: 'resource',
 		method,
-		params: { role },
+		params: {
+			resourceId: role,
+			change: { type: 'amount', amount: Math.abs(delta) },
+		},
 	};
-	applyEffect(context, effect, Math.abs(delta));
+	applyEffect(context, effect);
 }
 
 function ensureLandCount(context: EngineContext, target: number): void {

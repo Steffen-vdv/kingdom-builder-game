@@ -48,8 +48,18 @@ export interface ContentMetadata {
 	readonly tags?: readonly string[];
 }
 
+/**
+ * Triggers that run when a resource value changes.
+ */
+export interface ContentResourceTriggers {
+	readonly onValueIncrease?: readonly EffectDef[];
+	readonly onValueDecrease?: readonly EffectDef[];
+}
+
 export interface ContentResourceDefinition
-	extends ContentMetadata, ContentBounds {
+	extends ContentMetadata,
+		ContentBounds,
+		ContentResourceTriggers {
 	readonly displayAsPercent?: boolean;
 	readonly allowDecimal?: boolean;
 	readonly trackValueBreakdown?: boolean;

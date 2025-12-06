@@ -1,7 +1,10 @@
 import type { PlayerId, PlayerState } from '../state';
 import type { EngineContext } from '../context';
 import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
+import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import { runEffects } from '../effects';
+import { withResourceSourceFrames } from '../resource_sources';
+import { resolveResourceDefinition } from '../resource-v2/state-helpers';
 import { TieredResourceService } from './tiered_resource_service';
 import { PopCapService } from './pop_cap_service';
 import { WinConditionService } from './win_condition_service';
@@ -31,9 +34,112 @@ export class Services {
 		context: Context,
 		player: PlayerState,
 		key: ResourceIdentifier,
+		delta?: number,
 	) {
 		this.handleTieredResourceChange(context, player, key);
 		this.winCondition.evaluateResourceChange(context, player, key);
+		// Handle resource-defined triggers when value changes
+		if (delta !== undefined && delta !== 0) {
+			this.handleResourceTriggers(context, player, key, delta);
+		}
+	}
+
+	/**
+	 * Run onValueIncrease/onValueDecrease triggers defined on the resource.
+	 * Triggers are run once per unit of change.
+	 */
+	private handleResourceTriggers(
+		context: Context,
+		player: PlayerState,
+		resourceId: ResourceIdentifier,
+		delta: number,
+	) {
+		// Look up the resource definition from the V2 catalog
+		const catalog = context.resourceCatalogV2;
+		const lookup = resolveResourceDefinition(catalog, resourceId);
+		if (!lookup || lookup.kind !== 'resource') {
+			return;
+		}
+		const definition = lookup.definition;
+
+		const currentValue = player.resourceValues[resourceId] ?? 0;
+		const iterations = Math.abs(delta);
+
+		if (delta > 0 && definition.onValueIncrease.length > 0) {
+			// Run onValueIncrease triggers for each unit added
+			for (let i = 0; i < iterations; i++) {
+				const index = currentValue - iterations + i + 1;
+				const effects = applyParamsToEffects(
+					[...definition.onValueIncrease],
+					{
+						delta: 1,
+						index,
+						player: player.id,
+						resourceId,
+					},
+				);
+				const frames = [
+					() => ({
+						kind: 'resource' as const,
+						id: resourceId,
+						longevity: 'ongoing' as const,
+						dependsOn: [
+							{
+								type: 'resource',
+								id: resourceId,
+								detail: 'increased',
+							},
+						],
+						removal: {
+							type: 'resource',
+							id: resourceId,
+							detail: 'decreased',
+						},
+					}),
+				];
+				withResourceSourceFrames(context, frames, () =>
+					runEffects(effects, context),
+				);
+			}
+		} else if (delta < 0 && definition.onValueDecrease.length > 0) {
+			// Run onValueDecrease triggers for each unit removed
+			// Note: triggers run after the value is already decremented,
+			// so we compute indices based on what they would have been
+			for (let i = 0; i < iterations; i++) {
+				const index = currentValue + iterations - i;
+				const effects = applyParamsToEffects(
+					[...definition.onValueDecrease],
+					{
+						delta: -1,
+						index,
+						player: player.id,
+						resourceId,
+					},
+				);
+				const frames = [
+					() => ({
+						kind: 'resource' as const,
+						id: resourceId,
+						longevity: 'ongoing' as const,
+						dependsOn: [
+							{
+								type: 'resource',
+								id: resourceId,
+								detail: 'increased',
+							},
+						],
+						removal: {
+							type: 'resource',
+							id: resourceId,
+							detail: 'decreased',
+						},
+					}),
+				];
+				withResourceSourceFrames(context, frames, () =>
+					runEffects(effects, context),
+				);
+			}
+		}
 	}
 
 	handleTieredResourceChange(

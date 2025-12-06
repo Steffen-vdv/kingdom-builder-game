@@ -167,8 +167,8 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		cloned.aiSystem = source.aiSystem;
 	}
 	cloned.game.resourceCatalogV2 = source.resourceCatalogV2;
-	cloned.statAddPctBases = { ...source.statAddPctBases };
-	cloned.statAddPctAccums = { ...source.statAddPctAccums };
+	cloned.resourcePercentBases = { ...source.resourcePercentBases };
+	cloned.resourcePercentAccums = { ...source.resourcePercentAccums };
 	cloned.recentResourceGains = source.recentResourceGains.map((gain) => ({
 		key: gain.key,
 		amount: gain.amount,

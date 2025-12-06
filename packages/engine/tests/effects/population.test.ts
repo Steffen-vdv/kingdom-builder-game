@@ -8,21 +8,34 @@ import {
 	PopulationRole,
 } from '@kingdom-builder/contents';
 import { getCatalogIndexes } from '../../src/resource-v2';
+import { resourceAmountParams } from '../helpers/resourceV2Params';
 
-describe('population effects', () => {
-	it('adds and removes population', () => {
+describe('resource effects for population', () => {
+	it('adds and removes population via resource effects', () => {
 		const content = createContentFactory();
 		// Use a real population role that's registered in the ResourceV2 catalog
 		const roleId = PopulationRole.Legion;
 		const add = content.action({
 			effects: [
-				{ type: 'population', method: 'add', params: { role: roleId } },
-				{ type: 'population', method: 'add', params: { role: roleId } },
+				{
+					type: 'resource',
+					method: 'add',
+					params: resourceAmountParams({ key: roleId, amount: 1 }),
+				},
+				{
+					type: 'resource',
+					method: 'add',
+					params: resourceAmountParams({ key: roleId, amount: 1 }),
+				},
 			],
 		});
 		const remove = content.action({
 			effects: [
-				{ type: 'population', method: 'remove', params: { role: roleId } },
+				{
+					type: 'resource',
+					method: 'remove',
+					params: resourceAmountParams({ key: roleId, amount: 1 }),
+				},
 			],
 		});
 		const engineContext = createTestEngine(content);

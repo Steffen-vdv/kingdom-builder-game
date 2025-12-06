@@ -18,9 +18,6 @@ import {
 } from '../resource-v2/effects/transfer';
 import { buildingAdd, collectBuildingAddCosts } from './building_add';
 import { buildingRemove } from './building_remove';
-import { statAdd } from './stat_add';
-import { statAddPct } from './stat_add_pct';
-import { statRemove } from './stat_remove';
 import { developmentAdd } from './development_add';
 import { developmentRemove } from './development_remove';
 import { landTill } from './land_till';
@@ -28,8 +25,6 @@ import { passiveAdd } from './passive_add';
 import { passiveRemove } from './passive_remove';
 import { costMod } from './cost_mod';
 import { resultMod } from './result_mod';
-import { populationAdd } from './population_add';
-import { populationRemove } from './population_remove';
 import { actionAdd } from './action_add';
 import { actionRemove } from './action_remove';
 import { actionPerform } from './action_perform';
@@ -62,9 +57,6 @@ export function registerCoreEffects(
 	registry.add('resource:upper-bound:increase', resourceV2IncreaseUpperBound);
 	registry.add('building:add', buildingAdd);
 	registry.add('building:remove', buildingRemove);
-	registry.add('stat:add', statAdd);
-	registry.add('stat:add_pct', statAddPct);
-	registry.add('stat:remove', statRemove);
 	registry.add('development:add', developmentAdd);
 	registry.add('development:remove', developmentRemove);
 	registry.add('land:till', landTill);
@@ -74,8 +66,6 @@ export function registerCoreEffects(
 	registry.add('cost_mod:remove', costMod);
 	registry.add('result_mod:add', resultMod);
 	registry.add('result_mod:remove', resultMod);
-	registry.add('population:add', populationAdd);
-	registry.add('population:remove', populationRemove);
 	registry.add('action:add', actionAdd);
 	registry.add('action:remove', actionRemove);
 	registry.add('action:perform', actionPerform);
@@ -127,9 +117,6 @@ export {
 	resourceV2Transfer,
 	buildingAdd,
 	buildingRemove,
-	statAdd,
-	statAddPct,
-	statRemove,
 	developmentAdd,
 	developmentRemove,
 	landTill,
@@ -137,8 +124,6 @@ export {
 	passiveRemove,
 	costMod,
 	resultMod,
-	populationAdd,
-	populationRemove,
 	actionAdd,
 	actionRemove,
 	actionPerform,
