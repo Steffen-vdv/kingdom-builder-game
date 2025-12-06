@@ -1,4 +1,4 @@
-import { formatStatValue, statDisplaysAsPercent } from '../../utils/stats';
+import { statDisplaysAsPercent } from '../../utils/stats';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
 import type { ActionDiffChange } from './diff';
 import {
@@ -127,7 +127,7 @@ function describeStatBreakdown(
 	change: SignedDelta,
 	player: Pick<PlayerSnapshot, 'valuesV2'>,
 	step: StepEffects,
-	assets: TranslationAssets,
+	_assets: TranslationAssets,
 	metadataSelectors: TranslationResourceV2MetadataSelectors,
 ): string | undefined {
 	const breakdown = findStatPctBreakdown(step, key);
@@ -135,31 +135,31 @@ function describeStatBreakdown(
 		return undefined;
 	}
 	const role = breakdown.role;
-	// Role can be a V2 id (resource:core:legion) or legacy short key
-	// If it's already a V2 id, use it directly; otherwise construct the V2 id
-	const populationKey = role.startsWith('resource:population:')
+	// Role should be a V2 id - use it directly for V2 metadata lookup
+	const populationKey = role.startsWith('resource:')
 		? role
 		: `resource:core:${role}`;
 	const count = player.valuesV2?.[populationKey] ?? 0;
-	// Use V2 metadata for population icon, fallback to legacy assets
+	// Use V2 metadata for population icon
 	const popMetadata = metadataSelectors.get(populationKey);
-	const popIcon =
-		popMetadata?.icon ??
-		assets.populations[role]?.icon ??
-		assets.population.icon ??
-		'';
+	const popIcon = popMetadata?.icon ?? '';
 	const pctStat = breakdown.percentStat;
-	// Stats are now in valuesV2
+	// All values are now in valuesV2
 	const growth = player.valuesV2?.[pctStat] ?? 0;
-	// Use V2 metadata for stat icon, fallback to legacy assets
+	// Use V2 metadata for percent stat icon
 	const pctStatMetadata = metadataSelectors.get(pctStat);
-	const growthIcon = pctStatMetadata?.icon ?? assets.stats[pctStat]?.icon ?? '';
-	const growthValue = formatStatValue(breakdown.percentStat, growth, assets);
-	const baseValue = formatStatValue(key, change.before, assets);
-	const totalValue = formatStatValue(key, change.after, assets);
-	// Use V2 metadata for target stat icon, fallback to legacy assets
+	const growthIcon = pctStatMetadata?.icon ?? '';
+	// Format values using V2 metadata
+	const formatValue = (id: string, value: number) => {
+		const meta = metadataSelectors.get(id);
+		return meta?.displayAsPercent ? `${value * 100}%` : String(value);
+	};
+	const growthValue = formatValue(pctStat, growth);
+	const baseValue = formatValue(key, change.before);
+	const totalValue = formatValue(key, change.after);
+	// Use V2 metadata for target resource icon
 	const statMetadata = metadataSelectors.get(key);
-	const statIcon = statMetadata?.icon ?? assets.stats[key]?.icon ?? '';
+	const statIcon = statMetadata?.icon ?? '';
 	return formatPercentBreakdown(
 		statIcon,
 		baseValue,
@@ -170,20 +170,10 @@ function describeStatBreakdown(
 		totalValue,
 	);
 }
-const STAT_V2_PREFIX = 'resource:core:';
-
-function isResourceKey(key: string): boolean {
-	// Exclude stat keys - they're handled by appendStatChanges
-	if (key.startsWith(STAT_V2_PREFIX)) {
-		return false;
-	}
-	// Exclude legacy stat keys that can be mapped to V2 stat ids
-	const statV2Id = getResourceIdForLegacy('stats', key);
-	if (statV2Id !== undefined) {
-		return false;
-	}
-	return true;
-}
+// Resources are handled uniformly by appendResourceChanges - no ID-based
+// filtering. All V2 resources get source icons when available. Stat-specific
+// formatting (percent breakdowns for growth effects) is handled by
+// appendStatChanges based on effect metadata, not resource ID patterns.
 
 export function appendResourceChanges(
 	before: PlayerSnapshot,
@@ -195,9 +185,8 @@ export function appendResourceChanges(
 	options?: { trackByKey?: Map<string, ActionDiffChange> },
 ): ActionDiffChange[] {
 	const changes: ActionDiffChange[] = [];
-	// Filter out stat keys - they're handled by appendStatChanges
-	const filteredKeys = resourceKeys.filter(isResourceKey);
-	for (const key of filteredKeys) {
+	// Process ALL resource keys - no ID-based filtering
+	for (const key of resourceKeys) {
 		const resourceId = getResourceIdForLegacy('resources', key) ?? key;
 		const metadata = metadataSelectors.get(resourceId);
 		const summary = describeResourceChange(
@@ -223,21 +212,17 @@ export function appendResourceChanges(
 	return changes;
 }
 
-function collectStatKeys(
+function collectChangedKeys(
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
 ): string[] {
 	const keys = new Set<string>();
-	// Collect stat keys from valuesV2
+	// Collect all keys with changes from valuesV2
 	for (const key of Object.keys(before.valuesV2 ?? {})) {
-		if (key.startsWith(STAT_V2_PREFIX)) {
-			keys.add(key);
-		}
+		keys.add(key);
 	}
 	for (const key of Object.keys(after.valuesV2 ?? {})) {
-		if (key.startsWith(STAT_V2_PREFIX)) {
-			keys.add(key);
-		}
+		keys.add(key);
 	}
 	return Array.from(keys);
 }
@@ -251,9 +236,15 @@ export function appendStatChanges(
 	assets: TranslationAssets,
 	metadataSelectors: TranslationResourceV2MetadataSelectors,
 ) {
-	// Collect stat keys from both legacy stats and V2 valuesV2
-	const statKeys = collectStatKeys(before, after);
-	for (const key of statKeys) {
+	// This function handles resources that need percent breakdown display
+	// (e.g., growth effects like Legion * Growth = Army Strength).
+	// Resources are identified by having a percent breakdown effect, not by ID.
+	if (!step) {
+		return;
+	}
+	// Collect all changed resource keys
+	const changedKeys = collectChangedKeys(before, after);
+	for (const key of changedKeys) {
 		const resourceId = getResourceIdForLegacy('stats', key) ?? key;
 		const metadata = metadataSelectors.get(resourceId);
 		const mapping: ResourceV2LegacyMapping | undefined = getLegacyMapping(
@@ -266,11 +257,16 @@ export function appendStatChanges(
 		if (!diff) {
 			continue;
 		}
-		const summary = formatResourceV2Summary(metadata, diff.snapshot);
-		if (statDisplaysAsPercent(key, assets)) {
+		// Check if this resource displays as percent - use V2 metadata
+		const displaysAsPercent =
+			metadata.displayAsPercent || statDisplaysAsPercent(key, assets);
+		if (displaysAsPercent) {
+			// Percent-based resources don't need breakdown
+			const summary = formatResourceV2Summary(metadata, diff.snapshot);
 			changes.push(summary);
 			continue;
 		}
+		// Check if there's a percent breakdown effect for this resource
 		const breakdown = describeStatBreakdown(
 			key,
 			diff.change,
@@ -280,9 +276,9 @@ export function appendStatChanges(
 			metadataSelectors,
 		);
 		if (breakdown) {
+			// Only add entries that have breakdown - others handled elsewhere
+			const summary = formatResourceV2Summary(metadata, diff.snapshot);
 			changes.push(`${summary}${breakdown}`);
-		} else {
-			changes.push(summary);
 		}
 	}
 }

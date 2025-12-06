@@ -83,11 +83,11 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 		}
 		return resourceCatalog.resources.ordered
 			.filter((definition) => {
-				const { id } = definition;
-				if (id.includes(':stat:')) {
+				const { groupId } = definition;
+				if (groupId === 'resource-group:stats') {
 					return false;
 				}
-				if (id.includes(':population:role:')) {
+				if (groupId === 'resource-group:population:roles') {
 					return false;
 				}
 				return true;

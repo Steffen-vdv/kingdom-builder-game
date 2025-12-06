@@ -28,12 +28,15 @@ function normalizeMetaCount(rawCount: number): number {
 
 function renderPopulationMetaIcons(
 	meta: ResourceSourceMeta,
-	_context: TranslationDiffContext,
+	context: TranslationDiffContext,
 ): string {
 	const role = meta.id;
-	const icon = role
-		? _context.assets.populations[role]?.icon || role
-		: _context.assets.population.icon;
+	if (!role) {
+		return '';
+	}
+	// Use V2 metadata directly - resource IDs are used as-is without conversion
+	const v2Metadata = context.resourceMetadataV2?.get(role);
+	const icon = v2Metadata?.icon;
 	if (!icon) {
 		return '';
 	}

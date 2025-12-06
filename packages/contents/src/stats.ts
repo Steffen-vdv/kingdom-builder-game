@@ -1,5 +1,8 @@
 export const Stat = {
-	maxPopulation: 'resource:core:max-population',
+	/** Maximum population capacity */
+	populationMax: 'resource:core:max-population',
+	/** Parent resource aggregating all population roles (auto-computed sum) */
+	populationTotal: 'resource:core:total',
 	armyStrength: 'resource:core:army-strength',
 	fortificationStrength: 'resource:core:fortification-strength',
 	absorption: 'resource:core:absorption',
@@ -15,7 +18,7 @@ export function getStatResourceV2Id(stat: StatKey): StatV2Id {
 }
 
 const LEGACY_STAT_KEY_MAP = {
-	maxPopulation: Stat.maxPopulation,
+	maxPopulation: Stat.populationMax,
 	armyStrength: Stat.armyStrength,
 	fortificationStrength: Stat.fortificationStrength,
 	absorption: Stat.absorption,

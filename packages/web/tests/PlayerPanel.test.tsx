@@ -67,12 +67,12 @@ describe('<PlayerPanel />', () => {
 		// Resource buttons have aria-label format "Label: value"
 		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
 		const v2Resources = resourceCatalog?.resources?.ordered ?? [];
-		// Filter to only core resources (not stats or population roles)
-		const coreResources = v2Resources.filter(
-			(def) =>
-				!def.id.includes(':stat:') && !def.id.includes(':population:role:'),
+		// Resources with groupId = null should be displayed in ResourceBar
+		// Resources with a groupId are managed by other components
+		const ungroupedResources = v2Resources.filter(
+			(def) => def.groupId === null || def.groupId === undefined,
 		);
-		for (const definition of coreResources) {
+		for (const definition of ungroupedResources) {
 			const metadata = mockGame.translationContext.resourceMetadataV2.get(
 				definition.id,
 			);
@@ -98,13 +98,12 @@ describe('<PlayerPanel />', () => {
 		// Component uses V2 resources from resourceCatalogV2
 		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
 		const v2Resources = resourceCatalog?.resources?.ordered ?? [];
-		// Filter to only core resources (not stats or population roles)
-		const coreResources = v2Resources.filter(
-			(def) =>
-				!def.id.includes(':stat:') && !def.id.includes(':population:role:'),
+		// Resources with groupId = null should be displayed in ResourceBar
+		const ungroupedResources = v2Resources.filter(
+			(def) => def.groupId === null || def.groupId === undefined,
 		);
 		// Find first resource with a positive forecast
-		const resourceWithPositiveForecast = coreResources.find((def) => {
+		const resourceWithPositiveForecast = ungroupedResources.find((def) => {
 			const mapping = getLegacyMapping(def.id);
 			const key = mapping?.key ?? def.id;
 			return (resourceForecast[key] ?? 0) > 0;
@@ -139,7 +138,7 @@ describe('<PlayerPanel />', () => {
 			expect(resourceForecastBadge).toHaveClass('text-emerald-300');
 		}
 		// Find a resource with negative forecast
-		const negativeV2Resource = coreResources.find((def) => {
+		const negativeV2Resource = ungroupedResources.find((def) => {
 			const delta =
 				forecastByPlayerId[activePlayerSnapshot.id].valuesV2[def.id];
 			return (delta ?? 0) < 0;

@@ -49,9 +49,10 @@ describe('resource removal penalties', () => {
 		const action = content.action({
 			effects: [
 				{
+					// Use resource evaluator for population roles
 					evaluator: {
-						type: 'population',
-						params: { role: CPopulationRole.Council },
+						type: 'resource',
+						params: { resourceId: CPopulationRole.Council },
 					},
 					effects: [
 						{

@@ -1,5 +1,8 @@
 import React from 'react';
-import type { TranslationAssets, TranslationResourceV2MetadataSelectors } from './context';
+import type {
+	TranslationAssets,
+	TranslationResourceV2MetadataSelectors,
+} from './context';
 import { selectUpkeepDisplay } from './context/assetSelectors';
 import type { Summary } from './content';
 

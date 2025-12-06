@@ -88,13 +88,19 @@ function createLogHarness(
 		engineSnapshot.metadata,
 	);
 	engine.assets = translationContext.assets;
-	const populationDescriptor =
-		metadataSelectors.populationMetadata.list.find((entry) => {
-			return Boolean(entry.icon);
-		}) ?? metadataSelectors.populationMetadata.list[0];
-	if (!populationDescriptor) {
+	// Find any grouped resource with an icon from V2 catalog
+	// This tests population meta source rendering without hardcoding IDs
+	const populationV2Resource = v2ResourceIds.find((id) => {
+		const metadata = translationContext.resourceMetadataV2.get(id);
+		return (
+			metadata.groupId !== null &&
+			metadata.groupId !== undefined &&
+			Boolean(metadata.icon)
+		);
+	});
+	if (!populationV2Resource) {
 		throw new Error(
-			'Expected at least one population descriptor for log source tests.',
+			'Expected at least one grouped resource with an icon in V2 catalog.',
 		);
 	}
 	const developmentId = Array.from(engine.developments.keys()).find((id) => {
@@ -117,7 +123,7 @@ function createLogHarness(
 		translationContext,
 		metadataSelectors,
 		resourceKeys: v2ResourceIds,
-		populationId: populationDescriptor.id,
+		populationId: populationV2Resource,
 		developmentId,
 		buildingId,
 		landIcon: landDescriptor.icon ?? '',

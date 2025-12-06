@@ -4,12 +4,24 @@ export const compareRequirement = (left: unknown, right: unknown) => ({
 	params: { left, operator: 'lt', right },
 });
 
-export const populationEvaluator = (role?: string) => ({
-	type: 'population',
-	params: role ? { role } : {},
+/**
+ * Creates a resource evaluator definition.
+ * For population totals, use without resourceId or pass total population ID.
+ * For specific roles, pass the role's resource ID.
+ */
+export const resourceEvaluator = (resourceId?: string) => ({
+	type: 'resource',
+	params: resourceId ? { resourceId } : {},
 });
 
-export const statEvaluator = (key: string) => ({
-	type: 'stat',
-	params: { key },
-});
+/**
+ * @deprecated Use resourceEvaluator instead. Population is now a resource type.
+ */
+export const populationEvaluator = (resourceId?: string) =>
+	resourceEvaluator(resourceId);
+
+/**
+ * @deprecated Use resourceEvaluator instead. Stats are now resource types.
+ */
+export const statEvaluator = (resourceId: string) =>
+	resourceEvaluator(resourceId);

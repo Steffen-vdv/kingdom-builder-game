@@ -176,11 +176,12 @@ describe('resource sources metadata', () => {
 		const developmentId = engineContext.developments.keys()[0];
 		expect(developmentId).toBeDefined();
 
+		// Use resource evaluator for all resource types (stats, population, etc.)
 		const dependencies = collectEvaluatorDependencies({
 			type: 'compare',
 			params: {
 				left: {
-					type: 'population',
+					type: 'resource',
 					params: { resourceId: PopulationRole.Legion },
 				},
 				right: {
@@ -194,7 +195,7 @@ describe('resource sources metadata', () => {
 		});
 		expect(dependencies).toEqual(
 			expect.arrayContaining([
-				{ type: 'population', id: PopulationRole.Legion },
+				{ type: 'resource', id: PopulationRole.Legion },
 				{ type: 'development', id: developmentId },
 				{ type: 'resource', id: Stat.growth },
 			]),

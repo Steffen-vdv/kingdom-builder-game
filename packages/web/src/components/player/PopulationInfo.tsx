@@ -48,8 +48,9 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const populationRoleDefinitions = React.useMemo(
 		() =>
 			resourceCatalog
-				? resourceCatalog.resources.ordered.filter((definition) =>
-						definition.id.includes(':population:role:'),
+				? resourceCatalog.resources.ordered.filter(
+						(definition) =>
+							definition.groupId === 'resource-group:population:roles',
 					)
 				: [],
 		[resourceCatalog],
@@ -73,8 +74,8 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	const statDefinitions = React.useMemo(
 		() =>
 			resourceCatalog
-				? resourceCatalog.resources.ordered.filter((definition) =>
-						definition.id.includes(':stat:'),
+				? resourceCatalog.resources.ordered.filter(
+						(definition) => definition.groupId === 'resource-group:stats',
 					)
 				: [],
 		[resourceCatalog],

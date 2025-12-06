@@ -8,7 +8,6 @@ import {
 	action,
 	compareRequirement,
 	effect,
-	populationEvaluator,
 	resourceEvaluator,
 	actionParams,
 	actionEffectGroup,
@@ -60,7 +59,8 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.icon('💰')
 			.effect(
 				effect()
-					.evaluator(populationEvaluator().id(PopulationEvaluationId.tax))
+					// Use parent resource that auto-sums population roles
+					.evaluator(resourceEvaluator().resourceId(Stat.populationTotal).id(PopulationEvaluationId.tax))
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.gold, 4)).build())
 					.effect(
 						effect(Types.Resource, ResourceMethods.REMOVE)

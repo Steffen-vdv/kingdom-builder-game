@@ -41,7 +41,7 @@ describe('createEngine configuration overrides', () => {
 					[Resource.gold]: 11,
 					[Resource.ap]: 0,
 				},
-				stats: { [Stat.maxPopulation]: 2 },
+				stats: { [Stat.populationMax]: 2 },
 				population: { [populationRoleId]: 1 },
 			},
 			players: {

@@ -50,7 +50,10 @@ function describeEvaluatorOperand(
 	// Land evaluator has its own display
 	if (operand.type === 'land') {
 		const slot = selectSlotDisplay(context.assets);
-		return { icon: slot.icon, label: slot.label || 'Land' };
+		return {
+			...(slot.icon && { icon: slot.icon }),
+			label: slot.label || 'Land',
+		};
 	}
 	// All resource evaluators use ResourceV2 metadata (returns 'Value' if no id)
 	if (operand.type === 'resource') {

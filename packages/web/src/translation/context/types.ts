@@ -129,6 +129,7 @@ export interface TranslationResourceV2Metadata {
 	readonly description?: string | null;
 	readonly displayAsPercent?: boolean;
 	readonly format?: SessionMetadataFormat;
+	readonly groupId?: string | null;
 }
 
 export interface TranslationResourceV2MetadataSelectors {
