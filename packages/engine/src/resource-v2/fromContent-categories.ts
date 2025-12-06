@@ -74,6 +74,7 @@ export function normalizeCategory(
 		description: definition.description ?? null,
 		order: typeof order === 'number' ? order : null,
 		resolvedOrder: typeof order === 'number' ? order : index,
+		isPrimary: definition.isPrimary === true,
 		contents: Object.freeze([...contents]),
 	});
 }

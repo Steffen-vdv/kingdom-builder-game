@@ -23,6 +23,11 @@ import type { SummaryGroup } from '../../translation/content/types';
 interface ResourceGroupDisplayProps {
 	groupId: string;
 	player: SessionPlayerStateSnapshot;
+	/**
+	 * When true, all resources in this group are always visible.
+	 * When false, resources are only shown if touched (value was ever non-zero).
+	 */
+	isPrimaryCategory?: boolean;
 }
 
 interface ResourceEntry {
@@ -52,6 +57,9 @@ function buildBoundResourceMap(
 const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 	groupId,
 	player,
+	// Note: Category-level filtering is handled by ResourceCategoryRow.
+	// This prop is available for future per-resource filtering within groups.
+	isPrimaryCategory: _isPrimaryCategory = false,
 }) => {
 	const { handleHoverCard, clearHoverCard, translationContext } =
 		useGameEngine();
