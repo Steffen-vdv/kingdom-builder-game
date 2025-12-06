@@ -68,6 +68,7 @@ describe('plow workshop translation', () => {
 			engineSnapshot,
 			{
 				actions: synthetic.factory.actions,
+				actionCategories: synthetic.factory.categories,
 				buildings: synthetic.factory.buildings,
 				developments: synthetic.factory.developments,
 				populations: synthetic.factory.populations,

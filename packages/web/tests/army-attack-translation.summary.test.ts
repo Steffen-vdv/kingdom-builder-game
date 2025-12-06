@@ -193,11 +193,12 @@ describe('army attack translation summary', () => {
 
 		const summary = summarizeContent('action', buildingAttack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
+		// V2 format adds space after icon for readability
 		expect(summary).toEqual([
 			`${powerSummary}${summaryTarget}`,
 			{
 				title: `${summaryTarget}💥`,
-				items: [`⚔️${gold.icon}+${rewardAmount}`],
+				items: [`⚔️${gold.icon} +${rewardAmount}`],
 			},
 		]);
 	});
