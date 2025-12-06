@@ -87,6 +87,14 @@ function createTestSetup(): TestSetup {
 				description: 'Minted test currency.',
 			},
 		},
+		// V2 metadata is used by selectAttackResourceDescriptor
+		resourcesV2: {
+			[resourceKey]: {
+				label: 'Auric Coin',
+				icon: '🪙',
+				description: 'Minted test currency.',
+			},
+		},
 		assets: {
 			land: { label: 'Territory', icon: '🗺️' },
 			slot: { label: 'Development Slot', icon: '🧩' },
@@ -291,11 +299,17 @@ describe('attack on-damage formatter registry', () => {
 			],
 		};
 
+		// Create a mutated context with empty V2 metadata to test fallback
 		const mutatedContext = {
 			...translationContext,
 			assets: {
 				...translationContext.assets,
 				resources: {},
+			},
+			resourceMetadataV2: {
+				get: () => undefined,
+				list: () => [],
+				has: () => false,
 			},
 		} as typeof translationContext;
 		const fallbackDescriptor = selectAttackResourceDescriptor(

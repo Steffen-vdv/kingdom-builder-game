@@ -69,8 +69,7 @@ export const actionTraceLandSnapshotSchema = z.object({
 });
 
 export const actionPlayerSnapshotSchema = z.object({
-	resources: z.record(z.string(), z.number()),
-	stats: z.record(z.string(), z.number()),
+	valuesV2: z.record(z.string(), z.number()),
 	buildings: z.array(z.string()),
 	lands: z.array(actionTraceLandSnapshotSchema),
 	passives: z.array(sessionPassiveSummarySchema),

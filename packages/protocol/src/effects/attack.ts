@@ -73,21 +73,15 @@ export interface AttackEvaluationLog {
 	target: AttackEvaluationTargetLog;
 }
 
-export interface AttackResourceDiff {
-	type: 'resource';
+/**
+ * Represents a change in a player's ResourceV2 value during an attack.
+ * The key is the ResourceV2 identifier (e.g., 'resource:core:gold').
+ */
+export interface AttackPlayerDiff {
 	key: string;
 	before: number;
 	after: number;
 }
-
-export interface AttackStatDiff {
-	type: 'stat';
-	key: string;
-	before: number;
-	after: number;
-}
-
-export type AttackPlayerDiff = AttackResourceDiff | AttackStatDiff;
 
 export interface AttackOnDamageLogEntry {
 	owner: AttackLogOwner;

@@ -8,9 +8,16 @@ import {
 	PHASES,
 	GAME_START,
 	RULES,
-	Resource,
 	PopulationRole,
 } from '@kingdom-builder/contents';
+import {
+	Resource,
+	getResourceV2Id,
+} from '@kingdom-builder/contents/resourceKeys';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 
 describe('dev mode start configuration', () => {
 	it('applies content-driven overrides when dev mode is enabled', () => {
@@ -22,6 +29,10 @@ describe('dev mode start configuration', () => {
 			phases: PHASES,
 			start: GAME_START,
 			rules: RULES,
+			resourceCatalogV2: {
+				resources: RESOURCE_V2_REGISTRY,
+				groups: RESOURCE_GROUP_V2_REGISTRY,
+			},
 			devMode: true,
 		});
 		const snapshot = session.getSnapshot();
@@ -29,6 +40,10 @@ describe('dev mode start configuration', () => {
 		if (!player || !opponent) {
 			throw new Error('Expected both players to be present at game start');
 		}
+		const goldId = getResourceV2Id(Resource.gold);
+		const happinessId = getResourceV2Id(Resource.happiness);
+		const apId = getResourceV2Id(Resource.ap);
+		const castleId = getResourceV2Id(Resource.castleHP);
 		expect(snapshot.game.devMode).toBe(true);
 		expect(player.resources[Resource.gold]).toBe(100);
 		expect(player.resources[Resource.happiness]).toBe(10);
@@ -36,5 +51,14 @@ describe('dev mode start configuration', () => {
 		expect(player.population[PopulationRole.Legion]).toBe(1);
 		expect(player.population[PopulationRole.Fortifier]).toBe(1);
 		expect(opponent.resources[Resource.castleHP]).toBe(1);
+		expect(player.valuesV2[goldId]).toBe(100);
+		expect(player.valuesV2[happinessId]).toBe(10);
+		// AP starts at 0; it is granted during the Growth phase by Council members
+		expect(player.valuesV2[apId]).toBe(0);
+		expect(player.resourceBoundsV2[goldId]?.lowerBound).toBe(0);
+		expect(opponent.valuesV2[castleId]).toBe(1);
+		expect(
+			snapshot.game.resourceCatalogV2.resources.byId[goldId],
+		).toBeDefined();
 	});
 });

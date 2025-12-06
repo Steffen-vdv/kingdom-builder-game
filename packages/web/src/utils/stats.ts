@@ -1,6 +1,6 @@
 import type {
 	SessionPlayerStateSnapshot as PlayerStateSnapshot,
-	SessionStatSourceContribution as StatSourceContribution,
+	SessionResourceSourceContribution as StatSourceContribution,
 } from '@kingdom-builder/protocol';
 import type { Summary, SummaryEntry } from '../translation/content/types';
 import type { TranslationContext } from '../translation/context';
@@ -19,7 +19,7 @@ export function getStatBreakdownSummary(
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
 ): Summary {
-	const sources = player.statSources?.[statKey] ?? {};
+	const sources = player.resourceSources?.[statKey] ?? {};
 	const contributions = Object.values(sources);
 	if (!contributions.length) {
 		return [];

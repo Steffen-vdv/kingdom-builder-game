@@ -1,11 +1,11 @@
 import type { AttackPlayerDiff } from '@kingdom-builder/protocol';
-import { formatStatValue } from '../../../../utils/stats';
+import {
+	formatStatValue,
+	statDisplaysAsPercent,
+} from '../../../../utils/stats';
 import type { TranslationContext } from '../../../context';
 import type { AttackStatDescriptor, DiffFormatOptions } from './types';
-import {
-	selectAttackResourceDescriptor,
-	selectAttackStatDescriptor,
-} from './registrySelectors';
+import { selectAttackResourceDescriptor } from './registrySelectors';
 
 export function iconLabel(icon: string | undefined, label: string): string {
 	return icon ? `${icon} ${label}` : label;
@@ -57,78 +57,53 @@ function formatSigned(value: number): string {
 	return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
-function formatStatSigned(key: string, value: number): string {
-	const formatted = formatStatValue(key, Math.abs(value));
+function formatValueSigned(
+	key: string,
+	value: number,
+	assets?: TranslationContext['assets'],
+): string {
+	const formatted = formatStatValue(key, Math.abs(value), assets);
 	return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
-type ResourceDiff = Extract<AttackPlayerDiff, { type: 'resource' }>;
-type StatDiff = Extract<AttackPlayerDiff, { type: 'stat' }>;
-
-type DiffFormatterMap = {
-	[T in AttackPlayerDiff['type']]: (
-		prefix: string,
-		diff: Extract<AttackPlayerDiff, { type: T }>,
-		context: Pick<TranslationContext, 'assets'>,
-		options?: DiffFormatOptions,
-	) => string;
-};
-
-const DIFF_FORMATTERS: DiffFormatterMap = {
-	resource: (prefix, diff, context, options) =>
-		formatResourceDiff(prefix, diff, context, options),
-	stat: (prefix, diff, context) => formatStatDiff(prefix, diff, context),
-};
-
-export function formatResourceDiff(
+/**
+ * Formats a player diff using metadata-driven behavior.
+ * The display format (percent vs number) is determined by metadata properties
+ * like displayAsPercent, not by semantic type discrimination.
+ */
+export function formatDiffCommon(
 	prefix: string,
-	diff: ResourceDiff,
-	context: Pick<TranslationContext, 'assets'>,
+	diff: AttackPlayerDiff,
+	context: Pick<TranslationContext, 'assets' | 'resourceMetadataV2'>,
 	options?: DiffFormatOptions,
 ): string {
-	const descriptor = selectAttackResourceDescriptor(context, String(diff.key));
+	const key = String(diff.key);
+	const descriptor = selectAttackResourceDescriptor(context, key);
 	const displayLabel = iconLabel(descriptor.icon, descriptor.label);
 	const delta = diff.after - diff.before;
-	const before = formatNumber(diff.before);
-	const after = formatNumber(diff.after);
+
+	// Use metadata to determine if value should be displayed as percent
+	const isPercentValue = statDisplaysAsPercent(key, context.assets);
+
+	const before = isPercentValue
+		? formatStatValue(key, diff.before, context.assets)
+		: formatNumber(diff.before);
+	const after = isPercentValue
+		? formatStatValue(key, diff.after, context.assets)
+		: formatNumber(diff.after);
+	const signedDelta = isPercentValue
+		? formatValueSigned(key, delta, context.assets)
+		: formatSigned(delta);
+
 	if (options?.percent !== undefined) {
 		const magnitude = Math.abs(options.percent);
 		return `${prefix}: ${displayLabel} ${
 			delta >= 0 ? '+' : '-'
-		}${formatNumber(magnitude)}% (${before}→${after}) (${formatSigned(delta)})`;
+		}${formatNumber(magnitude)}% (${before}→${after}) (${signedDelta})`;
 	}
 	if (options?.showPercent && diff.before !== 0 && delta !== 0) {
 		const pct = (delta / diff.before) * 100;
-		return `${prefix}: ${displayLabel} ${formatSigned(pct)}% (${before}→${after}) (${formatSigned(delta)})`;
+		return `${prefix}: ${displayLabel} ${formatSigned(pct)}% (${before}→${after}) (${signedDelta})`;
 	}
-	return `${prefix}: ${displayLabel} ${formatSigned(delta)} (${before}→${after})`;
-}
-
-export function formatStatDiff(
-	prefix: string,
-	diff: StatDiff,
-	context: Pick<TranslationContext, 'assets'>,
-): string {
-	const descriptor = selectAttackStatDescriptor(context, String(diff.key));
-	const displayLabel = iconLabel(descriptor.icon, descriptor.label);
-	const delta = diff.after - diff.before;
-	const before = formatStatValue(String(diff.key), diff.before);
-	const after = formatStatValue(String(diff.key), diff.after);
-	return `${prefix}: ${displayLabel} ${formatStatSigned(
-		String(diff.key),
-		delta,
-	)} (${before}→${after})`;
-}
-
-export function formatDiffCommon(
-	prefix: string,
-	diff: AttackPlayerDiff,
-	context: Pick<TranslationContext, 'assets'>,
-	options?: DiffFormatOptions,
-): string {
-	const formatter = DIFF_FORMATTERS[diff.type];
-	if (!formatter) {
-		throw new Error(`Unsupported attack diff type: ${diff.type}`);
-	}
-	return formatter(prefix, diff as never, context, options);
+	return `${prefix}: ${displayLabel} ${signedDelta} (${before}→${after})`;
 }

@@ -22,7 +22,8 @@ export const normalizeActionFocus = (
 };
 
 export interface Action
-	extends SessionActionOption,
+	extends
+		SessionActionOption,
 		PerformableAction,
 		Partial<Pick<ActionDefinition, 'effects' | 'requirements'>> {
 	system?: boolean;

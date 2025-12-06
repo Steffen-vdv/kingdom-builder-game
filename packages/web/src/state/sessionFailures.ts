@@ -77,7 +77,7 @@ const serializeError = (error: Error, seen: WeakSet<object>): unknown => {
 	if (error.stack) {
 		result.stack = error.stack;
 	}
-	const cause = (error as Error & { cause?: unknown }).cause;
+	const cause = error.cause;
 	if (cause !== undefined) {
 		result.cause = serializeUnknown(cause, seen);
 	}
@@ -133,8 +133,8 @@ const isActionExecutionError = (
 	value instanceof Error &&
 	Boolean(
 		(value as ActionExecutionError).requirementFailure ||
-			(value as ActionExecutionError).requirementFailures ||
-			getActionErrorMetadata(value),
+		(value as ActionExecutionError).requirementFailures ||
+		getActionErrorMetadata(value),
 	);
 
 export const formatFailureDetails = (error: unknown): SessionFailureDetails => {

@@ -11,7 +11,8 @@ describe('evaluator:compare requirement', () => {
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
 			advance(engineContext);
 		}
-		engineContext.activePlayer.stats[Stat.maxPopulation] = 2;
+		// Stat values ARE ResourceV2 IDs - access via resourceValues
+		engineContext.activePlayer.resourceValues[Stat.maxPopulation] = 2;
 		const requirement = {
 			params: {
 				left: { type: 'stat', params: { key: Stat.maxPopulation } },

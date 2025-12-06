@@ -46,6 +46,18 @@ function resolveMaxPopulationKey(metadata: PopulationInfoScenario['metadata']) {
 	return keyed?.[0] ?? 'maxPopulation';
 }
 
+// Build V2 ID for population role
+function getPopulationRoleV2Id(legacyKey: string): string {
+	return `resource:population:role:${legacyKey}`;
+}
+
+// Build V2 ID for stat
+function getStatV2Id(legacyKey: string): string {
+	// Convert camelCase to kebab-case for stat IDs
+	const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+	return `resource:stat:${kebab}`;
+}
+
 function createPopulationInfoScenario(
 	options: {
 		omitMetadataFor?: string;
@@ -77,12 +89,21 @@ function createPopulationInfoScenario(
 	if (!(maxPopulationKey in playerStats)) {
 		playerStats[maxPopulationKey] = 5;
 	}
+	// Build valuesV2 from population counts and stats using V2 IDs
+	const valuesV2: Record<string, number> = {};
+	for (const [role, count] of Object.entries(populationCounts)) {
+		valuesV2[getPopulationRoleV2Id(role)] = count;
+	}
+	for (const [key, value] of Object.entries(playerStats)) {
+		valuesV2[getStatV2Id(key)] = value;
+	}
 	const activePlayer = createSnapshotPlayer({
 		id: 'player-1' as SessionPlayerId,
 		name: 'Player One',
 		population: populationCounts,
 		stats: playerStats,
 		statsHistory: { ...(options.statsHistory ?? {}) },
+		valuesV2,
 	});
 	const opponent = createSnapshotPlayer({
 		id: 'player-2' as SessionPlayerId,
@@ -96,6 +117,7 @@ function createPopulationInfoScenario(
 		actionCostResource: scaffold.ruleSnapshot.tieredResourceKey,
 		ruleSnapshot: scaffold.ruleSnapshot,
 		metadata,
+		resourceCatalogV2: scaffold.resourceCatalogV2,
 	});
 	const { mockGame } = createPassiveGame(sessionState, {
 		ruleSnapshot: scaffold.ruleSnapshot,
@@ -143,34 +165,34 @@ describe('<PopulationInfo />', () => {
 	});
 
 	it('renders population roles using registry metadata labels and icons', () => {
-		const {
-			registries,
-			metadata,
-			metadataSelectors,
-			activePlayer,
-			populationIds,
-		} = scenario;
+		const { registries, metadata, activePlayer, populationIds } = scenario;
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
 				<PopulationInfo player={activePlayer} />
 			</RegistryMetadataProvider>,
 		);
 		const [primaryRole] = populationIds;
-		const primaryDescriptor = toDescriptorDisplay(
-			metadataSelectors.populationMetadata.select(primaryRole),
-		);
-		const primaryButton = screen.getByRole('button', {
-			name: `${primaryDescriptor.label}: ${activePlayer.population[primaryRole]}`,
+		// Get the V2 metadata label (used by the component)
+		const v2RoleId = getPopulationRoleV2Id(primaryRole);
+		const v2Metadata = metadata.resourcesV2?.[v2RoleId];
+		const roleLabel = v2Metadata?.label ?? primaryRole;
+		const roleIcon = v2Metadata?.icon;
+		const populationCount = activePlayer.population[primaryRole];
+		// Use getAllByRole since multiple renders may exist in the DOM
+		const primaryButtons = screen.getAllByRole('button', {
+			name: `${roleLabel}: ${populationCount}`,
 		});
+		expect(primaryButtons.length).toBeGreaterThan(0);
+		const primaryButton = primaryButtons[0];
 		expect(primaryButton).toBeInTheDocument();
-		if (primaryDescriptor.icon) {
-			expect(primaryButton.textContent).toContain(primaryDescriptor.icon);
+		if (roleIcon) {
+			expect(primaryButton.textContent).toContain(roleIcon);
 		}
-		const populationButtonGroup = screen
-			.getByRole('button', {
-				name: /overview/i,
-			})
-			.closest('.info-bar');
+		const overviewButtons = screen.getAllByRole('button', {
+			name: /overview/i,
+		});
+		expect(overviewButtons.length).toBeGreaterThan(0);
+		const populationButtonGroup = overviewButtons[0].closest('.info-bar');
 		expect(populationButtonGroup).not.toBeNull();
 		if (populationButtonGroup) {
 			const populationButtons = within(populationButtonGroup).getAllByRole(
@@ -195,9 +217,12 @@ describe('<PopulationInfo />', () => {
 		const descriptor = toDescriptorDisplay(
 			metadataSelectors.populationMetadata.select(fallbackRole),
 		);
-		const button = screen.getByRole('button', {
+		// Use getAllByRole since multiple renders may exist in the DOM
+		const buttons = screen.getAllByRole('button', {
 			name: `${descriptor.label}: ${activePlayer.population[fallbackRole]}`,
 		});
+		expect(buttons.length).toBeGreaterThan(0);
+		const button = buttons[0];
 		expect(button).toBeInTheDocument();
 		const fallbackIcon =
 			descriptor.icon ?? registries.populations.get(fallbackRole)?.icon;
@@ -221,13 +246,12 @@ describe('<PopulationInfo />', () => {
 		const descriptor = toDescriptorDisplay(
 			metadataSelectors.statMetadata.select('armyStrength'),
 		);
-		const escapedLabel = descriptor.label.replace(
-			/[.*+?^${}()|[\]\\]/g,
-			'\\$&',
-		);
-		const statButton = screen.getByRole('button', {
-			name: new RegExp(escapedLabel, 'i'),
+		// Use getAllByRole since multiple renders may exist in the DOM
+		const statButtons = screen.getAllByRole('button', {
+			name: `${descriptor.label}: 2`,
 		});
+		expect(statButtons.length).toBeGreaterThan(0);
+		const statButton = statButtons[0];
 		expect(statButton).toBeInTheDocument();
 		if (descriptor.icon) {
 			expect(statButton.textContent).toContain(descriptor.icon);

@@ -33,10 +33,28 @@ export function applyCostsWithPassives(
 	const defaultedCosts = cloneCostBag(baseCosts);
 	const actionDefinition = getActionDefinitionOrThrow(actionId, engineContext);
 	const primaryCostKey = engineContext.actionCostResource;
-	if (primaryCostKey && defaultedCosts[primaryCostKey] === undefined) {
-		defaultedCosts[primaryCostKey] = actionDefinition.system
-			? 0
-			: engineContext.services.rules.defaultActionAPCost;
+	if (primaryCostKey) {
+		const globalAmount = engineContext.actionCostAmount;
+		if (globalAmount !== null) {
+			if (
+				Object.prototype.hasOwnProperty.call(defaultedCosts, primaryCostKey)
+			) {
+				const override = defaultedCosts[primaryCostKey];
+				if (!actionDefinition.system && override !== undefined) {
+					const label = actionDefinition.id ?? actionId;
+					throw new Error(
+						`Action ${label} may not override global cost resource ${primaryCostKey}.`,
+					);
+				}
+			}
+			defaultedCosts[primaryCostKey] = actionDefinition.system
+				? 0
+				: globalAmount;
+		} else if (defaultedCosts[primaryCostKey] === undefined) {
+			defaultedCosts[primaryCostKey] = actionDefinition.system
+				? 0
+				: engineContext.services.rules.defaultActionAPCost;
+		}
 	}
 	return engineContext.passives.applyCostMods(
 		actionDefinition.id,
@@ -136,11 +154,11 @@ export function verifyCostAffordability(
 	costs: CostBag,
 	playerState: PlayerState,
 ): true | string {
-	for (const resourceKey of Object.keys(costs)) {
-		const requiredAmount = costs[resourceKey] ?? 0;
-		const availableAmount = playerState.resources[resourceKey] ?? 0;
+	for (const resourceId of Object.keys(costs)) {
+		const requiredAmount = costs[resourceId] ?? 0;
+		const availableAmount = playerState.resourceValues[resourceId] ?? 0;
 		if (availableAmount < requiredAmount) {
-			const shortageDetail = `Insufficient ${resourceKey}: need ${requiredAmount}`;
+			const shortageDetail = `Insufficient ${resourceId}: need ${requiredAmount}`;
 			return `${shortageDetail}, have ${availableAmount}`;
 		}
 	}
@@ -152,14 +170,14 @@ export function deductCostsFromPlayer(
 	playerState: PlayerState,
 	engineContext: EngineContext,
 ): void {
-	for (const resourceKey of Object.keys(costs)) {
-		const amount = costs[resourceKey] ?? 0;
-		playerState.resources[resourceKey] =
-			(playerState.resources[resourceKey] || 0) - amount;
+	for (const resourceId of Object.keys(costs)) {
+		const amount = costs[resourceId] ?? 0;
+		const currentAmount = playerState.resourceValues[resourceId] ?? 0;
+		playerState.resourceValues[resourceId] = currentAmount - amount;
 		engineContext.services.handleResourceChange(
 			engineContext,
 			playerState,
-			resourceKey,
+			resourceId,
 		);
 	}
 }

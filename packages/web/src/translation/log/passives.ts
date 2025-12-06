@@ -93,7 +93,7 @@ function extractTokenSlug(value: string | undefined): string | undefined {
 function deriveIcon(
 	passive: SessionPassiveSummary,
 	effects: EffectDef[] | undefined,
-	meta: SessionPassiveSummary['meta'] | undefined,
+	meta: SessionPassiveSummary['meta'],
 	assets: TranslationAssets,
 ): string {
 	if (meta?.source?.icon) {

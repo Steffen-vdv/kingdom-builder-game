@@ -4,6 +4,7 @@ import {
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
+	effectSchema,
 	populationSchema,
 	phaseSchema,
 	startConfigSchema,
@@ -31,6 +32,105 @@ const serializedRegistrySchema = <Shape extends ZodRawShape>(
 	schema: ZodObject<Shape>,
 ) => z.record(z.string(), schema.passthrough());
 
+const resourceV2TierThresholdSchema = z
+	.object({
+		min: z.number().optional(),
+		max: z.number().optional(),
+	})
+	.passthrough();
+
+const resourceV2TierDefinitionSchema = z
+	.object({
+		id: z.string(),
+		label: z.string(),
+		icon: z.string().optional(),
+		description: z.string().optional(),
+		order: z.number().optional(),
+		threshold: resourceV2TierThresholdSchema,
+		enterEffects: z.array(effectSchema).optional(),
+		exitEffects: z.array(effectSchema).optional(),
+	})
+	.passthrough();
+
+const resourceV2TierTrackMetadataSchema = z
+	.object({
+		id: z.string(),
+		label: z.string(),
+		icon: z.string().optional(),
+		description: z.string().optional(),
+		order: z.number().optional(),
+	})
+	.passthrough();
+
+const resourceV2TierTrackSchema = z
+	.object({
+		metadata: resourceV2TierTrackMetadataSchema,
+		tiers: z.array(resourceV2TierDefinitionSchema),
+	})
+	.passthrough();
+
+const resourceV2MetadataSchema = z
+	.object({
+		id: z.string(),
+		label: z.string(),
+		icon: z.string(),
+		description: z.string().optional(),
+		order: z.number().optional(),
+		tags: z.array(z.string()).optional(),
+	})
+	.passthrough();
+
+const resourceV2BoundsSchema = z
+	.object({
+		lowerBound: z.number().optional(),
+		upperBound: z.number().optional(),
+	})
+	.passthrough();
+
+const resourceV2DefinitionSchema = resourceV2MetadataSchema
+	.merge(resourceV2BoundsSchema)
+	.extend({
+		displayAsPercent: z.boolean().optional(),
+		trackValueBreakdown: z.boolean().optional(),
+		trackBoundBreakdown: z.boolean().optional(),
+		groupId: z.string().optional(),
+		groupOrder: z.number().optional(),
+		globalCost: z
+			.object({
+				amount: z.number(),
+			})
+			.optional(),
+		tierTrack: resourceV2TierTrackSchema.optional(),
+	})
+	.passthrough();
+
+const resourceV2GroupParentSchema = resourceV2MetadataSchema
+	.merge(resourceV2BoundsSchema)
+	.extend({
+		displayAsPercent: z.boolean().optional(),
+		trackValueBreakdown: z.boolean().optional(),
+		trackBoundBreakdown: z.boolean().optional(),
+		tierTrack: resourceV2TierTrackSchema.optional(),
+	})
+	.passthrough();
+
+const resourceV2GroupDefinitionSchema = z
+	.object({
+		id: z.string(),
+		order: z.number().optional(),
+		parent: resourceV2GroupParentSchema.optional(),
+	})
+	.passthrough();
+
+const resourceV2RegistrySchema = z.record(
+	z.string(),
+	resourceV2DefinitionSchema,
+);
+const resourceV2GroupRegistrySchema = z.record(
+	z.string(),
+	resourceV2GroupDefinitionSchema,
+);
+
 export const sessionRegistriesSchema = z
 	.object({
 		actions: serializedRegistrySchema(actionSchema),
@@ -39,6 +139,8 @@ export const sessionRegistriesSchema = z
 		populations: serializedRegistrySchema(populationSchema),
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
+		resourcesV2: resourceV2RegistrySchema,
+		resourceGroupsV2: resourceV2GroupRegistrySchema,
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 
@@ -49,6 +151,8 @@ export const runtimeConfigResponseSchema = z
 		rules: ruleSetSchema,
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		primaryIconId: z.string().nullable(),
+		resourcesV2: resourceV2RegistrySchema,
+		resourceGroupsV2: resourceV2GroupRegistrySchema,
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
 

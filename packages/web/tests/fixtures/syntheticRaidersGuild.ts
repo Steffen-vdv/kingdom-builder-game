@@ -45,6 +45,9 @@ export interface RaidersGuildSyntheticContext {
 
 const tierResourceKey = 'synthetic:tier';
 const syntheticGoldKey = 'gold';
+const syntheticGoldResourceId = 'resource:synthetic:gold';
+const syntheticGoldIcon = '🪙';
+const syntheticGoldLabel = 'Synthetic Gold';
 
 const SYNTHETIC_PHASES: SessionSnapshot['phases'] = [
 	{
@@ -133,7 +136,10 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: syntheticGoldKey, amount: 2 },
+				params: {
+					resourceId: syntheticGoldResourceId,
+					change: { type: 'amount', amount: 2 },
+				},
 			},
 		],
 	});
@@ -206,7 +212,10 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 					{
 						type: 'resource',
 						method: 'add',
-						params: { key: syntheticGoldKey, amount: 1 },
+						params: {
+							resourceId: syntheticGoldResourceId,
+							change: { type: 'amount', amount: 1 },
+						},
 					},
 				],
 			},
@@ -235,6 +244,29 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		[transferBuilding.id, populationBuilding.id, developmentBuilding.id],
 		harvestDevelopment.id,
 	);
+
+	// Create ResourceV2 catalog with the synthetic gold resource
+	const goldResourceDefinition = {
+		id: syntheticGoldResourceId,
+		icon: syntheticGoldIcon,
+		label: syntheticGoldLabel,
+	};
+	const resourceCatalogV2 = {
+		resources: {
+			ordered: [goldResourceDefinition],
+			byId: { [syntheticGoldResourceId]: goldResourceDefinition },
+		},
+		groups: { ordered: [], byId: {} },
+	};
+
+	// ResourceMetadataV2 for translation layer
+	const resourceMetadataV2 = {
+		[syntheticGoldResourceId]: {
+			icon: syntheticGoldIcon,
+			label: syntheticGoldLabel,
+		},
+	};
+
 	const session = createSessionSnapshot({
 		players: [active, opponent],
 		activePlayerId: active.id,
@@ -243,6 +275,8 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		actionCostResource: syntheticGoldKey,
 		ruleSnapshot: buildRuleSnapshot(),
 		metadata,
+		resourceCatalogV2,
+		resourceMetadataV2,
 	});
 	const translation = createTranslationContext(
 		session,

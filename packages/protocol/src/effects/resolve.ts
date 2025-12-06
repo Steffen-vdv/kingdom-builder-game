@@ -36,7 +36,7 @@ export function applyParamsToEffects<E extends EffectDef>(
 			? (Object.fromEntries(
 					Object.entries(effect.params).map(([key, value]) => [
 						key,
-						replace(value),
+						replaceDeep(value),
 					]),
 				) as E['params'])
 			: undefined,
@@ -47,7 +47,7 @@ export function applyParamsToEffects<E extends EffectDef>(
 						? Object.fromEntries(
 								Object.entries(effect.evaluator.params).map(([key, value]) => [
 									key,
-									replace(value),
+									replaceDeep(value),
 								]),
 							)
 						: undefined,

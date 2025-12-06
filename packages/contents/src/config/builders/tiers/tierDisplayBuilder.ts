@@ -1,6 +1,6 @@
 import type { TierDisplayMetadata } from '@kingdom-builder/protocol';
 
-export type TierDisplayBuilderConfig = TierDisplayMetadata & { title?: string };
+export type TierDisplayBuilderConfig = TierDisplayMetadata;
 
 class TierDisplayBuilder {
 	private config: TierDisplayBuilderConfig = {};

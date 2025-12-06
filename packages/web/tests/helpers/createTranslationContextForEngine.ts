@@ -1,5 +1,6 @@
 import type {
 	SessionMetadataDescriptor,
+	SessionResourceCatalogV2,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
@@ -75,7 +76,9 @@ function mergeMetadata(
 			case 'developments':
 			case 'stats':
 			case 'triggers':
-			case 'assets': {
+			case 'assets':
+			case 'resourcesV2':
+			case 'resourceGroupsV2': {
 				const typedKey = key as keyof SessionSnapshotMetadata;
 				const current = (merged[typedKey] ?? {}) as Record<string, unknown>;
 				merged[typedKey] = {
@@ -137,6 +140,32 @@ function buildAssetMetadata(): Record<string, SessionMetadataDescriptor> {
 	return { ...base };
 }
 
+function buildResourcesV2Metadata(
+	resourceCatalogV2: SessionResourceCatalogV2 | undefined,
+): Record<string, SessionMetadataDescriptor> {
+	if (!resourceCatalogV2) {
+		return {};
+	}
+	const descriptors: Record<string, SessionMetadataDescriptor> = {};
+	for (const definition of resourceCatalogV2.resources.ordered) {
+		const entry: SessionMetadataDescriptor = {};
+		if (definition.label !== undefined) {
+			entry.label = definition.label;
+		}
+		if (definition.icon !== undefined) {
+			entry.icon = definition.icon;
+		}
+		if (definition.description !== undefined) {
+			entry.description = definition.description;
+		}
+		if (definition.displayAsPercent !== undefined) {
+			entry.displayAsPercent = definition.displayAsPercent;
+		}
+		descriptors[definition.id] = entry;
+	}
+	return descriptors;
+}
+
 function buildStatMetadata(
 	registries: SessionRegistries,
 ): Record<string, SessionMetadataDescriptor> {
@@ -184,6 +213,7 @@ export function createTranslationContextForEngine(
 		assets: buildAssetMetadata(),
 		stats: buildStatMetadata(registries),
 		triggers: snapshot.metadata.triggers ?? {},
+		resourcesV2: buildResourcesV2Metadata(snapshot.game.resourceCatalogV2),
 	});
 	const metadata = mergeMetadata(metadataWithRegistries, options?.metadata);
 	return createTranslationContext(snapshot, registries, metadata, {

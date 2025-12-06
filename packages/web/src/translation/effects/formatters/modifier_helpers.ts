@@ -225,20 +225,30 @@ export function formatDevelopment(
 		description: normalizedTarget,
 	};
 	const resourceEffect = effectDefinition.effects?.find(
-		(
-			nestedEffect,
-		): nestedEffect is EffectDef<{ key: string; amount: number }> =>
+		(nestedEffect): nestedEffect is EffectDef =>
 			nestedEffect.type === 'resource' &&
 			(nestedEffect.method === 'add' || nestedEffect.method === 'remove'),
 	);
 	if (resourceEffect) {
-		const key = resourceEffect.params?.['key'] as string;
-		const rawAmount = Number(resourceEffect.params?.['amount']);
+		// Support both legacy format (key/amount) and V2 format (resourceId/change)
+		const legacyKey = resourceEffect.params?.['key'] as string | undefined;
+		const resourceId = resourceEffect.params?.['resourceId'] as
+			| string
+			| undefined;
+		const key = resourceId ?? legacyKey;
+		const legacyAmount = resourceEffect.params?.['amount'] as
+			| number
+			| undefined;
+		const changeObj = resourceEffect.params?.['change'] as
+			| { amount?: number }
+			| undefined;
+		const rawAmount = Number(changeObj?.amount ?? legacyAmount ?? 0);
 		const amount = resourceEffect.method === 'remove' ? -rawAmount : rawAmount;
-		return formatGainFrom(label, source, amount, translationContext, {
-			key,
-			detailed,
-		});
+		const opts: Parameters<typeof formatGainFrom>[4] = { detailed };
+		if (key !== undefined) {
+			opts.key = key;
+		}
+		return formatGainFrom(label, source, amount, translationContext, opts);
 	}
 	const percentParam = effectDefinition.params?.['percent'];
 	if (percentParam !== undefined) {

@@ -26,9 +26,7 @@ export function resetNextTurnForecastCacheForTests(): void {
 
 function cloneEmptyDelta(): PlayerSnapshotDeltaBucket {
 	return {
-		resources: {},
-		stats: {},
-		population: {},
+		valuesV2: {},
 	};
 }
 

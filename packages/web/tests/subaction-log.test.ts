@@ -9,6 +9,8 @@ import type { SessionResourceDefinition } from '@kingdom-builder/protocol/sessio
 import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
+	SYNTHETIC_RESOURCES_V2,
+	SYNTHETIC_RESOURCE_V2_KEYS,
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_PASSIVE_INFO,
@@ -19,7 +21,14 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
-import type { TranslationContext } from '../src/translation/context';
+import type {
+	TranslationContext,
+	TranslationActionCategoryRegistry,
+} from '../src/translation/context';
+import {
+	cloneResourceCatalogV2,
+	createResourceV2MetadataSelectors,
+} from '../src/translation/context';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
 	appendSubActionChanges,
@@ -58,9 +67,7 @@ function asTimelineLines(
 	return lines;
 }
 
-const RESOURCE_KEYS = Object.keys(
-	SYNTHETIC_RESOURCES,
-) as (keyof typeof SYNTHETIC_RESOURCES)[];
+const RESOURCE_KEYS = Object.values(SYNTHETIC_RESOURCE_V2_KEYS);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -108,6 +115,7 @@ describe('sub-action logging', () => {
 			phases: synthetic.phases,
 			start: synthetic.start,
 			rules: synthetic.rules,
+			resourceCatalogV2: synthetic.resourceCatalogV2,
 		});
 		const baseAssets = createDefaultTranslationAssets();
 		engineContext.assets = {
@@ -115,19 +123,43 @@ describe('sub-action logging', () => {
 			resources: {
 				...baseAssets.resources,
 				...SYNTHETIC_RESOURCES,
+				...SYNTHETIC_RESOURCES_V2,
 			},
 			land: SYNTHETIC_LAND_INFO,
 			slot: SYNTHETIC_SLOT_INFO,
 			passive: SYNTHETIC_PASSIVE_INFO,
 		};
 		engineContext.activePlayer.actions.add(synthetic.plow.id);
-		engineContext.activePlayer.resources.gold = 10;
-		engineContext.activePlayer.resources.ap = 1;
+		engineContext.activePlayer.resourceValues[SYNTHETIC_RESOURCE_V2_KEYS.gold] =
+			10;
+		engineContext.activePlayer.resourceValues[SYNTHETIC_RESOURCE_V2_KEYS.ap] =
+			1;
 		const before = captureActivePlayer(engineContext);
 		const costs = getActionCosts(synthetic.plow.id, engineContext);
 		const traces = performAction(synthetic.plow.id, engineContext);
 		const after = captureActivePlayer(engineContext);
-		const diffContext = createTranslationDiffContext(engineContext);
+		// Create resource metadata selectors from the catalog
+		const catalogClone = cloneResourceCatalogV2(synthetic.resourceCatalogV2);
+		const resourceMetadataV2 = createResourceV2MetadataSelectors(catalogClone);
+		// Create stub action categories
+		const actionCategories: TranslationActionCategoryRegistry = {
+			categories: new Map(),
+			get: () => undefined,
+		};
+		// Create proper activePlayer structure for diff context
+		const diffActivePlayer = {
+			id: engineContext.game.activePlayerId,
+			population: { ...engineContext.activePlayer.population },
+			lands: engineContext.activePlayer.lands.map((land) => ({
+				developments: [...land.developments],
+			})),
+		};
+		const diffContext = createTranslationDiffContext({
+			...engineContext,
+			activePlayer: diffActivePlayer,
+			actionCategories,
+			resourceMetadataV2,
+		});
 		const translationContext = {
 			...engineContext,
 			rules: synthetic.rules,
@@ -144,17 +176,15 @@ describe('sub-action logging', () => {
 			logContent('action', synthetic.plow.id, translationContext),
 		);
 		const costLines: ActionLogLineDescriptor[] = [];
-		for (const key of Object.keys(
-			costs,
-		) as (keyof typeof SYNTHETIC_RESOURCES)[]) {
+		for (const key of Object.keys(costs)) {
 			const amount = costs[key] ?? 0;
 			if (!amount) {
 				continue;
 			}
-			const info = SYNTHETIC_RESOURCES[key];
+			const info = SYNTHETIC_RESOURCES_V2[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
-			const beforeResource = before.resources[key] ?? 0;
+			const beforeResource = before.valuesV2?.[key] ?? 0;
 			const afterResource = beforeResource - amount;
 			costLines.push({
 				text: `${icon}${label} -${amount} (${beforeResource}→${afterResource})`,
@@ -196,7 +226,7 @@ describe('sub-action logging', () => {
 			return;
 		}
 		const resourceDefinitions = Object.fromEntries(
-			Object.entries(SYNTHETIC_RESOURCES).map(([key, info]) => [
+			Object.entries(SYNTHETIC_RESOURCES_V2).map(([key, info]) => [
 				key,
 				{
 					key,

@@ -48,6 +48,7 @@ describe('development summary', () => {
 		let developmentId = '';
 		let triggerId = '';
 		let phaseLabel = '';
+		let effectResourceId = '';
 		const { translationContext, session } = buildSyntheticTranslationContext(
 			({ registries, session }) => {
 				const development = factory.development({
@@ -58,12 +59,16 @@ describe('development summary', () => {
 				registries.developments.add(development.id, development);
 				const triggerEntries = Object.keys(session.metadata.triggers ?? {});
 				triggerId = triggerEntries[0] ?? 'trigger.synthetic';
-				const resourceKeys = Object.keys(registries.resources);
-				const resourceKey = resourceKeys[0] ?? 'gold';
+				// Use V2 resource keys
+				const resourceId =
+					Object.keys(session.metadata.resourcesV2 ?? {})[0] ??
+					'resource:core:gold';
+				effectResourceId = resourceId;
+				// V2 format: resourceId and change.amount
 				const nestedEffect: EffectDef<Record<string, unknown>> = {
 					type: 'resource',
 					method: 'add',
-					params: { key: resourceKey, amount: 3 },
+					params: { resourceId, change: { type: 'amount', amount: 3 } },
 				};
 				const phaseEffect: EffectDef<Record<string, unknown>> = {
 					evaluator: {
@@ -134,9 +139,14 @@ describe('development summary', () => {
 		const fallbackIcons = [matchedStep?.icon, targetPhase?.icon].filter(
 			(icon): icon is string => typeof icon === 'string' && icon.length > 0,
 		);
+		// V2 formatter outputs resource icons from metadata
+		const resourceMetadata =
+			translationContext.resourceMetadataV2.get(effectResourceId);
+		const resourceIcon = resourceMetadata.icon ?? '';
 		const iconCandidates = [
 			...(triggerDisplay.icon ? [triggerDisplay.icon] : []),
 			...fallbackIcons,
+			...(resourceIcon ? [resourceIcon] : []),
 		].filter(
 			(icon): icon is string => typeof icon === 'string' && icon.length > 0,
 		);

@@ -15,7 +15,6 @@ import {
 	PLUNDER_HAPPINESS_AMOUNT,
 	BUILDING_REWARD_GOLD,
 } from './helpers/armyAttackFactories';
-import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import {
 	selectAttackBuildingDescriptor,
 	selectAttackResourceDescriptor,
@@ -56,13 +55,15 @@ describe('army attack translation log', () => {
 			Resource.happiness,
 		);
 
-		engineContext.activePlayer.resources[Resource.ap] = 1;
-		engineContext.activePlayer.stats[Stat.armyStrength] = 2;
-		engineContext.activePlayer.resources[Resource.happiness] = 2;
-		engineContext.activePlayer.resources[Resource.gold] = 7;
-		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
-		engineContext.opponent.resources[Resource.happiness] = 5;
-		engineContext.opponent.resources[Resource.gold] = 25;
+		engineContext.activePlayer.resourceValues[Resource.ap] = 1;
+		engineContext.activePlayer.resourceValues[Stat.armyStrength] = 2;
+		engineContext.activePlayer.resourceValues[Resource.happiness] = 2;
+		engineContext.activePlayer.resourceValues[Resource.gold] = 7;
+		engineContext.opponent.resourceValues[Stat.fortificationStrength] = 1;
+		engineContext.opponent.resourceValues[Resource.happiness] = 5;
+		engineContext.opponent.resourceValues[Resource.gold] = 25;
+		engineContext.activePlayer.actions.add(attack.id);
+		engineContext.activePlayer.actions.add(plunder.id);
 
 		performAction(attack.id, engineContext);
 
@@ -82,7 +83,7 @@ describe('army attack translation log', () => {
 		const attackHeadline = formatActionTitle(attackDefinition, translation);
 
 		expect(log).toHaveLength(9);
-		expect(log[0]).toEqual(attackHeadline);
+		expect(log[0]).toMatchObject({ text: attackHeadline, depth: 0 });
 		expect(log[1]).toMatchObject({
 			text: `Attack opponent with your ${powerLabel}`,
 			depth: 1,
@@ -140,11 +141,12 @@ describe('army attack translation log', () => {
 			building.id,
 		);
 
-		engineContext.activePlayer.resources[Resource.ap] = 1;
-		engineContext.activePlayer.stats[Stat.armyStrength] = 3;
-		engineContext.activePlayer.resources[Resource.gold] = 0;
-		engineContext.opponent.stats[Stat.fortificationStrength] = 1;
+		engineContext.activePlayer.resourceValues[Resource.ap] = 1;
+		engineContext.activePlayer.resourceValues[Stat.armyStrength] = 3;
+		engineContext.activePlayer.resourceValues[Resource.gold] = 0;
+		engineContext.opponent.resourceValues[Stat.fortificationStrength] = 1;
 		engineContext.opponent.buildings.add(building.id);
+		engineContext.activePlayer.actions.add(buildingAttack.id);
 
 		performAction(buildingAttack.id, engineContext);
 		const log = logContent('action', buildingAttack.id, translation);
@@ -165,7 +167,7 @@ describe('army attack translation log', () => {
 		);
 
 		expect(log).toHaveLength(7);
-		expect(log[0]).toEqual(buildingAttackHeadline);
+		expect(log[0]).toMatchObject({ text: buildingAttackHeadline, depth: 0 });
 		expect(log[1]).toMatchObject({
 			text: `Attack opponent with your ${powerLabel}`,
 			depth: 1,
@@ -186,8 +188,9 @@ describe('army attack translation log', () => {
 			text: `On opponent ${buildingDisplay} destruction`,
 			depth: 1,
 		});
+		// V2 format adds space after icon
 		expect(log[6]).toMatchObject({
-			text: `${gold.icon}+${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
+			text: `${gold.icon} +${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
 			depth: 2,
 		});
 	});

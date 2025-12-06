@@ -4,6 +4,7 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { advance, performAction, getActionCosts, snapshotPlayer } from '../src';
+import { resourceAmountParams } from './helpers/resourceV2Params';
 
 function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -11,7 +12,10 @@ function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	}
 }
 
-const resourceKeys = Object.values(CResource);
+// Filter out AP since it's the global action cost and can't be overridden
+const resourceKeys = Object.values(CResource).filter(
+	(key) => key !== CResource.ap,
+);
 const resourceKeyArb = fc.constantFrom(...resourceKeys);
 const resourceMapArb = fc.dictionary(
 	resourceKeyArb,
@@ -22,7 +26,7 @@ function toResourceEffects(map: Record<string, number>) {
 	return Object.entries(map).map(([key, amount]) => ({
 		type: 'resource' as const,
 		method: 'add' as const,
-		params: { key, amount },
+		params: resourceAmountParams({ key, amount }),
 	}));
 }
 
@@ -50,8 +54,9 @@ describe('engine property invariants', () => {
 					const costs = getActionCosts(action.id, engineContext, {
 						id: building.id,
 					});
+					// PlayerState uses resourceValues for all resources
 					for (const [key, amount] of Object.entries(costs)) {
-						engineContext.activePlayer.resources[key] = amount;
+						engineContext.activePlayer.resourceValues[key] = amount;
 					}
 					const before = snapshotPlayer(
 						engineContext.activePlayer,
@@ -62,9 +67,11 @@ describe('engine property invariants', () => {
 					expect(engineContext.activePlayer.buildings.has(building.id)).toBe(
 						true,
 					);
-					for (const key of Object.keys(engineContext.activePlayer.resources)) {
+					for (const key of Object.keys(
+						engineContext.activePlayer.resourceValues,
+					)) {
 						expect(
-							engineContext.activePlayer.resources[key],
+							engineContext.activePlayer.resourceValues[key],
 						).toBeGreaterThanOrEqual(0);
 					}
 					for (const key of new Set([
@@ -72,10 +79,12 @@ describe('engine property invariants', () => {
 						...Object.keys(gains),
 					])) {
 						const expected =
-							(before.resources[key] ?? 0) -
+							(before.valuesV2[key] ?? 0) -
 							(costs[key] ?? 0) +
 							(gains[key] ?? 0);
-						expect(engineContext.activePlayer.resources[key]).toBe(expected);
+						expect(engineContext.activePlayer.resourceValues[key]).toBe(
+							expected,
+						);
 					}
 					expect(before).toEqual(beforeCopy);
 					expect(before.buildings.includes(building.id)).toBe(false);

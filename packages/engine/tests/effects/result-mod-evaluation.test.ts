@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Resource as CResource } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents/resourceKeys';
 import { runEffects } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const EVALUATION_TARGET = 'test:evaluation';
 const [EVALUATION_TYPE, EVALUATION_ID] = EVALUATION_TARGET.split(':');
@@ -28,11 +29,16 @@ describe('result_mod evaluation modifiers', () => {
 				{
 					type: 'resource' as const,
 					method: 'add' as const,
-					params: { key: primaryResource, amount: 1 },
+					params: resourceAmountParams({
+						key: primaryResource,
+						amount: 1,
+					}),
 				},
 			],
 		};
-		const before = engineContext.activePlayer.resources[primaryResource] ?? 0;
+		// PlayerState uses resourceValues for all resources
+		const before =
+			engineContext.activePlayer.resourceValues[primaryResource] ?? 0;
 		runEffects([effect], engineContext);
 
 		const gains = [
@@ -51,7 +57,8 @@ describe('result_mod evaluation modifiers', () => {
 			key: secondaryResource ?? primaryResource,
 			amount: -2,
 		});
-		const after = engineContext.activePlayer.resources[primaryResource] ?? 0;
+		const after =
+			engineContext.activePlayer.resourceValues[primaryResource] ?? 0;
 		expect(after - before).toBe(3);
 
 		runEffects(

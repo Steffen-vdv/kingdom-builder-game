@@ -1,7 +1,7 @@
-import type { ResourceKey, PlayerId } from '../state';
+import type { PlayerId } from '../state';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
-import type { StatSourceFrame } from '../stat_sources';
+import type { ResourceSourceFrame } from '../resource_sources';
 
 export type PhaseSkipStep = {
 	phaseId: string;
@@ -46,16 +46,16 @@ export type PassiveRecord = PassiveSummary & {
 	onBeforeAttacked?: EffectDef[];
 	onAttackResolved?: EffectDef[];
 	owner: PlayerId;
-	frames: StatSourceFrame[];
+	frames: ResourceSourceFrame[];
 	detail?: string;
 	meta?: PassiveMetadata;
 	skip?: PhaseSkipConfig;
 	[trigger: string]: unknown;
 };
 
-export type CostBag = { [resourceKey in ResourceKey]?: number };
-export type CostModifierFlat = Partial<Record<ResourceKey, number>>;
-export type CostModifierPercent = Partial<Record<ResourceKey, number>>;
+export type CostBag = Record<string, number>;
+export type CostModifierFlat = Record<string, number>;
+export type CostModifierPercent = Record<string, number>;
 export type RoundingMode = 'up' | 'down';
 export type RoundingInstruction =
 	| RoundingMode

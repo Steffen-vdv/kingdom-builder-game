@@ -1,6 +1,6 @@
 import type {
-	SessionStatSourceLink as StatSourceLink,
-	SessionStatSourceMeta as StatSourceMeta,
+	SessionResourceSourceLink as StatSourceLink,
+	SessionResourceSourceMeta as StatSourceMeta,
 } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';

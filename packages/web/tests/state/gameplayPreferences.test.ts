@@ -26,30 +26,12 @@ describe('getStoredGameplayPreferences', () => {
 		expect(preferences.autoAdvance).toBe(true);
 	});
 
-	it('migrates legacy preferences and removes old keys', () => {
-		window.localStorage.setItem(
-			'kingdom-builder.preferences.autoAcknowledge',
-			'true',
-		);
-		window.localStorage.setItem(
-			'kingdom-builder.preferences.autoPass',
-			'false',
-		);
+	it('ignores unrelated storage keys', () => {
+		window.localStorage.setItem('some-other-key', 'true');
 
 		const preferences = getStoredGameplayPreferences();
 
-		expect(preferences.autoAdvance).toBe(true);
-		expect(
-			window.localStorage.getItem(AUTO_ADVANCE_PREFERENCE_STORAGE_KEY),
-		).toBe('true');
-		expect(
-			window.localStorage.getItem(
-				'kingdom-builder.preferences.autoAcknowledge',
-			),
-		).toBeNull();
-		expect(
-			window.localStorage.getItem('kingdom-builder.preferences.autoPass'),
-		).toBeNull();
+		expect(preferences.autoAdvance).toBe(false);
 	});
 });
 

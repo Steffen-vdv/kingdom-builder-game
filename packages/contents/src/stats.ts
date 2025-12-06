@@ -1,50 +1,28 @@
-import { stat, type StatInfo, toRecord } from './config/builders';
-
 export const Stat = {
-	maxPopulation: 'maxPopulation',
-	armyStrength: 'armyStrength',
-	fortificationStrength: 'fortificationStrength',
-	absorption: 'absorption',
-	growth: 'growth',
-	warWeariness: 'warWeariness',
+	maxPopulation: 'resource:stat:max-population',
+	armyStrength: 'resource:stat:army-strength',
+	fortificationStrength: 'resource:stat:fortification-strength',
+	absorption: 'resource:stat:absorption',
+	growth: 'resource:stat:growth',
+	warWeariness: 'resource:stat:war-weariness',
 } as const;
-export type StatKey = (typeof Stat)[keyof typeof Stat];
 
-const defs: StatInfo[] = [
-	stat(Stat.maxPopulation)
-		.icon('👥')
-		.label('Max Population')
-		.description('Max Population determines how many subjects your kingdom can sustain. Expand infrastructure or build houses to increase it.')
-		.capacity()
-		.addFormat({ prefix: 'Max ' })
-		.build(),
-	stat(Stat.armyStrength).icon('⚔️').label('Army Strength').description('Army Strength reflects the overall power of your military forces. A higher value makes your attacks more formidable.').build(),
-	stat(Stat.fortificationStrength)
-		.icon('🛡️')
-		.label('Fortification Strength')
-		.description('Fortification Strength measures the resilience of your defenses. It reduces damage taken when enemies assault your castle.')
-		.build(),
-	stat(Stat.absorption)
-		.icon('🌀')
-		.label('Absorption')
-		.description('Absorption reduces incoming damage by a percentage. It represents magical barriers or tactical advantages that soften blows.')
-		.displayAsPercent()
-		.addFormat({ percent: true })
-		.build(),
-	stat(Stat.growth)
-		.icon('📈')
-		.label('Growth')
-		.description(
-			'Growth increases Army and Fortification Strength during the Raise Strength step. Its effect scales with active Legions and Fortifiers—if you lack Legions or Fortifiers, that side will not gain Strength during the Growth phase.',
-		)
-		.displayAsPercent()
-		.addFormat({ percent: true })
-		.build(),
-	stat(Stat.warWeariness)
-		.icon('💤')
-		.label('War Weariness')
-		.description('War Weariness reflects the fatigue from prolonged conflict. High weariness can sap morale and hinder wartime efforts.')
-		.build(),
-];
+export type StatV2Id = (typeof Stat)[keyof typeof Stat];
+export type StatKey = StatV2Id;
 
-export const STATS: Record<StatKey, StatInfo> = toRecord(defs) as Record<StatKey, StatInfo>;
+export function getStatResourceV2Id(stat: StatKey): StatV2Id {
+	return stat;
+}
+
+const LEGACY_STAT_KEY_MAP = {
+	maxPopulation: Stat.maxPopulation,
+	armyStrength: Stat.armyStrength,
+	fortificationStrength: Stat.fortificationStrength,
+	absorption: Stat.absorption,
+	growth: Stat.growth,
+	warWeariness: Stat.warWeariness,
+} as const;
+
+export function legacyStatKeyToResourceV2Id(legacyKey: string): string {
+	return LEGACY_STAT_KEY_MAP[legacyKey as keyof typeof LEGACY_STAT_KEY_MAP] ?? legacyKey;
+}

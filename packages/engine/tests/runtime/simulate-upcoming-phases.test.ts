@@ -1,20 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { PhaseId, Resource, RULES } from '@kingdom-builder/contents';
+import {
+	PhaseId,
+	Resource as CResource,
+	Stat as CStat,
+	PopulationRole as CPopulationRole,
+	RULES,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import { simulateUpcomingPhases } from '../../src';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 function resetPlayerState(context: ReturnType<typeof createTestEngine>) {
 	const player = context.game.players[0]!;
-	for (const key of Object.keys(player.resources)) {
-		player.resources[key] = 0;
+	// Reset ResourceV2 values - keys ARE the ResourceV2 IDs now
+	for (const resourceId of Object.values(CResource)) {
+		player.resourceValues[resourceId] = 0;
 	}
-	for (const key of Object.keys(player.stats)) {
-		player.stats[key] = 0;
-		player.statsHistory[key] = false;
-		player.statSources[key] = {};
+	for (const statId of Object.values(CStat)) {
+		player.resourceValues[statId] = 0;
+		player.resourceSources[statId] = {};
 	}
-	for (const key of Object.keys(player.population)) {
-		player.population[key] = 0;
+	// Reset resourceTouched using stat IDs as keys
+	for (const statId of Object.values(CStat)) {
+		player.resourceTouched[statId] = false;
+	}
+	for (const roleId of Object.values(CPopulationRole)) {
+		player.resourceValues[roleId] = 0;
+	}
+	// Reset phase/step skip flags
+	for (const key of Object.keys(player.skipPhases)) {
+		player.skipPhases[key] = {};
+	}
+	for (const key of Object.keys(player.skipSteps)) {
+		player.skipSteps[key] = {};
 	}
 	player.buildings.clear();
 	player.actions.clear();
@@ -42,16 +60,20 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: Resource.gold, amount: goldGain },
+				params: resourceAmountParams({
+					key: CResource.gold,
+					amount: goldGain,
+				}),
 			},
 		];
-		land.upkeep = { [Resource.gold]: upkeepCost };
-		player.resources[Resource.gold] = 10;
+		land.upkeep = { [CResource.gold]: upkeepCost };
+		// key IS the ResourceV2 ID directly
+		player.resourceValues[CResource.gold] = 10;
 
 		const result = simulateUpcomingPhases(context, player.id);
 
 		expect(result.playerId).toBe(player.id);
-		expect(result.delta.resources[Resource.gold]).toBe(goldGain - upkeepCost);
+		expect(result.delta.valuesV2[CResource.gold]).toBe(goldGain - upkeepCost);
 		expect(
 			result.steps
 				.filter((step) => step.player.id === player.id)
@@ -71,7 +93,10 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: Resource.gold, amount: 3 },
+				params: resourceAmountParams({
+					key: CResource.gold,
+					amount: 3,
+				}),
 			},
 		];
 		const result = simulateUpcomingPhases(context, player.id, {
@@ -89,17 +114,18 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			context.game.players.find((candidate) => candidate.id === player.id),
 		);
 		expect(firstStep.effects[0]).not.toBe(originalEffect);
-		firstStep.player.resources[Resource.gold] = 99;
+		// Snapshot uses valuesV2, not resourceValues
+		firstStep.player.valuesV2[CResource.gold] = 99;
 		firstStep.effects.push({
 			type: 'resource',
 			method: 'add',
-			params: { key: Resource.gold, amount: 1 },
+			params: resourceAmountParams({ key: CResource.gold, amount: 1 }),
 		});
-		expect(context.game.players[0]!.resources[Resource.gold]).toBe(
-			player.resources[Resource.gold],
+		expect(context.game.players[0]!.resourceValues[CResource.gold]).toBe(
+			player.resourceValues[CResource.gold],
 		);
 		expect(land.onGainIncomeStep).toHaveLength(1);
-		expect(firstStep.player.resources[Resource.gold]).toBe(99);
+		expect(firstStep.player.valuesV2[CResource.gold]).toBe(99);
 	});
 
 	it('enforces iteration limits to prevent runaway simulations', () => {

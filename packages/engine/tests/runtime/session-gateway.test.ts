@@ -7,6 +7,12 @@ import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
 } from '@kingdom-builder/testing';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import type {
 	StartConfig,
 	RuleSet,
@@ -14,9 +20,11 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
+import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
 
-const RESOURCE_AP = 'test:resource:ap';
-const RESOURCE_GOLD = 'test:resource:gold';
+// Use actual ResourceV2 IDs - they ARE the resource keys directly
+const RESOURCE_AP = CResource.ap;
+const RESOURCE_GOLD = CResource.gold;
 const PHASE_MAIN = 'test:phase:main';
 const PHASE_GROWTH = 'test:phase:growth';
 const PHASE_UPKEEP = 'test:phase:upkeep';
@@ -84,22 +92,30 @@ const RULES: RuleSet = {
 	},
 };
 
+const BASE_RESOURCE_CATALOG: RuntimeResourceContent = {
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
+};
+
 type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
 
 function createGateway(options?: GatewayOptions) {
 	const content = createContentFactory();
+	// AP cost is now handled globally via resourceCatalog.globalCost,
+	// so we don't specify baseCosts for AP (it's auto-applied)
 	const gainGold = content.action({
-		baseCosts: { [RESOURCE_AP]: 1 },
 		effects: [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: RESOURCE_GOLD, amount: 2 },
+				params: resourceAmountParams({
+					key: RESOURCE_GOLD,
+					amount: 2,
+				}),
 			},
 		],
 	});
 	const failingAction = content.action({
-		baseCosts: { [RESOURCE_AP]: 1 },
 		requirements: [
 			{
 				type: 'vitest',
@@ -116,6 +132,7 @@ function createGateway(options?: GatewayOptions) {
 		phases: PHASES,
 		start: START,
 		rules: RULES,
+		resourceCatalogV2: BASE_RESOURCE_CATALOG,
 	});
 	return {
 		gateway: createLocalSessionGateway(session, options),
@@ -137,6 +154,11 @@ describe('createLocalSessionGateway', () => {
 		expect(created.snapshot.game.devMode).toBe(true);
 		expect(created.snapshot.game.players[0]?.name).toBe('Hero');
 		expect(created.registries.actionCategories).toEqual({});
+		expect(created.registries.resourcesV2).toEqual({});
+		expect(created.registries.resourceGroupsV2).toEqual({});
+		const firstPlayer = created.snapshot.game.players[0];
+		expect(firstPlayer?.resources).toBeDefined();
+		expect(firstPlayer?.valuesV2).toBeDefined();
 		const category = toSessionActionCategoryConfig(
 			createContentFactory().category(),
 		);
@@ -149,6 +171,40 @@ describe('createLocalSessionGateway', () => {
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
 		expect(fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(0);
 		expect(fetched.registries.actionCategories).toEqual({});
+	});
+
+	it('clones registries including ResourceV2 payloads', async () => {
+		const resourceId = RESOURCE_V2_REGISTRY.ordered[0]!.id;
+		const groupId = RESOURCE_GROUP_V2_REGISTRY.ordered[0]!.id;
+		const { gateway } = createGateway({
+			registries: {
+				actions: {},
+				buildings: {},
+				developments: {},
+				populations: {},
+				resources: {},
+				actionCategories: {},
+				resourcesV2: {
+					[resourceId]: RESOURCE_V2_REGISTRY.byId[resourceId]!,
+				},
+				resourceGroupsV2: {
+					[groupId]: RESOURCE_GROUP_V2_REGISTRY.byId[groupId]!,
+				},
+			},
+		});
+		const created = await gateway.createSession();
+		const registries = created.registries;
+		registries.resourcesV2[resourceId]!.label = 'Mutated gold';
+		registries.resourceGroupsV2[groupId]!.label = 'Mutated group';
+		const fetched = await gateway.fetchSnapshot({
+			sessionId: created.sessionId,
+		});
+		expect(fetched.registries.resourcesV2[resourceId]?.label).not.toBe(
+			'Mutated gold',
+		);
+		expect(fetched.registries.resourceGroupsV2[groupId]?.label).not.toBe(
+			'Mutated group',
+		);
 	});
 
 	it('performs actions and clones response payloads', async () => {

@@ -18,12 +18,15 @@ describe('applyDeveloperPreset', () => {
 		const player = ctx.game.players[0]!;
 		const opponent = ctx.game.players[1]!;
 		const initialLandIds = new Set(player.lands.map((land) => land.id));
-		const opponentGoldBefore = opponent.resources[CResource.gold] ?? 0;
+		// PlayerState uses resourceValues for all resources, stats, and population
+		const opponentGoldBefore = opponent.resourceValues[CResource.gold] ?? 0;
 		const opponentHappinessBefore =
-			opponent.resources[CResource.happiness] ?? 0;
-		const opponentCastleBefore = opponent.resources[CResource.castleHP] ?? 0;
+			opponent.resourceValues[CResource.happiness] ?? 0;
+		const opponentCastleBefore =
+			opponent.resourceValues[CResource.castleHP] ?? 0;
+		// PopulationRole values ARE ResourceV2 IDs - access via resourceValues
 		const opponentPopulationBefore =
-			opponent.population[PopulationRole.Council] ?? 0;
+			opponent.resourceValues[PopulationRole.Council] ?? 0;
 		const opponentLandCountBefore = opponent.lands.length;
 		const opponentDevelopmentIdsBefore = opponent.lands.flatMap((land) => {
 			return [...land.developments];
@@ -33,12 +36,13 @@ describe('applyDeveloperPreset', () => {
 		for (const land of player.lands) {
 			land.slotsUsed = land.slotsMax;
 		}
-		const goldTarget = (player.resources[CResource.gold] ?? 0) + 5;
-		const happinessTarget = (player.resources[CResource.happiness] ?? 0) + 3;
-		const castleBefore = player.resources[CResource.castleHP] ?? 0;
+		const goldTarget = (player.resourceValues[CResource.gold] ?? 0) + 5;
+		const happinessTarget =
+			(player.resourceValues[CResource.happiness] ?? 0) + 3;
+		const castleBefore = player.resourceValues[CResource.castleHP] ?? 0;
 		const castleTarget = Math.max(castleBefore - 2, 0);
 		const fortifierTarget =
-			(player.population[PopulationRole.Fortifier] ?? 0) + 2;
+			(player.resourceValues[PopulationRole.Fortifier] ?? 0) + 2;
 		const landCountTarget = initialLandCount + 1;
 		applyDeveloperPreset(ctx, {
 			playerId: player.id,
@@ -55,11 +59,13 @@ describe('applyDeveloperPreset', () => {
 			developments: [farmstead.id, workshop.id],
 			buildings: [hall.id],
 		});
-		expect(player.resources[CResource.gold]).toBe(goldTarget);
-		expect(player.resources[CResource.happiness]).toBe(happinessTarget);
-		expect(player.resources[CResource.castleHP]).toBe(castleTarget);
-		expect(player.population[PopulationRole.Council]).toBe(0);
-		expect(player.population[PopulationRole.Fortifier]).toBe(fortifierTarget);
+		expect(player.resourceValues[CResource.gold]).toBe(goldTarget);
+		expect(player.resourceValues[CResource.happiness]).toBe(happinessTarget);
+		expect(player.resourceValues[CResource.castleHP]).toBe(castleTarget);
+		expect(player.resourceValues[PopulationRole.Council]).toBe(0);
+		expect(player.resourceValues[PopulationRole.Fortifier]).toBe(
+			fortifierTarget,
+		);
 		expect(player.lands.length).toBeGreaterThanOrEqual(landCountTarget);
 		const landIdsAfter = new Set(player.lands.map((land) => land.id));
 		let newLandCount = 0;
@@ -75,12 +81,14 @@ describe('applyDeveloperPreset', () => {
 		expect(ownedDevelopments).toContain(farmstead.id);
 		expect(ownedDevelopments).toContain(workshop.id);
 		expect(player.buildings.has(hall.id)).toBe(true);
-		expect(opponent.resources[CResource.gold]).toBe(opponentGoldBefore);
-		expect(opponent.resources[CResource.happiness]).toBe(
+		expect(opponent.resourceValues[CResource.gold]).toBe(opponentGoldBefore);
+		expect(opponent.resourceValues[CResource.happiness]).toBe(
 			opponentHappinessBefore,
 		);
-		expect(opponent.resources[CResource.castleHP]).toBe(opponentCastleBefore);
-		expect(opponent.population[PopulationRole.Council]).toBe(
+		expect(opponent.resourceValues[CResource.castleHP]).toBe(
+			opponentCastleBefore,
+		);
+		expect(opponent.resourceValues[PopulationRole.Council]).toBe(
 			opponentPopulationBefore,
 		);
 		expect(opponent.lands.length).toBe(opponentLandCountBefore);
@@ -97,7 +105,7 @@ describe('applyDeveloperPreset', () => {
 		const hall = content.building();
 		const ctx = createTestEngine(content);
 		const player = ctx.game.players[0]!;
-		const goldBefore = player.resources[CResource.gold] ?? 0;
+		const goldBefore = player.resourceValues[CResource.gold] ?? 0;
 		const landsBefore = player.lands.map((land) => land.id);
 		applyDeveloperPreset(ctx, {
 			playerId: 'unknown-player' as PlayerId,
@@ -106,7 +114,7 @@ describe('applyDeveloperPreset', () => {
 			developments: [workshop.id],
 			buildings: [hall.id],
 		});
-		expect(player.resources[CResource.gold]).toBe(goldBefore);
+		expect(player.resourceValues[CResource.gold]).toBe(goldBefore);
 		expect(player.lands.map((land) => land.id)).toEqual(landsBefore);
 		const landCountTarget = player.lands.length + 1;
 		for (const land of player.lands) {
@@ -119,7 +127,7 @@ describe('applyDeveloperPreset', () => {
 			developments: [workshop.id],
 			buildings: [hall.id],
 		});
-		const goldAfterFirst = player.resources[CResource.gold] ?? 0;
+		const goldAfterFirst = player.resourceValues[CResource.gold] ?? 0;
 		const landIdsAfterFirst = player.lands.map((land) => land.id);
 		const developmentCountAfterFirst = player.lands.reduce((total, land) => {
 			const count = land.developments.filter((id) => id === workshop.id).length;
@@ -138,7 +146,7 @@ describe('applyDeveloperPreset', () => {
 			const count = land.developments.filter((id) => id === workshop.id).length;
 			return total + count;
 		}, 0);
-		expect(player.resources[CResource.gold]).toBe(goldAfterFirst);
+		expect(player.resourceValues[CResource.gold]).toBe(goldAfterFirst);
 		expect(player.lands.map((land) => land.id)).toEqual(landIdsAfterFirst);
 		expect(player.lands.length).toBe(landTotalAfterFirst);
 		expect(developmentCountAfterSecond).toBe(developmentCountAfterFirst);

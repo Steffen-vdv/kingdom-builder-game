@@ -1,9 +1,9 @@
 import { collectTriggerEffects } from '../triggers';
 import { runEffects } from '../effects';
-import { withStatSourceFrames } from '../stat_sources';
+import { withResourceSourceFrames } from '../resource_sources';
 import type { EngineContext } from '../context';
 import type { EffectDef } from '../effects';
-import type { PlayerState, StatKey } from '../state';
+import type { PlayerState, ResourceKey } from '../state';
 import type { PassiveMetadata } from '../services';
 
 export interface AdvanceSkipSource {
@@ -27,13 +27,13 @@ export interface AdvanceResult {
 	skipped?: AdvanceSkip;
 }
 
-function createPhaseStatFrame(
+function createPhaseResourceFrame(
 	phaseId: string,
 	stepId: string | undefined,
 ): (
 	effect: EffectDef,
 	context: EngineContext,
-	statKey: StatKey,
+	resourceKey: ResourceKey,
 ) => {
 	key: string;
 	kind: 'phase';
@@ -41,14 +41,14 @@ function createPhaseStatFrame(
 	longevity: 'permanent';
 	detail?: string;
 } {
-	return (_effect, _context, statKey) => {
+	return (_effect, _context, resourceKey) => {
 		const baseFrame: {
 			key: string;
 			kind: 'phase';
 			id: string;
 			longevity: 'permanent';
 		} = {
-			key: `phase:${phaseId}:${stepId ?? 'step'}:${statKey}`,
+			key: `phase:${phaseId}:${stepId ?? 'step'}:${resourceKey}`,
 			kind: 'phase',
 			id: phaseId,
 			longevity: 'permanent',
@@ -61,10 +61,10 @@ function runTriggerBundles(
 	triggerIds: string[],
 	engineContext: EngineContext,
 	playerState: PlayerState,
-	statFrame: ReturnType<typeof createPhaseStatFrame>,
+	resourceFrame: ReturnType<typeof createPhaseResourceFrame>,
 	collectedEffects: EffectDef[],
 ): void {
-	withStatSourceFrames(engineContext, statFrame, () => {
+	withResourceSourceFrames(engineContext, resourceFrame, () => {
 		for (const triggerId of triggerIds) {
 			const bundles = collectTriggerEffects(
 				triggerId,
@@ -72,7 +72,7 @@ function runTriggerBundles(
 				playerState,
 			);
 			for (const bundle of bundles) {
-				withStatSourceFrames(engineContext, bundle.frames, () => {
+				withResourceSourceFrames(engineContext, bundle.frames, () => {
 					runEffects(bundle.effects, engineContext);
 				});
 				collectedEffects.push(...bundle.effects);
@@ -201,7 +201,7 @@ export function advance(engineContext: EngineContext): AdvanceResult {
 	}
 
 	if (!skipped) {
-		const phaseFrame = createPhaseStatFrame(
+		const phaseFrame = createPhaseResourceFrame(
 			currentPhaseDefinition.id,
 			currentStepDefinition?.id,
 		);
@@ -217,13 +217,13 @@ export function advance(engineContext: EngineContext): AdvanceResult {
 		}
 		const stepEffects = currentStepDefinition?.effects;
 		if (stepEffects) {
-			withStatSourceFrames(engineContext, phaseFrame, () => {
+			withResourceSourceFrames(engineContext, phaseFrame, () => {
 				runEffects(stepEffects, engineContext);
 			});
 			appliedEffects.push(...stepEffects);
 		}
 		if (currentStepDefinition) {
-			withStatSourceFrames(engineContext, phaseFrame, () => {
+			withResourceSourceFrames(engineContext, phaseFrame, () => {
 				engineContext.passives.runResultMods(
 					currentStepDefinition.id,
 					engineContext,

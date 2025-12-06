@@ -25,13 +25,14 @@ describe('hold festival action translation', () => {
 		}${details.upkeepLabel}`;
 		const fortSummarySubject = details.fortIcon || details.fortInfo.label;
 
+		// V2 format adds space after icon for readability
 		expect(summary).toEqual([
-			`${details.happinessIcon}${sign(details.happinessAmt)}${details.happinessAmt}`,
+			`${details.happinessIcon} ${sign(details.happinessAmt)}${details.happinessAmt}`,
 			`${fortSummarySubject} ${sign(details.fortAmt)}${details.fortAmt}`,
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
-					`${modifierIcon}${details.armyAttack.icon}: ${details.happinessIcon}${sign(details.penaltyAmt)}${details.penaltyAmt}`,
+					`${modifierIcon}${details.armyAttack.icon}: ${details.happinessIcon} ${sign(details.penaltyAmt)}${details.penaltyAmt}`,
 				],
 			},
 		]);
@@ -51,13 +52,14 @@ describe('hold festival action translation', () => {
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
 
+		// V2 format adds space after icon for readability
 		expect(description).toEqual([
-			`${details.happinessInfo.icon}${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
+			`${details.happinessInfo.icon} ${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
 			`${details.fortInfo.icon || details.fortInfo.label} ${sign(details.fortAmt)}${details.fortAmt} ${details.fortInfo.label}`,
 			{
 				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
-					`${modifierIcon} Modifier on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+					`${modifierIcon} Modifier on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 		]);
@@ -82,8 +84,9 @@ describe('hold festival action translation', () => {
 			details.armyAttack.icon ?? '',
 			details.armyAttack.name,
 		);
+		// V2 format adds space after icon for readability
 		const happinessLabel =
-			`${details.happinessInfo.icon}${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`.replace(
+			`${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`.replace(
 				/\s{2,}/gu,
 				' ',
 			);

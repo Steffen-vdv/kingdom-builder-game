@@ -1,6 +1,10 @@
 import { SessionManager } from '../../src/session/SessionManager.js';
 import type { SessionManagerOptions } from '../../src/session/SessionManager.js';
-import { createContentFactory } from '@kingdom-builder/testing';
+import {
+	createContentFactory,
+	createResourceV2Registries,
+	resourceV2Definition,
+} from '@kingdom-builder/testing';
 import type { EngineSession } from '@kingdom-builder/engine';
 import {
 	happinessTier,
@@ -41,15 +45,36 @@ export function createSyntheticSessionManager(
 	options: SyntheticSessionManagerOptions = {},
 ): SyntheticSessionManagerResult {
 	const factory = createContentFactory();
-	const costKey = 'synthetic:cost';
-	const gainKey = 'synthetic:gain';
+	const costResourceId = 'resource:synthetic:cost';
+	const gainResourceId = 'resource:synthetic:gain';
+	// Legacy keys are deprecated but kept for backwards compatibility
+	const costKey = costResourceId;
+	const gainKey = gainResourceId;
+	// Create ResourceV2 definitions for the synthetic resources
+	const { resources, groups } = createResourceV2Registries({
+		resources: [
+			resourceV2Definition({
+				id: costResourceId,
+				metadata: { label: 'Cost', icon: '💰' },
+				bounds: { lowerBound: 0 },
+			}),
+			resourceV2Definition({
+				id: gainResourceId,
+				metadata: { label: 'Gain', icon: '⭐' },
+				bounds: { lowerBound: 0 },
+			}),
+		],
+	});
 	const action = factory.action({
-		baseCosts: { [costKey]: 1 },
+		baseCosts: { [costResourceId]: 1 },
 		effects: [
 			{
 				type: 'resource',
 				method: 'add',
-				params: { key: gainKey, amount: 1 },
+				params: {
+					resourceId: gainResourceId,
+					change: { type: 'amount', amount: 1 },
+				},
 			},
 		],
 	});
@@ -65,8 +90,8 @@ export function createSyntheticSessionManager(
 							type: 'resource',
 							method: 'add',
 							params: {
-								key: costKey,
-								amount: 1,
+								resourceId: costResourceId,
+								change: { type: 'amount', amount: 1 },
 							},
 						},
 					],
@@ -76,17 +101,22 @@ export function createSyntheticSessionManager(
 	];
 	const start: StartConfig = {
 		player: {
-			resources: { [costKey]: 1, [gainKey]: 0 },
+			resources: {},
 			stats: {},
 			population: {},
 			lands: [],
+			valuesV2: { [costResourceId]: 1, [gainResourceId]: 0 },
+			resourceLowerBoundsV2: {
+				[costResourceId]: 0,
+				[gainResourceId]: 0,
+			},
 		},
 	};
 	const rules: RuleSet = {
 		defaultActionAPCost: 1,
 		absorptionCapPct: 1,
 		absorptionRounding: 'down',
-		tieredResourceKey: gainKey,
+		tieredResourceKey: gainResourceId,
 		tierDefinitions: [
 			happinessTier('synthetic:happiness:baseline')
 				.range(0)
@@ -110,7 +140,7 @@ export function createSyntheticSessionManager(
 		winConditions: [],
 	};
 	const { engineOptions: engineOverrides = {}, ...rest } = options;
-	const defaultPrimaryIconId = gainKey;
+	const defaultPrimaryIconId = gainResourceId;
 	const engineOptions: NonNullable<SessionManagerOptions['engineOptions']> = {
 		actions: engineOverrides.actions ?? factory.actions,
 		actionCategories: engineOverrides.actionCategories ?? factory.categories,
@@ -120,9 +150,9 @@ export function createSyntheticSessionManager(
 		phases: engineOverrides.phases ?? phases,
 		start: engineOverrides.start ?? start,
 		rules: engineOverrides.rules ?? rules,
-		resourceRegistry: engineOverrides.resourceRegistry ?? {
-			[costKey]: { key: costKey },
-			[gainKey]: { key: gainKey },
+		resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? {
+			resources,
+			groups,
 		},
 		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
 	};

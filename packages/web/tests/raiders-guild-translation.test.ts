@@ -115,8 +115,12 @@ describe('raiders guild translation', () => {
 		const development = engineContext.developments.get(ids.harvestDevelopment);
 		const modifier = getModifier(engineContext, ids.developmentBuilding);
 		const resourceEffect = getResourceEffect(modifier);
-		const key = resourceEffect.params?.['key'] as string;
-		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
+		// ResourceV2 uses resourceId and change.amount
+		const key = resourceEffect.params?.['resourceId'] as string;
+		const change = resourceEffect.params?.['change'] as
+			| { amount: number }
+			| undefined;
+		const amount = Number(change?.amount ?? 0);
 		const resourceIcon =
 			selectAttackResourceDescriptor(translation, key).icon || key;
 		const expected = `${modifierIcon}${development.icon}: ${resourceIcon}${signed(
@@ -177,8 +181,12 @@ describe('raiders guild translation', () => {
 		const development = engineContext.developments.get(ids.harvestDevelopment);
 		const modifier = getModifier(engineContext, ids.developmentBuilding);
 		const resourceEffect = getResourceEffect(modifier);
-		const key = resourceEffect.params?.['key'] as string;
-		const amount = Number(resourceEffect.params?.['amount'] ?? 0);
+		// ResourceV2 uses resourceId and change.amount
+		const key = resourceEffect.params?.['resourceId'] as string;
+		const change = resourceEffect.params?.['change'] as
+			| { amount: number }
+			| undefined;
+		const amount = Number(change?.amount ?? 0);
 		const icon = selectAttackResourceDescriptor(translation, key).icon || key;
 		const clause = `${modifierText} on ${formatTargetLabel(
 			development.icon ?? '',

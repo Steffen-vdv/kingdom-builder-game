@@ -44,7 +44,7 @@ type SessionBuildingOption = {
 	icon?: string | undefined;
 	focus?: unknown;
 	costs: BuildingDefinition['costs'];
-	upkeep?: BuildingDefinition['upkeep'] | undefined;
+	upkeep?: BuildingDefinition['upkeep'];
 };
 type SessionDevelopmentOption = {
 	id: string;
@@ -53,7 +53,7 @@ type SessionDevelopmentOption = {
 	system?: boolean | undefined;
 	order?: number | undefined;
 	focus?: unknown;
-	upkeep?: DevelopmentDefinition['upkeep'] | undefined;
+	upkeep?: DevelopmentDefinition['upkeep'];
 };
 type SessionOptionSelection = {
 	actions: Map<string, SessionActionOption>;

@@ -8,6 +8,10 @@ import {
 	GAME_START,
 	RULES,
 } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -26,6 +30,10 @@ const BASE: {
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
 	start: StartConfig;
+	resourceCatalogV2: {
+		resources: typeof RESOURCE_V2_REGISTRY;
+		groups: typeof RESOURCE_GROUP_V2_REGISTRY;
+	};
 } = {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
@@ -33,6 +41,10 @@ const BASE: {
 	populations: POPULATIONS,
 	phases: PHASES,
 	start: GAME_START,
+	resourceCatalogV2: {
+		resources: RESOURCE_V2_REGISTRY,
+		groups: RESOURCE_GROUP_V2_REGISTRY,
+	},
 };
 
 type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };

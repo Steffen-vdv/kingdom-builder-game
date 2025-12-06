@@ -5,6 +5,10 @@ import type {
 	TranslationPassives,
 	TranslationPlayer,
 	TranslationRegistry,
+	TranslationResourceCatalogV2,
+	TranslationResourceV2Metadata,
+	TranslationResourceV2MetadataSelectors,
+	TranslationSignedResourceGainSelectors,
 } from '../../src/translation/context';
 import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
 
@@ -44,6 +48,36 @@ const EMPTY_PASSIVES: TranslationPassives = {
 		return EMPTY_MODIFIERS;
 	},
 };
+
+const EMPTY_RESOURCE_CATALOG: TranslationResourceCatalogV2 = Object.freeze({
+	resources: { byId: {}, ordered: [] },
+	groups: { byId: {}, ordered: [] },
+});
+
+const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceV2Metadata[] =
+	Object.freeze([]);
+
+const createEmptyResourceMetadata = (
+	id: string,
+): TranslationResourceV2Metadata => Object.freeze({ id, label: id });
+
+const EMPTY_RESOURCE_METADATA: TranslationResourceV2MetadataSelectors =
+	Object.freeze({
+		list: () => EMPTY_RESOURCE_METADATA_LIST,
+		get: (id: string) => createEmptyResourceMetadata(id),
+		has: () => false,
+	});
+
+const EMPTY_GAIN_ARRAY = Object.freeze([] as { key: string; amount: number }[]);
+
+const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors =
+	Object.freeze({
+		list: () => EMPTY_GAIN_ARRAY,
+		positives: () => EMPTY_GAIN_ARRAY,
+		negatives: () => EMPTY_GAIN_ARRAY,
+		forResource: (_id: string) => EMPTY_GAIN_ARRAY,
+		sumForResource: () => 0,
+	});
 
 const EMPTY_ACTION_CATEGORIES: TranslationActionCategoryRegistry = {
 	get(id: string) {
@@ -131,5 +165,9 @@ export function createTranslationContextStub(
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
 		assets: EMPTY_ASSETS,
+		resourcesV2: EMPTY_RESOURCE_CATALOG,
+		resourceMetadataV2: EMPTY_RESOURCE_METADATA,
+		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
+		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,
 	};
 }

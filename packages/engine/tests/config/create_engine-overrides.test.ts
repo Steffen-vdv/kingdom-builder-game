@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine } from '../../src/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { Resource as CResource } from '@kingdom-builder/contents';
+import {
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	GameConfig,
 	RuleSet,
@@ -8,8 +13,14 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 
-const RESOURCE_AP = 'test:resource:ap';
-const RESOURCE_GOLD = 'test:resource:gold';
+const resourceCatalogV2 = {
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
+};
+
+// Use actual ResourceV2 IDs - they ARE the resource keys directly
+const RESOURCE_AP = CResource.ap;
+const RESOURCE_GOLD = CResource.gold;
 
 const PHASES: PhaseDef[] = [
 	{
@@ -77,16 +88,18 @@ describe('createEngine config overrides', () => {
 			phases: PHASES,
 			start: START,
 			rules: RULES,
+			resourceCatalogV2,
 			config,
 		});
 		expect(engine.actions).not.toBe(baseContent.actions);
 		expect(() => engine.actions.get(overrideAction.id)).not.toThrow();
 		expect(() => engine.actions.get(baseAction.id)).toThrowError(/Unknown id/);
 		const [playerA, playerB] = engine.game.players;
-		expect(playerA?.resources[RESOURCE_AP]).toBe(4);
-		expect(playerA?.resources[RESOURCE_GOLD]).toBe(7);
-		expect(playerB?.resources[RESOURCE_AP]).toBe(4);
-		expect(playerB?.resources[RESOURCE_GOLD]).toBe(7);
+		// PlayerState uses resourceValues for all resources
+		expect(playerA?.resourceValues[RESOURCE_AP]).toBe(4);
+		expect(playerA?.resourceValues[RESOURCE_GOLD]).toBe(7);
+		expect(playerB?.resourceValues[RESOURCE_AP]).toBe(4);
+		expect(playerB?.resourceValues[RESOURCE_GOLD]).toBe(7);
 	});
 
 	it('retains original registries when config omits optional definitions', () => {
@@ -102,11 +115,12 @@ describe('createEngine config overrides', () => {
 			phases: PHASES,
 			start: START,
 			rules: RULES,
+			resourceCatalogV2,
 			config,
 		});
 		expect(engine.actions).toBe(baseContent.actions);
 		const [playerA] = engine.game.players;
-		expect(playerA?.resources[RESOURCE_AP]).toBe(2);
-		expect(playerA?.resources[RESOURCE_GOLD]).toBe(1);
+		expect(playerA?.resourceValues[RESOURCE_AP]).toBe(2);
+		expect(playerA?.resourceValues[RESOURCE_GOLD]).toBe(1);
 	});
 });

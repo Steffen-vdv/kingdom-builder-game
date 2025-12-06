@@ -1,5 +1,5 @@
 import type { EngineContext } from '../context';
-import type { PlayerId, PlayerState, ResourceKey } from '../state';
+import type { PlayerId, PlayerState } from '../state';
 import type {
 	WinConditionDefinition,
 	WinConditionResult,
@@ -47,7 +47,7 @@ export class WinConditionService {
 	evaluateResourceChange(
 		context: EngineContext,
 		subject: PlayerState,
-		resourceKey: ResourceKey,
+		resourceIdentifier: string,
 	): void {
 		if (context.game.conclusion) {
 			return;
@@ -59,7 +59,13 @@ export class WinConditionService {
 			if (definition.trigger.type !== 'resource') {
 				continue;
 			}
-			if (definition.trigger.key !== resourceKey) {
+			if (
+				!this.triggerMatchesResource(
+					definition.trigger,
+					subject,
+					resourceIdentifier,
+				)
+			) {
 				continue;
 			}
 			if (!this.matchesTrigger(definition.trigger, context, subject)) {
@@ -86,11 +92,52 @@ export class WinConditionService {
 			if (!opponent) {
 				return false;
 			}
-			const value = opponent.resources[trigger.key] ?? 0;
+			const value = this.getTriggerResourceValue(trigger, opponent);
 			return compareThreshold(trigger.comparison, value, trigger.value);
 		}
-		const value = subject.resources[trigger.key] ?? 0;
+		const value = this.getTriggerResourceValue(trigger, subject);
 		return compareThreshold(trigger.comparison, value, trigger.value);
+	}
+
+	private triggerMatchesResource(
+		trigger: WinConditionTrigger,
+		subject: PlayerState,
+		identifier: string,
+	): boolean {
+		if (trigger.type !== 'resource') {
+			return false;
+		}
+		const resolvedId = this.resolveTriggerResourceId(trigger, subject);
+		if (identifier === resolvedId) {
+			return true;
+		}
+		return identifier === trigger.key;
+	}
+
+	private resolveTriggerResourceId(
+		trigger: WinConditionTrigger,
+		_player: PlayerState,
+	): string {
+		const resourceTrigger = trigger as WinConditionTrigger & {
+			resourceId?: string;
+		};
+		if (resourceTrigger.resourceId && resourceTrigger.resourceId.length > 0) {
+			return resourceTrigger.resourceId;
+		}
+		// key IS the ResourceV2 ID directly (no mapper needed)
+		return resourceTrigger.key;
+	}
+
+	private getTriggerResourceValue(
+		trigger: WinConditionTrigger,
+		player: PlayerState,
+	): number {
+		const resourceId = this.resolveTriggerResourceId(trigger, player);
+		const value = player.resourceValues[resourceId];
+		if (typeof value === 'number') {
+			return value;
+		}
+		return 0;
 	}
 
 	private applyResult(

@@ -49,15 +49,13 @@ describe('SessionTransport runAiTurn', () => {
 		const fakeTrace: ActionTrace = {
 			id: 'trace',
 			before: {
-				resources: {},
-				stats: {},
+				valuesV2: {},
 				buildings: [],
 				lands: [],
 				passives: [],
 			},
 			after: {
-				resources: {},
-				stats: {},
+				valuesV2: {},
 				buildings: [],
 				lands: [],
 				passives: [],

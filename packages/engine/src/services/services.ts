@@ -1,7 +1,10 @@
-import type { ResourceKey, PlayerId, PlayerState } from '../state';
+import type { PlayerId, PlayerState } from '../state';
 import type { EngineContext } from '../context';
 import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
+import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import { runEffects } from '../effects';
+import { withResourceSourceFrames } from '../resource_sources';
+import { resolveResourceDefinition } from '../resource-v2/state-helpers';
 import { TieredResourceService } from './tiered_resource_service';
 import { PopCapService } from './pop_cap_service';
 import { WinConditionService } from './win_condition_service';
@@ -9,13 +12,14 @@ import type { HappinessTierDefinition } from './tiered_resource_types';
 import type { RuleSet } from './services_types';
 
 type Context = EngineContext;
-type TierResource = ResourceKey;
+type ResourceIdentifier = string;
 
 export class Services {
 	tieredResource: TieredResourceService;
 	popcap: PopCapService;
 	winCondition: WinConditionService;
 	private activeTiers: Map<PlayerId, HappinessTierDefinition> = new Map();
+	private tierResourceValues: Map<PlayerId, number> = new Map();
 
 	constructor(
 		public rules: RuleSet,
@@ -29,24 +33,142 @@ export class Services {
 	handleResourceChange(
 		context: Context,
 		player: PlayerState,
-		key: TierResource,
+		key: ResourceIdentifier,
+		delta?: number,
 	) {
 		this.handleTieredResourceChange(context, player, key);
 		this.winCondition.evaluateResourceChange(context, player, key);
+		// Handle resource-defined triggers when value changes
+		if (delta !== undefined && delta !== 0) {
+			this.handleResourceTriggers(context, player, key, delta);
+		}
+	}
+
+	/**
+	 * Run onValueIncrease/onValueDecrease triggers defined on the resource.
+	 * Triggers are run once per unit of change.
+	 */
+	private handleResourceTriggers(
+		context: Context,
+		player: PlayerState,
+		resourceId: ResourceIdentifier,
+		delta: number,
+	) {
+		// Look up the resource definition from the V2 catalog
+		const catalog = context.resourceCatalogV2;
+		const lookup = resolveResourceDefinition(catalog, resourceId);
+		if (!lookup || lookup.kind !== 'resource') {
+			return;
+		}
+		const definition = lookup.definition;
+
+		const currentValue = player.resourceValues[resourceId] ?? 0;
+		const iterations = Math.abs(delta);
+
+		if (delta > 0 && definition.onValueIncrease.length > 0) {
+			// Run onValueIncrease triggers for each unit added
+			for (let i = 0; i < iterations; i++) {
+				const index = currentValue - iterations + i + 1;
+				const effects = applyParamsToEffects([...definition.onValueIncrease], {
+					delta: 1,
+					index,
+					player: player.id,
+					resourceId,
+				});
+				const frames = [
+					() => ({
+						kind: 'resource' as const,
+						id: resourceId,
+						longevity: 'ongoing' as const,
+						dependsOn: [
+							{
+								type: 'resource',
+								id: resourceId,
+								detail: 'increased',
+							},
+						],
+						removal: {
+							type: 'resource',
+							id: resourceId,
+							detail: 'decreased',
+						},
+					}),
+				];
+				withResourceSourceFrames(context, frames, () =>
+					runEffects(effects, context),
+				);
+			}
+		} else if (delta < 0 && definition.onValueDecrease.length > 0) {
+			// Run onValueDecrease triggers for each unit removed
+			// Note: triggers run after the value is already decremented,
+			// so we compute indices based on what they would have been
+			for (let i = 0; i < iterations; i++) {
+				const index = currentValue + iterations - i;
+				const effects = applyParamsToEffects([...definition.onValueDecrease], {
+					delta: -1,
+					index,
+					player: player.id,
+					resourceId,
+				});
+				const frames = [
+					() => ({
+						kind: 'resource' as const,
+						id: resourceId,
+						longevity: 'ongoing' as const,
+						dependsOn: [
+							{
+								type: 'resource',
+								id: resourceId,
+								detail: 'increased',
+							},
+						],
+						removal: {
+							type: 'resource',
+							id: resourceId,
+							detail: 'decreased',
+						},
+					}),
+				];
+				withResourceSourceFrames(context, frames, () =>
+					runEffects(effects, context),
+				);
+			}
+		}
 	}
 
 	handleTieredResourceChange(
 		context: Context,
 		player: PlayerState,
-		tierKey: TierResource,
+		resourceIdentifier: ResourceIdentifier,
 	) {
-		if (tierKey !== this.tieredResource.resourceKey) {
+		if (!this.tieredResource.matches(resourceIdentifier)) {
 			return;
 		}
-		const value = player.resources[tierKey] ?? 0;
-		const nextTier = this.tieredResource.definition(value);
+		const previousValue = this.tierResourceValues.get(player.id) ?? null;
+		const value = this.tieredResource.valueFor(player);
+		const nextTier = this.tieredResource.tierFor(player);
 		const currentTier = this.activeTiers.get(player.id);
-		if (currentTier?.id === nextTier?.id) {
+		const tierChanged = currentTier?.id !== nextTier?.id;
+		const valueChanged = previousValue === null || previousValue !== value;
+		if (!tierChanged && !valueChanged) {
+			return;
+		}
+		if (valueChanged && previousValue !== null) {
+			const delta = value - previousValue;
+			if (delta !== 0) {
+				const alreadyLogged = context.recentResourceGains.some((entry) =>
+					this.tieredResource.matches(entry.key),
+				);
+				if (!alreadyLogged) {
+					context.recentResourceGains.push({
+						key: this.tieredResource.getLogIdentifier(),
+						amount: delta,
+					});
+				}
+			}
+		}
+		if (!tierChanged) {
+			this.tierResourceValues.set(player.id, value);
 			return;
 		}
 		const originalIndex = context.game.currentPlayerIndex;
@@ -97,10 +219,11 @@ export class Services {
 				context.game.currentPlayerIndex = originalIndex;
 			}
 		}
+		this.tierResourceValues.set(player.id, value);
 	}
 
 	initializeTierPassives(context: EngineContext) {
-		const resourceKey = this.tieredResource.resourceKey;
+		const resourceKey = this.tieredResource.resourceId;
 		const previousIndex = context.game.currentPlayerIndex;
 		context.game.players.forEach((_player, index) => {
 			context.game.currentPlayerIndex = index;
@@ -113,6 +236,7 @@ export class Services {
 	clone(developments: Registry<DevelopmentConfig>): Services {
 		const cloned = new Services(this.rules, developments);
 		cloned.activeTiers = new Map(this.activeTiers);
+		cloned.tierResourceValues = new Map(this.tierResourceValues);
 		cloned.winCondition = this.winCondition.clone();
 		return cloned;
 	}

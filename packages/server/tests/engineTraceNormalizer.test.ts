@@ -9,8 +9,7 @@ import type {
 describe('engineTraceNormalizer', () => {
 	it('deeply clones player snapshots when normalizing traces', () => {
 		const before: EnginePlayerSnapshot = {
-			resources: { gold: 5 },
-			stats: { strength: 2 },
+			valuesV2: { 'resource:core:gold': 5, 'resource:stat:strength': 2 },
 			buildings: ['tower'],
 			lands: [
 				{
@@ -33,8 +32,7 @@ describe('engineTraceNormalizer', () => {
 			],
 		};
 		const after: EnginePlayerSnapshot = {
-			resources: { gold: 7 },
-			stats: { strength: 3 },
+			valuesV2: { 'resource:core:gold': 7, 'resource:stat:strength': 3 },
 			buildings: ['tower', 'barracks'],
 			lands: [
 				{
@@ -56,7 +54,8 @@ describe('engineTraceNormalizer', () => {
 		const [normalized] = traces;
 		expect(normalized.before).not.toBe(before);
 		expect(normalized.after).not.toBe(after);
-		expect(normalized.before.resources).toEqual(before.resources);
+		// Normalizer copies valuesV2 instead of legacy resources
+		expect(normalized.before.valuesV2).toEqual(before.valuesV2);
 		expect(normalized.after.buildings).toEqual(after.buildings);
 		expect(normalized.before.lands[0]).not.toBe(before.lands[0]);
 		expect(normalized.before.passives[0]?.meta).not.toBe(

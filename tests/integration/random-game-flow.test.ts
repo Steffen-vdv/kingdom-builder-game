@@ -23,14 +23,22 @@ describe('random action flow', () => {
 		const endPhase = phases[1].id;
 		const endStep = phases[1].steps[0];
 		const effects = endStep.effects as
-			| { type?: string; method?: string; params?: { amount: number } }[]
+			| {
+					type?: string;
+					method?: string;
+					params?: { change: { amount: number } };
+			  }[]
 			| undefined;
 		const regenEffect = (effects || []).find(
 			(e) => e.type === 'resource' && e.method === 'add',
 		);
-		const regenAmount = (regenEffect?.params as { amount: number }).amount;
+		const regenAmount = (regenEffect?.params as { change: { amount: number } })
+			.change.amount;
 		const rng = createRng(42);
 		const initialTurn = engineContext.game.turn;
+		// costKey and gainKey are already ResourceV2 IDs (resource:synthetic:r0/r1)
+		const costResourceId = costKey;
+		const gainResourceId = gainKey;
 		const turns = 3;
 		const actionRegistry = engineContext.actions;
 
@@ -42,36 +50,45 @@ describe('random action flow', () => {
 			) {
 				expect(engineContext.game.currentPhase).toBe(mainPhase);
 				const hasAvailableCost = () => {
-					const { resources } = engineContext.activePlayer;
-					return (resources[costKey] ?? 0) > 0;
+					const { resourceValues } = engineContext.activePlayer;
+					return (resourceValues[costKey] ?? 0) > 0;
 				};
 				while (hasAvailableCost()) {
-					const playerResources = engineContext.activePlayer.resources;
+					const playerResources = engineContext.activePlayer.resourceValues;
 					const randomIndex = Math.floor(rng() * actionIds.length);
 					const actionId = actionIds[randomIndex];
 					const costs = getActionCosts(actionId, engineContext);
 					const beforeCost = playerResources[costKey];
 					const beforeGain = playerResources[gainKey];
 					const action = actionRegistry.get(actionId)!;
-					const gain = (
-						action.effects.find(
-							(e) => e.type === 'resource' && e.method === 'add',
-						)!.params as { amount: number }
-					).amount;
+					const gainEffect = action.effects.find(
+						(e) => e.type === 'resource' && e.method === 'add',
+					)!;
+					const gain = (gainEffect.params as { change: { amount: number } })
+						.change.amount;
 					performAction(actionId, engineContext);
 					expect(playerResources[costKey]).toBe(
 						beforeCost - (costs[costKey] ?? 0),
 					);
 					expect(playerResources[gainKey]).toBe(beforeGain + gain);
+					expect(
+						engineContext.activePlayer.resourceValues[costResourceId],
+					).toBe(beforeCost - (costs[costKey] ?? 0));
+					expect(
+						engineContext.activePlayer.resourceValues[gainResourceId],
+					).toBe(beforeGain + gain);
 				}
 				const currentIndex = engineContext.game.currentPlayerIndex;
 				advance(engineContext);
 				expect(engineContext.game.currentPhase).toBe(endPhase);
 				expect(engineContext.game.currentPlayerIndex).toBe(currentIndex);
 				const player = engineContext.activePlayer;
-				const beforeRegen = player.resources[costKey];
+				const beforeRegen = player.resourceValues[costKey];
 				advance(engineContext);
-				expect(player.resources[costKey]).toBe(beforeRegen + regenAmount);
+				expect(player.resourceValues[costKey]).toBe(beforeRegen + regenAmount);
+				expect(player.resourceValues[costResourceId]).toBe(
+					beforeRegen + regenAmount,
+				);
 				expect(engineContext.game.currentPhase).toBe(mainPhase);
 				expect(engineContext.game.currentPlayerIndex).toBe(
 					(currentIndex + 1) % engineContext.game.players.length,

@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { advance } from '../../src/index.ts';
 import { runEffects } from '../../src/effects/index.ts';
-import { Resource } from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('resource removal penalties', () => {
 	it('can target the opponent when shortfalls are allowed', () => {
@@ -12,22 +13,28 @@ describe('resource removal penalties', () => {
 		advance(engineContext);
 		const original = engineContext.game.currentPlayerIndex;
 		engineContext.game.currentPlayerIndex = 1;
-		engineContext.activePlayer.resources[Resource.happiness] = 0;
+		// CResource.happiness IS the ResourceV2 ID directly
+		engineContext.activePlayer.resourceValues[CResource.happiness] = 0;
 		const before =
-			engineContext.activePlayer.resources[Resource.happiness] ?? 0;
+			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;
+		const penalty = resourceAmountParams({
+			key: CResource.happiness,
+			amount: 1,
+		});
 		runEffects(
 			[
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: Resource.happiness, amount: 1 },
+					params: penalty,
 					meta: { allowShortfall: true },
 				},
 			],
 			engineContext,
 		);
-		const after = engineContext.activePlayer.resources[Resource.happiness] ?? 0;
-		expect(after).toBe(before - 1);
+		const after =
+			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;
+		expect(after).toBe(before - penalty.amount);
 		expect(after).toBeLessThan(0);
 		engineContext.game.currentPlayerIndex = original;
 	});

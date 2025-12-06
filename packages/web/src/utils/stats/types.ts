@@ -1,6 +1,6 @@
 import type {
 	SessionPlayerStateSnapshot as PlayerStateSnapshot,
-	SessionStatSourceLink as StatSourceLink,
+	SessionResourceSourceLink as StatSourceLink,
 } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../translation/context';
 

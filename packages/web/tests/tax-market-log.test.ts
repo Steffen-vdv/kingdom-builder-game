@@ -12,7 +12,6 @@ import {
 	SYNTHETIC_IDS,
 	SYNTHETIC_RESOURCES,
 	SYNTHETIC_RESOURCE_KEYS,
-	type SyntheticResourceKey,
 	SYNTHETIC_POPULATION_INFO,
 	SYNTHETIC_POPULATION_ROLES,
 	SYNTHETIC_POPULATION_ROLE_ID,
@@ -25,6 +24,11 @@ import {
 	logContent,
 	createTranslationDiffContext,
 } from '../src/translation';
+import type { TranslationActionCategoryRegistry } from '../src/translation/context';
+import {
+	cloneResourceCatalogV2,
+	createResourceV2MetadataSelectors,
+} from '../src/translation/context';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
 	appendSubActionChanges,
@@ -34,9 +38,7 @@ import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
 import type { ActionDiffChange } from '../src/translation/log/diff';
 
-const RESOURCE_KEYS = Object.keys(
-	SYNTHETIC_RESOURCES,
-) as SyntheticResourceKey[];
+const RESOURCE_KEYS = Object.values(SYNTHETIC_RESOURCE_KEYS);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -106,6 +108,7 @@ describe('tax action logging with market', () => {
 			phases: scenario.phases,
 			start: scenario.start,
 			rules: scenario.rules,
+			resourceCatalogV2: scenario.resourceCatalogV2,
 		});
 		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(
@@ -118,7 +121,7 @@ describe('tax action logging with market', () => {
 			],
 			engineContext,
 		);
-		engineContext.activePlayer.resources[SYNTHETIC_RESOURCE_KEYS.coin] = 0;
+		engineContext.activePlayer.resourceValues[SYNTHETIC_RESOURCE_KEYS.coin] = 0;
 		while (engineContext.game.currentPhase !== SYNTHETIC_PHASE_IDS.main) {
 			advance(engineContext);
 		}
@@ -130,7 +133,28 @@ describe('tax action logging with market', () => {
 			engineContext,
 		);
 		const after = captureActivePlayer(engineContext);
-		const translationDiffContext = createTranslationDiffContext(engineContext);
+		// Create resource metadata selectors from the catalog
+		const catalogClone = cloneResourceCatalogV2(scenario.resourceCatalogV2);
+		const resourceMetadataV2 = createResourceV2MetadataSelectors(catalogClone);
+		// Create stub action categories
+		const actionCategories: TranslationActionCategoryRegistry = {
+			categories: new Map(),
+			get: () => undefined,
+		};
+		// Create proper activePlayer structure for diff context
+		const diffActivePlayer = {
+			id: engineContext.game.activePlayerId,
+			population: { ...engineContext.activePlayer.population },
+			lands: engineContext.activePlayer.lands.map((land) => ({
+				developments: [...land.developments],
+			})),
+		};
+		const translationDiffContext = createTranslationDiffContext({
+			...engineContext,
+			activePlayer: diffActivePlayer,
+			actionCategories,
+			resourceMetadataV2,
+		});
 		const diffResult = diffStepSnapshots(
 			before,
 			after,
@@ -143,7 +167,7 @@ describe('tax action logging with market', () => {
 			logContent('action', SYNTHETIC_IDS.taxAction, engineContext),
 		);
 		const costDescriptors: ActionLogLineDescriptor[] = [];
-		for (const key of Object.keys(costs) as SyntheticResourceKey[]) {
+		for (const key of Object.keys(costs)) {
 			const amount = costs[key] ?? 0;
 			if (!amount) {
 				continue;
@@ -151,7 +175,7 @@ describe('tax action logging with market', () => {
 			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
-			const beforeAmount = before.resources[key] ?? 0;
+			const beforeAmount = before.valuesV2?.[key] ?? 0;
 			const afterAmount = beforeAmount - amount;
 			costDescriptors.push({
 				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
@@ -187,8 +211,8 @@ describe('tax action logging with market', () => {
 			SYNTHETIC_POPULATION_INFO.icon;
 		const marketIcon =
 			engineContext.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
-		const beforeCoins = before.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const afterCoins = after.resources[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const beforeCoins = before.valuesV2?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.valuesV2?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = afterCoins - beforeCoins;
 		const goldLine = logLines.find((line) =>
 			line

@@ -7,9 +7,10 @@ export function buildRuntimeConfigFallback(): {
 	resources: Record<string, Record<string, unknown>>;
 	primaryIconId: string | null;
 } {
+	// Use ResourceV2 registry for resource metadata
 	const fallbackResources = Object.fromEntries(
-		Object.entries(contents.RESOURCES).map(([key, definition]) => {
-			const entry: Record<string, unknown> = { key };
+		contents.RESOURCE_V2_REGISTRY.ordered.map((definition) => {
+			const entry: Record<string, unknown> = { key: definition.id };
 			if (definition.icon !== undefined) {
 				entry.icon = definition.icon;
 			}
@@ -22,7 +23,7 @@ export function buildRuntimeConfigFallback(): {
 			if (definition.tags && definition.tags.length > 0) {
 				entry.tags = [...definition.tags];
 			}
-			return [key, entry];
+			return [definition.id, entry];
 		}),
 	);
 

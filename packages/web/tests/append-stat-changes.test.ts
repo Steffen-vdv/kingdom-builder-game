@@ -10,11 +10,19 @@ import {
 } from './helpers/sessionFixtures';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createTranslationContext } from '../src/translation/context';
-import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import {
 	selectPopulationDescriptor,
 	selectStatDescriptor,
 } from '../src/translation/effects/registrySelectors';
+
+// V2 stat keys for testing - these match the resource:stat: prefix format
+const V2_STAT_KEYS = {
+	armyStrength: 'resource:stat:army-strength',
+	growth: 'resource:stat:growth',
+} as const;
+
+// V2 population key for testing
+const V2_POPULATION_KEY = 'resource:population:role:legion';
 
 function createTranslationSetup() {
 	const scaffold = createTestSessionScaffold();
@@ -44,30 +52,12 @@ function createTranslationSetup() {
 			passiveRecords: session.passiveRecords,
 		},
 	);
-	const metadataSelectors = createTestRegistryMetadata(
-		scaffold.registries,
-		session.metadata,
-	);
-	const [primaryStat, secondaryStat] = metadataSelectors.statMetadata.list;
-	if (!primaryStat || !secondaryStat) {
-		throw new Error(
-			'Expected at least two stats for append stat change tests.',
-		);
-	}
-	const populationDescriptor =
-		metadataSelectors.populationMetadata.list.find((descriptor) => {
-			return Boolean(descriptor.icon);
-		}) ?? metadataSelectors.populationMetadata.list[0];
-	if (!populationDescriptor) {
-		throw new Error(
-			'Expected at least one population descriptor for stat changes.',
-		);
-	}
+	// Use V2 stat keys directly instead of legacy stat metadata
 	return {
 		translationContext,
-		primaryStatId: primaryStat.id,
-		secondaryStatId: secondaryStat.id,
-		populationId: populationDescriptor.id,
+		primaryStatId: V2_STAT_KEYS.armyStrength,
+		secondaryStatId: V2_STAT_KEYS.growth,
+		populationId: V2_POPULATION_KEY,
 	};
 }
 
@@ -76,39 +66,35 @@ describe('appendStatChanges', () => {
 		const { translationContext, primaryStatId, secondaryStatId, populationId } =
 			createTranslationSetup();
 		const before: PlayerSnapshot = {
-			resources: {},
-			stats: {
+			buildings: [],
+			lands: [],
+			passives: [],
+			valuesV2: {
 				[primaryStatId]: 4,
 				[secondaryStatId]: 20,
 			},
-			population: {},
+			resourceBoundsV2: {},
+		};
+		const after: PlayerSnapshot = {
 			buildings: [],
 			lands: [],
 			passives: [],
-		};
-		const after: PlayerSnapshot = {
-			resources: {},
-			stats: {
+			valuesV2: {
 				[primaryStatId]: 5,
 				[secondaryStatId]: 20,
 			},
-			population: {},
-			buildings: [],
-			lands: [],
-			passives: [],
+			resourceBoundsV2: {},
 		};
 		const player: PlayerSnapshot = {
-			resources: {},
-			stats: {
-				[primaryStatId]: 5,
-				[secondaryStatId]: 25,
-			},
-			population: {
-				[populationId]: 2,
-			},
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: {
+				[primaryStatId]: 5,
+				[secondaryStatId]: 25,
+				[populationId]: 2,
+			},
+			resourceBoundsV2: {},
 		};
 		const raiseStrengthEffects: StepEffects = {
 			effects: [
@@ -119,11 +105,14 @@ describe('appendStatChanges', () => {
 					},
 					effects: [
 						{
-							type: 'stat',
-							method: 'add_pct',
+							type: 'resource',
+							method: 'add',
 							params: {
-								key: primaryStatId,
-								percentStat: secondaryStatId,
+								resourceId: primaryStatId,
+								change: {
+									type: 'percentFromResource',
+									sourceResourceId: secondaryStatId,
+								},
 							},
 						},
 					],
@@ -139,6 +128,7 @@ describe('appendStatChanges', () => {
 			player,
 			raiseStrengthEffects,
 			assets,
+			translationContext.resourceMetadataV2,
 		);
 		const statDescriptor = selectStatDescriptor(
 			translationContext,
@@ -160,12 +150,16 @@ describe('appendStatChanges', () => {
 		const armyIcon = statDescriptor.icon ?? '';
 		const breakdown = formatPercentBreakdown(
 			armyIcon || '',
-			formatStatValue(primaryStatId, before.stats[primaryStatId], assets),
+			formatStatValue(primaryStatId, before.valuesV2[primaryStatId], assets),
 			legionIcon,
-			player.population[populationId] ?? 0,
+			player.valuesV2[populationId] ?? 0,
 			growthIcon,
-			formatStatValue(secondaryStatId, player.stats[secondaryStatId], assets),
-			formatStatValue(primaryStatId, after.stats[primaryStatId], assets),
+			formatStatValue(
+				secondaryStatId,
+				player.valuesV2[secondaryStatId],
+				assets,
+			),
+			formatStatValue(primaryStatId, after.valuesV2[primaryStatId], assets),
 		);
 		expect(line?.endsWith(breakdown)).toBe(true);
 	});
@@ -175,28 +169,29 @@ describe('appendStatChanges', () => {
 			createTranslationSetup();
 		const baseAssets = translationContext.assets;
 		const before: PlayerSnapshot = {
-			resources: {},
-			stats: { [primaryStatId]: 1 },
-			population: {},
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: { [primaryStatId]: 1 },
+			resourceBoundsV2: {},
 		};
 		const after: PlayerSnapshot = {
-			resources: {},
-			stats: { [primaryStatId]: 3 },
-			population: {},
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: { [primaryStatId]: 3 },
+			resourceBoundsV2: {},
 		};
 		const player: PlayerSnapshot = {
-			resources: {},
-			stats: { [primaryStatId]: 3, [secondaryStatId]: 4 },
-			population: { [populationId]: 1 },
 			buildings: [],
 			lands: [],
 			passives: [],
+			valuesV2: {
+				[primaryStatId]: 3,
+				[secondaryStatId]: 4,
+				[populationId]: 1,
+			},
+			resourceBoundsV2: {},
 		};
 		const step: StepEffects = {
 			effects: [
@@ -204,11 +199,14 @@ describe('appendStatChanges', () => {
 					evaluator: { type: 'population', params: { role: populationId } },
 					effects: [
 						{
-							type: 'stat',
-							method: 'add_pct',
+							type: 'resource',
+							method: 'add',
 							params: {
-								key: primaryStatId,
-								percentStat: secondaryStatId,
+								resourceId: primaryStatId,
+								change: {
+									type: 'percentFromResource',
+									sourceResourceId: secondaryStatId,
+								},
 							},
 						},
 					],
@@ -223,8 +221,35 @@ describe('appendStatChanges', () => {
 				}),
 			),
 		};
+		// Create a metadata selector that returns the raw ID as label for
+		// primaryStatId to test fallback behavior - primaryStatId is already V2
+		const baseMetadata = translationContext.resourceMetadataV2;
+		const fallbackMetadata = {
+			get(id: string) {
+				if (id === primaryStatId) {
+					// Return minimal metadata with ID as label and no icon
+					return { id, label: id };
+				}
+				return baseMetadata.get(id);
+			},
+			list() {
+				return baseMetadata.list();
+			},
+			has(id: string) {
+				return baseMetadata.has(id);
+			},
+		};
 		const changes: string[] = [];
-		appendStatChanges(changes, before, after, player, step, fallbackAssets);
+		appendStatChanges(
+			changes,
+			before,
+			after,
+			player,
+			step,
+			fallbackAssets,
+			fallbackMetadata,
+		);
+		// Output should contain the V2 ID since we use it as the fallback label
 		const entry = changes.find((line) => line.includes(primaryStatId));
 		expect(entry).toBeDefined();
 		expect(entry?.includes(primaryStatId)).toBe(true);

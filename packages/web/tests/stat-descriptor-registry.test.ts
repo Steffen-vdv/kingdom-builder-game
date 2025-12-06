@@ -250,7 +250,7 @@ describe('stat descriptor registry', () => {
 		const unknownId = 'mystery-source';
 		const unknownDetail = 'mystery-detail';
 		const resourceDetail = 'resource-detail';
-		player.statSources[primaryStatKey] = {
+		player.resourceSources[primaryStatKey] = {
 			descriptor: {
 				amount: 1,
 				meta: {

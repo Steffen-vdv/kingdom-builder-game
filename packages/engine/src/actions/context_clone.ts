@@ -3,9 +3,9 @@ import {
 	GameState,
 	Land,
 	PlayerState,
-	type StatSourceContribution,
+	type ResourceSourceContribution,
 } from '../state';
-import { cloneMeta } from '../stat_sources/meta';
+import { cloneMeta } from '../resource_sources/meta';
 import { cloneEffectList } from '../utils';
 
 function cloneLand(land: Land): Land {
@@ -32,29 +32,42 @@ function cloneLand(land: Land): Land {
 
 function clonePlayerState(player: PlayerState): PlayerState {
 	const cloned = new PlayerState(player.id, player.name);
-	for (const key of Object.keys(player.resources)) {
-		cloned.resources[key] = player.resources[key] ?? 0;
+	// Clone all unified resource values (resources, stats, population)
+	for (const key of Object.keys(player.resourceValues)) {
+		cloned.resourceValues[key] = player.resourceValues[key] ?? 0;
 	}
-	for (const key of Object.keys(player.stats)) {
-		cloned.stats[key] = player.stats[key] ?? 0;
+	for (const key of Object.keys(player.resourceLowerBounds)) {
+		cloned.resourceLowerBounds[key] = player.resourceLowerBounds[key] ?? null;
 	}
-	for (const key of Object.keys(player.statsHistory)) {
-		cloned.statsHistory[key] = Boolean(player.statsHistory[key]);
+	for (const key of Object.keys(player.resourceUpperBounds)) {
+		cloned.resourceUpperBounds[key] = player.resourceUpperBounds[key] ?? null;
 	}
-	for (const key of Object.keys(player.population)) {
-		cloned.population[key] = player.population[key] ?? 0;
+	for (const key of Object.keys(player.resourceTouched)) {
+		cloned.resourceTouched[key] = Boolean(player.resourceTouched[key]);
+	}
+	for (const key of Object.keys(player.resourceTierIds)) {
+		cloned.resourceTierIds[key] = player.resourceTierIds[key] ?? null;
+	}
+	for (const key of Object.keys(player.resourceBoundTouched)) {
+		const bounds = player.resourceBoundTouched[key];
+		if (bounds) {
+			cloned.resourceBoundTouched[key] = {
+				lower: Boolean(bounds.lower),
+				upper: Boolean(bounds.upper),
+			};
+		}
 	}
 	cloned.lands = player.lands.map((land) => cloneLand(land));
 	cloned.buildings = new Set(player.buildings);
 	cloned.actions = new Set(player.actions);
-	const clonedSources = cloned.statSources;
-	for (const statKey of Object.keys(player.statSources)) {
-		const contributions = player.statSources[statKey];
+	const clonedSources = cloned.resourceSources;
+	for (const resourceKey of Object.keys(player.resourceSources)) {
+		const contributions = player.resourceSources[resourceKey];
 		if (!contributions) {
-			clonedSources[statKey] = {};
+			clonedSources[resourceKey] = {};
 			continue;
 		}
-		const next: Record<string, StatSourceContribution> = {};
+		const next: Record<string, ResourceSourceContribution> = {};
 		for (const sourceKey of Object.keys(contributions)) {
 			const contribution = contributions[sourceKey]!;
 			next[sourceKey] = {
@@ -62,7 +75,7 @@ function clonePlayerState(player: PlayerState): PlayerState {
 				meta: cloneMeta(contribution.meta),
 			};
 		}
-		clonedSources[statKey] = next;
+		clonedSources[resourceKey] = next;
 	}
 	cloned.skipPhases = Object.fromEntries(
 		Object.entries(player.skipPhases).map(([phaseId, flags]) => [
@@ -83,14 +96,16 @@ function clonePlayerState(player: PlayerState): PlayerState {
 	const reserved = new Set([
 		'id',
 		'name',
-		'resources',
-		'stats',
-		'statsHistory',
-		'population',
+		'resourceValues',
+		'resourceLowerBounds',
+		'resourceUpperBounds',
+		'resourceTouched',
+		'resourceTierIds',
+		'resourceBoundTouched',
 		'lands',
 		'buildings',
 		'actions',
-		'statSources',
+		'resourceSources',
 		'skipPhases',
 		'skipSteps',
 	]);
@@ -115,7 +130,8 @@ function cloneGameState(game: GameState): GameState {
 	const [firstName = 'Player', secondName = 'Opponent'] = game.players.map(
 		(player) => player.name,
 	);
-	const cloned = new GameState(firstName, secondName);
+	const catalog = game.resourceCatalogV2;
+	const cloned = new GameState(catalog, firstName, secondName);
 	cloned.turn = game.turn;
 	cloned.currentPlayerIndex = game.currentPlayerIndex;
 	cloned.currentPhase = game.currentPhase;
@@ -124,6 +140,7 @@ function cloneGameState(game: GameState): GameState {
 	cloned.stepIndex = game.stepIndex;
 	cloned.devMode = game.devMode;
 	cloned.players = game.players.map((player) => clonePlayerState(player));
+	cloned.resourceCatalogV2 = catalog;
 	return cloned;
 }
 
@@ -141,18 +158,21 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		source.populations,
 		clonedPassives,
 		source.phases,
-		source.actionCostResource,
+		source.actionCostResourceId,
+		source.actionCostAmount,
+		source.resourceCatalogV2,
 		compensations,
 	);
 	if (source.aiSystem) {
 		cloned.aiSystem = source.aiSystem;
 	}
-	cloned.statAddPctBases = { ...source.statAddPctBases };
-	cloned.statAddPctAccums = { ...source.statAddPctAccums };
+	cloned.game.resourceCatalogV2 = source.resourceCatalogV2;
+	cloned.resourcePercentBases = { ...source.resourcePercentBases };
+	cloned.resourcePercentAccums = { ...source.resourcePercentAccums };
 	cloned.recentResourceGains = source.recentResourceGains.map((gain) => ({
 		key: gain.key,
 		amount: gain.amount,
 	}));
-	cloned.statSourceStack = [...source.statSourceStack];
+	cloned.resourceSourceStack = [...source.resourceSourceStack];
 	return cloned;
 }

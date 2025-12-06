@@ -6,6 +6,9 @@ import {
 import type {
 	TranslationAssets,
 	TranslationContext,
+	TranslationResourceV2Metadata,
+	TranslationResourceV2MetadataSelectors,
+	TranslationSignedResourceGainSelectors,
 } from '../src/translation/context';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
 
@@ -13,6 +16,29 @@ const EMPTY_REGISTRY = {
 	get: (_id: string) => ({}),
 	has: () => false,
 } as TranslationContext['actions'];
+
+const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceV2Metadata[] =
+	Object.freeze([]);
+
+const EMPTY_RESOURCE_METADATA: TranslationResourceV2MetadataSelectors = {
+	list: () => EMPTY_RESOURCE_METADATA_LIST,
+	get: (id: string) => ({ id, label: id }),
+	has: () => false,
+};
+
+const EMPTY_RESOURCE_CATALOG = Object.freeze({
+	resources: { byId: {}, ordered: [] },
+	groups: { byId: {}, ordered: [] },
+});
+
+const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors = {
+	list: () => Object.freeze([] as { key: string; amount: number }[]),
+	positives: () => Object.freeze([] as { key: string; amount: number }[]),
+	negatives: () => Object.freeze([] as { key: string; amount: number }[]),
+	forResource: (_id: string) =>
+		Object.freeze([] as { key: string; amount: number }[]),
+	sumForResource: () => 0,
+};
 
 const createTranslationContext = (
 	requirements: unknown[],
@@ -120,6 +146,10 @@ const createTranslationContext = (
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
 		assets: mergedAssets,
+		resourcesV2: EMPTY_RESOURCE_CATALOG,
+		resourceMetadataV2: EMPTY_RESOURCE_METADATA,
+		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
+		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,
 	} satisfies TranslationContext;
 };
 

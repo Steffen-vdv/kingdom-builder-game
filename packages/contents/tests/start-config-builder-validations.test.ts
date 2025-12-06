@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { startConfig, playerStart } from '../src/config/builders';
-import { RESOURCES, type ResourceKey } from '../src/resources';
-import { STATS, type StatKey } from '../src/stats';
+import { Resource, type ResourceKey } from '../src/resourceKeys';
+import { Stat, type StatKey } from '../src/stats';
 
-const firstResourceKey = Object.keys(RESOURCES)[0] as ResourceKey;
-const firstStatKey = Object.keys(STATS)[0] as StatKey;
+const firstResourceKey = Object.values(Resource)[0] as ResourceKey;
+const firstStatKey = Object.values(Stat)[0] as StatKey;
 
 describe('start config builder safeguards', () => {
 	it('requires player start to configure each section', () => {
@@ -68,6 +68,50 @@ describe('start config builder safeguards', () => {
 			},
 			{},
 		]);
+	});
+
+	it('mirrors legacy resources into ResourceV2 values by default', () => {
+		const config = playerStart()
+			.resources({
+				[firstResourceKey]: 4,
+			})
+			.stats({ [firstStatKey]: 1 })
+			.population({ demo: 0 })
+			.lands([])
+			.build();
+		expect(config.valuesV2).toEqual({
+			[firstResourceKey]: 4,
+		});
+	});
+
+	it('supports configuring ResourceV2 bounds', () => {
+		const lower = { [firstResourceKey]: 0 };
+		const upper = { [firstResourceKey]: 5 };
+		const config = playerStart()
+			.resources({ [firstResourceKey]: 1 })
+			.stats({ [firstStatKey]: 2 })
+			.population({ demo: 3 })
+			.resourceBoundsV2({ lower, upper })
+			.lands([])
+			.build();
+		expect(config.resourceLowerBoundsV2).toEqual(lower);
+		expect(config.resourceUpperBoundsV2).toEqual(upper);
+	});
+
+	it('rejects duplicate ResourceV2 bound setters', () => {
+		expect(() =>
+			playerStart({ requireComplete: false })
+				.resourceBoundsV2({
+					lower: {
+						[firstResourceKey]: 0,
+					},
+				})
+				.resourceBoundsV2({
+					lower: {
+						[firstResourceKey]: 1,
+					},
+				}),
+		).toThrowError('Player start already set resourceBoundsV2(). Remove the extra resourceBoundsV2() call.');
 	});
 
 	it('blocks duplicate last player compensations in start configs', () => {

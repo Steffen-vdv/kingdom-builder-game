@@ -7,16 +7,18 @@ describe('Growth phase', () => {
 		const { engineContext, ids, roles, resources, values } =
 			createPhaseTestEnvironment();
 		const player = engineContext.activePlayer;
-		const apBefore = player.resources[resources.ap];
-		const goldBefore = player.resources[resources.gold];
+		// resources.ap IS the ResourceV2 ID directly
+		const apBefore = player.resourceValues[resources.ap] ?? 0;
+		const goldBefore = player.resourceValues[resources.gold] ?? 0;
 		while (engineContext.game.currentPhase === ids.phases.growth) {
 			advance(engineContext);
 		}
-		const councils = player.population[roles.council];
-		expect(player.resources[resources.ap]).toBe(
+		// roles.council IS the ResourceV2 ID directly
+		const councils = player.resourceValues[roles.council] ?? 0;
+		expect(player.resourceValues[resources.ap]).toBe(
 			apBefore + values.councilApGain * councils,
 		);
-		expect(player.resources[resources.gold]).toBe(
+		expect(player.resourceValues[resources.gold]).toBe(
 			goldBefore + values.farmIncome,
 		);
 	});
@@ -28,8 +30,8 @@ describe('Growth phase', () => {
 		const comp = values.apCompensation;
 		const playerA = engineContext.game.players[0]!;
 		const playerB = engineContext.game.players[1]!;
-		expect(playerA.resources[resources.ap]).toBe(baseAp);
-		expect(playerB.resources[resources.ap]).toBe(baseAp + comp);
+		expect(playerA.resourceValues[resources.ap]).toBe(baseAp);
+		expect(playerB.resourceValues[resources.ap]).toBe(baseAp + comp);
 
 		const growthPhaseIndex = phases.findIndex(
 			(phase) => phase.id === ids.phases.growth,
@@ -43,10 +45,10 @@ describe('Growth phase', () => {
 		engineContext.game.stepIndex = gainApIdx;
 		engineContext.game.currentPhase = ids.phases.growth;
 		engineContext.game.currentStep = ids.steps.gainAp;
-		playerA.resources[resources.ap] = 0;
+		playerA.resourceValues[resources.ap] = 0;
 		advance(engineContext);
-		const councilsA = playerA.population[roles.council];
-		expect(playerA.resources[resources.ap]).toBe(
+		const councilsA = playerA.resourceValues[roles.council] ?? 0;
+		expect(playerA.resourceValues[resources.ap]).toBe(
 			values.councilApGain * councilsA,
 		);
 
@@ -55,10 +57,10 @@ describe('Growth phase', () => {
 		engineContext.game.stepIndex = gainApIdx;
 		engineContext.game.currentPhase = ids.phases.growth;
 		engineContext.game.currentStep = ids.steps.gainAp;
-		playerB.resources[resources.ap] = 0;
+		playerB.resourceValues[resources.ap] = 0;
 		advance(engineContext);
-		const councilsB = playerB.population[roles.council];
-		expect(playerB.resources[resources.ap]).toBe(
+		const councilsB = playerB.resourceValues[roles.council] ?? 0;
+		expect(playerB.resourceValues[resources.ap]).toBe(
 			values.councilApGain * councilsB,
 		);
 
@@ -68,9 +70,9 @@ describe('Growth phase', () => {
 			engineContext.game.stepIndex = gainApIdx;
 			engineContext.game.currentPhase = ids.phases.growth;
 			engineContext.game.currentStep = ids.steps.gainAp;
-			playerB.resources[resources.ap] = 0;
+			playerB.resourceValues[resources.ap] = 0;
 			advance(engineContext);
-			expect(playerB.resources[resources.ap]).toBe(
+			expect(playerB.resourceValues[resources.ap]).toBe(
 				values.councilApGain * councilsB,
 			);
 		}
@@ -79,43 +81,44 @@ describe('Growth phase', () => {
 	it('grows legion and fortifier stats', () => {
 		const { engineContext, ids, roles, stats } = createPhaseTestEnvironment();
 		const player = engineContext.activePlayer;
-		player.population[roles.legion] = 1;
-		player.population[roles.fortifier] = 1;
-		player.stats[stats.army] = 8;
-		player.stats[stats.fort] = 4;
-		const growth = player.stats[stats.growth];
+		// roles and stats ARE ResourceV2 IDs directly
+		player.resourceValues[roles.legion] = 1;
+		player.resourceValues[roles.fortifier] = 1;
+		player.resourceValues[stats.army] = 8;
+		player.resourceValues[stats.fort] = 4;
+		const growth = player.resourceValues[stats.growth] ?? 0;
 		while (engineContext.game.currentPhase === ids.phases.growth) {
 			advance(engineContext);
 		}
 		const expectedArmy = Math.ceil(8 + 8 * growth);
 		const expectedFort = Math.ceil(4 + 4 * growth);
-		expect(player.stats[stats.army]).toBe(expectedArmy);
-		expect(player.stats[stats.fort]).toBe(expectedFort);
-		expect(Number.isInteger(player.stats[stats.army])).toBe(true);
-		expect(Number.isInteger(player.stats[stats.fort])).toBe(true);
-		expect(player.stats[stats.army]).toBeGreaterThanOrEqual(0);
-		expect(player.stats[stats.fort]).toBeGreaterThanOrEqual(0);
+		expect(player.resourceValues[stats.army]).toBe(expectedArmy);
+		expect(player.resourceValues[stats.fort]).toBe(expectedFort);
+		expect(Number.isInteger(player.resourceValues[stats.army])).toBe(true);
+		expect(Number.isInteger(player.resourceValues[stats.fort])).toBe(true);
+		expect(player.resourceValues[stats.army]).toBeGreaterThanOrEqual(0);
+		expect(player.resourceValues[stats.fort]).toBeGreaterThanOrEqual(0);
 	});
 
 	it('scales strength additively with multiple leaders', () => {
 		const { engineContext, ids, roles, stats } = createPhaseTestEnvironment();
 		const player = engineContext.activePlayer;
-		player.population[roles.legion] = 2;
-		player.population[roles.fortifier] = 2;
-		player.stats[stats.army] = 10;
-		player.stats[stats.fort] = 10;
-		const growth = player.stats[stats.growth];
+		player.resourceValues[roles.legion] = 2;
+		player.resourceValues[roles.fortifier] = 2;
+		player.resourceValues[stats.army] = 10;
+		player.resourceValues[stats.fort] = 10;
+		const growth = player.resourceValues[stats.growth] ?? 0;
 		while (engineContext.game.currentPhase === ids.phases.growth) {
 			advance(engineContext);
 		}
 		const expectedArmy = Math.ceil(10 + 10 * growth * 2);
 		const expectedFort = Math.ceil(10 + 10 * growth * 2);
-		expect(player.stats[stats.army]).toBe(expectedArmy);
-		expect(player.stats[stats.fort]).toBe(expectedFort);
-		expect(Number.isInteger(player.stats[stats.army])).toBe(true);
-		expect(Number.isInteger(player.stats[stats.fort])).toBe(true);
-		expect(player.stats[stats.army]).toBeGreaterThanOrEqual(0);
-		expect(player.stats[stats.fort]).toBeGreaterThanOrEqual(0);
+		expect(player.resourceValues[stats.army]).toBe(expectedArmy);
+		expect(player.resourceValues[stats.fort]).toBe(expectedFort);
+		expect(Number.isInteger(player.resourceValues[stats.army])).toBe(true);
+		expect(Number.isInteger(player.resourceValues[stats.fort])).toBe(true);
+		expect(player.resourceValues[stats.army]).toBeGreaterThanOrEqual(0);
+		expect(player.resourceValues[stats.fort]).toBeGreaterThanOrEqual(0);
 	});
 
 	describe('strength growth scenarios', () => {
@@ -147,10 +150,10 @@ describe('Growth phase', () => {
 			const { engineContext, ids, roles, stats, values } =
 				createPhaseTestEnvironment();
 			const player = engineContext.activePlayer;
-			player.population[roles.legion] = legions;
-			player.population[roles.fortifier] = fortifiers;
-			player.stats[stats.army] = baseArmy;
-			player.stats[stats.fort] = baseFort;
+			player.resourceValues[roles.legion] = legions;
+			player.resourceValues[roles.fortifier] = fortifiers;
+			player.resourceValues[stats.army] = baseArmy;
+			player.resourceValues[stats.fort] = baseFort;
 			const baseGrowth = values.baseGrowth;
 			while (engineContext.game.currentPhase === ids.phases.growth) {
 				advance(engineContext);
@@ -161,28 +164,28 @@ describe('Growth phase', () => {
 			const expectedFort = Math.ceil(
 				baseFort + baseFort * baseGrowth * fortifiers,
 			);
-			expect(player.stats[stats.army]).toBe(expectedArmy);
-			expect(player.stats[stats.fort]).toBe(expectedFort);
-			expect(Number.isInteger(player.stats[stats.army])).toBe(true);
-			expect(Number.isInteger(player.stats[stats.fort])).toBe(true);
-			expect(player.stats[stats.army]).toBeGreaterThanOrEqual(0);
-			expect(player.stats[stats.fort]).toBeGreaterThanOrEqual(0);
+			expect(player.resourceValues[stats.army]).toBe(expectedArmy);
+			expect(player.resourceValues[stats.fort]).toBe(expectedFort);
+			expect(Number.isInteger(player.resourceValues[stats.army])).toBe(true);
+			expect(Number.isInteger(player.resourceValues[stats.fort])).toBe(true);
+			expect(player.resourceValues[stats.army]).toBeGreaterThanOrEqual(0);
+			expect(player.resourceValues[stats.fort]).toBeGreaterThanOrEqual(0);
 		});
 
 		it('never drops below zero', () => {
 			const { engineContext, ids, roles, stats } = createPhaseTestEnvironment();
 			const player = engineContext.activePlayer;
-			player.population[roles.legion] = 1;
-			player.population[roles.fortifier] = 1;
-			player.stats[stats.army] = -5;
-			player.stats[stats.fort] = -5;
+			player.resourceValues[roles.legion] = 1;
+			player.resourceValues[roles.fortifier] = 1;
+			player.resourceValues[stats.army] = -5;
+			player.resourceValues[stats.fort] = -5;
 			while (engineContext.game.currentPhase === ids.phases.growth) {
 				advance(engineContext);
 			}
-			expect(player.stats[stats.army]).toBe(0);
-			expect(player.stats[stats.fort]).toBe(0);
-			expect(Number.isInteger(player.stats[stats.army])).toBe(true);
-			expect(Number.isInteger(player.stats[stats.fort])).toBe(true);
+			expect(player.resourceValues[stats.army]).toBe(0);
+			expect(player.resourceValues[stats.fort]).toBe(0);
+			expect(Number.isInteger(player.resourceValues[stats.army])).toBe(true);
+			expect(Number.isInteger(player.resourceValues[stats.fort])).toBe(true);
 		});
 	});
 });

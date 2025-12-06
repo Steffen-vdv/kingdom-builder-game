@@ -24,6 +24,10 @@ import type {
 	SimulateUpcomingPhasesResult,
 } from './index';
 import type { RuleSet } from '../services';
+import type {
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+} from '../resource-v2';
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -57,6 +61,18 @@ export interface SessionRegistriesPayload {
 	populations: SerializedRegistry<PopulationConfig>;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
+	/**
+	 * ResourceV2 registry of concrete resources. All transports populate
+	 * this alongside legacy registries and the field is now guaranteed to be
+	 * present for every session payload.
+	 */
+	resourcesV2: SerializedRegistry<ResourceV2Definition>;
+	/**
+	 * ResourceV2 registry of group definitions (including virtual parents).
+	 * Mirrors {@link resourcesV2} and is always provided with session
+	 * registries.
+	 */
+	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
 }
 
 export type SessionMetadataSnapshot = Pick<
@@ -83,6 +99,18 @@ export interface SessionRuntimeConfigResponse {
 	rules: RuleSet;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
+	/**
+	 * ResourceV2 registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourcesV2}. Always present for
+	 * clients consuming runtime configuration data.
+	 */
+	resourcesV2: SerializedRegistry<ResourceV2Definition>;
+	/**
+	 * ResourceV2 group registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Always provided
+	 * for clients consuming runtime configuration data.
+	 */
+	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
 }
 
 export interface SessionCreateResponse {

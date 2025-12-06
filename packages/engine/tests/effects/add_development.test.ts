@@ -3,6 +3,7 @@ import { performAction, getActionCosts, advance } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('development:add effect', () => {
 	it('adds development and applies onBuild effects', () => {
@@ -12,12 +13,14 @@ describe('development:add effect', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: CResource.gold, amount: 2 },
+					params: resourceAmountParams({
+						key: CResource.gold,
+						amount: 2,
+					}),
 				},
 			],
 		});
 		const action = content.action({
-			baseCosts: { [CResource.ap]: 1 },
 			effects: [
 				{
 					type: 'development',
@@ -37,8 +40,10 @@ describe('development:add effect', () => {
 			id: development.id,
 			landId: land.id,
 		});
-		engineContext.activePlayer.ap = cost[CResource.ap] ?? 0;
-		const beforeGold = engineContext.activePlayer.gold;
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
+		const beforeGold =
+			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		const beforeSlots = land.slotsUsed;
 		const gain = development.onBuild?.find(
 			(e) => e.type === 'resource' && e.method === 'add',
@@ -49,7 +54,9 @@ describe('development:add effect', () => {
 		});
 		expect(land.developments).toContain(development.id);
 		expect(land.slotsUsed).toBe(beforeSlots + 1);
-		expect(engineContext.activePlayer.gold).toBe(beforeGold + gain);
+		expect(engineContext.activePlayer.resourceValues[CResource.gold]).toBe(
+			beforeGold + gain,
+		);
 	});
 
 	it('throws if land does not exist', () => {
@@ -68,6 +75,10 @@ describe('development:add effect', () => {
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
 			advance(engineContext);
 		}
+		// Give player AP to pass cost check so we can verify the land error
+		const cost = getActionCosts(action.id, engineContext);
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
 		expect(() => performAction(action.id, engineContext)).toThrow(
 			/Land missing not found/,
 		);
@@ -91,6 +102,13 @@ describe('development:add effect', () => {
 		}
 		const land = engineContext.activePlayer.lands[0];
 		land.slotsUsed = land.slotsMax;
+		// Give player AP to pass cost check so we can verify the slots error
+		const cost = getActionCosts(action.id, engineContext, {
+			id: development.id,
+			landId: land.id,
+		});
+		engineContext.activePlayer.resourceValues[CResource.ap] =
+			cost[CResource.ap] ?? 0;
 		expect(() =>
 			performAction(action.id, engineContext, {
 				id: development.id,
