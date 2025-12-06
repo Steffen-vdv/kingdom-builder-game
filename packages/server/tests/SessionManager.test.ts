@@ -13,7 +13,8 @@ import {
 
 describe('SessionManager', () => {
 	it('creates and retrieves sessions using synthetic content', () => {
-		const { manager, costKey, gainKey } = createSyntheticSessionManager();
+		const { manager, costResourceId, gainResourceId } =
+			createSyntheticSessionManager();
 		const sessionId = 'session-1';
 		const session = manager.createSession(sessionId, {
 			devMode: true,
@@ -29,8 +30,8 @@ describe('SessionManager', () => {
 		expectSnapshotMetadata(mergedMetadata);
 		expectStaticMetadata(staticMetadata);
 		const [activePlayer] = snapshot.game.players;
-		expect(activePlayer?.resources[costKey]).toBeDefined();
-		expect(snapshot.rules.tieredResourceKey).toBe(gainKey);
+		expect(activePlayer?.resources[costResourceId]).toBeDefined();
+		expect(snapshot.rules.tieredResourceKey).toBe(gainResourceId);
 		expect(snapshot.game.devMode).toBe(true);
 	});
 
@@ -54,11 +55,11 @@ describe('SessionManager', () => {
 	});
 
 	it('provides rule snapshots from the active session', () => {
-		const { manager, gainKey } = createSyntheticSessionManager();
+		const { manager, gainResourceId } = createSyntheticSessionManager();
 		const sessionId = 'rules';
 		manager.createSession(sessionId);
 		const ruleSnapshot = manager.getRuleSnapshot(sessionId);
-		expect(ruleSnapshot.tieredResourceKey).toBe(gainKey);
+		expect(ruleSnapshot.tieredResourceKey).toBe(gainResourceId);
 	});
 
 	it('enforces maximum session limits', () => {
@@ -83,12 +84,12 @@ describe('SessionManager', () => {
 
 	it('caches metadata and clones results on access', () => {
 		const buildSpy = vi.spyOn(metadataModule, 'buildSessionMetadata');
-		const { manager, costKey } = createSyntheticSessionManager();
+		const { manager, costResourceId } = createSyntheticSessionManager();
 		expect(buildSpy).toHaveBeenCalledTimes(1);
 		const baseline = manager.getMetadata();
 		expectStaticMetadata(baseline);
 		expect(buildSpy).toHaveBeenCalledTimes(1);
-		expect(baseline.resources?.[costKey]).toBeDefined();
+		expect(baseline.resources?.[costResourceId]).toBeDefined();
 		const triggerKeys = Object.keys(baseline.triggers ?? {});
 		expect(triggerKeys.length).toBeGreaterThan(0);
 		const statKeys = Object.keys(baseline.stats ?? {});
@@ -100,7 +101,7 @@ describe('SessionManager', () => {
 		expect(mutated).not.toBe(baseline);
 		expect(mutated).toEqual(baseline);
 		if (mutated.resources) {
-			mutated.resources[costKey] = { label: 'changed' };
+			mutated.resources[costResourceId] = { label: 'changed' };
 		}
 		const [triggerKey] = triggerKeys;
 		if (mutated.triggers && triggerKey) {
@@ -126,7 +127,7 @@ describe('SessionManager', () => {
 		}
 		const next = manager.getMetadata();
 		expect(next).toEqual(baseline);
-		expect(next.resources?.[costKey]?.label).not.toBe('changed');
+		expect(next.resources?.[costResourceId]?.label).not.toBe('changed');
 		if (triggerKey) {
 			expect(next.triggers?.[triggerKey]?.label).not.toBe('changed');
 		}
@@ -142,7 +143,7 @@ describe('SessionManager', () => {
 	});
 
 	it('exposes a frozen runtime configuration snapshot', () => {
-		const { manager, phases, start, rules, gainKey, primaryIconId } =
+		const { manager, phases, start, rules, gainResourceId, primaryIconId } =
 			createSyntheticSessionManager();
 		const runtimeConfig = manager.getRuntimeConfig();
 		expect(runtimeConfig.phases).toEqual(phases);
@@ -157,7 +158,7 @@ describe('SessionManager', () => {
 		expect(Object.isFrozen(runtimeConfig.start)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.rules)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.resources)).toBe(true);
-		const resourceEntry = runtimeConfig.resources[gainKey];
+		const resourceEntry = runtimeConfig.resources[gainResourceId];
 		if (!resourceEntry) {
 			throw new Error('Missing synthetic resource definition.');
 		}

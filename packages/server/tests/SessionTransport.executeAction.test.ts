@@ -26,7 +26,8 @@ const authorizedHeaders = {
 
 describe('SessionTransport executeAction', () => {
 	it('executes actions and returns updated snapshots', async () => {
-		const { manager, gainKey, actionId } = createSyntheticSessionManager();
+		const { manager, gainResourceId, actionId } =
+			createSyntheticSessionManager();
 		const transport = new SessionTransport({
 			sessionManager: manager,
 			authMiddleware: middleware,
@@ -51,7 +52,7 @@ describe('SessionTransport executeAction', () => {
 		expect(result.status).toBe('success');
 		expectSnapshotMetadata(result.snapshot.metadata);
 		const [player] = result.snapshot.game.players;
-		expect(player?.resources[gainKey]).toBe(1);
+		expect(player?.resources[gainResourceId]).toBe(1);
 		expectStaticMetadata(manager.getMetadata());
 		expect(Array.isArray(result.traces)).toBe(true);
 		expect(result.costs).toEqual(expectedCosts);

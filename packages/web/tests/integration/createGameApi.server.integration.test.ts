@@ -28,11 +28,11 @@ describe.skipIf(!runIntegration)(
 		let server: FastifyInstance | undefined;
 		let baseUrl = '';
 		let actionId: string;
-		let costKey: string;
+		let costResourceId: string;
 		let manager: ReturnType<typeof createSyntheticSessionManager>['manager'];
 		beforeAll(async () => {
 			const result = createSyntheticSessionManager();
-			({ manager, actionId, costKey } = result);
+			({ manager, actionId, costResourceId } = result);
 			server = fastify();
 			const options: FastifySessionTransportOptions = {
 				sessionManager: manager,
@@ -73,7 +73,7 @@ describe.skipIf(!runIntegration)(
 			const { sessionId } = created;
 			const costs = await api.getActionCosts({ sessionId, actionId });
 			expect(costs.sessionId).toBe(sessionId);
-			expect(costs.costs[costKey]).toBe(1);
+			expect(costs.costs[costResourceId]).toBe(1);
 			const requirements = await api.getActionRequirements({
 				sessionId,
 				actionId,

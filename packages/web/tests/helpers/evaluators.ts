@@ -13,15 +13,3 @@ export const resourceEvaluator = (resourceId?: string) => ({
 	type: 'resource',
 	params: resourceId ? { resourceId } : {},
 });
-
-/**
- * @deprecated Use resourceEvaluator instead. Population is now a resource type.
- */
-export const populationEvaluator = (resourceId?: string) =>
-	resourceEvaluator(resourceId);
-
-/**
- * @deprecated Use resourceEvaluator instead. Stats are now resource types.
- */
-export const statEvaluator = (resourceId: string) =>
-	resourceEvaluator(resourceId);

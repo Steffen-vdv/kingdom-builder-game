@@ -50,7 +50,7 @@ describe('FastifySessionTransport', () => {
 		const {
 			manager,
 			actionId,
-			gainKey,
+			gainResourceId,
 			phases,
 			start,
 			rules,
@@ -67,7 +67,7 @@ describe('FastifySessionTransport', () => {
 		return {
 			app,
 			actionId,
-			gainKey,
+			gainResourceId,
 			manager,
 			phases,
 			start,
@@ -119,7 +119,8 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('includes session-specific registries and metadata for custom configs', async () => {
-		const { app, manager, factory, gainKey, start } = await createServer();
+		const { app, manager, factory, gainResourceId, start } =
+			await createServer();
 		const [actionId] = factory.actions.entries()[0];
 		const [buildingId] = factory.buildings.entries()[0];
 		const [developmentId] = factory.developments.entries()[0];
@@ -146,7 +147,7 @@ describe('FastifySessionTransport', () => {
 		actionOverride.name = `${actionOverride.name} (override)`;
 		actionOverride.baseCosts = {
 			...actionOverride.baseCosts,
-			[gainKey]: (actionOverride.baseCosts?.[gainKey] ?? 0) + 1,
+			[gainResourceId]: (actionOverride.baseCosts?.[gainResourceId] ?? 0) + 1,
 		};
 		const buildingOverride = buildings.find(
 			(definition) => definition.id === buildingId,
@@ -173,8 +174,8 @@ describe('FastifySessionTransport', () => {
 		}
 		populationOverride.name = `${populationOverride.name} (override)`;
 		const startOverride = structuredClone(start);
-		startOverride.player.resources[gainKey] =
-			(startOverride.player.resources?.[gainKey] ?? 0) + 5;
+		startOverride.player.resources[gainResourceId] =
+			(startOverride.player.resources?.[gainResourceId] ?? 0) + 5;
 		const configPayload = {
 			actions,
 			buildings,
@@ -236,8 +237,15 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('returns the runtime configuration without authentication', async () => {
-		const { app, manager, gainKey, phases, start, rules, primaryIconId } =
-			await createServer();
+		const {
+			app,
+			manager,
+			gainResourceId,
+			phases,
+			start,
+			rules,
+			primaryIconId,
+		} = await createServer();
 		const response = await app.inject({
 			method: 'GET',
 			url: '/runtime-config',
@@ -248,7 +256,7 @@ describe('FastifySessionTransport', () => {
 		expect(body.start).toEqual(start);
 		expect(body.rules).toEqual(rules);
 		expect(body.primaryIconId).toBe(primaryIconId);
-		const resource = body.resources[gainKey];
+		const resource = body.resources[gainResourceId];
 		expect(resource).toBeDefined();
 		expect(body).toEqual(manager.getRuntimeConfig());
 		await app.close();
@@ -373,7 +381,7 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('executes actions and returns success payloads', async () => {
-		const { app, actionId, gainKey, manager } = await createServer();
+		const { app, actionId, gainResourceId, manager } = await createServer();
 		const createResponse = await app.inject({
 			method: 'POST',
 			url: '/sessions',
@@ -394,7 +402,7 @@ describe('FastifySessionTransport', () => {
 		expect(actionBody.status).toBe('success');
 		expectSnapshotMetadata(actionBody.snapshot.metadata);
 		const [player] = actionBody.snapshot.game.players;
-		expect(player?.resources[gainKey]).toBe(1);
+		expect(player?.resources[gainResourceId]).toBe(1);
 		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});

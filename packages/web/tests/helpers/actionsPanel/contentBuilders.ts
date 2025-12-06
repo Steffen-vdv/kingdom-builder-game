@@ -1,10 +1,6 @@
 import type { SessionRequirementFailure } from '@kingdom-builder/protocol';
 import type { createContentFactory } from '@kingdom-builder/testing';
-import {
-	compareRequirement,
-	populationEvaluator,
-	statEvaluator,
-} from '../evaluators';
+import { compareRequirement, resourceEvaluator } from '../evaluators';
 import type { ActionsPanelGameOptions } from '../actionsPanel.types';
 
 interface ActionCategories {
@@ -81,10 +77,13 @@ export function buildActionsPanelContent({
 	const buildRequirements = requirementBuilder
 		? requirementBuilder({ capacityStat, populationPlaceholder })
 		: [
-				compareRequirement(populationEvaluator(), statEvaluator(capacityStat)),
 				compareRequirement(
-					populationEvaluator(populationPlaceholder),
-					populationEvaluator(populationPlaceholder),
+					resourceEvaluator(),
+					resourceEvaluator(capacityStat),
+				),
+				compareRequirement(
+					resourceEvaluator(populationPlaceholder),
+					resourceEvaluator(populationPlaceholder),
 				),
 			];
 
