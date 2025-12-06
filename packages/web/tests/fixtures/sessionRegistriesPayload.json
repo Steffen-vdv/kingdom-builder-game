@@ -1093,8 +1093,8 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "gold",
-								"amount": 2
+								"resourceId": "resource:core:gold",
+								"change": { "type": "amount", "amount": 2 }
 							}
 						}
 					],

@@ -71,7 +71,7 @@ describe('army attack translation summary', () => {
 		const targetSummary = castle.icon || castle.label;
 		const warSubject =
 			warWeariness.icon || warWeariness.label || Stat.warWeariness;
-		const warChange = `${warAmt >= 0 ? '+' : '-'}${Math.abs(warAmt)}`;
+		const warChangeStr = `${warAmt >= 0 ? '+' : '-'}${Math.abs(warAmt)}`;
 		expect(summary[0]).toBe(`${powerSummary}${targetSummary}`);
 		const damageSummary = summary[1];
 		if (typeof damageSummary !== 'object' || damageSummary === null) {
@@ -84,7 +84,7 @@ describe('army attack translation summary', () => {
 			(item) => typeof item === 'string' && item.includes(plunder.name),
 		);
 		expect(plunderLine).toBe(`⚔️${plunder.icon} ${plunder.name}`);
-		expect(summary[2]).toBe(`${warSubject} ${warChange}`);
+		expect(summary[2]).toBe(`${warSubject} ${warChangeStr}`);
 	});
 
 	it('describes plunder effects under on-damage entry', () => {
