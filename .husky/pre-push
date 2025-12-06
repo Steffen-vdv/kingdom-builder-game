@@ -1,29 +1,5 @@
 #!/usr/bin/env sh
-# POSIX-compliant pre-push hook for husky v9 compatibility
+# Lightweight pre-push hook - full verification runs in CI
+# Use `npm run verify` manually before pushing if needed
 
-set -eu
-
-log_buffer="$(mktemp -t kingdom-verify.XXXXXX)"
-trap 'rm -f "$log_buffer"' EXIT
-
-# Run verify and capture exit status without pipefail
-verify_status=0
-{ npm run verify 2>&1 || verify_status=$?; } | tee "$log_buffer"
-
-if [ "$verify_status" = "0" ]; then
-  exit 0
-fi
-
-environment_error_pattern='ENOENT|ERR_MODULE_NOT_FOUND|Cannot find module'
-environment_error_pattern="$environment_error_pattern|Missing script: verify"
-environment_error_pattern="$environment_error_pattern|is not recognized as an internal or external command"
-
-if grep -Eq "$environment_error_pattern" "$log_buffer"; then
-  echo "npm run verify is unavailable in this environment; falling back to" >&2
-  echo "direct npm run check && npm run test:coverage." >&2
-  npm run check
-  npm run test:coverage
-  exit 0
-fi
-
-exit "$verify_status"
+exit 0

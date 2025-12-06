@@ -1,14 +1,7 @@
 #!/usr/bin/env sh
+# Lightweight pre-commit hook - runs only lint-staged on changed files
+# Full verification is available via `npm run verify`
 
-# Exit on errors
 set -e
 
-# Run lint-staged on changed files
 npx lint-staged
-
-# Run the lighter CI check pipeline before tests to avoid redundant executions
-npm run check:ci
-
-# Run the fast Vitest suite without redundant lint/type checks
-npm run test:quick
-
