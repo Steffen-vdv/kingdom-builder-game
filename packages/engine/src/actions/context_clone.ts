@@ -57,9 +57,6 @@ function clonePlayerState(player: PlayerState): PlayerState {
 			};
 		}
 	}
-	for (const key of Object.keys(player.statsHistory)) {
-		cloned.statsHistory[key] = Boolean(player.statsHistory[key]);
-	}
 	cloned.lands = player.lands.map((land) => cloneLand(land));
 	cloned.buildings = new Set(player.buildings);
 	cloned.actions = new Set(player.actions);
@@ -105,7 +102,6 @@ function clonePlayerState(player: PlayerState): PlayerState {
 		'resourceTouched',
 		'resourceTierIds',
 		'resourceBoundTouched',
-		'statsHistory',
 		'lands',
 		'buildings',
 		'actions',

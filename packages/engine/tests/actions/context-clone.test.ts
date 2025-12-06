@@ -56,7 +56,7 @@ describe('cloneEngineContext', () => {
 		player.resourceValues[CPopulationRole.Council] = undefined as never;
 		// CStat.armyStrength IS the ResourceV2 ID directly
 		player.resourceValues[CStat.armyStrength] = 3;
-		player.statsHistory[CStat.armyStrength] = true;
+		player.resourceTouched[CStat.armyStrength] = true;
 		const armyStrengthId = CStat.armyStrength;
 		const happinessStatId = CStat.happiness;
 

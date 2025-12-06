@@ -72,7 +72,6 @@ export class PlayerState {
 	resourceTouched: Record<string, boolean>;
 	resourceTierIds: Record<string, string | null>;
 	resourceBoundTouched: Record<string, { lower: boolean; upper: boolean }>;
-	statsHistory: Record<string, boolean>;
 	statSources: Record<string, Record<string, StatSourceContribution>>;
 	lands: Land[] = [];
 	buildings: Set<string> = new Set();
@@ -91,7 +90,6 @@ export class PlayerState {
 		this.resourceTouched = {};
 		this.resourceTierIds = {};
 		this.resourceBoundTouched = {};
-		this.statsHistory = {};
 		this.statSources = {} as Record<
 			string,
 			Record<string, StatSourceContribution>

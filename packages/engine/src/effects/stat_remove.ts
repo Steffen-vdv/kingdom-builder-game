@@ -13,7 +13,7 @@ export const statRemove: EffectHandler = (effect, engineContext, mult = 1) => {
 	}
 	engineContext.activePlayer.resourceValues[key] = newVal;
 	if (newVal !== 0) {
-		engineContext.activePlayer.statsHistory[key] = true;
+		engineContext.activePlayer.resourceTouched[key] = true;
 	}
 	const delta = newVal - before;
 	if (delta !== 0) {

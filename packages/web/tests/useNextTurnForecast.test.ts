@@ -79,7 +79,7 @@ function createPlayer(
 			[primaryPopulation]: index,
 			...(overridePopulation ?? {}),
 		},
-		statsHistory: {},
+		resourceTouchedV2: {},
 		lands: [],
 		buildings: [],
 		actions: [],

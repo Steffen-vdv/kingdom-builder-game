@@ -58,7 +58,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		{},
 	);
 	const stats: Record<string, number> = {};
-	const statsHistory: Record<string, boolean> = {};
+	const resourceTouchedV2: Record<string, boolean> = {};
 	let statIndex = 0;
 	const statEntries = Object.entries(translationAssets.stats);
 	const maxPopulationKey =
@@ -72,7 +72,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		const value = statIndex % 2 === 0 ? statIndex + 1 : 0;
 		stats[statKey] = value;
 		if (value === 0) {
-			statsHistory[statKey] = true;
+			resourceTouchedV2[statKey] = true;
 		}
 		statIndex += 1;
 	}
@@ -89,7 +89,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		name: 'Player One',
 		resources: resourceValues,
 		stats,
-		statsHistory,
+		resourceTouchedV2,
 		population: {},
 		valuesV2,
 	});
@@ -201,7 +201,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			if (statValue !== 0) {
 				return true;
 			}
-			return Boolean(activePlayer.statsHistory?.[statKey]);
+			return Boolean(activePlayer.resourceTouchedV2?.[statKey]);
 		})
 		.map(([statKey]) => statKey);
 	const statForecast = displayableStatKeys.reduce<Record<string, number>>(

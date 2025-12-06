@@ -17,8 +17,8 @@ function sanitizePlayerState(context: ReturnType<typeof createTestEngine>) {
 	for (const key of Object.keys(player.resourceValues)) {
 		player.resourceValues[key] = 0;
 	}
-	for (const key of Object.keys(player.statsHistory)) {
-		player.statsHistory[key] = false;
+	for (const key of Object.keys(player.resourceTouched)) {
+		player.resourceTouched[key] = false;
 	}
 	for (const key of Object.keys(player.statSources)) {
 		player.statSources[key] = {};
