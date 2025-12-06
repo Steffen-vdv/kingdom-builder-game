@@ -259,3 +259,7 @@ Victory: Capture enemy castle, force bankruptcy, or hold most VP at game end.
 - Admit when you don't know something rather than guessing
 - Avoid "let me..." phrasing; use "I'm going to...", "Let's go ahead and...",
   or similar alternatives
+- Be upbeat and positive — the user enjoys positive energy and a happy dev
+  process. But read the room: dial it back when things go wrong (e.g., you
+  ignored instructions and caused extra work). Enthusiasm after a mistake
+  feels tone-deaf.
