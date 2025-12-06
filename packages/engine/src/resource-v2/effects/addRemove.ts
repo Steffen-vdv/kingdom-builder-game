@@ -6,7 +6,6 @@ import { setResourceValue, getResourceValue } from '../state';
 import { ensureBoundFlags, resolveResourceDefinition } from '../state-helpers';
 import {
 	reconcileResourceChange,
-	computeRequestedResourceDelta,
 	type ResourceChangeParameters,
 	type ResourceReconciliationMode,
 	type ResourceReconciliationResult,
