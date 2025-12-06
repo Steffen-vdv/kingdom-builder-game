@@ -1,11 +1,13 @@
-import { useEffect, useRef, type FC } from 'react';
+import React, { useEffect, useMemo, useRef, type FC } from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import ResourceBar from './ResourceBar';
 import CoreResourceBar from './CoreResourceBar';
+import ResourceCategoryRow from './ResourceCategoryRow';
 import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
 import PassiveDisplay from './PassiveDisplay';
 import { useAnimate } from '../../utils/useAutoAnimate';
+import { useGameEngine } from '../../state/GameContext';
 
 interface PlayerPanelProps {
 	player: SessionPlayerStateSnapshot;
@@ -20,10 +22,24 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	isActive = false,
 	onHeightChange,
 }) => {
+	const { translationContext } = useGameEngine();
 	const panelRef = useRef<HTMLDivElement | null>(null);
 	const heightCallbackRef = useRef<typeof onHeightChange | null>(null);
 	const animateBar = useAnimate<HTMLDivElement>();
 	const animateSections = useAnimate<HTMLDivElement>();
+
+	const categories = useMemo(() => {
+		const catalog = translationContext.resourcesV2;
+		if (!catalog?.categories?.ordered?.length) {
+			return [];
+		}
+		return [...catalog.categories.ordered].sort(
+			(a, b) => a.resolvedOrder - b.resolvedOrder,
+		);
+	}, [translationContext.resourcesV2]);
+
+	const useCategoryRendering = categories.length > 0;
+
 	useEffect(() => {
 		heightCallbackRef.current = onHeightChange;
 	}, [onHeightChange]);
@@ -86,8 +102,20 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				ref={animateBar}
 				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
 			>
-				<ResourceBar player={player} />
-				<CoreResourceBar player={player} />
+				{useCategoryRendering ? (
+					categories.map((category) => (
+						<ResourceCategoryRow
+							key={category.id}
+							category={category}
+							player={player}
+						/>
+					))
+				) : (
+					<>
+						<ResourceBar player={player} />
+						<CoreResourceBar player={player} />
+					</>
+				)}
 			</div>
 			<div ref={animateSections} className="flex flex-col gap-2">
 				<LandDisplay player={player} />
