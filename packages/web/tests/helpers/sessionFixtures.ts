@@ -24,6 +24,7 @@ import {
 const EMPTY_RESOURCE_CATALOG_V2: SessionResourceCatalogV2 = Object.freeze({
 	resources: { byId: {}, ordered: [] },
 	groups: { byId: {}, ordered: [] },
+	categories: { byId: {}, ordered: [] },
 });
 
 export const createEmptySnapshotMetadata = (

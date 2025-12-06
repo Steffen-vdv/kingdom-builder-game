@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useRef, type FC } from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
-import ResourceBar from './ResourceBar';
-import CoreResourceBar from './CoreResourceBar';
 import ResourceCategoryRow from './ResourceCategoryRow';
 import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
@@ -37,8 +35,6 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			(a, b) => a.resolvedOrder - b.resolvedOrder,
 		);
 	}, [translationContext.resourcesV2]);
-
-	const useCategoryRendering = categories.length > 0;
 
 	useEffect(() => {
 		heightCallbackRef.current = onHeightChange;
@@ -102,20 +98,13 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				ref={animateBar}
 				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
 			>
-				{useCategoryRendering ? (
-					categories.map((category) => (
-						<ResourceCategoryRow
-							key={category.id}
-							category={category}
-							player={player}
-						/>
-					))
-				) : (
-					<>
-						<ResourceBar player={player} />
-						<CoreResourceBar player={player} />
-					</>
-				)}
+				{categories.map((category) => (
+					<ResourceCategoryRow
+						key={category.id}
+						category={category}
+						player={player}
+					/>
+				))}
 			</div>
 			<div ref={animateSections} className="flex flex-col gap-2">
 				<LandDisplay player={player} />

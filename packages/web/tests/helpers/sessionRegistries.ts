@@ -72,9 +72,13 @@ function cloneResourceDefinition(
 	return clone;
 }
 
+type ExtendedPayload = SessionRegistriesPayload & {
+	resourceCategoriesV2?: Record<string, unknown>;
+};
+
 function cloneRegistriesPayload(
 	payload: SessionRegistriesPayload,
-): SessionRegistriesPayload {
+): ExtendedPayload {
 	const cloneEntries = <T>(entries: Record<string, T> | undefined) => {
 		if (!entries) {
 			return {};
@@ -86,6 +90,7 @@ function cloneRegistriesPayload(
 			]),
 		);
 	};
+	const extPayload = payload as ExtendedPayload;
 	return {
 		actions: cloneEntries(payload.actions),
 		buildings: cloneEntries(payload.buildings),
@@ -100,6 +105,7 @@ function cloneRegistriesPayload(
 		actionCategories: cloneEntries(payload.actionCategories),
 		resourcesV2: cloneEntries(payload.resourcesV2),
 		resourceGroupsV2: cloneEntries(payload.resourceGroupsV2),
+		resourceCategoriesV2: cloneEntries(extPayload.resourceCategoriesV2),
 	};
 }
 
@@ -123,6 +129,7 @@ export function createResourceV2CatalogContent() {
 	const payload = cloneRegistriesPayload(BASE_PAYLOAD);
 	const resourcesV2 = payload.resourcesV2 ?? {};
 	const resourceGroupsV2 = payload.resourceGroupsV2 ?? {};
+	const resourceCategoriesV2 = payload.resourceCategoriesV2 ?? {};
 
 	// Convert to ordered registry format expected by createRuntimeResourceCatalog
 	const resources = {
@@ -133,6 +140,10 @@ export function createResourceV2CatalogContent() {
 		ordered: Object.values(resourceGroupsV2),
 		byId: resourceGroupsV2,
 	};
+	const categories = {
+		ordered: Object.values(resourceCategoriesV2),
+		byId: resourceCategoriesV2,
+	};
 
-	return { resources, groups };
+	return { resources, groups, categories };
 }
