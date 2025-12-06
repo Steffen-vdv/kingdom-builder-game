@@ -1630,6 +1630,34 @@
 			}
 		}
 	},
+	"resourceCategoriesV2": {
+		"category:primary": {
+			"id": "category:primary",
+			"label": "Primary Resources",
+			"icon": "💎",
+			"description": "Core currencies and vital stats.",
+			"order": 0,
+			"resolvedOrder": 0,
+			"contents": [
+				{ "type": "resource", "id": "resource:core:gold" },
+				{ "type": "resource", "id": "resource:core:ap" },
+				{ "type": "resource", "id": "resource:core:happiness" },
+				{ "type": "resource", "id": "resource:core:castleHP" }
+			]
+		},
+		"category:secondary": {
+			"id": "category:secondary",
+			"label": "Secondary Resources",
+			"icon": "📊",
+			"description": "Stats and population.",
+			"order": 1,
+			"resolvedOrder": 1,
+			"contents": [
+				{ "type": "group", "id": "resource-group:stats" },
+				{ "type": "group", "id": "resource-group:population:roles" }
+			]
+		}
+	},
 	"actionCategories": {
 		"basic": {
 			"id": "basic",

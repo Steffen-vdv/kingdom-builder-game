@@ -65,14 +65,23 @@ function cloneResourceCatalogRegistryV2<TDefinition extends { id: string }>(
 	return { ordered, byId };
 }
 
+const EMPTY_CATEGORY_REGISTRY = Object.freeze({
+	ordered: Object.freeze([]),
+	byId: Object.freeze({}),
+});
+
 export function cloneResourceCatalogV2(
 	catalog: SessionResourceCatalogV2,
 ): TranslationResourceCatalogV2 {
 	const resources = cloneResourceCatalogRegistryV2(catalog.resources);
 	const groups = cloneResourceCatalogRegistryV2(catalog.groups);
+	const categories = catalog.categories
+		? cloneResourceCatalogRegistryV2(catalog.categories)
+		: EMPTY_CATEGORY_REGISTRY;
 	return Object.freeze({
 		resources,
 		groups,
+		categories,
 	}) as SessionResourceCatalogV2;
 }
 

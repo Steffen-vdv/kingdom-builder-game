@@ -166,6 +166,10 @@ function convertResourceCatalogSnapshot(
 			ordered: snapshot.groups.ordered,
 			byId: snapshot.groups.byId,
 		},
+		categories: {
+			ordered: snapshot.categories?.ordered ?? [],
+			byId: snapshot.categories?.byId ?? {},
+		},
 	} as RuntimeResourceContent;
 }
 

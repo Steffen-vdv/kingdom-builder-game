@@ -11,6 +11,7 @@ import {
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
+	RESOURCE_CATEGORY_V2_REGISTRY,
 } from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	ActionConfig as ActionDef,
@@ -33,6 +34,7 @@ const BASE: {
 	resourceCatalogV2: {
 		resources: typeof RESOURCE_V2_REGISTRY;
 		groups: typeof RESOURCE_GROUP_V2_REGISTRY;
+		categories: typeof RESOURCE_CATEGORY_V2_REGISTRY;
 	};
 } = {
 	actions: ACTIONS,
@@ -44,6 +46,7 @@ const BASE: {
 	resourceCatalogV2: {
 		resources: RESOURCE_V2_REGISTRY,
 		groups: RESOURCE_GROUP_V2_REGISTRY,
+		categories: RESOURCE_CATEGORY_V2_REGISTRY,
 	},
 };
 

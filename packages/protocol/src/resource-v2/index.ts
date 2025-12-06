@@ -1,4 +1,8 @@
 export type {
+	ResourceBoundOfConfig,
+	ResourceBoundType,
+	ResourceCategoryDefinition,
+	ResourceCategoryItem,
 	ResourceV2Bounds,
 	ResourceV2Definition,
 	ResourceV2GlobalCostConfig,

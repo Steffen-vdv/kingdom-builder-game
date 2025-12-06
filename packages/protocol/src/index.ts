@@ -3,6 +3,10 @@ export * as actions from './actions';
 export * as resourceV2 from './resource-v2';
 
 export type {
+	ResourceBoundOfConfig,
+	ResourceBoundType,
+	ResourceCategoryDefinition,
+	ResourceCategoryItem,
 	ResourceV2Bounds,
 	ResourceV2Definition,
 	ResourceV2GlobalCostConfig,
@@ -128,6 +132,9 @@ export type {
 	SessionResourceCatalogV2,
 	SessionResourceRegistryV2,
 	SessionResourceGroupRegistryV2,
+	SessionResourceCategoryItemV2,
+	SessionResourceCategoryDefinitionV2,
+	SessionResourceCategoryRegistryV2,
 	SessionResourceDefinitionV2,
 	SessionResourceGroupDefinitionV2,
 	SessionResourceGroupParentV2,

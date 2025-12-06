@@ -1,4 +1,4 @@
-import type { ResourceV2Definition, ResourceV2GroupDefinition } from './types';
+import type { ResourceCategoryDefinition, ResourceV2Definition, ResourceV2GroupDefinition } from './types';
 
 interface OrderedRegistry<T extends { id: string }> {
 	readonly byId: Readonly<Record<string, T>>;
@@ -36,4 +36,10 @@ export type ResourceGroupRegistry = OrderedRegistry<ResourceV2GroupDefinition>;
 
 export function createResourceGroupRegistry(definitions: readonly ResourceV2GroupDefinition[]): ResourceGroupRegistry {
 	return createOrderedRegistry('Resource group', definitions);
+}
+
+export type ResourceCategoryRegistry = OrderedRegistry<ResourceCategoryDefinition>;
+
+export function createResourceCategoryRegistry(definitions: readonly ResourceCategoryDefinition[]): ResourceCategoryRegistry {
+	return createOrderedRegistry('Resource category', definitions);
 }

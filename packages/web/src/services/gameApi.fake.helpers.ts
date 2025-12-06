@@ -25,4 +25,5 @@ export const EMPTY_REGISTRIES = {
 	resources: {},
 	resourcesV2: {},
 	resourceGroupsV2: {},
+	resourceCategoriesV2: {},
 } as const;

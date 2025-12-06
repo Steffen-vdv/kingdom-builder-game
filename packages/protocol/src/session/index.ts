@@ -12,6 +12,8 @@ import type {
 } from './resourceCatalogV2';
 
 export type {
+	SessionResourceBoundOfConfigV2,
+	SessionResourceBoundType,
 	SessionResourceTierThresholdV2,
 	SessionResourceTierDefinitionV2,
 	SessionResourceTierTrackMetadataV2,
@@ -24,6 +26,9 @@ export type {
 	SessionResourceGroupDefinitionV2,
 	SessionResourceRegistryV2,
 	SessionResourceGroupRegistryV2,
+	SessionResourceCategoryItemV2,
+	SessionResourceCategoryDefinitionV2,
+	SessionResourceCategoryRegistryV2,
 	SessionResourceCatalogV2,
 } from './resourceCatalogV2';
 

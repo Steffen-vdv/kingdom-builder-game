@@ -15,6 +15,7 @@ import {
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
 import {
+	RESOURCE_CATEGORY_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
 	RESOURCE_V2_REGISTRY,
 } from '@kingdom-builder/contents/registries/resourceV2';
@@ -325,6 +326,9 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		resources: buildResourceRegistry(),
 		resourcesV2: cloneResourceCatalogRegistry(RESOURCE_V2_REGISTRY),
 		resourceGroupsV2: cloneResourceCatalogRegistry(RESOURCE_GROUP_V2_REGISTRY),
+		resourceCategoriesV2: cloneResourceCatalogRegistry(
+			RESOURCE_CATEGORY_V2_REGISTRY,
+		),
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),

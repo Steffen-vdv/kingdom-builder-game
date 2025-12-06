@@ -7,10 +7,6 @@ import type {
 	ResourceV2MetadataSnapshot,
 	ResourceV2ValueSnapshot,
 } from '../../translation';
-import {
-	getLegacyMapping as selectLegacyMapping,
-	getResourceIdForLegacy as selectResourceIdForLegacy,
-} from '../../translation/resourceV2';
 import type { TranslationSignedResourceGainSelectors } from '../../translation/context';
 
 interface SnapshotContext {
@@ -21,28 +17,6 @@ interface SnapshotContext {
 	populationParentId?: string;
 }
 
-function resolveLegacyValue(
-	player: SessionPlayerStateSnapshot,
-	resourceId: string,
-): number | undefined {
-	const mapping = selectLegacyMapping(resourceId);
-	if (!mapping) {
-		return undefined;
-	}
-	const bucket = mapping.bucket;
-	const key = mapping.key;
-	if (bucket === 'resources') {
-		const value = player.resources?.[key];
-		return typeof value === 'number' ? value : undefined;
-	}
-	if (bucket === 'stats') {
-		const value = player.stats?.[key];
-		return typeof value === 'number' ? value : undefined;
-	}
-	const value = player.population?.[key];
-	return typeof value === 'number' ? value : undefined;
-}
-
 function sumPopulationRoles(
 	player: SessionPlayerStateSnapshot,
 	populationRoleIds: readonly string[] | undefined,
@@ -51,30 +25,14 @@ function sumPopulationRoles(
 		return 0;
 	}
 	const valuesV2 = player.valuesV2;
-	if (valuesV2) {
-		let total = 0;
-		for (const roleId of populationRoleIds) {
-			const entry = valuesV2[roleId];
-			if (typeof entry === 'number') {
-				total += entry;
-			}
-		}
-		if (total !== 0) {
-			return total;
-		}
-	}
-	let legacyTotal = 0;
+	let total = 0;
 	for (const roleId of populationRoleIds) {
-		const mapping = selectLegacyMapping(roleId);
-		if (!mapping) {
-			continue;
-		}
-		const roleValue = player.population?.[mapping.key];
-		if (typeof roleValue === 'number') {
-			legacyTotal += roleValue;
+		const entry = valuesV2?.[roleId];
+		if (typeof entry === 'number') {
+			total += entry;
 		}
 	}
-	return legacyTotal;
+	return total;
 }
 
 function sumForecastForPopulation(
@@ -127,7 +85,6 @@ export function createForecastMap(
 	if (!forecast || !forecast.valuesV2) {
 		return map;
 	}
-	// Forecast delta uses unified valuesV2
 	for (const [resourceId, delta] of Object.entries(forecast.valuesV2)) {
 		if (typeof delta !== 'number') {
 			continue;
@@ -156,12 +113,12 @@ export function createResourceSnapshot(
 		populationParentId,
 	} = context;
 	const bounds = resolveBounds(player.resourceBoundsV2, resourceId);
-	let current = player.valuesV2[resourceId];
+	let current = player.valuesV2?.[resourceId];
 	if (typeof current !== 'number') {
 		if (populationParentId && resourceId === populationParentId) {
 			current = sumPopulationRoles(player, populationRoleIds);
 		} else {
-			current = resolveLegacyValue(player, resourceId) ?? 0;
+			current = 0;
 		}
 	}
 	const resolvedCurrent = overrides?.current ?? current ?? 0;
@@ -209,11 +166,6 @@ export function toDescriptorFromMetadata(
 	}
 	return descriptor;
 }
-
-export {
-	selectResourceIdForLegacy as getResourceIdForLegacy,
-	selectLegacyMapping as getLegacyMapping,
-};
 
 export function formatResourceTitle(
 	metadata: ResourceV2MetadataSnapshot,

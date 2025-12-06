@@ -81,6 +81,9 @@ export function buildSessionAssets(
 	const resourceGroupsV2 = freezeSerializedRegistry(
 		structuredClone(resourceCatalog.groups.byId),
 	);
+	const resourceCategoriesV2 = freezeSerializedRegistry(
+		structuredClone(resourceCatalog.categories?.byId ?? {}),
+	);
 	const frozenResources = freezeSerializedRegistry(structuredClone(resources));
 	const registries: SessionRegistriesPayload = {
 		actions: freezeSerializedRegistry(cloneRegistry(actions)),
@@ -90,6 +93,7 @@ export function buildSessionAssets(
 		resources: frozenResources,
 		resourcesV2,
 		resourceGroupsV2,
+		resourceCategoriesV2,
 	};
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;
