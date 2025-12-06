@@ -71,6 +71,7 @@ const baseResponse = {
 	resourceGroupsV2: {
 		'resource-group:core': baseResourceGroupV2,
 	},
+	resourceCategoriesV2: {},
 	primaryIconId: 'gold',
 } as const;
 

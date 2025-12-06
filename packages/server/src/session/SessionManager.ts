@@ -16,6 +16,7 @@ import {
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
+	RESOURCE_CATEGORY_V2_REGISTRY,
 } from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	SessionRegistriesPayload,
@@ -23,6 +24,10 @@ import type {
 	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
+	SerializedRegistry,
+	ResourceV2Definition,
+	ResourceV2GroupDefinition,
+	ResourceCategoryDefinition,
 } from '@kingdom-builder/protocol';
 import {
 	buildSessionMetadata,
@@ -53,6 +58,9 @@ type SessionRuntimeConfig = {
 	rules: RuleSet;
 	resources: SessionResourceRegistry;
 	primaryIconId: string | null;
+	resourcesV2: SerializedRegistry<ResourceV2Definition>;
+	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
+	resourceCategoriesV2: SerializedRegistry<ResourceCategoryDefinition>;
 };
 
 type SessionRecord = {
@@ -126,6 +134,7 @@ export class SessionManager {
 			resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? {
 				resources: RESOURCE_V2_REGISTRY,
 				groups: RESOURCE_GROUP_V2_REGISTRY,
+				categories: RESOURCE_CATEGORY_V2_REGISTRY,
 			},
 		};
 		const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
@@ -144,6 +153,9 @@ export class SessionManager {
 		const resourceGroupsV2 = freezeSerializedRegistry(
 			structuredClone(resourceCatalog.groups.byId),
 		);
+		const resourceCategoriesV2 = freezeSerializedRegistry(
+			structuredClone(resourceCatalog.categories?.byId ?? {}),
+		);
 		const actionCategories = actionCategoryRegistry
 			? (freezeSerializedRegistry(
 					structuredClone(actionCategoryRegistry),
@@ -160,6 +172,7 @@ export class SessionManager {
 			resources,
 			resourcesV2,
 			resourceGroupsV2,
+			resourceCategoriesV2,
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
@@ -188,6 +201,7 @@ export class SessionManager {
 			primaryIconId,
 			resourcesV2,
 			resourceGroupsV2,
+			resourceCategoriesV2,
 		});
 	}
 

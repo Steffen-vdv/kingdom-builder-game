@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import React from 'react';
-import PopulationInfo from '../src/components/player/PopulationInfo';
+import CoreResourceBar from '../src/components/player/CoreResourceBar';
 // prettier-ignore
 import {
 	RegistryMetadataProvider,
@@ -20,7 +20,7 @@ import { createPassiveGame } from './helpers/createPassiveDisplayGame';
 import type { GameEngineContextValue } from '../src/state/GameContext.types';
 import type { SessionPlayerId } from '@kingdom-builder/protocol';
 
-interface PopulationInfoScenario {
+interface CoreResourceBarScenario {
 	registries: ReturnType<typeof createTestSessionScaffold>['registries'];
 	metadata: ReturnType<typeof createTestSessionScaffold>['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
@@ -38,7 +38,9 @@ interface PopulationInfoScenario {
 	maxPopulationKey: string;
 }
 
-function resolveMaxPopulationKey(metadata: PopulationInfoScenario['metadata']) {
+function resolveMaxPopulationKey(
+	metadata: CoreResourceBarScenario['metadata'],
+) {
 	const statEntries = Object.entries(metadata.stats ?? {});
 	const keyed = statEntries.find(([, descriptor]) =>
 		descriptor.label?.toLowerCase().includes('max population'),
@@ -58,13 +60,13 @@ function getStatV2Id(legacyKey: string): string {
 	return `resource:core:${kebab}`;
 }
 
-function createPopulationInfoScenario(
+function createCoreResourceBarScenario(
 	options: {
 		omitMetadataFor?: string;
 		playerStats?: Record<string, number>;
 		statsHistory?: Record<string, boolean>;
 	} = {},
-): PopulationInfoScenario {
+): CoreResourceBarScenario {
 	const scaffold = createTestSessionScaffold();
 	const registries = scaffold.registries;
 	const metadata = structuredClone(scaffold.metadata);
@@ -125,7 +127,7 @@ function createPopulationInfoScenario(
 		metadata,
 	});
 	const metadataSelectors = createTestRegistryMetadata(registries, metadata);
-	const forecast: PopulationInfoScenario['forecast'] = {
+	const forecast: CoreResourceBarScenario['forecast'] = {
 		[activePlayer.id]: {
 			resources: {},
 			stats: {},
@@ -144,7 +146,7 @@ function createPopulationInfoScenario(
 	};
 }
 
-let scenario = createPopulationInfoScenario();
+let scenario = createCoreResourceBarScenario();
 let currentGame = scenario.mockGame;
 let forecastByPlayerId = scenario.forecast;
 
@@ -157,9 +159,9 @@ vi.mock('../src/state/useNextTurnForecast', () => ({
 	useNextTurnForecast: () => forecastByPlayerId,
 }));
 
-describe('<PopulationInfo />', () => {
+describe('<CoreResourceBar />', () => {
 	beforeEach(() => {
-		scenario = createPopulationInfoScenario();
+		scenario = createCoreResourceBarScenario();
 		currentGame = scenario.mockGame;
 		forecastByPlayerId = scenario.forecast;
 	});
@@ -168,7 +170,7 @@ describe('<PopulationInfo />', () => {
 		const { registries, metadata, activePlayer, populationIds } = scenario;
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<PopulationInfo player={activePlayer} />
+				<CoreResourceBar player={activePlayer} />
 			</RegistryMetadataProvider>,
 		);
 		const [primaryRole] = populationIds;
@@ -205,13 +207,13 @@ describe('<PopulationInfo />', () => {
 	it('falls back when registry descriptors are missing', () => {
 		const fallbackRole =
 			scenario.populationIds.at(1) ?? scenario.populationIds[0];
-		scenario = createPopulationInfoScenario({ omitMetadataFor: fallbackRole });
+		scenario = createCoreResourceBarScenario({ omitMetadataFor: fallbackRole });
 		currentGame = scenario.mockGame;
 		forecastByPlayerId = scenario.forecast;
 		const { registries, metadata, metadataSelectors, activePlayer } = scenario;
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<PopulationInfo player={activePlayer} />
+				<CoreResourceBar player={activePlayer} />
 			</RegistryMetadataProvider>,
 		);
 		const descriptor = toDescriptorDisplay(
@@ -232,7 +234,7 @@ describe('<PopulationInfo />', () => {
 	});
 
 	it('renders stat buttons using metadata-driven descriptors', () => {
-		scenario = createPopulationInfoScenario({
+		scenario = createCoreResourceBarScenario({
 			playerStats: { armyStrength: 2 },
 		});
 		currentGame = scenario.mockGame;
@@ -240,7 +242,7 @@ describe('<PopulationInfo />', () => {
 		const { registries, metadata, metadataSelectors, activePlayer } = scenario;
 		render(
 			<RegistryMetadataProvider registries={registries} metadata={metadata}>
-				<PopulationInfo player={activePlayer} />
+				<CoreResourceBar player={activePlayer} />
 			</RegistryMetadataProvider>,
 		);
 		const descriptor = toDescriptorDisplay(

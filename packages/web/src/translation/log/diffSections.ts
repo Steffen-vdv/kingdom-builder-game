@@ -14,9 +14,6 @@ import type {
 } from '../context';
 import {
 	formatResourceV2Summary,
-	getLegacyMapping,
-	getResourceIdForLegacy,
-	type ResourceV2LegacyMapping,
 	type ResourceV2MetadataSnapshot,
 	type ResourceV2ValueSnapshot,
 } from '../resourceV2';
@@ -34,7 +31,6 @@ function isMeaningfulDelta(delta: number): boolean {
 function resolveResourceValue(
 	snapshot: PlayerSnapshot,
 	resourceId: string,
-	_mapping?: ResourceV2LegacyMapping,
 ): number | undefined {
 	// Use valuesV2 directly - all resources, stats, and population are unified
 	const values = snapshot.valuesV2;
@@ -70,15 +66,14 @@ function computeResourceV2Snapshot(
 	resourceId: string,
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
-	mapping?: ResourceV2LegacyMapping,
 ):
 	| {
 			snapshot: ResourceV2ValueSnapshot;
 			change: SignedDelta;
 	  }
 	| undefined {
-	const previous = resolveResourceValue(before, resourceId, mapping);
-	const current = resolveResourceValue(after, resourceId, mapping);
+	const previous = resolveResourceValue(before, resourceId);
+	const current = resolveResourceValue(after, resourceId);
 	const beforeValue = typeof previous === 'number' ? previous : 0;
 	const afterValue = typeof current === 'number' ? current : 0;
 	const delta = afterValue - beforeValue;
@@ -108,13 +103,7 @@ function describeResourceChange(
 	after: PlayerSnapshot,
 	sources: Record<string, string> | undefined,
 ): string | undefined {
-	const mapping: ResourceV2LegacyMapping | undefined = getLegacyMapping(
-		resourceId,
-	) ?? {
-		bucket: 'resources',
-		key,
-	};
-	const diff = computeResourceV2Snapshot(resourceId, before, after, mapping);
+	const diff = computeResourceV2Snapshot(resourceId, before, after);
 	if (!diff) {
 		return undefined;
 	}
@@ -122,15 +111,15 @@ function describeResourceChange(
 	const suffix = formatResourceSource(metadata, diff.change, sources?.[key]);
 	return suffix ? `${summary}${suffix}` : summary;
 }
-function describeStatBreakdown(
-	key: string,
+function describePercentBreakdown(
+	resourceId: string,
 	change: SignedDelta,
 	player: Pick<PlayerSnapshot, 'valuesV2'>,
 	step: StepEffects,
 	_assets: TranslationAssets,
 	metadataSelectors: TranslationResourceV2MetadataSelectors,
 ): string | undefined {
-	const breakdown = findStatPctBreakdown(step, key);
+	const breakdown = findStatPctBreakdown(step, resourceId);
 	if (!breakdown || change.delta <= 0) {
 		return undefined;
 	}
@@ -155,13 +144,13 @@ function describeStatBreakdown(
 		return meta?.displayAsPercent ? `${value * 100}%` : String(value);
 	};
 	const growthValue = formatValue(pctStat, growth);
-	const baseValue = formatValue(key, change.before);
-	const totalValue = formatValue(key, change.after);
+	const baseValue = formatValue(resourceId, change.before);
+	const totalValue = formatValue(resourceId, change.after);
 	// Use V2 metadata for target resource icon
-	const statMetadata = metadataSelectors.get(key);
-	const statIcon = statMetadata?.icon ?? '';
+	const resourceMeta = metadataSelectors.get(resourceId);
+	const resourceIcon = resourceMeta?.icon ?? '';
 	return formatPercentBreakdown(
-		statIcon,
+		resourceIcon,
 		baseValue,
 		popIcon,
 		count,
@@ -171,9 +160,9 @@ function describeStatBreakdown(
 	);
 }
 // Resources are handled uniformly by appendResourceChanges - no ID-based
-// filtering. All V2 resources get source icons when available. Stat-specific
-// formatting (percent breakdowns for growth effects) is handled by
-// appendStatChanges based on effect metadata, not resource ID patterns.
+// filtering. All V2 resources get source icons when available. Percent
+// breakdown formatting is handled by appendPercentBreakdownChanges based on
+// effect metadata, not resource ID patterns.
 
 export function appendResourceChanges(
 	before: PlayerSnapshot,
@@ -185,12 +174,11 @@ export function appendResourceChanges(
 	options?: { trackByKey?: Map<string, ActionDiffChange> },
 ): ActionDiffChange[] {
 	const changes: ActionDiffChange[] = [];
-	// Process ALL resource keys - no ID-based filtering
-	for (const key of resourceKeys) {
-		const resourceId = getResourceIdForLegacy('resources', key) ?? key;
+	// Process ALL resource keys - resource IDs are V2 IDs directly
+	for (const resourceId of resourceKeys) {
 		const metadata = metadataSelectors.get(resourceId);
 		const summary = describeResourceChange(
-			key,
+			resourceId,
 			resourceId,
 			metadata,
 			before,
@@ -202,10 +190,10 @@ export function appendResourceChanges(
 		}
 		const node: ActionDiffChange = {
 			summary,
-			meta: { resourceKey: key },
+			meta: { resourceKey: resourceId },
 		};
 		if (options?.trackByKey) {
-			options.trackByKey.set(key, node);
+			options.trackByKey.set(resourceId, node);
 		}
 		changes.push(node);
 	}
@@ -227,7 +215,7 @@ function collectChangedKeys(
 	return Array.from(keys);
 }
 
-export function appendStatChanges(
+export function appendPercentBreakdownChanges(
 	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
@@ -242,24 +230,17 @@ export function appendStatChanges(
 	if (!step) {
 		return;
 	}
-	// Collect all changed resource keys
+	// Collect all changed resource keys - these are V2 IDs directly
 	const changedKeys = collectChangedKeys(before, after);
-	for (const key of changedKeys) {
-		const resourceId = getResourceIdForLegacy('stats', key) ?? key;
+	for (const resourceId of changedKeys) {
 		const metadata = metadataSelectors.get(resourceId);
-		const mapping: ResourceV2LegacyMapping | undefined = getLegacyMapping(
-			resourceId,
-		) ?? {
-			bucket: 'stats',
-			key,
-		};
-		const diff = computeResourceV2Snapshot(resourceId, before, after, mapping);
+		const diff = computeResourceV2Snapshot(resourceId, before, after);
 		if (!diff) {
 			continue;
 		}
 		// Check if this resource displays as percent - use V2 metadata
 		const displaysAsPercent =
-			metadata.displayAsPercent || statDisplaysAsPercent(key, assets);
+			metadata.displayAsPercent || statDisplaysAsPercent(resourceId, assets);
 		if (displaysAsPercent) {
 			// Percent-based resources don't need breakdown
 			const summary = formatResourceV2Summary(metadata, diff.snapshot);
@@ -267,8 +248,8 @@ export function appendStatChanges(
 			continue;
 		}
 		// Check if there's a percent breakdown effect for this resource
-		const breakdown = describeStatBreakdown(
-			key,
+		const breakdown = describePercentBreakdown(
+			resourceId,
 			diff.change,
 			player,
 			step,

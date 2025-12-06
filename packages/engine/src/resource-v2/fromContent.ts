@@ -1,6 +1,8 @@
 import type {
 	RuntimeResourceBounds,
 	RuntimeResourceCatalog,
+	RuntimeResourceCategoryDefinition,
+	RuntimeResourceCategoryRegistry,
 	RuntimeResourceDefinition,
 	RuntimeResourceGlobalCostConfig,
 	RuntimeResourceGroup,
@@ -8,22 +10,18 @@ import type {
 	RuntimeResourceGroupRegistry,
 	RuntimeResourceMetadata,
 	RuntimeResourceRegistry,
-	RuntimeResourceTierDefinition,
-	RuntimeResourceTierThreshold,
-	RuntimeResourceTierTrack,
-	RuntimeResourceTierTrackMetadata,
 } from './types';
 
 import type {
+	ContentCategoryDefinition,
 	ContentOrderedRegistry,
 	ContentResourceDefinition,
 	ContentResourceGroupDefinition,
 	ContentResourceGroupParent,
-	ContentTierDefinition,
-	ContentTierTrack,
-	ContentTierTrackMetadata,
-	ContentTierThreshold,
 } from './content-types';
+
+import { normalizeBoundOf, normalizeCategory } from './fromContent-categories';
+import { normalizeTierTrack } from './fromContent-tiers';
 
 const RUNTIME_PREFIX = 'ResourceV2 runtime';
 
@@ -32,11 +30,7 @@ type NumericField =
 	| 'groupOrder'
 	| 'lowerBound'
 	| 'upperBound'
-	| 'globalCost.amount'
-	| 'tier.metadata.order'
-	| 'tier.order'
-	| 'tier.threshold.min'
-	| 'tier.threshold.max';
+	| 'globalCost.amount';
 
 function assertInteger(
 	value: number,
@@ -98,87 +92,6 @@ function normalizeMetadata(
 		resolvedOrder: typeof order === 'number' ? order : fallbackOrder,
 		tags: Object.freeze([...(tags ?? [])]),
 	};
-}
-
-function normalizeTierThreshold(
-	threshold: ContentTierThreshold,
-	context: string,
-): RuntimeResourceTierThreshold {
-	const { min, max } = threshold ?? {};
-	if (typeof min === 'number') {
-		assertInteger(min, 'tier.threshold.min', context);
-	}
-	if (typeof max === 'number') {
-		assertInteger(max, 'tier.threshold.max', context);
-	}
-	return Object.freeze({
-		min: typeof min === 'number' ? min : null,
-		max: typeof max === 'number' ? max : null,
-	});
-}
-
-function normalizeTierMetadata(
-	metadata: ContentTierTrackMetadata,
-	context: string,
-	fallbackOrder: number,
-): RuntimeResourceTierTrackMetadata {
-	const { order } = metadata;
-	if (typeof order === 'number') {
-		assertInteger(order, 'tier.metadata.order', context);
-	}
-	return {
-		id: metadata.id,
-		label: metadata.label,
-		order: typeof order === 'number' ? order : null,
-		resolvedOrder: typeof order === 'number' ? order : fallbackOrder,
-		...(metadata.icon !== undefined ? { icon: metadata.icon } : {}),
-		...(metadata.description !== undefined
-			? { description: metadata.description }
-			: {}),
-	};
-}
-
-function normalizeTierDefinition(
-	definition: ContentTierDefinition,
-	context: string,
-	fallbackOrder: number,
-): RuntimeResourceTierDefinition {
-	const tierContext = `${context} tier "${definition.id}"`;
-	const { order, enterEffects, exitEffects } = definition;
-	if (typeof order === 'number') {
-		assertInteger(order, 'tier.order', tierContext);
-	}
-	const runtime: RuntimeResourceTierDefinition = {
-		id: definition.id,
-		label: definition.label,
-		order: typeof order === 'number' ? order : null,
-		resolvedOrder: typeof order === 'number' ? order : fallbackOrder,
-		threshold: normalizeTierThreshold(definition.threshold, tierContext),
-		enterEffects: Object.freeze([...(enterEffects ?? [])]),
-		exitEffects: Object.freeze([...(exitEffects ?? [])]),
-		...(definition.icon !== undefined ? { icon: definition.icon } : {}),
-		...(definition.description !== undefined
-			? { description: definition.description }
-			: {}),
-	};
-	return Object.freeze(runtime);
-}
-
-function normalizeTierTrack(
-	track: ContentTierTrack | undefined,
-	context: string,
-): RuntimeResourceTierTrack | undefined {
-	if (!track) {
-		return undefined;
-	}
-	const metadata = normalizeTierMetadata(track.metadata, context, 0);
-	const tiers = track.tiers.map((tier, index) =>
-		normalizeTierDefinition(tier, context, index),
-	);
-	return Object.freeze({
-		metadata: Object.freeze({ ...metadata }),
-		tiers: Object.freeze([...tiers]),
-	});
 }
 
 function assertClampOnlyReconciliation(
@@ -245,11 +158,13 @@ function normalizeGlobalCost(
 export interface RuntimeResourceContent {
 	readonly resources: ContentOrderedRegistry<ContentResourceDefinition>;
 	readonly groups: ContentOrderedRegistry<ContentResourceGroupDefinition>;
+	readonly categories?: ContentOrderedRegistry<ContentCategoryDefinition>;
 }
 
 export function createRuntimeResourceCatalog({
 	resources,
 	groups,
+	categories,
 }: RuntimeResourceContent): RuntimeResourceCatalog {
 	const runtimeGroups: RuntimeResourceGroup[] = [];
 	const groupsById: Record<string, RuntimeResourceGroup> = {};
@@ -318,6 +233,7 @@ export function createRuntimeResourceCatalog({
 		}
 
 		const tierTrack = normalizeTierTrack(definition.tierTrack, context);
+		const boundOf = normalizeBoundOf(definition.boundOf, context);
 		const onValueIncrease = Object.freeze([
 			...(definition.onValueIncrease ?? []),
 		]);
@@ -336,6 +252,7 @@ export function createRuntimeResourceCatalog({
 			resolvedGroupOrder,
 			onValueIncrease,
 			onValueDecrease,
+			boundOf,
 			...(globalCost ? { globalCost } : {}),
 			...(tierTrack ? { tierTrack } : {}),
 		});
@@ -353,8 +270,28 @@ export function createRuntimeResourceCatalog({
 		ordered: Object.freeze([...runtimeGroups]),
 	};
 
+	const runtimeCategories: RuntimeResourceCategoryDefinition[] = [];
+	const categoriesById: Record<string, RuntimeResourceCategoryDefinition> = {};
+	if (categories) {
+		for (const [index, category] of categories.ordered.entries()) {
+			const runtimeCategory = normalizeCategory(category, index);
+			if (categoriesById[runtimeCategory.id]) {
+				throw new Error(
+					`${RUNTIME_PREFIX} received duplicate category id "${runtimeCategory.id}".`,
+				);
+			}
+			categoriesById[runtimeCategory.id] = runtimeCategory;
+			runtimeCategories.push(runtimeCategory);
+		}
+	}
+	const runtimeCategoryRegistry: RuntimeResourceCategoryRegistry = {
+		byId: Object.freeze({ ...categoriesById }),
+		ordered: Object.freeze([...runtimeCategories]),
+	};
+
 	return Object.freeze({
 		resources: runtimeResourceRegistry,
 		groups: runtimeGroupRegistry,
+		categories: runtimeCategoryRegistry,
 	});
 }

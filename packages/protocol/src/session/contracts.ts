@@ -25,6 +25,7 @@ import type {
 } from './index';
 import type { RuleSet } from '../services';
 import type {
+	ResourceCategoryDefinition,
 	ResourceV2Definition,
 	ResourceV2GroupDefinition,
 } from '../resource-v2';
@@ -73,6 +74,11 @@ export interface SessionRegistriesPayload {
 	 * registries.
 	 */
 	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
+	/**
+	 * ResourceV2 registry of category definitions that group resources and
+	 * resource groups into UI rows. Always provided with session registries.
+	 */
+	resourceCategoriesV2: SerializedRegistry<ResourceCategoryDefinition>;
 }
 
 export type SessionMetadataSnapshot = Pick<
@@ -111,6 +117,12 @@ export interface SessionRuntimeConfigResponse {
 	 * for clients consuming runtime configuration data.
 	 */
 	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
+	/**
+	 * ResourceV2 category registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceCategoriesV2}. Always provided
+	 * for clients consuming runtime configuration data.
+	 */
+	resourceCategoriesV2: SerializedRegistry<ResourceCategoryDefinition>;
 }
 
 export interface SessionCreateResponse {

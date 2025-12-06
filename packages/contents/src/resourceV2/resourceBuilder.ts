@@ -1,5 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import type { ResourceV2Definition, ResourceV2TierTrack } from './types';
+import type { ResourceBoundType, ResourceV2Definition, ResourceV2TierTrack } from './types';
 
 interface ResourceGroupOptions {
 	order?: number;
@@ -39,6 +39,14 @@ export interface ResourceV2Builder {
 	tierTrack(track: ResourceV2TierTrack): this;
 	globalActionCost(amount: number): this;
 	/**
+	 * Declares that this resource represents a bound of another resource.
+	 * Used for UI display (e.g., showing "5/10" for current/max).
+	 * Resources with boundOf should not be displayed independently in the UI.
+	 * @param resourceId The ID of the resource this is a bound of
+	 * @param boundType Whether this is an 'upper' (max) or 'lower' (min) bound
+	 */
+	boundOf(resourceId: string, boundType: ResourceBoundType): this;
+	/**
 	 * Effects to run when this resource's value increases.
 	 * Runs once per unit of increase.
 	 */
@@ -66,6 +74,7 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 	private globalCostSet = false;
 	private onValueIncreaseSet = false;
 	private onValueDecreaseSet = false;
+	private boundOfSet = false;
 
 	constructor(id: string) {
 		if (!id) {
@@ -254,6 +263,21 @@ class ResourceV2BuilderImpl implements ResourceV2Builder {
 		}
 		this.definition.onValueDecrease = effects;
 		this.onValueDecreaseSet = true;
+		return this;
+	}
+
+	boundOf(resourceId: string, boundType: ResourceBoundType) {
+		if (this.boundOfSet) {
+			throw new Error(`${builderName} already configured boundOf(). Remove the duplicate call.`);
+		}
+		if (!resourceId) {
+			throw new Error(`${builderName} boundOf() requires a non-empty resourceId.`);
+		}
+		if (boundType !== 'upper' && boundType !== 'lower') {
+			throw new Error(`${builderName} boundOf() requires boundType to be 'upper' or 'lower'.`);
+		}
+		this.definition.boundOf = { resourceId, boundType };
+		this.boundOfSet = true;
 		return this;
 	}
 

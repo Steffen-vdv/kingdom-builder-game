@@ -30,6 +30,17 @@ export type { PopulationDef, TriggerKey, Focus } from './defs';
 export type { ActionEffectGroupDef, ActionEffectGroupOptionDef } from './config/builders';
 export { ON_PAY_UPKEEP_STEP, ON_GAIN_INCOME_STEP, ON_GAIN_AP_STEP, BROOM_ICON, RESOURCE_TRANSFER_ICON } from './defs';
 export { formatPassiveRemoval } from './text';
-export { resourceV2, resourceGroup, createResourceV2Registry, createResourceGroupRegistry, RESOURCE_V2_REGISTRY, RESOURCE_GROUP_V2_REGISTRY, buildResourceCatalogV2 } from './resourceV2';
-export type { ResourceV2Builder, ResourceGroupBuilder, ResourceV2Registry, ResourceGroupRegistry, ResourceCatalogV2 } from './resourceV2';
+export {
+	resourceV2,
+	resourceGroup,
+	resourceCategory,
+	createResourceV2Registry,
+	createResourceGroupRegistry,
+	createResourceCategoryRegistry,
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+	RESOURCE_CATEGORY_V2_REGISTRY,
+	buildResourceCatalogV2,
+} from './resourceV2';
+export type { ResourceV2Builder, ResourceGroupBuilder, ResourceCategoryBuilder, ResourceV2Registry, ResourceGroupRegistry, ResourceCategoryRegistry, ResourceCatalogV2 } from './resourceV2';
 export { happinessModifierId, happinessPassiveId, happinessTierId, type HappinessModifierKind, type HappinessTierSlug } from './happinessHelpers';

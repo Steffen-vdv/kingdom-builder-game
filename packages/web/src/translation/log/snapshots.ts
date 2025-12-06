@@ -9,7 +9,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import {
 	appendResourceChanges,
-	appendStatChanges,
+	appendPercentBreakdownChanges,
 	appendBuildingChanges,
 	appendLandChanges,
 	appendSlotChanges,
@@ -138,7 +138,7 @@ export function diffSnapshots(
 	for (const change of resourceChanges) {
 		changeSummaries.push(change.summary);
 	}
-	appendStatChanges(
+	appendPercentBreakdownChanges(
 		changeSummaries,
 		previousSnapshot,
 		nextSnapshot,

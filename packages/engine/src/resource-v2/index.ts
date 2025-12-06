@@ -6,11 +6,17 @@ export type {
 	RuntimeResourceMetadata,
 	RuntimeResourceBounds,
 	RuntimeResourceGlobalCostConfig,
+	RuntimeResourceTriggers,
+	RuntimeResourceBoundType,
+	RuntimeResourceBoundOfConfig,
 	RuntimeResourceDefinition,
 	RuntimeResourceGroupParent,
 	RuntimeResourceGroup,
 	RuntimeResourceRegistry,
 	RuntimeResourceGroupRegistry,
+	RuntimeResourceCategoryItem,
+	RuntimeResourceCategoryDefinition,
+	RuntimeResourceCategoryRegistry,
 	RuntimeResourceCatalog,
 } from './types';
 

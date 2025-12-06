@@ -64,6 +64,24 @@ export interface ResourceV2Triggers {
 	onValueDecrease?: readonly EffectDef[];
 }
 
+/**
+ * Specifies which type of bound this resource represents.
+ * - 'upper': This resource is the upper bound (max) of another resource.
+ * - 'lower': This resource is the lower bound (min) of another resource.
+ */
+export type ResourceBoundType = 'upper' | 'lower';
+
+/**
+ * Configuration for a resource that acts as a bound of another resource.
+ * The UI will display these together (e.g., "5/10" for current/max).
+ */
+export interface ResourceBoundOfConfig {
+	/** The resource ID this resource is a bound of */
+	resourceId: string;
+	/** Whether this is an upper or lower bound */
+	boundType: ResourceBoundType;
+}
+
 export interface ResourceV2Definition extends ResourceV2Metadata, ResourceV2Bounds, ResourceV2Triggers {
 	displayAsPercent?: boolean;
 	allowDecimal?: boolean;
@@ -73,6 +91,12 @@ export interface ResourceV2Definition extends ResourceV2Metadata, ResourceV2Boun
 	groupOrder?: number;
 	globalCost?: ResourceV2GlobalCostConfig;
 	tierTrack?: ResourceV2TierTrack;
+	/**
+	 * Declares that this resource represents a bound of another resource.
+	 * Used for UI display (e.g., showing "5/10" for current/max).
+	 * Resources with boundOf should not be displayed independently in the UI.
+	 */
+	boundOf?: ResourceBoundOfConfig;
 }
 
 export interface ResourceV2GroupParent extends ResourceV2Metadata, ResourceV2Bounds {
@@ -86,4 +110,24 @@ export interface ResourceV2GroupDefinition {
 	id: string;
 	order?: number;
 	parent?: ResourceV2GroupParent;
+}
+
+/**
+ * A reference to a resource or resource group within a category.
+ * The category contains these in display order.
+ */
+export type ResourceCategoryItem = { type: 'resource'; id: string } | { type: 'group'; id: string };
+
+/**
+ * A category groups resources and resource groups into a UI row.
+ * Primary/Secondary categories dictate the resource bar layout.
+ */
+export interface ResourceCategoryDefinition {
+	id: string;
+	label: string;
+	icon?: string;
+	description?: string;
+	order?: number;
+	/** Resources and groups in this category, in display order */
+	contents: readonly ResourceCategoryItem[];
 }

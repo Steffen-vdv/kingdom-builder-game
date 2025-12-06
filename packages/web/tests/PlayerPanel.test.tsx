@@ -6,7 +6,6 @@ import React from 'react';
 import PlayerPanel from '../src/components/player/PlayerPanel';
 import { createPlayerPanelFixtures } from './helpers/playerPanelFixtures';
 import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContext';
-import { getLegacyMapping } from '../src/components/player/resourceV2Snapshots';
 
 const {
 	activePlayer: activePlayerSnapshot,
@@ -78,10 +77,6 @@ describe('<PlayerPanel />', () => {
 			);
 			const value = activePlayerSnapshot.valuesV2?.[definition.id] ?? 0;
 			const label = metadata?.label ?? definition.id;
-			// Get forecast for this resource using legacy mapping
-			const mapping = getLegacyMapping(definition.id);
-			const legacyKey = mapping?.key ?? definition.id;
-			const _delta = resourceForecast[legacyKey];
 			// Resource buttons may include forecast: "Label: value (+delta)"
 			// Use regex to match with/without forecast (escape label for regex)
 			const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -102,11 +97,11 @@ describe('<PlayerPanel />', () => {
 		const ungroupedResources = v2Resources.filter(
 			(def) => def.groupId === null || def.groupId === undefined,
 		);
-		// Find first resource with a positive forecast
+		// Find first resource with a positive forecast - use V2 ID directly
 		const resourceWithPositiveForecast = ungroupedResources.find((def) => {
-			const mapping = getLegacyMapping(def.id);
-			const key = mapping?.key ?? def.id;
-			return (resourceForecast[key] ?? 0) > 0;
+			const delta =
+				forecastByPlayerId[activePlayerSnapshot.id].valuesV2[def.id];
+			return (delta ?? 0) > 0;
 		});
 		if (resourceWithPositiveForecast) {
 			const firstV2Resource = resourceWithPositiveForecast;

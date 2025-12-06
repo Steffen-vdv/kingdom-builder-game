@@ -131,6 +131,27 @@ const resourceV2GroupRegistrySchema = z.record(
 	resourceV2GroupDefinitionSchema,
 );
 
+const resourceCategoryItemSchema = z.union([
+	z.object({ type: z.literal('resource'), id: z.string() }),
+	z.object({ type: z.literal('group'), id: z.string() }),
+]);
+
+const resourceCategoryDefinitionSchema = z
+	.object({
+		id: z.string(),
+		label: z.string(),
+		icon: z.string().optional(),
+		description: z.string().optional(),
+		order: z.number().optional(),
+		contents: z.array(resourceCategoryItemSchema),
+	})
+	.passthrough();
+
+const resourceCategoriesV2RegistrySchema = z.record(
+	z.string(),
+	resourceCategoryDefinitionSchema,
+);
+
 export const sessionRegistriesSchema = z
 	.object({
 		actions: serializedRegistrySchema(actionSchema),
@@ -141,6 +162,7 @@ export const sessionRegistriesSchema = z
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
 		resourcesV2: resourceV2RegistrySchema,
 		resourceGroupsV2: resourceV2GroupRegistrySchema,
+		resourceCategoriesV2: resourceCategoriesV2RegistrySchema,
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 
@@ -153,6 +175,7 @@ export const runtimeConfigResponseSchema = z
 		primaryIconId: z.string().nullable(),
 		resourcesV2: resourceV2RegistrySchema,
 		resourceGroupsV2: resourceV2GroupRegistrySchema,
+		resourceCategoriesV2: resourceCategoriesV2RegistrySchema,
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
 

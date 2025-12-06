@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendStatChanges } from '../src/translation/log/diffSections';
+import { appendPercentBreakdownChanges } from '../src/translation/log/diffSections';
 import { type PlayerSnapshot } from '../src/translation/log';
 import { type StepEffects } from '../src/translation/log/statBreakdown';
 import { formatPercentBreakdown } from '../src/translation/log/diffFormatting';
@@ -15,7 +15,7 @@ import {
 	selectStatDescriptor,
 } from '../src/translation/effects/registrySelectors';
 
-// Format value using V2 metadata like describeStatBreakdown does
+// Format value using V2 metadata like describePercentBreakdown does
 function formatV2Value(
 	id: string,
 	value: number,
@@ -71,7 +71,7 @@ function createTranslationSetup() {
 	};
 }
 
-describe('appendStatChanges', () => {
+describe('appendPercentBreakdownChanges', () => {
 	it('uses the provided player snapshot for percent breakdowns', () => {
 		const { translationContext, primaryStatId, secondaryStatId, populationId } =
 			createTranslationSetup();
@@ -131,7 +131,7 @@ describe('appendStatChanges', () => {
 		};
 		const assets = translationContext.assets;
 		const changes: string[] = [];
-		appendStatChanges(
+		appendPercentBreakdownChanges(
 			changes,
 			before,
 			after,
@@ -259,7 +259,7 @@ describe('appendStatChanges', () => {
 			},
 		};
 		const changes: string[] = [];
-		appendStatChanges(
+		appendPercentBreakdownChanges(
 			changes,
 			before,
 			after,
