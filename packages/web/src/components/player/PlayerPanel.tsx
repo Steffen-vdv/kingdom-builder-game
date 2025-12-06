@@ -1,7 +1,7 @@
 import { useEffect, useRef, type FC } from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import ResourceBar from './ResourceBar';
-import PopulationInfo from './PopulationInfo';
+import CoreResourceBar from './CoreResourceBar';
 import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
 import PassiveDisplay from './PassiveDisplay';
@@ -87,7 +87,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				className="panel-card flex w-full flex-col items-stretch gap-2 px-4 py-3"
 			>
 				<ResourceBar player={player} />
-				<PopulationInfo player={player} />
+				<CoreResourceBar player={player} />
 			</div>
 			<div ref={animateSections} className="flex flex-col gap-2">
 				<LandDisplay player={player} />

@@ -5,14 +5,14 @@ import type {
 } from '../../translation';
 import ResourceButton, { type ResourceButtonProps } from './ResourceButton';
 
-export interface StatButtonProps {
+export interface CoreResourceButtonProps {
 	metadata: ResourceV2MetadataSnapshot;
 	snapshot: ResourceV2ValueSnapshot;
 	onShow: (resourceId: string) => void;
 	onHide: () => void;
 }
 
-const StatButtonComponent: React.FC<StatButtonProps> = ({
+const CoreResourceButtonComponent: React.FC<CoreResourceButtonProps> = ({
 	metadata,
 	snapshot,
 	onShow,
@@ -27,6 +27,6 @@ const StatButtonComponent: React.FC<StatButtonProps> = ({
 	return <ResourceButton {...props} />;
 };
 
-const StatButton = React.memo(StatButtonComponent);
+const CoreResourceButton = React.memo(CoreResourceButtonComponent);
 
-export default StatButton;
+export default CoreResourceButton;

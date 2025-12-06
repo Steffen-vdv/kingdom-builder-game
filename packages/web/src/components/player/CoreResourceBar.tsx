@@ -3,26 +3,24 @@ import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
 import { getStatBreakdownSummary } from '../../utils/stats';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
-import { GENERAL_STAT_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
+import { GENERAL_CORE_RESOURCE_INFO, PLAYER_INFO_CARD_BG } from './infoCards';
 import {
 	buildResourceV2HoverSections,
 	type ResourceV2MetadataSnapshot,
 	type ResourceV2ValueSnapshot,
 } from '../../translation';
 import { formatResourceMagnitude } from './ResourceButton';
-import StatButton from './StatButton';
+import CoreResourceButton from './CoreResourceButton';
 import {
 	createForecastMap,
 	createResourceSnapshot,
 	formatResourceTitle,
-	getLegacyMapping,
-	getResourceIdForLegacy,
 	toDescriptorFromMetadata,
 } from './resourceV2Snapshots';
 import type { SummaryGroup } from '../../translation/content/types';
 
 const POPULATION_ARCHETYPE_LABEL = 'Archetypes';
-const MAX_POPULATION_LEGACY_KEY = 'maxPopulation';
+const MAX_POPULATION_RESOURCE_ID = 'resource:core:max-population';
 
 const ROLE_BUTTON_CLASSES = [
 	'cursor-help rounded-full border border-white/40 bg-white/40 px-2 py-1',
@@ -30,7 +28,7 @@ const ROLE_BUTTON_CLASSES = [
 	'dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100',
 ].join(' ');
 
-interface PopulationInfoProps {
+interface CoreResourceBarProps {
 	player: SessionPlayerStateSnapshot;
 }
 
@@ -39,7 +37,7 @@ interface ResourceEntry {
 	snapshot: ResourceV2ValueSnapshot;
 }
 
-const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
+const CoreResourceBar: React.FC<CoreResourceBarProps> = ({ player }) => {
 	const { handleHoverCard, clearHoverCard, translationContext } =
 		useGameEngine();
 	const resourceCatalog = translationContext.resourcesV2;
@@ -71,7 +69,7 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		return undefined;
 	}, [populationRoleDefinitions, resourceCatalog]);
 	const populationParentId = populationGroupDefinition?.parent?.id;
-	const statDefinitions = React.useMemo(
+	const coreResourceDefinitions = React.useMemo(
 		() =>
 			resourceCatalog
 				? resourceCatalog.resources.ordered.filter(
@@ -114,18 +112,24 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 			translationContext.resourceMetadataV2,
 		],
 	);
-	const statEntries = React.useMemo<ResourceEntry[]>(
+	const coreResourceEntries = React.useMemo<ResourceEntry[]>(
 		() =>
-			statDefinitions.map((definition) => ({
+			coreResourceDefinitions.map((definition) => ({
 				metadata: translationContext.resourceMetadataV2.get(definition.id),
 				snapshot: createResourceSnapshot(definition.id, snapshotContext),
 			})),
-		[statDefinitions, snapshotContext, translationContext.resourceMetadataV2],
+		[
+			coreResourceDefinitions,
+			snapshotContext,
+			translationContext.resourceMetadataV2,
+		],
 	);
-	const statEntryMap = React.useMemo(
+	const coreResourceEntryMap = React.useMemo(
 		() =>
-			new Map(statEntries.map((entry) => [entry.snapshot.id, entry] as const)),
-		[statEntries],
+			new Map(
+				coreResourceEntries.map((entry) => [entry.snapshot.id, entry] as const),
+			),
+		[coreResourceEntries],
 	);
 	const populationTotalEntry = React.useMemo(() => {
 		if (!populationParentId) {
@@ -143,34 +147,15 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 		snapshotContext,
 		translationContext.resourceMetadataV2,
 	]);
-	const populationGroupMetadata = React.useMemo(() => {
+	const populationGroupMetadataSnapshot = React.useMemo(() => {
 		if (!populationGroupDefinition) {
 			return undefined;
 		}
-		return translationContext.resourceGroupMetadataV2.get(
+		const meta = translationContext.resourceGroupMetadataV2.get(
 			populationGroupDefinition.id,
 		);
+		return meta ? ({ ...meta } as ResourceV2MetadataSnapshot) : undefined;
 	}, [populationGroupDefinition, translationContext.resourceGroupMetadataV2]);
-	const populationGroupMetadataSnapshot = React.useMemo(
-		() =>
-			populationGroupMetadata
-				? ({ ...populationGroupMetadata } as ResourceV2MetadataSnapshot)
-				: undefined,
-		[populationGroupMetadata],
-	);
-	const populationSummaries = React.useMemo(() => {
-		return populationEntries.map((entry) => {
-			const descriptor = toDescriptorFromMetadata(entry.metadata);
-			const base = [descriptor.icon, descriptor.label]
-				.filter((part) => part && String(part).trim().length > 0)
-				.join(' ')
-				.trim();
-			if (descriptor.description) {
-				return `${base} - ${descriptor.description}`.trim();
-			}
-			return base;
-		});
-	}, [populationEntries]);
 	const populationCardSections = React.useMemo(() => {
 		const sections: (string | SummaryGroup)[] = [];
 		if (populationTotalEntry) {
@@ -181,24 +166,25 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				),
 			);
 		}
-		populationSummaries.forEach((summary) => sections.push(summary));
+		for (const entry of populationEntries) {
+			const desc = toDescriptorFromMetadata(entry.metadata);
+			const base = [desc.icon, desc.label].filter(Boolean).join(' ').trim();
+			sections.push(desc.description ? `${base} - ${desc.description}` : base);
+		}
 		return sections;
-	}, [populationSummaries, populationTotalEntry]);
+	}, [populationEntries, populationTotalEntry]);
 	const showPopulationCard = React.useCallback(() => {
-		const metadata =
-			populationGroupMetadataSnapshot ??
-			(populationTotalEntry ? populationTotalEntry.metadata : undefined);
-		if (!metadata) {
+		const meta =
+			populationGroupMetadataSnapshot ?? populationTotalEntry?.metadata;
+		if (!meta) {
 			return;
 		}
 		handleHoverCard({
-			title: formatResourceTitle(metadata),
+			title: formatResourceTitle(meta),
 			effects: populationCardSections,
 			effectsTitle: POPULATION_ARCHETYPE_LABEL,
 			requirements: [],
-			...(metadata.description
-				? { description: metadata.description ?? undefined }
-				: {}),
+			...(meta.description ? { description: meta.description } : {}),
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
 	}, [
@@ -252,25 +238,23 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				}),
 		[handleHoverCard, populationEntries, showPopulationCard],
 	);
-	const showGeneralStatCard = () =>
+	const showOverviewCard = () =>
 		handleHoverCard({
-			title: `${GENERAL_STAT_INFO.icon} ${GENERAL_STAT_INFO.label}`,
+			title: `${GENERAL_CORE_RESOURCE_INFO.icon} ${GENERAL_CORE_RESOURCE_INFO.label}`,
 			effects: [],
 			requirements: [],
-			description: GENERAL_STAT_INFO.description,
+			description: GENERAL_CORE_RESOURCE_INFO.description,
 			bgClass: PLAYER_INFO_CARD_BG,
 		});
-	const showStatCard = React.useCallback(
+	const showCoreResourceCard = React.useCallback(
 		(resourceId: string) => {
-			const entry = statEntryMap.get(resourceId);
+			const entry = coreResourceEntryMap.get(resourceId);
 			if (!entry) {
 				return;
 			}
-			const legacyMapping = getLegacyMapping(resourceId);
-			const statKey =
-				legacyMapping?.bucket === 'stats' ? legacyMapping.key : resourceId;
+			// Use V2 resourceId directly - resourceSources is keyed by V2 IDs
 			const breakdown = getStatBreakdownSummary(
-				statKey,
+				resourceId,
 				player,
 				translationContext,
 			);
@@ -294,54 +278,39 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-		[handleHoverCard, player, statEntryMap, translationContext],
+		[handleHoverCard, player, coreResourceEntryMap, translationContext],
 	);
 	const populationTotal = populationTotalEntry?.snapshot.current ?? 0;
-	const maxPopulationId = React.useMemo(
-		() =>
-			getResourceIdForLegacy('stats', MAX_POPULATION_LEGACY_KEY) ??
-			MAX_POPULATION_LEGACY_KEY,
-		[],
+	const maxPopulationEntry = coreResourceEntryMap.get(
+		MAX_POPULATION_RESOURCE_ID,
 	);
-	const maxPopulationEntry = statEntryMap.get(maxPopulationId);
 	const maxPopulation = maxPopulationEntry?.snapshot.current ?? 0;
-	const populationDisplayMetadata = React.useMemo(() => {
-		if (populationTotalEntry?.metadata) {
-			return populationTotalEntry.metadata;
-		}
-		if (populationGroupMetadataSnapshot) {
-			return populationGroupMetadataSnapshot;
-		}
-		return {
+	const populationDisplayMetadata =
+		populationTotalEntry?.metadata ??
+		populationGroupMetadataSnapshot ??
+		({
 			id: populationParentId ?? 'population',
 			label: 'Population',
-		} as ResourceV2MetadataSnapshot;
-	}, [
-		populationGroupMetadataSnapshot,
-		populationParentId,
-		populationTotalEntry,
-	]);
-	const maxPopulationMetadata = React.useMemo(
-		() => maxPopulationEntry?.metadata ?? populationDisplayMetadata,
-		[maxPopulationEntry, populationDisplayMetadata],
-	);
-	const statEntriesForDisplay = statEntries.filter(
-		(entry) => entry.snapshot.id !== maxPopulationId,
+		} as ResourceV2MetadataSnapshot);
+	const maxPopulationMetadata =
+		maxPopulationEntry?.metadata ?? populationDisplayMetadata;
+	const coreResourceEntriesForDisplay = coreResourceEntries.filter(
+		(entry) => entry.snapshot.id !== MAX_POPULATION_RESOURCE_ID,
 	);
 
 	return (
-		<div className="info-bar stat-bar">
+		<div className="info-bar core-resource-bar">
 			<button
 				type="button"
 				className="info-bar__icon hoverable cursor-help"
-				aria-label={`${GENERAL_STAT_INFO.label} overview`}
-				onMouseEnter={showGeneralStatCard}
+				aria-label={`${GENERAL_CORE_RESOURCE_INFO.label} overview`}
+				onMouseEnter={showOverviewCard}
 				onMouseLeave={clearHoverCard}
-				onFocus={showGeneralStatCard}
+				onFocus={showOverviewCard}
 				onBlur={clearHoverCard}
-				onClick={showGeneralStatCard}
+				onClick={showOverviewCard}
 			>
-				{GENERAL_STAT_INFO.icon}
+				{GENERAL_CORE_RESOURCE_INFO.icon}
 			</button>
 			<div
 				role="button"
@@ -373,12 +342,12 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 					</>
 				)}
 			</div>
-			{statEntriesForDisplay.map((entry) => (
-				<StatButton
+			{coreResourceEntriesForDisplay.map((entry) => (
+				<CoreResourceButton
 					key={entry.snapshot.id}
 					metadata={entry.metadata}
 					snapshot={entry.snapshot}
-					onShow={showStatCard}
+					onShow={showCoreResourceCard}
 					onHide={clearHoverCard}
 				/>
 			))}
@@ -386,4 +355,4 @@ const PopulationInfo: React.FC<PopulationInfoProps> = ({ player }) => {
 	);
 };
 
-export default PopulationInfo;
+export default CoreResourceBar;

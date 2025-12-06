@@ -21,7 +21,6 @@ import {
 	createForecastMap,
 	createResourceSnapshot,
 	formatResourceTitle,
-	getResourceIdForLegacy,
 	toDescriptorFromMetadata,
 } from './resourceV2Snapshots';
 import { toDescriptorDisplay } from './registryDisplays';
@@ -108,14 +107,8 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 		[resourceEntries],
 	);
 	const tiers = ruleSnapshot.tierDefinitions;
-	const happinessLegacyKey = ruleSnapshot.tieredResourceKey;
-	const happinessResourceId = React.useMemo(() => {
-		if (!happinessLegacyKey) {
-			return undefined;
-		}
-		const resolved = getResourceIdForLegacy('resources', happinessLegacyKey);
-		return resolved ?? happinessLegacyKey;
-	}, [happinessLegacyKey]);
+	// tieredResourceKey is already a V2 resource ID
+	const tieredResourceId = ruleSnapshot.tieredResourceKey;
 
 	const showHappinessCard = React.useCallback(
 		(entry: ResourceEntry) => {
@@ -233,7 +226,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 			if (!entry) {
 				return;
 			}
-			if (happinessResourceId && resourceId === happinessResourceId) {
+			if (tieredResourceId && resourceId === tieredResourceId) {
 				showHappinessCard(entry);
 				return;
 			}
@@ -248,7 +241,7 @@ const ResourceBar: React.FC<ResourceBarProps> = ({ player }) => {
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-		[handleHoverCard, happinessResourceId, resourceMap, showHappinessCard],
+		[handleHoverCard, tieredResourceId, resourceMap, showHappinessCard],
 	);
 
 	return (
