@@ -26,53 +26,53 @@ export const buildResourceV2Metadata = (): Record<
 		description: 'Lose when this reaches zero.',
 	},
 	// Stats in ResourceV2 format
-	'resource:stat:max-population': {
+	'resource:core:max-population': {
 		icon: '👥',
 		label: 'Max Population',
 		description: 'Determines how many specialists the realm can sustain.',
 		format: { prefix: 'Max ' },
 	},
-	'resource:stat:army-strength': {
+	'resource:core:army-strength': {
 		icon: '⚔️',
 		label: 'Army Strength',
 		description: 'Measures combat readiness.',
 	},
-	'resource:stat:fortification-strength': {
+	'resource:core:fortification-strength': {
 		icon: '🛡️',
 		label: 'Fortification Strength',
 		description: 'Determines defensive strength.',
 	},
-	'resource:stat:absorption': {
+	'resource:core:absorption': {
 		icon: '🌀',
 		label: 'Absorption',
 		description: 'Reduces incoming damage by a percentage.',
 		displayAsPercent: true,
 		format: { percent: true },
 	},
-	'resource:stat:growth': {
+	'resource:core:growth': {
 		icon: '🌿',
 		label: 'Growth Rate',
 		description: 'Improves how quickly strength stats increase.',
 		displayAsPercent: true,
 		format: { percent: true },
 	},
-	'resource:stat:war-weariness': {
+	'resource:core:war-weariness': {
 		icon: '💤',
 		label: 'War Weariness',
 		description: 'Tracks fatigue from protracted conflict.',
 	},
 	// Population roles in ResourceV2 format
-	'resource:population:role:council': {
+	'resource:core:council': {
 		icon: '⚖️',
 		label: 'Council',
 		description: 'Advisors who grant action points.',
 	},
-	'resource:population:role:legion': {
+	'resource:core:legion': {
 		icon: '🎖️',
 		label: 'Legion',
 		description: 'Warriors who increase army strength.',
 	},
-	'resource:population:role:fortifier': {
+	'resource:core:fortifier': {
 		icon: '🔧',
 		label: 'Fortifier',
 		description: 'Builders who increase fortification strength.',

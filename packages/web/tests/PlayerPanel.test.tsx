@@ -38,7 +38,7 @@ function buildV2ForecastValues(): Record<string, number> {
 	// Convert stat forecasts to V2 IDs (camelCase to kebab-case)
 	for (const [legacyKey, delta] of Object.entries(statForecast)) {
 		const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-		const v2Id = `resource:stat:${kebab}`;
+		const v2Id = `resource:core:${kebab}`;
 		valuesV2[v2Id] = delta;
 	}
 	return valuesV2;

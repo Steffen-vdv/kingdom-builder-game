@@ -135,11 +135,11 @@ function describeStatBreakdown(
 		return undefined;
 	}
 	const role = breakdown.role;
-	// Role can be a V2 id (resource:population:role:legion) or legacy short key
+	// Role can be a V2 id (resource:core:legion) or legacy short key
 	// If it's already a V2 id, use it directly; otherwise construct the V2 id
 	const populationKey = role.startsWith('resource:population:')
 		? role
-		: `resource:population:role:${role}`;
+		: `resource:core:${role}`;
 	const count = player.valuesV2?.[populationKey] ?? 0;
 	// Use V2 metadata for population icon, fallback to legacy assets
 	const popMetadata = metadataSelectors.get(populationKey);
@@ -170,7 +170,7 @@ function describeStatBreakdown(
 		totalValue,
 	);
 }
-const STAT_V2_PREFIX = 'resource:stat:';
+const STAT_V2_PREFIX = 'resource:core:';
 
 function isResourceKey(key: string): boolean {
 	// Exclude stat keys - they're handled by appendStatChanges

@@ -3,7 +3,7 @@ import { resourceV2 } from '../resourceBuilder';
 import type { ResourceV2Definition, ResourceV2GroupDefinition } from '../types';
 
 const POPULATION_GROUP_ID = 'population';
-const POPULATION_PARENT_ID = 'resource:population:total';
+const POPULATION_PARENT_ID = 'resource:core:total';
 const POPULATION_GROUP_ORDER = 3;
 
 const COUNCIL_INFO = {
@@ -25,7 +25,7 @@ const FORTIFIER_INFO = {
 };
 
 export const POPULATION_RESOURCE_DEFINITIONS: readonly ResourceV2Definition[] = [
-	resourceV2('resource:population:role:council')
+	resourceV2('resource:core:council')
 		.icon(COUNCIL_INFO.icon)
 		.label(COUNCIL_INFO.label)
 		.description(COUNCIL_INFO.description)
@@ -33,7 +33,7 @@ export const POPULATION_RESOURCE_DEFINITIONS: readonly ResourceV2Definition[] = 
 		.order(1)
 		.lowerBound(0)
 		.build(),
-	resourceV2('resource:population:role:legion')
+	resourceV2('resource:core:legion')
 		.icon(LEGION_INFO.icon)
 		.label(LEGION_INFO.label)
 		.description(LEGION_INFO.description)
@@ -41,7 +41,7 @@ export const POPULATION_RESOURCE_DEFINITIONS: readonly ResourceV2Definition[] = 
 		.order(2)
 		.lowerBound(0)
 		.build(),
-	resourceV2('resource:population:role:fortifier')
+	resourceV2('resource:core:fortifier')
 		.icon(FORTIFIER_INFO.icon)
 		.label(FORTIFIER_INFO.label)
 		.description(FORTIFIER_INFO.description)

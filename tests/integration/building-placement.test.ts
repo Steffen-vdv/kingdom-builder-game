@@ -67,7 +67,7 @@ describe('Building placement integration', () => {
 		expect(engineContext.activePlayer.lands.length).toBe(
 			landPre + expandAfter.results.land,
 		);
-		// Stat deltas are now stored with ResourceV2 IDs (resource:stat:*)
+		// Stat deltas are now stored with ResourceV2 IDs (resource:core:*)
 		for (const [resourceId, gain] of Object.entries(
 			expandAfter.results.stats,
 		)) {

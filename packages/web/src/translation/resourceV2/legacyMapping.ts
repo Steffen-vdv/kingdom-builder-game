@@ -36,7 +36,7 @@ for (const [legacyKey, v2Id] of Object.entries(Stat)) {
 	LEGACY_TO_RESOURCE_V2.set(`stats#${v2Id}`, v2Id);
 }
 
-const POPULATION_ROLE_PREFIX = 'resource:population:role:' as const;
+const POPULATION_ROLE_PREFIX = 'resource:core:' as const;
 
 for (const role of Object.values(PopulationRole)) {
 	registerLegacyMapping('population', role, `${POPULATION_ROLE_PREFIX}${role}`);

@@ -1,10 +1,10 @@
 export const Stat = {
-	maxPopulation: 'resource:stat:max-population',
-	armyStrength: 'resource:stat:army-strength',
-	fortificationStrength: 'resource:stat:fortification-strength',
-	absorption: 'resource:stat:absorption',
-	growth: 'resource:stat:growth',
-	warWeariness: 'resource:stat:war-weariness',
+	maxPopulation: 'resource:core:max-population',
+	armyStrength: 'resource:core:army-strength',
+	fortificationStrength: 'resource:core:fortification-strength',
+	absorption: 'resource:core:absorption',
+	growth: 'resource:core:growth',
+	warWeariness: 'resource:core:war-weariness',
 } as const;
 
 export type StatV2Id = (typeof Stat)[keyof typeof Stat];

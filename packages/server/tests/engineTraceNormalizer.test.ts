@@ -9,7 +9,7 @@ import type {
 describe('engineTraceNormalizer', () => {
 	it('deeply clones player snapshots when normalizing traces', () => {
 		const before: EnginePlayerSnapshot = {
-			valuesV2: { 'resource:core:gold': 5, 'resource:stat:strength': 2 },
+			valuesV2: { 'resource:core:gold': 5, 'resource:core:strength': 2 },
 			buildings: ['tower'],
 			lands: [
 				{
@@ -32,7 +32,7 @@ describe('engineTraceNormalizer', () => {
 			],
 		};
 		const after: EnginePlayerSnapshot = {
-			valuesV2: { 'resource:core:gold': 7, 'resource:stat:strength': 3 },
+			valuesV2: { 'resource:core:gold': 7, 'resource:core:strength': 3 },
 			buildings: ['tower', 'barracks'],
 			lands: [
 				{

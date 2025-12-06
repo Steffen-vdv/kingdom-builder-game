@@ -15,14 +15,14 @@ import {
 	selectStatDescriptor,
 } from '../src/translation/effects/registrySelectors';
 
-// V2 stat keys for testing - these match the resource:stat: prefix format
+// V2 stat keys for testing - these match the resource:core: prefix format
 const V2_STAT_KEYS = {
-	armyStrength: 'resource:stat:army-strength',
-	growth: 'resource:stat:growth',
+	armyStrength: 'resource:core:army-strength',
+	growth: 'resource:core:growth',
 } as const;
 
 // V2 population key for testing
-const V2_POPULATION_KEY = 'resource:population:role:legion';
+const V2_POPULATION_KEY = 'resource:core:legion';
 
 function createTranslationSetup() {
 	const scaffold = createTestSessionScaffold();

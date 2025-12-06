@@ -109,7 +109,7 @@ export function selectPopulationDescriptor(
 	// Role can be a V2 id or a short key - try both
 	const v2Key = role.startsWith('resource:population:')
 		? role
-		: `resource:population:role:${role}`;
+		: `resource:core:${role}`;
 	const v2Entry = v2Context.resourceMetadataV2?.get?.(v2Key);
 	const effectiveEntry = entry ?? v2Entry;
 	const icon = coerceIcon(effectiveEntry?.icon, fallback.icon);
@@ -228,7 +228,7 @@ export function selectStatDescriptor(
 	}
 	const assets = context.assets;
 	const { entry, resolved } = resolveStatEntry(assets, key);
-	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:stat:army-strength')
+	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:core:army-strength')
 	const v2Context = context as {
 		resourceMetadataV2?: {
 			get?: (id: string) => { icon?: string; label?: string } | undefined;

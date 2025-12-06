@@ -103,14 +103,14 @@ export function simulateEffects(
 		}
 	}
 
-	// Derive legacy resources (resource:core:*) and stats (resource:stat:*)
+	// Derive legacy resources (resource:core:*) and stats (resource:core:*)
 	// from valuesV2 for backward compatibility
 	const resources: Record<string, number> = {};
 	const stats: Record<string, number> = {};
 	for (const [key, delta] of Object.entries(valuesV2)) {
 		if (key.startsWith('resource:core:')) {
 			resources[key] = delta;
-		} else if (key.startsWith('resource:stat:')) {
+		} else if (key.startsWith('resource:core:')) {
 			stats[key] = delta;
 		}
 	}
