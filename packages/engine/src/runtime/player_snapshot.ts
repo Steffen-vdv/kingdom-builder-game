@@ -174,7 +174,7 @@ export function snapshotPlayer(
 		aiControlled: Boolean(context.aiSystem?.has(player.id)),
 		resources: valuesV2,
 		stats: valuesV2,
-		statsHistory: { ...player.statsHistory },
+		resourceTouchedV2: { ...player.resourceTouched },
 		population: valuesV2,
 		valuesV2,
 		resourceBoundsV2,

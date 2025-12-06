@@ -59,7 +59,7 @@ interface SnapshotPlayerOptions {
 	aiControlled?: boolean;
 	resources?: Record<string, number>;
 	stats?: Record<string, number>;
-	statsHistory?: Record<string, boolean>;
+	resourceTouchedV2?: Record<string, boolean>;
 	population?: Record<string, number>;
 	valuesV2?: Record<string, number>;
 	resourceBoundsV2?: Record<string, Partial<SessionResourceBoundsV2>>;
@@ -78,7 +78,7 @@ export function createSnapshotPlayer({
 	aiControlled,
 	resources = {},
 	stats = {},
-	statsHistory = {},
+	resourceTouchedV2 = {},
 	population = {},
 	valuesV2 = {},
 	resourceBoundsV2 = {},
@@ -95,7 +95,7 @@ export function createSnapshotPlayer({
 		name,
 		resources: { ...resources },
 		stats: { ...stats },
-		statsHistory: { ...statsHistory },
+		resourceTouchedV2: { ...resourceTouchedV2 },
 		population: { ...population },
 		lands: cloneLands(lands),
 		buildings: [...buildings],

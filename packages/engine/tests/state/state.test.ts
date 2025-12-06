@@ -35,11 +35,11 @@ describe('State classes', () => {
 		expect(player.resourceValues[Stat.warWeariness]).toBeUndefined();
 	});
 
-	it('tracks stat history when values become non-zero', () => {
+	it('tracks resource touched when values become non-zero', () => {
 		const player = new PlayerState('A', 'Alice');
-		expect(player.statsHistory[Stat.armyStrength]).toBeFalsy();
+		expect(player.resourceTouched[Stat.armyStrength]).toBeFalsy();
 		player.resourceValues[Stat.armyStrength] = 1;
-		// Note: statsHistory is updated by setResourceValue, not raw assignment
+		// Note: resourceTouched is updated by setResourceValue, not raw assignment
 		// For now test the basic structure
 		expect(player.resourceValues[Stat.armyStrength]).toBe(1);
 	});

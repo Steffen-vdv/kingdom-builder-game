@@ -16,7 +16,7 @@ const createPlayer = (id: string): SessionPlayerStateSnapshot => ({
 	name: `Player ${id}`,
 	resources: { [primaryResource]: 0 },
 	stats: {},
-	statsHistory: {},
+	resourceTouchedV2: {},
 	population: {},
 	lands: [
 		{

@@ -83,7 +83,7 @@ export interface SessionPlayerStateSnapshot {
 	aiControlled?: boolean;
 	resources: Record<string, number>;
 	stats: Record<string, number>;
-	statsHistory: Record<string, boolean>;
+	resourceTouchedV2: Record<string, boolean>;
 	population: Record<string, number>;
 	/**
 	 * ResourceV2 value map mirrored directly from the engine snapshot.

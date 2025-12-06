@@ -113,7 +113,4 @@ export function recordEffectStatDelta(
 	}
 	applyStatDelta(context.activePlayer, statKey, delta, meta);
 	context.activePlayer.resourceTouched[resourceId] = true;
-	context.activePlayer.statsHistory[statKey] = Boolean(
-		context.activePlayer.resourceTouched[resourceId],
-	);
 }

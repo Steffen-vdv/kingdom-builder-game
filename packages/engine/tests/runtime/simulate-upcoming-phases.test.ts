@@ -20,9 +20,9 @@ function resetPlayerState(context: ReturnType<typeof createTestEngine>) {
 		player.resourceValues[statId] = 0;
 		player.statSources[statId] = {};
 	}
-	// Reset statsHistory using stat IDs as keys
+	// Reset resourceTouched using stat IDs as keys
 	for (const statId of Object.values(CStat)) {
-		player.statsHistory[statId] = false;
+		player.resourceTouched[statId] = false;
 	}
 	for (const roleId of Object.values(CPopulationRole)) {
 		player.resourceValues[roleId] = 0;

@@ -32,7 +32,7 @@ function clonePlayer(player: PlayerState) {
 	copy.resourceTouched = deepClone(player.resourceTouched);
 	copy.resourceTierIds = deepClone(player.resourceTierIds);
 	copy.resourceBoundTouched = deepClone(player.resourceBoundTouched);
-	copy.statsHistory = deepClone(player.statsHistory);
+	copy.resourceTouchedV2 = deepClone(player.resourceTouchedV2);
 	copy.statSources = deepClone(player.statSources);
 	copy.skipPhases = deepClone(player.skipPhases);
 	copy.skipSteps = deepClone(player.skipSteps);

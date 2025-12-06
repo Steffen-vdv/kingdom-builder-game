@@ -47,7 +47,7 @@ export const statAddPct: EffectHandler = (effect, context, multiplier = 1) => {
 	// key is now a ResourceV2 ID - use resourceValues directly
 	context.activePlayer.resourceValues[key] = newValue;
 	if (newValue !== 0) {
-		context.activePlayer.statsHistory[key] = true;
+		context.activePlayer.resourceTouched[key] = true;
 	}
 	const delta = newValue - before;
 	if (delta !== 0) {

@@ -13,7 +13,7 @@ const createFallbackPlayer = (
 	name: 'Player',
 	resources: {},
 	stats: {},
-	statsHistory: {},
+	resourceTouchedV2: {},
 	population: {},
 	lands: [],
 	buildings: [],

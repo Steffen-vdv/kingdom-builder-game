@@ -78,7 +78,7 @@ export function applyPlayerStartConfiguration(
 	let statSnapshotBeforeResourceOverrides: Map<StatKey, number> | null = null;
 	if (shouldSnapshotStats) {
 		statSnapshotBeforeResourceOverrides = new Map<StatKey, number>();
-		for (const statKey of Object.keys(playerState.statsHistory)) {
+		for (const statKey of Object.keys(playerState.resourceTouched)) {
 			statSnapshotBeforeResourceOverrides.set(
 				statKey,
 				getResourceValue(playerState, statKey),
@@ -171,7 +171,7 @@ export function applyPlayerStartConfiguration(
 		] of statSnapshotBeforeResourceOverrides) {
 			const nextValue = getResourceValue(playerState, statKey);
 			if (nextValue !== 0) {
-				playerState.statsHistory[statKey] = true;
+				playerState.resourceTouched[statKey] = true;
 			}
 			const delta = nextValue - previousValue;
 			if (delta !== 0) {

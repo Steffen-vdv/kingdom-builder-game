@@ -60,7 +60,7 @@ function createSessionPlayer(
 		name,
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
-		statsHistory: {},
+		resourceTouchedV2: {},
 		population: { ...snapshot.population },
 		lands: [],
 		buildings: [],

@@ -166,7 +166,7 @@ describe('createTranslationContext', () => {
 			resources: { [resourceKey]: config.resource },
 			valuesV2: { [resourceV2Id]: config.resource },
 			stats: { [statKey]: config.stat },
-			statsHistory: {},
+			resourceTouchedV2: {},
 			population: { [populationId]: config.population },
 			resourceBoundsV2: {
 				[resourceV2Id]: { lowerBound: 0, upperBound: 20 },
