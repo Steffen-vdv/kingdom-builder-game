@@ -28,9 +28,9 @@ function describeStatOperand(
 	params: Record<string, unknown> | undefined,
 	context: TranslationContext,
 ): OperandDescription {
-	const key = params?.['key'];
-	if (typeof key === 'string') {
-		const stat = selectStatDisplay(context.assets, key);
+	const resourceId = params?.['resourceId'];
+	if (typeof resourceId === 'string') {
+		const stat = selectStatDisplay(context.assets, resourceId);
 		if (stat.icon) {
 			return { icon: stat.icon, label: stat.label };
 		}
@@ -43,10 +43,10 @@ function describePopulationOperand(
 	params: Record<string, unknown> | undefined,
 	context: TranslationContext,
 ): OperandDescription {
-	const role = params?.['role'];
+	const resourceId = params?.['resourceId'];
 	const descriptor = selectPopulationRoleDisplay(
 		context.assets,
-		typeof role === 'string' ? role : undefined,
+		typeof resourceId === 'string' ? resourceId : undefined,
 	);
 	if (descriptor.icon) {
 		return { icon: descriptor.icon, label: descriptor.label };
@@ -108,8 +108,8 @@ function isGenericPopulation(operand: CompareOperand | undefined): boolean {
 	if (operand.type !== 'population') {
 		return false;
 	}
-	const role = operand.params?.['role'];
-	return typeof role !== 'string';
+	const resourceId = operand.params?.['resourceId'];
+	return typeof resourceId !== 'string';
 }
 
 function isMaxPopulationStat(operand: CompareOperand | undefined): boolean {
@@ -119,8 +119,8 @@ function isMaxPopulationStat(operand: CompareOperand | undefined): boolean {
 	if (operand.type !== 'stat') {
 		return false;
 	}
-	const key = operand.params?.['key'];
-	return key === 'maxPopulation';
+	const resourceId = operand.params?.['resourceId'];
+	return resourceId === 'maxPopulation';
 }
 
 function operatorPhrase(operator: CompareParams['operator']): string {

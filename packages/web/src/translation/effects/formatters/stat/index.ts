@@ -2,7 +2,7 @@ import { signed } from '../../helpers';
 import { registerEffectFormatter } from '../../factory';
 import { selectStatDescriptor } from '../../registrySelectors';
 
-function resolveStatKey(value: unknown): string {
+function resolveResourceId(value: unknown): string {
 	return typeof value === 'string' ? value : '';
 }
 
@@ -58,19 +58,19 @@ function resolveStatDescriptionParts(
 
 registerEffectFormatter('stat', 'add', {
 	summarize: (effectDefinition, context) => {
-		const statKey = resolveStatKey(effectDefinition.params?.['key']);
-		const descriptor = selectStatDescriptor(context, statKey);
+		const resourceId = resolveResourceId(effectDefinition.params?.['resourceId']);
+		const descriptor = selectStatDescriptor(context, resourceId);
 		const amount = Number(effectDefinition.params?.['amount']);
 		const format = descriptor.format;
-		const subject = formatStatSummarySubject(descriptor, statKey);
+		const subject = formatStatSummarySubject(descriptor, resourceId);
 		const change = formatSignedValue(amount, descriptor);
 		return appendFormatSuffix(format, `${subject} ${change}`);
 	},
 	describe: (effectDefinition, context) => {
-		const statKey = resolveStatKey(effectDefinition.params?.['key']);
-		const descriptor = selectStatDescriptor(context, statKey);
+		const resourceId = resolveResourceId(effectDefinition.params?.['resourceId']);
+		const descriptor = selectStatDescriptor(context, resourceId);
 		const amount = Number(effectDefinition.params?.['amount']);
-		const { icon, label } = resolveStatDescriptionParts(descriptor, statKey);
+		const { icon, label } = resolveStatDescriptionParts(descriptor, resourceId);
 		const change = formatSignedValue(amount, descriptor);
 		if (icon) {
 			return `${icon} ${change} ${label}`;
@@ -81,19 +81,19 @@ registerEffectFormatter('stat', 'add', {
 
 registerEffectFormatter('stat', 'remove', {
 	summarize: (effectDefinition, context) => {
-		const statKey = resolveStatKey(effectDefinition.params?.['key']);
-		const descriptor = selectStatDescriptor(context, statKey);
+		const resourceId = resolveResourceId(effectDefinition.params?.['resourceId']);
+		const descriptor = selectStatDescriptor(context, resourceId);
 		const amount = -Number(effectDefinition.params?.['amount']);
 		const format = descriptor.format;
-		const subject = formatStatSummarySubject(descriptor, statKey);
+		const subject = formatStatSummarySubject(descriptor, resourceId);
 		const change = formatSignedValue(amount, descriptor);
 		return appendFormatSuffix(format, `${subject} ${change}`);
 	},
 	describe: (effectDefinition, context) => {
-		const statKey = resolveStatKey(effectDefinition.params?.['key']);
-		const descriptor = selectStatDescriptor(context, statKey);
+		const resourceId = resolveResourceId(effectDefinition.params?.['resourceId']);
+		const descriptor = selectStatDescriptor(context, resourceId);
 		const amount = -Number(effectDefinition.params?.['amount']);
-		const { icon, label } = resolveStatDescriptionParts(descriptor, statKey);
+		const { icon, label } = resolveStatDescriptionParts(descriptor, resourceId);
 		const change = formatSignedValue(amount, descriptor);
 		if (icon) {
 			return `${icon} ${change} ${label}`;
@@ -104,11 +104,11 @@ registerEffectFormatter('stat', 'remove', {
 
 registerEffectFormatter('stat', 'add_pct', {
 	summarize: (effectDefinition, context) => {
-		const statKey = resolveStatKey(effectDefinition.params?.['key']);
-		const descriptor = selectStatDescriptor(context, statKey);
+		const resourceId = resolveResourceId(effectDefinition.params?.['resourceId']);
+		const descriptor = selectStatDescriptor(context, resourceId);
 		const percent = effectDefinition.params?.['percent'];
 		const format = descriptor.format;
-		const subject = formatStatSummarySubject(descriptor, statKey);
+		const subject = formatStatSummarySubject(descriptor, resourceId);
 		if (percent !== undefined) {
 			const percentValue = Number((Number(percent) * 100).toFixed(2));
 			return appendFormatSuffix(
@@ -116,27 +116,27 @@ registerEffectFormatter('stat', 'add_pct', {
 				`${subject} ${signed(percentValue)}${percentValue}%`,
 			);
 		}
-		const percentageStatKey = resolveStatKey(
+		const percentageResourceId = resolveResourceId(
 			effectDefinition.params?.['percentStat'],
 		);
-		if (percentageStatKey) {
+		if (percentageResourceId) {
 			const percentageDescriptor = selectStatDescriptor(
 				context,
-				percentageStatKey,
+				percentageResourceId,
 			);
 			const percentageSubject = formatStatSummarySubject(
 				percentageDescriptor,
-				percentageStatKey,
+				percentageResourceId,
 			);
 			return appendFormatSuffix(format, `${subject} ${percentageSubject}`);
 		}
 		return appendFormatSuffix(format, subject);
 	},
 	describe: (effectDefinition, context) => {
-		const statKey = resolveStatKey(effectDefinition.params?.['key']);
-		const descriptor = selectStatDescriptor(context, statKey);
+		const resourceId = resolveResourceId(effectDefinition.params?.['resourceId']);
+		const descriptor = selectStatDescriptor(context, resourceId);
 		const percent = effectDefinition.params?.['percent'];
-		const { icon, label } = resolveStatDescriptionParts(descriptor, statKey);
+		const { icon, label } = resolveStatDescriptionParts(descriptor, resourceId);
 		if (percent !== undefined) {
 			const percentChange = Number(percent);
 			const percentValue = Number((percentChange * 100).toFixed(2));
@@ -146,16 +146,16 @@ registerEffectFormatter('stat', 'add_pct', {
 			}
 			return `${change} ${label}`;
 		}
-		const percentageStatKey = resolveStatKey(
+		const percentageResourceId = resolveResourceId(
 			effectDefinition.params?.['percentStat'],
 		);
-		if (percentageStatKey) {
+		if (percentageResourceId) {
 			const percentageDescriptor = selectStatDescriptor(
 				context,
-				percentageStatKey,
+				percentageResourceId,
 			);
 			const { icon: percentIcon, label: percentLabel } =
-				resolveStatDescriptionParts(percentageDescriptor, percentageStatKey);
+				resolveStatDescriptionParts(percentageDescriptor, percentageResourceId);
 			const secondary = percentIcon
 				? `${percentIcon} ${percentLabel}`
 				: percentLabel;
