@@ -17,7 +17,7 @@ function resolvePopulationRole(
 		return currentRole;
 	}
 	const params = effect.evaluator.params as StringRecord | undefined;
-	return params?.['role'] ?? currentRole;
+	return params?.['resourceId'] ?? currentRole;
 }
 
 // V2 percent change params

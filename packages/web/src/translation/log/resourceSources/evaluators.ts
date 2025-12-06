@@ -37,9 +37,9 @@ function renderPopulationIcons(
 	const params = evaluatorDefinition.params as
 		| Record<string, string>
 		| undefined;
-	const role = params?.['role'];
-	const icon = role
-		? (context.assets.populations[role]?.icon ?? role)
+	const resourceId = params?.['resourceId'];
+	const icon = resourceId
+		? (context.assets.populations[resourceId]?.icon ?? resourceId)
 		: (context.assets.population.icon ?? '');
 	entry.icons += icon.repeat(count);
 }

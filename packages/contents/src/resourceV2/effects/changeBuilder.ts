@@ -6,7 +6,7 @@ const SUPPORTED_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> = 
 
 type ChangeKind = ResourceChangeParameters['type'];
 
-export interface ResourceChangeEffectParams {
+export interface ResourceChangeEffectParams extends Record<string, unknown> {
 	readonly resourceId: string;
 	readonly change: ResourceChangeParameters;
 	readonly reconciliation?: ResourceReconciliationMode;

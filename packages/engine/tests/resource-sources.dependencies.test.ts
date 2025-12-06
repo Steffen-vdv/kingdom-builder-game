@@ -22,7 +22,7 @@ describe('resource source evaluator dependencies', () => {
 		const population = factory.population();
 		const populationDependencies = collectEvaluatorDependencies({
 			type: 'population',
-			params: { role: `  ${population.id}  ` },
+			params: { resourceId: `  ${population.id}  ` },
 		});
 		expect(populationDependencies).toEqual([
 			{ type: 'population', id: population.id },
@@ -51,7 +51,7 @@ describe('resource source evaluator dependencies', () => {
 						},
 						right: {
 							type: 'population',
-							params: { role: population.id },
+							params: { resourceId: population.id },
 						},
 					},
 				},

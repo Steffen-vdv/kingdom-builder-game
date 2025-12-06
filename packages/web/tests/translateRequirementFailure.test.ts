@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { translateRequirementFailure } from '../src/translation';
 import type { SessionPlayerId } from '@kingdom-builder/protocol';
-import {
-	createTranslationContext,
-	selectPopulationRoleDisplay,
-	selectStatDisplay,
-} from '../src/translation/context';
+import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import {
 	createSessionSnapshot,
@@ -13,6 +9,13 @@ import {
 } from './helpers/sessionFixtures';
 
 type RequirementFailure = Parameters<typeof translateRequirementFailure>[0];
+
+// ResourceV2 IDs for test fixtures
+const RESOURCE_IDS = {
+	maxPopulation: 'resource:stat:max-population',
+	warWeariness: 'resource:stat:war-weariness',
+	legion: 'resource:population:role:legion',
+} as const;
 
 describe('translateRequirementFailure', () => {
 	const scaffold = createTestSessionScaffold();
@@ -40,41 +43,20 @@ describe('translateRequirementFailure', () => {
 			passiveRecords: session.passiveRecords,
 		},
 	);
-	const populationIds = scaffold.registries.populations.keys();
-	const populationId =
-		populationIds.find((id) => id.includes('legion')) ??
-		populationIds[0] ??
-		'legion';
 
-	it('describes population capacity failures with current and max values', () => {
+	it('formats resource comparisons with ResourceV2 metadata', () => {
 		const failure: RequirementFailure = {
 			requirement: {
 				type: 'evaluator',
 				method: 'compare',
 				params: {
-					left: { type: 'population' },
-					right: { type: 'stat', params: { key: 'maxPopulation' } },
-					operator: 'lt',
-				},
-			},
-			details: { left: 3, right: 3 },
-		};
-		const message = translateRequirementFailure(failure, context);
-		const maxPopulation = selectStatDisplay(context.assets, 'maxPopulation');
-		const prefix = maxPopulation.icon ? `${maxPopulation.icon} ` : '';
-		expect(message).toBe(`${prefix}Population is at capacity (3/3)`);
-	});
-
-	it('formats stat versus population comparisons with icons and values', () => {
-		const failure: RequirementFailure = {
-			requirement: {
-				type: 'evaluator',
-				method: 'compare',
-				params: {
-					left: { type: 'stat', params: { key: 'warWeariness' } },
+					left: {
+						type: 'resource',
+						params: { resourceId: RESOURCE_IDS.warWeariness },
+					},
 					right: {
-						type: 'population',
-						params: { role: 'legion' },
+						type: 'resource',
+						params: { resourceId: RESOURCE_IDS.legion },
 					},
 					operator: 'lt',
 				},
@@ -82,21 +64,51 @@ describe('translateRequirementFailure', () => {
 			details: { left: 2, right: 1 },
 		};
 		const message = translateRequirementFailure(failure, context);
-		const statDisplay = selectStatDisplay(context.assets, 'warWeariness');
-		const populationDisplay = selectPopulationRoleDisplay(
-			context.assets,
-			populationId,
-		);
-		const statLabel = [statDisplay.icon, statDisplay.label]
+		const warMeta = context.resourceMetadataV2.get(RESOURCE_IDS.warWeariness);
+		const legionMeta = context.resourceMetadataV2.get(RESOURCE_IDS.legion);
+		const warLabel = [warMeta.icon, warMeta.label].filter(Boolean).join(' ');
+		const legionLabel = [legionMeta.icon, legionMeta.label]
 			.filter(Boolean)
-			.join(' ')
-			.trim();
-		const populationLabel = [populationDisplay.icon, populationDisplay.label]
-			.filter(Boolean)
-			.join(' ')
-			.trim();
+			.join(' ');
 		expect(message).toBe(
-			`${statLabel} (2) must be lower than ${populationLabel} (1)`,
+			`${warLabel} (2) must be lower than ${legionLabel} (1)`,
+		);
+	});
+
+	it('formats capacity comparisons using resource labels', () => {
+		// The generic formatting produces clear messages like:
+		// "🎖️ Legion (3) must be lower than 👥 Max Population (3)"
+		const failure: RequirementFailure = {
+			requirement: {
+				type: 'evaluator',
+				method: 'compare',
+				params: {
+					left: {
+						type: 'resource',
+						params: { resourceId: RESOURCE_IDS.legion },
+					},
+					right: {
+						type: 'resource',
+						params: { resourceId: RESOURCE_IDS.maxPopulation },
+					},
+					operator: 'lt',
+				},
+			},
+			details: { left: 3, right: 3 },
+		};
+		const message = translateRequirementFailure(failure, context);
+		const legionMeta = context.resourceMetadataV2.get(RESOURCE_IDS.legion);
+		const maxPopMeta = context.resourceMetadataV2.get(
+			RESOURCE_IDS.maxPopulation,
+		);
+		const legionLabel = [legionMeta.icon, legionMeta.label]
+			.filter(Boolean)
+			.join(' ');
+		const maxPopLabel = [maxPopMeta.icon, maxPopMeta.label]
+			.filter(Boolean)
+			.join(' ');
+		expect(message).toBe(
+			`${legionLabel} (3) must be lower than ${maxPopLabel} (3)`,
 		);
 	});
 
@@ -130,15 +142,15 @@ describe('translateRequirementFailure', () => {
 		expect(message).toBe('Requirement not met');
 	});
 
-	it('falls back to the default population descriptor when role metadata is missing', () => {
+	it('falls back to Value label when resourceId is missing', () => {
 		const failure: RequirementFailure = {
 			requirement: {
 				type: 'evaluator',
 				method: 'compare',
 				params: {
 					left: {
-						type: 'population',
-						params: { role: 'unknown-role' },
+						type: 'resource',
+						params: {},
 					},
 					right: 1,
 					operator: 'lt',
@@ -147,14 +159,6 @@ describe('translateRequirementFailure', () => {
 			details: { right: 1 },
 		};
 		const message = translateRequirementFailure(failure, context);
-		const fallbackDisplay = selectPopulationRoleDisplay(
-			context.assets,
-			undefined,
-		);
-		const fallbackLabel = [fallbackDisplay.icon, fallbackDisplay.label]
-			.filter(Boolean)
-			.join(' ')
-			.trim();
-		expect(message).toBe(`${fallbackLabel} must be lower than 1`);
+		expect(message).toBe('Value must be lower than 1');
 	});
 });

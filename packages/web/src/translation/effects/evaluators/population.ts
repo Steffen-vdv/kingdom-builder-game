@@ -33,15 +33,15 @@ registerEvaluatorFormatter('population', {
 		subEntries: SummaryEntry[],
 		context: TranslationContext,
 	) => {
-		const role = evaluator.params?.['role'] as string | undefined;
-		return formatSubEntries(subEntries, context, role, 'summarize');
+		const resourceId = evaluator.params?.['resourceId'] as string | undefined;
+		return formatSubEntries(subEntries, context, resourceId, 'summarize');
 	},
 	describe: (
 		evaluator: PopulationEvaluator,
 		subEntries: SummaryEntry[],
 		context: TranslationContext,
 	) => {
-		const role = evaluator.params?.['role'] as string | undefined;
-		return formatSubEntries(subEntries, context, role, 'describe');
+		const resourceId = evaluator.params?.['resourceId'] as string | undefined;
+		return formatSubEntries(subEntries, context, resourceId, 'describe');
 	},
 });

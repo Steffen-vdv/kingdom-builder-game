@@ -54,19 +54,25 @@ Append new rows chronologically (most recent at the bottom). Include command out
 
 ## 4. Latest Handover (overwrite each task)
 
-- **Prepared by:** ChatGPT (gpt-5-codex)
-- **Timestamp (UTC):** 2025-11-02 12:00
-- **Current Focus:** Resource Migration MVP - P2 - T62 - ResourceV2 session contract hardening
+- **Prepared by:** Claude (claude-opus-4-5-20251101)
+- **Timestamp (UTC):** 2025-12-06 14:20
+- **Current Focus:** Resource Migration MVP - T67 - Evaluator ResourceV2 parameter migration
 - **State Summary:**
-  - Protocol session contracts and runtime config responses now require ResourceV2 registries/catalogs, and engine transports populate the fields unconditionally (see [`./worklogs/T62-resource-contract.md`](./worklogs/T62-resource-contract.md)).
-  - Translation context, UI helpers, and integration tests consume the guaranteed ResourceV2 payloads without legacy fallbacks, keeping HUD copy aligned with the unified catalog.
-  - Outstanding blockers remain limited to the historic `developmentTarget` TypeError during `npm run check` runs.
+  - All evaluators (stat, population, resource) now accept `resourceId` as the
+    V2 parameter name with legacy parameters (`key`, `role`) as fallbacks (see
+    [`./worklogs/T67-evaluator-resourceId.md`](./worklogs/T67-evaluator-resourceId.md)).
+  - The `resourceEvaluator` has been registered in the `EVALUATORS` registry
+    and exported from the index.
+  - All tests pass with backward-compatible legacy parameter support.
 - **Next Suggested Tasks:**
-  - Repair `packages/contents/src/happinessHelpers.ts` (or add a compatibility wrapper) to eliminate the `developmentTarget` TypeError so `npm run check` completes.
-  - Smoke-test HUD/translation flows in dev mode now that ResourceV2 payloads are always present and signed deltas surface through transports.
-  - Begin pruning legacy Resource/Stat fallback helpers once downstream packages confirm exclusive ResourceV2 consumption.
-- **Blocking Issues / Risks:** Repository `npm run check` still fails because of the pre-existing `developmentTarget` regression, delaying full-suite validation.
-- **Reminder:** Keep per-task worklogs under `./worklogs/` current so downstream owners can continue the final cleanup without re-reading individual task logs.
+  - Update content definitions and tests to use `resourceId` instead of
+    `key`/`role` when creating new evaluator usages.
+  - Consider consolidating stat/population/resource evaluators into a single
+    unified evaluator since they all delegate to `getResourceValue()`.
+  - Continue pruning legacy Resource/Stat fallback helpers.
+- **Blocking Issues / Risks:** None currently blocking.
+- **Reminder:** Keep per-task worklogs under `./worklogs/` current so downstream
+  owners can continue the final cleanup without re-reading individual task logs.
 
 ## 5. Notes & Decisions Archive
 

@@ -34,11 +34,11 @@ const populationCollector: EvaluatorDependencyCollector = (evaluator) => {
 	const evaluatorParams = isPlainObject(evaluator.params)
 		? evaluator.params
 		: undefined;
-	const roleIdentifier =
-		typeof evaluatorParams?.['role'] === 'string'
-			? evaluatorParams['role'].trim()
+	const resourceId =
+		typeof evaluatorParams?.['resourceId'] === 'string'
+			? evaluatorParams['resourceId'].trim()
 			: '';
-	return roleIdentifier ? [{ type: 'population', id: roleIdentifier }] : [];
+	return resourceId ? [{ type: 'population', id: resourceId }] : [];
 };
 
 const developmentCollector: EvaluatorDependencyCollector = (evaluator) => {
@@ -58,13 +58,11 @@ const resourceCollector: EvaluatorDependencyCollector = (evaluator) => {
 	const evaluatorParams = isPlainObject(evaluator.params)
 		? evaluator.params
 		: undefined;
-	const resourceIdentifier =
-		typeof evaluatorParams?.['key'] === 'string'
-			? evaluatorParams['key'].trim()
+	const resourceId =
+		typeof evaluatorParams?.['resourceId'] === 'string'
+			? evaluatorParams['resourceId'].trim()
 			: '';
-	return resourceIdentifier
-		? [{ type: 'resource', id: resourceIdentifier }]
-		: [];
+	return resourceId ? [{ type: 'resource', id: resourceId }] : [];
 };
 
 const compareCollector: EvaluatorDependencyCollector = (evaluator) => {

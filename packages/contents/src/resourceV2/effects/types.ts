@@ -13,7 +13,14 @@ export interface ResourcePercentChangeParameters {
 	readonly roundingMode?: ResourceChangeRoundingMode;
 }
 
-export type ResourceChangeParameters = ResourceAmountChangeParameters | ResourcePercentChangeParameters;
+export interface ResourcePercentFromResourceChangeParameters {
+	readonly type: 'percentFromResource';
+	readonly sourceResourceId: string;
+	readonly roundingMode?: ResourceChangeRoundingMode;
+	readonly additive?: boolean;
+}
+
+export type ResourceChangeParameters = ResourceAmountChangeParameters | ResourcePercentChangeParameters | ResourcePercentFromResourceChangeParameters;
 
 export type ResourceV2PlayerScope = 'active' | 'opponent';
 

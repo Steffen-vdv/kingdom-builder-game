@@ -176,7 +176,10 @@ export function createPhaseTestEnvironment() {
 							evaluator: {
 								type: 'compare',
 								params: {
-									left: { type: 'stat', params: { key: statKeys.war } },
+									left: {
+										type: 'resource',
+										params: { resourceId: statKeys.war },
+									},
 									operator: 'gt',
 									right: 0,
 								},
@@ -185,10 +188,10 @@ export function createPhaseTestEnvironment() {
 								{
 									type: 'resource',
 									method: 'remove',
-									params: resourceAmountParams({
-										key: statKeys.war,
-										amount: 1,
-									}),
+									params: {
+										resourceId: statKeys.war,
+										change: { type: 'amount', amount: 1 },
+									},
 								},
 							],
 						},

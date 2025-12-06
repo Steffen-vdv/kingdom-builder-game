@@ -133,6 +133,61 @@ must come from `@kingdom-builder/contents`:
 - UI metadata flows: contents → server → web context → components
 - When icons/labels change, edit contents and run `npm run generate:snapshots`
 
+## ResourceV2 Prime Directive
+
+**MANDATORY: Everything is a resource.**
+
+The codebase is migrating to a unified ResourceV2 system. Compliance with this
+directive is mandatory. Drifting from it is prohibited.
+
+### Core Principle
+
+Stats, population roles, and resources are now unified under ResourceV2. There
+is no distinction—all are resources with IDs, labels, icons, and metadata.
+
+### Forbidden Patterns
+
+If you find yourself writing any of these words, **STOP and reassess**:
+
+- `stat` or `stats` (as a concept separate from resources)
+- `population` (as a concept separate from resources)
+- `legacy` or `compatibility` (for old patterns)
+- `mapper` or `converter` (between old and new systems)
+- `key` or `role` (as effect parameters instead of `resourceId`)
+
+### Required Patterns
+
+- Use `type: 'resource'` for all resource-based evaluators and effects
+- Use `params: { resourceId: '...' }` for all resource references
+- Use `resourceMetadataV2.get(id)` for labels, icons, and metadata lookup
+- Use `resourceEvaluator().resourceId(...)` in content builders
+
+### Migration Rules
+
+When encountering legacy code:
+
+1. **Do not maintain** legacy `stat`/`population`/`resource(v1)` patterns
+2. **Actively migrate** to ResourceV2 patterns
+3. **Remove** old code after migration—do not keep compatibility layers
+4. **Never parse resource IDs** to derive semantic meaning; use metadata
+
+### Example Migration
+
+```typescript
+// WRONG - Legacy pattern
+{ type: 'stat', params: { key: 'armyStrength' } }
+{ type: 'population', params: { role: 'legion' } }
+
+// CORRECT - ResourceV2 pattern
+{ type: 'resource', params: { resourceId: 'resource:stat:army-strength' } }
+{ type: 'resource', params: { resourceId: 'resource:population:role:legion' } }
+```
+
+### Enforcement
+
+Any PR introducing or maintaining legacy patterns will be rejected. When in
+doubt, check if your code references concepts that should be unified resources.
+
 ## Package Boundaries
 
 - **Web** → imports only from engine's public API via server HTTP calls

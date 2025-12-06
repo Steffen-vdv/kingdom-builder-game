@@ -1,8 +1,4 @@
-import {
-	selectPopulationRoleDisplay,
-	selectSlotDisplay,
-	selectStatDisplay,
-} from '../translation';
+import { selectSlotDisplay } from '../translation';
 import type { TranslationContext } from '../translation';
 
 interface EvalConfig {
@@ -15,23 +11,24 @@ export type EvaluatorIconGetter = (
 	translationContext: TranslationContext,
 ) => string[];
 
+/**
+ * Unified ResourceV2 icon getter. Stats, population, and resources all use
+ * the same metadata lookup since they are all ResourceV2 resources.
+ */
+function getResourceV2Icon(
+	params: Record<string, unknown> | undefined,
+	translationContext: TranslationContext,
+): string[] {
+	const resourceId = params?.['resourceId'] as string | undefined;
+	if (!resourceId) {
+		return [];
+	}
+	const metadata = translationContext.resourceMetadataV2.get(resourceId);
+	return metadata.icon ? [metadata.icon] : [];
+}
+
 export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
-	stat: (params, translationContext) => {
-		const key = params?.['key'] as string | undefined;
-		if (!key) {
-			return [];
-		}
-		const icon = selectStatDisplay(translationContext.assets, key).icon;
-		return icon ? [icon] : [];
-	},
-	population: (params, translationContext) => {
-		const role = params?.['role'] as string | undefined;
-		const icon = selectPopulationRoleDisplay(
-			translationContext.assets,
-			role,
-		).icon;
-		return icon ? [icon] : [];
-	},
+	resource: getResourceV2Icon,
 	land: (_params, translationContext) => {
 		const icon = selectSlotDisplay(translationContext.assets).icon;
 		return icon ? [icon] : [];

@@ -179,12 +179,15 @@ describe('resource sources metadata', () => {
 		const dependencies = collectEvaluatorDependencies({
 			type: 'compare',
 			params: {
-				left: { type: 'population', params: { role: PopulationRole.Legion } },
+				left: {
+					type: 'population',
+					params: { resourceId: PopulationRole.Legion },
+				},
 				right: {
 					type: 'compare',
 					params: {
 						left: { type: 'development', params: { id: developmentId } },
-						right: { type: 'resource', params: { key: Stat.growth } },
+						right: { type: 'resource', params: { resourceId: Stat.growth } },
 					},
 				},
 			},
@@ -201,7 +204,7 @@ describe('resource sources metadata', () => {
 			type: 'resource',
 			method: 'add_pct',
 			params: {
-				key: Stat.armyStrength,
+				resourceId: Stat.armyStrength,
 				percent: 25,
 				percentResourceId: Stat.growth,
 			},

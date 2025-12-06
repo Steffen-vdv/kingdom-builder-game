@@ -1,6 +1,5 @@
 import type { EvaluatorDef } from '@kingdom-builder/protocol';
 import type { PopulationRoleId } from '../../../populationRoles';
-import type { StatKey } from '../../../stats';
 import type { DevelopmentIdParam } from '../actionEffectGroups';
 import { ParamsBuilder } from '../../builderShared';
 import type { Params } from '../../builderShared';
@@ -60,9 +59,25 @@ export class EvaluatorBuilder<P extends Params = Params> {
 /* eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents */
 type PopulationEvaluatorId = PopulationRoleId | string;
 
+class ResourceEvaluatorBuilder extends EvaluatorBuilder<{
+	resourceId?: string;
+}> {
+	constructor() {
+		super('resource');
+	}
+
+	resourceId(id: string) {
+		return this.param('resourceId', id);
+	}
+}
+
+export function resourceEvaluator() {
+	return new ResourceEvaluatorBuilder();
+}
+
 class PopulationEvaluatorBuilder extends EvaluatorBuilder<{
 	id?: PopulationEvaluatorId;
-	role?: PopulationRoleId;
+	resourceId?: PopulationRoleId;
 }> {
 	constructor() {
 		super('population');
@@ -72,8 +87,8 @@ class PopulationEvaluatorBuilder extends EvaluatorBuilder<{
 		return this.param('id', populationId);
 	}
 
-	role(role: PopulationRoleId) {
-		return this.param('role', role);
+	resourceId(resourceId: PopulationRoleId) {
+		return this.param('resourceId', resourceId);
 	}
 }
 
@@ -81,13 +96,13 @@ export function populationEvaluator() {
 	return new PopulationEvaluatorBuilder();
 }
 
-class StatEvaluatorBuilder extends EvaluatorBuilder<{ key?: StatKey }> {
+class StatEvaluatorBuilder extends EvaluatorBuilder<{ resourceId?: string }> {
 	constructor() {
 		super('stat');
 	}
 
-	key(key: StatKey) {
-		return this.param('key', key);
+	resourceId(resourceId: string) {
+		return this.param('resourceId', resourceId);
 	}
 }
 
