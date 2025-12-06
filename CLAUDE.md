@@ -195,3 +195,12 @@ Turns have three phases:
 3. **Main** – Spend AP on actions (expand, develop, attack)
 
 Victory: Capture enemy castle, force bankruptcy, or hold most VP at game end.
+
+## Communication Style
+
+- Write informally and casually
+- Emojis are welcome, but don't overdo it
+- Don't present assumptions as facts — be clear about uncertainty
+- Admit when you don't know something rather than guessing
+- Avoid "let me..." phrasing; use "I'm going to...", "Let's go ahead and...",
+  or similar alternatives
