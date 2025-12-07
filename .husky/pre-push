@@ -22,6 +22,10 @@ fi
 npm run typecheck
 npm run lint
 
+# Safety check: verify formatting is clean after all other scripts ran
+# This catches edge cases where typecheck/lint scripts might touch files
+npm run format:check
+
 # If we created an auto-format commit, push it now (skip hooks - we just validated)
 if [ "$AUTO_FORMATTED" = true ]; then
     echo ""
