@@ -15,7 +15,6 @@ import {
 } from './state-helpers';
 
 interface ApplyValueOptions {
-	readonly suppressTouched?: boolean;
 	readonly suppressRecentEntry?: boolean;
 	readonly skipTierUpdate?: boolean;
 }
@@ -42,11 +41,7 @@ function applyValue(
 	if (!lookup.definition.allowDecimal) {
 		assertInteger(value, `"${resourceId}" value`);
 	}
-	const {
-		suppressTouched = false,
-		suppressRecentEntry = false,
-		skipTierUpdate = false,
-	} = options;
+	const { suppressRecentEntry = false, skipTierUpdate = false } = options;
 	const lowerBound = player.resourceLowerBounds[resourceId];
 	const upperBound = player.resourceUpperBounds[resourceId];
 	const resolvedLower =
@@ -71,7 +66,7 @@ function applyValue(
 		return previous;
 	}
 	player.resourceValues[resourceId] = clamped;
-	if (!suppressTouched) {
+	if (clamped !== 0) {
 		player.resourceTouched[resourceId] = true;
 	}
 	if (!skipTierUpdate) {
@@ -89,7 +84,6 @@ function applyValue(
 	}
 	if (lookup.kind === 'resource' && lookup.groupId) {
 		recalculateGroupParentValue(context, player, catalog, lookup.groupId, {
-			suppressTouched,
 			suppressRecentEntry: true,
 			skipTierUpdate,
 		});

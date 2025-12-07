@@ -42,10 +42,7 @@ export function applyPlayerStartConfiguration(
 				resourceCatalog,
 				resourceId,
 				value ?? 0,
-				{
-					suppressTouched: true,
-					suppressRecentEntry: true,
-				},
+				{ suppressRecentEntry: true },
 			);
 		}
 		// Apply stats via ResourceV2 API (stat keys are now ResourceV2 IDs)
@@ -53,7 +50,6 @@ export function applyPlayerStartConfiguration(
 			const statValue = value ?? 0;
 			const previousValue = playerState.resourceValues[statId] ?? 0;
 			setResourceValue(null, playerState, resourceCatalog, statId, statValue, {
-				suppressTouched: true,
 				suppressRecentEntry: true,
 			});
 			const delta = statValue - previousValue;
@@ -69,7 +65,6 @@ export function applyPlayerStartConfiguration(
 		// Apply population via ResourceV2 API (role IDs are now ResourceV2 IDs)
 		for (const [roleId, value] of Object.entries(config.population || {})) {
 			setResourceValue(null, playerState, resourceCatalog, roleId, value ?? 0, {
-				suppressTouched: true,
 				suppressRecentEntry: true,
 			});
 		}
@@ -146,10 +141,7 @@ export function applyPlayerStartConfiguration(
 				resourceCatalog,
 				resourceId,
 				currentValue,
-				{
-					suppressTouched: true,
-					suppressRecentEntry: true,
-				},
+				{ suppressRecentEntry: true },
 			);
 		}
 	}
@@ -162,10 +154,7 @@ export function applyPlayerStartConfiguration(
 				resourceCatalog,
 				resourceId,
 				resolvedValue,
-				{
-					suppressTouched: true,
-					suppressRecentEntry: true,
-				},
+				{ suppressRecentEntry: true },
 			);
 		}
 	}

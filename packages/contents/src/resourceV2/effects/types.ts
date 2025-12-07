@@ -25,7 +25,6 @@ export type ResourceChangeParameters = ResourceAmountChangeParameters | Resource
 export type ResourceV2PlayerScope = 'active' | 'opponent';
 
 export interface ResourceV2ValueWriteOptions {
-	readonly suppressTouched?: boolean;
 	readonly suppressRecentEntry?: boolean;
 	readonly skipTierUpdate?: boolean;
 }

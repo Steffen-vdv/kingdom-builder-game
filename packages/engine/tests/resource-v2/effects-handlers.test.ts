@@ -158,11 +158,9 @@ describe('ResourceV2 effect handlers', () => {
 
 	it('transfers the minimum reconciled amount between players and honours options', () => {
 		setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.oreId, 7, {
-			suppressTouched: true,
 			suppressRecentEntry: true,
 		});
 		setResourceValue(ctx.context, ctx.opponent, ctx.catalog, ctx.vaultId, 1, {
-			suppressTouched: true,
 			suppressRecentEntry: true,
 		});
 		ctx.context.recentResourceGains.length = 0;
@@ -178,7 +176,6 @@ describe('ResourceV2 effect handlers', () => {
 					resourceId: ctx.vaultId,
 					change: { type: 'amount', amount: 6 },
 					options: {
-						suppressTouched: true,
 						suppressRecentEntry: true,
 						skipTierUpdate: true,
 					},
@@ -193,8 +190,9 @@ describe('ResourceV2 effect handlers', () => {
 		expect(ctx.context.recentResourceGains).toEqual([
 			{ key: ctx.oreId, amount: -4 },
 		]);
+		// Both are touched because their final values are non-zero
 		expect(ctx.active.resourceTouched[ctx.oreId]).toBe(true);
-		expect(ctx.opponent.resourceTouched[ctx.vaultId]).toBe(false);
+		expect(ctx.opponent.resourceTouched[ctx.vaultId]).toBe(true);
 		expect(ctx.opponent.resourceTierIds[ctx.vaultId]).toBe('tier-low');
 	});
 

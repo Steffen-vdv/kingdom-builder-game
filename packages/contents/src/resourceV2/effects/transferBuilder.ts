@@ -20,7 +20,6 @@ export interface ResourceTransferEndpointBuilder {
 	player(scope: ResourceV2PlayerScope): this;
 	change(configurator: ChangeConfigurator): this;
 	reconciliation(mode?: ResourceReconciliationMode): this;
-	suppressTouched(enabled?: boolean): this;
 	suppressRecentEntry(enabled?: boolean): this;
 	skipTierUpdate(enabled?: boolean): this;
 	build(): ResourceV2TransferEndpointPayload;
@@ -87,18 +86,9 @@ function normaliseOptions(options: ResourceV2ValueWriteOptions | undefined): Res
 	}
 
 	const result: {
-		suppressTouched?: boolean;
 		suppressRecentEntry?: boolean;
 		skipTierUpdate?: boolean;
 	} = {};
-	if (options.suppressTouched !== undefined) {
-		if (typeof options.suppressTouched !== 'boolean') {
-			throw new Error(`${TRANSFER_BUILDER_NAME} expected options.suppressTouched to be boolean when provided.`);
-		}
-		if (options.suppressTouched) {
-			result.suppressTouched = true;
-		}
-	}
 	if (options.suppressRecentEntry !== undefined) {
 		if (typeof options.suppressRecentEntry !== 'boolean') {
 			throw new Error(`${TRANSFER_BUILDER_NAME} expected options.suppressRecentEntry to be boolean when provided.`);
@@ -124,7 +114,6 @@ class ResourceTransferEndpointBuilderImpl implements ResourceTransferEndpointBui
 	private playerScope?: ResourceV2PlayerScope;
 	private changeParams?: ResourceChangeParameters;
 	private reconciliationMode?: ResourceReconciliationMode;
-	private suppressTouchedFlag = false;
 	private suppressRecentEntryFlag = false;
 	private skipTierUpdateFlag = false;
 
@@ -166,11 +155,6 @@ class ResourceTransferEndpointBuilderImpl implements ResourceTransferEndpointBui
 		return this;
 	}
 
-	suppressTouched(enabled = true): this {
-		this.suppressTouchedFlag = enabled ?? true;
-		return this;
-	}
-
 	suppressRecentEntry(enabled = true): this {
 		this.suppressRecentEntryFlag = enabled ?? true;
 		return this;
@@ -187,13 +171,9 @@ class ResourceTransferEndpointBuilderImpl implements ResourceTransferEndpointBui
 		}
 
 		const options: {
-			suppressTouched?: boolean;
 			suppressRecentEntry?: boolean;
 			skipTierUpdate?: boolean;
 		} = {};
-		if (this.suppressTouchedFlag) {
-			options.suppressTouched = true;
-		}
 		if (this.suppressRecentEntryFlag) {
 			options.suppressRecentEntry = true;
 		}
