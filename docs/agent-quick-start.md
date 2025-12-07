@@ -74,21 +74,20 @@ guide for rationale, lore, and extended background.
 **IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
 commands sequentially - that defeats the purpose of parallelization.**
 
-| What you changed  | Command to run                                         | Time   |
-| ----------------- | ------------------------------------------------------ | ------ |
-| Code (no tests)   | (nothing - push will run check:parallel automatically) | ~50s   |
-| Code + need tests | `npm run test:parallel`                                | ~50s   |
-| Before opening PR | `npm run verify`                                       | ~2 min |
-| Single test file  | `npx vitest run path/to/file.test.ts`                  | ~5s    |
+| What you changed | Command to run                        | Time |
+| ---------------- | ------------------------------------- | ---- |
+| Code (no tests)  | Just push (hook runs check:parallel)  | ~50s |
+| Code + tests     | `npm run test:parallel` then push     | ~50s |
+| Single test      | `npx vitest run path/to/file.test.ts` | ~5s  |
 
-**The pre-push hook runs `check:parallel` automatically.** You don't need to run
-it manually - just push and let the hook catch any issues.
+**The pre-push hook runs `check:parallel` automatically** (format + types + lint).
+Just push and let the hook catch issues. Run `test:parallel` only if you need tests.
 
 **Anti-patterns to avoid:**
 
-- Running `check:parallel` then `test:parallel` sequentially (100s total - BAD!)
-- Running `npm run verify` repeatedly (once before PR is enough)
-- Running full test suite when debugging one test (use `vitest run path/to/test`)
+- Running `check:parallel` manually before push (the hook does this!)
+- Running `check:parallel` then `test:parallel` sequentially (100s - redundant!)
+- Running `npm run verify` (it's for CI/coverage reports, not daily work)
 - **Avoid `npm run test:sequential` - it's SLOWER than `test:parallel`!**
 
 4. **Work content-first**
