@@ -1,12 +1,7 @@
 import type { Registry } from '@kingdom-builder/protocol';
 import type { ActionDef } from '../actions';
 import { action, effect } from '../config/builders';
-import {
-	ResourceMethods,
-	Types,
-	LandMethods,
-	DevelopmentMethods,
-} from '../config/builderShared';
+import { ResourceMethods, Types, LandMethods, DevelopmentMethods } from '../config/builderShared';
 import { SystemActionId } from '../actionIds';
 import { Resource, Stat, PopulationRole } from '../internal';
 import { DevelopmentId } from '../developments';
@@ -17,18 +12,14 @@ import { resourceChange } from '../resourceV2';
  * Automatically converts resource/stat/population keys to their V2 IDs.
  */
 function resourceAdd(resourceId: string, amount: number) {
-	return effect(Types.Resource, ResourceMethods.ADD)
-		.params(resourceChange(resourceId).amount(amount).build())
-		.build();
+	return effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(resourceId).amount(amount).build()).build();
 }
 
 /**
  * Creates a land:add effect that adds the specified number of lands.
  */
 function landAdd(count: number) {
-	return effect(Types.Land, LandMethods.ADD)
-		.param('count', count)
-		.build();
+	return effect(Types.Land, LandMethods.ADD).param('count', count).build();
 }
 
 /**
@@ -36,9 +27,7 @@ function landAdd(count: number) {
  * recent land with an open slot.
  */
 function developmentAdd(developmentId: string) {
-	return effect(Types.Development, DevelopmentMethods.ADD)
-		.param('id', developmentId)
-		.build();
+	return effect(Types.Development, DevelopmentMethods.ADD).param('id', developmentId).build();
 }
 
 export function registerInitialSetupActions(registry: Registry<ActionDef>) {
@@ -132,11 +121,7 @@ export function registerInitialSetupActions(registry: Registry<ActionDef>) {
 			.system()
 			.free()
 			// Reduce castle HP to 1 (remove 9 from the initial 10)
-			.effect(
-				effect(Types.Resource, ResourceMethods.REMOVE)
-					.params(resourceChange(Resource.castleHP).amount(9).build())
-					.build(),
-			)
+			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(Resource.castleHP).amount(9).build()).build())
 			.build(),
 	);
 }

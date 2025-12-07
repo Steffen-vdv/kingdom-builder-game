@@ -75,6 +75,77 @@ export function createSyntheticSessionManager(
 			},
 		],
 	});
+
+	// Create synthetic system actions for initial setup
+	// These give players the initial resources defined in the start config
+	const initialSetupActionId = '__synth_initial_setup__';
+	const initialSetupDevmodeActionId = '__synth_initial_setup_devmode__';
+	const compensationActionId = '__synth_compensation__';
+	const compensationDevmodeBActionId = '__synth_compensation_b__';
+
+	// Initial setup action gives players starting resources
+	factory.actions.add(initialSetupActionId, {
+		id: initialSetupActionId,
+		name: 'Synthetic Initial Setup',
+		system: true,
+		free: true,
+		baseCosts: {},
+		effects: [
+			{
+				type: 'resource',
+				method: 'add',
+				params: {
+					resourceId: costResourceId,
+					change: { type: 'amount', amount: 1 },
+				},
+			},
+		],
+	});
+
+	// DevMode setup (same as normal for synthetic tests)
+	factory.actions.add(initialSetupDevmodeActionId, {
+		id: initialSetupDevmodeActionId,
+		name: 'Synthetic Initial Setup (DevMode)',
+		system: true,
+		free: true,
+		baseCosts: {},
+		effects: [
+			{
+				type: 'resource',
+				method: 'add',
+				params: {
+					resourceId: costResourceId,
+					change: { type: 'amount', amount: 1 },
+				},
+			},
+		],
+	});
+
+	// Compensation actions (empty for synthetic tests)
+	factory.actions.add(compensationActionId, {
+		id: compensationActionId,
+		name: 'Synthetic Compensation',
+		system: true,
+		free: true,
+		baseCosts: {},
+		effects: [],
+	});
+
+	factory.actions.add(compensationDevmodeBActionId, {
+		id: compensationDevmodeBActionId,
+		name: 'Synthetic Compensation (DevMode B)',
+		system: true,
+		free: true,
+		baseCosts: {},
+		effects: [],
+	});
+
+	const systemActionIds = {
+		initialSetup: initialSetupActionId,
+		initialSetupDevmode: initialSetupDevmodeActionId,
+		compensation: compensationActionId,
+		compensationDevmodeB: compensationDevmodeBActionId,
+	};
 	const phases: PhaseConfig[] = [
 		{ id: 'main', action: true, steps: [{ id: 'main' }] },
 		{
@@ -152,6 +223,20 @@ export function createSyntheticSessionManager(
 			groups,
 		},
 		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
+		systemActionIds,
+		// Provide synthetic resources to the session registry
+		resourceRegistry: {
+			[costResourceId]: {
+				key: costResourceId,
+				label: 'Cost',
+				icon: '💰',
+			},
+			[gainResourceId]: {
+				key: gainResourceId,
+				label: 'Gain',
+				icon: '⭐',
+			},
+		},
 	};
 	const manager = new SessionManager({
 		...rest,

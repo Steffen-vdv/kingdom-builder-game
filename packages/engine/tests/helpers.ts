@@ -75,7 +75,11 @@ export function createTestEngine(overrides: EngineOverrides = {}) {
 	};
 	if (skipInitialSetup) {
 		// Provide fake action IDs that don't exist, so no setup effects run
-		(options as typeof options & { systemActionIds: typeof SKIP_SETUP_ACTION_IDS }).systemActionIds = SKIP_SETUP_ACTION_IDS;
+		(
+			options as typeof options & {
+				systemActionIds: typeof SKIP_SETUP_ACTION_IDS;
+			}
+		).systemActionIds = SKIP_SETUP_ACTION_IDS;
 	}
 	return createEngine(options);
 }

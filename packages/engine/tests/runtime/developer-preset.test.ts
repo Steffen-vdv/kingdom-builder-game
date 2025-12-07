@@ -83,7 +83,9 @@ describe('applyDeveloperPreset', () => {
 		expect(ownedDevelopments).toContain(farmstead.id);
 		expect(ownedDevelopments).toContain(workshop.id);
 		expect(player.buildings.has(hall.id)).toBe(true);
-		expect(opponent.resourceValues[CResource.gold] ?? 0).toBe(opponentGoldBefore);
+		expect(opponent.resourceValues[CResource.gold] ?? 0).toBe(
+			opponentGoldBefore,
+		);
 		expect(opponent.resourceValues[CResource.happiness] ?? 0).toBe(
 			opponentHappinessBefore,
 		);

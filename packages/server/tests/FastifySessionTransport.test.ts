@@ -237,15 +237,8 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('returns the runtime configuration without authentication', async () => {
-		const {
-			app,
-			manager,
-			gainResourceId,
-			phases,
-			start,
-			rules,
-			primaryIconId,
-		} = await createServer();
+		const { app, manager, gainResourceId, phases, rules, primaryIconId } =
+			await createServer();
 		const response = await app.inject({
 			method: 'GET',
 			url: '/runtime-config',
@@ -253,7 +246,6 @@ describe('FastifySessionTransport', () => {
 		expect(response.statusCode).toBe(200);
 		const body = response.json() as SessionRuntimeConfigResponse;
 		expect(body.phases).toEqual(phases);
-		expect(body.start).toEqual(start);
 		expect(body.rules).toEqual(rules);
 		expect(body.primaryIconId).toBe(primaryIconId);
 		const resource = body.resources[gainResourceId];

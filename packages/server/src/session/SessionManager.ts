@@ -132,6 +132,9 @@ export class SessionManager {
 				groups: RESOURCE_GROUP_V2_REGISTRY,
 				categories: RESOURCE_CATEGORY_V2_REGISTRY,
 			},
+			...(engineOverrides.systemActionIds
+				? { systemActionIds: engineOverrides.systemActionIds }
+				: {}),
 		};
 		const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
 		const resourceOverrideSnapshot = resourceRegistry

@@ -167,11 +167,18 @@ export function createSyntheticContext() {
 		developments,
 		populations,
 		phases,
-		start,
 		rules,
 		resourceCatalogV2: {
 			resources: resourcesV2,
 			groups: resourceGroupsV2,
+		},
+		// Skip real setup actions by providing non-existent IDs;
+		// synthetic tests don't need real content setup
+		systemActionIds: {
+			initialSetup: 'synthetic:skip:initial',
+			initialSetupDevmode: 'synthetic:skip:devmode',
+			compensation: 'synthetic:skip:compensation',
+			compensationDevmodeB: 'synthetic:skip:compensation-b',
 		},
 	});
 

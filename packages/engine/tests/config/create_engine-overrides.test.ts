@@ -15,7 +15,6 @@ const resourceCatalogV2 = {
 };
 
 // Use actual ResourceV2 IDs - they ARE the resource keys directly
-const RESOURCE_AP = CResource.ap;
 const RESOURCE_GOLD = CResource.gold;
 
 const PHASES: PhaseDef[] = [

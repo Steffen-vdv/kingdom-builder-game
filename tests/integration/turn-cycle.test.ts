@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, advance } from '@kingdom-builder/engine';
-import type {
-	PhaseConfig,
-	RuleSet,
-	StartConfig,
-} from '@kingdom-builder/protocol';
+import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
 import {
 	createContentFactory,
 	createResourceV2Registries,
@@ -15,15 +11,6 @@ const resources = {
 	ap: 'resource:turn:turn-resource-ap',
 	gold: 'resource:turn:turn-resource-gold',
 } as const;
-
-// Custom systemActionIds for this test since it uses a completely custom
-// resource setup that doesn't include the real game resources.
-const customSystemActionIds = {
-	initialSetup: '__noop_turn_test__',
-	initialSetupDevmode: '__noop_turn_test__',
-	compensation: '__noop_turn_test__',
-	compensationDevmodeB: '__noop_turn_test__',
-};
 
 const phaseIds = {
 	growth: 'turn:phase:growth',
@@ -36,15 +23,6 @@ const phases: PhaseConfig[] = [
 	{ id: phaseIds.upkeep, steps: [{ id: 'turn:step:upkeep' }] },
 	{ id: phaseIds.main, action: true, steps: [{ id: 'turn:step:main' }] },
 ];
-
-const start: StartConfig = {
-	player: {
-		resources: { [resources.ap]: 0, [resources.gold]: 0 },
-		stats: {},
-		population: {},
-		lands: [],
-	},
-};
 
 const rules: RuleSet = {
 	defaultActionAPCost: 1,
@@ -90,13 +68,19 @@ describe('Turn cycle integration', () => {
 			developments: content.developments,
 			populations: content.populations,
 			phases,
-			start,
 			rules,
 			resourceCatalogV2: {
 				resources: turnResourcesV2,
 				groups: turnResourceGroupsV2,
 			},
-			systemActionIds: customSystemActionIds,
+			// Skip real setup actions by providing non-existent IDs;
+			// this test focuses on phase cycling, not initial setup
+			systemActionIds: {
+				initialSetup: 'test:skip:initial',
+				initialSetupDevmode: 'test:skip:devmode',
+				compensation: 'test:skip:compensation',
+				compensationDevmodeB: 'test:skip:compensation-b',
+			},
 		});
 
 		while (engineContext.game.currentPhase !== phaseIds.main) {

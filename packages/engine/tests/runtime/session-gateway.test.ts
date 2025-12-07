@@ -12,21 +12,23 @@ import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
 } from '@kingdom-builder/contents/registries/resourceV2';
-import { Resource as CResource } from '@kingdom-builder/contents';
-import type { RuleSet, SessionRegistriesPayload } from '@kingdom-builder/protocol';
-import type { PhaseDef } from '../../src/phases.ts';
+import {
+	Resource as CResource,
+	PHASES as REAL_PHASES,
+	RULES as REAL_RULES,
+	PhaseId,
+	ACTIONS as REAL_ACTIONS,
+	BUILDINGS as REAL_BUILDINGS,
+	DEVELOPMENTS as REAL_DEVELOPMENTS,
+	POPULATIONS as REAL_POPULATIONS,
+} from '@kingdom-builder/contents';
+import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
 
 // Use actual ResourceV2 IDs - they ARE the resource keys directly
 const RESOURCE_AP = CResource.ap;
 const RESOURCE_GOLD = CResource.gold;
-const PHASE_MAIN = 'test:phase:main';
-const PHASE_GROWTH = 'test:phase:growth';
-const PHASE_UPKEEP = 'test:phase:upkeep';
-const STEP_MAIN = 'test:step:main';
-const STEP_GROWTH = 'test:step:growth';
-const STEP_UPKEEP = 'test:step:upkeep';
 
 const FAILURE_REQUIREMENT_ID = 'vitest:fail';
 const FAILURE_MESSAGE = 'Requirement failed for gateway test';
@@ -38,47 +40,7 @@ if (!REQUIREMENTS.has(FAILURE_REQUIREMENT_ID)) {
 	}));
 }
 
-const PHASES: PhaseDef[] = [
-	{
-		id: PHASE_GROWTH,
-		steps: [{ id: STEP_GROWTH }],
-	},
-	{
-		id: PHASE_MAIN,
-		action: true,
-		steps: [{ id: STEP_MAIN }],
-	},
-	{
-		id: PHASE_UPKEEP,
-		steps: [{ id: STEP_UPKEEP }],
-	},
-];
-
-// Minimal test setup action ID - gives players enough AP to perform test actions
-const TEST_SETUP_ACTION_ID = '__test_setup__';
-
-const RULES: RuleSet = {
-	// Minimal setup gives players AP; globalCost in catalog applies 1 AP per action
-	defaultActionAPCost: 1,
-	absorptionCapPct: 1,
-	absorptionRounding: 'down',
-	tieredResourceKey: RESOURCE_GOLD,
-	tierDefinitions: [
-		{
-			id: 'test:tier:baseline',
-			range: { min: 0 },
-			effect: { incomeMultiplier: 1 },
-		},
-	],
-	slotsPerNewLand: 1,
-	maxSlotsPerLand: 1,
-	basePopulationCap: 5,
-	winConditions: [],
-	corePhaseIds: {
-		growth: PHASE_GROWTH,
-		upkeep: PHASE_UPKEEP,
-	},
-};
+// Use real phases and rules from contents for proper initial setup integration
 
 const BASE_RESOURCE_CATALOG: RuntimeResourceContent = {
 	resources: RESOURCE_V2_REGISTRY,
@@ -87,25 +49,14 @@ const BASE_RESOURCE_CATALOG: RuntimeResourceContent = {
 
 type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
 
-function createGateway(options?: GatewayOptions) {
+interface CreateGatewayOptions {
+	gatewayOptions?: GatewayOptions;
+	devMode?: boolean;
+}
+
+function createGateway(options?: CreateGatewayOptions) {
 	const content = createContentFactory();
-	// Create a minimal system action that gives players enough AP for testing
-	content.action({
-		id: TEST_SETUP_ACTION_ID,
-		name: 'Test Setup',
-		system: true,
-		free: true,
-		effects: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: resourceAmountParams({
-					key: RESOURCE_AP,
-					amount: 10,
-				}),
-			},
-		],
-	});
+	// Add test-specific actions to the real ACTIONS registry
 	const gainGold = content.action({
 		effects: [
 			{
@@ -127,23 +78,22 @@ function createGateway(options?: GatewayOptions) {
 			},
 		],
 	});
+	// Register test actions with the real ACTIONS registry
+	REAL_ACTIONS.add(gainGold.id, gainGold);
+	REAL_ACTIONS.add(failingAction.id, failingAction);
+
 	const session = createEngineSession({
-		actions: content.actions,
-		buildings: content.buildings,
-		developments: content.developments,
-		populations: content.populations,
-		phases: PHASES,
-		rules: RULES,
+		actions: REAL_ACTIONS,
+		buildings: REAL_BUILDINGS,
+		developments: REAL_DEVELOPMENTS,
+		populations: REAL_POPULATIONS,
+		phases: REAL_PHASES,
+		rules: REAL_RULES,
 		resourceCatalogV2: BASE_RESOURCE_CATALOG,
-		systemActionIds: {
-			initialSetup: TEST_SETUP_ACTION_ID,
-			initialSetupDevmode: TEST_SETUP_ACTION_ID,
-			compensation: '__noop__',
-			compensationDevmodeB: '__noop__',
-		},
+		devMode: options?.devMode,
 	});
 	return {
-		gateway: createLocalSessionGateway(session, options),
+		gateway: createLocalSessionGateway(session, options?.gatewayOptions),
 		actionIds: {
 			gainGold: gainGold.id,
 			failing: failingAction.id,
@@ -153,7 +103,8 @@ function createGateway(options?: GatewayOptions) {
 
 describe('createLocalSessionGateway', () => {
 	it('creates sessions without leaking snapshots', async () => {
-		const { gateway } = createGateway();
+		// Pass devMode during engine creation so devMode setup runs
+		const { gateway } = createGateway({ devMode: true });
 		const created = await gateway.createSession({
 			devMode: true,
 			playerNames: { A: 'Hero' },
@@ -177,10 +128,10 @@ describe('createLocalSessionGateway', () => {
 			sessionId: created.sessionId,
 		});
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
-		// Resources that haven't been touched are undefined in the snapshot
-		expect(
-			fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD] ?? 0,
-		).toBe(0);
+		// Initial gold from devMode setup (100)
+		expect(fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
+			100,
+		);
 		expect(fetched.registries.actionCategories).toEqual({});
 	});
 
@@ -188,18 +139,20 @@ describe('createLocalSessionGateway', () => {
 		const resourceId = RESOURCE_V2_REGISTRY.ordered[0]!.id;
 		const groupId = RESOURCE_GROUP_V2_REGISTRY.ordered[0]!.id;
 		const { gateway } = createGateway({
-			registries: {
-				actions: {},
-				buildings: {},
-				developments: {},
-				populations: {},
-				resources: {},
-				actionCategories: {},
-				resourcesV2: {
-					[resourceId]: RESOURCE_V2_REGISTRY.byId[resourceId]!,
-				},
-				resourceGroupsV2: {
-					[groupId]: RESOURCE_GROUP_V2_REGISTRY.byId[groupId]!,
+			gatewayOptions: {
+				registries: {
+					actions: {},
+					buildings: {},
+					developments: {},
+					populations: {},
+					resources: {},
+					actionCategories: {},
+					resourcesV2: {
+						[resourceId]: RESOURCE_V2_REGISTRY.byId[resourceId]!,
+					},
+					resourceGroupsV2: {
+						[groupId]: RESOURCE_GROUP_V2_REGISTRY.byId[groupId]!,
+					},
 				},
 			},
 		});
@@ -221,6 +174,14 @@ describe('createLocalSessionGateway', () => {
 	it('performs actions and clones response payloads', async () => {
 		const { gateway, actionIds } = createGateway();
 		const { sessionId } = await gateway.createSession();
+		// Advance to Main phase to get AP from council (during Growth phase)
+		while (true) {
+			const advanced = await gateway.advancePhase({ sessionId });
+			// Check the snapshot's current phase, not the processed phase
+			if (advanced.snapshot.game.currentPhase === PhaseId.Main) {
+				break;
+			}
+		}
 		const response = await gateway.performAction({
 			sessionId,
 			actionId: actionIds.gainGold,
@@ -236,8 +197,9 @@ describe('createLocalSessionGateway', () => {
 			firstTrace.after.resources[RESOURCE_GOLD] = 88;
 		}
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
+		// Initial gold (10) + gained gold (2) = 12
 		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
-			2,
+			12,
 		);
 	});
 
@@ -254,24 +216,26 @@ describe('createLocalSessionGateway', () => {
 			expect(response.requirementFailure?.message).toBe(FAILURE_MESSAGE);
 		}
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
-		// Resources that haven't been touched are undefined in the snapshot
-		expect(
-			refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD] ?? 0,
-		).toBe(0);
+		// Player starts with 10 gold; failing action doesn't change it
+		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
+			10,
+		);
 	});
 
 	it('advances phases while keeping responses isolated', async () => {
 		const { gateway } = createGateway();
 		const { sessionId } = await gateway.createSession();
 		const advanced = await gateway.advancePhase({ sessionId });
-		expect(advanced.advance.phase).toBe(PHASE_GROWTH);
+		// advance.phase is the phase that was just processed (Growth)
+		expect(advanced.advance.phase).toBe(PhaseId.Growth);
 		advanced.advance.player.resources[RESOURCE_GOLD] = 45;
 		advanced.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 64;
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
-		// Resources that haven't been touched are undefined in the snapshot
-		expect(
-			refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD] ?? 0,
-		).toBe(0);
+		// Player starts with 10 gold; first advance only processes step 1
+		// of Growth (ResolveDynamicTriggers), not GainIncome where farm fires
+		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
+			10,
+		);
 	});
 
 	it('sets developer mode without leaking snapshot references', async () => {
@@ -302,7 +266,7 @@ describe('createLocalSessionGateway', () => {
 				[providedCategory.id]: providedCategory,
 			},
 		};
-		const { gateway } = createGateway({ registries });
+		const { gateway } = createGateway({ gatewayOptions: { registries } });
 		const created = await gateway.createSession();
 		expect(created.registries.actionCategories).toEqual({
 			[providedCategory.id]: providedCategory,

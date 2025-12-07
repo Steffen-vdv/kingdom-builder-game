@@ -1,5 +1,8 @@
 import type { PlayerState } from '../state';
-import type { ActionConfig as ActionDef, Registry } from '@kingdom-builder/protocol';
+import type {
+	ActionConfig as ActionDef,
+	Registry,
+} from '@kingdom-builder/protocol';
 
 export function initializePlayerActions(
 	playerState: PlayerState,

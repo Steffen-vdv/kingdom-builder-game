@@ -35,6 +35,17 @@ import {
 	initializePlayerActions,
 } from './player_setup';
 
+/**
+ * System action IDs for initial setup. The engine will run these actions
+ * to set up players at game start.
+ */
+export interface SystemActionIds {
+	initialSetup: string;
+	initialSetupDevmode: string;
+	compensation: string;
+	compensationDevmodeB: string;
+}
+
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
@@ -45,16 +56,7 @@ export interface EngineCreationOptions {
 	config?: GameConfig;
 	devMode?: boolean;
 	resourceCatalogV2?: RuntimeResourceContent;
-	/**
-	 * System action IDs for initial setup. The engine will run these actions
-	 * to set up players at game start.
-	 */
-	systemActionIds?: {
-		initialSetup: string;
-		initialSetupDevmode: string;
-		compensation: string;
-		compensationDevmodeB: string;
-	};
+	systemActionIds?: SystemActionIds;
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;

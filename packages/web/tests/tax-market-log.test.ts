@@ -17,6 +17,8 @@ import {
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_PHASE_IDS,
 	SYNTHETIC_ASSETS,
+	SKIP_SETUP_ACTION_IDS,
+	buildStartConfigEffects,
 } from './fixtures/syntheticTaxLog';
 import {
 	snapshotPlayer,
@@ -106,10 +108,11 @@ describe('tax action logging with market', () => {
 			developments: scenario.factory.developments,
 			populations: scenario.factory.populations,
 			phases: scenario.phases,
-			start: scenario.start,
 			rules: scenario.rules,
 			resourceCatalogV2: scenario.resourceCatalogV2,
+			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
+		runEffects(buildStartConfigEffects(scenario.start), engineContext);
 		engineContext.assets = SYNTHETIC_ASSETS;
 		runEffects(
 			[

@@ -62,6 +62,67 @@ export const SYNTHETIC_SLOT_INFO = syntheticData.SLOT_INFO;
 export const SYNTHETIC_PASSIVE_INFO = syntheticData.PASSIVE_INFO;
 export const SYNTHETIC_UPKEEP_PHASE: PhaseDef = syntheticData.UPKEEP_PHASE;
 
+/**
+ * No-op system action IDs used to skip initial setup.
+ * These actions don't exist, so no setup effects run.
+ */
+export const SKIP_SETUP_ACTION_IDS = {
+	initialSetup: '__synth_plow_noop_initial__',
+	initialSetupDevmode: '__synth_plow_noop_devmode__',
+	compensation: '__synth_plow_noop_compensation__',
+	compensationDevmodeB: '__synth_plow_noop_compensation_b__',
+};
+
+/**
+ * Build effects to apply a StartConfig.
+ * Returns an array of effects that can be passed to runEffects.
+ */
+export function buildStartConfigEffects(startConfig: StartConfig) {
+	const effects: Array<{
+		type: string;
+		method: string;
+		params?: Record<string, unknown>;
+	}> = [];
+
+	// Apply resources (old format) as resource:add effects
+	if (startConfig.player.resources) {
+		for (const [resourceId, value] of Object.entries(
+			startConfig.player.resources,
+		)) {
+			if (typeof value === 'number' && value > 0) {
+				effects.push({
+					type: 'resource',
+					method: 'add',
+					params: {
+						resourceId,
+						change: { type: 'amount', amount: value },
+					},
+				});
+			}
+		}
+	}
+
+	// Apply lands via land:add effects, then add developments
+	if (startConfig.player.lands) {
+		for (const landConfig of startConfig.player.lands) {
+			effects.push({
+				type: 'land',
+				method: 'add',
+				params: { count: 1 },
+			});
+			for (const devId of landConfig.developments) {
+				effects.push({
+					type: 'development',
+					method: 'add',
+					params: { id: devId },
+				});
+			}
+		}
+	}
+
+	return effects;
+}
+
 export function registerSyntheticPlowResources(
 	target: Record<string, { key: string; icon?: string; label?: string }>,
 ): void {
