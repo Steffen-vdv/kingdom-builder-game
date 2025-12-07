@@ -1,27 +1,8 @@
 #!/usr/bin/env sh
-# Pre-push hook - auto-formats, commits if needed, and runs quality checks
+# Pre-push hook - runs quality checks before push
+# Formatting is handled by pre-commit hook, so we just verify here
 
 set -e
 
-# Auto-fix formatting
-npm run format
-
-# If format changed files, commit them and ask user to push again
-if ! git diff --quiet; then
-    echo ""
-    echo "📝 Formatting changed files - auto-committing..."
-    git add -A
-    git commit -m "chore: auto-format"
-
-    # Run type checking and linting in parallel
-    npx run-p typecheck lint
-
-    echo ""
-    echo "════════════════════════════════════════════════════════════"
-    echo "✅ Auto-format commit created. Please push again!"
-    echo "════════════════════════════════════════════════════════════"
-    exit 1
-fi
-
-# No formatting needed - just run checks and let original push proceed
+# Run type checking and linting in parallel
 npx run-p typecheck lint

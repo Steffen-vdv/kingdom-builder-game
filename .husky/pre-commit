@@ -1,7 +1,10 @@
 #!/usr/bin/env sh
-# Lightweight pre-commit hook - runs only lint-staged on changed files
-# Full verification is available via `npm run verify`
+# Pre-commit hook - formats all files and adds changes to the commit
 
 set -e
 
-npx lint-staged
+# Format all files
+npm run format
+
+# Stage any formatting changes to tracked files (not untracked)
+git add -u
