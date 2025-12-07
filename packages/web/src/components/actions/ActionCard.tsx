@@ -104,6 +104,9 @@ export default function ActionCard({
 		'dark:text-rose-300',
 	].join(' ');
 	const costBlockClass = [
+		'absolute',
+		'top-4',
+		'right-4',
 		'flex',
 		'flex-col',
 		'items-end',
@@ -111,6 +114,7 @@ export default function ActionCard({
 		'text-right',
 	].join(' ');
 	const frontContentClass = [
+		'relative',
 		'flex',
 		'h-full',
 		'w-full',
@@ -120,13 +124,7 @@ export default function ActionCard({
 		'p-4',
 		'text-left',
 	].join(' ');
-	const frontHeaderClass = [
-		'flex',
-		'w-full',
-		'items-start',
-		'justify-between',
-		'gap-3',
-	].join(' ');
+	const frontHeaderClass = ['flex', 'w-full', 'items-start', 'pr-20'].join(' ');
 	const titleGroupClass = ['flex', 'items-center', 'gap-2'].join(' ');
 	const promptHeaderClass = [
 		'flex',
