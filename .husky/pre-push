@@ -1,8 +1,34 @@
 #!/usr/bin/env sh
-# Pre-push hook - runs quick quality checks before pushing
-# Full verification available via `npm run verify`
+# Pre-push hook - auto-formats, commits if needed, and runs quality checks
 
 set -e
 
-# Run parallel quality checks (format, typecheck, lint)
-npm run check:parallel
+# Auto-fix formatting
+npm run format
+
+# Track if we created an auto-format commit
+AUTO_FORMATTED=false
+
+# If format changed files, commit them
+if ! git diff --quiet; then
+    echo ""
+    echo "📝 Formatting changed files - auto-committing..."
+    git add -A
+    git commit -m "chore: auto-format"
+    AUTO_FORMATTED=true
+fi
+
+# Run type checking and linting in parallel
+# (posttypecheck no longer cleans dist - that moved to prebuild)
+npx run-p typecheck lint
+
+# Safety check: verify formatting is clean after all other scripts ran
+# This catches edge cases where typecheck/lint scripts might touch files
+npm run format:check
+
+# If we created an auto-format commit, push it now (skip hooks - we just validated)
+if [ "$AUTO_FORMATTED" = true ]; then
+    echo ""
+    echo "✅ Pushing auto-format commit..."
+    git push --no-verify
+fi

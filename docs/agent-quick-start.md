@@ -39,11 +39,10 @@ guide for rationale, lore, and extended background.
      `npm run check` executes
      `packages/web/tests/runtime-config-fallback-sync.test.ts` to enforce this, so
      stale snapshots will block your PR until you rerun the generator.
-   - The Husky pre-push hook runs `npm run check:parallel` (format + typecheck +
-     lint in parallel, ~30s) to catch issues before push.
-   - The Husky pre-commit hook runs `lint-staged` to format staged files and run
-     eslint + tsc on changed TypeScript files. Never bypass the hooks; fix the
-     underlying problem so the automated gates pass cleanly before pushing.
+   - The Husky pre-push hook auto-formats code, auto-commits if needed, then
+     runs typecheck + lint. Just push and let the hook handle formatting.
+   - The Husky pre-commit hook runs `lint-staged` (eslint + tsc on staged .ts
+     files). Never bypass the hooks; fix the underlying problem locally.
    - Reach for `npm run fix` after Prettier when eslint complains about
      spacing or other autofixable style violations.
    - `npm run check` still runs linting, type checks, and tests together if you
@@ -58,11 +57,7 @@ guide for rationale, lore, and extended background.
 
 ### Before pushing
 
-- Run `npm run format` to ensure tabs and other Prettier conventions are
-  applied across the repository.
-- The pre-push hook automatically runs `npm run check:parallel` (~30s) which
-  validates format, types, and lint in parallel.
-- Run `npm run verify` once before opening a PR (not after every push).
+- Just push - the pre-push hook auto-formats and auto-commits if needed.
 - Regenerate snapshots (`npm run generate:snapshots`) for any change that could
   affect rendered UI surfaces.
 - Husky installs the `pre-commit` and `pre-push` hooks automatically when you
@@ -71,28 +66,24 @@ guide for rationale, lore, and extended background.
 
 ### Efficient command usage
 
-| Stage             | Command                  | Time   | Notes                      |
-| ----------------- | ------------------------ | ------ | -------------------------- |
-| While editing     | (none)                   | —      | Hooks catch issues         |
-| Before committing | `npm run format`         | ~5s    | Only if lint-staged missed |
-| Quick validation  | `npm run check:parallel` | ~50s   | Format + types + lint      |
-| Test only         | `npm run test:parallel`  | ~50s   | All suites in parallel     |
-| Before pushing    | (automatic)              | ~50s   | pre-push hook              |
-| Before PR         | `npm run verify`         | ~2 min | Full check + coverage      |
+**IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
+commands sequentially - that defeats the purpose of parallelization.**
+
+| What you changed | Command to run                         | Time |
+| ---------------- | -------------------------------------- | ---- |
+| Code (no tests)  | Just push (hook auto-formats + checks) | ~30s |
+| Code + tests     | `npm run test:parallel` then push      | ~50s |
+| Single test      | `npx vitest run path/to/file.test.ts`  | ~5s  |
+
+**The pre-push hook auto-formats and validates.** It runs format, auto-commits
+any changes, then runs typecheck + lint. Just push and let the hook handle it.
 
 **Anti-patterns to avoid:**
 
-- Running `npm run check` after every small change (use `check:parallel`)
-- Running `npm run verify` repeatedly (once before PR is enough)
-- Running full test suite when debugging one test (use `vitest run path/to/test`)
-- **Avoid `npm run test:sequential` - it runs tests one by one and is SLOWER
-  than `test:parallel`!**
-
-**When you need to run tests:**
-
-1. **Single test file**: `npx vitest run path/to/file.test.ts`
-2. **All tests fastest**: `npm run test:parallel` (~50s, clean output)
-3. **Debugging failures**: `npm run test:parallel -- -v` (verbose on failure)
+- Running `npm run format` manually before push (the hook does this!)
+- Running `check:parallel` then `test:parallel` sequentially (redundant!)
+- Running `npm run verify` for daily work (it's for CI/coverage reports)
+- **Avoid `npm run test:sequential` - it's SLOWER than `test:parallel`!**
 
 4. **Work content-first**
    - Never hardcode game data in engine, web, or tests—load from
