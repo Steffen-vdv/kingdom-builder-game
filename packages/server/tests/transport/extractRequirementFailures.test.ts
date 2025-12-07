@@ -63,9 +63,9 @@ describe('extractRequirementFailures', () => {
 			},
 			{
 				requirement: {
-					type: 'population',
+					type: 'resource',
 					method: 'minimum',
-					params: { role: 'fortifier', amount: 2 },
+					params: { resourceId: 'resource:core:fortifier', amount: 2 },
 				},
 				details: { available: 1 },
 				message: 'Need more fortifiers',
