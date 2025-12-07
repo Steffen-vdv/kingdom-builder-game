@@ -42,4 +42,7 @@ export {
 	buildResourceCatalogV2,
 } from './resourceV2';
 export type { ResourceV2Builder, ResourceGroupBuilder, ResourceCategoryBuilder, ResourceV2Registry, ResourceGroupRegistry, ResourceCategoryRegistry, ResourceCatalogV2 } from './resourceV2';
+// Non-V2 resource exports (unified resource system)
+export { resource, createResourceRegistry, RESOURCE_REGISTRY, RESOURCE_GROUP_REGISTRY, RESOURCE_CATEGORY_REGISTRY, buildResourceCatalog } from './resource';
+export type { ResourceBuilder, ResourceRegistry, ResourceCatalog } from './resource';
 export { happinessModifierId, happinessPassiveId, happinessTierId, type HappinessModifierKind, type HappinessTierSlug } from './happinessHelpers';
