@@ -199,7 +199,8 @@ describe('FastifySessionTransport', () => {
 		expect(metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,
 		);
-		expect(metadata.populations?.[populationId]?.label).toBe(
+		// Population metadata is now in the resources object
+		expect(metadata.resources?.[populationId]?.label).toBe(
 			populationOverride.name,
 		);
 		const metadataResponse = await app.inject({
@@ -216,7 +217,8 @@ describe('FastifySessionTransport', () => {
 		expect(metadataBody.metadata.buildings?.[buildingId]?.label).toBe(
 			buildingOverride.name,
 		);
-		expect(metadataBody.metadata.populations?.[populationId]?.label).toBe(
+		// Population metadata is now in the resources object
+		expect(metadataBody.metadata.resources?.[populationId]?.label).toBe(
 			populationOverride.name,
 		);
 		expect(metadataBody.metadata.developments?.[developmentId]?.label).toBe(

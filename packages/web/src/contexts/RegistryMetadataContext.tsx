@@ -5,10 +5,10 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
+	ResourceDefinition,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionOverviewMetadata,
-	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
@@ -33,7 +33,7 @@ import {
 } from './registryMetadataDescriptors';
 
 export interface RegistryMetadataContextValue {
-	resources: DefinitionLookup<SessionResourceDefinition>;
+	resources: DefinitionLookup<ResourceDefinition>;
 	actions: DefinitionLookup<ActionConfig>;
 	actionCategories: DefinitionLookup<ActionCategoryConfig>;
 	buildings: DefinitionLookup<BuildingConfig>;

@@ -169,7 +169,6 @@ export class SessionManager {
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
 			developments: this.baseOptions.developments,
-			populations: this.baseOptions.populations,
 			resources,
 			phases: this.baseOptions.phases,
 		});

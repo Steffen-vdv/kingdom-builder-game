@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	createContentFactory,
-	createResourceRegistries,
-	resourceDefinition,
-} from '@kingdom-builder/testing';
+import { createContentFactory } from '@kingdom-builder/testing';
 import type {
 	PhaseConfig,
 	SerializedRegistry,
@@ -69,7 +65,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources,
 			phases,
 		});
@@ -84,7 +79,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources,
 			phases: [],
 		});
@@ -100,7 +94,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources,
 			phases: [],
 		});
@@ -117,7 +110,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources,
 			phases: [],
 		});
@@ -132,7 +124,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources,
 			phases: [],
 		});
@@ -147,7 +138,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases,
 		});
@@ -165,7 +155,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases,
 		});
@@ -183,7 +172,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases,
 		});
@@ -198,7 +186,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases,
 		});
@@ -216,7 +203,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases,
 		});
@@ -239,7 +225,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases,
 		});
@@ -257,7 +242,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases: [],
 		});
@@ -272,7 +256,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases: [],
 		});
@@ -291,7 +274,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases: [],
 		});
@@ -300,32 +282,28 @@ describe('buildSessionMetadata', () => {
 		expect(devMeta?.icon).toBe('🌳');
 	});
 
-	it('builds population metadata from registry fallback', () => {
+	it('builds population resource metadata when resources include population entries', () => {
 		const factory = createContentFactory();
-		// Create a population with a resource backing it
-		createResourceRegistries({
-			resources: [
-				resourceDefinition({
-					id: 'resource:population:role:test',
-					metadata: {
-						label: 'Registry Label',
-						icon: '👤',
-						description: 'Registry Description',
-					},
-				}),
-			],
-		});
-		// This test verifies the population metadata builds correctly
-		// using the existing populations in the factory
+		// Create a population resource entry
+		const resources: SerializedRegistry<SessionResourceDefinition> = {
+			'resource:population:role:test': {
+				key: 'resource:population:role:test',
+				label: 'Test Population',
+				icon: '👤',
+				description: 'Test population resource',
+			},
+		};
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
-			resources: {},
+			resources,
 			phases: [],
 		});
-		// Populations should be built from the registry
-		expect(metadata.populations).toBeDefined();
+		// Population resources should be included in the resources metadata
+		const popMeta = metadata.resources?.['resource:population:role:test'];
+		expect(popMeta).toBeDefined();
+		expect(popMeta?.label).toBe('Test Population');
+		expect(popMeta?.icon).toBe('👤');
 	});
 
 	it('includes trigger metadata from TRIGGER_INFO', () => {
@@ -333,7 +311,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases: [],
 		});
@@ -346,7 +323,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases: [],
 		});
@@ -359,21 +335,28 @@ describe('buildSessionMetadata', () => {
 		expect(metadata.assets?.transfer).toBeDefined();
 	});
 
-	it('includes stat metadata from resource:core: prefixed resources', () => {
+	it('includes core stat resources in resource metadata', () => {
 		const factory = createContentFactory();
+		// Create a core stat resource
+		const resources: SerializedRegistry<SessionResourceDefinition> = {
+			'resource:core:test-stat': {
+				key: 'resource:core:test-stat',
+				label: 'Test Stat',
+				icon: '📊',
+				displayAsPercent: true,
+			},
+		};
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
-			resources: {},
+			resources,
 			phases: [],
 		});
-		expect(metadata.stats).toBeDefined();
-		const statKeys = Object.keys(metadata.stats ?? {});
-		expect(statKeys.length).toBeGreaterThan(0);
-		for (const key of statKeys) {
-			expect(key.startsWith('resource:core:')).toBe(true);
-		}
+		// Core resources should be in the resources metadata
+		const statMeta = metadata.resources?.['resource:core:test-stat'];
+		expect(statMeta).toBeDefined();
+		expect(statMeta?.label).toBe('Test Stat');
+		expect(statMeta?.icon).toBe('📊');
 	});
 
 	it('includes overview content clone', () => {
@@ -381,7 +364,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases: [],
 		});
@@ -394,7 +376,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 			phases: [],
 		});
@@ -416,7 +397,6 @@ describe('buildSessionMetadata', () => {
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources,
 			phases: [],
 		});

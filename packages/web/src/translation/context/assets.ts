@@ -205,12 +205,7 @@ function requireAssetDescriptor(
 	return descriptor;
 }
 
-type MetadataRequirementKey =
-	| 'resources'
-	| 'populations'
-	| 'stats'
-	| 'assets'
-	| 'triggers';
+type MetadataRequirementKey = 'resources' | 'assets' | 'triggers';
 
 function requireMetadataRecord(
 	metadata: SessionSnapshotMetadata,
@@ -231,18 +226,11 @@ export function createTranslationAssets(
 	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
-	const populationMetadata = requireMetadataRecord(
-		metadata,
-		'populations',
-	) as Record<string, SessionMetadataDescriptor>;
+	// All metadata (including populations and stats) is now unified under resources
 	const resourceMetadata = requireMetadataRecord(
 		metadata,
 		'resources',
 	) as Record<string, SessionMetadataDescriptor>;
-	const statMetadata = requireMetadataRecord(metadata, 'stats') as Record<
-		string,
-		SessionMetadataDescriptor
-	>;
 	const assetDescriptors = requireMetadataRecord(metadata, 'assets') as Record<
 		string,
 		SessionMetadataDescriptor
@@ -251,12 +239,14 @@ export function createTranslationAssets(
 		string,
 		SessionTriggerMetadata
 	>;
+	// Population metadata is now part of unified resources (population IDs are resource IDs)
 	const populations = buildPopulationMap(
 		registries.populations,
-		populationMetadata,
+		resourceMetadata,
 	);
 	const resources = buildResourceMap(registries.resources, resourceMetadata);
-	const stats = buildStatMap(statMetadata);
+	// Stat metadata is now part of unified resources - use resourceMetadata for stats too
+	const stats = buildStatMap(resourceMetadata);
 	const populationAsset = mergeIconLabel(
 		undefined,
 		assetDescriptors.population,

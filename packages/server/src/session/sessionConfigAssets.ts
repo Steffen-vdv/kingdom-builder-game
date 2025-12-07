@@ -91,7 +91,6 @@ export function buildSessionAssets(
 	const metadata = buildSessionMetadata({
 		buildings,
 		developments,
-		populations,
 		resources,
 		phases,
 	});

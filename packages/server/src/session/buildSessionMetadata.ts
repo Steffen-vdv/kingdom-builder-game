@@ -18,7 +18,6 @@ import type {
 	SessionMetadataSnapshot,
 	SessionPhaseMetadata,
 	SessionTriggerMetadata,
-	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
 
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
@@ -26,10 +25,21 @@ type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
 
 export type SessionStaticMetadataPayload = SessionMetadataSnapshot;
 
+/**
+ * Minimal resource definition shape required for metadata extraction.
+ * This allows raw content definitions to be used without computed fields.
+ */
+export interface ResourceMetadataSource {
+	label?: string;
+	icon?: string;
+	description?: string | null;
+	displayAsPercent?: boolean;
+}
+
 export interface BuildSessionMetadataOptions {
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	resources: SerializedRegistry<ResourceMetadataSource>;
 	phases: ReadonlyArray<PhaseConfig>;
 }
 
@@ -68,7 +78,7 @@ export function buildSessionMetadata(
 }
 
 function buildResourceMetadata(
-	resources: SerializedRegistry<SessionResourceDefinition>,
+	resources: SerializedRegistry<ResourceMetadataSource>,
 ): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
 	for (const key of Object.keys(resources)) {
@@ -85,6 +95,9 @@ function buildResourceMetadata(
 		}
 		if (definition.description) {
 			descriptor.description = definition.description;
+		}
+		if (definition.displayAsPercent) {
+			descriptor.displayAsPercent = definition.displayAsPercent;
 		}
 		descriptors[key] = descriptor;
 	}

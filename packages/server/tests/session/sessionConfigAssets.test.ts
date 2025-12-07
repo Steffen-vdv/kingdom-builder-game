@@ -22,14 +22,14 @@ import {
 } from '../../src/session/registryUtils.js';
 
 describe('buildResourceRegistry', () => {
-	it('populates registry from RESOURCE_REGISTRY', () => {
-		// The function now populates from the global RESOURCE_REGISTRY
+	it('returns empty registry when no overrides provided', () => {
+		// The deprecated buildResourceRegistry only returns overrides
+		// Use resourceCatalog.resources.byId directly for the full registry
 		const registry = buildResourceRegistry(undefined);
-		// Should have entries from the global registry
 		expect(registry).toBeDefined();
 		expect(typeof registry).toBe('object');
-		// At minimum, should have some keys from the global registry
-		expect(Object.keys(registry).length).toBeGreaterThan(0);
+		// No overrides means empty registry
+		expect(Object.keys(registry).length).toBe(0);
 	});
 
 	it('applies resource overrides when provided', () => {

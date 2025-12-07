@@ -129,6 +129,9 @@ const buildResourceMetadata = () =>
 			if (resource.description) {
 				entry.description = resource.description;
 			}
+			if (resource.displayAsPercent) {
+				entry.displayAsPercent = resource.displayAsPercent;
+			}
 			return [resource.id, entry] as const;
 		}),
 	);

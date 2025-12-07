@@ -5,10 +5,10 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PopulationConfig,
+	ResourceDefinition,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
-	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
@@ -104,7 +104,7 @@ export const useDescriptorOverrides = (
 	}, [snapshotMetadata]);
 
 interface DefinitionLookups {
-	readonly resourceLookup: DefinitionLookup<SessionResourceDefinition>;
+	readonly resourceLookup: DefinitionLookup<ResourceDefinition>;
 	readonly actionLookup: DefinitionLookup<ActionConfig>;
 	readonly actionCategoryLookup: DefinitionLookup<ActionCategoryConfig>;
 	readonly buildingLookup: DefinitionLookup<BuildingConfig>;
