@@ -7,6 +7,7 @@ coverage
 .DS_Store
 .vscode
 tsconfig.tsbuildinfo
+.eslintcache
 .idea
 artifacts/
 playwright-report/

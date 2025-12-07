@@ -1,34 +1,26 @@
 #!/usr/bin/env sh
-# Pre-push hook - auto-formats, commits if needed, and runs quality checks
+# Pre-push hook - runs quality checks before push
+# Formatting is handled by pre-commit hook, so we just verify here
 
 set -e
 
-# Auto-fix formatting
-npm run format
+# Run typecheck (always full - it's fast due to incremental builds)
+npm run typecheck
 
-# Track if we created an auto-format commit
-AUTO_FORMATTED=false
-
-# If format changed files, commit them
-if ! git diff --quiet; then
-    echo ""
-    echo "📝 Formatting changed files - auto-committing..."
-    git add -A
-    git commit -m "chore: auto-format"
-    AUTO_FORMATTED=true
+# Lint only changed files for speed
+# Get files that differ from upstream (what we're about to push)
+UPSTREAM=$(git rev-parse --abbrev-ref @{upstream} 2>/dev/null || echo "")
+if [ -n "$UPSTREAM" ]; then
+    CHANGED_FILES=$(git diff --name-only "$UPSTREAM"...HEAD -- '*.ts' '*.tsx' 2>/dev/null | tr '\n' ' ')
+else
+    # No upstream - lint all staged/committed ts files
+    CHANGED_FILES=$(git diff --name-only HEAD~1 -- '*.ts' '*.tsx' 2>/dev/null | tr '\n' ' ')
 fi
 
-# Run type checking and linting in parallel
-# (posttypecheck no longer cleans dist - that moved to prebuild)
-npx run-p typecheck lint
-
-# Safety check: verify formatting is clean after all other scripts ran
-# This catches edge cases where typecheck/lint scripts might touch files
-npm run format:check
-
-# If we created an auto-format commit, push it now (skip hooks - we just validated)
-if [ "$AUTO_FORMATTED" = true ]; then
-    echo ""
-    echo "✅ Pushing auto-format commit..."
-    git push --no-verify
+if [ -n "$CHANGED_FILES" ]; then
+    echo "Linting changed files only..."
+    npm run lint:deps
+    npx eslint --cache $CHANGED_FILES
+else
+    echo "No .ts/.tsx files changed, skipping lint"
 fi
