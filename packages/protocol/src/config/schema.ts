@@ -313,7 +313,6 @@ export const phaseSchema = z.object({
 export type PhaseConfig = z.infer<typeof phaseSchema>;
 
 export const gameConfigSchema = z.object({
-	start: startConfigSchema.optional(),
 	actions: z.array(actionSchema).optional(),
 	buildings: z.array(buildingSchema).optional(),
 	developments: z.array(developmentSchema).optional(),

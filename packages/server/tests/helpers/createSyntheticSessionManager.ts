@@ -15,11 +15,7 @@ import {
 	Types,
 	PassiveMethods,
 } from '@kingdom-builder/contents/config/builderShared';
-import type {
-	PhaseConfig,
-	RuleSet,
-	StartConfig,
-} from '@kingdom-builder/protocol';
+import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
 import type { ContentFactory } from '@kingdom-builder/testing';
 
 export type SyntheticSessionManagerOptions = Omit<
@@ -36,7 +32,6 @@ export interface SyntheticSessionManagerResult {
 	gainResourceId: string;
 	actionId: string;
 	phases: PhaseConfig[];
-	start: StartConfig;
 	rules: RuleSet;
 	primaryIconId: string | null;
 }
@@ -167,19 +162,6 @@ export function createSyntheticSessionManager(
 			],
 		},
 	];
-	const start: StartConfig = {
-		player: {
-			resources: {},
-			stats: {},
-			population: {},
-			lands: [],
-			valuesV2: { [costResourceId]: 1, [gainResourceId]: 0 },
-			resourceLowerBoundsV2: {
-				[costResourceId]: 0,
-				[gainResourceId]: 0,
-			},
-		},
-	};
 	const rules: RuleSet = {
 		defaultActionAPCost: 1,
 		absorptionCapPct: 1,
@@ -216,7 +198,6 @@ export function createSyntheticSessionManager(
 		developments: engineOverrides.developments ?? factory.developments,
 		populations: engineOverrides.populations ?? factory.populations,
 		phases: engineOverrides.phases ?? phases,
-		start: engineOverrides.start ?? start,
 		rules: engineOverrides.rules ?? rules,
 		resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? {
 			resources,
@@ -249,7 +230,6 @@ export function createSyntheticSessionManager(
 		gainResourceId,
 		actionId: action.id,
 		phases,
-		start,
 		rules,
 		primaryIconId: engineOptions.primaryIconId ?? null,
 	};
