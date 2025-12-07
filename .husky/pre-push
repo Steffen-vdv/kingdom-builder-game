@@ -6,29 +6,24 @@ set -e
 # Auto-fix formatting
 npm run format
 
-# Track if we created an auto-format commit
-AUTO_FORMATTED=false
-
-# If format changed files, commit them
+# If format changed files, commit and push them, then abort original push
 if ! git diff --quiet; then
     echo ""
     echo "📝 Formatting changed files - auto-committing..."
     git add -A
     git commit -m "chore: auto-format"
-    AUTO_FORMATTED=true
-fi
 
-# Run type checking and linting in parallel
-# (posttypecheck no longer cleans dist - that moved to prebuild)
-npx run-p typecheck lint
+    # Run type checking and linting in parallel
+    npx run-p typecheck lint
 
-# Safety check: verify formatting is clean after all other scripts ran
-# This catches edge cases where typecheck/lint scripts might touch files
-npm run format:check
-
-# If we created an auto-format commit, push it now (skip hooks - we just validated)
-if [ "$AUTO_FORMATTED" = true ]; then
     echo ""
-    echo "✅ Pushing auto-format commit..."
+    echo "✅ Pushing with auto-format commit..."
     git push --no-verify
+
+    # Exit 1 to abort the original push (we already pushed successfully)
+    # This prevents git from trying to push stale refs
+    exit 1
 fi
+
+# No formatting needed - just run checks and let original push proceed
+npx run-p typecheck lint
