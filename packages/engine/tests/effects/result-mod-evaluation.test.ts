@@ -30,7 +30,7 @@ describe('result_mod evaluation modifiers', () => {
 					type: 'resource' as const,
 					method: 'add' as const,
 					params: resourceAmountParams({
-						key: primaryResource,
+						resourceId: primaryResource,
 						amount: 1,
 					}),
 				},
@@ -54,7 +54,7 @@ describe('result_mod evaluation modifiers', () => {
 
 		expect(gains[0]).toEqual({ key: primaryResource, amount: 3 });
 		expect(gains[1]).toEqual({
-			key: secondaryResource ?? primaryResource,
+			resourceId: secondaryResource ?? primaryResource,
 			amount: -2,
 		});
 		const after =

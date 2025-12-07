@@ -12,7 +12,7 @@ describe('resource removal penalties', () => {
 	it('reduces happiness when configured as a removal effect', () => {
 		const content = createContentFactory();
 		const penalty = resourceAmountParams({
-			key: CResource.happiness,
+			resourceId: CResource.happiness,
 			amount: 1,
 		});
 		const action = content.action({
@@ -43,7 +43,7 @@ describe('resource removal penalties', () => {
 	it('aggregates evaluator penalties before rounding when shortfalls are allowed', () => {
 		const content = createContentFactory();
 		const penalty = resourceAmountParams({
-			key: CResource.happiness,
+			resourceId: CResource.happiness,
 			amount: 0.5,
 		});
 		const action = content.action({

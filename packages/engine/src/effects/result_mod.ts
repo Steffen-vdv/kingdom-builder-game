@@ -70,7 +70,7 @@ export const resultMod: EffectHandler<ResultModParams> = (
 											type: 'resource',
 											method: 'add',
 											params: {
-												resourceId: gainEntry.key,
+												resourceId: gainEntry.resourceId,
 												change: { type: 'amount', amount },
 											},
 										},

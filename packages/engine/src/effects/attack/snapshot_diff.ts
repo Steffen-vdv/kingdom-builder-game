@@ -11,11 +11,11 @@ export function diffPlayerSnapshots(
 		...Object.keys(after.values),
 	]);
 
-	for (const key of allKeys) {
-		const beforeValue = before.values[key] ?? 0;
-		const afterValue = after.values[key] ?? 0;
+	for (const resourceId of allKeys) {
+		const beforeValue = before.values[resourceId] ?? 0;
+		const afterValue = after.values[resourceId] ?? 0;
 		if (beforeValue !== afterValue) {
-			diffs.push({ key, before: beforeValue, after: afterValue });
+			diffs.push({ resourceId, before: beforeValue, after: afterValue });
 		}
 	}
 

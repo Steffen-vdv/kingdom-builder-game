@@ -14,7 +14,7 @@ describe('resource:add additive percent effect', () => {
 			type: 'resource',
 			method: 'add',
 			params: resourcePercentParams({
-				key: Stat.absorption,
+				resourceId: Stat.absorption,
 				percent: 0.5,
 				additive: true,
 			}),

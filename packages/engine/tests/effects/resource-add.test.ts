@@ -28,7 +28,7 @@ describe('resource:add effect', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 3,
 					}),
 				},
@@ -43,7 +43,7 @@ describe('resource:add effect', () => {
 			(effect) =>
 				effect.type === 'resource' &&
 				effect.method === 'add' &&
-				effect.params?.key === CResource.gold,
+				effect.params?.resourceId === CResource.gold,
 		)?.params as ResourceAmountParamsResult | undefined;
 		const amount = params?.amount ?? 0;
 		const cost = getActionCosts('grant_gold', engineContext)[CResource.ap] ?? 0;
@@ -64,7 +64,7 @@ describe('resource:add effect', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourcePercentParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						percent: 0.24,
 						roundingMode: 'up',
 					}),
@@ -79,7 +79,7 @@ describe('resource:add effect', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourcePercentParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						percent: 0.18,
 						roundingMode: 'down',
 					}),
@@ -96,7 +96,7 @@ describe('resource:add effect', () => {
 				(effect) =>
 					effect.type === 'resource' &&
 					effect.method === 'add' &&
-					effect.params?.key === CResource.gold,
+					effect.params?.resourceId === CResource.gold,
 			)?.params as ResourcePercentParamsResult | undefined;
 		const roundUpBase = 5;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundUpBase;
@@ -114,7 +114,7 @@ describe('resource:add effect', () => {
 				(effect) =>
 					effect.type === 'resource' &&
 					effect.method === 'add' &&
-					effect.params?.key === CResource.gold,
+					effect.params?.resourceId === CResource.gold,
 			)?.params as ResourcePercentParamsResult | undefined;
 		const roundDownBase = 11;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundDownBase;

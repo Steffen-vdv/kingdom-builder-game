@@ -52,7 +52,6 @@ interface AdvanceToActionPhaseOptions {
 		| 'actionCategories'
 		| 'buildings'
 		| 'developments'
-		| 'populations'
 		| 'resources'
 	>;
 	onFatalSessionError?: (error: unknown) => void;

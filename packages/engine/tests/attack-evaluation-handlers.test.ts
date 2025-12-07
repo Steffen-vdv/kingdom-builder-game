@@ -11,7 +11,7 @@ describe('attack:perform evaluation handlers', () => {
 		const attacker = engineContext.activePlayer;
 		attacker.resourceValues[Stat.armyStrength] = 2;
 
-		const target = { type: 'resource', key: Resource.castleHP } as const;
+		const target = { type: 'resource', resourceId: Resource.castleHP } as const;
 		const resourceHandler = attackTargetHandlers.resource;
 		const originalGetKey = resourceHandler.getEvaluationModifierKey.bind(
 			resourceHandler,
@@ -36,7 +36,7 @@ describe('attack:perform evaluation handlers', () => {
 			expect(getKeySpy).toHaveBeenCalledWith(target);
 			expect(evaluationSpy).toHaveBeenCalled();
 			const modifiers = evaluationSpy.mock.calls[0]![2];
-			expect(modifiers[0]!.key).toBe(derivedKey);
+			expect(modifiers[0]!.resourceId).toBe(derivedKey);
 		} finally {
 			resourceHandler.getEvaluationModifierKey = originalGetKey;
 			evaluationSpy.mockRestore();
@@ -75,7 +75,7 @@ describe('attack:perform evaluation handlers', () => {
 			expect(getKeySpy).toHaveBeenCalledWith(target);
 			expect(evaluationSpy).toHaveBeenCalled();
 			const modifiers = evaluationSpy.mock.calls[0]![2];
-			expect(modifiers[0]!.key).toBe(derivedKey);
+			expect(modifiers[0]!.resourceId).toBe(derivedKey);
 		} finally {
 			buildingHandler.getEvaluationModifierKey = originalGetKey;
 			evaluationSpy.mockRestore();

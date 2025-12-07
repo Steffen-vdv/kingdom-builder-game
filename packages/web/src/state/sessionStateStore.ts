@@ -189,7 +189,6 @@ function applyRegistries(
 	);
 	mergeRegistryEntries(record.registries.buildings, next.buildings);
 	mergeRegistryEntries(record.registries.developments, next.developments);
-	mergeRegistryEntries(record.registries.populations, next.populations);
 	applyResourceRegistry(record.registries.resources, next.resources);
 	const keys = extractResourceKeys(record.registries);
 	record.resourceKeys.splice(0, record.resourceKeys.length, ...keys);

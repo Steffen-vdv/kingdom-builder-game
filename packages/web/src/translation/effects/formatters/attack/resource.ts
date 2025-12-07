@@ -12,27 +12,27 @@ import { DEFAULT_ATTACK_RESOURCE_KEY } from './defaultKeys';
 
 const resourceFormatter: AttackTargetFormatter<{
 	type: 'resource';
-	key: AttackResourceKey;
+	resourceId: AttackResourceKey;
 }> = {
 	type: 'resource',
 	parseEffectTarget(effect, _context) {
 		const targetParam = effect.params?.['target'] as
-			| { type: 'resource'; key: AttackResourceKey }
+			| { type: 'resource'; resourceId: AttackResourceKey }
 			| undefined;
 		if (targetParam?.type === 'resource') {
 			return targetParam;
 		}
-		return { type: 'resource', key: DEFAULT_ATTACK_RESOURCE_KEY };
+		return { type: 'resource', resourceId: DEFAULT_ATTACK_RESOURCE_KEY };
 	},
 	normalizeLogTarget(target) {
 		const resourceTarget = target as Extract<
 			AttackLog['evaluation']['target'],
 			{ type: 'resource' }
 		>;
-		return { type: 'resource', key: resourceTarget.key };
+		return { type: 'resource', resourceId: resourceTarget.resourceId };
 	},
 	getInfo(target, context) {
-		return selectAttackResourceDescriptor(context, target.key);
+		return selectAttackResourceDescriptor(context, target.resourceId);
 	},
 	getTargetLabel(info) {
 		return iconLabel(info.icon, info.label);

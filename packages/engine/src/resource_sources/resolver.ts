@@ -16,7 +16,7 @@ export function resolveResourceSourceMeta(
 	resourceKey: ResourceKey,
 ): ResourceSourceMeta {
 	const meta: ResourceSourceMeta = {
-		key: createResourceSourceKey(effectDefinition, resourceKey),
+		resourceId: createResourceSourceKey(effectDefinition, resourceKey),
 		longevity: 'permanent',
 	};
 	const effectInfo: ResourceSourceMeta['effect'] = {};
@@ -56,13 +56,13 @@ export function applyResourceDelta(
 	const sources =
 		playerResourceSources[resourceId] ??
 		(playerResourceSources[resourceId] = {});
-	const existingEntry = sources[meta.key];
+	const existingEntry = sources[meta.resourceId];
 	const normalizedDelta = Math.abs(delta) < RESOURCE_SOURCE_EPSILON ? 0 : delta;
 	if (!existingEntry) {
 		if (normalizedDelta === 0) {
 			return;
 		}
-		sources[meta.key] = {
+		sources[meta.resourceId] = {
 			amount: normalizedDelta,
 			meta: cloneMeta(meta),
 		};
@@ -70,7 +70,7 @@ export function applyResourceDelta(
 	}
 	const nextAmount = existingEntry.amount + normalizedDelta;
 	if (Math.abs(nextAmount) < RESOURCE_SOURCE_EPSILON) {
-		delete sources[meta.key];
+		delete sources[meta.resourceId];
 		return;
 	}
 	existingEntry.amount = nextAmount;
@@ -96,10 +96,21 @@ export function recordEffectResourceDelta(
 	const params = isPlainObject(effectDefinition.params)
 		? effectDefinition.params
 		: undefined;
-	const percentSourceId =
+	// Support both legacy percentResourceId and percentFromResource change pattern
+	let percentSourceId =
 		typeof params?.['percentResourceId'] === 'string'
 			? params['percentResourceId'].trim()
 			: '';
+	// Also check for percentFromResource change type which uses sourceResourceId
+	if (!percentSourceId && isPlainObject(params?.['change'])) {
+		const change = params['change'] as Record<string, unknown>;
+		if (
+			change['type'] === 'percentFromResource' &&
+			typeof change['sourceResourceId'] === 'string'
+		) {
+			percentSourceId = change['sourceResourceId'].trim();
+		}
+	}
 	if (percentSourceId) {
 		appendDependencyLink(meta, {
 			type: 'resource',

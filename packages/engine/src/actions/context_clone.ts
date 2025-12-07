@@ -155,7 +155,6 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		source.actions,
 		source.buildings,
 		source.developments,
-		source.populations,
 		clonedPassives,
 		source.phases,
 		source.actionCostResourceId,
@@ -170,7 +169,7 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 	cloned.resourcePercentBases = { ...source.resourcePercentBases };
 	cloned.resourcePercentAccums = { ...source.resourcePercentAccums };
 	cloned.recentResourceGains = source.recentResourceGains.map((gain) => ({
-		key: gain.key,
+		resourceId: gain.resourceId,
 		amount: gain.amount,
 	}));
 	cloned.resourceSourceStack = [...source.resourceSourceStack];

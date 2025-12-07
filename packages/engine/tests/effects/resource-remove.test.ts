@@ -28,7 +28,7 @@ describe('resource:remove effect', () => {
 					type: 'resource',
 					method: 'remove',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 3,
 					}),
 				},
@@ -43,7 +43,7 @@ describe('resource:remove effect', () => {
 			(effect) =>
 				effect.type === 'resource' &&
 				effect.method === 'remove' &&
-				effect.params?.key === CResource.gold,
+				effect.params?.resourceId === CResource.gold,
 		)?.params as ResourceAmountParamsResult | undefined;
 		const amount = params?.amount ?? 0;
 		const cost = getActionCosts('pay_gold', engineContext)[CResource.ap] ?? 0;
@@ -64,7 +64,7 @@ describe('resource:remove effect', () => {
 					type: 'resource',
 					method: 'remove',
 					params: resourcePercentParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						percent: 0.26,
 						roundingMode: 'up',
 					}),
@@ -79,7 +79,7 @@ describe('resource:remove effect', () => {
 					type: 'resource',
 					method: 'remove',
 					params: resourcePercentParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						percent: 0.36,
 						roundingMode: 'down',
 					}),
@@ -96,7 +96,7 @@ describe('resource:remove effect', () => {
 				(effect) =>
 					effect.type === 'resource' &&
 					effect.method === 'remove' &&
-					effect.params?.key === CResource.gold,
+					effect.params?.resourceId === CResource.gold,
 			)?.params as ResourcePercentParamsResult | undefined;
 		const roundUpBase = 7;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundUpBase;
@@ -115,7 +115,7 @@ describe('resource:remove effect', () => {
 				(effect) =>
 					effect.type === 'resource' &&
 					effect.method === 'remove' &&
-					effect.params?.key === CResource.gold,
+					effect.params?.resourceId === CResource.gold,
 			)?.params as ResourcePercentParamsResult | undefined;
 		const roundDownBase = 9;
 		engineContext.activePlayer.resourceValues[CResource.gold] = roundDownBase;

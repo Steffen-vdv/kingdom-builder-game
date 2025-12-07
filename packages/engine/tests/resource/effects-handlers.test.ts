@@ -85,7 +85,7 @@ function createTestContext(): TestContext {
 	const baseContext = {
 		game: { resourceCatalog: catalog },
 		resourceCatalog: catalog,
-		recentResourceGains: [] as { key: string; amount: number }[],
+		recentResourceGains: [] as { resourceId: string; amount: number }[],
 		activePlayer: active,
 		opponent,
 	} as unknown as EngineContext;
@@ -128,7 +128,7 @@ describe('Resource effect handlers', () => {
 		expect(ctx.active.resourceValues[ctx.parentId]).toBe(9);
 		expect(ctx.active.resourceTouched[ctx.parentId]).toBe(true);
 		expect(ctx.context.recentResourceGains).toEqual([
-			{ key: ctx.oreId, amount: 7 },
+			{ resourceId: ctx.oreId, amount: 7 },
 		]);
 	});
 
@@ -150,7 +150,7 @@ describe('Resource effect handlers', () => {
 			upper: false,
 		});
 		expect(ctx.context.recentResourceGains.at(-1)).toEqual({
-			key: ctx.oreId,
+			resourceId: ctx.oreId,
 			amount: -3,
 		});
 		expect(ctx.active.resourceTierIds[ctx.oreId]).toBe('tier-low');
@@ -188,7 +188,7 @@ describe('Resource effect handlers', () => {
 		expect(getResourceValue(ctx.active, ctx.oreId)).toBe(3);
 		expect(getResourceValue(ctx.opponent, ctx.vaultId)).toBe(5);
 		expect(ctx.context.recentResourceGains).toEqual([
-			{ key: ctx.oreId, amount: -4 },
+			{ resourceId: ctx.oreId, amount: -4 },
 		]);
 		// Both are touched because their final values are non-zero
 		expect(ctx.active.resourceTouched[ctx.oreId]).toBe(true);

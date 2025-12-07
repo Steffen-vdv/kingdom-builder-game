@@ -112,12 +112,12 @@ export class EvaluationModifierService {
 			return;
 		}
 		for (const gain of gains) {
-			const keyedPercent = perResourcePercent[gain.key] ?? 0;
+			const keyedPercent = perResourcePercent[gain.resourceId] ?? 0;
 			const totalPercent = globalPercent + keyedPercent;
 			if (totalPercent === 0) {
 				continue;
 			}
-			const roundMode = resolveRoundMode(rounding, gain.key);
+			const roundMode = resolveRoundMode(rounding, gain.resourceId);
 			const additionalGain = gain.amount * totalPercent;
 			const adjusted = applyRound(additionalGain, roundMode);
 			gain.amount += adjusted;

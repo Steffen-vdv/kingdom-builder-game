@@ -20,12 +20,12 @@ describe('resource effects for population', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: resourceAmountParams({ key: roleId, amount: 1 }),
+					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
 				},
 				{
 					type: 'resource',
 					method: 'add',
-					params: resourceAmountParams({ key: roleId, amount: 1 }),
+					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
 				},
 			],
 		});
@@ -34,7 +34,7 @@ describe('resource effects for population', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: resourceAmountParams({ key: roleId, amount: 1 }),
+					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
 				},
 			],
 		});

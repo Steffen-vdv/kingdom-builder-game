@@ -26,11 +26,11 @@ const EMPTY_RESOURCE_CATALOG = Object.freeze({
 });
 
 const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors = {
-	list: () => Object.freeze([] as { key: string; amount: number }[]),
-	positives: () => Object.freeze([] as { key: string; amount: number }[]),
-	negatives: () => Object.freeze([] as { key: string; amount: number }[]),
+	list: () => Object.freeze([] as { resourceId: string; amount: number }[]),
+	positives: () => Object.freeze([] as { resourceId: string; amount: number }[]),
+	negatives: () => Object.freeze([] as { resourceId: string; amount: number }[]),
 	forResource: (_id: string) =>
-		Object.freeze([] as { key: string; amount: number }[]),
+		Object.freeze([] as { resourceId: string; amount: number }[]),
 	sumForResource: () => 0,
 };
 

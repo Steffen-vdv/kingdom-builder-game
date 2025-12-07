@@ -107,7 +107,7 @@ export function buildStandardEvaluationEntry(
 	>;
 	const formatTargetValue = (value: number) => {
 		if (isStat) {
-			return formatStatValue(String(target.key), value);
+			return formatStatValue(String(target.resourceId), value);
 		}
 		return formatNumber(value);
 	};

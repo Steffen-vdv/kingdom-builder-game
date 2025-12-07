@@ -55,7 +55,7 @@ describe('simulateUpcomingPhases', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: Resource.gold,
+					resourceId: Resource.gold,
 					amount: goldGain,
 				}),
 			},
@@ -65,7 +65,7 @@ describe('simulateUpcomingPhases', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: Resource.ap,
+					resourceId: Resource.ap,
 					amount: apGain,
 				}),
 			},
@@ -144,7 +144,7 @@ describe('simulateUpcomingPhases', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: Resource.gold,
+					resourceId: Resource.gold,
 					amount: goldGain,
 				}),
 			},

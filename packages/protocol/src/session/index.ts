@@ -43,7 +43,7 @@ export type SessionResourceSourceLink = {
 };
 
 export interface SessionResourceSourceMeta {
-	key: string;
+	resourceId: string;
 	longevity: 'ongoing' | 'permanent';
 	kind?: string;
 	id?: string;
@@ -215,7 +215,7 @@ export interface SessionRuleSnapshot {
 }
 
 export interface SessionRecentResourceGain {
-	key: string;
+	resourceId: string;
 	amount: number;
 }
 

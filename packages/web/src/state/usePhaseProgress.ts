@@ -27,7 +27,6 @@ interface PhaseProgressOptions {
 		| 'buildings'
 		| 'developments'
 		| 'resources'
-		| 'populations'
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	onFatalSessionError?: ((error: unknown) => void) | undefined;

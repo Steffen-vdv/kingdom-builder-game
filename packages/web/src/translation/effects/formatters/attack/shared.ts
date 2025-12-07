@@ -77,7 +77,7 @@ export function formatDiffCommon(
 	context: Pick<TranslationContext, 'assets' | 'resourceMetadata'>,
 	options?: DiffFormatOptions,
 ): string {
-	const key = String(diff.key);
+	const key = String(diff.resourceId);
 	const descriptor = selectAttackResourceDescriptor(context, key);
 	const displayLabel = iconLabel(descriptor.icon, descriptor.label);
 	const delta = diff.after - diff.before;

@@ -23,7 +23,7 @@ describe('resource sources metadata', () => {
 		expect(firstStep).toBeDefined();
 
 		const frame = () => ({
-			key: 'frame-source',
+			resourceId: 'frame-source',
 			longevity: 'ongoing' as const,
 			kind: 'resource',
 			dependsOn: [
@@ -40,7 +40,10 @@ describe('resource sources metadata', () => {
 		const effect: EffectDef = {
 			type: 'resource',
 			method: 'add',
-			params: { key: Stat.armyStrength, amount: 2 },
+			params: {
+				resourceId: Stat.armyStrength,
+				change: { type: 'amount', amount: 2 },
+			},
 			meta: {
 				resourceSource: {
 					key: 'custom-source',
@@ -70,7 +73,7 @@ describe('resource sources metadata', () => {
 		);
 
 		expect(meta).toMatchObject({
-			key: 'custom-source',
+			resourceId: 'custom-source',
 			longevity: 'ongoing',
 			kind: 'resource',
 			id: PopulationRole.Legion,
@@ -104,7 +107,7 @@ describe('resource sources metadata', () => {
 
 		// Stat values ARE Resource IDs directly - no mapper needed
 		applyResourceDelta(player, Stat.armyStrength, 2, meta);
-		const initialEntry = player.resourceSources[Stat.armyStrength]?.[meta.key];
+		const initialEntry = player.resourceSources[Stat.armyStrength]?.[meta.resourceId];
 		expect(initialEntry?.amount).toBe(2);
 		expect(initialEntry?.meta.longevity).toBe('ongoing');
 
@@ -120,7 +123,7 @@ describe('resource sources metadata', () => {
 						...effect,
 						meta: {
 							resourceSource: {
-								key: meta.key,
+								key: meta.resourceId,
 								longevity: 'permanent',
 								dependsOn: [
 									{
@@ -138,7 +141,7 @@ describe('resource sources metadata', () => {
 		);
 
 		applyResourceDelta(player, Stat.armyStrength, 1, updateMeta);
-		const merged = player.resourceSources[Stat.armyStrength]?.[meta.key];
+		const merged = player.resourceSources[Stat.armyStrength]?.[meta.resourceId];
 		expect(merged?.amount).toBe(3);
 		expect(merged?.meta.longevity).toBe('ongoing');
 		expect(merged?.meta.extra).toEqual({
@@ -166,7 +169,7 @@ describe('resource sources metadata', () => {
 
 		applyResourceDelta(player, Stat.armyStrength, -3, updateMeta);
 		expect(
-			player.resourceSources[Stat.armyStrength]?.[meta.key],
+			player.resourceSources[Stat.armyStrength]?.[meta.resourceId],
 		).toBeUndefined();
 	});
 
@@ -203,18 +206,20 @@ describe('resource sources metadata', () => {
 
 		const pctEffect: EffectDef = {
 			type: 'resource',
-			method: 'add_pct',
+			method: 'add',
 			params: {
 				resourceId: Stat.armyStrength,
-				percent: 25,
-				percentResourceId: Stat.growth,
+				change: {
+					type: 'percentFromResource',
+					sourceResourceId: Stat.growth,
+				},
 			},
 		};
 		// Stat values ARE Resource IDs directly - no mapper needed
 		recordEffectResourceDelta(pctEffect, engineContext, Stat.armyStrength, 1);
 		const pctEntry = Object.values(
 			player.resourceSources[Stat.armyStrength] ?? {},
-		).find((entry) => entry.meta.effect?.method === 'add_pct');
+		).find((entry) => entry.meta.effect?.method === 'add');
 		expect(pctEntry?.meta.dependsOn).toEqual(
 			expect.arrayContaining([
 				{
@@ -237,7 +242,7 @@ describe('resource sources metadata', () => {
 		try {
 			const dependencies = collectEvaluatorDependencies({
 				type: 'resource',
-				params: { key: Stat.growth },
+				params: { resourceId: Stat.growth },
 			});
 
 			expect(dependencies).toEqual([

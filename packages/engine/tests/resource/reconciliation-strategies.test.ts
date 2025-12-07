@@ -56,7 +56,7 @@ function createTestContext(): TestContext {
 	const baseContext = {
 		game: { resourceCatalog: catalog },
 		resourceCatalog: catalog,
-		recentResourceGains: [] as { key: string; amount: number }[],
+		recentResourceGains: [] as { resourceId: string; amount: number }[],
 		activePlayer: active,
 		opponent,
 	} as unknown as EngineContext;
@@ -615,7 +615,7 @@ describe('Reconciliation strategies', () => {
 				resourceAdd(effect, ctx.context);
 
 				expect(ctx.context.recentResourceGains).toEqual([
-					{ key: ctx.goldId, amount: 20 },
+					{ resourceId: ctx.goldId, amount: 20 },
 				]);
 			});
 
@@ -635,7 +635,7 @@ describe('Reconciliation strategies', () => {
 
 				// Only 10 was applied due to clamping (90 + 10 = 100)
 				expect(ctx.context.recentResourceGains).toEqual([
-					{ key: ctx.goldId, amount: 10 },
+					{ resourceId: ctx.goldId, amount: 10 },
 				]);
 			});
 		});

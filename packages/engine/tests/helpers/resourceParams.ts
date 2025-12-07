@@ -6,8 +6,7 @@ import type {
 import { computeRequestedResourceDelta } from '../../src/resource/reconciliation.ts';
 
 interface BaseResourceParamsInput {
-	readonly key: string;
-	readonly resourceId?: string;
+	readonly resourceId: string;
 	readonly reconciliation?: ResourceReconciliationMode;
 	readonly suppressHooks?: boolean;
 }
@@ -24,7 +23,6 @@ interface ResourcePercentParamsInput extends BaseResourceParamsInput {
 }
 
 interface BaseResourceParamsResult {
-	readonly key: string;
 	readonly resourceId: string;
 	readonly change: ResourceChangeParameters;
 	readonly reconciliation?: ResourceReconciliationMode;
@@ -45,21 +43,11 @@ export interface ResourcePercentParamsResult extends BaseResourceParamsResult {
 	) => number;
 }
 
-function resolveResourceId(input: BaseResourceParamsInput): string {
-	if (input.resourceId) {
-		return input.resourceId;
-	}
-	// Keys ARE Resource IDs directly - no mapper needed
-	return input.key;
-}
-
 export function resourceAmountParams(
 	input: ResourceAmountParamsInput,
 ): ResourceAmountParamsResult {
-	const resourceId = resolveResourceId(input);
-	const amount = input.amount;
+	const { resourceId, amount } = input;
 	return {
-		key: input.key,
 		amount,
 		resourceId,
 		change: { type: 'amount', amount },
@@ -97,7 +85,7 @@ function invertChange(
 export function resourcePercentParams(
 	input: ResourcePercentParamsInput,
 ): ResourcePercentParamsResult {
-	const resourceId = resolveResourceId(input);
+	const { resourceId } = input;
 	const modifiers = normalisePercentModifiers(input.percent, input.modifiers);
 	const percent =
 		typeof input.percent === 'number' ? input.percent : (modifiers[0] ?? 0);
@@ -120,7 +108,6 @@ export function resourcePercentParams(
 	};
 
 	const result: ResourcePercentParamsResult = {
-		key: input.key,
 		percent,
 		modifiers,
 		resourceId,
@@ -142,7 +129,6 @@ interface PercentFromResourceParamsInput extends BaseResourceParamsInput {
 }
 
 export interface PercentFromResourceParamsResult {
-	readonly key: string;
 	readonly resourceId: string;
 	readonly change: Extract<
 		ResourceChangeParameters,
@@ -155,7 +141,7 @@ export interface PercentFromResourceParamsResult {
 export function resourcePercentFromResourceParams(
 	input: PercentFromResourceParamsInput,
 ): PercentFromResourceParamsResult {
-	const resourceId = resolveResourceId(input);
+	const { resourceId } = input;
 	const change: Extract<
 		ResourceChangeParameters,
 		{ type: 'percentFromResource' }
@@ -168,7 +154,6 @@ export function resourcePercentFromResourceParams(
 	};
 
 	return {
-		key: input.key,
 		resourceId,
 		change,
 		...(input.reconciliation ? { reconciliation: input.reconciliation } : {}),

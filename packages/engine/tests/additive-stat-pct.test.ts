@@ -18,7 +18,7 @@ describe('resource:add additive percent scaling', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourcePercentParams({
-					key: Stat.armyStrength,
+					resourceId: Stat.armyStrength,
 					percent: pct1,
 					additive: true,
 				}),
@@ -27,7 +27,7 @@ describe('resource:add additive percent scaling', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourcePercentParams({
-					key: Stat.armyStrength,
+					resourceId: Stat.armyStrength,
 					percent: pct2,
 					additive: true,
 				}),

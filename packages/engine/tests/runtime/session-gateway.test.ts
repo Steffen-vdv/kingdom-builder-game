@@ -20,7 +20,6 @@ import {
 	ACTIONS as REAL_ACTIONS,
 	BUILDINGS as REAL_BUILDINGS,
 	DEVELOPMENTS as REAL_DEVELOPMENTS,
-	POPULATIONS as REAL_POPULATIONS,
 } from '@kingdom-builder/contents';
 import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
@@ -63,7 +62,7 @@ function createGateway(options?: CreateGatewayOptions) {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: RESOURCE_GOLD,
+					resourceId: RESOURCE_GOLD,
 					amount: 2,
 				}),
 			},
@@ -86,7 +85,6 @@ function createGateway(options?: CreateGatewayOptions) {
 		actions: REAL_ACTIONS,
 		buildings: REAL_BUILDINGS,
 		developments: REAL_DEVELOPMENTS,
-		populations: REAL_POPULATIONS,
 		phases: REAL_PHASES,
 		rules: REAL_RULES,
 		resourceCatalog: BASE_RESOURCE_CATALOG,

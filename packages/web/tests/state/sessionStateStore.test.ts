@@ -119,7 +119,7 @@ describe('sessionStateStore', () => {
 			const bonusResource = structuredClone(
 				registriesPayload.resources[firstResource],
 			);
-			bonusResource.key = 'bonus-resource';
+			bonusResource.resourceId = 'bonus-resource';
 			registriesPayload.resources['bonus-resource'] = bonusResource;
 		}
 		const stateResponse: SessionStateResponse = {

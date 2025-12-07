@@ -61,7 +61,7 @@ describe('simulateUpcomingPhases (runtime)', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: CResource.gold,
+					resourceId: CResource.gold,
 					amount: goldGain,
 				}),
 			},
@@ -94,7 +94,7 @@ describe('simulateUpcomingPhases (runtime)', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: CResource.gold,
+					resourceId: CResource.gold,
 					amount: 3,
 				}),
 			},
@@ -119,7 +119,7 @@ describe('simulateUpcomingPhases (runtime)', () => {
 		firstStep.effects.push({
 			type: 'resource',
 			method: 'add',
-			params: resourceAmountParams({ key: CResource.gold, amount: 1 }),
+			params: resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		});
 		expect(context.game.players[0]!.resourceValues[CResource.gold]).toBe(
 			player.resourceValues[CResource.gold],

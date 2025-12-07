@@ -19,7 +19,6 @@ describe('building:remove effect', () => {
 		const context = createTestEngine({
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 			actions: content.actions,
 		});
 		context.activePlayer.buildings.add(building.id);

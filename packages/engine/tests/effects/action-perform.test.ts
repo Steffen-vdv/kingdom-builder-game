@@ -122,7 +122,6 @@ describe('action:perform effect', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		const resolution: ResolvedActionEffects = {
 			effects: [],
@@ -165,7 +164,6 @@ describe('action:perform effect', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		const missingResolution: ResolvedActionEffects = {
 			effects: [],

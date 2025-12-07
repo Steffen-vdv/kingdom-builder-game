@@ -111,7 +111,7 @@ function createTestContext(): TestContext {
 		resourceCatalog: catalog,
 		activePlayer: active,
 		opponent,
-		recentResourceGains: [] as { key: string; amount: number }[],
+		recentResourceGains: [] as { resourceId: string; amount: number }[],
 	} as unknown as EngineContext;
 
 	return {
@@ -164,8 +164,8 @@ describe('Resource transfer effect handler', () => {
 		expect(ctx.active.resourceTierIds[ctx.recipientId]).toBe('tier:high');
 		expect(ctx.opponent.resourceTierIds[ctx.donorId]).toBe('tier:high');
 		expect(ctx.context.recentResourceGains).toEqual([
-			{ key: ctx.donorId, amount: -4 },
-			{ key: ctx.recipientId, amount: 4 },
+			{ resourceId: ctx.donorId, amount: -4 },
+			{ resourceId: ctx.recipientId, amount: 4 },
 		]);
 		expect(ctx.active.resourceValues[ctx.parentId]).toBe(10);
 		expect(ctx.opponent.resourceValues[ctx.parentId]).toBe(8);
@@ -219,8 +219,8 @@ describe('Resource transfer effect handler', () => {
 		expect(nearest.donor).toBe(4);
 		expect(nearest.recipient).toBe(1);
 		expect(nearest.gains).toEqual([
-			{ key: ctx.donorId, amount: -1 },
-			{ key: ctx.recipientId, amount: 1 },
+			{ resourceId: ctx.donorId, amount: -1 },
+			{ resourceId: ctx.recipientId, amount: 1 },
 		]);
 
 		// -0.25 * 5 = -1.25, Math.ceil(-1.25) = -1 (toward zero)
@@ -272,7 +272,7 @@ describe('Resource transfer effect handler', () => {
 		expect(ctx.opponent.resourceTouched[ctx.donorId]).toBe(true);
 		expect(ctx.active.resourceTouched[ctx.recipientId]).toBe(true);
 		expect(ctx.context.recentResourceGains).toEqual([
-			{ key: ctx.recipientId, amount: 4 },
+			{ resourceId: ctx.recipientId, amount: 4 },
 		]);
 		expect(ctx.active.resourceTierIds[ctx.recipientId]).toBe(initialTier);
 	});

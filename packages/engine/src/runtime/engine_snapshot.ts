@@ -281,7 +281,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,
 		recentResourceGains: context.recentResourceGains.map((gain) => ({
-			key: gain.key,
+			resourceId: gain.resourceId,
 			amount: gain.amount,
 		})),
 		compensations: cloneCompensations(context.compensations),

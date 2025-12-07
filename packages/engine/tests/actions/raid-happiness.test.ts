@@ -18,7 +18,7 @@ describe('resource removal penalties', () => {
 		const before =
 			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;
 		const penalty = resourceAmountParams({
-			key: CResource.happiness,
+			resourceId: CResource.happiness,
 			amount: 1,
 		});
 		runEffects(

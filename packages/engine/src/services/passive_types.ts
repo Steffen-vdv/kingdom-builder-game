@@ -75,7 +75,7 @@ export type CostModifier = (
 export type ResultModifier = (actionId: string, context: EngineContext) => void;
 
 export type ResourceGain = {
-	key: string;
+	resourceId: string;
 	amount: number;
 };
 

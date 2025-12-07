@@ -45,7 +45,6 @@ export function createTranslationContext(
 		| 'actionCategories'
 		| 'buildings'
 		| 'developments'
-		| 'populations'
 		| 'resources'
 	>,
 	metadata: SessionSnapshotMetadata,
@@ -122,7 +121,6 @@ export function createTranslationContext(
 		actionCategories: wrapActionCategoryRegistry(registries.actionCategories),
 		buildings: wrapRegistry(registries.buildings),
 		developments: wrapRegistry(registries.developments),
-		populations: wrapRegistry(registries.populations),
 		passives: translationPassives,
 		phases: Object.freeze(
 			session.phases.map((phase) => {

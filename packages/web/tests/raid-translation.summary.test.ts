@@ -48,7 +48,7 @@ describe('raid translation summary', () => {
 			translation,
 			SYNTH_RESOURCE_IDS.castleHP,
 		);
-		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.resourceId)!;
 		const warWeariness = selectAttackStatDescriptor(
 			translation,
 			SYNTH_RESOURCE_IDS.warWeariness,
@@ -113,17 +113,17 @@ describe('raid translation summary', () => {
 		const originalResource =
 			SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP];
 		delete SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP];
-		suppressSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
+		suppressSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.resourceId);
 		try {
 			const { translation, attack } = createPartialStatEngineContext();
 			const castle = selectAttackResourceDescriptor(
 				translation,
 				SYNTH_RESOURCE_IDS.castleHP,
 			);
-			const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+			const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.resourceId)!;
 			const fallbackLabel =
-				humanizeIdentifier(SYNTH_COMBAT_STATS.power.key) ||
-				SYNTH_COMBAT_STATS.power.key;
+				humanizeIdentifier(SYNTH_COMBAT_STATS.power.resourceId) ||
+				SYNTH_COMBAT_STATS.power.resourceId;
 			expect(powerStat.label).toBe(fallbackLabel);
 			const targetDisplay = iconLabel(
 				castle.icon,
@@ -150,14 +150,14 @@ describe('raid translation summary', () => {
 			if (originalResource) {
 				SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP] = originalResource;
 			}
-			restoreSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.key);
+			restoreSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.resourceId);
 		}
 	});
 
 	it('summarizes building attack as destruction', () => {
 		const { translation, buildingAttack, building } =
 			createSyntheticEngineContext();
-		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.resourceId)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
 			SYNTH_RESOURCE_IDS.gold,
@@ -177,7 +177,7 @@ describe('raid translation summary', () => {
 		const rewardEffect = (onDamage.attacker ?? []).find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'resource' &&
-				((effectDef.params as { key?: string }).key ===
+				((effectDef.params as { key?: string }).resourceId ===
 					SYNTH_RESOURCE_IDS.gold ||
 					(effectDef.params as { resourceId?: string }).resourceId ===
 						SYNTH_RESOURCE_IDS.gold),

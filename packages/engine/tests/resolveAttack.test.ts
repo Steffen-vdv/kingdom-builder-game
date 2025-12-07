@@ -32,7 +32,7 @@ describe('resolveAttack', () => {
 		);
 		const result = resolveAttack(defender, 10, engineContext, {
 			type: 'resource',
-			key: CResource.castleHP,
+			resourceId: CResource.castleHP,
 		});
 		expect(result.damageDealt).toBe(5);
 	});
@@ -48,7 +48,7 @@ describe('resolveAttack', () => {
 		const startGold = defender.resourceValues[CResource.gold] ?? 0;
 		const result = resolveAttack(defender, 5, engineContext, {
 			type: 'resource',
-			key: CResource.castleHP,
+			resourceId: CResource.castleHP,
 		});
 		expect(result.damageDealt).toBe(4);
 		expect(defender.resourceValues[CResource.castleHP]).toBe(
@@ -70,7 +70,7 @@ describe('resolveAttack', () => {
 		const start = defender.resourceValues[CResource.castleHP] ?? 0;
 		const result = resolveAttack(defender, 1, engineContext, {
 			type: 'resource',
-			key: CResource.castleHP,
+			resourceId: CResource.castleHP,
 		});
 		expect(result.damageDealt).toBe(1);
 		expect(defender.resourceValues[CResource.castleHP]).toBe(start - 1);
@@ -83,7 +83,7 @@ describe('resolveAttack', () => {
 		defender.resourceValues[CStat.absorption] = 0.6;
 		const result = resolveAttack(defender, 1, engineContext, {
 			type: 'resource',
-			key: CResource.castleHP,
+			resourceId: CResource.castleHP,
 		});
 		expect(result.damageDealt).toBe(0);
 	});
@@ -97,7 +97,7 @@ describe('resolveAttack', () => {
 			defender,
 			10,
 			engineContext,
-			{ type: 'resource', key: CResource.castleHP },
+			{ type: 'resource', resourceId: CResource.castleHP },
 			{
 				ignoreAbsorption: true,
 				ignoreFortification: true,
@@ -126,7 +126,7 @@ describe('resolveAttack', () => {
 					type: 'resource',
 					method: 'add',
 					params: {
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						resourceId: CResource.gold,
 						change: { type: 'amount', amount: 1 },
 					},
@@ -154,7 +154,7 @@ describe('resolveAttack', () => {
 		const beforeGold = defender.resourceValues[CResource.gold] ?? 0;
 		const result = resolveAttack(defender, 4, engineContext, {
 			type: 'resource',
-			key: CResource.castleHP,
+			resourceId: CResource.castleHP,
 		});
 		expect(result.damageDealt).toBe(0);
 		expect(defender.resourceValues[CResource.castleHP]).toBe(10);
@@ -231,7 +231,7 @@ describe('resolveAttack', () => {
 		const armyStrength = attacker.resourceValues[CStat.armyStrength] as number;
 		const result = resolveAttack(defender, armyStrength, engineContext, {
 			type: 'resource',
-			key: CResource.castleHP,
+			resourceId: CResource.castleHP,
 		});
 		const rounding = engineContext.services.rules.absorptionRounding;
 		const base = armyStrength;
@@ -257,7 +257,7 @@ describe('resolveAttack', () => {
 		expect(engineContext.game.conclusion).toBeUndefined();
 		resolveAttack(defender, startHp, engineContext, {
 			type: 'resource',
-			key: CResource.castleHP,
+			resourceId: CResource.castleHP,
 		});
 		expect(engineContext.game.conclusion?.conditionId).toBe('castle-destroyed');
 		expect(engineContext.game.conclusion?.winnerId).toBe(

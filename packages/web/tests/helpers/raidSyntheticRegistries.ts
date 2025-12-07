@@ -29,7 +29,7 @@ const syntheticContent = vi.hoisted(() => {
 		statEnum[property] = key;
 	}
 	for (const config of Object.values(combatStatConfig)) {
-		statEnum[config.key] = config.key;
+		statEnum[config.resourceId] = config.resourceId;
 	}
 	const synthBuilding = {
 		id: 'synthetic:stronghold',

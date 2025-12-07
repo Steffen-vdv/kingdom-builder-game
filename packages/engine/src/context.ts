@@ -6,7 +6,6 @@ import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
 	DevelopmentConfig as DevelopmentDef,
-	PopulationConfig as PopulationDef,
 	PlayerStartConfig,
 	Registry,
 } from '@kingdom-builder/protocol';
@@ -21,7 +20,6 @@ export class EngineContext {
 		public actions: Registry<ActionDef>,
 		public buildings: Registry<BuildingDef>,
 		public developments: Registry<DevelopmentDef>,
-		public populations: Registry<PopulationDef>,
 		public passives: PassiveManager,
 		public phases: PhaseDef[],
 		public actionCostResourceId: string,
@@ -38,7 +36,7 @@ export class EngineContext {
 	}
 	aiSystem?: AISystem;
 	recentResourceGains: {
-		key: string;
+		resourceId: string;
 		amount: number;
 	}[] = [];
 	/**

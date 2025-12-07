@@ -59,7 +59,7 @@ const winConditionDisplaySchema = z.object({
 
 const winConditionTriggerSchema = z.object({
 	type: z.literal('resource'),
-	key: z.string(),
+	resourceId: z.string(),
 	comparison: z.enum(['lt', 'lte', 'gt', 'gte']),
 	value: z.number(),
 	target: z.enum(['self', 'opponent']),

@@ -62,7 +62,7 @@ describe('AI simulation guard', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: resourceAmountParams({ key: CResource.gold, amount: 1 }),
+					params: resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 				},
 			],
 		});
@@ -88,7 +88,7 @@ describe('AI simulation guard', () => {
 	it('simulation failure prevents costs from being deducted', async () => {
 		const { engineContext, apKey } = createEngineWithAction(
 			// Invalid effect that will fail during execution
-			resourceAmountParams({ key: CResource.gold, amount: 1 }),
+			resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		);
 
 		// Create a custom performAction that simulates failure
@@ -124,7 +124,7 @@ describe('AI simulation guard', () => {
 
 	it('expected errors (requirements) are handled gracefully', async () => {
 		const { engineContext, apKey } = createEngineWithAction(
-			resourceAmountParams({ key: CResource.gold, amount: 1 }),
+			resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		);
 
 		// Create a requirement failure error (expected error type)
@@ -160,7 +160,7 @@ describe('AI simulation guard', () => {
 
 	it('unexpected errors propagate to caller', async () => {
 		const { engineContext } = createEngineWithAction(
-			resourceAmountParams({ key: CResource.gold, amount: 1 }),
+			resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		);
 
 		// Create an unexpected engine error

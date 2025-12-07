@@ -315,7 +315,9 @@ export function createSignedResourceGainSelectors(
 	gains: ReadonlyArray<SessionRecentResourceGain>,
 ): TranslationSignedResourceGainSelectors {
 	const list = Object.freeze(
-		gains.map((e) => Object.freeze({ key: e.key, amount: e.amount })),
+		gains.map((e) =>
+			Object.freeze({ resourceId: e.resourceId, amount: e.amount }),
+		),
 	);
 	const positives = Object.freeze(list.filter((e) => e.amount > 0));
 	const negatives = Object.freeze(list.filter((e) => e.amount < 0));
@@ -327,13 +329,13 @@ export function createSignedResourceGainSelectors(
 		forResource(id: string) {
 			let result = cache.get(id);
 			if (!result) {
-				result = Object.freeze(list.filter((e) => e.key === id));
+				result = Object.freeze(list.filter((e) => e.resourceId === id));
 				cache.set(id, result);
 			}
 			return result;
 		},
 		sumForResource(id: string) {
-			return list.reduce((t, e) => (e.key === id ? t + e.amount : t), 0);
+			return list.reduce((t, e) => (e.resourceId === id ? t + e.amount : t), 0);
 		},
 	});
 }

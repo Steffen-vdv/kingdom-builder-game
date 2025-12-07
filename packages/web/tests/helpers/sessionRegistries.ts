@@ -56,7 +56,7 @@ type ResourceKey = SessionResourceDefinition['key'];
 function cloneResourceDefinition(
 	definition: SessionResourceDefinition,
 ): SessionResourceDefinition {
-	const clone: SessionResourceDefinition = { key: definition.key };
+	const clone: SessionResourceDefinition = { key: definition.resourceId };
 	if (definition.icon !== undefined) {
 		clone.icon = definition.icon;
 	}

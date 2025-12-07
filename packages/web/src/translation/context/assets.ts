@@ -1,4 +1,3 @@
-import type { PopulationConfig } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionRuleSnapshot,
@@ -49,45 +48,6 @@ function mergeIconLabel(
 		}
 	}
 	return Object.freeze(entry);
-}
-
-function toIconLabel(
-	definition: Partial<PopulationConfig> & {
-		id?: string;
-		icon?: string | undefined;
-		name?: string | undefined;
-		label?: string | undefined;
-		description?: string | undefined;
-	},
-	fallbackId: string,
-): TranslationIconLabel {
-	const label = definition.name ?? definition.label ?? fallbackId;
-	const entry: TranslationIconLabel = {};
-	if (definition.icon !== undefined) {
-		entry.icon = definition.icon;
-	}
-	if (label !== undefined) {
-		entry.label = label;
-	}
-	if (definition.description !== undefined) {
-		entry.description = definition.description;
-	}
-	return Object.freeze(entry);
-}
-
-function buildPopulationMap(
-	registry: SessionRegistries['populations'] | undefined,
-	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
-): Readonly<Record<string, TranslationIconLabel>> {
-	const entries: Record<string, TranslationIconLabel> = {};
-	// Under ResourceV2, populations are resources - this map may be empty
-	if (registry) {
-		for (const [id, definition] of registry.entries()) {
-			const base = toIconLabel(definition, id);
-			entries[id] = mergeIconLabel(base, descriptors?.[id], base.label ?? id);
-		}
-	}
-	return Object.freeze(entries);
 }
 
 function buildResourceMap(
@@ -225,8 +185,7 @@ function requireMetadataRecord(
 }
 
 export function createTranslationAssets(
-	registries: Pick<SessionRegistries, 'resources'> &
-		Partial<Pick<SessionRegistries, 'populations'>>,
+	registries: Pick<SessionRegistries, 'resources'>,
 	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
@@ -243,11 +202,6 @@ export function createTranslationAssets(
 		string,
 		SessionTriggerMetadata
 	>;
-	// Under ResourceV2, populations are resources - the separate registry is optional
-	const populations = buildPopulationMap(
-		registries.populations,
-		resourceMetadata,
-	);
 	const resources = buildResourceMap(registries.resources, resourceMetadata);
 	// Stat metadata is now part of unified resources - use resourceMetadata for stats too
 	const stats = buildStatMap(resourceMetadata);
@@ -283,7 +237,6 @@ export function createTranslationAssets(
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
 		resources,
-		populations,
 		stats,
 		population: populationAsset,
 		land: landAsset,

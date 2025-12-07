@@ -4,7 +4,6 @@ import {
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
-	POPULATIONS,
 	Resource,
 	RULES,
 } from '@kingdom-builder/contents';
@@ -28,12 +27,10 @@ describe('createEngine configuration overrides', () => {
 		});
 		factory.building();
 		factory.development();
-		factory.population();
 		const engine = createEngine({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog,
@@ -41,13 +38,11 @@ describe('createEngine configuration overrides', () => {
 				actions: factory.actions.values(),
 				buildings: factory.buildings.values(),
 				developments: factory.developments.values(),
-				populations: factory.populations.values(),
 			},
 		});
 		expect(engine.actions.keys()).toEqual(factory.actions.keys());
 		expect(engine.buildings.keys()).toEqual(factory.buildings.keys());
 		expect(engine.developments.keys()).toEqual(factory.developments.keys());
-		expect(engine.populations.keys()).toEqual(factory.populations.keys());
 		const createdAction = engine.actions.get(customAction.id);
 		const baseCosts = createdAction.baseCosts || {};
 		expect(baseCosts[Resource.gold]).toBe(3);
@@ -62,7 +57,6 @@ describe('createEngine configuration overrides', () => {
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog,
@@ -70,7 +64,6 @@ describe('createEngine configuration overrides', () => {
 				actions: [],
 				buildings: [],
 				developments: [],
-				populations: [],
 			},
 			devMode: true,
 		});

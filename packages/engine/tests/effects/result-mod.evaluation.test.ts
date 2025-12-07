@@ -33,7 +33,7 @@ describe('result_mod evaluation modifiers', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: Resource.happiness,
+						resourceId: Resource.happiness,
 						amount: 3,
 					}),
 				},
@@ -58,9 +58,9 @@ describe('result_mod evaluation modifiers', () => {
 
 		expect(gains[0]).toMatchObject({ key: Resource.gold });
 		expect(gains[0].amount).toBe(8);
-		expect(gains[1].key).toBe(Resource.happiness);
+		expect(gains[1].resourceId).toBe(Resource.happiness);
 		expect(gains[1].amount).toBeCloseTo(5.5);
-		expect(gains[2].key).toBe(Resource.ap);
+		expect(gains[2].resourceId).toBe(Resource.ap);
 		expect(gains[2].amount).toBeCloseTo(-3.3);
 		expect(engineContext.activePlayer.resourceValues[Resource.gold]).toBe(1);
 		expect(engineContext.activePlayer.resourceValues[Resource.happiness]).toBe(

@@ -31,7 +31,7 @@ describe('passive helpers', () => {
 			removal: { text: 'remove-token' },
 		};
 		const nestedParams = resourceAmountParams({
-			key: Resource.gold,
+			resourceId: Resource.gold,
 			amount: 3,
 		});
 		const nestedEffect: EffectDef = {
@@ -52,7 +52,7 @@ describe('passive helpers', () => {
 					type: 'resource',
 					method: 'remove',
 					params: resourceAmountParams({
-						key: Resource.gold,
+						resourceId: Resource.gold,
 						amount: 1,
 					}),
 					effects: [
@@ -60,7 +60,7 @@ describe('passive helpers', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: Resource.gold,
+								resourceId: Resource.gold,
 								amount: 2,
 							}),
 						},
@@ -125,7 +125,7 @@ describe('passive helpers', () => {
 
 		expect(record.frames).toHaveLength(1);
 		expect(record.effects?.[0]?.params).toMatchObject({
-			key: Resource.gold,
+			resourceId: Resource.gold,
 			amount: 3,
 		});
 		const originalNested = (
@@ -137,7 +137,7 @@ describe('passive helpers', () => {
 
 	it('recursively flips add/remove methods in reverseEffect', () => {
 		const baseAddParams = resourceAmountParams({
-			key: Resource.gold,
+			resourceId: Resource.gold,
 			amount: 2,
 		});
 		const base: EffectDef = {
@@ -149,7 +149,7 @@ describe('passive helpers', () => {
 					type: 'resource',
 					method: 'remove',
 					params: resourceAmountParams({
-						key: Resource.gold,
+						resourceId: Resource.gold,
 						amount: 1,
 					}),
 				},
@@ -161,7 +161,7 @@ describe('passive helpers', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: Resource.gold,
+								resourceId: Resource.gold,
 								amount: 4,
 							}),
 						},

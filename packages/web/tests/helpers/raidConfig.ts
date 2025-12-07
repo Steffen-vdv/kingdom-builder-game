@@ -287,7 +287,7 @@ const synthResourceDefinitions = [
 	}),
 	// Combat stat config keys for attack effects
 	resourceDefinition({
-		id: COMBAT_STAT_CONFIG.power.key,
+		id: COMBAT_STAT_CONFIG.power.resourceId,
 		metadata: {
 			label: COMBAT_STAT_CONFIG.power.label,
 			icon: COMBAT_STAT_CONFIG.power.icon,
@@ -296,7 +296,7 @@ const synthResourceDefinitions = [
 		bounds: { lowerBound: 0 },
 	}),
 	resourceDefinition({
-		id: COMBAT_STAT_CONFIG.absorption.key,
+		id: COMBAT_STAT_CONFIG.absorption.resourceId,
 		metadata: {
 			label: COMBAT_STAT_CONFIG.absorption.label,
 			icon: COMBAT_STAT_CONFIG.absorption.icon,
@@ -305,7 +305,7 @@ const synthResourceDefinitions = [
 		bounds: { lowerBound: 0 },
 	}),
 	resourceDefinition({
-		id: COMBAT_STAT_CONFIG.fortification.key,
+		id: COMBAT_STAT_CONFIG.fortification.resourceId,
 		metadata: {
 			label: COMBAT_STAT_CONFIG.fortification.label,
 			icon: COMBAT_STAT_CONFIG.fortification.icon,

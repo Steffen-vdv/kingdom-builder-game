@@ -199,7 +199,7 @@ export function mapPassiveDescriptors(
 
 export function cloneRecentResourceGains(
 	recent: SessionSnapshot['recentResourceGains'],
-): ReadonlyArray<{ key: string; amount: number }> {
+): ReadonlyArray<{ resourceId: string; amount: number }> {
 	return Object.freeze(recent.map((entry) => ({ ...entry })));
 }
 

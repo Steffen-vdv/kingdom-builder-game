@@ -111,7 +111,7 @@ export class WinConditionService {
 		if (identifier === resolvedId) {
 			return true;
 		}
-		return identifier === trigger.key;
+		return identifier === trigger.resourceId;
 	}
 
 	private resolveTriggerResourceId(
@@ -125,7 +125,7 @@ export class WinConditionService {
 			return resourceTrigger.resourceId;
 		}
 		// key IS the Resource ID directly (no mapper needed)
-		return resourceTrigger.key;
+		return resourceTrigger.resourceId;
 	}
 
 	private getTriggerResourceValue(

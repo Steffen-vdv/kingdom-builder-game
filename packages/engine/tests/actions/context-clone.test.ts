@@ -21,11 +21,11 @@ describe('cloneEngineContext', () => {
 		engineContext.resourcePercentBases.example = 3;
 		engineContext.resourcePercentAccums.example = 4;
 		engineContext.recentResourceGains.push({
-			key: CResource.gold,
+			resourceId: CResource.gold,
 			amount: 2,
 		});
 		const frame: ResourceSourceFrame = () => ({
-			key: 'frame-meta',
+			resourceId: 'frame-meta',
 			longevity: 'ongoing',
 		});
 		engineContext.resourceSourceStack.push(frame);
@@ -67,7 +67,7 @@ describe('cloneEngineContext', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: CResource.gold,
+					resourceId: CResource.gold,
 					amount: 1,
 				}),
 			},
@@ -77,7 +77,7 @@ describe('cloneEngineContext', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: CResource.gold,
+					resourceId: CResource.gold,
 					amount: 2,
 				}),
 			},
@@ -87,7 +87,7 @@ describe('cloneEngineContext', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: engineContext.actionCostResource,
+					resourceId: engineContext.actionCostResource,
 					amount: 1,
 				}),
 			},
@@ -98,7 +98,7 @@ describe('cloneEngineContext', () => {
 		const actionId = 'custom-action';
 		player.actions.add(actionId);
 		const resourceSourceMeta = {
-			key: 'meta-id',
+			resourceId: 'meta-id',
 			longevity: 'ongoing' as const,
 			extra: { note: 'tracked' },
 			effect: { type: 'resource', method: 'add' },

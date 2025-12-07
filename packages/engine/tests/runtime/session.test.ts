@@ -4,7 +4,6 @@ import {
 	ACTIONS,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	PhaseId,
 	RULES,
@@ -18,7 +17,6 @@ import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
 	DevelopmentConfig as DevelopmentDef,
-	PopulationConfig as PopulationDef,
 	Registry,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
@@ -34,14 +32,12 @@ const BASE: {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
 	resourceCatalog: RuntimeResourceContent;
 } = {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
 	phases: PHASES,
 	resourceCatalog: {
 		resources: RESOURCE_REGISTRY,
@@ -57,7 +53,6 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		actions: rest.actions ?? BASE.actions,
 		buildings: rest.buildings ?? BASE.buildings,
 		developments: rest.developments ?? BASE.developments,
-		populations: rest.populations ?? BASE.populations,
 		phases: rest.phases ?? BASE.phases,
 		rules: rules ?? RULES,
 		resourceCatalog: rest.resourceCatalog ?? BASE.resourceCatalog,
@@ -100,7 +95,7 @@ describe('EngineSession', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 3,
 					}),
 				},
@@ -110,7 +105,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		// Ensure player has enough AP to perform the action
@@ -145,7 +139,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		// Ensure player has enough AP so action fails on land, not AP
@@ -268,7 +261,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		const costs = session.getActionCosts(action.id);
@@ -290,7 +282,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		const snapshot = session.getSnapshot();
 		const [first, second] = snapshot.game.players;
@@ -323,7 +314,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		const requirements = session.getActionRequirements(action.id);
@@ -373,7 +363,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		const initialSnapshot = session.getSnapshot();
@@ -400,7 +389,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		const definition = session.getActionDefinition(categorized.id);
 		expect(definition).toEqual({
@@ -576,7 +564,7 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: CResource.gold,
+					resourceId: CResource.gold,
 					amount: 1,
 				}),
 			},
@@ -587,7 +575,6 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 		actions: content.actions,
 		buildings: content.buildings,
 		developments: content.developments,
-		populations: content.populations,
 	});
 	const initial = session.getSnapshot();
 	const opponentId = initial.game.opponentId;

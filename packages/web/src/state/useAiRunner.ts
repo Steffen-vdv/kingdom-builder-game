@@ -36,7 +36,7 @@ interface PresentAiActionsOptions {
 	resourceKeys: readonly SessionResourceKey[];
 	fallbackRegistries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		'actions' | 'buildings' | 'developments' | 'resources'
 	>;
 }
 
@@ -204,7 +204,7 @@ interface UseAiRunnerOptions {
 	addResolutionLog: (resolution: ActionResolution) => void;
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		'actions' | 'buildings' | 'developments' | 'resources'
 	>;
 	resourceKeys: readonly SessionResourceKey[];
 	actionCostResource: SessionResourceKey;

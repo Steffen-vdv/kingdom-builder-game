@@ -89,7 +89,7 @@ function applyValue(
 	const delta = clamped - previous;
 	if (!suppressRecentEntry && context && delta !== 0) {
 		context.recentResourceGains.push({
-			key: resourceId,
+			resourceId,
 			amount: delta,
 		});
 	}

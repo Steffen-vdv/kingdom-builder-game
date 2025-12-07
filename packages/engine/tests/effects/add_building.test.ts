@@ -174,7 +174,7 @@ describe('building:add effect', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 1,
 					}),
 				},

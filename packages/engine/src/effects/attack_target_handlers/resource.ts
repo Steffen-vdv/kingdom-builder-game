@@ -6,18 +6,18 @@ const resourceHandler: AttackTargetHandler<
 	AttackTargetMutationResult<'resource'>
 > = {
 	getEvaluationModifierKey(target) {
-		return target.key;
+		return target.resourceId;
 	},
 	applyDamage(target, damage, engineContext, defender) {
-		// target.key is now a Resource ID - use resourceValues directly
-		const before = defender.resourceValues[target.key] || 0;
+		// target.resourceId is now a Resource ID - use resourceValues directly
+		const before = defender.resourceValues[target.resourceId] || 0;
 		const after = Math.max(0, before - damage);
 		if (damage > 0) {
-			defender.resourceValues[target.key] = after;
+			defender.resourceValues[target.resourceId] = after;
 			engineContext.services.handleResourceChange(
 				engineContext,
 				defender,
-				target.key,
+				target.resourceId,
 			);
 		}
 		return { before, after };
@@ -25,7 +25,7 @@ const resourceHandler: AttackTargetHandler<
 	buildLog(target, damage, _engineContext, _defender, _meta, mutation) {
 		return {
 			type: 'resource',
-			key: target.key,
+			resourceId: target.resourceId,
 			before: mutation.before,
 			damage,
 			after: mutation.after,

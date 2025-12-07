@@ -27,7 +27,6 @@ interface UseCompensationLoggerOptions {
 		| 'actionCategories'
 		| 'buildings'
 		| 'developments'
-		| 'populations'
 		| 'resources'
 	>;
 }

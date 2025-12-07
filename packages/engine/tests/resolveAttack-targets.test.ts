@@ -14,13 +14,13 @@ describe('resolveAttack target handlers', () => {
 		const defender = engineContext.game.opponent;
 		const target: ResourceAttackTarget = {
 			type: 'resource',
-			key: Resource.castleHP,
+			resourceId: Resource.castleHP,
 		};
 
 		const originalHandler = attackTargetHandlers.resource;
 		// PlayerState uses resourceValues for all resources
 		const mutation = {
-			before: defender.resourceValues[target.key] ?? 0,
+			before: defender.resourceValues[target.resourceId] ?? 0,
 			after: 3,
 		};
 		const applySpy = vi.fn<typeof originalHandler.applyDamage>(
@@ -34,7 +34,7 @@ describe('resolveAttack target handlers', () => {
 		const buildSpy = vi.fn<typeof originalHandler.buildLog>(
 			(resourceTarget, damage, _ctx, _defender, _meta, mut) => ({
 				type: 'resource',
-				key: resourceTarget.key,
+				resourceId: resourceTarget.resourceId,
 				before: mut.before,
 				damage,
 				after: mut.after,
@@ -46,7 +46,7 @@ describe('resolveAttack target handlers', () => {
 			typeof mutation
 		> = {
 			getEvaluationModifierKey: vi.fn(
-				() => target.key,
+				() => target.resourceId,
 			) as typeof originalHandler.getEvaluationModifierKey,
 			applyDamage: applySpy,
 			buildLog: buildSpy,

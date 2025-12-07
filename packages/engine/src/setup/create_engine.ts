@@ -16,12 +16,10 @@ import {
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
-	populationSchema,
 	resolveActionEffects,
 	type ActionConfig as ActionDef,
 	type BuildingConfig as BuildingDef,
 	type DevelopmentConfig as DevelopmentDef,
-	type PopulationConfig as PopulationDef,
 	type PhaseConfig,
 	Registry,
 	type ResourceCatalogSnapshot,
@@ -51,7 +49,6 @@ export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
 	phases: PhaseConfig[];
 	rules: RuleSet;
 	config?: GameConfig;
@@ -66,7 +63,6 @@ type EngineRegistries = {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
 };
 
 type RuntimeResourceContent = Parameters<
@@ -151,13 +147,6 @@ function overrideRegistries(
 	);
 	if (developmentRegistry) {
 		nextRegistries.developments = developmentRegistry;
-	}
-	const populationRegistry = buildRegistry(
-		validatedConfig.populations,
-		populationSchema,
-	);
-	if (populationRegistry) {
-		nextRegistries.populations = populationRegistry;
 	}
 	return nextRegistries;
 }
@@ -251,7 +240,6 @@ export function createEngine({
 	actions,
 	buildings,
 	developments,
-	populations,
 	phases,
 	rules,
 	config,
@@ -267,13 +255,12 @@ export function createEngine({
 	let runtimeResourceCatalog: RuntimeResourceCatalog | undefined;
 	if (config) {
 		const validatedConfig = validateGameConfig(config);
-		({ actions, buildings, developments, populations } = overrideRegistries(
+		({ actions, buildings, developments } = overrideRegistries(
 			validatedConfig,
 			{
 				actions,
 				buildings,
 				developments,
-				populations,
 			},
 		));
 		if (validatedConfig.resourceCatalog) {
@@ -307,7 +294,6 @@ export function createEngine({
 		actions,
 		buildings,
 		developments,
-		populations,
 		passiveManager,
 		phases,
 		actionCostConfig.resourceId,

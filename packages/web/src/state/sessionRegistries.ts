@@ -4,12 +4,10 @@ import {
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
-	populationSchema,
 	type ActionCategoryConfig,
 	type ActionConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
-	type PopulationConfig,
 	type ResourceDefinition,
 } from '@kingdom-builder/protocol';
 import type { SessionRegistriesPayload } from '@kingdom-builder/protocol/session';
@@ -80,7 +78,6 @@ export interface SessionRegistries {
 	actionCategories: Registry<ActionCategoryConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
-	populations: Registry<PopulationConfig>;
 	resources: Record<string, ResourceDefinition>;
 }
 
@@ -99,10 +96,6 @@ export function deserializeSessionRegistries(
 		developments: createRegistryFromPayload(
 			payload.developments ?? {},
 			developmentSchema.passthrough(),
-		),
-		populations: createRegistryFromPayload(
-			payload.populations ?? {},
-			populationSchema.passthrough(),
 		),
 		resources: cloneResourceRegistry(payload.resources ?? {}),
 		actionCategories: createActionCategoryRegistry(payload.actionCategories),

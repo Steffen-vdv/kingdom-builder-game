@@ -20,7 +20,7 @@ describe('snapshotAdvance', () => {
 		const developmentEntry = context.developments.entries()[0];
 		const developmentId = developmentEntry?.[0] ?? 'test:development';
 		const outerParams = resourceAmountParams({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 3,
 		});
 		const outerEffect: EffectDef = {
@@ -42,7 +42,7 @@ describe('snapshotAdvance', () => {
 			meta: { tier: 'outer' },
 		};
 		const chainedParams = resourceAmountParams({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 1,
 		});
 		const chainedEffect: EffectDef = {
@@ -89,7 +89,7 @@ describe('snapshotAdvance', () => {
 			(snapshot.player.values[resourceKey] ?? 0) + 999;
 		snapshot.effects[0]!.method = 'mutated-method';
 		snapshot.effects[0]!.params = resourceAmountParams({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 99,
 		});
 		snapshot.effects[0]!.effects = [];
@@ -111,7 +111,7 @@ describe('snapshotAdvance', () => {
 		expect(original.effects).toHaveLength(2);
 		expect(original.effects[0]?.method).toBe('add');
 		expect(original.effects[0]?.params).toMatchObject({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 3,
 		});
 		expect(original.skipped?.sources).toHaveLength(2);
@@ -127,7 +127,7 @@ describe('snapshotAdvance', () => {
 		// Use known Resource ID directly
 		const resourceKey = CResource.gold;
 		const singleParams = resourceAmountParams({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 2,
 		});
 		const singleEffect: EffectDef = {

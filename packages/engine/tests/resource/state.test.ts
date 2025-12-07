@@ -195,7 +195,7 @@ describe('Resource state', () => {
 		expect(player.resourceTouched[RESOURCE_A]).toBe(true);
 		expect(player.resourceTierIds[RESOURCE_A]).toBe(`${RESOURCE_A}-track-high`);
 		expect(context.recentResourceGains).toEqual([
-			{ key: RESOURCE_A, amount: 8 },
+			{ resourceId: RESOURCE_A, amount: 8 },
 		]);
 		expect(player.resourceValues[PARENT_ID]).toBe(8);
 		expect(player.resourceTouched[PARENT_ID]).toBe(true);

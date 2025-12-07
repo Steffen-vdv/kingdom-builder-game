@@ -35,7 +35,6 @@ interface UseActionPerformerOptions {
 		| 'buildings'
 		| 'developments'
 		| 'resources'
-		| 'populations'
 	>;
 	addResolutionLog: (resolution: ActionResolution) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;

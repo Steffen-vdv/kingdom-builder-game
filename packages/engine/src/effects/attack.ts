@@ -39,7 +39,7 @@ export const attackPerform: EffectHandler = (effectDefinition, context) => {
 	const targetHandler = attackTargetHandlers[target.type];
 	const evaluationKey = targetHandler.getEvaluationModifierKey(target as never);
 	const powerModifiers: ResourceGain[] = [
-		{ key: evaluationKey, amount: baseDamage },
+		{ resourceId: evaluationKey, amount: baseDamage },
 	];
 	context.passives.runEvaluationMods('attack:power', context, powerModifiers);
 	const modifiedDamage = powerModifiers[0]!.amount;

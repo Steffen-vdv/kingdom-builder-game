@@ -107,8 +107,8 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 		}
 		return this.params.onDamage;
 	}
-	targetResource(key: ResourceKey) {
-		return this.set('target', { type: 'resource', key });
+	targetResource(resourceId: ResourceKey) {
+		return this.set('target', { type: 'resource', resourceId });
 	}
 	targetBuilding(id: string) {
 		return this.set('target', { type: 'building', id });

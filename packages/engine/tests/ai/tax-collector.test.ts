@@ -19,7 +19,7 @@ describe('tax collector AI controller', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 1,
 					}),
 				},

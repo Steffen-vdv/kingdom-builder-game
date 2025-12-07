@@ -162,7 +162,6 @@ interface SessionTranslationContextInput {
 		| 'actionCategories'
 		| 'buildings'
 		| 'developments'
-		| 'populations'
 		| 'resources'
 	>;
 }

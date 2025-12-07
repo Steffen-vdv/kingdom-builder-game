@@ -18,7 +18,7 @@ describe('WinConditionService', () => {
 			id: randomUUID(),
 			trigger: {
 				type: 'resource',
-				key: resourceKey,
+				resourceId: resourceKey,
 				comparison: 'gte',
 				value: 5,
 				target: 'self',
@@ -58,7 +58,7 @@ describe('WinConditionService', () => {
 			id: randomUUID(),
 			trigger: {
 				type: 'resource',
-				key: resourceKey,
+				resourceId: resourceKey,
 				comparison: 'lte',
 				value: 2,
 				target: 'opponent',
@@ -98,7 +98,7 @@ describe('WinConditionService', () => {
 			id: randomUUID(),
 			trigger: {
 				type: 'resource',
-				key: resourceKey,
+				resourceId: resourceKey,
 				comparison: 'gte',
 				value: 1,
 				target: 'self',
@@ -133,7 +133,7 @@ describe('WinConditionService', () => {
 			id: randomUUID(),
 			trigger: {
 				type: 'resource',
-				key: resourceKey,
+				resourceId: resourceKey,
 				comparison: 'gte',
 				value: 3,
 				target: 'self',

@@ -21,7 +21,6 @@ export const EMPTY_REGISTRIES = {
 	actions: {},
 	buildings: {},
 	developments: {},
-	populations: {},
 	resources: {},
 	resourceGroups: {},
 	resourceCategories: {},

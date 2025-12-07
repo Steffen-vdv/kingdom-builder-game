@@ -5,7 +5,6 @@ import type {
 	DevelopmentConfig,
 	EffectDef,
 	PlayerStartConfig,
-	PopulationConfig,
 	SessionMetadataFormat,
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
@@ -66,7 +65,6 @@ export interface TranslationTriggerAsset {
 export interface TranslationAssets {
 	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
 	readonly stats: Readonly<Record<string, TranslationIconLabel>>;
-	readonly populations: Readonly<Record<string, TranslationIconLabel>>;
 	readonly population: Readonly<TranslationIconLabel>;
 	readonly land: Readonly<TranslationIconLabel>;
 	readonly slot: Readonly<TranslationIconLabel>;
@@ -192,14 +190,13 @@ export interface TranslationContext {
 	readonly actionCategories: TranslationActionCategoryRegistry;
 	readonly buildings: TranslationRegistry<BuildingConfig>;
 	readonly developments: TranslationRegistry<DevelopmentConfig>;
-	readonly populations: TranslationRegistry<PopulationConfig>;
 	readonly passives: TranslationPassives;
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;
 	readonly opponent: TranslationPlayer;
 	readonly rules: SessionRuleSnapshot;
 	readonly recentResourceGains: ReadonlyArray<{
-		key: string;
+		resourceId: string;
 		amount: number;
 	}>;
 	readonly compensations: Readonly<Record<SessionPlayerId, PlayerStartConfig>>;

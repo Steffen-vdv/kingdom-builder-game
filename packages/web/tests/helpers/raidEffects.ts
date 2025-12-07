@@ -82,7 +82,7 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 			method: 'transfer',
 			params: {
 				// Legacy params for translation formatter
-				key: descriptor.key,
+				key: descriptor.resourceId,
 				...(descriptor.percent !== undefined
 					? { percent: descriptor.percent }
 					: {}),
@@ -92,12 +92,12 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 				// params for engine execution
 				donor: {
 					player: 'opponent' as const,
-					resourceId: descriptor.key,
+					resourceId: descriptor.resourceId,
 					change: donorChange,
 				},
 				recipient: {
 					player: 'active' as const,
-					resourceId: descriptor.key,
+					resourceId: descriptor.resourceId,
 					change: recipientChange,
 				},
 			},
@@ -107,7 +107,7 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 		type: 'resource',
 		method: descriptor.method,
 		params: {
-			resourceId: descriptor.key,
+			resourceId: descriptor.resourceId,
 			change: { type: 'amount', amount: descriptor.amount ?? 0 },
 		},
 	};
@@ -126,7 +126,7 @@ function buildStatEffect(descriptor: StatEffectDescriptor): EffectDef {
 		type: 'resource',
 		method: 'add',
 		params: {
-			resourceId: descriptor.key,
+			resourceId: descriptor.resourceId,
 			change: { type: 'amount', amount: descriptor.amount },
 		},
 	};
@@ -182,7 +182,7 @@ export function buildAttackEffect(
 		}
 		annotations?.push({
 			role,
-			key: config.key,
+			key: config.resourceId,
 			label: config.label,
 			icon: config.icon,
 		});

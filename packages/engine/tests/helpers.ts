@@ -3,7 +3,6 @@ import {
 	ACTIONS,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	RULES,
 } from '@kingdom-builder/contents';
@@ -16,7 +15,6 @@ import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
 	DevelopmentConfig as DevelopmentDef,
-	PopulationConfig as PopulationDef,
 	Registry,
 	RuleSet,
 } from '@kingdom-builder/protocol';
@@ -26,7 +24,6 @@ const BASE: {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
 	resourceCatalog: {
 		resources: typeof RESOURCE_REGISTRY;
@@ -37,7 +34,6 @@ const BASE: {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
 	phases: PHASES,
 	resourceCatalog: {
 		resources: RESOURCE_REGISTRY,

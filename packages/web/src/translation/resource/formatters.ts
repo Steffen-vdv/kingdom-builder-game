@@ -195,7 +195,7 @@ export function buildResourceSignedGainEntries(
 	}
 	return [
 		{
-			key: metadata.id,
+			resourceId: metadata.id,
 			amount: delta,
 		},
 	];

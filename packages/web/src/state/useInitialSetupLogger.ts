@@ -30,7 +30,6 @@ interface UseInitialSetupLoggerOptions {
 		| 'actionCategories'
 		| 'buildings'
 		| 'developments'
-		| 'populations'
 		| 'resources'
 	>;
 }

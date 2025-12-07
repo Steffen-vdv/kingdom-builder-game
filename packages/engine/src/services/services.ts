@@ -157,11 +157,11 @@ export class Services {
 			const delta = value - previousValue;
 			if (delta !== 0) {
 				const alreadyLogged = context.recentResourceGains.some((entry) =>
-					this.tieredResource.matches(entry.key),
+					this.tieredResource.matches(entry.resourceId),
 				);
 				if (!alreadyLogged) {
 					context.recentResourceGains.push({
-						key: this.tieredResource.getLogIdentifier(),
+						resourceId: this.tieredResource.getLogIdentifier(),
 						amount: delta,
 					});
 				}

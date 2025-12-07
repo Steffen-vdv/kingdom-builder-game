@@ -67,7 +67,7 @@ const EMPTY_RESOURCE_METADATA: TranslationResourceMetadataSelectors =
 		has: () => false,
 	});
 
-const EMPTY_GAIN_ARRAY = Object.freeze([] as { key: string; amount: number }[]);
+const EMPTY_GAIN_ARRAY = Object.freeze([] as { resourceId: string; amount: number }[]);
 
 const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors =
 	Object.freeze({

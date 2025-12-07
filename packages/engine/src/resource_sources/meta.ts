@@ -27,8 +27,8 @@ export function mergeMeta(
 		return;
 	}
 	const partialMeta = incomingMeta as ResourceSourceMetaPartial;
-	if (partialMeta.key) {
-		baseMeta.key = partialMeta.key;
+	if (partialMeta.resourceId) {
+		baseMeta.resourceId = partialMeta.resourceId;
 	}
 	if (partialMeta.longevity) {
 		if (
@@ -108,7 +108,7 @@ export function extractMetaFromEffect(
 	}
 	const partialMeta: ResourceSourceMetaPartial = {};
 	if (typeof rawMeta['key'] === 'string' && rawMeta['key'].trim()) {
-		partialMeta.key = rawMeta['key'].trim();
+		partialMeta.resourceId = rawMeta['key'].trim();
 	}
 	if (
 		rawMeta['longevity'] === 'ongoing' ||
@@ -181,8 +181,8 @@ export function extractMetaFromEffect(
 	if (Object.keys(effectInfo).length > 0) {
 		partialMeta.effect = effectInfo;
 	}
-	if (!partialMeta.key) {
-		partialMeta.key = createResourceSourceKey(effectDefinition, resourceId);
+	if (!partialMeta.resourceId) {
+		partialMeta.resourceId = createResourceSourceKey(effectDefinition, resourceId);
 	}
 	if (!partialMeta.longevity) {
 		partialMeta.longevity = 'permanent';
@@ -192,7 +192,7 @@ export function extractMetaFromEffect(
 
 export function cloneMeta(meta: ResourceSourceMeta): ResourceSourceMeta {
 	const clonedMeta: ResourceSourceMeta = {
-		key: meta.key,
+		resourceId: meta.resourceId,
 		longevity: meta.longevity,
 	};
 	if (meta.kind) {

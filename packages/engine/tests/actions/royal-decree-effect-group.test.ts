@@ -140,7 +140,7 @@ describe('royal decree action effect group', () => {
 				(candidate) =>
 					candidate.type === 'resource' &&
 					candidate.method === 'add' &&
-					(candidate.params as { key?: string }).key === CResource.happiness,
+					(candidate.params as { key?: string }).resourceId === CResource.happiness,
 			);
 			if (effect) {
 				happinessGain +=
@@ -155,7 +155,7 @@ describe('royal decree action effect group', () => {
 			)
 			.reduce((total, effect) => {
 				const params = effect.params as ResourceAmountParamsResult | undefined;
-				return params?.key === CResource.happiness
+				return params?.resourceId === CResource.happiness
 					? total + (params.amount ?? 0)
 					: total;
 			}, 0);

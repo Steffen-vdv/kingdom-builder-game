@@ -34,7 +34,7 @@ const DEFAULT_ATTACK_STAT_KEYS: Record<AttackStatRole, AttackStatKey> = {
 
 type RawAttackStatParam = {
 	role?: unknown;
-	key?: unknown;
+	resourceId?: unknown;
 	label?: unknown;
 	icon?: unknown;
 };
@@ -70,7 +70,7 @@ function buildStatDescriptor(
 	const icon = overrides.icon ?? baseDescriptor?.icon ?? '';
 	const descriptor: AttackStatDescriptor = { role, label, icon };
 	if (key !== undefined) {
-		descriptor.key = key;
+		descriptor.resourceId = key;
 	}
 	return descriptor;
 }
@@ -90,7 +90,7 @@ function resolveAttackStats(
 			if (!isAttackStatRole(role)) {
 				continue;
 			}
-			const key = typeof entry.key === 'string' ? entry.key : undefined;
+			const key = typeof entry.resourceId === 'string' ? entry.resourceId : undefined;
 			const label = typeof entry.label === 'string' ? entry.label : undefined;
 			const icon = typeof entry.icon === 'string' ? entry.icon : undefined;
 			const overrides: AttackStatOverrides = {};

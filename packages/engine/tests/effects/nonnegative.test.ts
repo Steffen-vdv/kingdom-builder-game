@@ -27,7 +27,7 @@ describe('resource and stat bounds', () => {
 					type: 'resource',
 					method: 'remove',
 					params: resourceAmountParams({
-						key: CStat.fortificationStrength,
+						resourceId: CStat.fortificationStrength,
 						amount: 3,
 					}),
 				},
@@ -61,7 +61,7 @@ describe('resource and stat bounds', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: -5,
 					}),
 				},
@@ -94,7 +94,7 @@ describe('resource and stat bounds', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CStat.armyStrength,
+						resourceId: CStat.armyStrength,
 						amount: -4,
 					}),
 				},

@@ -18,7 +18,7 @@ describe('passive:add effect', () => {
 						type: 'resource',
 						method: 'add',
 						params: resourceAmountParams({
-							key: Resource.gold,
+							resourceId: Resource.gold,
 							amount: 1,
 						}),
 					},
@@ -28,7 +28,7 @@ describe('passive:add effect', () => {
 						type: 'resource',
 						method: 'add',
 						params: resourceAmountParams({
-							key: Resource.gold,
+							resourceId: Resource.gold,
 							amount: 1,
 						}),
 					},
@@ -38,7 +38,7 @@ describe('passive:add effect', () => {
 						type: 'resource',
 						method: 'add',
 						params: resourceAmountParams({
-							key: Resource.gold,
+							resourceId: Resource.gold,
 							amount: 1,
 						}),
 					},
@@ -48,7 +48,7 @@ describe('passive:add effect', () => {
 						type: 'resource',
 						method: 'add',
 						params: resourceAmountParams({
-							key: Resource.gold,
+							resourceId: Resource.gold,
 							amount: 1,
 						}),
 					},
@@ -59,7 +59,7 @@ describe('passive:add effect', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: Stat.armyStrength,
+						resourceId: Stat.armyStrength,
 						amount: 1,
 					}),
 				},

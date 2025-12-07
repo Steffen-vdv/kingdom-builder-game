@@ -51,9 +51,9 @@ const originalStatEntries = new Map<string, SyntheticDescriptor | undefined>();
 
 function overrideStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
-	originalStatEntries.set(config.key, SYNTH_RESOURCE_METADATA[config.key]);
-	SYNTH_RESOURCE_METADATA[config.key] = {
-		key: config.key,
+	originalStatEntries.set(config.resourceId, SYNTH_RESOURCE_METADATA[config.resourceId]);
+	SYNTH_RESOURCE_METADATA[config.resourceId] = {
+		key: config.resourceId,
 		icon: config.icon,
 		label: config.label,
 	};
@@ -61,11 +61,11 @@ function overrideStat(key: CombatStatKey) {
 
 function restoreStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
-	const original = originalStatEntries.get(config.key);
+	const original = originalStatEntries.get(config.resourceId);
 	if (original) {
-		SYNTH_RESOURCE_METADATA[config.key] = original;
+		SYNTH_RESOURCE_METADATA[config.resourceId] = original;
 	} else {
-		delete SYNTH_RESOURCE_METADATA[config.key];
+		delete SYNTH_RESOURCE_METADATA[config.resourceId];
 	}
 }
 
@@ -120,8 +120,8 @@ function buildAction(
 
 function registerSyntheticResources(registries: SessionRegistries) {
 	for (const descriptor of Object.values(SYNTH_RESOURCE_METADATA)) {
-		registries.resources[descriptor.key] = {
-			key: descriptor.key,
+		registries.resources[descriptor.resourceId] = {
+			key: descriptor.resourceId,
 			icon: descriptor.icon,
 			label: descriptor.label,
 		};
@@ -239,9 +239,9 @@ export function iconLabel(
 }
 
 export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { key: string }> = {
-	power: { key: COMBAT_STAT_CONFIG.power.key },
-	absorption: { key: COMBAT_STAT_CONFIG.absorption.key },
-	fortification: { key: COMBAT_STAT_CONFIG.fortification.key },
+	power: { key: COMBAT_STAT_CONFIG.power.resourceId },
+	absorption: { key: COMBAT_STAT_CONFIG.absorption.resourceId },
+	fortification: { key: COMBAT_STAT_CONFIG.fortification.resourceId },
 };
 
 const suppressedStatEntries = new Map<

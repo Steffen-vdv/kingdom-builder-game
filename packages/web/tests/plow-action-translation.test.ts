@@ -207,7 +207,7 @@ describe('plow action translation', () => {
 		const expandHap = expand.effects.find(
 			(e: EffectDef) =>
 				e.type === 'resource' &&
-				((e.params as { key?: string }).key === 'happiness' ||
+				((e.params as { key?: string }).resourceId === 'happiness' ||
 					(e.params as { resourceId?: string }).resourceId ===
 						'resource:synthetic:happiness'),
 		);

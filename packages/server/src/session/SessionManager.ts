@@ -7,7 +7,6 @@ import {
 	ACTION_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	RULES,
 	PRIMARY_ICON_ID,
@@ -122,7 +121,6 @@ export class SessionManager {
 			actionCategories: baseActionCategories,
 			buildings: engineOverrides.buildings ?? BUILDINGS,
 			developments: engineOverrides.developments ?? DEVELOPMENTS,
-			populations: engineOverrides.populations ?? POPULATIONS,
 			phases: engineOverrides.phases ?? PHASES,
 			rules: engineOverrides.rules ?? RULES,
 			resourceCatalog: engineOverrides.resourceCatalog ?? {

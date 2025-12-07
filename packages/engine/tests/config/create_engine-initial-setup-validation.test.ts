@@ -3,7 +3,6 @@ import { createEngine } from '../../src/index.ts';
 import {
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	RULES,
 } from '@kingdom-builder/contents';
@@ -24,7 +23,6 @@ describe('createEngine initial setup validation', () => {
 	const baseConfig = {
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
 		phases: PHASES,
 		rules: RULES,
 		resourceCatalog: {

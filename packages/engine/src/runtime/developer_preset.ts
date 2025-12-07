@@ -9,7 +9,7 @@ export interface DeveloperPopulationPlanEntry {
 }
 
 export interface DeveloperResourceTarget {
-	key: ResourceKey;
+	resourceId: ResourceKey;
 	target: number;
 }
 
@@ -169,7 +169,7 @@ export function applyDeveloperPreset(
 	withPlayer(context, options.playerId, () => {
 		if (options.resources) {
 			for (const entry of options.resources) {
-				ensureResource(context, entry.key, entry.target);
+				ensureResource(context, entry.resourceId, entry.target);
 			}
 		}
 		if (options.population) {
