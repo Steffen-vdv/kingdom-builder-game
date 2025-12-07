@@ -11,7 +11,7 @@ const {
 	activePlayer: activePlayerSnapshot,
 	mockGame,
 	resourceForecast,
-	displayableSecondaryResourceKeys,
+	displayableSecondaryResourceIds,
 	secondaryForecast,
 	registries,
 	metadata,
@@ -25,19 +25,16 @@ const renderPanel = () =>
 		</RegistryMetadataProvider>,
 	);
 
-// Convert legacy forecasts to V2 format for the useNextTurnForecast mock
-// The createForecastMap function expects valuesV2 format
+// Build forecast values in V2 format for the useNextTurnForecast mock
 function buildV2ForecastValues(): Record<string, number> {
 	const valuesV2: Record<string, number> = {};
-	// Convert resource forecasts to V2 IDs
+	// Convert primary resource forecasts to V2 IDs (legacy keys still used)
 	for (const [legacyKey, delta] of Object.entries(resourceForecast)) {
 		const v2Id = `resource:core:${legacyKey}`;
 		valuesV2[v2Id] = delta;
 	}
-	// Convert secondary resource forecasts to V2 IDs (camelCase to kebab-case)
-	for (const [legacyKey, delta] of Object.entries(secondaryForecast)) {
-		const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-		const v2Id = `resource:core:${kebab}`;
+	// Secondary forecast already uses V2 IDs - copy directly
+	for (const [v2Id, delta] of Object.entries(secondaryForecast)) {
 		valuesV2[v2Id] = delta;
 	}
 	return valuesV2;
@@ -88,7 +85,7 @@ describe('<PlayerPanel />', () => {
 	});
 
 	it('renders next-turn forecasts with accessible labels', () => {
-		expect(displayableSecondaryResourceKeys.length).toBeGreaterThan(0);
+		expect(displayableSecondaryResourceIds.length).toBeGreaterThan(0);
 		renderPanel();
 		// Component uses V2 resources from resourceCatalogV2
 		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;

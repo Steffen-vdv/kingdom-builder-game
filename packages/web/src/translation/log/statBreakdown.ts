@@ -4,21 +4,21 @@ type StringRecord = Record<string, string>;
 
 export type StepEffects = { effects?: EffectDef[] } | undefined;
 
-export interface StatPctBreakdown {
-	role: string;
-	percentStat: string;
+export interface ResourcePctBreakdown {
+	resourceId: string;
+	percentSourceId: string;
 }
 
-function resolveResourceRole(
+function resolveEvaluatorResourceId(
 	effect: EffectDef,
-	currentRole: string | undefined,
+	currentResourceId: string | undefined,
 ): string | undefined {
 	const evaluator = effect.evaluator;
 	if (evaluator?.type !== 'resource') {
-		return currentRole;
+		return currentResourceId;
 	}
 	const params = evaluator.params as StringRecord | undefined;
-	return params?.['resourceId'] ?? currentRole;
+	return params?.['resourceId'] ?? currentResourceId;
 }
 
 // V2 percent change params
@@ -29,9 +29,9 @@ type V2PercentChange = {
 
 function detectPctEffect(
 	effect: EffectDef,
-	statKey: string,
-	role: string | undefined,
-): StatPctBreakdown | undefined {
+	targetResourceId: string,
+	evaluatorResourceId: string | undefined,
+): ResourcePctBreakdown | undefined {
 	// V2 format: type 'resource' with change.type 'percentFromResource'
 	if (effect.type !== 'resource') {
 		return undefined;
@@ -42,37 +42,47 @@ function detectPctEffect(
 				change?: V2PercentChange;
 		  }
 		| undefined;
-	if (params?.resourceId !== statKey) {
+	if (params?.resourceId !== targetResourceId) {
 		return undefined;
 	}
 	const change = params?.change;
 	if (change?.type !== 'percentFromResource' || !change.sourceResourceId) {
 		return undefined;
 	}
-	if (!role) {
+	if (!evaluatorResourceId) {
 		return undefined;
 	}
-	return { role, percentStat: change.sourceResourceId };
+	return {
+		resourceId: evaluatorResourceId,
+		percentSourceId: change.sourceResourceId,
+	};
 }
 
-export function findStatPctBreakdown(
+export function findResourcePctBreakdown(
 	step: StepEffects,
-	statKey: string,
-): StatPctBreakdown | undefined {
+	targetResourceId: string,
+): ResourcePctBreakdown | undefined {
 	const walk = (
 		effects: EffectDef[] | undefined,
-		currentRole: string | undefined,
-	): StatPctBreakdown | undefined => {
+		currentResourceId: string | undefined,
+	): ResourcePctBreakdown | undefined => {
 		if (!effects) {
 			return undefined;
 		}
 		for (const effect of effects) {
-			const role = resolveResourceRole(effect, currentRole);
-			const pct = detectPctEffect(effect, statKey, role);
+			const evaluatorResourceId = resolveEvaluatorResourceId(
+				effect,
+				currentResourceId,
+			);
+			const pct = detectPctEffect(
+				effect,
+				targetResourceId,
+				evaluatorResourceId,
+			);
 			if (pct) {
 				return pct;
 			}
-			const nested = walk(effect.effects, role);
+			const nested = walk(effect.effects, evaluatorResourceId);
 			if (nested) {
 				return nested;
 			}
