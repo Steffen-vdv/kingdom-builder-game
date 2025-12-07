@@ -207,7 +207,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.effect(
 				effect(Types.Passive, PassiveMethods.ADD)
 					.params(plowCostPenalty)
-					.effect(effect(Types.CostMod, CostModMethods.ADD).params(costModParams().id('plow_cost_all').key(Resource.gold).amount(2)).build())
+					.effect(effect(Types.CostMod, CostModMethods.ADD).params(costModParams().id('plow_cost_all').resourceId(Resource.gold).amount(2)).build())
 					.build(),
 			)
 			.category(ActionCategory.Basic)

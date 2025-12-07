@@ -18,7 +18,6 @@ import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import {
 	selectPassiveDescriptor,
 	selectResourceDescriptor,
-	selectStatDescriptor,
 } from '../src/translation/effects/registrySelectors';
 
 vi.mock('@kingdom-builder/engine', async () => {
@@ -325,26 +324,22 @@ describe('passive log labels', () => {
 			).trim() || slotLabel;
 		const expectedHeadline = `${LOG_KEYWORDS.developed} ${developmentLabel} on ${slotDisplay}`;
 		expect(lines).toContain(expectedHeadline);
-		const fortificationKey =
-			harness.metadataSelectors.statMetadata.list.find((descriptor) =>
-				descriptor.id.includes('fortification'),
-			)?.id ?? 'fortificationStrength';
-		const fortification = selectStatDescriptor(
-			translationContext,
-			fortificationKey,
+		// Use V2 resource IDs for fortification and absorption lookups
+		const fortificationResourceId = 'resource:core:fortification-strength';
+		const fortificationMeta = translationContext.resourceMetadataV2?.get?.(
+			fortificationResourceId,
 		);
+		const fortificationLabel =
+			fortificationMeta?.label ?? 'Fortification Strength';
 		expect(
 			lines.some(
-				(line) =>
-					line.includes(fortification.label ?? 'Fortification') &&
-					line.includes('+2'),
+				(line) => line.includes(fortificationLabel) && line.includes('+2'),
 			),
 		).toBe(true);
-		const absorptionDescriptor =
-			harness.metadataSelectors.statMetadata.list.find((descriptor) =>
-				descriptor.label?.toLowerCase().includes('absorption'),
-			);
-		const absorptionLabel = absorptionDescriptor?.label ?? 'Absorption';
+		const absorptionResourceId = 'resource:core:absorption';
+		const absorptionMeta =
+			translationContext.resourceMetadataV2?.get?.(absorptionResourceId);
+		const absorptionLabel = absorptionMeta?.label ?? 'Absorption';
 		expect(
 			lines.some(
 				(line) => line.includes(absorptionLabel) && line.includes('+50%'),

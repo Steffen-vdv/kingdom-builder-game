@@ -142,12 +142,12 @@ describe('plow action translation', () => {
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
-		const modKey = (costMod?.params as { key?: string })?.key ?? '';
+		const modResourceId =
+			(costMod?.params as { resourceId?: string })?.resourceId ?? '';
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		// Check both legacy and V2 metadata for the resource icon
-		const legacyDescriptor = translation.assets.resources?.[modKey];
-		const v2Descriptor = translation.resourceMetadataV2?.get?.(modKey);
-		const modIcon = legacyDescriptor?.icon ?? v2Descriptor?.icon ?? '';
+		// Use V2 metadata for the resource icon
+		const modDescriptor = translation.resourceMetadataV2?.get?.(modResourceId);
+		const modIcon = modDescriptor?.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
 		const modifierIcon = modifierInfo.icon ?? '✨';
 		expect(summary).toEqual([
@@ -193,12 +193,12 @@ describe('plow action translation', () => {
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
-		const modKey = (costMod?.params as { key?: string })?.key ?? '';
+		const modResourceId =
+			(costMod?.params as { resourceId?: string })?.resourceId ?? '';
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		// Check both legacy and V2 metadata for the resource icon
-		const legacyDescriptor = translation.assets.resources?.[modKey];
-		const v2Descriptor = translation.resourceMetadataV2?.get?.(modKey);
-		const modIcon = legacyDescriptor?.icon ?? v2Descriptor?.icon ?? '';
+		// Use V2 metadata for the resource icon
+		const modDescriptor = translation.resourceMetadataV2?.get?.(modResourceId);
+		const modIcon = modDescriptor?.icon ?? '';
 		const passiveName = ((plowPassive as { name?: string })?.name ??
 			SYNTHETIC_PASSIVE_INFO.label) as string;
 		const passiveIcon = ((plowPassive as { icon?: string })?.icon ??

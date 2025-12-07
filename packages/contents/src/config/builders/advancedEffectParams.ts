@@ -8,7 +8,7 @@ import type { EffectBuilder } from '../builders';
 export class CostModParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	actionId?: ActionId;
-	key?: ResourceKey;
+	resourceId?: ResourceKey;
 	amount?: number;
 	percent?: number;
 }> {
@@ -18,8 +18,8 @@ export class CostModParamsBuilder extends ParamsBuilder<{
 	actionId(actionId: ActionId) {
 		return this.set('actionId', actionId);
 	}
-	key(key: ResourceKey) {
-		return this.set('key', key);
+	resourceId(resourceId: ResourceKey) {
+		return this.set('resourceId', resourceId);
 	}
 	amount(amount: number) {
 		return this.set('amount', amount);

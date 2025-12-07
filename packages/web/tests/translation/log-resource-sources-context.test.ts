@@ -18,7 +18,7 @@ describe('translation diff resource source context', () => {
 		const resourceEffect = {
 			type: 'resource' as const,
 			method: 'add' as const,
-			params: { key: resourceKey },
+			params: { resourceId: resourceKey },
 		};
 		const context: TranslationDiffContext = {
 			activePlayer: {
