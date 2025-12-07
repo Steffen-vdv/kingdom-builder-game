@@ -42,8 +42,6 @@ describe('plow workshop translation', () => {
 		engineSnapshot.metadata = {
 			...engineSnapshot.metadata,
 			resources: SYNTHETIC_RESOURCES,
-			populations: {},
-			resources: {},
 			stats: {},
 			assets: {
 				land: {

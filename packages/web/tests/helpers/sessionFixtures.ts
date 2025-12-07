@@ -263,7 +263,7 @@ export function createSessionSnapshot({
 					tokens: {},
 				} satisfies SessionOverviewMetadata,
 			});
-	const resourceCatalog = clone(resourceCatalog ?? EMPTY_RESOURCE_CATALOG_V2);
+	const clonedCatalog = clone(resourceCatalog ?? EMPTY_RESOURCE_CATALOG_V2);
 	const snapshot: SessionSnapshot = {
 		game: {
 			turn,
@@ -276,7 +276,7 @@ export function createSessionSnapshot({
 			players: players.map((player) => ({ ...player })),
 			activePlayerId,
 			opponentId,
-			resourceCatalog: resourceCatalog,
+			resourceCatalog: clonedCatalog,
 		},
 		phases: phases.map((phaseDefinition) => ({
 			...phaseDefinition,

@@ -11,9 +11,9 @@ import {
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -27,8 +27,8 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
-import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import type { RuntimeResourceContent } from '../../src/resource/index.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -44,8 +44,8 @@ const BASE: {
 	populations: POPULATIONS,
 	phases: PHASES,
 	resourceCatalog: {
-		resources: RESOURCE_V2_REGISTRY,
-		groups: RESOURCE_GROUP_V2_REGISTRY,
+		resources: RESOURCE_REGISTRY,
+		groups: RESOURCE_GROUP_REGISTRY,
 	},
 };
 

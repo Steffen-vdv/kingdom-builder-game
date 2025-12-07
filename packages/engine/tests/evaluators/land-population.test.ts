@@ -4,7 +4,7 @@ import { resourceEvaluator } from '../../src/evaluators/resource.ts';
 import { createTestEngine } from '../helpers.ts';
 import { Land } from '../../src/state';
 import { PopulationRole, Stat } from '@kingdom-builder/contents';
-import { setResourceValue } from '../../src/resource-v2';
+import { setResourceValue } from '../../src/resource';
 
 describe('evaluators', () => {
 	it('counts total available land slots with negative usage guarded', () => {

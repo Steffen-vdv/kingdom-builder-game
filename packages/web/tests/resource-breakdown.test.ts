@@ -55,18 +55,14 @@ const isSummaryObject = (entry: unknown): entry is SummaryGroup => {
 
 function createStatBreakdownSetup(): BreakdownSetup {
 	const registries = createSessionRegistries();
-	const populationId = registries.populations.keys()[0];
+	// Synthetic population ID for testing - under ResourceV2 populations
+	// are resources
+	const populationId = 'resource:population:role:legion';
 	const buildingId = registries.buildings.keys()[0];
 	const developmentId = registries.developments.keys()[0];
 	const actionId = registries.actions.keys()[0];
 	const resourceKey = Object.keys(registries.resources)[0];
-	if (
-		!populationId ||
-		!buildingId ||
-		!developmentId ||
-		!actionId ||
-		!resourceKey
-	) {
+	if (!buildingId || !developmentId || !actionId || !resourceKey) {
 		throw new Error('Expected registries to provide baseline entries.');
 	}
 	const phaseId = 'phase:test';
@@ -74,12 +70,9 @@ function createStatBreakdownSetup(): BreakdownSetup {
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
 	// Resource ID for population
-	const populationResourceId = `resource:population:role:${populationId}`;
+	const populationResourceId = populationId;
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
-		populations: {
-			[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
-		},
 		buildings: {
 			[buildingId]: { label: 'Sky Bastion', icon: '🏯' },
 		},

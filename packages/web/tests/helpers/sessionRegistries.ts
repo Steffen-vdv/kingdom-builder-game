@@ -95,13 +95,6 @@ function cloneRegistriesPayload(
 		actions: cloneEntries(payload.actions),
 		buildings: cloneEntries(payload.buildings),
 		developments: cloneEntries(payload.developments),
-		populations: cloneEntries(payload.populations),
-		resources: Object.fromEntries(
-			Object.entries(payload.resources ?? {}).map(([key, definition]) => [
-				key,
-				cloneResourceDefinition(definition),
-			]),
-		),
 		actionCategories: cloneEntries(payload.actionCategories),
 		resources: cloneEntries(payload.resources),
 		resourceGroups: cloneEntries(payload.resourceGroups),
@@ -127,22 +120,22 @@ export function createResourceKeys(): ResourceKey[] {
 // Helper to create Resource catalog content for engine initialization
 export function createResourceCatalogContent() {
 	const payload = cloneRegistriesPayload(BASE_PAYLOAD);
-	const resources = payload.resources ?? {};
-	const resourceGroups = payload.resourceGroups ?? {};
-	const resourceCategories = payload.resourceCategories ?? {};
+	const resourcesMap = payload.resources ?? {};
+	const resourceGroupsMap = payload.resourceGroups ?? {};
+	const resourceCategoriesMap = payload.resourceCategories ?? {};
 
 	// Convert to ordered registry format expected by createRuntimeResourceCatalog
 	const resources = {
-		ordered: Object.values(resources),
-		byId: resources,
+		ordered: Object.values(resourcesMap),
+		byId: resourcesMap,
 	};
 	const groups = {
-		ordered: Object.values(resourceGroups),
-		byId: resourceGroups,
+		ordered: Object.values(resourceGroupsMap),
+		byId: resourceGroupsMap,
 	};
 	const categories = {
-		ordered: Object.values(resourceCategories),
-		byId: resourceCategories,
+		ordered: Object.values(resourceCategoriesMap),
+		byId: resourceCategoriesMap,
 	};
 
 	return { resources, groups, categories };

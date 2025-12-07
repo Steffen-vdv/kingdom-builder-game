@@ -446,7 +446,7 @@ describe('useActionPerformer', () => {
 					icon: '⚔️',
 				},
 				actorLabel: 'Played by',
-				lines: ['⚔️ Attack', '• 💲 Action cost', '  ↳ 🪙 Gold -1 (5→4)'],
+				lines: ['⚔️ Attack', '• 💲 Action cost', '  ↳ 💰 Gold -1 (5→4)'],
 				timeline: [
 					{
 						text: '⚔️ Attack',
@@ -459,7 +459,7 @@ describe('useActionPerformer', () => {
 						kind: 'cost',
 					},
 					{
-						text: '🪙 Gold -1 (5→4)',
+						text: '💰 Gold -1 (5→4)',
 						depth: 2,
 						kind: 'cost-detail',
 					},

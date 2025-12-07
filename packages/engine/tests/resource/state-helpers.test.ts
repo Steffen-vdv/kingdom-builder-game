@@ -10,7 +10,7 @@ import {
 	aggregateChildValues,
 	getCatalogIndexes,
 	resolveResourceDefinition,
-} from '../../src/resource-v2/index.ts';
+} from '../../src/resource/index.ts';
 import { PlayerState } from '../../src/state/index.ts';
 import {
 	resourceDefinition,
@@ -52,7 +52,7 @@ describe('Resource state helpers', () => {
 			tierTrack,
 		},
 	});
-	const resourceDefinition = resourceDefinition({
+	const testResource = resourceDefinition({
 		id: 'resource-alpha',
 		metadata: {
 			group: { id: groupDefinition.id },
@@ -62,7 +62,7 @@ describe('Resource state helpers', () => {
 	});
 	let catalog = createRuntimeResourceCatalog(
 		createResourceRegistries({
-			resources: [resourceDefinition],
+			resources: [testResource],
 			groups: [groupDefinition],
 		}),
 	);
@@ -90,10 +90,10 @@ describe('Resource state helpers', () => {
 	});
 
 	it('ensures bound flags are initialised and reuses the same object', () => {
-		const created = ensureBoundFlags(player, resourceDefinition.id);
+		const created = ensureBoundFlags(player, testResource.id);
 		expect(created).toEqual({ lower: false, upper: false });
 		created.lower = true;
-		expect(ensureBoundFlags(player, resourceDefinition.id)).toBe(created);
+		expect(ensureBoundFlags(player, testResource.id)).toBe(created);
 	});
 
 	it('resolves tier ids based on inclusive thresholds', () => {
@@ -103,13 +103,13 @@ describe('Resource state helpers', () => {
 	});
 
 	it('writes initial state with tier metadata and untouched flags', () => {
-		writeInitialState(player, resourceDefinition.id, 1, 9, tierTrack, 3);
-		expect(player.resourceValues[resourceDefinition.id]).toBe(3);
-		expect(player.resourceLowerBounds[resourceDefinition.id]).toBe(1);
-		expect(player.resourceUpperBounds[resourceDefinition.id]).toBe(9);
-		expect(player.resourceTouched[resourceDefinition.id]).toBe(false);
-		expect(player.resourceTierIds[resourceDefinition.id]).toBe('tier-mid');
-		expect(player.resourceBoundTouched[resourceDefinition.id]).toEqual({
+		writeInitialState(player, testResource.id, 1, 9, tierTrack, 3);
+		expect(player.resourceValues[testResource.id]).toBe(3);
+		expect(player.resourceLowerBounds[testResource.id]).toBe(1);
+		expect(player.resourceUpperBounds[testResource.id]).toBe(9);
+		expect(player.resourceTouched[testResource.id]).toBe(false);
+		expect(player.resourceTierIds[testResource.id]).toBe('tier-mid');
+		expect(player.resourceBoundTouched[testResource.id]).toEqual({
 			lower: false,
 			upper: false,
 		});
@@ -123,18 +123,18 @@ describe('Resource state helpers', () => {
 
 	it('indexes catalog entries for resources and parents', () => {
 		const indexes = getCatalogIndexes(catalog);
-		expect(indexes.resourceById[resourceDefinition.id]).toBeDefined();
+		expect(indexes.resourceById[testResource.id]).toBeDefined();
 		const parentId = groupDefinition.parent!.id;
 		expect(indexes.parentById[parentId]).toBeDefined();
 		expect(indexes.groupChildren[groupDefinition.id]).toEqual([
-			resourceDefinition.id,
+			testResource.id,
 		]);
 	});
 
 	it('resolves definitions for resources and parent group aggregates', () => {
 		const resourceLookup = resolveResourceDefinition(
 			catalog,
-			resourceDefinition.id,
+			testResource.id,
 		);
 		expect(resourceLookup).not.toBeNull();
 		expect(resourceLookup).toMatchObject({

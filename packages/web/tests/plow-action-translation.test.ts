@@ -75,12 +75,6 @@ function createTranslationHarness() {
 		tierDefinitions: [...synthetic.rules.tierDefinitions],
 		winConditions: [...synthetic.rules.winConditions],
 	} satisfies SessionRuleSnapshot;
-	const resourceMetadata: Record<string, SessionMetadataDescriptor> =
-		Object.fromEntries(
-			Object.entries(SYNTHETIC_RESOURCES).map(([key, info]) => {
-				return [key, { icon: info.icon, label: info.label }];
-			}),
-		);
 	// Resource metadata for translation layer
 	const resourceMetadata: Record<string, SessionMetadataDescriptor> =
 		Object.fromEntries(

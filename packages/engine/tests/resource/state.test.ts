@@ -7,7 +7,7 @@ import {
 	recalculateGroupParentValue,
 	increaseResourceLowerBound,
 	increaseResourceUpperBound,
-} from '../../src/resource-v2/state.ts';
+} from '../../src/resource/state.ts';
 import type {
 	RuntimeResourceCatalog,
 	RuntimeResourceDefinition,
@@ -15,7 +15,7 @@ import type {
 	RuntimeResourceGroupParent,
 	RuntimeResourceTierDefinition,
 	RuntimeResourceTierTrack,
-} from '../../src/resource-v2/types.ts';
+} from '../../src/resource/types.ts';
 
 function createTier(
 	id: string,

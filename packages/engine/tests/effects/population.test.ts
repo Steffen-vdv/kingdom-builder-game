@@ -7,7 +7,7 @@ import {
 	PhaseId,
 	PopulationRole,
 } from '@kingdom-builder/contents';
-import { getCatalogIndexes } from '../../src/resource-v2';
+import { getCatalogIndexes } from '../../src/resource';
 import { resourceAmountParams } from '../helpers/resourceParams';
 
 describe('resource effects for population', () => {

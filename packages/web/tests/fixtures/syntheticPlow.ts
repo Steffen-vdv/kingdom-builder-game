@@ -32,18 +32,6 @@ const syntheticData = {
 		ap: { icon: '🛠️', label: 'Synthetic Action Points' },
 		happiness: { icon: '🙂', label: 'Synthetic Happiness' },
 	} satisfies Record<SyntheticResourceKey, SyntheticResourceInfo>,
-	// keyed resources for use in assets/context
-	RESOURCES: {
-		[SYNTHETIC_RESOURCE_KEYS.gold]: { icon: '🪙', label: 'Synthetic Gold' },
-		[SYNTHETIC_RESOURCE_KEYS.ap]: {
-			icon: '🛠️',
-			label: 'Synthetic Action Points',
-		},
-		[SYNTHETIC_RESOURCE_KEYS.happiness]: {
-			icon: '🙂',
-			label: 'Synthetic Happiness',
-		},
-	} as Record<string, SyntheticResourceInfo>,
 	LAND_INFO: { icon: '🗺️', label: 'Synthetic Land' } as const,
 	SLOT_INFO: { icon: '🧱', label: 'Synthetic Slot' } as const,
 	PASSIVE_INFO: { icon: '♻️', label: 'Synthetic Passive' } as const,
@@ -55,7 +43,6 @@ const syntheticData = {
 	} satisfies PhaseDef,
 } as const;
 
-export const SYNTHETIC_RESOURCES = syntheticData.RESOURCES;
 export const SYNTHETIC_RESOURCES = syntheticData.RESOURCES;
 export const SYNTHETIC_LAND_INFO = syntheticData.LAND_INFO;
 export const SYNTHETIC_SLOT_INFO = syntheticData.SLOT_INFO;

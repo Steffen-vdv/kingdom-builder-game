@@ -5,7 +5,7 @@ import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 } from '@kingdom-builder/contents/registries/resource';
-import { createRuntimeResourceCatalog } from '../../src/resource-v2/index.ts';
+import { createRuntimeResourceCatalog } from '../../src/resource/index.ts';
 
 const RUNTIME_RESOURCE_CATALOG = createRuntimeResourceCatalog({
 	resources: RESOURCE_REGISTRY,

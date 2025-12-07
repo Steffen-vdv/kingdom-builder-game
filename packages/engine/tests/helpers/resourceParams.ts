@@ -2,8 +2,8 @@ import type {
 	ResourceChangeParameters,
 	ResourceChangeRoundingMode,
 	ResourceReconciliationMode,
-} from '../../src/resource-v2/reconciliation.ts';
-import { computeRequestedResourceDelta } from '../../src/resource-v2/reconciliation.ts';
+} from '../../src/resource/reconciliation.ts';
+import { computeRequestedResourceDelta } from '../../src/resource/reconciliation.ts';
 
 interface BaseResourceParamsInput {
 	readonly key: string;

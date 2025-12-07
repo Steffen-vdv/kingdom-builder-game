@@ -28,7 +28,8 @@ describe('createTranslationContext', () => {
 			label: undefined,
 		};
 		const statKey = 'maxPopulation';
-		const [populationId] = registries.populations.keys();
+		// Under ResourceV2, populations are resources - no separate registry
+		const populationId: string | undefined = undefined;
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
@@ -96,8 +97,6 @@ describe('createTranslationContext', () => {
 					icon: '💰',
 					description: 'The royal treasury fuels your ambitions.',
 				},
-			},
-			resources: {
 				[resourceId]: {
 					label: 'Treasury',
 					icon: '🏦',
@@ -157,17 +156,13 @@ describe('createTranslationContext', () => {
 			name: string;
 			resource: number;
 			stat: number;
-			population: number;
 			buildings?: string[];
 			passives?: SessionSnapshot['game']['players'][number]['passives'];
 		}): SessionSnapshot['game']['players'][number] => ({
 			id: config.id,
 			name: config.name,
-			resources: { [resourceKey]: config.resource },
 			values: { [resourceId]: config.resource },
-			stats: { [statKey]: config.stat },
 			resourceTouched: {},
-			population: { [populationId]: config.population },
 			resourceBounds: {
 				[resourceId]: { lowerBound: 0, upperBound: 20 },
 			},
@@ -185,7 +180,6 @@ describe('createTranslationContext', () => {
 				name: 'Player A',
 				resource: 7,
 				stat: 3,
-				population: 2,
 				buildings: [buildingId],
 				passives: [
 					{
@@ -202,7 +196,6 @@ describe('createTranslationContext', () => {
 				name: 'Player B',
 				resource: 5,
 				stat: 1,
-				population: 1,
 				passives: [],
 			}),
 		];
@@ -336,7 +329,7 @@ describe('createTranslationContext', () => {
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
 			{
-			  "actionCostResource": "gold",
+			  "actionCostResource": "resource:core:gold",
 			  "assets": {
 			    "passive": {
 			      "icon": "✨",
@@ -356,16 +349,7 @@ describe('createTranslationContext', () => {
 			      "icon": "📦",
 			      "label": "Plot Slot",
 			    },
-			    "stat": {
-			      "description": "Represents how many specialists can serve the realm.",
-			      "displayAsPercent": true,
-			      "format": {
-			        "percent": true,
-			        "prefix": "~",
-			      },
-			      "icon": "🏯",
-			      "label": "Population Capacity",
-			    },
+			    "stat": undefined,
 			    "trigger": {
 			      "future": "When the signal sounds",
 			      "icon": "🔔",
@@ -376,12 +360,12 @@ describe('createTranslationContext', () => {
 			  "compensations": {
 			    "A": {
 			      "resources": {
-			        "gold": 2,
+			        "resource:core:gold": 2,
 			      },
 			    },
 			    "B": {
 			      "resources": {
-			        "gold": 1,
+			        "resource:core:gold": 1,
 			      },
 			    },
 			  },
@@ -409,7 +393,7 @@ describe('createTranslationContext', () => {
 			    },
 			    "evaluationMods": [
 			      [
-			        "gold",
+			        "resource:core:gold",
 			        [
 			          "modifier",
 			        ],
@@ -432,7 +416,7 @@ describe('createTranslationContext', () => {
 			  "recentResourceGains": [
 			    {
 			      "amount": 3,
-			      "key": "gold",
+			      "key": "resource:core:gold",
 			    },
 			    {
 			      "amount": -2,
@@ -453,8 +437,8 @@ describe('createTranslationContext', () => {
 			      "id": "farm",
 			    },
 			    "population": {
-			      "has": true,
-			      "id": "council",
+			      "has": false,
+			      "id": undefined,
 			    },
 			  },
 			  "resourceMetadata": {
@@ -503,14 +487,14 @@ describe('createTranslationContext', () => {
 			  },
 			  "rules": {
 			    "tierDefinitions": [],
-			    "tieredResourceKey": "gold",
+			    "tieredResourceKey": "resource:core:gold",
 			    "winConditions": [],
 			  },
 			  "signedResourceGains": {
 			    "list": [
 			      {
 			        "amount": 3,
-			        "key": "gold",
+			        "key": "resource:core:gold",
 			      },
 			      {
 			        "amount": -2,
@@ -526,7 +510,7 @@ describe('createTranslationContext', () => {
 			    "positives": [
 			      {
 			        "amount": 3,
-			        "key": "gold",
+			        "key": "resource:core:gold",
 			      },
 			    ],
 			    "sumLegacy": 3,

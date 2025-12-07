@@ -7,15 +7,15 @@ import {
 	initialisePlayerResourceState,
 	setResourceValue,
 	getResourceValue,
-} from '../../src/resource-v2/index.ts';
+} from '../../src/resource/index.ts';
 import {
 	resourceAdd,
 	resourceRemove,
-} from '../../src/resource-v2/effects/addRemove.ts';
+} from '../../src/resource/effects/addRemove.ts';
 import {
 	reconcileResourceChange,
 	ResourceBoundExceededError,
-} from '../../src/resource-v2/reconciliation.ts';
+} from '../../src/resource/reconciliation.ts';
 import {
 	resourceDefinition,
 	resourceGroupDefinition,

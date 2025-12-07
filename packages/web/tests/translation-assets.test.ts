@@ -3,11 +3,10 @@ import { createTranslationAssets } from '../src/translation/context/assets';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 
 describe('translation assets', () => {
-	it('uses provided metadata descriptors for critical assets and stats', () => {
+	it('uses provided metadata descriptors for critical assets', () => {
 		const { registries, metadata, ruleSnapshot } = createTestSessionScaffold();
 		const assets = createTranslationAssets(
 			{
-				populations: registries.populations,
 				resources: registries.resources,
 			},
 			metadata,
@@ -23,11 +22,7 @@ describe('translation assets', () => {
 			label: metadata.assets?.passive?.label,
 			description: metadata.assets?.passive?.description,
 		});
-		expect(assets.stats.maxPopulation).toMatchObject({
-			icon: metadata.stats?.maxPopulation?.icon,
-			label: metadata.stats?.maxPopulation?.label,
-			description: metadata.stats?.maxPopulation?.description,
-		});
+		// Stats are now resources under ResourceV2 - no separate stats object
 	});
 
 	it('throws when required asset descriptors are missing', () => {
@@ -40,7 +35,6 @@ describe('translation assets', () => {
 		expect(() =>
 			createTranslationAssets(
 				{
-					populations: registries.populations,
 					resources: registries.resources,
 				},
 				metadataWithoutLand as typeof metadata,

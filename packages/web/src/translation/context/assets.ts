@@ -76,13 +76,16 @@ function toIconLabel(
 }
 
 function buildPopulationMap(
-	registry: SessionRegistries['populations'],
+	registry: SessionRegistries['populations'] | undefined,
 	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
 ): Readonly<Record<string, TranslationIconLabel>> {
 	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [id, definition] of registry.entries()) {
-		const base = toIconLabel(definition, id);
-		entries[id] = mergeIconLabel(base, descriptors?.[id], base.label ?? id);
+	// Under ResourceV2, populations are resources - this map may be empty
+	if (registry) {
+		for (const [id, definition] of registry.entries()) {
+			const base = toIconLabel(definition, id);
+			entries[id] = mergeIconLabel(base, descriptors?.[id], base.label ?? id);
+		}
 	}
 	return Object.freeze(entries);
 }
@@ -222,7 +225,8 @@ function requireMetadataRecord(
 }
 
 export function createTranslationAssets(
-	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
+	registries: Pick<SessionRegistries, 'resources'> &
+		Partial<Pick<SessionRegistries, 'populations'>>,
 	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
@@ -239,7 +243,7 @@ export function createTranslationAssets(
 		string,
 		SessionTriggerMetadata
 	>;
-	// Population metadata is now part of unified resources (population IDs are resource IDs)
+	// Under ResourceV2, populations are resources - the separate registry is optional
 	const populations = buildPopulationMap(
 		registries.populations,
 		resourceMetadata,

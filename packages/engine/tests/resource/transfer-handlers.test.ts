@@ -7,11 +7,11 @@ import {
 	getResourceValue,
 	initialisePlayerResourceState,
 	setResourceValue,
-} from '../../src/resource-v2/index.ts';
+} from '../../src/resource/index.ts';
 import {
 	resourceTransfer,
 	type ResourceTransferEffectParams,
-} from '../../src/resource-v2/effects/transfer.ts';
+} from '../../src/resource/effects/transfer.ts';
 import {
 	resourceDefinition,
 	resourceGroupDefinition,

@@ -80,13 +80,6 @@ function createTestSetup(): TestSetup {
 		resources: { [resourceKey]: 0 },
 	});
 	const metadata: SessionSnapshotMetadata = createEmptySnapshotMetadata({
-		resources: {
-			[resourceKey]: {
-				label: 'Auric Coin',
-				icon: '🪙',
-				description: 'Minted test currency.',
-			},
-		},
 		// metadata is used by selectAttackResourceDescriptor
 		resources: {
 			[resourceKey]: {

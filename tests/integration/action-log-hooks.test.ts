@@ -149,12 +149,6 @@ function ensureTranslationMetadata(
 		resourceDescriptors[key] = descriptor;
 	}
 	enriched.resources = resourceDescriptors;
-	const resourceDescriptors = enriched.resources ?? {};
-	for (const [key, descriptor] of Object.entries(resourceDescriptors)) {
-		const existing = resourceDescriptors[key] ?? {};
-		resourceDescriptors[key] = { ...descriptor, ...existing };
-	}
-	enriched.resources = resourceDescriptors;
 	const populationDescriptors = enriched.populations ?? {};
 	for (const [id, population] of registries.populations.entries()) {
 		const descriptor = populationDescriptors[id] ?? {};

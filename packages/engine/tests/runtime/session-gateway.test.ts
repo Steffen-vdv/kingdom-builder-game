@@ -7,11 +7,11 @@ import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
 } from '@kingdom-builder/testing';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import {
 	Resource as CResource,
 	PHASES as REAL_PHASES,
@@ -24,7 +24,7 @@ import {
 } from '@kingdom-builder/contents';
 import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
-import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
+import type { RuntimeResourceContent } from '../../src/resource/index.ts';
 
 // Use actual Resource IDs - they ARE the resource keys directly
 const RESOURCE_AP = CResource.ap;
@@ -43,8 +43,8 @@ if (!REQUIREMENTS.has(FAILURE_REQUIREMENT_ID)) {
 // Use real phases and rules from contents for proper initial setup integration
 
 const BASE_RESOURCE_CATALOG: RuntimeResourceContent = {
-	resources: RESOURCE_V2_REGISTRY,
-	groups: RESOURCE_GROUP_V2_REGISTRY,
+	resources: RESOURCE_REGISTRY,
+	groups: RESOURCE_GROUP_REGISTRY,
 };
 
 type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
@@ -133,8 +133,8 @@ describe('createLocalSessionGateway', () => {
 	});
 
 	it('clones registries including Resource payloads', async () => {
-		const resourceId = RESOURCE_V2_REGISTRY.ordered[0]!.id;
-		const groupId = RESOURCE_GROUP_V2_REGISTRY.ordered[0]!.id;
+		const resourceId = RESOURCE_REGISTRY.ordered[0]!.id;
+		const groupId = RESOURCE_GROUP_REGISTRY.ordered[0]!.id;
 		const { gateway } = createGateway({
 			gatewayOptions: {
 				registries: {
@@ -145,10 +145,10 @@ describe('createLocalSessionGateway', () => {
 					resources: {},
 					actionCategories: {},
 					resources: {
-						[resourceId]: RESOURCE_V2_REGISTRY.byId[resourceId]!,
+						[resourceId]: RESOURCE_REGISTRY.byId[resourceId]!,
 					},
 					resourceGroups: {
-						[groupId]: RESOURCE_GROUP_V2_REGISTRY.byId[groupId]!,
+						[groupId]: RESOURCE_GROUP_REGISTRY.byId[groupId]!,
 					},
 				},
 			},

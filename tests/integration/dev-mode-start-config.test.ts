@@ -14,9 +14,9 @@ import {
 } from '@kingdom-builder/contents';
 import { DevelopmentId } from '@kingdom-builder/contents/developments';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 
 describe('dev mode start configuration', () => {
 	it('applies content-driven overrides when dev mode is enabled', () => {
@@ -28,8 +28,8 @@ describe('dev mode start configuration', () => {
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog: {
-				resources: RESOURCE_V2_REGISTRY,
-				groups: RESOURCE_GROUP_V2_REGISTRY,
+				resources: RESOURCE_REGISTRY,
+				groups: RESOURCE_GROUP_REGISTRY,
 			},
 			devMode: true,
 		});
@@ -69,8 +69,8 @@ describe('dev mode start configuration', () => {
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog: {
-				resources: RESOURCE_V2_REGISTRY,
-				groups: RESOURCE_GROUP_V2_REGISTRY,
+				resources: RESOURCE_REGISTRY,
+				groups: RESOURCE_GROUP_REGISTRY,
 			},
 			devMode: true,
 		});
