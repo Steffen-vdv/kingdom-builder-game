@@ -7,7 +7,6 @@ import type {
 	GameConfig,
 	PopulationConfig,
 	PhaseConfig,
-	StartConfig,
 } from '../config/schema';
 import type {
 	ActionParametersPayload,
@@ -100,7 +99,6 @@ export interface SessionMetadataSnapshotResponse {
 
 export interface SessionRuntimeConfigResponse {
 	phases: PhaseConfig[];
-	start: StartConfig;
 	rules: RuleSet;
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;

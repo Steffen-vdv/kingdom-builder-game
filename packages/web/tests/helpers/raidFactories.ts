@@ -13,7 +13,6 @@ import {
 	SYNTH_BUILDING,
 	COMBAT_STAT_CONFIG,
 	PHASES,
-	START,
 	RULES,
 	PLUNDER_HAPPINESS_AMOUNT,
 	WAR_WEARINESS_GAIN,
@@ -25,6 +24,17 @@ import {
 	type CombatStatKey,
 	type SyntheticDescriptor,
 } from './raidConfig';
+
+/**
+ * No-op system action IDs used to skip initial setup.
+ * These actions don't exist, so no setup effects run.
+ */
+const SKIP_SETUP_ACTION_IDS = {
+	initialSetup: '__army_attack_noop_initial__',
+	initialSetupDevmode: '__army_attack_noop_devmode__',
+	compensation: '__army_attack_noop_compensation__',
+	compensationDevmodeB: '__army_attack_noop_compensation_b__',
+};
 import {
 	buildEffects,
 	buildAttackEffect,
@@ -80,9 +90,9 @@ function createBaseEngine() {
 		developments: factory.developments,
 		populations: factory.populations,
 		phases: PHASES,
-		start: START,
 		rules: RULES,
 		resourceCatalogV2: SYNTH_RESOURCE_CATALOG_V2,
+		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
 	return { factory, engineContext } as const;
 }

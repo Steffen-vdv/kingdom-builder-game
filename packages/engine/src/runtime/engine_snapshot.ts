@@ -13,6 +13,8 @@ import type {
 import type { PhaseDef, StepDef } from '../phases';
 import type { PlayerId } from '../state';
 import type {
+	ActionTrace as ProtocolActionTrace,
+	ActionPlayerSnapshot,
 	PlayerStartConfig,
 	SessionAdvanceResult,
 	SessionAdvanceSkipSnapshot,
@@ -29,6 +31,7 @@ import type {
 	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol';
 import type { PassiveRecordSnapshot } from './types';
+import type { ActionTrace as EngineActionTrace } from '../log';
 import {
 	cloneActionTraces,
 	deepClone,
@@ -79,6 +82,44 @@ function cloneCompensations(
 			deepClone(config),
 		]),
 	) as Record<PlayerId, PlayerStartConfig>;
+}
+
+/**
+ * Converts engine ActionTrace to protocol ActionTrace format.
+ * The engine format includes resourceBoundsV2 which is not part of the
+ * protocol's ActionPlayerSnapshot.
+ */
+function convertEngineTraceToProtocol(
+	trace: EngineActionTrace,
+): ProtocolActionTrace {
+	const convertSnapshot = (
+		snapshot: EngineActionTrace['before'],
+	): ActionPlayerSnapshot => ({
+		valuesV2: { ...snapshot.valuesV2 },
+		buildings: [...snapshot.buildings],
+		lands: snapshot.lands.map((land) => ({
+			id: land.id,
+			slotsMax: land.slotsMax,
+			slotsUsed: land.slotsUsed,
+			developments: [...land.developments],
+		})),
+		passives: snapshot.passives.map((passive) => ({ ...passive })),
+	});
+
+	return {
+		id: trace.id,
+		before: convertSnapshot(trace.before),
+		after: convertSnapshot(trace.after),
+	};
+}
+
+function cloneInitialSetupTraces(
+	traces: Record<PlayerId, EngineActionTrace[]>,
+): Record<PlayerId, ProtocolActionTrace[]> {
+	return {
+		A: (traces.A ?? []).map(convertEngineTraceToProtocol),
+		B: (traces.B ?? []).map(convertEngineTraceToProtocol),
+	};
 }
 
 function cloneSkipSource(
@@ -246,6 +287,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 			amount: gain.amount,
 		})),
 		compensations: cloneCompensations(context.compensations),
+		initialSetupTraces: cloneInitialSetupTraces(context.initialSetupTraces),
 		rules,
 		passiveRecords: clonePassiveRecords(context),
 		metadata,

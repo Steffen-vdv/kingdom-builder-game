@@ -15,11 +15,7 @@ import {
 	Types,
 	PassiveMethods,
 } from '@kingdom-builder/contents/config/builderShared';
-import type {
-	PhaseConfig,
-	RuleSet,
-	StartConfig,
-} from '@kingdom-builder/protocol';
+import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
 import type { ContentFactory } from '@kingdom-builder/testing';
 
 export type SyntheticSessionManagerOptions = Omit<
@@ -36,7 +32,6 @@ export interface SyntheticSessionManagerResult {
 	gainResourceId: string;
 	actionId: string;
 	phases: PhaseConfig[];
-	start: StartConfig;
 	rules: RuleSet;
 	primaryIconId: string | null;
 }
@@ -75,6 +70,77 @@ export function createSyntheticSessionManager(
 			},
 		],
 	});
+
+	// Create synthetic system actions for initial setup
+	// These give players the initial resources defined in the start config
+	const initialSetupActionId = '__synth_initial_setup__';
+	const initialSetupDevmodeActionId = '__synth_initial_setup_devmode__';
+	const compensationActionId = '__synth_compensation__';
+	const compensationDevmodeBActionId = '__synth_compensation_b__';
+
+	// Initial setup action gives players starting resources
+	factory.actions.add(initialSetupActionId, {
+		id: initialSetupActionId,
+		name: 'Synthetic Initial Setup',
+		system: true,
+		free: true,
+		baseCosts: {},
+		effects: [
+			{
+				type: 'resource',
+				method: 'add',
+				params: {
+					resourceId: costResourceId,
+					change: { type: 'amount', amount: 1 },
+				},
+			},
+		],
+	});
+
+	// DevMode setup (same as normal for synthetic tests)
+	factory.actions.add(initialSetupDevmodeActionId, {
+		id: initialSetupDevmodeActionId,
+		name: 'Synthetic Initial Setup (DevMode)',
+		system: true,
+		free: true,
+		baseCosts: {},
+		effects: [
+			{
+				type: 'resource',
+				method: 'add',
+				params: {
+					resourceId: costResourceId,
+					change: { type: 'amount', amount: 1 },
+				},
+			},
+		],
+	});
+
+	// Compensation actions (empty for synthetic tests)
+	factory.actions.add(compensationActionId, {
+		id: compensationActionId,
+		name: 'Synthetic Compensation',
+		system: true,
+		free: true,
+		baseCosts: {},
+		effects: [],
+	});
+
+	factory.actions.add(compensationDevmodeBActionId, {
+		id: compensationDevmodeBActionId,
+		name: 'Synthetic Compensation (DevMode B)',
+		system: true,
+		free: true,
+		baseCosts: {},
+		effects: [],
+	});
+
+	const systemActionIds = {
+		initialSetup: initialSetupActionId,
+		initialSetupDevmode: initialSetupDevmodeActionId,
+		compensation: compensationActionId,
+		compensationDevmodeB: compensationDevmodeBActionId,
+	};
 	const phases: PhaseConfig[] = [
 		{ id: 'main', action: true, steps: [{ id: 'main' }] },
 		{
@@ -96,19 +162,6 @@ export function createSyntheticSessionManager(
 			],
 		},
 	];
-	const start: StartConfig = {
-		player: {
-			resources: {},
-			stats: {},
-			population: {},
-			lands: [],
-			valuesV2: { [costResourceId]: 1, [gainResourceId]: 0 },
-			resourceLowerBoundsV2: {
-				[costResourceId]: 0,
-				[gainResourceId]: 0,
-			},
-		},
-	};
 	const rules: RuleSet = {
 		defaultActionAPCost: 1,
 		absorptionCapPct: 1,
@@ -145,13 +198,26 @@ export function createSyntheticSessionManager(
 		developments: engineOverrides.developments ?? factory.developments,
 		populations: engineOverrides.populations ?? factory.populations,
 		phases: engineOverrides.phases ?? phases,
-		start: engineOverrides.start ?? start,
 		rules: engineOverrides.rules ?? rules,
 		resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? {
 			resources,
 			groups,
 		},
 		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
+		systemActionIds,
+		// Provide synthetic resources to the session registry
+		resourceRegistry: {
+			[costResourceId]: {
+				key: costResourceId,
+				label: 'Cost',
+				icon: '💰',
+			},
+			[gainResourceId]: {
+				key: gainResourceId,
+				label: 'Gain',
+				icon: '⭐',
+			},
+		},
 	};
 	const manager = new SessionManager({
 		...rest,
@@ -164,7 +230,6 @@ export function createSyntheticSessionManager(
 		gainResourceId,
 		actionId: action.id,
 		phases,
-		start,
 		rules,
 		primaryIconId: engineOptions.primaryIconId ?? null,
 	};

@@ -151,6 +151,10 @@ vi.mock('../../src/state/useCompensationLogger', () => ({
 	useCompensationLogger: vi.fn(),
 }));
 
+vi.mock('../../src/state/useInitialSetupLogger', () => ({
+	useInitialSetupLogger: vi.fn(),
+}));
+
 vi.mock('../../src/state/useAiRunner', () => ({
 	useAiRunner: vi.fn(),
 }));

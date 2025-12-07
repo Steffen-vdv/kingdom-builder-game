@@ -7,7 +7,6 @@ import {
 	effectSchema,
 	populationSchema,
 	phaseSchema,
-	startConfigSchema,
 	ruleSetSchema,
 } from '../schema';
 import type {
@@ -169,7 +168,6 @@ export const sessionRegistriesSchema = z
 export const runtimeConfigResponseSchema = z
 	.object({
 		phases: z.array(phaseSchema),
-		start: startConfigSchema,
 		rules: ruleSetSchema,
 		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		primaryIconId: z.string().nullable(),

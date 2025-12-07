@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createEngine, advance } from '@kingdom-builder/engine';
-import type {
-	PhaseConfig,
-	RuleSet,
-	StartConfig,
-} from '@kingdom-builder/protocol';
+import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
 import {
 	createContentFactory,
 	createResourceV2Registries,
@@ -27,15 +23,6 @@ const phases: PhaseConfig[] = [
 	{ id: phaseIds.upkeep, steps: [{ id: 'turn:step:upkeep' }] },
 	{ id: phaseIds.main, action: true, steps: [{ id: 'turn:step:main' }] },
 ];
-
-const start: StartConfig = {
-	player: {
-		resources: { [resources.ap]: 0, [resources.gold]: 0 },
-		stats: {},
-		population: {},
-		lands: [],
-	},
-};
 
 const rules: RuleSet = {
 	defaultActionAPCost: 1,
@@ -81,11 +68,18 @@ describe('Turn cycle integration', () => {
 			developments: content.developments,
 			populations: content.populations,
 			phases,
-			start,
 			rules,
 			resourceCatalogV2: {
 				resources: turnResourcesV2,
 				groups: turnResourceGroupsV2,
+			},
+			// Skip real setup actions by providing non-existent IDs;
+			// this test focuses on phase cycling, not initial setup
+			systemActionIds: {
+				initialSetup: 'test:skip:initial',
+				initialSetupDevmode: 'test:skip:devmode',
+				compensation: 'test:skip:compensation',
+				compensationDevmodeB: 'test:skip:compensation-b',
 			},
 		});
 

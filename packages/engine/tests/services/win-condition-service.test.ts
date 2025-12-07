@@ -27,6 +27,7 @@ describe('WinConditionService', () => {
 		};
 		const engineContext = createTestEngine({
 			rules: createRulesWithWinConditions([winCondition]),
+			skipInitialSetup: true,
 		});
 		const subject = engineContext.game.players[0]!;
 		const opponent = engineContext.game.players[1]!;
@@ -66,6 +67,7 @@ describe('WinConditionService', () => {
 		};
 		const engineContext = createTestEngine({
 			rules: createRulesWithWinConditions([winCondition]),
+			skipInitialSetup: true,
 		});
 		const subject = engineContext.game.players[0]!;
 		const opponent = engineContext.game.players[1]!;
@@ -105,6 +107,7 @@ describe('WinConditionService', () => {
 		};
 		const engineContext = createTestEngine({
 			rules: createRulesWithWinConditions([winCondition]),
+			skipInitialSetup: true,
 		});
 		const subject = engineContext.game.players[0]!;
 		const opponent = engineContext.game.players[1]!;
@@ -139,6 +142,7 @@ describe('WinConditionService', () => {
 		};
 		const engineContext = createTestEngine({
 			rules: createRulesWithWinConditions([winCondition]),
+			skipInitialSetup: true,
 		});
 		const subject = engineContext.game.players[0]!;
 		const opponent = engineContext.game.players[1]!;

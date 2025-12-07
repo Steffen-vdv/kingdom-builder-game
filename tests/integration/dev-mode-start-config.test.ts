@@ -6,12 +6,13 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 	PopulationRole,
+	Stat,
 	Resource,
 	getResourceV2Id,
 } from '@kingdom-builder/contents';
+import { DevelopmentId } from '@kingdom-builder/contents/developments';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
@@ -25,7 +26,6 @@ describe('dev mode start configuration', () => {
 			developments: DEVELOPMENTS,
 			populations: POPULATIONS,
 			phases: PHASES,
-			start: GAME_START,
 			rules: RULES,
 			resourceCatalogV2: {
 				resources: RESOURCE_V2_REGISTRY,
@@ -58,5 +58,39 @@ describe('dev mode start configuration', () => {
 		expect(
 			snapshot.game.resourceCatalogV2.resources.byId[goldId],
 		).toBeDefined();
+	});
+
+	it('applies onBuild effects for start config developments', () => {
+		const session = createEngineSession({
+			actions: ACTIONS,
+			buildings: BUILDINGS,
+			developments: DEVELOPMENTS,
+			populations: POPULATIONS,
+			phases: PHASES,
+			rules: RULES,
+			resourceCatalogV2: {
+				resources: RESOURCE_V2_REGISTRY,
+				groups: RESOURCE_GROUP_V2_REGISTRY,
+			},
+			devMode: true,
+		});
+		const snapshot = session.getSnapshot();
+		const [player] = snapshot.game.players;
+		if (!player) {
+			throw new Error('Expected player to be present at game start');
+		}
+		// Count houses in devmode: 6 houses from initial_setup_devmode action
+		const houseCount = player.lands.reduce((count, land) => {
+			return (
+				count +
+				land.developments.filter((dev) => dev === DevelopmentId.House).length
+			);
+		}, 0);
+		expect(houseCount).toBe(6);
+		// Each house adds +1 to max population via onBuild effect
+		// Base populationMax is 1 (from initial_setup_devmode action)
+		// So total should be 1 + 6 = 7
+		const populationMaxId = Stat.populationMax;
+		expect(player.valuesV2[populationMaxId]).toBe(7);
 	});
 });

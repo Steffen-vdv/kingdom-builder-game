@@ -1,5 +1,9 @@
 export { createEngine } from './setup/create_engine';
-export type { ResourceKey, PopulationRoleId } from './setup/create_engine';
+export type {
+	ResourceKey,
+	PopulationRoleId,
+	SystemActionIds,
+} from './setup/create_engine';
 export type { RuntimeResourceContent } from './resource-v2';
 export { getResourceValue, setResourceValue } from './resource-v2';
 export {

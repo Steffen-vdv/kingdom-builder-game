@@ -143,19 +143,16 @@ describe('SessionManager', () => {
 	});
 
 	it('exposes a frozen runtime configuration snapshot', () => {
-		const { manager, phases, start, rules, gainResourceId, primaryIconId } =
+		const { manager, phases, rules, gainResourceId, primaryIconId } =
 			createSyntheticSessionManager();
 		const runtimeConfig = manager.getRuntimeConfig();
 		expect(runtimeConfig.phases).toEqual(phases);
 		expect(runtimeConfig.phases).not.toBe(phases);
-		expect(runtimeConfig.start).toEqual(start);
-		expect(runtimeConfig.start).not.toBe(start);
 		expect(runtimeConfig.rules).toEqual(rules);
 		expect(runtimeConfig.rules).not.toBe(rules);
 		expect(runtimeConfig.primaryIconId).toBe(primaryIconId);
 		expect(Object.isFrozen(runtimeConfig)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.phases)).toBe(true);
-		expect(Object.isFrozen(runtimeConfig.start)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.rules)).toBe(true);
 		expect(Object.isFrozen(runtimeConfig.resources)).toBe(true);
 		const resourceEntry = runtimeConfig.resources[gainResourceId];

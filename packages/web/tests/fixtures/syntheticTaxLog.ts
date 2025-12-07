@@ -33,6 +33,18 @@ export {
 	SYNTHETIC_STEP_IDS,
 } from './syntheticTaxData';
 export type { SyntheticResourceKey } from './syntheticTaxData';
+
+/**
+ * No-op system action IDs used to skip initial setup.
+ * These actions don't exist, so no setup effects run.
+ */
+export const SKIP_SETUP_ACTION_IDS = {
+	initialSetup: '__synth_noop_initial__',
+	initialSetupDevmode: '__synth_noop_devmode__',
+	compensation: '__synth_noop_compensation__',
+	compensationDevmodeB: '__synth_noop_compensation_b__',
+};
+
 export const SYNTHETIC_ASSETS = {
 	resources: SYNTHETIC_RESOURCES,
 	stats: {},
@@ -100,6 +112,56 @@ export interface SyntheticTaxScenario {
 	start: StartConfig;
 	rules: typeof SYNTHETIC_RULES;
 	resourceCatalogV2: typeof SYNTHETIC_RESOURCE_CATALOG_V2;
+}
+
+/**
+ * Build effects to apply a StartConfig.
+ * Returns an array of effects that can be passed to runEffects.
+ */
+export function buildStartConfigEffects(startConfig: StartConfig) {
+	const effects: Array<{
+		type: string;
+		method: string;
+		params?: Record<string, unknown>;
+	}> = [];
+
+	// Apply valuesV2 as resource:add effects
+	if (startConfig.player.valuesV2) {
+		for (const [resourceId, value] of Object.entries(
+			startConfig.player.valuesV2,
+		)) {
+			if (typeof value === 'number' && value > 0) {
+				effects.push({
+					type: 'resource',
+					method: 'add',
+					params: {
+						resourceId,
+						change: { type: 'amount', amount: value },
+					},
+				});
+			}
+		}
+	}
+
+	// Apply lands via land:add effects, then add developments
+	if (startConfig.player.lands) {
+		for (const landConfig of startConfig.player.lands) {
+			effects.push({
+				type: 'land',
+				method: 'add',
+				params: { count: 1 },
+			});
+			for (const devId of landConfig.developments) {
+				effects.push({
+					type: 'development',
+					method: 'add',
+					params: { id: devId },
+				});
+			}
+		}
+	}
+
+	return effects;
 }
 
 export function createSyntheticTaxScenario(): SyntheticTaxScenario {

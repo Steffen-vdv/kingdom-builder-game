@@ -15,6 +15,15 @@ export const BasicActionId = {
 	till: 'till',
 } as const;
 
+export const SystemActionId = {
+	initial_setup: 'initial_setup',
+	initial_setup_devmode: 'initial_setup_devmode',
+	compensation: 'compensation',
+	compensation_devmode_b: 'compensation_devmode_b',
+} as const;
+
+export type SystemActionId = ValueOf<typeof SystemActionId>;
+
 export type BasicActionId = ValueOf<typeof BasicActionId>;
 
 export const DevelopActionId = {
@@ -77,6 +86,7 @@ export const POPULATION_ACTION_IDS: readonly PopulationActionId[] = [HireActionI
 
 export const ActionId = {
 	...BasicActionId,
+	...SystemActionId,
 	...DevelopActionId,
 	...HireActionId,
 	...BuildActionId,

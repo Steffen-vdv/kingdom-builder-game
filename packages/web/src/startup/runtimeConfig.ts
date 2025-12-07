@@ -5,14 +5,12 @@ import type {
 	RuleSet,
 	SessionResourceDefinition,
 	SessionRuntimeConfigResponse,
-	StartConfig,
 } from '@kingdom-builder/protocol';
 import { runtimeConfigResponseSchema } from '@kingdom-builder/protocol';
 import { clone } from '../state/clone';
 
 export interface RuntimeContentConfig {
 	phases: PhaseConfig[];
-	start: StartConfig;
 	rules: RuleSet;
 	resources: Record<string, SessionResourceDefinition>;
 	resourcesV2: Record<string, ResourceV2Definition>;
@@ -102,9 +100,6 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 			const phases = overrides?.phases
 				? clone(overrides.phases)
 				: clone(base.phases);
-			const start = overrides?.start
-				? clone(overrides.start)
-				: clone(base.start);
 			const rules = overrides?.rules
 				? clone(overrides.rules)
 				: clone(base.rules);
@@ -121,7 +116,6 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 				overrides?.primaryIconId ?? base.primaryIconId ?? null;
 			const config: RuntimeContentConfig = {
 				phases,
-				start,
 				rules,
 				resources,
 				resourcesV2,

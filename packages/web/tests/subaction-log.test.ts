@@ -3,6 +3,7 @@ import {
 	createEngine,
 	performAction,
 	getActionCosts,
+	runEffects,
 	type ActionTrace,
 } from '@kingdom-builder/engine';
 import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
@@ -14,6 +15,8 @@ import {
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_PASSIVE_INFO,
+	SKIP_SETUP_ACTION_IDS,
+	buildStartConfigEffects,
 } from './fixtures/syntheticPlow';
 import {
 	snapshotPlayer,
@@ -113,10 +116,11 @@ describe('sub-action logging', () => {
 			developments: synthetic.factory.developments,
 			populations: synthetic.factory.populations,
 			phases: synthetic.phases,
-			start: synthetic.start,
 			rules: synthetic.rules,
 			resourceCatalogV2: synthetic.resourceCatalogV2,
+			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
+		runEffects(buildStartConfigEffects(synthetic.start), engineContext);
 		const baseAssets = createDefaultTranslationAssets();
 		engineContext.assets = {
 			...baseAssets,

@@ -4,7 +4,6 @@ import type {
 	RuleSet,
 	SessionResourceDefinition,
 	SerializedRegistry,
-	StartConfig,
 	GameConfig,
 } from '@kingdom-builder/protocol';
 import {
@@ -23,43 +22,14 @@ import {
 } from '../../src/session/registryUtils.js';
 
 describe('buildResourceRegistry', () => {
-	const createMinimalStart = (): StartConfig => ({
-		player: {
-			resources: {},
-			stats: {},
-			population: {},
-			lands: [],
-			valuesV2: {},
-		},
-	});
-
-	it('adds resources from player start config', () => {
-		const start: StartConfig = {
-			player: {
-				resources: { 'resource:test:gold': 10 },
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		expect(registry['resource:test:gold']).toBeDefined();
-		expect(registry['resource:test:gold'].key).toBe('resource:test:gold');
-	});
-
-	it('adds resources from valuesV2 in player start config', () => {
-		const start: StartConfig = {
-			player: {
-				resources: {},
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: { 'resource:core:happiness': 5 },
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		expect(registry['resource:core:happiness']).toBeDefined();
+	it('populates registry from RESOURCE_V2_REGISTRY', () => {
+		// The function now populates from the global RESOURCE_V2_REGISTRY
+		const registry = buildResourceRegistry(undefined);
+		// Should have entries from the global registry
+		expect(registry).toBeDefined();
+		expect(typeof registry).toBe('object');
+		// At minimum, should have some keys from the global registry
+		expect(Object.keys(registry).length).toBeGreaterThan(0);
 	});
 
 	it('applies resource overrides when provided', () => {
@@ -70,216 +40,29 @@ describe('buildResourceRegistry', () => {
 				icon: '🌟',
 			},
 		};
-		const registry = buildResourceRegistry(overrides, createMinimalStart());
+		const registry = buildResourceRegistry(overrides);
 		expect(registry['resource:custom:test']).toBeDefined();
 		expect(registry['resource:custom:test'].label).toBe('Custom Resource');
 	});
 
 	it('handles undefined overrides', () => {
-		const registry = buildResourceRegistry(undefined, createMinimalStart());
+		const registry = buildResourceRegistry(undefined);
 		expect(registry).toBeDefined();
 		expect(typeof registry).toBe('object');
 	});
 
-	it('adds resources from per-player start configs', () => {
-		const start: StartConfig = {
-			player: {
-				resources: {},
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-			players: {
-				A: {
-					resources: { 'resource:test:player-a': 5 },
-					stats: {},
-					population: {},
-					lands: [],
-					valuesV2: { 'resource:test:player-a-v2': 10 },
-				},
-				B: {
-					resources: { 'resource:test:player-b': 3 },
-					stats: {},
-					population: {},
-					lands: [],
-					valuesV2: {},
-				},
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		expect(registry['resource:test:player-a']).toBeDefined();
-		expect(registry['resource:test:player-a-v2']).toBeDefined();
-		expect(registry['resource:test:player-b']).toBeDefined();
-	});
-
-	it('adds resources from mode configs', () => {
-		const start: StartConfig = {
-			player: {
-				resources: {},
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-			modes: {
-				easy: {
-					player: {
-						resources: { 'resource:mode:easy': 100 },
-						stats: {},
-						population: {},
-						lands: [],
-						valuesV2: { 'resource:mode:easy-v2': 50 },
-					},
-				},
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		expect(registry['resource:mode:easy']).toBeDefined();
-		expect(registry['resource:mode:easy-v2']).toBeDefined();
-	});
-
-	it('adds resources from mode-specific player configs', () => {
-		const start: StartConfig = {
-			player: {
-				resources: {},
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-			modes: {
-				custom: {
-					player: {
-						resources: {},
-						stats: {},
-						population: {},
-						lands: [],
-						valuesV2: {},
-					},
-					players: {
-						A: {
-							resources: { 'resource:mode:player-a': 20 },
-							stats: {},
-							population: {},
-							lands: [],
-							valuesV2: {},
-						},
-					},
-				},
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		expect(registry['resource:mode:player-a']).toBeDefined();
-	});
-
-	it('skips undefined mode entries', () => {
-		const start: StartConfig = {
-			player: {
-				resources: {},
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-			modes: {
-				valid: {
-					player: {
-						resources: { 'resource:valid': 1 },
-						stats: {},
-						population: {},
-						lands: [],
-						valuesV2: {},
-					},
-				},
-				invalid: undefined as unknown as StartConfig['modes'] extends Record<
-					string,
-					infer M
-				>
-					? M
-					: never,
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		expect(registry['resource:valid']).toBeDefined();
-	});
-
-	it('does not duplicate resources already in registry', () => {
+	it('preserves override values over V2 registry defaults', () => {
+		// Pick a known resource from V2 registry and override it
 		const overrides: SerializedRegistry<SessionResourceDefinition> = {
-			'resource:test:existing': {
-				key: 'resource:test:existing',
-				label: 'Override Label',
-				icon: '🎯',
+			'resource:core:gold': {
+				key: 'resource:core:gold',
+				label: 'Override Gold Label',
+				icon: '💰',
 			},
 		};
-		const start: StartConfig = {
-			player: {
-				resources: { 'resource:test:existing': 10 },
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-		};
-		const registry = buildResourceRegistry(overrides, start);
+		const registry = buildResourceRegistry(overrides);
 		// Override should take precedence
-		expect(registry['resource:test:existing'].label).toBe('Override Label');
-	});
-
-	it('creates minimal entries for unknown resources', () => {
-		const start: StartConfig = {
-			player: {
-				resources: { 'resource:unknown:test': 5 },
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		// Unknown resources get minimal entries with just the key
-		expect(registry['resource:unknown:test']).toBeDefined();
-		expect(registry['resource:unknown:test'].key).toBe('resource:unknown:test');
-	});
-
-	it('handles empty player config resources', () => {
-		const start: StartConfig = {
-			player: {
-				resources: {},
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		expect(registry).toBeDefined();
-	});
-
-	it('handles mode with undefined players', () => {
-		const start: StartConfig = {
-			player: {
-				resources: {},
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: {},
-			},
-			modes: {
-				test: {
-					player: {
-						resources: { 'resource:mode:test': 1 },
-						stats: {},
-						population: {},
-						lands: [],
-						valuesV2: {},
-					},
-					// players is undefined
-				},
-			},
-		};
-		const registry = buildResourceRegistry(undefined, start);
-		expect(registry['resource:mode:test']).toBeDefined();
+		expect(registry['resource:core:gold'].label).toBe('Override Gold Label');
 	});
 });
 
@@ -297,15 +80,6 @@ describe('buildSessionAssets', () => {
 		const phases: PhaseConfig[] = [
 			{ id: 'main', action: true, steps: [{ id: 'main' }] },
 		];
-		const start: StartConfig = {
-			player: {
-				resources: {},
-				stats: {},
-				population: {},
-				lands: [],
-				valuesV2: { 'resource:test:base': 10 },
-			},
-		};
 		const rules: RuleSet = {
 			defaultActionAPCost: 1,
 			absorptionCapPct: 1,
@@ -324,7 +98,6 @@ describe('buildSessionAssets', () => {
 			developments: factory.developments,
 			populations: factory.populations,
 			phases,
-			start,
 			rules,
 			resourceCatalogV2: { resources, groups },
 		};
@@ -358,7 +131,7 @@ describe('buildSessionAssets', () => {
 		expect(metadata).toBe(baseMetadata);
 	});
 
-	it('applies config overrides when provided', () => {
+	it('creates new registries when config is provided', () => {
 		const baseOptions = createBaseOptions();
 		const baseRegistries = {
 			actions: freezeSerializedRegistry(cloneRegistry(baseOptions.actions)),
@@ -381,20 +154,12 @@ describe('buildSessionAssets', () => {
 			baseRegistries,
 			baseMetadata,
 		};
-		const config: GameConfig = {
-			start: {
-				player: {
-					resources: {},
-					stats: {},
-					population: {},
-					lands: [],
-					valuesV2: { 'resource:test:config': 5 },
-				},
-			},
-		};
+		// Any non-empty GameConfig triggers new registry creation
+		const config: GameConfig = {};
 		const { registries, metadata } = buildSessionAssets(context, config);
 		expect(registries).not.toBe(baseRegistries);
-		expect(registries.resources['resource:test:config']).toBeDefined();
+		// Resources should be populated from RESOURCE_V2_REGISTRY
+		expect(registries.resources).toBeDefined();
 		expect(metadata).toBeDefined();
 	});
 

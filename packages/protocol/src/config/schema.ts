@@ -72,6 +72,12 @@ export const actionSchema = z.object({
 	requirements: z.array(requirementSchema).optional(),
 	effects: z.array(actionEffectSchema),
 	system: z.boolean().optional(),
+	/**
+	 * When true, the action bypasses the global action cost (e.g., AP).
+	 * Only valid for system actions. Useful for initial setup actions that
+	 * need to run before players have any resources.
+	 */
+	free: z.boolean().optional(),
 });
 
 export type ActionConfig = z.infer<typeof actionSchema>;
@@ -307,7 +313,6 @@ export const phaseSchema = z.object({
 export type PhaseConfig = z.infer<typeof phaseSchema>;
 
 export const gameConfigSchema = z.object({
-	start: startConfigSchema.optional(),
 	actions: z.array(actionSchema).optional(),
 	buildings: z.array(buildingSchema).optional(),
 	developments: z.array(developmentSchema).optional(),

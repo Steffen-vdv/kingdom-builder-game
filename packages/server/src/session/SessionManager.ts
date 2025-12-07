@@ -9,7 +9,6 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 	PRIMARY_ICON_ID,
 } from '@kingdom-builder/contents';
@@ -21,7 +20,6 @@ import {
 import type {
 	SessionRegistriesPayload,
 	PhaseConfig,
-	StartConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
 	SerializedRegistry,
@@ -54,7 +52,6 @@ type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 
 type SessionRuntimeConfig = {
 	phases: PhaseConfig[];
-	start: StartConfig;
 	rules: RuleSet;
 	resources: SessionResourceRegistry;
 	primaryIconId: string | null;
@@ -129,23 +126,22 @@ export class SessionManager {
 			developments: engineOverrides.developments ?? DEVELOPMENTS,
 			populations: engineOverrides.populations ?? POPULATIONS,
 			phases: engineOverrides.phases ?? PHASES,
-			start: engineOverrides.start ?? GAME_START,
 			rules: engineOverrides.rules ?? RULES,
 			resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? {
 				resources: RESOURCE_V2_REGISTRY,
 				groups: RESOURCE_GROUP_V2_REGISTRY,
 				categories: RESOURCE_CATEGORY_V2_REGISTRY,
 			},
+			...(engineOverrides.systemActionIds
+				? { systemActionIds: engineOverrides.systemActionIds }
+				: {}),
 		};
 		const primaryIconId = primaryIconOverride ?? PRIMARY_ICON_ID ?? null;
 		const resourceOverrideSnapshot = resourceRegistry
 			? freezeSerializedRegistry(structuredClone(resourceRegistry))
 			: undefined;
 		this.resourceOverrides = resourceOverrideSnapshot;
-		const resources = buildResourceRegistry(
-			this.resourceOverrides,
-			this.baseOptions.start,
-		);
+		const resources = buildResourceRegistry(this.resourceOverrides);
 		const resourceCatalog = this.baseOptions.resourceCatalogV2;
 		const resourcesV2 = freezeSerializedRegistry(
 			structuredClone(resourceCatalog.resources.byId),
@@ -184,9 +180,6 @@ export class SessionManager {
 		const frozenPhases = Object.freeze(
 			structuredClone(this.baseOptions.phases),
 		) as unknown as PhaseConfig[];
-		const frozenStart = Object.freeze(
-			structuredClone(this.baseOptions.start),
-		) as unknown as StartConfig;
 		const frozenRules = Object.freeze(
 			structuredClone(this.baseOptions.rules),
 		) as unknown as RuleSet;
@@ -195,7 +188,6 @@ export class SessionManager {
 		) as SessionResourceRegistry;
 		this.runtimeConfig = Object.freeze({
 			phases: frozenPhases,
-			start: frozenStart,
 			rules: frozenRules,
 			resources: frozenResources,
 			primaryIconId,

@@ -49,6 +49,11 @@ export class EngineContext {
 	resourcePercentBases: Record<string, number> = {};
 	resourcePercentAccums: Record<string, number> = {};
 	actionTraces: ActionTrace[] = [];
+	/**
+	 * Initial setup action traces per player, captured during game creation.
+	 * Used for logging initial setup actions in the client.
+	 */
+	initialSetupTraces: Record<PlayerId, ActionTrace[]> = { A: [], B: [] };
 	resourceSourceStack: ResourceSourceFrame[] = [];
 
 	private _effectLogs: Map<string, unknown[]> = new Map();

@@ -6,7 +6,6 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 	Resource,
 	getResourceV2Id,
@@ -44,7 +43,6 @@ describe('royal decree via session', () => {
 			developments: DEVELOPMENTS,
 			populations: POPULATIONS,
 			phases: PHASES,
-			start: GAME_START,
 			rules: RULES,
 			resourceCatalogV2: {
 				resources: RESOURCE_V2_REGISTRY,

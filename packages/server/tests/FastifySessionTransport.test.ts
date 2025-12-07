@@ -52,7 +52,6 @@ describe('FastifySessionTransport', () => {
 			actionId,
 			gainResourceId,
 			phases,
-			start,
 			rules,
 			primaryIconId,
 			factory,
@@ -70,7 +69,6 @@ describe('FastifySessionTransport', () => {
 			gainResourceId,
 			manager,
 			phases,
-			start,
 			rules,
 			primaryIconId,
 			factory,
@@ -119,8 +117,7 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('includes session-specific registries and metadata for custom configs', async () => {
-		const { app, manager, factory, gainResourceId, start } =
-			await createServer();
+		const { app, manager, factory, gainResourceId } = await createServer();
 		const [actionId] = factory.actions.entries()[0];
 		const [buildingId] = factory.buildings.entries()[0];
 		const [developmentId] = factory.developments.entries()[0];
@@ -173,15 +170,11 @@ describe('FastifySessionTransport', () => {
 			throw new Error('Missing population override.');
 		}
 		populationOverride.name = `${populationOverride.name} (override)`;
-		const startOverride = structuredClone(start);
-		startOverride.player.resources[gainResourceId] =
-			(startOverride.player.resources?.[gainResourceId] ?? 0) + 5;
 		const configPayload = {
 			actions,
 			buildings,
 			developments,
 			populations,
-			start: startOverride,
 		};
 		const response = await app.inject({
 			method: 'POST',
@@ -237,15 +230,8 @@ describe('FastifySessionTransport', () => {
 	});
 
 	it('returns the runtime configuration without authentication', async () => {
-		const {
-			app,
-			manager,
-			gainResourceId,
-			phases,
-			start,
-			rules,
-			primaryIconId,
-		} = await createServer();
+		const { app, manager, gainResourceId, phases, rules, primaryIconId } =
+			await createServer();
 		const response = await app.inject({
 			method: 'GET',
 			url: '/runtime-config',
@@ -253,7 +239,6 @@ describe('FastifySessionTransport', () => {
 		expect(response.statusCode).toBe(200);
 		const body = response.json() as SessionRuntimeConfigResponse;
 		expect(body.phases).toEqual(phases);
-		expect(body.start).toEqual(start);
 		expect(body.rules).toEqual(rules);
 		expect(body.primaryIconId).toBe(primaryIconId);
 		const resource = body.resources[gainResourceId];

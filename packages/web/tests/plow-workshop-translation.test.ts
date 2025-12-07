@@ -6,13 +6,15 @@ import {
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_PASSIVE_INFO,
 	SYNTHETIC_UPKEEP_PHASE,
+	SKIP_SETUP_ACTION_IDS,
+	buildStartConfigEffects,
 } from './fixtures/syntheticPlow';
 import {
 	describeContent,
 	splitSummary,
 	type Summary,
 } from '../src/translation/content';
-import { createEngine } from '@kingdom-builder/engine';
+import { createEngine, runEffects } from '@kingdom-builder/engine';
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 
@@ -29,10 +31,11 @@ describe('plow workshop translation', () => {
 			developments: synthetic.factory.developments,
 			populations: synthetic.factory.populations,
 			phases: synthetic.phases,
-			start: synthetic.start,
 			rules: synthetic.rules,
 			resourceCatalogV2: synthetic.resourceCatalogV2,
+			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
+		runEffects(buildStartConfigEffects(synthetic.start), engine);
 
 		// Create engine snapshot and add V2 resource metadata
 		const engineSnapshot = snapshotEngine(engine);
