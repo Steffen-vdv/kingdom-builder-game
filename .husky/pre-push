@@ -6,7 +6,7 @@ set -e
 # Auto-fix formatting
 npm run format
 
-# If format changed files, commit and push them, then abort original push
+# If format changed files, commit them and ask user to push again
 if ! git diff --quiet; then
     echo ""
     echo "📝 Formatting changed files - auto-committing..."
@@ -17,17 +17,9 @@ if ! git diff --quiet; then
     npx run-p typecheck lint
 
     echo ""
-    echo "✅ Pushing with auto-format commit..."
-    git push --no-verify
-
-    echo ""
     echo "════════════════════════════════════════════════════════════"
-    echo "✅ Push completed successfully with auto-format!"
-    echo "   (Ignore the 'failed to push' error below - that's expected)"
+    echo "✅ Auto-format commit created. Please push again!"
     echo "════════════════════════════════════════════════════════════"
-
-    # Exit 1 to abort the original push (we already pushed successfully)
-    # This prevents git from trying to push stale refs
     exit 1
 fi
 
