@@ -6,7 +6,7 @@ import { formatPassiveRemoval } from './text';
 import { HAPPINESS_TIER_ICONS, getTierConfigs, type TierConfig } from './rules.config';
 import { getHappinessResourceDefinition } from './resourceV2/definitions';
 import type { ResourceV2TierDefinition, ResourceV2TierTrackMetadata } from './resourceV2';
-import { Resource } from './resourceKeys';
+import { Resource } from './internal';
 
 type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
 

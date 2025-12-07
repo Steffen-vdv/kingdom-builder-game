@@ -23,7 +23,6 @@ export interface TierSummary {
 
 type TierSummaryEntry = TierDefinition & { active: boolean };
 
-// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 type TierSummaryGroup = SummaryGroup & { className?: string };
 
 export interface TierEntriesResult {

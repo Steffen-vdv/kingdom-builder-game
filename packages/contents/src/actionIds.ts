@@ -1,7 +1,6 @@
 import { DevelopmentId } from './developments';
 import { BuildingId } from './buildingIds';
-import { PopulationRole } from './populationRoles';
-import type { PopulationRoleId } from './populationRoles';
+import { PopulationRole, type PopulationRoleId } from './internal';
 
 type ValueOf<T> = T[keyof T];
 

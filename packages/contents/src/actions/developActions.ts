@@ -1,5 +1,6 @@
 import type { Registry } from '@kingdom-builder/protocol';
-import { Resource, getResourceV2Id, type ResourceKey } from '../resourceKeys';
+import { Resource, getResourceV2Id } from '../internal';
+import type { ResourceKey } from '../internal';
 import { DevelopmentId, DEVELOPMENTS } from '../developments';
 import type { ActionDef } from '../actions';
 import { Focus, type DevelopmentDef } from '../defs';

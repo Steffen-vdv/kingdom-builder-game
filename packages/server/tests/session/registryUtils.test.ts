@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	Resource,
-	type ResourceKey,
-} from '@kingdom-builder/contents/resourceKeys';
+import { Resource, type ResourceKey } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 import {

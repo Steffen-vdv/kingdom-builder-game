@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Resource } from '@kingdom-builder/contents/resourceKeys';
+import { Resource } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { PlayerState } from '../../src/state';
 import {

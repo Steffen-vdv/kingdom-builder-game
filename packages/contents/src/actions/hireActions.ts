@@ -1,6 +1,5 @@
 import type { Registry } from '@kingdom-builder/protocol';
-import { Resource } from '../resourceKeys';
-import { Stat } from '../stats';
+import { Resource, Stat, PopulationRole } from '../internal';
 import { POPULATIONS } from '../populations';
 import type { ActionDef } from '../actions';
 import { HireActionId } from '../actionIds';
@@ -10,7 +9,6 @@ import { action, compareRequirement, effect, resourceEvaluator } from '../config
 import { Types, ResourceMethods } from '../config/builderShared';
 import { resourceChange } from '../resourceV2';
 import { Focus } from '../defs';
-import { PopulationRole } from '../populationRoles';
 import { resourceAmountChange } from '../helpers/resourceV2Effects';
 
 const HAPPINESS_REWARD_AMOUNT = 1;
