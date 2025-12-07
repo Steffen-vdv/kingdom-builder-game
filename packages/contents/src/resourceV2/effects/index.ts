@@ -7,6 +7,8 @@ export type { ResourceTransferBuilder, ResourceTransferEndpointBuilder } from '.
 export { increaseUpperBound } from './boundBuilder';
 export type { ResourceUpperBoundIncreaseBuilder } from './boundBuilder';
 
+export { ReconciliationMode, RoundingMode, VALID_RECONCILIATION_MODES, VALID_ROUNDING_MODES } from './types';
+
 export type {
 	ResourceChangeParameters,
 	ResourceChangeRoundingMode,

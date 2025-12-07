@@ -1,8 +1,14 @@
-import type { ResourceChangeParameters, ResourceChangeRoundingMode, ResourceReconciliationMode } from './types';
+import {
+	ReconciliationMode,
+	RoundingMode,
+	VALID_RECONCILIATION_MODES,
+	VALID_ROUNDING_MODES,
+	type ResourceChangeParameters,
+	type ResourceChangeRoundingMode,
+	type ResourceReconciliationMode,
+} from './types';
 
 const BUILDER_NAME = 'ResourceV2 change builder';
-
-const SUPPORTED_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> = new Set(['clamp']);
 
 type ChangeKind = ResourceChangeParameters['type'];
 
@@ -16,8 +22,22 @@ export interface ResourceChangeEffectParams extends Record<string, unknown> {
 export interface ResourceChangeBuilder {
 	amount(amount: number): this;
 	percent(modifier: number, ...additional: readonly number[]): this;
+	/** Set rounding mode using a string value */
 	roundingMode(mode: ResourceChangeRoundingMode): this;
+	/** Convenience: round towards positive infinity */
+	roundUp(): this;
+	/** Convenience: round towards zero */
+	roundDown(): this;
+	/** Convenience: round to nearest integer */
+	roundNearest(): this;
+	/** Set reconciliation mode using a string value */
 	reconciliation(mode?: ResourceReconciliationMode): this;
+	/** Convenience: clamp values to stay within bounds (default) */
+	clamp(): this;
+	/** Convenience: pass values through without bound checking */
+	pass(): this;
+	/** Convenience: reject changes that would exceed bounds */
+	reject(): this;
 	suppressHooks(enabled?: boolean): this;
 	build(): ResourceChangeEffectParams;
 }
@@ -75,16 +95,43 @@ class ResourceChangeBuilderImpl implements ResourceChangeBuilder {
 		if (!this.changeKind) {
 			throw new Error(`${BUILDER_NAME} roundingMode() requires amount() or percent() ` + `to be configured first.`);
 		}
+		if (!VALID_ROUNDING_MODES.has(mode)) {
+			throw new Error(`${BUILDER_NAME} rounding mode "${mode}" is invalid. ` + `Valid modes: ${[...VALID_ROUNDING_MODES].join(', ')}.`);
+		}
 		this.rounding = mode;
 		return this;
 	}
 
-	reconciliation(mode: ResourceReconciliationMode = 'clamp') {
-		if (!SUPPORTED_RECONCILIATION_MODES.has(mode)) {
-			throw new Error(`${BUILDER_NAME} reconciliation mode "${mode}" is not supported yet. Supported modes: clamp.`);
+	roundUp() {
+		return this.roundingMode(RoundingMode.UP);
+	}
+
+	roundDown() {
+		return this.roundingMode(RoundingMode.DOWN);
+	}
+
+	roundNearest() {
+		return this.roundingMode(RoundingMode.NEAREST);
+	}
+
+	reconciliation(mode: ResourceReconciliationMode = ReconciliationMode.CLAMP) {
+		if (!VALID_RECONCILIATION_MODES.has(mode)) {
+			throw new Error(`${BUILDER_NAME} reconciliation mode "${mode}" is invalid. ` + `Valid modes: ${[...VALID_RECONCILIATION_MODES].join(', ')}.`);
 		}
 		this.reconciliationMode = mode;
 		return this;
+	}
+
+	clamp() {
+		return this.reconciliation(ReconciliationMode.CLAMP);
+	}
+
+	pass() {
+		return this.reconciliation(ReconciliationMode.PASS);
+	}
+
+	reject() {
+		return this.reconciliation(ReconciliationMode.REJECT);
 	}
 
 	suppressHooks(enabled = true) {

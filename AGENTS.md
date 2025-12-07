@@ -8,7 +8,7 @@
   [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text).
 - Always load game data from content packages or registries and create synthetic
   fixtures through `createContentFactory()` in tests.
-- Run `npm run lint`, `npm run format`, and `npm run check` before committing.
+- Run `npm run format` before committing; the pre-push hook runs `check:parallel`.
 
 ▶ **Extended guidance, architecture lore, and gameplay reference begin in
 Section&nbsp;1 below.**
@@ -92,9 +92,11 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 
 ### 2.3 Pre-Commit Checklist
 
-- Never commit or push until `npm run format`, `npm run lint`, `npm run check`,
-  and `npm run verify` have finished without errors.
-- Fix every reported issue—including spacing drift back to tabs—before staging.
+- Run `npm run format` before committing to fix formatting issues.
+- The pre-push hook automatically runs `npm run check:parallel` (format + types +
+  lint in parallel, ~30s).
+- Run `npm run verify` once before opening a PR, not after every change.
+- Fix every reported issue—including spacing drift back to tabs—before pushing.
 
 #### Coding Standards Checklist
 
@@ -128,12 +130,12 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Execute the canonical quick suite during iterative development only:
 
   ```sh
-  npm run test:quick >/tmp/unit.log 2>&1 && tail -n 100 /tmp/unit.log
+  npm run test:parallel
   ```
 
-- The command logs Vitest output to `/tmp/unit.log` and prints the tail for a
-- fast sanity check while you are actively coding. It is **not** a replacement
-- for the required pre-submission workflow. See
+- The `test:parallel` command runs all test suites in parallel (~50s) with clean
+- output. Use it for fast feedback while developing. For the full pre-submission
+- workflow, use `npm run verify`. See
 - [Agent Quick Start §1.2](docs/agent-quick-start.md#run-core-commands) for a
 - condensed checklist and verification shortcuts.
 
@@ -144,18 +146,16 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   `artifacts/` directory. Share those artifacts with reviewers when failures
   need triage.
 
-- The Husky pre-push hook enforces that verification run so every push produces
-  fresh artifacts. When the hook reports a tooling failure (e.g., `ENOENT`,
-  missing dependencies) and executes the fallback command
-  (`npm run check && npm run test:coverage`), document the underlying issue in
-  your commit message.
+- The Husky pre-push hook runs `npm run check:parallel` (format + typecheck +
+  lint in parallel) to catch issues before push. Full verification is reserved
+  for PR submission.
 
 - If the verification script is unavailable in your environment, fall back to
   running `npm run check && npm run test:coverage` manually. Coverage runs may
   be skipped only when a change is strictly documentation-only or a pure
   content typo fix.
 
-- The Husky pre-commit hook runs `lint-staged` followed by `npm run test:quick`.
+- The Husky pre-commit hook runs `lint-staged` to format and lint staged files.
   GitHub Actions executes `npm run test:ci` (coverage) and `npm run build` for
   each pull request.
 - Obtain expectations dynamically from content or mock registries. Example unit
@@ -202,9 +202,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 These notes capture environment quirks and project-specific knowledge gathered
 by previous agents. Preserve them when updating this document.
 
-- 2025-08-31: Run tests with `npm run test:quick >/tmp/unit.log 2>&1 && tail -n
-100 /tmp/unit.log`; avoid running extra test commands unless specifically
-  asked.
+- 2025-12-07: Use `npm run test:parallel` for fast parallel test execution with
+  clean output (~50s). Avoid `npm run test:sequential` (formerly test:quick) as
+  it runs tests sequentially and is slower.
 - 2025-08-31: `git commit` triggers a Husky pre-commit hook running lint-staged
   and the fast Vitest suite.
 - 2025-08-31: Use `rg` for code searches; `grep -R` and `ls -R` are discouraged

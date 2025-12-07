@@ -15,11 +15,19 @@ import {
 	type ResourceReconciliationMode,
 	type ResourceReconciliationResult,
 } from '../reconciliation';
+
 import type {
 	RuntimeResourceCatalog,
 	RuntimeResourceDefinition,
 	RuntimeResourceBounds,
 } from '../types';
+
+// Inline valid modes to avoid circular dependency with reconciliation module
+const VALID_MODES: ReadonlySet<ResourceReconciliationMode> = new Set([
+	'clamp',
+	'pass',
+	'reject',
+]);
 
 export type ResourceV2PlayerScope = 'active' | 'opponent';
 
@@ -181,13 +189,14 @@ function prepareTransferParticipant(
 	};
 }
 
-function enforceClampMode(
+function assertValidReconciliationMode(
 	mode: ResourceReconciliationMode | undefined,
 	resourceId: string,
 ): void {
-	if (mode && mode !== 'clamp') {
+	if (mode && !VALID_MODES.has(mode)) {
 		throw new Error(
-			`ResourceV2 effect for "${resourceId}" only supports clamp reconciliation during MVP scope (received "${mode}").`,
+			`ResourceV2 effect for "${resourceId}" has invalid reconciliation ` +
+				`mode "${mode}". Valid modes: ${[...VALID_MODES].join(', ')}.`,
 		);
 	}
 }
@@ -196,7 +205,10 @@ function reconcileParticipant(
 	participant: TransferParticipantContext,
 	payload: ResourceV2TransferEndpointPayload,
 ): ResourceReconciliationResult {
-	enforceClampMode(payload.reconciliationMode, participant.resourceId);
+	assertValidReconciliationMode(
+		payload.reconciliationMode,
+		participant.resourceId,
+	);
 	const input: ResourceReconciliationInput = {
 		currentValue: participant.currentValue,
 		bounds: participant.bounds,
@@ -294,6 +306,12 @@ export const resourceV2Transfer: EffectHandler<
 	}
 	const donorNextValue = donorParticipant.currentValue - transferAmount;
 	const recipientNextValue = recipientParticipant.currentValue + transferAmount;
+
+	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
+	const donorSkipBoundClamp = params.donor.reconciliationMode === 'pass';
+	const recipientSkipBoundClamp =
+		params.recipient.reconciliationMode === 'pass';
+
 	if (donorNextValue !== donorParticipant.currentValue) {
 		setResourceValue(
 			context,
@@ -301,7 +319,7 @@ export const resourceV2Transfer: EffectHandler<
 			catalog,
 			donorParticipant.resourceId,
 			donorNextValue,
-			donorParticipant.options,
+			{ ...donorParticipant.options, skipBoundClamp: donorSkipBoundClamp },
 		);
 	}
 	if (recipientNextValue !== recipientParticipant.currentValue) {
@@ -311,7 +329,10 @@ export const resourceV2Transfer: EffectHandler<
 			catalog,
 			recipientParticipant.resourceId,
 			recipientNextValue,
-			recipientParticipant.options,
+			{
+				...recipientParticipant.options,
+				skipBoundClamp: recipientSkipBoundClamp,
+			},
 		);
 	}
 };
@@ -333,7 +354,6 @@ export const resourceV2IncreaseUpperBound: EffectHandler<
 			`ResourceV2 upper-bound increase cannot target limited parent resource "${params.resourceId}".`,
 		);
 	}
-	enforceClampMode(undefined, params.resourceId);
 	increaseResourceUpperBound(
 		context,
 		player,
