@@ -88,30 +88,25 @@ npm run generate:snapshots  # Refresh cached registry metadata after content cha
 
 ## Efficient Command Usage
 
-**Stop running slow commands repeatedly.** Use the right command for each stage:
+**IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
+commands sequentially - that defeats the purpose of parallelization.**
 
-| Stage              | Command                  | Time   | When to use                       |
-| ------------------ | ------------------------ | ------ | --------------------------------- |
-| While editing      | (none)                   | —      | Just code, hooks will catch       |
-| Before committing  | `npm run format`         | ~5s    | Only if lint-staged missed        |
-| Quick validation   | `npm run check:parallel` | ~50s   | Format + types + lint             |
-| Test only          | `npm run test:parallel`  | ~50s   | All test suites in parallel       |
-| Before pushing     | (automatic)              | ~50s   | pre-push hook runs check:parallel |
-| Final verification | `npm run verify`         | ~2 min | Before PR or when asked           |
+| What you changed  | Command to run                                         | Time   |
+| ----------------- | ------------------------------------------------------ | ------ |
+| Code (no tests)   | (nothing - push will run check:parallel automatically) | ~50s   |
+| Code + need tests | `npm run test:parallel`                                | ~50s   |
+| Before opening PR | `npm run verify`                                       | ~2 min |
+| Single test file  | `npx vitest run path/to/file.test.ts`                  | ~5s    |
+
+**The pre-push hook runs `check:parallel` automatically.** You don't need to run
+it manually - just push and let the hook catch any issues.
 
 **Anti-patterns to avoid:**
 
-- Running `npm run check` after every small change (use `check:parallel` instead)
+- Running `check:parallel` then `test:parallel` sequentially (100s total - BAD!)
 - Running `npm run verify` repeatedly (once before PR is enough)
-- Running tests when only checking format/types (use `check:parallel`)
 - Running full test suite when debugging one test (use `vitest run path/to/test`)
 - **Avoid `npm run test:sequential` - it's SLOWER than `test:parallel`!**
-
-**When you need to run tests:**
-
-1. **Single test file**: `npx vitest run path/to/file.test.ts`
-2. **All tests fastest**: `npm run test:parallel` (~50s, clean output)
-3. **Debugging failures**: `npm run test:parallel -- -v` (verbose on failure)
 
 ## Pre-Commit Workflow
 
