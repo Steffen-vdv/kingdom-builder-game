@@ -1,4 +1,4 @@
-import { formatStatValue } from '../../utils/stats';
+import { formatStatValue } from '../../utils/resourceSources';
 import type { TranslationAssets } from '../context';
 import type { ResourceV2MetadataSnapshot } from '../resourceV2';
 

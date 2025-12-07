@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
-import { formatStatValue } from '../src/utils/stats';
+import { formatStatValue } from '../src/utils/resourceSources';
 import type { EffectDef, SessionPlayerId } from '@kingdom-builder/protocol';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';

@@ -93,9 +93,12 @@ export function buildActionsPanelContent({
 		requirements: buildRequirements,
 		effects: [
 			{
-				type: 'population',
+				type: 'resource',
 				method: 'add',
-				params: { role: populationPlaceholder },
+				params: {
+					resourceId: populationPlaceholder,
+					change: { type: 'amount', amount: 1 },
+				},
 			},
 		],
 	});

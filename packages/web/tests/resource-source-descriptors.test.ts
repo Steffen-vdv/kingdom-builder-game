@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { getStatBreakdownSummary, formatStatValue } from '../src/utils/stats';
-import { formatTriggerLabel } from '../src/utils/stats/descriptors';
-import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
+import { getStatBreakdownSummary } from '../src/utils/resourceSources';
+import { formatTriggerLabel } from '../src/utils/resourceSources/descriptors';
+import { formatKindLabel } from '../src/utils/resourceSources/descriptorRegistry';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
@@ -19,6 +19,8 @@ type DescriptorSetup = {
 	primaryStatKey: string;
 	secondaryStatKey: string;
 	populationId: string;
+	populationResourceId: string;
+	statResourceId: string;
 	buildingId: string;
 	developmentId: string;
 	actionId: string;
@@ -82,6 +84,9 @@ function createDescriptorSetup(): DescriptorSetup {
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
+	// ResourceV2 IDs for population and stat
+	const populationResourceId = `resource:population:role:${populationId}`;
+	const statResourceId = 'resource:stat:army-strength';
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
 		populations: {
@@ -148,6 +153,10 @@ function createDescriptorSetup(): DescriptorSetup {
 		name: 'Active Player',
 		resources: { [resourceKey]: 0 },
 		population: { [populationId]: 2 },
+		valuesV2: {
+			[populationResourceId]: 2,
+			[statResourceId]: 3,
+		},
 		lands: [
 			{
 				id: landId,
@@ -184,6 +193,16 @@ function createDescriptorSetup(): DescriptorSetup {
 		actionCostResource: resourceKey,
 		ruleSnapshot,
 		metadata,
+		resourceMetadataV2: {
+			[populationResourceId]: {
+				icon: '🎖️',
+				label: 'Legion Vanguard',
+			},
+			[statResourceId]: {
+				icon: '⚔️',
+				label: 'Steel Resolve',
+			},
+		},
 	});
 	const translationContext = createTranslationContext(
 		sessionSnapshot,
@@ -216,6 +235,8 @@ function createDescriptorSetup(): DescriptorSetup {
 		primaryStatKey,
 		secondaryStatKey: secondaryStatKey || primaryStatKey,
 		populationId,
+		populationResourceId,
+		statResourceId,
 		buildingId,
 		developmentId,
 		actionId,
@@ -228,15 +249,15 @@ function createDescriptorSetup(): DescriptorSetup {
 	};
 }
 
-describe('stat descriptor registry', () => {
+describe('resource source descriptors', () => {
 	it('formats dependencies for each descriptor kind', () => {
 		const setup = createDescriptorSetup();
 		const {
 			translationContext,
 			player,
 			primaryStatKey,
-			secondaryStatKey,
-			populationId,
+			populationResourceId,
+			statResourceId,
 			buildingId,
 			developmentId,
 			actionId,
@@ -259,12 +280,12 @@ describe('stat descriptor registry', () => {
 					kind: 'action',
 					id: actionId,
 					dependsOn: [
-						{ type: 'population', id: populationId },
+						{ type: 'resource', id: populationResourceId },
 						{ type: 'building', id: buildingId },
 						{ type: 'development', id: developmentId },
 						{ type: 'phase', id: phaseId, detail: phaseStepId },
 						{ type: 'action', id: actionId },
-						{ type: 'stat', id: secondaryStatKey },
+						{ type: 'resource', id: statResourceId },
 						{ type: 'resource', id: resourceKey, detail: resourceDetail },
 						{ type: 'trigger', id: triggerId },
 						{ type: 'passive' },
@@ -300,11 +321,13 @@ describe('stat descriptor registry', () => {
 		] = triggered;
 		const populationLabel = formatKindLabel(
 			translationContext,
-			'population',
-			populationId,
+			'resource',
+			populationResourceId,
 		);
 		expect(populationLine).toContain(populationLabel);
-		expect(populationLine).toContain(`×${player.population[populationId]}`);
+		// Resource values are shown directly from valuesV2
+		const popValue = String(player.valuesV2[populationResourceId]);
+		expect(populationLine).toContain(popValue);
 		const buildingLabel = formatKindLabel(
 			translationContext,
 			'building',
@@ -332,17 +355,13 @@ describe('stat descriptor registry', () => {
 		expect(actionLine).toContain(actionLabel);
 		const statLabel = formatKindLabel(
 			translationContext,
-			'stat',
-			secondaryStatKey,
+			'resource',
+			statResourceId,
 		);
 		expect(statLine).toContain(statLabel);
-		expect(statLine).toContain(
-			formatStatValue(
-				secondaryStatKey,
-				player.stats[secondaryStatKey] ?? 0,
-				translationContext.assets,
-			),
-		);
+		// Stat values from valuesV2 are displayed directly (not percent)
+		const statValue = String(player.valuesV2[statResourceId]);
+		expect(statLine).toContain(statValue);
 		const resourceLabel = formatKindLabel(
 			translationContext,
 			'resource',
@@ -377,12 +396,12 @@ describe('stat descriptor registry', () => {
 				triggers: {},
 			},
 		};
-		const populationFallback = formatKindLabel(
+		const resourceFallback = formatKindLabel(
 			mutatedContext,
-			'population',
-			'unknown-role',
+			'resource',
+			'unknown-resource',
 		);
-		expect(populationFallback).toContain('unknown-role');
+		expect(resourceFallback).toContain('unknown-resource');
 		const triggerFallback = formatKindLabel(
 			mutatedContext,
 			'trigger',
