@@ -6,7 +6,6 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 	RESOURCES,
 } from '@kingdom-builder/contents';
@@ -56,7 +55,6 @@ export function createTestContext(
 		developments: DEVELOPMENTS,
 		populations: POPULATIONS,
 		phases: PHASES,
-		start: GAME_START,
 		rules: RULES,
 		resourceCatalogV2: {
 			resources: RESOURCE_V2_REGISTRY,

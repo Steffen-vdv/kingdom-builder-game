@@ -1,9 +1,7 @@
 import type { ResourceChangeBuilder, ResourceChangeEffectParams, ResourceV2TransferEffectParams } from '../resourceV2';
 import { resourceChange, resourceTransfer, transferEndpoint } from '../resourceV2';
-import type { ResourceKey } from '../resourceKeys';
-import { getResourceV2Id } from '../resourceKeys';
-import type { StatKey } from '../stats';
-import { getStatResourceV2Id } from '../stats';
+import { getResourceV2Id, getStatResourceV2Id } from '../internal';
+import type { ResourceKey, StatKey } from '../internal';
 
 type ChangeBuilderConfigurator = (builder: ResourceChangeBuilder) => void;
 

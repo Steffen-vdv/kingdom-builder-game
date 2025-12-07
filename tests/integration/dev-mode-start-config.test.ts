@@ -6,16 +6,13 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 	PopulationRole,
 	Stat,
-} from '@kingdom-builder/contents';
-import { DevelopmentId } from '@kingdom-builder/contents/developments';
-import {
 	Resource,
 	getResourceV2Id,
-} from '@kingdom-builder/contents/resourceKeys';
+} from '@kingdom-builder/contents';
+import { DevelopmentId } from '@kingdom-builder/contents/developments';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
@@ -29,7 +26,6 @@ describe('dev mode start configuration', () => {
 			developments: DEVELOPMENTS,
 			populations: POPULATIONS,
 			phases: PHASES,
-			start: GAME_START,
 			rules: RULES,
 			resourceCatalogV2: {
 				resources: RESOURCE_V2_REGISTRY,
@@ -71,7 +67,6 @@ describe('dev mode start configuration', () => {
 			developments: DEVELOPMENTS,
 			populations: POPULATIONS,
 			phases: PHASES,
-			start: GAME_START,
 			rules: RULES,
 			resourceCatalogV2: {
 				resources: RESOURCE_V2_REGISTRY,

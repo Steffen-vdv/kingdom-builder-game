@@ -49,8 +49,8 @@ const BASE: {
 type EngineOverrides = Partial<typeof BASE> & {
 	rules?: RuleSet;
 	/**
-	 * When true, skips running initial setup actions.
-	 * Useful for tests that need a clean slate.
+	 * When true, skips initial setup for a clean slate.
+	 * Defaults to false (runs setup like production).
 	 */
 	skipInitialSetup?: boolean;
 };
@@ -67,14 +67,14 @@ const SKIP_SETUP_ACTION_IDS = {
 };
 
 export function createTestEngine(overrides: EngineOverrides = {}) {
-	const { rules, skipInitialSetup, ...rest } = overrides;
+	const { rules, skipInitialSetup = false, ...rest } = overrides;
 	const options = {
 		...BASE,
 		...rest,
 		rules: rules ?? RULES,
 	};
 	if (skipInitialSetup) {
-		// Provide fake action IDs that don't exist, so the engine won't run setup
+		// Provide fake action IDs that don't exist, so no setup effects run
 		(options as typeof options & { systemActionIds: typeof SKIP_SETUP_ACTION_IDS }).systemActionIds = SKIP_SETUP_ACTION_IDS;
 	}
 	return createEngine(options);

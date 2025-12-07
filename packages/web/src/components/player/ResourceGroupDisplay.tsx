@@ -6,7 +6,6 @@ import type {
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import {
-	buildResourceV2HoverSections,
 	type ResourceV2MetadataSnapshot,
 	type ResourceV2ValueSnapshot,
 } from '../../translation';
@@ -168,21 +167,14 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 
 	const groupCardSections = React.useMemo(() => {
 		const sections: (string | SummaryGroup)[] = [];
-		if (groupTotalEntry) {
-			sections.push(
-				...buildResourceV2HoverSections(
-					groupTotalEntry.metadata,
-					groupTotalEntry.snapshot,
-				),
-			);
-		}
+		// Only show children descriptions, not parent value data
 		for (const entry of groupEntries) {
 			const desc = toDescriptorFromMetadata(entry.metadata);
 			const base = [desc.icon, desc.label].filter(Boolean).join(' ').trim();
 			sections.push(desc.description ? `${base} - ${desc.description}` : base);
 		}
 		return sections;
-	}, [groupEntries, groupTotalEntry]);
+	}, [groupEntries]);
 
 	const showGroupCard = React.useCallback(() => {
 		const meta = groupMetadataSnapshot ?? groupTotalEntry?.metadata;
@@ -207,14 +199,13 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 
 	const showEntryCard = React.useCallback(
 		(entry: ResourceEntry) => {
-			const effects = buildResourceV2HoverSections(
-				entry.metadata,
-				entry.snapshot,
-			);
 			handleHoverCard({
 				title: formatResourceTitle(entry.metadata),
-				effects,
+				effects: [],
 				requirements: [],
+				...(entry.metadata.description
+					? { description: entry.metadata.description }
+					: {}),
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
@@ -259,8 +250,8 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 	);
 
 	const displayMetadata =
-		groupTotalEntry?.metadata ??
 		groupMetadataSnapshot ??
+		groupTotalEntry?.metadata ??
 		({ id: groupId, label: 'Group' } as ResourceV2MetadataSnapshot);
 
 	const totalValue = groupTotalEntry?.snapshot.current ?? 0;

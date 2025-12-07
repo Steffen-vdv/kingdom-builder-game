@@ -1,4 +1,4 @@
-import { action, actionParams, effect, requirement, compareRequirement, passiveParams, attackParams, happinessTier, populationParams } from '../src/config/builders';
+import { action, actionParams, effect, requirement, compareRequirement, passiveParams, attackParams, happinessTier } from '../src/config/builders';
 import { DEVELOPMENT_ACTION_IDS } from '../src/actions';
 import { Types, PassiveMethods } from '../src/config/builderShared';
 import { describe, expect, it } from 'vitest';
@@ -88,7 +88,7 @@ describe('content builder safeguards', () => {
 	});
 
 	it('ensures attacks have a single target', () => {
-		expect(() => attackParams().build()).toThrowError('Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.');
+		expect(() => attackParams().build()).toThrowError('Attack effect is missing a target. Call targetResource(...) or targetBuilding(...) once.');
 	});
 
 	it('supports building targets for attacks', () => {
@@ -121,10 +121,5 @@ describe('content builder safeguards', () => {
 
 	it('verifies skipStep receives both identifiers', () => {
 		expect(() => passiveParams().id('passive:test').skipStep('', 'step')).toThrowError('Passive params skipStep(...) requires both phaseId and stepId. Provide both values when calling skipStep().');
-	});
-	it('supports placeholder strings in population params while requiring role()', () => {
-		const params = populationParams().role('$role').build();
-		expect(params).toEqual({ role: '$role' });
-		expect(() => populationParams().build()).toThrowError('Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.');
 	});
 });

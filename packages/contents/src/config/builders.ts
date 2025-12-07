@@ -1,7 +1,5 @@
 import type { WinConditionDefinition, WinConditionDisplay, WinConditionResult, WinConditionTrigger, WinConditionOutcome } from '@kingdom-builder/protocol';
-import type { ResourceKey } from '../resourceKeys';
-import type { StatKey } from '../stats';
-import type { PopulationRoleId } from '../populationRoles';
+import type { ResourceKey, StatKey, PopulationRoleId } from '../internal';
 import { CompareRequirementBuilder } from './builders/evaluators';
 import {
 	ActionBuilder,
@@ -52,13 +50,11 @@ export {
 	CostModParamsBuilder,
 	EvaluationTargetBuilder,
 	EvaluationTargetTypes,
-	PopulationEffectParamsBuilder,
 	ResultModParamsBuilder,
 	attackParams,
 	costModParams,
 	developmentTarget,
 	evaluationTarget,
-	populationParams,
 	populationTarget,
 	resultModParams,
 } from './builders/advancedEffectParams';

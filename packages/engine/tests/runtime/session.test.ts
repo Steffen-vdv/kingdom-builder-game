@@ -7,10 +7,9 @@ import {
 	POPULATIONS,
 	PHASES,
 	PhaseId,
-	GAME_START,
 	RULES,
+	Resource as CResource,
 } from '@kingdom-builder/contents';
-import { Resource as CResource } from '@kingdom-builder/contents/resourceKeys';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
@@ -21,7 +20,6 @@ import type {
 	DevelopmentConfig as DevelopmentDef,
 	PopulationConfig as PopulationDef,
 	Registry,
-	StartConfig,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
@@ -38,7 +36,6 @@ const BASE: {
 	developments: Registry<DevelopmentDef>;
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
-	start: StartConfig;
 	resourceCatalogV2: RuntimeResourceContent;
 } = {
 	actions: ACTIONS,
@@ -46,7 +43,6 @@ const BASE: {
 	developments: DEVELOPMENTS,
 	populations: POPULATIONS,
 	phases: PHASES,
-	start: GAME_START,
 	resourceCatalogV2: {
 		resources: RESOURCE_V2_REGISTRY,
 		groups: RESOURCE_GROUP_V2_REGISTRY,
@@ -63,7 +59,6 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		developments: rest.developments ?? BASE.developments,
 		populations: rest.populations ?? BASE.populations,
 		phases: rest.phases ?? BASE.phases,
-		start: rest.start ?? BASE.start,
 		rules: rules ?? RULES,
 		resourceCatalogV2: rest.resourceCatalogV2 ?? BASE.resourceCatalogV2,
 	});

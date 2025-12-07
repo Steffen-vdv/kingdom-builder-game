@@ -1,7 +1,6 @@
 import type { AttackLog, EffectDef } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../../context';
 import resourceFormatter from './resource';
-import statFormatter from './stat';
 import buildingFormatter from './building';
 import type { AttackTarget, AttackTargetFormatter, TargetInfo } from './types';
 export type {
@@ -19,7 +18,6 @@ type AttackTargetFormatterRegistry = {
 
 export const ATTACK_TARGET_FORMATTERS: AttackTargetFormatterRegistry = {
 	resource: resourceFormatter,
-	stat: statFormatter,
 	building: buildingFormatter,
 };
 

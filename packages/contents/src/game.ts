@@ -1,8 +1,6 @@
 import { startConfig, playerStart } from './config/builders';
 import type { PlayerStartResourceBoundsInput } from './config/builders/startConfig/playerStartBuilder';
-import { Resource, type ResourceKey } from './resourceKeys';
-import { Stat, type StatKey } from './stats';
-import { PopulationRole, type PopulationRoleId } from './populationRoles';
+import { Resource, type ResourceKey, Stat, type StatKey, PopulationRole, type PopulationRoleId } from './internal';
 import { DevelopmentId } from './developments';
 import { RESOURCE_V2_REGISTRY } from './resourceV2';
 import type { StartConfig } from '@kingdom-builder/protocol';

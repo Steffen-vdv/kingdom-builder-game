@@ -8,9 +8,7 @@ import {
 	DevelopmentMethods,
 } from '../config/builderShared';
 import { SystemActionId } from '../actionIds';
-import { Resource } from '../resourceKeys';
-import { Stat } from '../stats';
-import { PopulationRole } from '../populationRoles';
+import { Resource, Stat, PopulationRole } from '../internal';
 import { DevelopmentId } from '../developments';
 import { resourceChange } from '../resourceV2';
 

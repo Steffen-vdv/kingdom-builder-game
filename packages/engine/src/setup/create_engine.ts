@@ -187,10 +187,10 @@ function runSystemActionEffects(
 	actionId: string,
 	engineContext: EngineContext,
 ): boolean {
-	const actionDefinition = engineContext.actions.get(actionId);
-	if (!actionDefinition) {
+	if (!engineContext.actions.has(actionId)) {
 		return false;
 	}
+	const actionDefinition = engineContext.actions.get(actionId);
 	const resolved = resolveActionEffects(actionDefinition, undefined);
 	runEffects(resolved.effects, engineContext);
 	return true;

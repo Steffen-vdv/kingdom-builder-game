@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createEngineSession } from '@kingdom-builder/engine';
-import { PHASES, GAME_START, RULES } from '@kingdom-builder/contents';
+import { PHASES, RULES } from '@kingdom-builder/contents';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
@@ -255,7 +255,6 @@ describe('content-driven action log hooks', () => {
 				developments: registries.developments,
 				populations: registries.populations,
 				phases: PHASES,
-				start: GAME_START,
 				rules: RULES,
 				resourceCatalogV2: BASE_RESOURCE_CATALOG,
 			});

@@ -1,6 +1,4 @@
-import type { PopulationRoleId } from '../../../populationRoles';
-import type { ResourceKey } from '../../../resourceKeys';
-import type { StatKey } from '../../../stats';
+import type { PopulationRoleId, ResourceKey, StatKey } from '../../../internal';
 
 export interface InfoDef {
 	key: string;

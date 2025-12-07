@@ -1,8 +1,6 @@
 import type { AttackTarget, EffectConfig, EffectDef } from '@kingdom-builder/protocol';
 import type { ActionId } from '../../actions';
-import type { ResourceKey } from '../../resourceKeys';
-import type { StatKey } from '../../stats';
-import type { PopulationRoleId } from '../../populationRoles';
+import type { ResourceKey, StatKey } from '../../internal';
 import { ParamsBuilder } from '../builderShared';
 import { resolveEffectConfig } from './effectParams';
 import type { EffectBuilder } from '../builders';
@@ -85,23 +83,6 @@ export class ResultModParamsBuilder extends ParamsBuilder<{
 	}
 }
 export const resultModParams = () => new ResultModParamsBuilder();
-export class PopulationEffectParamsBuilder extends ParamsBuilder<{
-	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-	role?: PopulationRoleId | string;
-}> {
-	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-	role(role: PopulationRoleId | string) {
-		return this.set('role', role, 'You already chose a role() for this population effect. Remove the duplicate call.');
-	}
-
-	override build() {
-		if (!this.wasSet('role')) {
-			throw new Error('Population effect is missing role(). Call role(PopulationRole.yourChoice) to choose who is affected.');
-		}
-		return super.build();
-	}
-}
-export const populationParams = () => new PopulationEffectParamsBuilder();
 
 export type AttackStatRole = 'power' | 'absorption' | 'fortification';
 export type AttackStatAnnotation = {
@@ -128,9 +109,6 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 	}
 	targetResource(key: ResourceKey) {
 		return this.set('target', { type: 'resource', key });
-	}
-	targetStat(key: StatKey) {
-		return this.set('target', { type: 'stat', key });
 	}
 	targetBuilding(id: string) {
 		return this.set('target', { type: 'building', id });
@@ -180,7 +158,7 @@ export class AttackParamsBuilder extends ParamsBuilder<{
 
 	override build() {
 		if (!this.wasSet('target')) {
-			throw new Error('Attack effect is missing a target. Call targetResource(...), targetStat(...), or targetBuilding(...) once.');
+			throw new Error('Attack effect is missing a target. Call targetResource(...) or targetBuilding(...) once.');
 		}
 		return super.build();
 	}

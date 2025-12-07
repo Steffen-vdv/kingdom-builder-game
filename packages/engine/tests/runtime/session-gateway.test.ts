@@ -13,11 +13,7 @@ import {
 	RESOURCE_GROUP_V2_REGISTRY,
 } from '@kingdom-builder/contents/registries/resourceV2';
 import { Resource as CResource } from '@kingdom-builder/contents';
-import type {
-	StartConfig,
-	RuleSet,
-	SessionRegistriesPayload,
-} from '@kingdom-builder/protocol';
+import type { RuleSet, SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
@@ -58,16 +54,12 @@ const PHASES: PhaseDef[] = [
 	},
 ];
 
-const START: StartConfig = {
-	player: {
-		resources: {
-			[RESOURCE_AP]: 3,
-			[RESOURCE_GOLD]: 0,
-		},
-		stats: {},
-		population: {},
-		lands: [],
-	},
+// No-op system action IDs to skip initial setup and start with clean slate
+const SKIP_SETUP_ACTION_IDS = {
+	initialSetup: '__noop_initial_setup__',
+	initialSetupDevmode: '__noop_initial_setup_devmode__',
+	compensation: '__noop_compensation__',
+	compensationDevmodeB: '__noop_compensation_devmode_b__',
 };
 
 const RULES: RuleSet = {
@@ -101,9 +93,9 @@ type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
 
 function createGateway(options?: GatewayOptions) {
 	const content = createContentFactory();
-	// AP cost is now handled globally via resourceCatalog.globalCost,
-	// so we don't specify baseCosts for AP (it's auto-applied)
+	// Make actions free (no AP cost) since we skip initial setup
 	const gainGold = content.action({
+		baseCosts: { [RESOURCE_AP]: 0 },
 		effects: [
 			{
 				type: 'resource',
@@ -116,6 +108,7 @@ function createGateway(options?: GatewayOptions) {
 		],
 	});
 	const failingAction = content.action({
+		baseCosts: { [RESOURCE_AP]: 0 },
 		requirements: [
 			{
 				type: 'vitest',
@@ -130,9 +123,9 @@ function createGateway(options?: GatewayOptions) {
 		developments: content.developments,
 		populations: content.populations,
 		phases: PHASES,
-		start: START,
 		rules: RULES,
 		resourceCatalogV2: BASE_RESOURCE_CATALOG,
+		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
 	return {
 		gateway: createLocalSessionGateway(session, options),
