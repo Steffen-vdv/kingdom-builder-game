@@ -55,21 +55,24 @@ Append new rows chronologically (most recent at the bottom). Include command out
 ## 4. Latest Handover (overwrite each task)
 
 - **Prepared by:** Claude (claude-opus-4-5-20251101)
-- **Timestamp (UTC):** 2025-12-06 14:20
-- **Current Focus:** Resource Migration MVP - T67 - Evaluator ResourceV2 parameter migration
+- **Timestamp (UTC):** 2025-12-07 13:00
+- **Current Focus:** Resource Migration MVP - T68 - Test pattern migration
 - **State Summary:**
-  - All evaluators (stat, population, resource) now accept `resourceId` as the
-    V2 parameter name with legacy parameters (`key`, `role`) as fallbacks (see
-    [`./worklogs/T67-evaluator-resourceId.md`](./worklogs/T67-evaluator-resourceId.md)).
-  - The `resourceEvaluator` has been registered in the `EVALUATORS` registry
-    and exported from the index.
-  - All tests pass with backward-compatible legacy parameter support.
+  - Migrated test files and fixtures to use unified ResourceV2 patterns.
+  - Removed legacy `population` and `stat` descriptors from descriptor registry.
+  - Updated meta source icon renderer to use `type: 'resource'` instead of
+    `type: 'population'`.
+  - Renamed test files to reflect ResourceV2 paradigm:
+    - `stat-descriptor-registry.test.ts` → `resource-source-descriptors.test.ts`
+    - `stat-breakdown.test.ts` → `resource-breakdown.test.ts`
+  - All 916 tests pass across all packages.
+  - See [`./worklogs/T68-test-resourcev2-migration.md`](./worklogs/T68-test-resourcev2-migration.md)
+    for detailed change log.
 - **Next Suggested Tasks:**
-  - Update content definitions and tests to use `resourceId` instead of
-    `key`/`role` when creating new evaluator usages.
-  - Consider consolidating stat/population/resource evaluators into a single
-    unified evaluator since they all delegate to `getResourceValue()`.
-  - Continue pruning legacy Resource/Stat fallback helpers.
+  - Rename `packages/web/src/utils/stats/` folder since it no longer contains
+    stat-specific utilities.
+  - Continue removing legacy terminology from remaining source files.
+  - Consolidate stat/population/resource evaluators into unified evaluator.
 - **Blocking Issues / Risks:** None currently blocking.
 - **Reminder:** Keep per-task worklogs under `./worklogs/` current so downstream
   owners can continue the final cleanup without re-reading individual task logs.
