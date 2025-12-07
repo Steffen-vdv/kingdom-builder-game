@@ -22,7 +22,6 @@ function assembleResourceCatalogV2(): ResourceCatalogV2 {
 		return cachedCatalog;
 	}
 
-	// Call getter to get happiness definition lazily
 	const HAPPINESS_RESOURCE_DEFINITION = getHappinessResourceDefinition();
 
 	const RESOURCE_DEFINITIONS_ORDERED: readonly ResourceV2Definition[] = [...CORE_RESOURCE_DEFINITIONS, HAPPINESS_RESOURCE_DEFINITION, ...STAT_RESOURCE_DEFINITIONS, ...POPULATION_RESOURCE_DEFINITIONS];
@@ -38,47 +37,41 @@ function assembleResourceCatalogV2(): ResourceCatalogV2 {
 	return cachedCatalog;
 }
 
-// Use getters to ensure lazy initialization
-let _resourceRegistry: ResourceV2Registry | null = null;
-let _groupRegistry: ResourceGroupRegistry | null = null;
-let _categoryRegistry: ResourceCategoryRegistry | null = null;
-
+/**
+ * Lazy initialization via getter functions.
+ *
+ * The happiness resource definition depends on effect builders that require
+ * other modules to be fully loaded. Eagerly building the catalog at module
+ * load time would fail due to circular dependencies in the import chain.
+ */
 function getResourceRegistry(): ResourceV2Registry {
-	if (!_resourceRegistry) {
-		_resourceRegistry = assembleResourceCatalogV2().resources;
-	}
-	return _resourceRegistry;
+	return assembleResourceCatalogV2().resources;
 }
 
 function getGroupRegistry(): ResourceGroupRegistry {
-	if (!_groupRegistry) {
-		_groupRegistry = assembleResourceCatalogV2().groups;
-	}
-	return _groupRegistry;
+	return assembleResourceCatalogV2().groups;
 }
 
 function getCategoryRegistry(): ResourceCategoryRegistry {
-	if (!_categoryRegistry) {
-		_categoryRegistry = assembleResourceCatalogV2().categories;
-	}
-	return _categoryRegistry;
+	return assembleResourceCatalogV2().categories;
 }
 
-// Export as Proxies for backward compatibility - accesses are lazy
+// Proxy objects defer registry construction until first property access,
+// breaking circular dependencies during module initialization.
 export const RESOURCE_V2_REGISTRY = new Proxy({} as ResourceV2Registry, {
-	get(target, prop) {
+	get(_, prop) {
 		return getResourceRegistry()[prop as keyof ResourceV2Registry];
 	},
 });
 
 export const RESOURCE_GROUP_V2_REGISTRY = new Proxy({} as ResourceGroupRegistry, {
-	get(target, prop) {
+	get(_, prop) {
 		return getGroupRegistry()[prop as keyof ResourceGroupRegistry];
 	},
 });
 
 export const RESOURCE_CATEGORY_V2_REGISTRY = new Proxy({} as ResourceCategoryRegistry, {
-	get(target, prop) {
+	get(_, prop) {
 		return getCategoryRegistry()[prop as keyof ResourceCategoryRegistry];
 	},
 });

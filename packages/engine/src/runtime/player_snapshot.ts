@@ -164,8 +164,8 @@ export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
-	// All values are unified in valuesV2 - resources/stats/population point to
-	// the same data for backward compatibility with consumers
+	// All values are unified in valuesV2. The resources/stats/population
+	// properties reference the same object so consumers can access via any key.
 	const valuesV2 = cloneValuesV2(player.resourceValues);
 	const resourceBoundsV2 = buildResourceBoundsSnapshot(player);
 	return {

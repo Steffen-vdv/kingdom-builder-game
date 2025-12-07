@@ -33,11 +33,8 @@ describe('web package avoids engine internals', () => {
 		const requirePattern = /\brequire\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g;
 		const engineViolations: Array<{ file: string; specifier: string }> = [];
 		const contentViolations: Array<{ file: string; specifier: string }> = [];
-		// ResourceV2 translation layer legitimately needs content imports for
-		// legacy-to-v2 key mapping during the migration
-		const allowedContentImports = new Set<string>([
-			'src/translation/resourceV2/legacyMapping.ts',
-		]);
+		// Files in src/ that legitimately need @kingdom-builder/contents imports
+		const allowedContentImports = new Set<string>([]);
 		for (const rootName of roots) {
 			const rootPath = path.join(packageRoot, rootName);
 			let stat;

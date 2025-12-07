@@ -103,7 +103,7 @@ export function buildStandardEvaluationEntry(
 	);
 	const target = log.target as Extract<
 		AttackLog['evaluation']['target'],
-		{ type: 'resource' | 'stat' }
+		{ type: 'resource' }
 	>;
 	const formatTargetValue = (value: number) => {
 		if (isStat) {
