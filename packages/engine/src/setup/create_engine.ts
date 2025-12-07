@@ -36,6 +36,7 @@ import {
 	diffPlayerStartConfiguration,
 	determineCommonActionCostResource,
 	initializePlayerActions,
+	initializeStartConfigDevelopmentPassives,
 } from './player_setup';
 import { resolveStartConfigForMode } from './start_config_resolver';
 
@@ -284,6 +285,7 @@ export function createEngine({
 	);
 	initializePlayerActions(playerOne, actions);
 	initializePlayerActions(playerTwo, actions);
+	initializeStartConfigDevelopmentPassives(engineContext);
 	engineContext.game.currentPlayerIndex = 0;
 	engineContext.game.currentPhase = phases[0]?.id || '';
 	engineContext.game.currentStep = phases[0]?.steps[0]?.id || '';

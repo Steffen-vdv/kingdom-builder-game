@@ -8,12 +8,14 @@ import {
 	initialisePlayerResourceState,
 	setResourceValue,
 } from '../resource-v2';
-import type {
-	ActionConfig as ActionDef,
-	PlayerStartConfig,
-	Registry,
+import {
+	applyParamsToEffects,
+	type ActionConfig as ActionDef,
+	type PlayerStartConfig,
+	type Registry,
 } from '@kingdom-builder/protocol';
 import { START_RESOURCE_SOURCE_META } from './resource_source_meta';
+import type { EngineContext } from '../context';
 
 function cloneEffectList<EffectType extends object>(
 	effectList: EffectType[] | undefined,
@@ -269,6 +271,53 @@ export function initializePlayerActions(
 			continue;
 		}
 		playerState.actions.add(id);
+	}
+}
+
+export function initializeStartConfigDevelopmentPassives(
+	engineContext: EngineContext,
+): void {
+	for (const player of engineContext.game.players) {
+		const originalActiveIndex = engineContext.game.currentPlayerIndex;
+		engineContext.game.currentPlayerIndex =
+			engineContext.game.players.indexOf(player);
+		try {
+			for (const land of player.lands) {
+				for (const developmentId of land.developments) {
+					const developmentDef = engineContext.developments.get(developmentId);
+					if (developmentDef?.onBuild) {
+						const passiveId = `${developmentId}_${land.id}`;
+						// Skip if passive already registered (e.g., from explicit effect)
+						if (engineContext.passives.get(passiveId, player.id)) {
+							continue;
+						}
+						const onBuildEffects = applyParamsToEffects(
+							developmentDef.onBuild,
+							{ landId: land.id, id: developmentId },
+						);
+						engineContext.passives.addPassive(
+							{ id: passiveId, effects: onBuildEffects },
+							engineContext,
+							{
+								frames: () => ({
+									kind: 'development',
+									id: developmentId,
+									longevity: 'ongoing' as const,
+									dependsOn: [{ type: 'development', id: developmentId }],
+									removal: {
+										type: 'development',
+										id: developmentId,
+										detail: 'removed',
+									},
+								}),
+							},
+						);
+					}
+				}
+			}
+		} finally {
+			engineContext.game.currentPlayerIndex = originalActiveIndex;
+		}
 	}
 }
 
