@@ -7,7 +7,7 @@ import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 describe('passive:add effect', () => {
 	it('applies nested effects and registers phase triggers', () => {
-		const engineContext = createTestEngine();
+		const engineContext = createTestEngine({ skipInitialSetup: true });
 		const effect: EffectDef<{ id: string } & Record<string, EffectDef[]>> = {
 			type: 'passive',
 			method: 'add',
@@ -67,14 +67,17 @@ describe('passive:add effect', () => {
 		};
 
 		// Stat values ARE ResourceV2 IDs - access via resourceValues
-		const before = engineContext.activePlayer.resourceValues[Stat.armyStrength];
+		// With skipInitialSetup, stats start as undefined (treated as 0)
+		const before =
+			engineContext.activePlayer.resourceValues[Stat.armyStrength] ?? 0;
 		runEffects([effect], engineContext);
 		expect(engineContext.activePlayer.resourceValues[Stat.armyStrength]).toBe(
 			before + 1,
 		);
 		engineContext.passives.removePassive('temp', engineContext);
-		expect(engineContext.activePlayer.resourceValues[Stat.armyStrength]).toBe(
-			before,
-		);
+		// After removing passive, value returns to 0 (undefined treated as 0)
+		expect(
+			engineContext.activePlayer.resourceValues[Stat.armyStrength] ?? 0,
+		).toBe(before);
 	});
 });

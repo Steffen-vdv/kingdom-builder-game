@@ -1,6 +1,5 @@
 import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
-import type { StartConfig } from '@kingdom-builder/protocol';
 import type { RuleSet } from '../../src/services/index.ts';
 import {
 	PhaseTrigger,
@@ -206,32 +205,12 @@ export function createPhaseTestEnvironment() {
 		},
 	];
 
-	const start: StartConfig = {
-		player: {
-			resources: {
-				[resourceKeys.ap]: BASE_AP,
-				[resourceKeys.gold]: 0,
-			},
-			stats: {
-				[statKeys.army]: 0,
-				[statKeys.fort]: 0,
-				[statKeys.growth]: BASE_GROWTH,
-				[statKeys.war]: 0,
-			},
-			population: {
-				[council.id]: STARTING_COUNCILS,
-				[legion.id]: 0,
-				[fortifier.id]: 0,
-			},
-			lands: [{ developments: [farm.id] }],
-		},
-		players: {
-			B: {
-				resources: {
-					[resourceKeys.ap]: BASE_AP + AP_COMPENSATION,
-				},
-			},
-		},
+	// No-op system action IDs to skip initial setup
+	const SKIP_SETUP_ACTION_IDS = {
+		initialSetup: '__noop_initial_setup__',
+		initialSetupDevmode: '__noop_initial_setup_devmode__',
+		compensation: '__noop_compensation__',
+		compensationDevmodeB: '__noop_compensation_devmode_b__',
 	};
 
 	const rules: RuleSet = {
@@ -308,13 +287,41 @@ export function createPhaseTestEnvironment() {
 		developments: content.developments,
 		populations: content.populations,
 		phases,
-		start,
 		rules,
 		resourceCatalogV2: {
 			resources: testResourceRegistry,
 			groups: RESOURCE_GROUP_V2_REGISTRY,
 		},
+		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
+
+	// Manually set up initial state (previously handled by start config)
+	const playerA = engineContext.game.players[0]!;
+	const playerB = engineContext.game.players[1]!;
+
+	// Player A initial state
+	playerA.resourceValues[resourceKeys.ap] = BASE_AP;
+	playerA.resourceValues[resourceKeys.gold] = 0;
+	playerA.resourceValues[statKeys.army] = 0;
+	playerA.resourceValues[statKeys.fort] = 0;
+	playerA.resourceValues[statKeys.growth] = BASE_GROWTH;
+	playerA.resourceValues[statKeys.war] = 0;
+	playerA.resourceValues[council.id] = STARTING_COUNCILS;
+	playerA.resourceValues[legion.id] = 0;
+	playerA.resourceValues[fortifier.id] = 0;
+
+	// Add land with farm development
+	const land = {
+		id: crypto.randomUUID() as `${string}-${string}-${string}-${string}-${string}`,
+		slotsMax: 1,
+		slotsUsed: 1,
+		developments: [farm.id],
+		tilled: false,
+	};
+	playerA.lands.push(land);
+
+	// Player B gets compensation AP
+	playerB.resourceValues[resourceKeys.ap] = BASE_AP + AP_COMPENSATION;
 
 	return {
 		engineContext,

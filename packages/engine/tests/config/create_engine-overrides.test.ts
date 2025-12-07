@@ -6,11 +6,7 @@ import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,
 } from '@kingdom-builder/contents/registries/resourceV2';
-import type {
-	GameConfig,
-	RuleSet,
-	StartConfig,
-} from '@kingdom-builder/protocol';
+import type { GameConfig, RuleSet } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 
 const resourceCatalogV2 = {
@@ -30,16 +26,12 @@ const PHASES: PhaseDef[] = [
 	},
 ];
 
-const START: StartConfig = {
-	player: {
-		resources: {
-			[RESOURCE_AP]: 2,
-			[RESOURCE_GOLD]: 1,
-		},
-		stats: {},
-		population: {},
-		lands: [],
-	},
+// No-op system action IDs to skip initial setup
+const SKIP_SETUP_ACTION_IDS = {
+	initialSetup: '__noop_initial_setup__',
+	initialSetupDevmode: '__noop_initial_setup_devmode__',
+	compensation: '__noop_compensation__',
+	compensationDevmodeB: '__noop_compensation_devmode_b__',
 };
 
 const RULES: RuleSet = {
@@ -61,24 +53,13 @@ const RULES: RuleSet = {
 };
 
 describe('createEngine config overrides', () => {
-	it('overrides registries and the start configuration when config is provided', () => {
+	it('overrides registries when config is provided', () => {
 		const baseContent = createContentFactory();
 		const overrideContent = createContentFactory();
 		const baseAction = baseContent.action({ name: 'base:action' });
 		const overrideAction = overrideContent.action({ name: 'override:action' });
 		const config: GameConfig = {
 			actions: [overrideAction],
-			start: {
-				player: {
-					resources: {
-						[RESOURCE_AP]: 4,
-						[RESOURCE_GOLD]: 7,
-					},
-					stats: {},
-					population: {},
-					lands: [],
-				},
-			},
 		};
 		const engine = createEngine({
 			actions: baseContent.actions,
@@ -86,20 +67,14 @@ describe('createEngine config overrides', () => {
 			developments: baseContent.developments,
 			populations: baseContent.populations,
 			phases: PHASES,
-			start: START,
 			rules: RULES,
 			resourceCatalogV2,
 			config,
+			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		expect(engine.actions).not.toBe(baseContent.actions);
 		expect(() => engine.actions.get(overrideAction.id)).not.toThrow();
 		expect(() => engine.actions.get(baseAction.id)).toThrowError(/Unknown id/);
-		const [playerA, playerB] = engine.game.players;
-		// PlayerState uses resourceValues for all resources
-		expect(playerA?.resourceValues[RESOURCE_AP]).toBe(4);
-		expect(playerA?.resourceValues[RESOURCE_GOLD]).toBe(7);
-		expect(playerB?.resourceValues[RESOURCE_AP]).toBe(4);
-		expect(playerB?.resourceValues[RESOURCE_GOLD]).toBe(7);
 	});
 
 	it('retains original registries when config omits optional definitions', () => {
@@ -113,14 +88,11 @@ describe('createEngine config overrides', () => {
 			developments: baseContent.developments,
 			populations: baseContent.populations,
 			phases: PHASES,
-			start: START,
 			rules: RULES,
 			resourceCatalogV2,
 			config,
+			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		expect(engine.actions).toBe(baseContent.actions);
-		const [playerA] = engine.game.players;
-		expect(playerA?.resourceValues[RESOURCE_AP]).toBe(2);
-		expect(playerA?.resourceValues[RESOURCE_GOLD]).toBe(1);
 	});
 });

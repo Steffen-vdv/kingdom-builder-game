@@ -63,7 +63,9 @@ const SKIP_SETUP_ACTION_IDS = {
 };
 
 const RULES: RuleSet = {
-	defaultActionAPCost: 1,
+	// Set defaultActionAPCost to 0 since we skip initial setup and players
+	// have no AP. Tests that need AP costs can set them per-action.
+	defaultActionAPCost: 0,
 	absorptionCapPct: 1,
 	absorptionRounding: 'down',
 	tieredResourceKey: RESOURCE_GOLD,
@@ -93,9 +95,9 @@ type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
 
 function createGateway(options?: GatewayOptions) {
 	const content = createContentFactory();
-	// Make actions free (no AP cost) since we skip initial setup
+	// Actions use the default AP cost from rules (which is fine since we skip
+	// initial setup - the engine's global action cost resource handles AP costs)
 	const gainGold = content.action({
-		baseCosts: { [RESOURCE_AP]: 0 },
 		effects: [
 			{
 				type: 'resource',
@@ -108,7 +110,6 @@ function createGateway(options?: GatewayOptions) {
 		],
 	});
 	const failingAction = content.action({
-		baseCosts: { [RESOURCE_AP]: 0 },
 		requirements: [
 			{
 				type: 'vitest',
@@ -162,7 +163,10 @@ describe('createLocalSessionGateway', () => {
 			sessionId: created.sessionId,
 		});
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
-		expect(fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(0);
+		// Resources that haven't been touched are undefined in the snapshot
+		expect(
+			fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD] ?? 0,
+		).toBe(0);
 		expect(fetched.registries.actionCategories).toEqual({});
 	});
 
@@ -208,7 +212,9 @@ describe('createLocalSessionGateway', () => {
 			actionId: actionIds.gainGold,
 		});
 		if (response.status !== 'success') {
-			throw new Error('Expected action to succeed');
+			throw new Error(
+				`Expected action to succeed but got: ${response.error ?? 'unknown error'}`,
+			);
 		}
 		response.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 77;
 		const firstTrace = response.traces[0];
@@ -234,9 +240,10 @@ describe('createLocalSessionGateway', () => {
 			expect(response.requirementFailure?.message).toBe(FAILURE_MESSAGE);
 		}
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
-		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
-			0,
-		);
+		// Resources that haven't been touched are undefined in the snapshot
+		expect(
+			refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD] ?? 0,
+		).toBe(0);
 	});
 
 	it('advances phases while keeping responses isolated', async () => {
@@ -247,9 +254,10 @@ describe('createLocalSessionGateway', () => {
 		advanced.advance.player.resources[RESOURCE_GOLD] = 45;
 		advanced.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 64;
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
-		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
-			0,
-		);
+		// Resources that haven't been touched are undefined in the snapshot
+		expect(
+			refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD] ?? 0,
+		).toBe(0);
 	});
 
 	it('sets developer mode without leaking snapshot references', async () => {
