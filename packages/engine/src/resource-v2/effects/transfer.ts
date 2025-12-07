@@ -301,6 +301,12 @@ export const resourceV2Transfer: EffectHandler<
 	}
 	const donorNextValue = donorParticipant.currentValue - transferAmount;
 	const recipientNextValue = recipientParticipant.currentValue + transferAmount;
+
+	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
+	const donorSkipBoundClamp = params.donor.reconciliationMode === 'pass';
+	const recipientSkipBoundClamp =
+		params.recipient.reconciliationMode === 'pass';
+
 	if (donorNextValue !== donorParticipant.currentValue) {
 		setResourceValue(
 			context,
@@ -308,7 +314,7 @@ export const resourceV2Transfer: EffectHandler<
 			catalog,
 			donorParticipant.resourceId,
 			donorNextValue,
-			donorParticipant.options,
+			{ ...donorParticipant.options, skipBoundClamp: donorSkipBoundClamp },
 		);
 	}
 	if (recipientNextValue !== recipientParticipant.currentValue) {
@@ -318,7 +324,10 @@ export const resourceV2Transfer: EffectHandler<
 			catalog,
 			recipientParticipant.resourceId,
 			recipientNextValue,
-			recipientParticipant.options,
+			{
+				...recipientParticipant.options,
+				skipBoundClamp: recipientSkipBoundClamp,
+			},
 		);
 	}
 };

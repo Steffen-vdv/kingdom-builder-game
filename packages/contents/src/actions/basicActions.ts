@@ -178,6 +178,11 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.build(),
 	);
 
+	// Plunder uses pass mode for donor (allowing negative values to trigger
+	// tier effects like bankruptcy) and clamp mode for recipient (capping at
+	// max bounds).
+	const plunderReconciliation = { donorMode: 'pass', recipientMode: 'clamp' } as const;
+
 	registry.add(
 		ActionId.plunder,
 		action()
@@ -185,8 +190,16 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.name('Plunder')
 			.icon('🏴‍☠️')
 			.system()
-			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferAmount(Resource.happiness, 1)).build())
-			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferPercent(Resource.gold, 25)).build())
+			.effect(
+				effect(Types.Resource, ResourceMethods.TRANSFER)
+					.params(resourceTransferAmount(Resource.happiness, 1, plunderReconciliation))
+					.build(),
+			)
+			.effect(
+				effect(Types.Resource, ResourceMethods.TRANSFER)
+					.params(resourceTransferPercent(Resource.gold, 25, plunderReconciliation))
+					.build(),
+			)
 			.category(ActionCategory.Basic)
 			.focus(Focus.Aggressive)
 			.build(),

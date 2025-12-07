@@ -707,6 +707,129 @@ describe('Reconciliation strategies', () => {
 		});
 	});
 
+	describe('additive percent changes with reconciliation modes', () => {
+		let ctx: TestContext;
+
+		beforeEach(() => {
+			ctx = createTestContext();
+			// Initialize step tracking for additive percent caching
+			ctx.context.resourcePercentBases = {};
+			ctx.context.resourcePercentAccums = {};
+			ctx.context.game = {
+				...ctx.context.game,
+				turn: 1,
+				currentPhase: 'growth',
+				currentStep: 'test',
+			} as EngineContext['game'];
+		});
+
+		it('pass: additive percent change allows exceeding upper bound', () => {
+			setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.goldId, 80);
+
+			const effect: EffectDef = {
+				params: {
+					resourceId: ctx.goldId,
+					change: { type: 'percent', modifiers: [0.5], additive: true },
+					reconciliation: 'pass',
+				},
+			};
+
+			resourceAddV2(effect, ctx.context);
+
+			// 80 + 50% of 80 = 80 + 40 = 120 (exceeds upper bound of 100)
+			expect(getResourceValue(ctx.active, ctx.goldId)).toBe(120);
+		});
+
+		it('pass: additive percent change allows going below lower bound', () => {
+			setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.goldId, 20);
+
+			const effect: EffectDef = {
+				params: {
+					resourceId: ctx.goldId,
+					change: { type: 'percent', modifiers: [2.0], additive: true },
+					reconciliation: 'pass',
+				},
+			};
+
+			resourceRemoveV2(effect, ctx.context);
+
+			// 20 - 200% of 20 = 20 - 40 = -20 (below lower bound of 0)
+			expect(getResourceValue(ctx.active, ctx.goldId)).toBe(-20);
+		});
+
+		it('reject: additive percent change throws when exceeding upper bound', () => {
+			setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.goldId, 80);
+
+			const effect: EffectDef = {
+				params: {
+					resourceId: ctx.goldId,
+					change: { type: 'percent', modifiers: [0.5], additive: true },
+					reconciliation: 'reject',
+				},
+			};
+
+			expect(() => resourceAddV2(effect, ctx.context)).toThrow(
+				ResourceBoundExceededError,
+			);
+			// Value should remain unchanged
+			expect(getResourceValue(ctx.active, ctx.goldId)).toBe(80);
+		});
+
+		it('reject: additive percent change throws when going below lower bound', () => {
+			setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.goldId, 20);
+
+			const effect: EffectDef = {
+				params: {
+					resourceId: ctx.goldId,
+					change: { type: 'percent', modifiers: [2.0], additive: true },
+					reconciliation: 'reject',
+				},
+			};
+
+			expect(() => resourceRemoveV2(effect, ctx.context)).toThrow(
+				ResourceBoundExceededError,
+			);
+			// Value should remain unchanged
+			expect(getResourceValue(ctx.active, ctx.goldId)).toBe(20);
+		});
+
+		it('clamp: additive percent change clamps to upper bound', () => {
+			setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.goldId, 80);
+
+			const effect: EffectDef = {
+				params: {
+					resourceId: ctx.goldId,
+					change: { type: 'percent', modifiers: [0.5], additive: true },
+					reconciliation: 'clamp',
+				},
+			};
+
+			resourceAddV2(effect, ctx.context);
+
+			// Would be 120, but clamped to 100
+			expect(getResourceValue(ctx.active, ctx.goldId)).toBe(100);
+			expect(ctx.active.resourceBoundTouched[ctx.goldId].upper).toBe(true);
+		});
+
+		it('clamp: additive percent change clamps to lower bound', () => {
+			setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.goldId, 20);
+
+			const effect: EffectDef = {
+				params: {
+					resourceId: ctx.goldId,
+					change: { type: 'percent', modifiers: [2.0], additive: true },
+					reconciliation: 'clamp',
+				},
+			};
+
+			resourceRemoveV2(effect, ctx.context);
+
+			// Would be -20, but clamped to 0
+			expect(getResourceValue(ctx.active, ctx.goldId)).toBe(0);
+			expect(ctx.active.resourceBoundTouched[ctx.goldId].lower).toBe(true);
+		});
+	});
+
 	describe('ResourceBoundExceededError properties', () => {
 		it('has correct name property', () => {
 			try {

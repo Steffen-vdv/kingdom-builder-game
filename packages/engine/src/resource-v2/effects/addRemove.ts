@@ -292,6 +292,7 @@ function applyResourceEffect(
 			bounds,
 			effect,
 			change.roundingMode,
+			reconciliationMode,
 		);
 
 		if (result.clampedToLowerBound || result.clampedToUpperBound) {
