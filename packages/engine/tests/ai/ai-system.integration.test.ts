@@ -239,9 +239,12 @@ describe('AISystem with tax collector controller', () => {
 		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(2);
 	});
 
-	it('recovers from action errors by draining AP and advancing', async () => {
+	it('recovers from expected errors by draining AP and advancing', async () => {
 		const { engineContext, apKey } = createEngineFixture(2);
-		const error = new Error('boom');
+		// Requirement failure errors should be swallowed gracefully
+		const error = Object.assign(new Error('Requirement not met'), {
+			requirementFailure: { message: 'Requirement not met' },
+		});
 		const perform = vi.fn(() => {
 			throw error;
 		});
@@ -263,5 +266,31 @@ describe('AISystem with tax collector controller', () => {
 		expect(shouldAdvancePhase).toHaveBeenCalledTimes(1);
 		expect(advancePhase).toHaveBeenCalledTimes(1);
 		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+	});
+
+	it('re-throws unexpected errors', async () => {
+		const { engineContext } = createEngineFixture(2);
+		const error = new Error('unexpected engine bug');
+		const perform = vi.fn(() => {
+			throw error;
+		});
+		const advancePhase = vi.fn(() => advance(engineContext));
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
+		const system = createAISystem({
+			performAction: perform,
+			advance: advancePhase,
+			shouldAdvancePhase,
+		});
+		const controller = createTaxCollectorController(
+			engineContext.activePlayer.id,
+		);
+		system.register(engineContext.activePlayer.id, controller);
+
+		await expect(
+			system.run(engineContext.activePlayer.id, engineContext),
+		).rejects.toThrow('unexpected engine bug');
+
+		expect(perform).toHaveBeenCalledTimes(1);
+		expect(advancePhase).not.toHaveBeenCalled();
 	});
 });

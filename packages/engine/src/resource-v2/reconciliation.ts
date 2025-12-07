@@ -7,6 +7,7 @@ export type ResourceChangeRoundingMode = 'up' | 'down' | 'nearest';
 export interface ResourceAmountChangeParameters {
 	readonly type: 'amount';
 	readonly amount: number;
+	readonly roundingMode?: ResourceChangeRoundingMode;
 }
 
 export interface ResourcePercentChangeParameters {
@@ -88,6 +89,9 @@ export function computeRequestedResourceDelta(
 	const { currentValue, change, getResourceValue } = input;
 
 	if (change.type === 'amount') {
+		if (change.roundingMode) {
+			return roundValue(change.amount, change.roundingMode);
+		}
 		return change.amount;
 	}
 
