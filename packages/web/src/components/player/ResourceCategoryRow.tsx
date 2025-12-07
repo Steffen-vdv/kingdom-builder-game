@@ -8,7 +8,6 @@ import type {
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import {
-	buildResourceV2HoverSections,
 	type ResourceV2MetadataSnapshot,
 	type ResourceV2ValueSnapshot,
 } from '../../translation';
@@ -80,22 +79,15 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 				return;
 			}
 			const metadata = translationContext.resourceMetadataV2.get(resourceId);
-			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
-			const effects = buildResourceV2HoverSections(metadata, snapshot);
 			handleHoverCard({
 				title: formatResourceTitle(metadata),
-				effects,
+				effects: [],
 				requirements: [],
 				...(metadata.description ? { description: metadata.description } : {}),
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-		[
-			handleHoverCard,
-			resourceCatalog,
-			snapshotContext,
-			translationContext.resourceMetadataV2,
-		],
+		[handleHoverCard, resourceCatalog, translationContext.resourceMetadataV2],
 	);
 
 	const renderResource = React.useCallback(
