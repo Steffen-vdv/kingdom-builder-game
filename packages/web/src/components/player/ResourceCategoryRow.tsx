@@ -90,30 +90,22 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		[],
 	);
 
-	// Map tier passive IDs to tier definitions for quick lookup
-	const tierByPassiveId = React.useMemo(
-		() =>
-			tierDefinitions.reduce<Map<string, TierDefinition>>((map, tier) => {
-				const passiveId = tier.preview?.id;
-				if (passiveId) {
-					map.set(passiveId, tier);
-				}
-				return map;
-			}, new Map()),
-		[tierDefinitions],
-	);
-
-	// Find the active tier by checking which tier's passive is in the player's
-	// passives list
+	// Find the active tier by checking the tiered resource's value against tier
+	// ranges. This handles tiers without passives (like neutral tiers).
 	const activeTierId = React.useMemo(() => {
-		for (const passive of player.passives) {
-			const tier = tierByPassiveId.get(passive.id);
-			if (tier) {
+		if (!tieredResourceKey) {
+			return undefined;
+		}
+		const value = player.valuesV2?.[tieredResourceKey] ?? 0;
+		for (const tier of tierDefinitions) {
+			const min = tier.range.min ?? 0;
+			const max = tier.range.max;
+			if (value >= min && (max === undefined || value <= max)) {
 				return tier.id;
 			}
 		}
 		return undefined;
-	}, [player.passives, tierByPassiveId]);
+	}, [tieredResourceKey, tierDefinitions, player.valuesV2]);
 
 	const showResourceCard = React.useCallback(
 		(resourceId: string) => {
