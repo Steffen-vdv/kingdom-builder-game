@@ -97,9 +97,8 @@ export interface SessionPlayerStateSnapshot {
 	 */
 	valuesV2: Record<string, number>;
 	/**
-	 * ResourceV2 lower/upper bound map aligned with {@link valuesV2}. Always
-	 * present so consumers can clamp projections without inspecting legacy
-	 * resource sets.
+	 * Resource lower/upper bound map aligned with {@link valuesV2}. Always
+	 * present so consumers can clamp projections.
 	 */
 	resourceBoundsV2: Record<string, SessionResourceBoundsV2>;
 	lands: SessionLandSnapshot[];
@@ -331,8 +330,8 @@ export interface SessionSnapshotMetadata {
 	developments?: Record<string, SessionMetadataDescriptor>;
 	stats?: Record<string, SessionMetadataDescriptor>;
 	/**
-	 * Optional ResourceV2 metadata map. Introduced for the migration work
-	 * and remains unset until ResourceV2 values surface in snapshots.
+	 * Resource metadata map containing icons, labels, and display hints for
+	 * each resource ID. Present when resources surface in snapshots.
 	 */
 	resourcesV2?: Record<string, SessionMetadataDescriptor>;
 	/**
@@ -356,10 +355,9 @@ export interface SessionSnapshot {
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
 	metadata: SessionSnapshotMetadata;
 	/**
-	 * Optional ResourceV2 metadata snapshot that mirrors
-	 * {@link SessionSnapshotMetadata.resourcesV2}. Reserved for the
-	 * migration rollout so consumers can opt-in without waiting for the
-	 * legacy metadata map to change shape.
+	 * Resource metadata snapshot that mirrors
+	 * {@link SessionSnapshotMetadata.resourcesV2}. Present when resources
+	 * are active in the session.
 	 */
 	resourceMetadataV2?: Record<string, SessionMetadataDescriptor>;
 	/**

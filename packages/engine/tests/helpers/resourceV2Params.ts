@@ -45,19 +45,6 @@ export interface ResourcePercentParamsResult extends BaseResourceParamsResult {
 	) => number;
 }
 
-export interface StatAmountParamsInput {
-	readonly key: string;
-	readonly statId?: string;
-	readonly amount: number;
-}
-
-export interface StatAmountParamsResult {
-	readonly key: string;
-	readonly statId: string;
-	readonly amount: number;
-	readonly change: Extract<ResourceChangeParameters, { type: 'amount' }>;
-}
-
 function resolveResourceId(input: BaseResourceParamsInput): string {
 	if (input.resourceId) {
 		return input.resourceId;
@@ -145,20 +132,6 @@ export function resourcePercentParams(
 	};
 
 	return result;
-}
-
-export function statAmountParams(
-	input: StatAmountParamsInput,
-): StatAmountParamsResult {
-	// Keys ARE ResourceV2 IDs directly - no mapper needed
-	const statId = input.statId ?? input.key;
-	const amount = input.amount;
-	return {
-		key: input.key,
-		statId,
-		amount,
-		change: { type: 'amount', amount },
-	} satisfies StatAmountParamsResult;
 }
 
 interface PercentFromResourceParamsInput extends BaseResourceParamsInput {

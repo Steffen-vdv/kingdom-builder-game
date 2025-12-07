@@ -19,7 +19,6 @@ function formatSubEntries(
 		: null;
 
 	// If no resourceId or no metadata, fall back to population display logic
-	// (for backward compatibility with tests that pass empty params)
 	if (!metadata || !metadata.icon) {
 		const popDisplay = resolvePopulationDisplay(context, resourceId);
 		const suffix = mode === 'summarize' ? 'per' : 'for each';

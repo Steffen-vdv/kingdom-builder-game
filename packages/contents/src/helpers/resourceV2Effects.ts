@@ -1,19 +1,13 @@
 import type { ResourceChangeBuilder, ResourceChangeEffectParams, ResourceV2TransferEffectParams } from '../resourceV2';
 import { resourceChange, resourceTransfer, transferEndpoint } from '../resourceV2';
-import { getResourceV2Id, getStatResourceV2Id } from '../internal';
-import type { ResourceKey, StatKey } from '../internal';
+import { getResourceV2Id } from '../internal';
+import type { ResourceKey } from '../internal';
 
 type ChangeBuilderConfigurator = (builder: ResourceChangeBuilder) => void;
 
 type ResourceAmountParams = ResourceChangeEffectParams &
 	Record<string, unknown> & {
 		key: ResourceKey;
-		amount: number;
-	};
-
-type StatAmountParams = ResourceChangeEffectParams &
-	Record<string, unknown> & {
-		key: StatKey;
 		amount: number;
 	};
 
@@ -39,17 +33,6 @@ export function resourceAmountChange(resource: ResourceKey, amount: number, conf
 	return {
 		...builder.build(),
 		key: resource,
-		amount,
-	};
-}
-
-export function statAmountChange(stat: StatKey, amount: number, configure?: ChangeBuilderConfigurator): StatAmountParams {
-	const builder = resourceChange(getStatResourceV2Id(stat));
-	builder.amount(amount);
-	configureBuilder(builder, configure);
-	return {
-		...builder.build(),
-		key: stat,
 		amount,
 	};
 }
