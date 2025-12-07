@@ -51,7 +51,8 @@ export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
+	/** @deprecated Populations are unified under ResourceV2 */
+	populations?: Registry<PopulationDef>;
 	phases: PhaseConfig[];
 	rules: RuleSet;
 	config?: GameConfig;
@@ -66,7 +67,8 @@ type EngineRegistries = {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
+	/** @deprecated Populations are unified under ResourceV2 */
+	populations?: Registry<PopulationDef>;
 };
 
 type RuntimeResourceContent = Parameters<
