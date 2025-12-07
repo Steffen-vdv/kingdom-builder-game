@@ -81,20 +81,16 @@ describe('Building translation with development modifier', () => {
 					resources: {
 						...session.metadata.resources,
 						gold: { label: 'Refined Gold', icon: '🪙' },
+						'resource:synthetic:gold': {
+							label: 'Synthetic Gold',
+							icon: '🪙',
+						},
 					},
 					developments: {
 						...session.metadata.developments,
 						[harvestDevelopment.id]: {
 							label: harvestDevelopment.name,
 							icon: harvestDevelopment.icon,
-						},
-					},
-					resources: {
-						...session.metadata.resources,
-						gold: { label: 'Refined Gold', icon: '🪙' },
-						'resource:synthetic:gold': {
-							label: 'Synthetic Gold',
-							icon: '🪙',
 						},
 					},
 				};
@@ -155,10 +151,6 @@ describe('Building translation with development modifier', () => {
 				registries.buildings.add(guild.id, guild);
 				session.metadata = {
 					...session.metadata,
-					resources: {
-						...session.metadata.resources,
-						gold: { label: 'City Gold', icon: undefined },
-					},
 					resources: {
 						...session.metadata.resources,
 						gold: { label: 'City Gold' },

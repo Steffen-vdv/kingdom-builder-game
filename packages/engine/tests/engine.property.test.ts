@@ -23,10 +23,10 @@ const resourceMapArb = fc.dictionary(
 );
 
 function toResourceEffects(map: Record<string, number>) {
-	return Object.entries(map).map(([key, amount]) => ({
+	return Object.entries(map).map(([resourceId, amount]) => ({
 		type: 'resource' as const,
 		method: 'add' as const,
-		params: resourceAmountParams({ key, amount }),
+		params: resourceAmountParams({ resourceId, amount }),
 	}));
 }
 

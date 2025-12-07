@@ -131,7 +131,6 @@ function ensureTranslationMetadata(
 		stats: { ...(metadata.stats ?? {}) },
 		assets: { ...(metadata.assets ?? {}) },
 		triggers: { ...(metadata.triggers ?? {}) },
-		resources: { ...(metadata.resources ?? {}) },
 		resourceGroups: { ...(metadata.resourceGroups ?? {}) },
 	};
 	const resourceDescriptors = enriched.resources ?? {};
@@ -141,7 +140,7 @@ function ensureTranslationMetadata(
 			descriptor.icon = definition.icon;
 		}
 		if (descriptor.label === undefined) {
-			descriptor.label = definition.label ?? definition.key ?? key;
+			descriptor.label = definition.label ?? definition.id ?? key;
 		}
 		if (descriptor.description === undefined) {
 			descriptor.description = definition.description;
@@ -149,21 +148,7 @@ function ensureTranslationMetadata(
 		resourceDescriptors[key] = descriptor;
 	}
 	enriched.resources = resourceDescriptors;
-	const populationDescriptors = enriched.populations ?? {};
-	for (const [id, population] of registries.populations.entries()) {
-		const descriptor = populationDescriptors[id] ?? {};
-		if (population.icon !== undefined && descriptor.icon === undefined) {
-			descriptor.icon = population.icon;
-		}
-		if (descriptor.label === undefined) {
-			descriptor.label = population.name ?? id;
-		}
-		if (descriptor.description === undefined) {
-			descriptor.description = population.description;
-		}
-		populationDescriptors[id] = descriptor;
-	}
-	enriched.populations = populationDescriptors;
+	// Population metadata is now part of resources under ResourceV2
 	const statDescriptors = enriched.stats ?? {};
 	for (const [id, fallback] of Object.entries(REQUIRED_STAT_DESCRIPTORS)) {
 		const descriptor = statDescriptors[id] ?? {};

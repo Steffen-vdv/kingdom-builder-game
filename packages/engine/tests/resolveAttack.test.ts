@@ -127,7 +127,6 @@ describe('resolveAttack', () => {
 					method: 'add',
 					params: {
 						resourceId: CResource.gold,
-						resourceId: CResource.gold,
 						change: { type: 'amount', amount: 1 },
 					},
 				},

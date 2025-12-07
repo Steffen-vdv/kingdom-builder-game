@@ -79,10 +79,6 @@ describe('Action translation with population scaling', () => {
 						...session.metadata.resources,
 						[resourceKey]: { label: 'Civic Gold', icon: '🪙' },
 					},
-					resources: {
-						...session.metadata.resources,
-						[resourceKey]: { label: 'Civic Gold', icon: '🪙' },
-					},
 				};
 			});
 		render(

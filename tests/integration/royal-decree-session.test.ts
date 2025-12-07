@@ -108,11 +108,11 @@ describe('royal decree via session', () => {
 				playerId,
 				resources: [
 					{
-						key: Resource.gold as ResourceKey,
+						resourceId: Resource.gold as ResourceKey,
 						target: 12,
 					},
 					{
-						key: Resource.ap as ResourceKey,
+						resourceId: Resource.ap as ResourceKey,
 						target: 1,
 					},
 				],

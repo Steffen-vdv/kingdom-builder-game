@@ -40,8 +40,8 @@ interface MockGameEngine {
 }
 
 const registries = createSessionRegistries();
-const populationKeys = registries.populations.keys();
-const primaryPopulation = populationKeys[0] ?? 'council';
+// Population roles are now resources under ResourceV2
+const primaryPopulation = 'resource:population:role:council';
 const resourceKeys = Object.keys(registries.resources) as SessionResourceKey[];
 const primaryResource =
 	resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
