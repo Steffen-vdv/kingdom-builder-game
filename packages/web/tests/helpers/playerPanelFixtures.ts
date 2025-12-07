@@ -15,7 +15,7 @@ export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
 	mockGame: GameEngineContextValue;
 	resourceForecast: Record<string, number>;
-	/** V2 IDs for secondary resources that should be visible in tests */
+	/** V2 IDs for non-primary resources that should be visible in tests */
 	displayableSecondaryResourceIds: string[];
 	secondaryForecast: Record<string, number>;
 	registries: SessionRegistries;
@@ -23,22 +23,23 @@ export interface PlayerPanelFixtures {
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
 }
 
+type ResourceCatalog = ReturnType<
+	typeof createTestSessionScaffold
+>['resourceCatalogV2'];
+type CategoryEntry = { type: string; id: string };
+
 /**
  * Resolves all V2 resource IDs belonging to a category by expanding groups.
  */
 function resolveResourceIdsForCategory(
-	catalog: ReturnType<typeof createTestSessionScaffold>['resourceCatalogV2'],
-	categoryId: string,
+	catalog: ResourceCatalog,
+	category: { contents?: unknown },
 ): string[] {
-	const category = catalog.categories.byId[categoryId];
 	if (!category || !('contents' in category)) {
 		return [];
 	}
 	const resourceIds: string[] = [];
-	for (const entry of category.contents as Array<{
-		type: string;
-		id: string;
-	}>) {
+	for (const entry of category.contents as CategoryEntry[]) {
 		if (entry.type === 'resource') {
 			resourceIds.push(entry.id);
 		} else if (entry.type === 'group') {
@@ -53,6 +54,24 @@ function resolveResourceIdsForCategory(
 	return resourceIds;
 }
 
+/**
+ * Finds the primary category by checking the isPrimary property.
+ */
+function findPrimaryCategory(catalog: ResourceCatalog) {
+	return catalog.categories.ordered.find(
+		(cat) => 'isPrimary' in cat && cat.isPrimary === true,
+	);
+}
+
+/**
+ * Finds all non-primary categories.
+ */
+function findNonPrimaryCategories(catalog: ResourceCatalog) {
+	return catalog.categories.ordered.filter(
+		(cat) => !('isPrimary' in cat) || cat.isPrimary !== true,
+	);
+}
+
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	const activePlayerId = 'player-1' as SessionPlayerId;
 	const opponentId = 'player-2' as SessionPlayerId;
@@ -63,19 +82,16 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		ruleSnapshot,
 		resourceCatalogV2,
 	} = createTestSessionScaffold();
-	// Get primary and secondary resource IDs directly from V2 catalog
-	const primaryResourceIds = resolveResourceIdsForCategory(
-		resourceCatalogV2,
-		'category:primary',
+	// Find primary category by isPrimary property, not by ID
+	const primaryCategory = findPrimaryCategory(resourceCatalogV2);
+	const primaryResourceIds = primaryCategory
+		? resolveResourceIdsForCategory(resourceCatalogV2, primaryCategory)
+		: [];
+	// Find all non-primary categories and collect their resources
+	const nonPrimaryCategories = findNonPrimaryCategories(resourceCatalogV2);
+	const nonPrimaryResourceIds = nonPrimaryCategories.flatMap((category) =>
+		resolveResourceIdsForCategory(resourceCatalogV2, category),
 	);
-	const secondaryResourceIds = resolveResourceIdsForCategory(
-		resourceCatalogV2,
-		'category:secondary',
-	);
-	// Find max-population resource to exclude from secondary display
-	const maxPopulationId =
-		secondaryResourceIds.find((id) => id.includes('max-population')) ??
-		'resource:core:max-population';
 	// Build valuesV2 directly using V2 IDs
 	const valuesV2: Record<string, number> = {};
 	const resourceTouchedV2: Record<string, boolean> = {};
@@ -83,17 +99,14 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	for (const [index, resourceId] of primaryResourceIds.entries()) {
 		valuesV2[resourceId] = index + 2;
 	}
-	// Populate secondary resources
-	let secondaryIndex = 0;
-	for (const resourceId of secondaryResourceIds) {
-		if (resourceId === maxPopulationId) {
-			continue;
-		}
-		const value = secondaryIndex % 2 === 0 ? secondaryIndex + 1 : 0;
+	// Populate non-primary resources
+	let nonPrimaryIndex = 0;
+	for (const resourceId of nonPrimaryResourceIds) {
+		const value = nonPrimaryIndex % 2 === 0 ? nonPrimaryIndex + 1 : 0;
 		valuesV2[resourceId] = value;
-		// Mark all secondary resources as touched for visibility
+		// Mark all non-primary resources as touched for visibility
 		resourceTouchedV2[resourceId] = true;
-		secondaryIndex += 1;
+		nonPrimaryIndex += 1;
 	}
 	// Build legacy resource object from V2 values for backward compat
 	const resourceKeys = Object.keys(sessionRegistries.resources);
@@ -212,12 +225,9 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		},
 		{},
 	);
-	// Determine which secondary resources should be visible based on touched
-	const displayableSecondaryResourceIds = secondaryResourceIds.filter(
+	// Determine which non-primary resources should be visible based on touched
+	const displayableSecondaryResourceIds = nonPrimaryResourceIds.filter(
 		(resourceId) => {
-			if (resourceId === maxPopulationId) {
-				return false;
-			}
 			const value = valuesV2[resourceId] ?? 0;
 			if (value !== 0) {
 				return true;
