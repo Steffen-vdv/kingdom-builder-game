@@ -2,7 +2,7 @@ export const Stat = {
 	/** Maximum population capacity */
 	populationMax: 'resource:core:max-population',
 	/** Parent resource aggregating all population roles (auto-computed sum) */
-	populationTotal: 'resource:core:total',
+	populationTotal: 'resource:core:total-population',
 	armyStrength: 'resource:core:army-strength',
 	fortificationStrength: 'resource:core:fortification-strength',
 	absorption: 'resource:core:absorption',
