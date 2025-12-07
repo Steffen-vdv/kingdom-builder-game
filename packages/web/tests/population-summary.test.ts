@@ -57,7 +57,7 @@ describe('population resource effect translation', () => {
 			resources: {},
 			population: {},
 		}),
-		resourceMetadataV2: {
+		resourceMetadata: {
 			[populationResourceId]: {
 				icon: '👑',
 				label: 'Council',

@@ -20,11 +20,11 @@ import {
 	wrapRegistry,
 } from './contextHelpers';
 import {
-	cloneResourceCatalogV2,
-	createResourceV2GroupMetadataSelectors,
-	createResourceV2MetadataSelectors,
+	cloneResourceCatalog,
+	createResourceGroupMetadataSelectors,
+	createResourceMetadataSelectors,
 	createSignedResourceGainSelectors,
-} from './resourceV2';
+} from './resource';
 import {
 	EMPTY_PASSIVE_DEFINITIONS,
 	cloneRuleSnapshot,
@@ -103,18 +103,16 @@ export function createTranslationContext(
 	const assets = createTranslationAssets(registries, metadata, {
 		rules: options.ruleSnapshot,
 	});
-	const resourceCatalogV2 = cloneResourceCatalogV2(
-		session.game.resourceCatalogV2,
+	const resourceCatalog = cloneResourceCatalog(session.game.resourceCatalog);
+	const resourceMetadata = createResourceMetadataSelectors(
+		resourceCatalog,
+		session.resourceMetadata ?? metadata.resources,
+		metadata.resources,
 	);
-	const resourceMetadataV2 = createResourceV2MetadataSelectors(
-		resourceCatalogV2,
-		session.resourceMetadataV2 ?? metadata.resourcesV2,
-		metadata.resourcesV2,
-	);
-	const resourceGroupMetadataV2 = createResourceV2GroupMetadataSelectors(
-		resourceCatalogV2,
-		session.resourceGroupMetadataV2 ?? metadata.resourceGroupsV2,
-		metadata.resourceGroupsV2,
+	const resourceGroupMetadata = createResourceGroupMetadataSelectors(
+		resourceCatalog,
+		session.resourceGroupMetadata ?? metadata.resourceGroups,
+		metadata.resourceGroups,
 	);
 	const signedResourceGains = createSignedResourceGainSelectors(
 		session.recentResourceGains ?? [],
@@ -199,9 +197,9 @@ export function createTranslationContext(
 		compensations: cloneCompensations(session.compensations),
 		rules: ruleSnapshot,
 		assets,
-		resourcesV2: resourceCatalogV2,
-		resourceMetadataV2,
-		resourceGroupMetadataV2,
+		resources: resourceCatalog,
+		resourceMetadata,
+		resourceGroupMetadata,
 		signedResourceGains,
 	});
 }

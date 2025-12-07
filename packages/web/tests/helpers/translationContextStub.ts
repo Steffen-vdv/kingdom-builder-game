@@ -5,9 +5,9 @@ import type {
 	TranslationPassives,
 	TranslationPlayer,
 	TranslationRegistry,
-	TranslationResourceCatalogV2,
-	TranslationResourceV2Metadata,
-	TranslationResourceV2MetadataSelectors,
+	TranslationResourceCatalog,
+	TranslationResourceMetadata,
+	TranslationResourceMetadataSelectors,
 	TranslationSignedResourceGainSelectors,
 } from '../../src/translation/context';
 import type { SessionRuleSnapshot } from '@kingdom-builder/protocol';
@@ -49,19 +49,18 @@ const EMPTY_PASSIVES: TranslationPassives = {
 	},
 };
 
-const EMPTY_RESOURCE_CATALOG: TranslationResourceCatalogV2 = Object.freeze({
+const EMPTY_RESOURCE_CATALOG: TranslationResourceCatalog = Object.freeze({
 	resources: { byId: {}, ordered: [] },
 	groups: { byId: {}, ordered: [] },
 });
 
-const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceV2Metadata[] =
+const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceMetadata[] =
 	Object.freeze([]);
 
-const createEmptyResourceMetadata = (
-	id: string,
-): TranslationResourceV2Metadata => Object.freeze({ id, label: id });
+const createEmptyResourceMetadata = (id: string): TranslationResourceMetadata =>
+	Object.freeze({ id, label: id });
 
-const EMPTY_RESOURCE_METADATA: TranslationResourceV2MetadataSelectors =
+const EMPTY_RESOURCE_METADATA: TranslationResourceMetadataSelectors =
 	Object.freeze({
 		list: () => EMPTY_RESOURCE_METADATA_LIST,
 		get: (id: string) => createEmptyResourceMetadata(id),
@@ -138,7 +137,7 @@ export function createTranslationContextStub(
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: SessionRuleSnapshot;
-		resourceMetadataV2?: Record<string, Partial<TranslationResourceV2Metadata>>;
+		resourceMetadata?: Record<string, Partial<TranslationResourceMetadata>>;
 	},
 ): TranslationContext {
 	const rules: SessionRuleSnapshot =
@@ -148,24 +147,24 @@ export function createTranslationContextStub(
 			tierDefinitions: [],
 			winConditions: [],
 		} as SessionRuleSnapshot);
-	const customResourceMetadataV2 = options.resourceMetadataV2 ?? {};
-	const resourceMetadataV2: TranslationResourceV2MetadataSelectors =
-		Object.keys(customResourceMetadataV2).length > 0
+	const customResourceMetadata = options.resourceMetadata ?? {};
+	const resourceMetadata: TranslationResourceMetadataSelectors =
+		Object.keys(customResourceMetadata).length > 0
 			? {
 					list: () =>
-						Object.entries(customResourceMetadataV2).map(([id, meta]) => ({
+						Object.entries(customResourceMetadata).map(([id, meta]) => ({
 							id,
 							label: meta.label ?? id,
 							...meta,
 						})),
 					get: (id: string) => {
-						const meta = customResourceMetadataV2[id];
+						const meta = customResourceMetadata[id];
 						if (meta) {
 							return { id, label: meta.label ?? id, ...meta };
 						}
 						return createEmptyResourceMetadata(id);
 					},
-					has: (id: string) => id in customResourceMetadataV2,
+					has: (id: string) => id in customResourceMetadata,
 				}
 			: EMPTY_RESOURCE_METADATA;
 	return {
@@ -186,9 +185,9 @@ export function createTranslationContextStub(
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
 		assets: EMPTY_ASSETS,
-		resourcesV2: EMPTY_RESOURCE_CATALOG,
-		resourceMetadataV2,
-		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
+		resources: EMPTY_RESOURCE_CATALOG,
+		resourceMetadata,
+		resourceGroupMetadata: EMPTY_RESOURCE_METADATA,
 		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,
 	};
 }

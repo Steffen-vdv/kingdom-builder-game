@@ -109,7 +109,7 @@ function buildActionLog(
 	}
 	const items: SummaryEntry[] = [];
 	entry.defender.forEach((diff) => {
-		// Transfer summaries are keyed by ResourceV2 key
+		// Transfer summaries are keyed by Resource key
 		const summary = transferSummaries.get(diff.key);
 		let options;
 		if (summary?.percent !== undefined) {

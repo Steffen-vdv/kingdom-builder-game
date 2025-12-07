@@ -10,8 +10,8 @@ import type { SessionResourceDefinition } from '@kingdom-builder/protocol/sessio
 import {
 	createSyntheticPlowContent,
 	SYNTHETIC_RESOURCES,
-	SYNTHETIC_RESOURCES_V2,
-	SYNTHETIC_RESOURCE_V2_KEYS,
+	SYNTHETIC_RESOURCES,
+	SYNTHETIC_RESOURCE_KEYS,
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_PASSIVE_INFO,
@@ -29,8 +29,8 @@ import type {
 	TranslationActionCategoryRegistry,
 } from '../src/translation/context';
 import {
-	cloneResourceCatalogV2,
-	createResourceV2MetadataSelectors,
+	cloneResourceCatalog,
+	createResourceMetadataSelectors,
 } from '../src/translation/context';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
@@ -70,7 +70,7 @@ function asTimelineLines(
 	return lines;
 }
 
-const RESOURCE_KEYS = Object.values(SYNTHETIC_RESOURCE_V2_KEYS);
+const RESOURCE_KEYS = Object.values(SYNTHETIC_RESOURCE_KEYS);
 
 vi.mock('@kingdom-builder/engine', async () => {
 	return await import('../../engine/src');
@@ -117,7 +117,7 @@ describe('sub-action logging', () => {
 			populations: synthetic.factory.populations,
 			phases: synthetic.phases,
 			rules: synthetic.rules,
-			resourceCatalogV2: synthetic.resourceCatalogV2,
+			resourceCatalog: synthetic.resourceCatalog,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(synthetic.start), engineContext);
@@ -127,24 +127,23 @@ describe('sub-action logging', () => {
 			resources: {
 				...baseAssets.resources,
 				...SYNTHETIC_RESOURCES,
-				...SYNTHETIC_RESOURCES_V2,
+				...SYNTHETIC_RESOURCES,
 			},
 			land: SYNTHETIC_LAND_INFO,
 			slot: SYNTHETIC_SLOT_INFO,
 			passive: SYNTHETIC_PASSIVE_INFO,
 		};
 		engineContext.activePlayer.actions.add(synthetic.plow.id);
-		engineContext.activePlayer.resourceValues[SYNTHETIC_RESOURCE_V2_KEYS.gold] =
+		engineContext.activePlayer.resourceValues[SYNTHETIC_RESOURCE_KEYS.gold] =
 			10;
-		engineContext.activePlayer.resourceValues[SYNTHETIC_RESOURCE_V2_KEYS.ap] =
-			1;
+		engineContext.activePlayer.resourceValues[SYNTHETIC_RESOURCE_KEYS.ap] = 1;
 		const before = captureActivePlayer(engineContext);
 		const costs = getActionCosts(synthetic.plow.id, engineContext);
 		const traces = performAction(synthetic.plow.id, engineContext);
 		const after = captureActivePlayer(engineContext);
 		// Create resource metadata selectors from the catalog
-		const catalogClone = cloneResourceCatalogV2(synthetic.resourceCatalogV2);
-		const resourceMetadataV2 = createResourceV2MetadataSelectors(catalogClone);
+		const catalogClone = cloneResourceCatalog(synthetic.resourceCatalog);
+		const resourceMetadata = createResourceMetadataSelectors(catalogClone);
 		// Create stub action categories
 		const actionCategories: TranslationActionCategoryRegistry = {
 			categories: new Map(),
@@ -162,7 +161,7 @@ describe('sub-action logging', () => {
 			...engineContext,
 			activePlayer: diffActivePlayer,
 			actionCategories,
-			resourceMetadataV2,
+			resourceMetadata,
 		});
 		const translationContext = {
 			...engineContext,
@@ -185,10 +184,10 @@ describe('sub-action logging', () => {
 			if (!amount) {
 				continue;
 			}
-			const info = SYNTHETIC_RESOURCES_V2[key];
+			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
-			const beforeResource = before.valuesV2?.[key] ?? 0;
+			const beforeResource = before.values?.[key] ?? 0;
 			const afterResource = beforeResource - amount;
 			costLines.push({
 				text: `${icon}${label} -${amount} (${beforeResource}→${afterResource})`,
@@ -230,7 +229,7 @@ describe('sub-action logging', () => {
 			return;
 		}
 		const resourceDefinitions = Object.fromEntries(
-			Object.entries(SYNTHETIC_RESOURCES_V2).map(([key, info]) => [
+			Object.entries(SYNTHETIC_RESOURCES).map(([key, info]) => [
 				key,
 				{
 					key,

@@ -4,18 +4,18 @@ import type { RuleSet } from '../../src/services/index.ts';
 import {
 	PhaseTrigger,
 	RULES,
-	resourceV2,
-	createResourceV2Registry,
+	resource,
+	createResourceRegistry,
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	resourceAmountParams,
 	resourcePercentFromResourceParams,
-} from '../helpers/resourceV2Params.ts';
+} from '../helpers/resourceParams.ts';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 
 const resourceKeys = {
 	ap: 'synthetic:resource:ap',
@@ -232,54 +232,46 @@ export function createPhaseTestEnvironment() {
 		winConditions: RULES.winConditions,
 	};
 
-	// Create synthetic ResourceV2 definitions for testing
+	// Create synthetic Resource definitions for testing
 	const syntheticResourceDefs = [
-		resourceV2(resourceKeys.ap)
+		resource(resourceKeys.ap)
 			.label('Action Points')
 			.icon('⚡')
 			.lowerBound(0)
 			.build(),
-		resourceV2(resourceKeys.gold)
-			.label('Gold')
-			.icon('💰')
-			.lowerBound(0)
-			.build(),
-		resourceV2(statKeys.army)
+		resource(resourceKeys.gold).label('Gold').icon('💰').lowerBound(0).build(),
+		resource(statKeys.army)
 			.label('Army Strength')
 			.icon('⚔️')
 			.lowerBound(0)
 			.build(),
-		resourceV2(statKeys.fort)
+		resource(statKeys.fort)
 			.label('Fort Strength')
 			.icon('🏰')
 			.lowerBound(0)
 			.build(),
-		resourceV2(statKeys.growth)
+		resource(statKeys.growth)
 			.label('Growth')
 			.icon('📈')
 			.lowerBound(0)
 			.allowDecimal()
 			.build(),
-		resourceV2(statKeys.war)
+		resource(statKeys.war)
 			.label('War Weariness')
 			.icon('😟')
 			.lowerBound(0)
 			.build(),
-		resourceV2(council.id).label('Council').icon('👔').lowerBound(0).build(),
-		resourceV2(legion.id).label('Legion').icon('🛡️').lowerBound(0).build(),
-		resourceV2(fortifier.id)
-			.label('Fortifier')
-			.icon('🏗️')
-			.lowerBound(0)
-			.build(),
+		resource(council.id).label('Council').icon('👔').lowerBound(0).build(),
+		resource(legion.id).label('Legion').icon('🛡️').lowerBound(0).build(),
+		resource(fortifier.id).label('Fortifier').icon('🏗️').lowerBound(0).build(),
 	];
 
 	// Create combined registry with real + synthetic resources
 	const allResourceDefs = [
-		...RESOURCE_V2_REGISTRY.ordered,
+		...RESOURCE_REGISTRY.ordered,
 		...syntheticResourceDefs,
 	];
-	const testResourceRegistry = createResourceV2Registry(allResourceDefs);
+	const testResourceRegistry = createResourceRegistry(allResourceDefs);
 
 	const engineContext = createEngine({
 		actions: content.actions,
@@ -288,9 +280,9 @@ export function createPhaseTestEnvironment() {
 		populations: content.populations,
 		phases,
 		rules,
-		resourceCatalogV2: {
+		resourceCatalog: {
 			resources: testResourceRegistry,
-			groups: RESOURCE_GROUP_V2_REGISTRY,
+			groups: RESOURCE_GROUP_REGISTRY,
 		},
 		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});

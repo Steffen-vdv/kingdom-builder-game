@@ -2,8 +2,8 @@ import { SessionManager } from '../../src/session/SessionManager.js';
 import type { SessionManagerOptions } from '../../src/session/SessionManager.js';
 import {
 	createContentFactory,
-	createResourceV2Registries,
-	resourceV2Definition,
+	createResourceRegistries,
+	resourceDefinition,
 } from '@kingdom-builder/testing';
 import type { EngineSession } from '@kingdom-builder/engine';
 import {
@@ -42,15 +42,15 @@ export function createSyntheticSessionManager(
 	const factory = createContentFactory();
 	const costResourceId = 'resource:synthetic:cost';
 	const gainResourceId = 'resource:synthetic:gain';
-	// Create ResourceV2 definitions for the synthetic resources
-	const { resources, groups } = createResourceV2Registries({
+	// Create Resource definitions for the synthetic resources
+	const { resources, groups } = createResourceRegistries({
 		resources: [
-			resourceV2Definition({
+			resourceDefinition({
 				id: costResourceId,
 				metadata: { label: 'Cost', icon: '💰' },
 				bounds: { lowerBound: 0 },
 			}),
-			resourceV2Definition({
+			resourceDefinition({
 				id: gainResourceId,
 				metadata: { label: 'Gain', icon: '⭐' },
 				bounds: { lowerBound: 0 },
@@ -199,7 +199,7 @@ export function createSyntheticSessionManager(
 		populations: engineOverrides.populations ?? factory.populations,
 		phases: engineOverrides.phases ?? phases,
 		rules: engineOverrides.rules ?? rules,
-		resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? {
+		resourceCatalog: engineOverrides.resourceCatalog ?? {
 			resources,
 			groups,
 		},

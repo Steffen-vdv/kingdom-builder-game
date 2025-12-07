@@ -1,14 +1,14 @@
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import type {
 	SessionPlayerId,
-	SessionResourceCatalogV2,
+	SessionResourceCatalog,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { describe, expect, it } from 'vitest';
 import {
-	createResourceV2Registries,
-	resourceV2Definition,
-	resourceV2GroupDefinition,
+	createResourceRegistries,
+	resourceDefinition,
+	resourceGroupDefinition,
 } from '@kingdom-builder/testing';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
@@ -32,26 +32,26 @@ describe('createTranslationContext', () => {
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
-		const resourceV2Id = 'resource:gold';
-		const resourceGroupV2Id = 'resource-group:economy';
-		const { resources: resourceRegistryV2, groups: resourceGroupRegistryV2 } =
-			createResourceV2Registries({
+		const resourceId = 'resource:gold';
+		const resourceGroupId = 'resource-group:economy';
+		const { resources: resourceRegistry, groups: resourceGroupRegistry } =
+			createResourceRegistries({
 				resources: [
-					resourceV2Definition({
-						id: resourceV2Id,
+					resourceDefinition({
+						id: resourceId,
 						metadata: {
 							label: 'Gold Reserve',
 							icon: '🥇',
 							description: 'Vaulted wealth for the crown.',
 							order: 0,
-							group: { id: resourceGroupV2Id, order: 0 },
+							group: { id: resourceGroupId, order: 0 },
 						},
 						bounds: { lowerBound: 0 },
 					}),
 				],
 				groups: [
-					resourceV2GroupDefinition({
-						id: resourceGroupV2Id,
+					resourceGroupDefinition({
+						id: resourceGroupId,
 						order: 0,
 						parent: {
 							label: 'Economic Portfolio',
@@ -63,10 +63,10 @@ describe('createTranslationContext', () => {
 					}),
 				],
 			});
-		const resourceCatalogV2: SessionResourceCatalogV2 = Object.freeze({
-			resources: resourceRegistryV2,
-			groups: resourceGroupRegistryV2,
-		}) as SessionResourceCatalogV2;
+		const resourceCatalog: SessionResourceCatalog = Object.freeze({
+			resources: resourceRegistry,
+			groups: resourceGroupRegistry,
+		}) as SessionResourceCatalog;
 		const phases: SessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
@@ -97,17 +97,17 @@ describe('createTranslationContext', () => {
 					description: 'The royal treasury fuels your ambitions.',
 				},
 			},
-			resourcesV2: {
-				[resourceV2Id]: {
-					label: 'V2 Treasury',
+			resources: {
+				[resourceId]: {
+					label: 'Treasury',
 					icon: '🏦',
-					description: 'Translation metadata for ResourceV2.',
+					description: 'Translation metadata for Resource.',
 					displayAsPercent: true,
 					format: { prefix: '+', percent: true },
 				},
 			},
-			resourceGroupsV2: {
-				[resourceGroupV2Id]: {
+			resourceGroups: {
+				[resourceGroupId]: {
 					label: 'Economic Overview',
 					icon: '📊',
 				},
@@ -164,12 +164,12 @@ describe('createTranslationContext', () => {
 			id: config.id,
 			name: config.name,
 			resources: { [resourceKey]: config.resource },
-			valuesV2: { [resourceV2Id]: config.resource },
+			values: { [resourceId]: config.resource },
 			stats: { [statKey]: config.stat },
-			resourceTouchedV2: {},
+			resourceTouched: {},
 			population: { [populationId]: config.population },
-			resourceBoundsV2: {
-				[resourceV2Id]: { lowerBound: 0, upperBound: 20 },
+			resourceBounds: {
+				[resourceId]: { lowerBound: 0, upperBound: 20 },
 			},
 			lands: [],
 			buildings: config.buildings ?? [],
@@ -218,13 +218,13 @@ describe('createTranslationContext', () => {
 				players,
 				activePlayerId: 'A',
 				opponentId: 'B',
-				resourceCatalogV2,
+				resourceCatalog,
 			},
 			phases,
 			actionCostResource: resourceKey,
 			recentResourceGains: [
 				{ key: resourceKey, amount: 3 },
-				{ key: resourceV2Id, amount: -2 },
+				{ key: resourceId, amount: -2 },
 			],
 			compensations: {
 				A: compensation(2),
@@ -251,15 +251,15 @@ describe('createTranslationContext', () => {
 				B: [],
 			},
 			metadata,
-			resourceMetadataV2: {
-				[resourceV2Id]: {
+			resourceMetadata: {
+				[resourceId]: {
 					label: 'Catalog Gold',
 					icon: '🥇',
 					description: 'Catalog-provided metadata.',
 				},
 			},
-			resourceGroupMetadataV2: {
-				[resourceGroupV2Id]: {
+			resourceGroupMetadata: {
+				[resourceGroupId]: {
 					label: 'Catalog Economy',
 					icon: '💼',
 				},
@@ -287,15 +287,15 @@ describe('createTranslationContext', () => {
 				opponent: context.opponent.id,
 			},
 			recentResourceGains: context.recentResourceGains,
-			resourcesV2: {
-				resource: context.resourcesV2.resources.byId[resourceV2Id],
-				group: context.resourcesV2.groups.byId[resourceGroupV2Id],
+			resources: {
+				resource: context.resources.resources.byId[resourceId],
+				group: context.resources.groups.byId[resourceGroupId],
 			},
-			resourceMetadataV2: {
-				resource: context.resourceMetadataV2.get(resourceV2Id),
-				group: context.resourceGroupMetadataV2.get(resourceGroupV2Id),
-				fallback: context.resourceMetadataV2.get('resource:missing'),
-				hasExisting: context.resourceMetadataV2.has(resourceV2Id),
+			resourceMetadata: {
+				resource: context.resourceMetadata.get(resourceId),
+				group: context.resourceGroupMetadata.get(resourceGroupId),
+				fallback: context.resourceMetadata.get('resource:missing'),
+				hasExisting: context.resourceMetadata.has(resourceId),
 			},
 			signedResourceGains: {
 				list: context.signedResourceGains.list(),
@@ -457,7 +457,7 @@ describe('createTranslationContext', () => {
 			      "id": "council",
 			    },
 			  },
-			  "resourceMetadataV2": {
+			  "resourceMetadata": {
 			    "fallback": {
 			      "id": "resource:missing",
 			      "label": "resource:missing",
@@ -477,7 +477,7 @@ describe('createTranslationContext', () => {
 			      "label": "Catalog Gold",
 			    },
 			  },
-			  "resourcesV2": {
+			  "resources": {
 			    "group": {
 			      "id": "resource-group:economy",
 			      "order": 0,

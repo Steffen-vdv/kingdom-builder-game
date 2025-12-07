@@ -19,7 +19,7 @@ import {
 	SYNTHETIC_POPULATION_ROLES,
 	SYNTHETIC_POPULATION_ROLE_ID,
 	SYNTHETIC_LAND_INFO,
-	SYNTHETIC_RESOURCE_CATALOG_V2,
+	SYNTHETIC_RESOURCE_CATALOG,
 	SKIP_SETUP_ACTION_IDS,
 	buildStartConfigEffects,
 } from './fixtures/syntheticTaxLog';
@@ -30,8 +30,8 @@ import {
 } from '../src/translation/log';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
-	cloneResourceCatalogV2,
-	createResourceV2MetadataSelectors,
+	cloneResourceCatalog,
+	createResourceMetadataSelectors,
 } from '../src/translation/context';
 
 const RESOURCE_KEYS = Object.keys(
@@ -51,8 +51,8 @@ function captureActivePlayer(engineContext: ReturnType<typeof createEngine>) {
 function makeTranslationDiffContext(
 	engineContext: ReturnType<typeof createEngine>,
 ) {
-	const catalogV2 = cloneResourceCatalogV2(SYNTHETIC_RESOURCE_CATALOG_V2);
-	const resourceMetadataV2 = createResourceV2MetadataSelectors(catalogV2);
+	const catalog = cloneResourceCatalog(SYNTHETIC_RESOURCE_CATALOG);
+	const resourceMetadata = createResourceMetadataSelectors(catalog);
 	return createTranslationDiffContext({
 		activePlayer: captureActivePlayer(engineContext),
 		buildings: engineContext.buildings,
@@ -60,7 +60,7 @@ function makeTranslationDiffContext(
 		actionCategories: { list: () => [], get: () => null, has: () => false },
 		passives: null,
 		assets: SYNTHETIC_ASSETS,
-		resourceMetadataV2,
+		resourceMetadata,
 	});
 }
 
@@ -74,7 +74,7 @@ describe('log resource sources', () => {
 			populations: scenario.factory.populations,
 			phases: scenario.phases,
 			rules: scenario.rules,
-			resourceCatalogV2: scenario.resourceCatalogV2,
+			resourceCatalog: scenario.resourceCatalog,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(scenario.start), engineContext);
@@ -118,8 +118,8 @@ describe('log resource sources', () => {
 		const goldInfo = SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin];
 		const farmIcon =
 			engineContext.developments.get(SYNTHETIC_IDS.farmDevelopment)?.icon || '';
-		const beforeCoins = before.valuesV2[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const afterCoins = after.valuesV2[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const beforeCoins = before.values[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.values[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = afterCoins - beforeCoins;
 		const expectedFarmIncomeLine =
 			`${goldInfo.icon} ${goldInfo.label} ${delta >= 0 ? '+' : ''}` +
@@ -137,7 +137,7 @@ describe('log resource sources', () => {
 			populations: scenario.factory.populations,
 			phases: scenario.phases,
 			rules: scenario.rules,
-			resourceCatalogV2: scenario.resourceCatalogV2,
+			resourceCatalog: scenario.resourceCatalog,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(scenario.start), engineContext);
@@ -194,7 +194,7 @@ describe('log resource sources', () => {
 			populations: scenario.factory.populations,
 			phases: scenario.phases,
 			rules: scenario.rules,
-			resourceCatalogV2: scenario.resourceCatalogV2,
+			resourceCatalog: scenario.resourceCatalog,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(scenario.start), engineContext);
@@ -236,8 +236,8 @@ describe('log resource sources', () => {
 			line.startsWith(`${goldInfo.icon} ${goldInfo.label}`),
 		);
 		expect(goldLine).toBeTruthy();
-		const beforeCoins = before.valuesV2[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const afterCoins = after.valuesV2[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const beforeCoins = before.values[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.values[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = afterCoins - beforeCoins;
 		const icons = effects
 			.filter(
@@ -294,7 +294,7 @@ describe('log resource sources', () => {
 			engineContext.buildings.get(SYNTHETIC_IDS.raidersGuild)?.icon || '';
 		expect(raidersGuildIcon).not.toBe('');
 		expect(icons).toContain(raidersGuildIcon);
-		// In ResourceV2, population counts are stored in resourceValues
+		// In Resource, population counts are stored in resourceValues
 		const zeroPopulationIcons = engineContext.populations
 			.keys()
 			.filter(

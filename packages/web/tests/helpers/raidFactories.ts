@@ -20,7 +20,7 @@ import {
 	PLUNDER_PERCENT,
 	TIER_RESOURCE_KEY,
 	SYNTH_RESOURCE_METADATA,
-	SYNTH_RESOURCE_CATALOG_V2,
+	SYNTH_RESOURCE_CATALOG,
 	type CombatStatKey,
 	type SyntheticDescriptor,
 } from './raidConfig';
@@ -91,7 +91,7 @@ function createBaseEngine() {
 		populations: factory.populations,
 		phases: PHASES,
 		rules: RULES,
-		resourceCatalogV2: SYNTH_RESOURCE_CATALOG_V2,
+		resourceCatalog: SYNTH_RESOURCE_CATALOG,
 		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
 	return { factory, engineContext } as const;
@@ -223,7 +223,7 @@ export function createPartialStatEngineContext() {
 }
 
 export function getStat(
-	context: Pick<TranslationContext, 'resourceMetadataV2'>,
+	context: Pick<TranslationContext, 'resourceMetadata'>,
 	key: string,
 ): AttackRegistryDescriptor {
 	return selectAttackStatDescriptor(context, key);

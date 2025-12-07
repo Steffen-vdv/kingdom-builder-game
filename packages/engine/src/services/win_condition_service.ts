@@ -124,7 +124,7 @@ export class WinConditionService {
 		if (resourceTrigger.resourceId && resourceTrigger.resourceId.length > 0) {
 			return resourceTrigger.resourceId;
 		}
-		// key IS the ResourceV2 ID directly (no mapper needed)
+		// key IS the Resource ID directly (no mapper needed)
 		return resourceTrigger.key;
 	}
 

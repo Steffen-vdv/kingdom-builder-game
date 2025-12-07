@@ -8,11 +8,11 @@ import {
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import { simulateUpcomingPhases } from '../../src';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 function resetPlayerState(context: ReturnType<typeof createTestEngine>) {
 	const player = context.game.players[0]!;
-	// Reset ResourceV2 values - keys ARE the ResourceV2 IDs now
+	// Reset Resource values - keys ARE the Resource IDs now
 	for (const resourceId of Object.values(CResource)) {
 		player.resourceValues[resourceId] = 0;
 	}
@@ -67,13 +67,13 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			},
 		];
 		land.upkeep = { [CResource.gold]: upkeepCost };
-		// key IS the ResourceV2 ID directly
+		// key IS the Resource ID directly
 		player.resourceValues[CResource.gold] = 10;
 
 		const result = simulateUpcomingPhases(context, player.id);
 
 		expect(result.playerId).toBe(player.id);
-		expect(result.delta.valuesV2[CResource.gold]).toBe(goldGain - upkeepCost);
+		expect(result.delta.values[CResource.gold]).toBe(goldGain - upkeepCost);
 		expect(
 			result.steps
 				.filter((step) => step.player.id === player.id)
@@ -114,8 +114,8 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			context.game.players.find((candidate) => candidate.id === player.id),
 		);
 		expect(firstStep.effects[0]).not.toBe(originalEffect);
-		// Snapshot uses valuesV2, not resourceValues
-		firstStep.player.valuesV2[CResource.gold] = 99;
+		// Snapshot uses values, not resourceValues
+		firstStep.player.values[CResource.gold] = 99;
 		firstStep.effects.push({
 			type: 'resource',
 			method: 'add',
@@ -125,7 +125,7 @@ describe('simulateUpcomingPhases (runtime)', () => {
 			player.resourceValues[CResource.gold],
 		);
 		expect(land.onGainIncomeStep).toHaveLength(1);
-		expect(firstStep.player.valuesV2[CResource.gold]).toBe(99);
+		expect(firstStep.player.values[CResource.gold]).toBe(99);
 	});
 
 	it('enforces iteration limits to prevent runaway simulations', () => {

@@ -7,11 +7,11 @@ import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
 } from '@kingdom-builder/testing';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import {
 	Resource as CResource,
 	PHASES as REAL_PHASES,
@@ -26,7 +26,7 @@ import type { SessionRegistriesPayload } from '@kingdom-builder/protocol';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
 
-// Use actual ResourceV2 IDs - they ARE the resource keys directly
+// Use actual Resource IDs - they ARE the resource keys directly
 const RESOURCE_AP = CResource.ap;
 const RESOURCE_GOLD = CResource.gold;
 
@@ -43,8 +43,8 @@ if (!REQUIREMENTS.has(FAILURE_REQUIREMENT_ID)) {
 // Use real phases and rules from contents for proper initial setup integration
 
 const BASE_RESOURCE_CATALOG: RuntimeResourceContent = {
-	resources: RESOURCE_V2_REGISTRY,
-	groups: RESOURCE_GROUP_V2_REGISTRY,
+	resources: RESOURCE_REGISTRY,
+	groups: RESOURCE_GROUP_REGISTRY,
 };
 
 type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
@@ -89,7 +89,7 @@ function createGateway(options?: CreateGatewayOptions) {
 		populations: REAL_POPULATIONS,
 		phases: REAL_PHASES,
 		rules: REAL_RULES,
-		resourceCatalogV2: BASE_RESOURCE_CATALOG,
+		resourceCatalog: BASE_RESOURCE_CATALOG,
 		devMode: options?.devMode,
 	});
 	return {
@@ -113,11 +113,11 @@ describe('createLocalSessionGateway', () => {
 		expect(created.snapshot.game.devMode).toBe(true);
 		expect(created.snapshot.game.players[0]?.name).toBe('Hero');
 		expect(created.registries.actionCategories).toEqual({});
-		expect(created.registries.resourcesV2).toEqual({});
-		expect(created.registries.resourceGroupsV2).toEqual({});
+		expect(created.registries.resources).toEqual({});
+		expect(created.registries.resourceGroups).toEqual({});
 		const firstPlayer = created.snapshot.game.players[0];
 		expect(firstPlayer?.resources).toBeDefined();
-		expect(firstPlayer?.valuesV2).toBeDefined();
+		expect(firstPlayer?.values).toBeDefined();
 		const category = toSessionActionCategoryConfig(
 			createContentFactory().category(),
 		);
@@ -135,9 +135,9 @@ describe('createLocalSessionGateway', () => {
 		expect(fetched.registries.actionCategories).toEqual({});
 	});
 
-	it('clones registries including ResourceV2 payloads', async () => {
-		const resourceId = RESOURCE_V2_REGISTRY.ordered[0]!.id;
-		const groupId = RESOURCE_GROUP_V2_REGISTRY.ordered[0]!.id;
+	it('clones registries including Resource payloads', async () => {
+		const resourceId = RESOURCE_REGISTRY.ordered[0]!.id;
+		const groupId = RESOURCE_GROUP_REGISTRY.ordered[0]!.id;
 		const { gateway } = createGateway({
 			gatewayOptions: {
 				registries: {
@@ -147,26 +147,26 @@ describe('createLocalSessionGateway', () => {
 					populations: {},
 					resources: {},
 					actionCategories: {},
-					resourcesV2: {
-						[resourceId]: RESOURCE_V2_REGISTRY.byId[resourceId]!,
+					resources: {
+						[resourceId]: RESOURCE_REGISTRY.byId[resourceId]!,
 					},
-					resourceGroupsV2: {
-						[groupId]: RESOURCE_GROUP_V2_REGISTRY.byId[groupId]!,
+					resourceGroups: {
+						[groupId]: RESOURCE_GROUP_REGISTRY.byId[groupId]!,
 					},
 				},
 			},
 		});
 		const created = await gateway.createSession();
 		const registries = created.registries;
-		registries.resourcesV2[resourceId]!.label = 'Mutated gold';
-		registries.resourceGroupsV2[groupId]!.label = 'Mutated group';
+		registries.resources[resourceId]!.label = 'Mutated gold';
+		registries.resourceGroups[groupId]!.label = 'Mutated group';
 		const fetched = await gateway.fetchSnapshot({
 			sessionId: created.sessionId,
 		});
-		expect(fetched.registries.resourcesV2[resourceId]?.label).not.toBe(
+		expect(fetched.registries.resources[resourceId]?.label).not.toBe(
 			'Mutated gold',
 		);
-		expect(fetched.registries.resourceGroupsV2[groupId]?.label).not.toBe(
+		expect(fetched.registries.resourceGroups[groupId]?.label).not.toBe(
 			'Mutated group',
 		);
 	});

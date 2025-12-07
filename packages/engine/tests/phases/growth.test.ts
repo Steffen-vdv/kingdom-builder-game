@@ -7,13 +7,13 @@ describe('Growth phase', () => {
 		const { engineContext, ids, roles, resources, values } =
 			createPhaseTestEnvironment();
 		const player = engineContext.activePlayer;
-		// resources.ap IS the ResourceV2 ID directly
+		// resources.ap IS the Resource ID directly
 		const apBefore = player.resourceValues[resources.ap] ?? 0;
 		const goldBefore = player.resourceValues[resources.gold] ?? 0;
 		while (engineContext.game.currentPhase === ids.phases.growth) {
 			advance(engineContext);
 		}
-		// roles.council IS the ResourceV2 ID directly
+		// roles.council IS the Resource ID directly
 		const councils = player.resourceValues[roles.council] ?? 0;
 		expect(player.resourceValues[resources.ap]).toBe(
 			apBefore + values.councilApGain * councils,
@@ -81,7 +81,7 @@ describe('Growth phase', () => {
 	it('grows legion and fortifier stats', () => {
 		const { engineContext, ids, roles, stats } = createPhaseTestEnvironment();
 		const player = engineContext.activePlayer;
-		// roles and stats ARE ResourceV2 IDs directly
+		// roles and stats ARE Resource IDs directly
 		player.resourceValues[roles.legion] = 1;
 		player.resourceValues[roles.fortifier] = 1;
 		player.resourceValues[stats.army] = 8;

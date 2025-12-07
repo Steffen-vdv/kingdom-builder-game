@@ -27,7 +27,7 @@ import type {
 	SessionSnapshot,
 	SessionSnapshotMetadata,
 	SessionEffectLogMap,
-	SessionResourceCatalogV2,
+	SessionResourceCatalog,
 	SessionMetadataDescriptor,
 } from '@kingdom-builder/protocol';
 import type { PassiveRecordSnapshot } from './types';
@@ -37,7 +37,7 @@ import {
 	deepClone,
 	snapshotPlayer,
 } from './player_snapshot';
-import type { RuntimeResourceCatalog } from '../resource-v2';
+import type { RuntimeResourceCatalog } from '../resource';
 
 function clonePhaseStep(step: StepDef): SessionPhaseStepDefinition {
 	const cloned: SessionPhaseStepDefinition = { id: step.id };
@@ -86,7 +86,7 @@ function cloneCompensations(
 
 /**
  * Converts engine ActionTrace to protocol ActionTrace format.
- * The engine format includes resourceBoundsV2 which is not part of the
+ * The engine format includes resourceBounds which is not part of the
  * protocol's ActionPlayerSnapshot.
  */
 function convertEngineTraceToProtocol(
@@ -95,7 +95,7 @@ function convertEngineTraceToProtocol(
 	const convertSnapshot = (
 		snapshot: EngineActionTrace['before'],
 	): ActionPlayerSnapshot => ({
-		valuesV2: { ...snapshot.valuesV2 },
+		values: { ...snapshot.values },
 		buildings: [...snapshot.buildings],
 		lands: snapshot.lands.map((land) => ({
 			id: land.id,
@@ -237,9 +237,9 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 	const rules = cloneRuleSnapshot(context);
 	const effectLogs = cloneEffectLogs(context);
 	const passiveEvaluationModifiers = snapshotEvaluationModifiers(context);
-	const runtimeResourceCatalog = context.game.resourceCatalogV2;
-	const resourceMetadataV2 = buildResourceMetadata(runtimeResourceCatalog);
-	const resourceGroupMetadataV2 = buildResourceGroupMetadata(
+	const runtimeResourceCatalog = context.game.resourceCatalog;
+	const resourceMetadata = buildResourceMetadata(runtimeResourceCatalog);
+	const resourceGroupMetadata = buildResourceGroupMetadata(
 		runtimeResourceCatalog,
 	);
 	const metadataBase: SessionSnapshotMetadata = effectLogs
@@ -247,13 +247,11 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 		: { passiveEvaluationModifiers };
 	const metadata: SessionSnapshotMetadata = {
 		...metadataBase,
-		...(resourceMetadataV2 ? { resourcesV2: resourceMetadataV2 } : {}),
-		...(resourceGroupMetadataV2
-			? { resourceGroupsV2: resourceGroupMetadataV2 }
-			: {}),
+		...(resourceMetadata ? { resources: resourceMetadata } : {}),
+		...(resourceGroupMetadata ? { resourceGroups: resourceGroupMetadata } : {}),
 	};
-	const resourceCatalogV2 =
-		runtimeResourceCatalog as unknown as SessionResourceCatalogV2;
+	const resourceCatalog =
+		runtimeResourceCatalog as unknown as SessionResourceCatalog;
 	return {
 		game: {
 			turn: context.game.turn,
@@ -278,7 +276,7 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 						},
 					}
 				: {}),
-			resourceCatalogV2,
+			resourceCatalog,
 		},
 		phases: clonePhases(context.phases),
 		actionCostResource: context.actionCostResource,
@@ -291,8 +289,8 @@ export function snapshotEngine(context: EngineContext): SessionSnapshot {
 		rules,
 		passiveRecords: clonePassiveRecords(context),
 		metadata,
-		...(resourceMetadataV2 ? { resourceMetadataV2 } : {}),
-		...(resourceGroupMetadataV2 ? { resourceGroupMetadataV2 } : {}),
+		...(resourceMetadata ? { resourceMetadata } : {}),
+		...(resourceGroupMetadata ? { resourceGroupMetadata } : {}),
 	};
 }
 

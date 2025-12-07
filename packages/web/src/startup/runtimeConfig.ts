@@ -1,7 +1,7 @@
 import type {
 	PhaseConfig,
-	ResourceV2Definition,
-	ResourceV2GroupDefinition,
+	ResourceDefinition,
+	ResourceGroupDefinition,
 	RuleSet,
 	SessionResourceDefinition,
 	SessionRuntimeConfigResponse,
@@ -13,8 +13,8 @@ export interface RuntimeContentConfig {
 	phases: PhaseConfig[];
 	rules: RuleSet;
 	resources: Record<string, SessionResourceDefinition>;
-	resourcesV2: Record<string, ResourceV2Definition>;
-	resourceGroupsV2: Record<string, ResourceV2GroupDefinition>;
+	resources: Record<string, ResourceDefinition>;
+	resourceGroups: Record<string, ResourceGroupDefinition>;
 	primaryIconId?: string | null;
 }
 
@@ -106,11 +106,11 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 			const resources = normalizeResourceDefinitions(
 				overrides?.resources ?? base.resources,
 			);
-			const resourcesV2 = normalizeResourceCatalogDefinitions(
-				overrides?.resourcesV2 ?? base.resourcesV2,
+			const resources = normalizeResourceCatalogDefinitions(
+				overrides?.resources ?? base.resources,
 			);
-			const resourceGroupsV2 = normalizeResourceCatalogDefinitions(
-				overrides?.resourceGroupsV2 ?? base.resourceGroupsV2,
+			const resourceGroups = normalizeResourceCatalogDefinitions(
+				overrides?.resourceGroups ?? base.resourceGroups,
 			);
 			const primaryIconId =
 				overrides?.primaryIconId ?? base.primaryIconId ?? null;
@@ -118,8 +118,8 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 				phases,
 				rules,
 				resources,
-				resourcesV2,
-				resourceGroupsV2,
+				resources,
+				resourceGroups,
 				primaryIconId,
 			};
 			Object.freeze(config);

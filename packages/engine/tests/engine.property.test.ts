@@ -4,7 +4,7 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { advance, performAction, getActionCosts, snapshotPlayer } from '../src';
-import { resourceAmountParams } from './helpers/resourceV2Params';
+import { resourceAmountParams } from './helpers/resourceParams';
 
 function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	while (engineContext.game.currentPhase !== PhaseId.Main) {
@@ -79,9 +79,7 @@ describe('engine property invariants', () => {
 						...Object.keys(gains),
 					])) {
 						const expected =
-							(before.valuesV2[key] ?? 0) -
-							(costs[key] ?? 0) +
-							(gains[key] ?? 0);
+							(before.values[key] ?? 0) - (costs[key] ?? 0) + (gains[key] ?? 0);
 						expect(engineContext.activePlayer.resourceValues[key]).toBe(
 							expected,
 						);

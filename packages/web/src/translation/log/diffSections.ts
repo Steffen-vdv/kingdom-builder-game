@@ -10,13 +10,13 @@ import {
 import { type PlayerSnapshot } from './snapshots';
 import type {
 	TranslationAssets,
-	TranslationResourceV2MetadataSelectors,
+	TranslationResourceMetadataSelectors,
 } from '../context';
 import {
-	formatResourceV2Summary,
-	type ResourceV2MetadataSnapshot,
-	type ResourceV2ValueSnapshot,
-} from '../resourceV2';
+	formatResourceSummary,
+	type ResourceMetadataSnapshot,
+	type ResourceValueSnapshot,
+} from '../resource';
 export {
 	appendBuildingChanges,
 	appendLandChanges,
@@ -32,8 +32,8 @@ function resolveResourceValue(
 	snapshot: PlayerSnapshot,
 	resourceId: string,
 ): number | undefined {
-	// Use valuesV2 directly - all resources, stats, and population are unified
-	const values = snapshot.valuesV2;
+	// Use values directly - all resources, stats, and population are unified
+	const values = snapshot.values;
 	if (values && typeof values[resourceId] === 'number') {
 		return values[resourceId];
 	}
@@ -43,8 +43,8 @@ function resolveResourceValue(
 function resolveBounds(
 	snapshot: PlayerSnapshot,
 	resourceId: string,
-): Pick<ResourceV2ValueSnapshot, 'lowerBound' | 'upperBound'> {
-	const bounds = snapshot.resourceBoundsV2[resourceId];
+): Pick<ResourceValueSnapshot, 'lowerBound' | 'upperBound'> {
+	const bounds = snapshot.resourceBounds[resourceId];
 	if (!bounds) {
 		return {};
 	}
@@ -62,13 +62,13 @@ function resolveBounds(
 	};
 }
 
-function computeResourceV2Snapshot(
+function computeResourceSnapshot(
 	resourceId: string,
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
 ):
 	| {
-			snapshot: ResourceV2ValueSnapshot;
+			snapshot: ResourceValueSnapshot;
 			change: SignedDelta;
 	  }
 	| undefined {
@@ -85,7 +85,7 @@ function computeResourceV2Snapshot(
 		after: typeof current === 'number' ? current : beforeValue + delta,
 		delta,
 	};
-	const snapshot: ResourceV2ValueSnapshot = {
+	const snapshot: ResourceValueSnapshot = {
 		id: resourceId,
 		current: change.after,
 		delta,
@@ -98,47 +98,47 @@ function computeResourceV2Snapshot(
 function describeResourceChange(
 	key: string,
 	resourceId: string,
-	metadata: ResourceV2MetadataSnapshot,
+	metadata: ResourceMetadataSnapshot,
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
 	sources: Record<string, string> | undefined,
 ): string | undefined {
-	const diff = computeResourceV2Snapshot(resourceId, before, after);
+	const diff = computeResourceSnapshot(resourceId, before, after);
 	if (!diff) {
 		return undefined;
 	}
-	const summary = formatResourceV2Summary(metadata, diff.snapshot);
+	const summary = formatResourceSummary(metadata, diff.snapshot);
 	const suffix = formatResourceSource(metadata, diff.change, sources?.[key]);
 	return suffix ? `${summary}${suffix}` : summary;
 }
 function describePercentBreakdown(
 	resourceId: string,
 	change: SignedDelta,
-	player: Pick<PlayerSnapshot, 'valuesV2'>,
+	player: Pick<PlayerSnapshot, 'values'>,
 	step: StepEffects,
 	_assets: TranslationAssets,
-	metadataSelectors: TranslationResourceV2MetadataSelectors,
+	metadataSelectors: TranslationResourceMetadataSelectors,
 ): string | undefined {
 	const breakdown = findStatPctBreakdown(step, resourceId);
 	if (!breakdown || change.delta <= 0) {
 		return undefined;
 	}
 	const role = breakdown.role;
-	// Role should be a V2 id - use it directly for V2 metadata lookup
+	// Role should be a id - use it directly for metadata lookup
 	const populationKey = role.startsWith('resource:')
 		? role
 		: `resource:core:${role}`;
-	const count = player.valuesV2?.[populationKey] ?? 0;
-	// Use V2 metadata for population icon
+	const count = player.values?.[populationKey] ?? 0;
+	// Use metadata for population icon
 	const popMetadata = metadataSelectors.get(populationKey);
 	const popIcon = popMetadata?.icon ?? '';
 	const pctStat = breakdown.percentStat;
-	// All values are now in valuesV2
-	const growth = player.valuesV2?.[pctStat] ?? 0;
-	// Use V2 metadata for percent stat icon
+	// All values are now in values
+	const growth = player.values?.[pctStat] ?? 0;
+	// Use metadata for percent stat icon
 	const pctStatMetadata = metadataSelectors.get(pctStat);
 	const growthIcon = pctStatMetadata?.icon ?? '';
-	// Format values using V2 metadata
+	// Format values using metadata
 	const formatValue = (id: string, value: number) => {
 		const meta = metadataSelectors.get(id);
 		return meta?.displayAsPercent ? `${value * 100}%` : String(value);
@@ -146,7 +146,7 @@ function describePercentBreakdown(
 	const growthValue = formatValue(pctStat, growth);
 	const baseValue = formatValue(resourceId, change.before);
 	const totalValue = formatValue(resourceId, change.after);
-	// Use V2 metadata for target resource icon
+	// Use metadata for target resource icon
 	const resourceMeta = metadataSelectors.get(resourceId);
 	const resourceIcon = resourceMeta?.icon ?? '';
 	return formatPercentBreakdown(
@@ -160,7 +160,7 @@ function describePercentBreakdown(
 	);
 }
 // Resources are handled uniformly by appendResourceChanges - no ID-based
-// filtering. All V2 resources get source icons when available. Percent
+// filtering. All resources get source icons when available. Percent
 // breakdown formatting is handled by appendPercentBreakdownChanges based on
 // effect metadata, not resource ID patterns.
 
@@ -169,12 +169,12 @@ export function appendResourceChanges(
 	after: PlayerSnapshot,
 	resourceKeys: string[],
 	_assets: TranslationAssets,
-	metadataSelectors: TranslationResourceV2MetadataSelectors,
+	metadataSelectors: TranslationResourceMetadataSelectors,
 	sources?: Record<string, string>,
 	options?: { trackByKey?: Map<string, ActionDiffChange> },
 ): ActionDiffChange[] {
 	const changes: ActionDiffChange[] = [];
-	// Process ALL resource keys - resource IDs are V2 IDs directly
+	// Process ALL resource keys - resource IDs are IDs directly
 	for (const resourceId of resourceKeys) {
 		const metadata = metadataSelectors.get(resourceId);
 		const summary = describeResourceChange(
@@ -205,11 +205,11 @@ function collectChangedKeys(
 	after: PlayerSnapshot,
 ): string[] {
 	const keys = new Set<string>();
-	// Collect all keys with changes from valuesV2
-	for (const key of Object.keys(before.valuesV2 ?? {})) {
+	// Collect all keys with changes from values
+	for (const key of Object.keys(before.values ?? {})) {
 		keys.add(key);
 	}
-	for (const key of Object.keys(after.valuesV2 ?? {})) {
+	for (const key of Object.keys(after.values ?? {})) {
 		keys.add(key);
 	}
 	return Array.from(keys);
@@ -219,10 +219,10 @@ export function appendPercentBreakdownChanges(
 	changes: string[],
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
-	player: Pick<PlayerSnapshot, 'valuesV2'>,
+	player: Pick<PlayerSnapshot, 'values'>,
 	step: StepEffects,
 	assets: TranslationAssets,
-	metadataSelectors: TranslationResourceV2MetadataSelectors,
+	metadataSelectors: TranslationResourceMetadataSelectors,
 ) {
 	// This function handles resources that need percent breakdown display
 	// (e.g., growth effects like Legion * Growth = Army Strength).
@@ -230,20 +230,20 @@ export function appendPercentBreakdownChanges(
 	if (!step) {
 		return;
 	}
-	// Collect all changed resource keys - these are V2 IDs directly
+	// Collect all changed resource keys - these are IDs directly
 	const changedKeys = collectChangedKeys(before, after);
 	for (const resourceId of changedKeys) {
 		const metadata = metadataSelectors.get(resourceId);
-		const diff = computeResourceV2Snapshot(resourceId, before, after);
+		const diff = computeResourceSnapshot(resourceId, before, after);
 		if (!diff) {
 			continue;
 		}
-		// Check if this resource displays as percent - use V2 metadata
+		// Check if this resource displays as percent - use metadata
 		const displaysAsPercent =
 			metadata.displayAsPercent || statDisplaysAsPercent(resourceId, assets);
 		if (displaysAsPercent) {
 			// Percent-based resources don't need breakdown
-			const summary = formatResourceV2Summary(metadata, diff.snapshot);
+			const summary = formatResourceSummary(metadata, diff.snapshot);
 			changes.push(summary);
 			continue;
 		}
@@ -258,7 +258,7 @@ export function appendPercentBreakdownChanges(
 		);
 		if (breakdown) {
 			// Only add entries that have breakdown - others handled elsewhere
-			const summary = formatResourceV2Summary(metadata, diff.snapshot);
+			const summary = formatResourceSummary(metadata, diff.snapshot);
 			changes.push(`${summary}${breakdown}`);
 		}
 	}

@@ -102,7 +102,7 @@ describe('resource sources metadata', () => {
 			]),
 		);
 
-		// Stat values ARE ResourceV2 IDs directly - no mapper needed
+		// Stat values ARE Resource IDs directly - no mapper needed
 		applyResourceDelta(player, Stat.armyStrength, 2, meta);
 		const initialEntry = player.resourceSources[Stat.armyStrength]?.[meta.key];
 		expect(initialEntry?.amount).toBe(2);
@@ -210,7 +210,7 @@ describe('resource sources metadata', () => {
 				percentResourceId: Stat.growth,
 			},
 		};
-		// Stat values ARE ResourceV2 IDs directly - no mapper needed
+		// Stat values ARE Resource IDs directly - no mapper needed
 		recordEffectResourceDelta(pctEffect, engineContext, Stat.armyStrength, 1);
 		const pctEntry = Object.values(
 			player.resourceSources[Stat.armyStrength] ?? {},

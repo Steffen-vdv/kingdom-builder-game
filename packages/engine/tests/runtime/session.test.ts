@@ -11,9 +11,9 @@ import {
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -28,7 +28,7 @@ import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -36,16 +36,16 @@ const BASE: {
 	developments: Registry<DevelopmentDef>;
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
-	resourceCatalogV2: RuntimeResourceContent;
+	resourceCatalog: RuntimeResourceContent;
 } = {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
 	populations: POPULATIONS,
 	phases: PHASES,
-	resourceCatalogV2: {
-		resources: RESOURCE_V2_REGISTRY,
-		groups: RESOURCE_GROUP_V2_REGISTRY,
+	resourceCatalog: {
+		resources: RESOURCE_REGISTRY,
+		groups: RESOURCE_GROUP_REGISTRY,
 	},
 };
 
@@ -60,7 +60,7 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		populations: rest.populations ?? BASE.populations,
 		phases: rest.phases ?? BASE.phases,
 		rules: rules ?? RULES,
-		resourceCatalogV2: rest.resourceCatalogV2 ?? BASE.resourceCatalogV2,
+		resourceCatalog: rest.resourceCatalog ?? BASE.resourceCatalog,
 	});
 }
 
@@ -174,16 +174,16 @@ describe('EngineSession', () => {
 		expect(next.game.players[0]!.resources[CResource.gold]).not.toBe(999);
 	});
 
-	it('includes ResourceV2 data alongside legacy snapshots', () => {
+	it('includes Resource data alongside legacy snapshots', () => {
 		const session = createTestSession();
 		const snapshot = session.getSnapshot();
-		const catalog = snapshot.game.resourceCatalogV2;
+		const catalog = snapshot.game.resourceCatalog;
 		expect(catalog).toBeDefined();
 		const player = snapshot.game.players[0]!;
-		expect(player.valuesV2).toBeDefined();
+		expect(player.values).toBeDefined();
 		const goldLegacy = player.resources[CResource.gold];
 		expect(goldLegacy).toBeDefined();
-		expect(player.valuesV2['resource:core:gold']).toBe(goldLegacy);
+		expect(player.values['resource:core:gold']).toBe(goldLegacy);
 		expect(catalog.resources.byId['resource:core:gold']?.label).toBeDefined();
 	});
 
@@ -486,8 +486,8 @@ describe('EngineSession', () => {
 		const activeId = snapshot.game.activePlayerId;
 		const result = session.simulateUpcomingPhases(activeId);
 		expect(result.steps.length).toBeGreaterThan(0);
-		expect(result.before.valuesV2).toBeDefined();
-		expect(result.after.valuesV2).toBeDefined();
+		expect(result.before.values).toBeDefined();
+		expect(result.after.values).toBeDefined();
 		const firstStep = result.steps[0];
 		if (!firstStep) {
 			throw new Error('Expected at least one simulation step.');
@@ -557,14 +557,14 @@ it('returns cloned simulation previews for upcoming phases', () => {
 	const activeId = session.getSnapshot().game.activePlayerId;
 	const preview = session.simulateUpcomingPhases(activeId);
 	preview.steps.length = 0;
-	(preview.delta.valuesV2 as Record<string, unknown>).extra = 99;
-	preview.before.valuesV2 = {};
+	(preview.delta.values as Record<string, unknown>).extra = 99;
+	preview.before.values = {};
 	const refreshed = session.simulateUpcomingPhases(activeId);
 	expect(refreshed.steps.length).toBeGreaterThan(0);
 	expect(
-		(refreshed.delta.valuesV2 as Record<string, unknown>).extra,
+		(refreshed.delta.values as Record<string, unknown>).extra,
 	).toBeUndefined();
-	expect(Object.keys(refreshed.before.valuesV2).length).toBeGreaterThan(0);
+	expect(Object.keys(refreshed.before.values).length).toBeGreaterThan(0);
 });
 
 it('delegates AI turns with overrides while preserving controllers', async () => {

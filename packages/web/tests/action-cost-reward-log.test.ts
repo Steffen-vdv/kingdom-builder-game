@@ -23,9 +23,9 @@ import {
 	createTranslationDiffContext,
 } from '../src/translation';
 import {
-	createResourceV2MetadataSelectors,
-	cloneResourceCatalogV2,
-} from '../src/translation/context/resourceV2';
+	createResourceMetadataSelectors,
+	cloneResourceCatalog,
+} from '../src/translation/context/resource';
 import { filterActionDiffChanges } from '../src/state/useActionPerformer.helpers';
 import { formatActionLogLines } from '../src/state/actionLogFormat';
 import type { ActionLogLineDescriptor } from '../src/translation/log/timeline';
@@ -121,7 +121,7 @@ describe('action cost and reward logging', () => {
 			populations: scenario.factory.populations,
 			phases: scenario.phases,
 			rules: scenario.rules,
-			resourceCatalogV2: scenario.resourceCatalogV2,
+			resourceCatalog: scenario.resourceCatalog,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(scenario.start), engineContext);
@@ -134,8 +134,8 @@ describe('action cost and reward logging', () => {
 		const costs = getActionCosts(refundAction.id, engineContext);
 		performAction(refundAction.id, engineContext);
 		const after = captureActivePlayer(engineContext);
-		const resourceMetadataV2 = createResourceV2MetadataSelectors(
-			cloneResourceCatalogV2(scenario.resourceCatalogV2),
+		const resourceMetadata = createResourceMetadataSelectors(
+			cloneResourceCatalog(scenario.resourceCatalog),
 		);
 		const diffContext = createTranslationDiffContext({
 			activePlayer: {
@@ -148,7 +148,7 @@ describe('action cost and reward logging', () => {
 			actionCategories: { get: () => undefined, has: () => false },
 			passives: { evaluationMods: new Map() },
 			assets: SYNTHETIC_ASSETS,
-			resourceMetadataV2,
+			resourceMetadata,
 		});
 		const actionDefinition = engineContext.actions.get(refundAction.id);
 		if (!actionDefinition) {
@@ -174,7 +174,7 @@ describe('action cost and reward logging', () => {
 			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
-			const beforeAmount = before.valuesV2?.[key] ?? 0;
+			const beforeAmount = before.values?.[key] ?? 0;
 			const afterAmount = beforeAmount - amount;
 			costLines.push({
 				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
@@ -204,8 +204,8 @@ describe('action cost and reward logging', () => {
 			line.includes(`${coinInfo.icon} ${coinInfo.label} -${coinCost} `),
 		);
 		expect(costEntry).toBeDefined();
-		const beforeCoins = before.valuesV2?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const afterCoins = after.valuesV2?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const beforeCoins = before.values?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.values?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const rewardLine = filtered.find(
 			(line) =>
 				line.startsWith(`${coinInfo.icon} ${coinInfo.label}`) &&

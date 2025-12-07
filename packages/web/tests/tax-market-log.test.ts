@@ -28,8 +28,8 @@ import {
 } from '../src/translation';
 import type { TranslationActionCategoryRegistry } from '../src/translation/context';
 import {
-	cloneResourceCatalogV2,
-	createResourceV2MetadataSelectors,
+	cloneResourceCatalog,
+	createResourceMetadataSelectors,
 } from '../src/translation/context';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
 import {
@@ -109,7 +109,7 @@ describe('tax action logging with market', () => {
 			populations: scenario.factory.populations,
 			phases: scenario.phases,
 			rules: scenario.rules,
-			resourceCatalogV2: scenario.resourceCatalogV2,
+			resourceCatalog: scenario.resourceCatalog,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(scenario.start), engineContext);
@@ -137,8 +137,8 @@ describe('tax action logging with market', () => {
 		);
 		const after = captureActivePlayer(engineContext);
 		// Create resource metadata selectors from the catalog
-		const catalogClone = cloneResourceCatalogV2(scenario.resourceCatalogV2);
-		const resourceMetadataV2 = createResourceV2MetadataSelectors(catalogClone);
+		const catalogClone = cloneResourceCatalog(scenario.resourceCatalog);
+		const resourceMetadata = createResourceMetadataSelectors(catalogClone);
 		// Create stub action categories
 		const actionCategories: TranslationActionCategoryRegistry = {
 			categories: new Map(),
@@ -156,7 +156,7 @@ describe('tax action logging with market', () => {
 			...engineContext,
 			activePlayer: diffActivePlayer,
 			actionCategories,
-			resourceMetadataV2,
+			resourceMetadata,
 		});
 		const diffResult = diffStepSnapshots(
 			before,
@@ -178,7 +178,7 @@ describe('tax action logging with market', () => {
 			const info = SYNTHETIC_RESOURCES[key];
 			const icon = info?.icon ? `${info.icon} ` : '';
 			const label = info?.label ?? key;
-			const beforeAmount = before.valuesV2?.[key] ?? 0;
+			const beforeAmount = before.values?.[key] ?? 0;
 			const afterAmount = beforeAmount - amount;
 			costDescriptors.push({
 				text: `${icon}${label} -${amount} (${beforeAmount}→${afterAmount})`,
@@ -214,8 +214,8 @@ describe('tax action logging with market', () => {
 			SYNTHETIC_POPULATION_INFO.icon;
 		const marketIcon =
 			engineContext.buildings.get(SYNTHETIC_IDS.marketBuilding)?.icon || '';
-		const beforeCoins = before.valuesV2?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
-		const afterCoins = after.valuesV2?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const beforeCoins = before.values?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
+		const afterCoins = after.values?.[SYNTHETIC_RESOURCE_KEYS.coin] ?? 0;
 		const delta = afterCoins - beforeCoins;
 		const goldLine = logLines.find((line) =>
 			line

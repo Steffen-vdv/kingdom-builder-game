@@ -1,5 +1,5 @@
 import type { RuleSet } from '@kingdom-builder/protocol';
-import type { ResourceV2TierTrackMetadata } from './resourceV2';
+import type { ResourceTierTrackMetadata } from './resource';
 import { RULES } from './rules';
 
 export type TierSummaryGroup = Map<string, string>;
@@ -7,7 +7,7 @@ export type TierSummaryStore = Map<string, TierSummaryGroup>;
 
 type TierMetadataRuleSet = RuleSet & {
 	tieredResourceId?: string;
-	tierTrackMetadata?: ResourceV2TierTrackMetadata;
+	tierTrackMetadata?: ResourceTierTrackMetadata;
 };
 
 function extractTierSummaries(ruleSet: RuleSet): TierSummaryGroup {

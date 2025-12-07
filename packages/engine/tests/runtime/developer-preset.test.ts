@@ -24,7 +24,7 @@ describe('applyDeveloperPreset', () => {
 			opponent.resourceValues[CResource.happiness] ?? 0;
 		const opponentCastleBefore =
 			opponent.resourceValues[CResource.castleHP] ?? 0;
-		// PopulationRole values ARE ResourceV2 IDs - access via resourceValues
+		// PopulationRole values ARE Resource IDs - access via resourceValues
 		const opponentPopulationBefore =
 			opponent.resourceValues[PopulationRole.Council] ?? 0;
 		const opponentLandCountBefore = opponent.lands.length;

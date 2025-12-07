@@ -49,13 +49,13 @@ describe('SessionTransport runAiTurn', () => {
 		const fakeTrace: ActionTrace = {
 			id: 'trace',
 			before: {
-				valuesV2: {},
+				values: {},
 				buildings: [],
 				lands: [],
 				passives: [],
 			},
 			after: {
-				valuesV2: {},
+				values: {},
 				buildings: [],
 				lands: [],
 				passives: [],
@@ -232,13 +232,13 @@ describe('SessionTransport runAiTurn', () => {
 		const fakeTrace: ActionTrace = {
 			id: 'trace',
 			before: {
-				valuesV2: {},
+				values: {},
 				buildings: [],
 				lands: [],
 				passives: [],
 			},
 			after: {
-				valuesV2: {},
+				values: {},
 				buildings: [],
 				lands: [],
 				passives: [],
@@ -365,7 +365,7 @@ describe('SessionTransport runAiTurn', () => {
 		}
 		// Simulate an unexpected engine error during AI action
 		const engineBugMessage =
-			'ResourceV2 state expected "resource:core:happiness" value to be an ' +
+			'Resource state expected "resource:core:happiness" value to be an ' +
 			'integer but received 0.5.';
 		vi.spyOn(session, 'runAiTurn').mockRejectedValue(
 			new Error(engineBugMessage),

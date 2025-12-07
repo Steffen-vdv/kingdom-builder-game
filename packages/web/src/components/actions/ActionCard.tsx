@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { type Summary } from '../../translation';
 import type {
 	TranslationAssets,
-	TranslationResourceV2MetadataSelectors,
+	TranslationResourceMetadataSelectors,
 } from '../../translation/context';
 import { renderSummary, renderCosts } from '../../translation/render';
 import OptionList from './OptionList';
@@ -43,7 +43,7 @@ export interface ActionCardProps {
 	onCancel?: (() => void) | undefined;
 	multiStep?: boolean | undefined;
 	assets: TranslationAssets;
-	resourceMetadataV2?: TranslationResourceV2MetadataSelectors;
+	resourceMetadata?: TranslationResourceMetadataSelectors;
 }
 
 export default function ActionCard({
@@ -73,7 +73,7 @@ export default function ActionCard({
 	onCancel,
 	multiStep = false,
 	assets,
-	resourceMetadataV2,
+	resourceMetadata,
 }: ActionCardProps): ReactElement {
 	const focusClass =
 		(focus && FOCUS_GRADIENTS[focus]) ?? FOCUS_GRADIENTS.default;
@@ -187,7 +187,7 @@ export default function ActionCard({
 									upkeep,
 									{
 										assets,
-										...(resourceMetadataV2 && { resourceMetadataV2 }),
+										...(resourceMetadata && { resourceMetadata }),
 									},
 								)}
 								{requirementBadge}

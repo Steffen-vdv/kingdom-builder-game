@@ -15,7 +15,7 @@ import type {
 	PhaseSkipConfig,
 } from '../../src/services/passive_types';
 import type { EffectDef } from '../../src/effects';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('passive helpers', () => {
 	it('deeply clones passive records and metadata while pruning undefined', () => {

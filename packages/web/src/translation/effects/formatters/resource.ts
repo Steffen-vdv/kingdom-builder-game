@@ -1,7 +1,7 @@
 import { registerEffectFormatter } from '../factory';
-import type { TranslationResourceV2Metadata } from '../../context/types';
+import type { TranslationResourceMetadata } from '../../context/types';
 
-// Extract resourceId from V2 format - check direct param, then donor/recipient
+// Extract resourceId from format - check direct param, then donor/recipient
 function getResourceId(params: Record<string, unknown> | undefined): string {
 	// Direct resourceId (add/remove effects)
 	const resourceId = params?.['resourceId'];
@@ -22,7 +22,7 @@ function getResourceId(params: Record<string, unknown> | undefined): string {
 	return '';
 }
 
-// Extract amount from V2 change format only
+// Extract amount from change format only
 function getChangeAmount(params: Record<string, unknown> | undefined): number {
 	const change = params?.['change'] as { amount?: number } | undefined;
 	return Number(change?.amount ?? 0);
@@ -31,7 +31,7 @@ function getChangeAmount(params: Record<string, unknown> | undefined): number {
 // Format signed value with metadata-driven percent handling
 function formatSignedValue(
 	amount: number,
-	metadata: TranslationResourceV2Metadata,
+	metadata: TranslationResourceMetadata,
 ): string {
 	const usesPercent =
 		metadata.displayAsPercent === true ||
@@ -47,7 +47,7 @@ function formatSignedValue(
 
 // Append format suffix (like "Max" for maxPopulation) to content
 function appendFormatSuffix(
-	format: TranslationResourceV2Metadata['format'],
+	format: TranslationResourceMetadata['format'],
 	content: string,
 ): string {
 	if (!format || typeof format === 'string') {
@@ -64,7 +64,7 @@ registerEffectFormatter('resource', 'add', {
 	summarize: (effect, context) => {
 		const resourceId = getResourceId(effect.params);
 		const amount = getChangeAmount(effect.params);
-		const metadata = context.resourceMetadataV2.get(resourceId);
+		const metadata = context.resourceMetadata.get(resourceId);
 		const icon = metadata.icon?.trim() ?? '';
 		const change = formatSignedValue(amount, metadata);
 		const subject = icon || metadata.label || resourceId;
@@ -73,7 +73,7 @@ registerEffectFormatter('resource', 'add', {
 	describe: (effect, context) => {
 		const resourceId = getResourceId(effect.params);
 		const amount = getChangeAmount(effect.params);
-		const metadata = context.resourceMetadataV2.get(resourceId);
+		const metadata = context.resourceMetadata.get(resourceId);
 		const icon = metadata.icon?.trim() ?? '';
 		const change = formatSignedValue(amount, metadata);
 		if (icon) {
@@ -87,7 +87,7 @@ registerEffectFormatter('resource', 'remove', {
 	summarize: (effect, context) => {
 		const resourceId = getResourceId(effect.params);
 		const amount = getChangeAmount(effect.params);
-		const metadata = context.resourceMetadataV2.get(resourceId);
+		const metadata = context.resourceMetadata.get(resourceId);
 		const icon = metadata.icon?.trim() ?? '';
 		const change = formatSignedValue(-amount, metadata);
 		const subject = icon || metadata.label || resourceId;
@@ -96,7 +96,7 @@ registerEffectFormatter('resource', 'remove', {
 	describe: (effect, context) => {
 		const resourceId = getResourceId(effect.params);
 		const amount = getChangeAmount(effect.params);
-		const metadata = context.resourceMetadataV2.get(resourceId);
+		const metadata = context.resourceMetadata.get(resourceId);
 		const icon = metadata.icon?.trim() ?? '';
 		const change = formatSignedValue(-amount, metadata);
 		if (icon) {
@@ -109,7 +109,7 @@ registerEffectFormatter('resource', 'remove', {
 registerEffectFormatter('resource', 'transfer', {
 	summarize: (effect, context) => {
 		const resourceId = getResourceId(effect.params);
-		const metadata = context.resourceMetadataV2.get(resourceId);
+		const metadata = context.resourceMetadata.get(resourceId);
 		const icon = metadata.icon ?? '';
 		if (effect.params?.['amount'] !== undefined) {
 			const amount = Number(effect.params['amount']);
@@ -120,7 +120,7 @@ registerEffectFormatter('resource', 'transfer', {
 	},
 	describe: (effect, context) => {
 		const resourceId = getResourceId(effect.params);
-		const metadata = context.resourceMetadataV2.get(resourceId);
+		const metadata = context.resourceMetadata.get(resourceId);
 		const icon = metadata.icon ?? '';
 		if (effect.params?.['amount'] !== undefined) {
 			const amount = Number(effect.params['amount']);

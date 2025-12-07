@@ -90,7 +90,7 @@ describe('raiders guild translation', () => {
 		const development = engineContext.developments.get(ids.harvestDevelopment);
 		const modifier = getModifier(engineContext, ids.developmentBuilding);
 		const resourceEffect = getResourceEffect(modifier);
-		// ResourceV2 uses resourceId and change.amount
+		// Resource uses resourceId and change.amount
 		const key = resourceEffect.params?.['resourceId'] as string;
 		const change = resourceEffect.params?.['change'] as
 			| { amount: number }
@@ -120,7 +120,7 @@ describe('raiders guild translation', () => {
 		const development = engineContext.developments.get(ids.harvestDevelopment);
 		const modifier = getModifier(engineContext, ids.developmentBuilding);
 		const resourceEffect = getResourceEffect(modifier);
-		// ResourceV2 uses resourceId and change.amount
+		// Resource uses resourceId and change.amount
 		const key = resourceEffect.params?.['resourceId'] as string;
 		const change = resourceEffect.params?.['change'] as
 			| { amount: number }

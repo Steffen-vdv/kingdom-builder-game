@@ -1,5 +1,5 @@
 import type { EffectConfig, PassiveMetadata } from '@kingdom-builder/protocol';
-import type { ResourceV2TierTrackMetadata } from './resourceV2';
+import type { ResourceTierTrackMetadata } from './resource';
 import { costModParams, developmentTarget, resultModParams, statAddEffect, effect } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './config/builderShared';
 import { formatPassiveRemoval } from './text';
@@ -30,7 +30,7 @@ export const growthBonusEffect = (amount: number) => statAddEffect(GROWTH_STAT_K
 type TierPassiveEffectOptions = {
 	tierId: string;
 	resourceId: string;
-	tierTrackMetadata: ResourceV2TierTrackMetadata;
+	tierTrackMetadata: ResourceTierTrackMetadata;
 	summary: string;
 	summaryToken?: string;
 	removalDetail: string;
@@ -42,7 +42,7 @@ type TierPassiveEffectOptions = {
 
 type TierPassiveMetadata = PassiveMetadata & {
 	resourceId: string;
-	tierTrack: ResourceV2TierTrackMetadata;
+	tierTrack: ResourceTierTrackMetadata;
 	tierId: string;
 };
 

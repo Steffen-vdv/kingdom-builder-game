@@ -12,7 +12,7 @@ import {
 	TAX_ACTION_ID,
 } from '../../src/ai';
 import { createTestEngine } from '../helpers';
-import { resourceAmountParams } from '../helpers/resourceV2Params';
+import { resourceAmountParams } from '../helpers/resourceParams';
 
 describe('AI simulation guard', () => {
 	function createEngineWithAction(effectParams: Record<string, unknown>) {
@@ -165,7 +165,7 @@ describe('AI simulation guard', () => {
 
 		// Create an unexpected engine error
 		const engineBug = new Error(
-			'ResourceV2 state expected integer but received 0.5',
+			'Resource state expected integer but received 0.5',
 		);
 		const performWithBug = vi.fn(() => {
 			throw engineBug;
@@ -185,7 +185,7 @@ describe('AI simulation guard', () => {
 		// Should throw for unexpected errors
 		await expect(
 			system.run(engineContext.activePlayer.id, engineContext),
-		).rejects.toThrow('ResourceV2 state expected integer but received 0.5');
+		).rejects.toThrow('Resource state expected integer but received 0.5');
 
 		// Should NOT have advanced phase
 		expect(advanceFn).not.toHaveBeenCalled();
@@ -287,7 +287,7 @@ describe('AI action error types', () => {
 
 		// This is the actual error that would occur with the 0.5 happiness bug
 		const error = new Error(
-			'ResourceV2 state expected "resource:core:happiness" value to be an ' +
+			'Resource state expected "resource:core:happiness" value to be an ' +
 				'integer but received 0.5',
 		);
 		const perform = vi.fn(() => {

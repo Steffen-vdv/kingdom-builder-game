@@ -155,7 +155,7 @@ describe('raid translation log', () => {
 			text: `On opponent ${buildingDisplay} destruction`,
 			depth: 1,
 		});
-		// V2 format adds space after icon
+		// format adds space after icon
 		expect(log[3]).toMatchObject({
 			text: `${gold.icon} +${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
 			depth: 2,

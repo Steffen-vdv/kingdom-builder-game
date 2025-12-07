@@ -73,7 +73,7 @@ function createStatBreakdownSetup(): BreakdownSetup {
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
-	// ResourceV2 ID for population
+	// Resource ID for population
 	const populationResourceId = `resource:population:role:${populationId}`;
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
@@ -146,7 +146,7 @@ function createStatBreakdownSetup(): BreakdownSetup {
 		name: 'Active Player',
 		resources: { [resourceKey]: 0 },
 		population: { [populationId]: 2 },
-		valuesV2: {
+		values: {
 			[populationResourceId]: 2,
 		},
 		lands: [
@@ -185,7 +185,7 @@ function createStatBreakdownSetup(): BreakdownSetup {
 		actionCostResource: resourceKey,
 		ruleSnapshot,
 		metadata,
-		resourceMetadataV2: {
+		resourceMetadata: {
 			[populationResourceId]: {
 				icon: '🎖️',
 				label: 'Legion Vanguard',

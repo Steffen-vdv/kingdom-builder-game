@@ -53,14 +53,14 @@ describe('raid translation summary', () => {
 			translation,
 			SYNTH_RESOURCE_IDS.warWeariness,
 		);
-		// V2 format: stats are now resources with resourceId
+		// format: stats are now resources with resourceId
 		const warEffect = attack.effects.find(
 			(effectDef: EffectDef) =>
 				effectDef.type === 'resource' &&
 				(effectDef.params as { resourceId?: string }).resourceId ===
 					SYNTH_RESOURCE_IDS.warWeariness,
 		);
-		// V2 format: amount is in change.amount
+		// format: amount is in change.amount
 		const warChange = (warEffect?.params as { change?: { amount?: number } })
 			?.change;
 		const warAmt = warChange?.amount ?? 0;
@@ -182,7 +182,7 @@ describe('raid translation summary', () => {
 					(effectDef.params as { resourceId?: string }).resourceId ===
 						SYNTH_RESOURCE_IDS.gold),
 		);
-		// Support both legacy (amount) and V2 (change.amount) formats
+		// Support both legacy (amount) and resource (change.amount) formats
 		const changeObj = (rewardEffect?.params as { change?: { amount?: number } })
 			?.change;
 		const legacyAmount = (rewardEffect?.params as { amount?: number })?.amount;
@@ -190,7 +190,7 @@ describe('raid translation summary', () => {
 
 		const summary = summarizeContent('action', buildingAttack.id, translation);
 		const powerSummary = powerStat.icon ?? powerStat.label ?? 'Attack Power';
-		// V2 format adds space after icon for readability
+		// format adds space after icon for readability
 		expect(summary).toEqual([
 			`${powerSummary}${summaryTarget}`,
 			{

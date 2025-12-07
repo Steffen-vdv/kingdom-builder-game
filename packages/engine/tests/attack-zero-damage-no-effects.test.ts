@@ -6,7 +6,7 @@ import {
 } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { resourceAmountParams } from './helpers/resourceV2Params.ts';
+import { resourceAmountParams } from './helpers/resourceParams.ts';
 
 const attackLogKey = 'attack:perform';
 

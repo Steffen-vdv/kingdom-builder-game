@@ -5,10 +5,10 @@ import { ResourceMethods, Types, LandMethods, DevelopmentMethods } from '../conf
 import { SystemActionId } from '../actionIds';
 import { Resource, Stat, PopulationRole } from '../internal';
 import { DevelopmentId } from '../developments';
-import { resourceChange } from '../resourceV2';
+import { resourceChange } from '../resource';
 
 /**
- * Creates a resource:add effect using the ResourceV2 system with reject
+ * Creates a resource:add effect using the Resource system with reject
  * reconciliation mode. Initial setup effects must reject if bounds are
  * exceeded to catch configuration errors early.
  */
@@ -17,7 +17,7 @@ function resourceAdd(resourceId: string, amount: number) {
 }
 
 /**
- * Creates a resource:remove effect using the ResourceV2 system with reject
+ * Creates a resource:remove effect using the Resource system with reject
  * reconciliation mode.
  */
 function resourceRemove(resourceId: string, amount: number) {

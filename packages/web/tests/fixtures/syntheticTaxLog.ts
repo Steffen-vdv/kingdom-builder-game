@@ -1,8 +1,8 @@
 import {
 	createContentFactory,
-	createResourceV2Registries,
-	resourceV2Definition,
-	resourceV2GroupDefinition,
+	createResourceRegistries,
+	resourceDefinition,
+	resourceGroupDefinition,
 	type ContentFactory,
 } from '@kingdom-builder/testing';
 import type { PhaseDef, StartConfig } from './syntheticTaxData';
@@ -58,19 +58,19 @@ export const SYNTHETIC_ASSETS = {
 		`Active as long as ${description}`,
 };
 
-// Create ResourceV2 catalog for synthetic test resources
-const coreGroup = resourceV2GroupDefinition({
+// Create Resource catalog for synthetic test resources
+const coreGroup = resourceGroupDefinition({
 	id: 'resource-group:synthetic',
 	order: 0,
 });
 
-const populationGroup = resourceV2GroupDefinition({
+const populationGroup = resourceGroupDefinition({
 	id: 'resource-group:synthetic:population',
 	order: 1,
 });
 
-const synthResourceV2Definitions = [
-	resourceV2Definition({
+const synthResourceDefinitions = [
+	resourceDefinition({
 		id: SYNTHETIC_RESOURCE_KEYS.coin,
 		metadata: {
 			label: SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.coin].label,
@@ -79,7 +79,7 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTHETIC_RESOURCE_KEYS.actionPoints,
 		metadata: {
 			label: SYNTHETIC_RESOURCES[SYNTHETIC_RESOURCE_KEYS.actionPoints].label,
@@ -90,7 +90,7 @@ const synthResourceV2Definitions = [
 		globalCost: 1,
 	}),
 	// Population role resource
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTHETIC_POPULATION_ROLE_ID,
 		metadata: {
 			label: SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID].label,
@@ -101,8 +101,8 @@ const synthResourceV2Definitions = [
 	}),
 ];
 
-export const SYNTHETIC_RESOURCE_CATALOG_V2 = createResourceV2Registries({
-	resources: synthResourceV2Definitions,
+export const SYNTHETIC_RESOURCE_CATALOG = createResourceRegistries({
+	resources: synthResourceDefinitions,
 	groups: [coreGroup, populationGroup],
 });
 
@@ -111,7 +111,7 @@ export interface SyntheticTaxScenario {
 	phases: PhaseDef[];
 	start: StartConfig;
 	rules: typeof SYNTHETIC_RULES;
-	resourceCatalogV2: typeof SYNTHETIC_RESOURCE_CATALOG_V2;
+	resourceCatalog: typeof SYNTHETIC_RESOURCE_CATALOG;
 }
 
 /**
@@ -125,10 +125,10 @@ export function buildStartConfigEffects(startConfig: StartConfig) {
 		params?: Record<string, unknown>;
 	}> = [];
 
-	// Apply valuesV2 as resource:add effects
-	if (startConfig.player.valuesV2) {
+	// Apply values as resource:add effects
+	if (startConfig.player.values) {
 		for (const [resourceId, value] of Object.entries(
-			startConfig.player.valuesV2,
+			startConfig.player.values,
 		)) {
 			if (typeof value === 'number' && value > 0) {
 				effects.push({
@@ -293,7 +293,7 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 			resources: {},
 			stats: {},
 			population: {},
-			valuesV2: {
+			values: {
 				[SYNTHETIC_RESOURCE_KEYS.coin]: 10,
 				[SYNTHETIC_RESOURCE_KEYS.actionPoints]: 5,
 				[SYNTHETIC_POPULATION_ROLE_ID]: 1,
@@ -314,6 +314,6 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 		phases,
 		start,
 		rules: SYNTHETIC_RULES,
-		resourceCatalogV2: SYNTHETIC_RESOURCE_CATALOG_V2,
+		resourceCatalog: SYNTHETIC_RESOURCE_CATALOG,
 	};
 }

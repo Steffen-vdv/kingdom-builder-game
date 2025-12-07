@@ -84,7 +84,7 @@ function createDescriptorSetup(): DescriptorSetup {
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
-	// ResourceV2 IDs for population and stat
+	// Resource IDs for population and stat
 	const populationResourceId = `resource:population:role:${populationId}`;
 	const statResourceId = 'resource:stat:army-strength';
 	const metadata: SessionSnapshotMetadata = {
@@ -153,7 +153,7 @@ function createDescriptorSetup(): DescriptorSetup {
 		name: 'Active Player',
 		resources: { [resourceKey]: 0 },
 		population: { [populationId]: 2 },
-		valuesV2: {
+		values: {
 			[populationResourceId]: 2,
 			[statResourceId]: 3,
 		},
@@ -193,7 +193,7 @@ function createDescriptorSetup(): DescriptorSetup {
 		actionCostResource: resourceKey,
 		ruleSnapshot,
 		metadata,
-		resourceMetadataV2: {
+		resourceMetadata: {
 			[populationResourceId]: {
 				icon: '🎖️',
 				label: 'Legion Vanguard',
@@ -325,8 +325,8 @@ describe('resource source descriptors', () => {
 			populationResourceId,
 		);
 		expect(populationLine).toContain(populationLabel);
-		// Resource values are shown directly from valuesV2
-		const popValue = String(player.valuesV2[populationResourceId]);
+		// Resource values are shown directly from values
+		const popValue = String(player.values[populationResourceId]);
 		expect(populationLine).toContain(popValue);
 		const buildingLabel = formatKindLabel(
 			translationContext,
@@ -359,8 +359,8 @@ describe('resource source descriptors', () => {
 			statResourceId,
 		);
 		expect(statLine).toContain(statLabel);
-		// Stat values from valuesV2 are displayed directly (not percent)
-		const statValue = String(player.valuesV2[statResourceId]);
+		// Stat values from values are displayed directly (not percent)
+		const statValue = String(player.values[statResourceId]);
 		expect(statLine).toContain(statValue);
 		const resourceLabel = formatKindLabel(
 			translationContext,

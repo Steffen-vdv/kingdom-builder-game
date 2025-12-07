@@ -4,7 +4,7 @@ import { runEffects } from '../../src/effects/index.ts';
 import { Resource as CResource } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers.ts';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('resource removal penalties', () => {
 	it('can target the opponent when shortfalls are allowed', () => {
@@ -13,7 +13,7 @@ describe('resource removal penalties', () => {
 		advance(engineContext);
 		const original = engineContext.game.currentPlayerIndex;
 		engineContext.game.currentPlayerIndex = 1;
-		// CResource.happiness IS the ResourceV2 ID directly
+		// CResource.happiness IS the Resource ID directly
 		engineContext.activePlayer.resourceValues[CResource.happiness] = 0;
 		const before =
 			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;

@@ -60,7 +60,7 @@ export type ActionDefinition = {
 
 function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 	if (descriptor.method === 'transfer') {
-		// V2 transfer requires donor and recipient payloads
+		// transfer requires donor and recipient payloads
 		const hasPercent = descriptor.percent !== undefined;
 		// Percent change uses modifiers (values are fractions like 0.4 for 40%)
 		const percentFraction =
@@ -89,7 +89,7 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 				...(descriptor.amount !== undefined
 					? { amount: descriptor.amount }
 					: {}),
-				// V2 params for engine execution
+				// params for engine execution
 				donor: {
 					player: 'opponent' as const,
 					resourceId: descriptor.key,

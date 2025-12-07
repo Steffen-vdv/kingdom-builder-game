@@ -6,7 +6,7 @@ const globalScope = globalThis as {
 	__KINGDOM_BUILDER_CONFIG__?: Partial<RuntimeContentConfig> | undefined;
 };
 
-const baseResourceV2 = {
+const baseResource = {
 	id: 'resource:core:gold',
 	label: 'Gold',
 	icon: '💰',
@@ -20,7 +20,7 @@ const baseResourceV2 = {
 	groupOrder: 0,
 } as const;
 
-const baseResourceGroupV2 = {
+const baseResourceGroup = {
 	id: 'resource-group:core',
 	order: 0,
 	parent: {
@@ -65,13 +65,13 @@ const baseResponse = {
 	resources: {
 		gold: { key: 'gold', icon: 'gold-icon' },
 	},
-	resourcesV2: {
-		'resource:core:gold': baseResourceV2,
+	resources: {
+		'resource:core:gold': baseResource,
 	},
-	resourceGroupsV2: {
-		'resource-group:core': baseResourceGroupV2,
+	resourceGroups: {
+		'resource-group:core': baseResourceGroup,
 	},
-	resourceCategoriesV2: {},
+	resourceCategories: {},
 	primaryIconId: 'gold',
 } as const;
 

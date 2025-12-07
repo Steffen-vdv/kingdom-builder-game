@@ -121,8 +121,8 @@ describe('action effect groups integration', () => {
 		expect(traces).toHaveLength(1);
 		const trace = traces[0];
 		const delta =
-			(trace.after.valuesV2[Resource.gold] ?? 0) -
-			(trace.before.valuesV2[Resource.gold] ?? 0);
+			(trace.after.values[Resource.gold] ?? 0) -
+			(trace.before.values[Resource.gold] ?? 0);
 		expect(delta).toBe(rewardAmount);
 	});
 

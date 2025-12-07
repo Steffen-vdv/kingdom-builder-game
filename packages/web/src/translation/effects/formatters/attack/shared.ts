@@ -74,7 +74,7 @@ function formatValueSigned(
 export function formatDiffCommon(
 	prefix: string,
 	diff: AttackPlayerDiff,
-	context: Pick<TranslationContext, 'assets' | 'resourceMetadataV2'>,
+	context: Pick<TranslationContext, 'assets' | 'resourceMetadata'>,
 	options?: DiffFormatOptions,
 ): string {
 	const key = String(diff.key);

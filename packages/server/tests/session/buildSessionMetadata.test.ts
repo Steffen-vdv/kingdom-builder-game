@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
 	createContentFactory,
-	createResourceV2Registries,
-	resourceV2Definition,
+	createResourceRegistries,
+	resourceDefinition,
 } from '@kingdom-builder/testing';
 import type {
 	PhaseConfig,
@@ -300,17 +300,17 @@ describe('buildSessionMetadata', () => {
 		expect(devMeta?.icon).toBe('🌳');
 	});
 
-	it('builds population metadata from V2 registry fallback', () => {
+	it('builds population metadata from registry fallback', () => {
 		const factory = createContentFactory();
-		// Create a population with a V2 resource backing it
-		createResourceV2Registries({
+		// Create a population with a resource backing it
+		createResourceRegistries({
 			resources: [
-				resourceV2Definition({
+				resourceDefinition({
 					id: 'resource:population:role:test',
 					metadata: {
-						label: 'V2 Label',
+						label: 'Registry Label',
 						icon: '👤',
-						description: 'V2 Description',
+						description: 'Registry Description',
 					},
 				}),
 			],

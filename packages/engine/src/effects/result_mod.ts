@@ -63,7 +63,7 @@ export const resultMod: EffectHandler<ResultModParams> = (
 					if (amount !== undefined) {
 						for (const gainEntry of gains) {
 							if (gainEntry.amount > 0) {
-								// key IS the ResourceV2 ID directly (no mapper needed)
+								// key IS the Resource ID directly (no mapper needed)
 								runEffects(
 									[
 										{

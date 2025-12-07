@@ -4,7 +4,7 @@ import type { DevelopmentConfig, Registry } from '@kingdom-builder/protocol';
 import { applyParamsToEffects } from '@kingdom-builder/protocol';
 import { runEffects } from '../effects';
 import { withResourceSourceFrames } from '../resource_sources';
-import { resolveResourceDefinition } from '../resource-v2/state-helpers';
+import { resolveResourceDefinition } from '../resource/state-helpers';
 import { TieredResourceService } from './tiered_resource_service';
 import { PopCapService } from './pop_cap_service';
 import { WinConditionService } from './win_condition_service';
@@ -54,8 +54,8 @@ export class Services {
 		resourceId: ResourceIdentifier,
 		delta: number,
 	) {
-		// Look up the resource definition from the V2 catalog
-		const catalog = context.resourceCatalogV2;
+		// Look up the resource definition from the catalog
+		const catalog = context.resourceCatalog;
 		const lookup = resolveResourceDefinition(catalog, resourceId);
 		if (!lookup || lookup.kind !== 'resource') {
 			return;

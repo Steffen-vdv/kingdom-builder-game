@@ -105,13 +105,13 @@ describe('useActionPerformer', () => {
 			id: 'A',
 			name: 'Hero',
 			resources: { [actionCostResource]: 5 },
-			valuesV2: { [actionCostResource]: 5 },
+			values: { [actionCostResource]: 5 },
 		});
 		const opponent = createSnapshotPlayer({
 			id: 'B',
 			name: 'Rival',
 			resources: { [actionCostResource]: 4 },
-			valuesV2: { [actionCostResource]: 4 },
+			values: { [actionCostResource]: 4 },
 		});
 		sessionSnapshot = createSessionSnapshot({
 			players: [player, opponent],
@@ -381,8 +381,8 @@ describe('useActionPerformer', () => {
 				...activeBefore.resources,
 				[actionCostResource]: updatedResourceValue,
 			},
-			valuesV2: {
-				...activeBefore.valuesV2,
+			values: {
+				...activeBefore.values,
 				[actionCostResource]: updatedResourceValue,
 			},
 		});
@@ -390,7 +390,7 @@ describe('useActionPerformer', () => {
 			id: opponentBefore.id,
 			name: opponentBefore.name,
 			resources: { ...opponentBefore.resources },
-			valuesV2: { ...opponentBefore.valuesV2 },
+			values: { ...opponentBefore.values },
 		});
 		const snapshotAfter = createSessionSnapshot({
 			players: [updatedPlayer, updatedOpponent],
@@ -495,8 +495,8 @@ describe('useActionPerformer', () => {
 				...activeBefore.resources,
 				[actionCostResource]: updatedResourceValue,
 			},
-			valuesV2: {
-				...activeBefore.valuesV2,
+			values: {
+				...activeBefore.values,
 				[actionCostResource]: updatedResourceValue,
 			},
 		});
@@ -504,7 +504,7 @@ describe('useActionPerformer', () => {
 			id: opponentBefore.id,
 			name: opponentBefore.name,
 			resources: { ...opponentBefore.resources },
-			valuesV2: { ...opponentBefore.valuesV2 },
+			values: { ...opponentBefore.values },
 		});
 		const snapshotAfter = createSessionSnapshot({
 			players: [updatedPlayer, updatedOpponent],

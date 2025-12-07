@@ -1,7 +1,7 @@
 import type { PlayerId, PopulationRoleId, ResourceKey } from '../state';
 import type { EngineContext } from '../context';
 import { runEffects, type EffectDef } from '../effects';
-import { getResourceValue } from '../resource-v2';
+import { getResourceValue } from '../resource';
 
 export interface DeveloperPopulationPlanEntry {
 	role: PopulationRoleId;
@@ -36,7 +36,7 @@ function ensureResource(
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	// resourceId IS the ResourceV2 ID directly (no mapper needed)
+	// resourceId IS the Resource ID directly (no mapper needed)
 	const current = getResourceValue(player, resourceId);
 	if (current === target) {
 		return;
@@ -63,7 +63,7 @@ function ensurePopulation(
 	target: number,
 ): void {
 	const player = context.activePlayer;
-	// role IS the ResourceV2 ID (e.g. 'resource:core:council')
+	// role IS the Resource ID (e.g. 'resource:core:council')
 	const current = getResourceValue(player, role);
 	if (current === target) {
 		return;

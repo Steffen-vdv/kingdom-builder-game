@@ -4,7 +4,7 @@ import { PhaseId, Resource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
 import type { ResourceGain } from '../../src/services/passive_types.ts';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 const TARGET_TYPE = 'custom';
 const TARGET_ID = 'income';

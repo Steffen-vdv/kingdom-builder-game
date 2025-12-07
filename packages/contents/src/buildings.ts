@@ -1,6 +1,6 @@
 import { Registry, TRANSFER_PCT_EVALUATION_ID, TRANSFER_PCT_EVALUATION_TYPE, buildingSchema } from '@kingdom-builder/protocol';
 import { ActionId, PopulationEvaluationId } from './actionIds';
-import { Resource, getResourceV2Id, Stat, getStatResourceV2Id } from './internal';
+import { Resource, getResourceId, Stat, getStatResourceId } from './internal';
 import type { ResourceKey, StatKey } from './internal';
 import { DevelopmentId } from './developments';
 import { building, effect, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams } from './config/builders';
@@ -9,13 +9,13 @@ import { Focus } from './defs';
 import { BuildingId as BuildingIdMap } from './buildingIds';
 import type { BuildingId as BuildingIdType } from './buildingIds';
 import type { BuildingDef } from './defs';
-import { resourceChange } from './resourceV2';
+import { resourceChange } from './resource';
 export const BuildingId = BuildingIdMap;
 export type BuildingId = BuildingIdType;
 
 function resourceAmountParams(resource: ResourceKey, amount: number) {
 	return {
-		...resourceChange(getResourceV2Id(resource)).amount(amount).build(),
+		...resourceChange(getResourceId(resource)).amount(amount).build(),
 		key: resource,
 		amount,
 	};
@@ -23,7 +23,7 @@ function resourceAmountParams(resource: ResourceKey, amount: number) {
 
 function statAmountParams(stat: StatKey, amount: number) {
 	return {
-		...resourceChange(getStatResourceV2Id(stat)).amount(amount).build(),
+		...resourceChange(getStatResourceId(stat)).amount(amount).build(),
 		key: stat,
 		amount,
 	};

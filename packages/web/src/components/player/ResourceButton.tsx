@@ -1,14 +1,14 @@
 import React from 'react';
 import type {
-	ResourceV2MetadataSnapshot,
-	ResourceV2ValueSnapshot,
+	ResourceMetadataSnapshot,
+	ResourceValueSnapshot,
 } from '../../translation';
 import { getForecastDisplay } from '../../utils/forecast';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 
 export interface ResourceButtonProps {
-	metadata: ResourceV2MetadataSnapshot;
-	snapshot: ResourceV2ValueSnapshot;
+	metadata: ResourceMetadataSnapshot;
+	snapshot: ResourceValueSnapshot;
 	onShow: (resourceId: string) => void;
 	onHide: () => void;
 }
@@ -18,14 +18,14 @@ const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
 	maximumFractionDigits: 2,
 });
 
-type SessionMetadataFormat = ResourceV2MetadataSnapshot['format'];
+type SessionMetadataFormat = ResourceMetadataSnapshot['format'];
 
 type FormatDescriptor =
 	| NonNullable<SessionMetadataFormat>
 	| { prefix?: string | null; percent?: boolean | null }
 	| undefined;
 
-function readFormat(metadata: ResourceV2MetadataSnapshot): FormatDescriptor {
+function readFormat(metadata: ResourceMetadataSnapshot): FormatDescriptor {
 	if (typeof metadata.format === 'object' && metadata.format !== null) {
 		return metadata.format;
 	}
@@ -69,7 +69,7 @@ function resolvePrefix(descriptor: FormatDescriptor): string | undefined {
 
 export function formatResourceMagnitude(
 	value: number,
-	metadata: ResourceV2MetadataSnapshot,
+	metadata: ResourceMetadataSnapshot,
 ): string {
 	const descriptor = readFormat(metadata);
 	const prefix = resolvePrefix(descriptor);
@@ -81,7 +81,7 @@ export function formatResourceMagnitude(
 
 export function formatSignedResourceMagnitude(
 	value: number,
-	metadata: ResourceV2MetadataSnapshot,
+	metadata: ResourceMetadataSnapshot,
 ): string {
 	const magnitude = formatResourceMagnitude(Math.abs(value), metadata);
 	const sign = value >= 0 ? '+' : '-';

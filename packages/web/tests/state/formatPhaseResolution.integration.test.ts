@@ -14,13 +14,13 @@ import type {
 import { createDefaultTranslationAssets } from '../helpers/translationAssets';
 import {
 	createSessionRegistries,
-	createResourceV2CatalogContent,
+	createResourceCatalogContent,
 } from '../helpers/sessionRegistries';
 import type { SessionResourceKey } from '../../src/state/sessionTypes';
 import type { TranslationActionCategoryRegistry } from '../../src/translation/context';
 import {
-	cloneResourceCatalogV2,
-	createResourceV2MetadataSelectors,
+	cloneResourceCatalog,
+	createResourceMetadataSelectors,
 } from '../../src/translation/context';
 
 const translationAssets = createDefaultTranslationAssets();
@@ -29,9 +29,9 @@ const primaryResource =
 	(Object.keys(baseRegistries.resources) as SessionResourceKey[])[0] ??
 	('resource-fallback' as SessionResourceKey);
 
-const resourceCatalogV2 = createResourceV2CatalogContent();
-const catalogClone = cloneResourceCatalogV2(resourceCatalogV2);
-const resourceMetadataV2 = createResourceV2MetadataSelectors(catalogClone);
+const resourceCatalog = createResourceCatalogContent();
+const catalogClone = cloneResourceCatalog(resourceCatalog);
+const resourceMetadata = createResourceMetadataSelectors(catalogClone);
 const actionCategories: TranslationActionCategoryRegistry = {
 	categories: new Map(),
 	get: () => undefined,
@@ -60,7 +60,7 @@ function createSessionPlayer(
 		name,
 		resources: { ...snapshot.resources },
 		stats: { ...snapshot.stats },
-		resourceTouchedV2: {},
+		resourceTouched: {},
 		population: { ...snapshot.population },
 		lands: [],
 		buildings: [],
@@ -123,7 +123,7 @@ describe('formatPhaseResolution integration', () => {
 			passives: { evaluationMods: new Map(), get: () => undefined },
 			assets: translationAssets,
 			actionCategories,
-			resourceMetadataV2,
+			resourceMetadata,
 		});
 
 		const result: PhaseResolutionFormatResult = formatPhaseResolution({
@@ -178,7 +178,7 @@ describe('formatPhaseResolution integration', () => {
 			passives: { evaluationMods: new Map(), get: () => undefined },
 			assets: translationAssets,
 			actionCategories,
-			resourceMetadataV2,
+			resourceMetadata,
 		});
 
 		const result = formatPhaseResolution({

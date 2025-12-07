@@ -6,11 +6,11 @@ import type {
 	SessionPhaseDefinition,
 	SessionPlayerId,
 	SessionPlayerStateSnapshot,
-	SessionResourceBoundsV2,
+	SessionResourceBounds,
 	SessionRuleSnapshot,
 	SessionSnapshot,
 	SessionSnapshotMetadata,
-	SessionResourceCatalogV2,
+	SessionResourceCatalog,
 } from '@kingdom-builder/protocol/session';
 import {
 	clone,
@@ -21,7 +21,7 @@ import {
 	cloneResourceSources,
 } from './sessionCloneHelpers';
 
-const EMPTY_RESOURCE_CATALOG_V2: SessionResourceCatalogV2 = Object.freeze({
+const EMPTY_RESOURCE_CATALOG: SessionResourceCatalog = Object.freeze({
 	resources: { byId: {}, ordered: [] },
 	groups: { byId: {}, ordered: [] },
 	categories: { byId: {}, ordered: [] },
@@ -60,10 +60,10 @@ interface SnapshotPlayerOptions {
 	aiControlled?: boolean;
 	resources?: Record<string, number>;
 	stats?: Record<string, number>;
-	resourceTouchedV2?: Record<string, boolean>;
+	resourceTouched?: Record<string, boolean>;
 	population?: Record<string, number>;
-	valuesV2?: Record<string, number>;
-	resourceBoundsV2?: Record<string, Partial<SessionResourceBoundsV2>>;
+	values?: Record<string, number>;
+	resourceBounds?: Record<string, Partial<SessionResourceBounds>>;
 	lands?: SessionPlayerStateSnapshot['lands'];
 	buildings?: string[];
 	actions?: string[];
@@ -79,10 +79,10 @@ export function createSnapshotPlayer({
 	aiControlled,
 	resources = {},
 	stats = {},
-	resourceTouchedV2 = {},
+	resourceTouched = {},
 	population = {},
-	valuesV2 = {},
-	resourceBoundsV2 = {},
+	values = {},
+	resourceBounds = {},
 	lands = [],
 	buildings = [],
 	actions = [],
@@ -96,7 +96,7 @@ export function createSnapshotPlayer({
 		name,
 		resources: { ...resources },
 		stats: { ...stats },
-		resourceTouchedV2: { ...resourceTouchedV2 },
+		resourceTouched: { ...resourceTouched },
 		population: { ...population },
 		lands: cloneLands(lands),
 		buildings: [...buildings],
@@ -109,15 +109,15 @@ export function createSnapshotPlayer({
 	if (aiControlled !== undefined) {
 		snapshot.aiControlled = aiControlled;
 	}
-	snapshot.valuesV2 = { ...valuesV2 };
-	const normalizedBounds: Record<string, SessionResourceBoundsV2> = {};
-	for (const [resourceId, bounds] of Object.entries(resourceBoundsV2)) {
+	snapshot.values = { ...values };
+	const normalizedBounds: Record<string, SessionResourceBounds> = {};
+	for (const [resourceId, bounds] of Object.entries(resourceBounds)) {
 		normalizedBounds[resourceId] = {
 			lowerBound: bounds.lowerBound !== undefined ? bounds.lowerBound : null,
 			upperBound: bounds.upperBound !== undefined ? bounds.upperBound : null,
 		};
 	}
-	snapshot.resourceBoundsV2 = normalizedBounds;
+	snapshot.resourceBounds = normalizedBounds;
 	return snapshot;
 }
 
@@ -207,9 +207,9 @@ interface SessionSnapshotOptions {
 	stepIndex?: number;
 	devMode?: boolean;
 	metadata?: SessionSnapshotMetadata;
-	resourceCatalogV2?: SessionResourceCatalogV2;
-	resourceMetadataV2?: SessionSnapshot['resourceMetadataV2'];
-	resourceGroupMetadataV2?: SessionSnapshot['resourceGroupMetadataV2'];
+	resourceCatalog?: SessionResourceCatalog;
+	resourceMetadata?: SessionSnapshot['resourceMetadata'];
+	resourceGroupMetadata?: SessionSnapshot['resourceGroupMetadata'];
 }
 
 export function createSessionSnapshot({
@@ -229,9 +229,9 @@ export function createSessionSnapshot({
 	stepIndex = 0,
 	devMode = false,
 	metadata: metadataOverride,
-	resourceCatalogV2,
-	resourceMetadataV2,
-	resourceGroupMetadataV2,
+	resourceCatalog,
+	resourceMetadata,
+	resourceGroupMetadata,
 }: SessionSnapshotOptions): SessionSnapshot {
 	const phase = phases[phaseIndex] ?? phases[0];
 	const resolvedCurrentPhase =
@@ -272,7 +272,7 @@ export function createSessionSnapshot({
 					tokens: {},
 				} satisfies SessionOverviewMetadata,
 			});
-	const resourceCatalog = clone(resourceCatalogV2 ?? EMPTY_RESOURCE_CATALOG_V2);
+	const resourceCatalog = clone(resourceCatalog ?? EMPTY_RESOURCE_CATALOG);
 	const snapshot: SessionSnapshot = {
 		game: {
 			turn,
@@ -285,7 +285,7 @@ export function createSessionSnapshot({
 			players: players.map((player) => ({ ...player })),
 			activePlayerId,
 			opponentId,
-			resourceCatalogV2: resourceCatalog,
+			resourceCatalog: resourceCatalog,
 		},
 		phases: phases.map((phaseDefinition) => ({
 			...phaseDefinition,
@@ -307,11 +307,11 @@ export function createSessionSnapshot({
 		passiveRecords: normalizedPassiveRecords,
 		metadata,
 	} satisfies SessionSnapshot;
-	if (resourceMetadataV2) {
-		snapshot.resourceMetadataV2 = clone(resourceMetadataV2);
+	if (resourceMetadata) {
+		snapshot.resourceMetadata = clone(resourceMetadata);
 	}
-	if (resourceGroupMetadataV2) {
-		snapshot.resourceGroupMetadataV2 = clone(resourceGroupMetadataV2);
+	if (resourceGroupMetadata) {
+		snapshot.resourceGroupMetadata = clone(resourceGroupMetadata);
 	}
 	return snapshot;
 }

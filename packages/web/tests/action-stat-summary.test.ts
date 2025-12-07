@@ -9,25 +9,25 @@ type StatEffectScenario = {
 	amount: number;
 };
 
-// V2 stat resource IDs - must match testResourceV2Metadata.ts
-const V2_STAT_IDS = {
+// stat resource IDs - must match testResourceMetadata.ts
+const STAT_IDS = {
 	maxPopulation: 'resource:core:max-population',
 	fortificationStrength: 'resource:core:fortification-strength',
 	absorption: 'resource:core:absorption',
 	armyStrength: 'resource:core:army-strength',
 } as const;
 
-// Map legacy stat keys to ResourceV2 IDs
+// Map legacy stat keys to Resource IDs
 const STAT_KEY_MAP: Record<string, string> = {
-	maxPopulation: V2_STAT_IDS.maxPopulation,
-	fortificationStrength: V2_STAT_IDS.fortificationStrength,
-	absorption: V2_STAT_IDS.absorption,
-	armyStrength: V2_STAT_IDS.armyStrength,
+	maxPopulation: STAT_IDS.maxPopulation,
+	fortificationStrength: STAT_IDS.fortificationStrength,
+	absorption: STAT_IDS.absorption,
+	armyStrength: STAT_IDS.armyStrength,
 	// Handle capitalized variants
-	MaxPopulation: V2_STAT_IDS.maxPopulation,
-	FortificationStrength: V2_STAT_IDS.fortificationStrength,
-	Absorption: V2_STAT_IDS.absorption,
-	ArmyStrength: V2_STAT_IDS.armyStrength,
+	MaxPopulation: STAT_IDS.maxPopulation,
+	FortificationStrength: STAT_IDS.fortificationStrength,
+	Absorption: STAT_IDS.absorption,
+	ArmyStrength: STAT_IDS.armyStrength,
 };
 
 function setupStatAction(statEffects: StatEffectScenario[]) {

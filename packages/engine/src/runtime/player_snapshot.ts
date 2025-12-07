@@ -5,7 +5,7 @@ import type { ActionTrace, PlayerSnapshot } from '../log';
 import type { Land, PlayerId, PlayerState } from '../state';
 import type { PassiveSummary } from '../services';
 import type { LandSnapshot, PlayerStateSnapshot } from './types';
-import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
+import type { SessionResourceBounds } from '@kingdom-builder/protocol';
 
 type ResourceSnapshotBucket = PlayerStateSnapshot['resourceSources'][string];
 
@@ -132,7 +132,7 @@ function cloneLand(land: Land): LandSnapshot {
 	return snapshot;
 }
 
-function cloneValuesV2(
+function cloneValues(
 	values: PlayerState['resourceValues'],
 ): Record<string, number> {
 	const snapshot: Record<string, number> = {};
@@ -144,8 +144,8 @@ function cloneValuesV2(
 
 function buildResourceBoundsSnapshot(
 	player: PlayerState,
-): Record<string, SessionResourceBoundsV2> {
-	const snapshot: Record<string, SessionResourceBoundsV2> = {};
+): Record<string, SessionResourceBounds> {
+	const snapshot: Record<string, SessionResourceBounds> = {};
 	const keys = new Set(
 		Object.keys(player.resourceValues).concat(
 			Object.keys(player.resourceLowerBounds),
@@ -164,20 +164,20 @@ export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
-	// All values are unified in valuesV2. The resources/stats/population
+	// All values are unified in values. The resources/stats/population
 	// properties reference the same object so consumers can access via any key.
-	const valuesV2 = cloneValuesV2(player.resourceValues);
-	const resourceBoundsV2 = buildResourceBoundsSnapshot(player);
+	const values = cloneValues(player.resourceValues);
+	const resourceBounds = buildResourceBoundsSnapshot(player);
 	return {
 		id: player.id,
 		name: player.name,
 		aiControlled: Boolean(context.aiSystem?.has(player.id)),
-		resources: valuesV2,
-		stats: valuesV2,
-		resourceTouchedV2: { ...player.resourceTouched },
-		population: valuesV2,
-		valuesV2,
-		resourceBoundsV2,
+		resources: values,
+		stats: values,
+		resourceTouched: { ...player.resourceTouched },
+		population: values,
+		values,
+		resourceBounds,
 		lands: player.lands.map((land) => cloneLand(land)),
 		buildings: Array.from(player.buildings),
 		actions: Array.from(player.actions),
@@ -190,9 +190,9 @@ export function snapshotPlayer(
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 	return {
-		valuesV2: { ...snapshot.valuesV2 },
-		resourceBoundsV2: Object.fromEntries(
-			Object.entries(snapshot.resourceBoundsV2).map(([resourceId, bounds]) => [
+		values: { ...snapshot.values },
+		resourceBounds: Object.fromEntries(
+			Object.entries(snapshot.resourceBounds).map(([resourceId, bounds]) => [
 				resourceId,
 				{
 					lowerBound: bounds.lowerBound,

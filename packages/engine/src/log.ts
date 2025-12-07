@@ -1,15 +1,15 @@
 import type { EngineContext } from './context';
 import type { PlayerState } from './state';
 import type { PassiveSummary } from './services';
-import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
+import type { SessionResourceBounds } from '@kingdom-builder/protocol';
 
 export interface PlayerSnapshot {
 	/**
-	 * Unified ResourceV2 value map containing all resources, stats, and
-	 * population counts keyed by their V2 identifiers.
+	 * Unified Resource value map containing all resources, stats, and
+	 * population counts keyed by their identifiers.
 	 */
-	valuesV2: Record<string, number>;
-	resourceBoundsV2: Record<string, SessionResourceBoundsV2>;
+	values: Record<string, number>;
+	resourceBounds: Record<string, SessionResourceBounds>;
 	buildings: string[];
 	lands: {
 		id: string;
@@ -20,7 +20,7 @@ export interface PlayerSnapshot {
 	passives: PassiveSummary[];
 }
 
-function cloneValuesV2(player: PlayerState): Record<string, number> {
+function cloneValues(player: PlayerState): Record<string, number> {
 	const snapshot: Record<string, number> = {};
 	for (const [resourceId, value] of Object.entries(player.resourceValues)) {
 		snapshot[resourceId] = value ?? 0;
@@ -30,8 +30,8 @@ function cloneValuesV2(player: PlayerState): Record<string, number> {
 
 function buildResourceBoundsSnapshot(
 	player: PlayerState,
-): Record<string, SessionResourceBoundsV2> {
-	const snapshot: Record<string, SessionResourceBoundsV2> = {};
+): Record<string, SessionResourceBounds> {
+	const snapshot: Record<string, SessionResourceBounds> = {};
 	const keys = new Set(
 		Object.keys(player.resourceValues).concat(
 			Object.keys(player.resourceLowerBounds),
@@ -51,8 +51,8 @@ export function snapshotPlayer(
 	engineContext: EngineContext,
 ): PlayerSnapshot {
 	return {
-		valuesV2: cloneValuesV2(player),
-		resourceBoundsV2: buildResourceBoundsSnapshot(player),
+		values: cloneValues(player),
+		resourceBounds: buildResourceBoundsSnapshot(player),
 		buildings: Array.from(player.buildings),
 		lands: player.lands.map((land) => ({
 			id: land.id,

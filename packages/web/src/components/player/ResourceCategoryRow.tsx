@@ -1,22 +1,22 @@
 import React from 'react';
 import type {
 	SessionPlayerStateSnapshot,
-	SessionResourceCategoryDefinitionV2,
-	SessionResourceCategoryItemV2,
-	SessionResourceDefinitionV2,
+	SessionResourceCategoryDefinition,
+	SessionResourceCategoryItem,
+	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import {
-	type ResourceV2MetadataSnapshot,
-	type ResourceV2ValueSnapshot,
+	type ResourceMetadataSnapshot,
+	type ResourceValueSnapshot,
 } from '../../translation';
 import ResourceButton, { formatResourceMagnitude } from './ResourceButton';
 import {
 	createForecastMap,
 	createResourceSnapshot,
 	formatResourceTitle,
-} from './resourceV2Snapshots';
+} from './resourceSnapshots';
 import { PLAYER_INFO_CARD_BG } from './infoCards';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
 import { buildTierEntries, type TierDefinition } from './buildTierEntries';
@@ -27,14 +27,14 @@ import {
 import { toDescriptorDisplay } from './registryDisplays';
 
 interface ResourceCategoryRowProps {
-	category: SessionResourceCategoryDefinitionV2;
+	category: SessionResourceCategoryDefinition;
 	player: SessionPlayerStateSnapshot;
 }
 
 function buildBoundResourceMap(
-	definitions: readonly SessionResourceDefinitionV2[],
-): Map<string, SessionResourceDefinitionV2> {
-	const map = new Map<string, SessionResourceDefinitionV2>();
+	definitions: readonly SessionResourceDefinition[],
+): Map<string, SessionResourceDefinition> {
+	const map = new Map<string, SessionResourceDefinition>();
 	for (const definition of definitions) {
 		if (definition.boundOf) {
 			map.set(definition.boundOf.resourceId, definition);
@@ -49,7 +49,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 }) => {
 	const { handleHoverCard, clearHoverCard, translationContext, ruleSnapshot } =
 		useGameEngine();
-	const resourceCatalog = translationContext.resourcesV2;
+	const resourceCatalog = translationContext.resources;
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id];
 	const resourceMetadata = useResourceMetadata();
@@ -72,7 +72,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		() =>
 			resourceCatalog
 				? buildBoundResourceMap(resourceCatalog.resources.ordered)
-				: new Map<string, SessionResourceDefinitionV2>(),
+				: new Map<string, SessionResourceDefinition>(),
 		[resourceCatalog],
 	);
 
@@ -121,7 +121,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		if (!tieredResourceKey) {
 			return undefined;
 		}
-		const value = player.valuesV2?.[tieredResourceKey] ?? 0;
+		const value = player.values?.[tieredResourceKey] ?? 0;
 		for (const tier of tierDefinitions) {
 			const min = tier.range.min ?? 0;
 			const max = tier.range.max;
@@ -135,7 +135,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		tierByPassiveId,
 		tieredResourceKey,
 		tierDefinitions,
-		player.valuesV2,
+		player.values,
 	]);
 
 	const showResourceCard = React.useCallback(
@@ -147,7 +147,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			if (!definition) {
 				return;
 			}
-			const metadata = translationContext.resourceMetadataV2.get(resourceId);
+			const metadata = translationContext.resourceMetadata.get(resourceId);
 
 			// Check if this is a tiered resource
 			let effects: ReturnType<typeof buildTierEntries>['entries'] = [];
@@ -213,17 +213,17 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 				return null;
 			}
 			// For non-primary categories, only show resources that have been touched
-			if (!category.isPrimary && !player.resourceTouchedV2[resourceId]) {
+			if (!category.isPrimary && !player.resourceTouched[resourceId]) {
 				return null;
 			}
 
-			const metadata = translationContext.resourceMetadataV2.get(resourceId);
+			const metadata = translationContext.resourceMetadata.get(resourceId);
 			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
 
 			// Check if there's a bound resource for this resource
 			const boundDef = boundResourceMap.get(resourceId);
 			if (boundDef) {
-				const boundMetadata = translationContext.resourceMetadataV2.get(
+				const boundMetadata = translationContext.resourceMetadata.get(
 					boundDef.id,
 				);
 				const boundSnapshot = createResourceSnapshot(
@@ -258,17 +258,17 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		[
 			resourceCatalog,
 			snapshotContext,
-			translationContext.resourceMetadataV2,
+			translationContext.resourceMetadata,
 			boundResourceMap,
 			showResourceCard,
 			clearHoverCard,
 			category.isPrimary,
-			player.resourceTouchedV2,
+			player.resourceTouched,
 		],
 	);
 
 	const renderCategoryItem = React.useCallback(
-		(item: SessionResourceCategoryItemV2): React.ReactNode => {
+		(item: SessionResourceCategoryItem): React.ReactNode => {
 			if (item.type === 'resource') {
 				return renderResource(item.id);
 			}
@@ -327,10 +327,10 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 };
 
 interface ResourceWithBoundButtonProps {
-	metadata: ResourceV2MetadataSnapshot;
-	snapshot: ResourceV2ValueSnapshot;
-	boundMetadata: ResourceV2MetadataSnapshot;
-	boundSnapshot: ResourceV2ValueSnapshot;
+	metadata: ResourceMetadataSnapshot;
+	snapshot: ResourceValueSnapshot;
+	boundMetadata: ResourceMetadataSnapshot;
+	boundSnapshot: ResourceValueSnapshot;
 	boundType: 'upper' | 'lower';
 	onShow: (resourceId: string) => void;
 	onHide: () => void;

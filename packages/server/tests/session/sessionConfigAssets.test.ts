@@ -8,8 +8,8 @@ import type {
 } from '@kingdom-builder/protocol';
 import {
 	createContentFactory,
-	createResourceV2Registries,
-	resourceV2Definition,
+	createResourceRegistries,
+	resourceDefinition,
 } from '@kingdom-builder/testing';
 import {
 	buildResourceRegistry,
@@ -22,8 +22,8 @@ import {
 } from '../../src/session/registryUtils.js';
 
 describe('buildResourceRegistry', () => {
-	it('populates registry from RESOURCE_V2_REGISTRY', () => {
-		// The function now populates from the global RESOURCE_V2_REGISTRY
+	it('populates registry from RESOURCE_REGISTRY', () => {
+		// The function now populates from the global RESOURCE_REGISTRY
 		const registry = buildResourceRegistry(undefined);
 		// Should have entries from the global registry
 		expect(registry).toBeDefined();
@@ -51,8 +51,8 @@ describe('buildResourceRegistry', () => {
 		expect(typeof registry).toBe('object');
 	});
 
-	it('preserves override values over V2 registry defaults', () => {
-		// Pick a known resource from V2 registry and override it
+	it('preserves override values over registry defaults', () => {
+		// Pick a known resource from registry and override it
 		const overrides: SerializedRegistry<SessionResourceDefinition> = {
 			'resource:core:gold': {
 				key: 'resource:core:gold',
@@ -69,9 +69,9 @@ describe('buildResourceRegistry', () => {
 describe('buildSessionAssets', () => {
 	const createBaseOptions = (): SessionBaseOptions => {
 		const factory = createContentFactory();
-		const { resources, groups } = createResourceV2Registries({
+		const { resources, groups } = createResourceRegistries({
 			resources: [
-				resourceV2Definition({
+				resourceDefinition({
 					id: 'resource:test:base',
 					metadata: { label: 'Base', icon: '💎' },
 				}),
@@ -99,7 +99,7 @@ describe('buildSessionAssets', () => {
 			populations: factory.populations,
 			phases,
 			rules,
-			resourceCatalogV2: { resources, groups },
+			resourceCatalog: { resources, groups },
 		};
 	};
 
@@ -158,7 +158,7 @@ describe('buildSessionAssets', () => {
 		const config: GameConfig = {};
 		const { registries, metadata } = buildSessionAssets(context, config);
 		expect(registries).not.toBe(baseRegistries);
-		// Resources should be populated from RESOURCE_V2_REGISTRY
+		// Resources should be populated from RESOURCE_REGISTRY
 		expect(registries.resources).toBeDefined();
 		expect(metadata).toBeDefined();
 	});

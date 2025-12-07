@@ -90,8 +90,8 @@ describe('modifier percent formatting', () => {
 
 	it('falls back to raw numbers when percent metadata is missing', () => {
 		const { context } = createContext();
-		// ResourceV2 metadata returns the id as label when resource is unknown
-		const fallbackDisplay = context.resourceMetadataV2.get('unknown-stat');
+		// Resource metadata returns the id as label when resource is unknown
+		const fallbackDisplay = context.resourceMetadata.get('unknown-stat');
 		expect(fallbackDisplay.label).toBe('unknown-stat');
 		const fallbackValue = formatStatValue('unknown-stat', 0.5, context.assets);
 		expect(fallbackValue).toBe('0.5');

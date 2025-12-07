@@ -13,18 +13,18 @@ import {
 	PRIMARY_ICON_ID,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-	RESOURCE_CATEGORY_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+	RESOURCE_CATEGORY_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type {
 	SessionRegistriesPayload,
 	PhaseConfig,
 	RuleSet,
 	SessionActionCategoryRegistry,
 	SerializedRegistry,
-	ResourceV2Definition,
-	ResourceV2GroupDefinition,
+	ResourceDefinition,
+	ResourceGroupDefinition,
 	ResourceCategoryDefinition,
 } from '@kingdom-builder/protocol';
 import {
@@ -55,9 +55,9 @@ type SessionRuntimeConfig = {
 	rules: RuleSet;
 	resources: SessionResourceRegistry;
 	primaryIconId: string | null;
-	resourcesV2: SerializedRegistry<ResourceV2Definition>;
-	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
-	resourceCategoriesV2: SerializedRegistry<ResourceCategoryDefinition>;
+	resources: SerializedRegistry<ResourceDefinition>;
+	resourceGroups: SerializedRegistry<ResourceGroupDefinition>;
+	resourceCategories: SerializedRegistry<ResourceCategoryDefinition>;
 };
 
 type SessionRecord = {
@@ -127,10 +127,10 @@ export class SessionManager {
 			populations: engineOverrides.populations ?? POPULATIONS,
 			phases: engineOverrides.phases ?? PHASES,
 			rules: engineOverrides.rules ?? RULES,
-			resourceCatalogV2: engineOverrides.resourceCatalogV2 ?? {
-				resources: RESOURCE_V2_REGISTRY,
-				groups: RESOURCE_GROUP_V2_REGISTRY,
-				categories: RESOURCE_CATEGORY_V2_REGISTRY,
+			resourceCatalog: engineOverrides.resourceCatalog ?? {
+				resources: RESOURCE_REGISTRY,
+				groups: RESOURCE_GROUP_REGISTRY,
+				categories: RESOURCE_CATEGORY_REGISTRY,
 			},
 			...(engineOverrides.systemActionIds
 				? { systemActionIds: engineOverrides.systemActionIds }
@@ -142,14 +142,14 @@ export class SessionManager {
 			: undefined;
 		this.resourceOverrides = resourceOverrideSnapshot;
 		const resources = buildResourceRegistry(this.resourceOverrides);
-		const resourceCatalog = this.baseOptions.resourceCatalogV2;
-		const resourcesV2 = freezeSerializedRegistry(
+		const resourceCatalog = this.baseOptions.resourceCatalog;
+		const resources = freezeSerializedRegistry(
 			structuredClone(resourceCatalog.resources.byId),
 		);
-		const resourceGroupsV2 = freezeSerializedRegistry(
+		const resourceGroups = freezeSerializedRegistry(
 			structuredClone(resourceCatalog.groups.byId),
 		);
-		const resourceCategoriesV2 = freezeSerializedRegistry(
+		const resourceCategories = freezeSerializedRegistry(
 			structuredClone(resourceCatalog.categories?.byId ?? {}),
 		);
 		const actionCategories = actionCategoryRegistry
@@ -166,9 +166,9 @@ export class SessionManager {
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
-			resourcesV2,
-			resourceGroupsV2,
-			resourceCategoriesV2,
+			resources,
+			resourceGroups,
+			resourceCategories,
 		};
 		this.metadata = buildSessionMetadata({
 			buildings: this.baseOptions.buildings,
@@ -191,9 +191,9 @@ export class SessionManager {
 			rules: frozenRules,
 			resources: frozenResources,
 			primaryIconId,
-			resourcesV2,
-			resourceGroupsV2,
-			resourceCategoriesV2,
+			resources,
+			resourceGroups,
+			resourceCategories,
 		});
 	}
 

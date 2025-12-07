@@ -507,13 +507,13 @@ describe('FastifySessionTransport', () => {
 		const fakeTrace: ActionTrace = {
 			id: 'trace',
 			before: {
-				valuesV2: {},
+				values: {},
 				buildings: [],
 				lands: [],
 				passives: [],
 			},
 			after: {
-				valuesV2: {},
+				values: {},
 				buildings: [],
 				lands: [],
 				passives: [],

@@ -207,7 +207,7 @@ function GenericActionCard({
 			tooltip={title}
 			focus={actionFocus}
 			assets={translationContext.assets}
-			resourceMetadataV2={translationContext.resourceMetadataV2}
+			resourceMetadata={translationContext.resourceMetadata}
 			variant={isPending ? 'back' : 'front'}
 			multiStep={hasGroups}
 			stepCount={stepCount}

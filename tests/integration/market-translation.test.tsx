@@ -89,8 +89,8 @@ describe('Building translation with development modifier', () => {
 							icon: harvestDevelopment.icon,
 						},
 					},
-					resourcesV2: {
-						...session.metadata.resourcesV2,
+					resources: {
+						...session.metadata.resources,
 						gold: { label: 'Refined Gold', icon: '🪙' },
 						'resource:synthetic:gold': {
 							label: 'Synthetic Gold',
@@ -159,8 +159,8 @@ describe('Building translation with development modifier', () => {
 						...session.metadata.resources,
 						gold: { label: 'City Gold', icon: undefined },
 					},
-					resourcesV2: {
-						...session.metadata.resourcesV2,
+					resources: {
+						...session.metadata.resources,
 						gold: { label: 'City Gold' },
 						'resource:synthetic:gold': { label: 'Synthetic Gold' },
 					},

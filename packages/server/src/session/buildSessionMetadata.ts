@@ -7,7 +7,7 @@ import {
 	POPULATION_INFO,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
-	RESOURCE_V2_REGISTRY,
+	RESOURCE_REGISTRY,
 } from '@kingdom-builder/contents';
 import type {
 	BuildingConfig,
@@ -127,18 +127,18 @@ function buildPopulationMetadata(
 ): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
 	for (const [id, definition] of registry.entries()) {
-		const resource = RESOURCE_V2_REGISTRY.byId[id];
-		// Prefer definition name (custom overrides) over V2 registry label
+		const resource = RESOURCE_REGISTRY.byId[id];
+		// Prefer definition name (custom overrides) over registry label
 		const descriptor: SessionMetadataDescriptor = {
 			label: definition.name ?? resource?.label,
 		};
-		// Prefer definition icon over V2 registry icon
+		// Prefer definition icon over registry icon
 		if (definition.icon) {
 			descriptor.icon = definition.icon;
 		} else if (resource?.icon) {
 			descriptor.icon = resource.icon;
 		}
-		// Prefer definition description over V2 registry description
+		// Prefer definition description over registry description
 		const description = (definition as { description?: string }).description;
 		if (description) {
 			descriptor.description = description;
@@ -152,7 +152,7 @@ function buildPopulationMetadata(
 
 function buildStatMetadata(): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
-	for (const resource of RESOURCE_V2_REGISTRY.ordered) {
+	for (const resource of RESOURCE_REGISTRY.ordered) {
 		if (!resource.id.startsWith('resource:core:')) {
 			continue;
 		}

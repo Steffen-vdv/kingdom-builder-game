@@ -73,7 +73,7 @@ function cloneResourceDefinition(
 }
 
 type ExtendedPayload = SessionRegistriesPayload & {
-	resourceCategoriesV2?: Record<string, unknown>;
+	resourceCategories?: Record<string, unknown>;
 };
 
 function cloneRegistriesPayload(
@@ -103,9 +103,9 @@ function cloneRegistriesPayload(
 			]),
 		),
 		actionCategories: cloneEntries(payload.actionCategories),
-		resourcesV2: cloneEntries(payload.resourcesV2),
-		resourceGroupsV2: cloneEntries(payload.resourceGroupsV2),
-		resourceCategoriesV2: cloneEntries(extPayload.resourceCategoriesV2),
+		resources: cloneEntries(payload.resources),
+		resourceGroups: cloneEntries(payload.resourceGroups),
+		resourceCategories: cloneEntries(extPayload.resourceCategories),
 	};
 }
 
@@ -124,25 +124,25 @@ export function createResourceKeys(): ResourceKey[] {
 	return Object.keys(BASE_PAYLOAD.resources ?? {}) as ResourceKey[];
 }
 
-// Helper to create ResourceV2 catalog content for engine initialization
-export function createResourceV2CatalogContent() {
+// Helper to create Resource catalog content for engine initialization
+export function createResourceCatalogContent() {
 	const payload = cloneRegistriesPayload(BASE_PAYLOAD);
-	const resourcesV2 = payload.resourcesV2 ?? {};
-	const resourceGroupsV2 = payload.resourceGroupsV2 ?? {};
-	const resourceCategoriesV2 = payload.resourceCategoriesV2 ?? {};
+	const resources = payload.resources ?? {};
+	const resourceGroups = payload.resourceGroups ?? {};
+	const resourceCategories = payload.resourceCategories ?? {};
 
 	// Convert to ordered registry format expected by createRuntimeResourceCatalog
 	const resources = {
-		ordered: Object.values(resourcesV2),
-		byId: resourcesV2,
+		ordered: Object.values(resources),
+		byId: resources,
 	};
 	const groups = {
-		ordered: Object.values(resourceGroupsV2),
-		byId: resourceGroupsV2,
+		ordered: Object.values(resourceGroups),
+		byId: resourceGroups,
 	};
 	const categories = {
-		ordered: Object.values(resourceCategoriesV2),
-		byId: resourceCategoriesV2,
+		ordered: Object.values(resourceCategories),
+		byId: resourceCategories,
 	};
 
 	return { resources, groups, categories };

@@ -207,8 +207,8 @@ export function createSessionTranslationDiffContext(
 			translationContext.actionCategories as unknown as TranslationDiffContext['actionCategories'],
 		passives,
 		assets: translationContext.assets,
-		resourceMetadataV2:
-			translationContext.resourceMetadataV2 as unknown as TranslationDiffContext['resourceMetadataV2'],
+		resourceMetadata:
+			translationContext.resourceMetadata as unknown as TranslationDiffContext['resourceMetadata'],
 		evaluate,
 	};
 }

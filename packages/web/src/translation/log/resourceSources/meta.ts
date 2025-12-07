@@ -34,8 +34,8 @@ function renderResourceMetaIcons(
 	if (!resourceId) {
 		return '';
 	}
-	// Use V2 metadata directly - resource IDs are used as-is
-	const v2Metadata = context.resourceMetadataV2?.get(resourceId);
+	// Use metadata directly - resource IDs are used as-is
+	const v2Metadata = context.resourceMetadata?.get(resourceId);
 	const icon = v2Metadata?.icon;
 	if (!icon) {
 		return '';

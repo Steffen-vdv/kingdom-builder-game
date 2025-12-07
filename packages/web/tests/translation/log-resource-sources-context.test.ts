@@ -75,7 +75,7 @@ describe('translation diff resource source context', () => {
 				formatPassiveRemoval: (description: string) =>
 					`Active as long as ${description}`,
 			},
-			resourceMetadataV2: {
+			resourceMetadata: {
 				list: () => [],
 				get: (id: string) => ({ id, label: id }),
 				has: () => false,

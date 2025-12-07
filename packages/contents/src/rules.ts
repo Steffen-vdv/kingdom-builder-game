@@ -4,8 +4,8 @@ import { createTierPassiveEffect } from './happinessHelpers';
 import { happinessTier, passiveParams, winCondition } from './config/builders';
 import { formatPassiveRemoval } from './text';
 import { HAPPINESS_TIER_ICONS, getTierConfigs, type TierConfig } from './rules.config';
-import { getHappinessResourceDefinition } from './resourceV2/definitions';
-import type { ResourceV2TierDefinition, ResourceV2TierTrackMetadata } from './resourceV2';
+import { getHappinessResourceDefinition } from './resource/definitions';
+import type { ResourceTierDefinition, ResourceTierTrackMetadata } from './resource';
 import { Resource } from './internal';
 
 type HappinessTierSlug = keyof typeof HAPPINESS_TIER_ICONS;
@@ -28,17 +28,17 @@ if (!happinessTierTrack) {
 }
 
 const HAPPINESS_RESOURCE_ID = HAPPINESS_RESOURCE_DEFINITION.id;
-const HAPPINESS_TIER_TRACK_METADATA: ResourceV2TierTrackMetadata = happinessTierTrack.metadata;
+const HAPPINESS_TIER_TRACK_METADATA: ResourceTierTrackMetadata = happinessTierTrack.metadata;
 
-const HAPPINESS_RESOURCE_TIERS = new Map<string, ResourceV2TierDefinition>();
+const HAPPINESS_RESOURCE_TIERS = new Map<string, ResourceTierDefinition>();
 for (const tier of happinessTierTrack.tiers) {
 	HAPPINESS_RESOURCE_TIERS.set(tier.id, tier);
 }
 
-function resolveResourceTier(config: TierConfig): ResourceV2TierDefinition {
+function resolveResourceTier(config: TierConfig): ResourceTierDefinition {
 	const tier = HAPPINESS_RESOURCE_TIERS.get(config.id);
 	if (!tier) {
-		throw new Error(`Missing ResourceV2 tier definition for "${config.id}".`);
+		throw new Error(`Missing Resource tier definition for "${config.id}".`);
 	}
 	return tier;
 }
@@ -111,5 +111,5 @@ export const RULES = {
 	tierTrackMetadata: HAPPINESS_TIER_TRACK_METADATA,
 } satisfies RuleSet & {
 	tieredResourceId: string;
-	tierTrackMetadata: ResourceV2TierTrackMetadata;
+	tierTrackMetadata: ResourceTierTrackMetadata;
 };

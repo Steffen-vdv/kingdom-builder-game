@@ -29,7 +29,7 @@ describe('evaluators', () => {
 		setResourceValue(
 			context,
 			context.activePlayer,
-			context.resourceCatalogV2,
+			context.resourceCatalog,
 			focusRole,
 			3,
 		);
@@ -37,7 +37,7 @@ describe('evaluators', () => {
 			setResourceValue(
 				context,
 				context.activePlayer,
-				context.resourceCatalogV2,
+				context.resourceCatalog,
 				secondaryRole,
 				2,
 			);

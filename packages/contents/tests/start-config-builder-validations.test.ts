@@ -70,7 +70,7 @@ describe('start config builder safeguards', () => {
 		]);
 	});
 
-	it('mirrors legacy resources into ResourceV2 values by default', () => {
+	it('mirrors legacy resources into Resource values by default', () => {
 		const config = playerStart()
 			.resources({
 				[firstResourceKey]: 4,
@@ -79,39 +79,39 @@ describe('start config builder safeguards', () => {
 			.population({ demo: 0 })
 			.lands([])
 			.build();
-		expect(config.valuesV2).toEqual({
+		expect(config.values).toEqual({
 			[firstResourceKey]: 4,
 		});
 	});
 
-	it('supports configuring ResourceV2 bounds', () => {
+	it('supports configuring Resource bounds', () => {
 		const lower = { [firstResourceKey]: 0 };
 		const upper = { [firstResourceKey]: 5 };
 		const config = playerStart()
 			.resources({ [firstResourceKey]: 1 })
 			.stats({ [firstStatKey]: 2 })
 			.population({ demo: 3 })
-			.resourceBoundsV2({ lower, upper })
+			.resourceBounds({ lower, upper })
 			.lands([])
 			.build();
-		expect(config.resourceLowerBoundsV2).toEqual(lower);
-		expect(config.resourceUpperBoundsV2).toEqual(upper);
+		expect(config.resourceLowerBounds).toEqual(lower);
+		expect(config.resourceUpperBounds).toEqual(upper);
 	});
 
-	it('rejects duplicate ResourceV2 bound setters', () => {
+	it('rejects duplicate Resource bound setters', () => {
 		expect(() =>
 			playerStart({ requireComplete: false })
-				.resourceBoundsV2({
+				.resourceBounds({
 					lower: {
 						[firstResourceKey]: 0,
 					},
 				})
-				.resourceBoundsV2({
+				.resourceBounds({
 					lower: {
 						[firstResourceKey]: 1,
 					},
 				}),
-		).toThrowError('Player start already set resourceBoundsV2(). Remove the extra resourceBoundsV2() call.');
+		).toThrowError('Player start already set resourceBounds(). Remove the extra resourceBounds() call.');
 	});
 
 	it('blocks duplicate last player compensations in start configs', () => {

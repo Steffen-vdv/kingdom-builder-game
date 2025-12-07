@@ -1,7 +1,7 @@
 import React from 'react';
 import type {
 	TranslationAssets,
-	TranslationResourceV2MetadataSelectors,
+	TranslationResourceMetadataSelectors,
 } from './context';
 import { selectUpkeepDisplay } from './context/assetSelectors';
 import type { Summary } from './content';
@@ -33,7 +33,7 @@ export function renderSummary(summary: Summary | undefined): React.ReactNode {
 interface RenderCostsOptions {
 	showFreeLabel?: boolean;
 	assets?: TranslationAssets;
-	resourceMetadataV2?: TranslationResourceV2MetadataSelectors;
+	resourceMetadata?: TranslationResourceMetadataSelectors;
 }
 
 export function renderCosts(
@@ -45,7 +45,7 @@ export function renderCosts(
 ) {
 	const showFreeLabel = options?.showFreeLabel ?? true;
 	const assets = options?.assets;
-	const resourceMetadata = options?.resourceMetadataV2;
+	const resourceMetadata = options?.resourceMetadata;
 	const entries = Object.entries(costs || {}).filter(
 		([resourceKey]) =>
 			!actionCostResource || resourceKey !== actionCostResource,

@@ -9,7 +9,7 @@ const resourceHandler: AttackTargetHandler<
 		return target.key;
 	},
 	applyDamage(target, damage, engineContext, defender) {
-		// target.key is now a ResourceV2 ID - use resourceValues directly
+		// target.key is now a Resource ID - use resourceValues directly
 		const before = defender.resourceValues[target.key] || 0;
 		const after = Math.max(0, before - damage);
 		if (damage > 0) {

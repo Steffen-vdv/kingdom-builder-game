@@ -184,7 +184,7 @@ export const getSyntheticFestivalDetails = (
 	const happinessKey = happinessEff.params.resourceId;
 	const happinessInfo = translation.assets.resources[happinessKey] ??
 		resources[happinessKey as SyntheticResourceId] ??
-		translation.resourceMetadataV2?.get?.(happinessKey) ?? {
+		translation.resourceMetadata?.get?.(happinessKey) ?? {
 			icon: '',
 			label: happinessKey,
 		};

@@ -9,7 +9,7 @@ import {
 	PHASES,
 	ACTION_CATEGORIES,
 } from '@kingdom-builder/contents';
-import { RESOURCE_V2_REGISTRY } from '@kingdom-builder/contents/registries/resourceV2';
+import { RESOURCE_REGISTRY } from '@kingdom-builder/contents/registries/resource';
 import { buildSessionMetadata } from '../../src/session/sessionMetadataBuilder.js';
 
 describe('buildSessionMetadata', () => {
@@ -25,8 +25,8 @@ describe('buildSessionMetadata', () => {
 
 	it('copies stat formatting metadata', () => {
 		const { metadata } = buildSessionMetadata();
-		// Find a stat resource with displayAsPercent in the V2 registry
-		const statWithPercent = RESOURCE_V2_REGISTRY.ordered.find(
+		// Find a stat resource with displayAsPercent in the registry
+		const statWithPercent = RESOURCE_REGISTRY.ordered.find(
 			(resource) =>
 				resource.id.startsWith('resource:core:') && resource.displayAsPercent,
 		);
@@ -70,8 +70,8 @@ describe('buildSessionMetadata', () => {
 
 	it('builds resource metadata with icons and descriptions', () => {
 		const { metadata } = buildSessionMetadata();
-		// Find a resource with description in V2 registry
-		const resourceWithDescription = RESOURCE_V2_REGISTRY.ordered.find(
+		// Find a resource with description in registry
+		const resourceWithDescription = RESOURCE_REGISTRY.ordered.find(
 			(resource) => resource.description,
 		);
 		expect(resourceWithDescription).toBeDefined();
@@ -88,8 +88,8 @@ describe('buildSessionMetadata', () => {
 
 	it('builds resource registry with optional tags', () => {
 		const { registries } = buildSessionMetadata();
-		// Find a resource with tags in V2 registry
-		const resourceWithTags = RESOURCE_V2_REGISTRY.ordered.find(
+		// Find a resource with tags in registry
+		const resourceWithTags = RESOURCE_REGISTRY.ordered.find(
 			(resource) => resource.tags && resource.tags.length > 0,
 		);
 		if (resourceWithTags) {
@@ -98,7 +98,7 @@ describe('buildSessionMetadata', () => {
 			expect(resourceDef?.tags).toEqual(resourceWithTags.tags);
 		}
 		// Find a resource without tags
-		const resourceWithoutTags = RESOURCE_V2_REGISTRY.ordered.find(
+		const resourceWithoutTags = RESOURCE_REGISTRY.ordered.find(
 			(resource) => !resource.tags || resource.tags.length === 0,
 		);
 		if (resourceWithoutTags) {
@@ -108,20 +108,20 @@ describe('buildSessionMetadata', () => {
 		}
 	});
 
-	it('builds population metadata from V2 registry with fallbacks', () => {
+	it('builds population metadata from registry with fallbacks', () => {
 		const { metadata } = buildSessionMetadata();
 		const [populationId] = POPULATIONS.entries()[0];
 		const populationMeta = metadata.populations?.[populationId];
 		expect(populationMeta).toBeDefined();
-		// Should have a label from either V2 registry or definition
+		// Should have a label from either registry or definition
 		expect(populationMeta?.label).toBeTruthy();
 	});
 
-	it('builds population metadata with V2 icon when available', () => {
+	it('builds population metadata with icon when available', () => {
 		const { metadata } = buildSessionMetadata();
-		// Find a population that has a matching V2 resource with an icon
+		// Find a population that has a matching resource with an icon
 		for (const [id] of POPULATIONS.entries()) {
-			const v2Resource = RESOURCE_V2_REGISTRY.byId[id];
+			const v2Resource = RESOURCE_REGISTRY.byId[id];
 			if (v2Resource?.icon) {
 				const populationMeta = metadata.populations?.[id];
 				expect(populationMeta?.icon).toBe(v2Resource.icon);
@@ -130,10 +130,10 @@ describe('buildSessionMetadata', () => {
 		}
 	});
 
-	it('builds population metadata with V2 description when available', () => {
+	it('builds population metadata with description when available', () => {
 		const { metadata } = buildSessionMetadata();
 		for (const [id] of POPULATIONS.entries()) {
-			const v2Resource = RESOURCE_V2_REGISTRY.byId[id];
+			const v2Resource = RESOURCE_REGISTRY.byId[id];
 			if (v2Resource?.description) {
 				const populationMeta = metadata.populations?.[id];
 				expect(populationMeta?.description).toBe(v2Resource.description);
@@ -289,11 +289,11 @@ describe('buildSessionMetadata', () => {
 		}
 	});
 
-	it('includes resourcesV2 and resourceGroupsV2 in registries', () => {
+	it('includes resources and resourceGroups in registries', () => {
 		const { registries } = buildSessionMetadata();
-		expect(registries.resourcesV2).toBeDefined();
-		expect(registries.resourceGroupsV2).toBeDefined();
-		expect(Object.keys(registries.resourcesV2 ?? {})).not.toHaveLength(0);
+		expect(registries.resources).toBeDefined();
+		expect(registries.resourceGroups).toBeDefined();
+		expect(Object.keys(registries.resources ?? {})).not.toHaveLength(0);
 	});
 
 	it('builds stat metadata only for resource:core: prefixed resources', () => {
@@ -309,7 +309,7 @@ describe('buildSessionMetadata', () => {
 	it('handles stats without displayAsPercent flag', () => {
 		const { metadata } = buildSessionMetadata();
 		// Find a stat without displayAsPercent
-		const statWithoutPercent = RESOURCE_V2_REGISTRY.ordered.find(
+		const statWithoutPercent = RESOURCE_REGISTRY.ordered.find(
 			(resource) =>
 				resource.id.startsWith('resource:core:') && !resource.displayAsPercent,
 		);

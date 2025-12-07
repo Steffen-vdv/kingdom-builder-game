@@ -25,27 +25,27 @@ const renderPanel = () =>
 		</RegistryMetadataProvider>,
 	);
 
-// Convert legacy forecasts to V2 format for the useNextTurnForecast mock
-// The createForecastMap function expects valuesV2 format
-function buildV2ForecastValues(): Record<string, number> {
-	const valuesV2: Record<string, number> = {};
-	// Convert resource forecasts to V2 IDs
+// Convert legacy forecasts to format for the useNextTurnForecast mock
+// The createForecastMap function expects values format
+function buildForecastValues(): Record<string, number> {
+	const values: Record<string, number> = {};
+	// Convert resource forecasts to IDs
 	for (const [legacyKey, delta] of Object.entries(resourceForecast)) {
 		const v2Id = `resource:core:${legacyKey}`;
-		valuesV2[v2Id] = delta;
+		values[v2Id] = delta;
 	}
-	// Convert secondary resource forecasts to V2 IDs (camelCase to kebab-case)
+	// Convert secondary resource forecasts to IDs (camelCase to kebab-case)
 	for (const [legacyKey, delta] of Object.entries(secondaryForecast)) {
 		const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 		const v2Id = `resource:core:${kebab}`;
-		valuesV2[v2Id] = delta;
+		values[v2Id] = delta;
 	}
-	return valuesV2;
+	return values;
 }
 
 const forecastByPlayerId = {
 	[activePlayerSnapshot.id]: {
-		valuesV2: buildV2ForecastValues(),
+		values: buildForecastValues(),
 	},
 };
 
@@ -62,9 +62,9 @@ describe('<PlayerPanel />', () => {
 	it('renders player name and resource icons', () => {
 		renderPanel();
 		expect(screen.getByText(activePlayerSnapshot.name)).toBeInTheDocument();
-		// The component uses V2 resources from resourceCatalogV2 and V2 metadata
+		// The component uses resources from resourceCatalog and metadata
 		// Resource buttons have aria-label format "Label: value"
-		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 		const v2Resources = resourceCatalog?.resources?.ordered ?? [];
 		// Resources with groupId = null should be displayed in ResourceBar
 		// Resources with a groupId are managed by other components
@@ -72,10 +72,10 @@ describe('<PlayerPanel />', () => {
 			(def) => def.groupId === null || def.groupId === undefined,
 		);
 		for (const definition of ungroupedResources) {
-			const metadata = mockGame.translationContext.resourceMetadataV2.get(
+			const metadata = mockGame.translationContext.resourceMetadata.get(
 				definition.id,
 			);
-			const value = activePlayerSnapshot.valuesV2?.[definition.id] ?? 0;
+			const value = activePlayerSnapshot.values?.[definition.id] ?? 0;
 			const label = metadata?.label ?? definition.id;
 			// Resource buttons may include forecast: "Label: value (+delta)"
 			// Use regex to match with/without forecast (escape label for regex)
@@ -90,35 +90,32 @@ describe('<PlayerPanel />', () => {
 	it('renders next-turn forecasts with accessible labels', () => {
 		expect(displayableSecondaryResourceKeys.length).toBeGreaterThan(0);
 		renderPanel();
-		// Component uses V2 resources from resourceCatalogV2
-		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+		// Component uses resources from resourceCatalog
+		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 		const v2Resources = resourceCatalog?.resources?.ordered ?? [];
 		// Resources with groupId = null should be displayed in ResourceBar
 		const ungroupedResources = v2Resources.filter(
 			(def) => def.groupId === null || def.groupId === undefined,
 		);
-		// Find first resource with a positive forecast - use V2 ID directly
+		// Find first resource with a positive forecast - use ID directly
 		const resourceWithPositiveForecast = ungroupedResources.find((def) => {
-			const delta =
-				forecastByPlayerId[activePlayerSnapshot.id].valuesV2[def.id];
+			const delta = forecastByPlayerId[activePlayerSnapshot.id].values[def.id];
 			return (delta ?? 0) > 0;
 		});
 		if (resourceWithPositiveForecast) {
-			const firstV2Resource = resourceWithPositiveForecast;
+			const firstResource = resourceWithPositiveForecast;
 			const firstResourceMetadata =
-				mockGame.translationContext.resourceMetadataV2.get(firstV2Resource.id);
+				mockGame.translationContext.resourceMetadata.get(firstResource.id);
 			const firstResourceValue =
-				activePlayerSnapshot.valuesV2?.[firstV2Resource.id] ?? 0;
-			// Get forecast using V2 ID directly
+				activePlayerSnapshot.values?.[firstResource.id] ?? 0;
+			// Get forecast using ID directly
 			const resourceDelta =
-				forecastByPlayerId[activePlayerSnapshot.id].valuesV2[
-					firstV2Resource.id
-				];
+				forecastByPlayerId[activePlayerSnapshot.id].values[firstResource.id];
 			// Component uses parens around the delta
 			const signedDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
 			const formattedResourceDelta = `(${signedDelta})`;
 			const resourceLabel =
-				`${firstResourceMetadata?.label ?? firstV2Resource.id}: ` +
+				`${firstResourceMetadata?.label ?? firstResource.id}: ` +
 				`${firstResourceValue} ${formattedResourceDelta}`;
 			const resourceButtons = screen.getAllByRole('button', {
 				name: resourceLabel,
@@ -133,26 +130,24 @@ describe('<PlayerPanel />', () => {
 			expect(resourceForecastBadge).toHaveClass('text-emerald-300');
 		}
 		// Find a resource with negative forecast
-		const negativeV2Resource = ungroupedResources.find((def) => {
-			const delta =
-				forecastByPlayerId[activePlayerSnapshot.id].valuesV2[def.id];
+		const negativeResource = ungroupedResources.find((def) => {
+			const delta = forecastByPlayerId[activePlayerSnapshot.id].values[def.id];
 			return (delta ?? 0) < 0;
 		});
-		if (negativeV2Resource) {
-			const negMetadata = mockGame.translationContext.resourceMetadataV2.get(
-				negativeV2Resource.id,
+		if (negativeResource) {
+			const negMetadata = mockGame.translationContext.resourceMetadata.get(
+				negativeResource.id,
 			);
-			const negValue =
-				activePlayerSnapshot.valuesV2?.[negativeV2Resource.id] ?? 0;
+			const negValue = activePlayerSnapshot.values?.[negativeResource.id] ?? 0;
 			const negDelta =
-				forecastByPlayerId[activePlayerSnapshot.id].valuesV2[
-					negativeV2Resource.id
+				forecastByPlayerId[activePlayerSnapshot.id].values[
+					negativeResource.id
 				]!;
 			// Component uses parens around the delta
 			const signedNegDelta = `${negDelta > 0 ? '+' : ''}${negDelta}`;
 			const formattedNegDelta = `(${signedNegDelta})`;
 			const negLabel =
-				`${negMetadata?.label ?? negativeV2Resource.id}: ` +
+				`${negMetadata?.label ?? negativeResource.id}: ` +
 				`${negValue} ${formattedNegDelta}`;
 			const negButtons = screen.getAllByRole('button', { name: negLabel });
 			expect(negButtons.length).toBeGreaterThan(0);

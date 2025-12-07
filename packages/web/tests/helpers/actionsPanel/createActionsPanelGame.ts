@@ -95,7 +95,7 @@ function toPlayerSnapshot(
 		name: participant.name,
 		resources: { ...participant.resources },
 		stats: { [capacityStat]: 3 },
-		resourceTouchedV2: {},
+		resourceTouched: {},
 		population: { ...participant.population },
 		lands: participant.lands.map((land) => ({
 			...land,

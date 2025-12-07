@@ -16,7 +16,7 @@ class PopulationTranslator implements ContentTranslator<string> {
 		if (!normalized) {
 			return [''];
 		}
-		const metadata = context.resourceMetadataV2.get(normalized);
+		const metadata = context.resourceMetadata.get(normalized);
 		const display = [metadata.icon, metadata.label]
 			.filter(Boolean)
 			.join(' ')

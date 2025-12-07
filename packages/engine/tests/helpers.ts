@@ -8,10 +8,10 @@ import {
 	RULES,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-	RESOURCE_CATEGORY_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+	RESOURCE_CATEGORY_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -28,10 +28,10 @@ const BASE: {
 	developments: Registry<DevelopmentDef>;
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
-	resourceCatalogV2: {
-		resources: typeof RESOURCE_V2_REGISTRY;
-		groups: typeof RESOURCE_GROUP_V2_REGISTRY;
-		categories: typeof RESOURCE_CATEGORY_V2_REGISTRY;
+	resourceCatalog: {
+		resources: typeof RESOURCE_REGISTRY;
+		groups: typeof RESOURCE_GROUP_REGISTRY;
+		categories: typeof RESOURCE_CATEGORY_REGISTRY;
 	};
 } = {
 	actions: ACTIONS,
@@ -39,10 +39,10 @@ const BASE: {
 	developments: DEVELOPMENTS,
 	populations: POPULATIONS,
 	phases: PHASES,
-	resourceCatalogV2: {
-		resources: RESOURCE_V2_REGISTRY,
-		groups: RESOURCE_GROUP_V2_REGISTRY,
-		categories: RESOURCE_CATEGORY_V2_REGISTRY,
+	resourceCatalog: {
+		resources: RESOURCE_REGISTRY,
+		groups: RESOURCE_GROUP_REGISTRY,
+		categories: RESOURCE_CATEGORY_REGISTRY,
 	},
 };
 

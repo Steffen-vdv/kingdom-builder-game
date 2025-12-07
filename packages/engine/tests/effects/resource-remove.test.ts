@@ -15,7 +15,7 @@ import {
 	resourcePercentParams,
 	type ResourceAmountParamsResult,
 	type ResourcePercentParamsResult,
-} from '../helpers/resourceV2Params.ts';
+} from '../helpers/resourceParams.ts';
 
 describe('resource:remove effect', () => {
 	it('decrements a resource via action effect', () => {

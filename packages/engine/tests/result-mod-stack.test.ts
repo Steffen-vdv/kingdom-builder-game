@@ -3,7 +3,7 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { performAction, advance } from '../src';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from './helpers';
-import { resourceAmountParams } from './helpers/resourceV2Params.ts';
+import { resourceAmountParams } from './helpers/resourceParams.ts';
 
 describe('result modifiers', () => {
 	it('stack for the same action', () => {
@@ -77,7 +77,7 @@ describe('result modifiers', () => {
 		// Give player AP to perform the action
 		engineContext.activePlayer.resourceValues[CResource.ap] = 1;
 
-		// CResource values ARE ResourceV2 IDs directly - no mapper needed
+		// CResource values ARE Resource IDs directly - no mapper needed
 		const before = engineContext.activePlayer.resourceValues[resourceKey] ?? 0;
 		performAction(action.id, engineContext);
 		const after = engineContext.activePlayer.resourceValues[resourceKey] ?? 0;

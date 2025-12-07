@@ -1,13 +1,13 @@
 import React from 'react';
 import type {
 	SessionPlayerStateSnapshot,
-	SessionResourceDefinitionV2,
+	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
 import {
-	type ResourceV2MetadataSnapshot,
-	type ResourceV2ValueSnapshot,
+	type ResourceMetadataSnapshot,
+	type ResourceValueSnapshot,
 } from '../../translation';
 import { formatResourceMagnitude } from './ResourceButton';
 import {
@@ -15,7 +15,7 @@ import {
 	createResourceSnapshot,
 	formatResourceTitle,
 	toDescriptorFromMetadata,
-} from './resourceV2Snapshots';
+} from './resourceSnapshots';
 import { PLAYER_INFO_CARD_BG } from './infoCards';
 import type { SummaryGroup } from '../../translation/content/types';
 
@@ -30,9 +30,9 @@ interface ResourceGroupDisplayProps {
 }
 
 interface ResourceEntry {
-	metadata: ResourceV2MetadataSnapshot;
-	snapshot: ResourceV2ValueSnapshot;
-	definition: SessionResourceDefinitionV2;
+	metadata: ResourceMetadataSnapshot;
+	snapshot: ResourceValueSnapshot;
+	definition: SessionResourceDefinition;
 }
 
 const ROLE_BUTTON_CLASSES = [
@@ -42,9 +42,9 @@ const ROLE_BUTTON_CLASSES = [
 ].join(' ');
 
 function buildBoundResourceMap(
-	definitions: readonly SessionResourceDefinitionV2[],
-): Map<string, SessionResourceDefinitionV2> {
-	const map = new Map<string, SessionResourceDefinitionV2>();
+	definitions: readonly SessionResourceDefinition[],
+): Map<string, SessionResourceDefinition> {
+	const map = new Map<string, SessionResourceDefinition>();
 	for (const definition of definitions) {
 		if (definition.boundOf) {
 			map.set(definition.boundOf.resourceId, definition);
@@ -62,7 +62,7 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 }) => {
 	const { handleHoverCard, clearHoverCard, translationContext } =
 		useGameEngine();
-	const resourceCatalog = translationContext.resourcesV2;
+	const resourceCatalog = translationContext.resources;
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id];
 
@@ -114,7 +114,7 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 		() =>
 			resourceCatalog
 				? buildBoundResourceMap(resourceCatalog.resources.ordered)
-				: new Map<string, SessionResourceDefinitionV2>(),
+				: new Map<string, SessionResourceDefinition>(),
 		[resourceCatalog],
 	);
 
@@ -122,30 +122,30 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 		() =>
 			groupResources.map((definition) => ({
 				definition,
-				metadata: translationContext.resourceMetadataV2.get(definition.id),
+				metadata: translationContext.resourceMetadata.get(definition.id),
 				snapshot: createResourceSnapshot(definition.id, snapshotContext),
 			})),
-		[groupResources, snapshotContext, translationContext.resourceMetadataV2],
+		[groupResources, snapshotContext, translationContext.resourceMetadata],
 	);
 
 	const groupTotalEntry = React.useMemo(() => {
 		if (!groupParentId) {
 			return undefined;
 		}
-		const metadata = translationContext.resourceMetadataV2.get(groupParentId);
+		const metadata = translationContext.resourceMetadata.get(groupParentId);
 		const snapshot = createResourceSnapshot(groupParentId, snapshotContext);
 		return { metadata, snapshot };
-	}, [groupParentId, snapshotContext, translationContext.resourceMetadataV2]);
+	}, [groupParentId, snapshotContext, translationContext.resourceMetadata]);
 
 	const groupMetadataSnapshot = React.useMemo(() => {
 		if (!groupDefinition) {
 			return undefined;
 		}
-		const meta = translationContext.resourceGroupMetadataV2.get(
+		const meta = translationContext.resourceGroupMetadata.get(
 			groupDefinition.id,
 		);
-		return meta ? ({ ...meta } as ResourceV2MetadataSnapshot) : undefined;
-	}, [groupDefinition, translationContext.resourceGroupMetadataV2]);
+		return meta ? ({ ...meta } as ResourceMetadataSnapshot) : undefined;
+	}, [groupDefinition, translationContext.resourceGroupMetadata]);
 
 	const boundEntry = React.useMemo(() => {
 		if (!groupParentId) {
@@ -155,14 +155,14 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 		if (!boundDef) {
 			return undefined;
 		}
-		const metadata = translationContext.resourceMetadataV2.get(boundDef.id);
+		const metadata = translationContext.resourceMetadata.get(boundDef.id);
 		const snapshot = createResourceSnapshot(boundDef.id, snapshotContext);
 		return { metadata, snapshot, boundType: boundDef.boundOf?.boundType };
 	}, [
 		groupParentId,
 		boundResourceMap,
 		snapshotContext,
-		translationContext.resourceMetadataV2,
+		translationContext.resourceMetadata,
 	]);
 
 	const groupCardSections = React.useMemo(() => {
@@ -252,7 +252,7 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 	const displayMetadata =
 		groupMetadataSnapshot ??
 		groupTotalEntry?.metadata ??
-		({ id: groupId, label: 'Group' } as ResourceV2MetadataSnapshot);
+		({ id: groupId, label: 'Group' } as ResourceMetadataSnapshot);
 
 	const totalValue = groupTotalEntry?.snapshot.current ?? 0;
 

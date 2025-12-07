@@ -7,15 +7,15 @@ import type { PopulationActionId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
 import { action, compareRequirement, effect, resourceEvaluator } from '../config/builders';
 import { Types, ResourceMethods } from '../config/builderShared';
-import { resourceChange } from '../resourceV2';
+import { resourceChange } from '../resource';
 import { Focus } from '../defs';
-import { resourceAmountChange } from '../helpers/resourceV2Effects';
+import { resourceAmountChange } from '../helpers/resourceEffects';
 
 const HAPPINESS_REWARD_AMOUNT = 1;
 
 interface HireActionConfig {
 	id: PopulationActionId;
-	/** V2 resource ID to add when this action is performed */
+	/** resource ID to add when this action is performed */
 	resourceId: string;
 	orderOffset: number;
 }

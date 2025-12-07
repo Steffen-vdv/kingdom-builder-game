@@ -15,7 +15,7 @@ import {
 	resourcePercentParams,
 	type ResourceAmountParamsResult,
 	type ResourcePercentParamsResult,
-} from '../helpers/resourceV2Params.ts';
+} from '../helpers/resourceParams.ts';
 
 describe('resource:add effect', () => {
 	it('increments a resource via action effect', () => {

@@ -3,8 +3,8 @@ import { createEngine, advance } from '@kingdom-builder/engine';
 import type { PhaseConfig, RuleSet } from '@kingdom-builder/protocol';
 import {
 	createContentFactory,
-	createResourceV2Registries,
-	resourceV2Definition,
+	createResourceRegistries,
+	resourceDefinition,
 } from '@kingdom-builder/testing';
 
 const resources = {
@@ -43,15 +43,15 @@ const rules: RuleSet = {
 	winConditions: [],
 };
 
-const { resources: turnResourcesV2, groups: turnResourceGroupsV2 } =
-	createResourceV2Registries({
+const { resources: turnResources, groups: turnResourceGroups } =
+	createResourceRegistries({
 		resources: [
-			resourceV2Definition({
+			resourceDefinition({
 				id: 'resource:turn:turn-resource-ap',
 				metadata: { label: 'Turn Action Points', icon: '⚡' },
 				bounds: { lowerBound: 0 },
 			}),
-			resourceV2Definition({
+			resourceDefinition({
 				id: 'resource:turn:turn-resource-gold',
 				metadata: { label: 'Turn Gold', icon: '🪙' },
 				bounds: { lowerBound: 0 },
@@ -69,9 +69,9 @@ describe('Turn cycle integration', () => {
 			populations: content.populations,
 			phases,
 			rules,
-			resourceCatalogV2: {
-				resources: turnResourcesV2,
-				groups: turnResourceGroupsV2,
+			resourceCatalog: {
+				resources: turnResources,
+				groups: turnResourceGroups,
 			},
 			// Skip real setup actions by providing non-existent IDs;
 			// this test focuses on phase cycling, not initial setup

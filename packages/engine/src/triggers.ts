@@ -3,7 +3,7 @@ import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
 import type { ResourceSourceFrame } from './resource_sources';
-import { getResourceValue } from './resource-v2';
+import { getResourceValue } from './resource';
 
 export interface TriggerEffectBundle {
 	effects: EffectDef[];
@@ -17,7 +17,7 @@ function pushUpkeepEffect(
 	resourceId: string,
 	amount: number,
 ) {
-	// resourceId IS the ResourceV2 ID directly (no mapper needed)
+	// resourceId IS the Resource ID directly (no mapper needed)
 	bundles.push({
 		effects: [
 			{
@@ -58,7 +58,7 @@ export function collectTriggerEffects(
 	// Iterate over all registered populations, not just the PopulationRole enum
 	for (const role of engineContext.populations.keys()) {
 		const populationDefinition = engineContext.populations.get(role);
-		// role IS the ResourceV2 ID (e.g. 'resource:core:council')
+		// role IS the Resource ID (e.g. 'resource:core:council')
 		const qty = getResourceValue(player, role);
 		if (
 			trigger === 'onPayUpkeepStep' &&

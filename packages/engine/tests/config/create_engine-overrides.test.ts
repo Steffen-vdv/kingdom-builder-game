@@ -3,18 +3,18 @@ import { createEngine } from '../../src/index.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { Resource as CResource } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type { GameConfig, RuleSet } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
 
-const resourceCatalogV2 = {
-	resources: RESOURCE_V2_REGISTRY,
-	groups: RESOURCE_GROUP_V2_REGISTRY,
+const resourceCatalog = {
+	resources: RESOURCE_REGISTRY,
+	groups: RESOURCE_GROUP_REGISTRY,
 };
 
-// Use actual ResourceV2 IDs - they ARE the resource keys directly
+// Use actual Resource IDs - they ARE the resource keys directly
 const RESOURCE_GOLD = CResource.gold;
 
 const PHASES: PhaseDef[] = [
@@ -67,7 +67,7 @@ describe('createEngine config overrides', () => {
 			populations: baseContent.populations,
 			phases: PHASES,
 			rules: RULES,
-			resourceCatalogV2,
+			resourceCatalog,
 			config,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
@@ -88,7 +88,7 @@ describe('createEngine config overrides', () => {
 			populations: baseContent.populations,
 			phases: PHASES,
 			rules: RULES,
-			resourceCatalogV2,
+			resourceCatalog,
 			config,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});

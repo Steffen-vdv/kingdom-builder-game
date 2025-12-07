@@ -7,9 +7,9 @@ import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../action
 import { action, buildingParams, effect } from '../config/builders';
 import { Types, BuildingMethods } from '../config/builderShared';
 import { Focus, type BuildingDef } from '../defs';
-import { getResourceV2Id } from '../internal';
+import { getResourceId } from '../internal';
 import type { ResourceKey } from '../internal';
-import { resourceChange, type ResourceChangeEffectParams } from '../resourceV2';
+import { resourceChange, type ResourceChangeEffectParams } from '../resource';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -30,7 +30,7 @@ function createResourceChangeList(entries: Iterable<[ResourceKey, number]>) {
 		if (!Number.isFinite(amount) || amount === 0) {
 			continue;
 		}
-		const resourceId = getResourceV2Id(resource);
+		const resourceId = getResourceId(resource);
 		const change = resourceChange(resourceId).amount(amount).build();
 		changes.push(change);
 	}

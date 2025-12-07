@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
 	createSyntheticPlowContent,
-	SYNTHETIC_RESOURCES_V2,
+	SYNTHETIC_RESOURCES,
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_PASSIVE_INFO,
@@ -32,16 +32,16 @@ describe('plow workshop translation', () => {
 			populations: synthetic.factory.populations,
 			phases: synthetic.phases,
 			rules: synthetic.rules,
-			resourceCatalogV2: synthetic.resourceCatalogV2,
+			resourceCatalog: synthetic.resourceCatalog,
 			systemActionIds: SKIP_SETUP_ACTION_IDS,
 		});
 		runEffects(buildStartConfigEffects(synthetic.start), engine);
 
-		// Create engine snapshot and add V2 resource metadata
+		// Create engine snapshot and add resource metadata
 		const engineSnapshot = snapshotEngine(engine);
 		engineSnapshot.metadata = {
 			...engineSnapshot.metadata,
-			resourcesV2: SYNTHETIC_RESOURCES_V2,
+			resources: SYNTHETIC_RESOURCES,
 			populations: {},
 			resources: {},
 			stats: {},
@@ -66,7 +66,7 @@ describe('plow workshop translation', () => {
 			triggers: {},
 		};
 
-		// Create translation context with proper V2 metadata
+		// Create translation context with proper metadata
 		const translationContext = createTranslationContext(
 			engineSnapshot,
 			{

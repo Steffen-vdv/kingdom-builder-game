@@ -1,5 +1,5 @@
 import type { EffectDef } from '../effects';
-import type { RuntimeResourceCatalog } from '../resource-v2';
+import type { RuntimeResourceCatalog } from '../resource';
 
 export type ResourceKey = string;
 export type PhaseId = string;
@@ -108,14 +108,14 @@ export class GameState {
 	devMode = false;
 	conclusion?: GameConclusion;
 	players: PlayerState[];
-	private _resourceCatalogV2!: RuntimeResourceCatalog;
+	private _resourceCatalog!: RuntimeResourceCatalog;
 	constructor(
-		resourceCatalogV2: RuntimeResourceCatalog,
+		resourceCatalog: RuntimeResourceCatalog,
 		aName = 'Player',
 		bName = 'Opponent',
 	) {
 		this.players = [new PlayerState('A', aName), new PlayerState('B', bName)];
-		this.resourceCatalogV2 = resourceCatalogV2;
+		this.resourceCatalog = resourceCatalog;
 	}
 	get active(): PlayerState {
 		return this.players[this.currentPlayerIndex]!;
@@ -123,10 +123,10 @@ export class GameState {
 	get opponent(): PlayerState {
 		return this.players[(this.currentPlayerIndex + 1) % this.players.length]!;
 	}
-	get resourceCatalogV2(): RuntimeResourceCatalog {
-		return this._resourceCatalogV2;
+	get resourceCatalog(): RuntimeResourceCatalog {
+		return this._resourceCatalog;
 	}
-	set resourceCatalogV2(catalog: RuntimeResourceCatalog) {
-		this._resourceCatalogV2 = catalog;
+	set resourceCatalog(catalog: RuntimeResourceCatalog) {
+		this._resourceCatalog = catalog;
 	}
 }

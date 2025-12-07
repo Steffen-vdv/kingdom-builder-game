@@ -22,7 +22,7 @@ function normalizePlayerSnapshot(
 	snapshot: EnginePlayerSnapshot,
 ): ActionExecuteSuccessResponse['traces'][number]['before'] {
 	return {
-		valuesV2: { ...snapshot.valuesV2 },
+		values: { ...snapshot.values },
 		buildings: [...snapshot.buildings],
 		lands: snapshot.lands.map((land) => ({
 			id: land.id,

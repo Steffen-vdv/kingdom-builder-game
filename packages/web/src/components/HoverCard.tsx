@@ -161,7 +161,7 @@ export default function HoverCard() {
 	const renderCostOptions = {
 		showFreeLabel: shouldShowFreeLabel,
 		assets: translationContext.assets,
-		resourceMetadataV2: translationContext.resourceMetadataV2,
+		resourceMetadata: translationContext.resourceMetadata,
 	};
 
 	const multiStepIndicator = renderedData.multiStep ? (

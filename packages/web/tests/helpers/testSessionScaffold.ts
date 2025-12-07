@@ -7,10 +7,10 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import {
 	createSessionRegistries,
-	createResourceV2CatalogContent,
+	createResourceCatalogContent,
 } from './sessionRegistries';
 import { createEmptySnapshotMetadata } from './sessionFixtures';
-import { buildResourceV2Metadata } from './testResourceV2Metadata';
+import { buildResourceMetadata } from './testResourceMetadata';
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 
 interface PhaseOrderEntry {
@@ -130,7 +130,7 @@ export interface TestSessionScaffold {
 	ruleSnapshot: SessionRuleSnapshot;
 	tierPassiveId: string;
 	neutralTierId: string;
-	resourceCatalogV2: ReturnType<typeof createResourceV2CatalogContent>;
+	resourceCatalog: ReturnType<typeof createResourceCatalogContent>;
 }
 
 const buildResourceMetadata = (
@@ -294,7 +294,7 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 	const resourceMetadata = buildResourceMetadata(registries);
 	const populationMetadata = buildPopulationMetadata(registries);
 	const statMetadata = buildStatMetadata();
-	const resourceV2Metadata = buildResourceV2Metadata();
+	const resourceMetadata = buildResourceMetadata();
 	const phaseMetadata = buildPhaseMetadata();
 	const metadata: SessionSnapshot['metadata'] = createEmptySnapshotMetadata({
 		resources: resourceMetadata,
@@ -303,7 +303,7 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		phases: phaseMetadata,
 		triggers: { ...TRIGGER_METADATA },
 		assets: { ...ASSET_METADATA },
-		resourcesV2: resourceV2Metadata,
+		resources: resourceMetadata,
 		overviewContent: {
 			hero: { title: 'Session Overview', tokens: {} },
 			sections: [],
@@ -311,11 +311,11 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		},
 	});
 	const phases = buildPhaseDefinitions(PHASE_ORDER);
-	const resourceCatalogV2 = createResourceV2CatalogContent();
-	// Use ResourceV2 key for tieredResourceKey - happiness is the canonical
+	const resourceCatalog = createResourceCatalogContent();
+	// Use Resource key for tieredResourceKey - happiness is the canonical
 	// tiered resource in the test fixtures
 	const tieredResourceKey =
-		Object.keys(resourceCatalogV2.resources.byId).find((key) =>
+		Object.keys(resourceCatalog.resources.byId).find((key) =>
 			key.includes('happiness'),
 		) ?? 'resource:core:happiness';
 	const ruleSnapshot = buildRuleSnapshot(tieredResourceKey);
@@ -326,6 +326,6 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		ruleSnapshot,
 		tierPassiveId: TIER_PASSIVE_ID,
 		neutralTierId: NEUTRAL_TIER_ID,
-		resourceCatalogV2,
+		resourceCatalog,
 	};
 }

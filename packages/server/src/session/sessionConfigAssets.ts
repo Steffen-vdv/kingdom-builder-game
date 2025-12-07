@@ -17,7 +17,7 @@ import {
 	type SerializedRegistry,
 } from '@kingdom-builder/protocol';
 import {
-	RESOURCE_V2_REGISTRY,
+	RESOURCE_REGISTRY,
 	type ActionCategoryConfig,
 } from '@kingdom-builder/contents';
 import type { ZodType } from 'zod';
@@ -42,7 +42,7 @@ export interface SessionBaseOptions {
 	populations: Registry<PopulationConfig>;
 	phases: PhaseConfig[];
 	rules: RuleSet;
-	resourceCatalogV2: RuntimeResourceContent;
+	resourceCatalog: RuntimeResourceContent;
 	systemActionIds?: SystemActionIds;
 }
 
@@ -71,14 +71,14 @@ export function buildSessionAssets(
 		applyConfigRegistries(validated, context.baseOptions);
 	const phases = validated.phases ?? context.baseOptions.phases;
 	const resources = buildResourceRegistry(context.resourceOverrides);
-	const resourceCatalog = context.baseOptions.resourceCatalogV2;
-	const resourcesV2 = freezeSerializedRegistry(
+	const resourceCatalog = context.baseOptions.resourceCatalog;
+	const resources = freezeSerializedRegistry(
 		structuredClone(resourceCatalog.resources.byId),
 	);
-	const resourceGroupsV2 = freezeSerializedRegistry(
+	const resourceGroups = freezeSerializedRegistry(
 		structuredClone(resourceCatalog.groups.byId),
 	);
-	const resourceCategoriesV2 = freezeSerializedRegistry(
+	const resourceCategories = freezeSerializedRegistry(
 		structuredClone(resourceCatalog.categories?.byId ?? {}),
 	);
 	const frozenResources = freezeSerializedRegistry(structuredClone(resources));
@@ -88,9 +88,9 @@ export function buildSessionAssets(
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
 		populations: freezeSerializedRegistry(cloneRegistry(populations)),
 		resources: frozenResources,
-		resourcesV2,
-		resourceGroupsV2,
-		resourceCategoriesV2,
+		resources,
+		resourceGroups,
+		resourceCategories,
 	};
 	if (context.baseRegistries.actionCategories) {
 		registries.actionCategories = context.baseRegistries.actionCategories;
@@ -117,8 +117,8 @@ export function buildResourceRegistry(
 		}
 	}
 
-	// Add all resources from the V2 registry
-	for (const [key, resource] of Object.entries(RESOURCE_V2_REGISTRY.byId)) {
+	// Add all resources from the registry
+	for (const [key, resource] of Object.entries(RESOURCE_REGISTRY.byId)) {
 		if (registry.has(key)) {
 			continue;
 		}

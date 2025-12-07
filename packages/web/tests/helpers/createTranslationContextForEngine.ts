@@ -1,6 +1,6 @@
 import type {
 	SessionMetadataDescriptor,
-	SessionResourceCatalogV2,
+	SessionResourceCatalog,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import { snapshotEngine } from '../../../engine/src/runtime/engine_snapshot';
@@ -77,8 +77,8 @@ function mergeMetadata(
 			case 'stats':
 			case 'triggers':
 			case 'assets':
-			case 'resourcesV2':
-			case 'resourceGroupsV2': {
+			case 'resources':
+			case 'resourceGroups': {
 				const typedKey = key as keyof SessionSnapshotMetadata;
 				const current = (merged[typedKey] ?? {}) as Record<string, unknown>;
 				merged[typedKey] = {
@@ -140,14 +140,14 @@ function buildAssetMetadata(): Record<string, SessionMetadataDescriptor> {
 	return { ...base };
 }
 
-function buildResourcesV2Metadata(
-	resourceCatalogV2: SessionResourceCatalogV2 | undefined,
+function buildResourcesMetadata(
+	resourceCatalog: SessionResourceCatalog | undefined,
 ): Record<string, SessionMetadataDescriptor> {
-	if (!resourceCatalogV2) {
+	if (!resourceCatalog) {
 		return {};
 	}
 	const descriptors: Record<string, SessionMetadataDescriptor> = {};
-	for (const definition of resourceCatalogV2.resources.ordered) {
+	for (const definition of resourceCatalog.resources.ordered) {
 		const entry: SessionMetadataDescriptor = {};
 		if (definition.label !== undefined) {
 			entry.label = definition.label;
@@ -213,7 +213,7 @@ export function createTranslationContextForEngine(
 		assets: buildAssetMetadata(),
 		stats: buildStatMetadata(registries),
 		triggers: snapshot.metadata.triggers ?? {},
-		resourcesV2: buildResourcesV2Metadata(snapshot.game.resourceCatalogV2),
+		resources: buildResourcesMetadata(snapshot.game.resourceCatalog),
 	});
 	const metadata = mergeMetadata(metadataWithRegistries, options?.metadata);
 	return createTranslationContext(snapshot, registries, metadata, {

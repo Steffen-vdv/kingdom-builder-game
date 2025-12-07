@@ -10,7 +10,7 @@ import {
 
 type RequirementFailure = Parameters<typeof translateRequirementFailure>[0];
 
-// ResourceV2 IDs for test fixtures
+// Resource IDs for test fixtures
 const RESOURCE_IDS = {
 	maxPopulation: 'resource:stat:max-population',
 	warWeariness: 'resource:stat:war-weariness',
@@ -44,7 +44,7 @@ describe('translateRequirementFailure', () => {
 		},
 	);
 
-	it('formats resource comparisons with ResourceV2 metadata', () => {
+	it('formats resource comparisons with Resource metadata', () => {
 		const failure: RequirementFailure = {
 			requirement: {
 				type: 'evaluator',
@@ -64,8 +64,8 @@ describe('translateRequirementFailure', () => {
 			details: { left: 2, right: 1 },
 		};
 		const message = translateRequirementFailure(failure, context);
-		const warMeta = context.resourceMetadataV2.get(RESOURCE_IDS.warWeariness);
-		const legionMeta = context.resourceMetadataV2.get(RESOURCE_IDS.legion);
+		const warMeta = context.resourceMetadata.get(RESOURCE_IDS.warWeariness);
+		const legionMeta = context.resourceMetadata.get(RESOURCE_IDS.legion);
 		const warLabel = [warMeta.icon, warMeta.label].filter(Boolean).join(' ');
 		const legionLabel = [legionMeta.icon, legionMeta.label]
 			.filter(Boolean)
@@ -97,10 +97,8 @@ describe('translateRequirementFailure', () => {
 			details: { left: 3, right: 3 },
 		};
 		const message = translateRequirementFailure(failure, context);
-		const legionMeta = context.resourceMetadataV2.get(RESOURCE_IDS.legion);
-		const maxPopMeta = context.resourceMetadataV2.get(
-			RESOURCE_IDS.maxPopulation,
-		);
+		const legionMeta = context.resourceMetadata.get(RESOURCE_IDS.legion);
+		const maxPopMeta = context.resourceMetadata.get(RESOURCE_IDS.maxPopulation);
 		const legionLabel = [legionMeta.icon, legionMeta.label]
 			.filter(Boolean)
 			.join(' ');

@@ -92,7 +92,7 @@ export const createFestivalMetadata = (): SessionSnapshotMetadata =>
 			upkeep: FALLBACK_UPKEEP,
 		},
 		resources: { ...RESOURCE_LOOKUP },
-		resourcesV2: {
+		resources: {
 			[SYNTHETIC_RESOURCES.actionPoints.id]: {
 				icon: SYNTHETIC_RESOURCES.actionPoints.icon,
 				label: SYNTHETIC_RESOURCES.actionPoints.label,

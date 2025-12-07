@@ -15,10 +15,10 @@ import {
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_CATEGORY_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-	RESOURCE_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_CATEGORY_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+	RESOURCE_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type {
 	Registry,
 	SerializedRegistry,
@@ -116,7 +116,7 @@ const cloneResourceCatalogRegistry = <DefinitionType>(registry: {
 const buildResourceRegistry =
 	(): RegistryDefinition<SessionResourceDefinition> => {
 		const entries: RegistryDefinition<SessionResourceDefinition> = {};
-		for (const resource of RESOURCE_V2_REGISTRY.ordered) {
+		for (const resource of RESOURCE_REGISTRY.ordered) {
 			const definition: SessionResourceDefinition = { key: resource.id };
 			if (resource.icon) {
 				definition.icon = resource.icon;
@@ -145,7 +145,7 @@ const createMetadataRecord = <T>(entries: Iterable<readonly [string, T]>) => {
 
 const buildResourceMetadata = () =>
 	createMetadataRecord(
-		RESOURCE_V2_REGISTRY.ordered.map((resource) => {
+		RESOURCE_REGISTRY.ordered.map((resource) => {
 			const entry: SessionMetadataDescriptor = {
 				label: resource.label,
 				icon: resource.icon,
@@ -160,7 +160,7 @@ const buildResourceMetadata = () =>
 const buildPopulationMetadata = () =>
 	createMetadataRecord(
 		POPULATIONS.entries().map(([id, definition]) => {
-			const resource = RESOURCE_V2_REGISTRY.byId[id];
+			const resource = RESOURCE_REGISTRY.byId[id];
 			const descriptor: SessionMetadataDescriptor = {
 				label: resource?.label ?? definition.name ?? id,
 			};
@@ -222,7 +222,7 @@ const buildDevelopmentMetadata = () =>
 
 const buildStatMetadata = () =>
 	createMetadataRecord<SessionMetadataDescriptor>(
-		RESOURCE_V2_REGISTRY.ordered
+		RESOURCE_REGISTRY.ordered
 			.filter((resource) => resource.id.startsWith('resource:core:'))
 			.map((resource) => {
 				const descriptor: SessionMetadataDescriptor = {
@@ -324,10 +324,10 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
 		resources: buildResourceRegistry(),
-		resourcesV2: cloneResourceCatalogRegistry(RESOURCE_V2_REGISTRY),
-		resourceGroupsV2: cloneResourceCatalogRegistry(RESOURCE_GROUP_V2_REGISTRY),
-		resourceCategoriesV2: cloneResourceCatalogRegistry(
-			RESOURCE_CATEGORY_V2_REGISTRY,
+		resources: cloneResourceCatalogRegistry(RESOURCE_REGISTRY),
+		resourceGroups: cloneResourceCatalogRegistry(RESOURCE_GROUP_REGISTRY),
+		resourceCategories: cloneResourceCatalogRegistry(
+			RESOURCE_CATEGORY_REGISTRY,
 		),
 	};
 	const metadata: StaticSessionMetadata = {

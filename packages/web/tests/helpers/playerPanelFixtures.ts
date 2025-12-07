@@ -12,13 +12,13 @@ import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
 import { createTestSessionScaffold } from './testSessionScaffold';
 
-// Helper to build V2 ID for core resources (legacy key to V2 ID)
-function getCoreResourceV2Id(legacyKey: string): string {
+// Helper to build ID for core resources (legacy key to resource ID)
+function getCoreResourceId(legacyKey: string): string {
 	return `resource:core:${legacyKey}`;
 }
 
-// Helper to build V2 ID for secondary resources (camelCase to kebab-case)
-function getSecondaryResourceV2Id(legacyKey: string): string {
+// Helper to build ID for secondary resources (camelCase to kebab-case)
+function getSecondaryResourceId(legacyKey: string): string {
 	const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 	return `resource:core:${kebab}`;
 }
@@ -43,7 +43,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		metadata: sessionMetadata,
 		phases,
 		ruleSnapshot,
-		resourceCatalogV2,
+		resourceCatalog,
 	} = createTestSessionScaffold();
 	const translationAssets = createTranslationAssets(
 		sessionRegistries,
@@ -58,9 +58,9 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		},
 		{},
 	);
-	// Secondary resources (formerly stats) - now unified under ResourceV2
+	// Secondary resources (formerly stats) - now unified under Resource
 	const secondaryValues: Record<string, number> = {};
-	const resourceTouchedV2: Record<string, boolean> = {};
+	const resourceTouched: Record<string, boolean> = {};
 	let resourceIndex = 0;
 	// Legacy translation assets still use "stats" key - reading from it here
 	const secondaryEntries = Object.entries(translationAssets.stats);
@@ -74,28 +74,28 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		}
 		const value = resourceIndex % 2 === 0 ? resourceIndex + 1 : 0;
 		secondaryValues[legacyKey] = value;
-		// Mark all secondary resources as touched using V2 IDs for visibility
+		// Mark all secondary resources as touched using IDs for visibility
 		// Resources with non-zero value or that have ever been non-zero appear
-		const v2Id = getSecondaryResourceV2Id(legacyKey);
-		resourceTouchedV2[v2Id] = true;
+		const v2Id = getSecondaryResourceId(legacyKey);
+		resourceTouched[v2Id] = true;
 		resourceIndex += 1;
 	}
-	// Build valuesV2 from legacy resources and secondary resources using V2 IDs
-	const valuesV2: Record<string, number> = {};
+	// Build values from legacy resources and secondary resources using IDs
+	const values: Record<string, number> = {};
 	for (const [key, value] of Object.entries(resourceValues)) {
-		valuesV2[getCoreResourceV2Id(key)] = value;
+		values[getCoreResourceId(key)] = value;
 	}
 	for (const [key, value] of Object.entries(secondaryValues)) {
-		valuesV2[getSecondaryResourceV2Id(key)] = value;
+		values[getSecondaryResourceId(key)] = value;
 	}
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
 		resources: resourceValues,
 		stats: secondaryValues,
-		resourceTouchedV2,
+		resourceTouched,
 		population: {},
-		valuesV2,
+		values,
 	});
 	const opponent = createSnapshotPlayer({
 		id: opponentId,
@@ -112,7 +112,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
 		metadata: sessionMetadata,
-		resourceCatalogV2,
+		resourceCatalog,
 	});
 	const translationContext = createTranslationContext(
 		sessionState,
@@ -206,9 +206,9 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 			if (value !== 0) {
 				return true;
 			}
-			// Check using V2 ID since that's what resourceTouchedV2 stores
-			const v2Id = getSecondaryResourceV2Id(legacyKey);
-			return Boolean(activePlayer.resourceTouchedV2?.[v2Id]);
+			// Check using ID since that's what resourceTouched stores
+			const v2Id = getSecondaryResourceId(legacyKey);
+			return Boolean(activePlayer.resourceTouched?.[v2Id]);
 		})
 		.map(([legacyKey]) => legacyKey);
 	const secondaryForecast = displayableSecondaryResourceKeys.reduce<

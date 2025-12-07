@@ -9,9 +9,9 @@ function wait(milliseconds: number) {
 describe('EngineContext enqueue', () => {
 	it('runs tasks sequentially', async () => {
 		const engineContext = createTestEngine();
-		expect(engineContext.resourceCatalogV2).toBeDefined();
-		expect(engineContext.game.resourceCatalogV2).toBe(
-			engineContext.resourceCatalogV2,
+		expect(engineContext.resourceCatalog).toBeDefined();
+		expect(engineContext.game.resourceCatalog).toBe(
+			engineContext.resourceCatalog,
 		);
 		const order: number[] = [];
 		void engineContext.enqueue(async () => {
@@ -30,9 +30,9 @@ describe('EngineContext enqueue', () => {
 
 	it('continues scheduling after a rejected task', async () => {
 		const engineContext = createTestEngine();
-		expect(engineContext.resourceCatalogV2).toBeDefined();
-		expect(engineContext.game.resourceCatalogV2).toBe(
-			engineContext.resourceCatalogV2,
+		expect(engineContext.resourceCatalog).toBeDefined();
+		expect(engineContext.game.resourceCatalog).toBe(
+			engineContext.resourceCatalog,
 		);
 		const events: string[] = [];
 		const failingTask = engineContext.enqueue(() => {

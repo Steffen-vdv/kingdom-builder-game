@@ -25,7 +25,7 @@ describe('applyParamsToEffects', () => {
 				],
 			},
 		];
-		// Resource values ARE ResourceV2 IDs directly - no mapper needed
+		// Resource values ARE Resource IDs directly - no mapper needed
 		const params = {
 			resourceId: Resource.gold,
 			amount: 2,

@@ -12,7 +12,7 @@ import type {
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
-import type { RuntimeResourceCatalog } from './resource-v2';
+import type { RuntimeResourceCatalog } from './resource';
 
 export class EngineContext {
 	constructor(
@@ -26,7 +26,7 @@ export class EngineContext {
 		public phases: PhaseDef[],
 		public actionCostResourceId: string,
 		public actionCostAmount: number | null,
-		public resourceCatalogV2: RuntimeResourceCatalog,
+		public resourceCatalog: RuntimeResourceCatalog,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},

@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { Land, PlayerState, GameState } from '../../src/state/index.ts';
 import { Resource, Stat } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import { createRuntimeResourceCatalog } from '../../src/resource-v2/index.ts';
 
 const RUNTIME_RESOURCE_CATALOG = createRuntimeResourceCatalog({
-	resources: RESOURCE_V2_REGISTRY,
-	groups: RESOURCE_GROUP_V2_REGISTRY,
+	resources: RESOURCE_REGISTRY,
+	groups: RESOURCE_GROUP_REGISTRY,
 });
 
 describe('State classes', () => {

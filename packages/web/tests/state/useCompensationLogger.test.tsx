@@ -13,7 +13,7 @@ import type { SessionResourceKey } from '../../src/state/sessionTypes';
 import type { ActionResolution } from '../../src/state/useActionResolution';
 import {
 	createSessionRegistries,
-	createResourceV2CatalogContent,
+	createResourceCatalogContent,
 } from '../helpers/sessionRegistries';
 import { createEmptySnapshotMetadata } from '../helpers/sessionFixtures';
 
@@ -56,9 +56,9 @@ function createPlayer(
 		name,
 		resources: { [resourceKey]: 3 },
 		stats: {},
-		resourceTouchedV2: {},
-		valuesV2: {},
-		resourceBoundsV2: {},
+		resourceTouched: {},
+		values: {},
+		resourceBounds: {},
 		population: {},
 		lands: [],
 		buildings: [],
@@ -76,7 +76,7 @@ function createSessionState(
 ): SessionSnapshot {
 	const playerA = createPlayer('A', 'Player A', resourceKey);
 	const playerB = createPlayer('B', 'Player B', resourceKey);
-	const resourceCatalogV2 = createResourceV2CatalogContent();
+	const resourceCatalog = createResourceCatalogContent();
 	return {
 		game: {
 			turn,
@@ -89,7 +89,7 @@ function createSessionState(
 			players: [playerA, playerB],
 			activePlayerId: 'A',
 			opponentId: 'B',
-			resourceCatalogV2,
+			resourceCatalog,
 		},
 		phases: [],
 		actionCostResource: resourceKey,

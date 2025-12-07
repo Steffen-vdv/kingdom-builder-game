@@ -2,10 +2,10 @@ export * from './types';
 export * from './createTranslationContext';
 export * from './assetSelectors';
 export {
-	cloneResourceBoundsV2,
-	cloneResourceCatalogV2,
-	cloneResourceValuesV2,
-	createResourceV2MetadataSelectors,
-	createResourceV2GroupMetadataSelectors,
+	cloneResourceBounds,
+	cloneResourceCatalog,
+	cloneResourceValues,
+	createResourceMetadataSelectors,
+	createResourceGroupMetadataSelectors,
 	createSignedResourceGainSelectors,
-} from './resourceV2';
+} from './resource';

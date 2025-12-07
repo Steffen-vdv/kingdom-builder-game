@@ -9,8 +9,8 @@ export type { PhaseDef, StepDef } from './config/builders';
 export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTrigger as PhaseTriggerKey } from './phases';
 export type { ActionCategoryConfig, ActionCategoryLayout } from './config/builders';
 export { PopulationRole, type PopulationRoleId } from './internal';
-export { Resource, type ResourceKey, type ResourceV2Id, getResourceV2Id } from './internal';
-export { Stat, type StatKey, type StatV2Id, getStatResourceV2Id } from './internal';
+export { Resource, type ResourceKey, type ResourceId, getResourceId } from './internal';
+export { Stat, type StatKey, type StatId, getStatResourceId } from './internal';
 export { TRIGGER_INFO } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
 export { UPKEEP_INFO, TRANSFER_INFO } from './assets';
@@ -30,16 +30,16 @@ export type { ActionEffectGroupDef, ActionEffectGroupOptionDef } from './config/
 export { ON_PAY_UPKEEP_STEP, ON_GAIN_INCOME_STEP, ON_GAIN_AP_STEP, BROOM_ICON, RESOURCE_TRANSFER_ICON } from './defs';
 export { formatPassiveRemoval } from './text';
 export {
-	resourceV2,
+	resource,
 	resourceGroup,
 	resourceCategory,
-	createResourceV2Registry,
+	createResourceRegistry,
 	createResourceGroupRegistry,
 	createResourceCategoryRegistry,
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-	RESOURCE_CATEGORY_V2_REGISTRY,
-	buildResourceCatalogV2,
-} from './resourceV2';
-export type { ResourceV2Builder, ResourceGroupBuilder, ResourceCategoryBuilder, ResourceV2Registry, ResourceGroupRegistry, ResourceCategoryRegistry, ResourceCatalogV2 } from './resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+	RESOURCE_CATEGORY_REGISTRY,
+	buildResourceCatalog,
+} from './resource';
+export type { ResourceBuilder, ResourceGroupBuilder, ResourceCategoryBuilder, ResourceRegistry, ResourceGroupRegistry, ResourceCategoryRegistry, ResourceCatalog } from './resource';
 export { happinessModifierId, happinessPassiveId, happinessTierId, type HappinessModifierKind, type HappinessTierSlug } from './happinessHelpers';

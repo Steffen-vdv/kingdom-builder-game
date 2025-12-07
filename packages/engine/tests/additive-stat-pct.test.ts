@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef } from '../src/index.ts';
 import { Stat } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
-import { resourcePercentParams } from './helpers/resourceV2Params.ts';
+import { resourcePercentParams } from './helpers/resourceParams.ts';
 
 describe('resource:add additive percent scaling', () => {
 	it('adds multiple percentages from the original base in the same step', () => {
 		const engineContext = createTestEngine();
 		const base = 10;
-		// Stat values ARE ResourceV2 IDs - access via resourceValues
+		// Stat values ARE Resource IDs - access via resourceValues
 		engineContext.activePlayer.resourceValues[Stat.armyStrength] = base;
 
 		const pct1 = 0.2;

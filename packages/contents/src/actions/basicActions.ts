@@ -20,8 +20,8 @@ import { ActionMethods, AttackMethods, PassiveMethods, ResourceMethods, Types, C
 import { Focus } from '../defs';
 import { ActionId, DevelopActionId, PopulationEvaluationId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
-import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent } from '../helpers/resourceV2Effects';
-import { ReconciliationMode, resourceChange } from '../resourceV2';
+import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent } from '../helpers/resourceEffects';
+import { ReconciliationMode, resourceChange } from '../resource';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);

@@ -1,5 +1,5 @@
 import type { Registry } from '@kingdom-builder/protocol';
-import { Resource, getResourceV2Id } from '../internal';
+import { Resource, getResourceId } from '../internal';
 import type { ResourceKey } from '../internal';
 import { DevelopmentId, DEVELOPMENTS } from '../developments';
 import type { ActionDef } from '../actions';
@@ -8,7 +8,7 @@ import { DevelopActionId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
 import { action, compareRequirement, developmentParams, effect, landEvaluator } from '../config/builders';
 import { Types, DevelopmentMethods } from '../config/builderShared';
-import { resourceChange, type ResourceChangeEffectParams } from '../resourceV2';
+import { resourceChange, type ResourceChangeEffectParams } from '../resource';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -31,7 +31,7 @@ function createResourceChangeList(entries: Iterable<[ResourceKey, number]>) {
 		if (!Number.isFinite(amount) || amount === 0) {
 			continue;
 		}
-		const resourceId = getResourceV2Id(resource);
+		const resourceId = getResourceId(resource);
 		const change = resourceChange(resourceId).amount(amount).build();
 		changes.push(change);
 	}

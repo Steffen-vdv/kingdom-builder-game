@@ -14,7 +14,7 @@ import { createTestEngine } from '../helpers.ts';
 import {
 	resourceAmountParams,
 	type ResourceAmountParamsResult,
-} from '../helpers/resourceV2Params.ts';
+} from '../helpers/resourceParams.ts';
 
 describe('resource and stat bounds', () => {
 	it('clamps stat removal to zero', () => {

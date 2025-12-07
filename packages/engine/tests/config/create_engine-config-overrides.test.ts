@@ -9,15 +9,15 @@ import {
 	RULES,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createEngine } from '../../src/index.ts';
 
-const resourceCatalogV2 = {
-	resources: RESOURCE_V2_REGISTRY,
-	groups: RESOURCE_GROUP_V2_REGISTRY,
+const resourceCatalog = {
+	resources: RESOURCE_REGISTRY,
+	groups: RESOURCE_GROUP_REGISTRY,
 };
 
 describe('createEngine configuration overrides', () => {
@@ -36,7 +36,7 @@ describe('createEngine configuration overrides', () => {
 			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
-			resourceCatalogV2,
+			resourceCatalog,
 			config: {
 				actions: factory.actions.values(),
 				buildings: factory.buildings.values(),
@@ -65,7 +65,7 @@ describe('createEngine configuration overrides', () => {
 			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
-			resourceCatalogV2,
+			resourceCatalog,
 			config: {
 				actions: [],
 				buildings: [],

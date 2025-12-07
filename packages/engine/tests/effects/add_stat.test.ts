@@ -9,7 +9,7 @@ import { createTestEngine } from '../helpers.ts';
 import {
 	resourceAmountParams,
 	type ResourceAmountParamsResult,
-} from '../helpers/resourceV2Params.ts';
+} from '../helpers/resourceParams.ts';
 
 describe('resource:add effect for stats', () => {
 	it('increments a stat via action effect', () => {

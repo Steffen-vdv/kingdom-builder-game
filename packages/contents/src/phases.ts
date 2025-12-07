@@ -1,8 +1,8 @@
 import { Stat, PopulationRole } from './internal';
 import { effect, phase, step, compareEvaluator, resourceEvaluator, type PhaseDef } from './config/builders';
 import { Types, ResourceMethods } from './config/builderShared';
-import { resourcePercentFromResourceChange } from './helpers/resourceV2Effects';
-import { resourceChange } from './resourceV2';
+import { resourcePercentFromResourceChange } from './helpers/resourceEffects';
+import { resourceChange } from './resource';
 import { ON_GAIN_AP_STEP, ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP } from './defs';
 import { PhaseId, PhaseStepId, PhaseTrigger } from './phaseTypes';
 

@@ -1,9 +1,9 @@
 import type { EvaluatorHandler } from './index';
 import type { EngineContext } from '../context';
-import { getResourceValue } from '../resource-v2';
+import { getResourceValue } from '../resource';
 
 export interface ResourceEvaluatorParams extends Record<string, unknown> {
-	/** V2 resource identifier */
+	/** resource identifier */
 	resourceId: string;
 }
 

@@ -47,7 +47,7 @@ describe('attack diff formatters registry', () => {
 
 	it('formats stat diffs using the registered formatter', () => {
 		const { translation } = createSyntheticEngineContext();
-		// In V2, stats and resources are unified - use explicit stat key
+		// In resource system, stats and resources are unified - use explicit stat key
 		const statKey = SYNTH_RESOURCE_IDS.armyStrength;
 		const statInfo = selectAttackStatDescriptor(translation, statKey);
 		const diff: AttackPlayerDiff = {

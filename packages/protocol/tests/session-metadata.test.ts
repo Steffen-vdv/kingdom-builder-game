@@ -66,9 +66,9 @@ describe('session snapshot metadata', () => {
 				developments: {},
 				populations: {},
 				resources: {},
-				resourcesV2: {},
-				resourceGroupsV2: {},
-				resourceCategoriesV2: {},
+				resources: {},
+				resourceGroups: {},
+				resourceCategories: {},
 			},
 		};
 		const result = sessionCreateResponseSchema.parse(response);

@@ -28,11 +28,11 @@ function createLogHarness(
 	metadataOverride?: Parameters<typeof createTranslationContext>[2],
 ): LogHarness {
 	const scaffold = createTestSessionScaffold();
-	// Use V2 resource IDs from the catalog for engine initialization
+	// Use resource IDs from the catalog for engine initialization
 	const v2ResourceIds = Object.keys(
-		scaffold.resourceCatalogV2.resources.byId ?? {},
+		scaffold.resourceCatalog.resources.byId ?? {},
 	);
-	const startValuesV2 = Object.fromEntries(v2ResourceIds.map((id) => [id, 0]));
+	const startValues = Object.fromEntries(v2ResourceIds.map((id) => [id, 0]));
 	const startConfig: StartConfig = {
 		player: {
 			resources: {},
@@ -40,7 +40,7 @@ function createLogHarness(
 			population: {},
 			lands: [],
 			buildings: [],
-			valuesV2: { ...startValuesV2 },
+			values: { ...startValues },
 		},
 		players: {
 			opponent: {
@@ -49,7 +49,7 @@ function createLogHarness(
 				population: {},
 				lands: [],
 				buildings: [],
-				valuesV2: { ...startValuesV2 },
+				values: { ...startValues },
 			},
 		},
 	} satisfies StartConfig;
@@ -65,7 +65,7 @@ function createLogHarness(
 		})),
 		start: startConfig,
 		rules: scaffold.ruleSnapshot,
-		resourceCatalogV2: scaffold.resourceCatalogV2,
+		resourceCatalog: scaffold.resourceCatalog,
 	});
 	const engineSnapshot = snapshotEngine(engine);
 	engineSnapshot.metadata = structuredClone(
@@ -85,19 +85,19 @@ function createLogHarness(
 		engineSnapshot.metadata,
 	);
 	engine.assets = translationContext.assets;
-	// Find any grouped resource with an icon from V2 catalog
+	// Find any grouped resource with an icon from catalog
 	// This tests population meta source rendering without hardcoding IDs
-	const populationV2Resource = v2ResourceIds.find((id) => {
-		const metadata = translationContext.resourceMetadataV2.get(id);
+	const populationResource = v2ResourceIds.find((id) => {
+		const metadata = translationContext.resourceMetadata.get(id);
 		return (
 			metadata.groupId !== null &&
 			metadata.groupId !== undefined &&
 			Boolean(metadata.icon)
 		);
 	});
-	if (!populationV2Resource) {
+	if (!populationResource) {
 		throw new Error(
-			'Expected at least one grouped resource with an icon in V2 catalog.',
+			'Expected at least one grouped resource with an icon in catalog.',
 		);
 	}
 	const developmentId = Array.from(engine.developments.keys()).find((id) => {
@@ -120,7 +120,7 @@ function createLogHarness(
 		translationContext,
 		metadataSelectors,
 		resourceKeys: v2ResourceIds,
-		populationId: populationV2Resource,
+		populationId: populationResource,
 		developmentId,
 		buildingId,
 		landIcon: landDescriptor.icon ?? '',
@@ -182,7 +182,7 @@ describe('log resource source icon registry', () => {
 		it(`renders icons for ${name} meta sources`, () => {
 			const harness = createLogHarness();
 			const { meta, expected } = buildMeta(harness);
-			// Find gold resource from V2 catalog
+			// Find gold resource from catalog
 			const goldResourceId =
 				harness.resourceKeys.find((id) => id.includes('gold')) ??
 				harness.resourceKeys[0];
@@ -191,7 +191,7 @@ describe('log resource source icon registry', () => {
 					'Expected at least one resource descriptor for log source tests.',
 				);
 			}
-			// Use V2 effect format with resourceId and change object
+			// Use effect format with resourceId and change object
 			const effect = {
 				type: 'resource' as const,
 				method: 'add' as const,
@@ -212,7 +212,7 @@ describe('log resource source icon registry', () => {
 				passives: harness.translationContext.passives,
 				assets: harness.translationContext.assets,
 				actionCategories: harness.translationContext.actionCategories,
-				resourceMetadataV2: harness.translationContext.resourceMetadataV2,
+				resourceMetadata: harness.translationContext.resourceMetadata,
 			});
 			const diffResult = diffStepSnapshots(before, after, step, diffContext, [
 				goldResourceId,
