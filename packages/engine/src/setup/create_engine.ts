@@ -8,7 +8,7 @@ import { registerCoreEffects } from '../effects';
 import { registerCoreEvaluators } from '../evaluators';
 import { registerCoreRequirements } from '../requirements';
 import { createAISystem, createTaxCollectorController } from '../ai';
-import { performAction } from '../actions/action_execution';
+import { performAction, simulateAction } from '../actions/action_execution';
 import { advance } from '../phases/advance';
 import {
 	validateGameConfig,
@@ -255,7 +255,14 @@ export function createEngine({
 	);
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
-	const aiSystem = createAISystem({ performAction, advance });
+	// AI actions use simulation before execution to prevent partial state
+	// changes when an action fails. This mirrors the session's performAction
+	// behavior: simulate first, then execute only if simulation succeeds.
+	const aiPerformAction: typeof performAction = (actionId, ctx, params) => {
+		simulateAction(actionId, ctx, params);
+		return performAction(actionId, ctx, params);
+	};
+	const aiSystem = createAISystem({ performAction: aiPerformAction, advance });
 	aiSystem.register(playerTwo.id, createTaxCollectorController(playerTwo.id));
 	engineContext.aiSystem = aiSystem;
 	applyPlayerStartConfiguration(

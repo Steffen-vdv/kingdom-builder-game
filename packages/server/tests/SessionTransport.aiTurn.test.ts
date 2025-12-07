@@ -339,4 +339,52 @@ describe('SessionTransport runAiTurn', () => {
 		expect(result.actions).toHaveLength(0);
 		expect(result.phaseComplete).toBe(false);
 	});
+
+	it('propagates unexpected action errors with details for frontend', async () => {
+		// This test ensures that engine bugs (like the 0.5 integer validation
+		// error) properly propagate through the API so the frontend can show
+		// an error screen with details.
+		const { manager } = createSyntheticSessionManager();
+		const transport = new SessionTransport({
+			sessionManager: manager,
+			authMiddleware: middleware,
+		});
+		const { sessionId } = transport.createSession({
+			body: {},
+			headers: authorizedHeaders,
+		});
+		const session = manager.getSession(sessionId);
+		expect(session).toBeDefined();
+		if (!session) {
+			throw new Error('Session was not created.');
+		}
+		const playerId = findAiPlayerId(session);
+		expect(playerId).not.toBeNull();
+		if (playerId === null) {
+			throw new Error('No AI controller was available.');
+		}
+		// Simulate an unexpected engine error during AI action
+		const engineBugMessage =
+			'ResourceV2 state expected "resource:core:happiness" value to be an ' +
+			'integer but received 0.5.';
+		vi.spyOn(session, 'runAiTurn').mockRejectedValue(
+			new Error(engineBugMessage),
+		);
+		vi.spyOn(session, 'enqueue').mockImplementation(async (factory) => {
+			return await factory();
+		});
+		const attempt = transport.runAiTurn({
+			body: { sessionId, playerId },
+			headers: authorizedHeaders,
+		});
+		await expect(attempt).rejects.toBeInstanceOf(TransportError);
+		await attempt.catch((error) => {
+			if (error instanceof TransportError) {
+				// Error should be wrapped as CONFLICT for frontend handling
+				expect(error.code).toBe('CONFLICT');
+				// Original error message should be preserved for debugging
+				expect(error.message).toBe('Failed to execute AI turn.');
+			}
+		});
+	});
 });
