@@ -143,7 +143,19 @@ export const GAME_START: StartConfig = startConfig()
 				if (bounds) {
 					builder = builder.resourceBoundsV2(bounds);
 				}
-				return builder;
+				return builder.lands((lands) => {
+					// 1 land with farm
+					lands.land((land) => land.development(DevelopmentId.Farm));
+					// 6 lands with houses
+					for (let i = 0; i < 6; i++) {
+						lands.land((land) => land.development(DevelopmentId.House));
+					}
+					// 3 empty lands
+					for (let i = 0; i < 3; i++) {
+						lands.land();
+					}
+					return lands;
+				});
 			})
 			.playerOverride('B', (player) => {
 				const bounds = toResourceBoundsInput(DEV_MODE_PLAYER_OVERRIDE_B_V2);
