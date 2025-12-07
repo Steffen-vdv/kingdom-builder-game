@@ -12,7 +12,7 @@ import type {
 const ENDPOINT_BUILDER_NAME = 'ResourceV2 transfer endpoint builder';
 const TRANSFER_BUILDER_NAME = 'ResourceV2 transfer builder';
 
-const SUPPORTED_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> = new Set(['clamp']);
+const VALID_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> = new Set(['clamp', 'pass', 'reject']);
 
 type ChangeConfigurator = ResourceChangeParameters | ((builder: ResourceChangeBuilder) => ResourceChangeBuilder | void);
 
@@ -75,8 +75,8 @@ function normaliseChange(change: ResourceChangeParameters): ResourceChangeParame
 }
 
 function assertReconciliationMode(mode: ResourceReconciliationMode | undefined, context: string): void {
-	if (mode && !SUPPORTED_RECONCILIATION_MODES.has(mode)) {
-		throw new Error(`${context} reconciliation mode "${mode}" is not supported yet. Supported modes: clamp.`);
+	if (mode && !VALID_RECONCILIATION_MODES.has(mode)) {
+		throw new Error(`${context} reconciliation mode "${mode}" is invalid. ` + `Valid modes: ${[...VALID_RECONCILIATION_MODES].join(', ')}.`);
 	}
 }
 

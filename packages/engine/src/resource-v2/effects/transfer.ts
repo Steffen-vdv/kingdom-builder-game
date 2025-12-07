@@ -181,13 +181,17 @@ function prepareTransferParticipant(
 	};
 }
 
-function enforceClampMode(
+const VALID_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> =
+	new Set(['clamp', 'pass', 'reject']);
+
+function assertValidReconciliationMode(
 	mode: ResourceReconciliationMode | undefined,
 	resourceId: string,
 ): void {
-	if (mode && mode !== 'clamp') {
+	if (mode && !VALID_RECONCILIATION_MODES.has(mode)) {
 		throw new Error(
-			`ResourceV2 effect for "${resourceId}" only supports clamp reconciliation during MVP scope (received "${mode}").`,
+			`ResourceV2 effect for "${resourceId}" has invalid reconciliation ` +
+				`mode "${mode}". Valid modes: ${[...VALID_RECONCILIATION_MODES].join(', ')}.`,
 		);
 	}
 }
@@ -196,7 +200,10 @@ function reconcileParticipant(
 	participant: TransferParticipantContext,
 	payload: ResourceV2TransferEndpointPayload,
 ): ResourceReconciliationResult {
-	enforceClampMode(payload.reconciliationMode, participant.resourceId);
+	assertValidReconciliationMode(
+		payload.reconciliationMode,
+		participant.resourceId,
+	);
 	const input: ResourceReconciliationInput = {
 		currentValue: participant.currentValue,
 		bounds: participant.bounds,
@@ -333,7 +340,6 @@ export const resourceV2IncreaseUpperBound: EffectHandler<
 			`ResourceV2 upper-bound increase cannot target limited parent resource "${params.resourceId}".`,
 		);
 	}
-	enforceClampMode(undefined, params.resourceId);
 	increaseResourceUpperBound(
 		context,
 		player,

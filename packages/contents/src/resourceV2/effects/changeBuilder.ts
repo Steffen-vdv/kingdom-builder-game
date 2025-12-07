@@ -2,7 +2,7 @@ import type { ResourceChangeParameters, ResourceChangeRoundingMode, ResourceReco
 
 const BUILDER_NAME = 'ResourceV2 change builder';
 
-const SUPPORTED_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> = new Set(['clamp']);
+const VALID_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> = new Set(['clamp', 'pass', 'reject']);
 
 type ChangeKind = ResourceChangeParameters['type'];
 
@@ -80,8 +80,8 @@ class ResourceChangeBuilderImpl implements ResourceChangeBuilder {
 	}
 
 	reconciliation(mode: ResourceReconciliationMode = 'clamp') {
-		if (!SUPPORTED_RECONCILIATION_MODES.has(mode)) {
-			throw new Error(`${BUILDER_NAME} reconciliation mode "${mode}" is not supported yet. Supported modes: clamp.`);
+		if (!VALID_RECONCILIATION_MODES.has(mode)) {
+			throw new Error(`${BUILDER_NAME} reconciliation mode "${mode}" is invalid. ` + `Valid modes: ${[...VALID_RECONCILIATION_MODES].join(', ')}.`);
 		}
 		this.reconciliationMode = mode;
 		return this;

@@ -331,7 +331,11 @@ function applyResourceEffect(
 			flags.upper = true;
 		}
 	}
-	setResourceValue(context, player, catalog, resourceId, result.finalValue);
+	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
+	const skipBoundClamp = reconciliationMode === 'pass';
+	setResourceValue(context, player, catalog, resourceId, result.finalValue, {
+		skipBoundClamp,
+	});
 	// Track resource source deltas for UI breakdowns. Only run when the
 	// context includes the source stack (full engine runs).
 	const delta = result.finalValue - currentValue;
