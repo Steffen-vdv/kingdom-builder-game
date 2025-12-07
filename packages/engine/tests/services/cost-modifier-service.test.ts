@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Resource as CResource } from '@kingdom-builder/contents/resourceKeys';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { getActionCosts } from '../../src';
 import { createTestEngine } from '../helpers';

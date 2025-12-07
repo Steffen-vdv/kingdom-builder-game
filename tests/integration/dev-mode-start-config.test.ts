@@ -9,11 +9,9 @@ import {
 	GAME_START,
 	RULES,
 	PopulationRole,
-} from '@kingdom-builder/contents';
-import {
 	Resource,
 	getResourceV2Id,
-} from '@kingdom-builder/contents/resourceKeys';
+} from '@kingdom-builder/contents';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,

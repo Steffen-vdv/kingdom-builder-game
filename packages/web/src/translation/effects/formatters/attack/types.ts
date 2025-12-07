@@ -15,7 +15,6 @@ export type TargetInfo = { icon: string; label: string };
 
 export type AttackTarget =
 	| { type: 'resource'; key: AttackResourceKey }
-	| { type: 'stat'; key: AttackStatKey }
 	| { type: 'building'; id: string };
 
 export type AttackStatRole = 'power' | 'absorption' | 'fortification';

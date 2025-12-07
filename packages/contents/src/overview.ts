@@ -1,8 +1,6 @@
 import { ActionId, BuildActions, DevelopActions, HireActions } from './actions';
 import { PhaseId } from './phaseTypes';
-import { Resource } from './resourceKeys';
-import { Stat } from './stats';
-import { PopulationRole } from './populationRoles';
+import { Resource, Stat, PopulationRole } from './internal';
 
 export type OverviewTokenCategoryName = 'actions' | 'phases' | 'resources' | 'stats' | 'population' | 'static';
 

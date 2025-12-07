@@ -7,7 +7,6 @@ import type { PlayerState } from '../../state';
 
 import buildingHandler from './building';
 import resourceHandler from './resource';
-import statHandler from './stat';
 
 export interface AttackTargetHandlerMeta {
 	defenderIndex: number;
@@ -21,13 +20,12 @@ type AttackTargetForType<T extends AttackTargetType> = Extract<
 	{ type: T }
 >;
 
-export type AttackTargetMutationResult<T extends AttackTargetType> = T extends
-	| 'resource'
-	| 'stat'
-	? { before: number; after: number }
-	: T extends 'building'
-		? { existed: boolean; destroyed: boolean }
-		: never;
+export type AttackTargetMutationResult<T extends AttackTargetType> =
+	T extends 'resource'
+		? { before: number; after: number }
+		: T extends 'building'
+			? { existed: boolean; destroyed: boolean }
+			: never;
 
 export interface AttackTargetHandler<
 	T extends AttackTarget,
@@ -60,6 +58,5 @@ export type AttackTargetHandlerMap = {
 
 export const attackTargetHandlers: AttackTargetHandlerMap = {
 	resource: resourceHandler,
-	stat: statHandler,
 	building: buildingHandler,
 };
