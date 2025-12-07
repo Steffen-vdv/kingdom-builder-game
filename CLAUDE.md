@@ -88,39 +88,35 @@ npm run generate:snapshots  # Refresh cached registry metadata after content cha
 
 ## Efficient Command Usage
 
-**Stop running slow commands repeatedly.** Use the right command for each stage:
+**IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
+commands sequentially - that defeats the purpose of parallelization.**
 
-| Stage              | Command                  | Time   | When to use                       |
-| ------------------ | ------------------------ | ------ | --------------------------------- |
-| While editing      | (none)                   | —      | Just code, hooks will catch       |
-| Before committing  | `npm run format`         | ~5s    | Only if lint-staged missed        |
-| Quick validation   | `npm run check:parallel` | ~50s   | Format + types + lint             |
-| Test only          | `npm run test:parallel`  | ~50s   | All test suites in parallel       |
-| Before pushing     | (automatic)              | ~50s   | pre-push hook runs check:parallel |
-| Final verification | `npm run verify`         | ~2 min | Before PR or when asked           |
+| What you changed | Command to run                         | Time |
+| ---------------- | -------------------------------------- | ---- |
+| Code (no tests)  | Just push (hook auto-formats + checks) | ~30s |
+| Code + tests     | `npm run test:parallel` then push      | ~50s |
+| Single test      | `npx vitest run path/to/file.test.ts`  | ~5s  |
+
+**The pre-push hook auto-formats and validates.** It runs `npm run format`,
+auto-commits any formatting changes, then runs typecheck and lint. Just push
+and let the hook handle everything - no manual formatting needed.
 
 **Anti-patterns to avoid:**
 
-- Running `npm run check` after every small change (use `check:parallel` instead)
-- Running `npm run verify` repeatedly (once before PR is enough)
-- Running tests when only checking format/types (use `check:parallel`)
-- Running full test suite when debugging one test (use `vitest run path/to/test`)
+- Running `npm run format` manually before push (the hook does this!)
+- Running `check:parallel` then `test:parallel` sequentially (redundant!)
+- Running `npm run verify` for daily work (it's for CI/coverage reports)
 - **Avoid `npm run test:sequential` - it's SLOWER than `test:parallel`!**
 
-**When you need to run tests:**
-
-1. **Single test file**: `npx vitest run path/to/file.test.ts`
-2. **All tests fastest**: `npm run test:parallel` (~50s, clean output)
-3. **Debugging failures**: `npm run test:parallel -- -v` (verbose on failure)
-
-## Pre-Commit Workflow
+## Git Hooks
 
 Husky hooks enforce quality gates automatically:
 
-1. **pre-commit**: `lint-staged` (formats staged files, runs eslint + tsc on .ts)
-2. **pre-push**: `npm run check:parallel` (format + typecheck + lint in parallel)
+1. **pre-commit**: `lint-staged` runs eslint + tsc on staged .ts/.tsx files
+2. **pre-push**: Auto-formats code, auto-commits if needed, then runs typecheck + lint
 
-Never bypass these hooks. Fix failures locally before pushing.
+The pre-push hook handles formatting automatically - if your code needs
+formatting, it commits the changes for you. Never bypass these hooks.
 
 ## Coding Standards
 
@@ -291,10 +287,8 @@ without completing the full migration will be rejected.
 
 ## Pre-Push Checklist
 
-1. Run `npm run format` to fix any formatting issues
-2. The pre-push hook automatically runs `npm run check:parallel`
-3. Run `npm run verify` once before opening a PR (not after every change)
-4. For text changes, review
+1. Just push - the pre-push hook auto-formats (and auto-commits if needed)
+2. For text changes, review
    [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text)
 
 ## Common Patterns

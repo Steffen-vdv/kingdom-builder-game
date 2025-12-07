@@ -8,7 +8,7 @@
   [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text).
 - Always load game data from content packages or registries and create synthetic
   fixtures through `createContentFactory()` in tests.
-- Run `npm run format` before committing; the pre-push hook runs `check:parallel`.
+- Just push - the pre-push hook auto-formats, auto-commits if needed, and validates.
 
 ▶ **Extended guidance, architecture lore, and gameplay reference begin in
 Section&nbsp;1 below.**
@@ -90,13 +90,12 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 - Legacy files above 350 lines remain until refactored; new code should respect
   the limit, but `*.test.ts` files are exempt.
 
-### 2.3 Pre-Commit Checklist
+### 2.3 Pre-Push Workflow
 
-- Run `npm run format` before committing to fix formatting issues.
-- The pre-push hook automatically runs `npm run check:parallel` (format + types +
-  lint in parallel, ~30s).
+- Just push - the pre-push hook auto-formats, auto-commits if needed, then runs
+  typecheck + lint (~30s).
+- Fix any reported issues before pushing again.
 - Run `npm run verify` once before opening a PR, not after every change.
-- Fix every reported issue—including spacing drift back to tabs—before pushing.
 
 #### Coding Standards Checklist
 
