@@ -18,9 +18,8 @@ if ! git diff --quiet; then
     AUTO_FORMATTED=true
 fi
 
-# Run type checking and linting
-npm run typecheck
-npm run lint
+# Run type checking and linting in parallel for speed
+npx run-p typecheck lint
 
 # Safety check: verify formatting is clean after all other scripts ran
 # This catches edge cases where typecheck/lint scripts might touch files
