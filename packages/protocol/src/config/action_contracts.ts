@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { requirementSchema } from './schema';
-import { sessionIdSchema } from './session_contracts';
+import { sessionIdSchema } from './session_contracts/shared';
 import type {
 	ActionChoiceMap,
 	ActionEffectChoice,

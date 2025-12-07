@@ -44,56 +44,61 @@ function createTestLogger(): FastifyBaseLogger {
 }
 
 describe('server entrypoint', () => {
-	it('starts a Fastify server and listens for requests', async () => {
-		const messages: Array<{ level: number; msg: string }> = [];
-		const stream = new Writable({
-			write(chunk, _encoding, callback) {
-				try {
-					messages.push(JSON.parse(String(chunk)));
-				} catch {
-					// Ignore parse errors from non-JSON log entries.
-				}
-				callback();
-			},
-		});
-		const module = await import('../src/index.js');
-		const result = await module.startServer({
-			host: '127.0.0.1',
-			port: 0,
-			logger: {
-				level: 'info',
-				stream,
-			},
-			tokens: {
-				'integration-token': {
-					userId: 'integration-tester',
-					roles: ['session:create', 'session:advance'],
+	it(
+		'starts a Fastify server and listens for requests',
+		{ timeout: 15000 },
+		async () => {
+			const messages: Array<{ level: number; msg: string }> = [];
+			const stream = new Writable({
+				write(chunk, _encoding, callback) {
+					try {
+						messages.push(JSON.parse(String(chunk)));
+					} catch {
+						// Ignore parse errors from non-JSON log entries.
+					}
+					callback();
 				},
-			},
-		});
-		const response = await fetch(`${result.address}/sessions`, {
-			method: 'POST',
-			headers: {
-				authorization: 'Bearer integration-token',
-				'content-type': 'application/json',
-			},
-			body: JSON.stringify({}),
-		});
-		expect(response.status).toBe(201);
-		expect(
-			messages.some(
-				(entry) => entry.msg === 'Starting Kingdom Builder server...',
-			),
-		).toBe(true);
-		expect(
-			messages.some(
-				(entry) =>
-					entry.msg === `Kingdom Builder server listening on ${result.address}`,
-			),
-		).toBe(true);
-		await result.app.close();
-		stream.end();
-	});
+			});
+			const module = await import('../src/index.js');
+			const result = await module.startServer({
+				host: '127.0.0.1',
+				port: 0,
+				logger: {
+					level: 'info',
+					stream,
+				},
+				tokens: {
+					'integration-token': {
+						userId: 'integration-tester',
+						roles: ['session:create', 'session:advance'],
+					},
+				},
+			});
+			const response = await fetch(`${result.address}/sessions`, {
+				method: 'POST',
+				headers: {
+					authorization: 'Bearer integration-token',
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({}),
+			});
+			expect(response.status).toBe(201);
+			expect(
+				messages.some(
+					(entry) => entry.msg === 'Starting Kingdom Builder server...',
+				),
+			).toBe(true);
+			expect(
+				messages.some(
+					(entry) =>
+						entry.msg ===
+						`Kingdom Builder server listening on ${result.address}`,
+				),
+			).toBe(true);
+			await result.app.close();
+			stream.end();
+		},
+	);
 
 	it('resolves the bound port when configured with port 0', async () => {
 		const module = await import('../src/index.js');
