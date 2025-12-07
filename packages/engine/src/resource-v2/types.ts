@@ -41,9 +41,34 @@ export interface RuntimeResourceMetadata {
 	readonly tags: readonly string[];
 }
 
+/**
+ * Reconciliation modes for resource bounds.
+ * - 'clamp': Clamp values to stay within bounds (default behavior)
+ * - 'pass': Pass values through without bound checking (allows overflow)
+ * - 'reject': Reject changes that would exceed bounds (throws error)
+ */
+export type RuntimeReconciliationMode = 'clamp' | 'pass' | 'reject';
+
+/**
+ * A reference to another resource whose value acts as this bound.
+ * When the referenced resource's value changes, reconciliation is applied.
+ */
+export interface RuntimeBoundReference {
+	/** The resource ID whose value determines this bound */
+	readonly resourceId: string;
+	/**
+	 * How to reconcile when the bound changes and the current value
+	 * would overflow/underflow. Default: 'clamp'
+	 */
+	readonly reconciliation: RuntimeReconciliationMode;
+}
+
+/** A bound can be a static number, null (unbounded), or a dynamic reference */
+export type RuntimeBoundValue = number | RuntimeBoundReference | null;
+
 export interface RuntimeResourceBounds {
-	readonly lowerBound: number | null;
-	readonly upperBound: number | null;
+	readonly lowerBound: RuntimeBoundValue;
+	readonly upperBound: RuntimeBoundValue;
 }
 
 export interface RuntimeResourceGlobalCostConfig {
@@ -66,24 +91,6 @@ export interface RuntimeResourceTriggers {
 	readonly onValueDecrease: readonly EffectDef[];
 }
 
-/**
- * Specifies which type of bound this resource represents.
- * - 'upper': This resource is the upper bound (max) of another resource.
- * - 'lower': This resource is the lower bound (min) of another resource.
- */
-export type RuntimeResourceBoundType = 'upper' | 'lower';
-
-/**
- * Configuration for a resource that acts as a bound of another resource.
- * The UI will display these together (e.g., "5/10" for current/max).
- */
-export interface RuntimeResourceBoundOfConfig {
-	/** The resource ID this resource is a bound of */
-	readonly resourceId: string;
-	/** Whether this is an upper or lower bound */
-	readonly boundType: RuntimeResourceBoundType;
-}
-
 export interface RuntimeResourceDefinition
 	extends
 		RuntimeResourceMetadata,
@@ -98,12 +105,6 @@ export interface RuntimeResourceDefinition
 	readonly resolvedGroupOrder: number | null;
 	readonly globalCost?: RuntimeResourceGlobalCostConfig;
 	readonly tierTrack?: RuntimeResourceTierTrack;
-	/**
-	 * When set, declares that this resource represents a bound of another
-	 * resource. Used by UI to display "current/max" pairs. Resources with
-	 * boundOf should not be displayed independently in the UI.
-	 */
-	readonly boundOf: RuntimeResourceBoundOfConfig | null;
 }
 
 export interface RuntimeResourceGroupParent

@@ -34,9 +34,34 @@ export interface ContentTierTrack {
 	readonly tiers: readonly ContentTierDefinition[];
 }
 
+/**
+ * Reconciliation modes for resource bounds.
+ * - 'clamp': Clamp values to stay within bounds (default behavior)
+ * - 'pass': Pass values through without bound checking (allows overflow)
+ * - 'reject': Reject changes that would exceed bounds (throws error)
+ */
+export type ContentReconciliationMode = 'clamp' | 'pass' | 'reject';
+
+/**
+ * A reference to another resource whose value acts as this bound.
+ * When the referenced resource's value changes, reconciliation is applied.
+ */
+export interface ContentBoundReference {
+	/** The resource ID whose value determines this bound */
+	readonly resourceId: string;
+	/**
+	 * How to reconcile when the bound changes and the current value
+	 * would overflow/underflow. Default: 'clamp'
+	 */
+	readonly reconciliation?: ContentReconciliationMode;
+}
+
+/** A bound can be a static number or a dynamic reference to another resource */
+export type ContentBoundValue = number | ContentBoundReference;
+
 export interface ContentBounds {
-	readonly lowerBound?: number;
-	readonly upperBound?: number;
+	readonly lowerBound?: ContentBoundValue;
+	readonly upperBound?: ContentBoundValue;
 }
 
 export interface ContentMetadata {
@@ -56,24 +81,6 @@ export interface ContentResourceTriggers {
 	readonly onValueDecrease?: readonly EffectDef[];
 }
 
-/**
- * Specifies which type of bound this resource represents.
- * - 'upper': This resource is the upper bound (max) of another resource.
- * - 'lower': This resource is the lower bound (min) of another resource.
- */
-export type ContentBoundType = 'upper' | 'lower';
-
-/**
- * Configuration for a resource that acts as a bound of another resource.
- * The UI will display these together (e.g., "5/10" for current/max).
- */
-export interface ContentBoundOfConfig {
-	/** The resource ID this resource is a bound of */
-	readonly resourceId: string;
-	/** Whether this is an upper or lower bound */
-	readonly boundType: ContentBoundType;
-}
-
 export interface ContentResourceDefinition
 	extends ContentMetadata, ContentBounds, ContentResourceTriggers {
 	readonly displayAsPercent?: boolean;
@@ -84,13 +91,6 @@ export interface ContentResourceDefinition
 	readonly groupOrder?: number;
 	readonly globalCost?: { amount: number };
 	readonly tierTrack?: ContentTierTrack;
-	readonly reconciliation?: string;
-	/**
-	 * When set, declares that this resource represents a bound of another
-	 * resource. Used by UI to display "current/max" pairs. Resources with
-	 * boundOf should not be displayed independently in the UI.
-	 */
-	readonly boundOf?: ContentBoundOfConfig;
 }
 
 export interface ContentResourceGroupParent
@@ -100,7 +100,6 @@ export interface ContentResourceGroupParent
 	readonly trackValueBreakdown?: boolean;
 	readonly trackBoundBreakdown?: boolean;
 	readonly tierTrack?: ContentTierTrack;
-	readonly reconciliation?: string;
 }
 
 export interface ContentResourceGroupDefinition {

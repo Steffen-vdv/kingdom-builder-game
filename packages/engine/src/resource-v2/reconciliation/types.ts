@@ -1,4 +1,11 @@
-import type { RuntimeResourceBounds } from '../types';
+/**
+ * Resolved bounds where all dynamic references have been resolved to numbers.
+ * Strategies work with these resolved values, keeping them simple and pure.
+ */
+export interface ResolvedBounds {
+	readonly lowerBound: number | null;
+	readonly upperBound: number | null;
+}
 
 /**
  * Reconciliation mode constants for runtime validation and use.
@@ -94,7 +101,8 @@ export interface ComputeResourceDeltaInput {
 }
 
 export interface ResourceReconciliationInput extends ComputeResourceDeltaInput {
-	readonly bounds?: RuntimeResourceBounds | null;
+	/** Resolved bounds where dynamic references have been resolved to numbers */
+	readonly bounds?: ResolvedBounds | null;
 	readonly reconciliationMode: ResourceReconciliationMode;
 }
 
@@ -108,15 +116,15 @@ export interface ResourceReconciliationResult {
 
 /**
  * Strategy interface for reconciliation modes.
- * Each strategy receives the target value and bounds, and returns the
- * reconciliation result.
+ * Each strategy receives the target value and RESOLVED bounds, and returns the
+ * reconciliation result. Bounds must be resolved before calling strategies.
  */
 export interface ReconciliationStrategy {
 	(
 		currentValue: number,
 		targetValue: number,
 		requestedDelta: number,
-		bounds: RuntimeResourceBounds | null | undefined,
+		bounds: ResolvedBounds | null | undefined,
 	): ResourceReconciliationResult;
 }
 

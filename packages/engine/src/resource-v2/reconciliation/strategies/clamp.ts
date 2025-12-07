@@ -1,18 +1,19 @@
-import type { RuntimeResourceBounds } from '../../types';
 import type {
 	ReconciliationStrategy,
+	ResolvedBounds,
 	ResourceReconciliationResult,
 } from '../types';
 
 /**
  * Clamp strategy: constrains the final value within the resource's bounds.
  * This is the default reconciliation mode.
+ * Bounds must be resolved to numeric values before calling this strategy.
  */
 export const clampStrategy: ReconciliationStrategy = (
 	currentValue: number,
 	targetValue: number,
 	requestedDelta: number,
-	bounds: RuntimeResourceBounds | null | undefined,
+	bounds: ResolvedBounds | null | undefined,
 ): ResourceReconciliationResult => {
 	const lowerBound = bounds?.lowerBound ?? null;
 	const upperBound = bounds?.upperBound ?? null;

@@ -4,6 +4,7 @@ import type { PlayerState } from '../../state';
 import { recordEffectResourceDelta } from '../../resource_sources';
 import { setResourceValue, getResourceValue } from '../state';
 import type { RuntimeResourceCatalog, RuntimeResourceBounds } from '../types';
+import { resolveBoundValue } from '../state-helpers';
 import {
 	ResourceBoundExceededError,
 	type ResourceReconciliationMode,
@@ -67,9 +68,15 @@ export function applyAdditivePercentChange(
 		newValue = newValue >= 0 ? Math.floor(newValue) : Math.ceil(newValue);
 	}
 
-	// Apply reconciliation based on mode
-	const lowerBound = bounds.lowerBound;
-	const upperBound = bounds.upperBound;
+	// Resolve bounds (handles both static numbers and dynamic references)
+	const lowerBound = resolveBoundValue(
+		bounds.lowerBound,
+		player.resourceValues,
+	);
+	const upperBound = resolveBoundValue(
+		bounds.upperBound,
+		player.resourceValues,
+	);
 	let clampedToLowerBound = false;
 	let clampedToUpperBound = false;
 

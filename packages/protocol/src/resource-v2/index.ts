@@ -1,8 +1,9 @@
 export type {
-	ResourceBoundOfConfig,
-	ResourceBoundType,
+	ResourceBoundReference,
+	ResourceBoundValue,
 	ResourceCategoryDefinition,
 	ResourceCategoryItem,
+	ResourceReconciliationMode,
 	ResourceV2Bounds,
 	ResourceV2Definition,
 	ResourceV2GlobalCostConfig,
@@ -13,4 +14,5 @@ export type {
 	ResourceV2TierThreshold,
 	ResourceV2TierTrack,
 	ResourceV2TierTrackMetadata,
+	ResourceV2Triggers,
 } from './types';

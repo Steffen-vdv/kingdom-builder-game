@@ -1,5 +1,7 @@
 import type { PlayerState } from '../state';
 import type {
+	RuntimeBoundReference,
+	RuntimeBoundValue,
 	RuntimeResourceCatalog,
 	RuntimeResourceDefinition,
 	RuntimeResourceGroupParent,
@@ -87,6 +89,40 @@ export function resolveResourceDefinition(
 		};
 	}
 	return null;
+}
+
+/**
+ * Check if a bound value is a reference (not a static number or null).
+ */
+export function isBoundReference(
+	bound: RuntimeBoundValue | undefined,
+): bound is RuntimeBoundReference {
+	return bound !== null && bound !== undefined && typeof bound !== 'number';
+}
+
+/**
+ * Resolves a RuntimeBoundValue to a numeric value or null.
+ * - If the bound is a number, returns it directly.
+ * - If the bound is null/undefined, returns null (unbounded).
+ * - If the bound is a reference, looks up the referenced resource's value.
+ *
+ * @param bound - The bound value to resolve
+ * @param resourceValues - Map of resource IDs to their current values
+ * @returns The resolved numeric bound, or null if unbounded
+ */
+export function resolveBoundValue(
+	bound: RuntimeBoundValue | undefined,
+	resourceValues: Record<string, number>,
+): number | null {
+	if (bound === null || bound === undefined) {
+		return null;
+	}
+	if (typeof bound === 'number') {
+		return bound;
+	}
+	// It's a RuntimeBoundReference - look up the referenced resource's value
+	const referencedValue = resourceValues[bound.resourceId];
+	return referencedValue ?? null;
 }
 
 export function clampToBounds(

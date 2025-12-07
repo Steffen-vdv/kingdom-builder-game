@@ -7,19 +7,19 @@ import {
 	setResourceValue,
 	type SetResourceValueOptions,
 } from '../state';
-import { resolveResourceDefinition } from '../state-helpers';
-import {
-	reconcileResourceChange,
-	type ResourceChangeParameters,
-	type ResourceReconciliationInput,
-	type ResourceReconciliationMode,
-	type ResourceReconciliationResult,
-} from '../reconciliation';
+import { resolveBoundValue, resolveResourceDefinition } from '../state-helpers';
+import { reconcileResourceChange } from '../reconciliation';
+import type {
+	ResolvedBounds,
+	ResourceChangeParameters,
+	ResourceReconciliationInput,
+	ResourceReconciliationMode,
+	ResourceReconciliationResult,
+} from '../reconciliation/types';
 
 import type {
 	RuntimeResourceCatalog,
 	RuntimeResourceDefinition,
-	RuntimeResourceBounds,
 } from '../types';
 
 // Inline valid modes to avoid circular dependency with reconciliation module
@@ -107,7 +107,7 @@ interface TransferParticipantContext {
 	readonly player: PlayerState;
 	readonly resourceId: string;
 	readonly definition: RuntimeResourceDefinition;
-	readonly bounds: RuntimeResourceBounds;
+	readonly bounds: ResolvedBounds;
 	readonly currentValue: number;
 	readonly options: SetResourceValueOptions;
 }
@@ -126,33 +126,25 @@ function resolvePlayer(
 	return context.activePlayer;
 }
 
-function resolveEffectiveBound(
-	override: number | null | undefined,
-	fallback: number | null | undefined,
-): number | null {
-	if (typeof override === 'number') {
-		return override;
-	}
-	if (typeof fallback === 'number') {
-		return fallback;
-	}
-	return null;
-}
-
+/**
+ * Resolves the effective bound for a resource, checking player overrides first,
+ * then falling back to the definition, and finally resolving any references.
+ */
 function resolveEffectiveBounds(
 	player: PlayerState,
 	resourceId: string,
 	definition: RuntimeResourceDefinition,
-): RuntimeResourceBounds {
+): ResolvedBounds {
+	// Get bound values (could be numbers, references, or null)
+	const lowerBoundValue =
+		player.resourceLowerBounds[resourceId] ?? definition.lowerBound ?? null;
+	const upperBoundValue =
+		player.resourceUpperBounds[resourceId] ?? definition.upperBound ?? null;
+
+	// Resolve any references to get final numeric values
 	return {
-		lowerBound: resolveEffectiveBound(
-			player.resourceLowerBounds[resourceId],
-			definition.lowerBound ?? null,
-		),
-		upperBound: resolveEffectiveBound(
-			player.resourceUpperBounds[resourceId],
-			definition.upperBound ?? null,
-		),
+		lowerBound: resolveBoundValue(lowerBoundValue, player.resourceValues),
+		upperBound: resolveBoundValue(upperBoundValue, player.resourceValues),
 	};
 }
 

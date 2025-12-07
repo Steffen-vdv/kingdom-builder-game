@@ -1,5 +1,6 @@
 import { resourceGroup } from '../groupBuilder';
 import { resourceV2 } from '../resourceBuilder';
+import { boundTo } from '../types';
 import type { ResourceV2Definition, ResourceV2GroupDefinition } from '../types';
 
 const POPULATION_GROUP_ID = 'population';
@@ -61,6 +62,8 @@ export const POPULATION_GROUP_DEFINITIONS: readonly ResourceV2GroupDefinition[] 
 			label: 'Current Population',
 			icon: '👥',
 			description: 'Current Population is the sum of all assigned roles. ' + 'It cannot exceed Max Population.',
+			lowerBound: 0,
+			upperBound: boundTo('resource:core:max-population'),
 		})
 		.build(),
 ];

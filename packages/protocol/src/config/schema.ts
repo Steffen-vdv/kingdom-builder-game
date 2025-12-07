@@ -172,20 +172,28 @@ const resourceV2MetadataSchema = z.object({
 	tags: z.array(z.string()).optional(),
 });
 
-const resourceV2BoundsSchema = z.object({
-	lowerBound: z.number().optional(),
-	upperBound: z.number().optional(),
+const resourceReconciliationModeSchema = z.enum(['clamp', 'pass', 'reject']);
+
+const resourceBoundReferenceSchema = z.object({
+	resourceId: z.string(),
+	reconciliation: resourceReconciliationModeSchema.optional(),
 });
 
-const resourceBoundOfConfigSchema = z.object({
-	resourceId: z.string(),
-	boundType: z.enum(['upper', 'lower']),
+const resourceBoundValueSchema = z.union([
+	z.number(),
+	resourceBoundReferenceSchema,
+]);
+
+const resourceV2BoundsSchema = z.object({
+	lowerBound: resourceBoundValueSchema.optional(),
+	upperBound: resourceBoundValueSchema.optional(),
 });
 
 const resourceV2DefinitionSchema = resourceV2MetadataSchema
 	.merge(resourceV2BoundsSchema)
 	.extend({
 		displayAsPercent: z.boolean().optional(),
+		allowDecimal: z.boolean().optional(),
 		trackValueBreakdown: z.boolean().optional(),
 		trackBoundBreakdown: z.boolean().optional(),
 		groupId: z.string().optional(),
@@ -196,7 +204,6 @@ const resourceV2DefinitionSchema = resourceV2MetadataSchema
 			})
 			.optional(),
 		tierTrack: resourceV2TierTrackSchema.optional(),
-		boundOf: resourceBoundOfConfigSchema.optional(),
 	});
 
 const resourceV2GroupParentSchema = resourceV2MetadataSchema

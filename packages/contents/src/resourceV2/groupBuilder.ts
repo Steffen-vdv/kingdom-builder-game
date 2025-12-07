@@ -2,7 +2,11 @@ import type { ResourceV2GroupDefinition, ResourceV2GroupParent } from './types';
 
 const builderName = 'ResourceV2 group builder';
 
-type ParentMetadata = Pick<ResourceV2GroupParent, 'id' | 'label' | 'icon' | 'description'>;
+/**
+ * Parent metadata including optional bounds.
+ * Bounds can be static numbers or dynamic references to other resources.
+ */
+type ParentMetadata = Pick<ResourceV2GroupParent, 'id' | 'label' | 'icon' | 'description' | 'lowerBound' | 'upperBound'>;
 
 function assertInteger(value: number, field: 'order') {
 	if (!Number.isInteger(value)) {
@@ -84,8 +88,18 @@ class ResourceGroupBuilderImpl implements ResourceGroupBuilder {
 			throw new Error(`${builderName} parent() requires a non-empty icon.`);
 		}
 
-		const { id, label, icon, description } = metadata;
-		this.definition.parent = description ? { id, label, icon, description } : { id, label, icon };
+		const { id, label, icon, description, lowerBound, upperBound } = metadata;
+		const parent: ResourceV2GroupParent = { id, label, icon };
+		if (description !== undefined) {
+			parent.description = description;
+		}
+		if (lowerBound !== undefined) {
+			parent.lowerBound = lowerBound;
+		}
+		if (upperBound !== undefined) {
+			parent.upperBound = upperBound;
+		}
+		this.definition.parent = parent;
 		this.parentSet = true;
 		return this;
 	}

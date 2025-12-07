@@ -3,13 +3,19 @@ import type { EngineContext } from '../../context';
 import type { PlayerState } from '../../state';
 import { recordEffectResourceDelta } from '../../resource_sources';
 import { setResourceValue, getResourceValue } from '../state';
-import { ensureBoundFlags, resolveResourceDefinition } from '../state-helpers';
 import {
-	reconcileResourceChange,
-	type ResourceChangeParameters,
-	type ResourceReconciliationMode,
-	type ResourceReconciliationResult,
-} from '../reconciliation';
+	ensureBoundFlags,
+	isBoundReference,
+	resolveBoundValue,
+	resolveResourceDefinition,
+} from '../state-helpers';
+import { reconcileResourceChange } from '../reconciliation';
+import type {
+	ResolvedBounds,
+	ResourceChangeParameters,
+	ResourceReconciliationMode,
+	ResourceReconciliationResult,
+} from '../reconciliation/types';
 import type { RuntimeResourceCatalog, RuntimeResourceBounds } from '../types';
 import {
 	applyAdditivePercentChange,
@@ -186,22 +192,34 @@ function applySign(
 	};
 }
 
+/**
+ * Resolves the effective bound for a resource. For dynamic bounds (references
+ * to other resources), always use the definition to get a fresh resolution.
+ * For static bounds, player overrides take precedence over the definition.
+ */
 function resolveEffectiveBounds(
 	player: PlayerState,
 	resourceId: string,
 	definitionBounds: RuntimeResourceBounds,
-): RuntimeResourceBounds {
-	const lowerOverride = player.resourceLowerBounds[resourceId];
-	const upperOverride = player.resourceUpperBounds[resourceId];
+): ResolvedBounds {
+	const defLower = definitionBounds.lowerBound;
+	const defUpper = definitionBounds.upperBound;
+	const playerLower = player.resourceLowerBounds[resourceId];
+	const playerUpper = player.resourceUpperBounds[resourceId];
+
+	// For dynamic bounds (references), always use definition to get fresh value.
+	// For static bounds, player overrides take precedence.
+	const lowerBoundValue = isBoundReference(defLower)
+		? defLower
+		: (playerLower ?? defLower);
+	const upperBoundValue = isBoundReference(defUpper)
+		? defUpper
+		: (playerUpper ?? defUpper);
+
+	// Resolve any references to get final numeric values
 	return {
-		lowerBound:
-			typeof lowerOverride === 'number'
-				? lowerOverride
-				: (definitionBounds.lowerBound ?? null),
-		upperBound:
-			typeof upperOverride === 'number'
-				? upperOverride
-				: (definitionBounds.upperBound ?? null),
+		lowerBound: resolveBoundValue(lowerBoundValue, player.resourceValues),
+		upperBound: resolveBoundValue(upperBoundValue, player.resourceValues),
 	};
 }
 

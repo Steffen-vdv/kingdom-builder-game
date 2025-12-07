@@ -3,8 +3,11 @@ import {
 	createResourceV2Registry,
 	resourceGroup,
 	resourceV2,
+	type ResourceBoundReference,
+	type ResourceBoundValue,
 	type ResourceGroupBuilder,
 	type ResourceGroupRegistry,
+	type ResourceReconciliationMode,
 	type ResourceV2Builder,
 	type ResourceV2Registry,
 } from '@kingdom-builder/contents';
@@ -37,9 +40,13 @@ export interface ResourceV2MetadataOverrides {
 	trackBoundBreakdown?: boolean;
 }
 
+/**
+ * Bound overrides can be static numbers or dynamic references to other
+ * resources. Use `{ resourceId: 'other-resource' }` for dynamic bounds.
+ */
 export interface ResourceV2BoundsOverrides {
-	lowerBound?: number;
-	upperBound?: number;
+	lowerBound?: ResourceBoundValue;
+	upperBound?: ResourceBoundValue;
 }
 
 export interface ResourceV2GlobalCostOverride {
@@ -99,8 +106,11 @@ export function resourceV2Definition(
 
 	const lowerBound = overrides.bounds?.lowerBound;
 	const upperBound = overrides.bounds?.upperBound;
-	if (lowerBound !== undefined || upperBound !== undefined) {
-		builder.bounds(lowerBound, upperBound);
+	if (lowerBound !== undefined) {
+		builder.lowerBound(lowerBound);
+	}
+	if (upperBound !== undefined) {
+		builder.upperBound(upperBound);
 	}
 
 	if (overrides.tierTrack) {
@@ -124,12 +134,26 @@ export interface ResourceV2GroupParentOverrides {
 	icon?: string;
 	description?: string;
 	order?: number;
-	lowerBound?: number;
-	upperBound?: number;
+	lowerBound?: ResourceBoundValue;
+	upperBound?: ResourceBoundValue;
 	tierTrack?: ResourceV2TierTrack;
 	displayAsPercent?: boolean;
 	trackValueBreakdown?: boolean;
 	trackBoundBreakdown?: boolean;
+}
+
+/**
+ * Helper to create a bound reference for testing dynamic bounds.
+ * @example
+ * resourceV2Definition({
+ *   bounds: { upperBound: boundRef('max-population') }
+ * })
+ */
+export function boundRef(
+	resourceId: string,
+	reconciliation?: ResourceReconciliationMode,
+): ResourceBoundReference {
+	return reconciliation ? { resourceId, reconciliation } : { resourceId };
 }
 
 export interface ResourceV2GroupDefinitionOverrides {

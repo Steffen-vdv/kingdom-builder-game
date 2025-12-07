@@ -1,3 +1,4 @@
+import type { SessionResourceBoundValueV2 } from '@kingdom-builder/protocol';
 import { statDisplaysAsPercent } from '../../utils/resourceSources';
 import { findResourcePctBreakdown, type StepEffects } from './statBreakdown';
 import type { ActionDiffChange } from './diff';
@@ -40,6 +41,28 @@ function resolveResourceValue(
 	return undefined;
 }
 
+/**
+ * Resolves a single bound value to a number, handling both static numbers
+ * and dynamic bound references.
+ */
+function resolveBoundValueToNumber(
+	bound: SessionResourceBoundValueV2 | null | undefined,
+	valuesV2: Record<string, number> | undefined,
+): number | null {
+	if (bound === null || bound === undefined) {
+		return null;
+	}
+	if (typeof bound === 'number') {
+		return bound;
+	}
+	// It's a bound reference - look up the value from the referenced resource
+	if (typeof bound === 'object' && 'resourceId' in bound) {
+		const refValue = valuesV2?.[bound.resourceId];
+		return typeof refValue === 'number' ? refValue : null;
+	}
+	return null;
+}
+
 function resolveBounds(
 	snapshot: PlayerSnapshot,
 	resourceId: string,
@@ -48,17 +71,17 @@ function resolveBounds(
 	if (!bounds) {
 		return {};
 	}
-	const lowerBound =
-		bounds.lowerBound !== undefined && bounds.lowerBound !== null
-			? bounds.lowerBound
-			: undefined;
-	const upperBound =
-		bounds.upperBound !== undefined && bounds.upperBound !== null
-			? bounds.upperBound
-			: undefined;
+	const lowerBound = resolveBoundValueToNumber(
+		bounds.lowerBound,
+		snapshot.valuesV2,
+	);
+	const upperBound = resolveBoundValueToNumber(
+		bounds.upperBound,
+		snapshot.valuesV2,
+	);
 	return {
-		...(lowerBound !== undefined ? { lowerBound } : {}),
-		...(upperBound !== undefined ? { upperBound } : {}),
+		...(lowerBound !== null ? { lowerBound } : {}),
+		...(upperBound !== null ? { upperBound } : {}),
 	};
 }
 

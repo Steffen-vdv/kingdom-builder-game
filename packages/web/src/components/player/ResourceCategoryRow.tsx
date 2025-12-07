@@ -3,15 +3,10 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionResourceCategoryDefinitionV2,
 	SessionResourceCategoryItemV2,
-	SessionResourceDefinitionV2,
 } from '@kingdom-builder/protocol';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
-import {
-	type ResourceV2MetadataSnapshot,
-	type ResourceV2ValueSnapshot,
-} from '../../translation';
-import ResourceButton, { formatResourceMagnitude } from './ResourceButton';
+import ResourceButton from './ResourceButton';
 import {
 	createForecastMap,
 	createResourceSnapshot,
@@ -25,22 +20,15 @@ import {
 	useResourceMetadata,
 } from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from './registryDisplays';
+import {
+	buildBoundReferenceMap,
+	type BoundRefEntry,
+} from './boundReferenceHelpers';
+import ResourceWithBoundButton from './ResourceWithBoundButton';
 
 interface ResourceCategoryRowProps {
 	category: SessionResourceCategoryDefinitionV2;
 	player: SessionPlayerStateSnapshot;
-}
-
-function buildBoundResourceMap(
-	definitions: readonly SessionResourceDefinitionV2[],
-): Map<string, SessionResourceDefinitionV2> {
-	const map = new Map<string, SessionResourceDefinitionV2>();
-	for (const definition of definitions) {
-		if (definition.boundOf) {
-			map.set(definition.boundOf.resourceId, definition);
-		}
-	}
-	return map;
 }
 
 const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
@@ -68,11 +56,11 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		[player, forecastMap, translationContext.signedResourceGains],
 	);
 
-	const boundResourceMap = React.useMemo(
+	const boundReferenceMap = React.useMemo(
 		() =>
 			resourceCatalog
-				? buildBoundResourceMap(resourceCatalog.resources.ordered)
-				: new Map<string, SessionResourceDefinitionV2>(),
+				? buildBoundReferenceMap(resourceCatalog.resources.ordered)
+				: new Map<string, BoundRefEntry>(),
 		[resourceCatalog],
 	);
 
@@ -208,10 +196,6 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			if (!definition) {
 				return null;
 			}
-			// Skip resources that have boundOf - they display with their target
-			if (definition.boundOf) {
-				return null;
-			}
 			// For non-primary categories, only show resources that have been touched
 			if (!category.isPrimary && !player.resourceTouchedV2[resourceId]) {
 				return null;
@@ -220,14 +204,14 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			const metadata = translationContext.resourceMetadataV2.get(resourceId);
 			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
 
-			// Check if there's a bound resource for this resource
-			const boundDef = boundResourceMap.get(resourceId);
-			if (boundDef) {
+			// Check if this resource has a bound reference to another resource
+			const boundInfo = boundReferenceMap.get(resourceId);
+			if (boundInfo) {
 				const boundMetadata = translationContext.resourceMetadataV2.get(
-					boundDef.id,
+					boundInfo.boundRef.resourceId,
 				);
 				const boundSnapshot = createResourceSnapshot(
-					boundDef.id,
+					boundInfo.boundRef.resourceId,
 					snapshotContext,
 				);
 
@@ -238,7 +222,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 						snapshot={snapshot}
 						boundMetadata={boundMetadata}
 						boundSnapshot={boundSnapshot}
-						boundType={boundDef.boundOf?.boundType ?? 'upper'}
+						boundType={boundInfo.boundType}
 						onShow={showResourceCard}
 						onHide={clearHoverCard}
 					/>
@@ -259,7 +243,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			resourceCatalog,
 			snapshotContext,
 			translationContext.resourceMetadataV2,
-			boundResourceMap,
+			boundReferenceMap,
 			showResourceCard,
 			clearHoverCard,
 			category.isPrimary,
@@ -323,60 +307,6 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			)}
 			{category.contents.map((item) => renderCategoryItem(item))}
 		</div>
-	);
-};
-
-interface ResourceWithBoundButtonProps {
-	metadata: ResourceV2MetadataSnapshot;
-	snapshot: ResourceV2ValueSnapshot;
-	boundMetadata: ResourceV2MetadataSnapshot;
-	boundSnapshot: ResourceV2ValueSnapshot;
-	boundType: 'upper' | 'lower';
-	onShow: (resourceId: string) => void;
-	onHide: () => void;
-}
-
-const ResourceWithBoundButton: React.FC<ResourceWithBoundButtonProps> = ({
-	metadata,
-	snapshot,
-	boundMetadata,
-	boundSnapshot,
-	boundType,
-	onShow,
-	onHide,
-}) => {
-	const handleShow = React.useCallback(() => {
-		onShow(snapshot.id);
-	}, [onShow, snapshot.id]);
-
-	const iconLabel = metadata.icon ?? '?';
-	const currentValue = formatResourceMagnitude(snapshot.current, metadata);
-	const boundValue = formatResourceMagnitude(
-		boundSnapshot.current,
-		boundMetadata,
-	);
-
-	const displayValue =
-		boundType === 'upper'
-			? `${currentValue}/${boundValue}`
-			: `${boundValue}/${currentValue}`;
-
-	const ariaLabel = `${metadata.label}: ${displayValue}`;
-
-	return (
-		<button
-			type="button"
-			className="bar-item hoverable cursor-help relative overflow-visible"
-			onMouseEnter={handleShow}
-			onMouseLeave={onHide}
-			onFocus={handleShow}
-			onBlur={onHide}
-			onClick={handleShow}
-			aria-label={ariaLabel}
-		>
-			<span aria-hidden="true">{iconLabel}</span>
-			{displayValue}
-		</button>
 	);
 };
 
