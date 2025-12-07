@@ -20,7 +20,10 @@ import {
 import { PLAYER_INFO_CARD_BG } from './infoCards';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
 import { buildTierEntries, type TierDefinition } from './buildTierEntries';
-import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
+import {
+	usePassiveAssetMetadata,
+	useResourceMetadata,
+} from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from './registryDisplays';
 
 interface ResourceCategoryRowProps {
@@ -85,9 +88,10 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		[tieredResourceKey, resourceMetadata],
 	);
 
+	const passiveAssetMetadata = usePassiveAssetMetadata();
 	const passiveAssetDescriptor = React.useMemo(
-		() => ({ id: 'passive', icon: '♾️', label: 'Passive' }),
-		[],
+		() => toDescriptorDisplay(passiveAssetMetadata.select()),
+		[passiveAssetMetadata],
 	);
 
 	// Find the active tier by checking the tiered resource's value against tier
