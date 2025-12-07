@@ -32,7 +32,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `⏳ Until next ${upkeepSummaryLabel}`,
 				items: [
-					`${modifierIcon}${details.armyAttack.icon}: ${details.happinessIcon} ${sign(details.penaltyAmt)}${details.penaltyAmt}`,
+					`${modifierIcon}${details.raid.icon}: ${details.happinessIcon} ${sign(details.penaltyAmt)}${details.penaltyAmt}`,
 				],
 			},
 		]);
@@ -59,7 +59,7 @@ describe('hold festival action translation', () => {
 			{
 				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
 				items: [
-					`${modifierIcon} Modifier on ${details.armyAttack.icon} ${details.armyAttack.name}: Whenever it resolves, ${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+					`${modifierIcon} Modifier on ${details.raid.icon} ${details.raid.name}: Whenever it resolves, ${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 		]);
@@ -81,8 +81,8 @@ describe('hold festival action translation', () => {
 		const modifierIconValue = details.modifierInfo.icon ?? '✨';
 		const modifierIcon = modifierIconValue ? `${modifierIconValue} ` : '';
 		const raidLabel = formatTargetLabel(
-			details.armyAttack.icon ?? '',
-			details.armyAttack.name,
+			details.raid.icon ?? '',
+			details.raid.name,
 		);
 		// V2 format adds space after icon for readability
 		const happinessLabel =

@@ -20,29 +20,15 @@ import { selectAttackBuildingDescriptor } from './registrySelectors';
 
 export function buildDescribeEntry(
 	context: BaseEntryContext<AttackTarget>,
-	fortificationItems: string[],
+	_fortificationItems: string[],
 ): SummaryEntry {
-	const { stats, ignoreAbsorption } = context;
+	const { stats, info } = context;
 	const power = stats.power;
-	const absorption = stats.absorption;
 	const powerLabel = attackStatLabel(power, 'attack power');
-	const absorptionLabel = attackStatLabel(absorption, 'damage reduction');
-	const title = power
-		? `Attack opponent with your ${powerLabel}`
-		: 'Attack opponent with your forces';
-	const ignoringAbsorption = `Ignoring ${absorptionLabel} damage reduction`;
-	const appliedAbsorption = `${absorptionLabel} damage reduction applied`;
-	const absorptionItem = ignoreAbsorption
-		? absorption
-			? ignoringAbsorption
-			: 'Ignoring damage reduction'
-		: absorption
-			? appliedAbsorption
-			: 'Damage reduction applied';
-	return {
-		title,
-		items: [absorptionItem, ...fortificationItems],
-	};
+	const targetLabel = iconLabel(info.icon, info.label);
+	return power
+		? `Attack opponent's ${targetLabel} with your ${powerLabel}`
+		: `Attack opponent's ${targetLabel} with your forces`;
 }
 
 export function defaultFortificationItems(
