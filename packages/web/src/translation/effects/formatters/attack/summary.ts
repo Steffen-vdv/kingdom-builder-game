@@ -6,7 +6,6 @@ import {
 	type AttackStatDescriptor,
 } from './types';
 
-const FALLBACK_ATTACK_ICON = '⚔️';
 const DEFENDER_ICON = '🛡️';
 
 function statIconOrLabel(
