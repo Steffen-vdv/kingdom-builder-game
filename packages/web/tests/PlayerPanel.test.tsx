@@ -10,7 +10,7 @@ import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContex
 const {
 	activePlayer: activePlayerSnapshot,
 	mockGame,
-	resourceForecast,
+	primaryForecast,
 	displayableSecondaryResourceIds,
 	secondaryForecast,
 	registries,
@@ -27,17 +27,8 @@ const renderPanel = () =>
 
 // Build forecast values in V2 format for the useNextTurnForecast mock
 function buildV2ForecastValues(): Record<string, number> {
-	const valuesV2: Record<string, number> = {};
-	// Convert primary resource forecasts to V2 IDs (legacy keys still used)
-	for (const [legacyKey, delta] of Object.entries(resourceForecast)) {
-		const v2Id = `resource:core:${legacyKey}`;
-		valuesV2[v2Id] = delta;
-	}
-	// Secondary forecast already uses V2 IDs - copy directly
-	for (const [v2Id, delta] of Object.entries(secondaryForecast)) {
-		valuesV2[v2Id] = delta;
-	}
-	return valuesV2;
+	// Both primaryForecast and secondaryForecast already use V2 IDs
+	return { ...primaryForecast, ...secondaryForecast };
 }
 
 const forecastByPlayerId = {

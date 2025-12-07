@@ -14,7 +14,8 @@ import { createTestSessionScaffold } from './testSessionScaffold';
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
 	mockGame: GameEngineContextValue;
-	resourceForecast: Record<string, number>;
+	/** V2 IDs for primary resources with their forecast deltas */
+	primaryForecast: Record<string, number>;
 	/** V2 IDs for non-primary resources that should be visible in tests */
 	displayableSecondaryResourceIds: string[];
 	secondaryForecast: Record<string, number>;
@@ -108,18 +109,11 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		resourceTouchedV2[resourceId] = true;
 		nonPrimaryIndex += 1;
 	}
-	// Build legacy resource object from V2 values for backward compat
-	const resourceKeys = Object.keys(sessionRegistries.resources);
-	const resourceValues: Record<string, number> = {};
-	for (const key of resourceKeys) {
-		// Find matching V2 ID in primary resources
-		const v2Id = primaryResourceIds.find((id) => id.includes(key));
-		resourceValues[key] = v2Id ? (valuesV2[v2Id] ?? 0) : 0;
-	}
+	// Legacy resources object is empty - V2 is the source of truth
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
-		resources: resourceValues,
+		resources: {},
 		stats: {},
 		resourceTouchedV2,
 		population: {},
@@ -217,10 +211,11 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
 	};
-	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
-		(acc, key, index) => {
+	// Build primary forecast using V2 IDs directly
+	const primaryForecast = primaryResourceIds.reduce<Record<string, number>>(
+		(acc, resourceId, index) => {
 			const offset = index + 1;
-			acc[key] = index % 2 === 0 ? offset : -offset;
+			acc[resourceId] = index % 2 === 0 ? offset : -offset;
 			return acc;
 		},
 		{},
@@ -245,7 +240,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	return {
 		activePlayer,
 		mockGame,
-		resourceForecast,
+		primaryForecast,
 		displayableSecondaryResourceIds,
 		secondaryForecast,
 		registries: sessionRegistries,
