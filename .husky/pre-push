@@ -18,10 +18,9 @@ if ! git diff --quiet; then
     AUTO_FORMATTED=true
 fi
 
-# Run type checking first (posttypecheck cleans dist), then lint
-# Can't parallelize due to race condition with dist files
-npm run typecheck
-npm run lint
+# Run type checking and linting in parallel
+# (posttypecheck no longer cleans dist - that moved to prebuild)
+npx run-p typecheck lint
 
 # Safety check: verify formatting is clean after all other scripts ran
 # This catches edge cases where typecheck/lint scripts might touch files
