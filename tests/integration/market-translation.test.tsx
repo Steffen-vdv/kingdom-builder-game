@@ -41,16 +41,12 @@ afterEach(() => {
 	cleanup();
 });
 
-describe('Building translation with population bonus', () => {
+describe('Building translation with development modifier', () => {
 	it('renders modifier summary using registry metadata icons', () => {
 		const factory = createContentFactory();
-		const workAction = factory.action({
-			name: 'Work Detail',
-			icon: '🛠️',
-		});
-		const councilRole = factory.population({
-			name: 'Council',
-			icon: '👑',
+		const harvestDevelopment = factory.development({
+			name: 'Harvest Field',
+			icon: '🌾',
 		});
 		const building = factory.building({
 			name: 'Guild Hall',
@@ -60,16 +56,25 @@ describe('Building translation with population bonus', () => {
 					type: 'result_mod',
 					method: 'add',
 					params: {
-						amount: 1,
-						evaluation: { type: 'population', id: workAction.id },
+						id: 'modifier:guild-hall-bonus',
+						evaluation: { type: 'development', id: harvestDevelopment.id },
 					},
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resourceId: 'resource:synthetic:gold',
+								change: { type: 'amount', amount: 1 },
+							},
+						},
+					],
 				},
 			],
 		});
 		const { translationContext, registries, session } =
 			buildSyntheticTranslationContext(({ registries, session }) => {
-				registries.actions.add(workAction.id, workAction);
-				registries.populations.add(councilRole.id, councilRole);
+				registries.developments.add(harvestDevelopment.id, harvestDevelopment);
 				registries.buildings.add(building.id, building);
 				session.metadata = {
 					...session.metadata,
@@ -77,16 +82,20 @@ describe('Building translation with population bonus', () => {
 						...session.metadata.resources,
 						gold: { label: 'Refined Gold', icon: '🪙' },
 					},
-					populations: {
-						...session.metadata.populations,
-						[councilRole.id]: {
-							label: 'Guiding Council',
-							icon: councilRole.icon,
+					developments: {
+						...session.metadata.developments,
+						[harvestDevelopment.id]: {
+							label: harvestDevelopment.name,
+							icon: harvestDevelopment.icon,
 						},
 					},
 					resourcesV2: {
 						...session.metadata.resourcesV2,
 						gold: { label: 'Refined Gold', icon: '🪙' },
+						'resource:synthetic:gold': {
+							label: 'Synthetic Gold',
+							icon: '🪙',
+						},
 					},
 				};
 			});
@@ -94,7 +103,6 @@ describe('Building translation with population bonus', () => {
 			icon: '✨',
 			label: 'Outcome Adjustment',
 		};
-		const populationIcon = translationContext.assets.population?.icon ?? '👥';
 		render(
 			<RegistryMetadataProvider
 				registries={registries}
@@ -108,14 +116,16 @@ describe('Building translation with population bonus', () => {
 		);
 		const summaryText = screen.getByTestId('summary-output').textContent ?? '';
 		expect(summaryText).toContain(modifierInfo.icon ?? '');
-		expect(summaryText).toContain(populationIcon);
-		expect(summaryText).toContain(workAction.icon ?? workAction.name);
+		expect(summaryText).toContain(harvestDevelopment.icon);
 		expect(summaryText).toMatch(/\+1/);
 	});
 
 	it('falls back to default modifier icons when metadata omits them', () => {
 		const factory = createContentFactory();
-		const action = factory.action({ icon: '🚀', name: 'Expedition' });
+		const farmDevelopment = factory.development({
+			icon: '🚜',
+			name: 'Farm Plot',
+		});
 		const guild = factory.building({
 			name: 'Guild Outpost',
 			onBuild: [
@@ -123,15 +133,25 @@ describe('Building translation with population bonus', () => {
 					type: 'result_mod',
 					method: 'add',
 					params: {
-						amount: 2,
-						evaluation: { type: 'population', id: action.id },
+						id: 'modifier:guild-outpost-bonus',
+						evaluation: { type: 'development', id: farmDevelopment.id },
 					},
+					effects: [
+						{
+							type: 'resource',
+							method: 'add',
+							params: {
+								resourceId: 'resource:synthetic:gold',
+								change: { type: 'amount', amount: 2 },
+							},
+						},
+					],
 				},
 			],
 		});
 		const { translationContext, registries, session } =
 			buildSyntheticTranslationContext(({ registries, session }) => {
-				registries.actions.add(action.id, action);
+				registries.developments.add(farmDevelopment.id, farmDevelopment);
 				registries.buildings.add(guild.id, guild);
 				session.metadata = {
 					...session.metadata,
@@ -142,6 +162,7 @@ describe('Building translation with population bonus', () => {
 					resourcesV2: {
 						...session.metadata.resourcesV2,
 						gold: { label: 'City Gold' },
+						'resource:synthetic:gold': { label: 'Synthetic Gold' },
 					},
 				};
 			});
