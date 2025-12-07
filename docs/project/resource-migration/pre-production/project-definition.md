@@ -33,7 +33,7 @@ The Resource Migration initiative replaces three separate game systems (resource
 
 - **Management Team:** Reduced risk of divergent implementations, clear launch checklist, and confidence that regressions are tracked deliberately during migration.
 - **Product Owners:** Simplified roadmap planning—new mechanics plug into ResourceV2 without bespoke engineering. Easier to reason about global action costs and player-facing behaviour.
-- **Project Managers:** Strong governance via living documentation, structured work logs, and explicit handovers; easier to schedule and audit progress.
+- **Project Managers:** Strong governance via structured documentation and explicit handovers; easier to schedule and audit progress.
 - **Design & Narrative Teams:** Freed from technical quirks (e.g., citizens vs. roles) and empowered to focus on creative content with predictable tools.
 
 ## Risks & Mitigation

@@ -1,4 +1,4 @@
-import { statDisplaysAsPercent } from '../../utils/stats';
+import { statDisplaysAsPercent } from '../../utils/resourceSources';
 import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
 import type { ActionDiffChange } from './diff';
 import {

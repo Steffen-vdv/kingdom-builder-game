@@ -8,11 +8,17 @@ import {
 	formatSourceTitle,
 	formatStatValue,
 	getSourceDescriptor,
-} from './stats/descriptors';
-import type { SourceDescriptor } from './stats/descriptors';
-import { buildDetailEntries, pushSummaryEntry } from './stats/summary';
+} from './resourceSources/descriptors';
+import type { SourceDescriptor } from './resourceSources/descriptors';
+import {
+	buildDetailEntries,
+	pushSummaryEntry,
+} from './resourceSources/summary';
 
-export { statDisplaysAsPercent, formatStatValue } from './stats/descriptors';
+export {
+	statDisplaysAsPercent,
+	formatStatValue,
+} from './resourceSources/descriptors';
 
 export function getStatBreakdownSummary(
 	statKey: string,

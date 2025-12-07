@@ -1,5 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { formatDetailText } from '../../utils/stats/format';
+import { formatDetailText } from '../../utils/resourceSources/format';
 import { summarizeEffects, describeEffects } from '../effects';
 import type { Summary, SummaryEntry } from './types';
 import type { TranslationContext } from '../context';
