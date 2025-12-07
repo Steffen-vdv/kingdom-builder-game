@@ -10,9 +10,7 @@ import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContex
 const {
 	activePlayer: activePlayerSnapshot,
 	mockGame,
-	resourceForecast,
-	displayableSecondaryResourceKeys,
-	secondaryForecast,
+	forecast,
 	registries,
 	metadata,
 	metadataSelectors,
@@ -25,27 +23,9 @@ const renderPanel = () =>
 		</RegistryMetadataProvider>,
 	);
 
-// Convert legacy forecasts to format for the useNextTurnForecast mock
-// The createForecastMap function expects values format
-function buildForecastValues(): Record<string, number> {
-	const values: Record<string, number> = {};
-	// Convert resource forecasts to IDs
-	for (const [legacyKey, delta] of Object.entries(resourceForecast)) {
-		const v2Id = `resource:core:${legacyKey}`;
-		values[v2Id] = delta;
-	}
-	// Convert secondary resource forecasts to IDs (camelCase to kebab-case)
-	for (const [legacyKey, delta] of Object.entries(secondaryForecast)) {
-		const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-		const v2Id = `resource:core:${kebab}`;
-		values[v2Id] = delta;
-	}
-	return values;
-}
-
 const forecastByPlayerId = {
 	[activePlayerSnapshot.id]: {
-		values: buildForecastValues(),
+		values: forecast,
 	},
 };
 
@@ -62,7 +42,7 @@ describe('<PlayerPanel />', () => {
 	it('renders player name and resource icons', () => {
 		renderPanel();
 		expect(screen.getByText(activePlayerSnapshot.name)).toBeInTheDocument();
-		// The component uses resources from resourceCatalog and metadata
+		// The component uses V2 resources from resourceCatalog and V2 metadata
 		// Resource buttons have aria-label format "Label: value"
 		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 		const v2Resources = resourceCatalog?.resources?.ordered ?? [];
@@ -88,34 +68,38 @@ describe('<PlayerPanel />', () => {
 	});
 
 	it('renders next-turn forecasts with accessible labels', () => {
-		expect(displayableSecondaryResourceKeys.length).toBeGreaterThan(0);
+		// Verify fixture has resources with forecasts
+		expect(Object.keys(forecast).length).toBeGreaterThan(0);
 		renderPanel();
-		// Component uses resources from resourceCatalog
+		// Component uses V2 resources from resourceCatalog
 		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 		const v2Resources = resourceCatalog?.resources?.ordered ?? [];
 		// Resources with groupId = null should be displayed in ResourceBar
 		const ungroupedResources = v2Resources.filter(
 			(def) => def.groupId === null || def.groupId === undefined,
 		);
-		// Find first resource with a positive forecast - use ID directly
+		// Find first resource with a positive forecast - use V2 ID directly
 		const resourceWithPositiveForecast = ungroupedResources.find((def) => {
-			const delta = forecastByPlayerId[activePlayerSnapshot.id].values[def.id];
+			const delta =
+				forecastByPlayerId[activePlayerSnapshot.id].values[def.id];
 			return (delta ?? 0) > 0;
 		});
 		if (resourceWithPositiveForecast) {
-			const firstResource = resourceWithPositiveForecast;
+			const firstV2Resource = resourceWithPositiveForecast;
 			const firstResourceMetadata =
-				mockGame.translationContext.resourceMetadata.get(firstResource.id);
+				mockGame.translationContext.resourceMetadata.get(firstV2Resource.id);
 			const firstResourceValue =
-				activePlayerSnapshot.values?.[firstResource.id] ?? 0;
-			// Get forecast using ID directly
+				activePlayerSnapshot.values?.[firstV2Resource.id] ?? 0;
+			// Get forecast using V2 ID directly
 			const resourceDelta =
-				forecastByPlayerId[activePlayerSnapshot.id].values[firstResource.id];
+				forecastByPlayerId[activePlayerSnapshot.id].values[
+					firstV2Resource.id
+				];
 			// Component uses parens around the delta
 			const signedDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
 			const formattedResourceDelta = `(${signedDelta})`;
 			const resourceLabel =
-				`${firstResourceMetadata?.label ?? firstResource.id}: ` +
+				`${firstResourceMetadata?.label ?? firstV2Resource.id}: ` +
 				`${firstResourceValue} ${formattedResourceDelta}`;
 			const resourceButtons = screen.getAllByRole('button', {
 				name: resourceLabel,
@@ -130,24 +114,26 @@ describe('<PlayerPanel />', () => {
 			expect(resourceForecastBadge).toHaveClass('text-emerald-300');
 		}
 		// Find a resource with negative forecast
-		const negativeResource = ungroupedResources.find((def) => {
-			const delta = forecastByPlayerId[activePlayerSnapshot.id].values[def.id];
+		const negativeV2Resource = ungroupedResources.find((def) => {
+			const delta =
+				forecastByPlayerId[activePlayerSnapshot.id].values[def.id];
 			return (delta ?? 0) < 0;
 		});
-		if (negativeResource) {
+		if (negativeV2Resource) {
 			const negMetadata = mockGame.translationContext.resourceMetadata.get(
-				negativeResource.id,
+				negativeV2Resource.id,
 			);
-			const negValue = activePlayerSnapshot.values?.[negativeResource.id] ?? 0;
+			const negValue =
+				activePlayerSnapshot.values?.[negativeV2Resource.id] ?? 0;
 			const negDelta =
 				forecastByPlayerId[activePlayerSnapshot.id].values[
-					negativeResource.id
+					negativeV2Resource.id
 				]!;
 			// Component uses parens around the delta
 			const signedNegDelta = `${negDelta > 0 ? '+' : ''}${negDelta}`;
 			const formattedNegDelta = `(${signedNegDelta})`;
 			const negLabel =
-				`${negMetadata?.label ?? negativeResource.id}: ` +
+				`${negMetadata?.label ?? negativeV2Resource.id}: ` +
 				`${negValue} ${formattedNegDelta}`;
 			const negButtons = screen.getAllByRole('button', { name: negLabel });
 			expect(negButtons.length).toBeGreaterThan(0);
@@ -178,5 +164,67 @@ describe('<PlayerPanel />', () => {
 			descriptor.id,
 		]);
 		expect(record[descriptor.id]).toBe(first);
+	});
+
+	describe('forecast fixture correctness', () => {
+		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
+		const allResources = resourceCatalog?.resources?.ordered ?? [];
+
+		it('has forecast entries for every resource in the catalog', () => {
+			expect(allResources.length).toBeGreaterThan(0);
+			for (const resource of allResources) {
+				expect(forecast).toHaveProperty(resource.id);
+			}
+		});
+
+		it('has no extra forecast entries beyond catalog resources', () => {
+			const catalogIds = new Set(allResources.map((r) => r.id));
+			for (const forecastId of Object.keys(forecast)) {
+				expect(catalogIds.has(forecastId)).toBe(true);
+			}
+		});
+
+		it('has forecast count matching catalog resource count', () => {
+			expect(Object.keys(forecast).length).toBe(allResources.length);
+		});
+
+		it('has values entries for every resource', () => {
+			for (const resource of allResources) {
+				expect(activePlayerSnapshot.values).toHaveProperty(resource.id);
+			}
+		});
+
+		it('has both positive and negative forecast values', () => {
+			const values = Object.values(forecast);
+			const hasPositive = values.some((val) => val > 0);
+			const hasNegative = values.some((val) => val < 0);
+			expect(hasPositive).toBe(true);
+			expect(hasNegative).toBe(true);
+		});
+
+		it('marks non-primary resources as touched', () => {
+			// Find primary category resources
+			const primaryCategory = resourceCatalog?.categories?.ordered?.find(
+				(cat) => 'isPrimary' in cat && cat.isPrimary === true,
+			);
+			const primaryContents = (primaryCategory as { contents?: unknown[] })
+				?.contents;
+			const primaryResourceIds = new Set<string>();
+			if (primaryContents) {
+				for (const entry of primaryContents as { type: string; id: string }[]) {
+					if (entry.type === 'resource') {
+						primaryResourceIds.add(entry.id);
+					}
+				}
+			}
+			// Non-primary resources should be marked as touched
+			for (const resource of allResources) {
+				if (!primaryResourceIds.has(resource.id)) {
+					expect(activePlayerSnapshot.resourceTouched?.[resource.id]).toBe(
+						true,
+					);
+				}
+			}
+		});
 	});
 });

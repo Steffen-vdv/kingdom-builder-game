@@ -272,15 +272,15 @@ describe('useAiRunner', () => {
 			},
 		});
 		const firstResources = {
-			...activePlayer.resources,
+			...activePlayer.values,
 			[actionCostResource]:
-				(activePlayer.resources[actionCostResource] ?? 0) - 1,
+				(activePlayer.values[actionCostResource] ?? 0) - 1,
 		};
 		const secondResources = {
 			...firstResources,
 			[actionCostResource]: (firstResources[actionCostResource] ?? 0) - 1,
 		};
-		const firstTrace = createTrace(activePlayer.resources, firstResources);
+		const firstTrace = createTrace(activePlayer.values, firstResources);
 		const secondTrace = createTrace(firstResources, secondResources);
 		const firstSnapshot = {
 			...sessionState,
@@ -292,7 +292,7 @@ describe('useAiRunner', () => {
 					}
 					return {
 						...player,
-						resources: firstResources,
+						values: firstResources,
 					};
 				}),
 			},
@@ -307,7 +307,7 @@ describe('useAiRunner', () => {
 					}
 					return {
 						...player,
-						resources: secondResources,
+						values: secondResources,
 					};
 				}),
 			},

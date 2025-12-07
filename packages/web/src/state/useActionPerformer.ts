@@ -199,7 +199,7 @@ export function useActionPerformer({
 							!mountedRef.current ||
 							snapshotAfter.game.conclusion ||
 							!snapshotAfter.game.devMode ||
-							(playerAfter.resources[actionCostResource] ?? 0) > 0
+							(playerAfter.values[actionCostResource] ?? 0) > 0
 						) {
 							return;
 						}

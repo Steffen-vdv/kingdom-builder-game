@@ -21,7 +21,7 @@ import {
 	cloneResourceSources,
 } from './sessionCloneHelpers';
 
-const EMPTY_RESOURCE_CATALOG: SessionResourceCatalog = Object.freeze({
+const EMPTY_RESOURCE_CATALOG_V2: SessionResourceCatalog = Object.freeze({
 	resources: { byId: {}, ordered: [] },
 	groups: { byId: {}, ordered: [] },
 	categories: { byId: {}, ordered: [] },
@@ -58,10 +58,7 @@ interface SnapshotPlayerOptions {
 	id: SessionPlayerId;
 	name?: string;
 	aiControlled?: boolean;
-	resources?: Record<string, number>;
-	stats?: Record<string, number>;
 	resourceTouched?: Record<string, boolean>;
-	population?: Record<string, number>;
 	values?: Record<string, number>;
 	resourceBounds?: Record<string, Partial<SessionResourceBounds>>;
 	lands?: SessionPlayerStateSnapshot['lands'];
@@ -77,10 +74,7 @@ export function createSnapshotPlayer({
 	id,
 	name = `Player ${id}`,
 	aiControlled,
-	resources = {},
-	stats = {},
 	resourceTouched = {},
-	population = {},
 	values = {},
 	resourceBounds = {},
 	lands = [],
@@ -91,13 +85,19 @@ export function createSnapshotPlayer({
 	skipSteps = {},
 	passives = [],
 }: SnapshotPlayerOptions): SessionPlayerStateSnapshot {
+	const normalizedBounds: Record<string, SessionResourceBounds> = {};
+	for (const [resourceId, bounds] of Object.entries(resourceBounds)) {
+		normalizedBounds[resourceId] = {
+			lowerBound: bounds.lowerBound !== undefined ? bounds.lowerBound : null,
+			upperBound: bounds.upperBound !== undefined ? bounds.upperBound : null,
+		};
+	}
 	const snapshot: SessionPlayerStateSnapshot = {
 		id,
 		name,
-		resources: { ...resources },
-		stats: { ...stats },
 		resourceTouched: { ...resourceTouched },
-		population: { ...population },
+		values: { ...values },
+		resourceBounds: normalizedBounds,
 		lands: cloneLands(lands),
 		buildings: [...buildings],
 		actions: [...actions],
@@ -109,15 +109,6 @@ export function createSnapshotPlayer({
 	if (aiControlled !== undefined) {
 		snapshot.aiControlled = aiControlled;
 	}
-	snapshot.values = { ...values };
-	const normalizedBounds: Record<string, SessionResourceBounds> = {};
-	for (const [resourceId, bounds] of Object.entries(resourceBounds)) {
-		normalizedBounds[resourceId] = {
-			lowerBound: bounds.lowerBound !== undefined ? bounds.lowerBound : null,
-			upperBound: bounds.upperBound !== undefined ? bounds.upperBound : null,
-		};
-	}
-	snapshot.resourceBounds = normalizedBounds;
 	return snapshot;
 }
 
@@ -272,7 +263,7 @@ export function createSessionSnapshot({
 					tokens: {},
 				} satisfies SessionOverviewMetadata,
 			});
-	const resourceCatalog = clone(resourceCatalog ?? EMPTY_RESOURCE_CATALOG);
+	const resourceCatalog = clone(resourceCatalog ?? EMPTY_RESOURCE_CATALOG_V2);
 	const snapshot: SessionSnapshot = {
 		game: {
 			turn,

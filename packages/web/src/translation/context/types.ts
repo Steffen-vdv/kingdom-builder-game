@@ -175,10 +175,10 @@ export interface TranslationPlayer {
 	id: SessionPlayerId;
 	name?: string;
 	/**
-	 * Unified resource values map. All stats, populations, and resources
-	 * are accessed through this single property.
+	 * Unified Resource value map - the canonical source of truth for all
+	 * resource values including currencies, stats, and population counts.
 	 */
-	resources: Readonly<Record<string, number>>;
+	values: Readonly<Record<string, number>>;
 	resourceBounds: Readonly<Record<string, SessionResourceBounds>>;
 }
 

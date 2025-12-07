@@ -87,14 +87,10 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
 	resourceTouched: Record<string, boolean>;
-	population: Record<string, number>;
 	/**
-	 * Resource value map mirrored directly from the engine snapshot.
-	 * Transports now populate this for every player snapshot and clients can
-	 * treat it as the canonical resource payload.
+	 * Resource value map - the canonical source of truth for all resource
+	 * values including currencies, stats, and population counts.
 	 */
 	values: Record<string, number>;
 	/**
@@ -325,15 +321,13 @@ export interface SessionTriggerMetadata {
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
+	buildings?: Record<string, SessionMetadataDescriptor>;
+	developments?: Record<string, SessionMetadataDescriptor>;
 	/**
 	 * Resource metadata map containing icons, labels, and display hints for
 	 * each resource ID. Present when resources surface in snapshots.
 	 */
 	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
-	buildings?: Record<string, SessionMetadataDescriptor>;
-	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
 	/**
 	 * Optional Resource group metadata map. Mirrors
 	 * {@link resources} but scoped to group/parent descriptors.

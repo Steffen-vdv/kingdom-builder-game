@@ -73,10 +73,9 @@ export interface SessionRegistriesPayload {
 export type SessionMetadataSnapshot = Pick<
 	SessionSnapshotMetadata,
 	| 'resources'
-	| 'populations'
+	| 'resourceGroups'
 	| 'buildings'
 	| 'developments'
-	| 'stats'
 	| 'phases'
 	| 'triggers'
 	| 'assets'

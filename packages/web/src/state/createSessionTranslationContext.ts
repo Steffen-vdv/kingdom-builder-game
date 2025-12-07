@@ -16,9 +16,7 @@ interface DiffPlayer {
 	name: PlayerSnapshot['name'];
 	lands: PlayerSnapshot['lands'];
 	buildings: Set<string>;
-	resources: PlayerSnapshot['resources'];
-	stats: PlayerSnapshot['stats'];
-	population: PlayerSnapshot['population'];
+	values: PlayerSnapshot['values'];
 }
 
 interface CompareEvaluatorParams {
@@ -40,9 +38,7 @@ function clonePlayer(player: PlayerSnapshot): DiffPlayer {
 		name: player.name,
 		lands: cloneLands(player.lands),
 		buildings: new Set(player.buildings),
-		resources: { ...player.resources },
-		stats: { ...player.stats },
-		population: { ...player.population },
+		values: { ...player.values },
 	};
 }
 
@@ -58,23 +54,15 @@ function countDevelopments(player: DiffPlayer, id: unknown): number {
 	}, 0);
 }
 
-function countPopulation(player: DiffPlayer, role: unknown): number {
-	if (!player) {
+/**
+ * Reads a resource value by V2 ID. Works for all resources including
+ * currencies, stats, and population counts.
+ */
+function readResource(player: DiffPlayer, resourceId: unknown): number {
+	if (!player || typeof resourceId !== 'string' || resourceId.length === 0) {
 		return 0;
 	}
-	if (typeof role === 'string' && role.length > 0) {
-		return Number(player.population[role] ?? 0);
-	}
-	return Object.values(player.population).reduce((total, value) => {
-		return total + Number(value ?? 0);
-	}, 0);
-}
-
-function readStat(player: DiffPlayer, key: unknown): number {
-	if (!player || typeof key !== 'string' || key.length === 0) {
-		return 0;
-	}
-	return Number(player.stats[key] ?? 0);
+	return Number(player.values[resourceId] ?? 0);
 }
 
 function compareValues(
@@ -126,13 +114,19 @@ function evaluateDefinition(
 			const id = definition.params?.['id'];
 			return countDevelopments(player, id);
 		}
+		case 'resource': {
+			const resourceId = definition.params?.['resourceId'];
+			return readResource(player, resourceId);
+		}
 		case 'population': {
-			const role = definition.params?.['role'];
-			return countPopulation(player, role);
+			// Legacy evaluator - uses role param as V2 resource ID
+			const resourceId = definition.params?.['resourceId'];
+			return readResource(player, resourceId);
 		}
 		case 'stat': {
-			const key = definition.params?.['key'];
-			return readStat(player, key);
+			// Legacy evaluator - uses resourceId param
+			const resourceId = definition.params?.['resourceId'];
+			return readResource(player, resourceId);
 		}
 		case 'compare': {
 			const params = definition.params as CompareEvaluatorParams | undefined;

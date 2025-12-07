@@ -11,9 +11,9 @@ import {
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_REGISTRY,
-	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -28,7 +28,7 @@ import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
-import { resourceAmountParams } from '../helpers/resourceParams.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
@@ -44,8 +44,8 @@ const BASE: {
 	populations: POPULATIONS,
 	phases: PHASES,
 	resourceCatalog: {
-		resources: RESOURCE_REGISTRY,
-		groups: RESOURCE_GROUP_REGISTRY,
+		resources: RESOURCE_V2_REGISTRY,
+		groups: RESOURCE_GROUP_V2_REGISTRY,
 	},
 };
 
@@ -120,17 +120,17 @@ describe('EngineSession', () => {
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
-		const initialGold = activeBefore.resources[CResource.gold] ?? 0;
+		const initialGold = activeBefore.values[CResource.gold] ?? 0;
 		const traces = session.performAction(gainGold.id);
 		const after = session.getSnapshot();
 		const activeAfter = after.game.players[0]!;
-		expect(activeAfter.resources[CResource.gold]).toBe(initialGold + 3);
+		expect(activeAfter.values[CResource.gold]).toBe(initialGold + 3);
 		if (traces.length > 0) {
-			traces[0]!.after.resources[CResource.gold] = 999;
+			traces[0]!.after.values[CResource.gold] = 999;
 		}
 		const refreshed = session.getSnapshot();
 		const activeRefreshed = refreshed.game.players[0]!;
-		expect(activeRefreshed.resources[CResource.gold]).toBe(initialGold + 3);
+		expect(activeRefreshed.values[CResource.gold]).toBe(initialGold + 3);
 	});
 
 	it('simulates actions before executing to avoid partial failures', () => {
@@ -155,7 +155,7 @@ describe('EngineSession', () => {
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
-		const initialAp = activeBefore.resources[CResource.ap] ?? 0;
+		const initialAp = activeBefore.values[CResource.ap] ?? 0;
 
 		expect(() => session.performAction(failingAction.id)).toThrow(
 			/No tillable land available/,
@@ -163,27 +163,26 @@ describe('EngineSession', () => {
 
 		const after = session.getSnapshot();
 		const activeAfter = after.game.players[0]!;
-		expect(activeAfter.resources[CResource.ap]).toBe(initialAp);
+		expect(activeAfter.values[CResource.ap]).toBe(initialAp);
 	});
 
 	it('returns immutable game snapshots', () => {
 		const session = createTestSession();
 		const snapshot = session.getSnapshot();
-		snapshot.game.players[0]!.resources[CResource.gold] = 999;
+		snapshot.game.players[0]!.values[CResource.gold] = 999;
 		const next = session.getSnapshot();
-		expect(next.game.players[0]!.resources[CResource.gold]).not.toBe(999);
+		expect(next.game.players[0]!.values[CResource.gold]).not.toBe(999);
 	});
 
-	it('includes Resource data alongside legacy snapshots', () => {
+	it('includes Resource data in player snapshots', () => {
 		const session = createTestSession();
 		const snapshot = session.getSnapshot();
 		const catalog = snapshot.game.resourceCatalog;
 		expect(catalog).toBeDefined();
 		const player = snapshot.game.players[0]!;
 		expect(player.values).toBeDefined();
-		const goldLegacy = player.resources[CResource.gold];
-		expect(goldLegacy).toBeDefined();
-		expect(player.values['resource:core:gold']).toBe(goldLegacy);
+		const goldV2 = player.values[CResource.gold];
+		expect(goldV2).toBeDefined();
 		expect(catalog.resources.byId['resource:core:gold']?.label).toBeDefined();
 	});
 
@@ -191,15 +190,15 @@ describe('EngineSession', () => {
 		const session = createTestSession();
 		const result = session.advancePhase();
 		const playerId = result.player.id;
-		const keys = Object.keys(result.player.resources);
+		const keys = Object.keys(result.player.values);
 		const firstKey = keys[0];
 		if (firstKey) {
-			result.player.resources[firstKey] = 777;
+			result.player.values[firstKey] = 777;
 		}
 		const snapshot = session.getSnapshot();
 		const player = snapshot.game.players.find((entry) => entry.id === playerId);
 		if (firstKey) {
-			expect(player?.resources[firstKey]).not.toBe(777);
+			expect(player?.values[firstKey]).not.toBe(777);
 		}
 	});
 
@@ -492,9 +491,9 @@ describe('EngineSession', () => {
 		if (!firstStep) {
 			throw new Error('Expected at least one simulation step.');
 		}
-		firstStep.player.resources[CResource.gold] = 999;
+		firstStep.player.values[CResource.gold] = 999;
 		const refreshed = session.simulateUpcomingPhases(activeId);
-		expect(refreshed.steps[0]?.player.resources[CResource.gold]).not.toBe(999);
+		expect(refreshed.steps[0]?.player.values[CResource.gold]).not.toBe(999);
 	});
 
 	it('supports primitive effect log entries without mutation', () => {

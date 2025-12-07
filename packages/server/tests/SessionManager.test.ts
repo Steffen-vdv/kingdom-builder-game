@@ -30,7 +30,7 @@ describe('SessionManager', () => {
 		expectSnapshotMetadata(mergedMetadata);
 		expectStaticMetadata(staticMetadata);
 		const [activePlayer] = snapshot.game.players;
-		expect(activePlayer?.resources[costResourceId]).toBeDefined();
+		expect(activePlayer?.values[costResourceId]).toBeDefined();
 		expect(snapshot.rules.tieredResourceKey).toBe(gainResourceId);
 		expect(snapshot.game.devMode).toBe(true);
 	});

@@ -38,10 +38,9 @@ type RegistryDefinition<T> = SerializedRegistry<T>;
 type StaticSessionMetadata = Pick<
 	SessionSnapshotMetadata,
 	| 'resources'
-	| 'populations'
+	| 'resourceGroups'
 	| 'buildings'
 	| 'developments'
-	| 'stats'
 	| 'phases'
 	| 'triggers'
 	| 'assets'
@@ -308,10 +307,8 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),
-		populations: buildPopulationMetadata(),
 		buildings: buildBuildingMetadata(),
 		developments: buildDevelopmentMetadata(),
-		stats: buildStatMetadata(),
 		phases: buildPhaseMetadata(),
 		triggers: buildTriggerMetadata(),
 		assets: buildAssetMetadata(),

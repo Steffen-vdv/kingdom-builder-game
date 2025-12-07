@@ -14,9 +14,9 @@ import {
 } from '@kingdom-builder/contents';
 import { DevelopmentId } from '@kingdom-builder/contents/developments';
 import {
-	RESOURCE_REGISTRY,
-	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 
 describe('dev mode start configuration', () => {
 	it('applies content-driven overrides when dev mode is enabled', () => {
@@ -28,8 +28,8 @@ describe('dev mode start configuration', () => {
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog: {
-				resources: RESOURCE_REGISTRY,
-				groups: RESOURCE_GROUP_REGISTRY,
+				resources: RESOURCE_V2_REGISTRY,
+				groups: RESOURCE_GROUP_V2_REGISTRY,
 			},
 			devMode: true,
 		});
@@ -42,20 +42,22 @@ describe('dev mode start configuration', () => {
 		const happinessId = getResourceId(Resource.happiness);
 		const apId = getResourceId(Resource.ap);
 		const castleId = getResourceId(Resource.castleHP);
+		const councilId = getResourceId(PopulationRole.Council);
+		const legionId = getResourceId(PopulationRole.Legion);
+		const fortifierId = getResourceId(PopulationRole.Fortifier);
 		expect(snapshot.game.devMode).toBe(true);
-		expect(player.resources[Resource.gold]).toBe(100);
-		expect(player.resources[Resource.happiness]).toBe(10);
-		expect(player.population[PopulationRole.Council]).toBe(2);
-		expect(player.population[PopulationRole.Legion]).toBe(1);
-		expect(player.population[PopulationRole.Fortifier]).toBe(1);
-		expect(opponent.resources[Resource.castleHP]).toBe(1);
 		expect(player.values[goldId]).toBe(100);
 		expect(player.values[happinessId]).toBe(10);
+		expect(player.values[councilId]).toBe(2);
+		expect(player.values[legionId]).toBe(1);
+		expect(player.values[fortifierId]).toBe(1);
+		expect(opponent.values[castleId]).toBe(1);
 		// AP starts at 0; it is granted during the Growth phase by Council members
 		expect(player.values[apId]).toBe(0);
 		expect(player.resourceBounds[goldId]?.lowerBound).toBe(0);
-		expect(opponent.values[castleId]).toBe(1);
-		expect(snapshot.game.resourceCatalog.resources.byId[goldId]).toBeDefined();
+		expect(
+			snapshot.game.resourceCatalog.resources.byId[goldId],
+		).toBeDefined();
 	});
 
 	it('applies onBuild effects for start config developments', () => {
@@ -67,8 +69,8 @@ describe('dev mode start configuration', () => {
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog: {
-				resources: RESOURCE_REGISTRY,
-				groups: RESOURCE_GROUP_REGISTRY,
+				resources: RESOURCE_V2_REGISTRY,
+				groups: RESOURCE_GROUP_V2_REGISTRY,
 			},
 			devMode: true,
 		});

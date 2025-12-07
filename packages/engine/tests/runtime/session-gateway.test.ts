@@ -7,11 +7,11 @@ import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
 } from '@kingdom-builder/testing';
-import { resourceAmountParams } from '../helpers/resourceParams.ts';
+import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
 import {
-	RESOURCE_REGISTRY,
-	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+	RESOURCE_V2_REGISTRY,
+	RESOURCE_GROUP_V2_REGISTRY,
+} from '@kingdom-builder/contents/registries/resourceV2';
 import {
 	Resource as CResource,
 	PHASES as REAL_PHASES,
@@ -43,8 +43,8 @@ if (!REQUIREMENTS.has(FAILURE_REQUIREMENT_ID)) {
 // Use real phases and rules from contents for proper initial setup integration
 
 const BASE_RESOURCE_CATALOG: RuntimeResourceContent = {
-	resources: RESOURCE_REGISTRY,
-	groups: RESOURCE_GROUP_REGISTRY,
+	resources: RESOURCE_V2_REGISTRY,
+	groups: RESOURCE_GROUP_V2_REGISTRY,
 };
 
 type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
@@ -116,28 +116,25 @@ describe('createLocalSessionGateway', () => {
 		expect(created.registries.resources).toEqual({});
 		expect(created.registries.resourceGroups).toEqual({});
 		const firstPlayer = created.snapshot.game.players[0];
-		expect(firstPlayer?.resources).toBeDefined();
 		expect(firstPlayer?.values).toBeDefined();
 		const category = toSessionActionCategoryConfig(
 			createContentFactory().category(),
 		);
 		created.registries.actionCategories![category.id] = category;
 		created.snapshot.game.players[0]!.name = 'Mutated';
-		created.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 99;
+		created.snapshot.game.players[0]!.values[RESOURCE_GOLD] = 99;
 		const fetched = await gateway.fetchSnapshot({
 			sessionId: created.sessionId,
 		});
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
 		// Initial gold from devMode setup (100)
-		expect(fetched.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
-			100,
-		);
+		expect(fetched.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(100);
 		expect(fetched.registries.actionCategories).toEqual({});
 	});
 
 	it('clones registries including Resource payloads', async () => {
-		const resourceId = RESOURCE_REGISTRY.ordered[0]!.id;
-		const groupId = RESOURCE_GROUP_REGISTRY.ordered[0]!.id;
+		const resourceId = RESOURCE_V2_REGISTRY.ordered[0]!.id;
+		const groupId = RESOURCE_GROUP_V2_REGISTRY.ordered[0]!.id;
 		const { gateway } = createGateway({
 			gatewayOptions: {
 				registries: {
@@ -148,10 +145,10 @@ describe('createLocalSessionGateway', () => {
 					resources: {},
 					actionCategories: {},
 					resources: {
-						[resourceId]: RESOURCE_REGISTRY.byId[resourceId]!,
+						[resourceId]: RESOURCE_V2_REGISTRY.byId[resourceId]!,
 					},
 					resourceGroups: {
-						[groupId]: RESOURCE_GROUP_REGISTRY.byId[groupId]!,
+						[groupId]: RESOURCE_GROUP_V2_REGISTRY.byId[groupId]!,
 					},
 				},
 			},
@@ -191,14 +188,14 @@ describe('createLocalSessionGateway', () => {
 				`Expected action to succeed but got: ${response.error ?? 'unknown error'}`,
 			);
 		}
-		response.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 77;
+		response.snapshot.game.players[0]!.values[RESOURCE_GOLD] = 77;
 		const firstTrace = response.traces[0];
 		if (firstTrace) {
-			firstTrace.after.resources[RESOURCE_GOLD] = 88;
+			firstTrace.after.values[RESOURCE_GOLD] = 88;
 		}
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		// Initial gold (10) + gained gold (2) = 12
-		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
+		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(
 			12,
 		);
 	});
@@ -217,7 +214,7 @@ describe('createLocalSessionGateway', () => {
 		}
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		// Player starts with 10 gold; failing action doesn't change it
-		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
+		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(
 			10,
 		);
 	});
@@ -228,12 +225,12 @@ describe('createLocalSessionGateway', () => {
 		const advanced = await gateway.advancePhase({ sessionId });
 		// advance.phase is the phase that was just processed (Growth)
 		expect(advanced.advance.phase).toBe(PhaseId.Growth);
-		advanced.advance.player.resources[RESOURCE_GOLD] = 45;
-		advanced.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 64;
+		advanced.advance.player.values[RESOURCE_GOLD] = 45;
+		advanced.snapshot.game.players[0]!.values[RESOURCE_GOLD] = 64;
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		// Player starts with 10 gold; first advance only processes step 1
 		// of Growth (ResolveDynamicTriggers), not GainIncome where farm fires
-		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
+		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(
 			10,
 		);
 	});
@@ -335,13 +332,13 @@ describe('createLocalSessionGateway', () => {
 			playerId: aiPlayer.id,
 		});
 		expect(response.ranTurn).toBe(true);
-		response.snapshot.game.players[0]!.resources[RESOURCE_GOLD] = 999;
+		response.snapshot.game.players[0]!.values[RESOURCE_GOLD] = 999;
 		const refreshed = await gateway.fetchSnapshot({
 			sessionId: created.sessionId,
 		});
 		const baselineGold =
-			created.snapshot.game.players[0]?.resources[RESOURCE_GOLD];
-		expect(refreshed.snapshot.game.players[0]?.resources[RESOURCE_GOLD]).toBe(
+			created.snapshot.game.players[0]?.values[RESOURCE_GOLD];
+		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(
 			baselineGold,
 		);
 	});
