@@ -27,12 +27,9 @@ interface BaseResourceEffectParams extends Record<string, unknown> {
 	 */
 	readonly reconciliation?: ResourceReconciliationMode;
 	/**
-	 * When true, downstream hook emission (tier checks, win conditions,
-	 * etc.) should be skipped.
-	 *
-	 * Resource Migration MVP keeps the field for forward compatibility
-	 * but does not implement suppression yet. Follow-up tasks will honour
-	 * the flag when the new hook plumbing is ready.
+	 * When true, skips downstream hook emission (tier checks, win conditions,
+	 * population triggers). Use to prevent recursive effects during batch
+	 * operations.
 	 */
 	readonly suppressHooks?: boolean;
 }

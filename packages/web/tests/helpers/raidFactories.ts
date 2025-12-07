@@ -228,15 +228,6 @@ export function iconLabel(
 	return icon ? `${icon} ${resolved}` : resolved;
 }
 
-export function statToken(
-	stat: AttackRegistryDescriptor,
-	fallback: string,
-	value: string,
-): string {
-	const label = iconLabel(stat.icon, stat.label, fallback);
-	return `${label} ${value}`;
-}
-
 export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { key: string }> = {
 	power: { key: COMBAT_STAT_CONFIG.power.key },
 	absorption: { key: COMBAT_STAT_CONFIG.absorption.key },

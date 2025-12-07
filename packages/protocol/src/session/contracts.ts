@@ -63,9 +63,8 @@ export interface SessionRegistriesPayload {
 	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
 	/**
-	 * ResourceV2 registry of concrete resources. All transports populate
-	 * this alongside legacy registries and the field is now guaranteed to be
-	 * present for every session payload.
+	 * Registry of concrete resource definitions. Always present for every
+	 * session payload.
 	 */
 	resourcesV2: SerializedRegistry<ResourceV2Definition>;
 	/**
