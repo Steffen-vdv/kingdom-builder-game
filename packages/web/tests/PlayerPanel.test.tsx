@@ -11,8 +11,8 @@ const {
 	activePlayer: activePlayerSnapshot,
 	mockGame,
 	resourceForecast,
-	displayableStatKeys,
-	statForecast,
+	displayableSecondaryResourceKeys,
+	secondaryForecast,
 	registries,
 	metadata,
 	metadataSelectors,
@@ -34,8 +34,8 @@ function buildV2ForecastValues(): Record<string, number> {
 		const v2Id = `resource:core:${legacyKey}`;
 		valuesV2[v2Id] = delta;
 	}
-	// Convert stat forecasts to V2 IDs (camelCase to kebab-case)
-	for (const [legacyKey, delta] of Object.entries(statForecast)) {
+	// Convert secondary resource forecasts to V2 IDs (camelCase to kebab-case)
+	for (const [legacyKey, delta] of Object.entries(secondaryForecast)) {
 		const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 		const v2Id = `resource:core:${kebab}`;
 		valuesV2[v2Id] = delta;
@@ -88,7 +88,7 @@ describe('<PlayerPanel />', () => {
 	});
 
 	it('renders next-turn forecasts with accessible labels', () => {
-		expect(displayableStatKeys.length).toBeGreaterThan(0);
+		expect(displayableSecondaryResourceKeys.length).toBeGreaterThan(0);
 		renderPanel();
 		// Component uses V2 resources from resourceCatalogV2
 		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
@@ -160,36 +160,9 @@ describe('<PlayerPanel />', () => {
 			const negBadge = within(negButton).getByText(formattedNegDelta);
 			expect(negBadge).toHaveClass('text-rose-300');
 		}
-		// Find a stat V2 resource with positive forecast
-		const statV2Resources = v2Resources.filter((def) =>
-			def.id.includes(':stat:'),
-		);
-		const firstStatV2 = statV2Resources.find((def) => {
-			const delta =
-				forecastByPlayerId[activePlayerSnapshot.id].valuesV2[def.id];
-			return (delta ?? 0) > 0;
-		});
-		if (firstStatV2) {
-			const statMetadata = mockGame.translationContext.resourceMetadataV2.get(
-				firstStatV2.id,
-			);
-			const statLabel = statMetadata?.label ?? firstStatV2.id;
-			const statValue = activePlayerSnapshot.valuesV2?.[firstStatV2.id] ?? 0;
-			const statDelta =
-				forecastByPlayerId[activePlayerSnapshot.id].valuesV2[firstStatV2.id]!;
-			// Component uses parens around the delta
-			const signedStatDelta = `${statDelta > 0 ? '+' : ''}${statDelta}`;
-			const formattedStatDelta = `(${signedStatDelta})`;
-			const statButtons = screen.getAllByRole('button', {
-				name: `${statLabel}: ${statValue} ${formattedStatDelta}`,
-			});
-			expect(statButtons.length).toBeGreaterThan(0);
-			const [statButton] = statButtons;
-			const statForecastBadge =
-				within(statButton).getByText(formattedStatDelta);
-			expect(statForecastBadge).toBeInTheDocument();
-			expect(statForecastBadge).toHaveClass('text-emerald-300');
-		}
+		// Note: Grouped resources (groupId !== null) are rendered differently
+		// inside ResourceGroupDisplay and don't have forecast badges in aria-label.
+		// The above tests cover ungrouped resources with positive/negative forecasts.
 	});
 
 	it('memoizes registry metadata selectors', () => {

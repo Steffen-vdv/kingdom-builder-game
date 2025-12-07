@@ -12,13 +12,13 @@ import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
 import { createTestSessionScaffold } from './testSessionScaffold';
 
-// Helper to build V2 ID for core resources
+// Helper to build V2 ID for core resources (legacy key to V2 ID)
 function getCoreResourceV2Id(legacyKey: string): string {
 	return `resource:core:${legacyKey}`;
 }
 
-// Helper to build V2 ID for stats (camelCase to kebab-case)
-function getStatV2Id(legacyKey: string): string {
+// Helper to build V2 ID for secondary resources (camelCase to kebab-case)
+function getSecondaryResourceV2Id(legacyKey: string): string {
 	const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 	return `resource:core:${kebab}`;
 }
@@ -27,8 +27,9 @@ export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
 	mockGame: GameEngineContextValue;
 	resourceForecast: Record<string, number>;
-	displayableStatKeys: string[];
-	statForecast: Record<string, number>;
+	/** Legacy keys for secondary resources that should be visible in tests */
+	displayableSecondaryResourceKeys: string[];
+	secondaryForecast: Record<string, number>;
 	registries: SessionRegistries;
 	metadata: SessionSnapshot['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
@@ -57,38 +58,41 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		},
 		{},
 	);
-	const stats: Record<string, number> = {};
+	// Secondary resources (formerly stats) - now unified under ResourceV2
+	const secondaryValues: Record<string, number> = {};
 	const resourceTouchedV2: Record<string, boolean> = {};
-	let statIndex = 0;
-	const statEntries = Object.entries(translationAssets.stats);
+	let resourceIndex = 0;
+	// Legacy translation assets still use "stats" key - reading from it here
+	const secondaryEntries = Object.entries(translationAssets.stats);
 	const maxPopulationKey =
-		statEntries.find(([, entry]) =>
+		secondaryEntries.find(([, entry]) =>
 			entry.label?.toLowerCase().includes('max population'),
 		)?.[0] ?? 'maxPopulation';
-	for (const [statKey] of statEntries) {
-		if (statKey === maxPopulationKey) {
+	for (const [legacyKey] of secondaryEntries) {
+		if (legacyKey === maxPopulationKey) {
 			continue;
 		}
-		const value = statIndex % 2 === 0 ? statIndex + 1 : 0;
-		stats[statKey] = value;
-		if (value === 0) {
-			resourceTouchedV2[statKey] = true;
-		}
-		statIndex += 1;
+		const value = resourceIndex % 2 === 0 ? resourceIndex + 1 : 0;
+		secondaryValues[legacyKey] = value;
+		// Mark all secondary resources as touched using V2 IDs for visibility
+		// Resources with non-zero value or that have ever been non-zero appear
+		const v2Id = getSecondaryResourceV2Id(legacyKey);
+		resourceTouchedV2[v2Id] = true;
+		resourceIndex += 1;
 	}
-	// Build valuesV2 from legacy resources and stats using V2 IDs
+	// Build valuesV2 from legacy resources and secondary resources using V2 IDs
 	const valuesV2: Record<string, number> = {};
 	for (const [key, value] of Object.entries(resourceValues)) {
 		valuesV2[getCoreResourceV2Id(key)] = value;
 	}
-	for (const [key, value] of Object.entries(stats)) {
-		valuesV2[getStatV2Id(key)] = value;
+	for (const [key, value] of Object.entries(secondaryValues)) {
+		valuesV2[getSecondaryResourceV2Id(key)] = value;
 	}
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
 		resources: resourceValues,
-		stats,
+		stats: secondaryValues,
 		resourceTouchedV2,
 		population: {},
 		valuesV2,
@@ -193,31 +197,33 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		},
 		{},
 	);
-	const displayableStatKeys = Object.entries(activePlayer.stats)
-		.filter(([statKey, statValue]) => {
-			if (statKey === maxPopulationKey) {
+	// Determine which secondary resources should be visible based on touched
+	const displayableSecondaryResourceKeys = Object.entries(activePlayer.stats)
+		.filter(([legacyKey, value]) => {
+			if (legacyKey === maxPopulationKey) {
 				return false;
 			}
-			if (statValue !== 0) {
+			if (value !== 0) {
 				return true;
 			}
-			return Boolean(activePlayer.resourceTouchedV2?.[statKey]);
+			// Check using V2 ID since that's what resourceTouchedV2 stores
+			const v2Id = getSecondaryResourceV2Id(legacyKey);
+			return Boolean(activePlayer.resourceTouchedV2?.[v2Id]);
 		})
-		.map(([statKey]) => statKey);
-	const statForecast = displayableStatKeys.reduce<Record<string, number>>(
-		(acc, key, index) => {
-			const offset = index + 2;
-			acc[key] = index % 2 === 0 ? offset : -offset;
-			return acc;
-		},
-		{},
-	);
+		.map(([legacyKey]) => legacyKey);
+	const secondaryForecast = displayableSecondaryResourceKeys.reduce<
+		Record<string, number>
+	>((acc, key, index) => {
+		const offset = index + 2;
+		acc[key] = index % 2 === 0 ? offset : -offset;
+		return acc;
+	}, {});
 	return {
 		activePlayer,
 		mockGame,
 		resourceForecast,
-		displayableStatKeys,
-		statForecast,
+		displayableSecondaryResourceKeys,
+		secondaryForecast,
 		registries: sessionRegistries,
 		metadata: sessionState.metadata,
 		metadataSelectors,

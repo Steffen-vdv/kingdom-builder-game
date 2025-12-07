@@ -13,6 +13,12 @@ export interface ResourceCategoryBuilder {
 	icon(icon: string): this;
 	description(description: string): this;
 	order(order: number): this;
+	/**
+	 * Marks this category as primary. Primary categories always show all their
+	 * resources. Non-primary categories only show resources that have been
+	 * "touched" (value has ever been non-zero).
+	 */
+	primary(): this;
 	resource(id: string): this;
 	group(id: string): this;
 	build(): ResourceCategoryDefinition;
@@ -27,6 +33,7 @@ class ResourceCategoryBuilderImpl implements ResourceCategoryBuilder {
 	private iconSet = false;
 	private descriptionSet = false;
 	private orderSet = false;
+	private primarySet = false;
 
 	constructor(id: string) {
 		if (!id) {
@@ -72,6 +79,15 @@ class ResourceCategoryBuilderImpl implements ResourceCategoryBuilder {
 		assertInteger(order, 'order');
 		this.definition.order = order;
 		this.orderSet = true;
+		return this;
+	}
+
+	primary() {
+		if (this.primarySet) {
+			throw new Error(`${builderName} already has primary() set. Remove the duplicate call.`);
+		}
+		this.definition.isPrimary = true;
+		this.primarySet = true;
 		return this;
 	}
 

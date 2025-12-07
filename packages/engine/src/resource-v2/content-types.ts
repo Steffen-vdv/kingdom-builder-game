@@ -127,5 +127,11 @@ export interface ContentCategoryDefinition {
 	readonly icon?: string;
 	readonly description?: string;
 	readonly order?: number;
+	/**
+	 * When true, this category contains core resources that are always visible.
+	 * Resources in non-primary categories are only shown if their value has
+	 * ever been non-zero (tracked via resourceTouched).
+	 */
+	readonly isPrimary?: boolean;
 	readonly contents: readonly ContentCategoryItem[];
 }

@@ -111,6 +111,10 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			if (definition.boundOf) {
 				return null;
 			}
+			// For non-primary categories, only show resources that have been touched
+			if (!category.isPrimary && !player.resourceTouchedV2[resourceId]) {
+				return null;
+			}
 
 			const metadata = translationContext.resourceMetadataV2.get(resourceId);
 			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
@@ -157,6 +161,8 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			boundResourceMap,
 			showResourceCard,
 			clearHoverCard,
+			category.isPrimary,
+			player.resourceTouchedV2,
 		],
 	);
 
@@ -171,22 +177,48 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 						key={item.id}
 						groupId={item.id}
 						player={player}
+						isPrimaryCategory={category.isPrimary}
 					/>
 				);
 			}
 			return null;
 		},
-		[renderResource, player],
+		[renderResource, player, category.isPrimary],
 	);
 
 	const categoryIcon = category.icon ?? '';
 
+	const showCategoryCard = React.useCallback(() => {
+		if (!category.label) {
+			return;
+		}
+		const title = category.icon
+			? `${category.icon} ${category.label}`
+			: category.label;
+		handleHoverCard({
+			title,
+			effects: [],
+			requirements: [],
+			...(category.description ? { description: category.description } : {}),
+			bgClass: PLAYER_INFO_CARD_BG,
+		});
+	}, [handleHoverCard, category]);
+
 	return (
 		<div className="info-bar resource-category-row">
 			{categoryIcon && (
-				<span className="info-bar__icon" aria-hidden="true">
+				<button
+					type="button"
+					className="info-bar__icon hoverable cursor-help"
+					aria-label={category.label}
+					onMouseEnter={showCategoryCard}
+					onMouseLeave={clearHoverCard}
+					onFocus={showCategoryCard}
+					onBlur={clearHoverCard}
+					onClick={showCategoryCard}
+				>
 					{categoryIcon}
-				</span>
+				</button>
 			)}
 			{category.contents.map((item) => renderCategoryItem(item))}
 		</div>

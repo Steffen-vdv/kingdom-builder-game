@@ -1638,6 +1638,7 @@
 			"description": "Core currencies and vital stats.",
 			"order": 0,
 			"resolvedOrder": 0,
+			"isPrimary": true,
 			"contents": [
 				{ "type": "resource", "id": "resource:core:gold" },
 				{ "type": "resource", "id": "resource:core:ap" },
@@ -1652,6 +1653,7 @@
 			"description": "Stats and population.",
 			"order": 1,
 			"resolvedOrder": 1,
+			"isPrimary": false,
 			"contents": [
 				{ "type": "group", "id": "resource-group:stats" },
 				{ "type": "group", "id": "resource-group:population:roles" }
