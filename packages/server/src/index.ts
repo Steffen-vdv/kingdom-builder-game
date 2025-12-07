@@ -58,7 +58,8 @@ export {
 } from './auth/tokenAuthMiddleware.js';
 
 // eslint-disable-next-line max-len
-export interface StartServerOptions extends Partial<FastifySessionTransportOptions> {
+export interface StartServerOptions
+	extends Partial<FastifySessionTransportOptions> {
 	host?: string;
 	port?: number;
 	logger?: FastifyServerOptions['logger'];

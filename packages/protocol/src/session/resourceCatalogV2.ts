@@ -69,7 +69,8 @@ export interface SessionResourceGlobalCostConfigV2 {
 }
 
 export interface SessionResourceDefinitionV2
-	extends SessionResourceMetadataV2, SessionResourceBoundsV2 {
+	extends SessionResourceMetadataV2,
+		SessionResourceBoundsV2 {
 	displayAsPercent: boolean;
 	trackValueBreakdown: boolean;
 	trackBoundBreakdown: boolean;
@@ -87,7 +88,8 @@ export interface SessionResourceDefinitionV2
 }
 
 export interface SessionResourceGroupParentV2
-	extends SessionResourceMetadataV2, SessionResourceBoundsV2 {
+	extends SessionResourceMetadataV2,
+		SessionResourceBoundsV2 {
 	displayAsPercent: boolean;
 	trackValueBreakdown: boolean;
 	trackBoundBreakdown: boolean;

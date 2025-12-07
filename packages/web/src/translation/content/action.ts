@@ -21,10 +21,9 @@ import type {
 } from '../log/timeline';
 import { formatActionTitle } from '../formatActionTitle';
 
-class ActionTranslator implements ContentTranslator<
-	string,
-	Record<string, unknown>
-> {
+class ActionTranslator
+	implements ContentTranslator<string, Record<string, unknown>>
+{
 	summarize(
 		id: string,
 		context: TranslationContext,
