@@ -66,7 +66,7 @@ if (!DEFAULT_HIRE_ACTION) {
 const HERO_PARAGRAPH_TEXT = [
 	'Welcome to {game}, a brisk duel of wits where {expand} expansion,',
 	`projects like {${DEFAULT_BUILD_ACTION}} show clever construction,`,
-	'and {army_attack} daring raids decide who steers the crown.',
+	'and {raid} daring raids decide who steers the crown.',
 ].join(' ');
 
 const DEFAULT_TOKENS: OverviewTokenCandidates = {
@@ -75,7 +75,7 @@ const DEFAULT_TOKENS: OverviewTokenCandidates = {
 		[DEFAULT_BUILD_ACTION]: [DEFAULT_BUILD_ACTION],
 		[DEFAULT_DEVELOP_ACTION]: [DEFAULT_DEVELOP_ACTION],
 		[DEFAULT_HIRE_ACTION]: [DEFAULT_HIRE_ACTION],
-		[ActionId.army_attack]: [ActionId.army_attack],
+		[ActionId.raid]: [ActionId.raid],
 	},
 	phases: {
 		[PhaseId.Growth]: [PhaseId.Growth],
@@ -191,7 +191,7 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 			{
 				icon: PopulationRole.Legion,
 				label: 'Legion',
-				body: ['Reinforces {armyStrength} Army strength for devastating {army_attack} raids.'],
+				body: ['Reinforces {armyStrength} Army strength for devastating {raid} raids.'],
 			},
 			{
 				icon: PopulationRole.Fortifier,
@@ -208,7 +208,7 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 		span: true,
 		paragraphs: [
 			`Spend {ap} AP to {expand} grow territory or {${DEFAULT_DEVELOP_ACTION}} upgrade key lands.`,
-			`Field {${DEFAULT_HIRE_ACTION}} specialists or launch {army_attack} attacks to snowball momentum.`,
+			`Field {${DEFAULT_HIRE_ACTION}} specialists or launch {raid} attacks to snowball momentum.`,
 		],
 	},
 ];

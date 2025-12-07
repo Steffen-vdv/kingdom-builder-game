@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 
-import './helpers/armyAttackSyntheticRegistries';
+import './helpers/raidSyntheticRegistries';
 
 import type { SummaryEntry } from '../src/translation/content';
 import { summarizeContent, describeContent } from '../src/translation/content';
-import type { EffectDef } from './helpers/armyAttackFactories';
+import type { EffectDef } from './helpers/raidFactories';
 import {
 	createSyntheticEngineContext,
 	createPartialStatEngineContext,
@@ -16,12 +16,12 @@ import {
 	SYNTH_COMBAT_STATS,
 	suppressSyntheticStatDescriptor,
 	restoreSyntheticStatDescriptor,
-} from './helpers/armyAttackFactories';
+} from './helpers/raidFactories';
 import {
 	SYNTH_RESOURCE_IDS,
 	SYNTH_RESOURCE_METADATA,
 	COMBAT_STAT_CONFIG,
-} from './helpers/armyAttackConfig';
+} from './helpers/raidConfig';
 import {
 	selectAttackBuildingDescriptor,
 	selectAttackResourceDescriptor,
@@ -41,7 +41,7 @@ afterAll(() => {
 	teardownStatOverrides();
 });
 
-describe('army attack translation summary', () => {
+describe('raid translation summary', () => {
 	it('summarizes attack action with on-damage effects', () => {
 		const { translation, attack, plunder } = createSyntheticEngineContext();
 		const castle = selectAttackResourceDescriptor(
@@ -83,7 +83,7 @@ describe('army attack translation summary', () => {
 		const plunderLine = damageItems.find(
 			(item) => typeof item === 'string' && item.includes(plunder.name),
 		);
-		expect(plunderLine).toBe(`⚔️${plunder.icon} ${plunder.name}`);
+		expect(plunderLine).toBe(`${plunder.icon} ${plunder.name}`);
 		expect(summary[2]).toBe(`${warSubject} ${warChangeStr}`);
 	});
 
@@ -138,19 +138,13 @@ describe('army attack translation summary', () => {
 			]);
 
 			const description = describeContent('action', attack.id, translation);
+			const powerLabel = iconLabel(
+				COMBAT_STAT_CONFIG.power.icon,
+				COMBAT_STAT_CONFIG.power.label,
+				'attack power',
+			);
 			expect(description).toEqual([
-				{
-					title: `Attack opponent with your ${iconLabel(
-						COMBAT_STAT_CONFIG.power.icon,
-						COMBAT_STAT_CONFIG.power.label,
-						'attack power',
-					)}`,
-					items: [
-						'Damage reduction applied',
-						'Apply damage to opponent defenses',
-						`If opponent defenses fall, overflow remaining damage onto opponent ${targetDisplay}`,
-					],
-				},
+				`Attack opponent's ${targetDisplay} with your ${powerLabel}`,
 			]);
 		} finally {
 			if (originalResource) {
@@ -201,7 +195,7 @@ describe('army attack translation summary', () => {
 			`${powerSummary}${summaryTarget}`,
 			{
 				title: `${summaryTarget}💥`,
-				items: [`⚔️${gold.icon} +${rewardAmount}`],
+				items: [`${gold.icon} +${rewardAmount}`],
 			},
 		]);
 	});
