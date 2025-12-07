@@ -1,25 +1,32 @@
 import { resourceChange } from './changeBuilder';
 import type { ResourceChangeBuilder } from './changeBuilder';
-import type {
-	ResourceChangeParameters,
-	ResourceReconciliationMode,
-	ResourceV2PlayerScope,
-	ResourceV2TransferEffectParams,
-	ResourceV2TransferEndpointPayload,
-	ResourceV2ValueWriteOptions,
+import {
+	ReconciliationMode,
+	VALID_RECONCILIATION_MODES,
+	type ResourceChangeParameters,
+	type ResourceReconciliationMode,
+	type ResourceV2PlayerScope,
+	type ResourceV2TransferEffectParams,
+	type ResourceV2TransferEndpointPayload,
+	type ResourceV2ValueWriteOptions,
 } from './types';
 
 const ENDPOINT_BUILDER_NAME = 'ResourceV2 transfer endpoint builder';
 const TRANSFER_BUILDER_NAME = 'ResourceV2 transfer builder';
-
-const SUPPORTED_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> = new Set(['clamp']);
 
 type ChangeConfigurator = ResourceChangeParameters | ((builder: ResourceChangeBuilder) => ResourceChangeBuilder | void);
 
 export interface ResourceTransferEndpointBuilder {
 	player(scope: ResourceV2PlayerScope): this;
 	change(configurator: ChangeConfigurator): this;
+	/** Set reconciliation mode using a string value */
 	reconciliation(mode?: ResourceReconciliationMode): this;
+	/** Convenience: clamp values to stay within bounds (default) */
+	clamp(): this;
+	/** Convenience: pass values through without bound checking */
+	pass(): this;
+	/** Convenience: reject changes that would exceed bounds */
+	reject(): this;
 	suppressRecentEntry(enabled?: boolean): this;
 	skipTierUpdate(enabled?: boolean): this;
 	build(): ResourceV2TransferEndpointPayload;
@@ -75,8 +82,8 @@ function normaliseChange(change: ResourceChangeParameters): ResourceChangeParame
 }
 
 function assertReconciliationMode(mode: ResourceReconciliationMode | undefined, context: string): void {
-	if (mode && !SUPPORTED_RECONCILIATION_MODES.has(mode)) {
-		throw new Error(`${context} reconciliation mode "${mode}" is not supported yet. Supported modes: clamp.`);
+	if (mode && !VALID_RECONCILIATION_MODES.has(mode)) {
+		throw new Error(`${context} reconciliation mode "${mode}" is invalid. ` + `Valid modes: ${[...VALID_RECONCILIATION_MODES].join(', ')}.`);
 	}
 }
 
@@ -149,10 +156,22 @@ class ResourceTransferEndpointBuilderImpl implements ResourceTransferEndpointBui
 		return this;
 	}
 
-	reconciliation(mode: ResourceReconciliationMode = 'clamp'): this {
+	reconciliation(mode: ResourceReconciliationMode = ReconciliationMode.CLAMP): this {
 		assertReconciliationMode(mode, ENDPOINT_BUILDER_NAME);
 		this.reconciliationMode = mode;
 		return this;
+	}
+
+	clamp(): this {
+		return this.reconciliation(ReconciliationMode.CLAMP);
+	}
+
+	pass(): this {
+		return this.reconciliation(ReconciliationMode.PASS);
+	}
+
+	reject(): this {
+		return this.reconciliation(ReconciliationMode.REJECT);
 	}
 
 	suppressRecentEntry(enabled = true): this {

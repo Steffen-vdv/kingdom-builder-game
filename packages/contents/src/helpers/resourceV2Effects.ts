@@ -1,9 +1,14 @@
-import type { ResourceChangeBuilder, ResourceChangeEffectParams, ResourceV2TransferEffectParams } from '../resourceV2';
+import type { ResourceChangeBuilder, ResourceChangeEffectParams, ResourceReconciliationMode, ResourceV2TransferEffectParams } from '../resourceV2';
 import { resourceChange, resourceTransfer, transferEndpoint } from '../resourceV2';
 import { getResourceV2Id } from '../internal';
 import type { ResourceKey } from '../internal';
 
 type ChangeBuilderConfigurator = (builder: ResourceChangeBuilder) => void;
+
+interface TransferReconciliationOptions {
+	readonly donorMode?: ResourceReconciliationMode;
+	readonly recipientMode?: ResourceReconciliationMode;
+}
 
 type ResourceAmountParams = ResourceChangeEffectParams &
 	Record<string, unknown> & {
@@ -53,17 +58,21 @@ export function resourcePercentFromResourceChange(
 	};
 }
 
-export function resourceTransferAmount(resource: ResourceKey, amount: number): ResourceTransferParams {
+export function resourceTransferAmount(resource: ResourceKey, amount: number, reconciliation?: TransferReconciliationOptions): ResourceTransferParams {
 	const resourceId = getResourceV2Id(resource);
-	const donor = transferEndpoint(resourceId)
+	const donorBuilder = transferEndpoint(resourceId)
 		.player('opponent')
-		.change((change) => change.amount(-amount))
-		.build();
-	const recipient = transferEndpoint(resourceId)
+		.change((change) => change.amount(-amount));
+	if (reconciliation?.donorMode) {
+		donorBuilder.reconciliation(reconciliation.donorMode);
+	}
+	const recipientBuilder = transferEndpoint(resourceId)
 		.player('active')
-		.change((change) => change.amount(amount))
-		.build();
-	const transfer = resourceTransfer().donor(donor).recipient(recipient).build();
+		.change((change) => change.amount(amount));
+	if (reconciliation?.recipientMode) {
+		recipientBuilder.reconciliation(reconciliation.recipientMode);
+	}
+	const transfer = resourceTransfer().donor(donorBuilder.build()).recipient(recipientBuilder.build()).build();
 	return {
 		...transfer,
 		key: resource,
@@ -71,17 +80,21 @@ export function resourceTransferAmount(resource: ResourceKey, amount: number): R
 	};
 }
 
-export function resourceTransferPercent(resource: ResourceKey, percent: number): ResourceTransferParams {
+export function resourceTransferPercent(resource: ResourceKey, percent: number, reconciliation?: TransferReconciliationOptions): ResourceTransferParams {
 	const resourceId = getResourceV2Id(resource);
-	const donor = transferEndpoint(resourceId)
+	const donorBuilder = transferEndpoint(resourceId)
 		.player('opponent')
-		.change((change) => change.percent(-percent))
-		.build();
-	const recipient = transferEndpoint(resourceId)
+		.change((change) => change.percent(-percent));
+	if (reconciliation?.donorMode) {
+		donorBuilder.reconciliation(reconciliation.donorMode);
+	}
+	const recipientBuilder = transferEndpoint(resourceId)
 		.player('active')
-		.change((change) => change.percent(percent))
-		.build();
-	const transfer = resourceTransfer().donor(donor).recipient(recipient).build();
+		.change((change) => change.percent(percent));
+	if (reconciliation?.recipientMode) {
+		recipientBuilder.reconciliation(reconciliation.recipientMode);
+	}
+	const transfer = resourceTransfer().donor(donorBuilder.build()).recipient(recipientBuilder.build()).build();
 	return {
 		...transfer,
 		key: resource,

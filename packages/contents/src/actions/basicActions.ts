@@ -21,7 +21,7 @@ import { Focus } from '../defs';
 import { ActionId, DevelopActionId, PopulationEvaluationId } from '../actionIds';
 import { ActionCategoryId as ActionCategory, ACTION_CATEGORIES } from '../actionCategories';
 import { resourceAmountChange, resourceTransferAmount, resourceTransferPercent } from '../helpers/resourceV2Effects';
-import { resourceChange } from '../resourceV2';
+import { ReconciliationMode, resourceChange } from '../resourceV2';
 
 const categoryOrder = (categoryId: keyof typeof ActionCategory) => {
 	const category = ACTION_CATEGORIES.get(ActionCategory[categoryId]);
@@ -178,6 +178,14 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.build(),
 	);
 
+	// Plunder uses pass mode for donor (allowing negative values to trigger
+	// tier effects like bankruptcy) and clamp mode for recipient (capping at
+	// max bounds).
+	const plunderReconciliation = {
+		donorMode: ReconciliationMode.PASS,
+		recipientMode: ReconciliationMode.CLAMP,
+	};
+
 	registry.add(
 		ActionId.plunder,
 		action()
@@ -185,8 +193,16 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.name('Plunder')
 			.icon('🏴‍☠️')
 			.system()
-			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferAmount(Resource.happiness, 1)).build())
-			.effect(effect(Types.Resource, ResourceMethods.TRANSFER).params(resourceTransferPercent(Resource.gold, 25)).build())
+			.effect(
+				effect(Types.Resource, ResourceMethods.TRANSFER)
+					.params(resourceTransferAmount(Resource.happiness, 1, plunderReconciliation))
+					.build(),
+			)
+			.effect(
+				effect(Types.Resource, ResourceMethods.TRANSFER)
+					.params(resourceTransferPercent(Resource.gold, 25, plunderReconciliation))
+					.build(),
+			)
 			.category(ActionCategory.Basic)
 			.focus(Focus.Aggressive)
 			.build(),

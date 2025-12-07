@@ -17,6 +17,11 @@ import {
 interface ApplyValueOptions {
 	readonly suppressRecentEntry?: boolean;
 	readonly skipTierUpdate?: boolean;
+	/**
+	 * When true, skip clamping to bounds. Used by 'pass' reconciliation mode
+	 * to allow values outside defined bounds.
+	 */
+	readonly skipBoundClamp?: boolean;
 }
 
 export type SetResourceValueOptions = ApplyValueOptions;
@@ -41,7 +46,11 @@ function applyValue(
 	if (!lookup.definition.allowDecimal) {
 		assertInteger(value, `"${resourceId}" value`);
 	}
-	const { suppressRecentEntry = false, skipTierUpdate = false } = options;
+	const {
+		suppressRecentEntry = false,
+		skipTierUpdate = false,
+		skipBoundClamp = false,
+	} = options;
 	const lowerBound = player.resourceLowerBounds[resourceId];
 	const upperBound = player.resourceUpperBounds[resourceId];
 	const resolvedLower =
@@ -55,7 +64,9 @@ function applyValue(
 	const previous =
 		player.resourceValues[resourceId] ??
 		clampToBounds(0, resolvedLower, resolvedUpper);
-	const clamped = clampToBounds(value, resolvedLower, resolvedUpper);
+	const clamped = skipBoundClamp
+		? value
+		: clampToBounds(value, resolvedLower, resolvedUpper);
 	if (clamped === previous) {
 		if (!skipTierUpdate) {
 			player.resourceTierIds[resourceId] = resolveTierId(

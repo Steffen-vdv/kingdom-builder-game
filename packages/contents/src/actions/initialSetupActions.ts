@@ -8,11 +8,20 @@ import { DevelopmentId } from '../developments';
 import { resourceChange } from '../resourceV2';
 
 /**
- * Creates a resource:add effect using the ResourceV2 system.
- * Automatically converts resource/stat/population keys to their V2 IDs.
+ * Creates a resource:add effect using the ResourceV2 system with reject
+ * reconciliation mode. Initial setup effects must reject if bounds are
+ * exceeded to catch configuration errors early.
  */
 function resourceAdd(resourceId: string, amount: number) {
-	return effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(resourceId).amount(amount).build()).build();
+	return effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(resourceId).amount(amount).reject().build()).build();
+}
+
+/**
+ * Creates a resource:remove effect using the ResourceV2 system with reject
+ * reconciliation mode.
+ */
+function resourceRemove(resourceId: string, amount: number) {
+	return effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(resourceId).amount(amount).reject().build()).build();
 }
 
 /**
@@ -121,7 +130,7 @@ export function registerInitialSetupActions(registry: Registry<ActionDef>) {
 			.system()
 			.free()
 			// Reduce castle HP to 1 (remove 9 from the initial 10)
-			.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(Resource.castleHP).amount(9).build()).build())
+			.effect(resourceRemove(Resource.castleHP, 9))
 			.build(),
 	);
 }

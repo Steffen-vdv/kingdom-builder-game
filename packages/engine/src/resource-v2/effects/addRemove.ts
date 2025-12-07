@@ -60,6 +60,8 @@ type ResourceEffectHandler = (
 	multiplier?: number,
 ) => ResourceReconciliationResult;
 
+// Use string literal to avoid circular dependency at module initialization.
+// ReconciliationMode is only available after all imports resolve.
 const DEFAULT_RECONCILIATION_MODE: ResourceReconciliationMode = 'clamp';
 
 type ResourceEffectKind = 'add' | 'remove';
@@ -292,6 +294,7 @@ function applyResourceEffect(
 			bounds,
 			effect,
 			change.roundingMode,
+			reconciliationMode,
 		);
 
 		if (result.clampedToLowerBound || result.clampedToUpperBound) {
@@ -331,7 +334,11 @@ function applyResourceEffect(
 			flags.upper = true;
 		}
 	}
-	setResourceValue(context, player, catalog, resourceId, result.finalValue);
+	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
+	const skipBoundClamp = reconciliationMode === 'pass';
+	setResourceValue(context, player, catalog, resourceId, result.finalValue, {
+		skipBoundClamp,
+	});
 	// Track resource source deltas for UI breakdowns. Only run when the
 	// context includes the source stack (full engine runs).
 	const delta = result.finalValue - currentValue;

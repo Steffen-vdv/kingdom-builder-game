@@ -28,7 +28,7 @@ export type { ResourceV2Registry, ResourceGroupRegistry, ResourceCategoryRegistr
 export { RESOURCE_V2_REGISTRY, RESOURCE_GROUP_V2_REGISTRY, RESOURCE_CATEGORY_V2_REGISTRY, buildResourceCatalogV2 } from './catalog';
 export type { ResourceCatalogV2 } from './catalog';
 
-export { resourceChange, resourceTransfer, transferEndpoint, increaseUpperBound } from './effects';
+export { resourceChange, resourceTransfer, transferEndpoint, increaseUpperBound, ReconciliationMode, RoundingMode, VALID_RECONCILIATION_MODES, VALID_ROUNDING_MODES } from './effects';
 export type {
 	ResourceChangeBuilder,
 	ResourceChangeEffectParams,
