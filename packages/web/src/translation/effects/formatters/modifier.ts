@@ -12,7 +12,7 @@ import {
 	parseNumericParam,
 	wrapResultModifierEntries,
 } from './modifier_helpers';
-import { formatPopulation, getActionInfo } from './modifier_targets';
+import { getActionInfo } from './modifier_targets';
 import { resolveTransferModifierTarget } from './transfer_helpers';
 import { describeContent } from '../../content';
 import {
@@ -140,25 +140,6 @@ registerModifierEvalHandler('development', {
 	describe: (effect, evaluation, context) => {
 		const label = getResultModifierLabel(context);
 		const description = formatDevelopment(
-			label,
-			effect,
-			evaluation,
-			context,
-			true,
-		);
-		return toArray(description);
-	},
-});
-
-registerModifierEvalHandler('population', {
-	summarize: (effect, evaluation, context) => {
-		const label = getResultModifierLabel(context);
-		const summary = formatPopulation(label, effect, evaluation, context, false);
-		return toArray(summary);
-	},
-	describe: (effect, evaluation, context) => {
-		const label = getResultModifierLabel(context);
-		const description = formatPopulation(
 			label,
 			effect,
 			evaluation,

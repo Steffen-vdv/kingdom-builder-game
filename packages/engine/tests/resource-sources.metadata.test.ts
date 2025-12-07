@@ -25,10 +25,10 @@ describe('resource sources metadata', () => {
 		const frame = () => ({
 			key: 'frame-source',
 			longevity: 'ongoing' as const,
-			kind: 'population',
+			kind: 'resource',
 			dependsOn: [
 				{
-					type: 'population',
+					type: 'resource',
 					id: PopulationRole.Legion,
 					detail: 'assigned',
 					extra: { extraField: 'keep' },
@@ -72,7 +72,7 @@ describe('resource sources metadata', () => {
 		expect(meta).toMatchObject({
 			key: 'custom-source',
 			longevity: 'ongoing',
-			kind: 'population',
+			kind: 'resource',
 			id: PopulationRole.Legion,
 			detail: 'Passive bonus',
 			instance: '7',
@@ -88,7 +88,7 @@ describe('resource sources metadata', () => {
 		expect(meta.dependsOn).toEqual(
 			expect.arrayContaining([
 				{
-					type: 'population',
+					type: 'resource',
 					id: PopulationRole.Legion,
 					detail: 'assigned',
 					extra: { extraField: 'keep' },
@@ -124,7 +124,7 @@ describe('resource sources metadata', () => {
 								longevity: 'permanent',
 								dependsOn: [
 									{
-										type: 'population',
+										type: 'resource',
 										id: PopulationRole.Legion,
 										detail: 'assigned',
 									},
@@ -149,7 +149,7 @@ describe('resource sources metadata', () => {
 		expect(merged?.meta.dependsOn).toEqual(
 			expect.arrayContaining([
 				{
-					type: 'population',
+					type: 'resource',
 					id: PopulationRole.Legion,
 					detail: 'assigned',
 					extra: { extraField: 'keep' },
