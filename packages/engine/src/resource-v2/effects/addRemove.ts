@@ -162,7 +162,11 @@ function applySign(
 		return change;
 	}
 	if (change.type === 'amount') {
-		return { type: 'amount', amount: -change.amount };
+		return {
+			type: 'amount',
+			amount: -change.amount,
+			...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+		};
 	}
 	if (change.type === 'percentFromResource') {
 		// For remove, we negate via a negative multiplier
