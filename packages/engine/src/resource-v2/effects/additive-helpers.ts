@@ -52,13 +52,13 @@ export function applyAdditivePercentChange(
 	}
 
 	const base = bases[cacheKey]!;
+	const currentAccum = accums[cacheKey]!;
 	const before = getResourceValue(player, resourceId);
 
-	// Accumulate the delta from the original base
-	accums[cacheKey]! += requestedDelta;
-
-	// Compute new value from base + accumulated delta
-	let newValue = base + accums[cacheKey]!;
+	// Compute tentative new value WITHOUT updating accumulator yet
+	// (reject mode must not leave state modified on failure)
+	const tentativeAccum = currentAccum + requestedDelta;
+	let newValue = base + tentativeAccum;
 
 	// Apply rounding
 	if (roundingMode === 'up') {
@@ -75,6 +75,7 @@ export function applyAdditivePercentChange(
 
 	if (reconciliationMode === 'reject') {
 		// Reject mode: throw error if bounds would be exceeded
+		// NOTE: We throw BEFORE updating the accumulator so state is untouched
 		if (lowerBound !== null && newValue < lowerBound) {
 			throw new ResourceBoundExceededError(
 				'lower',
@@ -103,6 +104,9 @@ export function applyAdditivePercentChange(
 		}
 	}
 	// Pass mode: no bounds checking, value passes through as-is
+
+	// Only update accumulator AFTER validation passes
+	accums[cacheKey] = tentativeAccum;
 
 	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
 	const skipBoundClamp = reconciliationMode === 'pass';

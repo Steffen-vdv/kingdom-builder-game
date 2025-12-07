@@ -10,8 +10,14 @@ import { clampStrategy, passStrategy, rejectStrategy } from './strategies';
 // Re-export delta computation utility
 export { computeRequestedResourceDelta } from './delta';
 
-// Re-export error class from types
-export { ResourceBoundExceededError } from './types';
+// Re-export error class and constants from types
+export {
+	ResourceBoundExceededError,
+	ReconciliationMode,
+	RoundingMode,
+	VALID_RECONCILIATION_MODES,
+	VALID_ROUNDING_MODES,
+} from './types';
 export type {
 	ComputeResourceDeltaInput,
 	ReconciliationStrategy,

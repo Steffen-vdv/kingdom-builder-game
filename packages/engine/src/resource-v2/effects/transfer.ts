@@ -15,11 +15,19 @@ import {
 	type ResourceReconciliationMode,
 	type ResourceReconciliationResult,
 } from '../reconciliation';
+
 import type {
 	RuntimeResourceCatalog,
 	RuntimeResourceDefinition,
 	RuntimeResourceBounds,
 } from '../types';
+
+// Inline valid modes to avoid circular dependency with reconciliation module
+const VALID_MODES: ReadonlySet<ResourceReconciliationMode> = new Set([
+	'clamp',
+	'pass',
+	'reject',
+]);
 
 export type ResourceV2PlayerScope = 'active' | 'opponent';
 
@@ -181,17 +189,14 @@ function prepareTransferParticipant(
 	};
 }
 
-const VALID_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> =
-	new Set(['clamp', 'pass', 'reject']);
-
 function assertValidReconciliationMode(
 	mode: ResourceReconciliationMode | undefined,
 	resourceId: string,
 ): void {
-	if (mode && !VALID_RECONCILIATION_MODES.has(mode)) {
+	if (mode && !VALID_MODES.has(mode)) {
 		throw new Error(
 			`ResourceV2 effect for "${resourceId}" has invalid reconciliation ` +
-				`mode "${mode}". Valid modes: ${[...VALID_RECONCILIATION_MODES].join(', ')}.`,
+				`mode "${mode}". Valid modes: ${[...VALID_MODES].join(', ')}.`,
 		);
 	}
 }

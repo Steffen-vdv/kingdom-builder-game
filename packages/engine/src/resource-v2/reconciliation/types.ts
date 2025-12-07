@@ -1,8 +1,50 @@
 import type { RuntimeResourceBounds } from '../types';
 
-export type ResourceReconciliationMode = 'clamp' | 'pass' | 'reject';
+/**
+ * Reconciliation mode constants for runtime validation and use.
+ */
+export const ReconciliationMode = {
+	/** Clamp values to stay within bounds (default behavior) */
+	CLAMP: 'clamp',
+	/** Pass values through without bound checking (allows negative/overflow) */
+	PASS: 'pass',
+	/** Reject changes that would exceed bounds (throws error) */
+	REJECT: 'reject',
+} as const;
 
-export type ResourceChangeRoundingMode = 'up' | 'down' | 'nearest';
+export type ResourceReconciliationMode =
+	(typeof ReconciliationMode)[keyof typeof ReconciliationMode];
+
+/**
+ * All valid reconciliation modes as a Set for runtime validation.
+ */
+type ReconciliationModeSet = ReadonlySet<ResourceReconciliationMode>;
+export const VALID_RECONCILIATION_MODES: ReconciliationModeSet = new Set([
+	ReconciliationMode.CLAMP,
+	ReconciliationMode.PASS,
+	ReconciliationMode.REJECT,
+]);
+
+/**
+ * Rounding mode constants for runtime validation and use.
+ */
+export const RoundingMode = {
+	/** Round towards positive infinity (ceiling for positive, floor for neg) */
+	UP: 'up',
+	/** Round towards zero (floor for positive, ceiling for negative) */
+	DOWN: 'down',
+	/** Round to nearest integer */
+	NEAREST: 'nearest',
+} as const;
+
+export type ResourceChangeRoundingMode =
+	(typeof RoundingMode)[keyof typeof RoundingMode];
+
+/**
+ * All valid rounding modes as a Set for runtime validation.
+ */
+export const VALID_ROUNDING_MODES: ReadonlySet<ResourceChangeRoundingMode> =
+	new Set([RoundingMode.UP, RoundingMode.DOWN, RoundingMode.NEAREST]);
 
 export interface ResourceAmountChangeParameters {
 	readonly type: 'amount';

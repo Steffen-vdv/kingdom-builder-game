@@ -60,6 +60,8 @@ type ResourceEffectHandler = (
 	multiplier?: number,
 ) => ResourceReconciliationResult;
 
+// Use string literal to avoid circular dependency at module initialization.
+// ReconciliationMode is only available after all imports resolve.
 const DEFAULT_RECONCILIATION_MODE: ResourceReconciliationMode = 'clamp';
 
 type ResourceEffectKind = 'add' | 'remove';

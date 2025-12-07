@@ -13,7 +13,7 @@ import { resourceChange } from '../resourceV2';
  * exceeded to catch configuration errors early.
  */
 function resourceAdd(resourceId: string, amount: number) {
-	return effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(resourceId).amount(amount).reconciliation('reject').build()).build();
+	return effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(resourceId).amount(amount).reject().build()).build();
 }
 
 /**
@@ -21,7 +21,7 @@ function resourceAdd(resourceId: string, amount: number) {
  * reconciliation mode.
  */
 function resourceRemove(resourceId: string, amount: number) {
-	return effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(resourceId).amount(amount).reconciliation('reject').build()).build();
+	return effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(resourceId).amount(amount).reject().build()).build();
 }
 
 /**
