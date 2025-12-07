@@ -2,6 +2,7 @@ import type { PlayerState } from '../state';
 import type {
 	RuntimeBoundReference,
 	RuntimeBoundValue,
+	RuntimeReconciliationMode,
 	RuntimeResourceCatalog,
 	RuntimeResourceDefinition,
 	RuntimeResourceGroupParent,
@@ -16,21 +17,74 @@ type ResourceDefinitionLike =
 	  }
 	| { kind: 'parent'; definition: RuntimeResourceGroupParent; groupId: string };
 
+/**
+ * Entry tracking a resource that depends on another resource for its bound.
+ */
+interface BoundDependentEntry {
+	/** The ID of the resource that has a dynamic bound */
+	readonly dependentId: string;
+	/** Which bound references this resource ('lower' or 'upper') */
+	readonly direction: 'lower' | 'upper';
+	/** How to reconcile when the bound changes */
+	readonly reconciliation: RuntimeReconciliationMode;
+}
+
 interface CatalogIndexes {
 	readonly resourceById: RuntimeResourceCatalog['resources']['byId'];
 	readonly parentById: Record<string, RuntimeResourceGroupParent>;
 	readonly parentGroupByParentId: Record<string, string>;
 	readonly groupChildren: Record<string, readonly string[]>;
+	/**
+	 * Maps a resource ID to the list of resources that reference it as a bound.
+	 * Used for cascading reconciliation when a bound resource changes.
+	 */
+	readonly boundDependents: Record<string, readonly BoundDependentEntry[]>;
 }
 
 const catalogIndexCache = new WeakMap<RuntimeResourceCatalog, CatalogIndexes>();
+
+/**
+ * Helper to register a bound dependency if the bound is a reference.
+ */
+function registerBoundDependent(
+	dependents: Record<string, BoundDependentEntry[]>,
+	dependentId: string,
+	bound: RuntimeBoundValue | undefined,
+	direction: 'lower' | 'upper',
+): void {
+	if (!isBoundReference(bound)) {
+		return;
+	}
+	const referencedId = bound.resourceId;
+	const bucket = dependents[referencedId] ?? [];
+	bucket.push({
+		dependentId,
+		direction,
+		reconciliation: bound.reconciliation,
+	});
+	dependents[referencedId] = bucket;
+}
 
 function buildCatalogIndexes(catalog: RuntimeResourceCatalog): CatalogIndexes {
 	const parentById: Record<string, RuntimeResourceGroupParent> = {};
 	const parentGroupByParentId: Record<string, string> = {};
 	const groupChildren: Record<string, readonly string[]> = {};
 	const workingChildren: Record<string, string[]> = {};
+	const workingDependents: Record<string, BoundDependentEntry[]> = {};
 	for (const resource of catalog.resources.ordered) {
+		// Track bound dependencies for cascading reconciliation
+		registerBoundDependent(
+			workingDependents,
+			resource.id,
+			resource.lowerBound,
+			'lower',
+		);
+		registerBoundDependent(
+			workingDependents,
+			resource.id,
+			resource.upperBound,
+			'upper',
+		);
 		if (!resource.groupId) {
 			continue;
 		}
@@ -46,12 +100,31 @@ function buildCatalogIndexes(catalog: RuntimeResourceCatalog): CatalogIndexes {
 		}
 		parentById[group.parent.id] = group.parent;
 		parentGroupByParentId[group.parent.id] = group.id;
+		// Track bound dependencies for parent resources too
+		registerBoundDependent(
+			workingDependents,
+			group.parent.id,
+			group.parent.lowerBound,
+			'lower',
+		);
+		registerBoundDependent(
+			workingDependents,
+			group.parent.id,
+			group.parent.upperBound,
+			'upper',
+		);
+	}
+	// Freeze all dependent arrays
+	const boundDependents: Record<string, readonly BoundDependentEntry[]> = {};
+	for (const [key, entries] of Object.entries(workingDependents)) {
+		boundDependents[key] = Object.freeze([...entries]);
 	}
 	return {
 		resourceById: catalog.resources.byId,
 		parentById,
 		parentGroupByParentId,
 		groupChildren,
+		boundDependents,
 	};
 }
 
@@ -215,4 +288,4 @@ export function aggregateChildValues(
 	return aggregate;
 }
 
-export type { CatalogIndexes, ResourceDefinitionLike };
+export type { BoundDependentEntry, CatalogIndexes, ResourceDefinitionLike };

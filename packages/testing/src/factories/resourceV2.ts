@@ -144,10 +144,18 @@ export interface ResourceV2GroupParentOverrides {
 
 /**
  * Helper to create a bound reference for testing dynamic bounds.
+ * When the referenced resource changes, cascading reconciliation applies.
+ *
+ * @param resourceId - Resource whose value acts as the bound
+ * @param reconciliation - 'clamp' (default), 'pass', or 'reject'
+ *
  * @example
  * resourceV2Definition({
  *   bounds: { upperBound: boundRef('max-population') }
  * })
+ *
+ * Note: Avoid circular bound references in tests. If A bounds B and B bounds A,
+ * neither can increase beyond 0.
  */
 export function boundRef(
 	resourceId: string,

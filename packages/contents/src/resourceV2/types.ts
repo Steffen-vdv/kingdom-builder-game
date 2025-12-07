@@ -146,6 +146,9 @@ export interface ResourceCategoryDefinition {
  * Creates a dynamic bound reference to another resource's value.
  * Use this helper when configuring resource bounds to improve readability.
  *
+ * When the referenced resource's value changes, cascading reconciliation is
+ * automatically applied to ensure this resource stays within its new bounds.
+ *
  * @param resourceId - The resource whose value acts as this bound
  * @param reconciliation - How to handle overflow/underflow when bound changes
  *                         (default: 'clamp')
@@ -156,6 +159,11 @@ export interface ResourceCategoryDefinition {
  *
  * // Explicit reconciliation mode
  * .upperBound(boundTo(Stat.populationMax, ReconciliationMode.REJECT))
+ *
+ * **WARNING: Avoid circular bound references.** If resource A's bound
+ * references B and B's bound references A, both will initialize to 0 and
+ * cannot increase. Prefer one-way dependency chains like:
+ * `max-population → population → workforce`
  */
 export function boundTo(resourceId: string, reconciliation?: ResourceReconciliationMode): ResourceBoundReference {
 	return reconciliation ? { resourceId, reconciliation } : { resourceId };

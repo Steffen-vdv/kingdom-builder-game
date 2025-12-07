@@ -51,7 +51,31 @@ export type RuntimeReconciliationMode = 'clamp' | 'pass' | 'reject';
 
 /**
  * A reference to another resource whose value acts as this bound.
- * When the referenced resource's value changes, reconciliation is applied.
+ * When the referenced resource's value changes, cascading reconciliation
+ * is automatically applied to ensure dependent resources stay within bounds.
+ *
+ * ## Cascading Reconciliation
+ * When a bound resource changes (e.g., max-population decreases from 20 to 10),
+ * all resources that reference it as a bound are automatically reconciled:
+ * - `clamp`: Value is clamped to the new bound (population: 15 → 10)
+ * - `pass`: Value is left unchanged, even if it exceeds the new bound
+ * - `reject`: An error is thrown if the value violates the new bound
+ *
+ * ## Content Maintainer Notes
+ *
+ * **Avoid circular bound references.** While the engine prevents infinite loops
+ * during cascading reconciliation, circular dependencies create initialization
+ * problems. For example, if resource A's upper bound references B and B's upper
+ * bound references A, both resources initialize to 0 and cannot increase beyond
+ * each other's initial value.
+ *
+ * **Prefer one-way dependency chains.** Good patterns:
+ * - `max-population` → `population` (stat bounds currency)
+ * - `max-population` → `total-population` → `workforce` (chained bounds)
+ *
+ * **Avoid:**
+ * - `A` ↔ `B` (mutual bounds create deadlock)
+ * - `A` → `B` → `C` → `A` (cycles prevent value increases)
  */
 export interface RuntimeBoundReference {
 	/** The resource ID whose value determines this bound */

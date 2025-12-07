@@ -241,32 +241,31 @@ describe('Dynamic resource bounds', () => {
 			expect(getResourceValue(ctx.active, populationId)).toBe(18);
 		});
 
-		it('handles decreasing bound resource (no auto-clamp on bound change)', () => {
+		it('cascades reconciliation when bound resource decreases', () => {
 			// Set max population to 20
 			setResourceValue(ctx.context, ctx.active, ctx.catalog, maxPopId, 20);
 			// Set population to 15
 			setResourceValue(ctx.context, ctx.active, ctx.catalog, populationId, 15);
 
 			// Now decrease max population to 10
-			// Note: This doesn't automatically clamp population down
+			// With cascading reconciliation, population is automatically clamped
 			setResourceValue(ctx.context, ctx.active, ctx.catalog, maxPopId, 10);
 
-			// Population is still 15 (above new bound)
-			// This is expected - bounds are enforced on change, not retroactively
-			expect(getResourceValue(ctx.active, populationId)).toBe(15);
+			// Population is automatically clamped to the new bound of 10
+			expect(getResourceValue(ctx.active, populationId)).toBe(10);
 
-			// But the next operation will respect the new bound
+			// Further operations still respect the bound
 			const effect: EffectDef = {
 				params: {
 					resourceId: populationId,
-					change: { type: 'amount', amount: 1 },
+					change: { type: 'amount', amount: 5 },
 					reconciliation: 'clamp',
 				},
 			};
 
 			resourceAddV2(effect, ctx.context);
 
-			// Even trying to add 1, it clamps to the new max of 10
+			// Already at max, so stays at 10
 			expect(getResourceValue(ctx.active, populationId)).toBe(10);
 		});
 	});
@@ -889,6 +888,330 @@ describe('Dynamic resource bounds', () => {
 				resourceId: maxPopId,
 				reconciliation: 'reject',
 			});
+		});
+	});
+
+	describe('cascading reconciliation', () => {
+		it('clamps dependent when upper bound decreases below value', () => {
+			const maxPopId = 'stat-max-population';
+			const populationId = 'resource-population';
+
+			const maxPop = resourceV2Definition({
+				id: maxPopId,
+				bounds: { lowerBound: 0, upperBound: 100 },
+			});
+
+			const population = resourceV2Definition({
+				id: populationId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: boundRef(maxPopId, 'clamp'),
+				},
+			});
+
+			const registries = createResourceV2Registries({
+				resources: [maxPop, population],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalogV2: catalog },
+				resourceCatalogV2: catalog,
+				recentResourceGains: [] as { key: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set max population to 20, population to 15
+			setResourceValue(ctx, active, catalog, maxPopId, 20);
+			setResourceValue(ctx, active, catalog, populationId, 15);
+
+			// Decrease max population to 10 - population should be clamped
+			setResourceValue(ctx, active, catalog, maxPopId, 10);
+
+			expect(getResourceValue(active, populationId)).toBe(10);
+		});
+
+		it('clamps dependent when lower bound increases above value', () => {
+			const minGoldId = 'stat-min-gold';
+			const goldId = 'resource-gold';
+
+			const minGold = resourceV2Definition({
+				id: minGoldId,
+				bounds: { lowerBound: 0, upperBound: 100 },
+			});
+
+			const gold = resourceV2Definition({
+				id: goldId,
+				bounds: {
+					lowerBound: boundRef(minGoldId, 'clamp'),
+					upperBound: 1000,
+				},
+			});
+
+			const registries = createResourceV2Registries({
+				resources: [minGold, gold],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalogV2: catalog },
+				resourceCatalogV2: catalog,
+				recentResourceGains: [] as { key: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set min gold to 5, gold to 10
+			setResourceValue(ctx, active, catalog, minGoldId, 5);
+			setResourceValue(ctx, active, catalog, goldId, 10);
+
+			// Increase min gold to 15 - gold should be clamped up
+			setResourceValue(ctx, active, catalog, minGoldId, 15);
+
+			expect(getResourceValue(active, goldId)).toBe(15);
+		});
+
+		it('does not cascade when reconciliation mode is pass', () => {
+			const maxPopId = 'stat-max-population';
+			const populationId = 'resource-population';
+
+			const maxPop = resourceV2Definition({
+				id: maxPopId,
+				bounds: { lowerBound: 0, upperBound: 100 },
+			});
+
+			const population = resourceV2Definition({
+				id: populationId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: boundRef(maxPopId, 'pass'),
+				},
+			});
+
+			const registries = createResourceV2Registries({
+				resources: [maxPop, population],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalogV2: catalog },
+				resourceCatalogV2: catalog,
+				recentResourceGains: [] as { key: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set max population to 20, population to 15
+			setResourceValue(ctx, active, catalog, maxPopId, 20);
+			setResourceValue(ctx, active, catalog, populationId, 15);
+
+			// Decrease max population to 10 - population stays at 15 (pass mode)
+			setResourceValue(ctx, active, catalog, maxPopId, 10);
+
+			expect(getResourceValue(active, populationId)).toBe(15);
+		});
+
+		it('throws when reconciliation mode is reject and bound violated', () => {
+			const maxPopId = 'stat-max-population';
+			const populationId = 'resource-population';
+
+			const maxPop = resourceV2Definition({
+				id: maxPopId,
+				bounds: { lowerBound: 0, upperBound: 100 },
+			});
+
+			const population = resourceV2Definition({
+				id: populationId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: boundRef(maxPopId, 'reject'),
+				},
+			});
+
+			const registries = createResourceV2Registries({
+				resources: [maxPop, population],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalogV2: catalog },
+				resourceCatalogV2: catalog,
+				recentResourceGains: [] as { key: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set max population to 20, population to 15
+			setResourceValue(ctx, active, catalog, maxPopId, 20);
+			setResourceValue(ctx, active, catalog, populationId, 15);
+
+			// Decrease max population to 10 - should throw
+			expect(() => {
+				setResourceValue(ctx, active, catalog, maxPopId, 10);
+			}).toThrow(ResourceBoundExceededError);
+		});
+
+		it('does not cause infinite loops with chained dependencies', () => {
+			// A chain: maxPop -> population -> workforce
+			// Decreasing maxPop should cascade but not loop
+			const maxPopId = 'stat-max-pop';
+			const populationId = 'resource-population';
+			const workforceId = 'resource-workforce';
+
+			const maxPop = resourceV2Definition({
+				id: maxPopId,
+				bounds: { lowerBound: 0, upperBound: 100 },
+			});
+
+			const population = resourceV2Definition({
+				id: populationId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: boundRef(maxPopId, 'clamp'),
+				},
+			});
+
+			// Workforce is bounded by population
+			const workforce = resourceV2Definition({
+				id: workforceId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: boundRef(populationId, 'clamp'),
+				},
+			});
+
+			const registries = createResourceV2Registries({
+				resources: [maxPop, population, workforce],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalogV2: catalog },
+				resourceCatalogV2: catalog,
+				recentResourceGains: [] as { key: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set up the chain: maxPop=20, population=15, workforce=10
+			setResourceValue(ctx, active, catalog, maxPopId, 20);
+			setResourceValue(ctx, active, catalog, populationId, 15);
+			setResourceValue(ctx, active, catalog, workforceId, 10);
+
+			// Decrease maxPop to 8 - should cascade through population to workforce
+			setResourceValue(ctx, active, catalog, maxPopId, 8);
+
+			// All should be clamped appropriately
+			expect(getResourceValue(active, maxPopId)).toBe(8);
+			expect(getResourceValue(active, populationId)).toBe(8);
+			expect(getResourceValue(active, workforceId)).toBe(8);
+		});
+
+		it('cascades through multiple dependents', () => {
+			const maxPopId = 'stat-max-population';
+			const councilId = 'resource-council';
+			const legionId = 'resource-legion';
+
+			const maxPop = resourceV2Definition({
+				id: maxPopId,
+				bounds: { lowerBound: 0, upperBound: 100 },
+			});
+
+			const council = resourceV2Definition({
+				id: councilId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: boundRef(maxPopId, 'clamp'),
+				},
+			});
+
+			const legion = resourceV2Definition({
+				id: legionId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: boundRef(maxPopId, 'clamp'),
+				},
+			});
+
+			const registries = createResourceV2Registries({
+				resources: [maxPop, council, legion],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalogV2: catalog },
+				resourceCatalogV2: catalog,
+				recentResourceGains: [] as { key: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set max population to 20
+			setResourceValue(ctx, active, catalog, maxPopId, 20);
+			// Set council to 15, legion to 18
+			setResourceValue(ctx, active, catalog, councilId, 15);
+			setResourceValue(ctx, active, catalog, legionId, 18);
+
+			// Decrease max population to 10 - both should be clamped
+			setResourceValue(ctx, active, catalog, maxPopId, 10);
+
+			expect(getResourceValue(active, councilId)).toBe(10);
+			expect(getResourceValue(active, legionId)).toBe(10);
+		});
+
+		it('does not cascade when value already within new bound', () => {
+			const maxPopId = 'stat-max-population';
+			const populationId = 'resource-population';
+
+			const maxPop = resourceV2Definition({
+				id: maxPopId,
+				bounds: { lowerBound: 0, upperBound: 100 },
+			});
+
+			const population = resourceV2Definition({
+				id: populationId,
+				bounds: {
+					lowerBound: 0,
+					upperBound: boundRef(maxPopId, 'clamp'),
+				},
+			});
+
+			const registries = createResourceV2Registries({
+				resources: [maxPop, population],
+			});
+
+			const catalog = createRuntimeResourceCatalog(registries);
+			const active = new PlayerState('A', 'Active Player');
+			initialisePlayerResourceState(active, catalog);
+
+			const ctx = {
+				game: { resourceCatalogV2: catalog },
+				resourceCatalogV2: catalog,
+				recentResourceGains: [] as { key: string; amount: number }[],
+				activePlayer: active,
+			} as unknown as EngineContext;
+
+			// Set max population to 20, population to 5
+			setResourceValue(ctx, active, catalog, maxPopId, 20);
+			setResourceValue(ctx, active, catalog, populationId, 5);
+
+			// Decrease max population to 10 - population is 5, still within bound
+			setResourceValue(ctx, active, catalog, maxPopId, 10);
+
+			expect(getResourceValue(active, populationId)).toBe(5);
 		});
 	});
 

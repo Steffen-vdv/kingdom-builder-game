@@ -15,19 +15,16 @@ import {
 	writeInitialState,
 	type ResourceDefinitionLike,
 } from './state-helpers';
+import { reconcileBoundDependents } from './cascading';
 
 interface ApplyValueOptions {
 	readonly suppressRecentEntry?: boolean;
 	readonly skipTierUpdate?: boolean;
-	/**
-	 * When true, skip clamping to bounds. Used by 'pass' reconciliation mode
-	 * to allow values outside defined bounds.
-	 */
+	/** Skip clamping to bounds ('pass' reconciliation mode). */
 	readonly skipBoundClamp?: boolean;
 }
 
 export type SetResourceValueOptions = ApplyValueOptions;
-
 export type RecalculateParentValueOptions = ApplyValueOptions;
 
 export interface AdjustBoundResult {
@@ -44,6 +41,7 @@ function applyValue(
 	resourceId: string,
 	value: number,
 	options: ApplyValueOptions = {},
+	reconciling: Set<string> = new Set(),
 ): number {
 	if (!lookup.definition.allowDecimal) {
 		assertInteger(value, `"${resourceId}" value`);
@@ -109,11 +107,24 @@ function applyValue(
 		});
 	}
 	if (lookup.kind === 'resource' && lookup.groupId) {
-		recalculateGroupParentValue(context, player, catalog, lookup.groupId, {
-			suppressRecentEntry: true,
-			skipTierUpdate,
-		});
+		recalculateGroupParentValue(
+			context,
+			player,
+			catalog,
+			lookup.groupId,
+			{ suppressRecentEntry: true, skipTierUpdate },
+			reconciling,
+		);
 	}
+	// Cascading reconciliation: reconcile resources that depend on this one
+	reconcileBoundDependents(
+		context,
+		player,
+		catalog,
+		resourceId,
+		reconciling,
+		applyValue,
+	);
 	return clamped;
 }
 
@@ -211,6 +222,7 @@ export function recalculateGroupParentValue(
 	catalog: RuntimeResourceCatalog,
 	groupId: string,
 	options: RecalculateParentValueOptions = {},
+	reconciling: Set<string> = new Set(),
 ): number | null {
 	const group = catalog.groups.byId[groupId];
 	if (!group || !group.parent) {
@@ -234,6 +246,7 @@ export function recalculateGroupParentValue(
 		group.parent.id,
 		aggregate,
 		options,
+		reconciling,
 	);
 }
 
@@ -247,33 +260,26 @@ function adjustResourceBound(
 	delta: number,
 	direction: BoundDirection,
 ): AdjustBoundResult {
-	const directionLabel = direction === 'lower' ? 'lower' : 'upper';
-	assertInteger(delta, `"${resourceId}" ${directionLabel}-bound delta`);
+	assertInteger(delta, `"${resourceId}" ${direction}-bound delta`);
 	if (delta <= 0) {
-		throw new Error(
-			`ResourceV2 state expected ${directionLabel}-bound delta for "${resourceId}" to be positive but received ${delta}.`,
-		);
+		throw new Error(`${direction}-bound delta must be positive: ${delta}`);
 	}
 	const lookup = resolveResourceDefinition(catalog, resourceId);
 	if (!lookup) {
-		throw new Error(
-			`ResourceV2 state does not recognise resource "${resourceId}".`,
-		);
+		throw new Error(`Unknown resource "${resourceId}".`);
 	}
-	const boundMap =
-		direction === 'lower'
-			? player.resourceLowerBounds
-			: player.resourceUpperBounds;
-	const definitionBound =
-		direction === 'lower'
-			? lookup.definition.lowerBound
-			: lookup.definition.upperBound;
+	const isLower = direction === 'lower';
+	const boundMap = isLower
+		? player.resourceLowerBounds
+		: player.resourceUpperBounds;
+	const defBound = isLower
+		? lookup.definition.lowerBound
+		: lookup.definition.upperBound;
 	const previousRaw = boundMap[resourceId];
-	// Get the bound value (player override or definition), then resolve
-	const boundValue = previousRaw !== undefined ? previousRaw : definitionBound;
+	const boundValue = previousRaw !== undefined ? previousRaw : defBound;
 	const previousBound = resolveBoundValue(boundValue, player.resourceValues);
-	const nextBase = typeof previousBound === 'number' ? previousBound : 0;
-	const nextBound = nextBase + delta;
+	const nextBound =
+		(typeof previousBound === 'number' ? previousBound : 0) + delta;
 	if (direction === 'lower') {
 		player.resourceLowerBounds[resourceId] = nextBound;
 	} else {
