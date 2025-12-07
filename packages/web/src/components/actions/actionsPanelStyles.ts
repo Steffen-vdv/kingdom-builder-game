@@ -166,14 +166,6 @@ export const TAB_LABEL_CLASS_NAMES = [
 	'dark:text-slate-100',
 ] as const;
 
-export const TAB_COUNT_CLASS_NAMES = [
-	'text-xs',
-	'font-semibold',
-	'tracking-wide',
-	'text-emerald-700',
-	'dark:text-emerald-200',
-] as const;
-
 export const CATEGORY_SUBTITLE_CLASS_NAMES = [
 	'mb-2',
 	'text-sm',
@@ -205,7 +197,6 @@ export const TAB_BUTTON_INACTIVE_CLASSES = joinClassNames(
 export const TAB_HEADER_CLASSES = joinClassNames(TAB_HEADER_CLASS_NAMES);
 export const TAB_ICON_CLASSES = joinClassNames(TAB_ICON_CLASS_NAMES);
 export const TAB_LABEL_CLASSES = joinClassNames(TAB_LABEL_CLASS_NAMES);
-export const TAB_COUNT_CLASSES = joinClassNames(TAB_COUNT_CLASS_NAMES);
 export const CATEGORY_SUBTITLE_CLASSES = joinClassNames(
 	CATEGORY_SUBTITLE_CLASS_NAMES,
 );
