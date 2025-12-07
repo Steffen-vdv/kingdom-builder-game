@@ -85,8 +85,7 @@ export interface RuntimeResourceBoundOfConfig {
 }
 
 export interface RuntimeResourceDefinition
-	extends
-		RuntimeResourceMetadata,
+	extends RuntimeResourceMetadata,
 		RuntimeResourceBounds,
 		RuntimeResourceTriggers {
 	readonly displayAsPercent: boolean;
@@ -107,7 +106,8 @@ export interface RuntimeResourceDefinition
 }
 
 export interface RuntimeResourceGroupParent
-	extends RuntimeResourceMetadata, RuntimeResourceBounds {
+	extends RuntimeResourceMetadata,
+		RuntimeResourceBounds {
 	readonly displayAsPercent: boolean;
 	readonly allowDecimal: boolean;
 	readonly trackValueBreakdown: boolean;

@@ -207,7 +207,7 @@ export default function PhasePanel() {
 		() =>
 			Boolean(
 				resolution &&
-				(!resolution.requireAcknowledgement || !resolution.isComplete),
+					(!resolution.requireAcknowledgement || !resolution.isComplete),
 			),
 		[resolution],
 	);
