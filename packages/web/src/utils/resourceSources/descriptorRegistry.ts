@@ -2,12 +2,7 @@ import type {
 	TranslationContext,
 	TranslationRegistry,
 } from '../../translation/context';
-import {
-	formatDetailText,
-	formatPhaseStep,
-	formatStatValue,
-	formatStepLabel,
-} from './format';
+import { formatDetailText, formatPhaseStep, formatStepLabel } from './format';
 import { createTriggerDescriptorEntry } from './triggerLabels';
 import type { DescriptorRegistryEntry, ResolveResult } from './types';
 
@@ -63,57 +58,10 @@ function createTranslationRegistryResolver<
 	};
 }
 
-function createRecordResolver<T extends { icon?: string; label?: string }>(
-	record: Readonly<Record<string, T>>,
-	fallback: string,
-): RegistryResolver {
-	return (id) => {
-		if (id) {
-			const item = record[id];
-			if (item) {
-				return {
-					icon: item.icon ?? '',
-					label: item.label ?? id,
-				} satisfies ResolveResult;
-			}
-		}
-		return {
-			icon: '',
-			label: id ?? fallback,
-		} satisfies ResolveResult;
-	};
-}
-
 function createDescriptorRegistry(
 	translationContext: TranslationContext,
 ): Registry {
 	return {
-		population: {
-			resolve: (id) => {
-				const base = translationContext.assets.population;
-				const fallbackIcon = base.icon ?? '';
-				const fallbackLabel = base.label ?? 'Population';
-				const entry = id
-					? translationContext.assets.populations[id]
-					: undefined;
-				return {
-					icon: entry?.icon ?? fallbackIcon,
-					label: entry?.label ?? id ?? fallbackLabel,
-				} satisfies ResolveResult;
-			},
-			formatDetail: defaultFormatDetail,
-			augmentDependencyDetail: (detail, link, player, _context, options) => {
-				const includeCounts = options.includeCounts ?? true;
-				if (!includeCounts || !link.id) {
-					return detail;
-				}
-				const count = player.population?.[link.id] ?? 0;
-				if (count > 0) {
-					return detail ? `${detail} ×${count}` : `×${count}`;
-				}
-				return detail;
-			},
-		},
 		building: {
 			resolve: createTranslationRegistryResolver(
 				translationContext.buildings,
@@ -161,22 +109,8 @@ function createDescriptorRegistry(
 				},
 			} satisfies DescriptorRegistryEntry;
 		})(),
-		stat: {
-			resolve: createRecordResolver(translationContext.assets.stats, 'Stat'),
-			formatDetail: defaultFormatDetail,
-			augmentDependencyDetail: (detail, link, player, context) => {
-				if (!link.id) {
-					return detail;
-				}
-				const statValue =
-					player.stats?.[link.id] ?? context.activePlayer.stats?.[link.id] ?? 0;
-				const valueText = formatStatValue(link.id, statValue, context.assets);
-				return detail ? `${detail} ${valueText}` : valueText;
-			},
-		},
 		resource: {
 			resolve: (id) => {
-				// Use ResourceV2 metadata for V2 resource IDs
 				if (id && translationContext.resourceMetadataV2.has(id)) {
 					const metadata = translationContext.resourceMetadataV2.get(id);
 					return {
@@ -184,39 +118,29 @@ function createDescriptorRegistry(
 						label: metadata.label ?? id,
 					} satisfies ResolveResult;
 				}
-				// Fall back to legacy assets for old-style keys
-				if (id) {
-					const legacyEntry = translationContext.assets.resources[id];
-					if (legacyEntry) {
-						return {
-							icon: legacyEntry.icon ?? '',
-							label: legacyEntry.label ?? id,
-						} satisfies ResolveResult;
-					}
-				}
 				return {
 					icon: '',
 					label: id ?? 'Resource',
 				} satisfies ResolveResult;
 			},
 			formatDetail: defaultFormatDetail,
-			augmentDependencyDetail: (detail, link, player, context, options) => {
-				// Show count for population-type resources
+			augmentDependencyDetail: (detail, link, player, _context, options) => {
 				const includeCounts = options.includeCounts ?? true;
 				if (!includeCounts || !link.id) {
 					return detail;
 				}
-				// Check if this is a population resource by looking at valuesV2
 				const resourceValue = player.valuesV2?.[link.id];
-				if (resourceValue !== undefined && resourceValue > 0) {
-					// Check if it looks like a population resource (has count semantics)
-					const isPopulationResource =
-						link.id.includes(':population:') || link.id.includes(':role:');
-					if (isPopulationResource) {
-						return detail ? `${detail} ×${resourceValue}` : `×${resourceValue}`;
-					}
+				if (resourceValue === undefined || resourceValue === 0) {
+					return detail;
 				}
-				return detail;
+				const metadata = translationContext.resourceMetadataV2.has(link.id)
+					? translationContext.resourceMetadataV2.get(link.id)
+					: undefined;
+				const isPercent = metadata?.displayAsPercent ?? false;
+				const valueText = isPercent
+					? `${Math.round(resourceValue * 100)}%`
+					: String(resourceValue);
+				return detail ? `${detail} ${valueText}` : valueText;
 			},
 		},
 		trigger: createTriggerDescriptorEntry(

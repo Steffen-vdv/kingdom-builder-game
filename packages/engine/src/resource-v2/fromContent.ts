@@ -131,12 +131,14 @@ function normalizeGroup(
 	definition: ContentResourceGroupDefinition,
 	index: number,
 ): RuntimeResourceGroup {
-	const { parent, order } = definition;
+	const { parent, order, label, icon } = definition;
 	if (typeof order === 'number') {
 		assertInteger(order, 'order', `group "${definition.id}"`);
 	}
 	return Object.freeze({
 		id: definition.id,
+		...(label ? { label } : {}),
+		...(icon ? { icon } : {}),
 		order: typeof order === 'number' ? order : null,
 		resolvedOrder: typeof order === 'number' ? order : index,
 		...(parent ? { parent: normalizeGroupParent(parent, index) } : {}),

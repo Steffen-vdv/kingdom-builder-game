@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResourceSourceLink as StatSourceLink } from '@kingdom-builder/protocol';
-import { getStatBreakdownSummary } from '../src/utils/stats';
-import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
+import { getStatBreakdownSummary } from '../src/utils/resourceSources';
+import { formatKindLabel } from '../src/utils/resourceSources/descriptorRegistry';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
@@ -19,6 +19,7 @@ type BreakdownSetup = {
 	primaryStatKey: string;
 	secondaryStatKey: string;
 	populationId: string;
+	populationResourceId: string;
 	buildingId: string;
 	developmentId: string;
 	actionId: string;
@@ -72,6 +73,8 @@ function createStatBreakdownSetup(): BreakdownSetup {
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
+	// ResourceV2 ID for population
+	const populationResourceId = `resource:population:role:${populationId}`;
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
 		populations: {
@@ -143,6 +146,9 @@ function createStatBreakdownSetup(): BreakdownSetup {
 		name: 'Active Player',
 		resources: { [resourceKey]: 0 },
 		population: { [populationId]: 2 },
+		valuesV2: {
+			[populationResourceId]: 2,
+		},
 		lands: [
 			{
 				id: landId,
@@ -179,6 +185,12 @@ function createStatBreakdownSetup(): BreakdownSetup {
 		actionCostResource: resourceKey,
 		ruleSnapshot,
 		metadata,
+		resourceMetadataV2: {
+			[populationResourceId]: {
+				icon: '🎖️',
+				label: 'Legion Vanguard',
+			},
+		},
 	});
 	const translationContext = createTranslationContext(
 		sessionSnapshot,
@@ -211,6 +223,7 @@ function createStatBreakdownSetup(): BreakdownSetup {
 		primaryStatKey,
 		secondaryStatKey: secondaryStatKey || primaryStatKey,
 		populationId,
+		populationResourceId,
 		buildingId,
 		developmentId,
 		actionId,
@@ -223,21 +236,21 @@ function createStatBreakdownSetup(): BreakdownSetup {
 	};
 }
 
-describe('stat breakdown summary', () => {
+describe('resource breakdown summary', () => {
 	it('includes ongoing and permanent army strength sources', () => {
 		const setup = createStatBreakdownSetup();
 		const {
 			translationContext,
 			player,
 			primaryStatKey,
-			populationId,
+			populationResourceId,
 			resourceKey,
 			phaseId,
 			phaseStepId,
 			metadataSelectors,
 		} = setup;
 		const dependencies: StatSourceLink[] = [
-			{ type: 'population', id: populationId },
+			{ type: 'resource', id: populationResourceId },
 			{ type: 'resource', id: resourceKey },
 		];
 		player.resourceSources[primaryStatKey] = {
@@ -246,8 +259,8 @@ describe('stat breakdown summary', () => {
 				meta: {
 					key: primaryStatKey,
 					longevity: 'ongoing',
-					kind: 'population',
-					id: populationId,
+					kind: 'resource',
+					id: populationResourceId,
 					dependsOn: dependencies,
 				},
 			},
@@ -280,8 +293,8 @@ describe('stat breakdown summary', () => {
 		}
 		const populationLabel = formatKindLabel(
 			translationContext,
-			'population',
-			populationId,
+			'resource',
+			populationResourceId,
 		);
 		expect(ongoing.title).toContain(populationLabel);
 		const ongoingTexts = ongoing.items.filter(

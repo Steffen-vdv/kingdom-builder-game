@@ -12,7 +12,7 @@ import {
 import { flattenActionDiffChanges } from '../translation/log/diff';
 import { describeSkipEvent } from '../utils/describeSkipEvent';
 import type { ResolutionSource } from './useActionResolution';
-import { formatDetailText } from '../utils/stats/format';
+import { formatDetailText } from '../utils/resourceSources/format';
 import type { SessionResourceKey } from './sessionTypes';
 
 interface FormatPhaseResolutionOptions {

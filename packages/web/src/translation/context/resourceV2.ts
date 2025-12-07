@@ -43,7 +43,8 @@ export function cloneResourceBoundsV2(
 function cloneResourceCatalogRegistryV2<TDefinition extends { id: string }>(
 	registry:
 		| SessionResourceCatalogV2['resources']
-		| SessionResourceCatalogV2['groups'],
+		| SessionResourceCatalogV2['groups']
+		| SessionResourceCatalogV2['categories'],
 ): {
 	ordered: readonly TDefinition[];
 	byId: Readonly<Record<string, TDefinition>>;
@@ -209,6 +210,18 @@ export function createResourceV2MetadataSelectors(
 		]);
 		seen.add(definition.id);
 	}
+	// Index parent resources from groups so effects can look them up
+	for (const group of catalog.groups.ordered) {
+		if (group.parent && !seen.has(group.parent.id)) {
+			const descriptor =
+				metadata?.[group.parent.id] ?? fallbackMetadata?.[group.parent.id];
+			entries.push([
+				group.parent.id,
+				createMetadataEntry(group.parent.id, group.parent, descriptor),
+			]);
+			seen.add(group.parent.id);
+		}
+	}
 	const descriptorRecords: ReadonlyArray<MetadataRecord> = [
 		metadata,
 		fallbackMetadata,
@@ -227,10 +240,31 @@ export function createResourceV2MetadataSelectors(
 		}
 	}
 	const factory: MetadataFactory = (id, descriptor) => {
+		// Check if this is a parent resource from a group
+		for (const group of catalog.groups.ordered) {
+			if (group.parent?.id === id) {
+				return createMetadataEntry(id, group.parent, descriptor);
+			}
+		}
 		const definition = catalog.resources.byId[id];
 		return createMetadataEntry(id, definition, descriptor);
 	};
 	return createMetadataSelectors(entries, descriptorRecords, factory);
+}
+
+/**
+ * Extracts group display metadata. Groups MUST have their own label and icon;
+ * we do NOT fall back to parent values since that hides misconfiguration.
+ * Missing fields show obvious placeholders ("??") to signal broken config.
+ */
+function extractGroupMetadata(
+	def: TranslationResourceCatalogV2['groups']['ordered'][number],
+) {
+	return {
+		label: def.label ?? '??',
+		icon: def.icon ?? '❓',
+		description: def.parent?.description ?? null,
+	};
 }
 
 export function createResourceV2GroupMetadataSelectors(
@@ -240,14 +274,13 @@ export function createResourceV2GroupMetadataSelectors(
 ): TranslationResourceV2MetadataSelectors {
 	const entries: Array<[string, TranslationResourceV2Metadata]> = [];
 	const seen = new Set<string>();
-	for (const definition of catalog.groups.ordered) {
-		const descriptor =
-			metadata?.[definition.id] ?? fallbackMetadata?.[definition.id];
+	for (const def of catalog.groups.ordered) {
+		const desc = metadata?.[def.id] ?? fallbackMetadata?.[def.id];
 		entries.push([
-			definition.id,
-			createMetadataEntry(definition.id, definition.parent, descriptor),
+			def.id,
+			createMetadataEntry(def.id, extractGroupMetadata(def), desc),
 		]);
-		seen.add(definition.id);
+		seen.add(def.id);
 	}
 	const descriptorRecords: ReadonlyArray<MetadataRecord> = [
 		metadata,
@@ -257,21 +290,23 @@ export function createResourceV2GroupMetadataSelectors(
 		if (!record) {
 			continue;
 		}
-		for (const [id, descriptor] of Object.entries(record)) {
+		for (const [id, desc] of Object.entries(record)) {
 			if (seen.has(id)) {
 				continue;
 			}
-			const definition = catalog.groups.byId[id];
-			entries.push([
-				id,
-				createMetadataEntry(id, definition?.parent, descriptor),
-			]);
+			const def = catalog.groups.byId[id];
+			const base = def ? extractGroupMetadata(def) : undefined;
+			entries.push([id, createMetadataEntry(id, base, desc)]);
 			seen.add(id);
 		}
 	}
-	const factory: MetadataFactory = (id, descriptor) => {
-		const definition = catalog.groups.byId[id];
-		return createMetadataEntry(id, definition?.parent, descriptor);
+	const factory: MetadataFactory = (id, desc) => {
+		const def = catalog.groups.byId[id];
+		return createMetadataEntry(
+			id,
+			def ? extractGroupMetadata(def) : undefined,
+			desc,
+		);
 	};
 	return createMetadataSelectors(entries, descriptorRecords, factory);
 }
@@ -280,43 +315,25 @@ export function createSignedResourceGainSelectors(
 	gains: ReadonlyArray<SessionRecentResourceGain>,
 ): TranslationSignedResourceGainSelectors {
 	const list = Object.freeze(
-		gains.map((entry) =>
-			Object.freeze({ key: entry.key, amount: entry.amount }),
-		),
+		gains.map((e) => Object.freeze({ key: e.key, amount: e.amount })),
 	);
-	const positives = Object.freeze(list.filter((entry) => entry.amount > 0));
-	const negatives = Object.freeze(list.filter((entry) => entry.amount < 0));
-	const byKeyCache = new Map<
-		string,
-		ReadonlyArray<SessionRecentResourceGain>
-	>();
+	const positives = Object.freeze(list.filter((e) => e.amount > 0));
+	const negatives = Object.freeze(list.filter((e) => e.amount < 0));
+	const cache = new Map<string, ReadonlyArray<SessionRecentResourceGain>>();
 	return Object.freeze({
-		list() {
-			return list;
-		},
-		positives() {
-			return positives;
-		},
-		negatives() {
-			return negatives;
-		},
+		list: () => list,
+		positives: () => positives,
+		negatives: () => negatives,
 		forResource(id: string) {
-			const cached = byKeyCache.get(id);
-			if (cached) {
-				return cached;
+			let result = cache.get(id);
+			if (!result) {
+				result = Object.freeze(list.filter((e) => e.key === id));
+				cache.set(id, result);
 			}
-			const entries = Object.freeze(list.filter((entry) => entry.key === id));
-			byKeyCache.set(id, entries);
-			return entries;
+			return result;
 		},
 		sumForResource(id: string) {
-			let total = 0;
-			for (const entry of list) {
-				if (entry.key === id) {
-					total += entry.amount;
-				}
-			}
-			return total;
+			return list.reduce((t, e) => (e.key === id ? t + e.amount : t), 0);
 		},
 	});
 }

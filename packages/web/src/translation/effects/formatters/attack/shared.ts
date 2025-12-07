@@ -2,7 +2,7 @@ import type { AttackPlayerDiff } from '@kingdom-builder/protocol';
 import {
 	formatStatValue,
 	statDisplaysAsPercent,
-} from '../../../../utils/stats';
+} from '../../../../utils/resourceSources';
 import type { TranslationContext } from '../../../context';
 import type { AttackStatDescriptor, DiffFormatOptions } from './types';
 import { selectAttackResourceDescriptor } from './registrySelectors';

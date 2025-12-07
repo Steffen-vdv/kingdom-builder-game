@@ -1593,11 +1593,13 @@
 		},
 		"resource-group:population": {
 			"id": "resource-group:population",
+			"label": "Population",
+			"icon": "👥",
 			"order": 2,
 			"resolvedOrder": 2,
 			"parent": {
-				"id": "resource:core:total",
-				"label": "Population",
+				"id": "resource:core:total-population",
+				"label": "Current Population",
 				"icon": "👥",
 				"description": "Total population count.",
 				"order": 2,
@@ -1615,7 +1617,7 @@
 			"order": 3,
 			"resolvedOrder": 3,
 			"parent": {
-				"id": "resource:core:total",
+				"id": "resource:core:total-population",
 				"label": "Population Roles",
 				"icon": "👥",
 				"description": "Assigned population roles.",

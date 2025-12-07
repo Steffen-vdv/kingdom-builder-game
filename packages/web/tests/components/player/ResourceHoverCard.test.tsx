@@ -339,25 +339,25 @@ describe('Resource HoverCard behavior', () => {
 			expect(hiddenIconSpan).toBeTruthy();
 		});
 
-		it('uses group metadata (with parent icon) over resource metadata', () => {
+		it('uses group-level icon from definition (no parent fallback)', () => {
 			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
 			if (!resourceCatalog) {
 				throw new Error('Expected resourceCatalogV2');
 			}
-			// Find a group with a parent that has an icon
-			const groupWithParent = resourceCatalog.groups.ordered.find(
-				(group) => group.parent?.icon,
+			// Find a group with its own icon defined (not relying on parent)
+			const groupWithIcon = resourceCatalog.groups.ordered.find(
+				(group) => group.icon,
 			) as SessionResourceGroupDefinitionV2 | undefined;
-			if (!groupWithParent) {
+			if (!groupWithIcon) {
 				return;
 			}
-			// Get the group metadata which should have the parent's icon
+			// Get the group metadata which should use the group's own icon
 			const groupMetadata =
 				mockGame.translationContext.resourceGroupMetadataV2.get(
-					groupWithParent.id,
+					groupWithIcon.id,
 				);
-			// Verify the group metadata has the icon from the parent
-			expect(groupMetadata.icon).toBe(groupWithParent.parent!.icon);
+			// Verify the group metadata uses the group's own icon
+			expect(groupMetadata.icon).toBe(groupWithIcon.icon);
 		});
 	});
 });

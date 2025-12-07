@@ -231,7 +231,7 @@ export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 				},
 				meta: {
 					source: {
-						type: 'population',
+						type: 'resource',
 						id: SYNTHETIC_POPULATION_ROLE_ID,
 						count: 1,
 					},

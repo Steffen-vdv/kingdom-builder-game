@@ -3,7 +3,7 @@ import { resourceV2 } from '../resourceBuilder';
 import type { ResourceV2Definition, ResourceV2GroupDefinition } from '../types';
 
 const POPULATION_GROUP_ID = 'population';
-const POPULATION_PARENT_ID = 'resource:core:total';
+const POPULATION_PARENT_ID = 'resource:core:total-population';
 const POPULATION_GROUP_ORDER = 3;
 
 const COUNCIL_INFO = {
@@ -53,12 +53,14 @@ export const POPULATION_RESOURCE_DEFINITIONS: readonly ResourceV2Definition[] = 
 
 export const POPULATION_GROUP_DEFINITIONS: readonly ResourceV2GroupDefinition[] = [
 	resourceGroup(POPULATION_GROUP_ID)
+		.label('Population')
+		.icon('👥')
 		.order(POPULATION_GROUP_ORDER)
 		.parent({
 			id: POPULATION_PARENT_ID,
-			label: 'Population',
-			icon: '🧑‍🤝‍🧑',
-			description: 'Population aggregates all assigned roles. This virtual track sums its child resources so you can monitor total staffing at a glance.',
+			label: 'Current Population',
+			icon: '👥',
+			description: 'Current Population is the sum of all assigned roles. ' + 'It cannot exceed Max Population.',
 		})
 		.build(),
 ];
