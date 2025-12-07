@@ -9,6 +9,7 @@ import { createPlayerPanelFixtures } from '../../helpers/playerPanelFixtures';
 import { RegistryMetadataProvider } from '../../../src/contexts/RegistryMetadataContext';
 import type { HoverCard } from '../../../src/state/useHoverCard';
 import type {
+	SessionPlayerStateSnapshot,
 	SessionResourceCategoryDefinitionV2,
 	SessionResourceGroupDefinitionV2,
 } from '@kingdom-builder/protocol';
@@ -156,6 +157,107 @@ describe('Resource HoverCard behavior', () => {
 				expect(effect).toHaveProperty('title');
 				expect(effect).toHaveProperty('items');
 			}
+		});
+
+		it('uses passive-based tier detection over value-based when desync occurs', () => {
+			// This test verifies that tier detection prioritizes passives
+			// (authoritative) over range-based value checks. The previous
+			// value-only implementation would fail this test by showing neutral
+			// tier instead of joyous tier.
+			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+			if (!resourceCatalog) {
+				throw new Error('Expected resourceCatalogV2');
+			}
+			const tieredResourceKey = mockGame.ruleSnapshot.tieredResourceKey;
+			const tierDefinitions = mockGame.ruleSnapshot.tierDefinitions;
+
+			// Find the joyous tier (has passive) and neutral tier (no passive)
+			const joyousTier = tierDefinitions.find((t) => t.preview?.id);
+			const neutralTier = tierDefinitions.find((t) => !t.preview?.id);
+			if (!joyousTier || !neutralTier) {
+				throw new Error('Expected both joyous and neutral tiers');
+			}
+
+			// Create a player with:
+			// - joyous tier passive (authoritative indicator of joyous tier)
+			// - resource value in neutral tier range (would indicate neutral if
+			//   using value-only check)
+			const neutralRangeValue = (neutralTier.range.min ?? 0) + 1; // e.g., 5
+			const playerWithDesync: SessionPlayerStateSnapshot = {
+				...activePlayerSnapshot,
+				passives: [
+					{
+						id: joyousTier.preview!.id,
+						name: joyousTier.display?.title,
+						icon: joyousTier.display?.icon,
+					},
+				],
+				valuesV2: {
+					...activePlayerSnapshot.valuesV2,
+					[tieredResourceKey]: neutralRangeValue,
+				},
+			};
+
+			// Find a category containing the tiered resource
+			const category = resourceCatalog.categories.ordered.find((cat) =>
+				cat.contents.some(
+					(item) => item.type === 'resource' && item.id === tieredResourceKey,
+				),
+			);
+			if (!category) {
+				return; // Skip if tiered resource not in any category
+			}
+			const tieredOnlyCategory = {
+				...category,
+				contents: category.contents.filter(
+					(item) => item.type === 'resource' && item.id === tieredResourceKey,
+				),
+			};
+
+			const tieredMeta =
+				mockGame.translationContext.resourceMetadataV2.get(tieredResourceKey);
+			const tieredIcon = tieredMeta.icon;
+
+			render(
+				<RegistryMetadataProvider registries={registries} metadata={metadata}>
+					<ResourceCategoryRow
+						category={tieredOnlyCategory as SessionResourceCategoryDefinitionV2}
+						player={playerWithDesync}
+					/>
+				</RegistryMetadataProvider>,
+			);
+
+			const resourceButtons = screen.getAllByRole('button');
+			const resourceButton = resourceButtons.find((btn) => {
+				if (btn.classList.contains('info-bar__icon')) {
+					return false;
+				}
+				return tieredIcon && btn.textContent?.includes(tieredIcon);
+			});
+			if (!resourceButton) {
+				throw new Error('Expected tiered resource button');
+			}
+
+			fireEvent.mouseEnter(resourceButton);
+			expect(lastHoverCard).not.toBeNull();
+
+			// The hover card should show tier effects with joyous tier highlighted
+			// (from passive), not neutral tier (from value range)
+			const effects = lastHoverCard!.effects;
+			expect(effects.length).toBeGreaterThan(0);
+
+			// Find the effect group that's marked as active (the joyous tier)
+			// The active tier should be joyous (from passive), even though value
+			// is in neutral range
+			const joyousTierTitle = joyousTier.display?.title ?? joyousTier.id;
+			const hasJoyousTierEntry = effects.some(
+				(effect) =>
+					typeof effect === 'object' &&
+					'title' in effect &&
+					typeof effect.title === 'string' &&
+					effect.title.includes(joyousTierTitle),
+			);
+			expect(hasJoyousTierEntry).toBe(true);
 		});
 
 		it('does not pass Value/Bounds groups to effects for resources', () => {

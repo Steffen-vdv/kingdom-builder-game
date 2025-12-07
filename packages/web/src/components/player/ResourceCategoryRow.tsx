@@ -94,9 +94,30 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		[passiveAssetMetadata],
 	);
 
-	// Find the active tier by checking the tiered resource's value against tier
-	// ranges. This handles tiers without passives (like neutral tiers).
+	// Map tier passive IDs to tier definitions for authoritative tier detection
+	const tierByPassiveId = React.useMemo(
+		() =>
+			tierDefinitions.reduce<Map<string, TierDefinition>>((map, tier) => {
+				const passiveId = tier.preview?.id;
+				if (passiveId) {
+					map.set(passiveId, tier);
+				}
+				return map;
+			}, new Map()),
+		[tierDefinitions],
+	);
+
+	// Find the active tier: first check passives (authoritative), then fall back
+	// to range check for tiers without passives (like neutral tiers).
 	const activeTierId = React.useMemo(() => {
+		// Check player's passives first - this is the authoritative tier indicator
+		for (const passive of player.passives) {
+			const tier = tierByPassiveId.get(passive.id);
+			if (tier) {
+				return tier.id;
+			}
+		}
+		// Fall back to range-based check for tiers without passives
 		if (!tieredResourceKey) {
 			return undefined;
 		}
@@ -109,7 +130,13 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			}
 		}
 		return undefined;
-	}, [tieredResourceKey, tierDefinitions, player.valuesV2]);
+	}, [
+		player.passives,
+		tierByPassiveId,
+		tieredResourceKey,
+		tierDefinitions,
+		player.valuesV2,
+	]);
 
 	const showResourceCard = React.useCallback(
 		(resourceId: string) => {
