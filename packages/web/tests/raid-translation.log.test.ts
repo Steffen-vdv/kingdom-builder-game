@@ -41,7 +41,10 @@ describe('raid translation log', () => {
 			translation,
 			SYNTH_RESOURCE_IDS.castleHP,
 		);
-		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.resourceId)!;
+		const powerStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.power.resourceId,
+		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
 			SYNTH_RESOURCE_IDS.gold,
@@ -107,7 +110,10 @@ describe('raid translation log', () => {
 	it('logs building attack action with destruction evaluation', () => {
 		const { engineContext, translation, buildingAttack, building } =
 			createSyntheticEngineContext();
-		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.resourceId)!;
+		const powerStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.power.resourceId,
+		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
 			SYNTH_RESOURCE_IDS.gold,

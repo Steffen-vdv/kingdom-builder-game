@@ -42,8 +42,8 @@ describe('result_mod evaluation modifiers', () => {
 		runEffects([effect], engineContext);
 
 		const gains = [
-			{ key: primaryResource, amount: 1 },
-			{ key: secondaryResource ?? primaryResource, amount: -2 },
+			{ resourceId: primaryResource, amount: 1 },
+			{ resourceId: secondaryResource ?? primaryResource, amount: -2 },
 		];
 
 		engineContext.passives.runEvaluationMods(
@@ -52,7 +52,7 @@ describe('result_mod evaluation modifiers', () => {
 			gains,
 		);
 
-		expect(gains[0]).toEqual({ key: primaryResource, amount: 3 });
+		expect(gains[0]).toEqual({ resourceId: primaryResource, amount: 3 });
 		expect(gains[1]).toEqual({
 			resourceId: secondaryResource ?? primaryResource,
 			amount: -2,
@@ -71,13 +71,13 @@ describe('result_mod evaluation modifiers', () => {
 			engineContext,
 		);
 
-		const followUpGains = [{ key: primaryResource, amount: 1 }];
+		const followUpGains = [{ resourceId: primaryResource, amount: 1 }];
 		engineContext.passives.runEvaluationMods(
 			EVALUATION_TARGET,
 			engineContext,
 			followUpGains,
 		);
-		expect(followUpGains[0]).toEqual({ key: primaryResource, amount: 1 });
+		expect(followUpGains[0]).toEqual({ resourceId: primaryResource, amount: 1 });
 	});
 
 	it('throws when required identifiers are missing', () => {

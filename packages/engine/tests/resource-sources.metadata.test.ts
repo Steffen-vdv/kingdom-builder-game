@@ -107,7 +107,8 @@ describe('resource sources metadata', () => {
 
 		// Stat values ARE Resource IDs directly - no mapper needed
 		applyResourceDelta(player, Stat.armyStrength, 2, meta);
-		const initialEntry = player.resourceSources[Stat.armyStrength]?.[meta.resourceId];
+		const initialEntry =
+			player.resourceSources[Stat.armyStrength]?.[meta.resourceId];
 		expect(initialEntry?.amount).toBe(2);
 		expect(initialEntry?.meta.longevity).toBe('ongoing');
 

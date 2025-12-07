@@ -110,7 +110,7 @@ describe('EngineSession', () => {
 		// Ensure player has enough AP to perform the action
 		session.applyDeveloperPreset({
 			playerId: session.getSnapshot().game.activePlayerId,
-			resources: [{ key: CResource.ap, target: 5 }],
+			resources: [{ resourceId: CResource.ap, target: 5 }],
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
@@ -144,7 +144,7 @@ describe('EngineSession', () => {
 		// Ensure player has enough AP so action fails on land, not AP
 		session.applyDeveloperPreset({
 			playerId: session.getSnapshot().game.activePlayerId,
-			resources: [{ key: CResource.ap, target: 5 }],
+			resources: [{ resourceId: CResource.ap, target: 5 }],
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
@@ -584,7 +584,7 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 	advanceToPlayerMain(session, opponentId);
 	session.applyDeveloperPreset({
 		playerId: opponentId,
-		resources: [{ key: CResource.ap, target: 1 }],
+		resources: [{ resourceId: CResource.ap, target: 1 }],
 	});
 	const performSpy = vi.fn<
 		Parameters<PerformActionFn>,

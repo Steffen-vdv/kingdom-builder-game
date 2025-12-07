@@ -13,7 +13,10 @@ describe('result modifiers', () => {
 		const modGainB = 3;
 
 		const content = createContentFactory();
-		const base = resourceAmountParams({ resourceId: resourceKey, amount: baseGain });
+		const base = resourceAmountParams({
+			resourceId: resourceKey,
+			amount: baseGain,
+		});
 		const action = content.action({
 			effects: [
 				{

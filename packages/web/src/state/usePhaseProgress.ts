@@ -22,11 +22,7 @@ interface PhaseProgressOptions {
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'buildings'
-		| 'developments'
-		| 'resources'
+		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	onFatalSessionError?: ((error: unknown) => void) | undefined;

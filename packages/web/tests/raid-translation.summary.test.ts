@@ -48,7 +48,10 @@ describe('raid translation summary', () => {
 			translation,
 			SYNTH_RESOURCE_IDS.castleHP,
 		);
-		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.resourceId)!;
+		const powerStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.power.resourceId,
+		)!;
 		const warWeariness = selectAttackStatDescriptor(
 			translation,
 			SYNTH_RESOURCE_IDS.warWeariness,
@@ -120,7 +123,10 @@ describe('raid translation summary', () => {
 				translation,
 				SYNTH_RESOURCE_IDS.castleHP,
 			);
-			const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.resourceId)!;
+			const powerStat = getStat(
+				translation,
+				SYNTH_COMBAT_STATS.power.resourceId,
+			)!;
 			const fallbackLabel =
 				humanizeIdentifier(SYNTH_COMBAT_STATS.power.resourceId) ||
 				SYNTH_COMBAT_STATS.power.resourceId;
@@ -157,7 +163,10 @@ describe('raid translation summary', () => {
 	it('summarizes building attack as destruction', () => {
 		const { translation, buildingAttack, building } =
 			createSyntheticEngineContext();
-		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.resourceId)!;
+		const powerStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.power.resourceId,
+		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
 			SYNTH_RESOURCE_IDS.gold,

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
 	PhaseId,
 	Resource,
-	PopulationRole,
 	PHASES,
 	RULES,
 } from '@kingdom-builder/contents';
@@ -105,7 +104,7 @@ describe('simulateUpcomingPhases', () => {
 		).toBe(true);
 	});
 
-	it('applies upkeep costs from lands and population', () => {
+	it('applies upkeep costs from lands', () => {
 		const context = createTestEngine();
 		const player = sanitizePlayerState(context);
 		const land = player.lands[0]!;
@@ -113,23 +112,14 @@ describe('simulateUpcomingPhases', () => {
 		// Keys ARE Resource IDs directly - no mapper needed
 		player.resourceValues[Resource.gold] = 10;
 		land.upkeep = { [Resource.gold]: upkeepCost };
-		player.resourceValues[PopulationRole.Council] = 1;
 		const result = simulateUpcomingPhases(context, player.id, {
 			phaseIds: {
 				growth: PhaseId.Growth,
 				upkeep: PhaseId.Upkeep,
 			},
 		});
-		const councilUpkeep =
-			context.populations.get(PopulationRole.Council)?.upkeep?.[
-				Resource.gold
-			] ?? 0;
-		expect(result.delta.values[Resource.gold]).toBe(
-			-(upkeepCost + councilUpkeep),
-		);
-		expect(result.after.values[Resource.gold]).toBe(
-			10 - upkeepCost - councilUpkeep,
-		);
+		expect(result.delta.values[Resource.gold]).toBe(-upkeepCost);
+		expect(result.after.values[Resource.gold]).toBe(10 - upkeepCost);
 	});
 
 	it('uses rule metadata to resolve growth and upkeep when phases are reordered', () => {

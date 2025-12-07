@@ -182,7 +182,10 @@ export function extractMetaFromEffect(
 		partialMeta.effect = effectInfo;
 	}
 	if (!partialMeta.resourceId) {
-		partialMeta.resourceId = createResourceSourceKey(effectDefinition, resourceId);
+		partialMeta.resourceId = createResourceSourceKey(
+			effectDefinition,
+			resourceId,
+		);
 	}
 	if (!partialMeta.longevity) {
 		partialMeta.longevity = 'permanent';

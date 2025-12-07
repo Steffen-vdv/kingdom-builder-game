@@ -74,11 +74,7 @@ const OVERVIEW_DESCRIPTOR_ERROR =
 interface RegistryMetadataProviderProps {
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'resources'
-		| 'buildings'
-		| 'developments'
+		'actions' | 'actionCategories' | 'resources' | 'buildings' | 'developments'
 	>;
 	metadata?: SessionSnapshotMetadata | null;
 	children: React.ReactNode;

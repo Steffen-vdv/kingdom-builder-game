@@ -140,7 +140,8 @@ describe('royal decree action effect group', () => {
 				(candidate) =>
 					candidate.type === 'resource' &&
 					candidate.method === 'add' &&
-					(candidate.params as { key?: string }).resourceId === CResource.happiness,
+					(candidate.params as { key?: string }).resourceId ===
+						CResource.happiness,
 			);
 			if (effect) {
 				happinessGain +=

@@ -108,11 +108,7 @@ interface DefinitionLookups {
 export const useDefinitionLookups = (
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'resources'
-		| 'buildings'
-		| 'developments'
+		'actions' | 'actionCategories' | 'resources' | 'buildings' | 'developments'
 	>,
 ): DefinitionLookups =>
 	useMemo(() => {
@@ -163,11 +159,7 @@ interface MetadataLookups {
 export const useMetadataLookups = (
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'resources'
-		| 'buildings'
-		| 'developments'
+		'actions' | 'actionCategories' | 'resources' | 'buildings' | 'developments'
 	>,
 	overrides: DescriptorOverrides,
 ): MetadataLookups =>

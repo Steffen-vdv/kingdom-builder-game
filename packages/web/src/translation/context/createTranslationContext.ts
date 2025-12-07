@@ -41,11 +41,7 @@ export function createTranslationContext(
 	session: SessionSnapshot,
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'buildings'
-		| 'developments'
-		| 'resources'
+		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
 	>,
 	metadata: SessionSnapshotMetadata,
 	options: TranslationContextOptions,

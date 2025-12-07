@@ -49,14 +49,14 @@ describe('result_mod evaluation modifiers', () => {
 		engineContext.activePlayer.resourceValues[Resource.ap] = 0;
 
 		const gains: ResourceGain[] = [
-			{ key: Resource.gold, amount: 5 },
-			{ key: Resource.happiness, amount: 3 },
-			{ key: Resource.ap, amount: -5 },
+			{ resourceId: Resource.gold, amount: 5 },
+			{ resourceId: Resource.happiness, amount: 3 },
+			{ resourceId: Resource.ap, amount: -5 },
 		];
 
 		engineContext.passives.runEvaluationMods(TARGET_KEY, engineContext, gains);
 
-		expect(gains[0]).toMatchObject({ key: Resource.gold });
+		expect(gains[0]).toMatchObject({ resourceId: Resource.gold });
 		expect(gains[0].amount).toBe(8);
 		expect(gains[1].resourceId).toBe(Resource.happiness);
 		expect(gains[1].amount).toBeCloseTo(5.5);

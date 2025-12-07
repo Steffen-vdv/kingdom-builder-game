@@ -30,11 +30,7 @@ interface UseActionPerformerOptions {
 	actionCostResource: SessionResourceKey;
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'buildings'
-		| 'developments'
-		| 'resources'
+		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
 	>;
 	addResolutionLog: (resolution: ActionResolution) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;

@@ -62,7 +62,10 @@ describe('AI simulation guard', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
+					params: resourceAmountParams({
+						resourceId: CResource.gold,
+						amount: 1,
+					}),
 				},
 			],
 		});

@@ -32,8 +32,8 @@ describe('EvaluationModifierService', () => {
 			percent: 0.1,
 		}));
 		const gains = [
-			{ key: resourceA, amount: 10 },
-			{ key: resourceB, amount: 5 },
+			{ resourceId: resourceA, amount: 10 },
+			{ resourceId: resourceB, amount: 5 },
 		];
 		service.run(primaryTarget, {} as EngineContext, gains);
 		expect(gains[0]!.amount).toBe(13);
@@ -68,8 +68,8 @@ describe('EvaluationModifierService', () => {
 			},
 		}));
 		const cloneGains = [
-			{ key: resourceA, amount: 4 },
-			{ key: resourceB, amount: 8 },
+			{ resourceId: resourceA, amount: 4 },
+			{ resourceId: resourceB, amount: 8 },
 		];
 		clone.run(target, {} as EngineContext, cloneGains);
 		expect(cloneGains[0]!.amount).toBe(6);
@@ -79,8 +79,8 @@ describe('EvaluationModifierService', () => {
 		expect(originalMap?.has('original')).toBe(true);
 		expect(originalMap?.has('cloneOnly')).toBe(false);
 		const originalGains = [
-			{ key: resourceA, amount: 4 },
-			{ key: resourceB, amount: 8 },
+			{ resourceId: resourceA, amount: 4 },
+			{ resourceId: resourceB, amount: 8 },
 		];
 		service.run(target, {} as EngineContext, originalGains);
 		expect(originalGains[0]!.amount).toBe(6);

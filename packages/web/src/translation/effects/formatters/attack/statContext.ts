@@ -90,7 +90,8 @@ function resolveAttackStats(
 			if (!isAttackStatRole(role)) {
 				continue;
 			}
-			const key = typeof entry.resourceId === 'string' ? entry.resourceId : undefined;
+			const key =
+				typeof entry.resourceId === 'string' ? entry.resourceId : undefined;
 			const label = typeof entry.label === 'string' ? entry.label : undefined;
 			const icon = typeof entry.icon === 'string' ? entry.icon : undefined;
 			const overrides: AttackStatOverrides = {};

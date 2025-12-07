@@ -51,7 +51,10 @@ const originalStatEntries = new Map<string, SyntheticDescriptor | undefined>();
 
 function overrideStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
-	originalStatEntries.set(config.resourceId, SYNTH_RESOURCE_METADATA[config.resourceId]);
+	originalStatEntries.set(
+		config.resourceId,
+		SYNTH_RESOURCE_METADATA[config.resourceId],
+	);
 	SYNTH_RESOURCE_METADATA[config.resourceId] = {
 		key: config.resourceId,
 		icon: config.icon,

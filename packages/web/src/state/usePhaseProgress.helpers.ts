@@ -48,11 +48,7 @@ interface AdvanceToActionPhaseOptions {
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'buildings'
-		| 'developments'
-		| 'resources'
+		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
 	>;
 	onFatalSessionError?: (error: unknown) => void;
 	forceAdvance?: boolean;
