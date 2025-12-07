@@ -117,6 +117,16 @@ export interface RuntimeResourceGroupParent
 
 export interface RuntimeResourceGroup {
 	readonly id: string;
+	/**
+	 * Display label for the group in the resource bar.
+	 * Falls back to parent.label if not set.
+	 */
+	readonly label?: string;
+	/**
+	 * Display icon for the group in the resource bar.
+	 * Falls back to parent.icon if not set.
+	 */
+	readonly icon?: string;
 	readonly order: number | null;
 	readonly resolvedOrder: number;
 	readonly parent?: RuntimeResourceGroupParent;

@@ -252,17 +252,18 @@ export function createResourceV2MetadataSelectors(
 	return createMetadataSelectors(entries, descriptorRecords, factory);
 }
 
-/** Merges group label/icon with parent as fallback. */
-function mergeGroupWithParent(
+/**
+ * Extracts group display metadata. Groups MUST have their own label and icon;
+ * we do NOT fall back to parent values since that hides misconfiguration.
+ * Missing fields show obvious placeholders ("??") to signal broken config.
+ */
+function extractGroupMetadata(
 	def: TranslationResourceCatalogV2['groups']['ordered'][number],
 ) {
-	if (!def.parent && !def.label && !def.icon) {
-		return undefined;
-	}
 	return {
-		...def.parent,
-		...(def.label && { label: def.label }),
-		...(def.icon && { icon: def.icon }),
+		label: def.label ?? '??',
+		icon: def.icon ?? '❓',
+		description: def.parent?.description ?? null,
 	};
 }
 
@@ -277,7 +278,7 @@ export function createResourceV2GroupMetadataSelectors(
 		const desc = metadata?.[def.id] ?? fallbackMetadata?.[def.id];
 		entries.push([
 			def.id,
-			createMetadataEntry(def.id, mergeGroupWithParent(def), desc),
+			createMetadataEntry(def.id, extractGroupMetadata(def), desc),
 		]);
 		seen.add(def.id);
 	}
@@ -294,7 +295,7 @@ export function createResourceV2GroupMetadataSelectors(
 				continue;
 			}
 			const def = catalog.groups.byId[id];
-			const base = def ? mergeGroupWithParent(def) : undefined;
+			const base = def ? extractGroupMetadata(def) : undefined;
 			entries.push([id, createMetadataEntry(id, base, desc)]);
 			seen.add(id);
 		}
@@ -303,7 +304,7 @@ export function createResourceV2GroupMetadataSelectors(
 		const def = catalog.groups.byId[id];
 		return createMetadataEntry(
 			id,
-			def ? mergeGroupWithParent(def) : undefined,
+			def ? extractGroupMetadata(def) : undefined,
 			desc,
 		);
 	};
