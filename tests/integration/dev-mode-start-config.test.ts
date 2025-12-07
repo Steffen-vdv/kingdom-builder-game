@@ -79,7 +79,7 @@ describe('dev mode start configuration', () => {
 		if (!player) {
 			throw new Error('Expected player to be present at game start');
 		}
-		// Count houses in devmode: 6 houses configured in GAME_START devMode
+		// Count houses in devmode: 6 houses from initial_setup_devmode action
 		const houseCount = player.lands.reduce((count, land) => {
 			return (
 				count +
@@ -88,7 +88,7 @@ describe('dev mode start configuration', () => {
 		}, 0);
 		expect(houseCount).toBe(6);
 		// Each house adds +1 to max population via onBuild effect
-		// Base populationMax is 1 (from PLAYER_START_STATS in game.ts)
+		// Base populationMax is 1 (from initial_setup_devmode action)
 		// So total should be 1 + 6 = 7
 		const populationMaxId = Stat.populationMax;
 		expect(player.valuesV2[populationMaxId]).toBe(7);
