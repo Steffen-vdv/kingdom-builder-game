@@ -95,7 +95,6 @@
 		"vitest": "^4.0.15"
 	},
 	"lint-staged": {
-		"*.{js,jsx,ts,tsx,json,md,cjs,mjs,mts,cts,yml,yaml}": "prettier --write",
 		"*.{ts,tsx}": [
 			"node scripts/run-eslint.mjs --max-warnings=0",
 			"bash -c 'tsc --noEmit'"
