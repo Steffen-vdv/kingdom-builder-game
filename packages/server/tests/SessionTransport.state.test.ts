@@ -61,10 +61,10 @@ describe('SessionTransport session state', () => {
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expectStaticMetadata(manager.getMetadata());
 		expect(state.registries.resources[costResourceId]).toMatchObject({
-			key: costResourceId,
+			id: costResourceId,
 		});
 		expect(state.registries.resources[gainResourceId]).toMatchObject({
-			key: gainResourceId,
+			id: gainResourceId,
 		});
 	});
 

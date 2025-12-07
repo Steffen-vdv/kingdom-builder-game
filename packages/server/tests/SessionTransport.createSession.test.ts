@@ -204,15 +204,12 @@ describe('SessionTransport createSession', () => {
 		expect(new Set(Object.keys(registries.developments))).toEqual(
 			new Set(factory.developments.keys()),
 		);
-		expect(new Set(Object.keys(registries.populations))).toEqual(
-			new Set(factory.populations.keys()),
-		);
 		expect(registries.actions[actionId]).toMatchObject({ id: actionId });
 		expect(registries.resources[costResourceId]).toMatchObject({
-			key: costResourceId,
+			id: costResourceId,
 		});
 		expect(registries.resources[gainResourceId]).toMatchObject({
-			key: gainResourceId,
+			id: gainResourceId,
 		});
 	});
 

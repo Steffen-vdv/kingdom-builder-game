@@ -3,12 +3,10 @@ import {
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
-	populationSchema,
 	validateGameConfig,
 	type ActionConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
-	type PopulationConfig,
 	type GameConfig,
 	type PhaseConfig,
 	type RuleSet,
@@ -35,7 +33,6 @@ export interface SessionBaseOptions {
 	actionCategories: Registry<ActionCategoryConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
-	populations: Registry<PopulationConfig>;
 	phases: PhaseConfig[];
 	rules: RuleSet;
 	resourceCatalog: RuntimeResourceContent;
@@ -63,8 +60,10 @@ export function buildSessionAssets(
 		};
 	}
 	const validated = validateGameConfig(config);
-	const { actions, buildings, developments, populations } =
-		applyConfigRegistries(validated, context.baseOptions);
+	const { actions, buildings, developments } = applyConfigRegistries(
+		validated,
+		context.baseOptions,
+	);
 	const phases = validated.phases ?? context.baseOptions.phases;
 	const resourceCatalog = context.baseOptions.resourceCatalog;
 	const resources = freezeSerializedRegistry(
@@ -80,7 +79,6 @@ export function buildSessionAssets(
 		actions: freezeSerializedRegistry(cloneRegistry(actions)),
 		buildings: freezeSerializedRegistry(cloneRegistry(buildings)),
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
-		populations: freezeSerializedRegistry(cloneRegistry(populations)),
 		resources,
 		resourceGroups,
 		resourceCategories,
@@ -123,12 +121,10 @@ function applyConfigRegistries(
 	actions: Registry<ActionConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
-	populations: Registry<PopulationConfig>;
 } {
 	let actions = baseOptions.actions;
 	let buildings = baseOptions.buildings;
 	let developments = baseOptions.developments;
-	let populations = baseOptions.populations;
 	const overrideRegistry = <DefinitionType extends { id: string }>(
 		definitions: DefinitionType[] | undefined,
 		schema: ZodType<DefinitionType>,
@@ -150,10 +146,5 @@ function applyConfigRegistries(
 		developmentSchema,
 		developments,
 	);
-	populations = overrideRegistry(
-		config.populations,
-		populationSchema,
-		populations,
-	);
-	return { actions, buildings, developments, populations };
+	return { actions, buildings, developments };
 }

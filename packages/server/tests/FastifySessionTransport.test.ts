@@ -121,7 +121,6 @@ describe('FastifySessionTransport', () => {
 		const [actionId] = factory.actions.entries()[0];
 		const [buildingId] = factory.buildings.entries()[0];
 		const [developmentId] = factory.developments.entries()[0];
-		const [populationId] = factory.populations.entries()[0];
 		const actions = factory.actions
 			.entries()
 			.map(([, definition]) => structuredClone(definition));
@@ -129,9 +128,6 @@ describe('FastifySessionTransport', () => {
 			.entries()
 			.map(([, definition]) => structuredClone(definition));
 		const developments = factory.developments
-			.entries()
-			.map(([, definition]) => structuredClone(definition));
-		const populations = factory.populations
 			.entries()
 			.map(([, definition]) => structuredClone(definition));
 		const actionOverride = actions.find(
@@ -162,19 +158,10 @@ describe('FastifySessionTransport', () => {
 			throw new Error('Missing development override.');
 		}
 		developmentOverride.name = `${developmentOverride.name} (override)`;
-		const populationOverride = populations.find(
-			(definition) => definition.id === populationId,
-		);
-		expect(populationOverride).toBeDefined();
-		if (!populationOverride) {
-			throw new Error('Missing population override.');
-		}
-		populationOverride.name = `${populationOverride.name} (override)`;
 		const configPayload = {
 			actions,
 			buildings,
 			developments,
-			populations,
 		};
 		const response = await app.inject({
 			method: 'POST',
@@ -191,17 +178,10 @@ describe('FastifySessionTransport', () => {
 		expect(body.registries.developments[developmentId].name).toBe(
 			developmentOverride.name,
 		);
-		expect(body.registries.populations[populationId].name).toBe(
-			populationOverride.name,
-		);
 		const metadata = body.snapshot.metadata;
 		expect(metadata.buildings?.[buildingId]?.label).toBe(buildingOverride.name);
 		expect(metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,
-		);
-		// Population metadata is now in the resources object
-		expect(metadata.resources?.[populationId]?.label).toBe(
-			populationOverride.name,
 		);
 		const metadataResponse = await app.inject({
 			method: 'GET',
@@ -216,10 +196,6 @@ describe('FastifySessionTransport', () => {
 		);
 		expect(metadataBody.metadata.buildings?.[buildingId]?.label).toBe(
 			buildingOverride.name,
-		);
-		// Population metadata is now in the resources object
-		expect(metadataBody.metadata.resources?.[populationId]?.label).toBe(
-			populationOverride.name,
 		);
 		expect(metadataBody.metadata.developments?.[developmentId]?.label).toBe(
 			developmentOverride.name,

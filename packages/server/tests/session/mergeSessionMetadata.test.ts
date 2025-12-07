@@ -114,20 +114,6 @@ describe('mergeSessionMetadata', () => {
 		expect(merged.resources).toBeUndefined();
 	});
 
-	it('deletes populations when merged result is undefined', () => {
-		const baseMetadata: SessionStaticMetadataPayload = {
-			passiveEvaluationModifiers: {},
-		};
-		const snapshot: SessionSnapshotMetadata = {
-			passiveEvaluationModifiers: {},
-		};
-		const merged = mergeSessionMetadata({
-			baseMetadata,
-			snapshotMetadata: snapshot,
-		});
-		expect(merged.populations).toBeUndefined();
-	});
-
 	it('deletes hero.tokens when merged result is undefined', () => {
 		const baseMetadata: SessionStaticMetadataPayload = {
 			passiveEvaluationModifiers: {},

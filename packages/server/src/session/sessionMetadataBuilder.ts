@@ -301,7 +301,6 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		actionCategories: cloneActionCategoryRegistry(),
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
-		populations: cloneRegistry(POPULATIONS),
 		resources: cloneResourceCatalogRegistry(RESOURCE_REGISTRY),
 		resourceGroups: cloneResourceCatalogRegistry(RESOURCE_GROUP_REGISTRY),
 		resourceCategories: cloneResourceCatalogRegistry(

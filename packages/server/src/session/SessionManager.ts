@@ -161,7 +161,6 @@ export class SessionManager {
 			actionCategories,
 			buildings: cloneRegistry(this.baseOptions.buildings),
 			developments: cloneRegistry(this.baseOptions.developments),
-			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
 			resourceGroups,
 			resourceCategories,

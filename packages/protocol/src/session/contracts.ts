@@ -50,7 +50,6 @@ export interface SessionRegistriesPayload {
 	actions: SerializedRegistry<ActionConfig>;
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
-	populations: SerializedRegistry<PopulationConfig>;
 	actionCategories?: SessionActionCategoryRegistry;
 	/**
 	 * Registry of concrete resource definitions. Always present for every

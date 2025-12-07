@@ -43,6 +43,8 @@ export function createSyntheticSessionManager(
 	const costResourceId = 'resource:synthetic:cost';
 	const gainResourceId = 'resource:synthetic:gain';
 	// Create Resource definitions for the synthetic resources
+	// Include a percent resource to satisfy expectStaticMetadata checks
+	const percentResourceId = 'resource:synthetic:percent';
 	const { resources, groups } = createResourceRegistries({
 		resources: [
 			resourceDefinition({
@@ -54,6 +56,10 @@ export function createSyntheticSessionManager(
 				id: gainResourceId,
 				metadata: { label: 'Gain', icon: '⭐' },
 				bounds: { lowerBound: 0 },
+			}),
+			resourceDefinition({
+				id: percentResourceId,
+				metadata: { label: 'Percent', icon: '📊', displayAsPercent: true },
 			}),
 		],
 	});
@@ -205,19 +211,6 @@ export function createSyntheticSessionManager(
 		},
 		primaryIconId: engineOverrides.primaryIconId ?? defaultPrimaryIconId,
 		systemActionIds,
-		// Provide synthetic resources to the session registry
-		resourceRegistry: {
-			[costResourceId]: {
-				key: costResourceId,
-				label: 'Cost',
-				icon: '💰',
-			},
-			[gainResourceId]: {
-				key: gainResourceId,
-				label: 'Gain',
-				icon: '⭐',
-			},
-		},
 	};
 	const manager = new SessionManager({
 		...rest,

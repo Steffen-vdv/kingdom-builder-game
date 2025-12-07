@@ -96,7 +96,6 @@ describe('buildSessionAssets', () => {
 			actionCategories: factory.categories,
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			phases,
 			rules,
 			resourceCatalog: { resources, groups },
@@ -110,9 +109,6 @@ describe('buildSessionAssets', () => {
 			buildings: freezeSerializedRegistry(cloneRegistry(baseOptions.buildings)),
 			developments: freezeSerializedRegistry(
 				cloneRegistry(baseOptions.developments),
-			),
-			populations: freezeSerializedRegistry(
-				cloneRegistry(baseOptions.populations),
 			),
 			resources: {} as SerializedRegistry<SessionResourceDefinition>,
 			actionCategories: freezeSerializedRegistry(
@@ -138,9 +134,6 @@ describe('buildSessionAssets', () => {
 			buildings: freezeSerializedRegistry(cloneRegistry(baseOptions.buildings)),
 			developments: freezeSerializedRegistry(
 				cloneRegistry(baseOptions.developments),
-			),
-			populations: freezeSerializedRegistry(
-				cloneRegistry(baseOptions.populations),
 			),
 			resources: {} as SerializedRegistry<SessionResourceDefinition>,
 			actionCategories: freezeSerializedRegistry(
@@ -170,9 +163,6 @@ describe('buildSessionAssets', () => {
 			buildings: freezeSerializedRegistry(cloneRegistry(baseOptions.buildings)),
 			developments: freezeSerializedRegistry(
 				cloneRegistry(baseOptions.developments),
-			),
-			populations: freezeSerializedRegistry(
-				cloneRegistry(baseOptions.populations),
 			),
 			resources: {} as SerializedRegistry<SessionResourceDefinition>,
 			actionCategories: {

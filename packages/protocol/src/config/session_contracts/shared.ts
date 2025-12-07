@@ -153,7 +153,6 @@ export const sessionRegistriesSchema = z
 		actions: serializedRegistrySchema(actionSchema),
 		buildings: serializedRegistrySchema(buildingSchema),
 		developments: serializedRegistrySchema(developmentSchema),
-		populations: serializedRegistrySchema(populationSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
 		resources: resourceRegistrySchema,
 		resourceGroups: resourceGroupRegistrySchema,
