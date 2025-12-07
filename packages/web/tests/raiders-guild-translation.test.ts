@@ -78,31 +78,6 @@ describe('raiders guild translation', () => {
 		);
 	});
 
-	it('summarizes population modifier compactly', () => {
-		const { engineContext, translation, ids } = synthetic;
-		const modifierInfo = translation.assets.modifiers.result ?? { icon: '✨' };
-		const modifierIcon = modifierInfo.icon ?? '✨';
-		const summary = summarizeContent(
-			'building',
-			ids.populationBuilding,
-			translation,
-		);
-		const ledger = engineContext.actions.get(ids.ledgerAction);
-		const modifier = getModifier(engineContext, ids.populationBuilding);
-		const amount = Number(modifier.params?.['amount'] ?? 0);
-		const actionIcon =
-			ledger.icon && ledger.icon.trim().length ? ledger.icon : ledger.name;
-		const expectedSuffix = `${GENERAL_RESOURCE_ICON}${signed(amount)}${Math.abs(amount)}`;
-		const lines = collectText(summary);
-		const line = lines.find((entry) => entry.includes(expectedSuffix));
-		expect(line).toBeDefined();
-		if (!line) {
-			return;
-		}
-		expect(line).toContain(`(${actionIcon})`);
-		expect(line.startsWith(modifierIcon)).toBe(true);
-	});
-
 	it('summarizes development modifier compactly', () => {
 		const { engineContext, translation, ids } = synthetic;
 		const modifierInfo = translation.assets.modifiers.result ?? { icon: '✨' };
@@ -127,42 +102,6 @@ describe('raiders guild translation', () => {
 			amount,
 		)}${Math.abs(amount)}`;
 		expect(collectText(summary)).toContain(expected);
-	});
-
-	it('describes population modifier with detailed clause', () => {
-		const { engineContext, translation, ids } = synthetic;
-		const modifierInfo = translation.assets.modifiers.result ?? { icon: '✨' };
-		const modifierIcon = modifierInfo.icon ?? '✨';
-		const modifierLabel = modifierInfo.label ?? 'result';
-		const modifierText = modifierIcon
-			? `${modifierIcon} Modifier`
-			: `${modifierLabel} Modifier`;
-		const summary = describeContent(
-			'building',
-			ids.populationBuilding,
-			translation,
-		);
-		const ledger = engineContext.actions.get(ids.ledgerAction);
-		const modifier = getModifier(engineContext, ids.populationBuilding);
-		const amount = Number(modifier.params?.['amount'] ?? 0);
-		const populationAsset = translation.assets.population;
-		const populationIcon = populationAsset.icon ?? '';
-		const populationLabel = populationAsset.label ?? 'Population';
-		const target = `${populationIcon ? `${populationIcon} ` : ''}${populationLabel} through ${formatTargetLabel(
-			ledger.icon ?? '',
-			ledger.name,
-		)}`;
-		const clauseSuffix = `${GENERAL_RESOURCE_ICON}${signed(amount)}${Math.abs(amount)} more of that resource`;
-		const detailLines = collectText(summary);
-		const detailLine = detailLines.find((entry) =>
-			entry.includes(clauseSuffix),
-		);
-		expect(detailLine).toBeDefined();
-		if (!detailLine) {
-			return;
-		}
-		expect(detailLine.startsWith(modifierText)).toBe(true);
-		expect(detailLine).toContain(target);
 	});
 
 	it('describes development modifier with detailed clause', () => {

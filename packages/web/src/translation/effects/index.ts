@@ -15,7 +15,5 @@ import './formatters/modifier';
 import './formatters/action';
 import './formatters/passive';
 import './formatters/attack';
-import './formatters/population';
 import './evaluators/development';
-import './evaluators/population';
 import './evaluators/resource';

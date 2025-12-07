@@ -23,10 +23,8 @@ import {
 
 interface SyntheticIds {
 	transferBuilding: string;
-	populationBuilding: string;
 	developmentBuilding: string;
 	raidAction: string;
-	ledgerAction: string;
 	harvestDevelopment: string;
 }
 
@@ -71,11 +69,10 @@ const buildRuleSnapshot = (): SessionRuleSnapshot => ({
 const buildMetadata = (
 	registries: SessionRegistries,
 	resourceKey: string,
-	populationId: string,
+	_populationId: string,
 	buildingIds: string[],
 	developmentId: string,
 ): SessionSnapshotMetadata => {
-	const population = registries.populations.get(populationId);
 	const development = registries.developments.get(developmentId);
 	return createEmptySnapshotMetadata({
 		resources: {
@@ -84,12 +81,7 @@ const buildMetadata = (
 				label: 'Synthetic Gold',
 			},
 		},
-		populations: {
-			[populationId]: {
-				icon: population.icon,
-				label: population.name ?? populationId,
-			},
-		},
+		populations: {},
 		buildings: Object.fromEntries(
 			buildingIds.map((id) => {
 				const building = registries.buildings.get(id);
@@ -144,22 +136,10 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		],
 	});
 
-	const ledgerAction = content.action({
-		id: 'action:levy',
-		name: 'Ledger Levy',
-		icon: '📜',
-	});
-
 	const harvestDevelopment = content.development({
 		id: 'development:farm',
 		name: 'Hydroponic Farm',
 		icon: '🌾',
-	});
-
-	const populationRole = content.population({
-		id: 'population:ledger',
-		name: 'Ledger Keepers',
-		icon: '🧾',
 	});
 
 	const transferBuilding = content.building({
@@ -174,23 +154,6 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 					id: 'modifier:transfer-bonus',
 					evaluation: { type: 'transfer_pct', id: raidAction.id },
 					adjust: 25,
-				},
-			},
-		],
-	});
-
-	const populationBuilding = content.building({
-		id: 'building:ledger-market',
-		name: 'Ledger Market',
-		icon: '🏪',
-		onBuild: [
-			{
-				type: 'result_mod',
-				method: 'add',
-				params: {
-					id: 'modifier:ledger-bonus',
-					evaluation: { type: 'population', id: ledgerAction.id },
-					amount: 1,
 				},
 			},
 		],
@@ -229,19 +192,16 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		label: 'Synthetic Gold',
 	};
 	registries.actions.add(raidAction.id, { ...raidAction });
-	registries.actions.add(ledgerAction.id, { ...ledgerAction });
 	registries.buildings.add(transferBuilding.id, { ...transferBuilding });
-	registries.buildings.add(populationBuilding.id, { ...populationBuilding });
 	registries.buildings.add(developmentBuilding.id, { ...developmentBuilding });
 	registries.developments.add(harvestDevelopment.id, { ...harvestDevelopment });
-	registries.populations.add(populationRole.id, { ...populationRole });
 
 	const { active, opponent } = createPlayers();
 	const metadata = buildMetadata(
 		registries,
 		syntheticGoldKey,
-		populationRole.id,
-		[transferBuilding.id, populationBuilding.id, developmentBuilding.id],
+		'', // no population needed
+		[transferBuilding.id, developmentBuilding.id],
 		harvestDevelopment.id,
 	);
 
@@ -298,10 +258,8 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		translation,
 		ids: {
 			transferBuilding: transferBuilding.id,
-			populationBuilding: populationBuilding.id,
 			developmentBuilding: developmentBuilding.id,
 			raidAction: raidAction.id,
-			ledgerAction: ledgerAction.id,
 			harvestDevelopment: harvestDevelopment.id,
 		},
 	};

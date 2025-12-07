@@ -175,11 +175,49 @@ function createDescriptorRegistry(
 			},
 		},
 		resource: {
-			resolve: createRecordResolver(
-				translationContext.assets.resources,
-				'Resource',
-			),
+			resolve: (id) => {
+				// Use ResourceV2 metadata for V2 resource IDs
+				if (id && translationContext.resourceMetadataV2.has(id)) {
+					const metadata = translationContext.resourceMetadataV2.get(id);
+					return {
+						icon: metadata.icon ?? '',
+						label: metadata.label ?? id,
+					} satisfies ResolveResult;
+				}
+				// Fall back to legacy assets for old-style keys
+				if (id) {
+					const legacyEntry = translationContext.assets.resources[id];
+					if (legacyEntry) {
+						return {
+							icon: legacyEntry.icon ?? '',
+							label: legacyEntry.label ?? id,
+						} satisfies ResolveResult;
+					}
+				}
+				return {
+					icon: '',
+					label: id ?? 'Resource',
+				} satisfies ResolveResult;
+			},
 			formatDetail: defaultFormatDetail,
+			augmentDependencyDetail: (detail, link, player, context, options) => {
+				// Show count for population-type resources
+				const includeCounts = options.includeCounts ?? true;
+				if (!includeCounts || !link.id) {
+					return detail;
+				}
+				// Check if this is a population resource by looking at valuesV2
+				const resourceValue = player.valuesV2?.[link.id];
+				if (resourceValue !== undefined && resourceValue > 0) {
+					// Check if it looks like a population resource (has count semantics)
+					const isPopulationResource =
+						link.id.includes(':population:') || link.id.includes(':role:');
+					if (isPopulationResource) {
+						return detail ? `${detail} ×${resourceValue}` : `×${resourceValue}`;
+					}
+				}
+				return detail;
+			},
 		},
 		trigger: createTriggerDescriptorEntry(
 			translationContext.assets,
