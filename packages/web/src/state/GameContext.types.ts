@@ -23,8 +23,10 @@ import type {
 } from './sessionTypes';
 import type { ResumeSessionRecord } from './sessionResumeStorage';
 
-export interface SessionContainer
-	extends Omit<RemoteSessionRecord, 'queueSeed'> {
+export interface SessionContainer extends Omit<
+	RemoteSessionRecord,
+	'queueSeed'
+> {
 	adapter: Session;
 }
 

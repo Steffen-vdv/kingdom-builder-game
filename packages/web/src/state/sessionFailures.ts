@@ -133,8 +133,8 @@ const isActionExecutionError = (
 	value instanceof Error &&
 	Boolean(
 		(value as ActionExecutionError).requirementFailure ||
-			(value as ActionExecutionError).requirementFailures ||
-			getActionErrorMetadata(value),
+		(value as ActionExecutionError).requirementFailures ||
+		getActionErrorMetadata(value),
 	);
 
 export const formatFailureDetails = (error: unknown): SessionFailureDetails => {

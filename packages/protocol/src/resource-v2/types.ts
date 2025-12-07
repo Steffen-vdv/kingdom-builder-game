@@ -66,8 +66,7 @@ export interface ResourceBoundOfConfig {
 }
 
 export interface ResourceV2Definition
-	extends ResourceV2Metadata,
-		ResourceV2Bounds {
+	extends ResourceV2Metadata, ResourceV2Bounds {
 	displayAsPercent?: boolean;
 	trackValueBreakdown?: boolean;
 	trackBoundBreakdown?: boolean;
@@ -84,8 +83,7 @@ export interface ResourceV2Definition
 }
 
 export interface ResourceV2GroupParent
-	extends ResourceV2Metadata,
-		ResourceV2Bounds {
+	extends ResourceV2Metadata, ResourceV2Bounds {
 	displayAsPercent?: boolean;
 	trackValueBreakdown?: boolean;
 	trackBoundBreakdown?: boolean;
