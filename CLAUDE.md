@@ -9,13 +9,13 @@ Builder codebase. For detailed guidance, see [`AGENTS.md`](AGENTS.md) and
 Kingdom Builder is a turn-based 1v1 strategy game built entirely through
 AI-assisted development. The codebase uses npm workspaces with five packages:
 
-| Package  | Purpose                                          |
-| -------- | ------------------------------------------------ |
+| Package | Purpose |
+| --- | --- |
 | contents | Game data: actions, buildings, resources, phases |
-| protocol | Shared TypeScript types and zod schemas          |
-| engine   | Deterministic game loop, effects, registries     |
-| server   | Fastify HTTP transport, session management, auth |
-| web      | Vite + React client                              |
+| protocol | Shared TypeScript types and zod schemas |
+| engine | Deterministic game loop, effects, registries |
+| server | Fastify HTTP transport, session management, auth |
+| web | Vite + React client |
 
 ## Request Verification Protocol
 
