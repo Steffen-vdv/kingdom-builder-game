@@ -20,6 +20,12 @@ if ! git diff --quiet; then
     echo "✅ Pushing with auto-format commit..."
     git push --no-verify
 
+    echo ""
+    echo "════════════════════════════════════════════════════════════"
+    echo "✅ Push completed successfully with auto-format!"
+    echo "   (Ignore the 'failed to push' error below - that's expected)"
+    echo "════════════════════════════════════════════════════════════"
+
     # Exit 1 to abort the original push (we already pushed successfully)
     # This prevents git from trying to push stale refs
     exit 1
