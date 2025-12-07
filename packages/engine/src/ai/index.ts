@@ -175,7 +175,18 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 					return;
 				}
 			} catch (error) {
-				void error;
+				// Re-throw unexpected errors (engine bugs) so the frontend can
+				// show an error page. Only swallow expected failures like
+				// requirement failures or affordability issues.
+				const errorRecord = error as Record<string, unknown>;
+				const isRequirementFailure = 'requirementFailure' in errorRecord;
+				const isAffordabilityFailure =
+					error instanceof Error &&
+					(error.message.includes('Cannot afford') ||
+						error.message.includes('Requirement not met'));
+				if (!isRequirementFailure && !isAffordabilityFailure) {
+					throw error;
+				}
 				await finishActionPhaseAsync();
 				return;
 			}

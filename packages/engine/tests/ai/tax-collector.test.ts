@@ -257,9 +257,13 @@ describe('tax collector AI controller', () => {
 		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
 	});
 
-	it('finishes the phase when performAction throws', async () => {
+	it('finishes the phase when performAction throws expected error', async () => {
 		const { engineContext, apKey, controller } = createControllerFixture();
-		const perform = vi.fn().mockRejectedValue(new Error('fail'));
+		// Requirement failures and affordability issues should be handled gracefully
+		const error = Object.assign(new Error('Requirement not met'), {
+			requirementFailure: { message: 'Requirement not met' },
+		});
+		const perform = vi.fn().mockRejectedValue(error);
 		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
 		const endPhase = vi.fn(() => advance(engineContext));
 
@@ -272,5 +276,24 @@ describe('tax collector AI controller', () => {
 		expect(perform).toHaveBeenCalledTimes(1);
 		expect(endPhase).toHaveBeenCalledTimes(1);
 		expect(engineContext.activePlayer.resourceValues[apKey]).toBe(0);
+	});
+
+	it('re-throws unexpected errors', async () => {
+		const { engineContext, controller } = createControllerFixture();
+		const error = new Error('unexpected engine bug');
+		const perform = vi.fn().mockRejectedValue(error);
+		const shouldAdvancePhase = vi.fn().mockResolvedValue(true);
+		const endPhase = vi.fn(() => advance(engineContext));
+
+		await expect(
+			controller(engineContext, {
+				performAction: perform,
+				advance: endPhase,
+				shouldAdvancePhase,
+			}),
+		).rejects.toThrow('unexpected engine bug');
+
+		expect(perform).toHaveBeenCalledTimes(1);
+		expect(endPhase).not.toHaveBeenCalled();
 	});
 });

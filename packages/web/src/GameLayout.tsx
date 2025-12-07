@@ -12,46 +12,16 @@ import PlayerPanel from './components/player/PlayerPanel';
 import SettingsDialog from './components/settings/SettingsDialog';
 import { useGameEngine } from './state/GameContext';
 import {
-	ADVANCE_CONTROL_ID,
 	SPEED_CONTROL_DEFINITIONS,
 	normalizeKeyInput,
 } from './state/keybindings';
 import { useSoundEffectsContext } from './state/SoundEffectsContext';
-
-const INTERACTIVE_ELEMENT_SELECTOR = 'button, input, textarea, select';
-const ROLE_ELEMENT_SELECTOR = '[role="button"], [role="textbox"]';
-const CONTENT_EDITABLE_SELECTOR = '[contenteditable="true"]';
+import { useAdvanceKeybind } from './state/useAdvanceKeybind';
 
 export const QUIT_CONFIRMATION_DESCRIPTION = [
 	'If you quit now, the current game will end, your progress will be lost,',
 	"and you won't be able to continue later. Are you sure you want to retreat?",
 ].join(' ');
-
-function isInteractiveTarget(target: EventTarget | null): boolean {
-	if (!(target instanceof HTMLElement)) {
-		return false;
-	}
-	const tagName = target.tagName;
-	if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') {
-		return true;
-	}
-	if (target.isContentEditable) {
-		return true;
-	}
-	if (tagName === 'BUTTON') {
-		return true;
-	}
-	if (target.closest(INTERACTIVE_ELEMENT_SELECTOR)) {
-		return true;
-	}
-	if (target.closest(CONTENT_EDITABLE_SELECTOR)) {
-		return true;
-	}
-	if (target.closest(ROLE_ELEMENT_SELECTOR)) {
-		return true;
-	}
-	return false;
-}
 
 export default function GameLayout() {
 	const {
@@ -71,9 +41,6 @@ export default function GameLayout() {
 		playerName,
 		onChangePlayerName,
 		phase,
-		resolution,
-		acknowledgeResolution,
-		requests: { advancePhase },
 		setTimeScale,
 		controlKeybinds,
 		setControlKeybind,
@@ -109,6 +76,11 @@ export default function GameLayout() {
 		setQuitDialogOpen(false);
 		onExit();
 	}, [onExit]);
+
+	// Handle advance keybind (Let's Go, Continue, Next Turn)
+	useAdvanceKeybind({ disabled: isSettingsOpen || isQuitDialogOpen });
+
+	// Handle speed control keybinds
 	useEffect(() => {
 		if (typeof window === 'undefined') {
 			return;
@@ -123,37 +95,8 @@ export default function GameLayout() {
 			if (event.metaKey || event.ctrlKey || event.altKey) {
 				return;
 			}
-			if (isInteractiveTarget(event.target)) {
-				return;
-			}
-			if (typeof document !== 'undefined') {
-				const activeElement = document.activeElement;
-				if (isInteractiveTarget(activeElement)) {
-					return;
-				}
-			}
 			const key = normalizeKeyInput(event.key);
 			if (!key) {
-				return;
-			}
-			if (key === controlKeybinds[ADVANCE_CONTROL_ID]) {
-				if (
-					resolution &&
-					resolution.requireAcknowledgement &&
-					resolution.isComplete
-				) {
-					event.preventDefault();
-					acknowledgeResolution();
-					return;
-				}
-				if (
-					(!resolution || !resolution.requireAcknowledgement) &&
-					phase.canEndTurn &&
-					!phase.isAdvancing
-				) {
-					event.preventDefault();
-					void advancePhase();
-				}
 				return;
 			}
 			const speedControl = SPEED_CONTROL_DEFINITIONS.find(
@@ -168,17 +111,7 @@ export default function GameLayout() {
 		return () => {
 			window.removeEventListener('keydown', handleKeyDown);
 		};
-	}, [
-		acknowledgeResolution,
-		advancePhase,
-		controlKeybinds,
-		isQuitDialogOpen,
-		isSettingsOpen,
-		phase.canEndTurn,
-		phase.isAdvancing,
-		resolution,
-		setTimeScale,
-	]);
+	}, [controlKeybinds, isQuitDialogOpen, isSettingsOpen, setTimeScale]);
 	const activePlayerId =
 		phase.activePlayerId ?? sessionSnapshot.game.activePlayerId;
 	const playerPanels = sessionSnapshot.game.players.map((player, index) => {

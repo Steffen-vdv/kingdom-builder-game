@@ -13,7 +13,7 @@ import {
 	BUILDING_REWARD_GOLD,
 	PLUNDER_PERCENT,
 	type SyntheticAction,
-} from './armyAttackConfig';
+} from './raidConfig';
 
 export type ResourceMethod = 'add' | 'remove' | 'transfer';
 export type ActionMethod = 'perform';

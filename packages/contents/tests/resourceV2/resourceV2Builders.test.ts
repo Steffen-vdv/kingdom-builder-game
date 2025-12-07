@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createResourceGroupRegistry, createResourceV2Registry, resourceV2, type ResourceV2TierTrack } from '../../src/resourceV2';
 import { resourceV2Definition, resourceV2GroupDefinition } from '@kingdom-builder/testing';
+import { RESOURCE_GROUP_V2_REGISTRY } from '../../src/registries/resourceV2';
 
 describe('resourceV2 builder', () => {
 	it('builds a fully configured resource definition', () => {
@@ -138,5 +139,16 @@ describe('resourceV2 group builders and registries', () => {
 		expect(wealth.groupOrder).toBe(2);
 		expect(defense.groupId).toBe('group:military');
 		expect(defense.groupOrder).toBe(1);
+	});
+});
+
+describe('production resource group definitions', () => {
+	it('requires all groups to have explicit label and icon (no fallback)', () => {
+		// Groups MUST have their own label and icon - we do NOT fall back to
+		// parent metadata because that hides misconfiguration
+		for (const group of RESOURCE_GROUP_V2_REGISTRY.ordered) {
+			expect(group.label, `Group "${group.id}" is missing label`).toBeTruthy();
+			expect(group.icon, `Group "${group.id}" is missing icon`).toBeTruthy();
+		}
 	});
 });

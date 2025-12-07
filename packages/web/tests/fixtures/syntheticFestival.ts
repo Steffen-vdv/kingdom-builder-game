@@ -233,7 +233,7 @@ export const getSyntheticFestivalDetails = (
 	const innerRawAmt = innerChange?.amount ?? innerRes.params.amount;
 	const penaltyAmt =
 		innerRes.method === 'remove' ? -Number(innerRawAmt) : Number(innerRawAmt);
-	const armyAttack = registries.actions.get(attackActionId);
+	const raid = registries.actions.get(attackActionId);
 	const upkeepPhase = scenario.session.phases.find((phase) =>
 		phase.steps?.some((step) => step.triggers?.includes(ON_UPKEEP_PHASE)),
 	);
@@ -250,7 +250,7 @@ export const getSyntheticFestivalDetails = (
 
 	return {
 		festival,
-		armyAttack,
+		raid,
 		happinessInfo,
 		happinessIcon: happinessInfo.icon,
 		happinessAmt,

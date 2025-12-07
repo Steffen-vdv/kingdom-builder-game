@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useGameEngine } from '../../state/GameContext';
+import { useAdvanceAction } from '../../state/useAdvanceAction';
 import type { ActionResolution } from '../../state/useActionResolution';
 import Button from '../common/Button';
 
@@ -123,12 +124,12 @@ export default function PhasePanel() {
 		sessionSnapshot,
 		selectors,
 		phase,
-		requests,
 		resolution,
 		log,
 		handleHoverCard,
 		clearHoverCard,
 	} = useGameEngine();
+	const { mode: advanceMode, advance } = useAdvanceAction();
 	const { sessionView } = selectors;
 	const phases = useMemo<PhaseSummary[]>(
 		() =>
@@ -201,7 +202,6 @@ export default function PhasePanel() {
 		sessionView.active?.name ??
 		activePlayerSnapshot?.name ??
 		'Player';
-	const awaitingManualStart = phase.awaitingManualStart;
 	const shouldHideControls = Boolean(resolution?.requireAcknowledgement);
 	const shouldSuppressHoverCards = useMemo(
 		() =>
@@ -232,11 +232,10 @@ export default function PhasePanel() {
 	const hidePhaseHistory = useCallback(() => {
 		clearHoverCard();
 	}, [clearHoverCard]);
-	const handleStartSessionClick = () => {
-		void requests.startSession();
-	};
+
+	// Show "Let's Go" button when in start mode and controls aren't hidden
 	const shouldShowManualStartButton =
-		awaitingManualStart && !shouldHideControls;
+		advanceMode === 'start' && !shouldHideControls;
 	return (
 		<section className={panelClassName}>
 			<header className={headerClassName}>
@@ -331,7 +330,7 @@ export default function PhasePanel() {
 			</div>
 			{shouldShowManualStartButton ? (
 				<div className="flex justify-end pt-2">
-					<Button variant="success" onClick={handleStartSessionClick} icon="🚀">
+					<Button variant="success" onClick={advance} icon="🚀">
 						Let's go!
 					</Button>
 				</div>

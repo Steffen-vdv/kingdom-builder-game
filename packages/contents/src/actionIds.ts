@@ -5,7 +5,7 @@ import { PopulationRole, type PopulationRoleId } from './internal';
 type ValueOf<T> = T[keyof T];
 
 export const BasicActionId = {
-	army_attack: 'army_attack',
+	raid: 'raid',
 	expand: 'expand',
 	hold_festival: 'hold_festival',
 	plow: 'plow',

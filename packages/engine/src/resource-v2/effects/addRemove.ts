@@ -11,6 +11,10 @@ import {
 	type ResourceReconciliationResult,
 } from '../reconciliation';
 import type { RuntimeResourceCatalog, RuntimeResourceBounds } from '../types';
+import {
+	applyAdditivePercentChange,
+	buildAdditiveCacheKey,
+} from './additive-helpers';
 
 interface BaseResourceEffectParams extends Record<string, unknown> {
 	/**
@@ -74,7 +78,11 @@ function normaliseChange(
 				`ResourceV2 effect expected numeric amount change but received ${amount}.`,
 			);
 		}
-		return { type: 'amount', amount };
+		return {
+			type: 'amount',
+			amount,
+			...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+		};
 	}
 	if (change.type === 'percentFromResource') {
 		if (
@@ -117,7 +125,11 @@ function scaleChange(
 		return change;
 	}
 	if (change.type === 'amount') {
-		return { type: 'amount', amount: change.amount * multiplier };
+		return {
+			type: 'amount',
+			amount: change.amount * multiplier,
+			...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+		};
 	}
 	if (change.type === 'percentFromResource') {
 		// percentFromResource scaling is handled in reconciliation via
@@ -147,7 +159,11 @@ function applySign(
 		return change;
 	}
 	if (change.type === 'amount') {
-		return { type: 'amount', amount: -change.amount };
+		return {
+			type: 'amount',
+			amount: -change.amount,
+			...(change.roundingMode ? { roundingMode: change.roundingMode } : {}),
+		};
 	}
 	if (change.type === 'percentFromResource') {
 		// For remove, we negate via a negative multiplier
@@ -184,90 +200,6 @@ function resolveEffectiveBounds(
 			typeof upperOverride === 'number'
 				? upperOverride
 				: (definitionBounds.upperBound ?? null),
-	};
-}
-
-/**
- * Build a cache key for additive percent changes. Multiple percent changes
- * in the same turn/phase/step use additive accumulation from the original
- * base value rather than compounding.
- */
-function buildAdditiveCacheKey(context: EngineContext, resourceId: string) {
-	return (
-		`${context.game.turn}:${context.game.currentPhase}:` +
-		`${context.game.currentStep}:${resourceId}`
-	);
-}
-
-/**
- * Apply an additive percent change using step-based caching. Multiple
- * percent changes in the same step scale from the original base value
- * rather than compounding.
- */
-function applyAdditivePercentChange(
-	context: EngineContext,
-	player: PlayerState,
-	catalog: RuntimeResourceCatalog,
-	resourceId: string,
-	requestedDelta: number,
-	bounds: RuntimeResourceBounds,
-	effect: EffectDef<ResourceEffectParams>,
-	roundingMode: 'up' | 'down' | 'nearest' | undefined,
-): ResourceReconciliationResult {
-	const cacheKey = buildAdditiveCacheKey(context, resourceId);
-	const bases = context.resourcePercentBases;
-	const accums = context.resourcePercentAccums;
-
-	// Initialize cache on first access in this step
-	if (!(cacheKey in bases)) {
-		bases[cacheKey] = getResourceValue(player, resourceId);
-		accums[cacheKey] = 0;
-	}
-
-	const base = bases[cacheKey]!;
-	const before = getResourceValue(player, resourceId);
-
-	// Accumulate the delta from the original base
-	accums[cacheKey]! += requestedDelta;
-
-	// Compute new value from base + accumulated delta
-	let newValue = base + accums[cacheKey]!;
-
-	// Apply rounding
-	if (roundingMode === 'up') {
-		newValue = newValue >= 0 ? Math.ceil(newValue) : Math.floor(newValue);
-	} else if (roundingMode === 'down') {
-		newValue = newValue >= 0 ? Math.floor(newValue) : Math.ceil(newValue);
-	}
-
-	// Apply bounds
-	const lowerBound = bounds.lowerBound;
-	const upperBound = bounds.upperBound;
-	let clampedToLowerBound = false;
-	let clampedToUpperBound = false;
-
-	if (lowerBound !== null && newValue < lowerBound) {
-		newValue = lowerBound;
-		clampedToLowerBound = true;
-	}
-	if (upperBound !== null && newValue > upperBound) {
-		newValue = upperBound;
-		clampedToUpperBound = true;
-	}
-
-	setResourceValue(context, player, catalog, resourceId, newValue);
-
-	const delta = newValue - before;
-	if (delta !== 0 && Array.isArray(context.resourceSourceStack)) {
-		recordEffectResourceDelta(effect, context, resourceId, delta);
-	}
-
-	return {
-		requestedDelta,
-		appliedDelta: delta,
-		finalValue: newValue,
-		clampedToLowerBound,
-		clampedToUpperBound,
 	};
 }
 

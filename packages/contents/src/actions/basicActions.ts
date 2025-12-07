@@ -62,7 +62,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.gold, 4)).build())
 					.effect(
 						effect(Types.Resource, ResourceMethods.REMOVE)
-							.params(resourceAmountChange(Resource.happiness, 0.5, (change) => change.reconciliation()))
+							.params(resourceAmountChange(Resource.happiness, 0.5, (change) => change.roundingMode('down').reconciliation()))
 							.build(),
 					)
 					.build(),
@@ -122,10 +122,10 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 	);
 
 	registry.add(
-		ActionId.army_attack,
+		ActionId.raid,
 		action()
-			.id(ActionId.army_attack)
-			.name('Army Attack')
+			.id(ActionId.raid)
+			.name('Raid')
 			.icon('🗡️')
 			.requirement(compareRequirement().left(resourceEvaluator().resourceId(Stat.warWeariness)).operator('lt').right(resourceEvaluator().resourceId(PopulationRole.Legion)).build())
 			.effect(
@@ -162,7 +162,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.params(passiveParams().id('hold_festival_penalty').name('Festival Hangover').icon('🤮').removeOnUpkeepStep())
 					.effect(
 						effect(Types.ResultMod, ResultModMethods.ADD)
-							.params(resultModParams().id('hold_festival_attack_happiness_penalty').actionId(ActionId.army_attack))
+							.params(resultModParams().id('hold_festival_attack_happiness_penalty').actionId(ActionId.raid))
 							.effect(
 								effect(Types.Resource, ResourceMethods.REMOVE)
 									.params(resourceAmountChange(Resource.happiness, 3, (change) => change.reconciliation()))

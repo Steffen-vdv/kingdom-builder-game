@@ -105,6 +105,16 @@ export interface ContentResourceGroupParent
 
 export interface ContentResourceGroupDefinition {
 	readonly id: string;
+	/**
+	 * Display label for the group in the resource bar.
+	 * Falls back to parent.label if not set.
+	 */
+	readonly label?: string;
+	/**
+	 * Display icon for the group in the resource bar.
+	 * Falls back to parent.icon if not set.
+	 */
+	readonly icon?: string;
 	readonly order?: number;
 	readonly parent?: ContentResourceGroupParent;
 }

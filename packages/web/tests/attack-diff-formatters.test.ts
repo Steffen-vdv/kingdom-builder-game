@@ -11,11 +11,11 @@ import {
 	suppressSyntheticStatDescriptor,
 	restoreSyntheticStatDescriptor,
 	createSyntheticEngineContext,
-} from './helpers/armyAttackFactories';
+} from './helpers/raidFactories';
 import {
 	SYNTH_RESOURCE_IDS,
 	SYNTH_RESOURCE_METADATA,
-} from './helpers/armyAttackConfig';
+} from './helpers/raidConfig';
 
 const getFirst = <T>(values: readonly T[]): T => {
 	if (!values.length) {

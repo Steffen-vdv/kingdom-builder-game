@@ -95,8 +95,8 @@ export type CombatStatConfig = {
 };
 
 export const SYNTH_ATTACK: SyntheticAction = {
-	id: 'synthetic:army_attack',
-	name: 'Synthetic Assault',
+	id: 'synthetic:raid',
+	name: 'Synthetic Raid',
 	icon: '🛡️',
 };
 
