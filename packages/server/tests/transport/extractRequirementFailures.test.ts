@@ -11,7 +11,7 @@ describe('extractRequirementFailures', () => {
 			requirement: {
 				type: 'resource',
 				method: 'minimum',
-				params: { key: 'gold', amount: 3 },
+				params: { resourceId: 'resource:core:gold', amount: 3 },
 			},
 			details: { needed: 3 },
 			message: 'Need more gold',
@@ -26,7 +26,10 @@ describe('extractRequirementFailures', () => {
 		expect(extracted.requirementFailure).not.toBe(requirementFailure);
 		expect(extracted.requirementFailures?.[0]).not.toBe(requirementFailure);
 
-		requirementFailure.requirement.params = { key: 'gold', amount: 6 };
+		requirementFailure.requirement.params = {
+			resourceId: 'resource:core:gold',
+			amount: 6,
+		};
 		requirementFailure.details = { needed: 6 };
 		requirementFailure.message = 'changed';
 
@@ -34,7 +37,7 @@ describe('extractRequirementFailures', () => {
 			requirement: {
 				type: 'resource',
 				method: 'minimum',
-				params: { key: 'gold', amount: 3 },
+				params: { resourceId: 'resource:core:gold', amount: 3 },
 			},
 			details: { needed: 3 },
 			message: 'Need more gold',
@@ -43,7 +46,7 @@ describe('extractRequirementFailures', () => {
 			requirement: {
 				type: 'resource',
 				method: 'minimum',
-				params: { key: 'gold', amount: 3 },
+				params: { resourceId: 'resource:core:gold', amount: 3 },
 			},
 			details: { needed: 3 },
 			message: 'Need more gold',
@@ -56,16 +59,19 @@ describe('extractRequirementFailures', () => {
 				requirement: {
 					type: 'resource',
 					method: 'maximum',
-					params: { key: 'wood', amount: 5 },
+					params: { resourceId: 'resource:core:wood', amount: 5 },
 				},
 				details: { available: 1 },
 				message: 'Too much wood',
 			},
 			{
 				requirement: {
-					type: 'population',
+					type: 'resource',
 					method: 'minimum',
-					params: { role: 'fortifier', amount: 2 },
+					params: {
+						resourceId: 'resource:population:role:fortifier',
+						amount: 2,
+					},
 				},
 				details: { available: 1 },
 				message: 'Need more fortifiers',
@@ -83,14 +89,14 @@ describe('extractRequirementFailures', () => {
 
 		requirementFailures[0].message = 'updated';
 		requirementFailures[0].requirement.params = {
-			key: 'wood',
+			resourceId: 'resource:core:wood',
 			amount: 10,
 		};
 		requirementFailures.push({
 			requirement: {
 				type: 'resource',
 				method: 'minimum',
-				params: { key: 'stone', amount: 1 },
+				params: { resourceId: 'resource:core:stone', amount: 1 },
 			},
 			details: { available: 0 },
 			message: 'Need stone',
@@ -101,7 +107,7 @@ describe('extractRequirementFailures', () => {
 			requirement: {
 				type: 'resource',
 				method: 'maximum',
-				params: { key: 'wood', amount: 5 },
+				params: { resourceId: 'resource:core:wood', amount: 5 },
 			},
 			details: { available: 1 },
 			message: 'Too much wood',
@@ -113,7 +119,7 @@ describe('extractRequirementFailures', () => {
 			requirement: {
 				type: 'resource',
 				method: 'minimum',
-				params: { key: 'gold', amount: 2 },
+				params: { resourceId: 'resource:core:gold', amount: 2 },
 			},
 			message: 'single failure',
 		} satisfies SessionRequirementFailure;
@@ -122,7 +128,7 @@ describe('extractRequirementFailures', () => {
 				requirement: {
 					type: 'resource',
 					method: 'minimum',
-					params: { key: 'gold', amount: 10 },
+					params: { resourceId: 'resource:core:gold', amount: 10 },
 				},
 				message: 'list failure',
 			},
