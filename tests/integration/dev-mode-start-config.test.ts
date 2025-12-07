@@ -55,9 +55,7 @@ describe('dev mode start configuration', () => {
 		// AP starts at 0; it is granted during the Growth phase by Council members
 		expect(player.values[apId]).toBe(0);
 		expect(player.resourceBounds[goldId]?.lowerBound).toBe(0);
-		expect(
-			snapshot.game.resourceCatalog.resources.byId[goldId],
-		).toBeDefined();
+		expect(snapshot.game.resourceCatalog.resources.byId[goldId]).toBeDefined();
 	});
 
 	it('applies onBuild effects for start config developments', () => {

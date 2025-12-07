@@ -132,10 +132,7 @@ describe('Resource state helpers', () => {
 	});
 
 	it('resolves definitions for resources and parent group aggregates', () => {
-		const resourceLookup = resolveResourceDefinition(
-			catalog,
-			testResource.id,
-		);
+		const resourceLookup = resolveResourceDefinition(catalog, testResource.id);
 		expect(resourceLookup).not.toBeNull();
 		expect(resourceLookup).toMatchObject({
 			kind: 'resource',

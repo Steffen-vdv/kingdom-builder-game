@@ -195,9 +195,7 @@ describe('createLocalSessionGateway', () => {
 		}
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		// Initial gold (10) + gained gold (2) = 12
-		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(
-			12,
-		);
+		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(12);
 	});
 
 	it('returns requirement failures from the engine session', async () => {
@@ -214,9 +212,7 @@ describe('createLocalSessionGateway', () => {
 		}
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		// Player starts with 10 gold; failing action doesn't change it
-		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(
-			10,
-		);
+		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(10);
 	});
 
 	it('advances phases while keeping responses isolated', async () => {
@@ -230,9 +226,7 @@ describe('createLocalSessionGateway', () => {
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
 		// Player starts with 10 gold; first advance only processes step 1
 		// of Growth (ResolveDynamicTriggers), not GainIncome where farm fires
-		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(
-			10,
-		);
+		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(10);
 	});
 
 	it('sets developer mode without leaking snapshot references', async () => {

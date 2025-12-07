@@ -119,10 +119,7 @@ export async function handleMissingActionDefinition({
 	if (snapshot.game.conclusion) {
 		return;
 	}
-	if (
-		snapshot.game.devMode &&
-		(player.values[actionCostResource] ?? 0) <= 0
-	) {
+	if (snapshot.game.devMode && (player.values[actionCostResource] ?? 0) <= 0) {
 		await endTurn();
 	}
 }

@@ -273,8 +273,7 @@ describe('useAiRunner', () => {
 		});
 		const firstResources = {
 			...activePlayer.values,
-			[actionCostResource]:
-				(activePlayer.values[actionCostResource] ?? 0) - 1,
+			[actionCostResource]: (activePlayer.values[actionCostResource] ?? 0) - 1,
 		};
 		const secondResources = {
 			...firstResources,
