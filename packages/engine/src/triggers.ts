@@ -69,7 +69,7 @@ export function collectTriggerEffects(
 				pushUpkeepEffect(
 					bundles,
 					player,
-					{ type: 'population', id: role, count: qty },
+					{ type: 'resource', id: role, count: qty },
 					key,
 					amount * qty,
 				);
@@ -89,9 +89,9 @@ export function collectTriggerEffects(
 				bundles.push({
 					effects: clones,
 					frames: () => ({
-						kind: 'population',
+						kind: 'resource',
 						id: role,
-						dependsOn: [{ type: 'population', id: role }],
+						dependsOn: [{ type: 'resource', id: role }],
 					}),
 				});
 			}

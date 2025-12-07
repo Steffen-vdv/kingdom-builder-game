@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-	summarizeContent,
 	summarizeEffects,
 	describeEffects,
 	type Summary,
@@ -24,10 +23,14 @@ function flatten(summary: Summary): string[] {
 	return result;
 }
 
-describe('population effect translation', () => {
+describe('population resource effect translation', () => {
 	const registries = createSessionRegistries();
 	const resourceKeys = Object.keys(registries.resources);
 	const actionCostResource = resourceKeys[0] ?? 'resource.ap';
+
+	// Create a synthetic population resource ID
+	const populationResourceId = 'resource:population:role:council';
+
 	const translationContext = createTranslationContextStub({
 		actions: wrapTranslationRegistry(registries.actions),
 		buildings: wrapTranslationRegistry(registries.buildings),
@@ -54,66 +57,49 @@ describe('population effect translation', () => {
 			resources: {},
 			population: {},
 		}),
+		resourceMetadataV2: {
+			[populationResourceId]: {
+				icon: '👑',
+				label: 'Council',
+			},
+		},
 	});
 
-	it('summarizes population-raising action for specific role', () => {
-		const raiseEntry = registries.actions
-			.entries()
-			.find(([, action]) =>
-				action.effects.some(
-					(effect) => effect.type === 'population' && effect.method === 'add',
-				),
-			);
-		const raiseId = raiseEntry?.[0];
-		const roleEffect = raiseEntry?.[1].effects.find(
-			(effect) => effect.type === 'population' && effect.method === 'add',
-		);
-		const roleId = roleEffect?.params?.role as string | undefined;
-		if (!raiseId || !roleId) {
-			throw new Error('Unable to locate population-raising action.');
-		}
-		const summary = summarizeContent('action', raiseId, translationContext, {
-			role: roleId,
-		});
-		const flat = flatten(summary);
-		const expected = summarizeEffects(
-			[
-				{
-					type: 'population',
-					method: 'add',
-					params: { role: roleId },
-				},
-			],
-			translationContext,
-		)[0];
-		expect(flat).toContain(expected);
-	});
-
-	it('handles population removal effect', () => {
-		const removalRole = registries.actions
-			.entries()
-			.flatMap(([, action]) => action.effects)
-			.find((effect) => effect.type === 'population' && effect.params?.role)
-			?.params?.role as string | undefined;
-		if (!removalRole) {
-			throw new Error('No population role found for removal test.');
-		}
-		const removalEffect = {
-			type: 'population' as const,
-			method: 'remove' as const,
-			params: { role: removalRole },
+	it('summarizes resource add effect for population role', () => {
+		const addEffect = {
+			type: 'resource' as const,
+			method: 'add' as const,
+			params: {
+				resourceId: populationResourceId,
+				change: { type: 'amount', amount: 1 },
+			},
 		};
-		const summary = summarizeEffects([removalEffect], translationContext);
-		const desc = describeEffects([removalEffect], translationContext);
-		const expectedSummary = summarizeEffects(
-			[removalEffect],
-			translationContext,
-		)[0];
-		const expectedDesc = describeEffects(
-			[removalEffect],
-			translationContext,
-		)[0];
-		expect(summary).toContain(expectedSummary);
-		expect(desc).toContain(expectedDesc);
+		const summary = summarizeEffects([addEffect], translationContext);
+		const flat = flatten(summary);
+		// Should contain the icon and a positive change indicator
+		expect(flat.some((s) => s.includes('👑'))).toBe(true);
+		expect(flat.some((s) => s.includes('+1'))).toBe(true);
+	});
+
+	it('summarizes resource remove effect for population role', () => {
+		const removeEffect = {
+			type: 'resource' as const,
+			method: 'remove' as const,
+			params: {
+				resourceId: populationResourceId,
+				change: { type: 'amount', amount: 1 },
+			},
+		};
+		const summary = summarizeEffects([removeEffect], translationContext);
+		const desc = describeEffects([removeEffect], translationContext);
+		const flatSummary = flatten(summary);
+		const flatDesc = flatten(desc);
+		// Summary should show negative change
+		expect(flatSummary.some((s) => s.includes('👑'))).toBe(true);
+		expect(flatSummary.some((s) => s.includes('-1'))).toBe(true);
+		// Description should show negative change with label
+		expect(flatDesc.some((s) => s.includes('👑'))).toBe(true);
+		expect(flatDesc.some((s) => s.includes('-1'))).toBe(true);
+		expect(flatDesc.some((s) => s.includes('Council'))).toBe(true);
 	});
 });

@@ -138,6 +138,7 @@ export function createTranslationContextStub(
 		activePlayer: TranslationPlayer;
 		opponent: TranslationPlayer;
 		rules?: SessionRuleSnapshot;
+		resourceMetadataV2?: Record<string, Partial<TranslationResourceV2Metadata>>;
 	},
 ): TranslationContext {
 	const rules: SessionRuleSnapshot =
@@ -147,6 +148,26 @@ export function createTranslationContextStub(
 			tierDefinitions: [],
 			winConditions: [],
 		} as SessionRuleSnapshot);
+	const customResourceMetadataV2 = options.resourceMetadataV2 ?? {};
+	const resourceMetadataV2: TranslationResourceV2MetadataSelectors =
+		Object.keys(customResourceMetadataV2).length > 0
+			? {
+					list: () =>
+						Object.entries(customResourceMetadataV2).map(([id, meta]) => ({
+							id,
+							label: meta.label ?? id,
+							...meta,
+						})),
+					get: (id: string) => {
+						const meta = customResourceMetadataV2[id];
+						if (meta) {
+							return { id, label: meta.label ?? id, ...meta };
+						}
+						return createEmptyResourceMetadata(id);
+					},
+					has: (id: string) => id in customResourceMetadataV2,
+				}
+			: EMPTY_RESOURCE_METADATA;
 	return {
 		actions: options.actions,
 		actionCategories: options.actionCategories ?? EMPTY_ACTION_CATEGORIES,
@@ -166,7 +187,7 @@ export function createTranslationContextStub(
 		compensations: { A: {}, B: {} },
 		assets: EMPTY_ASSETS,
 		resourcesV2: EMPTY_RESOURCE_CATALOG,
-		resourceMetadataV2: EMPTY_RESOURCE_METADATA,
+		resourceMetadataV2,
 		resourceGroupMetadataV2: EMPTY_RESOURCE_METADATA,
 		signedResourceGains: EMPTY_SIGNED_RESOURCE_GAINS,
 	};
