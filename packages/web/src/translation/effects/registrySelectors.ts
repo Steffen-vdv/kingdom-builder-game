@@ -126,17 +126,13 @@ export function selectResourceDescriptor(
 	if (cached) {
 		return cached;
 	}
-	const assets = context.assets;
-	// Check legacy resources first
-	const legacyEntry = assets?.resources?.[key];
-	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:synthetic:gold')
+	// Use ResourceV2 metadata for all resource lookups
 	const v2Context = context as {
 		resourceMetadataV2?: {
 			get?: (id: string) => { icon?: string; label?: string } | undefined;
 		};
 	};
-	const v2Entry = v2Context.resourceMetadataV2?.get?.(key);
-	const entry = legacyEntry ?? v2Entry;
+	const entry = v2Context.resourceMetadataV2?.get?.(key);
 	const fallbackLabel = humanizeIdentifier(key) || key;
 	const label = coerceLabel(entry?.label, fallbackLabel);
 	const icon = coerceIcon(entry?.icon, '');
@@ -148,67 +144,6 @@ export function selectResourceDescriptor(
 const statCache: CacheStore<StatRegistryDescriptor> = new WeakMap();
 const statFallbackCache: CacheFallback<StatRegistryDescriptor> = new Map();
 
-function resolveStatFormat(
-	entry: TranslationAssets['stats'][string] | undefined,
-): { prefix?: string; percent?: boolean } | undefined {
-	if (!entry) {
-		return undefined;
-	}
-	const descriptor = entry.format;
-	let prefix: string | undefined;
-	let percent: boolean | undefined;
-	if (typeof descriptor === 'string') {
-		if (descriptor.trim().length > 0) {
-			prefix = descriptor;
-		}
-	} else if (descriptor && typeof descriptor === 'object') {
-		const formatted = descriptor as { prefix?: unknown; percent?: unknown };
-		if (
-			typeof formatted.prefix === 'string' &&
-			formatted.prefix.trim().length > 0
-		) {
-			prefix = formatted.prefix;
-		}
-		if (typeof formatted.percent === 'boolean') {
-			percent = formatted.percent;
-		}
-	}
-	if (percent === undefined && entry.displayAsPercent === true) {
-		percent = true;
-	}
-	if (prefix === undefined && percent === undefined) {
-		return undefined;
-	}
-	const format: { prefix?: string; percent?: boolean } = {};
-	if (prefix !== undefined) {
-		format.prefix = prefix;
-	}
-	if (percent !== undefined) {
-		format.percent = percent;
-	}
-	return format;
-}
-
-function resolveStatEntry(
-	assets: TranslationAssets | undefined,
-	key: string,
-): { entry: TranslationAssets['stats'][string] | undefined; resolved: string } {
-	const stats = assets?.stats;
-	if (!stats) {
-		return { entry: undefined, resolved: key };
-	}
-	if (key in stats) {
-		return { entry: stats[key], resolved: key };
-	}
-	if (key.length > 0) {
-		const camelCandidate = key.charAt(0).toLowerCase() + key.slice(1);
-		if (camelCandidate in stats) {
-			return { entry: stats[camelCandidate], resolved: camelCandidate };
-		}
-	}
-	return { entry: undefined, resolved: key };
-}
-
 export function selectStatDescriptor(
 	context: ContextWithAssets,
 	key: string,
@@ -219,26 +154,26 @@ export function selectStatDescriptor(
 	if (cached) {
 		return cached;
 	}
-	const assets = context.assets;
-	const { entry, resolved } = resolveStatEntry(assets, key);
-	// Check ResourceV2 metadata for V2 keys (e.g., 'resource:core:army-strength')
+	// Use ResourceV2 metadata as the primary source
 	const v2Context = context as {
 		resourceMetadataV2?: {
-			get?: (id: string) => { icon?: string; label?: string } | undefined;
+			get?: (id: string) => {
+				icon?: string;
+				label?: string;
+				displayAsPercent?: boolean;
+			};
 		};
 	};
 	const v2Entry = v2Context.resourceMetadataV2?.get?.(key);
-	// Prefer legacy entry, then V2 entry
-	const effectiveEntry = entry ?? v2Entry;
-	const statLabelFallback = humanizeIdentifier(resolved);
+	const statLabelFallback = humanizeIdentifier(key);
 	const fallbackLabel =
-		statLabelFallback && statLabelFallback.length > 0
-			? statLabelFallback
-			: resolved;
-	const label = coerceLabel(effectiveEntry?.label, fallbackLabel);
-	// For icon, use empty string as fallback instead of the key
-	const icon = coerceIcon(effectiveEntry?.icon, '');
-	const format = resolveStatFormat(entry);
+		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
+	const label = coerceLabel(v2Entry?.label, fallbackLabel);
+	const icon = coerceIcon(v2Entry?.icon, '');
+	// Derive format from V2 metadata displayAsPercent property
+	const format: { percent?: boolean } | undefined = v2Entry?.displayAsPercent
+		? { percent: true }
+		: undefined;
 	const descriptor: StatRegistryDescriptor = {
 		icon,
 		label,

@@ -20,7 +20,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "happiness",
+						"resourceId": "resource:core:happiness",
 						"amount": 1
 					}
 				}
@@ -131,7 +131,7 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "gold",
+								"resourceId": "resource:core:gold",
 								"amount": 4
 							}
 						},
@@ -139,7 +139,7 @@
 							"type": "resource",
 							"method": "remove",
 							"params": {
-								"key": "happiness",
+								"resourceId": "resource:core:happiness",
 								"amount": 0.5
 							},
 							"round": "up",
@@ -178,9 +178,9 @@
 						},
 						"operator": "lt",
 						"right": {
-							"type": "stat",
+							"type": "resource",
 							"params": {
-								"key": "resource:core:max-population"
+								"resourceId": "resource:core:max-population"
 							}
 						}
 					}
@@ -198,7 +198,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "happiness",
+						"resourceId": "resource:core:happiness",
 						"amount": 1
 					}
 				}
@@ -225,9 +225,9 @@
 						},
 						"operator": "lt",
 						"right": {
-							"type": "stat",
+							"type": "resource",
 							"params": {
-								"key": "resource:core:max-population"
+								"resourceId": "resource:core:max-population"
 							}
 						}
 					}
@@ -245,7 +245,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "happiness",
+						"resourceId": "resource:core:happiness",
 						"amount": 1
 					}
 				}
@@ -272,9 +272,9 @@
 						},
 						"operator": "lt",
 						"right": {
-							"type": "stat",
+							"type": "resource",
 							"params": {
-								"key": "resource:core:max-population"
+								"resourceId": "resource:core:max-population"
 							}
 						}
 					}
@@ -292,7 +292,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "happiness",
+						"resourceId": "resource:core:happiness",
 						"amount": 1
 					}
 				}
@@ -372,7 +372,7 @@
 					"type": "resource",
 					"method": "remove",
 					"params": {
-						"key": "happiness",
+						"resourceId": "resource:core:happiness",
 						"amount": 3
 					},
 					"meta": {
@@ -397,16 +397,16 @@
 					"method": "compare",
 					"params": {
 						"left": {
-							"type": "stat",
+							"type": "resource",
 							"params": {
-								"key": "resource:core:war-weariness"
+								"resourceId": "resource:core:war-weariness"
 							}
 						},
 						"operator": "lt",
 						"right": {
-							"type": "population",
+							"type": "resource",
 							"params": {
-								"role": "legion"
+								"resourceId": "resource:population:role:legion"
 							}
 						}
 					}
@@ -420,20 +420,20 @@
 						"stats": [
 							{
 								"role": "power",
-								"key": "resource:core:army-strength"
+								"resourceId": "resource:core:army-strength"
 							},
 							{
 								"role": "absorption",
-								"key": "resource:core:absorption"
+								"resourceId": "resource:core:absorption"
 							},
 							{
 								"role": "fortification",
-								"key": "resource:core:fortification-strength"
+								"resourceId": "resource:core:fortification-strength"
 							}
 						],
 						"target": {
 							"type": "resource",
-							"key": "castleHP"
+							"resourceId": "resource:core:castleHP"
 						},
 						"onDamage": {
 							"attacker": [
@@ -475,9 +475,9 @@
 					"method": "compare",
 					"params": {
 						"left": {
-							"type": "stat",
+							"type": "resource",
 							"params": {
-								"key": "resource:core:war-weariness"
+								"resourceId": "resource:core:war-weariness"
 							}
 						},
 						"operator": "eq",
@@ -490,7 +490,7 @@
 					"type": "resource",
 					"method": "add",
 					"params": {
-						"key": "happiness",
+						"resourceId": "resource:core:happiness",
 						"amount": 3
 					}
 				},
@@ -532,7 +532,7 @@
 									"type": "resource",
 									"method": "remove",
 									"params": {
-										"key": "happiness",
+										"resourceId": "resource:core:happiness",
 										"amount": 3
 									},
 									"meta": {
@@ -557,7 +557,7 @@
 					"type": "resource",
 					"method": "transfer",
 					"params": {
-						"key": "happiness",
+						"resourceId": "resource:core:happiness",
 						"amount": 1
 					}
 				},
@@ -565,7 +565,7 @@
 					"type": "resource",
 					"method": "transfer",
 					"params": {
-						"key": "gold",
+						"resourceId": "resource:core:gold",
 						"percent": 25
 					}
 				}
@@ -616,7 +616,7 @@
 							"method": "add",
 							"params": {
 								"id": "plow_cost_all",
-								"key": "gold",
+								"resourceId": "resource:core:gold",
 								"amount": 2
 							}
 						}
@@ -858,7 +858,7 @@
 					"params": {
 						"id": "tc_expand_cost",
 						"actionId": "expand",
-						"key": "gold",
+						"resourceId": "resource:core:gold",
 						"amount": 2
 					}
 				},
@@ -874,7 +874,7 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "happiness",
+								"resourceId": "resource:core:happiness",
 								"amount": 1
 							}
 						}
@@ -1209,16 +1209,15 @@
 							"type": "resource",
 							"method": "add",
 							"params": {
-								"key": "ap",
+								"resourceId": "resource:core:ap",
 								"amount": 1
 							}
 						}
 					],
 					"evaluator": {
-						"type": "population",
+						"type": "resource",
 						"params": {
-							"id": "council",
-							"role": "council"
+							"resourceId": "resource:population:role:council"
 						}
 					}
 				}

@@ -79,12 +79,12 @@ function formatCostEffect(
 	mode: 'summary' | 'describe',
 	method: 'add' | 'remove',
 ): string {
-	const keyParam = effect.params?.['key'];
-	const resourceKey = typeof keyParam === 'string' ? keyParam : '';
-	const resourceDescriptor = resourceKey
-		? selectResourceDescriptor(context, resourceKey)
+	const resourceIdParam = effect.params?.['resourceId'];
+	const resourceId = typeof resourceIdParam === 'string' ? resourceIdParam : '';
+	const resourceDescriptor = resourceId
+		? selectResourceDescriptor(context, resourceId)
 		: undefined;
-	const resourceIcon = resourceDescriptor?.icon || resourceKey;
+	const resourceIcon = resourceDescriptor?.icon || resourceId;
 	const actionId = effect.params?.['actionId'] as string | undefined;
 	const actionInfo = actionId
 		? getActionInfo(context, actionId)

@@ -1,11 +1,10 @@
 import type { EffectHandler } from '.';
 import type { CostModifierResult } from '../services/passive_types';
-import type { ResourceKey } from '../state';
 
 interface CostModParams {
 	id: string;
 	actionId?: string;
-	key: ResourceKey;
+	resourceId: string;
 	amount?: number;
 	percent?: number;
 	[key: string]: unknown;
@@ -13,14 +12,14 @@ interface CostModParams {
 
 export const costMod: EffectHandler<CostModParams> = (effect, context) => {
 	const params = effect.params || ({} as CostModParams);
-	const { id, actionId, key } = params;
+	const { id, actionId, resourceId } = params;
 	const rawAmount = params['amount'];
 	const amount = typeof rawAmount === 'number' ? rawAmount : undefined;
 	const rawPercent = params['percent'];
 	const percent = typeof rawPercent === 'number' ? rawPercent : undefined;
-	if (!id || !key || (amount === undefined && percent === undefined)) {
+	if (!id || !resourceId || (amount === undefined && percent === undefined)) {
 		throw new Error(
-			'cost_mod requires id, key, and at least amount or percent',
+			'cost_mod requires id, resourceId, and at least amount or percent',
 		);
 	}
 	const ownerId = context.activePlayer.id;
@@ -37,11 +36,11 @@ export const costMod: EffectHandler<CostModParams> = (effect, context) => {
 				}
 				let flat: Record<string, number> | undefined;
 				if (amount !== undefined) {
-					flat = { [key]: amount };
+					flat = { [resourceId]: amount };
 				}
 				let percentMap: Record<string, number> | undefined;
 				if (percent !== undefined) {
-					percentMap = { [key]: percent };
+					percentMap = { [resourceId]: percent };
 				}
 				if (!flat && !percentMap) {
 					return;

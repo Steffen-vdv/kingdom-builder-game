@@ -10,7 +10,6 @@ import {
 } from './helpers/sessionFixtures';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
 import { createTranslationContext } from '../src/translation/context';
-import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import {
 	selectModifierInfo,
 	selectResourceDescriptor,
@@ -32,15 +31,11 @@ function createModifierHarness(options: ModifierHarnessOptions = {}) {
 		id: 'player-1',
 		name: 'Player One',
 		resources: {},
-		stats: {},
-		population: {},
 	});
 	const opponent = createSnapshotPlayer({
 		id: 'player-2',
 		name: 'Player Two',
 		resources: {},
-		stats: {},
-		population: {},
 	});
 	const session = createSessionSnapshot({
 		players: [activePlayer, opponent],
@@ -60,13 +55,8 @@ function createModifierHarness(options: ModifierHarnessOptions = {}) {
 			passiveRecords: session.passiveRecords,
 		},
 	);
-	const metadataSelectors = createTestRegistryMetadata(
-		scaffold.registries,
-		session.metadata,
-	);
 	return {
 		translationContext,
-		metadataSelectors,
 		registries: scaffold.registries,
 	};
 }
@@ -89,21 +79,30 @@ function selectDevelopmentWithIcon(
 	return { id: firstId, definition: firstDefinition } as const;
 }
 
-function selectResourceDescriptorWithIcon(
-	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>,
+function selectResourceV2WithIcon(
+	translationContext: ReturnType<typeof createTranslationContext>,
 ) {
-	for (const descriptor of metadataSelectors.resourceMetadata.list) {
-		if (descriptor.icon) {
-			return descriptor;
+	// Get a V2 resource with an icon from the resourceMetadataV2 context
+	const resourceIds = [
+		'resource:core:gold',
+		'resource:core:happiness',
+		'resource:core:ap',
+		'resource:core:castleHP',
+	];
+	for (const resourceId of resourceIds) {
+		const entry = translationContext.resourceMetadataV2.get(resourceId);
+		if (entry?.icon) {
+			return { id: resourceId, icon: entry.icon, label: entry.label ?? '' };
 		}
 	}
-	const fallback = metadataSelectors.resourceMetadata.list[0];
-	if (!fallback) {
-		throw new Error(
-			'Expected at least one resource descriptor for modifier tests.',
-		);
-	}
-	return fallback;
+	// Fallback to first available resource
+	const fallbackId = resourceIds[0];
+	const fallbackEntry = translationContext.resourceMetadataV2.get(fallbackId);
+	return {
+		id: fallbackId,
+		icon: fallbackEntry?.icon ?? '',
+		label: fallbackEntry?.label ?? fallbackId,
+	};
 }
 
 function selectActionWithIcon(
@@ -147,13 +146,11 @@ describe('modifier evaluation handlers', () => {
 	});
 
 	it('formats development result modifiers with resource removal', () => {
-		const { translationContext, metadataSelectors, registries } =
-			createModifierHarness();
+		const { translationContext, registries } = createModifierHarness();
 		const { id: developmentId, definition: developmentDef } =
 			selectDevelopmentWithIcon(registries);
-		const resourceDescriptor =
-			selectResourceDescriptorWithIcon(metadataSelectors);
-		const resourceKey = resourceDescriptor.id;
+		const resourceDescriptor = selectResourceV2WithIcon(translationContext);
+		const resourceId = resourceDescriptor.id;
 		const eff: EffectDef = {
 			type: 'result_mod',
 			method: 'add',
@@ -164,7 +161,7 @@ describe('modifier evaluation handlers', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: { key: resourceKey, amount: 2 },
+					params: { resourceId, change: { amount: 2 } },
 				},
 			],
 		};
@@ -173,7 +170,7 @@ describe('modifier evaluation handlers', () => {
 		const resultDescriptor = selectModifierInfo(translationContext, 'result');
 		const resourceInfo = selectResourceDescriptor(
 			translationContext,
-			resourceKey,
+			resourceId,
 		);
 		const developmentInfo = translationContext.developments.get(developmentId);
 		const targetIcon =
@@ -184,8 +181,7 @@ describe('modifier evaluation handlers', () => {
 		expect(
 			summary[0].startsWith(`${resultDescriptor.icon}${targetIcon}: `),
 		).toBe(true);
-		const resourceToken =
-			resourceInfo.icon ?? resourceInfo.label ?? resourceKey;
+		const resourceToken = resourceInfo.icon ?? resourceInfo.label ?? resourceId;
 		expect(summary[0]).toContain(`${resourceToken}-2`);
 		expect(description).not.toHaveLength(0);
 		const primaryLine = description[0];
@@ -201,19 +197,17 @@ describe('modifier evaluation handlers', () => {
 	});
 
 	it('formats cost modifiers with percent adjustments', () => {
-		const { translationContext, metadataSelectors, registries } =
-			createModifierHarness();
+		const { translationContext, registries } = createModifierHarness();
 		const { id: actionId, definition: actionDef } =
 			selectActionWithIcon(registries);
-		const resourceDescriptor =
-			selectResourceDescriptorWithIcon(metadataSelectors);
-		const resourceKey = resourceDescriptor.id;
+		const resourceDescriptor = selectResourceV2WithIcon(translationContext);
+		const resourceId = resourceDescriptor.id;
 		const eff: EffectDef = {
 			type: 'cost_mod',
 			method: 'add',
 			params: {
 				id: 'synthetic:discount',
-				key: resourceKey,
+				resourceId,
 				actionId,
 				percent: -0.2,
 			},
@@ -223,14 +217,14 @@ describe('modifier evaluation handlers', () => {
 		const costDescriptor = selectModifierInfo(translationContext, 'cost');
 		const resourceInfo = selectResourceDescriptor(
 			translationContext,
-			resourceKey,
+			resourceId,
 		);
 		const actionInfo = translationContext.actions.get(actionId);
 		const actionIcon =
 			actionInfo?.icon && actionInfo.icon.trim().length > 0
 				? actionInfo.icon
 				: (actionInfo?.name ?? actionDef.name ?? actionId);
-		const resourceIcon = resourceInfo.icon ?? resourceKey;
+		const resourceIcon = resourceInfo.icon ?? resourceId;
 		expect(summary).toEqual([
 			`${costDescriptor.icon}${actionIcon}: ${resourceIcon}-20%`,
 		]);

@@ -21,7 +21,7 @@ describe('building:add effect', () => {
 					params: {
 						id: 'mod',
 						actionId: target.id,
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 2,
 					},
 				},
@@ -127,7 +127,7 @@ describe('building:add effect', () => {
 					params: {
 						id: 'building_surcharge',
 						actionId: target.id,
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: surcharge,
 					},
 				},
