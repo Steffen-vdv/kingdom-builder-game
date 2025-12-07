@@ -120,13 +120,13 @@ formatting, it commits the changes for you. Never bypass these hooks.
 
 ## Coding Standards
 
-| Rule        | Requirement                                            |
-| ----------- | ------------------------------------------------------ |
-| Braces      | Always use braces, even for single-statement bodies    |
-| Line length | ≤80 characters                                         |
+| Rule | Requirement |
+| --- | --- |
+| Braces | Always use braces, even for single-statement bodies |
+| Line length | ≤80 characters |
 | File length | ≤350 lines for new files (\*.test.ts files are exempt) |
-| Naming      | Descriptive identifiers; camelCase/PascalCase          |
-| Indentation | Tabs (not spaces)                                      |
+| Naming | Descriptive identifiers; camelCase/PascalCase |
+| Indentation | Tabs (not spaces) |
 
 ## File Operations
 
