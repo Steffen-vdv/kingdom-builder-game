@@ -105,7 +105,10 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 	const boundReferenceMap = React.useMemo(
 		() =>
 			resourceCatalog
-				? buildBoundReferenceMap(resourceCatalog.resources.ordered)
+				? buildBoundReferenceMap(
+						resourceCatalog.resources.ordered,
+						resourceCatalog.groups.ordered,
+					)
 				: new Map<string, BoundRefEntry>(),
 		[resourceCatalog],
 	);

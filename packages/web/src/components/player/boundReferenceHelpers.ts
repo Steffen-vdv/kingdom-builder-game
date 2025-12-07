@@ -1,6 +1,7 @@
 import type {
 	SessionResourceBoundReferenceV2,
 	SessionResourceDefinitionV2,
+	SessionResourceGroupDefinitionV2,
 } from '@kingdom-builder/protocol';
 
 /**
@@ -24,25 +25,54 @@ export function getBoundReference(
 	return null;
 }
 
+/** Add bound reference entry to map if it has a dynamic reference */
+function addBoundEntry(
+	map: Map<string, BoundRefEntry>,
+	id: string,
+	upperBound: number | SessionResourceBoundReferenceV2 | null | undefined,
+	lowerBound: number | SessionResourceBoundReferenceV2 | null | undefined,
+): void {
+	// Check upper bound first (more common case)
+	const upperRef = getBoundReference(upperBound);
+	if (upperRef) {
+		map.set(id, { boundRef: upperRef, boundType: 'upper' });
+		return;
+	}
+	// Check lower bound
+	const lowerRef = getBoundReference(lowerBound);
+	if (lowerRef) {
+		map.set(id, { boundRef: lowerRef, boundType: 'lower' });
+	}
+}
+
 /**
  * Build a map from resource ID to bound reference info.
- * Only includes resources with dynamic bound references (not static).
+ * Includes both regular resources and group parents with dynamic bounds.
  */
 export function buildBoundReferenceMap(
 	definitions: readonly SessionResourceDefinitionV2[],
+	groups?: readonly SessionResourceGroupDefinitionV2[],
 ): Map<string, BoundRefEntry> {
 	const map = new Map<string, BoundRefEntry>();
 	for (const definition of definitions) {
-		// Check upper bound first (more common case)
-		const upperRef = getBoundReference(definition.upperBound);
-		if (upperRef) {
-			map.set(definition.id, { boundRef: upperRef, boundType: 'upper' });
-			continue;
-		}
-		// Check lower bound
-		const lowerRef = getBoundReference(definition.lowerBound);
-		if (lowerRef) {
-			map.set(definition.id, { boundRef: lowerRef, boundType: 'lower' });
+		addBoundEntry(
+			map,
+			definition.id,
+			definition.upperBound,
+			definition.lowerBound,
+		);
+	}
+	// Also include group parent bounds (e.g., Population bounded by Max Pop)
+	if (groups) {
+		for (const group of groups) {
+			if (group.parent) {
+				addBoundEntry(
+					map,
+					group.parent.id,
+					group.parent.upperBound,
+					group.parent.lowerBound,
+				);
+			}
 		}
 	}
 	return map;
