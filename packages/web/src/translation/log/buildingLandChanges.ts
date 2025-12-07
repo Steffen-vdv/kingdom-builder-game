@@ -46,6 +46,19 @@ export function appendBuildingChanges(
 	}
 }
 
+function formatDevelopmentChange(
+	developmentId: string,
+	context: Pick<TranslationDiffContext, 'developments' | 'assets'>,
+): string {
+	const label = describeContent(context.developments, developmentId).trim();
+	const slotLabelBase =
+		context.assets.slot.label?.trim() || 'Development Slot';
+	const slotLabel = `Empty ${slotLabelBase}`.trim();
+	const slotDisplay =
+		formatIconLabel(context.assets.slot.icon, slotLabel).trim() || slotLabel;
+	return `${LOG_KEYWORDS.developed} ${label} on ${slotDisplay}`.trim();
+}
+
 export function appendLandChanges(
 	changes: string[],
 	before: PlayerSnapshot,
@@ -68,21 +81,17 @@ export function appendLandChanges(
 			const summary = `${landLabelBase} +1 (${previousCount}→${newCount})`;
 			changes.push(summary);
 			gainedLandCount += 1;
+			// Also log any developments that came with the new land
+			for (const development of land.developments) {
+				changes.push(formatDevelopmentChange(development, context));
+			}
 			continue;
 		}
 		for (const development of land.developments) {
 			if (previous.developments.includes(development)) {
 				continue;
 			}
-			const label = describeContent(context.developments, development).trim();
-			const slotLabelBase =
-				context.assets.slot.label?.trim() || 'Development Slot';
-			const slotLabel = `Empty ${slotLabelBase}`.trim();
-			const slotDisplay =
-				formatIconLabel(context.assets.slot.icon, slotLabel).trim() ||
-				slotLabel;
-			const summary = `${LOG_KEYWORDS.developed} ${label} on ${slotDisplay}`;
-			changes.push(summary.trim());
+			changes.push(formatDevelopmentChange(development, context));
 		}
 	}
 }
