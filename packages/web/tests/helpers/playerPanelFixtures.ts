@@ -14,11 +14,8 @@ import { createTestSessionScaffold } from './testSessionScaffold';
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
 	mockGame: GameEngineContextValue;
-	/** V2 IDs for primary resources with their forecast deltas */
-	primaryForecast: Record<string, number>;
-	/** V2 IDs for non-primary resources that should be visible in tests */
-	displayableSecondaryResourceIds: string[];
-	secondaryForecast: Record<string, number>;
+	/** Forecast deltas for all resources, keyed by V2 ID */
+	forecast: Record<string, number>;
 	registries: SessionRegistries;
 	metadata: SessionSnapshot['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
@@ -64,15 +61,6 @@ function findPrimaryCategory(catalog: ResourceCatalog) {
 	);
 }
 
-/**
- * Finds all non-primary categories.
- */
-function findNonPrimaryCategories(catalog: ResourceCatalog) {
-	return catalog.categories.ordered.filter(
-		(cat) => !('isPrimary' in cat) || cat.isPrimary !== true,
-	);
-}
-
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 	const activePlayerId = 'player-1' as SessionPlayerId;
 	const opponentId = 'player-2' as SessionPlayerId;
@@ -83,31 +71,25 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		ruleSnapshot,
 		resourceCatalogV2,
 	} = createTestSessionScaffold();
-	// Find primary category by isPrimary property, not by ID
+	// Get all resources from the catalog - no need to separate by category
+	const allResources = resourceCatalogV2.resources.ordered;
+	// Find primary category to determine which resources need touched tracking
 	const primaryCategory = findPrimaryCategory(resourceCatalogV2);
-	const primaryResourceIds = primaryCategory
-		? resolveResourceIdsForCategory(resourceCatalogV2, primaryCategory)
-		: [];
-	// Find all non-primary categories and collect their resources
-	const nonPrimaryCategories = findNonPrimaryCategories(resourceCatalogV2);
-	const nonPrimaryResourceIds = nonPrimaryCategories.flatMap((category) =>
-		resolveResourceIdsForCategory(resourceCatalogV2, category),
+	const primaryResourceIds = new Set(
+		primaryCategory
+			? resolveResourceIdsForCategory(resourceCatalogV2, primaryCategory)
+			: [],
 	);
-	// Build valuesV2 directly using V2 IDs
+	// Build valuesV2 and resourceTouchedV2 uniformly for all resources
 	const valuesV2: Record<string, number> = {};
 	const resourceTouchedV2: Record<string, boolean> = {};
-	// Populate primary resources
-	for (const [index, resourceId] of primaryResourceIds.entries()) {
-		valuesV2[resourceId] = index + 2;
-	}
-	// Populate non-primary resources
-	let nonPrimaryIndex = 0;
-	for (const resourceId of nonPrimaryResourceIds) {
-		const value = nonPrimaryIndex % 2 === 0 ? nonPrimaryIndex + 1 : 0;
-		valuesV2[resourceId] = value;
-		// Mark all non-primary resources as touched for visibility
-		resourceTouchedV2[resourceId] = true;
-		nonPrimaryIndex += 1;
+	for (const [index, resource] of allResources.entries()) {
+		// Assign values: alternating pattern for variety in tests
+		valuesV2[resource.id] = index % 2 === 0 ? index + 2 : index + 1;
+		// Non-primary resources need touched flag for visibility
+		if (!primaryResourceIds.has(resource.id)) {
+			resourceTouchedV2[resource.id] = true;
+		}
 	}
 	// Legacy resources object is empty - V2 is the source of truth
 	const activePlayer = createSnapshotPlayer({
@@ -211,38 +193,17 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
 	};
-	// Build primary forecast using V2 IDs directly
-	const primaryForecast = primaryResourceIds.reduce<Record<string, number>>(
-		(acc, resourceId, index) => {
-			const offset = index + 1;
-			acc[resourceId] = index % 2 === 0 ? offset : -offset;
-			return acc;
-		},
-		{},
-	);
-	// Determine which non-primary resources should be visible based on touched
-	const displayableSecondaryResourceIds = nonPrimaryResourceIds.filter(
-		(resourceId) => {
-			const value = valuesV2[resourceId] ?? 0;
-			if (value !== 0) {
-				return true;
-			}
-			return Boolean(resourceTouchedV2[resourceId]);
-		},
-	);
-	const secondaryForecast = displayableSecondaryResourceIds.reduce<
-		Record<string, number>
-	>((acc, resourceId, index) => {
-		const offset = index + 2;
-		acc[resourceId] = index % 2 === 0 ? offset : -offset;
-		return acc;
-	}, {});
+	// Build forecast uniformly for all resources
+	const forecast: Record<string, number> = {};
+	for (const [index, resource] of allResources.entries()) {
+		// Alternating positive/negative deltas for test variety
+		const offset = index + 1;
+		forecast[resource.id] = index % 2 === 0 ? offset : -offset;
+	}
 	return {
 		activePlayer,
 		mockGame,
-		primaryForecast,
-		displayableSecondaryResourceIds,
-		secondaryForecast,
+		forecast,
 		registries: sessionRegistries,
 		metadata: sessionState.metadata,
 		metadataSelectors,

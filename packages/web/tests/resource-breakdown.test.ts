@@ -213,9 +213,9 @@ function createStatBreakdownSetup(): BreakdownSetup {
 	if (!primaryStatKey) {
 		throw new Error('Unable to resolve a stat key for testing.');
 	}
-	active.stats[primaryStatKey] = 0;
+	active.valuesV2[primaryStatKey] = 0;
 	if (secondaryStatKey) {
-		active.stats[secondaryStatKey] = 3;
+		active.valuesV2[secondaryStatKey] = 3;
 	}
 	return {
 		translationContext,

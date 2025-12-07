@@ -93,10 +93,13 @@ function toPlayerSnapshot(
 	return {
 		id: participant.id,
 		name: participant.name,
-		resources: { ...participant.resources },
-		stats: { [capacityStat]: 3 },
+		valuesV2: {
+			...participant.resources,
+			...participant.population,
+			[capacityStat]: 3,
+		},
 		resourceTouchedV2: {},
-		population: { ...participant.population },
+		resourceBoundsV2: {},
 		lands: participant.lands.map((land) => ({
 			...land,
 			slotsMax: land.slotsFree,
@@ -217,14 +220,18 @@ export function createActionsPanelGame({
 		activePlayer: toTranslationPlayer({
 			id: player.id,
 			name: player.name,
-			resources: player.resources,
-			population: player.population,
+			valuesV2: {
+				...player.resources,
+				...player.population,
+			},
 		}),
 		opponent: toTranslationPlayer({
 			id: opponent.id,
 			name: opponent.name,
-			resources: opponent.resources,
-			population: opponent.population,
+			valuesV2: {
+				...opponent.resources,
+				...opponent.population,
+			},
 		}),
 		actionCostResource,
 	});

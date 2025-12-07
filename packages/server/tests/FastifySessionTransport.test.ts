@@ -387,7 +387,7 @@ describe('FastifySessionTransport', () => {
 		expect(actionBody.status).toBe('success');
 		expectSnapshotMetadata(actionBody.snapshot.metadata);
 		const [player] = actionBody.snapshot.game.players;
-		expect(player?.resources[gainResourceId]).toBe(1);
+		expect(player?.valuesV2[gainResourceId]).toBe(1);
 		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});

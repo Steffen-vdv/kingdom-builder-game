@@ -104,13 +104,11 @@ describe('useActionPerformer', () => {
 		const player = createSnapshotPlayer({
 			id: 'A',
 			name: 'Hero',
-			resources: { [actionCostResource]: 5 },
 			valuesV2: { [actionCostResource]: 5 },
 		});
 		const opponent = createSnapshotPlayer({
 			id: 'B',
 			name: 'Rival',
-			resources: { [actionCostResource]: 4 },
 			valuesV2: { [actionCostResource]: 4 },
 		});
 		sessionSnapshot = createSessionSnapshot({
@@ -315,7 +313,7 @@ describe('useActionPerformer', () => {
 		const opponentOnly = createSnapshotPlayer({
 			id: 'B',
 			name: 'Rival',
-			resources: { [actionCostResource]: 4 },
+			valuesV2: { [actionCostResource]: 4 },
 		});
 		sessionSnapshot = createSessionSnapshot({
 			players: [opponentOnly],
@@ -373,14 +371,10 @@ describe('useActionPerformer', () => {
 			throw new Error('Expected players in snapshot');
 		}
 		const updatedResourceValue =
-			(activeBefore.resources[actionCostResource] ?? 0) - 1;
+			(activeBefore.valuesV2[actionCostResource] ?? 0) - 1;
 		const updatedPlayer = createSnapshotPlayer({
 			id: activeBefore.id,
 			name: activeBefore.name,
-			resources: {
-				...activeBefore.resources,
-				[actionCostResource]: updatedResourceValue,
-			},
 			valuesV2: {
 				...activeBefore.valuesV2,
 				[actionCostResource]: updatedResourceValue,
@@ -389,7 +383,6 @@ describe('useActionPerformer', () => {
 		const updatedOpponent = createSnapshotPlayer({
 			id: opponentBefore.id,
 			name: opponentBefore.name,
-			resources: { ...opponentBefore.resources },
 			valuesV2: { ...opponentBefore.valuesV2 },
 		});
 		const snapshotAfter = createSessionSnapshot({
@@ -487,14 +480,10 @@ describe('useActionPerformer', () => {
 			throw new Error('Expected players in snapshot');
 		}
 		const updatedResourceValue =
-			(activeBefore.resources[actionCostResource] ?? 0) - 1;
+			(activeBefore.valuesV2[actionCostResource] ?? 0) - 1;
 		const updatedPlayer = createSnapshotPlayer({
 			id: activeBefore.id,
 			name: activeBefore.name,
-			resources: {
-				...activeBefore.resources,
-				[actionCostResource]: updatedResourceValue,
-			},
 			valuesV2: {
 				...activeBefore.valuesV2,
 				[actionCostResource]: updatedResourceValue,
@@ -503,7 +492,6 @@ describe('useActionPerformer', () => {
 		const updatedOpponent = createSnapshotPlayer({
 			id: opponentBefore.id,
 			name: opponentBefore.name,
-			resources: { ...opponentBefore.resources },
 			valuesV2: { ...opponentBefore.valuesV2 },
 		});
 		const snapshotAfter = createSessionSnapshot({
@@ -667,12 +655,12 @@ describe('useActionPerformer', () => {
 		const updatedPlayer = createSnapshotPlayer({
 			id: activeBefore.id,
 			name: activeBefore.name,
-			resources: { ...activeBefore.resources, [actionCostResource]: 0 },
+			valuesV2: { ...activeBefore.valuesV2, [actionCostResource]: 0 },
 		});
 		const updatedOpponent = createSnapshotPlayer({
 			id: opponentBefore.id,
 			name: opponentBefore.name,
-			resources: { ...opponentBefore.resources },
+			valuesV2: { ...opponentBefore.valuesV2 },
 		});
 		const snapshotAfter = createSessionSnapshot({
 			players: [updatedPlayer, updatedOpponent],

@@ -174,10 +174,11 @@ export interface TranslationPhase {
 export interface TranslationPlayer {
 	id: SessionPlayerId;
 	name?: string;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
-	resourcesV2: Readonly<Record<string, number>>;
+	/**
+	 * Unified ResourceV2 value map - the canonical source of truth for all
+	 * resource values including currencies, stats, and population counts.
+	 */
+	valuesV2: Readonly<Record<string, number>>;
 	resourceBoundsV2: Readonly<Record<string, SessionResourceBoundsV2>>;
 }
 

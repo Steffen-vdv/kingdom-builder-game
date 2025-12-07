@@ -87,14 +87,10 @@ export interface SessionPlayerStateSnapshot {
 	id: SessionPlayerId;
 	name: string;
 	aiControlled?: boolean;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
 	resourceTouchedV2: Record<string, boolean>;
-	population: Record<string, number>;
 	/**
-	 * ResourceV2 value map mirrored directly from the engine snapshot.
-	 * Transports now populate this for every player snapshot and clients can
-	 * treat it as the canonical resource payload.
+	 * ResourceV2 value map - the canonical source of truth for all resource
+	 * values including currencies, stats, and population counts.
 	 */
 	valuesV2: Record<string, number>;
 	/**

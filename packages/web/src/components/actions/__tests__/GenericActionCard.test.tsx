@@ -50,10 +50,10 @@ describe('GenericActionCard', () => {
 	const player: DisplayPlayer = {
 		id: 'player',
 		name: 'Player',
-		resources: { gold: 5 },
-		stats: {},
+		valuesV2: { gold: 5 },
+		resourceTouchedV2: {},
+		resourceBoundsV2: {},
 		lands: [],
-		population: {},
 		buildings: new Set<string>(),
 		actions: new Set<string>(),
 	} as unknown as DisplayPlayer;

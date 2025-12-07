@@ -52,7 +52,7 @@ describe('SessionTransport executeAction', () => {
 		expect(result.status).toBe('success');
 		expectSnapshotMetadata(result.snapshot.metadata);
 		const [player] = result.snapshot.game.players;
-		expect(player?.resources[gainResourceId]).toBe(1);
+		expect(player?.valuesV2[gainResourceId]).toBe(1);
 		expectStaticMetadata(manager.getMetadata());
 		expect(Array.isArray(result.traces)).toBe(true);
 		expect(result.costs).toEqual(expectedCosts);

@@ -58,10 +58,7 @@ interface SnapshotPlayerOptions {
 	id: SessionPlayerId;
 	name?: string;
 	aiControlled?: boolean;
-	resources?: Record<string, number>;
-	stats?: Record<string, number>;
 	resourceTouchedV2?: Record<string, boolean>;
-	population?: Record<string, number>;
 	valuesV2?: Record<string, number>;
 	resourceBoundsV2?: Record<string, Partial<SessionResourceBoundsV2>>;
 	lands?: SessionPlayerStateSnapshot['lands'];
@@ -77,10 +74,7 @@ export function createSnapshotPlayer({
 	id,
 	name = `Player ${id}`,
 	aiControlled,
-	resources = {},
-	stats = {},
 	resourceTouchedV2 = {},
-	population = {},
 	valuesV2 = {},
 	resourceBoundsV2 = {},
 	lands = [],
@@ -91,13 +85,19 @@ export function createSnapshotPlayer({
 	skipSteps = {},
 	passives = [],
 }: SnapshotPlayerOptions): SessionPlayerStateSnapshot {
+	const normalizedBounds: Record<string, SessionResourceBoundsV2> = {};
+	for (const [resourceId, bounds] of Object.entries(resourceBoundsV2)) {
+		normalizedBounds[resourceId] = {
+			lowerBound: bounds.lowerBound !== undefined ? bounds.lowerBound : null,
+			upperBound: bounds.upperBound !== undefined ? bounds.upperBound : null,
+		};
+	}
 	const snapshot: SessionPlayerStateSnapshot = {
 		id,
 		name,
-		resources: { ...resources },
-		stats: { ...stats },
 		resourceTouchedV2: { ...resourceTouchedV2 },
-		population: { ...population },
+		valuesV2: { ...valuesV2 },
+		resourceBoundsV2: normalizedBounds,
 		lands: cloneLands(lands),
 		buildings: [...buildings],
 		actions: [...actions],
@@ -109,15 +109,6 @@ export function createSnapshotPlayer({
 	if (aiControlled !== undefined) {
 		snapshot.aiControlled = aiControlled;
 	}
-	snapshot.valuesV2 = { ...valuesV2 };
-	const normalizedBounds: Record<string, SessionResourceBoundsV2> = {};
-	for (const [resourceId, bounds] of Object.entries(resourceBoundsV2)) {
-		normalizedBounds[resourceId] = {
-			lowerBound: bounds.lowerBound !== undefined ? bounds.lowerBound : null,
-			upperBound: bounds.upperBound !== undefined ? bounds.upperBound : null,
-		};
-	}
-	snapshot.resourceBoundsV2 = normalizedBounds;
 	return snapshot;
 }
 

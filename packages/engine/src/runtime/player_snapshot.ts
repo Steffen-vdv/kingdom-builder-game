@@ -164,18 +164,13 @@ export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
-	// All values are unified in valuesV2. The resources/stats/population
-	// properties reference the same object so consumers can access via any key.
 	const valuesV2 = cloneValuesV2(player.resourceValues);
 	const resourceBoundsV2 = buildResourceBoundsSnapshot(player);
 	return {
 		id: player.id,
 		name: player.name,
 		aiControlled: Boolean(context.aiSystem?.has(player.id)),
-		resources: valuesV2,
-		stats: valuesV2,
 		resourceTouchedV2: { ...player.resourceTouched },
-		population: valuesV2,
 		valuesV2,
 		resourceBoundsV2,
 		lands: player.lands.map((land) => cloneLand(land)),
