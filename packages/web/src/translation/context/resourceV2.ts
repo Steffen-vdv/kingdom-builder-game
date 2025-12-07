@@ -43,7 +43,8 @@ export function cloneResourceBoundsV2(
 function cloneResourceCatalogRegistryV2<TDefinition extends { id: string }>(
 	registry:
 		| SessionResourceCatalogV2['resources']
-		| SessionResourceCatalogV2['groups'],
+		| SessionResourceCatalogV2['groups']
+		| SessionResourceCatalogV2['categories'],
 ): {
 	ordered: readonly TDefinition[];
 	byId: Readonly<Record<string, TDefinition>>;
@@ -233,6 +234,32 @@ export function createResourceV2MetadataSelectors(
 	return createMetadataSelectors(entries, descriptorRecords, factory);
 }
 
+/**
+ * Merges group-level label/icon with parent metadata as fallback.
+ * Priority: group.label/icon > parent.label/icon
+ */
+function mergeGroupWithParent(
+	definition: TranslationResourceCatalogV2['groups']['ordered'][number],
+):
+	| {
+			label?: string | null;
+			icon?: string;
+			description?: string | null;
+			displayAsPercent?: boolean;
+			groupId?: string | null;
+	  }
+	| undefined {
+	if (!definition.parent && !definition.label && !definition.icon) {
+		return undefined;
+	}
+	return {
+		...definition.parent,
+		// Group-level label/icon override parent if present
+		...(definition.label && { label: definition.label }),
+		...(definition.icon && { icon: definition.icon }),
+	};
+}
+
 export function createResourceV2GroupMetadataSelectors(
 	catalog: TranslationResourceCatalogV2,
 	metadata?: Record<string, SessionMetadataDescriptor>,
@@ -245,7 +272,11 @@ export function createResourceV2GroupMetadataSelectors(
 			metadata?.[definition.id] ?? fallbackMetadata?.[definition.id];
 		entries.push([
 			definition.id,
-			createMetadataEntry(definition.id, definition.parent, descriptor),
+			createMetadataEntry(
+				definition.id,
+				mergeGroupWithParent(definition),
+				descriptor,
+			),
 		]);
 		seen.add(definition.id);
 	}
@@ -264,14 +295,22 @@ export function createResourceV2GroupMetadataSelectors(
 			const definition = catalog.groups.byId[id];
 			entries.push([
 				id,
-				createMetadataEntry(id, definition?.parent, descriptor),
+				createMetadataEntry(
+					id,
+					definition ? mergeGroupWithParent(definition) : undefined,
+					descriptor,
+				),
 			]);
 			seen.add(id);
 		}
 	}
 	const factory: MetadataFactory = (id, descriptor) => {
 		const definition = catalog.groups.byId[id];
-		return createMetadataEntry(id, definition?.parent, descriptor);
+		return createMetadataEntry(
+			id,
+			definition ? mergeGroupWithParent(definition) : undefined,
+			descriptor,
+		);
 	};
 	return createMetadataSelectors(entries, descriptorRecords, factory);
 }

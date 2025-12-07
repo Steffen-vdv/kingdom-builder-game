@@ -1596,7 +1596,7 @@
 			"order": 2,
 			"resolvedOrder": 2,
 			"parent": {
-				"id": "resource:core:total",
+				"id": "resource:core:total-population",
 				"label": "Population",
 				"icon": "👥",
 				"description": "Total population count.",
@@ -1615,7 +1615,7 @@
 			"order": 3,
 			"resolvedOrder": 3,
 			"parent": {
-				"id": "resource:core:total",
+				"id": "resource:core:total-population",
 				"label": "Population Roles",
 				"icon": "👥",
 				"description": "Assigned population roles.",

@@ -92,6 +92,16 @@ export interface ResourceV2GroupParent
 
 export interface ResourceV2GroupDefinition {
 	id: string;
+	/**
+	 * Display label for the group in the resource bar.
+	 * Falls back to parent.label if not set.
+	 */
+	label?: string;
+	/**
+	 * Display icon for the group in the resource bar.
+	 * Falls back to parent.icon if not set.
+	 */
+	icon?: string;
 	order?: number;
 	parent?: ResourceV2GroupParent;
 }
