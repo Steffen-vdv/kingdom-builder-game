@@ -162,7 +162,6 @@ Document owners must ensure that each deferred item feeds into the post-MVP back
 3. **Incremental Migrations**
    - Migrate one resource/stat/population at a time end-to-end (engine, content, protocol, web). Start with **Absorption** as the pilot ResourceV2 conversion because it is a small, low-risk stat with limited integrations.
    - After each migration, remove the legacy definition and leave breadcrumbs documenting the change.
-   - Maintain the living doc with temporary regressions and next steps.
 4. **System-Wide Adoption**
    - Once all numeric tracks moved, retire legacy systems, builders, and translation code.
    - Consolidate tests and content to use ResourceV2 exclusively.
@@ -186,11 +185,11 @@ Document owners must ensure that each deferred item feeds into the post-MVP back
 
 ## 10. Risks & Mitigations
 
-- **Documentation Drift:** Mitigated by mandatory reading instructions and structured living doc updates.
+- **Documentation Drift:** Mitigated by mandatory reading instructions and archived reference documentation.
 - **Partial Migrations Causing Confusion:** Each resource migration removes legacy code and records intended regressions to discourage accidental reverts.
 - **Complex Validation:** Builder validators enforce rules upfront, reducing runtime surprises.
 - **Translation Regression:** Unified ResourceV2 translators designed early, tested with representative resources before broad rollout.
 
 ## 11. Open Questions (none outstanding)
 
-All clarifications from the Q&A are resolved. Future discoveries must be captured in the living doc and, if fundamental, backported into this design document.
+All clarifications from the Q&A have been resolved. The project has been completed and documentation archived.
