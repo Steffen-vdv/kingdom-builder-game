@@ -196,8 +196,8 @@ describe('<PlayerPanel />', () => {
 
 		it('has both positive and negative forecast values', () => {
 			const values = Object.values(forecast);
-			const hasPositive = values.some((v) => v > 0);
-			const hasNegative = values.some((v) => v < 0);
+			const hasPositive = values.some((val) => val > 0);
+			const hasNegative = values.some((val) => val < 0);
 			expect(hasPositive).toBe(true);
 			expect(hasNegative).toBe(true);
 		});

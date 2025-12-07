@@ -236,15 +236,10 @@ export function createActionsPanelGame({
 		actionCostResource,
 	});
 	const ruleSnapshot = {
-		tieredResourceKey,
-		tierDefinitions: [],
-		winConditions: [],
+		tieredResourceKey, tierDefinitions: [], winConditions: [],
 	} as const;
 	const phaseDefinition = {
-		id: actionPhaseId,
-		name: phaseLabel,
-		action: true,
-		steps: [],
+		id: actionPhaseId, name: phaseLabel, action: true, steps: [],
 	} as const;
 	const playerSnapshot = toPlayerSnapshot(player, capacityStat);
 	const opponentSnapshot = toPlayerSnapshot(opponent, capacityStat);
