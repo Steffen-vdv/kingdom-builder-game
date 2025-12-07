@@ -2,78 +2,100 @@ import { describe, expect, it } from 'vitest';
 import { selectStatDescriptor } from '../../src/translation/effects/registrySelectors';
 import type { TranslationAssets } from '../../src/translation/context';
 
-type AssetOverrides = Partial<TranslationAssets> & {
-	stats?: TranslationAssets['stats'];
+type ResourceV2Metadata = {
+	id: string;
+	label?: string;
+	icon?: string;
+	displayAsPercent?: boolean;
 };
 
-function createAssets(overrides: AssetOverrides = {}): TranslationAssets {
+type ResourceMetadataV2Selectors = {
+	get: (id: string) => ResourceV2Metadata;
+	has: (id: string) => boolean;
+	list: () => ResourceV2Metadata[];
+};
+
+function createAssets(): TranslationAssets {
 	return {
-		resources: overrides.resources ?? {},
-		stats: overrides.stats ?? {},
-		populations: overrides.populations ?? {},
-		population: overrides.population ?? {},
-		land: overrides.land ?? {},
-		slot: overrides.slot ?? {},
-		passive: overrides.passive ?? {},
-		upkeep: overrides.upkeep ?? {},
-		modifiers: overrides.modifiers ?? {},
-		triggers: overrides.triggers ?? {},
-		tierSummaries: overrides.tierSummaries ?? {},
-		formatPassiveRemoval:
-			overrides.formatPassiveRemoval ?? ((description: string) => description),
+		resources: {},
+		stats: {},
+		populations: {},
+		population: {},
+		land: {},
+		slot: {},
+		passive: {},
+		upkeep: {},
+		modifiers: {},
+		triggers: {},
+		tierSummaries: {},
+		formatPassiveRemoval: (description: string) => description,
 	} as TranslationAssets;
 }
 
-function createContext(overrides: AssetOverrides = {}) {
-	return { assets: createAssets(overrides) };
+function createResourceMetadataV2(
+	entries: Record<string, Omit<ResourceV2Metadata, 'id'>>,
+): ResourceMetadataV2Selectors {
+	const data = Object.entries(entries).map(([id, meta]) => ({ id, ...meta }));
+	return {
+		get: (id: string) => {
+			const entry = data.find((e) => e.id === id);
+			return entry ?? { id, label: id };
+		},
+		has: (id: string) => data.some((e) => e.id === id),
+		list: () => data,
+	};
+}
+
+function createContext(
+	v2Entries: Record<string, Omit<ResourceV2Metadata, 'id'>> = {},
+) {
+	return {
+		assets: createAssets(),
+		resourceMetadataV2: createResourceMetadataV2(v2Entries),
+	};
 }
 
 describe('registrySelectors – selectStatDescriptor', () => {
-	it('prefers translation asset metadata and clones format descriptors', () => {
-		const statKey = 'stat.max';
-		const metadataFormat = Object.freeze({ prefix: 'Max ' });
-		const stats = {
-			[statKey]: Object.freeze({
+	it('uses ResourceV2 metadata for labels and icons', () => {
+		const resourceId = 'resource:core:max-value';
+		const context = createContext({
+			[resourceId]: {
 				label: 'Maximum',
 				icon: '🔺',
-				format: metadataFormat,
-			}),
-		} satisfies TranslationAssets['stats'];
-		const context = createContext({ stats });
-		const descriptor = selectStatDescriptor(context, statKey);
+			},
+		});
+		const descriptor = selectStatDescriptor(context, resourceId);
 		expect(descriptor.label).toBe('Maximum');
 		expect(descriptor.icon).toBe('🔺');
-		expect(descriptor.format).toEqual({ prefix: 'Max ' });
-		expect(descriptor.format).not.toBe(metadataFormat);
-		const cached = selectStatDescriptor(context, statKey);
+		const cached = selectStatDescriptor(context, resourceId);
 		expect(cached).toBe(descriptor);
 	});
 
-	it('derives percent formatting hints from metadata flags', () => {
-		const statKey = 'stat.percent';
-		const stats = {
-			[statKey]: Object.freeze({
+	it('derives percent formatting from V2 displayAsPercent property', () => {
+		const resourceId = 'resource:core:percent-value';
+		const context = createContext({
+			[resourceId]: {
 				label: 'Percentile',
 				icon: '📈',
 				displayAsPercent: true,
-			}),
-		} satisfies TranslationAssets['stats'];
-		const context = createContext({ stats });
-		const descriptor = selectStatDescriptor(context, statKey);
+			},
+		});
+		const descriptor = selectStatDescriptor(context, resourceId);
 		expect(descriptor.format).toEqual({ percent: true });
 	});
 
-	it('falls back to humanized identifiers and maintains per-context caches', () => {
-		const statKey = 'mystery-stat';
+	it('falls back to V2 metadata default label and maintains per-context caches', () => {
+		const resourceId = 'mystery-stat';
 		const context = createContext();
-		const descriptor = selectStatDescriptor(context, statKey);
-		expect(descriptor.label).toBe('Mystery Stat');
+		const descriptor = selectStatDescriptor(context, resourceId);
+		// V2 metadata returns id as label for unknown resources
+		expect(descriptor.label).toBe('mystery-stat');
 		// Icon falls back to empty string when not found
 		expect(descriptor.icon).toBe('');
-		const repeat = selectStatDescriptor(context, statKey);
+		const repeat = selectStatDescriptor(context, resourceId);
 		expect(repeat).toBe(descriptor);
 		const otherContext = createContext();
-		const otherDescriptor = selectStatDescriptor(otherContext, statKey);
+		const otherDescriptor = selectStatDescriptor(otherContext, resourceId);
 		expect(otherDescriptor).not.toBe(descriptor);
 		expect(otherDescriptor.label).toBe(descriptor.label);
 	});

@@ -39,7 +39,7 @@ export function createBuildingRegistry() {
 			.name('Town Charter')
 			.icon('🏘️')
 			.cost(Resource.gold, 5)
-			.onBuild(effect(Types.CostMod, CostModMethods.ADD).params(costModParams().id('tc_expand_cost').actionId(ActionId.expand).key(Resource.gold).amount(2)).build())
+			.onBuild(effect(Types.CostMod, CostModMethods.ADD).params(costModParams().id('tc_expand_cost').actionId(ActionId.expand).resourceId(Resource.gold).amount(2)).build())
 			.onBuild(
 				effect(Types.ResultMod, ResultModMethods.ADD)
 					.params(resultModParams().id('tc_expand_result').actionId(ActionId.expand))

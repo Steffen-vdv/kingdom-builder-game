@@ -16,7 +16,7 @@ describe('cost_mod effects', () => {
 					params: {
 						id: 'm',
 						actionId: targetAction.id,
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 1,
 					},
 				},
@@ -28,7 +28,7 @@ describe('cost_mod effects', () => {
 				{
 					type: 'cost_mod',
 					method: 'remove',
-					params: { id: 'm', key: CResource.gold, amount: 0 },
+					params: { id: 'm', resourceId: CResource.gold, amount: 0 },
 				},
 			],
 		});
@@ -66,7 +66,7 @@ describe('cost_mod effects', () => {
 					params: {
 						id: 'flat',
 						actionId: targetAction.id,
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 4,
 					},
 				},
@@ -76,7 +76,7 @@ describe('cost_mod effects', () => {
 					params: {
 						id: 'pctA',
 						actionId: targetAction.id,
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						percent: 0.2,
 					},
 				},
@@ -86,7 +86,7 @@ describe('cost_mod effects', () => {
 					params: {
 						id: 'pctB',
 						actionId: targetAction.id,
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						percent: -0.1,
 					},
 				},

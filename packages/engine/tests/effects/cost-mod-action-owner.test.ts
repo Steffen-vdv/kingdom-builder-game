@@ -24,7 +24,7 @@ describe('cost_mod owner scope', () => {
 				{
 					type: 'cost_mod',
 					method: 'add',
-					params: { id: 'general', key: CResource.gold, amount: 1 },
+					params: { id: 'general', resourceId: CResource.gold, amount: 1 },
 				},
 				{
 					type: 'cost_mod',
@@ -32,7 +32,7 @@ describe('cost_mod owner scope', () => {
 					params: {
 						id: 'specific',
 						actionId: firstActionDefinition.id,
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 2,
 					},
 				},

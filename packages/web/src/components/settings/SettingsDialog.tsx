@@ -22,22 +22,23 @@ const DIALOG_DESCRIPTION = [
 	'These selections stay with you as you explore different screens.',
 ].join(' ');
 const TAB_BUTTON_CLASS = [
-	'flex flex-1 items-center justify-center gap-2 rounded-2xl border',
-	'border-transparent px-4 py-3 text-sm font-semibold',
-	'tracking-wide transition hoverable cursor-pointer focus:outline-none',
-	'focus-visible:ring-2 focus-visible:ring-emerald-300',
+	'flex flex-1 items-center justify-center gap-2 border px-4 py-2.5',
+	'text-sm font-semibold tracking-wide transition hoverable cursor-pointer',
+	'focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300',
 	'dark:focus-visible:ring-emerald-500/60',
+	'first:rounded-l-full last:rounded-r-full',
 ].join(' ');
 const TAB_BUTTON_ACTIVE_CLASS = [
-	'bg-emerald-100 text-emerald-900 shadow-sm shadow-emerald-500/20',
-	'hover:bg-emerald-200',
-	'dark:bg-emerald-500/20 dark:text-emerald-100 dark:shadow-black/40',
-	'dark:hover:bg-emerald-500/30',
+	'border-emerald-300 bg-emerald-100 text-emerald-900',
+	'shadow-sm shadow-emerald-500/20 hover:bg-emerald-200',
+	'dark:border-emerald-500/40 dark:bg-emerald-500/20 dark:text-emerald-100',
+	'dark:shadow-black/40 dark:hover:bg-emerald-500/30',
 ].join(' ');
 const TAB_BUTTON_INACTIVE_CLASS = [
-	'bg-white/60 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700',
-	'dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/70',
-	'dark:hover:text-emerald-200',
+	'border-slate-200/60 bg-white/55 text-slate-600',
+	'hover:border-slate-300 hover:bg-white/80 hover:text-emerald-700',
+	'dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
+	'dark:hover:border-white/20 dark:hover:bg-white/10 dark:hover:text-emerald-200',
 ].join(' ');
 const TAB_ICON_CLASS = 'text-lg leading-none';
 
@@ -208,7 +209,7 @@ export default function SettingsDialog({
 	}
 
 	return createPortal(
-		<div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10">
+		<div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-16 pb-10 overflow-y-auto">
 			<div
 				className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
 				onClick={onClose}
@@ -241,7 +242,7 @@ export default function SettingsDialog({
 					</p>
 				</header>
 				<div className="flex flex-col gap-5">
-					<div className="flex gap-2 rounded-3xl bg-white/60 p-2 dark:bg-slate-900/70 justify-center">
+					<div className="flex rounded-full bg-slate-100/60 p-1 dark:bg-slate-800/50 justify-center">
 						{SETTINGS_TABS.map((tab) => {
 							const isActive = activeTab === tab.id;
 							return (

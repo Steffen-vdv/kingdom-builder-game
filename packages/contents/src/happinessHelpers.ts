@@ -23,7 +23,7 @@ export const incomeModifier = (id: string, percent: number) =>
 const GOLD_RESOURCE_KEY: ResourceKey = Resource.gold;
 const GROWTH_STAT_KEY: StatKey = Stat.growth;
 
-export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).key(GOLD_RESOURCE_KEY).percent(-0.2).build()).build();
+export const actionDiscountModifier = (id: string) => effect(Types.CostMod, CostModMethods.ADD).round('up').params(costModParams().id(id).resourceId(GOLD_RESOURCE_KEY).percent(-0.2).build()).build();
 
 export const growthBonusEffect = (amount: number) => statAddEffect(GROWTH_STAT_KEY, amount);
 

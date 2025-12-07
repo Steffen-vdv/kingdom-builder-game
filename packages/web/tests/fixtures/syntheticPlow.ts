@@ -208,7 +208,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 						method: 'add',
 						params: {
 							id: 'cost-mod:synthetic:plow',
-							key: SYNTHETIC_RESOURCE_V2_KEYS.gold,
+							resourceId: SYNTHETIC_RESOURCE_V2_KEYS.gold,
 							amount: 2,
 						},
 					},

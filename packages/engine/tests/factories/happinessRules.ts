@@ -141,7 +141,7 @@ export const createTierCostRules = (): RuleSet => ({
 						method: 'add',
 						params: {
 							id: 'tier:discount',
-							key: CResource.gold,
+							resourceId: CResource.gold,
 							percent: 0.1,
 						},
 					}),
