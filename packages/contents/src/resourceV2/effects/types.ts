@@ -1,22 +1,7 @@
-/**
- * Reconciliation mode constants for use with builders and effect configuration.
- * Use these instead of string literals for type safety and consistency.
- */
-export const ReconciliationMode = {
-	/** Clamp values to stay within bounds (default behavior) */
-	CLAMP: 'clamp',
-	/** Pass values through without bound checking (allows negative/overflow) */
-	PASS: 'pass',
-	/** Reject changes that would exceed bounds (throws error) */
-	REJECT: 'reject',
-} as const;
+// Import and re-export reconciliation types from the shared module
+import { ReconciliationMode, VALID_RECONCILIATION_MODES, type ResourceReconciliationMode } from '../reconciliation';
 
-export type ResourceReconciliationMode = (typeof ReconciliationMode)[keyof typeof ReconciliationMode];
-
-/**
- * All valid reconciliation modes as a Set for validation.
- */
-export const VALID_RECONCILIATION_MODES: ReadonlySet<ResourceReconciliationMode> = new Set([ReconciliationMode.CLAMP, ReconciliationMode.PASS, ReconciliationMode.REJECT]);
+export { ReconciliationMode, VALID_RECONCILIATION_MODES, type ResourceReconciliationMode };
 
 /**
  * Rounding mode constants for use with builders and effect configuration.

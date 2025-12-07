@@ -2,6 +2,7 @@ import type {
 	PlayerSnapshotDeltaBucket,
 	SessionPlayerStateSnapshot,
 	SessionResourceBoundsV2,
+	SessionResourceBoundValueV2,
 } from '@kingdom-builder/protocol';
 import type {
 	ResourceV2MetadataSnapshot,
@@ -54,25 +55,42 @@ function sumForecastForPopulation(
 	return hasValue ? total : undefined;
 }
 
+/**
+ * Resolves a single bound value to a number, handling both static numbers
+ * and dynamic bound references.
+ */
+function resolveBoundValueToNumber(
+	bound: SessionResourceBoundValueV2 | null | undefined,
+	valuesV2: Record<string, number> | undefined,
+): number | null {
+	if (bound === null || bound === undefined) {
+		return null;
+	}
+	if (typeof bound === 'number') {
+		return bound;
+	}
+	// It's a bound reference - look up the value from the referenced resource
+	if (typeof bound === 'object' && 'resourceId' in bound) {
+		const refValue = valuesV2?.[bound.resourceId];
+		return typeof refValue === 'number' ? refValue : null;
+	}
+	return null;
+}
+
 function resolveBounds(
 	bounds: Record<string, SessionResourceBoundsV2> | undefined,
 	resourceId: string,
+	valuesV2: Record<string, number> | undefined,
 ): Pick<ResourceV2ValueSnapshot, 'lowerBound' | 'upperBound'> {
 	const entry = bounds?.[resourceId];
 	if (!entry) {
 		return {};
 	}
-	const lowerBound =
-		entry.lowerBound !== undefined && entry.lowerBound !== null
-			? entry.lowerBound
-			: undefined;
-	const upperBound =
-		entry.upperBound !== undefined && entry.upperBound !== null
-			? entry.upperBound
-			: undefined;
+	const lowerBound = resolveBoundValueToNumber(entry.lowerBound, valuesV2);
+	const upperBound = resolveBoundValueToNumber(entry.upperBound, valuesV2);
 	return {
-		...(lowerBound !== undefined ? { lowerBound } : {}),
-		...(upperBound !== undefined ? { upperBound } : {}),
+		...(lowerBound !== null ? { lowerBound } : {}),
+		...(upperBound !== null ? { upperBound } : {}),
 	};
 }
 
@@ -112,7 +130,11 @@ export function createResourceSnapshot(
 		populationRoleIds,
 		populationParentId,
 	} = context;
-	const bounds = resolveBounds(player.resourceBoundsV2, resourceId);
+	const bounds = resolveBounds(
+		player.resourceBoundsV2,
+		resourceId,
+		player.valuesV2,
+	);
 	let current = player.valuesV2?.[resourceId];
 	if (typeof current !== 'number') {
 		if (populationParentId && resourceId === populationParentId) {

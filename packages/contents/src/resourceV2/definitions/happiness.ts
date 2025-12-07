@@ -89,8 +89,9 @@ export function getHappinessResourceDefinition(): ResourceV2Definition {
 	cachedHappinessDefinition = resourceV2(HAPPINESS_RESOURCE_ID)
 		.icon('😊')
 		.label('Happiness')
-		.description('Happiness measures the contentment of your subjects. High happiness keeps morale up, while low happiness can lead to unrest or negative effects.')
-		.bounds(-10, 10)
+		.description('Happiness measures the contentment of your subjects. High happiness ' + 'keeps morale up, while low happiness can lead to unrest or ' + 'negative effects.')
+		.lowerBound(-10)
+		.upperBound(10)
 		.tierTrack({
 			metadata: HAPPINESS_TIER_TRACK_METADATA,
 			tiers: getHappinessTiers(),

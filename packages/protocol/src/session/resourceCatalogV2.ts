@@ -1,22 +1,31 @@
 import type { EffectDef } from '../effects';
 
 /**
- * Specifies which type of bound this resource represents.
- * - 'upper': This resource is the upper bound (max) of another resource.
- * - 'lower': This resource is the lower bound (min) of another resource.
+ * Reconciliation modes for resource bounds.
+ * - 'clamp': Clamp values to stay within bounds (default behavior)
+ * - 'pass': Pass values through without bound checking (allows overflow)
+ * - 'reject': Reject changes that would exceed bounds (throws error)
  */
-export type SessionResourceBoundType = 'upper' | 'lower';
+export type SessionResourceReconciliationModeV2 = 'clamp' | 'pass' | 'reject';
 
 /**
- * Configuration for a resource that acts as a bound of another resource.
- * The UI will display these together (e.g., "5/10" for current/max).
+ * A reference to another resource whose value acts as this bound.
+ * When the referenced resource's value changes, reconciliation is applied.
  */
-export interface SessionResourceBoundOfConfigV2 {
-	/** The resource ID this resource is a bound of */
-	resourceId: string;
-	/** Whether this is an upper or lower bound */
-	boundType: SessionResourceBoundType;
+export interface SessionResourceBoundReferenceV2 {
+	/** The resource ID whose value determines this bound */
+	readonly resourceId: string;
+	/**
+	 * How to reconcile when the bound changes and the current value
+	 * would overflow/underflow. Default: 'clamp'
+	 */
+	readonly reconciliation?: SessionResourceReconciliationModeV2;
 }
+
+/** A bound can be a static number or a dynamic reference to another resource */
+export type SessionResourceBoundValueV2 =
+	| number
+	| SessionResourceBoundReferenceV2;
 
 export interface SessionResourceTierThresholdV2 {
 	min: number | null;
@@ -60,8 +69,8 @@ export interface SessionResourceMetadataV2 {
 }
 
 export interface SessionResourceBoundsV2 {
-	lowerBound: number | null;
-	upperBound: number | null;
+	lowerBound: SessionResourceBoundValueV2 | null;
+	upperBound: SessionResourceBoundValueV2 | null;
 }
 
 export interface SessionResourceGlobalCostConfigV2 {
@@ -71,6 +80,7 @@ export interface SessionResourceGlobalCostConfigV2 {
 export interface SessionResourceDefinitionV2
 	extends SessionResourceMetadataV2, SessionResourceBoundsV2 {
 	displayAsPercent: boolean;
+	allowDecimal: boolean;
 	trackValueBreakdown: boolean;
 	trackBoundBreakdown: boolean;
 	groupId: string | null;
@@ -78,12 +88,6 @@ export interface SessionResourceDefinitionV2
 	resolvedGroupOrder: number | null;
 	globalCost?: SessionResourceGlobalCostConfigV2;
 	tierTrack?: SessionResourceTierTrackV2;
-	/**
-	 * When set, declares that this resource represents a bound of another
-	 * resource. Used by UI to display "current/max" pairs. Resources with
-	 * boundOf should not be displayed independently in the UI.
-	 */
-	boundOf: SessionResourceBoundOfConfigV2 | null;
 }
 
 export interface SessionResourceGroupParentV2

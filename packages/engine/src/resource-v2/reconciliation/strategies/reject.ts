@@ -1,6 +1,6 @@
-import type { RuntimeResourceBounds } from '../../types';
 import type {
 	ReconciliationStrategy,
+	ResolvedBounds,
 	ResourceReconciliationResult,
 } from '../types';
 import { ResourceBoundExceededError } from '../types';
@@ -10,12 +10,13 @@ import { ResourceBoundExceededError } from '../types';
  * Used during action simulation to prevent invalid state from being applied.
  * This is particularly useful for system actions like initial setup where
  * exceeding bounds indicates a configuration error.
+ * Bounds must be resolved to numeric values before calling this strategy.
  */
 export const rejectStrategy: ReconciliationStrategy = (
 	_currentValue: number,
 	targetValue: number,
 	requestedDelta: number,
-	bounds: RuntimeResourceBounds | null | undefined,
+	bounds: ResolvedBounds | null | undefined,
 ): ResourceReconciliationResult => {
 	const lowerBound = bounds?.lowerBound ?? null;
 	const upperBound = bounds?.upperBound ?? null;

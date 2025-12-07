@@ -13,8 +13,9 @@ import type {
 } from './resourceCatalogV2';
 
 export type {
-	SessionResourceBoundOfConfigV2,
-	SessionResourceBoundType,
+	SessionResourceBoundReferenceV2,
+	SessionResourceBoundValueV2,
+	SessionResourceReconciliationModeV2,
 	SessionResourceTierThresholdV2,
 	SessionResourceTierDefinitionV2,
 	SessionResourceTierTrackMetadataV2,

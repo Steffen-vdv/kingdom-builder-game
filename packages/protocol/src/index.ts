@@ -3,10 +3,11 @@ export * as actions from './actions';
 export * as resourceV2 from './resource-v2';
 
 export type {
-	ResourceBoundOfConfig,
-	ResourceBoundType,
+	ResourceBoundReference,
+	ResourceBoundValue,
 	ResourceCategoryDefinition,
 	ResourceCategoryItem,
+	ResourceReconciliationMode,
 	ResourceV2Bounds,
 	ResourceV2Definition,
 	ResourceV2GlobalCostConfig,
@@ -17,6 +18,7 @@ export type {
 	ResourceV2TierThreshold,
 	ResourceV2TierTrack,
 	ResourceV2TierTrackMetadata,
+	ResourceV2Triggers,
 } from './resource-v2';
 
 export { Registry } from './registry';
@@ -138,6 +140,9 @@ export type {
 	SessionResourceGroupParentV2,
 	SessionResourceMetadataV2,
 	SessionResourceBoundsV2,
+	SessionResourceBoundReferenceV2,
+	SessionResourceBoundValueV2,
+	SessionResourceReconciliationModeV2,
 	SessionResourceGlobalCostConfigV2,
 	SessionResourceTierTrackV2,
 	SessionResourceTierTrackMetadataV2,

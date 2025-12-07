@@ -79,10 +79,19 @@ const resourceV2MetadataSchema = z
 	})
 	.passthrough();
 
+// Bound can be a number or a reference to another resource
+const resourceV2BoundValueSchema = z.union([
+	z.number(),
+	z.object({
+		resourceId: z.string(),
+		reconciliation: z.string().optional(),
+	}),
+]);
+
 const resourceV2BoundsSchema = z
 	.object({
-		lowerBound: z.number().optional(),
-		upperBound: z.number().optional(),
+		lowerBound: resourceV2BoundValueSchema.optional().nullable(),
+		upperBound: resourceV2BoundValueSchema.optional().nullable(),
 	})
 	.passthrough();
 

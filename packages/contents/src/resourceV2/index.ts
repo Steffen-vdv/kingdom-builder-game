@@ -11,7 +11,11 @@ export type {
 	ResourceV2GroupDefinition,
 	ResourceCategoryItem,
 	ResourceCategoryDefinition,
+	ResourceBoundReference,
+	ResourceBoundValue,
 } from './types';
+
+export { boundTo } from './types';
 
 export { resourceV2 } from './resourceBuilder';
 export type { ResourceV2Builder } from './resourceBuilder';

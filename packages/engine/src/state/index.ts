@@ -1,5 +1,5 @@
 import type { EffectDef } from '../effects';
-import type { RuntimeResourceCatalog } from '../resource-v2';
+import type { RuntimeBoundValue, RuntimeResourceCatalog } from '../resource-v2';
 
 export type ResourceKey = string;
 export type PhaseId = string;
@@ -66,8 +66,8 @@ export class PlayerState {
 	id: PlayerId;
 	name: string;
 	resourceValues: Record<string, number>;
-	resourceLowerBounds: Record<string, number | null>;
-	resourceUpperBounds: Record<string, number | null>;
+	resourceLowerBounds: Record<string, RuntimeBoundValue>;
+	resourceUpperBounds: Record<string, RuntimeBoundValue>;
 	resourceTouched: Record<string, boolean>;
 	resourceTierIds: Record<string, string | null>;
 	resourceBoundTouched: Record<string, { lower: boolean; upper: boolean }>;

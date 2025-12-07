@@ -25,6 +25,15 @@ describe('evaluators', () => {
 		const roleIds = Object.values(PopulationRole);
 		const focusRole = roleIds[0]!;
 		const secondaryRole = roleIds.find((entry) => entry !== focusRole);
+		// First raise max-population to allow for 5 total population
+		// (population total is dynamically bounded by max-population)
+		setResourceValue(
+			context,
+			context.activePlayer,
+			context.resourceCatalogV2,
+			Stat.populationMax,
+			10,
+		);
 		// Use setResourceValue to properly trigger parent recalculation
 		setResourceValue(
 			context,

@@ -8,24 +8,23 @@ import {
 	clearRecord,
 	ensureBoundFlags,
 	getCatalogIndexes,
+	isBoundReference,
+	resolveBoundValue,
 	resolveResourceDefinition,
 	resolveTierId,
 	writeInitialState,
 	type ResourceDefinitionLike,
 } from './state-helpers';
+import { reconcileBoundDependents } from './cascading';
 
 interface ApplyValueOptions {
 	readonly suppressRecentEntry?: boolean;
 	readonly skipTierUpdate?: boolean;
-	/**
-	 * When true, skip clamping to bounds. Used by 'pass' reconciliation mode
-	 * to allow values outside defined bounds.
-	 */
+	/** Skip clamping to bounds ('pass' reconciliation mode). */
 	readonly skipBoundClamp?: boolean;
 }
 
 export type SetResourceValueOptions = ApplyValueOptions;
-
 export type RecalculateParentValueOptions = ApplyValueOptions;
 
 export interface AdjustBoundResult {
@@ -42,6 +41,7 @@ function applyValue(
 	resourceId: string,
 	value: number,
 	options: ApplyValueOptions = {},
+	reconciling: Set<string> = new Set(),
 ): number {
 	if (!lookup.definition.allowDecimal) {
 		assertInteger(value, `"${resourceId}" value`);
@@ -51,16 +51,29 @@ function applyValue(
 		skipTierUpdate = false,
 		skipBoundClamp = false,
 	} = options;
-	const lowerBound = player.resourceLowerBounds[resourceId];
-	const upperBound = player.resourceUpperBounds[resourceId];
-	const resolvedLower =
-		typeof lowerBound === 'number'
-			? lowerBound
-			: (lookup.definition.lowerBound ?? null);
-	const resolvedUpper =
-		typeof upperBound === 'number'
-			? upperBound
-			: (lookup.definition.upperBound ?? null);
+	// Resolve bounds: For dynamic references (bound to another resource), always
+	// use the definition bound so we re-resolve each time. For static bounds,
+	// check player-specific overrides first.
+	const defLower = lookup.definition.lowerBound;
+	const defUpper = lookup.definition.upperBound;
+	const playerLower = player.resourceLowerBounds[resourceId];
+	const playerUpper = player.resourceUpperBounds[resourceId];
+	// For dynamic bounds (references), always use definition to get fresh value.
+	// For static bounds, player overrides take precedence.
+	const lowerBoundValue = isBoundReference(defLower)
+		? defLower
+		: (playerLower ?? defLower);
+	const upperBoundValue = isBoundReference(defUpper)
+		? defUpper
+		: (playerUpper ?? defUpper);
+	const resolvedLower = resolveBoundValue(
+		lowerBoundValue,
+		player.resourceValues,
+	);
+	const resolvedUpper = resolveBoundValue(
+		upperBoundValue,
+		player.resourceValues,
+	);
 	const previous =
 		player.resourceValues[resourceId] ??
 		clampToBounds(0, resolvedLower, resolvedUpper);
@@ -94,11 +107,24 @@ function applyValue(
 		});
 	}
 	if (lookup.kind === 'resource' && lookup.groupId) {
-		recalculateGroupParentValue(context, player, catalog, lookup.groupId, {
-			suppressRecentEntry: true,
-			skipTierUpdate,
-		});
+		recalculateGroupParentValue(
+			context,
+			player,
+			catalog,
+			lookup.groupId,
+			{ suppressRecentEntry: true, skipTierUpdate },
+			reconciling,
+		);
 	}
+	// Cascading reconciliation: reconcile resources that depend on this one
+	reconcileBoundDependents(
+		context,
+		player,
+		catalog,
+		resourceId,
+		reconciling,
+		applyValue,
+	);
 	return clamped;
 }
 
@@ -119,8 +145,9 @@ export function initialisePlayerResourceState(
 	}
 	const indexes = getCatalogIndexes(catalog);
 	for (const resource of catalog.resources.ordered) {
-		const lower = resource.lowerBound ?? null;
-		const upper = resource.upperBound ?? null;
+		// Resolve bounds - for references, use current player values
+		const lower = resolveBoundValue(resource.lowerBound, player.resourceValues);
+		const upper = resolveBoundValue(resource.upperBound, player.resourceValues);
 		const initialValue = clampToBounds(0, lower, upper);
 		writeInitialState(
 			player,
@@ -136,8 +163,14 @@ export function initialisePlayerResourceState(
 			continue;
 		}
 		const childIds = indexes.groupChildren[group.id] ?? [];
-		const lower = group.parent.lowerBound ?? null;
-		const upper = group.parent.upperBound ?? null;
+		const lower = resolveBoundValue(
+			group.parent.lowerBound,
+			player.resourceValues,
+		);
+		const upper = resolveBoundValue(
+			group.parent.upperBound,
+			player.resourceValues,
+		);
 		const aggregate = aggregateChildValues(player, childIds);
 		const initialValue = clampToBounds(aggregate, lower, upper);
 		writeInitialState(
@@ -189,6 +222,7 @@ export function recalculateGroupParentValue(
 	catalog: RuntimeResourceCatalog,
 	groupId: string,
 	options: RecalculateParentValueOptions = {},
+	reconciling: Set<string> = new Set(),
 ): number | null {
 	const group = catalog.groups.byId[groupId];
 	if (!group || !group.parent) {
@@ -212,6 +246,7 @@ export function recalculateGroupParentValue(
 		group.parent.id,
 		aggregate,
 		options,
+		reconciling,
 	);
 }
 
@@ -225,32 +260,26 @@ function adjustResourceBound(
 	delta: number,
 	direction: BoundDirection,
 ): AdjustBoundResult {
-	const directionLabel = direction === 'lower' ? 'lower' : 'upper';
-	assertInteger(delta, `"${resourceId}" ${directionLabel}-bound delta`);
+	assertInteger(delta, `"${resourceId}" ${direction}-bound delta`);
 	if (delta <= 0) {
-		throw new Error(
-			`ResourceV2 state expected ${directionLabel}-bound delta for "${resourceId}" to be positive but received ${delta}.`,
-		);
+		throw new Error(`${direction}-bound delta must be positive: ${delta}`);
 	}
 	const lookup = resolveResourceDefinition(catalog, resourceId);
 	if (!lookup) {
-		throw new Error(
-			`ResourceV2 state does not recognise resource "${resourceId}".`,
-		);
+		throw new Error(`Unknown resource "${resourceId}".`);
 	}
-	const boundMap =
-		direction === 'lower'
-			? player.resourceLowerBounds
-			: player.resourceUpperBounds;
-	const definitionBound =
-		direction === 'lower'
-			? lookup.definition.lowerBound
-			: lookup.definition.upperBound;
+	const isLower = direction === 'lower';
+	const boundMap = isLower
+		? player.resourceLowerBounds
+		: player.resourceUpperBounds;
+	const defBound = isLower
+		? lookup.definition.lowerBound
+		: lookup.definition.upperBound;
 	const previousRaw = boundMap[resourceId];
-	const previousBound =
-		typeof previousRaw === 'number' ? previousRaw : (definitionBound ?? null);
-	const nextBase = typeof previousBound === 'number' ? previousBound : 0;
-	const nextBound = nextBase + delta;
+	const boundValue = previousRaw !== undefined ? previousRaw : defBound;
+	const previousBound = resolveBoundValue(boundValue, player.resourceValues);
+	const nextBound =
+		(typeof previousBound === 'number' ? previousBound : 0) + delta;
 	if (direction === 'lower') {
 		player.resourceLowerBounds[resourceId] = nextBound;
 	} else {

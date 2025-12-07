@@ -18,6 +18,10 @@ import {
 } from './resourceV2Snapshots';
 import { PLAYER_INFO_CARD_BG } from './infoCards';
 import type { SummaryGroup } from '../../translation/content/types';
+import {
+	buildBoundReferenceMap,
+	type BoundRefEntry,
+} from './boundReferenceHelpers';
 
 interface ResourceGroupDisplayProps {
 	groupId: string;
@@ -40,18 +44,6 @@ const ROLE_BUTTON_CLASSES = [
 	'text-xs font-semibold text-slate-700 hoverable',
 	'dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100',
 ].join(' ');
-
-function buildBoundResourceMap(
-	definitions: readonly SessionResourceDefinitionV2[],
-): Map<string, SessionResourceDefinitionV2> {
-	const map = new Map<string, SessionResourceDefinitionV2>();
-	for (const definition of definitions) {
-		if (definition.boundOf) {
-			map.set(definition.boundOf.resourceId, definition);
-		}
-	}
-	return map;
-}
 
 const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 	groupId,
@@ -110,11 +102,14 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 		],
 	);
 
-	const boundResourceMap = React.useMemo(
+	const boundReferenceMap = React.useMemo(
 		() =>
 			resourceCatalog
-				? buildBoundResourceMap(resourceCatalog.resources.ordered)
-				: new Map<string, SessionResourceDefinitionV2>(),
+				? buildBoundReferenceMap(
+						resourceCatalog.resources.ordered,
+						resourceCatalog.groups.ordered,
+					)
+				: new Map<string, BoundRefEntry>(),
 		[resourceCatalog],
 	);
 
@@ -151,16 +146,22 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 		if (!groupParentId) {
 			return undefined;
 		}
-		const boundDef = boundResourceMap.get(groupParentId);
-		if (!boundDef) {
+		// Check if the group parent has a bound reference
+		const boundInfo = boundReferenceMap.get(groupParentId);
+		if (!boundInfo) {
 			return undefined;
 		}
-		const metadata = translationContext.resourceMetadataV2.get(boundDef.id);
-		const snapshot = createResourceSnapshot(boundDef.id, snapshotContext);
-		return { metadata, snapshot, boundType: boundDef.boundOf?.boundType };
+		const metadata = translationContext.resourceMetadataV2.get(
+			boundInfo.boundRef.resourceId,
+		);
+		const snapshot = createResourceSnapshot(
+			boundInfo.boundRef.resourceId,
+			snapshotContext,
+		);
+		return { metadata, snapshot, boundType: boundInfo.boundType };
 	}, [
 		groupParentId,
-		boundResourceMap,
+		boundReferenceMap,
 		snapshotContext,
 		translationContext.resourceMetadataV2,
 	]);
