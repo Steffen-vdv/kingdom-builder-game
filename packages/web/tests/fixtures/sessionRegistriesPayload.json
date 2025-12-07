@@ -1593,11 +1593,13 @@
 		},
 		"resource-group:population": {
 			"id": "resource-group:population",
+			"label": "Population",
+			"icon": "👥",
 			"order": 2,
 			"resolvedOrder": 2,
 			"parent": {
 				"id": "resource:core:total-population",
-				"label": "Population",
+				"label": "Current Population",
 				"icon": "👥",
 				"description": "Total population count.",
 				"order": 2,

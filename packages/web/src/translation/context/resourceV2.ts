@@ -210,6 +210,18 @@ export function createResourceV2MetadataSelectors(
 		]);
 		seen.add(definition.id);
 	}
+	// Index parent resources from groups so effects can look them up
+	for (const group of catalog.groups.ordered) {
+		if (group.parent && !seen.has(group.parent.id)) {
+			const descriptor =
+				metadata?.[group.parent.id] ?? fallbackMetadata?.[group.parent.id];
+			entries.push([
+				group.parent.id,
+				createMetadataEntry(group.parent.id, group.parent, descriptor),
+			]);
+			seen.add(group.parent.id);
+		}
+	}
 	const descriptorRecords: ReadonlyArray<MetadataRecord> = [
 		metadata,
 		fallbackMetadata,
@@ -228,35 +240,29 @@ export function createResourceV2MetadataSelectors(
 		}
 	}
 	const factory: MetadataFactory = (id, descriptor) => {
+		// Check if this is a parent resource from a group
+		for (const group of catalog.groups.ordered) {
+			if (group.parent?.id === id) {
+				return createMetadataEntry(id, group.parent, descriptor);
+			}
+		}
 		const definition = catalog.resources.byId[id];
 		return createMetadataEntry(id, definition, descriptor);
 	};
 	return createMetadataSelectors(entries, descriptorRecords, factory);
 }
 
-/**
- * Merges group-level label/icon with parent metadata as fallback.
- * Priority: group.label/icon > parent.label/icon
- */
+/** Merges group label/icon with parent as fallback. */
 function mergeGroupWithParent(
-	definition: TranslationResourceCatalogV2['groups']['ordered'][number],
-):
-	| {
-			label?: string | null;
-			icon?: string;
-			description?: string | null;
-			displayAsPercent?: boolean;
-			groupId?: string | null;
-	  }
-	| undefined {
-	if (!definition.parent && !definition.label && !definition.icon) {
+	def: TranslationResourceCatalogV2['groups']['ordered'][number],
+) {
+	if (!def.parent && !def.label && !def.icon) {
 		return undefined;
 	}
 	return {
-		...definition.parent,
-		// Group-level label/icon override parent if present
-		...(definition.label && { label: definition.label }),
-		...(definition.icon && { icon: definition.icon }),
+		...def.parent,
+		...(def.label && { label: def.label }),
+		...(def.icon && { icon: def.icon }),
 	};
 }
 
@@ -267,18 +273,13 @@ export function createResourceV2GroupMetadataSelectors(
 ): TranslationResourceV2MetadataSelectors {
 	const entries: Array<[string, TranslationResourceV2Metadata]> = [];
 	const seen = new Set<string>();
-	for (const definition of catalog.groups.ordered) {
-		const descriptor =
-			metadata?.[definition.id] ?? fallbackMetadata?.[definition.id];
+	for (const def of catalog.groups.ordered) {
+		const desc = metadata?.[def.id] ?? fallbackMetadata?.[def.id];
 		entries.push([
-			definition.id,
-			createMetadataEntry(
-				definition.id,
-				mergeGroupWithParent(definition),
-				descriptor,
-			),
+			def.id,
+			createMetadataEntry(def.id, mergeGroupWithParent(def), desc),
 		]);
-		seen.add(definition.id);
+		seen.add(def.id);
 	}
 	const descriptorRecords: ReadonlyArray<MetadataRecord> = [
 		metadata,
@@ -288,28 +289,22 @@ export function createResourceV2GroupMetadataSelectors(
 		if (!record) {
 			continue;
 		}
-		for (const [id, descriptor] of Object.entries(record)) {
+		for (const [id, desc] of Object.entries(record)) {
 			if (seen.has(id)) {
 				continue;
 			}
-			const definition = catalog.groups.byId[id];
-			entries.push([
-				id,
-				createMetadataEntry(
-					id,
-					definition ? mergeGroupWithParent(definition) : undefined,
-					descriptor,
-				),
-			]);
+			const def = catalog.groups.byId[id];
+			const base = def ? mergeGroupWithParent(def) : undefined;
+			entries.push([id, createMetadataEntry(id, base, desc)]);
 			seen.add(id);
 		}
 	}
-	const factory: MetadataFactory = (id, descriptor) => {
-		const definition = catalog.groups.byId[id];
+	const factory: MetadataFactory = (id, desc) => {
+		const def = catalog.groups.byId[id];
 		return createMetadataEntry(
 			id,
-			definition ? mergeGroupWithParent(definition) : undefined,
-			descriptor,
+			def ? mergeGroupWithParent(def) : undefined,
+			desc,
 		);
 	};
 	return createMetadataSelectors(entries, descriptorRecords, factory);
@@ -319,43 +314,25 @@ export function createSignedResourceGainSelectors(
 	gains: ReadonlyArray<SessionRecentResourceGain>,
 ): TranslationSignedResourceGainSelectors {
 	const list = Object.freeze(
-		gains.map((entry) =>
-			Object.freeze({ key: entry.key, amount: entry.amount }),
-		),
+		gains.map((e) => Object.freeze({ key: e.key, amount: e.amount })),
 	);
-	const positives = Object.freeze(list.filter((entry) => entry.amount > 0));
-	const negatives = Object.freeze(list.filter((entry) => entry.amount < 0));
-	const byKeyCache = new Map<
-		string,
-		ReadonlyArray<SessionRecentResourceGain>
-	>();
+	const positives = Object.freeze(list.filter((e) => e.amount > 0));
+	const negatives = Object.freeze(list.filter((e) => e.amount < 0));
+	const cache = new Map<string, ReadonlyArray<SessionRecentResourceGain>>();
 	return Object.freeze({
-		list() {
-			return list;
-		},
-		positives() {
-			return positives;
-		},
-		negatives() {
-			return negatives;
-		},
+		list: () => list,
+		positives: () => positives,
+		negatives: () => negatives,
 		forResource(id: string) {
-			const cached = byKeyCache.get(id);
-			if (cached) {
-				return cached;
+			let result = cache.get(id);
+			if (!result) {
+				result = Object.freeze(list.filter((e) => e.key === id));
+				cache.set(id, result);
 			}
-			const entries = Object.freeze(list.filter((entry) => entry.key === id));
-			byKeyCache.set(id, entries);
-			return entries;
+			return result;
 		},
 		sumForResource(id: string) {
-			let total = 0;
-			for (const entry of list) {
-				if (entry.key === id) {
-					total += entry.amount;
-				}
-			}
-			return total;
+			return list.reduce((t, e) => (e.key === id ? t + e.amount : t), 0);
 		},
 	});
 }
