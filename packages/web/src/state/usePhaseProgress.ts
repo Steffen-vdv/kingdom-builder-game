@@ -91,8 +91,7 @@ function computePhaseState(
 	const activePlayer = snapshot.game.players.find(
 		(player) => player.id === snapshot.game.activePlayerId,
 	);
-	const remainingActionPoints =
-		activePlayer?.valuesV2[actionCostResource] ?? 0;
+	const remainingActionPoints = activePlayer?.valuesV2[actionCostResource] ?? 0;
 	const isAiTurn = Boolean(activePlayer?.aiControlled);
 	const canEndTurn = isAiTurn
 		? false

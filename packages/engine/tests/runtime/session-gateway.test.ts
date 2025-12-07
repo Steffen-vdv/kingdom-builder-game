@@ -128,9 +128,7 @@ describe('createLocalSessionGateway', () => {
 		});
 		expect(fetched.snapshot.game.players[0]?.name).toBe('Hero');
 		// Initial gold from devMode setup (100)
-		expect(fetched.snapshot.game.players[0]?.valuesV2[RESOURCE_GOLD]).toBe(
-			100,
-		);
+		expect(fetched.snapshot.game.players[0]?.valuesV2[RESOURCE_GOLD]).toBe(100);
 		expect(fetched.registries.actionCategories).toEqual({});
 	});
 
