@@ -19,6 +19,9 @@ import {
 } from './resourceV2Snapshots';
 import { PLAYER_INFO_CARD_BG } from './infoCards';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
+import { buildTierEntries, type TierDefinition } from './buildTierEntries';
+import { useResourceMetadata } from '../../contexts/RegistryMetadataContext';
+import { toDescriptorDisplay } from './registryDisplays';
 
 interface ResourceCategoryRowProps {
 	category: SessionResourceCategoryDefinitionV2;
@@ -41,11 +44,12 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 	category,
 	player,
 }) => {
-	const { handleHoverCard, clearHoverCard, translationContext } =
+	const { handleHoverCard, clearHoverCard, translationContext, ruleSnapshot } =
 		useGameEngine();
 	const resourceCatalog = translationContext.resourcesV2;
 	const forecast = useNextTurnForecast();
 	const playerForecast = forecast[player.id];
+	const resourceMetadata = useResourceMetadata();
 
 	const forecastMap = React.useMemo(
 		() => createForecastMap(playerForecast),
@@ -69,6 +73,48 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 		[resourceCatalog],
 	);
 
+	// Tier display configuration for tiered resources (e.g., happiness)
+	const tierDefinitions = ruleSnapshot.tierDefinitions;
+	const tieredResourceKey = ruleSnapshot.tieredResourceKey;
+
+	const tieredResourceDescriptor = React.useMemo(
+		() =>
+			tieredResourceKey
+				? toDescriptorDisplay(resourceMetadata.select(tieredResourceKey))
+				: undefined,
+		[tieredResourceKey, resourceMetadata],
+	);
+
+	const passiveAssetDescriptor = React.useMemo(
+		() => ({ id: 'passive', icon: '♾️', label: 'Passive' }),
+		[],
+	);
+
+	// Map tier passive IDs to tier definitions for quick lookup
+	const tierByPassiveId = React.useMemo(
+		() =>
+			tierDefinitions.reduce<Map<string, TierDefinition>>((map, tier) => {
+				const passiveId = tier.preview?.id;
+				if (passiveId) {
+					map.set(passiveId, tier);
+				}
+				return map;
+			}, new Map()),
+		[tierDefinitions],
+	);
+
+	// Find the active tier by checking which tier's passive is in the player's
+	// passives list
+	const activeTierId = React.useMemo(() => {
+		for (const passive of player.passives) {
+			const tier = tierByPassiveId.get(passive.id);
+			if (tier) {
+				return tier.id;
+			}
+		}
+		return undefined;
+	}, [player.passives, tierByPassiveId]);
+
 	const showResourceCard = React.useCallback(
 		(resourceId: string) => {
 			if (!resourceCatalog) {
@@ -79,15 +125,55 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 				return;
 			}
 			const metadata = translationContext.resourceMetadataV2.get(resourceId);
+
+			// Check if this is a tiered resource
+			let effects: ReturnType<typeof buildTierEntries>['entries'] = [];
+			if (resourceId === tieredResourceKey && tierDefinitions.length > 0) {
+				// Find the active tier's index to show context (prev/current/next)
+				const sortedTiers = [...tierDefinitions].sort(
+					(a, b) => (b.range.min ?? 0) - (a.range.min ?? 0),
+				);
+				const activeIndex = sortedTiers.findIndex((t) => t.id === activeTierId);
+
+				// Show up to 3 tiers: previous, current, next (or just current if
+				// no active tier)
+				let tiersToShow: TierDefinition[];
+				if (activeIndex >= 0) {
+					const start = Math.max(0, activeIndex - 1);
+					const end = Math.min(sortedTiers.length, activeIndex + 2);
+					tiersToShow = sortedTiers.slice(start, end);
+				} else {
+					// No active tier, show top 3
+					tiersToShow = sortedTiers.slice(0, 3);
+				}
+
+				const tierResult = buildTierEntries(tiersToShow, {
+					...(activeTierId ? { activeId: activeTierId } : {}),
+					tieredResource: tieredResourceDescriptor,
+					passiveAsset: passiveAssetDescriptor,
+					translationContext,
+				});
+				effects = tierResult.entries;
+			}
+
 			handleHoverCard({
 				title: formatResourceTitle(metadata),
-				effects: [],
+				effects,
 				requirements: [],
 				...(metadata.description ? { description: metadata.description } : {}),
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
-		[handleHoverCard, resourceCatalog, translationContext.resourceMetadataV2],
+		[
+			handleHoverCard,
+			resourceCatalog,
+			translationContext,
+			tieredResourceKey,
+			tierDefinitions,
+			activeTierId,
+			tieredResourceDescriptor,
+			passiveAssetDescriptor,
+		],
 	);
 
 	const renderResource = React.useCallback(

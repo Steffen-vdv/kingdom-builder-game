@@ -43,22 +43,32 @@ beforeEach(() => {
 
 describe('Resource HoverCard behavior', () => {
 	describe('ResourceCategoryRow', () => {
-		it('shows description but no effects section for resource hover cards', () => {
+		it('shows description but no effects for non-tiered resources', () => {
 			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
 			if (!resourceCatalog) {
 				throw new Error('Expected resourceCatalogV2');
 			}
-			// Find a category with at least one non-grouped resource
+			const tieredResourceKey = mockGame.ruleSnapshot.tieredResourceKey;
+			// Find a category with at least one non-grouped, non-tiered resource
 			const category = resourceCatalog.categories.ordered.find((cat) =>
-				cat.contents.some((item) => item.type === 'resource'),
+				cat.contents.some(
+					(item) => item.type === 'resource' && item.id !== tieredResourceKey,
+				),
 			);
 			if (!category) {
-				throw new Error('Expected category with resources');
+				throw new Error('Expected category with non-tiered resources');
 			}
+			// Filter to only include non-tiered resources for this test
+			const filteredCategory = {
+				...category,
+				contents: category.contents.filter(
+					(item) => item.type !== 'resource' || item.id !== tieredResourceKey,
+				),
+			};
 			render(
 				<RegistryMetadataProvider registries={registries} metadata={metadata}>
 					<ResourceCategoryRow
-						category={category as SessionResourceCategoryDefinitionV2}
+						category={filteredCategory as SessionResourceCategoryDefinitionV2}
 						player={activePlayerSnapshot}
 					/>
 				</RegistryMetadataProvider>,
@@ -74,11 +84,78 @@ describe('Resource HoverCard behavior', () => {
 			fireEvent.mouseEnter(resourceButton);
 			expect(handleHoverCardSpy).toHaveBeenCalled();
 			expect(lastHoverCard).not.toBeNull();
-			// The effects array should be empty for resources
-			// (unlike lands/developments which have effect summaries)
+			// The effects array should be empty for non-tiered resources
 			expect(lastHoverCard!.effects).toEqual([]);
 			// Title should be set
 			expect(lastHoverCard!.title).toBeTruthy();
+		});
+
+		it('shows tier entries for tiered resources (e.g., happiness)', () => {
+			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+			if (!resourceCatalog) {
+				throw new Error('Expected resourceCatalogV2');
+			}
+			const tieredResourceKey = mockGame.ruleSnapshot.tieredResourceKey;
+			// Get metadata for the tiered resource to find its icon
+			const tieredMeta =
+				mockGame.translationContext.resourceMetadataV2.get(tieredResourceKey);
+			const tieredIcon = tieredMeta.icon;
+
+			// Find a category containing the tiered resource
+			const category = resourceCatalog.categories.ordered.find((cat) =>
+				cat.contents.some(
+					(item) => item.type === 'resource' && item.id === tieredResourceKey,
+				),
+			);
+			if (!category) {
+				// If tiered resource is not in any category, skip this test
+				return;
+			}
+			// Create a category with only the tiered resource
+			const tieredOnlyCategory = {
+				...category,
+				contents: category.contents.filter(
+					(item) => item.type === 'resource' && item.id === tieredResourceKey,
+				),
+			};
+			render(
+				<RegistryMetadataProvider registries={registries} metadata={metadata}>
+					<ResourceCategoryRow
+						category={tieredOnlyCategory as SessionResourceCategoryDefinitionV2}
+						player={activePlayerSnapshot}
+					/>
+				</RegistryMetadataProvider>,
+			);
+			// Find the button containing the tiered resource's icon
+			const resourceButtons = screen.getAllByRole('button');
+			const resourceButton = resourceButtons.find((btn) => {
+				// Skip category icon buttons
+				if (btn.classList.contains('info-bar__icon')) {
+					return false;
+				}
+				// Find button with the tiered resource icon
+				return tieredIcon && btn.textContent?.includes(tieredIcon);
+			});
+			if (!resourceButton) {
+				// Resource might not be rendered (not in valuesV2 or hidden)
+				// Let's check what buttons exist for debugging
+				const buttonContents = resourceButtons.map((btn) => btn.textContent);
+				throw new Error(
+					`Expected tiered resource button with icon "${tieredIcon}". ` +
+						`Found buttons: ${JSON.stringify(buttonContents)}`,
+				);
+			}
+			fireEvent.mouseEnter(resourceButton);
+			expect(handleHoverCardSpy).toHaveBeenCalled();
+			expect(lastHoverCard).not.toBeNull();
+			// Tiered resources should have tier entries in effects
+			expect(lastHoverCard!.effects.length).toBeGreaterThan(0);
+			// Each effect should be a SummaryGroup with title and items
+			for (const effect of lastHoverCard!.effects) {
+				expect(typeof effect).toBe('object');
+				expect(effect).toHaveProperty('title');
+				expect(effect).toHaveProperty('items');
+			}
 		});
 
 		it('does not pass Value/Bounds groups to effects for resources', () => {
