@@ -18,6 +18,7 @@ import { usePhaseProgress } from './usePhaseProgress';
 import { useActionPerformer } from './useActionPerformer';
 import { useToasts } from './useToasts';
 import { useCompensationLogger } from './useCompensationLogger';
+import { useInitialSetupLogger } from './useInitialSetupLogger';
 import { useAiRunner } from './useAiRunner';
 import { useKeybindingPreferences } from './keybindings';
 import { useSoundEffectsContext } from './SoundEffectsContext';
@@ -189,6 +190,14 @@ export function GameProviderInner({
 	} = useKeybindingPreferences();
 
 	useCompensationLogger({
+		sessionId,
+		sessionSnapshot: liveSessionSnapshot,
+		addResolutionLog,
+		resourceKeys,
+		registries,
+	});
+
+	useInitialSetupLogger({
 		sessionId,
 		sessionSnapshot: liveSessionSnapshot,
 		addResolutionLog,
