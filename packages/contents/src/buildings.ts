@@ -1,9 +1,7 @@
 import { Registry, TRANSFER_PCT_EVALUATION_ID, TRANSFER_PCT_EVALUATION_TYPE, buildingSchema } from '@kingdom-builder/protocol';
 import { ActionId, PopulationEvaluationId } from './actionIds';
-import { Resource, getResourceV2Id } from './resourceKeys';
-import type { ResourceKey } from './resourceKeys';
-import { Stat, getStatResourceV2Id } from './stats';
-import type { StatKey } from './stats';
+import { Resource, getResourceV2Id, Stat, getStatResourceV2Id } from './internal';
+import type { ResourceKey, StatKey } from './internal';
 import { DevelopmentId } from './developments';
 import { building, effect, actionParams, resultModParams, evaluationTarget, developmentTarget, populationTarget, costModParams } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, ResourceMethods, ActionMethods, PassiveMethods } from './config/builderShared';

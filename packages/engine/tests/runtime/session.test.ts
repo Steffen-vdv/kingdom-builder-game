@@ -9,8 +9,8 @@ import {
 	PhaseId,
 	GAME_START,
 	RULES,
+	Resource as CResource,
 } from '@kingdom-builder/contents';
-import { Resource as CResource } from '@kingdom-builder/contents/resourceKeys';
 import {
 	RESOURCE_V2_REGISTRY,
 	RESOURCE_GROUP_V2_REGISTRY,

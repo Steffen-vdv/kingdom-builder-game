@@ -1,5 +1,4 @@
-import { Stat } from './stats';
-import { PopulationRole } from './populationRoles';
+import { Stat, PopulationRole } from './internal';
 import { effect, phase, step, compareEvaluator, resourceEvaluator, type PhaseDef } from './config/builders';
 import { Types, ResourceMethods } from './config/builderShared';
 import { resourcePercentFromResourceChange } from './helpers/resourceV2Effects';

@@ -38,9 +38,36 @@ module.exports = {
 				path: '^packages/contents/src/(?!registries?/|index\\.ts$).+',
 			},
 		},
+		{
+			name: 'web-to-content-internal',
+			comment: 'Web must not import from content internal directory.',
+			severity: 'error',
+			from: {
+				path: '^packages/web/src',
+			},
+			to: {
+				path: '^packages/contents/src/internal/',
+			},
+		},
+		{
+			name: 'server-to-content-internal',
+			comment: 'Server must not import from content internal directory.',
+			severity: 'error',
+			from: {
+				path: '^packages/server/src',
+			},
+			to: {
+				path: '^packages/contents/src/internal/',
+			},
+		},
 	],
 	options: {
-		includeOnly: ['^packages/engine', '^packages/contents', '^packages/web'],
+		includeOnly: [
+			'^packages/engine',
+			'^packages/contents',
+			'^packages/web',
+			'^packages/server',
+		],
 		doNotFollow: {
 			path: 'node_modules',
 		},

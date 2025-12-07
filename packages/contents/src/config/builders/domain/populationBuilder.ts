@@ -1,5 +1,5 @@
 import type { EffectConfig, PopulationConfig } from '@kingdom-builder/protocol';
-import type { ResourceKey } from '../../../resourceKeys';
+import type { ResourceKey } from '../../../internal';
 import { BaseBuilder } from './baseBuilder';
 
 type PopulationEffectKey = 'onAssigned' | 'onUnassigned' | 'onGrowthPhase' | 'onUpkeepPhase' | 'onPayUpkeepStep' | 'onGainIncomeStep' | 'onGainAPStep';

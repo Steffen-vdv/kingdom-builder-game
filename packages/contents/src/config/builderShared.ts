@@ -6,10 +6,8 @@ export const Types = {
 	Passive: 'passive',
 	CostMod: 'cost_mod',
 	ResultMod: 'result_mod',
-	Population: 'population',
 	Action: 'action',
 	Attack: 'attack',
-	Stat: 'stat',
 } as const;
 
 export const LandMethods = {
@@ -56,11 +54,6 @@ export const ResultModMethods = {
 	REMOVE: 'remove',
 } as const;
 
-export const PopulationMethods = {
-	ADD: 'add',
-	REMOVE: 'remove',
-} as const;
-
 export const ActionMethods = {
 	ADD: 'add',
 	REMOVE: 'remove',
@@ -69,12 +62,6 @@ export const ActionMethods = {
 
 export const AttackMethods = {
 	PERFORM: 'perform',
-} as const;
-
-export const StatMethods = {
-	ADD: 'add',
-	ADD_PCT: 'add_pct',
-	REMOVE: 'remove',
 } as const;
 
 export const RequirementTypes = {

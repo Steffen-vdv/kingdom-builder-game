@@ -2,7 +2,7 @@ import type { ActionEffect, EffectConfig, RequirementConfig } from '@kingdom-bui
 import type { ActionDef } from '../../../actions';
 import type { ActionCategoryId } from '../../../actionCategories';
 import type { Focus } from '../../../defs';
-import type { ResourceKey } from '../../../resourceKeys';
+import type { ResourceKey } from '../../../internal';
 import { ActionEffectGroupBuilder } from '../actionEffectGroups';
 import type { ActionEffectGroupDef } from '../actionEffectGroups';
 import { RequirementBuilder } from '../evaluators';

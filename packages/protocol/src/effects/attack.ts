@@ -5,20 +5,12 @@ export type ResourceAttackTarget = {
 	key: string;
 };
 
-export type StatAttackTarget = {
-	type: 'stat';
-	key: string;
-};
-
 export type BuildingAttackTarget = {
 	type: 'building';
 	id: string;
 };
 
-export type AttackTarget =
-	| ResourceAttackTarget
-	| StatAttackTarget
-	| BuildingAttackTarget;
+export type AttackTarget = ResourceAttackTarget | BuildingAttackTarget;
 
 export interface AttackCalcOptions {
 	ignoreAbsorption?: boolean;
@@ -41,9 +33,6 @@ export interface AttackNumericTargetLog {
 export type ResourceAttackEvaluationTargetLog = ResourceAttackTarget &
 	AttackNumericTargetLog;
 
-export type StatAttackEvaluationTargetLog = StatAttackTarget &
-	AttackNumericTargetLog;
-
 export interface BuildingAttackEvaluationTargetLog {
 	type: 'building';
 	id: string;
@@ -54,7 +43,6 @@ export interface BuildingAttackEvaluationTargetLog {
 
 export type AttackEvaluationTargetLog =
 	| ResourceAttackEvaluationTargetLog
-	| StatAttackEvaluationTargetLog
 	| BuildingAttackEvaluationTargetLog;
 
 export interface AttackEvaluationLog {
