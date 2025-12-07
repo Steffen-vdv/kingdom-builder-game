@@ -39,10 +39,9 @@ guide for rationale, lore, and extended background.
      `npm run check` executes
      `packages/web/tests/runtime-config-fallback-sync.test.ts` to enforce this, so
      stale snapshots will block your PR until you rerun the generator.
-   - The Husky pre-push hook auto-formats code, auto-commits if needed, then
-     runs typecheck + lint. Just push and let the hook handle formatting.
-   - The Husky pre-commit hook runs `lint-staged` (eslint + tsc on staged .ts
-     files). Never bypass the hooks; fix the underlying problem locally.
+   - The Husky pre-commit hook runs Prettier on all files and stages changes.
+   - The Husky pre-push hook runs typecheck, then lints only changed `.ts/.tsx`
+     files. Never bypass the hooks; fix the underlying problem locally.
    - Reach for `npm run fix` after Prettier when eslint complains about
      spacing or other autofixable style violations.
    - `npm run check` still runs linting, type checks, and tests together if you
@@ -57,7 +56,7 @@ guide for rationale, lore, and extended background.
 
 ### Before pushing
 
-- Just push - the pre-push hook auto-formats and auto-commits if needed.
+- Just commit and push - pre-commit formats, pre-push validates.
 - Regenerate snapshots (`npm run generate:snapshots`) for any change that could
   affect rendered UI surfaces.
 - Husky installs the `pre-commit` and `pre-push` hooks automatically when you
@@ -69,18 +68,18 @@ guide for rationale, lore, and extended background.
 **IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
 commands sequentially - that defeats the purpose of parallelization.**
 
-| What you changed | Command to run                         | Time |
-| ---------------- | -------------------------------------- | ---- |
-| Code (no tests)  | Just push (hook auto-formats + checks) | ~30s |
-| Code + tests     | `npm run test:parallel` then push      | ~50s |
-| Single test      | `npx vitest run path/to/file.test.ts`  | ~5s  |
+| What you changed | Command to run                        | Time |
+| ---------------- | ------------------------------------- | ---- |
+| Code (no tests)  | Just commit and push                  | ~10s |
+| Code + tests     | `npm run test:parallel` then push     | ~50s |
+| Single test      | `npx vitest run path/to/file.test.ts` | ~5s  |
 
-**The pre-push hook auto-formats and validates.** It runs format, auto-commits
-any changes, then runs typecheck + lint. Just push and let the hook handle it.
+**Pre-commit formats, pre-push validates.** The pre-commit hook runs Prettier
+and stages changes. The pre-push hook runs typecheck + lint on changed files
+only (~5-10s). Just commit and push.
 
 **Anti-patterns to avoid:**
 
-- Running `npm run format` manually before push (the hook does this!)
 - Running `check:parallel` then `test:parallel` sequentially (redundant!)
 - Running `npm run verify` for daily work (it's for CI/coverage reports)
 - **Avoid `npm run test:sequential` - it's SLOWER than `test:parallel`!**

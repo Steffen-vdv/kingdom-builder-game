@@ -91,17 +91,15 @@ npm run generate:snapshots  # Refresh cached registry metadata after content cha
 **IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
 commands sequentially - that defeats the purpose of parallelization.**
 
-| What you changed | Command to run                        | Time   |
-| ---------------- | ------------------------------------- | ------ |
-| Code (no tests)  | Just commit and push                  | ~15s\* |
-| Code + tests     | `npm run test:parallel` then push     | ~55s   |
-| Single test      | `npx vitest run path/to/file.test.ts` | ~5s    |
-
-\* First push after changes ~45s (full lint), subsequent pushes ~15s (cached).
+| What you changed | Command to run                        | Time |
+| ---------------- | ------------------------------------- | ---- |
+| Code (no tests)  | Just commit and push                  | ~10s |
+| Code + tests     | `npm run test:parallel` then push     | ~55s |
+| Single test      | `npx vitest run path/to/file.test.ts` | ~5s  |
 
 **Pre-commit formats, pre-push validates.** The pre-commit hook runs Prettier
-on all files and stages any changes. The pre-push hook runs typecheck + lint.
-ESLint uses caching, so repeated pushes are fast (~5s lint vs ~45s first run).
+on all files and stages any changes. The pre-push hook runs typecheck + lint
+on changed files only, making it fast even on first push (~5-10s).
 
 **Anti-patterns to avoid:**
 
@@ -114,7 +112,7 @@ ESLint uses caching, so repeated pushes are fast (~5s lint vs ~45s first run).
 Husky hooks enforce quality gates automatically:
 
 1. **pre-commit**: Formats all files with Prettier, stages changes
-2. **pre-push**: Runs typecheck + lint in parallel (ESLint uses cache for speed)
+2. **pre-push**: Runs typecheck, then lints only changed `.ts/.tsx` files
 
 Never bypass these hooks - they ensure code quality before it reaches the repo.
 
@@ -287,7 +285,7 @@ without completing the full migration will be rejected.
 
 ## Pre-Push Checklist
 
-1. Just push - the pre-push hook auto-formats (and auto-commits if needed)
+1. Just commit and push - pre-commit formats, pre-push validates
 2. For text changes, review
    [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text)
 
