@@ -1,5 +1,5 @@
 import type { AttackLog } from '@kingdom-builder/protocol';
-import { formatStatValue } from '../../../../utils/stats';
+import { formatStatValue } from '../../../../utils/resourceSources';
 import type { SummaryEntry } from '../../../content';
 import {
 	attackStatLabel,

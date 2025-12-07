@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResourceSourceLink as StatSourceLink } from '@kingdom-builder/protocol';
-import { getStatBreakdownSummary } from '../src/utils/stats';
-import { formatKindLabel } from '../src/utils/stats/descriptorRegistry';
+import { getStatBreakdownSummary } from '../src/utils/resourceSources';
+import { formatKindLabel } from '../src/utils/resourceSources/descriptorRegistry';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
 	createSessionSnapshot,
