@@ -26,10 +26,8 @@ const mapLand = (
 });
 const mapPlayer = (player: SessionPlayerStateSnapshot): SessionPlayerView => ({
 	...player,
-	resources: cloneRecord(player.resources),
-	stats: cloneRecord(player.stats),
 	resourceTouchedV2: cloneRecord(player.resourceTouchedV2),
-	population: cloneRecord(player.population),
+	valuesV2: cloneRecord(player.valuesV2),
 	passives: [...player.passives],
 	lands: player.lands.map(mapLand),
 	buildings: new Set(player.buildings),

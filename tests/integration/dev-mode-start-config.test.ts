@@ -42,19 +42,19 @@ describe('dev mode start configuration', () => {
 		const happinessId = getResourceV2Id(Resource.happiness);
 		const apId = getResourceV2Id(Resource.ap);
 		const castleId = getResourceV2Id(Resource.castleHP);
+		const councilId = getResourceV2Id(PopulationRole.Council);
+		const legionId = getResourceV2Id(PopulationRole.Legion);
+		const fortifierId = getResourceV2Id(PopulationRole.Fortifier);
 		expect(snapshot.game.devMode).toBe(true);
-		expect(player.resources[Resource.gold]).toBe(100);
-		expect(player.resources[Resource.happiness]).toBe(10);
-		expect(player.population[PopulationRole.Council]).toBe(2);
-		expect(player.population[PopulationRole.Legion]).toBe(1);
-		expect(player.population[PopulationRole.Fortifier]).toBe(1);
-		expect(opponent.resources[Resource.castleHP]).toBe(1);
 		expect(player.valuesV2[goldId]).toBe(100);
 		expect(player.valuesV2[happinessId]).toBe(10);
+		expect(player.valuesV2[councilId]).toBe(2);
+		expect(player.valuesV2[legionId]).toBe(1);
+		expect(player.valuesV2[fortifierId]).toBe(1);
+		expect(opponent.valuesV2[castleId]).toBe(1);
 		// AP starts at 0; it is granted during the Growth phase by Council members
 		expect(player.valuesV2[apId]).toBe(0);
 		expect(player.resourceBoundsV2[goldId]?.lowerBound).toBe(0);
-		expect(opponent.valuesV2[castleId]).toBe(1);
 		expect(
 			snapshot.game.resourceCatalogV2.resources.byId[goldId],
 		).toBeDefined();

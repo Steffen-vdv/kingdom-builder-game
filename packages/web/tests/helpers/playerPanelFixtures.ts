@@ -4,7 +4,6 @@ import type {
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { createTranslationContext } from '../../src/translation/context';
-import { createTranslationAssets } from '../../src/translation/context/assets';
 import type { GameEngineContextValue } from '../../src/state/GameContext.types';
 import { createSessionSnapshot, createSnapshotPlayer } from './sessionFixtures';
 import { selectSessionView } from '../../src/state/sessionSelectors';
@@ -12,27 +11,54 @@ import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTestRegistryMetadata } from './registryMetadata';
 import { createTestSessionScaffold } from './testSessionScaffold';
 
-// Helper to build V2 ID for core resources (legacy key to V2 ID)
-function getCoreResourceV2Id(legacyKey: string): string {
-	return `resource:core:${legacyKey}`;
-}
-
-// Helper to build V2 ID for secondary resources (camelCase to kebab-case)
-function getSecondaryResourceV2Id(legacyKey: string): string {
-	const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-	return `resource:core:${kebab}`;
-}
-
 export interface PlayerPanelFixtures {
 	activePlayer: ReturnType<typeof createSnapshotPlayer>;
 	mockGame: GameEngineContextValue;
-	resourceForecast: Record<string, number>;
-	/** Legacy keys for secondary resources that should be visible in tests */
-	displayableSecondaryResourceKeys: string[];
-	secondaryForecast: Record<string, number>;
+	/** Forecast deltas for all resources, keyed by V2 ID */
+	forecast: Record<string, number>;
 	registries: SessionRegistries;
 	metadata: SessionSnapshot['metadata'];
 	metadataSelectors: ReturnType<typeof createTestRegistryMetadata>;
+}
+
+type ResourceCatalog = ReturnType<
+	typeof createTestSessionScaffold
+>['resourceCatalogV2'];
+type CategoryEntry = { type: string; id: string };
+
+/**
+ * Resolves all V2 resource IDs belonging to a category by expanding groups.
+ */
+function resolveResourceIdsForCategory(
+	catalog: ResourceCatalog,
+	category: { contents?: unknown },
+): string[] {
+	if (!category || !('contents' in category)) {
+		return [];
+	}
+	const resourceIds: string[] = [];
+	for (const entry of category.contents as CategoryEntry[]) {
+		if (entry.type === 'resource') {
+			resourceIds.push(entry.id);
+		} else if (entry.type === 'group') {
+			// Find all resources belonging to this group
+			for (const resource of catalog.resources.ordered) {
+				if (resource.groupId === entry.id) {
+					resourceIds.push(resource.id);
+				}
+			}
+		}
+	}
+	return resourceIds;
+}
+
+/**
+ * Finds the primary category by checking the isPrimary property.
+ */
+function findPrimaryCategory(catalog: ResourceCatalog) {
+	return catalog.categories.ordered.find(
+		(cat) => 'isPrimary' in cat && cat.isPrimary === true,
+	);
 }
 
 export function createPlayerPanelFixtures(): PlayerPanelFixtures {
@@ -45,54 +71,32 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		ruleSnapshot,
 		resourceCatalogV2,
 	} = createTestSessionScaffold();
-	const translationAssets = createTranslationAssets(
-		sessionRegistries,
-		sessionMetadata,
-		{ rules: ruleSnapshot },
+	// Get all resources from the catalog - no need to separate by category
+	const allResources = resourceCatalogV2.resources.ordered;
+	// Find primary category to determine which resources need touched tracking
+	const primaryCategory = findPrimaryCategory(resourceCatalogV2);
+	const primaryResourceIds = new Set(
+		primaryCategory
+			? resolveResourceIdsForCategory(resourceCatalogV2, primaryCategory)
+			: [],
 	);
-	const resourceKeys = Object.keys(sessionRegistries.resources);
-	const resourceValues = resourceKeys.reduce<Record<string, number>>(
-		(acc, key, index) => {
-			acc[key] = index + 2;
-			return acc;
-		},
-		{},
-	);
-	// Secondary resources (formerly stats) - now unified under ResourceV2
-	const secondaryValues: Record<string, number> = {};
-	const resourceTouchedV2: Record<string, boolean> = {};
-	let resourceIndex = 0;
-	// Legacy translation assets still use "stats" key - reading from it here
-	const secondaryEntries = Object.entries(translationAssets.stats);
-	const maxPopulationKey =
-		secondaryEntries.find(([, entry]) =>
-			entry.label?.toLowerCase().includes('max population'),
-		)?.[0] ?? 'maxPopulation';
-	for (const [legacyKey] of secondaryEntries) {
-		if (legacyKey === maxPopulationKey) {
-			continue;
-		}
-		const value = resourceIndex % 2 === 0 ? resourceIndex + 1 : 0;
-		secondaryValues[legacyKey] = value;
-		// Mark all secondary resources as touched using V2 IDs for visibility
-		// Resources with non-zero value or that have ever been non-zero appear
-		const v2Id = getSecondaryResourceV2Id(legacyKey);
-		resourceTouchedV2[v2Id] = true;
-		resourceIndex += 1;
-	}
-	// Build valuesV2 from legacy resources and secondary resources using V2 IDs
+	// Build valuesV2 and resourceTouchedV2 uniformly for all resources
 	const valuesV2: Record<string, number> = {};
-	for (const [key, value] of Object.entries(resourceValues)) {
-		valuesV2[getCoreResourceV2Id(key)] = value;
+	const resourceTouchedV2: Record<string, boolean> = {};
+	for (const [index, resource] of allResources.entries()) {
+		// Assign values: alternating pattern for variety in tests
+		valuesV2[resource.id] = index % 2 === 0 ? index + 2 : index + 1;
+		// Non-primary resources need touched flag for visibility
+		if (!primaryResourceIds.has(resource.id)) {
+			resourceTouchedV2[resource.id] = true;
+		}
 	}
-	for (const [key, value] of Object.entries(secondaryValues)) {
-		valuesV2[getSecondaryResourceV2Id(key)] = value;
-	}
+	// Legacy resources object is empty - V2 is the source of truth
 	const activePlayer = createSnapshotPlayer({
 		id: activePlayerId,
 		name: 'Player One',
-		resources: resourceValues,
-		stats: secondaryValues,
+		resources: {},
+		stats: {},
 		resourceTouchedV2,
 		population: {},
 		valuesV2,
@@ -189,41 +193,17 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		playerName: 'Player',
 		onChangePlayerName: vi.fn(),
 	};
-	const resourceForecast = resourceKeys.reduce<Record<string, number>>(
-		(acc, key, index) => {
-			const offset = index + 1;
-			acc[key] = index % 2 === 0 ? offset : -offset;
-			return acc;
-		},
-		{},
-	);
-	// Determine which secondary resources should be visible based on touched
-	const displayableSecondaryResourceKeys = Object.entries(activePlayer.stats)
-		.filter(([legacyKey, value]) => {
-			if (legacyKey === maxPopulationKey) {
-				return false;
-			}
-			if (value !== 0) {
-				return true;
-			}
-			// Check using V2 ID since that's what resourceTouchedV2 stores
-			const v2Id = getSecondaryResourceV2Id(legacyKey);
-			return Boolean(activePlayer.resourceTouchedV2?.[v2Id]);
-		})
-		.map(([legacyKey]) => legacyKey);
-	const secondaryForecast = displayableSecondaryResourceKeys.reduce<
-		Record<string, number>
-	>((acc, key, index) => {
-		const offset = index + 2;
-		acc[key] = index % 2 === 0 ? offset : -offset;
-		return acc;
-	}, {});
+	// Build forecast uniformly for all resources
+	const forecast: Record<string, number> = {};
+	for (const [index, resource] of allResources.entries()) {
+		// Alternating positive/negative deltas for test variety
+		const offset = index + 1;
+		forecast[resource.id] = index % 2 === 0 ? offset : -offset;
+	}
 	return {
 		activePlayer,
 		mockGame,
-		resourceForecast,
-		displayableSecondaryResourceKeys,
-		secondaryForecast,
+		forecast,
 		registries: sessionRegistries,
 		metadata: sessionState.metadata,
 		metadataSelectors,

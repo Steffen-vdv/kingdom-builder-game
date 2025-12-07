@@ -120,17 +120,17 @@ describe('EngineSession', () => {
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
-		const initialGold = activeBefore.resources[CResource.gold] ?? 0;
+		const initialGold = activeBefore.valuesV2[CResource.gold] ?? 0;
 		const traces = session.performAction(gainGold.id);
 		const after = session.getSnapshot();
 		const activeAfter = after.game.players[0]!;
-		expect(activeAfter.resources[CResource.gold]).toBe(initialGold + 3);
+		expect(activeAfter.valuesV2[CResource.gold]).toBe(initialGold + 3);
 		if (traces.length > 0) {
-			traces[0]!.after.resources[CResource.gold] = 999;
+			traces[0]!.after.valuesV2[CResource.gold] = 999;
 		}
 		const refreshed = session.getSnapshot();
 		const activeRefreshed = refreshed.game.players[0]!;
-		expect(activeRefreshed.resources[CResource.gold]).toBe(initialGold + 3);
+		expect(activeRefreshed.valuesV2[CResource.gold]).toBe(initialGold + 3);
 	});
 
 	it('simulates actions before executing to avoid partial failures', () => {
@@ -155,7 +155,7 @@ describe('EngineSession', () => {
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
-		const initialAp = activeBefore.resources[CResource.ap] ?? 0;
+		const initialAp = activeBefore.valuesV2[CResource.ap] ?? 0;
 
 		expect(() => session.performAction(failingAction.id)).toThrow(
 			/No tillable land available/,
@@ -163,27 +163,26 @@ describe('EngineSession', () => {
 
 		const after = session.getSnapshot();
 		const activeAfter = after.game.players[0]!;
-		expect(activeAfter.resources[CResource.ap]).toBe(initialAp);
+		expect(activeAfter.valuesV2[CResource.ap]).toBe(initialAp);
 	});
 
 	it('returns immutable game snapshots', () => {
 		const session = createTestSession();
 		const snapshot = session.getSnapshot();
-		snapshot.game.players[0]!.resources[CResource.gold] = 999;
+		snapshot.game.players[0]!.valuesV2[CResource.gold] = 999;
 		const next = session.getSnapshot();
-		expect(next.game.players[0]!.resources[CResource.gold]).not.toBe(999);
+		expect(next.game.players[0]!.valuesV2[CResource.gold]).not.toBe(999);
 	});
 
-	it('includes ResourceV2 data alongside legacy snapshots', () => {
+	it('includes ResourceV2 data in player snapshots', () => {
 		const session = createTestSession();
 		const snapshot = session.getSnapshot();
 		const catalog = snapshot.game.resourceCatalogV2;
 		expect(catalog).toBeDefined();
 		const player = snapshot.game.players[0]!;
 		expect(player.valuesV2).toBeDefined();
-		const goldLegacy = player.resources[CResource.gold];
-		expect(goldLegacy).toBeDefined();
-		expect(player.valuesV2['resource:core:gold']).toBe(goldLegacy);
+		const goldV2 = player.valuesV2[CResource.gold];
+		expect(goldV2).toBeDefined();
 		expect(catalog.resources.byId['resource:core:gold']?.label).toBeDefined();
 	});
 
@@ -191,15 +190,15 @@ describe('EngineSession', () => {
 		const session = createTestSession();
 		const result = session.advancePhase();
 		const playerId = result.player.id;
-		const keys = Object.keys(result.player.resources);
+		const keys = Object.keys(result.player.valuesV2);
 		const firstKey = keys[0];
 		if (firstKey) {
-			result.player.resources[firstKey] = 777;
+			result.player.valuesV2[firstKey] = 777;
 		}
 		const snapshot = session.getSnapshot();
 		const player = snapshot.game.players.find((entry) => entry.id === playerId);
 		if (firstKey) {
-			expect(player?.resources[firstKey]).not.toBe(777);
+			expect(player?.valuesV2[firstKey]).not.toBe(777);
 		}
 	});
 
@@ -492,9 +491,9 @@ describe('EngineSession', () => {
 		if (!firstStep) {
 			throw new Error('Expected at least one simulation step.');
 		}
-		firstStep.player.resources[CResource.gold] = 999;
+		firstStep.player.valuesV2[CResource.gold] = 999;
 		const refreshed = session.simulateUpcomingPhases(activeId);
-		expect(refreshed.steps[0]?.player.resources[CResource.gold]).not.toBe(999);
+		expect(refreshed.steps[0]?.player.valuesV2[CResource.gold]).not.toBe(999);
 	});
 
 	it('supports primitive effect log entries without mutation', () => {

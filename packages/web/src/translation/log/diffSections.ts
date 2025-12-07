@@ -1,5 +1,5 @@
 import { statDisplaysAsPercent } from '../../utils/resourceSources';
-import { findStatPctBreakdown, type StepEffects } from './statBreakdown';
+import { findResourcePctBreakdown, type StepEffects } from './statBreakdown';
 import type { ActionDiffChange } from './diff';
 import {
 	formatPercentBreakdown,
@@ -119,31 +119,27 @@ function describePercentBreakdown(
 	_assets: TranslationAssets,
 	metadataSelectors: TranslationResourceV2MetadataSelectors,
 ): string | undefined {
-	const breakdown = findStatPctBreakdown(step, resourceId);
+	const breakdown = findResourcePctBreakdown(step, resourceId);
 	if (!breakdown || change.delta <= 0) {
 		return undefined;
 	}
-	const role = breakdown.role;
-	// Role should be a V2 id - use it directly for V2 metadata lookup
-	const populationKey = role.startsWith('resource:')
-		? role
-		: `resource:core:${role}`;
-	const count = player.valuesV2?.[populationKey] ?? 0;
-	// Use V2 metadata for population icon
-	const popMetadata = metadataSelectors.get(populationKey);
-	const popIcon = popMetadata?.icon ?? '';
-	const pctStat = breakdown.percentStat;
-	// All values are now in valuesV2
-	const growth = player.valuesV2?.[pctStat] ?? 0;
-	// Use V2 metadata for percent stat icon
-	const pctStatMetadata = metadataSelectors.get(pctStat);
-	const growthIcon = pctStatMetadata?.icon ?? '';
+	// breakdown.resourceId is the evaluator resource (e.g., population role)
+	// It's already a full V2 ID - no prefix construction needed
+	const evaluatorResourceId = breakdown.resourceId;
+	const count = player.valuesV2?.[evaluatorResourceId] ?? 0;
+	const evaluatorMetadata = metadataSelectors.get(evaluatorResourceId);
+	const evaluatorIcon = evaluatorMetadata?.icon ?? '';
+	// breakdown.percentSourceId is the percent source resource (e.g., growth)
+	const percentSourceId = breakdown.percentSourceId;
+	const percentValue = player.valuesV2?.[percentSourceId] ?? 0;
+	const percentMetadata = metadataSelectors.get(percentSourceId);
+	const percentIcon = percentMetadata?.icon ?? '';
 	// Format values using V2 metadata
 	const formatValue = (id: string, value: number) => {
 		const meta = metadataSelectors.get(id);
 		return meta?.displayAsPercent ? `${value * 100}%` : String(value);
 	};
-	const growthValue = formatValue(pctStat, growth);
+	const percentDisplay = formatValue(percentSourceId, percentValue);
 	const baseValue = formatValue(resourceId, change.before);
 	const totalValue = formatValue(resourceId, change.after);
 	// Use V2 metadata for target resource icon
@@ -152,10 +148,10 @@ function describePercentBreakdown(
 	return formatPercentBreakdown(
 		resourceIcon,
 		baseValue,
-		popIcon,
+		evaluatorIcon,
 		count,
-		growthIcon,
-		growthValue,
+		percentIcon,
+		percentDisplay,
 		totalValue,
 	);
 }

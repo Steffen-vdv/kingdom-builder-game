@@ -181,7 +181,7 @@ function createMockGame() {
 	const activePlayer = createSnapshotPlayer({
 		id: 'A',
 		name: 'Player',
-		resources: {
+		valuesV2: {
 			[actionCostResource]: 3,
 			[secondaryResource]: 20,
 		},
@@ -209,7 +209,7 @@ function createMockGame() {
 	const opponent = createSnapshotPlayer({
 		id: 'B',
 		name: 'Opponent',
-		resources: {
+		valuesV2: {
 			[actionCostResource]: 0,
 			[secondaryResource]: 0,
 		},

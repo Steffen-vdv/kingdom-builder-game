@@ -258,7 +258,7 @@ describe('<HoverCard />', () => {
 		if (!activePlayer) {
 			throw new Error('Expected active player for next turn test');
 		}
-		activePlayer.resources[actionCostResource] = 0;
+		activePlayer.valuesV2[actionCostResource] = 0;
 		mockGame.phase = {
 			...mockGame.phase,
 			canEndTurn: true,

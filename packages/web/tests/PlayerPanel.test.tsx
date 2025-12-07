@@ -10,9 +10,7 @@ import { RegistryMetadataProvider } from '../src/contexts/RegistryMetadataContex
 const {
 	activePlayer: activePlayerSnapshot,
 	mockGame,
-	resourceForecast,
-	displayableSecondaryResourceKeys,
-	secondaryForecast,
+	forecast,
 	registries,
 	metadata,
 	metadataSelectors,
@@ -25,27 +23,9 @@ const renderPanel = () =>
 		</RegistryMetadataProvider>,
 	);
 
-// Convert legacy forecasts to V2 format for the useNextTurnForecast mock
-// The createForecastMap function expects valuesV2 format
-function buildV2ForecastValues(): Record<string, number> {
-	const valuesV2: Record<string, number> = {};
-	// Convert resource forecasts to V2 IDs
-	for (const [legacyKey, delta] of Object.entries(resourceForecast)) {
-		const v2Id = `resource:core:${legacyKey}`;
-		valuesV2[v2Id] = delta;
-	}
-	// Convert secondary resource forecasts to V2 IDs (camelCase to kebab-case)
-	for (const [legacyKey, delta] of Object.entries(secondaryForecast)) {
-		const kebab = legacyKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-		const v2Id = `resource:core:${kebab}`;
-		valuesV2[v2Id] = delta;
-	}
-	return valuesV2;
-}
-
 const forecastByPlayerId = {
 	[activePlayerSnapshot.id]: {
-		valuesV2: buildV2ForecastValues(),
+		valuesV2: forecast,
 	},
 };
 
@@ -88,7 +68,8 @@ describe('<PlayerPanel />', () => {
 	});
 
 	it('renders next-turn forecasts with accessible labels', () => {
-		expect(displayableSecondaryResourceKeys.length).toBeGreaterThan(0);
+		// Verify fixture has resources with forecasts
+		expect(Object.keys(forecast).length).toBeGreaterThan(0);
 		renderPanel();
 		// Component uses V2 resources from resourceCatalogV2
 		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
@@ -183,5 +164,67 @@ describe('<PlayerPanel />', () => {
 			descriptor.id,
 		]);
 		expect(record[descriptor.id]).toBe(first);
+	});
+
+	describe('forecast fixture correctness', () => {
+		const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+		const allResources = resourceCatalog?.resources?.ordered ?? [];
+
+		it('has forecast entries for every resource in the catalog', () => {
+			expect(allResources.length).toBeGreaterThan(0);
+			for (const resource of allResources) {
+				expect(forecast).toHaveProperty(resource.id);
+			}
+		});
+
+		it('has no extra forecast entries beyond catalog resources', () => {
+			const catalogIds = new Set(allResources.map((r) => r.id));
+			for (const forecastId of Object.keys(forecast)) {
+				expect(catalogIds.has(forecastId)).toBe(true);
+			}
+		});
+
+		it('has forecast count matching catalog resource count', () => {
+			expect(Object.keys(forecast).length).toBe(allResources.length);
+		});
+
+		it('has valuesV2 entries for every resource', () => {
+			for (const resource of allResources) {
+				expect(activePlayerSnapshot.valuesV2).toHaveProperty(resource.id);
+			}
+		});
+
+		it('has both positive and negative forecast values', () => {
+			const values = Object.values(forecast);
+			const hasPositive = values.some((val) => val > 0);
+			const hasNegative = values.some((val) => val < 0);
+			expect(hasPositive).toBe(true);
+			expect(hasNegative).toBe(true);
+		});
+
+		it('marks non-primary resources as touched', () => {
+			// Find primary category resources
+			const primaryCategory = resourceCatalog?.categories?.ordered?.find(
+				(cat) => 'isPrimary' in cat && cat.isPrimary === true,
+			);
+			const primaryContents = (primaryCategory as { contents?: unknown[] })
+				?.contents;
+			const primaryResourceIds = new Set<string>();
+			if (primaryContents) {
+				for (const entry of primaryContents as { type: string; id: string }[]) {
+					if (entry.type === 'resource') {
+						primaryResourceIds.add(entry.id);
+					}
+				}
+			}
+			// Non-primary resources should be marked as touched
+			for (const resource of allResources) {
+				if (!primaryResourceIds.has(resource.id)) {
+					expect(activePlayerSnapshot.resourceTouchedV2?.[resource.id]).toBe(
+						true,
+					);
+				}
+			}
+		});
 	});
 });

@@ -108,7 +108,7 @@ function GenericActionCard({
 		cardEnabled = true;
 	}
 	const insufficientTooltip = costsReady
-		? formatMissingResources(costs, player.resources, selectResourceDescriptor)
+		? formatMissingResources(costs, player.valuesV2, selectResourceDescriptor)
 		: 'Loading costs…';
 	const requirementText = requirements.join(', ');
 	const title = !availability.implemented
@@ -196,7 +196,7 @@ function GenericActionCard({
 			key={action.id}
 			title={renderIconLabel(actionIcon, action.name)}
 			costs={costs}
-			playerResources={player.resources}
+			playerResources={player.valuesV2}
 			actionCostResource={actionCostResource}
 			upkeep={hasCleanupCosts ? cleanupCosts : undefined}
 			requirements={requirements}

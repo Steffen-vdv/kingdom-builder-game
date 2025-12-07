@@ -114,17 +114,15 @@ export function wrapTranslationRegistry<TDefinition>(
 
 export function toTranslationPlayer(
 	player: Pick<TranslationPlayer, 'id' | 'name'> & {
-		resources: Record<string, number>;
-		population: Record<string, number>;
-		stats?: Record<string, number>;
+		valuesV2: Record<string, number>;
+		resourceBoundsV2?: Record<string, unknown>;
 	},
 ): TranslationPlayer {
 	return {
 		id: player.id,
 		name: player.name,
-		resources: { ...player.resources },
-		stats: { ...(player.stats ?? {}) },
-		population: { ...player.population },
+		valuesV2: { ...player.valuesV2 },
+		resourceBoundsV2: { ...(player.resourceBoundsV2 ?? {}) },
 	};
 }
 

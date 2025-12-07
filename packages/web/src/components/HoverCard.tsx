@@ -182,7 +182,7 @@ export default function HoverCard() {
 				<div className={costTextClass}>
 					{renderCosts(
 						renderedData.costs,
-						translationContext.activePlayer.resources,
+						translationContext.activePlayer.valuesV2,
 						actionCostResource,
 						renderedData.upkeep,
 						renderCostOptions,

@@ -91,8 +91,7 @@ function computePhaseState(
 	const activePlayer = snapshot.game.players.find(
 		(player) => player.id === snapshot.game.activePlayerId,
 	);
-	const remainingActionPoints =
-		activePlayer?.resources[actionCostResource] ?? 0;
+	const remainingActionPoints = activePlayer?.valuesV2[actionCostResource] ?? 0;
 	const isAiTurn = Boolean(activePlayer?.aiControlled);
 	const canEndTurn = isAiTurn
 		? false
@@ -303,7 +302,7 @@ export function usePhaseProgress({
 		if (!activePlayer) {
 			return;
 		}
-		if ((activePlayer.resources[actionCostResource] ?? 0) > 0) {
+		if ((activePlayer.valuesV2[actionCostResource] ?? 0) > 0) {
 			return;
 		}
 		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });
