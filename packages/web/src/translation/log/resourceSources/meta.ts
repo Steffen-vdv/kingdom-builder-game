@@ -26,16 +26,16 @@ function normalizeMetaCount(rawCount: number): number {
 	return Math.max(1, rounded);
 }
 
-function renderPopulationMetaIcons(
+function renderResourceMetaIcons(
 	meta: ResourceSourceMeta,
 	context: TranslationDiffContext,
 ): string {
-	const role = meta.id;
-	if (!role) {
+	const resourceId = meta.id;
+	if (!resourceId) {
 		return '';
 	}
-	// Use V2 metadata directly - resource IDs are used as-is without conversion
-	const v2Metadata = context.resourceMetadataV2?.get(role);
+	// Use V2 metadata directly - resource IDs are used as-is
+	const v2Metadata = context.resourceMetadataV2?.get(resourceId);
 	const icon = v2Metadata?.icon;
 	if (!icon) {
 		return '';
@@ -82,7 +82,7 @@ function renderLandMetaIcons(
 }
 
 const META_ICON_RENDERERS: Record<string, MetaIconRenderer> = {
-	population: renderPopulationMetaIcons,
+	resource: renderResourceMetaIcons,
 	development: renderDevelopmentMetaIcons,
 	building: renderBuildingMetaIcons,
 	land: renderLandMetaIcons,

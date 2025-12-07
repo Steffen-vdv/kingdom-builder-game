@@ -11,10 +11,7 @@ import { createTestRegistryMetadata } from './helpers/registryMetadata';
 import { createTranslationContext } from '../src/translation/context';
 import { snapshotEngine } from '../../engine/src/runtime/engine_snapshot';
 import { snapshotPlayer as snapshotEnginePlayer } from '../../engine/src/runtime/player_snapshot';
-import {
-	selectPopulationDescriptor,
-	selectResourceDescriptor,
-} from '../src/translation/effects/registrySelectors';
+import { selectResourceDescriptor } from '../src/translation/effects/registrySelectors';
 
 interface LogHarness {
 	engine: ReturnType<typeof createEngine>;
@@ -137,15 +134,15 @@ function captureActivePlayer(engine: ReturnType<typeof createEngine>) {
 describe('log resource source icon registry', () => {
 	const scenarios = [
 		{
-			name: 'population',
+			name: 'resource',
 			buildMeta: (harness: LogHarness) => ({
 				meta: {
-					type: 'population' as const,
+					type: 'resource' as const,
 					id: harness.populationId,
 					count: 2,
 				},
 				expected:
-					selectPopulationDescriptor(
+					selectResourceDescriptor(
 						harness.translationContext,
 						harness.populationId,
 					).icon?.repeat(2) ?? '',
