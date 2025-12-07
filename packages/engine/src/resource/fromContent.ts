@@ -1,4 +1,5 @@
 import type {
+	RuntimeBoundValue,
 	RuntimeResourceBounds,
 	RuntimeResourceCatalog,
 	RuntimeResourceCategoryDefinition,
@@ -13,6 +14,7 @@ import type {
 } from './types';
 
 import type {
+	ContentBoundValue,
 	ContentCategoryDefinition,
 	ContentOrderedRegistry,
 	ContentResourceDefinition,
@@ -20,7 +22,7 @@ import type {
 	ContentResourceGroupParent,
 } from './content-types';
 
-import { normalizeBoundOf, normalizeCategory } from './fromContent-categories';
+import { normalizeCategory } from './fromContent-categories';
 import { normalizeTierTrack } from './fromContent-tiers';
 
 const RUNTIME_PREFIX = 'Resource runtime';
@@ -57,20 +59,44 @@ function assertPositiveInteger(
 	}
 }
 
+/**
+ * Normalizes a bound value from content to runtime format.
+ * - Numbers are validated as integers and passed through.
+ * - Reference objects have resourceId validated and reconciliation set.
+ * - Undefined/null becomes null (unbounded).
+ */
+function normalizeBoundValue(
+	value: ContentBoundValue | undefined,
+	field: 'lowerBound' | 'upperBound',
+	context: string,
+): RuntimeBoundValue {
+	if (value === undefined || value === null) {
+		return null;
+	}
+	if (typeof value === 'number') {
+		assertInteger(value, field, context);
+		return value;
+	}
+	// It's a bound reference
+	if (!value.resourceId) {
+		throw new Error(
+			`${RUNTIME_PREFIX} ${context} ${field} reference requires a non-empty resourceId.`,
+		);
+	}
+	return Object.freeze({
+		resourceId: value.resourceId,
+		reconciliation: value.reconciliation ?? 'clamp',
+	});
+}
+
 function normalizeBounds(
 	definition: ContentResourceDefinition | ContentResourceGroupParent,
 ): RuntimeResourceBounds {
 	const { lowerBound, upperBound } = definition;
 	const context = `"${definition.id}"`;
-	if (typeof lowerBound === 'number') {
-		assertInteger(lowerBound, 'lowerBound', context);
-	}
-	if (typeof upperBound === 'number') {
-		assertInteger(upperBound, 'upperBound', context);
-	}
 	return {
-		lowerBound: typeof lowerBound === 'number' ? lowerBound : null,
-		upperBound: typeof upperBound === 'number' ? upperBound : null,
+		lowerBound: normalizeBoundValue(lowerBound, 'lowerBound', context),
+		upperBound: normalizeBoundValue(upperBound, 'upperBound', context),
 	};
 }
 
@@ -94,25 +120,11 @@ function normalizeMetadata(
 	};
 }
 
-function assertClampOnlyReconciliation(
-	definition: ContentResourceDefinition | ContentResourceGroupParent,
-	context: string,
-): void {
-	const reconciliation = (definition as { reconciliation?: string })
-		.reconciliation;
-	if (reconciliation && reconciliation !== 'clamp') {
-		throw new Error(
-			`${RUNTIME_PREFIX} only supports clamp reconciliation during MVP. ${context} requested "${reconciliation}".`,
-		);
-	}
-}
-
 function normalizeGroupParent(
 	parent: ContentResourceGroupParent,
 	fallbackOrder: number,
 ): RuntimeResourceGroupParent {
 	const context = `group parent "${parent.id}"`;
-	assertClampOnlyReconciliation(parent, context);
 	const metadata = normalizeMetadata(parent, fallbackOrder);
 	const bounds = normalizeBounds(parent);
 	const tierTrack = normalizeTierTrack(parent.tierTrack, context);
@@ -188,7 +200,6 @@ export function createRuntimeResourceCatalog({
 
 	for (const [index, definition] of resources.ordered.entries()) {
 		const context = `resource "${definition.id}"`;
-		assertClampOnlyReconciliation(definition, context);
 
 		const metadata = normalizeMetadata(definition, index);
 		const bounds = normalizeBounds(definition);
@@ -235,7 +246,6 @@ export function createRuntimeResourceCatalog({
 		}
 
 		const tierTrack = normalizeTierTrack(definition.tierTrack, context);
-		const boundOf = normalizeBoundOf(definition.boundOf, context);
 		const onValueIncrease = Object.freeze([
 			...(definition.onValueIncrease ?? []),
 		]);
@@ -254,7 +264,6 @@ export function createRuntimeResourceCatalog({
 			resolvedGroupOrder,
 			onValueIncrease,
 			onValueDecrease,
-			boundOf,
 			...(globalCost ? { globalCost } : {}),
 			...(tierTrack ? { tierTrack } : {}),
 		});

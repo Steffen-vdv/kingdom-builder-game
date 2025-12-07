@@ -3,8 +3,11 @@ import {
 	createResourceRegistry,
 	resourceGroup,
 	resource,
+	type ResourceBoundReference,
+	type ResourceBoundValue,
 	type ResourceGroupBuilder,
 	type ResourceGroupRegistry,
+	type ResourceReconciliationMode,
 	type ResourceBuilder,
 	type ResourceRegistry,
 } from '@kingdom-builder/contents';
@@ -37,9 +40,13 @@ export interface ResourceMetadataOverrides {
 	trackBoundBreakdown?: boolean;
 }
 
+/**
+ * Bound overrides can be static numbers or dynamic references to other
+ * resources. Use `{ resourceId: 'other-resource' }` for dynamic bounds.
+ */
 export interface ResourceBoundsOverrides {
-	lowerBound?: number;
-	upperBound?: number;
+	lowerBound?: ResourceBoundValue;
+	upperBound?: ResourceBoundValue;
 }
 
 export interface ResourceGlobalCostOverride {
@@ -99,8 +106,11 @@ export function resourceDefinition(
 
 	const lowerBound = overrides.bounds?.lowerBound;
 	const upperBound = overrides.bounds?.upperBound;
-	if (lowerBound !== undefined || upperBound !== undefined) {
-		builder.bounds(lowerBound, upperBound);
+	if (lowerBound !== undefined) {
+		builder.lowerBound(lowerBound);
+	}
+	if (upperBound !== undefined) {
+		builder.upperBound(upperBound);
 	}
 
 	if (overrides.tierTrack) {
@@ -124,12 +134,34 @@ export interface ResourceGroupParentOverrides {
 	icon?: string;
 	description?: string;
 	order?: number;
-	lowerBound?: number;
-	upperBound?: number;
+	lowerBound?: ResourceBoundValue;
+	upperBound?: ResourceBoundValue;
 	tierTrack?: ResourceTierTrack;
 	displayAsPercent?: boolean;
 	trackValueBreakdown?: boolean;
 	trackBoundBreakdown?: boolean;
+}
+
+/**
+ * Helper to create a bound reference for testing dynamic bounds.
+ * When the referenced resource changes, cascading reconciliation applies.
+ *
+ * @param resourceId - Resource whose value acts as the bound
+ * @param reconciliation - 'clamp' (default), 'pass', or 'reject'
+ *
+ * @example
+ * resourceDefinition({
+ *   bounds: { upperBound: boundRef('max-population') }
+ * })
+ *
+ * Note: Avoid circular bound references in tests. If A bounds B and B bounds A,
+ * neither can increase beyond 0.
+ */
+export function boundRef(
+	resourceId: string,
+	reconciliation?: ResourceReconciliationMode,
+): ResourceBoundReference {
+	return reconciliation ? { resourceId, reconciliation } : { resourceId };
 }
 
 export interface ResourceGroupDefinitionOverrides {

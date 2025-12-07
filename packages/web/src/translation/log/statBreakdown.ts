@@ -21,7 +21,7 @@ function resolveEvaluatorResourceId(
 	return params?.['resourceId'] ?? currentResourceId;
 }
 
-// V2 percent change params
+// Percent change params for resource effects
 type PercentChange = {
 	type: 'percentFromResource';
 	sourceResourceId: string;
@@ -32,7 +32,7 @@ function detectPctEffect(
 	targetResourceId: string,
 	evaluatorResourceId: string | undefined,
 ): ResourcePctBreakdown | undefined {
-	// V2 format: type 'resource' with change.type 'percentFromResource'
+	// Resource format: type 'resource' with change.type 'percentFromResource'
 	if (effect.type !== 'resource') {
 		return undefined;
 	}

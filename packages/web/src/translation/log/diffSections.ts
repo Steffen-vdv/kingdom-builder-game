@@ -1,3 +1,4 @@
+import type { SessionResourceBoundValue } from '@kingdom-builder/protocol';
 import { statDisplaysAsPercent } from '../../utils/resourceSources';
 import { findResourcePctBreakdown, type StepEffects } from './statBreakdown';
 import type { ActionDiffChange } from './diff';
@@ -40,6 +41,28 @@ function resolveResourceValue(
 	return undefined;
 }
 
+/**
+ * Resolves a single bound value to a number, handling both static numbers
+ * and dynamic bound references.
+ */
+function resolveBoundValueToNumber(
+	bound: SessionResourceBoundValue | null | undefined,
+	values: Record<string, number> | undefined,
+): number | null {
+	if (bound === null || bound === undefined) {
+		return null;
+	}
+	if (typeof bound === 'number') {
+		return bound;
+	}
+	// It's a bound reference - look up the value from the referenced resource
+	if (typeof bound === 'object' && 'resourceId' in bound) {
+		const refValue = values?.[bound.resourceId];
+		return typeof refValue === 'number' ? refValue : null;
+	}
+	return null;
+}
+
 function resolveBounds(
 	snapshot: PlayerSnapshot,
 	resourceId: string,
@@ -48,17 +71,17 @@ function resolveBounds(
 	if (!bounds) {
 		return {};
 	}
-	const lowerBound =
-		bounds.lowerBound !== undefined && bounds.lowerBound !== null
-			? bounds.lowerBound
-			: undefined;
-	const upperBound =
-		bounds.upperBound !== undefined && bounds.upperBound !== null
-			? bounds.upperBound
-			: undefined;
+	const lowerBound = resolveBoundValueToNumber(
+		bounds.lowerBound,
+		snapshot.values,
+	);
+	const upperBound = resolveBoundValueToNumber(
+		bounds.upperBound,
+		snapshot.values,
+	);
 	return {
-		...(lowerBound !== undefined ? { lowerBound } : {}),
-		...(upperBound !== undefined ? { upperBound } : {}),
+		...(lowerBound !== null ? { lowerBound } : {}),
+		...(upperBound !== null ? { upperBound } : {}),
 	};
 }
 
@@ -124,7 +147,7 @@ function describePercentBreakdown(
 		return undefined;
 	}
 	// breakdown.resourceId is the evaluator resource (e.g., population role)
-	// It's already a full V2 ID - no prefix construction needed
+	// It's already a full resource ID - no prefix construction needed
 	const evaluatorResourceId = breakdown.resourceId;
 	const count = player.values?.[evaluatorResourceId] ?? 0;
 	const evaluatorMetadata = metadataSelectors.get(evaluatorResourceId);
@@ -134,7 +157,7 @@ function describePercentBreakdown(
 	const percentValue = player.values?.[percentSourceId] ?? 0;
 	const percentMetadata = metadataSelectors.get(percentSourceId);
 	const percentIcon = percentMetadata?.icon ?? '';
-	// Format values using V2 metadata
+	// Format values using resource metadata
 	const formatValue = (id: string, value: number) => {
 		const meta = metadataSelectors.get(id);
 		return meta?.displayAsPercent ? `${value * 100}%` : String(value);
@@ -142,7 +165,7 @@ function describePercentBreakdown(
 	const percentDisplay = formatValue(percentSourceId, percentValue);
 	const baseValue = formatValue(resourceId, change.before);
 	const totalValue = formatValue(resourceId, change.after);
-	// Use V2 metadata for target resource icon
+	// Use metadata for target resource icon
 	const resourceMeta = metadataSelectors.get(resourceId);
 	const resourceIcon = resourceMeta?.icon ?? '';
 	return formatPercentBreakdown(
@@ -156,7 +179,7 @@ function describePercentBreakdown(
 	);
 }
 // Resources are handled uniformly by appendResourceChanges - no ID-based
-// filtering. All V2 resources get source icons when available. Percent
+// filtering. All resources get source icons when available. Percent
 // breakdown formatting is handled by appendPercentBreakdownChanges based on
 // effect metadata, not resource ID patterns.
 
@@ -170,7 +193,7 @@ export function appendResourceChanges(
 	options?: { trackByKey?: Map<string, ActionDiffChange> },
 ): ActionDiffChange[] {
 	const changes: ActionDiffChange[] = [];
-	// Process ALL resource keys - resource IDs are V2 IDs directly
+	// Process ALL resource keys - resource IDs are unified resource IDs
 	for (const resourceId of resourceKeys) {
 		const metadata = metadataSelectors.get(resourceId);
 		const summary = describeResourceChange(
@@ -226,7 +249,7 @@ export function appendPercentBreakdownChanges(
 	if (!step) {
 		return;
 	}
-	// Collect all changed resource keys - these are V2 IDs directly
+	// Collect all changed resource keys - these are unified resource IDs
 	const changedKeys = collectChangedKeys(before, after);
 	for (const resourceId of changedKeys) {
 		const metadata = metadataSelectors.get(resourceId);
@@ -234,7 +257,7 @@ export function appendPercentBreakdownChanges(
 		if (!diff) {
 			continue;
 		}
-		// Check if this resource displays as percent - use V2 metadata
+		// Check if this resource displays as percent - use metadata
 		const displaysAsPercent =
 			metadata.displayAsPercent || statDisplaysAsPercent(resourceId, assets);
 		if (displaysAsPercent) {

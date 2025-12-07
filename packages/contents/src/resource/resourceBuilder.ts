@@ -1,5 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import type { ResourceBoundType, ResourceDefinition, ResourceTierTrack } from './types';
+import type { ResourceBoundType, ResourceBoundValue, ResourceDefinition, ResourceTierTrack } from './types';
 
 interface ResourceGroupOptions {
 	order?: number;
@@ -12,6 +12,17 @@ type NumericField = 'order' | 'lowerBound' | 'upperBound' | 'groupOrder' | 'glob
 function assertInteger(value: number, field: NumericField) {
 	if (!Number.isInteger(value)) {
 		throw new Error(`${builderName} expected ${field} to be an integer but received ${value}.`);
+	}
+}
+
+function assertValidBoundValue(value: ResourceBoundValue, field: NumericField) {
+	if (typeof value === 'number') {
+		assertInteger(value, field);
+		return;
+	}
+	// It's a ResourceBoundReference
+	if (!value.resourceId) {
+		throw new Error(`${builderName} ${field}() requires a non-empty resourceId.`);
 	}
 }
 
@@ -29,23 +40,28 @@ export interface ResourceBuilder {
 	order(order: number): this;
 	displayAsPercent(enabled?: boolean): this;
 	allowDecimal(enabled?: boolean): this;
-	lowerBound(value: number): this;
-	upperBound(value: number): this;
-	bounds(lower?: number, upper?: number): this;
+	/**
+	 * Sets the lower bound for this resource.
+	 * @param value - A static number or a ResourceBoundReference (use boundTo())
+	 * @example
+	 * .lowerBound(0)  // Static: can't go below 0
+	 * .lowerBound(boundTo(Stat.minGold))  // Dynamic: bound to another resource
+	 */
+	lowerBound(value: ResourceBoundValue): this;
+	/**
+	 * Sets the upper bound for this resource.
+	 * @param value - A static number or a ResourceBoundReference (use boundTo())
+	 * @example
+	 * .upperBound(100)  // Static: can't exceed 100
+	 * .upperBound(boundTo(Stat.populationMax))  // Dynamic: bound to another resource
+	 */
+	upperBound(value: ResourceBoundValue): this;
 	trackValueBreakdown(enabled?: boolean): this;
 	trackBoundBreakdown(enabled?: boolean): this;
 	group(id: string, options?: ResourceGroupOptions): this;
 	tags(...tags: ReadonlyArray<string | readonly string[]>): this;
 	tierTrack(track: ResourceTierTrack): this;
 	globalActionCost(amount: number): this;
-	/**
-	 * Declares that this resource represents a bound of another resource.
-	 * Used for UI display (e.g., showing "5/10" for current/max).
-	 * Resources with boundOf should not be displayed independently in the UI.
-	 * @param resourceId The ID of the resource this is a bound of
-	 * @param boundType Whether this is an 'upper' (max) or 'lower' (min) bound
-	 */
-	boundOf(resourceId: string, boundType: ResourceBoundType): this;
 	/**
 	 * Effects to run when this resource's value increases.
 	 * Runs once per unit of increase.
@@ -74,7 +90,6 @@ class ResourceBuilderImpl implements ResourceBuilder {
 	private globalCostSet = false;
 	private onValueIncreaseSet = false;
 	private onValueDecreaseSet = false;
-	private boundOfSet = false;
 
 	constructor(id: string) {
 		if (!id) {
@@ -101,8 +116,9 @@ class ResourceBuilderImpl implements ResourceBuilder {
 
 	private validateBounds() {
 		const { lowerBound, upperBound } = this.definition;
+		// Only validate static numeric bounds against each other
 		if (typeof lowerBound === 'number' && typeof upperBound === 'number' && lowerBound > upperBound) {
-			throw new Error(`${builderName} lowerBound must be less than or equal to upperBound (${lowerBound} > ${upperBound}).`);
+			throw new Error(`${builderName} lowerBound must be <= upperBound (${lowerBound} > ${upperBound}).`);
 		}
 	}
 
@@ -139,45 +155,24 @@ class ResourceBuilderImpl implements ResourceBuilder {
 		return this;
 	}
 
-	lowerBound(value: number) {
+	lowerBound(value: ResourceBoundValue) {
 		if (this.lowerBoundSet) {
 			throw new Error(`${builderName} already has lowerBound() set. Remove the duplicate call.`);
 		}
-		assertInteger(value, 'lowerBound');
+		assertValidBoundValue(value, 'lowerBound');
 		this.definition.lowerBound = value;
 		this.lowerBoundSet = true;
 		this.validateBounds();
 		return this;
 	}
 
-	upperBound(value: number) {
+	upperBound(value: ResourceBoundValue) {
 		if (this.upperBoundSet) {
 			throw new Error(`${builderName} already has upperBound() set. Remove the duplicate call.`);
 		}
-		assertInteger(value, 'upperBound');
+		assertValidBoundValue(value, 'upperBound');
 		this.definition.upperBound = value;
 		this.upperBoundSet = true;
-		this.validateBounds();
-		return this;
-	}
-
-	bounds(lower?: number, upper?: number) {
-		if (typeof lower === 'number') {
-			if (this.lowerBoundSet) {
-				throw new Error(`${builderName} already has lowerBound() set. Remove the duplicate call.`);
-			}
-			assertInteger(lower, 'lowerBound');
-			this.definition.lowerBound = lower;
-			this.lowerBoundSet = true;
-		}
-		if (typeof upper === 'number') {
-			if (this.upperBoundSet) {
-				throw new Error(`${builderName} already has upperBound() set. Remove the duplicate call.`);
-			}
-			assertInteger(upper, 'upperBound');
-			this.definition.upperBound = upper;
-			this.upperBoundSet = true;
-		}
 		this.validateBounds();
 		return this;
 	}

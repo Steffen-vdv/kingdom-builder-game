@@ -6,6 +6,12 @@ import type { Land, PlayerId, PlayerState } from '../state';
 import type { PassiveSummary } from '../services';
 import type { LandSnapshot, PlayerStateSnapshot } from './types';
 import type { SessionResourceBounds } from '@kingdom-builder/protocol';
+import type { RuntimeResourceCatalog } from '../resource';
+import {
+	isBoundReference,
+	resolveBoundValue,
+	resolveResourceDefinition,
+} from '../resource/state-helpers';
 
 type ResourceSnapshotBucket = PlayerStateSnapshot['resourceSources'][string];
 
@@ -142,8 +148,45 @@ function cloneValuesV2(
 	return snapshot;
 }
 
+/**
+ * Resolves the effective bound for a resource, considering dynamic references.
+ * If the bound was explicitly modified (touched), uses the stored value.
+ * Otherwise, resolves from the definition (which may be a dynamic reference).
+ */
+function resolveEffectiveBound(
+	player: PlayerState,
+	catalog: RuntimeResourceCatalog,
+	resourceId: string,
+	direction: 'lower' | 'upper',
+): number | null {
+	const touched = player.resourceBoundTouched[resourceId]?.[direction];
+	const storedBound =
+		direction === 'lower'
+			? player.resourceLowerBounds[resourceId]
+			: player.resourceUpperBounds[resourceId];
+	// If explicitly modified, use stored value (resolve in case it's a ref)
+	if (touched) {
+		return resolveBoundValue(storedBound, player.resourceValues);
+	}
+	const lookup = resolveResourceDefinition(catalog, resourceId);
+	if (!lookup) {
+		return resolveBoundValue(storedBound, player.resourceValues);
+	}
+	const defBound =
+		direction === 'lower'
+			? lookup.definition.lowerBound
+			: lookup.definition.upperBound;
+	// If definition has a dynamic reference, resolve it from current values
+	if (isBoundReference(defBound)) {
+		return resolveBoundValue(defBound, player.resourceValues);
+	}
+	// Static bound - use stored (resolve in case type includes references)
+	return resolveBoundValue(storedBound, player.resourceValues);
+}
+
 function buildResourceBoundsSnapshot(
 	player: PlayerState,
+	catalog: RuntimeResourceCatalog,
 ): Record<string, SessionResourceBounds> {
 	const snapshot: Record<string, SessionResourceBounds> = {};
 	const keys = new Set(
@@ -153,8 +196,8 @@ function buildResourceBoundsSnapshot(
 		),
 	);
 	for (const resourceId of keys) {
-		const lower = player.resourceLowerBounds[resourceId] ?? null;
-		const upper = player.resourceUpperBounds[resourceId] ?? null;
+		const lower = resolveEffectiveBound(player, catalog, resourceId, 'lower');
+		const upper = resolveEffectiveBound(player, catalog, resourceId, 'upper');
 		snapshot[resourceId] = { lowerBound: lower, upperBound: upper };
 	}
 	return snapshot;
@@ -165,7 +208,10 @@ export function snapshotPlayer(
 	player: PlayerState,
 ): PlayerStateSnapshot {
 	const values = cloneValuesV2(player.resourceValues);
-	const resourceBounds = buildResourceBoundsSnapshot(player);
+	const resourceBounds = buildResourceBoundsSnapshot(
+		player,
+		context.resourceCatalog,
+	);
 	return {
 		id: player.id,
 		name: player.name,

@@ -41,5 +41,16 @@ export {
 	RESOURCE_CATEGORY_REGISTRY,
 	buildResourceCatalog,
 } from './resource';
-export type { ResourceBuilder, ResourceGroupBuilder, ResourceCategoryBuilder, ResourceRegistry, ResourceGroupRegistry, ResourceCategoryRegistry, ResourceCatalog } from './resource';
+export type {
+	ResourceBuilder,
+	ResourceGroupBuilder,
+	ResourceCategoryBuilder,
+	ResourceRegistry,
+	ResourceGroupRegistry,
+	ResourceCategoryRegistry,
+	ResourceCatalog,
+	ResourceBoundReference,
+	ResourceBoundValue,
+	ResourceReconciliationMode,
+} from './resource';
 export { happinessModifierId, happinessPassiveId, happinessTierId, type HappinessModifierKind, type HappinessTierSlug } from './happinessHelpers';

@@ -64,7 +64,7 @@ export const createOverviewTokenSources = ({
 		phases: phaseMetadata,
 		resources: resourceMetadata,
 		stats: statMetadata,
-		// Under ResourceV2, population resources are part of unified resources
+		// Population resources are part of unified resources
 		population: resourceMetadata,
 		land: landMetadata,
 		slot: slotMetadata,

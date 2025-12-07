@@ -41,9 +41,58 @@ export interface RuntimeResourceMetadata {
 	readonly tags: readonly string[];
 }
 
+/**
+ * Reconciliation modes for resource bounds.
+ * - 'clamp': Clamp values to stay within bounds (default behavior)
+ * - 'pass': Pass values through without bound checking (allows overflow)
+ * - 'reject': Reject changes that would exceed bounds (throws error)
+ */
+export type RuntimeReconciliationMode = 'clamp' | 'pass' | 'reject';
+
+/**
+ * A reference to another resource whose value acts as this bound.
+ * When the referenced resource's value changes, cascading reconciliation
+ * is automatically applied to ensure dependent resources stay within bounds.
+ *
+ * ## Cascading Reconciliation
+ * When a bound resource changes (e.g., max-population decreases from 20 to 10),
+ * all resources that reference it as a bound are automatically reconciled:
+ * - `clamp`: Value is clamped to the new bound (population: 15 → 10)
+ * - `pass`: Value is left unchanged, even if it exceeds the new bound
+ * - `reject`: An error is thrown if the value violates the new bound
+ *
+ * ## Content Maintainer Notes
+ *
+ * **Avoid circular bound references.** While the engine prevents infinite loops
+ * during cascading reconciliation, circular dependencies create initialization
+ * problems. For example, if resource A's upper bound references B and B's upper
+ * bound references A, both resources initialize to 0 and cannot increase beyond
+ * each other's initial value.
+ *
+ * **Prefer one-way dependency chains.** Good patterns:
+ * - `max-population` → `population` (stat bounds currency)
+ * - `max-population` → `total-population` → `workforce` (chained bounds)
+ *
+ * **Avoid:**
+ * - `A` ↔ `B` (mutual bounds create deadlock)
+ * - `A` → `B` → `C` → `A` (cycles prevent value increases)
+ */
+export interface RuntimeBoundReference {
+	/** The resource ID whose value determines this bound */
+	readonly resourceId: string;
+	/**
+	 * How to reconcile when the bound changes and the current value
+	 * would overflow/underflow. Default: 'clamp'
+	 */
+	readonly reconciliation: RuntimeReconciliationMode;
+}
+
+/** A bound can be a static number, null (unbounded), or a dynamic reference */
+export type RuntimeBoundValue = number | RuntimeBoundReference | null;
+
 export interface RuntimeResourceBounds {
-	readonly lowerBound: number | null;
-	readonly upperBound: number | null;
+	readonly lowerBound: RuntimeBoundValue;
+	readonly upperBound: RuntimeBoundValue;
 }
 
 export interface RuntimeResourceGlobalCostConfig {
@@ -66,24 +115,6 @@ export interface RuntimeResourceTriggers {
 	readonly onValueDecrease: readonly EffectDef[];
 }
 
-/**
- * Specifies which type of bound this resource represents.
- * - 'upper': This resource is the upper bound (max) of another resource.
- * - 'lower': This resource is the lower bound (min) of another resource.
- */
-export type RuntimeResourceBoundType = 'upper' | 'lower';
-
-/**
- * Configuration for a resource that acts as a bound of another resource.
- * The UI will display these together (e.g., "5/10" for current/max).
- */
-export interface RuntimeResourceBoundOfConfig {
-	/** The resource ID this resource is a bound of */
-	readonly resourceId: string;
-	/** Whether this is an upper or lower bound */
-	readonly boundType: RuntimeResourceBoundType;
-}
-
 export interface RuntimeResourceDefinition
 	extends
 		RuntimeResourceMetadata,
@@ -98,12 +129,6 @@ export interface RuntimeResourceDefinition
 	readonly resolvedGroupOrder: number | null;
 	readonly globalCost?: RuntimeResourceGlobalCostConfig;
 	readonly tierTrack?: RuntimeResourceTierTrack;
-	/**
-	 * When set, declares that this resource represents a bound of another
-	 * resource. Used by UI to display "current/max" pairs. Resources with
-	 * boundOf should not be displayed independently in the UI.
-	 */
-	readonly boundOf: RuntimeResourceBoundOfConfig | null;
 }
 
 export interface RuntimeResourceGroupParent

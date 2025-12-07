@@ -1,11 +1,9 @@
 import type {
-	RuntimeResourceBoundOfConfig,
 	RuntimeResourceCategoryDefinition,
 	RuntimeResourceCategoryItem,
 } from './types';
 
 import type {
-	ContentBoundOfConfig,
 	ContentCategoryDefinition,
 	ContentCategoryItem,
 } from './content-types';
@@ -25,30 +23,6 @@ function assertInteger(
 				`but received ${value}.`,
 		);
 	}
-}
-
-export function normalizeBoundOf(
-	config: ContentBoundOfConfig | undefined,
-	context: string,
-): RuntimeResourceBoundOfConfig | null {
-	if (!config) {
-		return null;
-	}
-	if (!config.resourceId) {
-		throw new Error(
-			`${RUNTIME_PREFIX} ${context} boundOf requires a non-empty resourceId.`,
-		);
-	}
-	if (config.boundType !== 'upper' && config.boundType !== 'lower') {
-		throw new Error(
-			`${RUNTIME_PREFIX} ${context} boundOf requires boundType ` +
-				`to be 'upper' or 'lower' but received "${String(config.boundType)}".`,
-		);
-	}
-	return Object.freeze({
-		resourceId: config.resourceId,
-		boundType: config.boundType,
-	});
 }
 
 function normalizeCategoryItem(

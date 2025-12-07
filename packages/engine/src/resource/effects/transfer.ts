@@ -7,19 +7,23 @@ import {
 	setResourceValue,
 	type SetResourceValueOptions,
 } from '../state';
-import { resolveResourceDefinition } from '../state-helpers';
 import {
-	reconcileResourceChange,
-	type ResourceChangeParameters,
-	type ResourceReconciliationInput,
-	type ResourceReconciliationMode,
-	type ResourceReconciliationResult,
-} from '../reconciliation';
+	isBoundReference,
+	resolveBoundValue,
+	resolveResourceDefinition,
+} from '../state-helpers';
+import { reconcileResourceChange } from '../reconciliation';
+import type {
+	ResolvedBounds,
+	ResourceChangeParameters,
+	ResourceReconciliationInput,
+	ResourceReconciliationMode,
+	ResourceReconciliationResult,
+} from '../reconciliation/types';
 
 import type {
 	RuntimeResourceCatalog,
 	RuntimeResourceDefinition,
-	RuntimeResourceBounds,
 } from '../types';
 
 // Inline valid modes to avoid circular dependency with reconciliation module
@@ -104,7 +108,7 @@ interface TransferParticipantContext {
 	readonly player: PlayerState;
 	readonly resourceId: string;
 	readonly definition: RuntimeResourceDefinition;
-	readonly bounds: RuntimeResourceBounds;
+	readonly bounds: ResolvedBounds;
 	readonly currentValue: number;
 	readonly options: SetResourceValueOptions;
 }
@@ -123,33 +127,33 @@ function resolvePlayer(
 	return context.activePlayer;
 }
 
-function resolveEffectiveBound(
-	override: number | null | undefined,
-	fallback: number | null | undefined,
-): number | null {
-	if (typeof override === 'number') {
-		return override;
-	}
-	if (typeof fallback === 'number') {
-		return fallback;
-	}
-	return null;
-}
-
+/**
+ * Resolves the effective bound for a resource.
+ * For dynamic bounds (references), always use the definition to re-resolve
+ * the current referenced resource value. For static bounds, check player
+ * overrides first, then fall back to definition.
+ */
 function resolveEffectiveBounds(
 	player: PlayerState,
 	resourceId: string,
 	definition: RuntimeResourceDefinition,
-): RuntimeResourceBounds {
+): ResolvedBounds {
+	const defLower = definition.lowerBound;
+	const defUpper = definition.upperBound;
+	const playerLower = player.resourceLowerBounds[resourceId];
+	const playerUpper = player.resourceUpperBounds[resourceId];
+	// For dynamic bounds (references), always use definition to get fresh value.
+	// For static bounds, player overrides take precedence.
+	const lowerBoundValue = isBoundReference(defLower)
+		? defLower
+		: (playerLower ?? defLower ?? null);
+	const upperBoundValue = isBoundReference(defUpper)
+		? defUpper
+		: (playerUpper ?? defUpper ?? null);
+	// Resolve any references to get final numeric values
 	return {
-		lowerBound: resolveEffectiveBound(
-			player.resourceLowerBounds[resourceId],
-			definition.lowerBound ?? null,
-		),
-		upperBound: resolveEffectiveBound(
-			player.resourceUpperBounds[resourceId],
-			definition.upperBound ?? null,
-		),
+		lowerBound: resolveBoundValue(lowerBoundValue, player.resourceValues),
+		upperBound: resolveBoundValue(upperBoundValue, player.resourceValues),
 	};
 }
 

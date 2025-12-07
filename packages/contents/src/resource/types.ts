@@ -1,4 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
+import type { ResourceReconciliationMode } from './reconciliation';
 
 export interface ResourceMetadata {
 	id: string;
@@ -9,9 +10,26 @@ export interface ResourceMetadata {
 	tags?: readonly string[];
 }
 
+/**
+ * A reference to another resource whose value acts as this bound.
+ * When the referenced resource's value changes, reconciliation is applied.
+ */
+export interface ResourceBoundReference {
+	/** The resource ID whose value determines this bound */
+	readonly resourceId: string;
+	/**
+	 * How to reconcile when the bound changes and the current value
+	 * would overflow/underflow. Default: 'clamp'
+	 */
+	readonly reconciliation?: ResourceReconciliationMode;
+}
+
+/** A bound can be a static number or a dynamic reference to another resource */
+export type ResourceBoundValue = number | ResourceBoundReference;
+
 export interface ResourceBounds {
-	lowerBound?: number;
-	upperBound?: number;
+	lowerBound?: ResourceBoundValue;
+	upperBound?: ResourceBoundValue;
 }
 
 export interface ResourceGlobalCostConfig {
@@ -146,4 +164,31 @@ export interface ResourceCategoryDefinition {
 	isPrimary?: boolean;
 	/** Resources and groups in this category, in display order */
 	contents: readonly ResourceCategoryItem[];
+}
+
+/**
+ * Creates a dynamic bound reference to another resource's value.
+ * Use this helper when configuring resource bounds to improve readability.
+ *
+ * When the referenced resource's value changes, cascading reconciliation is
+ * automatically applied to ensure this resource stays within its new bounds.
+ *
+ * @param resourceId - The resource whose value acts as this bound
+ * @param reconciliation - How to handle overflow/underflow when bound changes
+ *                         (default: 'clamp')
+ *
+ * @example
+ * // Default clamp behavior - population capped by max-population
+ * .upperBound(boundTo(Stat.populationMax))
+ *
+ * // Explicit reconciliation mode
+ * .upperBound(boundTo(Stat.populationMax, ReconciliationMode.REJECT))
+ *
+ * **WARNING: Avoid circular bound references.** If resource A's bound
+ * references B and B's bound references A, both will initialize to 0 and
+ * cannot increase. Prefer one-way dependency chains like:
+ * `max-population → population → workforce`
+ */
+export function boundTo(resourceId: string, reconciliation?: ResourceReconciliationMode): ResourceBoundReference {
+	return reconciliation ? { resourceId, reconciliation } : { resourceId };
 }

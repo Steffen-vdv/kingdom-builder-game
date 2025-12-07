@@ -7,7 +7,6 @@ export const STAT_RESOURCE_DEFINITIONS: readonly ResourceDefinition[] = [
 		.label('Max Population')
 		.description('Max Population determines how many subjects your kingdom can ' + 'sustain. Expand infrastructure or build houses to increase it.')
 		.lowerBound(0)
-		.boundOf('resource:core:total-population', 'upper')
 		.build(),
 	resource('resource:core:army-strength')
 		.icon('⚔️')

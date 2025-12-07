@@ -172,9 +172,21 @@ const resourceMetadataSchema = z.object({
 	tags: z.array(z.string()).optional(),
 });
 
+const resourceReconciliationModeSchema = z.enum(['clamp', 'pass', 'reject']);
+
+const resourceBoundReferenceSchema = z.object({
+	resourceId: z.string(),
+	reconciliation: resourceReconciliationModeSchema.optional(),
+});
+
+const resourceBoundValueSchema = z.union([
+	z.number(),
+	resourceBoundReferenceSchema,
+]);
+
 const resourceBoundsSchema = z.object({
-	lowerBound: z.number().optional(),
-	upperBound: z.number().optional(),
+	lowerBound: resourceBoundValueSchema.optional(),
+	upperBound: resourceBoundValueSchema.optional(),
 });
 
 const resourceBoundOfConfigSchema = z.object({
@@ -186,6 +198,7 @@ const resourceDefinitionSchema = resourceMetadataSchema
 	.merge(resourceBoundsSchema)
 	.extend({
 		displayAsPercent: z.boolean().optional(),
+		allowDecimal: z.boolean().optional(),
 		trackValueBreakdown: z.boolean().optional(),
 		trackBoundBreakdown: z.boolean().optional(),
 		groupId: z.string().optional(),

@@ -1,6 +1,33 @@
 import type { EffectDef } from '../effects';
 
 /**
+ * Reconciliation modes for resource bounds.
+ * - 'clamp': Clamp values to stay within bounds (default behavior)
+ * - 'pass': Pass values through without bound checking (allows overflow)
+ * - 'reject': Reject changes that would exceed bounds (throws error)
+ */
+export type SessionResourceReconciliationMode = 'clamp' | 'pass' | 'reject';
+
+/**
+ * A reference to another resource whose value acts as this bound.
+ * When the referenced resource's value changes, reconciliation is applied.
+ */
+export interface SessionResourceBoundReference {
+	/** The resource ID whose value determines this bound */
+	readonly resourceId: string;
+	/**
+	 * How to reconcile when the bound changes and the current value
+	 * would overflow/underflow. Default: 'clamp'
+	 */
+	readonly reconciliation?: SessionResourceReconciliationMode;
+}
+
+/** A bound can be a static number or a dynamic reference to another resource */
+export type SessionResourceBoundValue =
+	| number
+	| SessionResourceBoundReference;
+
+/**
  * Specifies which type of bound this resource represents.
  * - 'upper': This resource is the upper bound (max) of another resource.
  * - 'lower': This resource is the lower bound (min) of another resource.
@@ -60,8 +87,8 @@ export interface SessionResourceMetadata {
 }
 
 export interface SessionResourceBounds {
-	lowerBound: number | null;
-	upperBound: number | null;
+	lowerBound: SessionResourceBoundValue | null;
+	upperBound: SessionResourceBoundValue | null;
 }
 
 export interface SessionResourceGlobalCostConfig {
@@ -71,6 +98,7 @@ export interface SessionResourceGlobalCostConfig {
 export interface SessionResourceDefinition
 	extends SessionResourceMetadata, SessionResourceBounds {
 	displayAsPercent: boolean;
+	allowDecimal: boolean;
 	trackValueBreakdown: boolean;
 	trackBoundBreakdown: boolean;
 	groupId: string | null;

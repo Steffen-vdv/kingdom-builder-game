@@ -15,6 +15,9 @@ import type {
 export type {
 	SessionResourceBoundOfConfig,
 	SessionResourceBoundType,
+	SessionResourceBoundReference,
+	SessionResourceBoundValue,
+	SessionResourceReconciliationMode,
 	SessionResourceTierThreshold,
 	SessionResourceTierDefinition,
 	SessionResourceTierTrackMetadata,
