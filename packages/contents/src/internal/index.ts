@@ -11,4 +11,4 @@
 
 export { Resource, type ResourceKey, type ResourceId, getResourceId } from './resourceKeys';
 export { Stat, type StatKey, type StatId, getStatResourceId } from './stats';
-export { PopulationRole, type PopulationRoleId, type PopulationRoleId } from './populationRoles';
+export { PopulationRole, type PopulationRoleId } from './populationRoles';

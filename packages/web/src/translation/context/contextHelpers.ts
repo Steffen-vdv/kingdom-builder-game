@@ -77,9 +77,6 @@ export function clonePlayer(
 	return Object.freeze({
 		id: player.id,
 		name: player.name,
-		resources: cloneRecord(player.resources),
-		stats: cloneRecord(player.stats),
-		population: cloneRecord(player.population),
 		resources,
 		resourceBounds,
 	});

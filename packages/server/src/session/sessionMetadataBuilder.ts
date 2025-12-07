@@ -23,7 +23,6 @@ import type {
 	Registry,
 	SerializedRegistry,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
 import type {
@@ -112,28 +111,6 @@ const cloneResourceCatalogRegistry = <DefinitionType>(registry: {
 	deepFreeze(
 		structuredClone(registry.byId),
 	) as RegistryDefinition<DefinitionType>;
-
-const buildResourceRegistry =
-	(): RegistryDefinition<SessionResourceDefinition> => {
-		const entries: RegistryDefinition<SessionResourceDefinition> = {};
-		for (const resource of RESOURCE_REGISTRY.ordered) {
-			const definition: SessionResourceDefinition = { key: resource.id };
-			if (resource.icon) {
-				definition.icon = resource.icon;
-			}
-			if (resource.label) {
-				definition.label = resource.label;
-			}
-			if (resource.description) {
-				definition.description = resource.description;
-			}
-			if (resource.tags && resource.tags.length > 0) {
-				definition.tags = [...resource.tags];
-			}
-			entries[resource.id] = definition;
-		}
-		return deepFreeze(entries);
-	};
 
 const createMetadataRecord = <T>(entries: Iterable<readonly [string, T]>) => {
 	const record: Record<string, T> = {};
@@ -323,7 +300,6 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
 		populations: cloneRegistry(POPULATIONS),
-		resources: buildResourceRegistry(),
 		resources: cloneResourceCatalogRegistry(RESOURCE_REGISTRY),
 		resourceGroups: cloneResourceCatalogRegistry(RESOURCE_GROUP_REGISTRY),
 		resourceCategories: cloneResourceCatalogRegistry(

@@ -174,9 +174,10 @@ export interface TranslationPhase {
 export interface TranslationPlayer {
 	id: SessionPlayerId;
 	name?: string;
-	resources: Record<string, number>;
-	stats: Record<string, number>;
-	population: Record<string, number>;
+	/**
+	 * Unified resource values map. All stats, populations, and resources
+	 * are accessed through this single property.
+	 */
 	resources: Readonly<Record<string, number>>;
 	resourceBounds: Readonly<Record<string, SessionResourceBounds>>;
 }

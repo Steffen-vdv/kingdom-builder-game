@@ -1,5 +1,4 @@
-import type { Registry } from '@kingdom-builder/protocol';
-import type { SessionResourceDefinition } from '@kingdom-builder/protocol/session';
+import type { Registry, ResourceDefinition } from '@kingdom-builder/protocol';
 
 export interface DefinitionLookup<TDefinition> {
 	readonly record: Readonly<Record<string, TDefinition>>;
@@ -80,9 +79,9 @@ export const createRegistryLookup = <TDefinition extends { id: string }>(
 	createRegistryDefinitionLookup(registry, definitionType);
 
 const createResourceRecord = (
-	resources: Record<string, SessionResourceDefinition>,
-): Readonly<Record<string, SessionResourceDefinition>> => {
-	const record: Record<string, SessionResourceDefinition> = {};
+	resources: Record<string, ResourceDefinition>,
+): Readonly<Record<string, ResourceDefinition>> => {
+	const record: Record<string, ResourceDefinition> = {};
 	for (const [key, definition] of Object.entries(resources)) {
 		record[key] = Object.freeze({ ...definition });
 	}
@@ -91,8 +90,8 @@ const createResourceRecord = (
 };
 
 export const createResourceLookup = (
-	resources: Record<string, SessionResourceDefinition>,
-): DefinitionLookup<SessionResourceDefinition> => {
+	resources: Record<string, ResourceDefinition>,
+): DefinitionLookup<ResourceDefinition> => {
 	const record = createResourceRecord(resources);
 	const entryList = Object.entries(record).map((entry) =>
 		Object.freeze([entry[0], entry[1]] as const),
@@ -100,7 +99,7 @@ export const createResourceLookup = (
 	const frozenEntries = freezeEntries(entryList);
 	const values = freezeArray(entryList.map(([, definition]) => definition));
 	const keys = freezeArray(Object.keys(record));
-	const lookup: DefinitionLookup<SessionResourceDefinition> = {
+	const lookup: DefinitionLookup<ResourceDefinition> = {
 		record,
 		get(id: string) {
 			return record[id];

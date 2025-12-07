@@ -41,14 +41,6 @@ export interface SessionCreateRequest {
 	playerNames?: SessionPlayerNameMap;
 }
 
-export interface SessionResourceDefinition {
-	key: string;
-	icon?: string;
-	label?: string;
-	description?: string;
-	tags?: string[];
-}
-
 export type SerializedRegistry<T> = Record<string, T>;
 
 export type SessionActionCategoryRegistry =

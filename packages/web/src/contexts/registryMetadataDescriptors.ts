@@ -1,9 +1,8 @@
-import type { Registry } from '@kingdom-builder/protocol';
+import type { Registry, ResourceDefinition } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionPhaseMetadata,
 	SessionPhaseStepMetadata,
-	SessionResourceDefinition,
 	SessionTriggerMetadata,
 } from '@kingdom-builder/protocol/session';
 
@@ -200,16 +199,16 @@ const mergeRegistryEntries = <TDefinition extends { id: string }>(
 };
 
 const mergeResourceEntries = (
-	resources: Record<string, SessionResourceDefinition>,
+	resources: Record<string, ResourceDefinition>,
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
 ): Iterable<readonly [string, RegistryMetadataDescriptor]> => {
 	const entries: Array<readonly [string, RegistryMetadataDescriptor]> = [];
 	const processed = new Set<string>();
 	for (const [key, definition] of Object.entries(resources)) {
 		const descriptor = createRegistryDescriptor(key, metadata?.[key], {
-			label: definition.label ?? definition.key ?? key,
+			label: definition.label ?? definition.id ?? key,
 			icon: definition.icon,
-			description: definition.description,
+			description: definition.description ?? undefined,
 		});
 		entries.push([key, descriptor]);
 		processed.add(key);
@@ -226,7 +225,7 @@ const mergeResourceEntries = (
 };
 
 export const buildResourceMetadata = (
-	resources: Record<string, SessionResourceDefinition>,
+	resources: Record<string, ResourceDefinition>,
 	metadata: Record<string, SessionMetadataDescriptor> | undefined,
 ): MetadataLookup<RegistryMetadataDescriptor> =>
 	createLookup(mergeResourceEntries(resources, metadata), (id: string) =>

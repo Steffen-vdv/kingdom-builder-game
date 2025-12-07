@@ -122,7 +122,6 @@ export function createLocalSessionGateway(
 		buildings: registries?.buildings ?? {},
 		developments: registries?.developments ?? {},
 		populations: registries?.populations ?? {},
-		resources: registries?.resources ?? {},
 		actionCategories: registries?.actionCategories ?? {},
 		resources: registries?.resources ?? {},
 		resourceGroups: registries?.resourceGroups ?? {},
@@ -137,7 +136,6 @@ export function createLocalSessionGateway(
 			buildings: { ...baseRegistries.buildings },
 			developments: { ...baseRegistries.developments },
 			populations: { ...baseRegistries.populations },
-			resources: { ...baseRegistries.resources },
 			actionCategories: {
 				...baseRegistries.actionCategories,
 			},

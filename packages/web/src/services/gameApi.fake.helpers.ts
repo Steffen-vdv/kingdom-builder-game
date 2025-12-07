@@ -23,7 +23,6 @@ export const EMPTY_REGISTRIES = {
 	developments: {},
 	populations: {},
 	resources: {},
-	resources: {},
 	resourceGroups: {},
 	resourceCategories: {},
 } as const;

@@ -189,7 +189,6 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SerializedRegistry,
 	SessionActionCategoryRegistry,
 	SessionUpdatePlayerNameRequest,

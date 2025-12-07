@@ -97,7 +97,7 @@ function buildResourceMap(
 		if (definition.icon !== undefined) {
 			entry.icon = definition.icon;
 		}
-		entry.label = definition.label ?? definition.key ?? key;
+		entry.label = definition.label ?? definition.id ?? key;
 		if (definition.description !== undefined) {
 			entry.description = definition.description;
 		}

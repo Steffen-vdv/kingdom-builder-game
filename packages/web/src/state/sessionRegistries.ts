@@ -10,11 +10,9 @@ import {
 	type BuildingConfig,
 	type DevelopmentConfig,
 	type PopulationConfig,
+	type ResourceDefinition,
 } from '@kingdom-builder/protocol';
-import type {
-	SessionRegistriesPayload,
-	SessionResourceDefinition,
-} from '@kingdom-builder/protocol/session';
+import type { SessionRegistriesPayload } from '@kingdom-builder/protocol/session';
 import type { ZodType } from 'zod';
 import { clone } from './clone';
 
@@ -29,32 +27,13 @@ function createRegistryFromPayload<DefinitionType>(
 	return registry;
 }
 
-function cloneResourceDefinition(
-	definition: SessionResourceDefinition,
-): SessionResourceDefinition {
-	const cloned: SessionResourceDefinition = { key: definition.key };
-	if (definition.icon !== undefined) {
-		cloned.icon = definition.icon;
-	}
-	if (definition.label !== undefined) {
-		cloned.label = definition.label;
-	}
-	if (definition.description !== undefined) {
-		cloned.description = definition.description;
-	}
-	if (definition.tags && definition.tags.length > 0) {
-		cloned.tags = [...definition.tags];
-	}
-	return cloned;
-}
-
 function cloneResourceRegistry(
-	resources: Record<string, SessionResourceDefinition>,
-): Record<string, SessionResourceDefinition> {
+	resources: Record<string, ResourceDefinition>,
+): Record<string, ResourceDefinition> {
 	return Object.fromEntries(
 		Object.entries(resources).map(([key, definition]) => [
 			key,
-			cloneResourceDefinition(definition),
+			clone(definition),
 		]),
 	);
 }
@@ -102,7 +81,7 @@ export interface SessionRegistries {
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
-	resources: Record<string, SessionResourceDefinition>;
+	resources: Record<string, ResourceDefinition>;
 }
 
 export function deserializeSessionRegistries(

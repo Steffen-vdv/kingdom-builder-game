@@ -325,16 +325,15 @@ export interface SessionTriggerMetadata {
 export interface SessionSnapshotMetadata {
 	effectLogs?: SessionEffectLogMap;
 	passiveEvaluationModifiers: SessionPassiveEvaluationModifierMap;
-	resources?: Record<string, SessionMetadataDescriptor>;
-	populations?: Record<string, SessionMetadataDescriptor>;
-	buildings?: Record<string, SessionMetadataDescriptor>;
-	developments?: Record<string, SessionMetadataDescriptor>;
-	stats?: Record<string, SessionMetadataDescriptor>;
 	/**
 	 * Resource metadata map containing icons, labels, and display hints for
 	 * each resource ID. Present when resources surface in snapshots.
 	 */
 	resources?: Record<string, SessionMetadataDescriptor>;
+	populations?: Record<string, SessionMetadataDescriptor>;
+	buildings?: Record<string, SessionMetadataDescriptor>;
+	developments?: Record<string, SessionMetadataDescriptor>;
+	stats?: Record<string, SessionMetadataDescriptor>;
 	/**
 	 * Optional Resource group metadata map. Mirrors
 	 * {@link resources} but scoped to group/parent descriptors.
@@ -401,7 +400,6 @@ export type {
 	SessionSetDevModeRequest,
 	SessionSetDevModeResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SerializedRegistry,
 	SessionMetadataSnapshot,
 	SessionMetadataSnapshotResponse,

@@ -38,7 +38,6 @@ import {
 } from './registryUtils.js';
 import {
 	buildSessionAssets,
-	buildResourceRegistry,
 	type SessionBaseOptions,
 	type SessionResourceRegistry,
 } from './sessionConfigAssets.js';
@@ -53,7 +52,6 @@ type EngineSessionOverrideOptions = Partial<SessionBaseOptions> & {
 type SessionRuntimeConfig = {
 	phases: PhaseConfig[];
 	rules: RuleSet;
-	resources: SessionResourceRegistry;
 	primaryIconId: string | null;
 	resources: SerializedRegistry<ResourceDefinition>;
 	resourceGroups: SerializedRegistry<ResourceGroupDefinition>;
@@ -141,7 +139,6 @@ export class SessionManager {
 			? freezeSerializedRegistry(structuredClone(resourceRegistry))
 			: undefined;
 		this.resourceOverrides = resourceOverrideSnapshot;
-		const resources = buildResourceRegistry(this.resourceOverrides);
 		const resourceCatalog = this.baseOptions.resourceCatalog;
 		const resources = freezeSerializedRegistry(
 			structuredClone(resourceCatalog.resources.byId),
@@ -166,7 +163,6 @@ export class SessionManager {
 			developments: cloneRegistry(this.baseOptions.developments),
 			populations: cloneRegistry(this.baseOptions.populations),
 			resources,
-			resources,
 			resourceGroups,
 			resourceCategories,
 		};
@@ -183,13 +179,9 @@ export class SessionManager {
 		const frozenRules = Object.freeze(
 			structuredClone(this.baseOptions.rules),
 		) as unknown as RuleSet;
-		const frozenResources = freezeSerializedRegistry(
-			structuredClone(resources),
-		) as SessionResourceRegistry;
 		this.runtimeConfig = Object.freeze({
 			phases: frozenPhases,
 			rules: frozenRules,
-			resources: frozenResources,
 			primaryIconId,
 			resources,
 			resourceGroups,

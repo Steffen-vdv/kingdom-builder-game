@@ -13,13 +13,10 @@ import {
 	type PhaseConfig,
 	type RuleSet,
 	type SessionRegistriesPayload,
-	type SessionResourceDefinition,
+	type ResourceDefinition,
 	type SerializedRegistry,
 } from '@kingdom-builder/protocol';
-import {
-	RESOURCE_REGISTRY,
-	type ActionCategoryConfig,
-} from '@kingdom-builder/contents';
+import { type ActionCategoryConfig } from '@kingdom-builder/contents';
 import type { ZodType } from 'zod';
 import {
 	buildSessionMetadata,
@@ -31,8 +28,7 @@ import type {
 	SystemActionIds,
 } from '@kingdom-builder/engine';
 
-export type SessionResourceRegistry =
-	SerializedRegistry<SessionResourceDefinition>;
+export type SessionResourceRegistry = SerializedRegistry<ResourceDefinition>;
 
 export interface SessionBaseOptions {
 	actions: Registry<ActionConfig>;
@@ -70,7 +66,6 @@ export function buildSessionAssets(
 	const { actions, buildings, developments, populations } =
 		applyConfigRegistries(validated, context.baseOptions);
 	const phases = validated.phases ?? context.baseOptions.phases;
-	const resources = buildResourceRegistry(context.resourceOverrides);
 	const resourceCatalog = context.baseOptions.resourceCatalog;
 	const resources = freezeSerializedRegistry(
 		structuredClone(resourceCatalog.resources.byId),
@@ -81,13 +76,11 @@ export function buildSessionAssets(
 	const resourceCategories = freezeSerializedRegistry(
 		structuredClone(resourceCatalog.categories?.byId ?? {}),
 	);
-	const frozenResources = freezeSerializedRegistry(structuredClone(resources));
 	const registries: SessionRegistriesPayload = {
 		actions: freezeSerializedRegistry(cloneRegistry(actions)),
 		buildings: freezeSerializedRegistry(cloneRegistry(buildings)),
 		developments: freezeSerializedRegistry(cloneRegistry(developments)),
 		populations: freezeSerializedRegistry(cloneRegistry(populations)),
-		resources: frozenResources,
 		resources,
 		resourceGroups,
 		resourceCategories,
@@ -99,41 +92,26 @@ export function buildSessionAssets(
 		buildings,
 		developments,
 		populations,
-		resources: frozenResources,
+		resources,
 		phases,
 	});
 	return { registries, metadata };
 }
 
+/**
+ * @deprecated Use resourceCatalog.resources.byId directly.
+ * Kept temporarily for test compatibility.
+ */
 export function buildResourceRegistry(
 	overrides: SessionResourceRegistry | undefined,
 ): SessionResourceRegistry {
-	const registry = new Map<string, SessionResourceDefinition>();
+	const registry = new Map<string, ResourceDefinition>();
 
 	// Apply any overrides first
 	if (overrides) {
 		for (const [key, definition] of Object.entries(overrides)) {
 			registry.set(key, structuredClone(definition));
 		}
-	}
-
-	// Add all resources from the registry
-	for (const [key, resource] of Object.entries(RESOURCE_REGISTRY.byId)) {
-		if (registry.has(key)) {
-			continue;
-		}
-		const definition: SessionResourceDefinition = {
-			key: resource.id,
-			icon: resource.icon,
-			label: resource.label,
-		};
-		if (resource.description) {
-			definition.description = resource.description;
-		}
-		if (resource.tags && resource.tags.length > 0) {
-			definition.tags = [...resource.tags];
-		}
-		registry.set(key, definition);
 	}
 
 	return Object.fromEntries(registry.entries());

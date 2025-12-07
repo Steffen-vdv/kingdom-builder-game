@@ -5,4 +5,3 @@ export const PopulationRole = {
 } as const;
 
 export type PopulationRoleId = (typeof PopulationRole)[keyof typeof PopulationRole];
-export type PopulationRoleId = PopulationRoleId;
