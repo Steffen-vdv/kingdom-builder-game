@@ -91,19 +91,20 @@ npm run generate:snapshots  # Refresh cached registry metadata after content cha
 **IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
 commands sequentially - that defeats the purpose of parallelization.**
 
-| What you changed | Command to run                         | Time |
-| ---------------- | -------------------------------------- | ---- |
-| Code (no tests)  | Just push (hook auto-formats + checks) | ~30s |
-| Code + tests     | `npm run test:parallel` then push      | ~50s |
-| Single test      | `npx vitest run path/to/file.test.ts`  | ~5s  |
+| What you changed | Command to run                        | Time   |
+| ---------------- | ------------------------------------- | ------ |
+| Code (no tests)  | Just commit and push                  | ~15s\* |
+| Code + tests     | `npm run test:parallel` then push     | ~55s   |
+| Single test      | `npx vitest run path/to/file.test.ts` | ~5s    |
 
-**The pre-push hook auto-formats and validates.** It runs `npm run format`,
-auto-commits any formatting changes, then runs typecheck and lint. Just push
-and let the hook handle everything - no manual formatting needed.
+\* First push after changes ~45s (full lint), subsequent pushes ~15s (cached).
+
+**Pre-commit formats, pre-push validates.** The pre-commit hook runs Prettier
+on all files and stages any changes. The pre-push hook runs typecheck + lint.
+ESLint uses caching, so repeated pushes are fast (~5s lint vs ~45s first run).
 
 **Anti-patterns to avoid:**
 
-- Running `npm run format` manually before push (the hook does this!)
 - Running `check:parallel` then `test:parallel` sequentially (redundant!)
 - Running `npm run verify` for daily work (it's for CI/coverage reports)
 - **Avoid `npm run test:sequential` - it's SLOWER than `test:parallel`!**
@@ -112,11 +113,10 @@ and let the hook handle everything - no manual formatting needed.
 
 Husky hooks enforce quality gates automatically:
 
-1. **pre-commit**: `lint-staged` runs eslint + tsc on staged .ts/.tsx files
-2. **pre-push**: Auto-formats code, auto-commits if needed, then runs typecheck + lint
+1. **pre-commit**: Formats all files with Prettier, stages changes
+2. **pre-push**: Runs typecheck + lint in parallel (ESLint uses cache for speed)
 
-The pre-push hook handles formatting automatically - if your code needs
-formatting, it commits the changes for you. Never bypass these hooks.
+Never bypass these hooks - they ensure code quality before it reaches the repo.
 
 ## Coding Standards
 
