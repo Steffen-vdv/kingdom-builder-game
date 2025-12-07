@@ -34,6 +34,7 @@ import {
 	determineCommonActionCostResource,
 	initializePlayerActions,
 } from './player_setup';
+import { snapshotPlayer, type ActionTrace } from '../log';
 
 /**
  * System action IDs for initial setup. The engine will run these actions
@@ -209,14 +210,14 @@ function initializeBaselineResourceValues(
 /**
  * Runs a system action's effects directly, bypassing cost/requirement checks.
  * Used for initial setup actions that run before the game starts.
- * Returns false if the action doesn't exist (allows skipping setup in tests).
+ * Returns the action trace if effects were run, null if action doesn't exist.
  */
 function runSystemActionEffects(
 	actionId: string,
 	engineContext: EngineContext,
-): boolean {
+): ActionTrace | null {
 	if (!engineContext.actions.has(actionId)) {
-		return false;
+		return null;
 	}
 	const actionDefinition = engineContext.actions.get(actionId);
 	// Verify this is actually a system action
@@ -225,9 +226,17 @@ function runSystemActionEffects(
 			`Cannot run non-system action "${actionId}" as system action.`,
 		);
 	}
+	// Capture before snapshot
+	const before = snapshotPlayer(engineContext.activePlayer, engineContext);
+
+	// Run the effects
 	const resolved = resolveActionEffects(actionDefinition, undefined);
 	runEffects(resolved.effects, engineContext);
-	return true;
+
+	// Capture after snapshot
+	const after = snapshotPlayer(engineContext.activePlayer, engineContext);
+
+	return { id: actionId, before, after };
 }
 
 // Default system action IDs from @kingdom-builder/contents
@@ -323,20 +332,39 @@ export function createEngine({
 		? systemActionIds.initialSetupDevmode
 		: systemActionIds.initialSetup;
 
-	// Run initial setup for player 1
+	// Run initial setup for player 1 and capture trace
 	engineContext.game.currentPlayerIndex = 0;
-	runSystemActionEffects(setupActionId, engineContext);
+	const setupTraceA = runSystemActionEffects(setupActionId, engineContext);
+	if (setupTraceA) {
+		engineContext.initialSetupTraces.A.push(setupTraceA);
+	}
 
-	// Run initial setup for player 2
+	// Run initial setup for player 2 and capture trace
 	engineContext.game.currentPlayerIndex = 1;
-	runSystemActionEffects(setupActionId, engineContext);
+	const setupTraceB = runSystemActionEffects(setupActionId, engineContext);
+	if (setupTraceB) {
+		engineContext.initialSetupTraces.B.push(setupTraceB);
+	}
 
 	// Run compensation for player 2 (last player gets extra resources)
-	runSystemActionEffects(systemActionIds.compensation, engineContext);
+	// Compensation trace is also stored for logging
+	const compensationTrace = runSystemActionEffects(
+		systemActionIds.compensation,
+		engineContext,
+	);
+	if (compensationTrace) {
+		engineContext.initialSetupTraces.B.push(compensationTrace);
+	}
 
 	// In dev mode, also run the devmode-specific compensation for player B
 	if (devMode) {
-		runSystemActionEffects(systemActionIds.compensationDevmodeB, engineContext);
+		const devmodeCompTrace = runSystemActionEffects(
+			systemActionIds.compensationDevmodeB,
+			engineContext,
+		);
+		if (devmodeCompTrace) {
+			engineContext.initialSetupTraces.B.push(devmodeCompTrace);
+		}
 	}
 
 	// Initialize player actions (unlocks non-system actions for players)

@@ -6,6 +6,7 @@ import type {
 	WinConditionDefinition,
 } from '../services';
 import type { PlayerStartConfig, RequirementConfig } from '../config/schema';
+import type { ActionTrace } from '../actions/contracts';
 import type {
 	SessionResourceCatalogV2,
 	SessionResourceBoundsV2,
@@ -352,6 +353,11 @@ export interface SessionSnapshot {
 	actionCostResource: string;
 	recentResourceGains: SessionRecentResourceGain[];
 	compensations: Record<SessionPlayerId, PlayerStartConfig>;
+	/**
+	 * Initial setup action traces per player, captured by the engine
+	 * during game creation. Used to log initial setup actions.
+	 */
+	initialSetupTraces: Record<SessionPlayerId, ActionTrace[]>;
 	rules: SessionRuleSnapshot;
 	passiveRecords: Record<SessionPlayerId, SessionPassiveRecordSnapshot[]>;
 	metadata: SessionSnapshotMetadata;
