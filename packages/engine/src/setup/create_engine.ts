@@ -179,6 +179,32 @@ function convertResourceCatalogSnapshot(
 }
 
 /**
+ * Initializes all known resources to 0 for each player, and copies
+ * bounds from the resource catalog to each player's bound records.
+ * This is baseline state creation, not a formal transaction.
+ * Resources are NOT marked as "touched" by this initialization.
+ */
+function initializeBaselineResourceValues(
+	gameState: GameState,
+	resourceCatalog: RuntimeResourceCatalog,
+): void {
+	for (const player of gameState.players) {
+		for (const resource of resourceCatalog.resources.ordered) {
+			// Set baseline value to 0 (not tracked as touched)
+			player.resourceValues[resource.id] = 0;
+
+			// Copy bounds from catalog if defined
+			if (resource.lowerBound !== undefined) {
+				player.resourceLowerBounds[resource.id] = resource.lowerBound;
+			}
+			if (resource.upperBound !== undefined) {
+				player.resourceUpperBounds[resource.id] = resource.upperBound;
+			}
+		}
+	}
+}
+
+/**
  * Runs a system action's effects directly, bypassing cost/requirement checks.
  * Used for initial setup actions that run before the game starts.
  * Returns false if the action doesn't exist (allows skipping setup in tests).
@@ -191,6 +217,12 @@ function runSystemActionEffects(
 		return false;
 	}
 	const actionDefinition = engineContext.actions.get(actionId);
+	// Verify this is actually a system action
+	if (!actionDefinition.system) {
+		throw new Error(
+			`Cannot run non-system action "${actionId}" as system action.`,
+		);
+	}
 	const resolved = resolveActionEffects(actionDefinition, undefined);
 	runEffects(resolved.effects, engineContext);
 	return true;
@@ -250,6 +282,10 @@ export function createEngine({
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState(runtimeResourceCatalog, 'Player', 'Opponent');
+
+	// Initialize all resources to 0 for each player (baseline state)
+	initializeBaselineResourceValues(gameState, runtimeResourceCatalog);
+
 	const actionCostConfig = determineCommonActionCostResource(
 		actions,
 		runtimeResourceCatalog,

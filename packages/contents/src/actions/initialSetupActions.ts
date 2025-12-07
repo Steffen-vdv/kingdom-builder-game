@@ -50,6 +50,7 @@ export function registerInitialSetupActions(registry: Registry<ActionDef>) {
 			.name('Initial Setup')
 			.icon('🎮')
 			.system()
+			.free()
 			// Resources
 			.effect(resourceAdd(Resource.gold, 10))
 			.effect(resourceAdd(Resource.castleHP, 10))
@@ -73,6 +74,7 @@ export function registerInitialSetupActions(registry: Registry<ActionDef>) {
 			.name('Initial Setup (Dev Mode)')
 			.icon('🛠️')
 			.system()
+			.free()
 			// Resources (dev mode gets more resources)
 			.effect(resourceAdd(Resource.gold, 100))
 			.effect(resourceAdd(Resource.happiness, 10))
@@ -114,6 +116,7 @@ export function registerInitialSetupActions(registry: Registry<ActionDef>) {
 			.name('Player Compensation')
 			.icon('⚖️')
 			.system()
+			.free()
 			// Extra AP for the second player
 			.effect(resourceAdd(Resource.ap, 1))
 			.build(),
@@ -127,6 +130,7 @@ export function registerInitialSetupActions(registry: Registry<ActionDef>) {
 			.name('Dev Mode Player B Compensation')
 			.icon('🔧')
 			.system()
+			.free()
 			// Reduce castle HP to 1 (remove 9 from the initial 10)
 			.effect(
 				effect(Types.Resource, ResourceMethods.REMOVE)

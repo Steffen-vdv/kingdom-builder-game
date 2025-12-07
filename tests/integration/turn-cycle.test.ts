@@ -16,6 +16,15 @@ const resources = {
 	gold: 'resource:turn:turn-resource-gold',
 } as const;
 
+// Custom systemActionIds for this test since it uses a completely custom
+// resource setup that doesn't include the real game resources.
+const customSystemActionIds = {
+	initialSetup: '__noop_turn_test__',
+	initialSetupDevmode: '__noop_turn_test__',
+	compensation: '__noop_turn_test__',
+	compensationDevmodeB: '__noop_turn_test__',
+};
+
 const phaseIds = {
 	growth: 'turn:phase:growth',
 	upkeep: 'turn:phase:upkeep',
@@ -87,6 +96,7 @@ describe('Turn cycle integration', () => {
 				resources: turnResourcesV2,
 				groups: turnResourceGroupsV2,
 			},
+			systemActionIds: customSystemActionIds,
 		});
 
 		while (engineContext.game.currentPhase !== phaseIds.main) {

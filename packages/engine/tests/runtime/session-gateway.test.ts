@@ -54,18 +54,12 @@ const PHASES: PhaseDef[] = [
 	},
 ];
 
-// No-op system action IDs to skip initial setup and start with clean slate
-const SKIP_SETUP_ACTION_IDS = {
-	initialSetup: '__noop_initial_setup__',
-	initialSetupDevmode: '__noop_initial_setup_devmode__',
-	compensation: '__noop_compensation__',
-	compensationDevmodeB: '__noop_compensation_devmode_b__',
-};
+// Minimal test setup action ID - gives players enough AP to perform test actions
+const TEST_SETUP_ACTION_ID = '__test_setup__';
 
 const RULES: RuleSet = {
-	// Set defaultActionAPCost to 0 since we skip initial setup and players
-	// have no AP. Tests that need AP costs can set them per-action.
-	defaultActionAPCost: 0,
+	// Minimal setup gives players AP; globalCost in catalog applies 1 AP per action
+	defaultActionAPCost: 1,
 	absorptionCapPct: 1,
 	absorptionRounding: 'down',
 	tieredResourceKey: RESOURCE_GOLD,
@@ -95,8 +89,23 @@ type GatewayOptions = Parameters<typeof createLocalSessionGateway>[1];
 
 function createGateway(options?: GatewayOptions) {
 	const content = createContentFactory();
-	// Actions use the default AP cost from rules (which is fine since we skip
-	// initial setup - the engine's global action cost resource handles AP costs)
+	// Create a minimal system action that gives players enough AP for testing
+	content.action({
+		id: TEST_SETUP_ACTION_ID,
+		name: 'Test Setup',
+		system: true,
+		free: true,
+		effects: [
+			{
+				type: 'resource',
+				method: 'add',
+				params: resourceAmountParams({
+					key: RESOURCE_AP,
+					amount: 10,
+				}),
+			},
+		],
+	});
 	const gainGold = content.action({
 		effects: [
 			{
@@ -126,7 +135,12 @@ function createGateway(options?: GatewayOptions) {
 		phases: PHASES,
 		rules: RULES,
 		resourceCatalogV2: BASE_RESOURCE_CATALOG,
-		systemActionIds: SKIP_SETUP_ACTION_IDS,
+		systemActionIds: {
+			initialSetup: TEST_SETUP_ACTION_ID,
+			initialSetupDevmode: TEST_SETUP_ACTION_ID,
+			compensation: '__noop__',
+			compensationDevmodeB: '__noop__',
+		},
 	});
 	return {
 		gateway: createLocalSessionGateway(session, options),

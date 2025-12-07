@@ -67,4 +67,13 @@ export class ActionBuilder extends BaseBuilder<ActionBuilderConfig> {
 		this.config.system = flag;
 		return this;
 	}
+
+	/**
+	 * Marks this action as free (bypasses global action cost like AP).
+	 * Only valid for system actions. Call after `.system()`.
+	 */
+	free(flag = true) {
+		this.config.free = flag;
+		return this;
+	}
 }
