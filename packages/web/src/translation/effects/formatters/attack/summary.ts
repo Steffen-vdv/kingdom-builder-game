@@ -60,7 +60,9 @@ export function buildAttackSummaryBullet<TTarget extends AttackTarget>(
 }
 
 export function ownerSummaryIcon(owner: 'attacker' | 'defender'): string {
-	return owner === 'attacker' ? FALLBACK_ATTACK_ICON : DEFENDER_ICON;
+	// Attacker effects (like Plunder) don't need a prefix - the action icon
+	// already identifies the effect. Defender effects use a shield icon.
+	return owner === 'attacker' ? '' : DEFENDER_ICON;
 }
 
 export function prefixOwnerSummary(

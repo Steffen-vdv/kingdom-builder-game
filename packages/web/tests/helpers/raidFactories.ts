@@ -24,13 +24,13 @@ import {
 	SYNTH_RESOURCE_CATALOG_V2,
 	type CombatStatKey,
 	type SyntheticDescriptor,
-} from './armyAttackConfig';
+} from './raidConfig';
 import {
 	buildEffects,
 	buildAttackEffect,
 	ACTION_DEFS,
 	type ActionDefinition,
-} from './armyAttackEffects';
+} from './raidEffects';
 import type { TranslationContext } from '../../src/translation/context';
 import {
 	selectAttackStatDescriptor,
