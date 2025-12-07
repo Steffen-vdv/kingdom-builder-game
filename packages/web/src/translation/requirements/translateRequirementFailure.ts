@@ -23,7 +23,8 @@ type OperandDescription = {
 /**
  * Describes any resource-based evaluator operand using ResourceV2 metadata.
  * All resources (including what were formerly "stats" and "population")
- * use the unified ResourceV2 registry for labels and icons.
+ * use the unified ResourceV2 registry for labels and icons. Also checks
+ * group metadata for aggregate resources like total population.
  */
 function describeResourceOperand(
 	params: Record<string, unknown> | undefined,
@@ -31,7 +32,10 @@ function describeResourceOperand(
 ): OperandDescription {
 	const resourceId = params?.['resourceId'];
 	if (typeof resourceId === 'string') {
-		const metadata = context.resourceMetadataV2.get(resourceId);
+		// Try resource metadata first, then fall back to group metadata
+		const metadata = context.resourceMetadataV2.has(resourceId)
+			? context.resourceMetadataV2.get(resourceId)
+			: context.resourceGroupMetadataV2.get(resourceId);
 		if (metadata.icon) {
 			return { icon: metadata.icon, label: metadata.label };
 		}
