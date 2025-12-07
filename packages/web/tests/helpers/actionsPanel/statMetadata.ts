@@ -32,10 +32,11 @@ function collectStatKeysFromValue(value: unknown, keys: Set<string>): void {
 		return;
 	}
 	const record = value as Record<string, unknown>;
-	if (record.type === 'stat') {
-		const params = record.params as { key?: unknown } | undefined;
-		if (params && typeof params.key === 'string') {
-			keys.add(params.key);
+	// ResourceV2 unified all stats under type: 'resource'
+	if (record.type === 'resource') {
+		const params = record.params as { resourceId?: unknown } | undefined;
+		if (params && typeof params.resourceId === 'string') {
+			keys.add(params.resourceId);
 		}
 	}
 	for (const nested of Object.values(record)) {

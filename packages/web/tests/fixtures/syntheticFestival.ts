@@ -178,24 +178,17 @@ export const getSyntheticFestivalDetails = (
 	const happinessEff = festival.effects.find(
 		(e: EffectDef) => e.type === 'resource',
 	) as EffectDef<{
-		key?: SyntheticResourceId;
-		resourceId?: string;
-		amount?: number;
-		change?: { amount: number };
+		resourceId: string;
+		change: { amount: number };
 	}>;
-	// Support both legacy (key) and V2 (resourceId) formats
-	const happinessKey =
-		happinessEff.params.resourceId ?? happinessEff.params.key ?? '';
+	const happinessKey = happinessEff.params.resourceId;
 	const happinessInfo = translation.assets.resources[happinessKey] ??
 		resources[happinessKey as SyntheticResourceId] ??
 		translation.resourceMetadataV2?.get?.(happinessKey) ?? {
 			icon: '',
 			label: happinessKey,
 		};
-	// Support both legacy (amount) and V2 (change.amount) formats
-	const happinessAmt = Number(
-		happinessEff.params.change?.amount ?? happinessEff.params.amount,
-	);
+	const happinessAmt = Number(happinessEff.params.change.amount);
 	const fortEff = festival.effects.find(
 		(e: EffectDef) =>
 			e.type === 'resource' &&
@@ -223,16 +216,13 @@ export const getSyntheticFestivalDetails = (
 	const innerRes = resMod.effects?.find(
 		(e: EffectDef) =>
 			e.type === 'resource' &&
-			((e.params as { key?: string }).key ===
-				SYNTHETIC_RESOURCES.happiness.id ||
-				(e.params as { resourceId?: string }).resourceId ===
-					SYNTHETIC_RESOURCES.happiness.id),
-	) as EffectDef<{ amount: number; change?: { amount: number } }>;
-	// Support both legacy (amount) and V2 (change.amount) formats
-	const innerChange = innerRes.params?.change;
-	const innerRawAmt = innerChange?.amount ?? innerRes.params.amount;
+			(e.params as { resourceId?: string }).resourceId ===
+				SYNTHETIC_RESOURCES.happiness.id,
+	) as EffectDef<{ resourceId: string; change: { amount: number } }>;
 	const penaltyAmt =
-		innerRes.method === 'remove' ? -Number(innerRawAmt) : Number(innerRawAmt);
+		innerRes.method === 'remove'
+			? -Number(innerRes.params.change.amount)
+			: Number(innerRes.params.change.amount);
 	const raid = registries.actions.get(attackActionId);
 	const upkeepPhase = scenario.session.phases.find((phase) =>
 		phase.steps?.some((step) => step.triggers?.includes(ON_UPKEEP_PHASE)),
