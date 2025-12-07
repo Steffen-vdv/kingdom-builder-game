@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
-# Lightweight pre-push hook - full verification runs in CI
-# Use `npm run verify` manually before pushing if needed
+# Pre-push hook - runs quick quality checks before pushing
+# Full verification available via `npm run verify`
 
-exit 0
+set -e
+
+# Run parallel quality checks (format, typecheck, lint)
+npm run check:parallel

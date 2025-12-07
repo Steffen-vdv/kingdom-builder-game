@@ -39,13 +39,11 @@ guide for rationale, lore, and extended background.
      `npm run check` executes
      `packages/web/tests/runtime-config-fallback-sync.test.ts` to enforce this, so
      stale snapshots will block your PR until you rerun the generator.
-   - The Husky pre-push hook enforces that verification run (with a fallback
-     to `npm run check && npm run test:coverage` on tooling failures). If you
-     must execute the fallback manually, note the environment issue in your
-     commit message.
-   - Husky also runs the commit-time trio: `lint-staged`, `npm run check`,
-     and `npm run test:quick`. Never bypass the hooks; fix the underlying
-     problem so the automated gates pass cleanly before pushing.
+   - The Husky pre-push hook runs `npm run check:parallel` (format + typecheck +
+     lint in parallel, ~30s) to catch issues before push.
+   - The Husky pre-commit hook runs `lint-staged` to format staged files and run
+     eslint + tsc on changed TypeScript files. Never bypass the hooks; fix the
+     underlying problem so the automated gates pass cleanly before pushing.
    - Reach for `npm run fix` after Prettier when eslint complains about
      spacing or other autofixable style violations.
    - `npm run check` still runs linting, type checks, and tests together if you
@@ -62,16 +60,41 @@ guide for rationale, lore, and extended background.
 
 - Run `npm run format` to ensure tabs and other Prettier conventions are
   applied across the repository.
-- Use `npm run fix` (or rerun `npm run lint`) until eslint reports success.
-- Execute `npm run check` followed by `npm run verify` and confirm that both
-  commands finish without errors or uncommitted file changes.
+- The pre-push hook automatically runs `npm run check:parallel` (~30s) which
+  validates format, types, and lint in parallel.
+- Run `npm run verify` once before opening a PR (not after every push).
 - Regenerate snapshots (`npm run generate:snapshots`) for any change that could
   affect rendered UI surfaces.
 - Husky installs the `pre-commit` and `pre-push` hooks automatically when you
   run `npm install` (`npm run prepare` manually reapplies them if necessary).
   Never bypass the hooks—resolve the reported failures locally before pushing.
 
-3. **Work content-first**
+### Efficient command usage
+
+| Stage             | Command                  | Time   | Notes                      |
+| ----------------- | ------------------------ | ------ | -------------------------- |
+| While editing     | (none)                   | —      | Hooks catch issues         |
+| Before committing | `npm run format`         | ~5s    | Only if lint-staged missed |
+| Quick validation  | `npm run check:parallel` | ~50s   | Format + types + lint      |
+| Test only         | `npm run test:parallel`  | ~50s   | All suites in parallel     |
+| Before pushing    | (automatic)              | ~50s   | pre-push hook              |
+| Before PR         | `npm run verify`         | ~2 min | Full check + coverage      |
+
+**Anti-patterns to avoid:**
+
+- Running `npm run check` after every small change (use `check:parallel`)
+- Running `npm run verify` repeatedly (once before PR is enough)
+- Running full test suite when debugging one test (use `vitest run path/to/test`)
+- **Avoid `npm run test:sequential` - it runs tests one by one and is SLOWER
+  than `test:parallel`!**
+
+**When you need to run tests:**
+
+1. **Single test file**: `npx vitest run path/to/file.test.ts`
+2. **All tests fastest**: `npm run test:parallel` (~50s, clean output)
+3. **Debugging failures**: `npm run test:parallel -- -v` (verbose on failure)
+
+4. **Work content-first**
    - Never hardcode game data in engine, web, or tests—load from
      `@kingdom-builder/contents` or registries.
    - Tests should create data through `createContentFactory()` or other
@@ -86,7 +109,7 @@ guide for rationale, lore, and extended background.
      [`RegistryMetadataContext`](../packages/web/src/contexts/RegistryMetadataContext.tsx).
      Update the content package (not web-layer fallbacks) so every layer stays
      in sync.
-4. **Respect text standards**
+5. **Respect text standards**
    - Before touching player-facing copy, review
      [`docs/text-formatting.md`](text-formatting.md#0-before-writing-text).
 
