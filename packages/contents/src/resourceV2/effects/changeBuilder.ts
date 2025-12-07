@@ -72,8 +72,8 @@ class ResourceChangeBuilderImpl implements ResourceChangeBuilder {
 	}
 
 	roundingMode(mode: ResourceChangeRoundingMode) {
-		if (this.changeKind !== 'percent') {
-			throw new Error(`${BUILDER_NAME} roundingMode() requires percent() to be configured first. Add percent() before roundingMode().`);
+		if (!this.changeKind) {
+			throw new Error(`${BUILDER_NAME} roundingMode() requires amount() or percent() ` + `to be configured first.`);
 		}
 		this.rounding = mode;
 		return this;
@@ -103,7 +103,11 @@ class ResourceChangeBuilderImpl implements ResourceChangeBuilder {
 			}
 			return {
 				resourceId: this.resourceId,
-				change: { type: 'amount', amount: this.amountValue },
+				change: {
+					type: 'amount',
+					amount: this.amountValue,
+					...(this.rounding ? { roundingMode: this.rounding } : {}),
+				},
 				...(this.reconciliationMode ? { reconciliation: this.reconciliationMode } : {}),
 				...(this.suppressHooksFlag ? { suppressHooks: true } : {}),
 			};

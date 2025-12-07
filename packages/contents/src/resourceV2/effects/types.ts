@@ -5,6 +5,7 @@ export type ResourceChangeRoundingMode = 'up' | 'down' | 'nearest';
 export interface ResourceAmountChangeParameters {
 	readonly type: 'amount';
 	readonly amount: number;
+	readonly roundingMode?: ResourceChangeRoundingMode;
 }
 
 export interface ResourcePercentChangeParameters {

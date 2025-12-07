@@ -62,7 +62,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.gold, 4)).build())
 					.effect(
 						effect(Types.Resource, ResourceMethods.REMOVE)
-							.params(resourceAmountChange(Resource.happiness, 0.5, (change) => change.reconciliation()))
+							.params(resourceAmountChange(Resource.happiness, 0.5, (change) => change.roundingMode('down').reconciliation()))
 							.build(),
 					)
 					.build(),
