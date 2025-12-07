@@ -8,7 +8,7 @@
   [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text).
 - Always load game data from content packages or registries and create synthetic
   fixtures through `createContentFactory()` in tests.
-- Just push - the pre-push hook auto-formats, auto-commits if needed, and validates.
+- Just commit and push - pre-commit formats, pre-push validates (typecheck + lint changed files).
 
 ▶ **Extended guidance, architecture lore, and gameplay reference begin in
 Section&nbsp;1 below.**
@@ -92,8 +92,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 
 ### 2.3 Pre-Push Workflow
 
-- Just push - the pre-push hook auto-formats, auto-commits if needed, then runs
-  typecheck + lint (~30s).
+- Just commit and push - pre-commit formats, pre-push validates (~10s).
+- The pre-commit hook runs Prettier and stages any changes automatically.
+- The pre-push hook runs typecheck, then lints only changed `.ts/.tsx` files.
 - Fix any reported issues before pushing again.
 - Run `npm run verify` once before opening a PR, not after every change.
 
@@ -145,9 +146,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   `artifacts/` directory. Share those artifacts with reviewers when failures
   need triage.
 
-- The Husky pre-push hook runs `npm run check:parallel` (format + typecheck +
-  lint in parallel) to catch issues before push. Full verification is reserved
-  for PR submission.
+- The Husky pre-push hook runs typecheck + lint (on changed files only) to catch
+  issues before push. Full verification is reserved for PR submission.
 
 - If the verification script is unavailable in your environment, fall back to
   running `npm run check && npm run test:coverage` manually. Coverage runs may
