@@ -7,21 +7,21 @@ describe('ResourceV2 transfer builders', () => {
 		const donor = transferEndpoint('resource:gold')
 			.player('active')
 			.change((change) => change.amount(-3))
-			.suppressTouched()
+			.suppressRecentEntry()
 			.build();
-		const recipient = transferEndpoint('resource:happiness').player('opponent').change({ type: 'amount', amount: 5 }).suppressRecentEntry().skipTierUpdate().build();
+		const recipient = transferEndpoint('resource:happiness').player('opponent').change({ type: 'amount', amount: 5 }).skipTierUpdate().build();
 
 		expect(donor).toEqual({
 			player: 'active',
 			resourceId: 'resource:gold',
 			change: { type: 'amount', amount: -3 },
-			options: { suppressTouched: true },
+			options: { suppressRecentEntry: true },
 		});
 		expect(recipient).toEqual({
 			player: 'opponent',
 			resourceId: 'resource:happiness',
 			change: { type: 'amount', amount: 5 },
-			options: { suppressRecentEntry: true, skipTierUpdate: true },
+			options: { skipTierUpdate: true },
 		});
 
 		const params = resourceTransfer().donor(donor).recipient(recipient).build();

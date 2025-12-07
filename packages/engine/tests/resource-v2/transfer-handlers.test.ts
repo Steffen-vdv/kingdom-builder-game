@@ -134,11 +134,9 @@ describe('ResourceV2 transfer effect handler', () => {
 
 	it('clamps donor removals and recipient gains to the available bounds', () => {
 		setResourceValue(ctx.context, ctx.opponent, ctx.catalog, ctx.donorId, 12, {
-			suppressTouched: true,
 			suppressRecentEntry: true,
 		});
 		setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.recipientId, 6, {
-			suppressTouched: true,
 			suppressRecentEntry: true,
 		});
 		ctx.context.recentResourceGains.length = 0;
@@ -176,7 +174,6 @@ describe('ResourceV2 transfer effect handler', () => {
 	it('rounds donor percent requests before reconciling transfer amounts', () => {
 		const run = (roundingMode?: 'up' | 'down' | 'nearest') => {
 			setResourceValue(ctx.context, ctx.opponent, ctx.catalog, ctx.donorId, 5, {
-				suppressTouched: true,
 				suppressRecentEntry: true,
 			});
 			setResourceValue(
@@ -185,10 +182,7 @@ describe('ResourceV2 transfer effect handler', () => {
 				ctx.catalog,
 				ctx.recipientId,
 				0,
-				{
-					suppressTouched: true,
-					suppressRecentEntry: true,
-				},
+				{ suppressRecentEntry: true },
 			);
 			ctx.context.recentResourceGains.length = 0;
 
@@ -240,14 +234,12 @@ describe('ResourceV2 transfer effect handler', () => {
 		expect(roundedDown.recipient).toBe(2);
 	});
 
-	it('honours endpoint options for touched flags, logging, and tier updates', () => {
+	it('honours endpoint options for logging and tier updates', () => {
 		const initialTier = ctx.active.resourceTierIds[ctx.recipientId];
 		setResourceValue(ctx.context, ctx.opponent, ctx.catalog, ctx.donorId, 6, {
-			suppressTouched: true,
 			suppressRecentEntry: true,
 		});
 		setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.recipientId, 1, {
-			suppressTouched: true,
 			suppressRecentEntry: true,
 		});
 		ctx.context.recentResourceGains.length = 0;
@@ -259,7 +251,6 @@ describe('ResourceV2 transfer effect handler', () => {
 					resourceId: ctx.donorId,
 					change: { type: 'amount', amount: -4 },
 					options: {
-						suppressTouched: true,
 						suppressRecentEntry: true,
 					},
 				},
@@ -277,7 +268,9 @@ describe('ResourceV2 transfer effect handler', () => {
 
 		expect(getResourceValue(ctx.opponent, ctx.donorId)).toBe(2);
 		expect(getResourceValue(ctx.active, ctx.recipientId)).toBe(5);
-		expect(ctx.opponent.resourceTouched[ctx.donorId]).toBe(false);
+		// Resources are touched when their value is non-zero
+		expect(ctx.opponent.resourceTouched[ctx.donorId]).toBe(true);
+		expect(ctx.active.resourceTouched[ctx.recipientId]).toBe(true);
 		expect(ctx.context.recentResourceGains).toEqual([
 			{ key: ctx.recipientId, amount: 4 },
 		]);
@@ -286,7 +279,6 @@ describe('ResourceV2 transfer effect handler', () => {
 
 	it('skips processing when donor and recipient reference the same player resource', () => {
 		setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.recipientId, 5, {
-			suppressTouched: true,
 			suppressRecentEntry: true,
 		});
 		ctx.context.recentResourceGains.length = 0;

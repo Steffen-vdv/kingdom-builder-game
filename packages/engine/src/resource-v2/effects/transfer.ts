@@ -25,11 +25,6 @@ export type ResourceV2PlayerScope = 'active' | 'opponent';
 
 export interface ResourceV2ValueWriteOptions extends Record<string, unknown> {
 	/**
-	 * Skip toggling the per-resource "touched" flag for this write.
-	 * Use when designers manually manage touched state during migrations.
-	 */
-	readonly suppressTouched?: boolean;
-	/**
 	 * Prevent the write from emitting an entry to
 	 * {@link EngineContext.recentResourceGains}.
 	 * Use for silent transfers or bound tweaks that should stay unlogged.
@@ -159,12 +154,8 @@ function normaliseWriteOptions(
 	if (!options) {
 		return {};
 	}
-	const {
-		suppressTouched = false,
-		suppressRecentEntry = false,
-		skipTierUpdate = false,
-	} = options;
-	return { suppressTouched, suppressRecentEntry, skipTierUpdate };
+	const { suppressRecentEntry = false, skipTierUpdate = false } = options;
+	return { suppressRecentEntry, skipTierUpdate };
 }
 
 function prepareTransferParticipant(
