@@ -71,28 +71,56 @@ Only proceed once the user confirms, corrects, or provides the missing details.
 npm install              # Install dependencies (runs prepare for Husky)
 npm run dev              # Start server + web client together
 
-# Quality gates (run before any commit)
+# Quality gates (fastest to slowest)
 npm run format           # Apply Prettier (tabs, 80-char lines)
-npm run lint             # ESLint + dependency-cruiser
-npm run check            # format:check + typecheck + lint + test
+npm run check:parallel   # format + typecheck + lint IN PARALLEL (~20-30s)
+npm run check            # check:parallel + tests (~1-2 min)
 npm run verify           # Full check + test:coverage (logs to artifacts/)
 
-# Testing
-npm run test:quick       # Fast Vitest suite for iteration
-npm run test:coverage    # Full coverage run
+# Testing (use test:parallel for speed!)
+npm run test:parallel    # All test suites in parallel (~50s) - USE THIS
+npm run test:coverage    # Full coverage run (sequential, slow)
+npm run test:sequential  # Runs tests one by one (slower than parallel)
 
 # UI metadata
 npm run generate:snapshots  # Refresh cached registry metadata after content changes
 ```
 
+## Efficient Command Usage
+
+**Stop running slow commands repeatedly.** Use the right command for each stage:
+
+| Stage              | Command                  | Time   | When to use                       |
+| ------------------ | ------------------------ | ------ | --------------------------------- |
+| While editing      | (none)                   | —      | Just code, hooks will catch       |
+| Before committing  | `npm run format`         | ~5s    | Only if lint-staged missed        |
+| Quick validation   | `npm run check:parallel` | ~50s   | Format + types + lint             |
+| Test only          | `npm run test:parallel`  | ~50s   | All test suites in parallel       |
+| Before pushing     | (automatic)              | ~50s   | pre-push hook runs check:parallel |
+| Final verification | `npm run verify`         | ~2 min | Before PR or when asked           |
+
+**Anti-patterns to avoid:**
+
+- Running `npm run check` after every small change (use `check:parallel` instead)
+- Running `npm run verify` repeatedly (once before PR is enough)
+- Running tests when only checking format/types (use `check:parallel`)
+- Running full test suite when debugging one test (use `vitest run path/to/test`)
+- **Avoid `npm run test:sequential` - it's SLOWER than `test:parallel`!**
+
+**When you need to run tests:**
+
+1. **Single test file**: `npx vitest run path/to/file.test.ts`
+2. **All tests fastest**: `npm run test:parallel` (~50s, clean output)
+3. **Debugging failures**: `npm run test:parallel -- -v` (verbose on failure)
+
 ## Pre-Commit Workflow
 
 Husky hooks enforce quality gates automatically:
 
-1. **pre-commit**: `lint-staged` → `npm run check:ci` → `npm run test:quick`
-2. **pre-push**: `npm run verify` (with fallback to check + test:coverage)
+1. **pre-commit**: `lint-staged` (formats staged files, runs eslint + tsc on .ts)
+2. **pre-push**: `npm run check:parallel` (format + typecheck + lint in parallel)
 
-Never bypass these hooks. Fix failures locally before committing.
+Never bypass these hooks. Fix failures locally before pushing.
 
 ## Coding Standards
 
@@ -261,11 +289,12 @@ without completing the full migration will be rejected.
 - [`docs/domain-boundaries.md`](docs/domain-boundaries.md) – Package contracts
 - [`docs/architecture/navigation-cheatsheet.md`](docs/architecture/navigation-cheatsheet.md) – Module index
 
-## Pre-Commit Checklist
+## Pre-Push Checklist
 
-1. Run `npm run format`, `npm run lint`, `npm run check`, and `npm run verify`
-2. Fix all errors before committing
-3. For text changes, review
+1. Run `npm run format` to fix any formatting issues
+2. The pre-push hook automatically runs `npm run check:parallel`
+3. Run `npm run verify` once before opening a PR (not after every change)
+4. For text changes, review
    [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text)
 
 ## Common Patterns
