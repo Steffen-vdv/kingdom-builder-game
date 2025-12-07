@@ -3,6 +3,7 @@ import { registerBasicActions } from './actions/basicActions';
 import { registerHireActions } from './actions/hireActions';
 import { registerDevelopActions } from './actions/developActions';
 import { registerBuildActions } from './actions/buildActions';
+import { registerInitialSetupActions } from './actions/initialSetupActions';
 import { ActionCategoryId as ActionCategoryValues, type ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 import type { Focus as FocusType } from './defs';
 import {
@@ -11,6 +12,7 @@ import {
 	BuildActionId as BuildActionIdMap,
 	DevelopActionId as DevelopActionIdMap,
 	HireActionId as HireActionIdMap,
+	SystemActionId as SystemActionIdMap,
 	DEVELOPMENT_ACTION_IDS,
 	BUILDING_ACTION_IDS,
 	POPULATION_ACTION_IDS,
@@ -21,6 +23,7 @@ import {
 	type DevelopmentActionId as DevelopmentActionIdType,
 	type PopulationActionId as PopulationActionIdType,
 	type PopulationEvaluationId as PopulationEvaluationIdType,
+	type SystemActionId as SystemActionIdType,
 } from './actionIds';
 
 export const ActionId = ActionIdValues;
@@ -29,6 +32,7 @@ export const BasicActions = BasicActionIdMap;
 export const DevelopActions = DevelopActionIdMap;
 export const HireActions = HireActionIdMap;
 export const BuildActions = BuildActionIdMap;
+export const SystemActions = SystemActionIdMap;
 export const PopulationEvaluationId = PopulationEvaluationIdValues;
 
 export { DEVELOPMENT_ACTION_IDS, BUILDING_ACTION_IDS, POPULATION_ACTION_IDS };
@@ -38,6 +42,7 @@ export type BasicActionId = BasicActionIdType;
 export type DevelopmentActionId = DevelopmentActionIdType;
 export type PopulationActionId = PopulationActionIdType;
 export type BuildingActionId = BuildingActionIdType;
+export type SystemActionId = SystemActionIdType;
 export type PopulationEvaluationId = PopulationEvaluationIdType;
 
 export interface ActionDef extends ActionConfig {
@@ -53,6 +58,7 @@ export function createActionRegistry() {
 	registerHireActions(registry);
 	registerDevelopActions(registry);
 	registerBuildActions(registry);
+	registerInitialSetupActions(registry);
 
 	return registry;
 }

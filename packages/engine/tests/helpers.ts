@@ -5,7 +5,6 @@ import {
 	DEVELOPMENTS,
 	POPULATIONS,
 	PHASES,
-	GAME_START,
 	RULES,
 } from '@kingdom-builder/contents';
 import {
@@ -20,7 +19,6 @@ import type {
 	PopulationConfig as PopulationDef,
 	Registry,
 	RuleSet,
-	StartConfig,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../src/phases.ts';
 
@@ -30,7 +28,6 @@ const BASE: {
 	developments: Registry<DevelopmentDef>;
 	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
-	start: StartConfig;
 	resourceCatalogV2: {
 		resources: typeof RESOURCE_V2_REGISTRY;
 		groups: typeof RESOURCE_GROUP_V2_REGISTRY;
@@ -42,7 +39,6 @@ const BASE: {
 	developments: DEVELOPMENTS,
 	populations: POPULATIONS,
 	phases: PHASES,
-	start: GAME_START,
 	resourceCatalogV2: {
 		resources: RESOURCE_V2_REGISTRY,
 		groups: RESOURCE_GROUP_V2_REGISTRY,
@@ -50,9 +46,36 @@ const BASE: {
 	},
 };
 
-type EngineOverrides = Partial<typeof BASE> & { rules?: RuleSet };
+type EngineOverrides = Partial<typeof BASE> & {
+	rules?: RuleSet;
+	/**
+	 * When true, skips running initial setup actions.
+	 * Useful for tests that need a clean slate.
+	 */
+	skipInitialSetup?: boolean;
+};
+
+/**
+ * No-op system action IDs used when skipping initial setup.
+ * These actions don't exist, so no setup effects run.
+ */
+const SKIP_SETUP_ACTION_IDS = {
+	initialSetup: '__noop_initial_setup__',
+	initialSetupDevmode: '__noop_initial_setup_devmode__',
+	compensation: '__noop_compensation__',
+	compensationDevmodeB: '__noop_compensation_devmode_b__',
+};
 
 export function createTestEngine(overrides: EngineOverrides = {}) {
-	const { rules, ...rest } = overrides;
-	return createEngine({ ...BASE, ...rest, rules: rules ?? RULES });
+	const { rules, skipInitialSetup, ...rest } = overrides;
+	const options = {
+		...BASE,
+		...rest,
+		rules: rules ?? RULES,
+	};
+	if (skipInitialSetup) {
+		// Provide fake action IDs that don't exist, so the engine won't run setup
+		(options as typeof options & { systemActionIds: typeof SKIP_SETUP_ACTION_IDS }).systemActionIds = SKIP_SETUP_ACTION_IDS;
+	}
+	return createEngine(options);
 }

@@ -4,7 +4,7 @@ import type { ResourceKey, PopulationRoleId } from '../state';
 import { Services, PassiveManager } from '../services';
 import type { RuleSet } from '../services';
 import { EngineContext } from '../context';
-import { registerCoreEffects } from '../effects';
+import { registerCoreEffects, runEffects } from '../effects';
 import { registerCoreEvaluators } from '../evaluators';
 import { registerCoreRequirements } from '../requirements';
 import { createAISystem, createTaxCollectorController } from '../ai';
@@ -17,12 +17,11 @@ import {
 	buildingSchema,
 	developmentSchema,
 	populationSchema,
-	type PlayerStartConfig,
+	resolveActionEffects,
 	type ActionConfig as ActionDef,
 	type BuildingConfig as BuildingDef,
 	type DevelopmentConfig as DevelopmentDef,
 	type PopulationConfig as PopulationDef,
-	type StartConfig,
 	type PhaseConfig,
 	Registry,
 	type ResourceV2CatalogSnapshot,
@@ -32,13 +31,9 @@ import {
 	type RuntimeResourceCatalog,
 } from '../resource-v2';
 import {
-	applyPlayerStartConfiguration,
-	diffPlayerStartConfiguration,
 	determineCommonActionCostResource,
 	initializePlayerActions,
-	initializeStartConfigDevelopmentPassives,
 } from './player_setup';
-import { resolveStartConfigForMode } from './start_config_resolver';
 
 export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
@@ -46,11 +41,20 @@ export interface EngineCreationOptions {
 	developments: Registry<DevelopmentDef>;
 	populations: Registry<PopulationDef>;
 	phases: PhaseConfig[];
-	start: StartConfig;
 	rules: RuleSet;
 	config?: GameConfig;
 	devMode?: boolean;
 	resourceCatalogV2?: RuntimeResourceContent;
+	/**
+	 * System action IDs for initial setup. The engine will run these actions
+	 * to set up players at game start.
+	 */
+	systemActionIds?: {
+		initialSetup: string;
+		initialSetupDevmode: string;
+		compensation: string;
+		compensationDevmodeB: string;
+	};
 }
 
 type ValidatedConfig = ReturnType<typeof validateGameConfig>;
@@ -174,22 +178,47 @@ function convertResourceCatalogSnapshot(
 	} as RuntimeResourceContent;
 }
 
+/**
+ * Runs a system action's effects directly, bypassing cost/requirement checks.
+ * Used for initial setup actions that run before the game starts.
+ * Returns false if the action doesn't exist (allows skipping setup in tests).
+ */
+function runSystemActionEffects(
+	actionId: string,
+	engineContext: EngineContext,
+): boolean {
+	const actionDefinition = engineContext.actions.get(actionId);
+	if (!actionDefinition) {
+		return false;
+	}
+	const resolved = resolveActionEffects(actionDefinition, undefined);
+	runEffects(resolved.effects, engineContext);
+	return true;
+}
+
+// Default system action IDs from @kingdom-builder/contents
+const DEFAULT_SYSTEM_ACTION_IDS = {
+	initialSetup: 'initial_setup',
+	initialSetupDevmode: 'initial_setup_devmode',
+	compensation: 'compensation',
+	compensationDevmodeB: 'compensation_devmode_b',
+};
+
 export function createEngine({
 	actions,
 	buildings,
 	developments,
 	populations,
 	phases,
-	start,
 	rules,
 	config,
 	devMode = false,
 	resourceCatalogV2,
+	systemActionIds = DEFAULT_SYSTEM_ACTION_IDS,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();
-	let startConfig = start;
 	let runtimeResourceContent: RuntimeResourceContent | undefined =
 		resourceCatalogV2;
 	let runtimeResourceCatalog: RuntimeResourceCatalog | undefined;
@@ -204,9 +233,6 @@ export function createEngine({
 				populations,
 			},
 		));
-		if (validatedConfig.start) {
-			startConfig = validatedConfig.start;
-		}
 		if (validatedConfig.resourceCatalogV2) {
 			runtimeResourceContent = convertResourceCatalogSnapshot(
 				validatedConfig.resourceCatalogV2,
@@ -215,12 +241,12 @@ export function createEngine({
 	}
 	if (!runtimeResourceContent) {
 		throw new Error(
-			'createEngine requires resourceCatalogV2 content when no GameConfig override is provided.',
+			'createEngine requires resourceCatalogV2 content when no ' +
+				'GameConfig override is provided.',
 		);
 	}
 	runtimeResourceCatalog = createRuntimeResourceCatalog(runtimeResourceContent);
 	validatePhases(phases);
-	startConfig = resolveStartConfigForMode(startConfig, devMode);
 	const services = new Services(rules, developments);
 	const passiveManager = new PassiveManager();
 	const gameState = new GameState(runtimeResourceCatalog, 'Player', 'Opponent');
@@ -228,18 +254,6 @@ export function createEngine({
 		actions,
 		runtimeResourceCatalog,
 	);
-	const playerACompensation = diffPlayerStartConfiguration(
-		startConfig.player,
-		startConfig.players?.['A'],
-	);
-	const playerBCompensation = diffPlayerStartConfiguration(
-		startConfig.player,
-		startConfig.players?.['B'],
-	);
-	const compensationMap = {
-		A: playerACompensation,
-		B: playerBCompensation,
-	} as Record<'A' | 'B', PlayerStartConfig>;
 	const engineContext = new EngineContext(
 		gameState,
 		services,
@@ -252,45 +266,47 @@ export function createEngine({
 		actionCostConfig.resourceId,
 		actionCostConfig.amount,
 		runtimeResourceCatalog,
-		compensationMap,
 	);
 	const playerOne = engineContext.game.players[0]!;
 	const playerTwo = engineContext.game.players[1]!;
 	const aiSystem = createAISystem({ performAction, advance });
 	aiSystem.register(playerTwo.id, createTaxCollectorController(playerTwo.id));
 	engineContext.aiSystem = aiSystem;
-	applyPlayerStartConfiguration(
-		playerOne,
-		startConfig.player,
-		rules,
-		runtimeResourceCatalog,
-	);
-	applyPlayerStartConfiguration(
-		playerOne,
-		playerACompensation,
-		rules,
-		runtimeResourceCatalog,
-	);
-	applyPlayerStartConfiguration(
-		playerTwo,
-		startConfig.player,
-		rules,
-		runtimeResourceCatalog,
-	);
-	applyPlayerStartConfiguration(
-		playerTwo,
-		playerBCompensation,
-		rules,
-		runtimeResourceCatalog,
-	);
+
+	// Select the appropriate initial setup action based on mode
+	const setupActionId = devMode
+		? systemActionIds.initialSetupDevmode
+		: systemActionIds.initialSetup;
+
+	// Run initial setup for player 1
+	engineContext.game.currentPlayerIndex = 0;
+	runSystemActionEffects(setupActionId, engineContext);
+
+	// Run initial setup for player 2
+	engineContext.game.currentPlayerIndex = 1;
+	runSystemActionEffects(setupActionId, engineContext);
+
+	// Run compensation for player 2 (last player gets extra resources)
+	runSystemActionEffects(systemActionIds.compensation, engineContext);
+
+	// In dev mode, also run the devmode-specific compensation for player B
+	if (devMode) {
+		runSystemActionEffects(systemActionIds.compensationDevmodeB, engineContext);
+	}
+
+	// Initialize player actions (unlocks non-system actions for players)
 	initializePlayerActions(playerOne, actions);
 	initializePlayerActions(playerTwo, actions);
-	initializeStartConfigDevelopmentPassives(engineContext);
+
+	// Set initial game state
 	engineContext.game.currentPlayerIndex = 0;
 	engineContext.game.currentPhase = phases[0]?.id || '';
 	engineContext.game.currentStep = phases[0]?.steps[0]?.id || '';
 	engineContext.game.devMode = devMode;
+
+	// Initialize tier-based passives (e.g., happiness tiers)
 	services.initializeTierPassives(engineContext);
+
 	return engineContext;
 }
 

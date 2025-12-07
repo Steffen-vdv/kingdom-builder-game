@@ -11,9 +11,7 @@ import {
 	type PopulationConfig,
 	type GameConfig,
 	type PhaseConfig,
-	type StartConfig,
 	type RuleSet,
-	type PlayerStartConfig,
 	type SessionRegistriesPayload,
 	type SessionResourceDefinition,
 	type SerializedRegistry,
@@ -40,7 +38,6 @@ export interface SessionBaseOptions {
 	developments: Registry<DevelopmentConfig>;
 	populations: Registry<PopulationConfig>;
 	phases: PhaseConfig[];
-	start: StartConfig;
 	rules: RuleSet;
 	resourceCatalogV2: RuntimeResourceContent;
 }
@@ -68,12 +65,8 @@ export function buildSessionAssets(
 	const validated = validateGameConfig(config);
 	const { actions, buildings, developments, populations } =
 		applyConfigRegistries(validated, context.baseOptions);
-	const startConfig = validated.start ?? context.baseOptions.start;
 	const phases = validated.phases ?? context.baseOptions.phases;
-	const resources = buildResourceRegistry(
-		context.resourceOverrides,
-		startConfig,
-	);
+	const resources = buildResourceRegistry(context.resourceOverrides);
 	const resourceCatalog = context.baseOptions.resourceCatalogV2;
 	const resourcesV2 = freezeSerializedRegistry(
 		structuredClone(resourceCatalog.resources.byId),
@@ -110,72 +103,35 @@ export function buildSessionAssets(
 
 export function buildResourceRegistry(
 	overrides: SessionResourceRegistry | undefined,
-	startConfig: StartConfig,
 ): SessionResourceRegistry {
 	const registry = new Map<string, SessionResourceDefinition>();
-	const applyOverride = (source: SessionResourceRegistry | undefined): void => {
-		if (!source) {
-			return;
-		}
-		for (const [key, definition] of Object.entries(source)) {
+
+	// Apply any overrides first
+	if (overrides) {
+		for (const [key, definition] of Object.entries(overrides)) {
 			registry.set(key, structuredClone(definition));
 		}
-	};
-	applyOverride(overrides);
-	const addKey = (key: string): void => {
+	}
+
+	// Add all resources from the V2 registry
+	for (const [key, resource] of Object.entries(RESOURCE_V2_REGISTRY.byId)) {
 		if (registry.has(key)) {
-			return;
+			continue;
 		}
-		const resource = RESOURCE_V2_REGISTRY.byId[key];
-		if (resource) {
-			const definition: SessionResourceDefinition = {
-				key: resource.id,
-				icon: resource.icon,
-				label: resource.label,
-			};
-			if (resource.description) {
-				definition.description = resource.description;
-			}
-			if (resource.tags && resource.tags.length > 0) {
-				definition.tags = [...resource.tags];
-			}
-			registry.set(key, definition);
-			return;
+		const definition: SessionResourceDefinition = {
+			key: resource.id,
+			icon: resource.icon,
+			label: resource.label,
+		};
+		if (resource.description) {
+			definition.description = resource.description;
 		}
-		registry.set(key, { key });
-	};
-	const addFromStart = (config: PlayerStartConfig | undefined): void => {
-		if (config?.resources) {
-			for (const key of Object.keys(config.resources)) {
-				addKey(key);
-			}
+		if (resource.tags && resource.tags.length > 0) {
+			definition.tags = [...resource.tags];
 		}
-		// Also check valuesV2 for V2 resource IDs
-		if (config?.valuesV2) {
-			for (const key of Object.keys(config.valuesV2)) {
-				addKey(key);
-			}
-		}
-	};
-	addFromStart(startConfig.player);
-	if (startConfig.players) {
-		for (const playerConfig of Object.values(startConfig.players)) {
-			addFromStart(playerConfig);
-		}
+		registry.set(key, definition);
 	}
-	if (startConfig.modes) {
-		for (const mode of Object.values(startConfig.modes)) {
-			if (!mode) {
-				continue;
-			}
-			addFromStart(mode.player);
-			if (mode.players) {
-				for (const modePlayer of Object.values(mode.players)) {
-					addFromStart(modePlayer);
-				}
-			}
-		}
-	}
+
 	return Object.fromEntries(registry.entries());
 }
 
