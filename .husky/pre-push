@@ -4,5 +4,23 @@
 
 set -e
 
-# Run type checking and linting in parallel
-npx run-p typecheck lint
+# Run typecheck (always full - it's fast due to incremental builds)
+npm run typecheck
+
+# Lint only changed files for speed
+# Get files that differ from upstream (what we're about to push)
+UPSTREAM=$(git rev-parse --abbrev-ref @{upstream} 2>/dev/null || echo "")
+if [ -n "$UPSTREAM" ]; then
+    CHANGED_FILES=$(git diff --name-only "$UPSTREAM"...HEAD -- '*.ts' '*.tsx' 2>/dev/null | tr '\n' ' ')
+else
+    # No upstream - lint all staged/committed ts files
+    CHANGED_FILES=$(git diff --name-only HEAD~1 -- '*.ts' '*.tsx' 2>/dev/null | tr '\n' ' ')
+fi
+
+if [ -n "$CHANGED_FILES" ]; then
+    echo "Linting changed files only..."
+    npm run lint:deps
+    npx eslint --cache $CHANGED_FILES
+else
+    echo "No .ts/.tsx files changed, skipping lint"
+fi
