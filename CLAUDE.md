@@ -91,11 +91,11 @@ npm run generate:snapshots  # Refresh cached registry metadata after content cha
 **IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
 commands sequentially - that defeats the purpose of parallelization.**
 
-| What you changed | Command to run                        | Time |
-| ---------------- | ------------------------------------- | ---- |
+| What you changed | Command to run                         | Time |
+| ---------------- | -------------------------------------- | ---- |
 | Code (no tests)  | Just push (hook auto-formats + checks) | ~30s |
-| Code + tests     | `npm run test:parallel` then push     | ~50s |
-| Single test      | `npx vitest run path/to/file.test.ts` | ~5s  |
+| Code + tests     | `npm run test:parallel` then push      | ~50s |
+| Single test      | `npx vitest run path/to/file.test.ts`  | ~5s  |
 
 **The pre-push hook auto-formats and validates.** It runs `npm run format`,
 auto-commits any formatting changes, then runs typecheck and lint. Just push
