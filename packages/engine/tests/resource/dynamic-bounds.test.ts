@@ -8,16 +8,16 @@ import {
 	setResourceValue,
 	getResourceValue,
 	resolveBoundValue,
-} from '../../src/resource-v2/index.ts';
+} from '../../src/resource/index.ts';
 import {
-	resourceAddV2,
-	resourceRemoveV2,
-} from '../../src/resource-v2/effects/addRemove.ts';
-import { ResourceBoundExceededError } from '../../src/resource-v2/reconciliation.ts';
+	resourceAdd,
+	resourceRemove,
+} from '../../src/resource/effects/addRemove.ts';
+import { ResourceBoundExceededError } from '../../src/resource/reconciliation/index.ts';
 import {
-	resourceV2Definition,
-	resourceV2GroupDefinition,
-	createResourceV2Registries,
+	resourceDefinition,
+	resourceGroupDefinition,
+	createResourceRegistries,
 	boundRef,
 } from '@kingdom-builder/testing';
 
@@ -92,12 +92,12 @@ describe('Dynamic resource bounds', () => {
 			const maxPopId = 'stat-max-population';
 			const populationId = 'resource-population';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 1, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -105,7 +105,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -124,17 +124,17 @@ describe('Dynamic resource bounds', () => {
 			// This tests what happens when two resources reference each other
 			// The system should not infinite loop - it uses current values at
 			// resolution time
-			const resourceA = resourceV2Definition({
+			const resourceA = resourceDefinition({
 				id: 'resource-a',
 				bounds: { upperBound: boundRef('resource-b') },
 			});
 
-			const resourceB = resourceV2Definition({
+			const resourceB = resourceDefinition({
 				id: 'resource-b',
 				bounds: { upperBound: boundRef('resource-a') },
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [resourceA, resourceB],
 			});
 
@@ -154,12 +154,12 @@ describe('Dynamic resource bounds', () => {
 		const populationId = 'resource-population';
 
 		beforeEach(() => {
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -167,7 +167,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -178,8 +178,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(opponent, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 				opponent,
@@ -211,7 +211,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, ctx.context);
+			resourceAdd(effect, ctx.context);
 
 			expect(getResourceValue(ctx.active, populationId)).toBe(10);
 			expect(ctx.active.resourceBoundTouched[populationId].upper).toBe(true);
@@ -235,7 +235,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, ctx.context);
+			resourceAdd(effect, ctx.context);
 
 			// 3 + 15 = 18, which is within new max of 20
 			expect(getResourceValue(ctx.active, populationId)).toBe(18);
@@ -263,7 +263,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, ctx.context);
+			resourceAdd(effect, ctx.context);
 
 			// Already at max, so stays at 10
 			expect(getResourceValue(ctx.active, populationId)).toBe(10);
@@ -276,12 +276,12 @@ describe('Dynamic resource bounds', () => {
 		const populationId = 'resource-population';
 
 		beforeEach(() => {
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -289,7 +289,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -300,8 +300,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(opponent, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 				opponent,
@@ -322,7 +322,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			expect(() => resourceAddV2(effect, ctx.context)).toThrow(
+			expect(() => resourceAdd(effect, ctx.context)).toThrow(
 				ResourceBoundExceededError,
 			);
 			expect(getResourceValue(ctx.active, populationId)).toBe(8);
@@ -340,7 +340,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, ctx.context);
+			resourceAdd(effect, ctx.context);
 			expect(getResourceValue(ctx.active, populationId)).toBe(8);
 		});
 
@@ -356,7 +356,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, ctx.context);
+			resourceAdd(effect, ctx.context);
 			expect(getResourceValue(ctx.active, populationId)).toBe(10);
 		});
 
@@ -373,7 +373,7 @@ describe('Dynamic resource bounds', () => {
 			};
 
 			try {
-				resourceAddV2(effect, ctx.context);
+				resourceAdd(effect, ctx.context);
 				expect.fail('Should have thrown ResourceBoundExceededError');
 			} catch (error) {
 				expect(error).toBeInstanceOf(ResourceBoundExceededError);
@@ -390,12 +390,12 @@ describe('Dynamic resource bounds', () => {
 		const populationId = 'resource-population';
 
 		beforeEach(() => {
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -403,7 +403,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -414,8 +414,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(opponent, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 				opponent,
@@ -436,7 +436,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, ctx.context);
+			resourceAdd(effect, ctx.context);
 			expect(getResourceValue(ctx.active, populationId)).toBe(18);
 		});
 
@@ -445,12 +445,12 @@ describe('Dynamic resource bounds', () => {
 			const minGoldId = 'stat-min-gold';
 			const goldId = 'resource-gold';
 
-			const minGold = resourceV2Definition({
+			const minGold = resourceDefinition({
 				id: minGoldId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const gold = resourceV2Definition({
+			const gold = resourceDefinition({
 				id: goldId,
 				bounds: {
 					lowerBound: boundRef(minGoldId),
@@ -458,7 +458,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [minGold, gold],
 			});
 
@@ -467,8 +467,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -487,7 +487,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceRemoveV2(effect, baseContext);
+			resourceRemove(effect, baseContext);
 			expect(getResourceValue(active, goldId)).toBe(5);
 		});
 	});
@@ -498,12 +498,12 @@ describe('Dynamic resource bounds', () => {
 		const goldId = 'resource-gold';
 
 		beforeEach(() => {
-			const minGold = resourceV2Definition({
+			const minGold = resourceDefinition({
 				id: minGoldId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const gold = resourceV2Definition({
+			const gold = resourceDefinition({
 				id: goldId,
 				bounds: {
 					lowerBound: boundRef(minGoldId),
@@ -511,7 +511,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [minGold, gold],
 			});
 
@@ -522,8 +522,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(opponent, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 				opponent,
@@ -544,7 +544,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceRemoveV2(effect, ctx.context);
+			resourceRemove(effect, ctx.context);
 
 			expect(getResourceValue(ctx.active, goldId)).toBe(10);
 			expect(ctx.active.resourceBoundTouched[goldId].lower).toBe(true);
@@ -562,7 +562,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			expect(() => resourceRemoveV2(effect, ctx.context)).toThrow(
+			expect(() => resourceRemove(effect, ctx.context)).toThrow(
 				ResourceBoundExceededError,
 			);
 			expect(getResourceValue(ctx.active, goldId)).toBe(15);
@@ -573,7 +573,7 @@ describe('Dynamic resource bounds', () => {
 		it('handles missing bound resource (resolves to null/unbounded)', () => {
 			const populationId = 'resource-population';
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -581,7 +581,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [population],
 			});
 
@@ -590,8 +590,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -607,7 +607,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, baseContext);
+			resourceAdd(effect, baseContext);
 
 			// Should allow any value since upper bound resolves to null
 			expect(getResourceValue(active, populationId)).toBe(1100);
@@ -617,12 +617,12 @@ describe('Dynamic resource bounds', () => {
 			const maxPopId = 'stat-max-population';
 			const populationId = 'resource-population';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -630,7 +630,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -639,8 +639,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -656,7 +656,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, baseContext);
+			resourceAdd(effect, baseContext);
 
 			// Clamped to upper bound of 0
 			expect(getResourceValue(active, populationId)).toBe(0);
@@ -666,13 +666,13 @@ describe('Dynamic resource bounds', () => {
 			const minGoldId = 'stat-min-gold';
 			const goldId = 'resource-gold';
 
-			const minGold = resourceV2Definition({
+			const minGold = resourceDefinition({
 				id: minGoldId,
 				// Allow negative min gold (debt threshold)
 				bounds: { lowerBound: -100, upperBound: 0 },
 			});
 
-			const gold = resourceV2Definition({
+			const gold = resourceDefinition({
 				id: goldId,
 				bounds: {
 					lowerBound: boundRef(minGoldId),
@@ -680,7 +680,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [minGold, gold],
 			});
 
@@ -689,8 +689,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -708,7 +708,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceRemoveV2(effect, baseContext);
+			resourceRemove(effect, baseContext);
 
 			expect(getResourceValue(active, goldId)).toBe(-50);
 		});
@@ -720,12 +720,12 @@ describe('Dynamic resource bounds', () => {
 		const populationId = 'resource-population';
 
 		beforeEach(() => {
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -733,7 +733,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -744,8 +744,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(opponent, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 				opponent,
@@ -767,7 +767,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			resourceAddV2(effect, ctx.context);
+			resourceAdd(effect, ctx.context);
 
 			expect(getResourceValue(ctx.active, populationId)).toBe(15);
 		});
@@ -785,7 +785,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			expect(() => resourceAddV2(effect, ctx.context)).toThrow(
+			expect(() => resourceAdd(effect, ctx.context)).toThrow(
 				ResourceBoundExceededError,
 			);
 		});
@@ -799,12 +799,12 @@ describe('Dynamic resource bounds', () => {
 			const roleAId = 'resource-role-a';
 			const roleBId = 'resource-role-b';
 
-			const maxTotalPop = resourceV2Definition({
+			const maxTotalPop = resourceDefinition({
 				id: maxTotalPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const group = resourceV2GroupDefinition({
+			const group = resourceGroupDefinition({
 				id: groupId,
 				parent: {
 					id: parentId,
@@ -815,19 +815,19 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const roleA = resourceV2Definition({
+			const roleA = resourceDefinition({
 				id: roleAId,
 				metadata: { group: { id: groupId } },
 				bounds: { lowerBound: 0, upperBound: 50 },
 			});
 
-			const roleB = resourceV2Definition({
+			const roleB = resourceDefinition({
 				id: roleBId,
 				metadata: { group: { id: groupId } },
 				bounds: { lowerBound: 0, upperBound: 50 },
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxTotalPop, roleA, roleB],
 				groups: [group],
 			});
@@ -837,8 +837,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const baseContext = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -862,13 +862,13 @@ describe('Dynamic resource bounds', () => {
 			const maxPopId = 'stat-max-population';
 			const populationId = 'resource-population';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
 			// Use a bound reference with explicit reconciliation mode
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -876,7 +876,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -896,12 +896,12 @@ describe('Dynamic resource bounds', () => {
 			const maxPopId = 'stat-max-population';
 			const populationId = 'resource-population';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -909,7 +909,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -918,8 +918,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const ctx = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -938,12 +938,12 @@ describe('Dynamic resource bounds', () => {
 			const minGoldId = 'stat-min-gold';
 			const goldId = 'resource-gold';
 
-			const minGold = resourceV2Definition({
+			const minGold = resourceDefinition({
 				id: minGoldId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const gold = resourceV2Definition({
+			const gold = resourceDefinition({
 				id: goldId,
 				bounds: {
 					lowerBound: boundRef(minGoldId, 'clamp'),
@@ -951,7 +951,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [minGold, gold],
 			});
 
@@ -960,8 +960,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const ctx = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -980,12 +980,12 @@ describe('Dynamic resource bounds', () => {
 			const maxPopId = 'stat-max-population';
 			const populationId = 'resource-population';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -993,7 +993,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -1002,8 +1002,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const ctx = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -1022,12 +1022,12 @@ describe('Dynamic resource bounds', () => {
 			const maxPopId = 'stat-max-population';
 			const populationId = 'resource-population';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -1035,7 +1035,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -1044,8 +1044,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const ctx = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -1067,12 +1067,12 @@ describe('Dynamic resource bounds', () => {
 			const populationId = 'resource-population';
 			const workforceId = 'resource-workforce';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -1081,7 +1081,7 @@ describe('Dynamic resource bounds', () => {
 			});
 
 			// Workforce is bounded by population
-			const workforce = resourceV2Definition({
+			const workforce = resourceDefinition({
 				id: workforceId,
 				bounds: {
 					lowerBound: 0,
@@ -1089,7 +1089,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population, workforce],
 			});
 
@@ -1098,8 +1098,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const ctx = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -1123,12 +1123,12 @@ describe('Dynamic resource bounds', () => {
 			const councilId = 'resource-council';
 			const legionId = 'resource-legion';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const council = resourceV2Definition({
+			const council = resourceDefinition({
 				id: councilId,
 				bounds: {
 					lowerBound: 0,
@@ -1136,7 +1136,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const legion = resourceV2Definition({
+			const legion = resourceDefinition({
 				id: legionId,
 				bounds: {
 					lowerBound: 0,
@@ -1144,7 +1144,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, council, legion],
 			});
 
@@ -1153,8 +1153,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const ctx = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -1176,12 +1176,12 @@ describe('Dynamic resource bounds', () => {
 			const maxPopId = 'stat-max-population';
 			const populationId = 'resource-population';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				bounds: { lowerBound: 0, upperBound: 100 },
 			});
 
-			const population = resourceV2Definition({
+			const population = resourceDefinition({
 				id: populationId,
 				bounds: {
 					lowerBound: 0,
@@ -1189,7 +1189,7 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, population],
 			});
 
@@ -1198,8 +1198,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(active, catalog);
 
 			const ctx = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
@@ -1225,13 +1225,13 @@ describe('Dynamic resource bounds', () => {
 			const legionId = 'resource:population:role:legion';
 			const groupId = 'group:population';
 
-			const maxPop = resourceV2Definition({
+			const maxPop = resourceDefinition({
 				id: maxPopId,
 				metadata: { label: 'Max Population', icon: '👥' },
 				bounds: { lowerBound: 1, upperBound: 100 },
 			});
 
-			const group = resourceV2GroupDefinition({
+			const group = resourceGroupDefinition({
 				id: groupId,
 				parent: {
 					id: totalPopId,
@@ -1242,19 +1242,19 @@ describe('Dynamic resource bounds', () => {
 				},
 			});
 
-			const council = resourceV2Definition({
+			const council = resourceDefinition({
 				id: councilId,
 				metadata: { label: 'Council', icon: '⚖️', group: { id: groupId } },
 				bounds: { lowerBound: 0 },
 			});
 
-			const legion = resourceV2Definition({
+			const legion = resourceDefinition({
 				id: legionId,
 				metadata: { label: 'Legion', icon: '⚔️', group: { id: groupId } },
 				bounds: { lowerBound: 0 },
 			});
 
-			const registries = createResourceV2Registries({
+			const registries = createResourceRegistries({
 				resources: [maxPop, council, legion],
 				groups: [group],
 			});
@@ -1264,8 +1264,8 @@ describe('Dynamic resource bounds', () => {
 			initialisePlayerResourceState(player, catalog);
 
 			const ctx = {
-				game: { resourceCatalogV2: catalog },
-				resourceCatalogV2: catalog,
+				game: { resourceCatalog: catalog },
+				resourceCatalog: catalog,
 				recentResourceGains: [] as { key: string; amount: number }[],
 				activePlayer: player,
 			} as unknown as EngineContext;
@@ -1293,7 +1293,7 @@ describe('Dynamic resource bounds', () => {
 			};
 
 			// This will add the legion but the parent won't exceed its bound
-			resourceAddV2(effect, ctx);
+			resourceAdd(effect, ctx);
 
 			// Legion is now 2
 			expect(getResourceValue(player, legionId)).toBe(2);

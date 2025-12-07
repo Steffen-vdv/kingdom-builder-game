@@ -30,7 +30,7 @@ describe('evaluators', () => {
 		setResourceValue(
 			context,
 			context.activePlayer,
-			context.resourceCatalogV2,
+			context.resourceCatalog,
 			Stat.populationMax,
 			10,
 		);

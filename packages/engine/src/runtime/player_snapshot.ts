@@ -138,7 +138,7 @@ function cloneLand(land: Land): LandSnapshot {
 	return snapshot;
 }
 
-function cloneValuesV2(
+function cloneResourceValues(
 	values: PlayerState['resourceValues'],
 ): Record<string, number> {
 	const snapshot: Record<string, number> = {};
@@ -207,7 +207,7 @@ export function snapshotPlayer(
 	context: EngineContext,
 	player: PlayerState,
 ): PlayerStateSnapshot {
-	const values = cloneValuesV2(player.resourceValues);
+	const values = cloneResourceValues(player.resourceValues);
 	const resourceBounds = buildResourceBoundsSnapshot(
 		player,
 		context.resourceCatalog,

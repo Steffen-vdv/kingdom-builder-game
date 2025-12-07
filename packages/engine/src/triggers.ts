@@ -54,7 +54,7 @@ export function collectTriggerEffects(
 	player: PlayerState = engineContext.activePlayer,
 ): TriggerEffectBundle[] {
 	const bundles: TriggerEffectBundle[] = [];
-	// Population triggers are now handled via ResourceV2:
+	// Population triggers are now handled via the unified resource system:
 	// - Population values are resources (e.g., 'resource:core:council')
 	// - Population upkeep is defined in phase step effects
 	// - Population triggers like onGainAPStep are defined in phase steps

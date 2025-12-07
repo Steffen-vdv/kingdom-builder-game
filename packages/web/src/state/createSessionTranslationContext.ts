@@ -55,7 +55,7 @@ function countDevelopments(player: DiffPlayer, id: unknown): number {
 }
 
 /**
- * Reads a resource value by V2 ID. Works for all resources including
+ * Reads a resource value by ID. Works for all resources including
  * currencies, stats, and population counts.
  */
 function readResource(player: DiffPlayer, resourceId: unknown): number {
@@ -119,7 +119,7 @@ function evaluateDefinition(
 			return readResource(player, resourceId);
 		}
 		case 'population': {
-			// Legacy evaluator - uses role param as V2 resource ID
+			// Legacy evaluator - uses resourceId param
 			const resourceId = definition.params?.['resourceId'];
 			return readResource(player, resourceId);
 		}
