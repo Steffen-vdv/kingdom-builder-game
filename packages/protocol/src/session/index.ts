@@ -248,8 +248,6 @@ export type SessionOverviewTokenCategoryName =
 	| 'actions'
 	| 'phases'
 	| 'resources'
-	| 'stats'
-	| 'population'
 	| 'static';
 
 export type SessionOverviewTokenMap = Partial<

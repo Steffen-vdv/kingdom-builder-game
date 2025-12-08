@@ -9,7 +9,7 @@ import {
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
 import { collectResourceKeys, type PlayerSnapshot } from './snapshots';
-import { type StepEffects } from './statBreakdown';
+import { type StepEffects } from './resourceBreakdown';
 
 export interface ActionDiffChange {
 	summary: string;

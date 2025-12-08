@@ -32,8 +32,6 @@ export interface OverviewTokenSources {
 	actions: DefinitionLookup<ActionConfig>;
 	phases: MetadataSelector<PhaseMetadata>;
 	resources: MetadataSelector<RegistryMetadataDescriptor>;
-	stats: MetadataSelector<RegistryMetadataDescriptor>;
-	population: MetadataSelector<RegistryMetadataDescriptor>;
 	land: AssetMetadataSelector;
 	slot: AssetMetadataSelector;
 	landDescriptor: AssetMetadata;
@@ -44,7 +42,6 @@ interface OverviewTokenSourceArgs {
 	actions: DefinitionLookup<ActionConfig>;
 	phaseMetadata: MetadataSelector<PhaseMetadata>;
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
-	statMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 }
@@ -53,7 +50,6 @@ export const createOverviewTokenSources = ({
 	actions,
 	phaseMetadata,
 	resourceMetadata,
-	statMetadata,
 	landMetadata,
 	slotMetadata,
 }: OverviewTokenSourceArgs): OverviewTokenSources => {
@@ -63,9 +59,6 @@ export const createOverviewTokenSources = ({
 		actions,
 		phases: phaseMetadata,
 		resources: resourceMetadata,
-		stats: statMetadata,
-		// Population resources are part of unified resources
-		population: resourceMetadata,
 		land: landMetadata,
 		slot: slotMetadata,
 		landDescriptor,
@@ -143,18 +136,6 @@ const createCategoryConfig = (
 			keys: () => sources.resources.list.map((descriptor) => descriptor.id),
 			resolve: (candidates: string[]) =>
 				resolveDescriptorIcon(sources.resources, candidates),
-		},
-		{
-			name: 'stats',
-			keys: () => sources.stats.list.map((descriptor) => descriptor.id),
-			resolve: (candidates: string[]) =>
-				resolveDescriptorIcon(sources.stats, candidates),
-		},
-		{
-			name: 'population',
-			keys: () => sources.population.list.map((descriptor) => descriptor.id),
-			resolve: (candidates: string[]) =>
-				resolveDescriptorIcon(sources.population, candidates),
 		},
 		{
 			name: 'static',
@@ -254,19 +235,12 @@ export function mergeTokenConfig(
 		defaults.resources,
 		overrides?.resources,
 	);
-	const stats = mergeTokenCategory(defaults.stats, overrides?.stats);
-	const population = mergeTokenCategory(
-		defaults.population,
-		overrides?.population,
-	);
 	const staticIcons = mergeTokenCategory(defaults.static, overrides?.static);
 
 	return {
 		actions,
 		phases,
 		resources,
-		stats,
-		population,
 		static: staticIcons,
 	};
 }

@@ -73,8 +73,6 @@ describe('buildOverviewIconSet', () => {
 			actions,
 			phaseMetadata,
 			resourceMetadata,
-			statMetadata,
-			// populationMetadata removed - unified under resources in V2
 			landMetadata,
 			slotMetadata,
 		} = useRegistryMetadata();
@@ -84,18 +82,10 @@ describe('buildOverviewIconSet', () => {
 					actions,
 					phaseMetadata,
 					resourceMetadata,
-					statMetadata,
 					landMetadata,
 					slotMetadata,
 				}),
-			[
-				actions,
-				phaseMetadata,
-				resourceMetadata,
-				statMetadata,
-				landMetadata,
-				slotMetadata,
-			],
+			[actions, phaseMetadata, resourceMetadata, landMetadata, slotMetadata],
 		);
 		return buildOverviewIconSet(sources, overrides);
 	};

@@ -118,16 +118,6 @@ function evaluateDefinition(
 			const resourceId = definition.params?.['resourceId'];
 			return readResource(player, resourceId);
 		}
-		case 'population': {
-			// Legacy evaluator - uses resourceId param
-			const resourceId = definition.params?.['resourceId'];
-			return readResource(player, resourceId);
-		}
-		case 'stat': {
-			// Legacy evaluator - uses resourceId param
-			const resourceId = definition.params?.['resourceId'];
-			return readResource(player, resourceId);
-		}
 		case 'compare': {
 			const params = definition.params as CompareEvaluatorParams | undefined;
 			if (!params) {

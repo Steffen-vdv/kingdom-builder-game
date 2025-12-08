@@ -65,7 +65,10 @@ describe('formatPhaseResolution', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: 'gold', amount: 2 },
+					params: {
+						resourceId: 'gold',
+						change: { type: 'amount', amount: 2 },
+					},
 				},
 			],
 			player: {} as SessionAdvanceResult['player'],
@@ -134,7 +137,10 @@ describe('formatPhaseResolution', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: { key: 'gold', amount: 1 },
+					params: {
+						resourceId: 'gold',
+						change: { type: 'amount', amount: 1 },
+					},
 				},
 			],
 		};

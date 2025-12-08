@@ -55,19 +55,19 @@ function formatContribution(
 	context: TranslationContext,
 ): SummaryEntry {
 	const { amount, meta } = contribution;
-	const statInfo = context.assets.stats?.[statKey];
-	if (!statInfo) {
-		console.warn(`Missing stat metadata for key: ${statKey}`);
+	const resourceInfo = context.assets.resources?.[statKey];
+	if (!resourceInfo) {
+		console.warn(`Missing resource metadata for key: ${statKey}`);
 	}
 	const valueText = formatStatValue(statKey, amount, context.assets);
 	const sign = amount >= 0 ? '+' : '';
 	const amountParts: string[] = [];
-	if (statInfo?.icon) {
-		amountParts.push(statInfo.icon);
+	if (resourceInfo?.icon) {
+		amountParts.push(resourceInfo.icon);
 	}
 	amountParts.push(`${sign}${valueText}`);
-	if (statInfo?.label) {
-		amountParts.push(statInfo.label);
+	if (resourceInfo?.label) {
+		amountParts.push(resourceInfo.label);
 	}
 	const amountEntry = amountParts.join(' ').trim();
 	const detailEntries = buildDetailEntries(meta, player, context);

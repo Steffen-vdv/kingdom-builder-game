@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { collectResourceSources } from '../../src/translation/log/resourceSources';
-import { type StepEffects } from '../../src/translation/log/statBreakdown';
+import { type StepEffects } from '../../src/translation/log/resourceBreakdown';
 import { type TranslationDiffContext } from '../../src/translation/log/resourceSources/context';
 import { type PassiveModifierMap } from '../../src/translation/log/resourceSources/types';
 

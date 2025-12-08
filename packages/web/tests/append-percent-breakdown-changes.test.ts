@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { appendPercentBreakdownChanges } from '../src/translation/log/diffSections';
 import { type PlayerSnapshot } from '../src/translation/log';
-import { type StepEffects } from '../src/translation/log/statBreakdown';
+import { type StepEffects } from '../src/translation/log/resourceBreakdown';
 import { formatPercentBreakdown } from '../src/translation/log/diffFormatting';
 import {
 	createSessionSnapshot,

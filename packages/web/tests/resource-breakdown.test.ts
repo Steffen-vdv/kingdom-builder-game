@@ -201,20 +201,21 @@ function createStatBreakdownSetup(): BreakdownSetup {
 	if (!active) {
 		throw new Error('Failed to locate active player snapshot.');
 	}
-	const statKeys = Object.keys(translationContext.assets.stats);
-	const [primaryStatKey, secondaryStatKey = statKeys[0] ?? ''] = statKeys;
-	if (!primaryStatKey) {
-		throw new Error('Unable to resolve a stat key for testing.');
+	const resourceKeys = Object.keys(translationContext.assets.resources);
+	const [primaryResourceKey, secondaryResourceKey = resourceKeys[0] ?? ''] =
+		resourceKeys;
+	if (!primaryResourceKey) {
+		throw new Error('Unable to resolve a resource key for testing.');
 	}
-	active.values[primaryStatKey] = 0;
-	if (secondaryStatKey) {
-		active.values[secondaryStatKey] = 3;
+	active.values[primaryResourceKey] = 0;
+	if (secondaryResourceKey) {
+		active.values[secondaryResourceKey] = 3;
 	}
 	return {
 		translationContext,
 		player: active,
-		primaryStatKey,
-		secondaryStatKey: secondaryStatKey || primaryStatKey,
+		primaryStatKey: primaryResourceKey,
+		secondaryStatKey: secondaryResourceKey || primaryResourceKey,
 		populationId,
 		populationResourceId,
 		buildingId,

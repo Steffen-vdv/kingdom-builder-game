@@ -12,7 +12,7 @@ import {
 import {
 	resolveAttackFormatterContext,
 	type AttackFormatterContext,
-} from './attack/statContext';
+} from './attack/combatResourceContext';
 import type { TranslationContext } from '../../context';
 
 type DamageEffectCategorizer = (

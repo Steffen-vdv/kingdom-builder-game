@@ -180,7 +180,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 				opponent,
 			} as unknown as EngineContext;
@@ -302,7 +302,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 				opponent,
 			} as unknown as EngineContext;
@@ -416,7 +416,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 				opponent,
 			} as unknown as EngineContext;
@@ -469,7 +469,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -524,7 +524,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 				opponent,
 			} as unknown as EngineContext;
@@ -592,7 +592,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -641,7 +641,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -691,7 +691,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -746,7 +746,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 				opponent,
 			} as unknown as EngineContext;
@@ -839,7 +839,7 @@ describe('Dynamic resource bounds', () => {
 			const baseContext = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -920,7 +920,7 @@ describe('Dynamic resource bounds', () => {
 			const ctx = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -962,7 +962,7 @@ describe('Dynamic resource bounds', () => {
 			const ctx = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -1004,7 +1004,7 @@ describe('Dynamic resource bounds', () => {
 			const ctx = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -1046,7 +1046,7 @@ describe('Dynamic resource bounds', () => {
 			const ctx = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -1100,7 +1100,7 @@ describe('Dynamic resource bounds', () => {
 			const ctx = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -1155,7 +1155,7 @@ describe('Dynamic resource bounds', () => {
 			const ctx = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -1200,7 +1200,7 @@ describe('Dynamic resource bounds', () => {
 			const ctx = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: active,
 			} as unknown as EngineContext;
 
@@ -1266,7 +1266,7 @@ describe('Dynamic resource bounds', () => {
 			const ctx = {
 				game: { resourceCatalog: catalog },
 				resourceCatalog: catalog,
-				recentResourceGains: [] as { key: string; amount: number }[],
+				recentResourceGains: [] as { resourceId: string; amount: number }[],
 				activePlayer: player,
 			} as unknown as EngineContext;
 

@@ -43,14 +43,14 @@ export function statDisplaysAsPercent(
 	key: string,
 	assets?: TranslationAssets,
 ): boolean {
-	const stat = assets?.stats?.[key];
-	if (!stat) {
+	const resource = assets?.resources?.[key];
+	if (!resource) {
 		return false;
 	}
-	if (typeof stat.displayAsPercent === 'boolean') {
-		return stat.displayAsPercent;
+	if (typeof resource.displayAsPercent === 'boolean') {
+		return resource.displayAsPercent;
 	}
-	const format = stat.format;
+	const format = resource.format;
 	if (format && typeof format === 'object') {
 		return Boolean(format.percent);
 	}

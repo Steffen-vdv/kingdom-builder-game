@@ -117,7 +117,7 @@ of rephrasing the same mechanic elsewhere.
 | Formatter        | Module                                                                                                                                                                                    | Handles                                                                                                  |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | Actions          | [`effects/formatters/action.ts`](../packages/web/src/translation/effects/formatters/action.ts)                                                                                            | Adding/removing/unlocking/performing actions.                                                            |
-| Attacks          | [`effects/formatters/attack.ts`](../packages/web/src/translation/effects/formatters/attack.ts) & [`effects/formatters/attack`](../packages/web/src/translation/effects/formatters/attack) | Army, building, stat, and resource attack variants plus on-damage summaries.                             |
+| Attacks          | [`effects/formatters/attack.ts`](../packages/web/src/translation/effects/formatters/attack.ts) & [`effects/formatters/attack`](../packages/web/src/translation/effects/formatters/attack) | Army, building, and resource attack variants plus on-damage summaries.                                   |
 | Buildings        | [`effects/formatters/building.ts`](../packages/web/src/translation/effects/formatters/building.ts)                                                                                        | Gain/remove/building slot interactions.                                                                  |
 | Developments     | [`effects/formatters/development.ts`](../packages/web/src/translation/effects/formatters/development.ts)                                                                                  | Create/destroy/toggle development slots.                                                                 |
 | Land slots       | [`effects/formatters/land.ts`](../packages/web/src/translation/effects/formatters/land.ts)                                                                                                | Slot count adjustments and till bonuses.                                                                 |
@@ -127,43 +127,46 @@ of rephrasing the same mechanic elsewhere.
 | Passives         | [`effects/formatters/passive.ts`](../packages/web/src/translation/effects/formatters/passive.ts)                                                                                          | Passive duration labels, phase detection, and nested summaries.                                          |
 | Population       | [`effects/formatters/population.ts`](../packages/web/src/translation/effects/formatters/population.ts)                                                                                    | Role icons/labels and movement verbs.                                                                    |
 | Resources        | [`effects/formatters/resource.ts`](../packages/web/src/translation/effects/formatters/resource.ts)                                                                                        | Gain/lose/transfer resource amounts with signed values.                                                  |
-| Stats            | [`effects/formatters/stat/index.ts`](../packages/web/src/translation/effects/formatters/stat/index.ts)                                                                                    | Flat and percent stat adjustments keyed to `STATS`.                                                      |
+| Combat resources | [`effects/formatters/stat/index.ts`](../packages/web/src/translation/effects/formatters/stat/index.ts)                                                                                    | Flat and percent resource adjustments for combat-related resources (strength, absorption, etc.).         |
 
 Evaluator formatters live under `effects/evaluators` and provide consistent
 suffixes like "per 🧩 Development" (see
 [`effects/evaluators/development.ts`](../packages/web/src/translation/effects/evaluators/development.ts) and
 [`effects/evaluators/population.ts`](../packages/web/src/translation/effects/evaluators/population.ts)).
 
-### 3.1 Percent & Stat Presentation Map
+### 3.1 Percent & Resource Presentation Map
 
-Stat copy for summaries, descriptions, and logs runs through the same
-formatter-plus-utility pairing:
+Combat resource copy (army strength, absorption, etc.) for summaries,
+descriptions, and logs runs through the same formatter-plus-utility pairing.
+Note: All resources—including those with combat semantics—are unified under
+ResourceV2. The formatter files retain "stat" in their names for historical
+reasons but handle unified resource effects.
 
 - [`effects/formatters/stat/index.ts`](../packages/web/src/translation/effects/formatters/stat/index.ts)
-  registers the `stat:add`, `stat:remove`, and `stat:add_pct` handlers. The
-  summary and description branches call helpers such as
-  `formatStatSummarySubject` and `resolveStatDescriptionParts` so cards and
-  hovercards render identical icon/label combinations when `summarizeEffects`
-  or `describeEffects` wrap the effect list.
+  registers handlers for combat resource effects. The summary and description
+  branches call helpers such as `formatStatSummarySubject` and
+  `resolveStatDescriptionParts` so cards and hovercards render identical
+  icon/label combinations when `summarizeEffects` or `describeEffects` wrap
+  the effect list.
 - [`utils/stats/format.ts`](../packages/web/src/utils/stats/format.ts)
   centralises percent-aware math via `statDisplaysAsPercent` and
-  `formatStatValue`. Any component that displays raw stat values (growth phase
-  inspectors, damage calculators, etc.) should call `formatStatValue` so the
-  percent flag defined in contents drives the UI instead of duplicating the
-  conversion logic.
+  `formatStatValue`. Any component that displays raw resource values (growth
+  phase inspectors, damage calculators, etc.) should call `formatStatValue` so
+  the percent flag defined in contents drives the UI instead of duplicating
+  the conversion logic.
 
 Because content translators (`ActionTranslator.log`,
 `PhasedTranslator.summarize`, `PhasedTranslator.describe`, etc.) funnel their
 effect arrays through `summarizeEffects`, `describeEffects`, and `logEffects`,
 the same formatter is responsible for card bullets, tooltip sentences, and
-action-resolution logs. When a new stat output mode needs bespoke log text,
-extend the corresponding formatter with a `log` implementation so `logEffects`
-can pick it up without hand-written component patches.
+action-resolution logs. When a new resource output mode needs bespoke log
+text, extend the corresponding formatter with a `log` implementation so
+`logEffects` can pick it up without hand-written component patches.
 
 #### Worked example — Growth absorption tuning
 
 Suppose a Growth phase card increases absorption by percentage. Update the
-`stat:add_pct` formatter so the summary prints `🛡️ +50% Absorption` (icon +
+combat resource formatter so the summary prints `🛡️ +50% Absorption` (icon +
 signed percent) and the description resolves to `🛡️ +50% Absorption damage
 reduction` or similar. With that formatter in place:
 
@@ -172,13 +175,13 @@ reduction` or similar. With that formatter in place:
 2. Hovercards/tooltips reuse the same effect list through
    `PhasedTranslator.describe` → `describeEffects`.
 3. Resolution logs (including `ActionTranslator.log` and any phased log wrapper)
-   call `logEffects`. Add a `log` branch to `stat:add_pct` if the log needs past-
+   call `logEffects`. Add a `log` branch to the formatter if the log needs past-
    tense phrasing; otherwise the shared handler keeps the three surfaces aligned
    automatically.
 
 Whenever the percent should appear on readouts outside of translators (for
 example, combat previews), make sure the consumer uses
-`formatStatValue('absorption', value, assets)` so any `displayAsPercent` or
+`formatStatValue(resourceId, value, assets)` so any `displayAsPercent` or
 `format.percent` flag defined in contents propagates everywhere.
 
 ## 4. Canonical Keywords, Icons, & Helper Utilities
@@ -226,9 +229,9 @@ example, combat previews), make sure the consumer uses
   [`content/decorators.ts`](../packages/web/src/translation/content/decorators.ts))
   contains the approved "On build" / "On each" phrasing. Use it when writing new
   trigger copy.
-- **Stat presentation** — See
-  [Section 3.1](#31-percent--stat-presentation-map) before introducing
-  component-level percent math. Reviewers will expect changes in `stat`
+- **Combat resource presentation** — See
+  [Section 3.1](#31-percent--resource-presentation-map) before introducing
+  component-level percent math. Reviewers will expect changes in resource
   formatters or `utils/stats/format.ts`, not ad-hoc patches.
 
 ## 5. Working With Logs

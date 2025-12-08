@@ -70,16 +70,6 @@ function buildResourceMap(
 	return Object.freeze(entries);
 }
 
-function buildStatMap(
-	descriptors: Readonly<Record<string, SessionMetadataDescriptor>>,
-): Readonly<Record<string, TranslationIconLabel>> {
-	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [key, descriptor] of Object.entries(descriptors)) {
-		entries[key] = mergeIconLabel(undefined, descriptor, key);
-	}
-	return Object.freeze(entries);
-}
-
 type ModifierDescriptorOverrides = {
 	cost?: SessionMetadataDescriptor;
 	result?: SessionMetadataDescriptor;
@@ -189,7 +179,6 @@ export function createTranslationAssets(
 	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
-	// All metadata (populations/stats) is now unified under resources
 	const resourceMetadata = requireMetadataRecord(
 		metadata,
 		'resources',
@@ -203,8 +192,6 @@ export function createTranslationAssets(
 		SessionTriggerMetadata
 	>;
 	const resources = buildResourceMap(registries.resources, resourceMetadata);
-	// Stats are now unified resources - use resourceMetadata
-	const stats = buildStatMap(resourceMetadata);
 	const populationAsset = mergeIconLabel(
 		undefined,
 		assetDescriptors.population,
@@ -237,7 +224,6 @@ export function createTranslationAssets(
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
 		resources,
-		stats,
 		population: populationAsset,
 		land: landAsset,
 		slot: slotAsset,
