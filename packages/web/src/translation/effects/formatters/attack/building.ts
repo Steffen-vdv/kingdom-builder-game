@@ -1,7 +1,7 @@
 import type { AttackLog } from '@kingdom-builder/protocol';
 import {
-	attackStatLabel,
-	attackStatValue,
+	attackResourceLabel,
+	attackResourceValue,
 	formatDiffCommon,
 	formatNumber,
 	formatPercent,
@@ -60,21 +60,13 @@ const buildingFormatter: AttackTargetFormatter<{
 		const absorption = stats.absorption;
 		const fort = stats.fortification;
 		const powerValue = (value: number) =>
-			attackStatValue(power, 'Attack', formatSignedValue(value, formatNumber));
+			attackResourceValue(power, formatSignedValue(value, formatNumber));
 		const absorptionValue = (value: number) =>
-			attackStatValue(
-				absorption,
-				'Absorption',
-				formatSignedValue(value, formatPercent),
-			);
+			attackResourceValue(absorption, formatSignedValue(value, formatPercent));
 		const fortValue = (value: number) =>
-			attackStatValue(
-				fort,
-				'Fortification',
-				formatSignedValue(value, formatNumber),
-			);
-		const absorptionLabel = attackStatLabel(absorption, 'damage reduction');
-		const fortLabel = attackStatLabel(fort, 'fortification');
+			attackResourceValue(fort, formatSignedValue(value, formatNumber));
+		const absorptionLabel = attackResourceLabel(absorption);
+		const fortLabel = attackResourceLabel(fort);
 		const target = log.target as Extract<
 			AttackLog['evaluation']['target'],
 			{ type: 'building' }
@@ -93,7 +85,11 @@ const buildingFormatter: AttackTargetFormatter<{
 		const titleSegments: string[] = [];
 
 		if (log.absorption.ignored) {
-			titleSegments.push(`Ignore ${absorptionLabel} with ${powerModified}`);
+			titleSegments.push(
+				absorptionLabel
+					? `Ignore ${absorptionLabel} with ${powerModified}`
+					: `Ignore absorption with ${powerModified}`,
+			);
 		} else {
 			titleSegments.push(
 				`Compare ${powerModified} against ${absorptionBefore}`,
@@ -101,7 +97,11 @@ const buildingFormatter: AttackTargetFormatter<{
 		}
 
 		if (log.fortification.ignored) {
-			titleSegments.push(`Bypass ${fortLabel} with ${powerAfterAbsorption}`);
+			titleSegments.push(
+				fortLabel
+					? `Bypass ${fortLabel} with ${powerAfterAbsorption}`
+					: `Bypass fortification with ${powerAfterAbsorption}`,
+			);
 		} else {
 			titleSegments.push(`Compare remaining damage against ${fortBefore}`);
 		}
@@ -120,7 +120,11 @@ const buildingFormatter: AttackTargetFormatter<{
 		const items: SummaryEntry[] = [];
 
 		if (log.absorption.ignored) {
-			items.push(`Ignore ${absorptionLabel} with ${powerModified}`);
+			items.push(
+				absorptionLabel
+					? `Ignore ${absorptionLabel} with ${powerModified}`
+					: `Ignore absorption with ${powerModified}`,
+			);
 		} else {
 			items.push(
 				`Compare ${powerModified} against ${absorptionBefore} → ${powerAfterAbsorption}`,
@@ -128,7 +132,11 @@ const buildingFormatter: AttackTargetFormatter<{
 		}
 
 		if (log.fortification.ignored) {
-			items.push(`Bypass ${fortLabel} with ${powerAfterAbsorption}`);
+			items.push(
+				fortLabel
+					? `Bypass ${fortLabel} with ${powerAfterAbsorption}`
+					: `Bypass fortification with ${powerAfterAbsorption}`,
+			);
 		} else {
 			items.push(
 				`Compare ${powerAfterAbsorption} against ${fortBefore} → ${fortAfter} and carry forward ${remainingPower}`,

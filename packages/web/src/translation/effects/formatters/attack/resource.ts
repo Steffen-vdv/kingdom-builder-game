@@ -8,7 +8,6 @@ import {
 } from './evaluation';
 import type { AttackTargetFormatter, AttackResourceKey } from './types';
 import { selectAttackResourceDescriptor } from './registrySelectors';
-import { DEFAULT_ATTACK_RESOURCE_KEY } from './defaultKeys';
 
 const resourceFormatter: AttackTargetFormatter<{
 	type: 'resource';
@@ -19,10 +18,10 @@ const resourceFormatter: AttackTargetFormatter<{
 		const targetParam = effect.params?.['target'] as
 			| { type: 'resource'; resourceId: AttackResourceKey }
 			| undefined;
-		if (targetParam?.type === 'resource') {
-			return targetParam;
+		if (targetParam?.type !== 'resource' || !targetParam.resourceId) {
+			throw new Error('Attack effect must specify a resource target');
 		}
-		return { type: 'resource', resourceId: DEFAULT_ATTACK_RESOURCE_KEY };
+		return targetParam;
 	},
 	normalizeLogTarget(target) {
 		const resourceTarget = target as Extract<

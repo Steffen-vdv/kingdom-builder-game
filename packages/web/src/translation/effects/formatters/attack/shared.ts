@@ -11,20 +11,29 @@ export function iconLabel(icon: string | undefined, label: string): string {
 	return icon ? `${icon} ${label}` : label;
 }
 
-export function attackStatLabel(
-	stat: AttackStatDescriptor | undefined,
-	fallback: string,
+/**
+ * Returns icon + label from content-provided resource descriptor.
+ * Returns empty string if resource is not provided.
+ */
+export function attackResourceLabel(
+	resource: AttackStatDescriptor | undefined,
 ): string {
-	return stat ? iconLabel(stat.icon, stat.label) : fallback;
+	if (!resource) {
+		return '';
+	}
+	return iconLabel(resource.icon, resource.label);
 }
 
-export function attackStatValue(
-	stat: AttackStatDescriptor | undefined,
-	fallback: string,
+/**
+ * Returns resource label with value appended.
+ * Returns just the value if resource is not provided.
+ */
+export function attackResourceValue(
+	resource: AttackStatDescriptor | undefined,
 	value: string,
 ): string {
-	const label = attackStatLabel(stat, fallback);
-	return `${label} ${value}`;
+	const label = attackResourceLabel(resource);
+	return label ? `${label} ${value}` : value;
 }
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
