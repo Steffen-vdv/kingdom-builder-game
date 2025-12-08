@@ -20,50 +20,14 @@ fi
   echo "╚════════════════════════════════════════════════════════════════╝"
   echo ""
 
-  # Load README.md
+  # Load CLAUDE.md - THE source of truth for AI agents
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "📄 README.md"
+  echo "🤖 CLAUDE.md (AI Agent Operating Manual)"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  if [ -f "$(pwd)/README.md" ]; then
-    cat "$(pwd)/README.md"
+  if [ -f "$(pwd)/CLAUDE.md" ]; then
+    cat "$(pwd)/CLAUDE.md"
   else
-    echo "⚠️  README.md not found"
-  fi
-  echo ""
-  echo ""
-
-  # Load AGENTS.md
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "🤖 AGENTS.md"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  if [ -f "$(pwd)/AGENTS.md" ]; then
-    cat "$(pwd)/AGENTS.md"
-  else
-    echo "⚠️  AGENTS.md not found"
-  fi
-  echo ""
-  echo ""
-
-  # Load docs/agent-quick-start.md
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "🚀 docs/agent-quick-start.md"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  if [ -f "$(pwd)/docs/agent-quick-start.md" ]; then
-    cat "$(pwd)/docs/agent-quick-start.md"
-  else
-    echo "⚠️  docs/agent-quick-start.md not found"
-  fi
-  echo ""
-  echo ""
-
-  # Load docs/text-formatting.md
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "✍️  docs/text-formatting.md"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  if [ -f "$(pwd)/docs/text-formatting.md" ]; then
-    cat "$(pwd)/docs/text-formatting.md"
-  else
-    echo "⚠️  docs/text-formatting.md not found"
+    echo "⚠️  CLAUDE.md not found - this is critical!"
   fi
   echo ""
   echo ""

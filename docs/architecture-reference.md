@@ -1,0 +1,389 @@
+# Architecture Reference
+
+This document provides detailed documentation of Kingdom Builder's core systems.
+Read this when working on features that touch these systems. **Update this
+document when you implement changes to core mechanics.**
+
+---
+
+## Game Concepts
+
+### Players
+
+A game has exactly two players (Player A and Player B). Each player has their
+own independent:
+
+- Resource values (gold, AP, army strength, etc.)
+- Buildings (global structures)
+- Lands with developments (territory improvements)
+- Passives (active buffs/debuffs and modifiers)
+
+Player A acts first each turn. Player B receives compensatory boosts defined in
+`contents/src/game.ts` (e.g., extra AP on their first Growth phase).
+
+### Turns, Phases, and Steps
+
+```
+Turn
+ ├── Growth Phase
+ │    ├── gain-income step
+ │    ├── gain-ap step
+ │    └── grow-military step
+ ├── Upkeep Phase
+ │    └── pay-upkeep step
+ └── Main Phase
+      └── (players spend AP on actions)
+```
+
+- **Turn**: One complete cycle for both players
+- **Phase**: Major segment of a turn (Growth → Upkeep → Main)
+- **Step**: Granular operation within a phase
+
+Triggers can fire at phase level (`onGrowthPhase`) or step level
+(`onGainIncomeStep`). Effects collected from buildings, developments, passives,
+and population roles execute when their trigger fires.
+
+### Victory Conditions
+
+Win by:
+
+- Capturing the enemy castle (reduce castle HP to 0)
+- Forcing enemy bankruptcy (opponent cannot pay upkeep)
+- Holding the most victory points when the game ends
+
+---
+
+## Core Systems
+
+### Resources (Unified Resource System)
+
+All numeric values—currencies, stats, population roles—are unified under a
+single Resource system.
+
+**Key concepts:**
+
+- `resourceValues`: Map of resource ID → current value
+- `resourceTouched`: Tracks whether a resource has ever been non-zero
+- Resources are organized into **groups** and **categories**
+- Categories marked `isPrimary: true` always display; others show only when
+  touched
+
+**Resource IDs follow the pattern:** `resource:{group}:{name}`
+
+- `resource:core:gold` - Gold currency
+- `resource:core:action-points` - Action Points
+- `resource:stat:army-strength` - Army Strength stat
+- `resource:population:role:legion` - Legion population count
+
+**Effects:**
+
+- `resource:add` - Add to a resource value
+- `resource:remove` - Subtract from a resource value
+- `resource:transfer` - Move value between resources (with donor/recipient)
+- `resource:upper-bound:increase` - Raise the maximum cap
+
+### Actions
+
+Player-initiated sequences with costs, requirements, and effects.
+
+**Execution flow:**
+
+1. Verify action is unlocked
+2. Check all requirements pass
+3. Calculate costs (base costs + effect costs + modifiers)
+4. Pay costs
+5. Execute effects (including effect groups)
+6. Apply result modifiers
+7. Log action trace
+
+**System actions** (marked with `.system()`) cost 0 AP and are auto-unlocked.
+Used for internal game operations.
+
+### Effects
+
+Atomic operations identified by `type:method` pairs. Registered in the `EFFECTS`
+registry and executed via `runEffects()`.
+
+**Structure:**
+
+```typescript
+{
+  type: 'resource',
+  method: 'add',
+  params: { resourceId: 'resource:core:gold', amount: 2 },
+  // Optional:
+  evaluator: { ... },  // Controls repetition
+  effects: [ ... ],    // Nested effects
+  round: 'up' | 'down' // Rounding strategy
+}
+```
+
+**Registered effect types:**
+
+- `resource:add`, `resource:remove`, `resource:transfer`,
+  `resource:upper-bound:increase`
+- `building:add`, `building:remove`
+- `development:add`, `development:remove`
+- `land:add`, `land:till`
+- `passive:add`, `passive:remove`
+- `cost_mod:add`, `cost_mod:remove`
+- `result_mod:add`, `result_mod:remove`
+- `action:add`, `action:remove`, `action:perform`
+- `attack:perform`
+
+### Effect Groups
+
+Named collections of effects that can be conditionally executed during action
+resolution. Used for branching logic (e.g., "choose one of these options").
+
+### Triggers
+
+Named events that fire effect lists automatically. Effects are collected from
+buildings, developments, passives, and population roles via
+`collectTriggerEffects()`.
+
+**Phase-level triggers:**
+
+- `onGrowthPhase` - Start of Growth phase
+- `onUpkeepPhase` - Start of Upkeep phase
+
+**Step-level triggers:**
+
+- `onGainIncomeStep` - During income collection
+- `onGainAPStep` - During AP gain
+- `onPayUpkeepStep` - During upkeep payment
+
+**Combat triggers:**
+
+- `onBeforeAttacked` - Before receiving an attack
+- `onAttackResolved` - After attack damage applied
+
+**Resource triggers (per-resource):**
+
+- `onValueIncrease` - Fires per unit of resource increase
+- `onValueDecrease` - Fires per unit of resource decrease
+
+**Population triggers:**
+
+- `onAssigned` - When a citizen is assigned to this role
+- `onUnassigned` - When a citizen is unassigned from this role
+
+**Build triggers:**
+
+- `onBuild` - When a building/development is constructed
+
+### Evaluators
+
+Compute numbers to control effect repetition. Registered in the `EVALUATORS`
+registry.
+
+**Usage:**
+
+```typescript
+{
+  evaluator: { type: 'development', params: { id: 'farm' } },
+  effects: [
+    // These effects run N times, where N = number of farms
+    { type: 'resource', method: 'add', params: { ... } }
+  ]
+}
+```
+
+**Registered evaluators:**
+
+- `development` - Count developments matching ID
+- `land` - Count lands matching criteria
+- `resource` - Get resource value
+- `compare` - Compare two evaluators (returns 1 if true, 0 if false)
+
+---
+
+## Game Objects
+
+### Buildings
+
+Global structures recorded in a player's `buildings` set. Not tied to land.
+
+**Lifecycle:**
+
+- `building:add` creates entry, runs `onBuild` effects, registers passives
+- `building:remove` removes entry, unregisters passives, runs teardown
+
+**Features:**
+
+- Trigger effects (`onGrowthPhase`, `onUpkeepPhase`, etc.)
+- Upkeep costs (gold per turn)
+- Grant passives with modifiers
+
+### Developments
+
+Improvements tied to specific land tiles. Consume development slots.
+
+**Lifecycle:**
+
+- `development:add` creates entry on land, runs `onBuild`, registers passives
+- `development:remove` removes from land, unregisters passives, runs teardown
+
+**Features:**
+
+- Tied to `landId` parameter
+- Consume `slotsUsed` up to land's `slotsMax`
+- Can modify population caps
+- Support same triggers as buildings
+
+### Lands
+
+Territory with development slots and tilling state.
+
+**Properties:**
+
+- `slotsMax` - Maximum development slots
+- `slotsUsed` - Currently occupied slots
+- `developments` - List of development IDs on this land
+- `tpisFilled` - Tilling state
+
+**Effects:**
+
+- `land:add` - Create new land tile
+- `land:till` - Increase slots up to configured maximum
+
+---
+
+## Services
+
+### PassiveManager
+
+Central manager for passive lifecycle. Located at
+`packages/engine/src/services/passive_manager.ts`.
+
+**Responsibilities:**
+
+- Register/unregister passives
+- Manage cost modifiers, result modifiers, evaluation modifiers
+- Run setup effects on add, teardown effects on remove
+- Track passive-to-modifier relationships for cleanup
+
+**Modifier types:**
+
+- **Cost modifiers**: Adjust action costs (flat or percent)
+- **Result modifiers**: Run effects after action execution
+- **Evaluation modifiers**: Adjust evaluator outputs
+
+### Reconciliation
+
+Handles resource transfers and modifications with multiple modes. Spans Effects
+and Resources, performs complex calculations.
+
+**Modes:**
+
+- Static amount transfer
+- Percent-based transfer
+- Transfer with donor + recipient
+
+Handles modifier application, rounding, and bound enforcement.
+
+### TieredResourceService
+
+Manages resources with tier tracks (like happiness with mood states).
+
+**Features:**
+
+- Tier definitions with thresholds
+- Automatic tier transitions on value changes
+- Enter/exit effects when crossing tier boundaries
+- Tracks active tier per player in `resourceTierIds`
+
+### WinConditionService
+
+Evaluates victory conditions on resource changes. Triggers game conclusion when
+conditions are met.
+
+### SessionManager (Server)
+
+Source of truth for session lifecycle. Located at
+`packages/server/src/session/SessionManager.ts`.
+
+**Responsibilities:**
+
+- Create, cache, and snapshot engine sessions
+- Clone registries and merge overrides on boot
+- Expose registry metadata to clients
+
+---
+
+## Passives & Modifiers
+
+### Passives
+
+Persistent bundles that manage modifier lifecycles and run trigger effects.
+
+**Structure:**
+
+- Setup effects (run on add)
+- Teardown effects (run on remove)
+- Trigger effects (`onGrowthPhase`, `onUpkeepPhase`, etc.)
+- Registered modifiers
+
+**Lifecycle:**
+
+1. `passive:add` runs setup effects, registers modifiers with PassiveManager
+2. Passive persists, triggers fire on events
+3. `passive:remove` unregisters modifiers, runs teardown effects
+
+### Modifiers
+
+Functions that adjust costs, results, or evaluations. Inert until registered
+via passives.
+
+**Types:**
+
+- **Cost modifiers**: Alter action resource costs before payment
+- **Result modifiers**: Run effects after action execution, can target specific
+  actions
+- **Evaluation modifiers**: Adjust evaluator numeric results
+
+**Requirements:**
+
+- Unique `id` per player to avoid conflicts
+- Scoped internally via `makeKey()`
+
+---
+
+## Content Pipeline
+
+### Data Flow
+
+```
+@kingdom-builder/contents
+        ↓ (definitions, registries)
+packages/server/src/session/SessionManager.ts
+        ↓ (registry payload)
+packages/web/src/state/sessionRegistries.ts
+        ↓ (client cache)
+packages/web/src/contexts/RegistryMetadataContext.tsx
+        ↓ (React context)
+Components + Translators
+```
+
+### Key Files
+
+- **Content definitions**: `packages/contents/src/**`
+- **Session bootstrap**: `packages/server/src/session/SessionManager.ts`
+- **Client registry store**: `packages/web/src/state/sessionRegistries.ts`
+- **Metadata context**: `packages/web/src/contexts/RegistryMetadataContext.tsx`
+- **Effect handlers**: `packages/engine/src/effects/**`
+- **Evaluators**: `packages/engine/src/evaluators/**`
+- **Services**: `packages/engine/src/services/**`
+
+---
+
+## Updating This Document
+
+When you implement a feature that changes core mechanics:
+
+1. Update the relevant section in this document
+2. Add new systems/concepts if introducing them
+3. Remove deprecated information
+4. Ensure examples are accurate
+
+Outdated documentation misleads future agents. Keep it current.
