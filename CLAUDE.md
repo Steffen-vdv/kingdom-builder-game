@@ -45,6 +45,10 @@ else. Then wait for user instruction.
 updates. The 🪨 is a complete response. Adding any text defeats the purpose and
 creates response loops.
 
+If you already answered a user question and hooks start firing, do not use
+subsequent messages to elaborate on your previous answer. You answered. Now
+you're waiting. 🪨 means you're done talking until the user responds.
+
 ### Message correlation
 
 The interface may delay or batch user messages. When you receive a new message:
