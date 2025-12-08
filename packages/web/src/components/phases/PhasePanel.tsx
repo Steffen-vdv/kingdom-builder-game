@@ -317,7 +317,7 @@ export default function PhasePanel() {
 										className={phaseListItemIconClassName}
 										aria-hidden="true"
 									>
-										{phaseDefinition.icon || '✦'}
+										{phaseDefinition.icon || '⚠️'}
 									</span>
 									<span className={phaseListItemLabelClassName}>
 										{phaseDefinition.label}

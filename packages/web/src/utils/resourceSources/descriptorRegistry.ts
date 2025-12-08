@@ -91,8 +91,8 @@ function createDescriptorRegistry(
 						})
 					: undefined;
 				return {
-					icon: phase?.icon ?? '',
-					label: phase?.label ?? id ?? 'Phase',
+					icon: phase?.icon ?? '⚠️',
+					label: phase?.label ?? `[MISSING:phase:${id}]`,
 				} satisfies ResolveResult;
 			};
 			const phases = translationContext.phases;
@@ -114,13 +114,13 @@ function createDescriptorRegistry(
 				if (id && translationContext.resourceMetadata.has(id)) {
 					const metadata = translationContext.resourceMetadata.get(id);
 					return {
-						icon: metadata.icon ?? '',
-						label: metadata.label ?? id,
+						icon: metadata.icon ?? '⚠️',
+						label: metadata.label ?? `[MISSING:resource:${id}]`,
 					} satisfies ResolveResult;
 				}
 				return {
-					icon: '',
-					label: id ?? 'Resource',
+					icon: '⚠️',
+					label: `[MISSING:resource:${id ?? 'unknown'}]`,
 				} satisfies ResolveResult;
 			},
 			formatDetail: defaultFormatDetail,
@@ -151,24 +151,30 @@ function createDescriptorRegistry(
 			resolve: () => {
 				const passive = translationContext.assets.passive;
 				return {
-					icon: passive.icon ?? '',
-					label: passive.label ?? 'Passive',
+					icon: passive.icon ?? '⚠️',
+					label: passive.label ?? '[MISSING:passive]',
 				} satisfies ResolveResult;
 			},
 			formatDetail: defaultFormatDetail,
 		},
 		land: {
-			resolve: (id) => ({
-				icon: '',
-				label: id ?? 'Land',
-			}),
+			resolve: (id) => {
+				const land = translationContext.assets.land;
+				return {
+					icon: land?.icon ?? '⚠️',
+					label: land?.label ?? `[MISSING:land:${id ?? 'unknown'}]`,
+				};
+			},
 			formatDetail: defaultFormatDetail,
 		},
 		start: {
-			resolve: () => ({
-				icon: '',
-				label: 'Initial Setup',
-			}),
+			resolve: () => {
+				// No start asset in TranslationAssets - use visible placeholder
+				return {
+					icon: '⚠️',
+					label: '[MISSING:start]',
+				};
+			},
 			formatDetail: defaultFormatDetail,
 		},
 	} satisfies Registry;
@@ -177,8 +183,8 @@ function createDescriptorRegistry(
 function createDefaultDescriptor(kind?: string): DescriptorRegistryEntry {
 	return {
 		resolve: (id) => ({
-			icon: '',
-			label: id ?? kind ?? 'Source',
+			icon: '⚠️',
+			label: `[MISSING:${kind ?? 'source'}:${id ?? 'unknown'}]`,
 		}),
 		formatDetail: defaultFormatDetail,
 	} satisfies DescriptorRegistryEntry;

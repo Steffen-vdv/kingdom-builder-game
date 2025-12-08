@@ -31,21 +31,21 @@ export default function GameConclusionOverlay({
 		(entry) => entry.id === conclusion.conditionId,
 	);
 	const message = playerWon
-		? (condition?.display?.victory ?? 'You stand victorious.')
-		: (condition?.display?.defeat ?? 'Defeat has taken the realm.');
+		? (condition?.display?.victory ?? '[MISSING:victory-message]')
+		: (condition?.display?.defeat ?? '[MISSING:defeat-message]');
 	const iconKey = condition?.display?.icon;
 	let icon: string | undefined;
 	if (iconKey) {
 		const descriptor = resourceMetadata.byId[iconKey];
 		if (descriptor) {
 			const display = toDescriptorDisplay(descriptor);
-			icon = display.icon ?? '🏁';
+			icon = display.icon ?? '⚠️';
 		} else if (iconKey.trim().length > 0) {
 			icon = iconKey;
 		}
 	}
 	if (!icon) {
-		icon = '🏁';
+		icon = '⚠️';
 	}
 	const title = playerWon ? 'Victory' : 'Defeat';
 

@@ -51,7 +51,8 @@ function formatDevelopmentChange(
 	context: Pick<TranslationDiffContext, 'developments' | 'assets'>,
 ): string {
 	const label = describeContent(context.developments, developmentId).trim();
-	const slotLabelBase = context.assets.slot.label?.trim() || 'Development Slot';
+	const slotLabelBase =
+		context.assets.slot.label?.trim() || '[MISSING:slot-label]';
 	const slotLabel = `Empty ${slotLabelBase}`.trim();
 	const slotDisplay =
 		formatIconLabel(context.assets.slot.icon, slotLabel).trim() || slotLabel;

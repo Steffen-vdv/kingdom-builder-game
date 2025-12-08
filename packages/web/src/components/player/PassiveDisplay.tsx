@@ -55,7 +55,7 @@ function resolveUpkeepPhaseLabel(
 			matchesUpkeepPhase(descriptor.id) ||
 			matchesUpkeepPhase(descriptor.label)
 		) {
-			return descriptor.label || 'Upkeep';
+			return descriptor.label || '[MISSING:upkeep-phase]';
 		}
 	}
 	for (const phase of phases) {
@@ -67,10 +67,10 @@ function resolveUpkeepPhaseLabel(
 			if (phase.label?.trim()) {
 				return phase.label;
 			}
-			return 'Upkeep';
+			return `[MISSING:phase:${phase.id}]`;
 		}
 	}
-	return 'Upkeep';
+	return '[MISSING:upkeep-phase]';
 }
 
 export default function PassiveDisplay({
@@ -176,7 +176,7 @@ export default function PassiveDisplay({
 					definition: passiveDefinition,
 					assets: translationContext.assets,
 				});
-				const icon = presentation.icon || passiveAsset.icon || '♾️';
+				const icon = presentation.icon || passiveAsset.icon || '⚠️';
 				const label = presentation.label || passiveAsset.label;
 				const removalText = presentation.removal;
 				const summaryText = presentation.summary;

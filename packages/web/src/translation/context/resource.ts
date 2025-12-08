@@ -253,16 +253,16 @@ export function createResourceMetadataSelectors(
 }
 
 /**
- * Extracts group display metadata. Groups MUST have their own label and icon;
- * we do NOT fall back to parent values since that hides misconfiguration.
- * Missing fields show obvious placeholders ("??") to signal broken config.
+ * Extracts group display metadata. Groups MUST have their own label and icon
+ * defined in content. Missing values show visible placeholders to surface
+ * content gaps during development.
  */
 function extractGroupMetadata(
 	def: TranslationResourceCatalog['groups']['ordered'][number],
 ) {
 	return {
-		label: def.label ?? '??',
-		icon: def.icon ?? '❓',
+		label: def.label ?? `[MISSING:${def.id}]`,
+		icon: def.icon ?? '⚠️',
 		description: def.parent?.description ?? null,
 	};
 }

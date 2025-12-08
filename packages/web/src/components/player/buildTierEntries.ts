@@ -131,7 +131,7 @@ export function buildTierEntries(
 	}));
 	const summaries = entries.map((entry) => {
 		const { display, active } = entry;
-		const icon = display?.icon ?? passiveAsset.icon ?? '♾️';
+		const icon = display?.icon ?? passiveAsset.icon ?? '⚠️';
 		const name = resolveTierName(entry);
 		const titleParts = [icon, name].filter(
 			(part) => part && String(part).trim().length > 0,
