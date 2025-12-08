@@ -23,9 +23,7 @@ export interface SessionResourceBoundReference {
 }
 
 /** A bound can be a static number or a dynamic reference to another resource */
-export type SessionResourceBoundValue =
-	| number
-	| SessionResourceBoundReference;
+export type SessionResourceBoundValue = number | SessionResourceBoundReference;
 
 /**
  * Specifies which type of bound this resource represents.

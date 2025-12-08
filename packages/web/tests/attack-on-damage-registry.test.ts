@@ -197,7 +197,7 @@ describe('attack on-damage formatter registry', () => {
 			defender: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 5,
 					after: 3,
 				},
@@ -205,7 +205,7 @@ describe('attack on-damage formatter registry', () => {
 			attacker: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 1,
 					after: 4,
 				},
@@ -236,7 +236,7 @@ describe('attack on-damage formatter registry', () => {
 			defender: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 10,
 					after: 5,
 				},
@@ -244,7 +244,7 @@ describe('attack on-damage formatter registry', () => {
 			attacker: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 2,
 					after: 7,
 				},
@@ -275,7 +275,7 @@ describe('attack on-damage formatter registry', () => {
 			defender: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 5,
 					after: 3,
 				},
@@ -283,7 +283,7 @@ describe('attack on-damage formatter registry', () => {
 			attacker: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 1,
 					after: 4,
 				},

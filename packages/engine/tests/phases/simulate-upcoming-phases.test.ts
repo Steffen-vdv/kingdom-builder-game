@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	PhaseId,
-	Resource,
-	PHASES,
-	RULES,
-} from '@kingdom-builder/contents';
+import { PhaseId, Resource, PHASES, RULES } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { simulateUpcomingPhases } from '../../src';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';

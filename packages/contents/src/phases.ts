@@ -30,11 +30,7 @@ export const PHASES: PhaseDef[] = [
 				.effect(
 					effect()
 						.evaluator(resourceEvaluator().resourceId(PopulationRole.Council))
-						.effect(
-							effect(Types.Resource, ResourceMethods.ADD)
-								.params(resourceAmountChange(Resource.ap, COUNCIL_AP_GAIN))
-								.build(),
-						)
+						.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.ap, COUNCIL_AP_GAIN)).build())
 						.build(),
 				),
 		)
@@ -74,31 +70,19 @@ export const PHASES: PhaseDef[] = [
 				.effect(
 					effect()
 						.evaluator(resourceEvaluator().resourceId(PopulationRole.Council))
-						.effect(
-							effect(Types.Resource, ResourceMethods.REMOVE)
-								.params(resourceAmountChange(Resource.gold, COUNCIL_UPKEEP))
-								.build(),
-						)
+						.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceAmountChange(Resource.gold, COUNCIL_UPKEEP)).build())
 						.build(),
 				)
 				.effect(
 					effect()
 						.evaluator(resourceEvaluator().resourceId(PopulationRole.Legion))
-						.effect(
-							effect(Types.Resource, ResourceMethods.REMOVE)
-								.params(resourceAmountChange(Resource.gold, LEGION_UPKEEP))
-								.build(),
-						)
+						.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceAmountChange(Resource.gold, LEGION_UPKEEP)).build())
 						.build(),
 				)
 				.effect(
 					effect()
 						.evaluator(resourceEvaluator().resourceId(PopulationRole.Fortifier))
-						.effect(
-							effect(Types.Resource, ResourceMethods.REMOVE)
-								.params(resourceAmountChange(Resource.gold, FORTIFIER_UPKEEP))
-								.build(),
-						)
+						.effect(effect(Types.Resource, ResourceMethods.REMOVE).params(resourceAmountChange(Resource.gold, FORTIFIER_UPKEEP)).build())
 						.build(),
 				),
 		)

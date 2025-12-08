@@ -106,8 +106,8 @@ describe('Resource formatters', () => {
 		const gains = collectSignedGains([child, parent]);
 
 		expect(gains).toEqual([
-			{ key: 'resource:population', amount: 2 },
-			{ key: 'resource:legion', amount: -2 },
+			{ resourceId: 'resource:population', amount: 2 },
+			{ resourceId: 'resource:legion', amount: -2 },
 		]);
 	});
 

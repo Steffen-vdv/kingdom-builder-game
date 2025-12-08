@@ -77,7 +77,10 @@ describe('result_mod evaluation modifiers', () => {
 			engineContext,
 			followUpGains,
 		);
-		expect(followUpGains[0]).toEqual({ resourceId: primaryResource, amount: 1 });
+		expect(followUpGains[0]).toEqual({
+			resourceId: primaryResource,
+			amount: 1,
+		});
 	});
 
 	it('throws when required identifiers are missing', () => {

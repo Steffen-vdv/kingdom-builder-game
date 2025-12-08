@@ -56,7 +56,7 @@ function deriveStatKeys(registries: SessionRegistries): string[] {
 	scanRegistry(registries.actions);
 	scanRegistry(registries.buildings);
 	scanRegistry(registries.developments);
-	scanRegistry(registries.populations);
+	// Populations are now unified under resources in V2 system
 	return Array.from(keys);
 }
 

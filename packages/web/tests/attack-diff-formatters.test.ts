@@ -33,7 +33,7 @@ describe('attack diff formatters registry', () => {
 			resourceKey,
 		);
 		const diff: AttackPlayerDiff = {
-			key: resourceKey,
+			resourceId: resourceKey,
 			before: 2,
 			after: 5,
 		};
@@ -51,7 +51,7 @@ describe('attack diff formatters registry', () => {
 		const statKey = SYNTH_RESOURCE_IDS.armyStrength;
 		const statInfo = selectAttackStatDescriptor(translation, statKey);
 		const diff: AttackPlayerDiff = {
-			key: statKey,
+			resourceId: statKey,
 			before: 4,
 			after: 9,
 		};
@@ -70,7 +70,7 @@ describe('attack diff formatters registry', () => {
 		try {
 			const { translation } = createSyntheticEngineContext();
 			const diff: AttackPlayerDiff = {
-				key: resourceKey,
+				resourceId: resourceKey,
 				before: 1,
 				after: 4,
 			};
@@ -98,7 +98,7 @@ describe('attack diff formatters registry', () => {
 		try {
 			const { translation } = createSyntheticEngineContext();
 			const diff: AttackPlayerDiff = {
-				key: statKey,
+				resourceId: statKey,
 				before: 6,
 				after: 7,
 			};
@@ -119,7 +119,7 @@ describe('attack diff formatters registry', () => {
 		const { translation } = createSyntheticEngineContext();
 		// Test that formatting works without type discrimination
 		const diff: AttackPlayerDiff = {
-			key: 'unknown:test:key',
+			resourceId: 'unknown:test:key',
 			before: 0,
 			after: 1,
 		};

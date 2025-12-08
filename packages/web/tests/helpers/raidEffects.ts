@@ -82,7 +82,7 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 			method: 'transfer',
 			params: {
 				// Legacy params for translation formatter
-				key: descriptor.resourceId,
+				key: descriptor.key,
 				...(descriptor.percent !== undefined
 					? { percent: descriptor.percent }
 					: {}),
@@ -92,12 +92,12 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 				// params for engine execution
 				donor: {
 					player: 'opponent' as const,
-					resourceId: descriptor.resourceId,
+					resourceId: descriptor.key,
 					change: donorChange,
 				},
 				recipient: {
 					player: 'active' as const,
-					resourceId: descriptor.resourceId,
+					resourceId: descriptor.key,
 					change: recipientChange,
 				},
 			},
@@ -107,7 +107,7 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 		type: 'resource',
 		method: descriptor.method,
 		params: {
-			resourceId: descriptor.resourceId,
+			resourceId: descriptor.key,
 			change: { type: 'amount', amount: descriptor.amount ?? 0 },
 		},
 	};
@@ -126,7 +126,7 @@ function buildStatEffect(descriptor: StatEffectDescriptor): EffectDef {
 		type: 'resource',
 		method: 'add',
 		params: {
-			resourceId: descriptor.resourceId,
+			resourceId: descriptor.key,
 			change: { type: 'amount', amount: descriptor.amount },
 		},
 	};
@@ -147,10 +147,12 @@ export function buildEffects(
 }
 
 type AttackParams = {
-	target: { type: 'resource'; key: string } | { type: 'building'; id: string };
+	target:
+		| { type: 'resource'; resourceId: string }
+		| { type: 'building'; id: string };
 	stats?: Array<{
 		role: 'power' | 'absorption' | 'fortification';
-		key: string;
+		resourceId: string;
 		label?: string;
 		icon?: string;
 	}>;
@@ -167,7 +169,7 @@ export function buildAttackEffect(
 ): EffectDef {
 	const params: AttackParams = {
 		target: descriptor.target.resource
-			? { type: 'resource', key: descriptor.target.resource }
+			? { type: 'resource', resourceId: descriptor.target.resource }
 			: {
 					type: 'building',
 					id: descriptor.target.building ?? SYNTH_BUILDING.id,
@@ -182,7 +184,7 @@ export function buildAttackEffect(
 		}
 		annotations?.push({
 			role,
-			key: config.resourceId,
+			resourceId: config.resourceId,
 			label: config.label,
 			icon: config.icon,
 		});

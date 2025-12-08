@@ -123,8 +123,8 @@ function buildAction(
 
 function registerSyntheticResources(registries: SessionRegistries) {
 	for (const descriptor of Object.values(SYNTH_RESOURCE_METADATA)) {
-		registries.resources[descriptor.resourceId] = {
-			key: descriptor.resourceId,
+		registries.resources[descriptor.key] = {
+			key: descriptor.key,
 			icon: descriptor.icon,
 			label: descriptor.label,
 		};
@@ -241,10 +241,10 @@ export function iconLabel(
 	return icon ? `${icon} ${resolved}` : resolved;
 }
 
-export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { key: string }> = {
-	power: { key: COMBAT_STAT_CONFIG.power.resourceId },
-	absorption: { key: COMBAT_STAT_CONFIG.absorption.resourceId },
-	fortification: { key: COMBAT_STAT_CONFIG.fortification.resourceId },
+export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { resourceId: string }> = {
+	power: { resourceId: COMBAT_STAT_CONFIG.power.resourceId },
+	absorption: { resourceId: COMBAT_STAT_CONFIG.absorption.resourceId },
+	fortification: { resourceId: COMBAT_STAT_CONFIG.fortification.resourceId },
 };
 
 const suppressedStatEntries = new Map<

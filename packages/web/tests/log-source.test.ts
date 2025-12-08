@@ -295,12 +295,11 @@ describe('log resource sources', () => {
 		expect(raidersGuildIcon).not.toBe('');
 		expect(icons).toContain(raidersGuildIcon);
 		// In Resource, population counts are stored in resourceValues
-		const zeroPopulationIcons = engineContext.populations
-			.keys()
+		const zeroPopulationIcons = Object.keys(SYNTHETIC_POPULATION_ROLES)
 			.filter(
 				(role) => (engineContext.activePlayer.resourceValues[role] ?? 0) === 0,
 			)
-			.map((role) => engineContext.populations.get(role)?.icon)
+			.map((role) => SYNTHETIC_POPULATION_ROLES[role]?.icon)
 			.filter((icon): icon is string => Boolean(icon));
 		for (const icon of zeroPopulationIcons) {
 			expect(icons).not.toContain(icon);

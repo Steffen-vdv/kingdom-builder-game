@@ -15,7 +15,6 @@ import {
 	RegistryMetadataProvider,
 	useRegistryMetadata,
 	useResourceMetadata,
-	usePopulationMetadata,
 	useActionCategoryMetadata,
 	useBuildingMetadata,
 	useDevelopmentMetadata,
@@ -106,8 +105,7 @@ function createTestSetup(): TestSetup {
 				icon: '💡',
 				description: 'Condensed radiance.',
 			},
-		},
-		populations: {
+			// Populations are unified under resources in V2 system
 			[population.id]: { label: 'Astral Council', icon: '✨' },
 		},
 		actionCategories: {
@@ -184,7 +182,7 @@ function createTestSetup(): TestSetup {
 interface CapturedLookups {
 	context: RegistryMetadataContextValue;
 	resources: MetadataSelector<RegistryMetadataDescriptor>;
-	populations: MetadataSelector<RegistryMetadataDescriptor>;
+	// Populations are unified under resources in V2 system
 	actionCategories: MetadataSelector<RegistryMetadataDescriptor>;
 	buildings: MetadataSelector<RegistryMetadataDescriptor>;
 	developments: MetadataSelector<RegistryMetadataDescriptor>;
@@ -212,7 +210,7 @@ describe('RegistryMetadataProvider', () => {
 			captured = {
 				context: useRegistryMetadata(),
 				resources: useResourceMetadata(),
-				populations: usePopulationMetadata(),
+				// Populations are unified under resources in V2 system
 				actionCategories: useActionCategoryMetadata(),
 				buildings: useBuildingMetadata(),
 				developments: useDevelopmentMetadata(),
@@ -239,7 +237,7 @@ describe('RegistryMetadataProvider', () => {
 		const {
 			context,
 			resources,
-			populations,
+			// populations removed - unified under resources in V2 system
 			actionCategories,
 			buildings,
 			developments,
@@ -260,13 +258,12 @@ describe('RegistryMetadataProvider', () => {
 		expect(context.developments.getOrThrow(developmentId).id).toBe(
 			developmentId,
 		);
-		expect(context.populations.getOrThrow(populationId).id).toBe(populationId);
+		// Populations unified under resources in V2 - use resourceMetadata instead
 		expect(context.resources.getOrThrow(resourceKey)).toEqual(setup.resource);
 		expect(context.buildings.keys()).toContain(buildingId);
 		expect(context.developments.values().map((item) => item.id)).toContain(
 			developmentId,
 		);
-		expect(context.populations.has(nextKey('population'))).toBe(false);
 		expect(context.actionCategories.get(setup.categoryId)?.title).toBe(
 			'Arcane',
 		);
@@ -292,7 +289,8 @@ describe('RegistryMetadataProvider', () => {
 		expect(resourceRecord[resourceKey]).toBe(resourceDescriptor);
 		expect(Object.isFrozen(selectedResources)).toBe(true);
 		expect(Object.isFrozen(resourceRecord)).toBe(true);
-		expect(populations.byId[populationId].label).toBe('Astral Council');
+		// Populations unified under resources in V2 - check via resources
+		expect(resources.byId[populationId]?.label).toBe('Astral Council');
 		expect(actionCategories.byId[setup.categoryId].label).toBe(
 			'Arcane Actions',
 		);

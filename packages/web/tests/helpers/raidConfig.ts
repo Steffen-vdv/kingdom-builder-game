@@ -89,6 +89,7 @@ export const SYNTH_RESOURCE_METADATA: Record<
 
 export type CombatStatConfig = {
 	key: string;
+	resourceId: string;
 	icon: string;
 	label: string;
 	baseKey: SyntheticResourceKey;
@@ -127,18 +128,21 @@ export const SYNTH_PARTIAL_ATTACK: SyntheticAction = {
 export const COMBAT_STAT_CONFIG: Record<CombatStatKey, CombatStatConfig> = {
 	power: {
 		key: 'synthetic:valor',
+		resourceId: 'synthetic:valor',
 		icon: '⚔️',
 		label: 'Valor',
 		baseKey: SYNTH_RESOURCE_IDS.armyStrength,
 	},
 	absorption: {
 		key: 'synthetic:veil',
+		resourceId: 'synthetic:veil',
 		icon: '🌫️',
 		label: 'Veil',
 		baseKey: SYNTH_RESOURCE_IDS.absorption,
 	},
 	fortification: {
 		key: 'synthetic:rampart',
+		resourceId: 'synthetic:rampart',
 		icon: '🧱',
 		label: 'Rampart',
 		baseKey: SYNTH_RESOURCE_IDS.fortificationStrength,

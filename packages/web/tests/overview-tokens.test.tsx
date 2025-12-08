@@ -26,7 +26,7 @@ describe('buildOverviewIconSet', () => {
 		actionCategories: new Registry<ActionCategoryConfig>(),
 		buildings: factory.buildings,
 		developments: factory.developments,
-		populations: factory.populations,
+		// Populations are now unified under resources in V2 system
 		resources: {
 			gold: { key: 'gold', label: 'Gold', icon: '🥇' },
 			ap: { key: 'ap', label: 'AP', icon: '⚡' },
@@ -37,8 +37,7 @@ describe('buildOverviewIconSet', () => {
 		resources: {
 			gold: { label: 'Refined Gold', icon: '🪙' },
 			ap: { label: 'Reserve AP', icon: '✨' },
-		},
-		populations: {
+			// Populations are unified under resources in V2 system
 			[councilRole.id]: { label: 'Guiding Council', icon: councilRole.icon },
 			[legionRole.id]: { label: 'Legion Vanguard', icon: legionRole.icon },
 		},
@@ -77,7 +76,7 @@ describe('buildOverviewIconSet', () => {
 			phaseMetadata,
 			resourceMetadata,
 			statMetadata,
-			populationMetadata,
+			// populationMetadata removed - unified under resources in V2
 			landMetadata,
 			slotMetadata,
 		} = useRegistryMetadata();
@@ -88,7 +87,6 @@ describe('buildOverviewIconSet', () => {
 					phaseMetadata,
 					resourceMetadata,
 					statMetadata,
-					populationMetadata,
 					landMetadata,
 					slotMetadata,
 				}),
@@ -97,7 +95,6 @@ describe('buildOverviewIconSet', () => {
 				phaseMetadata,
 				resourceMetadata,
 				statMetadata,
-				populationMetadata,
 				landMetadata,
 				slotMetadata,
 			],

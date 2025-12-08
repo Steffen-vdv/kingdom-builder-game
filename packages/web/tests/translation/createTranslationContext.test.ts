@@ -216,8 +216,8 @@ describe('createTranslationContext', () => {
 			phases,
 			actionCostResource: resourceKey,
 			recentResourceGains: [
-				{ key: resourceKey, amount: 3 },
-				{ key: resourceId, amount: -2 },
+				{ resourceId: resourceKey, amount: 3 },
+				{ resourceId: resourceId, amount: -2 },
 			],
 			compensations: {
 				A: compensation(2),
@@ -304,9 +304,10 @@ describe('createTranslationContext', () => {
 					id: developmentId,
 					has: context.developments.has(developmentId),
 				},
+				// Populations are unified under resources in V2 system
 				population: {
 					id: populationId,
-					has: context.populations.has(populationId),
+					has: context.resourceMetadata.has(populationId),
 				},
 			},
 			assets: {
@@ -416,11 +417,11 @@ describe('createTranslationContext', () => {
 			  "recentResourceGains": [
 			    {
 			      "amount": 3,
-			      "key": "resource:core:gold",
+			      "resourceId": "resource:core:gold",
 			    },
 			    {
 			      "amount": -2,
-			      "key": "resource:gold",
+			      "resourceId": "resource:gold",
 			    },
 			  ],
 			  "registries": {
@@ -494,23 +495,23 @@ describe('createTranslationContext', () => {
 			    "list": [
 			      {
 			        "amount": 3,
-			        "key": "resource:core:gold",
+			        "resourceId": "resource:core:gold",
 			      },
 			      {
 			        "amount": -2,
-			        "key": "resource:gold",
+			        "resourceId": "resource:gold",
 			      },
 			    ],
 			    "negatives": [
 			      {
 			        "amount": -2,
-			        "key": "resource:gold",
+			        "resourceId": "resource:gold",
 			      },
 			    ],
 			    "positives": [
 			      {
 			        "amount": 3,
-			        "key": "resource:core:gold",
+			        "resourceId": "resource:core:gold",
 			      },
 			    ],
 			    "sumLegacy": 3,

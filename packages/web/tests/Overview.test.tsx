@@ -43,8 +43,7 @@ describe('<Overview />', () => {
 			resources: {
 				gold: { label: 'Refined Gold', icon: '🪙' },
 				ap: { label: 'Reserve AP', icon: '✨' },
-			},
-			populations: {
+				// Population resources are unified in V2 system
 				[councilRole.id]: {
 					label: 'Guiding Council',
 					icon: councilRole.icon,
