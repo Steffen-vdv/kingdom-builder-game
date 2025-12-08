@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Post-merge hook - formats files after merge to catch unformatted changes
+# Post-merge hook - formats and lints files after merge
 
 set -e
 
@@ -12,4 +12,17 @@ if ! git diff --quiet; then
 	echo "⚠️  Formatting changes detected after merge."
 	echo "   Please review and commit them before pushing."
 	echo ""
+fi
+
+# Lint files that changed in the merge to catch errors early
+# ORIG_HEAD is the commit before merge, HEAD is after merge
+MERGED_FILES=$(git diff --name-only ORIG_HEAD HEAD -- '*.ts' '*.tsx' 2>/dev/null | tr '\n' ' ')
+if [ -n "$MERGED_FILES" ]; then
+	echo "Linting merged files..."
+	if ! npx eslint --cache $MERGED_FILES; then
+		echo ""
+		echo "⚠️  Lint errors detected in merged files."
+		echo "   Please fix them before committing."
+		echo ""
+	fi
 fi

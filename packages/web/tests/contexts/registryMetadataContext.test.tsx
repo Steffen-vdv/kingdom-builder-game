@@ -180,11 +180,10 @@ function createTestSetup(): TestSetup {
 interface CapturedLookups {
 	context: RegistryMetadataContextValue;
 	resources: MetadataSelector<RegistryMetadataDescriptor>;
-	// Populations are unified under resources in V2 system
+	// Populations and stats are unified under resources in V2 system
 	actionCategories: MetadataSelector<RegistryMetadataDescriptor>;
 	buildings: MetadataSelector<RegistryMetadataDescriptor>;
 	developments: MetadataSelector<RegistryMetadataDescriptor>;
-	stats: MetadataSelector<RegistryMetadataDescriptor>;
 	phases: MetadataSelector<PhaseMetadata>;
 	triggers: MetadataSelector<TriggerMetadata>;
 	land: AssetMetadataSelector;
@@ -208,11 +207,10 @@ describe('RegistryMetadataProvider', () => {
 			captured = {
 				context: useRegistryMetadata(),
 				resources: useResourceMetadata(),
-				// Populations are unified under resources in V2 system
+				// Populations and stats are unified under resources in V2 system
 				actionCategories: useActionCategoryMetadata(),
 				buildings: useBuildingMetadata(),
 				developments: useDevelopmentMetadata(),
-				stats: useStatMetadata(),
 				phases: usePhaseMetadata(),
 				triggers: useTriggerMetadata(),
 				land: useLandMetadata(),
@@ -235,11 +233,10 @@ describe('RegistryMetadataProvider', () => {
 		const {
 			context,
 			resources,
-			// populations removed - unified under resources in V2 system
+			// populations and stats removed - unified under resources in V2 system
 			actionCategories,
 			buildings,
 			developments,
-			stats,
 			phases,
 			triggers,
 			land,
