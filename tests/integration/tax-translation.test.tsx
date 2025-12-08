@@ -59,7 +59,10 @@ describe('Action translation with population scaling', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: resourceKey, amount: 1 },
+							params: {
+								resourceId: resourceKey,
+								change: { type: 'amount', amount: 1 },
+							},
 						},
 					],
 				},
@@ -69,7 +72,7 @@ describe('Action translation with population scaling', () => {
 			buildSyntheticTranslationContext(({ registries, session }) => {
 				registries.actions.add(action.id, action);
 				registries.resources[resourceKey] = {
-					key: resourceKey,
+					id: resourceKey,
 					label: 'Tax Gold',
 					icon: '🪙',
 				};
@@ -114,7 +117,10 @@ describe('Action translation with population scaling', () => {
 						{
 							type: 'resource',
 							method: 'add',
-							params: { key: resourceKey, amount: 1 },
+							params: {
+								resourceId: resourceKey,
+								change: { type: 'amount', amount: 1 },
+							},
 						},
 					],
 				},
@@ -124,7 +130,7 @@ describe('Action translation with population scaling', () => {
 			buildSyntheticTranslationContext(({ registries, session }) => {
 				registries.actions.add(action.id, action);
 				registries.resources[resourceKey] = {
-					key: resourceKey,
+					id: resourceKey,
 					label: 'Levy Gold',
 				};
 				session.metadata = {

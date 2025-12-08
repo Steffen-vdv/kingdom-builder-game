@@ -12,9 +12,7 @@ import type {
 describe('simulate upcoming phases protocol types', () => {
 	it('describes the delta bucket structure', () => {
 		expectTypeOf<PlayerSnapshotDeltaBucket>().toEqualTypeOf<{
-			resources: Record<string, number>;
-			stats: Record<string, number>;
-			population: Record<string, number>;
+			values: Record<string, number>;
 		}>();
 	});
 

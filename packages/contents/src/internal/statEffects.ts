@@ -1,6 +1,5 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
-import { getStatResourceId } from '../internal';
-import type { StatKey } from '../internal';
+import { getStatResourceId, type StatKey } from './stats';
 import { resourceChange } from '../resource';
 import { effect } from '../config/builders/evaluators/effectBuilder';
 import { ResourceMethods, Types } from '../config/builderShared';

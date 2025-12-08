@@ -16,7 +16,7 @@ import {
 import {
 	resolveAttackFormatterContext,
 	type AttackFormatterContext,
-} from './attack/statContext';
+} from './attack/combatResourceContext';
 import {
 	resolveAttackTargetFormatter,
 	type AttackTargetFormatter,

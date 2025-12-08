@@ -47,7 +47,6 @@ export default function Overview({
 		actions,
 		phaseMetadata,
 		resourceMetadata,
-		statMetadata,
 		landMetadata,
 		slotMetadata,
 		overviewContent,
@@ -62,18 +61,10 @@ export default function Overview({
 				actions,
 				phaseMetadata,
 				resourceMetadata,
-				statMetadata,
 				landMetadata,
 				slotMetadata,
 			}),
-		[
-			actions,
-			phaseMetadata,
-			resourceMetadata,
-			statMetadata,
-			landMetadata,
-			slotMetadata,
-		],
+		[actions, phaseMetadata, resourceMetadata, landMetadata, slotMetadata],
 	);
 	const { sections: renderedSections, tokens: iconTokens } =
 		React.useMemo(() => {

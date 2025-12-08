@@ -32,7 +32,7 @@ export {
 	resourceEvaluator,
 } from './builders/evaluators';
 
-export { statAddEffect } from '../helpers/statEffects';
+export { statAddEffect } from '../internal/statEffects';
 
 export {
 	ActionEffectGroupBuilder,

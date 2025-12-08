@@ -68,7 +68,10 @@ describe('PhasedTranslator step triggers', () => {
 				const makeEffect = (amount: number) => ({
 					type: 'resource',
 					method: 'add',
-					params: { key: resourceKey, amount },
+					params: {
+						resourceId: resourceKey,
+						change: { type: 'amount', amount },
+					},
 				});
 
 				session.metadata = {

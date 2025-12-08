@@ -46,8 +46,9 @@ const resourceKeys = Object.keys(registries.resources) as SessionResourceKey[];
 const primaryResource =
 	resourceKeys[0] ?? ('resource-fallback' as SessionResourceKey);
 const translationAssets = createDefaultTranslationAssets();
-const statKeys = Object.keys(translationAssets.stats);
-const primaryStat = statKeys[0] ?? 'maxPopulation';
+// Use resources for stat keys - stats are unified under resources in V2
+const resourceMetadataKeys = Object.keys(translationAssets.resources ?? {});
+const primaryStat = resourceMetadataKeys[0] ?? 'maxPopulation';
 const defaultPhases: SessionSnapshot['phases'] = [
 	{ id: 'growth', steps: [] },
 	{ id: 'upkeep', steps: [] },

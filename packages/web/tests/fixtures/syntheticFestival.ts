@@ -114,6 +114,12 @@ export const createSyntheticFestivalScenario =
 				label: resource.label,
 			};
 		}
+		// Add fortification stat as a unified resource
+		registries.resources[FORTIFICATION_STAT_KEY] = {
+			key: FORTIFICATION_STAT_KEY,
+			icon: '🛡️',
+			label: 'Fortification Strength',
+		};
 		registries.actions.add(attackAction.id, { ...attackAction });
 		registries.actions.add(festivalAction.id, { ...festivalAction });
 		const metadata = createFestivalMetadata();
@@ -195,8 +201,8 @@ export const getSyntheticFestivalDetails = (
 			(e.params as { resourceId?: string }).resourceId ===
 				FORTIFICATION_STAT_KEY,
 	) as EffectDef<{ resourceId: string; change: { amount: number } }>;
-	const fortInfo = translation.assets.stats[fortEff.params.resourceId] ??
-		translation.assets.stats[FORTIFICATION_STAT_KEY] ?? {
+	const fortInfo = translation.assets.resources[fortEff.params.resourceId] ??
+		translation.assets.resources[FORTIFICATION_STAT_KEY] ?? {
 			icon: '',
 			label: fortEff.params.resourceId,
 		};

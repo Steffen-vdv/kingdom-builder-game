@@ -1,6 +1,9 @@
 import type { SessionResourceBoundValue } from '@kingdom-builder/protocol';
 import { statDisplaysAsPercent } from '../../utils/resourceSources';
-import { findResourcePctBreakdown, type StepEffects } from './statBreakdown';
+import {
+	findResourcePctBreakdown,
+	type StepEffects,
+} from './resourceBreakdown';
 import type { ActionDiffChange } from './diff';
 import {
 	formatPercentBreakdown,

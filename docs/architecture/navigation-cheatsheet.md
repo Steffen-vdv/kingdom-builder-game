@@ -6,8 +6,8 @@ Use this as a jumping-off point when you need to track how combat, passives, and
 
 - **`packages/engine/src/effects/attack.ts`** – Entry effect that pulls attacker/defender state, applies evaluation modifiers, and kicks off `resolveAttack` before logging on-damage hooks.【F:packages/engine/src/effects/attack.ts†L1-L86】
 - **`packages/engine/src/effects/attack/resolve.ts`** – Core calculator for absorption, fortification, and post-trigger sweeps; expects `RULES` values (cap, rounding) to be preloaded before running fights.【F:packages/engine/src/effects/attack/resolve.ts†L1-L120】
-- **`packages/engine/src/effects/attack_target_handlers/index.ts`** – Dispatch table for resource/stat/building targets; use this when adding new attack surfaces or evaluation keys.【F:packages/engine/src/effects/attack_target_handlers/index.ts†L1-L51】
-- **`packages/engine/src/effects/attack/snapshot_diff.ts`** – Utility diffing attacker/defender snapshots so logs surface resource/stat shifts during combat.【F:packages/engine/src/effects/attack/snapshot_diff.ts†L1-L48】
+- **`packages/engine/src/effects/attack_target_handlers/index.ts`** – Dispatch table for resource/building targets; use this when adding new attack surfaces or evaluation keys.【F:packages/engine/src/effects/attack_target_handlers/index.ts†L1-L51】
+- **`packages/engine/src/effects/attack/snapshot_diff.ts`** – Utility diffing attacker/defender snapshots so logs surface resource shifts during combat.【F:packages/engine/src/effects/attack/snapshot_diff.ts†L1-L48】
 - **Registries to preload** – `RULES`, `PHASES`, and any attack-target metadata from `@kingdom-builder/contents` must be loaded before invoking `attack:perform` so evaluation hooks resolve correctly.
 
 ## Passive Stacking & Modifiers

@@ -64,7 +64,6 @@ export interface TranslationTriggerAsset {
 
 export interface TranslationAssets {
 	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
-	readonly stats: Readonly<Record<string, TranslationIconLabel>>;
 	readonly population: Readonly<TranslationIconLabel>;
 	readonly land: Readonly<TranslationIconLabel>;
 	readonly slot: Readonly<TranslationIconLabel>;
@@ -166,8 +165,8 @@ export interface TranslationPhase {
 
 /**
  * Snapshot of active/opposing players required by translation helpers. The
- * fields mirror the read access patterns used when formatting stat breakdowns
- * and passive ownership.
+ * fields mirror the read access patterns used when formatting resource
+ * breakdowns and passive ownership.
  */
 export interface TranslationPlayer {
 	id: SessionPlayerId;

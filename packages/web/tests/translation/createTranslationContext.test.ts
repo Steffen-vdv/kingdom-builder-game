@@ -27,8 +27,7 @@ describe('createTranslationContext', () => {
 			...registries.resources[resourceKey],
 			label: undefined,
 		};
-		const statKey = 'maxPopulation';
-		// Under ResourceV2, populations are resources - no separate registry
+		// Populations are now unified under the resource system
 		const populationId: string | undefined = undefined;
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
@@ -119,15 +118,6 @@ describe('createTranslationContext', () => {
 						},
 					}
 				: undefined,
-			stats: {
-				[statKey]: {
-					label: 'Population Capacity',
-					icon: '🏯',
-					description: 'Represents how many specialists can serve the realm.',
-					displayAsPercent: true,
-					format: { prefix: '~', percent: true },
-				},
-			},
 			assets: {
 				passive: { icon: '✨', label: 'Passive Aura' },
 				slot: {
@@ -314,7 +304,6 @@ describe('createTranslationContext', () => {
 				passive: context.assets.passive,
 				slot: context.assets.slot,
 				resource: context.assets.resources[resourceKey],
-				stat: context.assets.stats[statKey],
 				trigger: context.assets.triggers[triggerId],
 				population: context.assets.population,
 			},
@@ -350,7 +339,6 @@ describe('createTranslationContext', () => {
 			      "icon": "📦",
 			      "label": "Plot Slot",
 			    },
-			    "stat": undefined,
 			    "trigger": {
 			      "future": "When the signal sounds",
 			      "icon": "🔔",
