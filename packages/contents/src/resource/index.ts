@@ -1,4 +1,6 @@
 export type {
+	ResourceBoundReference,
+	ResourceBoundValue,
 	ResourceMetadata,
 	ResourceBounds,
 	ResourceGlobalCostConfig,
@@ -12,6 +14,7 @@ export type {
 	ResourceCategoryItem,
 	ResourceCategoryDefinition,
 } from './types';
+export { boundTo } from './types';
 
 export { resource } from './resourceBuilder';
 export type { ResourceBuilder } from './resourceBuilder';

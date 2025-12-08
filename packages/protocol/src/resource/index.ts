@@ -1,6 +1,8 @@
 export type {
 	ResourceBoundOfConfig,
+	ResourceBoundReference,
 	ResourceBoundType,
+	ResourceBoundValue,
 	ResourceCategoryDefinition,
 	ResourceCategoryItem,
 	ResourceBounds,
@@ -9,8 +11,10 @@ export type {
 	ResourceGroupDefinition,
 	ResourceGroupParent,
 	ResourceMetadata,
+	ResourceReconciliationMode,
 	ResourceTierDefinition,
 	ResourceTierThreshold,
 	ResourceTierTrack,
 	ResourceTierTrackMetadata,
+	ResourceTriggers,
 } from './types';

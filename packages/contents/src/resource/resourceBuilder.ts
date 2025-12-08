@@ -72,6 +72,11 @@ export interface ResourceBuilder {
 	 * Runs once per unit of decrease.
 	 */
 	onValueDecrease(...effects: EffectDef[]): this;
+	/**
+	 * Declares that this resource represents a bound of another resource.
+	 * Used for UI display (e.g., showing "5/10" for current/max).
+	 */
+	boundOf(resourceId: string, boundType: ResourceBoundType): this;
 	build(): ResourceDefinition;
 }
 
@@ -90,6 +95,7 @@ class ResourceBuilderImpl implements ResourceBuilder {
 	private globalCostSet = false;
 	private onValueIncreaseSet = false;
 	private onValueDecreaseSet = false;
+	private boundOfSet = false;
 
 	constructor(id: string) {
 		if (!id) {
