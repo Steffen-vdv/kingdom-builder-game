@@ -373,7 +373,7 @@ describe('resource source descriptors', () => {
 		expect(passiveLine).toContain(passiveLabel);
 		const landLabel = formatKindLabel(translationContext, 'land', landId);
 		expect(landLine).toContain(landLabel);
-		expect(startLine).toContain('Initial Setup');
+		expect(startLine).toContain('[MISSING:start]');
 		expect(unknownLine).toContain(unknownId);
 		expect(unknownLine).toContain('Mystery Detail');
 	});
@@ -416,7 +416,7 @@ describe('resource source descriptors', () => {
 			'phase',
 			'mystery-phase',
 		);
-		expect(phaseFallback).toBe('mystery-phase');
+		expect(phaseFallback).toBe('⚠️ [MISSING:phase:mystery-phase]');
 		const first = formatKindLabel(mutatedContext, 'phase', 'mystery-phase');
 		const second = formatKindLabel(mutatedContext, 'phase', 'mystery-phase');
 		expect(first).toBe(second);

@@ -49,21 +49,21 @@ function describeEvaluatorOperand(
 	context: TranslationContext,
 ): OperandDescription {
 	if (!operand || typeof operand === 'number') {
-		return { label: 'Value' };
+		return { label: '[MISSING:operand]' };
 	}
 	// Land evaluator has its own display
 	if (operand.type === 'land') {
 		const slot = selectSlotDisplay(context.assets);
 		return {
 			...(slot.icon && { icon: slot.icon }),
-			label: slot.label || 'Land',
+			label: slot.label || '[MISSING:land-label]',
 		};
 	}
-	// All resource evaluators use Resource metadata (returns 'Value' if no id)
+	// All resource evaluators use Resource metadata
 	if (operand.type === 'resource') {
 		return describeResourceOperand(operand.params, context);
 	}
-	return { label: 'Value' };
+	return { label: '[MISSING:operand-label]' };
 }
 
 function isLandOperand(operand: CompareOperand | undefined): boolean {
@@ -76,7 +76,7 @@ function isLandOperand(operand: CompareOperand | undefined): boolean {
 function describeLandRequirement(context: TranslationContext): string {
 	const slot = selectSlotDisplay(context.assets);
 	const parts = [slot.icon, slot.label].filter(Boolean);
-	const detail = parts.join(' ').trim() || 'Development Slot';
+	const detail = parts.join(' ').trim() || '[MISSING:slot]';
 	return `Must have at least one available ${detail}`;
 }
 
@@ -89,7 +89,8 @@ function formatOperand(
 		return `${operand}`;
 	}
 	const { icon, label } = describeEvaluatorOperand(operand, context);
-	const base = [icon, label].filter(Boolean).join(' ').trim() || 'Value';
+	const base =
+		[icon, label].filter(Boolean).join(' ').trim() || '[MISSING:operand]';
 	if (typeof actual === 'number') {
 		return `${base} (${actual})`;
 	}
@@ -149,5 +150,5 @@ export function translateRequirementFailure(
 	if (requirement.type === 'evaluator' && requirement.method === 'compare') {
 		return translateCompareRequirement(failure, context);
 	}
-	return failure.message ?? 'Requirement not met';
+	return failure.message ?? '[MISSING:requirement-message]';
 }

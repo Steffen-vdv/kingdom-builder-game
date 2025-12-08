@@ -30,7 +30,7 @@ function translate(
 			});
 		} else {
 			const slot = selectSlotDisplay(context.assets);
-			const label = slot.label ?? 'Development Slot';
+			const label = slot.label ?? '[MISSING:slot-label]';
 			const prefix = slot.icon ? `${slot.icon} ` : '';
 			const title = `${prefix}Empty ${label}`.trim();
 			if (slot.description) {

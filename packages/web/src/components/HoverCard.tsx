@@ -106,7 +106,7 @@ export default function HoverCard() {
 	const continueMode = advanceMode === 'next-turn' ? 'next-turn' : 'continue';
 
 	const resolutionTitle =
-		data?.title ?? renderedData?.title ?? 'Action Resolution';
+		data?.title ?? renderedData?.title ?? '[MISSING:resolution-title]';
 	if (actionResolution && !data) {
 		return (
 			<ResolutionCard

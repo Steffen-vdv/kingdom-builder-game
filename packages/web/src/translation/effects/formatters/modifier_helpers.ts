@@ -217,7 +217,7 @@ export function formatDevelopment(
 		}
 		return undefined;
 	};
-	const fallback = fallbackLabelFromId() || 'Income';
+	const fallback = fallbackLabelFromId() || '[MISSING:income-label]';
 	const rawTarget = formatTargetLabel(icon, name);
 	const normalizedTarget =
 		rawTarget && rawTarget !== evaluation.id ? rawTarget : fallback;
