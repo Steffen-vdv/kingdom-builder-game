@@ -4,6 +4,12 @@
 # This script runs automatically when Claude Code starts a new session
 # and injects critical documentation files into the context.
 
+# Ensure Husky git hooks are properly initialized
+# This handles cases where npm install wasn't run or hooks weren't set up
+if [ ! -d ".husky/_" ]; then
+  npm run prepare 2>/dev/null || true
+fi
+
 {
   echo "╔════════════════════════════════════════════════════════════════╗"
   echo "║          PROJECT DOCUMENTATION CONTEXT AUTO-LOADED             ║"
