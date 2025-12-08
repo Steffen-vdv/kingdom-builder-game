@@ -44,7 +44,7 @@
 		"pretest:ci": "npm run ensure:dev-deps",
 		"test:ci": "run-s test:coverage",
 		"format": "prettier . --write",
-		"prepare": "husky install",
+		"prepare": "husky",
 		"lint:deps": "dependency-cruiser packages/engine packages/contents packages/web packages/server --config scripts/dependency-cruiser.cjs --output-type err",
 		"verify": "node scripts/run-verification.mjs",
 		"predev:build-contents": "npm run build --workspace @kingdom-builder/contents",
