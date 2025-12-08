@@ -253,20 +253,6 @@ export const buildRegistryMetadata = <
 			createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
 	);
 
-export const buildStatMetadata = (
-	metadata: Record<string, SessionMetadataDescriptor> | undefined,
-): MetadataLookup<RegistryMetadataDescriptor> =>
-	createLookup(
-		metadata
-			? Object.entries(metadata).map(([id, descriptor]) => [
-					id,
-					createRegistryDescriptor(id, descriptor, {}),
-				])
-			: [],
-		(id: string) =>
-			createRegistryDescriptor(id, undefined, { label: formatLabel(id) }),
-	);
-
 export const buildPhaseMetadata = (
 	metadata: Record<string, SessionPhaseMetadata> | undefined,
 ): MetadataLookup<PhaseMetadata> =>

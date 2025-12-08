@@ -174,10 +174,8 @@ const createMetadataSnapshotResponse = (): SessionMetadataSnapshotResponse => {
 		registries: createSessionRegistriesPayload(),
 		metadata: {
 			resources: metadata.resources,
-			populations: metadata.populations,
 			buildings: metadata.buildings,
 			developments: metadata.developments,
-			stats: metadata.stats,
 			phases: metadata.phases,
 			triggers: metadata.triggers,
 			assets: metadata.assets,

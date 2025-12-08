@@ -105,8 +105,9 @@ function createTestSetup(): TestSetup {
 				icon: '💡',
 				description: 'Condensed radiance.',
 			},
-			// Populations are unified under resources in V2 system
+			// Populations and stats are unified under resources in V2 system
 			[population.id]: { label: 'Astral Council', icon: '✨' },
+			[statId]: { label: 'Resolve', icon: '🔥' },
 		},
 		actionCategories: {
 			[category.id]: { label: 'Arcane Actions', icon: '🔮' },
@@ -116,9 +117,6 @@ function createTestSetup(): TestSetup {
 		},
 		developments: {
 			[development.id]: { label: 'Celestial Garden', icon: '🌿' },
-		},
-		stats: {
-			[statId]: { label: 'Resolve', icon: '🔥' },
 		},
 		phases: {
 			[phaseId]: {
@@ -296,9 +294,10 @@ describe('RegistryMetadataProvider', () => {
 		);
 		expect(buildings.byId[buildingId].label).toBe('Sky Bastion Prime');
 		expect(developments.byId[developmentId].label).toBe('Celestial Garden');
-		expect(stats.select(setup.statId).icon).toBe('🔥');
+		// Stats are unified under resources in V2
+		expect(resources.select(setup.statId).icon).toBe('🔥');
 		const fallbackStatId = nextKey('stat');
-		expect(stats.select(fallbackStatId).label).toBe(
+		expect(resources.select(fallbackStatId).label).toBe(
 			formatFallbackLabel(fallbackStatId),
 		);
 		const phaseDescriptor = phases.select(setup.phaseId);
@@ -339,5 +338,64 @@ describe('RegistryMetadataProvider', () => {
 		).toThrowError(
 			'RegistryMetadataProvider requires metadata with asset and overview descriptors.',
 		);
+	});
+
+	it('does not require stats metadata (regression: stats unified under resources)', () => {
+		// This test ensures the metadata hooks work without a 'stats' key
+		// since stats are unified under resources in ResourceV2.
+		// See: "Session snapshot metadata is missing the 'stats' descriptors" error
+		const factory = createContentFactory();
+		const statId = nextKey('stat');
+		const metadata: SessionSnapshotMetadata = {
+			passiveEvaluationModifiers: {},
+			// Note: NO 'stats' key - stats are in resources now
+			resources: {
+				[statId]: { label: 'Army Strength', icon: '⚔️' },
+			},
+			buildings: {},
+			developments: {},
+			phases: {},
+			triggers: {},
+			assets: {
+				land: { label: 'Land', icon: '🗺️' },
+				slot: { label: 'Slot', icon: '🧩' },
+				passive: { label: 'Passive', icon: '✨' },
+			},
+			overviewContent: {
+				hero: { title: 'Test', tokens: {} },
+				sections: [],
+				tokens: {},
+			},
+		};
+		const registries: SessionRegistries = {
+			actions: factory.actions,
+			actionCategories: new Registry<ActionCategoryConfig>(
+				actionCategorySchema.passthrough(),
+			),
+			buildings: factory.buildings,
+			developments: factory.developments,
+			populations: factory.populations,
+			resources: {},
+		};
+
+		let stats: MetadataSelector<RegistryMetadataDescriptor> | null = null;
+		const Capture = () => {
+			stats = useStatMetadata();
+			return null;
+		};
+
+		// Should NOT throw - stats are accessed via resources, not a separate key
+		expect(() =>
+			renderToStaticMarkup(
+				<RegistryMetadataProvider registries={registries} metadata={metadata}>
+					<Capture />
+				</RegistryMetadataProvider>,
+			),
+		).not.toThrow();
+
+		// Stats should be accessible via the unified resource metadata
+		expect(stats).not.toBeNull();
+		expect(stats!.select(statId).label).toBe('Army Strength');
+		expect(stats!.select(statId).icon).toBe('⚔️');
 	});
 });

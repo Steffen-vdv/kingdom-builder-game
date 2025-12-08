@@ -1,7 +1,6 @@
 import { createEngine } from '@kingdom-builder/engine';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { createContentFactory } from '@kingdom-builder/testing';
-import type { SessionMetadataDescriptor } from '@kingdom-builder/protocol/session';
 
 import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import { createTranslationContextForEngine } from '../helpers/createTranslationContextForEngine';
@@ -142,18 +141,6 @@ export function createSyntheticEngineContext() {
 	const plunder = buildAction(factory, ACTION_DEFS.plunder);
 	const attack = buildAction(factory, ACTION_DEFS.attack);
 	const buildingAttack = buildAction(factory, ACTION_DEFS.buildingAttack);
-	const statMetadata = Object.fromEntries(
-		Object.entries(SYNTH_RESOURCE_METADATA).map(([key, descriptor]) => {
-			const entry: SessionMetadataDescriptor = {};
-			if (descriptor.icon !== undefined) {
-				entry.icon = descriptor.icon;
-			}
-			if (descriptor.label !== undefined) {
-				entry.label = descriptor.label;
-			}
-			return [key, entry] as const;
-		}),
-	);
 	const translation = createTranslationContextForEngine(
 		engineContext,
 		(registries) => {
@@ -177,7 +164,6 @@ export function createSyntheticEngineContext() {
 			}
 			registerSyntheticResources(registries);
 		},
-		{ metadata: { stats: statMetadata } },
 	);
 	return {
 		engineContext,
@@ -187,24 +173,11 @@ export function createSyntheticEngineContext() {
 		building,
 		buildingAttack,
 		resourceMetadata: SYNTH_RESOURCE_METADATA,
-		statMetadata: SYNTH_RESOURCE_METADATA,
 	} as const;
 }
 export function createPartialStatEngineContext() {
 	const { factory, engineContext } = createBaseEngine();
 	const attack = buildAction(factory, ACTION_DEFS.partial);
-	const statMetadata = Object.fromEntries(
-		Object.entries(SYNTH_RESOURCE_METADATA).map(([key, descriptor]) => {
-			const entry: SessionMetadataDescriptor = {};
-			if (descriptor.icon !== undefined) {
-				entry.icon = descriptor.icon;
-			}
-			if (descriptor.label !== undefined) {
-				entry.label = descriptor.label;
-			}
-			return [key, entry] as const;
-		}),
-	);
 	const translation = createTranslationContextForEngine(
 		engineContext,
 		(registries) => {
@@ -214,14 +187,12 @@ export function createPartialStatEngineContext() {
 			}
 			registerSyntheticResources(registries);
 		},
-		{ metadata: { stats: statMetadata } },
 	);
 	return {
 		engineContext,
 		translation,
 		attack,
 		resourceMetadata: SYNTH_RESOURCE_METADATA,
-		statMetadata: SYNTH_RESOURCE_METADATA,
 	} as const;
 }
 
