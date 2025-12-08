@@ -8,7 +8,7 @@ import { cloneEngineContext } from '../../src/actions/context_clone.ts';
 import { createAISystem } from '../../src/ai/index.ts';
 import type { ResourceSourceFrame } from '../../src/resource_sources/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('cloneEngineContext', () => {
 	it('clones player state and optional engine context fields', () => {
@@ -21,17 +21,17 @@ describe('cloneEngineContext', () => {
 		engineContext.resourcePercentBases.example = 3;
 		engineContext.resourcePercentAccums.example = 4;
 		engineContext.recentResourceGains.push({
-			key: CResource.gold,
+			resourceId: CResource.gold,
 			amount: 2,
 		});
 		const frame: ResourceSourceFrame = () => ({
-			key: 'frame-meta',
+			resourceId: 'frame-meta',
 			longevity: 'ongoing',
 		});
 		engineContext.resourceSourceStack.push(frame);
 
 		const player = engineContext.activePlayer;
-		// CResource.gold IS the ResourceV2 ID directly
+		// CResource.gold IS the Resource ID directly
 		const goldResourceId = CResource.gold;
 		player.resourceValues[goldResourceId] = 5;
 		player.resourceLowerBounds[goldResourceId] = 0;
@@ -43,7 +43,7 @@ describe('cloneEngineContext', () => {
 			upper: false,
 		};
 		const fallbackResource = CResource.happiness;
-		// CResource.happiness IS the ResourceV2 ID directly
+		// CResource.happiness IS the Resource ID directly
 		const fallbackResourceId = fallbackResource;
 		player.resourceValues[fallbackResourceId] = undefined as never;
 		player.resourceLowerBounds[fallbackResourceId] = undefined as never;
@@ -51,10 +51,10 @@ describe('cloneEngineContext', () => {
 		player.resourceTouched[fallbackResourceId] = undefined as never;
 		player.resourceTierIds[fallbackResourceId] = undefined as never;
 		player.resourceBoundTouched[fallbackResourceId] = undefined as never;
-		// CPopulationRole.Legion IS the ResourceV2 ID directly
+		// CPopulationRole.Legion IS the Resource ID directly
 		player.resourceValues[CPopulationRole.Legion] = 2;
 		player.resourceValues[CPopulationRole.Council] = undefined as never;
-		// CStat.armyStrength IS the ResourceV2 ID directly
+		// CStat.armyStrength IS the Resource ID directly
 		player.resourceValues[CStat.armyStrength] = 3;
 		player.resourceTouched[CStat.armyStrength] = true;
 		const armyStrengthId = CStat.armyStrength;
@@ -67,7 +67,7 @@ describe('cloneEngineContext', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: CResource.gold,
+					resourceId: CResource.gold,
 					amount: 1,
 				}),
 			},
@@ -77,7 +77,7 @@ describe('cloneEngineContext', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: CResource.gold,
+					resourceId: CResource.gold,
 					amount: 2,
 				}),
 			},
@@ -87,7 +87,7 @@ describe('cloneEngineContext', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: engineContext.actionCostResource,
+					resourceId: engineContext.actionCostResource,
 					amount: 1,
 				}),
 			},
@@ -98,7 +98,7 @@ describe('cloneEngineContext', () => {
 		const actionId = 'custom-action';
 		player.actions.add(actionId);
 		const resourceSourceMeta = {
-			key: 'meta-id',
+			resourceId: 'meta-id',
 			longevity: 'ongoing' as const,
 			extra: { note: 'tracked' },
 			effect: { type: 'resource', method: 'add' },

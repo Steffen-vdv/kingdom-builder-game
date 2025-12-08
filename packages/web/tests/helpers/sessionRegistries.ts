@@ -2,10 +2,7 @@ import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
 } from '@kingdom-builder/testing';
-import type {
-	SessionRegistriesPayload,
-	SessionResourceDefinition,
-} from '@kingdom-builder/protocol/session';
+import type { SessionRegistriesPayload } from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
@@ -51,29 +48,9 @@ function normalizeActionCategories(payload: SessionRegistriesPayload): void {
 		}
 	}
 }
-type ResourceKey = SessionResourceDefinition['key'];
-
-function cloneResourceDefinition(
-	definition: SessionResourceDefinition,
-): SessionResourceDefinition {
-	const clone: SessionResourceDefinition = { key: definition.key };
-	if (definition.icon !== undefined) {
-		clone.icon = definition.icon;
-	}
-	if (definition.label !== undefined) {
-		clone.label = definition.label;
-	}
-	if (definition.description !== undefined) {
-		clone.description = definition.description;
-	}
-	if (definition.tags && definition.tags.length > 0) {
-		clone.tags = [...definition.tags];
-	}
-	return clone;
-}
 
 type ExtendedPayload = SessionRegistriesPayload & {
-	resourceCategoriesV2?: Record<string, unknown>;
+	resourceCategories?: Record<string, unknown>;
 };
 
 function cloneRegistriesPayload(
@@ -95,17 +72,10 @@ function cloneRegistriesPayload(
 		actions: cloneEntries(payload.actions),
 		buildings: cloneEntries(payload.buildings),
 		developments: cloneEntries(payload.developments),
-		populations: cloneEntries(payload.populations),
-		resources: Object.fromEntries(
-			Object.entries(payload.resources ?? {}).map(([key, definition]) => [
-				key,
-				cloneResourceDefinition(definition),
-			]),
-		),
 		actionCategories: cloneEntries(payload.actionCategories),
-		resourcesV2: cloneEntries(payload.resourcesV2),
-		resourceGroupsV2: cloneEntries(payload.resourceGroupsV2),
-		resourceCategoriesV2: cloneEntries(extPayload.resourceCategoriesV2),
+		resources: cloneEntries(payload.resources),
+		resourceGroups: cloneEntries(payload.resourceGroups),
+		resourceCategories: cloneEntries(extPayload.resourceCategories),
 	};
 }
 
@@ -124,25 +94,25 @@ export function createResourceKeys(): ResourceKey[] {
 	return Object.keys(BASE_PAYLOAD.resources ?? {}) as ResourceKey[];
 }
 
-// Helper to create ResourceV2 catalog content for engine initialization
-export function createResourceV2CatalogContent() {
+// Helper to create Resource catalog content for engine initialization
+export function createResourceCatalogContent() {
 	const payload = cloneRegistriesPayload(BASE_PAYLOAD);
-	const resourcesV2 = payload.resourcesV2 ?? {};
-	const resourceGroupsV2 = payload.resourceGroupsV2 ?? {};
-	const resourceCategoriesV2 = payload.resourceCategoriesV2 ?? {};
+	const resourcesMap = payload.resources ?? {};
+	const resourceGroupsMap = payload.resourceGroups ?? {};
+	const resourceCategoriesMap = payload.resourceCategories ?? {};
 
 	// Convert to ordered registry format expected by createRuntimeResourceCatalog
 	const resources = {
-		ordered: Object.values(resourcesV2),
-		byId: resourcesV2,
+		ordered: Object.values(resourcesMap),
+		byId: resourcesMap,
 	};
 	const groups = {
-		ordered: Object.values(resourceGroupsV2),
-		byId: resourceGroupsV2,
+		ordered: Object.values(resourceGroupsMap),
+		byId: resourceGroupsMap,
 	};
 	const categories = {
-		ordered: Object.values(resourceCategoriesV2),
-		byId: resourceCategoriesV2,
+		ordered: Object.values(resourceCategoriesMap),
+		byId: resourceCategoriesMap,
 	};
 
 	return { resources, groups, categories };

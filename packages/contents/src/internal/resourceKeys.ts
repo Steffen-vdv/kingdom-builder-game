@@ -5,9 +5,9 @@ export const Resource = {
 	castleHP: 'resource:core:castle-hp',
 } as const;
 
-export type ResourceV2Id = (typeof Resource)[keyof typeof Resource];
-export type ResourceKey = ResourceV2Id;
+export type ResourceId = (typeof Resource)[keyof typeof Resource];
+export type ResourceKey = ResourceId;
 
-export function getResourceV2Id(resource: ResourceV2Id): ResourceV2Id {
+export function getResourceId(resource: ResourceId): ResourceId {
 	return resource;
 }

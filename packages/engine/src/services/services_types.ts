@@ -1,5 +1,5 @@
 import type { ResourceKey } from '../state';
-import type { RuntimeResourceTierTrackMetadata } from '../resource-v2';
+import type { RuntimeResourceTierTrackMetadata } from '../resource';
 import type { HappinessTierDefinition } from './tiered_resource_types';
 import type { WinConditionDefinition } from './win_condition_types';
 

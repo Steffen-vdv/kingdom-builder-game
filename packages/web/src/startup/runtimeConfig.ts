@@ -1,9 +1,8 @@
 import type {
 	PhaseConfig,
-	ResourceV2Definition,
-	ResourceV2GroupDefinition,
+	ResourceDefinition,
+	ResourceGroupDefinition,
 	RuleSet,
-	SessionResourceDefinition,
 	SessionRuntimeConfigResponse,
 } from '@kingdom-builder/protocol';
 import { runtimeConfigResponseSchema } from '@kingdom-builder/protocol';
@@ -12,9 +11,8 @@ import { clone } from '../state/clone';
 export interface RuntimeContentConfig {
 	phases: PhaseConfig[];
 	rules: RuleSet;
-	resources: Record<string, SessionResourceDefinition>;
-	resourcesV2: Record<string, ResourceV2Definition>;
-	resourceGroupsV2: Record<string, ResourceV2GroupDefinition>;
+	resources: Record<string, ResourceDefinition>;
+	resourceGroups: Record<string, ResourceGroupDefinition>;
 	primaryIconId?: string | null;
 }
 
@@ -22,20 +20,6 @@ type RuntimeConfigSource = Partial<RuntimeContentConfig>;
 
 declare global {
 	var __KINGDOM_BUILDER_CONFIG__: RuntimeConfigSource | undefined;
-}
-
-function normalizeResourceDefinitions(
-	resources: Record<string, SessionResourceDefinition> | undefined,
-): Record<string, SessionResourceDefinition> {
-	if (!resources) {
-		return {};
-	}
-	return Object.fromEntries(
-		Object.entries(resources).map(([key, definition]) => [
-			key,
-			clone(definition),
-		]),
-	);
 }
 
 function normalizeResourceCatalogDefinitions<DefinitionType>(
@@ -103,14 +87,11 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 			const rules = overrides?.rules
 				? clone(overrides.rules)
 				: clone(base.rules);
-			const resources = normalizeResourceDefinitions(
+			const resources = normalizeResourceCatalogDefinitions(
 				overrides?.resources ?? base.resources,
 			);
-			const resourcesV2 = normalizeResourceCatalogDefinitions(
-				overrides?.resourcesV2 ?? base.resourcesV2,
-			);
-			const resourceGroupsV2 = normalizeResourceCatalogDefinitions(
-				overrides?.resourceGroupsV2 ?? base.resourceGroupsV2,
+			const resourceGroups = normalizeResourceCatalogDefinitions(
+				overrides?.resourceGroups ?? base.resourceGroups,
 			);
 			const primaryIconId =
 				overrides?.primaryIconId ?? base.primaryIconId ?? null;
@@ -118,8 +99,7 @@ export async function getRuntimeContentConfig(): Promise<RuntimeContentConfig> {
 				phases,
 				rules,
 				resources,
-				resourcesV2,
-				resourceGroupsV2,
+				resourceGroups,
 				primaryIconId,
 			};
 			Object.freeze(config);

@@ -18,10 +18,10 @@ export interface SimulateUpcomingPhasesOptions {
 
 export interface PlayerSnapshotDeltaBucket {
 	/**
-	 * All resource changes keyed by ResourceV2 id.
+	 * All resource changes keyed by Resource id.
 	 * This replaces the legacy resources/stats/population separation.
 	 */
-	valuesV2: Record<string, number>;
+	values: Record<string, number>;
 }
 
 export interface SimulateUpcomingPhasesResult {
@@ -73,18 +73,18 @@ function buildDelta(
 	before: PlayerStateSnapshot,
 	after: PlayerStateSnapshot,
 ): PlayerSnapshotDeltaBucket {
-	const valuesV2: Record<string, number> = {};
+	const values: Record<string, number> = {};
 	const keys = new Set([
-		...Object.keys(before.valuesV2),
-		...Object.keys(after.valuesV2),
+		...Object.keys(before.values),
+		...Object.keys(after.values),
 	]);
 	for (const key of keys) {
-		const diff = (after.valuesV2[key] ?? 0) - (before.valuesV2[key] ?? 0);
+		const diff = (after.values[key] ?? 0) - (before.values[key] ?? 0);
 		if (diff !== 0) {
-			valuesV2[key] = diff;
+			values[key] = diff;
 		}
 	}
-	return { valuesV2 };
+	return { values };
 }
 
 function hasReachedIterationLimit(iterations: number, limit: number): boolean {

@@ -30,7 +30,7 @@ import type { SessionResourceKey } from './sessionTypes';
 
 interface HandleMissingActionDefinitionOptions {
 	action: Action;
-	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name' | 'valuesV2'>;
+	player: Pick<SessionPlayerStateSnapshot, 'id' | 'name' | 'values'>;
 	snapshot: SessionSnapshot;
 	actionCostResource: SessionResourceKey;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
@@ -119,10 +119,7 @@ export async function handleMissingActionDefinition({
 	if (snapshot.game.conclusion) {
 		return;
 	}
-	if (
-		snapshot.game.devMode &&
-		(player.valuesV2[actionCostResource] ?? 0) <= 0
-	) {
+	if (snapshot.game.devMode && (player.values[actionCostResource] ?? 0) <= 0) {
 		await endTurn();
 	}
 }

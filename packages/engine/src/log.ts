@@ -1,21 +1,21 @@
 import type { EngineContext } from './context';
 import type { PlayerState } from './state';
 import type { PassiveSummary } from './services';
-import type { SessionResourceBoundsV2 } from '@kingdom-builder/protocol';
-import type { RuntimeResourceCatalog } from './resource-v2';
+import type { SessionResourceBounds } from '@kingdom-builder/protocol';
+import type { RuntimeResourceCatalog } from './resource';
 import {
 	isBoundReference,
 	resolveBoundValue,
 	resolveResourceDefinition,
-} from './resource-v2/state-helpers';
+} from './resource/state-helpers';
 
 export interface PlayerSnapshot {
 	/**
-	 * Unified ResourceV2 value map containing all resources, stats, and
-	 * population counts keyed by their V2 identifiers.
+	 * Unified Resource value map containing all resources, stats, and
+	 * population counts keyed by their identifiers.
 	 */
-	valuesV2: Record<string, number>;
-	resourceBoundsV2: Record<string, SessionResourceBoundsV2>;
+	values: Record<string, number>;
+	resourceBounds: Record<string, SessionResourceBounds>;
 	buildings: string[];
 	lands: {
 		id: string;
@@ -26,7 +26,7 @@ export interface PlayerSnapshot {
 	passives: PassiveSummary[];
 }
 
-function cloneValuesV2(player: PlayerState): Record<string, number> {
+function cloneValues(player: PlayerState): Record<string, number> {
 	const snapshot: Record<string, number> = {};
 	for (const [resourceId, value] of Object.entries(player.resourceValues)) {
 		snapshot[resourceId] = value ?? 0;
@@ -79,8 +79,8 @@ function resolveEffectiveBound(
 function buildResourceBoundsSnapshot(
 	player: PlayerState,
 	catalog: RuntimeResourceCatalog,
-): Record<string, SessionResourceBoundsV2> {
-	const snapshot: Record<string, SessionResourceBoundsV2> = {};
+): Record<string, SessionResourceBounds> {
+	const snapshot: Record<string, SessionResourceBounds> = {};
 	const keys = new Set(
 		Object.keys(player.resourceValues).concat(
 			Object.keys(player.resourceLowerBounds),
@@ -100,10 +100,10 @@ export function snapshotPlayer(
 	engineContext: EngineContext,
 ): PlayerSnapshot {
 	return {
-		valuesV2: cloneValuesV2(player),
-		resourceBoundsV2: buildResourceBoundsSnapshot(
+		values: cloneValues(player),
+		resourceBounds: buildResourceBoundsSnapshot(
 			player,
-			engineContext.resourceCatalogV2,
+			engineContext.resourceCatalog,
 		),
 		buildings: Array.from(player.buildings),
 		lands: player.lands.map((land) => ({

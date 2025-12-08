@@ -60,7 +60,7 @@ export type ActionDefinition = {
 
 function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 	if (descriptor.method === 'transfer') {
-		// V2 transfer requires donor and recipient payloads
+		// transfer requires donor and recipient payloads
 		const hasPercent = descriptor.percent !== undefined;
 		// Percent change uses modifiers (values are fractions like 0.4 for 40%)
 		const percentFraction =
@@ -89,7 +89,7 @@ function buildResourceEffect(descriptor: ResourceEffectDescriptor): EffectDef {
 				...(descriptor.amount !== undefined
 					? { amount: descriptor.amount }
 					: {}),
-				// V2 params for engine execution
+				// params for engine execution
 				donor: {
 					player: 'opponent' as const,
 					resourceId: descriptor.key,
@@ -147,10 +147,12 @@ export function buildEffects(
 }
 
 type AttackParams = {
-	target: { type: 'resource'; key: string } | { type: 'building'; id: string };
+	target:
+		| { type: 'resource'; resourceId: string }
+		| { type: 'building'; id: string };
 	stats?: Array<{
 		role: 'power' | 'absorption' | 'fortification';
-		key: string;
+		resourceId: string;
 		label?: string;
 		icon?: string;
 	}>;
@@ -167,7 +169,7 @@ export function buildAttackEffect(
 ): EffectDef {
 	const params: AttackParams = {
 		target: descriptor.target.resource
-			? { type: 'resource', key: descriptor.target.resource }
+			? { type: 'resource', resourceId: descriptor.target.resource }
 			: {
 					type: 'building',
 					id: descriptor.target.building ?? SYNTH_BUILDING.id,
@@ -182,7 +184,7 @@ export function buildAttackEffect(
 		}
 		annotations?.push({
 			role,
-			key: config.key,
+			resourceId: config.resourceId,
 			label: config.label,
 			icon: config.icon,
 		});

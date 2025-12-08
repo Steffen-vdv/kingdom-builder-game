@@ -8,13 +8,13 @@ import {
 	PHASES,
 	RULES,
 	Resource,
-	getResourceV2Id,
+	getResourceId,
 	type ResourceKey,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 
 interface EffectGroupOption {
 	id: string;
@@ -44,9 +44,9 @@ describe('royal decree via session', () => {
 			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
-			resourceCatalogV2: {
-				resources: RESOURCE_V2_REGISTRY,
-				groups: RESOURCE_GROUP_V2_REGISTRY,
+			resourceCatalog: {
+				resources: RESOURCE_REGISTRY,
+				groups: RESOURCE_GROUP_REGISTRY,
 			},
 		});
 		let snapshot = session.getSnapshot();
@@ -54,11 +54,9 @@ describe('royal decree via session', () => {
 			session.advancePhase();
 			snapshot = session.getSnapshot();
 		}
-		const goldId = getResourceV2Id(Resource.gold);
-		expect(
-			snapshot.game.resourceCatalogV2.resources.byId[goldId],
-		).toBeDefined();
-		expect(snapshot.game.players[0]?.valuesV2[goldId]).toBeDefined();
+		const goldId = getResourceId(Resource.gold);
+		expect(snapshot.game.resourceCatalog.resources.byId[goldId]).toBeDefined();
+		expect(snapshot.game.players[0]?.values[goldId]).toBeDefined();
 		const withGroup = ACTIONS.entries().find(([, def]) =>
 			def.effects.some(isEffectGroup),
 		);
@@ -110,11 +108,11 @@ describe('royal decree via session', () => {
 				playerId,
 				resources: [
 					{
-						key: Resource.gold as ResourceKey,
+						resourceId: Resource.gold as ResourceKey,
 						target: 12,
 					},
 					{
-						key: Resource.ap as ResourceKey,
+						resourceId: Resource.ap as ResourceKey,
 						target: 1,
 					},
 				],

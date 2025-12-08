@@ -7,25 +7,25 @@ import {
 	PhaseId,
 	PopulationRole,
 } from '@kingdom-builder/contents';
-import { getCatalogIndexes } from '../../src/resource-v2';
-import { resourceAmountParams } from '../helpers/resourceV2Params';
+import { getCatalogIndexes } from '../../src/resource';
+import { resourceAmountParams } from '../helpers/resourceParams';
 
 describe('resource effects for population', () => {
 	it('adds and removes population via resource effects', () => {
 		const content = createContentFactory();
-		// Use a real population role that's registered in the ResourceV2 catalog
+		// Use a real population role that's registered in the Resource catalog
 		const roleId = PopulationRole.Legion;
 		const add = content.action({
 			effects: [
 				{
 					type: 'resource',
 					method: 'add',
-					params: resourceAmountParams({ key: roleId, amount: 1 }),
+					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
 				},
 				{
 					type: 'resource',
 					method: 'add',
-					params: resourceAmountParams({ key: roleId, amount: 1 }),
+					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
 				},
 			],
 		});
@@ -34,7 +34,7 @@ describe('resource effects for population', () => {
 				{
 					type: 'resource',
 					method: 'remove',
-					params: resourceAmountParams({ key: roleId, amount: 1 }),
+					params: resourceAmountParams({ resourceId: roleId, amount: 1 }),
 				},
 			],
 		});
@@ -49,11 +49,11 @@ describe('resource effects for population', () => {
 			cost[CResource.ap] ?? 0;
 		performAction(add.id, engineContext);
 		const added = add.effects.filter((e) => e.method === 'add').length;
-		// roleId IS the ResourceV2 ID
+		// roleId IS the Resource ID
 		expect(engineContext.activePlayer.resourceValues[roleId]).toBe(
 			initialCount + added,
 		);
-		const catalog = engineContext.resourceCatalogV2;
+		const catalog = engineContext.resourceCatalog;
 		expect(catalog).toBeDefined();
 		// roleId IS the resourceId directly
 		const resourceId = roleId;

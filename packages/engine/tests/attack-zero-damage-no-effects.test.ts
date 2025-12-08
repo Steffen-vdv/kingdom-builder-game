@@ -6,7 +6,7 @@ import {
 } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { resourceAmountParams } from './helpers/resourceV2Params.ts';
+import { resourceAmountParams } from './helpers/resourceParams.ts';
 
 const attackLogKey = 'attack:perform';
 
@@ -37,14 +37,14 @@ describe('attack:perform', () => {
 			type: 'attack',
 			method: 'perform',
 			params: {
-				target: { type: 'resource', key: CResource.castleHP },
+				target: { type: 'resource', resourceId: CResource.castleHP },
 				onDamage: {
 					attacker: [
 						{
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: CResource.gold,
+								resourceId: CResource.gold,
 								amount: 1,
 							}),
 						},
@@ -52,7 +52,7 @@ describe('attack:perform', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: CResource.happiness,
+								resourceId: CResource.happiness,
 								amount: 1,
 							}),
 						},
@@ -62,7 +62,7 @@ describe('attack:perform', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: CResource.gold,
+								resourceId: CResource.gold,
 								amount: 1,
 							}),
 						},
@@ -70,7 +70,7 @@ describe('attack:perform', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: CResource.happiness,
+								resourceId: CResource.happiness,
 								amount: 1,
 							}),
 						},
@@ -135,7 +135,7 @@ describe('attack:perform', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: CResource.gold,
+								resourceId: CResource.gold,
 								amount: 1,
 							}),
 						},
@@ -170,14 +170,14 @@ describe('attack:perform', () => {
 			type: 'attack',
 			method: 'perform',
 			params: {
-				target: { type: 'resource', key: CResource.castleHP },
+				target: { type: 'resource', resourceId: CResource.castleHP },
 				onDamage: {
 					attacker: [
 						{
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: CResource.happiness,
+								resourceId: CResource.happiness,
 								amount: 1,
 							}),
 						},
@@ -187,7 +187,7 @@ describe('attack:perform', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: CResource.happiness,
+								resourceId: CResource.happiness,
 								amount: -1,
 							}),
 						},
@@ -208,7 +208,7 @@ describe('attack:perform', () => {
 		);
 		expect(defenderEntries).toHaveLength(1);
 		const defenderDiffs = defenderEntries[0]!.defender.filter(
-			(diff) => diff.key === CResource.happiness,
+			(diff) => diff.resourceId === CResource.happiness,
 		);
 		expect(defenderDiffs).toHaveLength(1);
 		expect(defenderDiffs[0]!.before).toBe(3);

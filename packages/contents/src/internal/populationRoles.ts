@@ -4,5 +4,4 @@ export const PopulationRole = {
 	Fortifier: 'resource:core:fortifier',
 } as const;
 
-export type PopulationRoleV2Id = (typeof PopulationRole)[keyof typeof PopulationRole];
-export type PopulationRoleId = PopulationRoleV2Id;
+export type PopulationRoleId = (typeof PopulationRole)[keyof typeof PopulationRole];

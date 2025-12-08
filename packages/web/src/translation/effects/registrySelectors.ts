@@ -98,13 +98,13 @@ export function selectPopulationDescriptor(
 		cache.set(cacheKey, fallback);
 		return fallback;
 	}
-	// Use V2 metadata for population descriptors - use role ID directly
+	// Use metadata for population descriptors - use role ID directly
 	const v2Context = context as {
-		resourceMetadataV2?: {
+		resourceMetadata?: {
 			get?: (id: string) => { icon?: string; label?: string } | undefined;
 		};
 	};
-	const v2Entry = v2Context.resourceMetadataV2?.get?.(role);
+	const v2Entry = v2Context.resourceMetadata?.get?.(role);
 	const icon = coerceIcon(v2Entry?.icon, fallback.icon);
 	const fallbackLabel = humanizeIdentifier(role) || fallback.label;
 	const label = coerceLabel(v2Entry?.label, fallbackLabel);
@@ -126,13 +126,13 @@ export function selectResourceDescriptor(
 	if (cached) {
 		return cached;
 	}
-	// Use ResourceV2 metadata for all resource lookups
+	// Use Resource metadata for all resource lookups
 	const v2Context = context as {
-		resourceMetadataV2?: {
+		resourceMetadata?: {
 			get?: (id: string) => { icon?: string; label?: string } | undefined;
 		};
 	};
-	const entry = v2Context.resourceMetadataV2?.get?.(key);
+	const entry = v2Context.resourceMetadata?.get?.(key);
 	const fallbackLabel = humanizeIdentifier(key) || key;
 	const label = coerceLabel(entry?.label, fallbackLabel);
 	const icon = coerceIcon(entry?.icon, '');
@@ -154,9 +154,9 @@ export function selectStatDescriptor(
 	if (cached) {
 		return cached;
 	}
-	// Use ResourceV2 metadata as the primary source
+	// Use Resource metadata as the primary source
 	const v2Context = context as {
-		resourceMetadataV2?: {
+		resourceMetadata?: {
 			get?: (id: string) => {
 				icon?: string;
 				label?: string;
@@ -164,13 +164,13 @@ export function selectStatDescriptor(
 			};
 		};
 	};
-	const v2Entry = v2Context.resourceMetadataV2?.get?.(key);
+	const v2Entry = v2Context.resourceMetadata?.get?.(key);
 	const statLabelFallback = humanizeIdentifier(key);
 	const fallbackLabel =
 		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
 	const label = coerceLabel(v2Entry?.label, fallbackLabel);
 	const icon = coerceIcon(v2Entry?.icon, '');
-	// Derive format from V2 metadata displayAsPercent property
+	// Derive format from metadata displayAsPercent property
 	const format: { percent?: boolean } | undefined = v2Entry?.displayAsPercent
 		? { percent: true }
 		: undefined;

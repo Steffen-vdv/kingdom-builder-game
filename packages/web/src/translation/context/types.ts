@@ -5,14 +5,13 @@ import type {
 	DevelopmentConfig,
 	EffectDef,
 	PlayerStartConfig,
-	PopulationConfig,
 	SessionMetadataFormat,
 	SessionPassiveRecordSnapshot,
 	SessionPassiveSummary,
 	SessionPlayerId,
 	SessionRecentResourceGain,
-	SessionResourceBoundsV2,
-	SessionResourceCatalogV2,
+	SessionResourceBounds,
+	SessionResourceCatalog,
 	SessionRuleSnapshot,
 } from '@kingdom-builder/protocol';
 
@@ -66,7 +65,6 @@ export interface TranslationTriggerAsset {
 export interface TranslationAssets {
 	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
 	readonly stats: Readonly<Record<string, TranslationIconLabel>>;
-	readonly populations: Readonly<Record<string, TranslationIconLabel>>;
 	readonly population: Readonly<TranslationIconLabel>;
 	readonly land: Readonly<TranslationIconLabel>;
 	readonly slot: Readonly<TranslationIconLabel>;
@@ -122,7 +120,7 @@ export interface TranslationPassives {
 	readonly evaluationMods: TranslationPassiveModifierMap;
 }
 
-export interface TranslationResourceV2Metadata {
+export interface TranslationResourceMetadata {
 	readonly id: string;
 	readonly label: string;
 	readonly icon?: string;
@@ -132,9 +130,9 @@ export interface TranslationResourceV2Metadata {
 	readonly groupId?: string | null;
 }
 
-export interface TranslationResourceV2MetadataSelectors {
-	list(): readonly TranslationResourceV2Metadata[];
-	get(id: string): TranslationResourceV2Metadata;
+export interface TranslationResourceMetadataSelectors {
+	list(): readonly TranslationResourceMetadata[];
+	get(id: string): TranslationResourceMetadata;
 	has(id: string): boolean;
 }
 
@@ -146,7 +144,7 @@ export interface TranslationSignedResourceGainSelectors {
 	sumForResource(id: string): number;
 }
 
-export type TranslationResourceCatalogV2 = SessionResourceCatalogV2;
+export type TranslationResourceCatalog = SessionResourceCatalog;
 
 /**
  * Minimal phase metadata consumed by translation renderers.
@@ -175,11 +173,11 @@ export interface TranslationPlayer {
 	id: SessionPlayerId;
 	name?: string;
 	/**
-	 * Unified ResourceV2 value map - the canonical source of truth for all
+	 * Unified Resource value map - the canonical source of truth for all
 	 * resource values including currencies, stats, and population counts.
 	 */
-	valuesV2: Readonly<Record<string, number>>;
-	resourceBoundsV2: Readonly<Record<string, SessionResourceBoundsV2>>;
+	values: Readonly<Record<string, number>>;
+	resourceBounds: Readonly<Record<string, SessionResourceBounds>>;
 }
 
 /**
@@ -192,22 +190,21 @@ export interface TranslationContext {
 	readonly actionCategories: TranslationActionCategoryRegistry;
 	readonly buildings: TranslationRegistry<BuildingConfig>;
 	readonly developments: TranslationRegistry<DevelopmentConfig>;
-	readonly populations: TranslationRegistry<PopulationConfig>;
 	readonly passives: TranslationPassives;
 	readonly phases: readonly TranslationPhase[];
 	readonly activePlayer: TranslationPlayer;
 	readonly opponent: TranslationPlayer;
 	readonly rules: SessionRuleSnapshot;
 	readonly recentResourceGains: ReadonlyArray<{
-		key: string;
+		resourceId: string;
 		amount: number;
 	}>;
 	readonly compensations: Readonly<Record<SessionPlayerId, PlayerStartConfig>>;
 	pullEffectLog<T>(key: string): T | undefined;
 	readonly actionCostResource?: string;
 	readonly assets: TranslationAssets;
-	readonly resourcesV2: TranslationResourceCatalogV2;
-	readonly resourceMetadataV2: TranslationResourceV2MetadataSelectors;
-	readonly resourceGroupMetadataV2: TranslationResourceV2MetadataSelectors;
+	readonly resources: TranslationResourceCatalog;
+	readonly resourceMetadata: TranslationResourceMetadataSelectors;
+	readonly resourceGroupMetadata: TranslationResourceMetadataSelectors;
 	readonly signedResourceGains: TranslationSignedResourceGainSelectors;
 }

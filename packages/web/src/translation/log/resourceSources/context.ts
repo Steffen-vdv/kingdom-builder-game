@@ -6,7 +6,7 @@ import type {
 import type {
 	TranslationActionCategoryRegistry,
 	TranslationAssets,
-	TranslationResourceV2MetadataSelectors,
+	TranslationResourceMetadataSelectors,
 } from '../../context';
 import { type PassiveDescriptor, type PassiveModifierMap } from './types';
 
@@ -39,7 +39,7 @@ export interface TranslationDiffContext {
 	readonly actionCategories: TranslationActionCategoryRegistry;
 	readonly passives: TranslationDiffPassives;
 	readonly assets: TranslationAssets;
-	readonly resourceMetadataV2: TranslationResourceV2MetadataSelectors;
+	readonly resourceMetadata: TranslationResourceMetadataSelectors;
 	evaluate(evaluator: {
 		type: string;
 		params?: Record<string, unknown>;
@@ -105,7 +105,7 @@ export function createTranslationDiffContext(context: {
 	actionCategories: TranslationDiffContext['actionCategories'];
 	passives: unknown;
 	assets: TranslationAssets;
-	resourceMetadataV2: TranslationResourceV2MetadataSelectors;
+	resourceMetadata: TranslationResourceMetadataSelectors;
 }): TranslationDiffContext {
 	const rawPassives = context.passives as PassiveLookup | undefined;
 	const evaluationMods = (rawPassives?.evaluationMods ??
@@ -134,7 +134,7 @@ export function createTranslationDiffContext(context: {
 		actionCategories: context.actionCategories,
 		passives,
 		assets: context.assets,
-		resourceMetadataV2: context.resourceMetadataV2,
+		resourceMetadata: context.resourceMetadata,
 		evaluate(evaluator) {
 			return Number(evaluateDefinition(evaluator, this));
 		},

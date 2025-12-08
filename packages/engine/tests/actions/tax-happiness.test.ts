@@ -6,13 +6,13 @@ import {
 } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers.ts';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('resource removal penalties', () => {
 	it('reduces happiness when configured as a removal effect', () => {
 		const content = createContentFactory();
 		const penalty = resourceAmountParams({
-			key: CResource.happiness,
+			resourceId: CResource.happiness,
 			amount: 1,
 		});
 		const action = content.action({
@@ -28,7 +28,7 @@ describe('resource removal penalties', () => {
 		const engineContext = createTestEngine(content);
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
-		// key IS the ResourceV2 ID directly
+		// key IS the Resource ID directly
 		engineContext.activePlayer.resourceValues[CResource.happiness] = 2;
 		const before =
 			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;
@@ -43,7 +43,7 @@ describe('resource removal penalties', () => {
 	it('aggregates evaluator penalties before rounding when shortfalls are allowed', () => {
 		const content = createContentFactory();
 		const penalty = resourceAmountParams({
-			key: CResource.happiness,
+			resourceId: CResource.happiness,
 			amount: 0.5,
 		});
 		const action = content.action({
@@ -68,7 +68,7 @@ describe('resource removal penalties', () => {
 		const engineContext = createTestEngine({ actions: content.actions });
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
-		// role IS the ResourceV2 ID directly
+		// role IS the Resource ID directly
 		engineContext.activePlayer.resourceValues[CPopulationRole.Council] = 2;
 		engineContext.activePlayer.resourceValues[CResource.happiness] = 2;
 		const cost = getActionCosts(action.id, engineContext)[CResource.ap] ?? 0;

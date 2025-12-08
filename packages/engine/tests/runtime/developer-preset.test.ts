@@ -24,7 +24,7 @@ describe('applyDeveloperPreset', () => {
 			opponent.resourceValues[CResource.happiness] ?? 0;
 		const opponentCastleBefore =
 			opponent.resourceValues[CResource.castleHP] ?? 0;
-		// PopulationRole values ARE ResourceV2 IDs - access via resourceValues
+		// PopulationRole values ARE Resource IDs - access via resourceValues
 		const opponentPopulationBefore =
 			opponent.resourceValues[PopulationRole.Council] ?? 0;
 		const opponentLandCountBefore = opponent.lands.length;
@@ -47,9 +47,9 @@ describe('applyDeveloperPreset', () => {
 		applyDeveloperPreset(ctx, {
 			playerId: player.id,
 			resources: [
-				{ key: CResource.gold, target: goldTarget },
-				{ key: CResource.happiness, target: happinessTarget },
-				{ key: CResource.castleHP, target: castleTarget },
+				{ resourceId: CResource.gold, target: goldTarget },
+				{ resourceId: CResource.happiness, target: happinessTarget },
+				{ resourceId: CResource.castleHP, target: castleTarget },
 			],
 			population: [
 				{ role: PopulationRole.Council, count: 0 },
@@ -113,7 +113,7 @@ describe('applyDeveloperPreset', () => {
 		const landsBefore = player.lands.map((land) => land.id);
 		applyDeveloperPreset(ctx, {
 			playerId: 'unknown-player' as PlayerId,
-			resources: [{ key: CResource.gold, target: goldBefore + 7 }],
+			resources: [{ resourceId: CResource.gold, target: goldBefore + 7 }],
 			landCount: player.lands.length + 2,
 			developments: [workshop.id],
 			buildings: [hall.id],
@@ -127,7 +127,7 @@ describe('applyDeveloperPreset', () => {
 		}
 		applyDeveloperPreset(ctx, {
 			playerId: player.id,
-			resources: [{ key: CResource.gold, target: goldBefore + 2 }],
+			resources: [{ resourceId: CResource.gold, target: goldBefore + 2 }],
 			landCount: landCountTarget,
 			developments: [workshop.id],
 			buildings: [hall.id],
@@ -142,7 +142,7 @@ describe('applyDeveloperPreset', () => {
 		const buildingOwnedAfterFirst = player.buildings.has(hall.id);
 		applyDeveloperPreset(ctx, {
 			playerId: player.id,
-			resources: [{ key: CResource.gold, target: goldBefore + 2 }],
+			resources: [{ resourceId: CResource.gold, target: goldBefore + 2 }],
 			landCount: landCountTarget,
 			developments: [workshop.id],
 			buildings: [hall.id],

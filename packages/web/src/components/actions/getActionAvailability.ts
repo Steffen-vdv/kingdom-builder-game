@@ -39,7 +39,7 @@ export function getActionAvailability({
 	const requirementFailures = metadata.requirements ?? [];
 	const canPay = costsReady
 		? Object.entries(costs).every(([resourceKey, cost]) => {
-				const playerAmount = Number(player.valuesV2[resourceKey] ?? 0);
+				const playerAmount = Number(player.values[resourceKey] ?? 0);
 				const neededAmount = Number(cost ?? 0);
 				return Number.isFinite(playerAmount) && Number.isFinite(neededAmount)
 					? playerAmount >= neededAmount

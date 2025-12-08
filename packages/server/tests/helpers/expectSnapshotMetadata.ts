@@ -18,12 +18,13 @@ export function expectSnapshotMetadata(
 export function expectStaticMetadata(
 	metadata: SessionStaticMetadataPayload,
 ): void {
-	const statKeys = Object.keys(metadata.stats ?? {});
-	expect(statKeys.length).toBeGreaterThan(0);
-	const hasPercentStat = Object.values(metadata.stats ?? {}).some(
+	// Resources now contain all resource types including former stats
+	const resourceKeys = Object.keys(metadata.resources ?? {});
+	expect(resourceKeys.length).toBeGreaterThan(0);
+	const hasPercentResource = Object.values(metadata.resources ?? {}).some(
 		(descriptor) => descriptor?.displayAsPercent === true,
 	);
-	expect(hasPercentStat).toBe(true);
+	expect(hasPercentResource).toBe(true);
 	const triggerKeys = Object.keys(metadata.triggers ?? {});
 	expect(triggerKeys.length).toBeGreaterThan(0);
 	expect(metadata.overview).toBeDefined();

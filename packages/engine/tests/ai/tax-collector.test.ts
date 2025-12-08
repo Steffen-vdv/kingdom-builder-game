@@ -7,7 +7,7 @@ import {
 } from '../../src/ai/index';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('tax collector AI controller', () => {
 	function createControllerFixture(actionPoints: number = 2) {
@@ -19,7 +19,7 @@ describe('tax collector AI controller', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 1,
 					}),
 				},

@@ -1,2 +1,2 @@
 export * from './factories/content';
-export * from './factories/resourceV2';
+export * from './factories/resource';

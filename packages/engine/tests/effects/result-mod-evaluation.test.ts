@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Resource as CResource } from '@kingdom-builder/contents';
 import { runEffects } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 const EVALUATION_TARGET = 'test:evaluation';
 const [EVALUATION_TYPE, EVALUATION_ID] = EVALUATION_TARGET.split(':');
@@ -30,7 +30,7 @@ describe('result_mod evaluation modifiers', () => {
 					type: 'resource' as const,
 					method: 'add' as const,
 					params: resourceAmountParams({
-						key: primaryResource,
+						resourceId: primaryResource,
 						amount: 1,
 					}),
 				},
@@ -42,8 +42,8 @@ describe('result_mod evaluation modifiers', () => {
 		runEffects([effect], engineContext);
 
 		const gains = [
-			{ key: primaryResource, amount: 1 },
-			{ key: secondaryResource ?? primaryResource, amount: -2 },
+			{ resourceId: primaryResource, amount: 1 },
+			{ resourceId: secondaryResource ?? primaryResource, amount: -2 },
 		];
 
 		engineContext.passives.runEvaluationMods(
@@ -52,9 +52,9 @@ describe('result_mod evaluation modifiers', () => {
 			gains,
 		);
 
-		expect(gains[0]).toEqual({ key: primaryResource, amount: 3 });
+		expect(gains[0]).toEqual({ resourceId: primaryResource, amount: 3 });
 		expect(gains[1]).toEqual({
-			key: secondaryResource ?? primaryResource,
+			resourceId: secondaryResource ?? primaryResource,
 			amount: -2,
 		});
 		const after =
@@ -71,13 +71,16 @@ describe('result_mod evaluation modifiers', () => {
 			engineContext,
 		);
 
-		const followUpGains = [{ key: primaryResource, amount: 1 }];
+		const followUpGains = [{ resourceId: primaryResource, amount: 1 }];
 		engineContext.passives.runEvaluationMods(
 			EVALUATION_TARGET,
 			engineContext,
 			followUpGains,
 		);
-		expect(followUpGains[0]).toEqual({ key: primaryResource, amount: 1 });
+		expect(followUpGains[0]).toEqual({
+			resourceId: primaryResource,
+			amount: 1,
+		});
 	});
 
 	it('throws when required identifiers are missing', () => {

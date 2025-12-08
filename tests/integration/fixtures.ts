@@ -10,9 +10,9 @@ import {
 	RESOURCES,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { PlayerState, Land } from '@kingdom-builder/engine/state';
 import { runEffects } from '@kingdom-builder/engine/effects';
@@ -31,7 +31,7 @@ function clonePlayer(player: PlayerState) {
 	copy.resourceTouched = deepClone(player.resourceTouched);
 	copy.resourceTierIds = deepClone(player.resourceTierIds);
 	copy.resourceBoundTouched = deepClone(player.resourceBoundTouched);
-	copy.resourceTouchedV2 = deepClone(player.resourceTouchedV2);
+	copy.resourceTouched = deepClone(player.resourceTouched);
 	copy.resourceSources = deepClone(player.resourceSources);
 	copy.skipPhases = deepClone(player.skipPhases);
 	copy.skipSteps = deepClone(player.skipSteps);
@@ -56,16 +56,16 @@ export function createTestContext(
 		populations: POPULATIONS,
 		phases: PHASES,
 		rules: RULES,
-		resourceCatalogV2: {
-			resources: RESOURCE_V2_REGISTRY,
-			groups: RESOURCE_GROUP_V2_REGISTRY,
+		resourceCatalog: {
+			resources: RESOURCE_REGISTRY,
+			groups: RESOURCE_GROUP_REGISTRY,
 		},
 	});
 	if (overrides) {
 		for (const key of Object.keys(RESOURCES) as (keyof typeof RESOURCES)[]) {
 			const value = overrides[key];
 			if (value !== undefined) {
-				// RESOURCES values are already ResourceV2 IDs (e.g., resource:core:gold)
+				// RESOURCES values are already Resource IDs (e.g., resource:core:gold)
 				const resourceId = RESOURCES[key];
 				engineContext.activePlayer.resourceValues[resourceId] = value;
 			}
@@ -87,7 +87,7 @@ export function simulateEffects(
 		engineContext.passives.runResultMods(actionId, dummyCtx);
 	}
 
-	const valuesV2: Record<string, number> = {};
+	const values: Record<string, number> = {};
 	const beforeKeys = new Set(
 		Object.keys(before.resourceValues).concat(
 			Object.keys(dummy.resourceValues),
@@ -97,15 +97,15 @@ export function simulateEffects(
 		const delta =
 			(dummy.resourceValues[key] ?? 0) - (before.resourceValues[key] ?? 0);
 		if (delta !== 0) {
-			valuesV2[key] = delta;
+			values[key] = delta;
 		}
 	}
 
-	// All V2 resources are unified - just use valuesV2 directly
-	const resources: Record<string, number> = { ...valuesV2 };
+	// All resources are unified - just use values directly
+	const resources: Record<string, number> = { ...values };
 
 	const land = dummy.lands.length - before.lands.length;
-	return { resources, valuesV2, land };
+	return { resources, values, land };
 }
 
 export function getActionOutcome(id: string, engineContext: EngineForTest) {
@@ -185,7 +185,7 @@ export function getBuildingWithResourceBonuses() {
 		if (passive) {
 			const passiveEffects =
 				(passive as { effects?: EffectDef[] }).effects || [];
-			// Look for ResourceV2 add effects
+			// Look for Resource add effects
 			const resources = passiveEffects
 				.filter((e): e is EffectDef => {
 					if (e.type !== 'resource' || e.method !== 'add') {

@@ -6,7 +6,7 @@ const globalScope = globalThis as {
 	__KINGDOM_BUILDER_CONFIG__?: Partial<RuntimeContentConfig> | undefined;
 };
 
-const baseResourceV2 = {
+const baseResource = {
 	id: 'resource:core:gold',
 	label: 'Gold',
 	icon: '💰',
@@ -20,7 +20,7 @@ const baseResourceV2 = {
 	groupOrder: 0,
 } as const;
 
-const baseResourceGroupV2 = {
+const baseResourceGroup = {
 	id: 'resource-group:core',
 	order: 0,
 	parent: {
@@ -45,9 +45,7 @@ const baseResponse = {
 	],
 	start: {
 		player: {
-			resources: { gold: 10 },
-			stats: {},
-			population: {},
+			resources: { 'resource:core:gold': 10 },
 			lands: [],
 		},
 	},
@@ -55,7 +53,7 @@ const baseResponse = {
 		defaultActionAPCost: 1,
 		absorptionCapPct: 1,
 		absorptionRounding: 'down',
-		tieredResourceKey: 'gold',
+		tieredResourceKey: 'resource:core:gold',
 		tierDefinitions: [],
 		slotsPerNewLand: 1,
 		maxSlotsPerLand: 1,
@@ -63,16 +61,13 @@ const baseResponse = {
 		winConditions: [],
 	},
 	resources: {
-		gold: { key: 'gold', icon: 'gold-icon' },
+		'resource:core:gold': baseResource,
 	},
-	resourcesV2: {
-		'resource:core:gold': baseResourceV2,
+	resourceGroups: {
+		'resource-group:core': baseResourceGroup,
 	},
-	resourceGroupsV2: {
-		'resource-group:core': baseResourceGroupV2,
-	},
-	resourceCategoriesV2: {},
-	primaryIconId: 'gold',
+	resourceCategories: {},
+	primaryIconId: 'resource:core:gold',
 } as const;
 
 describe('getRuntimeContentConfig', () => {
@@ -113,7 +108,9 @@ describe('getRuntimeContentConfig', () => {
 		});
 		expect(config.phases).toEqual(baseResponse.phases);
 		expect(config.phases).not.toBe(baseResponse.phases);
-		expect(config.resources.gold).toEqual(baseResponse.resources.gold);
+		expect(config.resources['resource:core:gold']).toEqual(
+			baseResponse.resources['resource:core:gold'],
+		);
 	});
 
 	it('applies runtime overrides from the global scope', async () => {
@@ -121,15 +118,20 @@ describe('getRuntimeContentConfig', () => {
 		globalScope.__KINGDOM_BUILDER_CONFIG__ = {
 			primaryIconId: 'custom-primary',
 			resources: {
-				gold: { key: 'gold', icon: 'override-icon' },
-				extra: { key: 'extra' },
+				'resource:core:gold': { ...baseResource, icon: 'override-icon' },
+				'resource:extra': {
+					id: 'resource:extra',
+					label: 'Extra',
+					icon: '✨',
+					order: 99,
+				},
 			},
 		};
 		const { getRuntimeContentConfig } = await import(runtimeModulePath);
 		const config = await getRuntimeContentConfig();
 		expect(config.primaryIconId).toBe('custom-primary');
-		expect(config.resources.extra).toEqual({ key: 'extra' });
-		expect(config.resources.gold?.icon).toBe('override-icon');
+		expect(config.resources['resource:extra']?.label).toBe('Extra');
+		expect(config.resources['resource:core:gold']?.icon).toBe('override-icon');
 	});
 
 	it('throws when the runtime configuration request fails', async () => {

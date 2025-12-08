@@ -6,9 +6,8 @@ import type {
 	SessionSnapshotMetadata,
 	SessionStateResponse,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 } from '@kingdom-builder/protocol/session';
-import type { Registry } from '@kingdom-builder/protocol';
+import type { Registry, ResourceDefinition } from '@kingdom-builder/protocol';
 import {
 	deserializeSessionRegistries,
 	extractResourceKeys,
@@ -165,8 +164,8 @@ function mergeRegistryEntries<DefinitionType>(
 }
 
 function applyResourceRegistry(
-	target: Record<string, SessionResourceDefinition>,
-	source: Record<string, SessionResourceDefinition>,
+	target: Record<string, ResourceDefinition>,
+	source: Record<string, ResourceDefinition>,
 ): void {
 	for (const key of Object.keys(target)) {
 		if (!(key in source)) {
@@ -190,7 +189,6 @@ function applyRegistries(
 	);
 	mergeRegistryEntries(record.registries.buildings, next.buildings);
 	mergeRegistryEntries(record.registries.developments, next.developments);
-	mergeRegistryEntries(record.registries.populations, next.populations);
 	applyResourceRegistry(record.registries.resources, next.resources);
 	const keys = extractResourceKeys(record.registries);
 	record.resourceKeys.splice(0, record.resourceKeys.length, ...keys);

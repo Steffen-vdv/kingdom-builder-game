@@ -58,7 +58,7 @@ const createPlayerSnapshot = (
 	name: `Player ${id}`,
 	resources: {},
 	stats: {},
-	resourceTouchedV2: {},
+	resourceTouched: {},
 	population: {},
 	lands: [],
 	buildings: [],

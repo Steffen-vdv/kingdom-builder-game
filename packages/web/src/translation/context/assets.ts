@@ -1,4 +1,3 @@
-import type { PopulationConfig } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
 	SessionRuleSnapshot,
@@ -51,42 +50,6 @@ function mergeIconLabel(
 	return Object.freeze(entry);
 }
 
-function toIconLabel(
-	definition: Partial<PopulationConfig> & {
-		id?: string;
-		icon?: string | undefined;
-		name?: string | undefined;
-		label?: string | undefined;
-		description?: string | undefined;
-	},
-	fallbackId: string,
-): TranslationIconLabel {
-	const label = definition.name ?? definition.label ?? fallbackId;
-	const entry: TranslationIconLabel = {};
-	if (definition.icon !== undefined) {
-		entry.icon = definition.icon;
-	}
-	if (label !== undefined) {
-		entry.label = label;
-	}
-	if (definition.description !== undefined) {
-		entry.description = definition.description;
-	}
-	return Object.freeze(entry);
-}
-
-function buildPopulationMap(
-	registry: SessionRegistries['populations'],
-	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
-): Readonly<Record<string, TranslationIconLabel>> {
-	const entries: Record<string, TranslationIconLabel> = {};
-	for (const [id, definition] of registry.entries()) {
-		const base = toIconLabel(definition, id);
-		entries[id] = mergeIconLabel(base, descriptors?.[id], base.label ?? id);
-	}
-	return Object.freeze(entries);
-}
-
 function buildResourceMap(
 	resources: SessionRegistries['resources'],
 	descriptors: Record<string, SessionMetadataDescriptor> | undefined,
@@ -97,7 +60,7 @@ function buildResourceMap(
 		if (definition.icon !== undefined) {
 			entry.icon = definition.icon;
 		}
-		entry.label = definition.label ?? definition.key ?? key;
+		entry.label = definition.label ?? definition.id ?? key;
 		if (definition.description !== undefined) {
 			entry.description = definition.description;
 		}
@@ -205,12 +168,7 @@ function requireAssetDescriptor(
 	return descriptor;
 }
 
-type MetadataRequirementKey =
-	| 'resources'
-	| 'populations'
-	| 'stats'
-	| 'assets'
-	| 'triggers';
+type MetadataRequirementKey = 'resources' | 'assets' | 'triggers';
 
 function requireMetadataRecord(
 	metadata: SessionSnapshotMetadata,
@@ -227,22 +185,15 @@ function requireMetadataRecord(
 }
 
 export function createTranslationAssets(
-	registries: Pick<SessionRegistries, 'populations' | 'resources'>,
+	registries: Pick<SessionRegistries, 'resources'>,
 	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
-	const populationMetadata = requireMetadataRecord(
-		metadata,
-		'populations',
-	) as Record<string, SessionMetadataDescriptor>;
+	// All metadata (populations/stats) is now unified under resources
 	const resourceMetadata = requireMetadataRecord(
 		metadata,
 		'resources',
 	) as Record<string, SessionMetadataDescriptor>;
-	const statMetadata = requireMetadataRecord(metadata, 'stats') as Record<
-		string,
-		SessionMetadataDescriptor
-	>;
 	const assetDescriptors = requireMetadataRecord(metadata, 'assets') as Record<
 		string,
 		SessionMetadataDescriptor
@@ -251,12 +202,9 @@ export function createTranslationAssets(
 		string,
 		SessionTriggerMetadata
 	>;
-	const populations = buildPopulationMap(
-		registries.populations,
-		populationMetadata,
-	);
 	const resources = buildResourceMap(registries.resources, resourceMetadata);
-	const stats = buildStatMap(statMetadata);
+	// Stats are now unified resources - use resourceMetadata
+	const stats = buildStatMap(resourceMetadata);
 	const populationAsset = mergeIconLabel(
 		undefined,
 		assetDescriptors.population,
@@ -289,7 +237,6 @@ export function createTranslationAssets(
 	const tierSummaries = buildTierSummaryMap(options?.rules);
 	return Object.freeze({
 		resources,
-		populations,
 		stats,
 		population: populationAsset,
 		land: landAsset,

@@ -1,33 +1,15 @@
 import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services/index.ts';
-import {
-	PhaseTrigger,
-	RULES,
-	resourceV2,
-	createResourceV2Registry,
-} from '@kingdom-builder/contents';
+import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import {
-	resourceAmountParams,
-	resourcePercentFromResourceParams,
-} from '../helpers/resourceV2Params.ts';
-import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
-
-const resourceKeys = {
-	ap: 'synthetic:resource:ap',
-	gold: 'synthetic:resource:gold',
-} as const;
-
-const statKeys = {
-	army: 'synthetic:stat:army-strength',
-	fort: 'synthetic:stat:fort-strength',
-	growth: 'synthetic:stat:growth',
-	war: 'synthetic:stat:war-weariness',
-} as const;
+	resourceKeys,
+	statKeys,
+	populationKeys,
+	testResourceRegistry,
+	testResourceGroupRegistry,
+} from './syntheticResources';
 
 const phaseIds = {
 	growth: 'synthetic:phase:growth',
@@ -64,86 +46,10 @@ export function createPhaseTestEnvironment() {
 			{
 				type: 'resource',
 				method: 'add',
-				params: resourceAmountParams({
-					key: resourceKeys.gold,
-					amount: FARM_INCOME,
-				}),
-			},
-		],
-	});
-
-	const council = content.population({
-		id: 'synthetic:population:council',
-		onGainAPStep: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: resourceAmountParams({
-					key: resourceKeys.ap,
-					amount: AP_GAIN_PER_COUNCIL,
-				}),
-			},
-		],
-		onPayUpkeepStep: [
-			{
-				type: 'resource',
-				method: 'remove',
-				params: resourceAmountParams({
-					key: resourceKeys.gold,
-					amount: COUNCIL_UPKEEP,
-				}),
-			},
-		],
-	});
-
-	const legion = content.population({
-		id: 'synthetic:population:legion',
-		onGrowthPhase: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: resourcePercentFromResourceParams({
-					key: statKeys.army,
-					sourceResourceId: statKeys.growth,
-					roundingMode: 'up',
-					additive: true,
-				}),
-			},
-		],
-		onPayUpkeepStep: [
-			{
-				type: 'resource',
-				method: 'remove',
-				params: resourceAmountParams({
-					key: resourceKeys.gold,
-					amount: LEGION_UPKEEP,
-				}),
-			},
-		],
-	});
-
-	const fortifier = content.population({
-		id: 'synthetic:population:fortifier',
-		onGrowthPhase: [
-			{
-				type: 'resource',
-				method: 'add',
-				params: resourcePercentFromResourceParams({
-					key: statKeys.fort,
-					sourceResourceId: statKeys.growth,
-					roundingMode: 'up',
-					additive: true,
-				}),
-			},
-		],
-		onPayUpkeepStep: [
-			{
-				type: 'resource',
-				method: 'remove',
-				params: resourceAmountParams({
-					key: resourceKeys.gold,
-					amount: FORTIFIER_UPKEEP,
-				}),
+				params: {
+					resourceId: resourceKeys.gold,
+					change: { type: 'amount', amount: FARM_INCOME },
+				},
 			},
 		],
 	});
@@ -155,9 +61,77 @@ export function createPhaseTestEnvironment() {
 				{
 					id: stepIds.growthTriggers,
 					triggers: [PhaseTrigger.OnGrowthPhase],
+					// Legion and Fortifier stat growth - use resource evaluators
+					effects: [
+						// Legion grants army strength growth
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.legion },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'add',
+									params: {
+										resourceId: statKeys.army,
+										change: {
+											type: 'percentFromResource',
+											sourceResourceId: statKeys.growth,
+											roundingMode: 'up',
+											additive: true,
+										},
+									},
+								},
+							],
+						},
+						// Fortifier grants fort strength growth
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.fortifier },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'add',
+									params: {
+										resourceId: statKeys.fort,
+										change: {
+											type: 'percentFromResource',
+											sourceResourceId: statKeys.growth,
+											roundingMode: 'up',
+											additive: true,
+										},
+									},
+								},
+							],
+						},
+					],
 				},
 				{ id: stepIds.gainIncome, triggers: ['onGainIncomeStep'] },
-				{ id: stepIds.gainAp, triggers: ['onGainAPStep'] },
+				{
+					id: stepIds.gainAp,
+					// Council members grant AP - use resource evaluator
+					effects: [
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.council },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'add',
+									params: {
+										resourceId: resourceKeys.ap,
+										change: { type: 'amount', amount: AP_GAIN_PER_COUNCIL },
+									},
+								},
+							],
+						},
+					],
+				},
 			],
 		},
 		{
@@ -167,7 +141,60 @@ export function createPhaseTestEnvironment() {
 					id: stepIds.upkeepTriggers,
 					triggers: [PhaseTrigger.OnUpkeepPhase],
 				},
-				{ id: stepIds.payUpkeep, triggers: ['onPayUpkeepStep'] },
+				{
+					id: stepIds.payUpkeep,
+					// Population upkeep - use resource evaluators
+					effects: [
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.council },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'remove',
+									params: {
+										resourceId: resourceKeys.gold,
+										change: { type: 'amount', amount: COUNCIL_UPKEEP },
+									},
+								},
+							],
+						},
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.legion },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'remove',
+									params: {
+										resourceId: resourceKeys.gold,
+										change: { type: 'amount', amount: LEGION_UPKEEP },
+									},
+								},
+							],
+						},
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.fortifier },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'remove',
+									params: {
+										resourceId: resourceKeys.gold,
+										change: { type: 'amount', amount: FORTIFIER_UPKEEP },
+									},
+								},
+							],
+						},
+					],
+				},
 				{
 					id: stepIds.warRecovery,
 					effects: [
@@ -232,65 +259,15 @@ export function createPhaseTestEnvironment() {
 		winConditions: RULES.winConditions,
 	};
 
-	// Create synthetic ResourceV2 definitions for testing
-	const syntheticResourceDefs = [
-		resourceV2(resourceKeys.ap)
-			.label('Action Points')
-			.icon('⚡')
-			.lowerBound(0)
-			.build(),
-		resourceV2(resourceKeys.gold)
-			.label('Gold')
-			.icon('💰')
-			.lowerBound(0)
-			.build(),
-		resourceV2(statKeys.army)
-			.label('Army Strength')
-			.icon('⚔️')
-			.lowerBound(0)
-			.build(),
-		resourceV2(statKeys.fort)
-			.label('Fort Strength')
-			.icon('🏰')
-			.lowerBound(0)
-			.build(),
-		resourceV2(statKeys.growth)
-			.label('Growth')
-			.icon('📈')
-			.lowerBound(0)
-			.allowDecimal()
-			.build(),
-		resourceV2(statKeys.war)
-			.label('War Weariness')
-			.icon('😟')
-			.lowerBound(0)
-			.build(),
-		resourceV2(council.id).label('Council').icon('👔').lowerBound(0).build(),
-		resourceV2(legion.id).label('Legion').icon('🛡️').lowerBound(0).build(),
-		resourceV2(fortifier.id)
-			.label('Fortifier')
-			.icon('🏗️')
-			.lowerBound(0)
-			.build(),
-	];
-
-	// Create combined registry with real + synthetic resources
-	const allResourceDefs = [
-		...RESOURCE_V2_REGISTRY.ordered,
-		...syntheticResourceDefs,
-	];
-	const testResourceRegistry = createResourceV2Registry(allResourceDefs);
-
 	const engineContext = createEngine({
 		actions: content.actions,
 		buildings: content.buildings,
 		developments: content.developments,
-		populations: content.populations,
 		phases,
 		rules,
-		resourceCatalogV2: {
+		resourceCatalog: {
 			resources: testResourceRegistry,
-			groups: RESOURCE_GROUP_V2_REGISTRY,
+			groups: testResourceGroupRegistry,
 		},
 		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
@@ -306,9 +283,9 @@ export function createPhaseTestEnvironment() {
 	playerA.resourceValues[statKeys.fort] = 0;
 	playerA.resourceValues[statKeys.growth] = BASE_GROWTH;
 	playerA.resourceValues[statKeys.war] = 0;
-	playerA.resourceValues[council.id] = STARTING_COUNCILS;
-	playerA.resourceValues[legion.id] = 0;
-	playerA.resourceValues[fortifier.id] = 0;
+	playerA.resourceValues[populationKeys.council] = STARTING_COUNCILS;
+	playerA.resourceValues[populationKeys.legion] = 0;
+	playerA.resourceValues[populationKeys.fortifier] = 0;
 
 	// Add land with farm development
 	const land = {
@@ -331,9 +308,9 @@ export function createPhaseTestEnvironment() {
 			steps: stepIds,
 		},
 		roles: {
-			council: council.id,
-			legion: legion.id,
-			fortifier: fortifier.id,
+			council: populationKeys.council,
+			legion: populationKeys.legion,
+			fortifier: populationKeys.fortifier,
 		},
 		resources: resourceKeys,
 		stats: statKeys,

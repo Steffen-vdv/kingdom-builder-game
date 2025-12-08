@@ -15,24 +15,24 @@ import {
 	selectStatDescriptor,
 } from '../src/translation/effects/registrySelectors';
 
-// Format value using V2 metadata like describePercentBreakdown does
-function formatV2Value(
+// Format value using metadata like describePercentBreakdown does
+function formatValue(
 	id: string,
 	value: number,
 	context: TranslationContext,
 ): string {
-	const meta = context.resourceMetadataV2.get(id);
+	const meta = context.resourceMetadata.get(id);
 	return meta?.displayAsPercent ? `${value * 100}%` : String(value);
 }
 
-// V2 stat keys for testing - these match the resource:core: prefix format
-const V2_STAT_KEYS = {
+// stat keys for testing - these match the resource:core: prefix format
+const STAT_KEYS = {
 	armyStrength: 'resource:core:army-strength',
 	growth: 'resource:core:growth',
 } as const;
 
-// V2 population key for testing
-const V2_POPULATION_KEY = 'resource:core:legion';
+// population key for testing
+const POPULATION_KEY = 'resource:core:legion';
 
 function createTranslationSetup() {
 	const scaffold = createTestSessionScaffold();
@@ -62,12 +62,12 @@ function createTranslationSetup() {
 			passiveRecords: session.passiveRecords,
 		},
 	);
-	// Use V2 stat keys directly instead of legacy stat metadata
+	// Use stat keys directly instead of legacy stat metadata
 	return {
 		translationContext,
-		primaryStatId: V2_STAT_KEYS.armyStrength,
-		secondaryStatId: V2_STAT_KEYS.growth,
-		populationId: V2_POPULATION_KEY,
+		primaryStatId: STAT_KEYS.armyStrength,
+		secondaryStatId: STAT_KEYS.growth,
+		populationId: POPULATION_KEY,
 	};
 }
 
@@ -79,32 +79,32 @@ describe('appendPercentBreakdownChanges', () => {
 			buildings: [],
 			lands: [],
 			passives: [],
-			valuesV2: {
+			values: {
 				[primaryStatId]: 4,
 				[secondaryStatId]: 20,
 			},
-			resourceBoundsV2: {},
+			resourceBounds: {},
 		};
 		const after: PlayerSnapshot = {
 			buildings: [],
 			lands: [],
 			passives: [],
-			valuesV2: {
+			values: {
 				[primaryStatId]: 5,
 				[secondaryStatId]: 20,
 			},
-			resourceBoundsV2: {},
+			resourceBounds: {},
 		};
 		const player: PlayerSnapshot = {
 			buildings: [],
 			lands: [],
 			passives: [],
-			valuesV2: {
+			values: {
 				[primaryStatId]: 5,
 				[secondaryStatId]: 25,
 				[populationId]: 2,
 			},
-			resourceBoundsV2: {},
+			resourceBounds: {},
 		};
 		const raiseStrengthEffects: StepEffects = {
 			effects: [
@@ -138,7 +138,7 @@ describe('appendPercentBreakdownChanges', () => {
 			player,
 			raiseStrengthEffects,
 			assets,
-			translationContext.resourceMetadataV2,
+			translationContext.resourceMetadata,
 		);
 		const statDescriptor = selectStatDescriptor(
 			translationContext,
@@ -158,25 +158,25 @@ describe('appendPercentBreakdownChanges', () => {
 		const legionIcon = populationDescriptor.icon ?? '';
 		const growthIcon = secondaryStatDescriptor.icon ?? '';
 		const armyIcon = statDescriptor.icon ?? '';
-		// Use V2-aware formatting to match describeStatBreakdown behavior
+		// Use resource-aware formatting to match describeStatBreakdown behavior
 		const breakdown = formatPercentBreakdown(
 			armyIcon || '',
-			formatV2Value(
+			formatValue(
 				primaryStatId,
-				before.valuesV2[primaryStatId],
+				before.values[primaryStatId],
 				translationContext,
 			),
 			legionIcon,
-			player.valuesV2[populationId] ?? 0,
+			player.values[populationId] ?? 0,
 			growthIcon,
-			formatV2Value(
+			formatValue(
 				secondaryStatId,
-				player.valuesV2[secondaryStatId],
+				player.values[secondaryStatId],
 				translationContext,
 			),
-			formatV2Value(
+			formatValue(
 				primaryStatId,
-				after.valuesV2[primaryStatId],
+				after.values[primaryStatId],
 				translationContext,
 			),
 		);
@@ -191,26 +191,26 @@ describe('appendPercentBreakdownChanges', () => {
 			buildings: [],
 			lands: [],
 			passives: [],
-			valuesV2: { [primaryStatId]: 1 },
-			resourceBoundsV2: {},
+			values: { [primaryStatId]: 1 },
+			resourceBounds: {},
 		};
 		const after: PlayerSnapshot = {
 			buildings: [],
 			lands: [],
 			passives: [],
-			valuesV2: { [primaryStatId]: 3 },
-			resourceBoundsV2: {},
+			values: { [primaryStatId]: 3 },
+			resourceBounds: {},
 		};
 		const player: PlayerSnapshot = {
 			buildings: [],
 			lands: [],
 			passives: [],
-			valuesV2: {
+			values: {
 				[primaryStatId]: 3,
 				[secondaryStatId]: 4,
 				[populationId]: 1,
 			},
-			resourceBoundsV2: {},
+			resourceBounds: {},
 		};
 		const step: StepEffects = {
 			effects: [
@@ -241,8 +241,8 @@ describe('appendPercentBreakdownChanges', () => {
 			),
 		};
 		// Create a metadata selector that returns the raw ID as label for
-		// primaryStatId to test fallback behavior - primaryStatId is already V2
-		const baseMetadata = translationContext.resourceMetadataV2;
+		// primaryStatId to test fallback behavior - primaryStatId is already resource
+		const baseMetadata = translationContext.resourceMetadata;
 		const fallbackMetadata = {
 			get(id: string) {
 				if (id === primaryStatId) {
@@ -268,7 +268,7 @@ describe('appendPercentBreakdownChanges', () => {
 			fallbackAssets,
 			fallbackMetadata,
 		);
-		// Output should contain the V2 ID since we use it as the fallback label
+		// Output should contain the ID since we use it as the fallback label
 		const entry = changes.find((line) => line.includes(primaryStatId));
 		expect(entry).toBeDefined();
 		expect(entry?.includes(primaryStatId)).toBe(true);

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { requirementSchema } from './schema';
-import { sessionIdSchema } from './session_contracts';
+import { sessionIdSchema } from './session_contracts/shared';
 import type {
 	ActionChoiceMap,
 	ActionEffectChoice,
@@ -69,7 +69,7 @@ export const actionTraceLandSnapshotSchema = z.object({
 });
 
 export const actionPlayerSnapshotSchema = z.object({
-	valuesV2: z.record(z.string(), z.number()),
+	values: z.record(z.string(), z.number()),
 	buildings: z.array(z.string()),
 	lands: z.array(actionTraceLandSnapshotSchema),
 	passives: z.array(sessionPassiveSummarySchema),

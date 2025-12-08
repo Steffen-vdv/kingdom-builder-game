@@ -5,7 +5,6 @@ import {
 	buildingSchema,
 	developmentSchema,
 	effectSchema,
-	populationSchema,
 	phaseSchema,
 	ruleSetSchema,
 } from '../schema';
@@ -31,27 +30,27 @@ const serializedRegistrySchema = <Shape extends ZodRawShape>(
 	schema: ZodObject<Shape>,
 ) => z.record(z.string(), schema.passthrough());
 
-const resourceV2TierThresholdSchema = z
+const resourceTierThresholdSchema = z
 	.object({
 		min: z.number().optional(),
 		max: z.number().optional(),
 	})
 	.passthrough();
 
-const resourceV2TierDefinitionSchema = z
+const resourceTierDefinitionSchema = z
 	.object({
 		id: z.string(),
 		label: z.string(),
 		icon: z.string().optional(),
 		description: z.string().optional(),
 		order: z.number().optional(),
-		threshold: resourceV2TierThresholdSchema,
+		threshold: resourceTierThresholdSchema,
 		enterEffects: z.array(effectSchema).optional(),
 		exitEffects: z.array(effectSchema).optional(),
 	})
 	.passthrough();
 
-const resourceV2TierTrackMetadataSchema = z
+const resourceTierTrackMetadataSchema = z
 	.object({
 		id: z.string(),
 		label: z.string(),
@@ -61,14 +60,14 @@ const resourceV2TierTrackMetadataSchema = z
 	})
 	.passthrough();
 
-const resourceV2TierTrackSchema = z
+const resourceTierTrackSchema = z
 	.object({
-		metadata: resourceV2TierTrackMetadataSchema,
-		tiers: z.array(resourceV2TierDefinitionSchema),
+		metadata: resourceTierTrackMetadataSchema,
+		tiers: z.array(resourceTierDefinitionSchema),
 	})
 	.passthrough();
 
-const resourceV2MetadataSchema = z
+const resourceMetadataSchema = z
 	.object({
 		id: z.string(),
 		label: z.string(),
@@ -80,7 +79,7 @@ const resourceV2MetadataSchema = z
 	.passthrough();
 
 // Bound can be a number or a reference to another resource
-const resourceV2BoundValueSchema = z.union([
+const resourceBoundValueSchema = z.union([
 	z.number(),
 	z.object({
 		resourceId: z.string(),
@@ -88,15 +87,15 @@ const resourceV2BoundValueSchema = z.union([
 	}),
 ]);
 
-const resourceV2BoundsSchema = z
+const resourceBoundsSchema = z
 	.object({
-		lowerBound: resourceV2BoundValueSchema.optional().nullable(),
-		upperBound: resourceV2BoundValueSchema.optional().nullable(),
+		lowerBound: resourceBoundValueSchema.optional().nullable(),
+		upperBound: resourceBoundValueSchema.optional().nullable(),
 	})
 	.passthrough();
 
-const resourceV2DefinitionSchema = resourceV2MetadataSchema
-	.merge(resourceV2BoundsSchema)
+const resourceDefinitionSchema = resourceMetadataSchema
+	.merge(resourceBoundsSchema)
 	.extend({
 		displayAsPercent: z.boolean().optional(),
 		trackValueBreakdown: z.boolean().optional(),
@@ -108,35 +107,32 @@ const resourceV2DefinitionSchema = resourceV2MetadataSchema
 				amount: z.number(),
 			})
 			.optional(),
-		tierTrack: resourceV2TierTrackSchema.optional(),
+		tierTrack: resourceTierTrackSchema.optional(),
 	})
 	.passthrough();
 
-const resourceV2GroupParentSchema = resourceV2MetadataSchema
-	.merge(resourceV2BoundsSchema)
+const resourceGroupParentSchema = resourceMetadataSchema
+	.merge(resourceBoundsSchema)
 	.extend({
 		displayAsPercent: z.boolean().optional(),
 		trackValueBreakdown: z.boolean().optional(),
 		trackBoundBreakdown: z.boolean().optional(),
-		tierTrack: resourceV2TierTrackSchema.optional(),
+		tierTrack: resourceTierTrackSchema.optional(),
 	})
 	.passthrough();
 
-const resourceV2GroupDefinitionSchema = z
+const resourceGroupDefinitionSchema = z
 	.object({
 		id: z.string(),
 		order: z.number().optional(),
-		parent: resourceV2GroupParentSchema.optional(),
+		parent: resourceGroupParentSchema.optional(),
 	})
 	.passthrough();
 
-const resourceV2RegistrySchema = z.record(
+const resourceRegistrySchema = z.record(z.string(), resourceDefinitionSchema);
+const resourceGroupRegistrySchema = z.record(
 	z.string(),
-	resourceV2DefinitionSchema,
-);
-const resourceV2GroupRegistrySchema = z.record(
-	z.string(),
-	resourceV2GroupDefinitionSchema,
+	resourceGroupDefinitionSchema,
 );
 
 const resourceCategoryItemSchema = z.union([
@@ -155,7 +151,7 @@ const resourceCategoryDefinitionSchema = z
 	})
 	.passthrough();
 
-const resourceCategoriesV2RegistrySchema = z.record(
+const resourceCategoriesRegistrySchema = z.record(
 	z.string(),
 	resourceCategoryDefinitionSchema,
 );
@@ -165,12 +161,10 @@ export const sessionRegistriesSchema = z
 		actions: serializedRegistrySchema(actionSchema),
 		buildings: serializedRegistrySchema(buildingSchema),
 		developments: serializedRegistrySchema(developmentSchema),
-		populations: serializedRegistrySchema(populationSchema),
-		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		actionCategories: serializedRegistrySchema(actionCategorySchema).optional(),
-		resourcesV2: resourceV2RegistrySchema,
-		resourceGroupsV2: resourceV2GroupRegistrySchema,
-		resourceCategoriesV2: resourceCategoriesV2RegistrySchema,
+		resources: resourceRegistrySchema,
+		resourceGroups: resourceGroupRegistrySchema,
+		resourceCategories: resourceCategoriesRegistrySchema,
 	})
 	.transform((value) => value as SessionRegistriesPayload);
 
@@ -178,11 +172,10 @@ export const runtimeConfigResponseSchema = z
 	.object({
 		phases: z.array(phaseSchema),
 		rules: ruleSetSchema,
-		resources: serializedRegistrySchema(sessionResourceDefinitionSchema),
 		primaryIconId: z.string().nullable(),
-		resourcesV2: resourceV2RegistrySchema,
-		resourceGroupsV2: resourceV2GroupRegistrySchema,
-		resourceCategoriesV2: resourceCategoriesV2RegistrySchema,
+		resources: resourceRegistrySchema,
+		resourceGroups: resourceGroupRegistrySchema,
+		resourceCategories: resourceCategoriesRegistrySchema,
 	})
 	.transform((value) => value as SessionRuntimeConfigResponse);
 

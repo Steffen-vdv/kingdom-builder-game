@@ -38,8 +38,11 @@ function renderPopulationIcons(
 		| Record<string, string>
 		| undefined;
 	const resourceId = params?.['resourceId'];
+	// Population resources are now part of the unified resource metadata
 	const icon = resourceId
-		? (context.assets.populations[resourceId]?.icon ?? resourceId)
+		? context.resourceMetadata.has(resourceId)
+			? (context.resourceMetadata.get(resourceId).icon ?? resourceId)
+			: resourceId
 		: (context.assets.population.icon ?? '');
 	entry.icons += icon.repeat(count);
 }

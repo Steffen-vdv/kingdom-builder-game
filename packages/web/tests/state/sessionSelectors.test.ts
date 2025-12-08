@@ -87,7 +87,7 @@ describe('sessionSelectors', () => {
 		name: `Player ${id}`,
 		resources: { [primaryResource]: 5, ...(overrides.resources ?? {}) },
 		stats: { ...(overrides.stats ?? {}) },
-		resourceTouchedV2: { ...(overrides.resourceTouchedV2 ?? {}) },
+		resourceTouched: { ...(overrides.resourceTouched ?? {}) },
 		population: { ...(overrides.population ?? {}) },
 		lands: overrides.lands ?? [
 			{

@@ -9,7 +9,7 @@ import { createTestEngine } from '../helpers.ts';
 import {
 	resourceAmountParams,
 	type ResourceAmountParamsResult,
-} from '../helpers/resourceV2Params.ts';
+} from '../helpers/resourceParams.ts';
 
 describe('resource:add effect for stats', () => {
 	it('increments a stat via action effect', () => {
@@ -22,7 +22,7 @@ describe('resource:add effect for stats', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CStat.armyStrength,
+						resourceId: CStat.armyStrength,
 						amount: 3,
 					}),
 				},
@@ -38,7 +38,7 @@ describe('resource:add effect for stats', () => {
 			(effect) =>
 				effect.type === 'resource' &&
 				effect.method === 'add' &&
-				effect.params?.key === CStat.armyStrength,
+				effect.params?.resourceId === CStat.armyStrength,
 		)?.params as ResourceAmountParamsResult | undefined;
 		const armyStrengthIncrease = params?.amount ?? 0;
 		const actionCosts = getActionCosts('train_army', engineContext);

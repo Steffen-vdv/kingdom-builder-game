@@ -10,9 +10,9 @@ export const Stat = {
 	warWeariness: 'resource:core:war-weariness',
 } as const;
 
-export type StatV2Id = (typeof Stat)[keyof typeof Stat];
-export type StatKey = StatV2Id;
+export type StatId = (typeof Stat)[keyof typeof Stat];
+export type StatKey = StatId;
 
-export function getStatResourceV2Id(stat: StatKey): StatV2Id {
+export function getStatResourceId(stat: StatKey): StatId {
 	return stat;
 }

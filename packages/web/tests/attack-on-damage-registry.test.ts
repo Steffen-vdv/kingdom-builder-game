@@ -15,7 +15,7 @@ import {
 } from './helpers/sessionFixtures';
 import { createTranslationContext } from '../src/translation/context/createTranslationContext';
 import { createTestRegistryMetadata } from './helpers/registryMetadata';
-// selectResourceDisplay removed - use V2 metadata instead
+// selectResourceDisplay removed - use metadata instead
 import { selectAttackResourceDescriptor } from '../src/translation/effects/formatters/attack/registrySelectors';
 import type { SessionSnapshotMetadata } from '@kingdom-builder/protocol/session';
 import { ownerLabel } from '../src/translation/effects/formatters/attackFormatterUtils';
@@ -80,15 +80,8 @@ function createTestSetup(): TestSetup {
 		resources: { [resourceKey]: 0 },
 	});
 	const metadata: SessionSnapshotMetadata = createEmptySnapshotMetadata({
+		// metadata is used by selectAttackResourceDescriptor
 		resources: {
-			[resourceKey]: {
-				label: 'Auric Coin',
-				icon: '🪙',
-				description: 'Minted test currency.',
-			},
-		},
-		// V2 metadata is used by selectAttackResourceDescriptor
-		resourcesV2: {
 			[resourceKey]: {
 				label: 'Auric Coin',
 				icon: '🪙',
@@ -123,8 +116,8 @@ function createTestSetup(): TestSetup {
 		},
 	);
 	const metadataSelectors = createTestRegistryMetadata(registries, metadata);
-	// Use V2 metadata for resource display
-	const v2Metadata = translationContext.resourceMetadataV2.get(resourceKey);
+	// Use metadata for resource display
+	const v2Metadata = translationContext.resourceMetadata.get(resourceKey);
 	const resourceDescriptor =
 		metadataSelectors.resourceMetadata.select(resourceKey);
 	const labelSource = v2Metadata?.label ?? resourceDescriptor.label;
@@ -204,7 +197,7 @@ describe('attack on-damage formatter registry', () => {
 			defender: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 5,
 					after: 3,
 				},
@@ -212,7 +205,7 @@ describe('attack on-damage formatter registry', () => {
 			attacker: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 1,
 					after: 4,
 				},
@@ -243,7 +236,7 @@ describe('attack on-damage formatter registry', () => {
 			defender: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 10,
 					after: 5,
 				},
@@ -251,7 +244,7 @@ describe('attack on-damage formatter registry', () => {
 			attacker: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 2,
 					after: 7,
 				},
@@ -282,7 +275,7 @@ describe('attack on-damage formatter registry', () => {
 			defender: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 5,
 					after: 3,
 				},
@@ -290,21 +283,21 @@ describe('attack on-damage formatter registry', () => {
 			attacker: [
 				{
 					type: 'resource',
-					key: resourceKey,
+					resourceId: resourceKey,
 					before: 1,
 					after: 4,
 				},
 			],
 		};
 
-		// Create a mutated context with empty V2 metadata to test fallback
+		// Create a mutated context with empty metadata to test fallback
 		const mutatedContext = {
 			...translationContext,
 			assets: {
 				...translationContext.assets,
 				resources: {},
 			},
-			resourceMetadataV2: {
+			resourceMetadata: {
 				get: () => undefined,
 				list: () => [],
 				has: () => false,

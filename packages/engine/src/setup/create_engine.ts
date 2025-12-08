@@ -16,20 +16,18 @@ import {
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
-	populationSchema,
 	resolveActionEffects,
 	type ActionConfig as ActionDef,
 	type BuildingConfig as BuildingDef,
 	type DevelopmentConfig as DevelopmentDef,
-	type PopulationConfig as PopulationDef,
 	type PhaseConfig,
 	Registry,
-	type ResourceV2CatalogSnapshot,
+	type ResourceCatalogSnapshot,
 } from '@kingdom-builder/protocol';
 import {
 	createRuntimeResourceCatalog,
 	type RuntimeResourceCatalog,
-} from '../resource-v2';
+} from '../resource';
 import {
 	determineCommonActionCostResource,
 	initializePlayerActions,
@@ -51,12 +49,11 @@ export interface EngineCreationOptions {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
 	phases: PhaseConfig[];
 	rules: RuleSet;
 	config?: GameConfig;
 	devMode?: boolean;
-	resourceCatalogV2?: RuntimeResourceContent;
+	resourceCatalog?: RuntimeResourceContent;
 	systemActionIds?: SystemActionIds;
 }
 
@@ -66,7 +63,6 @@ type EngineRegistries = {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
 };
 
 type RuntimeResourceContent = Parameters<
@@ -152,18 +148,11 @@ function overrideRegistries(
 	if (developmentRegistry) {
 		nextRegistries.developments = developmentRegistry;
 	}
-	const populationRegistry = buildRegistry(
-		validatedConfig.populations,
-		populationSchema,
-	);
-	if (populationRegistry) {
-		nextRegistries.populations = populationRegistry;
-	}
 	return nextRegistries;
 }
 
 function convertResourceCatalogSnapshot(
-	snapshot: ResourceV2CatalogSnapshot,
+	snapshot: ResourceCatalogSnapshot,
 ): RuntimeResourceContent {
 	return {
 		resources: {
@@ -251,40 +240,38 @@ export function createEngine({
 	actions,
 	buildings,
 	developments,
-	populations,
 	phases,
 	rules,
 	config,
 	devMode = false,
-	resourceCatalogV2,
+	resourceCatalog,
 	systemActionIds = DEFAULT_SYSTEM_ACTION_IDS,
 }: EngineCreationOptions) {
 	registerCoreEffects();
 	registerCoreEvaluators();
 	registerCoreRequirements();
 	let runtimeResourceContent: RuntimeResourceContent | undefined =
-		resourceCatalogV2;
+		resourceCatalog;
 	let runtimeResourceCatalog: RuntimeResourceCatalog | undefined;
 	if (config) {
 		const validatedConfig = validateGameConfig(config);
-		({ actions, buildings, developments, populations } = overrideRegistries(
+		({ actions, buildings, developments } = overrideRegistries(
 			validatedConfig,
 			{
 				actions,
 				buildings,
 				developments,
-				populations,
 			},
 		));
-		if (validatedConfig.resourceCatalogV2) {
+		if (validatedConfig.resourceCatalog) {
 			runtimeResourceContent = convertResourceCatalogSnapshot(
-				validatedConfig.resourceCatalogV2,
+				validatedConfig.resourceCatalog,
 			);
 		}
 	}
 	if (!runtimeResourceContent) {
 		throw new Error(
-			'createEngine requires resourceCatalogV2 content when no ' +
+			'createEngine requires resourceCatalog content when no ' +
 				'GameConfig override is provided.',
 		);
 	}
@@ -307,7 +294,6 @@ export function createEngine({
 		actions,
 		buildings,
 		developments,
-		populations,
 		passiveManager,
 		phases,
 		actionCostConfig.resourceId,

@@ -16,7 +16,7 @@ interface DiffPlayer {
 	name: PlayerSnapshot['name'];
 	lands: PlayerSnapshot['lands'];
 	buildings: Set<string>;
-	valuesV2: PlayerSnapshot['valuesV2'];
+	values: PlayerSnapshot['values'];
 }
 
 interface CompareEvaluatorParams {
@@ -38,7 +38,7 @@ function clonePlayer(player: PlayerSnapshot): DiffPlayer {
 		name: player.name,
 		lands: cloneLands(player.lands),
 		buildings: new Set(player.buildings),
-		valuesV2: { ...player.valuesV2 },
+		values: { ...player.values },
 	};
 }
 
@@ -55,14 +55,14 @@ function countDevelopments(player: DiffPlayer, id: unknown): number {
 }
 
 /**
- * Reads a resource value by V2 ID. Works for all resources including
+ * Reads a resource value by ID. Works for all resources including
  * currencies, stats, and population counts.
  */
-function readResourceV2(player: DiffPlayer, resourceId: unknown): number {
+function readResource(player: DiffPlayer, resourceId: unknown): number {
 	if (!player || typeof resourceId !== 'string' || resourceId.length === 0) {
 		return 0;
 	}
-	return Number(player.valuesV2[resourceId] ?? 0);
+	return Number(player.values[resourceId] ?? 0);
 }
 
 function compareValues(
@@ -116,17 +116,17 @@ function evaluateDefinition(
 		}
 		case 'resource': {
 			const resourceId = definition.params?.['resourceId'];
-			return readResourceV2(player, resourceId);
+			return readResource(player, resourceId);
 		}
 		case 'population': {
-			// Legacy evaluator - uses role param as V2 resource ID
+			// Legacy evaluator - uses resourceId param
 			const resourceId = definition.params?.['resourceId'];
-			return readResourceV2(player, resourceId);
+			return readResource(player, resourceId);
 		}
 		case 'stat': {
 			// Legacy evaluator - uses resourceId param
 			const resourceId = definition.params?.['resourceId'];
-			return readResourceV2(player, resourceId);
+			return readResource(player, resourceId);
 		}
 		case 'compare': {
 			const params = definition.params as CompareEvaluatorParams | undefined;
@@ -158,12 +158,7 @@ interface SessionTranslationContextInput {
 	passiveRecords: SessionSnapshot['passiveRecords'];
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'buildings'
-		| 'developments'
-		| 'populations'
-		| 'resources'
+		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
 	>;
 }
 
@@ -201,8 +196,8 @@ export function createSessionTranslationDiffContext(
 			translationContext.actionCategories as unknown as TranslationDiffContext['actionCategories'],
 		passives,
 		assets: translationContext.assets,
-		resourceMetadataV2:
-			translationContext.resourceMetadataV2 as unknown as TranslationDiffContext['resourceMetadataV2'],
+		resourceMetadata:
+			translationContext.resourceMetadata as unknown as TranslationDiffContext['resourceMetadata'],
 		evaluate,
 	};
 }

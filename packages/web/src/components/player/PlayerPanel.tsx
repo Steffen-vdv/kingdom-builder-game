@@ -27,14 +27,14 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	const animateSections = useAnimate<HTMLDivElement>();
 
 	const categories = useMemo(() => {
-		const catalog = translationContext.resourcesV2;
+		const catalog = translationContext.resources;
 		if (!catalog?.categories?.ordered?.length) {
 			return [];
 		}
 		return [...catalog.categories.ordered].sort(
 			(a, b) => a.resolvedOrder - b.resolvedOrder,
 		);
-	}, [translationContext.resourcesV2]);
+	}, [translationContext.resources]);
 
 	useEffect(() => {
 		heightCallbackRef.current = onHeightChange;

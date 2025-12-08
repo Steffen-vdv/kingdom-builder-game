@@ -55,31 +55,24 @@ const isSummaryObject = (entry: unknown): entry is SummaryGroup => {
 
 function createStatBreakdownSetup(): BreakdownSetup {
 	const registries = createSessionRegistries();
-	const populationId = registries.populations.keys()[0];
+	// Synthetic population ID for testing - under ResourceV2 populations
+	// are resources
+	const populationId = 'resource:population:role:legion';
 	const buildingId = registries.buildings.keys()[0];
 	const developmentId = registries.developments.keys()[0];
 	const actionId = registries.actions.keys()[0];
 	const resourceKey = Object.keys(registries.resources)[0];
-	if (
-		!populationId ||
-		!buildingId ||
-		!developmentId ||
-		!actionId ||
-		!resourceKey
-	) {
+	if (!buildingId || !developmentId || !actionId || !resourceKey) {
 		throw new Error('Expected registries to provide baseline entries.');
 	}
 	const phaseId = 'phase:test';
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
-	// ResourceV2 ID for population
-	const populationResourceId = `resource:population:role:${populationId}`;
+	// Resource ID for population
+	const populationResourceId = populationId;
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
-		populations: {
-			[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
-		},
 		buildings: {
 			[buildingId]: { label: 'Sky Bastion', icon: '🏯' },
 		},
@@ -146,7 +139,7 @@ function createStatBreakdownSetup(): BreakdownSetup {
 		name: 'Active Player',
 		resources: { [resourceKey]: 0 },
 		population: { [populationId]: 2 },
-		valuesV2: {
+		values: {
 			[populationResourceId]: 2,
 		},
 		lands: [
@@ -185,7 +178,7 @@ function createStatBreakdownSetup(): BreakdownSetup {
 		actionCostResource: resourceKey,
 		ruleSnapshot,
 		metadata,
-		resourceMetadataV2: {
+		resourceMetadata: {
 			[populationResourceId]: {
 				icon: '🎖️',
 				label: 'Legion Vanguard',
@@ -213,9 +206,9 @@ function createStatBreakdownSetup(): BreakdownSetup {
 	if (!primaryStatKey) {
 		throw new Error('Unable to resolve a stat key for testing.');
 	}
-	active.valuesV2[primaryStatKey] = 0;
+	active.values[primaryStatKey] = 0;
 	if (secondaryStatKey) {
-		active.valuesV2[secondaryStatKey] = 3;
+		active.values[secondaryStatKey] = 3;
 	}
 	return {
 		translationContext,

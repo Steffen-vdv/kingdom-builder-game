@@ -1,19 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import {
-	PhaseId,
-	Resource,
-	PopulationRole,
-	PHASES,
-	RULES,
-} from '@kingdom-builder/contents';
+import { PhaseId, Resource, PHASES, RULES } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { simulateUpcomingPhases } from '../../src';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 function sanitizePlayerState(context: ReturnType<typeof createTestEngine>) {
 	const player = context.game.players[0]!;
-	// Keys ARE ResourceV2 IDs directly - no mapper needed
-	// Reset all ResourceV2 values (the unified storage)
+	// Keys ARE Resource IDs directly - no mapper needed
+	// Reset all Resource values (the unified storage)
 	for (const key of Object.keys(player.resourceValues)) {
 		player.resourceValues[key] = 0;
 	}
@@ -55,7 +49,7 @@ describe('simulateUpcomingPhases', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: Resource.gold,
+					resourceId: Resource.gold,
 					amount: goldGain,
 				}),
 			},
@@ -65,7 +59,7 @@ describe('simulateUpcomingPhases', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: Resource.ap,
+					resourceId: Resource.ap,
 					amount: apGain,
 				}),
 			},
@@ -80,8 +74,8 @@ describe('simulateUpcomingPhases', () => {
 		});
 		expect(context.game.currentPhase).toBe(beforePhase);
 		expect(context.game.currentPlayerIndex).toBe(beforePlayerIndex);
-		expect(result.delta.valuesV2[Resource.gold]).toBe(goldGain);
-		expect(result.delta.valuesV2[Resource.ap]).toBe(apGain);
+		expect(result.delta.values[Resource.gold]).toBe(goldGain);
+		expect(result.delta.values[Resource.ap]).toBe(apGain);
 	});
 
 	it('treats skip flags as completing the affected phases', () => {
@@ -96,7 +90,7 @@ describe('simulateUpcomingPhases', () => {
 				upkeep: PhaseId.Upkeep,
 			},
 		});
-		expect(result.delta.valuesV2).toEqual({});
+		expect(result.delta.values).toEqual({});
 		expect(
 			result.steps.some((step) => step.skipped?.phaseId === PhaseId.Growth),
 		).toBe(true);
@@ -105,31 +99,22 @@ describe('simulateUpcomingPhases', () => {
 		).toBe(true);
 	});
 
-	it('applies upkeep costs from lands and population', () => {
+	it('applies upkeep costs from lands', () => {
 		const context = createTestEngine();
 		const player = sanitizePlayerState(context);
 		const land = player.lands[0]!;
 		const upkeepCost = 3;
-		// Keys ARE ResourceV2 IDs directly - no mapper needed
+		// Keys ARE Resource IDs directly - no mapper needed
 		player.resourceValues[Resource.gold] = 10;
 		land.upkeep = { [Resource.gold]: upkeepCost };
-		player.resourceValues[PopulationRole.Council] = 1;
 		const result = simulateUpcomingPhases(context, player.id, {
 			phaseIds: {
 				growth: PhaseId.Growth,
 				upkeep: PhaseId.Upkeep,
 			},
 		});
-		const councilUpkeep =
-			context.populations.get(PopulationRole.Council)?.upkeep?.[
-				Resource.gold
-			] ?? 0;
-		expect(result.delta.valuesV2[Resource.gold]).toBe(
-			-(upkeepCost + councilUpkeep),
-		);
-		expect(result.after.valuesV2[Resource.gold]).toBe(
-			10 - upkeepCost - councilUpkeep,
-		);
+		expect(result.delta.values[Resource.gold]).toBe(-upkeepCost);
+		expect(result.after.values[Resource.gold]).toBe(10 - upkeepCost);
 	});
 
 	it('uses rule metadata to resolve growth and upkeep when phases are reordered', () => {
@@ -144,13 +129,13 @@ describe('simulateUpcomingPhases', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: Resource.gold,
+					resourceId: Resource.gold,
 					amount: goldGain,
 				}),
 			},
 		];
 		land.upkeep = { [Resource.gold]: upkeepCost };
-		// Keys ARE ResourceV2 IDs directly - no mapper needed
+		// Keys ARE Resource IDs directly - no mapper needed
 		player.resourceValues[Resource.gold] = 10;
 		const result = simulateUpcomingPhases(context, player.id);
 		const relevantPhases = result.steps
@@ -158,7 +143,7 @@ describe('simulateUpcomingPhases', () => {
 			.map((step) => step.phase);
 		expect(relevantPhases).toContain(PhaseId.Growth);
 		expect(relevantPhases).toContain(PhaseId.Upkeep);
-		expect(result.delta.valuesV2[Resource.gold]).toBe(goldGain - upkeepCost);
+		expect(result.delta.values[Resource.gold]).toBe(goldGain - upkeepCost);
 	});
 
 	it('throws when rule metadata omits core phase ids', () => {

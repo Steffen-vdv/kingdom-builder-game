@@ -1,14 +1,14 @@
 import type { PlayerStartConfig } from '@kingdom-builder/protocol';
 import type {
 	SessionPlayerId,
-	SessionResourceCatalogV2,
+	SessionResourceCatalog,
 	SessionSnapshot,
 } from '@kingdom-builder/protocol/session';
 import { describe, expect, it } from 'vitest';
 import {
-	createResourceV2Registries,
-	resourceV2Definition,
-	resourceV2GroupDefinition,
+	createResourceRegistries,
+	resourceDefinition,
+	resourceGroupDefinition,
 } from '@kingdom-builder/testing';
 
 import { createTranslationContext } from '../../src/translation/context/createTranslationContext';
@@ -28,30 +28,31 @@ describe('createTranslationContext', () => {
 			label: undefined,
 		};
 		const statKey = 'maxPopulation';
-		const [populationId] = registries.populations.keys();
+		// Under ResourceV2, populations are resources - no separate registry
+		const populationId: string | undefined = undefined;
 		const [actionId] = registries.actions.keys();
 		const [buildingId] = registries.buildings.keys();
 		const [developmentId] = registries.developments.keys();
-		const resourceV2Id = 'resource:gold';
-		const resourceGroupV2Id = 'resource-group:economy';
-		const { resources: resourceRegistryV2, groups: resourceGroupRegistryV2 } =
-			createResourceV2Registries({
+		const resourceId = 'resource:gold';
+		const resourceGroupId = 'resource-group:economy';
+		const { resources: resourceRegistry, groups: resourceGroupRegistry } =
+			createResourceRegistries({
 				resources: [
-					resourceV2Definition({
-						id: resourceV2Id,
+					resourceDefinition({
+						id: resourceId,
 						metadata: {
 							label: 'Gold Reserve',
 							icon: '🥇',
 							description: 'Vaulted wealth for the crown.',
 							order: 0,
-							group: { id: resourceGroupV2Id, order: 0 },
+							group: { id: resourceGroupId, order: 0 },
 						},
 						bounds: { lowerBound: 0 },
 					}),
 				],
 				groups: [
-					resourceV2GroupDefinition({
-						id: resourceGroupV2Id,
+					resourceGroupDefinition({
+						id: resourceGroupId,
 						order: 0,
 						parent: {
 							label: 'Economic Portfolio',
@@ -63,10 +64,10 @@ describe('createTranslationContext', () => {
 					}),
 				],
 			});
-		const resourceCatalogV2: SessionResourceCatalogV2 = Object.freeze({
-			resources: resourceRegistryV2,
-			groups: resourceGroupRegistryV2,
-		}) as SessionResourceCatalogV2;
+		const resourceCatalog: SessionResourceCatalog = Object.freeze({
+			resources: resourceRegistry,
+			groups: resourceGroupRegistry,
+		}) as SessionResourceCatalog;
 		const phases: SessionSnapshot['phases'] = [
 			{
 				id: 'phase.alpha',
@@ -96,18 +97,16 @@ describe('createTranslationContext', () => {
 					icon: '💰',
 					description: 'The royal treasury fuels your ambitions.',
 				},
-			},
-			resourcesV2: {
-				[resourceV2Id]: {
-					label: 'V2 Treasury',
+				[resourceId]: {
+					label: 'Treasury',
 					icon: '🏦',
-					description: 'Translation metadata for ResourceV2.',
+					description: 'Translation metadata for Resource.',
 					displayAsPercent: true,
 					format: { prefix: '+', percent: true },
 				},
 			},
-			resourceGroupsV2: {
-				[resourceGroupV2Id]: {
+			resourceGroups: {
+				[resourceGroupId]: {
 					label: 'Economic Overview',
 					icon: '📊',
 				},
@@ -157,19 +156,15 @@ describe('createTranslationContext', () => {
 			name: string;
 			resource: number;
 			stat: number;
-			population: number;
 			buildings?: string[];
 			passives?: SessionSnapshot['game']['players'][number]['passives'];
 		}): SessionSnapshot['game']['players'][number] => ({
 			id: config.id,
 			name: config.name,
-			resources: { [resourceKey]: config.resource },
-			valuesV2: { [resourceV2Id]: config.resource },
-			stats: { [statKey]: config.stat },
-			resourceTouchedV2: {},
-			population: { [populationId]: config.population },
-			resourceBoundsV2: {
-				[resourceV2Id]: { lowerBound: 0, upperBound: 20 },
+			values: { [resourceId]: config.resource },
+			resourceTouched: {},
+			resourceBounds: {
+				[resourceId]: { lowerBound: 0, upperBound: 20 },
 			},
 			lands: [],
 			buildings: config.buildings ?? [],
@@ -185,7 +180,6 @@ describe('createTranslationContext', () => {
 				name: 'Player A',
 				resource: 7,
 				stat: 3,
-				population: 2,
 				buildings: [buildingId],
 				passives: [
 					{
@@ -202,7 +196,6 @@ describe('createTranslationContext', () => {
 				name: 'Player B',
 				resource: 5,
 				stat: 1,
-				population: 1,
 				passives: [],
 			}),
 		];
@@ -218,13 +211,13 @@ describe('createTranslationContext', () => {
 				players,
 				activePlayerId: 'A',
 				opponentId: 'B',
-				resourceCatalogV2,
+				resourceCatalog,
 			},
 			phases,
 			actionCostResource: resourceKey,
 			recentResourceGains: [
-				{ key: resourceKey, amount: 3 },
-				{ key: resourceV2Id, amount: -2 },
+				{ resourceId: resourceKey, amount: 3 },
+				{ resourceId: resourceId, amount: -2 },
 			],
 			compensations: {
 				A: compensation(2),
@@ -251,15 +244,15 @@ describe('createTranslationContext', () => {
 				B: [],
 			},
 			metadata,
-			resourceMetadataV2: {
-				[resourceV2Id]: {
+			resourceMetadata: {
+				[resourceId]: {
 					label: 'Catalog Gold',
 					icon: '🥇',
 					description: 'Catalog-provided metadata.',
 				},
 			},
-			resourceGroupMetadataV2: {
-				[resourceGroupV2Id]: {
+			resourceGroupMetadata: {
+				[resourceGroupId]: {
 					label: 'Catalog Economy',
 					icon: '💼',
 				},
@@ -287,15 +280,15 @@ describe('createTranslationContext', () => {
 				opponent: context.opponent.id,
 			},
 			recentResourceGains: context.recentResourceGains,
-			resourcesV2: {
-				resource: context.resourcesV2.resources.byId[resourceV2Id],
-				group: context.resourcesV2.groups.byId[resourceGroupV2Id],
+			resources: {
+				resource: context.resources.resources.byId[resourceId],
+				group: context.resources.groups.byId[resourceGroupId],
 			},
-			resourceMetadataV2: {
-				resource: context.resourceMetadataV2.get(resourceV2Id),
-				group: context.resourceGroupMetadataV2.get(resourceGroupV2Id),
-				fallback: context.resourceMetadataV2.get('resource:missing'),
-				hasExisting: context.resourceMetadataV2.has(resourceV2Id),
+			resourceMetadata: {
+				resource: context.resourceMetadata.get(resourceId),
+				group: context.resourceGroupMetadata.get(resourceGroupId),
+				fallback: context.resourceMetadata.get('resource:missing'),
+				hasExisting: context.resourceMetadata.has(resourceId),
 			},
 			signedResourceGains: {
 				list: context.signedResourceGains.list(),
@@ -311,9 +304,10 @@ describe('createTranslationContext', () => {
 					id: developmentId,
 					has: context.developments.has(developmentId),
 				},
+				// Populations are unified under resources in V2 system
 				population: {
 					id: populationId,
-					has: context.populations.has(populationId),
+					has: context.resourceMetadata.has(populationId),
 				},
 			},
 			assets: {
@@ -336,7 +330,7 @@ describe('createTranslationContext', () => {
 		};
 		expect(contextSnapshot).toMatchInlineSnapshot(`
 			{
-			  "actionCostResource": "gold",
+			  "actionCostResource": "resource:core:gold",
 			  "assets": {
 			    "passive": {
 			      "icon": "✨",
@@ -356,16 +350,7 @@ describe('createTranslationContext', () => {
 			      "icon": "📦",
 			      "label": "Plot Slot",
 			    },
-			    "stat": {
-			      "description": "Represents how many specialists can serve the realm.",
-			      "displayAsPercent": true,
-			      "format": {
-			        "percent": true,
-			        "prefix": "~",
-			      },
-			      "icon": "🏯",
-			      "label": "Population Capacity",
-			    },
+			    "stat": undefined,
 			    "trigger": {
 			      "future": "When the signal sounds",
 			      "icon": "🔔",
@@ -376,12 +361,12 @@ describe('createTranslationContext', () => {
 			  "compensations": {
 			    "A": {
 			      "resources": {
-			        "gold": 2,
+			        "resource:core:gold": 2,
 			      },
 			    },
 			    "B": {
 			      "resources": {
-			        "gold": 1,
+			        "resource:core:gold": 1,
 			      },
 			    },
 			  },
@@ -409,7 +394,7 @@ describe('createTranslationContext', () => {
 			    },
 			    "evaluationMods": [
 			      [
-			        "gold",
+			        "resource:core:gold",
 			        [
 			          "modifier",
 			        ],
@@ -432,11 +417,11 @@ describe('createTranslationContext', () => {
 			  "recentResourceGains": [
 			    {
 			      "amount": 3,
-			      "key": "gold",
+			      "resourceId": "resource:core:gold",
 			    },
 			    {
 			      "amount": -2,
-			      "key": "resource:gold",
+			      "resourceId": "resource:gold",
 			    },
 			  ],
 			  "registries": {
@@ -453,11 +438,11 @@ describe('createTranslationContext', () => {
 			      "id": "farm",
 			    },
 			    "population": {
-			      "has": true,
-			      "id": "council",
+			      "has": false,
+			      "id": undefined,
 			    },
 			  },
-			  "resourceMetadataV2": {
+			  "resourceMetadata": {
 			    "fallback": {
 			      "id": "resource:missing",
 			      "label": "resource:missing",
@@ -477,7 +462,7 @@ describe('createTranslationContext', () => {
 			      "label": "Catalog Gold",
 			    },
 			  },
-			  "resourcesV2": {
+			  "resources": {
 			    "group": {
 			      "id": "resource-group:economy",
 			      "order": 0,
@@ -503,30 +488,30 @@ describe('createTranslationContext', () => {
 			  },
 			  "rules": {
 			    "tierDefinitions": [],
-			    "tieredResourceKey": "gold",
+			    "tieredResourceKey": "resource:core:gold",
 			    "winConditions": [],
 			  },
 			  "signedResourceGains": {
 			    "list": [
 			      {
 			        "amount": 3,
-			        "key": "gold",
+			        "resourceId": "resource:core:gold",
 			      },
 			      {
 			        "amount": -2,
-			        "key": "resource:gold",
+			        "resourceId": "resource:gold",
 			      },
 			    ],
 			    "negatives": [
 			      {
 			        "amount": -2,
-			        "key": "resource:gold",
+			        "resourceId": "resource:gold",
 			      },
 			    ],
 			    "positives": [
 			      {
 			        "amount": 3,
-			        "key": "gold",
+			        "resourceId": "resource:core:gold",
 			      },
 			    ],
 			    "sumLegacy": 3,

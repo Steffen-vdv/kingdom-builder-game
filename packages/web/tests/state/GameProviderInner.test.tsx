@@ -467,7 +467,7 @@ describe('GameProviderInner', () => {
 		const basePlayer = createSnapshotPlayer({
 			id: 'player-live',
 			name: 'Live Player',
-			valuesV2: { [resourceKey]: 4 },
+			values: { [resourceKey]: 4 },
 		});
 		const opponentPlayer = createSnapshotPlayer({
 			id: 'player-opponent',
@@ -488,9 +488,9 @@ describe('GameProviderInner', () => {
 		const increasedPlayer = createSnapshotPlayer({
 			id: basePlayer.id,
 			name: basePlayer.name,
-			valuesV2: {
-				...basePlayer.valuesV2,
-				[resourceKey]: (basePlayer.valuesV2[resourceKey] ?? 0) + 2,
+			values: {
+				...basePlayer.values,
+				[resourceKey]: (basePlayer.values[resourceKey] ?? 0) + 2,
 			},
 		});
 		const increasedSnapshot = createSessionSnapshot({
@@ -505,7 +505,7 @@ describe('GameProviderInner', () => {
 		const restoredPlayer = createSnapshotPlayer({
 			id: basePlayer.id,
 			name: basePlayer.name,
-			valuesV2: basePlayer.valuesV2,
+			values: basePlayer.values,
 		});
 		const restoredSnapshot = createSessionSnapshot({
 			players: [restoredPlayer, opponentPlayer],
@@ -551,7 +551,7 @@ describe('GameProviderInner', () => {
 			if (!activePlayer) {
 				return null;
 			}
-			const resourceValue = activePlayer.valuesV2[resourceKey] ?? 0;
+			const resourceValue = activePlayer.values[resourceKey] ?? 0;
 			return (
 				<ResourceButton
 					metadata={{

@@ -1,8 +1,8 @@
 import {
 	createContentFactory,
-	createResourceV2Registries,
-	resourceV2Definition,
-	resourceV2GroupDefinition,
+	createResourceRegistries,
+	resourceDefinition,
+	resourceGroupDefinition,
 	type ContentFactory,
 } from '@kingdom-builder/testing';
 import type {
@@ -12,11 +12,11 @@ import type {
 	ActionConfig,
 	BuildingConfig,
 	EffectDef,
-	SessionResourceCatalogV2,
+	SessionResourceCatalog,
 } from '@kingdom-builder/protocol';
 
-// V2 resource key constants
-export const SYNTHETIC_RESOURCE_V2_KEYS = {
+// resource key constants
+export const SYNTHETIC_RESOURCE_KEYS = {
 	gold: 'resource:synthetic:gold',
 	ap: 'resource:synthetic:ap',
 	happiness: 'resource:synthetic:happiness',
@@ -32,18 +32,6 @@ const syntheticData = {
 		ap: { icon: '🛠️', label: 'Synthetic Action Points' },
 		happiness: { icon: '🙂', label: 'Synthetic Happiness' },
 	} satisfies Record<SyntheticResourceKey, SyntheticResourceInfo>,
-	// V2 keyed resources for use in assets/context
-	RESOURCES_V2: {
-		[SYNTHETIC_RESOURCE_V2_KEYS.gold]: { icon: '🪙', label: 'Synthetic Gold' },
-		[SYNTHETIC_RESOURCE_V2_KEYS.ap]: {
-			icon: '🛠️',
-			label: 'Synthetic Action Points',
-		},
-		[SYNTHETIC_RESOURCE_V2_KEYS.happiness]: {
-			icon: '🙂',
-			label: 'Synthetic Happiness',
-		},
-	} as Record<string, SyntheticResourceInfo>,
 	LAND_INFO: { icon: '🗺️', label: 'Synthetic Land' } as const,
 	SLOT_INFO: { icon: '🧱', label: 'Synthetic Slot' } as const,
 	PASSIVE_INFO: { icon: '♻️', label: 'Synthetic Passive' } as const,
@@ -56,7 +44,6 @@ const syntheticData = {
 } as const;
 
 export const SYNTHETIC_RESOURCES = syntheticData.RESOURCES;
-export const SYNTHETIC_RESOURCES_V2 = syntheticData.RESOURCES_V2;
 export const SYNTHETIC_LAND_INFO = syntheticData.LAND_INFO;
 export const SYNTHETIC_SLOT_INFO = syntheticData.SLOT_INFO;
 export const SYNTHETIC_PASSIVE_INFO = syntheticData.PASSIVE_INFO;
@@ -146,7 +133,7 @@ export interface SyntheticPlowContent {
 	start: StartConfig;
 	rules: RuleSet;
 	tierResourceKey: string;
-	resourceCatalogV2: SessionResourceCatalogV2;
+	resourceCatalog: SessionResourceCatalog;
 }
 
 export function createSyntheticPlowContent(): SyntheticPlowContent {
@@ -158,8 +145,8 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		icon: '🌾',
 		system: true,
 		baseCosts: {
-			[SYNTHETIC_RESOURCE_V2_KEYS.ap]: 1,
-			[SYNTHETIC_RESOURCE_V2_KEYS.gold]: 2,
+			[SYNTHETIC_RESOURCE_KEYS.ap]: 1,
+			[SYNTHETIC_RESOURCE_KEYS.gold]: 2,
 		},
 		effects: [
 			{ type: 'land', method: 'add', params: { count: 1 } },
@@ -167,7 +154,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 				type: 'resource',
 				method: 'add',
 				params: {
-					resourceId: SYNTHETIC_RESOURCE_V2_KEYS.happiness,
+					resourceId: SYNTHETIC_RESOURCE_KEYS.happiness,
 					change: { type: 'amount', amount: 1 },
 				},
 			},
@@ -192,8 +179,8 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		icon: '🚜',
 		system: true,
 		baseCosts: {
-			[SYNTHETIC_RESOURCE_V2_KEYS.ap]: 1,
-			[SYNTHETIC_RESOURCE_V2_KEYS.gold]: 6,
+			[SYNTHETIC_RESOURCE_KEYS.ap]: 1,
+			[SYNTHETIC_RESOURCE_KEYS.gold]: 6,
 		},
 		effects: [
 			{ type: 'action', method: 'perform', params: { id: expand.id } },
@@ -208,7 +195,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 						method: 'add',
 						params: {
 							id: 'cost-mod:synthetic:plow',
-							resourceId: SYNTHETIC_RESOURCE_V2_KEYS.gold,
+							resourceId: SYNTHETIC_RESOURCE_KEYS.gold,
 							amount: 2,
 						},
 					},
@@ -232,9 +219,9 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 	const start: StartConfig = {
 		player: {
 			resources: {
-				[SYNTHETIC_RESOURCE_V2_KEYS.gold]: 0,
-				[SYNTHETIC_RESOURCE_V2_KEYS.ap]: 0,
-				[SYNTHETIC_RESOURCE_V2_KEYS.happiness]: 0,
+				[SYNTHETIC_RESOURCE_KEYS.gold]: 0,
+				[SYNTHETIC_RESOURCE_KEYS.ap]: 0,
+				[SYNTHETIC_RESOURCE_KEYS.happiness]: 0,
 				[tierResourceKey]: 0,
 			},
 			stats: {},
@@ -262,13 +249,13 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		winConditions: [],
 	};
 
-	// Create ResourceV2 catalog for synthetic plow resources
-	const coreGroup = resourceV2GroupDefinition({
+	// Create Resource catalog for synthetic plow resources
+	const coreGroup = resourceGroupDefinition({
 		id: 'resource-group:synthetic:core',
 		order: 0,
 	});
 	const resourceDefinitions = [
-		resourceV2Definition({
+		resourceDefinition({
 			id: 'resource:synthetic:gold',
 			metadata: {
 				label: SYNTHETIC_RESOURCES.gold.label,
@@ -277,7 +264,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 			},
 			bounds: { lowerBound: 0 },
 		}),
-		resourceV2Definition({
+		resourceDefinition({
 			id: 'resource:synthetic:ap',
 			metadata: {
 				label: SYNTHETIC_RESOURCES.ap.label,
@@ -287,7 +274,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 			bounds: { lowerBound: 0 },
 			globalCost: 1,
 		}),
-		resourceV2Definition({
+		resourceDefinition({
 			id: 'resource:synthetic:happiness',
 			metadata: {
 				label: SYNTHETIC_RESOURCES.happiness.label,
@@ -296,7 +283,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 			},
 			bounds: { lowerBound: 0 },
 		}),
-		resourceV2Definition({
+		resourceDefinition({
 			id: tierResourceKey,
 			metadata: {
 				label: 'Synthetic Tier',
@@ -305,7 +292,7 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 			},
 		}),
 	];
-	const resourceCatalogV2 = createResourceV2Registries({
+	const resourceCatalog = createResourceRegistries({
 		resources: resourceDefinitions,
 		groups: [coreGroup],
 	});
@@ -321,6 +308,6 @@ export function createSyntheticPlowContent(): SyntheticPlowContent {
 		start,
 		rules,
 		tierResourceKey,
-		resourceCatalogV2,
+		resourceCatalog,
 	};
 }

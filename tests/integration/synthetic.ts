@@ -23,8 +23,8 @@ import {
 	PassiveMethods,
 } from '@kingdom-builder/contents/config/builderShared';
 import {
-	createResourceV2Registries,
-	resourceV2Definition,
+	createResourceRegistries,
+	resourceDefinition,
 } from '@kingdom-builder/testing';
 
 export function createSyntheticContext() {
@@ -145,15 +145,15 @@ export function createSyntheticContext() {
 		winConditions: [],
 	};
 
-	const { resources: resourcesV2, groups: resourceGroupsV2 } =
-		createResourceV2Registries({
+	const { resources: resources, groups: resourceGroups } =
+		createResourceRegistries({
 			resources: [
-				resourceV2Definition({
+				resourceDefinition({
 					id: 'resource:synthetic:r0',
 					metadata: { label: 'Synthetic AP', icon: '⚡' },
 					bounds: { lowerBound: 0 },
 				}),
-				resourceV2Definition({
+				resourceDefinition({
 					id: 'resource:synthetic:r1',
 					metadata: { label: 'Synthetic Gain', icon: '🪙' },
 					bounds: { lowerBound: 0 },
@@ -168,9 +168,9 @@ export function createSyntheticContext() {
 		populations,
 		phases,
 		rules,
-		resourceCatalogV2: {
-			resources: resourcesV2,
-			groups: resourceGroupsV2,
+		resourceCatalog: {
+			resources: resources,
+			groups: resourceGroups,
 		},
 		// Skip real setup actions by providing non-existent IDs;
 		// synthetic tests don't need real content setup

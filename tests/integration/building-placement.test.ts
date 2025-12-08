@@ -51,14 +51,14 @@ describe('Building placement integration', () => {
 		performAction(actionId, engineContext);
 
 		for (const [resourceId, cost] of Object.entries(expandAfter.costs)) {
-			const v2Gain = expandAfter.results.valuesV2[resourceId] || 0;
+			const v2Gain = expandAfter.results.values[resourceId] || 0;
 			expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
 				(v2Pre[resourceId] ?? 0) - cost + v2Gain,
 			);
 		}
 		for (const [resourceId] of Object.entries(expandAfter.results.resources)) {
 			if (expandAfter.costs[resourceId] === undefined) {
-				const v2Gain = expandAfter.results.valuesV2[resourceId] ?? 0;
+				const v2Gain = expandAfter.results.values[resourceId] ?? 0;
 				expect(engineContext.activePlayer.resourceValues[resourceId]).toBe(
 					(v2Pre[resourceId] ?? 0) + v2Gain,
 				);

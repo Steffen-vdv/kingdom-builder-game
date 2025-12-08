@@ -1,11 +1,11 @@
 import { Registry, developmentSchema } from '@kingdom-builder/protocol';
-import { Stat, getStatResourceV2Id, Resource, getResourceV2Id } from './internal';
+import { Stat, getStatResourceId, Resource, getResourceId } from './internal';
 import type { StatKey, ResourceKey } from './internal';
 import { development, effect, developmentParams, developmentEvaluator } from './config/builders';
 import { Types, DevelopmentMethods, ResourceMethods } from './config/builderShared';
 import { Focus } from './defs';
 import type { DevelopmentDef } from './defs';
-import { resourceChange } from './resourceV2';
+import { resourceChange } from './resource';
 
 export type { DevelopmentDef } from './defs';
 
@@ -20,7 +20,7 @@ export type DevelopmentId = (typeof DevelopmentId)[keyof typeof DevelopmentId];
 
 function resourceAmountParams(resource: ResourceKey, amount: number) {
 	return {
-		...resourceChange(getResourceV2Id(resource)).amount(amount).build(),
+		...resourceChange(getResourceId(resource)).amount(amount).build(),
 		key: resource,
 		amount,
 	};
@@ -28,7 +28,7 @@ function resourceAmountParams(resource: ResourceKey, amount: number) {
 
 function statAmountParams(stat: StatKey, amount: number) {
 	return {
-		...resourceChange(getStatResourceV2Id(stat)).amount(amount).build(),
+		...resourceChange(getStatResourceId(stat)).amount(amount).build(),
 		key: stat,
 		amount,
 	};

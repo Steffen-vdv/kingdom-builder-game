@@ -12,10 +12,10 @@ export type EvaluatorIconGetter = (
 ) => string[];
 
 /**
- * Unified ResourceV2 icon getter. Stats, population, and resources all use
- * the same metadata lookup since they are all ResourceV2 resources.
+ * Unified Resource icon getter. Stats, population, and resources all use
+ * the same metadata lookup since they are all Resource resources.
  */
-function getResourceV2Icon(
+function getResourceIcon(
 	params: Record<string, unknown> | undefined,
 	translationContext: TranslationContext,
 ): string[] {
@@ -23,12 +23,12 @@ function getResourceV2Icon(
 	if (!resourceId) {
 		return [];
 	}
-	const metadata = translationContext.resourceMetadataV2.get(resourceId);
+	const metadata = translationContext.resourceMetadata.get(resourceId);
 	return metadata.icon ? [metadata.icon] : [];
 }
 
 export const EVALUATOR_ICON_MAP: Record<string, EvaluatorIconGetter> = {
-	resource: getResourceV2Icon,
+	resource: getResourceIcon,
 	land: (_params, translationContext) => {
 		const icon = selectSlotDisplay(translationContext.assets).icon;
 		return icon ? [icon] : [];

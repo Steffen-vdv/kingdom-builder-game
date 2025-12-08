@@ -14,7 +14,7 @@ export type Mode = 'summarize' | 'describe';
 export type TargetInfo = { icon: string; label: string };
 
 export type AttackTarget =
-	| { type: 'resource'; key: AttackResourceKey }
+	| { type: 'resource'; resourceId: AttackResourceKey }
 	| { type: 'building'; id: string };
 
 export type AttackStatRole = 'power' | 'absorption' | 'fortification';
@@ -23,7 +23,7 @@ export type AttackStatDescriptor = {
 	role: AttackStatRole;
 	label: string;
 	icon?: string;
-	key?: AttackStatKey;
+	resourceId?: AttackStatKey;
 };
 
 export type AttackStatContext = Partial<

@@ -2,17 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { selectStatDescriptor } from '../../src/translation/effects/registrySelectors';
 import type { TranslationAssets } from '../../src/translation/context';
 
-type ResourceV2Metadata = {
+type ResourceMetadata = {
 	id: string;
 	label?: string;
 	icon?: string;
 	displayAsPercent?: boolean;
 };
 
-type ResourceMetadataV2Selectors = {
-	get: (id: string) => ResourceV2Metadata;
+type ResourceMetadataSelectors = {
+	get: (id: string) => ResourceMetadata;
 	has: (id: string) => boolean;
-	list: () => ResourceV2Metadata[];
+	list: () => ResourceMetadata[];
 };
 
 function createAssets(): TranslationAssets {
@@ -32,9 +32,9 @@ function createAssets(): TranslationAssets {
 	} as TranslationAssets;
 }
 
-function createResourceMetadataV2(
-	entries: Record<string, Omit<ResourceV2Metadata, 'id'>>,
-): ResourceMetadataV2Selectors {
+function createResourceMetadata(
+	entries: Record<string, Omit<ResourceMetadata, 'id'>>,
+): ResourceMetadataSelectors {
 	const data = Object.entries(entries).map(([id, meta]) => ({ id, ...meta }));
 	return {
 		get: (id: string) => {
@@ -47,16 +47,16 @@ function createResourceMetadataV2(
 }
 
 function createContext(
-	v2Entries: Record<string, Omit<ResourceV2Metadata, 'id'>> = {},
+	v2Entries: Record<string, Omit<ResourceMetadata, 'id'>> = {},
 ) {
 	return {
 		assets: createAssets(),
-		resourceMetadataV2: createResourceMetadataV2(v2Entries),
+		resourceMetadata: createResourceMetadata(v2Entries),
 	};
 }
 
 describe('registrySelectors – selectStatDescriptor', () => {
-	it('uses ResourceV2 metadata for labels and icons', () => {
+	it('uses Resource metadata for labels and icons', () => {
 		const resourceId = 'resource:core:max-value';
 		const context = createContext({
 			[resourceId]: {
@@ -71,7 +71,7 @@ describe('registrySelectors – selectStatDescriptor', () => {
 		expect(cached).toBe(descriptor);
 	});
 
-	it('derives percent formatting from V2 displayAsPercent property', () => {
+	it('derives percent formatting from displayAsPercent property', () => {
 		const resourceId = 'resource:core:percent-value';
 		const context = createContext({
 			[resourceId]: {
@@ -84,11 +84,11 @@ describe('registrySelectors – selectStatDescriptor', () => {
 		expect(descriptor.format).toEqual({ percent: true });
 	});
 
-	it('falls back to V2 metadata default label and maintains per-context caches', () => {
+	it('falls back to metadata default label and maintains per-context caches', () => {
 		const resourceId = 'mystery-stat';
 		const context = createContext();
 		const descriptor = selectStatDescriptor(context, resourceId);
-		// V2 metadata returns id as label for unknown resources
+		// metadata returns id as label for unknown resources
 		expect(descriptor.label).toBe('mystery-stat');
 		// Icon falls back to empty string when not found
 		expect(descriptor.icon).toBe('');

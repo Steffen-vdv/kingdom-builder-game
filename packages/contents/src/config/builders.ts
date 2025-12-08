@@ -135,7 +135,7 @@ class WinConditionBuilder {
 	resourceThreshold(resource: ResourceKey, comparison: WinConditionTrigger['comparison'], value: number, target: WinConditionTrigger['target'] = 'self') {
 		return this.setTrigger({
 			type: 'resource',
-			key: resource,
+			resourceId: resource,
 			comparison,
 			value,
 			target,

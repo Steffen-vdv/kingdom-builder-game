@@ -26,12 +26,7 @@ interface UseInitialSetupLoggerOptions {
 	resourceKeys: SessionResourceKey[];
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'buildings'
-		| 'developments'
-		| 'populations'
-		| 'resources'
+		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
 	>;
 }
 

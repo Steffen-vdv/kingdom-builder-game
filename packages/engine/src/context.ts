@@ -6,13 +6,12 @@ import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
 	DevelopmentConfig as DevelopmentDef,
-	PopulationConfig as PopulationDef,
 	PlayerStartConfig,
 	Registry,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from './phases';
 import type { ActionTrace } from './log';
-import type { RuntimeResourceCatalog } from './resource-v2';
+import type { RuntimeResourceCatalog } from './resource';
 
 export class EngineContext {
 	constructor(
@@ -21,12 +20,11 @@ export class EngineContext {
 		public actions: Registry<ActionDef>,
 		public buildings: Registry<BuildingDef>,
 		public developments: Registry<DevelopmentDef>,
-		public populations: Registry<PopulationDef>,
 		public passives: PassiveManager,
 		public phases: PhaseDef[],
 		public actionCostResourceId: string,
 		public actionCostAmount: number | null,
-		public resourceCatalogV2: RuntimeResourceCatalog,
+		public resourceCatalog: RuntimeResourceCatalog,
 		public compensations: Record<PlayerId, PlayerStartConfig> = {
 			A: {},
 			B: {},
@@ -38,7 +36,7 @@ export class EngineContext {
 	}
 	aiSystem?: AISystem;
 	recentResourceGains: {
-		key: string;
+		resourceId: string;
 		amount: number;
 	}[] = [];
 	/**

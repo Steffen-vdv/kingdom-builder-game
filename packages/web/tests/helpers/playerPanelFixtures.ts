@@ -23,7 +23,7 @@ export interface PlayerPanelFixtures {
 
 type ResourceCatalog = ReturnType<
 	typeof createTestSessionScaffold
->['resourceCatalogV2'];
+>['resourceCatalog'];
 type CategoryEntry = { type: string; id: string };
 
 /**
@@ -69,26 +69,26 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		metadata: sessionMetadata,
 		phases,
 		ruleSnapshot,
-		resourceCatalogV2,
+		resourceCatalog,
 	} = createTestSessionScaffold();
 	// Get all resources from the catalog - no need to separate by category
-	const allResources = resourceCatalogV2.resources.ordered;
+	const allResources = resourceCatalog.resources.ordered;
 	// Find primary category to determine which resources need touched tracking
-	const primaryCategory = findPrimaryCategory(resourceCatalogV2);
+	const primaryCategory = findPrimaryCategory(resourceCatalog);
 	const primaryResourceIds = new Set(
 		primaryCategory
-			? resolveResourceIdsForCategory(resourceCatalogV2, primaryCategory)
+			? resolveResourceIdsForCategory(resourceCatalog, primaryCategory)
 			: [],
 	);
-	// Build valuesV2 and resourceTouchedV2 uniformly for all resources
-	const valuesV2: Record<string, number> = {};
-	const resourceTouchedV2: Record<string, boolean> = {};
+	// Build values and resourceTouched uniformly for all resources
+	const values: Record<string, number> = {};
+	const resourceTouched: Record<string, boolean> = {};
 	for (const [index, resource] of allResources.entries()) {
 		// Assign values: alternating pattern for variety in tests
-		valuesV2[resource.id] = index % 2 === 0 ? index + 2 : index + 1;
+		values[resource.id] = index % 2 === 0 ? index + 2 : index + 1;
 		// Non-primary resources need touched flag for visibility
 		if (!primaryResourceIds.has(resource.id)) {
-			resourceTouchedV2[resource.id] = true;
+			resourceTouched[resource.id] = true;
 		}
 	}
 	// Legacy resources object is empty - V2 is the source of truth
@@ -97,9 +97,9 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		name: 'Player One',
 		resources: {},
 		stats: {},
-		resourceTouchedV2,
+		resourceTouched,
 		population: {},
-		valuesV2,
+		values,
 	});
 	const opponent = createSnapshotPlayer({
 		id: opponentId,
@@ -116,7 +116,7 @@ export function createPlayerPanelFixtures(): PlayerPanelFixtures {
 		actionCostResource: ruleSnapshot.tieredResourceKey,
 		ruleSnapshot,
 		metadata: sessionMetadata,
-		resourceCatalogV2,
+		resourceCatalog,
 	});
 	const translationContext = createTranslationContext(
 		sessionState,

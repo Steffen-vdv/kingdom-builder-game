@@ -25,7 +25,7 @@ describe('hold festival action translation', () => {
 		}${details.upkeepLabel}`;
 		const fortSummarySubject = details.fortIcon || details.fortInfo.label;
 
-		// V2 format adds space after icon for readability
+		// format adds space after icon for readability
 		expect(summary).toEqual([
 			`${details.happinessIcon} ${sign(details.happinessAmt)}${details.happinessAmt}`,
 			`${fortSummarySubject} ${sign(details.fortAmt)}${details.fortAmt}`,
@@ -52,7 +52,7 @@ describe('hold festival action translation', () => {
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
 
-		// V2 format adds space after icon for readability
+		// format adds space after icon for readability
 		expect(description).toEqual([
 			`${details.happinessInfo.icon} ${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
 			`${details.fortInfo.icon || details.fortInfo.label} ${sign(details.fortAmt)}${details.fortAmt} ${details.fortInfo.label}`,
@@ -84,7 +84,7 @@ describe('hold festival action translation', () => {
 			details.raid.icon ?? '',
 			details.raid.name,
 		);
-		// V2 format adds space after icon for readability
+		// format adds space after icon for readability
 		const happinessLabel =
 			`${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`.replace(
 				/\s{2,}/gu,

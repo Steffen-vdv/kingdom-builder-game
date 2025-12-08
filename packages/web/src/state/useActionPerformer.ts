@@ -30,12 +30,7 @@ interface UseActionPerformerOptions {
 	actionCostResource: SessionResourceKey;
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'buildings'
-		| 'developments'
-		| 'resources'
-		| 'populations'
+		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
 	>;
 	addResolutionLog: (resolution: ActionResolution) => void;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
@@ -199,7 +194,7 @@ export function useActionPerformer({
 							!mountedRef.current ||
 							snapshotAfter.game.conclusion ||
 							!snapshotAfter.game.devMode ||
-							(playerAfter.valuesV2[actionCostResource] ?? 0) > 0
+							(playerAfter.values[actionCostResource] ?? 0) > 0
 						) {
 							return;
 						}

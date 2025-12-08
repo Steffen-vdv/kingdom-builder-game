@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# Post-merge hook - formats files after merge to catch unformatted changes
+
+set -e
+
+# Format all files after merge
+npm run format
+
+# Check if there are formatting changes
+if ! git diff --quiet; then
+	echo ""
+	echo "⚠️  Formatting changes detected after merge."
+	echo "   Please review and commit them before pushing."
+	echo ""
+fi

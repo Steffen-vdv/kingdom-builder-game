@@ -37,7 +37,7 @@ export interface TestRegistryMetadataSelectors {
 export function createTestRegistryMetadata(
 	registries: Pick<
 		SessionRegistries,
-		'resources' | 'populations' | 'buildings' | 'developments'
+		'resources' | 'buildings' | 'developments'
 	>,
 	metadata: SessionSnapshotMetadata,
 ): TestRegistryMetadataSelectors {
@@ -45,8 +45,8 @@ export function createTestRegistryMetadata(
 		registries.resources,
 		extractDescriptorRecord(metadata, 'resources'),
 	);
-	const populationMetadataLookup = buildRegistryMetadata(
-		registries.populations,
+	// Population metadata now comes from resources under ResourceV2
+	const populationMetadataLookup = buildStatMetadata(
 		extractDescriptorRecord(metadata, 'populations'),
 	);
 	const buildingMetadataLookup = buildRegistryMetadata(

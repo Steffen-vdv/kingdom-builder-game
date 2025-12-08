@@ -79,10 +79,10 @@ function selectDevelopmentWithIcon(
 	return { id: firstId, definition: firstDefinition } as const;
 }
 
-function selectResourceV2WithIcon(
+function selectResourceWithIcon(
 	translationContext: ReturnType<typeof createTranslationContext>,
 ) {
-	// Get a V2 resource with an icon from the resourceMetadataV2 context
+	// Get a resource with an icon from the resourceMetadata context
 	const resourceIds = [
 		'resource:core:gold',
 		'resource:core:happiness',
@@ -90,14 +90,14 @@ function selectResourceV2WithIcon(
 		'resource:core:castleHP',
 	];
 	for (const resourceId of resourceIds) {
-		const entry = translationContext.resourceMetadataV2.get(resourceId);
+		const entry = translationContext.resourceMetadata.get(resourceId);
 		if (entry?.icon) {
 			return { id: resourceId, icon: entry.icon, label: entry.label ?? '' };
 		}
 	}
 	// Fallback to first available resource
 	const fallbackId = resourceIds[0];
-	const fallbackEntry = translationContext.resourceMetadataV2.get(fallbackId);
+	const fallbackEntry = translationContext.resourceMetadata.get(fallbackId);
 	return {
 		id: fallbackId,
 		icon: fallbackEntry?.icon ?? '',
@@ -149,7 +149,7 @@ describe('modifier evaluation handlers', () => {
 		const { translationContext, registries } = createModifierHarness();
 		const { id: developmentId, definition: developmentDef } =
 			selectDevelopmentWithIcon(registries);
-		const resourceDescriptor = selectResourceV2WithIcon(translationContext);
+		const resourceDescriptor = selectResourceWithIcon(translationContext);
 		const resourceId = resourceDescriptor.id;
 		const eff: EffectDef = {
 			type: 'result_mod',
@@ -200,7 +200,7 @@ describe('modifier evaluation handlers', () => {
 		const { translationContext, registries } = createModifierHarness();
 		const { id: actionId, definition: actionDef } =
 			selectActionWithIcon(registries);
-		const resourceDescriptor = selectResourceV2WithIcon(translationContext);
+		const resourceDescriptor = selectResourceWithIcon(translationContext);
 		const resourceId = resourceDescriptor.id;
 		const eff: EffectDef = {
 			type: 'cost_mod',

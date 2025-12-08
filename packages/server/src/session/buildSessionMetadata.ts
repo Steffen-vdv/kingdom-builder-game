@@ -2,25 +2,22 @@ import {
 	LAND_INFO,
 	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
+	POPULATION_INFO,
 	SLOT_INFO,
 	TRIGGER_INFO,
-	POPULATION_INFO,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
-	RESOURCE_V2_REGISTRY,
 } from '@kingdom-builder/contents';
 import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	PhaseConfig,
-	PopulationConfig,
 	Registry,
 	SerializedRegistry,
 	SessionMetadataDescriptor,
 	SessionMetadataSnapshot,
 	SessionPhaseMetadata,
 	SessionTriggerMetadata,
-	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
 
 type SessionMetadataDescriptorMap = Record<string, SessionMetadataDescriptor>;
@@ -28,11 +25,21 @@ type SessionPhaseStep = NonNullable<SessionPhaseMetadata['steps']>[number];
 
 export type SessionStaticMetadataPayload = SessionMetadataSnapshot;
 
+/**
+ * Minimal resource definition shape required for metadata extraction.
+ * This allows raw content definitions to be used without computed fields.
+ */
+export interface ResourceMetadataSource {
+	label?: string;
+	icon?: string;
+	description?: string | null;
+	displayAsPercent?: boolean;
+}
+
 export interface BuildSessionMetadataOptions {
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
-	populations: Registry<PopulationConfig>;
-	resources: SerializedRegistry<SessionResourceDefinition>;
+	resources: SerializedRegistry<ResourceMetadataSource>;
 	phases: ReadonlyArray<PhaseConfig>;
 }
 
@@ -40,13 +47,10 @@ export function buildSessionMetadata(
 	options: BuildSessionMetadataOptions,
 ): SessionStaticMetadataPayload {
 	const metadata: SessionStaticMetadataPayload = {};
+	// Resources now include what was previously stats and populations
 	const resourceMetadata = buildResourceMetadata(options.resources);
 	if (hasEntries(resourceMetadata)) {
 		metadata.resources = resourceMetadata;
-	}
-	const populationMetadata = buildPopulationMetadata(options.populations);
-	if (hasEntries(populationMetadata)) {
-		metadata.populations = populationMetadata;
 	}
 	const buildingMetadata = buildRegistryMetadata(options.buildings);
 	if (hasEntries(buildingMetadata)) {
@@ -55,10 +59,6 @@ export function buildSessionMetadata(
 	const developmentMetadata = buildRegistryMetadata(options.developments);
 	if (hasEntries(developmentMetadata)) {
 		metadata.developments = developmentMetadata;
-	}
-	const statMetadata = buildStatMetadata();
-	if (hasEntries(statMetadata)) {
-		metadata.stats = statMetadata;
 	}
 	const phaseMetadata = buildPhaseMetadata(options.phases);
 	if (hasEntries(phaseMetadata)) {
@@ -78,7 +78,7 @@ export function buildSessionMetadata(
 }
 
 function buildResourceMetadata(
-	resources: SerializedRegistry<SessionResourceDefinition>,
+	resources: SerializedRegistry<ResourceMetadataSource>,
 ): SessionMetadataDescriptorMap {
 	const descriptors: SessionMetadataDescriptorMap = {};
 	for (const key of Object.keys(resources)) {
@@ -95,6 +95,9 @@ function buildResourceMetadata(
 		}
 		if (definition.description) {
 			descriptor.description = definition.description;
+		}
+		if (definition.displayAsPercent) {
+			descriptor.displayAsPercent = definition.displayAsPercent;
 		}
 		descriptors[key] = descriptor;
 	}
@@ -118,57 +121,6 @@ function buildRegistryMetadata<
 			descriptor.description = definition.description;
 		}
 		descriptors[id] = descriptor;
-	}
-	return descriptors;
-}
-
-function buildPopulationMetadata(
-	registry: Registry<PopulationConfig>,
-): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
-	for (const [id, definition] of registry.entries()) {
-		const resource = RESOURCE_V2_REGISTRY.byId[id];
-		// Prefer definition name (custom overrides) over V2 registry label
-		const descriptor: SessionMetadataDescriptor = {
-			label: definition.name ?? resource?.label,
-		};
-		// Prefer definition icon over V2 registry icon
-		if (definition.icon) {
-			descriptor.icon = definition.icon;
-		} else if (resource?.icon) {
-			descriptor.icon = resource.icon;
-		}
-		// Prefer definition description over V2 registry description
-		const description = (definition as { description?: string }).description;
-		if (description) {
-			descriptor.description = description;
-		} else if (resource?.description) {
-			descriptor.description = resource.description;
-		}
-		descriptors[id] = descriptor;
-	}
-	return descriptors;
-}
-
-function buildStatMetadata(): SessionMetadataDescriptorMap {
-	const descriptors: SessionMetadataDescriptorMap = {};
-	for (const resource of RESOURCE_V2_REGISTRY.ordered) {
-		if (!resource.id.startsWith('resource:core:')) {
-			continue;
-		}
-		const descriptor: SessionMetadataDescriptor = {
-			label: resource.label,
-		};
-		if (resource.description) {
-			descriptor.description = resource.description;
-		}
-		if (resource.icon) {
-			descriptor.icon = resource.icon;
-		}
-		if (resource.displayAsPercent) {
-			descriptor.displayAsPercent = resource.displayAsPercent;
-		}
-		descriptors[resource.id] = descriptor;
 	}
 	return descriptors;
 }

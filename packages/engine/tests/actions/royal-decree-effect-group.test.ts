@@ -8,7 +8,7 @@ import {
 } from '../../src';
 import { createTestEngine } from '../helpers';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
-import { type ResourceAmountParamsResult } from '../helpers/resourceV2Params.ts';
+import { type ResourceAmountParamsResult } from '../helpers/resourceParams.ts';
 
 interface EffectGroupOption {
 	id: string;
@@ -93,7 +93,7 @@ describe('royal decree action effect group', () => {
 			costs[CResource.gold] ?? 0;
 
 		const beforeLands = engineContext.activePlayer.lands.length;
-		// keys ARE the ResourceV2 IDs directly
+		// keys ARE the Resource IDs directly
 		const beforeHappiness =
 			engineContext.activePlayer.resourceValues[CResource.happiness] ?? 0;
 		const beforeGold =
@@ -140,7 +140,8 @@ describe('royal decree action effect group', () => {
 				(candidate) =>
 					candidate.type === 'resource' &&
 					candidate.method === 'add' &&
-					(candidate.params as { key?: string }).key === CResource.happiness,
+					(candidate.params as { key?: string }).resourceId ===
+						CResource.happiness,
 			);
 			if (effect) {
 				happinessGain +=
@@ -155,7 +156,7 @@ describe('royal decree action effect group', () => {
 			)
 			.reduce((total, effect) => {
 				const params = effect.params as ResourceAmountParamsResult | undefined;
-				return params?.key === CResource.happiness
+				return params?.resourceId === CResource.happiness
 					? total + (params.amount ?? 0)
 					: total;
 			}, 0);

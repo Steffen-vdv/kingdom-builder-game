@@ -3,7 +3,7 @@ import { Resource as CResource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { getActionCosts } from '../../src';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('PassiveManager', () => {
 	it('applies and unregisters cost modifiers', () => {
@@ -101,13 +101,13 @@ describe('PassiveManager', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 2,
 					}),
 				},
 			],
 		};
-		// CResource.gold IS the ResourceV2 ID
+		// CResource.gold IS the Resource ID
 		const before =
 			engineContext.activePlayer.resourceValues[CResource.gold] ?? 0;
 		engineContext.passives.addPassive(passive, engineContext);

@@ -3,7 +3,6 @@ import type { EngineContext } from './context';
 import type { EffectDef } from './effects';
 import type { PlayerState } from './state';
 import type { ResourceSourceFrame } from './resource_sources';
-import { getResourceValue } from './resource-v2';
 
 export interface TriggerEffectBundle {
 	effects: EffectDef[];
@@ -17,7 +16,7 @@ function pushUpkeepEffect(
 	resourceId: string,
 	amount: number,
 ) {
-	// resourceId IS the ResourceV2 ID directly (no mapper needed)
+	// resourceId IS the Resource ID directly (no mapper needed)
 	bundles.push({
 		effects: [
 			{
@@ -55,48 +54,10 @@ export function collectTriggerEffects(
 	player: PlayerState = engineContext.activePlayer,
 ): TriggerEffectBundle[] {
 	const bundles: TriggerEffectBundle[] = [];
-	// Iterate over all registered populations, not just the PopulationRole enum
-	for (const role of engineContext.populations.keys()) {
-		const populationDefinition = engineContext.populations.get(role);
-		// role IS the ResourceV2 ID (e.g. 'resource:core:council')
-		const qty = getResourceValue(player, role);
-		if (
-			trigger === 'onPayUpkeepStep' &&
-			populationDefinition?.upkeep &&
-			qty > 0
-		) {
-			for (const [key, amount] of Object.entries(populationDefinition.upkeep)) {
-				pushUpkeepEffect(
-					bundles,
-					player,
-					{ type: 'resource', id: role, count: qty },
-					key,
-					amount * qty,
-				);
-			}
-		}
-		const list = getEffects(populationDefinition, trigger);
-		if (list) {
-			const clones: EffectDef[] = [];
-			for (
-				let populationIndex = 0;
-				populationIndex < Number(qty);
-				populationIndex++
-			) {
-				clones.push(...list.map(cloneEffect));
-			}
-			if (clones.length) {
-				bundles.push({
-					effects: clones,
-					frames: () => ({
-						kind: 'resource',
-						id: role,
-						dependsOn: [{ type: 'resource', id: role }],
-					}),
-				});
-			}
-		}
-	}
+	// Population triggers are now handled via the unified resource system:
+	// - Population values are resources (e.g., 'resource:core:council')
+	// - Population upkeep is defined in phase step effects
+	// - Population triggers like onGainAPStep are defined in phase steps
 	for (const land of player.lands) {
 		if (trigger === 'onPayUpkeepStep' && land.upkeep) {
 			for (const [key, amount] of Object.entries(land.upkeep)) {

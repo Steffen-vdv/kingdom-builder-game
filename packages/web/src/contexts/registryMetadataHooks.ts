@@ -4,11 +4,10 @@ import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
-	PopulationConfig,
+	ResourceDefinition,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionMetadataDescriptor,
-	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
@@ -33,7 +32,6 @@ import {
 export interface DescriptorOverrides {
 	readonly resources?: ReturnType<typeof extractDescriptorRecord>;
 	readonly actionCategories?: ReturnType<typeof extractDescriptorRecord>;
-	readonly populations?: ReturnType<typeof extractDescriptorRecord>;
 	readonly buildings?: ReturnType<typeof extractDescriptorRecord>;
 	readonly developments?: ReturnType<typeof extractDescriptorRecord>;
 	readonly stats?: ReturnType<typeof extractDescriptorRecord>;
@@ -72,10 +70,6 @@ export const useDescriptorOverrides = (
 				snapshotMetadata,
 				'actionCategories',
 			),
-			populations: requireDescriptorRecord(
-				extractDescriptorRecord(snapshotMetadata, 'populations'),
-				'populations',
-			),
 			buildings: requireDescriptorRecord(
 				extractDescriptorRecord(snapshotMetadata, 'buildings'),
 				'buildings',
@@ -104,23 +98,17 @@ export const useDescriptorOverrides = (
 	}, [snapshotMetadata]);
 
 interface DefinitionLookups {
-	readonly resourceLookup: DefinitionLookup<SessionResourceDefinition>;
+	readonly resourceLookup: DefinitionLookup<ResourceDefinition>;
 	readonly actionLookup: DefinitionLookup<ActionConfig>;
 	readonly actionCategoryLookup: DefinitionLookup<ActionCategoryConfig>;
 	readonly buildingLookup: DefinitionLookup<BuildingConfig>;
 	readonly developmentLookup: DefinitionLookup<DevelopmentConfig>;
-	readonly populationLookup: DefinitionLookup<PopulationConfig>;
 }
 
 export const useDefinitionLookups = (
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'resources'
-		| 'buildings'
-		| 'developments'
-		| 'populations'
+		'actions' | 'actionCategories' | 'resources' | 'buildings' | 'developments'
 	>,
 ): DefinitionLookups =>
 	useMemo(() => {
@@ -138,24 +126,18 @@ export const useDefinitionLookups = (
 			registries.developments,
 			'development',
 		);
-		const populationLookup = createRegistryLookup(
-			registries.populations,
-			'population',
-		);
 		return Object.freeze({
 			resourceLookup,
 			actionLookup,
 			actionCategoryLookup,
 			buildingLookup,
 			developmentLookup,
-			populationLookup,
 		});
 	}, [
 		registries.actions,
 		registries.actionCategories,
 		registries.buildings,
 		registries.developments,
-		registries.populations,
 		registries.resources,
 	]);
 
@@ -164,7 +146,6 @@ interface MetadataLookups {
 	readonly actionCategoryMetadataLookup: ReturnType<
 		typeof buildRegistryMetadata
 	>;
-	readonly populationMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
 	readonly buildingMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
 	readonly developmentMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
 	readonly statMetadataLookup: ReturnType<typeof buildStatMetadata>;
@@ -178,12 +159,7 @@ interface MetadataLookups {
 export const useMetadataLookups = (
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'resources'
-		| 'buildings'
-		| 'developments'
-		| 'populations'
+		'actions' | 'actionCategories' | 'resources' | 'buildings' | 'developments'
 	>,
 	overrides: DescriptorOverrides,
 ): MetadataLookups =>
@@ -195,10 +171,6 @@ export const useMetadataLookups = (
 		const actionCategoryMetadataLookup = buildRegistryMetadata(
 			registries.actionCategories,
 			overrides.actionCategories,
-		);
-		const populationMetadataLookup = buildRegistryMetadata(
-			registries.populations,
-			overrides.populations,
 		);
 		const buildingMetadataLookup = buildRegistryMetadata(
 			registries.buildings,
@@ -215,7 +187,6 @@ export const useMetadataLookups = (
 		return Object.freeze({
 			resourceMetadataLookup,
 			actionCategoryMetadataLookup,
-			populationMetadataLookup,
 			buildingMetadataLookup,
 			developmentMetadataLookup,
 			statMetadataLookup,
@@ -228,6 +199,5 @@ export const useMetadataLookups = (
 		registries.actionCategories,
 		registries.buildings,
 		registries.developments,
-		registries.populations,
 		registries.resources,
 	]);

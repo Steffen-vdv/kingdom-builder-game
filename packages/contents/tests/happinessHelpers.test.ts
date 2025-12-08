@@ -4,8 +4,8 @@ import { EvaluationTargetTypes } from '../src/config/builders/advancedEffectPara
 import { DevelopmentId } from '../src/developments';
 import { createTierPassiveEffect, growthBonusEffect, happinessTierId } from '../src/happinessHelpers';
 import { Resource } from '../src/resources';
-import { Stat, getStatResourceV2Id } from '../src/stats';
-import { resourceChange } from '../src/resourceV2';
+import { Stat, getStatResourceId } from '../src/stats';
+import { resourceChange } from '../src/resource';
 import { describe, expect, it } from 'vitest';
 
 describe('happiness helpers', () => {
@@ -13,7 +13,7 @@ describe('happiness helpers', () => {
 		const amount = 0.2;
 		const config = statAddEffect(Stat.growth, amount);
 		const expected = effect(Types.Resource, ResourceMethods.ADD)
-			.params(resourceChange(getStatResourceV2Id(Stat.growth)).amount(amount).build())
+			.params(resourceChange(getStatResourceId(Stat.growth)).amount(amount).build())
 			.build();
 		expect(config).toEqual(expected);
 		expect(config.round).toBeUndefined();

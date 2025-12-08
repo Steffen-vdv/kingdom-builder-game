@@ -69,7 +69,7 @@ export function diffStepSnapshots(
 		nextSnapshot,
 		resourceKeys,
 		diffContext.assets,
-		diffContext.resourceMetadataV2,
+		diffContext.resourceMetadata,
 		sources,
 		{ trackByKey: resourceNodes },
 	);
@@ -86,7 +86,7 @@ export function diffStepSnapshots(
 		nextSnapshot,
 		stepEffects,
 		diffContext.assets,
-		diffContext.resourceMetadataV2,
+		diffContext.resourceMetadata,
 	);
 	for (const summary of percentBreakdownChanges) {
 		if (!summary || !summary.trim()) {

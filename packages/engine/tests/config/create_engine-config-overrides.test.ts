@@ -4,20 +4,19 @@ import {
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
-	POPULATIONS,
 	Resource,
 	RULES,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createEngine } from '../../src/index.ts';
 
-const resourceCatalogV2 = {
-	resources: RESOURCE_V2_REGISTRY,
-	groups: RESOURCE_GROUP_V2_REGISTRY,
+const resourceCatalog = {
+	resources: RESOURCE_REGISTRY,
+	groups: RESOURCE_GROUP_REGISTRY,
 };
 
 describe('createEngine configuration overrides', () => {
@@ -28,26 +27,22 @@ describe('createEngine configuration overrides', () => {
 		});
 		factory.building();
 		factory.development();
-		factory.population();
 		const engine = createEngine({
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
-			resourceCatalogV2,
+			resourceCatalog,
 			config: {
 				actions: factory.actions.values(),
 				buildings: factory.buildings.values(),
 				developments: factory.developments.values(),
-				populations: factory.populations.values(),
 			},
 		});
 		expect(engine.actions.keys()).toEqual(factory.actions.keys());
 		expect(engine.buildings.keys()).toEqual(factory.buildings.keys());
 		expect(engine.developments.keys()).toEqual(factory.developments.keys());
-		expect(engine.populations.keys()).toEqual(factory.populations.keys());
 		const createdAction = engine.actions.get(customAction.id);
 		const baseCosts = createdAction.baseCosts || {};
 		expect(baseCosts[Resource.gold]).toBe(3);
@@ -62,15 +57,13 @@ describe('createEngine configuration overrides', () => {
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
-			resourceCatalogV2,
+			resourceCatalog,
 			config: {
 				actions: [],
 				buildings: [],
 				developments: [],
-				populations: [],
 			},
 			devMode: true,
 		});

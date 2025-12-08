@@ -1,6 +1,6 @@
 import { formatStatValue } from '../../utils/resourceSources';
 import type { TranslationAssets } from '../context';
-import type { ResourceV2MetadataSnapshot } from '../resourceV2';
+import type { ResourceMetadataSnapshot } from '../resource';
 
 export interface SignedDelta {
 	before: number;
@@ -35,7 +35,7 @@ export function formatResourceChange(
 }
 
 export function formatResourceSource(
-	metadata: ResourceV2MetadataSnapshot,
+	metadata: ResourceMetadataSnapshot,
 	change: SignedDelta,
 	source: string | undefined,
 ): string | undefined {

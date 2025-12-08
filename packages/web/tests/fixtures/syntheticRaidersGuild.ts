@@ -205,13 +205,13 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		harvestDevelopment.id,
 	);
 
-	// Create ResourceV2 catalog with the synthetic gold resource
+	// Create Resource catalog with the synthetic gold resource
 	const goldResourceDefinition = {
 		id: syntheticGoldResourceId,
 		icon: syntheticGoldIcon,
 		label: syntheticGoldLabel,
 	};
-	const resourceCatalogV2 = {
+	const resourceCatalog = {
 		resources: {
 			ordered: [goldResourceDefinition],
 			byId: { [syntheticGoldResourceId]: goldResourceDefinition },
@@ -219,8 +219,8 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		groups: { ordered: [], byId: {} },
 	};
 
-	// ResourceMetadataV2 for translation layer
-	const resourceMetadataV2 = {
+	// ResourceMetadata for translation layer
+	const resourceMetadata = {
 		[syntheticGoldResourceId]: {
 			icon: syntheticGoldIcon,
 			label: syntheticGoldLabel,
@@ -235,8 +235,8 @@ export function createRaidersGuildContext(): RaidersGuildSyntheticContext {
 		actionCostResource: syntheticGoldKey,
 		ruleSnapshot: buildRuleSnapshot(),
 		metadata,
-		resourceCatalogV2,
-		resourceMetadataV2,
+		resourceCatalog,
+		resourceMetadata,
 	});
 	const translation = createTranslationContext(
 		session,

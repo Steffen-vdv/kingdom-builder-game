@@ -3,15 +3,14 @@ import { createEngine } from '../../src/index.ts';
 import {
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	RULES,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-	RESOURCE_CATEGORY_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+	RESOURCE_CATEGORY_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import { Registry, actionSchema } from '@kingdom-builder/protocol';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 
@@ -24,13 +23,12 @@ describe('createEngine initial setup validation', () => {
 	const baseConfig = {
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
 		phases: PHASES,
 		rules: RULES,
-		resourceCatalogV2: {
-			resources: RESOURCE_V2_REGISTRY,
-			groups: RESOURCE_GROUP_V2_REGISTRY,
-			categories: RESOURCE_CATEGORY_V2_REGISTRY,
+		resourceCatalog: {
+			resources: RESOURCE_REGISTRY,
+			groups: RESOURCE_GROUP_REGISTRY,
+			categories: RESOURCE_CATEGORY_REGISTRY,
 		},
 	};
 

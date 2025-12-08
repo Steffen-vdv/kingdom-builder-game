@@ -8,7 +8,7 @@ import {
 	TAX_ACTION_ID,
 } from '../../src/ai/index';
 import { createTestEngine } from '../helpers';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('AISystem with tax collector controller', () => {
 	type ActionOverrides = Partial<
@@ -29,7 +29,7 @@ describe('AISystem with tax collector controller', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 1,
 					}),
 				},

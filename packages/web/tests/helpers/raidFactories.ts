@@ -20,7 +20,7 @@ import {
 	PLUNDER_PERCENT,
 	TIER_RESOURCE_KEY,
 	SYNTH_RESOURCE_METADATA,
-	SYNTH_RESOURCE_CATALOG_V2,
+	SYNTH_RESOURCE_CATALOG,
 	type CombatStatKey,
 	type SyntheticDescriptor,
 } from './raidConfig';
@@ -51,9 +51,12 @@ const originalStatEntries = new Map<string, SyntheticDescriptor | undefined>();
 
 function overrideStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
-	originalStatEntries.set(config.key, SYNTH_RESOURCE_METADATA[config.key]);
-	SYNTH_RESOURCE_METADATA[config.key] = {
-		key: config.key,
+	originalStatEntries.set(
+		config.resourceId,
+		SYNTH_RESOURCE_METADATA[config.resourceId],
+	);
+	SYNTH_RESOURCE_METADATA[config.resourceId] = {
+		key: config.resourceId,
 		icon: config.icon,
 		label: config.label,
 	};
@@ -61,11 +64,11 @@ function overrideStat(key: CombatStatKey) {
 
 function restoreStat(key: CombatStatKey) {
 	const config = COMBAT_STAT_CONFIG[key];
-	const original = originalStatEntries.get(config.key);
+	const original = originalStatEntries.get(config.resourceId);
 	if (original) {
-		SYNTH_RESOURCE_METADATA[config.key] = original;
+		SYNTH_RESOURCE_METADATA[config.resourceId] = original;
 	} else {
-		delete SYNTH_RESOURCE_METADATA[config.key];
+		delete SYNTH_RESOURCE_METADATA[config.resourceId];
 	}
 }
 
@@ -91,7 +94,7 @@ function createBaseEngine() {
 		populations: factory.populations,
 		phases: PHASES,
 		rules: RULES,
-		resourceCatalogV2: SYNTH_RESOURCE_CATALOG_V2,
+		resourceCatalog: SYNTH_RESOURCE_CATALOG,
 		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});
 	return { factory, engineContext } as const;
@@ -223,7 +226,7 @@ export function createPartialStatEngineContext() {
 }
 
 export function getStat(
-	context: Pick<TranslationContext, 'resourceMetadataV2'>,
+	context: Pick<TranslationContext, 'resourceMetadata'>,
 	key: string,
 ): AttackRegistryDescriptor {
 	return selectAttackStatDescriptor(context, key);
@@ -238,11 +241,12 @@ export function iconLabel(
 	return icon ? `${icon} ${resolved}` : resolved;
 }
 
-export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { key: string }> = {
-	power: { key: COMBAT_STAT_CONFIG.power.key },
-	absorption: { key: COMBAT_STAT_CONFIG.absorption.key },
-	fortification: { key: COMBAT_STAT_CONFIG.fortification.key },
-};
+export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { resourceId: string }> =
+	{
+		power: { resourceId: COMBAT_STAT_CONFIG.power.resourceId },
+		absorption: { resourceId: COMBAT_STAT_CONFIG.absorption.resourceId },
+		fortification: { resourceId: COMBAT_STAT_CONFIG.fortification.resourceId },
+	};
 
 const suppressedStatEntries = new Map<
 	string,

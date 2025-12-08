@@ -161,7 +161,7 @@ export default function HoverCard() {
 	const renderCostOptions = {
 		showFreeLabel: shouldShowFreeLabel,
 		assets: translationContext.assets,
-		resourceMetadataV2: translationContext.resourceMetadataV2,
+		resourceMetadata: translationContext.resourceMetadata,
 	};
 
 	const multiStepIndicator = renderedData.multiStep ? (
@@ -182,7 +182,7 @@ export default function HoverCard() {
 				<div className={costTextClass}>
 					{renderCosts(
 						renderedData.costs,
-						translationContext.activePlayer.valuesV2,
+						translationContext.activePlayer.values,
 						actionCostResource,
 						renderedData.upkeep,
 						renderCostOptions,

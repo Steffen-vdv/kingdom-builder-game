@@ -146,7 +146,7 @@ export function createActionsPanelGame({
 		activePlayer: toTranslationPlayer({
 			id: player.id,
 			name: player.name,
-			valuesV2: {
+			values: {
 				...player.resources,
 				...player.population,
 			},
@@ -154,7 +154,7 @@ export function createActionsPanelGame({
 		opponent: toTranslationPlayer({
 			id: opponent.id,
 			name: opponent.name,
-			valuesV2: {
+			values: {
 				...opponent.resources,
 				...opponent.population,
 			},

@@ -16,7 +16,8 @@ function expectDescriptorMetadata(
 	if (!metadata) {
 		return;
 	}
-	expect(Object.keys(metadata.stats ?? {})).not.toHaveLength(0);
+	// Resources now contain all resource types including former stats
+	expect(Object.keys(metadata.resources ?? {})).not.toHaveLength(0);
 	expect(Object.keys(metadata.triggers ?? {})).not.toHaveLength(0);
 	expect(metadata.overview).toBeDefined();
 }
@@ -60,10 +61,10 @@ describe('SessionTransport session state', () => {
 		expect(state.registries.actions[actionId]).toBeDefined();
 		expectStaticMetadata(manager.getMetadata());
 		expect(state.registries.resources[costResourceId]).toMatchObject({
-			key: costResourceId,
+			id: costResourceId,
 		});
 		expect(state.registries.resources[gainResourceId]).toMatchObject({
-			key: gainResourceId,
+			id: gainResourceId,
 		});
 	});
 

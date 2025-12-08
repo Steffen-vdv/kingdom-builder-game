@@ -32,7 +32,7 @@ function collectStatKeysFromValue(value: unknown, keys: Set<string>): void {
 		return;
 	}
 	const record = value as Record<string, unknown>;
-	// ResourceV2 unified all stats under type: 'resource'
+	// Resource unified all stats under type: 'resource'
 	if (record.type === 'resource') {
 		const params = record.params as { resourceId?: unknown } | undefined;
 		if (params && typeof params.resourceId === 'string') {
@@ -56,7 +56,7 @@ function deriveStatKeys(registries: SessionRegistries): string[] {
 	scanRegistry(registries.actions);
 	scanRegistry(registries.buildings);
 	scanRegistry(registries.developments);
-	scanRegistry(registries.populations);
+	// Populations are now unified under resources in V2 system
 	return Array.from(keys);
 }
 

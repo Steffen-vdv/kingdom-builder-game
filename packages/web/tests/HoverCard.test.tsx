@@ -48,10 +48,10 @@ interface HoverCardScenario {
 
 function createHoverCardScenario(): HoverCardScenario {
 	const scaffold = createTestSessionScaffold();
-	// Use ungrouped V2 resource IDs from the catalog
+	// Use ungrouped resource IDs from the catalog
 	// Resources with groupId = null/undefined are in ResourceBar
 	// Resources with a groupId are managed by other components
-	const v2ResourceIds = scaffold.resourceCatalogV2.resources.ordered
+	const v2ResourceIds = scaffold.resourceCatalog.resources.ordered
 		.filter((def) => def.groupId === null || def.groupId === undefined)
 		.map((def) => def.id);
 	const metadata = structuredClone(scaffold.metadata);
@@ -96,8 +96,8 @@ function createHoverCardScenario(): HoverCardScenario {
 	mockGame.selectors.sessionView = sessionView;
 	mockGame.sessionSnapshot = sessionState;
 	const translationContext = mockGame.translationContext;
-	// Get icon from V2 metadata instead of legacy assets
-	const costMetadata = translationContext.resourceMetadataV2.get(costResource);
+	// Get icon from metadata instead of legacy assets
+	const costMetadata = translationContext.resourceMetadata.get(costResource);
 	const costIcon = costMetadata?.icon ?? '🪙';
 	const actionEntries = Array.from(scaffold.registries.actions.entries());
 	const [exampleActionId, exampleActionDefinition] =
@@ -258,7 +258,7 @@ describe('<HoverCard />', () => {
 		if (!activePlayer) {
 			throw new Error('Expected active player for next turn test');
 		}
-		activePlayer.valuesV2[actionCostResource] = 0;
+		activePlayer.values[actionCostResource] = 0;
 		mockGame.phase = {
 			...mockGame.phase,
 			canEndTurn: true,
@@ -323,10 +323,10 @@ describe('<HoverCard />', () => {
 		if (!activePlayerView) {
 			throw new Error('Expected active player for phase resolution test');
 		}
-		// Use V2 resource IDs from resourceMetadataV2 - ungrouped resources
+		// Use resource IDs from resourceMetadata - ungrouped resources
 		// are in the resource bar and suitable for diffing
-		const resourceMetadataV2 = mockGame.translationContext.resourceMetadataV2;
-		const availableResourceKeys = resourceMetadataV2
+		const resourceMetadata = mockGame.translationContext.resourceMetadata;
+		const availableResourceKeys = resourceMetadata
 			.list()
 			.filter((metadata) => metadata.groupId === null)
 			.map((metadata) => metadata.id);
@@ -337,13 +337,13 @@ describe('<HoverCard />', () => {
 		const createPlayerSnapshot = (
 			resources: Record<string, number>,
 		): PlayerSnapshot => {
-			// Resources are already V2 IDs, copy directly to valuesV2
+			// Resources are already IDs, copy directly to values
 			return {
 				resources,
 				stats: {},
 				population: {},
-				valuesV2: { ...resources },
-				resourceBoundsV2: {},
+				values: { ...resources },
+				resourceBounds: {},
 				buildings: [],
 				lands: [],
 				passives: [],
@@ -356,9 +356,9 @@ describe('<HoverCard />', () => {
 			name: activePlayerView.name,
 			resources: { ...after.resources },
 			stats: {},
-			resourceTouchedV2: {},
-			valuesV2: {},
-			resourceBoundsV2: {},
+			resourceTouched: {},
+			values: {},
+			resourceBounds: {},
 			population: {},
 			lands: [],
 			buildings: [],
@@ -408,7 +408,7 @@ describe('<HoverCard />', () => {
 			actionCategories: mockGame.translationContext.actionCategories,
 			passives: { evaluationMods: new Map(), get: () => undefined },
 			assets: mockGame.translationContext.assets,
-			resourceMetadataV2: mockGame.translationContext.resourceMetadataV2,
+			resourceMetadata: mockGame.translationContext.resourceMetadata,
 		});
 		const formatted = formatPhaseResolution({
 			advance,

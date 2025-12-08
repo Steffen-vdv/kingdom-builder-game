@@ -14,9 +14,7 @@ function formatSubEntries(
 	mode: 'summarize' | 'describe',
 ): SummaryEntry[] {
 	// Try to get resource metadata for the resourceId
-	const metadata = resourceId
-		? context.resourceMetadataV2.get(resourceId)
-		: null;
+	const metadata = resourceId ? context.resourceMetadata.get(resourceId) : null;
 
 	// If no resourceId or no metadata, fall back to population display logic
 	if (!metadata || !metadata.icon) {

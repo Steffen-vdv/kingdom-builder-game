@@ -7,10 +7,11 @@ import {
 	type PassiveLike,
 	type PassiveOwner,
 } from '../src/passives/visibility';
-import { createSessionRegistries } from './helpers/sessionRegistries';
 
-const registries = createSessionRegistries();
-const populationIds = Array.from(registries.populations.keys());
+// Synthetic population IDs for testing visibility heuristics.
+// Under ResourceV2, population roles are resources - these IDs represent
+// resources with population semantics.
+const populationIds = ['resource:population:role:legion'] as const;
 const visibilityOptions = { populationIds } as const;
 
 function createOwner(overrides: Partial<PassiveOwner> = {}): PassiveOwner {

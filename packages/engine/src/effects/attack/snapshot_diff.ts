@@ -7,15 +7,15 @@ export function diffPlayerSnapshots(
 ): AttackPlayerDiff[] {
 	const diffs: AttackPlayerDiff[] = [];
 	const allKeys = new Set([
-		...Object.keys(before.valuesV2),
-		...Object.keys(after.valuesV2),
+		...Object.keys(before.values),
+		...Object.keys(after.values),
 	]);
 
-	for (const key of allKeys) {
-		const beforeValue = before.valuesV2[key] ?? 0;
-		const afterValue = after.valuesV2[key] ?? 0;
+	for (const resourceId of allKeys) {
+		const beforeValue = before.values[resourceId] ?? 0;
+		const afterValue = after.values[resourceId] ?? 0;
 		if (beforeValue !== afterValue) {
-			diffs.push({ key, before: beforeValue, after: afterValue });
+			diffs.push({ resourceId, before: beforeValue, after: afterValue });
 		}
 	}
 

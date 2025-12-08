@@ -4,18 +4,18 @@ import { createTestEngine } from '../helpers.ts';
 describe('EngineContext effect logs', () => {
 	it('returns undefined when there are no entries', () => {
 		const engineContext = createTestEngine();
-		expect(engineContext.resourceCatalogV2).toBeDefined();
-		expect(engineContext.game.resourceCatalogV2).toBe(
-			engineContext.resourceCatalogV2,
+		expect(engineContext.resourceCatalog).toBeDefined();
+		expect(engineContext.game.resourceCatalog).toBe(
+			engineContext.resourceCatalog,
 		);
 		expect(engineContext.pullEffectLog('missing')).toBeUndefined();
 	});
 
 	it('pulls entries in insertion order and clears the queue', () => {
 		const engineContext = createTestEngine();
-		expect(engineContext.resourceCatalogV2).toBeDefined();
-		expect(engineContext.game.resourceCatalogV2).toBe(
-			engineContext.resourceCatalogV2,
+		expect(engineContext.resourceCatalog).toBeDefined();
+		expect(engineContext.game.resourceCatalog).toBe(
+			engineContext.resourceCatalog,
 		);
 		engineContext.pushEffectLog('resource', { amount: 1 });
 		engineContext.pushEffectLog('resource', { amount: 2 });
@@ -29,9 +29,9 @@ describe('EngineContext effect logs', () => {
 
 	it('clones drained entries and empties the log store', () => {
 		const engineContext = createTestEngine();
-		expect(engineContext.resourceCatalogV2).toBeDefined();
-		expect(engineContext.game.resourceCatalogV2).toBe(
-			engineContext.resourceCatalogV2,
+		expect(engineContext.resourceCatalog).toBeDefined();
+		expect(engineContext.game.resourceCatalog).toBe(
+			engineContext.resourceCatalog,
 		);
 		const original = { nested: { value: 1 } };
 		engineContext.pushEffectLog('clone', original);

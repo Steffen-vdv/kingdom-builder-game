@@ -2,19 +2,19 @@ import { describe, it, expect } from 'vitest';
 import { Stat } from '@kingdom-builder/contents';
 import { runEffects } from '../../src/effects/index.ts';
 import { createTestEngine } from '../helpers.ts';
-import { resourcePercentParams } from '../helpers/resourceV2Params.ts';
+import { resourcePercentParams } from '../helpers/resourceParams.ts';
 
 describe('resource:add additive percent effect', () => {
 	it('resets cached base between steps', () => {
 		const engineContext = createTestEngine();
-		// Stat values ARE ResourceV2 IDs - access via resourceValues
+		// Stat values ARE Resource IDs - access via resourceValues
 		engineContext.activePlayer.resourceValues[Stat.absorption] = 0.2;
 		engineContext.game.currentStep = 's1';
 		const effect = {
 			type: 'resource',
 			method: 'add',
 			params: resourcePercentParams({
-				key: Stat.absorption,
+				resourceId: Stat.absorption,
 				percent: 0.5,
 				additive: true,
 			}),

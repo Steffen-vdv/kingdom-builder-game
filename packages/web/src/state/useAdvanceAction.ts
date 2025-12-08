@@ -75,7 +75,7 @@ export function useAdvanceAction(): AdvanceActionState {
 		if (!activePlayer) {
 			return false;
 		}
-		const remainingActions = activePlayer.valuesV2?.[actionCostResource] ?? 0;
+		const remainingActions = activePlayer.values?.[actionCostResource] ?? 0;
 		if (remainingActions > 0) {
 			return false;
 		}

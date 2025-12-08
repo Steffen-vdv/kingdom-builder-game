@@ -1324,7 +1324,7 @@
 			"tags": ["attack-target", "win-condition-zero"]
 		}
 	},
-	"resourcesV2": {
+	"resources": {
 		"resource:core:gold": {
 			"id": "resource:core:gold",
 			"label": "Gold",
@@ -1550,7 +1550,7 @@
 			"resolvedGroupOrder": 2
 		}
 	},
-	"resourceGroupsV2": {
+	"resourceGroups": {
 		"resource-group:core": {
 			"id": "resource-group:core",
 			"order": 0,
@@ -1631,7 +1631,7 @@
 			}
 		}
 	},
-	"resourceCategoriesV2": {
+	"resourceCategories": {
 		"category:primary": {
 			"id": "category:primary",
 			"label": "Primary Resources",

@@ -111,8 +111,8 @@ function createDescriptorRegistry(
 		})(),
 		resource: {
 			resolve: (id) => {
-				if (id && translationContext.resourceMetadataV2.has(id)) {
-					const metadata = translationContext.resourceMetadataV2.get(id);
+				if (id && translationContext.resourceMetadata.has(id)) {
+					const metadata = translationContext.resourceMetadata.get(id);
 					return {
 						icon: metadata.icon ?? '',
 						label: metadata.label ?? id,
@@ -129,12 +129,12 @@ function createDescriptorRegistry(
 				if (!includeCounts || !link.id) {
 					return detail;
 				}
-				const resourceValue = player.valuesV2?.[link.id];
+				const resourceValue = player.values?.[link.id];
 				if (resourceValue === undefined || resourceValue === 0) {
 					return detail;
 				}
-				const metadata = translationContext.resourceMetadataV2.has(link.id)
-					? translationContext.resourceMetadataV2.get(link.id)
+				const metadata = translationContext.resourceMetadata.has(link.id)
+					? translationContext.resourceMetadata.get(link.id)
 					: undefined;
 				const isPercent = metadata?.displayAsPercent ?? false;
 				const valueText = isPercent

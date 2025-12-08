@@ -1,15 +1,15 @@
 import React from 'react';
 import {
-	type ResourceV2MetadataSnapshot,
-	type ResourceV2ValueSnapshot,
+	type ResourceMetadataSnapshot,
+	type ResourceValueSnapshot,
 } from '../../translation';
 import { formatResourceMagnitude } from './ResourceButton';
 
 export interface ResourceWithBoundButtonProps {
-	metadata: ResourceV2MetadataSnapshot;
-	snapshot: ResourceV2ValueSnapshot;
-	boundMetadata: ResourceV2MetadataSnapshot;
-	boundSnapshot: ResourceV2ValueSnapshot;
+	metadata: ResourceMetadataSnapshot;
+	snapshot: ResourceValueSnapshot;
+	boundMetadata: ResourceMetadataSnapshot;
+	boundSnapshot: ResourceValueSnapshot;
 	boundType: 'upper' | 'lower';
 	onShow: (resourceId: string) => void;
 	onHide: () => void;

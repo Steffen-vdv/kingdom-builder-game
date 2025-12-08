@@ -3,8 +3,8 @@ import { humanizeIdentifier } from '../../stringUtils';
 
 export type AttackRegistryDescriptor = { icon: string; label: string };
 
-type ResourceV2MetadataCarrier = {
-	resourceMetadataV2?: {
+type ResourceMetadataCarrier = {
+	resourceMetadata?: {
 		get?: (id: string) => { icon?: string; label?: string } | undefined;
 		list?: () => ReadonlyArray<{ id: string }>;
 	};
@@ -33,10 +33,10 @@ function freezeKeys<T extends string>(keys: string[]): ReadonlyArray<T> {
 }
 
 export function selectAttackResourceDescriptor(
-	context: ResourceV2MetadataCarrier,
+	context: ResourceMetadataCarrier,
 	resourceKey: string,
 ): AttackRegistryDescriptor {
-	const entry = context.resourceMetadataV2?.get?.(resourceKey);
+	const entry = context.resourceMetadata?.get?.(resourceKey);
 	const label = coerceLabel(
 		entry?.label,
 		humanizeIdentifier(resourceKey) || resourceKey,
@@ -46,11 +46,11 @@ export function selectAttackResourceDescriptor(
 }
 
 export function selectAttackStatDescriptor(
-	context: ResourceV2MetadataCarrier,
+	context: ResourceMetadataCarrier,
 	statKey: string,
 ): AttackRegistryDescriptor {
-	// Stats are unified with resources in ResourceV2
-	const entry = context.resourceMetadataV2?.get?.(statKey);
+	// Stats are unified with resources in Resource
+	const entry = context.resourceMetadata?.get?.(statKey);
 	const fallbackLabel = humanizeIdentifier(statKey) || statKey;
 	const label = coerceLabel(entry?.label, fallbackLabel);
 	const icon = coerceIcon(entry?.icon);
@@ -77,8 +77,8 @@ export function selectAttackBuildingDescriptor(
 }
 
 export function listAttackResourceKeys(
-	context: ResourceV2MetadataCarrier,
+	context: ResourceMetadataCarrier,
 ): ReadonlyArray<string> {
-	const entries = context.resourceMetadataV2?.list?.() ?? [];
+	const entries = context.resourceMetadata?.list?.() ?? [];
 	return freezeKeys(entries.map((entry) => entry.id));
 }

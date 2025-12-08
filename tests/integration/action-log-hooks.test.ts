@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { createEngineSession } from '@kingdom-builder/engine';
 import { PHASES, RULES } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import { logContent } from '@kingdom-builder/web/translation/content';
 import { createTranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -31,8 +31,8 @@ function extractLineText(entry: TimelineEntry | undefined): string {
 const BASE_REGISTRIES_PAYLOAD = createSessionRegistriesPayload();
 
 const BASE_RESOURCE_CATALOG = Object.freeze({
-	resources: RESOURCE_V2_REGISTRY,
-	groups: RESOURCE_GROUP_V2_REGISTRY,
+	resources: RESOURCE_REGISTRY,
+	groups: RESOURCE_GROUP_REGISTRY,
 });
 
 function createSessionRegistries(): SessionRegistries {
@@ -131,8 +131,7 @@ function ensureTranslationMetadata(
 		stats: { ...(metadata.stats ?? {}) },
 		assets: { ...(metadata.assets ?? {}) },
 		triggers: { ...(metadata.triggers ?? {}) },
-		resourcesV2: { ...(metadata.resourcesV2 ?? {}) },
-		resourceGroupsV2: { ...(metadata.resourceGroupsV2 ?? {}) },
+		resourceGroups: { ...(metadata.resourceGroups ?? {}) },
 	};
 	const resourceDescriptors = enriched.resources ?? {};
 	for (const [key, definition] of Object.entries(registries.resources)) {
@@ -141,7 +140,7 @@ function ensureTranslationMetadata(
 			descriptor.icon = definition.icon;
 		}
 		if (descriptor.label === undefined) {
-			descriptor.label = definition.label ?? definition.key ?? key;
+			descriptor.label = definition.label ?? definition.id ?? key;
 		}
 		if (descriptor.description === undefined) {
 			descriptor.description = definition.description;
@@ -149,27 +148,7 @@ function ensureTranslationMetadata(
 		resourceDescriptors[key] = descriptor;
 	}
 	enriched.resources = resourceDescriptors;
-	const resourceV2Descriptors = enriched.resourcesV2 ?? {};
-	for (const [key, descriptor] of Object.entries(resourceDescriptors)) {
-		const existing = resourceV2Descriptors[key] ?? {};
-		resourceV2Descriptors[key] = { ...descriptor, ...existing };
-	}
-	enriched.resourcesV2 = resourceV2Descriptors;
-	const populationDescriptors = enriched.populations ?? {};
-	for (const [id, population] of registries.populations.entries()) {
-		const descriptor = populationDescriptors[id] ?? {};
-		if (population.icon !== undefined && descriptor.icon === undefined) {
-			descriptor.icon = population.icon;
-		}
-		if (descriptor.label === undefined) {
-			descriptor.label = population.name ?? id;
-		}
-		if (descriptor.description === undefined) {
-			descriptor.description = population.description;
-		}
-		populationDescriptors[id] = descriptor;
-	}
-	enriched.populations = populationDescriptors;
+	// Population metadata is now part of resources under ResourceV2
 	const statDescriptors = enriched.stats ?? {};
 	for (const [id, fallback] of Object.entries(REQUIRED_STAT_DESCRIPTORS)) {
 		const descriptor = statDescriptors[id] ?? {};
@@ -256,7 +235,7 @@ describe('content-driven action log hooks', () => {
 				populations: registries.populations,
 				phases: PHASES,
 				rules: RULES,
-				resourceCatalogV2: BASE_RESOURCE_CATALOG,
+				resourceCatalog: BASE_RESOURCE_CATALOG,
 			});
 			const snapshot = session.getSnapshot();
 			const metadata = ensureTranslationMetadata(snapshot.metadata, registries);

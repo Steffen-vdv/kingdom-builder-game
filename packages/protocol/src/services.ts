@@ -74,7 +74,7 @@ export type WinConditionDisplay = {
 
 export type WinConditionResourceTrigger = {
 	type: 'resource';
-	key: string;
+	resourceId: string;
 	comparison: 'lt' | 'lte' | 'gt' | 'gte';
 	value: number;
 	target: 'self' | 'opponent';

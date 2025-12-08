@@ -2,7 +2,7 @@ import type { EngineContext } from '../context';
 import type { PlayerId } from '../state';
 import type { ActionParams, AdvanceResult } from '../index';
 import type { ActionTrace } from '../log';
-import { getResourceValue, setResourceValue } from '../resource-v2';
+import { getResourceValue, setResourceValue } from '../resource';
 
 export const TAX_ACTION_ID = 'tax';
 
@@ -93,12 +93,12 @@ export function createTaxCollectorController(playerId: PlayerId): AIController {
 		if (!currentPhaseDefinition?.action) {
 			return;
 		}
-		// actionCostResource IS the ResourceV2 ID (e.g. 'resource:core:ap')
+		// actionCostResource IS the Resource ID (e.g. 'resource:core:ap')
 		const actionPointResourceId = engineContext.actionCostResource;
 		if (!actionPointResourceId) {
 			return;
 		}
-		const catalog = engineContext.resourceCatalogV2;
+		const catalog = engineContext.resourceCatalog;
 		const readActionPoints = () =>
 			getResourceValue(engineContext.activePlayer, actionPointResourceId);
 		const writeActionPoints = (value: number) => {

@@ -66,13 +66,13 @@ export function toPlayerSnapshot(
 	return {
 		id: participant.id,
 		name: participant.name,
-		valuesV2: {
+		values: {
 			...participant.resources,
 			...participant.population,
 			[capacityStat]: 3,
 		},
-		resourceTouchedV2: {},
-		resourceBoundsV2: {},
+		resourceTouched: {},
+		resourceBounds: {},
 		lands: participant.lands.map((land) => ({
 			...land,
 			slotsMax: land.slotsFree,

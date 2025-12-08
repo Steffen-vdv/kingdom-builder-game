@@ -1,14 +1,14 @@
 import type {
-	SessionResourceBoundReferenceV2,
-	SessionResourceDefinitionV2,
-	SessionResourceGroupDefinitionV2,
+	SessionResourceBoundReference,
+	SessionResourceDefinition,
+	SessionResourceGroupDefinition,
 } from '@kingdom-builder/protocol';
 
 /**
  * Entry describing a bound reference and its type.
  */
 export type BoundRefEntry = {
-	boundRef: SessionResourceBoundReferenceV2;
+	boundRef: SessionResourceBoundReference;
 	boundType: 'lower' | 'upper';
 };
 
@@ -17,8 +17,8 @@ export type BoundRefEntry = {
  * Returns the reference if it is, or null if it's a number or null.
  */
 export function getBoundReference(
-	bound: number | SessionResourceBoundReferenceV2 | null | undefined,
-): SessionResourceBoundReferenceV2 | null {
+	bound: number | SessionResourceBoundReference | null | undefined,
+): SessionResourceBoundReference | null {
 	if (bound != null && typeof bound === 'object' && 'resourceId' in bound) {
 		return bound;
 	}
@@ -29,8 +29,8 @@ export function getBoundReference(
 function addBoundEntry(
 	map: Map<string, BoundRefEntry>,
 	id: string,
-	upperBound: number | SessionResourceBoundReferenceV2 | null | undefined,
-	lowerBound: number | SessionResourceBoundReferenceV2 | null | undefined,
+	upperBound: number | SessionResourceBoundReference | null | undefined,
+	lowerBound: number | SessionResourceBoundReference | null | undefined,
 ): void {
 	// Check upper bound first (more common case)
 	const upperRef = getBoundReference(upperBound);
@@ -50,8 +50,8 @@ function addBoundEntry(
  * Includes both regular resources and group parents with dynamic bounds.
  */
 export function buildBoundReferenceMap(
-	definitions: readonly SessionResourceDefinitionV2[],
-	groups?: readonly SessionResourceGroupDefinitionV2[],
+	definitions: readonly SessionResourceDefinition[],
+	groups?: readonly SessionResourceGroupDefinition[],
 ): Map<string, BoundRefEntry> {
 	const map = new Map<string, BoundRefEntry>();
 	for (const definition of definitions) {

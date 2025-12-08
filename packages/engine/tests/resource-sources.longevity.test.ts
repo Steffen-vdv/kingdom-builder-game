@@ -7,7 +7,7 @@ describe('resource sources longevity', () => {
 		const engineContext = createTestEngine();
 		const player = engineContext.activePlayer;
 
-		// Stat values ARE ResourceV2 IDs directly - no mapper needed
+		// Stat values ARE Resource IDs directly - no mapper needed
 		const growthId = Stat.growth;
 		const growthSources = Object.values(player.resourceSources[growthId] ?? {});
 		expect(growthSources.length).toBeGreaterThan(0);

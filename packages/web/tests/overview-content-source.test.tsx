@@ -20,7 +20,8 @@ describe('Overview content integration', () => {
 			label: 'Action Points',
 			icon: '⚡',
 		};
-		metadata.populations['council'] = {
+		// Populations are unified under resources in V2 system
+		metadata.resources['council'] = {
 			label: 'Council',
 			icon: '👑',
 		};

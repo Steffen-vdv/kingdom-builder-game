@@ -3,7 +3,7 @@ import { performAction, getActionCosts, advance } from '../../src';
 import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('development:add effect', () => {
 	it('adds development and applies onBuild effects', () => {
@@ -14,7 +14,7 @@ describe('development:add effect', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 2,
 					}),
 				},

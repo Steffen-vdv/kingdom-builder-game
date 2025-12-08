@@ -6,8 +6,8 @@ import {
 import type {
 	TranslationAssets,
 	TranslationContext,
-	TranslationResourceV2Metadata,
-	TranslationResourceV2MetadataSelectors,
+	TranslationResourceMetadata,
+	TranslationResourceMetadataSelectors,
 	TranslationSignedResourceGainSelectors,
 } from '../src/translation/context';
 import { createDefaultTranslationAssets } from './helpers/translationAssets';
@@ -17,7 +17,7 @@ const EMPTY_REGISTRY = {
 	has: () => false,
 } as TranslationContext['actions'];
 
-const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceV2Metadata[] =
+const EMPTY_RESOURCE_METADATA_LIST: readonly TranslationResourceMetadata[] =
 	Object.freeze([]);
 
 const EMPTY_RESOURCE_CATALOG = Object.freeze({
@@ -26,15 +26,17 @@ const EMPTY_RESOURCE_CATALOG = Object.freeze({
 });
 
 const EMPTY_SIGNED_RESOURCE_GAINS: TranslationSignedResourceGainSelectors = {
-	list: () => Object.freeze([] as { key: string; amount: number }[]),
-	positives: () => Object.freeze([] as { key: string; amount: number }[]),
-	negatives: () => Object.freeze([] as { key: string; amount: number }[]),
+	list: () => Object.freeze([] as { resourceId: string; amount: number }[]),
+	positives: () =>
+		Object.freeze([] as { resourceId: string; amount: number }[]),
+	negatives: () =>
+		Object.freeze([] as { resourceId: string; amount: number }[]),
 	forResource: (_id: string) =>
-		Object.freeze([] as { key: string; amount: number }[]),
+		Object.freeze([] as { resourceId: string; amount: number }[]),
 	sumForResource: () => 0,
 };
 
-// ResourceV2 IDs for test fixtures
+// Resource IDs for test fixtures
 const RESOURCE_IDS = {
 	warWeariness: 'resource:stat:war-weariness',
 	legion: 'resource:population:role:legion',
@@ -42,7 +44,7 @@ const RESOURCE_IDS = {
 
 const createTranslationContext = (
 	requirements: unknown[],
-	resourceV2Overrides: Record<string, { icon?: string; label: string }> = {},
+	resourceOverrides: Record<string, { icon?: string; label: string }> = {},
 	assetOverrides: Partial<TranslationAssets> = {},
 ): TranslationContext => {
 	const baseAssets = createDefaultTranslationAssets();
@@ -102,16 +104,16 @@ const createTranslationContext = (
 			((description: string) => baseAssets.formatPassiveRemoval(description)),
 	};
 
-	const resourceMetadataV2: TranslationResourceV2MetadataSelectors = {
+	const resourceMetadata: TranslationResourceMetadataSelectors = {
 		list: () => EMPTY_RESOURCE_METADATA_LIST,
 		get: (id: string) => {
-			const override = resourceV2Overrides[id];
+			const override = resourceOverrides[id];
 			if (override) {
 				return { id, ...override };
 			}
 			return { id, label: id };
 		},
-		has: (id: string) => id in resourceV2Overrides,
+		has: (id: string) => id in resourceOverrides,
 	};
 
 	return {
@@ -160,9 +162,9 @@ const createTranslationContext = (
 		recentResourceGains: [],
 		compensations: { A: {}, B: {} },
 		assets: mergedAssets,
-		resourcesV2: EMPTY_RESOURCE_CATALOG,
-		resourceMetadataV2,
-		resourceGroupMetadataV2: {
+		resources: EMPTY_RESOURCE_CATALOG,
+		resourceMetadata,
+		resourceGroupMetadata: {
 			list: () => EMPTY_RESOURCE_METADATA_LIST,
 			get: (id: string) => ({ id, label: id }),
 			has: () => false,
@@ -173,7 +175,7 @@ const createTranslationContext = (
 
 describe('getRequirementIcons', () => {
 	it('includes icons derived from evaluator compare requirements', () => {
-		const resourceV2Metadata = {
+		const resourceMetadata = {
 			[RESOURCE_IDS.warWeariness]: { icon: '📊', label: 'War Weariness' },
 			[RESOURCE_IDS.legion]: { icon: '👥', label: 'Legion' },
 		};
@@ -195,7 +197,7 @@ describe('getRequirementIcons', () => {
 					},
 				},
 			],
-			resourceV2Metadata,
+			resourceMetadata,
 		);
 
 		const icons = getRequirementIcons('test-action', translationContext);

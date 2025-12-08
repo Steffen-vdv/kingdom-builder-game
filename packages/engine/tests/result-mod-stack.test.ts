@@ -3,7 +3,7 @@ import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { performAction, advance } from '../src';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from './helpers';
-import { resourceAmountParams } from './helpers/resourceV2Params.ts';
+import { resourceAmountParams } from './helpers/resourceParams.ts';
 
 describe('result modifiers', () => {
 	it('stack for the same action', () => {
@@ -13,7 +13,10 @@ describe('result modifiers', () => {
 		const modGainB = 3;
 
 		const content = createContentFactory();
-		const base = resourceAmountParams({ key: resourceKey, amount: baseGain });
+		const base = resourceAmountParams({
+			resourceId: resourceKey,
+			amount: baseGain,
+		});
 		const action = content.action({
 			effects: [
 				{
@@ -36,7 +39,7 @@ describe('result modifiers', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: resourceKey,
+								resourceId: resourceKey,
 								amount: modGainA,
 							}),
 						},
@@ -57,7 +60,7 @@ describe('result modifiers', () => {
 							type: 'resource',
 							method: 'add',
 							params: resourceAmountParams({
-								key: resourceKey,
+								resourceId: resourceKey,
 								amount: modGainB,
 							}),
 						},
@@ -77,7 +80,7 @@ describe('result modifiers', () => {
 		// Give player AP to perform the action
 		engineContext.activePlayer.resourceValues[CResource.ap] = 1;
 
-		// CResource values ARE ResourceV2 IDs directly - no mapper needed
+		// CResource values ARE Resource IDs directly - no mapper needed
 		const before = engineContext.activePlayer.resourceValues[resourceKey] ?? 0;
 		performAction(action.id, engineContext);
 		const after = engineContext.activePlayer.resourceValues[resourceKey] ?? 0;

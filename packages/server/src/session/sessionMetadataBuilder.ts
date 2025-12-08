@@ -3,7 +3,6 @@ import {
 	ACTION_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	TRIGGER_INFO,
 	LAND_INFO,
@@ -15,15 +14,14 @@ import {
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_CATEGORY_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-	RESOURCE_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_CATEGORY_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+	RESOURCE_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type {
 	Registry,
 	SerializedRegistry,
 	SessionRegistriesPayload,
-	SessionResourceDefinition,
 	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
 import type {
@@ -39,10 +37,9 @@ type RegistryDefinition<T> = SerializedRegistry<T>;
 type StaticSessionMetadata = Pick<
 	SessionSnapshotMetadata,
 	| 'resources'
-	| 'populations'
+	| 'resourceGroups'
 	| 'buildings'
 	| 'developments'
-	| 'stats'
 	| 'phases'
 	| 'triggers'
 	| 'assets'
@@ -113,28 +110,6 @@ const cloneResourceCatalogRegistry = <DefinitionType>(registry: {
 		structuredClone(registry.byId),
 	) as RegistryDefinition<DefinitionType>;
 
-const buildResourceRegistry =
-	(): RegistryDefinition<SessionResourceDefinition> => {
-		const entries: RegistryDefinition<SessionResourceDefinition> = {};
-		for (const resource of RESOURCE_V2_REGISTRY.ordered) {
-			const definition: SessionResourceDefinition = { key: resource.id };
-			if (resource.icon) {
-				definition.icon = resource.icon;
-			}
-			if (resource.label) {
-				definition.label = resource.label;
-			}
-			if (resource.description) {
-				definition.description = resource.description;
-			}
-			if (resource.tags && resource.tags.length > 0) {
-				definition.tags = [...resource.tags];
-			}
-			entries[resource.id] = definition;
-		}
-		return deepFreeze(entries);
-	};
-
 const createMetadataRecord = <T>(entries: Iterable<readonly [string, T]>) => {
 	const record: Record<string, T> = {};
 	for (const [id, descriptor] of entries) {
@@ -145,7 +120,7 @@ const createMetadataRecord = <T>(entries: Iterable<readonly [string, T]>) => {
 
 const buildResourceMetadata = () =>
 	createMetadataRecord(
-		RESOURCE_V2_REGISTRY.ordered.map((resource) => {
+		RESOURCE_REGISTRY.ordered.map((resource) => {
 			const entry: SessionMetadataDescriptor = {
 				label: resource.label,
 				icon: resource.icon,
@@ -153,26 +128,10 @@ const buildResourceMetadata = () =>
 			if (resource.description) {
 				entry.description = resource.description;
 			}
+			if (resource.displayAsPercent) {
+				entry.displayAsPercent = resource.displayAsPercent;
+			}
 			return [resource.id, entry] as const;
-		}),
-	);
-
-const buildPopulationMetadata = () =>
-	createMetadataRecord(
-		POPULATIONS.entries().map(([id, definition]) => {
-			const resource = RESOURCE_V2_REGISTRY.byId[id];
-			const descriptor: SessionMetadataDescriptor = {
-				label: resource?.label ?? definition.name ?? id,
-			};
-			if (resource?.icon) {
-				descriptor.icon = resource.icon;
-			} else if (definition.icon) {
-				descriptor.icon = definition.icon;
-			}
-			if (resource?.description) {
-				descriptor.description = resource.description;
-			}
-			return [id, descriptor] as const;
 		}),
 	);
 
@@ -218,25 +177,6 @@ const buildDevelopmentMetadata = () =>
 			}
 			return [id, descriptor] as const;
 		}),
-	);
-
-const buildStatMetadata = () =>
-	createMetadataRecord<SessionMetadataDescriptor>(
-		RESOURCE_V2_REGISTRY.ordered
-			.filter((resource) => resource.id.startsWith('resource:core:'))
-			.map((resource) => {
-				const descriptor: SessionMetadataDescriptor = {
-					label: resource.label,
-					icon: resource.icon,
-				};
-				if (resource.description) {
-					descriptor.description = resource.description;
-				}
-				if (resource.displayAsPercent) {
-					descriptor.displayAsPercent = resource.displayAsPercent;
-				}
-				return [resource.id, descriptor] as const;
-			}),
 	);
 
 const toPhaseStepMetadata = (step: unknown): SessionPhaseStepMetadata => {
@@ -322,20 +262,16 @@ export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 		actionCategories: cloneActionCategoryRegistry(),
 		buildings: cloneRegistry(BUILDINGS),
 		developments: cloneRegistry(DEVELOPMENTS),
-		populations: cloneRegistry(POPULATIONS),
-		resources: buildResourceRegistry(),
-		resourcesV2: cloneResourceCatalogRegistry(RESOURCE_V2_REGISTRY),
-		resourceGroupsV2: cloneResourceCatalogRegistry(RESOURCE_GROUP_V2_REGISTRY),
-		resourceCategoriesV2: cloneResourceCatalogRegistry(
-			RESOURCE_CATEGORY_V2_REGISTRY,
+		resources: cloneResourceCatalogRegistry(RESOURCE_REGISTRY),
+		resourceGroups: cloneResourceCatalogRegistry(RESOURCE_GROUP_REGISTRY),
+		resourceCategories: cloneResourceCatalogRegistry(
+			RESOURCE_CATEGORY_REGISTRY,
 		),
 	};
 	const metadata: StaticSessionMetadata = {
 		resources: buildResourceMetadata(),
-		populations: buildPopulationMetadata(),
 		buildings: buildBuildingMetadata(),
 		developments: buildDevelopmentMetadata(),
-		stats: buildStatMetadata(),
 		phases: buildPhaseMetadata(),
 		triggers: buildTriggerMetadata(),
 		assets: buildAssetMetadata(),

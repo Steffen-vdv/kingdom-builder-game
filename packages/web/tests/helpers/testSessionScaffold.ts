@@ -7,11 +7,10 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import {
 	createSessionRegistries,
-	createResourceV2CatalogContent,
+	createResourceCatalogContent,
 } from './sessionRegistries';
 import { createEmptySnapshotMetadata } from './sessionFixtures';
-import { buildResourceV2Metadata } from './testResourceV2Metadata';
-import type { SessionRegistries } from '../../src/state/sessionRegistries';
+import { buildResourceMetadata } from './testResourceMetadata';
 
 interface PhaseOrderEntry {
 	id: string;
@@ -130,92 +129,8 @@ export interface TestSessionScaffold {
 	ruleSnapshot: SessionRuleSnapshot;
 	tierPassiveId: string;
 	neutralTierId: string;
-	resourceCatalogV2: ReturnType<typeof createResourceV2CatalogContent>;
+	resourceCatalog: ReturnType<typeof createResourceCatalogContent>;
 }
-
-const buildResourceMetadata = (
-	registries: SessionRegistries,
-): Record<string, SessionMetadataDescriptor> => {
-	const descriptors: Record<string, SessionMetadataDescriptor> = {};
-	const resourceKeys = Object.keys(registries.resources);
-	const missingIconKey =
-		resourceKeys[resourceKeys.length - 1] ?? resourceKeys[0] ?? 'resource-0';
-	const missingIconDefinition = registries.resources[missingIconKey];
-	if (missingIconDefinition) {
-		const clone = { ...missingIconDefinition };
-		delete clone.icon;
-		registries.resources[missingIconKey] = clone;
-	}
-	for (const [index, key] of resourceKeys.entries()) {
-		const descriptor: SessionMetadataDescriptor = {
-			label: `Resource ${index + 1}`,
-		};
-		if (index === 0) {
-			descriptor.icon = '🧪';
-			descriptor.description = 'Primary resource descriptor.';
-		} else if (index % 2 === 0) {
-			descriptor.description = `Descriptor for ${key}.`;
-		}
-		descriptors[key] = descriptor;
-	}
-	return descriptors;
-};
-
-const buildPopulationMetadata = (
-	registries: SessionRegistries,
-): Record<string, SessionMetadataDescriptor> => {
-	const descriptors: Record<string, SessionMetadataDescriptor> = {};
-	let index = 0;
-	for (const id of registries.populations.keys()) {
-		const descriptor: SessionMetadataDescriptor = {
-			label: `Role ${index + 1}`,
-		};
-		if (index === 0) {
-			descriptor.icon = '🛡️';
-		}
-		descriptors[id] = descriptor;
-		index += 1;
-	}
-	return descriptors;
-};
-
-const buildStatMetadata = (): Record<string, SessionMetadataDescriptor> => ({
-	maxPopulation: {
-		icon: '👥',
-		label: 'Max Population',
-		description: 'Determines how many specialists the realm can sustain.',
-		format: { prefix: 'Max ' },
-	},
-	armyStrength: {
-		icon: '⚔️',
-		label: 'Army Strength',
-		description: 'Measures combat readiness.',
-	},
-	fortificationStrength: {
-		icon: '🛡️',
-		label: 'Fortification Strength',
-		description: 'Determines defensive strength.',
-	},
-	absorption: {
-		icon: '🌀',
-		label: 'Absorption',
-		description: 'Reduces incoming damage by a percentage.',
-		displayAsPercent: true,
-		format: { percent: true },
-	},
-	growth: {
-		icon: '🌿',
-		label: 'Growth Rate',
-		description: 'Improves how quickly strength stats increase.',
-		displayAsPercent: true,
-		format: { percent: true },
-	},
-	warWeariness: {
-		icon: '💤',
-		label: 'War Weariness',
-		description: 'Tracks fatigue from protracted conflict.',
-	},
-});
 
 const buildPhaseDefinitions = (
 	entries: readonly PhaseOrderEntry[],
@@ -291,19 +206,13 @@ const buildRuleSnapshot = (resourceKey: string): SessionRuleSnapshot => ({
 
 export function createTestSessionScaffold(): TestSessionScaffold {
 	const registries = createSessionRegistries();
-	const resourceMetadata = buildResourceMetadata(registries);
-	const populationMetadata = buildPopulationMetadata(registries);
-	const statMetadata = buildStatMetadata();
-	const resourceV2Metadata = buildResourceV2Metadata();
+	const resourceMetadata = buildResourceMetadata();
 	const phaseMetadata = buildPhaseMetadata();
 	const metadata: SessionSnapshot['metadata'] = createEmptySnapshotMetadata({
 		resources: resourceMetadata,
-		populations: populationMetadata,
-		stats: statMetadata,
 		phases: phaseMetadata,
 		triggers: { ...TRIGGER_METADATA },
 		assets: { ...ASSET_METADATA },
-		resourcesV2: resourceV2Metadata,
 		overviewContent: {
 			hero: { title: 'Session Overview', tokens: {} },
 			sections: [],
@@ -311,11 +220,11 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		},
 	});
 	const phases = buildPhaseDefinitions(PHASE_ORDER);
-	const resourceCatalogV2 = createResourceV2CatalogContent();
-	// Use ResourceV2 key for tieredResourceKey - happiness is the canonical
+	const resourceCatalog = createResourceCatalogContent();
+	// Use Resource key for tieredResourceKey - happiness is the canonical
 	// tiered resource in the test fixtures
 	const tieredResourceKey =
-		Object.keys(resourceCatalogV2.resources.byId).find((key) =>
+		Object.keys(resourceCatalog.resources.byId).find((key) =>
 			key.includes('happiness'),
 		) ?? 'resource:core:happiness';
 	const ruleSnapshot = buildRuleSnapshot(tieredResourceKey);
@@ -326,6 +235,6 @@ export function createTestSessionScaffold(): TestSessionScaffold {
 		ruleSnapshot,
 		tierPassiveId: TIER_PASSIVE_ID,
 		neutralTierId: NEUTRAL_TIER_ID,
-		resourceCatalogV2,
+		resourceCatalog,
 	};
 }

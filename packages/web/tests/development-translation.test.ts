@@ -58,12 +58,10 @@ function collectResourceKeys(
 			typeof effect.params === 'object' &&
 			effect.params !== null
 		) {
-			// V2 format: resourceId instead of key
+			// format: resourceId instead of key
 			const params = effect.params as { key?: string; resourceId?: string };
 			if (typeof params.resourceId === 'string') {
 				keys.add(params.resourceId);
-			} else if (typeof params.key === 'string') {
-				keys.add(params.key);
 			}
 		}
 		collectResourceKeys(effect.effects as EffectDef[] | undefined, keys);
@@ -127,8 +125,8 @@ describe('development translation', () => {
 		expect(strings.some((line) => /\+2/u.test(line))).toBe(true);
 		const [resourceKey] = [...resourceKeys];
 		if (resourceKey) {
-			// Use V2 metadata for resource label lookup (matches formatter behavior)
-			const metadata = translationContext.resourceMetadataV2.get(resourceKey);
+			// Use metadata for resource label lookup (matches formatter behavior)
+			const metadata = translationContext.resourceMetadata.get(resourceKey);
 			const resourceLabel = metadata.label ?? resourceKey;
 			expect(strings.some((line) => line.includes(resourceLabel))).toBe(true);
 		}

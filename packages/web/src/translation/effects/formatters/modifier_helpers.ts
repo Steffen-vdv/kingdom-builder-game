@@ -138,15 +138,17 @@ export function formatGainFrom(
 	amount: number,
 	context: TranslationContext,
 	options: {
-		key?: string;
+		resourceId?: string;
 		detailed?: boolean;
 		percent?: number;
 		round?: 'up' | 'down';
 	} = {},
 ) {
-	const { key, detailed, percent, round } = options;
-	const descriptor = key ? selectResourceDescriptor(context, key) : undefined;
-	const resIcon = descriptor?.icon || key;
+	const { resourceId, detailed, percent, round } = options;
+	const descriptor = resourceId
+		? selectResourceDescriptor(context, resourceId)
+		: undefined;
+	const resIcon = descriptor?.icon || resourceId;
 	const usePercent = typeof percent === 'number' && !Number.isNaN(percent);
 	const value = usePercent ? Number(percent) : amount;
 	const normalizedValue = Object.is(value, -0) ? 0 : value;
@@ -240,7 +242,7 @@ export function formatDevelopment(
 		const amount = resourceEffect.method === 'remove' ? -rawAmount : rawAmount;
 		const opts: Parameters<typeof formatGainFrom>[4] = { detailed };
 		if (resourceId !== undefined) {
-			opts.key = resourceId;
+			opts.resourceId = resourceId;
 		}
 		return formatGainFrom(label, source, amount, translationContext, opts);
 	}

@@ -130,7 +130,7 @@ function cloneGameState(game: GameState): GameState {
 	const [firstName = 'Player', secondName = 'Opponent'] = game.players.map(
 		(player) => player.name,
 	);
-	const catalog = game.resourceCatalogV2;
+	const catalog = game.resourceCatalog;
 	const cloned = new GameState(catalog, firstName, secondName);
 	cloned.turn = game.turn;
 	cloned.currentPlayerIndex = game.currentPlayerIndex;
@@ -140,7 +140,7 @@ function cloneGameState(game: GameState): GameState {
 	cloned.stepIndex = game.stepIndex;
 	cloned.devMode = game.devMode;
 	cloned.players = game.players.map((player) => clonePlayerState(player));
-	cloned.resourceCatalogV2 = catalog;
+	cloned.resourceCatalog = catalog;
 	return cloned;
 }
 
@@ -155,22 +155,21 @@ export function cloneEngineContext(source: EngineContext): EngineContext {
 		source.actions,
 		source.buildings,
 		source.developments,
-		source.populations,
 		clonedPassives,
 		source.phases,
 		source.actionCostResourceId,
 		source.actionCostAmount,
-		source.resourceCatalogV2,
+		source.resourceCatalog,
 		compensations,
 	);
 	if (source.aiSystem) {
 		cloned.aiSystem = source.aiSystem;
 	}
-	cloned.game.resourceCatalogV2 = source.resourceCatalogV2;
+	cloned.game.resourceCatalog = source.resourceCatalog;
 	cloned.resourcePercentBases = { ...source.resourcePercentBases };
 	cloned.resourcePercentAccums = { ...source.resourcePercentAccums };
 	cloned.recentResourceGains = source.recentResourceGains.map((gain) => ({
-		key: gain.key,
+		resourceId: gain.resourceId,
 		amount: gain.amount,
 	}));
 	cloned.resourceSourceStack = [...source.resourceSourceStack];

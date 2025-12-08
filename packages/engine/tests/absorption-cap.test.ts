@@ -12,7 +12,7 @@ describe('absorption cap', () => {
 		const start = defender.resourceValues[Resource.castleHP];
 		const result = resolveAttack(defender, 5, engineContext, {
 			type: 'resource',
-			key: Resource.castleHP,
+			resourceId: Resource.castleHP,
 		});
 		expect(result.damageDealt).toBe(0);
 		expect(defender.resourceValues[Resource.castleHP]).toBe(start);

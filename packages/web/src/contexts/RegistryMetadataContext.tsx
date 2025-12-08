@@ -4,11 +4,10 @@ import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
-	PopulationConfig,
+	ResourceDefinition,
 } from '@kingdom-builder/protocol';
 import type {
 	SessionOverviewMetadata,
-	SessionResourceDefinition,
 	SessionSnapshotMetadata,
 } from '@kingdom-builder/protocol/session';
 import type { SessionRegistries } from '../state/sessionRegistries';
@@ -33,15 +32,13 @@ import {
 } from './registryMetadataDescriptors';
 
 export interface RegistryMetadataContextValue {
-	resources: DefinitionLookup<SessionResourceDefinition>;
+	resources: DefinitionLookup<ResourceDefinition>;
 	actions: DefinitionLookup<ActionConfig>;
 	actionCategories: DefinitionLookup<ActionCategoryConfig>;
 	buildings: DefinitionLookup<BuildingConfig>;
 	developments: DefinitionLookup<DevelopmentConfig>;
-	populations: DefinitionLookup<PopulationConfig>;
 	resourceMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	actionCategoryMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
-	populationMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	buildingMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	developmentMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
 	statMetadataLookup: MetadataLookup<RegistryMetadataDescriptor>;
@@ -49,7 +46,6 @@ export interface RegistryMetadataContextValue {
 	triggerMetadataLookup: MetadataLookup<TriggerMetadata>;
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	actionCategoryMetadata: MetadataSelector<RegistryMetadataDescriptor>;
-	populationMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	buildingMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	developmentMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	statMetadata: MetadataSelector<RegistryMetadataDescriptor>;
@@ -78,12 +74,7 @@ const OVERVIEW_DESCRIPTOR_ERROR =
 interface RegistryMetadataProviderProps {
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'resources'
-		| 'buildings'
-		| 'developments'
-		| 'populations'
+		'actions' | 'actionCategories' | 'resources' | 'buildings' | 'developments'
 	>;
 	metadata?: SessionSnapshotMetadata | null;
 	children: React.ReactNode;
@@ -121,12 +112,10 @@ export function RegistryMetadataProvider({
 		actionCategoryLookup,
 		buildingLookup,
 		developmentLookup,
-		populationLookup,
 	} = useDefinitionLookups(registries);
 	const {
 		resourceMetadataLookup,
 		actionCategoryMetadataLookup,
-		populationMetadataLookup,
 		buildingMetadataLookup,
 		developmentMetadataLookup,
 		statMetadataLookup,
@@ -152,10 +141,6 @@ export function RegistryMetadataProvider({
 	const actionCategoryMetadata = useMemo(
 		() => createMetadataSelector(actionCategoryMetadataLookup),
 		[actionCategoryMetadataLookup],
-	);
-	const populationMetadata = useMemo(
-		() => createMetadataSelector(populationMetadataLookup),
-		[populationMetadataLookup],
 	);
 	const buildingMetadata = useMemo(
 		() => createMetadataSelector(buildingMetadataLookup),
@@ -198,10 +183,8 @@ export function RegistryMetadataProvider({
 				actionCategories: actionCategoryLookup,
 				buildings: buildingLookup,
 				developments: developmentLookup,
-				populations: populationLookup,
 				resourceMetadataLookup,
 				actionCategoryMetadataLookup,
-				populationMetadataLookup,
 				buildingMetadataLookup,
 				developmentMetadataLookup,
 				statMetadataLookup,
@@ -209,7 +192,6 @@ export function RegistryMetadataProvider({
 				triggerMetadataLookup,
 				resourceMetadata,
 				actionCategoryMetadata,
-				populationMetadata,
 				buildingMetadata,
 				developmentMetadata,
 				statMetadata,
@@ -226,10 +208,8 @@ export function RegistryMetadataProvider({
 			actionCategoryLookup,
 			buildingLookup,
 			developmentLookup,
-			populationLookup,
 			resourceMetadataLookup,
 			actionCategoryMetadataLookup,
-			populationMetadataLookup,
 			buildingMetadataLookup,
 			developmentMetadataLookup,
 			statMetadataLookup,
@@ -237,7 +217,6 @@ export function RegistryMetadataProvider({
 			triggerMetadataLookup,
 			resourceMetadata,
 			actionCategoryMetadata,
-			populationMetadata,
 			buildingMetadata,
 			developmentMetadata,
 			statMetadata,
@@ -275,10 +254,6 @@ export function useOptionalRegistryMetadata(): OptionalRegistryMetadataValue {
 export const useResourceMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>
 		useRegistryMetadata().resourceMetadata;
-
-export const usePopulationMetadata =
-	(): MetadataSelector<RegistryMetadataDescriptor> =>
-		useRegistryMetadata().populationMetadata;
 
 export const useActionCategoryMetadata =
 	(): MetadataSelector<RegistryMetadataDescriptor> =>

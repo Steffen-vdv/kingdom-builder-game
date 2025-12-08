@@ -1,8 +1,8 @@
 import type { PhaseDef, RuleSet, StartConfig } from '@kingdom-builder/protocol';
 import {
-	createResourceV2Registries,
-	resourceV2Definition,
-	resourceV2GroupDefinition,
+	createResourceRegistries,
+	resourceDefinition,
+	resourceGroupDefinition,
 } from '@kingdom-builder/testing';
 
 export type SyntheticAction = {
@@ -26,7 +26,7 @@ export const SYNTH_RESOURCE_IDS = {
 	happiness: 'happiness',
 	castleHP: 'castleHP',
 	tier: 'tierResource',
-	// Stats (also resources in V2)
+	// Stats (also resources in resource system)
 	armyStrength: 'armyStrength',
 	absorption: 'absorption',
 	fortificationStrength: 'fortificationStrength',
@@ -89,6 +89,7 @@ export const SYNTH_RESOURCE_METADATA: Record<
 
 export type CombatStatConfig = {
 	key: string;
+	resourceId: string;
 	icon: string;
 	label: string;
 	baseKey: SyntheticResourceKey;
@@ -127,18 +128,21 @@ export const SYNTH_PARTIAL_ATTACK: SyntheticAction = {
 export const COMBAT_STAT_CONFIG: Record<CombatStatKey, CombatStatConfig> = {
 	power: {
 		key: 'synthetic:valor',
+		resourceId: 'synthetic:valor',
 		icon: '⚔️',
 		label: 'Valor',
 		baseKey: SYNTH_RESOURCE_IDS.armyStrength,
 	},
 	absorption: {
 		key: 'synthetic:veil',
+		resourceId: 'synthetic:veil',
 		icon: '🌫️',
 		label: 'Veil',
 		baseKey: SYNTH_RESOURCE_IDS.absorption,
 	},
 	fortification: {
 		key: 'synthetic:rampart',
+		resourceId: 'synthetic:rampart',
 		icon: '🧱',
 		label: 'Rampart',
 		baseKey: SYNTH_RESOURCE_IDS.fortificationStrength,
@@ -191,19 +195,19 @@ export const RULES: RuleSet = {
 	winConditions: [],
 };
 
-// Create ResourceV2 catalog for synthetic test resources
-const coreGroup = resourceV2GroupDefinition({
+// Create Resource catalog for synthetic test resources
+const coreGroup = resourceGroupDefinition({
 	id: 'resource-group:core',
 	order: 0,
 });
 
-const statGroup = resourceV2GroupDefinition({
+const statGroup = resourceGroupDefinition({
 	id: 'resource-group:stat',
 	order: 1,
 });
 
-const synthResourceV2Definitions = [
-	resourceV2Definition({
+const synthResourceDefinitions = [
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.ap,
 		metadata: {
 			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.ap].label,
@@ -213,7 +217,7 @@ const synthResourceV2Definitions = [
 		bounds: { lowerBound: 0 },
 		globalCost: 1,
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.gold,
 		metadata: {
 			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.gold].label,
@@ -222,7 +226,7 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.happiness,
 		metadata: {
 			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.happiness].label,
@@ -230,7 +234,7 @@ const synthResourceV2Definitions = [
 			group: { id: coreGroup.id, order: 2 },
 		},
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.castleHP,
 		metadata: {
 			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP].label,
@@ -239,7 +243,7 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.tier,
 		metadata: {
 			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.tier].label,
@@ -247,7 +251,7 @@ const synthResourceV2Definitions = [
 			group: { id: coreGroup.id, order: 4 },
 		},
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.armyStrength,
 		metadata: {
 			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.armyStrength].label,
@@ -256,7 +260,7 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.absorption,
 		metadata: {
 			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.absorption].label,
@@ -265,7 +269,7 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.fortificationStrength,
 		metadata: {
 			label:
@@ -276,7 +280,7 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
-	resourceV2Definition({
+	resourceDefinition({
 		id: SYNTH_RESOURCE_IDS.warWeariness,
 		metadata: {
 			label: SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.warWeariness].label,
@@ -286,8 +290,8 @@ const synthResourceV2Definitions = [
 		bounds: { lowerBound: 0 },
 	}),
 	// Combat stat config keys for attack effects
-	resourceV2Definition({
-		id: COMBAT_STAT_CONFIG.power.key,
+	resourceDefinition({
+		id: COMBAT_STAT_CONFIG.power.resourceId,
 		metadata: {
 			label: COMBAT_STAT_CONFIG.power.label,
 			icon: COMBAT_STAT_CONFIG.power.icon,
@@ -295,8 +299,8 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
-	resourceV2Definition({
-		id: COMBAT_STAT_CONFIG.absorption.key,
+	resourceDefinition({
+		id: COMBAT_STAT_CONFIG.absorption.resourceId,
 		metadata: {
 			label: COMBAT_STAT_CONFIG.absorption.label,
 			icon: COMBAT_STAT_CONFIG.absorption.icon,
@@ -304,8 +308,8 @@ const synthResourceV2Definitions = [
 		},
 		bounds: { lowerBound: 0 },
 	}),
-	resourceV2Definition({
-		id: COMBAT_STAT_CONFIG.fortification.key,
+	resourceDefinition({
+		id: COMBAT_STAT_CONFIG.fortification.resourceId,
 		metadata: {
 			label: COMBAT_STAT_CONFIG.fortification.label,
 			icon: COMBAT_STAT_CONFIG.fortification.icon,
@@ -315,7 +319,7 @@ const synthResourceV2Definitions = [
 	}),
 ];
 
-export const SYNTH_RESOURCE_CATALOG_V2 = createResourceV2Registries({
-	resources: synthResourceV2Definitions,
+export const SYNTH_RESOURCE_CATALOG = createResourceRegistries({
+	resources: synthResourceDefinitions,
 	groups: [coreGroup, statGroup],
 });

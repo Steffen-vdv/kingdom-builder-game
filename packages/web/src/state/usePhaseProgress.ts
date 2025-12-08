@@ -22,12 +22,7 @@ interface PhaseProgressOptions {
 	enqueue: <T>(task: () => Promise<T> | T) => Promise<T>;
 	registries: Pick<
 		SessionRegistries,
-		| 'actions'
-		| 'actionCategories'
-		| 'buildings'
-		| 'developments'
-		| 'resources'
-		| 'populations'
+		'actions' | 'actionCategories' | 'buildings' | 'developments' | 'resources'
 	>;
 	showResolution: (options: ShowResolutionOptions) => Promise<void>;
 	onFatalSessionError?: ((error: unknown) => void) | undefined;
@@ -91,7 +86,7 @@ function computePhaseState(
 	const activePlayer = snapshot.game.players.find(
 		(player) => player.id === snapshot.game.activePlayerId,
 	);
-	const remainingActionPoints = activePlayer?.valuesV2[actionCostResource] ?? 0;
+	const remainingActionPoints = activePlayer?.values[actionCostResource] ?? 0;
 	const isAiTurn = Boolean(activePlayer?.aiControlled);
 	const canEndTurn = isAiTurn
 		? false
@@ -302,7 +297,7 @@ export function usePhaseProgress({
 		if (!activePlayer) {
 			return;
 		}
-		if ((activePlayer.valuesV2[actionCostResource] ?? 0) > 0) {
+		if ((activePlayer.values[actionCostResource] ?? 0) > 0) {
 			return;
 		}
 		applyPhaseSnapshot(snapshot, { isAdvancing: true, canEndTurn: false });

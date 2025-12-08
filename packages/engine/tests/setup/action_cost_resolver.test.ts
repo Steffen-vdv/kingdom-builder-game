@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { determineCommonActionCostResource } from '../../src/setup/action_cost_resolver';
 import type { ActionConfig as ActionDef } from '@kingdom-builder/protocol';
-import type { RuntimeResourceCatalog } from '../../src/resource-v2';
+import type { RuntimeResourceCatalog } from '../../src/resource';
 import { Registry } from '@kingdom-builder/protocol';
 
 function createMockResourceCatalog(

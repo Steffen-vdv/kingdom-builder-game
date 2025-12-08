@@ -5,7 +5,6 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	GameConfig,
-	PopulationConfig,
 	PhaseConfig,
 } from '../config/schema';
 import type {
@@ -25,9 +24,9 @@ import type {
 import type { RuleSet } from '../services';
 import type {
 	ResourceCategoryDefinition,
-	ResourceV2Definition,
-	ResourceV2GroupDefinition,
-} from '../resource-v2';
+	ResourceDefinition,
+	ResourceGroupDefinition,
+} from '../resource';
 
 export interface SessionIdentifier {
 	sessionId: string;
@@ -41,14 +40,6 @@ export interface SessionCreateRequest {
 	playerNames?: SessionPlayerNameMap;
 }
 
-export interface SessionResourceDefinition {
-	key: string;
-	icon?: string;
-	label?: string;
-	description?: string;
-	tags?: string[];
-}
-
 export type SerializedRegistry<T> = Record<string, T>;
 
 export type SessionActionCategoryRegistry =
@@ -58,34 +49,31 @@ export interface SessionRegistriesPayload {
 	actions: SerializedRegistry<ActionConfig>;
 	buildings: SerializedRegistry<BuildingConfig>;
 	developments: SerializedRegistry<DevelopmentConfig>;
-	populations: SerializedRegistry<PopulationConfig>;
-	resources: SerializedRegistry<SessionResourceDefinition>;
 	actionCategories?: SessionActionCategoryRegistry;
 	/**
 	 * Registry of concrete resource definitions. Always present for every
 	 * session payload.
 	 */
-	resourcesV2: SerializedRegistry<ResourceV2Definition>;
+	resources: SerializedRegistry<ResourceDefinition>;
 	/**
-	 * ResourceV2 registry of group definitions (including virtual parents).
-	 * Mirrors {@link resourcesV2} and is always provided with session
+	 * Resource registry of group definitions (including virtual parents).
+	 * Mirrors {@link resources} and is always provided with session
 	 * registries.
 	 */
-	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
+	resourceGroups: SerializedRegistry<ResourceGroupDefinition>;
 	/**
-	 * ResourceV2 registry of category definitions that group resources and
+	 * Resource registry of category definitions that group resources and
 	 * resource groups into UI rows. Always provided with session registries.
 	 */
-	resourceCategoriesV2: SerializedRegistry<ResourceCategoryDefinition>;
+	resourceCategories: SerializedRegistry<ResourceCategoryDefinition>;
 }
 
 export type SessionMetadataSnapshot = Pick<
 	SessionSnapshotMetadata,
 	| 'resources'
-	| 'populations'
+	| 'resourceGroups'
 	| 'buildings'
 	| 'developments'
-	| 'stats'
 	| 'phases'
 	| 'triggers'
 	| 'assets'
@@ -100,26 +88,25 @@ export interface SessionMetadataSnapshotResponse {
 export interface SessionRuntimeConfigResponse {
 	phases: PhaseConfig[];
 	rules: RuleSet;
-	resources: SerializedRegistry<SessionResourceDefinition>;
 	primaryIconId: string | null;
 	/**
-	 * ResourceV2 registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourcesV2}. Always present for
+	 * Resource registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resources}. Always present for
 	 * clients consuming runtime configuration data.
 	 */
-	resourcesV2: SerializedRegistry<ResourceV2Definition>;
+	resources: SerializedRegistry<ResourceDefinition>;
 	/**
-	 * ResourceV2 group registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourceGroupsV2}. Always provided
+	 * Resource group registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceGroups}. Always provided
 	 * for clients consuming runtime configuration data.
 	 */
-	resourceGroupsV2: SerializedRegistry<ResourceV2GroupDefinition>;
+	resourceGroups: SerializedRegistry<ResourceGroupDefinition>;
 	/**
-	 * ResourceV2 category registry snapshot mirroring
-	 * {@link SessionRegistriesPayload.resourceCategoriesV2}. Always provided
+	 * Resource category registry snapshot mirroring
+	 * {@link SessionRegistriesPayload.resourceCategories}. Always provided
 	 * for clients consuming runtime configuration data.
 	 */
-	resourceCategoriesV2: SerializedRegistry<ResourceCategoryDefinition>;
+	resourceCategories: SerializedRegistry<ResourceCategoryDefinition>;
 }
 
 export interface SessionCreateResponse {

@@ -39,10 +39,10 @@ function createPassiveHarness(
 	metadataOverride?: Parameters<typeof createTranslationContext>[2],
 ): PassiveHarness {
 	const scaffold = createTestSessionScaffold();
-	// Use ResourceV2 IDs for start resources
-	const resourceV2Keys = Object.keys(scaffold.resourceCatalogV2.resources.byId);
+	// Use Resource IDs for start resources
+	const resourceKeys = Object.keys(scaffold.resourceCatalog.resources.byId);
 	const startResources = Object.fromEntries(
-		resourceV2Keys.map((key) => [key, 0]),
+		resourceKeys.map((key) => [key, 0]),
 	);
 	const startConfig = {
 		player: {
@@ -74,7 +74,7 @@ function createPassiveHarness(
 		})),
 		start: startConfig,
 		rules: scaffold.ruleSnapshot,
-		resourceCatalogV2: scaffold.resourceCatalogV2,
+		resourceCatalog: scaffold.resourceCatalog,
 	});
 	const snapshot = snapshotEngine(engine);
 	const appliedMetadata = structuredClone(
@@ -128,7 +128,7 @@ function rebuildTranslationArtifacts(harness: PassiveHarness) {
 		passives: translationContext.passives,
 		assets: translationContext.assets,
 		actionCategories: translationContext.actionCategories,
-		resourceMetadataV2: translationContext.resourceMetadataV2,
+		resourceMetadata: translationContext.resourceMetadata,
 	});
 	return { translationContext, diffContext } as const;
 }
@@ -324,9 +324,9 @@ describe('passive log labels', () => {
 			).trim() || slotLabel;
 		const expectedHeadline = `${LOG_KEYWORDS.developed} ${developmentLabel} on ${slotDisplay}`;
 		expect(lines).toContain(expectedHeadline);
-		// Use V2 resource IDs for fortification and absorption lookups
+		// Use resource IDs for fortification and absorption lookups
 		const fortificationResourceId = 'resource:core:fortification-strength';
-		const fortificationMeta = translationContext.resourceMetadataV2?.get?.(
+		const fortificationMeta = translationContext.resourceMetadata?.get?.(
 			fortificationResourceId,
 		);
 		const fortificationLabel =
@@ -338,7 +338,7 @@ describe('passive log labels', () => {
 		).toBe(true);
 		const absorptionResourceId = 'resource:core:absorption';
 		const absorptionMeta =
-			translationContext.resourceMetadataV2?.get?.(absorptionResourceId);
+			translationContext.resourceMetadata?.get?.(absorptionResourceId);
 		const absorptionLabel = absorptionMeta?.label ?? 'Absorption';
 		expect(
 			lines.some(

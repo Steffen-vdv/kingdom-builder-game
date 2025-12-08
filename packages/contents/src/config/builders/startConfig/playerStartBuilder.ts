@@ -11,9 +11,9 @@ export class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 
 	constructor(private readonly requireComplete: boolean) {
 		super({
-			valuesV2: {},
-			resourceLowerBoundsV2: {},
-			resourceUpperBoundsV2: {},
+			values: {},
+			resourceLowerBounds: {},
+			resourceUpperBounds: {},
 		} as PlayerStartConfig);
 	}
 
@@ -21,9 +21,9 @@ export class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 		if (!values) {
 			throw new Error('Player start resources() needs a record. Use {} when nothing changes.');
 		}
-		if (!this.wasSet('valuesV2')) {
+		if (!this.wasSet('values')) {
 			this.mirroredValuesFromResources = true;
-			this.params.valuesV2 = { ...values };
+			this.params.values = { ...values };
 		}
 		return this.set('resources', { ...values }, 'Player start already set resources(). Remove the extra resources() call.');
 	}
@@ -42,23 +42,23 @@ export class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 		return this.set('population', { ...values }, 'Player start already set population(). Remove the extra population() call.');
 	}
 
-	valuesV2(values: Record<string, number>) {
+	values(values: Record<string, number>) {
 		if (!values) {
-			throw new Error('Player start valuesV2() needs a record. Use {} when nothing changes.');
+			throw new Error('Player start values() needs a record. Use {} when nothing changes.');
 		}
 		this.mirroredValuesFromResources = false;
-		return this.set('valuesV2', { ...values }, 'Player start already set valuesV2(). Remove the extra valuesV2() call.');
+		return this.set('values', { ...values }, 'Player start already set values(). Remove the extra values() call.');
 	}
 
-	resourceBoundsV2(bounds: PlayerStartResourceBoundsInput) {
+	resourceBounds(bounds: PlayerStartResourceBoundsInput) {
 		if (!bounds) {
-			throw new Error('Player start resourceBoundsV2() needs configuration. Use {} when bounds stay defaulted.');
+			throw new Error('Player start resourceBounds() needs configuration. Use {} when bounds stay defaulted.');
 		}
 		if (bounds.lower) {
-			this.set('resourceLowerBoundsV2', { ...bounds.lower }, 'Player start already set resourceBoundsV2(). Remove the extra resourceBoundsV2() call.');
+			this.set('resourceLowerBounds', { ...bounds.lower }, 'Player start already set resourceBounds(). Remove the extra resourceBounds() call.');
 		}
 		if (bounds.upper) {
-			this.set('resourceUpperBoundsV2', { ...bounds.upper }, 'Player start already set resourceBoundsV2(). Remove the extra resourceBoundsV2() call.');
+			this.set('resourceUpperBounds', { ...bounds.upper }, 'Player start already set resourceBounds(). Remove the extra resourceBounds() call.');
 		}
 		return this;
 	}
@@ -98,18 +98,18 @@ export class PlayerStartBuilder extends ParamsBuilder<PlayerStartConfig> {
 			if (!this.wasSet('lands')) {
 				throw new Error('Player start is missing lands(). Call lands(...) before build().');
 			}
-			if (!this.params.valuesV2) {
-				throw new Error('Player start is missing valuesV2(). Call valuesV2(...) before build().');
+			if (!this.params.values) {
+				throw new Error('Player start is missing values(). Call values(...) before build().');
 			}
-			if (!this.params.resourceLowerBoundsV2) {
-				throw new Error('Player start is missing resourceBoundsV2() lower map. Call resourceBoundsV2(...) before build().');
+			if (!this.params.resourceLowerBounds) {
+				throw new Error('Player start is missing resourceBounds() lower map. Call resourceBounds(...) before build().');
 			}
-			if (!this.params.resourceUpperBoundsV2) {
-				throw new Error('Player start is missing resourceBoundsV2() upper map. Call resourceBoundsV2(...) before build().');
+			if (!this.params.resourceUpperBounds) {
+				throw new Error('Player start is missing resourceBounds() upper map. Call resourceBounds(...) before build().');
 			}
 		}
-		if (!this.wasSet('valuesV2') && this.mirroredValuesFromResources && this.params.resources) {
-			this.params.valuesV2 = { ...this.params.resources };
+		if (!this.wasSet('values') && this.mirroredValuesFromResources && this.params.resources) {
+			this.params.values = { ...this.params.resources };
 		}
 		return super.build();
 	}

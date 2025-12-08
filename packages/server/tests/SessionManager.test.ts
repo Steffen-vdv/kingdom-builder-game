@@ -30,7 +30,7 @@ describe('SessionManager', () => {
 		expectSnapshotMetadata(mergedMetadata);
 		expectStaticMetadata(staticMetadata);
 		const [activePlayer] = snapshot.game.players;
-		expect(activePlayer?.valuesV2[costResourceId]).toBeDefined();
+		expect(activePlayer?.values[costResourceId]).toBeDefined();
 		expect(snapshot.rules.tieredResourceKey).toBe(gainResourceId);
 		expect(snapshot.game.devMode).toBe(true);
 	});
@@ -92,8 +92,9 @@ describe('SessionManager', () => {
 		expect(baseline.resources?.[costResourceId]).toBeDefined();
 		const triggerKeys = Object.keys(baseline.triggers ?? {});
 		expect(triggerKeys.length).toBeGreaterThan(0);
-		const statKeys = Object.keys(baseline.stats ?? {});
-		expect(statKeys.length).toBeGreaterThan(0);
+		// Resources now contain all resource types including former stats
+		const resourceKeys = Object.keys(baseline.resources ?? {});
+		expect(resourceKeys.length).toBeGreaterThan(0);
 		const heroTokens = baseline.overview?.hero?.tokens ?? {};
 		const overviewTokenKeys = Object.keys(heroTokens);
 		expect(overviewTokenKeys.length).toBeGreaterThan(0);
@@ -112,14 +113,15 @@ describe('SessionManager', () => {
 			};
 			mutated.triggers[triggerKey] = descriptor;
 		}
-		const [statKey] = statKeys;
-		if (mutated.stats && statKey) {
-			const original = mutated.stats[statKey];
+		// Test that mutating resources doesn't affect subsequent gets
+		const [resourceKey] = resourceKeys;
+		if (mutated.resources && resourceKey) {
+			const original = mutated.resources[resourceKey];
 			const descriptor: SessionMetadataDescriptor = {
 				...(original ?? {}),
 				label: 'changed',
 			};
-			mutated.stats[statKey] = descriptor;
+			mutated.resources[resourceKey] = descriptor;
 		}
 		const [overviewTokenKey] = overviewTokenKeys;
 		if (mutated.overview?.hero?.tokens && overviewTokenKey) {
@@ -131,8 +133,8 @@ describe('SessionManager', () => {
 		if (triggerKey) {
 			expect(next.triggers?.[triggerKey]?.label).not.toBe('changed');
 		}
-		if (statKey) {
-			expect(next.stats?.[statKey]?.label).not.toBe('changed');
+		if (resourceKey) {
+			expect(next.resources?.[resourceKey]?.label).not.toBe('changed');
 		}
 		if (overviewTokenKey) {
 			expect(next.overview?.hero?.tokens?.[overviewTokenKey]).not.toBe(

@@ -121,12 +121,10 @@ export function createLocalSessionGateway(
 		actions: registries?.actions ?? {},
 		buildings: registries?.buildings ?? {},
 		developments: registries?.developments ?? {},
-		populations: registries?.populations ?? {},
-		resources: registries?.resources ?? {},
 		actionCategories: registries?.actionCategories ?? {},
-		resourcesV2: registries?.resourcesV2 ?? {},
-		resourceGroupsV2: registries?.resourceGroupsV2 ?? {},
-		resourceCategoriesV2: registries?.resourceCategoriesV2 ?? {},
+		resources: registries?.resources ?? {},
+		resourceGroups: registries?.resourceGroups ?? {},
+		resourceCategories: registries?.resourceCategories ?? {},
 	};
 	const getRegistries = (): SessionRegistriesPayload => {
 		if (typeof structuredClone === 'function') {
@@ -136,14 +134,12 @@ export function createLocalSessionGateway(
 			actions: { ...baseRegistries.actions },
 			buildings: { ...baseRegistries.buildings },
 			developments: { ...baseRegistries.developments },
-			populations: { ...baseRegistries.populations },
-			resources: { ...baseRegistries.resources },
 			actionCategories: {
 				...baseRegistries.actionCategories,
 			},
-			resourcesV2: { ...baseRegistries.resourcesV2 },
-			resourceGroupsV2: { ...baseRegistries.resourceGroupsV2 },
-			resourceCategoriesV2: { ...baseRegistries.resourceCategoriesV2 },
+			resources: { ...baseRegistries.resources },
+			resourceGroups: { ...baseRegistries.resourceGroups },
+			resourceCategories: { ...baseRegistries.resourceCategories },
 		};
 	};
 	return {

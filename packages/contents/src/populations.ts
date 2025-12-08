@@ -1,8 +1,8 @@
 import { Registry, populationSchema } from '@kingdom-builder/protocol';
 import { PopulationRole, Resource, Stat } from './internal';
 import { population, effect, resourceEvaluator, passiveParams, populationAssignmentPassiveId } from './config/builders';
-import { resourceAmountChange } from './helpers/resourceV2Effects';
-import { resourceChange } from './resourceV2';
+import { resourceAmountChange } from './helpers/resourceEffects';
+import { resourceChange } from './resource';
 import { Types, ResourceMethods, PassiveMethods } from './config/builderShared';
 import type { PopulationDef } from './defs';
 

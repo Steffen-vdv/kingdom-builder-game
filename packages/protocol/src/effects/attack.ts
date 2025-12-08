@@ -2,7 +2,7 @@ import type { EffectDef } from '../effects';
 
 export type ResourceAttackTarget = {
 	type: 'resource';
-	key: string;
+	resourceId: string;
 };
 
 export type BuildingAttackTarget = {
@@ -62,11 +62,11 @@ export interface AttackEvaluationLog {
 }
 
 /**
- * Represents a change in a player's ResourceV2 value during an attack.
- * The key is the ResourceV2 identifier (e.g., 'resource:core:gold').
+ * Represents a change in a player's Resource value during an attack.
+ * The resourceId is the Resource identifier (e.g., 'resource:core:gold').
  */
 export interface AttackPlayerDiff {
-	key: string;
+	resourceId: string;
 	before: number;
 	after: number;
 }

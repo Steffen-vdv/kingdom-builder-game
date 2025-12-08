@@ -8,8 +8,8 @@ import type {
 } from '@kingdom-builder/protocol';
 import {
 	createContentFactory,
-	createResourceV2Registries,
-	resourceV2Definition,
+	createResourceRegistries,
+	resourceDefinition,
 } from '@kingdom-builder/testing';
 import {
 	buildResourceRegistry,
@@ -22,14 +22,14 @@ import {
 } from '../../src/session/registryUtils.js';
 
 describe('buildResourceRegistry', () => {
-	it('populates registry from RESOURCE_V2_REGISTRY', () => {
-		// The function now populates from the global RESOURCE_V2_REGISTRY
+	it('returns empty registry when no overrides provided', () => {
+		// The deprecated buildResourceRegistry only returns overrides
+		// Use resourceCatalog.resources.byId directly for the full registry
 		const registry = buildResourceRegistry(undefined);
-		// Should have entries from the global registry
 		expect(registry).toBeDefined();
 		expect(typeof registry).toBe('object');
-		// At minimum, should have some keys from the global registry
-		expect(Object.keys(registry).length).toBeGreaterThan(0);
+		// No overrides means empty registry
+		expect(Object.keys(registry).length).toBe(0);
 	});
 
 	it('applies resource overrides when provided', () => {
@@ -51,8 +51,8 @@ describe('buildResourceRegistry', () => {
 		expect(typeof registry).toBe('object');
 	});
 
-	it('preserves override values over V2 registry defaults', () => {
-		// Pick a known resource from V2 registry and override it
+	it('preserves override values over registry defaults', () => {
+		// Pick a known resource from registry and override it
 		const overrides: SerializedRegistry<SessionResourceDefinition> = {
 			'resource:core:gold': {
 				key: 'resource:core:gold',
@@ -69,9 +69,9 @@ describe('buildResourceRegistry', () => {
 describe('buildSessionAssets', () => {
 	const createBaseOptions = (): SessionBaseOptions => {
 		const factory = createContentFactory();
-		const { resources, groups } = createResourceV2Registries({
+		const { resources, groups } = createResourceRegistries({
 			resources: [
-				resourceV2Definition({
+				resourceDefinition({
 					id: 'resource:test:base',
 					metadata: { label: 'Base', icon: '💎' },
 				}),
@@ -96,10 +96,9 @@ describe('buildSessionAssets', () => {
 			actionCategories: factory.categories,
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			phases,
 			rules,
-			resourceCatalogV2: { resources, groups },
+			resourceCatalog: { resources, groups },
 		};
 	};
 
@@ -110,9 +109,6 @@ describe('buildSessionAssets', () => {
 			buildings: freezeSerializedRegistry(cloneRegistry(baseOptions.buildings)),
 			developments: freezeSerializedRegistry(
 				cloneRegistry(baseOptions.developments),
-			),
-			populations: freezeSerializedRegistry(
-				cloneRegistry(baseOptions.populations),
 			),
 			resources: {} as SerializedRegistry<SessionResourceDefinition>,
 			actionCategories: freezeSerializedRegistry(
@@ -139,9 +135,6 @@ describe('buildSessionAssets', () => {
 			developments: freezeSerializedRegistry(
 				cloneRegistry(baseOptions.developments),
 			),
-			populations: freezeSerializedRegistry(
-				cloneRegistry(baseOptions.populations),
-			),
 			resources: {} as SerializedRegistry<SessionResourceDefinition>,
 			actionCategories: freezeSerializedRegistry(
 				cloneRegistry(baseOptions.actionCategories),
@@ -158,7 +151,7 @@ describe('buildSessionAssets', () => {
 		const config: GameConfig = {};
 		const { registries, metadata } = buildSessionAssets(context, config);
 		expect(registries).not.toBe(baseRegistries);
-		// Resources should be populated from RESOURCE_V2_REGISTRY
+		// Resources should be populated from RESOURCE_REGISTRY
 		expect(registries.resources).toBeDefined();
 		expect(metadata).toBeDefined();
 	});
@@ -170,9 +163,6 @@ describe('buildSessionAssets', () => {
 			buildings: freezeSerializedRegistry(cloneRegistry(baseOptions.buildings)),
 			developments: freezeSerializedRegistry(
 				cloneRegistry(baseOptions.developments),
-			),
-			populations: freezeSerializedRegistry(
-				cloneRegistry(baseOptions.populations),
 			),
 			resources: {} as SerializedRegistry<SessionResourceDefinition>,
 			actionCategories: {

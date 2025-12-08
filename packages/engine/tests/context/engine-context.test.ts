@@ -4,9 +4,9 @@ import { createTestEngine } from '../helpers.ts';
 describe('EngineContext', () => {
 	it('manages effect logs and cloning behaviour', () => {
 		const engineContext = createTestEngine();
-		expect(engineContext.resourceCatalogV2).toBeDefined();
-		expect(engineContext.game.resourceCatalogV2).toBe(
-			engineContext.resourceCatalogV2,
+		expect(engineContext.resourceCatalog).toBeDefined();
+		expect(engineContext.game.resourceCatalog).toBe(
+			engineContext.resourceCatalog,
 		);
 		const key = 'effect';
 
@@ -33,9 +33,9 @@ describe('EngineContext', () => {
 
 	it('serializes queued tasks even after failures', async () => {
 		const engineContext = createTestEngine();
-		expect(engineContext.resourceCatalogV2).toBeDefined();
-		expect(engineContext.game.resourceCatalogV2).toBe(
-			engineContext.resourceCatalogV2,
+		expect(engineContext.resourceCatalog).toBeDefined();
+		expect(engineContext.game.resourceCatalog).toBe(
+			engineContext.resourceCatalog,
 		);
 		const order: string[] = [];
 

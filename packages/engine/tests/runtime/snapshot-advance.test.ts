@@ -4,7 +4,7 @@ import type { AdvanceResult, AdvanceSkip } from '../../src/phases/advance';
 import type { PassiveMetadata } from '../../src/services';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { createTestEngine } from '../helpers';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 import {
 	Resource as CResource,
 	Stat as CStat,
@@ -14,13 +14,13 @@ describe('snapshotAdvance', () => {
 	it('clones advance results with skip metadata and complex effects', () => {
 		const context = createTestEngine();
 		const activePlayer = context.activePlayer;
-		// Use known ResourceV2 IDs directly
+		// Use known Resource IDs directly
 		const resourceKey = CResource.gold;
 		const statKey = CStat.armyStrength;
 		const developmentEntry = context.developments.entries()[0];
 		const developmentId = developmentEntry?.[0] ?? 'test:development';
 		const outerParams = resourceAmountParams({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 3,
 		});
 		const outerEffect: EffectDef = {
@@ -42,7 +42,7 @@ describe('snapshotAdvance', () => {
 			meta: { tier: 'outer' },
 		};
 		const chainedParams = resourceAmountParams({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 1,
 		});
 		const chainedEffect: EffectDef = {
@@ -84,12 +84,12 @@ describe('snapshotAdvance', () => {
 		expect(snapshot.player).not.toBe(original.player);
 		expect(snapshot.effects).not.toBe(original.effects);
 		expect(snapshot.skipped?.sources).not.toBe(original.skipped?.sources);
-		// Snapshot uses valuesV2, not resourceValues
-		snapshot.player.valuesV2[resourceKey] =
-			(snapshot.player.valuesV2[resourceKey] ?? 0) + 999;
+		// Snapshot uses values, not resourceValues
+		snapshot.player.values[resourceKey] =
+			(snapshot.player.values[resourceKey] ?? 0) + 999;
 		snapshot.effects[0]!.method = 'mutated-method';
 		snapshot.effects[0]!.params = resourceAmountParams({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 99,
 		});
 		snapshot.effects[0]!.effects = [];
@@ -111,7 +111,7 @@ describe('snapshotAdvance', () => {
 		expect(original.effects).toHaveLength(2);
 		expect(original.effects[0]?.method).toBe('add');
 		expect(original.effects[0]?.params).toMatchObject({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 3,
 		});
 		expect(original.skipped?.sources).toHaveLength(2);
@@ -124,10 +124,10 @@ describe('snapshotAdvance', () => {
 	it('omits skip data when advance results do not include skip info', () => {
 		const context = createTestEngine();
 		const activePlayer = context.activePlayer;
-		// Use known ResourceV2 ID directly
+		// Use known Resource ID directly
 		const resourceKey = CResource.gold;
 		const singleParams = resourceAmountParams({
-			key: resourceKey,
+			resourceId: resourceKey,
 			amount: 2,
 		});
 		const singleEffect: EffectDef = {
@@ -144,9 +144,9 @@ describe('snapshotAdvance', () => {
 		const originalValue = activePlayer.resourceValues[resourceKey] ?? 0;
 		const snapshot = snapshotAdvance(context, original);
 		expect(snapshot.skipped).toBeUndefined();
-		// Snapshot uses valuesV2, not resourceValues
-		snapshot.player.valuesV2[resourceKey] =
-			(snapshot.player.valuesV2[resourceKey] ?? 0) + 100;
+		// Snapshot uses values, not resourceValues
+		snapshot.player.values[resourceKey] =
+			(snapshot.player.values[resourceKey] ?? 0) + 100;
 		snapshot.effects[0]!.method = 'remove';
 		snapshot.effects.push({ type: 'extra' });
 		expect(original.skipped).toBeUndefined();

@@ -74,10 +74,10 @@ function formatValueSigned(
 export function formatDiffCommon(
 	prefix: string,
 	diff: AttackPlayerDiff,
-	context: Pick<TranslationContext, 'assets' | 'resourceMetadataV2'>,
+	context: Pick<TranslationContext, 'assets' | 'resourceMetadata'>,
 	options?: DiffFormatOptions,
 ): string {
-	const key = String(diff.key);
+	const key = String(diff.resourceId);
 	const descriptor = selectAttackResourceDescriptor(context, key);
 	const displayLabel = iconLabel(descriptor.icon, descriptor.label);
 	const delta = diff.after - diff.before;

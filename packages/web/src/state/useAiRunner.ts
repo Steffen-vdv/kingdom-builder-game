@@ -36,15 +36,15 @@ interface PresentAiActionsOptions {
 	resourceKeys: readonly SessionResourceKey[];
 	fallbackRegistries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		'actions' | 'buildings' | 'developments' | 'resources'
 	>;
 }
 
 function clonePlayerSnapshot(snapshot: PlayerSnapshot): PlayerSnapshot {
 	return {
-		valuesV2: { ...snapshot.valuesV2 },
-		resourceBoundsV2: Object.fromEntries(
-			Object.entries(snapshot.resourceBoundsV2).map(([id, bounds]) => [
+		values: { ...snapshot.values },
+		resourceBounds: Object.fromEntries(
+			Object.entries(snapshot.resourceBounds).map(([id, bounds]) => [
 				id,
 				{
 					lowerBound: bounds.lowerBound ?? null,
@@ -204,7 +204,7 @@ interface UseAiRunnerOptions {
 	addResolutionLog: (resolution: ActionResolution) => void;
 	registries: Pick<
 		SessionRegistries,
-		'actions' | 'buildings' | 'developments' | 'populations' | 'resources'
+		'actions' | 'buildings' | 'developments' | 'resources'
 	>;
 	resourceKeys: readonly SessionResourceKey[];
 	actionCostResource: SessionResourceKey;

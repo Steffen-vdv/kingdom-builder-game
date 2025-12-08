@@ -21,9 +21,9 @@ type OperandDescription = {
 };
 
 /**
- * Describes any resource-based evaluator operand using ResourceV2 metadata.
+ * Describes any resource-based evaluator operand using Resource metadata.
  * All resources (including what were formerly "stats" and "population")
- * use the unified ResourceV2 registry for labels and icons. Also checks
+ * use the unified Resource registry for labels and icons. Also checks
  * group metadata for aggregate resources like total population.
  */
 function describeResourceOperand(
@@ -33,9 +33,9 @@ function describeResourceOperand(
 	const resourceId = params?.['resourceId'];
 	if (typeof resourceId === 'string') {
 		// Try resource metadata first, then fall back to group metadata
-		const metadata = context.resourceMetadataV2.has(resourceId)
-			? context.resourceMetadataV2.get(resourceId)
-			: context.resourceGroupMetadataV2.get(resourceId);
+		const metadata = context.resourceMetadata.has(resourceId)
+			? context.resourceMetadata.get(resourceId)
+			: context.resourceGroupMetadata.get(resourceId);
 		if (metadata.icon) {
 			return { icon: metadata.icon, label: metadata.label };
 		}
@@ -59,7 +59,7 @@ function describeEvaluatorOperand(
 			label: slot.label || 'Land',
 		};
 	}
-	// All resource evaluators use ResourceV2 metadata (returns 'Value' if no id)
+	// All resource evaluators use Resource metadata (returns 'Value' if no id)
 	if (operand.type === 'resource') {
 		return describeResourceOperand(operand.params, context);
 	}
@@ -130,7 +130,7 @@ function translateCompareRequirement(
 			return describeLandRequirement(context);
 		}
 	}
-	// Generic formatting using ResourceV2 metadata for labels
+	// Generic formatting using Resource metadata for labels
 	const left = formatOperand(leftOperand, context, failure.details?.['left']);
 	const right = formatOperand(
 		rightOperand,

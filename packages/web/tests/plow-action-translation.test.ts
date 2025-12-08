@@ -6,7 +6,7 @@ import {
 	SYNTHETIC_LAND_INFO,
 	SYNTHETIC_SLOT_INFO,
 	SYNTHETIC_RESOURCES,
-	SYNTHETIC_RESOURCES_V2,
+	SYNTHETIC_RESOURCES,
 	registerSyntheticPlowResources,
 } from './fixtures/syntheticPlow';
 import {
@@ -75,16 +75,10 @@ function createTranslationHarness() {
 		tierDefinitions: [...synthetic.rules.tierDefinitions],
 		winConditions: [...synthetic.rules.winConditions],
 	} satisfies SessionRuleSnapshot;
+	// Resource metadata for translation layer
 	const resourceMetadata: Record<string, SessionMetadataDescriptor> =
 		Object.fromEntries(
 			Object.entries(SYNTHETIC_RESOURCES).map(([key, info]) => {
-				return [key, { icon: info.icon, label: info.label }];
-			}),
-		);
-	// ResourceV2 metadata for translation layer
-	const resourceMetadataV2: Record<string, SessionMetadataDescriptor> =
-		Object.fromEntries(
-			Object.entries(SYNTHETIC_RESOURCES_V2).map(([key, info]) => {
 				return [key, { icon: info.icon, label: info.label }];
 			}),
 		);
@@ -116,8 +110,8 @@ function createTranslationHarness() {
 				},
 			},
 		}),
-		resourceCatalogV2: synthetic.resourceCatalogV2,
-		resourceMetadataV2,
+		resourceCatalog: synthetic.resourceCatalog,
+		resourceMetadata,
 	});
 	const translation = createTranslationContext(
 		session,
@@ -145,8 +139,8 @@ describe('plow action translation', () => {
 		const modResourceId =
 			(costMod?.params as { resourceId?: string })?.resourceId ?? '';
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		// Use V2 metadata for the resource icon
-		const modDescriptor = translation.resourceMetadataV2?.get?.(modResourceId);
+		// Use metadata for the resource icon
+		const modDescriptor = translation.resourceMetadata?.get?.(modResourceId);
 		const modIcon = modDescriptor?.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
 		const modifierIcon = modifierInfo.icon ?? '✨';
@@ -196,8 +190,8 @@ describe('plow action translation', () => {
 		const modResourceId =
 			(costMod?.params as { resourceId?: string })?.resourceId ?? '';
 		const modAmt = (costMod?.params as { amount?: number })?.amount ?? 0;
-		// Use V2 metadata for the resource icon
-		const modDescriptor = translation.resourceMetadataV2?.get?.(modResourceId);
+		// Use metadata for the resource icon
+		const modDescriptor = translation.resourceMetadata?.get?.(modResourceId);
 		const modIcon = modDescriptor?.icon ?? '';
 		const passiveName = ((plowPassive as { name?: string })?.name ??
 			SYNTHETIC_PASSIVE_INFO.label) as string;
@@ -213,7 +207,7 @@ describe('plow action translation', () => {
 		const expandHap = expand.effects.find(
 			(e: EffectDef) =>
 				e.type === 'resource' &&
-				((e.params as { key?: string }).key === 'happiness' ||
+				((e.params as { key?: string }).resourceId === 'happiness' ||
 					(e.params as { resourceId?: string }).resourceId ===
 						'resource:synthetic:happiness'),
 		);
@@ -222,10 +216,10 @@ describe('plow action translation', () => {
 		const hapLegacyAmt = (expandHap?.params as { amount?: number })?.amount;
 		const hapAmt = hapChange?.amount ?? hapLegacyAmt ?? 0;
 		const hapLegacyDesc = translation.assets.resources?.happiness;
-		const hapV2Desc = translation.resourceMetadataV2?.get?.(
+		const hapDesc = translation.resourceMetadata?.get?.(
 			'resource:synthetic:happiness',
 		);
-		const hapDescriptor = hapLegacyDesc ?? hapV2Desc ?? {};
+		const hapDescriptor = hapLegacyDesc ?? hapDesc ?? {};
 		const hapLabel = hapDescriptor.label ?? 'happiness';
 		const hapIcon = hapDescriptor.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};

@@ -38,14 +38,14 @@ export function mergeSessionMetadata({
 	} else {
 		delete merged.resources;
 	}
-	const populations = mergeRecord(
-		baseClone.populations,
-		snapshotMetadata.populations,
+	const resourceGroups = mergeRecord(
+		baseClone.resourceGroups,
+		snapshotMetadata.resourceGroups,
 	);
-	if (populations !== undefined) {
-		merged.populations = populations;
+	if (resourceGroups !== undefined) {
+		merged.resourceGroups = resourceGroups;
 	} else {
-		delete merged.populations;
+		delete merged.resourceGroups;
 	}
 	const buildings = mergeRecord(
 		baseClone.buildings,
@@ -64,12 +64,6 @@ export function mergeSessionMetadata({
 		merged.developments = developments;
 	} else {
 		delete merged.developments;
-	}
-	const stats = mergeRecord(baseClone.stats, snapshotMetadata.stats);
-	if (stats !== undefined) {
-		merged.stats = stats;
-	} else {
-		delete merged.stats;
 	}
 	const phases = mergeRecord(baseClone.phases, snapshotMetadata.phases);
 	if (phases !== undefined) {

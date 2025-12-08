@@ -41,7 +41,10 @@ describe('raid translation log', () => {
 			translation,
 			SYNTH_RESOURCE_IDS.castleHP,
 		);
-		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const powerStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.power.resourceId,
+		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
 			SYNTH_RESOURCE_IDS.gold,
@@ -107,7 +110,10 @@ describe('raid translation log', () => {
 	it('logs building attack action with destruction evaluation', () => {
 		const { engineContext, translation, buildingAttack, building } =
 			createSyntheticEngineContext();
-		const powerStat = getStat(translation, SYNTH_COMBAT_STATS.power.key)!;
+		const powerStat = getStat(
+			translation,
+			SYNTH_COMBAT_STATS.power.resourceId,
+		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
 			SYNTH_RESOURCE_IDS.gold,
@@ -155,7 +161,7 @@ describe('raid translation log', () => {
 			text: `On opponent ${buildingDisplay} destruction`,
 			depth: 1,
 		});
-		// V2 format adds space after icon
+		// format adds space after icon
 		expect(log[3]).toMatchObject({
 			text: `${gold.icon} +${BUILDING_REWARD_GOLD} ${gold.label} for Player`,
 			depth: 2,

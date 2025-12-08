@@ -4,21 +4,19 @@ import {
 	ACTIONS,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	PhaseId,
 	RULES,
 	Resource as CResource,
 } from '@kingdom-builder/contents';
 import {
-	RESOURCE_V2_REGISTRY,
-	RESOURCE_GROUP_V2_REGISTRY,
-} from '@kingdom-builder/contents/registries/resourceV2';
+	RESOURCE_REGISTRY,
+	RESOURCE_GROUP_REGISTRY,
+} from '@kingdom-builder/contents/registries/resource';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
 	DevelopmentConfig as DevelopmentDef,
-	PopulationConfig as PopulationDef,
 	Registry,
 } from '@kingdom-builder/protocol';
 import type { PhaseDef } from '../../src/phases.ts';
@@ -27,25 +25,23 @@ import { createContentFactory } from '@kingdom-builder/testing';
 import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
-import type { RuntimeResourceContent } from '../../src/resource-v2/index.ts';
-import { resourceAmountParams } from '../helpers/resourceV2Params.ts';
+import type { RuntimeResourceContent } from '../../src/resource/index.ts';
+import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 const BASE: {
 	actions: Registry<ActionDef>;
 	buildings: Registry<BuildingDef>;
 	developments: Registry<DevelopmentDef>;
-	populations: Registry<PopulationDef>;
 	phases: PhaseDef[];
-	resourceCatalogV2: RuntimeResourceContent;
+	resourceCatalog: RuntimeResourceContent;
 } = {
 	actions: ACTIONS,
 	buildings: BUILDINGS,
 	developments: DEVELOPMENTS,
-	populations: POPULATIONS,
 	phases: PHASES,
-	resourceCatalogV2: {
-		resources: RESOURCE_V2_REGISTRY,
-		groups: RESOURCE_GROUP_V2_REGISTRY,
+	resourceCatalog: {
+		resources: RESOURCE_REGISTRY,
+		groups: RESOURCE_GROUP_REGISTRY,
 	},
 };
 
@@ -57,10 +53,9 @@ function createTestSession(overrides: EngineOverrides = {}) {
 		actions: rest.actions ?? BASE.actions,
 		buildings: rest.buildings ?? BASE.buildings,
 		developments: rest.developments ?? BASE.developments,
-		populations: rest.populations ?? BASE.populations,
 		phases: rest.phases ?? BASE.phases,
 		rules: rules ?? RULES,
-		resourceCatalogV2: rest.resourceCatalogV2 ?? BASE.resourceCatalogV2,
+		resourceCatalog: rest.resourceCatalog ?? BASE.resourceCatalog,
 	});
 }
 
@@ -100,7 +95,7 @@ describe('EngineSession', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						key: CResource.gold,
+						resourceId: CResource.gold,
 						amount: 3,
 					}),
 				},
@@ -110,27 +105,26 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		// Ensure player has enough AP to perform the action
 		session.applyDeveloperPreset({
 			playerId: session.getSnapshot().game.activePlayerId,
-			resources: [{ key: CResource.ap, target: 5 }],
+			resources: [{ resourceId: CResource.ap, target: 5 }],
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
-		const initialGold = activeBefore.valuesV2[CResource.gold] ?? 0;
+		const initialGold = activeBefore.values[CResource.gold] ?? 0;
 		const traces = session.performAction(gainGold.id);
 		const after = session.getSnapshot();
 		const activeAfter = after.game.players[0]!;
-		expect(activeAfter.valuesV2[CResource.gold]).toBe(initialGold + 3);
+		expect(activeAfter.values[CResource.gold]).toBe(initialGold + 3);
 		if (traces.length > 0) {
-			traces[0]!.after.valuesV2[CResource.gold] = 999;
+			traces[0]!.after.values[CResource.gold] = 999;
 		}
 		const refreshed = session.getSnapshot();
 		const activeRefreshed = refreshed.game.players[0]!;
-		expect(activeRefreshed.valuesV2[CResource.gold]).toBe(initialGold + 3);
+		expect(activeRefreshed.values[CResource.gold]).toBe(initialGold + 3);
 	});
 
 	it('simulates actions before executing to avoid partial failures', () => {
@@ -145,17 +139,16 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		// Ensure player has enough AP so action fails on land, not AP
 		session.applyDeveloperPreset({
 			playerId: session.getSnapshot().game.activePlayerId,
-			resources: [{ key: CResource.ap, target: 5 }],
+			resources: [{ resourceId: CResource.ap, target: 5 }],
 		});
 		const before = session.getSnapshot();
 		const activeBefore = before.game.players[0]!;
-		const initialAp = activeBefore.valuesV2[CResource.ap] ?? 0;
+		const initialAp = activeBefore.values[CResource.ap] ?? 0;
 
 		expect(() => session.performAction(failingAction.id)).toThrow(
 			/No tillable land available/,
@@ -163,25 +156,25 @@ describe('EngineSession', () => {
 
 		const after = session.getSnapshot();
 		const activeAfter = after.game.players[0]!;
-		expect(activeAfter.valuesV2[CResource.ap]).toBe(initialAp);
+		expect(activeAfter.values[CResource.ap]).toBe(initialAp);
 	});
 
 	it('returns immutable game snapshots', () => {
 		const session = createTestSession();
 		const snapshot = session.getSnapshot();
-		snapshot.game.players[0]!.valuesV2[CResource.gold] = 999;
+		snapshot.game.players[0]!.values[CResource.gold] = 999;
 		const next = session.getSnapshot();
-		expect(next.game.players[0]!.valuesV2[CResource.gold]).not.toBe(999);
+		expect(next.game.players[0]!.values[CResource.gold]).not.toBe(999);
 	});
 
-	it('includes ResourceV2 data in player snapshots', () => {
+	it('includes Resource data in player snapshots', () => {
 		const session = createTestSession();
 		const snapshot = session.getSnapshot();
-		const catalog = snapshot.game.resourceCatalogV2;
+		const catalog = snapshot.game.resourceCatalog;
 		expect(catalog).toBeDefined();
 		const player = snapshot.game.players[0]!;
-		expect(player.valuesV2).toBeDefined();
-		const goldV2 = player.valuesV2[CResource.gold];
+		expect(player.values).toBeDefined();
+		const goldV2 = player.values[CResource.gold];
 		expect(goldV2).toBeDefined();
 		expect(catalog.resources.byId['resource:core:gold']?.label).toBeDefined();
 	});
@@ -190,15 +183,15 @@ describe('EngineSession', () => {
 		const session = createTestSession();
 		const result = session.advancePhase();
 		const playerId = result.player.id;
-		const keys = Object.keys(result.player.valuesV2);
+		const keys = Object.keys(result.player.values);
 		const firstKey = keys[0];
 		if (firstKey) {
-			result.player.valuesV2[firstKey] = 777;
+			result.player.values[firstKey] = 777;
 		}
 		const snapshot = session.getSnapshot();
 		const player = snapshot.game.players.find((entry) => entry.id === playerId);
 		if (firstKey) {
-			expect(player?.valuesV2[firstKey]).not.toBe(777);
+			expect(player?.values[firstKey]).not.toBe(777);
 		}
 	});
 
@@ -268,7 +261,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		const costs = session.getActionCosts(action.id);
@@ -290,7 +282,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		const snapshot = session.getSnapshot();
 		const [first, second] = snapshot.game.players;
@@ -323,7 +314,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		const requirements = session.getActionRequirements(action.id);
@@ -373,7 +363,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		advanceToMain(session);
 		const initialSnapshot = session.getSnapshot();
@@ -400,7 +389,6 @@ describe('EngineSession', () => {
 			actions: content.actions,
 			buildings: content.buildings,
 			developments: content.developments,
-			populations: content.populations,
 		});
 		const definition = session.getActionDefinition(categorized.id);
 		expect(definition).toEqual({
@@ -485,15 +473,15 @@ describe('EngineSession', () => {
 		const activeId = snapshot.game.activePlayerId;
 		const result = session.simulateUpcomingPhases(activeId);
 		expect(result.steps.length).toBeGreaterThan(0);
-		expect(result.before.valuesV2).toBeDefined();
-		expect(result.after.valuesV2).toBeDefined();
+		expect(result.before.values).toBeDefined();
+		expect(result.after.values).toBeDefined();
 		const firstStep = result.steps[0];
 		if (!firstStep) {
 			throw new Error('Expected at least one simulation step.');
 		}
-		firstStep.player.valuesV2[CResource.gold] = 999;
+		firstStep.player.values[CResource.gold] = 999;
 		const refreshed = session.simulateUpcomingPhases(activeId);
-		expect(refreshed.steps[0]?.player.valuesV2[CResource.gold]).not.toBe(999);
+		expect(refreshed.steps[0]?.player.values[CResource.gold]).not.toBe(999);
 	});
 
 	it('supports primitive effect log entries without mutation', () => {
@@ -556,14 +544,14 @@ it('returns cloned simulation previews for upcoming phases', () => {
 	const activeId = session.getSnapshot().game.activePlayerId;
 	const preview = session.simulateUpcomingPhases(activeId);
 	preview.steps.length = 0;
-	(preview.delta.valuesV2 as Record<string, unknown>).extra = 99;
-	preview.before.valuesV2 = {};
+	(preview.delta.values as Record<string, unknown>).extra = 99;
+	preview.before.values = {};
 	const refreshed = session.simulateUpcomingPhases(activeId);
 	expect(refreshed.steps.length).toBeGreaterThan(0);
 	expect(
-		(refreshed.delta.valuesV2 as Record<string, unknown>).extra,
+		(refreshed.delta.values as Record<string, unknown>).extra,
 	).toBeUndefined();
-	expect(Object.keys(refreshed.before.valuesV2).length).toBeGreaterThan(0);
+	expect(Object.keys(refreshed.before.values).length).toBeGreaterThan(0);
 });
 
 it('delegates AI turns with overrides while preserving controllers', async () => {
@@ -576,7 +564,7 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 				type: 'resource',
 				method: 'add',
 				params: resourceAmountParams({
-					key: CResource.gold,
+					resourceId: CResource.gold,
 					amount: 1,
 				}),
 			},
@@ -587,7 +575,6 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 		actions: content.actions,
 		buildings: content.buildings,
 		developments: content.developments,
-		populations: content.populations,
 	});
 	const initial = session.getSnapshot();
 	const opponentId = initial.game.opponentId;
@@ -597,7 +584,7 @@ it('delegates AI turns with overrides while preserving controllers', async () =>
 	advanceToPlayerMain(session, opponentId);
 	session.applyDeveloperPreset({
 		playerId: opponentId,
-		resources: [{ key: CResource.ap, target: 1 }],
+		resources: [{ resourceId: CResource.ap, target: 1 }],
 	});
 	const performSpy = vi.fn<
 		Parameters<PerformActionFn>,

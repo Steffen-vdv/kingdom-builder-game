@@ -12,7 +12,7 @@ import {
 	TAX_ACTION_ID,
 } from '../../src/ai';
 import { createTestEngine } from '../helpers';
-import { resourceAmountParams } from '../helpers/resourceV2Params';
+import { resourceAmountParams } from '../helpers/resourceParams';
 
 describe('AI simulation guard', () => {
 	function createEngineWithAction(effectParams: Record<string, unknown>) {
@@ -62,7 +62,10 @@ describe('AI simulation guard', () => {
 				{
 					type: 'resource',
 					method: 'add',
-					params: resourceAmountParams({ key: CResource.gold, amount: 1 }),
+					params: resourceAmountParams({
+						resourceId: CResource.gold,
+						amount: 1,
+					}),
 				},
 			],
 		});
@@ -88,7 +91,7 @@ describe('AI simulation guard', () => {
 	it('simulation failure prevents costs from being deducted', async () => {
 		const { engineContext, apKey } = createEngineWithAction(
 			// Invalid effect that will fail during execution
-			resourceAmountParams({ key: CResource.gold, amount: 1 }),
+			resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		);
 
 		// Create a custom performAction that simulates failure
@@ -124,7 +127,7 @@ describe('AI simulation guard', () => {
 
 	it('expected errors (requirements) are handled gracefully', async () => {
 		const { engineContext, apKey } = createEngineWithAction(
-			resourceAmountParams({ key: CResource.gold, amount: 1 }),
+			resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		);
 
 		// Create a requirement failure error (expected error type)
@@ -160,12 +163,12 @@ describe('AI simulation guard', () => {
 
 	it('unexpected errors propagate to caller', async () => {
 		const { engineContext } = createEngineWithAction(
-			resourceAmountParams({ key: CResource.gold, amount: 1 }),
+			resourceAmountParams({ resourceId: CResource.gold, amount: 1 }),
 		);
 
 		// Create an unexpected engine error
 		const engineBug = new Error(
-			'ResourceV2 state expected integer but received 0.5',
+			'Resource state expected integer but received 0.5',
 		);
 		const performWithBug = vi.fn(() => {
 			throw engineBug;
@@ -185,7 +188,7 @@ describe('AI simulation guard', () => {
 		// Should throw for unexpected errors
 		await expect(
 			system.run(engineContext.activePlayer.id, engineContext),
-		).rejects.toThrow('ResourceV2 state expected integer but received 0.5');
+		).rejects.toThrow('Resource state expected integer but received 0.5');
 
 		// Should NOT have advanced phase
 		expect(advanceFn).not.toHaveBeenCalled();
@@ -287,7 +290,7 @@ describe('AI action error types', () => {
 
 		// This is the actual error that would occur with the 0.5 happiness bug
 		const error = new Error(
-			'ResourceV2 state expected "resource:core:happiness" value to be an ' +
+			'Resource state expected "resource:core:happiness" value to be an ' +
 				'integer but received 0.5',
 		);
 		const perform = vi.fn(() => {

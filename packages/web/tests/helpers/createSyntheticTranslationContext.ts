@@ -21,7 +21,7 @@ export type SyntheticContextConfigurator = (options: {
 export function buildSyntheticTranslationContext(
 	configure?: SyntheticContextConfigurator,
 ): SyntheticTranslationContextResult {
-	const { registries, metadata, phases, ruleSnapshot, resourceCatalogV2 } =
+	const { registries, metadata, phases, ruleSnapshot, resourceCatalog } =
 		createTestSessionScaffold();
 	const resourceKeys = Object.keys(registries.resources);
 	const baseResources = Object.fromEntries(resourceKeys.map((key) => [key, 0]));
@@ -47,7 +47,7 @@ export function buildSyntheticTranslationContext(
 		actionCostResource,
 		ruleSnapshot,
 		metadata,
-		resourceCatalogV2,
+		resourceCatalog,
 	});
 	configure?.({ session, registries });
 	const translationContext = createTranslationContext(

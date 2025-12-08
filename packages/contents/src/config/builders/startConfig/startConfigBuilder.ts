@@ -75,8 +75,8 @@ export function startConfig() {
 	return new StartConfigBuilder();
 }
 
-export function toRecord<T extends { key: string }>(items: T[]) {
-	const entries = items.map((item) => [item.key, item]);
+export function toRecord<T extends { resourceId: string }>(items: T[]) {
+	const entries = items.map((item) => [item.resourceId, item]);
 	return Object.fromEntries(entries) as Record<string, T>;
 }
 

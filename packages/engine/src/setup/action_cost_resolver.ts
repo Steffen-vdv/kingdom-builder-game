@@ -1,4 +1,4 @@
-import type { RuntimeResourceCatalog } from '../resource-v2';
+import type { RuntimeResourceCatalog } from '../resource';
 import type {
 	Registry,
 	ActionConfig as ActionDef,

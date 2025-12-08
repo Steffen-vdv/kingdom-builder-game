@@ -10,8 +10,8 @@ import { RegistryMetadataProvider } from '../../../src/contexts/RegistryMetadata
 import type { HoverCard } from '../../../src/state/useHoverCard';
 import type {
 	SessionPlayerStateSnapshot,
-	SessionResourceCategoryDefinitionV2,
-	SessionResourceGroupDefinitionV2,
+	SessionResourceCategoryDefinition,
+	SessionResourceGroupDefinition,
 } from '@kingdom-builder/protocol';
 
 const {
@@ -45,9 +45,9 @@ beforeEach(() => {
 describe('Resource HoverCard behavior', () => {
 	describe('ResourceCategoryRow', () => {
 		it('shows description but no effects for non-tiered resources', () => {
-			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 			if (!resourceCatalog) {
-				throw new Error('Expected resourceCatalogV2');
+				throw new Error('Expected resourceCatalog');
 			}
 			const tieredResourceKey = mockGame.ruleSnapshot.tieredResourceKey;
 			// Find a category with at least one non-grouped, non-tiered resource
@@ -69,7 +69,7 @@ describe('Resource HoverCard behavior', () => {
 			render(
 				<RegistryMetadataProvider registries={registries} metadata={metadata}>
 					<ResourceCategoryRow
-						category={filteredCategory as SessionResourceCategoryDefinitionV2}
+						category={filteredCategory as SessionResourceCategoryDefinition}
 						player={activePlayerSnapshot}
 					/>
 				</RegistryMetadataProvider>,
@@ -92,14 +92,14 @@ describe('Resource HoverCard behavior', () => {
 		});
 
 		it('shows tier entries for tiered resources (e.g., happiness)', () => {
-			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 			if (!resourceCatalog) {
-				throw new Error('Expected resourceCatalogV2');
+				throw new Error('Expected resourceCatalog');
 			}
 			const tieredResourceKey = mockGame.ruleSnapshot.tieredResourceKey;
 			// Get metadata for the tiered resource to find its icon
 			const tieredMeta =
-				mockGame.translationContext.resourceMetadataV2.get(tieredResourceKey);
+				mockGame.translationContext.resourceMetadata.get(tieredResourceKey);
 			const tieredIcon = tieredMeta.icon;
 
 			// Find a category containing the tiered resource
@@ -122,7 +122,7 @@ describe('Resource HoverCard behavior', () => {
 			render(
 				<RegistryMetadataProvider registries={registries} metadata={metadata}>
 					<ResourceCategoryRow
-						category={tieredOnlyCategory as SessionResourceCategoryDefinitionV2}
+						category={tieredOnlyCategory as SessionResourceCategoryDefinition}
 						player={activePlayerSnapshot}
 					/>
 				</RegistryMetadataProvider>,
@@ -138,7 +138,7 @@ describe('Resource HoverCard behavior', () => {
 				return tieredIcon && btn.textContent?.includes(tieredIcon);
 			});
 			if (!resourceButton) {
-				// Resource might not be rendered (not in valuesV2 or hidden)
+				// Resource might not be rendered (not in values or hidden)
 				// Let's check what buttons exist for debugging
 				const buttonContents = resourceButtons.map((btn) => btn.textContent);
 				throw new Error(
@@ -164,9 +164,9 @@ describe('Resource HoverCard behavior', () => {
 			// (authoritative) over range-based value checks. The previous
 			// value-only implementation would fail this test by showing neutral
 			// tier instead of joyous tier.
-			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 			if (!resourceCatalog) {
-				throw new Error('Expected resourceCatalogV2');
+				throw new Error('Expected resourceCatalog');
 			}
 			const tieredResourceKey = mockGame.ruleSnapshot.tieredResourceKey;
 			const tierDefinitions = mockGame.ruleSnapshot.tierDefinitions;
@@ -192,8 +192,8 @@ describe('Resource HoverCard behavior', () => {
 						icon: joyousTier.display?.icon,
 					},
 				],
-				valuesV2: {
-					...activePlayerSnapshot.valuesV2,
+				values: {
+					...activePlayerSnapshot.values,
 					[tieredResourceKey]: neutralRangeValue,
 				},
 			};
@@ -215,13 +215,13 @@ describe('Resource HoverCard behavior', () => {
 			};
 
 			const tieredMeta =
-				mockGame.translationContext.resourceMetadataV2.get(tieredResourceKey);
+				mockGame.translationContext.resourceMetadata.get(tieredResourceKey);
 			const tieredIcon = tieredMeta.icon;
 
 			render(
 				<RegistryMetadataProvider registries={registries} metadata={metadata}>
 					<ResourceCategoryRow
-						category={tieredOnlyCategory as SessionResourceCategoryDefinitionV2}
+						category={tieredOnlyCategory as SessionResourceCategoryDefinition}
 						player={playerWithDesync}
 					/>
 				</RegistryMetadataProvider>,
@@ -261,9 +261,9 @@ describe('Resource HoverCard behavior', () => {
 		});
 
 		it('does not pass Value/Bounds groups to effects for resources', () => {
-			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 			if (!resourceCatalog) {
-				throw new Error('Expected resourceCatalogV2');
+				throw new Error('Expected resourceCatalog');
 			}
 			const category = resourceCatalog.categories.ordered.find((cat) =>
 				cat.contents.some((item) => item.type === 'resource'),
@@ -274,7 +274,7 @@ describe('Resource HoverCard behavior', () => {
 			render(
 				<RegistryMetadataProvider registries={registries} metadata={metadata}>
 					<ResourceCategoryRow
-						category={category as SessionResourceCategoryDefinitionV2}
+						category={category as SessionResourceCategoryDefinition}
 						player={activePlayerSnapshot}
 					/>
 				</RegistryMetadataProvider>,
@@ -307,9 +307,9 @@ describe('Resource HoverCard behavior', () => {
 
 	describe('ResourceGroupDisplay', () => {
 		it('displays the parent icon in the rendered output', () => {
-			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 			if (!resourceCatalog) {
-				throw new Error('Expected resourceCatalogV2');
+				throw new Error('Expected resourceCatalog');
 			}
 			// Find a group with a parent that has an icon
 			const groupWithParent = resourceCatalog.groups.ordered.find(
@@ -340,22 +340,20 @@ describe('Resource HoverCard behavior', () => {
 		});
 
 		it('uses group-level icon from definition (no parent fallback)', () => {
-			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalogV2;
+			const resourceCatalog = mockGame.sessionSnapshot.game.resourceCatalog;
 			if (!resourceCatalog) {
-				throw new Error('Expected resourceCatalogV2');
+				throw new Error('Expected resourceCatalog');
 			}
 			// Find a group with its own icon defined (not relying on parent)
 			const groupWithIcon = resourceCatalog.groups.ordered.find(
 				(group) => group.icon,
-			) as SessionResourceGroupDefinitionV2 | undefined;
+			) as SessionResourceGroupDefinition | undefined;
 			if (!groupWithIcon) {
 				return;
 			}
 			// Get the group metadata which should use the group's own icon
 			const groupMetadata =
-				mockGame.translationContext.resourceGroupMetadataV2.get(
-					groupWithIcon.id,
-				);
+				mockGame.translationContext.resourceGroupMetadata.get(groupWithIcon.id);
 			// Verify the group metadata uses the group's own icon
 			expect(groupMetadata.icon).toBe(groupWithIcon.icon);
 		});

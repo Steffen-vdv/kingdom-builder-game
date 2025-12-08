@@ -45,7 +45,6 @@ interface OverviewTokenSourceArgs {
 	phaseMetadata: MetadataSelector<PhaseMetadata>;
 	resourceMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	statMetadata: MetadataSelector<RegistryMetadataDescriptor>;
-	populationMetadata: MetadataSelector<RegistryMetadataDescriptor>;
 	landMetadata: AssetMetadataSelector;
 	slotMetadata: AssetMetadataSelector;
 }
@@ -55,7 +54,6 @@ export const createOverviewTokenSources = ({
 	phaseMetadata,
 	resourceMetadata,
 	statMetadata,
-	populationMetadata,
 	landMetadata,
 	slotMetadata,
 }: OverviewTokenSourceArgs): OverviewTokenSources => {
@@ -66,7 +64,8 @@ export const createOverviewTokenSources = ({
 		phases: phaseMetadata,
 		resources: resourceMetadata,
 		stats: statMetadata,
-		population: populationMetadata,
+		// Population resources are part of unified resources
+		population: resourceMetadata,
 		land: landMetadata,
 		slot: slotMetadata,
 		landDescriptor,

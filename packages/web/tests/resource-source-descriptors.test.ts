@@ -66,32 +66,24 @@ const collectSummaryLines = (entry: unknown): string[] => {
 
 function createDescriptorSetup(): DescriptorSetup {
 	const registries = createSessionRegistries();
-	const populationId = registries.populations.keys()[0];
+	// Synthetic population ID - under ResourceV2 populations are resources
+	const populationId = 'resource:population:role:legion';
 	const buildingId = registries.buildings.keys()[0];
 	const developmentId = registries.developments.keys()[0];
 	const actionId = registries.actions.keys()[0];
 	const resourceKey = Object.keys(registries.resources)[0];
-	if (
-		!populationId ||
-		!buildingId ||
-		!developmentId ||
-		!actionId ||
-		!resourceKey
-	) {
+	if (!buildingId || !developmentId || !actionId || !resourceKey) {
 		throw new Error('Expected registries to provide baseline entries.');
 	}
 	const phaseId = 'phase:test';
 	const phaseStepId = 'phase:test:step';
 	const triggerId = 'trigger:test';
 	const landId = 'land:test';
-	// ResourceV2 IDs for population and stat
-	const populationResourceId = `resource:population:role:${populationId}`;
+	// Resource IDs for population and stat
+	const populationResourceId = populationId;
 	const statResourceId = 'resource:stat:army-strength';
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
-		populations: {
-			[populationId]: { label: 'Legion Vanguard', icon: '🎖️' },
-		},
 		buildings: {
 			[buildingId]: { label: 'Sky Bastion', icon: '🏯' },
 		},
@@ -153,7 +145,7 @@ function createDescriptorSetup(): DescriptorSetup {
 		name: 'Active Player',
 		resources: { [resourceKey]: 0 },
 		population: { [populationId]: 2 },
-		valuesV2: {
+		values: {
 			[populationResourceId]: 2,
 			[statResourceId]: 3,
 		},
@@ -193,7 +185,7 @@ function createDescriptorSetup(): DescriptorSetup {
 		actionCostResource: resourceKey,
 		ruleSnapshot,
 		metadata,
-		resourceMetadataV2: {
+		resourceMetadata: {
 			[populationResourceId]: {
 				icon: '🎖️',
 				label: 'Legion Vanguard',
@@ -225,9 +217,9 @@ function createDescriptorSetup(): DescriptorSetup {
 	if (!primaryStatKey) {
 		throw new Error('Unable to resolve a stat key for testing.');
 	}
-	active.valuesV2[primaryStatKey] = 0;
+	active.values[primaryStatKey] = 0;
 	if (secondaryStatKey) {
-		active.valuesV2[secondaryStatKey] = 3;
+		active.values[secondaryStatKey] = 3;
 	}
 	return {
 		translationContext,
@@ -325,8 +317,8 @@ describe('resource source descriptors', () => {
 			populationResourceId,
 		);
 		expect(populationLine).toContain(populationLabel);
-		// Resource values are shown directly from valuesV2
-		const popValue = String(player.valuesV2[populationResourceId]);
+		// Resource values are shown directly from values
+		const popValue = String(player.values[populationResourceId]);
 		expect(populationLine).toContain(popValue);
 		const buildingLabel = formatKindLabel(
 			translationContext,
@@ -359,8 +351,8 @@ describe('resource source descriptors', () => {
 			statResourceId,
 		);
 		expect(statLine).toContain(statLabel);
-		// Stat values from valuesV2 are displayed directly (not percent)
-		const statValue = String(player.valuesV2[statResourceId]);
+		// Stat values from values are displayed directly (not percent)
+		const statValue = String(player.values[statResourceId]);
 		expect(statLine).toContain(statValue);
 		const resourceLabel = formatKindLabel(
 			translationContext,
