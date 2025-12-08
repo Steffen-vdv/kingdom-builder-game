@@ -104,7 +104,7 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 	const forecastDisplay = getForecastDisplay(normalizedForecastDelta, (delta) =>
 		formatSignedResourceMagnitude(delta, metadata),
 	);
-	const iconLabel = metadata.icon ?? '❔';
+	const iconLabel = metadata.icon ?? '⚠️';
 	const formattedValue = formatResourceMagnitude(snapshot.current, metadata);
 	const ariaLabel = forecastDisplay
 		? `${metadata.label}: ${formattedValue} ${forecastDisplay.label}`

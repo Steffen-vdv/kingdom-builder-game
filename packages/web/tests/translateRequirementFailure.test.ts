@@ -110,13 +110,13 @@ describe('translateRequirementFailure', () => {
 		);
 	});
 
-	it('returns a generic message for unknown requirement types', () => {
+	it('returns a visible placeholder for unknown requirement types', () => {
 		const failure: RequirementFailure = {
 			requirement: { type: 'custom', method: 'test' },
 			details: { message: 'Requires special condition' },
 		};
 		const message = translateRequirementFailure(failure, context);
-		expect(message).toBe('Requirement not met');
+		expect(message).toBe('[MISSING:requirement-message]');
 	});
 
 	it('falls back to the failure message when translation is unavailable', () => {
@@ -137,7 +137,7 @@ describe('translateRequirementFailure', () => {
 			} as unknown as RequirementFailure['requirement'],
 		};
 		const message = translateRequirementFailure(failure, context);
-		expect(message).toBe('Requirement not met');
+		expect(message).toBe('[MISSING:requirement-message]');
 	});
 
 	it('falls back to Value label when resourceId is missing', () => {

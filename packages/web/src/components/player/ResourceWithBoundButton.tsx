@@ -32,7 +32,7 @@ const ResourceWithBoundButton: React.FC<ResourceWithBoundButtonProps> = ({
 		onShow(snapshot.id);
 	}, [onShow, snapshot.id]);
 
-	const iconLabel = metadata.icon ?? '?';
+	const iconLabel = metadata.icon ?? '⚠️';
 	const currentValue = formatResourceMagnitude(snapshot.current, metadata);
 	const boundValue = formatResourceMagnitude(
 		boundSnapshot.current,

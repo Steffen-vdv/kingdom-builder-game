@@ -92,7 +92,7 @@ function ResolutionCard({
 	continueMode = 'continue',
 }: ResolutionCardProps) {
 	const playerLabel = resolution.player?.name ?? resolution.player?.id ?? null;
-	const playerName = playerLabel ?? 'Unknown player';
+	const playerName = playerLabel ?? '[MISSING:player]';
 	const resolveAccentClasses = usePlayerAccentClasses();
 	const accentClasses = resolveAccentClasses(resolution.player?.id ?? null);
 	const { playUiClick } = useSoundEffectsContext();
@@ -284,7 +284,7 @@ function ResolutionCard({
 				<div className={headerRowClass}>
 					{actionIcon || actionName ? (
 						<div className={actionBadgeClass} aria-hidden="true">
-							{actionIcon ?? '✦'}
+							{actionIcon ?? '⚠️'}
 						</div>
 					) : null}
 					<div className="flex flex-1 items-start justify-between gap-4">

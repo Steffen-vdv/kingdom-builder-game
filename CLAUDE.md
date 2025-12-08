@@ -269,6 +269,55 @@ The agent who left that debt didn't follow this policy — you should.
 This isn't optional. PRs that add new deprecations or compatibility shims
 without completing the full migration will be rejected.
 
+## No Web Fallbacks Policy
+
+**MANDATORY: All UI data must come from content. No exceptions.**
+
+The web layer must never invent fallback values for missing content. Icons,
+labels, descriptions, and all display metadata originate in
+`@kingdom-builder/contents` and flow through the server to web components.
+
+### The Rule
+
+When content is missing, make it visible—don't hide it with fallbacks:
+
+1. **Use visible placeholders** — Missing labels become `[MISSING:type:id]`,
+   missing icons become `⚠️`. These surface content gaps immediately.
+2. **Never hardcode defaults** — No `|| 'Unknown'`, `?? 'Value'`, or similar
+   patterns that silently paper over missing data.
+3. **Fix content, not web** — When a placeholder appears, add the missing data
+   to `@kingdom-builder/contents`, not a fallback in web code.
+
+### Why This Matters
+
+Fallbacks mask content gaps until they reach production:
+
+- **Silent failures**: A missing icon renders as `✦` and nobody notices until
+  a player reports the inconsistency.
+- **Wrong layer**: Web shouldn't decide what an action is called—that's
+  content's job. Mixing responsibilities creates maintenance nightmares.
+- **Debt accumulation**: Every fallback is a TODO that never gets done.
+
+### Forbidden Patterns
+
+```typescript
+// WRONG - Hides missing content
+const icon = action.icon || '✦';
+const label = resource.label ?? 'Unknown';
+const name = player.name || 'Player';
+
+// CORRECT - Surfaces missing content
+const icon = action.icon ?? '⚠️';
+const label = resource.label ?? `[MISSING:resource:${id}]`;
+const name = player.name ?? '[MISSING:player]';
+```
+
+### Enforcement
+
+PRs that introduce web-layer fallbacks for content data will be rejected. When
+you see a `[MISSING:...]` placeholder in the UI, the fix belongs in
+`@kingdom-builder/contents`, not in the component rendering it.
+
 ## Package Boundaries
 
 - **Web** → imports only from engine's public API via server HTTP calls

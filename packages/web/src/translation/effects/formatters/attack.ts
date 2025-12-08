@@ -91,8 +91,8 @@ function buildActionLog(
 	formatter: AttackTargetFormatter,
 ): SummaryEntry {
 	const id = entry.effect.params?.['id'] as string | undefined;
-	let icon = '';
-	let name = id || 'Unknown action';
+	let icon = '⚠️';
+	let name = id ? `[MISSING:action:${id}]` : '[MISSING:action]';
 	const transferSummaries = new Map<string, TransferSummary>();
 	if (id) {
 		try {

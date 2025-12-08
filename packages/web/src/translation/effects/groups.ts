@@ -81,10 +81,10 @@ export function buildGroupEntry(
 ): SummaryEntry {
 	const { group, selection, params } = step;
 	const title =
-		[group.icon, group.title || 'Choose one:']
+		[group.icon, group.title || `[MISSING:group-title:${group.id}]`]
 			.filter(Boolean)
 			.join(' ')
-			.trim() || group.id;
+			.trim() || `[MISSING:group:${group.id}]`;
 	const items: SummaryEntry[] = [];
 	if (mode !== 'log' && group.summary) {
 		items.push(group.summary);

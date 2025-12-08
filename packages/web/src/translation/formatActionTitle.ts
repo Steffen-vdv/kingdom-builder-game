@@ -52,7 +52,7 @@ function resolveActionLabel(definition: ActionTitleDefinition): string {
 	if (typeof definition.id === 'string' && definition.id.trim().length > 0) {
 		return definition.id.trim();
 	}
-	return 'Unknown action';
+	return '[MISSING:action]';
 }
 
 function formatActionTitle(
