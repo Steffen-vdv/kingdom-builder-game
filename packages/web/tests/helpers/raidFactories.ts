@@ -241,11 +241,12 @@ export function iconLabel(
 	return icon ? `${icon} ${resolved}` : resolved;
 }
 
-export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { resourceId: string }> = {
-	power: { resourceId: COMBAT_STAT_CONFIG.power.resourceId },
-	absorption: { resourceId: COMBAT_STAT_CONFIG.absorption.resourceId },
-	fortification: { resourceId: COMBAT_STAT_CONFIG.fortification.resourceId },
-};
+export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { resourceId: string }> =
+	{
+		power: { resourceId: COMBAT_STAT_CONFIG.power.resourceId },
+		absorption: { resourceId: COMBAT_STAT_CONFIG.absorption.resourceId },
+		fortification: { resourceId: COMBAT_STAT_CONFIG.fortification.resourceId },
+	};
 
 const suppressedStatEntries = new Map<
 	string,
