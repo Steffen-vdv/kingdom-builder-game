@@ -2,8 +2,8 @@ import type { AttackLog } from '@kingdom-builder/protocol';
 import { formatStatValue } from '../../../../utils/resourceSources';
 import type { SummaryEntry } from '../../../content';
 import {
-	attackStatLabel,
-	attackStatValue,
+	attackResourceLabel,
+	attackResourceValue,
 	formatNumber,
 	formatPercent,
 	formatSignedValue,
@@ -24,11 +24,11 @@ export function buildDescribeEntry(
 ): SummaryEntry {
 	const { stats, info } = context;
 	const power = stats.power;
-	const powerLabel = attackStatLabel(power, 'attack power');
+	const powerLabel = attackResourceLabel(power);
 	const targetLabel = iconLabel(info.icon, info.label);
-	return power
+	return powerLabel
 		? `Attack opponent's ${targetLabel} with your ${powerLabel}`
-		: `Attack opponent's ${targetLabel} with your forces`;
+		: `Attack opponent's ${targetLabel}`;
 }
 
 export function defaultFortificationItems(
@@ -36,16 +36,13 @@ export function defaultFortificationItems(
 ): string[] {
 	const { stats, targetLabel } = context;
 	const fortificationStat = stats.fortification;
-	if (!fortificationStat) {
+	const fortificationDisplay = attackResourceLabel(fortificationStat);
+	if (!fortificationDisplay) {
 		return [
 			'Apply damage to opponent defenses',
 			`If opponent defenses fall, overflow remaining damage onto opponent ${targetLabel}`,
 		];
 	}
-	const fortificationDisplay = attackStatLabel(
-		fortificationStat,
-		'fortification',
-	);
 	return [
 		`Apply damage to opponent ${fortificationDisplay}`,
 		`If opponent ${fortificationDisplay} falls to 0, overflow remaining damage onto opponent ${targetLabel}`,
@@ -57,16 +54,13 @@ export function buildingFortificationItems(
 ): string[] {
 	const { stats, targetLabel } = context;
 	const fortificationStat = stats.fortification;
-	if (!fortificationStat) {
+	const fortificationDisplay = attackResourceLabel(fortificationStat);
+	if (!fortificationDisplay) {
 		return [
 			'Apply damage to opponent defenses',
 			`If opponent defenses fall, use remaining damage to attempt to destroy opponent ${targetLabel}`,
 		];
 	}
-	const fortificationDisplay = attackStatLabel(
-		fortificationStat,
-		'fortification',
-	);
 	return [
 		`Apply damage to opponent ${fortificationDisplay}`,
 		`If opponent ${fortificationDisplay} falls to 0, use remaining damage to attempt to destroy opponent ${targetLabel}`,
@@ -83,24 +77,16 @@ export function buildStandardEvaluationEntry(
 	const absorption = stats.absorption;
 	const fortificationStat = stats.fortification;
 	const powerValue = (value: number) =>
-		attackStatValue(power, 'Attack', formatSignedValue(value, formatNumber));
+		attackResourceValue(power, formatSignedValue(value, formatNumber));
 	const absorptionValue = (value: number) =>
-		attackStatValue(
-			absorption,
-			'Absorption',
-			formatSignedValue(value, formatPercent),
-		);
+		attackResourceValue(absorption, formatSignedValue(value, formatPercent));
 	const fortificationValue = (value: number) =>
-		attackStatValue(
+		attackResourceValue(
 			fortificationStat,
-			'Fortification',
 			formatSignedValue(value, formatNumber),
 		);
-	const absorptionLabel = attackStatLabel(absorption, 'damage reduction');
-	const fortificationLabel = attackStatLabel(
-		fortificationStat,
-		'fortification',
-	);
+	const absorptionLabel = attackResourceLabel(absorption);
+	const fortificationLabel = attackResourceLabel(fortificationStat);
 	const target = log.target as Extract<
 		AttackLog['evaluation']['target'],
 		{ type: 'resource' }
@@ -130,14 +116,20 @@ export function buildStandardEvaluationEntry(
 	const titleSegments: string[] = [];
 
 	if (log.absorption.ignored) {
-		titleSegments.push(`Ignore ${absorptionLabel} with ${powerModified}`);
+		titleSegments.push(
+			absorptionLabel
+				? `Ignore ${absorptionLabel} with ${powerModified}`
+				: `Ignore absorption with ${powerModified}`,
+		);
 	} else {
 		titleSegments.push(`Compare ${powerModified} against ${absorptionBefore}`);
 	}
 
 	if (log.fortification.ignored) {
 		titleSegments.push(
-			`Bypass ${fortificationLabel} with ${powerAfterAbsorption}`,
+			fortificationLabel
+				? `Bypass ${fortificationLabel} with ${powerAfterAbsorption}`
+				: `Bypass fortification with ${powerAfterAbsorption}`,
 		);
 	} else {
 		titleSegments.push(
@@ -151,7 +143,11 @@ export function buildStandardEvaluationEntry(
 	const items: SummaryEntry[] = [];
 
 	if (log.absorption.ignored) {
-		items.push(`Ignore ${absorptionLabel} with ${powerModified}`);
+		items.push(
+			absorptionLabel
+				? `Ignore ${absorptionLabel} with ${powerModified}`
+				: `Ignore absorption with ${powerModified}`,
+		);
 	} else {
 		items.push(
 			`Compare ${powerModified} against ${absorptionBefore} → ${powerAfterAbsorption}`,
@@ -159,7 +155,11 @@ export function buildStandardEvaluationEntry(
 	}
 
 	if (log.fortification.ignored) {
-		items.push(`Bypass ${fortificationLabel} with ${powerAfterAbsorption}`);
+		items.push(
+			fortificationLabel
+				? `Bypass ${fortificationLabel} with ${powerAfterAbsorption}`
+				: `Bypass fortification with ${powerAfterAbsorption}`,
+		);
 	} else {
 		items.push(
 			`Compare ${powerAfterAbsorption} against ${fortificationBefore} → ${fortificationAfter} and carry forward ${remainingPower}`,

@@ -141,11 +141,6 @@ function createTestSetup(): TestSetup {
 }
 
 describe('attack on-damage formatter registry', () => {
-	const attackEffect = {
-		type: 'attack',
-		method: 'perform',
-		params: {},
-	} as EffectDef<Record<string, unknown>>;
 	const {
 		translationContext,
 		resourceKey,
@@ -153,6 +148,14 @@ describe('attack on-damage formatter registry', () => {
 		customResourceLabel,
 		diffResourceLabel,
 	} = createTestSetup();
+	// Attack effects must specify a target - this is content-driven
+	const attackEffect = {
+		type: 'attack',
+		method: 'perform',
+		params: {
+			target: { type: 'resource', resourceId: resourceKey },
+		},
+	} as EffectDef<Record<string, unknown>>;
 	const defenderLabel = ownerLabel(translationContext, 'defender');
 	const attackerLabel = ownerLabel(translationContext, 'attacker');
 
