@@ -42,10 +42,8 @@ export const createEmptySnapshotMetadata = (
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
 		resources: {},
-		populations: {},
 		buildings: {},
 		developments: {},
-		stats: {},
 		phases: {},
 		triggers: {},
 		assets: assetOverrides ? { ...baseAssets, ...assetOverrides } : baseAssets,

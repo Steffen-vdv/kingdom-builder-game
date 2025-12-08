@@ -43,17 +43,15 @@ describe('<Overview />', () => {
 			resources: {
 				gold: { label: 'Refined Gold', icon: '🪙' },
 				ap: { label: 'Reserve AP', icon: '✨' },
-				// Population resources are unified in V2 system
+				// Population and stats are unified under resources in V2 system
 				[councilRole.id]: {
 					label: 'Guiding Council',
 					icon: councilRole.icon,
 				},
+				army: { label: 'Army Strength', icon: '🛡️' },
 			},
 			buildings: {},
 			developments: {},
-			stats: {
-				army: { label: 'Army Strength', icon: '🛡️' },
-			},
 			phases: {
 				growth: {
 					label: 'Growth Phase',

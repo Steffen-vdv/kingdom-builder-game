@@ -284,12 +284,16 @@ describe.sequential('server entrypoint', { timeout: 10000 }, () => {
 			default: fastifyMock,
 		}));
 		await import('../src/index.js');
-		await new Promise((resolve) => setImmediate(resolve));
+		// Wait for the async autostart chain to complete:
+		// startServer -> register -> listen (rejects) -> catch -> close -> exitCode
+		// Using vi.waitFor instead of setImmediate avoids race conditions
+		await vi.waitFor(() => {
+			expect(close).toHaveBeenCalled();
+		});
 		expect(log.error).toHaveBeenCalledWith(
 			error,
 			'Failed to start Kingdom Builder server.',
 		);
-		expect(close).toHaveBeenCalled();
 		expect(process.exitCode).toBe(1);
 		process.exitCode = undefined;
 	});

@@ -4,7 +4,6 @@ import {
 	buildPhaseMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
-	buildStatMetadata,
 	buildTriggerMetadata,
 	resolveAssetDescriptor,
 	type RegistryMetadataDescriptor,
@@ -45,10 +44,6 @@ export function createTestRegistryMetadata(
 		registries.resources,
 		extractDescriptorRecord(metadata, 'resources'),
 	);
-	// Population metadata now comes from resources under ResourceV2
-	const populationMetadataLookup = buildStatMetadata(
-		extractDescriptorRecord(metadata, 'populations'),
-	);
 	const buildingMetadataLookup = buildRegistryMetadata(
 		registries.buildings,
 		extractDescriptorRecord(metadata, 'buildings'),
@@ -56,9 +51,6 @@ export function createTestRegistryMetadata(
 	const developmentMetadataLookup = buildRegistryMetadata(
 		registries.developments,
 		extractDescriptorRecord(metadata, 'developments'),
-	);
-	const statMetadataLookup = buildStatMetadata(
-		extractDescriptorRecord(metadata, 'stats'),
 	);
 	const phaseMetadataLookup = buildPhaseMetadata(extractPhaseRecord(metadata));
 	const triggerMetadataLookup = buildTriggerMetadata(
@@ -71,12 +63,14 @@ export function createTestRegistryMetadata(
 		'passive',
 		assetDescriptors?.passive,
 	);
+	// Resources now includes stats and populations under ResourceV2
+	const resourceSelector = createMetadataSelector(resourceMetadataLookup);
 	return {
-		resourceMetadata: createMetadataSelector(resourceMetadataLookup),
-		populationMetadata: createMetadataSelector(populationMetadataLookup),
+		resourceMetadata: resourceSelector,
+		populationMetadata: resourceSelector,
 		buildingMetadata: createMetadataSelector(buildingMetadataLookup),
 		developmentMetadata: createMetadataSelector(developmentMetadataLookup),
-		statMetadata: createMetadataSelector(statMetadataLookup),
+		statMetadata: resourceSelector,
 		phaseMetadata: createMetadataSelector(phaseMetadataLookup),
 		triggerMetadata: createMetadataSelector(triggerMetadataLookup),
 		landMetadata: createAssetMetadataSelector(landDescriptor),

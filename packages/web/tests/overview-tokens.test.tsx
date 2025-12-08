@@ -37,16 +37,14 @@ describe('buildOverviewIconSet', () => {
 		resources: {
 			gold: { label: 'Refined Gold', icon: '🪙' },
 			ap: { label: 'Reserve AP', icon: '✨' },
-			// Populations are unified under resources in V2 system
+			// Populations and stats are unified under resources in V2 system
 			[councilRole.id]: { label: 'Guiding Council', icon: councilRole.icon },
 			[legionRole.id]: { label: 'Legion Vanguard', icon: legionRole.icon },
-		},
-		buildings: {},
-		developments: {},
-		stats: {
 			army: { label: 'Army Strength', icon: '🛡️' },
 			fortification: { label: 'Fortification', icon: '🧱' },
 		},
+		buildings: {},
+		developments: {},
 		phases: {
 			growth: { label: 'Growth', icon: '🌱', action: false, steps: [] },
 			upkeep: { label: 'Upkeep', icon: '🧹', action: false, steps: [] },

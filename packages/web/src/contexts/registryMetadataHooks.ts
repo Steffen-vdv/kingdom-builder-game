@@ -20,7 +20,6 @@ import {
 	buildPhaseMetadata,
 	buildRegistryMetadata,
 	buildResourceMetadata,
-	buildStatMetadata,
 	buildTriggerMetadata,
 } from './registryMetadataDescriptors';
 import {
@@ -34,7 +33,6 @@ export interface DescriptorOverrides {
 	readonly actionCategories?: ReturnType<typeof extractDescriptorRecord>;
 	readonly buildings?: ReturnType<typeof extractDescriptorRecord>;
 	readonly developments?: ReturnType<typeof extractDescriptorRecord>;
-	readonly stats?: ReturnType<typeof extractDescriptorRecord>;
 	readonly assets?: ReturnType<typeof extractDescriptorRecord>;
 	readonly phases?: ReturnType<typeof extractPhaseRecord>;
 	readonly triggers?: ReturnType<typeof extractTriggerRecord>;
@@ -77,10 +75,6 @@ export const useDescriptorOverrides = (
 			developments: requireDescriptorRecord(
 				extractDescriptorRecord(snapshotMetadata, 'developments'),
 				'developments',
-			),
-			stats: requireDescriptorRecord(
-				extractDescriptorRecord(snapshotMetadata, 'stats'),
-				'stats',
 			),
 			assets: requireDescriptorRecord(
 				extractDescriptorRecord(snapshotMetadata, 'assets'),
@@ -148,7 +142,7 @@ interface MetadataLookups {
 	>;
 	readonly buildingMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
 	readonly developmentMetadataLookup: ReturnType<typeof buildRegistryMetadata>;
-	readonly statMetadataLookup: ReturnType<typeof buildStatMetadata>;
+	readonly statMetadataLookup: ReturnType<typeof buildResourceMetadata>;
 	readonly phaseMetadataLookup: ReturnType<typeof buildPhaseMetadata>;
 	readonly triggerMetadataLookup: ReturnType<typeof buildTriggerMetadata>;
 	readonly assetDescriptors:
@@ -180,7 +174,6 @@ export const useMetadataLookups = (
 			registries.developments,
 			overrides.developments,
 		);
-		const statMetadataLookup = buildStatMetadata(overrides.stats);
 		const phaseMetadataLookup = buildPhaseMetadata(overrides.phases);
 		const triggerMetadataLookup = buildTriggerMetadata(overrides.triggers);
 		const assetDescriptors = overrides.assets;
@@ -189,7 +182,8 @@ export const useMetadataLookups = (
 			actionCategoryMetadataLookup,
 			buildingMetadataLookup,
 			developmentMetadataLookup,
-			statMetadataLookup,
+			// Stats are unified under resources
+			statMetadataLookup: resourceMetadataLookup,
 			phaseMetadataLookup,
 			triggerMetadataLookup,
 			assetDescriptors,
