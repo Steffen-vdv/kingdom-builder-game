@@ -30,12 +30,6 @@ export type AttackStatContext = Partial<
 	Record<AttackStatRole, AttackStatDescriptor>
 >;
 
-export const DEFAULT_ATTACK_STAT_LABELS: Record<AttackStatRole, string> = {
-	power: 'Attack Power',
-	absorption: 'Absorption',
-	fortification: 'Fortification',
-};
-
 export type BaseEntryContext<TTarget extends AttackTarget> = {
 	mode: Mode;
 	stats: AttackStatContext;

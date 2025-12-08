@@ -32,7 +32,12 @@ function translate(
 			const slot = selectSlotDisplay(context.assets);
 			const label = slot.label ?? 'Development Slot';
 			const prefix = slot.icon ? `${slot.icon} ` : '';
-			items.push(`${prefix}Empty ${label}`.trim());
+			const title = `${prefix}Empty ${label}`.trim();
+			if (slot.description) {
+				items.push({ title, items: [slot.description] });
+			} else {
+				items.push(title);
+			}
 		}
 	}
 	return items;

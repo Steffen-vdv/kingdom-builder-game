@@ -1,6 +1,5 @@
 import type { SummaryEntry } from '../../../content';
 import {
-	DEFAULT_ATTACK_STAT_LABELS,
 	type AttackTarget,
 	type BaseEntryContext,
 	type AttackStatDescriptor,
@@ -8,17 +7,15 @@ import {
 
 const DEFENDER_ICON = '🛡️';
 
-function statIconOrLabel(
-	descriptor: AttackStatDescriptor | undefined,
-	fallbackLabel: string,
-): string {
+/**
+ * Returns icon if available, otherwise label.
+ * Content must provide at least one of these.
+ */
+function statIconOrLabel(descriptor: AttackStatDescriptor | undefined): string {
 	if (descriptor?.icon) {
 		return descriptor.icon;
 	}
-	if (descriptor?.label) {
-		return descriptor.label;
-	}
-	return fallbackLabel;
+	return descriptor?.label ?? '';
 }
 
 function targetIconOrLabel<TTarget extends AttackTarget>(
@@ -33,27 +30,14 @@ function targetIconOrLabel<TTarget extends AttackTarget>(
 export function buildAttackSummaryBullet<TTarget extends AttackTarget>(
 	context: BaseEntryContext<TTarget>,
 ): SummaryEntry {
-	const powerIcon = statIconOrLabel(
-		context.stats.power,
-		DEFAULT_ATTACK_STAT_LABELS.power,
-	);
+	const powerIcon = statIconOrLabel(context.stats.power);
 	const targetIcon = targetIconOrLabel(context);
 	const parts: string[] = [powerIcon, targetIcon];
 	if (context.ignoreAbsorption && context.stats.absorption) {
-		parts.push(
-			`🚫${statIconOrLabel(
-				context.stats.absorption,
-				DEFAULT_ATTACK_STAT_LABELS.absorption,
-			)}`,
-		);
+		parts.push(`🚫${statIconOrLabel(context.stats.absorption)}`);
 	}
 	if (context.ignoreFortification && context.stats.fortification) {
-		parts.push(
-			`🚫${statIconOrLabel(
-				context.stats.fortification,
-				DEFAULT_ATTACK_STAT_LABELS.fortification,
-			)}`,
-		);
+		parts.push(`🚫${statIconOrLabel(context.stats.fortification)}`);
 	}
 	return parts.join('');
 }
