@@ -74,7 +74,11 @@ When you receive a message starting with "This session is being continued from
 a previous conversation", you are in a **session handover**. Context has been
 compressed and intent may have drifted.
 
-**Immediately respond with:**
+**First**: Re-read this file (CLAUDE.md) completely. Your inherited context may
+have stale or drifted interpretations of the rules. Ground yourself in the
+actual documented protocols before proceeding.
+
+**Then immediately respond with:**
 
 > 👻 Session handover detected. ⚠️ About to risk drifting. 😌 Checking with User.
 
