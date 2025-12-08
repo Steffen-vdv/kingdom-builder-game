@@ -15,3 +15,6 @@ test-results/
 blob-report/
 
 config/server-auth.tokens.local.json
+
+# Husky v9 generated directory (deprecated install command creates this)
+.husky/_/
