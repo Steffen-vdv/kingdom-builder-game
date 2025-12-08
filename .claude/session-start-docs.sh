@@ -4,9 +4,13 @@
 # This script runs automatically when Claude Code starts a new session
 # and injects critical documentation files into the context.
 
-# Ensure Husky git hooks are properly initialized
-# This handles cases where npm install wasn't run or hooks weren't set up
-if [ ! -d ".husky/_" ]; then
+# Ensure dependencies and Husky git hooks are properly initialized
+# This handles fresh clones or cases where npm install wasn't run
+if [ ! -d "node_modules" ]; then
+  # Full install needed - no node_modules at all
+  npm install 2>/dev/null || true
+elif [ ! -d ".husky/_" ]; then
+  # Dependencies exist but Husky not initialized
   npm run prepare 2>/dev/null || true
 fi
 
