@@ -41,6 +41,29 @@ push" but a hook complains about unpushed commits, you do not push. Period.
 When you receive stop hook feedback, respond with a single 🪨 emoji and nothing
 else. Then wait for user instruction.
 
+**Literally nothing else.** No "Understood.", no clarifications, no status
+updates. The 🪨 is a complete response. Adding any text defeats the purpose and
+creates response loops.
+
+### Message correlation
+
+The interface may delay or batch user messages. When you receive a new message:
+
+1. Consider whether it continues the user's **previous message** (their train of
+   thought) rather than responding to **your latest message**
+2. Look for semantic continuity with what the user said before, not just what
+   you asked
+3. If ambiguous, ask: "Is this continuing your earlier point, or answering my
+   question?"
+
+Example of misread correlation:
+
+- User X: "Can you describe this in a way future agents understand?"
+- You Z: "Here's my suggestion. Want me to add this?"
+- User Y: "To prevent loops in future, I mean"
+- ❌ Wrong: Y approves Z → you make the edit
+- ✅ Right: Y clarifies X → you wait for explicit approval of Z
+
 ### Session handover protocol
 
 When you receive a message starting with "This session is being continued from
