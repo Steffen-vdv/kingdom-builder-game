@@ -46,6 +46,7 @@ and population roles execute when their trigger fires.
 ### Victory Conditions
 
 Win by:
+
 - Capturing the enemy castle (reduce castle HP to 0)
 - Forcing enemy bankruptcy (opponent cannot pay upkeep)
 - Holding the most victory points when the game ends
@@ -60,6 +61,7 @@ All numeric values—currencies, stats, population roles—are unified under a
 single Resource system.
 
 **Key concepts:**
+
 - `resourceValues`: Map of resource ID → current value
 - `resourceTouched`: Tracks whether a resource has ever been non-zero
 - Resources are organized into **groups** and **categories**
@@ -67,12 +69,14 @@ single Resource system.
   touched
 
 **Resource IDs follow the pattern:** `resource:{group}:{name}`
+
 - `resource:core:gold` - Gold currency
 - `resource:core:action-points` - Action Points
 - `resource:stat:army-strength` - Army Strength stat
 - `resource:population:role:legion` - Legion population count
 
 **Effects:**
+
 - `resource:add` - Add to a resource value
 - `resource:remove` - Subtract from a resource value
 - `resource:transfer` - Move value between resources (with donor/recipient)
@@ -83,6 +87,7 @@ single Resource system.
 Player-initiated sequences with costs, requirements, and effects.
 
 **Execution flow:**
+
 1. Verify action is unlocked
 2. Check all requirements pass
 3. Calculate costs (base costs + effect costs + modifiers)
@@ -100,6 +105,7 @@ Atomic operations identified by `type:method` pairs. Registered in the `EFFECTS`
 registry and executed via `runEffects()`.
 
 **Structure:**
+
 ```typescript
 {
   type: 'resource',
@@ -113,6 +119,7 @@ registry and executed via `runEffects()`.
 ```
 
 **Registered effect types:**
+
 - `resource:add`, `resource:remove`, `resource:transfer`,
   `resource:upper-bound:increase`
 - `building:add`, `building:remove`
@@ -136,27 +143,33 @@ buildings, developments, passives, and population roles via
 `collectTriggerEffects()`.
 
 **Phase-level triggers:**
+
 - `onGrowthPhase` - Start of Growth phase
 - `onUpkeepPhase` - Start of Upkeep phase
 
 **Step-level triggers:**
+
 - `onGainIncomeStep` - During income collection
 - `onGainAPStep` - During AP gain
 - `onPayUpkeepStep` - During upkeep payment
 
 **Combat triggers:**
+
 - `onBeforeAttacked` - Before receiving an attack
 - `onAttackResolved` - After attack damage applied
 
 **Resource triggers (per-resource):**
+
 - `onValueIncrease` - Fires per unit of resource increase
 - `onValueDecrease` - Fires per unit of resource decrease
 
 **Population triggers:**
+
 - `onAssigned` - When a citizen is assigned to this role
 - `onUnassigned` - When a citizen is unassigned from this role
 
 **Build triggers:**
+
 - `onBuild` - When a building/development is constructed
 
 ### Evaluators
@@ -165,6 +178,7 @@ Compute numbers to control effect repetition. Registered in the `EVALUATORS`
 registry.
 
 **Usage:**
+
 ```typescript
 {
   evaluator: { type: 'development', params: { id: 'farm' } },
@@ -176,6 +190,7 @@ registry.
 ```
 
 **Registered evaluators:**
+
 - `development` - Count developments matching ID
 - `land` - Count lands matching criteria
 - `resource` - Get resource value
@@ -190,10 +205,12 @@ registry.
 Global structures recorded in a player's `buildings` set. Not tied to land.
 
 **Lifecycle:**
+
 - `building:add` creates entry, runs `onBuild` effects, registers passives
 - `building:remove` removes entry, unregisters passives, runs teardown
 
 **Features:**
+
 - Trigger effects (`onGrowthPhase`, `onUpkeepPhase`, etc.)
 - Upkeep costs (gold per turn)
 - Grant passives with modifiers
@@ -203,10 +220,12 @@ Global structures recorded in a player's `buildings` set. Not tied to land.
 Improvements tied to specific land tiles. Consume development slots.
 
 **Lifecycle:**
+
 - `development:add` creates entry on land, runs `onBuild`, registers passives
 - `development:remove` removes from land, unregisters passives, runs teardown
 
 **Features:**
+
 - Tied to `landId` parameter
 - Consume `slotsUsed` up to land's `slotsMax`
 - Can modify population caps
@@ -217,12 +236,14 @@ Improvements tied to specific land tiles. Consume development slots.
 Territory with development slots and tilling state.
 
 **Properties:**
+
 - `slotsMax` - Maximum development slots
 - `slotsUsed` - Currently occupied slots
 - `developments` - List of development IDs on this land
 - `tpisFilled` - Tilling state
 
 **Effects:**
+
 - `land:add` - Create new land tile
 - `land:till` - Increase slots up to configured maximum
 
@@ -236,12 +257,14 @@ Central manager for passive lifecycle. Located at
 `packages/engine/src/services/passive_manager.ts`.
 
 **Responsibilities:**
+
 - Register/unregister passives
 - Manage cost modifiers, result modifiers, evaluation modifiers
 - Run setup effects on add, teardown effects on remove
 - Track passive-to-modifier relationships for cleanup
 
 **Modifier types:**
+
 - **Cost modifiers**: Adjust action costs (flat or percent)
 - **Result modifiers**: Run effects after action execution
 - **Evaluation modifiers**: Adjust evaluator outputs
@@ -252,6 +275,7 @@ Handles resource transfers and modifications with multiple modes. Spans Effects
 and Resources, performs complex calculations.
 
 **Modes:**
+
 - Static amount transfer
 - Percent-based transfer
 - Transfer with donor + recipient
@@ -263,6 +287,7 @@ Handles modifier application, rounding, and bound enforcement.
 Manages resources with tier tracks (like happiness with mood states).
 
 **Features:**
+
 - Tier definitions with thresholds
 - Automatic tier transitions on value changes
 - Enter/exit effects when crossing tier boundaries
@@ -279,6 +304,7 @@ Source of truth for session lifecycle. Located at
 `packages/server/src/session/SessionManager.ts`.
 
 **Responsibilities:**
+
 - Create, cache, and snapshot engine sessions
 - Clone registries and merge overrides on boot
 - Expose registry metadata to clients
@@ -292,12 +318,14 @@ Source of truth for session lifecycle. Located at
 Persistent bundles that manage modifier lifecycles and run trigger effects.
 
 **Structure:**
+
 - Setup effects (run on add)
 - Teardown effects (run on remove)
 - Trigger effects (`onGrowthPhase`, `onUpkeepPhase`, etc.)
 - Registered modifiers
 
 **Lifecycle:**
+
 1. `passive:add` runs setup effects, registers modifiers with PassiveManager
 2. Passive persists, triggers fire on events
 3. `passive:remove` unregisters modifiers, runs teardown effects
@@ -308,12 +336,14 @@ Functions that adjust costs, results, or evaluations. Inert until registered
 via passives.
 
 **Types:**
+
 - **Cost modifiers**: Alter action resource costs before payment
 - **Result modifiers**: Run effects after action execution, can target specific
   actions
 - **Evaluation modifiers**: Adjust evaluator numeric results
 
 **Requirements:**
+
 - Unique `id` per player to avoid conflicts
 - Scoped internally via `makeKey()`
 

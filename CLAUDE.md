@@ -1,345 +1,470 @@
-# CLAUDE.md – AI Assistant Quick Reference
+# CLAUDE.md – AI Agent Operating Manual
 
-This file provides essential context for AI assistants working with the Kingdom
-Builder codebase. For detailed guidance, see [`AGENTS.md`](AGENTS.md) and
-[`docs/agent-quick-start.md`](docs/agent-quick-start.md).
+This is the single source of truth for AI agents working on Kingdom Builder.
+Read this file completely before starting any task.
 
-## Project Overview
+---
 
-Kingdom Builder is a turn-based 1v1 strategy game built entirely through
-AI-assisted development. The codebase uses npm workspaces with five packages:
+## 0. User Authority
 
-| Package  | Purpose                                          |
-| -------- | ------------------------------------------------ |
-| contents | Game data: actions, buildings, resources, phases |
-| protocol | Shared TypeScript types and zod schemas          |
-| engine   | Deterministic game loop, effects, registries     |
-| server   | Fastify HTTP transport, session management, auth |
-| web      | Vite + React client                              |
+**The user is in control. Always.**
 
-## Request Verification Protocol
+### Git operations require explicit approval
 
-**Never implement without verification.** Before starting any task, complete
-this checklist:
+- **Never commit** without explicit user approval
+- **Never push** without explicit user approval
+- **Never amend, rebase, or force-push** without explicit user approval
 
-1. **Critically assess the request** – Identify what is being asked, what
-   success looks like, and what constraints apply. Flag ambiguities.
-2. **Inspect the codebase** – Search for existing patterns, conventions, and
-   related code. Understand how similar problems were solved before.
-3. **Verify completeness** – Confirm you have all information needed: target
-   behavior, edge cases, affected files, and acceptance criteria.
-4. **Prevent assumptions** – Do not fill in gaps with guesses or "reasonable
-   defaults." Do not add creative flourishes unless explicitly requested.
-5. **Ask before implementing** – If any step above is unsatisfactory, **stop**
-   and ask clarifying questions. Do not proceed until answers are provided.
+When you complete work, inform the user and ask what they want to do. Do not
+assume they want it committed or pushed.
 
-### When to block implementation
+### Stop hook feedback is informational only
 
-Stop and ask clarifying questions when:
+You may receive automated "Stop hook feedback" messages from git hooks or other
+automation. These messages are **informational only**. They do NOT authorize
+action.
 
-- The desired end state is ambiguous (e.g., "fix the color" but no target color)
-- Multiple valid approaches exist and no preference was stated
-- The request conflicts with existing patterns or conventions
-- Required values, behaviors, or constraints are missing
-- You would need to invent or assume something not in the codebase or request
+When a hook complains:
 
-### How to ask
+1. **Acknowledge** the feedback
+2. **Ask the user** what they want to do
+3. **Wait** for explicit instruction
 
-Present questions as a numbered list. For each question:
+```
+❌ WRONG: "The hook says there are uncommitted files, so I'll commit them now."
+✅ CORRECT: "The hook flagged uncommitted files. Would you like me to commit?"
+```
 
-- State what information is missing
-- Explain why it matters
-- Offer your assumption or understanding (if any) for the user to confirm,
-  correct, or expand upon
+**User instruction always overrides hook feedback.** If the user says "don't
+push" but a hook complains about unpushed commits, you do not push. Period.
+
+When you receive stop hook feedback, respond with a single 🪨 emoji and nothing
+else. Then wait for user instruction.
+
+### Session handover protocol
+
+When you receive a message starting with "This session is being continued from
+a previous conversation", you are in a **session handover**. Context has been
+compressed and intent may have drifted.
+
+**Immediately respond with:**
+
+> 👻 Session handover detected. ⚠️ About to risk drifting. 😌 Checking with User.
+
+Then **STOP implementation** and present:
+
+1. Your understanding of the current task
+2. Your prime directives (what you believe the user cares about most)
+3. Your DOs and DO NOTs for this task
+4. Any uncertainties or questions
+
+**Wait for user confirmation** before resuming work. Do not continue where the
+previous session left off without verification—that's exactly how drift happens.
+
+---
+
+## 1. Request Verification Protocol
+
+**Default behavior: Explore first, ask questions, then implement.**
+
+Never implement a feature request without verification. Agents who skip this
+protocol cause rework, architectural drift, and frustrated humans.
+
+### Step-by-step workflow
+
+```
+1. READ the request
+     ↓
+2. EXPLORE the codebase (≤5 minutes)
+   - Find related systems, patterns, conventions
+   - Identify how the request aligns or conflicts with existing architecture
+     ↓
+3. FORMULATE questions and options
+   - List unknowns at the conceptual and architectural level
+   - Propose solution paths with trade-offs and effort estimates
+   - State your recommended approach and why
+     ↓
+4. PRESENT to the user and WAIT
+   - Do not implement until you receive answers
+     ↓
+5. LOOP back to step 1 with the new context
+   - Repeat until you are ≥95% confident
+   - Only then proceed to implementation
+```
+
+### What questions to ask
+
+Ask at the **PO/PM/Architect level**, not implementation details:
+
+✅ "Should this new mechanic integrate with the existing passive system, or is
+it a new subsystem?"
+✅ "I see two approaches: A costs ~2 hours but is simpler, B costs ~4 hours but
+is more extensible. Which fits your goals?"
+✅ "This would affect the attack resolution flow—should I preserve backward
+compatibility or migrate existing code?"
+
+❌ "What should I name this variable?"
+❌ "Should I use `const` or `let` here?"
+
+### When to ask (the 95% rule)
+
+- If you are **≥95% confident** about intent, approach, and edge cases → proceed
+- If you have **any meaningful uncertainty** → ask first
+
+Explore the codebase and docs before asking. But after exploration, if you're
+still uncertain, **stop and ask**.
+
+### How to present questions
+
+Use a numbered list. For each question:
+
+1. State what information is missing
+2. Explain why it matters
+3. Offer your assumption or recommended option
 
 **Example:**
 
-> Before I implement this, I need clarification:
+> Before implementing, I need clarification:
 >
-> 1. **Target color**: What color should the button be? I see save buttons use
->    green (`--color-success`) elsewhere, but this isn't a save action.
-> 2. **Dark mode variant**: Should it use the same color in both themes, or a
->    different shade for dark mode?
-> 3. **Hover/active states**: Should these follow the existing button patterns?
+> 1. **Trigger scope**: Should this effect fire for both players or only the
+>    active player? I see existing phase triggers use active-player-only, so I'd
+>    default to that.
+> 2. **Stacking behavior**: If the player builds multiple copies, should bonuses
+>    stack additively or replace? Existing buildings use additive stacking.
 
-Only proceed once the user confirms, corrects, or provides the missing details.
+---
 
-## Essential Commands
+## 2. Core Principles
 
-```bash
-# Development
-npm install              # Install dependencies (runs prepare for Husky)
-npm run dev              # Start server + web client together
+### 2.1 Strictness Over Defensiveness
 
-# Quality gates (fastest to slowest)
-npm run format           # Apply Prettier (tabs, 80-char lines)
-npm run check:parallel   # format + typecheck + lint IN PARALLEL (~20-30s)
-npm run check            # check:parallel + tests (~1-2 min)
-npm run verify           # Full check + test:coverage (logs to artifacts/)
+**Let things crash when they should crash.**
 
-# Testing (use test:parallel for speed!)
-npm run test:parallel    # All test suites in parallel (~50s) - USE THIS
-npm run test:coverage    # Full coverage run (sequential, slow)
-npm run test:sequential  # Runs tests one by one (slower than parallel)
+- **NO fallbacks** that mask bad data from upstream
+- **NO defaults** that hide misconfiguration
+- **NO "defensive" code** that silently accepts `null`, `undefined`, or malformed
+  objects when the contract says otherwise
 
-# UI metadata
-npm run generate:snapshots  # Refresh cached registry metadata after content changes
+When something is wrong, the system should fail loudly and immediately. Silent
+fallbacks hide bugs and make debugging nightmares.
+
+```typescript
+// ❌ WRONG - Hides upstream bugs
+function getResource(id: string) {
+	return resources.get(id) ?? { value: 0, label: 'Unknown' };
+}
+
+// ✅ CORRECT - Fails fast, surfaces the real problem
+function getResource(id: string) {
+	const resource = resources.get(id);
+	if (!resource) {
+		throw new Error(`Resource not found: ${id}`);
+	}
+	return resource;
+}
 ```
 
-## Efficient Command Usage
+### 2.2 Quality Over Speed
 
-**IMPORTANT: Pick ONE command based on what you need. Do NOT run multiple
-commands sequentially - that defeats the purpose of parallelization.**
+Prefer **high-quality, maintainable solutions** over quick hacks.
 
-| What you changed | Command to run                        | Time |
-| ---------------- | ------------------------------------- | ---- |
-| Code (no tests)  | Just commit and push                  | ~10s |
-| Code + tests     | `npm run test:parallel` then push     | ~55s |
-| Single test      | `npx vitest run path/to/file.test.ts` | ~5s  |
+- Over-engineer where it enables extensibility
+- No junior-level shortcuts or "good enough for now" code
+- **3x longer is acceptable** if it means better architecture, maintainability,
+  scalability, and security
 
-**Pre-commit formats and lints, pre-push typechecks.** The pre-commit hook runs
-Prettier, stages changes, then lints staged `.ts/.tsx` files. The pre-push hook
-runs typecheck + dependency validation (~5-10s).
+This is a long-term project. Technical debt compounds. Do it right.
 
-**Anti-patterns to avoid:**
+### 2.3 Content-Driven Architecture
 
-- Running `check:parallel` then `test:parallel` sequentially (redundant!)
-- Running `npm run verify` for daily work (it's for CI/coverage reports)
-- **Avoid `npm run test:sequential` - it's SLOWER than `test:parallel`!**
+**Never hardcode game data.**
 
-## Git Hooks
+All resource keys, values, icons, labels, and behaviors must come from the
+Content domain (`@kingdom-builder/contents`). The Engine and Web layers consume
+content at runtime—they never define it.
 
-Husky hooks enforce quality gates automatically:
+```typescript
+// ❌ WRONG - Hardcoded game data
+const goldIcon = '🪙';
+const startingGold = 10;
 
-1. **pre-commit**: Formats all files, stages changes, lints staged `.ts/.tsx`
-2. **post-merge**: Formats merged files, warns about lint errors in merged code
-3. **pre-push**: Runs typecheck + dependency validation (no lint - pre-commit handles it)
+// ✅ CORRECT - Loaded from content
+const goldIcon = resourceMetadata.get('resource:core:gold').icon;
+const startingGold = RULES.startingResources.gold;
+```
 
-Never bypass these hooks - they ensure code quality before it reaches the repo.
+**For UI text**: We have a unified translation system. Do not write custom
+sentences for descriptions, summaries, or logs. If you find yourself composing
+player-facing text manually, you're probably doing it wrong. Find the existing
+formatter or translator, or ask how to extend it.
 
-## Coding Standards
+### 2.4 Clean As You Go
 
-| Rule        | Requirement                                            |
-| ----------- | ------------------------------------------------------ |
-| Braces      | Always use braces, even for single-statement bodies    |
-| Line length | ≤80 characters                                         |
-| File length | ≤350 lines for new files (\*.test.ts files are exempt) |
-| Naming      | Descriptive identifiers; camelCase/PascalCase          |
-| Indentation | Tabs (not spaces)                                      |
+**Continuous improvement is expected, not optional.**
 
-## File Operations
+When working in an area of the codebase, you may notice:
 
-**Always read files before editing or writing to them.** The Edit tool will
-reject changes to files that haven't been read in the current session. This
-prevents blind edits and ensures you understand the current file state:
+- Code that could benefit from cleanup or refactoring
+- Patterns that could be improved
+- Small restructures that would help
+
+**Do it.** Create small TODOs as you encounter wins, then execute them as part
+of your task. This creates a self-improving codebase.
+
+If unsure whether a cleanup is appropriate, ask. But default to action on
+obvious improvements.
+
+### 2.5 Tech Debt Prevention
+
+When you introduce a new pattern that replaces an old one:
+
+1. **Migrate all usages immediately** — in the same PR, not "later"
+2. **Delete the old code** — no `@deprecated` markers, no compatibility shims
+3. **Update tests** — no test should reference deleted patterns
+
+Leaving deprecated code around creates confusion and maintenance burden. PRs
+that add new deprecations without completing migration will be rejected.
+
+---
+
+## 3. When You're About to Break the Rules
+
+If you find yourself about to:
+
+- Write a fallback or default value
+- Hardcode game data
+- Write custom UI text instead of using translators
+- Skip writing tests
+- Introduce a pattern that conflicts with existing conventions
+
+**STOP.** Do not proceed. Instead:
+
+1. Explain why you feel the breach is necessary
+2. List the non-breaching alternatives you explored and why you rejected them
+3. Ask for guidance
+
+The user will tell you how to solve the problem without breaching protocol.
+
+---
+
+## 4. Project Structure
+
+Kingdom Builder uses npm workspaces with five packages:
+
+| Package    | Purpose                                                 |
+| ---------- | ------------------------------------------------------- |
+| `contents` | Game data: actions, buildings, resources, phases, rules |
+| `protocol` | Shared TypeScript types and Zod schemas                 |
+| `engine`   | Deterministic game loop, effects, registries, services  |
+| `server`   | Fastify HTTP transport, session management, auth        |
+| `web`      | Vite + React client                                     |
+
+### Import boundaries
 
 ```
-# Correct workflow
-1. Read the file first
-2. Understand its structure and content
+Contents ←── Engine ←── Server
+    ↑           ↑          ↓
+    └───────────┴───── Protocol
+                           ↑
+                          Web (via HTTP only)
+```
+
+- **Web** communicates with Server via HTTP only. Never import Engine directly.
+- **Engine** consumes Content definitions. Never imports Web or Server.
+- **Content** is pure data with no runtime logic.
+- **Protocol** is shared types only. Imported by all packages.
+
+---
+
+## 5. Commands & Automation
+
+### What Husky handles automatically
+
+| Hook       | What it runs                              | When         |
+| ---------- | ----------------------------------------- | ------------ |
+| pre-commit | `npm run format` + lint staged `.ts/.tsx` | Every commit |
+| pre-push   | `npm run typecheck` + `npm run lint:deps` | Every push   |
+| post-merge | Format + lint merged files                | After merge  |
+
+**Trust the hooks.** Do not manually run format, lint, or typecheck—they happen
+automatically.
+
+### What you must run manually
+
+| Scenario                    | Command                               | Time  |
+| --------------------------- | ------------------------------------- | ----- |
+| After writing/changing code | Just commit and push                  | ~10s  |
+| After changing tests        | `npm run test:parallel` then push     | ~50s  |
+| Single test file            | `npx vitest run path/to/file.test.ts` | ~5s   |
+| After changing UI/content   | `npm run generate:snapshots`          | ~10s  |
+| Before opening PR           | `npm run verify`                      | ~2min |
+
+### Anti-patterns
+
+❌ Running `npm run format` manually (pre-commit does it)
+❌ Running `npm run typecheck` manually (pre-push does it)
+❌ Running `check:parallel` then `test:parallel` sequentially (redundant)
+❌ Running `npm run verify` after every change (it's for PRs only)
+
+---
+
+## 6. Coding Standards
+
+| Rule        | Requirement                                         |
+| ----------- | --------------------------------------------------- |
+| Braces      | Always use braces, even for single-statement bodies |
+| Line length | ≤80 characters                                      |
+| File length | ≤350 lines for new files (`.test.ts` files exempt)  |
+| Naming      | Descriptive identifiers; `camelCase`/`PascalCase`   |
+| Indentation | Tabs (not spaces)                                   |
+
+### File operations
+
+**Always read files before editing.** The Edit tool rejects changes to unread
+files. This prevents blind edits:
+
+```
+1. Read the file
+2. Understand its structure
 3. Make targeted edits
-
-# Incorrect - will fail
-Edit a file without reading it first → Error: "File has not been read yet"
 ```
 
-When modifying multiple files, read each one before editing. This avoids wasted
-round-trips and keeps context accurate.
+---
 
-## Content-Driven Architecture
+## 7. Architecture Reference
 
-**Never hardcode game data.** All resource keys, stat values, icons, and labels
-must come from `@kingdom-builder/contents`:
+For detailed system documentation, see
+[`docs/architecture-reference.md`](docs/architecture-reference.md).
 
-- Engine and web must load data from registries at runtime
-- Tests use `createContentFactory()` for synthetic fixtures
-- UI metadata flows: contents → server → web context → components
-- When icons/labels change, edit contents and run `npm run generate:snapshots`
+**You are expected to read this file** when working on features that touch core
+systems. It documents:
 
-## ResourceV2 Prime Directive
+- Resource system (unified currencies, stats, population)
+- Actions, Effects, Triggers, Evaluators
+- Buildings, Developments, Lands
+- Passives and Modifiers
+- Services (PassiveManager, Reconciliation, etc.)
+- Game flow (Players, Turns, Phases, Steps)
 
-**MANDATORY: Everything is a resource.**
+**You are expected to update this file** when you implement features that
+change, extend, or add to core game mechanics.
 
-The codebase is migrating to a unified ResourceV2 system. Compliance with this
-directive is mandatory. Drifting from it is prohibited.
+---
 
-### Core Principle
+## 8. Translation Pipeline
 
-Stats, population roles, and resources are now unified under ResourceV2. There
-is no distinction—all are resources with IDs, labels, icons, and metadata.
+The web client uses a layered translation system to convert engine data into
+player-facing text. **Do not bypass this system.**
 
-### Forbidden Patterns
+### Three output modes
 
-If you find yourself writing any of these words, **STOP and reassess**:
+| Mode        | Purpose                     | Voice                     |
+| ----------- | --------------------------- | ------------------------- |
+| `summarize` | Card bullets, list previews | Terse, present-tense      |
+| `describe`  | Tooltips, expanded details  | Complete sentences        |
+| `log`       | Action log, history         | Past-tense, chronological |
 
-- `stat` or `stats` (as a concept separate from resources)
-- `population` (as a concept separate from resources)
-- `legacy` or `compatibility` (for old patterns)
-- `mapper` or `converter` (between old and new systems)
-- `key` or `role` (as effect parameters instead of `resourceId`)
+### How it works
 
-### Required Patterns
-
-- Use `type: 'resource'` for all resource-based evaluators and effects
-- Use `params: { resourceId: '...' }` for all resource references
-- Use `resourceMetadataV2.get(id)` for labels, icons, and metadata lookup
-- Use `resourceEvaluator().resourceId(...)` in content builders
-
-### Migration Rules
-
-When encountering legacy code:
-
-1. **Do not maintain** legacy `stat`/`population`/`resource(v1)` patterns
-2. **Actively migrate** to ResourceV2 patterns
-3. **Remove** old code after migration—do not keep compatibility layers
-4. **Never parse resource IDs** to derive semantic meaning; use metadata
-
-### Example Migration
-
-```typescript
-// WRONG - Legacy pattern
-{ type: 'stat', params: { key: 'armyStrength' } }
-{ type: 'population', params: { role: 'legion' } }
-
-// CORRECT - ResourceV2 pattern
-{ type: 'resource', params: { resourceId: 'resource:stat:army-strength' } }
-{ type: 'resource', params: { resourceId: 'resource:population:role:legion' } }
+```
+Effect Formatters (per effect type:method)
+        ↓
+Content Translators (actions, buildings, developments, etc.)
+        ↓
+Factory helpers: summarizeContent(), describeContent(), logContent()
 ```
 
-### Enforcement
+### The rule
 
-Any PR introducing or maintaining legacy patterns will be rejected. When in
-doubt, check if your code references concepts that should be unified resources.
+If you're writing custom player-facing text, you're probably doing it wrong.
 
-## Tech Debt Prevention Policy
+1. Find the existing formatter/translator for your mechanic
+2. Extend it if needed
+3. If nothing exists, ask before creating new copy
 
-**MANDATORY: Clean as you go. No exceptions.**
+All icons, labels, and descriptions originate in `@kingdom-builder/contents`,
+flow through `SessionManager`, and surface via `RegistryMetadataContext`.
+Update the content package, not web-layer fallbacks.
 
-This project has suffered from agents leaving deprecated code, compatibility
-shims, and "temporary" workarounds scattered throughout the codebase. Cleaning
-up this mess is tedious, error-prone, and wastes everyone's time. **Do not
-contribute to this problem.**
+---
 
-### The Rule
+## 9. Testing Philosophy
 
-When you introduce a new pattern, API, or abstraction that replaces an existing
-one:
+**Write tests like you're trying to break the feature.**
 
-1. **Migrate all usages immediately** — Find every reference to the old pattern
-   and update it to use the new one. This happens in the same PR, not "later."
-2. **Delete the old code** — Remove the deprecated function, class, or pattern
-   entirely. Do not mark it `@deprecated`. Do not add compatibility wrappers.
-   Do not leave it "for reference." Delete it.
-3. **Update tests** — Tests that relied on the old pattern must be updated to
-   use the new one. No test should reference deleted code.
+Pretend you're an external QA engineer aiming for a promotion. Your goal is to
+find bugs, not confirm the happy path works.
 
-### Why This Matters
+### Requirements
 
-Leaving deprecated code around creates:
+Every implementation must include tests that cover:
 
-- **Confusion**: Which pattern should new code use? Both exist, so both get
-  used, and now you have inconsistency.
-- **Maintenance burden**: Someone (probably a future AI agent) will eventually
-  have to audit and clean this up. That's wasted effort.
-- **Broken mental models**: The codebase becomes harder to understand when it
-  contains multiple ways to do the same thing.
+- The entire feature scope
+- Plausible user scenarios
+- Edge cases and boundary conditions
 
-### What NOT To Do
+Do not wait to be told to write tests. They are part of the implementation.
 
-❌ Add `@deprecated` JSDoc annotations and call it done
-❌ Create "legacy" wrappers that delegate to new implementations
-❌ Leave commented-out old code "for reference"
-❌ Add TODO comments promising to migrate "later"
-❌ Merge a PR that introduces a new pattern without migrating all usages
-
-### What TO Do
-
-✅ When creating `resourceEvaluator()`, delete `statEvaluator()` and
-`populationEvaluator()` in the same commit
-✅ When renaming `costKey` to `costResourceId`, update all 20+ test files in the
-same PR
-✅ When moving from V1 to V2 APIs, remove V1 entirely once V2 is working
-
-### Accountability
-
-If you encounter deprecated markers, compatibility layers, or TODO comments
-about migration during your work, **clean them up**. Don't perpetuate the mess.
-The agent who left that debt didn't follow this policy — you should.
-
-This isn't optional. PRs that add new deprecations or compatibility shims
-without completing the full migration will be rejected.
-
-## Package Boundaries
-
-- **Web** → imports only from engine's public API via server HTTP calls
-- **Engine** → consumes content definitions; never imports from web
-- **Contents** → pure data; no runtime logic
-- **Protocol** → shared types only; imported by all packages
-
-## Key Documentation
-
-- [`docs/agent-quick-start.md`](docs/agent-quick-start.md) – Mandatory workflow
-- [`docs/text-formatting.md`](docs/text-formatting.md) – Translation pipeline
-- [`docs/ui-change-playbook.md`](docs/ui-change-playbook.md) – UI update process
-- [`docs/domain-boundaries.md`](docs/domain-boundaries.md) – Package contracts
-- [`docs/architecture/navigation-cheatsheet.md`](docs/architecture/navigation-cheatsheet.md) – Module index
-
-## Pre-Push Checklist
-
-1. Just commit and push - pre-commit formats, pre-push validates
-2. For text changes, review
-   [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text)
-
-## Common Patterns
-
-### Effect System
-
-Effects use `type:method` pairs registered in `EFFECTS`:
+### Test patterns
 
 ```typescript
-{ type: 'resource', method: 'add', params: { key: 'gold', amount: 2 } }
-```
-
-Compose with builders:
-
-```typescript
-effect('resource', 'add').param('key', 'gold').param('amount', 2);
-```
-
-### Testing
-
-```typescript
+// Use synthetic content factory - never hardcode IDs
 const content = createContentFactory();
 const action = content.action({ effects: [...] });
 const ctx = createTestEngine(content);
-// Assert against dynamic content values, not literals
+
+// Assert against dynamic values, not literals
+const before = ctx.activePlayer.resources.get(CResource.gold);
+performAction(action.id, ctx);
+expect(ctx.activePlayer.resources.get(CResource.gold)).toBe(before + 2);
 ```
 
-### Translation Layer
+---
 
-- `summarizeContent()` – Compact previews
-- `describeContent()` – Detailed explanations
-- `logContent()` – Past-tense action logs
+## 10. Documentation Requirements
 
-## Game Flow Reference
+**Documentation must stay current.**
 
-Turns have three phases:
+When you implement a feature that changes, extends, or adds to a core game
+mechanic, you must update [`docs/architecture-reference.md`](docs/architecture-reference.md).
 
-1. **Growth** – Collect income, gain AP, grow military
-2. **Upkeep** – Pay upkeep, resolve end-of-phase effects
-3. **Main** – Spend AP on actions (expand, develop, attack)
+This is not optional. Outdated documentation is worse than no documentation
+because it actively misleads future agents.
 
-Victory: Capture enemy castle, force bankruptcy, or hold most VP at game end.
+---
 
-## Communication Style
+## 11. Communication Style
 
 - Write informally and casually
 - Emojis are welcome, but don't overdo it
-- Don't present assumptions as facts — be clear about uncertainty
+- Be upbeat and positive—but read the room when things go wrong
+- Don't present assumptions as facts
 - Admit when you don't know something rather than guessing
-- Avoid "let me..." phrasing; use "I'm going to...", "Let's go ahead and...",
-  or similar alternatives
-- Be upbeat and positive — the user enjoys positive energy and a happy dev
-  process. But read the room: dial it back when things go wrong (e.g., you
-  ignored instructions and caused extra work). Enthusiasm after a mistake
-  feels tone-deaf.
+- Avoid "let me..." phrasing; use "I'm going to..." or "Let's go ahead and..."
+
+---
+
+## Quick Reference Card
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ BEFORE IMPLEMENTING                                             │
+│ □ Explored codebase (≤5 min)                                    │
+│ □ Identified unknowns and options                               │
+│ □ Asked questions if <95% confident                             │
+│ □ Received answers and looped until confident                   │
+├─────────────────────────────────────────────────────────────────┤
+│ DURING IMPLEMENTATION                                           │
+│ □ No fallbacks or defaults hiding bad data                      │
+│ □ No hardcoded game data (use Content)                          │
+│ □ No custom UI text (use translators)                           │
+│ □ Writing tests as part of implementation                       │
+│ □ Cleaning up nearby code if obvious wins                       │
+├─────────────────────────────────────────────────────────────────┤
+│ BEFORE PUSHING                                                  │
+│ □ Tests pass: npm run test:parallel                             │
+│ □ Snapshots regenerated if UI/content changed                   │
+│ □ Architecture docs updated if core mechanics changed           │
+│ □ Just commit and push (hooks handle the rest)                  │
+└─────────────────────────────────────────────────────────────────┘
+```
