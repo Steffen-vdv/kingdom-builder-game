@@ -97,9 +97,9 @@ commands sequentially - that defeats the purpose of parallelization.**
 | Code + tests     | `npm run test:parallel` then push     | ~55s |
 | Single test      | `npx vitest run path/to/file.test.ts` | ~5s  |
 
-**Pre-commit formats, pre-push validates.** The pre-commit hook runs Prettier
-on all files and stages any changes. The pre-push hook runs typecheck + lint
-on changed files only, making it fast even on first push (~5-10s).
+**Pre-commit formats and lints, pre-push typechecks.** The pre-commit hook runs
+Prettier, stages changes, then lints staged `.ts/.tsx` files. The pre-push hook
+runs typecheck + dependency validation (~5-10s).
 
 **Anti-patterns to avoid:**
 
@@ -111,8 +111,9 @@ on changed files only, making it fast even on first push (~5-10s).
 
 Husky hooks enforce quality gates automatically:
 
-1. **pre-commit**: Formats all files with Prettier, stages changes
-2. **pre-push**: Runs typecheck, then lints only changed `.ts/.tsx` files
+1. **pre-commit**: Formats all files, stages changes, lints staged `.ts/.tsx`
+2. **post-merge**: Formats merged files, warns about lint errors in merged code
+3. **pre-push**: Runs typecheck + dependency validation (no lint - pre-commit handles it)
 
 Never bypass these hooks - they ensure code quality before it reaches the repo.
 

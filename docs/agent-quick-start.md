@@ -39,9 +39,10 @@ guide for rationale, lore, and extended background.
      `npm run check` executes
      `packages/web/tests/runtime-config-fallback-sync.test.ts` to enforce this, so
      stale snapshots will block your PR until you rerun the generator.
-   - The Husky pre-commit hook runs Prettier on all files and stages changes.
-   - The Husky pre-push hook runs typecheck, then lints only changed `.ts/.tsx`
-     files. Never bypass the hooks; fix the underlying problem locally.
+   - The Husky pre-commit hook formats all files, stages changes, then lints
+     staged `.ts/.tsx` files.
+   - The Husky pre-push hook runs typecheck + dependency validation (lint is
+     handled by pre-commit). Never bypass the hooks; fix issues locally.
    - Reach for `npm run fix` after Prettier when eslint complains about
      spacing or other autofixable style violations.
    - `npm run check` still runs linting, type checks, and tests together if you
@@ -74,9 +75,9 @@ commands sequentially - that defeats the purpose of parallelization.**
 | Code + tests     | `npm run test:parallel` then push     | ~50s |
 | Single test      | `npx vitest run path/to/file.test.ts` | ~5s  |
 
-**Pre-commit formats, pre-push validates.** The pre-commit hook runs Prettier
-and stages changes. The pre-push hook runs typecheck + lint on changed files
-only (~5-10s). Just commit and push.
+**Pre-commit formats and lints, pre-push typechecks.** The pre-commit hook
+formats, stages changes, then lints staged `.ts/.tsx`. The pre-push hook runs
+typecheck + dependency validation (~5-10s). Just commit and push.
 
 **Anti-patterns to avoid:**
 

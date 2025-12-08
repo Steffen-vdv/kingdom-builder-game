@@ -8,7 +8,7 @@
   [`docs/text-formatting.md`](docs/text-formatting.md#0-before-writing-text).
 - Always load game data from content packages or registries and create synthetic
   fixtures through `createContentFactory()` in tests.
-- Just commit and push - pre-commit formats, pre-push validates (typecheck + lint changed files).
+- Just commit and push - pre-commit formats + lints, pre-push typechecks.
 
 ▶ **Extended guidance, architecture lore, and gameplay reference begin in
 Section&nbsp;1 below.**
@@ -92,9 +92,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
 
 ### 2.3 Pre-Push Workflow
 
-- Just commit and push - pre-commit formats, pre-push validates (~10s).
-- The pre-commit hook runs Prettier and stages any changes automatically.
-- The pre-push hook runs typecheck, then lints only changed `.ts/.tsx` files.
+- Just commit and push - pre-commit formats + lints, pre-push typechecks (~10s).
+- The pre-commit hook runs Prettier, stages changes, then lints staged `.ts/.tsx`.
+- The pre-push hook runs typecheck + dependency validation (lint handled by pre-commit).
 - Fix any reported issues before pushing again.
 - Run `npm run verify` once before opening a PR, not after every change.
 
@@ -146,15 +146,14 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`.
   `artifacts/` directory. Share those artifacts with reviewers when failures
   need triage.
 
-- The Husky pre-push hook runs typecheck + lint (on changed files only) to catch
+- The Husky pre-push hook runs typecheck + dependency validation to catch
   issues before push. Full verification is reserved for PR submission.
 
 - If the verification script is unavailable in your environment, fall back to
-  running `npm run check && npm run test:coverage` manually. Coverage runs may
-  be skipped only when a change is strictly documentation-only or a pure
-  content typo fix.
+  `npm run check:parallel && npm run test:parallel`. Coverage runs (`verify`)
+  are only needed before opening a PR, not during regular development.
 
-- The Husky pre-commit hook runs `lint-staged` to format and lint staged files.
+- The Husky pre-commit hook formats all files and lints staged `.ts/.tsx` files.
   GitHub Actions executes `npm run test:ci` (coverage) and `npm run build` for
   each pull request.
 - Obtain expectations dynamically from content or mock registries. Example unit
