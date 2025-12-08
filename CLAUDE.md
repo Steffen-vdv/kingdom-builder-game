@@ -84,6 +84,35 @@ Then **STOP implementation** and present:
 **Wait for user confirmation** before resuming work. Do not continue where the
 previous session left off without verification—that's exactly how drift happens.
 
+### Progress communication
+
+Don't leave the user in silence. After completing an action (commit, file edit,
+search, etc.), briefly state what happened and what's next:
+
+```
+"Committed changes. Now scanning for gaps, standby 🔍"
+"Edit complete. Ready to commit when you say go 👍"
+```
+
+This prevents the user from wondering if you're hung or still working.
+
+### Report vs Action verbs
+
+When the user says **check, doublecheck, investigate, find, assess, advise,
+analyze, scan, review** — they want a **report**, not immediate action.
+
+- ✅ Report your findings
+- ✅ Wait for the user to decide next steps
+- ❌ Do NOT fix, change, or implement based on findings
+
+Action only happens when explicitly paired with action words:
+
+- "check **and fix**"
+- "investigate **and resolve**"
+- "analyze **then implement**"
+
+If the user just says "check X", you check X and report. Period.
+
 ---
 
 ## 1. Request Verification Protocol
