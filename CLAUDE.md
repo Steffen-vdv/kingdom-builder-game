@@ -90,8 +90,14 @@ previous session left off without verification—that's exactly how drift happen
 
 ### Progress communication
 
-Don't leave the user in silence. After completing an action (commit, file edit,
-search, etc.), briefly state what happened and what's next:
+Don't leave the user in silence.
+
+**Before starting work**: When the user gives you an instruction, immediately
+acknowledge what you're about to do before invoking tools. A quick "On it —
+adding the section, then committing 🚀" takes one second and prevents 15 seconds
+of mystery silence while tools run.
+
+**After completing work**: Briefly state what happened and what's next:
 
 ```
 "Committed changes. Now scanning for gaps, standby 🔍"
