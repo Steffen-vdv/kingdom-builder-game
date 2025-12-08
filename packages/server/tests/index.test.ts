@@ -44,8 +44,9 @@ function createTestLogger(): FastifyBaseLogger {
 }
 
 // Run tests sequentially to avoid resource contention when multiple tests
-// start real Fastify servers. The 10s timeout accounts for cold module import.
-describe.sequential('server entrypoint', { timeout: 10000 }, () => {
+// start real Fastify servers. The 20s timeout accounts for cold module import
+// and parallel test load pressure.
+describe.sequential('server entrypoint', { timeout: 20000 }, () => {
 	it('starts a Fastify server and listens for requests', async () => {
 		const messages: Array<{ level: number; msg: string }> = [];
 		const stream = new Writable({

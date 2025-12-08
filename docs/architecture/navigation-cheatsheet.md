@@ -12,7 +12,7 @@ Use this as a jumping-off point when you need to track how combat, passives, and
 
 ## Passive Stacking & Modifiers
 
-- **`packages/engine/src/services/passive_manager.ts`** – Central manager for registering passives plus cost/result/evaluation modifiers and skip flags; orchestrates stacking with stat frames.【F:packages/engine/src/services/passive_manager.ts†L1-L125】
+- **`packages/engine/src/services/passive_manager.ts`** – Central manager for registering passives plus cost/result/evaluation modifiers and skip flags; orchestrates stacking and resource modification.【F:packages/engine/src/services/passive_manager.ts†L1-L125】
 - **`packages/engine/src/services/passive_helpers.ts`** – Clone/reverse utilities that keep passive metadata, teardown effects, and skip scaffolding consistent when adding/removing stacks.【F:packages/engine/src/services/passive_helpers.ts†L1-L116】
 - **`packages/engine/src/effects/passive_add.ts`** – Effect surface for injecting passives (incl. growth/upkeep triggers); call this from buildings, developments, or tier scripts when you need a new stack.【F:packages/engine/src/effects/passive_add.ts†L21-L87】
 - **`packages/engine/src/effects/result_mod.ts`** – Registers result/evaluation modifiers tied to passives; pair with the manager when adding custom stacking math.【F:packages/engine/src/effects/result_mod.ts†L1-L55】
