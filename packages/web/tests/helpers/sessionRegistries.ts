@@ -2,10 +2,7 @@ import {
 	createContentFactory,
 	toSessionActionCategoryConfig,
 } from '@kingdom-builder/testing';
-import type {
-	SessionRegistriesPayload,
-	SessionResourceDefinition,
-} from '@kingdom-builder/protocol/session';
+import type { SessionRegistriesPayload } from '@kingdom-builder/protocol/session';
 import {
 	deserializeSessionRegistries,
 	type SessionRegistries,
@@ -50,26 +47,6 @@ function normalizeActionCategories(payload: SessionRegistriesPayload): void {
 			(definition as { category: string }).category = remapped;
 		}
 	}
-}
-type ResourceKey = SessionResourceDefinition['key'];
-
-function cloneResourceDefinition(
-	definition: SessionResourceDefinition,
-): SessionResourceDefinition {
-	const clone: SessionResourceDefinition = { key: definition.resourceId };
-	if (definition.icon !== undefined) {
-		clone.icon = definition.icon;
-	}
-	if (definition.label !== undefined) {
-		clone.label = definition.label;
-	}
-	if (definition.description !== undefined) {
-		clone.description = definition.description;
-	}
-	if (definition.tags && definition.tags.length > 0) {
-		clone.tags = [...definition.tags];
-	}
-	return clone;
 }
 
 type ExtendedPayload = SessionRegistriesPayload & {

@@ -189,7 +189,7 @@ export function createTranslationAssets(
 	metadata: SessionSnapshotMetadata,
 	options?: { rules?: SessionRuleSnapshot },
 ): TranslationAssets {
-	// All metadata (including populations and stats) is now unified under resources
+	// All metadata (populations/stats) is now unified under resources
 	const resourceMetadata = requireMetadataRecord(
 		metadata,
 		'resources',
@@ -203,7 +203,7 @@ export function createTranslationAssets(
 		SessionTriggerMetadata
 	>;
 	const resources = buildResourceMap(registries.resources, resourceMetadata);
-	// Stat metadata is now part of unified resources - use resourceMetadata for stats too
+	// Stats are now unified resources - use resourceMetadata
 	const stats = buildStatMap(resourceMetadata);
 	const populationAsset = mergeIconLabel(
 		undefined,

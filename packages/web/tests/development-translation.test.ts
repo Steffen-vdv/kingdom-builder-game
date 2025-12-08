@@ -62,8 +62,6 @@ function collectResourceKeys(
 			const params = effect.params as { key?: string; resourceId?: string };
 			if (typeof params.resourceId === 'string') {
 				keys.add(params.resourceId);
-			} else if (typeof params.resourceId === 'string') {
-				keys.add(params.resourceId);
 			}
 		}
 		collectResourceKeys(effect.effects as EffectDef[] | undefined, keys);

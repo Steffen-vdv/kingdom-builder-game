@@ -3,7 +3,6 @@ import {
 	ACTION_CATEGORIES,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	TRIGGER_INFO,
 	LAND_INFO,
@@ -136,25 +135,6 @@ const buildResourceMetadata = () =>
 		}),
 	);
 
-const buildPopulationMetadata = () =>
-	createMetadataRecord(
-		POPULATIONS.entries().map(([id, definition]) => {
-			const resource = RESOURCE_REGISTRY.byId[id];
-			const descriptor: SessionMetadataDescriptor = {
-				label: resource?.label ?? definition.name ?? id,
-			};
-			if (resource?.icon) {
-				descriptor.icon = resource.icon;
-			} else if (definition.icon) {
-				descriptor.icon = definition.icon;
-			}
-			if (resource?.description) {
-				descriptor.description = resource.description;
-			}
-			return [id, descriptor] as const;
-		}),
-	);
-
 const buildBuildingMetadata = () =>
 	createMetadataRecord(
 		BUILDINGS.entries().map(([id, definition]) => {
@@ -197,25 +177,6 @@ const buildDevelopmentMetadata = () =>
 			}
 			return [id, descriptor] as const;
 		}),
-	);
-
-const buildStatMetadata = () =>
-	createMetadataRecord<SessionMetadataDescriptor>(
-		RESOURCE_REGISTRY.ordered
-			.filter((resource) => resource.id.startsWith('resource:core:'))
-			.map((resource) => {
-				const descriptor: SessionMetadataDescriptor = {
-					label: resource.label,
-					icon: resource.icon,
-				};
-				if (resource.description) {
-					descriptor.description = resource.description;
-				}
-				if (resource.displayAsPercent) {
-					descriptor.displayAsPercent = resource.displayAsPercent;
-				}
-				return [resource.id, descriptor] as const;
-			}),
 	);
 
 const toPhaseStepMetadata = (step: unknown): SessionPhaseStepMetadata => {

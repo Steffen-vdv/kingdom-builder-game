@@ -66,7 +66,6 @@ describe('session snapshot metadata', () => {
 				developments: {},
 				populations: {},
 				resources: {},
-				resources: {},
 				resourceGroups: {},
 				resourceCategories: {},
 			},

@@ -5,7 +5,6 @@ import type {
 	BuildingConfig,
 	DevelopmentConfig,
 	GameConfig,
-	PopulationConfig,
 	PhaseConfig,
 } from '../config/schema';
 import type {

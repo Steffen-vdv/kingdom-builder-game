@@ -1,29 +1,15 @@
 import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services/index.ts';
-import {
-	PhaseTrigger,
-	RULES,
-	resource,
-	createResourceRegistry,
-} from '@kingdom-builder/contents';
+import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import {
-	RESOURCE_REGISTRY,
-	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
-
-const resourceKeys = {
-	ap: 'synthetic:resource:ap',
-	gold: 'synthetic:resource:gold',
-} as const;
-
-const statKeys = {
-	army: 'synthetic:stat:army-strength',
-	fort: 'synthetic:stat:fort-strength',
-	growth: 'synthetic:stat:growth',
-	war: 'synthetic:stat:war-weariness',
-} as const;
+	resourceKeys,
+	statKeys,
+	populationKeys,
+	testResourceRegistry,
+	testResourceGroupRegistry,
+} from './syntheticResources';
 
 const phaseIds = {
 	growth: 'synthetic:phase:growth',
@@ -51,13 +37,6 @@ const LEGION_UPKEEP = 2;
 const FORTIFIER_UPKEEP = 2;
 const STARTING_COUNCILS = 1;
 
-// Population resource IDs - under ResourceV2, populations are just resources
-const populationKeys = {
-	council: 'synthetic:population:council',
-	legion: 'synthetic:population:legion',
-	fortifier: 'synthetic:population:fortifier',
-} as const;
-
 export function createPhaseTestEnvironment() {
 	const content = createContentFactory();
 
@@ -84,7 +63,7 @@ export function createPhaseTestEnvironment() {
 					triggers: [PhaseTrigger.OnGrowthPhase],
 					// Legion and Fortifier stat growth - use resource evaluators
 					effects: [
-						// Legion grants army strength growth (base_army * growth_rate * legion_count)
+						// Legion grants army strength growth
 						{
 							evaluator: {
 								type: 'resource',
@@ -106,7 +85,7 @@ export function createPhaseTestEnvironment() {
 								},
 							],
 						},
-						// Fortifier grants fort strength growth (base_fort * growth_rate * fort_count)
+						// Fortifier grants fort strength growth
 						{
 							evaluator: {
 								type: 'resource',
@@ -280,59 +259,6 @@ export function createPhaseTestEnvironment() {
 		winConditions: RULES.winConditions,
 	};
 
-	// Create synthetic Resource definitions for testing
-	const syntheticResourceDefs = [
-		resource(resourceKeys.ap)
-			.label('Action Points')
-			.icon('⚡')
-			.lowerBound(0)
-			.build(),
-		resource(resourceKeys.gold).label('Gold').icon('💰').lowerBound(0).build(),
-		resource(statKeys.army)
-			.label('Army Strength')
-			.icon('⚔️')
-			.lowerBound(0)
-			.build(),
-		resource(statKeys.fort)
-			.label('Fort Strength')
-			.icon('🏰')
-			.lowerBound(0)
-			.build(),
-		resource(statKeys.growth)
-			.label('Growth')
-			.icon('📈')
-			.lowerBound(0)
-			.allowDecimal()
-			.build(),
-		resource(statKeys.war)
-			.label('War Weariness')
-			.icon('😟')
-			.lowerBound(0)
-			.build(),
-		resource(populationKeys.council)
-			.label('Council')
-			.icon('👔')
-			.lowerBound(0)
-			.build(),
-		resource(populationKeys.legion)
-			.label('Legion')
-			.icon('🛡️')
-			.lowerBound(0)
-			.build(),
-		resource(populationKeys.fortifier)
-			.label('Fortifier')
-			.icon('🏗️')
-			.lowerBound(0)
-			.build(),
-	];
-
-	// Create combined registry with real + synthetic resources
-	const allResourceDefs = [
-		...RESOURCE_REGISTRY.ordered,
-		...syntheticResourceDefs,
-	];
-	const testResourceRegistry = createResourceRegistry(allResourceDefs);
-
 	const engineContext = createEngine({
 		actions: content.actions,
 		buildings: content.buildings,
@@ -341,7 +267,7 @@ export function createPhaseTestEnvironment() {
 		rules,
 		resourceCatalog: {
 			resources: testResourceRegistry,
-			groups: RESOURCE_GROUP_REGISTRY,
+			groups: testResourceGroupRegistry,
 		},
 		systemActionIds: SKIP_SETUP_ACTION_IDS,
 	});

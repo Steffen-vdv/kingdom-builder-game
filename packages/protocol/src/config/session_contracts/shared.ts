@@ -5,7 +5,6 @@ import {
 	buildingSchema,
 	developmentSchema,
 	effectSchema,
-	populationSchema,
 	phaseSchema,
 	ruleSetSchema,
 } from '../schema';

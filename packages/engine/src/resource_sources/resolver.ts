@@ -103,7 +103,7 @@ export function recordEffectResourceDelta(
 			: '';
 	// Also check for percentFromResource change type which uses sourceResourceId
 	if (!percentSourceId && isPlainObject(params?.['change'])) {
-		const change = params['change'] as Record<string, unknown>;
+		const change = params['change'];
 		if (
 			change['type'] === 'percentFromResource' &&
 			typeof change['sourceResourceId'] === 'string'

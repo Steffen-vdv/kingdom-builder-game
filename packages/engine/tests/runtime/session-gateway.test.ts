@@ -139,7 +139,6 @@ describe('createLocalSessionGateway', () => {
 					buildings: {},
 					developments: {},
 					populations: {},
-					resources: {},
 					actionCategories: {},
 					resources: {
 						[resourceId]: RESOURCE_REGISTRY.byId[resourceId]!,
