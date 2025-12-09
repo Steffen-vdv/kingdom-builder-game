@@ -4,7 +4,7 @@ import {
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
-	TRIGGER_INFO,
+	TRIGGER_META,
 	LAND_INFO,
 	SLOT_INFO,
 	PASSIVE_INFO,
@@ -218,22 +218,49 @@ const buildPhaseMetadata = () =>
 		}),
 	);
 
-const buildTriggerMetadata = () =>
-	createMetadataRecord(
-		Object.entries(TRIGGER_INFO).map(([id, info]) => {
-			const descriptor: SessionTriggerMetadata = { label: info.past ?? id };
-			if (typeof info.icon === 'string') {
-				descriptor.icon = info.icon;
+// Build a map from stepId to phase info for step trigger resolution
+const buildStepToPhaseMap = (): Map<
+	string,
+	{ icon: string; label: string }
+> => {
+	const map = new Map<string, { icon: string; label: string }>();
+	for (const phase of PHASES) {
+		for (const step of phase.steps ?? []) {
+			map.set(step.id, {
+				icon: phase.icon ?? '',
+				label: phase.label ?? phase.id,
+			});
+		}
+	}
+	return map;
+};
+
+const buildTriggerMetadata = () => {
+	const stepToPhase = buildStepToPhaseMap();
+
+	return createMetadataRecord(
+		Object.entries(TRIGGER_META).map(([triggerId, meta]) => {
+			const descriptor: SessionTriggerMetadata = { label: meta.label };
+
+			if (meta.type === 'step') {
+				// Step trigger: derive icon and text from phase
+				const phaseInfo = stepToPhase.get(meta.stepId);
+				if (phaseInfo) {
+					descriptor.icon = phaseInfo.icon;
+					descriptor.future = `On your ${phaseInfo.icon} ${phaseInfo.label} Phase`;
+					descriptor.past = `${phaseInfo.label} Phase`;
+				}
+			} else {
+				// Event trigger: use provided icon and text
+				descriptor.icon = meta.icon;
+				descriptor.future = meta.text;
+				descriptor.past = meta.label;
 			}
-			if (typeof info.future === 'string') {
-				descriptor.future = info.future;
-			}
-			if (typeof info.past === 'string') {
-				descriptor.past = info.past;
-			}
-			return [id, descriptor] as const;
+
+			return [triggerId, descriptor] as const;
 		}),
 	);
+};
 
 const buildAssetMetadata = () =>
 	createMetadataRecord([

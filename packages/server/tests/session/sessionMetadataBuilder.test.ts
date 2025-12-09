@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	ACTIONS,
-	TRIGGER_INFO,
+	TRIGGER_META,
 	OVERVIEW_CONTENT,
 	BUILDINGS,
 	DEVELOPMENTS,
@@ -44,12 +44,14 @@ describe('buildSessionMetadata', () => {
 
 	it('includes trigger metadata from content definitions', () => {
 		const { metadata } = buildSessionMetadata();
-		const [triggerId, triggerInfo] = Object.entries(TRIGGER_INFO)[0];
+		const [triggerId, triggerMeta] = Object.entries(TRIGGER_META)[0];
 		const triggerMetadata = metadata.triggers?.[triggerId];
 		expect(triggerMetadata).toBeDefined();
-		expect(triggerMetadata?.icon).toBe(triggerInfo.icon);
-		expect(triggerMetadata?.future).toBe(triggerInfo.future);
-		expect(triggerMetadata?.past).toBe(triggerInfo.past);
+		expect(triggerMetadata?.label).toBe(triggerMeta.label);
+		// Step triggers derive icon from phase, event triggers use their own
+		if (triggerMeta.type === 'event') {
+			expect(triggerMetadata?.icon).toBe(triggerMeta.icon);
+		}
 	});
 
 	it('clones overview content including hero tokens', () => {
@@ -242,19 +244,18 @@ describe('buildSessionMetadata', () => {
 		}
 	});
 
-	it('builds trigger metadata with optional future and past strings', () => {
+	it('builds trigger metadata with label, icon, and future/past strings', () => {
 		const { metadata } = buildSessionMetadata();
-		for (const [triggerId, triggerInfo] of Object.entries(TRIGGER_INFO)) {
+		for (const [triggerId, triggerDef] of Object.entries(TRIGGER_META)) {
 			const triggerMeta = metadata.triggers?.[triggerId];
 			expect(triggerMeta).toBeDefined();
-			if (typeof triggerInfo.icon === 'string') {
-				expect(triggerMeta?.icon).toBe(triggerInfo.icon);
-			}
-			if (typeof triggerInfo.future === 'string') {
-				expect(triggerMeta?.future).toBe(triggerInfo.future);
-			}
-			if (typeof triggerInfo.past === 'string') {
-				expect(triggerMeta?.past).toBe(triggerInfo.past);
+			expect(triggerMeta?.label).toBe(triggerDef.label);
+			// All triggers should have icon and future text generated
+			expect(triggerMeta?.icon).toBeDefined();
+			expect(triggerMeta?.future).toBeDefined();
+			// Event triggers use their own icon directly
+			if (triggerDef.type === 'event') {
+				expect(triggerMeta?.icon).toBe(triggerDef.icon);
 			}
 		}
 	});

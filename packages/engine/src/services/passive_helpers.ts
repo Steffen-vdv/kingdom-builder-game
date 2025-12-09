@@ -43,17 +43,11 @@ export function clonePassiveRecord(record: PassiveRecord): PassiveRecord {
 	} else if ('effects' in cloned) {
 		delete cloned.effects;
 	}
-	const onGrowth = cloneEffectList(record.onGrowthPhase);
-	if (onGrowth) {
-		cloned.onGrowthPhase = onGrowth;
-	} else if ('onGrowthPhase' in cloned) {
-		delete cloned.onGrowthPhase;
-	}
-	const onUpkeep = cloneEffectList(record.onUpkeepPhase);
-	if (onUpkeep) {
-		cloned.onUpkeepPhase = onUpkeep;
-	} else if ('onUpkeepPhase' in cloned) {
-		delete cloned.onUpkeepPhase;
+	const onPayUpkeep = cloneEffectList(record.onPayUpkeepStep);
+	if (onPayUpkeep) {
+		cloned.onPayUpkeepStep = onPayUpkeep;
+	} else if ('onPayUpkeepStep' in cloned) {
+		delete cloned.onPayUpkeepStep;
 	}
 	const onBefore = cloneEffectList(record.onBeforeAttacked);
 	if (onBefore) {
@@ -78,8 +72,7 @@ export function clonePassiveRecord(record: PassiveRecord): PassiveRecord {
 		'name',
 		'icon',
 		'effects',
-		'onGrowthPhase',
-		'onUpkeepPhase',
+		'onPayUpkeepStep',
 		'onBeforeAttacked',
 		'onAttackResolved',
 		'owner',

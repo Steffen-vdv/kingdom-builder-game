@@ -3,8 +3,8 @@ import { effect, phase, step, compareEvaluator, resourceEvaluator, type PhaseDef
 import { Types, ResourceMethods } from './config/builderShared';
 import { resourcePercentFromResourceChange, resourceAmountChange } from './helpers/resourceEffects';
 import { resourceChange } from './resource';
-import { ON_GAIN_AP_STEP, ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP } from './defs';
-import { PhaseId, PhaseStepId, PhaseTrigger } from './phaseTypes';
+import { Trigger } from './triggers';
+import { PhaseId, PhaseStepId } from './phaseTypes';
 
 // Population upkeep costs (gold per population member per turn)
 const COUNCIL_UPKEEP = 2;
@@ -14,19 +14,25 @@ const FORTIFIER_UPKEEP = 1;
 // Population AP gain (AP per council member per turn)
 const COUNCIL_AP_GAIN = 1;
 
-export { PhaseId, PhaseStepId, PhaseTrigger };
-export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTrigger as PhaseTriggerKey } from './phaseTypes';
+export { PhaseId, PhaseStepId };
+export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue } from './phaseTypes';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PHASE DEFINITIONS
+//
+// NOTE: When adding a new step that content should be able to hook into,
+// also add it to TRIGGER_META in triggers.ts so web can display it properly.
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const PHASES: PhaseDef[] = [
 	phase(PhaseId.Growth)
 		.label('Growth')
 		.icon('🌳')
-		.step(step(PhaseStepId.ResolveDynamicTriggers).title('Resolve dynamic triggers').triggers(PhaseTrigger.OnGrowthPhase))
-		.step(step(PhaseStepId.GainIncome).title('Gain Income').icon('💰').triggers(ON_GAIN_INCOME_STEP))
+		.step(step(PhaseStepId.GainIncome).title('Gain Income').icon('💰').triggers(Trigger.GAIN_INCOME))
 		.step(
 			step(PhaseStepId.GainActionPoints)
 				.title('Gain Action Points')
-				.triggers(ON_GAIN_AP_STEP)
+				.triggers(Trigger.GAIN_AP)
 				.effect(
 					effect()
 						.evaluator(resourceEvaluator().resourceId(PopulationRole.Council))
@@ -62,11 +68,10 @@ export const PHASES: PhaseDef[] = [
 	phase(PhaseId.Upkeep)
 		.label('Upkeep')
 		.icon('🧹')
-		.step(step(PhaseStepId.ResolveDynamicTriggers).title('Resolve dynamic triggers').triggers(PhaseTrigger.OnUpkeepPhase))
 		.step(
 			step(PhaseStepId.PayUpkeep)
 				.title('Pay Upkeep')
-				.triggers(ON_PAY_UPKEEP_STEP)
+				.triggers(Trigger.PAY_UPKEEP)
 				.effect(
 					effect()
 						.evaluator(resourceEvaluator().resourceId(PopulationRole.Council))

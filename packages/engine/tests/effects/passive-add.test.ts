@@ -6,14 +6,14 @@ import type { EffectDef } from '../../src/effects/index.ts';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 describe('passive:add effect', () => {
-	it('applies nested effects and registers phase triggers', () => {
+	it('applies nested effects and registers step triggers', () => {
 		const engineContext = createTestEngine({ skipInitialSetup: true });
 		const effect: EffectDef<{ id: string } & Record<string, EffectDef[]>> = {
 			type: 'passive',
 			method: 'add',
 			params: {
 				id: 'temp',
-				onGrowthPhase: [
+				onGainIncomeStep: [
 					{
 						type: 'resource',
 						method: 'add',
@@ -23,7 +23,7 @@ describe('passive:add effect', () => {
 						}),
 					},
 				],
-				onUpkeepPhase: [
+				onPayUpkeepStep: [
 					{
 						type: 'resource',
 						method: 'add',

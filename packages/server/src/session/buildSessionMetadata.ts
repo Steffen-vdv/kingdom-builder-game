@@ -4,9 +4,10 @@ import {
 	PASSIVE_INFO,
 	POPULATION_INFO,
 	SLOT_INFO,
-	TRIGGER_INFO,
+	TRIGGER_META,
 	UPKEEP_INFO,
 	TRANSFER_INFO,
+	PHASES,
 } from '@kingdom-builder/contents';
 import type {
 	BuildingConfig,
@@ -161,31 +162,46 @@ function buildPhaseMetadata(
 	return descriptors;
 }
 
-function buildTriggerMetadata(): Record<string, SessionTriggerMetadata> {
-	const descriptors: Record<string, SessionTriggerMetadata> = {};
-	const triggerKeys = Object.keys(TRIGGER_INFO) as Array<
-		keyof typeof TRIGGER_INFO
-	>;
-	for (const key of triggerKeys) {
-		descriptors[key] = buildTriggerDescriptor(TRIGGER_INFO[key]);
+// Build a map from stepId to phase info for step trigger resolution
+function buildStepToPhaseMap(): Map<string, { icon: string; label: string }> {
+	const map = new Map<string, { icon: string; label: string }>();
+	for (const phase of PHASES) {
+		for (const step of phase.steps ?? []) {
+			map.set(step.id, {
+				icon: phase.icon ?? '',
+				label: phase.label ?? phase.id,
+			});
+		}
 	}
-	return descriptors;
+	return map;
 }
 
-function buildTriggerDescriptor(
-	info: (typeof TRIGGER_INFO)[keyof typeof TRIGGER_INFO],
-): SessionTriggerMetadata {
-	const descriptor: SessionTriggerMetadata = {};
-	if (info.icon) {
-		descriptor.icon = info.icon;
+function buildTriggerMetadata(): Record<string, SessionTriggerMetadata> {
+	const descriptors: Record<string, SessionTriggerMetadata> = {};
+	const stepToPhase = buildStepToPhaseMap();
+
+	for (const [triggerId, meta] of Object.entries(TRIGGER_META)) {
+		const descriptor: SessionTriggerMetadata = { label: meta.label };
+
+		if (meta.type === 'step') {
+			// Step trigger: derive icon and text from phase
+			const phaseInfo = stepToPhase.get(meta.stepId);
+			if (phaseInfo) {
+				descriptor.icon = phaseInfo.icon;
+				descriptor.future = `On your ${phaseInfo.icon} ${phaseInfo.label} Phase`;
+				descriptor.past = `${phaseInfo.label} Phase`;
+			}
+		} else {
+			// Event trigger: use provided icon and text
+			descriptor.icon = meta.icon;
+			descriptor.future = meta.text;
+			descriptor.past = meta.label;
+		}
+
+		descriptors[triggerId] = descriptor;
 	}
-	if (info.future) {
-		descriptor.future = info.future;
-	}
-	if (info.past) {
-		descriptor.past = info.past;
-	}
-	return descriptor;
+
+	return descriptors;
 }
 
 function buildAssetMetadata(): SessionMetadataDescriptorMap {

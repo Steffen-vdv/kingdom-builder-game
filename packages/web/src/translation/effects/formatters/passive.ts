@@ -57,8 +57,6 @@ function resolvePhaseMeta(
 	return toPhaseInfo(match);
 }
 
-const PHASE_TRIGGER_KEY_PATTERN = /^on[A-Z][A-Za-z0-9]*Phase$/;
-
 function humanizePhaseId(id: string): string {
 	const slug = id.split(':').pop() ?? id;
 	return slug
@@ -91,12 +89,20 @@ function resolvePhaseByTrigger(
 	return undefined;
 }
 
-function collectPhaseTriggerKeys(params: Record<string, unknown>) {
+/**
+ * Find param keys that are known trigger IDs by checking against
+ * the trigger metadata map from the translation context.
+ */
+function collectTriggerKeys(
+	params: Record<string, unknown>,
+	context: TranslationContext,
+): string[] {
+	const triggerMap = context.assets.triggers;
 	return Object.keys(params).filter((key) => {
-		if (!PHASE_TRIGGER_KEY_PATTERN.test(key)) {
+		if (params[key] === undefined) {
 			return false;
 		}
-		return params[key] !== undefined;
+		return key in triggerMap;
 	});
 }
 
@@ -127,7 +133,7 @@ function resolveDurationMeta(
 
 	let resolvedPhase = resolvePhaseMeta(context, durationPhaseId);
 
-	const triggerKeys = collectPhaseTriggerKeys(params);
+	const triggerKeys = collectTriggerKeys(params, context);
 	if (!resolvedPhase) {
 		for (const triggerId of triggerKeys) {
 			const phase = resolvePhaseByTrigger(context, triggerId);

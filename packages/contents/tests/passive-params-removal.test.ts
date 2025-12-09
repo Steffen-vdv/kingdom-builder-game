@@ -16,7 +16,7 @@ describe('passive removal helpers', () => {
 	});
 
 	it('matches manual upkeep removal wiring', () => {
-		const manual = passiveParams().id('passive:manual').onUpkeepPhase(effect(Types.Passive, PassiveMethods.REMOVE).param('id', 'passive:manual').build()).build();
+		const manual = passiveParams().id('passive:manual').onPayUpkeepStep(effect(Types.Passive, PassiveMethods.REMOVE).param('id', 'passive:manual').build()).build();
 		const helper = passiveParams().id('passive:manual').removeOnUpkeepStep().build();
 		expect(helper).toEqual(manual);
 	});

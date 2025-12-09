@@ -216,7 +216,7 @@ describe('passive formatter duration metadata', () => {
 					steps: [
 						{
 							id: 'custom:upkeep',
-							triggers: ['onUpkeepPhase'],
+							triggers: ['onPayUpkeepStep'],
 						},
 					],
 				},
@@ -232,7 +232,7 @@ describe('passive formatter duration metadata', () => {
 				};
 				metadata.triggers = {
 					...metadata.triggers,
-					onUpkeepPhase: {
+					onPayUpkeepStep: {
 						past: 'Upkeep',
 						future: 'During Upkeep',
 						icon: '🛏️',
@@ -245,7 +245,7 @@ describe('passive formatter duration metadata', () => {
 			method: 'add',
 			params: {
 				id: 'synthetic:passive:trigger-upkeep',
-				onUpkeepPhase: [],
+				onPayUpkeepStep: [],
 			},
 			effects: [],
 		};

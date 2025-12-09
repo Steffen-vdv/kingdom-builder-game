@@ -167,15 +167,9 @@ export class PassiveEffectParamsBuilder extends ParamsBuilder<
 		skip.steps.push({ phaseId, stepId });
 		return this;
 	}
-	onGrowthPhase(...effects: Array<EffectConfig | EffectBuilder>) {
+	onPayUpkeepStep(...effects: Array<EffectConfig | EffectBuilder>) {
 		return this.addTriggerEffects(
-			'onGrowthPhase',
-			effects.map((item) => resolveEffectConfig(item)),
-		);
-	}
-	onUpkeepPhase(...effects: Array<EffectConfig | EffectBuilder>) {
-		return this.addTriggerEffects(
-			'onUpkeepPhase',
+			'onPayUpkeepStep',
 			effects.map((item) => resolveEffectConfig(item)),
 		);
 	}
@@ -192,7 +186,7 @@ export class PassiveEffectParamsBuilder extends ParamsBuilder<
 		);
 	}
 	removeOnUpkeepStep() {
-		return this.scheduleRemoval('onUpkeepPhase', 'removeOnUpkeepStep()');
+		return this.scheduleRemoval('onPayUpkeepStep', 'removeOnUpkeepStep()');
 	}
 	removeOnTrigger(trigger: TriggerKey) {
 		const context = `removeOnTrigger('${trigger}')`;

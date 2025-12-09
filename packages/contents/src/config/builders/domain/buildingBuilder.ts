@@ -3,7 +3,7 @@ import type { BuildingDef, Focus } from '../../../defs';
 import type { ResourceKey } from '../../../internal';
 import { BaseBuilder } from './baseBuilder';
 
-type BuildingEffectKey = 'onBuild' | 'onGrowthPhase' | 'onUpkeepPhase' | 'onPayUpkeepStep' | 'onGainIncomeStep' | 'onGainAPStep' | 'onBeforeAttacked' | 'onAttackResolved';
+type BuildingEffectKey = 'onBuild' | 'onPayUpkeepStep' | 'onGainIncomeStep' | 'onGainAPStep' | 'onBeforeAttacked' | 'onAttackResolved';
 
 export class BuildingBuilder extends BaseBuilder<BuildingDef> {
 	constructor() {
@@ -39,14 +39,6 @@ export class BuildingBuilder extends BaseBuilder<BuildingDef> {
 
 	onBuild(effect: EffectConfig) {
 		return this.pushEffect('onBuild', effect);
-	}
-
-	onGrowthPhase(effect: EffectConfig) {
-		return this.pushEffect('onGrowthPhase', effect);
-	}
-
-	onUpkeepPhase(effect: EffectConfig) {
-		return this.pushEffect('onUpkeepPhase', effect);
 	}
 
 	onPayUpkeepStep(effect: EffectConfig) {

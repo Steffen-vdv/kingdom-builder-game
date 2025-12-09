@@ -9,7 +9,7 @@ import type { SessionRegistries } from '../../src/state/sessionRegistries';
 import {
 	FALLBACK_UPKEEP,
 	FORTIFICATION_STAT_KEY,
-	ON_UPKEEP_PHASE,
+	ON_PAY_UPKEEP_STEP,
 	RESOURCE_LOOKUP,
 	SYNTHETIC_PHASES,
 	SYNTHETIC_RESOURCES,
@@ -69,7 +69,7 @@ const createFestivalActions = () => {
 					id: passiveId,
 					name: 'Festival Hangover',
 					icon: '🤮',
-					onUpkeepPhase: [
+					onPayUpkeepStep: [
 						{
 							type: 'passive',
 							method: 'remove',
@@ -231,9 +231,9 @@ export const getSyntheticFestivalDetails = (
 			: Number(innerRes.params.change.amount);
 	const raid = registries.actions.get(attackActionId);
 	const upkeepPhase = scenario.session.phases.find((phase) =>
-		phase.steps?.some((step) => step.triggers?.includes(ON_UPKEEP_PHASE)),
+		phase.steps?.some((step) => step.triggers?.includes(ON_PAY_UPKEEP_STEP)),
 	);
-	const upkeepTrigger = translation.assets.triggers[ON_UPKEEP_PHASE];
+	const upkeepTrigger = translation.assets.triggers[ON_PAY_UPKEEP_STEP];
 	const upkeepLabel =
 		upkeepPhase?.label ??
 		upkeepTrigger?.label ??
