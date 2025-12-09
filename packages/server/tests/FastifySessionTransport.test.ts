@@ -758,4 +758,18 @@ describe('FastifySessionTransport', () => {
 		expectStaticMetadata(manager.getMetadata());
 		await app.close();
 	});
+
+	it('returns 404 for /visitors when visitor tracking is disabled', async () => {
+		const { app } = await createServer();
+		const response = await app.inject({
+			method: 'GET',
+			url: '/visitors',
+			headers: authorizedHeaders,
+		});
+		expect(response.statusCode).toBe(404);
+		const body = response.json() as { code: string; message: string };
+		expect(body.code).toBe('NOT_FOUND');
+		expect(body.message).toBe('Visitor tracking is not enabled.');
+		await app.close();
+	});
 });

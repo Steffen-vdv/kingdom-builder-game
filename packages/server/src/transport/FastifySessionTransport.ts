@@ -53,13 +53,13 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 	fastify.get<{ Querystring: VisitorQuerystring }>(
 		'/visitors',
 		async (request, reply) => {
-			if (!visitorTracker) {
-				throw new TransportError(
-					'NOT_FOUND',
-					'Visitor tracking is not enabled.',
-				);
-			}
 			try {
+				if (!visitorTracker) {
+					throw new TransportError(
+						'NOT_FOUND',
+						'Visitor tracking is not enabled.',
+					);
+				}
 				transport.requireAuthorizationPublic(request, 'session:advance');
 				const includeBreakdown = request.query.breakdown === 'true';
 				const stats = visitorTracker.get24hStats();
