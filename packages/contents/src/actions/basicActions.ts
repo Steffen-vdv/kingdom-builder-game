@@ -208,7 +208,7 @@ export function registerBasicActions(registry: Registry<ActionDef>) {
 			.build(),
 	);
 
-	const plowCostPenalty = passiveParams().id('plow_cost_mod').removeOnUpkeepStep();
+	const plowCostPenalty = passiveParams().id('plow_cost_mod').name('Furrow Focus').icon('🌱').removeOnUpkeepStep();
 
 	registry.add(
 		ActionId.plow,

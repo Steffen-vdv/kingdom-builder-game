@@ -163,19 +163,13 @@ describe('passive formatter duration metadata', () => {
 			(phase) => phase.id === (growthPhase?.id ?? 'phase.growth'),
 		);
 
-		// New split format - passive uses descriptor defaults for icon/name
+		// Missing icon/name shows error indicators - no silent fallbacks
 		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
-		const passiveAsset = context.assets.passive ?? {};
-		const passiveIcon = passiveAsset.icon ?? '♾️';
-		const passiveName = passiveAsset.label ?? 'Passive';
-		const passiveDisplay = passiveIcon
-			? `${passiveIcon} ${passiveName}`
-			: passiveName;
 		expect(summary).toEqual([
-			{ title: `+♾️: ${passiveDisplay}`, items: [] },
+			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
 			{
 				title: `On your ${phaseLabel} Phase`,
-				items: [`-♾️: ${passiveDisplay}`],
+				items: ['-♾️: ❓ ⚠️ MISSING'],
 			},
 		]);
 	});
@@ -214,19 +208,13 @@ describe('passive formatter duration metadata', () => {
 		const summary = summarizeEffects([passive], context);
 		const resolvedPhase = context.phases.find((phase) => phase.id === growthId);
 
-		// New split format - passive uses descriptor defaults for icon/name
+		// Missing icon/name shows error indicators - no silent fallbacks
 		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
-		const passiveAsset = context.assets.passive ?? {};
-		const passiveIcon = passiveAsset.icon ?? '♾️';
-		const passiveName = passiveAsset.label ?? 'Passive';
-		const passiveDisplay = passiveIcon
-			? `${passiveIcon} ${passiveName}`
-			: passiveName;
 		expect(summary).toEqual([
-			{ title: `+♾️: ${passiveDisplay}`, items: [] },
+			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
 			{
 				title: `On your ${phaseLabel} Phase`,
-				items: [`-♾️: ${passiveDisplay}`],
+				items: ['-♾️: ❓ ⚠️ MISSING'],
 			},
 		]);
 	});
@@ -281,20 +269,53 @@ describe('passive formatter duration metadata', () => {
 			(phase) => phase.id === upkeepPhaseId,
 		);
 
-		// New split format - passive uses descriptor defaults for icon/name
+		// Missing icon/name shows error indicators - no silent fallbacks
 		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
-		const passiveAsset = context.assets.passive ?? {};
-		const passiveIcon = passiveAsset.icon ?? '♾️';
-		const passiveName = passiveAsset.label ?? 'Passive';
-		const passiveDisplay = passiveIcon
-			? `${passiveIcon} ${passiveName}`
-			: passiveName;
 		expect(summary).toEqual([
-			{ title: `+♾️: ${passiveDisplay}`, items: [] },
+			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
 			{
 				title: `On your ${phaseLabel} Phase`,
-				items: [`-♾️: ${passiveDisplay}`],
+				items: ['-♾️: ❓ ⚠️ MISSING'],
 			},
 		]);
+	});
+
+	it('shows error indicators when passive is missing icon/name in content', () => {
+		const scaffold = createTestSessionScaffold();
+		const context = createFormatterContext({ phases: scaffold.phases });
+
+		// Passive with NO icon/name defined - simulates content bug
+		const passiveWithoutMetadata: EffectDef = {
+			type: 'passive',
+			method: 'add',
+			params: {
+				id: 'synthetic:passive:no-metadata',
+				durationPhaseId: scaffold.phases[0]?.id,
+			},
+			effects: [],
+		};
+
+		const summary = summarizeEffects([passiveWithoutMetadata], context);
+		const description = describeEffects([passiveWithoutMetadata], context);
+		const log = logEffects([passiveWithoutMetadata], context);
+
+		// Summary shows error indicators
+		expect((summary[0] as { title: string }).title).toBe('+♾️: ❓ ⚠️ MISSING');
+		expect((summary[1] as { items: string[] }).items[0]).toBe(
+			'-♾️: ❓ ⚠️ MISSING',
+		);
+
+		// Description shows error indicators
+		expect((description[0] as { title: string }).title).toBe(
+			'Gain ♾️ Passive: ❓ ⚠️ MISSING',
+		);
+		expect((description[1] as { items: string[] }).items[0]).toBe(
+			'Remove ♾️ Passive: ❓ ⚠️ MISSING',
+		);
+
+		// Log shows error indicators
+		expect((log[0] as { title: string }).title).toBe(
+			'♾️ ❓ ⚠️ MISSING activated',
+		);
 	});
 });

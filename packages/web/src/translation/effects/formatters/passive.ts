@@ -5,7 +5,6 @@ import {
 } from '../factory';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type { TranslationContext, TranslationPhase } from '../../context';
-import { selectPassiveDescriptor } from '../registrySelectors';
 
 type PassiveDurationMeta = {
 	label: string;
@@ -183,17 +182,24 @@ function formatDuration(metadata: PassiveDurationMeta) {
 	return `${icon}${metadata.label}`;
 }
 
+/**
+ * Missing passive icon/name indicator.
+ * When content doesn't provide icon/name, show this instead of silent fallback.
+ */
+const MISSING_PASSIVE_ICON = '❓';
+const MISSING_PASSIVE_NAME = '⚠️ MISSING';
+
 function formatPassiveLabel(
 	effect: EffectDef<Record<string, unknown>>,
 	context: TranslationContext,
 ): { icon: string; name: string } {
-	const descriptor = selectPassiveDescriptor(context);
 	const icon =
-		(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
+		(effect.params?.['icon'] as string | undefined) ?? MISSING_PASSIVE_ICON;
 	const name =
-		(effect.params?.['name'] as string | undefined) ??
-		descriptor.label ??
-		'Passive';
+		(effect.params?.['name'] as string | undefined) ?? MISSING_PASSIVE_NAME;
+	// We explicitly do NOT fall back to descriptor - passives MUST define
+	// their own icon/name in content. Missing values = content bug, not UI bug.
+	void context; // Keep param for future use, avoid unused warning
 	return { icon, name };
 }
 
@@ -244,30 +250,21 @@ registerEffectFormatter('passive', 'add', {
 		];
 	},
 	log: (effect, context) => {
-		const descriptor = selectPassiveDescriptor(context);
 		const icon =
-			(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
+			(effect.params?.['icon'] as string | undefined) ?? MISSING_PASSIVE_ICON;
 		const name =
-			(effect.params?.['name'] as string | undefined) ??
-			descriptor.label ??
-			'Passive';
-		const prefix = icon ? `${icon} ` : '';
-		const label = `${prefix}${name}`.trim();
-		const activationLabel = label.length
-			? `♾️ ${label} activated`
-			: '♾️ Passive activated';
+			(effect.params?.['name'] as string | undefined) ?? MISSING_PASSIVE_NAME;
+		// No fallback to descriptor - passives MUST define icon/name in content
+		void context;
+		const label = `${icon} ${name}`;
+		const activationLabel = `♾️ ${label} activated`;
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
 		const items = [...inner];
 		if (duration) {
 			const durationLabel = formatDuration(duration);
-			const durationPrefix = icon ? `${icon} ` : '';
-			const durationDescription =
-				`${durationPrefix}Duration: Until player's next ${durationLabel}`.trim();
+			const durationDescription = `${icon} Duration: Until player's next ${durationLabel}`;
 			items.push(durationDescription);
-		}
-		if (!label) {
-			return items;
 		}
 		if (items.length === 0) {
 			return activationLabel;

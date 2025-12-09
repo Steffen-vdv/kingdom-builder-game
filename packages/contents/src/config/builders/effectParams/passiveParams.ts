@@ -173,6 +173,18 @@ export class PassiveEffectParamsBuilder extends ParamsBuilder<
 			effects.map((item) => resolveEffectConfig(item)),
 		);
 	}
+	onGainIncomeStep(...effects: Array<EffectConfig | EffectBuilder>) {
+		return this.addTriggerEffects(
+			'onGainIncomeStep',
+			effects.map((item) => resolveEffectConfig(item)),
+		);
+	}
+	onGainAPStep(...effects: Array<EffectConfig | EffectBuilder>) {
+		return this.addTriggerEffects(
+			'onGainAPStep',
+			effects.map((item) => resolveEffectConfig(item)),
+		);
+	}
 	onBeforeAttacked(...effects: Array<EffectConfig | EffectBuilder>) {
 		return this.addTriggerEffects(
 			'onBeforeAttacked',
@@ -187,6 +199,12 @@ export class PassiveEffectParamsBuilder extends ParamsBuilder<
 	}
 	removeOnUpkeepStep() {
 		return this.scheduleRemoval('onPayUpkeepStep', 'removeOnUpkeepStep()');
+	}
+	removeOnGainIncomeStep() {
+		return this.scheduleRemoval('onGainIncomeStep', 'removeOnGainIncomeStep()');
+	}
+	removeOnGainAPStep() {
+		return this.scheduleRemoval('onGainAPStep', 'removeOnGainAPStep()');
 	}
 	removeOnTrigger(trigger: TriggerKey) {
 		const context = `removeOnTrigger('${trigger}')`;
