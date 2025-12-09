@@ -5,6 +5,7 @@ import type {
 import { GameApiError } from '../services/gameApi';
 import { getActionErrorMetadata } from './actionErrorMetadata';
 import { SessionMirroringError, isSessionExpiredError } from './sessionErrors';
+import { clearStoredResumeSession } from './sessionResumeStorage';
 
 export interface SessionFailureDetails {
 	summary: string;
@@ -142,6 +143,9 @@ const isActionExecutionError = (
 export const formatFailureDetails = (error: unknown): SessionFailureDetails => {
 	// Session expiry is a specific type of GameApiError - check it first
 	if (isSessionExpiredError(error)) {
+		// Clear the stored resume session so the "Start New Game" button
+		// immediately creates a new game instead of retrying the expired one.
+		clearStoredResumeSession();
 		return {
 			summary:
 				'Your session timed out due to inactivity. ' +
