@@ -16,24 +16,15 @@ function formatStepTriggerLabel(
 			if (!triggers.includes(triggerKey)) {
 				continue;
 			}
+			// Concise format: just phase icon + label, no step text
 			const phaseParts = [phase.icon, phase.label ?? formatDetailText(phase.id)]
 				.filter((value) => typeof value === 'string' && value.trim().length > 0)
 				.map((value) => value!.trim());
 			const phaseLabel = phaseParts.join(' ');
-			const stepLabel = (step.title ?? formatDetailText(step.id))
-				?.trim()
-				.replace(/\s+/gu, ' ');
-			const sections: string[] = [];
-			if (phaseLabel.length) {
-				sections.push(`${phaseLabel} Phase`);
-			}
-			if (stepLabel && stepLabel.length) {
-				sections.push(`${stepLabel} step`);
-			}
-			if (sections.length === 0) {
+			if (!phaseLabel.length) {
 				return undefined;
 			}
-			return sections.join(' — ');
+			return `${phaseLabel} Phase`;
 		}
 	}
 	return undefined;
@@ -73,11 +64,11 @@ function formatTriggerTitle(
 	const label = sanitize(display.label);
 	const past = sanitize(display.past);
 	const fallback = sanitize(fallbackTitle);
+	// Step triggers use "On your <Phase> Phase" format
 	if (stepLabel) {
-		return (
-			composeIconLabel(icon, `During ${stepLabel}`) ?? `During ${stepLabel}`
-		);
+		return `On your ${stepLabel}`;
 	}
+	// Event triggers use icon + text format (e.g., "⚔️ After attack")
 	if (future) {
 		return composeIconLabel(icon, future) ?? future;
 	}

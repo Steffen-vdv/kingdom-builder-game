@@ -183,41 +183,69 @@ function formatDuration(metadata: PassiveDurationMeta) {
 	return `${icon}${metadata.label}`;
 }
 
+function formatPassiveLabel(
+	effect: EffectDef<Record<string, unknown>>,
+	context: TranslationContext,
+): { icon: string; name: string } {
+	const descriptor = selectPassiveDescriptor(context);
+	const icon =
+		(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
+	const name =
+		(effect.params?.['name'] as string | undefined) ??
+		descriptor.label ??
+		'Passive';
+	return { icon, name };
+}
+
+function formatTriggerPrefix(duration: PassiveDurationMeta): string {
+	const phaseIcon = duration.icon ? `${duration.icon} ` : '';
+	return `On your ${phaseIcon}${duration.label} Phase`;
+}
+
 registerEffectFormatter('passive', 'add', {
 	summarize: (effect, context) => {
 		const inner = summarizeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
+		const { icon, name } = formatPassiveLabel(effect, context);
+		const passiveIcon = icon || '♾️';
 		if (!duration) {
 			return inner;
 		}
+		// Split into two entries:
+		// 1. "+♾️ - <icon> <name>" with child effects
+		// 2. "On your <phase icon> <Phase> Phase" with "-♾️ - <icon> <name>" removal
+		const addLabel = icon
+			? `+${passiveIcon} - ${icon} ${name}`
+			: `+${passiveIcon} - ${name}`;
+		const removeLabel = icon
+			? `-${passiveIcon} - ${icon} ${name}`
+			: `-${passiveIcon} - ${name}`;
+		const triggerTitle = formatTriggerPrefix(duration);
 		return [
-			{
-				title: `⏳ Until next ${formatDuration(duration)}`,
-				items: inner,
-			},
+			{ title: addLabel, items: inner },
+			{ title: triggerTitle, items: [removeLabel] },
 		];
 	},
 	describe: (effect, context) => {
-		const descriptor = selectPassiveDescriptor(context);
-		const icon =
-			(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
-		const name =
-			(effect.params?.['name'] as string | undefined) ??
-			descriptor.label ??
-			'Passive';
-		const prefix = icon ? `${icon} ` : '';
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
+		const { icon, name } = formatPassiveLabel(effect, context);
 		if (!duration) {
 			return inner;
 		}
-		const durationLabel = formatDuration(duration);
-		const durationTitle = `${prefix}${name} – Until your next ${durationLabel}`;
+		// Split into two entries:
+		// 1. "Gain ♾️ Passive - <icon> <name>" with child effects
+		// 2. "On your <Phase> Phase" with "Remove ♾️ Passive - ..."
+		const addLabel = icon
+			? `Gain ♾️ Passive - ${icon} ${name}`
+			: `Gain ♾️ Passive - ${name}`;
+		const removeLabel = icon
+			? `Remove ♾️ Passive - ${icon} ${name}`
+			: `Remove ♾️ Passive - ${name}`;
+		const triggerTitle = formatTriggerPrefix(duration);
 		return [
-			{
-				title: durationTitle,
-				items: inner,
-			},
+			{ title: addLabel, items: inner },
+			{ title: triggerTitle, items: [removeLabel] },
 		];
 	},
 	log: (effect, context) => {
