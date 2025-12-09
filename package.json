@@ -19,7 +19,7 @@
 		"prelint": "npm run ensure:dev-deps",
 		"lint": "run-s lint:deps lint:eslint",
 		"typecheck": "tsc -b --pretty false",
-		"postypecheck": "find packages -path '*/src/*.js' -type f -delete && find packages -path '*/src/*.d.ts' -type f -delete",
+		"posttypecheck": "find packages -path '*/src/*.js' -type f -delete && find packages -path '*/src/*.d.ts' -type f -delete",
 		"clean:dists": "node scripts/clean-dists.cjs",
 		"fix": "npm run lint:eslint -- --fix",
 		"format:check": "prettier --check --log-level warn .",
