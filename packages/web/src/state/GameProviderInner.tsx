@@ -1,10 +1,4 @@
-import React, {
-	createContext,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RegistryMetadataProvider } from '../contexts/RegistryMetadataContext';
 import TranslationContextLoading from './TranslationContextLoading';
 import { useTimeScale } from './useTimeScale';
@@ -32,6 +26,7 @@ import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import { selectSessionView } from './sessionSelectors';
 import type { SessionResourceKey } from './sessionTypes';
 import type { GameProviderInnerProps } from './GameProviderInner.types';
+import { GameEngineContext } from './GameEngineContext';
 import { useSessionQueue } from './useSessionQueue';
 import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { useManualSessionStart } from './useManualSessionStart';
@@ -41,10 +36,6 @@ import { useSessionHeartbeat } from './useSessionHeartbeat';
 import GameSessionLoadingScreen from '../components/game/GameSessionLoadingScreen';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
-
-export const GameEngineContext = createContext<GameEngineContextValue | null>(
-	null,
-);
 
 export function GameProviderInner({
 	children,

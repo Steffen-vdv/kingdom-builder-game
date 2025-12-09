@@ -7,10 +7,10 @@ import React, {
 	useState,
 } from 'react';
 import {
-	GameEngineContext,
 	GameProviderInner,
 	type GameProviderInnerProps,
 } from './GameProviderInner';
+import { GameEngineContext } from './GameEngineContext';
 import {
 	type SessionQueueHelpers,
 	type SessionQueueSeed,
