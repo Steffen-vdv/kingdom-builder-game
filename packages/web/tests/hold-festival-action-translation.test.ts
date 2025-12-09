@@ -20,20 +20,23 @@ describe('hold festival action translation', () => {
 		const summary = summarizeContent('action', festivalActionId, translation);
 		const details = getSyntheticFestivalDetails(scenario);
 		const modifierIcon = details.modifierInfo.icon ?? '✨';
-		const upkeepSummaryLabel = `${
-			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
-		}${details.upkeepLabel}`;
 		const fortSummarySubject = details.fortIcon || details.fortInfo.label;
 
-		// format adds space after icon for readability
+		// Passive effects split into two entries:
+		// 1. "+♾️: <icon> <name>" with child effects
+		// 2. "On your <phase icon> <Phase> Phase" with removal "-♾️: <icon> <name>"
 		expect(summary).toEqual([
 			`${details.happinessIcon} ${sign(details.happinessAmt)}${details.happinessAmt}`,
 			`${fortSummarySubject} ${sign(details.fortAmt)}${details.fortAmt}`,
 			{
-				title: `⏳ Until next ${upkeepSummaryLabel}`,
+				title: `+♾️: ${details.passiveIcon} ${details.passiveName}`,
 				items: [
 					`${modifierIcon}${details.raid.icon}: ${details.happinessIcon} ${sign(details.penaltyAmt)}${details.penaltyAmt}`,
 				],
+			},
+			{
+				title: `On your ${details.upkeepIcon} ${details.upkeepLabel} Phase`,
+				items: [`-♾️: ${details.passiveIcon} ${details.passiveName}`],
 			},
 		]);
 	});
@@ -48,18 +51,23 @@ describe('hold festival action translation', () => {
 		);
 		const details = getSyntheticFestivalDetails(scenario);
 		const modifierIcon = details.modifierInfo.icon ?? '✨';
-		const upkeepDescriptionLabel = `${
-			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
-		}${details.upkeepLabel}`;
 
-		// format adds space after icon for readability
+		// Passive effects split into two entries:
+		// 1. "Gain ♾️ Passive: <icon> <name>" with child effects
+		// 2. "On your <phase icon> <Phase> Phase" with "Remove ♾️ Passive: ..."
 		expect(description).toEqual([
 			`${details.happinessInfo.icon} ${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
 			`${details.fortInfo.icon || details.fortInfo.label} ${sign(details.fortAmt)}${details.fortAmt} ${details.fortInfo.label}`,
 			{
-				title: `${details.passiveIcon ? `${details.passiveIcon} ` : ''}${details.passiveName} – Until your next ${upkeepDescriptionLabel}`,
+				title: `Gain ♾️ Passive: ${details.passiveIcon} ${details.passiveName}`,
 				items: [
 					`${modifierIcon} Modifier on ${details.raid.icon} ${details.raid.name}: Whenever it resolves, ${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+				],
+			},
+			{
+				title: `On your ${details.upkeepIcon} ${details.upkeepLabel} Phase`,
+				items: [
+					`Remove ♾️ Passive: ${details.passiveIcon} ${details.passiveName}`,
 				],
 			},
 		]);

@@ -107,19 +107,29 @@ describe('passive formatter duration metadata', () => {
 			festivalPhase?.icon,
 		);
 
+		// New split format: add entry + remove entry under trigger
+		const passiveIcon = '✨';
+		const passiveName = 'Festival Spirit';
 		expect(summary).toEqual([
-			{ title: `⏳ Until next ${durationLabel}`, items: [] },
+			{ title: `+♾️: ${passiveIcon} ${passiveName}`, items: [] },
+			{
+				title: `On your ${festivalPhase?.icon} ${festivalPhase?.label} Phase`,
+				items: [`-♾️: ${passiveIcon} ${passiveName}`],
+			},
 		]);
 		expect(description).toEqual([
+			{ title: `Gain ♾️ Passive: ${passiveIcon} ${passiveName}`, items: [] },
 			{
-				title: `✨ Festival Spirit – Until your next ${durationLabel}`,
-				items: [],
+				title: `On your ${festivalPhase?.icon} ${festivalPhase?.label} Phase`,
+				items: [`Remove ♾️ Passive: ${passiveIcon} ${passiveName}`],
 			},
 		]);
 		expect(log).toEqual([
 			{
-				title: '♾️ ✨ Festival Spirit activated',
-				items: [`✨ Duration: Until player's next ${durationLabel}`],
+				title: `♾️ ${passiveIcon} ${passiveName} activated`,
+				items: [
+					`${passiveIcon} Duration: Until player's next ${durationLabel}`,
+				],
 			},
 		]);
 	});
@@ -152,13 +162,21 @@ describe('passive formatter duration metadata', () => {
 		const resolvedPhase = context.phases.find(
 			(phase) => phase.id === (growthPhase?.id ?? 'phase.growth'),
 		);
-		const durationLabel = formatDurationLabel(
-			resolvedPhase?.label,
-			resolvedPhase?.icon,
-		);
 
+		// New split format - passive uses descriptor defaults for icon/name
+		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
+		const passiveAsset = context.assets.passive ?? {};
+		const passiveIcon = passiveAsset.icon ?? '♾️';
+		const passiveName = passiveAsset.label ?? 'Passive';
+		const passiveDisplay = passiveIcon
+			? `${passiveIcon} ${passiveName}`
+			: passiveName;
 		expect(summary).toEqual([
-			{ title: `⏳ Until next ${durationLabel}`, items: [] },
+			{ title: `+♾️: ${passiveDisplay}`, items: [] },
+			{
+				title: `On your ${phaseLabel} Phase`,
+				items: [`-♾️: ${passiveDisplay}`],
+			},
 		]);
 	});
 
@@ -195,13 +213,21 @@ describe('passive formatter duration metadata', () => {
 
 		const summary = summarizeEffects([passive], context);
 		const resolvedPhase = context.phases.find((phase) => phase.id === growthId);
-		const durationLabel = formatDurationLabel(
-			resolvedPhase?.label,
-			resolvedPhase?.icon,
-		);
 
+		// New split format - passive uses descriptor defaults for icon/name
+		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
+		const passiveAsset = context.assets.passive ?? {};
+		const passiveIcon = passiveAsset.icon ?? '♾️';
+		const passiveName = passiveAsset.label ?? 'Passive';
+		const passiveDisplay = passiveIcon
+			? `${passiveIcon} ${passiveName}`
+			: passiveName;
 		expect(summary).toEqual([
-			{ title: `⏳ Until next ${durationLabel}`, items: [] },
+			{ title: `+♾️: ${passiveDisplay}`, items: [] },
+			{
+				title: `On your ${phaseLabel} Phase`,
+				items: [`-♾️: ${passiveDisplay}`],
+			},
 		]);
 	});
 
@@ -254,13 +280,21 @@ describe('passive formatter duration metadata', () => {
 		const resolvedPhase = context.phases.find(
 			(phase) => phase.id === upkeepPhaseId,
 		);
-		const durationLabel = formatDurationLabel(
-			resolvedPhase?.label,
-			resolvedPhase?.icon,
-		);
 
+		// New split format - passive uses descriptor defaults for icon/name
+		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
+		const passiveAsset = context.assets.passive ?? {};
+		const passiveIcon = passiveAsset.icon ?? '♾️';
+		const passiveName = passiveAsset.label ?? 'Passive';
+		const passiveDisplay = passiveIcon
+			? `${passiveIcon} ${passiveName}`
+			: passiveName;
 		expect(summary).toEqual([
-			{ title: `⏳ Until next ${durationLabel}`, items: [] },
+			{ title: `+♾️: ${passiveDisplay}`, items: [] },
+			{
+				title: `On your ${phaseLabel} Phase`,
+				items: [`-♾️: ${passiveDisplay}`],
+			},
 		]);
 	});
 });

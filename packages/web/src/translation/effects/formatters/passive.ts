@@ -207,19 +207,14 @@ registerEffectFormatter('passive', 'add', {
 		const inner = summarizeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
 		const { icon, name } = formatPassiveLabel(effect, context);
-		const passiveIcon = icon || '♾️';
 		if (!duration) {
 			return inner;
 		}
 		// Split into two entries:
-		// 1. "+♾️ - <icon> <name>" with child effects
-		// 2. "On your <phase icon> <Phase> Phase" with "-♾️ - <icon> <name>" removal
-		const addLabel = icon
-			? `+${passiveIcon} - ${icon} ${name}`
-			: `+${passiveIcon} - ${name}`;
-		const removeLabel = icon
-			? `-${passiveIcon} - ${icon} ${name}`
-			: `-${passiveIcon} - ${name}`;
+		// 1. "+♾️: <icon> <name>" with child effects
+		// 2. "On your <phase icon> <Phase> Phase" with "-♾️: <icon> <name>" removal
+		const addLabel = icon ? `+♾️: ${icon} ${name}` : `+♾️: ${name}`;
+		const removeLabel = icon ? `-♾️: ${icon} ${name}` : `-♾️: ${name}`;
 		const triggerTitle = formatTriggerPrefix(duration);
 		return [
 			{ title: addLabel, items: inner },
@@ -234,14 +229,14 @@ registerEffectFormatter('passive', 'add', {
 			return inner;
 		}
 		// Split into two entries:
-		// 1. "Gain ♾️ Passive - <icon> <name>" with child effects
-		// 2. "On your <Phase> Phase" with "Remove ♾️ Passive - ..."
+		// 1. "Gain ♾️ Passive: <icon> <name>" with child effects
+		// 2. "On your <Phase> Phase" with "Remove ♾️ Passive: ..."
 		const addLabel = icon
-			? `Gain ♾️ Passive - ${icon} ${name}`
-			: `Gain ♾️ Passive - ${name}`;
+			? `Gain ♾️ Passive: ${icon} ${name}`
+			: `Gain ♾️ Passive: ${name}`;
 		const removeLabel = icon
-			? `Remove ♾️ Passive - ${icon} ${name}`
-			: `Remove ♾️ Passive - ${name}`;
+			? `Remove ♾️ Passive: ${icon} ${name}`
+			: `Remove ♾️ Passive: ${name}`;
 		const triggerTitle = formatTriggerPrefix(duration);
 		return [
 			{ title: addLabel, items: inner },
