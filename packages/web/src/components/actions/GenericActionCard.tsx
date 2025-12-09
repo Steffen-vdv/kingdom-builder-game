@@ -24,6 +24,7 @@ import { normalizeActionFocus } from './types';
 import type { UseActionMetadataResult } from '../../state/useActionMetadata';
 import { getActionAvailability } from './getActionAvailability';
 import { resolveInstallationTarget } from './actionSummaryHelpers';
+import { isBuildingAlreadyOwned } from './buildingOwnershipCheck';
 
 interface GenericActionCardProps {
 	action: Action;
@@ -82,6 +83,13 @@ function GenericActionCard({
 			}),
 		[metadata, player, canInteract, summary],
 	);
+	const actionConfig = translationContext.actions.has(action.id)
+		? translationContext.actions.get(action.id)
+		: undefined;
+	const buildingAlreadyOwned = useMemo(
+		() => isBuildingAlreadyOwned(actionConfig, player.buildings),
+		[actionConfig, player.buildings],
+	);
 	const { costs, cleanup: cleanupCosts } = availability;
 	const costsLoading = metadata.loading.costs;
 	const requirementsLoading = metadata.loading.requirements;
@@ -101,7 +109,7 @@ function GenericActionCard({
 	const requirementIcons = getRequirementIcons(action.id, translationContext);
 	const groups = metadata.groups ?? [];
 	const groupsReady = !groupsLoading;
-	const baseEnabled = availability.performable;
+	const baseEnabled = availability.performable && !buildingAlreadyOwned;
 	const isPending = pending?.action.id === action.id;
 	let cardEnabled = baseEnabled && !pending;
 	if (isPending) {
@@ -111,17 +119,30 @@ function GenericActionCard({
 		? formatMissingResources(costs, player.values, selectResourceDescriptor)
 		: 'Loading costs…';
 	const requirementText = requirements.join(', ');
-	const title = !availability.implemented
-		? 'Not implemented yet'
-		: requirementsLoading
-			? 'Loading requirements…'
-			: costsLoading
-				? 'Loading costs…'
-				: !availability.meetsRequirements
-					? requirementText
-					: !availability.canPay
-						? (insufficientTooltip ?? 'Cannot pay costs')
-						: undefined;
+
+	const resolveTooltip = (): string | undefined => {
+		if (!availability.implemented) {
+			return 'Not implemented yet';
+		}
+		if (buildingAlreadyOwned) {
+			return 'Already built';
+		}
+		if (requirementsLoading) {
+			return 'Loading requirements…';
+		}
+		if (costsLoading) {
+			return 'Loading costs…';
+		}
+		if (!availability.meetsRequirements) {
+			return requirementText;
+		}
+		if (!availability.canPay) {
+			return insufficientTooltip ?? 'Cannot pay costs';
+		}
+		return undefined;
+	};
+	const title = resolveTooltip();
+
 	const hoverBackground =
 		'bg-gradient-to-br from-white/80 to-white/60 ' +
 		'dark:from-slate-900/80 dark:to-slate-900/60';
