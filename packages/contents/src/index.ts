@@ -4,14 +4,16 @@ export { ACTIONS, createActionRegistry, ActionId } from './actions';
 export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
-export { PHASES, PhaseId, PhaseStepId, PhaseTrigger } from './phases';
+export { PHASES, PhaseId, PhaseStepId } from './phases';
 export type { PhaseDef, StepDef } from './config/builders';
-export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue, PhaseTrigger as PhaseTriggerKey } from './phases';
+export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue } from './phases';
 export type { ActionCategoryConfig, ActionCategoryLayout } from './config/builders';
 export { PopulationRole, type PopulationRoleId } from './internal';
 export { Resource, type ResourceKey, type ResourceId, getResourceId } from './internal';
 export { Stat, type StatKey, type StatId, getStatResourceId } from './internal';
-export { TRIGGER_INFO } from './triggers';
+export { Trigger, TRIGGER_META, type TriggerId, type TriggerMeta } from './triggers';
+// Legacy exports for backwards compatibility
+export { ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP, ON_GAIN_AP_STEP } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
 export { UPKEEP_INFO, TRANSFER_INFO } from './assets';
 export { POPULATION_INFO, POPULATION_ARCHETYPE_INFO } from './population';
@@ -27,7 +29,7 @@ export type { BuildingDef } from './defs';
 export type { DevelopmentDef } from './developments';
 export type { PopulationDef, TriggerKey, Focus } from './defs';
 export type { ActionEffectGroupDef, ActionEffectGroupOptionDef } from './config/builders';
-export { ON_PAY_UPKEEP_STEP, ON_GAIN_INCOME_STEP, ON_GAIN_AP_STEP, BROOM_ICON, RESOURCE_TRANSFER_ICON } from './defs';
+export { BROOM_ICON, RESOURCE_TRANSFER_ICON } from './defs';
 export { formatPassiveRemoval } from './text';
 export {
 	resource,

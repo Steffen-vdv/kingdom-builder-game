@@ -17,11 +17,26 @@ import {
 } from './state/keybindings';
 import { useSoundEffectsContext } from './state/SoundEffectsContext';
 import { useAdvanceKeybind } from './state/useAdvanceKeybind';
+import { useVisitorCount } from './state/useVisitorCount';
 
 export const QUIT_CONFIRMATION_DESCRIPTION = [
 	'If you quit now, the current game will end, your progress will be lost,',
 	"and you won't be able to continue later. Are you sure you want to retreat?",
 ].join(' ');
+
+function VisitorCountSubtitle() {
+	const { totalVisitors, isLoading, error } = useVisitorCount();
+
+	if (isLoading || error || totalVisitors === null) {
+		return null;
+	}
+
+	return (
+		<p className="text-xs text-slate-500 dark:text-slate-400">
+			{totalVisitors.toLocaleString()} visitors in last 24h
+		</p>
+	);
+}
 
 export default function GameLayout() {
 	const {
@@ -217,16 +232,19 @@ export default function GameLayout() {
 
 			<div className="relative z-10 flex min-h-screen flex-col gap-8 px-4 py-8 sm:px-8 lg:px-12">
 				<div className="flex items-center justify-between rounded-3xl border border-white/50 bg-white/70 px-6 py-4 shadow-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-900/40 frosted-surface">
-					<h1>
-						<button
-							type="button"
-							onClick={handleTitleClick}
-							disabled={!onExit}
-							className="cursor-pointer rounded-md border-none bg-transparent p-0 text-left text-2xl font-bold tracking-tight text-slate-900 transition hover:text-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-default disabled:opacity-100 sm:text-3xl dark:text-slate-100 dark:hover:text-slate-100/80"
-						>
-							Kingdom Builder
-						</button>
-					</h1>
+					<div>
+						<h1>
+							<button
+								type="button"
+								onClick={handleTitleClick}
+								disabled={!onExit}
+								className="cursor-pointer rounded-md border-none bg-transparent p-0 text-left text-2xl font-bold tracking-tight text-slate-900 transition hover:text-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-default disabled:opacity-100 sm:text-3xl dark:text-slate-100 dark:hover:text-slate-100/80"
+							>
+								Kingdom Builder
+							</button>
+						</h1>
+						<VisitorCountSubtitle />
+					</div>
 					{onExit && (
 						<div className="ml-4 flex items-center gap-3">
 							{logButton}

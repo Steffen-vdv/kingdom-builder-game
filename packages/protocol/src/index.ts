@@ -1,6 +1,7 @@
 export * as session from './session';
 export * as actions from './actions';
 export * as resource from './resource';
+export * as visitors from './visitors';
 
 export type {
 	ResourceBoundReference,
@@ -265,3 +266,8 @@ export {
 	actionExecuteErrorResponseSchema,
 	actionExecuteResponseSchema,
 } from './config/action_contracts';
+export type { HourlyVisitorStats, VisitorStatsResponse } from './visitors';
+export {
+	hourlyVisitorStatsSchema,
+	visitorStatsResponseSchema,
+} from './visitors';

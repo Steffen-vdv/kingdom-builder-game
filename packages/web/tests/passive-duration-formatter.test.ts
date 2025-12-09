@@ -107,19 +107,29 @@ describe('passive formatter duration metadata', () => {
 			festivalPhase?.icon,
 		);
 
+		// New split format: add entry + remove entry under trigger
+		const passiveIcon = '✨';
+		const passiveName = 'Festival Spirit';
 		expect(summary).toEqual([
-			{ title: `⏳ Until next ${durationLabel}`, items: [] },
+			{ title: `+♾️: ${passiveIcon} ${passiveName}`, items: [] },
+			{
+				title: `On your ${festivalPhase?.icon} ${festivalPhase?.label} Phase`,
+				items: [`-♾️: ${passiveIcon} ${passiveName}`],
+			},
 		]);
 		expect(description).toEqual([
+			{ title: `Gain ♾️ Passive: ${passiveIcon} ${passiveName}`, items: [] },
 			{
-				title: `✨ Festival Spirit – Until your next ${durationLabel}`,
-				items: [],
+				title: `On your ${festivalPhase?.icon} ${festivalPhase?.label} Phase`,
+				items: [`Remove ♾️ Passive: ${passiveIcon} ${passiveName}`],
 			},
 		]);
 		expect(log).toEqual([
 			{
-				title: '♾️ ✨ Festival Spirit activated',
-				items: [`✨ Duration: Until player's next ${durationLabel}`],
+				title: `♾️ ${passiveIcon} ${passiveName} activated`,
+				items: [
+					`${passiveIcon} Duration: Until player's next ${durationLabel}`,
+				],
 			},
 		]);
 	});
@@ -152,13 +162,15 @@ describe('passive formatter duration metadata', () => {
 		const resolvedPhase = context.phases.find(
 			(phase) => phase.id === (growthPhase?.id ?? 'phase.growth'),
 		);
-		const durationLabel = formatDurationLabel(
-			resolvedPhase?.label,
-			resolvedPhase?.icon,
-		);
 
+		// Missing icon/name shows error indicators - no silent fallbacks
+		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
 		expect(summary).toEqual([
-			{ title: `⏳ Until next ${durationLabel}`, items: [] },
+			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
+			{
+				title: `On your ${phaseLabel} Phase`,
+				items: ['-♾️: ❓ ⚠️ MISSING'],
+			},
 		]);
 	});
 
@@ -195,13 +207,15 @@ describe('passive formatter duration metadata', () => {
 
 		const summary = summarizeEffects([passive], context);
 		const resolvedPhase = context.phases.find((phase) => phase.id === growthId);
-		const durationLabel = formatDurationLabel(
-			resolvedPhase?.label,
-			resolvedPhase?.icon,
-		);
 
+		// Missing icon/name shows error indicators - no silent fallbacks
+		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
 		expect(summary).toEqual([
-			{ title: `⏳ Until next ${durationLabel}`, items: [] },
+			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
+			{
+				title: `On your ${phaseLabel} Phase`,
+				items: ['-♾️: ❓ ⚠️ MISSING'],
+			},
 		]);
 	});
 
@@ -216,7 +230,7 @@ describe('passive formatter duration metadata', () => {
 					steps: [
 						{
 							id: 'custom:upkeep',
-							triggers: ['onUpkeepPhase'],
+							triggers: ['onPayUpkeepStep'],
 						},
 					],
 				},
@@ -232,7 +246,7 @@ describe('passive formatter duration metadata', () => {
 				};
 				metadata.triggers = {
 					...metadata.triggers,
-					onUpkeepPhase: {
+					onPayUpkeepStep: {
 						past: 'Upkeep',
 						future: 'During Upkeep',
 						icon: '🛏️',
@@ -245,7 +259,7 @@ describe('passive formatter duration metadata', () => {
 			method: 'add',
 			params: {
 				id: 'synthetic:passive:trigger-upkeep',
-				onUpkeepPhase: [],
+				onPayUpkeepStep: [],
 			},
 			effects: [],
 		};
@@ -254,13 +268,54 @@ describe('passive formatter duration metadata', () => {
 		const resolvedPhase = context.phases.find(
 			(phase) => phase.id === upkeepPhaseId,
 		);
-		const durationLabel = formatDurationLabel(
-			resolvedPhase?.label,
-			resolvedPhase?.icon,
+
+		// Missing icon/name shows error indicators - no silent fallbacks
+		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
+		expect(summary).toEqual([
+			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
+			{
+				title: `On your ${phaseLabel} Phase`,
+				items: ['-♾️: ❓ ⚠️ MISSING'],
+			},
+		]);
+	});
+
+	it('shows error indicators when passive is missing icon/name in content', () => {
+		const scaffold = createTestSessionScaffold();
+		const context = createFormatterContext({ phases: scaffold.phases });
+
+		// Passive with NO icon/name defined - simulates content bug
+		const passiveWithoutMetadata: EffectDef = {
+			type: 'passive',
+			method: 'add',
+			params: {
+				id: 'synthetic:passive:no-metadata',
+				durationPhaseId: scaffold.phases[0]?.id,
+			},
+			effects: [],
+		};
+
+		const summary = summarizeEffects([passiveWithoutMetadata], context);
+		const description = describeEffects([passiveWithoutMetadata], context);
+		const log = logEffects([passiveWithoutMetadata], context);
+
+		// Summary shows error indicators
+		expect((summary[0] as { title: string }).title).toBe('+♾️: ❓ ⚠️ MISSING');
+		expect((summary[1] as { items: string[] }).items[0]).toBe(
+			'-♾️: ❓ ⚠️ MISSING',
 		);
 
-		expect(summary).toEqual([
-			{ title: `⏳ Until next ${durationLabel}`, items: [] },
-		]);
+		// Description shows error indicators
+		expect((description[0] as { title: string }).title).toBe(
+			'Gain ♾️ Passive: ❓ ⚠️ MISSING',
+		);
+		expect((description[1] as { items: string[] }).items[0]).toBe(
+			'Remove ♾️ Passive: ❓ ⚠️ MISSING',
+		);
+
+		// Log shows error indicators
+		expect((log[0] as { title: string }).title).toBe(
+			'♾️ ❓ ⚠️ MISSING activated',
+		);
 	});
 });

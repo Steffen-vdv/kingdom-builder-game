@@ -5,7 +5,6 @@ import {
 } from '../factory';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import type { TranslationContext, TranslationPhase } from '../../context';
-import { selectPassiveDescriptor } from '../registrySelectors';
 
 type PassiveDurationMeta = {
 	label: string;
@@ -57,8 +56,6 @@ function resolvePhaseMeta(
 	return toPhaseInfo(match);
 }
 
-const PHASE_TRIGGER_KEY_PATTERN = /^on[A-Z][A-Za-z0-9]*Phase$/;
-
 function humanizePhaseId(id: string): string {
 	const slug = id.split(':').pop() ?? id;
 	return slug
@@ -91,12 +88,20 @@ function resolvePhaseByTrigger(
 	return undefined;
 }
 
-function collectPhaseTriggerKeys(params: Record<string, unknown>) {
+/**
+ * Find param keys that are known trigger IDs by checking against
+ * the trigger metadata map from the translation context.
+ */
+function collectTriggerKeys(
+	params: Record<string, unknown>,
+	context: TranslationContext,
+): string[] {
+	const triggerMap = context.assets.triggers;
 	return Object.keys(params).filter((key) => {
-		if (!PHASE_TRIGGER_KEY_PATTERN.test(key)) {
+		if (params[key] === undefined) {
 			return false;
 		}
-		return params[key] !== undefined;
+		return key in triggerMap;
 	});
 }
 
@@ -127,7 +132,7 @@ function resolveDurationMeta(
 
 	let resolvedPhase = resolvePhaseMeta(context, durationPhaseId);
 
-	const triggerKeys = collectPhaseTriggerKeys(params);
+	const triggerKeys = collectTriggerKeys(params, context);
 	if (!resolvedPhase) {
 		for (const triggerId of triggerKeys) {
 			const phase = resolvePhaseByTrigger(context, triggerId);
@@ -177,68 +182,89 @@ function formatDuration(metadata: PassiveDurationMeta) {
 	return `${icon}${metadata.label}`;
 }
 
+/**
+ * Missing passive icon/name indicator.
+ * When content doesn't provide icon/name, show this instead of silent fallback.
+ */
+const MISSING_PASSIVE_ICON = '❓';
+const MISSING_PASSIVE_NAME = '⚠️ MISSING';
+
+function formatPassiveLabel(
+	effect: EffectDef<Record<string, unknown>>,
+	context: TranslationContext,
+): { icon: string; name: string } {
+	const icon =
+		(effect.params?.['icon'] as string | undefined) ?? MISSING_PASSIVE_ICON;
+	const name =
+		(effect.params?.['name'] as string | undefined) ?? MISSING_PASSIVE_NAME;
+	// We explicitly do NOT fall back to descriptor - passives MUST define
+	// their own icon/name in content. Missing values = content bug, not UI bug.
+	void context; // Keep param for future use, avoid unused warning
+	return { icon, name };
+}
+
+function formatTriggerPrefix(duration: PassiveDurationMeta): string {
+	const phaseIcon = duration.icon ? `${duration.icon} ` : '';
+	return `On your ${phaseIcon}${duration.label} Phase`;
+}
+
 registerEffectFormatter('passive', 'add', {
 	summarize: (effect, context) => {
 		const inner = summarizeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
+		const { icon, name } = formatPassiveLabel(effect, context);
 		if (!duration) {
 			return inner;
 		}
+		// Split into two entries:
+		// 1. "+♾️: <icon> <name>" with child effects
+		// 2. "On your <phase icon> <Phase> Phase" with "-♾️: <icon> <name>" removal
+		const addLabel = icon ? `+♾️: ${icon} ${name}` : `+♾️: ${name}`;
+		const removeLabel = icon ? `-♾️: ${icon} ${name}` : `-♾️: ${name}`;
+		const triggerTitle = formatTriggerPrefix(duration);
 		return [
-			{
-				title: `⏳ Until next ${formatDuration(duration)}`,
-				items: inner,
-			},
+			{ title: addLabel, items: inner },
+			{ title: triggerTitle, items: [removeLabel] },
 		];
 	},
 	describe: (effect, context) => {
-		const descriptor = selectPassiveDescriptor(context);
-		const icon =
-			(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
-		const name =
-			(effect.params?.['name'] as string | undefined) ??
-			descriptor.label ??
-			'Passive';
-		const prefix = icon ? `${icon} ` : '';
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
+		const { icon, name } = formatPassiveLabel(effect, context);
 		if (!duration) {
 			return inner;
 		}
-		const durationLabel = formatDuration(duration);
-		const durationTitle = `${prefix}${name} – Until your next ${durationLabel}`;
+		// Split into two entries:
+		// 1. "Gain ♾️ Passive: <icon> <name>" with child effects
+		// 2. "On your <Phase> Phase" with "Remove ♾️ Passive: ..."
+		const addLabel = icon
+			? `Gain ♾️ Passive: ${icon} ${name}`
+			: `Gain ♾️ Passive: ${name}`;
+		const removeLabel = icon
+			? `Remove ♾️ Passive: ${icon} ${name}`
+			: `Remove ♾️ Passive: ${name}`;
+		const triggerTitle = formatTriggerPrefix(duration);
 		return [
-			{
-				title: durationTitle,
-				items: inner,
-			},
+			{ title: addLabel, items: inner },
+			{ title: triggerTitle, items: [removeLabel] },
 		];
 	},
 	log: (effect, context) => {
-		const descriptor = selectPassiveDescriptor(context);
 		const icon =
-			(effect.params?.['icon'] as string | undefined) ?? descriptor.icon ?? '';
+			(effect.params?.['icon'] as string | undefined) ?? MISSING_PASSIVE_ICON;
 		const name =
-			(effect.params?.['name'] as string | undefined) ??
-			descriptor.label ??
-			'Passive';
-		const prefix = icon ? `${icon} ` : '';
-		const label = `${prefix}${name}`.trim();
-		const activationLabel = label.length
-			? `♾️ ${label} activated`
-			: '♾️ Passive activated';
+			(effect.params?.['name'] as string | undefined) ?? MISSING_PASSIVE_NAME;
+		// No fallback to descriptor - passives MUST define icon/name in content
+		void context;
+		const label = `${icon} ${name}`;
+		const activationLabel = `♾️ ${label} activated`;
 		const inner = describeEffects(effect.effects || [], context);
 		const duration = resolveDurationMeta(effect, context);
 		const items = [...inner];
 		if (duration) {
 			const durationLabel = formatDuration(duration);
-			const durationPrefix = icon ? `${icon} ` : '';
-			const durationDescription =
-				`${durationPrefix}Duration: Until player's next ${durationLabel}`.trim();
+			const durationDescription = `${icon} Duration: Until player's next ${durationLabel}`;
 			items.push(durationDescription);
-		}
-		if (!label) {
-			return items;
 		}
 		if (items.length === 0) {
 			return activationLabel;

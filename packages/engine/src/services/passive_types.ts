@@ -41,8 +41,7 @@ export type PassiveMetadata = {
 
 export type PassiveRecord = PassiveSummary & {
 	effects?: EffectDef[];
-	onGrowthPhase?: EffectDef[];
-	onUpkeepPhase?: EffectDef[];
+	onPayUpkeepStep?: EffectDef[];
 	onBeforeAttacked?: EffectDef[];
 	onAttackResolved?: EffectDef[];
 	owner: PlayerId;

@@ -1,5 +1,3 @@
-import type { TriggerKey } from './defs';
-
 export const PhaseId = {
 	Growth: 'growth',
 	Upkeep: 'upkeep',
@@ -9,7 +7,6 @@ export const PhaseId = {
 export type PhaseId = (typeof PhaseId)[keyof typeof PhaseId];
 
 export const PhaseStepId = {
-	ResolveDynamicTriggers: 'resolve-dynamic-triggers',
 	GainIncome: 'gain-income',
 	GainActionPoints: 'gain-ap',
 	RaiseStrength: 'raise-strength',
@@ -19,10 +16,3 @@ export const PhaseStepId = {
 } as const;
 
 export type PhaseStepId = (typeof PhaseStepId)[keyof typeof PhaseStepId];
-
-export const PhaseTrigger = {
-	OnGrowthPhase: 'onGrowthPhase',
-	OnUpkeepPhase: 'onUpkeepPhase',
-} as const satisfies Record<string, TriggerKey>;
-
-export type PhaseTrigger = (typeof PhaseTrigger)[keyof typeof PhaseTrigger];

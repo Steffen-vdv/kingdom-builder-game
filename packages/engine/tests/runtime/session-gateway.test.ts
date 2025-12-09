@@ -215,9 +215,9 @@ describe('createLocalSessionGateway', () => {
 		advanced.advance.player.values[RESOURCE_GOLD] = 45;
 		advanced.snapshot.game.players[0]!.values[RESOURCE_GOLD] = 64;
 		const refreshed = await gateway.fetchSnapshot({ sessionId });
-		// Player starts with 10 gold; first advance only processes step 1
-		// of Growth (ResolveDynamicTriggers), not GainIncome where farm fires
-		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(10);
+		// Player starts with 10 gold; first advance processes GainIncome step
+		// where farm fires adding 2 gold (10 + 2 = 12)
+		expect(refreshed.snapshot.game.players[0]?.values[RESOURCE_GOLD]).toBe(12);
 	});
 
 	it('sets developer mode without leaking snapshot references', async () => {

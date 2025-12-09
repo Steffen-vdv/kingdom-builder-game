@@ -509,7 +509,7 @@
 						"id": "hold_festival_penalty",
 						"name": "Festival Hangover",
 						"icon": "🤮",
-						"onUpkeepPhase": [
+						"onPayUpkeepStep": [
 							{
 								"type": "passive",
 								"method": "remove",
@@ -600,7 +600,7 @@
 					"method": "add",
 					"params": {
 						"id": "plow_cost_mod",
-						"onUpkeepPhase": [
+						"onPayUpkeepStep": [
 							{
 								"type": "passive",
 								"method": "remove",

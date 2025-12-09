@@ -32,8 +32,9 @@ type PassivePayload = {
 	detail?: string | undefined;
 	meta?: PassiveMetadata | undefined;
 	effects?: PassiveRecord['effects'];
-	onGrowthPhase?: PassiveRecord['onGrowthPhase'];
-	onUpkeepPhase?: PassiveRecord['onUpkeepPhase'];
+	onPayUpkeepStep?: PassiveRecord['onPayUpkeepStep'];
+	onGainIncomeStep?: PassiveRecord['onGainIncomeStep'];
+	onGainAPStep?: PassiveRecord['onGainAPStep'];
 	onBeforeAttacked?: PassiveRecord['onBeforeAttacked'];
 	onAttackResolved?: PassiveRecord['onAttackResolved'];
 	skip?: PhaseSkipConfig;

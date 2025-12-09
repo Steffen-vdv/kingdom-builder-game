@@ -192,7 +192,7 @@ export default function PassiveDisplay({
 				const items = tierSections
 					? tierSections
 					: describeEffects(resolvedEffects, translationContext);
-				const sections = definition.onUpkeepPhase
+				const sections = definition.onPayUpkeepStep
 					? [
 							{
 								title: `Until your next ${upkeepLabel} Phase`,

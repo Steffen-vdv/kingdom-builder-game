@@ -118,8 +118,9 @@ interface PassiveRecordOptions {
 	detail?: string;
 	meta?: SessionPassiveRecordSnapshot['meta'];
 	effects?: EffectDef[];
-	onGrowthPhase?: EffectDef[];
-	onUpkeepPhase?: EffectDef[];
+	onPayUpkeepStep?: EffectDef[];
+	onGainIncomeStep?: EffectDef[];
+	onGainAPStep?: EffectDef[];
 	onBeforeAttacked?: EffectDef[];
 	onAttackResolved?: EffectDef[];
 }
@@ -138,8 +139,9 @@ export function createPassiveRecord({
 	detail,
 	meta,
 	effects,
-	onGrowthPhase,
-	onUpkeepPhase,
+	onPayUpkeepStep,
+	onGainIncomeStep,
+	onGainAPStep,
 	onBeforeAttacked,
 	onAttackResolved,
 }: PassiveRecordOptions): SessionPassiveRecordSnapshot {
@@ -162,11 +164,14 @@ export function createPassiveRecord({
 	if (effects) {
 		record.effects = cloneEffects(effects);
 	}
-	if (onGrowthPhase) {
-		record.onGrowthPhase = cloneEffects(onGrowthPhase);
+	if (onPayUpkeepStep) {
+		record.onPayUpkeepStep = cloneEffects(onPayUpkeepStep);
 	}
-	if (onUpkeepPhase) {
-		record.onUpkeepPhase = cloneEffects(onUpkeepPhase);
+	if (onGainIncomeStep) {
+		record.onGainIncomeStep = cloneEffects(onGainIncomeStep);
+	}
+	if (onGainAPStep) {
+		record.onGainAPStep = cloneEffects(onGainAPStep);
 	}
 	if (onBeforeAttacked) {
 		record.onBeforeAttacked = cloneEffects(onBeforeAttacked);

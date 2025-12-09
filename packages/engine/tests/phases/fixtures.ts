@@ -1,7 +1,7 @@
 import { createEngine } from '../../src/index.ts';
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services/index.ts';
-import { PhaseTrigger, RULES } from '@kingdom-builder/contents';
+import { RULES } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import {
 	resourceKeys,
@@ -18,10 +18,9 @@ const phaseIds = {
 } as const;
 
 const stepIds = {
-	growthTriggers: 'synthetic:step:growth:triggers',
+	raiseStrength: 'synthetic:step:growth:raise-strength',
 	gainIncome: 'synthetic:step:growth:gain-income',
 	gainAp: 'synthetic:step:growth:gain-ap',
-	upkeepTriggers: 'synthetic:step:upkeep:triggers',
 	payUpkeep: 'synthetic:step:upkeep:pay',
 	warRecovery: 'synthetic:step:upkeep:war-recovery',
 	main: 'synthetic:step:main',
@@ -58,57 +57,6 @@ export function createPhaseTestEnvironment() {
 		{
 			id: phaseIds.growth,
 			steps: [
-				{
-					id: stepIds.growthTriggers,
-					triggers: [PhaseTrigger.OnGrowthPhase],
-					// Legion and Fortifier stat growth - use resource evaluators
-					effects: [
-						// Legion grants army strength growth
-						{
-							evaluator: {
-								type: 'resource',
-								params: { resourceId: populationKeys.legion },
-							},
-							effects: [
-								{
-									type: 'resource',
-									method: 'add',
-									params: {
-										resourceId: statKeys.army,
-										change: {
-											type: 'percentFromResource',
-											sourceResourceId: statKeys.growth,
-											roundingMode: 'up',
-											additive: true,
-										},
-									},
-								},
-							],
-						},
-						// Fortifier grants fort strength growth
-						{
-							evaluator: {
-								type: 'resource',
-								params: { resourceId: populationKeys.fortifier },
-							},
-							effects: [
-								{
-									type: 'resource',
-									method: 'add',
-									params: {
-										resourceId: statKeys.fort,
-										change: {
-											type: 'percentFromResource',
-											sourceResourceId: statKeys.growth,
-											roundingMode: 'up',
-											additive: true,
-										},
-									},
-								},
-							],
-						},
-					],
-				},
 				{ id: stepIds.gainIncome, triggers: ['onGainIncomeStep'] },
 				{
 					id: stepIds.gainAp,
@@ -132,15 +80,59 @@ export function createPhaseTestEnvironment() {
 						},
 					],
 				},
+				{
+					id: stepIds.raiseStrength,
+					// Legion raises army strength, Fortifier raises fortification
+					effects: [
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.legion },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'add',
+									params: {
+										resourceId: statKeys.army,
+										change: {
+											type: 'percentFromResource',
+											sourceResourceId: statKeys.growth,
+											roundingMode: 'up',
+											additive: true,
+										},
+									},
+								},
+							],
+						},
+						{
+							evaluator: {
+								type: 'resource',
+								params: { resourceId: populationKeys.fortifier },
+							},
+							effects: [
+								{
+									type: 'resource',
+									method: 'add',
+									params: {
+										resourceId: statKeys.fort,
+										change: {
+											type: 'percentFromResource',
+											sourceResourceId: statKeys.growth,
+											roundingMode: 'up',
+											additive: true,
+										},
+									},
+								},
+							],
+						},
+					],
+				},
 			],
 		},
 		{
 			id: phaseIds.upkeep,
 			steps: [
-				{
-					id: stepIds.upkeepTriggers,
-					triggers: [PhaseTrigger.OnUpkeepPhase],
-				},
 				{
 					id: stepIds.payUpkeep,
 					// Population upkeep - use resource evaluators

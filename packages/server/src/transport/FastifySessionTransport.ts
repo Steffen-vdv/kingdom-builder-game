@@ -3,22 +3,70 @@ import type {
 	FastifyReply,
 	FastifyRequest,
 } from 'fastify';
-import { sessionIdSchema } from '@kingdom-builder/protocol';
+import {
+	sessionIdSchema,
+	visitorStatsResponseSchema,
+} from '@kingdom-builder/protocol';
+import type { VisitorStatsResponse } from '@kingdom-builder/protocol';
 import { SessionTransport } from './SessionTransport.js';
 import type { SessionTransportOptions } from './SessionTransport.js';
 import { TransportError } from './TransportTypes.js';
 import type { TransportErrorCode } from './TransportTypes.js';
+import type { VisitorTracker } from '../visitors/VisitorTracker.js';
 
-export type FastifySessionTransportOptions = SessionTransportOptions;
+// prettier-ignore
+export interface FastifySessionTransportOptions
+	extends SessionTransportOptions {
+	/**
+	 * Visitor tracker for recording and reporting visitor stats.
+	 */
+	visitorTracker: VisitorTracker;
+}
 
 interface MetadataQuerystring {
 	sessionId?: string;
+}
+
+interface VisitorQuerystring {
+	breakdown?: string;
 }
 
 export const createSessionTransportPlugin: FastifyPluginCallback<
 	FastifySessionTransportOptions
 > = (fastify, options, done) => {
 	const transport = new SessionTransport(options);
+	const { visitorTracker } = options;
+
+	// Track visitors on each request
+	fastify.addHook('onRequest', (request, _reply, hookDone) => {
+		const clientIp = extractClientIp(request);
+		if (clientIp) {
+			visitorTracker.recordVisitor(clientIp);
+		}
+		hookDone();
+	});
+
+	// Visitor stats endpoint (requires auth)
+	fastify.get<{ Querystring: VisitorQuerystring }>(
+		'/visitors',
+		async (request, reply) => {
+			try {
+				transport.requireAuthorizationPublic(request, 'session:advance');
+				const includeBreakdown = request.query.breakdown === 'true';
+				const stats = visitorTracker.get24hStats();
+				const response: VisitorStatsResponse = {
+					totalVisitors: stats.totalVisitors,
+					hoursIncluded: stats.hoursIncluded,
+					...(includeBreakdown
+						? { hourlyBreakdown: stats.hourlyBreakdown }
+						: {}),
+				};
+				return reply.send(visitorStatsResponseSchema.parse(response));
+			} catch (error) {
+				return handleTransportError(reply, error);
+			}
+		},
+	);
 
 	fastify.get('/runtime-config', async (_request, reply) => {
 		try {
@@ -306,4 +354,22 @@ function statusFromErrorCode(code: TransportErrorCode): number {
 		default:
 			return 500;
 	}
+}
+
+/**
+ * Extracts the client IP address from a Fastify request.
+ * Handles X-Forwarded-For header for proxied requests.
+ */
+function extractClientIp(request: FastifyRequest): string | undefined {
+	// Check X-Forwarded-For header first (for reverse proxies)
+	const forwardedFor = request.headers['x-forwarded-for'];
+	if (typeof forwardedFor === 'string') {
+		// X-Forwarded-For can contain multiple IPs, take the first (client)
+		const firstIp = forwardedFor.split(',')[0]?.trim();
+		if (firstIp) {
+			return firstIp;
+		}
+	}
+	// Fall back to direct connection IP
+	return request.ip;
 }

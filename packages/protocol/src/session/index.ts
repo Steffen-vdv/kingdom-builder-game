@@ -200,8 +200,7 @@ export interface SimulateUpcomingPhasesResult {
 
 export interface SessionPassiveRecordSnapshot extends SessionPassiveSummary {
 	effects?: EffectDef[];
-	onGrowthPhase?: EffectDef[];
-	onUpkeepPhase?: EffectDef[];
+	onPayUpkeepStep?: EffectDef[];
 	onBeforeAttacked?: EffectDef[];
 	onAttackResolved?: EffectDef[];
 	owner: SessionPlayerId;
