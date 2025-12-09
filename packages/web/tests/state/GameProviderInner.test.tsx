@@ -6,10 +6,8 @@ import '@testing-library/jest-dom/vitest';
 import type { SessionSnapshot } from '@kingdom-builder/protocol/session';
 import type { ActionResolution } from '../../src/state/useActionResolution';
 import type { PhaseProgressState } from '../../src/state/usePhaseProgress';
-import {
-	GameProviderInner,
-	GameEngineContext,
-} from '../../src/state/GameProviderInner';
+import { GameProviderInner } from '../../src/state/GameProviderInner';
+import { GameEngineContext } from '../../src/state/GameEngineContext';
 import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
