@@ -45,9 +45,18 @@ export function isFatalSessionError(error: unknown): boolean {
 }
 
 /**
+ * Pattern matching the server's session-not-found message format:
+ * `Session "${sessionId}" was not found.`
+ *
+ * This is distinct from other NOT_FOUND errors like action-not-found which
+ * use different message formats (e.g., `Action "x" was not found in session`).
+ */
+const SESSION_NOT_FOUND_PATTERN = /^Session "[^"]+" was not found\.$/;
+
+/**
  * Checks if an error indicates the session has expired (server returned 404
- * with NOT_FOUND code). This happens when the user is idle for too long and
- * the server purges the session.
+ * with NOT_FOUND code and session-specific message). This happens when the
+ * user is idle for too long and the server purges the session.
  */
 export function isSessionExpiredError(error: unknown): boolean {
 	if (!(error instanceof GameApiError)) {
@@ -60,8 +69,14 @@ export function isSessionExpiredError(error: unknown): boolean {
 	if (body === null || typeof body !== 'object') {
 		return false;
 	}
-	const { code } = body as { code?: unknown };
-	return code === 'NOT_FOUND';
+	const record = body as { code?: unknown; message?: unknown };
+	if (record.code !== 'NOT_FOUND') {
+		return false;
+	}
+	if (typeof record.message !== 'string') {
+		return false;
+	}
+	return SESSION_NOT_FOUND_PATTERN.test(record.message);
 }
 
 export function markSessionExpired(error: unknown): void {

@@ -10,18 +10,27 @@ import {
 
 describe('sessionErrors', () => {
 	describe('isSessionExpiredError', () => {
-		it('returns true for GameApiError with 404 status and NOT_FOUND code', () => {
+		it('returns true for session-not-found error with exact message pattern', () => {
 			const error = new GameApiError('Session not found', 404, 'Not Found', {
 				code: 'NOT_FOUND',
-				message: 'Session "abc" was not found.',
+				message: 'Session "abc-123" was not found.',
 			});
 			expect(isSessionExpiredError(error)).toBe(true);
 		});
 
-		it('returns false for GameApiError with 404 but different code', () => {
+		it('returns false for action-not-found with NOT_FOUND code', () => {
+			// Server uses same NOT_FOUND code for actions, but different message
 			const error = new GameApiError('Action not found', 404, 'Not Found', {
-				code: 'ACTION_NOT_FOUND',
-				message: 'Action was not found.',
+				code: 'NOT_FOUND',
+				message: 'Action "some-action" was not found in session "abc".',
+			});
+			expect(isSessionExpiredError(error)).toBe(false);
+		});
+
+		it('returns false for other NOT_FOUND errors with different message', () => {
+			const error = new GameApiError('Resource not found', 404, 'Not Found', {
+				code: 'NOT_FOUND',
+				message: 'Resource "xyz" was not found.',
 			});
 			expect(isSessionExpiredError(error)).toBe(false);
 		});
@@ -31,7 +40,10 @@ describe('sessionErrors', () => {
 				'Server error',
 				500,
 				'Internal Server Error',
-				{ code: 'NOT_FOUND', message: 'Something not found.' },
+				{
+					code: 'NOT_FOUND',
+					message: 'Session "abc" was not found.',
+				},
 			);
 			expect(isSessionExpiredError(error)).toBe(false);
 		});
@@ -58,6 +70,13 @@ describe('sessionErrors', () => {
 				'Not Found',
 				'string body',
 			);
+			expect(isSessionExpiredError(error)).toBe(false);
+		});
+
+		it('returns false when message is missing', () => {
+			const error = new GameApiError('Session not found', 404, 'Not Found', {
+				code: 'NOT_FOUND',
+			});
 			expect(isSessionExpiredError(error)).toBe(false);
 		});
 	});
