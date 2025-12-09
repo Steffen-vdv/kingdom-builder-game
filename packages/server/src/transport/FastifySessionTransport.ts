@@ -18,10 +18,9 @@ import type { VisitorTracker } from '../visitors/VisitorTracker.js';
 export interface FastifySessionTransportOptions
 	extends SessionTransportOptions {
 	/**
-	 * Optional visitor tracker for recording and reporting visitor stats.
-	 * When provided, enables the /visitors endpoint and IP tracking.
+	 * Visitor tracker for recording and reporting visitor stats.
 	 */
-	visitorTracker?: VisitorTracker;
+	visitorTracker: VisitorTracker;
 }
 
 interface MetadataQuerystring {
@@ -38,28 +37,20 @@ export const createSessionTransportPlugin: FastifyPluginCallback<
 	const transport = new SessionTransport(options);
 	const { visitorTracker } = options;
 
-	// Track visitors on each request if visitor tracker is configured
-	if (visitorTracker) {
-		fastify.addHook('onRequest', (request, _reply, hookDone) => {
-			const clientIp = extractClientIp(request);
-			if (clientIp) {
-				visitorTracker.recordVisitor(clientIp);
-			}
-			hookDone();
-		});
-	}
+	// Track visitors on each request
+	fastify.addHook('onRequest', (request, _reply, hookDone) => {
+		const clientIp = extractClientIp(request);
+		if (clientIp) {
+			visitorTracker.recordVisitor(clientIp);
+		}
+		hookDone();
+	});
 
 	// Visitor stats endpoint (requires auth)
 	fastify.get<{ Querystring: VisitorQuerystring }>(
 		'/visitors',
 		async (request, reply) => {
 			try {
-				if (!visitorTracker) {
-					throw new TransportError(
-						'NOT_FOUND',
-						'Visitor tracking is not enabled.',
-					);
-				}
 				transport.requireAuthorizationPublic(request, 'session:advance');
 				const includeBreakdown = request.query.breakdown === 'true';
 				const stats = visitorTracker.get24hStats();

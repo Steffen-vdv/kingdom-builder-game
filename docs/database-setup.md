@@ -128,27 +128,6 @@ set KB_DATABASE_PATH=C:\ProgramData\KingdomBuilder\data.db
 
 ---
 
-## Disabling Database Features
-
-To run the server without database (useful for testing):
-
-```bash
-# Start server without visitor tracking
-KB_VISITOR_TRACKING=0 npm run dev --workspace=@kingdom-builder/server
-```
-
-Or programmatically:
-
-```typescript
-import { startServer } from '@kingdom-builder/server';
-
-await startServer({
-	enableVisitorTracking: false,
-});
-```
-
----
-
 ## Database Management
 
 ### Location

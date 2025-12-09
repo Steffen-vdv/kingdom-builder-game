@@ -146,11 +146,13 @@ export class VisitorTracker {
 	}
 
 	/**
-	 * Returns the timestamp of the start of the hour containing the given time.
+	 * Returns the timestamp of the start of the UTC hour containing the given
+	 * time. Using UTC ensures consistent hour boundaries across server
+	 * timezones.
 	 */
 	private getHourStart(timestamp: number): number {
 		const date = new Date(timestamp);
-		date.setMinutes(0, 0, 0);
+		date.setUTCMinutes(0, 0, 0);
 		return date.getTime();
 	}
 

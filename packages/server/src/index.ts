@@ -85,12 +85,6 @@ export interface StartServerOptions extends Partial<FastifySessionTransportOptio
 	env?: NodeJS.ProcessEnv;
 	tokens?: Record<string, TokenDefinition>;
 	allowDevToken?: boolean;
-	/**
-	 * Enable visitor tracking with SQLite database.
-	 * When true, initializes database, runs migrations, and tracks visitors.
-	 * Defaults to true if not explicitly set.
-	 */
-	enableVisitorTracking?: boolean;
 }
 
 export interface StartServerResult {
@@ -99,15 +93,13 @@ export interface StartServerResult {
 	host: string;
 	port: number;
 	/**
-	 * Database instance (if visitor tracking is enabled).
-	 * Call database.close() when shutting down the server.
+	 * Database instance. Call database.close() when shutting down the server.
 	 */
-	database?: Database;
+	database: Database;
 	/**
-	 * Hourly scheduler (if visitor tracking is enabled).
-	 * Call scheduler.stop() when shutting down the server.
+	 * Hourly scheduler. Call scheduler.stop() when shutting down the server.
 	 */
-	hourlyScheduler?: HourlyScheduler;
+	hourlyScheduler: HourlyScheduler;
 }
 
 export async function startServer(
@@ -123,59 +115,50 @@ export async function startServer(
 	const app = fastify({ logger: options.logger ?? false });
 	const logger = options.logger ? app.log : undefined;
 
-	// Initialize database and visitor tracking (enabled by default)
-	const enableTracking = options.enableVisitorTracking ?? true;
-	let database: Database | undefined;
-	let visitorTracker: VisitorTracker | undefined;
-	let hourlyScheduler: HourlyScheduler | undefined;
+	// Initialize database
+	const database = new Database({ env });
+	const dbPath = database.getPath();
 
-	if (enableTracking) {
-		database = new Database({ env });
-		const dbPath = database.getPath();
-
-		// Ensure database directory exists
-		try {
-			mkdirSync(dirname(dbPath), { recursive: true });
-		} catch {
-			// Directory may already exist
-		}
-
-		database.open();
-		logger?.info(`Database opened at ${dbPath}`);
-
-		// Run migrations
-		const migrationRunner = new MigrationRunner(database);
-		const migrationResult = migrationRunner.run();
-		if (migrationResult.applied.length > 0) {
-			logger?.info(
-				`Applied ${migrationResult.applied.length} migration(s): ` +
-					migrationResult.applied.map((mig) => mig.name).join(', '),
-			);
-		} else if (migrationResult.alreadyUpToDate) {
-			logger?.info('Database schema is up to date');
-		}
-
-		// Initialize visitor tracker
-		visitorTracker = new VisitorTracker({ database });
-
-		// Start hourly scheduler for persisting visitor stats
-		hourlyScheduler = new HourlyScheduler({
-			onHour: () => {
-				visitorTracker?.persistCurrentHour();
-				logger?.info('Persisted hourly visitor stats');
-			},
-			logger: (msg) => logger?.info(msg),
-		});
-		hourlyScheduler.start();
+	// Ensure database directory exists
+	try {
+		mkdirSync(dirname(dbPath), { recursive: true });
+	} catch {
+		// Directory may already exist
 	}
+
+	database.open();
+	logger?.info(`Database opened at ${dbPath}`);
+
+	// Run migrations
+	const migrationRunner = new MigrationRunner(database);
+	const migrationResult = migrationRunner.run();
+	if (migrationResult.applied.length > 0) {
+		logger?.info(
+			`Applied ${migrationResult.applied.length} migration(s): ` +
+				migrationResult.applied.map((migration) => migration.name).join(', '),
+		);
+	} else if (migrationResult.alreadyUpToDate) {
+		logger?.info('Database schema is up to date');
+	}
+
+	// Initialize visitor tracker
+	const visitorTracker = new VisitorTracker({ database });
+
+	// Start hourly scheduler for persisting visitor stats
+	const hourlyScheduler = new HourlyScheduler({
+		onHour: () => {
+			visitorTracker.persistCurrentHour();
+			logger?.info('Persisted hourly visitor stats');
+		},
+		logger: (message) => logger?.info(message),
+	});
+	hourlyScheduler.start();
 
 	const transportOptions: FastifySessionTransportOptions = {
 		sessionManager,
 		authMiddleware,
+		visitorTracker,
 	};
-	if (visitorTracker) {
-		transportOptions.visitorTracker = visitorTracker;
-	}
 	if (options.idFactory) {
 		transportOptions.idFactory = options.idFactory;
 	}
@@ -185,23 +168,18 @@ export async function startServer(
 		const address = await app.listen({ host, port });
 		logger?.info(`Kingdom Builder server listening on ${address}`);
 		const url = new URL(address);
-		const result: StartServerResult = {
+		return {
 			app,
 			address,
 			host: url.hostname,
 			port: Number.parseInt(url.port, 10),
+			database,
+			hourlyScheduler,
 		};
-		if (database) {
-			result.database = database;
-		}
-		if (hourlyScheduler) {
-			result.hourlyScheduler = hourlyScheduler;
-		}
-		return result;
 	} catch (error) {
 		logger?.error(error, 'Failed to start Kingdom Builder server.');
-		hourlyScheduler?.stop();
-		database?.close();
+		hourlyScheduler.stop();
+		database.close();
 		await app.close();
 		throw error;
 	}

@@ -12,6 +12,7 @@ import {
 	createSessionTransportPlugin,
 	type FastifySessionTransportOptions,
 } from '../src/transport/FastifySessionTransport.js';
+import type { VisitorTracker } from '../src/visitors/VisitorTracker.js';
 import {
 	createSyntheticSessionManager,
 	findAiPlayerId,
@@ -20,6 +21,19 @@ import {
 	expectSnapshotMetadata,
 	expectStaticMetadata,
 } from './helpers/expectSnapshotMetadata.js';
+
+function createMockVisitorTracker(): VisitorTracker {
+	return {
+		recordVisitor: vi.fn(),
+		getCurrentHourCount: vi.fn().mockReturnValue(0),
+		persistCurrentHour: vi.fn(),
+		get24hStats: vi.fn().mockReturnValue({
+			totalVisitors: 0,
+			hoursIncluded: 0,
+			hourlyBreakdown: [],
+		}),
+	} as unknown as VisitorTracker;
+}
 
 describe('FastifySessionTransport', () => {
 	const defaultTokens = {
@@ -60,6 +74,7 @@ describe('FastifySessionTransport', () => {
 		const options: FastifySessionTransportOptions = {
 			sessionManager: manager,
 			authMiddleware: createTokenAuthMiddleware({ tokens }),
+			visitorTracker: createMockVisitorTracker(),
 		};
 		await app.register(createSessionTransportPlugin, options);
 		await app.ready();
@@ -756,20 +771,6 @@ describe('FastifySessionTransport', () => {
 		});
 		expect(response.statusCode).toBe(403);
 		expectStaticMetadata(manager.getMetadata());
-		await app.close();
-	});
-
-	it('returns 404 for /visitors when visitor tracking is disabled', async () => {
-		const { app } = await createServer();
-		const response = await app.inject({
-			method: 'GET',
-			url: '/visitors',
-			headers: authorizedHeaders,
-		});
-		expect(response.statusCode).toBe(404);
-		const body = response.json() as { code: string; message: string };
-		expect(body.code).toBe('NOT_FOUND');
-		expect(body.message).toBe('Visitor tracking is not enabled.');
 		await app.close();
 	});
 });
