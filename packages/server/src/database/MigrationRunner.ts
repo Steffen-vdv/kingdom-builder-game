@@ -207,9 +207,9 @@ function parseMigrationFilename(
 }
 
 function getDefaultMigrationsPath(): string {
-	// When running from dist/, go up to package root
+	// MigrationRunner.ts is at packages/server/src/database/ (or dist/database/)
+	// Go up two levels to reach packages/server/
 	const currentDir = new URL('.', import.meta.url).pathname;
-	// Normalize: /path/to/server/src/database/ or /path/to/server/dist/database/
 	const serverRoot = join(currentDir, '..', '..');
 	return join(serverRoot, 'migrations');
 }
