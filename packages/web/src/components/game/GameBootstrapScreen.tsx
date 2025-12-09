@@ -26,15 +26,19 @@ export default function GameBootstrapScreen({
 			</BlockingScreen>
 		);
 	}
+	const retryLabel = error.retryLabel ?? 'Try again';
+	const isSessionExpiry = Boolean(error.retryLabel);
 	return (
 		<BlockingScreen
 			title="We could not load your kingdom."
 			description={error.summary}
 		>
-			<p className="max-w-xl text-sm text-slate-300 dark:text-slate-200">
-				Try again in a moment. If the problem continues, send the details below
-				to a developer so they can investigate.
-			</p>
+			{isSessionExpiry ? null : (
+				<p className="max-w-xl text-sm text-slate-300 dark:text-slate-200">
+					Try again in a moment. If the problem continues, send the details
+					below to a developer so they can investigate.
+				</p>
+			)}
 			<details className="w-full max-w-2xl rounded-lg border border-slate-500/40 bg-slate-900/70 p-4 text-left text-slate-100 shadow-md dark:border-slate-100/10 dark:bg-slate-950/70">
 				<summary className="cursor-pointer text-sm font-semibold">
 					Technical details
@@ -45,7 +49,7 @@ export default function GameBootstrapScreen({
 			</details>
 			<div className="flex flex-wrap items-center justify-center gap-4">
 				<Button onClick={onRetry} variant="primary" icon="↻">
-					Try again
+					{retryLabel}
 				</Button>
 				{onExit ? (
 					<Button onClick={onExit} variant="secondary" icon="🏠">

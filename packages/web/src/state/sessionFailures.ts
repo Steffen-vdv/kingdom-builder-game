@@ -4,11 +4,14 @@ import type {
 } from '@kingdom-builder/protocol/session';
 import { GameApiError } from '../services/gameApi';
 import { getActionErrorMetadata } from './actionErrorMetadata';
-import { SessionMirroringError } from './sessionErrors';
+import { SessionMirroringError, isSessionExpiredError } from './sessionErrors';
+import { clearStoredResumeSession } from './sessionResumeStorage';
 
 export interface SessionFailureDetails {
 	summary: string;
 	details: string;
+	/** Custom label for the retry button (defaults to "Try again"). */
+	retryLabel?: string;
 }
 
 const DEFAULT_FAILURE_SUMMARY =
@@ -138,6 +141,22 @@ const isActionExecutionError = (
 	);
 
 export const formatFailureDetails = (error: unknown): SessionFailureDetails => {
+	// Session expiry is a specific type of GameApiError - check it first
+	if (isSessionExpiredError(error)) {
+		// Clear the stored resume session so the "Start New Game" button
+		// immediately creates a new game instead of retrying the expired one.
+		clearStoredResumeSession();
+		return {
+			summary:
+				'Your session timed out due to inactivity. ' +
+				'The server clears idle sessions after 15 minutes.',
+			details: stringifyUnknown({
+				reason: 'SESSION_EXPIRED',
+				hint: 'This happens when the game is left idle for too long.',
+			}),
+			retryLabel: 'Start New Game',
+		};
+	}
 	if (error instanceof GameApiError) {
 		return {
 			summary: 'The game service returned an error response.',
