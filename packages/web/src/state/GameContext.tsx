@@ -23,10 +23,12 @@ import type {
 } from './GameContext.types';
 import { DEFAULT_PLAYER_NAME } from './playerIdentity';
 import GameBootstrapScreen from '../components/game/GameBootstrapScreen';
+import SessionExpiredScreen from '../components/game/SessionExpiredScreen';
 import {
 	formatFailureDetails,
 	type SessionFailureDetails,
 } from './sessionFailures';
+import { isSessionExpiredError, isMarkedSessionExpired } from './sessionErrors';
 import {
 	createSession,
 	fetchSnapshot,
@@ -76,6 +78,7 @@ export function GameProvider(props: GameProviderProps) {
 	const lastPersistedSessionDevModeRef = useRef<boolean | null>(null);
 	const [sessionError, setSessionError] =
 		useState<SessionFailureDetails | null>(null);
+	const [sessionExpired, setSessionExpired] = useState(false);
 	const [bootAttempt, setBootAttempt] = useState(0);
 	const [sessionData, setSessionData] = useState<SessionContainer | null>(null);
 	const playerNameRef = useRef(playerName);
@@ -107,6 +110,14 @@ export function GameProvider(props: GameProviderProps) {
 		setSessionError(null);
 		setBootAttempt((value) => value + 1);
 	}, []);
+
+	const handleStartNewGame = useCallback(() => {
+		setSessionExpired(false);
+		setSessionError(null);
+		// Clear any persisted session reference so we create a fresh session
+		onClearResumeSession(null);
+		setBootAttempt((value) => value + 1);
+	}, [onClearResumeSession]);
 
 	const runExclusive = useCallback(
 		<T,>(task: () => Promise<T> | T): Promise<T> => {
@@ -147,6 +158,11 @@ export function GameProvider(props: GameProviderProps) {
 		(error: unknown) => {
 			releaseCurrentSession();
 			if (!mountedRef.current) {
+				return;
+			}
+			// Check if this is a session timeout/expiry error
+			if (isSessionExpiredError(error) || isMarkedSessionExpired(error)) {
+				setSessionExpired(true);
 				return;
 			}
 			setSessionError(formatFailureDetails(error));
@@ -411,6 +427,15 @@ export function GameProvider(props: GameProviderProps) {
 	);
 
 	if (!sessionData) {
+		// Show dedicated recovery screen for session expiry
+		if (sessionExpired) {
+			return (
+				<SessionExpiredScreen
+					onStartNewGame={handleStartNewGame}
+					{...(onExit ? { onExit } : {})}
+				/>
+			);
+		}
 		const bootstrapProps = {
 			error: sessionError,
 			onRetry: handleRetry,

@@ -37,6 +37,7 @@ import { useSessionTranslationContext } from './useSessionTranslationContext';
 import { useManualSessionStart } from './useManualSessionStart';
 import { useResolutionAutomation } from './useResolutionAutomation';
 import { useRemotePlayerNameSync } from './useRemotePlayerNameSync';
+import { useSessionHeartbeat } from './useSessionHeartbeat';
 import GameSessionLoadingScreen from '../components/game/GameSessionLoadingScreen';
 
 export type { GameProviderInnerProps } from './GameProviderInner.types';
@@ -233,6 +234,12 @@ export function GameProviderInner({
 		resourceKeys,
 		actionCostResource,
 		...(onFatalSessionError ? { onFatalSessionError } : {}),
+	});
+
+	useSessionHeartbeat({
+		sessionId,
+		mountedRef,
+		onSessionExpired: onFatalSessionError ?? (() => {}),
 	});
 
 	const metadata = useMemo<SessionMetadataFetchers>(
