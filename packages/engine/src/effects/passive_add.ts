@@ -11,8 +11,9 @@ interface PassiveParams {
 	detail?: string;
 	meta?: PassiveMetadata;
 	skip?: PhaseSkipConfig;
-	onGrowthPhase?: EffectDef[];
-	onUpkeepPhase?: EffectDef[];
+	onPayUpkeepStep?: EffectDef[];
+	onGainIncomeStep?: EffectDef[];
+	onGainAPStep?: EffectDef[];
 	onBeforeAttacked?: EffectDef[];
 	onAttackResolved?: EffectDef[];
 	[key: string]: unknown;
@@ -31,8 +32,9 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		detail,
 		meta,
 		skip,
-		onGrowthPhase,
-		onUpkeepPhase,
+		onPayUpkeepStep,
+		onGainIncomeStep,
+		onGainAPStep,
 		onBeforeAttacked,
 		onAttackResolved,
 	} = params;
@@ -47,8 +49,9 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 		meta?: PassiveMetadata | undefined;
 		skip?: PhaseSkipConfig;
 		effects: EffectDef[];
-		onGrowthPhase?: EffectDef[];
-		onUpkeepPhase?: EffectDef[];
+		onPayUpkeepStep?: EffectDef[];
+		onGainIncomeStep?: EffectDef[];
+		onGainAPStep?: EffectDef[];
 		onBeforeAttacked?: EffectDef[];
 		onAttackResolved?: EffectDef[];
 	} = {
@@ -70,11 +73,14 @@ export const passiveAdd: EffectHandler<PassiveParams> = (
 	if (skip !== undefined) {
 		passive.skip = skip;
 	}
-	if (onGrowthPhase) {
-		passive.onGrowthPhase = onGrowthPhase;
+	if (onPayUpkeepStep) {
+		passive.onPayUpkeepStep = onPayUpkeepStep;
 	}
-	if (onUpkeepPhase) {
-		passive.onUpkeepPhase = onUpkeepPhase;
+	if (onGainIncomeStep) {
+		passive.onGainIncomeStep = onGainIncomeStep;
+	}
+	if (onGainAPStep) {
+		passive.onGainAPStep = onGainAPStep;
 	}
 	if (onBeforeAttacked) {
 		passive.onBeforeAttacked = onBeforeAttacked;

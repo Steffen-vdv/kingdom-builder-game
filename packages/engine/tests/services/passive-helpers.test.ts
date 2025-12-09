@@ -67,7 +67,7 @@ describe('passive helpers', () => {
 					],
 				},
 			],
-			onGrowthPhase: [nestedEffect],
+			onGainIncomeStep: [nestedEffect],
 			meta: source,
 			customData: {
 				nested: [
@@ -106,7 +106,7 @@ describe('passive helpers', () => {
 		expect('detail' in recordClone).toBe(false);
 		expect(recordClone.meta).not.toBe(record.meta);
 		expect(recordClone.effects).not.toBe(record.effects);
-		expect(recordClone.onGrowthPhase).not.toBe(record.onGrowthPhase);
+		expect(recordClone.onGainIncomeStep).not.toBe(record.onGainIncomeStep);
 		expect(recordClone.frames).not.toBe(record.frames);
 
 		recordClone.frames.push(() => ({ mark: true }));

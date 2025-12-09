@@ -11,7 +11,7 @@ import {
 	createSnapshotPlayer,
 } from '../helpers/sessionFixtures';
 
-export const ON_UPKEEP_PHASE = 'onUpkeepPhase';
+export const ON_PAY_UPKEEP_STEP = 'onPayUpkeepStep';
 
 export const SYNTHETIC_RESOURCES = Object.freeze({
 	actionPoints: Object.freeze({
@@ -61,7 +61,7 @@ export const SYNTHETIC_PHASES: SessionSnapshot['phases'] = [
 			{
 				id: 'step:synthetic:rest',
 				title: 'Recover',
-				triggers: [ON_UPKEEP_PHASE],
+				triggers: [ON_PAY_UPKEEP_STEP],
 			},
 		],
 	},
@@ -114,7 +114,7 @@ export const createFestivalMetadata = (): SessionSnapshotMetadata =>
 			},
 		},
 		triggers: {
-			[ON_UPKEEP_PHASE]: {
+			[ON_PAY_UPKEEP_STEP]: {
 				icon: FALLBACK_UPKEEP.icon,
 				future: `During ${FALLBACK_UPKEEP.label}`,
 				past: FALLBACK_UPKEEP.label,
@@ -133,7 +133,7 @@ export const buildFestivalPassiveRecord = (
 	name: 'Festival Hangover',
 	icon,
 	meta: { source: { icon } },
-	onUpkeepPhase: [upkeepEffect],
+	onPayUpkeepStep: [upkeepEffect],
 });
 
 export const createFestivalPlayers = (

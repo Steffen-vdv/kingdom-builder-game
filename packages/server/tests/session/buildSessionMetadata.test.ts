@@ -306,7 +306,7 @@ describe('buildSessionMetadata', () => {
 		expect(popMeta?.icon).toBe('👤');
 	});
 
-	it('includes trigger metadata from TRIGGER_INFO', () => {
+	it('includes trigger metadata from TRIGGER_META', () => {
 		const factory = createContentFactory();
 		const metadata = buildSessionMetadata({
 			buildings: factory.buildings,

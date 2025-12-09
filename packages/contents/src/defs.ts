@@ -1,9 +1,5 @@
 import type { BuildingConfig, DevelopmentConfig, EffectDef, PopulationConfig } from '@kingdom-builder/protocol';
 
-export const ON_PAY_UPKEEP_STEP = 'onPayUpkeepStep';
-export const ON_GAIN_INCOME_STEP = 'onGainIncomeStep';
-export const ON_GAIN_AP_STEP = 'onGainAPStep';
-
 export const BROOM_ICON = '🧹';
 export const RESOURCE_TRANSFER_ICON = '🔁';
 
@@ -17,8 +13,6 @@ export const Focus = {
 export type Focus = (typeof Focus)[keyof typeof Focus];
 
 export interface Triggered {
-	onGrowthPhase?: EffectDef[] | undefined;
-	onUpkeepPhase?: EffectDef[] | undefined;
 	onBeforeAttacked?: EffectDef[] | undefined;
 	onAttackResolved?: EffectDef[] | undefined;
 	onPayUpkeepStep?: EffectDef[] | undefined;

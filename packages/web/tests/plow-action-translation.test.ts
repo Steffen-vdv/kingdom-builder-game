@@ -127,12 +127,12 @@ function createTranslationHarness() {
 
 describe('plow action translation', () => {
 	it('summarizes plow action', () => {
-		const { translation, expand, till, plow } = createTranslationHarness();
+		const { translation, expand, till, plow, plowPassive } =
+			createTranslationHarness();
 		const summary = summarizeContent('action', plow.id, translation);
 		const passive = plow.effects.find((e: EffectDef) => e.type === 'passive');
 		const upkeepLabel = SYNTHETIC_UPKEEP_PHASE.label;
 		const upkeepIcon = SYNTHETIC_UPKEEP_PHASE.icon;
-		const upkeepSummaryLabel = `${upkeepIcon ? `${upkeepIcon} ` : ''}${upkeepLabel}`;
 		const costMod = passive?.effects.find(
 			(e: EffectDef) => e.type === 'cost_mod',
 		);
@@ -144,14 +144,22 @@ describe('plow action translation', () => {
 		const modIcon = modDescriptor?.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
 		const modifierIcon = modifierInfo.icon ?? '✨';
+		const passiveIcon = (plowPassive as { icon?: string })?.icon ?? '';
+		const passiveName =
+			(plowPassive as { name?: string })?.name ?? SYNTHETIC_PASSIVE_INFO.label;
+		// New split format: add entry + remove entry under trigger
 		expect(summary).toEqual([
 			`${expand.icon} ${expand.name}`,
 			`${till.icon} ${till.name}`,
 			{
-				title: `⏳ Until next ${upkeepSummaryLabel}`,
+				title: `+♾️: ${passiveIcon} ${passiveName}`,
 				items: [
 					`${modifierIcon}: ${modIcon}${modAmt >= 0 ? '+' : ''}${modAmt}`,
 				],
+			},
+			{
+				title: `On your ${upkeepIcon} ${upkeepLabel} Phase`,
+				items: [`-♾️: ${passiveIcon} ${passiveName}`],
 			},
 		]);
 	});
@@ -165,16 +173,20 @@ describe('plow action translation', () => {
 		titles.forEach((title) => {
 			expect(title).not.toMatch(/^Perform action/);
 		});
-		const passiveEntry = desc.find((entry) => {
+		// Check the passive add entry uses the new format
+		const passiveIcon =
+			(plowPassive as { icon?: string })?.icon ?? SYNTHETIC_PASSIVE_INFO.icon;
+		const passiveName =
+			(plowPassive as { name?: string })?.name ?? SYNTHETIC_PASSIVE_INFO.label;
+		const passiveAddEntry = desc.find((entry) => {
 			if (typeof entry !== 'object') {
 				return false;
 			}
-
-			return entry.title.includes(SYNTHETIC_UPKEEP_PHASE.label);
+			return entry.title.includes('Gain ♾️ Passive');
 		}) as { title: string; items?: unknown[] } | undefined;
-		const passiveIcon =
-			(plowPassive as { icon?: string })?.icon ?? SYNTHETIC_PASSIVE_INFO.icon;
-		expect(passiveEntry?.title.startsWith(`${passiveIcon} `)).toBe(true);
+		expect(passiveAddEntry?.title).toBe(
+			`Gain ♾️ Passive: ${passiveIcon} ${passiveName}`,
+		);
 	});
 
 	it('keeps performed system actions in effects', () => {
@@ -232,6 +244,7 @@ describe('plow action translation', () => {
 		const slotAsset = translation.assets.slot ?? {};
 		const slotIcon = slotAsset.icon ?? SYNTHETIC_SLOT_INFO.icon;
 		const slotLabel = slotAsset.label ?? SYNTHETIC_SLOT_INFO.label;
+		// New split format: passive add entry + remove entry under trigger
 		expect(effects).toEqual([
 			{
 				title: `${expand.icon} ${expand.name}`,
@@ -247,12 +260,14 @@ describe('plow action translation', () => {
 				],
 			},
 			{
-				title: `${passiveIcon ? `${passiveIcon} ` : ''}${passiveName} – Until your next ${
-					upkeepDescriptionLabel
-				}`,
+				title: `Gain ♾️ Passive: ${passiveIcon} ${passiveName}`,
 				items: [
 					`${modifierIcon} Modifier on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
 				],
+			},
+			{
+				title: `On your ${upkeepDescriptionLabel} Phase`,
+				items: [`Remove ♾️ Passive: ${passiveIcon} ${passiveName}`],
 			},
 		]);
 	});

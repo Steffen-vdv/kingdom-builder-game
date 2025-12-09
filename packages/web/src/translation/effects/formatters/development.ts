@@ -60,10 +60,19 @@ registerEffectFormatter('development', 'add', {
 
 registerEffectFormatter('development', 'remove', {
 	summarize: (effect, context) => {
-		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
-			describe: 'Remove',
-			log: 'Removed',
-		}).summary;
+		const id = effect.params?.['id'] as string;
+		const safeId = typeof id === 'string' && id.length ? id : 'development';
+		let icon = '';
+		try {
+			const developmentDefinition = context.developments.get(safeId);
+			if (developmentDefinition?.icon) {
+				icon = developmentDefinition.icon;
+			}
+		} catch {
+			/* ignore missing development definitions */
+		}
+		// Summary shows just -<icon> for conciseness
+		return icon ? `-${icon}` : `-${safeId}`;
 	},
 	describe: (effect, context) => {
 		return renderDevelopmentChange(effect.params?.['id'] as string, context, {
