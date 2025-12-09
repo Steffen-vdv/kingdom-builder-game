@@ -2,16 +2,17 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSessionHeartbeat } from '../../src/state/useSessionHeartbeat';
-import * as sessionSdk from '../../src/state/sessionSdk';
 import { GameApiError } from '../../src/services/gameApi';
 
-vi.mock('../../src/state/sessionSdk', () => ({
-	fetchSnapshot: vi.fn(),
+const mockFetchSnapshot = vi.fn();
+
+vi.mock('../../src/state/gameApiInstance', () => ({
+	ensureGameApi: vi.fn(() => ({
+		fetchSnapshot: mockFetchSnapshot,
+	})),
 }));
 
 describe('useSessionHeartbeat', () => {
-	const mockFetchSnapshot = vi.mocked(sessionSdk.fetchSnapshot);
-
 	beforeEach(() => {
 		vi.useFakeTimers();
 		mockFetchSnapshot.mockReset();
@@ -24,11 +25,7 @@ describe('useSessionHeartbeat', () => {
 	it('sends heartbeat at 5 minute intervals', async () => {
 		const mountedRef = { current: true };
 		const onSessionExpired = vi.fn();
-		mockFetchSnapshot.mockResolvedValue(
-			{} as ReturnType<typeof sessionSdk.fetchSnapshot> extends Promise<infer T>
-				? T
-				: never,
-		);
+		mockFetchSnapshot.mockResolvedValue({});
 
 		renderHook(() =>
 			useSessionHeartbeat({
@@ -112,11 +109,7 @@ describe('useSessionHeartbeat', () => {
 		const onSessionExpired = vi.fn();
 		const networkError = new Error('Network failure');
 		mockFetchSnapshot.mockRejectedValueOnce(networkError);
-		mockFetchSnapshot.mockResolvedValue(
-			{} as ReturnType<typeof sessionSdk.fetchSnapshot> extends Promise<infer T>
-				? T
-				: never,
-		);
+		mockFetchSnapshot.mockResolvedValue({});
 
 		renderHook(() =>
 			useSessionHeartbeat({
@@ -165,11 +158,7 @@ describe('useSessionHeartbeat', () => {
 	it('cleans up interval on unmount', () => {
 		const mountedRef = { current: true };
 		const onSessionExpired = vi.fn();
-		mockFetchSnapshot.mockResolvedValue(
-			{} as ReturnType<typeof sessionSdk.fetchSnapshot> extends Promise<infer T>
-				? T
-				: never,
-		);
+		mockFetchSnapshot.mockResolvedValue({});
 
 		const { unmount } = renderHook(() =>
 			useSessionHeartbeat({

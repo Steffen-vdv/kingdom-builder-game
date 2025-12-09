@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { fetchSnapshot } from './sessionSdk';
+import { ensureGameApi } from './gameApiInstance';
 import { isSessionExpiredError } from './sessionErrors';
 
 /**
@@ -35,10 +35,12 @@ export function useSessionHeartbeat({
 				return;
 			}
 			try {
-				// fetchSnapshot updates lastAccessedAt on the server, keeping
-				// the session alive. We discard the result since we only care
-				// about the keepalive side effect.
-				await fetchSnapshot(sessionId);
+				// Call the raw API directly to update lastAccessedAt on the
+				// server. We intentionally avoid the sessionSdk's fetchSnapshot
+				// wrapper because it applies state to the store—a heartbeat
+				// response arriving after an action could roll back newer state.
+				const api = ensureGameApi();
+				await api.fetchSnapshot(sessionId);
 			} catch (error) {
 				if (!mountedRef.current) {
 					return;
