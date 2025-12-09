@@ -143,12 +143,22 @@ export class MigrationRunner {
 
 	private loadMigrationFiles(): ParsedMigration[] {
 		if (!existsSync(this.migrationsPath)) {
-			return [];
+			throw new Error(
+				`Migrations directory not found: ${this.migrationsPath}. ` +
+					'Ensure migrations are included in the build output.',
+			);
 		}
 
 		const files = readdirSync(this.migrationsPath)
 			.filter((f) => f.endsWith('.sql'))
 			.sort();
+
+		if (files.length === 0) {
+			throw new Error(
+				`No migration files found in: ${this.migrationsPath}. ` +
+					'At least one migration is required for database initialization.',
+			);
+		}
 
 		return files.map((filename) => {
 			const parsed = parseMigrationFilename(filename);

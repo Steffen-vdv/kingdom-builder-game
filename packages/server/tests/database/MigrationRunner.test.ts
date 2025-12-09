@@ -29,6 +29,10 @@ describe('MigrationRunner', () => {
 
 	describe('run', () => {
 		it('creates schema_migrations table', () => {
+			writeFileSync(
+				join(migrationsPath, '001_init.sql'),
+				'SELECT 1;', // No-op migration
+			);
 			const runner = new MigrationRunner(db, { migrationsPath });
 			runner.run();
 
@@ -39,6 +43,20 @@ describe('MigrationRunner', () => {
 				>("SELECT name FROM sqlite_master WHERE type='table' " + "AND name='schema_migrations'")
 				.get();
 			expect(table?.name).toBe('schema_migrations');
+		});
+
+		it('throws when migrations directory is missing', () => {
+			rmSync(migrationsPath, { recursive: true });
+			const runner = new MigrationRunner(db, { migrationsPath });
+
+			expect(() => runner.run()).toThrow('Migrations directory not found');
+		});
+
+		it('throws when migrations directory is empty', () => {
+			// migrationsPath exists but has no .sql files
+			const runner = new MigrationRunner(db, { migrationsPath });
+
+			expect(() => runner.run()).toThrow('No migration files found');
 		});
 
 		it('applies migrations in order', () => {

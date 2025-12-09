@@ -13,6 +13,7 @@ artifacts/
 playwright-report/
 test-results/
 blob-report/
+data/
 
 config/server-auth.tokens.local.json
 
