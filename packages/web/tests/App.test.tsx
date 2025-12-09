@@ -33,6 +33,10 @@ const fetchMetadataSnapshotMock = vi.fn<
 vi.mock('../src/state/gameApiInstance', () => ({
 	ensureGameApi: () => ({
 		fetchMetadataSnapshot: fetchMetadataSnapshotMock,
+		fetchVisitorStats: vi.fn().mockResolvedValue({
+			totalVisitors: 0,
+			hoursIncluded: 0,
+		}),
 	}),
 }));
 

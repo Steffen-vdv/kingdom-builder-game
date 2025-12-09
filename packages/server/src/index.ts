@@ -1,4 +1,5 @@
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import fastify from 'fastify';
 import type { FastifyInstance, FastifyServerOptions } from 'fastify';
@@ -7,6 +8,10 @@ import { createSessionTransportPlugin } from './transport/FastifySessionTranspor
 import type { FastifySessionTransportOptions } from './transport/FastifySessionTransport.js';
 import { createTokenAuthMiddleware } from './auth/tokenAuthMiddleware.js';
 import type { TokenDefinition } from './auth/tokenAuthMiddleware.js';
+import { Database } from './database/Database.js';
+import { MigrationRunner } from './database/MigrationRunner.js';
+import { VisitorTracker } from './visitors/VisitorTracker.js';
+import { HourlyScheduler } from './visitors/HourlyScheduler.js';
 
 export { SessionManager } from './session/SessionManager.js';
 export type {
@@ -56,6 +61,21 @@ export {
 	type AuthenticatedRequest,
 	type AuthMiddleware,
 } from './auth/tokenAuthMiddleware.js';
+export { Database, type DatabaseOptions } from './database/index.js';
+export {
+	MigrationRunner,
+	type MigrationRunnerOptions,
+	type MigrationRecord,
+	type MigrationResult,
+} from './database/index.js';
+export {
+	VisitorTracker,
+	HourlyScheduler,
+	type VisitorTrackerOptions,
+	type HourlyVisitorStats,
+	type VisitorStats24h,
+	type HourlySchedulerOptions,
+} from './visitors/index.js';
 
 // eslint-disable-next-line max-len
 export interface StartServerOptions extends Partial<FastifySessionTransportOptions> {
@@ -72,6 +92,14 @@ export interface StartServerResult {
 	address: string;
 	host: string;
 	port: number;
+	/**
+	 * Database instance. Call database.close() when shutting down the server.
+	 */
+	database: Database;
+	/**
+	 * Hourly scheduler. Call scheduler.stop() when shutting down the server.
+	 */
+	hourlyScheduler: HourlyScheduler;
 }
 
 export async function startServer(
@@ -86,9 +114,50 @@ export async function startServer(
 	const authMiddleware = createTokenAuthMiddleware(middlewareOptions);
 	const app = fastify({ logger: options.logger ?? false });
 	const logger = options.logger ? app.log : undefined;
+
+	// Initialize database
+	const database = new Database({ env });
+	const dbPath = database.getPath();
+
+	// Ensure database directory exists
+	try {
+		mkdirSync(dirname(dbPath), { recursive: true });
+	} catch {
+		// Directory may already exist
+	}
+
+	database.open();
+	logger?.info(`Database opened at ${dbPath}`);
+
+	// Run migrations
+	const migrationRunner = new MigrationRunner(database);
+	const migrationResult = migrationRunner.run();
+	if (migrationResult.applied.length > 0) {
+		logger?.info(
+			`Applied ${migrationResult.applied.length} migration(s): ` +
+				migrationResult.applied.map((migration) => migration.name).join(', '),
+		);
+	} else if (migrationResult.alreadyUpToDate) {
+		logger?.info('Database schema is up to date');
+	}
+
+	// Initialize visitor tracker
+	const visitorTracker = new VisitorTracker({ database });
+
+	// Start hourly scheduler for persisting visitor stats
+	const hourlyScheduler = new HourlyScheduler({
+		onHour: () => {
+			visitorTracker.persistCurrentHour();
+			logger?.info('Persisted hourly visitor stats');
+		},
+		logger: (message) => logger?.info(message),
+	});
+	hourlyScheduler.start();
+
 	const transportOptions: FastifySessionTransportOptions = {
 		sessionManager,
 		authMiddleware,
+		visitorTracker,
 	};
 	if (options.idFactory) {
 		transportOptions.idFactory = options.idFactory;
@@ -104,9 +173,13 @@ export async function startServer(
 			address,
 			host: url.hostname,
 			port: Number.parseInt(url.port, 10),
-		} satisfies StartServerResult;
+			database,
+			hourlyScheduler,
+		};
 	} catch (error) {
 		logger?.error(error, 'Failed to start Kingdom Builder server.');
+		hourlyScheduler.stop();
+		database.close();
 		await app.close();
 		throw error;
 	}

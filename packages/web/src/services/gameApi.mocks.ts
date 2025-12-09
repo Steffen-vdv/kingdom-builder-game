@@ -24,6 +24,7 @@ import type {
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
+import type { VisitorStatsResponse } from '@kingdom-builder/protocol/visitors';
 import type { GameApi, GameApiRequestOptions } from './gameApi';
 
 const missingHandlerMessage = (name: keyof GameApiMockHandlers) =>
@@ -86,6 +87,9 @@ export type GameApiMockHandlers = {
 		request: SessionSimulateRequest,
 		options?: GameApiRequestOptions,
 	) => Promise<SessionSimulateResponse> | SessionSimulateResponse;
+	fetchVisitorStats?: (
+		options?: GameApiRequestOptions,
+	) => Promise<VisitorStatsResponse> | VisitorStatsResponse;
 };
 
 const resolveHandler = async <TArgs extends unknown[], TResult>(
@@ -178,6 +182,8 @@ export const createGameApiMock = (
 			request,
 			options,
 		),
+	fetchVisitorStats: (options: GameApiRequestOptions = {}) =>
+		resolveHandler(handlers.fetchVisitorStats, 'fetchVisitorStats', options),
 });
 
 export { GameApiFake } from './gameApi.fake';

@@ -26,6 +26,7 @@ import type {
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
+import type { VisitorStatsResponse } from '@kingdom-builder/protocol/visitors';
 import { clone, clonePlayerResponseMap } from './gameApi.clone';
 import type { RunAiMap, SimulationMap } from './gameApi.clone';
 import { EMPTY_REGISTRIES, toStateResponse } from './gameApi.fake.helpers';
@@ -44,6 +45,7 @@ type NextResponses = {
 	runAi?: SessionRunAiResponse;
 	simulate?: SessionSimulateResponse;
 	metadataSnapshot?: SessionMetadataSnapshotResponse;
+	visitorStats?: VisitorStatsResponse;
 };
 
 export interface GameApiFakeState {
@@ -102,6 +104,9 @@ export class GameApiFake implements GameApi {
 	}
 	setNextSimulationResponse(response: SessionSimulateResponse) {
 		this.#primeNext('simulate', response);
+	}
+	setNextVisitorStatsResponse(response: VisitorStatsResponse) {
+		this.#primeNext('visitorStats', response);
 	}
 	primeRunAiResponse(
 		sessionId: string,
@@ -271,6 +276,15 @@ export class GameApiFake implements GameApi {
 	): Promise<SessionSimulateResponse> {
 		const response =
 			this.#pullNext('simulate') ?? this.#lookupSimulation(request);
+		return Promise.resolve(clone(response));
+	}
+	fetchVisitorStats(
+		_options: GameApiRequestOptions = {},
+	): Promise<VisitorStatsResponse> {
+		const response = this.#consumeNext(
+			'visitorStats',
+			'No visitor stats response primed.',
+		);
 		return Promise.resolve(clone(response));
 	}
 	#primeNext<K extends keyof NextResponses>(

@@ -24,6 +24,7 @@ import type {
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
+import type { VisitorStatsResponse } from '@kingdom-builder/protocol/visitors';
 import type {
 	AuthTokenProvider,
 	FetchFn,
@@ -287,6 +288,18 @@ export class HttpGameApi implements GameApi {
 			{
 				method: 'POST',
 				body: request,
+			},
+			options,
+		);
+	}
+
+	async fetchVisitorStats(
+		options: GameApiRequestOptions = {},
+	): Promise<VisitorStatsResponse> {
+		return this.#send(
+			'/visitors',
+			{
+				method: 'GET',
 			},
 			options,
 		);

@@ -24,6 +24,7 @@ import type {
 	SessionUpdatePlayerNameRequest,
 	SessionUpdatePlayerNameResponse,
 } from '@kingdom-builder/protocol/session';
+import type { VisitorStatsResponse } from '@kingdom-builder/protocol/visitors';
 
 export type FetchFn = (
 	input: RequestInfo,
@@ -95,6 +96,9 @@ export interface GameApi {
 		request: SessionSimulateRequest,
 		options?: GameApiRequestOptions,
 	): Promise<SessionSimulateResponse>;
+	fetchVisitorStats(
+		options?: GameApiRequestOptions,
+	): Promise<VisitorStatsResponse>;
 }
 
 export class GameApiError extends Error {

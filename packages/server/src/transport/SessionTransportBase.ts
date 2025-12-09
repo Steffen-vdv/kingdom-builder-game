@@ -148,6 +148,25 @@ export class SessionTransportBase {
 			this.sessionManager.getRuntimeConfig(),
 		);
 	}
+
+	/**
+	 * Public authorization check for use in Fastify routes.
+	 * Converts a Fastify request-like object to a TransportRequest.
+	 */
+	public requireAuthorizationPublic(
+		request: { headers: Record<string, string | string[] | undefined> },
+		role: AuthRole,
+	): AuthContext {
+		const headers: Record<string, string | undefined> = {};
+		for (const [key, value] of Object.entries(request.headers)) {
+			if (typeof value === 'string') {
+				headers[key] = value;
+			} else if (Array.isArray(value) && value.length > 0) {
+				headers[key] = value[value.length - 1];
+			}
+		}
+		return this.requireAuthorization({ body: {}, headers }, role);
+	}
 	protected attachHttpStatus<T extends object>(
 		payload: T,
 		status: number,
