@@ -1,4 +1,11 @@
-import { registerEffectFormatter } from '../factory';
+import {
+	registerEffectFormatter,
+	summarizeEffects,
+	describeEffects,
+} from '../factory';
+import type { EffectDef } from '@kingdom-builder/protocol';
+import type { SummaryEntry } from '../../content';
+import type { TranslationContext } from '../../context';
 import type { TranslationResourceMetadata } from '../../context/types';
 
 // Extract resourceId from format - check direct param, then donor/recipient
@@ -60,6 +67,74 @@ function appendFormatSuffix(
 	return `${content} ${suffix}`.trim();
 }
 
+// Extract passive ID from a passive:add or passive:remove effect
+function getPassiveId(effect: EffectDef): string | undefined {
+	if (effect.type !== 'passive') {
+		return undefined;
+	}
+	const id = effect.params?.['id'];
+	return typeof id === 'string' ? id : undefined;
+}
+
+// Check if a passive:add effect has a matching passive:remove in onValueDecrease
+function isPassivePaired(
+	addEffect: EffectDef,
+	decreaseEffects: readonly EffectDef[],
+): boolean {
+	const addId = getPassiveId(addEffect);
+	if (!addId || addEffect.method !== 'add') {
+		return false;
+	}
+	return decreaseEffects.some((removeEffect) => {
+		if (removeEffect.type !== 'passive' || removeEffect.method !== 'remove') {
+			return false;
+		}
+		return getPassiveId(removeEffect) === addId;
+	});
+}
+
+// Format trigger effects with appropriate hierarchy
+function formatTriggerEffects(
+	triggerEffects: readonly EffectDef[],
+	decreaseEffects: readonly EffectDef[],
+	context: TranslationContext,
+	mode: 'summarize' | 'describe',
+): SummaryEntry[] {
+	const results: SummaryEntry[] = [];
+	const formatFn = mode === 'summarize' ? summarizeEffects : describeEffects;
+
+	for (const triggerEffect of triggerEffects) {
+		// For passive:add effects, check if paired with passive:remove
+		if (triggerEffect.type === 'passive' && triggerEffect.method === 'add') {
+			const isPaired = isPassivePaired(triggerEffect, decreaseEffects);
+			// Format the inner effects of the passive
+			const innerEffects = triggerEffect.effects ?? [];
+			const innerFormatted = formatFn(innerEffects, context);
+
+			if (isPaired && innerFormatted.length > 0) {
+				// Show as conditional with "while active" qualifier
+				for (const entry of innerFormatted) {
+					if (typeof entry === 'string') {
+						results.push(`${entry} (while active)`);
+					} else {
+						results.push({
+							...entry,
+							title: `${entry.title} (while active)`,
+						});
+					}
+				}
+			} else {
+				// Show as sibling (permanent effect)
+				results.push(...innerFormatted);
+			}
+		} else {
+			// Non-passive effects: format directly
+			results.push(...formatFn([triggerEffect], context));
+		}
+	}
+	return results;
+}
+
 registerEffectFormatter('resource', 'add', {
 	summarize: (effect, context) => {
 		const resourceId = getResourceId(effect.params);
@@ -68,7 +143,30 @@ registerEffectFormatter('resource', 'add', {
 		const icon = metadata.icon?.trim() ?? '';
 		const change = formatSignedValue(amount, metadata);
 		const subject = icon || metadata.label || resourceId;
-		return appendFormatSuffix(metadata.format, `${subject} ${change}`);
+		const mainEntry = appendFormatSuffix(metadata.format, `${subject} ${change}`);
+
+		// Look up resource definition for triggers
+		const resourceDef = context.resources.resources.byId[resourceId];
+		const increaseEffects = resourceDef?.onValueIncrease ?? [];
+		const decreaseEffects = resourceDef?.onValueDecrease ?? [];
+
+		if (increaseEffects.length === 0) {
+			return mainEntry;
+		}
+
+		// Format trigger effects as sub-bullets
+		const triggerItems = formatTriggerEffects(
+			increaseEffects,
+			decreaseEffects,
+			context,
+			'summarize',
+		);
+
+		if (triggerItems.length === 0) {
+			return mainEntry;
+		}
+
+		return { title: mainEntry, items: triggerItems };
 	},
 	describe: (effect, context) => {
 		const resourceId = getResourceId(effect.params);
@@ -76,10 +174,32 @@ registerEffectFormatter('resource', 'add', {
 		const metadata = context.resourceMetadata.get(resourceId);
 		const icon = metadata.icon?.trim() ?? '';
 		const change = formatSignedValue(amount, metadata);
-		if (icon) {
-			return `${icon} ${change} ${metadata.label}`;
+		const mainEntry = icon
+			? `${icon} ${change} ${metadata.label}`
+			: `${change} ${metadata.label}`;
+
+		// Look up resource definition for triggers
+		const resourceDef = context.resources.resources.byId[resourceId];
+		const increaseEffects = resourceDef?.onValueIncrease ?? [];
+		const decreaseEffects = resourceDef?.onValueDecrease ?? [];
+
+		if (increaseEffects.length === 0) {
+			return mainEntry;
 		}
-		return `${change} ${metadata.label}`;
+
+		// Format trigger effects as sub-bullets
+		const triggerItems = formatTriggerEffects(
+			increaseEffects,
+			decreaseEffects,
+			context,
+			'describe',
+		);
+
+		if (triggerItems.length === 0) {
+			return mainEntry;
+		}
+
+		return { title: mainEntry, items: triggerItems };
 	},
 });
 

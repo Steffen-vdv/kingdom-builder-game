@@ -110,6 +110,18 @@ export interface SessionResourceDefinition
 	 * boundOf should not be displayed independently in the UI.
 	 */
 	boundOf: SessionResourceBoundOfConfig | null;
+	/**
+	 * Effects to run when this resource's value increases.
+	 * Runs once per unit of increase. Used by UI to show downstream effects
+	 * of gaining this resource.
+	 */
+	onValueIncrease: readonly EffectDef[];
+	/**
+	 * Effects to run when this resource's value decreases.
+	 * Runs once per unit of decrease. Used by UI to detect paired add/remove
+	 * for conditional display (e.g., "while active").
+	 */
+	onValueDecrease: readonly EffectDef[];
 }
 
 export interface SessionResourceGroupParent

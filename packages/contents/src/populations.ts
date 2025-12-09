@@ -1,22 +1,13 @@
 import { Registry, populationSchema } from '@kingdom-builder/protocol';
-import { PopulationRole, Resource, Stat } from './internal';
-import { population, effect, resourceEvaluator, passiveParams, populationAssignmentPassiveId } from './config/builders';
+import { PopulationRole, Resource } from './internal';
+import { population, effect, resourceEvaluator } from './config/builders';
 import { resourceAmountChange } from './helpers/resourceEffects';
-import { resourceChange } from './resource';
-import { Types, ResourceMethods, PassiveMethods } from './config/builderShared';
+import { Types, ResourceMethods } from './config/builderShared';
 import type { PopulationDef } from './defs';
 
 export type { PopulationDef } from './defs';
 
 const COUNCIL_AP_GAIN_PARAMS = resourceAmountChange(Resource.ap, 1);
-
-const LEGION_STRENGTH_GAIN_PARAMS = resourceChange(Stat.armyStrength).amount(1).build();
-
-const FORTIFIER_STRENGTH_GAIN_PARAMS = resourceChange(Stat.fortificationStrength).amount(1).build();
-
-const LEGION_ASSIGNMENT_PASSIVE_PARAMS = passiveParams().id(populationAssignmentPassiveId(PopulationRole.Legion)).build();
-
-const FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS = passiveParams().id(populationAssignmentPassiveId(PopulationRole.Fortifier)).build();
 
 export function createPopulationRegistry() {
 	const registry = new Registry<PopulationDef>(populationSchema);
@@ -44,10 +35,6 @@ export function createPopulationRegistry() {
 			.name('Legion')
 			.icon('🎖️')
 			.upkeep(Resource.gold, 1)
-			.onAssigned(
-				effect(Types.Passive, PassiveMethods.ADD).params(LEGION_ASSIGNMENT_PASSIVE_PARAMS).effect(effect(Types.Resource, ResourceMethods.ADD).params(LEGION_STRENGTH_GAIN_PARAMS).build()).build(),
-			)
-			.onUnassigned(effect(Types.Passive, PassiveMethods.REMOVE).params(LEGION_ASSIGNMENT_PASSIVE_PARAMS).build())
 			.build(),
 	);
 
@@ -58,13 +45,6 @@ export function createPopulationRegistry() {
 			.name('Fortifier')
 			.icon('🔧')
 			.upkeep(Resource.gold, 1)
-			.onAssigned(
-				effect(Types.Passive, PassiveMethods.ADD)
-					.params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS)
-					.effect(effect(Types.Resource, ResourceMethods.ADD).params(FORTIFIER_STRENGTH_GAIN_PARAMS).build())
-					.build(),
-			)
-			.onUnassigned(effect(Types.Passive, PassiveMethods.REMOVE).params(FORTIFIER_ASSIGNMENT_PASSIVE_PARAMS).build())
 			.build(),
 	);
 

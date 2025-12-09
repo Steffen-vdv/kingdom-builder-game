@@ -1,7 +1,15 @@
 import { resourceGroup } from '../groupBuilder';
 import { resource } from '../resourceBuilder';
+import { resourceChange } from '..';
 import { boundTo } from '../types';
 import type { ResourceDefinition, ResourceGroupDefinition } from '../types';
+import {
+	effect,
+	passiveParams,
+	populationAssignmentPassiveId,
+} from '../../config/builders';
+import { Types, ResourceMethods, PassiveMethods } from '../../config/builderShared';
+import { PopulationRole, Stat } from '../../internal';
 
 const POPULATION_GROUP_ID = 'population';
 const POPULATION_PARENT_ID = 'resource:core:total-population';
@@ -25,6 +33,47 @@ const FORTIFIER_INFO = {
 	description: 'Fortifiers reinforce your defenses. They raise Fortification Strength and shore up the castle every Growth phase.',
 };
 
+// Effect params for population assignment passives
+const LEGION_STRENGTH_GAIN_PARAMS = resourceChange(Stat.armyStrength)
+	.amount(1)
+	.build();
+const FORTIFIER_STRENGTH_GAIN_PARAMS = resourceChange(Stat.fortificationStrength)
+	.amount(1)
+	.build();
+
+const LEGION_PASSIVE_PARAMS = passiveParams()
+	.id(populationAssignmentPassiveId(PopulationRole.Legion))
+	.build();
+const FORTIFIER_PASSIVE_PARAMS = passiveParams()
+	.id(populationAssignmentPassiveId(PopulationRole.Fortifier))
+	.build();
+
+// Legion: +1 Army Strength while assigned (via passive)
+const LEGION_ON_VALUE_INCREASE = effect(Types.Passive, PassiveMethods.ADD)
+	.params(LEGION_PASSIVE_PARAMS)
+	.effect(
+		effect(Types.Resource, ResourceMethods.ADD)
+			.params(LEGION_STRENGTH_GAIN_PARAMS)
+			.build(),
+	)
+	.build();
+const LEGION_ON_VALUE_DECREASE = effect(Types.Passive, PassiveMethods.REMOVE)
+	.params(LEGION_PASSIVE_PARAMS)
+	.build();
+
+// Fortifier: +1 Fortification Strength while assigned (via passive)
+const FORTIFIER_ON_VALUE_INCREASE = effect(Types.Passive, PassiveMethods.ADD)
+	.params(FORTIFIER_PASSIVE_PARAMS)
+	.effect(
+		effect(Types.Resource, ResourceMethods.ADD)
+			.params(FORTIFIER_STRENGTH_GAIN_PARAMS)
+			.build(),
+	)
+	.build();
+const FORTIFIER_ON_VALUE_DECREASE = effect(Types.Passive, PassiveMethods.REMOVE)
+	.params(FORTIFIER_PASSIVE_PARAMS)
+	.build();
+
 export const POPULATION_RESOURCE_DEFINITIONS: readonly ResourceDefinition[] = [
 	resource('resource:core:council')
 		.icon(COUNCIL_INFO.icon)
@@ -41,6 +90,8 @@ export const POPULATION_RESOURCE_DEFINITIONS: readonly ResourceDefinition[] = [
 		.group(POPULATION_GROUP_ID, { order: POPULATION_GROUP_ORDER })
 		.order(2)
 		.lowerBound(0)
+		.onValueIncrease(LEGION_ON_VALUE_INCREASE)
+		.onValueDecrease(LEGION_ON_VALUE_DECREASE)
 		.build(),
 	resource('resource:core:fortifier')
 		.icon(FORTIFIER_INFO.icon)
@@ -49,6 +100,8 @@ export const POPULATION_RESOURCE_DEFINITIONS: readonly ResourceDefinition[] = [
 		.group(POPULATION_GROUP_ID, { order: POPULATION_GROUP_ORDER })
 		.order(3)
 		.lowerBound(0)
+		.onValueIncrease(FORTIFIER_ON_VALUE_INCREASE)
+		.onValueDecrease(FORTIFIER_ON_VALUE_DECREASE)
 		.build(),
 ];
 
