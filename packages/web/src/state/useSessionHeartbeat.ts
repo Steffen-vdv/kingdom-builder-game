@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { fetchSnapshot } from './sessionSdk';
-import { isSessionExpiredError, markSessionExpired } from './sessionErrors';
+import { isSessionExpiredError } from './sessionErrors';
 
 /**
  * The interval between heartbeat pings. Set to 5 minutes which is well under
@@ -44,7 +44,6 @@ export function useSessionHeartbeat({
 					return;
 				}
 				if (isSessionExpiredError(error)) {
-					markSessionExpired(error);
 					onSessionExpiredRef.current(error);
 					// Stop heartbeat once session is expired
 					if (intervalId !== null) {
