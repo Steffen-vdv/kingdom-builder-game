@@ -18,29 +18,54 @@ native bindings during `npm install`. Most systems have this pre-installed.
    https://visualstudio.microsoft.com/visual-cpp-build-tools/
 
 2. Run the installer and select:
-   - "Desktop development with C++"
-   - Ensure "MSVC" and "Windows SDK" are checked
+   - **"Desktop development with C++"** workload
+   - Ensure these are checked (usually selected by default):
+     - MSVC v143 (or latest version)
+     - Windows 11 SDK (or Windows 10 SDK)
 
-3. Restart your terminal and run:
+3. Restart your terminal completely (close and reopen)
+
+4. Run:
    ```powershell
    npm install
    ```
 
-### Option 2: windows-build-tools (NPM Package)
+### Option 2: Chocolatey (Alternative)
 
-Run as Administrator in PowerShell:
+If you have [Chocolatey](https://chocolatey.org/) installed:
 
 ```powershell
-npm install --global windows-build-tools
+# Run as Administrator
+choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
 ```
 
-This installs the necessary build tools automatically.
+Then restart your terminal and run `npm install`.
 
 ### Verify Installation
 
 ```powershell
 npm run build --workspace=@kingdom-builder/server
 ```
+
+### Troubleshooting Windows Build Issues
+
+**"windows-build-tools" package errors**: Do NOT use `npm install -g
+windows-build-tools`. This package is deprecated and broken on Node.js 18+.
+Use Option 1 or Option 2 above instead.
+
+**Build still failing after installing Visual Studio Build Tools**:
+
+1. Ensure you selected the "Desktop development with C++" workload
+2. Completely close and reopen your terminal
+3. Try cleaning npm cache:
+   ```powershell
+   npm cache clean --force
+   rd /s /q node_modules
+   npm install
+   ```
+
+**"MSBUILD : error MSB3428"**: Visual Studio Build Tools not fully installed.
+Rerun the installer and ensure "MSVC" compiler is selected.
 
 ---
 
