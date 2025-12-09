@@ -186,6 +186,13 @@ export default [
 		},
 	},
 	{
+		files: ['**/*.fake.ts'],
+		rules: {
+			'max-lines': 'off',
+			'local/no-max-lines-override': 'off',
+		},
+	},
+	{
 		files: [
 			'packages/**/tests/**/*.ts',
 			'packages/**/tests/**/*.tsx',

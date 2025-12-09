@@ -1,4 +1,5 @@
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import fastify from 'fastify';
 import type { FastifyInstance, FastifyServerOptions } from 'fastify';
@@ -7,6 +8,10 @@ import { createSessionTransportPlugin } from './transport/FastifySessionTranspor
 import type { FastifySessionTransportOptions } from './transport/FastifySessionTransport.js';
 import { createTokenAuthMiddleware } from './auth/tokenAuthMiddleware.js';
 import type { TokenDefinition } from './auth/tokenAuthMiddleware.js';
+import { Database } from './database/Database.js';
+import { MigrationRunner } from './database/MigrationRunner.js';
+import { VisitorTracker } from './visitors/VisitorTracker.js';
+import { HourlyScheduler } from './visitors/HourlyScheduler.js';
 
 export { SessionManager } from './session/SessionManager.js';
 export type {
@@ -56,6 +61,21 @@ export {
 	type AuthenticatedRequest,
 	type AuthMiddleware,
 } from './auth/tokenAuthMiddleware.js';
+export { Database, type DatabaseOptions } from './database/index.js';
+export {
+	MigrationRunner,
+	type MigrationRunnerOptions,
+	type MigrationRecord,
+	type MigrationResult,
+} from './database/index.js';
+export {
+	VisitorTracker,
+	HourlyScheduler,
+	type VisitorTrackerOptions,
+	type HourlyVisitorStats,
+	type VisitorStats24h,
+	type HourlySchedulerOptions,
+} from './visitors/index.js';
 
 // eslint-disable-next-line max-len
 export interface StartServerOptions extends Partial<FastifySessionTransportOptions> {
@@ -65,6 +85,12 @@ export interface StartServerOptions extends Partial<FastifySessionTransportOptio
 	env?: NodeJS.ProcessEnv;
 	tokens?: Record<string, TokenDefinition>;
 	allowDevToken?: boolean;
+	/**
+	 * Enable visitor tracking with SQLite database.
+	 * When true, initializes database, runs migrations, and tracks visitors.
+	 * Defaults to true if not explicitly set.
+	 */
+	enableVisitorTracking?: boolean;
 }
 
 export interface StartServerResult {
@@ -72,6 +98,16 @@ export interface StartServerResult {
 	address: string;
 	host: string;
 	port: number;
+	/**
+	 * Database instance (if visitor tracking is enabled).
+	 * Call database.close() when shutting down the server.
+	 */
+	database?: Database;
+	/**
+	 * Hourly scheduler (if visitor tracking is enabled).
+	 * Call scheduler.stop() when shutting down the server.
+	 */
+	hourlyScheduler?: HourlyScheduler;
 }
 
 export async function startServer(
@@ -86,10 +122,60 @@ export async function startServer(
 	const authMiddleware = createTokenAuthMiddleware(middlewareOptions);
 	const app = fastify({ logger: options.logger ?? false });
 	const logger = options.logger ? app.log : undefined;
+
+	// Initialize database and visitor tracking (enabled by default)
+	const enableTracking = options.enableVisitorTracking ?? true;
+	let database: Database | undefined;
+	let visitorTracker: VisitorTracker | undefined;
+	let hourlyScheduler: HourlyScheduler | undefined;
+
+	if (enableTracking) {
+		database = new Database({ env });
+		const dbPath = database.getPath();
+
+		// Ensure database directory exists
+		try {
+			mkdirSync(dirname(dbPath), { recursive: true });
+		} catch {
+			// Directory may already exist
+		}
+
+		database.open();
+		logger?.info(`Database opened at ${dbPath}`);
+
+		// Run migrations
+		const migrationRunner = new MigrationRunner(database);
+		const migrationResult = migrationRunner.run();
+		if (migrationResult.applied.length > 0) {
+			logger?.info(
+				`Applied ${migrationResult.applied.length} migration(s): ` +
+					migrationResult.applied.map((mig) => mig.name).join(', '),
+			);
+		} else if (migrationResult.alreadyUpToDate) {
+			logger?.info('Database schema is up to date');
+		}
+
+		// Initialize visitor tracker
+		visitorTracker = new VisitorTracker({ database });
+
+		// Start hourly scheduler for persisting visitor stats
+		hourlyScheduler = new HourlyScheduler({
+			onHour: () => {
+				visitorTracker?.persistCurrentHour();
+				logger?.info('Persisted hourly visitor stats');
+			},
+			logger: (msg) => logger?.info(msg),
+		});
+		hourlyScheduler.start();
+	}
+
 	const transportOptions: FastifySessionTransportOptions = {
 		sessionManager,
 		authMiddleware,
 	};
+	if (visitorTracker) {
+		transportOptions.visitorTracker = visitorTracker;
+	}
 	if (options.idFactory) {
 		transportOptions.idFactory = options.idFactory;
 	}
@@ -99,14 +185,23 @@ export async function startServer(
 		const address = await app.listen({ host, port });
 		logger?.info(`Kingdom Builder server listening on ${address}`);
 		const url = new URL(address);
-		return {
+		const result: StartServerResult = {
 			app,
 			address,
 			host: url.hostname,
 			port: Number.parseInt(url.port, 10),
-		} satisfies StartServerResult;
+		};
+		if (database) {
+			result.database = database;
+		}
+		if (hourlyScheduler) {
+			result.hourlyScheduler = hourlyScheduler;
+		}
+		return result;
 	} catch (error) {
 		logger?.error(error, 'Failed to start Kingdom Builder server.');
+		hourlyScheduler?.stop();
+		database?.close();
 		await app.close();
 		throw error;
 	}
