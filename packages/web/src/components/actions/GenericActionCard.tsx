@@ -119,19 +119,30 @@ function GenericActionCard({
 		? formatMissingResources(costs, player.values, selectResourceDescriptor)
 		: 'Loading costs…';
 	const requirementText = requirements.join(', ');
-	const title = !availability.implemented
-		? 'Not implemented yet'
-		: buildingAlreadyOwned
-			? 'Already built'
-			: requirementsLoading
-				? 'Loading requirements…'
-				: costsLoading
-					? 'Loading costs…'
-					: !availability.meetsRequirements
-						? requirementText
-						: !availability.canPay
-							? (insufficientTooltip ?? 'Cannot pay costs')
-							: undefined;
+
+	const resolveTooltip = (): string | undefined => {
+		if (!availability.implemented) {
+			return 'Not implemented yet';
+		}
+		if (buildingAlreadyOwned) {
+			return 'Already built';
+		}
+		if (requirementsLoading) {
+			return 'Loading requirements…';
+		}
+		if (costsLoading) {
+			return 'Loading costs…';
+		}
+		if (!availability.meetsRequirements) {
+			return requirementText;
+		}
+		if (!availability.canPay) {
+			return insufficientTooltip ?? 'Cannot pay costs';
+		}
+		return undefined;
+	};
+	const title = resolveTooltip();
+
 	const hoverBackground =
 		'bg-gradient-to-br from-white/80 to-white/60 ' +
 		'dark:from-slate-900/80 dark:to-slate-900/60';
