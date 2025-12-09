@@ -47,8 +47,9 @@ export function renderCosts(
 	const assets = options?.assets;
 	const resourceMetadata = options?.resourceMetadata;
 	const entries = Object.entries(costs || {}).filter(
-		([resourceKey]) =>
-			!actionCostResource || resourceKey !== actionCostResource,
+		([resourceKey, costValue]) =>
+			(!actionCostResource || resourceKey !== actionCostResource) &&
+			costValue,
 	);
 	const upkeepEntries = Object.entries(upkeep || {});
 	if (entries.length === 0 && upkeepEntries.length === 0) {
