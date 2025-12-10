@@ -106,7 +106,13 @@ export function GenericActionEntry({
 			cost: total,
 			cleanup: cleanupTotal,
 		});
-	}, [action.id, total, cleanupTotal, onSortMetricsChange, metadata.loading.costs]);
+	}, [
+		action.id,
+		total,
+		cleanupTotal,
+		onSortMetricsChange,
+		metadata.loading.costs,
+	]);
 	return (
 		<GenericActionCard
 			action={action}
