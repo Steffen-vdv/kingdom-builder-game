@@ -6,7 +6,14 @@ export const developmentRemove: EffectHandler = (
 	mult = 1,
 ) => {
 	const id = effect.params?.['id'] as string;
-	const landId = effect.params?.['landId'] as string;
+	const rawLandId = effect.params?.['landId'] as string;
+	// Detect unresolved placeholders
+	if (rawLandId?.startsWith('$')) {
+		throw new Error(
+			`development:remove received unresolved placeholder "${rawLandId}"`,
+		);
+	}
+	const landId = rawLandId;
 	if (!id || !landId) {
 		throw new Error('development:remove requires id and landId');
 	}

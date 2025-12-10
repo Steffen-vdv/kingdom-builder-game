@@ -2,7 +2,7 @@ import type { EffectConfig, PopulationConfig } from '@kingdom-builder/protocol';
 import type { ResourceKey } from '../../../internal';
 import { BaseBuilder } from './baseBuilder';
 
-type PopulationEffectKey = 'onAssigned' | 'onUnassigned' | 'onPayUpkeepStep' | 'onGainIncomeStep' | 'onGainAPStep';
+type PopulationEffectKey = 'onPayUpkeepStep' | 'onGainIncomeStep' | 'onGainAPStep';
 
 export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
 	constructor() {
@@ -21,14 +21,6 @@ export class PopulationBuilder extends BaseBuilder<PopulationConfig> {
 		list.push(effect);
 		this.config[key] = list as PopulationConfig[PopulationEffectKey];
 		return this;
-	}
-
-	onAssigned(effect: EffectConfig) {
-		return this.pushEffect('onAssigned', effect);
-	}
-
-	onUnassigned(effect: EffectConfig) {
-		return this.pushEffect('onUnassigned', effect);
 	}
 
 	onPayUpkeepStep(effect: EffectConfig) {

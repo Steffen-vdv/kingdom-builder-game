@@ -3,7 +3,10 @@ import type { EffectHandler } from '.';
 export const landTill: EffectHandler = (effect, engineContext, mult = 1) => {
 	const max = engineContext.services.rules.maxSlotsPerLand;
 	for (let index = 0; index < Math.floor(mult); index++) {
-		const landId = effect.params?.['landId'] as string | undefined;
+		const rawLandId = effect.params?.['landId'] as string | undefined;
+		// Treat unresolved placeholders as "no value provided"
+		const landId =
+			rawLandId && !rawLandId.startsWith('$') ? rawLandId : undefined;
 		const land = landId
 			? engineContext.activePlayer.lands.find((l) => l.id === landId)
 			: [...engineContext.activePlayer.lands]

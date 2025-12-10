@@ -9,7 +9,10 @@ export const developmentAdd: EffectHandler = (
 	const id =
 		(effect.params?.['id'] as string | undefined) ||
 		(effect.params?.['developmentId'] as string | undefined);
-	const providedLandId = effect.params?.['landId'] as string | undefined;
+	const rawLandId = effect.params?.['landId'] as string | undefined;
+	// Treat unresolved placeholders as "no value provided"
+	const providedLandId =
+		rawLandId && !rawLandId.startsWith('$') ? rawLandId : undefined;
 	if (!id) {
 		throw new Error('development:add requires id');
 	}

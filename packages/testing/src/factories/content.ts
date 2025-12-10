@@ -137,8 +137,6 @@ export function createContentFactory(): ContentFactory {
 			id,
 			name: definition.name ?? id,
 			icon: definition.icon,
-			onAssigned: definition.onAssigned ?? [],
-			onUnassigned: definition.onUnassigned ?? [],
 			onPayUpkeepStep: definition.onPayUpkeepStep ?? [],
 			onGainIncomeStep: definition.onGainIncomeStep ?? [],
 			onGainAPStep: definition.onGainAPStep ?? [],

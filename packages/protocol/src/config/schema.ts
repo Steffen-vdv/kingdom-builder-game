@@ -120,8 +120,6 @@ export const populationSchema = z.object({
 	name: z.string(),
 	icon: z.string().optional(),
 	upkeep: costBagSchema.optional(),
-	onAssigned: z.array(effectSchema).optional(),
-	onUnassigned: z.array(effectSchema).optional(),
 	onPayUpkeepStep: z.array(effectSchema).optional(),
 	onGainIncomeStep: z.array(effectSchema).optional(),
 	onGainAPStep: z.array(effectSchema).optional(),
@@ -205,6 +203,8 @@ const resourceDefinitionSchema = resourceMetadataSchema
 			.optional(),
 		tierTrack: resourceTierTrackSchema.optional(),
 		boundOf: resourceBoundOfConfigSchema.optional(),
+		onValueIncrease: z.array(effectSchema).optional(),
+		onValueDecrease: z.array(effectSchema).optional(),
 	});
 
 const resourceGroupParentSchema = resourceMetadataSchema

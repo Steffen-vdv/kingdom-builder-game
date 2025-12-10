@@ -2,8 +2,8 @@ import type { ResourceCategoryDefinition, ResourceDefinition, ResourceGroupDefin
 import {
 	CORE_RESOURCE_DEFINITIONS,
 	getHappinessResourceDefinition,
-	POPULATION_GROUP_DEFINITIONS,
-	POPULATION_RESOURCE_DEFINITIONS,
+	getPopulationGroupDefinitions,
+	getPopulationResourceDefinitions,
 	RESOURCE_CATEGORY_DEFINITIONS,
 	STAT_RESOURCE_DEFINITIONS,
 } from './definitions';
@@ -22,16 +22,18 @@ function assembleResourceCatalog(): ResourceCatalog {
 		return cachedCatalog;
 	}
 
-	const HAPPINESS_RESOURCE_DEFINITION = getHappinessResourceDefinition();
+	const happinessDefinition = getHappinessResourceDefinition();
+	const populationResourceDefs = getPopulationResourceDefinitions();
+	const populationGroupDefs = getPopulationGroupDefinitions();
 
-	const RESOURCE_DEFINITIONS_ORDERED: readonly ResourceDefinition[] = [...CORE_RESOURCE_DEFINITIONS, HAPPINESS_RESOURCE_DEFINITION, ...STAT_RESOURCE_DEFINITIONS, ...POPULATION_RESOURCE_DEFINITIONS];
-	const RESOURCE_GROUP_DEFINITIONS_ORDERED: readonly ResourceGroupDefinition[] = [...POPULATION_GROUP_DEFINITIONS];
-	const CATEGORY_DEFINITIONS_ORDERED: readonly ResourceCategoryDefinition[] = [...RESOURCE_CATEGORY_DEFINITIONS];
+	const resourceDefinitionsOrdered: readonly ResourceDefinition[] = [...CORE_RESOURCE_DEFINITIONS, happinessDefinition, ...STAT_RESOURCE_DEFINITIONS, ...populationResourceDefs];
+	const resourceGroupDefinitionsOrdered: readonly ResourceGroupDefinition[] = [...populationGroupDefs];
+	const categoryDefinitionsOrdered: readonly ResourceCategoryDefinition[] = [...RESOURCE_CATEGORY_DEFINITIONS];
 
 	cachedCatalog = {
-		resources: createResourceRegistry(RESOURCE_DEFINITIONS_ORDERED),
-		groups: createResourceGroupRegistry(RESOURCE_GROUP_DEFINITIONS_ORDERED),
-		categories: createResourceCategoryRegistry(CATEGORY_DEFINITIONS_ORDERED),
+		resources: createResourceRegistry(resourceDefinitionsOrdered),
+		groups: createResourceGroupRegistry(resourceGroupDefinitionsOrdered),
+		categories: createResourceCategoryRegistry(categoryDefinitionsOrdered),
 	};
 
 	return cachedCatalog;

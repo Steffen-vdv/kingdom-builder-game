@@ -17,8 +17,27 @@ export function applyParamsToEffects<E extends EffectDef>(
 	effects: E[],
 	params: Record<string, unknown>,
 ): E[] {
-	const replace = (val: unknown): unknown =>
-		typeof val === 'string' && val.startsWith('$') ? params[val.slice(1)] : val;
+	const replace = (val: unknown): unknown => {
+		if (typeof val !== 'string') {
+			return val;
+		}
+		// If exact placeholder (e.g., "$player"), return the param value directly
+		// This preserves non-string types like numbers
+		if (val.startsWith('$') && /^\$\w+$/.test(val)) {
+			const key = val.slice(1);
+			return key in params ? params[key] : val;
+		}
+		// If string contains embedded placeholders (e.g., "legion_$player_$index"),
+		// interpolate them as strings
+		if (val.includes('$')) {
+			let result = val;
+			for (const [paramKey, paramValue] of Object.entries(params)) {
+				result = result.split(`$${paramKey}`).join(String(paramValue));
+			}
+			return result;
+		}
+		return val;
+	};
 	const replaceDeep = (val: unknown): unknown => {
 		if (Array.isArray(val)) {
 			return val.map(replaceDeep);

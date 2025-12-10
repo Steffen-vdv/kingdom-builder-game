@@ -108,6 +108,8 @@ const resourceDefinitionSchema = resourceMetadataSchema
 			})
 			.optional(),
 		tierTrack: resourceTierTrackSchema.optional(),
+		onValueIncrease: z.array(effectSchema).optional(),
+		onValueDecrease: z.array(effectSchema).optional(),
 	})
 	.passthrough();
 
