@@ -143,7 +143,10 @@ registerEffectFormatter('resource', 'add', {
 		const icon = metadata.icon?.trim() ?? '';
 		const change = formatSignedValue(amount, metadata);
 		const subject = icon || metadata.label || resourceId;
-		const mainEntry = appendFormatSuffix(metadata.format, `${subject} ${change}`);
+		const mainEntry = appendFormatSuffix(
+			metadata.format,
+			`${subject} ${change}`,
+		);
 
 		// Look up resource definition for triggers
 		const resourceDef = context.resources.resources.byId[resourceId];

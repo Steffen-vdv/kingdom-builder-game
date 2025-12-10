@@ -1,13 +1,5 @@
-import {
-	PassiveMethods,
-	ResourceMethods,
-	Types,
-} from '../../config/builderShared';
-import {
-	effect,
-	passiveParams,
-	populationAssignmentPassiveId,
-} from '../../config/builders';
+import { PassiveMethods, ResourceMethods, Types } from '../../config/builderShared';
+import { effect, passiveParams, populationAssignmentPassiveId } from '../../config/builders';
 import { PopulationRole, Stat } from '../../internal';
 import { resourceChange } from '..';
 import { resourceGroup } from '../groupBuilder';
@@ -22,74 +14,46 @@ const POPULATION_GROUP_ORDER = 3;
 const COUNCIL_INFO = {
 	icon: '⚖️',
 	label: 'Council',
-	description:
-		'The Council advises the crown and generates Action Points during ' +
-		'the Growth phase. Keeping them employed fuels your economy.',
+	description: 'The Council advises the crown and generates Action Points during ' + 'the Growth phase. Keeping them employed fuels your economy.',
 };
 
 const LEGION_INFO = {
 	icon: '🎖️',
 	label: 'Legion',
-	description:
-		'Legions lead your forces, boosting Army Strength and training ' +
-		'troops each Growth phase.',
+	description: 'Legions lead your forces, boosting Army Strength and training ' + 'troops each Growth phase.',
 };
 
 const FORTIFIER_INFO = {
 	icon: '🔧',
 	label: 'Fortifier',
-	description:
-		'Fortifiers reinforce your defenses. They raise Fortification ' +
-		'Strength and shore up the castle every Growth phase.',
+	description: 'Fortifiers reinforce your defenses. They raise Fortification ' + 'Strength and shore up the castle every Growth phase.',
 };
 
 // Lazy initialization to break circular dependency with config/builders
-let cachedPopulationResourceDefinitions: readonly ResourceDefinition[] | null =
-	null;
-let cachedPopulationGroupDefinitions: readonly ResourceGroupDefinition[] | null =
-	null;
+let cachedPopulationResourceDefinitions: readonly ResourceDefinition[] | null = null;
+let cachedPopulationGroupDefinitions: readonly ResourceGroupDefinition[] | null = null;
 
 function buildPopulationResourceDefinitions(): readonly ResourceDefinition[] {
 	// Effect params for population assignment passives
-	const legionStrengthGainParams = resourceChange(Stat.armyStrength)
-		.amount(1)
-		.build();
-	const fortifierStrengthGainParams = resourceChange(Stat.fortificationStrength)
-		.amount(1)
-		.build();
+	const legionStrengthGainParams = resourceChange(Stat.armyStrength).amount(1).build();
+	const fortifierStrengthGainParams = resourceChange(Stat.fortificationStrength).amount(1).build();
 
-	const legionPassiveParams = passiveParams()
-		.id(populationAssignmentPassiveId(PopulationRole.Legion))
-		.build();
-	const fortifierPassiveParams = passiveParams()
-		.id(populationAssignmentPassiveId(PopulationRole.Fortifier))
-		.build();
+	const legionPassiveParams = passiveParams().id(populationAssignmentPassiveId(PopulationRole.Legion)).build();
+	const fortifierPassiveParams = passiveParams().id(populationAssignmentPassiveId(PopulationRole.Fortifier)).build();
 
 	// Legion: +1 Army Strength while assigned (via passive)
 	const legionOnValueIncrease = effect(Types.Passive, PassiveMethods.ADD)
 		.params(legionPassiveParams)
-		.effect(
-			effect(Types.Resource, ResourceMethods.ADD)
-				.params(legionStrengthGainParams)
-				.build(),
-		)
+		.effect(effect(Types.Resource, ResourceMethods.ADD).params(legionStrengthGainParams).build())
 		.build();
-	const legionOnValueDecrease = effect(Types.Passive, PassiveMethods.REMOVE)
-		.params(legionPassiveParams)
-		.build();
+	const legionOnValueDecrease = effect(Types.Passive, PassiveMethods.REMOVE).params(legionPassiveParams).build();
 
 	// Fortifier: +1 Fortification Strength while assigned (via passive)
 	const fortifierOnValueIncrease = effect(Types.Passive, PassiveMethods.ADD)
 		.params(fortifierPassiveParams)
-		.effect(
-			effect(Types.Resource, ResourceMethods.ADD)
-				.params(fortifierStrengthGainParams)
-				.build(),
-		)
+		.effect(effect(Types.Resource, ResourceMethods.ADD).params(fortifierStrengthGainParams).build())
 		.build();
-	const fortifierOnValueDecrease = effect(Types.Passive, PassiveMethods.REMOVE)
-		.params(fortifierPassiveParams)
-		.build();
+	const fortifierOnValueDecrease = effect(Types.Passive, PassiveMethods.REMOVE).params(fortifierPassiveParams).build();
 
 	return [
 		resource('resource:core:council')
@@ -144,9 +108,7 @@ export function getPopulationGroupDefinitions(): readonly ResourceGroupDefinitio
 				id: POPULATION_PARENT_ID,
 				label: 'Current Population',
 				icon: '👥',
-				description:
-					'Current Population is the sum of all assigned roles. ' +
-					'It cannot exceed Max Population.',
+				description: 'Current Population is the sum of all assigned roles. ' + 'It cannot exceed Max Population.',
 				lowerBound: 0,
 				upperBound: boundTo('resource:core:max-population'),
 			})

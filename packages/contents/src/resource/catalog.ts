@@ -1,8 +1,4 @@
-import type {
-	ResourceCategoryDefinition,
-	ResourceDefinition,
-	ResourceGroupDefinition,
-} from './types';
+import type { ResourceCategoryDefinition, ResourceDefinition, ResourceGroupDefinition } from './types';
 import {
 	CORE_RESOURCE_DEFINITIONS,
 	getHappinessResourceDefinition,
@@ -11,14 +7,7 @@ import {
 	RESOURCE_CATEGORY_DEFINITIONS,
 	STAT_RESOURCE_DEFINITIONS,
 } from './definitions';
-import {
-	createResourceCategoryRegistry,
-	createResourceGroupRegistry,
-	createResourceRegistry,
-	type ResourceCategoryRegistry,
-	type ResourceGroupRegistry,
-	type ResourceRegistry,
-} from './registry';
+import { createResourceCategoryRegistry, createResourceGroupRegistry, createResourceRegistry, type ResourceCategoryRegistry, type ResourceGroupRegistry, type ResourceRegistry } from './registry';
 
 export interface ResourceCatalog {
 	readonly resources: ResourceRegistry;
@@ -37,18 +26,9 @@ function assembleResourceCatalog(): ResourceCatalog {
 	const populationResourceDefs = getPopulationResourceDefinitions();
 	const populationGroupDefs = getPopulationGroupDefinitions();
 
-	const resourceDefinitionsOrdered: readonly ResourceDefinition[] = [
-		...CORE_RESOURCE_DEFINITIONS,
-		happinessDefinition,
-		...STAT_RESOURCE_DEFINITIONS,
-		...populationResourceDefs,
-	];
-	const resourceGroupDefinitionsOrdered: readonly ResourceGroupDefinition[] = [
-		...populationGroupDefs,
-	];
-	const categoryDefinitionsOrdered: readonly ResourceCategoryDefinition[] = [
-		...RESOURCE_CATEGORY_DEFINITIONS,
-	];
+	const resourceDefinitionsOrdered: readonly ResourceDefinition[] = [...CORE_RESOURCE_DEFINITIONS, happinessDefinition, ...STAT_RESOURCE_DEFINITIONS, ...populationResourceDefs];
+	const resourceGroupDefinitionsOrdered: readonly ResourceGroupDefinition[] = [...populationGroupDefs];
+	const categoryDefinitionsOrdered: readonly ResourceCategoryDefinition[] = [...RESOURCE_CATEGORY_DEFINITIONS];
 
 	cachedCatalog = {
 		resources: createResourceRegistry(resourceDefinitionsOrdered),

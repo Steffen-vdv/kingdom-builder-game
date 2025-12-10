@@ -28,25 +28,9 @@ export function createPopulationRegistry() {
 			.build(),
 	);
 
-	registry.add(
-		PopulationRole.Legion,
-		population()
-			.id(PopulationRole.Legion)
-			.name('Legion')
-			.icon('🎖️')
-			.upkeep(Resource.gold, 1)
-			.build(),
-	);
+	registry.add(PopulationRole.Legion, population().id(PopulationRole.Legion).name('Legion').icon('🎖️').upkeep(Resource.gold, 1).build());
 
-	registry.add(
-		PopulationRole.Fortifier,
-		population()
-			.id(PopulationRole.Fortifier)
-			.name('Fortifier')
-			.icon('🔧')
-			.upkeep(Resource.gold, 1)
-			.build(),
-	);
+	registry.add(PopulationRole.Fortifier, population().id(PopulationRole.Fortifier).name('Fortifier').icon('🔧').upkeep(Resource.gold, 1).build());
 
 	return registry;
 }
