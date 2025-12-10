@@ -314,8 +314,8 @@ export interface SessionPhaseMetadata {
 export interface SessionTriggerMetadata {
 	label?: string;
 	icon?: string;
-	future?: string;
-	past?: string;
+	text?: string;
+	condition?: string;
 }
 
 export interface SessionSnapshotMetadata {

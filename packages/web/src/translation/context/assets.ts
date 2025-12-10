@@ -95,22 +95,26 @@ function resolveModifierDescriptors(
 	return overrides;
 }
 function toTriggerAsset(
+	id: string,
 	descriptor: SessionTriggerMetadata | undefined,
-	fallbackLabel: string,
 ): TranslationTriggerAsset {
-	const entry: TranslationTriggerAsset = {};
-	if (descriptor?.icon !== undefined) {
+	if (!descriptor?.label) {
+		throw new Error(
+			`Trigger "${id}" is missing a label. ` +
+				'All triggers must have metadata with a label defined.',
+		);
+	}
+	const entry: TranslationTriggerAsset = {
+		label: descriptor.label,
+	};
+	if (descriptor.icon !== undefined) {
 		entry.icon = descriptor.icon;
 	}
-	if (descriptor?.future !== undefined) {
-		entry.future = descriptor.future;
+	if (descriptor.text !== undefined) {
+		entry.text = descriptor.text;
 	}
-	if (descriptor?.past !== undefined) {
-		entry.past = descriptor.past;
-	}
-	const label = descriptor?.label ?? descriptor?.past ?? fallbackLabel;
-	if (label !== undefined) {
-		entry.label = label;
+	if (descriptor.condition !== undefined) {
+		entry.condition = descriptor.condition;
 	}
 	return Object.freeze(entry);
 }
@@ -123,7 +127,7 @@ function buildTriggerMap(
 	}
 	const entries: Record<string, TranslationTriggerAsset> = {};
 	for (const [id, descriptor] of Object.entries(triggers)) {
-		entries[id] = toTriggerAsset(descriptor, id);
+		entries[id] = toTriggerAsset(id, descriptor);
 	}
 	return Object.freeze(entries);
 }

@@ -237,7 +237,7 @@ export const getSyntheticFestivalDetails = (
 	const upkeepLabel =
 		upkeepPhase?.label ??
 		upkeepTrigger?.label ??
-		upkeepTrigger?.past ??
+		upkeepTrigger?.text ??
 		FALLBACK_UPKEEP.label;
 	const upkeepIcon =
 		upkeepPhase?.icon ?? upkeepTrigger?.icon ?? FALLBACK_UPKEEP.icon;

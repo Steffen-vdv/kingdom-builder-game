@@ -247,8 +247,8 @@ describe('passive formatter duration metadata', () => {
 				metadata.triggers = {
 					...metadata.triggers,
 					onPayUpkeepStep: {
-						past: 'Upkeep',
-						future: 'During Upkeep',
+						label: 'Upkeep',
+						text: 'During Upkeep',
 						icon: '🛏️',
 					},
 				};

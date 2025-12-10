@@ -42,13 +42,13 @@ describe('PhasedTranslator step triggers', () => {
 		const stepMetadata = {
 			onTestStep: {
 				icon: '🧪',
-				future: 'During test step',
-				past: 'Test step',
+				label: 'Test step',
+				text: 'During test step',
 			},
 			onWorkshopStep: {
 				icon: '⚙️',
-				future: 'During workshop step',
-				past: 'Workshop step',
+				label: 'Workshop step',
+				text: 'During workshop step',
 			},
 		} as const;
 		let developmentId = '';

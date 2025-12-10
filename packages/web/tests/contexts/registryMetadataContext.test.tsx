@@ -137,8 +137,7 @@ function createTestSetup(): TestSetup {
 			[triggerId]: {
 				label: 'Ignition Trigger',
 				icon: '🔥',
-				future: 'Ignite at dawn',
-				past: 'Ignition complete',
+				text: 'Ignite at dawn',
 			},
 		},
 		assets: {
@@ -308,8 +307,8 @@ describe('RegistryMetadataProvider', () => {
 		expect(fallbackPhase.steps).toHaveLength(0);
 		expect(fallbackPhase.action).toBe(false);
 		const trigger = triggers.select(setup.triggerId);
-		expect(trigger.future).toBe('Ignite at dawn');
-		expect(trigger.past).toBe('Ignition complete');
+		expect(trigger.text).toBe('Ignite at dawn');
+		expect(trigger.label).toBe('Ignition Trigger');
 		const fallbackTriggerId = nextKey('trigger');
 		expect(triggers.select(fallbackTriggerId).label).toBe(
 			formatFallbackLabel(fallbackTriggerId),

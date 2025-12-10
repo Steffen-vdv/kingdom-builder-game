@@ -75,16 +75,17 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 	Object.freeze({
 		'trigger.growth.start': {
 			icon: '🌿',
-			past: 'Growth Triggered',
-			future: 'At the start of Growth',
+			label: 'Growth Start',
+			text: 'At the start of Growth',
 		},
 		'trigger.growth.resolve': {
-			past: 'Growth Resolved',
+			label: 'Growth Resolved',
+			text: 'Growth Resolved',
 		},
 		'trigger.upkeep.clean': {
 			icon: '🧹',
-			past: 'Upkeep',
-			future: 'During Upkeep',
+			label: 'Upkeep',
+			text: 'During Upkeep',
 		},
 	});
 

@@ -244,15 +244,15 @@ describe('buildSessionMetadata', () => {
 		}
 	});
 
-	it('builds trigger metadata with label, icon, and future/past strings', () => {
+	it('builds trigger metadata with label, icon, and text strings', () => {
 		const { metadata } = buildSessionMetadata();
 		for (const [triggerId, triggerDef] of Object.entries(TRIGGER_META)) {
 			const triggerMeta = metadata.triggers?.[triggerId];
 			expect(triggerMeta).toBeDefined();
 			expect(triggerMeta?.label).toBe(triggerDef.label);
-			// All triggers should have icon and future text generated
+			// All triggers should have icon and text generated
 			expect(triggerMeta?.icon).toBeDefined();
-			expect(triggerMeta?.future).toBeDefined();
+			expect(triggerMeta?.text).toBeDefined();
 			// Event triggers use their own icon directly
 			if (triggerDef.type === 'event') {
 				expect(triggerMeta?.icon).toBe(triggerDef.icon);

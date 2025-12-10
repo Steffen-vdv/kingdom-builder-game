@@ -27,10 +27,9 @@ export function withInstallation<T>(
 			}
 			const trigger = selectTriggerDisplay(context.assets, 'onBuild');
 			const icon = trigger.icon ? `${trigger.icon} ` : '';
-			const futureLabel = trigger.future ?? 'Until removed';
-			const installedTitle = `${icon}${futureLabel}`.trim();
+			const installedTitle = `${icon}${trigger.condition}`.trim();
 			const uninstalledTitle =
-				`${icon}On build, ${futureLabel.toLowerCase()}`.trim();
+				`${icon}${trigger.text}, ${trigger.condition?.toLowerCase()}`.trim();
 			const title = options?.installed ? installedTitle : uninstalledTitle;
 			const wrapped = main.length ? [{ title, items: main }] : [];
 			return [...wrapped, ...hoisted];
@@ -56,10 +55,9 @@ export function withInstallation<T>(
 			}
 			const trigger = selectTriggerDisplay(context.assets, 'onBuild');
 			const icon = trigger.icon ? `${trigger.icon} ` : '';
-			const futureLabel = trigger.future ?? 'Until removed';
-			const installedTitle = `${icon}${futureLabel}`.trim();
+			const installedTitle = `${icon}${trigger.condition}`.trim();
 			const uninstalledTitle =
-				`${icon}On build, ${futureLabel.toLowerCase()}`.trim();
+				`${icon}${trigger.text}, ${trigger.condition?.toLowerCase()}`.trim();
 			const title = options?.installed ? installedTitle : uninstalledTitle;
 			const wrapped = main.length ? [{ title, items: main }] : [];
 			return [...wrapped, ...hoisted];

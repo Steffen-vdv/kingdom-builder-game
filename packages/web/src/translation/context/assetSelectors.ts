@@ -44,10 +44,13 @@ export function selectTriggerDisplay(
 	triggerId: string,
 ): TranslationTriggerAsset {
 	const entry = assets?.triggers?.[triggerId];
-	if (entry) {
-		return entry;
+	if (!entry) {
+		throw new Error(
+			`Trigger "${triggerId}" not found in assets. ` +
+				'All triggers must have metadata defined.',
+		);
 	}
-	return Object.freeze({ label: triggerId });
+	return entry;
 }
 
 export function selectTierSummary(
