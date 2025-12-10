@@ -30,9 +30,11 @@ export function applyParamsToEffects<E extends EffectDef>(
 		// If string contains embedded placeholders (e.g., "legion_$player_$index"),
 		// interpolate them as strings
 		if (val.includes('$')) {
-			return val.replace(/\$(\w+)/g, (match, key) => {
-				return key in params ? String(params[key]) : match;
-			});
+			let result = val;
+			for (const [paramKey, paramValue] of Object.entries(params)) {
+				result = result.split(`$${paramKey}`).join(String(paramValue));
+			}
+			return result;
 		}
 		return val;
 	};
