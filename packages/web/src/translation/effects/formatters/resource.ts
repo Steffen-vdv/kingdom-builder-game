@@ -76,7 +76,7 @@ function getPassiveId(effect: EffectDef): string | undefined {
 	return typeof id === 'string' ? id : undefined;
 }
 
-// Check if a passive:add effect has a matching passive:remove in onValueDecrease
+// Check if passive:add has a matching passive:remove in onValueDecrease
 function isPassivePaired(
 	addEffect: EffectDef,
 	decreaseEffects: readonly EffectDef[],
