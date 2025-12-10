@@ -59,12 +59,10 @@ export function buildActionsPanelContent({
 					name: 'Council Role',
 					icon: '⚖️',
 					upkeep: { [upkeepResource]: 1 },
-					onAssigned: [{}],
 				},
 				{
 					name: 'Legion Role',
 					upkeep: { [upkeepResource]: 1 },
-					onAssigned: [{}],
 				},
 			];
 	const registeredPopulationRoles = defaultPopulationRoles.map((definition) =>

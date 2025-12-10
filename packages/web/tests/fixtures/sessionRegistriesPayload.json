@@ -1229,35 +1229,7 @@
 			"icon": "🎖️",
 			"upkeep": {
 				"gold": 1
-			},
-			"onAssigned": [
-				{
-					"type": "passive",
-					"method": "add",
-					"params": {
-						"id": "legion_$player_$index"
-					},
-					"effects": [
-						{
-							"type": "resource",
-							"method": "add",
-							"params": {
-								"resourceId": "resource:core:army-strength",
-								"change": { "type": "amount", "amount": 1 }
-							}
-						}
-					]
-				}
-			],
-			"onUnassigned": [
-				{
-					"type": "passive",
-					"method": "remove",
-					"params": {
-						"id": "legion_$player_$index"
-					}
-				}
-			]
+			}
 		},
 		"fortifier": {
 			"id": "fortifier",
@@ -1265,35 +1237,7 @@
 			"icon": "🔧",
 			"upkeep": {
 				"gold": 1
-			},
-			"onAssigned": [
-				{
-					"type": "passive",
-					"method": "add",
-					"params": {
-						"id": "fortifier_$player_$index"
-					},
-					"effects": [
-						{
-							"type": "resource",
-							"method": "add",
-							"params": {
-								"resourceId": "resource:core:fortification-strength",
-								"change": { "type": "amount", "amount": 1 }
-							}
-						}
-					]
-				}
-			],
-			"onUnassigned": [
-				{
-					"type": "passive",
-					"method": "remove",
-					"params": {
-						"id": "fortifier_$player_$index"
-					}
-				}
-			]
+			}
 		}
 	},
 	"resources": {

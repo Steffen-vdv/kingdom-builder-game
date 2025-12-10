@@ -163,11 +163,6 @@ buildings, developments, passives, and population roles via
 - `onValueIncrease` - Fires per unit of resource increase
 - `onValueDecrease` - Fires per unit of resource decrease
 
-**Population triggers:**
-
-- `onAssigned` - When a citizen is assigned to this role
-- `onUnassigned` - When a citizen is unassigned from this role
-
 **Build triggers:**
 
 - `onBuild` - When a building/development is constructed
