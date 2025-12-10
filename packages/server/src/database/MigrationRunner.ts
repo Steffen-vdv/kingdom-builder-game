@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { join, basename, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Database } from './Database.js';
 
 export interface MigrationRunnerOptions {
@@ -209,7 +210,9 @@ function parseMigrationFilename(
 function getDefaultMigrationsPath(): string {
 	// MigrationRunner.ts is at packages/server/src/database/ (or dist/database/)
 	// Go up two levels to reach packages/server/
-	const currentDir = new URL('.', import.meta.url).pathname;
+	// Use fileURLToPath for cross-platform compatibility (Windows paths)
+	const currentFile = fileURLToPath(import.meta.url);
+	const currentDir = dirname(currentFile);
 	const serverRoot = join(currentDir, '..', '..');
 	return join(serverRoot, 'migrations');
 }
