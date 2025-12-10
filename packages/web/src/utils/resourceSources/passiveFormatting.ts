@@ -1,6 +1,6 @@
 import type {
-	SessionResourceSourceLink as StatSourceLink,
-	SessionResourceSourceMeta as StatSourceMeta,
+	SessionResourceSourceLink as ResourceSourceLink,
+	SessionResourceSourceMeta as ResourceSourceMeta,
 } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationContext } from '../../translation/context';
@@ -10,11 +10,11 @@ const PERMANENT_ICON = '🗿';
 const DEFAULT_PASSIVE_ICON = '♾️';
 
 export function buildLongevityEntries(
-	meta: StatSourceMeta,
+	meta: ResourceSourceMeta,
 	dependencies: string[],
 	translationContext: TranslationContext,
 	removal?: string,
-	removalLink?: StatSourceLink,
+	removalLink?: ResourceSourceLink,
 ): SummaryEntry[] {
 	if (meta.longevity === 'ongoing') {
 		const anchors = collectAnchorLabels(meta, translationContext);
@@ -48,7 +48,7 @@ export function buildLongevityEntries(
 }
 
 function collectAnchorLabels(
-	meta: StatSourceMeta,
+	meta: ResourceSourceMeta,
 	translationContext: TranslationContext,
 ): string[] {
 	const labels: string[] = [];
@@ -64,7 +64,7 @@ function collectAnchorLabels(
 		seen.add(normalized);
 		labels.push(label.trim());
 	};
-	const includeLink = (link?: StatSourceLink) => {
+	const includeLink = (link?: ResourceSourceLink) => {
 		if (!link || link.type === 'action') {
 			return;
 		}
@@ -81,7 +81,7 @@ function collectAnchorLabels(
 }
 
 function collectRemovalLabels(
-	removal: StatSourceLink | undefined,
+	removal: ResourceSourceLink | undefined,
 	translationContext: TranslationContext,
 ): string[] {
 	if (!removal) {

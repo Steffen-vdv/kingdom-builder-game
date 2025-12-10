@@ -39,7 +39,7 @@ function resolvePhaseArguments(
 	};
 }
 
-export function statDisplaysAsPercent(
+export function resourceDisplaysAsPercent(
 	key: string,
 	assets?: TranslationAssets,
 ): boolean {
@@ -57,12 +57,14 @@ export function statDisplaysAsPercent(
 	return false;
 }
 
-export function formatStatValue(
+export function formatResourceValue(
 	key: string,
 	value: number,
 	assets?: TranslationAssets,
 ): string {
-	return statDisplaysAsPercent(key, assets) ? `${value * 100}%` : String(value);
+	return resourceDisplaysAsPercent(key, assets)
+		? `${value * 100}%`
+		: String(value);
 }
 
 export function formatDetailText(detail: string): string {

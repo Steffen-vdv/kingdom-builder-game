@@ -1,5 +1,5 @@
 import type { AttackLog } from '@kingdom-builder/protocol';
-import { formatStatValue } from '../../../../utils/resourceSources';
+import { formatResourceValue } from '../../../../utils/resourceSources';
 import type { SummaryEntry } from '../../../content';
 import {
 	attackResourceLabel,
@@ -93,7 +93,7 @@ export function buildStandardEvaluationEntry(
 	>;
 	const formatTargetValue = (value: number) => {
 		if (isStat) {
-			return formatStatValue(String(target.resourceId), value);
+			return formatResourceValue(String(target.resourceId), value);
 		}
 		return formatNumber(value);
 	};

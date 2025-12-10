@@ -1,4 +1,4 @@
-import { formatStatValue } from '../../utils/resourceSources';
+import { formatResourceValue } from '../../utils/resourceSources';
 import type { TranslationAssets } from '../context';
 import type { ResourceMetadataSnapshot } from '../resource';
 
@@ -55,9 +55,9 @@ export function formatStatChange(
 	assets: TranslationAssets,
 ): string {
 	const prefix = iconPrefix(icon);
-	const before = formatStatValue(key, change.before, assets);
-	const after = formatStatValue(key, change.after, assets);
-	const delta = formatStatValue(key, change.delta, assets);
+	const before = formatResourceValue(key, change.before, assets);
+	const after = formatResourceValue(key, change.after, assets);
+	const delta = formatResourceValue(key, change.delta, assets);
 	const sign = change.delta >= 0 ? '+' : '';
 	return `${prefix}${label} ${sign}${delta} (${before}→${after})`;
 }

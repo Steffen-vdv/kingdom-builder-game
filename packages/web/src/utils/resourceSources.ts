@@ -1,12 +1,12 @@
 import type {
 	SessionPlayerStateSnapshot as PlayerStateSnapshot,
-	SessionResourceSourceContribution as StatSourceContribution,
+	SessionResourceSourceContribution as ResourceSourceContribution,
 } from '@kingdom-builder/protocol';
 import type { Summary, SummaryEntry } from '../translation/content/types';
 import type { TranslationContext } from '../translation/context';
 import {
 	formatSourceTitle,
-	formatStatValue,
+	formatResourceValue,
 	getSourceDescriptor,
 } from './resourceSources/descriptors';
 import type { SourceDescriptor } from './resourceSources/descriptors';
@@ -16,16 +16,16 @@ import {
 } from './resourceSources/summary';
 
 export {
-	statDisplaysAsPercent,
-	formatStatValue,
+	resourceDisplaysAsPercent,
+	formatResourceValue,
 } from './resourceSources/descriptors';
 
-export function getStatBreakdownSummary(
-	statKey: string,
+export function getResourceBreakdownSummary(
+	resourceKey: string,
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
 ): Summary {
-	const sources = player.resourceSources?.[statKey] ?? {};
+	const sources = player.resourceSources?.[resourceKey] ?? {};
 	const contributions = Object.values(sources);
 	if (!contributions.length) {
 		return [];
@@ -43,23 +43,23 @@ export function getStatBreakdownSummary(
 		return left.descriptor.label.localeCompare(right.descriptor.label);
 	});
 	return annotated.map(({ entry, descriptor }) =>
-		formatContribution(statKey, entry, descriptor, player, context),
+		formatContribution(resourceKey, entry, descriptor, player, context),
 	);
 }
 
 function formatContribution(
-	statKey: string,
-	contribution: StatSourceContribution,
+	resourceKey: string,
+	contribution: ResourceSourceContribution,
 	descriptor: SourceDescriptor,
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
 ): SummaryEntry {
 	const { amount, meta } = contribution;
-	const resourceInfo = context.assets.resources?.[statKey];
+	const resourceInfo = context.assets.resources?.[resourceKey];
 	if (!resourceInfo) {
-		console.warn(`Missing resource metadata for key: ${statKey}`);
+		console.warn(`Missing resource metadata for key: ${resourceKey}`);
 	}
-	const valueText = formatStatValue(statKey, amount, context.assets);
+	const valueText = formatResourceValue(resourceKey, amount, context.assets);
 	const sign = amount >= 0 ? '+' : '';
 	const amountParts: string[] = [];
 	if (resourceInfo?.icon) {

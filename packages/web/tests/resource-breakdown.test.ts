@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { SessionResourceSourceLink as StatSourceLink } from '@kingdom-builder/protocol';
-import { getStatBreakdownSummary } from '../src/utils/resourceSources';
+import type { SessionResourceSourceLink as ResourceSourceLink } from '@kingdom-builder/protocol';
+import { getResourceBreakdownSummary } from '../src/utils/resourceSources';
 import { formatKindLabel } from '../src/utils/resourceSources/descriptorRegistry';
 import { createSessionRegistries } from './helpers/sessionRegistries';
 import {
@@ -242,7 +242,7 @@ describe('resource breakdown summary', () => {
 			phaseStepId,
 			metadataSelectors,
 		} = setup;
-		const dependencies: StatSourceLink[] = [
+		const dependencies: ResourceSourceLink[] = [
 			{ type: 'resource', id: populationResourceId },
 			{ type: 'resource', id: resourceKey },
 		];
@@ -268,7 +268,7 @@ describe('resource breakdown summary', () => {
 				},
 			},
 		};
-		const summary = getStatBreakdownSummary(
+		const summary = getResourceBreakdownSummary(
 			primaryStatKey,
 			player,
 			translationContext,
@@ -341,7 +341,7 @@ describe('resource breakdown summary', () => {
 				},
 			},
 		};
-		const summary = getStatBreakdownSummary(
+		const summary = getResourceBreakdownSummary(
 			primaryStatKey,
 			player,
 			translationContext,
@@ -380,12 +380,12 @@ describe('resource breakdown summary', () => {
 				stats: {},
 			},
 		};
-		const first = getStatBreakdownSummary(
+		const first = getResourceBreakdownSummary(
 			primaryStatKey,
 			player,
 			mutatedContext,
 		);
-		const second = getStatBreakdownSummary(
+		const second = getResourceBreakdownSummary(
 			primaryStatKey,
 			player,
 			mutatedContext,
