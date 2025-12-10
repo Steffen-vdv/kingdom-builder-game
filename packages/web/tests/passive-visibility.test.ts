@@ -34,6 +34,17 @@ describe('passive visibility helpers', () => {
 		);
 	});
 
+	it('derives resource origin from metadata', () => {
+		const owner = createOwner();
+		const passive: PassiveLike = {
+			id: 'legion-passive',
+			meta: { source: { type: 'resource' } },
+		};
+		expect(derivePassiveOrigin(passive, owner, visibilityOptions)).toBe(
+			'resource',
+		);
+	});
+
 	it('falls back to heuristics for building, development, and population passives', () => {
 		const owner = createOwner({
 			buildings: new Set<string>(['castle']),
@@ -83,6 +94,19 @@ describe('passive visibility helpers', () => {
 		);
 	});
 
+	it('hides resource-sourced passives for common surfaces', () => {
+		const owner = createOwner();
+		const context = createPassiveVisibilityContext(owner, visibilityOptions);
+		const resourcePassive: PassiveLike = {
+			id: 'legion-strength-bonus',
+			meta: { source: { type: 'resource' } },
+		};
+		expect(shouldSurfacePassive(resourcePassive, context, 'player-panel')).toBe(
+			false,
+		);
+		expect(shouldSurfacePassive(resourcePassive, context, 'log')).toBe(false);
+	});
+
 	it('filters out hidden passives when preparing surface collections', () => {
 		const owner = createOwner({
 			buildings: new Set<string>(['castle']),
@@ -104,6 +128,7 @@ describe('passive visibility helpers', () => {
 			{ id: 'castle_bonus' },
 			{ id: 'watchtower_land-1' },
 			{ id: `${populationEntry}_assignment` },
+			{ id: 'legion-bonus', meta: { source: { type: 'resource' } } },
 			{ id: 'independent' },
 		];
 		const visible = filterPassivesForSurface(passives, context, 'player-panel');
