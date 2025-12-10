@@ -16,6 +16,8 @@ export interface HoverCard {
 	multiStep?: boolean;
 	resolution?: ActionResolution;
 	resolutionTitle?: string;
+	/** Optional breakdown of resource sources */
+	breakdown?: Summary;
 }
 
 interface HoverCardOptions {

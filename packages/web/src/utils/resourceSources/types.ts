@@ -1,6 +1,6 @@
 import type {
 	SessionPlayerStateSnapshot as PlayerStateSnapshot,
-	SessionResourceSourceLink as StatSourceLink,
+	SessionResourceSourceLink as ResourceSourceLink,
 } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../translation/context';
 
@@ -19,13 +19,13 @@ export type DescriptorRegistryEntry = {
 	) => string | undefined;
 	augmentDependencyDetail?: (
 		detail: string | undefined,
-		link: StatSourceLink,
+		link: ResourceSourceLink,
 		player: PlayerStateSnapshot,
 		context: TranslationContext,
 		options: { includeCounts?: boolean },
 	) => string | undefined;
 	formatDependency?: (
-		link: StatSourceLink,
+		link: ResourceSourceLink,
 		player: PlayerStateSnapshot,
 		context: TranslationContext,
 		options: { includeCounts?: boolean },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
-import { formatStatValue } from '../src/utils/resourceSources';
+import { formatResourceValue } from '../src/utils/resourceSources';
 import type { EffectDef, SessionPlayerId } from '@kingdom-builder/protocol';
 import { createTranslationContext } from '../src/translation/context';
 import { createTestSessionScaffold } from './helpers/testSessionScaffold';
@@ -93,7 +93,11 @@ describe('modifier percent formatting', () => {
 		// Resource metadata returns the id as label when resource is unknown
 		const fallbackDisplay = context.resourceMetadata.get('unknown-stat');
 		expect(fallbackDisplay.label).toBe('unknown-stat');
-		const fallbackValue = formatStatValue('unknown-stat', 0.5, context.assets);
+		const fallbackValue = formatResourceValue(
+			'unknown-stat',
+			0.5,
+			context.assets,
+		);
 		expect(fallbackValue).toBe('0.5');
 	});
 });

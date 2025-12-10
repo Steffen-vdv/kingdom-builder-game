@@ -17,8 +17,8 @@ export {
 export {
 	formatDetailText,
 	formatPhaseStep,
-	formatStatValue,
+	formatResourceValue,
 	formatStepLabel,
-	statDisplaysAsPercent,
+	resourceDisplaysAsPercent,
 } from './format';
 export { formatTriggerLabel } from './triggerLabels';

@@ -215,6 +215,14 @@ export default function HoverCard() {
 					</div>
 				);
 			})()}
+			{renderedData.breakdown && renderedData.breakdown.length > 0 && (
+				<div className="mt-2">
+					<div className={CARD_LABEL_CLASS}>Breakdown</div>
+					<ul className={CARD_LIST_CLASS}>
+						{renderSummary(renderedData.breakdown)}
+					</ul>
+				</div>
+			)}
 			{renderedData.requirements.length > 0 && (
 				<div className={CARD_ALERT_TEXT_CLASS}>
 					<div className={CARD_LABEL_CLASS}>Requirements</div>

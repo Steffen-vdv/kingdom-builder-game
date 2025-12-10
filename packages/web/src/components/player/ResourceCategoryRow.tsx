@@ -25,6 +25,7 @@ import {
 	type BoundRefEntry,
 } from './boundReferenceHelpers';
 import ResourceWithBoundButton from './ResourceWithBoundButton';
+import { getResourceBreakdownSummary } from '../../utils/resourceSources';
 
 interface ResourceCategoryRowProps {
 	category: SessionResourceCategoryDefinition;
@@ -167,11 +168,17 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 				effects = tierResult.entries;
 			}
 
+			// Build breakdown for resources that track it
+			const breakdown = definition.trackValueBreakdown
+				? getResourceBreakdownSummary(resourceId, player, translationContext)
+				: undefined;
+
 			handleHoverCard({
 				title: formatResourceTitle(metadata),
 				effects,
 				requirements: [],
 				...(metadata.description ? { description: metadata.description } : {}),
+				...(breakdown && breakdown.length > 0 ? { breakdown } : {}),
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},
@@ -184,6 +191,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 			activeTierId,
 			tieredResourceDescriptor,
 			passiveAssetDescriptor,
+			player,
 		],
 	);
 

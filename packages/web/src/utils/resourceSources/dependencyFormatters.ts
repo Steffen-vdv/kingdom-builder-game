@@ -1,7 +1,7 @@
 import type {
 	SessionPlayerStateSnapshot as PlayerStateSnapshot,
-	SessionResourceSourceLink as StatSourceLink,
-	SessionResourceSourceMeta as StatSourceMeta,
+	SessionResourceSourceLink as ResourceSourceLink,
+	SessionResourceSourceMeta as ResourceSourceMeta,
 } from '@kingdom-builder/protocol';
 import type { TranslationContext } from '../../translation/context';
 import type { ResolveResult, SourceDescriptor } from './types';
@@ -12,9 +12,9 @@ import {
 } from './descriptorRegistry';
 
 function getResolutionCandidates(
-	meta: StatSourceMeta,
-): (StatSourceLink | undefined)[] {
-	const candidates: (StatSourceLink | undefined)[] = [meta.removal];
+	meta: ResourceSourceMeta,
+): (ResourceSourceLink | undefined)[] {
+	const candidates: (ResourceSourceLink | undefined)[] = [meta.removal];
 	if (meta.dependsOn) {
 		candidates.push(...meta.dependsOn);
 	}
@@ -23,7 +23,7 @@ function getResolutionCandidates(
 
 export function formatLinkLabel(
 	translationContext: TranslationContext,
-	link?: StatSourceLink,
+	link?: ResourceSourceLink,
 ): string | undefined {
 	if (!link) {
 		return undefined;
@@ -43,7 +43,7 @@ export function formatLinkLabel(
 
 function resolveLinkDescriptor(
 	translationContext: TranslationContext,
-	link?: StatSourceLink,
+	link?: ResourceSourceLink,
 	options: {
 		omitAssignmentDetail?: boolean;
 		omitRemovalDetail?: boolean;
@@ -84,7 +84,7 @@ function resolveLinkDescriptor(
 
 function deriveResolutionSuffix(
 	translationContext: TranslationContext,
-	meta: StatSourceMeta,
+	meta: ResourceSourceMeta,
 ): ResolveResult | undefined {
 	if (meta.kind !== 'action') {
 		return undefined;
@@ -123,7 +123,7 @@ function deriveResolutionSuffix(
 
 export function getSourceDescriptor(
 	translationContext: TranslationContext,
-	meta: StatSourceMeta,
+	meta: ResourceSourceMeta,
 ): SourceDescriptor {
 	const entry = getDescriptor(translationContext, meta.kind);
 	const base = entry.resolve(meta.id);
@@ -211,7 +211,7 @@ export function formatSourceTitle(descriptor: SourceDescriptor): string {
 }
 
 export function formatDependency(
-	link: StatSourceLink,
+	link: ResourceSourceLink,
 	player: PlayerStateSnapshot,
 	context: TranslationContext,
 	options: { includeCounts?: boolean } = {},

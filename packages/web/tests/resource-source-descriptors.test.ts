@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getStatBreakdownSummary } from '../src/utils/resourceSources';
+import { getResourceBreakdownSummary } from '../src/utils/resourceSources';
 import { formatTriggerLabel } from '../src/utils/resourceSources/descriptors';
 import { formatKindLabel } from '../src/utils/resourceSources/descriptorRegistry';
 import { createSessionRegistries } from './helpers/sessionRegistries';
@@ -289,7 +289,7 @@ describe('resource source descriptors', () => {
 				},
 			},
 		};
-		const breakdown = getStatBreakdownSummary(
+		const breakdown = getResourceBreakdownSummary(
 			primaryStatKey,
 			player,
 			translationContext,

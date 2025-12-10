@@ -1,5 +1,5 @@
 import type { SessionResourceBoundValue } from '@kingdom-builder/protocol';
-import { statDisplaysAsPercent } from '../../utils/resourceSources';
+import { resourceDisplaysAsPercent } from '../../utils/resourceSources';
 import {
 	findResourcePctBreakdown,
 	type StepEffects,
@@ -262,7 +262,8 @@ export function appendPercentBreakdownChanges(
 		}
 		// Check if this resource displays as percent - use metadata
 		const displaysAsPercent =
-			metadata.displayAsPercent || statDisplaysAsPercent(resourceId, assets);
+			metadata.displayAsPercent ||
+			resourceDisplaysAsPercent(resourceId, assets);
 		if (displaysAsPercent) {
 			// Percent-based resources don't need breakdown
 			const summary = formatResourceSummary(metadata, diff.snapshot);

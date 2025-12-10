@@ -1,7 +1,7 @@
 import type { AttackPlayerDiff } from '@kingdom-builder/protocol';
 import {
-	formatStatValue,
-	statDisplaysAsPercent,
+	formatResourceValue,
+	resourceDisplaysAsPercent,
 } from '../../../../utils/resourceSources';
 import type { TranslationContext } from '../../../context';
 import type { AttackStatDescriptor, DiffFormatOptions } from './types';
@@ -71,7 +71,7 @@ function formatValueSigned(
 	value: number,
 	assets?: TranslationContext['assets'],
 ): string {
-	const formatted = formatStatValue(key, Math.abs(value), assets);
+	const formatted = formatResourceValue(key, Math.abs(value), assets);
 	return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
@@ -92,13 +92,13 @@ export function formatDiffCommon(
 	const delta = diff.after - diff.before;
 
 	// Use metadata to determine if value should be displayed as percent
-	const isPercentValue = statDisplaysAsPercent(key, context.assets);
+	const isPercentValue = resourceDisplaysAsPercent(key, context.assets);
 
 	const before = isPercentValue
-		? formatStatValue(key, diff.before, context.assets)
+		? formatResourceValue(key, diff.before, context.assets)
 		: formatNumber(diff.before);
 	const after = isPercentValue
-		? formatStatValue(key, diff.after, context.assets)
+		? formatResourceValue(key, diff.after, context.assets)
 		: formatNumber(diff.after);
 	const signedDelta = isPercentValue
 		? formatValueSigned(key, delta, context.assets)

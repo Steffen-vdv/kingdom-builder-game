@@ -1,4 +1,4 @@
-import type { SessionResourceSourceMeta as StatSourceMeta } from '@kingdom-builder/protocol';
+import type { SessionResourceSourceMeta as ResourceSourceMeta } from '@kingdom-builder/protocol';
 import type { SummaryEntry } from '../../translation/content/types';
 import type { TranslationTriggerAsset } from '../../translation/context';
 import { formatPhaseStep } from './format';
@@ -8,7 +8,7 @@ type HistoryFormattingOptions = {
 };
 
 export function buildHistoryEntries(
-	meta: StatSourceMeta,
+	meta: ResourceSourceMeta,
 	options: HistoryFormattingOptions = {},
 ): SummaryEntry[] {
 	const extra = meta.extra;
