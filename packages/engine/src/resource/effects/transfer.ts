@@ -48,8 +48,10 @@ export interface ResourceValueWriteOptions extends Record<string, unknown> {
 	readonly skipTierUpdate?: boolean;
 }
 
-export interface ResourceTransferEndpointPayload
-	extends Record<string, unknown> {
+export interface ResourceTransferEndpointPayload extends Record<
+	string,
+	unknown
+> {
 	/**
 	 * Player scope to resolve. Defaults to the active player when omitted.
 	 */
@@ -83,8 +85,10 @@ export interface ResourceTransferEffectParams extends Record<string, unknown> {
 	readonly recipient: ResourceTransferEndpointPayload;
 }
 
-export interface ResourceUpperBoundIncreaseParams
-	extends Record<string, unknown> {
+export interface ResourceUpperBoundIncreaseParams extends Record<
+	string,
+	unknown
+> {
 	/**
 	 * Player scope to resolve. Defaults to the active player.
 	 */

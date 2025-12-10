@@ -108,9 +108,7 @@ export interface ResourceBoundOfConfig {
 }
 
 export interface ResourceDefinition
-	extends ResourceMetadata,
-		ResourceBounds,
-		ResourceTriggers {
+	extends ResourceMetadata, ResourceBounds, ResourceTriggers {
 	displayAsPercent?: boolean;
 	allowDecimal?: boolean;
 	trackValueBreakdown?: boolean;

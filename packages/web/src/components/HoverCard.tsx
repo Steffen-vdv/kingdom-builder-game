@@ -29,8 +29,7 @@ export default function HoverCard() {
 	const { mode: advanceMode, advance } = useAdvanceAction();
 	const shouldSuppressHoverCards = Boolean(
 		actionResolution &&
-			(!actionResolution.requireAcknowledgement ||
-				!actionResolution.isComplete),
+		(!actionResolution.requireAcknowledgement || !actionResolution.isComplete),
 	);
 	const data = shouldSuppressHoverCards ? null : rawHoverCard;
 	const [renderedData, setRenderedData] = useState(data);
