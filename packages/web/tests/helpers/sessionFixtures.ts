@@ -39,13 +39,32 @@ export const createEmptySnapshotMetadata = (
 		transfer: { label: 'Transfer' },
 		upkeep: { label: 'Upkeep' },
 	};
+	const baseTriggers: NonNullable<SessionSnapshotMetadata['triggers']> = {
+		onBuild: {
+			icon: '⚒️',
+			label: 'Build',
+			text: 'On build',
+		},
+		onGainIncomeStep: {
+			icon: '💰',
+			label: 'Gain Income',
+			text: 'On Gain Income',
+		},
+		'onPhase.growthPhase': {
+			icon: '🌱',
+			label: 'Growth Phase',
+			text: 'On each Growth Phase',
+		},
+	};
 	const metadata: SessionSnapshotMetadata = {
 		passiveEvaluationModifiers: {},
 		resources: {},
 		buildings: {},
 		developments: {},
 		phases: {},
-		triggers: {},
+		triggers: overrides.triggers
+			? { ...baseTriggers, ...overrides.triggers }
+			: baseTriggers,
 		assets: assetOverrides ? { ...baseAssets, ...assetOverrides } : baseAssets,
 		...metadataOverrides,
 	};

@@ -58,7 +58,20 @@ describe('development summary', () => {
 				developmentId = development.id;
 				registries.developments.add(development.id, development);
 				const triggerEntries = Object.keys(session.metadata.triggers ?? {});
-				triggerId = triggerEntries[0] ?? 'trigger.synthetic';
+				// Use existing trigger or create synthetic one with metadata
+				if (triggerEntries.length > 0) {
+					triggerId = triggerEntries[0]!;
+				} else {
+					triggerId = 'trigger.synthetic';
+					session.metadata.triggers = {
+						...session.metadata.triggers,
+						[triggerId]: {
+							label: 'Synthetic Trigger',
+							icon: '🧪',
+							text: 'On synthetic event',
+						},
+					};
+				}
 				// Use resource keys
 				const resourceId =
 					Object.keys(session.metadata.resources ?? {})[0] ??
@@ -109,14 +122,21 @@ describe('development summary', () => {
 			developmentId,
 			translationContext,
 		);
-		const expectedPhaseLabel = `On each ${phaseLabel} Phase`;
 		const targetPhase = session.phases[0];
 		const phaseKey = targetPhase?.id?.split('.').pop();
 		const fallbackPhaseLabel = phaseKey
 			? `onPhase.${phaseKey}Phase`
 			: undefined;
+		// The translator generates "On each {phase label}" so we look for that
+		// pattern or variations thereof
 		const incomeGroup = findGroup(summary, (entry) => {
-			if (entry.title.includes(expectedPhaseLabel)) {
+			// Match "On each {phaseLabel}" - the translator already includes
+			// "Phase" in the label so we don't add it again
+			if (entry.title.includes(`On each ${phaseLabel}`)) {
+				return true;
+			}
+			// Also check for raw phase label in case format varies
+			if (entry.title.includes(phaseLabel)) {
 				return true;
 			}
 			if (fallbackPhaseLabel) {

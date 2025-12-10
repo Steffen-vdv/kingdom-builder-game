@@ -84,7 +84,7 @@ export const actionPerform: EffectHandler = (effect, context, mult = 1) => {
 		withResourceSourceFrames(
 			context,
 			(_effect, _context, resourceKey) => ({
-				key: `action:${actionDefinition.id}:${resourceKey}`,
+				sourceKey: `action:${actionDefinition.id}:${resourceKey}`,
 				kind: 'action',
 				id: actionDefinition.id,
 				detail: 'Resolution',

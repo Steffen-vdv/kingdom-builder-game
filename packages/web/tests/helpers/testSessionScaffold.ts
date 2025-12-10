@@ -87,6 +87,21 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 			label: 'Upkeep',
 			text: 'During Upkeep',
 		},
+		onGainIncomeStep: {
+			icon: '💰',
+			label: 'Gain Income',
+			text: 'On Gain Income',
+		},
+		onBuild: {
+			icon: '⚒️',
+			label: 'Build',
+			text: 'On build',
+		},
+		'onPhase.growthPhase': {
+			icon: '🌱',
+			label: 'Growth Phase',
+			text: 'On each Growth Phase',
+		},
 	});
 
 const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
