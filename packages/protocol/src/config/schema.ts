@@ -203,6 +203,8 @@ const resourceDefinitionSchema = resourceMetadataSchema
 			.optional(),
 		tierTrack: resourceTierTrackSchema.optional(),
 		boundOf: resourceBoundOfConfigSchema.optional(),
+		onValueIncrease: z.array(effectSchema).optional(),
+		onValueDecrease: z.array(effectSchema).optional(),
 	});
 
 const resourceGroupParentSchema = resourceMetadataSchema
