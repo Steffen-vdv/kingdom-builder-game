@@ -24,6 +24,7 @@ const passiveSourceMetadataSchema = z.object({
 	id: z.string(),
 	icon: z.string().optional(),
 	labelToken: z.string().optional(),
+	name: z.string().optional(),
 });
 
 const passiveRemovalMetadataSchema = z.object({

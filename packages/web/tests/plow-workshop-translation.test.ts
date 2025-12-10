@@ -61,7 +61,14 @@ describe('plow workshop translation', () => {
 					label: SYNTHETIC_UPKEEP_PHASE.label,
 				},
 			},
-			triggers: {},
+			triggers: {
+				onBuild: {
+					icon: '⚒️',
+					label: 'Build',
+					text: 'On build',
+					condition: 'Until removed',
+				},
+			},
 		};
 
 		// Create translation context with proper metadata

@@ -100,6 +100,14 @@ const buildMetadata = (
 				label: development.name ?? developmentId,
 			},
 		},
+		triggers: {
+			onBuild: {
+				icon: '⚒️',
+				label: 'Build',
+				text: 'On build',
+				condition: 'Until removed',
+			},
+		},
 	});
 };
 
