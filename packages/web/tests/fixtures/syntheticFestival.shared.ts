@@ -116,8 +116,8 @@ export const createFestivalMetadata = (): SessionSnapshotMetadata =>
 		triggers: {
 			[ON_PAY_UPKEEP_STEP]: {
 				icon: FALLBACK_UPKEEP.icon,
-				future: `During ${FALLBACK_UPKEEP.label}`,
-				past: FALLBACK_UPKEEP.label,
+				text: `During ${FALLBACK_UPKEEP.label}`,
+				label: FALLBACK_UPKEEP.label,
 			},
 		},
 	});

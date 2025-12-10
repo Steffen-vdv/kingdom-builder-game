@@ -57,7 +57,7 @@ function createFormatterContext(config: {
 		icon: string;
 		steps?: Array<{ id: string; triggers?: string[] }>;
 	}>;
-	triggers: Record<string, { past?: string; future?: string; icon?: string }>;
+	triggers: Record<string, { text?: string; label?: string; icon?: string }>;
 	developments?: Record<string, { icon?: string; name?: string }>;
 }) {
 	const scaffold = createTestSessionScaffold();
@@ -124,7 +124,7 @@ describe('translation format rules', () => {
 					},
 				],
 				triggers: {
-					onGainIncomeStep: { past: 'Income', icon: '💰' },
+					onGainIncomeStep: { label: 'Income', text: 'Income', icon: '💰' },
 				},
 			});
 
@@ -168,7 +168,7 @@ describe('translation format rules', () => {
 					},
 				],
 				triggers: {
-					onPayUpkeepStep: { past: 'Pay Upkeep', icon: '💸' },
+					onPayUpkeepStep: { label: 'Pay Upkeep', text: 'Pay Upkeep', icon: '💸' },
 				},
 			});
 
@@ -237,7 +237,7 @@ describe('translation format rules', () => {
 					},
 				],
 				triggers: {
-					onPayUpkeepStep: { past: 'Upkeep', icon: '🧹' },
+					onPayUpkeepStep: { label: 'Upkeep', text: 'Upkeep', icon: '🧹' },
 				},
 			});
 
@@ -285,7 +285,7 @@ describe('translation format rules', () => {
 					},
 				],
 				triggers: {
-					onPayUpkeepStep: { past: 'Upkeep', icon: '💸' },
+					onPayUpkeepStep: { label: 'Upkeep', text: 'Upkeep', icon: '💸' },
 				},
 			});
 
@@ -361,7 +361,7 @@ describe('translation format rules', () => {
 						steps: [{ id: 'step:test', triggers: ['onTestStep'] }],
 					},
 				],
-				triggers: { onTestStep: { past: 'Test' } },
+				triggers: { onTestStep: { label: 'Test', text: 'Test' } },
 			});
 
 			const passive: EffectDef = {
@@ -400,7 +400,7 @@ describe('translation format rules', () => {
 						steps: [{ id: 'step:test', triggers: ['onTestStep'] }],
 					},
 				],
-				triggers: { onTestStep: { past: 'Test' } },
+				triggers: { onTestStep: { label: 'Test', text: 'Test' } },
 			});
 
 			const passive: EffectDef = {

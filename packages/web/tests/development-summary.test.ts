@@ -162,8 +162,7 @@ describe('development summary', () => {
 			}
 		}
 		const labelCandidates = [
-			triggerDisplay.past,
-			triggerDisplay.future,
+			triggerDisplay.text,
 			triggerDisplay.label,
 			phaseLabel,
 			fallbackPhaseLabel,

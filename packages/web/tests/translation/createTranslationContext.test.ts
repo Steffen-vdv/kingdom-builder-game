@@ -132,8 +132,7 @@ describe('createTranslationContext', () => {
 			triggers: {
 				[triggerId]: {
 					icon: '🔔',
-					future: 'When the signal sounds',
-					past: 'Signal',
+					text: 'When the signal sounds',
 					label: 'Signal Trigger',
 				},
 			},
@@ -340,10 +339,9 @@ describe('createTranslationContext', () => {
 			      "label": "Plot Slot",
 			    },
 			    "trigger": {
-			      "future": "When the signal sounds",
 			      "icon": "🔔",
 			      "label": "Signal Trigger",
-			      "past": "Signal",
+			      "text": "When the signal sounds",
 			    },
 			  },
 			  "compensations": {

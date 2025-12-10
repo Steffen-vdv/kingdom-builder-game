@@ -2,25 +2,25 @@ import type { TranslationAssets } from '../../translation/context';
 import { selectTriggerDisplay } from '../../translation/context';
 import type { DescriptorRegistryEntry, ResolveResult } from './types';
 
-const DEFAULT_TRIGGER_LABEL = 'Trigger';
-
 function coerceTriggerLabel(
 	assets: TranslationAssets | undefined,
 	id?: string,
 ): ResolveResult {
 	if (!id) {
-		return { icon: '', label: DEFAULT_TRIGGER_LABEL } satisfies ResolveResult;
+		throw new Error('Trigger ID is required to resolve trigger label.');
 	}
 	const asset = selectTriggerDisplay(assets, id);
 	const icon = typeof asset.icon === 'string' ? asset.icon : '';
-	const fallbackLabel = id ?? DEFAULT_TRIGGER_LABEL;
-	const label = [asset.past, asset.future, asset.label, fallbackLabel].find(
-		(value): value is string =>
-			typeof value === 'string' && value.trim().length > 0,
-	);
+	const label = asset.text ?? asset.label;
+	if (!label) {
+		throw new Error(
+			`Trigger "${id}" is missing text and label. ` +
+				'At least one must be defined.',
+		);
+	}
 	return {
 		icon,
-		label: label ?? fallbackLabel,
+		label,
 	} satisfies ResolveResult;
 }
 

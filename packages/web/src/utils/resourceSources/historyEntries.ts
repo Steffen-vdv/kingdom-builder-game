@@ -104,7 +104,7 @@ function formatTriggerAssetLabel(
 	}
 	const asset = triggerAssets?.[id];
 	const icon = asset?.icon ?? '';
-	const label = asset?.label ?? asset?.past ?? asset?.future ?? '';
+	const label = asset?.label ?? asset?.text ?? '';
 	const parts: string[] = [];
 	if (icon.trim()) {
 		parts.push(icon.trim());

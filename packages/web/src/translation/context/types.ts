@@ -57,8 +57,8 @@ export interface TranslationModifierInfo {
 
 export interface TranslationTriggerAsset {
 	icon?: string;
-	future?: string;
-	past?: string;
+	text?: string;
+	condition?: string;
 	label?: string;
 }
 

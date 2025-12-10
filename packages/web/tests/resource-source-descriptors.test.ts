@@ -115,8 +115,7 @@ function createDescriptorSetup(): DescriptorSetup {
 			[triggerId]: {
 				label: 'Starlight Surge',
 				icon: '⚡',
-				future: 'When the stars align',
-				past: 'Starlight Surge',
+				text: 'When the stars align',
 			},
 		},
 		phases: {

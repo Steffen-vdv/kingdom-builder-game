@@ -227,8 +227,8 @@ const sessionTriggerMetadataSchema = z
 	.object({
 		label: z.string().optional(),
 		icon: z.string().optional(),
-		future: z.string().optional(),
-		past: z.string().optional(),
+		text: z.string().optional(),
+		condition: z.string().optional(),
 	})
 	.passthrough();
 

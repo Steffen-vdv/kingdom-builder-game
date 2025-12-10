@@ -60,23 +60,19 @@ function formatTriggerTitle(
 	stepLabel: string | undefined,
 ): string | undefined {
 	const icon = sanitize(display.icon);
-	const future = sanitize(display.future);
+	const text = sanitize(display.text);
 	const label = sanitize(display.label);
-	const past = sanitize(display.past);
 	const fallback = sanitize(fallbackTitle);
 	// Step triggers use "On your <Phase> Phase" format
 	if (stepLabel) {
 		return `On your ${stepLabel}`;
 	}
-	// Event triggers use icon + text format (e.g., "⚔️ After attack")
-	if (future) {
-		return composeIconLabel(icon, future) ?? future;
+	// Event triggers use icon + text format (e.g., "⚔️ Before being attacked")
+	if (text) {
+		return composeIconLabel(icon, text) ?? text;
 	}
 	if (label) {
 		return composeIconLabel(icon, label) ?? label;
-	}
-	if (past) {
-		return composeIconLabel(icon, past) ?? past;
 	}
 	if (fallback) {
 		if (icon && !fallback.includes(icon)) {

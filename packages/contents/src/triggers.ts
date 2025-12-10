@@ -51,12 +51,17 @@ type StepTriggerMeta = {
 /**
  * Event trigger metadata.
  * Web displays: "<icon> <text>"
+ *
+ * - text: Display text describing when the trigger fires (e.g., "On build")
+ * - label: Short label for history/logs (e.g., "Build")
+ * - condition: Optional duration text for persistent effects (e.g., "Until removed")
  */
 type EventTriggerMeta = {
 	type: 'event';
 	icon: string;
 	text: string;
 	label: string;
+	condition?: string;
 };
 
 export type TriggerMeta = StepTriggerMeta | EventTriggerMeta;
@@ -91,6 +96,7 @@ export const TRIGGER_META: Record<TriggerId, TriggerMeta> = {
 		icon: '⚒️',
 		text: 'On build',
 		label: 'Build',
+		condition: 'Until removed',
 	},
 	[Trigger.BEFORE_ATTACKED]: {
 		type: 'event',

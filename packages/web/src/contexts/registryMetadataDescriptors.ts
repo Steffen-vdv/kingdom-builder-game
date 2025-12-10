@@ -35,8 +35,8 @@ export interface TriggerMetadata {
 	id: string;
 	label: string;
 	icon?: string;
-	future?: string;
-	past?: string;
+	text?: string;
+	condition?: string;
 }
 
 export interface MetadataLookup<TDescriptor extends { id: string }> {
@@ -155,18 +155,24 @@ const createTriggerDescriptor = (
 	id: string,
 	trigger: SessionTriggerMetadata | undefined,
 ): TriggerMetadata => {
+	if (!trigger?.label) {
+		throw new Error(
+			`Trigger "${id}" is missing a label. ` +
+				'All triggers must have metadata with a label defined.',
+		);
+	}
 	const entry: TriggerMetadata = {
 		id,
-		label: trigger?.label ?? formatLabel(id),
+		label: trigger.label,
 	};
-	if (trigger?.icon !== undefined) {
+	if (trigger.icon !== undefined) {
 		entry.icon = trigger.icon;
 	}
-	if (trigger?.future !== undefined) {
-		entry.future = trigger.future;
+	if (trigger.text !== undefined) {
+		entry.text = trigger.text;
 	}
-	if (trigger?.past !== undefined) {
-		entry.past = trigger.past;
+	if (trigger.condition !== undefined) {
+		entry.condition = trigger.condition;
 	}
 	return Object.freeze(entry);
 };

@@ -247,14 +247,16 @@ const buildTriggerMetadata = () => {
 				const phaseInfo = stepToPhase.get(meta.stepId);
 				if (phaseInfo) {
 					descriptor.icon = phaseInfo.icon;
-					descriptor.future = `On your ${phaseInfo.icon} ${phaseInfo.label} Phase`;
-					descriptor.past = `${phaseInfo.label} Phase`;
+					descriptor.text =
+						`On your ${phaseInfo.icon} ${phaseInfo.label} Phase`;
 				}
 			} else {
-				// Event trigger: use provided icon and text
+				// Event trigger: pass through icon, text, and condition
 				descriptor.icon = meta.icon;
-				descriptor.future = meta.text;
-				descriptor.past = meta.label;
+				descriptor.text = meta.text;
+				if (meta.condition) {
+					descriptor.condition = meta.condition;
+				}
 			}
 
 			return [triggerId, descriptor] as const;
