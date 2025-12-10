@@ -168,7 +168,11 @@ describe('translation format rules', () => {
 					},
 				],
 				triggers: {
-					onPayUpkeepStep: { label: 'Pay Upkeep', text: 'Pay Upkeep', icon: '💸' },
+					onPayUpkeepStep: {
+						label: 'Pay Upkeep',
+						text: 'Pay Upkeep',
+						icon: '💸',
+					},
 				},
 			});
 

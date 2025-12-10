@@ -225,8 +225,8 @@ describe('trigger text/condition migration', () => {
 		});
 
 		it('shows step trigger as "On your {phase}"', () => {
-			const { translationContext, session } =
-				buildSyntheticTranslationContext(({ session }) => {
+			const { translationContext, session } = buildSyntheticTranslationContext(
+				({ session }) => {
 					session.metadata.triggers = {
 						...session.metadata.triggers,
 						'trigger.growth.start': {
@@ -235,11 +235,10 @@ describe('trigger text/condition migration', () => {
 							text: 'At the start of Growth',
 						},
 					};
-				});
-			// Step triggers resolve via phase lookup, showing "On your {phase}"
-			const growthPhase = session.phases.find((p) =>
-				p.id.includes('growth'),
+				},
 			);
+			// Step triggers resolve via phase lookup, showing "On your {phase}"
+			const growthPhase = session.phases.find((p) => p.id.includes('growth'));
 			expect(growthPhase).toBeDefined();
 			// The format should be "On your {icon} {label}"
 			const expectedPattern = `On your ${growthPhase?.icon} ${growthPhase?.label}`;

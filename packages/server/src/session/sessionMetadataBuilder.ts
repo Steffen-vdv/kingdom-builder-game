@@ -247,8 +247,7 @@ const buildTriggerMetadata = () => {
 				const phaseInfo = stepToPhase.get(meta.stepId);
 				if (phaseInfo) {
 					descriptor.icon = phaseInfo.icon;
-					descriptor.text =
-						`On your ${phaseInfo.icon} ${phaseInfo.label} Phase`;
+					descriptor.text = `On your ${phaseInfo.icon} ${phaseInfo.label} Phase`;
 				}
 			} else {
 				// Event trigger: pass through icon, text, and condition
