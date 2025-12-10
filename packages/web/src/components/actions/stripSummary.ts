@@ -28,11 +28,13 @@ export function stripSummary(
 	requirements: readonly string[],
 ): Summary | undefined {
 	const first = summary?.[0];
-	const baseSummary = !first
-		? summary
-		: typeof first === 'string'
-			? summary
-			: first.items;
+	// Only unwrap a single SummaryGroup wrapper if it has no title
+	const isEmptyWrapper =
+		first &&
+		typeof first !== 'string' &&
+		!first.title?.trim() &&
+		summary?.length === 1;
+	const baseSummary = isEmptyWrapper ? first.items : summary;
 	if (!baseSummary) {
 		return baseSummary;
 	}
