@@ -96,11 +96,17 @@ export function GenericActionEntry({
 		return sumUpkeep(cleanupCosts);
 	}, [metadata.costs, cleanupCosts]);
 	useEffect(() => {
+		// Skip reporting sort metrics while costs are still loading.
+		// This prevents flickering from multiple null→value state transitions
+		// as each action's metadata loads asynchronously.
+		if (metadata.loading.costs) {
+			return;
+		}
 		onSortMetricsChange(action.id, {
 			cost: total,
 			cleanup: cleanupTotal,
 		});
-	}, [action.id, total, cleanupTotal, onSortMetricsChange]);
+	}, [action.id, total, cleanupTotal, onSortMetricsChange, metadata.loading.costs]);
 	return (
 		<GenericActionCard
 			action={action}
