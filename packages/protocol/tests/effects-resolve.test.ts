@@ -74,6 +74,65 @@ function createActionFixtures() {
 }
 
 describe('applyParamsToEffects', () => {
+	it('interpolates embedded placeholders within strings', () => {
+		const effect: EffectDef = {
+			type: 'passive',
+			method: 'add',
+			params: {
+				id: 'legion_$player_$index',
+			},
+		};
+
+		const [result] = applyParamsToEffects([effect], {
+			player: 'player1',
+			index: 3,
+		});
+
+		expect(result.params).toEqual({
+			id: 'legion_player1_3',
+		});
+	});
+
+	it('preserves non-string types for exact placeholders', () => {
+		const effect: EffectDef = {
+			type: 'resource',
+			method: 'add',
+			params: {
+				amount: '$amount',
+				resourceId: '$resourceId',
+			},
+		};
+
+		const [result] = applyParamsToEffects([effect], {
+			amount: 42,
+			resourceId: 'resource:gold',
+		});
+
+		expect(result.params).toEqual({
+			amount: 42,
+			resourceId: 'resource:gold',
+		});
+		expect(typeof result.params?.['amount']).toBe('number');
+	});
+
+	it('leaves unmatched placeholders unchanged', () => {
+		const effect: EffectDef = {
+			type: 'passive',
+			method: 'add',
+			params: {
+				id: 'prefix_$unknown_$index',
+			},
+		};
+
+		const [result] = applyParamsToEffects([effect], {
+			index: 5,
+		});
+
+		expect(result.params).toEqual({
+			id: 'prefix_$unknown_5',
+		});
+	});
+
 	it('replaces placeholders across params, evaluator data, and metadata', () => {
 		const baseEffect: EffectDef = {
 			type: 'resource',
