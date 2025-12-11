@@ -45,6 +45,12 @@ function resolveRoundMode(
 	return map[key] ?? map['*'];
 }
 
+/**
+ * Global target matches all resource:add effects regardless of evaluator.
+ * Used for modifiers like happiness tier penalties that apply to all gains.
+ */
+export const GLOBAL_EVALUATION_TARGET = '*';
+
 export class EvaluationModifierService {
 	private modifiers: Map<string, Map<string, EvaluationModifier>> = new Map();
 	private index: Map<string, string> = new Map();
@@ -75,35 +81,50 @@ export class EvaluationModifierService {
 	}
 
 	run(target: string, context: EngineContext, gains: ResourceGain[]) {
-		const modifierMap = this.modifiers.get(target);
-		if (!modifierMap) {
+		// Collect modifiers from both the specific target and global target
+		const targetMap = this.modifiers.get(target);
+		const globalMap =
+			target !== GLOBAL_EVALUATION_TARGET
+				? this.modifiers.get(GLOBAL_EVALUATION_TARGET)
+				: undefined;
+		if (!targetMap && !globalMap) {
 			return;
 		}
 		let globalPercent = 0;
 		const perResourcePercent: Partial<Record<string, number>> = {};
 		const rounding: Partial<Record<string, RoundingMode>> = {};
-		for (const modifier of modifierMap.values()) {
-			const result = modifier(context, gains);
-			if (!result || result.percent === undefined) {
-				if (result && 'round' in result) {
-					mergeRoundInstruction(rounding, result.round);
-				}
-				continue;
-			}
-			const percent = result.percent;
-			mergeRoundInstruction(rounding, result.round);
-			if (typeof percent === 'number') {
-				globalPercent += percent;
-				continue;
-			}
-			const entries = Object.entries(percent);
-			for (const [key, value] of entries) {
-				if (typeof value !== 'number') {
+		// Helper to process a modifier map
+		const processModifiers = (map: Map<string, EvaluationModifier>) => {
+			for (const modifier of map.values()) {
+				const result = modifier(context, gains);
+				if (!result || result.percent === undefined) {
+					if (result && 'round' in result) {
+						mergeRoundInstruction(rounding, result.round);
+					}
 					continue;
 				}
-				const currentPercent = perResourcePercent[key] ?? 0;
-				perResourcePercent[key] = currentPercent + value;
+				const percent = result.percent;
+				mergeRoundInstruction(rounding, result.round);
+				if (typeof percent === 'number') {
+					globalPercent += percent;
+					continue;
+				}
+				const entries = Object.entries(percent);
+				for (const [key, value] of entries) {
+					if (typeof value !== 'number') {
+						continue;
+					}
+					const currentPercent = perResourcePercent[key] ?? 0;
+					perResourcePercent[key] = currentPercent + value;
+				}
 			}
+		};
+		// Process specific target modifiers first, then global
+		if (targetMap) {
+			processModifiers(targetMap);
+		}
+		if (globalMap) {
+			processModifiers(globalMap);
 		}
 		const hasGlobalPercent = globalPercent !== 0;
 		const perResourceKeys = Object.keys(perResourcePercent);

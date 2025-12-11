@@ -63,7 +63,7 @@ adding or updating tiers:
 - Declare each tier with `happinessTier()` and provide an inclusive `range`, the
   passive payload, and any supporting metadata.
 - Use the helper modifiers to keep effects consistent:
-  - `incomeModifier(...)` adjusts gold gain.
+  - `resourceGainModifier(...)` adjusts all resource gains globally.
   - `actionDiscountModifier(...)` lowers gold costs across every action.
   - `growthBonusEffect(...)` grants Growth stat bonuses.
 - Register phase or upkeep skips through `.skipPhase(...)` / `.skipStep(...)`

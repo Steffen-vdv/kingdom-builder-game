@@ -96,8 +96,8 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 		},
 		onGainIncomeStep: {
 			icon: '💰',
-			label: 'Income',
-			text: 'On your Income step',
+			label: 'Gain Income',
+			text: 'Gain Income',
 		},
 		onPayUpkeepStep: {
 			icon: '🧹',

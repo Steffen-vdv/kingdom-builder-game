@@ -1,6 +1,7 @@
-import { GENERAL_RESOURCE_ICON } from '../../../icons';
+import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
 import { increaseOrDecrease, signed } from '../helpers';
 import {
+	RESULT_EVENT_GRANT_RESOURCES,
 	RESULT_EVENT_RESOLVE,
 	RESULT_EVENT_TRANSFER,
 	buildModifierDescriptionLabel,
@@ -11,6 +12,7 @@ import {
 	formatTargetLabel,
 	parseNumericParam,
 	wrapResultModifierEntries,
+	type ResultModifierLabel,
 } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
 import { resolveTransferModifierTarget } from './transfer_helpers';
@@ -71,6 +73,51 @@ function getResultModifierLabel(context: TranslationContext) {
 
 function getCostModifierLabel(context: TranslationContext) {
 	return getModifierDescriptor(context, 'cost', 'Cost Adjustment');
+}
+
+const GLOBAL_TARGET_LABEL = `all ${GENERAL_RESOURCE_LABEL.toLowerCase()} gains`;
+
+/**
+ * Formats a global resource gain modifier (no specific evaluation type).
+ * These affect all resource:add effects regardless of source.
+ */
+function formatGlobalModifier(
+	label: ResultModifierLabel,
+	effect: EffectDef,
+	detailed: boolean,
+): string {
+	const percent = parseNumericParam(effect.params?.['percent']);
+	const round =
+		effect.round === 'down' || effect.round === 'up' ? effect.round : undefined;
+	const roundingSuffix = round ? ` (rounded ${round})` : '';
+
+	if (typeof percent === 'number') {
+		const magnitude = formatPercentMagnitude(percent);
+		const adjective = percent >= 0 ? 'more' : 'less';
+		if (!detailed) {
+			return `${label.icon}: gain ${magnitude}% ${adjective} ${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL.toLowerCase()}${roundingSuffix}`;
+		}
+		return formatResultModifierClause(
+			buildModifierDescriptionLabel(label),
+			GLOBAL_TARGET_LABEL,
+			RESULT_EVENT_GRANT_RESOURCES,
+			`gain ${magnitude}% ${adjective}${roundingSuffix}`,
+		);
+	}
+
+	// Handle amount-based modifiers
+	const amount = parseNumericParam(effect.params?.['amount']) ?? 0;
+	const direction = amount >= 0 ? 'more' : 'less';
+	const absolute = Math.abs(amount);
+	if (!detailed) {
+		return `${label.icon}: gain ${GENERAL_RESOURCE_ICON}${signed(amount)}${absolute}`;
+	}
+	return formatResultModifierClause(
+		buildModifierDescriptionLabel(label),
+		GLOBAL_TARGET_LABEL,
+		RESULT_EVENT_GRANT_RESOURCES,
+		`gain ${GENERAL_RESOURCE_ICON}${absolute} ${direction}`,
+	);
 }
 
 function formatCostEffect(
@@ -239,11 +286,23 @@ registerEffectFormatter('result_mod', 'add', {
 	summarize: (effect, context) => {
 		const summaries = summarizeEffects(effect.effects || [], context);
 		const evaluation = effect.params?.['evaluation'] as
-			| { type: string; id: string }
+			| { type?: string; id?: string }
 			| undefined;
 		if (evaluation) {
-			const handler = MODIFIER_EVAL_HANDLERS[evaluation.type];
-			return handler ? handler.summarize(effect, evaluation, context) : [];
+			// If evaluation has a type, use the registered handler
+			if (evaluation.type) {
+				const handler = MODIFIER_EVAL_HANDLERS[evaluation.type];
+				return handler
+					? handler.summarize(
+							effect,
+							evaluation as { type: string; id: string },
+							context,
+						)
+					: [];
+			}
+			// No type = global modifier (applies to all resource gains)
+			const label = getResultModifierLabel(context);
+			return toArray(formatGlobalModifier(label, effect, false));
 		}
 		const actionId = effect.params?.['actionId'] as string | undefined;
 		const actionInfo = actionId
@@ -261,11 +320,23 @@ registerEffectFormatter('result_mod', 'add', {
 	describe: (effect, context) => {
 		const descriptions = describeEffects(effect.effects || [], context);
 		const evaluation = effect.params?.['evaluation'] as
-			| { type: string; id: string }
+			| { type?: string; id?: string }
 			| undefined;
 		if (evaluation) {
-			const handler = MODIFIER_EVAL_HANDLERS[evaluation.type];
-			return handler ? handler.describe(effect, evaluation, context) : [];
+			// If evaluation has a type, use the registered handler
+			if (evaluation.type) {
+				const handler = MODIFIER_EVAL_HANDLERS[evaluation.type];
+				return handler
+					? handler.describe(
+							effect,
+							evaluation as { type: string; id: string },
+							context,
+						)
+					: [];
+			}
+			// No type = global modifier (applies to all resource gains)
+			const label = getResultModifierLabel(context);
+			return toArray(formatGlobalModifier(label, effect, true));
 		}
 		const actionId = effect.params?.['actionId'] as string | undefined;
 		const actionInfo = actionId

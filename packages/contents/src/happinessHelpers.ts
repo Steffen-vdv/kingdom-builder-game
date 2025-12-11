@@ -1,6 +1,6 @@
 import type { EffectConfig, PassiveMetadata } from '@kingdom-builder/protocol';
 import type { ResourceTierTrackMetadata } from './resource';
-import { costModParams, developmentTarget, resultModParams, statAddEffect, effect } from './config/builders';
+import { costModParams, globalTarget, resultModParams, statAddEffect, effect } from './config/builders';
 import { Types, CostModMethods, ResultModMethods, PassiveMethods } from './config/builderShared';
 import { formatPassiveRemoval } from './text';
 import type { passiveParams } from './config/builders';
@@ -17,8 +17,12 @@ export const happinessPassiveId = (slug: HappinessTierSlug) => `passive:happines
 
 export const happinessModifierId = (slug: HappinessTierSlug, kind: HappinessModifierKind) => `happiness:${slug}:${kind}`;
 
-export const incomeModifier = (id: string, percent: number) =>
-	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(developmentTarget()).percent(percent).build()).build();
+/**
+ * Creates a modifier that applies a percent bonus/penalty to ALL resource gains.
+ * Used by happiness tiers to globally affect resource acquisition.
+ */
+export const resourceGainModifier = (id: string, percent: number) =>
+	effect(Types.ResultMod, ResultModMethods.ADD).round('up').params(resultModParams().id(id).evaluation(globalTarget()).percent(percent).build()).build();
 
 const GOLD_RESOURCE_KEY: ResourceKey = Resource.gold;
 const GROWTH_STAT_KEY: StatKey = Stat.growth;

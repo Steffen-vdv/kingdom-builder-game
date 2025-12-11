@@ -1,5 +1,4 @@
 import type { TranslationAssets } from '../../translation/context';
-import { selectTriggerDisplay } from '../../translation/context';
 import type { DescriptorRegistryEntry, ResolveResult } from './types';
 
 function coerceTriggerLabel(
@@ -7,17 +6,22 @@ function coerceTriggerLabel(
 	id?: string,
 ): ResolveResult {
 	if (!id) {
-		throw new Error('Trigger ID is required to resolve trigger label.');
+		return {
+			icon: '',
+			label: '',
+		} satisfies ResolveResult;
 	}
-	const asset = selectTriggerDisplay(assets, id);
+	const asset = assets?.triggers?.[id];
+	if (!asset) {
+		// Graceful fallback when trigger metadata is missing
+		return {
+			icon: '',
+			label: id,
+		} satisfies ResolveResult;
+	}
 	const icon = typeof asset.icon === 'string' ? asset.icon : '';
-	const label = asset.text ?? asset.label;
-	if (!label) {
-		throw new Error(
-			`Trigger "${id}" is missing text and label. ` +
-				'At least one must be defined.',
-		);
-	}
+	// After migration, prefer text over label for display
+	const label = asset.text ?? asset.label ?? id;
 	return {
 		icon,
 		label,

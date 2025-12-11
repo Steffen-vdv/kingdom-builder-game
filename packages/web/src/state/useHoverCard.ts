@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Summary } from '../translation';
 import type { ActionResolution } from './useActionResolution';
+import type { TierSummary } from '../components/player/buildTierEntries';
+
+export interface TierThermometerData {
+	currentValue: number;
+	tiers: TierSummary[];
+	resourceIcon?: string;
+}
 
 export interface HoverCard {
 	title: string;
@@ -18,6 +25,8 @@ export interface HoverCard {
 	resolutionTitle?: string;
 	/** Optional breakdown of resource sources */
 	breakdown?: Summary;
+	/** Optional thermometer visualization for tiered resources */
+	thermometer?: TierThermometerData;
 }
 
 interface HoverCardOptions {
