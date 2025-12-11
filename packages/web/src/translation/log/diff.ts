@@ -6,6 +6,7 @@ import {
 	appendBuildingChanges,
 	appendLandChanges,
 	appendSlotChanges,
+	collectPercentBreakdownResourceIds,
 } from './diffSections';
 import { appendPassiveChanges } from './passiveChanges';
 import { collectResourceKeys, type PlayerSnapshot } from './snapshots';
@@ -64,6 +65,16 @@ export function diffStepSnapshots(
 	const sources = collectResourceSources(stepEffects, diffContext);
 	const resourceNodes = new Map<string, ActionDiffChange>();
 
+	// Determine which resources will be handled by appendPercentBreakdownChanges
+	// so appendResourceChanges can skip them (single ownership principle)
+	const breakdownResourceIds = collectPercentBreakdownResourceIds(
+		previousSnapshot,
+		nextSnapshot,
+		stepEffects,
+		diffContext.assets,
+		diffContext.resourceMetadata,
+	);
+
 	const resourceChanges = appendResourceChanges(
 		previousSnapshot,
 		nextSnapshot,
@@ -71,7 +82,7 @@ export function diffStepSnapshots(
 		diffContext.assets,
 		diffContext.resourceMetadata,
 		sources,
-		{ trackByKey: resourceNodes },
+		{ trackByKey: resourceNodes, skipResourceIds: breakdownResourceIds },
 	);
 	for (const change of resourceChanges) {
 		changeTree.push(change);

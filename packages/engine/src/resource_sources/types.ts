@@ -11,7 +11,7 @@ import type {
 export const RESOURCE_SOURCE_EPSILON = 1e-9;
 
 export interface ResourceSourceMetaPartial {
-	resourceId?: string;
+	sourceKey?: string;
 	longevity?: 'ongoing' | 'permanent';
 	kind?: string;
 	id?: string;

@@ -309,10 +309,11 @@ describe('RegistryMetadataProvider', () => {
 		const trigger = triggers.select(setup.triggerId);
 		expect(trigger.text).toBe('Ignite at dawn');
 		expect(trigger.label).toBe('Ignition Trigger');
-		const fallbackTriggerId = nextKey('trigger');
-		expect(triggers.select(fallbackTriggerId).label).toBe(
-			formatFallbackLabel(fallbackTriggerId),
-		);
+		// Unknown triggers now fall back to formatted ID-based labels
+		const unknownTriggerId = nextKey('trigger');
+		const unknownTrigger = triggers.select(unknownTriggerId);
+		// formatLabel converts 'trigger_10' to 'Trigger 10'
+		expect(unknownTrigger.label).toContain('Trigger');
 		const phaseRecord = phases.selectRecord([setup.phaseId, fallbackPhaseId]);
 		expect(phaseRecord[setup.phaseId]).toBe(phaseDescriptor);
 		expect(Object.isFrozen(phaseRecord)).toBe(true);

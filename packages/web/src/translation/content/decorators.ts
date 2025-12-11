@@ -27,9 +27,14 @@ export function withInstallation<T>(
 			}
 			const trigger = selectTriggerDisplay(context.assets, 'onBuild');
 			const icon = trigger.icon ? `${trigger.icon} ` : '';
-			const installedTitle = `${icon}${trigger.condition}`.trim();
+			const conditionSuffix = trigger.condition
+				? `, ${trigger.condition.toLowerCase()}`
+				: '';
+			const installedTitle = trigger.condition
+				? `${icon}${trigger.condition}`.trim()
+				: `${icon}${trigger.text}`.trim();
 			const uninstalledTitle =
-				`${icon}${trigger.text}, ${trigger.condition?.toLowerCase()}`.trim();
+				`${icon}${trigger.text}${conditionSuffix}`.trim();
 			const title = options?.installed ? installedTitle : uninstalledTitle;
 			const wrapped = main.length ? [{ title, items: main }] : [];
 			return [...wrapped, ...hoisted];
@@ -55,9 +60,14 @@ export function withInstallation<T>(
 			}
 			const trigger = selectTriggerDisplay(context.assets, 'onBuild');
 			const icon = trigger.icon ? `${trigger.icon} ` : '';
-			const installedTitle = `${icon}${trigger.condition}`.trim();
+			const conditionSuffix = trigger.condition
+				? `, ${trigger.condition.toLowerCase()}`
+				: '';
+			const installedTitle = trigger.condition
+				? `${icon}${trigger.condition}`.trim()
+				: `${icon}${trigger.text}`.trim();
 			const uninstalledTitle =
-				`${icon}${trigger.text}, ${trigger.condition?.toLowerCase()}`.trim();
+				`${icon}${trigger.text}${conditionSuffix}`.trim();
 			const title = options?.installed ? installedTitle : uninstalledTitle;
 			const wrapped = main.length ? [{ title, items: main }] : [];
 			return [...wrapped, ...hoisted];

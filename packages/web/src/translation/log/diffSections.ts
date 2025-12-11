@@ -186,6 +186,11 @@ function describePercentBreakdown(
 // breakdown formatting is handled by appendPercentBreakdownChanges based on
 // effect metadata, not resource ID patterns.
 
+export interface AppendResourceChangesOptions {
+	trackByKey?: Map<string, ActionDiffChange>;
+	skipResourceIds?: Set<string>;
+}
+
 export function appendResourceChanges(
 	before: PlayerSnapshot,
 	after: PlayerSnapshot,
@@ -193,11 +198,15 @@ export function appendResourceChanges(
 	_assets: TranslationAssets,
 	metadataSelectors: TranslationResourceMetadataSelectors,
 	sources?: Record<string, string>,
-	options?: { trackByKey?: Map<string, ActionDiffChange> },
+	options?: AppendResourceChangesOptions,
 ): ActionDiffChange[] {
 	const changes: ActionDiffChange[] = [];
 	// Process ALL resource keys - resource IDs are unified resource IDs
 	for (const resourceId of resourceKeys) {
+		// Skip resources that will be handled by appendPercentBreakdownChanges
+		if (options?.skipResourceIds?.has(resourceId)) {
+			continue;
+		}
 		const metadata = metadataSelectors.get(resourceId);
 		const summary = describeResourceChange(
 			resourceId,
@@ -235,6 +244,45 @@ function collectChangedKeys(
 		keys.add(key);
 	}
 	return Array.from(keys);
+}
+
+/**
+ * Determines which resource IDs will be handled by
+ * appendPercentBreakdownChanges. This allows appendResourceChanges to skip
+ * these resources, ensuring each resource is handled by exactly one function
+ * (single ownership).
+ */
+export function collectPercentBreakdownResourceIds(
+	before: PlayerSnapshot,
+	after: PlayerSnapshot,
+	step: StepEffects,
+	assets: TranslationAssets,
+	metadataSelectors: TranslationResourceMetadataSelectors,
+): Set<string> {
+	const handled = new Set<string>();
+	if (!step) {
+		return handled;
+	}
+	const changedKeys = collectChangedKeys(before, after);
+	for (const resourceId of changedKeys) {
+		const diff = computeResourceSnapshot(resourceId, before, after);
+		if (!diff) {
+			continue;
+		}
+		const metadata = metadataSelectors.get(resourceId);
+		const displaysAsPercent =
+			metadata.displayAsPercent ||
+			resourceDisplaysAsPercent(resourceId, assets);
+		if (displaysAsPercent) {
+			handled.add(resourceId);
+			continue;
+		}
+		const breakdown = findResourcePctBreakdown(step, resourceId);
+		if (breakdown && diff.change.delta > 0) {
+			handled.add(resourceId);
+		}
+	}
+	return handled;
 }
 
 export function appendPercentBreakdownChanges(

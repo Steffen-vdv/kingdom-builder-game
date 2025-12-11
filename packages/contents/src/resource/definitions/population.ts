@@ -38,8 +38,28 @@ function buildPopulationResourceDefinitions(): readonly ResourceDefinition[] {
 	const legionStrengthGainParams = resourceChange(Stat.armyStrength).amount(1).build();
 	const fortifierStrengthGainParams = resourceChange(Stat.fortificationStrength).amount(1).build();
 
-	const legionPassiveParams = passiveParams().id(populationAssignmentPassiveId(PopulationRole.Legion)).build();
-	const fortifierPassiveParams = passiveParams().id(populationAssignmentPassiveId(PopulationRole.Fortifier)).build();
+	const legionPassiveParams = passiveParams()
+		.id(populationAssignmentPassiveId(PopulationRole.Legion))
+		.meta({
+			source: {
+				type: 'resource',
+				id: PopulationRole.Legion,
+				icon: LEGION_INFO.icon,
+				name: LEGION_INFO.label,
+			},
+		})
+		.build();
+	const fortifierPassiveParams = passiveParams()
+		.id(populationAssignmentPassiveId(PopulationRole.Fortifier))
+		.meta({
+			source: {
+				type: 'resource',
+				id: PopulationRole.Fortifier,
+				icon: FORTIFIER_INFO.icon,
+				name: FORTIFIER_INFO.label,
+			},
+		})
+		.build();
 
 	// Legion: +1 Army Strength while assigned (via passive)
 	const legionOnValueIncrease = effect(Types.Passive, PassiveMethods.ADD)

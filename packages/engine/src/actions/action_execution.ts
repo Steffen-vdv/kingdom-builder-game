@@ -124,7 +124,7 @@ function executeAction<T extends string>(
 	withResourceSourceFrames(
 		engineContext,
 		(_effect, _context, resourceKey) => ({
-			key: `action:${actionDefinition.id}:${resourceKey}`,
+			sourceKey: `action:${actionDefinition.id}:${resourceKey}`,
 			kind: 'action',
 			id: actionDefinition.id,
 			detail: 'Resolution',

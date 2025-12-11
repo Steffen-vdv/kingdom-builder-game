@@ -366,7 +366,7 @@ describe('resource source descriptors', () => {
 			'trigger',
 			triggerId,
 		);
-		// After migration, text is preferred over label for display
+		// formatKindLabel for triggers uses text (not label) for display
 		expect(triggerLabel).toContain('When the stars align');
 		expect(triggerLine).toContain(triggerLabel);
 		const passiveLabel = formatKindLabel(translationContext, 'passive', '');
@@ -395,18 +395,21 @@ describe('resource source descriptors', () => {
 			'unknown-resource',
 		);
 		expect(resourceFallback).toContain('unknown-resource');
+		// Missing triggers now fall back to ID instead of throwing
 		const triggerFallback = formatKindLabel(
 			mutatedContext,
 			'trigger',
 			'mystery-trigger',
 		);
 		expect(triggerFallback).toBe('mystery-trigger');
+		// Known trigger with full assets works correctly
 		const formattedTrigger = formatTriggerLabel(
 			translationContext.assets,
 			triggerId,
 		);
-		// After migration, text is preferred over label for display
+		// formatTriggerLabel uses text (not label) when present
 		expect(formattedTrigger).toBe('⚡ When the stars align');
+		// Missing trigger falls back to the ID instead of throwing
 		const fallbackTrigger = formatTriggerLabel(
 			mutatedContext.assets,
 			'unknown-trigger',
