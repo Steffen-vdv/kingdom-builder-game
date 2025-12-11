@@ -25,16 +25,22 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 	// Tiers come in highest-first order, reverse for display (lowest on left)
 	const sortedTiers = [...tiers].reverse();
 
-	// Find bounds for the scale
-	const minTier = sortedTiers[0];
-	const maxTier = sortedTiers[sortedTiers.length - 1];
+	// Find current tier index and get 5 tiers centered on current
+	// (2 below, current, 2 above). If no active tier found, default to last.
+	const foundIndex = sortedTiers.findIndex((t) => t.active);
+	const activeIndex = foundIndex >= 0 ? foundIndex : sortedTiers.length - 1;
+	const visibleTiers = getVisibleTiers(sortedTiers, activeIndex, 5);
+
+	// Find bounds for the scale FROM VISIBLE TIERS ONLY
+	const minTier = visibleTiers[0];
+	const maxTier = visibleTiers[visibleTiers.length - 1];
 	if (!minTier || !maxTier) {
 		return null;
 	}
 
-	// Calculate display range from tier data
-	// For unbounded lower (MIN_SAFE_INTEGER), use rangeMax of lowest tier
-	// For unbounded upper (undefined rangeMax), use rangeMin of highest tier
+	// Calculate display range from visible tier data
+	// Unbounded lower (MIN_SAFE_INTEGER): use rangeMax of lowest visible tier
+	// Unbounded upper (undefined rangeMax): use rangeMin of highest visible tier
 	const rawMinBound = minTier.rangeMin;
 	const minBound =
 		rawMinBound === undefined || rawMinBound === Number.MIN_SAFE_INTEGER
@@ -57,10 +63,10 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 	// Clamp marker position
 	const markerPercent = Math.max(3, Math.min(97, valueToPercent(currentValue)));
 
-	// Collect threshold values (boundaries between tiers)
+	// Collect threshold values (boundaries between VISIBLE tiers only)
 	const thresholds: Array<{ value: number; percent: number }> = [];
-	for (let i = 1; i < sortedTiers.length; i++) {
-		const tier = sortedTiers[i];
+	for (let i = 1; i < visibleTiers.length; i++) {
+		const tier = visibleTiers[i];
 		if (!tier) {
 			continue;
 		}
@@ -76,12 +82,6 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 			thresholds.push({ value: thresholdValue, percent });
 		}
 	}
-
-	// Find current tier index and get 5 tiers centered on current
-	// (2 below, current, 2 above). If no active tier found, default to last.
-	const foundIndex = sortedTiers.findIndex((t) => t.active);
-	const activeIndex = foundIndex >= 0 ? foundIndex : sortedTiers.length - 1;
-	const visibleTiers = getVisibleTiers(sortedTiers, activeIndex, 5);
 
 	// Format threshold label
 	const formatThreshold = (value: number) =>
