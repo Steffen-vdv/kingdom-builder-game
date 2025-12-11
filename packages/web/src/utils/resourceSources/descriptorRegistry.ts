@@ -169,7 +169,15 @@ function createDescriptorRegistry(
 		},
 		tier: {
 			resolve: (id) => {
-				// Tier IDs correspond to tiered resource definitions (e.g., "ecstatic")
+				const tierDef = translationContext.rules.tierDefinitions.find(
+					(tier) => tier.id === id,
+				);
+				if (tierDef?.display) {
+					return {
+						icon: tierDef.display.icon ?? '📊',
+						label: tierDef.display.title ?? id ?? '[MISSING:tier]',
+					};
+				}
 				return {
 					icon: '📊',
 					label: id ?? '[MISSING:tier]',
