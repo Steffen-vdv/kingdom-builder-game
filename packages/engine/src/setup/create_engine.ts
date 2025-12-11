@@ -42,7 +42,6 @@ export interface SystemActionIds {
 	initialSetup: string;
 	initialSetupDevmode: string;
 	compensation: string;
-	compensationDevmodeB: string;
 }
 
 export interface EngineCreationOptions {
@@ -233,7 +232,6 @@ const DEFAULT_SYSTEM_ACTION_IDS = {
 	initialSetup: 'initial_setup',
 	initialSetupDevmode: 'initial_setup_devmode',
 	compensation: 'compensation',
-	compensationDevmodeB: 'compensation_devmode_b',
 };
 
 export function createEngine({
@@ -340,17 +338,6 @@ export function createEngine({
 	);
 	if (compensationTrace) {
 		engineContext.initialSetupTraces.B.push(compensationTrace);
-	}
-
-	// In dev mode, also run the devmode-specific compensation for player B
-	if (devMode) {
-		const devmodeCompTrace = runSystemActionEffects(
-			systemActionIds.compensationDevmodeB,
-			engineContext,
-		);
-		if (devmodeCompTrace) {
-			engineContext.initialSetupTraces.B.push(devmodeCompTrace);
-		}
 	}
 
 	// Initialize player actions (unlocks non-system actions for players)
