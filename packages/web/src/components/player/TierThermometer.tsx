@@ -71,27 +71,27 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 	}
 
 	// Find current tier index and get 5 tiers centered on current
-	// (2 below, current, 2 above)
-	const activeIndex = sortedTiers.findIndex((t) => t.active);
+	// (2 below, current, 2 above). If no active tier found, default to last.
+	const foundIndex = sortedTiers.findIndex((t) => t.active);
+	const activeIndex = foundIndex >= 0 ? foundIndex : sortedTiers.length - 1;
 	const visibleTiers = getVisibleTiers(sortedTiers, activeIndex, 5);
 
 	// Format threshold label
 	const formatThreshold = (value: number) =>
 		value >= 0 ? `+${value}` : `${value}`;
 
-	// Get effect description from tier entry
-	const getEffectDesc = (tier: TierSummary | undefined) => {
+	// Get effect items from tier entry as array
+	const getEffectItems = (tier: TierSummary | undefined): string[] => {
 		if (!tier) {
-			return '';
+			return [];
 		}
 		const items = tier.entry.items;
 		if (items.length === 0) {
-			return 'No effect';
+			return ['No effect'];
 		}
-		return items
-			.slice(0, 2)
-			.map((item) => (typeof item === 'string' ? item : item.text))
-			.join('. ');
+		return items.map((item): string =>
+			typeof item === 'string' ? item : item.title,
+		);
 	};
 
 	return (
@@ -175,7 +175,7 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 						key={tier.name}
 						tier={tier}
 						rangeLabel={tier.rangeLabel}
-						description={getEffectDesc(tier)}
+						effects={getEffectItems(tier)}
 						variant={tier.active ? 'current' : 'adjacent'}
 					/>
 				))}
@@ -221,14 +221,14 @@ function getVisibleTiers(
 interface TierEffectRowProps {
 	tier: TierSummary;
 	rangeLabel: string;
-	description: string;
+	effects: string[];
 	variant: 'current' | 'adjacent';
 }
 
 const TierEffectRow: React.FC<TierEffectRowProps> = ({
 	tier,
 	rangeLabel,
-	description,
+	effects,
 	variant,
 }) => {
 	const isCurrent = variant === 'current';
@@ -242,18 +242,26 @@ const TierEffectRow: React.FC<TierEffectRowProps> = ({
 			}`}
 		>
 			<span className="text-sm flex-shrink-0">{tier.icon}</span>
-			<div className="min-w-0 flex-1 flex items-baseline gap-2">
-				<span
-					className={`font-medium ${isCurrent ? 'text-white/90' : 'text-white/70'}`}
-				>
-					{tier.name}
-				</span>
-				<span className="text-[9px] text-white/40 tabular-nums">
-					{rangeLabel}
-				</span>
-			</div>
-			<div className="text-white/50 text-right flex-shrink-0 max-w-[50%]">
-				{description}
+			<div className="min-w-0 flex-1">
+				<div className="flex items-baseline gap-2">
+					<span
+						className={`font-medium ${isCurrent ? 'text-white/90' : 'text-white/70'}`}
+					>
+						{tier.name}
+					</span>
+					<span className="text-[9px] text-white/40 tabular-nums">
+						{rangeLabel}
+					</span>
+				</div>
+				{effects.length === 1 ? (
+					<div className="text-white/50 mt-0.5">{effects[0]}</div>
+				) : (
+					<ul className="text-white/50 mt-0.5 list-disc list-inside">
+						{effects.map((effect, i) => (
+							<li key={i}>{effect}</li>
+						))}
+					</ul>
+				)}
 			</div>
 		</div>
 	);
