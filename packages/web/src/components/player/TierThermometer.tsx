@@ -150,14 +150,24 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 					/>
 				</div>
 
-				{/* Tier icons below */}
+				{/* Tier icons below - only show visible tiers */}
 				<div className="relative h-5 text-sm">
-					{sortedTiers.map((tier, index) => {
-						const nextT = sortedTiers[index + 1];
-						const left = tier.rangeMin ?? paddedMin;
-						const right = nextT?.rangeMin ?? paddedMax;
-						const midpoint = (left + right) / 2;
-						const percent = valueToPercent(midpoint);
+					{visibleTiers.map((tier) => {
+						// Position icon at center of tier's own range
+						// For unbounded lower: use rangeMax
+						// For unbounded upper: use rangeMin
+						// For normal range: use midpoint
+						const min = tier.rangeMin;
+						const max = tier.rangeMax;
+						let position: number;
+						if (min === undefined || min === Number.MIN_SAFE_INTEGER) {
+							position = max ?? minBound;
+						} else if (max === undefined) {
+							position = min;
+						} else {
+							position = (min + max) / 2;
+						}
+						const percent = valueToPercent(position);
 
 						return (
 							<span
@@ -165,7 +175,7 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 								className={`absolute -translate-x-1/2 transition-all ${
 									tier.active ? 'opacity-100 scale-110' : 'opacity-40'
 								}`}
-								style={{ left: `${Math.max(5, Math.min(95, percent))}%` }}
+								style={{ left: `${Math.max(3, Math.min(97, percent))}%` }}
 								title={tier.name}
 							>
 								{tier.icon}
