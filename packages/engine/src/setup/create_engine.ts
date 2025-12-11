@@ -224,7 +224,7 @@ function runSystemActionEffects(
 	withResourceSourceFrames(
 		engineContext,
 		(_effect, _context, resourceKey) => ({
-			key: `action:${actionId}:${resourceKey}`,
+			sourceKey: `action:${actionId}:${resourceKey}`,
 			kind: 'action',
 			id: actionId,
 			longevity: 'permanent' as const,

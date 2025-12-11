@@ -38,10 +38,15 @@ export function mergeMeta(
 			baseMeta.longevity = partialMeta.longevity;
 		}
 	}
-	if (!baseMeta.kind && partialMeta.kind) {
+	// Ongoing sources represent current state, not history - they should
+	// override parent kind/id so they display as their own identity
+	// (e.g., "Ecstatic" not "Initial Setup: Ecstatic")
+	const isOngoingOverride =
+		partialMeta.longevity === 'ongoing' && baseMeta.longevity !== 'ongoing';
+	if (partialMeta.kind && (!baseMeta.kind || isOngoingOverride)) {
 		baseMeta.kind = partialMeta.kind;
 	}
-	if (!baseMeta.id && partialMeta.id) {
+	if (partialMeta.id && (!baseMeta.id || isOngoingOverride)) {
 		baseMeta.id = partialMeta.id;
 	}
 	if (!baseMeta.detail && partialMeta.detail) {
