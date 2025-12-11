@@ -11,43 +11,35 @@ interface TierThermometerProps {
 }
 
 /**
- * A vertical thermometer showing tier thresholds and current value.
- *
- * The thermometer shows:
- * - Boundaries between tiers as horizontal lines with threshold values
- * - The current value as a green marker line
- * - Tier icons on the side indicating which tier each section belongs to
+ * A horizontal thermometer showing tier thresholds, current value,
+ * and prev/current/next tier effects.
  */
 const TierThermometer: React.FC<TierThermometerProps> = ({
 	currentValue,
 	tiers,
-	resourceIcon,
 }) => {
-	const minTier = tiers[tiers.length - 1];
-	const maxTier = tiers[0];
+	if (tiers.length === 0) {
+		return null;
+	}
+
+	// Tiers come in highest-first order, reverse for display (lowest on left)
+	const sortedTiers = [...tiers].reverse();
+
+	// Find bounds for the scale
+	const minTier = sortedTiers[0];
+	const maxTier = sortedTiers[sortedTiers.length - 1];
 	if (!minTier || !maxTier) {
 		return null;
 	}
 
-	// Calculate the range to display
-	// Use actual tier boundaries, with some padding for visual clarity
-	// Get boundary values
-	const displayMin = minTier.rangeMin ?? -15;
-	const displayMax = maxTier.rangeMax ?? maxTier.rangeMin ?? 15;
-
-	// Add padding for unbounded tiers
-	const paddedMin =
-		minTier.rangeMin === Number.MIN_SAFE_INTEGER
-			? Math.min(currentValue - 2, displayMin)
-			: displayMin - 1;
-	const paddedMax =
-		maxTier.rangeMax === undefined
-			? Math.max(currentValue + 2, (maxTier.rangeMin ?? 0) + 5)
-			: displayMax + 1;
-
+	// Calculate display range with padding
+	const minBound = minTier.rangeMin ?? -10;
+	const maxBound = maxTier.rangeMax ?? (maxTier.rangeMin ?? 0) + 5;
+	const paddedMin = Math.min(minBound - 1, currentValue - 1);
+	const paddedMax = Math.max(maxBound + 1, currentValue + 1);
 	const range = paddedMax - paddedMin;
 
-	// Calculate position percentage (0% = bottom, 100% = top)
+	// Convert value to percentage (0% = left, 100% = right)
 	const valueToPercent = (value: number) => {
 		if (range === 0) {
 			return 50;
@@ -55,161 +47,218 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 		return ((value - paddedMin) / range) * 100;
 	};
 
-	// Clamp the current value position to stay within visible bounds
-	const currentPercent = Math.max(
-		5,
-		Math.min(95, valueToPercent(currentValue)),
-	);
+	// Clamp marker position
+	const markerPercent = Math.max(3, Math.min(97, valueToPercent(currentValue)));
 
-	// Collect threshold lines between tiers
-	const thresholds: Array<{
-		value: number;
-		percent: number;
-		labelAbove: string;
-		labelBelow: string;
-	}> = [];
-
-	for (let i = 0; i < tiers.length - 1; i++) {
-		const upperTier = tiers[i];
-		const lowerTier = tiers[i + 1];
-		if (!upperTier || !lowerTier) {
+	// Collect threshold values (boundaries between tiers)
+	const thresholds: Array<{ value: number; percent: number }> = [];
+	for (let i = 1; i < sortedTiers.length; i++) {
+		const tier = sortedTiers[i];
+		if (!tier) {
 			continue;
 		}
-
-		// The threshold is the boundary between tiers
-		// Upper tier's min is the threshold value
-		const thresholdValue = upperTier.rangeMin;
+		const thresholdValue = tier.rangeMin;
 		if (
 			thresholdValue === undefined ||
 			thresholdValue === Number.MIN_SAFE_INTEGER
 		) {
 			continue;
 		}
-
 		const percent = valueToPercent(thresholdValue);
-		if (percent < 0 || percent > 100) {
-			continue;
+		if (percent > 0 && percent < 100) {
+			thresholds.push({ value: thresholdValue, percent });
 		}
-
-		thresholds.push({
-			value: thresholdValue,
-			percent,
-			labelAbove: upperTier.icon,
-			labelBelow: lowerTier.icon,
-		});
 	}
 
+	// Find current tier index and adjacent tiers
+	const activeIndex = sortedTiers.findIndex((t) => t.active);
+	const currentTier = activeIndex >= 0 ? sortedTiers[activeIndex] : undefined;
+	const prevTier = activeIndex > 0 ? sortedTiers[activeIndex - 1] : undefined;
+	const nextTier =
+		activeIndex < sortedTiers.length - 1
+			? sortedTiers[activeIndex + 1]
+			: undefined;
+
+	// Format threshold label
+	const formatThreshold = (value: number) =>
+		value >= 0 ? `+${value}` : `${value}`;
+
+	// Get effect description from tier entry
+	const getEffectDesc = (tier: TierSummary | undefined) => {
+		if (!tier) {
+			return '';
+		}
+		const items = tier.entry.items;
+		if (items.length === 0) {
+			return 'No effect';
+		}
+		return items
+			.slice(0, 2)
+			.map((item) => (typeof item === 'string' ? item : item.text))
+			.join('. ');
+	};
+
+	// Get range label for adjacent tier
+	const getAdjacentLabel = (
+		tier: TierSummary | undefined,
+		direction: 'above' | 'below',
+	) => {
+		if (!tier) {
+			return '';
+		}
+		if (direction === 'above' && tier.rangeMin !== undefined) {
+			return `Above ${formatThreshold(tier.rangeMin - 1)}`;
+		}
+		if (direction === 'below' && tier.rangeMax !== undefined) {
+			return `Below ${formatThreshold(tier.rangeMax + 1)}`;
+		}
+		return tier.rangeLabel;
+	};
+
 	return (
-		<div className="tier-thermometer flex items-center gap-2 py-2">
-			{/* Thermometer bar */}
-			<div className="relative h-24 w-4 rounded-full bg-neutral-200 dark:bg-neutral-700">
-				{/* Tier sections as colored backgrounds */}
-				{tiers.map((tier, index) => {
-					const nextTier = tiers[index + 1];
-					const topValue = tier.rangeMax ?? paddedMax;
-					const bottomValue = nextTier?.rangeMin ?? tier.rangeMin ?? paddedMin;
-
-					const topPercent = Math.min(
-						100,
-						Math.max(0, valueToPercent(topValue)),
-					);
-					const bottomPercent = Math.min(
-						100,
-						Math.max(0, valueToPercent(bottomValue)),
-					);
-					const height = topPercent - bottomPercent;
-
-					if (height <= 0) {
-						return null;
-					}
-
-					return (
-						<div
-							key={tier.name}
-							className={`absolute left-0 w-full rounded-full transition-colors ${
-								tier.active
-									? 'bg-emerald-400/40 dark:bg-emerald-500/40'
-									: 'bg-neutral-300/30 dark:bg-neutral-600/30'
-							}`}
-							style={{
-								bottom: `${bottomPercent}%`,
-								height: `${height}%`,
-							}}
-						/>
-					);
-				})}
-
-				{/* Threshold lines */}
-				{thresholds.map((threshold) => (
-					<div
-						key={`threshold-${threshold.value}`}
-						className="absolute left-0 w-full border-t border-neutral-400 dark:border-neutral-500"
-						style={{ bottom: `${threshold.percent}%` }}
-					/>
-				))}
-
-				{/* Current value marker */}
-				<div
-					className="absolute -left-1 -right-1 h-0.5 bg-emerald-500 shadow-sm shadow-emerald-500/50"
-					style={{ bottom: `${currentPercent}%` }}
-				>
-					{/* Arrow indicator */}
-					<div className="absolute -right-2 top-1/2 -translate-y-1/2 border-y-4 border-l-4 border-y-transparent border-l-emerald-500" />
-				</div>
-			</div>
-
-			{/* Labels column */}
-			<div className="relative h-24 flex flex-col justify-between text-xs">
-				{/* Threshold labels */}
-				{thresholds.map((threshold) => (
-					<div
-						key={`label-${threshold.value}`}
-						className="absolute left-0 flex items-center gap-1 -translate-y-1/2"
-						style={{ bottom: `${threshold.percent}%` }}
-					>
-						<span className="text-neutral-600 dark:text-neutral-400 tabular-nums">
-							{threshold.value >= 0 ? `+${threshold.value}` : threshold.value}
-						</span>
-						<span className="text-neutral-500">
-							{threshold.labelAbove}/{threshold.labelBelow}
-						</span>
-					</div>
-				))}
-
-				{/* Current value label (only if not near a threshold) */}
-				<div
-					className="absolute left-0 flex items-center gap-1 -translate-y-1/2 font-medium text-emerald-600 dark:text-emerald-400"
-					style={{ bottom: `${currentPercent}%` }}
-				>
-					<span className="tabular-nums">
-						{resourceIcon}{' '}
-						{currentValue >= 0 ? `+${currentValue}` : currentValue}
-					</span>
-				</div>
-			</div>
-
-			{/* Tier icons column */}
-			<div className="relative h-24 flex flex-col justify-between">
-				{tiers.map((tier, index) => {
-					const nextTier = tiers[index + 1];
-					const topValue = tier.rangeMax ?? paddedMax;
-					const bottomValue = nextTier?.rangeMin ?? tier.rangeMin ?? paddedMin;
-					const midpoint = (topValue + bottomValue) / 2;
-					const percent = valueToPercent(midpoint);
-
-					return (
-						<div
-							key={`icon-${tier.name}`}
-							className={`absolute -translate-y-1/2 text-base ${
-								tier.active ? 'opacity-100' : 'opacity-50'
-							}`}
-							style={{ bottom: `${percent}%` }}
-							title={tier.name}
+		<div className="tier-thermometer">
+			{/* Thermometer bar section */}
+			<div className="flex flex-col gap-1.5">
+				{/* Threshold labels above */}
+				<div className="relative h-3 text-[10px] text-neutral-500">
+					{thresholds.map((t) => (
+						<span
+							key={t.value}
+							className="absolute -translate-x-1/2 tabular-nums"
+							style={{ left: `${t.percent}%` }}
 						>
-							{tier.icon}
-						</div>
-					);
-				})}
+							{formatThreshold(t.value)}
+						</span>
+					))}
+				</div>
+
+				{/* Gradient track with ticks and marker */}
+				<div
+					className="relative h-3 rounded-full"
+					style={{
+						background: `linear-gradient(to right,
+							#dc2626 0%,
+							#f97316 25%,
+							#eab308 50%,
+							#84cc16 75%,
+							#22c55e 100%)`,
+					}}
+				>
+					{/* Threshold tick marks */}
+					{thresholds.map((t) => (
+						<div
+							key={`tick-${t.value}`}
+							className="absolute top-0 bottom-0 w-0.5 bg-black/30"
+							style={{ left: `${t.percent}%` }}
+						/>
+					))}
+
+					{/* Current value marker */}
+					<div
+						className="absolute -top-1 -bottom-1 w-1.5 rounded-sm bg-white"
+						style={{
+							left: `${markerPercent}%`,
+							transform: 'translateX(-50%)',
+							boxShadow: '0 0 6px rgba(255, 255, 255, 0.9)',
+						}}
+					/>
+				</div>
+
+				{/* Tier icons below */}
+				<div className="relative h-5 text-sm">
+					{sortedTiers.map((tier, index) => {
+						const nextT = sortedTiers[index + 1];
+						const left = tier.rangeMin ?? paddedMin;
+						const right = nextT?.rangeMin ?? paddedMax;
+						const midpoint = (left + right) / 2;
+						const percent = valueToPercent(midpoint);
+
+						return (
+							<span
+								key={tier.name}
+								className={`absolute -translate-x-1/2 transition-all ${
+									tier.active ? 'opacity-100 scale-110' : 'opacity-40'
+								}`}
+								style={{ left: `${Math.max(5, Math.min(95, percent))}%` }}
+								title={tier.name}
+							>
+								{tier.icon}
+							</span>
+						);
+					})}
+				</div>
+			</div>
+
+			{/* Tier effect descriptions: prev / current / next */}
+			<div className="mt-3 flex flex-col gap-2 text-[11px]">
+				{/* Previous (lower) tier */}
+				{prevTier && (
+					<TierEffectRow
+						tier={prevTier}
+						label={getAdjacentLabel(prevTier, 'below')}
+						description={getEffectDesc(prevTier)}
+						variant="adjacent"
+					/>
+				)}
+
+				{/* Current tier */}
+				{currentTier && (
+					<TierEffectRow
+						tier={currentTier}
+						label={`Current (${currentTier.rangeLabel})`}
+						description={getEffectDesc(currentTier)}
+						variant="current"
+					/>
+				)}
+
+				{/* Next (higher) tier */}
+				{nextTier && (
+					<TierEffectRow
+						tier={nextTier}
+						label={getAdjacentLabel(nextTier, 'above')}
+						description={getEffectDesc(nextTier)}
+						variant="adjacent"
+					/>
+				)}
+			</div>
+		</div>
+	);
+};
+
+interface TierEffectRowProps {
+	tier: TierSummary;
+	label: string;
+	description: string;
+	variant: 'current' | 'adjacent';
+}
+
+const TierEffectRow: React.FC<TierEffectRowProps> = ({
+	tier,
+	label,
+	description,
+	variant,
+}) => {
+	const isCurrent = variant === 'current';
+
+	return (
+		<div
+			className={`flex items-start gap-2 rounded-md px-2 py-1.5 ${
+				isCurrent
+					? 'bg-white/10 ring-1 ring-white/10'
+					: 'bg-white/[0.03] opacity-60'
+			}`}
+		>
+			<span className="text-sm flex-shrink-0">{tier.icon}</span>
+			<div className="min-w-0 flex-1">
+				<div className="text-[9px] uppercase tracking-wide text-white/40 mb-0.5">
+					{label}
+				</div>
+				<div
+					className={`font-medium ${isCurrent ? 'text-white/90' : 'text-white/70'}`}
+				>
+					{tier.name}
+				</div>
+				<div className="text-white/50 leading-snug">{description}</div>
 			</div>
 		</div>
 	);
