@@ -35,7 +35,7 @@ function createPhaseResourceFrame(
 	context: EngineContext,
 	resourceKey: ResourceKey,
 ) => {
-	key: string;
+	sourceKey: string;
 	kind: 'phase';
 	id: string;
 	longevity: 'permanent';
@@ -43,12 +43,12 @@ function createPhaseResourceFrame(
 } {
 	return (_effect, _context, resourceKey) => {
 		const baseFrame: {
-			key: string;
+			sourceKey: string;
 			kind: 'phase';
 			id: string;
 			longevity: 'permanent';
 		} = {
-			key: `phase:${phaseId}:${stepId ?? 'step'}:${resourceKey}`,
+			sourceKey: `phase:${phaseId}:${stepId ?? 'step'}:${resourceKey}`,
 			kind: 'phase',
 			id: phaseId,
 			longevity: 'permanent',

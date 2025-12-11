@@ -13,7 +13,7 @@ export interface ResourceSourceLink {
 }
 
 export interface ResourceSourceMeta {
-	resourceId: string;
+	sourceKey: string;
 	longevity: 'ongoing' | 'permanent';
 	kind?: string;
 	id?: string;

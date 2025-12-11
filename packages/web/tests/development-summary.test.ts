@@ -58,7 +58,20 @@ describe('development summary', () => {
 				developmentId = development.id;
 				registries.developments.add(development.id, development);
 				const triggerEntries = Object.keys(session.metadata.triggers ?? {});
-				triggerId = triggerEntries[0] ?? 'trigger.synthetic';
+				// Use existing trigger or create synthetic one with metadata
+				if (triggerEntries.length > 0) {
+					triggerId = triggerEntries[0]!;
+				} else {
+					triggerId = 'trigger.synthetic';
+					session.metadata.triggers = {
+						...session.metadata.triggers,
+						[triggerId]: {
+							label: 'Synthetic Trigger',
+							icon: '🧪',
+							text: 'On synthetic event',
+						},
+					};
+				}
 				// Use resource keys
 				const resourceId =
 					Object.keys(session.metadata.resources ?? {})[0] ??
