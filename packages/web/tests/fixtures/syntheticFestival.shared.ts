@@ -90,6 +90,24 @@ export const createFestivalMetadata = (): SessionSnapshotMetadata =>
 		assets: {
 			passive: SYNTHETIC_RESULT_MODIFIER,
 			upkeep: FALLBACK_UPKEEP,
+			action: {
+				icon: '🎯',
+				label: 'Action',
+				plural: 'Actions',
+			},
+			development: {
+				icon: '🏗️',
+				label: 'Development',
+				plural: 'Developments',
+			},
+			modifiers: {
+				cost: { icon: '✨', label: 'Cost Adjustment' },
+				result: SYNTHETIC_RESULT_MODIFIER,
+			},
+			keywords: {
+				resourceGain: 'Resource Gain',
+				cost: 'Cost',
+			},
 		},
 		resources: {
 			...RESOURCE_LOOKUP,

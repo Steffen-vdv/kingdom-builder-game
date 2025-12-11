@@ -1,8 +1,10 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import { GENERAL_RESOURCE_ICON } from '../../../icons';
 import { formatTargetLabel } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
-import { selectTransferDescriptor } from '../registrySelectors';
+import {
+	selectTransferDescriptor,
+	selectActionDescriptor,
+} from '../registrySelectors';
 import { humanizeIdentifier } from '../stringUtils';
 import type { TranslationContext } from '../../context';
 
@@ -20,7 +22,8 @@ export function resolveTransferModifierTarget(
 	translationContext: TranslationContext,
 ): TransferModifierTarget {
 	const params = effectDefinition.params ?? {};
-	const transferDescriptor = selectTransferDescriptor(translationContext);
+	// Validate transfer descriptor is available (will throw if missing)
+	selectTransferDescriptor(translationContext);
 	const rawActionId = params['actionId'];
 	const paramActionId =
 		typeof rawActionId === 'string' ? rawActionId : undefined;
@@ -45,38 +48,29 @@ export function resolveTransferModifierTarget(
 		};
 	}
 
-	const resourceTransferName = `${GENERAL_RESOURCE_ICON}${
-		transferDescriptor.icon || ''
-	} Resource Transfers`;
-	let fallbackName = 'affected actions';
+	// For global transfer modifiers, use the action keyword for "All Actions"
+	const actionKeyword = selectActionDescriptor(translationContext);
+	const globalActionName = `All ${actionKeyword.plural}`;
+	let fallbackName = globalActionName;
 	if (paramActionId) {
 		fallbackName = humanizeIdentifier(paramActionId) || paramActionId;
 	} else if (evaluationId) {
 		fallbackName = humanizeIdentifier(evaluationId) || evaluationId;
-	} else if (
-		evaluation?.type === 'transfer_pct' ||
-		evaluation?.type === 'transfer_amount'
-	) {
-		fallbackName = resourceTransferName;
 	} else if (evaluation) {
-		fallbackName = humanizeIdentifier(evaluation.type) || evaluation.type;
+		fallbackName = humanizeIdentifier(evaluation.type) || globalActionName;
 	}
 	if (
 		(evaluation?.type === 'transfer_pct' ||
 			evaluation?.type === 'transfer_amount') &&
 		(!evaluationId || evaluationId === 'percent' || evaluationId === 'amount')
 	) {
-		fallbackName = resourceTransferName;
+		fallbackName = globalActionName;
 	}
 
-	const clauseTarget = formatTargetLabel('', fallbackName);
-	const summaryLabel =
-		evaluation?.type === 'transfer_pct' ||
-		evaluation?.type === 'transfer_amount'
-			? `${GENERAL_RESOURCE_ICON}${transferDescriptor.icon || ''}`
-			: fallbackName;
+	const clauseTarget = formatTargetLabel(actionKeyword.icon, fallbackName);
+	const summaryLabel = actionKeyword.icon;
 	return {
-		icon: '',
+		icon: actionKeyword.icon,
 		name: fallbackName,
 		summaryLabel,
 		clauseTarget,

@@ -31,6 +31,7 @@ import {
 	type ActionAvailabilityResult,
 } from './getActionAvailability';
 import { summarizeActionWithInstallation } from './actionSummaryHelpers';
+import { selectActionDescriptor } from '../../translation/effects/registrySelectors';
 
 interface CategoryEntry {
 	id: string;
@@ -113,6 +114,10 @@ export default function ActionsPanel() {
 	);
 	const actionCostIcon = actionCostDescriptor.icon;
 	const actionCostLabel = actionCostDescriptor.label ?? actionCostResource;
+	const actionKeyword = useMemo(
+		() => selectActionDescriptor(translationContext),
+		[translationContext],
+	);
 	const sectionRef = useAnimate<HTMLDivElement>();
 	const player = sessionView.active;
 	if (!player) {
@@ -397,7 +402,9 @@ export default function ActionsPanel() {
 			{panelDisabled && <div aria-hidden className={OVERLAY_CLASSES} />}
 			<div className={HEADER_CLASSES}>
 				<h2 className={TITLE_CLASSES}>
-					{viewingOpponent ? `${opponent.name} Actions` : 'Actions'}{' '}
+					{viewingOpponent
+						? `${opponent.name} ${actionKeyword.plural}`
+						: `${actionKeyword.icon} ${actionKeyword.plural}`}{' '}
 					<span className={COST_LABEL_CLASSES}>
 						(1 {actionCostIcon ?? ''}
 						{actionCostIcon ? ' ' : ''}

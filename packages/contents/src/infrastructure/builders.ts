@@ -40,15 +40,17 @@ export {
 	EvaluationTargetBuilder,
 	EvaluationTargetTypes,
 	ResultModParamsBuilder,
+	TARGET_EFFECT_RESOURCE_ADD,
 	attackParams,
 	costModParams,
 	developmentTarget,
 	evaluationTarget,
+	globalTarget,
 	populationTarget,
 	resultModParams,
 } from './builders/advancedEffectParams';
 
-export type { AttackResourceAnnotation, AttackResourceRole } from './builders/advancedEffectParams';
+export type { AttackResourceAnnotation, AttackResourceRole, TargetEffect } from './builders/advancedEffectParams';
 
 export type { ActionEffectGroupDef, ActionEffectGroupOptionDef, DevelopmentIdParam } from './builders/actionEffectGroups';
 

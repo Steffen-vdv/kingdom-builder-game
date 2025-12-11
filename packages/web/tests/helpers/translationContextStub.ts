@@ -21,12 +21,18 @@ const EMPTY_ASSETS: TranslationAssets = {
 	population: {},
 	land: {},
 	slot: {},
-	passive: {},
-	transfer: {},
-	upkeep: {},
-	modifiers: {},
+	passive: { icon: '♾️', label: 'Passive Effect' },
+	transfer: { icon: '🧺🔁', label: 'Resource Transfer' },
+	upkeep: { icon: '🧽', label: 'Maintenance' },
+	modifiers: {
+		cost: { icon: '✨', label: 'Cost Adjustment' },
+		result: { icon: '✨', label: 'Outcome Adjustment' },
+	},
 	triggers: {},
 	tierSummaries: {},
+	action: { icon: '🎯', label: 'Action', plural: 'Actions' },
+	development: { icon: '🏗️', label: 'Development', plural: 'Developments' },
+	keywords: { resourceGain: 'Resource Gain', cost: 'Cost' },
 	formatPassiveRemoval: (description: string) =>
 		`Active as long as ${description}`,
 };

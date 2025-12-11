@@ -14,6 +14,10 @@ elif [ ! -d ".husky/_" ]; then
   npm run prepare 2>/dev/null || true
 fi
 
+# Rebuild better-sqlite3 native bindings for current Node version
+# This is needed after Node.js version changes or fresh clones
+npm rebuild better-sqlite3 2>/dev/null || true
+
 {
   echo "╔════════════════════════════════════════════════════════════════╗"
   echo "║          PROJECT DOCUMENTATION CONTEXT AUTO-LOADED             ║"

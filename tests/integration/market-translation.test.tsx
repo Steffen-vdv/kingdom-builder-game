@@ -113,7 +113,8 @@ describe('Building translation with development modifier', () => {
 		const summaryText = screen.getByTestId('summary-output').textContent ?? '';
 		expect(summaryText).toContain(modifierInfo.icon ?? '');
 		expect(summaryText).toContain(harvestDevelopment.icon);
-		expect(summaryText).toMatch(/\+1/);
+		// New format: +🪙1 (icon between sign and number)
+		expect(summaryText).toMatch(/\+.*1/);
 	});
 
 	it('falls back to default modifier icons when metadata omits them', () => {

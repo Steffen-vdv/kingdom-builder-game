@@ -23,7 +23,11 @@ describe('result_mod evaluation modifiers', () => {
 			method: 'add',
 			params: {
 				id: 'eval_boost',
-				evaluation: { type: TARGET_TYPE, id: TARGET_ID },
+				evaluation: {
+					type: TARGET_TYPE,
+					id: TARGET_ID,
+					targetEffect: 'resource:add',
+				},
 				adjust: 2,
 				amount: 1,
 				percent: 0.1,
@@ -80,7 +84,11 @@ describe('result_mod evaluation modifiers', () => {
 			method: 'add',
 			params: {
 				id: 'missing_check',
-				evaluation: { type: TARGET_TYPE, id: TARGET_ID },
+				evaluation: {
+					type: TARGET_TYPE,
+					id: TARGET_ID,
+					targetEffect: 'resource:add',
+				},
 			},
 		};
 		const removeEffect: EffectDef = {
@@ -88,7 +96,11 @@ describe('result_mod evaluation modifiers', () => {
 			method: 'remove',
 			params: {
 				id: 'missing_check',
-				evaluation: { type: TARGET_TYPE, id: TARGET_ID },
+				evaluation: {
+					type: TARGET_TYPE,
+					id: TARGET_ID,
+					targetEffect: 'resource:add',
+				},
 			},
 		};
 

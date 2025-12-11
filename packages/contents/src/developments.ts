@@ -94,3 +94,13 @@ export function createDevelopmentRegistry() {
 }
 
 export const DEVELOPMENTS = createDevelopmentRegistry();
+
+/**
+ * Metadata for the "Development" concept as a keyword.
+ * Used in modifier translations and UI when referring to developments generically.
+ */
+export const DEVELOPMENT_INFO = {
+	icon: '🏗️',
+	label: 'Development',
+	plural: 'Developments',
+} as const;

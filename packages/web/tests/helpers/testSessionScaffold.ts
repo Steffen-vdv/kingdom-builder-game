@@ -96,8 +96,8 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 		},
 		onGainIncomeStep: {
 			icon: '💰',
-			label: 'Income',
-			text: 'On your Income step',
+			label: 'Gain Income',
+			text: 'Gain Income',
 		},
 		onPayUpkeepStep: {
 			icon: '🧹',
@@ -155,9 +155,27 @@ const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 			description: 'Costs paid each upkeep phase to retain benefits.',
 		},
 		transfer: {
-			icon: '🔁',
-			label: 'Transfer',
+			icon: '🧺🔁',
+			label: 'Resource Transfer',
 			description: 'Movement of resources or assets between owners.',
+		},
+		action: {
+			icon: '🎯',
+			label: 'Action',
+			plural: 'Actions',
+		},
+		development: {
+			icon: '🏗️',
+			label: 'Development',
+			plural: 'Developments',
+		},
+		modifiers: {
+			cost: { icon: '✨', label: 'Cost Adjustment' },
+			result: { icon: '✨', label: 'Outcome Adjustment' },
+		},
+		keywords: {
+			resourceGain: 'Resource Gain',
+			cost: 'Cost',
 		},
 	});
 

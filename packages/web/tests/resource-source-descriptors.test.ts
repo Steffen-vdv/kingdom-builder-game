@@ -395,10 +395,13 @@ describe('resource source descriptors', () => {
 			'unknown-resource',
 		);
 		expect(resourceFallback).toContain('unknown-resource');
-		// Triggers do not support fallbacks - missing triggers throw errors
-		expect(() =>
-			formatKindLabel(mutatedContext, 'trigger', 'mystery-trigger'),
-		).toThrow('Trigger "mystery-trigger" not found in assets.');
+		// Missing triggers now fall back to ID instead of throwing
+		const triggerFallback = formatKindLabel(
+			mutatedContext,
+			'trigger',
+			'mystery-trigger',
+		);
+		expect(triggerFallback).toBe('mystery-trigger');
 		// Known trigger with full assets works correctly
 		const formattedTrigger = formatTriggerLabel(
 			translationContext.assets,
@@ -406,10 +409,12 @@ describe('resource source descriptors', () => {
 		);
 		// formatTriggerLabel uses text (not label) when present
 		expect(formattedTrigger).toBe('⚡ When the stars align');
-		// Missing trigger in formatTriggerLabel also throws
-		expect(() =>
-			formatTriggerLabel(mutatedContext.assets, 'unknown-trigger'),
-		).toThrow('Trigger "unknown-trigger" not found in assets.');
+		// Missing trigger falls back to the ID instead of throwing
+		const fallbackTrigger = formatTriggerLabel(
+			mutatedContext.assets,
+			'unknown-trigger',
+		);
+		expect(fallbackTrigger).toBe('unknown-trigger');
 		const phaseFallback = formatKindLabel(
 			mutatedContext,
 			'phase',

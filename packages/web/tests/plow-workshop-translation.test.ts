@@ -60,6 +60,24 @@ describe('plow workshop translation', () => {
 					icon: SYNTHETIC_UPKEEP_PHASE.icon,
 					label: SYNTHETIC_UPKEEP_PHASE.label,
 				},
+				action: {
+					icon: '🎯',
+					label: 'Action',
+					plural: 'Actions',
+				},
+				development: {
+					icon: '🏗️',
+					label: 'Development',
+					plural: 'Developments',
+				},
+				modifiers: {
+					cost: { icon: '✨', label: 'Cost Adjustment' },
+					result: { icon: '✨', label: 'Outcome Adjustment' },
+				},
+				keywords: {
+					resourceGain: 'Resource Gain',
+					cost: 'Cost',
+				},
 			},
 			triggers: {
 				onBuild: {
@@ -105,8 +123,7 @@ describe('plow workshop translation', () => {
 		expect(actionCard.title).toBe(
 			`${synthetic.plow.icon} ${synthetic.plow.name}`,
 		);
-		expect(JSON.stringify({ effects, description })).not.toMatch(
-			/Immediately|🎯/,
-		);
+		// Only check for "Immediately" - 🎯 is now valid for action cost modifiers
+		expect(JSON.stringify({ effects, description })).not.toMatch(/Immediately/);
 	});
 });

@@ -252,6 +252,18 @@ export function createActionsPanelGame({
 			land: landDescriptor,
 			slot: slotDescriptor,
 			passive: passiveDescriptor,
+			upkeep: { icon: '🧽', label: 'Maintenance' },
+			transfer: { icon: '🧺🔁', label: 'Resource Transfer' },
+			action: { icon: '🎯', label: 'Action', plural: 'Actions' },
+			development: { icon: '🏗️', label: 'Development', plural: 'Developments' },
+			modifiers: {
+				cost: { icon: '✨', label: 'Cost Adjustment' },
+				result: { icon: '✨', label: 'Outcome Adjustment' },
+			},
+			keywords: {
+				resourceGain: 'Resource Gain',
+				cost: 'Cost',
+			},
 		},
 		overviewContent: {
 			hero: { title: 'Session Overview', tokens: {} },

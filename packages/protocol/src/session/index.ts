@@ -241,6 +241,8 @@ export interface SessionMetadataDescriptor {
 	description?: string;
 	displayAsPercent?: boolean;
 	format?: SessionMetadataFormat;
+	/** Plural form of the label (e.g., "Actions" for "Action") */
+	plural?: string;
 }
 
 export type SessionOverviewTokenCategoryName =

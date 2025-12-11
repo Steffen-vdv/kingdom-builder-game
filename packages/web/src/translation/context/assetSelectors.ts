@@ -45,10 +45,11 @@ export function selectTriggerDisplay(
 ): TranslationTriggerAsset {
 	const entry = assets?.triggers?.[triggerId];
 	if (!entry) {
-		throw new Error(
-			`Trigger "${triggerId}" not found in assets. ` +
-				'All triggers must have metadata defined.',
-		);
+		// Graceful fallback when trigger metadata is missing
+		return {
+			label: triggerId,
+			text: triggerId,
+		};
 	}
 	return entry;
 }

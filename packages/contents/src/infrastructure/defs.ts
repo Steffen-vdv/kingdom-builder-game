@@ -1,6 +1,7 @@
 import type { BuildingConfig, DevelopmentConfig, EffectDef } from '@kingdom-builder/protocol';
 
 export const BROOM_ICON = '🧹';
+export const GENERAL_RESOURCE_ICON = '🧺';
 export const RESOURCE_TRANSFER_ICON = '🔁';
 
 export const Focus = {

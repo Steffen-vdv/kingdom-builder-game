@@ -45,34 +45,32 @@ const summaryTokens = {
 } as const;
 
 const summaryTexts = {
-	content: 'During income step, gain 25% more 🪙 gold (rounded up).',
+	content: 'Gain 25% more resources (rounded up).',
 	despair: [
-		'During income step, gain 50% less 🪙 gold (rounded up).',
+		'Gain 50% less resources (rounded up).',
 		'Skip Growth phase.',
 		'Skip War Recovery step during Upkeep phase.',
 	].join('\n'),
 	ecstatic: [
-		'During income step, gain 50% more 🪙 gold (rounded up).',
+		'Gain 50% more resources (rounded up).',
 		'All actions cost 20% less 🪙 gold (rounded up).',
 		'Gain +20% 📈 Growth.',
 	].join('\n'),
 	elated: [
-		'During income step, gain 50% more 🪙 gold (rounded up).',
+		'Gain 50% more resources (rounded up).',
 		'All actions cost 20% less 🪙 gold (rounded up).',
 	].join('\n'),
-	grim: [
-		'During income step, gain 25% less 🪙 gold (rounded up).',
-		'Skip Growth phase.',
-	].join('\n'),
+	grim: ['Gain 25% less resources (rounded up).', 'Skip Growth phase.'].join(
+		'\n',
+	),
 	joyful: [
-		'During income step, gain 25% more 🪙 gold (rounded up).',
+		'Gain 25% more resources (rounded up).',
 		'All actions cost 20% less 🪙 gold (rounded up).',
 	].join('\n'),
-	misery: [
-		'During income step, gain 50% less 🪙 gold (rounded up).',
-		'Skip Growth phase.',
-	].join('\n'),
-	unrest: 'During income step, gain 25% less 🪙 gold (rounded up).',
+	misery: ['Gain 50% less resources (rounded up).', 'Skip Growth phase.'].join(
+		'\n',
+	),
+	unrest: 'Gain 25% less resources (rounded up).',
 } as const;
 
 const createPassive = (tier: keyof typeof passiveIds) => ({
