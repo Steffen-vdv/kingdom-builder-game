@@ -79,7 +79,6 @@ describe('Turn cycle integration', () => {
 				initialSetup: 'test:skip:initial',
 				initialSetupDevmode: 'test:skip:devmode',
 				compensation: 'test:skip:compensation',
-				compensationDevmodeB: 'test:skip:compensation-b',
 			},
 		});
 

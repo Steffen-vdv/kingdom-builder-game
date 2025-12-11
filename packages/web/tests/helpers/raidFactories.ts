@@ -32,7 +32,6 @@ const SKIP_SETUP_ACTION_IDS = {
 	initialSetup: '__army_attack_noop_initial__',
 	initialSetupDevmode: '__army_attack_noop_devmode__',
 	compensation: '__army_attack_noop_compensation__',
-	compensationDevmodeB: '__army_attack_noop_compensation_b__',
 };
 import {
 	buildEffects,

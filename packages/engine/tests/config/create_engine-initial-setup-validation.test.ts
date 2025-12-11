@@ -66,7 +66,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_invalid_setup',
 				initialSetupDevmode: 'test_invalid_setup',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			expect(() =>
@@ -102,7 +101,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_group_mutation',
 				initialSetupDevmode: 'test_group_mutation',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			expect(() =>
@@ -139,7 +137,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_missing_resource_id',
 				initialSetupDevmode: 'test_missing_resource_id',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			expect(() =>
@@ -171,7 +168,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_missing_params',
 				initialSetupDevmode: 'test_missing_params',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			expect(() =>
@@ -206,7 +202,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_invalid_amount',
 				initialSetupDevmode: 'test_invalid_amount',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			expect(() =>
@@ -242,7 +237,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_non_system',
 				initialSetupDevmode: 'test_non_system',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			expect(() =>
@@ -290,7 +284,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_underflow_setup',
 				initialSetupDevmode: 'test_underflow_setup',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			// This should NOT throw - bounds are clamped, not rejected
@@ -335,7 +328,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_unknown_development',
 				initialSetupDevmode: 'test_unknown_development',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			expect(() =>
@@ -367,7 +359,6 @@ describe('createEngine initial setup validation', () => {
 				initialSetup: 'test_unknown_building',
 				initialSetupDevmode: 'test_unknown_building',
 				compensation: '__noop__',
-				compensationDevmodeB: '__noop__',
 			};
 
 			expect(() =>

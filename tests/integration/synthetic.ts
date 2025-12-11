@@ -178,7 +178,6 @@ export function createSyntheticContext() {
 			initialSetup: 'synthetic:skip:initial',
 			initialSetupDevmode: 'synthetic:skip:devmode',
 			compensation: 'synthetic:skip:compensation',
-			compensationDevmodeB: 'synthetic:skip:compensation-b',
 		},
 	});
 
