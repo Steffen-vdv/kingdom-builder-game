@@ -354,8 +354,12 @@ function applyResourceEffect(
 	}
 	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
 	const skipBoundClamp = reconciliationMode === 'pass';
+	// Only track resource:add effects in recentResourceGains for evaluation
+	// modifiers. resource:remove effects should not be subject to result mods.
+	const suppressRecentEntry = kind === 'remove';
 	setResourceValue(context, player, catalog, resourceId, result.finalValue, {
 		skipBoundClamp,
+		suppressRecentEntry,
 	});
 	// Track resource source deltas for UI breakdowns. Only run when the
 	// context includes the source stack (full engine runs).

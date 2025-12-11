@@ -38,27 +38,57 @@ type LooseEvaluationTargetType = string & {
 };
 type EvaluationTargetType = EvaluationTargetTypes | LooseEvaluationTargetType;
 
+/**
+ * Supported effect types for result modifiers.
+ * Currently only 'resource:add' is supported.
+ */
+export const TARGET_EFFECT_RESOURCE_ADD = 'resource:add' as const;
+export type TargetEffect = typeof TARGET_EFFECT_RESOURCE_ADD;
+
 export class EvaluationTargetBuilder extends ParamsBuilder<{
-	type: EvaluationTargetType;
+	type?: EvaluationTargetType;
 	id?: string;
+	targetEffect: TargetEffect;
 }> {
-	constructor(type: EvaluationTargetType) {
+	constructor(type?: EvaluationTargetType) {
 		super();
-		this.set('type', type);
+		// All evaluation modifiers currently target resource:add
+		this.set('targetEffect', TARGET_EFFECT_RESOURCE_ADD);
+		if (type) {
+			this.set('type', type);
+		}
 	}
 	id(id: string) {
 		return this.set('id', id);
 	}
 }
 export const evaluationTarget = (type: string) => new EvaluationTargetBuilder(type);
-export function developmentTarget() {
-	return evaluationTarget(EvaluationTargetTypes.Development);
+
+/**
+ * Creates an evaluation target for a specific development.
+ * Acts on resource:add effects from that development's evaluator.
+ */
+export function developmentTarget(id?: string) {
+	const builder = new EvaluationTargetBuilder(EvaluationTargetTypes.Development);
+	if (id) {
+		builder.id(id);
+	}
+	return builder;
 }
-export const populationTarget = () => evaluationTarget(EvaluationTargetTypes.Population);
+
+/**
+ * Creates a global evaluation target.
+ * Acts on ALL resource:add effects regardless of evaluator.
+ */
+export function globalTarget() {
+	return new EvaluationTargetBuilder();
+}
+
+export const populationTarget = () => new EvaluationTargetBuilder(EvaluationTargetTypes.Population);
 export class ResultModParamsBuilder extends ParamsBuilder<{
 	id?: string;
 	actionId?: ActionId;
-	evaluation?: { type: EvaluationTargetType; id?: string };
+	evaluation?: { type?: EvaluationTargetType; id?: string; targetEffect: TargetEffect };
 	amount?: number;
 	adjust?: number;
 	percent?: number;
@@ -69,7 +99,7 @@ export class ResultModParamsBuilder extends ParamsBuilder<{
 	actionId(actionId: ActionId) {
 		return this.set('actionId', actionId);
 	}
-	evaluation(target: EvaluationTargetBuilder | { type: EvaluationTargetType; id?: string }) {
+	evaluation(target: EvaluationTargetBuilder | { type?: EvaluationTargetType; id?: string; targetEffect: TargetEffect }) {
 		return this.set('evaluation', target instanceof EvaluationTargetBuilder ? target.build() : target);
 	}
 	amount(amount: number) {

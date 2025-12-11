@@ -155,23 +155,17 @@ const createTriggerDescriptor = (
 	id: string,
 	trigger: SessionTriggerMetadata | undefined,
 ): TriggerMetadata => {
-	if (!trigger?.label) {
-		throw new Error(
-			`Trigger "${id}" is missing a label. ` +
-				'All triggers must have metadata with a label defined.',
-		);
-	}
 	const entry: TriggerMetadata = {
 		id,
-		label: trigger.label,
+		label: trigger?.label ?? formatLabel(id),
 	};
-	if (trigger.icon !== undefined) {
+	if (trigger?.icon !== undefined) {
 		entry.icon = trigger.icon;
 	}
-	if (trigger.text !== undefined) {
+	if (trigger?.text !== undefined) {
 		entry.text = trigger.text;
 	}
-	if (trigger.condition !== undefined) {
+	if (trigger?.condition !== undefined) {
 		entry.condition = trigger.condition;
 	}
 	return Object.freeze(entry);

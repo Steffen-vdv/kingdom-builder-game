@@ -20,6 +20,7 @@ describe('result_mod evaluation modifiers', () => {
 				evaluation: {
 					type: EVALUATION_TYPE ?? 'test',
 					id: EVALUATION_ID ?? 'evaluation',
+					targetEffect: 'resource:add',
 				},
 				adjust: 1,
 				amount: 2,
