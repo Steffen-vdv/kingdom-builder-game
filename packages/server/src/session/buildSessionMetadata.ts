@@ -230,7 +230,12 @@ function buildAssetMetadata(): SessionMetadataDescriptorMap {
 	return descriptors;
 }
 
-type AssetInfo = { icon?: string; label?: string; description?: string };
+type AssetInfo = {
+	icon?: string;
+	label?: string;
+	description?: string;
+	plural?: string;
+};
 
 function assignAssetDescriptor(
 	target: SessionMetadataDescriptorMap,
@@ -249,6 +254,9 @@ function assignAssetDescriptor(
 	}
 	if (info.description) {
 		descriptor.description = info.description;
+	}
+	if (info.plural) {
+		descriptor.plural = info.plural;
 	}
 	target[key] = descriptor;
 }
