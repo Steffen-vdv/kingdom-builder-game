@@ -62,6 +62,17 @@ export interface TranslationTriggerAsset {
 	label?: string;
 }
 
+export interface TranslationKeywordDescriptor {
+	readonly icon: string;
+	readonly label: string;
+	readonly plural: string;
+}
+
+export interface TranslationKeywordLabels {
+	readonly resourceGain: string;
+	readonly cost: string;
+}
+
 export interface TranslationAssets {
 	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
 	readonly population: Readonly<TranslationIconLabel>;
@@ -73,6 +84,9 @@ export interface TranslationAssets {
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
 	readonly triggers: Readonly<Record<string, TranslationTriggerAsset>>;
 	readonly tierSummaries: Readonly<Record<string, string>>;
+	readonly action?: Readonly<TranslationKeywordDescriptor>;
+	readonly development?: Readonly<TranslationKeywordDescriptor>;
+	readonly keywords?: Readonly<TranslationKeywordLabels>;
 	formatPassiveRemoval(description: string): string;
 }
 

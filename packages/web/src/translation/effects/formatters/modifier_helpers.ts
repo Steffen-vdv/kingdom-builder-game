@@ -1,113 +1,22 @@
 import type { EffectDef, DevelopmentConfig } from '@kingdom-builder/protocol';
-import { GENERAL_RESOURCE_ICON, GENERAL_RESOURCE_LABEL } from '../../../icons';
-import { signed } from '../helpers';
 import { humanizeIdentifier } from '../stringUtils';
-import type { SummaryEntry } from '../../content/types';
 import type { TranslationContext } from '../../context';
-import { selectResourceDescriptor } from '../registrySelectors';
+import {
+	selectResourceDescriptor,
+	selectDevelopmentDescriptor,
+	selectKeywordLabels,
+} from '../registrySelectors';
 
 const joinParts = (...parts: Array<string | undefined>) =>
 	parts.filter(Boolean).join(' ').trim();
 
-const GENERAL_RESOURCES_KEYWORD = `${GENERAL_RESOURCE_ICON} ${GENERAL_RESOURCE_LABEL}`;
-
-export const RESULT_EVENT_GRANT_RESOURCES = `Whenever it grants ${GENERAL_RESOURCES_KEYWORD}`,
-	RESULT_EVENT_RESOLVE = 'Whenever it resolves',
-	RESULT_EVENT_TRANSFER = `Whenever it transfers ${GENERAL_RESOURCES_KEYWORD}`;
-
 export const formatTargetLabel = (icon: string, name: string) =>
 	joinParts(icon, name || '');
-
-export interface ModifierLabelLike {
-	icon?: string;
-	label?: string;
-}
-
-export function buildModifierDescriptionLabel(
-	descriptor: ModifierLabelLike,
-): string {
-	const icon = descriptor.icon?.trim();
-	if (icon) {
-		return `${icon} Modifier`;
-	}
-	const label = descriptor.label?.trim();
-	if (label) {
-		return `${label} Modifier`;
-	}
-	return 'Modifier';
-}
-
-export function formatResultModifierClause(
-	label: string,
-	target: string,
-	event: string,
-	effect: string,
-): string {
-	const prefix = `${label} on ${target}: ${event}`;
-	return `${prefix}, ${effect}`;
-}
-
-interface ResultModifierWrapTarget {
-	icon?: string;
-	name: string;
-}
-
-interface ResultModifierWrapOptions {
-	mode: 'summary' | 'describe';
-	contextIcon?: string;
-}
-
-export function wrapResultModifierEntries(
-	label: ResultModifierLabel,
-	entries: SummaryEntry[],
-	target: ResultModifierWrapTarget,
-	event: string,
-	options: ResultModifierWrapOptions,
-): SummaryEntry[] {
-	if (!entries.length) {
-		return [];
-	}
-	if (options.mode === 'summary') {
-		const targetIcon =
-			target.icon && target.icon.trim() ? target.icon : target.name;
-		const prefix = `${label.icon}${targetIcon}${
-			options.contextIcon ? `(${options.contextIcon})` : ''
-		}:`;
-		return entries.map((entry) =>
-			typeof entry === 'string'
-				? `${prefix} ${entry}`
-				: {
-						...entry,
-						title: `${prefix} ${entry.title}`,
-					},
-		);
-	}
-	const labelText = buildModifierDescriptionLabel(label);
-	const targetLabel = formatTargetLabel(target.icon ?? '', target.name);
-	const prefix = `${labelText} on ${targetLabel}: ${event}`;
-	return entries.map((entry) =>
-		typeof entry === 'string'
-			? `${prefix}, ${entry}`
-			: {
-					...entry,
-					title: `${prefix}, ${entry.title}`,
-				},
-	);
-}
 
 export interface ResultModifierLabel {
 	icon: string;
 	label: string;
 }
-
-interface ResultModifierSource {
-	summaryTargetIcon: string;
-	summaryContextIcon?: string;
-	description: string;
-}
-
-const resolveIcon = (icon?: string) =>
-	icon && icon.trim() ? icon : GENERAL_RESOURCE_ICON;
 
 export const formatPercentText = (percent: number) => {
 	const scaled = Number((percent * 100).toFixed(2));
@@ -132,143 +41,120 @@ export const parseNumericParam = (value: unknown) => {
 	return undefined;
 };
 
-export function formatGainFrom(
-	label: ResultModifierLabel,
-	source: ResultModifierSource,
-	amount: number,
+/**
+ * Gets development info for a specific development ID, or returns the generic
+ * development keyword for "all developments" when ID is empty/undefined.
+ */
+function getDevelopmentTarget(
 	context: TranslationContext,
-	options: {
-		resourceId?: string;
-		detailed?: boolean;
-		percent?: number;
-		round?: 'up' | 'down';
-	} = {},
-) {
-	const { resourceId, detailed, percent, round } = options;
-	const descriptor = resourceId
-		? selectResourceDescriptor(context, resourceId)
-		: undefined;
-	const resIcon = descriptor?.icon || resourceId;
-	const usePercent = typeof percent === 'number' && !Number.isNaN(percent);
-	const value = usePercent ? Number(percent) : amount;
-	const normalizedValue = Object.is(value, -0) ? 0 : value;
-	const amountText = usePercent
-		? formatPercentText(normalizedValue)
-		: `${signed(normalizedValue)}${normalizedValue}`;
-	const roundingDetail =
-		usePercent && round ? ` (rounded ${round === 'down' ? 'down' : 'up'})` : '';
-
-	if (!detailed) {
-		const context = source.summaryContextIcon
-			? `(${source.summaryContextIcon})`
-			: '';
-		const prefix = `${label.icon}${source.summaryTargetIcon}${context}:`;
-		if (usePercent) {
-			const magnitude = formatPercentMagnitude(normalizedValue);
-			const adjective = normalizedValue >= 0 ? 'more' : 'less';
-			const percentSummary = joinParts('gain', `${magnitude}%`, adjective);
-			const decoratedPercentSummary = `${percentSummary}${roundingDetail}`;
-			return `${prefix} ${decoratedPercentSummary}`;
-		}
-		const icon = resolveIcon(resIcon);
-		const valueText = icon ? `${icon}${amountText}` : amountText;
-		return `${prefix} ${valueText}`;
+	evaluationId: string | undefined,
+): { icon: string; name: string; isGlobal: boolean } {
+	// Empty/undefined evaluation ID means "all developments"
+	if (!evaluationId || evaluationId.trim() === '') {
+		const keyword = selectDevelopmentDescriptor(context);
+		return {
+			icon: keyword.icon,
+			name: `All ${keyword.plural}`,
+			isGlobal: true,
+		};
 	}
-
-	const more = (() => {
-		if (!usePercent) {
-			const moreIcon = resolveIcon(resIcon);
-			const moreValue = moreIcon ? `${moreIcon}${amountText}` : amountText;
-			return `${moreValue} more${detailed ? ' of that resource' : ''}`;
-		}
-		const magnitude = formatPercentMagnitude(normalizedValue);
-		const adjective = normalizedValue >= 0 ? 'more' : 'less';
-		return `${magnitude}% ${adjective}${detailed ? ' of that resource' : ''}`;
-	})();
-	return formatResultModifierClause(
-		buildModifierDescriptionLabel(label),
-		source.description,
-		RESULT_EVENT_GRANT_RESOURCES,
-		`gain ${more}${usePercent ? roundingDetail : ''}`,
-	);
+	// Specific development
+	const info = getDevelopmentInfo(context, evaluationId);
+	return { ...info, isGlobal: false };
 }
 
+/**
+ * Formats development modifier (Resource Gain) with simplified output:
+ * - Summary: `✨🌾: +🪙1 Resource Gain` or `✨🏗️: +50% Resource Gain`
+ * - Describe: `✨🌾 Farm: +🪙1 Resource Gain` or
+ *   `✨🏗️ All Developments: +50% Resource Gain (rounded up)`
+ */
 export function formatDevelopment(
 	label: ResultModifierLabel,
 	effectDefinition: EffectDef,
 	evaluation: { id: string },
-	translationContext: TranslationContext,
+	context: TranslationContext,
 	detailed: boolean,
-) {
-	const { icon, name } = getDevelopmentInfo(translationContext, evaluation.id);
-	const fallbackLabelFromId = () => {
-		const candidates: Array<string | undefined> = [
-			(() => {
-				const rawId = effectDefinition.params?.['id'];
-				return typeof rawId === 'string' ? rawId : undefined;
-			})(),
-			evaluation.id,
-		];
-		for (const candidate of candidates) {
-			const humanized = humanizeIdentifier(candidate);
-			if (humanized) {
-				return humanized;
-			}
-		}
-		return undefined;
-	};
-	const fallback = fallbackLabelFromId() || '[MISSING:income-label]';
-	const rawTarget = formatTargetLabel(icon, name);
-	const normalizedTarget =
-		rawTarget && rawTarget !== evaluation.id ? rawTarget : fallback;
-	const summaryTargetIcon = icon?.trim() ? icon : normalizedTarget;
-	const source = {
-		summaryTargetIcon,
-		description: normalizedTarget,
-	};
+): string {
+	const target = getDevelopmentTarget(context, evaluation.id);
+	const keywords = selectKeywordLabels(context);
+
+	// Extract resource and amount information
 	const resourceEffect = effectDefinition.effects?.find(
 		(nestedEffect): nestedEffect is EffectDef =>
 			nestedEffect.type === 'resource' &&
 			(nestedEffect.method === 'add' || nestedEffect.method === 'remove'),
 	);
+
+	let resourceIcon = '';
+	let amount = 0;
+	let usePercent = false;
+	let round: 'up' | 'down' | undefined;
+
 	if (resourceEffect) {
 		const resourceId = resourceEffect.params?.['resourceId'] as
 			| string
 			| undefined;
+		if (resourceId) {
+			const descriptor = selectResourceDescriptor(context, resourceId);
+			// Use icon only if it exists and is not empty; otherwise leave blank
+			resourceIcon =
+				descriptor?.icon && descriptor.icon.trim().length > 0
+					? descriptor.icon
+					: '';
+		}
 		const changeObj = resourceEffect.params?.['change'] as
 			| { amount?: number }
 			| undefined;
 		const rawAmount = Number(changeObj?.amount ?? 0);
-		const amount = resourceEffect.method === 'remove' ? -rawAmount : rawAmount;
-		const opts: Parameters<typeof formatGainFrom>[4] = { detailed };
-		if (resourceId !== undefined) {
-			opts.resourceId = resourceId;
+		amount = resourceEffect.method === 'remove' ? -rawAmount : rawAmount;
+	} else {
+		// Check for percent-based modifier
+		const percentParam = effectDefinition.params?.['percent'];
+		if (percentParam !== undefined) {
+			usePercent = true;
+			amount = Number(percentParam);
+			round =
+				effectDefinition.round === 'down' || effectDefinition.round === 'up'
+					? effectDefinition.round
+					: undefined;
+		} else {
+			amount = Number(effectDefinition.params?.['amount'] ?? 0);
 		}
-		return formatGainFrom(label, source, amount, translationContext, opts);
 	}
-	const percentParam = effectDefinition.params?.['percent'];
-	if (percentParam !== undefined) {
-		const percent = Number(percentParam);
-		const round =
-			effectDefinition.round === 'down' || effectDefinition.round === 'up'
-				? effectDefinition.round
-				: undefined;
-		return formatGainFrom(label, source, percent, translationContext, {
-			detailed,
-			percent,
-			...(round ? { round } : {}),
-		});
+
+	// Format the value text
+	const signChar = amount >= 0 ? '+' : '-';
+	const absolute = Math.abs(amount);
+	let valueText: string;
+	if (usePercent) {
+		const magnitude = formatPercentMagnitude(amount);
+		valueText = `${signChar}${magnitude}%`;
+	} else {
+		valueText = resourceIcon
+			? `${signChar}${resourceIcon}${absolute}`
+			: `${signChar}${absolute}`;
 	}
-	const amount = Number(effectDefinition.params?.['amount'] ?? 0);
-	return formatGainFrom(label, source, amount, translationContext, {
-		detailed,
-	});
+
+	// Rounding detail for percent modifiers
+	const roundingDetail =
+		usePercent && round ? ` (rounded ${round === 'down' ? 'down' : 'up'})` : '';
+
+	// Build the output
+	if (!detailed) {
+		// Summary: ✨🌾: +🪙1 Resource Gain
+		return `${label.icon}${target.icon}: ${valueText} ${keywords.resourceGain}${roundingDetail}`;
+	}
+
+	// Describe: ✨🌾 Farm: +🪙1 Resource Gain
+	const targetLabel = formatTargetLabel(target.icon, target.name);
+	return `${label.icon}${targetLabel}: ${valueText} ${keywords.resourceGain}${roundingDetail}`;
 }
 
 export function getDevelopmentInfo(
 	translationContext: TranslationContext,
 	id: string,
-) {
+): { icon: string; name: string } {
 	try {
 		const developmentDefinition: DevelopmentConfig =
 			translationContext.developments.get(id);

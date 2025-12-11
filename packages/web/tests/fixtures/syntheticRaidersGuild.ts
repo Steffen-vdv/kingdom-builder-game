@@ -108,6 +108,21 @@ const buildMetadata = (
 				condition: 'Until removed',
 			},
 		},
+		assets: {
+			passive: { icon: '♾️', label: 'Passive Effect' },
+			transfer: { icon: '🧺🔁', label: 'Resource Transfer' },
+			upkeep: { icon: '🧽', label: 'Maintenance' },
+			action: { icon: '🎯', label: 'Action', plural: 'Actions' },
+			development: { icon: '🏗️', label: 'Development', plural: 'Developments' },
+			modifiers: {
+				cost: { icon: '✨', label: 'Cost Adjustment' },
+				result: { icon: '✨', label: 'Outcome Adjustment' },
+			},
+			keywords: {
+				resourceGain: 'Resource Gain',
+				cost: 'Cost',
+			},
+		},
 	});
 };
 

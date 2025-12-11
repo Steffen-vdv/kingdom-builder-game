@@ -108,6 +108,24 @@ function createTranslationHarness() {
 					icon: SYNTHETIC_UPKEEP_PHASE.icon,
 					label: SYNTHETIC_UPKEEP_PHASE.label,
 				},
+				action: {
+					icon: '🎯',
+					label: 'Action',
+					plural: 'Actions',
+				},
+				development: {
+					icon: '🏗️',
+					label: 'Development',
+					plural: 'Developments',
+				},
+				modifiers: {
+					cost: { icon: '✨', label: 'Cost Adjustment' },
+					result: { icon: '✨', label: 'Outcome Adjustment' },
+				},
+				keywords: {
+					resourceGain: 'Resource Gain',
+					cost: 'Cost',
+				},
 			},
 		}),
 		resourceCatalog: synthetic.resourceCatalog,
@@ -144,17 +162,21 @@ describe('plow action translation', () => {
 		const modIcon = modDescriptor?.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
 		const modifierIcon = modifierInfo.icon ?? '✨';
+		const actionKeyword = translation.assets.action ?? { icon: '🎯' };
+		const keywords = translation.assets.keywords ?? { cost: 'Cost' };
 		const passiveIcon = (plowPassive as { icon?: string })?.icon ?? '';
 		const passiveName =
 			(plowPassive as { name?: string })?.name ?? SYNTHETIC_PASSIVE_INFO.label;
-		// New split format: add entry + remove entry under trigger
+		// Simplified format:
+		// modifier icon + target icon: sign + resource icon + amount + keyword
+		const sign = modAmt >= 0 ? '+' : '-';
 		expect(summary).toEqual([
 			`${expand.icon} ${expand.name}`,
 			`${till.icon} ${till.name}`,
 			{
 				title: `+♾️: ${passiveIcon} ${passiveName}`,
 				items: [
-					`${modifierIcon}: ${modIcon}${modAmt >= 0 ? '+' : ''}${modAmt}`,
+					`${modifierIcon}${actionKeyword.icon}: ${sign}${modIcon}${Math.abs(modAmt)} ${keywords.cost}`,
 				],
 			},
 			{
@@ -236,7 +258,12 @@ describe('plow action translation', () => {
 		const hapIcon = hapDescriptor.icon ?? '';
 		const modifierInfo = translation.assets.modifiers?.cost ?? {};
 		const modifierIcon = modifierInfo.icon ?? '✨';
-		const modifierDirection = modAmt >= 0 ? 'Increase' : 'Decrease';
+		const actionKeyword = translation.assets.action ?? {
+			icon: '🎯',
+			plural: 'Actions',
+		};
+		const keywords = translation.assets.keywords ?? { cost: 'Cost' };
+		const sign = modAmt >= 0 ? '+' : '-';
 		const modMagnitude = Math.abs(modAmt);
 		const landAsset = translation.assets.land ?? {};
 		const landIcon = landAsset.icon ?? SYNTHETIC_LAND_INFO.icon;
@@ -244,7 +271,8 @@ describe('plow action translation', () => {
 		const slotAsset = translation.assets.slot ?? {};
 		const slotIcon = slotAsset.icon ?? SYNTHETIC_SLOT_INFO.icon;
 		const slotLabel = slotAsset.label ?? SYNTHETIC_SLOT_INFO.label;
-		// New split format: passive add entry + remove entry under trigger
+		// Simplified format:
+		// modifier icon + target label: sign + resource icon + amount + keyword
 		expect(effects).toEqual([
 			{
 				title: `${expand.icon} ${expand.name}`,
@@ -262,7 +290,7 @@ describe('plow action translation', () => {
 			{
 				title: `Gain ♾️ Passive: ${passiveIcon} ${passiveName}`,
 				items: [
-					`${modifierIcon} Modifier on all actions: ${modifierDirection} cost by ${modIcon}${modMagnitude}`,
+					`${modifierIcon}${actionKeyword.icon} All ${actionKeyword.plural}: ${sign}${modIcon}${modMagnitude} ${keywords.cost}`,
 				],
 			},
 			{

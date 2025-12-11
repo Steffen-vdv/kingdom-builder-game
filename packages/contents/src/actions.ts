@@ -64,3 +64,13 @@ export function createActionRegistry() {
 }
 
 export const ACTIONS = createActionRegistry();
+
+/**
+ * Metadata for the "Action" concept as a keyword.
+ * Used in modifier translations and UI when referring to actions generically.
+ */
+export const ACTION_INFO = {
+	icon: '🎯',
+	label: 'Action',
+	plural: 'Actions',
+} as const;

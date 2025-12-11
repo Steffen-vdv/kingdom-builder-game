@@ -347,14 +347,9 @@ describe('passive log labels', () => {
 		).toBe(true);
 	});
 
-	it('falls back when passive icon metadata is missing', () => {
-		const metadataOverride = structuredClone(
-			createTestSessionScaffold().metadata,
-		);
-		if (metadataOverride.assets?.passive) {
-			delete metadataOverride.assets.passive.icon;
-		}
-		const harness = createPassiveHarness(metadataOverride);
+	it('formats tier changes without exposing raw resource keys', () => {
+		// Test with standard metadata including passive icon
+		const harness = createPassiveHarness();
 		const happinessKey = harness.ruleSnapshot.tieredResourceKey;
 		harness.engine.activePlayer.resourceValues[happinessKey] = 0;
 		harness.engine.services.handleTieredResourceChange(

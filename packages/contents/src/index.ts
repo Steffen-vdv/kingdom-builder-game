@@ -1,8 +1,8 @@
 export { ACTION_CATEGORIES, createActionCategoryRegistry, ActionCategoryId } from './actionCategories';
 export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
-export { ACTIONS, createActionRegistry, ActionId } from './actions';
+export { ACTIONS, createActionRegistry, ActionId, ACTION_INFO } from './actions';
 export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
-export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
+export { DEVELOPMENTS, createDevelopmentRegistry, DEVELOPMENT_INFO } from './developments';
 export { POPULATIONS, createPopulationRegistry } from './populations';
 export { PHASES, PhaseId, PhaseStepId } from './phases';
 export type { PhaseDef, StepDef } from './config/builders';
@@ -15,7 +15,7 @@ export { Trigger, TRIGGER_META, type TriggerId, type TriggerMeta } from './trigg
 // Legacy exports for backwards compatibility
 export { ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP, ON_GAIN_AP_STEP } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
-export { UPKEEP_INFO, TRANSFER_INFO } from './assets';
+export { UPKEEP_INFO, TRANSFER_INFO, KEYWORD_LABELS } from './assets';
 export { POPULATION_INFO, POPULATION_ARCHETYPE_INFO } from './population';
 export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';
@@ -29,7 +29,7 @@ export type { BuildingDef } from './defs';
 export type { DevelopmentDef } from './developments';
 export type { PopulationDef, TriggerKey, Focus } from './defs';
 export type { ActionEffectGroupDef, ActionEffectGroupOptionDef } from './config/builders';
-export { BROOM_ICON, RESOURCE_TRANSFER_ICON } from './defs';
+export { BROOM_ICON, GENERAL_RESOURCE_ICON, RESOURCE_TRANSFER_ICON } from './defs';
 export { formatPassiveRemoval } from './text';
 export {
 	resource,
