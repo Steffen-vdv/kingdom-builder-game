@@ -1,27 +1,24 @@
-import { developmentTarget, effect, passiveParams, resultModParams, statAddEffect } from '../src/config/builders';
-import { PassiveMethods, ResourceMethods, ResultModMethods, Types } from '../src/config/builderShared';
-import { EvaluationTargetTypes } from '../src/config/builders/advancedEffectParams';
+import { developmentTarget, effect, passiveParams, resultModParams, resourceAddEffect } from '../src/infrastructure/builders';
+import { PassiveMethods, ResourceMethods, ResultModMethods, Types } from '../src/infrastructure/builderShared';
+import { EvaluationTargetTypes } from '../src/infrastructure/builders/advancedEffectParams';
 import { DevelopmentId } from '../src/developments';
-import { createTierPassiveEffect, growthBonusEffect, happinessTierId } from '../src/happinessHelpers';
-import { Resource } from '../src/resources';
-import { Stat, getStatResourceId } from '../src/stats';
+import { createTierPassiveEffect, growthBonusEffect, happinessTierId } from '../src/infrastructure/happinessHelpers';
+import { Resource } from '../src/internal';
 import { resourceChange } from '../src/resource';
 import { describe, expect, it } from 'vitest';
 
 describe('happiness helpers', () => {
-	it('builds additive stat effects without altering rounding', () => {
+	it('builds additive resource effects without altering rounding', () => {
 		const amount = 0.2;
-		const config = statAddEffect(Stat.growth, amount);
-		const expected = effect(Types.Resource, ResourceMethods.ADD)
-			.params(resourceChange(getStatResourceId(Stat.growth)).amount(amount).build())
-			.build();
+		const config = resourceAddEffect(Resource.growth, amount);
+		const expected = effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.growth).amount(amount).build()).build();
 		expect(config).toEqual(expected);
 		expect(config.round).toBeUndefined();
 	});
 
-	it('delegates growth bonuses to the stat helper', () => {
+	it('delegates growth bonuses to the resource helper', () => {
 		const amount = 0.75;
-		expect(growthBonusEffect(amount)).toEqual(statAddEffect(Stat.growth, amount));
+		expect(growthBonusEffect(amount)).toEqual(resourceAddEffect(Resource.growth, amount));
 	});
 
 	it('provides isolated development evaluation builders for result modifiers', () => {

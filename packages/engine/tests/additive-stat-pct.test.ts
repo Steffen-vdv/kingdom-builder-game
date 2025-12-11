@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef } from '../src/index.ts';
-import { Stat } from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import { resourcePercentParams } from './helpers/resourceParams.ts';
 
@@ -9,7 +9,7 @@ describe('resource:add additive percent scaling', () => {
 		const engineContext = createTestEngine();
 		const base = 10;
 		// Stat values ARE Resource IDs - access via resourceValues
-		engineContext.activePlayer.resourceValues[Stat.armyStrength] = base;
+		engineContext.activePlayer.resourceValues[Resource.armyStrength] = base;
 
 		const pct1 = 0.2;
 		const pct2 = 0.4;
@@ -18,7 +18,7 @@ describe('resource:add additive percent scaling', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourcePercentParams({
-					resourceId: Stat.armyStrength,
+					resourceId: Resource.armyStrength,
 					percent: pct1,
 					additive: true,
 				}),
@@ -27,7 +27,7 @@ describe('resource:add additive percent scaling', () => {
 				type: 'resource',
 				method: 'add',
 				params: resourcePercentParams({
-					resourceId: Stat.armyStrength,
+					resourceId: Resource.armyStrength,
 					percent: pct2,
 					additive: true,
 				}),
@@ -38,11 +38,11 @@ describe('resource:add additive percent scaling', () => {
 
 		const expected = base * (1 + pct1 + pct2);
 		expect(
-			engineContext.activePlayer.resourceValues[Stat.armyStrength],
+			engineContext.activePlayer.resourceValues[Resource.armyStrength],
 		).toBeCloseTo(expected);
 		const sequential = base * (1 + pct1) * (1 + pct2);
 		expect(
-			engineContext.activePlayer.resourceValues[Stat.armyStrength],
+			engineContext.activePlayer.resourceValues[Resource.armyStrength],
 		).not.toBeCloseTo(sequential);
 	});
 });

@@ -8,7 +8,6 @@ import {
 import {
 	createActionRegistry,
 	Resource as CResource,
-	Stat as CStat,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import {
@@ -27,7 +26,7 @@ describe('resource and stat bounds', () => {
 					type: 'resource',
 					method: 'remove',
 					params: resourceAmountParams({
-						resourceId: CStat.fortificationStrength,
+						resourceId: CResource.fortificationStrength,
 						amount: 3,
 					}),
 				},
@@ -41,13 +40,16 @@ describe('resource and stat bounds', () => {
 			(effect) => effect.type === 'resource',
 		)?.params as ResourceAmountParamsResult | undefined;
 		const effectAmount = resourceParams?.amount ?? 0;
-		engineContext.activePlayer.resourceValues[CStat.fortificationStrength] =
+		engineContext.activePlayer.resourceValues[CResource.fortificationStrength] =
 			effectAmount - 1;
 		const cost = getActionCosts('lower_fort', engineContext)[CResource.ap] ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('lower_fort', engineContext);
 		expect(
-			getResourceValue(engineContext.activePlayer, CStat.fortificationStrength),
+			getResourceValue(
+				engineContext.activePlayer,
+				CResource.fortificationStrength,
+			),
 		).toBe(0);
 	});
 
@@ -94,7 +96,7 @@ describe('resource and stat bounds', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						resourceId: CStat.armyStrength,
+						resourceId: CResource.armyStrength,
 						amount: -4,
 					}),
 				},
@@ -110,13 +112,13 @@ describe('resource and stat bounds', () => {
 		const effectAmount = addParams?.amount ?? 0;
 		const before = getResourceValue(
 			engineContext.activePlayer,
-			CStat.armyStrength,
+			CResource.armyStrength,
 		);
 		const cost = getActionCosts('bad_add', engineContext)[CResource.ap] ?? 0;
 		engineContext.activePlayer.resourceValues[CResource.ap] = cost;
 		performAction('bad_add', engineContext);
 		expect(
-			getResourceValue(engineContext.activePlayer, CStat.armyStrength),
+			getResourceValue(engineContext.activePlayer, CResource.armyStrength),
 		).toBe(Math.max(before + effectAmount, 0));
 	});
 });

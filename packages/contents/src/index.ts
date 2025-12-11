@@ -3,14 +3,12 @@ export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategori
 export { ACTIONS, createActionRegistry, ActionId } from './actions';
 export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
-export { POPULATIONS, createPopulationRegistry } from './populations';
+export { POPULATIONS, createPopulationRegistry, type PopulationDef } from './resources';
 export { PHASES, PhaseId, PhaseStepId } from './phases';
-export type { PhaseDef, StepDef } from './config/builders';
+export type { PhaseDef, StepDef } from './infrastructure/builders';
 export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue } from './phases';
-export type { ActionCategoryConfig, ActionCategoryLayout } from './config/builders';
-export { PopulationRole, type PopulationRoleId } from './internal';
+export type { ActionCategoryConfig, ActionCategoryLayout } from './infrastructure/builders';
 export { Resource, type ResourceKey, type ResourceId, getResourceId } from './internal';
-export { Stat, type StatKey, type StatId, getStatResourceId } from './internal';
 export { Trigger, TRIGGER_META, type TriggerId, type TriggerMeta } from './triggers';
 // Legacy exports for backwards compatibility
 export { ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP, ON_GAIN_AP_STEP } from './triggers';
@@ -21,16 +19,16 @@ export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';
 export { RULES } from './rules';
 export { OVERVIEW_CONTENT, type OverviewContentTemplate, type OverviewHeroTemplate, type OverviewSectionTemplate, type OverviewTokenCandidates, type OverviewTokenCategoryName } from './overview';
-export { TIER_SUMMARY_STORE, type TierSummaryStore, type TierSummaryGroup } from './tieredResources';
+export { TIER_SUMMARY_STORE, type TierSummaryStore, type TierSummaryGroup } from './infrastructure/tieredResources';
 export { PRIMARY_ICON_ID } from './startup';
 export { type ActionDef } from './actions';
 export type { ActionId as ActionIdType } from './actions';
-export type { BuildingDef } from './defs';
+export type { BuildingDef } from './infrastructure/defs';
 export type { DevelopmentDef } from './developments';
-export type { PopulationDef, TriggerKey, Focus } from './defs';
-export type { ActionEffectGroupDef, ActionEffectGroupOptionDef } from './config/builders';
-export { BROOM_ICON, RESOURCE_TRANSFER_ICON } from './defs';
-export { formatPassiveRemoval } from './text';
+export type { TriggerKey, Focus } from './infrastructure/defs';
+export type { ActionEffectGroupDef, ActionEffectGroupOptionDef } from './infrastructure/builders';
+export { BROOM_ICON, RESOURCE_TRANSFER_ICON } from './infrastructure/defs';
+export { formatPassiveRemoval } from './infrastructure/text';
 export {
 	resource,
 	resourceGroup,
@@ -55,4 +53,18 @@ export type {
 	ResourceBoundValue,
 	ResourceReconciliationMode,
 } from './resource';
-export { happinessModifierId, happinessPassiveId, happinessTierId, type HappinessModifierKind, type HappinessTierSlug } from './happinessHelpers';
+export { happinessModifierId, happinessPassiveId, happinessTierId, type HappinessModifierKind, type HappinessTierSlug } from './infrastructure/happinessHelpers';
+
+// Builder functions and utilities (for tests and advanced content creators)
+export {
+	actionEffectGroup,
+	actionEffectGroupOption,
+	actionEffectGroupOptionParams,
+	effect,
+	happinessTier,
+	passiveParams,
+	winCondition,
+	compareRequirement,
+	requirement,
+} from './infrastructure/builders';
+export { Types, PassiveMethods, CostModMethods, RequirementTypes, ActionMethods, ResourceMethods, LandMethods } from './infrastructure/builderShared';

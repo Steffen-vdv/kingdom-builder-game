@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { simulateAction, performAction } from '../../src/index.ts';
 import { createTestEngine } from '../helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
+import { LandMethods } from '@kingdom-builder/contents';
 
 describe('simulateAction', () => {
 	it('does not mutate state when previewing an action', () => {

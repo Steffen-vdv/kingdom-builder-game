@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects, type EffectDef, type AttackLog } from '../src/index.ts';
-import {
-	Resource as CResource,
-	Stat as CStat,
-} from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { resourceAmountParams } from './helpers/resourceParams.ts';
@@ -16,9 +13,9 @@ describe('attack:perform', () => {
 		const attacker = engineContext.activePlayer;
 		const defender = engineContext.opponent;
 
-		attacker.resourceValues[CStat.armyStrength] = 1;
-		defender.resourceValues[CStat.absorption] = 1;
-		defender.resourceValues[CStat.fortificationStrength] = 0;
+		attacker.resourceValues[CResource.armyStrength] = 1;
+		defender.resourceValues[CResource.absorption] = 1;
+		defender.resourceValues[CResource.fortificationStrength] = 0;
 
 		const previousState = {
 			attacker: {
@@ -121,8 +118,8 @@ describe('attack:perform', () => {
 		);
 		engineContext.game.currentPlayerIndex = 0;
 
-		attacker.resourceValues[CStat.armyStrength] = 2;
-		defender.resourceValues[CStat.absorption] = 1;
+		attacker.resourceValues[CResource.armyStrength] = 2;
+		defender.resourceValues[CResource.absorption] = 1;
 
 		const effect: EffectDef = {
 			type: 'attack',
@@ -162,7 +159,7 @@ describe('attack:perform', () => {
 		const attacker = engineContext.activePlayer;
 		const defender = engineContext.opponent;
 
-		attacker.resourceValues[CStat.armyStrength] = 3;
+		attacker.resourceValues[CResource.armyStrength] = 3;
 		attacker.resourceValues[CResource.happiness] = 1;
 		defender.resourceValues[CResource.happiness] = 3;
 

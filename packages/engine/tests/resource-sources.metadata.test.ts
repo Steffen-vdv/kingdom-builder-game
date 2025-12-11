@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PopulationRole, Stat } from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers.ts';
 import {
 	resolveResourceSourceMeta,
@@ -29,7 +29,7 @@ describe('resource sources metadata', () => {
 			dependsOn: [
 				{
 					type: 'resource',
-					id: PopulationRole.Legion,
+					id: Resource.legion,
 					detail: 'assigned',
 					extra: { extraField: 'keep' },
 				},
@@ -41,14 +41,14 @@ describe('resource sources metadata', () => {
 			type: 'resource',
 			method: 'add',
 			params: {
-				resourceId: Stat.armyStrength,
+				resourceId: Resource.armyStrength,
 				change: { type: 'amount', amount: 2 },
 			},
 			meta: {
 				resourceSource: {
 					key: 'custom-source',
 					longevity: 'permanent',
-					id: PopulationRole.Legion,
+					id: Resource.legion,
 					detail: 'Passive bonus',
 					instance: 7,
 					dependsOn: {
@@ -69,14 +69,14 @@ describe('resource sources metadata', () => {
 		};
 
 		const meta = withResourceSourceFrames(engineContext, frame, () =>
-			resolveResourceSourceMeta(effect, engineContext, Stat.armyStrength),
+			resolveResourceSourceMeta(effect, engineContext, Resource.armyStrength),
 		);
 
 		expect(meta).toMatchObject({
 			sourceKey: 'custom-source',
 			longevity: 'ongoing',
 			kind: 'resource',
-			id: PopulationRole.Legion,
+			id: Resource.legion,
 			detail: 'Passive bonus',
 			instance: '7',
 			effect: { type: 'resource', method: 'add' },
@@ -92,7 +92,7 @@ describe('resource sources metadata', () => {
 			expect.arrayContaining([
 				{
 					type: 'resource',
-					id: PopulationRole.Legion,
+					id: Resource.legion,
 					detail: 'assigned',
 					extra: { extraField: 'keep' },
 				},
@@ -106,16 +106,16 @@ describe('resource sources metadata', () => {
 		);
 
 		// Stat values ARE Resource IDs directly - no mapper needed
-		applyResourceDelta(player, Stat.armyStrength, 2, meta);
+		applyResourceDelta(player, Resource.armyStrength, 2, meta);
 		const initialEntry =
-			player.resourceSources[Stat.armyStrength]?.[meta.sourceKey];
+			player.resourceSources[Resource.armyStrength]?.[meta.sourceKey];
 		expect(initialEntry?.amount).toBe(2);
 		expect(initialEntry?.meta.longevity).toBe('ongoing');
 
 		const updateMeta = withResourceSourceFrames(
 			engineContext,
 			() => ({
-				dependsOn: [{ type: 'resource', id: Stat.growth }],
+				dependsOn: [{ type: 'resource', id: Resource.growth }],
 				extra: { updateTag: 'gamma' },
 			}),
 			() =>
@@ -129,7 +129,7 @@ describe('resource sources metadata', () => {
 								dependsOn: [
 									{
 										type: 'resource',
-										id: PopulationRole.Legion,
+										id: Resource.legion,
 										detail: 'assigned',
 									},
 								],
@@ -137,12 +137,13 @@ describe('resource sources metadata', () => {
 						},
 					},
 					engineContext,
-					Stat.armyStrength,
+					Resource.armyStrength,
 				),
 		);
 
-		applyResourceDelta(player, Stat.armyStrength, 1, updateMeta);
-		const merged = player.resourceSources[Stat.armyStrength]?.[meta.sourceKey];
+		applyResourceDelta(player, Resource.armyStrength, 1, updateMeta);
+		const merged =
+			player.resourceSources[Resource.armyStrength]?.[meta.sourceKey];
 		expect(merged?.amount).toBe(3);
 		expect(merged?.meta.longevity).toBe('ongoing');
 		expect(merged?.meta.extra).toEqual({
@@ -154,7 +155,7 @@ describe('resource sources metadata', () => {
 			expect.arrayContaining([
 				{
 					type: 'resource',
-					id: PopulationRole.Legion,
+					id: Resource.legion,
 					detail: 'assigned',
 					extra: { extraField: 'keep' },
 				},
@@ -164,13 +165,13 @@ describe('resource sources metadata', () => {
 					detail: firstStep?.id,
 					extra: { reason: 'phase' },
 				},
-				{ type: 'resource', id: Stat.growth },
+				{ type: 'resource', id: Resource.growth },
 			]),
 		);
 
-		applyResourceDelta(player, Stat.armyStrength, -3, updateMeta);
+		applyResourceDelta(player, Resource.armyStrength, -3, updateMeta);
 		expect(
-			player.resourceSources[Stat.armyStrength]?.[meta.sourceKey],
+			player.resourceSources[Resource.armyStrength]?.[meta.sourceKey],
 		).toBeUndefined();
 	});
 
@@ -186,22 +187,25 @@ describe('resource sources metadata', () => {
 			params: {
 				left: {
 					type: 'resource',
-					params: { resourceId: PopulationRole.Legion },
+					params: { resourceId: Resource.legion },
 				},
 				right: {
 					type: 'compare',
 					params: {
 						left: { type: 'development', params: { id: developmentId } },
-						right: { type: 'resource', params: { resourceId: Stat.growth } },
+						right: {
+							type: 'resource',
+							params: { resourceId: Resource.growth },
+						},
 					},
 				},
 			},
 		});
 		expect(dependencies).toEqual(
 			expect.arrayContaining([
-				{ type: 'resource', id: PopulationRole.Legion },
+				{ type: 'resource', id: Resource.legion },
 				{ type: 'development', id: developmentId },
-				{ type: 'resource', id: Stat.growth },
+				{ type: 'resource', id: Resource.growth },
 			]),
 		);
 
@@ -209,23 +213,28 @@ describe('resource sources metadata', () => {
 			type: 'resource',
 			method: 'add',
 			params: {
-				resourceId: Stat.armyStrength,
+				resourceId: Resource.armyStrength,
 				change: {
 					type: 'percentFromResource',
-					sourceResourceId: Stat.growth,
+					sourceResourceId: Resource.growth,
 				},
 			},
 		};
 		// Stat values ARE Resource IDs directly - no mapper needed
-		recordEffectResourceDelta(pctEffect, engineContext, Stat.armyStrength, 1);
+		recordEffectResourceDelta(
+			pctEffect,
+			engineContext,
+			Resource.armyStrength,
+			1,
+		);
 		const pctEntry = Object.values(
-			player.resourceSources[Stat.armyStrength] ?? {},
+			player.resourceSources[Resource.armyStrength] ?? {},
 		).find((entry) => entry.meta.effect?.method === 'add');
 		expect(pctEntry?.meta.dependsOn).toEqual(
 			expect.arrayContaining([
 				{
 					type: 'resource',
-					id: Stat.growth,
+					id: Resource.growth,
 				},
 			]),
 		);
@@ -235,7 +244,7 @@ describe('resource sources metadata', () => {
 		const originalCollector =
 			evaluatorDependencyCollectorRegistry.get('resource');
 		const customCollector: EvaluatorDependencyCollector = () => [
-			{ type: 'resource', id: Stat.armyStrength },
+			{ type: 'resource', id: Resource.armyStrength },
 		];
 
 		registerEvaluatorDependencyCollector('resource', customCollector);
@@ -243,11 +252,11 @@ describe('resource sources metadata', () => {
 		try {
 			const dependencies = collectEvaluatorDependencies({
 				type: 'resource',
-				params: { resourceId: Stat.growth },
+				params: { resourceId: Resource.growth },
 			});
 
 			expect(dependencies).toEqual([
-				{ type: 'resource', id: Stat.armyStrength },
+				{ type: 'resource', id: Resource.armyStrength },
 			]);
 		} finally {
 			if (originalCollector) {

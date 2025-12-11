@@ -1,9 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
+import {
+	Resource as CResource,
+	PhaseId,
+	buildResourceCatalog,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from './helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { advance, performAction, getActionCosts, snapshotPlayer } from '../src';
+import {
+	getCatalogIndexes,
+	createRuntimeResourceCatalog,
+} from '../src/resource';
 import { resourceAmountParams } from './helpers/resourceParams';
 
 function toMain(engineContext: ReturnType<typeof createTestEngine>) {
@@ -12,10 +20,45 @@ function toMain(engineContext: ReturnType<typeof createTestEngine>) {
 	}
 }
 
-// Filter out AP since it's the global action cost and can't be overridden
-const resourceKeys = Object.values(CResource).filter(
-	(key) => key !== CResource.ap,
-);
+/**
+ * Get resource IDs that can be tested with simple add/remove effects.
+ * Excludes:
+ * - Resources with globalCost: Reserved as global action costs
+ * - Group parent resources: Values are derived from children
+ * - Group child resources: Changing them affects parent (cascading)
+ *
+ * This test verifies simple effect math: before - costs + gains = after.
+ * Resources with cascading effects would break this invariant.
+ */
+function getSimpleResourceIds(): string[] {
+	const contentCatalog = buildResourceCatalog();
+	const runtimeCatalog = createRuntimeResourceCatalog(contentCatalog);
+	const indexes = getCatalogIndexes(runtimeCatalog);
+	const parentIds = new Set(Object.keys(indexes.parentById));
+
+	// Exclude resources with globalCost (reserved as action costs)
+	const globalCostIds = new Set<string>();
+	for (const resource of Object.values(indexes.resourceById)) {
+		if (resource.globalCost) {
+			globalCostIds.add(resource.id);
+		}
+	}
+
+	// Also exclude resources that are in a group (have cascading effects)
+	const groupChildIds = new Set<string>();
+	for (const resource of Object.values(indexes.resourceById)) {
+		if (resource.groupId) {
+			groupChildIds.add(resource.id);
+		}
+	}
+
+	return Object.values(CResource).filter(
+		(id) =>
+			!globalCostIds.has(id) && !parentIds.has(id) && !groupChildIds.has(id),
+	);
+}
+
+const resourceKeys = getSimpleResourceIds();
 const resourceKeyArb = fc.constantFrom(...resourceKeys);
 const resourceMapArb = fc.dictionary(
 	resourceKeyArb,

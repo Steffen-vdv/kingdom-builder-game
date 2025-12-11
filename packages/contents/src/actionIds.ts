@@ -1,6 +1,6 @@
 import { DevelopmentId } from './developments';
 import { BuildingId } from './buildingIds';
-import { PopulationRole, type PopulationRoleId } from './internal';
+import { Resource, type ResourceKey } from './internal';
 
 type ValueOf<T> = T[keyof T];
 
@@ -122,7 +122,7 @@ export const BUILD_ACTION_BUILDING_MAP = {
 } as const satisfies Record<BuildingActionId, BuildingId>;
 
 export const HIRE_ACTION_ROLE_MAP = {
-	[HireActionId.hire_council]: PopulationRole.Council,
-	[HireActionId.hire_legion]: PopulationRole.Legion,
-	[HireActionId.hire_fortifier]: PopulationRole.Fortifier,
-} as const satisfies Record<PopulationActionId, PopulationRoleId>;
+	[HireActionId.hire_council]: Resource.council,
+	[HireActionId.hire_legion]: Resource.legion,
+	[HireActionId.hire_fortifier]: Resource.fortifier,
+} as const satisfies Record<PopulationActionId, ResourceKey>;

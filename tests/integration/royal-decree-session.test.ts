@@ -14,7 +14,7 @@ import {
 import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
 
 interface EffectGroupOption {
 	id: string;

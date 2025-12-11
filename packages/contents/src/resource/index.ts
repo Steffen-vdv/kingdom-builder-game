@@ -13,25 +13,34 @@ export type {
 	ResourceGroupDefinition,
 	ResourceCategoryItem,
 	ResourceCategoryDefinition,
-} from './types';
-export { boundTo } from './types';
+} from '../infrastructure/resource/types';
+export { boundTo } from '../infrastructure/resource/types';
 
-export { resource } from './resourceBuilder';
-export type { ResourceBuilder } from './resourceBuilder';
+export { resource } from '../infrastructure/resource/resourceBuilder';
+export type { ResourceBuilder } from '../infrastructure/resource/resourceBuilder';
 
-export { resourceGroup } from './groupBuilder';
-export type { ResourceGroupBuilder } from './groupBuilder';
+export { resourceGroup } from '../infrastructure/resource/groupBuilder';
+export type { ResourceGroupBuilder } from '../infrastructure/resource/groupBuilder';
 
-export { resourceCategory } from './categoryBuilder';
-export type { ResourceCategoryBuilder } from './categoryBuilder';
+export { resourceCategory } from '../infrastructure/resource/categoryBuilder';
+export type { ResourceCategoryBuilder } from '../infrastructure/resource/categoryBuilder';
 
-export { createResourceRegistry, createResourceGroupRegistry, createResourceCategoryRegistry } from './registry';
-export type { ResourceRegistry, ResourceGroupRegistry, ResourceCategoryRegistry } from './registry';
+export { createResourceRegistry, createResourceGroupRegistry, createResourceCategoryRegistry } from '../infrastructure/resource/registry';
+export type { ResourceRegistry, ResourceGroupRegistry, ResourceCategoryRegistry } from '../infrastructure/resource/registry';
 
-export { RESOURCE_REGISTRY, RESOURCE_GROUP_REGISTRY, RESOURCE_CATEGORY_REGISTRY, buildResourceCatalog } from './catalog';
-export type { ResourceCatalog } from './catalog';
+export { RESOURCE_REGISTRY, RESOURCE_GROUP_REGISTRY, RESOURCE_CATEGORY_REGISTRY, buildResourceCatalog } from '../infrastructure/resource/catalog';
+export type { ResourceCatalog } from '../infrastructure/resource/catalog';
 
-export { resourceChange, resourceTransfer, transferEndpoint, increaseUpperBound, ReconciliationMode, RoundingMode, VALID_RECONCILIATION_MODES, VALID_ROUNDING_MODES } from './effects';
+export {
+	resourceChange,
+	resourceTransfer,
+	transferEndpoint,
+	increaseUpperBound,
+	ReconciliationMode,
+	RoundingMode,
+	VALID_RECONCILIATION_MODES,
+	VALID_ROUNDING_MODES,
+} from '../infrastructure/resource/effects';
 export type {
 	ResourceChangeBuilder,
 	ResourceChangeEffectParams,
@@ -48,4 +57,4 @@ export type {
 	ResourceUpperBoundIncreaseParams,
 	ResourceValueWriteOptions,
 	ResourcePlayerScope,
-} from './effects';
+} from '../infrastructure/resource/effects';

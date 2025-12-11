@@ -2,10 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createTestEngine } from '../helpers.ts';
 import { applyDeveloperPreset } from '../../src/runtime/developer_preset.ts';
 import { createContentFactory } from '@kingdom-builder/testing';
-import {
-	Resource as CResource,
-	PopulationRole,
-} from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import type { PlayerId } from '../../src/state';
 
 describe('applyDeveloperPreset', () => {
@@ -26,7 +23,7 @@ describe('applyDeveloperPreset', () => {
 			opponent.resourceValues[CResource.castleHP] ?? 0;
 		// PopulationRole values ARE Resource IDs - access via resourceValues
 		const opponentPopulationBefore =
-			opponent.resourceValues[PopulationRole.Council] ?? 0;
+			opponent.resourceValues[CResource.council] ?? 0;
 		const opponentLandCountBefore = opponent.lands.length;
 		const opponentDevelopmentIdsBefore = opponent.lands.flatMap((land) => {
 			return [...land.developments];
@@ -42,7 +39,7 @@ describe('applyDeveloperPreset', () => {
 		const castleBefore = player.resourceValues[CResource.castleHP] ?? 0;
 		const castleTarget = Math.max(castleBefore - 2, 0);
 		const fortifierTarget =
-			(player.resourceValues[PopulationRole.Fortifier] ?? 0) + 2;
+			(player.resourceValues[CResource.fortifier] ?? 0) + 2;
 		const landCountTarget = initialLandCount + 1;
 		applyDeveloperPreset(ctx, {
 			playerId: player.id,
@@ -52,8 +49,8 @@ describe('applyDeveloperPreset', () => {
 				{ resourceId: CResource.castleHP, target: castleTarget },
 			],
 			population: [
-				{ role: PopulationRole.Council, count: 0 },
-				{ role: PopulationRole.Fortifier, count: fortifierTarget },
+				{ role: CResource.council, count: 0 },
+				{ role: CResource.fortifier, count: fortifierTarget },
 			],
 			landCount: landCountTarget,
 			developments: [farmstead.id, workshop.id],
@@ -64,8 +61,8 @@ describe('applyDeveloperPreset', () => {
 		// When skipInitialSetup is true and target equals 0, the value may remain
 		// undefined since getResourceValue defaults undefined to 0
 		expect(player.resourceValues[CResource.castleHP] ?? 0).toBe(castleTarget);
-		expect(player.resourceValues[PopulationRole.Council] ?? 0).toBe(0);
-		expect(player.resourceValues[PopulationRole.Fortifier] ?? 0).toBe(
+		expect(player.resourceValues[CResource.council] ?? 0).toBe(0);
+		expect(player.resourceValues[CResource.fortifier] ?? 0).toBe(
 			fortifierTarget,
 		);
 		expect(player.lands.length).toBeGreaterThanOrEqual(landCountTarget);
@@ -92,7 +89,7 @@ describe('applyDeveloperPreset', () => {
 		expect(opponent.resourceValues[CResource.castleHP] ?? 0).toBe(
 			opponentCastleBefore,
 		);
-		expect(opponent.resourceValues[PopulationRole.Council] ?? 0).toBe(
+		expect(opponent.resourceValues[CResource.council] ?? 0).toBe(
 			opponentPopulationBefore,
 		);
 		expect(opponent.lands.length).toBe(opponentLandCountBefore);

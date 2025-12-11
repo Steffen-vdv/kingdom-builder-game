@@ -10,12 +10,10 @@ import {
 	PHASES,
 	RULES,
 	PRIMARY_ICON_ID,
-} from '@kingdom-builder/contents';
-import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_CATEGORY_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
 import type {
 	SessionRegistriesPayload,
 	PhaseConfig,

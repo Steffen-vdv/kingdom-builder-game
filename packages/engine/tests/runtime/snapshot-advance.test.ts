@@ -5,10 +5,7 @@ import type { PassiveMetadata } from '../../src/services';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { createTestEngine } from '../helpers';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
-import {
-	Resource as CResource,
-	Stat as CStat,
-} from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents';
 
 describe('snapshotAdvance', () => {
 	it('clones advance results with skip metadata and complex effects', () => {
@@ -16,7 +13,7 @@ describe('snapshotAdvance', () => {
 		const activePlayer = context.activePlayer;
 		// Use known Resource IDs directly
 		const resourceKey = CResource.gold;
-		const statKey = CStat.armyStrength;
+		const statKey = CResource.armyStrength;
 		const developmentEntry = context.developments.entries()[0];
 		const developmentId = developmentEntry?.[0] ?? 'test:development';
 		const outerParams = resourceAmountParams({

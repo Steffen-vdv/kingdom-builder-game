@@ -17,11 +17,9 @@ import {
 	happinessTier,
 	effect,
 	passiveParams,
-} from '@kingdom-builder/contents/config/builders';
-import {
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents/config/builderShared';
+} from '@kingdom-builder/contents';
 import {
 	createResourceRegistries,
 	resourceDefinition,

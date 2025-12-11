@@ -3,7 +3,7 @@ import { landEvaluator } from '../../src/evaluators/land.ts';
 import { resourceEvaluator } from '../../src/evaluators/resource.ts';
 import { createTestEngine } from '../helpers.ts';
 import { Land } from '../../src/state';
-import { PopulationRole, Stat } from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/contents';
 import { setResourceValue } from '../../src/resource';
 
 describe('evaluators', () => {
@@ -22,16 +22,15 @@ describe('evaluators', () => {
 	it('totals population via parent resource and filters by role when provided', () => {
 		const context = createTestEngine();
 		// Get population role IDs from contents
-		const roleIds = Object.values(PopulationRole);
-		const focusRole = roleIds[0]!;
-		const secondaryRole = roleIds.find((entry) => entry !== focusRole);
+		const focusRole = Resource.council;
+		const secondaryRole = Resource.legion;
 		// First raise max-population to allow for 5 total population
 		// (population total is dynamically bounded by max-population)
 		setResourceValue(
 			context,
 			context.activePlayer,
 			context.resourceCatalog,
-			Stat.populationMax,
+			Resource.populationMax,
 			10,
 		);
 		// Use setResourceValue to properly trigger parent recalculation
@@ -53,7 +52,7 @@ describe('evaluators', () => {
 		}
 		// Total population uses parent resource that auto-sums children
 		const total = resourceEvaluator(
-			{ params: { resourceId: Stat.populationTotal } } as never,
+			{ params: { resourceId: Resource.populationTotal } } as never,
 			context,
 		);
 		expect(total).toBe(secondaryRole ? 5 : 3);

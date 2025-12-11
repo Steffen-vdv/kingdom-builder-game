@@ -1,10 +1,10 @@
 import type { HappinessTierDefinition, RuleSet } from '@kingdom-builder/protocol';
 import { PhaseId } from './phaseTypes';
-import { createTierPassiveEffect } from './happinessHelpers';
-import { happinessTier, passiveParams, winCondition } from './config/builders';
-import { formatPassiveRemoval } from './text';
+import { createTierPassiveEffect } from './infrastructure/happinessHelpers';
+import { happinessTier, passiveParams, winCondition } from './infrastructure/builders';
+import { formatPassiveRemoval } from './infrastructure/text';
 import { HAPPINESS_TIER_ICONS, getTierConfigs, type TierConfig } from './rules.config';
-import { getHappinessResourceDefinition } from './resource/definitions';
+import { getHappinessResourceDefinition } from './infrastructure/happinessResource';
 import type { ResourceTierDefinition, ResourceTierTrackMetadata } from './resource';
 import { Resource } from './internal';
 

@@ -8,11 +8,10 @@ import {
 	PhaseId,
 	RULES,
 	Resource as CResource,
-} from '@kingdom-builder/contents';
-import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+	LandMethods,
+} from '@kingdom-builder/contents';
 import type {
 	ActionConfig as ActionDef,
 	BuildingConfig as BuildingDef,
@@ -22,7 +21,6 @@ import type {
 import type { PhaseDef } from '../../src/phases.ts';
 import type { RuleSet } from '../../src/services';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { LandMethods } from '@kingdom-builder/contents/config/builderShared';
 import { REQUIREMENTS } from '../../src/requirements/index.ts';
 import { TAX_ACTION_ID, type PerformActionFn } from '../../src/ai/index.ts';
 import type { RuntimeResourceContent } from '../../src/resource/index.ts';

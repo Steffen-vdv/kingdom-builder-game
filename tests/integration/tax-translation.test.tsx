@@ -6,7 +6,7 @@ import React from 'react';
 import { summarizeContent } from '@kingdom-builder/web/translation/content';
 import type { TranslationContext } from '@kingdom-builder/web/translation/context';
 import { createContentFactory } from '@kingdom-builder/testing';
-import { Stat } from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/contents';
 import { RegistryMetadataProvider } from '../../packages/web/src/contexts/RegistryMetadataContext';
 import { buildSyntheticTranslationContext } from '../../packages/web/tests/helpers/createSyntheticTranslationContext';
 
@@ -53,7 +53,7 @@ describe('Action translation with population scaling', () => {
 					// Use resource evaluator with populationTotal to evaluate population
 					evaluator: {
 						type: 'resource',
-						params: { resourceId: Stat.populationTotal },
+						params: { resourceId: Resource.populationTotal },
 					},
 					effects: [
 						{
@@ -111,7 +111,7 @@ describe('Action translation with population scaling', () => {
 					// Use resource evaluator with populationTotal to evaluate population
 					evaluator: {
 						type: 'resource',
-						params: { resourceId: Stat.populationTotal },
+						params: { resourceId: Resource.populationTotal },
 					},
 					effects: [
 						{

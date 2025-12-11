@@ -2,16 +2,12 @@ import {
 	RULES,
 	PHASES,
 	Resource as CResource,
-} from '@kingdom-builder/contents';
-import {
 	happinessTier,
 	effect,
 	passiveParams,
-} from '@kingdom-builder/contents/config/builders';
-import {
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents/config/builderShared';
+} from '@kingdom-builder/contents';
 import type { RuleSet } from '../../src/services';
 
 interface TierSwapConfiguration {

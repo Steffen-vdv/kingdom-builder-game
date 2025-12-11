@@ -1,6 +1,6 @@
 import { ActionId, BuildActions, DevelopActions, HireActions } from './actions';
 import { PhaseId } from './phaseTypes';
-import { Resource, Stat, PopulationRole } from './internal';
+import { Resource } from './internal';
 
 export type OverviewTokenCategoryName = 'actions' | 'phases' | 'resources' | 'stats' | 'population' | 'static';
 
@@ -89,13 +89,13 @@ const DEFAULT_TOKENS: OverviewTokenCandidates = {
 		castleHP: [Resource.castleHP],
 	},
 	stats: {
-		armyStrength: [Stat.armyStrength],
-		fortificationStrength: [Stat.fortificationStrength],
+		armyStrength: [Resource.armyStrength],
+		fortificationStrength: [Resource.fortificationStrength],
 	},
 	population: {
-		council: [PopulationRole.Council],
-		legion: [PopulationRole.Legion],
-		fortifier: [PopulationRole.Fortifier],
+		council: [Resource.council],
+		legion: [Resource.legion],
+		fortifier: [Resource.fortifier],
 	},
 	static: {
 		land: ['land'],
@@ -179,22 +179,22 @@ const DEFAULT_SECTIONS: OverviewSectionTemplate[] = [
 	{
 		kind: 'list',
 		id: 'population',
-		icon: PopulationRole.Council,
+		icon: Resource.council,
 		title: 'Population Roles',
 		span: true,
 		items: [
 			{
-				icon: PopulationRole.Council,
+				icon: Resource.council,
 				label: 'Council',
 				body: ['Rallies extra {ap} Action Points each round.'],
 			},
 			{
-				icon: PopulationRole.Legion,
+				icon: Resource.legion,
 				label: 'Legion',
 				body: ['Reinforces {armyStrength} Army strength for devastating {raid} raids.'],
 			},
 			{
-				icon: PopulationRole.Fortifier,
+				icon: Resource.fortifier,
 				label: 'Fortifier',
 				body: ['Cements your defenses with persistent buffs.'],
 			},

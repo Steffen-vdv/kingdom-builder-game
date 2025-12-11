@@ -11,8 +11,6 @@ import { resourceAmountParams } from '../helpers/resourceParams.ts';
 import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
-import {
 	Resource as CResource,
 	PHASES as REAL_PHASES,
 	RULES as REAL_RULES,

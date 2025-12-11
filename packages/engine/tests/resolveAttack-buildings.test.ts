@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { resolveAttack, runEffects } from '../src/index.ts';
 import { createTestEngine } from './helpers.ts';
-import { Resource, Stat } from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('resolveAttack buildings', () => {
@@ -24,8 +24,8 @@ describe('resolveAttack buildings', () => {
 			engineContext,
 		);
 		engineContext.game.currentPlayerIndex = 0;
-		defender.resourceValues[Stat.absorption] = 1;
-		defender.resourceValues[Stat.fortificationStrength] = 0;
+		defender.resourceValues[Resource.absorption] = 1;
+		defender.resourceValues[Resource.fortificationStrength] = 0;
 
 		// PlayerState uses resourceValues for all resources
 		const castleBefore = defender.resourceValues[Resource.castleHP];
@@ -53,7 +53,7 @@ describe('resolveAttack buildings', () => {
 					type: 'resource',
 					method: 'add',
 					params: {
-						resourceId: Stat.fortificationStrength,
+						resourceId: Resource.fortificationStrength,
 						change: { type: 'amount', amount: 3 },
 					},
 				},
@@ -77,7 +77,7 @@ describe('resolveAttack buildings', () => {
 		engineContext.game.currentPlayerIndex = 0;
 
 		const castleBefore = defender.resourceValues[Resource.castleHP];
-		expect(defender.resourceValues[Stat.fortificationStrength]).toBe(3);
+		expect(defender.resourceValues[Resource.fortificationStrength]).toBe(3);
 
 		const result = resolveAttack(defender, 5, engineContext, {
 			type: 'building',
@@ -87,7 +87,7 @@ describe('resolveAttack buildings', () => {
 		expect(result.damageDealt).toBe(2);
 		expect(defender.buildings.has(fortress.id)).toBe(false);
 		expect(defender.resourceValues[Resource.castleHP]).toBe(castleBefore);
-		expect(defender.resourceValues[Stat.fortificationStrength]).toBe(0);
+		expect(defender.resourceValues[Resource.fortificationStrength]).toBe(0);
 		expect(result.evaluation.target.type).toBe('building');
 		if (result.evaluation.target.type === 'building') {
 			expect(result.evaluation.target.destroyed).toBe(true);
@@ -115,8 +115,8 @@ describe('resolveAttack buildings', () => {
 		);
 		engineContext.game.currentPlayerIndex = 0;
 
-		defender.resourceValues[Stat.absorption] = 0.9;
-		defender.resourceValues[Stat.fortificationStrength] = 10;
+		defender.resourceValues[Resource.absorption] = 0.9;
+		defender.resourceValues[Resource.fortificationStrength] = 10;
 		const castleBefore = defender.resourceValues[Resource.castleHP];
 
 		const result = resolveAttack(
@@ -133,7 +133,7 @@ describe('resolveAttack buildings', () => {
 		expect(result.damageDealt).toBe(4);
 		expect(result.evaluation.absorption.ignored).toBe(true);
 		expect(result.evaluation.fortification.ignored).toBe(true);
-		expect(defender.resourceValues[Stat.fortificationStrength]).toBe(10);
+		expect(defender.resourceValues[Resource.fortificationStrength]).toBe(10);
 		expect(defender.resourceValues[Resource.castleHP]).toBe(castleBefore);
 		expect(defender.buildings.has(stronghold.id)).toBe(false);
 		expect(result.evaluation.target.type).toBe('building');

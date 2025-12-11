@@ -310,6 +310,7 @@ export default [
 		rules: {
 			'max-len': 'off',
 			'max-lines': 'off',
+			'local/no-max-lines-override': 'off',
 		},
 	},
 	{

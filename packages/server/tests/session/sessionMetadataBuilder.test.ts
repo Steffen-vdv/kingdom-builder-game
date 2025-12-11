@@ -8,8 +8,8 @@ import {
 	POPULATIONS,
 	PHASES,
 	ACTION_CATEGORIES,
+	RESOURCE_REGISTRY,
 } from '@kingdom-builder/contents';
-import { RESOURCE_REGISTRY } from '@kingdom-builder/contents/registries/resource';
 import { buildSessionMetadata } from '../../src/session/sessionMetadataBuilder.js';
 
 describe('buildSessionMetadata', () => {

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { requirement } from '@kingdom-builder/contents/config/builders';
-import { Stat, PopulationRole } from '@kingdom-builder/contents';
+import { requirement, Resource } from '@kingdom-builder/contents';
 
 describe('RequirementBuilder', () => {
 	it('builds requirement configs with params', () => {
@@ -8,12 +7,12 @@ describe('RequirementBuilder', () => {
 		const req = requirement('evaluator', 'compare')
 			.param('left', {
 				type: 'resource',
-				params: { resourceId: Stat.warWeariness },
+				params: { resourceId: Resource.warWeariness },
 			})
 			.param('operator', 'lt')
 			.param('right', {
 				type: 'resource',
-				params: { resourceId: PopulationRole.Legion },
+				params: { resourceId: Resource.legion },
 			})
 			.build();
 
@@ -21,11 +20,14 @@ describe('RequirementBuilder', () => {
 			type: 'evaluator',
 			method: 'compare',
 			params: {
-				left: { type: 'resource', params: { resourceId: Stat.warWeariness } },
+				left: {
+					type: 'resource',
+					params: { resourceId: Resource.warWeariness },
+				},
 				operator: 'lt',
 				right: {
 					type: 'resource',
-					params: { resourceId: PopulationRole.Legion },
+					params: { resourceId: Resource.legion },
 				},
 			},
 		});

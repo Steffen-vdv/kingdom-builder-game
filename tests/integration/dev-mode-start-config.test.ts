@@ -7,16 +7,12 @@ import {
 	POPULATIONS,
 	PHASES,
 	RULES,
-	PopulationRole,
-	Stat,
 	Resource,
 	getResourceId,
-} from '@kingdom-builder/contents';
-import { DevelopmentId } from '@kingdom-builder/contents/developments';
-import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
+import { DevelopmentId } from '@kingdom-builder/contents/developments';
 
 describe('dev mode start configuration', () => {
 	it('applies content-driven overrides when dev mode is enabled', () => {
@@ -42,9 +38,9 @@ describe('dev mode start configuration', () => {
 		const happinessId = getResourceId(Resource.happiness);
 		const apId = getResourceId(Resource.ap);
 		const castleId = getResourceId(Resource.castleHP);
-		const councilId = getResourceId(PopulationRole.Council);
-		const legionId = getResourceId(PopulationRole.Legion);
-		const fortifierId = getResourceId(PopulationRole.Fortifier);
+		const councilId = getResourceId(Resource.council);
+		const legionId = getResourceId(Resource.legion);
+		const fortifierId = getResourceId(Resource.fortifier);
 		expect(snapshot.game.devMode).toBe(true);
 		expect(player.values[goldId]).toBe(100);
 		expect(player.values[happinessId]).toBe(10);
@@ -88,7 +84,7 @@ describe('dev mode start configuration', () => {
 		// Each house adds +1 to max population via onBuild effect
 		// Base populationMax is 1 (from initial_setup_devmode action)
 		// So total should be 1 + 6 = 7
-		const populationMaxId = Stat.populationMax;
+		const populationMaxId = Resource.populationMax;
 		expect(player.values[populationMaxId]).toBe(7);
 	});
 });

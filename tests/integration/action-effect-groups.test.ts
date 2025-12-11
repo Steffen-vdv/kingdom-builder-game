@@ -6,17 +6,17 @@ import {
 } from '@kingdom-builder/engine';
 import { resolveActionEffects } from '@kingdom-builder/protocol';
 import { logContent } from '@kingdom-builder/web/translation/content';
-import { Resource } from '@kingdom-builder/contents';
+import {
+	Resource,
+	actionEffectGroup,
+	actionEffectGroupOption,
+} from '@kingdom-builder/contents';
 import { createTestEngine } from '../../packages/engine/tests/helpers';
 import {
 	Registry,
 	type ActionConfig,
 	type ActionEffectGroup,
 } from '@kingdom-builder/protocol';
-import {
-	actionEffectGroup,
-	actionEffectGroupOption,
-} from '../../packages/contents/src/config/builders';
 
 describe('action effect groups integration', () => {
 	function setup() {

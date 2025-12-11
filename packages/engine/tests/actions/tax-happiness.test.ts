@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { performAction, advance, getActionCosts } from '../../src/index.ts';
-import {
-	Resource as CResource,
-	PopulationRole as CPopulationRole,
-} from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createTestEngine } from '../helpers.ts';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
@@ -52,7 +49,7 @@ describe('resource removal penalties', () => {
 					// Use resource evaluator for population roles
 					evaluator: {
 						type: 'resource',
-						params: { resourceId: CPopulationRole.Council },
+						params: { resourceId: CResource.council },
 					},
 					effects: [
 						{
@@ -69,7 +66,7 @@ describe('resource removal penalties', () => {
 		advance(engineContext);
 		engineContext.game.currentPlayerIndex = 0;
 		// role IS the Resource ID directly
-		engineContext.activePlayer.resourceValues[CPopulationRole.Council] = 2;
+		engineContext.activePlayer.resourceValues[CResource.council] = 2;
 		engineContext.activePlayer.resourceValues[CResource.happiness] = 2;
 		const cost = getActionCosts(action.id, engineContext)[CResource.ap] ?? 0;
 
@@ -80,7 +77,7 @@ describe('resource removal penalties', () => {
 		performAction(action.id, engineContext);
 
 		const populationCount =
-			engineContext.activePlayer.resourceValues[CPopulationRole.Council] ?? 0;
+			engineContext.activePlayer.resourceValues[CResource.council] ?? 0;
 		const delta = penalty.change.amount * populationCount * -1;
 		expect(engineContext.activePlayer.resourceValues[CResource.happiness]).toBe(
 			before + delta,
