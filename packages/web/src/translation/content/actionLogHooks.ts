@@ -87,17 +87,25 @@ function extractStaticParam(
 	return raw.startsWith('$') ? undefined : raw;
 }
 
+interface LinkedContentResolverOptions {
+	effectType: string;
+	method: string;
+	contentType: string;
+	paramKey?: string;
+	/**
+	 * When true, skip appending if the target label already appears in the
+	 * action name (prevents duplication when the action name IS the target).
+	 */
+	skipIfNameMatches?: boolean;
+}
+
 function createLinkedContentResolver({
 	effectType,
 	method,
 	contentType,
 	paramKey = 'id',
-}: {
-	effectType: string;
-	method: string;
-	contentType: string;
-	paramKey?: string;
-}): ActionLogHookResolver {
+	skipIfNameMatches = false,
+}: LinkedContentResolverOptions): ActionLogHookResolver {
 	return (actionDefinition) => {
 		const matchesTarget = (candidate: EffectDef): boolean => {
 			const matchesType = candidate.type === effectType;
@@ -128,7 +136,18 @@ function createLinkedContentResolver({
 			const [rawTarget] = logContent(contentType, targetId, context);
 			const target =
 				rawTarget && typeof rawTarget === 'object' ? rawTarget.text : rawTarget;
-			return target ? ` - ${target}` : '';
+			if (!target) {
+				return '';
+			}
+			// Skip appending if the action name already contains the target label
+			// (prevents duplication when the action's name IS the target name)
+			if (skipIfNameMatches) {
+				const actionName = actionDefinition.name?.trim();
+				if (actionName && target.includes(actionName)) {
+					return '';
+				}
+			}
+			return ` - ${target}`;
 		};
 	};
 }
@@ -159,6 +178,7 @@ registerActionLogHookResolver(
 		effectType: 'building',
 		method: 'add',
 		contentType: 'building',
+		skipIfNameMatches: true,
 	}),
 );
 
