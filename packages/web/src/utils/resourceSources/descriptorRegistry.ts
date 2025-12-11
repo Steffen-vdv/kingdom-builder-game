@@ -167,6 +167,16 @@ function createDescriptorRegistry(
 			},
 			formatDetail: defaultFormatDetail,
 		},
+		tier: {
+			resolve: (id) => {
+				// Tier IDs correspond to tiered resource definitions (e.g., "ecstatic")
+				return {
+					icon: '📊',
+					label: id ?? '[MISSING:tier]',
+				};
+			},
+			formatDetail: defaultFormatDetail,
+		},
 		start: {
 			resolve: () => {
 				// No start asset in TranslationAssets - use visible placeholder

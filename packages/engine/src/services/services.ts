@@ -180,14 +180,34 @@ export class Services {
 			if (currentTier) {
 				const exitEffects = currentTier.exitEffects ?? [];
 				if (exitEffects.length) {
-					runEffects(exitEffects, context);
+					// Wrap exit effects with tier frame so they don't inherit
+					// parent action source
+					withResourceSourceFrames(
+						context,
+						() => ({
+							kind: 'tier' as const,
+							id: currentTier.id,
+							longevity: 'ongoing' as const,
+						}),
+						() => runEffects(exitEffects, context),
+					);
 				}
 				this.activeTiers.delete(player.id);
 			}
 			if (nextTier) {
 				const enterEffects = nextTier.enterEffects ?? [];
 				if (enterEffects.length) {
-					runEffects(enterEffects, context);
+					// Wrap enter effects with tier frame so they don't inherit
+					// parent action source (e.g., initial setup)
+					withResourceSourceFrames(
+						context,
+						() => ({
+							kind: 'tier' as const,
+							id: nextTier.id,
+							longevity: 'ongoing' as const,
+						}),
+						() => runEffects(enterEffects, context),
+					);
 				}
 				const passiveId = nextTier.preview?.id;
 				const summaryToken =
