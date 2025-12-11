@@ -12,7 +12,7 @@ interface TierThermometerProps {
 
 /**
  * A horizontal thermometer showing tier thresholds, current value,
- * and 5 tiers centered on the current tier (2 below, current, 2 above).
+ * and 3 tiers centered on the current tier (1 below, current, 1 above).
  */
 const TierThermometer: React.FC<TierThermometerProps> = ({
 	currentValue,
@@ -25,22 +25,26 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 	// Tiers come in highest-first order, reverse for display (lowest on left)
 	const sortedTiers = [...tiers].reverse();
 
-	// Find current tier index and get 5 tiers centered on current
-	// (2 below, current, 2 above). If no active tier found, default to last.
+	// Find current tier index and get visible tiers
+	// (1 below, current, 1 above). If no active tier found, default to last.
 	const foundIndex = sortedTiers.findIndex((t) => t.active);
 	const activeIndex = foundIndex >= 0 ? foundIndex : sortedTiers.length - 1;
-	const visibleTiers = getVisibleTiers(sortedTiers, activeIndex, 5);
 
-	// Find bounds for the scale FROM VISIBLE TIERS ONLY
-	const minTier = visibleTiers[0];
-	const maxTier = visibleTiers[visibleTiers.length - 1];
+	// 3 tiers for the thermometer bar visualization
+	const visibleTiersBar = getVisibleTiers(sortedTiers, activeIndex, 3);
+	// 5 tiers for the effect rows below
+	const visibleTiersRows = getVisibleTiers(sortedTiers, activeIndex, 5);
+
+	// Find bounds for the scale FROM BAR VISIBLE TIERS ONLY
+	const minTier = visibleTiersBar[0];
+	const maxTier = visibleTiersBar[visibleTiersBar.length - 1];
 	if (!minTier || !maxTier) {
 		return null;
 	}
 
-	// Calculate display range from visible tier data
-	// Unbounded lower (MIN_SAFE_INTEGER): use rangeMax of lowest visible tier
-	// Unbounded upper (undefined rangeMax): use rangeMin of highest visible tier
+	// Calculate range: lower bound of lowest tier to upper bound of highest tier
+	// For unbounded lower: use rangeMax of that tier
+	// For unbounded upper: use rangeMin of that tier
 	const rawMinBound = minTier.rangeMin;
 	const minBound =
 		rawMinBound === undefined || rawMinBound === Number.MIN_SAFE_INTEGER
@@ -48,25 +52,31 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 			: rawMinBound;
 	const rawMaxBound = maxTier.rangeMax;
 	const maxBound = rawMaxBound ?? maxTier.rangeMin ?? 0;
-	const paddedMin = Math.min(minBound - 1, currentValue - 1);
-	const paddedMax = Math.max(maxBound + 1, currentValue + 1);
-	const range = paddedMax - paddedMin;
 
-	// Convert value to percentage (0% = left, 100% = right)
+	// Generate integer values for the range
+	const integerValues: number[] = [];
+	for (let i = minBound; i <= maxBound; i++) {
+		integerValues.push(i);
+	}
+
+	// Convert value to percentage (0% = minBound, 100% = maxBound)
+	const range = maxBound - minBound;
 	const valueToPercent = (value: number) => {
 		if (range === 0) {
 			return 50;
 		}
-		return ((value - paddedMin) / range) * 100;
+		return ((value - minBound) / range) * 100;
 	};
 
-	// Clamp marker position
-	const markerPercent = Math.max(3, Math.min(97, valueToPercent(currentValue)));
+	// Format label with + prefix for positive values
+	const formatLabel = (value: number) =>
+		value >= 0 ? `+${value}` : `${value}`;
 
-	// Collect threshold values (boundaries between VISIBLE tiers only)
-	const thresholds: Array<{ value: number; percent: number }> = [];
-	for (let i = 1; i < visibleTiers.length; i++) {
-		const tier = visibleTiers[i];
+	// Find tier boundaries (where one tier ends and next begins)
+	// Boundary goes BETWEEN the two adjacent integers
+	const boundaries: Array<{ percent: number }> = [];
+	for (let i = 1; i < visibleTiersBar.length; i++) {
+		const tier = visibleTiersBar[i];
 		if (!tier) {
 			continue;
 		}
@@ -77,15 +87,34 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 		) {
 			continue;
 		}
-		const percent = valueToPercent(thresholdValue);
+		// Position boundary between (thresholdValue - 1) and thresholdValue
+		// That's at thresholdValue - 0.5
+		const boundaryPosition = thresholdValue - 0.5;
+		const percent = valueToPercent(boundaryPosition);
 		if (percent > 0 && percent < 100) {
-			thresholds.push({ value: thresholdValue, percent });
+			boundaries.push({ percent });
 		}
 	}
 
-	// Format threshold label
-	const formatThreshold = (value: number) =>
-		value >= 0 ? `+${value}` : `${value}`;
+	// Calculate emoji positions (centered in each tier's range within the bar)
+	const emojiPositions = visibleTiersBar.map((tier) => {
+		const min = tier.rangeMin;
+		const max = tier.rangeMax;
+
+		// Clamp to visible range for positioning
+		const effectiveMin =
+			min === undefined || min === Number.MIN_SAFE_INTEGER
+				? minBound
+				: Math.max(min, minBound);
+		const effectiveMax = max === undefined ? maxBound : Math.min(max, maxBound);
+
+		// Center of tier's range
+		const center = (effectiveMin + effectiveMax) / 2;
+		return {
+			tier,
+			percent: Math.max(0, Math.min(100, valueToPercent(center))),
+		};
+	});
 
 	// Get effect items from tier entry as array
 	const getEffectItems = (tier: TierSummary | undefined): string[] => {
@@ -104,90 +133,94 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 	return (
 		<div className="tier-thermometer">
 			{/* Thermometer bar section */}
-			<div className="flex flex-col gap-1.5">
-				{/* Threshold labels above */}
-				<div className="relative h-3 text-[10px] text-neutral-500">
-					{thresholds.map((t) => (
-						<span
-							key={t.value}
-							className="absolute -translate-x-1/2 tabular-nums"
-							style={{ left: `${t.percent}%` }}
-						>
-							{formatThreshold(t.value)}
-						</span>
-					))}
+			<div className="flex flex-col px-2">
+				{/* Integer labels row */}
+				<div className="relative h-4 mb-1">
+					{integerValues.map((value) => {
+						const percent = valueToPercent(value);
+						const isCurrent = value === currentValue;
+						return (
+							<span
+								key={value}
+								className={`absolute -translate-x-1/2 tabular-nums ${
+									isCurrent
+										? 'text-white font-bold text-[11px]'
+										: 'text-white/40 text-[9px]'
+								}`}
+								style={{
+									left: `${percent}%`,
+									textShadow: isCurrent
+										? '0 0 8px rgba(255,255,255,0.6)'
+										: 'none',
+								}}
+							>
+								{formatLabel(value)}
+							</span>
+						);
+					})}
 				</div>
 
-				{/* Gradient track with ticks and marker */}
+				{/* Gradient bar with boundaries and current marker */}
 				<div
-					className="relative h-3 rounded-full"
+					className="relative h-2 rounded-full"
 					style={{
 						background: `linear-gradient(to right,
-							#dc2626 0%,
-							#f97316 25%,
-							#eab308 50%,
-							#84cc16 75%,
-							#22c55e 100%)`,
+							#f59e0b 0%,
+							#22c55e 50%,
+							#10b981 100%)`,
 					}}
 				>
-					{/* Threshold tick marks */}
-					{thresholds.map((t) => (
+					{/* Tier boundary markers */}
+					{boundaries.map((b, i) => (
 						<div
-							key={`tick-${t.value}`}
-							className="absolute top-0 bottom-0 w-0.5 bg-black/30"
-							style={{ left: `${t.percent}%` }}
+							key={`boundary-${i}`}
+							className="absolute -top-0.5 w-0.5 h-3 rounded-sm"
+							style={{
+								left: `${b.percent}%`,
+								transform: 'translateX(-50%)',
+								background: 'rgba(255,255,255,0.5)',
+								boxShadow: '0 0 4px rgba(255,255,255,0.3)',
+							}}
 						/>
 					))}
 
 					{/* Current value marker */}
 					<div
-						className="absolute -top-1 -bottom-1 w-1.5 rounded-sm bg-white"
+						className="absolute -top-1 w-1 h-4 rounded-sm bg-white"
 						style={{
-							left: `${markerPercent}%`,
+							left: `${valueToPercent(currentValue)}%`,
 							transform: 'translateX(-50%)',
-							boxShadow: '0 0 6px rgba(255, 255, 255, 0.9)',
+							boxShadow:
+								'0 0 10px rgba(255,255,255,0.9), 0 0 20px rgba(255,255,255,0.5)',
 						}}
 					/>
 				</div>
 
-				{/* Tier icons below - only show visible tiers */}
-				<div className="relative h-5 text-sm">
-					{visibleTiers.map((tier) => {
-						// Position icon at center of tier's own range
-						// For unbounded lower: use rangeMax
-						// For unbounded upper: use rangeMin
-						// For normal range: use midpoint
-						const min = tier.rangeMin;
-						const max = tier.rangeMax;
-						let position: number;
-						if (min === undefined || min === Number.MIN_SAFE_INTEGER) {
-							position = max ?? minBound;
-						} else if (max === undefined) {
-							position = min;
-						} else {
-							position = (min + max) / 2;
-						}
-						const percent = valueToPercent(position);
-
-						return (
-							<span
-								key={tier.name}
-								className={`absolute -translate-x-1/2 transition-all ${
-									tier.active ? 'opacity-100 scale-110' : 'opacity-40'
-								}`}
-								style={{ left: `${Math.max(3, Math.min(97, percent))}%` }}
-								title={tier.name}
-							>
-								{tier.icon}
-							</span>
-						);
-					})}
+				{/* Emoji row centered in tier zones */}
+				<div className="relative h-6 mt-1.5">
+					{emojiPositions.map(({ tier, percent }) => (
+						<span
+							key={tier.name}
+							className={`absolute -translate-x-1/2 ${
+								tier.active ? 'text-xl opacity-100' : 'text-base opacity-50'
+							}`}
+							style={{
+								left: `${percent}%`,
+								filter: tier.active
+									? 'drop-shadow(0 0 4px rgba(255,255,255,0.5))'
+									: 'none',
+							}}
+							title={tier.name}
+						>
+							{tier.icon}
+						</span>
+					))}
 				</div>
 			</div>
 
 			{/* 5 Tier effect rows: 2 below, current, 2 above */}
 			<div className="mt-3 flex flex-col gap-1.5 text-[11px]">
-				{visibleTiers.map((tier) => (
+				{visibleTiersRows.map((tier) => (
 					<TierEffectRow
 						key={tier.name}
 						tier={tier}

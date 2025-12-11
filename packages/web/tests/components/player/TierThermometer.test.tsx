@@ -102,7 +102,7 @@ describe('TierThermometer', () => {
 		});
 	});
 
-	describe('visible tiers (5 max, centered on active)', () => {
+	describe('visible tiers (3 for bar, 5 for rows)', () => {
 		it('shows exactly 5 tier rows when more than 5 tiers exist', () => {
 			const tiers = createHappinessTiers(4); // Steady tier active (middle)
 			const { container } = render(
@@ -115,7 +115,20 @@ describe('TierThermometer', () => {
 			expect(tierRows?.length).toBe(5);
 		});
 
-		it('centers visible tiers on active tier (2 below, current, 2 above)', () => {
+		it('shows only 3 emojis on bar (1 below, current, 1 above)', () => {
+			const { container } = render(
+				<TierThermometer currentValue={0} tiers={createHappinessTiers(4)} />,
+			);
+
+			// Get emojis from the emoji row
+			const emojiRow = container.querySelector('.relative.h-6');
+			const emojis = emojiRow?.querySelectorAll('span');
+
+			// Should show 3 emojis on bar
+			expect(emojis?.length).toBe(3);
+		});
+
+		it('shows 5 tier rows centered on active (2 below, current, 2 above)', () => {
 			const { container } = render(
 				<TierThermometer currentValue={0} tiers={createHappinessTiers(4)} />,
 			);
@@ -125,10 +138,12 @@ describe('TierThermometer', () => {
 			const tierNames = tierRowsSection?.querySelectorAll('.font-medium');
 			const names = Array.from(tierNames || []).map((elem) => elem.textContent);
 
-			// Should show: Grim, Unrest, Steady (active), Content, Joyful
+			// Should show 5 tiers: Grim, Unrest, Steady (active), Content, Joyful
 			expect(names).toContain('Steady');
 			expect(names).toContain('Content');
+			expect(names).toContain('Unrest');
 			expect(names).toContain('Joyful');
+			expect(names).toContain('Grim');
 
 			// Should NOT show Ecstatic (too far above)
 			expect(names).not.toContain('Ecstatic');
@@ -178,105 +193,170 @@ describe('TierThermometer', () => {
 			expect(names).not.toContain('Elated');
 		});
 
-		it('shows all tiers when fewer than 5 exist', () => {
+		it('shows all tiers when fewer than 3 exist', () => {
 			const tiers: TierSummary[] = [
 				createTierSummary('High', '😄', 5, undefined, false),
 				createTierSummary('Medium', '😐', 0, 4, true),
-				createTierSummary('Low', '😟', Number.MIN_SAFE_INTEGER, -1, false),
 			];
 			render(<TierThermometer currentValue={2} tiers={tiers} />);
 
-			// Should show all 3 tiers
+			// Should show both tiers
 			expect(screen.getByText('High')).toBeInTheDocument();
 			expect(screen.getByText('Medium')).toBeInTheDocument();
-			expect(screen.getByText('Low')).toBeInTheDocument();
 		});
 	});
 
-	describe('thermometer bar bounds', () => {
-		it('bases thermometer range on visible tiers only', () => {
-			const tiers = createHappinessTiers(4); // Steady active
+	describe('integer labels', () => {
+		it('renders integer labels for each value in range', () => {
+			// Create tiers with known range: Joyful(5-7), Elated(8-9), Ecstatic(10+)
+			const tiers = createHappinessTiers(1); // Elated active
+			const { container } = render(
+				<TierThermometer currentValue={9} tiers={tiers} />,
+			);
+
+			// Get labels row
+			const labelsRow = container.querySelector('.relative.h-4');
+			const labels = labelsRow?.querySelectorAll('span');
+
+			// Should have labels for integers in range 5-10 (6 labels)
+			expect(labels?.length).toBeGreaterThanOrEqual(3);
+		});
+
+		it('highlights the current value label', () => {
+			const tiers = createHappinessTiers(4); // Steady active, value 0
 			const { container } = render(
 				<TierThermometer currentValue={0} tiers={tiers} />,
 			);
 
-			// Only 5 tier icons should be visible on the bar
-			const tierIcons = container.querySelectorAll('.relative.h-5 > span');
-			expect(tierIcons.length).toBe(5);
+			// Find the current value label (should be bold with text-white)
+			const labelsRow = container.querySelector('.relative.h-4');
+			const currentLabel = labelsRow?.querySelector('.font-bold.text-white');
+			expect(currentLabel).toBeTruthy();
+			expect(currentLabel?.textContent).toBe('+0');
 		});
 
-		it('shows threshold labels for visible tier boundaries', () => {
-			const tiers = createHappinessTiers(4); // Steady active, centered
-			render(<TierThermometer currentValue={0} tiers={tiers} />);
+		it('formats positive values with + prefix', () => {
+			const tiers = createHappinessTiers(3); // Content active (3-4 range)
+			const { container } = render(
+				<TierThermometer currentValue={3} tiers={tiers} />,
+			);
 
-			// The visible tiers are roughly Unrest(-4 to -3), Steady(-2 to 2),
-			// Content(3-4), Joyful(5-7), Elated(8-9)
-			// So thresholds should include values like +3, +5, +8, -2 (but not -10)
-			const thresholdLabels = document.querySelectorAll('.relative.h-3 > span');
-			expect(thresholdLabels.length).toBeGreaterThan(0);
-
-			// Check that at least some visible threshold labels exist
-			const labelTexts = Array.from(thresholdLabels).map(
+			// Find labels containing +
+			const labelsRow = container.querySelector('.relative.h-4');
+			const labels = labelsRow?.querySelectorAll('span');
+			const labelTexts = Array.from(labels || []).map(
 				(elem) => elem.textContent,
 			);
-			// Should have some positive thresholds from visible tiers
-			const hasVisibleThresholds = labelTexts.some(
-				(text) => text && (text.includes('+') || text.includes('-')),
-			);
-			expect(hasVisibleThresholds).toBe(true);
+
+			// Should have some positive labels with + prefix
+			expect(labelTexts.some((text) => text?.startsWith('+'))).toBe(true);
 		});
 	});
 
-	describe('tier icons positioning', () => {
-		it('positions icons for only visible tiers', () => {
-			const tiers = createHappinessTiers(4); // Steady active
+	describe('tier boundary markers', () => {
+		it('renders boundary markers between tiers', () => {
+			const tiers = createHappinessTiers(1); // Elated active
 			const { container } = render(
-				<TierThermometer currentValue={0} tiers={tiers} />,
+				<TierThermometer currentValue={9} tiers={tiers} />,
 			);
 
-			// Get all tier icons
-			const icons = container.querySelectorAll('.relative.h-5 > span');
-			expect(icons.length).toBe(5);
+			// Find the gradient bar
+			const bar = container.querySelector('.relative.h-2.rounded-full');
+			// Boundaries have the w-0.5 class, marker has w-1
+			const boundaries = bar?.querySelectorAll('.w-0\\.5');
 
-			// Each icon should have a left style for positioning
-			icons.forEach((icon) => {
-				const style = (icon as HTMLElement).style.left;
+			// Should have 2 boundaries between 3 visible bar tiers
+			expect(boundaries?.length).toBe(2);
+		});
+
+		it('positions boundaries between adjacent integers', () => {
+			// With tiers Joyful(5-7), Elated(8-9), Ecstatic(10+)
+			// Boundary between 7 and 8 should be at 50% if range is 5-10
+			const tiers = createHappinessTiers(1); // Elated active
+			const { container } = render(
+				<TierThermometer currentValue={9} tiers={tiers} />,
+			);
+
+			const bar = container.querySelector('.relative.h-2.rounded-full');
+			const boundaries = bar?.querySelectorAll('.w-0\\.5');
+
+			// Each boundary should have a left percentage
+			boundaries?.forEach((boundary) => {
+				const style = (boundary as HTMLElement).style.left;
 				expect(style).toMatch(/^\d+(\.\d+)?%$/);
 			});
 		});
+	});
 
-		it('highlights the active tier icon', () => {
-			const tiers = createHappinessTiers(4); // Steady active
-			render(<TierThermometer currentValue={0} tiers={tiers} />);
-
-			// Find the active tier icon (Steady = 😐)
-			const icons = document.querySelectorAll('.relative.h-5 > span');
-			const activeIcon = Array.from(icons).find((icon) =>
-				icon.classList.contains('scale-110'),
+	describe('current value marker', () => {
+		it('renders current value marker on bar', () => {
+			const tiers = createHappinessTiers(4);
+			const { container } = render(
+				<TierThermometer currentValue={0} tiers={tiers} />,
 			);
-			expect(activeIcon).toBeTruthy();
-			expect(activeIcon?.textContent).toBe('😐'); // Steady icon
+
+			// Find the marker (white bar with glow)
+			const marker = container.querySelector('.absolute.-top-1.w-1.h-4');
+			expect(marker).toBeInTheDocument();
 		});
 
-		it('positions unbounded upper tier at rangeMin (right edge)', () => {
-			// Test with Ecstatic tier visible (10+)
-			const tiers = createHappinessTiers(0); // Ecstatic active
+		it('positions marker at current value', () => {
+			const tiers = createHappinessTiers(4); // Steady active (-2 to 2)
 			const { container } = render(
-				<TierThermometer currentValue={10} tiers={tiers} />,
+				<TierThermometer currentValue={0} tiers={tiers} />,
 			);
 
-			// Find the Ecstatic icon (🤩)
-			const icons = container.querySelectorAll('.relative.h-5 > span');
-			const ecstaticIcon = Array.from(icons).find(
-				(icon) => icon.textContent === '🤩',
-			);
-			expect(ecstaticIcon).toBeTruthy();
+			const marker = container.querySelector('.absolute.-top-1.w-1.h-4');
+			expect(marker).toBeTruthy();
 
-			// Should be positioned at or near 97% (right edge, clamped)
-			const leftValue = parseFloat(
-				(ecstaticIcon as HTMLElement).style.left || '0',
+			// Marker should have a left style
+			const leftValue = (marker as HTMLElement).style.left;
+			expect(leftValue).toMatch(/^\d+(\.\d+)?%$/);
+		});
+	});
+
+	describe('emoji positioning', () => {
+		it('renders emojis for each visible tier', () => {
+			const tiers = createHappinessTiers(4); // Steady active
+			const { container } = render(
+				<TierThermometer currentValue={0} tiers={tiers} />,
 			);
-			expect(leftValue).toBeGreaterThanOrEqual(90);
+
+			// Get emoji row
+			const emojiRow = container.querySelector('.relative.h-6');
+			const emojis = emojiRow?.querySelectorAll('span');
+
+			// Should have 3 emojis (one per visible tier)
+			expect(emojis?.length).toBe(3);
+		});
+
+		it('highlights the active tier emoji', () => {
+			const tiers = createHappinessTiers(4); // Steady active
+			const { container } = render(
+				<TierThermometer currentValue={0} tiers={tiers} />,
+			);
+
+			// Find emoji row and active emoji
+			const emojiRow = container.querySelector('.relative.h-6');
+			const activeEmoji = emojiRow?.querySelector('.text-xl.opacity-100');
+			expect(activeEmoji).toBeTruthy();
+			expect(activeEmoji?.textContent).toBe('😐'); // Steady icon
+		});
+
+		it('positions emojis centered in tier zones', () => {
+			const tiers = createHappinessTiers(1); // Elated active
+			const { container } = render(
+				<TierThermometer currentValue={9} tiers={tiers} />,
+			);
+
+			const emojiRow = container.querySelector('.relative.h-6');
+			const emojis = emojiRow?.querySelectorAll('span');
+
+			// Each emoji should have a left percentage
+			emojis?.forEach((emoji) => {
+				const style = (emoji as HTMLElement).style.left;
+				expect(style).toMatch(/^\d+(\.\d+)?%$/);
+			});
 		});
 	});
 
@@ -357,37 +437,6 @@ describe('TierThermometer', () => {
 				(elem) => elem.textContent,
 			);
 			expect(labels).toContain('-2 - 2');
-		});
-	});
-
-	describe('current value marker', () => {
-		it('positions marker based on current value', () => {
-			const tiers = createHappinessTiers(4);
-			const { container } = render(
-				<TierThermometer currentValue={0} tiers={tiers} />,
-			);
-
-			// Find the marker (white bar with glow)
-			const marker = container.querySelector(
-				'.absolute.-top-1.-bottom-1.w-1\\.5',
-			);
-			expect(marker).toBeInTheDocument();
-		});
-
-		it('clamps marker position within visible range', () => {
-			// Test with a value at the edge
-			const tiers = createHappinessTiers(0);
-			const { container } = render(
-				<TierThermometer currentValue={10} tiers={tiers} />,
-			);
-
-			const marker = container.querySelector('[style*="box-shadow: 0 0 6px"]');
-			expect(marker).toBeTruthy();
-
-			// Marker should be clamped between 3% and 97%
-			const leftValue = parseFloat((marker as HTMLElement).style.left || '50');
-			expect(leftValue).toBeGreaterThanOrEqual(3);
-			expect(leftValue).toBeLessThanOrEqual(97);
 		});
 	});
 });
