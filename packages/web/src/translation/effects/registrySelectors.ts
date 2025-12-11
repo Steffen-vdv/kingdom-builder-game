@@ -3,20 +3,11 @@ import { humanizeIdentifier } from './stringUtils';
 
 export type RegistryDescriptor = { icon: string; label: string };
 
+export type KeywordDescriptor = { icon: string; label: string; plural: string };
+
 export type StatRegistryDescriptor = RegistryDescriptor & {
 	format?: { prefix?: string; percent?: boolean };
 };
-
-const DEFAULT_POPULATION_ICON = '👥';
-const DEFAULT_POPULATION_LABEL = 'Population';
-const DEFAULT_PASSIVE_ICON = '♾️';
-const DEFAULT_PASSIVE_LABEL = 'Passive';
-const DEFAULT_COST_ICON = '✨';
-const DEFAULT_COST_LABEL = 'Cost Adjustment';
-const DEFAULT_RESULT_ICON = '✨';
-const DEFAULT_RESULT_LABEL = 'Outcome Adjustment';
-const DEFAULT_TRANSFER_ICON = '🔁';
-const DEFAULT_TRANSFER_LABEL = 'Transfer';
 
 const DEFAULT_KEY = Symbol('default');
 
@@ -54,12 +45,12 @@ function coerceString(value: unknown): string | undefined {
 	return trimmed.length > 0 ? trimmed : undefined;
 }
 
-function coerceIcon(icon: unknown, fallback: string): string {
-	return coerceString(icon) ?? fallback;
-}
-
-function coerceLabel(label: unknown, fallback: string): string {
-	return coerceString(label) ?? fallback;
+function requireString(value: unknown, context: string): string {
+	const result = coerceString(value);
+	if (result === undefined) {
+		throw new Error(`Missing required content: ${context}`);
+	}
+	return result;
 }
 
 type ContextWithAssets =
@@ -69,13 +60,10 @@ type ContextWithAssets =
 const populationCache: CacheStore<RegistryDescriptor> = new WeakMap();
 const populationFallbackCache: CacheFallback<RegistryDescriptor> = new Map();
 
-function resolvePopulationFallback(context: ContextWithAssets | undefined) {
+function resolvePopulationDescriptor(context: ContextWithAssets | undefined) {
 	const assets = context?.assets;
-	const icon = coerceIcon(assets?.population?.icon, DEFAULT_POPULATION_ICON);
-	const label = coerceLabel(
-		assets?.population?.label,
-		DEFAULT_POPULATION_LABEL,
-	);
+	const icon = requireString(assets?.population?.icon, 'population.icon');
+	const label = requireString(assets?.population?.label, 'population.label');
 	return { icon, label } satisfies RegistryDescriptor;
 }
 
@@ -93,10 +81,10 @@ export function selectPopulationDescriptor(
 	if (cached) {
 		return cached;
 	}
-	const fallback = resolvePopulationFallback(context);
+	const base = resolvePopulationDescriptor(context);
 	if (!role) {
-		cache.set(cacheKey, fallback);
-		return fallback;
+		cache.set(cacheKey, base);
+		return base;
 	}
 	// Use metadata for population descriptors - use role ID directly
 	const v2Context = context as {
@@ -105,9 +93,9 @@ export function selectPopulationDescriptor(
 		};
 	};
 	const v2Entry = v2Context.resourceMetadata?.get?.(role);
-	const icon = coerceIcon(v2Entry?.icon, fallback.icon);
-	const fallbackLabel = humanizeIdentifier(role) || fallback.label;
-	const label = coerceLabel(v2Entry?.label, fallbackLabel);
+	const icon = coerceString(v2Entry?.icon) ?? base.icon;
+	const fallbackLabel = humanizeIdentifier(role) || base.label;
+	const label = coerceString(v2Entry?.label) ?? fallbackLabel;
 	const descriptor = { icon, label } satisfies RegistryDescriptor;
 	cache.set(cacheKey, descriptor);
 	return descriptor;
@@ -134,8 +122,8 @@ export function selectResourceDescriptor(
 	};
 	const entry = v2Context.resourceMetadata?.get?.(key);
 	const fallbackLabel = humanizeIdentifier(key) || key;
-	const label = coerceLabel(entry?.label, fallbackLabel);
-	const icon = coerceIcon(entry?.icon, '');
+	const label = coerceString(entry?.label) ?? fallbackLabel;
+	const icon = coerceString(entry?.icon) ?? '';
 	const descriptor = { icon, label } satisfies RegistryDescriptor;
 	cache.set(cacheKey, descriptor);
 	return descriptor;
@@ -168,8 +156,8 @@ export function selectStatDescriptor(
 	const statLabelFallback = humanizeIdentifier(key);
 	const fallbackLabel =
 		statLabelFallback && statLabelFallback.length > 0 ? statLabelFallback : key;
-	const label = coerceLabel(v2Entry?.label, fallbackLabel);
-	const icon = coerceIcon(v2Entry?.icon, '');
+	const label = coerceString(v2Entry?.label) ?? fallbackLabel;
+	const icon = coerceString(v2Entry?.icon) ?? '';
 	// Derive format from metadata displayAsPercent property
 	const format: { percent?: boolean } | undefined = v2Entry?.displayAsPercent
 		? { percent: true }
@@ -186,10 +174,10 @@ export function selectStatDescriptor(
 const passiveCache: CacheStore<RegistryDescriptor> = new WeakMap();
 const passiveFallbackCache: CacheFallback<RegistryDescriptor> = new Map();
 
-function resolvePassiveFallback(context: ContextWithAssets | undefined) {
+function resolvePassiveDescriptor(context: ContextWithAssets | undefined) {
 	const assets = context?.assets;
-	const icon = coerceIcon(assets?.passive?.icon, DEFAULT_PASSIVE_ICON);
-	const label = coerceLabel(assets?.passive?.label, DEFAULT_PASSIVE_LABEL);
+	const icon = requireString(assets?.passive?.icon, 'passive.icon');
+	const label = requireString(assets?.passive?.label, 'passive.label');
 	return { icon, label } satisfies RegistryDescriptor;
 }
 
@@ -202,9 +190,9 @@ export function selectPassiveDescriptor(
 	if (cached) {
 		return cached;
 	}
-	const fallback = resolvePassiveFallback(context);
-	cache.set(cacheKey, fallback);
-	return fallback;
+	const descriptor = resolvePassiveDescriptor(context);
+	cache.set(cacheKey, descriptor);
+	return descriptor;
 }
 
 const modifierCache: CacheStore<Record<string, RegistryDescriptor>> =
@@ -212,18 +200,18 @@ const modifierCache: CacheStore<Record<string, RegistryDescriptor>> =
 const modifierFallbackCache: CacheFallback<Record<string, RegistryDescriptor>> =
 	new Map();
 
-function resolveModifierFallback(context: ContextWithAssets | undefined) {
+function resolveModifierDescriptors(context: ContextWithAssets | undefined) {
 	const assets = context?.assets;
-	const cost = assets?.modifiers?.cost ?? {};
-	const result = assets?.modifiers?.result ?? {};
+	const cost = assets?.modifiers?.cost;
+	const result = assets?.modifiers?.result;
 	return {
 		cost: {
-			icon: coerceIcon(cost.icon, DEFAULT_COST_ICON),
-			label: coerceLabel(cost.label, DEFAULT_COST_LABEL),
+			icon: requireString(cost?.icon, 'modifiers.cost.icon'),
+			label: requireString(cost?.label, 'modifiers.cost.label'),
 		},
 		result: {
-			icon: coerceIcon(result.icon, DEFAULT_RESULT_ICON),
-			label: coerceLabel(result.label, DEFAULT_RESULT_LABEL),
+			icon: requireString(result?.icon, 'modifiers.result.icon'),
+			label: requireString(result?.label, 'modifiers.result.label'),
 		},
 	};
 }
@@ -233,8 +221,8 @@ const transferFallbackCache: CacheFallback<RegistryDescriptor> = new Map();
 
 function resolveTransferDescriptor(context: ContextWithAssets | undefined) {
 	const assets = context?.assets;
-	const icon = coerceIcon(assets?.transfer?.icon, DEFAULT_TRANSFER_ICON);
-	const label = coerceLabel(assets?.transfer?.label, DEFAULT_TRANSFER_LABEL);
+	const icon = requireString(assets?.transfer?.icon, 'transfer.icon');
+	const label = requireString(assets?.transfer?.label, 'transfer.label');
 	return { icon, label } satisfies RegistryDescriptor;
 }
 
@@ -259,15 +247,111 @@ export function selectModifierInfo(
 	const cache = getCacheEntry(context, modifierCache, modifierFallbackCache);
 	const cacheKey = normalizeKey(undefined);
 	const cached = cache.get(cacheKey);
-	const base = cached ?? resolveModifierFallback(context);
+	const base = cached ?? resolveModifierDescriptors(context);
 	if (!cached) {
 		cache.set(cacheKey, base);
 	}
-	const descriptor = base[kind];
-	if (descriptor) {
-		return descriptor;
+	return base[kind];
+}
+
+// Action keyword descriptor
+const actionCache: CacheStore<KeywordDescriptor> = new WeakMap();
+const actionFallbackCache: CacheFallback<KeywordDescriptor> = new Map();
+
+function resolveActionDescriptor(
+	context: ContextWithAssets | undefined,
+): KeywordDescriptor {
+	const assets = context?.assets;
+	const action = assets?.action as
+		| { icon?: string; label?: string; plural?: string }
+		| undefined;
+	const icon = requireString(action?.icon, 'action.icon');
+	const label = requireString(action?.label, 'action.label');
+	const plural = requireString(action?.plural, 'action.plural');
+	return { icon, label, plural };
+}
+
+export function selectActionDescriptor(
+	context: ContextWithAssets,
+): KeywordDescriptor {
+	const cache = getCacheEntry(context, actionCache, actionFallbackCache);
+	const cacheKey = normalizeKey(undefined);
+	const cached = cache.get(cacheKey);
+	if (cached) {
+		return cached;
 	}
-	const fallback = resolveModifierFallback(context)[kind];
-	cache.set(cacheKey, { ...base, [kind]: fallback });
-	return fallback;
+	const descriptor = resolveActionDescriptor(context);
+	cache.set(cacheKey, descriptor);
+	return descriptor;
+}
+
+// Development keyword descriptor
+const developmentCache: CacheStore<KeywordDescriptor> = new WeakMap();
+const developmentFallbackCache: CacheFallback<KeywordDescriptor> = new Map();
+
+function resolveDevelopmentDescriptor(
+	context: ContextWithAssets | undefined,
+): KeywordDescriptor {
+	const assets = context?.assets;
+	const development = assets?.development as
+		| { icon?: string; label?: string; plural?: string }
+		| undefined;
+	const icon = requireString(development?.icon, 'development.icon');
+	const label = requireString(development?.label, 'development.label');
+	const plural = requireString(development?.plural, 'development.plural');
+	return { icon, label, plural };
+}
+
+export function selectDevelopmentDescriptor(
+	context: ContextWithAssets,
+): KeywordDescriptor {
+	const cache = getCacheEntry(
+		context,
+		developmentCache,
+		developmentFallbackCache,
+	);
+	const cacheKey = normalizeKey(undefined);
+	const cached = cache.get(cacheKey);
+	if (cached) {
+		return cached;
+	}
+	const descriptor = resolveDevelopmentDescriptor(context);
+	cache.set(cacheKey, descriptor);
+	return descriptor;
+}
+
+// Keyword labels (text-only, no icons)
+export interface KeywordLabels {
+	resourceGain: string;
+	cost: string;
+}
+
+const keywordsCache: CacheStore<KeywordLabels> = new WeakMap();
+const keywordsFallbackCache: CacheFallback<KeywordLabels> = new Map();
+
+function resolveKeywordLabels(
+	context: ContextWithAssets | undefined,
+): KeywordLabels {
+	const assets = context?.assets;
+	const keywords = assets?.keywords as
+		| { resourceGain?: string; cost?: string }
+		| undefined;
+	const resourceGain = requireString(
+		keywords?.resourceGain,
+		'keywords.resourceGain',
+	);
+	const cost = requireString(keywords?.cost, 'keywords.cost');
+	return { resourceGain, cost };
+}
+
+export function selectKeywordLabels(context: ContextWithAssets): KeywordLabels {
+	const cache = getCacheEntry(context, keywordsCache, keywordsFallbackCache);
+	const cacheKey = normalizeKey(undefined);
+	const cached = cache.get(cacheKey);
+	if (cached) {
+		return cached;
+	}
+	const labels = resolveKeywordLabels(context);
+	cache.set(cacheKey, labels);
+	return labels;
 }

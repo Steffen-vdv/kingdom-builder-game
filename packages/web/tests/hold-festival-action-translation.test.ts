@@ -55,13 +55,18 @@ describe('hold festival action translation', () => {
 		// Passive effects split into two entries:
 		// 1. "Gain ♾️ Passive: <icon> <name>" with child effects
 		// 2. "On your <phase icon> <Phase> Phase" with "Remove ♾️ Passive: ..."
+		// New simplified format removes "Modifier on" and "Whenever it resolves"
+		const targetLabel = formatTargetLabel(
+			details.raid.icon ?? '',
+			details.raid.name,
+		);
 		expect(description).toEqual([
 			`${details.happinessInfo.icon} ${sign(details.happinessAmt)}${details.happinessAmt} ${details.happinessInfo.label}`,
 			`${details.fortInfo.icon || details.fortInfo.label} ${sign(details.fortAmt)}${details.fortAmt} ${details.fortInfo.label}`,
 			{
 				title: `Gain ♾️ Passive: ${details.passiveIcon} ${details.passiveName}`,
 				items: [
-					`${modifierIcon} Modifier on ${details.raid.icon} ${details.raid.name}: Whenever it resolves, ${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
+					`${modifierIcon}${targetLabel}: ${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`,
 				],
 			},
 			{
@@ -86,13 +91,12 @@ describe('hold festival action translation', () => {
 		const upkeepDescriptionLabel = `${
 			details.upkeepIcon ? `${details.upkeepIcon} ` : ''
 		}${details.upkeepLabel}`;
-		const modifierIconValue = details.modifierInfo.icon ?? '✨';
-		const modifierIcon = modifierIconValue ? `${modifierIconValue} ` : '';
+		const modifierIcon = details.modifierInfo.icon ?? '✨';
 		const raidLabel = formatTargetLabel(
 			details.raid.icon ?? '',
 			details.raid.name,
 		);
-		// format adds space after icon for readability
+		// Simplified format: modifier icon + target label, no verbose boilerplate
 		const happinessLabel =
 			`${details.happinessInfo.icon} ${sign(details.penaltyAmt)}${details.penaltyAmt} ${details.happinessInfo.label}`.replace(
 				/\s{2,}/gu,
@@ -110,7 +114,7 @@ describe('hold festival action translation', () => {
 				kind: 'group',
 			},
 			{
-				text: `${modifierIcon}Modifier on ${raidLabel}: Whenever it resolves, ${happinessLabel}`,
+				text: `${modifierIcon}${raidLabel}: ${happinessLabel}`,
 				depth: 2,
 				kind: 'effect',
 			},

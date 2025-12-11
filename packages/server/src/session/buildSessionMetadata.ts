@@ -1,5 +1,9 @@
 import {
+	ACTION_INFO,
+	DEVELOPMENT_INFO,
+	KEYWORD_LABELS,
 	LAND_INFO,
+	MODIFIER_INFO,
 	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
 	POPULATION_INFO,
@@ -213,6 +217,16 @@ function buildAssetMetadata(): SessionMetadataDescriptorMap {
 	assignAssetDescriptor(descriptors, 'slot', SLOT_INFO);
 	assignAssetDescriptor(descriptors, 'upkeep', UPKEEP_INFO);
 	assignAssetDescriptor(descriptors, 'transfer', TRANSFER_INFO);
+	assignAssetDescriptor(descriptors, 'action', ACTION_INFO);
+	assignAssetDescriptor(descriptors, 'development', DEVELOPMENT_INFO);
+	// Modifiers require nested structure for cost/result
+	descriptors['modifiers'] = {
+		cost: MODIFIER_INFO.cost,
+		result: MODIFIER_INFO.result,
+	} as unknown as SessionMetadataDescriptor;
+	// Keywords are text-only labels
+	descriptors['keywords'] =
+		KEYWORD_LABELS as unknown as SessionMetadataDescriptor;
 	return descriptors;
 }
 

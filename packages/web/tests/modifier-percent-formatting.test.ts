@@ -8,6 +8,7 @@ import {
 	createSessionSnapshot,
 	createSnapshotPlayer,
 } from './helpers/sessionFixtures';
+import { selectKeywordLabels } from '../src/translation/effects/registrySelectors';
 
 function createContext() {
 	const scaffold = createTestSessionScaffold();
@@ -59,14 +60,17 @@ describe('modifier percent formatting', () => {
 		const developmentInfo = registries.developments.get(developmentId);
 		const developmentToken =
 			developmentInfo?.icon ?? developmentInfo?.name ?? developmentId;
+		const keywords = selectKeywordLabels(bonusCtx);
+		// Summary format: ✨🌾: +20% Resource Gain (rounded up)
 		expect(bonusSummary).toEqual([expect.stringContaining(developmentToken)]);
-		expect(bonusSummary[0]).toContain('gain 20% more');
-		expect(bonusSummary[0]).toContain('rounded up');
+		expect(bonusSummary[0]).toContain('+20%');
+		expect(bonusSummary[0]).toContain(keywords.resourceGain);
+		expect(bonusSummary[0]).toContain('(rounded up)');
+		// Describe format: ✨🌾 Farm: +20% Resource Gain (rounded up)
 		const bonusDescription = describeEffects([bonus], bonusCtx);
 		expect(bonusDescription[0]).toContain(developmentToken);
-		expect(bonusDescription[0]).toContain(
-			'20% more of that resource (rounded up)',
-		);
+		expect(bonusDescription[0]).toContain('+20%');
+		expect(bonusDescription[0]).toContain('(rounded up)');
 
 		const { context: penaltyCtx } = createContext();
 		const penalty: EffectDef = {
@@ -80,12 +84,12 @@ describe('modifier percent formatting', () => {
 			round: 'down',
 		};
 		const penaltySummary = summarizeEffects([penalty], penaltyCtx);
-		expect(penaltySummary[0]).toContain('gain 25% less');
-		expect(penaltySummary[0]).toContain('rounded down');
+		// Penalty format: ✨🌾: -25% Resource Gain (rounded down)
+		expect(penaltySummary[0]).toContain('-25%');
+		expect(penaltySummary[0]).toContain('(rounded down)');
 		const penaltyDescription = describeEffects([penalty], penaltyCtx);
-		expect(penaltyDescription[0]).toContain(
-			'25% less of that resource (rounded down)',
-		);
+		expect(penaltyDescription[0]).toContain('-25%');
+		expect(penaltyDescription[0]).toContain('(rounded down)');
 	});
 
 	it('falls back to raw numbers when percent metadata is missing', () => {

@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { EffectDef } from '@kingdom-builder/protocol';
 import { summarizeEffects, describeEffects } from '../src/translation/effects';
-import { GENERAL_RESOURCE_ICON } from '../src/icons';
 import { registerModifierEvalHandler } from '../src/translation/effects/formatters/modifier';
-import { buildModifierDescriptionLabel } from '../src/translation/effects/formatters/modifier_helpers';
+import { formatTargetLabel } from '../src/translation/effects/formatters/modifier_helpers';
 import {
 	createSnapshotPlayer,
 	createSessionSnapshot,
@@ -14,8 +13,8 @@ import {
 	selectModifierInfo,
 	selectResourceDescriptor,
 	selectTransferDescriptor,
+	selectKeywordLabels,
 } from '../src/translation/effects/registrySelectors';
-import { increaseOrDecrease } from '../src/translation/effects/helpers';
 
 type ModifierHarnessOptions = {
 	customizeMetadata?: (
@@ -172,28 +171,32 @@ describe('modifier evaluation handlers', () => {
 			translationContext,
 			resourceId,
 		);
+		const keywords = selectKeywordLabels(translationContext);
 		const developmentInfo = translationContext.developments.get(developmentId);
 		const targetIcon =
 			developmentInfo?.icon && developmentInfo.icon.trim().length > 0
 				? developmentInfo.icon
 				: (developmentInfo?.name ?? developmentDef.name ?? developmentId);
+		// Summary format: ✨🌾: -🪙2 Resource Gain
 		expect(summary).toHaveLength(1);
 		expect(
 			summary[0].startsWith(`${resultDescriptor.icon}${targetIcon}: `),
 		).toBe(true);
 		const resourceToken = resourceInfo.icon ?? resourceInfo.label ?? resourceId;
-		expect(summary[0]).toContain(`${resourceToken}-2`);
+		expect(summary[0]).toContain(`-${resourceToken}2`);
+		expect(summary[0]).toContain(keywords.resourceGain);
+		// Describe format: ✨🌾 Farm: -🪙2 Resource Gain
 		expect(description).not.toHaveLength(0);
 		const primaryLine = description[0];
-		const resultLabelText = buildModifierDescriptionLabel(resultDescriptor);
 		const targetLabel = joinParts(
 			developmentInfo?.icon ?? developmentDef.icon,
 			developmentInfo?.name ?? developmentDef.name ?? developmentId,
 		);
 		expect(
-			primaryLine.startsWith(`${resultLabelText} on ${targetLabel}:`),
+			primaryLine.startsWith(`${resultDescriptor.icon}${targetLabel}:`),
 		).toBe(true);
-		expect(primaryLine.includes(resourceToken)).toBe(true);
+		expect(primaryLine).toContain(`-${resourceToken}2`);
+		expect(primaryLine).toContain(keywords.resourceGain);
 	});
 
 	it('formats cost modifiers with percent adjustments', () => {
@@ -219,22 +222,24 @@ describe('modifier evaluation handlers', () => {
 			translationContext,
 			resourceId,
 		);
+		const keywords = selectKeywordLabels(translationContext);
 		const actionInfo = translationContext.actions.get(actionId);
 		const actionIcon =
 			actionInfo?.icon && actionInfo.icon.trim().length > 0
 				? actionInfo.icon
 				: (actionInfo?.name ?? actionDef.name ?? actionId);
 		const resourceIcon = resourceInfo.icon ?? resourceId;
+		// Summary format: ✨🚜: 🪙-20% Cost
 		expect(summary).toEqual([
-			`${costDescriptor.icon}${actionIcon}: ${resourceIcon}-20%`,
+			`${costDescriptor.icon}${actionIcon}: ${resourceIcon}-20% ${keywords.cost}`,
 		]);
+		// Describe format: ✨🚜 Plow: -20% 🪙 Cost
 		const targetLabel = joinParts(
 			actionInfo?.icon ?? actionDef.icon,
 			actionInfo?.name ?? actionDef.name ?? actionId,
 		);
-		const costLabelText = buildModifierDescriptionLabel(costDescriptor);
 		expect(description).toEqual([
-			`${costLabelText} on ${targetLabel}: Decrease cost by 20% ${resourceIcon}`,
+			`${costDescriptor.icon}${targetLabel}: -20% ${resourceIcon} ${keywords.cost}`,
 		]);
 	});
 
@@ -259,31 +264,19 @@ describe('modifier evaluation handlers', () => {
 			actionInfo?.icon && actionInfo.icon.trim().length > 0
 				? actionInfo.icon
 				: (actionInfo?.name ?? actionDef.name ?? actionId);
-		const targetLabel = joinParts(
-			actionInfo?.icon ?? actionDef.icon,
+		const targetLabel = formatTargetLabel(
+			actionInfo?.icon ?? actionDef.icon ?? '',
 			actionInfo?.name ?? actionDef.name ?? actionId,
 		);
 		const transferDescriptor = selectTransferDescriptor(translationContext);
-		const transferIcon = transferDescriptor.icon;
-		const transferAdjust = Math.abs(Number(eff.params?.['adjust']));
-		const transferChange = increaseOrDecrease(transferAdjust);
-		expect(summary).toHaveLength(1);
-		expect(
-			summary[0].startsWith(`${resultDescriptor.icon}${actionIcon}: `),
-		).toBe(true);
-		expect(summary[0]).toMatch(/\+10%$/u);
-		expect(summary[0]).toContain(
-			`${GENERAL_RESOURCE_ICON} +${transferAdjust}%`,
-		);
+		// Summary format: ✨🏴‍☠️: 🧺🔁 +10% Resource Transfer
+		expect(summary).toEqual([
+			`${resultDescriptor.icon}${actionIcon}: ${transferDescriptor.icon} +10% ${transferDescriptor.label}`,
+		]);
+		// Describe format: ✨🏴‍☠️ Plunder: 🧺🔁 +10% Resource Transfer + card
 		const primaryLine = description[0];
-		expect(
-			primaryLine.startsWith(
-				`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
-			),
-		).toBe(true);
-		expect(primaryLine).toMatch(/transfers.+10%/u);
-		expect(primaryLine.toLowerCase()).toContain(
-			`${transferIcon} ${transferChange.toLowerCase()} transfer by ${transferAdjust}%`,
+		expect(primaryLine).toBe(
+			`${resultDescriptor.icon}${targetLabel}: ${transferDescriptor.icon} +10% ${transferDescriptor.label}`,
 		);
 		const card = description[1];
 		expect(card).toMatchObject({
@@ -293,41 +286,18 @@ describe('modifier evaluation handlers', () => {
 		});
 	});
 
-	it('falls back to default modifier descriptors when metadata is missing', () => {
-		const { translationContext, registries } = createModifierHarness({
+	it('throws error when modifier metadata is missing', () => {
+		const { translationContext } = createModifierHarness({
 			customizeMetadata(metadata) {
 				if (metadata.assets) {
 					delete metadata.assets.modifiers;
 				}
 			},
 		});
-		const { id: actionId, definition: actionDef } =
-			selectActionWithIcon(registries);
-		const resultDescriptor = selectModifierInfo(translationContext, 'result');
-		expect(resultDescriptor.icon).toBeTruthy();
-		expect(resultDescriptor.label).toBeTruthy();
-		const eff: EffectDef = {
-			type: 'result_mod',
-			method: 'add',
-			params: {
-				evaluation: { type: 'transfer_pct', id: actionId },
-				adjust: 5,
-			},
-		};
-		const summary = summarizeEffects([eff], translationContext);
-		expect(summary[0].startsWith(resultDescriptor.icon)).toBe(true);
-		const targetLabel = joinParts(
-			translationContext.actions.get(actionId)?.icon ?? actionDef.icon,
-			translationContext.actions.get(actionId)?.name ??
-				actionDef.name ??
-				actionId,
+		// Without proper modifier metadata, selectModifierInfo should throw
+		expect(() => selectModifierInfo(translationContext, 'result')).toThrow(
+			'Missing required content',
 		);
-		const primaryLine = describeEffects([eff], translationContext)[0];
-		expect(
-			primaryLine.startsWith(
-				`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
-			),
-		).toBe(true);
 	});
 });
 
@@ -352,23 +322,19 @@ it('formats transfer amount evaluation modifiers for arbitrary actions', () => {
 		actionInfo?.icon && actionInfo.icon.trim().length > 0
 			? actionInfo.icon
 			: (actionInfo?.name ?? actionDef.name ?? actionId);
-	const targetLabel = joinParts(
-		actionInfo?.icon ?? actionDef.icon,
+	const targetLabel = formatTargetLabel(
+		actionInfo?.icon ?? actionDef.icon ?? '',
 		actionInfo?.name ?? actionDef.name ?? actionId,
 	);
 	const transferDescriptor = selectTransferDescriptor(translationContext);
-	const transferIcon = transferDescriptor.icon;
+	// Summary format: ✨🗡️: 🧺🔁 +2 Resource Transfer
 	expect(summary).toEqual([
-		`${resultDescriptor.icon}${actionIcon}: ${transferIcon} +2`,
+		`${resultDescriptor.icon}${actionIcon}: ${transferDescriptor.icon} +2 ${transferDescriptor.label}`,
 	]);
+	// Describe format: ✨🗡️ Raid: 🧺🔁 +2 Resource Transfer + card
 	const primaryLine = description[0];
-	expect(
-		primaryLine.startsWith(
-			`${buildModifierDescriptionLabel(resultDescriptor)} on ${targetLabel}:`,
-		),
-	).toBe(true);
-	expect(primaryLine.toLowerCase()).toContain(
-		`${transferIcon} ${increaseOrDecrease(2).toLowerCase()} transfer by 2`,
+	expect(primaryLine).toBe(
+		`${resultDescriptor.icon}${targetLabel}: ${transferDescriptor.icon} +2 ${transferDescriptor.label}`,
 	);
 	const card = description[1];
 	expect(card).toMatchObject({

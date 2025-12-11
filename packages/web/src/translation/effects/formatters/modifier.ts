@@ -1,16 +1,8 @@
-import { GENERAL_RESOURCE_ICON } from '../../../icons';
-import { increaseOrDecrease, signed } from '../helpers';
 import {
-	RESULT_EVENT_RESOLVE,
-	RESULT_EVENT_TRANSFER,
-	buildModifierDescriptionLabel,
 	formatDevelopment,
-	formatPercentMagnitude,
 	formatPercentText,
-	formatResultModifierClause,
 	formatTargetLabel,
 	parseNumericParam,
-	wrapResultModifierEntries,
 } from './modifier_helpers';
 import { getActionInfo } from './modifier_targets';
 import { resolveTransferModifierTarget } from './transfer_helpers';
@@ -27,6 +19,8 @@ import {
 	selectModifierInfo,
 	selectResourceDescriptor,
 	selectTransferDescriptor,
+	selectActionDescriptor,
+	selectKeywordLabels,
 } from '../registrySelectors';
 
 interface ModifierEvalHandler {
@@ -56,23 +50,23 @@ const toArray = <T>(value: T): T[] => [value];
 function getModifierDescriptor(
 	context: TranslationContext,
 	kind: 'cost' | 'result',
-	fallbackLabel: string,
 ) {
-	const descriptor = selectModifierInfo(context, kind);
-	return {
-		icon: descriptor.icon || '',
-		label: descriptor.label || fallbackLabel,
-	};
+	return selectModifierInfo(context, kind);
 }
 
 function getResultModifierLabel(context: TranslationContext) {
-	return getModifierDescriptor(context, 'result', 'Outcome Adjustment');
+	return getModifierDescriptor(context, 'result');
 }
 
 function getCostModifierLabel(context: TranslationContext) {
-	return getModifierDescriptor(context, 'cost', 'Cost Adjustment');
+	return getModifierDescriptor(context, 'cost');
 }
 
+/**
+ * Formats cost modifiers with simplified output:
+ * - Summary: `✨🚜: 🪙-20% Cost` or `✨🎯: 🪙-20% Cost` (all actions)
+ * - Describe: `✨🚜 Plow: -20% 🪙 Cost` or `✨🎯 All Actions: -20% 🪙 Cost`
+ */
 function formatCostEffect(
 	effect: EffectDef,
 	context: TranslationContext,
@@ -86,43 +80,38 @@ function formatCostEffect(
 		: undefined;
 	const resourceIcon = resourceDescriptor?.icon || resourceId;
 	const actionId = effect.params?.['actionId'] as string | undefined;
+	const actionKeyword = selectActionDescriptor(context);
+	const keywords = selectKeywordLabels(context);
 	const actionInfo = actionId
 		? getActionInfo(context, actionId)
-		: { icon: '', name: 'all actions' };
+		: { icon: actionKeyword.icon, name: `All ${actionKeyword.plural}` };
 	const costLabel = getCostModifierLabel(context);
-	const prefixIcon = actionId ? `${actionInfo.icon}: ` : ': ';
-	const summaryPrefix = `${costLabel.icon}${prefixIcon}${resourceIcon}`;
-	const target = actionId
-		? `${actionInfo.icon} ${actionInfo.name}`
-		: actionInfo.name;
-	const labelText = `${buildModifierDescriptionLabel(costLabel)} on ${target}:`;
+
 	const percent = parseNumericParam(effect.params?.['percent']);
 	if (typeof percent === 'number') {
 		const resolvedPercent = method === 'remove' ? -percent : percent;
+		const percentText = formatPercentText(resolvedPercent);
 		if (mode === 'summary') {
-			const percentText = formatPercentText(resolvedPercent);
-			return `${summaryPrefix}${percentText}`;
+			return `${costLabel.icon}${actionInfo.icon}: ${resourceIcon}${percentText} ${keywords.cost}`;
 		}
-		const suffix = resourceIcon ? ` ${resourceIcon}` : '';
-		const direction = increaseOrDecrease(resolvedPercent);
-		const magnitude = formatPercentMagnitude(resolvedPercent);
-		const base = `${labelText} ${direction} cost by`;
-		return `${base} ${magnitude}%${suffix}`;
+		const targetLabel = actionId
+			? `${actionInfo.icon} ${actionInfo.name}`
+			: `${actionInfo.icon} ${actionInfo.name}`;
+		return `${costLabel.icon}${targetLabel}: ${percentText} ${resourceIcon} ${keywords.cost}`;
 	}
+
 	const rawAmount = parseNumericParam(effect.params?.['amount']) ?? 0;
 	const amount = method === 'remove' ? -rawAmount : rawAmount;
-	if (mode === 'summary') {
-		const absolute = Math.abs(amount);
-		if (method === 'add') {
-			return `${summaryPrefix}${signed(amount)}${absolute}`;
-		}
-		const sign = amount >= 0 ? '+' : '-';
-		return `${summaryPrefix}${sign}${absolute}`;
-	}
-	const direction = increaseOrDecrease(amount);
 	const absolute = Math.abs(amount);
-	const base = `${labelText} ${direction} cost by`;
-	return `${base} ${resourceIcon}${absolute}`;
+	const signChar = amount >= 0 ? '+' : '-';
+
+	if (mode === 'summary') {
+		return `${costLabel.icon}${actionInfo.icon}: ${signChar}${resourceIcon}${absolute} ${keywords.cost}`;
+	}
+	const targetLabel = actionId
+		? `${actionInfo.icon} ${actionInfo.name}`
+		: `${actionInfo.icon} ${actionInfo.name}`;
+	return `${costLabel.icon}${targetLabel}: ${signChar}${resourceIcon}${absolute} ${keywords.cost}`;
 }
 
 registerModifierEvalHandler('development', {
@@ -150,27 +139,29 @@ registerModifierEvalHandler('development', {
 	},
 });
 
+/**
+ * Formats transfer percent modifiers with simplified output:
+ * - Summary: `✨🏴‍☠️: 🧺🔁 +25% Resource Transfer`
+ * - Describe: `✨🏴‍☠️ Plunder: 🧺🔁 +25% Resource Transfer`
+ */
 registerModifierEvalHandler('transfer_pct', {
 	summarize: (effect, evaluation, context) => {
 		const target = resolveTransferModifierTarget(effect, evaluation, context);
 		const amount = Number(effect.params?.['adjust'] ?? 0);
 		const sign = amount >= 0 ? '+' : '-';
 		const descriptor = getResultModifierLabel(context);
-		const targetSummaryLabel = `${descriptor.icon}${target.summaryLabel}`;
-		const transferAdjustment = `${GENERAL_RESOURCE_ICON} ${sign}${Math.abs(amount)}%`;
-		return [`${targetSummaryLabel}: ${transferAdjustment}`];
+		const transferDescriptor = selectTransferDescriptor(context);
+		const transferAdjustment = `${transferDescriptor.icon} ${sign}${Math.abs(amount)}% ${transferDescriptor.label}`;
+		return [`${descriptor.icon}${target.summaryLabel}: ${transferAdjustment}`];
 	},
 	describe: (effect, evaluation, context) => {
 		const target = resolveTransferModifierTarget(effect, evaluation, context);
 		const amount = Number(effect.params?.['adjust'] ?? 0);
+		const sign = amount >= 0 ? '+' : '-';
 		const descriptor = getResultModifierLabel(context);
-		const transferIcon = selectTransferDescriptor(context).icon;
-		const modifierDescription = formatResultModifierClause(
-			buildModifierDescriptionLabel(descriptor),
-			target.clauseTarget,
-			RESULT_EVENT_TRANSFER,
-			`${transferIcon} ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}%`,
-		);
+		const transferDescriptor = selectTransferDescriptor(context);
+		const targetLabel = formatTargetLabel(target.icon, target.name);
+		const modifierDescription = `${descriptor.icon}${targetLabel}: ${transferDescriptor.icon} ${sign}${Math.abs(amount)}% ${transferDescriptor.label}`;
 		const entries: Summary = [modifierDescription];
 		if (target.actionId) {
 			const card = describeContent('action', target.actionId, context);
@@ -185,28 +176,29 @@ registerModifierEvalHandler('transfer_pct', {
 	},
 });
 
+/**
+ * Formats transfer amount modifiers with simplified output:
+ * - Summary: `✨🗡️: 🧺🔁 +2 Resource Transfer`
+ * - Describe: `✨🗡️ Raid: 🧺🔁 +2 Resource Transfer`
+ */
 registerModifierEvalHandler('transfer_amount', {
 	summarize: (effect, evaluation, context) => {
 		const target = resolveTransferModifierTarget(effect, evaluation, context);
 		const amount = Number(effect.params?.['adjust'] ?? 0);
 		const sign = amount >= 0 ? '+' : '-';
 		const descriptor = getResultModifierLabel(context);
-		const targetSummaryLabel = `${descriptor.icon}${target.summaryLabel}`;
-		const transferIcon = selectTransferDescriptor(context).icon;
-		const transferAdjustment = `${transferIcon} ${sign}${Math.abs(amount)}`;
-		return [`${targetSummaryLabel}: ${transferAdjustment}`];
+		const transferDescriptor = selectTransferDescriptor(context);
+		const transferAdjustment = `${transferDescriptor.icon} ${sign}${Math.abs(amount)} ${transferDescriptor.label}`;
+		return [`${descriptor.icon}${target.summaryLabel}: ${transferAdjustment}`];
 	},
 	describe: (effect, evaluation, context) => {
 		const target = resolveTransferModifierTarget(effect, evaluation, context);
 		const amount = Number(effect.params?.['adjust'] ?? 0);
+		const sign = amount >= 0 ? '+' : '-';
 		const descriptor = getResultModifierLabel(context);
-		const transferIcon = selectTransferDescriptor(context).icon;
-		const modifierDescription = formatResultModifierClause(
-			buildModifierDescriptionLabel(descriptor),
-			target.clauseTarget,
-			RESULT_EVENT_TRANSFER,
-			`${transferIcon} ${increaseOrDecrease(amount)} transfer by ${Math.abs(amount)}`,
-		);
+		const transferDescriptor = selectTransferDescriptor(context);
+		const targetLabel = formatTargetLabel(target.icon, target.name);
+		const modifierDescription = `${descriptor.icon}${targetLabel}: ${transferDescriptor.icon} ${sign}${Math.abs(amount)} ${transferDescriptor.label}`;
 		const entries: Summary = [modifierDescription];
 		if (target.actionId) {
 			const card = describeContent('action', target.actionId, context);
@@ -235,6 +227,12 @@ registerEffectFormatter('cost_mod', 'remove', {
 		formatCostEffect(effect, context, 'describe', 'remove'),
 });
 
+/**
+ * Result modifier formatter for resolve-type modifiers (nested effects).
+ * Simplified format removes "Whenever it resolves" text:
+ * - Summary: `✨🗡️: 😊-1`
+ * - Describe: `✨🗡️ Raid: 😊-1`
+ */
 registerEffectFormatter('result_mod', 'add', {
 	summarize: (effect, context) => {
 		const summaries = summarizeEffects(effect.effects || [], context);
@@ -246,16 +244,17 @@ registerEffectFormatter('result_mod', 'add', {
 			return handler ? handler.summarize(effect, evaluation, context) : [];
 		}
 		const actionId = effect.params?.['actionId'] as string | undefined;
+		const actionKeyword = selectActionDescriptor(context);
 		const actionInfo = actionId
 			? getActionInfo(context, actionId)
-			: { icon: '', name: 'all actions' };
+			: { icon: actionKeyword.icon, name: `All ${actionKeyword.plural}` };
 		const label = getResultModifierLabel(context);
-		return wrapResultModifierEntries(
-			label,
-			summaries,
-			{ icon: actionInfo.icon, name: actionInfo.name },
-			RESULT_EVENT_RESOLVE,
-			{ mode: 'summary' },
+		// Simplified: just prefix with modifier icon and target icon
+		const prefix = `${label.icon}${actionInfo.icon}:`;
+		return summaries.map((entry) =>
+			typeof entry === 'string'
+				? `${prefix} ${entry}`
+				: { ...entry, title: `${prefix} ${entry.title}` },
 		);
 	},
 	describe: (effect, context) => {
@@ -268,16 +267,18 @@ registerEffectFormatter('result_mod', 'add', {
 			return handler ? handler.describe(effect, evaluation, context) : [];
 		}
 		const actionId = effect.params?.['actionId'] as string | undefined;
+		const actionKeyword = selectActionDescriptor(context);
 		const actionInfo = actionId
 			? getActionInfo(context, actionId)
-			: { icon: '', name: 'all actions' };
+			: { icon: actionKeyword.icon, name: `All ${actionKeyword.plural}` };
 		const label = getResultModifierLabel(context);
-		return wrapResultModifierEntries(
-			label,
-			descriptions,
-			actionInfo,
-			RESULT_EVENT_RESOLVE,
-			{ mode: 'describe' },
+		// Simplified: modifier icon + target label, no "Whenever it resolves"
+		const targetLabel = formatTargetLabel(actionInfo.icon, actionInfo.name);
+		const prefix = `${label.icon}${targetLabel}:`;
+		return descriptions.map((entry) =>
+			typeof entry === 'string'
+				? `${prefix} ${entry}`
+				: { ...entry, title: `${prefix} ${entry.title}` },
 		);
 	},
 });

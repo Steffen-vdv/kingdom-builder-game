@@ -18,7 +18,7 @@ const ACTION_CATEGORY_SUBTITLES = {
 const ACTION_CATEGORY_ICONS = {
 	Basic: '⚙️',
 	Hire: '🧑‍🤝‍🧑',
-	Develop: '🛠️',
+	Develop: '🏗️',
 	Build: '🏗️',
 } as const;
 

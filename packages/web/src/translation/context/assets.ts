@@ -8,6 +8,8 @@ import type { SessionRegistries } from '../../state/sessionRegistries';
 import type {
 	TranslationAssets,
 	TranslationIconLabel,
+	TranslationKeywordDescriptor,
+	TranslationKeywordLabels,
 	TranslationTriggerAsset,
 } from './types';
 const formatRemoval = (description: string) =>
@@ -93,6 +95,41 @@ function resolveModifierDescriptors(
 		overrides.result = descriptor.result as SessionMetadataDescriptor;
 	}
 	return overrides;
+}
+
+function resolveKeywordDescriptor(
+	value: unknown,
+): TranslationKeywordDescriptor | undefined {
+	if (!value || typeof value !== 'object') {
+		return undefined;
+	}
+	const descriptor = value as Record<string, unknown>;
+	const icon = descriptor.icon;
+	const label = descriptor.label;
+	const plural = descriptor.plural;
+	if (
+		typeof icon !== 'string' ||
+		typeof label !== 'string' ||
+		typeof plural !== 'string'
+	) {
+		return undefined;
+	}
+	return Object.freeze({ icon, label, plural });
+}
+
+function resolveKeywordLabels(
+	value: unknown,
+): TranslationKeywordLabels | undefined {
+	if (!value || typeof value !== 'object') {
+		return undefined;
+	}
+	const descriptor = value as Record<string, unknown>;
+	const resourceGain = descriptor.resourceGain;
+	const cost = descriptor.cost;
+	if (typeof resourceGain !== 'string' || typeof cost !== 'string') {
+		return undefined;
+	}
+	return Object.freeze({ resourceGain, cost });
 }
 function toTriggerAsset(
 	id: string,
@@ -226,17 +263,31 @@ export function createTranslationAssets(
 	});
 	const triggers = buildTriggerMap(triggerMetadata);
 	const tierSummaries = buildTierSummaryMap(options?.rules);
-	return Object.freeze({
-		resources,
-		population: populationAsset,
-		land: landAsset,
-		slot: slotAsset,
-		passive: passiveAsset,
-		transfer: transferAsset,
-		upkeep: upkeepAsset,
-		modifiers,
-		triggers,
-		tierSummaries,
-		formatPassiveRemoval: formatRemoval,
-	});
+	// Resolve optional keyword descriptors
+	const actionDescriptor = resolveKeywordDescriptor(assetDescriptors['action']);
+	const developmentDescriptor = resolveKeywordDescriptor(
+		assetDescriptors['development'],
+	);
+	const keywordLabels = resolveKeywordLabels(assetDescriptors['keywords']);
+	const base: Omit<TranslationAssets, 'action' | 'development' | 'keywords'> =
+		Object.freeze({
+			resources,
+			population: populationAsset,
+			land: landAsset,
+			slot: slotAsset,
+			passive: passiveAsset,
+			transfer: transferAsset,
+			upkeep: upkeepAsset,
+			modifiers,
+			triggers,
+			tierSummaries,
+			formatPassiveRemoval: formatRemoval,
+		});
+	const result: TranslationAssets = {
+		...base,
+		...(actionDescriptor ? { action: actionDescriptor } : {}),
+		...(developmentDescriptor ? { development: developmentDescriptor } : {}),
+		...(keywordLabels ? { keywords: keywordLabels } : {}),
+	};
+	return Object.freeze(result);
 }

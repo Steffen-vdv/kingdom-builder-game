@@ -1,4 +1,4 @@
-import { BROOM_ICON, RESOURCE_TRANSFER_ICON } from './defs';
+import { BROOM_ICON, GENERAL_RESOURCE_ICON, RESOURCE_TRANSFER_ICON } from './defs';
 
 export const UPKEEP_INFO = {
 	icon: BROOM_ICON,
@@ -6,6 +6,15 @@ export const UPKEEP_INFO = {
 } as const;
 
 export const TRANSFER_INFO = {
-	icon: RESOURCE_TRANSFER_ICON,
-	label: 'Transfer',
+	icon: `${GENERAL_RESOURCE_ICON}${RESOURCE_TRANSFER_ICON}`,
+	label: 'Resource Transfer',
+} as const;
+
+/**
+ * Keyword labels used in modifier translations.
+ * These are text-only keywords without icons.
+ */
+export const KEYWORD_LABELS = {
+	resourceGain: 'Resource Gain',
+	cost: 'Cost',
 } as const;
