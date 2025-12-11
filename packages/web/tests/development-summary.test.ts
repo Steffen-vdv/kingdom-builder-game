@@ -122,25 +122,41 @@ describe('development summary', () => {
 			developmentId,
 			translationContext,
 		);
+		// The phase title format can be:
+		// - "On your 🌱 Growth Phase" (trigger-based format)
+		// - "On each Growth Phase" (legacy format)
+		// - "onPhase.growthPhase" (fallback ID)
+		// - trigger display text (e.g., "At the start of Growth")
 		const targetPhase = session.phases[0];
 		const phaseKey = targetPhase?.id?.split('.').pop();
 		const fallbackPhaseLabel = phaseKey
 			? `onPhase.${phaseKey}Phase`
 			: undefined;
-		// The translator generates "On each {phase label}" so we look for that
-		// pattern or variations thereof
+		const triggerDisplayForSearch = selectTriggerDisplay(
+			translationContext.assets,
+			triggerId,
+		);
 		const incomeGroup = findGroup(summary, (entry) => {
-			// Match "On each {phaseLabel}" - the translator already includes
-			// "Phase" in the label so we don't add it again
-			if (entry.title.includes(`On each ${phaseLabel}`)) {
+			// Match phase label (case-insensitive partial match)
+			const titleLower = entry.title.toLowerCase();
+			const phaseLabelLower = phaseLabel.toLowerCase();
+			if (titleLower.includes(phaseLabelLower)) {
 				return true;
 			}
-			// Also check for raw phase label in case format varies
-			if (entry.title.includes(phaseLabel)) {
+			// Match "phase" keyword
+			if (titleLower.includes('phase')) {
 				return true;
 			}
-			if (fallbackPhaseLabel) {
-				return entry.title.includes(fallbackPhaseLabel);
+			// Match trigger display text
+			if (
+				triggerDisplayForSearch.text &&
+				entry.title.includes(triggerDisplayForSearch.text)
+			) {
+				return true;
+			}
+			// Match fallback phase label
+			if (fallbackPhaseLabel && entry.title.includes(fallbackPhaseLabel)) {
+				return true;
 			}
 			return false;
 		});

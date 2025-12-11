@@ -5,14 +5,12 @@
  * past/future to text/condition semantics.
  *
  * Expected results:
- * | Location          | Context                      | Expected Output                    |
- * |-------------------|------------------------------|-----------------------------------|
- * | decorators.ts     | Uninstalled building         | "⚒️ On build, until removed"      |
- * | decorators.ts     | Installed building           | "⚒️ Until removed"                |
- * | phased.ts         | Event trigger title          | "⚔️ Before being attacked"        |
- * | phased.ts         | Step trigger title           | "On your 🌱 Growth Phase"         |
- * | triggerLabels.ts  | Trigger label                | "On build" (from text)            |
- * | historyEntries.ts | History "Triggered by X"     | "Triggered by ⚒️ Build"           |
+ * - decorators.ts (uninstalled): "⚒️ On build, until removed"
+ * - decorators.ts (installed): "⚒️ Until removed"
+ * - phased.ts (event trigger): "⚔️ Before being attacked"
+ * - phased.ts (step trigger): "On your 🌱 Growth Phase"
+ * - triggerLabels.ts: "On build" (from text)
+ * - historyEntries.ts: "Triggered by ⚒️ Build"
  */
 import { describe, expect, it } from 'vitest';
 import { createContentFactory } from '@kingdom-builder/testing';
@@ -225,20 +223,20 @@ describe('trigger text/condition migration', () => {
 		});
 
 		it('shows step trigger as "On your {phase}"', () => {
-			const { translationContext, session } = buildSyntheticTranslationContext(
-				({ session }) => {
-					session.metadata.triggers = {
-						...session.metadata.triggers,
-						'trigger.growth.start': {
-							icon: '🌿',
-							label: 'Growth',
-							text: 'At the start of Growth',
-						},
-					};
-				},
-			);
+			const { session } = buildSyntheticTranslationContext(({ session }) => {
+				session.metadata.triggers = {
+					...session.metadata.triggers,
+					'trigger.growth.start': {
+						icon: '🌿',
+						label: 'Growth',
+						text: 'At the start of Growth',
+					},
+				};
+			});
 			// Step triggers resolve via phase lookup, showing "On your {phase}"
-			const growthPhase = session.phases.find((p) => p.id.includes('growth'));
+			const growthPhase = session.phases.find((phase) =>
+				phase.id.includes('growth'),
+			);
 			expect(growthPhase).toBeDefined();
 			// The format should be "On your {icon} {label}"
 			const expectedPattern = `On your ${growthPhase?.icon} ${growthPhase?.label}`;

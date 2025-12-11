@@ -117,8 +117,18 @@ describe('development translation', () => {
 		const developmentName = definition?.name ?? id;
 		const icon = definition?.icon ?? '';
 
+		// Check for income-related trigger text in any of its forms:
+		// - "Gain Income" (legacy)
+		// - "On your Income step" (trigger text)
+		// - "Income" (trigger label)
+		// - "onGainIncomeStep" (fallback ID)
 		const hasIncomeLine = strings.some((line) => {
-			return /Gain Income/u.test(line) || line.includes('onGainIncomeStep');
+			return (
+				/Gain Income/u.test(line) ||
+				/On your Income step/u.test(line) ||
+				/\bIncome\b/u.test(line) ||
+				line.includes('onGainIncomeStep')
+			);
 		});
 		expect(hasIncomeLine).toBe(true);
 

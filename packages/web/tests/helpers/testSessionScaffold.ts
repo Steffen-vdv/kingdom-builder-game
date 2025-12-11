@@ -87,20 +87,43 @@ const TRIGGER_METADATA: Readonly<Record<string, SessionTriggerMetadata>> =
 			label: 'Upkeep',
 			text: 'During Upkeep',
 		},
-		onGainIncomeStep: {
-			icon: '💰',
-			label: 'Gain Income',
-			text: 'On Gain Income',
-		},
+		// Triggers used in session registries payload (buildings/developments)
 		onBuild: {
 			icon: '⚒️',
 			label: 'Build',
 			text: 'On build',
+			condition: 'Until removed',
 		},
+		onGainIncomeStep: {
+			icon: '💰',
+			label: 'Income',
+			text: 'On your Income step',
+		},
+		onPayUpkeepStep: {
+			icon: '🧹',
+			label: 'Upkeep',
+			text: 'On your Upkeep step',
+		},
+		onGainAPStep: {
+			icon: '⚡',
+			label: 'AP',
+			text: 'On your AP step',
+		},
+		onAttackResolved: {
+			icon: '⚔️',
+			label: 'Attack Resolved',
+			text: 'After having been attacked',
+		},
+		onDamage: {
+			icon: '💥',
+			label: 'Damage',
+			text: 'When damage is dealt',
+		},
+		// Phase triggers used in phased translation tests
 		'onPhase.growthPhase': {
 			icon: '🌱',
 			label: 'Growth Phase',
-			text: 'On each Growth Phase',
+			text: 'On your Growth Phase',
 		},
 	});
 

@@ -366,7 +366,7 @@ describe('resource source descriptors', () => {
 			'trigger',
 			triggerId,
 		);
-		// Trigger descriptors use text field for display, falling back to label
+		// formatKindLabel for triggers uses text (not label) for display
 		expect(triggerLabel).toContain('When the stars align');
 		expect(triggerLine).toContain(triggerLabel);
 		const passiveLabel = formatKindLabel(translationContext, 'passive', '');
@@ -395,20 +395,21 @@ describe('resource source descriptors', () => {
 			'unknown-resource',
 		);
 		expect(resourceFallback).toContain('unknown-resource');
-		// Trigger lookups now throw for missing metadata (strictness principle)
+		// Triggers do not support fallbacks - missing triggers throw errors
 		expect(() =>
 			formatKindLabel(mutatedContext, 'trigger', 'mystery-trigger'),
-		).toThrow('Trigger "mystery-trigger" not found in assets');
-		// formatTriggerLabel uses text field for display, falling back to label
+		).toThrow('Trigger "mystery-trigger" not found in assets.');
+		// Known trigger with full assets works correctly
 		const formattedTrigger = formatTriggerLabel(
 			translationContext.assets,
 			triggerId,
 		);
+		// formatTriggerLabel uses text (not label) when present
 		expect(formattedTrigger).toBe('⚡ When the stars align');
-		// Missing triggers throw errors
+		// Missing trigger in formatTriggerLabel also throws
 		expect(() =>
 			formatTriggerLabel(mutatedContext.assets, 'unknown-trigger'),
-		).toThrow('Trigger "unknown-trigger" not found in assets');
+		).toThrow('Trigger "unknown-trigger" not found in assets.');
 		const phaseFallback = formatKindLabel(
 			mutatedContext,
 			'phase',

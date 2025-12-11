@@ -309,10 +309,10 @@ describe('RegistryMetadataProvider', () => {
 		const trigger = triggers.select(setup.triggerId);
 		expect(trigger.text).toBe('Ignite at dawn');
 		expect(trigger.label).toBe('Ignition Trigger');
-		// Triggers now throw for missing metadata (strictness principle)
-		const fallbackTriggerId = nextKey('trigger');
-		expect(() => triggers.select(fallbackTriggerId)).toThrow(
-			`Trigger "${fallbackTriggerId}" is missing a label`,
+		// Triggers do not support fallbacks - selecting an unknown trigger throws
+		const unknownTriggerId = nextKey('trigger');
+		expect(() => triggers.select(unknownTriggerId)).toThrowError(
+			`Trigger "${unknownTriggerId}" is missing a label.`,
 		);
 		const phaseRecord = phases.selectRecord([setup.phaseId, fallbackPhaseId]);
 		expect(phaseRecord[setup.phaseId]).toBe(phaseDescriptor);

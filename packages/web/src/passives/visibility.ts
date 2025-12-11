@@ -7,6 +7,7 @@ export type PassiveOrigin =
 	| 'building-bonus'
 	| 'development'
 	| 'population-assignment'
+	| 'resource'
 	| 'standalone';
 
 export type PassiveSurface = 'player-panel' | 'log';
@@ -178,6 +179,9 @@ function deriveOriginFromContext(
 		if (normalized.startsWith('population')) {
 			return 'population-assignment';
 		}
+		if (normalized === 'resource') {
+			return 'resource';
+		}
 	}
 	if (context.buildingIdSet.has(passive.id)) {
 		return 'building';
@@ -211,12 +215,14 @@ const HIDDEN_ORIGINS: Record<PassiveSurface, ReadonlySet<PassiveOrigin>> = {
 		'building-bonus',
 		'development',
 		'population-assignment',
+		'resource',
 	]),
 	log: new Set([
 		'building',
 		'building-bonus',
 		'development',
 		'population-assignment',
+		'resource',
 	]),
 };
 

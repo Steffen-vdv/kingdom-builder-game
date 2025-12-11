@@ -66,6 +66,7 @@ describe('plow workshop translation', () => {
 					icon: '⚒️',
 					label: 'Build',
 					text: 'On build',
+					condition: 'Until removed',
 				},
 			},
 		};
