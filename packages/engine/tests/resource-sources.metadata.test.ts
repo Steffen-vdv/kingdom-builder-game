@@ -73,7 +73,7 @@ describe('resource sources metadata', () => {
 		);
 
 		expect(meta).toMatchObject({
-			resourceId: 'custom-source',
+			sourceKey: 'custom-source',
 			longevity: 'ongoing',
 			kind: 'resource',
 			id: PopulationRole.Legion,
@@ -108,7 +108,7 @@ describe('resource sources metadata', () => {
 		// Stat values ARE Resource IDs directly - no mapper needed
 		applyResourceDelta(player, Stat.armyStrength, 2, meta);
 		const initialEntry =
-			player.resourceSources[Stat.armyStrength]?.[meta.resourceId];
+			player.resourceSources[Stat.armyStrength]?.[meta.sourceKey];
 		expect(initialEntry?.amount).toBe(2);
 		expect(initialEntry?.meta.longevity).toBe('ongoing');
 
@@ -124,7 +124,7 @@ describe('resource sources metadata', () => {
 						...effect,
 						meta: {
 							resourceSource: {
-								key: meta.resourceId,
+								key: meta.sourceKey,
 								longevity: 'permanent',
 								dependsOn: [
 									{
@@ -142,7 +142,7 @@ describe('resource sources metadata', () => {
 		);
 
 		applyResourceDelta(player, Stat.armyStrength, 1, updateMeta);
-		const merged = player.resourceSources[Stat.armyStrength]?.[meta.resourceId];
+		const merged = player.resourceSources[Stat.armyStrength]?.[meta.sourceKey];
 		expect(merged?.amount).toBe(3);
 		expect(merged?.meta.longevity).toBe('ongoing');
 		expect(merged?.meta.extra).toEqual({
@@ -170,7 +170,7 @@ describe('resource sources metadata', () => {
 
 		applyResourceDelta(player, Stat.armyStrength, -3, updateMeta);
 		expect(
-			player.resourceSources[Stat.armyStrength]?.[meta.resourceId],
+			player.resourceSources[Stat.armyStrength]?.[meta.sourceKey],
 		).toBeUndefined();
 	});
 

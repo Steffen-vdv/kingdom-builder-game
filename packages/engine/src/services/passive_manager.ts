@@ -148,7 +148,7 @@ export class PassiveManager {
 			_context,
 			resourceKey,
 		) => ({
-			key: `passive:${key}:${resourceKey}`,
+			sourceKey: `passive:${key}:${resourceKey}`,
 			instance: key,
 			detail: options?.detail ?? passive.name ?? 'Passive',
 			longevity: 'ongoing' as const,

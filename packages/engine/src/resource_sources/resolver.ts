@@ -16,7 +16,7 @@ export function resolveResourceSourceMeta(
 	resourceKey: ResourceKey,
 ): ResourceSourceMeta {
 	const meta: ResourceSourceMeta = {
-		resourceId: createResourceSourceKey(effectDefinition, resourceKey),
+		sourceKey: createResourceSourceKey(effectDefinition, resourceKey),
 		longevity: 'permanent',
 	};
 	const effectInfo: ResourceSourceMeta['effect'] = {};
@@ -56,13 +56,13 @@ export function applyResourceDelta(
 	const sources =
 		playerResourceSources[resourceId] ??
 		(playerResourceSources[resourceId] = {});
-	const existingEntry = sources[meta.resourceId];
+	const existingEntry = sources[meta.sourceKey];
 	const normalizedDelta = Math.abs(delta) < RESOURCE_SOURCE_EPSILON ? 0 : delta;
 	if (!existingEntry) {
 		if (normalizedDelta === 0) {
 			return;
 		}
-		sources[meta.resourceId] = {
+		sources[meta.sourceKey] = {
 			amount: normalizedDelta,
 			meta: cloneMeta(meta),
 		};
@@ -70,7 +70,7 @@ export function applyResourceDelta(
 	}
 	const nextAmount = existingEntry.amount + normalizedDelta;
 	if (Math.abs(nextAmount) < RESOURCE_SOURCE_EPSILON) {
-		delete sources[meta.resourceId];
+		delete sources[meta.sourceKey];
 		return;
 	}
 	existingEntry.amount = nextAmount;
