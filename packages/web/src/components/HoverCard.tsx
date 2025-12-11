@@ -201,7 +201,7 @@ export default function HoverCard() {
 					/>
 				</div>
 			)}
-			{renderedData.effects.length > 0 && (
+			{renderedData.effects.length > 0 && !renderedData.thermometer && (
 				<div className="mb-2">
 					<div className={CARD_LABEL_CLASS}>{effectsTitle}</div>
 					<ul className={CARD_LIST_CLASS}>{effectSummary}</ul>
@@ -213,7 +213,7 @@ export default function HoverCard() {
 					typeof desc === 'string'
 						? desc.trim().length > 0
 						: Array.isArray(desc) && desc.length > 0;
-				if (!hasDescription) {
+				if (!hasDescription || renderedData.thermometer) {
 					return null;
 				}
 				return (

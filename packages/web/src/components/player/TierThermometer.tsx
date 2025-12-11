@@ -12,7 +12,7 @@ interface TierThermometerProps {
 
 /**
  * A horizontal thermometer showing tier thresholds, current value,
- * and prev/current/next tier effects.
+ * and 5 tiers centered on the current tier (2 below, current, 2 above).
  */
 const TierThermometer: React.FC<TierThermometerProps> = ({
 	currentValue,
@@ -70,14 +70,10 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 		}
 	}
 
-	// Find current tier index and adjacent tiers
+	// Find current tier index and get 5 tiers centered on current
+	// (2 below, current, 2 above)
 	const activeIndex = sortedTiers.findIndex((t) => t.active);
-	const currentTier = activeIndex >= 0 ? sortedTiers[activeIndex] : undefined;
-	const prevTier = activeIndex > 0 ? sortedTiers[activeIndex - 1] : undefined;
-	const nextTier =
-		activeIndex < sortedTiers.length - 1
-			? sortedTiers[activeIndex + 1]
-			: undefined;
+	const visibleTiers = getVisibleTiers(sortedTiers, activeIndex, 5);
 
 	// Format threshold label
 	const formatThreshold = (value: number) =>
@@ -96,23 +92,6 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 			.slice(0, 2)
 			.map((item) => (typeof item === 'string' ? item : item.text))
 			.join('. ');
-	};
-
-	// Get range label for adjacent tier
-	const getAdjacentLabel = (
-		tier: TierSummary | undefined,
-		direction: 'above' | 'below',
-	) => {
-		if (!tier) {
-			return '';
-		}
-		if (direction === 'above' && tier.rangeMin !== undefined) {
-			return `Above ${formatThreshold(tier.rangeMin - 1)}`;
-		}
-		if (direction === 'below' && tier.rangeMax !== undefined) {
-			return `Below ${formatThreshold(tier.rangeMax + 1)}`;
-		}
-		return tier.rangeLabel;
 	};
 
 	return (
@@ -189,52 +168,66 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 				</div>
 			</div>
 
-			{/* Tier effect descriptions: prev / current / next */}
-			<div className="mt-3 flex flex-col gap-2 text-[11px]">
-				{/* Previous (lower) tier */}
-				{prevTier && (
+			{/* 5 Tier effect rows: 2 below, current, 2 above */}
+			<div className="mt-3 flex flex-col gap-1.5 text-[11px]">
+				{visibleTiers.map((tier) => (
 					<TierEffectRow
-						tier={prevTier}
-						label={getAdjacentLabel(prevTier, 'below')}
-						description={getEffectDesc(prevTier)}
-						variant="adjacent"
+						key={tier.name}
+						tier={tier}
+						rangeLabel={tier.rangeLabel}
+						description={getEffectDesc(tier)}
+						variant={tier.active ? 'current' : 'adjacent'}
 					/>
-				)}
-
-				{/* Current tier */}
-				{currentTier && (
-					<TierEffectRow
-						tier={currentTier}
-						label={`Current (${currentTier.rangeLabel})`}
-						description={getEffectDesc(currentTier)}
-						variant="current"
-					/>
-				)}
-
-				{/* Next (higher) tier */}
-				{nextTier && (
-					<TierEffectRow
-						tier={nextTier}
-						label={getAdjacentLabel(nextTier, 'above')}
-						description={getEffectDesc(nextTier)}
-						variant="adjacent"
-					/>
-				)}
+				))}
 			</div>
 		</div>
 	);
 };
 
+/**
+ * Get up to `count` tiers centered on the active tier.
+ * Returns tiers in display order (lowest first).
+ */
+function getVisibleTiers(
+	sortedTiers: TierSummary[],
+	activeIndex: number,
+	count: number,
+): TierSummary[] {
+	if (sortedTiers.length <= count) {
+		return sortedTiers;
+	}
+
+	// Calculate how many tiers on each side
+	const halfBelow = Math.floor((count - 1) / 2);
+	const halfAbove = count - 1 - halfBelow;
+
+	// Calculate start index, clamping to valid range
+	let startIndex = activeIndex - halfBelow;
+	let endIndex = activeIndex + halfAbove;
+
+	// Adjust if we go out of bounds
+	if (startIndex < 0) {
+		endIndex = Math.min(sortedTiers.length - 1, endIndex - startIndex);
+		startIndex = 0;
+	}
+	if (endIndex >= sortedTiers.length) {
+		startIndex = Math.max(0, startIndex - (endIndex - sortedTiers.length + 1));
+		endIndex = sortedTiers.length - 1;
+	}
+
+	return sortedTiers.slice(startIndex, endIndex + 1);
+}
+
 interface TierEffectRowProps {
 	tier: TierSummary;
-	label: string;
+	rangeLabel: string;
 	description: string;
 	variant: 'current' | 'adjacent';
 }
 
 const TierEffectRow: React.FC<TierEffectRowProps> = ({
 	tier,
-	label,
+	rangeLabel,
 	description,
 	variant,
 }) => {
@@ -242,23 +235,25 @@ const TierEffectRow: React.FC<TierEffectRowProps> = ({
 
 	return (
 		<div
-			className={`flex items-start gap-2 rounded-md px-2 py-1.5 ${
+			className={`flex items-start gap-2 rounded-md px-2 py-1 ${
 				isCurrent
 					? 'bg-white/10 ring-1 ring-white/10'
 					: 'bg-white/[0.03] opacity-60'
 			}`}
 		>
 			<span className="text-sm flex-shrink-0">{tier.icon}</span>
-			<div className="min-w-0 flex-1">
-				<div className="text-[9px] uppercase tracking-wide text-white/40 mb-0.5">
-					{label}
-				</div>
-				<div
+			<div className="min-w-0 flex-1 flex items-baseline gap-2">
+				<span
 					className={`font-medium ${isCurrent ? 'text-white/90' : 'text-white/70'}`}
 				>
 					{tier.name}
-				</div>
-				<div className="text-white/50 leading-snug">{description}</div>
+				</span>
+				<span className="text-[9px] text-white/40 tabular-nums">
+					{rangeLabel}
+				</span>
+			</div>
+			<div className="text-white/50 text-right flex-shrink-0 max-w-[50%]">
+				{description}
 			</div>
 		</div>
 	);
