@@ -32,9 +32,16 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 		return null;
 	}
 
-	// Calculate display range with padding
-	const minBound = minTier.rangeMin ?? -10;
-	const maxBound = maxTier.rangeMax ?? (maxTier.rangeMin ?? 0) + 5;
+	// Calculate display range from tier data
+	// For unbounded lower (MIN_SAFE_INTEGER), use rangeMax of lowest tier
+	// For unbounded upper (undefined rangeMax), use rangeMin of highest tier
+	const rawMinBound = minTier.rangeMin;
+	const minBound =
+		rawMinBound === undefined || rawMinBound === Number.MIN_SAFE_INTEGER
+			? (minTier.rangeMax ?? 0)
+			: rawMinBound;
+	const rawMaxBound = maxTier.rangeMax;
+	const maxBound = rawMaxBound ?? maxTier.rangeMin ?? 0;
 	const paddedMin = Math.min(minBound - 1, currentValue - 1);
 	const paddedMax = Math.max(maxBound + 1, currentValue + 1);
 	const range = paddedMax - paddedMin;
