@@ -102,20 +102,20 @@ describe('TierThermometer', () => {
 		});
 	});
 
-	describe('visible tiers (3 for bar, 5 for rows)', () => {
-		it('shows exactly 5 tier rows when more than 5 tiers exist', () => {
+	describe('visible tiers (3 for both bar and rows)', () => {
+		it('shows exactly 3 tier rows when more than 3 tiers exist', () => {
 			const tiers = createHappinessTiers(4); // Steady tier active (middle)
 			const { container } = render(
 				<TierThermometer currentValue={0} tiers={tiers} />,
 			);
 
-			// Should render 5 tier effect rows (in the tier rows section)
+			// Should render 3 tier effect rows (in the tier rows section)
 			const tierRowsSection = container.querySelector('.mt-3.flex.flex-col');
 			const tierRows = tierRowsSection?.querySelectorAll('.rounded-md');
-			expect(tierRows?.length).toBe(5);
+			expect(tierRows?.length).toBe(3);
 		});
 
-		it('shows only 3 emojis on bar (1 below, current, 1 above)', () => {
+		it('shows 3 emojis on bar (1 below, current, 1 above)', () => {
 			const { container } = render(
 				<TierThermometer currentValue={0} tiers={createHappinessTiers(4)} />,
 			);
@@ -128,7 +128,7 @@ describe('TierThermometer', () => {
 			expect(emojis?.length).toBe(3);
 		});
 
-		it('shows 5 tier rows centered on active (2 below, current, 2 above)', () => {
+		it('shows 3 tier rows centered on active (1 below, current, 1 above)', () => {
 			const { container } = render(
 				<TierThermometer currentValue={0} tiers={createHappinessTiers(4)} />,
 			);
@@ -138,15 +138,15 @@ describe('TierThermometer', () => {
 			const tierNames = tierRowsSection?.querySelectorAll('.font-medium');
 			const names = Array.from(tierNames || []).map((elem) => elem.textContent);
 
-			// Should show 5 tiers: Grim, Unrest, Steady (active), Content, Joyful
+			// Should show 3 tiers: Unrest, Steady (active), Content
 			expect(names).toContain('Steady');
 			expect(names).toContain('Content');
 			expect(names).toContain('Unrest');
-			expect(names).toContain('Joyful');
-			expect(names).toContain('Grim');
 
-			// Should NOT show Ecstatic (too far above)
+			// Should NOT show tiers further away
 			expect(names).not.toContain('Ecstatic');
+			expect(names).not.toContain('Joyful');
+			expect(names).not.toContain('Grim');
 		});
 
 		it('fills from other direction when at upper boundary', () => {
@@ -159,16 +159,14 @@ describe('TierThermometer', () => {
 			const tierNames = tierRowsSection?.querySelectorAll('.font-medium');
 			const names = Array.from(tierNames || []).map((elem) => elem.textContent);
 
-			// At top boundary, should show 5 highest tiers
+			// At top boundary, should show 3 highest tiers
 			expect(names).toContain('Ecstatic');
 			expect(names).toContain('Elated');
 			expect(names).toContain('Joyful');
-			expect(names).toContain('Content');
-			expect(names).toContain('Steady');
 
 			// Should NOT show lower tiers
-			expect(names).not.toContain('Despair');
-			expect(names).not.toContain('Misery');
+			expect(names).not.toContain('Content');
+			expect(names).not.toContain('Steady');
 		});
 
 		it('fills from other direction when at lower boundary', () => {
@@ -181,16 +179,14 @@ describe('TierThermometer', () => {
 			const tierNames = tierRowsSection?.querySelectorAll('.font-medium');
 			const names = Array.from(tierNames || []).map((elem) => elem.textContent);
 
-			// At bottom boundary, should show 5 lowest tiers
+			// At bottom boundary, should show 3 lowest tiers
 			expect(names).toContain('Despair');
 			expect(names).toContain('Misery');
 			expect(names).toContain('Grim');
-			expect(names).toContain('Unrest');
-			expect(names).toContain('Steady');
 
 			// Should NOT show higher tiers
-			expect(names).not.toContain('Ecstatic');
-			expect(names).not.toContain('Elated');
+			expect(names).not.toContain('Steady');
+			expect(names).not.toContain('Unrest');
 		});
 
 		it('shows all tiers when fewer than 3 exist', () => {
@@ -254,7 +250,7 @@ describe('TierThermometer', () => {
 	});
 
 	describe('tier boundary markers', () => {
-		it('renders boundary markers between tiers', () => {
+		it('renders colored boundary markers between tiers', () => {
 			const tiers = createHappinessTiers(1); // Elated active
 			const { container } = render(
 				<TierThermometer currentValue={9} tiers={tiers} />,
@@ -262,27 +258,46 @@ describe('TierThermometer', () => {
 
 			// Find the gradient bar
 			const bar = container.querySelector('.relative.h-2.rounded-full');
-			// Boundaries have the w-0.5 class, marker has w-1
-			const boundaries = bar?.querySelectorAll('.w-0\\.5');
-
-			// Should have 2 boundaries between 3 visible bar tiers
-			expect(boundaries?.length).toBe(2);
+			// All markers (boundaries + current) have w-1 class
+			const allMarkers = bar?.querySelectorAll('.w-1');
+			// Should have 2 boundaries + 1 current value marker = 3 total
+			expect(allMarkers?.length).toBe(3);
 		});
 
-		it('positions boundaries between adjacent integers', () => {
-			// With tiers Joyful(5-7), Elated(8-9), Ecstatic(10+)
-			// Boundary between 7 and 8 should be at 50% if range is 5-10
+		it('colors boundaries by direction (orange=regression, teal=progression)', () => {
 			const tiers = createHappinessTiers(1); // Elated active
 			const { container } = render(
 				<TierThermometer currentValue={9} tiers={tiers} />,
 			);
 
 			const bar = container.querySelector('.relative.h-2.rounded-full');
-			const boundaries = bar?.querySelectorAll('.w-0\\.5');
+			const allMarkers = Array.from(bar?.querySelectorAll('.w-1') || []);
 
-			// Each boundary should have a left percentage
-			boundaries?.forEach((boundary) => {
-				const style = (boundary as HTMLElement).style.left;
+			// Check for orange (regression) and teal (progression) colors
+			const hasOrange = allMarkers.some((marker) =>
+				(marker as HTMLElement).style.background.includes('251, 146, 60'),
+			);
+			const hasTeal = allMarkers.some((marker) =>
+				(marker as HTMLElement).style.background.includes('45, 212, 191'),
+			);
+
+			expect(hasOrange).toBe(true);
+			expect(hasTeal).toBe(true);
+		});
+
+		it('positions boundaries between adjacent integers', () => {
+			// With tiers Joyful(5-7), Elated(8-9), Ecstatic(10+)
+			const tiers = createHappinessTiers(1); // Elated active
+			const { container } = render(
+				<TierThermometer currentValue={9} tiers={tiers} />,
+			);
+
+			const bar = container.querySelector('.relative.h-2.rounded-full');
+			const allMarkers = bar?.querySelectorAll('.w-1');
+
+			// Each marker should have a left percentage
+			allMarkers?.forEach((marker) => {
+				const style = (marker as HTMLElement).style.left;
 				expect(style).toMatch(/^\d+(\.\d+)?%$/);
 			});
 		});
@@ -367,10 +382,10 @@ describe('TierThermometer', () => {
 				<TierThermometer currentValue={0} tiers={tiers} />,
 			);
 
-			// Should have 5 tier rows in the tier rows section
+			// Should have 3 tier rows in the tier rows section
 			const tierRowsSection = container.querySelector('.mt-3.flex.flex-col');
 			const rows = tierRowsSection?.querySelectorAll('.rounded-md');
-			expect(rows?.length).toBe(5);
+			expect(rows?.length).toBe(3);
 		});
 
 		it('highlights the active tier row', () => {
