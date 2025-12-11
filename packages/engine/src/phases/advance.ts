@@ -30,6 +30,7 @@ export interface AdvanceResult {
 function createPhaseResourceFrame(
 	phaseId: string,
 	stepId: string | undefined,
+	turn: number,
 ): (
 	effect: EffectDef,
 	context: EngineContext,
@@ -40,6 +41,7 @@ function createPhaseResourceFrame(
 	id: string;
 	longevity: 'permanent';
 	detail?: string;
+	extra?: { turn: number };
 } {
 	return (_effect, _context, resourceKey) => {
 		const baseFrame: {
@@ -47,11 +49,13 @@ function createPhaseResourceFrame(
 			kind: 'phase';
 			id: string;
 			longevity: 'permanent';
+			extra: { turn: number };
 		} = {
-			sourceKey: `phase:${phaseId}:${stepId ?? 'step'}:${resourceKey}`,
+			sourceKey: `phase:${phaseId}:${stepId ?? 'step'}:turn${turn}:${resourceKey}`,
 			kind: 'phase',
 			id: phaseId,
 			longevity: 'permanent',
+			extra: { turn },
 		};
 		return stepId ? { ...baseFrame, detail: stepId } : baseFrame;
 	};
@@ -204,6 +208,7 @@ export function advance(engineContext: EngineContext): AdvanceResult {
 		const phaseFrame = createPhaseResourceFrame(
 			currentPhaseDefinition.id,
 			currentStepDefinition?.id,
+			engineContext.game.turn,
 		);
 		const triggerIds = currentStepDefinition?.triggers ?? [];
 		if (triggerIds.length > 0) {

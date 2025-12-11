@@ -167,6 +167,24 @@ function createDescriptorRegistry(
 			},
 			formatDetail: defaultFormatDetail,
 		},
+		tier: {
+			resolve: (id) => {
+				const tierDef = translationContext.rules.tierDefinitions.find(
+					(tier) => tier.id === id,
+				);
+				if (tierDef?.display) {
+					return {
+						icon: tierDef.display.icon ?? '📊',
+						label: tierDef.display.title ?? id ?? '[MISSING:tier]',
+					};
+				}
+				return {
+					icon: '📊',
+					label: id ?? '[MISSING:tier]',
+				};
+			},
+			formatDetail: defaultFormatDetail,
+		},
 		start: {
 			resolve: () => {
 				// No start asset in TranslationAssets - use visible placeholder

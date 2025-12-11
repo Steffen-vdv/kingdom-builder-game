@@ -30,6 +30,12 @@ export function mergeMeta(
 	if (partialMeta.sourceKey) {
 		baseMeta.sourceKey = partialMeta.sourceKey;
 	}
+	// Compute override flag BEFORE updating longevity - ongoing sources
+	// represent current state, not history, so they should override parent
+	// kind/id to display as their own identity (e.g., "Ecstatic" not
+	// "Initial Setup: Ecstatic")
+	const isOngoingOverride =
+		partialMeta.longevity === 'ongoing' && baseMeta.longevity !== 'ongoing';
 	if (partialMeta.longevity) {
 		if (
 			baseMeta.longevity !== 'ongoing' ||
@@ -38,10 +44,10 @@ export function mergeMeta(
 			baseMeta.longevity = partialMeta.longevity;
 		}
 	}
-	if (!baseMeta.kind && partialMeta.kind) {
+	if (partialMeta.kind && (!baseMeta.kind || isOngoingOverride)) {
 		baseMeta.kind = partialMeta.kind;
 	}
-	if (!baseMeta.id && partialMeta.id) {
+	if (partialMeta.id && (!baseMeta.id || isOngoingOverride)) {
 		baseMeta.id = partialMeta.id;
 	}
 	if (!baseMeta.detail && partialMeta.detail) {

@@ -10,6 +10,7 @@ import { registerCoreRequirements } from '../requirements';
 import { createAISystem, createTaxCollectorController } from '../ai';
 import { performAction, simulateAction } from '../actions/action_execution';
 import { advance } from '../phases/advance';
+import { withResourceSourceFrames } from '../resource_sources';
 import {
 	validateGameConfig,
 	type GameConfig,
@@ -217,9 +218,20 @@ function runSystemActionEffects(
 	// Capture before snapshot
 	const before = snapshotPlayer(engineContext.activePlayer, engineContext);
 
-	// Run the effects
+	// Run the effects with source tracking
 	const resolved = resolveActionEffects(actionDefinition, undefined);
-	runEffects(resolved.effects, engineContext);
+	withResourceSourceFrames(
+		engineContext,
+		(_effect, _context, resourceKey) => ({
+			sourceKey: `action:${actionId}:${resourceKey}`,
+			kind: 'action',
+			id: actionId,
+			longevity: 'permanent' as const,
+		}),
+		() => {
+			runEffects(resolved.effects, engineContext);
+		},
+	);
 
 	// Capture after snapshot
 	const after = snapshotPlayer(engineContext.activePlayer, engineContext);
