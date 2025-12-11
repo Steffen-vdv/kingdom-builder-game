@@ -4,7 +4,6 @@ import {
 	ACTIONS,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	RULES,
 	RESOURCES,
@@ -51,7 +50,6 @@ export function createTestContext(
 		actions: ACTIONS,
 		buildings: BUILDINGS,
 		developments: DEVELOPMENTS,
-		populations: POPULATIONS,
 		phases: PHASES,
 		rules: RULES,
 		resourceCatalog: {

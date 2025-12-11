@@ -189,7 +189,6 @@ export function createSyntheticSessionManager(
 		actionCategories: engineOverrides.actionCategories ?? factory.categories,
 		buildings: engineOverrides.buildings ?? factory.buildings,
 		developments: engineOverrides.developments ?? factory.developments,
-		populations: engineOverrides.populations ?? factory.populations,
 		phases: engineOverrides.phases ?? phases,
 		rules: engineOverrides.rules ?? rules,
 		resourceCatalog: engineOverrides.resourceCatalog ?? {

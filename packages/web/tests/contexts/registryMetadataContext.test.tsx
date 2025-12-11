@@ -39,7 +39,7 @@ interface TestSetup {
 	categoryId: string;
 	buildingId: string;
 	developmentId: string;
-	populationId: string;
+	councilId: string;
 	resourceKey: string;
 	resource: SessionResourceDefinition;
 	metadata: SessionSnapshotMetadata;
@@ -82,10 +82,8 @@ function createTestSetup(): TestSetup {
 		name: 'Celestial Garden',
 		icon: '🌿',
 	});
-	const population = factory.population({
-		name: 'Astral Council',
-		icon: '✨',
-	});
+	const councilId = nextKey('council');
+	const councilIcon = '✨';
 	const resourceKey = nextKey('resource');
 	const resource: SessionResourceDefinition = {
 		key: resourceKey,
@@ -105,8 +103,7 @@ function createTestSetup(): TestSetup {
 				icon: '💡',
 				description: 'Condensed radiance.',
 			},
-			// Populations and stats are unified under resources in V2 system
-			[population.id]: { label: 'Astral Council', icon: '✨' },
+			[councilId]: { label: 'Astral Council', icon: councilIcon },
 			[statId]: { label: 'Resolve', icon: '🔥' },
 		},
 		actionCategories: {
@@ -156,7 +153,6 @@ function createTestSetup(): TestSetup {
 		actionCategories,
 		buildings: factory.buildings,
 		developments: factory.developments,
-		populations: factory.populations,
 		resources: { [resourceKey]: resource },
 	};
 	return {
@@ -165,7 +161,7 @@ function createTestSetup(): TestSetup {
 		categoryId: category.id,
 		buildingId: building.id,
 		developmentId: development.id,
-		populationId: population.id,
+		councilId,
 		resourceKey,
 		resource,
 		metadata,
@@ -179,7 +175,6 @@ function createTestSetup(): TestSetup {
 interface CapturedLookups {
 	context: RegistryMetadataContextValue;
 	resources: MetadataSelector<RegistryMetadataDescriptor>;
-	// Populations and stats are unified under resources in V2 system
 	actionCategories: MetadataSelector<RegistryMetadataDescriptor>;
 	buildings: MetadataSelector<RegistryMetadataDescriptor>;
 	developments: MetadataSelector<RegistryMetadataDescriptor>;
@@ -206,7 +201,6 @@ describe('RegistryMetadataProvider', () => {
 			captured = {
 				context: useRegistryMetadata(),
 				resources: useResourceMetadata(),
-				// Populations and stats are unified under resources in V2 system
 				actionCategories: useActionCategoryMetadata(),
 				buildings: useBuildingMetadata(),
 				developments: useDevelopmentMetadata(),
@@ -232,7 +226,6 @@ describe('RegistryMetadataProvider', () => {
 		const {
 			context,
 			resources,
-			// populations and stats removed - unified under resources in V2 system
 			actionCategories,
 			buildings,
 			developments,
@@ -242,7 +235,7 @@ describe('RegistryMetadataProvider', () => {
 			slot,
 			passive,
 		} = captured;
-		const { actionId, buildingId, developmentId, populationId, resourceKey } =
+		const { actionId, buildingId, developmentId, councilId, resourceKey } =
 			setup;
 		expect(context.actions.getOrThrow(actionId).id).toBe(actionId);
 		expect(context.actionCategories.getOrThrow(setup.categoryId).id).toBe(
@@ -283,8 +276,7 @@ describe('RegistryMetadataProvider', () => {
 		expect(resourceRecord[resourceKey]).toBe(resourceDescriptor);
 		expect(Object.isFrozen(selectedResources)).toBe(true);
 		expect(Object.isFrozen(resourceRecord)).toBe(true);
-		// Populations unified under resources in V2 - check via resources
-		expect(resources.byId[populationId]?.label).toBe('Astral Council');
+		expect(resources.byId[councilId]?.label).toBe('Astral Council');
 		expect(actionCategories.byId[setup.categoryId].label).toBe(
 			'Arcane Actions',
 		);
@@ -371,7 +363,6 @@ describe('RegistryMetadataProvider', () => {
 			),
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {},
 		};
 

@@ -1,4 +1,4 @@
-import type { BuildingConfig, DevelopmentConfig, EffectDef, PopulationConfig } from '@kingdom-builder/protocol';
+import type { BuildingConfig, DevelopmentConfig, EffectDef } from '@kingdom-builder/protocol';
 
 export const BROOM_ICON = '🧹';
 export const RESOURCE_TRANSFER_ICON = '🔁';
@@ -20,7 +20,6 @@ export interface Triggered {
 	onGainAPStep?: EffectDef[] | undefined;
 }
 
-export interface PopulationDef extends PopulationConfig, Triggered {}
 export interface DevelopmentDef extends DevelopmentConfig, Triggered {
 	order?: number;
 	focus?: Focus;

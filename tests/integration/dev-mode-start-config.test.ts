@@ -4,7 +4,6 @@ import {
 	ACTIONS,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	RULES,
 	Resource,
@@ -20,7 +19,6 @@ describe('dev mode start configuration', () => {
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog: {
@@ -59,7 +57,6 @@ describe('dev mode start configuration', () => {
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog: {

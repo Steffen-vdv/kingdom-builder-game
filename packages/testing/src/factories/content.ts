@@ -3,7 +3,6 @@ import {
 	createActionRegistry,
 	createBuildingRegistry,
 	createDevelopmentRegistry,
-	createPopulationRegistry,
 	type ActionCategoryConfig as ContentActionCategoryConfig,
 } from '@kingdom-builder/contents';
 import type {
@@ -11,7 +10,6 @@ import type {
 	ActionConfig,
 	BuildingConfig,
 	DevelopmentConfig,
-	PopulationConfig,
 	Registry,
 } from '@kingdom-builder/protocol';
 
@@ -26,14 +24,12 @@ export interface ContentFactory {
 	actions: Registry<ActionConfig>;
 	buildings: Registry<BuildingConfig>;
 	developments: Registry<DevelopmentConfig>;
-	populations: Registry<PopulationConfig>;
 	category(
 		definition?: Partial<ContentActionCategoryConfig>,
 	): ContentActionCategoryConfig;
 	action(definition?: Partial<ActionConfig>): ActionConfig;
 	building(definition?: Partial<BuildingConfig>): BuildingConfig;
 	development(definition?: Partial<DevelopmentConfig>): DevelopmentConfig;
-	population(definition?: Partial<PopulationConfig>): PopulationConfig;
 }
 
 export function createContentFactory(): ContentFactory {
@@ -41,7 +37,6 @@ export function createContentFactory(): ContentFactory {
 	const actions = createActionRegistry();
 	const buildings = createBuildingRegistry();
 	const developments = createDevelopmentRegistry();
-	const populations = createPopulationRegistry();
 
 	let nextCategoryOrder = categories.values().length;
 
@@ -129,34 +124,15 @@ export function createContentFactory(): ContentFactory {
 		return built;
 	}
 
-	function population(
-		definition: Partial<PopulationConfig> = {},
-	): PopulationConfig {
-		const id = definition.id ?? nextId('population');
-		const built: PopulationConfig = {
-			id,
-			name: definition.name ?? id,
-			icon: definition.icon,
-			onPayUpkeepStep: definition.onPayUpkeepStep ?? [],
-			onGainIncomeStep: definition.onGainIncomeStep ?? [],
-			onGainAPStep: definition.onGainAPStep ?? [],
-			upkeep: definition.upkeep,
-		};
-		populations.add(id, built);
-		return built;
-	}
-
 	return {
 		categories,
 		actions,
 		buildings,
 		developments,
-		populations,
 		category,
 		action,
 		building,
 		development,
-		population,
 	};
 }
 

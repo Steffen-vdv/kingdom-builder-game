@@ -5,10 +5,10 @@ import {
 	OVERVIEW_CONTENT,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	ACTION_CATEGORIES,
 	RESOURCE_REGISTRY,
+	Resource,
 } from '@kingdom-builder/contents';
 import { buildSessionMetadata } from '../../src/session/sessionMetadataBuilder.js';
 
@@ -111,8 +111,8 @@ describe('buildSessionMetadata', () => {
 
 	it('builds population resource metadata from registry', () => {
 		const { metadata } = buildSessionMetadata();
-		// Population resources have their metadata in the resources object
-		const [populationId] = POPULATIONS.entries()[0];
+		// Population resources are now just resources - use Resource constants
+		const populationId = Resource.council;
 		const resourceMeta = metadata.resources?.[populationId];
 		expect(resourceMeta).toBeDefined();
 		// Should have a label from the resource registry
@@ -121,12 +121,17 @@ describe('buildSessionMetadata', () => {
 
 	it('builds population resource metadata with icon when available', () => {
 		const { metadata } = buildSessionMetadata();
-		// Find a population that has a matching resource with an icon
-		for (const [id] of POPULATIONS.entries()) {
-			const v2Resource = RESOURCE_REGISTRY.byId[id];
-			if (v2Resource?.icon) {
+		// Population resources use Resource constant IDs
+		const populationIds = [
+			Resource.council,
+			Resource.legion,
+			Resource.fortifier,
+		];
+		for (const id of populationIds) {
+			const resourceDef = RESOURCE_REGISTRY.byId[id];
+			if (resourceDef?.icon) {
 				const resourceMeta = metadata.resources?.[id];
-				expect(resourceMeta?.icon).toBe(v2Resource.icon);
+				expect(resourceMeta?.icon).toBe(resourceDef.icon);
 				break;
 			}
 		}
@@ -134,11 +139,17 @@ describe('buildSessionMetadata', () => {
 
 	it('builds population resource metadata with description when available', () => {
 		const { metadata } = buildSessionMetadata();
-		for (const [id] of POPULATIONS.entries()) {
-			const v2Resource = RESOURCE_REGISTRY.byId[id];
-			if (v2Resource?.description) {
+		// Population resources use Resource constant IDs
+		const populationIds = [
+			Resource.council,
+			Resource.legion,
+			Resource.fortifier,
+		];
+		for (const id of populationIds) {
+			const resourceDef = RESOURCE_REGISTRY.byId[id];
+			if (resourceDef?.description) {
 				const resourceMeta = metadata.resources?.[id];
-				expect(resourceMeta?.description).toBe(v2Resource.description);
+				expect(resourceMeta?.description).toBe(resourceDef.description);
 				break;
 			}
 		}

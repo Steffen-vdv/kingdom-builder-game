@@ -24,11 +24,29 @@ interface BuildActionsPanelContentOptions {
 type ContentFactory = ReturnType<typeof createContentFactory>;
 type ActionDefinition = ReturnType<ContentFactory['action']>;
 type BuildingDefinition = ReturnType<ContentFactory['building']>;
-type PopulationDefinition = ReturnType<ContentFactory['population']>;
+
+interface PopulationEntry {
+	id: string;
+	name: string;
+	icon?: string;
+}
+
+let populationSeq = 0;
+function createPopulationEntry(def: {
+	name?: string;
+	icon?: string;
+}): PopulationEntry {
+	populationSeq += 1;
+	return {
+		id: `population-${populationSeq}`,
+		name: def.name ?? `Population ${populationSeq}`,
+		icon: def.icon,
+	};
+}
 
 export interface ActionsPanelContent {
-	readonly registeredPopulationRoles: PopulationDefinition[];
-	readonly passivePopulation: PopulationDefinition;
+	readonly registeredPopulationRoles: PopulationEntry[];
+	readonly passivePopulation: PopulationEntry;
 	readonly buildRequirements: unknown[];
 	readonly raisePopulationAction: ActionDefinition;
 	readonly basicAction: ActionDefinition;
@@ -58,17 +76,15 @@ export function buildActionsPanelContent({
 				{
 					name: 'Council Role',
 					icon: '⚖️',
-					upkeep: { [upkeepResource]: 1 },
 				},
 				{
 					name: 'Legion Role',
-					upkeep: { [upkeepResource]: 1 },
 				},
 			];
 	const registeredPopulationRoles = defaultPopulationRoles.map((definition) =>
-		factory.population(definition),
+		createPopulationEntry(definition),
 	);
-	const passivePopulation = factory.population({
+	const passivePopulation = createPopulationEntry({
 		name: 'Passive Role',
 		icon: '👤',
 	});

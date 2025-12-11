@@ -18,28 +18,27 @@ describe('resource source evaluator dependencies', () => {
 	});
 
 	it('trims identifiers and ignores non-object parameters', () => {
-		const factory = createContentFactory();
-		const population = factory.population();
-		// Population roles now use 'resource' evaluator type
-		const populationDependencies = collectEvaluatorDependencies({
-			type: 'resource',
-			params: { resourceId: `  ${population.id}  ` },
-		});
-		expect(populationDependencies).toEqual([
-			{ type: 'resource', id: population.id },
-		]);
+		// Use an arbitrary resource ID for testing dependency collection
+		const resourceId = 'resource:test:sample';
 		const resourceDependencies = collectEvaluatorDependencies({
+			type: 'resource',
+			params: { resourceId: `  ${resourceId}  ` },
+		});
+		expect(resourceDependencies).toEqual([
+			{ type: 'resource', id: resourceId },
+		]);
+		const invalidParams = collectEvaluatorDependencies({
 			type: 'resource',
 			params: ['not-an-object'] as unknown as Record<string, unknown>,
 		});
-		expect(resourceDependencies).toEqual([]);
+		expect(invalidParams).toEqual([]);
 	});
 
 	it('collects nested compare dependencies and skips numbers', () => {
 		const factory = createContentFactory();
 		const development = factory.development();
-		const population = factory.population();
-		// Population roles now use 'resource' evaluator type
+		// Use an arbitrary resource ID for testing dependency collection
+		const resourceId = 'resource:test:nested';
 		const dependencies = collectEvaluatorDependencies({
 			type: 'compare',
 			params: {
@@ -53,7 +52,7 @@ describe('resource source evaluator dependencies', () => {
 						},
 						right: {
 							type: 'resource',
-							params: { resourceId: population.id },
+							params: { resourceId },
 						},
 					},
 				},
@@ -61,7 +60,7 @@ describe('resource source evaluator dependencies', () => {
 		});
 		expect(dependencies).toEqual([
 			{ type: 'development', id: development.id },
-			{ type: 'resource', id: population.id },
+			{ type: 'resource', id: resourceId },
 		]);
 		const noParams = collectEvaluatorDependencies({
 			type: 'compare',

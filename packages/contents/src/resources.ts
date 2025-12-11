@@ -11,18 +11,14 @@
  * - Use .lowerBound() and .upperBound() to set value constraints
  * - Always end with .build() to finalize the resource
  */
-import { Registry, populationSchema } from '@kingdom-builder/protocol';
 import { resource, resourceCategory, resourceGroup, boundTo } from './infrastructure/resource';
 import type { ResourceDefinition, ResourceCategoryDefinition, ResourceGroupDefinition } from './infrastructure/resource';
 import { resourceChange } from './infrastructure/resource/effects';
 import { PassiveMethods, ResourceMethods, Types } from './infrastructure/builderShared';
-import { effect, passiveParams, resourceAssignmentPassiveId, population, resourceEvaluator } from './infrastructure/builders';
+import { effect, passiveParams, resourceAssignmentPassiveId, resourceEvaluator } from './infrastructure/builders';
 import { resourceAmountChange } from './infrastructure/helpers/resourceEffects';
 import { Resource } from './internal';
 import { getHappinessResourceDefinition } from './infrastructure/happinessResource';
-import type { PopulationDef } from './infrastructure/defs';
-
-export type { PopulationDef } from './infrastructure/defs';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RESOURCES
@@ -166,6 +162,12 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 		.build();
 	const fortifierOnValueDecrease = effect(Types.Passive, PassiveMethods.REMOVE).params(fortifierPassiveParams).build();
 
+	// Council onGainAPStep effect: +1 AP per council member
+	const councilApGainEffect = effect()
+		.evaluator(resourceEvaluator().param('id', Resource.council).resourceId(Resource.council))
+		.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.ap, 1)).build())
+		.build();
+
 	cachedPopulationResources = [
 		resource('resource:core:council')
 			.icon('⚖️')
@@ -174,6 +176,8 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 			.group(POPULATION_GROUP_ID, { order: POPULATION_GROUP_ORDER })
 			.order(1)
 			.lowerBound(0)
+			.upkeep(Resource.gold, 2)
+			.onGainAPStep(councilApGainEffect)
 			.build(),
 		resource('resource:core:legion')
 			.icon('🎖️')
@@ -182,6 +186,7 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 			.group(POPULATION_GROUP_ID, { order: POPULATION_GROUP_ORDER })
 			.order(2)
 			.lowerBound(0)
+			.upkeep(Resource.gold, 1)
 			.onValueIncrease(legionOnValueIncrease)
 			.onValueDecrease(legionOnValueDecrease)
 			.build(),
@@ -192,6 +197,7 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 			.group(POPULATION_GROUP_ID, { order: POPULATION_GROUP_ORDER })
 			.order(3)
 			.lowerBound(0)
+			.upkeep(Resource.gold, 1)
 			.onValueIncrease(fortifierOnValueIncrease)
 			.onValueDecrease(fortifierOnValueDecrease)
 			.build(),
@@ -278,35 +284,3 @@ export function getResourceGroupDefinitions(): readonly ResourceGroupDefinition[
 export function getResourceCategoryDefinitions(): readonly ResourceCategoryDefinition[] {
 	return [primaryCategory, secondaryCategory];
 }
-
-// Legacy: PopulationDef defines upkeep and phase effects. These are resource
-// behaviors that should ideally be part of ResourceDefinition, but the engine
-// currently consumes them separately via populationSchema.
-
-export function createPopulationRegistry() {
-	const registry = new Registry<PopulationDef>(populationSchema);
-
-	registry.add(
-		Resource.council,
-		population()
-			.id(Resource.council)
-			.name('Council')
-			.icon('⚖️')
-			.upkeep(Resource.gold, 2)
-			.onGainAPStep(
-				effect()
-					.evaluator(resourceEvaluator().param('id', Resource.council).resourceId(Resource.council))
-					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.ap, 1)).build())
-					.build(),
-			)
-			.build(),
-	);
-
-	registry.add(Resource.legion, population().id(Resource.legion).name('Legion').icon('🎖️').upkeep(Resource.gold, 1).build());
-
-	registry.add(Resource.fortifier, population().id(Resource.fortifier).name('Fortifier').icon('🔧').upkeep(Resource.gold, 1).build());
-
-	return registry;
-}
-
-export const POPULATIONS = createPopulationRegistry();

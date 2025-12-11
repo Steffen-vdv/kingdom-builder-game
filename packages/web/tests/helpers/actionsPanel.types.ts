@@ -1,8 +1,13 @@
-import type { PopulationConfig } from '@kingdom-builder/protocol';
 import type { createActionsPanelGame } from './actionsPanel';
 
+interface PopulationRoleOption {
+	id?: string;
+	name?: string;
+	icon?: string;
+}
+
 export interface ActionsPanelGameOptions {
-	populationRoles?: Array<Partial<PopulationConfig>>;
+	populationRoles?: PopulationRoleOption[];
 	showBuilding?: boolean;
 	actionCategories?: {
 		population?: string;

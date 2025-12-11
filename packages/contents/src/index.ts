@@ -3,7 +3,6 @@ export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategori
 export { ACTIONS, createActionRegistry, ActionId } from './actions';
 export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry } from './developments';
-export { POPULATIONS, createPopulationRegistry, type PopulationDef } from './resources';
 export { PHASES, PhaseId, PhaseStepId } from './phases';
 export type { PhaseDef, StepDef } from './infrastructure/builders';
 export type { PhaseId as PhaseIdValue, PhaseStepId as PhaseStepIdValue } from './phases';

@@ -115,18 +115,6 @@ export const developmentSchema = z.object({
 
 export type DevelopmentConfig = z.infer<typeof developmentSchema>;
 
-export const populationSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	icon: z.string().optional(),
-	upkeep: costBagSchema.optional(),
-	onPayUpkeepStep: z.array(effectSchema).optional(),
-	onGainIncomeStep: z.array(effectSchema).optional(),
-	onGainAPStep: z.array(effectSchema).optional(),
-});
-
-export type PopulationConfig = z.infer<typeof populationSchema>;
-
 const resourceTierThresholdSchema = z.object({
 	min: z.number().optional(),
 	max: z.number().optional(),
@@ -324,7 +312,6 @@ export const gameConfigSchema = z.object({
 	actions: z.array(actionSchema).optional(),
 	buildings: z.array(buildingSchema).optional(),
 	developments: z.array(developmentSchema).optional(),
-	populations: z.array(populationSchema).optional(),
 	phases: z.array(phaseSchema).optional(),
 	resourceCatalog: resourceCatalogSchema.optional(),
 });

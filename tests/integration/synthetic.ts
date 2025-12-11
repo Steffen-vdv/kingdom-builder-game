@@ -4,11 +4,9 @@ import {
 	actionSchema,
 	buildingSchema,
 	developmentSchema,
-	populationSchema,
 	type ActionConfig,
 	type BuildingConfig,
 	type DevelopmentConfig,
-	type PopulationConfig,
 	type StartConfig,
 	type PhaseConfig,
 	type RuleSet,
@@ -82,7 +80,6 @@ export function createSyntheticContext() {
 
 	const buildings = new Registry<BuildingConfig>(buildingSchema);
 	const developments = new Registry<DevelopmentConfig>(developmentSchema);
-	const populations = new Registry<PopulationConfig>(populationSchema);
 
 	const phases: PhaseConfig[] = [
 		{ id: 'main', action: true, steps: [{ id: 'main' }] },
@@ -163,7 +160,6 @@ export function createSyntheticContext() {
 		actions: actionsReg,
 		buildings,
 		developments,
-		populations,
 		phases,
 		rules,
 		resourceCatalog: {

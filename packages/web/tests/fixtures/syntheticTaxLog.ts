@@ -88,7 +88,6 @@ const synthResourceDefinitions = [
 		bounds: { lowerBound: 0 },
 		globalCost: 1,
 	}),
-	// Population role resource
 	resourceDefinition({
 		id: SYNTHETIC_POPULATION_ROLE_ID,
 		metadata: {
@@ -165,10 +164,6 @@ export function buildStartConfigEffects(startConfig: StartConfig) {
 
 export function createSyntheticTaxScenario(): SyntheticTaxScenario {
 	const factory = createContentFactory();
-	factory.population({
-		id: SYNTHETIC_POPULATION_ROLE_ID,
-		icon: SYNTHETIC_POPULATION_ROLES[SYNTHETIC_POPULATION_ROLE_ID].icon,
-	});
 	factory.development({
 		id: SYNTHETIC_IDS.farmDevelopment,
 		icon: '🌾',

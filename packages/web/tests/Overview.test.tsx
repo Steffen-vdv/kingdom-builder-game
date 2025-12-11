@@ -14,17 +14,13 @@ describe('<Overview />', () => {
 	it('renders supplied overview content using registry metadata tokens', () => {
 		const factory = createContentFactory();
 		const expandAction = factory.action({ id: 'expand', icon: '🚀' });
-		const councilRole = factory.population({
-			id: 'council',
-			icon: '👑',
-			name: 'Council',
-		});
+		const councilId = 'council';
+		const councilIcon = '👑';
 		const registries: SessionRegistries = {
 			actions: factory.actions,
 			actionCategories: new Registry<ActionCategoryConfig>(),
 			buildings: factory.buildings,
 			developments: factory.developments,
-			populations: factory.populations,
 			resources: {
 				gold: {
 					key: 'gold',
@@ -43,10 +39,9 @@ describe('<Overview />', () => {
 			resources: {
 				gold: { label: 'Refined Gold', icon: '🪙' },
 				ap: { label: 'Reserve AP', icon: '✨' },
-				// Population and stats are unified under resources in V2 system
-				[councilRole.id]: {
+				[councilId]: {
 					label: 'Guiding Council',
-					icon: councilRole.icon,
+					icon: councilIcon,
 				},
 				army: { label: 'Army Strength', icon: '🛡️' },
 			},
@@ -111,7 +106,7 @@ describe('<Overview />', () => {
 						army: ['missing-army', 'army'],
 					},
 					population: {
-						council: ['missing-council', councilRole.id],
+						council: ['missing-council', councilId],
 					},
 					static: {
 						land: ['land'],
@@ -139,7 +134,7 @@ describe('<Overview />', () => {
 		expect(storySection.textContent).not.toContain('{ap}');
 
 		expect(storySection).toHaveTextContent('🪙');
-		expect(storySection).toHaveTextContent(councilRole.icon ?? '');
+		expect(storySection).toHaveTextContent(councilIcon);
 		expect(storySection).toHaveTextContent('✨');
 
 		const flowSection = screen.getByText('Custom Flow').closest('section');
