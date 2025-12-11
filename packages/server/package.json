@@ -8,6 +8,7 @@
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
 		"build": "tsc -b tsconfig.json",
+		"pretest": "npm rebuild better-sqlite3 --silent",
 		"test": "vitest --run --config vitest.config.ts"
 	},
 	"dependencies": {
