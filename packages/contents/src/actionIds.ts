@@ -19,7 +19,6 @@ export const SystemActionId = {
 	initial_setup: 'initial_setup',
 	initial_setup_devmode: 'initial_setup_devmode',
 	compensation: 'compensation',
-	compensation_devmode_b: 'compensation_devmode_b',
 } as const;
 
 export type SystemActionId = ValueOf<typeof SystemActionId>;

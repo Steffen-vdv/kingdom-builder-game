@@ -17,14 +17,6 @@ function resourceAdd(resourceId: string, amount: number) {
 }
 
 /**
- * Creates a resource:remove effect using the Resource system with reject
- * reconciliation mode.
- */
-function resourceRemove(resourceId: string, amount: number) {
-	return effect(Types.Resource, ResourceMethods.REMOVE).params(resourceChange(resourceId).amount(amount).reject().build()).build();
-}
-
-/**
  * Creates a land:add effect that adds the specified number of lands.
  */
 function landAdd(count: number) {
@@ -117,20 +109,6 @@ export function registerInitialSetupActions(registry: Registry<ActionDef>) {
 			.free()
 			// Extra AP for the second player
 			.effect(resourceAdd(Resource.ap, 1))
-			.build(),
-	);
-
-	// Dev mode compensation for player B - override castleHP to 1
-	registry.add(
-		SystemActionId.compensation_devmode_b,
-		action()
-			.id(SystemActionId.compensation_devmode_b)
-			.name('Dev Mode Player B Compensation')
-			.icon('🔧')
-			.system()
-			.free()
-			// Reduce castle HP to 1 (remove 9 from the initial 10)
-			.effect(resourceRemove(Resource.castleHP, 9))
 			.build(),
 	);
 }

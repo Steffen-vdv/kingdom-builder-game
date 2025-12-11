@@ -82,7 +82,6 @@ export function createSyntheticSessionManager(
 	const initialSetupActionId = '__synth_initial_setup__';
 	const initialSetupDevmodeActionId = '__synth_initial_setup_devmode__';
 	const compensationActionId = '__synth_compensation__';
-	const compensationDevmodeBActionId = '__synth_compensation_b__';
 
 	// Initial setup action gives players starting resources
 	factory.actions.add(initialSetupActionId, {
@@ -132,20 +131,10 @@ export function createSyntheticSessionManager(
 		effects: [],
 	});
 
-	factory.actions.add(compensationDevmodeBActionId, {
-		id: compensationDevmodeBActionId,
-		name: 'Synthetic Compensation (DevMode B)',
-		system: true,
-		free: true,
-		baseCosts: {},
-		effects: [],
-	});
-
 	const systemActionIds = {
 		initialSetup: initialSetupActionId,
 		initialSetupDevmode: initialSetupDevmodeActionId,
 		compensation: compensationActionId,
-		compensationDevmodeB: compensationDevmodeBActionId,
 	};
 	const phases: PhaseConfig[] = [
 		{ id: 'main', action: true, steps: [{ id: 'main' }] },

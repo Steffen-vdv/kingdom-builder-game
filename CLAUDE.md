@@ -266,15 +266,15 @@ you're asking with a concrete prototype instead of words.
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <style>
-    /* All styles inline */
-    .your-component { ... }
-  </style>
-</head>
-<body>
-  <!-- Mockup content -->
-</body>
+	<head>
+		<style>
+			/* All styles inline */
+			.your-component { ... }
+		</style>
+	</head>
+	<body>
+		<!-- Mockup content -->
+	</body>
 </html>
 ```
 

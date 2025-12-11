@@ -229,7 +229,6 @@ export function createPhaseTestEnvironment() {
 		initialSetup: '__noop_initial_setup__',
 		initialSetupDevmode: '__noop_initial_setup_devmode__',
 		compensation: '__noop_compensation__',
-		compensationDevmodeB: '__noop_compensation_devmode_b__',
 	};
 
 	const rules: RuleSet = {

@@ -42,7 +42,6 @@ export const SKIP_SETUP_ACTION_IDS = {
 	initialSetup: '__synth_noop_initial__',
 	initialSetupDevmode: '__synth_noop_devmode__',
 	compensation: '__synth_noop_compensation__',
-	compensationDevmodeB: '__synth_noop_compensation_b__',
 };
 
 export const SYNTHETIC_ASSETS = {
