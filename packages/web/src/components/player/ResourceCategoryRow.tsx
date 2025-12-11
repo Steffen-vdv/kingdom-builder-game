@@ -149,25 +149,14 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 				| undefined;
 
 			if (resourceId === tieredResourceKey && tierDefinitions.length > 0) {
-				// Find the active tier's index to show context (prev/current/next)
+				// Sort tiers by range (highest first for display)
 				const sortedTiers = [...tierDefinitions].sort(
 					(a, b) => (b.range.min ?? 0) - (a.range.min ?? 0),
 				);
-				const activeIndex = sortedTiers.findIndex((t) => t.id === activeTierId);
 
-				// Show up to 3 tiers: previous, current, next (or just current if
-				// no active tier)
-				let tiersToShow: TierDefinition[];
-				if (activeIndex >= 0) {
-					const start = Math.max(0, activeIndex - 1);
-					const end = Math.min(sortedTiers.length, activeIndex + 2);
-					tiersToShow = sortedTiers.slice(start, end);
-				} else {
-					// No active tier, show top 3
-					tiersToShow = sortedTiers.slice(0, 3);
-				}
-
-				const tierResult = buildTierEntries(tiersToShow, {
+				// Pass all tiers to buildTierEntries - the thermometer component
+				// will handle showing 5 tiers centered on the active one
+				const tierResult = buildTierEntries(sortedTiers, {
 					...(activeTierId ? { activeId: activeTierId } : {}),
 					tieredResource: tieredResourceDescriptor,
 					passiveAsset: passiveAssetDescriptor,
