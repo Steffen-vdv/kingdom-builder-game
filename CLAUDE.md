@@ -209,6 +209,75 @@ Use a numbered list. For each question:
 > 2. **Stacking behavior**: If the player builds multiple copies, should bonuses
 >    stack additively or replace? Existing buildings use additive stacking.
 
+### Visual mockup protocol
+
+When implementing UI features, **get visual approval before writing integrated
+code.**
+
+**This protocol applies when:**
+
+- The user explicitly asks for a "mockup"
+- The request has a significant visual component (new UI element, layout change,
+  styling update, component redesign)
+
+**Workflow:**
+
+```
+1. CREATE an isolated HTML+CSS snippet
+   - Self-contained: runs in any browser without dependencies
+   - No React, no TypeScript, no build step required
+   - User can paste it into a blank .html file and open it
+     ↓
+2. PRESENT the snippet immediately
+   - Include the full HTML document with embedded CSS
+   - Explain what visual decisions you made and why
+     ↓
+3. WAIT for user feedback
+   - Do NOT proceed to codebase integration
+   - Do NOT write React components, styled-components, or real implementation
+     ↓
+4. ITERATE if needed
+   - Adjust the mockup based on feedback
+   - Repeat until user approves the visual design
+     ↓
+5. ONLY THEN implement in the actual codebase
+   - Translate the approved HTML+CSS into proper React/TypeScript
+   - Follow existing component patterns and styling conventions
+```
+
+**Why this matters:**
+
+Visual design is subjective and hard to describe in words. A 30-second HTML
+mockup prevents hours of rework from implementing the wrong visual direction.
+This is the visual equivalent of "ask questions when uncertain"—except here,
+you're asking with a concrete prototype instead of words.
+
+```
+❌ WRONG: User asks for a new card layout → you write a React component →
+          user says "that's not what I meant" → you rewrite everything
+
+✅ CORRECT: User asks for a new card layout → you provide an HTML mockup →
+            user says "make the header bigger" → you adjust mockup →
+            user approves → you implement the real component once
+```
+
+**The mockup format:**
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* All styles inline */
+    .your-component { ... }
+  </style>
+</head>
+<body>
+  <!-- Mockup content -->
+</body>
+</html>
+```
+
 ---
 
 ## 2. Core Principles
@@ -597,6 +666,7 @@ db.close();
 │ □ Identified unknowns and options                               │
 │ □ Asked questions if <95% confident                             │
 │ □ Received answers and looped until confident                   │
+│ □ Visual work? HTML mockup approved before integration          │
 ├─────────────────────────────────────────────────────────────────┤
 │ DURING IMPLEMENTATION                                           │
 │ □ No fallbacks or defaults hiding bad data                      │
