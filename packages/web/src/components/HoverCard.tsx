@@ -15,6 +15,7 @@ import {
 } from './common/cardStyles';
 import { ResolutionCard } from './ResolutionCard';
 import { MultiStepIndicator } from './actions/StepBadge';
+import TierThermometer from './player/TierThermometer';
 
 const FADE_DURATION_MS = 200;
 
@@ -189,6 +190,17 @@ export default function HoverCard() {
 					)}
 				</div>
 			</div>
+			{renderedData.thermometer && (
+				<div className="mb-3">
+					<TierThermometer
+						currentValue={renderedData.thermometer.currentValue}
+						tiers={renderedData.thermometer.tiers}
+						{...(renderedData.thermometer.resourceIcon !== undefined && {
+							resourceIcon: renderedData.thermometer.resourceIcon,
+						})}
+					/>
+				</div>
+			)}
 			{renderedData.effects.length > 0 && (
 				<div className="mb-2">
 					<div className={CARD_LABEL_CLASS}>{effectsTitle}</div>

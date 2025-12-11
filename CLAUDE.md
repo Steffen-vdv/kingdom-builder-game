@@ -575,6 +575,18 @@ db.close();
 | ------------------ | ---------------------- | --------------------------- |
 | `KB_DATABASE_PATH` | Database file location | `./data/kingdom-builder.db` |
 
+### Troubleshooting
+
+If server tests fail with `Could not locate the bindings file` errors for
+`better-sqlite3`, the native module needs rebuilding for your Node.js version:
+
+```bash
+npm rebuild better-sqlite3
+```
+
+This is common after Node.js version changes or fresh clones. Run this before
+investigating test failures in the server package.
+
 ---
 
 ## 12. Communication Style

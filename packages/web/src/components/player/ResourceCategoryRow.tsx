@@ -140,6 +140,14 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 
 			// Check if this is a tiered resource
 			let effects: ReturnType<typeof buildTierEntries>['entries'] = [];
+			let thermometer:
+				| {
+						currentValue: number;
+						tiers: ReturnType<typeof buildTierEntries>['summaries'];
+						resourceIcon?: string;
+				  }
+				| undefined;
+
 			if (resourceId === tieredResourceKey && tierDefinitions.length > 0) {
 				// Find the active tier's index to show context (prev/current/next)
 				const sortedTiers = [...tierDefinitions].sort(
@@ -166,6 +174,15 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 					translationContext,
 				});
 				effects = tierResult.entries;
+
+				// Build thermometer data for visual tier display
+				const currentValue = player.values?.[resourceId] ?? 0;
+				const icon = tieredResourceDescriptor?.icon;
+				thermometer = {
+					currentValue,
+					tiers: tierResult.summaries,
+					...(icon !== undefined && { resourceIcon: icon }),
+				};
 			}
 
 			// Build breakdown for resources that track it
@@ -179,6 +196,7 @@ const ResourceCategoryRow: React.FC<ResourceCategoryRowProps> = ({
 				requirements: [],
 				...(metadata.description ? { description: metadata.description } : {}),
 				...(breakdown && breakdown.length > 0 ? { breakdown } : {}),
+				...(thermometer ? { thermometer } : {}),
 				bgClass: PLAYER_INFO_CARD_BG,
 			});
 		},

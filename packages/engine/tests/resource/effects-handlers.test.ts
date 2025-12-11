@@ -134,6 +134,7 @@ describe('Resource effect handlers', () => {
 
 	it('applies removals with percent rounding and clamps to the lower bound', () => {
 		setResourceValue(ctx.context, ctx.active, ctx.catalog, ctx.oreId, 5);
+		const initialGainsCount = ctx.context.recentResourceGains.length;
 
 		const effect: EffectDef = {
 			params: {
@@ -149,10 +150,9 @@ describe('Resource effect handlers', () => {
 			lower: true,
 			upper: false,
 		});
-		expect(ctx.context.recentResourceGains.at(-1)).toEqual({
-			resourceId: ctx.oreId,
-			amount: -3,
-		});
+		// resource:remove effects are NOT tracked in recentResourceGains
+		// since result mods only apply to resource:add effects
+		expect(ctx.context.recentResourceGains.length).toBe(initialGainsCount);
 		expect(ctx.active.resourceTierIds[ctx.oreId]).toBe('tier-low');
 	});
 

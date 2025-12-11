@@ -366,7 +366,8 @@ describe('resource source descriptors', () => {
 			'trigger',
 			triggerId,
 		);
-		expect(triggerLabel).toContain('Starlight Surge');
+		// After migration, text is preferred over label for display
+		expect(triggerLabel).toContain('When the stars align');
 		expect(triggerLine).toContain(triggerLabel);
 		const passiveLabel = formatKindLabel(translationContext, 'passive', '');
 		expect(passiveLine).toContain(passiveLabel);
@@ -404,7 +405,8 @@ describe('resource source descriptors', () => {
 			translationContext.assets,
 			triggerId,
 		);
-		expect(formattedTrigger).toBe('⚡ Starlight Surge');
+		// After migration, text is preferred over label for display
+		expect(formattedTrigger).toBe('⚡ When the stars align');
 		const fallbackTrigger = formatTriggerLabel(
 			mutatedContext.assets,
 			'unknown-trigger',
