@@ -30,14 +30,12 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 	const foundIndex = sortedTiers.findIndex((t) => t.active);
 	const activeIndex = foundIndex >= 0 ? foundIndex : sortedTiers.length - 1;
 
-	// 3 tiers for the thermometer bar visualization
-	const visibleTiersBar = getVisibleTiers(sortedTiers, activeIndex, 3);
-	// 5 tiers for the effect rows below
-	const visibleTiersRows = getVisibleTiers(sortedTiers, activeIndex, 5);
+	// 3 tiers for both bar and rows (always in sync)
+	const visibleTiers = getVisibleTiers(sortedTiers, activeIndex, 3);
 
-	// Find bounds for the scale FROM BAR VISIBLE TIERS ONLY
-	const minTier = visibleTiersBar[0];
-	const maxTier = visibleTiersBar[visibleTiersBar.length - 1];
+	// Find bounds for the scale FROM VISIBLE TIERS
+	const minTier = visibleTiers[0];
+	const maxTier = visibleTiers[visibleTiers.length - 1];
 	if (!minTier || !maxTier) {
 		return null;
 	}
@@ -74,9 +72,11 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 
 	// Find tier boundaries (where one tier ends and next begins)
 	// Boundary goes BETWEEN the two adjacent integers
-	const boundaries: Array<{ percent: number }> = [];
-	for (let i = 1; i < visibleTiersBar.length; i++) {
-		const tier = visibleTiersBar[i];
+	// Color: left of current = regression (orange), right = progression (teal)
+	const currentTierIndex = visibleTiers.findIndex((t) => t.active);
+	const boundaries: Array<{ percent: number; isRegression: boolean }> = [];
+	for (let i = 1; i < visibleTiers.length; i++) {
+		const tier = visibleTiers[i];
 		if (!tier) {
 			continue;
 		}
@@ -92,12 +92,14 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 		const boundaryPosition = thresholdValue - 0.5;
 		const percent = valueToPercent(boundaryPosition);
 		if (percent > 0 && percent < 100) {
-			boundaries.push({ percent });
+			// Boundary is "regression" if it's to the left of current tier
+			const isRegression = i <= currentTierIndex;
+			boundaries.push({ percent, isRegression });
 		}
 	}
 
 	// Calculate emoji positions (centered in each tier's range within the bar)
-	const emojiPositions = visibleTiersBar.map((tier) => {
+	const emojiPositions = visibleTiers.map((tier) => {
 		const min = tier.rangeMin;
 		const max = tier.rangeMax;
 
@@ -170,19 +172,28 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 							#10b981 100%)`,
 					}}
 				>
-					{/* Tier boundary markers */}
-					{boundaries.map((b, i) => (
-						<div
-							key={`boundary-${i}`}
-							className="absolute -top-0.5 w-0.5 h-3 rounded-sm"
-							style={{
-								left: `${b.percent}%`,
-								transform: 'translateX(-50%)',
-								background: 'rgba(255,255,255,0.5)',
-								boxShadow: '0 0 4px rgba(255,255,255,0.3)',
-							}}
-						/>
-					))}
+					{/* Tier boundary markers - colored by direction */}
+					{boundaries.map((b, i) => {
+						// Regression (left/negative) = orange, Progression (right) = teal
+						const color = b.isRegression
+							? 'rgb(251, 146, 60)' // orange-400
+							: 'rgb(45, 212, 191)'; // teal-400
+						const shadow = b.isRegression
+							? '0 0 6px rgba(251, 146, 60, 0.8)'
+							: '0 0 6px rgba(45, 212, 191, 0.8)';
+						return (
+							<div
+								key={`boundary-${i}`}
+								className="absolute -top-1 w-1 h-4 rounded-sm"
+								style={{
+									left: `${b.percent}%`,
+									transform: 'translateX(-50%)',
+									background: color,
+									boxShadow: shadow,
+								}}
+							/>
+						);
+					})}
 
 					{/* Current value marker */}
 					<div
@@ -218,9 +229,9 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 				</div>
 			</div>
 
-			{/* 5 Tier effect rows: 2 below, current, 2 above */}
+			{/* 3 Tier effect rows: 1 below, current, 1 above */}
 			<div className="mt-3 flex flex-col gap-1.5 text-[11px]">
-				{visibleTiersRows.map((tier) => (
+				{visibleTiers.map((tier) => (
 					<TierEffectRow
 						key={tier.name}
 						tier={tier}
