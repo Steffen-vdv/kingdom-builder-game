@@ -259,6 +259,7 @@ export const resourceTransfer: EffectHandler<ResourceTransferEffectParams> = (
 			'Resource transfer effect requires "donor" and "recipient" parameters.',
 		);
 	}
+
 	const catalog = requireRuntimeCatalog(context);
 	const donorParticipant = prepareTransferParticipant(
 		context,

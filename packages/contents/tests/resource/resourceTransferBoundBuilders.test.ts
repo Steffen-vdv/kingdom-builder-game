@@ -31,13 +31,23 @@ describe('Resource transfer builders', () => {
 		expect(params.recipient).not.toBe(recipient);
 	});
 
-	it('rejects unsupported reconciliation modes', () => {
+	it('rejects invalid reconciliation modes', () => {
 		expect(() =>
-			transferEndpoint('resource:gold').reconciliation('reject').change({
-				type: 'amount',
-				amount: -1,
-			}),
-		).toThrowError('Resource transfer endpoint builder reconciliation mode "reject" is not supported yet. Supported modes: clamp.');
+			transferEndpoint('resource:gold')
+				.reconciliation('invalid' as 'clamp')
+				.change({
+					type: 'amount',
+					amount: -1,
+				}),
+		).toThrowError('reconciliation mode "invalid" is invalid');
+	});
+
+	it('accepts all valid reconciliation modes', () => {
+		const validModes: Array<'clamp' | 'pass' | 'reject'> = ['clamp', 'pass', 'reject'];
+		for (const mode of validModes) {
+			const endpoint = transferEndpoint('resource:gold').reconciliation(mode).changeAmount(-1).build();
+			expect(endpoint.reconciliationMode).toBe(mode);
+		}
 	});
 
 	it('requires donor and recipient payloads before build', () => {
@@ -45,6 +55,81 @@ describe('Resource transfer builders', () => {
 
 		expect(() => resourceTransfer().build()).toThrowError('Resource transfer builder requires donor() before build().');
 		expect(() => resourceTransfer().donor(donor).build()).toThrowError('Resource transfer builder requires recipient() before build().');
+	});
+});
+
+describe('transferEndpoint convenience methods', () => {
+	describe('changeAmount', () => {
+		it('sets amount change type with provided value', () => {
+			const endpoint = transferEndpoint('resource:gold').changeAmount(-10).build();
+
+			expect(endpoint.change).toEqual({
+				type: 'amount',
+				amount: -10,
+			});
+		});
+
+		it('rejects non-finite values', () => {
+			expect(() => transferEndpoint('resource:gold').changeAmount(NaN)).toThrow('expected amount to be a finite number');
+			expect(() => transferEndpoint('resource:gold').changeAmount(Infinity)).toThrow('expected amount to be a finite number');
+		});
+	});
+
+	describe('changePercent', () => {
+		it('converts whole percentage to decimal (e.g., 25 → 0.25)', () => {
+			const endpoint = transferEndpoint('resource:gold').changePercent(25).build();
+
+			expect(endpoint.change).toEqual({
+				type: 'percent',
+				modifiers: [0.25],
+			});
+		});
+
+		it('converts negative percentages correctly', () => {
+			const endpoint = transferEndpoint('resource:gold').changePercent(-50).build();
+
+			expect(endpoint.change).toEqual({
+				type: 'percent',
+				modifiers: [-0.5],
+			});
+		});
+
+		it('handles 100% as 1.0', () => {
+			const endpoint = transferEndpoint('resource:gold').changePercent(100).build();
+
+			expect(endpoint.change).toEqual({
+				type: 'percent',
+				modifiers: [1.0],
+			});
+		});
+
+		it('handles small percentages correctly', () => {
+			const endpoint = transferEndpoint('resource:gold').changePercent(1).build();
+
+			expect(endpoint.change).toEqual({
+				type: 'percent',
+				modifiers: [0.01],
+			});
+		});
+
+		it('rejects non-finite values', () => {
+			expect(() => transferEndpoint('resource:gold').changePercent(NaN)).toThrow('expected percent to be a finite number');
+			expect(() => transferEndpoint('resource:gold').changePercent(Infinity)).toThrow('expected percent to be a finite number');
+		});
+	});
+
+	describe('reconciliation modes', () => {
+		it('sets clamp mode via convenience method', () => {
+			const endpoint = transferEndpoint('resource:gold').changeAmount(-5).clamp().build();
+
+			expect(endpoint.reconciliationMode).toBe('clamp');
+		});
+
+		it('sets pass mode via convenience method', () => {
+			const endpoint = transferEndpoint('resource:gold').changeAmount(-5).pass().build();
+
+			expect(endpoint.reconciliationMode).toBe('pass');
+		});
 	});
 });
 

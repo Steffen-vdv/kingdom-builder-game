@@ -751,6 +751,91 @@ performAction(action.id, ctx);
 expect(ctx.activePlayer.resources.get(CResource.gold)).toBe(before + 2);
 ```
 
+### Three-layer testing strategy
+
+Unit tests alone are insufficient. They often bypass builders and use hardcoded
+"correct" values, allowing infrastructure bugs to slip through. Use this
+three-layer strategy:
+
+**Layer 1: Builder Contract Tests** (in `packages/contents/tests/`)
+
+Test that builder methods produce correct output for any valid input:
+
+```typescript
+// Test the builder, not specific content
+it('changePercent converts to decimal', () => {
+	const result = transferEndpoint('gold').changePercent(25).build();
+	expect(result.change.modifiers[0]).toBe(0.25); // Not 25!
+});
+```
+
+**Layer 2: Engine Invariant Tests** (in `packages/engine/tests/`)
+
+Test properties that must hold regardless of content:
+
+```typescript
+// Test engine mechanics with real content
+it('transfer effects have decimal modifiers', () => {
+	for (const action of createActionRegistry().values()) {
+		// Verify all percent modifiers are in valid range
+		// Would catch: changePercent(25) storing 25 instead of 0.25
+	}
+});
+
+it('council AP scales linearly', () => {
+	// Test N councils → N AP (not N²)
+	// Would catch: evaluator × trigger loop = quadratic scaling
+});
+```
+
+**Layer 3: Regression Tests** (alongside feature tests)
+
+When you fix a bug, add a test that would have caught it:
+
+```typescript
+// This test exists because we had a bug where...
+it('changePercent divides by 100', () => {
+	// Explicit test for the specific bug pattern
+});
+```
+
+### Why unit tests miss infrastructure bugs
+
+Consider this unit test:
+
+```typescript
+// LOOKS CORRECT but would NOT catch the changePercent bug
+it('transfers 25% of gold', () => {
+	const effect = {
+		params: {
+			change: { type: 'percent', modifiers: [-0.25] }, // Hardcoded decimal!
+		},
+	};
+	// Tests handler works with correct input, not that builder produces it
+});
+```
+
+The handler test passes because the fixture uses `0.25`. But the actual
+`changePercent(25)` builder was storing `25`, causing 2500% transfers. The fix
+is to test the **builder output**, not just the handler behavior.
+
+### Property-based testing with fast-check
+
+For numeric conversions and scaling behavior, use property-based tests:
+
+```typescript
+import fc from 'fast-check';
+
+it('changePercent produces decimals for any percentage', () => {
+	fc.assert(
+		fc.property(fc.integer({ min: -100, max: 100 }), (percent) => {
+			const result = transferEndpoint('x').changePercent(percent).build();
+			expect(result.change.modifiers[0]).toBe(percent / 100);
+		}),
+	);
+});
+```
+
 ---
 
 ## 10. Documentation Requirements
