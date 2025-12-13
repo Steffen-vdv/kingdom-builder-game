@@ -6,6 +6,34 @@
 	"hooks": {
 		"SessionStart": [
 			{
+				"matcher": "startup",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/home/user/kingdom-builder-game/.claude/session-start-docs.sh"
+					}
+				]
+			},
+			{
+				"matcher": "resume",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/home/user/kingdom-builder-game/.claude/session-start-docs.sh"
+					}
+				]
+			},
+			{
+				"matcher": "clear",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/home/user/kingdom-builder-game/.claude/session-start-docs.sh"
+					}
+				]
+			},
+			{
+				"matcher": "compact",
 				"hooks": [
 					{
 						"type": "command",
