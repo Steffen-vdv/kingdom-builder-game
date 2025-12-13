@@ -78,6 +78,8 @@ describe('plow workshop translation', () => {
 					resourceGain: 'Resource Gain',
 					cost: 'Cost',
 				},
+				'section:economy': { label: 'Economy' },
+				'section:combat': { label: 'Military' },
 			},
 			triggers: {
 				onBuild: {

@@ -29,36 +29,10 @@
 	}
 
 	.player-bg {
-		@apply relative overflow-hidden rounded-3xl border border-white/60 text-slate-900 shadow-xl shadow-slate-900/10 dark:border-white/10 dark:text-slate-100 dark:shadow-black/40;
-		--stripe-color: rgba(255, 255, 255, 0.45);
+		@apply relative overflow-hidden rounded-2xl border text-slate-900 shadow-xl dark:text-slate-100;
+		border-color: rgba(255, 255, 255, 0.1);
 		background-color: var(--player-color);
-	}
-
-	.dark .player-bg {
-		--stripe-color: rgba(15, 23, 42, 0.45);
-	}
-
-	.player-bg::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: 0;
-		background-image: linear-gradient(
-			45deg,
-			var(--stripe-color) 25%,
-			transparent 25%,
-			transparent 50%,
-			var(--stripe-color) 50%,
-			var(--stripe-color) 75%,
-			transparent 75%,
-			transparent
-		);
-		background-size: 32px 32px;
-		background-position: 0 0;
-		background-repeat: repeat;
-		opacity: 0.65;
-		will-change: background-position;
-		transition: opacity 150ms ease-in-out;
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 	}
 
 	.player-bg > * {
@@ -66,79 +40,136 @@
 		z-index: 1;
 	}
 
+	/* Subtle gradient overlay - removed diagonal stripes */
 	.player-bg::after {
 		content: '';
 		position: absolute;
 		inset: 0;
-		background:
-			radial-gradient(
-				circle at 25% -10%,
-				rgba(255, 255, 255, 0.35),
-				transparent 55%
-			),
-			radial-gradient(
-				circle at 75% 120%,
-				rgba(255, 255, 255, 0.25),
-				transparent 65%
-			);
-		opacity: 0.7;
+		background: linear-gradient(
+			135deg,
+			rgba(255, 255, 255, 0.08),
+			transparent 50%
+		);
+		opacity: 0.5;
 		pointer-events: none;
 		z-index: 0;
 	}
 
 	.dark .player-bg::after {
-		background:
-			radial-gradient(
-				circle at 25% -10%,
-				rgba(148, 163, 184, 0.15),
-				transparent 60%
-			),
-			radial-gradient(
-				circle at 75% 120%,
-				rgba(148, 163, 184, 0.12),
-				transparent 70%
-			);
-		opacity: 0.8;
+		background: linear-gradient(
+			135deg,
+			rgba(148, 163, 184, 0.08),
+			transparent 50%
+		);
+		opacity: 0.6;
 	}
 
+	/* Active player highlight - subtle glow instead of animated stripes */
 	.player-bg-animated {
-		animation: none;
-	}
-
-	.player-bg-animated::before {
-		opacity: 1;
-		animation: player-bg-slide 2s linear infinite;
+		box-shadow:
+			0 20px 40px rgba(0, 0, 0, 0.4),
+			0 0 20px var(--player-glow, rgba(255, 255, 255, 0.1));
 	}
 
 	.player-bg-blue {
 		--player-color: rgba(191, 219, 254, 0.75);
+		--player-glow: rgba(59, 130, 246, 0.3);
 	}
 
 	.player-bg-blue-active {
 		--player-color: rgba(147, 197, 253, 0.85);
+		--player-glow: rgba(59, 130, 246, 0.4);
 	}
 
 	.player-bg-red {
 		--player-color: rgba(254, 205, 211, 0.75);
+		--player-glow: rgba(239, 68, 68, 0.3);
 	}
 
 	.player-bg-red-active {
 		--player-color: rgba(251, 182, 206, 0.85);
+		--player-glow: rgba(239, 68, 68, 0.4);
 	}
 
+	/* Dark mode: cleaner, more subtle backgrounds - no colored borders */
 	.dark .player-bg-blue {
-		--player-color: rgba(37, 99, 235, 0.35);
+		--player-color: rgba(15, 23, 42, 0.92);
+		--player-glow: rgba(59, 130, 246, 0.2);
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.15),
+			rgba(37, 99, 235, 0.08)
+		);
 	}
 
 	.dark .player-bg-blue-active {
-		--player-color: rgba(96, 165, 250, 0.5);
+		--player-color: rgba(15, 23, 42, 0.95);
+		--player-glow: rgba(59, 130, 246, 0.35);
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.25),
+			rgba(37, 99, 235, 0.15)
+		);
 	}
 
 	.dark .player-bg-red {
-		--player-color: rgba(190, 18, 60, 0.35);
+		--player-color: rgba(15, 23, 42, 0.92);
+		--player-glow: rgba(239, 68, 68, 0.2);
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.15),
+			rgba(220, 38, 38, 0.08)
+		);
 	}
 
 	.dark .player-bg-red-active {
-		--player-color: rgba(244, 63, 94, 0.5);
+		--player-color: rgba(15, 23, 42, 0.95);
+		--player-glow: rgba(239, 68, 68, 0.35);
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.25),
+			rgba(220, 38, 38, 0.15)
+		);
+	}
+
+	/* Light mode header backgrounds */
+	.player-bg-blue {
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.2),
+			rgba(37, 99, 235, 0.1)
+		);
+	}
+
+	.player-bg-blue-active {
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.3),
+			rgba(37, 99, 235, 0.18)
+		);
+	}
+
+	.player-bg-red {
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.2),
+			rgba(220, 38, 38, 0.1)
+		);
+	}
+
+	.player-bg-red-active {
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.3),
+			rgba(220, 38, 38, 0.18)
+		);
+	}
+
+	/* Panel header picks up player color */
+	.player-bg .panel-header {
+		background: var(
+			--player-header-bg,
+			linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.06))
+		);
 	}
 }

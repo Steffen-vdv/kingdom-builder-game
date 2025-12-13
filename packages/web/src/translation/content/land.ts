@@ -24,8 +24,11 @@ function translate(
 			const development = context.developments.get(developmentId);
 			items.push({
 				title: `${development?.icon || ''} ${development?.name || developmentId}`,
+				// Omit trigger title since installation context is implied
+				// when viewing developments within owned lands
 				items: translateSummary('development', developmentId, context, {
 					installed: true,
+					omitTriggerTitle: true,
 				}),
 			});
 		} else {

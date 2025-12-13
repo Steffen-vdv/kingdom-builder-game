@@ -10,6 +10,7 @@ import {
 	type ResourceReconciliationMode,
 	type ResourceReconciliationResult,
 } from '../reconciliation';
+import { validateGroupParentBounds } from './group-parent-validation';
 
 /**
  * Build a cache key for additive percent changes. Multiple percent changes
@@ -111,6 +112,9 @@ export function applyAdditivePercentChange(
 		}
 	}
 	// Pass mode: no bounds checking, value passes through as-is
+
+	// Validate group parent bounds - systematic rejection to maintain integrity
+	validateGroupParentBounds(player, catalog, resourceId, newValue);
 
 	// Only update accumulator AFTER validation passes
 	accums[cacheKey] = tentativeAccum;

@@ -10,6 +10,7 @@ import type {
 	TranslationIconLabel,
 	TranslationKeywordDescriptor,
 	TranslationKeywordLabels,
+	TranslationSectionLabel,
 	TranslationTriggerAsset,
 } from './types';
 const formatRemoval = (description: string) =>
@@ -199,6 +200,20 @@ function requireAssetDescriptor(
 	return descriptor;
 }
 
+function requireSectionLabel(
+	descriptors: Readonly<Record<string, SessionMetadataDescriptor>>,
+	section: 'economy' | 'combat',
+): TranslationSectionLabel {
+	const key = `section:${section}`;
+	const descriptor = descriptors[key];
+	if (!descriptor?.label) {
+		throw new Error(
+			`Session metadata is missing a label for section "${section}".`,
+		);
+	}
+	return Object.freeze({ label: descriptor.label });
+}
+
 type MetadataRequirementKey = 'resources' | 'assets' | 'triggers';
 
 function requireMetadataRecord(
@@ -268,25 +283,35 @@ export function createTranslationAssets(
 	const developmentDescriptor = resolveKeywordDescriptor(
 		assetDescriptors['development'],
 	);
+	const buildingDescriptor = resolveKeywordDescriptor(
+		assetDescriptors['building'],
+	);
 	const keywordLabels = resolveKeywordLabels(assetDescriptors['keywords']);
-	const base: Omit<TranslationAssets, 'action' | 'development' | 'keywords'> =
-		Object.freeze({
-			resources,
-			population: populationAsset,
-			land: landAsset,
-			slot: slotAsset,
-			passive: passiveAsset,
-			transfer: transferAsset,
-			upkeep: upkeepAsset,
-			modifiers,
-			triggers,
-			tierSummaries,
-			formatPassiveRemoval: formatRemoval,
-		});
+	// Build section labels for resource panel columns
+	const sections = Object.freeze({
+		economy: requireSectionLabel(assetDescriptors, 'economy'),
+		combat: requireSectionLabel(assetDescriptors, 'combat'),
+	});
+	type OptionalAssetKeys = 'action' | 'development' | 'building' | 'keywords';
+	const base: Omit<TranslationAssets, OptionalAssetKeys> = Object.freeze({
+		resources,
+		population: populationAsset,
+		land: landAsset,
+		slot: slotAsset,
+		passive: passiveAsset,
+		transfer: transferAsset,
+		upkeep: upkeepAsset,
+		modifiers,
+		triggers,
+		tierSummaries,
+		sections,
+		formatPassiveRemoval: formatRemoval,
+	});
 	const result: TranslationAssets = {
 		...base,
 		...(actionDescriptor ? { action: actionDescriptor } : {}),
 		...(developmentDescriptor ? { development: developmentDescriptor } : {}),
+		...(buildingDescriptor ? { building: buildingDescriptor } : {}),
 		...(keywordLabels ? { keywords: keywordLabels } : {}),
 	};
 	return Object.freeze(result);

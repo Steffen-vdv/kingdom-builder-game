@@ -122,6 +122,20 @@ export interface ResourceBoundOfConfig {
 	boundType: ResourceBoundType;
 }
 
+/**
+ * UI section for dual-column layout.
+ * - 'economy': Left column (Gold, AP, Population, Happiness)
+ * - 'combat': Right column (Castle HP, Army, Fort, Absorb, Growth)
+ */
+export type ResourceSection = 'economy' | 'combat';
+
+/**
+ * Display hint color for UI styling.
+ * Can be any valid CSS color (name, hex, rgb, etc.).
+ * Used for visual differentiation of combat stats.
+ */
+export type ResourceDisplayHint = string;
+
 export interface ResourceDefinition extends ResourceMetadata, ResourceBounds, ResourceTriggers, ResourcePhaseEffects {
 	displayAsPercent?: boolean;
 	allowDecimal?: boolean;
@@ -141,6 +155,20 @@ export interface ResourceDefinition extends ResourceMetadata, ResourceBounds, Re
 	 * Upkeep cost per unit of this resource, paid during the upkeep phase.
 	 */
 	upkeep?: ResourceUpkeepCost;
+	/**
+	 * UI section for dual-column layout. Defaults to 'economy' if not set.
+	 */
+	section?: ResourceSection;
+	/**
+	 * When true, render this resource in a smaller/secondary style.
+	 * Used for supporting stats like Absorption and Growth.
+	 */
+	secondary?: boolean;
+	/**
+	 * Display hint for color styling in the UI.
+	 * Used for combat stats that need visual differentiation.
+	 */
+	displayHint?: ResourceDisplayHint;
 }
 
 export interface ResourceGroupParent extends ResourceMetadata, ResourceBounds {

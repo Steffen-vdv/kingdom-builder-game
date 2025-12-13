@@ -8,6 +8,7 @@ export type {
 	ResourceTierDefinition,
 	ResourceTierTrackMetadata,
 	ResourceTierTrack,
+	ResourceSection,
 	ResourceDefinition,
 	ResourceGroupParent,
 	ResourceGroupDefinition,

@@ -277,7 +277,8 @@ describe('buildSessionMetadata', () => {
 		expect(metadata.assets?.land).toBeDefined();
 		expect(metadata.assets?.slot).toBeDefined();
 		expect(metadata.assets?.passive).toBeDefined();
-		expect(metadata.assets?.developments).toBeDefined();
+		expect(metadata.assets?.development).toBeDefined();
+		expect(metadata.assets?.building).toBeDefined();
 	});
 
 	it('freezes nested objects deeply', () => {

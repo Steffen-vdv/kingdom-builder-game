@@ -11,7 +11,7 @@ export const getForecastDisplay = (
 		return undefined;
 	}
 	return {
-		label: `(${formatDelta(delta)})`,
+		label: formatDelta(delta),
 		toneClass: delta > 0 ? 'text-emerald-300' : 'text-rose-300',
 	};
 };

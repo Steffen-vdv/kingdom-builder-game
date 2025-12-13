@@ -18,24 +18,6 @@ interface SnapshotContext {
 	populationParentId?: string;
 }
 
-function sumPopulationRoles(
-	player: SessionPlayerStateSnapshot,
-	populationRoleIds: readonly string[] | undefined,
-): number {
-	if (!populationRoleIds?.length) {
-		return 0;
-	}
-	const values = player.values;
-	let total = 0;
-	for (const roleId of populationRoleIds) {
-		const entry = values?.[roleId];
-		if (typeof entry === 'number') {
-			total += entry;
-		}
-	}
-	return total;
-}
-
 function sumForecastForPopulation(
 	forecastMap: ReadonlyMap<string, number>,
 	populationRoleIds: readonly string[] | undefined,
@@ -123,26 +105,14 @@ export function createResourceSnapshot(
 	context: SnapshotContext,
 	overrides?: Partial<ResourceValueSnapshot>,
 ): ResourceValueSnapshot {
-	const {
-		player,
-		forecastMap,
-		signedGains,
-		populationRoleIds,
-		populationParentId,
-	} = context;
+	const { player, forecastMap, signedGains } = context;
 	const bounds = resolveBounds(
 		player.resourceBounds,
 		resourceId,
 		player.values,
 	);
-	let current = player.values?.[resourceId];
-	if (typeof current !== 'number') {
-		if (populationParentId && resourceId === populationParentId) {
-			current = sumPopulationRoles(player, populationRoleIds);
-		} else {
-			current = 0;
-		}
-	}
+	const rawValue = player.values?.[resourceId];
+	const current = typeof rawValue === 'number' ? rawValue : 0;
 	const resolvedCurrent = overrides?.current ?? current ?? 0;
 	const forecastDelta = overrides?.forecastDelta ?? forecastMap.get(resourceId);
 	const normalizedForecast =

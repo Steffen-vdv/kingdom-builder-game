@@ -627,14 +627,10 @@ export function createActionRegistry() {
 			// Stats
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.populationMax).amount(1).reject().build()).build())
 			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.growth).amount(0.25).reject().build()).build())
-			// Population (dev mode gets more)
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.council).amount(2).reject().build()).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.legion).amount(1).reject().build()).build())
-			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.fortifier).amount(1).reject().build()).build())
 			// First land with Farm
 			.effect(effect(Types.Land, LandMethods.ADD).param('count', 1).build())
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).param('id', DevelopmentId.Farm).build())
-			// Six lands with Houses
+			// Six lands with Houses (must come before population to provide capacity)
 			.effect(effect(Types.Land, LandMethods.ADD).param('count', 1).build())
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).param('id', DevelopmentId.House).build())
 			.effect(effect(Types.Land, LandMethods.ADD).param('count', 1).build())
@@ -649,6 +645,10 @@ export function createActionRegistry() {
 			.effect(effect(Types.Development, DevelopmentMethods.ADD).param('id', DevelopmentId.House).build())
 			// Three empty lands
 			.effect(effect(Types.Land, LandMethods.ADD).param('count', 3).build())
+			// Population (dev mode gets more) - added after houses provide capacity
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.council).amount(2).reject().build()).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.legion).amount(1).reject().build()).build())
+			.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceChange(Resource.fortifier).amount(1).reject().build()).build())
 			.build(),
 	);
 

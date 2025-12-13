@@ -26,9 +26,10 @@ function toMain(engineContext: ReturnType<typeof createTestEngine>) {
  * - Resources with globalCost: Reserved as global action costs
  * - Group parent resources: Values are derived from children
  * - Group child resources: Changing them affects parent (cascading)
+ * - Resources with fixed upperBound: Capping breaks simple math invariant
  *
  * This test verifies simple effect math: before - costs + gains = after.
- * Resources with cascading effects would break this invariant.
+ * Resources with cascading effects or caps would break this invariant.
  */
 function getSimpleResourceIds(): string[] {
 	const contentCatalog = buildResourceCatalog();
@@ -52,9 +53,21 @@ function getSimpleResourceIds(): string[] {
 		}
 	}
 
+	// Exclude resources with fixed upper bounds (capping breaks simple math)
+	const cappedIds = new Set<string>();
+	for (const resource of Object.values(indexes.resourceById)) {
+		// Only exclude fixed numeric bounds, not reference bounds (like boundTo)
+		if (typeof resource.upperBound === 'number') {
+			cappedIds.add(resource.id);
+		}
+	}
+
 	return Object.values(CResource).filter(
 		(id) =>
-			!globalCostIds.has(id) && !parentIds.has(id) && !groupChildIds.has(id),
+			!globalCostIds.has(id) &&
+			!parentIds.has(id) &&
+			!groupChildIds.has(id) &&
+			!cappedIds.has(id),
 	);
 }
 

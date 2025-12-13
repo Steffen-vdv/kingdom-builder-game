@@ -1,5 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import type { ResourceBoundType, ResourceBoundValue, ResourceDefinition, ResourceTierTrack } from './types';
+import type { ResourceBoundType, ResourceBoundValue, ResourceDefinition, ResourceDisplayHint, ResourceSection, ResourceTierTrack } from './types';
 
 interface ResourceGroupOptions {
 	order?: number;
@@ -95,6 +95,24 @@ export interface ResourceBuilder {
 	 * Effects to run during the Gain AP step, per unit of this resource.
 	 */
 	onGainAPStep(...effects: EffectDef[]): this;
+	/**
+	 * Sets the UI section for dual-column layout.
+	 * - 'economy': Left column (Gold, AP, Population, Happiness)
+	 * - 'combat': Right column (Castle HP, Army, Fort, Absorb, Growth)
+	 */
+	section(section: ResourceSection): this;
+	/**
+	 * Marks this resource for smaller/secondary display style.
+	 * Used for supporting stats like Absorption and Growth.
+	 */
+	secondary(enabled?: boolean): this;
+	/**
+	 * Sets a display hint color for UI styling.
+	 * Accepts any valid CSS color (name, hex, rgb, etc.).
+	 * @example .displayHint('#ef4444') // red for offensive stats
+	 * @example .displayHint('#3b82f6') // blue for defensive stats
+	 */
+	displayHint(hint: ResourceDisplayHint): this;
 	build(): ResourceDefinition;
 }
 
@@ -343,6 +361,28 @@ class ResourceBuilderImpl implements ResourceBuilder {
 		}
 		this.definition.onGainAPStep = effects;
 		this.onGainAPStepSet = true;
+		return this;
+	}
+
+	section(section: ResourceSection) {
+		if (section !== 'economy' && section !== 'combat') {
+			throw new Error(`${builderName} section() requires 'economy' or 'combat'.`);
+		}
+		this.setOnce('section', section);
+		return this;
+	}
+
+	secondary(enabled = true) {
+		const resolved = enabled ?? true;
+		this.setOnce('secondary', resolved);
+		return this;
+	}
+
+	displayHint(hint: ResourceDisplayHint) {
+		if (!hint || typeof hint !== 'string') {
+			throw new Error(`${builderName} displayHint() requires a valid CSS color string.`);
+		}
+		this.setOnce('displayHint', hint);
 		return this;
 	}
 

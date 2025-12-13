@@ -128,6 +128,8 @@ describe('createTranslationContext', () => {
 				land: { icon: '🌄', label: 'Territory' },
 				population: { icon: '🧑‍🤝‍🧑', label: 'Population' },
 				upkeep: { icon: '🪣', label: 'Maintenance' },
+				'section:economy': { label: 'Economy' },
+				'section:combat': { label: 'Military' },
 			},
 			triggers: {
 				[triggerId]: {

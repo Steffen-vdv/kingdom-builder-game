@@ -106,6 +106,7 @@ export function getHappinessResourceDefinition(): ResourceDefinition {
 			metadata: HAPPINESS_TIER_TRACK_METADATA,
 			tiers: getHappinessTiers(),
 		})
+		.section('economy')
 		.build();
 
 	return cachedHappinessDefinition;

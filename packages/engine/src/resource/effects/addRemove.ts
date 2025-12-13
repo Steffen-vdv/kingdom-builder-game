@@ -10,6 +10,7 @@ import {
 	resolveResourceDefinition,
 } from '../state-helpers';
 import { reconcileResourceChange } from '../reconciliation';
+import { validateGroupParentBounds } from './group-parent-validation';
 import type {
 	ResolvedBounds,
 	ResourceChangeParameters,
@@ -352,6 +353,9 @@ function applyResourceEffect(
 			flags.upper = true;
 		}
 	}
+	// Validate that the change won't violate the group parent's bounds.
+	// This is a systematic rejection to maintain computed value integrity.
+	validateGroupParentBounds(player, catalog, resourceId, result.finalValue);
 	// Pass mode bypasses bounds - tell setResourceValue to skip clamping
 	const skipBoundClamp = reconciliationMode === 'pass';
 	// Only track resource:add effects in recentResourceGains for evaluation

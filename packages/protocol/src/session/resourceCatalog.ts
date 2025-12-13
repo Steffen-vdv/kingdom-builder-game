@@ -93,6 +93,19 @@ export interface SessionResourceGlobalCostConfig {
 	amount: number;
 }
 
+/**
+ * UI section for dual-column layout.
+ * - 'economy': Left column (Gold, AP, Population, Happiness)
+ * - 'combat': Right column (Castle HP, Army, Fort, Absorb, Growth)
+ */
+export type SessionResourceSection = 'economy' | 'combat';
+
+/**
+ * Display hint for UI color styling.
+ * A CSS color value (hex, rgb, color name, etc.) applied as background tint.
+ */
+export type DisplayHintColor = string;
+
 export interface SessionResourceDefinition
 	extends SessionResourceMetadata, SessionResourceBounds {
 	displayAsPercent: boolean;
@@ -104,6 +117,21 @@ export interface SessionResourceDefinition
 	resolvedGroupOrder: number | null;
 	globalCost?: SessionResourceGlobalCostConfig;
 	tierTrack?: SessionResourceTierTrack;
+	/**
+	 * UI section for dual-column layout. Resources without a section
+	 * default to 'economy'.
+	 */
+	section: SessionResourceSection;
+	/**
+	 * When true, render this resource in a smaller/secondary style.
+	 * Used for supporting stats like Absorption and Growth.
+	 */
+	secondary: boolean;
+	/**
+	 * Display hint color for UI styling (CSS color value).
+	 * Applied as background tint for visual differentiation.
+	 */
+	displayHint: DisplayHintColor | null;
 	/**
 	 * When set, declares that this resource represents a bound of another
 	 * resource. Used by UI to display "current/max" pairs. Resources with

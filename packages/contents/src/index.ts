@@ -1,7 +1,7 @@
 export { ACTION_CATEGORIES, createActionCategoryRegistry, ActionCategoryId } from './actionCategories';
 export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 export { ACTIONS, createActionRegistry, ActionId, ACTION_INFO } from './actions';
-export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
+export { BUILDINGS, createBuildingRegistry, BuildingId, BUILDING_INFO } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry, DEVELOPMENT_INFO } from './developments';
 export { PHASES, PhaseId, PhaseStepId } from './phases';
 export type { PhaseDef, StepDef } from './infrastructure/builders';
@@ -12,7 +12,7 @@ export { Trigger, TRIGGER_META, type TriggerId, type TriggerMeta } from './trigg
 // Legacy exports for backwards compatibility
 export { ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP, ON_GAIN_AP_STEP } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
-export { UPKEEP_INFO, TRANSFER_INFO, KEYWORD_LABELS } from './assets';
+export { UPKEEP_INFO, TRANSFER_INFO, KEYWORD_LABELS, SECTION_INFO } from './assets';
 export { POPULATION_INFO, POPULATION_ARCHETYPE_INFO } from './population';
 export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';

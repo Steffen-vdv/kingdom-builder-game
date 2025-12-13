@@ -1284,7 +1284,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": null,
 			"groupOrder": null,
-			"resolvedGroupOrder": null
+			"resolvedGroupOrder": null,
+			"section": "economy",
+			"secondary": false
 		},
 		"resource:core:ap": {
 			"id": "resource:core:ap",
@@ -1302,7 +1304,9 @@
 			"groupId": null,
 			"groupOrder": null,
 			"resolvedGroupOrder": null,
-			"globalCost": { "amount": 1 }
+			"globalCost": { "amount": 1 },
+			"section": "economy",
+			"secondary": false
 		},
 		"resource:core:happiness": {
 			"id": "resource:core:happiness",
@@ -1319,7 +1323,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": null,
 			"groupOrder": null,
-			"resolvedGroupOrder": null
+			"resolvedGroupOrder": null,
+			"section": "economy",
+			"secondary": false
 		},
 		"resource:core:castleHP": {
 			"id": "resource:core:castleHP",
@@ -1336,7 +1342,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": null,
 			"groupOrder": null,
-			"resolvedGroupOrder": null
+			"resolvedGroupOrder": null,
+			"section": "combat",
+			"secondary": false
 		},
 		"resource:core:max-population": {
 			"id": "resource:core:max-population",
@@ -1353,7 +1361,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:stats",
 			"groupOrder": 0,
-			"resolvedGroupOrder": 0
+			"resolvedGroupOrder": 0,
+			"section": "economy",
+			"secondary": false
 		},
 		"resource:core:army-strength": {
 			"id": "resource:core:army-strength",
@@ -1370,7 +1380,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:stats",
 			"groupOrder": 1,
-			"resolvedGroupOrder": 1
+			"resolvedGroupOrder": 1,
+			"section": "combat",
+			"secondary": false
 		},
 		"resource:core:fortification-strength": {
 			"id": "resource:core:fortification-strength",
@@ -1387,7 +1399,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:stats",
 			"groupOrder": 2,
-			"resolvedGroupOrder": 2
+			"resolvedGroupOrder": 2,
+			"section": "combat",
+			"secondary": false
 		},
 		"resource:core:absorption": {
 			"id": "resource:core:absorption",
@@ -1405,7 +1419,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:stats",
 			"groupOrder": 3,
-			"resolvedGroupOrder": 3
+			"resolvedGroupOrder": 3,
+			"section": "combat",
+			"secondary": true
 		},
 		"resource:core:growth": {
 			"id": "resource:core:growth",
@@ -1423,7 +1439,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:stats",
 			"groupOrder": 4,
-			"resolvedGroupOrder": 4
+			"resolvedGroupOrder": 4,
+			"section": "combat",
+			"secondary": true
 		},
 		"resource:core:war-weariness": {
 			"id": "resource:core:war-weariness",
@@ -1440,7 +1458,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:stats",
 			"groupOrder": 5,
-			"resolvedGroupOrder": 5
+			"resolvedGroupOrder": 5,
+			"section": "combat",
+			"secondary": true
 		},
 		"resource:core:council": {
 			"id": "resource:core:council",
@@ -1457,7 +1477,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:population:roles",
 			"groupOrder": 0,
-			"resolvedGroupOrder": 0
+			"resolvedGroupOrder": 0,
+			"section": "economy",
+			"secondary": false
 		},
 		"resource:core:legion": {
 			"id": "resource:core:legion",
@@ -1474,7 +1496,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:population:roles",
 			"groupOrder": 1,
-			"resolvedGroupOrder": 1
+			"resolvedGroupOrder": 1,
+			"section": "economy",
+			"secondary": false
 		},
 		"resource:core:fortifier": {
 			"id": "resource:core:fortifier",
@@ -1491,7 +1515,9 @@
 			"trackBoundBreakdown": false,
 			"groupId": "resource-group:population:roles",
 			"groupOrder": 2,
-			"resolvedGroupOrder": 2
+			"resolvedGroupOrder": 2,
+			"section": "economy",
+			"secondary": false
 		}
 	},
 	"resourceGroups": {

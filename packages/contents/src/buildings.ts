@@ -25,6 +25,12 @@ import { resourceChange } from './resource';
 export const BuildingId = BuildingIdMap;
 export type BuildingId = BuildingIdType;
 
+export const BUILDING_INFO = {
+	icon: '🏛️',
+	label: 'Building',
+	plural: 'Buildings',
+} as const;
+
 export function createBuildingRegistry() {
 	const registry = new Registry<BuildingDef>(buildingSchema.passthrough());
 
