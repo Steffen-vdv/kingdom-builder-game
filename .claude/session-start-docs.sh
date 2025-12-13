@@ -1,53 +1,25 @@
 #!/bin/bash
 
-# SessionStart Hook: Auto-load project documentation context
-# This script runs automatically when Claude Code starts a new session
-# and injects critical documentation files into the context.
-
-# Ensure dependencies and Husky git hooks are properly initialized
-# This handles fresh clones or cases where npm install wasn't run
-if [ ! -d "node_modules" ]; then
-  # Full install needed - no node_modules at all
-  npm install 2>/dev/null || true
-elif [ ! -d ".husky/_" ]; then
-  # Dependencies exist but Husky not initialized
-  npm run prepare 2>/dev/null || true
-fi
-
-# Rebuild better-sqlite3 native bindings for current Node version
-# This is needed after Node.js version changes or fresh clones
-npm rebuild better-sqlite3 2>/dev/null || true
-
-# Copy project Claude settings to root location
-# Workaround: PreToolUse hooks only work from /root/.claude/settings.json
-cp /home/user/kingdom-builder-game/.claude/settings.json /root/.claude/settings.json 2>/dev/null || true
-
-# Leave a marker file so agents can verify the hook ran
+# MINIMAL TEST: Create marker file FIRST to verify hook execution
 # Check with: cat /tmp/claude-session-start-hook.marker
 echo "SessionStart hook executed at $(date -Iseconds)" > /tmp/claude-session-start-hook.marker
 
-{
-  echo "╔════════════════════════════════════════════════════════════════╗"
-  echo "║          PROJECT DOCUMENTATION CONTEXT AUTO-LOADED             ║"
-  echo "╚════════════════════════════════════════════════════════════════╝"
-  echo ""
+# If we got here, hook is working. Now do the real work:
 
-  # Load CLAUDE.md - THE source of truth for AI agents
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "🤖 CLAUDE.md (AI Agent Operating Manual)"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  if [ -f "$(pwd)/CLAUDE.md" ]; then
-    cat "$(pwd)/CLAUDE.md"
-  else
-    echo "⚠️  CLAUDE.md not found - this is critical!"
-  fi
-  echo ""
-  echo ""
+# Ensure dependencies and Husky git hooks are properly initialized
+if [ ! -d "node_modules" ]; then
+  npm install 2>/dev/null || true
+elif [ ! -d ".husky/_" ]; then
+  npm run prepare 2>/dev/null || true
+fi
 
-  echo "╔════════════════════════════════════════════════════════════════╗"
-  echo "║            CONTEXT LOADING COMPLETE ✅                          ║"
-  echo "╚════════════════════════════════════════════════════════════════╝"
+# Rebuild better-sqlite3 native bindings
+npm rebuild better-sqlite3 2>/dev/null || true
 
-} | head -c 150000  # Limit output to 150K characters to stay within context budgets
+# Copy project Claude settings to root location (workaround for PreToolUse hooks)
+cp "$CLAUDE_PROJECT_DIR/.claude/settings.json" /root/.claude/settings.json 2>/dev/null || true
+
+# Output context for the agent
+echo "SessionStart hook completed successfully"
 
 exit 0
