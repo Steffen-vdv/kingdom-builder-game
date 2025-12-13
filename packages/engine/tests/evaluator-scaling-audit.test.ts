@@ -139,28 +139,17 @@ describe('Trigger Effect Scaling', () => {
 
 	describe('onGainIncomeStep: Farm income generation', () => {
 		/**
-		 * KNOWN ISSUE: Farm income currently scales quadratically (N²).
+		 * Farm income scales linearly with farm count.
 		 *
-		 * The Farm definition uses:
-		 *   .onGainIncomeStep(
-		 *     effect()
-		 *       .evaluator(developmentEvaluator().id('$id'))
-		 *       .effect(...)
-		 *   )
+		 * The trigger collection loop in triggers.ts creates one bundle per
+		 * farm development. The farm's onGainIncomeStep effect adds +2 gold
+		 * directly without an evaluator.
 		 *
-		 * The evaluator counts ALL farms, but the trigger loop already
-		 * iterates once per farm. This causes N × N = N² scaling:
-		 * - 2 farms = 8 gold (expected 4)
-		 * - 3 farms = 18 gold (expected 6)
-		 * - N farms = N² × 2 gold (expected N × 2)
-		 *
-		 * This is the same bug pattern as the Council AP N² scaling bug.
-		 * The fix is to remove the evaluator from farm's onGainIncomeStep,
-		 * since the trigger loop already handles per-development iteration.
-		 *
-		 * TODO: Fix farm definition in developments.ts and enable this test.
+		 * This test guards against regression of the N² scaling bug that
+		 * occurred when the farm definition incorrectly used an evaluator
+		 * that re-counted farms (bundles × evaluator = N² scaling).
 		 */
-		it.skip('scales linearly with development count (KNOWN BUG: N² scaling)', () => {
+		it('scales linearly with development count', () => {
 			fc.assert(
 				fc.property(fc.integer({ min: 1, max: 10 }), (farmCount) => {
 					const engine = createMinimalEngine();
@@ -192,38 +181,6 @@ describe('Trigger Effect Scaling', () => {
 				}),
 				{ numRuns: 10 },
 			);
-		});
-
-		/**
-		 * This test documents the CURRENT (buggy) N² behavior.
-		 * When the bug is fixed, this test will fail - at which point
-		 * enable the skipped linear test above and delete this one.
-		 */
-		it('currently produces N² gold (documents existing bug)', () => {
-			const engine = createMinimalEngine();
-			const player = engine.activePlayer;
-
-			// 3 farms
-			player.lands = [];
-			for (let i = 0; i < 3; i++) {
-				player.lands.push({
-					id: `land_${i}`,
-					slotsMax: 1,
-					slotsUsed: 1,
-					tilled: true,
-					developments: ['farm'],
-				});
-			}
-
-			const goldBefore = player.resourceValues[Resource.gold] ?? 0;
-			positionAtStep(engine, PhaseId.Growth, 'onGainIncomeStep');
-			advance(engine);
-			const goldGained =
-				(player.resourceValues[Resource.gold] ?? 0) - goldBefore;
-
-			// BUG: 3 farms × 3 (evaluator count) × 2 gold = 18 gold
-			// Should be: 3 farms × 2 gold = 6 gold
-			expect(goldGained).toBe(18); // N² × 2 = 3² × 2 = 18
 		});
 	});
 

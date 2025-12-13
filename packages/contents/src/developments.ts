@@ -1,7 +1,7 @@
 import { Registry, developmentSchema } from '@kingdom-builder/protocol';
 import { Resource, getResourceId } from './internal';
 import type { ResourceKey } from './internal';
-import { development, effect, developmentParams, developmentEvaluator } from './infrastructure/builders';
+import { development, effect, developmentParams } from './infrastructure/builders';
 import { Types, DevelopmentMethods, ResourceMethods } from './infrastructure/builderShared';
 import { Focus } from './infrastructure/defs';
 import type { DevelopmentDef } from './infrastructure/defs';
@@ -29,18 +29,17 @@ function resourceAmountParams(resource: ResourceKey, amount: number) {
 export function createDevelopmentRegistry() {
 	const registry = new Registry<DevelopmentDef>(developmentSchema.passthrough());
 
+	// Farm onGainIncomeStep effect: +2 gold per farm
+	// Note: The trigger collection loop in triggers.ts already creates one bundle
+	// per farm development, so no evaluator is needed here. Using an evaluator
+	// would cause N² gold gain (bundles × evaluator count) instead of N.
 	registry.add(
 		DevelopmentId.Farm,
 		development()
 			.id(DevelopmentId.Farm)
 			.name('Farm')
 			.icon('🌾')
-			.onGainIncomeStep(
-				effect()
-					.evaluator(developmentEvaluator().id('$id'))
-					.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.gold, 2)).build())
-					.build(),
-			)
+			.onGainIncomeStep(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountParams(Resource.gold, 2)).build())
 			.order(2)
 			.focus(Focus.Economy)
 			.build(),
