@@ -8,6 +8,14 @@
 #
 # This ensures agents are reminded once per commit cycle.
 
+# Parse command from tool input JSON
+COMMAND=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.command' 2>/dev/null || echo "")
+
+# Only intercept git commit commands - allow everything else through
+if [[ ! "$COMMAND" == *"git commit"* ]]; then
+	exit 0
+fi
+
 STATE_FILE="/tmp/claude-commit-verified-$$"
 # Use a more stable state file path that persists across tool calls
 STATE_FILE="$HOME/.claude-commit-reminder-state"

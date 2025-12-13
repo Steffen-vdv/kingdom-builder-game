@@ -172,4 +172,86 @@
 			linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.06))
 		);
 	}
+
+	/* Active player header glow - game-esque styling */
+	.player-bg .panel-header.is-active {
+		position: relative;
+		box-shadow:
+			inset 0 0 20px var(--player-active-glow-inner, rgba(59, 130, 246, 0.2)),
+			inset 0 -2px 8px var(--player-active-glow-inner, rgba(59, 130, 246, 0.15));
+		border-bottom: 1px solid var(--player-active-border, rgba(59, 130, 246, 0.4));
+		animation: active-header-pulse 2s ease-in-out infinite;
+	}
+
+	.player-bg .panel-header.is-active::after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 2px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			var(--player-active-glow, rgba(59, 130, 246, 0.6)) 20%,
+			var(--player-active-glow, rgba(59, 130, 246, 0.8)) 50%,
+			var(--player-active-glow, rgba(59, 130, 246, 0.6)) 80%,
+			transparent
+		);
+		filter: blur(1px);
+		animation: active-border-glow 2s ease-in-out infinite;
+	}
+
+	/* Blue player active glow colors */
+	.player-bg-blue-active {
+		--player-active-glow: rgba(59, 130, 246, 0.8);
+		--player-active-glow-inner: rgba(59, 130, 246, 0.15);
+		--player-active-border: rgba(59, 130, 246, 0.35);
+	}
+
+	.dark .player-bg-blue-active {
+		--player-active-glow: rgba(96, 165, 250, 0.9);
+		--player-active-glow-inner: rgba(96, 165, 250, 0.2);
+		--player-active-border: rgba(96, 165, 250, 0.4);
+	}
+
+	/* Red player active glow colors */
+	.player-bg-red-active {
+		--player-active-glow: rgba(239, 68, 68, 0.8);
+		--player-active-glow-inner: rgba(239, 68, 68, 0.15);
+		--player-active-border: rgba(239, 68, 68, 0.35);
+	}
+
+	.dark .player-bg-red-active {
+		--player-active-glow: rgba(248, 113, 113, 0.9);
+		--player-active-glow-inner: rgba(248, 113, 113, 0.2);
+		--player-active-border: rgba(248, 113, 113, 0.4);
+	}
+
+	/* Glow pulse animations */
+	@keyframes active-header-pulse {
+		0%,
+		100% {
+			box-shadow:
+				inset 0 0 20px var(--player-active-glow-inner, rgba(59, 130, 246, 0.2)),
+				inset 0 -2px 8px var(--player-active-glow-inner, rgba(59, 130, 246, 0.15));
+		}
+		50% {
+			box-shadow:
+				inset 0 0 28px var(--player-active-glow-inner, rgba(59, 130, 246, 0.28)),
+				inset 0 -3px 12px var(--player-active-glow-inner, rgba(59, 130, 246, 0.22));
+		}
+	}
+
+	@keyframes active-border-glow {
+		0%,
+		100% {
+			opacity: 0.7;
+			filter: blur(1px);
+		}
+		50% {
+			opacity: 1;
+			filter: blur(2px);
+		}
+	}
 }
