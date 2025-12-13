@@ -75,16 +75,6 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 		() => new Set(player.buildings),
 		[player.buildings],
 	);
-	// Collect development IDs from player's lands
-	const developmentIds = React.useMemo(() => {
-		const ids = new Set<string>();
-		for (const land of player.lands) {
-			for (const devId of land.developments) {
-				ids.add(devId);
-			}
-		}
-		return ids;
-	}, [player.lands]);
 	// Get tier passive IDs from rule definitions (content-driven)
 	const tierPassiveIds = React.useMemo(() => {
 		const ids = new Set<string>();
@@ -103,8 +93,8 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 				if (buildingIds.has(passive.id)) {
 					return false;
 				}
-				// Exclude development passives (ID matches a development)
-				if (developmentIds.has(passive.id)) {
+				// Exclude development passives (source type from engine metadata)
+				if (passive.meta?.source?.type === 'development') {
 					return false;
 				}
 				// Exclude tier passives (ID from tier definitions)
@@ -113,9 +103,9 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 				}
 				return true;
 			}),
-		[allPassiveSummaries, buildingIds, developmentIds, tierPassiveIds],
+		[allPassiveSummaries, buildingIds, tierPassiveIds],
 	);
-	const effectsCount = passiveSummaries.length;
+	const passivesCount = passiveSummaries.length;
 
 	// Build hover card for lands - show each land with its developments
 	const showLandsCard = React.useCallback(() => {
@@ -254,7 +244,7 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 	]);
 
 	// Don't render if nothing to show
-	if (landsCount === 0 && buildingsCount === 0 && effectsCount === 0) {
+	if (landsCount === 0 && buildingsCount === 0 && passivesCount === 0) {
 		return null;
 	}
 
@@ -289,16 +279,18 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 			</div>
 
 			{/* Right side: passives */}
-			{effectsCount > 0 && (
+			{passivesCount > 0 && (
 				<button
 					type="button"
 					className="asset-badge asset-badge--effects cursor-help"
 					onMouseEnter={showEffectsCard}
 					onMouseLeave={clearHoverCard}
-					aria-label={`${effectsCount} active passives`}
+					aria-label={`${passivesCount} active ${passivesCount === 1 ? 'passive' : 'passives'}`}
 				>
 					<span aria-hidden="true">{passiveDescriptor.icon}</span>
-					<span className="font-semibold">{effectsCount} passives</span>
+					<span className="font-semibold">
+						{passivesCount} {passivesCount === 1 ? 'passive' : 'passives'}
+					</span>
 				</button>
 			)}
 		</div>

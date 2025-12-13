@@ -46,7 +46,11 @@ export const developmentAdd: EffectHandler = (
 				{ landId, id },
 			);
 			engineContext.passives.addPassive(
-				{ id: `${id}_${landId}`, effects: onBuildEffects },
+				{
+					id: `${id}_${landId}`,
+					effects: onBuildEffects,
+					meta: { source: { type: 'development', id } },
+				},
 				engineContext,
 				{
 					frames: () => ({
