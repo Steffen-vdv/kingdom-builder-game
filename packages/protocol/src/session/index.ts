@@ -26,6 +26,7 @@ export type {
 	SessionResourceBounds,
 	SessionResourceGlobalCostConfig,
 	SessionResourceSection,
+	DisplayHintColor,
 	SessionResourceDefinition,
 	SessionResourceGroupParent,
 	SessionResourceGroupDefinition,

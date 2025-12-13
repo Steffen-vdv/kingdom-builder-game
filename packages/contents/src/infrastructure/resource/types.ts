@@ -129,6 +129,13 @@ export interface ResourceBoundOfConfig {
  */
 export type ResourceSection = 'economy' | 'combat';
 
+/**
+ * Display hint color for UI styling.
+ * Can be any valid CSS color (name, hex, rgb, etc.).
+ * Used for visual differentiation of combat stats.
+ */
+export type ResourceDisplayHint = string;
+
 export interface ResourceDefinition extends ResourceMetadata, ResourceBounds, ResourceTriggers, ResourcePhaseEffects {
 	displayAsPercent?: boolean;
 	allowDecimal?: boolean;
@@ -157,6 +164,11 @@ export interface ResourceDefinition extends ResourceMetadata, ResourceBounds, Re
 	 * Used for supporting stats like Absorption and Growth.
 	 */
 	secondary?: boolean;
+	/**
+	 * Display hint for color styling in the UI.
+	 * Used for combat stats that need visual differentiation.
+	 */
+	displayHint?: ResourceDisplayHint;
 }
 
 export interface ResourceGroupParent extends ResourceMetadata, ResourceBounds {

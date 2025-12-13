@@ -3,7 +3,7 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
-import ResourceButton, { type ColorVariant } from './ResourceButton';
+import ResourceButton from './ResourceButton';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
 import ResourceWithBoundButton from './ResourceWithBoundButton';
 import HappinessBar from './HappinessBar';
@@ -34,7 +34,6 @@ import {
 } from './playerPanelHelpers';
 import { useHeightTracking } from './useHeightTracking';
 import { useActiveTier } from './useActiveTier';
-import { getColorVariant } from './colorVariants';
 
 interface PlayerPanelProps {
 	player: SessionPlayerStateSnapshot;
@@ -135,7 +134,10 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 		if (!resourceCatalog) {
 			return { economy: [], combat: [] };
 		}
-		return groupResourcesBySection(resourceCatalog.resources.ordered);
+		return groupResourcesBySection(
+			resourceCatalog.resources.ordered,
+			resourceCatalog.groups.ordered,
+		);
 	}, [resourceCatalog]);
 
 	// Get group IDs for each section
@@ -228,11 +230,6 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			const metadata = translationContext.resourceMetadata.get(resourceId);
 			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
 
-			// Determine color variant for combat stats
-			const section = definition.section;
-			const colorVariant: ColorVariant =
-				section === 'combat' ? getColorVariant(resourceId) : 'default';
-
 			// If this resource has a bound reference, render with bound
 			if (boundInfo) {
 				const boundMetadata = translationContext.resourceMetadata.get(
@@ -268,7 +265,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 					onShow={showResourceCard}
 					onHide={clearHoverCard}
 					compact={isSecondary}
-					colorVariant={colorVariant}
+					displayHint={definition.displayHint}
 				/>
 			);
 		},

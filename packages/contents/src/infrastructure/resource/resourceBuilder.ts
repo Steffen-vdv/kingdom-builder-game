@@ -1,5 +1,5 @@
 import type { EffectDef } from '@kingdom-builder/protocol';
-import type { ResourceBoundType, ResourceBoundValue, ResourceDefinition, ResourceSection, ResourceTierTrack } from './types';
+import type { ResourceBoundType, ResourceBoundValue, ResourceDefinition, ResourceDisplayHint, ResourceSection, ResourceTierTrack } from './types';
 
 interface ResourceGroupOptions {
 	order?: number;
@@ -106,6 +106,13 @@ export interface ResourceBuilder {
 	 * Used for supporting stats like Absorption and Growth.
 	 */
 	secondary(enabled?: boolean): this;
+	/**
+	 * Sets a display hint color for UI styling.
+	 * Accepts any valid CSS color (name, hex, rgb, etc.).
+	 * @example .displayHint('#ef4444') // red for offensive stats
+	 * @example .displayHint('#3b82f6') // blue for defensive stats
+	 */
+	displayHint(hint: ResourceDisplayHint): this;
 	build(): ResourceDefinition;
 }
 
@@ -368,6 +375,14 @@ class ResourceBuilderImpl implements ResourceBuilder {
 	secondary(enabled = true) {
 		const resolved = enabled ?? true;
 		this.setOnce('secondary', resolved);
+		return this;
+	}
+
+	displayHint(hint: ResourceDisplayHint) {
+		if (!hint || typeof hint !== 'string') {
+			throw new Error(`${builderName} displayHint() requires a valid CSS color string.`);
+		}
+		this.setOnce('displayHint', hint);
 		return this;
 	}
 

@@ -279,6 +279,7 @@ export function createRuntimeResourceCatalog({
 			onGainAPStep,
 			section: definition.section ?? 'economy',
 			secondary: definition.secondary ?? false,
+			displayHint: definition.displayHint ?? null,
 			...(globalCost ? { globalCost } : {}),
 			...(tierTrack ? { tierTrack } : {}),
 			...(upkeep ? { upkeep } : {}),

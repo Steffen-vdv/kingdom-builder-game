@@ -73,6 +73,7 @@ const armyStrengthResource = resource('resource:core:army-strength')
 	.lowerBound(0)
 	.trackValueBreakdown()
 	.section('combat')
+	.displayHint('#ef4444')
 	.build();
 
 const fortificationStrengthResource = resource('resource:core:fortification-strength')
@@ -82,6 +83,7 @@ const fortificationStrengthResource = resource('resource:core:fortification-stre
 	.lowerBound(0)
 	.trackValueBreakdown()
 	.section('combat')
+	.displayHint('#3b82f6')
 	.build();
 
 const absorptionResource = resource('resource:core:absorption')

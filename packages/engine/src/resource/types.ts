@@ -164,6 +164,11 @@ export interface RuntimeResourceDefinition
 	 * When true, render this resource in a smaller/secondary style.
 	 */
 	readonly secondary: boolean;
+	/**
+	 * Display hint color for UI styling (CSS color value).
+	 * Applied as background tint for visual differentiation.
+	 */
+	readonly displayHint: string | null;
 }
 
 export interface RuntimeResourceGroupParent

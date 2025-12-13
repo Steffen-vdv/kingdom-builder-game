@@ -144,6 +144,7 @@ export type {
 	SessionResourceReconciliationMode,
 	SessionResourceGlobalCostConfig,
 	SessionResourceSection,
+	DisplayHintColor,
 	SessionResourceTierTrack,
 	SessionResourceTierTrackMetadata,
 	SessionResourceTierDefinition,

@@ -6,8 +6,6 @@ import type {
 import { getForecastDisplay } from '../../utils/forecast';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 
-export type ColorVariant = 'default' | 'army' | 'attack' | 'fort';
-
 export interface ResourceButtonProps {
 	metadata: ResourceMetadataSnapshot;
 	snapshot: ResourceValueSnapshot;
@@ -15,8 +13,11 @@ export interface ResourceButtonProps {
 	onHide: () => void;
 	/** When true, renders with smaller text and reduced padding */
 	compact?: boolean;
-	/** Color variant for combat stats (army=red tint, fort=blue tint) */
-	colorVariant?: ColorVariant;
+	/**
+	 * Display hint color (CSS color value) for background tint.
+	 * Applied with reduced opacity for visual differentiation.
+	 */
+	displayHint?: string | null;
 	/** Optional suffix label (e.g., "HP") shown instead of forecast */
 	suffixLabel?: string;
 }
@@ -96,12 +97,29 @@ export function formatSignedResourceMagnitude(
 	return `${sign}${magnitude}`;
 }
 
-const COLOR_VARIANT_CLASSES: Record<ColorVariant, string> = {
-	default: '',
-	army: 'stat-chip--army',
-	attack: 'stat-chip--attack',
-	fort: 'stat-chip--fort',
-};
+/**
+ * Converts a CSS color to rgba format with specified opacity.
+ * Supports hex (#rgb, #rrggbb), rgb(), and named colors via canvas.
+ */
+function colorToRgba(color: string, opacity: number): string {
+	// Handle hex colors directly for performance
+	if (color.startsWith('#')) {
+		const hex = color.slice(1);
+		let red: number, green: number, blue: number;
+		if (hex.length === 3) {
+			red = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+			green = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+			blue = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+		} else {
+			red = parseInt(hex.slice(0, 2), 16);
+			green = parseInt(hex.slice(2, 4), 16);
+			blue = parseInt(hex.slice(4, 6), 16);
+		}
+		return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+	}
+	// For other formats, return color-mix (modern browsers)
+	return `color-mix(in srgb, ${color} ${Math.round(opacity * 100)}%, transparent)`;
+}
 
 const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 	metadata,
@@ -109,9 +127,10 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 	onShow,
 	onHide,
 	compact = false,
-	colorVariant = 'default',
+	displayHint,
 	suffixLabel,
 }) => {
+	const [isHovered, setIsHovered] = React.useState(false);
 	const changes = useValueChangeIndicators(snapshot.current);
 	const normalizedForecastDelta =
 		snapshot.forecastDelta === null ? undefined : snapshot.forecastDelta;
@@ -127,14 +146,31 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 		onShow(snapshot.id);
 	}, [onShow, snapshot.id]);
 
+	// Event handlers that track hover state
+	const handleMouseEnter = React.useCallback(() => {
+		setIsHovered(true);
+		onShow(snapshot.id);
+	}, [onShow, snapshot.id]);
+
+	const handleMouseLeave = React.useCallback(() => {
+		setIsHovered(false);
+		onHide();
+	}, [onHide]);
+
+	// Build inline style for displayHint background
+	const hintStyle: React.CSSProperties | undefined = displayHint
+		? { background: colorToRgba(displayHint, isHovered ? 0.35 : 0.25) }
+		: undefined;
+
 	// For compact mode (mini-chip), render inline icon + value + forecast
 	if (compact) {
 		return (
 			<button
 				type="button"
 				className="mini-chip cursor-help relative overflow-visible"
-				onMouseEnter={handleShow}
-				onMouseLeave={onHide}
+				style={hintStyle}
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
 				onFocus={handleShow}
 				onBlur={onHide}
 				onClick={handleShow}
@@ -151,22 +187,14 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 		);
 	}
 
-	// Build stat-chip class with optional color variant
-	const variantClass = COLOR_VARIANT_CLASSES[colorVariant];
-	const chipClass = [
-		'stat-chip cursor-help relative overflow-visible',
-		variantClass,
-	]
-		.filter(Boolean)
-		.join(' ');
-
 	// Primary stat-chip: icon+value left, forecast/suffix right
 	return (
 		<button
 			type="button"
-			className={chipClass}
-			onMouseEnter={handleShow}
-			onMouseLeave={onHide}
+			className="stat-chip cursor-help relative overflow-visible"
+			style={hintStyle}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
 			onFocus={handleShow}
 			onBlur={onHide}
 			onClick={handleShow}

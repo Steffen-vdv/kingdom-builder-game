@@ -7,6 +7,8 @@ import {
 	usePassiveAssetMetadata,
 } from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from './registryDisplays';
+import { resolveBuildingDisplay } from '../../translation/content/buildingIcons';
+import { resolvePassivePresentation } from '../../translation/log/passives';
 
 interface AssetsRowProps {
 	player: SessionPlayerStateSnapshot;
@@ -73,10 +75,12 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 	// Build hover card for buildings
 	const showBuildingsCard = React.useCallback(() => {
 		const buildingItems = player.buildings.map((buildingId) => {
-			const definition = translationContext.buildings.get(buildingId);
-			const icon = definition?.icon ?? BUILDING_ICON;
-			const name = definition?.name ?? buildingId;
-			return `${icon} ${name}`;
+			const { name, icon } = resolveBuildingDisplay(
+				buildingId,
+				translationContext,
+			);
+			const displayIcon = icon || BUILDING_ICON;
+			return `${displayIcon} ${name}`;
 		});
 		handleHoverCard({
 			title: `${BUILDING_ICON} ${BUILDING_LABEL}s (${buildingsCount})`,
@@ -93,10 +97,28 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 		const defMap = new Map(definitions.map((d) => [d.id, d]));
 		const effectItems = passiveSummaries.map((summary) => {
 			const def = defMap.get(summary.id);
-			const icon = (def?.meta as { icon?: string } | undefined)?.icon ?? '✨';
-			const label =
-				(def?.meta as { label?: string } | undefined)?.label ?? summary.id;
-			return `${icon} ${label}`;
+			// Build options conditionally to satisfy exactOptionalPropertyTypes
+			type PresentationOptions = Parameters<
+				typeof resolvePassivePresentation
+			>[1];
+			type PassiveDef = NonNullable<PresentationOptions['definition']>;
+			const baseOptions = { assets: translationContext.assets };
+			let options: PresentationOptions;
+			if (def) {
+				const passiveDef: PassiveDef = {};
+				if (def.meta !== undefined) {
+					passiveDef.meta = def.meta;
+				}
+				if (def.detail !== undefined) {
+					passiveDef.detail = def.detail;
+				}
+				options = { ...baseOptions, definition: passiveDef };
+			} else {
+				options = baseOptions;
+			}
+			const presentation = resolvePassivePresentation(summary, options);
+			const icon = presentation.icon || passiveDescriptor.icon || '✨';
+			return `${icon} ${presentation.label}`;
 		});
 		handleHoverCard({
 			title: `${passiveDescriptor.icon ?? '✨'} Active Effects (${effectsCount})`,
