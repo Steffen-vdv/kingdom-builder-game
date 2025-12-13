@@ -6,6 +6,8 @@ import type {
 import { getForecastDisplay } from '../../utils/forecast';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 
+export type ColorVariant = 'default' | 'army' | 'fort';
+
 export interface ResourceButtonProps {
 	metadata: ResourceMetadataSnapshot;
 	snapshot: ResourceValueSnapshot;
@@ -13,6 +15,10 @@ export interface ResourceButtonProps {
 	onHide: () => void;
 	/** When true, renders with smaller text and reduced padding */
 	compact?: boolean;
+	/** Color variant for combat stats (army=red tint, fort=blue tint) */
+	colorVariant?: ColorVariant;
+	/** Optional suffix label (e.g., "HP") shown instead of forecast */
+	suffixLabel?: string;
 }
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
@@ -90,12 +96,20 @@ export function formatSignedResourceMagnitude(
 	return `${sign}${magnitude}`;
 }
 
+const COLOR_VARIANT_CLASSES: Record<ColorVariant, string> = {
+	default: '',
+	army: 'stat-chip--army',
+	fort: 'stat-chip--fort',
+};
+
 const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 	metadata,
 	snapshot,
 	onShow,
 	onHide,
 	compact = false,
+	colorVariant = 'default',
+	suffixLabel,
 }) => {
 	const changes = useValueChangeIndicators(snapshot.current);
 	const normalizedForecastDelta =
@@ -112,17 +126,12 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 		onShow(snapshot.id);
 	}, [onShow, snapshot.id]);
 
-	// Use mini-chip for compact/secondary resources, stat-chip for primary
-	const buttonClassName = compact
-		? 'mini-chip cursor-help relative overflow-visible'
-		: 'stat-chip cursor-help relative overflow-visible';
-
-	// For compact mode, render inline icon + value + forecast
+	// For compact mode (mini-chip), render inline icon + value + forecast
 	if (compact) {
 		return (
 			<button
 				type="button"
-				className={buttonClassName}
+				className="mini-chip cursor-help relative overflow-visible"
 				onMouseEnter={handleShow}
 				onMouseLeave={onHide}
 				onFocus={handleShow}
@@ -141,11 +150,20 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 		);
 	}
 
-	// Primary stat-chip: horizontal layout with icon+value left, forecast right
+	// Build stat-chip class with optional color variant
+	const variantClass = COLOR_VARIANT_CLASSES[colorVariant];
+	const chipClass = [
+		'stat-chip cursor-help relative overflow-visible',
+		variantClass,
+	]
+		.filter(Boolean)
+		.join(' ');
+
+	// Primary stat-chip: icon+value left, forecast/suffix right
 	return (
 		<button
 			type="button"
-			className={buttonClassName}
+			className={chipClass}
 			onMouseEnter={handleShow}
 			onMouseLeave={onHide}
 			onFocus={handleShow}
@@ -153,19 +171,21 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 			onClick={handleShow}
 			aria-label={ariaLabel}
 		>
-			<span className="flex items-center gap-1">
+			<span className="flex items-center gap-1.5">
 				<span className="stat-chip__icon" aria-hidden="true">
 					{iconLabel}
 				</span>
 				<span className="stat-chip__value">{formattedValue}</span>
 			</span>
-			{forecastDisplay && (
+			{suffixLabel ? (
+				<span className="text-[10px] text-slate-500">{suffixLabel}</span>
+			) : forecastDisplay ? (
 				<span
 					className={`text-[11px] font-semibold ${forecastDisplay.toneClass}`}
 				>
 					{forecastDisplay.label}
 				</span>
-			)}
+			) : null}
 			{changes.map((change) => (
 				<span
 					key={change.id}

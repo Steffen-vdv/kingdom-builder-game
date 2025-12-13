@@ -39,19 +39,12 @@ interface ResourceEntry {
 	definition: SessionResourceDefinition;
 }
 
-const ROLE_BUTTON_CLASSES = [
-	'cursor-help rounded-full border border-white/40 bg-white/40 px-2 py-1',
-	'text-xs font-semibold text-slate-700 hoverable',
-	'dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100',
-].join(' ');
-
 const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 	groupId,
 	player,
-	// Note: Category-level filtering is handled by ResourceCategoryRow.
-	// This prop is available for future per-resource filtering within groups.
 	isPrimaryCategory: _isPrimaryCategory = false,
 }) => {
+	const [expanded, setExpanded] = React.useState(false);
 	const { handleHoverCard, clearHoverCard, translationContext } =
 		useGameEngine();
 	const resourceCatalog = translationContext.resources;
@@ -146,7 +139,6 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 		if (!groupParentId) {
 			return undefined;
 		}
-		// Check if the group parent has a bound reference
 		const boundInfo = boundReferenceMap.get(groupParentId);
 		if (!boundInfo) {
 			return undefined;
@@ -168,7 +160,6 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 
 	const groupCardSections = React.useMemo(() => {
 		const sections: (string | SummaryGroup)[] = [];
-		// Only show children descriptions, not parent value data
 		for (const entry of groupEntries) {
 			const desc = toDescriptorFromMetadata(entry.metadata);
 			const base = [desc.icon, desc.label].filter(Boolean).join(' ').trim();
@@ -213,50 +204,12 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 		[handleHoverCard],
 	);
 
-	const roleButtons = React.useMemo(
-		() =>
-			groupEntries
-				.filter((entry) => entry.snapshot.current > 0)
-				.map((entry, index) => {
-					const handleRoleFocus = (event: React.SyntheticEvent) => {
-						event.stopPropagation();
-						showEntryCard(entry);
-					};
-					const handleRoleLeave = (event: React.SyntheticEvent) => {
-						event.stopPropagation();
-						showGroupCard();
-					};
-					return (
-						<React.Fragment key={entry.snapshot.id}>
-							{index > 0 && ','}
-							<button
-								type="button"
-								className={ROLE_BUTTON_CLASSES}
-								onMouseEnter={handleRoleFocus}
-								onMouseLeave={handleRoleLeave}
-								onFocus={handleRoleFocus}
-								onBlur={handleRoleLeave}
-								onClick={handleRoleFocus}
-								aria-label={`${entry.metadata.label}: ${entry.snapshot.current}`}
-							>
-								{entry.metadata.icon && (
-									<span aria-hidden="true">{entry.metadata.icon}</span>
-								)}
-								{entry.snapshot.current}
-							</button>
-						</React.Fragment>
-					);
-				}),
-		[groupEntries, showEntryCard, showGroupCard],
-	);
-
 	const displayMetadata =
 		groupMetadataSnapshot ??
 		groupTotalEntry?.metadata ??
 		({ id: groupId, label: 'Group' } as ResourceMetadataSnapshot);
 
 	const totalValue = groupTotalEntry?.snapshot.current ?? 0;
-
 	const boundValue = boundEntry?.snapshot.current ?? null;
 	const boundType = boundEntry?.boundType ?? 'upper';
 
@@ -276,32 +229,73 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 				: `${formattedBound}/${formattedTotal}`
 			: formattedTotal;
 
+	// Members with value > 0
+	const activeMembers = groupEntries.filter(
+		(entry) => entry.snapshot.current > 0,
+	);
+
+	const toggleExpanded = () => setExpanded(!expanded);
+
 	return (
 		<div
-			role="button"
-			tabIndex={0}
-			className="bar-item hoverable cursor-help"
+			className={`pop-group${expanded ? ' expanded' : ''}`}
 			onMouseEnter={showGroupCard}
 			onMouseLeave={clearHoverCard}
-			onFocus={showGroupCard}
-			onBlur={clearHoverCard}
-			onKeyDown={(event) => {
-				if (event.key === 'Enter' || event.key === ' ') {
-					event.preventDefault();
-					showGroupCard();
-				}
-			}}
 		>
-			{displayMetadata.icon && (
-				<span aria-hidden="true">{displayMetadata.icon}</span>
-			)}
-			{displayValue}
-			{roleButtons.length > 0 && (
-				<>
-					{' ('}
-					{roleButtons}
-					{')'}
-				</>
+			{/* Header row - clickable to expand */}
+			<button
+				type="button"
+				className="pop-header w-full"
+				onClick={toggleExpanded}
+				aria-expanded={expanded}
+				aria-label={`${displayMetadata.label}: ${displayValue}`}
+			>
+				{displayMetadata.icon && (
+					<span className="text-sm" aria-hidden="true">
+						{displayMetadata.icon}
+					</span>
+				)}
+				<span className="flex-1 text-left text-sm font-semibold text-slate-100">
+					{displayValue}
+				</span>
+				{activeMembers.length > 0 && (
+					<span className="pop-chevron" aria-hidden="true">
+						{expanded ? '▼' : '▲'}
+					</span>
+				)}
+			</button>
+
+			{/* Expandable member chips */}
+			{activeMembers.length > 0 && (
+				<div className="pop-members">
+					{activeMembers.map((entry) => {
+						const handleMemberEnter = (event: React.SyntheticEvent) => {
+							event.stopPropagation();
+							showEntryCard(entry);
+						};
+						const handleMemberLeave = (event: React.SyntheticEvent) => {
+							event.stopPropagation();
+							showGroupCard();
+						};
+						return (
+							<button
+								key={entry.snapshot.id}
+								type="button"
+								className="mini-chip"
+								onMouseEnter={handleMemberEnter}
+								onMouseLeave={handleMemberLeave}
+								onFocus={handleMemberEnter}
+								onBlur={handleMemberLeave}
+								aria-label={`${entry.metadata.label}: ${entry.snapshot.current}`}
+							>
+								{entry.metadata.icon && (
+									<span aria-hidden="true">{entry.metadata.icon}</span>
+								)}
+								<span>{entry.snapshot.current}</span>
+							</button>
+						);
+					})}
+				</div>
 			)}
 		</div>
 	);

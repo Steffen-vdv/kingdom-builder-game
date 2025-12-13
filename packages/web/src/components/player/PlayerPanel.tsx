@@ -6,10 +6,11 @@ import type {
 import LandDisplay from './LandDisplay';
 import BuildingDisplay from './BuildingDisplay';
 import PassiveDisplay from './PassiveDisplay';
-import ResourceButton from './ResourceButton';
+import ResourceButton, { type ColorVariant } from './ResourceButton';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
 import ResourceWithBoundButton from './ResourceWithBoundButton';
 import HappinessBar from './HappinessBar';
+import AssetsRow from './AssetsRow';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
@@ -36,6 +37,7 @@ import {
 } from './playerPanelHelpers';
 import { useHeightTracking } from './useHeightTracking';
 import { useActiveTier } from './useActiveTier';
+import { getColorVariant } from './colorVariants';
 
 interface PlayerPanelProps {
 	player: SessionPlayerStateSnapshot;
@@ -230,6 +232,11 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			const metadata = translationContext.resourceMetadata.get(resourceId);
 			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
 
+			// Determine color variant for combat stats
+			const section = definition.section;
+			const colorVariant: ColorVariant =
+				section === 'combat' ? getColorVariant(resourceId) : 'default';
+
 			// If this resource has a bound reference, render with bound
 			if (boundInfo) {
 				const boundMetadata = translationContext.resourceMetadata.get(
@@ -265,6 +272,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 					onShow={showResourceCard}
 					onHide={clearHoverCard}
 					compact={isSecondary}
+					colorVariant={colorVariant}
 				/>
 			);
 		},
@@ -284,6 +292,10 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	]
 		.filter(Boolean)
 		.join(' ');
+
+	// Separate primary and secondary combat resources
+	const primaryCombat = resourcesBySection.combat.filter((d) => !d.secondary);
+	const secondaryCombat = resourcesBySection.combat.filter((d) => d.secondary);
 
 	return (
 		<div ref={panelRef} className={panelClassName}>
@@ -336,7 +348,14 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 							Combat
 						</div>
 						<div className="flex flex-col gap-1.5">
-							{resourcesBySection.combat.map((def) => renderResource(def))}
+							{/* Primary combat stats (full stat-chip) */}
+							{primaryCombat.map((def) => renderResource(def))}
+							{/* Secondary combat stats (mini-chips in a row) */}
+							{secondaryCombat.length > 0 && (
+								<div className="flex flex-wrap gap-1">
+									{secondaryCombat.map((def) => renderResource(def))}
+								</div>
+							)}
 						</div>
 					</div>
 				</div>
@@ -353,8 +372,12 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 						/>
 					</div>
 				)}
+
+				{/* Assets row: lands, buildings, effects counts */}
+				<AssetsRow player={player} />
 			</div>
 
+			{/* Detailed displays (can be toggled or shown on hover) */}
 			<div ref={animateSections} className="flex flex-col gap-2">
 				<LandDisplay player={player} />
 				<BuildingDisplay player={player} />
