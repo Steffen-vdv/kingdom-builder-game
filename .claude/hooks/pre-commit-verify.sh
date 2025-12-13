@@ -14,41 +14,28 @@
 # - Exit 0 = allow, Exit 2 = block
 # - Blocked message goes to STDERR
 
-# Debug logging
-LOG="/tmp/claude-precommit-hook.log"
-echo "=== PreToolUse hook called $(date -Iseconds) ===" >> "$LOG"
-
-# Read tool input from stdin (this is how Claude Code passes it)
+# Read tool input from stdin
 JSON_INPUT=$(cat)
-echo "JSON_INPUT: $JSON_INPUT" >> "$LOG"
 
-# Parse command from tool input JSON - note: .tool_input.command, not .command
+# Parse command from tool input JSON
 COMMAND=$(echo "$JSON_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
-echo "Parsed COMMAND: $COMMAND" >> "$LOG"
 
 # Only intercept git commit commands - allow everything else through
 if [[ ! "$COMMAND" == *"git commit"* ]]; then
-	echo "Not a git commit command, allowing through" >> "$LOG"
 	exit 0
 fi
 
-echo "Git commit detected!" >> "$LOG"
-
 # Use a stable state file path that persists across tool calls
 STATE_FILE="$HOME/.claude-commit-reminder-state"
-echo "STATE_FILE: $STATE_FILE" >> "$LOG"
-echo "State file exists: $([ -f "$STATE_FILE" ] && echo YES || echo NO)" >> "$LOG"
 
 # Check if we've already shown the reminder (state file exists)
 if [[ -f "$STATE_FILE" ]]; then
 	# Already reminded - allow this attempt and reset state
-	echo "State file exists - allowing commit (second attempt)" >> "$LOG"
 	rm -f "$STATE_FILE"
 	exit 0
 fi
 
 # First attempt - create state file and block
-echo "First attempt - creating state file and BLOCKING (exit 2)" >> "$LOG"
 touch "$STATE_FILE"
 
 # Output message to STDERR (shown to agent when blocked)
@@ -78,5 +65,4 @@ Before committing, complete these steps:
 After completing verification, retry your commit.
 EOF
 
-echo "Block message sent to stderr, exiting with code 2" >> "$LOG"
 exit 2

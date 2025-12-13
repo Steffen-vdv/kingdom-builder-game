@@ -1,57 +1,40 @@
 #!/bin/bash
 
 # ASYNC MODE: Output JSON first line to run in background with 5min timeout
-# This allows npm install to complete without hitting the default 60s timeout
 echo '{"async": true, "asyncTimeout": 300000}'
 
-# Log file for debugging
 LOG="/tmp/claude-session-start-hook.log"
+echo "=== SessionStart $(date -Iseconds) ===" > "$LOG"
 
-# Create marker file to verify hook execution
-echo "SessionStart hook executed at $(date -Iseconds)" > /tmp/claude-session-start-hook.marker
-
-# Start logging
-echo "=== SessionStart hook log $(date -Iseconds) ===" > "$LOG"
-echo "CLAUDE_PROJECT_DIR=$CLAUDE_PROJECT_DIR" >> "$LOG"
-echo "Running in ASYNC mode (5min timeout)" >> "$LOG"
-
-# Change to project directory
-cd "$CLAUDE_PROJECT_DIR" || { echo "FAILED to cd" >> "$LOG"; exit 1; }
-echo "PWD: $(pwd)" >> "$LOG"
+cd "$CLAUDE_PROJECT_DIR" || { echo "FAILED to cd to $CLAUDE_PROJECT_DIR" >> "$LOG"; exit 1; }
 
 # Install dependencies if needed
+# Use npm ci (faster, uses lockfile exactly) with --prefer-offline (use cache)
 if [ ! -d "$CLAUDE_PROJECT_DIR/node_modules" ]; then
-  echo "node_modules missing - running npm install..." >> "$LOG"
-  npm install >> "$LOG" 2>&1
-  NPM_EXIT=$?
-  echo "npm install exit code: $NPM_EXIT" >> "$LOG"
-  if [ $NPM_EXIT -ne 0 ]; then
-    echo "ERROR: npm install failed!" >> "$LOG"
-    exit 1
-  fi
-else
-  echo "node_modules already exists" >> "$LOG"
+  echo "Installing dependencies (npm ci --prefer-offline)..." >> "$LOG"
+  npm ci --prefer-offline >> "$LOG" 2>&1 || {
+    echo "npm ci failed, falling back to npm install..." >> "$LOG"
+    npm install >> "$LOG" 2>&1 || { echo "npm install failed" >> "$LOG"; exit 1; }
+  }
 fi
 
 # Initialize Husky if needed
 if [ ! -d "$CLAUDE_PROJECT_DIR/.husky/_" ]; then
-  echo "Running: npm run prepare (to initialize Husky)" >> "$LOG"
+  echo "Initializing Husky..." >> "$LOG"
   npm run prepare >> "$LOG" 2>&1
-  echo "npm run prepare exit code: $?" >> "$LOG"
-else
-  echo ".husky/_ already exists" >> "$LOG"
 fi
 
-# Verify Husky
-echo ".husky/_ exists: $([ -d "$CLAUDE_PROJECT_DIR/.husky/_" ] && echo YES || echo NO)" >> "$LOG"
+# Only rebuild better-sqlite3 if the binary doesn't exist
+SQLITE_BINARY="$CLAUDE_PROJECT_DIR/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+if [ ! -f "$SQLITE_BINARY" ]; then
+  echo "Rebuilding better-sqlite3 (binary missing)..." >> "$LOG"
+  npm rebuild better-sqlite3 >> "$LOG" 2>&1
+else
+  echo "better-sqlite3 binary already exists, skipping rebuild" >> "$LOG"
+fi
 
-# Rebuild better-sqlite3 native bindings
-echo "Running: npm rebuild better-sqlite3" >> "$LOG"
-npm rebuild better-sqlite3 >> "$LOG" 2>&1
+# Copy settings to root location (workaround for PreToolUse hooks)
+cp "$CLAUDE_PROJECT_DIR/.claude/settings.json" /root/.claude/settings.json 2>/dev/null
 
-# Copy project Claude settings to root location (workaround for PreToolUse hooks)
-echo "Copying settings.json to /root/.claude/" >> "$LOG"
-cp "$CLAUDE_PROJECT_DIR/.claude/settings.json" /root/.claude/settings.json >> "$LOG" 2>&1
-
-echo "=== Hook completed $(date -Iseconds) ===" >> "$LOG"
+echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 exit 0
