@@ -47,7 +47,7 @@ export type AttackEffectDescriptor = {
 	target: { resource?: string; building?: string };
 	attacker?: EffectDescriptor[];
 	defender?: EffectDescriptor[];
-	stats?: Array<'power' | 'absorption' | 'fortification'>;
+	combatResources?: Array<'power' | 'absorption' | 'fortification'>;
 };
 
 export type ActionDefinition = {
@@ -152,7 +152,7 @@ type AttackParams = {
 		| { type: 'building'; id: string };
 	resources?: Array<{
 		role: 'power' | 'absorption' | 'fortification';
-		key: string;
+		resourceId: string;
 		label?: string;
 		icon?: string;
 	}>;
@@ -175,16 +175,20 @@ export function buildAttackEffect(
 					id: descriptor.target.building ?? SYNTH_BUILDING.id,
 				},
 	};
-	const roles = descriptor.stats ?? ['power', 'absorption', 'fortification'];
+	const combatResources = descriptor.combatResources ?? [
+		'power',
+		'absorption',
+		'fortification',
+	];
 	const resources = [] as AttackParams['resources'];
-	for (const role of roles) {
+	for (const role of combatResources) {
 		const config = COMBAT_STAT_CONFIG[role];
 		if (!config) {
 			continue;
 		}
 		resources?.push({
 			role,
-			key: config.resourceId,
+			resourceId: config.resourceId,
 			label: config.label,
 			icon: config.icon,
 		});
@@ -265,7 +269,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 0 },
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
-			stats: ['power'],
+			combatResources: ['power'],
 		},
 	},
 };
