@@ -1,5 +1,6 @@
 import {
 	ACTION_INFO,
+	BUILDING_INFO,
 	DEVELOPMENT_INFO,
 	KEYWORD_LABELS,
 	LAND_INFO,
@@ -219,6 +220,7 @@ function buildAssetMetadata(): SessionMetadataDescriptorMap {
 	assignAssetDescriptor(descriptors, 'upkeep', UPKEEP_INFO);
 	assignAssetDescriptor(descriptors, 'transfer', TRANSFER_INFO);
 	assignAssetDescriptor(descriptors, 'action', ACTION_INFO);
+	assignAssetDescriptor(descriptors, 'building', BUILDING_INFO);
 	assignAssetDescriptor(descriptors, 'development', DEVELOPMENT_INFO);
 	// Resource panel section labels
 	assignAssetDescriptor(descriptors, 'section:economy', SECTION_INFO.economy);
