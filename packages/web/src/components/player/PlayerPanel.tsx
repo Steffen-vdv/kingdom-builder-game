@@ -257,6 +257,12 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			// Secondary resources get smaller styling
 			const isSecondary = definition.secondary;
 
+			// Check for numeric upper bound (not reference bounds)
+			const numericUpperBound =
+				typeof definition.upperBound === 'number'
+					? definition.upperBound
+					: null;
+
 			return (
 				<ResourceButton
 					key={resourceId}
@@ -266,6 +272,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 					onHide={clearHoverCard}
 					compact={isSecondary}
 					displayHint={definition.displayHint}
+					numericUpperBound={numericUpperBound}
 				/>
 			);
 		},
@@ -281,6 +288,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	const panelClassName = [
 		'player-panel flex h-auto flex-col self-start',
 		'text-slate-800 dark:text-slate-100',
+		'max-w-[400px]',
 		className,
 	]
 		.filter(Boolean)

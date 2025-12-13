@@ -39,7 +39,7 @@ const HappinessBar: React.FC<HappinessBarProps> = ({
 			role="button"
 			tabIndex={0}
 		>
-			<span className="text-sm flex-shrink-0 w-5 text-center">{icon}</span>
+			<span className="text-base flex-shrink-0 w-6 text-center">{icon}</span>
 			<div className="bar-track">
 				{/* Gradient fill */}
 				<div

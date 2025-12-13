@@ -70,21 +70,21 @@
 	/* Stat chip for primary resources (horizontal layout) */
 	.stat-chip {
 		@apply inline-flex flex-row items-center justify-between gap-2 rounded-[10px] px-3 py-2 cursor-pointer transition-all;
-		background: rgba(255, 255, 255, 0.04);
+		background: rgba(255, 255, 255, 0.06);
 		min-width: 100%;
 	}
 
 	.stat-chip:hover {
-		background: rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.12);
 	}
 
 	/* Light mode variant */
 	:not(.dark) .stat-chip {
-		background: rgba(0, 0, 0, 0.03);
+		background: rgba(0, 0, 0, 0.04);
 	}
 
 	:not(.dark) .stat-chip:hover {
-		background: rgba(0, 0, 0, 0.06);
+		background: rgba(0, 0, 0, 0.08);
 	}
 
 	.stat-chip__icon {
@@ -95,11 +95,12 @@
 	.stat-chip__value {
 		font-size: 16px;
 		font-weight: 700;
-		color: #f1f5f9;
+		color: #1e293b;
 	}
 
-	:not(.dark) .stat-chip__value {
-		color: #1e293b;
+	/* Dark mode: white text - use .dark selector for proper specificity */
+	.dark .stat-chip__value {
+		color: #f1f5f9;
 	}
 
 	/* Mini chip for secondary resources */
@@ -107,15 +108,19 @@
 		@apply inline-flex items-center gap-1 rounded-md cursor-pointer transition-all;
 		padding: 4px 8px;
 		font-size: 12px;
-		background: rgba(255, 255, 255, 0.05);
+		background: rgba(255, 255, 255, 0.06);
 	}
 
 	.mini-chip:hover {
-		background: rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.12);
 	}
 
 	.mini-chip strong {
 		font-weight: 600;
+	}
+
+	/* Dark mode: white text */
+	.dark .mini-chip strong {
 		color: #f1f5f9;
 	}
 
@@ -163,17 +168,18 @@
 
 	/* Assets row at bottom */
 	.assets-row {
-		@apply flex gap-1.5 px-3 py-2 items-center justify-between;
+		@apply flex gap-2 px-3 py-2.5 items-center justify-between;
 		border-top: 1px solid rgba(255, 255, 255, 0.06);
 	}
 
 	.asset-badge {
-		@apply inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer transition-all;
+		@apply inline-flex items-center gap-1.5 px-3 py-2 rounded-lg cursor-pointer transition-all;
+		font-size: 14px;
 		background: rgba(255, 255, 255, 0.04);
 	}
 
 	.asset-badge:hover {
-		background: rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.1);
 	}
 
 	.asset-badge--effects {
@@ -181,12 +187,12 @@
 	}
 
 	.asset-badge--effects:hover {
-		background: rgba(168, 85, 247, 0.15);
+		background: rgba(168, 85, 247, 0.18);
 	}
 
 	/* Resource bar (for bounded resources like happiness) */
 	.resource-bar {
-		@apply flex items-center gap-2 py-1.5 cursor-pointer;
+		@apply flex items-center gap-2.5 py-2 cursor-pointer;
 	}
 
 	.resource-bar:hover .bar-track {
@@ -194,7 +200,7 @@
 	}
 
 	.bar-track {
-		@apply flex-1 h-[18px] rounded-lg overflow-hidden relative;
+		@apply flex-1 h-[22px] rounded-lg overflow-hidden relative;
 		background: rgba(255, 255, 255, 0.06);
 		border: 1px solid transparent;
 		transition: border-color 0.15s;
@@ -205,7 +211,7 @@
 	}
 
 	.bar-label {
-		@apply absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-white;
+		@apply absolute right-2 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-white;
 		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 	}
 

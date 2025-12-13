@@ -20,6 +20,11 @@ export interface ResourceButtonProps {
 	displayHint?: string | null;
 	/** Optional suffix label (e.g., "HP") shown instead of forecast */
 	suffixLabel?: string;
+	/**
+	 * Numeric upper bound for the resource (e.g., Castle HP max 10).
+	 * When provided, displays value as "current/max" format.
+	 */
+	numericUpperBound?: number | null;
 }
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
@@ -129,6 +134,7 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 	compact = false,
 	displayHint,
 	suffixLabel,
+	numericUpperBound,
 }) => {
 	const [isHovered, setIsHovered] = React.useState(false);
 	const changes = useValueChangeIndicators(snapshot.current);
@@ -138,7 +144,12 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 		formatSignedResourceMagnitude(delta, metadata),
 	);
 	const iconLabel = metadata.icon ?? '⚠️';
-	const formattedValue = formatResourceMagnitude(snapshot.current, metadata);
+	const currentFormatted = formatResourceMagnitude(snapshot.current, metadata);
+	// Format as "current/max" when numeric upper bound is provided
+	const formattedValue =
+		numericUpperBound != null
+			? `${currentFormatted}/${formatNumber(numericUpperBound)}`
+			: currentFormatted;
 	const ariaLabel = forecastDisplay
 		? `${metadata.label}: ${formattedValue} ${forecastDisplay.label}`
 		: `${metadata.label}: ${formattedValue}`;
