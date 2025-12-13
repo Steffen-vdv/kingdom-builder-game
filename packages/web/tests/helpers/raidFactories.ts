@@ -10,7 +10,7 @@ import {
 	SYNTH_BUILDING_ATTACK,
 	SYNTH_PARTIAL_ATTACK,
 	SYNTH_BUILDING,
-	COMBAT_STAT_CONFIG,
+	COMBAT_RESOURCE_CONFIG,
 	PHASES,
 	RULES,
 	PLUNDER_HAPPINESS_AMOUNT,
@@ -20,7 +20,7 @@ import {
 	TIER_RESOURCE_KEY,
 	SYNTH_RESOURCE_METADATA,
 	SYNTH_RESOURCE_CATALOG,
-	type CombatStatKey,
+	type CombatResourceKey,
 	type SyntheticDescriptor,
 } from './raidConfig';
 
@@ -45,11 +45,14 @@ import {
 	type AttackRegistryDescriptor,
 } from '../../src/translation/effects/formatters/attack/registrySelectors';
 
-const originalStatEntries = new Map<string, SyntheticDescriptor | undefined>();
+const originalResourceEntries = new Map<
+	string,
+	SyntheticDescriptor | undefined
+>();
 
-function overrideStat(key: CombatStatKey) {
-	const config = COMBAT_STAT_CONFIG[key];
-	originalStatEntries.set(
+function overrideResource(key: CombatResourceKey) {
+	const config = COMBAT_RESOURCE_CONFIG[key];
+	originalResourceEntries.set(
 		config.resourceId,
 		SYNTH_RESOURCE_METADATA[config.resourceId],
 	);
@@ -60,9 +63,9 @@ function overrideStat(key: CombatStatKey) {
 	};
 }
 
-function restoreStat(key: CombatStatKey) {
-	const config = COMBAT_STAT_CONFIG[key];
-	const original = originalStatEntries.get(config.resourceId);
+function restoreResource(key: CombatResourceKey) {
+	const config = COMBAT_RESOURCE_CONFIG[key];
+	const original = originalResourceEntries.get(config.resourceId);
 	if (original) {
 		SYNTH_RESOURCE_METADATA[config.resourceId] = original;
 	} else {
@@ -70,17 +73,21 @@ function restoreStat(key: CombatStatKey) {
 	}
 }
 
-export function setupStatOverrides() {
-	for (const key of Object.keys(COMBAT_STAT_CONFIG) as CombatStatKey[]) {
-		overrideStat(key);
+export function setupResourceOverrides() {
+	for (const key of Object.keys(
+		COMBAT_RESOURCE_CONFIG,
+	) as CombatResourceKey[]) {
+		overrideResource(key);
 	}
 }
 
-export function teardownStatOverrides() {
-	for (const key of Object.keys(COMBAT_STAT_CONFIG) as CombatStatKey[]) {
-		restoreStat(key);
+export function teardownResourceOverrides() {
+	for (const key of Object.keys(
+		COMBAT_RESOURCE_CONFIG,
+	) as CombatResourceKey[]) {
+		restoreResource(key);
 	}
-	originalStatEntries.clear();
+	originalResourceEntries.clear();
 }
 
 function createBaseEngine() {
@@ -195,7 +202,7 @@ export function createPartialStatEngineContext() {
 	} as const;
 }
 
-export function getStat(
+export function getResource(
 	context: Pick<TranslationContext, 'resourceMetadata'>,
 	key: string,
 ): AttackRegistryDescriptor {
@@ -211,33 +218,40 @@ export function iconLabel(
 	return icon ? `${icon} ${resolved}` : resolved;
 }
 
-export const SYNTH_COMBAT_STATS: Record<CombatStatKey, { resourceId: string }> =
-	{
-		power: { resourceId: COMBAT_STAT_CONFIG.power.resourceId },
-		absorption: { resourceId: COMBAT_STAT_CONFIG.absorption.resourceId },
-		fortification: { resourceId: COMBAT_STAT_CONFIG.fortification.resourceId },
-	};
+export const SYNTH_COMBAT_RESOURCES: Record<
+	CombatResourceKey,
+	{ resourceId: string }
+> = {
+	power: { resourceId: COMBAT_RESOURCE_CONFIG.power.resourceId },
+	absorption: { resourceId: COMBAT_RESOURCE_CONFIG.absorption.resourceId },
+	fortification: {
+		resourceId: COMBAT_RESOURCE_CONFIG.fortification.resourceId,
+	},
+};
 
-const suppressedStatEntries = new Map<
+const suppressedResourceEntries = new Map<
 	string,
 	SyntheticDescriptor | undefined
 >();
 
-export function suppressSyntheticStatDescriptor(statKey: string) {
-	if (!suppressedStatEntries.has(statKey)) {
-		suppressedStatEntries.set(statKey, SYNTH_RESOURCE_METADATA[statKey]);
+export function suppressSyntheticResourceDescriptor(resourceKey: string) {
+	if (!suppressedResourceEntries.has(resourceKey)) {
+		suppressedResourceEntries.set(
+			resourceKey,
+			SYNTH_RESOURCE_METADATA[resourceKey],
+		);
 	}
-	delete SYNTH_RESOURCE_METADATA[statKey];
+	delete SYNTH_RESOURCE_METADATA[resourceKey];
 }
 
-export function restoreSyntheticStatDescriptor(statKey: string) {
-	const original = suppressedStatEntries.get(statKey);
+export function restoreSyntheticResourceDescriptor(resourceKey: string) {
+	const original = suppressedResourceEntries.get(resourceKey);
 	if (original) {
-		SYNTH_RESOURCE_METADATA[statKey] = original;
+		SYNTH_RESOURCE_METADATA[resourceKey] = original;
 	} else {
-		delete SYNTH_RESOURCE_METADATA[statKey];
+		delete SYNTH_RESOURCE_METADATA[resourceKey];
 	}
-	suppressedStatEntries.delete(statKey);
+	suppressedResourceEntries.delete(resourceKey);
 }
 
 export {

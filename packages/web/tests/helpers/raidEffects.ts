@@ -6,13 +6,14 @@ import {
 	SYNTH_BUILDING_ATTACK,
 	SYNTH_PARTIAL_ATTACK,
 	SYNTH_BUILDING,
-	COMBAT_STAT_CONFIG,
+	COMBAT_RESOURCE_CONFIG,
 	SYNTH_RESOURCE_IDS,
 	PLUNDER_HAPPINESS_AMOUNT,
 	WAR_WEARINESS_GAIN,
 	BUILDING_REWARD_GOLD,
 	PLUNDER_PERCENT,
 	type SyntheticAction,
+	type CombatResourceKey,
 } from './raidConfig';
 
 export type ResourceMethod = 'add' | 'remove' | 'transfer';
@@ -47,7 +48,7 @@ export type AttackEffectDescriptor = {
 	target: { resource?: string; building?: string };
 	attacker?: EffectDescriptor[];
 	defender?: EffectDescriptor[];
-	combatResources?: Array<'power' | 'absorption' | 'fortification'>;
+	combatResources?: CombatResourceKey[];
 };
 
 export type ActionDefinition = {
@@ -175,19 +176,17 @@ export function buildAttackEffect(
 					id: descriptor.target.building ?? SYNTH_BUILDING.id,
 				},
 	};
-	const combatResources = descriptor.combatResources ?? [
-		'power',
-		'absorption',
-		'fortification',
-	];
+	const combatResourceKeys =
+		descriptor.combatResources ??
+		(Object.keys(COMBAT_RESOURCE_CONFIG) as CombatResourceKey[]);
 	const resources = [] as AttackParams['resources'];
-	for (const role of combatResources) {
-		const config = COMBAT_STAT_CONFIG[role];
+	for (const key of combatResourceKeys) {
+		const config = COMBAT_RESOURCE_CONFIG[key];
 		if (!config) {
 			continue;
 		}
 		resources?.push({
-			role,
+			role: key,
 			resourceId: config.resourceId,
 			label: config.label,
 			icon: config.icon,

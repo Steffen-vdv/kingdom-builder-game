@@ -6,11 +6,11 @@ import { performAction } from '@kingdom-builder/engine';
 import { formatActionTitle } from '../src/translation/formatActionTitle';
 import {
 	createSyntheticEngineContext,
-	setupStatOverrides,
-	teardownStatOverrides,
-	getStat,
+	setupResourceOverrides,
+	teardownResourceOverrides,
+	getResource,
 	iconLabel,
-	SYNTH_COMBAT_STATS,
+	SYNTH_COMBAT_RESOURCES,
 	PLUNDER_PERCENT,
 	PLUNDER_HAPPINESS_AMOUNT,
 	BUILDING_REWARD_GOLD,
@@ -26,11 +26,11 @@ vi.mock('@kingdom-builder/engine', async () => {
 });
 
 beforeAll(() => {
-	setupStatOverrides();
+	setupResourceOverrides();
 });
 
 afterAll(() => {
-	teardownStatOverrides();
+	teardownResourceOverrides();
 });
 
 describe('raid translation log', () => {
@@ -41,9 +41,9 @@ describe('raid translation log', () => {
 			translation,
 			SYNTH_RESOURCE_IDS.castleHP,
 		);
-		const powerStat = getStat(
+		const powerStat = getResource(
 			translation,
-			SYNTH_COMBAT_STATS.power.resourceId,
+			SYNTH_COMBAT_RESOURCES.power.resourceId,
 		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
@@ -70,7 +70,6 @@ describe('raid translation log', () => {
 		performAction(attack.id, engineContext);
 
 		const log = logContent('action', attack.id, translation);
-		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
 		const castleLabel = iconLabel(
 			castle.icon,
 			castle.label,
@@ -111,9 +110,9 @@ describe('raid translation log', () => {
 	it('logs building attack action with destruction evaluation', () => {
 		const { engineContext, translation, buildingAttack, building } =
 			createSyntheticEngineContext();
-		const powerStat = getStat(
+		const powerStat = getResource(
 			translation,
-			SYNTH_COMBAT_STATS.power.resourceId,
+			SYNTH_COMBAT_RESOURCES.power.resourceId,
 		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
@@ -141,7 +140,6 @@ describe('raid translation log', () => {
 
 		performAction(buildingAttack.id, engineContext);
 		const log = logContent('action', buildingAttack.id, translation);
-		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
 		const buildingAttackDefinition = translation.actions.get(buildingAttack.id);
 		if (!buildingAttackDefinition) {
 			throw new Error('Missing building attack definition');

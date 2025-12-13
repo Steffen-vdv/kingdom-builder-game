@@ -8,8 +8,8 @@ import {
 	selectAttackStatDescriptor,
 } from '../src/translation/effects/formatters/attack/registrySelectors';
 import {
-	suppressSyntheticStatDescriptor,
-	restoreSyntheticStatDescriptor,
+	suppressSyntheticResourceDescriptor,
+	restoreSyntheticResourceDescriptor,
 	createSyntheticEngineContext,
 } from './helpers/raidFactories';
 import {
@@ -94,7 +94,7 @@ describe('attack diff formatters registry', () => {
 
 	it('falls back to stat key when descriptor metadata is missing', () => {
 		const statKey = SYNTH_RESOURCE_IDS.armyStrength;
-		suppressSyntheticStatDescriptor(statKey);
+		suppressSyntheticResourceDescriptor(statKey);
 		try {
 			const { translation } = createSyntheticEngineContext();
 			const diff: AttackPlayerDiff = {
@@ -111,7 +111,7 @@ describe('attack diff formatters registry', () => {
 			expect(formatted).toContain(expectedLabel);
 			expect(formatted).toContain('+1');
 		} finally {
-			restoreSyntheticStatDescriptor(statKey);
+			restoreSyntheticResourceDescriptor(statKey);
 		}
 	});
 
