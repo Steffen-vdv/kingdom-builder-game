@@ -304,6 +304,58 @@ describe('Evaluator Architecture Invariants', () => {
 	});
 
 	/**
+	 * INVARIANT: Developments with trigger effects should NOT use evaluators
+	 * that re-count the same development type.
+	 *
+	 * The trigger loop in triggers.ts already iterates once per development
+	 * instance. Adding an evaluator that counts developments would cause N².
+	 */
+	it('no development triggers use same-development evaluators', () => {
+		const violations: string[] = [];
+
+		for (const dev of DEVELOPMENTS.values()) {
+			const triggers = ['onGainIncomeStep'] as const;
+
+			for (const trigger of triggers) {
+				const effects = dev[trigger];
+				if (!effects) {
+					continue;
+				}
+
+				const checkEffects = (effs: unknown[], path: string) => {
+					for (const eff of effs) {
+						if (typeof eff !== 'object' || eff === null) {
+							continue;
+						}
+						const effect = eff as Record<string, unknown>;
+
+						// Check for development evaluators
+						if (effect.evaluator && typeof effect.evaluator === 'object') {
+							const evaluator = effect.evaluator as Record<string, unknown>;
+							// Any development evaluator in a trigger is suspicious
+							if (evaluator.type === 'development') {
+								violations.push(
+									`Development "${dev.id}" trigger "${trigger}" has ` +
+										`development evaluator at ${path}. ` +
+										`This likely causes N² scaling.`,
+								);
+							}
+						}
+
+						if (Array.isArray(effect.effects)) {
+							checkEffects(effect.effects, `${path}.effects`);
+						}
+					}
+				};
+
+				checkEffects(Array.isArray(effects) ? effects : [effects], trigger);
+			}
+		}
+
+		expect(violations, violations.join('\n')).toHaveLength(0);
+	});
+
+	/**
 	 * INVARIANT: All evaluation modifiers must have valid target effects.
 	 *
 	 * This prevents silent failures where a modifier is registered but
