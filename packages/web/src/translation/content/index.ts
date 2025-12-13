@@ -6,6 +6,7 @@ export type {
 	ContentTranslator,
 	ContentTranslatorContext,
 } from './types';
+export type { InstallationOptions } from './decorators';
 export {
 	registerContentTranslator,
 	summarizeContent,

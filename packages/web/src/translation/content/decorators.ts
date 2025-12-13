@@ -2,14 +2,29 @@ import type { ContentTranslator, Summary, TranslatorLogEntry } from './types';
 import type { TranslationContext } from '../context';
 import { selectTriggerDisplay } from '../context/assetSelectors';
 
+/**
+ * Installation display options for buildings and developments.
+ *
+ * @property installed - Whether the building/development is currently owned.
+ *   Affects title: installed shows "⚒️ Until removed", uninstalled shows
+ *   "⚒️ On build, until removed".
+ * @property omitTriggerTitle - When true, skips wrapping effects in the
+ *   trigger title entirely. Use this when viewing owned assets where the
+ *   installation context is implied (e.g., in the player panel buildings list).
+ */
+export interface InstallationOptions {
+	installed?: boolean;
+	omitTriggerTitle?: boolean;
+}
+
 export function withInstallation<T>(
 	translator: ContentTranslator<T, unknown>,
-): ContentTranslator<T, { installed?: boolean }> {
+): ContentTranslator<T, InstallationOptions> {
 	return {
 		summarize(
 			target: T,
 			context: TranslationContext,
-			options?: { installed?: boolean },
+			options?: InstallationOptions,
 		): Summary {
 			const inner = translator.summarize(target, context, options);
 			if (!inner.length) {
@@ -24,6 +39,10 @@ export function withInstallation<T>(
 				} else {
 					main.push(entry);
 				}
+			}
+			// When omitTriggerTitle is true, return raw items without wrapper
+			if (options?.omitTriggerTitle) {
+				return [...main, ...hoisted];
 			}
 			const trigger = selectTriggerDisplay(context.assets, 'onBuild');
 			const icon = trigger.icon ? `${trigger.icon} ` : '';
@@ -42,7 +61,7 @@ export function withInstallation<T>(
 		describe(
 			target: T,
 			context: TranslationContext,
-			options?: { installed?: boolean },
+			options?: InstallationOptions,
 		): Summary {
 			const inner = translator.describe(target, context, options);
 			if (!inner.length) {
@@ -57,6 +76,10 @@ export function withInstallation<T>(
 				} else {
 					main.push(entry);
 				}
+			}
+			// When omitTriggerTitle is true, return raw items without wrapper
+			if (options?.omitTriggerTitle) {
+				return [...main, ...hoisted];
 			}
 			const trigger = selectTriggerDisplay(context.assets, 'onBuild');
 			const icon = trigger.icon ? `${trigger.icon} ` : '';
@@ -75,7 +98,7 @@ export function withInstallation<T>(
 		log(
 			target: T,
 			context: TranslationContext,
-			options?: { installed?: boolean },
+			options?: InstallationOptions,
 		): TranslatorLogEntry[] {
 			return translator.log ? translator.log(target, context, options) : [];
 		},

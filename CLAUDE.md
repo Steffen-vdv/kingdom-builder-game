@@ -9,14 +9,19 @@ Read this file completely before starting any task.
 
 **The user is in control. Always.**
 
-### Git operations require explicit approval
+### Git operations
 
-- **Never commit** without explicit user approval
-- **Never push** without explicit user approval
-- **Never amend, rebase, or force-push** without explicit user approval
+**Commits**: You may commit autonomously after completing the pre-commit
+verification checklist (enforced by PreToolUse hook). The hook will block your
+first attempt and show you a verification checklist. Complete the checklist,
+then retry. If you are uncertain about expected behavior, assumptions, or
+whether your solution aligns with system mechanics—ask the user before
+committing. Err on the side of caution.
 
-When you complete work, inform the user and ask what they want to do. Do not
-assume they want it committed or pushed.
+**Pushes**: **Never push** without explicit user approval. When ready to push,
+inform the user and wait for their go-ahead.
+
+**Amend, rebase, force-push**: **Never** without explicit user approval.
 
 ### Stop hook feedback is informational only
 
@@ -452,6 +457,97 @@ When you introduce a new pattern that replaces an old one:
 
 Leaving deprecated code around creates confusion and maintenance burden. PRs
 that add new deprecations without completing migration will be rejected.
+
+### 2.6 Root Cause Analysis
+
+**Fix the disease, not the symptom.**
+
+When you encounter a bug or unexpected behavior, your instinct will be to patch
+it at the point where you observe it. **Resist this instinct.** The observation
+point is almost never the correct fix location.
+
+#### The diagnostic workflow
+
+```
+1. OBSERVE the symptom
+   - What is the actual behavior?
+   - What is the expected behavior?
+     ↓
+2. TRACE the data flow backward
+   - Where does this value come from?
+   - What transformed it along the way?
+   - Which layer is responsible for this logic?
+     ↓
+3. IDENTIFY the root cause
+   - Where does expected behavior diverge from actual behavior?
+   - Is this a content issue, engine issue, or presentation issue?
+     ↓
+4. VERIFY your understanding
+   - Can you explain WHY the bug occurs, not just WHERE?
+   - If uncertain, ASK the user before proceeding
+     ↓
+5. FIX at the correct layer
+   - Content: data definitions, configuration values
+   - Engine: game logic, computations, state transitions
+   - Web: presentation, formatting, user interaction
+```
+
+#### Example: The wrong way
+
+> **Symptom**: UI shows resource value as 1, should be 4.
+>
+> ❌ **Band-aid #1**: Patch web layer to multiply by 4
+> _"It shows 1 but should show 4, so I'll multiply in the component."_
+>
+> ❌ **Band-aid #2**: Patch content config from 1 to 4
+> _"Backend sends 1, so I'll change the content definition."_
+>
+> ✅ **Root cause**: Engine computation bug
+> _"Content correctly defines base value as 1. Engine should compute
+> modified value as 4 based on game state, but the modifier isn't being
+> applied. Fix the engine's modifier application logic."_
+
+Each band-aid "works" in the narrow sense—the number 4 appears on screen. But:
+
+- Band-aid #1 breaks when the actual value changes (now web hardcodes a lie)
+- Band-aid #2 breaks game balance (base value was intentionally 1)
+- Only the root cause fix preserves system integrity
+
+#### Questions to ask yourself
+
+Before implementing a fix, answer these:
+
+1. **"Why is this value wrong?"** — not "how do I make it right"
+2. **"What is the source of truth?"** — trace it back to content/config
+3. **"Which layer owns this logic?"** — don't fix presentation bugs in content
+4. **"If I fix it here, what assumptions am I encoding?"** — hidden assumptions
+   become future bugs
+
+If you cannot confidently answer these questions, **stop and ask the user**.
+
+#### The user is your ally
+
+The user understands the system's intended behavior. When you're uncertain:
+
+- Ask what the expected data flow is
+- Ask which layer should own the logic
+- Ask if your proposed fix location sounds right
+- Present your diagnosis and let them correct your understanding
+
+**System integrity always beats speed of delivery.** A correct fix that takes
+an hour of discussion is worth more than a quick patch that creates three new
+bugs next month.
+
+#### Red flags that you're about to apply a band-aid
+
+- You're adding a transformation in the UI layer for "display purposes"
+- You're changing a content value to match what the UI expects
+- You're adding a special case for one specific ID or scenario
+- You don't understand why the current code produces the wrong result
+- Your fix involves the word "workaround" or "for now"
+
+When you notice these red flags, **stop**. Go back to step 2 (trace the data
+flow) and find the real problem.
 
 ---
 
