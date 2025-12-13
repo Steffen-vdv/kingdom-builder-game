@@ -1,7 +1,7 @@
 export { ACTION_CATEGORIES, createActionCategoryRegistry, ActionCategoryId } from './actionCategories';
 export type { ActionCategoryId as ActionCategoryIdValue } from './actionCategories';
 export { ACTIONS, createActionRegistry, ActionId, ACTION_INFO } from './actions';
-export { BUILDINGS, createBuildingRegistry, BuildingId } from './buildings';
+export { BUILDINGS, createBuildingRegistry, BuildingId, BUILDING_INFO } from './buildings';
 export { DEVELOPMENTS, createDevelopmentRegistry, DEVELOPMENT_INFO } from './developments';
 export { PHASES, PhaseId, PhaseStepId } from './phases';
 export type { PhaseDef, StepDef } from './infrastructure/builders';

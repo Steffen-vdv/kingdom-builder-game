@@ -10,6 +10,7 @@ import {
 	PASSIVE_INFO,
 	POPULATION_INFO,
 	DEVELOPMENTS_INFO,
+	BUILDING_INFO,
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
@@ -273,10 +274,19 @@ const buildAssetMetadata = () =>
 		['slot', { label: SLOT_INFO.label, icon: SLOT_INFO.icon }],
 		['passive', { label: PASSIVE_INFO.label, icon: PASSIVE_INFO.icon }],
 		[
-			'developments',
+			'development',
 			{
 				label: DEVELOPMENTS_INFO.label,
 				icon: DEVELOPMENTS_INFO.icon,
+				plural: 'Developments',
+			},
+		],
+		[
+			'building',
+			{
+				label: BUILDING_INFO.label,
+				icon: BUILDING_INFO.icon,
+				plural: BUILDING_INFO.plural,
 			},
 		],
 	]);

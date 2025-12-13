@@ -169,6 +169,11 @@ const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 			label: 'Development',
 			plural: 'Developments',
 		},
+		building: {
+			icon: '🏛️',
+			label: 'Building',
+			plural: 'Buildings',
+		},
 		modifiers: {
 			cost: { icon: '✨', label: 'Cost Adjustment' },
 			result: { icon: '✨', label: 'Outcome Adjustment' },

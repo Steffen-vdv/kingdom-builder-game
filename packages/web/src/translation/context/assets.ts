@@ -268,25 +268,29 @@ export function createTranslationAssets(
 	const developmentDescriptor = resolveKeywordDescriptor(
 		assetDescriptors['development'],
 	);
+	const buildingDescriptor = resolveKeywordDescriptor(
+		assetDescriptors['building'],
+	);
 	const keywordLabels = resolveKeywordLabels(assetDescriptors['keywords']);
-	const base: Omit<TranslationAssets, 'action' | 'development' | 'keywords'> =
-		Object.freeze({
-			resources,
-			population: populationAsset,
-			land: landAsset,
-			slot: slotAsset,
-			passive: passiveAsset,
-			transfer: transferAsset,
-			upkeep: upkeepAsset,
-			modifiers,
-			triggers,
-			tierSummaries,
-			formatPassiveRemoval: formatRemoval,
-		});
+	type OptionalAssetKeys = 'action' | 'development' | 'building' | 'keywords';
+	const base: Omit<TranslationAssets, OptionalAssetKeys> = Object.freeze({
+		resources,
+		population: populationAsset,
+		land: landAsset,
+		slot: slotAsset,
+		passive: passiveAsset,
+		transfer: transferAsset,
+		upkeep: upkeepAsset,
+		modifiers,
+		triggers,
+		tierSummaries,
+		formatPassiveRemoval: formatRemoval,
+	});
 	const result: TranslationAssets = {
 		...base,
 		...(actionDescriptor ? { action: actionDescriptor } : {}),
 		...(developmentDescriptor ? { development: developmentDescriptor } : {}),
+		...(buildingDescriptor ? { building: buildingDescriptor } : {}),
 		...(keywordLabels ? { keywords: keywordLabels } : {}),
 	};
 	return Object.freeze(result);

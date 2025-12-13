@@ -86,6 +86,7 @@ export interface TranslationAssets {
 	readonly tierSummaries: Readonly<Record<string, string>>;
 	readonly action?: Readonly<TranslationKeywordDescriptor>;
 	readonly development?: Readonly<TranslationKeywordDescriptor>;
+	readonly building?: Readonly<TranslationKeywordDescriptor>;
 	readonly keywords?: Readonly<TranslationKeywordLabels>;
 	formatPassiveRemoval(description: string): string;
 }

@@ -10,6 +10,7 @@ import { useGameEngine } from '../../state/GameContext';
 import {
 	useLandMetadata,
 	usePassiveAssetMetadata,
+	useBuildingMetadata,
 } from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from './registryDisplays';
 import { resolvePassivePresentation } from '../../translation/log/passives';
@@ -40,19 +41,16 @@ const HOVER_CARD_BG =
 	'bg-gradient-to-br from-white/80 to-white/60 ' +
 	'dark:from-slate-900/80 dark:to-slate-900/60';
 
-// Default building icon and label (no asset metadata available)
-const BUILDING_ICON = '🏗️';
-const BUILDING_LABEL = 'Building';
-
 /**
  * Compact assets row showing lands count, buildings count, and effects count.
  * Designed to sit at the bottom of the PlayerPanel inside the panel-card.
  */
 const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
-	const { translationContext, handleHoverCard, clearHoverCard } =
+	const { translationContext, ruleSnapshot, handleHoverCard, clearHoverCard } =
 		useGameEngine();
 	const landMeta = useLandMetadata();
 	const passiveMeta = usePassiveAssetMetadata();
+	const buildingMeta = useBuildingMetadata();
 
 	const landDescriptor = React.useMemo(
 		() => toDescriptorDisplay(landMeta.select()),
@@ -62,26 +60,71 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 		() => toDescriptorDisplay(passiveMeta.select()),
 		[passiveMeta],
 	);
+	// Buildings asset descriptor for the category title
+	const buildingCategoryAsset = translationContext.assets.building;
+	if (!buildingCategoryAsset) {
+		throw new Error('Building asset descriptor required for building display');
+	}
 
 	const landsCount = player.lands.length;
 	const buildingsCount = player.buildings.length;
 
-	// Count passives (effects)
-	const passiveSummaries = translationContext.passives.list(player.id);
+	// Count passives (effects), excluding building and tier passives
+	// since they have dedicated sections
+	const buildingIds = React.useMemo(
+		() => new Set(player.buildings),
+		[player.buildings],
+	);
+	// Get tier passive IDs from rule definitions (content-driven)
+	const tierPassiveIds = React.useMemo(() => {
+		const ids = new Set<string>();
+		for (const tier of ruleSnapshot.tierDefinitions) {
+			if (tier.preview?.id) {
+				ids.add(tier.preview.id);
+			}
+		}
+		return ids;
+	}, [ruleSnapshot.tierDefinitions]);
+	const allPassiveSummaries = translationContext.passives.list(player.id);
+	const passiveSummaries = React.useMemo(
+		() =>
+			allPassiveSummaries.filter((passive) => {
+				// Exclude building passives (ID matches a building)
+				if (buildingIds.has(passive.id)) {
+					return false;
+				}
+				// Exclude tier passives (ID from tier definitions)
+				if (tierPassiveIds.has(passive.id)) {
+					return false;
+				}
+				return true;
+			}),
+		[allPassiveSummaries, buildingIds, tierPassiveIds],
+	);
 	const effectsCount = passiveSummaries.length;
 
 	// Build hover card for lands - show each land with its developments
 	const showLandsCard = React.useCallback(() => {
-		const landItems: string[] = [];
+		const landItems: (string | SummaryGroup)[] = [];
+		const landIcon = landDescriptor.icon;
 		for (const land of player.lands) {
+			// Get the land's effects (developments)
 			const full = describeContent('land', land, translationContext);
 			const { effects } = splitSummary(full);
-			// Flatten both string and group entries
-			landItems.push(...flattenSummary(effects));
+			// Build hierarchical group: land with its effects as children
+			if (effects.length > 0) {
+				landItems.push({
+					title: `${landIcon} ${land.id}`,
+					items: effects,
+				});
+			} else {
+				landItems.push(`${landIcon} ${land.id}`);
+			}
 		}
 		handleHoverCard({
-			title: `${landDescriptor.icon ?? '🗺️'} ${landDescriptor.label}s (${landsCount})`,
+			title: `${landDescriptor.icon} ${landDescriptor.label}s (${landsCount})`,
 			effects: landItems.length > 0 ? landItems : ['No lands owned'],
+			effectsTitle: ' ', // Hide the "Effects" label
 			requirements: [],
 			bgClass: HOVER_CARD_BG,
 		});
@@ -95,21 +138,40 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 
 	// Build hover card for buildings - show each building with its effects
 	const showBuildingsCard = React.useCallback(() => {
-		const buildingItems: string[] = [];
+		const buildingItems: (string | SummaryGroup)[] = [];
 		for (const buildingId of player.buildings) {
+			// Get building metadata for icon/label - required by contract
+			const buildingMetadata = buildingMeta.select(buildingId);
+			// Get the building's effects
 			const full = describeContent('building', buildingId, translationContext);
 			const { effects } = splitSummary(full);
-			// Flatten both string and group entries
-			buildingItems.push(...flattenSummary(effects));
+			// Build hierarchical group: building name with its effects as children
+			if (effects.length > 0) {
+				buildingItems.push({
+					title: `${buildingMetadata.icon} ${buildingMetadata.label}`,
+					items: effects,
+				});
+			} else {
+				buildingItems.push(
+					`${buildingMetadata.icon} ${buildingMetadata.label}`,
+				);
+			}
 		}
 		handleHoverCard({
-			title: `${BUILDING_ICON} ${BUILDING_LABEL}s (${buildingsCount})`,
+			title: `${buildingCategoryAsset.icon} ${buildingCategoryAsset.plural} (${buildingsCount})`,
 			effects:
 				buildingItems.length > 0 ? buildingItems : ['No buildings owned'],
 			requirements: [],
 			bgClass: HOVER_CARD_BG,
 		});
-	}, [player.buildings, translationContext, handleHoverCard, buildingsCount]);
+	}, [
+		player.buildings,
+		translationContext,
+		handleHoverCard,
+		buildingsCount,
+		buildingMeta,
+		buildingCategoryAsset,
+	]);
 
 	// Build hover card for effects/passives
 	const showEffectsCard = React.useCallback(() => {
@@ -132,6 +194,10 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 				}
 				if (def.detail !== undefined) {
 					passiveDef.detail = def.detail;
+				}
+				// Include effects for icon derivation
+				if (def.effects !== undefined) {
+					passiveDef.effects = def.effects;
 				}
 				options = { ...baseOptions, definition: passiveDef };
 			} else {
@@ -191,7 +257,7 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 						onMouseLeave={clearHoverCard}
 						aria-label={`${landsCount} lands`}
 					>
-						<span aria-hidden="true">{landDescriptor.icon ?? '🗺️'}</span>
+						<span aria-hidden="true">{landDescriptor.icon}</span>
 						<span className="font-semibold">{landsCount}</span>
 					</button>
 				)}
@@ -203,7 +269,7 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 						onMouseLeave={clearHoverCard}
 						aria-label={`${buildingsCount} buildings`}
 					>
-						<span aria-hidden="true">{BUILDING_ICON}</span>
+						<span aria-hidden="true">{buildingCategoryAsset.icon}</span>
 						<span className="font-semibold">{buildingsCount}</span>
 					</button>
 				)}
@@ -218,7 +284,7 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 					onMouseLeave={clearHoverCard}
 					aria-label={`${effectsCount} active effects`}
 				>
-					<span aria-hidden="true">{passiveDescriptor.icon ?? '✨'}</span>
+					<span aria-hidden="true">{passiveDescriptor.icon}</span>
 					<span className="font-semibold">{effectsCount} effects</span>
 				</button>
 			)}
