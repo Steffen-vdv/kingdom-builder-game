@@ -6,8 +6,6 @@ import { resolveTierEffectConfig, type TierEffectInput } from './tierEffectConfi
 
 type TierPassiveTextInput = TierPassiveTextTokens | TierPassiveTextBuilder | ((builder: TierPassiveTextBuilder) => TierPassiveTextBuilder);
 
-type TierDisplayInput = TierDisplayMetadata | TierDisplayBuilder | ((builder: TierDisplayBuilder) => TierDisplayBuilder);
-
 type PassiveParams = { id?: string };
 class HappinessTierBuilder {
 	private config: Partial<HappinessTierDefinition> & {

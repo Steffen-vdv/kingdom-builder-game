@@ -1,4 +1,3 @@
-import type { ResourceCategoryDefinition, ResourceDefinition, ResourceGroupDefinition } from './types';
 import { getResourceDefinitions, getResourceGroupDefinitions, getResourceCategoryDefinitions } from '../../resources';
 import { createResourceCategoryRegistry, createResourceGroupRegistry, createResourceRegistry, type ResourceCategoryRegistry, type ResourceGroupRegistry, type ResourceRegistry } from './registry';
 
