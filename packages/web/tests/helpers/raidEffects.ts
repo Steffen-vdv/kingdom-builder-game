@@ -150,9 +150,9 @@ type AttackParams = {
 	target:
 		| { type: 'resource'; resourceId: string }
 		| { type: 'building'; id: string };
-	stats?: Array<{
+	resources?: Array<{
 		role: 'power' | 'absorption' | 'fortification';
-		resourceId: string;
+		key: string;
 		label?: string;
 		icon?: string;
 	}>;
@@ -175,22 +175,22 @@ export function buildAttackEffect(
 					id: descriptor.target.building ?? SYNTH_BUILDING.id,
 				},
 	};
-	const stats = descriptor.stats ?? ['power', 'absorption', 'fortification'];
-	const annotations = [] as AttackParams['stats'];
-	for (const role of stats) {
+	const roles = descriptor.stats ?? ['power', 'absorption', 'fortification'];
+	const resources = [] as AttackParams['resources'];
+	for (const role of roles) {
 		const config = COMBAT_STAT_CONFIG[role];
 		if (!config) {
 			continue;
 		}
-		annotations?.push({
+		resources?.push({
 			role,
-			resourceId: config.resourceId,
+			key: config.resourceId,
 			label: config.label,
 			icon: config.icon,
 		});
 	}
-	if (annotations && annotations.length > 0) {
-		params.stats = annotations;
+	if (resources && resources.length > 0) {
+		params.resources = resources;
 	}
 	if (descriptor.attacker?.length || descriptor.defender?.length) {
 		params.onDamage = {};
