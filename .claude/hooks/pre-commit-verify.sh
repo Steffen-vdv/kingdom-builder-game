@@ -10,25 +10,38 @@
 #
 # IMPORTANT: Must output JSON to actually block. Plain text is ignored by Claude Code.
 
+# Debug logging
+LOG="/tmp/claude-precommit-hook.log"
+echo "=== PreToolUse hook called $(date -Iseconds) ===" >> "$LOG"
+echo "CLAUDE_TOOL_INPUT: $CLAUDE_TOOL_INPUT" >> "$LOG"
+
 # Parse command from tool input JSON
 COMMAND=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.command' 2>/dev/null || echo "")
+echo "Parsed COMMAND: $COMMAND" >> "$LOG"
 
 # Only intercept git commit commands - allow everything else through
 if [[ ! "$COMMAND" == *"git commit"* ]]; then
+	echo "Not a git commit command, allowing through" >> "$LOG"
 	exit 0
 fi
 
+echo "Git commit detected!" >> "$LOG"
+
 # Use a stable state file path that persists across tool calls
 STATE_FILE="$HOME/.claude-commit-reminder-state"
+echo "STATE_FILE: $STATE_FILE" >> "$LOG"
+echo "State file exists: $([ -f "$STATE_FILE" ] && echo YES || echo NO)" >> "$LOG"
 
 # Check if we've already shown the reminder (state file exists)
 if [[ -f "$STATE_FILE" ]]; then
 	# Already reminded - allow this attempt and reset state
+	echo "State file exists - allowing commit (second attempt)" >> "$LOG"
 	rm -f "$STATE_FILE"
 	exit 0
 fi
 
 # First attempt - create state file and block with JSON response
+echo "First attempt - creating state file and BLOCKING" >> "$LOG"
 touch "$STATE_FILE"
 
 # Output JSON to actually block the tool call
@@ -40,4 +53,5 @@ cat << 'EOF'
 }
 EOF
 
+echo "JSON block response output complete" >> "$LOG"
 exit 0
