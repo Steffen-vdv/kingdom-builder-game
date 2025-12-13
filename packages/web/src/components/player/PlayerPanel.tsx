@@ -9,7 +9,7 @@ import PassiveDisplay from './PassiveDisplay';
 import ResourceButton from './ResourceButton';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
 import ResourceWithBoundButton from './ResourceWithBoundButton';
-import TierThermometer from './TierThermometer';
+import HappinessBar from './HappinessBar';
 import { useAnimate } from '../../utils/useAutoAnimate';
 import { useGameEngine } from '../../state/GameContext';
 import { useNextTurnForecast } from '../../state/useNextTurnForecast';
@@ -108,6 +108,30 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 		tieredResourceKey,
 	);
 
+	// Get active tier info for HappinessBar display
+	const activeTierInfo = useMemo(() => {
+		if (!activeTierId || !tieredResourceKey) {
+			return null;
+		}
+		const tier = tierDefinitions.find((t) => t.id === activeTierId);
+		if (!tier) {
+			return null;
+		}
+		const value = player.values?.[tieredResourceKey] ?? 0;
+		const icon = tieredResourceDescriptor?.icon ?? '😊';
+		return {
+			name: tier.display?.title ?? 'Neutral',
+			icon,
+			value,
+		};
+	}, [
+		activeTierId,
+		tieredResourceKey,
+		tierDefinitions,
+		player.values,
+		tieredResourceDescriptor,
+	]);
+
 	// Group resources by section
 	const resourcesBySection = useMemo(() => {
 		if (!resourceCatalog) {
@@ -197,44 +221,14 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 		(definition: SessionResourceDefinition): React.ReactNode => {
 			const resourceId = definition.id;
 
-			// Skip resources with boundOf - they're shown inline with their parent
-			const boundInfo = boundReferenceMap.get(resourceId);
+			// Skip tiered resources - they're rendered separately as HappinessBar
+			if (definition.tierTrack) {
+				return null;
+			}
 
+			const boundInfo = boundReferenceMap.get(resourceId);
 			const metadata = translationContext.resourceMetadata.get(resourceId);
 			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
-
-			// Render tiered resources (like Happiness) with thermometer inline
-			if (definition.tierTrack) {
-				const currentValue = player.values?.[resourceId] ?? 0;
-				const sortedTiers = [...tierDefinitions].sort(
-					(a, b) => (b.range.min ?? 0) - (a.range.min ?? 0),
-				);
-				const tierResult = buildTierEntries(sortedTiers, {
-					...(activeTierId ? { activeId: activeTierId } : {}),
-					tieredResource: tieredResourceDescriptor,
-					passiveAsset: passiveAssetDescriptor,
-					translationContext,
-				});
-
-				return (
-					<div
-						key={resourceId}
-						className="resource-tiered col-span-full cursor-pointer"
-						onMouseEnter={() => showResourceCard(resourceId)}
-						onMouseLeave={clearHoverCard}
-						onFocus={() => showResourceCard(resourceId)}
-						onBlur={clearHoverCard}
-						role="button"
-						tabIndex={0}
-					>
-						<TierThermometer
-							currentValue={currentValue}
-							tiers={tierResult.summaries}
-							{...(metadata.icon ? { resourceIcon: metadata.icon } : {})}
-						/>
-					</div>
-				);
-			}
 
 			// If this resource has a bound reference, render with bound
 			if (boundInfo) {
@@ -278,19 +272,14 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			boundReferenceMap,
 			snapshotContext,
 			translationContext,
-			player.values,
-			tierDefinitions,
-			activeTierId,
-			tieredResourceDescriptor,
-			passiveAssetDescriptor,
 			showResourceCard,
 			clearHoverCard,
 		],
 	);
 
 	const panelClassName = [
-		'player-panel flex h-auto min-h-[320px] flex-col gap-2',
-		'self-start text-slate-800 dark:text-slate-100',
+		'player-panel flex h-auto min-h-[320px] flex-col gap-2 self-start',
+		'text-slate-800 dark:text-slate-100',
 		className,
 	]
 		.filter(Boolean)
@@ -308,34 +297,62 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			</h3>
 
 			{/* Dual-column resource layout */}
-			<div ref={animateBar} className="panel-card flex w-full gap-3 px-4 py-3">
-				{/* Economy Column */}
-				<div className="flex flex-1 flex-col gap-2">
-					<div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-						Economy
+			<div ref={animateBar} className="panel-card w-full overflow-hidden">
+				{/* Grid for Economy | Combat columns */}
+				<div
+					className="grid grid-cols-2"
+					style={{
+						gap: '1px',
+						background: 'rgba(255, 255, 255, 0.06)',
+					}}
+				>
+					{/* Economy Column */}
+					<div
+						className="flex flex-col gap-1.5 p-2.5"
+						style={{ background: 'rgba(15, 23, 42, 0.95)' }}
+					>
+						<div className="text-[9px] font-medium uppercase tracking-widest text-slate-500">
+							Economy
+						</div>
+						<div className="flex flex-col gap-1.5">
+							{resourcesBySection.economy.map((def) => renderResource(def))}
+							{economyGroups.map((groupId) => (
+								<ResourceGroupDisplay
+									key={groupId}
+									groupId={groupId}
+									player={player}
+									isPrimaryCategory={true}
+								/>
+							))}
+						</div>
 					</div>
-					<div className="info-bar flex flex-wrap gap-1">
-						{resourcesBySection.economy.map((def) => renderResource(def))}
-						{economyGroups.map((groupId) => (
-							<ResourceGroupDisplay
-								key={groupId}
-								groupId={groupId}
-								player={player}
-								isPrimaryCategory={true}
-							/>
-						))}
+
+					{/* Combat Column */}
+					<div
+						className="flex flex-col gap-1.5 p-2.5"
+						style={{ background: 'rgba(15, 23, 42, 0.95)' }}
+					>
+						<div className="text-[9px] font-medium uppercase tracking-widest text-slate-500">
+							Combat
+						</div>
+						<div className="flex flex-col gap-1.5">
+							{resourcesBySection.combat.map((def) => renderResource(def))}
+						</div>
 					</div>
 				</div>
 
-				{/* Combat Column */}
-				<div className="flex flex-1 flex-col gap-2">
-					<div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-						Combat
+				{/* Happiness bar spanning full width below columns */}
+				{activeTierInfo && tieredResourceKey && (
+					<div className="px-3 py-1.5">
+						<HappinessBar
+							currentValue={activeTierInfo.value}
+							tierName={activeTierInfo.name}
+							icon={activeTierInfo.icon}
+							onMouseEnter={() => showResourceCard(tieredResourceKey)}
+							onMouseLeave={clearHoverCard}
+						/>
 					</div>
-					<div className="info-bar flex flex-wrap gap-1">
-						{resourcesBySection.combat.map((def) => renderResource(def))}
-					</div>
-				</div>
+				)}
 			</div>
 
 			<div ref={animateSections} className="flex flex-col gap-2">

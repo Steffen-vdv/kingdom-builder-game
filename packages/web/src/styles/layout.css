@@ -67,6 +67,81 @@
 		@apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/60 hover:shadow-lg hover:shadow-amber-500/10 dark:hover:bg-white/10 dark:hover:shadow-black/30;
 	}
 
+	/* Stat chip for primary resources (horizontal layout) */
+	.stat-chip {
+		@apply inline-flex flex-row items-center justify-between gap-2 rounded-lg px-3 py-2 cursor-pointer transition-all;
+		background: rgba(255, 255, 255, 0.04);
+		min-width: 80px;
+	}
+
+	.stat-chip:hover {
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	/* Light mode variant */
+	:not(.dark) .stat-chip {
+		background: rgba(0, 0, 0, 0.03);
+	}
+
+	:not(.dark) .stat-chip:hover {
+		background: rgba(0, 0, 0, 0.06);
+	}
+
+	.stat-chip__icon {
+		@apply text-base flex-shrink-0;
+	}
+
+	.stat-chip__value {
+		@apply text-base font-bold text-slate-100;
+	}
+
+	:not(.dark) .stat-chip__value {
+		@apply text-slate-800;
+	}
+
+	/* Mini chip for secondary resources */
+	.mini-chip {
+		@apply inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs cursor-pointer transition-all;
+		background: rgba(255, 255, 255, 0.05);
+	}
+
+	.mini-chip:hover {
+		background: rgba(255, 255, 255, 0.1);
+	}
+
+	:not(.dark) .mini-chip {
+		background: rgba(0, 0, 0, 0.04);
+	}
+
+	:not(.dark) .mini-chip:hover {
+		background: rgba(0, 0, 0, 0.08);
+	}
+
+	/* Resource bar (for bounded resources like happiness) */
+	.resource-bar {
+		@apply flex items-center gap-2 py-1.5 cursor-pointer;
+	}
+
+	.resource-bar:hover .bar-track {
+		border-color: rgba(255, 255, 255, 0.25);
+	}
+
+	.bar-track {
+		@apply flex-1 h-[18px] rounded-lg overflow-hidden relative;
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid transparent;
+		transition: border-color 0.15s;
+	}
+
+	:not(.dark) .bar-track {
+		background: rgba(0, 0, 0, 0.06);
+	}
+
+	.bar-label {
+		@apply absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-white;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+	}
+
 	.panel-card {
 		@apply relative overflow-hidden rounded-2xl border border-white/50 bg-white/70 shadow-lg shadow-amber-500/10 dark:border-white/10 dark:bg-slate-900/70 dark:shadow-black/50;
 	}

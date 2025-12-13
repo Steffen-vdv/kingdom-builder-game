@@ -90,10 +90,6 @@ export function formatSignedResourceMagnitude(
 	return `${sign}${magnitude}`;
 }
 
-const FORECAST_BADGE_CLASS =
-	'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold';
-const FORECAST_BADGE_THEME_CLASS = 'bg-slate-800/70 dark:bg-slate-100/10';
-
 const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 	metadata,
 	snapshot,
@@ -116,10 +112,36 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 		onShow(snapshot.id);
 	}, [onShow, snapshot.id]);
 
+	// Use mini-chip for compact/secondary resources, stat-chip for primary
 	const buttonClassName = compact
-		? 'bar-item hoverable cursor-help relative overflow-visible text-sm opacity-80'
-		: 'bar-item hoverable cursor-help relative overflow-visible';
+		? 'mini-chip cursor-help relative overflow-visible'
+		: 'stat-chip cursor-help relative overflow-visible';
 
+	// For compact mode, render inline icon + value + forecast
+	if (compact) {
+		return (
+			<button
+				type="button"
+				className={buttonClassName}
+				onMouseEnter={handleShow}
+				onMouseLeave={onHide}
+				onFocus={handleShow}
+				onBlur={onHide}
+				onClick={handleShow}
+				aria-label={ariaLabel}
+			>
+				<span aria-hidden="true">{iconLabel}</span>
+				<strong>{formattedValue}</strong>
+				{forecastDisplay && (
+					<span className={`text-[9px] ${forecastDisplay.toneClass}`}>
+						{forecastDisplay.label}
+					</span>
+				)}
+			</button>
+		);
+	}
+
+	// Primary stat-chip: horizontal layout with icon+value left, forecast right
 	return (
 		<button
 			type="button"
@@ -131,15 +153,15 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 			onClick={handleShow}
 			aria-label={ariaLabel}
 		>
-			<span aria-hidden="true">{iconLabel}</span>
-			{formattedValue}
+			<span className="flex items-center gap-1">
+				<span className="stat-chip__icon" aria-hidden="true">
+					{iconLabel}
+				</span>
+				<span className="stat-chip__value">{formattedValue}</span>
+			</span>
 			{forecastDisplay && (
 				<span
-					className={[
-						FORECAST_BADGE_CLASS,
-						FORECAST_BADGE_THEME_CLASS,
-						forecastDisplay.toneClass,
-					].join(' ')}
+					className={`text-[11px] font-semibold ${forecastDisplay.toneClass}`}
 				>
 					{forecastDisplay.label}
 				</span>
