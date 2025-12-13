@@ -33,6 +33,8 @@ describe('applyDeveloperPreset', () => {
 		for (const land of player.lands) {
 			land.slotsUsed = land.slotsMax;
 		}
+		// Set max-population to provide capacity for population targets
+		player.resourceValues[CResource.populationMax] = 10;
 		const goldTarget = (player.resourceValues[CResource.gold] ?? 0) + 5;
 		const happinessTarget =
 			(player.resourceValues[CResource.happiness] ?? 0) + 3;

@@ -265,36 +265,38 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 				)}
 			</button>
 
-			{/* Expandable member chips */}
+			{/* Expandable member chips with rollout animation */}
 			{activeMembers.length > 0 && (
-				<div className="pop-members">
-					{activeMembers.map((entry) => {
-						const handleMemberEnter = (event: React.SyntheticEvent) => {
-							event.stopPropagation();
-							showEntryCard(entry);
-						};
-						const handleMemberLeave = (event: React.SyntheticEvent) => {
-							event.stopPropagation();
-							showGroupCard();
-						};
-						return (
-							<button
-								key={entry.snapshot.id}
-								type="button"
-								className="mini-chip"
-								onMouseEnter={handleMemberEnter}
-								onMouseLeave={handleMemberLeave}
-								onFocus={handleMemberEnter}
-								onBlur={handleMemberLeave}
-								aria-label={`${entry.metadata.label}: ${entry.snapshot.current}`}
-							>
-								{entry.metadata.icon && (
-									<span aria-hidden="true">{entry.metadata.icon}</span>
-								)}
-								<span>{entry.snapshot.current}</span>
-							</button>
-						);
-					})}
+				<div className="pop-members-wrapper">
+					<div className="pop-members">
+						{activeMembers.map((entry) => {
+							const handleMemberEnter = (event: React.SyntheticEvent) => {
+								event.stopPropagation();
+								showEntryCard(entry);
+							};
+							const handleMemberLeave = (event: React.SyntheticEvent) => {
+								event.stopPropagation();
+								showGroupCard();
+							};
+							return (
+								<button
+									key={entry.snapshot.id}
+									type="button"
+									className="mini-chip"
+									onMouseEnter={handleMemberEnter}
+									onMouseLeave={handleMemberLeave}
+									onFocus={handleMemberEnter}
+									onBlur={handleMemberLeave}
+									aria-label={`${entry.metadata.label}: ${entry.snapshot.current}`}
+								>
+									{entry.metadata.icon && (
+										<span aria-hidden="true">{entry.metadata.icon}</span>
+									)}
+									<span>{entry.snapshot.current}</span>
+								</button>
+							);
+						})}
+					</div>
 				</div>
 			)}
 		</div>

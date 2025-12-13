@@ -12,7 +12,7 @@ export { Trigger, TRIGGER_META, type TriggerId, type TriggerMeta } from './trigg
 // Legacy exports for backwards compatibility
 export { ON_GAIN_INCOME_STEP, ON_PAY_UPKEEP_STEP, ON_GAIN_AP_STEP } from './triggers';
 export { LAND_INFO, SLOT_INFO, DEVELOPMENTS_INFO } from './land';
-export { UPKEEP_INFO, TRANSFER_INFO, KEYWORD_LABELS } from './assets';
+export { UPKEEP_INFO, TRANSFER_INFO, KEYWORD_LABELS, SECTION_INFO } from './assets';
 export { POPULATION_INFO, POPULATION_ARCHETYPE_INFO } from './population';
 export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';

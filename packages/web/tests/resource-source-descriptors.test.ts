@@ -137,6 +137,8 @@ function createDescriptorSetup(): DescriptorSetup {
 			land: { label: 'Territory', icon: '🗺️' },
 			slot: { label: 'Development Slot', icon: '🧩' },
 			passive: { label: 'Aura', icon: '♾️' },
+			'section:economy': { label: 'Economy' },
+			'section:combat': { label: 'Military' },
 		},
 	};
 	const activePlayer = createSnapshotPlayer({

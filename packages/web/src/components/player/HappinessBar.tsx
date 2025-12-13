@@ -45,7 +45,7 @@ const HappinessBar: React.FC<HappinessBarProps> = ({
 				<div
 					className="absolute inset-0 rounded-lg"
 					style={{
-						background: 'linear-gradient(90deg, #ef4444, #fbbf24, #22c55e)',
+						background: 'linear-gradient(90deg, #ef4444, #86efac, #3b82f6)',
 					}}
 				/>
 				{/* Mask overlay that hides the unfilled portion */}

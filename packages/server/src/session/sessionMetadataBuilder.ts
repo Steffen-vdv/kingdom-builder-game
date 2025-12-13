@@ -11,6 +11,7 @@ import {
 	POPULATION_INFO,
 	DEVELOPMENTS_INFO,
 	BUILDING_INFO,
+	SECTION_INFO,
 	OVERVIEW_CONTENT,
 	type OverviewContentTemplate,
 } from '@kingdom-builder/contents';
@@ -289,6 +290,9 @@ const buildAssetMetadata = () =>
 				plural: BUILDING_INFO.plural,
 			},
 		],
+		// Resource panel section labels
+		['section:economy', { label: SECTION_INFO.economy.label }],
+		['section:combat', { label: SECTION_INFO.combat.label }],
 	]);
 
 const cloneOverviewContent = () =>

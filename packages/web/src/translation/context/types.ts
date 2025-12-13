@@ -73,6 +73,13 @@ export interface TranslationKeywordLabels {
 	readonly cost: string;
 }
 
+/**
+ * Section label info for resource panel columns.
+ */
+export interface TranslationSectionLabel {
+	readonly label: string;
+}
+
 export interface TranslationAssets {
 	readonly resources: Readonly<Record<string, TranslationIconLabel>>;
 	readonly population: Readonly<TranslationIconLabel>;
@@ -84,6 +91,10 @@ export interface TranslationAssets {
 	readonly modifiers: Readonly<Record<string, TranslationModifierInfo>>;
 	readonly triggers: Readonly<Record<string, TranslationTriggerAsset>>;
 	readonly tierSummaries: Readonly<Record<string, string>>;
+	readonly sections: Readonly<{
+		economy: TranslationSectionLabel;
+		combat: TranslationSectionLabel;
+	}>;
 	readonly action?: Readonly<TranslationKeywordDescriptor>;
 	readonly development?: Readonly<TranslationKeywordDescriptor>;
 	readonly building?: Readonly<TranslationKeywordDescriptor>;

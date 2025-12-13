@@ -45,7 +45,7 @@ interface PlayerPanelProps {
 const PlayerPanel: FC<PlayerPanelProps> = ({
 	player,
 	className = '',
-	isActive: _isActive = false,
+	isActive = false,
 	onHeightChange,
 }) => {
 	const { handleHoverCard, clearHoverCard, translationContext, ruleSnapshot } =
@@ -310,13 +310,13 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			{/* Dual-column resource layout */}
 			<div ref={animateBar} className="panel-card w-full overflow-hidden">
 				{/* Panel header with player name */}
-				<div className="panel-header">
+				<div className={`panel-header${isActive ? ' is-active' : ''}`}>
 					<span className="text-[13px]" aria-hidden="true">
 						👑
 					</span>
 					<span className="font-semibold text-[14px]">{player.name}</span>
 				</div>
-				{/* Grid for Economy | Combat columns */}
+				{/* Grid for Economy | Military columns */}
 				<div
 					className="grid grid-cols-2"
 					style={{
@@ -330,7 +330,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 						style={{ background: 'rgba(15, 23, 42, 0.95)' }}
 					>
 						<div className="text-[9px] font-medium uppercase tracking-widest text-slate-500">
-							Economy
+							{translationContext.assets.sections.economy.label}
 						</div>
 						<div className="flex flex-col gap-1.5">
 							{resourcesBySection.economy.map((def) => renderResource(def))}
@@ -345,13 +345,13 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 						</div>
 					</div>
 
-					{/* Combat Column */}
+					{/* Military Column */}
 					<div
 						className="flex flex-col gap-1.5 p-2.5"
 						style={{ background: 'rgba(15, 23, 42, 0.95)' }}
 					>
 						<div className="text-[9px] font-medium uppercase tracking-widest text-slate-500">
-							Combat
+							{translationContext.assets.sections.combat.label}
 						</div>
 						<div className="flex flex-col gap-1.5">
 							{/* Primary combat stats (full stat-chip) */}

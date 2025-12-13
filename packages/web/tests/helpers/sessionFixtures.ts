@@ -27,6 +27,21 @@ const EMPTY_RESOURCE_CATALOG_V2: SessionResourceCatalog = Object.freeze({
 	categories: { byId: {}, ordered: [] },
 });
 
+/**
+ * Base asset metadata required for translation context creation.
+ * Use this as a spread base when building custom metadata in tests.
+ */
+export const BASE_ASSET_METADATA = {
+	land: { label: 'Land' },
+	slot: { label: 'Development Slot' },
+	passive: { label: 'Passive' },
+	population: { label: 'Population' },
+	transfer: { label: 'Transfer' },
+	upkeep: { label: 'Upkeep' },
+	'section:economy': { label: 'Economy' },
+	'section:combat': { label: 'Military' },
+} as const;
+
 export const createEmptySnapshotMetadata = (
 	overrides: Partial<SessionSnapshotMetadata> = {},
 ): SessionSnapshotMetadata => {
@@ -38,6 +53,9 @@ export const createEmptySnapshotMetadata = (
 		population: { label: 'Population' },
 		transfer: { label: 'Transfer' },
 		upkeep: { label: 'Upkeep' },
+		// Section labels for resource panel columns
+		'section:economy': { label: 'Economy' },
+		'section:combat': { label: 'Military' },
 	};
 	const baseTriggers: NonNullable<SessionSnapshotMetadata['triggers']> = {
 		onBuild: {

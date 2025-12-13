@@ -167,9 +167,9 @@ const TierThermometer: React.FC<TierThermometerProps> = ({
 					className="relative h-2 rounded-full"
 					style={{
 						background: `linear-gradient(to right,
-							#f59e0b 0%,
-							#22c55e 50%,
-							#10b981 100%)`,
+							#ef4444 0%,
+							#86efac 50%,
+							#3b82f6 100%)`,
 					}}
 				>
 					{/* Tier boundary markers - colored by direction */}

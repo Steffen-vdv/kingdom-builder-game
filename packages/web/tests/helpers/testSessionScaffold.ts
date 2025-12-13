@@ -182,6 +182,13 @@ const ASSET_METADATA: Readonly<Record<string, SessionMetadataDescriptor>> =
 			resourceGain: 'Resource Gain',
 			cost: 'Cost',
 		},
+		// Section labels for resource panel columns
+		'section:economy': {
+			label: 'Economy',
+		},
+		'section:combat': {
+			label: 'Military',
+		},
 	});
 
 export interface TestSessionScaffold {

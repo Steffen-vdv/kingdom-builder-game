@@ -75,6 +75,12 @@ const REQUIRED_ASSET_DESCRIPTORS: Record<string, SessionMetadataDescriptor> =
 			label: 'Maintenance',
 			description: 'Costs paid each upkeep phase to retain benefits.',
 		},
+		'section:economy': {
+			label: 'Economy',
+		},
+		'section:combat': {
+			label: 'Military',
+		},
 	});
 
 const REQUIRED_STAT_DESCRIPTORS: Record<string, SessionMetadataDescriptor> =

@@ -38,6 +38,8 @@ describe('resource effects for population', () => {
 		while (engineContext.game.currentPhase !== PhaseId.Main) {
 			advance(engineContext);
 		}
+		// Increase max-population to provide capacity for the test populations
+		engineContext.activePlayer.resourceValues[CResource.populationMax] = 10;
 		// Get initial population count
 		const initialCount = engineContext.activePlayer.resourceValues[roleId] ?? 0;
 		let cost = getActionCosts(add.id, engineContext);

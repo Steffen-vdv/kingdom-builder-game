@@ -7,6 +7,7 @@ import {
 	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
 	POPULATION_INFO,
+	SECTION_INFO,
 	SLOT_INFO,
 	TRIGGER_META,
 	UPKEEP_INFO,
@@ -219,6 +220,9 @@ function buildAssetMetadata(): SessionMetadataDescriptorMap {
 	assignAssetDescriptor(descriptors, 'transfer', TRANSFER_INFO);
 	assignAssetDescriptor(descriptors, 'action', ACTION_INFO);
 	assignAssetDescriptor(descriptors, 'development', DEVELOPMENT_INFO);
+	// Resource panel section labels
+	assignAssetDescriptor(descriptors, 'section:economy', SECTION_INFO.economy);
+	assignAssetDescriptor(descriptors, 'section:combat', SECTION_INFO.combat);
 	// Modifiers require nested structure for cost/result
 	descriptors['modifiers'] = {
 		cost: MODIFIER_INFO.cost,

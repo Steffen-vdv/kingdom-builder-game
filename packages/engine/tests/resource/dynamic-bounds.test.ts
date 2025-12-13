@@ -1292,12 +1292,15 @@ describe('Dynamic resource bounds', () => {
 				},
 			};
 
-			// This will add the legion but the parent won't exceed its bound
-			resourceAdd(effect, ctx);
+			// Adding a child that would cause parent to exceed bounds is rejected
+			// to maintain computed value integrity
+			expect(() => resourceAdd(effect, ctx)).toThrow(
+				ResourceBoundExceededError,
+			);
 
-			// Legion is now 2
-			expect(getResourceValue(player, legionId)).toBe(2);
-			// But total is clamped to 3 (max population)
+			// Legion remains at 1
+			expect(getResourceValue(player, legionId)).toBe(1);
+			// Total remains at 3
 			expect(getResourceValue(player, totalPopId)).toBe(3);
 		});
 	});

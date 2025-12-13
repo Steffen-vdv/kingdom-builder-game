@@ -18,3 +18,16 @@ export const KEYWORD_LABELS = {
 	resourceGain: 'Resource Gain',
 	cost: 'Cost',
 } as const;
+
+/**
+ * Section labels for resource panel columns.
+ * These map to SessionResourceSection values.
+ */
+export const SECTION_INFO = {
+	economy: {
+		label: 'Economy',
+	},
+	combat: {
+		label: 'Military',
+	},
+} as const;
