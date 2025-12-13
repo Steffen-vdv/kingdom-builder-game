@@ -44,7 +44,7 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 	player,
 	isPrimaryCategory: _isPrimaryCategory = false,
 }) => {
-	const [expanded, setExpanded] = React.useState(false);
+	const [expanded, setExpanded] = React.useState(true);
 	const { handleHoverCard, clearHoverCard, translationContext } =
 		useGameEngine();
 	const resourceCatalog = translationContext.resources;
@@ -260,7 +260,7 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 				</span>
 				{activeMembers.length > 0 && (
 					<span className="pop-chevron" aria-hidden="true">
-						{expanded ? '▼' : '▲'}
+						{expanded ? '▲' : '▼'}
 					</span>
 				)}
 			</button>

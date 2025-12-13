@@ -288,7 +288,6 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	const panelClassName = [
 		'player-panel flex h-auto flex-col self-start',
 		'text-slate-800 dark:text-slate-100',
-		'max-w-[400px]',
 		className,
 	]
 		.filter(Boolean)
@@ -299,7 +298,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	const secondaryCombat = resourcesBySection.combat.filter((d) => d.secondary);
 
 	return (
-		<div ref={panelRef} className={panelClassName}>
+		<div ref={panelRef} className={panelClassName} style={{ maxWidth: 400 }}>
 			{/* Dual-column resource layout */}
 			<div ref={animateBar} className="panel-card w-full overflow-hidden">
 				{/* Panel header with player name */}

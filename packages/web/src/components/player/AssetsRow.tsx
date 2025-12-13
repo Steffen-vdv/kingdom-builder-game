@@ -7,7 +7,6 @@ import {
 	usePassiveAssetMetadata,
 } from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from './registryDisplays';
-import { resolveBuildingDisplay } from '../../translation/content/buildingIcons';
 import { resolvePassivePresentation } from '../../translation/log/passives';
 
 interface AssetsRowProps {
@@ -48,16 +47,19 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 	const passiveSummaries = translationContext.passives.list(player.id);
 	const effectsCount = passiveSummaries.length;
 
-	// Build hover card for lands
+	// Build hover card for lands - show each land with its developments
 	const showLandsCard = React.useCallback(() => {
-		const landItems = player.lands.map((land) => {
+		const landItems: string[] = [];
+		for (const land of player.lands) {
 			const full = describeContent('land', land, translationContext);
 			const { effects } = splitSummary(full);
-			const firstEffect = effects[0];
-			return typeof firstEffect === 'string'
-				? firstEffect
-				: `${landDescriptor.icon ?? '🗺️'} ${landDescriptor.label}`;
-		});
+			// Add each effect line from the land description
+			for (const effect of effects) {
+				if (typeof effect === 'string') {
+					landItems.push(effect);
+				}
+			}
+		}
 		handleHoverCard({
 			title: `${landDescriptor.icon ?? '🗺️'} ${landDescriptor.label}s (${landsCount})`,
 			effects: landItems.length > 0 ? landItems : ['No lands owned'],
@@ -72,16 +74,19 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 		landsCount,
 	]);
 
-	// Build hover card for buildings
+	// Build hover card for buildings - show each building with its effects
 	const showBuildingsCard = React.useCallback(() => {
-		const buildingItems = player.buildings.map((buildingId) => {
-			const { name, icon } = resolveBuildingDisplay(
-				buildingId,
-				translationContext,
-			);
-			const displayIcon = icon || BUILDING_ICON;
-			return `${displayIcon} ${name}`;
-		});
+		const buildingItems: string[] = [];
+		for (const buildingId of player.buildings) {
+			const full = describeContent('building', buildingId, translationContext);
+			const { effects } = splitSummary(full);
+			// Add each effect line from the building description
+			for (const effect of effects) {
+				if (typeof effect === 'string') {
+					buildingItems.push(effect);
+				}
+			}
+		}
 		handleHoverCard({
 			title: `${BUILDING_ICON} ${BUILDING_LABEL}s (${buildingsCount})`,
 			effects:
@@ -118,7 +123,11 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 			}
 			const presentation = resolvePassivePresentation(summary, options);
 			const icon = presentation.icon || passiveDescriptor.icon || '✨';
-			return `${icon} ${presentation.label}`;
+			// Include summary details if available
+			const label = presentation.summary
+				? `${presentation.label}: ${presentation.summary}`
+				: presentation.label;
+			return `${icon} ${label}`;
 		});
 		handleHoverCard({
 			title: `${passiveDescriptor.icon ?? '✨'} Active Effects (${effectsCount})`,

@@ -23,9 +23,9 @@ const HappinessBar: React.FC<HappinessBarProps> = ({
 	const formattedValue =
 		currentValue >= 0 ? `+${currentValue}` : `${currentValue}`;
 
-	// Map value to percentage (assuming -4 to +4 visible range, clamped)
-	const minBound = -4;
-	const maxBound = 4;
+	// Map value to percentage (full -10 to +10 range)
+	const minBound = -10;
+	const maxBound = 10;
 	const clampedValue = Math.max(minBound, Math.min(maxBound, currentValue));
 	const percent = ((clampedValue - minBound) / (maxBound - minBound)) * 100;
 
@@ -39,7 +39,7 @@ const HappinessBar: React.FC<HappinessBarProps> = ({
 			role="button"
 			tabIndex={0}
 		>
-			<span className="text-base flex-shrink-0 w-6 text-center">{icon}</span>
+			<span className="text-[20px] flex-shrink-0 w-6 text-center">{icon}</span>
 			<div className="bar-track">
 				{/* Gradient fill */}
 				<div

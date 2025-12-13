@@ -70,21 +70,21 @@
 	/* Stat chip for primary resources (horizontal layout) */
 	.stat-chip {
 		@apply inline-flex flex-row items-center justify-between gap-2 rounded-[10px] px-3 py-2 cursor-pointer transition-all;
-		background: rgba(255, 255, 255, 0.06);
+		background: rgba(0, 0, 0, 0.04);
 		min-width: 100%;
 	}
 
 	.stat-chip:hover {
-		background: rgba(255, 255, 255, 0.12);
-	}
-
-	/* Light mode variant */
-	:not(.dark) .stat-chip {
-		background: rgba(0, 0, 0, 0.04);
-	}
-
-	:not(.dark) .stat-chip:hover {
 		background: rgba(0, 0, 0, 0.08);
+	}
+
+	/* Dark mode - use html.dark for proper specificity */
+	html.dark .stat-chip {
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	html.dark .stat-chip:hover {
+		background: rgba(255, 255, 255, 0.12);
 	}
 
 	.stat-chip__icon {
@@ -98,8 +98,7 @@
 		color: #1e293b;
 	}
 
-	/* Dark mode: white text - use .dark selector for proper specificity */
-	.dark .stat-chip__value {
+	html.dark .stat-chip__value {
 		color: #f1f5f9;
 	}
 
@@ -108,32 +107,28 @@
 		@apply inline-flex items-center gap-1 rounded-md cursor-pointer transition-all;
 		padding: 4px 8px;
 		font-size: 12px;
-		background: rgba(255, 255, 255, 0.06);
+		background: rgba(0, 0, 0, 0.04);
 	}
 
 	.mini-chip:hover {
+		background: rgba(0, 0, 0, 0.08);
+	}
+
+	html.dark .mini-chip {
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	html.dark .mini-chip:hover {
 		background: rgba(255, 255, 255, 0.12);
 	}
 
 	.mini-chip strong {
 		font-weight: 600;
-	}
-
-	/* Dark mode: white text */
-	.dark .mini-chip strong {
-		color: #f1f5f9;
-	}
-
-	:not(.dark) .mini-chip {
-		background: rgba(0, 0, 0, 0.04);
-	}
-
-	:not(.dark) .mini-chip:hover {
-		background: rgba(0, 0, 0, 0.08);
-	}
-
-	:not(.dark) .mini-chip strong {
 		color: #1e293b;
+	}
+
+	html.dark .mini-chip strong {
+		color: #f1f5f9;
 	}
 
 	/* Population group - expandable container */
@@ -201,13 +196,13 @@
 
 	.bar-track {
 		@apply flex-1 h-[22px] rounded-lg overflow-hidden relative;
-		background: rgba(255, 255, 255, 0.06);
+		background: rgba(0, 0, 0, 0.06);
 		border: 1px solid transparent;
 		transition: border-color 0.15s;
 	}
 
-	:not(.dark) .bar-track {
-		background: rgba(0, 0, 0, 0.06);
+	html.dark .bar-track {
+		background: rgba(255, 255, 255, 0.06);
 	}
 
 	.bar-label {
@@ -253,15 +248,6 @@
 		align-items: center;
 		gap: 8px;
 		padding: 10px 12px;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-		background: linear-gradient(
-			135deg,
-			rgba(59, 130, 246, 0.12),
-			rgba(37, 99, 235, 0.08)
-		);
-	}
-
-	:not(.dark) .panel-header {
 		border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 		background: linear-gradient(
 			135deg,
@@ -270,26 +256,35 @@
 		);
 	}
 
-	/* Happiness bar section background */
-	.happiness-section {
-		background: rgba(255, 255, 255, 0.02);
-		border-top: 1px solid rgba(255, 255, 255, 0.06);
+	html.dark .panel-header {
+		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+		background: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.12),
+			rgba(37, 99, 235, 0.08)
+		);
 	}
 
-	:not(.dark) .happiness-section {
+	/* Happiness bar section background */
+	.happiness-section {
 		background: rgba(0, 0, 0, 0.02);
 		border-top: 1px solid rgba(0, 0, 0, 0.04);
+	}
+
+	html.dark .happiness-section {
+		background: rgba(255, 255, 255, 0.02);
+		border-top: 1px solid rgba(255, 255, 255, 0.06);
 	}
 
 	/* Assets row section background */
 	.assets-section {
-		background: rgba(255, 255, 255, 0.02);
-		border-top: 1px solid rgba(255, 255, 255, 0.06);
-	}
-
-	:not(.dark) .assets-section {
 		background: rgba(0, 0, 0, 0.02);
 		border-top: 1px solid rgba(0, 0, 0, 0.04);
+	}
+
+	html.dark .assets-section {
+		background: rgba(255, 255, 255, 0.02);
+		border-top: 1px solid rgba(255, 255, 255, 0.06);
 	}
 
 	.frosted-surface {
