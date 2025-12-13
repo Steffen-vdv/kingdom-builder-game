@@ -1,0 +1,1921 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Player Panel V3 - Refined Mockups</title>
+		<style>
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background: linear-gradient(
+					135deg,
+					#1a1a2e 0%,
+					#16213e 50%,
+					#1a1a2e 100%
+				);
+				min-height: 100vh;
+				padding: 20px;
+				color: #e2e8f0;
+			}
+
+			.page-header {
+				text-align: center;
+				margin-bottom: 20px;
+			}
+
+			.page-header h1 {
+				font-size: 22px;
+				font-weight: 600;
+				margin-bottom: 6px;
+			}
+			.page-header p {
+				color: #94a3b8;
+				font-size: 13px;
+			}
+
+			.insights {
+				max-width: 700px;
+				margin: 0 auto 20px;
+				padding: 12px 16px;
+				background: rgba(34, 197, 94, 0.1);
+				border: 1px solid rgba(34, 197, 94, 0.3);
+				border-radius: 10px;
+				font-size: 12px;
+				color: #86efac;
+			}
+
+			.insights strong {
+				color: #4ade80;
+			}
+
+			.tab-nav {
+				display: flex;
+				gap: 8px;
+				justify-content: center;
+				margin-bottom: 20px;
+				flex-wrap: wrap;
+			}
+
+			.tab-btn {
+				padding: 10px 20px;
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.05);
+				color: #94a3b8;
+				border-radius: 10px;
+				cursor: pointer;
+				font-size: 13px;
+				font-weight: 500;
+				transition: all 0.2s;
+			}
+
+			.tab-btn:hover {
+				background: rgba(255, 255, 255, 0.1);
+				color: #e2e8f0;
+			}
+			.tab-btn.active {
+				background: linear-gradient(135deg, #3b82f6, #2563eb);
+				border-color: #3b82f6;
+				color: white;
+			}
+
+			.tab-content {
+				display: none;
+			}
+			.tab-content.active {
+				display: block;
+			}
+
+			.mockup-container {
+				display: flex;
+				justify-content: center;
+				gap: 30px;
+				flex-wrap: wrap;
+				align-items: flex-start;
+			}
+
+			.mockup-wrapper {
+				text-align: center;
+			}
+			.mockup-label {
+				font-size: 11px;
+				color: #64748b;
+				margin-bottom: 10px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+
+			/* ========================================
+       PANEL BASE
+       ======================================== */
+			.panel {
+				width: 340px;
+				border-radius: 14px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				background: rgba(15, 23, 42, 0.92);
+				backdrop-filter: blur(12px);
+				overflow: hidden;
+				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+				text-align: left;
+			}
+
+			.panel-header {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 10px 12px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+				background: linear-gradient(
+					135deg,
+					rgba(59, 130, 246, 0.12),
+					rgba(37, 99, 235, 0.08)
+				);
+			}
+
+			.player-name {
+				font-weight: 600;
+				font-size: 14px;
+			}
+			.crown {
+				font-size: 13px;
+			}
+
+			/* Mood indicator in header */
+			.mood-indicator {
+				margin-left: auto;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+				padding: 3px 8px;
+				background: linear-gradient(
+					135deg,
+					rgba(250, 204, 21, 0.2),
+					rgba(234, 179, 8, 0.15)
+				);
+				border: 1px solid rgba(250, 204, 21, 0.3);
+				border-radius: 10px;
+				font-size: 10px;
+				font-weight: 500;
+				cursor: pointer;
+			}
+
+			.mood-indicator:hover {
+				background: rgba(250, 204, 21, 0.25);
+			}
+
+			/* ========================================
+       RESOURCE STYLES
+       ======================================== */
+
+			/* Big stat chip (for unbounded important resources) */
+			.stat-chip {
+				display: inline-flex;
+				flex-direction: column;
+				align-items: center;
+				padding: 8px 12px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 10px;
+				cursor: pointer;
+				transition: all 0.15s;
+				min-width: 60px;
+			}
+
+			.stat-chip:hover {
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.stat-chip .icon {
+				font-size: 16px;
+				margin-bottom: 2px;
+			}
+			.stat-chip .value {
+				font-size: 18px;
+				font-weight: 700;
+				color: #f1f5f9;
+			}
+			.stat-chip .forecast {
+				font-size: 10px;
+				font-weight: 600;
+				margin-top: 1px;
+			}
+
+			.forecast.positive {
+				color: #4ade80;
+			}
+			.forecast.negative {
+				color: #f87171;
+			}
+			.forecast.neutral {
+				color: #64748b;
+			}
+
+			/* Small inline chip */
+			.mini-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 3px;
+				padding: 4px 8px;
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 6px;
+				font-size: 12px;
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+
+			.mini-chip:hover {
+				background: rgba(255, 255, 255, 0.1);
+			}
+			.mini-chip .icon {
+				font-size: 12px;
+			}
+
+			/* Resource bar (for bounded resources) */
+			.resource-bar {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 6px 0;
+				cursor: pointer;
+			}
+
+			.resource-bar:hover .bar-track {
+				border-color: rgba(255, 255, 255, 0.25);
+			}
+
+			.bar-icon {
+				font-size: 14px;
+				width: 20px;
+				text-align: center;
+			}
+
+			.bar-track {
+				flex: 1;
+				height: 16px;
+				background: rgba(255, 255, 255, 0.06);
+				border-radius: 8px;
+				overflow: hidden;
+				position: relative;
+				border: 1px solid transparent;
+				transition: border-color 0.15s;
+			}
+
+			.bar-fill {
+				height: 100%;
+				border-radius: 7px;
+				transition: width 0.3s ease;
+			}
+
+			.bar-label {
+				position: absolute;
+				right: 6px;
+				top: 50%;
+				transform: translateY(-50%);
+				font-size: 10px;
+				font-weight: 600;
+				color: white;
+				text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+			}
+
+			.bar-forecast {
+				font-size: 10px;
+				font-weight: 600;
+				width: 28px;
+				text-align: right;
+			}
+
+			/* Tier markers on happiness bar */
+			.tier-markers {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				pointer-events: none;
+			}
+
+			.tier-marker {
+				position: absolute;
+				top: 2px;
+				bottom: 2px;
+				width: 1px;
+				background: rgba(255, 255, 255, 0.3);
+			}
+
+			/* ========================================
+       POPULATION GROUP
+       ======================================== */
+			.pop-group {
+				background: rgba(255, 255, 255, 0.03);
+				border-radius: 8px;
+				overflow: hidden;
+				margin: 4px 0;
+			}
+
+			.pop-header {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 8px 10px;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+
+			.pop-header:hover {
+				background: rgba(255, 255, 255, 0.04);
+			}
+
+			.pop-icon {
+				font-size: 14px;
+			}
+			.pop-label {
+				font-size: 11px;
+				color: #94a3b8;
+				flex: 1;
+			}
+			.pop-value {
+				font-size: 13px;
+				font-weight: 600;
+			}
+			.pop-chevron {
+				font-size: 10px;
+				color: #64748b;
+				transition: transform 0.2s;
+			}
+
+			.pop-group.expanded .pop-chevron {
+				transform: rotate(180deg);
+			}
+
+			.pop-members {
+				display: none;
+				padding: 0 10px 8px;
+				gap: 6px;
+			}
+
+			.pop-group.expanded .pop-members {
+				display: flex;
+				flex-wrap: wrap;
+			}
+
+			.pop-member {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+				padding: 4px 8px;
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 6px;
+				font-size: 11px;
+				cursor: pointer;
+			}
+
+			.pop-member:hover {
+				background: rgba(255, 255, 255, 0.1);
+			}
+			.pop-member .effect {
+				color: #64748b;
+				font-size: 10px;
+			}
+
+			/* ========================================
+       COMBAT CLUSTER
+       ======================================== */
+			.combat-cluster {
+				display: flex;
+				gap: 4px;
+				padding: 8px 12px;
+				background: rgba(255, 255, 255, 0.03);
+				border-radius: 10px;
+				margin: 4px 0;
+			}
+
+			.combat-stat {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				padding: 6px;
+				border-radius: 8px;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+
+			.combat-stat:hover {
+				background: rgba(255, 255, 255, 0.06);
+			}
+
+			.combat-stat .icon {
+				font-size: 14px;
+				margin-bottom: 2px;
+			}
+			.combat-stat .value {
+				font-size: 16px;
+				font-weight: 700;
+			}
+			.combat-stat .label {
+				font-size: 9px;
+				color: #64748b;
+				text-transform: uppercase;
+			}
+			.combat-stat .forecast {
+				font-size: 9px;
+				margin-top: 1px;
+			}
+
+			.combat-divider {
+				width: 1px;
+				background: rgba(255, 255, 255, 0.1);
+				margin: 4px 0;
+			}
+
+			/* ========================================
+       ASSETS ROW
+       ======================================== */
+			.assets-row {
+				display: flex;
+				gap: 6px;
+				padding: 8px 12px;
+				border-top: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.asset-badge {
+				display: flex;
+				align-items: center;
+				gap: 5px;
+				padding: 6px 10px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 8px;
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+
+			.asset-badge:hover {
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.asset-badge .icon {
+				font-size: 13px;
+			}
+			.asset-badge .count {
+				font-size: 13px;
+				font-weight: 600;
+			}
+			.asset-badge .sub {
+				font-size: 10px;
+				color: #64748b;
+				margin-left: 2px;
+			}
+
+			/* ========================================
+       EFFECTS STRIP
+       ======================================== */
+			.effects-strip {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 8px 12px;
+				border-top: 1px solid rgba(255, 255, 255, 0.06);
+				background: rgba(255, 255, 255, 0.02);
+				cursor: pointer;
+			}
+
+			.effects-strip:hover {
+				background: rgba(255, 255, 255, 0.04);
+			}
+
+			.effects-label {
+				font-size: 10px;
+				color: #64748b;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+
+			.effect-source-badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 3px;
+				padding: 3px 7px;
+				background: rgba(168, 85, 247, 0.15);
+				border: 1px solid rgba(168, 85, 247, 0.25);
+				border-radius: 6px;
+				font-size: 10px;
+				color: #c4b5fd;
+			}
+
+			.effect-source-badge.mood {
+				background: rgba(250, 204, 21, 0.15);
+				border-color: rgba(250, 204, 21, 0.25);
+				color: #fde047;
+			}
+
+			.effect-source-badge.building {
+				background: rgba(59, 130, 246, 0.15);
+				border-color: rgba(59, 130, 246, 0.25);
+				color: #93c5fd;
+			}
+
+			/* ========================================
+       HOVERCARD SIMULATION
+       ======================================== */
+			.hovercard {
+				position: fixed;
+				z-index: 1000;
+				width: 260px;
+				background: rgba(15, 23, 42, 0.98);
+				border: 1px solid rgba(255, 255, 255, 0.15);
+				border-radius: 12px;
+				box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+				padding: 12px;
+				display: none;
+				pointer-events: none;
+			}
+
+			.hovercard.visible {
+				display: block;
+			}
+
+			.hovercard-title {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 13px;
+				font-weight: 600;
+				margin-bottom: 8px;
+				padding-bottom: 8px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			.hovercard-content {
+				font-size: 11px;
+				color: #cbd5e1;
+			}
+
+			.hovercard-row {
+				display: flex;
+				justify-content: space-between;
+				padding: 3px 0;
+			}
+
+			.hovercard-row .label {
+				color: #94a3b8;
+			}
+			.hovercard-row .value {
+				font-weight: 500;
+			}
+
+			.hovercard-section {
+				margin-top: 8px;
+				padding-top: 8px;
+				border-top: 1px solid rgba(255, 255, 255, 0.08);
+			}
+
+			.hovercard-section-title {
+				font-size: 9px;
+				color: #64748b;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+				margin-bottom: 4px;
+			}
+
+			/* Thermometer in hovercard */
+			.hc-thermometer {
+				margin: 8px 0;
+			}
+
+			.hc-tier {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 6px;
+				border-radius: 4px;
+				font-size: 10px;
+				margin: 2px 0;
+			}
+
+			.hc-tier.active {
+				background: rgba(34, 197, 94, 0.15);
+				border-left: 2px solid #22c55e;
+			}
+
+			.hc-tier.inactive {
+				opacity: 0.4;
+			}
+			.hc-tier .range {
+				color: #64748b;
+				margin-left: auto;
+			}
+
+			/* ========================================
+       SECTION LAYOUTS
+       ======================================== */
+			.section-row {
+				display: flex;
+				gap: 6px;
+				padding: 8px 12px;
+			}
+
+			.section-divider {
+				border-top: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			/* Description */
+			.option-desc {
+				max-width: 360px;
+				margin: 14px auto 0;
+				padding: 10px 14px;
+				background: rgba(255, 255, 255, 0.03);
+				border-radius: 10px;
+				border: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.option-desc h3 {
+				font-size: 13px;
+				font-weight: 600;
+				margin-bottom: 6px;
+			}
+			.option-desc ul {
+				list-style: none;
+				font-size: 11px;
+				color: #94a3b8;
+			}
+			.option-desc li {
+				padding: 2px 0 2px 14px;
+				position: relative;
+			}
+			.option-desc li::before {
+				content: '•';
+				position: absolute;
+				left: 0;
+				color: #3b82f6;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="page-header">
+			<h1>Player Panel V3 — Refined Based on Game Analysis</h1>
+			<p>
+				Hover any element to see details • Click to pin hovercard (simulated)
+			</p>
+		</div>
+
+		<div class="insights">
+			<strong>Key design decisions:</strong> Bars only for bounded resources
+			(Happiness, Population). Chips for unbounded (Gold, AP, Castle HP). Combat
+			stats grouped but not as "resource group". Population group is collapsible
+			with members. Hover shows existing hovercard behavior.
+		</div>
+
+		<div class="tab-nav">
+			<button class="tab-btn active" onclick="showTab('optionA')">
+				A: Zoned Layout
+			</button>
+			<button class="tab-btn" onclick="showTab('optionB')">
+				B: Compact Hierarchy
+			</button>
+			<button class="tab-btn" onclick="showTab('optionC')">
+				C: Dual Column
+			</button>
+			<button class="tab-btn" onclick="showTab('optionD')">
+				D: Minimal Dense
+			</button>
+		</div>
+
+		<!-- SHARED HOVERCARD -->
+		<div class="hovercard" id="hovercard"></div>
+
+		<!-- ========================================
+       OPTION A: ZONED LAYOUT
+       ======================================== -->
+		<div id="optionA" class="tab-content active">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Economy → Combat → Assets → Effects</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-indicator" data-hover="mood">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<!-- ECONOMY ZONE -->
+						<div class="section-row">
+							<div class="stat-chip" data-hover="gold">
+								<span class="icon">🪙</span>
+								<span class="value">66</span>
+								<span class="forecast negative">-4</span>
+							</div>
+							<div class="stat-chip" data-hover="ap">
+								<span class="icon">⚡</span>
+								<span class="value">3</span>
+								<span class="forecast positive">+2</span>
+							</div>
+							<div class="stat-chip" data-hover="castle">
+								<span class="icon">🏰</span>
+								<span class="value">45</span>
+								<span class="forecast neutral">—</span>
+							</div>
+						</div>
+
+						<!-- HAPPINESS BAR -->
+						<div style="padding: 4px 12px">
+							<div class="resource-bar" data-hover="happiness">
+								<span class="bar-icon">😊</span>
+								<div class="bar-track">
+									<div
+										class="bar-fill"
+										style="
+											width: 90%;
+											background: linear-gradient(
+												90deg,
+												#f87171,
+												#fbbf24,
+												#4ade80
+											);
+										"
+									></div>
+									<div class="tier-markers">
+										<div class="tier-marker" style="left: 10%"></div>
+										<div class="tier-marker" style="left: 30%"></div>
+										<div class="tier-marker" style="left: 50%"></div>
+										<div class="tier-marker" style="left: 70%"></div>
+									</div>
+									<span class="bar-label">+8</span>
+								</div>
+								<span class="bar-forecast forecast neutral">—</span>
+							</div>
+						</div>
+
+						<!-- POPULATION GROUP -->
+						<div style="padding: 4px 12px">
+							<div class="pop-group expanded" id="popGroupA">
+								<div class="pop-header" onclick="togglePop('popGroupA')">
+									<span class="pop-icon">👥</span>
+									<span class="pop-label">Population</span>
+									<span class="pop-value">4/15</span>
+									<span class="pop-chevron">▼</span>
+								</div>
+								<div class="pop-members">
+									<div class="pop-member" data-hover="council">
+										<span>⚖️</span>
+										<span>2</span>
+										<span class="effect">+2 AP</span>
+									</div>
+									<div class="pop-member" data-hover="legion">
+										<span>🎖️</span>
+										<span>1</span>
+										<span class="effect">+1 Army</span>
+									</div>
+									<div class="pop-member" data-hover="fortifier">
+										<span>🔧</span>
+										<span>1</span>
+										<span class="effect">+1 Fort</span>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-divider"></div>
+
+						<!-- COMBAT ZONE -->
+						<div class="combat-cluster" style="margin: 8px 12px">
+							<div class="combat-stat" data-hover="army">
+								<span class="icon">⚔️</span>
+								<span class="value">8</span>
+								<span class="label">Army</span>
+								<span class="forecast positive">+1</span>
+							</div>
+							<div class="combat-divider"></div>
+							<div class="combat-stat" data-hover="fort">
+								<span class="icon">🛡️</span>
+								<span class="value">12</span>
+								<span class="label">Fort</span>
+								<span class="forecast positive">+2</span>
+							</div>
+							<div class="combat-divider"></div>
+							<div class="combat-stat" data-hover="absorption">
+								<span class="icon">🌀</span>
+								<span class="value">20%</span>
+								<span class="label">Absorb</span>
+								<span class="forecast neutral">—</span>
+							</div>
+							<div class="combat-divider"></div>
+							<div class="combat-stat" data-hover="growth">
+								<span class="icon">📈</span>
+								<span class="value">15%</span>
+								<span class="label">Growth</span>
+								<span class="forecast neutral">—</span>
+							</div>
+						</div>
+
+						<!-- ASSETS ROW -->
+						<div class="assets-row">
+							<div class="asset-badge" data-hover="lands">
+								<span class="icon">🗺️</span>
+								<span class="count">7</span>
+								<span class="sub">lands</span>
+							</div>
+							<div class="asset-badge" data-hover="buildings">
+								<span class="icon">🏗️</span>
+								<span class="count">3</span>
+								<span class="sub">built</span>
+							</div>
+							<div class="asset-badge" data-hover="slots">
+								<span class="icon">📦</span>
+								<span class="count">8/21</span>
+								<span class="sub">slots</span>
+							</div>
+						</div>
+
+						<!-- EFFECTS STRIP -->
+						<div class="effects-strip" data-hover="effects">
+							<span class="effects-label">Effects:</span>
+							<span class="effect-source-badge mood">Mood ×2</span>
+							<span class="effect-source-badge building">Building ×3</span>
+							<span class="effect-source-badge">Pop ×2</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-desc">
+				<h3>A: Zoned Layout</h3>
+				<ul>
+					<li>
+						Clear zones: Economy → Happiness → Pop → Combat → Assets → Effects
+					</li>
+					<li>
+						Big stat chips for critical unbounded resources (Gold, AP, Castle
+						HP)
+					</li>
+					<li>Happiness as horizontal tier bar with markers</li>
+					<li>Population group collapsible, shows member effects</li>
+					<li>Combat cluster groups related stats with forecasts</li>
+					<li>Effects strip shows aggregate counts by source</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION B: COMPACT HIERARCHY
+       ======================================== -->
+		<div id="optionB" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">
+						Primary → Secondary → Tertiary hierarchy
+					</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-indicator" data-hover="mood">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<!-- PRIMARY: The big 3 -->
+						<div
+							style="
+								padding: 10px 12px;
+								display: flex;
+								justify-content: space-around;
+							"
+						>
+							<div
+								class="stat-chip"
+								data-hover="gold"
+								style="flex: 1; max-width: 90px"
+							>
+								<span class="icon">🪙</span>
+								<span class="value">66</span>
+								<span class="forecast negative">-4/turn</span>
+							</div>
+							<div
+								class="stat-chip"
+								data-hover="ap"
+								style="flex: 1; max-width: 90px"
+							>
+								<span class="icon">⚡</span>
+								<span class="value">3</span>
+								<span class="forecast positive">+2/turn</span>
+							</div>
+							<div
+								class="stat-chip"
+								data-hover="castle"
+								style="flex: 1; max-width: 90px"
+							>
+								<span class="icon">🏰</span>
+								<span class="value">45</span>
+								<span class="forecast neutral">HP</span>
+							</div>
+						</div>
+
+						<div class="section-divider"></div>
+
+						<!-- SECONDARY: Bars for bounded -->
+						<div style="padding: 6px 12px">
+							<!-- Happiness with tier indicator -->
+							<div class="resource-bar" data-hover="happiness">
+								<span class="bar-icon">😊</span>
+								<div class="bar-track" style="height: 20px">
+									<div
+										class="bar-fill"
+										style="
+											width: 90%;
+											background: linear-gradient(
+												90deg,
+												#ef4444 0%,
+												#fbbf24 50%,
+												#22c55e 100%
+											);
+										"
+									></div>
+									<span class="bar-label" style="font-size: 11px"
+										>Elated +8</span
+									>
+								</div>
+							</div>
+
+							<!-- Population with inline members -->
+							<div
+								style="
+									display: flex;
+									align-items: center;
+									gap: 8px;
+									margin-top: 6px;
+								"
+							>
+								<div
+									class="resource-bar"
+									data-hover="population"
+									style="flex: 1"
+								>
+									<span class="bar-icon">👥</span>
+									<div class="bar-track">
+										<div
+											class="bar-fill"
+											style="
+												width: 27%;
+												background: linear-gradient(90deg, #f87171, #ef4444);
+											"
+										></div>
+										<span class="bar-label">4/15</span>
+									</div>
+								</div>
+								<div style="display: flex; gap: 4px">
+									<span class="mini-chip" data-hover="council">⚖️2</span>
+									<span class="mini-chip" data-hover="legion">🎖️1</span>
+									<span class="mini-chip" data-hover="fortifier">🔧1</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-divider"></div>
+
+						<!-- TERTIARY: Combat stats as row -->
+						<div
+							style="
+								padding: 8px 12px;
+								display: flex;
+								gap: 6px;
+								flex-wrap: wrap;
+							"
+						>
+							<span
+								class="mini-chip"
+								data-hover="army"
+								style="background: rgba(239, 68, 68, 0.15)"
+							>
+								⚔️ <strong>8</strong>
+								<span class="forecast positive" style="font-size: 9px">+1</span>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="fort"
+								style="background: rgba(59, 130, 246, 0.15)"
+							>
+								🛡️ <strong>12</strong>
+								<span class="forecast positive" style="font-size: 9px">+2</span>
+							</span>
+							<span class="mini-chip" data-hover="absorption">
+								🌀 <strong>20%</strong>
+							</span>
+							<span class="mini-chip" data-hover="growth">
+								📈 <strong>15%</strong>
+							</span>
+							<span class="mini-chip" data-hover="warwear">
+								💤 <strong>2</strong>
+							</span>
+						</div>
+
+						<div class="section-divider"></div>
+
+						<!-- ASSETS + EFFECTS combined -->
+						<div
+							style="
+								padding: 8px 12px;
+								display: flex;
+								gap: 6px;
+								flex-wrap: wrap;
+								align-items: center;
+							"
+						>
+							<span class="mini-chip" data-hover="lands">🗺️ 7 lands</span>
+							<span class="mini-chip" data-hover="buildings">🏗️ 3 built</span>
+							<span style="margin-left: auto; font-size: 10px; color: #64748b"
+								>|</span
+							>
+							<span
+								class="mini-chip"
+								data-hover="effects"
+								style="background: rgba(168, 85, 247, 0.1)"
+								>✨ 7 effects</span
+							>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-desc">
+				<h3>B: Compact Hierarchy</h3>
+				<ul>
+					<li>Clear visual hierarchy: Big → Medium → Small</li>
+					<li>The "big 3" (Gold, AP, Castle HP) prominently displayed</li>
+					<li>Bounded resources as bars (Happiness, Population)</li>
+					<li>Pop members inline beside the bar</li>
+					<li>Combat stats as colored chips in a row</li>
+					<li>Most compact overall footprint</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION C: DUAL COLUMN
+       ======================================== -->
+		<div id="optionC" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Economy | Combat split</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-indicator" data-hover="mood">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<!-- TWO COLUMN LAYOUT -->
+						<div
+							style="
+								display: grid;
+								grid-template-columns: 1fr 1fr;
+								gap: 1px;
+								background: rgba(255, 255, 255, 0.06);
+							"
+						>
+							<!-- LEFT: Economy -->
+							<div style="background: rgba(15, 23, 42, 0.95); padding: 10px">
+								<div
+									style="
+										font-size: 9px;
+										color: #64748b;
+										text-transform: uppercase;
+										letter-spacing: 0.05em;
+										margin-bottom: 6px;
+									"
+								>
+									Economy
+								</div>
+
+								<div style="display: flex; flex-direction: column; gap: 6px">
+									<div
+										class="stat-chip"
+										data-hover="gold"
+										style="
+											flex-direction: row;
+											gap: 8px;
+											justify-content: space-between;
+										"
+									>
+										<span style="display: flex; align-items: center; gap: 4px">
+											<span class="icon">🪙</span>
+											<span class="value" style="font-size: 16px">66</span>
+										</span>
+										<span class="forecast negative" style="font-size: 11px"
+											>-4</span
+										>
+									</div>
+
+									<div
+										class="stat-chip"
+										data-hover="ap"
+										style="
+											flex-direction: row;
+											gap: 8px;
+											justify-content: space-between;
+										"
+									>
+										<span style="display: flex; align-items: center; gap: 4px">
+											<span class="icon">⚡</span>
+											<span class="value" style="font-size: 16px">3</span>
+										</span>
+										<span class="forecast positive" style="font-size: 11px"
+											>+2</span
+										>
+									</div>
+
+									<!-- Pop in economy column -->
+									<div
+										class="pop-group expanded"
+										id="popGroupC"
+										style="margin: 0"
+									>
+										<div
+											class="pop-header"
+											onclick="togglePop('popGroupC')"
+											style="padding: 6px 8px"
+										>
+											<span class="pop-icon" style="font-size: 12px">👥</span>
+											<span class="pop-value" style="font-size: 12px"
+												>4/15</span
+											>
+											<span class="pop-chevron">▼</span>
+										</div>
+										<div
+											class="pop-members"
+											style="padding: 0 6px 6px; gap: 4px"
+										>
+											<div
+												class="pop-member"
+												data-hover="council"
+												style="padding: 3px 6px; font-size: 10px"
+											>
+												⚖️2
+											</div>
+											<div
+												class="pop-member"
+												data-hover="legion"
+												style="padding: 3px 6px; font-size: 10px"
+											>
+												🎖️1
+											</div>
+											<div
+												class="pop-member"
+												data-hover="fortifier"
+												style="padding: 3px 6px; font-size: 10px"
+											>
+												🔧1
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- RIGHT: Combat -->
+							<div style="background: rgba(15, 23, 42, 0.95); padding: 10px">
+								<div
+									style="
+										font-size: 9px;
+										color: #64748b;
+										text-transform: uppercase;
+										letter-spacing: 0.05em;
+										margin-bottom: 6px;
+									"
+								>
+									Combat
+								</div>
+
+								<div style="display: flex; flex-direction: column; gap: 6px">
+									<div
+										class="stat-chip"
+										data-hover="castle"
+										style="
+											flex-direction: row;
+											gap: 8px;
+											justify-content: space-between;
+										"
+									>
+										<span style="display: flex; align-items: center; gap: 4px">
+											<span class="icon">🏰</span>
+											<span class="value" style="font-size: 16px">45</span>
+										</span>
+										<span style="font-size: 10px; color: #64748b">HP</span>
+									</div>
+
+									<div
+										class="stat-chip"
+										data-hover="army"
+										style="
+											flex-direction: row;
+											gap: 8px;
+											justify-content: space-between;
+											background: rgba(239, 68, 68, 0.1);
+										"
+									>
+										<span style="display: flex; align-items: center; gap: 4px">
+											<span class="icon">⚔️</span>
+											<span class="value" style="font-size: 16px">8</span>
+										</span>
+										<span class="forecast positive" style="font-size: 11px"
+											>+1</span
+										>
+									</div>
+
+									<div
+										class="stat-chip"
+										data-hover="fort"
+										style="
+											flex-direction: row;
+											gap: 8px;
+											justify-content: space-between;
+											background: rgba(59, 130, 246, 0.1);
+										"
+									>
+										<span style="display: flex; align-items: center; gap: 4px">
+											<span class="icon">🛡️</span>
+											<span class="value" style="font-size: 16px">12</span>
+										</span>
+										<span class="forecast positive" style="font-size: 11px"
+											>+2</span
+										>
+									</div>
+
+									<div style="display: flex; gap: 4px">
+										<span
+											class="mini-chip"
+											data-hover="absorption"
+											style="flex: 1; justify-content: center"
+											>🌀 20%</span
+										>
+										<span
+											class="mini-chip"
+											data-hover="growth"
+											style="flex: 1; justify-content: center"
+											>📈 15%</span
+										>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- HAPPINESS spanning full width -->
+						<div style="padding: 6px 12px">
+							<div class="resource-bar" data-hover="happiness">
+								<span class="bar-icon">😊</span>
+								<div class="bar-track" style="height: 18px">
+									<div
+										class="bar-fill"
+										style="
+											width: 90%;
+											background: linear-gradient(
+												90deg,
+												#ef4444,
+												#fbbf24,
+												#22c55e
+											);
+										"
+									></div>
+									<span class="bar-label">Elated +8</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- ASSETS + EFFECTS -->
+						<div class="assets-row" style="justify-content: space-between">
+							<div style="display: flex; gap: 6px">
+								<span class="mini-chip" data-hover="lands">🗺️ 7</span>
+								<span class="mini-chip" data-hover="buildings">🏗️ 3</span>
+							</div>
+							<span
+								class="mini-chip"
+								data-hover="effects"
+								style="background: rgba(168, 85, 247, 0.1)"
+								>✨ 7 effects</span
+							>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-desc">
+				<h3>C: Dual Column</h3>
+				<ul>
+					<li>Economy and Combat separated into columns</li>
+					<li>Population group lives in Economy side</li>
+					<li>Castle HP grouped with combat stats (it's the attack target)</li>
+					<li>Happiness spans full width as the "mood" indicator</li>
+					<li>Very clear mental model: left = economy, right = war</li>
+					<li>Compact assets row at bottom</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION D: MINIMAL DENSE
+       ======================================== -->
+		<div id="optionD" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Maximum info, minimum space</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-indicator" data-hover="mood">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<!-- SINGLE ROW OF ALL PRIMARY STATS -->
+						<div
+							style="
+								padding: 8px 10px;
+								display: flex;
+								gap: 4px;
+								flex-wrap: wrap;
+							"
+						>
+							<span
+								class="mini-chip"
+								data-hover="gold"
+								style="padding: 5px 8px"
+							>
+								🪙 <strong>66</strong> <span class="forecast negative">-4</span>
+							</span>
+							<span class="mini-chip" data-hover="ap" style="padding: 5px 8px">
+								⚡ <strong>3</strong> <span class="forecast positive">+2</span>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="castle"
+								style="padding: 5px 8px"
+							>
+								🏰 <strong>45</strong>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="happiness"
+								style="padding: 5px 8px; background: rgba(34, 197, 94, 0.15)"
+							>
+								😊 <strong>+8</strong>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="population"
+								style="padding: 5px 8px"
+							>
+								👥 <strong>4</strong>/15
+							</span>
+						</div>
+
+						<!-- COMPACT COMBAT ROW -->
+						<div style="padding: 4px 10px; display: flex; gap: 4px">
+							<span
+								class="mini-chip"
+								data-hover="army"
+								style="background: rgba(239, 68, 68, 0.12)"
+							>
+								⚔️ <strong>8</strong> <span class="forecast positive">+1</span>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="fort"
+								style="background: rgba(59, 130, 246, 0.12)"
+							>
+								🛡️ <strong>12</strong> <span class="forecast positive">+2</span>
+							</span>
+							<span class="mini-chip" data-hover="absorption">🌀 20%</span>
+							<span class="mini-chip" data-hover="growth">📈 15%</span>
+						</div>
+
+						<!-- POP MEMBERS (always visible but tiny) -->
+						<div
+							style="
+								padding: 4px 10px;
+								display: flex;
+								gap: 4px;
+								align-items: center;
+							"
+						>
+							<span style="font-size: 9px; color: #64748b">Pop:</span>
+							<span
+								class="mini-chip"
+								data-hover="council"
+								style="padding: 3px 6px; font-size: 10px"
+								>⚖️2</span
+							>
+							<span
+								class="mini-chip"
+								data-hover="legion"
+								style="padding: 3px 6px; font-size: 10px"
+								>🎖️1</span
+							>
+							<span
+								class="mini-chip"
+								data-hover="fortifier"
+								style="padding: 3px 6px; font-size: 10px"
+								>🔧1</span
+							>
+						</div>
+
+						<div class="section-divider"></div>
+
+						<!-- ASSETS + EFFECTS COMBINED ROW -->
+						<div
+							style="
+								padding: 6px 10px;
+								display: flex;
+								gap: 6px;
+								align-items: center;
+							"
+						>
+							<span class="mini-chip" data-hover="lands">🗺️ 7</span>
+							<span class="mini-chip" data-hover="buildings">🏗️ 3</span>
+							<span class="mini-chip" data-hover="slots">📦 8/21</span>
+							<span style="flex: 1"></span>
+							<span
+								class="mini-chip"
+								data-hover="effects"
+								style="background: rgba(168, 85, 247, 0.1)"
+								>✨ 7</span
+							>
+						</div>
+					</div>
+				</div>
+
+				<div class="mockup-wrapper">
+					<div class="mockup-label">With expanded pop members</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-indicator" data-hover="mood">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<div
+							style="
+								padding: 8px 10px;
+								display: flex;
+								gap: 4px;
+								flex-wrap: wrap;
+							"
+						>
+							<span
+								class="mini-chip"
+								data-hover="gold"
+								style="padding: 5px 8px"
+							>
+								🪙 <strong>66</strong> <span class="forecast negative">-4</span>
+							</span>
+							<span class="mini-chip" data-hover="ap" style="padding: 5px 8px">
+								⚡ <strong>3</strong> <span class="forecast positive">+2</span>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="castle"
+								style="padding: 5px 8px"
+							>
+								🏰 <strong>45</strong>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="happiness"
+								style="padding: 5px 8px; background: rgba(34, 197, 94, 0.15)"
+							>
+								😊 <strong>+8</strong>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="population"
+								style="padding: 5px 8px"
+							>
+								👥 <strong>4</strong>/15
+							</span>
+						</div>
+
+						<div style="padding: 4px 10px; display: flex; gap: 4px">
+							<span
+								class="mini-chip"
+								data-hover="army"
+								style="background: rgba(239, 68, 68, 0.12)"
+							>
+								⚔️ <strong>8</strong> <span class="forecast positive">+1</span>
+							</span>
+							<span
+								class="mini-chip"
+								data-hover="fort"
+								style="background: rgba(59, 130, 246, 0.12)"
+							>
+								🛡️ <strong>12</strong> <span class="forecast positive">+2</span>
+							</span>
+							<span class="mini-chip" data-hover="absorption">🌀 20%</span>
+							<span class="mini-chip" data-hover="growth">📈 15%</span>
+						</div>
+
+						<!-- EXPANDED POP DETAILS -->
+						<div
+							style="
+								padding: 6px 10px;
+								background: rgba(255, 255, 255, 0.02);
+								border-radius: 6px;
+								margin: 4px 10px;
+							"
+						>
+							<div style="font-size: 9px; color: #64748b; margin-bottom: 4px">
+								POPULATION BREAKDOWN
+							</div>
+							<div style="display: flex; gap: 6px">
+								<div class="pop-member" data-hover="council" style="flex: 1">
+									<span>⚖️</span>
+									<span>Council ×2</span>
+									<span class="effect">→ +2 AP/turn</span>
+								</div>
+							</div>
+							<div style="display: flex; gap: 6px; margin-top: 4px">
+								<div class="pop-member" data-hover="legion" style="flex: 1">
+									<span>🎖️</span>
+									<span>Legion ×1</span>
+									<span class="effect">→ +1 Army</span>
+								</div>
+							</div>
+							<div style="display: flex; gap: 6px; margin-top: 4px">
+								<div class="pop-member" data-hover="fortifier" style="flex: 1">
+									<span>🔧</span>
+									<span>Fortifier ×1</span>
+									<span class="effect">→ +1 Fort</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-divider"></div>
+
+						<div
+							style="
+								padding: 6px 10px;
+								display: flex;
+								gap: 6px;
+								align-items: center;
+							"
+						>
+							<span class="mini-chip" data-hover="lands">🗺️ 7</span>
+							<span class="mini-chip" data-hover="buildings">🏗️ 3</span>
+							<span class="mini-chip" data-hover="slots">📦 8/21</span>
+							<span style="flex: 1"></span>
+							<span
+								class="mini-chip"
+								data-hover="effects"
+								style="background: rgba(168, 85, 247, 0.1)"
+								>✨ 7</span
+							>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-desc">
+				<h3>D: Minimal Dense</h3>
+				<ul>
+					<li>Everything as chips — no bars at all</li>
+					<li>Happiness shown as number (+8) with color hint</li>
+					<li>Population members always visible (tiny chips)</li>
+					<li>Smallest vertical footprint possible</li>
+					<li>Relies heavily on hover for details</li>
+					<li>Best for players who know the game well</li>
+				</ul>
+			</div>
+		</div>
+
+		<script>
+			// Tab switching
+			function showTab(tabId) {
+				document
+					.querySelectorAll('.tab-content')
+					.forEach((t) => t.classList.remove('active'));
+				document
+					.querySelectorAll('.tab-btn')
+					.forEach((b) => b.classList.remove('active'));
+				document.getElementById(tabId).classList.add('active');
+				event.target.classList.add('active');
+			}
+
+			// Population group toggle
+			function togglePop(id) {
+				document.getElementById(id).classList.toggle('expanded');
+			}
+
+			// Hovercard data
+			const hoverData = {
+				gold: {
+					icon: '🪙',
+					title: 'Gold',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">66</span></div>
+          <div class="hovercard-row"><span class="label">Next Turn</span><span class="value forecast negative">-4</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Sources</div>
+            <div class="hovercard-row"><span class="label">Tax Income</span><span class="value">+12</span></div>
+            <div class="hovercard-row"><span class="label">Mill Bonus</span><span class="value">+3</span></div>
+            <div class="hovercard-row"><span class="label">Mood Bonus</span><span class="value">+8</span></div>
+            <div class="hovercard-row"><span class="label">Pop Upkeep</span><span class="value">-6</span></div>
+            <div class="hovercard-row"><span class="label">Building Upkeep</span><span class="value">-1</span></div>
+          </div>
+        `,
+				},
+				ap: {
+					icon: '⚡',
+					title: 'Action Points',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">3</span></div>
+          <div class="hovercard-row"><span class="label">Next Turn</span><span class="value forecast positive">+2</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">From Council</div>
+            <div class="hovercard-row"><span class="label">⚖️ Council ×2</span><span class="value">+2 AP/turn</span></div>
+          </div>
+        `,
+				},
+				castle: {
+					icon: '🏰',
+					title: 'Castle HP',
+					content: `
+          <div class="hovercard-row"><span class="label">Current HP</span><span class="value">45</span></div>
+          <div class="hovercard-row"><span class="label">Status</span><span class="value">Healthy</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Note</div>
+            <div style="font-size: 10px; color: #94a3b8;">If Castle HP reaches 0, you lose the game.</div>
+          </div>
+        `,
+				},
+				happiness: {
+					icon: '😊',
+					title: 'Happiness',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">+8 (Elated)</span></div>
+          <div class="hovercard-row"><span class="label">Range</span><span class="value">-10 to +10</span></div>
+          <div class="hc-thermometer">
+            <div class="hc-tier inactive">🤩 Ecstatic <span class="range">+10</span></div>
+            <div class="hc-tier active">😄 Elated <span class="range">+8 to +9</span></div>
+            <div class="hc-tier inactive">😊 Joyful <span class="range">+5 to +7</span></div>
+            <div class="hc-tier inactive">🙂 Content <span class="range">+3 to +4</span></div>
+            <div class="hc-tier inactive">😐 Steady <span class="range">-2 to +2</span></div>
+            <div class="hc-tier inactive">😟 Unrest <span class="range">-3 to -4</span></div>
+            <div class="hc-tier inactive">😠 Grim <span class="range">-5 to -7</span></div>
+          </div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Current Tier Effects</div>
+            <div style="font-size: 10px; color: #4ade80;">+50% Gold income</div>
+            <div style="font-size: 10px; color: #4ade80;">-20% Action costs</div>
+          </div>
+        `,
+				},
+				mood: {
+					icon: '🤩',
+					title: 'Mood: Ecstatic',
+					content: `
+          <div class="hovercard-row"><span class="label">Happiness</span><span class="value">+8</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Active Effects</div>
+            <div style="font-size: 10px; color: #4ade80;">• +50% Gold income</div>
+            <div style="font-size: 10px; color: #4ade80;">• -20% Action costs</div>
+          </div>
+        `,
+				},
+				population: {
+					icon: '👥',
+					title: 'Population',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">4</span></div>
+          <div class="hovercard-row"><span class="label">Capacity</span><span class="value">15</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Breakdown</div>
+            <div class="hovercard-row"><span class="label">⚖️ Council</span><span class="value">2 → +2 AP</span></div>
+            <div class="hovercard-row"><span class="label">🎖️ Legion</span><span class="value">1 → +1 Army</span></div>
+            <div class="hovercard-row"><span class="label">🔧 Fortifier</span><span class="value">1 → +1 Fort</span></div>
+          </div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Upkeep Cost</div>
+            <div class="hovercard-row"><span class="label">Total</span><span class="value">-6 Gold/turn</span></div>
+          </div>
+        `,
+				},
+				council: {
+					icon: '⚖️',
+					title: 'Council',
+					content: `
+          <div class="hovercard-row"><span class="label">Count</span><span class="value">2</span></div>
+          <div class="hovercard-row"><span class="label">Effect</span><span class="value">+1 AP/turn each</span></div>
+          <div class="hovercard-row"><span class="label">Upkeep</span><span class="value">-2 Gold each</span></div>
+        `,
+				},
+				legion: {
+					icon: '🎖️',
+					title: 'Legion',
+					content: `
+          <div class="hovercard-row"><span class="label">Count</span><span class="value">1</span></div>
+          <div class="hovercard-row"><span class="label">Effect</span><span class="value">+1 Army Strength</span></div>
+          <div class="hovercard-row"><span class="label">Growth</span><span class="value">+15% Army/turn</span></div>
+          <div class="hovercard-row"><span class="label">Upkeep</span><span class="value">-1 Gold each</span></div>
+        `,
+				},
+				fortifier: {
+					icon: '🔧',
+					title: 'Fortifier',
+					content: `
+          <div class="hovercard-row"><span class="label">Count</span><span class="value">1</span></div>
+          <div class="hovercard-row"><span class="label">Effect</span><span class="value">+1 Fortification</span></div>
+          <div class="hovercard-row"><span class="label">Growth</span><span class="value">+15% Fort/turn</span></div>
+          <div class="hovercard-row"><span class="label">Upkeep</span><span class="value">-1 Gold each</span></div>
+        `,
+				},
+				army: {
+					icon: '⚔️',
+					title: 'Army Strength',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">8</span></div>
+          <div class="hovercard-row"><span class="label">Next Turn</span><span class="value forecast positive">+1</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Sources</div>
+            <div class="hovercard-row"><span class="label">🎖️ Legion ×1</span><span class="value">+1</span></div>
+            <div class="hovercard-row"><span class="label">🪖 Barracks</span><span class="value">+5</span></div>
+            <div class="hovercard-row"><span class="label">Growth (15%)</span><span class="value">+1/turn</span></div>
+          </div>
+        `,
+				},
+				fort: {
+					icon: '🛡️',
+					title: 'Fortification',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">12</span></div>
+          <div class="hovercard-row"><span class="label">Next Turn</span><span class="value forecast positive">+2</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Sources</div>
+            <div class="hovercard-row"><span class="label">🔧 Fortifier ×1</span><span class="value">+1</span></div>
+            <div class="hovercard-row"><span class="label">🧱 Castle Walls</span><span class="value">+5</span></div>
+            <div class="hovercard-row"><span class="label">🏯 Citadel</span><span class="value">+5</span></div>
+            <div class="hovercard-row"><span class="label">Growth (15%)</span><span class="value">+2/turn</span></div>
+          </div>
+        `,
+				},
+				absorption: {
+					icon: '🌀',
+					title: 'Absorption',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">20%</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Effect</div>
+            <div style="font-size: 10px; color: #94a3b8;">Reduces incoming damage by 20% after Fortification reduction.</div>
+          </div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Source</div>
+            <div class="hovercard-row"><span class="label">🧱 Castle Walls</span><span class="value">+20%</span></div>
+          </div>
+        `,
+				},
+				growth: {
+					icon: '📈',
+					title: 'Growth',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">15%</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Effect</div>
+            <div style="font-size: 10px; color: #94a3b8;">During Growth phase, Army and Fortification grow by (Pop count × Growth%).</div>
+          </div>
+        `,
+				},
+				warwear: {
+					icon: '💤',
+					title: 'War Weariness',
+					content: `
+          <div class="hovercard-row"><span class="label">Current</span><span class="value">2</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Recovery</div>
+            <div style="font-size: 10px; color: #94a3b8;">-1 per turn during Upkeep phase (War Recovery step).</div>
+          </div>
+        `,
+				},
+				lands: {
+					icon: '🗺️',
+					title: 'Lands',
+					content: `
+          <div class="hovercard-row"><span class="label">Total</span><span class="value">7 lands</span></div>
+          <div class="hovercard-row"><span class="label">Developed</span><span class="value">4 lands</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Development Slots</div>
+            <div class="hovercard-row"><span class="label">Used</span><span class="value">8</span></div>
+            <div class="hovercard-row"><span class="label">Available</span><span class="value">13</span></div>
+          </div>
+        `,
+				},
+				buildings: {
+					icon: '🏗️',
+					title: 'Buildings',
+					content: `
+          <div class="hovercard-row"><span class="label">Built</span><span class="value">3</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Your Buildings</div>
+            <div class="hovercard-row"><span class="label">⚙️ Mill</span><span class="value">+3 Gold/farm</span></div>
+            <div class="hovercard-row"><span class="label">🧱 Castle Walls</span><span class="value">+5 Fort, 20% Absorb</span></div>
+            <div class="hovercard-row"><span class="label">🪖 Barracks</span><span class="value">+5 Army</span></div>
+          </div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Total Upkeep</div>
+            <div class="hovercard-row"><span class="label">Buildings</span><span class="value">-1 Gold/turn</span></div>
+          </div>
+        `,
+				},
+				slots: {
+					icon: '📦',
+					title: 'Development Slots',
+					content: `
+          <div class="hovercard-row"><span class="label">Used</span><span class="value">8</span></div>
+          <div class="hovercard-row"><span class="label">Total</span><span class="value">21</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">Per Land</div>
+            <div style="font-size: 10px; color: #94a3b8;">Each land has 3 slots. Tilling adds more slots.</div>
+          </div>
+        `,
+				},
+				effects: {
+					icon: '✨',
+					title: 'Active Effects',
+					content: `
+          <div class="hovercard-row"><span class="label">Total</span><span class="value">7 effects</span></div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">From Mood (Elated)</div>
+            <div style="font-size: 10px; color: #4ade80;">• +50% Gold income</div>
+            <div style="font-size: 10px; color: #4ade80;">• -20% Action costs</div>
+          </div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">From Buildings</div>
+            <div style="font-size: 10px; color: #93c5fd;">• Mill: +3 Gold/farm</div>
+            <div style="font-size: 10px; color: #93c5fd;">• Castle Walls: +5 Fort, +20% Absorb</div>
+            <div style="font-size: 10px; color: #93c5fd;">• Barracks: +5 Army</div>
+          </div>
+          <div class="hovercard-section">
+            <div class="hovercard-section-title">From Population</div>
+            <div style="font-size: 10px; color: #c4b5fd;">• Legion: +1 Army</div>
+            <div style="font-size: 10px; color: #c4b5fd;">• Fortifier: +1 Fort</div>
+          </div>
+        `,
+				},
+			};
+
+			// Hovercard positioning and display
+			const hovercard = document.getElementById('hovercard');
+			let currentHover = null;
+
+			document.querySelectorAll('[data-hover]').forEach((el) => {
+				el.addEventListener('mouseenter', (e) => {
+					const key = el.dataset.hover;
+					const data = hoverData[key];
+					if (!data) return;
+
+					hovercard.innerHTML = `
+          <div class="hovercard-title">
+            <span>${data.icon}</span>
+            <span>${data.title}</span>
+          </div>
+          <div class="hovercard-content">${data.content}</div>
+        `;
+
+					// Position near element
+					const rect = el.getBoundingClientRect();
+					let left = rect.right + 12;
+					let top = rect.top;
+
+					// Keep on screen
+					if (left + 260 > window.innerWidth) {
+						left = rect.left - 260 - 12;
+					}
+					if (top + 300 > window.innerHeight) {
+						top = window.innerHeight - 310;
+					}
+
+					hovercard.style.left = left + 'px';
+					hovercard.style.top = top + 'px';
+					hovercard.classList.add('visible');
+					currentHover = el;
+				});
+
+				el.addEventListener('mouseleave', () => {
+					hovercard.classList.remove('visible');
+					currentHover = null;
+				});
+			});
+		</script>
+	</body>
+</html>

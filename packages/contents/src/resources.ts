@@ -35,6 +35,8 @@ const goldResource = resource('resource:core:gold')
 	)
 	.tags('bankruptcy-check')
 	.lowerBound(0)
+	.section('economy')
+	.trackValueBreakdown()
 	.build();
 
 const actionPointsResource = resource('resource:core:action-points')
@@ -43,6 +45,8 @@ const actionPointsResource = resource('resource:core:action-points')
 	.description('Action Points govern how many actions you can perform during your ' + 'turn. Plan carefully: once you run out of AP, your main phase ends.')
 	.lowerBound(0)
 	.globalActionCost(1)
+	.section('economy')
+	.trackValueBreakdown()
 	.build();
 
 const castleHpResource = resource('resource:core:castle-hp')
@@ -51,6 +55,7 @@ const castleHpResource = resource('resource:core:castle-hp')
 	.description('Castle HP represents the durability of your stronghold. If it ever ' + 'drops to zero, your kingdom falls and the game is lost.')
 	.tags('attack-target', 'win-condition-zero')
 	.lowerBound(0)
+	.section('combat')
 	.build();
 
 const maxPopulationResource = resource('resource:core:max-population')
@@ -58,6 +63,7 @@ const maxPopulationResource = resource('resource:core:max-population')
 	.label('Max Population')
 	.description('Max Population determines how many subjects your kingdom can sustain. ' + 'Expand infrastructure or build houses to increase it.')
 	.lowerBound(0)
+	.section('economy')
 	.build();
 
 const armyStrengthResource = resource('resource:core:army-strength')
@@ -66,6 +72,7 @@ const armyStrengthResource = resource('resource:core:army-strength')
 	.description('Army Strength reflects the overall power of your military forces. ' + 'A higher value makes your attacks more formidable.')
 	.lowerBound(0)
 	.trackValueBreakdown()
+	.section('combat')
 	.build();
 
 const fortificationStrengthResource = resource('resource:core:fortification-strength')
@@ -74,6 +81,7 @@ const fortificationStrengthResource = resource('resource:core:fortification-stre
 	.description('Fortification Strength measures the resilience of your defenses. ' + 'It reduces damage taken when enemies assault your castle.')
 	.lowerBound(0)
 	.trackValueBreakdown()
+	.section('combat')
 	.build();
 
 const absorptionResource = resource('resource:core:absorption')
@@ -83,6 +91,8 @@ const absorptionResource = resource('resource:core:absorption')
 	.displayAsPercent()
 	.allowDecimal()
 	.lowerBound(0)
+	.section('combat')
+	.secondary()
 	.build();
 
 const growthResource = resource('resource:core:growth')
@@ -98,6 +108,8 @@ const growthResource = resource('resource:core:growth')
 	.allowDecimal()
 	.lowerBound(0)
 	.trackValueBreakdown()
+	.section('combat')
+	.secondary()
 	.build();
 
 const warWearinessResource = resource('resource:core:war-weariness')
@@ -105,6 +117,8 @@ const warWearinessResource = resource('resource:core:war-weariness')
 	.label('War Weariness')
 	.description('War Weariness reflects the fatigue from prolonged conflict. High ' + 'weariness can sap morale and hinder wartime efforts.')
 	.lowerBound(0)
+	.section('combat')
+	.secondary()
 	.build();
 
 // Resources below are built lazily to avoid circular dependencies
@@ -178,6 +192,7 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 			.lowerBound(0)
 			.upkeep(Resource.gold, 2)
 			.onGainAPStep(councilApGainEffect)
+			.section('economy')
 			.build(),
 		resource('resource:core:legion')
 			.icon('🎖️')
@@ -189,6 +204,7 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 			.upkeep(Resource.gold, 1)
 			.onValueIncrease(legionOnValueIncrease)
 			.onValueDecrease(legionOnValueDecrease)
+			.section('economy')
 			.build(),
 		resource('resource:core:fortifier')
 			.icon('🔧')
@@ -200,6 +216,7 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 			.upkeep(Resource.gold, 1)
 			.onValueIncrease(fortifierOnValueIncrease)
 			.onValueDecrease(fortifierOnValueDecrease)
+			.section('economy')
 			.build(),
 	];
 

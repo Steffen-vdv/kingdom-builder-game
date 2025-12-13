@@ -1,0 +1,2130 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Player Panel Redesign V2 - Interactive Mockups</title>
+		<style>
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background: linear-gradient(
+					135deg,
+					#1a1a2e 0%,
+					#16213e 50%,
+					#1a1a2e 100%
+				);
+				min-height: 100vh;
+				padding: 20px;
+				color: #e2e8f0;
+			}
+
+			.page-header {
+				text-align: center;
+				margin-bottom: 24px;
+			}
+
+			.page-header h1 {
+				font-size: 24px;
+				font-weight: 600;
+				margin-bottom: 8px;
+			}
+
+			.page-header p {
+				color: #94a3b8;
+				font-size: 14px;
+			}
+
+			.features-list {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				justify-content: center;
+				margin-top: 12px;
+			}
+
+			.feature-tag {
+				padding: 4px 10px;
+				background: rgba(34, 197, 94, 0.2);
+				border: 1px solid rgba(34, 197, 94, 0.4);
+				border-radius: 12px;
+				font-size: 11px;
+				color: #4ade80;
+			}
+
+			/* Tab Navigation */
+			.tab-nav {
+				display: flex;
+				gap: 8px;
+				justify-content: center;
+				margin-bottom: 24px;
+				flex-wrap: wrap;
+			}
+
+			.tab-btn {
+				padding: 12px 24px;
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.05);
+				color: #94a3b8;
+				border-radius: 12px;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: 500;
+				transition: all 0.2s;
+			}
+
+			.tab-btn:hover {
+				background: rgba(255, 255, 255, 0.1);
+				color: #e2e8f0;
+			}
+
+			.tab-btn.active {
+				background: linear-gradient(135deg, #3b82f6, #2563eb);
+				border-color: #3b82f6;
+				color: white;
+			}
+
+			.tab-content {
+				display: none;
+			}
+
+			.tab-content.active {
+				display: block;
+			}
+
+			.mockup-container {
+				display: flex;
+				justify-content: center;
+				gap: 24px;
+				flex-wrap: wrap;
+			}
+
+			.mockup-wrapper {
+				text-align: center;
+			}
+
+			.mockup-label {
+				font-size: 12px;
+				color: #64748b;
+				margin-bottom: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+			}
+
+			/* ========================================
+       SHARED PANEL STYLES
+       ======================================== */
+
+			.panel {
+				width: 340px;
+				border-radius: 16px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				background: rgba(15, 23, 42, 0.9);
+				backdrop-filter: blur(12px);
+				overflow: hidden;
+				box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+				text-align: left;
+			}
+
+			.panel-header {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 12px 14px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+				background: linear-gradient(
+					135deg,
+					rgba(59, 130, 246, 0.15),
+					rgba(37, 99, 235, 0.1)
+				);
+			}
+
+			.player-name {
+				font-weight: 600;
+				font-size: 15px;
+			}
+
+			.crown {
+				font-size: 14px;
+			}
+
+			.mood-badge {
+				margin-left: auto;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+				padding: 4px 10px;
+				background: linear-gradient(
+					135deg,
+					rgba(250, 204, 21, 0.2),
+					rgba(234, 179, 8, 0.15)
+				);
+				border: 1px solid rgba(250, 204, 21, 0.3);
+				border-radius: 12px;
+				font-size: 11px;
+				font-weight: 500;
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+
+			.mood-badge:hover {
+				background: linear-gradient(
+					135deg,
+					rgba(250, 204, 21, 0.3),
+					rgba(234, 179, 8, 0.25)
+				);
+			}
+
+			/* Resource styling */
+			.resource-section {
+				padding: 10px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.resource-grid {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 4px;
+			}
+
+			.resource-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 3px;
+				padding: 5px 8px;
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 6px;
+				font-size: 12px;
+				font-weight: 500;
+				cursor: pointer;
+				transition: all 0.15s;
+				border: 1px solid transparent;
+			}
+
+			.resource-chip:hover {
+				background: rgba(255, 255, 255, 0.1);
+				border-color: rgba(255, 255, 255, 0.2);
+			}
+
+			.resource-chip.selected {
+				background: rgba(59, 130, 246, 0.2);
+				border-color: rgba(59, 130, 246, 0.4);
+			}
+
+			.resource-chip .icon {
+				font-size: 12px;
+			}
+			.resource-chip .value {
+				color: #f1f5f9;
+			}
+
+			.resource-chip .bounds {
+				font-size: 9px;
+				color: #64748b;
+				margin-left: 1px;
+			}
+
+			.forecast {
+				font-size: 10px;
+				font-weight: 600;
+				margin-left: 2px;
+			}
+
+			.forecast.positive {
+				color: #4ade80;
+			}
+			.forecast.negative {
+				color: #f87171;
+			}
+
+			/* Resource group header */
+			.resource-group {
+				margin-top: 6px;
+			}
+
+			.resource-group:first-child {
+				margin-top: 0;
+			}
+
+			.group-header {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 6px;
+				margin-bottom: 4px;
+				background: rgba(255, 255, 255, 0.03);
+				border-radius: 6px;
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+
+			.group-header:hover {
+				background: rgba(255, 255, 255, 0.06);
+			}
+
+			.group-header.selected {
+				background: rgba(59, 130, 246, 0.15);
+			}
+
+			.group-label {
+				font-size: 10px;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+				color: #64748b;
+			}
+
+			.group-total {
+				margin-left: auto;
+				font-size: 11px;
+				font-weight: 600;
+			}
+
+			.group-members {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 3px;
+				padding-left: 8px;
+			}
+
+			/* Collapsible sections */
+			.section {
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.section:last-child {
+				border-bottom: none;
+			}
+
+			.section-header {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 10px 14px;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+
+			.section-header:hover {
+				background: rgba(255, 255, 255, 0.03);
+			}
+
+			.section-title {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 12px;
+				font-weight: 500;
+				color: #cbd5e1;
+			}
+
+			.section-summary {
+				margin-left: auto;
+				font-size: 11px;
+				color: #64748b;
+			}
+
+			.section-chevron {
+				color: #64748b;
+				font-size: 10px;
+				transition: transform 0.2s;
+			}
+
+			.section.expanded .section-chevron {
+				transform: rotate(180deg);
+			}
+
+			.section-content {
+				padding: 0 14px 10px;
+				display: none;
+			}
+
+			.section.expanded .section-content {
+				display: block;
+			}
+
+			/* Detail Panel (embedded hover card replacement) */
+			.detail-panel {
+				background: rgba(30, 41, 59, 0.95);
+				border-top: 1px solid rgba(255, 255, 255, 0.1);
+				max-height: 200px;
+				overflow-y: auto;
+				display: none;
+			}
+
+			.detail-panel.visible {
+				display: block;
+			}
+
+			.detail-panel::-webkit-scrollbar {
+				width: 6px;
+			}
+
+			.detail-panel::-webkit-scrollbar-track {
+				background: rgba(255, 255, 255, 0.05);
+			}
+
+			.detail-panel::-webkit-scrollbar-thumb {
+				background: rgba(255, 255, 255, 0.2);
+				border-radius: 3px;
+			}
+
+			.detail-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 10px 14px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+				position: sticky;
+				top: 0;
+				background: rgba(30, 41, 59, 0.98);
+			}
+
+			.detail-title {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 13px;
+				font-weight: 600;
+			}
+
+			.detail-close {
+				background: none;
+				border: none;
+				color: #64748b;
+				cursor: pointer;
+				font-size: 16px;
+				padding: 4px;
+				line-height: 1;
+			}
+
+			.detail-close:hover {
+				color: #94a3b8;
+			}
+
+			.detail-content {
+				padding: 10px 14px;
+			}
+
+			/* Thermometer display for tiered resources */
+			.thermometer {
+				margin: 8px 0;
+			}
+
+			.thermo-tier {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 6px 8px;
+				margin: 2px 0;
+				border-radius: 6px;
+				font-size: 11px;
+				transition: all 0.15s;
+			}
+
+			.thermo-tier.active {
+				background: rgba(34, 197, 94, 0.15);
+				border-left: 3px solid #22c55e;
+			}
+
+			.thermo-tier.inactive {
+				opacity: 0.5;
+			}
+
+			.tier-icon {
+				font-size: 14px;
+			}
+
+			.tier-range {
+				color: #64748b;
+				font-size: 10px;
+			}
+
+			.tier-effects {
+				flex: 1;
+				color: #94a3b8;
+			}
+
+			/* Effects aggregate list */
+			.effects-list {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+			}
+
+			.effect-item {
+				display: flex;
+				align-items: flex-start;
+				gap: 8px;
+				padding: 6px 8px;
+				background: rgba(255, 255, 255, 0.03);
+				border-radius: 6px;
+				font-size: 11px;
+			}
+
+			.effect-source {
+				font-size: 9px;
+				color: #64748b;
+				padding: 2px 6px;
+				background: rgba(255, 255, 255, 0.06);
+				border-radius: 4px;
+				white-space: nowrap;
+			}
+
+			.effect-text {
+				flex: 1;
+				color: #cbd5e1;
+			}
+
+			/* Mini items */
+			.mini-grid {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 4px;
+			}
+
+			.mini-item {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				padding: 6px 4px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 6px;
+				font-size: 9px;
+				color: #94a3b8;
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+
+			.mini-item:hover {
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.mini-item .icon {
+				font-size: 14px;
+				margin-bottom: 2px;
+			}
+
+			.mini-item .sub-icons {
+				display: flex;
+				gap: 1px;
+				font-size: 9px;
+			}
+
+			/* Building/Effect list items */
+			.list-item {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 8px 10px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 8px;
+				margin: 4px 0;
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+
+			.list-item:hover {
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.list-item .icon {
+				font-size: 18px;
+			}
+
+			.list-item .info {
+				flex: 1;
+			}
+
+			.list-item .name {
+				font-size: 12px;
+				font-weight: 500;
+			}
+
+			.list-item .desc {
+				font-size: 10px;
+				color: #64748b;
+			}
+
+			/* Resource bar (for thermometer view) */
+			.resource-bar-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin: 4px 0;
+				cursor: pointer;
+			}
+
+			.resource-bar-row:hover .bar-container {
+				border-color: rgba(255, 255, 255, 0.3);
+			}
+
+			.bar-icon {
+				width: 24px;
+				text-align: center;
+				font-size: 14px;
+			}
+
+			.bar-container {
+				flex: 1;
+				height: 18px;
+				background: rgba(255, 255, 255, 0.06);
+				border-radius: 9px;
+				overflow: hidden;
+				position: relative;
+				border: 1px solid transparent;
+				transition: border-color 0.15s;
+			}
+
+			.bar-fill {
+				height: 100%;
+				border-radius: 8px;
+				transition: width 0.3s;
+			}
+
+			.bar-markers {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				pointer-events: none;
+			}
+
+			.bar-min-marker,
+			.bar-max-marker {
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				width: 2px;
+				background: rgba(255, 255, 255, 0.4);
+			}
+
+			.bar-value {
+				position: absolute;
+				right: 6px;
+				top: 50%;
+				transform: translateY(-50%);
+				font-size: 10px;
+				font-weight: 600;
+				color: white;
+				text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+			}
+
+			.bar-bounds {
+				font-size: 9px;
+				color: #64748b;
+				margin-left: 2px;
+			}
+
+			.bar-forecast {
+				width: 32px;
+				text-align: right;
+				font-size: 10px;
+				font-weight: 600;
+			}
+
+			/* Tabs inside panel */
+			.inner-tabs {
+				display: flex;
+				padding: 6px 10px;
+				gap: 4px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				background: rgba(0, 0, 0, 0.2);
+			}
+
+			.inner-tab {
+				flex: 1;
+				padding: 6px 8px;
+				border: none;
+				background: transparent;
+				color: #64748b;
+				font-size: 10px;
+				font-weight: 500;
+				border-radius: 6px;
+				cursor: pointer;
+				transition: all 0.15s;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 2px;
+			}
+
+			.inner-tab:hover {
+				background: rgba(255, 255, 255, 0.05);
+				color: #94a3b8;
+			}
+
+			.inner-tab.active {
+				background: rgba(59, 130, 246, 0.2);
+				color: #60a5fa;
+			}
+
+			.inner-tab .badge {
+				font-size: 9px;
+				padding: 1px 5px;
+				background: rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+			}
+
+			.inner-tab.active .badge {
+				background: rgba(59, 130, 246, 0.3);
+			}
+
+			.tab-panel {
+				padding: 10px;
+				min-height: 100px;
+			}
+
+			/* Compact card grid */
+			.compact-grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 6px;
+				padding: 10px;
+			}
+
+			.compact-card {
+				padding: 10px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 10px;
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+
+			.compact-card:hover {
+				background: rgba(255, 255, 255, 0.08);
+				border-color: rgba(255, 255, 255, 0.12);
+			}
+
+			.compact-card.selected {
+				background: rgba(59, 130, 246, 0.15);
+				border-color: rgba(59, 130, 246, 0.4);
+			}
+
+			.compact-card.full-width {
+				grid-column: 1 / -1;
+			}
+
+			.compact-card .header {
+				display: flex;
+				align-items: center;
+				gap: 5px;
+				margin-bottom: 4px;
+			}
+
+			.compact-card .header .icon {
+				font-size: 14px;
+			}
+
+			.compact-card .header .label {
+				font-size: 10px;
+				color: #64748b;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+
+			.compact-card .value {
+				font-size: 18px;
+				font-weight: 600;
+			}
+
+			.compact-card .sub {
+				font-size: 10px;
+				color: #64748b;
+				margin-top: 2px;
+			}
+
+			.compact-card .icon-row {
+				display: flex;
+				gap: 3px;
+				margin-top: 4px;
+			}
+
+			.compact-card .icon-row span {
+				font-size: 12px;
+			}
+
+			/* Description box */
+			.option-description {
+				max-width: 400px;
+				margin: 16px auto 0;
+				padding: 12px 16px;
+				background: rgba(255, 255, 255, 0.03);
+				border-radius: 12px;
+				border: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.option-description h3 {
+				font-size: 14px;
+				font-weight: 600;
+				margin-bottom: 8px;
+				color: #e2e8f0;
+			}
+
+			.option-description ul {
+				list-style: none;
+				font-size: 12px;
+				color: #94a3b8;
+				columns: 2;
+			}
+
+			.option-description li {
+				padding: 3px 0;
+				padding-left: 14px;
+				position: relative;
+			}
+
+			.option-description li::before {
+				content: '✓';
+				position: absolute;
+				left: 0;
+				color: #22c55e;
+				font-size: 10px;
+			}
+
+			/* Scrollable resource area */
+			.resource-scroll {
+				max-height: 120px;
+				overflow-y: auto;
+				padding: 10px;
+			}
+
+			.resource-scroll::-webkit-scrollbar {
+				width: 4px;
+			}
+
+			.resource-scroll::-webkit-scrollbar-thumb {
+				background: rgba(255, 255, 255, 0.2);
+				border-radius: 2px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="page-header">
+			<h1>Player Panel Redesign V2</h1>
+			<p>Interactive mockups with your feedback incorporated</p>
+			<div class="features-list">
+				<span class="feature-tag">✓ Embedded detail panel</span>
+				<span class="feature-tag">✓ Min/max bounds</span>
+				<span class="feature-tag">✓ Aggregate effects</span>
+				<span class="feature-tag">✓ 15 resources + groups</span>
+				<span class="feature-tag">✓ Interactive</span>
+			</div>
+		</div>
+
+		<div class="tab-nav">
+			<button class="tab-btn active" onclick="showTab('optionA')">
+				A: Accordion+
+			</button>
+			<button class="tab-btn" onclick="showTab('optionB')">B: Tabbed+</button>
+			<button class="tab-btn" onclick="showTab('optionC')">C: Cards+</button>
+			<button class="tab-btn" onclick="showTab('optionD')">D: Thermo+</button>
+		</div>
+
+		<!-- ========================================
+       OPTION A: ACCORDION WITH EMBEDDED DETAIL
+       ======================================== -->
+		<div id="optionA" class="tab-content active">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Click any resource or section</div>
+					<div class="panel" id="panelA">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-badge" onclick="showDetailA('mood')">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<!-- Primary Resources -->
+						<div class="resource-section">
+							<div class="resource-grid">
+								<div class="resource-chip" onclick="showDetailA('gold')">
+									<span class="icon">🪙</span>
+									<span class="value">66</span>
+									<span class="bounds">/200</span>
+									<span class="forecast negative">-4</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailA('energy')">
+									<span class="icon">⚡</span>
+									<span class="value">3</span>
+									<span class="bounds">/10</span>
+									<span class="forecast positive">+2</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailA('happiness')">
+									<span class="icon">😊</span>
+									<span class="value">75</span>
+									<span class="bounds">/100</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailA('defense')">
+									<span class="icon">🛡️</span>
+									<span class="value">12</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailA('attack')">
+									<span class="icon">⚔️</span>
+									<span class="value">8</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailA('influence')">
+									<span class="icon">👑</span>
+									<span class="value">45</span>
+									<span class="bounds">/100</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailA('food')">
+									<span class="icon">🌾</span>
+									<span class="value">24</span>
+									<span class="forecast positive">+6</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailA('wood')">
+									<span class="icon">🪵</span>
+									<span class="value">18</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailA('stone')">
+									<span class="icon">🪨</span>
+									<span class="value">9</span>
+								</div>
+							</div>
+
+							<!-- Population Group -->
+							<div class="resource-group">
+								<div class="group-header" onclick="showDetailA('population')">
+									<span>👥</span>
+									<span class="group-label">Population</span>
+									<span class="group-total">4/7</span>
+								</div>
+								<div class="group-members">
+									<div class="resource-chip" onclick="showDetailA('workers')">
+										<span class="icon">👷</span>
+										<span class="value">2</span>
+									</div>
+									<div class="resource-chip" onclick="showDetailA('guards')">
+										<span class="icon">💂</span>
+										<span class="value">1</span>
+									</div>
+									<div class="resource-chip" onclick="showDetailA('scribes')">
+										<span class="icon">📜</span>
+										<span class="value">1</span>
+									</div>
+								</div>
+							</div>
+
+							<!-- Metals Group -->
+							<div class="resource-group">
+								<div class="group-header" onclick="showDetailA('metals')">
+									<span>⚙️</span>
+									<span class="group-label">Metals</span>
+									<span class="group-total">15</span>
+								</div>
+								<div class="group-members">
+									<div class="resource-chip" onclick="showDetailA('copper')">
+										<span class="icon">🟤</span>
+										<span class="value">8</span>
+									</div>
+									<div class="resource-chip" onclick="showDetailA('iron')">
+										<span class="icon">⬜</span>
+										<span class="value">5</span>
+									</div>
+									<div class="resource-chip" onclick="showDetailA('tin')">
+										<span class="icon">🔘</span>
+										<span class="value">2</span>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Collapsible Sections -->
+						<div class="section" id="landsA">
+							<div class="section-header" onclick="toggleSection('landsA')">
+								<div class="section-title">
+									<span>🗺️</span>
+									<span>Lands</span>
+								</div>
+								<span class="section-summary">7 lands • 4 developed</span>
+								<span class="section-chevron">▼</span>
+							</div>
+							<div class="section-content">
+								<div class="mini-grid">
+									<div class="mini-item" onclick="showDetailA('land1')">
+										<span class="icon">🏞️</span>
+										<div class="sub-icons">🏠🌾</div>
+									</div>
+									<div class="mini-item" onclick="showDetailA('land2')">
+										<span class="icon">🏞️</span>
+										<div class="sub-icons">🏠</div>
+									</div>
+									<div class="mini-item" onclick="showDetailA('land3')">
+										<span class="icon">🏞️</span>
+										<div class="sub-icons">⚒️</div>
+									</div>
+									<div class="mini-item" onclick="showDetailA('land4')">
+										<span class="icon">🏞️</span>
+										<div class="sub-icons">—</div>
+									</div>
+									<div class="mini-item" onclick="showDetailA('land5')">
+										<span class="icon">🏞️</span>
+										<div class="sub-icons">🌾</div>
+									</div>
+									<div class="mini-item" onclick="showDetailA('land6')">
+										<span class="icon">🏞️</span>
+										<div class="sub-icons">—</div>
+									</div>
+									<div class="mini-item" onclick="showDetailA('land7')">
+										<span class="icon">🏞️</span>
+										<div class="sub-icons">—</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section" id="buildingsA">
+							<div class="section-header" onclick="toggleSection('buildingsA')">
+								<div class="section-title">
+									<span>🏗️</span>
+									<span>Buildings</span>
+								</div>
+								<span class="section-summary">3 built</span>
+								<span class="section-chevron">▼</span>
+							</div>
+							<div class="section-content">
+								<div class="list-item" onclick="showDetailA('castle')">
+									<span class="icon">🏰</span>
+									<div class="info">
+										<div class="name">Castle Walls</div>
+										<div class="desc">+2 Defense/turn</div>
+									</div>
+								</div>
+								<div class="list-item" onclick="showDetailA('guild')">
+									<span class="icon">⚔️</span>
+									<div class="info">
+										<div class="name">Raider's Guild</div>
+										<div class="desc">Raids -1 Energy</div>
+									</div>
+								</div>
+								<div class="list-item" onclick="showDetailA('mill')">
+									<span class="icon">⚙️</span>
+									<div class="info">
+										<div class="name">Mill</div>
+										<div class="desc">+3 Gold from farms</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section" id="effectsA">
+							<div class="section-header" onclick="toggleSection('effectsA')">
+								<div class="section-title">
+									<span>✨</span>
+									<span>All Active Effects</span>
+								</div>
+								<span class="section-summary">8 total</span>
+								<span class="section-chevron">▼</span>
+							</div>
+							<div class="section-content">
+								<div class="effects-list">
+									<div class="effect-item">
+										<span class="effect-source">Mood</span>
+										<span class="effect-text">+15% Gold income</span>
+									</div>
+									<div class="effect-item">
+										<span class="effect-source">Mood</span>
+										<span class="effect-text">+10% Attack power</span>
+									</div>
+									<div class="effect-item">
+										<span class="effect-source">Building</span>
+										<span class="effect-text">+2 Defense per turn</span>
+									</div>
+									<div class="effect-item">
+										<span class="effect-source">Building</span>
+										<span class="effect-text">Raids cost -1 Energy</span>
+									</div>
+									<div class="effect-item">
+										<span class="effect-source">Building</span>
+										<span class="effect-text">+3 Gold from farms</span>
+									</div>
+									<div class="effect-item">
+										<span class="effect-source">Dev</span>
+										<span class="effect-text">+2 Food per farm</span>
+									</div>
+									<div class="effect-item">
+										<span class="effect-source">Army</span>
+										<span class="effect-text">Legion: +1 Attack per guard</span>
+									</div>
+									<div class="effect-item">
+										<span class="effect-source">Passive</span>
+										<span class="effect-text">Trade Route: +5 Gold/turn</span>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Embedded Detail Panel -->
+						<div class="detail-panel" id="detailPanelA">
+							<div class="detail-header">
+								<div class="detail-title" id="detailTitleA">
+									<span>🪙</span>
+									<span>Gold</span>
+								</div>
+								<button class="detail-close" onclick="hideDetailA()">×</button>
+							</div>
+							<div class="detail-content" id="detailContentA">
+								<!-- Dynamic content -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-description">
+				<h3>Option A: Accordion with Embedded Detail</h3>
+				<ul>
+					<li>Resources with bounds shown</li>
+					<li>Groups collapse members</li>
+					<li>All effects aggregated</li>
+					<li>Detail panel embedded below</li>
+					<li>Scrollable when needed</li>
+					<li>Click anything for detail</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION B: TABBED WITH EMBEDDED DETAIL
+       ======================================== -->
+		<div id="optionB" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">
+						Resources always visible, tabs for detail
+					</div>
+					<div class="panel" id="panelB">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-badge" onclick="showDetailB('mood')">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<!-- Compact Resource Row -->
+						<div class="resource-scroll">
+							<div class="resource-grid">
+								<div class="resource-chip" onclick="showDetailB('gold')">
+									<span class="icon">🪙</span>
+									<span class="value">66</span>
+									<span class="bounds">/200</span>
+									<span class="forecast negative">-4</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('energy')">
+									<span class="icon">⚡</span>
+									<span class="value">3</span>
+									<span class="bounds">/10</span>
+									<span class="forecast positive">+2</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('happiness')">
+									<span class="icon">😊</span>
+									<span class="value">75</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('defense')">
+									<span class="icon">🛡️</span>
+									<span class="value">12</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('attack')">
+									<span class="icon">⚔️</span>
+									<span class="value">8</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('influence')">
+									<span class="icon">👑</span>
+									<span class="value">45</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('food')">
+									<span class="icon">🌾</span>
+									<span class="value">24</span>
+									<span class="forecast positive">+6</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('wood')">
+									<span class="icon">🪵</span>
+									<span class="value">18</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('stone')">
+									<span class="icon">🪨</span>
+									<span class="value">9</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('population')">
+									<span class="icon">👥</span>
+									<span class="value">4/7</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailB('metals')">
+									<span class="icon">⚙️</span>
+									<span class="value">15</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Tabs -->
+						<div class="inner-tabs">
+							<button class="inner-tab active" onclick="switchTabB('lands')">
+								<span>🗺️</span>
+								<span class="badge">7</span>
+							</button>
+							<button class="inner-tab" onclick="switchTabB('buildings')">
+								<span>🏗️</span>
+								<span class="badge">3</span>
+							</button>
+							<button class="inner-tab" onclick="switchTabB('effects')">
+								<span>✨</span>
+								<span class="badge">8</span>
+							</button>
+						</div>
+
+						<!-- Tab Panels -->
+						<div class="tab-panel" id="tabLandsB">
+							<div class="mini-grid">
+								<div class="mini-item" onclick="showDetailB('land1')">
+									<span class="icon">🏞️</span>
+									<div class="sub-icons">🏠🌾</div>
+								</div>
+								<div class="mini-item" onclick="showDetailB('land2')">
+									<span class="icon">🏞️</span>
+									<div class="sub-icons">🏠</div>
+								</div>
+								<div class="mini-item" onclick="showDetailB('land3')">
+									<span class="icon">🏞️</span>
+									<div class="sub-icons">⚒️</div>
+								</div>
+								<div class="mini-item" onclick="showDetailB('land4')">
+									<span class="icon">🏞️</span>
+									<div class="sub-icons">—</div>
+								</div>
+								<div class="mini-item" onclick="showDetailB('land5')">
+									<span class="icon">🏞️</span>
+									<div class="sub-icons">🌾</div>
+								</div>
+								<div class="mini-item" onclick="showDetailB('land6')">
+									<span class="icon">🏞️</span>
+									<div class="sub-icons">—</div>
+								</div>
+								<div class="mini-item" onclick="showDetailB('land7')">
+									<span class="icon">🏞️</span>
+									<div class="sub-icons">—</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="tab-panel" id="tabBuildingsB" style="display: none">
+							<div class="list-item" onclick="showDetailB('castle')">
+								<span class="icon">🏰</span>
+								<div class="info">
+									<div class="name">Castle Walls</div>
+									<div class="desc">+2 Defense/turn</div>
+								</div>
+							</div>
+							<div class="list-item" onclick="showDetailB('guild')">
+								<span class="icon">⚔️</span>
+								<div class="info">
+									<div class="name">Raider's Guild</div>
+									<div class="desc">Raids -1 Energy</div>
+								</div>
+							</div>
+							<div class="list-item" onclick="showDetailB('mill')">
+								<span class="icon">⚙️</span>
+								<div class="info">
+									<div class="name">Mill</div>
+									<div class="desc">+3 Gold from farms</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="tab-panel" id="tabEffectsB" style="display: none">
+							<div class="effects-list">
+								<div class="effect-item">
+									<span class="effect-source">Mood</span>
+									<span class="effect-text">+15% Gold income</span>
+								</div>
+								<div class="effect-item">
+									<span class="effect-source">Mood</span>
+									<span class="effect-text">+10% Attack power</span>
+								</div>
+								<div class="effect-item">
+									<span class="effect-source">Building</span>
+									<span class="effect-text">+2 Defense per turn</span>
+								</div>
+								<div class="effect-item">
+									<span class="effect-source">Building</span>
+									<span class="effect-text">Raids cost -1 Energy</span>
+								</div>
+								<div class="effect-item">
+									<span class="effect-source">Building</span>
+									<span class="effect-text">+3 Gold from farms</span>
+								</div>
+								<div class="effect-item">
+									<span class="effect-source">Dev</span>
+									<span class="effect-text">+2 Food per farm</span>
+								</div>
+								<div class="effect-item">
+									<span class="effect-source">Army</span>
+									<span class="effect-text">Legion: +1 Attack/guard</span>
+								</div>
+								<div class="effect-item">
+									<span class="effect-source">Passive</span>
+									<span class="effect-text">Trade Route: +5 Gold/turn</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Embedded Detail Panel -->
+						<div class="detail-panel" id="detailPanelB">
+							<div class="detail-header">
+								<div class="detail-title" id="detailTitleB">
+									<span>🪙</span>
+									<span>Gold</span>
+								</div>
+								<button class="detail-close" onclick="hideDetailB()">×</button>
+							</div>
+							<div class="detail-content" id="detailContentB">
+								<!-- Dynamic content -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-description">
+				<h3>Option B: Tabbed with Embedded Detail</h3>
+				<ul>
+					<li>All resources always visible</li>
+					<li>Scrollable resource area</li>
+					<li>Tabs for lands/buildings/effects</li>
+					<li>Badge counts on tabs</li>
+					<li>Embedded detail panel</li>
+					<li>Fixed layout height</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION C: COMPACT CARDS WITH DETAIL
+       ======================================== -->
+		<div id="optionC" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Maximum density, click for detail</div>
+					<div class="panel" id="panelC">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-badge" onclick="showDetailC('mood')">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<!-- Compact Cards -->
+						<div class="compact-grid">
+							<div class="compact-card" onclick="showDetailC('gold')">
+								<div class="header">
+									<span class="icon">🪙</span>
+									<span class="label">Gold</span>
+								</div>
+								<div class="value">
+									66<span style="font-size: 12px; color: #64748b">/200</span>
+								</div>
+								<div class="sub">
+									<span class="forecast negative">-4</span> next turn
+								</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('energy')">
+								<div class="header">
+									<span class="icon">⚡</span>
+									<span class="label">Energy</span>
+								</div>
+								<div class="value">
+									3<span style="font-size: 12px; color: #64748b">/10</span>
+								</div>
+								<div class="sub">
+									<span class="forecast positive">+2</span> next turn
+								</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('happiness')">
+								<div class="header">
+									<span class="icon">😊</span>
+									<span class="label">Happiness</span>
+								</div>
+								<div class="value">75</div>
+								<div class="sub">Ecstatic tier</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('combat')">
+								<div class="header">
+									<span class="icon">⚔️</span>
+									<span class="label">Combat</span>
+								</div>
+								<div class="value">8/12</div>
+								<div class="sub">Atk / Def</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('population')">
+								<div class="header">
+									<span class="icon">👥</span>
+									<span class="label">Population</span>
+								</div>
+								<div class="value">4/7</div>
+								<div class="icon-row">
+									<span>👷×2</span>
+									<span>💂×1</span>
+									<span>📜×1</span>
+								</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('materials')">
+								<div class="header">
+									<span class="icon">📦</span>
+									<span class="label">Materials</span>
+								</div>
+								<div class="value">5</div>
+								<div class="icon-row">
+									<span>🌾24</span>
+									<span>🪵18</span>
+									<span>🪨9</span>
+								</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('metals')">
+								<div class="header">
+									<span class="icon">⚙️</span>
+									<span class="label">Metals</span>
+								</div>
+								<div class="value">15</div>
+								<div class="icon-row">
+									<span>🟤8</span>
+									<span>⬜5</span>
+									<span>🔘2</span>
+								</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('other')">
+								<div class="header">
+									<span class="icon">👑</span>
+									<span class="label">Other</span>
+								</div>
+								<div class="value">45</div>
+								<div class="sub">Influence</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('lands')">
+								<div class="header">
+									<span class="icon">🗺️</span>
+									<span class="label">Lands</span>
+								</div>
+								<div class="value">7</div>
+								<div class="sub">4 developed</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailC('buildings')">
+								<div class="header">
+									<span class="icon">🏗️</span>
+									<span class="label">Buildings</span>
+								</div>
+								<div class="value">3</div>
+								<div class="icon-row">
+									<span>🏰</span>
+									<span>⚔️</span>
+									<span>⚙️</span>
+								</div>
+							</div>
+
+							<div
+								class="compact-card full-width"
+								onclick="showDetailC('effects')"
+							>
+								<div class="header">
+									<span class="icon">✨</span>
+									<span class="label">Active Effects</span>
+								</div>
+								<div class="value">8</div>
+								<div class="sub">
+									From mood, buildings, developments, passives
+								</div>
+							</div>
+						</div>
+
+						<!-- Embedded Detail Panel -->
+						<div class="detail-panel" id="detailPanelC">
+							<div class="detail-header">
+								<div class="detail-title" id="detailTitleC">
+									<span>🪙</span>
+									<span>Gold</span>
+								</div>
+								<button class="detail-close" onclick="hideDetailC()">×</button>
+							</div>
+							<div class="detail-content" id="detailContentC">
+								<!-- Dynamic content -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-description">
+				<h3>Option C: Compact Cards with Detail</h3>
+				<ul>
+					<li>Dashboard-style cards</li>
+					<li>Resources grouped logically</li>
+					<li>Bounds visible inline</li>
+					<li>Click any card for detail</li>
+					<li>Full effects aggregate card</li>
+					<li>Very high density</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION D: THERMOMETER WITH DETAIL
+       ======================================== -->
+		<div id="optionD" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">
+						Visual bars with bounds, click for detail
+					</div>
+					<div class="panel" id="panelD">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div class="mood-badge" onclick="showDetailD('mood')">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+
+						<!-- Thermometer Bars -->
+						<div style="padding: 10px">
+							<div class="resource-bar-row" onclick="showDetailD('gold')">
+								<span class="bar-icon">🪙</span>
+								<div class="bar-container">
+									<div
+										class="bar-fill"
+										style="
+											width: 33%;
+											background: linear-gradient(90deg, #fbbf24, #f59e0b);
+										"
+									></div>
+									<div class="bar-markers">
+										<div class="bar-min-marker" style="left: 5%"></div>
+										<div class="bar-max-marker" style="left: 100%"></div>
+									</div>
+									<span class="bar-value">66/200</span>
+								</div>
+								<span class="bar-forecast forecast negative">-4</span>
+							</div>
+
+							<div class="resource-bar-row" onclick="showDetailD('energy')">
+								<span class="bar-icon">⚡</span>
+								<div class="bar-container">
+									<div
+										class="bar-fill"
+										style="
+											width: 30%;
+											background: linear-gradient(90deg, #a855f7, #7c3aed);
+										"
+									></div>
+									<span class="bar-value">3/10</span>
+								</div>
+								<span class="bar-forecast forecast positive">+2</span>
+							</div>
+
+							<div class="resource-bar-row" onclick="showDetailD('happiness')">
+								<span class="bar-icon">😊</span>
+								<div class="bar-container">
+									<div
+										class="bar-fill"
+										style="
+											width: 75%;
+											background: linear-gradient(90deg, #4ade80, #22c55e);
+										"
+									></div>
+									<span class="bar-value">75/100</span>
+								</div>
+								<span class="bar-forecast">—</span>
+							</div>
+
+							<div class="resource-bar-row" onclick="showDetailD('influence')">
+								<span class="bar-icon">👑</span>
+								<div class="bar-container">
+									<div
+										class="bar-fill"
+										style="
+											width: 45%;
+											background: linear-gradient(90deg, #f472b6, #ec4899);
+										"
+									></div>
+									<span class="bar-value">45/100</span>
+								</div>
+								<span class="bar-forecast">—</span>
+							</div>
+
+							<div class="resource-bar-row" onclick="showDetailD('population')">
+								<span class="bar-icon">👥</span>
+								<div class="bar-container">
+									<div
+										class="bar-fill"
+										style="
+											width: 57%;
+											background: linear-gradient(90deg, #f87171, #ef4444);
+										"
+									></div>
+									<span class="bar-value">4/7</span>
+								</div>
+								<span class="bar-forecast">—</span>
+							</div>
+
+							<div class="resource-bar-row" onclick="showDetailD('food')">
+								<span class="bar-icon">🌾</span>
+								<div class="bar-container">
+									<div
+										class="bar-fill"
+										style="
+											width: 48%;
+											background: linear-gradient(90deg, #84cc16, #65a30d);
+										"
+									></div>
+									<span class="bar-value">24/50</span>
+								</div>
+								<span class="bar-forecast forecast positive">+6</span>
+							</div>
+
+							<!-- Unbounded resources as chips -->
+							<div
+								style="
+									display: flex;
+									flex-wrap: wrap;
+									gap: 4px;
+									margin-top: 8px;
+								"
+							>
+								<div class="resource-chip" onclick="showDetailD('attack')">
+									<span class="icon">⚔️</span>
+									<span class="value">8</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailD('defense')">
+									<span class="icon">🛡️</span>
+									<span class="value">12</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailD('wood')">
+									<span class="icon">🪵</span>
+									<span class="value">18</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailD('stone')">
+									<span class="icon">🪨</span>
+									<span class="value">9</span>
+								</div>
+								<div class="resource-chip" onclick="showDetailD('metals')">
+									<span class="icon">⚙️</span>
+									<span class="value">15</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Summary Cards -->
+						<div class="compact-grid" style="padding-top: 0">
+							<div class="compact-card" onclick="showDetailD('lands')">
+								<div class="header">
+									<span class="icon">🗺️</span>
+									<span class="label">Lands</span>
+								</div>
+								<div class="value">7</div>
+								<div class="sub">4 developed</div>
+							</div>
+
+							<div class="compact-card" onclick="showDetailD('buildings')">
+								<div class="header">
+									<span class="icon">🏗️</span>
+									<span class="label">Buildings</span>
+								</div>
+								<div class="value">3</div>
+								<div class="icon-row">
+									<span>🏰</span>
+									<span>⚔️</span>
+									<span>⚙️</span>
+								</div>
+							</div>
+
+							<div
+								class="compact-card full-width"
+								onclick="showDetailD('effects')"
+							>
+								<div class="header">
+									<span class="icon">✨</span>
+									<span class="label">Active Effects</span>
+								</div>
+								<div
+									style="
+										display: flex;
+										gap: 8px;
+										flex-wrap: wrap;
+										margin-top: 4px;
+									"
+								>
+									<span class="effect-source">Mood ×2</span>
+									<span class="effect-source">Building ×3</span>
+									<span class="effect-source">Dev ×1</span>
+									<span class="effect-source">Passive ×2</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Embedded Detail Panel -->
+						<div class="detail-panel" id="detailPanelD">
+							<div class="detail-header">
+								<div class="detail-title" id="detailTitleD">
+									<span>🪙</span>
+									<span>Gold</span>
+								</div>
+								<button class="detail-close" onclick="hideDetailD()">×</button>
+							</div>
+							<div class="detail-content" id="detailContentD">
+								<!-- Dynamic content -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-description">
+				<h3>Option D: Thermometer with Detail</h3>
+				<ul>
+					<li>Visual bars for bounded resources</li>
+					<li>Min/max markers on bars</li>
+					<li>Chips for unbounded resources</li>
+					<li>Effects summary with counts</li>
+					<li>Click any element for detail</li>
+					<li>Very scannable at a glance</li>
+				</ul>
+			</div>
+		</div>
+
+		<script>
+			// ==========================================
+			// MOCK DATA
+			// ==========================================
+			const mockData = {
+				gold: {
+					icon: '🪙',
+					name: 'Gold',
+					value: 66,
+					min: 0,
+					max: 200,
+					forecast: -4,
+					sources: [
+						{ name: 'Tax Income', value: '+12' },
+						{ name: 'Mill Bonus', value: '+3' },
+						{ name: 'Trade Route', value: '+5' },
+						{ name: 'Upkeep', value: '-24' },
+					],
+				},
+				energy: {
+					icon: '⚡',
+					name: 'Energy',
+					value: 3,
+					min: 0,
+					max: 10,
+					forecast: +2,
+					sources: [
+						{ name: 'Base Regen', value: '+2' },
+						{ name: 'Scribes', value: '+1' },
+						{ name: 'Actions Used', value: '-1' },
+					],
+				},
+				happiness: {
+					icon: '😊',
+					name: 'Happiness',
+					value: 75,
+					min: 0,
+					max: 100,
+					tiered: true,
+					tiers: [
+						{
+							icon: '🤩',
+							name: 'Ecstatic',
+							range: '70+',
+							effects: ['+15% Gold', '+10% Attack'],
+							active: true,
+						},
+						{
+							icon: '😊',
+							name: 'Happy',
+							range: '50-69',
+							effects: ['+10% Gold'],
+							active: false,
+						},
+						{
+							icon: '😐',
+							name: 'Content',
+							range: '30-49',
+							effects: ['No bonuses'],
+							active: false,
+						},
+						{
+							icon: '😟',
+							name: 'Unhappy',
+							range: '10-29',
+							effects: ['-10% Gold'],
+							active: false,
+						},
+						{
+							icon: '😡',
+							name: 'Miserable',
+							range: '0-9',
+							effects: ['-20% Gold', 'Riots'],
+							active: false,
+						},
+					],
+				},
+				mood: {
+					icon: '🤩',
+					name: 'Current Mood: Ecstatic',
+					effects: [
+						{ text: '+15% Gold income from all sources', source: 'Tier Bonus' },
+						{ text: '+10% Attack power', source: 'Tier Bonus' },
+					],
+				},
+				population: {
+					icon: '👥',
+					name: 'Population',
+					value: 4,
+					max: 7,
+					breakdown: [
+						{ icon: '👷', name: 'Workers', count: 2, effect: '+2 Production' },
+						{
+							icon: '💂',
+							name: 'Guards',
+							count: 1,
+							effect: '+1 Defense, +1 Attack (Legion)',
+						},
+						{
+							icon: '📜',
+							name: 'Scribes',
+							count: 1,
+							effect: '+1 Energy regen',
+						},
+					],
+				},
+				metals: {
+					icon: '⚙️',
+					name: 'Metals',
+					total: 15,
+					members: [
+						{ icon: '🟤', name: 'Copper', value: 8 },
+						{ icon: '⬜', name: 'Iron', value: 5 },
+						{ icon: '🔘', name: 'Tin', value: 2 },
+					],
+				},
+				castle: {
+					icon: '🏰',
+					name: 'Castle Walls',
+					type: 'Building',
+					effects: ['+2 Defense per turn'],
+					upkeep: '2 Gold/turn',
+				},
+				guild: {
+					icon: '⚔️',
+					name: "Raider's Guild",
+					type: 'Building',
+					effects: ['Raid actions cost 1 less Energy', '+1 Raid damage'],
+					upkeep: '3 Gold/turn',
+				},
+				mill: {
+					icon: '⚙️',
+					name: 'Mill',
+					type: 'Building',
+					effects: ['+3 Gold from each Farm development'],
+					upkeep: '1 Gold/turn',
+				},
+				land1: {
+					icon: '🏞️',
+					name: 'Fertile Plains',
+					type: 'Land',
+					developments: ['🏠 Homestead (+1 Pop cap)', '🌾 Farm (+2 Food)'],
+					slots: '2/2 used',
+				},
+				effects: {
+					icon: '✨',
+					name: 'All Active Effects',
+					categories: [
+						{
+							name: 'From Mood (Ecstatic)',
+							effects: ['+15% Gold income', '+10% Attack power'],
+						},
+						{
+							name: 'From Buildings',
+							effects: [
+								'+2 Defense/turn (Castle)',
+								'Raids -1 Energy (Guild)',
+								'+3 Gold/farm (Mill)',
+							],
+						},
+						{
+							name: 'From Developments',
+							effects: ['+2 Food per Farm', '+1 Pop cap per Homestead'],
+						},
+						{
+							name: 'From Army',
+							effects: ['Legion: +1 Attack per Guard (1 Guard = +1)'],
+						},
+						{
+							name: 'From Passives',
+							effects: ['Trade Route: +5 Gold/turn'],
+						},
+					],
+				},
+			};
+
+			// ==========================================
+			// TAB NAVIGATION
+			// ==========================================
+			function showTab(tabId) {
+				document
+					.querySelectorAll('.tab-content')
+					.forEach((tab) => tab.classList.remove('active'));
+				document
+					.querySelectorAll('.tab-btn')
+					.forEach((btn) => btn.classList.remove('active'));
+				document.getElementById(tabId).classList.add('active');
+				event.target.classList.add('active');
+			}
+
+			// ==========================================
+			// OPTION A: ACCORDION
+			// ==========================================
+			function toggleSection(sectionId) {
+				const section = document.getElementById(sectionId);
+				section.classList.toggle('expanded');
+			}
+
+			function showDetailA(key) {
+				const panel = document.getElementById('detailPanelA');
+				const title = document.getElementById('detailTitleA');
+				const content = document.getElementById('detailContentA');
+
+				panel.classList.add('visible');
+				renderDetail(key, title, content);
+			}
+
+			function hideDetailA() {
+				document.getElementById('detailPanelA').classList.remove('visible');
+			}
+
+			// ==========================================
+			// OPTION B: TABBED
+			// ==========================================
+			function switchTabB(tab) {
+				const tabs = ['lands', 'buildings', 'effects'];
+				tabs.forEach((t) => {
+					document.getElementById('tabLandsB').style.display =
+						t === 'lands' ? 'block' : 'none';
+					document.getElementById('tabBuildingsB').style.display =
+						t === 'buildings' ? 'block' : 'none';
+					document.getElementById('tabEffectsB').style.display =
+						t === 'effects' ? 'block' : 'none';
+				});
+
+				if (tab === 'lands') {
+					document.getElementById('tabLandsB').style.display = 'block';
+					document.getElementById('tabBuildingsB').style.display = 'none';
+					document.getElementById('tabEffectsB').style.display = 'none';
+				} else if (tab === 'buildings') {
+					document.getElementById('tabLandsB').style.display = 'none';
+					document.getElementById('tabBuildingsB').style.display = 'block';
+					document.getElementById('tabEffectsB').style.display = 'none';
+				} else {
+					document.getElementById('tabLandsB').style.display = 'none';
+					document.getElementById('tabBuildingsB').style.display = 'none';
+					document.getElementById('tabEffectsB').style.display = 'block';
+				}
+
+				document.querySelectorAll('#panelB .inner-tab').forEach((btn, i) => {
+					btn.classList.toggle('active', tabs[i] === tab);
+				});
+			}
+
+			function showDetailB(key) {
+				const panel = document.getElementById('detailPanelB');
+				const title = document.getElementById('detailTitleB');
+				const content = document.getElementById('detailContentB');
+
+				panel.classList.add('visible');
+				renderDetail(key, title, content);
+			}
+
+			function hideDetailB() {
+				document.getElementById('detailPanelB').classList.remove('visible');
+			}
+
+			// ==========================================
+			// OPTION C: CARDS
+			// ==========================================
+			function showDetailC(key) {
+				const panel = document.getElementById('detailPanelC');
+				const title = document.getElementById('detailTitleC');
+				const content = document.getElementById('detailContentC');
+
+				panel.classList.add('visible');
+				renderDetail(key, title, content);
+			}
+
+			function hideDetailC() {
+				document.getElementById('detailPanelC').classList.remove('visible');
+			}
+
+			// ==========================================
+			// OPTION D: THERMOMETER
+			// ==========================================
+			function showDetailD(key) {
+				const panel = document.getElementById('detailPanelD');
+				const title = document.getElementById('detailTitleD');
+				const content = document.getElementById('detailContentD');
+
+				panel.classList.add('visible');
+				renderDetail(key, title, content);
+			}
+
+			function hideDetailD() {
+				document.getElementById('detailPanelD').classList.remove('visible');
+			}
+
+			// ==========================================
+			// SHARED DETAIL RENDERER
+			// ==========================================
+			function renderDetail(key, titleEl, contentEl) {
+				const data = mockData[key];
+
+				if (!data) {
+					titleEl.innerHTML = `<span>❓</span><span>${key}</span>`;
+					contentEl.innerHTML =
+						'<div style="color:#64748b;font-size:11px;">No detailed data available for this item.</div>';
+					return;
+				}
+
+				titleEl.innerHTML = `<span>${data.icon}</span><span>${data.name}</span>`;
+
+				let html = '';
+
+				// Resource with sources
+				if (data.sources) {
+					html += `<div style="margin-bottom:8px;">
+          <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Value: <strong style="color:#f1f5f9;">${data.value}</strong>`;
+					if (data.min !== undefined)
+						html += ` (min: ${data.min}, max: ${data.max})`;
+					html += `</div>`;
+					if (data.forecast) {
+						const cls = data.forecast > 0 ? 'positive' : 'negative';
+						const sign = data.forecast > 0 ? '+' : '';
+						html += `<div style="font-size:11px;">Next turn: <span class="forecast ${cls}">${sign}${data.forecast}</span></div>`;
+					}
+					html += `</div>`;
+					html += `<div style="font-size:10px;color:#64748b;margin-bottom:4px;">SOURCES</div>`;
+					data.sources.forEach((s) => {
+						html += `<div class="effect-item"><span class="effect-text">${s.name}</span><span style="margin-left:auto;font-weight:600;">${s.value}</span></div>`;
+					});
+				}
+
+				// Tiered resource (happiness)
+				if (data.tiered) {
+					html += `<div style="margin-bottom:8px;">
+          <div style="font-size:11px;color:#64748b;">Current: <strong style="color:#f1f5f9;">${data.value}</strong> / ${data.max}</div>
+        </div>`;
+					html += `<div class="thermometer">`;
+					data.tiers.forEach((tier) => {
+						const cls = tier.active ? 'active' : 'inactive';
+						html += `<div class="thermo-tier ${cls}">
+            <span class="tier-icon">${tier.icon}</span>
+            <span>${tier.name}</span>
+            <span class="tier-range">${tier.range}</span>
+            <span class="tier-effects">${tier.effects.join(', ')}</span>
+          </div>`;
+					});
+					html += `</div>`;
+				}
+
+				// Mood effects
+				if (data.effects && !data.categories) {
+					html += `<div class="effects-list">`;
+					data.effects.forEach((e) => {
+						html += `<div class="effect-item">
+            <span class="effect-source">${e.source}</span>
+            <span class="effect-text">${e.text}</span>
+          </div>`;
+					});
+					html += `</div>`;
+				}
+
+				// Population breakdown
+				if (data.breakdown) {
+					html += `<div style="margin-bottom:8px;">
+          <div style="font-size:11px;color:#64748b;">Total: <strong style="color:#f1f5f9;">${data.value}</strong> / ${data.max} capacity</div>
+        </div>`;
+					data.breakdown.forEach((p) => {
+						html += `<div class="effect-item">
+            <span>${p.icon} ${p.name} ×${p.count}</span>
+            <span class="effect-text" style="margin-left:auto;">${p.effect}</span>
+          </div>`;
+					});
+				}
+
+				// Metals group
+				if (data.members) {
+					html += `<div style="margin-bottom:8px;">
+          <div style="font-size:11px;color:#64748b;">Total: <strong style="color:#f1f5f9;">${data.total}</strong></div>
+        </div>`;
+					data.members.forEach((m) => {
+						html += `<div class="effect-item">
+            <span>${m.icon} ${m.name}</span>
+            <span style="margin-left:auto;font-weight:600;">${m.value}</span>
+          </div>`;
+					});
+				}
+
+				// Building
+				if (data.type === 'Building') {
+					html += `<div style="font-size:10px;color:#64748b;margin-bottom:4px;">EFFECTS</div>`;
+					data.effects.forEach((e) => {
+						html += `<div class="effect-item"><span class="effect-text">${e}</span></div>`;
+					});
+					if (data.upkeep) {
+						html += `<div style="margin-top:8px;font-size:10px;color:#64748b;">Upkeep: ${data.upkeep}</div>`;
+					}
+				}
+
+				// Land
+				if (data.type === 'Land') {
+					html += `<div style="font-size:10px;color:#64748b;margin-bottom:4px;">DEVELOPMENTS (${data.slots})</div>`;
+					data.developments.forEach((d) => {
+						html += `<div class="effect-item"><span class="effect-text">${d}</span></div>`;
+					});
+				}
+
+				// All effects aggregate
+				if (data.categories) {
+					data.categories.forEach((cat) => {
+						html += `<div style="font-size:10px;color:#64748b;margin:8px 0 4px;text-transform:uppercase;">${cat.name}</div>`;
+						cat.effects.forEach((e) => {
+							html += `<div class="effect-item"><span class="effect-text">${e}</span></div>`;
+						});
+					});
+				}
+
+				contentEl.innerHTML = html;
+			}
+		</script>
+	</body>
+</html>

@@ -175,6 +175,8 @@ const resourceBoundOfConfigSchema = z.object({
 	boundType: z.enum(['upper', 'lower']),
 });
 
+const resourceSectionSchema = z.enum(['economy', 'combat']);
+
 const resourceDefinitionSchema = resourceMetadataSchema
 	.merge(resourceBoundsSchema)
 	.extend({
@@ -193,6 +195,8 @@ const resourceDefinitionSchema = resourceMetadataSchema
 		boundOf: resourceBoundOfConfigSchema.optional(),
 		onValueIncrease: z.array(effectSchema).optional(),
 		onValueDecrease: z.array(effectSchema).optional(),
+		section: resourceSectionSchema.optional(),
+		secondary: z.boolean().optional(),
 	});
 
 const resourceGroupParentSchema = resourceMetadataSchema

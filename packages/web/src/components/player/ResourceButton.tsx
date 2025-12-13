@@ -11,6 +11,8 @@ export interface ResourceButtonProps {
 	snapshot: ResourceValueSnapshot;
 	onShow: (resourceId: string) => void;
 	onHide: () => void;
+	/** When true, renders with smaller text and reduced padding */
+	compact?: boolean;
 }
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
@@ -97,6 +99,7 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 	snapshot,
 	onShow,
 	onHide,
+	compact = false,
 }) => {
 	const changes = useValueChangeIndicators(snapshot.current);
 	const normalizedForecastDelta =
@@ -113,10 +116,14 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 		onShow(snapshot.id);
 	}, [onShow, snapshot.id]);
 
+	const buttonClassName = compact
+		? 'bar-item hoverable cursor-help relative overflow-visible text-sm opacity-80'
+		: 'bar-item hoverable cursor-help relative overflow-visible';
+
 	return (
 		<button
 			type="button"
-			className="bar-item hoverable cursor-help relative overflow-visible"
+			className={buttonClassName}
 			onMouseEnter={handleShow}
 			onMouseLeave={onHide}
 			onFocus={handleShow}

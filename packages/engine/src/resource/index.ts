@@ -10,6 +10,7 @@ export type {
 	RuntimeResourceBounds,
 	RuntimeResourceGlobalCostConfig,
 	RuntimeResourceTriggers,
+	RuntimeResourceSection,
 	RuntimeResourceDefinition,
 	RuntimeResourceGroupParent,
 	RuntimeResourceGroup,

@@ -331,6 +331,33 @@ function getResource(id: string) {
 }
 ```
 
+**Web layer must trust engine/protocol contracts.**
+
+When the protocol defines a field as required (not optional with `?`), the web
+layer must NOT add defensive fallbacks. The engine already guarantees the value.
+
+```typescript
+// Protocol defines: section: SessionResourceSection (required, not optional)
+
+// ❌ WRONG - Web adds fallback that masks potential engine bugs
+const section = resource.section ?? 'economy';
+result[section].push(resource);
+
+// ✅ CORRECT - Trust the protocol contract, fail loudly if violated
+result[resource.section].push(resource);
+```
+
+If the protocol says it's required, it's required. Adding `?? defaultValue` in
+the web layer:
+
+1. Masks bugs where engine fails to set the field
+2. Creates silent misconfigurations that are hard to debug
+3. Duplicates logic that belongs in one place (the engine)
+
+**When to use fallbacks:** Only for legitimately optional values in player state
+(like resource values that may not be set yet) or tier ranges (where `undefined`
+min means "from 0"). Never for structural fields guaranteed by the type system.
+
 ### 2.2 Quality Over Speed
 
 Prefer **high-quality, maintainable solutions** over quick hacks.

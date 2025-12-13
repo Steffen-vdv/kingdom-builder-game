@@ -133,6 +133,13 @@ export interface RuntimeResourcePhaseEffects {
 	readonly onGainAPStep: readonly EffectDef[];
 }
 
+/**
+ * UI section for dual-column layout.
+ * - 'economy': Left column (Gold, AP, Population, Happiness)
+ * - 'combat': Right column (Castle HP, Army, Fort, Absorb, Growth)
+ */
+export type RuntimeResourceSection = 'economy' | 'combat';
+
 export interface RuntimeResourceDefinition
 	extends
 		RuntimeResourceMetadata,
@@ -149,6 +156,14 @@ export interface RuntimeResourceDefinition
 	readonly globalCost?: RuntimeResourceGlobalCostConfig;
 	readonly tierTrack?: RuntimeResourceTierTrack;
 	readonly upkeep?: RuntimeResourceUpkeepCost;
+	/**
+	 * UI section for dual-column layout. Defaults to 'economy'.
+	 */
+	readonly section: RuntimeResourceSection;
+	/**
+	 * When true, render this resource in a smaller/secondary style.
+	 */
+	readonly secondary: boolean;
 }
 
 export interface RuntimeResourceGroupParent

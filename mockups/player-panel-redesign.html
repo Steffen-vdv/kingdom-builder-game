@@ -1,0 +1,1540 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Player Panel Redesign - 4 Options</title>
+		<style>
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background: linear-gradient(
+					135deg,
+					#1a1a2e 0%,
+					#16213e 50%,
+					#1a1a2e 100%
+				);
+				min-height: 100vh;
+				padding: 20px;
+				color: #e2e8f0;
+			}
+
+			.page-header {
+				text-align: center;
+				margin-bottom: 24px;
+			}
+
+			.page-header h1 {
+				font-size: 24px;
+				font-weight: 600;
+				margin-bottom: 8px;
+			}
+
+			.page-header p {
+				color: #94a3b8;
+				font-size: 14px;
+			}
+
+			/* Tab Navigation */
+			.tab-nav {
+				display: flex;
+				gap: 8px;
+				justify-content: center;
+				margin-bottom: 24px;
+				flex-wrap: wrap;
+			}
+
+			.tab-btn {
+				padding: 12px 24px;
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.05);
+				color: #94a3b8;
+				border-radius: 12px;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: 500;
+				transition: all 0.2s;
+			}
+
+			.tab-btn:hover {
+				background: rgba(255, 255, 255, 0.1);
+				color: #e2e8f0;
+			}
+
+			.tab-btn.active {
+				background: linear-gradient(135deg, #3b82f6, #2563eb);
+				border-color: #3b82f6;
+				color: white;
+			}
+
+			.tab-content {
+				display: none;
+			}
+
+			.tab-content.active {
+				display: block;
+			}
+
+			.mockup-container {
+				display: flex;
+				justify-content: center;
+				gap: 40px;
+				flex-wrap: wrap;
+			}
+
+			.mockup-wrapper {
+				text-align: center;
+			}
+
+			.mockup-label {
+				font-size: 12px;
+				color: #64748b;
+				margin-bottom: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+			}
+
+			/* ========================================
+       SHARED PANEL STYLES
+       ======================================== */
+
+			.panel {
+				width: 320px;
+				border-radius: 20px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				background: rgba(15, 23, 42, 0.85);
+				backdrop-filter: blur(12px);
+				overflow: hidden;
+				box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+			}
+
+			.panel-header {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 16px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+				background: linear-gradient(
+					135deg,
+					rgba(59, 130, 246, 0.15),
+					rgba(37, 99, 235, 0.1)
+				);
+			}
+
+			.player-name {
+				font-weight: 600;
+				font-size: 16px;
+			}
+
+			.crown {
+				font-size: 14px;
+			}
+
+			/* Resource styling */
+			.resource-row {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				padding: 12px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.resource-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				padding: 6px 10px;
+				background: rgba(255, 255, 255, 0.06);
+				border-radius: 8px;
+				font-size: 13px;
+				font-weight: 500;
+			}
+
+			.resource-chip .icon {
+				font-size: 14px;
+			}
+
+			.resource-chip .value {
+				color: #f1f5f9;
+			}
+
+			.forecast {
+				font-size: 11px;
+				font-weight: 600;
+				margin-left: 2px;
+			}
+
+			.forecast.positive {
+				color: #4ade80;
+			}
+
+			.forecast.negative {
+				color: #f87171;
+			}
+
+			/* Section styling */
+			.section {
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.section:last-child {
+				border-bottom: none;
+			}
+
+			.section-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 12px 16px;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+
+			.section-header:hover {
+				background: rgba(255, 255, 255, 0.03);
+			}
+
+			.section-title {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 13px;
+				font-weight: 500;
+				color: #cbd5e1;
+			}
+
+			.section-summary {
+				font-size: 12px;
+				color: #64748b;
+			}
+
+			.section-chevron {
+				color: #64748b;
+				font-size: 12px;
+				transition: transform 0.2s;
+			}
+
+			.section.expanded .section-chevron {
+				transform: rotate(180deg);
+			}
+
+			.section-content {
+				padding: 0 16px 12px;
+				display: none;
+			}
+
+			.section.expanded .section-content {
+				display: block;
+			}
+
+			/* Passive/Effect chips */
+			.effect-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 6px 12px;
+				background: linear-gradient(
+					135deg,
+					rgba(168, 85, 247, 0.2),
+					rgba(139, 92, 246, 0.15)
+				);
+				border: 1px solid rgba(168, 85, 247, 0.3);
+				border-radius: 20px;
+				font-size: 12px;
+				font-weight: 500;
+			}
+
+			.mood-chip {
+				background: linear-gradient(
+					135deg,
+					rgba(250, 204, 21, 0.2),
+					rgba(234, 179, 8, 0.15)
+				);
+				border-color: rgba(250, 204, 21, 0.3);
+			}
+
+			/* ========================================
+       OPTION A: COLLAPSIBLE ACCORDION
+       ======================================== */
+
+			.accordion-item {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				padding: 8px 0;
+			}
+
+			.accordion-item .mini-card {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+				padding: 4px 8px;
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 6px;
+				font-size: 12px;
+			}
+
+			/* Land mini display */
+			.land-summary-grid {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 6px;
+			}
+
+			.land-mini {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				padding: 8px 4px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 8px;
+				font-size: 10px;
+				color: #94a3b8;
+			}
+
+			.land-mini .icon {
+				font-size: 16px;
+				margin-bottom: 2px;
+			}
+
+			.land-mini .devs {
+				display: flex;
+				gap: 2px;
+				font-size: 10px;
+			}
+
+			/* ========================================
+       OPTION B: TABBED DASHBOARD
+       ======================================== */
+
+			.inner-tabs {
+				display: flex;
+				padding: 8px 12px;
+				gap: 4px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				background: rgba(0, 0, 0, 0.2);
+			}
+
+			.inner-tab {
+				flex: 1;
+				padding: 8px 12px;
+				border: none;
+				background: transparent;
+				color: #64748b;
+				font-size: 11px;
+				font-weight: 500;
+				border-radius: 8px;
+				cursor: pointer;
+				transition: all 0.15s;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 2px;
+			}
+
+			.inner-tab:hover {
+				background: rgba(255, 255, 255, 0.05);
+				color: #94a3b8;
+			}
+
+			.inner-tab.active {
+				background: rgba(59, 130, 246, 0.2);
+				color: #60a5fa;
+			}
+
+			.inner-tab .badge {
+				font-size: 10px;
+				padding: 2px 6px;
+				background: rgba(255, 255, 255, 0.1);
+				border-radius: 10px;
+			}
+
+			.inner-tab.active .badge {
+				background: rgba(59, 130, 246, 0.3);
+			}
+
+			.tab-panel {
+				padding: 12px;
+				min-height: 120px;
+			}
+
+			.building-list {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.building-item {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 10px 12px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 10px;
+			}
+
+			.building-item .icon {
+				font-size: 20px;
+			}
+
+			.building-item .info {
+				flex: 1;
+			}
+
+			.building-item .name {
+				font-size: 13px;
+				font-weight: 500;
+			}
+
+			.building-item .effect {
+				font-size: 11px;
+				color: #64748b;
+			}
+
+			/* ========================================
+       OPTION C: COMPACT CARDS
+       ======================================== */
+
+			.compact-grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 8px;
+				padding: 12px;
+			}
+
+			.compact-card {
+				padding: 12px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 12px;
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+
+			.compact-card:hover {
+				background: rgba(255, 255, 255, 0.08);
+				border-color: rgba(255, 255, 255, 0.12);
+			}
+
+			.compact-card.full-width {
+				grid-column: 1 / -1;
+			}
+
+			.compact-card .header {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				margin-bottom: 6px;
+			}
+
+			.compact-card .header .icon {
+				font-size: 16px;
+			}
+
+			.compact-card .header .label {
+				font-size: 11px;
+				color: #64748b;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+
+			.compact-card .value {
+				font-size: 20px;
+				font-weight: 600;
+			}
+
+			.compact-card .sub {
+				font-size: 11px;
+				color: #64748b;
+				margin-top: 2px;
+			}
+
+			.compact-card .icon-row {
+				display: flex;
+				gap: 4px;
+				margin-top: 6px;
+			}
+
+			.compact-card .icon-row span {
+				font-size: 14px;
+			}
+
+			.resource-mini-bar {
+				display: flex;
+				gap: 12px;
+				padding: 12px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.resource-mini {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+				font-size: 13px;
+			}
+
+			.resource-mini .forecast {
+				font-size: 10px;
+			}
+
+			/* ========================================
+       OPTION D: VERTICAL THERMOMETER
+       ======================================== */
+
+			.thermo-resources {
+				padding: 12px;
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.thermo-row {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+
+			.thermo-icon {
+				width: 28px;
+				text-align: center;
+				font-size: 16px;
+			}
+
+			.thermo-bar-container {
+				flex: 1;
+				height: 20px;
+				background: rgba(255, 255, 255, 0.06);
+				border-radius: 10px;
+				overflow: hidden;
+				position: relative;
+			}
+
+			.thermo-bar {
+				height: 100%;
+				border-radius: 10px;
+				transition: width 0.3s;
+			}
+
+			.thermo-bar.gold {
+				background: linear-gradient(90deg, #fbbf24, #f59e0b);
+				width: 66%;
+			}
+
+			.thermo-bar.energy {
+				background: linear-gradient(90deg, #a855f7, #7c3aed);
+				width: 30%;
+			}
+
+			.thermo-bar.population {
+				background: linear-gradient(90deg, #f87171, #ef4444);
+				width: 100%;
+			}
+
+			.thermo-bar.happiness {
+				background: linear-gradient(90deg, #4ade80, #22c55e);
+				width: 50%;
+			}
+
+			.thermo-value {
+				position: absolute;
+				right: 8px;
+				top: 50%;
+				transform: translateY(-50%);
+				font-size: 11px;
+				font-weight: 600;
+				color: white;
+				text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+			}
+
+			.thermo-forecast {
+				width: 36px;
+				text-align: right;
+				font-size: 11px;
+				font-weight: 600;
+			}
+
+			.icon-cluster {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				padding: 12px;
+				border-top: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.cluster-group {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 8px 12px;
+				background: rgba(255, 255, 255, 0.04);
+				border-radius: 10px;
+			}
+
+			.cluster-group .icons {
+				display: flex;
+				gap: 2px;
+				font-size: 14px;
+			}
+
+			.cluster-group .count {
+				font-size: 12px;
+				color: #94a3b8;
+				font-weight: 500;
+			}
+
+			.effects-strip {
+				display: flex;
+				gap: 8px;
+				padding: 12px;
+				border-top: 1px solid rgba(255, 255, 255, 0.06);
+				overflow-x: auto;
+			}
+
+			/* Hover tooltip simulation */
+			.hover-hint {
+				font-size: 10px;
+				color: #475569;
+				text-align: center;
+				padding: 8px;
+				font-style: italic;
+			}
+
+			/* Description box */
+			.option-description {
+				max-width: 320px;
+				margin: 16px auto 0;
+				padding: 12px 16px;
+				background: rgba(255, 255, 255, 0.03);
+				border-radius: 12px;
+				border: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.option-description h3 {
+				font-size: 14px;
+				font-weight: 600;
+				margin-bottom: 8px;
+				color: #e2e8f0;
+			}
+
+			.option-description ul {
+				list-style: none;
+				font-size: 12px;
+				color: #94a3b8;
+			}
+
+			.option-description li {
+				padding: 4px 0;
+				padding-left: 16px;
+				position: relative;
+			}
+
+			.option-description li::before {
+				content: '•';
+				position: absolute;
+				left: 0;
+				color: #3b82f6;
+			}
+
+			/* Population display */
+			.pop-breakdown {
+				display: flex;
+				gap: 8px;
+				font-size: 11px;
+				color: #64748b;
+			}
+
+			.pop-item {
+				display: flex;
+				align-items: center;
+				gap: 3px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="page-header">
+			<h1>Player Panel Redesign Options</h1>
+			<p>Click each tab to compare the four design approaches</p>
+		</div>
+
+		<div class="tab-nav">
+			<button class="tab-btn active" onclick="showTab('optionA')">
+				A: Accordion
+			</button>
+			<button class="tab-btn" onclick="showTab('optionB')">B: Tabbed</button>
+			<button class="tab-btn" onclick="showTab('optionC')">
+				C: Compact Cards
+			</button>
+			<button class="tab-btn" onclick="showTab('optionD')">
+				D: Thermometer
+			</button>
+		</div>
+
+		<!-- ========================================
+       OPTION A: COLLAPSIBLE ACCORDION
+       ======================================== -->
+		<div id="optionA" class="tab-content active">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Collapsed State</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+						</div>
+
+						<div class="resource-row">
+							<div class="resource-chip">
+								<span class="icon">🪙</span>
+								<span class="value">66</span>
+								<span class="forecast negative">-4</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">⚡</span>
+								<span class="value">3</span>
+								<span class="forecast positive">+2</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">🏠</span>
+								<span class="value">10</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">😊</span>
+								<span class="value">10</span>
+							</div>
+						</div>
+
+						<div class="section">
+							<div class="section-header">
+								<div class="section-title">
+									<span>🗺️</span>
+									<span>Lands</span>
+								</div>
+								<div class="section-summary">7 lands • 4 developed</div>
+								<span class="section-chevron">▼</span>
+							</div>
+						</div>
+
+						<div class="section">
+							<div class="section-header">
+								<div class="section-title">
+									<span>🏗️</span>
+									<span>Buildings</span>
+								</div>
+								<div class="section-summary">3 built</div>
+								<span class="section-chevron">▼</span>
+							</div>
+						</div>
+
+						<div class="section">
+							<div class="section-header">
+								<div class="section-title">
+									<span>✨</span>
+									<span>Effects</span>
+								</div>
+								<div class="section-summary">1 active</div>
+								<span class="section-chevron">▼</span>
+							</div>
+						</div>
+
+						<div style="padding: 12px">
+							<div class="effect-chip mood-chip">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Expanded State (Lands open)</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+						</div>
+
+						<div class="resource-row">
+							<div class="resource-chip">
+								<span class="icon">🪙</span>
+								<span class="value">66</span>
+								<span class="forecast negative">-4</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">⚡</span>
+								<span class="value">3</span>
+								<span class="forecast positive">+2</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">🏠</span>
+								<span class="value">10</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">😊</span>
+								<span class="value">10</span>
+							</div>
+						</div>
+
+						<div class="section expanded">
+							<div class="section-header">
+								<div class="section-title">
+									<span>🗺️</span>
+									<span>Lands</span>
+								</div>
+								<div class="section-summary">7 lands • 4 developed</div>
+								<span class="section-chevron">▼</span>
+							</div>
+							<div class="section-content">
+								<div class="land-summary-grid">
+									<div class="land-mini">
+										<span class="icon">🏞️</span>
+										<div class="devs">🏠🌾</div>
+									</div>
+									<div class="land-mini">
+										<span class="icon">🏞️</span>
+										<div class="devs">🏠</div>
+									</div>
+									<div class="land-mini">
+										<span class="icon">🏞️</span>
+										<div class="devs">⚒️</div>
+									</div>
+									<div class="land-mini">
+										<span class="icon">🏞️</span>
+										<div class="devs">—</div>
+									</div>
+									<div class="land-mini">
+										<span class="icon">🏞️</span>
+										<div class="devs">🌾</div>
+									</div>
+									<div class="land-mini">
+										<span class="icon">🏞️</span>
+										<div class="devs">—</div>
+									</div>
+									<div class="land-mini">
+										<span class="icon">🏞️</span>
+										<div class="devs">—</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section">
+							<div class="section-header">
+								<div class="section-title">
+									<span>🏗️</span>
+									<span>Buildings</span>
+								</div>
+								<div class="section-summary">3 built</div>
+								<span class="section-chevron">▼</span>
+							</div>
+						</div>
+
+						<div class="section">
+							<div class="section-header">
+								<div class="section-title">
+									<span>✨</span>
+									<span>Effects</span>
+								</div>
+								<div class="section-summary">1 active</div>
+								<span class="section-chevron">▼</span>
+							</div>
+						</div>
+
+						<div style="padding: 12px">
+							<div class="effect-chip mood-chip">
+								<span>🤩</span>
+								<span>Ecstatic</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-description">
+				<h3>Option A: Collapsible Accordion</h3>
+				<ul>
+					<li>Resources always visible at top</li>
+					<li>Each section shows a summary when collapsed</li>
+					<li>Click to expand any section for full detail</li>
+					<li>Mood always visible at bottom</li>
+					<li>Very compact when collapsed</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION B: TABBED DASHBOARD
+       ======================================== -->
+		<div id="optionB" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Buildings Tab Active</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div style="margin-left: auto">
+								<div
+									class="effect-chip mood-chip"
+									style="padding: 4px 10px; font-size: 11px"
+								>
+									<span>🤩</span>
+									<span>Ecstatic</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="resource-row">
+							<div class="resource-chip">
+								<span class="icon">🪙</span>
+								<span class="value">66</span>
+								<span class="forecast negative">-4</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">⚡</span>
+								<span class="value">3</span>
+								<span class="forecast positive">+2</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">🏠</span>
+								<span class="value">10</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">😊</span>
+								<span class="value">10</span>
+							</div>
+						</div>
+
+						<div class="inner-tabs">
+							<button class="inner-tab">
+								<span>🗺️</span>
+								<span class="badge">7</span>
+							</button>
+							<button class="inner-tab active">
+								<span>🏗️</span>
+								<span class="badge">3</span>
+							</button>
+							<button class="inner-tab">
+								<span>✨</span>
+								<span class="badge">1</span>
+							</button>
+						</div>
+
+						<div class="tab-panel">
+							<div class="building-list">
+								<div class="building-item">
+									<span class="icon">🏰</span>
+									<div class="info">
+										<div class="name">Castle Walls</div>
+										<div class="effect">+2 Defense per turn</div>
+									</div>
+								</div>
+								<div class="building-item">
+									<span class="icon">⚔️</span>
+									<div class="info">
+										<div class="name">Raider's Guild</div>
+										<div class="effect">Raids cost -1 Energy</div>
+									</div>
+								</div>
+								<div class="building-item">
+									<span class="icon">⚙️</span>
+									<div class="info">
+										<div class="name">Mill</div>
+										<div class="effect">+3 Gold from farms</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Lands Tab Active</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div style="margin-left: auto">
+								<div
+									class="effect-chip mood-chip"
+									style="padding: 4px 10px; font-size: 11px"
+								>
+									<span>🤩</span>
+									<span>Ecstatic</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="resource-row">
+							<div class="resource-chip">
+								<span class="icon">🪙</span>
+								<span class="value">66</span>
+								<span class="forecast negative">-4</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">⚡</span>
+								<span class="value">3</span>
+								<span class="forecast positive">+2</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">🏠</span>
+								<span class="value">10</span>
+							</div>
+							<div class="resource-chip">
+								<span class="icon">😊</span>
+								<span class="value">10</span>
+							</div>
+						</div>
+
+						<div class="inner-tabs">
+							<button class="inner-tab active">
+								<span>🗺️</span>
+								<span class="badge">7</span>
+							</button>
+							<button class="inner-tab">
+								<span>🏗️</span>
+								<span class="badge">3</span>
+							</button>
+							<button class="inner-tab">
+								<span>✨</span>
+								<span class="badge">1</span>
+							</button>
+						</div>
+
+						<div class="tab-panel">
+							<div class="land-summary-grid">
+								<div class="land-mini">
+									<span class="icon">🏞️</span>
+									<div class="devs">🏠🌾</div>
+								</div>
+								<div class="land-mini">
+									<span class="icon">🏞️</span>
+									<div class="devs">🏠</div>
+								</div>
+								<div class="land-mini">
+									<span class="icon">🏞️</span>
+									<div class="devs">⚒️</div>
+								</div>
+								<div class="land-mini">
+									<span class="icon">🏞️</span>
+									<div class="devs">—</div>
+								</div>
+								<div class="land-mini">
+									<span class="icon">🏞️</span>
+									<div class="devs">🌾</div>
+								</div>
+								<div class="land-mini">
+									<span class="icon">🏞️</span>
+									<div class="devs">—</div>
+								</div>
+								<div class="land-mini">
+									<span class="icon">🏞️</span>
+									<div class="devs">—</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-description">
+				<h3>Option B: Tabbed Dashboard</h3>
+				<ul>
+					<li>Resources and mood always visible</li>
+					<li>Tabs with badge counts for quick scanning</li>
+					<li>One content area, switch between views</li>
+					<li>Fixed height, consistent layout</li>
+					<li>Great for detailed per-category viewing</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION C: COMPACT CARDS
+       ======================================== -->
+		<div id="optionC" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Default View</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+						</div>
+
+						<div class="resource-mini-bar">
+							<div class="resource-mini">
+								<span>🪙</span>
+								<strong>66</strong>
+								<span class="forecast negative">-4</span>
+							</div>
+							<div class="resource-mini">
+								<span>⚡</span>
+								<strong>3</strong>
+								<span class="forecast positive">+2</span>
+							</div>
+							<div class="resource-mini">
+								<span>🏠</span>
+								<strong>10</strong>
+							</div>
+							<div class="resource-mini">
+								<span>😊</span>
+								<strong>10</strong>
+							</div>
+						</div>
+
+						<div class="compact-grid">
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">🗺️</span>
+									<span class="label">Lands</span>
+								</div>
+								<div class="value">7</div>
+								<div class="sub">4 developed</div>
+							</div>
+
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">🏗️</span>
+									<span class="label">Buildings</span>
+								</div>
+								<div class="value">3</div>
+								<div class="icon-row">
+									<span>🏰</span>
+									<span>⚔️</span>
+									<span>⚙️</span>
+								</div>
+							</div>
+
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">👥</span>
+									<span class="label">Population</span>
+								</div>
+								<div class="value">1/7</div>
+								<div class="pop-breakdown">
+									<span class="pop-item">👷2</span>
+									<span class="pop-item">💂1</span>
+									<span class="pop-item">📜1</span>
+								</div>
+							</div>
+
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">✨</span>
+									<span class="label">Effects</span>
+								</div>
+								<div class="value">1</div>
+								<div class="sub">Ecstatic 🤩</div>
+							</div>
+						</div>
+
+						<div class="hover-hint">Hover or click any card for details</div>
+					</div>
+				</div>
+
+				<div class="mockup-wrapper">
+					<div class="mockup-label">With Hover Tooltip (simulated)</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+						</div>
+
+						<div class="resource-mini-bar">
+							<div class="resource-mini">
+								<span>🪙</span>
+								<strong>66</strong>
+								<span class="forecast negative">-4</span>
+							</div>
+							<div class="resource-mini">
+								<span>⚡</span>
+								<strong>3</strong>
+								<span class="forecast positive">+2</span>
+							</div>
+							<div class="resource-mini">
+								<span>🏠</span>
+								<strong>10</strong>
+							</div>
+							<div class="resource-mini">
+								<span>😊</span>
+								<strong>10</strong>
+							</div>
+						</div>
+
+						<div class="compact-grid">
+							<div
+								class="compact-card"
+								style="
+									background: rgba(59, 130, 246, 0.15);
+									border-color: rgba(59, 130, 246, 0.4);
+								"
+							>
+								<div class="header">
+									<span class="icon">🗺️</span>
+									<span class="label">Lands</span>
+								</div>
+								<div class="value">7</div>
+								<div class="sub">4 developed</div>
+							</div>
+
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">🏗️</span>
+									<span class="label">Buildings</span>
+								</div>
+								<div class="value">3</div>
+								<div class="icon-row">
+									<span>🏰</span>
+									<span>⚔️</span>
+									<span>⚙️</span>
+								</div>
+							</div>
+
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">👥</span>
+									<span class="label">Population</span>
+								</div>
+								<div class="value">1/7</div>
+								<div class="pop-breakdown">
+									<span class="pop-item">👷2</span>
+									<span class="pop-item">💂1</span>
+									<span class="pop-item">📜1</span>
+								</div>
+							</div>
+
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">✨</span>
+									<span class="label">Effects</span>
+								</div>
+								<div class="value">1</div>
+								<div class="sub">Ecstatic 🤩</div>
+							</div>
+						</div>
+
+						<!-- Simulated hover popover -->
+						<div
+							style="
+								margin: 12px;
+								padding: 12px;
+								background: rgba(30, 41, 59, 0.95);
+								border: 1px solid rgba(255, 255, 255, 0.15);
+								border-radius: 12px;
+								box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+							"
+						>
+							<div
+								style="font-size: 13px; font-weight: 600; margin-bottom: 8px"
+							>
+								🗺️ Your Lands
+							</div>
+							<div class="land-summary-grid" style="gap: 4px">
+								<div class="land-mini" style="padding: 6px">
+									<span class="icon" style="font-size: 14px">🏞️</span>
+									<div class="devs">🏠🌾</div>
+								</div>
+								<div class="land-mini" style="padding: 6px">
+									<span class="icon" style="font-size: 14px">🏞️</span>
+									<div class="devs">🏠</div>
+								</div>
+								<div class="land-mini" style="padding: 6px">
+									<span class="icon" style="font-size: 14px">🏞️</span>
+									<div class="devs">⚒️</div>
+								</div>
+								<div class="land-mini" style="padding: 6px">
+									<span class="icon" style="font-size: 14px">🏞️</span>
+									<div class="devs">—</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-description">
+				<h3>Option C: Compact Cards</h3>
+				<ul>
+					<li>Maximum information density</li>
+					<li>Everything visible at a glance as summary cards</li>
+					<li>Hover/click reveals detailed breakdown</li>
+					<li>Very small footprint</li>
+					<li>Dashboard-like feel</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- ========================================
+       OPTION D: VERTICAL THERMOMETER
+       ======================================== -->
+		<div id="optionD" class="tab-content">
+			<div class="mockup-container">
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Thermometer Layout</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div style="margin-left: auto">
+								<div
+									class="effect-chip mood-chip"
+									style="padding: 4px 10px; font-size: 11px"
+								>
+									<span>🤩</span>
+									<span>Ecstatic</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="thermo-resources">
+							<div class="thermo-row">
+								<div class="thermo-icon">🪙</div>
+								<div class="thermo-bar-container">
+									<div class="thermo-bar gold"></div>
+									<span class="thermo-value">66</span>
+								</div>
+								<div class="thermo-forecast forecast negative">-4</div>
+							</div>
+							<div class="thermo-row">
+								<div class="thermo-icon">⚡</div>
+								<div class="thermo-bar-container">
+									<div class="thermo-bar energy"></div>
+									<span class="thermo-value">3</span>
+								</div>
+								<div class="thermo-forecast forecast positive">+2</div>
+							</div>
+							<div class="thermo-row">
+								<div class="thermo-icon">🏠</div>
+								<div class="thermo-bar-container">
+									<div class="thermo-bar population"></div>
+									<span class="thermo-value">10/10</span>
+								</div>
+								<div class="thermo-forecast">—</div>
+							</div>
+							<div class="thermo-row">
+								<div class="thermo-icon">😊</div>
+								<div class="thermo-bar-container">
+									<div class="thermo-bar happiness"></div>
+									<span class="thermo-value">10</span>
+								</div>
+								<div class="thermo-forecast">—</div>
+							</div>
+						</div>
+
+						<div class="icon-cluster">
+							<div class="cluster-group">
+								<div class="icons">🗺️</div>
+								<span class="count">7 lands</span>
+							</div>
+							<div class="cluster-group">
+								<div class="icons">🏰⚔️⚙️</div>
+								<span class="count">3 built</span>
+							</div>
+						</div>
+
+						<div class="icon-cluster">
+							<div class="cluster-group">
+								<div class="icons">👷</div>
+								<span class="count">×2</span>
+							</div>
+							<div class="cluster-group">
+								<div class="icons">💂</div>
+								<span class="count">×1</span>
+							</div>
+							<div class="cluster-group">
+								<div class="icons">📜</div>
+								<span class="count">×1</span>
+							</div>
+						</div>
+
+						<div class="hover-hint">Click any bar or cluster for details</div>
+					</div>
+				</div>
+
+				<div class="mockup-wrapper">
+					<div class="mockup-label">Alternative: Stacked Bars</div>
+					<div class="panel">
+						<div class="panel-header">
+							<span class="crown">👑</span>
+							<span class="player-name">Stef</span>
+							<div style="margin-left: auto">
+								<div
+									class="effect-chip mood-chip"
+									style="padding: 4px 10px; font-size: 11px"
+								>
+									<span>🤩</span>
+									<span>Ecstatic</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Stacked horizontal bar showing all resources -->
+						<div style="padding: 12px">
+							<div
+								style="
+									display: flex;
+									gap: 8px;
+									align-items: center;
+									margin-bottom: 12px;
+								"
+							>
+								<div
+									style="
+										flex: 1;
+										height: 32px;
+										background: rgba(255, 255, 255, 0.06);
+										border-radius: 8px;
+										overflow: hidden;
+										display: flex;
+									"
+								>
+									<div
+										style="
+											background: linear-gradient(90deg, #fbbf24, #f59e0b);
+											width: 40%;
+											display: flex;
+											align-items: center;
+											justify-content: center;
+											font-size: 12px;
+											font-weight: 600;
+										"
+									>
+										🪙 66
+									</div>
+									<div
+										style="
+											background: linear-gradient(90deg, #a855f7, #7c3aed);
+											width: 15%;
+											display: flex;
+											align-items: center;
+											justify-content: center;
+											font-size: 12px;
+											font-weight: 600;
+										"
+									>
+										⚡ 3
+									</div>
+									<div
+										style="
+											background: linear-gradient(90deg, #f87171, #ef4444);
+											width: 25%;
+											display: flex;
+											align-items: center;
+											justify-content: center;
+											font-size: 12px;
+											font-weight: 600;
+										"
+									>
+										🏠 10
+									</div>
+									<div
+										style="
+											background: linear-gradient(90deg, #4ade80, #22c55e);
+											width: 20%;
+											display: flex;
+											align-items: center;
+											justify-content: center;
+											font-size: 12px;
+											font-weight: 600;
+										"
+									>
+										😊 10
+									</div>
+								</div>
+							</div>
+
+							<div
+								style="
+									display: flex;
+									gap: 8px;
+									font-size: 11px;
+									color: #64748b;
+									margin-bottom: 12px;
+								"
+							>
+								<span><span class="forecast negative">-4</span> net gold</span>
+								<span
+									><span class="forecast positive">+2</span> net energy</span
+								>
+							</div>
+						</div>
+
+						<div class="compact-grid" style="padding: 0 12px 12px">
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">🗺️</span>
+									<span class="label">Lands</span>
+								</div>
+								<div class="value">7</div>
+								<div class="sub">4 developed</div>
+							</div>
+
+							<div class="compact-card">
+								<div class="header">
+									<span class="icon">🏗️</span>
+									<span class="label">Buildings</span>
+								</div>
+								<div class="value">3</div>
+								<div class="icon-row">
+									<span>🏰</span>
+									<span>⚔️</span>
+									<span>⚙️</span>
+								</div>
+							</div>
+
+							<div class="compact-card full-width">
+								<div class="header">
+									<span class="icon">👥</span>
+									<span class="label">Population</span>
+								</div>
+								<div style="display: flex; gap: 12px; align-items: center">
+									<div class="value">1/7</div>
+									<div class="pop-breakdown">
+										<span class="pop-item">👷 Workers ×2</span>
+										<span class="pop-item">💂 Guards ×1</span>
+										<span class="pop-item">📜 Scribes ×1</span>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="hover-hint">Click any section for details</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="option-description">
+				<h3>Option D: Thermometer Layout</h3>
+				<ul>
+					<li>Visual bars show resource levels at a glance</li>
+					<li>Forecasts aligned on the right</li>
+					<li>Icon clusters for lands/buildings/population</li>
+					<li>Very visual, less text-heavy</li>
+					<li>Inspired by the tiered resource thermometer you liked</li>
+				</ul>
+			</div>
+		</div>
+
+		<script>
+			function showTab(tabId) {
+				// Hide all tabs
+				document.querySelectorAll('.tab-content').forEach((tab) => {
+					tab.classList.remove('active');
+				});
+				document.querySelectorAll('.tab-btn').forEach((btn) => {
+					btn.classList.remove('active');
+				});
+
+				// Show selected tab
+				document.getElementById(tabId).classList.add('active');
+				event.target.classList.add('active');
+			}
+		</script>
+	</body>
+</html>

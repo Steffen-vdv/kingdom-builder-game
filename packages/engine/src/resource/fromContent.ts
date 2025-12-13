@@ -277,6 +277,8 @@ export function createRuntimeResourceCatalog({
 			onPayUpkeepStep,
 			onGainIncomeStep,
 			onGainAPStep,
+			section: definition.section ?? 'economy',
+			secondary: definition.secondary ?? false,
 			...(globalCost ? { globalCost } : {}),
 			...(tierTrack ? { tierTrack } : {}),
 			...(upkeep ? { upkeep } : {}),
