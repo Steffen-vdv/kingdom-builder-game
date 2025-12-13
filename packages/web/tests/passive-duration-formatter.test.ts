@@ -107,7 +107,7 @@ describe('passive formatter duration metadata', () => {
 			festivalPhase?.icon,
 		);
 
-		// New split format: add entry + remove entry under trigger (icon only in summary)
+		// New split format: add entry + remove entry under trigger (icon only)
 		const passiveIcon = '✨';
 		const passiveName = 'Festival Spirit';
 		expect(summary).toEqual([

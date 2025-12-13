@@ -166,8 +166,8 @@ describe('plow action translation', () => {
 		const keywords = translation.assets.keywords ?? { cost: 'Cost' };
 		const passiveIcon = (plowPassive as { icon?: string })?.icon ?? '';
 		// Simplified format:
-		// Summary: modifier icon + target icon + keyword: resource icon + sign + amount
-		// Passive summary: icon only (no name)
+		// Summary: modifier icon + target icon + keyword: resource icon + amount
+		// Passive summary: icon only
 		const sign = modAmt >= 0 ? '+' : '-';
 		expect(summary).toEqual([
 			`${expand.icon} ${expand.name}`,
@@ -271,7 +271,7 @@ describe('plow action translation', () => {
 		const slotIcon = slotAsset.icon ?? SYNTHETIC_SLOT_INFO.icon;
 		const slotLabel = slotAsset.label ?? SYNTHETIC_SLOT_INFO.label;
 		// Simplified format:
-		// Describe: modifier icon + target label + keyword: resource icon + space + sign + amount
+		// Describe: modifier icon + target label + keyword: resource + amount
 		expect(effects).toEqual([
 			{
 				title: `${expand.icon} ${expand.name}`,

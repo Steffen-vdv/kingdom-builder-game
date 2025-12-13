@@ -217,7 +217,7 @@ registerEffectFormatter('passive', 'add', {
 			return inner;
 		}
 		// Split into two entries:
-		// 1. "+♾️: <icon>" with child effects (icon only for summary, name as fallback)
+		// 1. "+♾️: <icon>" with child effects (icon only for summary)
 		// 2. "On your <phase icon> <Phase> Phase" with "-♾️: <icon>" removal
 		const addLabel = icon ? `+♾️: ${icon}` : `+♾️: ${name}`;
 		const removeLabel = icon ? `-♾️: ${icon}` : `-♾️: ${name}`;
