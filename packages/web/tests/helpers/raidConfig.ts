@@ -11,7 +11,7 @@ export type SyntheticAction = {
 	icon: string;
 };
 
-export type CombatStatKey = 'power' | 'absorption' | 'fortification';
+export type CombatResourceKey = 'power' | 'absorption' | 'fortification';
 
 export type SyntheticDescriptor = {
 	key: string;
@@ -26,7 +26,7 @@ export const SYNTH_RESOURCE_IDS = {
 	happiness: 'happiness',
 	castleHP: 'castleHP',
 	tier: 'tierResource',
-	// Stats (also resources in resource system)
+	// Combat resources
 	armyStrength: 'armyStrength',
 	absorption: 'absorption',
 	fortificationStrength: 'fortificationStrength',
@@ -87,7 +87,7 @@ export const SYNTH_RESOURCE_METADATA: Record<
 	},
 };
 
-export type CombatStatConfig = {
+export type CombatResourceConfig = {
 	key: string;
 	resourceId: string;
 	icon: string;
@@ -125,7 +125,10 @@ export const SYNTH_PARTIAL_ATTACK: SyntheticAction = {
 	icon: '🗡️',
 };
 
-export const COMBAT_STAT_CONFIG: Record<CombatStatKey, CombatStatConfig> = {
+export const COMBAT_RESOURCE_CONFIG: Record<
+	CombatResourceKey,
+	CombatResourceConfig
+> = {
 	power: {
 		key: 'synthetic:valor',
 		resourceId: 'synthetic:valor',
@@ -291,28 +294,28 @@ const synthResourceDefinitions = [
 	}),
 	// Combat stat config keys for attack effects
 	resourceDefinition({
-		id: COMBAT_STAT_CONFIG.power.resourceId,
+		id: COMBAT_RESOURCE_CONFIG.power.resourceId,
 		metadata: {
-			label: COMBAT_STAT_CONFIG.power.label,
-			icon: COMBAT_STAT_CONFIG.power.icon,
+			label: COMBAT_RESOURCE_CONFIG.power.label,
+			icon: COMBAT_RESOURCE_CONFIG.power.icon,
 			group: { id: statGroup.id, order: 4 },
 		},
 		bounds: { lowerBound: 0 },
 	}),
 	resourceDefinition({
-		id: COMBAT_STAT_CONFIG.absorption.resourceId,
+		id: COMBAT_RESOURCE_CONFIG.absorption.resourceId,
 		metadata: {
-			label: COMBAT_STAT_CONFIG.absorption.label,
-			icon: COMBAT_STAT_CONFIG.absorption.icon,
+			label: COMBAT_RESOURCE_CONFIG.absorption.label,
+			icon: COMBAT_RESOURCE_CONFIG.absorption.icon,
 			group: { id: statGroup.id, order: 5 },
 		},
 		bounds: { lowerBound: 0 },
 	}),
 	resourceDefinition({
-		id: COMBAT_STAT_CONFIG.fortification.resourceId,
+		id: COMBAT_RESOURCE_CONFIG.fortification.resourceId,
 		metadata: {
-			label: COMBAT_STAT_CONFIG.fortification.label,
-			icon: COMBAT_STAT_CONFIG.fortification.icon,
+			label: COMBAT_RESOURCE_CONFIG.fortification.label,
+			icon: COMBAT_RESOURCE_CONFIG.fortification.icon,
 			group: { id: statGroup.id, order: 6 },
 		},
 		bounds: { lowerBound: 0 },

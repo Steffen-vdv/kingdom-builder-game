@@ -23,20 +23,20 @@ describe('hold festival action translation', () => {
 		const fortSummarySubject = details.fortIcon || details.fortInfo.label;
 
 		// Passive effects split into two entries:
-		// 1. "+♾️: <icon> <name>" with child effects
-		// 2. "On your <phase icon> <Phase> Phase" with removal "-♾️: <icon> <name>"
+		// 1. "+♾️: <icon>" with child effects (icon only in summary)
+		// 2. "On your <phase icon> <Phase> Phase" with removal "-♾️: <icon>"
 		expect(summary).toEqual([
 			`${details.happinessIcon} ${sign(details.happinessAmt)}${details.happinessAmt}`,
 			`${fortSummarySubject} ${sign(details.fortAmt)}${details.fortAmt}`,
 			{
-				title: `+♾️: ${details.passiveIcon} ${details.passiveName}`,
+				title: `+♾️: ${details.passiveIcon}`,
 				items: [
 					`${modifierIcon}${details.raid.icon}: ${details.happinessIcon} ${sign(details.penaltyAmt)}${details.penaltyAmt}`,
 				],
 			},
 			{
 				title: `On your ${details.upkeepIcon} ${details.upkeepLabel} Phase`,
-				items: [`-♾️: ${details.passiveIcon} ${details.passiveName}`],
+				items: [`-♾️: ${details.passiveIcon}`],
 			},
 		]);
 	});

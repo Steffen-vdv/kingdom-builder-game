@@ -8,19 +8,19 @@ import type { EffectDef } from './helpers/raidFactories';
 import {
 	createSyntheticEngineContext,
 	createPartialStatEngineContext,
-	setupStatOverrides,
-	teardownStatOverrides,
-	getStat,
+	setupResourceOverrides,
+	teardownResourceOverrides,
+	getResource,
 	iconLabel,
 	SYNTH_ATTACK,
-	SYNTH_COMBAT_STATS,
-	suppressSyntheticStatDescriptor,
-	restoreSyntheticStatDescriptor,
+	SYNTH_COMBAT_RESOURCES,
+	suppressSyntheticResourceDescriptor,
+	restoreSyntheticResourceDescriptor,
 } from './helpers/raidFactories';
 import {
 	SYNTH_RESOURCE_IDS,
 	SYNTH_RESOURCE_METADATA,
-	COMBAT_STAT_CONFIG,
+	COMBAT_RESOURCE_CONFIG,
 } from './helpers/raidConfig';
 import {
 	selectAttackBuildingDescriptor,
@@ -34,11 +34,11 @@ vi.mock('@kingdom-builder/engine', async () => {
 });
 
 beforeAll(() => {
-	setupStatOverrides();
+	setupResourceOverrides();
 });
 
 afterAll(() => {
-	teardownStatOverrides();
+	teardownResourceOverrides();
 });
 
 describe('raid translation summary', () => {
@@ -48,9 +48,9 @@ describe('raid translation summary', () => {
 			translation,
 			SYNTH_RESOURCE_IDS.castleHP,
 		);
-		const powerStat = getStat(
+		const powerStat = getResource(
 			translation,
-			SYNTH_COMBAT_STATS.power.resourceId,
+			SYNTH_COMBAT_RESOURCES.power.resourceId,
 		)!;
 		const warWeariness = selectAttackStatDescriptor(
 			translation,
@@ -116,20 +116,22 @@ describe('raid translation summary', () => {
 		const originalResource =
 			SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP];
 		delete SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP];
-		suppressSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.resourceId);
+		suppressSyntheticResourceDescriptor(
+			SYNTH_COMBAT_RESOURCES.power.resourceId,
+		);
 		try {
 			const { translation, attack } = createPartialStatEngineContext();
 			const castle = selectAttackResourceDescriptor(
 				translation,
 				SYNTH_RESOURCE_IDS.castleHP,
 			);
-			const powerStat = getStat(
+			const powerStat = getResource(
 				translation,
-				SYNTH_COMBAT_STATS.power.resourceId,
+				SYNTH_COMBAT_RESOURCES.power.resourceId,
 			)!;
 			const fallbackLabel =
-				humanizeIdentifier(SYNTH_COMBAT_STATS.power.resourceId) ||
-				SYNTH_COMBAT_STATS.power.resourceId;
+				humanizeIdentifier(SYNTH_COMBAT_RESOURCES.power.resourceId) ||
+				SYNTH_COMBAT_RESOURCES.power.resourceId;
 			expect(powerStat.label).toBe(fallbackLabel);
 			const targetDisplay = iconLabel(
 				castle.icon,
@@ -140,32 +142,30 @@ describe('raid translation summary', () => {
 			const summary = summarizeContent('action', attack.id, translation);
 			const targetSummary = castle.icon || castle.label;
 			expect(summary).toEqual([
-				`${COMBAT_STAT_CONFIG.power.icon}${targetSummary}`,
+				`${COMBAT_RESOURCE_CONFIG.power.icon}${targetSummary}`,
 			]);
 
 			const description = describeContent('action', attack.id, translation);
-			const powerLabel = iconLabel(
-				COMBAT_STAT_CONFIG.power.icon,
-				COMBAT_STAT_CONFIG.power.label,
-				'attack power',
-			);
+			// New format: [powerIcon]Attack opponent's [targetIcon] [targetLabel]
 			expect(description).toEqual([
-				`Attack opponent's ${targetDisplay} with your ${powerLabel}`,
+				`${COMBAT_RESOURCE_CONFIG.power.icon}Attack opponent's ${targetDisplay}`,
 			]);
 		} finally {
 			if (originalResource) {
 				SYNTH_RESOURCE_METADATA[SYNTH_RESOURCE_IDS.castleHP] = originalResource;
 			}
-			restoreSyntheticStatDescriptor(SYNTH_COMBAT_STATS.power.resourceId);
+			restoreSyntheticResourceDescriptor(
+				SYNTH_COMBAT_RESOURCES.power.resourceId,
+			);
 		}
 	});
 
 	it('summarizes building attack as destruction', () => {
 		const { translation, buildingAttack, building } =
 			createSyntheticEngineContext();
-		const powerStat = getStat(
+		const powerStat = getResource(
 			translation,
-			SYNTH_COMBAT_STATS.power.resourceId,
+			SYNTH_COMBAT_RESOURCES.power.resourceId,
 		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,

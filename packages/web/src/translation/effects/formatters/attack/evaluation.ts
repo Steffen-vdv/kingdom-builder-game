@@ -23,12 +23,9 @@ export function buildDescribeEntry(
 	_fortificationItems: string[],
 ): SummaryEntry {
 	const { stats, info } = context;
-	const power = stats.power;
-	const powerLabel = attackResourceLabel(power);
+	const powerIcon = stats.power?.icon ?? '';
 	const targetLabel = iconLabel(info.icon, info.label);
-	return powerLabel
-		? `Attack opponent's ${targetLabel} with your ${powerLabel}`
-		: `Attack opponent's ${targetLabel}`;
+	return `${powerIcon}Attack opponent's ${targetLabel}`;
 }
 
 export function defaultFortificationItems(

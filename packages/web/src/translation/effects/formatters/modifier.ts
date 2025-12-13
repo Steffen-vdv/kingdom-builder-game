@@ -104,8 +104,8 @@ function formatGlobalModifier(
 
 /**
  * Formats cost modifiers with simplified output:
- * - Summary: `✨🚜: 🪙-20% Cost` or `✨🎯: 🪙-20% Cost` (all actions)
- * - Describe: `✨🚜 Plow: -20% 🪙 Cost` or `✨🎯 All Actions: -20% 🪙 Cost`
+ * - Summary: `✨🚜 cost: 🪙-20%` or `✨🎯 cost: 🪙-20%` (all actions)
+ * - Describe: `✨🚜 Plow cost: 🪙 -20%` or `✨🎯 All Actions cost: 🪙 -20%`
  */
 function formatCostEffect(
 	effect: EffectDef,
@@ -132,12 +132,10 @@ function formatCostEffect(
 		const resolvedPercent = method === 'remove' ? -percent : percent;
 		const percentText = formatPercentText(resolvedPercent);
 		if (mode === 'summary') {
-			return `${costLabel.icon}${actionInfo.icon}: ${resourceIcon}${percentText} ${keywords.cost}`;
+			return `${costLabel.icon}${actionInfo.icon} ${keywords.cost}: ${resourceIcon}${percentText}`;
 		}
-		const targetLabel = actionId
-			? `${actionInfo.icon} ${actionInfo.name}`
-			: `${actionInfo.icon} ${actionInfo.name}`;
-		return `${costLabel.icon}${targetLabel}: ${percentText} ${resourceIcon} ${keywords.cost}`;
+		const targetLabel = `${actionInfo.icon} ${actionInfo.name}`;
+		return `${costLabel.icon}${targetLabel} ${keywords.cost}: ${resourceIcon} ${percentText}`;
 	}
 
 	const rawAmount = parseNumericParam(effect.params?.['amount']) ?? 0;
@@ -146,12 +144,10 @@ function formatCostEffect(
 	const signChar = amount >= 0 ? '+' : '-';
 
 	if (mode === 'summary') {
-		return `${costLabel.icon}${actionInfo.icon}: ${signChar}${resourceIcon}${absolute} ${keywords.cost}`;
+		return `${costLabel.icon}${actionInfo.icon} ${keywords.cost}: ${resourceIcon}${signChar}${absolute}`;
 	}
-	const targetLabel = actionId
-		? `${actionInfo.icon} ${actionInfo.name}`
-		: `${actionInfo.icon} ${actionInfo.name}`;
-	return `${costLabel.icon}${targetLabel}: ${signChar}${resourceIcon}${absolute} ${keywords.cost}`;
+	const targetLabel = `${actionInfo.icon} ${actionInfo.name}`;
+	return `${costLabel.icon}${targetLabel} ${keywords.cost}: ${resourceIcon} ${signChar}${absolute}`;
 }
 
 registerModifierEvalHandler('development', {

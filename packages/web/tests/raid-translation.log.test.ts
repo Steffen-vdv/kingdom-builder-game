@@ -6,11 +6,11 @@ import { performAction } from '@kingdom-builder/engine';
 import { formatActionTitle } from '../src/translation/formatActionTitle';
 import {
 	createSyntheticEngineContext,
-	setupStatOverrides,
-	teardownStatOverrides,
-	getStat,
+	setupResourceOverrides,
+	teardownResourceOverrides,
+	getResource,
 	iconLabel,
-	SYNTH_COMBAT_STATS,
+	SYNTH_COMBAT_RESOURCES,
 	PLUNDER_PERCENT,
 	PLUNDER_HAPPINESS_AMOUNT,
 	BUILDING_REWARD_GOLD,
@@ -26,11 +26,11 @@ vi.mock('@kingdom-builder/engine', async () => {
 });
 
 beforeAll(() => {
-	setupStatOverrides();
+	setupResourceOverrides();
 });
 
 afterAll(() => {
-	teardownStatOverrides();
+	teardownResourceOverrides();
 });
 
 describe('raid translation log', () => {
@@ -41,9 +41,9 @@ describe('raid translation log', () => {
 			translation,
 			SYNTH_RESOURCE_IDS.castleHP,
 		);
-		const powerStat = getStat(
+		const powerStat = getResource(
 			translation,
-			SYNTH_COMBAT_STATS.power.resourceId,
+			SYNTH_COMBAT_RESOURCES.power.resourceId,
 		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
@@ -70,7 +70,6 @@ describe('raid translation log', () => {
 		performAction(attack.id, engineContext);
 
 		const log = logContent('action', attack.id, translation);
-		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
 		const castleLabel = iconLabel(
 			castle.icon,
 			castle.label,
@@ -82,11 +81,12 @@ describe('raid translation log', () => {
 		}
 		const attackHeadline = formatActionTitle(attackDefinition, translation);
 
-		// Simplified attack description - mechanics details removed
+		// Simplified attack description - [powerIcon]Attack opponent's [targetLabel]
+		const powerIcon = powerStat.icon ?? '';
 		expect(log).toHaveLength(6);
 		expect(log[0]).toMatchObject({ text: attackHeadline, depth: 0 });
 		expect(log[1]).toMatchObject({
-			text: `Attack opponent's ${castleLabel} with your ${powerLabel}`,
+			text: `${powerIcon}Attack opponent's ${castleLabel}`,
 			depth: 1,
 		});
 		expect(log[2]).toMatchObject({
@@ -110,9 +110,9 @@ describe('raid translation log', () => {
 	it('logs building attack action with destruction evaluation', () => {
 		const { engineContext, translation, buildingAttack, building } =
 			createSyntheticEngineContext();
-		const powerStat = getStat(
+		const powerStat = getResource(
 			translation,
-			SYNTH_COMBAT_STATS.power.resourceId,
+			SYNTH_COMBAT_RESOURCES.power.resourceId,
 		)!;
 		const gold = selectAttackResourceDescriptor(
 			translation,
@@ -140,7 +140,6 @@ describe('raid translation log', () => {
 
 		performAction(buildingAttack.id, engineContext);
 		const log = logContent('action', buildingAttack.id, translation);
-		const powerLabel = iconLabel(powerStat.icon, powerStat.label, 'Attack');
 		const buildingAttackDefinition = translation.actions.get(buildingAttack.id);
 		if (!buildingAttackDefinition) {
 			throw new Error('Missing building attack definition');
@@ -150,11 +149,12 @@ describe('raid translation log', () => {
 			translation,
 		);
 
-		// Simplified attack description - mechanics details removed
+		// Simplified attack description - [powerIcon]Attack opponent's [targetLabel]
+		const powerIcon = powerStat.icon ?? '';
 		expect(log).toHaveLength(4);
 		expect(log[0]).toMatchObject({ text: buildingAttackHeadline, depth: 0 });
 		expect(log[1]).toMatchObject({
-			text: `Attack opponent's ${buildingDisplay} with your ${powerLabel}`,
+			text: `${powerIcon}Attack opponent's ${buildingDisplay}`,
 			depth: 1,
 		});
 		expect(log[2]).toMatchObject({

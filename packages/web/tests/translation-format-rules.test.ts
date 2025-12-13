@@ -24,13 +24,13 @@
  * 3. PASSIVE DURATION (split into two entries)
  *    ──────────────────────────────────────────
  *    Entry 1 - Add:
- *      Summary:  "+♾️: <icon> <name>"
+ *      Summary:  "+♾️: <icon>" (icon only, no name)
  *      Describe: "Gain ♾️ Passive: <icon> <name>"
  *      Items:    [child effects]
  *
  *    Entry 2 - Remove (under trigger):
  *      Title:    "On your <icon> <Phase Label> Phase"
- *      Summary:  "-♾️: <icon> <name>"
+ *      Summary:  "-♾️: <icon>" (icon only, no name)
  *      Describe: "Remove ♾️ Passive: <icon> <name>"
  *
  * 4. RESOURCE EFFECTS
@@ -260,20 +260,20 @@ describe('translation format rules', () => {
 			const summary = summarizeEffects([passive], context);
 			expect(summary).toHaveLength(2);
 
-			// Entry 1: Add passive - "+♾️: <icon> <name>"
+			// Entry 1: Add passive - "+♾️: <icon>" (icon only in summary)
 			const addEntry = summary[0];
 			expect(addEntry).toEqual(
 				expect.objectContaining({
-					title: '+♾️: 🤮 Festival Hangover',
+					title: '+♾️: 🤮',
 				}),
 			);
 
-			// Entry 2: Remove under trigger - "-♾️: <icon> <name>"
+			// Entry 2: Remove under trigger - "-♾️: <icon>" (icon only in summary)
 			const removeEntry = summary[1];
 			expect(removeEntry).toEqual(
 				expect.objectContaining({
 					title: 'On your 🛌 Rest Phase',
-					items: ['-♾️: 🤮 Festival Hangover'],
+					items: ['-♾️: 🤮'],
 				}),
 			);
 		});
@@ -383,10 +383,8 @@ describe('translation format rules', () => {
 			const summary = summarizeEffects([passive], context);
 			const description = describeEffects([passive], context);
 
-			// Summary add: "+♾️: <icon> <name>"
-			expect((summary[0] as { title: string }).title).toBe(
-				'+♾️: ✨ Test Effect',
-			);
+			// Summary add: "+♾️: <icon>" (icon only)
+			expect((summary[0] as { title: string }).title).toBe('+♾️: ✨');
 
 			// Describe add: "Gain ♾️ Passive: <icon> <name>"
 			expect((description[0] as { title: string }).title).toBe(
@@ -394,7 +392,7 @@ describe('translation format rules', () => {
 			);
 		});
 
-		it('passive remove labels include full name in both modes', () => {
+		it('passive remove labels include full name in describe mode only', () => {
 			const context = createFormatterContext({
 				phases: [
 					{
@@ -422,9 +420,9 @@ describe('translation format rules', () => {
 			const summary = summarizeEffects([passive], context);
 			const description = describeEffects([passive], context);
 
-			// Summary remove: "-♾️: <icon> <name>"
+			// Summary remove: "-♾️: <icon>" (icon only)
 			const summaryRemove = (summary[1] as { items: string[] }).items[0];
-			expect(summaryRemove).toBe('-♾️: 🎭 My Effect');
+			expect(summaryRemove).toBe('-♾️: 🎭');
 
 			// Describe remove: "Remove ♾️ Passive: <icon> <name>"
 			const describeRemove = (description[1] as { items: string[] }).items[0];
