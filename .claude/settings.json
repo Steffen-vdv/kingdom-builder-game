@@ -13,6 +13,17 @@
 					}
 				]
 			}
+		],
+		"PreToolUse": [
+			{
+				"matcher": "Bash(git commit*)",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/home/user/kingdom-builder-game/.claude/hooks/pre-commit-verify.sh"
+					}
+				]
+			}
 		]
 	}
 }
