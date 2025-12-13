@@ -3,9 +3,6 @@ import type {
 	SessionPlayerStateSnapshot,
 	SessionResourceDefinition,
 } from '@kingdom-builder/protocol';
-import LandDisplay from './LandDisplay';
-import BuildingDisplay from './BuildingDisplay';
-import PassiveDisplay from './PassiveDisplay';
 import ResourceButton, { type ColorVariant } from './ResourceButton';
 import ResourceGroupDisplay from './ResourceGroupDisplay';
 import ResourceWithBoundButton from './ResourceWithBoundButton';
@@ -56,7 +53,6 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 		useGameEngine();
 	const panelRef = useHeightTracking(onHeightChange);
 	const animateBar = useAnimate<HTMLDivElement>();
-	const animateSections = useAnimate<HTMLDivElement>();
 
 	const resourceCatalog = translationContext.resources;
 	const resourceMetadata = useResourceMetadata();
@@ -375,13 +371,6 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 
 				{/* Assets row: lands, buildings, effects counts */}
 				<AssetsRow player={player} />
-			</div>
-
-			{/* Detailed displays (can be toggled or shown on hover) */}
-			<div ref={animateSections} className="flex flex-col gap-2">
-				<LandDisplay player={player} />
-				<BuildingDisplay player={player} />
-				<PassiveDisplay player={player} />
 			</div>
 		</div>
 	);

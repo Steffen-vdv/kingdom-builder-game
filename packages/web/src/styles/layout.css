@@ -87,21 +87,29 @@
 		background: rgba(0, 0, 0, 0.06);
 	}
 
-	/* Combat stat color variants */
+	/* Combat stat color variants - visible backgrounds */
 	.stat-chip--army {
-		background: rgba(239, 68, 68, 0.1);
+		background: rgba(239, 68, 68, 0.25);
 	}
 
 	.stat-chip--army:hover {
-		background: rgba(239, 68, 68, 0.15);
+		background: rgba(239, 68, 68, 0.35);
+	}
+
+	.stat-chip--attack {
+		background: rgba(168, 85, 247, 0.25);
+	}
+
+	.stat-chip--attack:hover {
+		background: rgba(168, 85, 247, 0.35);
 	}
 
 	.stat-chip--fort {
-		background: rgba(59, 130, 246, 0.1);
+		background: rgba(59, 130, 246, 0.25);
 	}
 
 	.stat-chip--fort:hover {
-		background: rgba(59, 130, 246, 0.15);
+		background: rgba(59, 130, 246, 0.35);
 	}
 
 	.stat-chip__icon {

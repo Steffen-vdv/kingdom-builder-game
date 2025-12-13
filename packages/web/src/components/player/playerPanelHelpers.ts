@@ -23,6 +23,10 @@ export function groupResourcesBySection(
 		if (resource.groupId) {
 			continue;
 		}
+		// Skip resources that are bounds of another (shown inline with bounded)
+		if (resource.boundOf) {
+			continue;
+		}
 		// section is guaranteed to be 'economy' | 'combat' by the protocol
 		const sectionArray = result[resource.section];
 		sectionArray.push(resource);

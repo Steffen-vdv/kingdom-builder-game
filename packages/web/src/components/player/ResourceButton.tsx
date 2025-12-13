@@ -6,7 +6,7 @@ import type {
 import { getForecastDisplay } from '../../utils/forecast';
 import { useValueChangeIndicators } from '../../utils/useValueChangeIndicators';
 
-export type ColorVariant = 'default' | 'army' | 'fort';
+export type ColorVariant = 'default' | 'army' | 'attack' | 'fort';
 
 export interface ResourceButtonProps {
 	metadata: ResourceMetadataSnapshot;
@@ -99,6 +99,7 @@ export function formatSignedResourceMagnitude(
 const COLOR_VARIANT_CLASSES: Record<ColorVariant, string> = {
 	default: '',
 	army: 'stat-chip--army',
+	attack: 'stat-chip--attack',
 	fort: 'stat-chip--fort',
 };
 
