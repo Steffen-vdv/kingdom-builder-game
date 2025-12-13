@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import fc from 'fast-check';
 
 import { increaseUpperBound, resourceTransfer, transferEndpoint, type ResourceTransferEndpointPayload } from '../../src/resource';
 
@@ -147,6 +148,123 @@ describe('Resource upper-bound builder', () => {
 			player: 'opponent',
 			resourceId: 'resource:gold',
 			delta: 3,
+		});
+	});
+});
+
+// ============================================================================
+// PROPERTY-BASED TESTS
+// ============================================================================
+
+describe('Property-based builder tests', () => {
+	describe('changePercent decimal conversion', () => {
+		/**
+		 * INVARIANT: changePercent always produces decimal values.
+		 *
+		 * For any percentage P in [-100, 100]:
+		 *   changePercent(P).build().change.modifiers[0] === P / 100
+		 *
+		 * This test would have caught the 100x transfer bug where
+		 * changePercent(25) incorrectly stored 25 instead of 0.25.
+		 */
+		it('produces decimal modifiers for any percentage', () => {
+			fc.assert(
+				fc.property(fc.integer({ min: -100, max: 100 }), (percent) => {
+					const endpoint = transferEndpoint('resource:gold').changePercent(percent).build();
+
+					const change = endpoint.change;
+					expect(change.type).toBe('percent');
+
+					if (change.type === 'percent') {
+						const modifier = change.modifiers[0];
+						const expected = percent / 100;
+						expect(modifier).toBeCloseTo(expected, 10);
+					}
+				}),
+				{ numRuns: 100 },
+			);
+		});
+
+		/**
+		 * INVARIANT: All percent modifiers are in valid decimal range.
+		 *
+		 * For percentages in [-100, 100], modifiers should be in [-1, 1].
+		 * Values outside this range indicate the bug where whole percentages
+		 * are stored instead of decimals.
+		 */
+		it('modifiers are always in valid decimal range [-1, 1]', () => {
+			fc.assert(
+				fc.property(fc.integer({ min: -100, max: 100 }), (percent) => {
+					const endpoint = transferEndpoint('resource:gold').changePercent(percent).build();
+
+					if (endpoint.change.type === 'percent') {
+						const modifier = endpoint.change.modifiers[0];
+						expect(Math.abs(modifier)).toBeLessThanOrEqual(1);
+					}
+				}),
+				{ numRuns: 100 },
+			);
+		});
+
+		/**
+		 * INVARIANT: Conversion is symmetric.
+		 *
+		 * changePercent(P) and changePercent(-P) should produce modifiers
+		 * that are negations of each other.
+		 */
+		it('positive and negative percentages are symmetric', () => {
+			fc.assert(
+				fc.property(fc.integer({ min: 1, max: 100 }), (percent) => {
+					const positive = transferEndpoint('resource:gold').changePercent(percent).build();
+					const negative = transferEndpoint('resource:gold').changePercent(-percent).build();
+
+					if (positive.change.type === 'percent' && negative.change.type === 'percent') {
+						const positiveMod = positive.change.modifiers[0];
+						const negativeMod = negative.change.modifiers[0];
+						if (positiveMod !== undefined && negativeMod !== undefined) {
+							expect(positiveMod).toBeCloseTo(-negativeMod, 10);
+						}
+					}
+				}),
+				{ numRuns: 50 },
+			);
+		});
+	});
+
+	describe('changeAmount passthrough', () => {
+		/**
+		 * INVARIANT: changeAmount preserves the exact value.
+		 *
+		 * Unlike changePercent, changeAmount should NOT transform the value.
+		 */
+		it('preserves exact amount values', () => {
+			fc.assert(
+				fc.property(fc.integer({ min: -1000, max: 1000 }), (amount) => {
+					const endpoint = transferEndpoint('resource:gold').changeAmount(amount).build();
+
+					expect(endpoint.change).toEqual({
+						type: 'amount',
+						amount: amount,
+					});
+				}),
+				{ numRuns: 100 },
+			);
+		});
+	});
+
+	describe('increaseUpperBound delta validation', () => {
+		/**
+		 * INVARIANT: Only positive integers are accepted.
+		 */
+		it('accepts all positive integers', () => {
+			fc.assert(
+				fc.property(fc.integer({ min: 1, max: 1000 }), (delta) => {
+					const params = increaseUpperBound('resource:gold').player('active').delta(delta).build();
+
+					expect(params.delta).toBe(delta);
+				}),
+				{ numRuns: 50 },
+			);
 		});
 	});
 });
