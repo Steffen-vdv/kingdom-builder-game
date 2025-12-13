@@ -45,7 +45,7 @@ interface PlayerPanelProps {
 const PlayerPanel: FC<PlayerPanelProps> = ({
 	player,
 	className = '',
-	isActive = false,
+	isActive: _isActive = false,
 	onHeightChange,
 }) => {
 	const { handleHoverCard, clearHoverCard, translationContext, ruleSnapshot } =
@@ -279,7 +279,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 	);
 
 	const panelClassName = [
-		'player-panel flex h-auto min-h-[320px] flex-col gap-2 self-start',
+		'player-panel flex h-auto flex-col self-start',
 		'text-slate-800 dark:text-slate-100',
 		className,
 	]
@@ -292,17 +292,15 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 
 	return (
 		<div ref={panelRef} className={panelClassName}>
-			<h3 className="text-lg font-semibold tracking-tight">
-				{isActive && (
-					<span role="img" aria-label="active player" className="mr-1">
-						👑
-					</span>
-				)}
-				{player.name}
-			</h3>
-
 			{/* Dual-column resource layout */}
 			<div ref={animateBar} className="panel-card w-full overflow-hidden">
+				{/* Panel header with player name */}
+				<div className="panel-header">
+					<span className="text-[13px]" aria-hidden="true">
+						👑
+					</span>
+					<span className="font-semibold text-[14px]">{player.name}</span>
+				</div>
 				{/* Grid for Economy | Combat columns */}
 				<div
 					className="grid grid-cols-2"
@@ -343,9 +341,9 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 						<div className="flex flex-col gap-1.5">
 							{/* Primary combat stats (full stat-chip) */}
 							{primaryCombat.map((def) => renderResource(def))}
-							{/* Secondary combat stats (mini-chips in a row) */}
+							{/* Secondary combat stats (2-column grid) */}
 							{secondaryCombat.length > 0 && (
-								<div className="flex flex-wrap gap-1">
+								<div className="grid grid-cols-2 gap-1">
 									{secondaryCombat.map((def) => renderResource(def))}
 								</div>
 							)}
@@ -355,7 +353,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 
 				{/* Happiness bar spanning full width below columns */}
 				{activeTierInfo && tieredResourceKey && (
-					<div className="px-3 py-1.5">
+					<div className="happiness-section px-3 py-1.5">
 						<HappinessBar
 							currentValue={activeTierInfo.value}
 							tierName={activeTierInfo.name}

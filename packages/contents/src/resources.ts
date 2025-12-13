@@ -55,6 +55,7 @@ const castleHpResource = resource('resource:core:castle-hp')
 	.description('Castle HP represents the durability of your stronghold. If it ever ' + 'drops to zero, your kingdom falls and the game is lost.')
 	.tags('attack-target', 'win-condition-zero')
 	.lowerBound(0)
+	.upperBound(10)
 	.section('combat')
 	.build();
 

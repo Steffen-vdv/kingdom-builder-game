@@ -57,11 +57,11 @@ describe('<PlayerPanel />', () => {
 			);
 			const value = activePlayerSnapshot.values?.[definition.id] ?? 0;
 			const label = metadata?.label ?? definition.id;
-			// Resource buttons may include forecast: "Label: value (+delta)"
+			// Resource buttons may include forecast: "Label: value +delta"
 			// Use regex to match with/without forecast (escape label for regex)
 			const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 			const buttons = screen.getAllByRole('button', {
-				name: new RegExp(`^${escapedLabel}: ${value}(\\s+\\([+-]?\\d+\\))?$`),
+				name: new RegExp(`^${escapedLabel}: ${value}(\\s+[+-]?\\d+)?$`),
 			});
 			expect(buttons.length).toBeGreaterThan(0);
 		}
@@ -92,21 +92,19 @@ describe('<PlayerPanel />', () => {
 			// Get forecast using V2 ID directly
 			const resourceDelta =
 				forecastByPlayerId[activePlayerSnapshot.id].values[firstV2Resource.id];
-			// Component uses parens around the delta
+			// Component uses signed delta without parentheses
 			const signedDelta = `${resourceDelta > 0 ? '+' : ''}${resourceDelta}`;
-			const formattedResourceDelta = `(${signedDelta})`;
 			const resourceLabel =
 				`${firstResourceMetadata?.label ?? firstV2Resource.id}: ` +
-				`${firstResourceValue} ${formattedResourceDelta}`;
+				`${firstResourceValue} ${signedDelta}`;
 			const resourceButtons = screen.getAllByRole('button', {
 				name: resourceLabel,
 			});
 			expect(resourceButtons.length).toBeGreaterThan(0);
 			const [resourceButton] = resourceButtons;
-			// Badge text uses parens around the signed number
-			const resourceForecastBadge = within(resourceButton).getByText(
-				formattedResourceDelta,
-			);
+			// Badge text uses signed number without parentheses
+			const resourceForecastBadge =
+				within(resourceButton).getByText(signedDelta);
 			expect(resourceForecastBadge).toBeInTheDocument();
 			expect(resourceForecastBadge).toHaveClass('text-emerald-300');
 		}
@@ -125,16 +123,15 @@ describe('<PlayerPanel />', () => {
 				forecastByPlayerId[activePlayerSnapshot.id].values[
 					negativeV2Resource.id
 				]!;
-			// Component uses parens around the delta
+			// Component uses signed delta without parentheses
 			const signedNegDelta = `${negDelta > 0 ? '+' : ''}${negDelta}`;
-			const formattedNegDelta = `(${signedNegDelta})`;
 			const negLabel =
 				`${negMetadata?.label ?? negativeV2Resource.id}: ` +
-				`${negValue} ${formattedNegDelta}`;
+				`${negValue} ${signedNegDelta}`;
 			const negButtons = screen.getAllByRole('button', { name: negLabel });
 			expect(negButtons.length).toBeGreaterThan(0);
 			const [negButton] = negButtons;
-			const negBadge = within(negButton).getByText(formattedNegDelta);
+			const negBadge = within(negButton).getByText(signedNegDelta);
 			expect(negBadge).toHaveClass('text-rose-300');
 		}
 		// Note: Grouped resources (groupId !== null) are rendered differently

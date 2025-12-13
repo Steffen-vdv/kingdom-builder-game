@@ -141,7 +141,7 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 	}
 
 	return (
-		<div className="assets-row">
+		<div className="assets-row assets-section">
 			{/* Left side: lands and buildings */}
 			<div className="flex gap-1.5">
 				{landsCount > 0 && (

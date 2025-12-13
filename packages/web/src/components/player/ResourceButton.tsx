@@ -157,9 +157,9 @@ const ResourceButtonComponent: React.FC<ResourceButtonProps> = ({
 		onHide();
 	}, [onHide]);
 
-	// Build inline style for displayHint background
+	// Build inline style for displayHint background (10% normal, 15% hover)
 	const hintStyle: React.CSSProperties | undefined = displayHint
-		? { background: colorToRgba(displayHint, isHovered ? 0.35 : 0.25) }
+		? { background: colorToRgba(displayHint, isHovered ? 0.15 : 0.1) }
 		: undefined;
 
 	// For compact mode (mini-chip), render inline icon + value + forecast
