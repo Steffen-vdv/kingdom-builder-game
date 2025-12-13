@@ -254,6 +254,7 @@ const buildRuleSnapshot = (resourceKey: string): SessionRuleSnapshot => ({
 			},
 			display: {
 				title: 'Steady Resolve',
+				icon: '⚖️',
 				summaryToken: 'tier.neutral.summary',
 			},
 		},

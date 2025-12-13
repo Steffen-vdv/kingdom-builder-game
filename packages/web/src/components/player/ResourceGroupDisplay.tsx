@@ -260,7 +260,7 @@ const ResourceGroupDisplay: React.FC<ResourceGroupDisplayProps> = ({
 				</span>
 				{activeMembers.length > 0 && (
 					<span className="pop-chevron" aria-hidden="true">
-						{expanded ? '▲' : '▼'}
+						▼
 					</span>
 				)}
 			</button>

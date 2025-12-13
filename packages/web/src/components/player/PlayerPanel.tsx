@@ -115,19 +115,19 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			return null;
 		}
 		const value = player.values?.[tieredResourceKey] ?? 0;
-		const icon = tieredResourceDescriptor?.icon ?? '😊';
+		// Tier must define its icon in content
+		const tierDisplay = tier.display;
+		if (!tierDisplay?.icon || !tierDisplay?.title) {
+			throw new Error(
+				`Tier "${tier.id}" is missing required display properties (icon, title)`,
+			);
+		}
 		return {
-			name: tier.display?.title ?? 'Neutral',
-			icon,
+			name: tierDisplay.title,
+			icon: tierDisplay.icon,
 			value,
 		};
-	}, [
-		activeTierId,
-		tieredResourceKey,
-		tierDefinitions,
-		player.values,
-		tieredResourceDescriptor,
-	]);
+	}, [activeTierId, tieredResourceKey, tierDefinitions, player.values]);
 
 	// Group resources by section
 	const resourcesBySection = useMemo(() => {
@@ -226,6 +226,13 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 				return null;
 			}
 
+			// Hide untouched resources at 0 - only show once they've been modified
+			const value = player.values?.[resourceId] ?? 0;
+			const touched = player.resourceTouched?.[resourceId] ?? false;
+			if (value === 0 && !touched) {
+				return null;
+			}
+
 			const boundInfo = boundReferenceMap.get(resourceId);
 			const metadata = translationContext.resourceMetadata.get(resourceId);
 			const snapshot = createResourceSnapshot(resourceId, snapshotContext);
@@ -282,6 +289,7 @@ const PlayerPanel: FC<PlayerPanelProps> = ({
 			translationContext,
 			showResourceCard,
 			clearHoverCard,
+			player,
 		],
 	);
 

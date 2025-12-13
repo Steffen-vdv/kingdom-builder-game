@@ -154,7 +154,7 @@
 	}
 
 	.pop-members {
-		@apply hidden px-2.5 pb-2 pt-0 gap-1 flex-wrap;
+		@apply hidden px-2.5 pb-2 pt-1.5 gap-1 flex-wrap;
 	}
 
 	.pop-group.expanded .pop-members {
@@ -242,27 +242,17 @@
 		z-index: 1;
 	}
 
-	/* Panel header with player name */
+	/* Panel header with player name - background set by player-panels.css */
 	.panel-header {
 		display: flex;
 		align-items: center;
 		gap: 8px;
 		padding: 10px 12px;
 		border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-		background: linear-gradient(
-			135deg,
-			rgba(59, 130, 246, 0.1),
-			rgba(37, 99, 235, 0.06)
-		);
 	}
 
 	html.dark .panel-header {
 		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-		background: linear-gradient(
-			135deg,
-			rgba(59, 130, 246, 0.12),
-			rgba(37, 99, 235, 0.08)
-		);
 	}
 
 	/* Happiness bar section background */

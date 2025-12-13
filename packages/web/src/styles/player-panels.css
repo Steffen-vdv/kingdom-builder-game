@@ -91,28 +91,85 @@
 		--player-glow: rgba(239, 68, 68, 0.4);
 	}
 
-	/* Dark mode: cleaner, more subtle backgrounds */
+	/* Dark mode: cleaner, more subtle backgrounds - no colored borders */
 	.dark .player-bg-blue {
 		--player-color: rgba(15, 23, 42, 0.92);
 		--player-glow: rgba(59, 130, 246, 0.2);
-		border-color: rgba(59, 130, 246, 0.25);
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.15),
+			rgba(37, 99, 235, 0.08)
+		);
 	}
 
 	.dark .player-bg-blue-active {
 		--player-color: rgba(15, 23, 42, 0.95);
 		--player-glow: rgba(59, 130, 246, 0.35);
-		border-color: rgba(59, 130, 246, 0.35);
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.25),
+			rgba(37, 99, 235, 0.15)
+		);
 	}
 
 	.dark .player-bg-red {
 		--player-color: rgba(15, 23, 42, 0.92);
 		--player-glow: rgba(239, 68, 68, 0.2);
-		border-color: rgba(239, 68, 68, 0.25);
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.15),
+			rgba(220, 38, 38, 0.08)
+		);
 	}
 
 	.dark .player-bg-red-active {
 		--player-color: rgba(15, 23, 42, 0.95);
 		--player-glow: rgba(239, 68, 68, 0.35);
-		border-color: rgba(239, 68, 68, 0.35);
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.25),
+			rgba(220, 38, 38, 0.15)
+		);
+	}
+
+	/* Light mode header backgrounds */
+	.player-bg-blue {
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.2),
+			rgba(37, 99, 235, 0.1)
+		);
+	}
+
+	.player-bg-blue-active {
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(59, 130, 246, 0.3),
+			rgba(37, 99, 235, 0.18)
+		);
+	}
+
+	.player-bg-red {
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.2),
+			rgba(220, 38, 38, 0.1)
+		);
+	}
+
+	.player-bg-red-active {
+		--player-header-bg: linear-gradient(
+			135deg,
+			rgba(239, 68, 68, 0.3),
+			rgba(220, 38, 38, 0.18)
+		);
+	}
+
+	/* Panel header picks up player color */
+	.player-bg .panel-header {
+		background: var(
+			--player-header-bg,
+			linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.06))
+		);
 	}
 }

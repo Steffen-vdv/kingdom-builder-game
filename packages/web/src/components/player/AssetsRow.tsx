@@ -1,6 +1,11 @@
 import React from 'react';
 import type { SessionPlayerStateSnapshot } from '@kingdom-builder/protocol';
-import { describeContent, splitSummary } from '../../translation';
+import {
+	describeContent,
+	splitSummary,
+	describeEffects,
+} from '../../translation';
+import type { Summary, SummaryGroup } from '../../translation/content/types';
 import { useGameEngine } from '../../state/GameContext';
 import {
 	useLandMetadata,
@@ -8,6 +13,24 @@ import {
 } from '../../contexts/RegistryMetadataContext';
 import { toDescriptorDisplay } from './registryDisplays';
 import { resolvePassivePresentation } from '../../translation/log/passives';
+
+/**
+ * Flatten a Summary into an array of display strings.
+ * Handles both string entries and SummaryGroup entries.
+ */
+function flattenSummary(summary: Summary): string[] {
+	const result: string[] = [];
+	for (const entry of summary) {
+		if (typeof entry === 'string') {
+			result.push(entry);
+		} else {
+			// SummaryGroup - add title and recurse into items
+			result.push(entry.title);
+			result.push(...flattenSummary(entry.items));
+		}
+	}
+	return result;
+}
 
 interface AssetsRowProps {
 	player: SessionPlayerStateSnapshot;
@@ -53,12 +76,8 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 		for (const land of player.lands) {
 			const full = describeContent('land', land, translationContext);
 			const { effects } = splitSummary(full);
-			// Add each effect line from the land description
-			for (const effect of effects) {
-				if (typeof effect === 'string') {
-					landItems.push(effect);
-				}
-			}
+			// Flatten both string and group entries
+			landItems.push(...flattenSummary(effects));
 		}
 		handleHoverCard({
 			title: `${landDescriptor.icon ?? '🗺️'} ${landDescriptor.label}s (${landsCount})`,
@@ -80,12 +99,8 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 		for (const buildingId of player.buildings) {
 			const full = describeContent('building', buildingId, translationContext);
 			const { effects } = splitSummary(full);
-			// Add each effect line from the building description
-			for (const effect of effects) {
-				if (typeof effect === 'string') {
-					buildingItems.push(effect);
-				}
-			}
+			// Flatten both string and group entries
+			buildingItems.push(...flattenSummary(effects));
 		}
 		handleHoverCard({
 			title: `${BUILDING_ICON} ${BUILDING_LABEL}s (${buildingsCount})`,
@@ -100,7 +115,8 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 	const showEffectsCard = React.useCallback(() => {
 		const definitions = translationContext.passives.definitions(player.id);
 		const defMap = new Map(definitions.map((d) => [d.id, d]));
-		const effectItems = passiveSummaries.map((summary) => {
+		const effectItems: (string | SummaryGroup)[] = [];
+		for (const summary of passiveSummaries) {
 			const def = defMap.get(summary.id);
 			// Build options conditionally to satisfy exactOptionalPropertyTypes
 			type PresentationOptions = Parameters<
@@ -122,15 +138,29 @@ const AssetsRow: React.FC<AssetsRowProps> = ({ player }) => {
 				options = baseOptions;
 			}
 			const presentation = resolvePassivePresentation(summary, options);
-			const icon = presentation.icon || passiveDescriptor.icon || '✨';
-			// Include summary details if available
-			const label = presentation.summary
-				? `${presentation.label}: ${presentation.summary}`
-				: presentation.label;
-			return `${icon} ${label}`;
-		});
+			// Get effects from the passive definition
+			const passiveEffects = def?.effects;
+			if (passiveEffects && passiveEffects.length > 0) {
+				const nestedEffects = describeEffects(
+					passiveEffects,
+					translationContext,
+				);
+				const nestedStrings = flattenSummary(nestedEffects);
+				// Group under the passive name with its icon
+				effectItems.push({
+					title: `${presentation.icon} ${presentation.label}`,
+					items: nestedStrings,
+				});
+			} else {
+				// No nested effects, just show the passive name
+				const label = presentation.summary
+					? `${presentation.label}: ${presentation.summary}`
+					: presentation.label;
+				effectItems.push(`${presentation.icon} ${label}`);
+			}
+		}
 		handleHoverCard({
-			title: `${passiveDescriptor.icon ?? '✨'} Active Effects (${effectsCount})`,
+			title: `${passiveDescriptor.icon} Active Effects (${effectsCount})`,
 			effects: effectItems.length > 0 ? effectItems : ['No active effects'],
 			requirements: [],
 			bgClass: HOVER_CARD_BG,

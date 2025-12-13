@@ -41,12 +41,18 @@ const HappinessBar: React.FC<HappinessBarProps> = ({
 		>
 			<span className="text-[20px] flex-shrink-0 w-6 text-center">{icon}</span>
 			<div className="bar-track">
-				{/* Gradient fill */}
+				{/* Fixed full-width gradient background */}
 				<div
-					className="absolute inset-y-0 left-0 rounded-lg"
+					className="absolute inset-0 rounded-lg"
 					style={{
-						width: `${percent}%`,
 						background: 'linear-gradient(90deg, #ef4444, #fbbf24, #22c55e)',
+					}}
+				/>
+				{/* Mask overlay that hides the unfilled portion */}
+				<div
+					className="absolute inset-y-0 right-0 rounded-r-lg bg-slate-800/90"
+					style={{
+						width: `${100 - percent}%`,
 					}}
 				/>
 				{/* Label overlay */}
