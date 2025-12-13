@@ -4,12 +4,15 @@
 # Check with: cat /tmp/claude-session-start-hook.marker
 echo "SessionStart hook executed at $(date -Iseconds)" > /tmp/claude-session-start-hook.marker
 
+# Change to project directory (hook may run from different cwd)
+cd "$CLAUDE_PROJECT_DIR" || exit 1
+
 # If we got here, hook is working. Now do the real work:
 
 # Ensure dependencies and Husky git hooks are properly initialized
-if [ ! -d "node_modules" ]; then
+if [ ! -d "$CLAUDE_PROJECT_DIR/node_modules" ]; then
   npm install 2>/dev/null || true
-elif [ ! -d ".husky/_" ]; then
+elif [ ! -d "$CLAUDE_PROJECT_DIR/.husky/_" ]; then
   npm run prepare 2>/dev/null || true
 fi
 
