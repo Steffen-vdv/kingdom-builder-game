@@ -8,15 +8,22 @@
 #
 # This ensures agents are reminded once per commit cycle.
 #
-# IMPORTANT: Must output JSON to actually block. Plain text is ignored by Claude Code.
+# IMPORTANT:
+# - Tool input comes via STDIN as JSON (not environment variable)
+# - Command is at .tool_input.command
+# - Exit 0 = allow, Exit 2 = block
+# - Blocked message goes to STDERR
 
 # Debug logging
 LOG="/tmp/claude-precommit-hook.log"
 echo "=== PreToolUse hook called $(date -Iseconds) ===" >> "$LOG"
-echo "CLAUDE_TOOL_INPUT: $CLAUDE_TOOL_INPUT" >> "$LOG"
 
-# Parse command from tool input JSON
-COMMAND=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.command' 2>/dev/null || echo "")
+# Read tool input from stdin (this is how Claude Code passes it)
+JSON_INPUT=$(cat)
+echo "JSON_INPUT: $JSON_INPUT" >> "$LOG"
+
+# Parse command from tool input JSON - note: .tool_input.command, not .command
+COMMAND=$(echo "$JSON_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 echo "Parsed COMMAND: $COMMAND" >> "$LOG"
 
 # Only intercept git commit commands - allow everything else through
@@ -40,18 +47,36 @@ if [[ -f "$STATE_FILE" ]]; then
 	exit 0
 fi
 
-# First attempt - create state file and block with JSON response
-echo "First attempt - creating state file and BLOCKING" >> "$LOG"
+# First attempt - create state file and block
+echo "First attempt - creating state file and BLOCKING (exit 2)" >> "$LOG"
 touch "$STATE_FILE"
 
-# Output JSON to actually block the tool call
-# The reason will be shown to the agent
-cat << 'EOF'
-{
-  "decision": "block",
-  "reason": "⚠️ COMMIT BLOCKED — Verification Required\n\nBefore committing, complete these steps:\n\n1. RE-READ CLAUDE.md sections 2.1–2.6 (Core Principles)\n\n2. REVIEW all changes since origin/main:\n   git diff origin/main --stat\n   git diff origin/main\n\n3. For EACH change, VERIFY:\n   □ Root cause addressed — not a band-aid (2.6)\n   □ Correct architectural layer (2.6)\n   □ No fallbacks/defaults masking bad data (2.1)\n   □ No hardcoded game data (2.3)\n   □ No CResource.*/CAction.* in filter logic (2.3)\n   □ No custom UI text (Section 8)\n   □ Tests included if new functionality (Section 9)\n\n4. If UNCERTAIN — ASK the user before proceeding.\n\nAfter completing verification, retry your commit."
-}
+# Output message to STDERR (shown to agent when blocked)
+# Exit code 2 = block the tool
+cat >&2 << 'EOF'
+⚠️ COMMIT BLOCKED — Verification Required
+
+Before committing, complete these steps:
+
+1. RE-READ CLAUDE.md sections 2.1–2.6 (Core Principles)
+
+2. REVIEW all changes since origin/main:
+   git diff origin/main --stat
+   git diff origin/main
+
+3. For EACH change, VERIFY:
+   □ Root cause addressed — not a band-aid (2.6)
+   □ Correct architectural layer (2.6)
+   □ No fallbacks/defaults masking bad data (2.1)
+   □ No hardcoded game data (2.3)
+   □ No CResource.*/CAction.* in filter logic (2.3)
+   □ No custom UI text (Section 8)
+   □ Tests included if new functionality (Section 9)
+
+4. If UNCERTAIN — ASK the user before proceeding.
+
+After completing verification, retry your commit.
 EOF
 
-echo "JSON block response output complete" >> "$LOG"
-exit 0
+echo "Block message sent to stderr, exiting with code 2" >> "$LOG"
+exit 2
