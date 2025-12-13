@@ -18,6 +18,14 @@ fi
 # This is needed after Node.js version changes or fresh clones
 npm rebuild better-sqlite3 2>/dev/null || true
 
+# Copy project Claude settings to root location
+# Workaround: PreToolUse hooks only work from /root/.claude/settings.json
+cp /home/user/kingdom-builder-game/.claude/settings.json /root/.claude/settings.json 2>/dev/null || true
+
+# Leave a marker file so agents can verify the hook ran
+# Check with: cat /tmp/claude-session-start-hook.marker
+echo "SessionStart hook executed at $(date -Iseconds)" > /tmp/claude-session-start-hook.marker
+
 {
   echo "╔════════════════════════════════════════════════════════════════╗"
   echo "║          PROJECT DOCUMENTATION CONTEXT AUTO-LOADED             ║"
