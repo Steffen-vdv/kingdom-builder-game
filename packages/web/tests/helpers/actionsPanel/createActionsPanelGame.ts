@@ -201,7 +201,6 @@ export function createActionsPanelGame({
 	sessionRegistries.actions = actionsRegistry;
 	sessionRegistries.buildings = buildingsRegistry;
 	sessionRegistries.developments = developmentsRegistry;
-	sessionRegistries.populations = populationsRegistry;
 	const sessionView = selectSessionView(sessionState, sessionRegistries);
 	const resourceDescriptors = createResourceDescriptors(sessionRegistries);
 	const populationDescriptors = createPopulationDescriptors(
@@ -247,8 +246,7 @@ export function createActionsPanelGame({
 		session.setActionRequirements(actionId, failures);
 	}
 	sessionState.metadata = createEmptySnapshotMetadata({
-		resources: resourceDescriptors,
-		populations: populationDescriptors,
+		resources: { ...resourceDescriptors, ...populationDescriptors },
 		stats: Object.fromEntries(statMetadataEntries),
 		assets: {
 			land: landDescriptor,

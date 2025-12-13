@@ -6,11 +6,9 @@ import {
 	PHASES,
 	Resource,
 	RULES,
-} from '@kingdom-builder/contents';
-import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { createEngine } from '../../src/index.ts';
 

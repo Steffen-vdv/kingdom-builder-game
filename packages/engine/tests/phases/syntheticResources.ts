@@ -1,8 +1,9 @@
-import { resource, createResourceRegistry } from '@kingdom-builder/contents';
 import {
+	resource,
+	createResourceRegistry,
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
 
 export const resourceKeys = {
 	ap: 'synthetic:resource:ap',

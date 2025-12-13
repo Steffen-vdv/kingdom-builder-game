@@ -106,7 +106,6 @@ describe('tax action logging with market', () => {
 			actions: scenario.factory.actions,
 			buildings: scenario.factory.buildings,
 			developments: scenario.factory.developments,
-			populations: scenario.factory.populations,
 			phases: scenario.phases,
 			rules: scenario.rules,
 			resourceCatalog: scenario.resourceCatalog,

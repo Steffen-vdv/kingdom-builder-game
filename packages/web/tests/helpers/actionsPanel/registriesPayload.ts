@@ -35,9 +35,7 @@ export function toRegistriesPayload(
 		developments: toEntries(
 			registries.developments as SessionRegistries['actions'],
 		),
-		populations: toEntries(
-			registries.populations as SessionRegistries['actions'],
-		),
 		resources: cloneResources(),
+		resourceGroups: {},
 	};
 }

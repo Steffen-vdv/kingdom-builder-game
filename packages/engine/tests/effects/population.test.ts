@@ -2,11 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { performAction, advance, getActionCosts } from '../../src';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
-import {
-	Resource as CResource,
-	PhaseId,
-	PopulationRole,
-} from '@kingdom-builder/contents';
+import { Resource as CResource, PhaseId } from '@kingdom-builder/contents';
 import { getCatalogIndexes } from '../../src/resource';
 import { resourceAmountParams } from '../helpers/resourceParams';
 
@@ -14,7 +10,7 @@ describe('resource effects for population', () => {
 	it('adds and removes population via resource effects', () => {
 		const content = createContentFactory();
 		// Use a real population role that's registered in the Resource catalog
-		const roleId = PopulationRole.Legion;
+		const roleId = CResource.legion;
 		const add = content.action({
 			effects: [
 				{

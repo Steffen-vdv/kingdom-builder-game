@@ -3,7 +3,7 @@ import { evaluatorCompare } from '../../src/requirements/evaluator_compare';
 import { createTestEngine } from '../helpers';
 import { createContentFactory } from '@kingdom-builder/testing';
 import { advance } from '../../src';
-import { Stat, PhaseId } from '@kingdom-builder/contents';
+import { Resource, PhaseId } from '@kingdom-builder/contents';
 
 describe('evaluator:compare requirement', () => {
 	it('compares stat values', () => {
@@ -12,11 +12,14 @@ describe('evaluator:compare requirement', () => {
 			advance(engineContext);
 		}
 		// Stat values ARE Resource IDs - access via resourceValues
-		engineContext.activePlayer.resourceValues[Stat.populationMax] = 2;
+		engineContext.activePlayer.resourceValues[Resource.populationMax] = 2;
 		// Use resource evaluator for stats (everything is a resource)
 		const requirement = {
 			params: {
-				left: { type: 'resource', params: { resourceId: Stat.populationMax } },
+				left: {
+					type: 'resource',
+					params: { resourceId: Resource.populationMax },
+				},
 				right: 1,
 				operator: 'gt',
 			},

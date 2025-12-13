@@ -103,6 +103,27 @@ Then **STOP implementation** and present:
 **Wait for user confirmation** before resuming work. Do not continue where the
 previous session left off without verification—that's exactly how drift happens.
 
+### Capturing feedback in CLAUDE.md
+
+When the user gives you feedback that sounds like a **general expectation miss**
+(something that future agents would likely repeat), proactively ask:
+
+> "This sounds like a general pattern I should remember. Want me to add this to
+> CLAUDE.md so future agents don't make the same mistake?"
+
+**Signs of a general expectation miss:**
+
+- User corrects a pattern or approach you used
+- User expresses frustration about something you should have known
+- User gives feedback that applies beyond this specific task
+- User says "don't do X" or "always do Y" in a general way
+
+**Why this matters:**
+
+The user wants to give feedback once and have it remembered. CLAUDE.md is the
+mechanism for that. If you don't offer to codify the feedback, the user will
+have to repeat themselves to every future agent.
+
 ### Progress communication
 
 Don't leave the user in silence.
@@ -344,6 +365,40 @@ sentences for descriptions, summaries, or logs. If you find yourself composing
 player-facing text manually, you're probably doing it wrong. Find the existing
 formatter or translator, or ask how to extend it.
 
+#### CRITICAL: Never hardcode content IDs in conditional logic
+
+When you need to exclude, filter, or special-case certain content items (like
+resources, actions, buildings), **find the property that makes them special**
+instead of hardcoding their IDs.
+
+```typescript
+// ❌ WRONG - Hardcoded ID comparison
+const filtered = resources.filter(
+	(id) => id !== CResource.ap && id !== CResource.totalPopulation,
+);
+
+// ✅ CORRECT - Property-based filtering
+const indexes = getCatalogIndexes(runtimeCatalog);
+const filtered = resources.filter((id) => {
+	const resource = indexes.resourceById[id];
+	// AP has globalCost, totalPopulation is a group parent
+	return !resource.globalCost && !indexes.parentById[id];
+});
+```
+
+**Why this matters:**
+
+- Hardcoded IDs break when content changes (new resources, renamed IDs)
+- They hide the _reason_ something is excluded (future agents won't understand)
+- They create implicit dependencies between code and specific content items
+- Property checks are self-documenting: the code explains _why_ something is
+  special
+
+**The rule**: If you're writing `=== CResource.something` or
+`!== CResource.something` in exclusion/filter logic, you're doing it wrong.
+Find the property that defines the behavior (e.g., `globalCost`, `groupId`,
+`isParent`) and check that instead.
+
 ### 2.4 Clean As You Go
 
 **Continuous improvement is expected, not optional.**
@@ -404,6 +459,14 @@ Kingdom Builder uses npm workspaces with five packages:
 | `engine`   | Deterministic game loop, effects, registries, services  |
 | `server`   | Fastify HTTP transport, session management, auth        |
 | `web`      | Vite + React client                                     |
+
+**Content Domain**: The `contents` package has strict structure rules. Before
+adding or modifying game data, read
+[`docs/content-domain-guide.md`](docs/content-domain-guide.md). Key rules:
+
+- Use **builder patterns only** in content files (no loops, no helper functions)
+- Technical code goes in `infrastructure/` subdirectory
+- Each definition should be self-contained and inline
 
 ### Import boundaries
 

@@ -1,15 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { Services } from '../../src/services';
-import { RULES } from '@kingdom-builder/contents';
 import {
+	RULES,
 	happinessTier,
 	effect,
 	passiveParams,
-} from '@kingdom-builder/contents/config/builders';
-import {
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents/config/builderShared';
+} from '@kingdom-builder/contents';
 import { createContentFactory } from '@kingdom-builder/testing';
 
 describe('Services', () => {

@@ -19,14 +19,15 @@ describe('buildOverviewIconSet', () => {
 	const expandAction = factory.action({ id: 'expand', icon: '🚀' });
 	const developActionId = 'develop_house';
 	const developAction = factory.action({ id: developActionId, icon: '🏗️' });
-	const councilRole = factory.population({ id: 'council', icon: '👑' });
-	const legionRole = factory.population({ id: 'legion', icon: '🛡️' });
+	const councilId = 'council';
+	const councilIcon = '👑';
+	const legionId = 'legion';
+	const legionIcon = '🛡️';
 	const registries: SessionRegistries = {
 		actions: factory.actions,
 		actionCategories: new Registry<ActionCategoryConfig>(),
 		buildings: factory.buildings,
 		developments: factory.developments,
-		// Populations are now unified under resources in V2 system
 		resources: {
 			gold: { key: 'gold', label: 'Gold', icon: '🥇' },
 			ap: { key: 'ap', label: 'AP', icon: '⚡' },
@@ -37,9 +38,8 @@ describe('buildOverviewIconSet', () => {
 		resources: {
 			gold: { label: 'Refined Gold', icon: '🪙' },
 			ap: { label: 'Reserve AP', icon: '✨' },
-			// Populations and stats are unified under resources in V2 system
-			[councilRole.id]: { label: 'Guiding Council', icon: councilRole.icon },
-			[legionRole.id]: { label: 'Legion Vanguard', icon: legionRole.icon },
+			[councilId]: { label: 'Guiding Council', icon: councilIcon },
+			[legionId]: { label: 'Legion Vanguard', icon: legionIcon },
 			army: { label: 'Army Strength', icon: '🛡️' },
 			fortification: { label: 'Fortification', icon: '🧱' },
 		},
@@ -102,8 +102,8 @@ describe('buildOverviewIconSet', () => {
 		expect(icons.ap).toBe('✨');
 		expect(icons.army).toBe('🛡️');
 		expect(icons.fortification).toBe('🧱');
-		expect(icons.council).toBe(councilRole.icon);
-		expect(icons.legion).toBe(legionRole.icon);
+		expect(icons.council).toBe(councilIcon);
+		expect(icons.legion).toBe(legionIcon);
 		expect(icons.land).toBe('🗺️');
 		expect(icons.slot).toBe('🧩');
 	});

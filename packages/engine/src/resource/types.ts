@@ -115,11 +115,30 @@ export interface RuntimeResourceTriggers {
 	readonly onValueDecrease: readonly EffectDef[];
 }
 
+/**
+ * Upkeep cost per unit of this resource, paid during the upkeep phase.
+ */
+export interface RuntimeResourceUpkeepCost {
+	readonly resourceId: string;
+	readonly amount: number;
+}
+
+/**
+ * Phase effects that run during specific game phases.
+ * These are triggered per-unit of the resource.
+ */
+export interface RuntimeResourcePhaseEffects {
+	readonly onPayUpkeepStep: readonly EffectDef[];
+	readonly onGainIncomeStep: readonly EffectDef[];
+	readonly onGainAPStep: readonly EffectDef[];
+}
+
 export interface RuntimeResourceDefinition
 	extends
 		RuntimeResourceMetadata,
 		RuntimeResourceBounds,
-		RuntimeResourceTriggers {
+		RuntimeResourceTriggers,
+		RuntimeResourcePhaseEffects {
 	readonly displayAsPercent: boolean;
 	readonly allowDecimal: boolean;
 	readonly trackValueBreakdown: boolean;
@@ -129,6 +148,7 @@ export interface RuntimeResourceDefinition
 	readonly resolvedGroupOrder: number | null;
 	readonly globalCost?: RuntimeResourceGlobalCostConfig;
 	readonly tierTrack?: RuntimeResourceTierTrack;
+	readonly upkeep?: RuntimeResourceUpkeepCost;
 }
 
 export interface RuntimeResourceGroupParent

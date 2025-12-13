@@ -1,14 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { RULES, PHASES } from '@kingdom-builder/contents';
 import {
+	RULES,
+	PHASES,
 	happinessTier,
 	effect,
 	passiveParams,
-} from '@kingdom-builder/contents/config/builders';
-import {
 	Types,
 	PassiveMethods,
-} from '@kingdom-builder/contents/config/builderShared';
+} from '@kingdom-builder/contents';
 import { advance } from '../src';
 import { createTestEngine } from './helpers';
 import type { RuleSet } from '../src/services';

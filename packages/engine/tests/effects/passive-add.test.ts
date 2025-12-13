@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runEffects } from '../../src/index.ts';
-import { Resource, Stat } from '@kingdom-builder/contents';
+import { Resource } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
 import type { EffectDef } from '../../src/effects/index.ts';
 import { resourceAmountParams } from '../helpers/resourceParams.ts';
@@ -59,7 +59,7 @@ describe('passive:add effect', () => {
 					type: 'resource',
 					method: 'add',
 					params: resourceAmountParams({
-						resourceId: Stat.armyStrength,
+						resourceId: Resource.armyStrength,
 						amount: 1,
 					}),
 				},
@@ -69,15 +69,15 @@ describe('passive:add effect', () => {
 		// Stat values ARE Resource IDs - access via resourceValues
 		// With skipInitialSetup, stats start as undefined (treated as 0)
 		const before =
-			engineContext.activePlayer.resourceValues[Stat.armyStrength] ?? 0;
+			engineContext.activePlayer.resourceValues[Resource.armyStrength] ?? 0;
 		runEffects([effect], engineContext);
-		expect(engineContext.activePlayer.resourceValues[Stat.armyStrength]).toBe(
-			before + 1,
-		);
+		expect(
+			engineContext.activePlayer.resourceValues[Resource.armyStrength],
+		).toBe(before + 1);
 		engineContext.passives.removePassive('temp', engineContext);
 		// After removing passive, value returns to 0 (undefined treated as 0)
 		expect(
-			engineContext.activePlayer.resourceValues[Stat.armyStrength] ?? 0,
+			engineContext.activePlayer.resourceValues[Resource.armyStrength] ?? 0,
 		).toBe(before);
 	});
 });

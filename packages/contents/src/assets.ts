@@ -1,4 +1,4 @@
-import { BROOM_ICON, GENERAL_RESOURCE_ICON, RESOURCE_TRANSFER_ICON } from './defs';
+import { BROOM_ICON, GENERAL_RESOURCE_ICON, RESOURCE_TRANSFER_ICON } from './infrastructure/defs';
 
 export const UPKEEP_INFO = {
 	icon: BROOM_ICON,

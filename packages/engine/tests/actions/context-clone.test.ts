@@ -1,9 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import {
-	Resource as CResource,
-	Stat as CStat,
-	PopulationRole as CPopulationRole,
-} from '@kingdom-builder/contents';
+import { Resource as CResource } from '@kingdom-builder/contents';
 import { cloneEngineContext } from '../../src/actions/context_clone.ts';
 import { createAISystem } from '../../src/ai/index.ts';
 import type { ResourceSourceFrame } from '../../src/resource_sources/index.ts';
@@ -51,14 +47,14 @@ describe('cloneEngineContext', () => {
 		player.resourceTouched[fallbackResourceId] = undefined as never;
 		player.resourceTierIds[fallbackResourceId] = undefined as never;
 		player.resourceBoundTouched[fallbackResourceId] = undefined as never;
-		// CPopulationRole.Legion IS the Resource ID directly
-		player.resourceValues[CPopulationRole.Legion] = 2;
-		player.resourceValues[CPopulationRole.Council] = undefined as never;
-		// CStat.armyStrength IS the Resource ID directly
-		player.resourceValues[CStat.armyStrength] = 3;
-		player.resourceTouched[CStat.armyStrength] = true;
-		const armyStrengthId = CStat.armyStrength;
-		const happinessStatId = CStat.happiness;
+		// CResource.legion IS the Resource ID directly
+		player.resourceValues[CResource.legion] = 2;
+		player.resourceValues[CResource.council] = undefined as never;
+		// CResource.armyStrength IS the Resource ID directly
+		player.resourceValues[CResource.armyStrength] = 3;
+		player.resourceTouched[CResource.armyStrength] = true;
+		const armyStrengthId = CResource.armyStrength;
+		const happinessStatId = CResource.happiness;
 
 		const land = player.lands[0]!;
 		land.upkeep = { [CResource.gold]: 1 };
@@ -158,9 +154,9 @@ describe('cloneEngineContext', () => {
 		expect(
 			clonedPlayer.resourceBoundTouched[fallbackResourceId],
 		).toBeUndefined();
-		expect(clonedPlayer.resourceValues[CStat.armyStrength]).toBe(3);
-		expect(clonedPlayer.resourceValues[CPopulationRole.Legion]).toBe(2);
-		expect(clonedPlayer.resourceValues[CPopulationRole.Council]).toBe(0);
+		expect(clonedPlayer.resourceValues[CResource.armyStrength]).toBe(3);
+		expect(clonedPlayer.resourceValues[CResource.legion]).toBe(2);
+		expect(clonedPlayer.resourceValues[CResource.council]).toBe(0);
 		expect(clonedPlayer.resourceSources[armyStrengthId]['source-id']).not.toBe(
 			player.resourceSources[armyStrengthId]['source-id'],
 		);

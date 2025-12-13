@@ -81,8 +81,30 @@ export interface ContentResourceTriggers {
 	readonly onValueDecrease?: readonly EffectDef[];
 }
 
+/**
+ * Upkeep cost per unit of this resource, paid during the upkeep phase.
+ */
+export interface ContentResourceUpkeepCost {
+	readonly resourceId: string;
+	readonly amount: number;
+}
+
+/**
+ * Phase effects that run during specific game phases.
+ * These are triggered per-unit of the resource.
+ */
+export interface ContentResourcePhaseEffects {
+	readonly onPayUpkeepStep?: readonly EffectDef[];
+	readonly onGainIncomeStep?: readonly EffectDef[];
+	readonly onGainAPStep?: readonly EffectDef[];
+}
+
 export interface ContentResourceDefinition
-	extends ContentMetadata, ContentBounds, ContentResourceTriggers {
+	extends
+		ContentMetadata,
+		ContentBounds,
+		ContentResourceTriggers,
+		ContentResourcePhaseEffects {
 	readonly displayAsPercent?: boolean;
 	readonly allowDecimal?: boolean;
 	readonly trackValueBreakdown?: boolean;
@@ -91,6 +113,7 @@ export interface ContentResourceDefinition
 	readonly groupOrder?: number;
 	readonly globalCost?: { amount: number };
 	readonly tierTrack?: ContentTierTrack;
+	readonly upkeep?: ContentResourceUpkeepCost;
 }
 
 export interface ContentResourceGroupParent

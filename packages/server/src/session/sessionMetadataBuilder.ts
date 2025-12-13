@@ -17,7 +17,7 @@ import {
 	RESOURCE_CATEGORY_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
 import type {
 	Registry,
 	SerializedRegistry,

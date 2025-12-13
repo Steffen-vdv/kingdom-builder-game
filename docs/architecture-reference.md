@@ -139,7 +139,7 @@ resolution. Used for branching logic (e.g., "choose one of these options").
 ### Triggers
 
 Named events that fire effect lists automatically. Effects are collected from
-buildings, developments, passives, and population roles via
+buildings, developments, lands, passives, and resources via
 `collectTriggerEffects()`.
 
 **Phase-level triggers:**
@@ -162,6 +162,25 @@ buildings, developments, passives, and population roles via
 
 - `onValueIncrease` - Fires per unit of resource increase
 - `onValueDecrease` - Fires per unit of resource decrease
+
+**Resource phase effects:**
+
+Resources can define effects that fire during specific phase steps. These are
+triggered **per unit** of the resource the player owns.
+
+```typescript
+resource('resource:core:council')
+	.upkeep(Resource.gold, 2) // Pay 2 gold per council during upkeep
+	.onGainAPStep(councilApEffect) // Gain 1 AP per council during AP step
+	.build();
+```
+
+- `.upkeep(resourceId, amount)` - Pay cost per unit during PayUpkeep step
+- `.onPayUpkeepStep(effects)` - Run effects per unit during PayUpkeep step
+- `.onGainIncomeStep(effects)` - Run effects per unit during GainIncome step
+- `.onGainAPStep(effects)` - Run effects per unit during GainAP step
+
+These are data-driven alternatives to hardcoding phase effects in `phases.ts`.
 
 **Build triggers:**
 

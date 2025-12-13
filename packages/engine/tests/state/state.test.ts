@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { Land, PlayerState, GameState } from '../../src/state/index.ts';
-import { Resource, Stat } from '@kingdom-builder/contents';
 import {
+	Resource,
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
 import { createRuntimeResourceCatalog } from '../../src/resource/index.ts';
 
 const RUNTIME_RESOURCE_CATALOG = createRuntimeResourceCatalog({
@@ -23,25 +23,25 @@ describe('State classes', () => {
 	it('updates resources and stats via resourceValues', () => {
 		const player = new PlayerState('A', 'Alice');
 		player.resourceValues[Resource.gold] = 5;
-		player.resourceValues[Stat.populationMax] = 3;
-		player.resourceValues[Stat.warWeariness] = 2;
+		player.resourceValues[Resource.populationMax] = 3;
+		player.resourceValues[Resource.warWeariness] = 2;
 		expect(player.resourceValues[Resource.gold]).toBe(5);
-		expect(player.resourceValues[Stat.populationMax]).toBe(3);
-		expect(player.resourceValues[Stat.warWeariness]).toBe(2);
+		expect(player.resourceValues[Resource.populationMax]).toBe(3);
+		expect(player.resourceValues[Resource.warWeariness]).toBe(2);
 	});
 
 	it('defaults values to undefined until set', () => {
 		const player = new PlayerState('A', 'Alice');
-		expect(player.resourceValues[Stat.warWeariness]).toBeUndefined();
+		expect(player.resourceValues[Resource.warWeariness]).toBeUndefined();
 	});
 
 	it('tracks resource touched when values become non-zero', () => {
 		const player = new PlayerState('A', 'Alice');
-		expect(player.resourceTouched[Stat.armyStrength]).toBeFalsy();
-		player.resourceValues[Stat.armyStrength] = 1;
+		expect(player.resourceTouched[Resource.armyStrength]).toBeFalsy();
+		player.resourceValues[Resource.armyStrength] = 1;
 		// Note: resourceTouched is updated by setResourceValue, not raw assignment
 		// For now test the basic structure
-		expect(player.resourceValues[Stat.armyStrength]).toBe(1);
+		expect(player.resourceValues[Resource.armyStrength]).toBe(1);
 	});
 
 	it('provides active and opponent players', () => {

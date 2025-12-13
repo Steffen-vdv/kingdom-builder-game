@@ -1,6 +1,6 @@
 import type { EffectConfig } from '@kingdom-builder/protocol';
 import { PhaseId, PhaseStepId } from './phaseTypes';
-import { actionDiscountModifier, growthBonusEffect, happinessModifierId, happinessPassiveId, happinessTierId, resourceGainModifier } from './happinessHelpers';
+import { actionDiscountModifier, growthBonusEffect, happinessModifierId, happinessPassiveId, happinessTierId, resourceGainModifier } from './infrastructure/happinessHelpers';
 
 export const HAPPINESS_TIER_ICONS = {
 	despair: '😡',

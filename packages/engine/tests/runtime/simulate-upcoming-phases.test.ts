@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
 	PhaseId,
 	Resource as CResource,
-	Stat as CStat,
-	PopulationRole as CPopulationRole,
 	RULES,
 } from '@kingdom-builder/contents';
 import { createTestEngine } from '../helpers.ts';
@@ -12,20 +10,11 @@ import { resourceAmountParams } from '../helpers/resourceParams.ts';
 
 function resetPlayerState(context: ReturnType<typeof createTestEngine>) {
 	const player = context.game.players[0]!;
-	// Reset Resource values - keys ARE the Resource IDs now
+	// Reset all resource values (now unified under CResource)
 	for (const resourceId of Object.values(CResource)) {
 		player.resourceValues[resourceId] = 0;
-	}
-	for (const statId of Object.values(CStat)) {
-		player.resourceValues[statId] = 0;
-		player.resourceSources[statId] = {};
-	}
-	// Reset resourceTouched using stat IDs as keys
-	for (const statId of Object.values(CStat)) {
-		player.resourceTouched[statId] = false;
-	}
-	for (const roleId of Object.values(CPopulationRole)) {
-		player.resourceValues[roleId] = 0;
+		player.resourceSources[resourceId] = {};
+		player.resourceTouched[resourceId] = false;
 	}
 	// Reset phase/step skip flags
 	for (const key of Object.keys(player.skipPhases)) {

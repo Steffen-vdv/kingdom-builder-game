@@ -5,12 +5,10 @@ import {
 	DEVELOPMENTS,
 	PHASES,
 	RULES,
-} from '@kingdom-builder/contents';
-import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_CATEGORY_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
 import { Registry, actionSchema } from '@kingdom-builder/protocol';
 import type { ActionConfig } from '@kingdom-builder/protocol';
 

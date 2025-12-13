@@ -54,10 +54,52 @@ export function collectTriggerEffects(
 	player: PlayerState = engineContext.activePlayer,
 ): TriggerEffectBundle[] {
 	const bundles: TriggerEffectBundle[] = [];
-	// Population triggers are now handled via the unified resource system:
-	// - Population values are resources (e.g., 'resource:core:council')
-	// - Population upkeep is defined in phase step effects
-	// - Population triggers like onGainAPStep are defined in phase steps
+
+	// Collect resource phase effects (upkeep, income, AP gain per resource unit)
+	for (const resource of engineContext.resourceCatalog.resources.ordered) {
+		const playerValue = player.resourceValues[resource.id] ?? 0;
+		if (playerValue <= 0) {
+			continue;
+		}
+		const source = { type: 'resource', id: resource.id };
+		// Handle upkeep cost
+		if (trigger === 'onPayUpkeepStep' && resource.upkeep) {
+			for (let i = 0; i < playerValue; i++) {
+				pushUpkeepEffect(
+					bundles,
+					player,
+					source,
+					resource.upkeep.resourceId,
+					resource.upkeep.amount,
+				);
+			}
+		}
+		// Handle phase step effects
+		const effectKey = trigger as
+			| 'onPayUpkeepStep'
+			| 'onGainIncomeStep'
+			| 'onGainAPStep';
+		const phaseEffects = resource[effectKey];
+		if (
+			Array.isArray(phaseEffects) &&
+			phaseEffects.length > 0 &&
+			(effectKey === 'onPayUpkeepStep' ||
+				effectKey === 'onGainIncomeStep' ||
+				effectKey === 'onGainAPStep')
+		) {
+			for (let i = 0; i < playerValue; i++) {
+				const clones = phaseEffects.map(cloneEffect);
+				bundles.push({
+					effects: clones,
+					frames: () => ({
+						kind: 'resource' as const,
+						id: resource.id,
+					}),
+				});
+			}
+		}
+	}
+
 	for (const land of player.lands) {
 		if (trigger === 'onPayUpkeepStep' && land.upkeep) {
 			for (const [key, amount] of Object.entries(land.upkeep)) {

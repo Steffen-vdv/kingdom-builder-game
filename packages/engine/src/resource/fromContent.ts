@@ -252,6 +252,16 @@ export function createRuntimeResourceCatalog({
 		const onValueDecrease = Object.freeze([
 			...(definition.onValueDecrease ?? []),
 		]);
+		const onPayUpkeepStep = Object.freeze([
+			...(definition.onPayUpkeepStep ?? []),
+		]);
+		const onGainIncomeStep = Object.freeze([
+			...(definition.onGainIncomeStep ?? []),
+		]);
+		const onGainAPStep = Object.freeze([...(definition.onGainAPStep ?? [])]);
+		const upkeep = definition.upkeep
+			? Object.freeze({ ...definition.upkeep })
+			: undefined;
 		const runtimeDefinition: RuntimeResourceDefinition = Object.freeze({
 			...metadata,
 			...bounds,
@@ -264,8 +274,12 @@ export function createRuntimeResourceCatalog({
 			resolvedGroupOrder,
 			onValueIncrease,
 			onValueDecrease,
+			onPayUpkeepStep,
+			onGainIncomeStep,
+			onGainAPStep,
 			...(globalCost ? { globalCost } : {}),
 			...(tierTrack ? { tierTrack } : {}),
+			...(upkeep ? { upkeep } : {}),
 		});
 
 		runtimeResources.push(runtimeDefinition);

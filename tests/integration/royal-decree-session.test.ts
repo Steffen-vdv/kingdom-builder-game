@@ -4,17 +4,14 @@ import {
 	ACTIONS,
 	BUILDINGS,
 	DEVELOPMENTS,
-	POPULATIONS,
 	PHASES,
 	RULES,
 	Resource,
 	getResourceId,
 	type ResourceKey,
-} from '@kingdom-builder/contents';
-import {
 	RESOURCE_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
-} from '@kingdom-builder/contents/registries/resource';
+} from '@kingdom-builder/contents';
 
 interface EffectGroupOption {
 	id: string;
@@ -41,7 +38,6 @@ describe('royal decree via session', () => {
 			actions: ACTIONS,
 			buildings: BUILDINGS,
 			developments: DEVELOPMENTS,
-			populations: POPULATIONS,
 			phases: PHASES,
 			rules: RULES,
 			resourceCatalog: {

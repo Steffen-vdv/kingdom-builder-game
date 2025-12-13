@@ -26,22 +26,22 @@ export function createResourceDescriptors(
 	);
 }
 
-type PopulationDescriptor = {
+interface PopulationDescriptor {
 	readonly id: string;
 	readonly label: string;
 	readonly icon?: string;
-};
+}
 
 export function createPopulationDescriptors(
 	populationDefinitions: ActionsPanelContent['registeredPopulationRoles'],
 ): Record<string, PopulationDescriptor> {
 	return Object.fromEntries(
-		populationDefinitions.map((definition) => [
-			definition.id,
+		populationDefinitions.map((entry) => [
+			entry.id,
 			{
-				id: definition.id,
-				label: definition.name,
-				icon: definition.icon,
+				id: entry.id,
+				label: entry.name,
+				icon: entry.icon,
 			},
 		]),
 	);
