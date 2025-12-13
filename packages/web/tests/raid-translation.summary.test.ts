@@ -144,13 +144,9 @@ describe('raid translation summary', () => {
 			]);
 
 			const description = describeContent('action', attack.id, translation);
-			const powerLabel = iconLabel(
-				COMBAT_STAT_CONFIG.power.icon,
-				COMBAT_STAT_CONFIG.power.label,
-				'attack power',
-			);
+			// New format: [powerIcon]Attack opponent's [targetIcon] [targetLabel]
 			expect(description).toEqual([
-				`Attack opponent's ${targetDisplay} with your ${powerLabel}`,
+				`${COMBAT_STAT_CONFIG.power.icon}Attack opponent's ${targetDisplay}`,
 			]);
 		} finally {
 			if (originalResource) {

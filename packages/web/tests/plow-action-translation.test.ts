@@ -165,23 +165,22 @@ describe('plow action translation', () => {
 		const actionKeyword = translation.assets.action ?? { icon: '🎯' };
 		const keywords = translation.assets.keywords ?? { cost: 'Cost' };
 		const passiveIcon = (plowPassive as { icon?: string })?.icon ?? '';
-		const passiveName =
-			(plowPassive as { name?: string })?.name ?? SYNTHETIC_PASSIVE_INFO.label;
 		// Simplified format:
-		// modifier icon + target icon: sign + resource icon + amount + keyword
+		// Summary: modifier icon + target icon + keyword: resource icon + sign + amount
+		// Passive summary: icon only (no name)
 		const sign = modAmt >= 0 ? '+' : '-';
 		expect(summary).toEqual([
 			`${expand.icon} ${expand.name}`,
 			`${till.icon} ${till.name}`,
 			{
-				title: `+♾️: ${passiveIcon} ${passiveName}`,
+				title: `+♾️: ${passiveIcon}`,
 				items: [
-					`${modifierIcon}${actionKeyword.icon}: ${sign}${modIcon}${Math.abs(modAmt)} ${keywords.cost}`,
+					`${modifierIcon}${actionKeyword.icon} ${keywords.cost}: ${modIcon}${sign}${Math.abs(modAmt)}`,
 				],
 			},
 			{
 				title: `On your ${upkeepIcon} ${upkeepLabel} Phase`,
-				items: [`-♾️: ${passiveIcon} ${passiveName}`],
+				items: [`-♾️: ${passiveIcon}`],
 			},
 		]);
 	});
@@ -272,7 +271,7 @@ describe('plow action translation', () => {
 		const slotIcon = slotAsset.icon ?? SYNTHETIC_SLOT_INFO.icon;
 		const slotLabel = slotAsset.label ?? SYNTHETIC_SLOT_INFO.label;
 		// Simplified format:
-		// modifier icon + target label: sign + resource icon + amount + keyword
+		// Describe: modifier icon + target label + keyword: resource icon + space + sign + amount
 		expect(effects).toEqual([
 			{
 				title: `${expand.icon} ${expand.name}`,
@@ -290,7 +289,7 @@ describe('plow action translation', () => {
 			{
 				title: `Gain ♾️ Passive: ${passiveIcon} ${passiveName}`,
 				items: [
-					`${modifierIcon}${actionKeyword.icon} All ${actionKeyword.plural}: ${sign}${modIcon}${modMagnitude} ${keywords.cost}`,
+					`${modifierIcon}${actionKeyword.icon} All ${actionKeyword.plural} ${keywords.cost}: ${modIcon} ${sign}${modMagnitude}`,
 				],
 			},
 			{

@@ -107,14 +107,14 @@ describe('passive formatter duration metadata', () => {
 			festivalPhase?.icon,
 		);
 
-		// New split format: add entry + remove entry under trigger
+		// New split format: add entry + remove entry under trigger (icon only in summary)
 		const passiveIcon = '✨';
 		const passiveName = 'Festival Spirit';
 		expect(summary).toEqual([
-			{ title: `+♾️: ${passiveIcon} ${passiveName}`, items: [] },
+			{ title: `+♾️: ${passiveIcon}`, items: [] },
 			{
 				title: `On your ${festivalPhase?.icon} ${festivalPhase?.label} Phase`,
-				items: [`-♾️: ${passiveIcon} ${passiveName}`],
+				items: [`-♾️: ${passiveIcon}`],
 			},
 		]);
 		expect(description).toEqual([
@@ -164,12 +164,13 @@ describe('passive formatter duration metadata', () => {
 		);
 
 		// Missing icon/name shows error indicators - no silent fallbacks
+		// Summary shows MISSING_PASSIVE_ICON (❓) when icon is not in content
 		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
 		expect(summary).toEqual([
-			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
+			{ title: '+♾️: ❓', items: [] },
 			{
 				title: `On your ${phaseLabel} Phase`,
-				items: ['-♾️: ❓ ⚠️ MISSING'],
+				items: ['-♾️: ❓'],
 			},
 		]);
 	});
@@ -209,12 +210,13 @@ describe('passive formatter duration metadata', () => {
 		const resolvedPhase = context.phases.find((phase) => phase.id === growthId);
 
 		// Missing icon/name shows error indicators - no silent fallbacks
+		// Summary shows MISSING_PASSIVE_ICON (❓) when icon is not in content
 		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
 		expect(summary).toEqual([
-			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
+			{ title: '+♾️: ❓', items: [] },
 			{
 				title: `On your ${phaseLabel} Phase`,
-				items: ['-♾️: ❓ ⚠️ MISSING'],
+				items: ['-♾️: ❓'],
 			},
 		]);
 	});
@@ -270,12 +272,13 @@ describe('passive formatter duration metadata', () => {
 		);
 
 		// Missing icon/name shows error indicators - no silent fallbacks
+		// Summary shows MISSING_PASSIVE_ICON (❓) when icon is not in content
 		const phaseLabel = `${resolvedPhase?.icon} ${resolvedPhase?.label}`;
 		expect(summary).toEqual([
-			{ title: '+♾️: ❓ ⚠️ MISSING', items: [] },
+			{ title: '+♾️: ❓', items: [] },
 			{
 				title: `On your ${phaseLabel} Phase`,
-				items: ['-♾️: ❓ ⚠️ MISSING'],
+				items: ['-♾️: ❓'],
 			},
 		]);
 	});
@@ -299,11 +302,9 @@ describe('passive formatter duration metadata', () => {
 		const description = describeEffects([passiveWithoutMetadata], context);
 		const log = logEffects([passiveWithoutMetadata], context);
 
-		// Summary shows error indicators
-		expect((summary[0] as { title: string }).title).toBe('+♾️: ❓ ⚠️ MISSING');
-		expect((summary[1] as { items: string[] }).items[0]).toBe(
-			'-♾️: ❓ ⚠️ MISSING',
-		);
+		// Summary shows MISSING_PASSIVE_ICON (❓) when icon is not in content
+		expect((summary[0] as { title: string }).title).toBe('+♾️: ❓');
+		expect((summary[1] as { items: string[] }).items[0]).toBe('-♾️: ❓');
 
 		// Description shows error indicators
 		expect((description[0] as { title: string }).title).toBe(

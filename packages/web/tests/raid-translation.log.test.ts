@@ -82,11 +82,12 @@ describe('raid translation log', () => {
 		}
 		const attackHeadline = formatActionTitle(attackDefinition, translation);
 
-		// Simplified attack description - mechanics details removed
+		// Simplified attack description - [powerIcon]Attack opponent's [targetLabel]
+		const powerIcon = powerStat.icon ?? '';
 		expect(log).toHaveLength(6);
 		expect(log[0]).toMatchObject({ text: attackHeadline, depth: 0 });
 		expect(log[1]).toMatchObject({
-			text: `Attack opponent's ${castleLabel} with your ${powerLabel}`,
+			text: `${powerIcon}Attack opponent's ${castleLabel}`,
 			depth: 1,
 		});
 		expect(log[2]).toMatchObject({
@@ -150,11 +151,12 @@ describe('raid translation log', () => {
 			translation,
 		);
 
-		// Simplified attack description - mechanics details removed
+		// Simplified attack description - [powerIcon]Attack opponent's [targetLabel]
+		const powerIcon = powerStat.icon ?? '';
 		expect(log).toHaveLength(4);
 		expect(log[0]).toMatchObject({ text: buildingAttackHeadline, depth: 0 });
 		expect(log[1]).toMatchObject({
-			text: `Attack opponent's ${buildingDisplay} with your ${powerLabel}`,
+			text: `${powerIcon}Attack opponent's ${buildingDisplay}`,
 			depth: 1,
 		});
 		expect(log[2]).toMatchObject({
