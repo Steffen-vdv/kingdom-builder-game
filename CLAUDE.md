@@ -164,59 +164,6 @@ Action only happens when explicitly paired with action words:
 
 If the user just says "check X", you check X and report. Period.
 
-### Environment setup (web sessions)
-
-When running on Claude Code web, a **SessionStart hook** automatically runs to
-set up your environment. This takes **4–5 minutes** to complete.
-
-**What it does:**
-
-- Installs npm dependencies (`npm ci`)
-- Initializes Husky git hooks
-- Rebuilds native bindings (better-sqlite3)
-
-**CRITICAL: Wait for setup before running tests or committing.**
-
-The hook runs asynchronously. If you try to run tests, typecheck, or commit
-before it completes, you will get errors (missing node_modules, missing
-binaries, etc.).
-
-**How to check if setup is complete:**
-
-```bash
-cat /tmp/claude-env-status
-```
-
-- `SETUP_IN_PROGRESS` → Still running, wait
-- `READY` → Setup complete, you can proceed
-- `FAILED` → Something went wrong, check the log
-
-For detailed progress, check: `cat /tmp/claude-session-start-hook.log`
-
-**Quick verification commands:**
-
-```bash
-# Check if node_modules exists
-ls node_modules | head -3
-
-# Check if Husky is initialized
-ls .husky/_
-
-# Check if better-sqlite3 binary exists
-ls node_modules/better-sqlite3/build/Release/better_sqlite3.node
-```
-
-If all three checks pass, your environment is ready.
-
-**If the user asks you to implement something immediately:**
-
-1. First check if setup is complete (using the log check above)
-2. If not complete, inform the user: "Environment setup is still running
-   (~X minutes remaining). I'll proceed with planning/exploration while it
-   completes."
-3. Use the wait time productively: read code, plan your approach, ask
-   clarifying questions
-
 ---
 
 ## 1. Request Verification Protocol
