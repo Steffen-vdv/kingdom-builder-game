@@ -20,6 +20,8 @@
 	"devDependencies": {
 		"@kingdom-builder/contents": "workspace:*",
 		"@kingdom-builder/engine": "workspace:*",
+		"@kingdom-builder/server": "workspace:*",
+		"fastify": "^5.5.0",
 		"@types/react": "^19.2.7",
 		"@types/react-dom": "^19.2.3",
 		"@typescript-eslint/eslint-plugin": "^8.49.0",
