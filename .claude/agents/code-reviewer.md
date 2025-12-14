@@ -4,11 +4,11 @@ description: >
   Adversarial code quality gate. MANDATORY before pushing. Reviews with extreme
   skepticism — blocking by default until the implementation is proven correct.
 tools:
-  - Read
   - Glob
   - Grep
-  - Bash
-  - Write
+  - Read
+  - WebFetch
+  - WebSearch
 model: sonnet
 ---
 
