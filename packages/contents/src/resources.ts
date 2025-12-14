@@ -15,7 +15,7 @@ import { resource, resourceCategory, resourceGroup, boundTo } from './infrastruc
 import type { ResourceDefinition, ResourceCategoryDefinition, ResourceGroupDefinition } from './infrastructure/resource';
 import { resourceChange } from './infrastructure/resource/effects';
 import { PassiveMethods, ResourceMethods, Types } from './infrastructure/builderShared';
-import { effect, passiveParams, resourceAssignmentPassiveId, resourceEvaluator } from './infrastructure/builders';
+import { effect, passiveParams, resourceAssignmentPassiveId } from './infrastructure/builders';
 import { resourceAmountChange } from './infrastructure/helpers/resourceEffects';
 import { Resource } from './internal';
 import { getHappinessResourceDefinition } from './infrastructure/happinessResource';
@@ -180,10 +180,10 @@ function buildPopulationResources(): readonly ResourceDefinition[] {
 	const fortifierOnValueDecrease = effect(Types.Passive, PassiveMethods.REMOVE).params(fortifierPassiveParams).build();
 
 	// Council onGainAPStep effect: +1 AP per council member
-	const councilApGainEffect = effect()
-		.evaluator(resourceEvaluator().param('id', Resource.council).resourceId(Resource.council))
-		.effect(effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.ap, 1)).build())
-		.build();
+	// Note: The trigger collection loop in triggers.ts already creates one bundle
+	// per council unit, so no evaluator is needed here. Using an evaluator would
+	// cause N² AP gain (bundles × evaluator count) instead of N.
+	const councilApGainEffect = effect(Types.Resource, ResourceMethods.ADD).params(resourceAmountChange(Resource.ap, 1)).build();
 
 	cachedPopulationResources = [
 		resource('resource:core:council')
