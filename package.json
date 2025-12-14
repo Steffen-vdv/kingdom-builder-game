@@ -7,7 +7,6 @@
 		"packages/*"
 	],
 	"scripts": {
-		"postinstall": "node -e \"try{require('child_process').execSync('pnpm rebuild better-sqlite3',{stdio:'ignore'})}catch{}\"",
 		"ensure:dev-deps": "node scripts/ensure-dev-dependencies.cjs",
 		"predev": "run-s ensure:dev-deps predev:build-contents",
 		"dev": "node scripts/run-with-auth.mjs dev:run",
@@ -100,6 +99,12 @@
 		"*.{ts,tsx}": [
 			"node scripts/run-eslint.mjs --max-warnings=0",
 			"bash -c 'tsc --noEmit'"
+		]
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"better-sqlite3",
+			"esbuild"
 		]
 	}
 }

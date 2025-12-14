@@ -18,8 +18,8 @@
 		"react-dom": "^19.2.3"
 	},
 	"devDependencies": {
-		"@kingdom-builder/contents": "^0.1.0",
-		"@kingdom-builder/engine": "^0.1.0",
+		"@kingdom-builder/contents": "workspace:*",
+		"@kingdom-builder/engine": "workspace:*",
 		"@types/react": "^19.2.7",
 		"@types/react-dom": "^19.2.3",
 		"@typescript-eslint/eslint-plugin": "^8.49.0",
