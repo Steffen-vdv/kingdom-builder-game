@@ -6,11 +6,11 @@ description: >
 model: opus
 permissionMode: bypassPermissions
 tools:
-  - Read
   - Glob
   - Grep
-  - Bash
-  - Write
+  - Read
+  - WebFetch
+  - WebSearch
 ---
 
 # Code Reviewer — Adversarial Quality Gate
