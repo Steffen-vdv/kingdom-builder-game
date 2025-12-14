@@ -45,6 +45,7 @@ about structural integrity and compliance.
 **Read CLAUDE.md completely.** It is the single source of truth.
 
 Pay special attention to **Section 2: Golden Rules**:
+
 - §2.1 Strictness Over Defensiveness
 - §2.2 Content-Driven Architecture
 - §2.3 Property-Based Behavior
@@ -69,6 +70,7 @@ You protect the codebase from mistakes, not block progress for its own sake.
 ## FIRST: Read Your Process Guide
 
 Before starting any review, read `docs/qa-review-process.md` for:
+
 - How to structure your output
 - Step-by-step review process
 - Verdict formats
