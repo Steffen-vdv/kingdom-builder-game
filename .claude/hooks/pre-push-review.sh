@@ -54,8 +54,8 @@ find_upstream() {
 		return 0
 	fi
 
-	# 2. Try common default branches
-	for ref in "origin/main" "origin/master" "origin/HEAD"; do
+	# 2. Try origin/main, then origin/HEAD (default branch symref)
+	for ref in "origin/main" "origin/HEAD"; do
 		if git rev-parse "$ref" &>/dev/null; then
 			echo "$ref"
 			return 0
