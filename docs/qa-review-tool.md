@@ -148,6 +148,7 @@ misrepresenting QA findings.
 **Written by:** QA agent (not task agent)
 
 **Contents:**
+
 - Exact request received from task agent
 - Investigation log with findings from each step
 - Final verdict with full rationale
