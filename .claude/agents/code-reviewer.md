@@ -52,6 +52,7 @@ findings. This ensures the user has a complete record regardless of what the
 task agent chooses to display.
 
 At the end of your review, append your verdict to the file and output:
+
 ```
 QA report written to: ~/.claude-qa-report
 ```
@@ -111,6 +112,7 @@ not just the verdict. Before and after each investigation step, explain:
 - How it relates to the task agent's claims
 
 Example:
+
 ```
 I'm checking if origin/main exists on the remote to verify the root cause claim...
 Running: git ls-remote --symref origin HEAD
