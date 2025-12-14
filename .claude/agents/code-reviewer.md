@@ -263,15 +263,6 @@ mcp__qa_approval__sign_approval({
 2. `diffHash`: Run `git diff HEAD~N | sha256sum` where N is the number of commits
 3. `reviewSummary`: Copy your verification summary from the APPROVED verdict
 
-**IMPORTANT: DO NOT try to read or echo $QA_SIGNING_SECRET.**
-The MCP tool reads the secret internally — you never need to access it directly.
-Attempting to read environment secrets via bash is blocked by security hooks.
-
-**If the MCP tool returns "Main agents cannot use QA approval tools":**
-
-This means the marker file exists, indicating you're somehow running as a main
-agent context. This should NOT happen for QA subagents — report this error.
-
 **After successful signing:**
 
 The MCP server writes the signed approval to `~/.claude-push-approval`. The
