@@ -169,7 +169,10 @@ class ResourceTransferEndpointBuilderImpl implements ResourceTransferEndpointBui
 
 	changePercent(percent: number): this {
 		ensureFinite(percent, 'percent');
-		this.changeParams = { type: 'percent', modifiers: [percent] };
+		// Convert whole percentage to decimal (e.g., 25 → 0.25)
+		// The reconciliation system multiplies modifiers by currentValue,
+		// so 0.25 * 100 = 25 (correct 25% of 100)
+		this.changeParams = { type: 'percent', modifiers: [percent / 100] };
 		return this;
 	}
 

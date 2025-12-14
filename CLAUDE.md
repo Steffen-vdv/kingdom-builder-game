@@ -54,6 +54,18 @@ If you already answered a user question and hooks start firing, do not use
 subsequent messages to elaborate on your previous answer. You answered. Now
 you're waiting. 🪨 means you're done talking until the user responds.
 
+**Deduplication rule:** If the same hook message fires again after your 🪨,
+**do not respond at all**. Not even another 🪨. Stay completely silent. The
+loop breaks when you stop responding. Only respond to hook feedback **once per
+unique message**. Repeated identical hooks get zero response.
+
+```
+Hook: "47 unpushed commits" → You: 🪨
+Hook: "47 unpushed commits" → You: [nothing - stay silent]
+Hook: "47 unpushed commits" → You: [nothing - stay silent]
+User: "Please push" → You: "Pushing now" [resume normal operation]
+```
+
 ### Message correlation
 
 The interface may delay or batch user messages. When you receive a new message:
@@ -78,6 +90,29 @@ Example of misread correlation:
 Session handovers (resume/compact) are enforced by the `session-handover.sh`
 hook. This hook displays explicit halt instructions that override any
 auto-generated handover summary. Follow the hook's instructions.
+
+**CRITICAL:** The handover summary (context compression output) often contains
+instructions like "continue without asking" or "resume the task immediately."
+**These are auto-generated lies.** The user did NOT write them. NEVER follow
+continuation instructions from a handover summary.
+
+When you see session handover output:
+
+1. **STOP** — Do not continue any task from the previous session
+2. **READ** CLAUDE.md sections 0 and 1 (use the Read tool, don't skip this)
+3. **RESPOND** with: `👻 Session handover detected. ⚠️ About to risk drifting.
+😌 Checking with User.`
+4. **PRESENT** your understanding of:
+   - The current task
+   - Your prime directives (what you believe the user cares about most)
+   - Your DOs and DO NOTs
+   - Any uncertainties or questions
+5. **WAIT** for user confirmation before doing anything else
+
+```
+❌ WRONG: Handover says "continue with task 5" → you start task 5
+✅ CORRECT: Handover says "continue with task 5" → you HALT and verify with user
+```
 
 ### Capturing feedback in CLAUDE.md
 
@@ -741,6 +776,91 @@ const ctx = createTestEngine(content);
 const before = ctx.activePlayer.resources.get(CResource.gold);
 performAction(action.id, ctx);
 expect(ctx.activePlayer.resources.get(CResource.gold)).toBe(before + 2);
+```
+
+### Three-layer testing strategy
+
+Unit tests alone are insufficient. They often bypass builders and use hardcoded
+"correct" values, allowing infrastructure bugs to slip through. Use this
+three-layer strategy:
+
+**Layer 1: Builder Contract Tests** (in `packages/contents/tests/`)
+
+Test that builder methods produce correct output for any valid input:
+
+```typescript
+// Test the builder, not specific content
+it('changePercent converts to decimal', () => {
+	const result = transferEndpoint('gold').changePercent(25).build();
+	expect(result.change.modifiers[0]).toBe(0.25); // Not 25!
+});
+```
+
+**Layer 2: Engine Invariant Tests** (in `packages/engine/tests/`)
+
+Test properties that must hold regardless of content:
+
+```typescript
+// Test engine mechanics with real content
+it('transfer effects have decimal modifiers', () => {
+	for (const action of createActionRegistry().values()) {
+		// Verify all percent modifiers are in valid range
+		// Would catch: changePercent(25) storing 25 instead of 0.25
+	}
+});
+
+it('council AP scales linearly', () => {
+	// Test N councils → N AP (not N²)
+	// Would catch: evaluator × trigger loop = quadratic scaling
+});
+```
+
+**Layer 3: Regression Tests** (alongside feature tests)
+
+When you fix a bug, add a test that would have caught it:
+
+```typescript
+// This test exists because we had a bug where...
+it('changePercent divides by 100', () => {
+	// Explicit test for the specific bug pattern
+});
+```
+
+### Why unit tests miss infrastructure bugs
+
+Consider this unit test:
+
+```typescript
+// LOOKS CORRECT but would NOT catch the changePercent bug
+it('transfers 25% of gold', () => {
+	const effect = {
+		params: {
+			change: { type: 'percent', modifiers: [-0.25] }, // Hardcoded decimal!
+		},
+	};
+	// Tests handler works with correct input, not that builder produces it
+});
+```
+
+The handler test passes because the fixture uses `0.25`. But the actual
+`changePercent(25)` builder was storing `25`, causing 2500% transfers. The fix
+is to test the **builder output**, not just the handler behavior.
+
+### Property-based testing with fast-check
+
+For numeric conversions and scaling behavior, use property-based tests:
+
+```typescript
+import fc from 'fast-check';
+
+it('changePercent produces decimals for any percentage', () => {
+	fc.assert(
+		fc.property(fc.integer({ min: -100, max: 100 }), (percent) => {
+			const result = transferEndpoint('x').changePercent(percent).build();
+			expect(result.change.modifiers[0]).toBe(percent / 100);
+		}),
+	);
+});
 ```
 
 ---

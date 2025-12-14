@@ -37,6 +37,9 @@ function cloneEffect(effect: EffectDef): EffectDef {
 	if (effect.effects) {
 		cloned.effects = effect.effects.map(cloneEffect);
 	}
+	// Note: This is a SHALLOW clone - params are NOT deep-cloned.
+	// If effect.params contains arrays/objects that are mutated elsewhere,
+	// all clones will share those mutations.
 	return cloned;
 }
 
