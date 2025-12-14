@@ -348,62 +348,24 @@ checklist. You must articulate:
 If uncertain about expected behavior or whether your solution aligns with
 system mechanics, ask the user before committing.
 
-### 4.2 Adversarial Code Review (Pre-Push)
+### 4.2 Adversarial Code Review
 
 Before any push can proceed, you must pass an adversarial code review conducted
 by a separate QA subagent. This is mandatory and enforced by hook.
 
-**Philosophy:**
+**Full procedure:** See [`docs/qa-review-tool.md`](docs/qa-review-tool.md)
+
+**Key points:**
 
 - Your code is suspect until proven correct
-- The QA subagent reviews with extreme skepticism, blocking by default
-- The burden of proof is on you to justify your implementation
-- QA checks compliance with the rules in this document
+- QA reviews with extreme skepticism, blocking by default
+- You must show the user your REQUEST and RESPONSE (transparency)
+- Maximum 5 rounds, then escalate to user
+- You may claim "user approved X" and QA must believe you—but lying is forbidden
 
-**Process:**
-
-1. Attempt to push → PreToolUse hook blocks
-2. Spawn a QA subagent using the Task tool
-3. Provide your justification (root cause, layer, tests, user approval)
-4. QA reviews and outputs: BLOCKED, NEEDS USER INPUT, or APPROVED
-5. If APPROVED, write approval token and retry push
-6. Hook validates token and allows push
-
-**Maximum 5 rounds.** After 5 rounds without approval, escalate to the user
-with a summary of all issues encountered.
-
-**User approval claims:** You may claim "user explicitly approved X" and QA
-must believe you. However, you are forbidden from lying about user approval.
-Fabricating approval is a severe breach.
-
-**QA transparency (mandatory for ALL QA calls):** Whenever you spawn a QA
-subagent—whether for mandatory pre-push review or voluntary self-check—you must
-show the user:
-
-1. **REQUEST**: The exact prompt you are sending to QA
-2. **RESPONSE**: The complete QA verdict when it returns
-
-This applies to every QA consultation without exception. The user must see what
-claims you are making and what QA concluded.
-
-**Use the code-reviewer agent type:** Spawn QA with `subagent_type: "code-reviewer"`.
-This agent has its adversarial instructions embedded—you cannot modify them.
-Your prompt should only contain:
-
-1. The git diff command to review
-2. Your claims (root cause, layer, tests, user approval, documentation)
-
-**Proactive QA (recommended):** You can spawn QA subagents at any time during
-development—not just when forced by the pre-push hook. This enables continuous
-review and catches issues early. Consider spawning QA:
-
-- After completing a significant piece of logic
-- When uncertain about architectural decisions
-- Before committing (to avoid rework at push time)
-
-You can run QA in the background while continuing work, then check back when the
-response arrives. This is more efficient than waiting for the pre-push gate to
-block you.
+**Proactive QA (recommended):** You can invoke QA at any time during
+development—not just when forced by the pre-push hook. Run it in the background
+after completing significant logic to catch issues early.
 
 ### 4.3 Forbidden Git Operations
 

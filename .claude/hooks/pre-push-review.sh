@@ -3,11 +3,11 @@
 # PreToolUse hook for git push — Adversarial Review Gate
 #
 # This hook enforces mandatory code review before pushing.
-# The task agent MUST invoke the code-reviewer skill and obtain
+# The task agent MUST spawn a code-reviewer subagent and obtain
 # explicit APPROVED status before a push can proceed.
 #
 # State machine:
-#   No approval file     → Block + instruct to invoke code-reviewer skill
+#   No approval file     → Block + instruct to run QA review
 #   Approval file exists → Check if valid approval → Allow or Block
 #
 # Approval token format (JSON):
@@ -76,7 +76,7 @@ if [[ -f "$APPROVAL_FILE" ]]; then
 ⚠️ APPROVAL STALE — New commits detected
 
 The existing approval was for different commits.
-You must re-run the code-reviewer skill for the current changes.
+You must re-run QA review for the current changes.
 
 STALE_APPROVAL
 			rm -f "$APPROVAL_FILE"
@@ -97,6 +97,8 @@ echo "{\"round\": $REVIEW_ROUND, \"branch\": \"$CURRENT_BRANCH\", \"commits\": \
 
 # Check if we've hit max iterations
 if [[ $REVIEW_ROUND -gt 5 ]]; then
+	# Reset the counter so next push attempt starts fresh after user guidance
+	rm -f "$REVIEW_STATE_FILE"
 	cat >&2 << 'MAX_ITERATIONS'
 🚨 MANDATORY USER ESCALATION
 
@@ -108,6 +110,7 @@ You MUST escalate to the user now:
 3. Ask user to: clarify behavior, override concerns, or redirect approach
 
 DO NOT attempt another push until user has provided guidance.
+(Review round counter has been reset for next attempt after user guidance.)
 MAX_ITERATIONS
 	exit 2
 fi
@@ -119,7 +122,7 @@ CHANGED_FILES=$(git diff --name-only "$UPSTREAM..HEAD" 2>/dev/null | head -30)
 # Block and instruct
 cat >&2 << BLOCK_MESSAGE
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║  🛑 PUSH BLOCKED — Adversarial Code Review Required (Subagent)                ║
+║  🛑 PUSH BLOCKED — Adversarial Code Review Required                           ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 Review Round: $REVIEW_ROUND of 5
@@ -131,80 +134,19 @@ $CHANGED_FILES
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-REQUIRED: Spawn a code-reviewer SUBAGENT using the Task tool.
+REQUIRED: Pass adversarial QA review before pushing.
 
-The subagent provides TRUE CONTEXT SEPARATION — a fresh perspective without
-your task-completion biases. This is mandatory for pre-push review.
+Follow the procedure in: docs/qa-review-tool.md
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-STEP 0: SHOW THE USER YOUR QA REQUEST
-
-  Before spawning, output the exact prompt you will send.
-  After QA responds, output the complete response.
-  The user must see both REQUEST and RESPONSE for every QA call.
-
-STEP 1: Spawn the QA subagent:
-
-  Task tool parameters:
-    description: "Adversarial code review"
-    subagent_type: "code-reviewer"        ← Uses embedded adversarial instructions
-    prompt: <your claims only>
-
-  The code-reviewer agent already knows its identity and rules.
-  Your prompt should ONLY contain:
-
-  ─────────────────────────────────────────────────────────────────────────────
-  Review: git diff $UPSTREAM..HEAD
-
-  TASK AGENT CLAIMS:
-  - Root cause: [FILL IN]
-  - Layer: [FILL IN]
-  - Tests: [FILL IN]
-  - User approval: [FILL IN or "N/A"]
-  - Documentation: [FILL IN or "N/A"]
-  ─────────────────────────────────────────────────────────────────────────────
-
-STEP 2: Based on subagent response:
-
-  If 🚫 BLOCKED:
-    - Fix the violation
-    - Commit the fix
-    - Retry push (triggers next review round)
-
-  If ⚠️ NEEDS USER INPUT:
-    - Escalate to user with the specific question
-    - Wait for user response
-    - Adjust implementation
-    - Retry push
-
-  If ✅ APPROVED:
-    - Write the approval token (see Step 3)
-    - Retry push
-
-STEP 3: Write approval token (only after ✅ APPROVED):
-
-  Write this JSON to: $APPROVAL_FILE
-  {
-    "status": "APPROVED",
-    "timestamp": "$(date -Iseconds)",
-    "commits": [$(git rev-list "$UPSTREAM..HEAD" | sed 's/.*/"&"/' | tr '\n' ',' | sed 's/,$//')],
-    "reviewer_verdict": "<paste subagent's approval summary>"
-  }
+Quick summary:
+1. Prepare your claims (root cause, layer, tests, user approval, docs)
+2. Show the user your QA request (transparency requirement)
+3. Spawn QA subagent with Task tool
+4. Show the user the QA response
+5. Handle verdict: fix if BLOCKED, escalate if NEEDS INPUT
+6. After ✅ APPROVED, write token to: $APPROVAL_FILE
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-REMEMBER:
-• Provide clear justification for your implementation decisions
-• The QA subagent will verify your claims by reading the actual code
-• You may NOT lie about user approval
-• After 5 rounds without approval → mandatory user escalation
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-TIP: You can spawn QA subagents proactively during development (not just here).
-Consider running QA in the background after completing significant logic—it
-catches issues early and avoids rework at push time.
 
 BLOCK_MESSAGE
 
