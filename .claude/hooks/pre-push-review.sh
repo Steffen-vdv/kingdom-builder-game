@@ -43,7 +43,41 @@ REVIEW_STATE_FILE="$HOME/.claude-review-state"
 
 # Get commits that would be pushed
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-UPSTREAM=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null || echo "origin/main")
+
+# Find a valid upstream reference with fallback chain
+find_upstream() {
+	# 1. Try the configured upstream
+	local upstream
+	upstream=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null)
+	if [[ -n "$upstream" ]] && git rev-parse "$upstream" &>/dev/null; then
+		echo "$upstream"
+		return 0
+	fi
+
+	# 2. Try origin/main, then origin/HEAD (default branch symref)
+	for ref in "origin/main" "origin/HEAD"; do
+		if git rev-parse "$ref" &>/dev/null; then
+			echo "$ref"
+			return 0
+		fi
+	done
+
+	# 3. Local refs failed - try fetching origin/main from remote
+	# This handles fresh clones or repos where main wasn't tracked locally
+	if git fetch origin main --quiet 2>/dev/null; then
+		if git rev-parse "origin/main" &>/dev/null; then
+			echo "origin/main"
+			return 0
+		fi
+	fi
+
+	# 4. No valid upstream found - use empty tree (all commits are "new")
+	# This ensures new branches without any remote refs still get reviewed
+	echo "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+	return 0
+}
+
+UPSTREAM=$(find_upstream)
 
 # Count unpushed commits
 UNPUSHED_COUNT=$(git rev-list "$UPSTREAM..HEAD" --count 2>/dev/null || echo "0")
@@ -56,6 +90,9 @@ fi
 # Get list of unpushed commit SHAs
 UNPUSHED_COMMITS=$(git rev-list "$UPSTREAM..HEAD" 2>/dev/null | tr '\n' ' ')
 
+# QA report file (tamper-proof record written by QA agent)
+QA_REPORT_FILE="$HOME/.claude-qa-report"
+
 # Check if approval file exists and is valid
 if [[ -f "$APPROVAL_FILE" ]]; then
 	APPROVAL_STATUS=$(jq -r '.status // empty' "$APPROVAL_FILE" 2>/dev/null)
@@ -66,10 +103,27 @@ if [[ -f "$APPROVAL_FILE" ]]; then
 		# (Simple check: at least the HEAD commit should match)
 		HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
 		if [[ "$APPROVAL_COMMITS" == *"$HEAD_SHA"* ]]; then
-			# Valid approval, allow push and clean up
-			rm -f "$APPROVAL_FILE"
-			rm -f "$REVIEW_STATE_FILE"
-			exit 0
+			# Verify QA report file exists (tamper-proof record)
+			if [[ ! -f "$QA_REPORT_FILE" ]]; then
+				cat >&2 << 'MISSING_REPORT'
+⚠️ QA REPORT MISSING
+
+Approval token exists but QA report file (~/.claude-qa-report) is missing.
+The QA agent should have written this file during review.
+
+This may indicate the QA agent did not follow proper protocol.
+Re-run QA review to generate the report file.
+
+MISSING_REPORT
+				rm -f "$APPROVAL_FILE"
+				# Fall through to block
+			else
+				# Valid approval with report, allow push and clean up
+				rm -f "$APPROVAL_FILE"
+				rm -f "$REVIEW_STATE_FILE"
+				rm -f "$QA_REPORT_FILE"
+				exit 0
+			fi
 		else
 			# Approval exists but for different commits
 			cat >&2 << 'STALE_APPROVAL'
@@ -142,9 +196,12 @@ Quick summary:
 1. Prepare your claims (root cause, layer, tests, user approval, docs)
 2. Show the user your QA request (transparency requirement)
 3. Spawn QA subagent with Task tool
-4. Show the user the QA response
+4. Show the user the COMPLETE QA response (QA writes to: $QA_REPORT_FILE)
 5. Handle verdict: fix if BLOCKED, escalate if NEEDS INPUT
 6. After ✅ APPROVED, write token to: $APPROVAL_FILE
+
+NOTE: QA agent writes tamper-proof report to $QA_REPORT_FILE
+      Hook validates this file exists before allowing push.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

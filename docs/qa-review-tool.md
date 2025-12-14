@@ -98,8 +98,22 @@ The QA agent will read the code, verify your claims, and output one of:
 
 ### Step 4: Show the User the Response (Transparency)
 
-**After QA responds**, output the complete verdict. The user must see what QA
-concluded.
+**After QA responds**, output BOTH the verdict AND the full rationale. The user
+must see what QA concluded and WHY.
+
+**Required format:**
+
+```
+## QA Response: [verdict emoji and status]
+
+[Paste complete QA response including:]
+- Verification summary for each claim
+- CLAUDE.md compliance checks
+- Any concerns or observations
+- The full verdict block
+```
+
+Do NOT abbreviate. The complete reasoning must be visible to the user.
 
 ### Step 5: Handle the Verdict
 
@@ -120,6 +134,32 @@ concluded.
 
 1. For mandatory pre-push review: Write the approval token (see below)
 2. For proactive review: Proceed with confidence
+
+---
+
+## QA Report File (Tamper-Proof Record)
+
+The QA agent writes a report file during review that serves as an independent
+record of the review process. This prevents task agents from abbreviating or
+misrepresenting QA findings.
+
+**Location:** `~/.claude-qa-report`
+
+**Written by:** QA agent (not task agent)
+
+**Contents:**
+
+- Exact request received from task agent
+- Investigation log with findings from each step
+- Final verdict with full rationale
+
+**Hook validation:** The pre-push hook verifies this file exists alongside the
+approval token. If the approval token exists but the report file is missing,
+the push is blocked.
+
+**Why this exists:** Task agents can abbreviate QA responses when displaying
+them to users. The report file creates a tamper-proof record that the user can
+verify independently by reading `~/.claude-qa-report`.
 
 ---
 
@@ -221,7 +261,7 @@ This is more efficient than waiting for the mandatory pre-push gate.
 │ □ Prepare claims (root cause, layer, tests, user approval, docs)            │
 │ □ OUTPUT the prompt you will send (transparency)                            │
 │ □ Spawn QA subagent with Task tool                                          │
-│ □ OUTPUT the complete QA response (transparency)                            │
+│ □ OUTPUT the COMPLETE QA response with FULL RATIONALE (not just verdict!)   │
 │ □ Handle verdict: fix if BLOCKED, escalate if NEEDS INPUT, proceed if OK    │
 │ □ For pre-push: write approval token after ✅ APPROVED                       │
 │ □ Max 5 rounds → escalate to user                                           │
