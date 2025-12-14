@@ -4,52 +4,20 @@ const { spawnSync } = require('child_process');
 
 const rootDir = resolve(__dirname, '..');
 
-const dependencies = [
-	{
-		name: 'eslint-plugin-import',
-		path: resolve(
-			rootDir,
-			'node_modules',
-			'eslint-plugin-import',
-			'package.json',
-		),
-	},
-	{
-		name: 'npm-run-all',
-		path: resolve(rootDir, 'node_modules', 'npm-run-all', 'package.json'),
-	},
-	{
-		name: 'cross-env',
-		path: resolve(rootDir, 'node_modules', 'cross-env', 'package.json'),
-	},
-	{
-		name: '@vitest/coverage-v8',
-		path: resolve(
-			rootDir,
-			'node_modules',
-			'@vitest',
-			'coverage-v8',
-			'package.json',
-		),
-	},
-	{
-		name: '@tailwindcss/postcss',
-		path: resolve(
-			rootDir,
-			'node_modules',
-			'@tailwindcss',
-			'postcss',
-			'package.json',
-		),
-	},
+// Critical dependencies that must exist for lifecycle scripts to work
+const criticalDeps = [
+	resolve(rootDir, 'node_modules', 'eslint-plugin-import', 'package.json'),
+	resolve(rootDir, 'node_modules', 'npm-run-all', 'package.json'),
+	resolve(rootDir, 'node_modules', 'cross-env', 'package.json'),
+	resolve(rootDir, 'node_modules', '@vitest', 'coverage-v8', 'package.json'),
+	resolve(rootDir, 'node_modules', '@tailwindcss', 'postcss', 'package.json'),
 ];
 
-const missing = dependencies
-	.filter((dependency) => !existsSync(dependency.path))
-	.map((dependency) => dependency.name);
+const anyMissing = criticalDeps.some((dep) => !existsSync(dep));
 
-if (missing.length > 0) {
-	const result = spawnSync('npm', ['install', '--no-save', ...missing], {
+if (anyMissing) {
+	// Run full pnpm install to ensure lockfile consistency
+	const result = spawnSync('pnpm', ['install', '--frozen-lockfile'], {
 		cwd: rootDir,
 		stdio: 'inherit',
 		env: process.env,
