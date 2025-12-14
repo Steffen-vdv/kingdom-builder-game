@@ -90,6 +90,9 @@ fi
 # Get list of unpushed commit SHAs
 UNPUSHED_COMMITS=$(git rev-list "$UPSTREAM..HEAD" 2>/dev/null | tr '\n' ' ')
 
+# QA report file (tamper-proof record written by QA agent)
+QA_REPORT_FILE="$HOME/.claude-qa-report"
+
 # Check if approval file exists and is valid
 if [[ -f "$APPROVAL_FILE" ]]; then
 	APPROVAL_STATUS=$(jq -r '.status // empty' "$APPROVAL_FILE" 2>/dev/null)
@@ -100,10 +103,27 @@ if [[ -f "$APPROVAL_FILE" ]]; then
 		# (Simple check: at least the HEAD commit should match)
 		HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
 		if [[ "$APPROVAL_COMMITS" == *"$HEAD_SHA"* ]]; then
-			# Valid approval, allow push and clean up
-			rm -f "$APPROVAL_FILE"
-			rm -f "$REVIEW_STATE_FILE"
-			exit 0
+			# Verify QA report file exists (tamper-proof record)
+			if [[ ! -f "$QA_REPORT_FILE" ]]; then
+				cat >&2 << 'MISSING_REPORT'
+⚠️ QA REPORT MISSING
+
+Approval token exists but QA report file (~/.claude-qa-report) is missing.
+The QA agent should have written this file during review.
+
+This may indicate the QA agent did not follow proper protocol.
+Re-run QA review to generate the report file.
+
+MISSING_REPORT
+				rm -f "$APPROVAL_FILE"
+				# Fall through to block
+			else
+				# Valid approval with report, allow push and clean up
+				rm -f "$APPROVAL_FILE"
+				rm -f "$REVIEW_STATE_FILE"
+				rm -f "$QA_REPORT_FILE"
+				exit 0
+			fi
 		else
 			# Approval exists but for different commits
 			cat >&2 << 'STALE_APPROVAL'
@@ -176,9 +196,12 @@ Quick summary:
 1. Prepare your claims (root cause, layer, tests, user approval, docs)
 2. Show the user your QA request (transparency requirement)
 3. Spawn QA subagent with Task tool
-4. Show the user the QA response
+4. Show the user the COMPLETE QA response (QA writes to: $QA_REPORT_FILE)
 5. Handle verdict: fix if BLOCKED, escalate if NEEDS INPUT
 6. After ✅ APPROVED, write token to: $APPROVAL_FILE
+
+NOTE: QA agent writes tamper-proof report to $QA_REPORT_FILE
+      Hook validates this file exists before allowing push.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
