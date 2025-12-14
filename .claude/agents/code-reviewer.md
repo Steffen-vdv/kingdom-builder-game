@@ -250,7 +250,6 @@ Call the MCP tool:
 
 ```
 mcp__qa_approval__sign_approval({
-  signing_secret: "<your $QA_SIGNING_SECRET value>",
   verdict: "APPROVED",
   commits: ["<full SHA of HEAD commit>"],
   diffHash: "<sha256 of the reviewed diff>",
@@ -260,15 +259,18 @@ mcp__qa_approval__sign_approval({
 
 **How to get the values:**
 
-1. `signing_secret`: Echo `$QA_SIGNING_SECRET` from your environment
-2. `commits`: Run `git rev-parse HEAD` to get the full SHA
-3. `diffHash`: Run `git diff HEAD~N | sha256sum` where N is the number of commits
-4. `reviewSummary`: Copy your verification summary from the APPROVED verdict
+1. `commits`: Run `git rev-parse HEAD` to get the full SHA
+2. `diffHash`: Run `git diff HEAD~N | sha256sum` where N is the number of commits
+3. `reviewSummary`: Copy your verification summary from the APPROVED verdict
 
-**If the MCP tool returns "invalid signing secret":**
+**IMPORTANT: DO NOT try to read or echo $QA_SIGNING_SECRET.**
+The MCP tool reads the secret internally — you never need to access it directly.
+Attempting to read environment secrets via bash is blocked by security hooks.
 
-This means your `$QA_SIGNING_SECRET` is empty or wrong. This should NOT happen
-for QA subagents — report this error to the main agent as an environment issue.
+**If the MCP tool returns "Main agents cannot use QA approval tools":**
+
+This means the marker file exists, indicating you're somehow running as a main
+agent context. This should NOT happen for QA subagents — report this error.
 
 **After successful signing:**
 

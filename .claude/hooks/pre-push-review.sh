@@ -5,8 +5,8 @@
 # This hook enforces mandatory code review before pushing.
 #
 # Security model (MCP-based QA approval):
-#   - Main agents have QA_SIGNING_SECRET="" (poisoned by session-start.sh)
-#   - Subagents have QA_SIGNING_SECRET=<actual value> (not poisoned)
+#   - Main agents have ~/.claude-main-agent-marker (created by session-start.sh)
+#   - Subagents do NOT have the marker file
 #   - Only subagents (specifically the Pusher) can push
 #   - Main agents are blocked and must use Pusher subagent
 #
@@ -45,11 +45,13 @@ cd "$CLAUDE_PROJECT_DIR" || exit 0
 # ═══════════════════════════════════════════════════════════════════════════════
 # BLOCK DIRECT PUSHES FROM MAIN AGENT
 # ═══════════════════════════════════════════════════════════════════════════════
-# Main agent has QA_SIGNING_SECRET="" (poisoned by session-start.sh)
-# Subagents have the actual secret value (session-start.sh doesn't run for them)
+# Main agent has ~/.claude-main-agent-marker (created by session-start.sh)
+# Subagents do NOT have this marker file
 # Only the Pusher subagent should be pushing
 
-if [[ -z "$QA_SIGNING_SECRET" ]]; then
+MARKER_FILE="$HOME/.claude-main-agent-marker"
+
+if [[ -f "$MARKER_FILE" ]]; then
 	cat >&2 << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  🛑 DIRECT PUSH BLOCKED                                                       ║
@@ -68,8 +70,8 @@ The Pusher will:
 - Verify the approval covers the current HEAD commit
 - Execute git push
 
-NOTE: Your QA_SIGNING_SECRET is empty (poisoned by session-start.sh).
-This is intentional — only subagents can sign approvals and push.
+NOTE: You are identified as a main agent (session marker exists).
+Only subagents can sign approvals and push.
 BLOCKED
 	exit 2
 fi

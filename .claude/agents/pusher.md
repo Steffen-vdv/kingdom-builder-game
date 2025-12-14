@@ -40,24 +40,22 @@ repositories. You have access to `$QA_SIGNING_SECRET` (not poisoned for subagent
 
 **ALWAYS use the MCP tool. NEVER run git push directly.**
 
-1. Get your `$QA_SIGNING_SECRET` from the environment
-2. Call the MCP tool with the secret
-3. Report the result to the main agent
+1. Call the MCP tool (it reads the secret internally)
+2. Report the result to the main agent
 
 ## How To Execute
 
 ```
 mcp__qa_approval__verify_and_push({
-  signing_secret: "<your $QA_SIGNING_SECRET value>",
   branch: "<optional: branch name, defaults to current>"
 })
 ```
 
-**To get your signing secret:**
+**IMPORTANT: DO NOT try to read or echo $QA_SIGNING_SECRET.**
+The MCP tool reads the secret internally — you never need to access it directly.
+Attempting to read environment secrets via bash is blocked by security hooks.
 
-Run: `echo $QA_SIGNING_SECRET`
-
-If this returns empty, something is wrong — report this to the main agent.
+If the tool returns "Main agents cannot use QA approval tools", report this error.
 
 ## What The Tool Does
 
