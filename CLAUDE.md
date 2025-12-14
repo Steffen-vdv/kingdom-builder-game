@@ -363,13 +363,22 @@ by a separate QA subagent. This is mandatory and enforced by hook.
 
 - Your code is suspect until proven correct
 - QA reviews with extreme skepticism, blocking by default
-- You must show the user your REQUEST and RESPONSE (transparency)
+- QA subagent echoes the exact request it receives (verbatim traceability)
 - Maximum 5 rounds, then escalate to user
 - You may claim "user approved X" and QA must believe you—but lying is forbidden
 
-**Proactive QA (recommended):** You can invoke QA at any time during
-development—not just when forced by the pre-push hook. Run it in the background
-after completing significant logic to catch issues early.
+**Proactive QA (required workflow):** Invoke QA proactively BEFORE attempting
+to push—do not wait for the pre-push hook to force it. Run QA in parallel with
+tests for efficiency:
+
+```
+# In a single message, spawn both:
+1. Task(subagent_type: "code-reviewer") — QA review
+2. Bash — Run relevant tests (see Section 7.1 for which tests to run)
+```
+
+The pre-push hook is a safety net, not the primary workflow. Catching issues
+early via proactive QA saves iteration cycles.
 
 ### 4.3 Forbidden Git Operations
 
@@ -620,9 +629,9 @@ hook.
 │ □ Verify: root cause identified, correct layer, files read      │
 │ □ Tests pass                                                    │
 ├─────────────────────────────────────────────────────────────────┤
-│ BEFORE PUSHING                                                  │
-│ □ Spawn QA subagent for adversarial review                      │
-│ □ Justify: root cause, layer, tests, user approvals             │
+│ BEFORE PUSHING (proactively, not waiting for hook)              │
+│ □ Spawn QA subagent + run tests in parallel                     │
+│ □ QA outputs directly to user (request echo + verdict)          │
 │ □ If BLOCKED: fix, commit, retry                                │
 │ □ If APPROVED: write token, push                                │
 │ □ Max 5 rounds → escalate to user                               │
