@@ -1,0 +1,9 @@
+{
+	"mcpServers": {
+		"qa-approval": {
+			"type": "stdio",
+			"command": "npx",
+			"args": ["tsx", ".claude/mcp/qa-approval/src/index.ts"]
+		}
+	}
+}

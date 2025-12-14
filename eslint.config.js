@@ -97,6 +97,7 @@ export default [
 			'**/coverage/**',
 			'**/*.d.ts',
 			'packages/**/src/**/*.js',
+			'.claude/mcp/**',
 		],
 	},
 	{
