@@ -137,6 +137,31 @@ Do NOT abbreviate. The complete reasoning must be visible to the user.
 
 ---
 
+## QA Report File (Tamper-Proof Record)
+
+The QA agent writes a report file during review that serves as an independent
+record of the review process. This prevents task agents from abbreviating or
+misrepresenting QA findings.
+
+**Location:** `~/.claude-qa-report`
+
+**Written by:** QA agent (not task agent)
+
+**Contents:**
+- Exact request received from task agent
+- Investigation log with findings from each step
+- Final verdict with full rationale
+
+**Hook validation:** The pre-push hook verifies this file exists alongside the
+approval token. If the approval token exists but the report file is missing,
+the push is blocked.
+
+**Why this exists:** Task agents can abbreviate QA responses when displaying
+them to users. The report file creates a tamper-proof record that the user can
+verify independently by reading `~/.claude-qa-report`.
+
+---
+
 ## Approval Token (Pre-Push Only)
 
 After receiving ✅ APPROVED from mandatory pre-push QA, write an approval token
