@@ -43,7 +43,32 @@ REVIEW_STATE_FILE="$HOME/.claude-review-state"
 
 # Get commits that would be pushed
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-UPSTREAM=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null || echo "origin/main")
+
+# Find a valid upstream reference with fallback chain
+find_upstream() {
+	# 1. Try the configured upstream
+	local upstream
+	upstream=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null)
+	if [[ -n "$upstream" ]] && git rev-parse "$upstream" &>/dev/null; then
+		echo "$upstream"
+		return 0
+	fi
+
+	# 2. Try common default branches
+	for ref in "origin/main" "origin/master" "origin/HEAD"; do
+		if git rev-parse "$ref" &>/dev/null; then
+			echo "$ref"
+			return 0
+		fi
+	done
+
+	# 3. No valid upstream found - use empty tree (all commits are "new")
+	# This ensures new branches without any remote refs still get reviewed
+	echo "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+	return 0
+}
+
+UPSTREAM=$(find_upstream)
 
 # Count unpushed commits
 UNPUSHED_COUNT=$(git rev-list "$UPSTREAM..HEAD" --count 2>/dev/null || echo "0")
