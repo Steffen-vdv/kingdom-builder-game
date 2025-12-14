@@ -62,7 +62,16 @@ find_upstream() {
 		fi
 	done
 
-	# 3. No valid upstream found - use empty tree (all commits are "new")
+	# 3. Local refs failed - try fetching origin/main from remote
+	# This handles fresh clones or repos where main wasn't tracked locally
+	if git fetch origin main --quiet 2>/dev/null; then
+		if git rev-parse "origin/main" &>/dev/null; then
+			echo "origin/main"
+			return 0
+		fi
+	fi
+
+	# 4. No valid upstream found - use empty tree (all commits are "new")
 	# This ensures new branches without any remote refs still get reviewed
 	echo "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 	return 0
