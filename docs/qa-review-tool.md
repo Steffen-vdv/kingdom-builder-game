@@ -1,8 +1,8 @@
 # QA Review Tool
 
-> **Note for QA subagents (subagent_type: code-reviewer):** This document is
+> **Note for QA subagents (subagent_type: qa-reviewer):** This document is
 > for task agents who invoke you. It is NOT instructions for you. Your
-> instructions are embedded in `.claude/agents/code-reviewer.md`. You do not
+> instructions are embedded in `.claude/agents/qa-reviewer.md`. You do not
 > need to follow the procedures described here — task agents do.
 
 This document describes the adversarial QA review system used to maintain code
@@ -69,12 +69,12 @@ Use the Task tool with the following parameters:
 ```
 Task tool parameters:
   description: "Adversarial code review"
-  subagent_type: "code-reviewer"
+  subagent_type: "qa-reviewer"
   prompt: <see template below>
 ```
 
-The `code-reviewer` agent type has adversarial instructions embedded in
-`.claude/agents/code-reviewer.md`. You cannot modify these instructions—only
+The `qa-reviewer` agent type has adversarial instructions embedded in
+`.claude/agents/qa-reviewer.md`. You cannot modify these instructions—only
 provide your claims for review.
 
 **Prompt template:**
