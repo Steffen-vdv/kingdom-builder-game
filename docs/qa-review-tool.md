@@ -1,207 +1,217 @@
-# QA Review Tool
+# Push Workflow Guide
 
-> **Note for QA subagents (subagent_type: code-reviewer):** This document is
-> for task agents who invoke you. It is NOT instructions for you. Your
-> instructions are embedded in `.claude/agents/code-reviewer.md`. You do not
-> need to follow the procedures described here — task agents do.
-
-This document describes the adversarial QA review system used to maintain code
-quality. The QA tool provides an independent review perspective before changes
-are pushed.
+This document describes the complete workflow for pushing code changes. All
+pushes require QA review and use a two-subagent system for security.
 
 ---
 
-## Overview
+## Workflow Overview
 
-The QA review is an **adversarial code review** conducted by a separate agent
-context. Its purpose is to catch issues that the task agent might miss due to
-task-completion bias.
-
-**Key principle:** The QA reviewer assumes every change is bad until proven
-otherwise. The burden of proof is on the task agent.
-
----
-
-## When to Use QA Review
-
-### Mandatory (Enforced)
-
-The pre-push hook automatically blocks pushes and requires QA review. You cannot
-push without passing QA.
-
-### Proactive (Recommended)
-
-You can invoke QA at any time during development:
-
-- After completing significant logic
-- When uncertain about architectural decisions
-- Before committing (to catch issues early)
-
-Proactive QA runs in the background—you can continue working while waiting for
-the response.
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PUSH WORKFLOW                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. PREPARE                                                                 │
+│     └─→ Commit your changes                                                 │
+│     └─→ Prepare your claims (root cause, layer, tests, user approval)       │
+│                                                                             │
+│  2. QA REVIEW                                                               │
+│     └─→ Spawn code-reviewer subagent                                        │
+│     └─→ Handle verdict: BLOCKED → fix, NEEDS INPUT → ask user, APPROVED → 3 │
+│                                                                             │
+│  3. PUSH                                                                    │
+│     └─→ Spawn pusher subagent                                               │
+│     └─→ Handle result: success → done, failure → see troubleshooting        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## How to Invoke QA
+## Step 1: Prepare Your Changes
 
-### Step 1: Prepare Your Claims
+Before requesting QA review:
 
-Before invoking QA, articulate your justification:
+1. **Commit all changes** - QA reviews committed code, not working directory
+2. **Run tests** - Ensure tests pass before requesting review
+3. **Prepare your claims** - Articulate what you changed and why
+
+### Claims Template
 
 ```
 TASK AGENT CLAIMS:
 - Root cause: [what was actually wrong, not just what you changed]
-- Layer: [content | engine | web | server | infra]
+- Layer: [content | engine | web | server | docs]
 - Tests: [test coverage details, or "N/A" for non-code changes]
 - User approval: [what the user explicitly approved, or "N/A"]
-- Documentation: [doc updates made, or "N/A" if not applicable]
-```
-
-### Step 2: Spawn the QA Subagent
-
-Use the Task tool with the following parameters:
-
-```
-Task tool parameters:
-  description: "Adversarial code review"
-  subagent_type: "code-reviewer"
-  prompt: <see template below>
-```
-
-The `code-reviewer` agent type has adversarial instructions embedded in
-`.claude/agents/code-reviewer.md`. You cannot modify these instructions—only
-provide your claims for review.
-
-**Prompt template:**
-
-```
-Review: git diff <upstream>..HEAD
-
-TASK AGENT CLAIMS:
-- Root cause: [what was actually wrong]
-- Layer: [content | engine | web | server | infra]
-- Tests: [test coverage, or "N/A"]
-- User approval: [what user approved, or "N/A"]
-- Documentation: [doc updates, or "N/A"]
-```
-
-The QA agent will read the code, verify your claims, and output one of:
-
-- 🚫 BLOCKED — with violation and required fix
-- ⚠️ NEEDS USER INPUT — with specific question for user
-- ✅ APPROVED — with verification summary
-
-### Step 3: Handle the Verdict
-
-The QA subagent outputs directly to the user — it echoes the exact request it
-received and outputs a complete verdict. Act on the verdict accordingly.
-
-**If 🚫 BLOCKED:**
-
-1. Fix the violation identified by QA
-2. Commit the fix
-3. Re-invoke QA (or retry push to trigger next round)
-
-**If ⚠️ NEEDS USER INPUT:**
-
-1. Present QA's question to the user
-2. Wait for user response
-3. Adjust implementation based on user guidance
-4. Re-invoke QA
-
-**If ✅ APPROVED:**
-
-1. For mandatory pre-push review: Write the approval token (see below)
-2. For proactive review: Proceed with confidence
-
----
-
-## Approval Token (Pre-Push Only)
-
-After receiving ✅ APPROVED from mandatory pre-push QA, write an approval token
-so the hook allows the push:
-
-**Location:** `~/.claude-push-approval`
-
-**Format:**
-
-```json
-{
-  "status": "APPROVED",
-  "timestamp": "<ISO8601 timestamp>",
-  "commits": ["<sha1>", "<sha2>", ...],
-  "reviewer_verdict": "<paste QA's approval summary>"
-}
-```
-
-**Generate with:**
-
-```bash
-UPSTREAM=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null || echo "origin/main")
-cat > ~/.claude-push-approval << EOF
-{
-  "status": "APPROVED",
-  "timestamp": "$(date -Iseconds)",
-  "commits": [$(git rev-list "$UPSTREAM..HEAD" | sed 's/.*/\"&\"/' | tr '\n' ',' | sed 's/,$//')],
-  "reviewer_verdict": "<paste approval summary here>"
-}
-EOF
 ```
 
 ---
 
-## Iteration Limits
+## Step 2: QA Review
 
-**Maximum 5 rounds** of QA review per push attempt. If you cannot get approval
-after 5 rounds, you must escalate to the user with:
+### Spawn the QA Subagent
 
-1. Summary of issues from each round
-2. Remaining concerns
-3. Request for user guidance (clarify behavior, override concerns, or redirect)
+```
+Task(
+  subagent_type: "code-reviewer",
+  description: "QA review for push",
+  prompt: """
+    Review the changes on branch <branch-name>.
+
+    TASK AGENT CLAIMS:
+    - Root cause: <your root cause analysis>
+    - Layer: <which layer owns this change>
+    - Tests: <test coverage, or N/A>
+    - User approval: <what user approved, or N/A>
+  """
+)
+```
+
+### Handle the Verdict
+
+The QA subagent will return one of three verdicts:
+
+#### ✅ APPROVED
+
+QA has approved your changes and signed the approval file. Proceed to Step 3.
+
+#### 🚫 BLOCKED
+
+QA found issues that must be fixed.
+
+**What to do:**
+
+1. Read the specific violation in the QA response
+2. Fix the identified issue
+3. Commit the fix
+4. Re-invoke QA review (return to Step 2)
+
+#### ⚠️ NEEDS USER INPUT
+
+QA needs clarification on a design decision.
+
+**What to do:**
+
+1. Present QA's question to the user verbatim
+2. Wait for user's response
+3. If user approves the current approach, re-invoke QA with the user's approval
+4. If user wants changes, implement them, commit, and re-invoke QA
+
+### Iteration Limits
+
+**Maximum 5 rounds** of QA review. If you cannot get approval after 5 rounds:
+
+1. Stop attempting
+2. Summarize the issues from each round
+3. Present to user and ask for guidance
+4. Wait for user direction before proceeding
 
 ---
 
-## What QA Checks
+## Step 3: Push
 
-The QA reviewer verifies:
+After QA approval, spawn the Pusher subagent to push your changes.
 
-| Check                   | What It Means                                      |
-| ----------------------- | -------------------------------------------------- |
-| Root cause identified   | Fix addresses actual problem, not just symptom     |
-| Correct layer           | Fix is in content/engine/web/server as appropriate |
-| No defensive fallbacks  | Web layer trusts protocol contracts                |
-| No hardcoded IDs        | No `CResource.*` or `CAction.*` in filter logic    |
-| Tests exist             | New functionality has test coverage                |
-| Edge cases covered      | Tests include boundary conditions                  |
-| User approved behaviors | Edge case behaviors explicitly approved by user    |
-| Documentation exists    | New features are documented                        |
-| No workarounds          | No "for now" or "workaround" language              |
+### Spawn the Pusher Subagent
+
+```
+Task(
+  subagent_type: "pusher",
+  description: "Push approved changes",
+  prompt: "Push the approved changes to origin"
+)
+```
+
+### Handle the Result
+
+#### Success
+
+The pusher will report success. Your changes are now on the remote.
+
+#### Failure
+
+The pusher will report the specific error. Common failures:
+
+| Error                        | Meaning                          | What To Do                  |
+| ---------------------------- | -------------------------------- | --------------------------- |
+| No approval file             | QA didn't sign or signing failed | Re-run QA review            |
+| Invalid signature            | Approval file corrupted          | Re-run QA review            |
+| HEAD not in approved commits | New commits after approval       | Re-run QA review            |
+| Git push failed              | Network or permission issue      | Retry push, or check remote |
+
+**For any pusher failure:** The pusher will tell you exactly what went wrong.
+Follow the guidance in its response.
 
 ---
 
-## The Sacred Trust
+## Troubleshooting
 
-You may claim "user explicitly approved X" and QA **must believe this**. The
-task agent is forbidden from lying about user approval—this is the worst
-possible breach.
+### Push Blocked - "Main agents cannot push directly"
 
-However, QA can and should ask:
+You tried to run `git push` yourself. Main agents cannot push directly.
 
-- "What specifically did the user approve?"
-- "Does their approval cover this specific edge case?"
+**Solution:** Use the pusher subagent as described in Step 3.
+
+### Push Blocked - "No approval file found"
+
+The QA subagent either wasn't invoked or failed to sign.
+
+**Solution:** Run QA review (Step 2). Ensure QA returns ✅ APPROVED.
+
+### Push Blocked - "Invalid signature"
+
+The approval file exists but is corrupted or was tampered with.
+
+**Solution:** Re-run QA review from Step 2.
+
+### Push Blocked - "HEAD not in approved commits"
+
+You made new commits after QA approved.
+
+**Solution:** Re-run QA review to approve the new commits.
+
+### QA Tool Not Available
+
+If the QA subagent reports it cannot access the MCP tool:
+
+**Solution:** Report this to the user as an environment configuration issue.
+The MCP server may not be running or properly configured.
+
+### Pusher Tool Not Available
+
+If the Pusher subagent reports it cannot access the MCP tool:
+
+**Solution:** Report this to the user as an environment configuration issue.
 
 ---
 
-## Background Execution
+## What QA Reviews
 
-For proactive QA, you can run the review in the background:
+The QA reviewer verifies your changes against these criteria:
 
-1. Spawn QA with `run_in_background: true` (if supported)
-2. Continue working on other aspects
-3. Check back for the QA response
-4. Address any issues before pushing
+| Check                   | What It Means                             |
+| ----------------------- | ----------------------------------------- |
+| Root cause identified   | Fix addresses actual problem, not symptom |
+| Correct layer           | Fix is in appropriate package             |
+| No defensive fallbacks  | Web layer trusts protocol contracts       |
+| No hardcoded IDs        | No entity-specific conditionals           |
+| Tests exist             | New functionality has test coverage       |
+| User approved behaviors | Edge cases explicitly approved by user    |
+| Documentation current   | Docs updated if needed                    |
 
-This is more efficient than waiting for the mandatory pre-push gate.
+---
+
+## User Approval Claims
+
+You may claim "user explicitly approved X" and QA will accept this. However:
+
+- You must be truthful about what the user approved
+- QA may ask for specifics: "What exactly did the user approve?"
+- Lying about user approval is a severe breach
+
+If unsure whether user approval covers a specific case, ask the user first.
 
 ---
 
@@ -209,12 +219,17 @@ This is more efficient than waiting for the mandatory pre-push gate.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ QA REVIEW CHECKLIST                                                         │
+│ PUSH CHECKLIST                                                              │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ □ Prepare claims (root cause, layer, tests, user approval, docs)            │
-│ □ Spawn QA subagent (outputs request echo + verdict directly to user)       │
-│ □ Handle verdict: fix if BLOCKED, escalate if NEEDS INPUT, proceed if OK    │
-│ □ For pre-push: write approval token after ✅ APPROVED                       │
-│ □ Max 5 rounds → escalate to user                                           │
+│ □ Changes committed                                                         │
+│ □ Tests passing                                                             │
+│ □ Claims prepared (root cause, layer, tests, user approval)                 │
+│ □ QA subagent spawned → verdict received                                    │
+│   └─ BLOCKED: fix and retry                                                 │
+│   └─ NEEDS INPUT: ask user and retry                                        │
+│   └─ APPROVED: proceed to push                                              │
+│ □ Pusher subagent spawned → result received                                 │
+│   └─ Success: done                                                          │
+│   └─ Failure: follow error guidance                                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```

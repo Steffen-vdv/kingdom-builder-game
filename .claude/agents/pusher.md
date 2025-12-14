@@ -65,12 +65,40 @@ You do NOT need to do any of these steps manually. Just call the tool.
 
 ## Error Handling
 
-If the tool returns an error, report it to the main agent:
+If the tool returns an error, report it clearly to the main agent with follow-up actions:
 
-- **"No approval file found"** → QA review was not completed or signing failed
-- **"Invalid signature"** → Approval file was tampered with or corrupted
-- **"HEAD not in approved commits"** → New commits added after QA approval
-- **"Git push failed"** → Network or permission issue
+| Error                | Meaning              | What To Report                                        |
+| -------------------- | -------------------- | ----------------------------------------------------- |
+| No approval file     | QA didn't complete   | "Re-run QA review (Step 2 in docs/qa-review-tool.md)" |
+| Invalid signature    | Approval corrupted   | "Re-run QA review (Step 2 in docs/qa-review-tool.md)" |
+| HEAD not in approved | New commits after QA | "Re-run QA review for the new commits"                |
+| Git push failed      | Network/permission   | "Retry push, or check remote access"                  |
+
+**Example failure report:**
+
+```
+❌ PUSH FAILED
+
+Error: No approval file found
+
+MAIN AGENT FOLLOW-UP:
+→ QA review was not completed or signing failed
+→ Re-run QA review (Step 2 in docs/qa-review-tool.md)
+→ Ensure QA returns ✅ APPROVED before retrying push
+```
+
+**If the MCP tool is unavailable:**
+
+```
+❌ MCP TOOL UNAVAILABLE
+
+The mcp__qa_approval__verify_and_push tool is not available in this environment.
+
+MAIN AGENT FOLLOW-UP:
+→ This is an environment configuration issue
+→ Report to user: "Pusher MCP server may not be running or configured"
+→ Cannot proceed with push workflow until resolved
+```
 
 ## Example Interaction
 

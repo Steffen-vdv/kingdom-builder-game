@@ -268,6 +268,21 @@ mcp__qa_approval__sign_approval({
 The MCP server writes the signed approval to `~/.claude-push-approval`. The
 main agent will then use the Pusher subagent to verify this signature and push.
 
+**If the MCP tool is unavailable:**
+
+Report this clearly to the main agent:
+
+```
+❌ MCP TOOL UNAVAILABLE
+
+The mcp__qa_approval__sign_approval tool is not available in this environment.
+
+MAIN AGENT FOLLOW-UP:
+→ This is an environment configuration issue
+→ Report to user: "QA MCP server may not be running or configured"
+→ Cannot proceed with push workflow until resolved
+```
+
 ---
 
 ## User Approval Claims

@@ -54,24 +54,21 @@ MARKER_FILE="$HOME/.claude-main-agent-marker"
 if [[ -f "$MARKER_FILE" ]]; then
 	cat >&2 << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║  🛑 DIRECT PUSH BLOCKED                                                       ║
+║  🛑 PUSH BLOCKED — Main agents cannot push directly                           ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-Main agents cannot push directly. You must use the Pusher subagent.
+WHAT HAPPENED:
+You attempted to run git push directly. Main agents must use the push workflow.
 
-REQUIRED FLOW:
-1. QA subagent reviews and signs approval (via MCP tool)
-2. Spawn Pusher subagent to verify and push:
+WHAT TO DO:
+1. If you haven't done QA review yet:
+   → Spawn QA subagent: Task(subagent_type: "code-reviewer", ...)
+   → Wait for ✅ APPROVED verdict
 
-   Task(subagent_type: "pusher", prompt: "Push the approved changes to origin")
+2. After QA approval:
+   → Spawn Pusher subagent: Task(subagent_type: "pusher", prompt: "Push approved changes")
 
-The Pusher will:
-- Verify the HMAC signature on the approval file
-- Verify the approval covers the current HEAD commit
-- Execute git push
-
-NOTE: You are identified as a main agent (session marker exists).
-Only subagents can sign approvals and push.
+REFERENCE: See docs/qa-review-tool.md for the complete push workflow.
 BLOCKED
 	exit 2
 fi
@@ -93,9 +90,12 @@ if [[ ! -f "$APPROVAL_FILE" ]]; then
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 QA review must be completed before pushing.
-The approval file at ~/.claude-push-approval is missing.
 
-Use the MCP verify_and_push tool which handles this verification automatically.
+WHAT TO DO:
+→ Complete QA review first (Step 2 in docs/qa-review-tool.md)
+→ After QA returns ✅ APPROVED, spawn pusher subagent (Step 3)
+
+See: docs/qa-review-tool.md#troubleshooting
 NO_APPROVAL
 	exit 2
 fi
@@ -109,6 +109,12 @@ if [[ -z "$APPROVAL_CONTENT" ]]; then
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 The approval file exists but is empty or unreadable.
+
+WHAT TO DO:
+→ Re-run QA review (Step 2 in docs/qa-review-tool.md)
+→ Ensure QA returns ✅ APPROVED before spawning pusher
+
+See: docs/qa-review-tool.md#troubleshooting
 EMPTY_APPROVAL
 	exit 2
 fi
@@ -121,8 +127,13 @@ if [[ -z "$SIGNATURE" ]]; then
 ║  🛑 PUSH BLOCKED — Approval has no signature                                  ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-The approval file has no HMAC signature.
-It may have been created manually (bypassing QA review).
+The approval file has no cryptographic signature.
+
+WHAT TO DO:
+→ Re-run QA review (Step 2 in docs/qa-review-tool.md)
+→ Ensure QA returns ✅ APPROVED before spawning pusher
+
+See: docs/qa-review-tool.md#troubleshooting
 NO_SIGNATURE
 	exit 2
 fi
@@ -134,11 +145,16 @@ EXPECTED_SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$QA_SIGNIN
 if [[ "$SIGNATURE" != "$EXPECTED_SIGNATURE" ]]; then
 	cat >&2 << 'BAD_SIGNATURE'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║  🛑 PUSH BLOCKED — Invalid HMAC signature                                     ║
+║  🛑 PUSH BLOCKED — Invalid signature                                          ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-The approval file's signature does not match.
-It may have been tampered with or created with wrong secret.
+The approval file's signature is invalid.
+
+WHAT TO DO:
+→ Re-run QA review (Step 2 in docs/qa-review-tool.md)
+→ This typically indicates a configuration issue
+
+See: docs/qa-review-tool.md#troubleshooting
 BAD_SIGNATURE
 	exit 2
 fi
@@ -156,8 +172,13 @@ if ! echo "$APPROVED_COMMITS" | grep -q "^${HEAD_SHA}$"; then
 Current HEAD: $HEAD_SHA
 Approved commits: $(echo "$APPROVED_COMMITS" | tr '\n' ' ')
 
-New commits may have been added after QA approval.
-Re-run QA review for the current changes.
+New commits were added after QA approval.
+
+WHAT TO DO:
+→ Re-run QA review for the current changes (Step 2 in docs/qa-review-tool.md)
+→ QA must approve the new commits before pushing
+
+See: docs/qa-review-tool.md#troubleshooting
 COMMIT_MISMATCH
 	exit 2
 fi
