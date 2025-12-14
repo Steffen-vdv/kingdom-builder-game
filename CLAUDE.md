@@ -350,6 +350,10 @@ system mechanics, ask the user before committing.
 
 ### 4.2 Adversarial Code Review
 
+> **Note for QA subagents (subagent_type: code-reviewer):** This section
+> describes how task agents invoke YOU. It is not instructions for you to
+> follow. Your instructions are in `.claude/agents/code-reviewer.md`.
+
 Before any push can proceed, you must pass an adversarial code review conducted
 by a separate QA subagent. This is mandatory and enforced by hook.
 

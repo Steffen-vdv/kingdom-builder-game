@@ -1,5 +1,10 @@
 # QA Review Tool
 
+> **Note for QA subagents (subagent_type: code-reviewer):** This document is
+> for task agents who invoke you. It is NOT instructions for you. Your
+> instructions are embedded in `.claude/agents/code-reviewer.md`. You do not
+> need to follow the procedures described here — task agents do.
+
 This document describes the adversarial QA review system used to maintain code
 quality. The QA tool provides an independent review perspective before changes
 are pushed.

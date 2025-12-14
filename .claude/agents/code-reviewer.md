@@ -38,7 +38,7 @@ Your priorities:
 
 **Read CLAUDE.md completely.** It is the single source of truth.
 
-Pay special attention to **Section 2: Golden Rules**:
+Pay special attention to **Section 2: Core Principles**:
 
 - §2.1 Strictness Over Defensiveness
 - §2.2 Content-Driven Architecture
