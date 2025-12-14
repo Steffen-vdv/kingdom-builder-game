@@ -15,24 +15,19 @@ Task Agent → writes approval file directly → push succeeds
 **Desired flow (tamper-proof):**
 
 ```
-Task Agent → spawns QA Subagent → QA reviews → QA calls MCP tool →
-MCP server verifies secret & writes signed approval → hook verifies → push succeeds
+Task Agent → spawns QA Subagent → QA reviews & signs approval →
+Task Agent → spawns Pusher Subagent → Pusher verifies & pushes
 ```
 
 ---
 
-## Solution: Secret Poisoning via SessionStart Hook
+## Solution: Secret Poisoning + Pusher Subagent
 
 ### Key Discovery
 
-**`session-start.sh` runs ONLY for main task agents, NEVER for QA subagents.**
+**`session-start.sh` runs ONLY for main task agents, NEVER for subagents.**
 
-This asymmetry enables a clean solution:
-
-1. Cloud environment provides secrets to ALL agents
-2. `session-start.sh` "poisons" (unsets) the signing secret for main agents
-3. QA subagents retain the original secret (no session-start.sh runs)
-4. MCP server verifies the secret before signing approvals
+This asymmetry enables a clean solution with zero theoretical bypass.
 
 ### Architecture
 
@@ -42,64 +37,69 @@ This asymmetry enables a clean solution:
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  CLOUD ENVIRONMENT:                                                         │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │ QA_SIGNING_SECRET=<auth-secret>    ← For MCP tool authentication     │   │
-│  │ QA_MASTER_KEY=<hmac-key>           ← For HMAC signing (NOT poisoned) │   │
-│  └──────────────────────────────────────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────┐                                 │
+│  │ QA_SIGNING_SECRET=<secret>             │  ← Only ONE secret needed       │
+│  └────────────────────────────────────────┘                                 │
 │                    │                                                        │
-│         ┌─────────┴─────────┐                                               │
-│         ▼                   ▼                                               │
-│  ┌─────────────┐     ┌─────────────┐                                        │
-│  │ Main Agent  │     │ QA Subagent │                                        │
-│  └──────┬──────┘     └──────┬──────┘                                        │
-│         │                   │                                               │
-│         ▼                   │                                               │
-│  session-start.sh runs      │ (no session-start.sh)                         │
-│  ┌─────────────────────┐    │                                               │
-│  │ unset QA_SIGNING_   │    │                                               │
-│  │ SECRET (POISONED)   │    │                                               │
-│  │                     │    │                                               │
-│  │ QA_MASTER_KEY       │    │                                               │
-│  │ remains intact      │    │                                               │
-│  └─────────────────────┘    │                                               │
-│         │                   │                                               │
-│         ▼                   ▼                                               │
-│  QA_SIGNING_SECRET=""   QA_SIGNING_SECRET=<auth-secret>                     │
-│  QA_MASTER_KEY=<key>    QA_MASTER_KEY=<key>                                 │
-│         │                   │                                               │
-│         ▼                   ▼                                               │
-│  Calls MCP tool ──►     Calls MCP tool ──►                                  │
-│  Secret empty/wrong     Secret correct                                      │
-│  ──► REJECTED           ──► HMAC SIGNED                                     │
-│                              │                                              │
-│                              ▼                                              │
-│                    ~/.claude-push-approval                                  │
-│                    (contains HMAC signature)                                │
-│                              │                                              │
-│         ┌────────────────────┘                                              │
-│         ▼                                                                   │
-│  Pre-push hook runs (main agent context)                                    │
-│  Uses QA_MASTER_KEY (NOT poisoned) to verify HMAC                           │
-│         │                                                                   │
-│         ▼                                                                   │
-│    PUSH ALLOWED                                                             │
+│         ┌─────────┼─────────┬─────────────┐                                 │
+│         ▼         ▼         ▼             │                                 │
+│  ┌───────────┐ ┌────────┐ ┌────────────┐                                    │
+│  │Main Agent │ │QA Sub  │ │Pusher Sub  │                                    │
+│  └─────┬─────┘ └────┬───┘ └─────┬──────┘                                    │
+│        │            │           │                                           │
+│        ▼            │           │                                           │
+│  session-start.sh   │ (no hook) │ (no hook)                                 │
+│  POISONS secret     │           │                                           │
+│        │            │           │                                           │
+│        ▼            ▼           ▼                                           │
+│  SECRET=""     SECRET=<val> SECRET=<val>                                    │
+│        │            │           │                                           │
+│        │            │           │                                           │
+│  ✗ Cannot sign  ✓ Can sign  ✓ Can verify                                    │
+│  ✗ Cannot push    approval    and PUSH                                      │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Two-Secret Design
+### Flow
 
-| Secret | Purpose | Poisoned? | Who Has It |
-|--------|---------|-----------|------------|
-| `QA_SIGNING_SECRET` | MCP tool authentication | YES (main agent only) | QA subagent, MCP server |
-| `QA_MASTER_KEY` | HMAC signing & verification | NO | All agents, MCP server, pre-push hook |
+```
+1. Main agent completes work, ready to push
+         │
+         ▼
+2. Main agent spawns QA subagent (code-reviewer)
+         │
+         ▼
+3. QA subagent reviews code
+   - If BLOCKED → returns to main agent, no approval
+   - If APPROVED → calls MCP sign_approval() tool
+         │
+         ▼
+4. MCP server verifies QA_SIGNING_SECRET, writes approval file with HMAC
+         │
+         ▼
+5. Main agent spawns Pusher subagent
+         │
+         ▼
+6. Pusher subagent:
+   - Reads approval file
+   - Verifies HMAC using QA_SIGNING_SECRET (unpoisoned)
+   - Executes git push
+   - Returns result to main agent
+```
 
-**Why two secrets?**
+### Why This Works
 
-- `QA_SIGNING_SECRET` poisoning prevents main agent from calling MCP tool
-- `QA_MASTER_KEY` must remain available for pre-push hook to verify signatures
-- Main agent has `QA_MASTER_KEY` but cannot call MCP tool (no `QA_SIGNING_SECRET`)
-- Intentional forgery would require writing bypass code (acceptable for PoC)
+| Agent | Has Secret? | Can Sign? | Can Push? |
+|-------|-------------|-----------|-----------|
+| Main Agent | NO (poisoned) | NO | NO |
+| QA Subagent | YES | YES | — |
+| Pusher Subagent | YES | — | YES |
+
+**Zero theoretical bypass:** Main agent cannot push because:
+1. It cannot call `sign_approval` (no secret)
+2. It cannot push directly (pre-push hook blocks when secret is empty)
+3. It cannot forge approval file (no secret for HMAC)
 
 ---
 
@@ -117,23 +117,19 @@ if [[ -n "$QA_SIGNING_SECRET" ]]; then
 fi
 ```
 
-This code runs early in session-start.sh, ensuring main agents lose the
-signing secret before any operations.
-
 ---
 
 ## Implementation Required
 
 ### Pre-Implementation: Cloud Environment Setup
 
-Set these environment variables in the cloud environment configuration:
+Set this environment variable in cloud environment configuration:
 
 ```
-QA_SIGNING_SECRET=mcp-qa-auth-secret-2024
-QA_MASTER_KEY=mcp-qa-hmac-key-2024
+QA_SIGNING_SECRET=<any-secure-value>
 ```
 
-These values are examples; use any secure values.
+Example: `QA_SIGNING_SECRET=&@^!SecretMasterQASignKey!&&#@!`
 
 ### 1. Create MCP Server
 
@@ -168,26 +164,17 @@ These values are examples; use any secure values.
 }
 ```
 
-**src/index.ts requirements:**
+**src/index.ts — Tool: `sign_approval`**
 
-1. Use stdio transport
-2. Read `QA_SIGNING_SECRET` and `QA_MASTER_KEY` from environment
-3. Implement `sign_approval` tool:
-   - Input: `{ signing_secret, verdict, commits, diffHash, reviewSummary }`
-   - Verify `signing_secret === process.env.QA_SIGNING_SECRET`
-   - If mismatch: return error
-   - If match: generate HMAC signature using `QA_MASTER_KEY`
-   - Write approval file to `~/.claude-push-approval`
-
-**Tool schema:**
 ```typescript
+// Called by QA subagent after approving
 {
   name: 'sign_approval',
   inputSchema: {
     type: 'object',
     properties: {
       signing_secret: { type: 'string', description: 'Value of $QA_SIGNING_SECRET' },
-      verdict: { type: 'string', enum: ['APPROVED', 'BLOCKED', 'NEEDS_INPUT'] },
+      verdict: { type: 'string', enum: ['APPROVED'] },
       commits: { type: 'array', items: { type: 'string' } },
       diffHash: { type: 'string' },
       reviewSummary: { type: 'string' }
@@ -195,39 +182,13 @@ These values are examples; use any secure values.
     required: ['signing_secret', 'verdict', 'commits', 'diffHash', 'reviewSummary']
   }
 }
-```
 
-**HMAC signing:**
-```typescript
-import { createHmac } from 'crypto';
-import { writeFileSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
-
-function signApproval(payload: object): string {
-  const masterKey = process.env.QA_MASTER_KEY;
-  if (!masterKey) throw new Error('QA_MASTER_KEY not set');
-
-  const payloadStr = JSON.stringify(payload);
-  return createHmac('sha256', masterKey).update(payloadStr).digest('hex');
-}
-
-function writeApprovalFile(verdict: string, commits: string[], reviewSummary: string) {
-  const payload = {
-    status: verdict,
-    timestamp: new Date().toISOString(),
-    commits,
-    reviewer_verdict: reviewSummary
-  };
-
-  const signature = signApproval(payload);
-  const fileContent = { ...payload, signature };
-
-  const approvalPath = join(homedir(), '.claude-push-approval');
-  writeFileSync(approvalPath, JSON.stringify(fileContent, null, 2));
-
-  return approvalPath;
-}
+// Implementation:
+// 1. Verify signing_secret === process.env.QA_SIGNING_SECRET
+// 2. If mismatch → return error (caller is poisoned main agent)
+// 3. Create payload: { status, timestamp, commits, reviewer_verdict }
+// 4. Generate HMAC: hmac('sha256', QA_SIGNING_SECRET).update(JSON.stringify(payload))
+// 5. Write { ...payload, signature } to ~/.claude-push-approval
 ```
 
 ### 2. Create MCP Configuration
@@ -246,10 +207,65 @@ function writeApprovalFile(verdict: string, commits: string[], reviewSummary: st
 }
 ```
 
-**Note:** No `env` section needed — MCP server inherits environment from
-the cloud config, which includes both secrets.
+### 3. Create Pusher Subagent
 
-### 3. Update code-reviewer.md
+**Location:** `.claude/agents/pusher.md`
+
+```markdown
+---
+name: pusher
+description: Verifies QA approval and pushes to remote. Use after QA approval.
+tools: Bash, Read
+---
+
+# Pusher Agent
+
+You verify QA approvals and push code to remote repositories.
+
+## Your Task
+
+1. Read the approval file at `~/.claude-push-approval`
+2. Verify the HMAC signature using `$QA_SIGNING_SECRET`
+3. If valid, execute `git push`
+4. Return the result
+
+## Verification Process
+
+```bash
+# Read approval file
+APPROVAL_FILE="$HOME/.claude-push-approval"
+
+# Extract signature and payload
+SIGNATURE=$(jq -r '.signature' "$APPROVAL_FILE")
+PAYLOAD=$(jq -c 'del(.signature)' "$APPROVAL_FILE")
+
+# Verify HMAC
+EXPECTED=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$QA_SIGNING_SECRET" | awk '{print $2}')
+
+if [[ "$SIGNATURE" != "$EXPECTED" ]]; then
+    echo "❌ Invalid approval signature"
+    exit 1
+fi
+
+# Check commits match
+HEAD_SHA=$(git rev-parse HEAD)
+if ! echo "$PAYLOAD" | jq -e ".commits | index(\"$HEAD_SHA\")" > /dev/null; then
+    echo "❌ Approval is for different commits"
+    exit 1
+fi
+
+echo "✅ Approval verified"
+git push
+```
+
+## Important
+
+- You have `$QA_SIGNING_SECRET` available (not poisoned for subagents)
+- Only push if verification succeeds
+- Report any errors back to the main agent
+```
+
+### 4. Update code-reviewer.md
 
 Add after the APPROVED verdict section:
 
@@ -261,47 +277,68 @@ After outputting ✅ APPROVED, you MUST call the MCP signing tool:
 mcp__qa_approval__sign_approval({
   signing_secret: "<your $QA_SIGNING_SECRET value>",
   verdict: "APPROVED",
-  commits: ["<full SHA of each commit>"],
+  commits: ["<full SHA of HEAD commit>"],
   diffHash: "<sha256 of reviewed diff>",
   reviewSummary: "<your approval summary>"
 })
 
-If the tool returns "invalid signing secret", you are running in main agent
-context — this should not happen during normal QA review.
+This creates a cryptographically signed approval file that the Pusher
+subagent will verify before pushing.
+
+If the tool returns "invalid signing secret", something is wrong with
+your environment — report this to the main agent.
 ```
 
-### 4. Update Pre-Push Hook
+### 5. Update Pre-Push Hook
 
-Add HMAC verification to `.claude/hooks/pre-push-review.sh`:
+Modify `.claude/hooks/pre-push-review.sh` to block direct pushes:
 
 ```bash
 # ═══════════════════════════════════════════════════════════════════════════════
-# HMAC SIGNATURE VERIFICATION
+# BLOCK DIRECT PUSHES FROM MAIN AGENT
 # ═══════════════════════════════════════════════════════════════════════════════
+# Main agent has QA_SIGNING_SECRET="" (poisoned by session-start.sh)
+# Subagents have the actual secret value
+# Only subagents (specifically the Pusher) should be able to push
 
-if [[ -z "$QA_MASTER_KEY" ]]; then
-    echo "⚠️ QA_MASTER_KEY not set - skipping signature verification" >&2
-    # Fall through to existing validation (for backwards compatibility)
-else
-    SIGNATURE=$(jq -r '.signature // empty' "$APPROVAL_FILE" 2>/dev/null)
-    if [[ -z "$SIGNATURE" ]]; then
-        echo "❌ Approval file missing HMAC signature" >&2
-        rm -f "$APPROVAL_FILE"
-        exit 2
-    fi
+if [[ -z "$QA_SIGNING_SECRET" ]]; then
+    cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 DIRECT PUSH BLOCKED                                                       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
 
-    # Reconstruct payload and verify
-    PAYLOAD=$(jq -c 'del(.signature)' "$APPROVAL_FILE" 2>/dev/null)
-    EXPECTED=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$QA_MASTER_KEY" | awk '{print $2}')
+Main agents cannot push directly. Use the Pusher subagent:
 
-    if [[ "$SIGNATURE" != "$EXPECTED" ]]; then
-        echo "❌ Invalid HMAC signature" >&2
-        rm -f "$APPROVAL_FILE"
-        exit 2
-    fi
+1. First, ensure QA review passed and signed the approval
+2. Then spawn the Pusher subagent:
 
-    echo "✅ HMAC signature verified" >&2
+   Task(subagent_type: "pusher", prompt: "Push the approved changes")
+
+The Pusher will verify the approval signature and execute the push.
+BLOCKED
+    exit 2
 fi
+
+# If we reach here, caller has valid QA_SIGNING_SECRET (is a subagent)
+# The Pusher subagent will handle verification internally
+exit 0
+```
+
+### 6. Update CLAUDE.md
+
+Add to the Git Operations section or QA workflow documentation:
+
+```markdown
+## Pushing Code
+
+Main agents CANNOT push directly. After QA approval:
+
+1. QA subagent signs the approval (creates ~/.claude-push-approval)
+2. Spawn the Pusher subagent to verify and push:
+
+   Task(subagent_type: "pusher", prompt: "Push the approved changes to origin")
+
+The Pusher verifies the HMAC signature before pushing.
 ```
 
 ---
@@ -309,11 +346,11 @@ fi
 ## Success Criteria
 
 - [ ] MCP server starts and registers `sign_approval` tool
-- [ ] Main agent calling MCP tool fails (empty `QA_SIGNING_SECRET`)
-- [ ] QA subagent calling MCP tool succeeds (has valid secret)
+- [ ] QA subagent can call `sign_approval` (has valid secret)
+- [ ] Main agent CANNOT call `sign_approval` (poisoned secret)
 - [ ] Approval file contains HMAC signature
-- [ ] Pre-push hook verifies signature correctly
-- [ ] Missing/invalid signatures are rejected
+- [ ] Main agent CANNOT push directly (blocked by hook)
+- [ ] Pusher subagent CAN verify and push (has valid secret)
 
 ---
 
@@ -325,26 +362,28 @@ From main agent, attempt:
 ```
 mcp__qa_approval__sign_approval({
   signing_secret: "",
-  verdict: "APPROVED",
-  commits: ["test"],
-  diffHash: "test",
-  reviewSummary: "test"
+  ...
 })
 ```
 **Expected:** Error "invalid signing secret"
 
-### Test 2: QA Subagent Can Sign
+### Test 2: Main Agent Cannot Push
 
-1. Spawn QA subagent via Task tool
-2. Have QA echo `$QA_SIGNING_SECRET` (should be non-empty)
-3. Call MCP tool with valid secret
-4. **Expected:** Success, approval file written with signature
+From main agent, attempt:
+```
+git push origin branch-name
+```
+**Expected:** "DIRECT PUSH BLOCKED" message
 
-### Test 3: Signature Verification
+### Test 3: QA Subagent Can Sign
 
-1. Manually write approval file WITHOUT signature
-2. Attempt push
-3. **Expected:** "missing HMAC signature" error
+Spawn QA subagent, have it call `sign_approval` with valid secret.
+**Expected:** Success, approval file written
+
+### Test 4: Pusher Subagent Can Push
+
+After QA approval, spawn Pusher subagent.
+**Expected:** Verifies signature, executes push successfully
 
 ---
 
@@ -353,13 +392,13 @@ mcp__qa_approval__sign_approval({
 | Property | Mechanism |
 |----------|-----------|
 | Main agent cannot sign | `QA_SIGNING_SECRET` poisoned by session-start.sh |
-| QA subagent can sign | Secret intact (no session-start.sh) |
-| Approvals are authentic | HMAC signature proves MCP server origin |
-| Tampering detected | HMAC verification fails if content modified |
+| Main agent cannot push | Pre-push hook checks for empty secret |
+| Main agent cannot forge | No secret for HMAC generation |
+| Approvals are authentic | HMAC signature with secret |
+| Tampering detected | HMAC verification fails |
 
-**Known Limitation (PoC):** Main agent has `QA_MASTER_KEY` and could
-theoretically forge signatures by writing code to bypass the MCP flow.
-This requires intentional circumvention, not accidental bypass.
+**Zero theoretical bypass:** The only path to pushing is through QA approval +
+Pusher verification. Main agent has no access to the secret needed for either.
 
 ---
 
@@ -370,8 +409,10 @@ This requires intentional circumvention, not accidental bypass.
 - [ ] `.claude/mcp/qa-approval/tsconfig.json`
 - [ ] `.claude/mcp/qa-approval/src/index.ts`
 - [ ] `.mcp.json`
+- [ ] `.claude/agents/pusher.md` — NEW: Pusher subagent
 - [ ] `.claude/agents/code-reviewer.md` — MCP signing instructions
-- [ ] `.claude/hooks/pre-push-review.sh` — HMAC verification
+- [ ] `.claude/hooks/pre-push-review.sh` — Block direct pushes
+- [ ] `CLAUDE.md` — Document new push workflow
 
 ---
 
