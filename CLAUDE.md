@@ -573,7 +573,7 @@ The user will tell you how to solve the problem without breaching protocol.
 
 ## 4. Project Structure
 
-Kingdom Builder uses npm workspaces with five packages:
+Kingdom Builder uses **pnpm** workspaces with five packages:
 
 | Package    | Purpose                                                 |
 | ---------- | ------------------------------------------------------- |
@@ -606,37 +606,58 @@ Contents ←── Engine ←── Server
 - **Content** is pure data with no runtime logic.
 - **Protocol** is shared types only. Imported by all packages.
 
+### Package management
+
+This project uses **pnpm** (not npm) for package management.
+
+**Note:** `pnpm install` runs automatically at session startup via the
+SessionStart hook. You should never need to run it manually.
+
+```bash
+# Add a new dependency to a specific package
+pnpm add <package> --filter @kingdom-builder/<package-name>
+
+# Add a dev dependency to root
+pnpm add -D <package> -w
+
+# Run any script (shorthand)
+pnpm <script>
+```
+
+**Important:** The lockfile is `pnpm-lock.yaml`. Always commit changes to it
+when adding/updating packages.
+
 ---
 
 ## 5. Commands & Automation
 
 ### What Husky handles automatically
 
-| Hook       | What it runs                              | When         |
-| ---------- | ----------------------------------------- | ------------ |
-| pre-commit | `npm run format` + lint staged `.ts/.tsx` | Every commit |
-| pre-push   | `npm run typecheck` + `npm run lint:deps` | Every push   |
-| post-merge | Format + lint merged files                | After merge  |
+| Hook       | What it runs                                | When         |
+| ---------- | ------------------------------------------- | ------------ |
+| pre-commit | `pnpm run format` + lint staged `.ts/.tsx`  | Every commit |
+| pre-push   | `pnpm run typecheck` + `pnpm run lint:deps` | Every push   |
+| post-merge | Format + lint merged files                  | After merge  |
 
 **Trust the hooks.** Do not manually run format, lint, or typecheck—they happen
 automatically.
 
 ### What you must run manually
 
-| Scenario                    | Command                               | Time  |
-| --------------------------- | ------------------------------------- | ----- |
-| After writing/changing code | Just commit and push                  | ~10s  |
-| After changing tests        | `npm run test:parallel` then push     | ~50s  |
-| Single test file            | `npx vitest run path/to/file.test.ts` | ~5s   |
-| After changing UI/content   | `npm run generate:snapshots`          | ~10s  |
-| Before opening PR           | `npm run verify`                      | ~2min |
+| Scenario                    | Command                                | Time  |
+| --------------------------- | -------------------------------------- | ----- |
+| After writing/changing code | Just commit and push                   | ~10s  |
+| After changing tests        | `pnpm test:parallel` then push         | ~50s  |
+| Single test file            | `pnpm vitest run path/to/file.test.ts` | ~5s   |
+| After changing UI/content   | `pnpm generate:snapshots`              | ~10s  |
+| Before opening PR           | `pnpm verify`                          | ~2min |
 
 ### Anti-patterns
 
-❌ Running `npm run format` manually (pre-commit does it)
-❌ Running `npm run typecheck` manually (pre-push does it)
+❌ Running `pnpm format` manually (pre-commit does it)
+❌ Running `pnpm typecheck` manually (pre-push does it)
 ❌ Running `check:parallel` then `test:parallel` sequentially (redundant)
-❌ Running `npm run verify` after every change (it's for PRs only)
+❌ Running `pnpm verify` after every change (it's for PRs only)
 
 ---
 
@@ -862,7 +883,7 @@ db.close();
 │ □ Cleaning up nearby code if obvious wins                       │
 ├─────────────────────────────────────────────────────────────────┤
 │ BEFORE PUSHING                                                  │
-│ □ Tests pass: npm run test:parallel                             │
+│ □ Tests pass: pnpm test:parallel                                │
 │ □ Snapshots regenerated if UI/content changed                   │
 │ □ Architecture docs updated if core mechanics changed           │
 │ □ Just commit and push (hooks handle the rest)                  │
