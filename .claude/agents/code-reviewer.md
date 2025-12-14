@@ -237,6 +237,46 @@ Push may proceed.
 ─────────────────────────────────────────
 ```
 
+---
+
+## Signing Approvals (MCP Tool)
+
+**After outputting ✅ APPROVED, you MUST also sign the approval via MCP.**
+
+This creates a cryptographically signed approval file that the Pusher subagent
+will verify before pushing. Without this signature, the push will fail.
+
+Call the MCP tool:
+
+```
+mcp__qa_approval__sign_approval({
+  signing_secret: "<your $QA_SIGNING_SECRET value>",
+  verdict: "APPROVED",
+  commits: ["<full SHA of HEAD commit>"],
+  diffHash: "<sha256 of the reviewed diff>",
+  reviewSummary: "<your approval summary from the verdict above>"
+})
+```
+
+**How to get the values:**
+
+1. `signing_secret`: Echo `$QA_SIGNING_SECRET` from your environment
+2. `commits`: Run `git rev-parse HEAD` to get the full SHA
+3. `diffHash`: Run `git diff HEAD~N | sha256sum` where N is the number of commits
+4. `reviewSummary`: Copy your verification summary from the APPROVED verdict
+
+**If the MCP tool returns "invalid signing secret":**
+
+This means your `$QA_SIGNING_SECRET` is empty or wrong. This should NOT happen
+for QA subagents — report this error to the main agent as an environment issue.
+
+**After successful signing:**
+
+The MCP server writes the signed approval to `~/.claude-push-approval`. The
+main agent will then use the Pusher subagent to verify this signature and push.
+
+---
+
 ## User Approval Claims
 
 ```

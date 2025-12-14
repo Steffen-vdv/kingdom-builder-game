@@ -3,19 +3,24 @@
 # PreToolUse hook for git push — Adversarial Review Gate
 #
 # This hook enforces mandatory code review before pushing.
-# The task agent MUST spawn a code-reviewer subagent and obtain
-# explicit APPROVED status before a push can proceed.
 #
-# State machine:
-#   No approval file     → Block + instruct to run QA review
-#   Approval file exists → Check if valid approval → Allow or Block
+# Security model (MCP-based QA approval):
+#   - Main agents have QA_SIGNING_SECRET="" (poisoned by session-start.sh)
+#   - Subagents have QA_SIGNING_SECRET=<actual value> (not poisoned)
+#   - Only subagents (specifically the Pusher) can push
+#   - Main agents are blocked and must use Pusher subagent
+#
+# Flow:
+#   1. Main agent → QA subagent reviews → signs approval via MCP
+#   2. Main agent → Pusher subagent → verifies signature → pushes
 #
 # Approval token format (JSON):
 #   {
 #     "status": "APPROVED",
 #     "timestamp": "ISO8601",
 #     "commits": ["sha1", "sha2"],
-#     "reviewer_verdict": "summary of approval"
+#     "reviewer_verdict": "summary of approval",
+#     "signature": "HMAC-SHA256 signature"
 #   }
 #
 
@@ -36,6 +41,131 @@ if [[ "$COMMAND" == *"--dry-run"* ]]; then
 fi
 
 cd "$CLAUDE_PROJECT_DIR" || exit 0
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BLOCK DIRECT PUSHES FROM MAIN AGENT
+# ═══════════════════════════════════════════════════════════════════════════════
+# Main agent has QA_SIGNING_SECRET="" (poisoned by session-start.sh)
+# Subagents have the actual secret value (session-start.sh doesn't run for them)
+# Only the Pusher subagent should be pushing
+
+if [[ -z "$QA_SIGNING_SECRET" ]]; then
+	cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 DIRECT PUSH BLOCKED                                                       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Main agents cannot push directly. You must use the Pusher subagent.
+
+REQUIRED FLOW:
+1. QA subagent reviews and signs approval (via MCP tool)
+2. Spawn Pusher subagent to verify and push:
+
+   Task(subagent_type: "pusher", prompt: "Push the approved changes to origin")
+
+The Pusher will:
+- Verify the HMAC signature on the approval file
+- Verify the approval covers the current HEAD commit
+- Execute git push
+
+NOTE: Your QA_SIGNING_SECRET is empty (poisoned by session-start.sh).
+This is intentional — only subagents can sign approvals and push.
+BLOCKED
+	exit 2
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SUBAGENT CONTEXT — Verify approval before allowing push
+# ═══════════════════════════════════════════════════════════════════════════════
+# Defense-in-depth: Even for subagents, verify the approval file here.
+# This prevents prompt injection attacks where pusher is tricked into running
+# git push directly instead of using the MCP verify_and_push tool.
+
+APPROVAL_FILE="$HOME/.claude-push-approval"
+
+# Check approval file exists
+if [[ ! -f "$APPROVAL_FILE" ]]; then
+	cat >&2 << 'NO_APPROVAL'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 PUSH BLOCKED — No approval file found                                     ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+QA review must be completed before pushing.
+The approval file at ~/.claude-push-approval is missing.
+
+Use the MCP verify_and_push tool which handles this verification automatically.
+NO_APPROVAL
+	exit 2
+fi
+
+# Read approval file
+APPROVAL_CONTENT=$(cat "$APPROVAL_FILE" 2>/dev/null)
+if [[ -z "$APPROVAL_CONTENT" ]]; then
+	cat >&2 << 'EMPTY_APPROVAL'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 PUSH BLOCKED — Approval file is empty                                     ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+The approval file exists but is empty or unreadable.
+EMPTY_APPROVAL
+	exit 2
+fi
+
+# Extract signature and payload
+SIGNATURE=$(echo "$APPROVAL_CONTENT" | jq -r '.signature // empty' 2>/dev/null)
+if [[ -z "$SIGNATURE" ]]; then
+	cat >&2 << 'NO_SIGNATURE'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 PUSH BLOCKED — Approval has no signature                                  ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+The approval file has no HMAC signature.
+It may have been created manually (bypassing QA review).
+NO_SIGNATURE
+	exit 2
+fi
+
+# Extract payload (everything except signature) and compute expected HMAC
+PAYLOAD=$(echo "$APPROVAL_CONTENT" | jq -c 'del(.signature)' 2>/dev/null)
+EXPECTED_SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$QA_SIGNING_SECRET" 2>/dev/null | awk '{print $2}')
+
+if [[ "$SIGNATURE" != "$EXPECTED_SIGNATURE" ]]; then
+	cat >&2 << 'BAD_SIGNATURE'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 PUSH BLOCKED — Invalid HMAC signature                                     ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+The approval file's signature does not match.
+It may have been tampered with or created with wrong secret.
+BAD_SIGNATURE
+	exit 2
+fi
+
+# Verify HEAD commit is in approved commits
+HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
+APPROVED_COMMITS=$(echo "$APPROVAL_CONTENT" | jq -r '.commits[]?' 2>/dev/null)
+
+if ! echo "$APPROVED_COMMITS" | grep -q "^${HEAD_SHA}$"; then
+	cat >&2 << COMMIT_MISMATCH
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 PUSH BLOCKED — HEAD not in approved commits                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Current HEAD: $HEAD_SHA
+Approved commits: $(echo "$APPROVED_COMMITS" | tr '\n' ' ')
+
+New commits may have been added after QA approval.
+Re-run QA review for the current changes.
+COMMIT_MISMATCH
+	exit 2
+fi
+
+# All verification passed — allow push
+exit 0
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LEGACY CODE BELOW (kept for reference, no longer executed)
+# ═══════════════════════════════════════════════════════════════════════════════
 
 # State files
 APPROVAL_FILE="$HOME/.claude-push-approval"

@@ -90,13 +90,14 @@ This asymmetry enables a clean solution with zero theoretical bypass.
 
 ### Why This Works
 
-| Agent | Has Secret? | Can Sign? | Can Push? |
-|-------|-------------|-----------|-----------|
-| Main Agent | NO (poisoned) | NO | NO |
-| QA Subagent | YES | YES | — |
-| Pusher Subagent | YES | — | YES |
+| Agent           | Has Secret?   | Can Sign? | Can Push? |
+| --------------- | ------------- | --------- | --------- |
+| Main Agent      | NO (poisoned) | NO        | NO        |
+| QA Subagent     | YES           | YES       | —         |
+| Pusher Subagent | YES           | —         | YES       |
 
 **Zero theoretical bypass:** Main agent cannot push because:
+
 1. It cannot call `sign_approval` (no secret)
 2. It cannot push directly (pre-push hook blocks when secret is empty)
 3. It cannot forge approval file (no secret for HMAC)
@@ -136,6 +137,7 @@ Example: `QA_SIGNING_SECRET=&@^!SecretMasterQASignKey!&&#@!`
 **Location:** `.claude/mcp/qa-approval/`
 
 **Structure:**
+
 ```
 .claude/mcp/qa-approval/
 ├── package.json
@@ -145,22 +147,23 @@ Example: `QA_SIGNING_SECRET=&@^!SecretMasterQASignKey!&&#@!`
 ```
 
 **package.json:**
+
 ```json
 {
-  "name": "@kingdom-builder/qa-approval-mcp",
-  "version": "0.1.0",
-  "type": "module",
-  "main": "src/index.ts",
-  "scripts": {
-    "start": "tsx src/index.ts"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0"
-  },
-  "devDependencies": {
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
-  }
+	"name": "@kingdom-builder/qa-approval-mcp",
+	"version": "0.1.0",
+	"type": "module",
+	"main": "src/index.ts",
+	"scripts": {
+		"start": "tsx src/index.ts"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.0.0"
+	},
+	"devDependencies": {
+		"tsx": "^4.0.0",
+		"typescript": "^5.0.0"
+	}
 }
 ```
 
@@ -197,13 +200,13 @@ Example: `QA_SIGNING_SECRET=&@^!SecretMasterQASignKey!&&#@!`
 
 ```json
 {
-  "mcpServers": {
-    "qa-approval": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["tsx", ".claude/mcp/qa-approval/src/index.ts"]
-    }
-  }
+	"mcpServers": {
+		"qa-approval": {
+			"type": "stdio",
+			"command": "npx",
+			"args": ["tsx", ".claude/mcp/qa-approval/src/index.ts"]
+		}
+	}
 }
 ```
 
@@ -211,7 +214,7 @@ Example: `QA_SIGNING_SECRET=&@^!SecretMasterQASignKey!&&#@!`
 
 **Location:** `.claude/agents/pusher.md`
 
-```markdown
+````markdown
 ---
 name: pusher
 description: Verifies QA approval and pushes to remote. Use after QA approval.
@@ -257,13 +260,15 @@ fi
 echo "✅ Approval verified"
 git push
 ```
+````
 
 ## Important
 
 - You have `$QA_SIGNING_SECRET` available (not poisoned for subagents)
 - Only push if verification succeeds
 - Report any errors back to the main agent
-```
+
+````
 
 ### 4. Update code-reviewer.md
 
@@ -287,7 +292,7 @@ subagent will verify before pushing.
 
 If the tool returns "invalid signing secret", something is wrong with
 your environment — report this to the main agent.
-```
+````
 
 ### 5. Update Pre-Push Hook
 
@@ -359,20 +364,24 @@ The Pusher verifies the HMAC signature before pushing.
 ### Test 1: Main Agent Cannot Sign
 
 From main agent, attempt:
+
 ```
 mcp__qa_approval__sign_approval({
   signing_secret: "",
   ...
 })
 ```
+
 **Expected:** Error "invalid signing secret"
 
 ### Test 2: Main Agent Cannot Push
 
 From main agent, attempt:
+
 ```
 git push origin branch-name
 ```
+
 **Expected:** "DIRECT PUSH BLOCKED" message
 
 ### Test 3: QA Subagent Can Sign
@@ -389,30 +398,41 @@ After QA approval, spawn Pusher subagent.
 
 ## Security Properties
 
-| Property | Mechanism |
-|----------|-----------|
-| Main agent cannot sign | `QA_SIGNING_SECRET` poisoned by session-start.sh |
-| Main agent cannot push | Pre-push hook checks for empty secret |
-| Main agent cannot forge | No secret for HMAC generation |
-| Approvals are authentic | HMAC signature with secret |
-| Tampering detected | HMAC verification fails |
+| Property                 | Mechanism                                        |
+| ------------------------ | ------------------------------------------------ |
+| Main agent cannot sign   | `QA_SIGNING_SECRET` poisoned by session-start.sh |
+| Main agent cannot push   | Pre-push hook checks for empty secret            |
+| Main agent cannot forge  | No secret for HMAC generation                    |
+| Approvals are authentic  | HMAC signature with secret                       |
+| Tampering detected       | HMAC verification fails                          |
+| Prompt injection defense | Pre-push hook verifies HMAC even for subagents   |
+
+**Defense-in-depth:** The pre-push hook verifies the approval file for ALL callers:
+
+- Main agent (empty secret): Blocked unconditionally
+- Subagent (has secret): Must have valid approval file with correct HMAC
+
+This means even if the Pusher subagent is tricked by prompt injection into running
+`git push` directly (bypassing the MCP `verify_and_push` tool), the hook itself
+will still verify the approval file's HMAC signature and commit list.
 
 **Zero theoretical bypass:** The only path to pushing is through QA approval +
-Pusher verification. Main agent has no access to the secret needed for either.
+valid HMAC signature + HEAD in approved commits. Main agent has no access to
+the secret needed to generate valid signatures.
 
 ---
 
 ## File Checklist
 
 - [x] `.claude/session-start.sh` — Secret poisoning
-- [ ] `.claude/mcp/qa-approval/package.json`
-- [ ] `.claude/mcp/qa-approval/tsconfig.json`
-- [ ] `.claude/mcp/qa-approval/src/index.ts`
-- [ ] `.mcp.json`
-- [ ] `.claude/agents/pusher.md` — NEW: Pusher subagent
-- [ ] `.claude/agents/code-reviewer.md` — MCP signing instructions
-- [ ] `.claude/hooks/pre-push-review.sh` — Block direct pushes
-- [ ] `CLAUDE.md` — Document new push workflow
+- [x] `.claude/mcp/qa-approval/package.json` — Dependencies installed
+- [x] `.claude/mcp/qa-approval/tsconfig.json`
+- [x] `.claude/mcp/qa-approval/src/index.ts` — MCP server implementation
+- [x] `.mcp.json` — MCP server configuration
+- [x] `.claude/agents/pusher.md` — Pusher subagent definition
+- [x] `.claude/agents/code-reviewer.md` — MCP signing instructions added
+- [x] `.claude/hooks/pre-push-review.sh` — Block main agent + verify HMAC for all
+- [ ] `CLAUDE.md` — Document new push workflow (optional, can be done later)
 
 ---
 
