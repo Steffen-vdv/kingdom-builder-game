@@ -1,11 +1,8 @@
 ---
 name: code-reviewer
 description: >
-  Adversarial code quality gate for pre-push review. MANDATORY before pushing.
-  Also available on-demand when agent wants to verify they're on the right track.
-  This skill reviews with extreme skepticism — blocking by default until
-  the implementation is proven correct. Use when: about to push, uncertain about
-  approach, want verification before continuing, or need structural review.
+  Adversarial code quality gate. MANDATORY before pushing. Reviews with extreme
+  skepticism — blocking by default until the implementation is proven correct.
 ---
 
 # Code Reviewer — Adversarial Quality Gate

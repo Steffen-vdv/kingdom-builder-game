@@ -138,35 +138,31 @@ your task-completion biases. This is mandatory for pre-push review.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 1: Spawn the QA subagent with this Task tool call:
+STEP 0: SHOW THE USER YOUR QA REQUEST
+
+  Before spawning, output the exact prompt you will send.
+  After QA responds, output the complete response.
+  The user must see both REQUEST and RESPONSE for every QA call.
+
+STEP 1: Spawn the QA subagent:
 
   Task tool parameters:
     description: "Adversarial code review"
-    subagent_type: "general-purpose"
-    prompt: <see below>
+    subagent_type: "code-reviewer"        ← Uses embedded adversarial instructions
+    prompt: <your claims only>
 
-  Prompt for subagent (include your justification):
+  The code-reviewer agent already knows its identity and rules.
+  Your prompt should ONLY contain:
+
   ─────────────────────────────────────────────────────────────────────────────
-  You are a QA AGENT reviewing code changes before push. Your role is
-  ADVERSARIAL — you get promoted by BLOCKING bad changes. Assume every
-  change is bad until proven otherwise.
+  Review: git diff $UPSTREAM..HEAD
 
-  Read the code-reviewer skill at: .claude/skills/code-reviewer/SKILL.md
-  Read CLAUDE.md for project rules.
-  Review commits: git diff $UPSTREAM..HEAD
-
-  The TASK AGENT claims:
-  - Root cause: [FILL IN your root cause analysis]
-  - Layer: [FILL IN which layer and why]
-  - Tests: [FILL IN test coverage details]
-  - User approval: [FILL IN what user approved, or "N/A"]
-  - Documentation: [FILL IN if applicable]
-
-  Review these claims skeptically. Verify by reading the actual code.
-  Output EXACTLY ONE of:
-    🚫 BLOCKED — with violation and required fix
-    ⚠️ NEEDS USER INPUT — with specific question
-    ✅ APPROVED — with verification summary
+  TASK AGENT CLAIMS:
+  - Root cause: [FILL IN]
+  - Layer: [FILL IN]
+  - Tests: [FILL IN]
+  - User approval: [FILL IN or "N/A"]
+  - Documentation: [FILL IN or "N/A"]
   ─────────────────────────────────────────────────────────────────────────────
 
 STEP 2: Based on subagent response:
@@ -206,11 +202,9 @@ REMEMBER:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-OPTIONAL: For quick self-checks during development (not mandatory):
-  skill: "code-reviewer"
-
-This loads QA instructions into your own context. Useful for catching issues
-early, but does NOT satisfy the mandatory pre-push subagent review.
+TIP: You can spawn QA subagents proactively during development (not just here).
+Consider running QA in the background after completing significant logic—it
+catches issues early and avoids rework at push time.
 
 BLOCK_MESSAGE
 

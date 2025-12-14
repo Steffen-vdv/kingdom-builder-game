@@ -376,9 +376,34 @@ with a summary of all issues encountered.
 must believe you. However, you are forbidden from lying about user approval.
 Fabricating approval is a severe breach.
 
-**Optional self-check:** Invoke `skill: "code-reviewer"` anytime to load QA
-instructions into your context. Useful for catching issues early, but does not
-satisfy the mandatory pre-push subagent review.
+**QA transparency (mandatory for ALL QA calls):** Whenever you spawn a QA
+subagent—whether for mandatory pre-push review or voluntary self-check—you must
+show the user:
+
+1. **REQUEST**: The exact prompt you are sending to QA
+2. **RESPONSE**: The complete QA verdict when it returns
+
+This applies to every QA consultation without exception. The user must see what
+claims you are making and what QA concluded.
+
+**Use the code-reviewer agent type:** Spawn QA with `subagent_type: "code-reviewer"`.
+This agent has its adversarial instructions embedded—you cannot modify them.
+Your prompt should only contain:
+
+1. The git diff command to review
+2. Your claims (root cause, layer, tests, user approval, documentation)
+
+**Proactive QA (recommended):** You can spawn QA subagents at any time during
+development—not just when forced by the pre-push hook. This enables continuous
+review and catches issues early. Consider spawning QA:
+
+- After completing a significant piece of logic
+- When uncertain about architectural decisions
+- Before committing (to avoid rework at push time)
+
+You can run QA in the background while continuing work, then check back when the
+response arrives. This is more efficient than waiting for the pre-push gate to
+block you.
 
 ### 4.3 Forbidden Git Operations
 
