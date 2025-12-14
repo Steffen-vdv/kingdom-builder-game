@@ -17,11 +17,12 @@ means be interpreted as a reflection of the final product. Lots left to do!
 
 ## 1) Setup
 
-1. Install [Node.js](https://nodejs.org/) (v18+ recommended).
-2. Install dependencies: `npm install` (uses npm workspaces to link local
+1. Install [Node.js](https://nodejs.org/) (v22+ recommended) and
+   [pnpm](https://pnpm.io/) (v9+).
+2. Install dependencies: `pnpm install` (uses pnpm workspaces to link local
    packages).
 3. Start the combined dev environment (Fastify server + Vite web client):
-   `npm run dev`. The wrapper automatically loads
+   `pnpm dev`. The wrapper automatically loads
    `config/server-auth.tokens.default.json` so the development server boots with
    an admin token.
 4. Override the default token table when you need different credentials by
@@ -29,11 +30,11 @@ means be interpreted as a reflection of the final product. Lots left to do!
    exporting a `KB_SERVER_AUTH_TOKENS` environment variable that contains your
    JSON token map.
 5. Run a single target when needed:
-   - Web client only: `npm run dev:web`
-   - Server only: `npm run server:dev`
-6. Build production bundles for both server and web: `npm run build`.
-7. Build just the Node server bundle: `npm run server:build`.
-8. Launch the production server locally with `npm run start` after supplying a
+   - Web client only: `pnpm dev:web`
+   - Server only: `pnpm server:dev`
+6. Build production bundles for both server and web: `pnpm build`.
+7. Build just the Node server bundle: `pnpm server:build`.
+8. Launch the production server locally with `pnpm start` after supplying a
    real token map via `KB_SERVER_AUTH_TOKENS` or
    `config/server-auth.tokens.local.json`. The wrapper enables
    `NODE_ENV=production`, ignores the default dev token file, and refuses to
@@ -42,8 +43,8 @@ means be interpreted as a reflection of the final product. Lots left to do!
 
 ### Verification workflow
 
-- `npm run verify` runs the full quality gate (`npm run check` followed by
-  `npm run test:coverage`) and streams each command into timestamped logs under
+- `pnpm verify` runs the full quality gate (`pnpm check` followed by
+  `pnpm test:coverage`) and streams each command into timestamped logs under
   `artifacts/`. Share those logs when asking for review support or debugging a
   failing step.
 
@@ -51,5 +52,5 @@ means be interpreted as a reflection of the final product. Lots left to do!
 
 - Husky pre-commit and pre-push hooks handle formatting, linting, and
   typechecking automatically. Just commit and push.
-- Run `npm run test:parallel` if you changed tests.
-- Run `npm run verify` once before opening a PR.
+- Run `pnpm test:parallel` if you changed tests.
+- Run `pnpm verify` once before opening a PR.

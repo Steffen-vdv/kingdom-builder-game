@@ -6,7 +6,7 @@ and requires no separate database server process.
 ## Prerequisites
 
 The server package uses `better-sqlite3`, which requires a C++ compiler to build
-native bindings during `npm install`. Most systems have this pre-installed.
+native bindings during `pnpm install`. Most systems have this pre-installed.
 
 ---
 
@@ -27,7 +27,7 @@ native bindings during `npm install`. Most systems have this pre-installed.
 
 4. Run:
    ```powershell
-   npm install
+   pnpm install
    ```
 
 ### Option 2: Chocolatey (Alternative)
@@ -39,12 +39,12 @@ If you have [Chocolatey](https://chocolatey.org/) installed:
 choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
 ```
 
-Then restart your terminal and run `npm install`.
+Then restart your terminal and run `pnpm install`.
 
 ### Verify Installation
 
 ```powershell
-npm run build --workspace=@kingdom-builder/server
+pnpm run build --filter=@kingdom-builder/server
 ```
 
 ### Troubleshooting Windows Build Issues
@@ -57,11 +57,10 @@ Use Option 1 or Option 2 above instead.
 
 1. Ensure you selected the "Desktop development with C++" workload
 2. Completely close and reopen your terminal
-3. Try cleaning npm cache:
+3. Try cleaning the cache and reinstalling:
    ```powershell
-   npm cache clean --force
    rd /s /q node_modules
-   npm install
+   pnpm install
    ```
 
 **"MSBUILD : error MSB3428"**: Visual Studio Build Tools not fully installed.
@@ -76,7 +75,7 @@ Rerun the installer and ensure "MSVC" compiler is selected.
 ```bash
 sudo apt-get update
 sudo apt-get install -y build-essential python3
-npm install
+pnpm install
 ```
 
 ### Fedora/RHEL/CentOS
@@ -84,21 +83,21 @@ npm install
 ```bash
 sudo dnf groupinstall "Development Tools"
 sudo dnf install python3
-npm install
+pnpm install
 ```
 
 ### Arch Linux
 
 ```bash
 sudo pacman -S base-devel python
-npm install
+pnpm install
 ```
 
 ### Alpine Linux (Docker)
 
 ```bash
 apk add --no-cache build-base python3
-npm install
+pnpm install
 ```
 
 ---
@@ -155,7 +154,7 @@ To reset the database, delete the files and restart the server:
 
 ```bash
 rm -f ./data/kingdom-builder.db*
-npm run dev --workspace=@kingdom-builder/server
+pnpm dev --filter=@kingdom-builder/server
 ```
 
 Migrations will automatically run on next server start.
@@ -205,10 +204,10 @@ SELECT * FROM schema_migrations ORDER BY version;
 The native module needs to be rebuilt. Run:
 
 ```bash
-npm rebuild better-sqlite3
+pnpm rebuild better-sqlite3
 ```
 
-### "Python not found" during npm install
+### "Python not found" during pnpm install
 
 Ensure Python 3 is installed and in PATH:
 

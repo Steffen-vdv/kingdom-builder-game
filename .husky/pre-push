@@ -5,7 +5,7 @@
 set -e
 
 # Run typecheck (always full - it's fast due to incremental builds)
-npm run typecheck
+pnpm run typecheck
 
 # Run dependency cruiser to validate package boundaries
-npm run lint:deps
+pnpm run lint:deps
