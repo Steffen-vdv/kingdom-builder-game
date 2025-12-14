@@ -3,6 +3,13 @@ name: code-reviewer
 description: >
   Adversarial code quality gate. MANDATORY before pushing. Reviews with extreme
   skepticism — blocking by default until the implementation is proven correct.
+tools:
+  - Read
+  - Glob
+  - Grep
+  - Bash
+  - Write
+model: sonnet
 ---
 
 # Code Reviewer — Adversarial Quality Gate
