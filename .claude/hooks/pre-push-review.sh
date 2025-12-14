@@ -1,0 +1,153 @@
+#!/bin/bash
+#
+# PreToolUse hook for git push — Adversarial Review Gate
+#
+# This hook enforces mandatory code review before pushing.
+# The task agent MUST spawn a code-reviewer subagent and obtain
+# explicit APPROVED status before a push can proceed.
+#
+# State machine:
+#   No approval file     → Block + instruct to run QA review
+#   Approval file exists → Check if valid approval → Allow or Block
+#
+# Approval token format (JSON):
+#   {
+#     "status": "APPROVED",
+#     "timestamp": "ISO8601",
+#     "commits": ["sha1", "sha2"],
+#     "reviewer_verdict": "summary of approval"
+#   }
+#
+
+# Read tool input from stdin
+JSON_INPUT=$(cat)
+
+# Parse command from tool input JSON
+COMMAND=$(echo "$JSON_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
+
+# Only intercept git push commands
+if [[ ! "$COMMAND" == *"git push"* ]]; then
+	exit 0
+fi
+
+# Skip for --dry-run
+if [[ "$COMMAND" == *"--dry-run"* ]]; then
+	exit 0
+fi
+
+cd "$CLAUDE_PROJECT_DIR" || exit 0
+
+# State files
+APPROVAL_FILE="$HOME/.claude-push-approval"
+REVIEW_STATE_FILE="$HOME/.claude-review-state"
+
+# Get commits that would be pushed
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+UPSTREAM=$(git rev-parse --abbrev-ref "@{upstream}" 2>/dev/null || echo "origin/main")
+
+# Count unpushed commits
+UNPUSHED_COUNT=$(git rev-list "$UPSTREAM..HEAD" --count 2>/dev/null || echo "0")
+
+if [[ "$UNPUSHED_COUNT" == "0" ]]; then
+	# Nothing to push, allow
+	exit 0
+fi
+
+# Get list of unpushed commit SHAs
+UNPUSHED_COMMITS=$(git rev-list "$UPSTREAM..HEAD" 2>/dev/null | tr '\n' ' ')
+
+# Check if approval file exists and is valid
+if [[ -f "$APPROVAL_FILE" ]]; then
+	APPROVAL_STATUS=$(jq -r '.status // empty' "$APPROVAL_FILE" 2>/dev/null)
+	APPROVAL_COMMITS=$(jq -r '.commits | join(" ")' "$APPROVAL_FILE" 2>/dev/null)
+
+	if [[ "$APPROVAL_STATUS" == "APPROVED" ]]; then
+		# Verify the approval covers these commits
+		# (Simple check: at least the HEAD commit should match)
+		HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
+		if [[ "$APPROVAL_COMMITS" == *"$HEAD_SHA"* ]]; then
+			# Valid approval, allow push and clean up
+			rm -f "$APPROVAL_FILE"
+			rm -f "$REVIEW_STATE_FILE"
+			exit 0
+		else
+			# Approval exists but for different commits
+			cat >&2 << 'STALE_APPROVAL'
+⚠️ APPROVAL STALE — New commits detected
+
+The existing approval was for different commits.
+You must re-run QA review for the current changes.
+
+STALE_APPROVAL
+			rm -f "$APPROVAL_FILE"
+			# Fall through to block
+		fi
+	fi
+fi
+
+# Track review round
+REVIEW_ROUND=1
+if [[ -f "$REVIEW_STATE_FILE" ]]; then
+	REVIEW_ROUND=$(jq -r '.round // 1' "$REVIEW_STATE_FILE" 2>/dev/null)
+	REVIEW_ROUND=$((REVIEW_ROUND + 1))
+fi
+
+# Save review state
+echo "{\"round\": $REVIEW_ROUND, \"branch\": \"$CURRENT_BRANCH\", \"commits\": \"$UNPUSHED_COMMITS\"}" > "$REVIEW_STATE_FILE"
+
+# Check if we've hit max iterations
+if [[ $REVIEW_ROUND -gt 5 ]]; then
+	# Reset the counter so next push attempt starts fresh after user guidance
+	rm -f "$REVIEW_STATE_FILE"
+	cat >&2 << 'MAX_ITERATIONS'
+🚨 MANDATORY USER ESCALATION
+
+5 review rounds completed without approval.
+
+You MUST escalate to the user now:
+1. Summarize the issues encountered in each round
+2. Present remaining concerns
+3. Ask user to: clarify behavior, override concerns, or redirect approach
+
+DO NOT attempt another push until user has provided guidance.
+(Review round counter has been reset for next attempt after user guidance.)
+MAX_ITERATIONS
+	exit 2
+fi
+
+# Get the diff summary for the review prompt
+DIFF_STATS=$(git diff --stat "$UPSTREAM..HEAD" 2>/dev/null | tail -20)
+CHANGED_FILES=$(git diff --name-only "$UPSTREAM..HEAD" 2>/dev/null | head -30)
+
+# Block and instruct
+cat >&2 << BLOCK_MESSAGE
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 PUSH BLOCKED — Adversarial Code Review Required                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Review Round: $REVIEW_ROUND of 5
+Branch: $CURRENT_BRANCH
+Unpushed commits: $UNPUSHED_COUNT
+
+Changed files:
+$CHANGED_FILES
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REQUIRED: Pass adversarial QA review before pushing.
+
+Follow the procedure in: docs/qa-review-tool.md
+
+Quick summary:
+1. Prepare your claims (root cause, layer, tests, user approval, docs)
+2. Show the user your QA request (transparency requirement)
+3. Spawn QA subagent with Task tool
+4. Show the user the QA response
+5. Handle verdict: fix if BLOCKED, escalate if NEEDS INPUT
+6. After ✅ APPROVED, write token to: $APPROVAL_FILE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BLOCK_MESSAGE
+
+exit 2
