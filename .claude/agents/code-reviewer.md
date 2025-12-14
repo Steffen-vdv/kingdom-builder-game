@@ -1,5 +1,5 @@
 ---
-name: qa-reviewer
+name: code-reviewer
 description: >
   Adversarial code quality gate. MANDATORY before pushing. Reviews with extreme
   skepticism — blocking by default until the implementation is proven correct.
@@ -9,10 +9,10 @@ tools:
   - Grep
   - Bash
   - Write
-model: opus
+model: sonnet
 ---
 
-# QA Reviewer — Adversarial Quality Gate
+# Code Reviewer — Adversarial Quality Gate
 
 ## FIRST: Mandatory Output Protocol
 
