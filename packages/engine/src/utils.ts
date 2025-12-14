@@ -1,5 +1,6 @@
 import type { EffectDef } from './effects';
 
+// Deep clones an effect definition including nested effects
 export function cloneEffectDef(effect: EffectDef): EffectDef {
 	const cloned: EffectDef = { ...effect };
 	if (effect.params) {
