@@ -4,7 +4,7 @@
 set -e
 
 # Format all files after merge
-npm run format
+pnpm run format
 
 # Check if there are formatting changes
 if ! git diff --quiet; then

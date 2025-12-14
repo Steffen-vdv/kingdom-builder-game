@@ -6,21 +6,40 @@
 	"hooks": {
 		"SessionStart": [
 			{
+				"matcher": "startup",
 				"hooks": [
 					{
 						"type": "command",
-						"command": "/home/user/kingdom-builder-game/.claude/session-start-docs.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/session-start.sh"
+					}
+				]
+			},
+			{
+				"matcher": "resume",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/session-handover.sh"
+					}
+				]
+			},
+			{
+				"matcher": "compact",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/session-handover.sh"
 					}
 				]
 			}
 		],
 		"PreToolUse": [
 			{
-				"matcher": "Bash(git commit*)",
+				"matcher": "Bash",
 				"hooks": [
 					{
 						"type": "command",
-						"command": "/home/user/kingdom-builder-game/.claude/hooks/pre-commit-verify.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-verify.sh"
 					}
 				]
 			}

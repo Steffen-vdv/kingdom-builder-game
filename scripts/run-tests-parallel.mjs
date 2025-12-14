@@ -4,15 +4,15 @@
  * Runs all test suites in parallel (like CI does) and reports results cleanly.
  *
  * Usage:
- *   npm run test:parallel          # Run all test suites in parallel
- *   npm run test:parallel -- -v    # Verbose mode (show full output on failure)
+ *   pnpm test:parallel          # Run all test suites in parallel
+ *   pnpm test:parallel -- -v    # Verbose mode (show full output on failure)
  */
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const isWindows = process.platform === 'win32';
-const npmExecutable = isWindows ? 'npm.cmd' : 'npm';
+const pnpmExecutable = isWindows ? 'pnpm.cmd' : 'pnpm';
 const verbose =
 	process.argv.includes('-v') || process.argv.includes('--verbose');
 
@@ -42,7 +42,7 @@ async function runTestSuite(suite) {
 	let output = '';
 
 	return new Promise((resolve) => {
-		const child = spawn(npmExecutable, ['run', suite.script], {
+		const child = spawn(pnpmExecutable, ['run', suite.script], {
 			shell: isWindows,
 			env: { ...process.env, FORCE_COLOR: '0' },
 		});

@@ -9,8 +9,8 @@
 		"build": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
-		"@kingdom-builder/contents": "^0.1.0",
-		"@kingdom-builder/protocol": "^0.1.0"
+		"@kingdom-builder/contents": "workspace:*",
+		"@kingdom-builder/protocol": "workspace:*"
 	},
 	"devDependencies": {
 		"typescript": "5.9.3"

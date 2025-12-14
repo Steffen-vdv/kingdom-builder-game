@@ -8,13 +8,12 @@
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
 		"build": "tsc -b tsconfig.json",
-		"pretest": "npm rebuild better-sqlite3 --silent",
 		"test": "vitest --run --config vitest.config.ts"
 	},
 	"dependencies": {
-		"@kingdom-builder/contents": "^0.1.0",
-		"@kingdom-builder/engine": "^0.1.0",
-		"@kingdom-builder/protocol": "^0.1.0",
+		"@kingdom-builder/contents": "workspace:*",
+		"@kingdom-builder/engine": "workspace:*",
+		"@kingdom-builder/protocol": "workspace:*",
 		"better-sqlite3": "^12.5.0",
 		"fastify": "^5.6.2"
 	},

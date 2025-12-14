@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
 # Pre-commit hook - formats and lints staged files before commit
-# Note: If hooks aren't running, run `npm run prepare` to initialize Husky
+# Note: If hooks aren't running, run `pnpm run prepare` to initialize Husky
 
 set -e
 
 # Format all files
-npm run format
+pnpm run format
 
 # Stage any formatting changes to tracked files (not untracked)
 git add -u

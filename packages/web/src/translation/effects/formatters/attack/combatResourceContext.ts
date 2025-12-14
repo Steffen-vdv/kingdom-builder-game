@@ -57,21 +57,21 @@ function buildStatDescriptor(
 }
 
 /**
- * Resolves attack stats purely from effect params.
- * Content must provide the stats array - no defaults are assumed.
+ * Resolves attack resources purely from effect params.
+ * Content must provide the resources array - no defaults are assumed.
  */
 function resolveAttackStats(
 	effectDefinition: EffectDef<Record<string, unknown>>,
 	translationContext: TranslationContext,
 ): AttackStatContext {
 	const stats: AttackStatContext = {};
-	const rawStats = effectDefinition.params?.['stats'];
+	const rawResources = effectDefinition.params?.['resources'];
 
-	if (!Array.isArray(rawStats)) {
+	if (!Array.isArray(rawResources)) {
 		return stats;
 	}
 
-	for (const entry of rawStats) {
+	for (const entry of rawResources) {
 		if (!isRawAttackStatParam(entry)) {
 			continue;
 		}

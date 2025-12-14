@@ -6,13 +6,14 @@ import {
 	SYNTH_BUILDING_ATTACK,
 	SYNTH_PARTIAL_ATTACK,
 	SYNTH_BUILDING,
-	COMBAT_STAT_CONFIG,
+	COMBAT_RESOURCE_CONFIG,
 	SYNTH_RESOURCE_IDS,
 	PLUNDER_HAPPINESS_AMOUNT,
 	WAR_WEARINESS_GAIN,
 	BUILDING_REWARD_GOLD,
 	PLUNDER_PERCENT,
 	type SyntheticAction,
+	type CombatResourceKey,
 } from './raidConfig';
 
 export type ResourceMethod = 'add' | 'remove' | 'transfer';
@@ -47,7 +48,7 @@ export type AttackEffectDescriptor = {
 	target: { resource?: string; building?: string };
 	attacker?: EffectDescriptor[];
 	defender?: EffectDescriptor[];
-	stats?: Array<'power' | 'absorption' | 'fortification'>;
+	combatResources?: CombatResourceKey[];
 };
 
 export type ActionDefinition = {
@@ -150,7 +151,7 @@ type AttackParams = {
 	target:
 		| { type: 'resource'; resourceId: string }
 		| { type: 'building'; id: string };
-	stats?: Array<{
+	resources?: Array<{
 		role: 'power' | 'absorption' | 'fortification';
 		resourceId: string;
 		label?: string;
@@ -175,22 +176,24 @@ export function buildAttackEffect(
 					id: descriptor.target.building ?? SYNTH_BUILDING.id,
 				},
 	};
-	const stats = descriptor.stats ?? ['power', 'absorption', 'fortification'];
-	const annotations = [] as AttackParams['stats'];
-	for (const role of stats) {
-		const config = COMBAT_STAT_CONFIG[role];
+	const combatResourceKeys =
+		descriptor.combatResources ??
+		(Object.keys(COMBAT_RESOURCE_CONFIG) as CombatResourceKey[]);
+	const resources = [] as AttackParams['resources'];
+	for (const key of combatResourceKeys) {
+		const config = COMBAT_RESOURCE_CONFIG[key];
 		if (!config) {
 			continue;
 		}
-		annotations?.push({
-			role,
+		resources?.push({
+			role: key,
 			resourceId: config.resourceId,
 			label: config.label,
 			icon: config.icon,
 		});
 	}
-	if (annotations && annotations.length > 0) {
-		params.stats = annotations;
+	if (resources && resources.length > 0) {
+		params.resources = resources;
 	}
 	if (descriptor.attacker?.length || descriptor.defender?.length) {
 		params.onDamage = {};
@@ -265,7 +268,7 @@ export const ACTION_DEFS: Record<string, ActionDefinition> = {
 		baseCosts: { [SYNTH_RESOURCE_IDS.ap]: 0 },
 		attack: {
 			target: { resource: SYNTH_RESOURCE_IDS.castleHP },
-			stats: ['power'],
+			combatResources: ['power'],
 		},
 	},
 };

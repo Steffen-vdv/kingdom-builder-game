@@ -8,7 +8,7 @@ whether the caller may create new sessions or advance existing games.
 
 Tokens can be supplied through configuration files or via the
 `KB_SERVER_AUTH_TOKENS` environment variable. The repository ships with
-`config/server-auth.tokens.default.json`, which `npm run dev` loads through
+`config/server-auth.tokens.default.json`, which `pnpm dev` loads through
 `scripts/run-with-auth.mjs` to provide a local admin token automatically.
 
 Create `config/server-auth.tokens.local.json` when you need to override the
@@ -21,7 +21,7 @@ default map. The wrapper script resolves tokens in this order:
 
 When neither the environment variable nor the local override is present, the
 default file keeps the development server accessible with admin privileges. For
-production, call `npm run start` so `NODE_ENV=production` is set. The wrapper
+production, call `pnpm start` so `NODE_ENV=production` is set. The wrapper
 skips the default dev file (and the built-in fallback) when `--require-tokens`
 is present, forcing you to supply real credentials.
 

@@ -229,17 +229,17 @@ describe('modifier evaluation handlers', () => {
 				? actionInfo.icon
 				: (actionInfo?.name ?? actionDef.name ?? actionId);
 		const resourceIcon = resourceInfo.icon ?? resourceId;
-		// Summary format: ✨🚜: 🪙-20% Cost
+		// Summary format: ✨🚜 cost: 🪙-20%
 		expect(summary).toEqual([
-			`${costDescriptor.icon}${actionIcon}: ${resourceIcon}-20% ${keywords.cost}`,
+			`${costDescriptor.icon}${actionIcon} ${keywords.cost}: ${resourceIcon}-20%`,
 		]);
-		// Describe format: ✨🚜 Plow: -20% 🪙 Cost
+		// Describe format: ✨🚜 Plow cost: 🪙 -20%
 		const targetLabel = joinParts(
 			actionInfo?.icon ?? actionDef.icon,
 			actionInfo?.name ?? actionDef.name ?? actionId,
 		);
 		expect(description).toEqual([
-			`${costDescriptor.icon}${targetLabel}: -20% ${resourceIcon} ${keywords.cost}`,
+			`${costDescriptor.icon}${targetLabel} ${keywords.cost}: ${resourceIcon} -20%`,
 		]);
 	});
 
