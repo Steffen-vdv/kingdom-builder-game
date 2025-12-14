@@ -116,43 +116,19 @@ Verification:
 
 EVIDENCE
 
-# Contextual checks based on detected categories
-if $HAS_ENGINE || $HAS_CONTENT; then
-	cat >&2 << 'GAME_LOGIC'
-Game logic detected — also verify:
-- No hardcoded CResource.*/CAction.* in filter logic (use properties)
-- No fallbacks/defaults masking bad data
-- Root cause addressed, not symptom patched
+# Reference CLAUDE.md for rules
+cat >&2 << 'RULES_REF'
+Before committing, re-read CLAUDE.md Section 2 (Golden Rules).
 
-GAME_LOGIC
-fi
+Verify your changes comply with:
+- §2.1 Strictness Over Defensiveness
+- §2.2 Content-Driven Architecture
+- §2.3 Property-Based Behavior
+- §2.4 Root Cause Analysis
+- §2.5 Layer Responsibility
+- §2.6 Test Integrity
 
-if $HAS_WEB; then
-	cat >&2 << 'WEB'
-Web changes detected — also verify:
-- No custom UI text (use translators)
-- Web trusts protocol contracts (no defensive fallbacks for required fields)
-
-WEB
-fi
-
-if $HAS_INFRA && ! $HAS_ENGINE && ! $HAS_CONTENT && ! $HAS_WEB && ! $HAS_SERVER; then
-	cat >&2 << 'INFRA_ONLY'
-Infrastructure-only changes — simplified verification:
-- Confirm this is build/config, not game logic
-- State what problem this solves
-
-INFRA_ONLY
-fi
-
-if $HAS_TESTS_ONLY; then
-	cat >&2 << 'TESTS_ONLY'
-Test-only changes — simplified verification:
-- Confirm no production code was changed
-- State what the test covers
-
-TESTS_ONLY
-fi
+RULES_REF
 
 cat >&2 << 'FOOTER'
 ═══════════════════════════════════════════════════════════════════════
