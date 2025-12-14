@@ -12,21 +12,20 @@ LOG="/tmp/claude-session-start-hook.log"
 echo "=== SessionStart $(date -Iseconds) ===" > "$LOG"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# QA APPROVAL SYSTEM: Poison the signing secret for main agents
+# QA APPROVAL SYSTEM: Create marker file for main agent identification
 # ═══════════════════════════════════════════════════════════════════════════════
-# The QA_SIGNING_SECRET is provided via cloud environment to ALL agents.
-# By unsetting it here (which only runs for main agents), we ensure:
-#   - Main agents: QA_SIGNING_SECRET is empty/unset (cannot sign approvals)
-#   - QA subagents: QA_SIGNING_SECRET remains intact (can sign approvals)
+# This hook runs ONLY for main agents (not subagents).
+# By creating a marker file, we enable the qa-secret-guard.sh hook to:
+#   - Block main agents from accessing QA_SIGNING_SECRET
+#   - Block ALL agents from touching the marker file itself
 #
-# This prevents main agents from bypassing QA review by calling the MCP tool
-# directly - they won't have the secret required to sign.
+# The marker file approach replaces the previous "secret poisoning" approach
+# which didn't work because subprocess env changes don't affect the parent.
 # ═══════════════════════════════════════════════════════════════════════════════
-if [[ -n "$QA_SIGNING_SECRET" ]]; then
-  echo "Poisoning QA_SIGNING_SECRET for main agent session" >> "$LOG"
-  unset QA_SIGNING_SECRET
-  export QA_SIGNING_SECRET=""
-fi
+MARKER_FILE="$HOME/.claude-main-agent-marker"
+echo "Creating main agent marker: $MARKER_FILE" >> "$LOG"
+echo "{\"created\":\"$(date -Iseconds)\",\"type\":\"main-agent\"}" > "$MARKER_FILE"
+chmod 644 "$MARKER_FILE"
 
 cd "$CLAUDE_PROJECT_DIR" || { echo "FAILED to cd" >> "$LOG"; exit 1; }
 

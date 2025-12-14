@@ -1,14 +1,15 @@
 /**
  * MCP Server for QA Approval Signing
  *
- * This server provides the `sign_approval` tool that QA subagents use to
- * create cryptographically signed approval files after reviewing code.
+ * This server provides tools that QA and Pusher subagents use to
+ * create and verify cryptographically signed approval files.
  *
  * Security model:
- * - The tool requires `signing_secret` parameter matching $QA_SIGNING_SECRET
- * - Main agents have this secret poisoned (empty) by session-start.sh
- * - Only QA subagents have the actual secret value
- * - Approval files are HMAC-signed so Pusher can verify authenticity
+ * - The secret is read directly from process.env (never passed as parameter)
+ * - Main agents are identified by the presence of ~/.claude-main-agent-marker
+ * - Main agents CANNOT call these tools (blocked by marker check)
+ * - Only subagents (no marker) can sign approvals and push
+ * - Approval files are HMAC-signed for integrity verification
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -20,28 +21,49 @@ import { homedir } from 'os';
 import { join } from 'path';
 
 const QA_SIGNING_SECRET = process.env.QA_SIGNING_SECRET;
+const MARKER_FILE = join(homedir(), '.claude-main-agent-marker');
 
 if (!QA_SIGNING_SECRET) {
 	console.error('ERROR: QA_SIGNING_SECRET environment variable not set');
 	process.exit(1);
 }
 
+/**
+ * Check if the caller is a main agent (has marker file).
+ * Returns an error response if main agent, null otherwise.
+ */
+function checkMainAgentBlocked(): {
+	content: Array<{ type: 'text'; text: string }>;
+} | null {
+	if (existsSync(MARKER_FILE)) {
+		return {
+			content: [
+				{
+					type: 'text',
+					text: JSON.stringify({
+						success: false,
+						error:
+							'Main agents cannot use QA approval tools. Only subagents (QA reviewer, Pusher) can sign and push.',
+						hint: 'Spawn the appropriate subagent to perform this action.',
+					}),
+				},
+			],
+		};
+	}
+	return null;
+}
+
 // Create MCP server
 const server = new McpServer({
 	name: 'qa-approval',
-	version: '0.1.0',
+	version: '0.2.0',
 });
 
 // Register the sign_approval tool
 server.tool(
 	'sign_approval',
-	'Signs a QA approval after review. Only callable with valid QA_SIGNING_SECRET.',
+	'Signs a QA approval after review. Only callable by QA subagents (not main agents).',
 	{
-		signing_secret: {
-			type: 'string',
-			description:
-				'The QA signing secret from $QA_SIGNING_SECRET environment variable',
-		},
 		verdict: {
 			type: 'string',
 			enum: ['APPROVED'],
@@ -61,22 +83,10 @@ server.tool(
 			description: 'Summary of the review findings',
 		},
 	},
-	async ({ signing_secret, verdict, commits, diffHash, reviewSummary }) => {
-		// Verify the signing secret
-		if (signing_secret !== QA_SIGNING_SECRET) {
-			return {
-				content: [
-					{
-						type: 'text',
-						text: JSON.stringify({
-							success: false,
-							error:
-								'Invalid signing secret. Only QA subagents with valid $QA_SIGNING_SECRET can sign approvals.',
-						}),
-					},
-				],
-			};
-		}
+	async ({ verdict, commits, diffHash, reviewSummary }) => {
+		// Block main agents
+		const blocked = checkMainAgentBlocked();
+		if (blocked) return blocked;
 
 		// Verify verdict is APPROVED
 		if (verdict !== 'APPROVED') {
@@ -102,7 +112,7 @@ server.tool(
 			reviewer_verdict: reviewSummary,
 		};
 
-		// Generate HMAC signature
+		// Generate HMAC signature using secret from env
 		const payloadStr = JSON.stringify(payload);
 		const signature = createHmac('sha256', QA_SIGNING_SECRET)
 			.update(payloadStr)
@@ -145,38 +155,19 @@ server.tool(
 );
 
 // Register the verify_and_push tool
-// This tool verifies the approval AND pushes in one atomic operation
-// Pusher subagent MUST use this tool - it cannot skip verification
 server.tool(
 	'verify_and_push',
-	'Verifies QA approval signature and pushes to remote. ALWAYS use this tool - verification cannot be skipped.',
+	'Verifies QA approval signature and pushes to remote. Only callable by Pusher subagent.',
 	{
-		signing_secret: {
-			type: 'string',
-			description:
-				'The QA signing secret from $QA_SIGNING_SECRET environment variable',
-		},
 		branch: {
 			type: 'string',
 			description: 'Branch name to push (optional, defaults to current branch)',
 		},
 	},
-	async ({ signing_secret, branch }) => {
-		// Verify the signing secret (ensures caller is a subagent)
-		if (signing_secret !== QA_SIGNING_SECRET) {
-			return {
-				content: [
-					{
-						type: 'text',
-						text: JSON.stringify({
-							success: false,
-							error:
-								'Invalid signing secret. Only subagents with valid $QA_SIGNING_SECRET can push.',
-						}),
-					},
-				],
-			};
-		}
+	async ({ branch }) => {
+		// Block main agents
+		const blocked = checkMainAgentBlocked();
+		if (blocked) return blocked;
 
 		const approvalPath = join(homedir(), '.claude-push-approval');
 
