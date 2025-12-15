@@ -128,7 +128,7 @@ After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 ### Spawn the Pusher Subagent
 
-**IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
+**IMPORTANT:** Before invoking, display the exact prompt in a code block. After receiving response, display the structured response block verbatim in a code block.
 
 **See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#request-format-1) for
 the complete request format specification.**
