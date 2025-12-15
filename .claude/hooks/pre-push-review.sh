@@ -43,6 +43,14 @@ cat >&2 << 'BLOCKED'
 
 Direct git push is not allowed. You must use the verified push workflow.
 
+CHECKLIST (verify before proceeding):
+  □ Changes committed
+  □ Tests passing
+  □ Claims prepared (root cause, layer, tests, user approval)
+  □ Subagent I/O displayed verbatim (see docs/agent-task-workflow.md)
+  □ QA review completed with APPROVED verdict
+  □ Payload and signature received from QA
+
 WORKFLOW:
 1. QA subagent reviews code and signs approval via crypto-gate
 2. QA returns {payload, signature} to main agent
@@ -54,6 +62,6 @@ The verified-push.sh script will:
   ✓ Check HEAD is in approved commits
   ✓ Execute git push if all checks pass
 
-REFERENCE: See docs/agent-task-workflow.md
+REFERENCE: See docs/agent-task-workflow.md for complete details
 BLOCKED
 exit 2

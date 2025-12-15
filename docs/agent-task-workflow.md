@@ -30,6 +30,50 @@ changes. All pushes require QA review with cryptographic signing.
 
 ---
 
+## CRITICAL: Verbatim Subagent I/O Display
+
+**MANDATORY for ALL subagent invocations (code-reviewer, pusher).**
+
+Before invoking ANY subagent via the Task tool, you MUST display the exact prompt you are sending to the user in a triple-backtick code block:
+
+```
+[Your explanation of what you're about to do]
+
+Invoking subagent with the following prompt:
+
+```
+
+[EXACT prompt text - no modifications, no summaries]
+
+```
+
+```
+
+After receiving the subagent's response, you MUST display the exact response you received to the user in a triple-backtick code block:
+
+```
+Received response from subagent:
+
+```
+
+[EXACT response text - no modifications, no summaries]
+
+```
+
+```
+
+**Rules:**
+
+- Output the EXACT text with ZERO modifications
+- Do NOT summarize, paraphrase, or interpret
+- Do NOT add formatting beyond the code block
+- This applies to EVERY Task tool invocation for code-reviewer and pusher
+- The word is VERBATIM - copy/paste exactly what goes in and comes out
+
+**Purpose:** Verification and traceability. The user needs to see exactly what communication occurred with subagents.
+
+---
+
 ## Step 1: Prepare Your Changes
 
 Before requesting QA review:
@@ -53,6 +97,8 @@ TASK AGENT CLAIMS:
 ## Step 2: QA Review
 
 ### Spawn the QA Subagent
+
+**IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
 
 ```
 Task(
@@ -139,6 +185,8 @@ Signing failed (crypto-gate issue). The `MESSAGE` field has details.
 After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 ### Spawn the Pusher Subagent
+
+**IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
 
 ```
 Task(
@@ -300,6 +348,7 @@ Task(
 │ □ Changes committed                                                         │
 │ □ Tests passing                                                             │
 │ □ Claims prepared (root cause, layer, tests, user approval)                 │
+│ □ Subagent I/O displayed verbatim (prompt before, response after)           │
 │ □ QA subagent spawned → verdict received                                    │
 │   └─ BLOCKED: fix and retry                                                 │
 │   └─ NEEDS INPUT: ask user and retry                                        │

@@ -332,63 +332,17 @@ This is not optional. Outdated documentation actively misleads future agents.
 
 ---
 
-## 4. Quality Gates
+## 4. Workflow for Task Agents
 
-### 4.1 Pre-Commit Verification
+This section describes the complete workflow for task agents to prepare,
+review, and submit code changes. It covers QA review procedures, push
+workflows, subagent invocation protocols, and troubleshooting.
 
-Commits are gated by a PreToolUse hook that enforces verification.
+**Full documentation:** See [`docs/agent-task-workflow.md`](docs/agent-task-workflow.md)
 
-The hook will block your first commit attempt and display a verification
-checklist. You must articulate:
-
-- **Root cause**: What was actually wrong (not just what you changed)
-- **Layer**: Which layer owns this logic and why
-- **Files read**: Which files you read before editing
-
-If uncertain about expected behavior or whether your solution aligns with
-system mechanics, ask the user before committing.
-
-### 4.2 Adversarial Code Review
-
-> **Note for QA subagents (subagent_type: code-reviewer):** This section
-> describes how task agents invoke YOU. It is not instructions for you to
-> follow. Your instructions are in `.claude/agents/code-reviewer.md`.
-
-Before any push can proceed, you must pass an adversarial code review conducted
-by a separate QA subagent. This is mandatory and enforced by hook.
-
-**Full procedure:** See [`docs/agent-task-workflow.md`](docs/agent-task-workflow.md)
-
-**Key points:**
-
-- Your code is suspect until proven correct
-- QA reviews with extreme skepticism, blocking by default
-- QA subagent echoes the exact request it receives (verbatim traceability)
-- Maximum 5 rounds, then escalate to user
-- You may claim "user approved X" and QA must believe you—but lying is forbidden
-
-**Proactive QA (required workflow):** Invoke QA proactively BEFORE attempting
-to push—do not wait for the pre-push hook to force it. Run QA in parallel with
-tests for efficiency:
-
-```
-# In a single message, spawn both:
-1. Task(subagent_type: "code-reviewer") — QA review
-2. Bash — Run relevant tests (see Section 7.1 for which tests to run)
-```
-
-The pre-push hook is a safety net, not the primary workflow. Catching issues
-early via proactive QA saves iteration cycles.
-
-### 4.3 Forbidden Git Operations
-
-The following operations require explicit user approval:
-
-- `git commit --amend`
-- `git rebase`
-- `git push --force`
-
-Never perform these operations without the user explicitly requesting them.
+> **Note for SubAgents (code-reviewer, pusher):** You do not need to read the
+> workflow documentation. Your specific instructions are in your respective
+> agent definition files (`.claude/agents/*.md`).
 
 ---
 

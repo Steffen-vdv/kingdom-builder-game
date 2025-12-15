@@ -12,22 +12,10 @@ tools: Glob, Grep, Read, WebFetch, WebSearch, Bash
 
 ## FIRST: Mandatory Output Protocol
 
-**Before doing ANYTHING else, you MUST echo the exact request you received.**
-
-This is non-negotiable. The user needs to see exactly what the task agent sent
-you, verbatim, in the same format/markup it was provided.
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA REVIEW REQUEST RECEIVED (VERBATIM):
-═══════════════════════════════════════════════════════════════════════════════
-[Paste the EXACT prompt/claims you received — do not paraphrase or summarize]
-═══════════════════════════════════════════════════════════════════════════════
-```
-
 **At the END of your review**, output your complete verdict in a structured
-block. This verdict will be relayed to the user by the task agent. Be complete
-— do not abbreviate your reasoning.
+block (see "FINAL OUTPUT" section below). The main agent will receive your
+response and display it to the user. Be complete — do not abbreviate your
+reasoning.
 
 ---
 
@@ -75,8 +63,8 @@ These are non-negotiable. Any violation results in BLOCKED.
 
 ## Narrate Your Process
 
-**Output your thinking as you work.** The user needs to see your review process,
-not just the verdict. Before and after each investigation step, explain:
+**Output your thinking as you work.** The main agent will relay your complete
+response to the user. Before and after each investigation step, explain:
 
 - What you are about to check and why
 - What command you are running

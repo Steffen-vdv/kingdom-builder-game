@@ -1,3 +1,4 @@
+// Engine main entry point - exports core functionality
 export { createEngine } from './setup/create_engine';
 export type {
 	ResourceKey,
