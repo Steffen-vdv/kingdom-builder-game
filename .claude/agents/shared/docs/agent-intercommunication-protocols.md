@@ -9,6 +9,8 @@ the push workflow. It serves as the single source of truth for agent I/O specs.
 - `.claude/agents/sub-agent/docs/test-runner.md` - Test analysis agent definition
 - `.claude/agents/sub-agent/docs/code-reviewer.md` - QA agent definition
 - `.claude/agents/sub-agent/docs/pusher.md` - Pusher agent definition
+- `.claude/agents/sub-agent/docs/mastermind.md` - Conceptual QA agent definition
+- `.claude/agents/sub-agent/docs/minimind.md` - Fast research agent definition
 - `.claude/agents/hypervisor/docs/hypervisor.md` - Hypervisor orchestration guide
 - `.claude/agents/hypervisor/docs/agent-task-workflow.md` - Detailed workflow procedures
 
@@ -255,6 +257,87 @@ PUSH_RESPONSE_END
 - `SUCCESS`: Push completed successfully
 - `FAILED`: Verification or push failed (invalid signature, HEAD mismatch, etc.)
 - `ERROR`: Script or system error (crypto-gate not found, execution failed, etc.)
+
+---
+
+## Mastermind Protocol
+
+The mastermind subagent performs deep analysis and conceptual QA before implementation.
+
+### Request Format
+
+Hypervisor invokes via Task tool with this prompt structure:
+
+```
+Analyze this request:
+<description of feature, investigation, or task>
+
+CONTEXT:
+- Current state: <relevant background>
+- Related systems: <what this might touch>
+- User's goal: <what they're trying to achieve>
+
+SPECIFIC CONCERNS (optional):
+<Any aspects to pay special attention to>
+```
+
+### Response Format
+
+Mastermind returns a structured response:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+MASTERMIND_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: APPROVED|USER_INFO_NEEDED|BLOCKED
+MESSAGE:
+<Multi-line analysis, decomposition, questions, or rejection reasoning>
+═══════════════════════════════════════════════════════════════════════════════
+MASTERMIND_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**Field descriptions:**
+
+- **STATUS**: Analysis outcome (APPROVED/USER_INFO_NEEDED/BLOCKED)
+- **MESSAGE**: Detailed analysis including decomposition (for APPROVED), specific
+  questions (for USER_INFO_NEEDED), or rejection reasoning (for BLOCKED)
+
+**Status meanings:**
+
+- `APPROVED`: Concept clear, returns detailed implementation decomposition
+- `USER_INFO_NEEDED`: Ambiguous request, returns specific questions to clarify
+- `BLOCKED`: Request is fundamentally flawed, returns reasoning
+
+---
+
+## Minimind Protocol
+
+The minimind subagent performs fast lookups and trivial research.
+
+### Request Format
+
+Hypervisor invokes via Task tool with simple queries:
+
+```
+<Simple question or lookup request>
+
+Examples:
+- "What's in settings.json?"
+- "Do we have any golang files in the repo?"
+- "Where is the resource system defined?"
+```
+
+### Response Format
+
+Minimind returns a simple, unstructured response:
+
+```
+Searched for: <what was searched>
+Found: <what was found>
+```
+
+No formal START/END markers. Minimind is for trivial tasks only.
 
 ---
 

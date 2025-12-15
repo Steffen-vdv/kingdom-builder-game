@@ -122,5 +122,18 @@ this structure.
 See [`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#pusher-protocol)
 for the complete response format specification.
 
-After outputting your structured response, include this reminder: "Reminder: Consult
-your workflow documentation to confirm the correct next steps. Context may have shifted."
+After outputting your structured response, include this context refresh block:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+HYPERVISOR CONTEXT REFRESH
+═══════════════════════════════════════════════════════════════════════════════
+Re-read: .claude/agents/hypervisor/docs/hypervisor.md (Section 1: Directives)
+
+Checklist before proceeding:
+[ ] Show this exchange verbatim to user (code block)
+[ ] Check if user involvement needed per Directive 2
+[ ] Verify alignment with approved plan
+[ ] Confirm next action matches hypervisor role (orchestrate, not implement)
+═══════════════════════════════════════════════════════════════════════════════
+```

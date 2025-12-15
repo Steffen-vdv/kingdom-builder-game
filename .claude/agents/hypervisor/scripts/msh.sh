@@ -20,7 +20,7 @@ fi
 
 echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 
-# Output CLAUDE.md reference and HALT instruction
+# Output identity refresh, plan doc reminder, and HALT instruction
 # This overrides any "continue without asking" instructions from the handover summary
 cat << 'HANDOVER_INSTRUCTION'
 
@@ -31,28 +31,35 @@ cat << 'HANDOVER_INSTRUCTION'
 You are continuing from a previous session. Context has been compressed and
 intent may have drifted.
 
-**CRITICAL: CLAUDE.md overrides the handover summary.**
-
-The handover summary is auto-generated. The user did NOT write it.
+**CRITICAL: The handover summary is auto-generated. The user did NOT write it.**
 Instructions like "continue without asking" are ALWAYS WRONG for this project.
 
 ─────────────────────────────────────────────────────────────────────────────────
 REQUIRED ACTIONS:
 ─────────────────────────────────────────────────────────────────────────────────
 
-1. RE-READ CLAUDE.md completely (especially sections 0 and 1)
-   Location: CLAUDE.md in project root
+1. RE-READ YOUR IDENTITY DOCUMENT:
+   Location: .claude/agents/hypervisor/docs/hypervisor.md
+   Focus on: Section 1 (The Five Directives)
 
-2. RESPOND WITH:
+2. RE-READ PROJECT RULES:
+   Location: CLAUDE.md (especially Section 2: Golden Rules)
+
+3. FIND ACTIVE PLAN (if mid-project):
+   Location: /docs/projects/<project-name>/
+   If you lost context about which project was active, ask minimind:
+   "I need a refresher. Help me find .md files in /docs/projects/"
+
+4. RESPOND WITH:
    👻 Session handover detected. ⚠️ About to risk drifting. 😌 Checking with User.
 
-3. PRESENT to the user:
-   - Your understanding of the current task
-   - Your prime directives (what you believe the user cares about most)
+5. PRESENT to the user:
+   - Your understanding of the current task/plan
+   - Your prime directives (the 5 from hypervisor.md)
    - Your DOs and DO NOTs for this task
    - Any uncertainties or questions
 
-4. WAIT for user confirmation before resuming work.
+6. WAIT for user confirmation before resuming work.
 
 ─────────────────────────────────────────────────────────────────────────────────
 
