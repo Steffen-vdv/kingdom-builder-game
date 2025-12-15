@@ -4,7 +4,7 @@
 #
 # Security model:
 #   - ALL agents are blocked from running `git push` directly
-#   - Agents MUST use `scripts/verified-push.sh` which:
+#   - Agents MUST use `scripts/pusher-agent/verified-push.sh` which:
 #     1. Verifies signature via crypto-gate binary
 #     2. Validates HEAD is in approved commits
 #     3. Then executes git push
@@ -47,7 +47,7 @@ WORKFLOW:
 1. QA subagent reviews code and signs approval via crypto-gate
 2. QA returns {payload, signature} to main agent
 3. Main agent passes {payload, signature} to Pusher subagent
-4. Pusher runs: scripts/verified-push.sh '<payload>' '<signature>'
+4. Pusher runs: scripts/pusher-agent/verified-push.sh '<payload>' '<signature>'
 
 The verified-push.sh script will:
   ✓ Verify signature via crypto-gate

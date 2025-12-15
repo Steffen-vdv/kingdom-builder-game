@@ -275,7 +275,7 @@ Task(
     OVERRIDE_TOKEN: <user-provided-token>
     BRANCH: <branch-name>
 
-    Run: scripts/verified-push.sh --override '<token>' '<branch>'
+    Run: scripts/pusher-agent/verified-push.sh --override '<token>' '<branch>'
   """
 )
 ```

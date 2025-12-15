@@ -251,7 +251,7 @@ Do not deviate from this structure.
 After your review narrative, run the signing script and output:
 
 ```bash
-./scripts/qa-sign.sh "Brief summary of what was approved"
+./scripts/code-reviewer-agent/qa-sign.sh "Brief summary of what was approved"
 ```
 
 Then output the structured response using the script's JSON output:

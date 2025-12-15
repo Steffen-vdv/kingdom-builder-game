@@ -51,10 +51,16 @@ if [[ ! -x "$BINARY" ]]; then
 
 Expected: $BINARY
 
-The crypto-gate binary is downloaded automatically on session start.
-If missing, restart your Claude Code session or run:
+The crypto-gate binary is only available to QA subagents.
+It is downloaded automatically via the SubagentStart hook.
 
-  .claude/session-start.sh
+If you are a main task agent:
+  - You cannot sign QA approvals. This is by design.
+  - Spawn a code-reviewer subagent to perform QA review.
+
+If you are a QA subagent and see this error:
+  - The SubagentStart hook may have failed.
+  - Report this to the main agent as an ERROR verdict.
 
 EOF
   exit 1

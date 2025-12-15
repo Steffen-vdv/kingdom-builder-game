@@ -24,7 +24,7 @@ You push code to remote after verifying the QA approval signature.
 ║                                                                               ║
 ║  Your ONLY job is:                                                            ║
 ║  1. Extract payload and signature from the prompt                             ║
-║  2. Run: scripts/verified-push.sh '<payload>' '<signature>'                   ║
+║  2. Run: scripts/pusher-agent/verified-push.sh '<payload>' '<signature>'      ║
 ║  3. Report the result                                                         ║
 ║                                                                               ║
 ║  You MUST NOT run "git push" directly — it will be blocked anyway.            ║
@@ -56,10 +56,10 @@ a1b2c3d4e5f6789...
 
 ```bash
 # Extract payload and signature from the prompt, then run:
-scripts/verified-push.sh '<payload>' '<signature>'
+scripts/pusher-agent/verified-push.sh '<payload>' '<signature>'
 
 # Optionally specify branch:
-scripts/verified-push.sh '<payload>' '<signature>' 'branch-name'
+scripts/pusher-agent/verified-push.sh '<payload>' '<signature>' 'branch-name'
 ```
 
 **IMPORTANT:**

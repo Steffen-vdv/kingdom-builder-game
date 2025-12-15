@@ -19,7 +19,7 @@ SUMMARY="${1:-QA approved}"
 # ═══════════════════════════════════════════════════════════════════════════════
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CRYPTO_GATE="$PROJECT_DIR/bin/crypto-gate"
 
 if [[ ! -x "$CRYPTO_GATE" ]]; then
@@ -30,7 +30,8 @@ if [[ ! -x "$CRYPTO_GATE" ]]; then
 
 Expected: $CRYPTO_GATE
 
-Run .claude/session-start.sh to download the binary.
+The crypto-gate binary should be downloaded by SubagentStart hook.
+If you are a QA subagent and see this, report ERROR verdict to main agent.
 EOF
 	exit 1
 fi
@@ -67,13 +68,21 @@ ESCAPED_SUMMARY=$(echo "$SUMMARY" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g')
 PAYLOAD="{\"commits\":[\"$HEAD_SHA\"],\"diffHash\":\"$DIFF_HASH\",\"verdict\":\"APPROVED\",\"summary\":\"$ESCAPED_SUMMARY\",\"timestamp\":\"$TIMESTAMP\"}"
 
 # Sign via crypto-gate CLI
-# crypto-gate sign outputs: {"payload":"...","signature":"..."}
-RESULT=$("$CRYPTO_GATE" sign "$PAYLOAD" 2>&1)
+# crypto-gate sign outputs just the hex signature
+SIGNATURE=$("$CRYPTO_GATE" sign "$PAYLOAD" 2>&1)
 
 if [[ $? -ne 0 ]]; then
-	echo "ERROR: crypto-gate signing failed: $RESULT" >&2
+	echo "ERROR: crypto-gate signing failed: $SIGNATURE" >&2
 	exit 1
 fi
 
-# Output the result (JSON with payload and signature)
-echo "$RESULT"
+# Validate signature looks like hex
+if [[ ! "$SIGNATURE" =~ ^[a-f0-9]{64}$ ]]; then
+	echo "ERROR: Invalid signature format: $SIGNATURE" >&2
+	exit 1
+fi
+
+# Output JSON with both payload and signature
+# Escape payload for JSON embedding (it's already JSON, so escape quotes)
+ESCAPED_PAYLOAD=$(echo "$PAYLOAD" | sed 's/"/\\"/g')
+echo "{\"payload\":\"$ESCAPED_PAYLOAD\",\"signature\":\"$SIGNATURE\"}"
