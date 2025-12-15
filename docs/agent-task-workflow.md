@@ -215,28 +215,41 @@ If unsure whether user approval covers a specific case, ask the user first.
 
 ---
 
-## Manual Signing (Escape Hatch)
+## User Override Push (Escape Hatch)
 
-If the normal workflow is unavailable (MCP tools not working, meta-work on the
-workflow itself), the user can authorize a manual signing:
+If the normal workflow is unavailable (QA subagent can't access MCP tools,
+meta-work on the workflow itself), the user can authorize a direct push via the
+MCP override tool.
+
+### Prerequisites
+
+The user must have `QA_OVERRIDE_CODE` set in the MCP server's environment. This
+is a separate secret from `QA_SIGNING_SECRET` specifically for override
+authorization.
+
+### Workflow
 
 1. Main agent explains why normal workflow cannot be used
-2. User provides the `QA_SIGNING_SECRET` value
-3. Main agent creates signed approval file:
+2. User provides their `QA_OVERRIDE_CODE` value
+3. Main agent calls the MCP override tool:
 
-```bash
-SECRET="<user-provided>"
-COMMITS="[\"$(git rev-parse HEAD)\"]"
-DIFF_HASH=$(git diff HEAD~1 | sha256sum | cut -d' ' -f1)
-TIMESTAMP=$(date -Iseconds)
-PAYLOAD="{\"status\":\"APPROVED\",\"timestamp\":\"$TIMESTAMP\",\"commits\":$COMMITS,\"diffHash\":\"$DIFF_HASH\",\"reviewer_verdict\":\"User-authorized manual signing\"}"
-SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SECRET" | cut -d' ' -f2)
-echo "{\"status\":\"APPROVED\",\"timestamp\":\"$TIMESTAMP\",\"commits\":$COMMITS,\"diffHash\":\"$DIFF_HASH\",\"reviewer_verdict\":\"User-authorized manual signing\",\"signature\":\"$SIGNATURE\"}" > ~/.claude-push-approval
+```
+mcp__qa_approval__user_override_push({
+  override_code: "<user-provided-code>",
+  branch: "<branch-name>"  // optional
+})
 ```
 
-4. Main agent pushes directly via `git push` (pre-push hook verifies signature)
+4. MCP server verifies the code and pushes directly
 
-The user providing the secret serves as authorization. This bypasses QA review.
+### Why This Approach
+
+- **Maintains MCP boundaries**: Secrets stay within MCP tools, never exposed to
+  bash commands or agent context
+- **User authorization required**: The override code is known only to the user
+- **Auditable**: The MCP tool can log override pushes separately
+- **No prompt injection risk**: The override code verification happens in
+  isolated MCP server code, not in agent-accessible hooks
 
 ---
 

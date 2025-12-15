@@ -327,6 +327,121 @@ server.tool(
 	},
 );
 
+// Register the user_override_push tool (escape hatch for emergency situations)
+server.tool(
+	'user_override_push',
+	'Emergency push with user-provided override code. Bypasses normal QA workflow when user explicitly authorizes. Use only when normal workflow is broken.',
+	{
+		override_code: {
+			type: 'string',
+			description: 'User-provided override authorization code',
+		},
+		branch: {
+			type: 'string',
+			description: 'Branch name to push (optional, defaults to current branch)',
+		},
+	},
+	async ({ override_code, branch }) => {
+		// NOTE: This tool intentionally does NOT check the main agent marker.
+		// It's designed for emergency use when the normal workflow is broken
+		// (e.g., QA subagent can't access MCP tools, or working on workflow itself).
+
+		// Verify the override code against environment variable
+		const QA_OVERRIDE_CODE = process.env.QA_OVERRIDE_CODE;
+
+		if (!QA_OVERRIDE_CODE) {
+			return {
+				content: [
+					{
+						type: 'text',
+						text: JSON.stringify({
+							success: false,
+							error:
+								'Override feature not configured. QA_OVERRIDE_CODE environment variable not set.',
+							hint: 'The user must configure QA_OVERRIDE_CODE in the environment.',
+						}),
+					},
+				],
+			};
+		}
+
+		if (override_code !== QA_OVERRIDE_CODE) {
+			return {
+				content: [
+					{
+						type: 'text',
+						text: JSON.stringify({
+							success: false,
+							error:
+								'Invalid override code. The user must provide the correct authorization code.',
+						}),
+					},
+				],
+			};
+		}
+
+		// Get HEAD commit
+		let headSha;
+		try {
+			headSha = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
+		} catch (err) {
+			return {
+				content: [
+					{
+						type: 'text',
+						text: JSON.stringify({
+							success: false,
+							error: `Failed to get HEAD commit: ${err}`,
+						}),
+					},
+				],
+			};
+		}
+
+		// Execute push
+		let pushOutput;
+		try {
+			const branchName =
+				branch ||
+				execSync('git rev-parse --abbrev-ref HEAD', {
+					encoding: 'utf-8',
+				}).trim();
+			pushOutput = execSync(`git push -u origin ${branchName}`, {
+				encoding: 'utf-8',
+				stdio: ['pipe', 'pipe', 'pipe'],
+			});
+		} catch (err: unknown) {
+			const error = err as { stderr?: string; message?: string };
+			return {
+				content: [
+					{
+						type: 'text',
+						text: JSON.stringify({
+							success: false,
+							error: `Git push failed: ${error.stderr || error.message}`,
+						}),
+					},
+				],
+			};
+		}
+
+		return {
+			content: [
+				{
+					type: 'text',
+					text: JSON.stringify({
+						success: true,
+						message: 'Override push completed successfully',
+						headCommit: headSha,
+						note: 'This push bypassed normal QA workflow via user authorization',
+						output: pushOutput,
+					}),
+				},
+			],
+		};
+	},
+);
+
 // Start the server
 async function main() {
 	const transport = new StdioServerTransport();
