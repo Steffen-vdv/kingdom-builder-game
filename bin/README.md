@@ -30,11 +30,11 @@ To manually download:
 
 ```bash
 # Set your platform (example for macOS ARM)
-CRYPTO_GATE_VERSION="v1.0.0"
+CRYPTO_GATE_VERSION="0.3.0"
 BINARY_NAME="crypto-gate-darwin-arm64"
 
 gh release download "$CRYPTO_GATE_VERSION" \
-    --repo "YourOrg/crypto-gate" \
+    --repo "Steffen-vdv/crypto-gate-releases" \
     --pattern "$BINARY_NAME" \
     --dir bin/
 
