@@ -1,7 +1,7 @@
 # Agent Task Workflow
 
 This document describes the complete workflow for completing and submitting code
-changes. All pushes require QA review and use a two-subagent system for security.
+changes. All pushes require QA review with cryptographic signing.
 
 ---
 
@@ -18,11 +18,12 @@ changes. All pushes require QA review and use a two-subagent system for security
 │                                                                             │
 │  2. QA REVIEW                                                               │
 │     └─→ Spawn code-reviewer subagent                                        │
-│     └─→ Handle verdict: BLOCKED → fix, NEEDS INPUT → ask user, APPROVED → 3 │
+│     └─→ Handle verdict: BLOCKED → fix, NEEDS INPUT → ask user               │
+│     └─→ If APPROVED: receive {payload, signature} from QA                   │
 │                                                                             │
 │  3. PUSH                                                                    │
-│     └─→ Spawn pusher subagent                                               │
-│     └─→ Handle result: success → done, failure → see troubleshooting        │
+│     └─→ Spawn pusher subagent WITH {payload, signature}                     │
+│     └─→ Pusher runs verified-push.sh to verify and push                     │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -75,7 +76,23 @@ The QA subagent will return one of three verdicts:
 
 #### ✅ APPROVED
 
-QA has approved your changes and signed the approval file. Proceed to Step 3.
+QA has approved and signed the changes. The response includes:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+APPROVAL SIGNED — Data for Pusher
+═══════════════════════════════════════════════════════════════════════════════
+
+PAYLOAD:
+{"commits":["abc123..."],"diffHash":"def456...","verdict":"APPROVED",...}
+
+SIGNATURE:
+a1b2c3d4e5f6...
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**Save both PAYLOAD and SIGNATURE** - you'll pass them to the Pusher.
 
 #### 🚫 BLOCKED
 
@@ -112,7 +129,7 @@ QA needs clarification on a design decision.
 
 ## Step 3: Push
 
-After QA approval, spawn the Pusher subagent to push your changes.
+After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 ### Spawn the Pusher Subagent
 
@@ -120,9 +137,19 @@ After QA approval, spawn the Pusher subagent to push your changes.
 Task(
   subagent_type: "pusher",
   description: "Push approved changes",
-  prompt: "Push the approved changes to origin"
+  prompt: """
+    Push the approved changes.
+
+    PAYLOAD:
+    {"commits":["abc123..."],"diffHash":"def456...","verdict":"APPROVED",...}
+
+    SIGNATURE:
+    a1b2c3d4e5f6...
+  """
 )
 ```
+
+**IMPORTANT:** Pass the exact payload and signature from QA. Do not modify them.
 
 ### Handle the Result
 
@@ -134,56 +161,55 @@ The pusher will report success. Your changes are now on the remote.
 
 The pusher will report the specific error. Common failures:
 
-| Error                        | Meaning                          | What To Do                  |
-| ---------------------------- | -------------------------------- | --------------------------- |
-| No approval file             | QA didn't sign or signing failed | Re-run QA review            |
-| Invalid signature            | Approval file corrupted          | Re-run QA review            |
-| HEAD not in approved commits | New commits after approval       | Re-run QA review            |
-| Git push failed              | Network or permission issue      | Retry push, or check remote |
-
-**For any pusher failure:** The pusher will tell you exactly what went wrong.
-Follow the guidance in its response.
+| Error                        | Meaning                       | What To Do                   |
+| ---------------------------- | ----------------------------- | ---------------------------- |
+| Missing payload/signature    | Data not passed to pusher     | Re-spawn pusher with data    |
+| Invalid signature            | Signature verification failed | Re-run QA review             |
+| HEAD not in approved commits | New commits after approval    | Re-run QA review             |
+| crypto-gate not found        | Binary not installed          | Check bin/crypto-gate exists |
+| Git push failed              | Network or permission issue   | Retry push, or check remote  |
 
 ---
 
 ## Troubleshooting
 
-### Push Blocked - "Main agents cannot push directly"
+### Push Blocked - "Use verified-push.sh instead"
 
-You tried to run `git push` yourself. Main agents cannot push directly.
+You tried to run `git push` directly. All agents must use verified-push.sh.
 
 **Solution:** Use the pusher subagent as described in Step 3.
 
-### Push Blocked - "No approval file found"
+### Push Failed - "Invalid signature"
 
-The QA subagent either wasn't invoked or failed to sign.
+The signature verification failed. The payload may have been modified.
 
-**Solution:** Run QA review (Step 2). Ensure QA returns ✅ APPROVED.
+**Solution:** Re-run QA review to get a fresh payload and signature.
 
-### Push Blocked - "Invalid signature"
-
-The approval file exists but is corrupted or was tampered with.
-
-**Solution:** Re-run QA review from Step 2.
-
-### Push Blocked - "HEAD not in approved commits"
+### Push Failed - "HEAD not in approved commits"
 
 You made new commits after QA approved.
 
 **Solution:** Re-run QA review to approve the new commits.
 
-### QA Tool Not Available
+### Push Failed - "crypto-gate not found"
 
-If the QA subagent reports it cannot access the MCP tool:
+The crypto-gate binary is not installed.
 
-**Solution:** Report this to the user as an environment configuration issue.
-The MCP server may not be running or properly configured.
+**Solution:**
 
-### Pusher Tool Not Available
+1. Download crypto-gate binary from releases
+2. Place it in `bin/crypto-gate`
+3. Make it executable: `chmod +x bin/crypto-gate`
 
-If the Pusher subagent reports it cannot access the MCP tool:
+### crypto-gate Tool Not Available
 
-**Solution:** Report this to the user as an environment configuration issue.
+If the QA subagent reports it cannot access the crypto-gate MCP tool:
+
+**Solution:**
+
+1. Check that `bin/crypto-gate` exists and is executable
+2. Check `.mcp.json` points to the correct path
+3. Report to user as environment configuration issue
 
 ---
 
@@ -217,39 +243,43 @@ If unsure whether user approval covers a specific case, ask the user first.
 
 ## User Override Push (Escape Hatch)
 
-If the normal workflow is unavailable (QA subagent can't access MCP tools,
-meta-work on the workflow itself), the user can authorize a direct push via the
-MCP override tool.
+If the normal workflow is unavailable, the user can authorize a direct push via
+the crypto-gate override verification.
 
 ### Prerequisites
 
-The user must have `QA_OVERRIDE_CODE` set in the MCP server's environment. This
-is a separate secret from `QA_SIGNING_SECRET` specifically for override
-authorization.
+The crypto-gate binary must have been built with `CRYPTO_GATE_OVERRIDE` set.
+This is a token known only to the user.
 
 ### Workflow
 
 1. Main agent explains why normal workflow cannot be used
-2. User provides their `QA_OVERRIDE_CODE` value
-3. Main agent calls the MCP override tool:
+2. User provides their override token
+3. Main agent spawns pusher with override:
 
 ```
-mcp__qa_approval__user_override_push({
-  override_code: "<user-provided-code>",
-  branch: "<branch-name>"  // optional
-})
+Task(
+  subagent_type: "pusher",
+  description: "Override push",
+  prompt: """
+    User has authorized override push.
+
+    OVERRIDE_TOKEN: <user-provided-token>
+    BRANCH: <branch-name>
+
+    Run: scripts/verified-push.sh --override '<token>' '<branch>'
+  """
+)
 ```
 
-4. MCP server verifies the code and pushes directly
+4. The verified-push.sh script calls crypto-gate to verify the override token
 
 ### Why This Approach
 
-- **Maintains MCP boundaries**: Secrets stay within MCP tools, never exposed to
-  bash commands or agent context
-- **User authorization required**: The override code is known only to the user
-- **Auditable**: The MCP tool can log override pushes separately
-- **No prompt injection risk**: The override code verification happens in
-  isolated MCP server code, not in agent-accessible hooks
+- **Cryptographic verification**: Override token is verified by crypto-gate
+- **User authorization required**: Only user knows the override token
+- **Auditable**: Override pushes are logged separately
+- **No secret exposure**: Token verification happens in compiled binary
 
 ---
 
@@ -265,8 +295,8 @@ mcp__qa_approval__user_override_push({
 │ □ QA subagent spawned → verdict received                                    │
 │   └─ BLOCKED: fix and retry                                                 │
 │   └─ NEEDS INPUT: ask user and retry                                        │
-│   └─ APPROVED: proceed to push                                              │
-│ □ Pusher subagent spawned → result received                                 │
+│   └─ APPROVED: save payload + signature                                     │
+│ □ Pusher subagent spawned WITH payload + signature                          │
 │   └─ Success: done                                                          │
 │   └─ Failure: follow error guidance                                         │
 └─────────────────────────────────────────────────────────────────────────────┘

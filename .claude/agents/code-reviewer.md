@@ -5,7 +5,7 @@ description: >
   skepticism — blocking by default until the implementation is proven correct.
 model: opus
 permissionMode: bypassPermissions
-tools: Glob, Grep, Read, WebFetch, WebSearch, Bash, mcp__qa_approval__sign_approval
+tools: Glob, Grep, Read, WebFetch, WebSearch, Bash, mcp__crypto_gate__sign
 ---
 
 # Code Reviewer — Adversarial Quality Gate
@@ -239,48 +239,72 @@ Push may proceed.
 
 ---
 
-## Signing Approvals (MCP Tool)
+## Signing Approvals (REQUIRED after APPROVED verdict)
 
-**After outputting ✅ APPROVED, you MUST also sign the approval via MCP.**
+**After outputting ✅ APPROVED, you MUST sign the approval via crypto-gate.**
 
-This creates a cryptographically signed approval file that the Pusher subagent
-will verify before pushing. Without this signature, the push will fail.
+This creates a cryptographic signature that the Pusher subagent will use to
+verify the approval before pushing. Without this signature, the push will fail.
 
-Call the MCP tool:
+### Step 1: Gather signing data
+
+```bash
+# Get HEAD commit SHA
+git rev-parse HEAD
+
+# Get diff hash (for all commits since upstream)
+git diff origin/main...HEAD | sha256sum | cut -d' ' -f1
+```
+
+### Step 2: Create payload and sign
+
+```javascript
+// Create the payload (must be valid JSON)
+const payload = JSON.stringify({
+	commits: ['<full HEAD SHA>'],
+	diffHash: '<sha256 of diff>',
+	verdict: 'APPROVED',
+	summary: '<your brief approval summary>',
+	timestamp: '<ISO8601 timestamp>',
+});
+
+// Call crypto-gate to sign
+mcp__crypto_gate__sign({ payload: payload });
+// Returns: { signature: "<hmac-sha256 signature>" }
+```
+
+### Step 3: Return payload and signature to main agent
+
+After signing, output BOTH values clearly so the main agent can pass them
+to the Pusher subagent:
 
 ```
-mcp__qa_approval__sign_approval({
-  verdict: "APPROVED",
-  commits: ["<full SHA of HEAD commit>"],
-  diffHash: "<sha256 of the reviewed diff>",
-  reviewSummary: "<your approval summary from the verdict above>"
-})
+═══════════════════════════════════════════════════════════════════════════════
+APPROVAL SIGNED — Data for Pusher
+═══════════════════════════════════════════════════════════════════════════════
+
+PAYLOAD:
+{"commits":["abc123..."],"diffHash":"def456...","verdict":"APPROVED","summary":"...","timestamp":"..."}
+
+SIGNATURE:
+a1b2c3d4e5f6...
+
+═══════════════════════════════════════════════════════════════════════════════
+Main agent: Pass BOTH payload and signature to the Pusher subagent.
+═══════════════════════════════════════════════════════════════════════════════
 ```
 
-**How to get the values:**
-
-1. `commits`: Run `git rev-parse HEAD` to get the full SHA
-2. `diffHash`: Run `git diff HEAD~N | sha256sum` where N is the number of commits
-3. `reviewSummary`: Copy your verification summary from the APPROVED verdict
-
-**After successful signing:**
-
-The MCP server writes the signed approval to `~/.claude-push-approval`. The
-main agent will then use the Pusher subagent to verify this signature and push.
-
-**If the MCP tool is unavailable:**
-
-Report this clearly to the main agent:
+**If crypto-gate is unavailable:**
 
 ```
-❌ MCP TOOL UNAVAILABLE
+❌ CRYPTO-GATE UNAVAILABLE
 
-The mcp__qa_approval__sign_approval tool is not available in this environment.
+The mcp__crypto_gate__sign tool is not available.
 
 MAIN AGENT FOLLOW-UP:
-→ This is an environment configuration issue
-→ Report to user: "QA MCP server may not be running or configured"
-→ Cannot proceed with push workflow until resolved
+→ Ensure crypto-gate binary is installed
+→ Check .mcp.json configuration
+→ Cannot proceed with push until resolved
 ```
 
 ---

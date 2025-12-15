@@ -39,38 +39,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/qa-secret-guard.sh"
-					},
-					{
-						"type": "command",
 						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-push-review.sh"
-					}
-				]
-			},
-			{
-				"matcher": "Read",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/qa-secret-guard.sh"
-					}
-				]
-			},
-			{
-				"matcher": "Write",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/qa-secret-guard.sh"
-					}
-				]
-			},
-			{
-				"matcher": "Edit",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/qa-secret-guard.sh"
 					}
 				]
 			}

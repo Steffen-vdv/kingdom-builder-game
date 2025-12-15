@@ -1,9 +1,8 @@
 {
 	"mcpServers": {
-		"qa-approval": {
+		"crypto-gate": {
 			"type": "stdio",
-			"command": "npx",
-			"args": ["tsx", ".claude/mcp/qa-approval/src/index.ts"]
+			"command": "./bin/crypto-gate"
 		}
 	}
 }
