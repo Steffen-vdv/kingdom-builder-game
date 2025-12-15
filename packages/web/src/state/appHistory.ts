@@ -1,5 +1,6 @@
 export enum Screen {
 	Menu = 'menu',
+	Overview = 'overview',
 	Tutorial = 'tutorial',
 	Game = 'game',
 }

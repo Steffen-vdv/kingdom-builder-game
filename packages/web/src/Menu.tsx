@@ -19,6 +19,7 @@ interface MenuProps {
 	onStartDev: () => void;
 	resumePoint: ResumeSessionRecord | null;
 	onContinue: () => void;
+	onOverview: () => void;
 	onTutorial: () => void;
 	darkModeEnabled: boolean;
 	onToggleDark: () => void;
@@ -40,6 +41,7 @@ export default function Menu({
 	onStartDev,
 	resumePoint,
 	onContinue,
+	onOverview,
 	onTutorial,
 	darkModeEnabled,
 	onToggleDark,
@@ -153,6 +155,7 @@ export default function Menu({
 						onStartDev={requestDeveloperStart}
 						resumePoint={resumePoint}
 						onContinue={onContinue}
+						onOverview={onOverview}
 						onTutorial={onTutorial}
 						onOpenSettings={() => setSettingsOpen(true)}
 					/>

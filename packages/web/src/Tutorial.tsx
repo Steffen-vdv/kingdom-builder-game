@@ -7,6 +7,7 @@ import {
 	SHOWCASE_BADGE_CLASS,
 	SHOWCASE_INTRO_CLASS,
 } from './components/layouts/ShowcasePage';
+import { renderTokens } from './components/overview/OverviewLayout';
 
 interface TutorialProps {
 	onBack: () => void;
@@ -72,12 +73,24 @@ const HERO_INTRO_TEXT = [
 	].join(' '),
 ].join(' ');
 
+const TUTORIAL_PARAGRAPH_TEXT = [
+	'Learn the rhythm of {game} with quick hits.',
+	[
+		'Each tip spotlights a core system so you can improvise while we polish',
+		'the tour.',
+	].join(' '),
+].join(' ');
+
 const TUTORIAL_CALLOUT_LINES = [
 	'More scripted scenarios, narrated turns, and puzzle drills are on the way.',
 	'Have ideas? Share them so we can fold them into the next update.',
 ];
 
 export default function Tutorial({ onBack }: TutorialProps) {
+	const introTokens: Record<string, React.ReactNode> = {
+		game: <strong>Kingdom Builder</strong>,
+	};
+
 	return (
 		<ShowcaseBackground>
 			<ShowcaseLayout className="items-center">
@@ -94,9 +107,7 @@ export default function Tutorial({ onBack }: TutorialProps) {
 
 				<ShowcaseCard as="article" className={TUTORIAL_CARD_CLASS}>
 					<p className="text-base leading-relaxed">
-						Learn the rhythm of <strong>Kingdom Builder</strong> with quick
-						hits. Each tip spotlights a core system so you can improvise while
-						we polish the tour.
+						{renderTokens(TUTORIAL_PARAGRAPH_TEXT, introTokens)}
 					</p>
 
 					<div className="grid gap-4 sm:grid-cols-3">

@@ -69,6 +69,7 @@ export interface CallToActionProps {
 	onStartDev: () => void;
 	resumePoint: ResumeSessionRecord | null;
 	onContinue: () => void;
+	onOverview: () => void;
 	onTutorial: () => void;
 	onOpenSettings: () => void;
 }
@@ -78,6 +79,7 @@ export function CallToActionSection({
 	onStartDev,
 	resumePoint,
 	onContinue,
+	onOverview,
 	onTutorial,
 	onOpenSettings,
 }: CallToActionProps) {
@@ -135,8 +137,21 @@ export function CallToActionSection({
 			Tutorial
 		</Button>
 	);
+	const overviewButton = (
+		<Button
+			variant="ghost"
+			className={CTA_GHOST_BUTTON_CLASS}
+			onClick={onOverview}
+			icon="🧭"
+		>
+			Game Overview
+		</Button>
+	);
 	const knowledgeActions = (
-		<div className={KNOWLEDGE_ACTIONS_CLASS}>{tutorialButton}</div>
+		<div className={KNOWLEDGE_ACTIONS_CLASS}>
+			{tutorialButton}
+			{overviewButton}
+		</div>
 	);
 	return (
 		<ShowcaseCard className="flex flex-col gap-8">

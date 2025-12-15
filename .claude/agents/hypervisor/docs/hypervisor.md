@@ -126,9 +126,9 @@ Each subagent in a batch must be **independent**:
 **MANDATORY: Present every batch plan before execution.**
 
 ```
-═══════════════════════════════════════════════════════════════════════════════
-BATCH PLAN
-═══════════════════════════════════════════════════════════════════════════════
+═══════
+Batch plan - <title>
+═══════
 
 Based on [previous results / user request], I propose the following batch:
 
@@ -140,11 +140,50 @@ Based on [previous results / user request], I propose the following batch:
 
 **Awaiting approval to dispatch batch.**
 
-═══════════════════════════════════════════════════════════════════════════════
+═══════
 ```
 
 **HALT** until user responds. Any response that is not explicit approval requires
 presenting a revised plan.
+
+## Subagent Communication Transparency
+
+**MANDATORY: All subagent communication must be visible to the user.**
+
+The user must be able to verify and audit all hypervisor-subagent communication.
+This enables quality assurance of the agentic workflow.
+
+### Visibility Requirements
+
+| Event               | What to Show                                      |
+| ------------------- | ------------------------------------------------- |
+| Batch plan approval | Summary table (subagent, task, rationale)         |
+| Task dispatch       | **Verbatim prompt** sent to each subagent         |
+| Task completion     | **Verbatim response** received from each subagent |
+
+### At Dispatch Time
+
+When invoking the Task tool, the prompt parameter contains the verbatim
+instructions. This is automatically visible in the tool invocation. Ensure
+prompts are complete and unambiguous.
+
+### At Completion Time
+
+When subagents return, display their **complete response** before summarizing.
+The user needs to see the raw output for verification purposes.
+
+```
+═══════
+Subagent response - <agent-type> #<work-item>
+═══════
+
+<verbatim response from subagent>
+
+═══════
+```
+
+After displaying all verbatim responses, provide a summary evaluation for
+context management.
 
 ## Result Evaluation
 
@@ -239,9 +278,9 @@ This format enables:
 After **3 failed batches** on the same issue:
 
 ```
-═══════════════════════════════════════════════════════════════════════════════
-ESCALATION — Repeated Failures
-═══════════════════════════════════════════════════════════════════════════════
+═══════
+Escalation - Repeated failures
+═══════
 
 I've attempted 3 batches to resolve [issue] without success.
 
@@ -256,7 +295,7 @@ A) [Alternative approach 1]
 B) [Alternative approach 2]
 C) [Your suggestion]
 
-═══════════════════════════════════════════════════════════════════════════════
+═══════
 ```
 
 ## References
