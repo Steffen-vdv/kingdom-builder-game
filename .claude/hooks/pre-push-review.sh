@@ -43,16 +43,39 @@ fi
 cd "$CLAUDE_PROJECT_DIR" || exit 0
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# BLOCK DIRECT PUSHES FROM MAIN AGENT
+# MAIN AGENT CHECK WITH ESCAPE HATCH
 # ═══════════════════════════════════════════════════════════════════════════════
 # Main agent has ~/.claude-main-agent-marker (created by session-start.sh)
 # Subagents do NOT have this marker file
-# Only the Pusher subagent should be pushing
+#
+# Escape hatch: If main agent has a VALID signed approval file, allow push.
+# This supports the manual signing flow where user provides the secret.
+# Security: Main agent can't forge signatures (blocked from accessing secret).
 
 MARKER_FILE="$HOME/.claude-main-agent-marker"
+APPROVAL_FILE="$HOME/.claude-push-approval"
 
 if [[ -f "$MARKER_FILE" ]]; then
-	cat >&2 << 'BLOCKED'
+	# Main agent detected - check for valid escape hatch
+	ALLOW_ESCAPE=false
+
+	if [[ -f "$APPROVAL_FILE" ]]; then
+		APPROVAL_CONTENT=$(cat "$APPROVAL_FILE" 2>/dev/null)
+		SIGNATURE=$(echo "$APPROVAL_CONTENT" | jq -r '.signature // empty' 2>/dev/null)
+		PAYLOAD=$(echo "$APPROVAL_CONTENT" | jq -c 'del(.signature)' 2>/dev/null)
+		EXPECTED=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$QA_SIGNING_SECRET" 2>/dev/null | awk '{print $2}')
+		HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
+		APPROVED_COMMITS=$(echo "$APPROVAL_CONTENT" | jq -r '.commits[]?' 2>/dev/null)
+
+		if [[ -n "$SIGNATURE" && "$SIGNATURE" == "$EXPECTED" ]]; then
+			if echo "$APPROVED_COMMITS" | grep -q "^${HEAD_SHA}$"; then
+				ALLOW_ESCAPE=true
+			fi
+		fi
+	fi
+
+	if [[ "$ALLOW_ESCAPE" != "true" ]]; then
+		cat >&2 << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  🛑 PUSH BLOCKED — Main agents cannot push directly                           ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
@@ -70,7 +93,9 @@ WHAT TO DO:
 
 REFERENCE: See docs/agent-task-workflow.md for the complete push workflow.
 BLOCKED
-	exit 2
+		exit 2
+	fi
+	# Escape hatch valid - fall through to allow push
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
