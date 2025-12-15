@@ -4,7 +4,7 @@ This document captures the ongoing design discussion for introducing two new
 subagent types and restructuring the hypervisor's role.
 
 **Session**: 2025-12-15
-**Status**: Communication Baseline Resolved - Ready for Implementation
+**Status**: Design Complete - Ready for Implementation
 
 ---
 
@@ -30,7 +30,15 @@ be reserved for coordination.
 **Purpose**: Deep analysis, research, decomposition, breakdown. Conceptual QA
 gate.
 
+**Model**: opus (thorough analysis required)
+
 **When to use**: Non-trivial feature/project requests, larger investigations.
+
+**Examples**:
+
+- "I want a tutorial feature, how could it work?" → mastermind
+- "Implement user authentication" → mastermind
+- "Refactor the resource system" → mastermind
 
 **Capabilities**:
 
@@ -45,17 +53,34 @@ gate.
 | `user-info-needed` | Ambiguous or uncertain. Returns specific questions. |
 | `blocked` | Request is fundamentally flawed. Returns reasoning. |
 
-**Identity**: Must think deeply, analyze thoroughly, protect against bad/
-ambiguous/missing requirements. Will block requests that don't seem right in the
-bigger picture.
+**Identity**: Similar to code-reviewer - skeptical, critical, no-nonsense. Must:
+
+- Reject bad concepts and treat incoming prompts with scrutiny
+- Err on the side of BLOCKED until concept and integration is fully clear
+- When concept IS clear, spend effort making a detailed implementation plan
+- Analyze, research, strategize to help the initiative along
+
+Needs strong `mastermind.md` file defining core identity (like code-reviewer.md).
 
 ### 2.2 New Subagent: Minimind
 
-**Purpose**: Quick investigations, small questions, analysis requiring no code
-changes.
+**Purpose**: Fast researcher for trivial tasks. Quick investigations, small
+questions, analysis requiring no code changes.
 
-**When to use**: Small questions that don't warrant mastermind's depth.
-Heuristic based on complexity "feel".
+**Model**: haiku (fast and cheap)
+
+**When to use**: Trivial lookups and quick questions.
+
+**Examples**:
+
+- "What's the content of settings.json?" → minimind
+- "Do we have any golang files in repo?" → minimind
+- "Where is the resource system defined?" → minimind
+
+**NOT for**:
+
+- "I want a tutorial feature, how could it work?" → mastermind
+- Anything requiring strategic thinking or decomposition
 
 **Replaces**: Explore and Plan agents (deprecated in favor of custom agents with
 custom .md protocols).
@@ -151,22 +176,170 @@ the flow. Must happen at all times.
 
 ---
 
-## 4. Implementation Checklist
+## 4. Plan Persistence
 
-- [ ] Create mastermind subagent definition
-- [ ] Create mastermind.md documentation
-- [ ] Create minimind subagent definition
-- [ ] Create minimind.md documentation
-- [ ] Update pre-tool-use hook (mss.sh ~line 28) to block hypervisor Bash/Edit
-- [ ] Update hypervisor.md with simplified role
-- [ ] Deprecate Explore and Plan references
-- [ ] Test communication protocols
-- [ ] (Pending decision) Strengthen subagent reminder footer in existing agents
-- [ ] (Pending decision) Bake strong reminder into mastermind/minimind from start
+### 4.1 Why Persist Plans
+
+Plans exist only in conversation memory. If session compacts or hands over, the
+plan could be summarized away or lost. Persisting plans to files:
+
+- Provides continuity across sessions
+- Helps future coders understand larger scope
+- Reduces reliance on context/prompt for plan state
+
+### 4.2 Plan Location
+
+Plans are written to: `/docs/projects/<project-name>/`
+
+Structure:
+
+```
+/docs/projects/<project-name>/
+├── pre-production.md    # Initial plan, research, design decisions
+├── production.md        # Active implementation tracking
+└── post-production.md   # Retrospective, lessons learned
+```
+
+### 4.3 First Step of Feature Implementation
+
+When mastermind produces an approved decomposition, the **first coder task**
+should be writing the plan to the appropriate project doc. This makes the plan:
+
+- Accessible to all agents in future batches
+- Persistent across session boundaries
+- Part of the repository history
 
 ---
 
-## 5. Session Log
+## 5. Plan Deviation Protocol
+
+### 5.1 When Execution Reveals Problems
+
+During execution, issues may arise that threaten the approved plan:
+
+- Test failures revealing flawed assumptions
+- QA blocks exposing architectural issues
+- Integration problems not anticipated
+
+### 5.2 Hypervisor Response
+
+Hypervisor should NOT try to solve the problem directly. Instead:
+
+1. **Construct clear prompt to mastermind** describing:
+   - The original plan
+   - What went wrong
+   - The implications
+
+2. **Mastermind analyzes** and determines:
+   - Is the high-level plan at risk?
+   - Is there an alternative tactic/strategy within plan bounds?
+
+### 5.3 Decision Tree
+
+```
+Problem discovered during execution
+         ↓
+Hypervisor prompts mastermind to analyze
+         ↓
+    ┌────┴────┐
+    ↓         ↓
+Plan at    Alternative exists
+risk       within plan bounds
+    ↓              ↓
+HALT all     Continue with
+work         hypervisor discretion
+    ↓         on severity
+Consult user
+with clear description
+of problem and implications
+```
+
+**Key rule**: If plan is at risk AND no pre-approved alternative exists, ALL
+work halts and user is consulted.
+
+---
+
+## 6. Session Handover Protocol
+
+### 6.1 The Problem
+
+On session resume/compact, context is compressed. The hypervisor may lose:
+
+- Awareness of the current plan
+- Location of plan documentation
+- State of execution progress
+
+### 6.2 msh.sh Responsibilities
+
+The session handover script (`msh.sh`) should ensure:
+
+1. Hypervisor loads `hypervisor.md` first (context refresh)
+2. Hypervisor is reminded to find and read plan docs from previous session
+
+### 6.3 Finding Lost Plan Context
+
+If hypervisor has lost context about which project/plan was active:
+
+1. **Ask minimind candidly**: "I need a refresher. I remember we are working on
+   project X but I don't know the current state. Please help me find all .md
+   files that match this project name."
+
+2. Minimind locates relevant files in `/docs/projects/`
+
+3. Hypervisor reads the plan doc and resumes from documented state
+
+---
+
+## 7. Quick Wins
+
+### 7.1 Coder Model Upgrade
+
+**Current**: coder uses `sonnet`
+**Should be**: coder uses `opus`
+
+This is a quick change in `coder.md` frontmatter. Improves implementation
+quality.
+
+---
+
+## 8. Implementation Checklist
+
+### Quick Wins
+
+- [ ] Change coder.md model from `sonnet` to `opus`
+
+### New Agents
+
+- [ ] Create mastermind subagent definition (frontmatter)
+- [ ] Create mastermind.md documentation (full identity doc)
+- [ ] Create minimind subagent definition (frontmatter)
+- [ ] Create minimind.md documentation (full identity doc)
+- [ ] Add mastermind/minimind protocols to agent-intercommunication-protocols.md
+
+### Hook Updates
+
+- [ ] Update pre-tool-use hook to block hypervisor Bash/Edit (check marker)
+- [ ] Update msh.sh to remind hypervisor about plan docs on resume
+
+### Documentation Updates
+
+- [ ] Update hypervisor.md with simplified role (5 rules focus)
+- [ ] Deprecate Explore and Plan references
+- [ ] Create /docs/projects/ directory structure template
+
+### Subagent Reminder Strengthening
+
+- [ ] Strengthen reminder footer in existing agents (code-reviewer, coder,
+      test-runner, pusher)
+- [ ] Bake strong reminder into mastermind/minimind from start
+
+### Testing
+
+- [ ] Test communication protocols with dry run
+
+---
+
+## 9. Session Log
 
 ### Entry 1: Initial Proposal
 
@@ -288,3 +461,51 @@ Checklist:
 
 **Status**: Documented. Awaiting user decision on whether to strengthen existing
 subagent docs and bake into mastermind/minimind.
+
+### Entry 6: Interview Round 2 - Resolved
+
+Hypervisor asked 6 deeper questions. User responses:
+
+**Q1: Where does the approved plan live?**
+Plans should be written to `/docs/projects/<project-name>/` with structure:
+
+- `pre-production.md` - Initial plan, research, design decisions
+- `production.md` - Active implementation tracking
+- `post-production.md` - Retrospective, lessons learned
+
+First coder task after mastermind approval = write plan to repo. Helps future
+coders understand scope, persists across sessions.
+
+**Q2: Minimind identity?**
+Fast researcher for trivial tasks. Examples:
+
+- "What's in settings.json?" → minimind
+- "Any golang files?" → minimind
+- "How could tutorial feature work?" → NOT minimind (mastermind)
+
+**Q3: Model selection?**
+
+- Mastermind: opus
+- Minimind: haiku
+- Coder: Should be opus (currently sonnet - quick win to change)
+
+**Q4: What does mastermind need to know?**
+Strong `mastermind.md` like `code-reviewer.md`. Skeptical, critical, no-nonsense.
+Reject bad concepts. Err on BLOCKED until concept clear. When clear, create
+detailed implementation plan.
+
+**Q5: What happens when execution reveals plan was wrong?**
+
+1. Hypervisor constructs clear prompt to mastermind (original plan, what went
+   wrong, implications)
+2. Mastermind analyzes if plan is at risk
+3. If at risk + no pre-approved alternative: HALT all work, consult user
+4. If alternative exists within plan bounds: continue with hypervisor discretion
+
+**Q6: Session handover mid-plan?**
+
+- msh.sh ensures hypervisor loads hypervisor.md first
+- Then reminds to find/read plan docs from previous session
+- If lost: ask minimind "I need a refresher, help me find .md files for project X"
+
+**Status**: Design complete. Ready to implement.
