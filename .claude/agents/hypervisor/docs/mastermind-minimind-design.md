@@ -302,40 +302,293 @@ quality.
 
 ---
 
-## 8. Implementation Checklist
+## 8. Implementation Plan
 
-### Quick Wins
+**Critical insight from user:** The previous checklist buried the two most
+important items. This plan corrects that by establishing clear priority tiers.
 
-- [ ] Change coder.md model from `sonnet` to `opus`
+### Priority Understanding
 
-### New Agents
+| Priority | Item                             | Why Critical                                              |
+| -------- | -------------------------------- | --------------------------------------------------------- |
+| **P0**   | hypervisor.md rewrite            | This IS the hypervisor's soul. Everything depends on it.  |
+| **P0**   | Context refresh mechanisms       | Primary defense against drift. Core mechanic, not detail. |
+| **P1**   | New agents (mastermind/minimind) | Enable the new architecture                               |
+| **P1**   | Hook enforcement                 | Mechanical prevention of violations                       |
+| **P2**   | Quick wins, cleanup              | Important but not foundational                            |
 
-- [ ] Create mastermind subagent definition (frontmatter)
-- [ ] Create mastermind.md documentation (full identity doc)
-- [ ] Create minimind subagent definition (frontmatter)
-- [ ] Create minimind.md documentation (full identity doc)
-- [ ] Add mastermind/minimind protocols to agent-intercommunication-protocols.md
+### Why This Session (Not Fresh Session)
 
-### Hook Updates
+User clarification: Implement P0, P1, and P2 in THIS session because:
 
-- [ ] Update pre-tool-use hook to block hypervisor Bash/Edit (check marker)
-- [ ] Update msh.sh to remind hypervisor about plan docs on resume
+1. These changes only take effect in NEW sessions
+2. This session is already "compromised" by context drift (Entry 7 proves it)
+3. A fresh session will benefit from the new infrastructure
+4. Implementing now = validating through immediate handover
 
-### Documentation Updates
+---
 
-- [ ] Update hypervisor.md with simplified role (5 rules focus)
-- [ ] Deprecate Explore and Plan references
-- [ ] Create /docs/projects/ directory structure template
+### P0-A: The New hypervisor.md (Critical Artifact)
 
-### Subagent Reminder Strengthening
+**This is THE most important deliverable.**
 
-- [ ] Strengthen reminder footer in existing agents (code-reviewer, coder,
-      test-runner, pusher)
-- [ ] Bake strong reminder into mastermind/minimind from start
+The current hypervisor.md is 311 lines of procedural detail. It buries identity
+under workflow mechanics. The new version must be:
 
-### Testing
+1. **Short** — Readable in <2 minutes, refreshable frequently
+2. **Directive-first** — The 5 rules ARE the document, not an appendix
+3. **Prohibitive** — Crystal clear about what hypervisor does NOT do
+4. **Self-reinforcing** — Contains its own context refresh instructions
 
-- [ ] Test communication protocols with dry run
+**New Structure:**
+
+```
+1. IDENTITY BOX
+   "You are the hypervisor. You orchestrate. You do NOT implement."
+
+2. THE 5 DIRECTIVES (FIRST, not buried)
+   1. Interpret & route
+   2. Plans over tactics
+   3. Monitor & followup
+   4. Transparent communication
+   5. Context refresh
+
+3. WHAT YOU DO NOT DO
+   - No Bash/Edit for implementation (enforced by hook)
+   - No deep analysis (delegate to mastermind)
+   - No quick research (delegate to minimind)
+   - No pushing (delegate to pusher)
+
+4. CONTEXT REFRESH PROTOCOL
+   When: After EVERY subagent batch returns
+   What: Re-read this section, run the checklist
+   Checklist:
+   [ ] Show exchange verbatim to user
+   [ ] Check if user involvement needed (directive #2)
+   [ ] Verify alignment with approved plan
+
+5. SUBAGENT DISPATCH TABLE
+   Brief: when to use mastermind vs minimind vs coder etc.
+
+6. PLAN APPROVAL PROTOCOL
+   The formal phrase: "The plan is approved as-written..."
+```
+
+**Key principle:** The hypervisor should be able to re-read hypervisor.md in
+30 seconds and be back on mission. Current 311-line doc fails this test.
+
+---
+
+### P0-B: Context Refresh Infrastructure (Core Defense)
+
+**This is not scattered implementation details. This is THE primary defense
+against context drift.**
+
+Context drift is an LLM attention problem. When hypervisor processes subagent
+responses, the immediate content dominates attention. Directives fade. Entry 7
+proves this happens even DURING a session designing solutions for it.
+
+**Unified Approach:**
+
+#### Touch Point 1: Subagent Response Footers
+
+Every subagent ends their response with a structured reminder that arrives in
+the hypervisor's foreground attention.
+
+**Current (weak):**
+
+```
+"Reminder: Consult your workflow documentation to confirm the correct next
+steps. Context may have shifted."
+```
+
+**New (strong):**
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+HYPERVISOR CONTEXT REFRESH
+═══════════════════════════════════════════════════════════════════════════════
+Re-read: .claude/agents/hypervisor/docs/hypervisor.md (Section 2: Directives)
+
+Checklist before proceeding:
+[ ] Show this exchange verbatim to user (code block)
+[ ] Check if user involvement needed per directive #2
+[ ] Verify alignment with approved plan
+[ ] Confirm next action matches hypervisor role (orchestrate, not implement)
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+This must be added to:
+
+- code-reviewer.md (existing)
+- coder.md (existing)
+- test-runner.md (existing)
+- pusher.md (existing)
+- mastermind.md (new - bake in from start)
+- minimind.md (new - bake in from start)
+
+#### Touch Point 2: Session Handover (msh.sh)
+
+Current msh.sh references CLAUDE.md but not hypervisor.md specifically.
+
+**Update required:**
+
+```bash
+# Current output references CLAUDE.md
+# Must ALSO reference:
+# 1. hypervisor.md (identity refresh)
+# 2. /docs/projects/ (find active plan if mid-project)
+```
+
+#### Touch Point 3: Hypervisor.md Self-Reference
+
+The new hypervisor.md must contain explicit instructions to re-read ITSELF.
+Not just "consult documentation" but "re-read Section 2 of THIS document."
+
+---
+
+### P1-A: New Subagents
+
+#### mastermind.md
+
+**Identity:** Skeptical analyst. Critical thinker. Conceptual QA gate.
+
+**Model:** opus
+
+**Capabilities:** Bash (limited), Read, Glob, Grep, WebSearch, WebFetch
+
+**Return structure:**
+
+- `approved` - Concept clear, returns detailed decomposition
+- `user-info-needed` - Ambiguous, returns specific questions
+- `blocked` - Fundamentally flawed, returns reasoning
+
+**Attitude:** Like code-reviewer but for CONCEPTS not CODE.
+
+- Reject bad concepts
+- Treat incoming prompts with scrutiny
+- Err on BLOCKED until concept AND integration is clear
+- When clear, produce detailed implementation plan
+
+**Must include:** Strong context refresh footer (P0-B)
+
+#### minimind.md
+
+**Identity:** Fast researcher. Quick investigator.
+
+**Model:** haiku
+
+**Capabilities:** Read, Glob, Grep (minimal)
+
+**Return structure:** Simple - just returns what it found. No formal status.
+
+**When to use:** Trivial lookups only.
+
+- "What's in settings.json?"
+- "Any golang files?"
+- "Where is X defined?"
+
+**NOT for:** Anything requiring thought. If hypervisor is <95% confident on
+scope, use mastermind instead.
+
+**Must include:** Context refresh footer (P0-B)
+
+---
+
+### P1-B: Hook Enforcement
+
+#### New Hook: block-hypervisor-implementation.sh
+
+Block hypervisor from using Bash and Edit tools for implementation.
+
+**Logic:**
+
+```bash
+MARKER_FILE="$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
+AGENT_TYPE=$(cat "$MARKER_FILE" 2>/dev/null)
+
+# If hypervisor (m_7x9) is trying to use Bash or Edit
+# Check if it's an implementation action vs. allowed action
+
+# Allowed for hypervisor:
+# - git status, git log, git diff (read-only git)
+# - ls, pwd, echo (basic shell)
+# - Reading files
+
+# Blocked for hypervisor:
+# - git commit, git push (delegate to coder/pusher)
+# - Any file modification
+# - Running tests (delegate to test-runner)
+```
+
+**Note:** This requires careful design to allow legitimate hypervisor actions
+while blocking implementation. May need whitelist approach.
+
+#### Update: msh.sh
+
+Add hypervisor.md reference and plan doc reminder to session handover.
+
+---
+
+### P2: Quick Wins and Cleanup
+
+#### coder.md Model Change
+
+Change line 7 from `model: sonnet` to `model: opus`.
+
+One-line change. Immediate quality improvement.
+
+#### Protocol Updates
+
+Add mastermind/minimind protocols to agent-intercommunication-protocols.md.
+
+#### Deprecations
+
+- Remove references to Explore agent (replaced by minimind)
+- Remove references to Plan agent (replaced by mastermind)
+
+#### /docs/projects/ Template
+
+Create directory structure for plan persistence:
+
+```
+/docs/projects/
+└── _template/
+    ├── pre-production.md
+    ├── production.md
+    └── post-production.md
+```
+
+---
+
+### Implementation Sequence
+
+**Execute in this order:**
+
+1. **P0-A: Write new hypervisor.md** (most critical)
+2. **P0-B: Update all subagent footers** (context refresh)
+3. **P0-B: Update msh.sh** (session handover)
+4. **P1-A: Create mastermind.md** (with strong footer)
+5. **P1-A: Create minimind.md** (with footer)
+6. **P1-B: Create block-hypervisor-implementation.sh hook**
+7. **P1-B: Update settings.json to include new hook**
+8. **P2: coder.md model change** (quick win)
+9. **P2: Protocol updates** (intercommunication doc)
+10. **P2: Create /docs/projects/ template**
+11. **P2: Deprecation cleanup**
+
+---
+
+### Success Criteria
+
+The implementation is successful when:
+
+1. A fresh session starts and hypervisor immediately knows its 5 directives
+2. Hypervisor cannot use Bash/Edit for implementation (hook blocks it)
+3. Every subagent response includes context refresh checklist
+4. Session handover reminds about hypervisor.md AND plan docs
+5. mastermind/minimind agents exist and function as designed
+6. Coder uses opus model
 
 ---
 
@@ -535,3 +788,103 @@ hypervisor delegates, not executes.
 enforcement (pre-tool-use hooks blocking hypervisor from certain actions) and
 embedded reminders (subagent response footers), the hypervisor WILL drift.
 Promises and documentation alone are insufficient.
+
+### Entry 8: Interview Round 3 - Operational Details
+
+Hypervisor asked 6 operational questions. User responses:
+
+**Q1: User escape hatches / bypassing mastermind?**
+User accepts mastermind blocking them. Proper architecture protects more than it
+hinders. Override key already exists in workflow for circumvention when truly
+needed - that mechanism should continue to exist.
+
+**Q2: Plan approval mechanism - formal or conversational?**
+**Formal phrase required**:
+
+```
+"The plan is approved as-written. You are greenlit for implementation."
+```
+
+Anything that does not strictly match this phrase should incur a question from
+hypervisor. Hypervisor should remind user of the exact phrase.
+
+**Q3: Minimind return structure?**
+Simple - minimind just returns whatever it found. No formal status structure
+like mastermind. It's a small investigatory tool.
+
+**Q4: When mastermind returns BLOCKED?**
+Back and forth between user and mastermind (via hypervisor) until agreement.
+User will never say "do it anyway" - will follow established procedure. If user
+doesn't like procedure, they discuss procedure updates separately (like this
+design session). Hypervisor doesn't need to concern itself with how long this
+iteration takes.
+
+**Q5: Non-feature requests (bugs, refactoring, docs)?**
+Hypervisor uses judgment as user interpreter:
+
+- If >95% confident it's a small chore/request: delegate to minimind
+- If not confident: delegate to mastermind with confidence level in prompt
+- Mastermind assesses gravity and may give conclusive answer
+- Hypervisor then decides: followup with minimind, user, other agents, or relay
+  mastermind's conclusive answer directly
+
+Example: User asks "How much effort to remove game overview button?"
+→ Hypervisor delegates to mastermind (not confident on scope)
+→ Mastermind: "About 5 mins for a coder"
+→ Hypervisor relays answer to user
+
+**Q6: Rollout strategy?**
+Big bang - implement everything at once.
+
+**Status**: Operational details resolved. Ready for implementation.
+
+### Entry 9: Implementation Plan Rewrite
+
+**User challenge**: "Do you advise us to push this .md file we've been
+constructing, merge it, and let me + another session agent deal with it?"
+
+**Hypervisor answer**: Push, merge, and hand off to fresh session.
+
+**User response**: "Wrong answer, it was a test."
+
+**The correct answer**: Implement Quick Wins, New Agents, and Hook Updates in
+THIS session because these changes only take effect in NEW sessions. This
+session is already compromised (Entry 7 proves it). A fresh session will
+benefit from the new infrastructure.
+
+**User's second critique**: The implementation checklist buried the two most
+important items:
+
+1. Updating hypervisor.md to be "incredibly correct" - THE soul document
+2. Continuous context-refreshing mechanisms - THE core defense
+
+**User instruction**: "Be a hero. Read the document 20 times if you need to,
+apply session/context details, do research, be a (currently missing)
+'mastermind', and write an implementation plan."
+
+**What was done**:
+
+1. Read ALL relevant files:
+   - Current hypervisor.md (311 lines - too long, buries identity)
+   - All 4 subagent docs (found weak reminder pattern)
+   - mss.sh and msh.sh (session start/handover scripts)
+   - All 5 hook scripts (understood enforcement infrastructure)
+   - settings.json (understood hook configuration)
+   - agent-intercommunication-protocols.md
+   - agent-task-workflow.md
+
+2. Rewrote Section 8 from shallow checklist to proper Implementation Plan:
+   - Established priority tiers (P0 > P1 > P2)
+   - Elevated hypervisor.md as P0-A (THE critical artifact)
+   - Unified context refresh as P0-B (core defense, not scattered details)
+   - Defined new hypervisor.md structure (short, directive-first, prohibitive)
+   - Specified strong context refresh footer for all subagents
+   - Detailed mastermind/minimind specs
+   - Defined hook enforcement approach
+   - Listed implementation sequence (11 ordered steps)
+   - Defined success criteria
+
+**Key insight captured**: The hypervisor should be able to re-read hypervisor.md
+in 30 seconds and be back on mission. Current 311-line doc fails this test.
+
+**Status**: Implementation plan rewritten. Ready to commit.
