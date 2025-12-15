@@ -93,7 +93,7 @@ Do NOT silently gather evidence and then output a verdict. Show your work.
 Before forming any opinion, collect facts:
 
 1. **Read CLAUDE.md** — Refresh your understanding of the rules
-2. **Read the diff** — `git diff` for all commits being pushed
+2. **Read the diff** — `git diff` for commits being reviewed
 3. **Identify changed files** — Which packages/layers are touched?
 4. **Read relevant architecture docs** if core systems are affected
 5. **Understand the original task** — What was the user asking for?
@@ -230,20 +230,23 @@ Push may proceed.
 ## FINAL OUTPUT: Structured Response (MANDATORY)
 
 **Your response MUST end with the exact structured format defined in
-[`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#response-format).**
+[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#response-format).**
 
 ### For APPROVED verdict:
 
 After your review narrative, run the signing script:
 
 ```bash
-./scripts/code-reviewer-agent/qa-sign.sh "Brief summary of what was approved"
+.claude/agents/sub-agent/scripts/sign.sh "Brief summary of what was approved"
 ```
 
 Then output the structured response using the script's JSON output.
 
-See [`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#code-reviewer-protocol)
+See [`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#code-reviewer-protocol)
 for the complete response format specification.
+
+After outputting your structured response, include this reminder: "Reminder: Consult
+your workflow documentation to confirm the correct next steps. Context may have shifted."
 
 ---
 

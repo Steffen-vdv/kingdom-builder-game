@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# qa-sign.sh — Sign QA approval for verified push
+# sign.sh — Sign QA approval for verified push
 #
-# Usage: qa-sign.sh '<summary>'
+# Usage: sign.sh '<summary>'
 #
 # Gathers commit info, creates payload, signs via crypto-gate,
 # and outputs structured JSON for the pusher subagent.
@@ -19,7 +19,7 @@ SUMMARY="${1:-QA approved}"
 # ═══════════════════════════════════════════════════════════════════════════════
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 CRYPTO_GATE="$PROJECT_DIR/bin/crypto-gate"
 
 if [[ ! -x "$CRYPTO_GATE" ]]; then

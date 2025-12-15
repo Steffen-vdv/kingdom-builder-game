@@ -1,13 +1,13 @@
-# Subagent Protocols
+# Agent Intercommunication Protocols
 
 This document defines the request and response formats for all subagents used in
 the push workflow. It serves as the single source of truth for agent I/O specs.
 
 **Referenced by:**
 
-- `.claude/agents/code-reviewer.md` - QA agent definition
-- `.claude/agents/pusher.md` - Pusher agent definition
-- `docs/agent-task-workflow.md` - Main agent workflow guide
+- `.claude/agents/sub-agent/docs/code-reviewer.md` - QA agent definition
+- `.claude/agents/sub-agent/docs/pusher.md` - Pusher agent definition
+- `.claude/agents/main-agent/docs/agent-task-workflow.md` - Main agent workflow guide
 
 ---
 

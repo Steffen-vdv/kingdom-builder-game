@@ -338,11 +338,11 @@ This section describes the complete workflow for task agents to prepare,
 review, and submit code changes. It covers QA review procedures, push
 workflows, subagent invocation protocols, and troubleshooting.
 
-**Full documentation:** See [`docs/agent-task-workflow.md`](docs/agent-task-workflow.md)
+**Full documentation:** See [`.claude/agents/main-agent/docs/agent-task-workflow.md`](.claude/agents/main-agent/docs/agent-task-workflow.md)
 
 > **Note for SubAgents (code-reviewer, pusher):** You do not need to read the
 > workflow documentation. Your specific instructions are in your respective
-> agent definition files (`.claude/agents/*.md`).
+> agent definition files (`.claude/agents/sub-agent/docs/*.md`).
 
 ---
 
@@ -585,9 +585,10 @@ hook.
 ├─────────────────────────────────────────────────────────────────┤
 │ BEFORE PUSHING (proactively, not waiting for hook)              │
 │ □ Spawn QA subagent + run tests in parallel                     │
-│ □ QA outputs directly to user (request echo + verdict)          │
+│ □ Display prompt to user BEFORE invoking subagent               │
+│ □ Display structured response to user AFTER receiving it        │
 │ □ If BLOCKED: fix, commit, retry                                │
-│ □ If APPROVED: write token, push                                │
+│ □ If APPROVED: pass payload + signature to pusher               │
 │ □ Max 5 rounds → escalate to user                               │
 └─────────────────────────────────────────────────────────────────┘
 ```

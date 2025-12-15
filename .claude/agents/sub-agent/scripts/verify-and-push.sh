@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# verified-push.sh — Cryptographically verified git push
+# verify-and-push.sh — Cryptographically verified git push
 #
 # Usage:
-#   verified-push.sh '<payload-json>' '<signature>' [branch]
-#   verified-push.sh --override '<token>' [branch]
+#   verify-and-push.sh '<payload-json>' '<signature>' [branch]
+#   verify-and-push.sh --override '<token>' [branch]
 #
 # Normal mode:
 #   1. Calls crypto-gate to verify the signature
@@ -25,9 +25,9 @@ set -euo pipefail
 # DETERMINE PROJECT ROOT
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Derive project root from script location (scripts/pusher-agent/verified-push.sh)
+# Derive project root from script location (.claude/agents/sub-agent/scripts/verify-and-push.sh)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOCATE CRYPTO-GATE BINARY
@@ -71,7 +71,7 @@ if [[ "${1:-}" == "--override" ]]; then
 ║  ❌ USAGE ERROR — Missing override token                                      ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-Usage: verified-push.sh --override '<token>' [branch]
+Usage: verify-and-push.sh --override '<token>' [branch]
 
 The override token must be provided by the user.
 USAGE_OVERRIDE
@@ -150,8 +150,8 @@ if [[ -z "$PAYLOAD" || -z "$SIGNATURE" ]]; then
 ║  ❌ USAGE ERROR — Missing required arguments                                  ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-Usage: verified-push.sh '<payload-json>' '<signature>' [branch]
-       verified-push.sh --override '<token>' [branch]
+Usage: verify-and-push.sh '<payload-json>' '<signature>' [branch]
+       verify-and-push.sh --override '<token>' [branch]
 
 Arguments (normal mode):
   payload    JSON string containing approval data (commits, verdict, etc.)
@@ -164,8 +164,8 @@ Arguments (override mode):
   branch     Optional branch name (defaults to current branch)
 
 Example:
-  verified-push.sh '{"commits":["abc123"],"verdict":"APPROVED"}' 'a1b2c3...'
-  verified-push.sh --override 'user-secret-token'
+  verify-and-push.sh '{"commits":["abc123"],"verdict":"APPROVED"}' 'a1b2c3...'
+  verify-and-push.sh --override 'user-secret-token'
 USAGE
 	exit 1
 fi

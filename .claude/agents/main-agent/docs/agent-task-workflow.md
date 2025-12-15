@@ -23,54 +23,10 @@ changes. All pushes require QA review with cryptographic signing.
 │                                                                             │
 │  3. PUSH                                                                    │
 │     └─→ Spawn pusher subagent WITH {payload, signature}                     │
-│     └─→ Pusher runs verified-push.sh to verify and push                     │
+│     └─→ Pusher runs verify-and-push.sh to verify and push                     │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## CRITICAL: Verbatim Subagent I/O Display
-
-**MANDATORY for ALL subagent invocations (code-reviewer, pusher).**
-
-Before invoking ANY subagent via the Task tool, you MUST display the exact prompt you are sending to the user in a triple-backtick code block:
-
-```
-[Your explanation of what you're about to do]
-
-Invoking subagent with the following prompt:
-
-```
-
-[EXACT prompt text - no modifications, no summaries]
-
-```
-
-```
-
-After receiving the subagent's response, you MUST extract and display the structured response block to the user in a triple-backtick code block:
-
-**For code-reviewer responses:**
-
-Extract only the content between `QA_RESPONSE_START` and `QA_RESPONSE_END` markers (inclusive). Display this block verbatim.
-
-**For pusher responses:**
-
-Extract only the content between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END` markers (inclusive). Display this block verbatim.
-
-**See [`docs/subagent-protocols.md`](subagent-protocols.md) for the complete
-response format specifications.**
-
-**Rules:**
-
-- Extract ONLY the structured response block (between START/END markers)
-- Do NOT include the subagent's internal reasoning or analysis
-- Output the structured block with ZERO modifications
-- Do NOT summarize, paraphrase, or interpret the structured response
-- This applies to EVERY Task tool invocation for code-reviewer and pusher
-
-**Purpose:** Verification and traceability. The user needs to see exactly what communication occurred with subagents.
 
 ---
 
@@ -84,23 +40,30 @@ Before requesting QA review:
 
 ### Claims Template
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#request-format) for
 the complete request format specification.**
 
 ---
 
 ## Step 2: QA Review
 
-### Spawn the QA Subagent
+### Display Requirements for Subagent Communication
 
-**IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
+**For every subagent invocation (code-reviewer, pusher), you must:**
+
+1. **Before invoking:** Display the exact prompt in a code block
+2. **After receiving response:** Display the structured response block verbatim in a code block
+
+This is for traceability. Extract only the content between START/END markers (`QA_RESPONSE_START`/`QA_RESPONSE_END` or `PUSH_RESPONSE_START`/`PUSH_RESPONSE_END`) and display it without modifications.
+
+### Spawn the QA Subagent
 
 ```
 Task(
   subagent_type: "code-reviewer",
   description: "QA review for push",
   prompt: """
-    [Use format from docs/subagent-protocols.md#request-format]
+    [Use format from ../shared/docs/agent-intercommunication-protocols.md#request-format]
   """
 )
 ```
@@ -109,7 +72,7 @@ Task(
 
 The QA subagent returns a **structured response** that you must parse.
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md#response-format) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#response-format) for
 the complete response format specification.**
 
 **Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
@@ -118,7 +81,7 @@ the complete response format specification.**
 
 QA has approved and signed. Extract `PAYLOAD` and `SIGNATURE` for the Pusher.
 
-**What to do:** Proceed to Step 3 (Push) with the payload and signature.
+**What to do:** Proceed to Step 3 (Push) with the payload and signature
 
 #### VERDICT: BLOCKED
 
@@ -129,7 +92,7 @@ QA found issues. The `MESSAGE` field contains violation details.
 1. Read the violation in `MESSAGE`
 2. Fix the identified issue
 3. Commit the fix
-4. Re-invoke QA review (return to Step 2)
+4. Re-invoke QA to review the changes
 
 #### VERDICT: NEEDS_INPUT
 
@@ -165,9 +128,9 @@ After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 ### Spawn the Pusher Subagent
 
-**IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
+**IMPORTANT:** Before invoking, display the exact prompt in a code block. After receiving response, display the structured response block verbatim in a code block.
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format-1) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#request-format-1) for
 the complete request format specification.**
 
 Pass the exact payload and signature from QA. Do not modify them.
@@ -176,7 +139,7 @@ Pass the exact payload and signature from QA. Do not modify them.
 
 The Pusher subagent returns a **structured response** that you must parse.
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md#response-format-1) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#response-format-1) for
 the complete response format specification.**
 
 **Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**
@@ -208,9 +171,9 @@ The `MESSAGE` field contains details.
 
 ## Troubleshooting
 
-### Push Blocked - "Use verified-push.sh instead"
+### Push Blocked - "Use verify-and-push.sh instead"
 
-You tried to run `git push` directly. All agents must use verified-push.sh.
+You tried to run `git push` directly. All agents must use verify-and-push.sh.
 
 **Solution:** Use the pusher subagent as described in Step 3.
 
