@@ -4,6 +4,8 @@ description: >
   Implementation specialist. Writes code, fixes bugs, addresses QA concerns and
   test failures. Works autonomously within scoped tasks, commits changes, and
   reports results back to hypervisor.
+model: sonnet
+permissionMode: bypassPermissions
 tools: Glob, Grep, Read, Edit, Write, Bash
 ---
 
