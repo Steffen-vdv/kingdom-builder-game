@@ -49,26 +49,43 @@ Invoking subagent with the following prompt:
 
 ```
 
-After receiving the subagent's response, you MUST display the exact response you received to the user in a triple-backtick code block:
+After receiving the subagent's response, you MUST extract and display the structured response block to the user in a triple-backtick code block:
+
+**For code-reviewer responses:**
+
+Extract only the content between `QA_RESPONSE_START` and `QA_RESPONSE_END` markers (inclusive). Display this block verbatim:
 
 ```
-Received response from subagent:
+Received response from code-reviewer:
 
 ```
 
-[EXACT response text - no modifications, no summaries]
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+VERDICT: [verdict here]
+PAYLOAD: [payload here]
+SIGNATURE: [signature here]
+MESSAGE: [message here]
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
 
 ```
 
 ```
+
+**For pusher responses:**
+
+Extract only the content between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END` markers (inclusive). Display this block verbatim.
 
 **Rules:**
 
-- Output the EXACT text with ZERO modifications
-- Do NOT summarize, paraphrase, or interpret
-- Do NOT add formatting beyond the code block
+- Extract ONLY the structured response block (between START/END markers)
+- Do NOT include the subagent's internal reasoning or analysis
+- Output the structured block with ZERO modifications
+- Do NOT summarize, paraphrase, or interpret the structured response
 - This applies to EVERY Task tool invocation for code-reviewer and pusher
-- The word is VERBATIM - copy/paste exactly what goes in and comes out
 
 **Purpose:** Verification and traceability. The user needs to see exactly what communication occurred with subagents.
 
