@@ -4,6 +4,8 @@ This document provides detailed documentation of Kingdom Builder's core systems.
 Read this when working on features that touch these systems. **Update this
 document when you implement changes to core mechanics.**
 
+<!-- QA workflow validation: 2025-12-15 -->
+
 ---
 
 ## Game Concepts
