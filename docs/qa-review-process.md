@@ -244,3 +244,7 @@ User must intervene to:
 Awaiting user decision.
 ─────────────────────────────────────────
 ```
+
+---
+
+<!-- QA workflow validation: 2025-12-15 -->

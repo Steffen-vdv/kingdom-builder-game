@@ -5,7 +5,7 @@ description: >
   skepticism — blocking by default until the implementation is proven correct.
 model: opus
 permissionMode: bypassPermissions
-tools: Glob, Grep, Read, WebFetch, WebSearch, Bash, mcp__qa_approval__sign_approval
+tools: Glob, Grep, Read, WebFetch, WebSearch, Bash
 ---
 
 # Code Reviewer — Adversarial Quality Gate
@@ -239,48 +239,79 @@ Push may proceed.
 
 ---
 
-## Signing Approvals (MCP Tool)
+## FINAL OUTPUT: Structured Response (MANDATORY)
 
-**After outputting ✅ APPROVED, you MUST also sign the approval via MCP.**
+**Your response MUST end with this exact structured format.**
 
-This creates a cryptographically signed approval file that the Pusher subagent
-will verify before pushing. Without this signature, the push will fail.
+The main agent parses this format to extract the verdict and signing data.
+Do not deviate from this structure.
 
-Call the MCP tool:
+### For APPROVED verdict:
 
-```
-mcp__qa_approval__sign_approval({
-  verdict: "APPROVED",
-  commits: ["<full SHA of HEAD commit>"],
-  diffHash: "<sha256 of the reviewed diff>",
-  reviewSummary: "<your approval summary from the verdict above>"
-})
+After your review narrative, run the signing script and output:
+
+```bash
+./scripts/code-reviewer-agent/qa-sign.sh "Brief summary of what was approved"
 ```
 
-**How to get the values:**
-
-1. `commits`: Run `git rev-parse HEAD` to get the full SHA
-2. `diffHash`: Run `git diff HEAD~N | sha256sum` where N is the number of commits
-3. `reviewSummary`: Copy your verification summary from the APPROVED verdict
-
-**After successful signing:**
-
-The MCP server writes the signed approval to `~/.claude-push-approval`. The
-main agent will then use the Pusher subagent to verify this signature and push.
-
-**If the MCP tool is unavailable:**
-
-Report this clearly to the main agent:
+Then output the structured response using the script's JSON output:
 
 ```
-❌ MCP TOOL UNAVAILABLE
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+VERDICT: APPROVED
+PAYLOAD: {"commits":["<from script output>"],"diffHash":"...","verdict":"APPROVED",...}
+SIGNATURE: <hex signature from script output>
+MESSAGE: Brief human-readable summary of approval
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
 
-The mcp__qa_approval__sign_approval tool is not available in this environment.
+### For BLOCKED verdict:
 
-MAIN AGENT FOLLOW-UP:
-→ This is an environment configuration issue
-→ Report to user: "QA MCP server may not be running or configured"
-→ Cannot proceed with push workflow until resolved
+```
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+VERDICT: BLOCKED
+PAYLOAD:
+SIGNATURE:
+MESSAGE: [Violation details: which CLAUDE.md section, evidence, required fix]
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+### For NEEDS_INPUT verdict:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+VERDICT: NEEDS_INPUT
+PAYLOAD:
+SIGNATURE:
+MESSAGE: [Question for the user that must be answered before proceeding]
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+### If crypto-gate/signing fails:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+VERDICT: ERROR
+PAYLOAD:
+SIGNATURE:
+MESSAGE: crypto-gate signing failed: [error details]. Run .claude/session-start.sh
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
 ```
 
 ---

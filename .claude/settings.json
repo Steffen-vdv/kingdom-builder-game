@@ -33,44 +33,31 @@
 				]
 			}
 		],
+		"SubagentStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/subagent-setup.sh"
+					}
+				]
+			}
+		],
 		"PreToolUse": [
 			{
 				"matcher": "Bash",
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/qa-secret-guard.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-setup-scripts.sh"
+					},
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-direct-downloads.sh"
 					},
 					{
 						"type": "command",
 						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-push-review.sh"
-					}
-				]
-			},
-			{
-				"matcher": "Read",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/qa-secret-guard.sh"
-					}
-				]
-			},
-			{
-				"matcher": "Write",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/qa-secret-guard.sh"
-					}
-				]
-			},
-			{
-				"matcher": "Edit",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/qa-secret-guard.sh"
 					}
 				]
 			}
