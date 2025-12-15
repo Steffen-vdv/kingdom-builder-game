@@ -19,3 +19,7 @@ config/server-auth.tokens.local.json
 
 # Husky v9 generated directory (deprecated install command creates this)
 .husky/_/
+
+# crypto-gate binaries (downloaded on-demand, not committed)
+bin/crypto-gate-*
+bin/crypto-gate.exe

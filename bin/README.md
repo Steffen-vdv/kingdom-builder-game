@@ -6,31 +6,42 @@ This directory contains compiled binary tools used by the project.
 
 The `crypto-gate` binary provides cryptographic signing and verification for the QA approval workflow.
 
+### How It Works
+
+1. **Wrapper script** (`crypto-gate`) detects your OS and architecture
+2. **Platform binaries** are downloaded automatically on session start
+3. The wrapper delegates to the correct binary: `crypto-gate-{os}-{arch}`
+
+### Supported Platforms
+
+| OS      | Architecture | Binary Name                |
+| ------- | ------------ | -------------------------- |
+| Linux   | x64          | `crypto-gate-linux-x64`    |
+| Linux   | arm64        | `crypto-gate-linux-arm64`  |
+| macOS   | x64 (Intel)  | `crypto-gate-darwin-x64`   |
+| macOS   | arm64 (M1+)  | `crypto-gate-darwin-arm64` |
+| Windows | x64          | `crypto-gate-win-x64.exe`  |
+
 ### Installation
 
-Download the appropriate binaries for your platform from the crypto-gate releases and place them in this directory:
+Binaries are **downloaded automatically** by `.claude/session-start.sh` on first session start.
 
-- `crypto-gate-linux-x64` for Linux
-- `crypto-gate-macos-x64` for macOS (Intel)
-- `crypto-gate-macos-arm64` for macOS (Apple Silicon)
-- `crypto-gate.exe` for Windows
-
-The `crypto-gate` wrapper script automatically selects the correct binary based on your OS and architecture.
-
-### Setup
-
-Make the wrapper script and binaries executable:
+To manually download:
 
 ```bash
-chmod +x bin/crypto-gate
-chmod +x bin/crypto-gate-linux-x64      # Linux
-chmod +x bin/crypto-gate-macos-x64      # macOS Intel
-chmod +x bin/crypto-gate-macos-arm64    # macOS Apple Silicon
+# Set your platform (example for macOS ARM)
+CRYPTO_GATE_VERSION="v1.0.0"
+BINARY_NAME="crypto-gate-darwin-arm64"
+
+gh release download "$CRYPTO_GATE_VERSION" \
+    --repo "YourOrg/crypto-gate" \
+    --pattern "$BINARY_NAME" \
+    --dir bin/
+
+chmod +x "bin/$BINARY_NAME"
 ```
 
 ### Verification
-
-Test the installation:
 
 ```bash
 ./bin/crypto-gate --help
@@ -38,4 +49,7 @@ Test the installation:
 
 ### Note
 
-The binaries are built from the separate `crypto-gate` repository with secrets embedded at build time. They are not included in this repository and must be obtained from the crypto-gate CI/CD pipeline.
+- Binaries are **gitignored** (not committed to repo)
+- Built from the separate `crypto-gate` repository
+- Secrets are embedded at build time (V8 snapshot)
+- Each binary is ~50MB (includes Node.js runtime for standalone execution)

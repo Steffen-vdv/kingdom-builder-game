@@ -26,34 +26,28 @@ set -euo pipefail
 # ═══════════════════════════════════════════════════════════════════════════════
 
 find_crypto_gate() {
-	local POSSIBLE_PATHS=(
-		"$CLAUDE_PROJECT_DIR/bin/crypto-gate"
-		"$CLAUDE_PROJECT_DIR/node_modules/.bin/crypto-gate"
-		"$(which crypto-gate 2>/dev/null || true)"
-	)
+	# The wrapper script handles platform detection
+	local WRAPPER="$CLAUDE_PROJECT_DIR/bin/crypto-gate"
 
-	for path in "${POSSIBLE_PATHS[@]}"; do
-		if [[ -n "$path" && -x "$path" ]]; then
-			echo "$path"
-			return 0
-		fi
-	done
+	if [[ -x "$WRAPPER" ]]; then
+		echo "$WRAPPER"
+		return 0
+	fi
 
 	cat >&2 << 'NO_BINARY'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  ❌ CRYPTO-GATE NOT FOUND                                                     ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-The crypto-gate binary is not installed or not in expected locations.
+The crypto-gate wrapper script is not found or not executable.
 
-Checked:
-  - $CLAUDE_PROJECT_DIR/bin/crypto-gate
-  - $CLAUDE_PROJECT_DIR/node_modules/.bin/crypto-gate
-  - System PATH
+Expected: $CLAUDE_PROJECT_DIR/bin/crypto-gate
 
-WHAT TO DO:
-→ Ensure crypto-gate binary is installed in the project
-→ Check that the binary has execute permissions
+The crypto-gate binary is downloaded automatically on session start.
+If missing, restart your Claude Code session or run:
+
+  .claude/session-start.sh
+
 NO_BINARY
 	return 1
 }

@@ -5,20 +5,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Determine OS
 case "$(uname -s)" in
   Linux*)
-    BINARY="$SCRIPT_DIR/crypto-gate-linux-x64"
+    OS="linux"
     ;;
   Darwin*)
-    # Check architecture for macOS
-    if [[ "$(uname -m)" == "arm64" ]]; then
-      BINARY="$SCRIPT_DIR/crypto-gate-macos-arm64"
-    else
-      BINARY="$SCRIPT_DIR/crypto-gate-macos-x64"
-    fi
+    OS="darwin"
     ;;
   MINGW*|CYGWIN*|MSYS*)
-    BINARY="$SCRIPT_DIR/crypto-gate.exe"
+    OS="win"
     ;;
   *)
     echo "Unsupported OS: $(uname -s)" >&2
@@ -26,9 +22,41 @@ case "$(uname -s)" in
     ;;
 esac
 
+# Determine architecture
+case "$(uname -m)" in
+  x86_64|amd64)
+    ARCH="x64"
+    ;;
+  arm64|aarch64)
+    ARCH="arm64"
+    ;;
+  *)
+    echo "Unsupported architecture: $(uname -m)" >&2
+    exit 1
+    ;;
+esac
+
+# Construct binary name
+if [[ "$OS" == "win" ]]; then
+  BINARY="$SCRIPT_DIR/crypto-gate-${OS}-${ARCH}.exe"
+else
+  BINARY="$SCRIPT_DIR/crypto-gate-${OS}-${ARCH}"
+fi
+
 if [[ ! -x "$BINARY" ]]; then
-  echo "crypto-gate binary not found or not executable: $BINARY" >&2
-  echo "Please ensure the binary is installed in $SCRIPT_DIR" >&2
+  cat >&2 << EOF
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ CRYPTO-GATE BINARY NOT FOUND                                              ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Expected: $BINARY
+
+The crypto-gate binary is downloaded automatically on session start.
+If missing, restart your Claude Code session or run:
+
+  .claude/session-start.sh
+
+EOF
   exit 1
 fi
 
