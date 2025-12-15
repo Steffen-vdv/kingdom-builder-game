@@ -1,7 +1,7 @@
-# Push Workflow Guide
+# Agent Task Workflow
 
-This document describes the complete workflow for pushing code changes. All
-pushes require QA review and use a two-subagent system for security.
+This document describes the complete workflow for completing and submitting code
+changes. All pushes require QA review and use a two-subagent system for security.
 
 ---
 
@@ -215,52 +215,28 @@ If unsure whether user approval covers a specific case, ask the user first.
 
 ---
 
-## Emergency Backdoor Workflow
+## Manual Signing (Escape Hatch)
 
-In rare cases, the normal QA/Pusher workflow may be broken or unavailable:
+If the normal workflow is unavailable (MCP tools not working, meta-work on the
+workflow itself), the user can authorize a manual signing:
 
-- MCP tools not available to subagents
-- Fixing the workflow itself (meta-work)
-- Critical hotfix when workflow is down
-
-### When to Use
-
-This backdoor is **only** for emergencies where:
-
-1. The QA/Pusher subagent workflow is broken or unavailable, AND
-2. The changes are urgent or are fixes to the workflow itself
-
-**Do NOT use this for convenience.** The normal workflow exists for security.
-
-### Backdoor Procedure
-
-1. **Explain to the user** why the normal workflow cannot be used
-2. **Ask the user** to provide the value of `QA_SIGNING_SECRET`
-3. **User provides the secret** (this is the authorization step)
-4. **Main agent creates approval file** using the secret:
+1. Main agent explains why normal workflow cannot be used
+2. User provides the `QA_SIGNING_SECRET` value
+3. Main agent creates signed approval file:
 
 ```bash
-# Generate approval payload
+SECRET="<user-provided>"
 COMMITS="[\"$(git rev-parse HEAD)\"]"
 DIFF_HASH=$(git diff HEAD~1 | sha256sum | cut -d' ' -f1)
 TIMESTAMP=$(date -Iseconds)
-PAYLOAD="{\"status\":\"APPROVED\",\"timestamp\":\"$TIMESTAMP\",\"commits\":$COMMITS,\"diffHash\":\"$DIFF_HASH\",\"reviewer_verdict\":\"User-authorized backdoor\"}"
-
-# Sign with HMAC (user provides SECRET)
+PAYLOAD="{\"status\":\"APPROVED\",\"timestamp\":\"$TIMESTAMP\",\"commits\":$COMMITS,\"diffHash\":\"$DIFF_HASH\",\"reviewer_verdict\":\"User-authorized manual signing\"}"
 SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SECRET" | cut -d' ' -f2)
-
-# Write approval file
-echo "{\"status\":\"APPROVED\",\"timestamp\":\"$TIMESTAMP\",\"commits\":$COMMITS,\"diffHash\":\"$DIFF_HASH\",\"reviewer_verdict\":\"User-authorized backdoor\",\"signature\":\"$SIGNATURE\"}" > ~/.claude-push-approval
+echo "{\"status\":\"APPROVED\",\"timestamp\":\"$TIMESTAMP\",\"commits\":$COMMITS,\"diffHash\":\"$DIFF_HASH\",\"reviewer_verdict\":\"User-authorized manual signing\",\"signature\":\"$SIGNATURE\"}" > ~/.claude-push-approval
 ```
 
-5. **Main agent spawns Pusher** or pushes via MCP tool
+4. Main agent pushes directly via `git push` (pre-push hook verifies signature)
 
-### Security Notes
-
-- The user providing the secret IS the authorization
-- This bypasses QA review - user takes responsibility for the changes
-- The approval file is still cryptographically signed (for audit trail)
-- Use sparingly and document why normal workflow was unavailable
+The user providing the secret serves as authorization. This bypasses QA review.
 
 ---
 

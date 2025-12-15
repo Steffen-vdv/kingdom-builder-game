@@ -68,7 +68,7 @@ WHAT TO DO:
 2. After QA approval:
    → Spawn Pusher subagent: Task(subagent_type: "pusher", prompt: "Push approved changes")
 
-REFERENCE: See docs/push-workflow.md for the complete push workflow.
+REFERENCE: See docs/agent-task-workflow.md for the complete push workflow.
 BLOCKED
 	exit 2
 fi
@@ -92,10 +92,10 @@ if [[ ! -f "$APPROVAL_FILE" ]]; then
 QA review must be completed before pushing.
 
 WHAT TO DO:
-→ Complete QA review first (Step 2 in docs/push-workflow.md)
+→ Complete QA review first (Step 2 in docs/agent-task-workflow.md)
 → After QA returns ✅ APPROVED, spawn pusher subagent (Step 3)
 
-See: docs/push-workflow.md#troubleshooting
+See: docs/agent-task-workflow.md#troubleshooting
 NO_APPROVAL
 	exit 2
 fi
@@ -111,10 +111,10 @@ if [[ -z "$APPROVAL_CONTENT" ]]; then
 The approval file exists but is empty or unreadable.
 
 WHAT TO DO:
-→ Re-run QA review (Step 2 in docs/push-workflow.md)
+→ Re-run QA review (Step 2 in docs/agent-task-workflow.md)
 → Ensure QA returns ✅ APPROVED before spawning pusher
 
-See: docs/push-workflow.md#troubleshooting
+See: docs/agent-task-workflow.md#troubleshooting
 EMPTY_APPROVAL
 	exit 2
 fi
@@ -130,10 +130,10 @@ if [[ -z "$SIGNATURE" ]]; then
 The approval file has no cryptographic signature.
 
 WHAT TO DO:
-→ Re-run QA review (Step 2 in docs/push-workflow.md)
+→ Re-run QA review (Step 2 in docs/agent-task-workflow.md)
 → Ensure QA returns ✅ APPROVED before spawning pusher
 
-See: docs/push-workflow.md#troubleshooting
+See: docs/agent-task-workflow.md#troubleshooting
 NO_SIGNATURE
 	exit 2
 fi
@@ -151,10 +151,10 @@ if [[ "$SIGNATURE" != "$EXPECTED_SIGNATURE" ]]; then
 The approval file's signature is invalid.
 
 WHAT TO DO:
-→ Re-run QA review (Step 2 in docs/push-workflow.md)
+→ Re-run QA review (Step 2 in docs/agent-task-workflow.md)
 → This typically indicates a configuration issue
 
-See: docs/push-workflow.md#troubleshooting
+See: docs/agent-task-workflow.md#troubleshooting
 BAD_SIGNATURE
 	exit 2
 fi
@@ -175,10 +175,10 @@ Approved commits: $(echo "$APPROVED_COMMITS" | tr '\n' ' ')
 New commits were added after QA approval.
 
 WHAT TO DO:
-→ Re-run QA review for the current changes (Step 2 in docs/push-workflow.md)
+→ Re-run QA review for the current changes (Step 2 in docs/agent-task-workflow.md)
 → QA must approve the new commits before pushing
 
-See: docs/push-workflow.md#troubleshooting
+See: docs/agent-task-workflow.md#troubleshooting
 COMMIT_MISMATCH
 	exit 2
 fi
@@ -323,7 +323,7 @@ $CHANGED_FILES
 
 REQUIRED: Pass adversarial QA review before pushing.
 
-Follow the procedure in: docs/push-workflow.md
+Follow the procedure in: docs/agent-task-workflow.md
 
 Quick summary:
 1. Prepare your claims (root cause, layer, tests, user approval, docs)
