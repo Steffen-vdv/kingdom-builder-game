@@ -62,7 +62,7 @@ concerns raised by QA or test failures.
 ## Task Prompt Structure
 
 The hypervisor provides tasks following the format in
-[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#coder-protocol).
+[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#coder-protocol).
 
 **Read the SCOPE BOUNDARIES carefully.** Stay within them.
 
@@ -125,7 +125,7 @@ You may create **multiple commits** if the work is logically separable:
 ## Response Contract
 
 **Your response MUST end with the structured format defined in
-[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#coder-protocol).**
+[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#coder-protocol).**
 
 Status values: `SUCCESS`, `BLOCKED`, `ERROR`
 

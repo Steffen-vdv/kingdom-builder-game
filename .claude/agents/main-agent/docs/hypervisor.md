@@ -181,7 +181,7 @@ When receiving a user request:
 
 Your prompts to subagents must be **complete and self-contained**. Use the
 formats defined in
-[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md).
+[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md).
 
 **Key principle:** The subagent should NOT need to ask clarifying questions. If
 you can't write a complete prompt, you haven't decomposed the task enough.
@@ -216,7 +216,7 @@ C) [Your suggestion]
 For detailed workflow procedures:
 
 - [`agent-task-workflow.md`](./agent-task-workflow.md) — Push workflow, QA handling
-- [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md) — Response formats
+- [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md) — Response formats
 
 For project principles (fetch if needed):
 

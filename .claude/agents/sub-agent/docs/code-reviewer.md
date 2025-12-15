@@ -58,6 +58,7 @@ Pay special attention to **Section 2: Golden Rules**:
 - §2.4 Root Cause Analysis
 - §2.5 Layer Responsibility
 - §2.6 Test Integrity
+- §2.7 Single Source of Truth
 
 These are non-negotiable. Any violation results in BLOCKED.
 

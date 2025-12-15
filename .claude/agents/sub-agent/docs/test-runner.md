@@ -228,7 +228,7 @@ Apply the decision tree above based on your analysis.
 ## Response Contract
 
 **Your response MUST end with the structured format defined in
-[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#test-runner-protocol).**
+[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#test-runner-protocol).**
 
 Status values: `PASS`, `FAIL`, `ERROR`
 
