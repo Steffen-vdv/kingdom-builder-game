@@ -22,8 +22,8 @@ fi
 # DOWNLOAD CRYPTO-GATE BINARY (if not present)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-CRYPTO_GATE_VERSION="v1.0.0"
-CRYPTO_GATE_REPO="YourOrg/crypto-gate"  # TODO: Update with actual repo
+CRYPTO_GATE_VERSION="0.3.0"
+CRYPTO_GATE_REPO="Steffen-vdv/crypto-gate-releases"
 
 download_crypto_gate() {
   local BIN_DIR="$CLAUDE_PROJECT_DIR/bin"

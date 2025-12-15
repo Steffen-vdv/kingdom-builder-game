@@ -239,80 +239,79 @@ Push may proceed.
 
 ---
 
-## Signing Approvals (REQUIRED after APPROVED verdict)
+## FINAL OUTPUT: Structured Response (MANDATORY)
 
-**After outputting ✅ APPROVED, you MUST sign the approval via crypto-gate CLI.**
+**Your response MUST end with this exact structured format.**
 
-This creates a cryptographic signature that the Pusher subagent will use to
-verify the approval before pushing. Without this signature, the push will fail.
+The main agent parses this format to extract the verdict and signing data.
+Do not deviate from this structure.
 
-### Step 1: Gather signing data
+### For APPROVED verdict:
 
-```bash
-# Get HEAD commit SHA
-git rev-parse HEAD
-
-# Get diff hash (for all commits since upstream)
-git diff origin/main...HEAD | sha256sum | cut -d' ' -f1
-```
-
-### Step 2: Create payload and sign via CLI
+After your review narrative, run the signing script and output:
 
 ```bash
-# Create the payload JSON
-PAYLOAD='{"commits":["<HEAD_SHA>"],"diffHash":"<DIFF_HASH>","verdict":"APPROVED","summary":"<brief summary>","timestamp":"<ISO8601>"}'
-
-# Sign via crypto-gate CLI
-./bin/crypto-gate sign "$PAYLOAD"
-# Returns JSON: {"payload":"...","signature":"..."}
+./scripts/qa-sign.sh "Brief summary of what was approved"
 ```
 
-**Example:**
-
-```bash
-HEAD_SHA=$(git rev-parse HEAD)
-DIFF_HASH=$(git diff origin/main...HEAD | sha256sum | cut -d' ' -f1)
-TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-PAYLOAD="{\"commits\":[\"$HEAD_SHA\"],\"diffHash\":\"$DIFF_HASH\",\"verdict\":\"APPROVED\",\"summary\":\"QA approved\",\"timestamp\":\"$TIMESTAMP\"}"
-
-./bin/crypto-gate sign "$PAYLOAD"
-```
-
-### Step 3: Return payload and signature to main agent
-
-After signing, output BOTH values clearly so the main agent can pass them
-to the Pusher subagent:
+Then output the structured response using the script's JSON output:
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-APPROVAL SIGNED — Data for Pusher
+QA_RESPONSE_START
 ═══════════════════════════════════════════════════════════════════════════════
+VERDICT: APPROVED
+PAYLOAD: {"commits":["<from script output>"],"diffHash":"...","verdict":"APPROVED",...}
+SIGNATURE: <hex signature from script output>
+MESSAGE: Brief human-readable summary of approval
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
 
+### For BLOCKED verdict:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+VERDICT: BLOCKED
 PAYLOAD:
-{"commits":["abc123..."],"diffHash":"def456...","verdict":"APPROVED","summary":"...","timestamp":"..."}
-
 SIGNATURE:
-a1b2c3d4e5f6...
-
+MESSAGE: [Violation details: which CLAUDE.md section, evidence, required fix]
 ═══════════════════════════════════════════════════════════════════════════════
-Main agent: Pass BOTH payload and signature to the Pusher subagent.
+QA_RESPONSE_END
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
-**If crypto-gate is unavailable:**
+### For NEEDS_INPUT verdict:
 
 ```
-❌ CRYPTO-GATE UNAVAILABLE
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+VERDICT: NEEDS_INPUT
+PAYLOAD:
+SIGNATURE:
+MESSAGE: [Question for the user that must be answered before proceeding]
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
 
-The crypto-gate binary is not found or not executable.
+### If crypto-gate/signing fails:
 
-Expected location: ./bin/crypto-gate
-
-MAIN AGENT FOLLOW-UP:
-→ Run .claude/session-start.sh to download crypto-gate
-→ Or manually download from crypto-gate releases
-→ Cannot proceed with push until resolved
+```
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+VERDICT: ERROR
+PAYLOAD:
+SIGNATURE:
+MESSAGE: crypto-gate signing failed: [error details]. Run .claude/session-start.sh
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
 ```
 
 ---

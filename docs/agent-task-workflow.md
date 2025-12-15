@@ -72,49 +72,56 @@ Task(
 
 ### Handle the Verdict
 
-The QA subagent will return one of three verdicts:
-
-#### ✅ APPROVED
-
-QA has approved and signed the changes. The response includes:
+The QA subagent returns a **structured response** that you must parse:
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-APPROVAL SIGNED — Data for Pusher
+QA_RESPONSE_START
 ═══════════════════════════════════════════════════════════════════════════════
-
-PAYLOAD:
-{"commits":["abc123..."],"diffHash":"def456...","verdict":"APPROVED",...}
-
-SIGNATURE:
-a1b2c3d4e5f6...
-
+VERDICT: APPROVED|BLOCKED|NEEDS_INPUT|ERROR
+PAYLOAD: <json string or empty>
+SIGNATURE: <hex string or empty>
+MESSAGE: <human readable details>
+═══════════════════════════════════════════════════════════════════════════════
+QA_RESPONSE_END
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
-**Save both PAYLOAD and SIGNATURE** - you'll pass them to the Pusher.
+**Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
 
-#### 🚫 BLOCKED
+#### VERDICT: APPROVED
 
-QA found issues that must be fixed.
+QA has approved and signed. Extract `PAYLOAD` and `SIGNATURE` for the Pusher.
+
+**What to do:** Proceed to Step 3 (Push) with the payload and signature.
+
+#### VERDICT: BLOCKED
+
+QA found issues. The `MESSAGE` field contains violation details.
 
 **What to do:**
 
-1. Read the specific violation in the QA response
+1. Read the violation in `MESSAGE`
 2. Fix the identified issue
 3. Commit the fix
 4. Re-invoke QA review (return to Step 2)
 
-#### ⚠️ NEEDS USER INPUT
+#### VERDICT: NEEDS_INPUT
 
-QA needs clarification on a design decision.
+QA needs user clarification. The `MESSAGE` field contains the question.
 
 **What to do:**
 
-1. Present QA's question to the user verbatim
+1. Present `MESSAGE` to the user verbatim
 2. Wait for user's response
 3. If user approves the current approach, re-invoke QA with the user's approval
 4. If user wants changes, implement them, commit, and re-invoke QA
+
+#### VERDICT: ERROR
+
+Signing failed (crypto-gate issue). The `MESSAGE` field has details.
+
+**What to do:** Run `.claude/session-start.sh` to download crypto-gate, then retry.
 
 ### Iteration Limits
 
