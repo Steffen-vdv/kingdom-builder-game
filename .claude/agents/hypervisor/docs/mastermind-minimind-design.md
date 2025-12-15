@@ -4,7 +4,7 @@ This document captures the ongoing design discussion for introducing two new
 subagent types and restructuring the hypervisor's role.
 
 **Session**: 2025-12-15
-**Status**: In Progress - Interview Phase
+**Status**: Communication Baseline Resolved - Ready for Implementation
 
 ---
 
@@ -76,37 +76,78 @@ on implementation details.
 
 ---
 
-## 3. Communication Baseline Discussion
+## 3. Communication Baseline (Resolved)
 
-### 3.1 Open Questions
+### 3.1 Request-to-Plan Flow
 
-**Session plan visibility** - What does "good insight" look like?
+When user makes a request:
 
-- Bulleted plan at session start that hypervisor maintains?
-- Persistent summary updated after each batch?
-- Something else?
+1. **Hypervisor interprets** - Determine which agent type to involve
+2. **Involve subagent without explicit approval** - Unless request clearly not
+   suited for subagent (then discuss directly with user)
+3. **For features** - Involve mastermind first
 
-**Batch task involvement** - What's the right level?
+**Mastermind's role in this flow:**
 
-- User approves overall plan, hypervisor executes autonomously until blocker?
-- User approves each batch with less detail?
-- Something else?
+- Be critical and skeptical
+- Not just decompose, but question whether request makes conceptual sense
+- Identify missing considerations (e.g., interactions with other systems user
+  didn't think about)
+- Return questions when needed, not just decompositions
 
-**Subagent communication visibility** - What should user see?
+### 3.2 Plan Approval Flow
 
-- Full prompts sent to subagents?
-- Summary of request/response?
-- Only surfaced when something goes wrong?
+When mastermind returns a decomposition:
 
-**Core directives** - If hypervisor.md reduced to 5 rules, what are they?
+1. **Decomposition = PLAN** - User wants to understand and approve it
+2. **Hypervisor presents plan** with orchestration perspective:
+   - Which agents involved
+   - In what order
+   - How batched for efficiency
+3. **User may curate** - Disagree with parts, provide improvement points
+4. **Iterate if needed** - Hypervisor sends user feedback back to mastermind
+5. **Continue until** mastermind, hypervisor, and user all agree
+6. **After approval** - Hypervisor runs batches autonomously
 
-### 3.2 Decision Authority
+### 3.3 Autonomous Execution Boundaries
 
-**Proposal**: If mastermind returns "approved + decomposition", hypervisor
-proceeds with spawning coders without checkpoint - unless decomposition reveals
-something surprising or risky.
+After plan approval, hypervisor may act autonomously UNLESS:
 
-**Status**: Awaiting user input.
+- Something threatens the approved plan significantly
+- A significant event occurs requiring user input
+
+For small tactical deviations: Consult mastermind/minimind first, then decide.
+For significant deviations: Involve user before making decisions.
+
+### 3.4 Subagent Communication Visibility
+
+**Hard requirement**: Every request to and response from subagents must be shown
+to user **verbatim in code blocks**.
+
+Purpose: During trial period, user monitors for inefficiencies/improvements in
+the flow. Must happen at all times.
+
+### 3.5 Hypervisor Core Directives (5 Rules)
+
+1. **Interpret & route** - Interpret user requests, consult `hypervisor.md`,
+   determine followup (direct conversation or involve subagents)
+
+2. **Plans over tactics** - User approves plans, not low-level tactics. When
+   agents return plans for big features/bugs, involve user. When agents return
+   simple rejections/concerns, decide autonomously per `hypervisor.md`
+
+3. **Monitor & followup** - Monitor subagent output, consult `hypervisor.md`,
+   determine appropriate followup. Act autonomously if it doesn't threaten the
+   plan; involve user if there's any problem or concern
+
+4. **Transparent communication** - Always output request/response to/from
+   subagents verbatim to user
+
+5. **Context refresh** - Refresh context (`hypervisor.md`) often to stay on
+   mission. Hypervisor is the only long-living session; subagents are
+   short-lived. Hypervisor keeps track of the bigger picture. Context drift,
+   session handovers, or late directive refreshes cause user to force-refresh,
+   which is undesirable
 
 ---
 
@@ -160,4 +201,25 @@ Hypervisor posed specific questions about:
 - Core hypervisor directives (5 rules)
 - Decision authority after mastermind approval
 
-**Status**: Awaiting user response.
+### Entry 4: Communication Baseline Resolved
+
+User provided detailed answers (see Section 3 for full resolution):
+
+**Request-to-plan flow**: Hypervisor interprets request, involves appropriate
+subagent without explicit user approval. For features, involve mastermind first.
+Mastermind must be critical/skeptical and question whether request makes sense.
+
+**Plan approval**: Mastermind's decomposition = a PLAN. User wants to see it,
+understand it, possibly curate it. Iterate until mastermind + hypervisor + user
+all agree. Only then execute autonomously.
+
+**Autonomous boundaries**: After plan approval, hypervisor runs batches without
+user involvement UNLESS something threatens the plan significantly.
+
+**Subagent visibility**: Hard requirement - all request/response to/from
+subagents shown verbatim in code blocks. No exceptions during trial period.
+
+**Core 5 rules**: Interpret & route, plans over tactics, monitor & followup,
+transparent communication, context refresh.
+
+**Status**: Communication baseline established. Ready for implementation.
