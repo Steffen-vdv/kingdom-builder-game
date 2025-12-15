@@ -160,13 +160,38 @@ Task(
 
 ### Handle the Result
 
-#### Success
+The Pusher subagent returns a **structured response** that you must parse:
 
-The pusher will report success. Your changes are now on the remote.
+```
+═══════════════════════════════════════════════════════════════════════════════
+PUSH_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+RESULT: SUCCESS|FAILED|ERROR
+BRANCH: <branch-name or empty>
+COMMIT: <commit-sha or empty>
+MESSAGE: <human readable details>
+═══════════════════════════════════════════════════════════════════════════════
+PUSH_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
 
-#### Failure
+**Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**
 
-The pusher will report the specific error. Common failures:
+#### RESULT: SUCCESS
+
+Push completed. Your changes are now on the remote.
+
+#### RESULT: FAILED
+
+Verification or push failed (invalid signature, HEAD not in approved commits, etc.).
+The `MESSAGE` field contains details.
+
+#### RESULT: ERROR
+
+Script or system error (crypto-gate not found, execution failed, etc.).
+The `MESSAGE` field contains details.
+
+### Common Failures
 
 | Error                        | Meaning                       | What To Do                   |
 | ---------------------------- | ----------------------------- | ---------------------------- |
