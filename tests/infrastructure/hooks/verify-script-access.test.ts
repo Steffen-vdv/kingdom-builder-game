@@ -78,7 +78,6 @@ describe('Infrastructure: Script Access Control', () => {
 	describe('Subagent Script Protection', () => {
 		const SUBAGENT_SCRIPTS = [
 			'.claude/agents/sub-agent/scripts/sign.sh',
-			'.claude/agents/sub-agent/scripts/verify.sh',
 			'.claude/agents/sub-agent/scripts/verify-and-push.sh',
 			'.claude/agents/sub-agent/scripts/sss.sh',
 		];

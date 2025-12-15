@@ -88,35 +88,12 @@ Do NOT silently gather evidence and then output a verdict. Show your work.
 
 ## Review Process
 
-### Step 0: Check for Previous Approval (Incremental Review)
-
-If the task agent provides `PREVIOUS_APPROVAL` with payload and signature:
-
-1. **Verify the signature** using the shared verification script:
-
-   ```bash
-   .claude/agents/sub-agent/scripts/verify.sh '<payload>' '<signature>'
-   ```
-
-2. **If verification succeeds:**
-   - Extract the last approved commit from the payload: `jq -r '.commits[-1]' <<< "$PAYLOAD"`
-   - Calculate the range of NEW commits: `git log <last-approved-commit>..HEAD --oneline`
-   - Output: "✓ Previous approval verified. Reviewing only new commits: <range>"
-   - **Only review the NEW commits** — skip commits already approved
-   - When signing, include ALL commits (full ancestry), not just new ones
-
-3. **If verification fails (invalid signature, wrong verdict, etc.):**
-   - Output: "⚠ Previous approval verification failed. Falling back to full review."
-   - Review ALL commits on the branch (full review)
-
-**When to skip this step:** If no `PREVIOUS_APPROVAL` provided, proceed directly to Step 1 (full review).
-
 ### Step 1: Gather Evidence
 
 Before forming any opinion, collect facts:
 
 1. **Read CLAUDE.md** — Refresh your understanding of the rules
-2. **Read the diff** — `git diff` for commits being reviewed (incremental or full)
+2. **Read the diff** — `git diff` for commits being reviewed
 3. **Identify changed files** — Which packages/layers are touched?
 4. **Read relevant architecture docs** if core systems are affected
 5. **Understand the original task** — What was the user asking for?

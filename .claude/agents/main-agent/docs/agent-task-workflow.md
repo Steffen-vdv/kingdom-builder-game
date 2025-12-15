@@ -91,22 +91,6 @@ the complete request format specification.**
 
 ## Step 2: QA Review
 
-### Check for Cached Approval (Incremental Review)
-
-**Before invoking QA, check if you have a cached approval from earlier in this session.**
-
-If you have cached `PAYLOAD` and `SIGNATURE` from a previous APPROVED verdict:
-
-- Include it as `PREVIOUS_APPROVAL` in your QA request
-- QA will verify the signature and only review NEW commits
-- This saves significant time in multi-round sessions
-
-**Cache conditions:**
-
-- Only use within the same session (cleared on session resume/compact)
-- Only for the same branch
-- Clear cache if you rebase or change branches
-
 ### Spawn the QA Subagent
 
 **IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
@@ -117,11 +101,6 @@ Task(
   description: "QA review for push",
   prompt: """
     [Use format from ../shared/docs/agent-intercommunication-protocols.md#request-format]
-
-    # If you have cached approval, include:
-    PREVIOUS_APPROVAL (optional):
-    PAYLOAD: <json-from-previous-approved-verdict>
-    SIGNATURE: <signature-from-previous-approved-verdict>
   """
 )
 ```
@@ -139,22 +118,7 @@ the complete response format specification.**
 
 QA has approved and signed. Extract `PAYLOAD` and `SIGNATURE` for the Pusher.
 
-**What to do:**
-
-1. **⚠️ CACHE THE PAYLOAD AND SIGNATURE** - Store these for future use in this session
-2. Proceed to Step 3 (Push) with the payload and signature
-
-**Why caching matters:** If you make additional commits on this branch later in
-the session, you MUST pass the cached approval as `PREVIOUS_APPROVAL` to QA.
-This enables incremental review (QA only reviews new commits, not previously
-approved ones).
-
-**Example of cached data:**
-
-```
-CACHED_PAYLOAD: {"commits":["abc123..."],"branch":"feature/foo",...}
-CACHED_SIGNATURE: f904da271c784dba431e6fdbb768f833...
-```
+**What to do:** Proceed to Step 3 (Push) with the payload and signature
 
 #### VERDICT: BLOCKED
 
@@ -165,8 +129,7 @@ QA found issues. The `MESSAGE` field contains violation details.
 1. Read the violation in `MESSAGE`
 2. Fix the identified issue
 3. Commit the fix
-4. **⚠️ Re-invoke QA with `PREVIOUS_APPROVAL`** if you have a cached approval
-   from an earlier iteration (enables incremental review of only the new fix)
+4. Re-invoke QA to review the changes
 
 #### VERDICT: NEEDS_INPUT
 
@@ -177,9 +140,7 @@ QA needs user clarification. The `MESSAGE` field contains the question.
 1. Present `MESSAGE` to the user verbatim
 2. Wait for user's response
 3. If user approves the current approach, re-invoke QA with the user's approval
-   **⚠️ and `PREVIOUS_APPROVAL`** if you have cached approval from earlier
-4. If user wants changes, implement them, commit, and **⚠️ re-invoke QA with
-   `PREVIOUS_APPROVAL`** if available
+4. If user wants changes, implement them, commit, and re-invoke QA
 
 #### VERDICT: ERROR
 

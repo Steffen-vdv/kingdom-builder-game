@@ -31,10 +31,6 @@ TASK AGENT CLAIMS:
 - Tests: <Test coverage details, or "N/A" for non-code changes>
 - User approval: <What the user explicitly approved, or "N/A">
 
-PREVIOUS_APPROVAL (optional):
-PAYLOAD: <json from previous APPROVED verdict>
-SIGNATURE: <signature from previous APPROVED verdict>
-
 SPECIFIC QA FOCUS (optional):
 <Any specific aspects to pay attention to>
 ```
@@ -48,9 +44,6 @@ SPECIFIC QA FOCUS (optional):
 - **Layer**: Which architectural layer owns the change
 - **Tests**: Test coverage or "N/A" if not applicable
 - **User approval**: What the user explicitly approved, or "N/A"
-- **PREVIOUS_APPROVAL**: Optional. Provides payload and signature from a previous
-  APPROVED verdict within the same session. QA verifies the signature and only
-  reviews commits not included in the previous approval (incremental review).
 - **SPECIFIC QA FOCUS**: Optional additional guidance for QA
 
 ### Response Format
