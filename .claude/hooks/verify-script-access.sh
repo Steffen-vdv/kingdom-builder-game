@@ -3,11 +3,11 @@
 # Verify agent type before allowing access to agent-specific scripts
 #
 # Directory-based permission model:
-#   - .claude/agents/main-agent/scripts/* → Only main agents (marker != s_3k2)
+#   - .claude/agents/hypervisor/scripts/* → Only hypervisor (marker != s_3k2)
 #   - .claude/agents/sub-agent/scripts/*  → Only subagents (marker == s_3k2)
 #   - .claude/agents/shared/scripts/*     → Both (if this directory exists)
 #
-# Security: Even if a main agent somehow gets crypto-gate, it still
+# Security: Even if the hypervisor somehow gets crypto-gate, it still
 # cannot call the signing or verification scripts because this hook blocks access.
 
 COMMAND="${TOOL_INPUT_COMMAND:-}"
@@ -32,24 +32,24 @@ if [[ "$COMMAND" == *".claude/agents/sub-agent/scripts/"* ]]; then
 Scripts in .claude/agents/sub-agent/scripts/ can only be called by subagents
 (code-reviewer, pusher).
 
-Main task agents must spawn the appropriate subagent to use these scripts.
+The hypervisor must spawn the appropriate subagent to use these scripts.
 BLOCKED
     exit 2
   fi
 fi
 
-# Check if calling main agent scripts from subagent context
-if [[ "$COMMAND" == *".claude/agents/main-agent/scripts/"* ]]; then
-  # Only main agents can call these scripts
+# Check if calling hypervisor scripts from subagent context
+if [[ "$COMMAND" == *".claude/agents/hypervisor/scripts/"* ]]; then
+  # Only hypervisor can call these scripts
   if [[ "$AGENT_TYPE" == "s_3k2" ]]; then
     cat << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║  🛑 BLOCKED — Script requires main agent context                              ║
+║  🛑 BLOCKED — Script requires hypervisor context                              ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-Scripts in .claude/agents/main-agent/scripts/ can only be called by main agents.
+Scripts in .claude/agents/hypervisor/scripts/ can only be called by the hypervisor.
 
-Subagents cannot access main agent scripts.
+Subagents cannot access hypervisor scripts.
 BLOCKED
     exit 2
   fi

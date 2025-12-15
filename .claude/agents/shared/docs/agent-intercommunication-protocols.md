@@ -5,9 +5,124 @@ the push workflow. It serves as the single source of truth for agent I/O specs.
 
 **Referenced by:**
 
+- `.claude/agents/sub-agent/docs/coder.md` - Implementation agent definition
+- `.claude/agents/sub-agent/docs/test-runner.md` - Test analysis agent definition
 - `.claude/agents/sub-agent/docs/code-reviewer.md` - QA agent definition
 - `.claude/agents/sub-agent/docs/pusher.md` - Pusher agent definition
-- `.claude/agents/main-agent/docs/agent-task-workflow.md` - Main agent workflow guide
+- `.claude/agents/hypervisor/docs/hypervisor.md` - Hypervisor orchestration guide
+- `.claude/agents/hypervisor/docs/agent-task-workflow.md` - Detailed workflow procedures
+
+---
+
+## Coder Protocol
+
+The coder subagent implements features, fixes bugs, and addresses concerns.
+
+### Request Format
+
+Hypervisor invokes via Task tool with this prompt structure:
+
+```
+TASK: <Clear description of what to implement>
+
+CONTEXT:
+- Relevant files: <files the coder should read first>
+- Related systems: <what this integrates with>
+- Constraints: <specific requirements or limitations>
+
+ACCEPTANCE CRITERIA:
+- <Criterion 1>
+- <Criterion 2>
+
+SCOPE BOUNDARIES:
+- DO: <what is in scope>
+- DO NOT: <what is explicitly out of scope>
+```
+
+### Response Format
+
+Coder returns a structured response:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+CODER_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: SUCCESS|BLOCKED|ERROR
+COMMITS: ["<sha1>", "<sha2>", ...]
+MESSAGE:
+<Summary of implementation or explanation of blocker>
+═══════════════════════════════════════════════════════════════════════════════
+CODER_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**Field descriptions:**
+
+- **STATUS**: Outcome (SUCCESS/BLOCKED/ERROR)
+- **COMMITS**: Array of commit SHAs created (empty if BLOCKED/ERROR)
+- **MESSAGE**: Human-readable summary or blocker explanation
+
+**Status meanings:**
+
+- `SUCCESS`: Implementation complete, commits created
+- `BLOCKED`: Cannot proceed, needs clarification or guidance
+- `ERROR`: System failure during implementation
+
+---
+
+## Test Runner Protocol
+
+The test-runner subagent analyzes changes and executes appropriate tests.
+
+### Request Format
+
+Hypervisor invokes via Task tool with this prompt structure:
+
+```
+Analyze and test the changes in commit(s): <sha1>, <sha2>, ...
+
+BRANCH: <branch-name>
+SCOPE: <targeted | full | verify>
+```
+
+**Scope options:**
+
+- `targeted`: Analyze changes and run only relevant tests
+- `full`: Run full test suite (pnpm test:parallel)
+- `verify`: Run complete verification (pnpm verify)
+
+### Response Format
+
+Test-runner returns a structured response:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+TEST_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: PASS|FAIL|ERROR
+STRATEGY: <strategy name>
+TESTS_RUN: <number or "none">
+FAILURES: [{"file": "...", "test": "...", "error": "..."}]
+MESSAGE:
+<Strategy rationale and summary>
+═══════════════════════════════════════════════════════════════════════════════
+TEST_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**Field descriptions:**
+
+- **STATUS**: Test outcome (PASS/FAIL/ERROR)
+- **STRATEGY**: Which test strategy was chosen and why
+- **TESTS_RUN**: Number of tests executed, or "none" if no tests needed
+- **FAILURES**: Array of failure objects (empty if PASS)
+- **MESSAGE**: Human-readable summary of test run
+
+**Status meanings:**
+
+- `PASS`: All tests passed (or no tests needed)
+- `FAIL`: One or more tests failed
+- `ERROR`: Test execution failed (system error)
 
 ---
 
@@ -17,7 +132,7 @@ The code-reviewer subagent performs adversarial QA review before push.
 
 ### Request Format
 
-Main agent invokes via Task tool with this prompt structure:
+Hypervisor invokes via Task tool with this prompt structure:
 
 ```
 Review the changes on branch <branch-name>.
@@ -87,7 +202,7 @@ The pusher subagent verifies QA approval and executes the push.
 
 ### Request Format
 
-Main agent invokes via Task tool with ONE of two modes:
+Hypervisor invokes via Task tool with ONE of two modes:
 
 #### Mode 1: QA Approval (normal workflow)
 

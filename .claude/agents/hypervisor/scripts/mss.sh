@@ -19,12 +19,12 @@ fi
 [ ! -d "$CLAUDE_PROJECT_DIR/.husky/_" ] && pnpm run prepare >> "$LOG" 2>&1
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# NOTE: crypto-gate is NOT downloaded here for main agents.
+# NOTE: crypto-gate is NOT downloaded here for the hypervisor.
 # Only subagents get crypto-gate via SubagentStart hook → sss.sh
-# This is a security measure to prevent main agents from signing approvals.
+# This is a security measure to prevent the hypervisor from signing approvals.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Set agent type marker (main agent)
+# Set agent type marker (hypervisor)
 echo "m_7x9" > "$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
 
 # Copy settings to root location
@@ -32,12 +32,11 @@ cp "$CLAUDE_PROJECT_DIR/.claude/settings.json" /root/.claude/settings.json 2>/de
 
 echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 
-# Output CLAUDE.md content for agent context
-# This ensures the agent has the operating manual on fresh session start
+# Output hypervisor.md for hypervisor identity
 echo ""
-echo "=== CLAUDE.md Operating Manual ==="
-echo "Read this file before starting any task."
-echo "Location: $CLAUDE_PROJECT_DIR/CLAUDE.md"
+echo "=== Hypervisor Identity ==="
+echo "You are the hypervisor. Read your identity document before starting any task."
+echo "Location: $CLAUDE_PROJECT_DIR/.claude/agents/hypervisor/docs/hypervisor.md"
 echo ""
 
 exit 0

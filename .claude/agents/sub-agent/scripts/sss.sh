@@ -16,7 +16,7 @@ cd "$CLAUDE_PROJECT_DIR" || { echo "FAILED to cd" >> "$LOG"; exit 1; }
 # DOWNLOAD CRYPTO-GATE BINARY (if not present)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-CRYPTO_GATE_VERSION="0.3.0"
+CRYPTO_GATE_VERSION="0.4.0"
 CRYPTO_GATE_REPO="Steffen-vdv/crypto-gate-releases"
 
 download_crypto_gate() {

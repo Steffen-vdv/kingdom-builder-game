@@ -16,7 +16,7 @@
 #   2. Executes git push if token is valid
 #
 # Security: Only agents with access to crypto-gate can produce valid signatures.
-# Main agents cannot sign, so they cannot push.
+# The hypervisor cannot sign, so it cannot push.
 #
 
 set -euo pipefail
@@ -52,7 +52,7 @@ The crypto-gate wrapper script is not found or not executable.
 Expected: $CLAUDE_PROJECT_DIR/bin/crypto-gate
 
 The crypto-gate binary should be downloaded by SubagentStart hook.
-If you are a subagent and see this, report the error to main agent.
+If you are a subagent and see this, report the error to the hypervisor.
 NO_BINARY
 	return 1
 }

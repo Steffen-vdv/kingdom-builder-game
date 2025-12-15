@@ -12,6 +12,9 @@ import * as path from 'path';
  *
  * This verifies the security model implemented in
  * .claude/hooks/verify-script-access.sh
+ *
+ * Note: "main-agent" was renamed to "hypervisor" but the marker system
+ * still uses 'main' vs 'sub' terminology for the agent types.
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
@@ -113,16 +116,16 @@ describe('Infrastructure: Script Access Control', () => {
 		});
 	});
 
-	describe('Main Agent Script Protection', () => {
-		const MAIN_AGENT_SCRIPTS = [
-			'.claude/agents/main-agent/scripts/msh.sh',
-			'.claude/agents/main-agent/scripts/mss.sh',
+	describe('Hypervisor Script Protection', () => {
+		const HYPERVISOR_SCRIPTS = [
+			'.claude/agents/hypervisor/scripts/msh.sh',
+			'.claude/agents/hypervisor/scripts/mss.sh',
 		];
 
-		it('should allow main agents to access main agent scripts', () => {
+		it('should allow hypervisor to access hypervisor scripts', () => {
 			setAgentMarker('main');
 
-			for (const script of MAIN_AGENT_SCRIPTS) {
+			for (const script of HYPERVISOR_SCRIPTS) {
 				const command = `bash ${script}`;
 				const allowed = testHookAllows(command);
 				expect(allowed).toBe(true);
@@ -132,7 +135,7 @@ describe('Infrastructure: Script Access Control', () => {
 		it('should block subagents from accessing main agent scripts', () => {
 			setAgentMarker('sub');
 
-			for (const script of MAIN_AGENT_SCRIPTS) {
+			for (const script of HYPERVISOR_SCRIPTS) {
 				const command = `bash ${script}`;
 				const blocked = testHookBlocks(command);
 				expect(blocked).toBe(true);
@@ -142,7 +145,7 @@ describe('Infrastructure: Script Access Control', () => {
 		it('should allow agents with no marker to access main agent scripts', () => {
 			setAgentMarker('none');
 
-			for (const script of MAIN_AGENT_SCRIPTS) {
+			for (const script of HYPERVISOR_SCRIPTS) {
 				const command = `bash ${script}`;
 				const allowed = testHookAllows(command);
 				expect(allowed).toBe(true);
