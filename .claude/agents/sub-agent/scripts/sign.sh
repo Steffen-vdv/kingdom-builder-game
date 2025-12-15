@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# qa-sign.sh — Sign QA approval for verified push
+# sign.sh — Sign QA approval for verified push
 #
-# Usage: qa-sign.sh '<summary>'
+# Usage: sign.sh '<summary>'
 #
 # Gathers commit info, creates payload, signs via crypto-gate,
 # and outputs structured JSON for the pusher subagent.

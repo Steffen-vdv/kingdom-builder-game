@@ -1,17 +1,17 @@
 #!/bin/bash
 #
-# verify-approval.sh — Verify cryptographic signature on QA approval payload
+# verify.sh — Verify cryptographic signature on QA approval payload
 #
 # Usage:
-#   verify-approval.sh '<payload-json>' '<signature>'
+#   verify.sh '<payload-json>' '<signature>'
 #
 # Returns:
 #   0 if signature is valid and verdict is APPROVED
 #   1 if verification fails
 #
 # This script is shared by:
-#   - pusher-agent (verified-push.sh) — verifies before push
-#   - code-reviewer-agent — verifies prior approval for incremental review
+#   - pusher sub-agent (verify-and-push.sh) — verifies before push
+#   - code-reviewer sub-agent — verifies prior approval for incremental review
 #
 
 set -euo pipefail
@@ -21,7 +21,7 @@ set -euo pipefail
 # ═══════════════════════════════════════════════════════════════════════════════
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOCATE CRYPTO-GATE BINARY
@@ -62,7 +62,7 @@ if [[ -z "$PAYLOAD" || -z "$SIGNATURE" ]]; then
 ║  ❌ USAGE ERROR — Missing required arguments                                  ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-Usage: verify-approval.sh '<payload-json>' '<signature>'
+Usage: verify.sh '<payload-json>' '<signature>'
 
 Arguments:
   payload    JSON string containing approval data (commits, verdict, etc.)

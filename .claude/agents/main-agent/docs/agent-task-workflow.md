@@ -23,7 +23,7 @@ changes. All pushes require QA review with cryptographic signing.
 │                                                                             │
 │  3. PUSH                                                                    │
 │     └─→ Spawn pusher subagent WITH {payload, signature}                     │
-│     └─→ Pusher runs verified-push.sh to verify and push                     │
+│     └─→ Pusher runs verify-and-push.sh to verify and push                     │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -59,7 +59,7 @@ Extract only the content between `QA_RESPONSE_START` and `QA_RESPONSE_END` marke
 
 Extract only the content between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END` markers (inclusive). Display this block verbatim.
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md) for the complete
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md) for the complete
 response format specifications.**
 
 **Rules:**
@@ -247,9 +247,9 @@ The `MESSAGE` field contains details.
 
 ## Troubleshooting
 
-### Push Blocked - "Use verified-push.sh instead"
+### Push Blocked - "Use verify-and-push.sh instead"
 
-You tried to run `git push` directly. All agents must use verified-push.sh.
+You tried to run `git push` directly. All agents must use verify-and-push.sh.
 
 **Solution:** Use the pusher subagent as described in Step 3.
 
