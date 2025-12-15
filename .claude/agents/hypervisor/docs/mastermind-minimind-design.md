@@ -161,6 +161,8 @@ the flow. Must happen at all times.
 - [ ] Update hypervisor.md with simplified role
 - [ ] Deprecate Explore and Plan references
 - [ ] Test communication protocols
+- [ ] (Pending decision) Strengthen subagent reminder footer in existing agents
+- [ ] (Pending decision) Bake strong reminder into mastermind/minimind from start
 
 ---
 
@@ -223,3 +225,66 @@ subagents shown verbatim in code blocks. No exceptions during trial period.
 transparent communication, context refresh.
 
 **Status**: Communication baseline established. Ready for implementation.
+
+### Entry 5: Hypervisor Context Drift Problem
+
+User raised critical concern: When hypervisor launches 4 parallel tasks and
+receives responses, the immediate/pressing content of those responses dominates
+attention. Prime directives (`hypervisor.md`) fade to background. This is an
+LLM attention/context problem, not just workflow.
+
+**Proposed mitigations discussed:**
+
+1. **Forced context refresh** - Re-read `hypervisor.md` before processing any
+   subagent response batch. Problem: No mechanic to enforce this. It's just a
+   promise, which is unreliable.
+
+2. **Hook-injected reminder** - Hook fires when Task completes, injects
+   reminder. Problem: No formal hook fires on Task completion. `PostToolUse`
+   might work but unverified.
+
+3. **Shorter hypervisor.md** - 5 rules should be the entire doc (or first
+   thing). Helps but not sufficient alone.
+
+4. **Embedded reminder in subagent response** - Each subagent ends their
+   response with a structured footer reminding hypervisor to check directives.
+   **This is mechanically sound** - reminder arrives as part of the content
+   being processed, in the "foreground" of attention.
+
+**Discovery: Soft form already exists**
+
+All four existing subagents have this instruction at the end of their docs:
+
+```
+After outputting your structured response, include this reminder:
+"Reminder: Consult your workflow documentation to confirm the correct next
+steps. Context may have shifted."
+```
+
+Found in:
+
+- `code-reviewer.md` (lines 234-235)
+- `coder.md` (lines 147-149)
+- `test-runner.md` (lines 263-265)
+- `pusher.md` (lines 125-126)
+
+**Weaknesses of current form:**
+
+1. Generic - "workflow documentation" instead of specifically `hypervisor.md`
+2. Soft - "Context may have shifted" is observation, not directive
+3. No checklist - doesn't tell hypervisor WHAT to verify
+
+**Proposed strengthening:**
+
+```
+---
+HYPERVISOR: Re-read hypervisor.md before proceeding.
+Checklist:
+[ ] Show this exchange verbatim to user (code block)
+[ ] Check if user involvement needed per directive #2
+[ ] Verify alignment with approved plan
+---
+```
+
+**Status**: Documented. Awaiting user decision on whether to strengthen existing
+subagent docs and bake into mastermind/minimind.
