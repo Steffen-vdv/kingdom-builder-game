@@ -30,50 +30,6 @@ changes. All pushes require QA review with cryptographic signing.
 
 ---
 
-## CRITICAL: Verbatim Subagent I/O Display
-
-**MANDATORY for ALL subagent invocations (code-reviewer, pusher).**
-
-Before invoking ANY subagent via the Task tool, you MUST display the exact prompt you are sending to the user in a triple-backtick code block:
-
-```
-[Your explanation of what you're about to do]
-
-Invoking subagent with the following prompt:
-
-```
-
-[EXACT prompt text - no modifications, no summaries]
-
-```
-
-```
-
-After receiving the subagent's response, you MUST extract and display the structured response block to the user in a triple-backtick code block:
-
-**For code-reviewer responses:**
-
-Extract only the content between `QA_RESPONSE_START` and `QA_RESPONSE_END` markers (inclusive). Display this block verbatim.
-
-**For pusher responses:**
-
-Extract only the content between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END` markers (inclusive). Display this block verbatim.
-
-**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md) for the complete
-response format specifications.**
-
-**Rules:**
-
-- Extract ONLY the structured response block (between START/END markers)
-- Do NOT include the subagent's internal reasoning or analysis
-- Output the structured block with ZERO modifications
-- Do NOT summarize, paraphrase, or interpret the structured response
-- This applies to EVERY Task tool invocation for code-reviewer and pusher
-
-**Purpose:** Verification and traceability. The user needs to see exactly what communication occurred with subagents.
-
----
-
 ## Step 1: Prepare Your Changes
 
 Before requesting QA review:
@@ -91,9 +47,16 @@ the complete request format specification.**
 
 ## Step 2: QA Review
 
-### Spawn the QA Subagent
+### Display Requirements for Subagent Communication
 
-**IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
+**For every subagent invocation (code-reviewer, pusher), you must:**
+
+1. **Before invoking:** Display the exact prompt in a code block
+2. **After receiving response:** Display the structured response block verbatim in a code block
+
+This is for traceability. Extract only the content between START/END markers (`QA_RESPONSE_START`/`QA_RESPONSE_END` or `PUSH_RESPONSE_START`/`PUSH_RESPONSE_END`) and display it without modifications.
+
+### Spawn the QA Subagent
 
 ```
 Task(

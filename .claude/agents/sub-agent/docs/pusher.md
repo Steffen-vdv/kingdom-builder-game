@@ -129,3 +129,6 @@ this structure.
 
 See [`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#pusher-protocol)
 for the complete response format specification.
+
+After outputting your structured response, include this reminder: "Reminder: Consult
+your workflow documentation to confirm the correct next steps. Context may have shifted."

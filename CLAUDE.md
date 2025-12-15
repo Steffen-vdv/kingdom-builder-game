@@ -585,9 +585,10 @@ hook.
 ├─────────────────────────────────────────────────────────────────┤
 │ BEFORE PUSHING (proactively, not waiting for hook)              │
 │ □ Spawn QA subagent + run tests in parallel                     │
-│ □ QA outputs directly to user (request echo + verdict)          │
+│ □ Display prompt to user BEFORE invoking subagent               │
+│ □ Display structured response to user AFTER receiving it        │
 │ □ If BLOCKED: fix, commit, retry                                │
-│ □ If APPROVED: write token, push                                │
+│ □ If APPROVED: pass payload + signature to pusher               │
 │ □ Max 5 rounds → escalate to user                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
