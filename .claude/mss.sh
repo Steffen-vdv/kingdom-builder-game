@@ -20,9 +20,12 @@ fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # NOTE: crypto-gate is NOT downloaded here for main agents.
-# Only subagents get crypto-gate via SubagentStart hook → subagent-setup.sh
+# Only subagents get crypto-gate via SubagentStart hook → sss.sh
 # This is a security measure to prevent main agents from signing approvals.
 # ═══════════════════════════════════════════════════════════════════════════════
+
+# Set agent type marker (main agent)
+echo "m_7x9" > "$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
 
 # Copy settings to root location
 cp "$CLAUDE_PROJECT_DIR/.claude/settings.json" /root/.claude/settings.json 2>/dev/null

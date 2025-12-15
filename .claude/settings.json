@@ -10,7 +10,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/session-start.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/mss.sh"
 					}
 				]
 			},
@@ -19,7 +19,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/session-handover.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/msh.sh"
 					}
 				]
 			},
@@ -28,7 +28,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/session-handover.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/msh.sh"
 					}
 				]
 			}
@@ -38,7 +38,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/subagent-setup.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/sss.sh"
 					}
 				]
 			}
@@ -53,7 +53,15 @@
 					},
 					{
 						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-marker-access.sh"
+					},
+					{
+						"type": "command",
 						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-direct-downloads.sh"
+					},
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/verify-script-access.sh"
 					},
 					{
 						"type": "command",

@@ -299,7 +299,7 @@ QA_RESPONSE_END
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
-### If crypto-gate/signing fails:
+### If signing fails:
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
@@ -308,7 +308,7 @@ QA_RESPONSE_START
 VERDICT: ERROR
 PAYLOAD:
 SIGNATURE:
-MESSAGE: crypto-gate signing failed: [error details]. Run .claude/session-start.sh
+MESSAGE: Signing failed: [error details]. Report to main agent.
 ═══════════════════════════════════════════════════════════════════════════════
 QA_RESPONSE_END
 ═══════════════════════════════════════════════════════════════════════════════

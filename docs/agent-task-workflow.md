@@ -121,7 +121,7 @@ QA needs user clarification. The `MESSAGE` field contains the question.
 
 Signing failed (crypto-gate issue). The `MESSAGE` field has details.
 
-**What to do:** Run `.claude/session-start.sh` to download crypto-gate, then retry.
+**What to do:** SubagentStart hook may have failed. Report to user and retry spawning subagent.
 
 ### Iteration Limits
 
@@ -216,8 +216,8 @@ If the QA subagent reports it cannot find or execute crypto-gate:
 
 1. Check that `bin/crypto-gate` wrapper script exists and is executable
 2. Check that the platform binary exists (e.g., `bin/crypto-gate-linux-x64`)
-3. Run `.claude/session-start.sh` to download the binary
-4. Or manually download from crypto-gate releases
+3. The binary is downloaded automatically via SubagentStart hook
+4. If missing, report to user - the hook may have failed
 
 ---
 
