@@ -30,6 +30,50 @@ changes. All pushes require QA review with cryptographic signing.
 
 ---
 
+## CRITICAL: Verbatim Subagent I/O Display
+
+**MANDATORY for ALL subagent invocations (code-reviewer, pusher).**
+
+Before invoking ANY subagent via the Task tool, you MUST display the exact prompt you are sending to the user in a triple-backtick code block:
+
+```
+[Your explanation of what you're about to do]
+
+Invoking subagent with the following prompt:
+
+```
+
+[EXACT prompt text - no modifications, no summaries]
+
+```
+
+```
+
+After receiving the subagent's response, you MUST extract and display the structured response block to the user in a triple-backtick code block:
+
+**For code-reviewer responses:**
+
+Extract only the content between `QA_RESPONSE_START` and `QA_RESPONSE_END` markers (inclusive). Display this block verbatim.
+
+**For pusher responses:**
+
+Extract only the content between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END` markers (inclusive). Display this block verbatim.
+
+**See [`docs/subagent-protocols.md`](subagent-protocols.md) for the complete
+response format specifications.**
+
+**Rules:**
+
+- Extract ONLY the structured response block (between START/END markers)
+- Do NOT include the subagent's internal reasoning or analysis
+- Output the structured block with ZERO modifications
+- Do NOT summarize, paraphrase, or interpret the structured response
+- This applies to EVERY Task tool invocation for code-reviewer and pusher
+
+**Purpose:** Verification and traceability. The user needs to see exactly what communication occurred with subagents.
+
+---
+
 ## Step 1: Prepare Your Changes
 
 Before requesting QA review:
@@ -40,13 +84,8 @@ Before requesting QA review:
 
 ### Claims Template
 
-```
-TASK AGENT CLAIMS:
-- Root cause: [what was actually wrong, not just what you changed]
-- Layer: [content | engine | web | server | docs]
-- Tests: [test coverage details, or "N/A" for non-code changes]
-- User approval: [what the user explicitly approved, or "N/A"]
-```
+**See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format) for
+the complete request format specification.**
 
 ---
 
@@ -54,38 +93,24 @@ TASK AGENT CLAIMS:
 
 ### Spawn the QA Subagent
 
+**IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
+
 ```
 Task(
   subagent_type: "code-reviewer",
   description: "QA review for push",
   prompt: """
-    Review the changes on branch <branch-name>.
-
-    TASK AGENT CLAIMS:
-    - Root cause: <your root cause analysis>
-    - Layer: <which layer owns this change>
-    - Tests: <test coverage, or N/A>
-    - User approval: <what user approved, or N/A>
+    [Use format from docs/subagent-protocols.md#request-format]
   """
 )
 ```
 
 ### Handle the Verdict
 
-The QA subagent returns a **structured response** that you must parse:
+The QA subagent returns a **structured response** that you must parse.
 
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: APPROVED|BLOCKED|NEEDS_INPUT|ERROR
-PAYLOAD: <json string or empty>
-SIGNATURE: <hex string or empty>
-MESSAGE: <human readable details>
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+**See [`docs/subagent-protocols.md`](subagent-protocols.md#response-format) for
+the complete response format specification.**
 
 **Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
 
@@ -140,40 +165,19 @@ After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 ### Spawn the Pusher Subagent
 
-```
-Task(
-  subagent_type: "pusher",
-  description: "Push approved changes",
-  prompt: """
-    Push the approved changes.
+**IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
 
-    PAYLOAD:
-    {"commits":["abc123..."],"diffHash":"def456...","verdict":"APPROVED",...}
+**See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format-1) for
+the complete request format specification.**
 
-    SIGNATURE:
-    a1b2c3d4e5f6...
-  """
-)
-```
-
-**IMPORTANT:** Pass the exact payload and signature from QA. Do not modify them.
+Pass the exact payload and signature from QA. Do not modify them.
 
 ### Handle the Result
 
-The Pusher subagent returns a **structured response** that you must parse:
+The Pusher subagent returns a **structured response** that you must parse.
 
-```
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-RESULT: SUCCESS|FAILED|ERROR
-BRANCH: <branch-name or empty>
-COMMIT: <commit-sha or empty>
-MESSAGE: <human readable details>
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+**See [`docs/subagent-protocols.md`](subagent-protocols.md#response-format-1) for
+the complete response format specification.**
 
 **Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**
 
@@ -293,7 +297,8 @@ Task(
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ □ Changes committed                                                         │
 │ □ Tests passing                                                             │
-│ □ Claims prepared (root cause, layer, tests, user approval)                 │
+│ □ Claims prepared (original request, solution, layer, tests, user approval) │
+│ □ Subagent I/O displayed verbatim (prompt before, response after)           │
 │ □ QA subagent spawned → verdict received                                    │
 │   └─ BLOCKED: fix and retry                                                 │
 │   └─ NEEDS INPUT: ask user and retry                                        │

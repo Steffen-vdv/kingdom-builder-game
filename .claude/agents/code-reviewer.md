@@ -12,22 +12,10 @@ tools: Glob, Grep, Read, WebFetch, WebSearch, Bash
 
 ## FIRST: Mandatory Output Protocol
 
-**Before doing ANYTHING else, you MUST echo the exact request you received.**
-
-This is non-negotiable. The user needs to see exactly what the task agent sent
-you, verbatim, in the same format/markup it was provided.
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA REVIEW REQUEST RECEIVED (VERBATIM):
-═══════════════════════════════════════════════════════════════════════════════
-[Paste the EXACT prompt/claims you received — do not paraphrase or summarize]
-═══════════════════════════════════════════════════════════════════════════════
-```
-
 **At the END of your review**, output your complete verdict in a structured
-block. This verdict will be relayed to the user by the task agent. Be complete
-— do not abbreviate your reasoning.
+block (see "FINAL OUTPUT" section below). The main agent will receive your
+response and display it to the user. Be complete — do not abbreviate your
+reasoning.
 
 ---
 
@@ -75,8 +63,8 @@ These are non-negotiable. Any violation results in BLOCKED.
 
 ## Narrate Your Process
 
-**Output your thinking as you work.** The user needs to see your review process,
-not just the verdict. Before and after each investigation step, explain:
+**Output your thinking as you work.** The main agent will relay your complete
+response to the user. Before and after each investigation step, explain:
 
 - What you are about to check and why
 - What command you are running
@@ -241,78 +229,21 @@ Push may proceed.
 
 ## FINAL OUTPUT: Structured Response (MANDATORY)
 
-**Your response MUST end with this exact structured format.**
-
-The main agent parses this format to extract the verdict and signing data.
-Do not deviate from this structure.
+**Your response MUST end with the exact structured format defined in
+[`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#response-format).**
 
 ### For APPROVED verdict:
 
-After your review narrative, run the signing script and output:
+After your review narrative, run the signing script:
 
 ```bash
 ./scripts/code-reviewer-agent/qa-sign.sh "Brief summary of what was approved"
 ```
 
-Then output the structured response using the script's JSON output:
+Then output the structured response using the script's JSON output.
 
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: APPROVED
-PAYLOAD: {"commits":["<from script output>"],"diffHash":"...","verdict":"APPROVED",...}
-SIGNATURE: <hex signature from script output>
-MESSAGE: Brief human-readable summary of approval
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### For BLOCKED verdict:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: BLOCKED
-PAYLOAD:
-SIGNATURE:
-MESSAGE: [Violation details: which CLAUDE.md section, evidence, required fix]
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### For NEEDS_INPUT verdict:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: NEEDS_INPUT
-PAYLOAD:
-SIGNATURE:
-MESSAGE: [Question for the user that must be answered before proceeding]
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### If signing fails:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: ERROR
-PAYLOAD:
-SIGNATURE:
-MESSAGE: Signing failed: [error details]. Report to main agent.
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+See [`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#code-reviewer-protocol)
+for the complete response format specification.
 
 ---
 
