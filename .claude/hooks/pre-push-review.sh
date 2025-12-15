@@ -25,8 +25,8 @@ if [[ ! "$COMMAND" == *"git push"* ]]; then
 	exit 0
 fi
 
-# Allow verified-push.sh (it will call git push internally after verification)
-if [[ "$COMMAND" == *"verified-push"* ]]; then
+# Allow verify-and-push.sh (it will call git push internally after verification)
+if [[ "$COMMAND" == *"verify-and-push"* ]]; then
 	exit 0
 fi
 
@@ -38,7 +38,7 @@ fi
 # Block all other git push attempts
 cat >&2 << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║  🛑 PUSH BLOCKED — Use verified-push.sh instead                               ║
+║  🛑 PUSH BLOCKED — Use verify-and-push.sh instead                             ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 Direct git push is not allowed. You must use the verified push workflow.

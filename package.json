@@ -41,6 +41,7 @@
 		"test:coverage:protocol": "vitest run --coverage --config vitest.protocol.config.ts",
 		"test:integration": "vitest run --coverage --config vitest.integration.config.ts",
 		"test:web": "vitest run --config vitest.web.config.ts",
+		"test:infrastructure": "vitest run tests/infrastructure --config vitest.integration.config.ts",
 		"test:coverage:server": "pnpm --filter @kingdom-builder/server run test -- --coverage",
 		"pretest:ci": "pnpm run ensure:dev-deps",
 		"test:ci": "run-s test:coverage",
