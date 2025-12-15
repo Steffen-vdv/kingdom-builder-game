@@ -59,7 +59,7 @@ Extract only the content between `QA_RESPONSE_START` and `QA_RESPONSE_END` marke
 
 Extract only the content between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END` markers (inclusive). Display this block verbatim.
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md) for the complete
+**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md) for the complete
 response format specifications.**
 
 **Rules:**
@@ -84,12 +84,28 @@ Before requesting QA review:
 
 ### Claims Template
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md#request-format) for
 the complete request format specification.**
 
 ---
 
 ## Step 2: QA Review
+
+### Check for Cached Approval (Incremental Review)
+
+**Before invoking QA, check if you have a cached approval from earlier in this session.**
+
+If you have cached `PAYLOAD` and `SIGNATURE` from a previous APPROVED verdict:
+
+- Include it as `PREVIOUS_APPROVAL` in your QA request
+- QA will verify the signature and only review NEW commits
+- This saves significant time in multi-round sessions
+
+**Cache conditions:**
+
+- Only use within the same session (cleared on session resume/compact)
+- Only for the same branch
+- Clear cache if you rebase or change branches
 
 ### Spawn the QA Subagent
 
@@ -100,7 +116,12 @@ Task(
   subagent_type: "code-reviewer",
   description: "QA review for push",
   prompt: """
-    [Use format from docs/subagent-protocols.md#request-format]
+    [Use format from ../shared/docs/agent-intercommunication-protocols.md#request-format]
+
+    # If you have cached approval, include:
+    PREVIOUS_APPROVAL (optional):
+    PAYLOAD: <json-from-previous-approved-verdict>
+    SIGNATURE: <signature-from-previous-approved-verdict>
   """
 )
 ```
@@ -109,7 +130,7 @@ Task(
 
 The QA subagent returns a **structured response** that you must parse.
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md#response-format) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md#response-format) for
 the complete response format specification.**
 
 **Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
@@ -120,12 +141,20 @@ QA has approved and signed. Extract `PAYLOAD` and `SIGNATURE` for the Pusher.
 
 **What to do:**
 
-1. **Cache the payload and signature** for potential future use in this session
+1. **⚠️ CACHE THE PAYLOAD AND SIGNATURE** - Store these for future use in this session
 2. Proceed to Step 3 (Push) with the payload and signature
 
-**Incremental Review Optimization:** If you later make additional commits on the
-same branch within this session, you can pass the cached approval as
-`PREVIOUS_APPROVAL` to QA. QA will verify it and only review new commits.
+**Why caching matters:** If you make additional commits on this branch later in
+the session, you MUST pass the cached approval as `PREVIOUS_APPROVAL` to QA.
+This enables incremental review (QA only reviews new commits, not previously
+approved ones).
+
+**Example of cached data:**
+
+```
+CACHED_PAYLOAD: {"commits":["abc123..."],"branch":"feature/foo",...}
+CACHED_SIGNATURE: f904da271c784dba431e6fdbb768f833...
+```
 
 #### VERDICT: BLOCKED
 
@@ -136,8 +165,8 @@ QA found issues. The `MESSAGE` field contains violation details.
 1. Read the violation in `MESSAGE`
 2. Fix the identified issue
 3. Commit the fix
-4. Re-invoke QA review with `PREVIOUS_APPROVAL` if you have a cached approval
-   from an earlier iteration (incremental review)
+4. **⚠️ Re-invoke QA with `PREVIOUS_APPROVAL`** if you have a cached approval
+   from an earlier iteration (enables incremental review of only the new fix)
 
 #### VERDICT: NEEDS_INPUT
 
@@ -148,9 +177,9 @@ QA needs user clarification. The `MESSAGE` field contains the question.
 1. Present `MESSAGE` to the user verbatim
 2. Wait for user's response
 3. If user approves the current approach, re-invoke QA with the user's approval
-   (and `PREVIOUS_APPROVAL` if you have a cached approval from an earlier iteration)
-4. If user wants changes, implement them, commit, and re-invoke QA with
-   `PREVIOUS_APPROVAL` if available
+   **⚠️ and `PREVIOUS_APPROVAL`** if you have cached approval from earlier
+4. If user wants changes, implement them, commit, and **⚠️ re-invoke QA with
+   `PREVIOUS_APPROVAL`** if available
 
 #### VERDICT: ERROR
 
@@ -177,7 +206,7 @@ After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 **IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format-1) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md#request-format-1) for
 the complete request format specification.**
 
 Pass the exact payload and signature from QA. Do not modify them.
@@ -186,7 +215,7 @@ Pass the exact payload and signature from QA. Do not modify them.
 
 The Pusher subagent returns a **structured response** that you must parse.
 
-**See [`docs/subagent-protocols.md`](subagent-protocols.md#response-format-1) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md#response-format-1) for
 the complete response format specification.**
 
 **Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**

@@ -95,7 +95,7 @@ If the task agent provides `PREVIOUS_APPROVAL` with payload and signature:
 1. **Verify the signature** using the shared verification script:
 
    ```bash
-   scripts/subagent/verify-approval.sh '<payload>' '<signature>'
+   .claude/agents/sub-agent/scripts/verify.sh '<payload>' '<signature>'
    ```
 
 2. **If verification succeeds:**
@@ -253,19 +253,19 @@ Push may proceed.
 ## FINAL OUTPUT: Structured Response (MANDATORY)
 
 **Your response MUST end with the exact structured format defined in
-[`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#response-format).**
+[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#response-format).**
 
 ### For APPROVED verdict:
 
 After your review narrative, run the signing script:
 
 ```bash
-./scripts/subagent/qa-sign.sh "Brief summary of what was approved"
+.claude/agents/sub-agent/scripts/sign.sh "Brief summary of what was approved"
 ```
 
 Then output the structured response using the script's JSON output.
 
-See [`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#code-reviewer-protocol)
+See [`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#code-reviewer-protocol)
 for the complete response format specification.
 
 ---
