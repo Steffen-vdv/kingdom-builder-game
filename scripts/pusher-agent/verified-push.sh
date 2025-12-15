@@ -193,6 +193,33 @@ fi
 echo "✓ Signature valid" >&2
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# VERIFY VERDICT IS APPROVED
+# ═══════════════════════════════════════════════════════════════════════════════
+
+VERDICT=$(echo "$PAYLOAD" | jq -r '.verdict // empty' 2>/dev/null)
+
+if [[ "$VERDICT" != "APPROVED" ]]; then
+	cat >&2 << WRONG_VERDICT
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ PUSH BLOCKED — Verdict is not APPROVED                                    ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Payload verdict: ${VERDICT:-<missing>}
+Expected verdict: APPROVED
+
+Only payloads with verdict "APPROVED" can be pushed.
+A signed payload with BLOCKED or NEEDS_INPUT verdict cannot authorize a push.
+
+WHAT TO DO:
+→ Re-run QA review and address any blocking issues
+→ Get a fresh signature with APPROVED verdict
+WRONG_VERDICT
+	exit 1
+fi
+
+echo "✓ Verdict is APPROVED" >&2
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # VERIFY HEAD COMMIT IS IN APPROVED COMMITS
 # ═══════════════════════════════════════════════════════════════════════════════
 
