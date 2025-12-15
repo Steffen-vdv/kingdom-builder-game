@@ -1,0 +1,35 @@
+#!/bin/bash
+# Wrapper script to select the correct crypto-gate binary based on OS and architecture
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+case "$(uname -s)" in
+  Linux*)
+    BINARY="$SCRIPT_DIR/crypto-gate-linux-x64"
+    ;;
+  Darwin*)
+    # Check architecture for macOS
+    if [[ "$(uname -m)" == "arm64" ]]; then
+      BINARY="$SCRIPT_DIR/crypto-gate-macos-arm64"
+    else
+      BINARY="$SCRIPT_DIR/crypto-gate-macos-x64"
+    fi
+    ;;
+  MINGW*|CYGWIN*|MSYS*)
+    BINARY="$SCRIPT_DIR/crypto-gate.exe"
+    ;;
+  *)
+    echo "Unsupported OS: $(uname -s)" >&2
+    exit 1
+    ;;
+esac
+
+if [[ ! -x "$BINARY" ]]; then
+  echo "crypto-gate binary not found or not executable: $BINARY" >&2
+  echo "Please ensure the binary is installed in $SCRIPT_DIR" >&2
+  exit 1
+fi
+
+exec "$BINARY" "$@"

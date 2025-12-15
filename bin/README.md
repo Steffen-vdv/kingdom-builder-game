@@ -8,20 +8,34 @@ The `crypto-gate` binary provides cryptographic signing and verification for the
 
 ### Installation
 
-Download the appropriate binary for your platform from the crypto-gate releases:
+Download the appropriate binaries for your platform from the crypto-gate releases and place them in this directory:
 
 - `crypto-gate-linux-x64` for Linux
 - `crypto-gate-macos-x64` for macOS (Intel)
 - `crypto-gate-macos-arm64` for macOS (Apple Silicon)
-- `crypto-gate-win-x64.exe` for Windows
+- `crypto-gate.exe` for Windows
 
-Rename it to `crypto-gate` (or `crypto-gate.exe` on Windows) and place it in this directory.
+The `crypto-gate` wrapper script automatically selects the correct binary based on your OS and architecture.
 
-### Verification
+### Setup
 
-The binary should be executable:
+Make the wrapper script and binaries executable:
 
 ```bash
 chmod +x bin/crypto-gate
+chmod +x bin/crypto-gate-linux-x64      # Linux
+chmod +x bin/crypto-gate-macos-x64      # macOS Intel
+chmod +x bin/crypto-gate-macos-arm64    # macOS Apple Silicon
+```
+
+### Verification
+
+Test the installation:
+
+```bash
 ./bin/crypto-gate --help
 ```
+
+### Note
+
+The binaries are built from the separate `crypto-gate` repository with secrets embedded at build time. They are not included in this repository and must be obtained from the crypto-gate CI/CD pipeline.
