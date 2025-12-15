@@ -311,12 +311,12 @@ Have subagents report their available tools.
 - [x] `.claude/settings.json` — Hook configuration
 - [x] `.claude/agents/pusher.md` — Pusher subagent definition
 - [x] `.claude/agents/code-reviewer.md` — MCP signing instructions
-- [x] `docs/qa-review-tool.md` — Main agent workflow documentation
+- [x] `docs/push-workflow.md` — Main agent workflow documentation
 
 ---
 
 ## References
 
-- Push Workflow Guide: `docs/qa-review-tool.md`
+- Push Workflow Guide: `docs/push-workflow.md`
 - Test Results: `docs/project/test-qa-system.md`
 - MCP TypeScript SDK: https://github.com/modelcontextprotocol/typescript-sdk
