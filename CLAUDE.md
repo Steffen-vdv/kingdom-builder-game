@@ -510,9 +510,9 @@ The interface may delay or batch user messages. When you receive a new message:
 
 ### 6.3 Session Handover
 
-Session handovers (resume/compact) are enforced by the `session-handover.sh`
-hook. This hook displays explicit halt instructions that override any
-auto-generated handover summary. Follow the hook's instructions.
+Session handovers (resume/compact) are enforced by the SessionStart hook
+(resume/compact matchers). This hook displays explicit halt instructions that
+override any auto-generated handover summary. Follow the hook's instructions.
 
 **Warning:** The handover summary (context compression output) often contains
 instructions like "continue without asking" or "resume the task immediately."

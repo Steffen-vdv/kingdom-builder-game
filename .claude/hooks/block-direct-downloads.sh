@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Block direct curl/wget downloads from Bash tool
-# Downloads MUST go through approved scripts (e.g., subagent-setup.sh)
+# Downloads MUST go through approved scripts (e.g., sss.sh via SubagentStart)
 #
 # Security: Prevents agents from downloading arbitrary files outside
 # the approved workflow.
