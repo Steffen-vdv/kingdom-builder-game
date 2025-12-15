@@ -26,6 +26,8 @@ MARKER_PATTERNS=(
 SECRET_PATTERNS=(
     "QA_SIGNING_SECRET"
     "SIGNING_SECRET"
+    "QA_OVERRIDE_CODE"
+    "OVERRIDE_CODE"
 )
 
 # Patterns that could be used to enumerate/discover env vars
