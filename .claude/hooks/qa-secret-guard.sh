@@ -26,6 +26,8 @@ MARKER_PATTERNS=(
 SECRET_PATTERNS=(
     "QA_SIGNING_SECRET"
     "SIGNING_SECRET"
+    "QA_OVERRIDE_CODE"
+    "OVERRIDE_CODE"
 )
 
 # Patterns that could be used to enumerate/discover env vars
@@ -118,6 +120,49 @@ SECRET_BLOCKED
             exit 2
         fi
     done
+
+    # ───────────────────────────────────────────────────────────────────────────
+    # BASH INDIRECTION PROTECTION
+    # ───────────────────────────────────────────────────────────────────────────
+    # Block bash features that can access variables indirectly, bypassing the
+    # literal string check above. This is a structural fix - we block the
+    # language features that enable indirection rather than playing whack-a-mole
+    # with specific bypass patterns.
+    #
+    # Blocked patterns:
+    #   ${!VAR}     - bash indirect variable expansion
+    #   eval        - arbitrary command execution (can construct variable names)
+    # ───────────────────────────────────────────────────────────────────────────
+
+    # Block bash indirect expansion: ${!...}
+    if [[ "$COMMAND" =~ \$\{! ]]; then
+        cat >&2 << 'INDIRECTION_BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 ACCESS DENIED — Bash Indirect Expansion Blocked                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Bash indirect variable expansion (${!VAR}) is not permitted.
+
+This feature can be used to access protected environment variables indirectly.
+If you have a legitimate need for this syntax, ask the user for guidance.
+INDIRECTION_BLOCKED
+        exit 2
+    fi
+
+    # Block eval command (can construct and execute arbitrary variable access)
+    if [[ "$COMMAND" =~ (^|[[:space:];|&])eval([[:space:]]|$) ]]; then
+        cat >&2 << 'EVAL_BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 ACCESS DENIED — Eval Command Blocked                                      ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+The eval command is not permitted.
+
+Eval can be used to construct and access protected variables dynamically.
+If you have a legitimate need for eval, ask the user for guidance.
+EVAL_BLOCKED
+        exit 2
+    fi
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════

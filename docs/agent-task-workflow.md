@@ -1,7 +1,7 @@
-# Push Workflow Guide
+# Agent Task Workflow
 
-This document describes the complete workflow for pushing code changes. All
-pushes require QA review and use a two-subagent system for security.
+This document describes the complete workflow for completing and submitting code
+changes. All pushes require QA review and use a two-subagent system for security.
 
 ---
 
@@ -212,6 +212,44 @@ You may claim "user explicitly approved X" and QA will accept this. However:
 - Lying about user approval is a severe breach
 
 If unsure whether user approval covers a specific case, ask the user first.
+
+---
+
+## User Override Push (Escape Hatch)
+
+If the normal workflow is unavailable (QA subagent can't access MCP tools,
+meta-work on the workflow itself), the user can authorize a direct push via the
+MCP override tool.
+
+### Prerequisites
+
+The user must have `QA_OVERRIDE_CODE` set in the MCP server's environment. This
+is a separate secret from `QA_SIGNING_SECRET` specifically for override
+authorization.
+
+### Workflow
+
+1. Main agent explains why normal workflow cannot be used
+2. User provides their `QA_OVERRIDE_CODE` value
+3. Main agent calls the MCP override tool:
+
+```
+mcp__qa_approval__user_override_push({
+  override_code: "<user-provided-code>",
+  branch: "<branch-name>"  // optional
+})
+```
+
+4. MCP server verifies the code and pushes directly
+
+### Why This Approach
+
+- **Maintains MCP boundaries**: Secrets stay within MCP tools, never exposed to
+  bash commands or agent context
+- **User authorization required**: The override code is known only to the user
+- **Auditable**: The MCP tool can log override pushes separately
+- **No prompt injection risk**: The override code verification happens in
+  isolated MCP server code, not in agent-accessible hooks
 
 ---
 

@@ -357,7 +357,7 @@ system mechanics, ask the user before committing.
 Before any push can proceed, you must pass an adversarial code review conducted
 by a separate QA subagent. This is mandatory and enforced by hook.
 
-**Full procedure:** See [`docs/qa-review-tool.md`](docs/qa-review-tool.md)
+**Full procedure:** See [`docs/agent-task-workflow.md`](docs/agent-task-workflow.md)
 
 **Key points:**
 

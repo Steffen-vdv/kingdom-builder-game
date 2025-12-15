@@ -9,6 +9,22 @@ cd "$CLAUDE_PROJECT_DIR" || exit 1
 LOG="/tmp/claude-session-handover-hook.log"
 echo "=== SessionHandover $(date -Iseconds) ===" > "$LOG"
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# QA APPROVAL SYSTEM: Ensure marker file exists for resumed sessions
+# ═══════════════════════════════════════════════════════════════════════════════
+# Main agents may resume without going through session-start.sh (which creates
+# the marker). We must ensure the marker exists for ALL main agent sessions,
+# otherwise a resumed main agent could bypass push restrictions.
+# ═══════════════════════════════════════════════════════════════════════════════
+MARKER_FILE="$HOME/.claude-main-agent-marker"
+if [ ! -f "$MARKER_FILE" ]; then
+  echo "Creating main agent marker (resumed session): $MARKER_FILE" >> "$LOG"
+  echo "{\"created\":\"$(date -Iseconds)\",\"type\":\"main-agent\",\"resumed\":true}" > "$MARKER_FILE"
+  chmod 644 "$MARKER_FILE"
+else
+  echo "Main agent marker already exists" >> "$LOG"
+fi
+
 # Safety check: ensure dependencies exist (fast no-op if already installed)
 if [ ! -d "$CLAUDE_PROJECT_DIR/node_modules" ]; then
   echo "Dependencies missing - installing..." >> "$LOG"
