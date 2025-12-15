@@ -23,3 +23,6 @@ config/server-auth.tokens.local.json
 # crypto-gate binaries (downloaded on-demand, not committed)
 bin/crypto-gate-*
 bin/crypto-gate.exe
+
+# Claude context files
+.claude/.__ctx*

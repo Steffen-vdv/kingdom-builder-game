@@ -182,9 +182,9 @@ QA needs user clarification. The `MESSAGE` field contains the question.
 
 #### VERDICT: ERROR
 
-Signing failed (crypto-gate issue). The `MESSAGE` field has details.
+Signing failed (system issue). The `MESSAGE` field has details.
 
-**What to do:** SubagentStart hook may have failed. Report to user and retry spawning subagent.
+**What to do:** Report to user and retry spawning subagent.
 
 ### Iteration Limits
 
@@ -225,21 +225,45 @@ Task(
 
 ### Handle the Result
 
-#### Success
+The Pusher subagent returns a **structured response** that you must parse:
 
-The pusher will report success. Your changes are now on the remote.
+```
+═══════════════════════════════════════════════════════════════════════════════
+PUSH_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+RESULT: SUCCESS|FAILED|ERROR
+BRANCH: <branch-name or empty>
+COMMIT: <commit-sha or empty>
+MESSAGE: <human readable details>
+═══════════════════════════════════════════════════════════════════════════════
+PUSH_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
 
-#### Failure
+**Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**
 
-The pusher will report the specific error. Common failures:
+#### RESULT: SUCCESS
 
-| Error                        | Meaning                       | What To Do                   |
-| ---------------------------- | ----------------------------- | ---------------------------- |
-| Missing payload/signature    | Data not passed to pusher     | Re-spawn pusher with data    |
-| Invalid signature            | Signature verification failed | Re-run QA review             |
-| HEAD not in approved commits | New commits after approval    | Re-run QA review             |
-| crypto-gate not found        | Binary not installed          | Check bin/crypto-gate exists |
-| Git push failed              | Network or permission issue   | Retry push, or check remote  |
+Push completed. Your changes are now on the remote.
+
+#### RESULT: FAILED
+
+Verification or push failed (invalid signature, HEAD not in approved commits, etc.).
+The `MESSAGE` field contains details.
+
+#### RESULT: ERROR
+
+Script or system error (execution failed, etc.).
+The `MESSAGE` field contains details.
+
+### Common Failures
+
+| Error                        | Meaning                       | What To Do                  |
+| ---------------------------- | ----------------------------- | --------------------------- |
+| Missing payload/signature    | Data not passed to pusher     | Re-spawn pusher with data   |
+| Invalid signature            | Signature verification failed | Re-run QA review            |
+| HEAD not in approved commits | New commits after approval    | Re-run QA review            |
+| Git push failed              | Network or permission issue   | Retry push, or check remote |
 
 ---
 
@@ -262,27 +286,6 @@ The signature verification failed. The payload may have been modified.
 You made new commits after QA approved.
 
 **Solution:** Re-run QA review to approve the new commits.
-
-### Push Failed - "crypto-gate not found"
-
-The crypto-gate binary is not installed.
-
-**Solution:**
-
-1. Download crypto-gate binary from releases
-2. Place it in `bin/crypto-gate`
-3. Make it executable: `chmod +x bin/crypto-gate`
-
-### crypto-gate Binary Not Found
-
-If the QA subagent reports it cannot find or execute crypto-gate:
-
-**Solution:**
-
-1. Check that `bin/crypto-gate` wrapper script exists and is executable
-2. Check that the platform binary exists (e.g., `bin/crypto-gate-linux-x64`)
-3. The binary is downloaded automatically via SubagentStart hook
-4. If missing, report to user - the hook may have failed
 
 ---
 
@@ -317,12 +320,7 @@ If unsure whether user approval covers a specific case, ask the user first.
 ## User Override Push (Escape Hatch)
 
 If the normal workflow is unavailable, the user can authorize a direct push via
-the crypto-gate override verification.
-
-### Prerequisites
-
-The crypto-gate binary must have been built with `CRYPTO_GATE_OVERRIDE` set.
-This is a token known only to the user.
+an override token.
 
 ### Workflow
 
@@ -339,20 +337,16 @@ Task(
 
     OVERRIDE_TOKEN: <user-provided-token>
     BRANCH: <branch-name>
-
-    Run: scripts/pusher-agent/verified-push.sh --override '<token>' '<branch>'
   """
 )
 ```
 
-4. The verified-push.sh script calls crypto-gate to verify the override token
+4. Pusher verifies the override token and executes push
 
 ### Why This Approach
 
-- **Cryptographic verification**: Override token is verified by crypto-gate
 - **User authorization required**: Only user knows the override token
 - **Auditable**: Override pushes are logged separately
-- **No secret exposure**: Token verification happens in compiled binary
 
 ---
 
