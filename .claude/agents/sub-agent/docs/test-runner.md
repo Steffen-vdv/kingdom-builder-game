@@ -349,16 +349,19 @@ Always consider whether infrastructure tests are needed.
 
 ## Available Test Commands Reference
 
-| Command                       | What it runs                                                       |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `pnpm test:parallel`          | All tests in parallel (engine, protocol, integration, web, server) |
-| `pnpm test:infrastructure`    | Builder and factory validation tests                               |
-| `pnpm test:integration`       | Full pipeline integration tests                                    |
-| `pnpm test:coverage:engine`   | Engine tests with coverage                                         |
-| `pnpm test:coverage:protocol` | Protocol tests with coverage                                       |
-| `pnpm test:coverage:server`   | Server tests with coverage                                         |
-| `pnpm generate:snapshots`     | Regenerate UI snapshots                                            |
-| `pnpm verify`                 | Full verification (typecheck + lint + all tests)                   |
+| Command                       | What it runs                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| `pnpm test:parallel`          | All tests in parallel (engine, protocol, integration, infrastructure, web, server) |
+| `pnpm test:infrastructure`    | Builder and factory validation tests                                               |
+| `pnpm test:integration`       | Full pipeline integration tests                                                    |
+| `pnpm test:coverage:engine`   | Engine tests with coverage                                                         |
+| `pnpm test:coverage:protocol` | Protocol tests with coverage                                                       |
+| `pnpm test:coverage:server`   | Server tests with coverage                                                         |
+| `pnpm generate:snapshots`     | Regenerate UI snapshots                                                            |
+| `pnpm verify`                 | Sequential: check (format+typecheck+lint) → infrastructure → coverage              |
+
+**Note:** `verify` runs tasks sequentially to produce clean artifacts. Use `test:parallel`
+for quick feedback during development, `verify` for final pre-push validation.
 
 ## Reference
 

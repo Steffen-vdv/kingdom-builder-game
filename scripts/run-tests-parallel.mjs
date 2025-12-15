@@ -21,6 +21,11 @@ const testSuites = [
 	{ name: 'engine', script: 'test:coverage:engine', label: 'Engine' },
 	{ name: 'protocol', script: 'test:coverage:protocol', label: 'Protocol' },
 	{ name: 'integration', script: 'test:integration', label: 'Integration' },
+	{
+		name: 'infrastructure',
+		script: 'test:infrastructure',
+		label: 'Infrastructure',
+	},
 	{ name: 'web', script: 'test:web', label: 'Web' },
 	{ name: 'server', script: 'test:server', label: 'Server' },
 ];
