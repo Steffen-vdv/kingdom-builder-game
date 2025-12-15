@@ -229,14 +229,12 @@ Push may proceed.
 
 ## FINAL OUTPUT: Structured Response (MANDATORY)
 
-**Your response MUST end with this exact structured format.**
-
-The main agent parses this format to extract the verdict and signing data.
-Do not deviate from this structure.
+**Your response MUST end with the exact structured format defined in
+[`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#response-format).**
 
 ### For APPROVED verdict:
 
-After your review narrative, run the signing script and output:
+After your review narrative, run the signing script:
 
 ```bash
 ./scripts/code-reviewer-agent/qa-sign.sh "Brief summary of what was approved"
@@ -244,21 +242,8 @@ After your review narrative, run the signing script and output:
 
 Then output the structured response using the script's JSON output.
 
-**MESSAGE Format:** All verdict types use multi-line format - put MESSAGE on its own line, then use line breaks and numbered lists for readability.
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: APPROVED|BLOCKED|NEEDS_INPUT|ERROR
-PAYLOAD: <json for APPROVED, empty otherwise>
-SIGNATURE: <signature for APPROVED, empty otherwise>
-MESSAGE:
-[Multi-line details here]
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+See [`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#code-reviewer-protocol)
+for the complete response format specification.
 
 ---
 

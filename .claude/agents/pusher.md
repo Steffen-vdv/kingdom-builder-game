@@ -35,34 +35,13 @@ You push code to remote after verifying the QA approval signature.
 
 ## Expected Input
 
+**See [`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#pusher-protocol)
+for the complete request format specification.**
+
 The main agent provides ONE of two modes:
 
-### Mode 1: QA Approval (normal workflow)
-
-1. **payload** — JSON string containing approval data
-2. **signature** — Cryptographic signature from QA
-
-Example:
-
-```
-PAYLOAD:
-{"commits":["abc123..."],"diffHash":"def456...","verdict":"APPROVED","summary":"...","timestamp":"..."}
-
-SIGNATURE:
-a1b2c3d4e5f6789...
-```
-
-### Mode 2: User Override (escape hatch)
-
-1. **--override flag** — Signals override mode
-2. **token** — User-provided override token
-
-Example:
-
-```
-OVERRIDE TOKEN:
-UserProvidedSecretToken123
-```
+- **Mode 1: QA Approval** — Normal workflow with payload and signature from QA
+- **Mode 2: User Override** — Escape hatch with override token from user
 
 ## How To Execute
 
@@ -142,52 +121,11 @@ MAIN AGENT FOLLOW-UP:
 
 ## FINAL OUTPUT: Structured Response (MANDATORY)
 
-**Your response MUST end with this exact structured format.**
+**Your response MUST end with the exact structured format defined in
+[`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#response-format-1).**
 
-The main agent parses this format to extract the result.
-Do not deviate from this structure.
+The main agent parses this format to extract the result. Do not deviate from
+this structure.
 
-### For SUCCESS:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-RESULT: SUCCESS
-BRANCH: <branch-name>
-COMMIT: <commit-sha>
-MESSAGE: Push completed successfully
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### For FAILED (verification or push failed):
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-RESULT: FAILED
-BRANCH:
-COMMIT:
-MESSAGE: [Error details: invalid signature, HEAD not in approved commits, etc.]
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### For ERROR (script or crypto-gate error):
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-RESULT: ERROR
-BRANCH:
-COMMIT:
-MESSAGE: [Error details: crypto-gate not found, script execution failed, etc.]
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+See [`docs/subagent-protocols.md`](../../docs/subagent-protocols.md#pusher-protocol)
+for the complete response format specification.

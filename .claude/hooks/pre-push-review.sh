@@ -46,7 +46,7 @@ Direct git push is not allowed. You must use the verified push workflow.
 CHECKLIST (verify before proceeding):
   □ Changes committed
   □ Tests passing
-  □ Claims prepared (root cause, layer, tests, user approval)
+  □ Claims prepared (original request, solution, layer, tests, user approval)
   □ Subagent I/O displayed verbatim (see docs/agent-task-workflow.md)
   □ QA review completed with APPROVED verdict
   □ Payload and signature received from QA

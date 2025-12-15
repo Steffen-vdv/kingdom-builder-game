@@ -53,31 +53,14 @@ After receiving the subagent's response, you MUST extract and display the struct
 
 **For code-reviewer responses:**
 
-Extract only the content between `QA_RESPONSE_START` and `QA_RESPONSE_END` markers (inclusive). Display this block verbatim:
-
-```
-Received response from code-reviewer:
-
-```
-
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: [verdict here]
-PAYLOAD: [payload here]
-SIGNATURE: [signature here]
-MESSAGE: [message here]
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-
-```
-
-```
+Extract only the content between `QA_RESPONSE_START` and `QA_RESPONSE_END` markers (inclusive). Display this block verbatim.
 
 **For pusher responses:**
 
 Extract only the content between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END` markers (inclusive). Display this block verbatim.
+
+**See [`docs/subagent-protocols.md`](subagent-protocols.md) for the complete
+response format specifications.**
 
 **Rules:**
 
@@ -101,9 +84,15 @@ Before requesting QA review:
 
 ### Claims Template
 
+**See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format) for
+the complete request format specification.**
+
 ```
+ORIGINAL REQUEST:
+[The user's original request that led to these changes]
+
 TASK AGENT CLAIMS:
-- Root cause: [what was actually wrong, not just what you changed]
+- Solution: [What was implemented and why]
 - Layer: [content | engine | web | server | docs]
 - Tests: [test coverage details, or "N/A" for non-code changes]
 - User approval: [what the user explicitly approved, or "N/A"]
@@ -124,8 +113,11 @@ Task(
   prompt: """
     Review the changes on branch <branch-name>.
 
+    ORIGINAL REQUEST:
+    <The user's original request that led to these changes>
+
     TASK AGENT CLAIMS:
-    - Root cause: <your root cause analysis>
+    - Solution: <What was implemented and why>
     - Layer: <which layer owns this change>
     - Tests: <test coverage, or N/A>
     - User approval: <what user approved, or N/A>
@@ -135,21 +127,10 @@ Task(
 
 ### Handle the Verdict
 
-The QA subagent returns a **structured response** that you must parse:
+The QA subagent returns a **structured response** that you must parse.
 
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: APPROVED|BLOCKED|NEEDS_INPUT|ERROR
-PAYLOAD: <json string or empty>
-SIGNATURE: <hex string or empty>
-MESSAGE:
-<Multi-line human readable details - use line breaks and numbered lists for readability>
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+**See [`docs/subagent-protocols.md`](subagent-protocols.md#response-format) for
+the complete response format specification.**
 
 **Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
 
@@ -206,40 +187,17 @@ After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 **IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
 
-```
-Task(
-  subagent_type: "pusher",
-  description: "Push approved changes",
-  prompt: """
-    Push the approved changes.
+**See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format-1) for
+the complete request format specification.**
 
-    PAYLOAD:
-    {"commits":["abc123..."],"diffHash":"def456...","verdict":"APPROVED",...}
-
-    SIGNATURE:
-    a1b2c3d4e5f6...
-  """
-)
-```
-
-**IMPORTANT:** Pass the exact payload and signature from QA. Do not modify them.
+Pass the exact payload and signature from QA. Do not modify them.
 
 ### Handle the Result
 
-The Pusher subagent returns a **structured response** that you must parse:
+The Pusher subagent returns a **structured response** that you must parse.
 
-```
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-RESULT: SUCCESS|FAILED|ERROR
-BRANCH: <branch-name or empty>
-COMMIT: <commit-sha or empty>
-MESSAGE: <human readable details>
-═══════════════════════════════════════════════════════════════════════════════
-PUSH_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+**See [`docs/subagent-protocols.md`](subagent-protocols.md#response-format-1) for
+the complete response format specification.**
 
 **Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**
 
@@ -359,7 +317,7 @@ Task(
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ □ Changes committed                                                         │
 │ □ Tests passing                                                             │
-│ □ Claims prepared (root cause, layer, tests, user approval)                 │
+│ □ Claims prepared (original request, solution, layer, tests, user approval) │
 │ □ Subagent I/O displayed verbatim (prompt before, response after)           │
 │ □ QA subagent spawned → verdict received                                    │
 │   └─ BLOCKED: fix and retry                                                 │
