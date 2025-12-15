@@ -1,8 +1,0 @@
-{
-	"mcpServers": {
-		"crypto-gate": {
-			"type": "stdio",
-			"command": "./bin/crypto-gate"
-		}
-	}
-}

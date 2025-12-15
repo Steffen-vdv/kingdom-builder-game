@@ -201,15 +201,16 @@ The crypto-gate binary is not installed.
 2. Place it in `bin/crypto-gate`
 3. Make it executable: `chmod +x bin/crypto-gate`
 
-### crypto-gate Tool Not Available
+### crypto-gate Binary Not Found
 
-If the QA subagent reports it cannot access the crypto-gate MCP tool:
+If the QA subagent reports it cannot find or execute crypto-gate:
 
 **Solution:**
 
-1. Check that `bin/crypto-gate` exists and is executable
-2. Check `.mcp.json` points to the correct path
-3. Report to user as environment configuration issue
+1. Check that `bin/crypto-gate` wrapper script exists and is executable
+2. Check that the platform binary exists (e.g., `bin/crypto-gate-linux-x64`)
+3. Run `.claude/session-start.sh` to download the binary
+4. Or manually download from crypto-gate releases
 
 ---
 

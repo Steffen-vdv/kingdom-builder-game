@@ -5,7 +5,7 @@ description: >
   skepticism — blocking by default until the implementation is proven correct.
 model: opus
 permissionMode: bypassPermissions
-tools: Glob, Grep, Read, WebFetch, WebSearch, Bash, mcp__crypto_gate__sign
+tools: Glob, Grep, Read, WebFetch, WebSearch, Bash
 ---
 
 # Code Reviewer — Adversarial Quality Gate
@@ -241,7 +241,7 @@ Push may proceed.
 
 ## Signing Approvals (REQUIRED after APPROVED verdict)
 
-**After outputting ✅ APPROVED, you MUST sign the approval via crypto-gate.**
+**After outputting ✅ APPROVED, you MUST sign the approval via crypto-gate CLI.**
 
 This creates a cryptographic signature that the Pusher subagent will use to
 verify the approval before pushing. Without this signature, the push will fail.
@@ -256,21 +256,27 @@ git rev-parse HEAD
 git diff origin/main...HEAD | sha256sum | cut -d' ' -f1
 ```
 
-### Step 2: Create payload and sign
+### Step 2: Create payload and sign via CLI
 
-```javascript
-// Create the payload (must be valid JSON)
-const payload = JSON.stringify({
-	commits: ['<full HEAD SHA>'],
-	diffHash: '<sha256 of diff>',
-	verdict: 'APPROVED',
-	summary: '<your brief approval summary>',
-	timestamp: '<ISO8601 timestamp>',
-});
+```bash
+# Create the payload JSON
+PAYLOAD='{"commits":["<HEAD_SHA>"],"diffHash":"<DIFF_HASH>","verdict":"APPROVED","summary":"<brief summary>","timestamp":"<ISO8601>"}'
 
-// Call crypto-gate to sign
-mcp__crypto_gate__sign({ payload: payload });
-// Returns: { signature: "<hmac-sha256 signature>" }
+# Sign via crypto-gate CLI
+./bin/crypto-gate sign "$PAYLOAD"
+# Returns JSON: {"payload":"...","signature":"..."}
+```
+
+**Example:**
+
+```bash
+HEAD_SHA=$(git rev-parse HEAD)
+DIFF_HASH=$(git diff origin/main...HEAD | sha256sum | cut -d' ' -f1)
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+PAYLOAD="{\"commits\":[\"$HEAD_SHA\"],\"diffHash\":\"$DIFF_HASH\",\"verdict\":\"APPROVED\",\"summary\":\"QA approved\",\"timestamp\":\"$TIMESTAMP\"}"
+
+./bin/crypto-gate sign "$PAYLOAD"
 ```
 
 ### Step 3: Return payload and signature to main agent
@@ -299,11 +305,13 @@ Main agent: Pass BOTH payload and signature to the Pusher subagent.
 ```
 ❌ CRYPTO-GATE UNAVAILABLE
 
-The mcp__crypto_gate__sign tool is not available.
+The crypto-gate binary is not found or not executable.
+
+Expected location: ./bin/crypto-gate
 
 MAIN AGENT FOLLOW-UP:
-→ Ensure crypto-gate binary is installed
-→ Check .mcp.json configuration
+→ Run .claude/session-start.sh to download crypto-gate
+→ Or manually download from crypto-gate releases
 → Cannot proceed with push until resolved
 ```
 
