@@ -5,7 +5,7 @@ description: >
   skepticism — blocking by default until the implementation is proven correct.
 model: opus
 permissionMode: bypassPermissions
-tools: Glob, Grep, Read, WebFetch, WebSearch, Bash
+tools: Glob, Grep, Read, WebFetch, WebSearch, Bash, mcp__qa_approval__sign_approval
 ---
 
 # Code Reviewer — Adversarial Quality Gate

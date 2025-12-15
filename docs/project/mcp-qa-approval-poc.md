@@ -170,6 +170,39 @@ Location: `.claude/hooks/pre-push-review.sh`
 
 ---
 
+## Fixed Issues (December 2024)
+
+### Fix 1: Resumed Sessions Marker Creation
+
+**Issue:** `session-start.sh` only runs on fresh startup, not resume/compact.
+Main agents in resumed sessions had no marker file and could bypass restrictions.
+
+**Fix:** Added marker creation to `session-handover.sh` (runs on resume/compact).
+The marker is created if it doesn't already exist.
+
+### Fix 2: Bash Variable Indirection Bypass
+
+**Issue:** The literal string check could be bypassed using bash indirection:
+
+- `${!VAR}` - indirect variable expansion
+- `eval "echo \$CONSTRUCTED_VAR"` - eval with dynamic variable names
+
+**Fix:** Structural blocking of the language features that enable indirection:
+
+- Block any command containing `${!` (indirect expansion syntax)
+- Block any command using `eval` keyword
+
+This is a structural fix - we block the mechanisms, not patterns.
+
+### Fix 3: MCP Tool Missing from Code-Reviewer
+
+**Issue:** The `code-reviewer.md` agent definition didn't include
+`mcp__qa_approval__sign_approval` in its tools list.
+
+**Fix:** Added the MCP tool to the code-reviewer's tools list.
+
+---
+
 ## Known Issue: MCP Tool Availability
 
 **Issue:** MCP tools may not be available to subagents in some environments.
@@ -185,6 +218,7 @@ instruct the main agent to inform the user.
 - Check `.mcp.json` configuration
 - Verify MCP server starts correctly
 - Check Claude Code MCP integration settings
+- Verify subagents can inherit MCP server connections (may be a platform limitation)
 
 ---
 
