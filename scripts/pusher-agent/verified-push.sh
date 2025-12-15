@@ -44,7 +44,7 @@ The crypto-gate wrapper script is not found or not executable.
 Expected: $CLAUDE_PROJECT_DIR/bin/crypto-gate
 
 The crypto-gate binary should be downloaded by SubagentStart hook.
-If you are a pusher subagent and see this, report the error to main agent.
+If you are a subagent and see this, report the error to main agent.
 NO_BINARY
 	return 1
 }
