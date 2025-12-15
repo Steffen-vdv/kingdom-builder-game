@@ -242,61 +242,19 @@ After your review narrative, run the signing script and output:
 ./scripts/code-reviewer-agent/qa-sign.sh "Brief summary of what was approved"
 ```
 
-Then output the structured response using the script's JSON output:
+Then output the structured response using the script's JSON output.
+
+**MESSAGE Format:** All verdict types use multi-line format - put MESSAGE on its own line, then use line breaks and numbered lists for readability.
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
 QA_RESPONSE_START
 ═══════════════════════════════════════════════════════════════════════════════
-VERDICT: APPROVED
-PAYLOAD: {"commits":["<from script output>"],"diffHash":"...","verdict":"APPROVED",...}
-SIGNATURE: <hex signature from script output>
-MESSAGE: Brief human-readable summary of approval
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### For BLOCKED verdict:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: BLOCKED
-PAYLOAD:
-SIGNATURE:
-MESSAGE: <human readable details - can be multi-line with simple markup>
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### For NEEDS_INPUT verdict:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: NEEDS_INPUT
-PAYLOAD:
-SIGNATURE:
-MESSAGE: <human readable details - can be multi-line with simple markup>
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### If signing fails:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: ERROR
-PAYLOAD:
-SIGNATURE:
-MESSAGE: Signing failed: [error details]. Report to main agent.
+VERDICT: APPROVED|BLOCKED|NEEDS_INPUT|ERROR
+PAYLOAD: <json for APPROVED, empty otherwise>
+SIGNATURE: <signature for APPROVED, empty otherwise>
+MESSAGE:
+[Multi-line details here]
 ═══════════════════════════════════════════════════════════════════════════════
 QA_RESPONSE_END
 ═══════════════════════════════════════════════════════════════════════════════
