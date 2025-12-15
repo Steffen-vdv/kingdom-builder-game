@@ -259,15 +259,6 @@ QA_RESPONSE_END
 
 ### For BLOCKED verdict:
 
-**MESSAGE Format:** Use multi-line with simple markup for clarity:
-
-- Numbered lists for multiple violations: `1.`, `2.`, etc.
-- Line breaks between distinct points
-- Headers with `**Violation:**`, `**Required:**`, etc.
-- Keep it readable and scannable
-
-Example with single violation:
-
 ```
 ═══════════════════════════════════════════════════════════════════════════════
 QA_RESPONSE_START
@@ -275,38 +266,13 @@ QA_RESPONSE_START
 VERDICT: BLOCKED
 PAYLOAD:
 SIGNATURE:
-MESSAGE: Violation: §2.3 Property-Based Behavior - code uses hardcoded ID comparison (id === CResource.ap) instead of property-based filtering. Required: Replace ID comparison with property check or add property to content model.
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-Example with multiple violations:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-VERDICT: BLOCKED
-PAYLOAD:
-SIGNATURE:
-MESSAGE: Multiple violations found:
-
-1. **Section 4.3 "Forbidden Git Operations"** - Rules requiring user approval for amend/rebase/force-push were removed from CLAUDE.md and not preserved anywhere else. This removes important safety guardrails.
-
-2. **Misleading commit message** - Commit message describes only a trivial 1-line change while hiding significant restructuring of CLAUDE.md and workflow documentation changes.
-
-**Required fixes:**
-(a) Add "Forbidden Git Operations" rules back to CLAUDE.md or include them in docs/agent-task-workflow.md
-(b) Amend commit message to accurately describe all changes (requires user approval)
+MESSAGE: <human readable details - can be multi-line with simple markup>
 ═══════════════════════════════════════════════════════════════════════════════
 QA_RESPONSE_END
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
 ### For NEEDS_INPUT verdict:
-
-**MESSAGE Format:** Clear question(s) for the user, multi-line if needed.
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
@@ -315,12 +281,7 @@ QA_RESPONSE_START
 VERDICT: NEEDS_INPUT
 PAYLOAD:
 SIGNATURE:
-MESSAGE: Clarification needed: The changes modify the authentication flow, but I see two possible approaches:
-
-Option A: Preserve backward compatibility with existing tokens
-Option B: Require all users to re-authenticate
-
-Which approach should be used? The task agent claims user approval but didn't specify which option.
+MESSAGE: <human readable details - can be multi-line with simple markup>
 ═══════════════════════════════════════════════════════════════════════════════
 QA_RESPONSE_END
 ═══════════════════════════════════════════════════════════════════════════════
