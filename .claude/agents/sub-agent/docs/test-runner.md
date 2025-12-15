@@ -187,8 +187,8 @@ catching infrastructure bugs that unit tests miss.
 pnpm verify
 ```
 
-This runs in parallel: typecheck, lint, lint:deps, and test:parallel (which
-includes coverage for engine, protocol, integration, web, and server).
+This runs sequentially: check (format+typecheck+lint) → test:infrastructure →
+test:coverage. Use this for final pre-push validation.
 
 ## Analysis Process
 
@@ -360,7 +360,7 @@ Always consider whether infrastructure tests are needed.
 | `pnpm test:coverage:protocol` | Protocol tests with coverage                                                       |
 | `pnpm test:coverage:server`   | Server tests with coverage                                                         |
 | `pnpm generate:snapshots`     | Regenerate UI snapshots                                                            |
-| `pnpm verify`                 | Sequential: check (format+typecheck+lint) → infrastructure → coverage              |
+| `pnpm verify`                 | Sequential: check → test:infrastructure → test:coverage (clean artifacts)          |
 
 **Note:** `verify` runs tasks sequentially to produce clean artifacts. Use `test:parallel`
 for quick feedback during development, `verify` for final pre-push validation.
