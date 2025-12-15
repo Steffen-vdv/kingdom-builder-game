@@ -144,13 +144,21 @@ QA_RESPONSE_START
 VERDICT: APPROVED|BLOCKED|NEEDS_INPUT|ERROR
 PAYLOAD: <json string or empty>
 SIGNATURE: <hex string or empty>
-MESSAGE: <human readable details>
+MESSAGE: <human readable details - can be multi-line with simple markup>
 ═══════════════════════════════════════════════════════════════════════════════
 QA_RESPONSE_END
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
 **Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
+
+**Note on MESSAGE field:**
+
+- Can span multiple lines
+- May contain numbered lists (1., 2., etc.) for multiple violations
+- May contain bold headers (**Violation:**, **Required:**)
+- May contain line breaks for readability
+- Display the entire MESSAGE verbatim to the user when showing QA response
 
 #### VERDICT: APPROVED
 
