@@ -84,7 +84,7 @@ Before requesting QA review:
 
 ### Claims Template
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md#request-format) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#request-format) for
 the complete request format specification.**
 
 ---
@@ -130,7 +130,7 @@ Task(
 
 The QA subagent returns a **structured response** that you must parse.
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md#response-format) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#response-format) for
 the complete response format specification.**
 
 **Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
@@ -206,7 +206,7 @@ After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 **IMPORTANT:** Before invoking, display the exact prompt verbatim (see "CRITICAL: Verbatim Subagent I/O Display" above). After receiving response, display exact response verbatim.
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md#request-format-1) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#request-format-1) for
 the complete request format specification.**
 
 Pass the exact payload and signature from QA. Do not modify them.
@@ -215,7 +215,7 @@ Pass the exact payload and signature from QA. Do not modify them.
 
 The Pusher subagent returns a **structured response** that you must parse.
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](subagent-protocols.md#response-format-1) for
+**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#response-format-1) for
 the complete response format specification.**
 
 **Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**
