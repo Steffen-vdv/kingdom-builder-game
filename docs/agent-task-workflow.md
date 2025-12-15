@@ -118,7 +118,14 @@ the complete response format specification.**
 
 QA has approved and signed. Extract `PAYLOAD` and `SIGNATURE` for the Pusher.
 
-**What to do:** Proceed to Step 3 (Push) with the payload and signature.
+**What to do:**
+
+1. **Cache the payload and signature** for potential future use in this session
+2. Proceed to Step 3 (Push) with the payload and signature
+
+**Incremental Review Optimization:** If you later make additional commits on the
+same branch within this session, you can pass the cached approval as
+`PREVIOUS_APPROVAL` to QA. QA will verify it and only review new commits.
 
 #### VERDICT: BLOCKED
 
@@ -129,7 +136,8 @@ QA found issues. The `MESSAGE` field contains violation details.
 1. Read the violation in `MESSAGE`
 2. Fix the identified issue
 3. Commit the fix
-4. Re-invoke QA review (return to Step 2)
+4. Re-invoke QA review with `PREVIOUS_APPROVAL` if you have a cached approval
+   from an earlier iteration (incremental review)
 
 #### VERDICT: NEEDS_INPUT
 
@@ -140,7 +148,9 @@ QA needs user clarification. The `MESSAGE` field contains the question.
 1. Present `MESSAGE` to the user verbatim
 2. Wait for user's response
 3. If user approves the current approach, re-invoke QA with the user's approval
-4. If user wants changes, implement them, commit, and re-invoke QA
+   (and `PREVIOUS_APPROVAL` if you have a cached approval from an earlier iteration)
+4. If user wants changes, implement them, commit, and re-invoke QA with
+   `PREVIOUS_APPROVAL` if available
 
 #### VERDICT: ERROR
 

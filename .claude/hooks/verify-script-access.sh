@@ -1,17 +1,16 @@
 #!/bin/bash
 
-# Verify agent type before allowing access to agent-specific scripts
-# Main agents cannot call scripts in code-reviewer-agent/ or pusher-agent/
+# Verify agent type before allowing access to subagent-specific scripts
+# Main agents cannot call scripts in subagent/
 #
 # Security: Even if a main agent somehow gets crypto-gate, it still
-# cannot call the signing scripts because this hook blocks access.
+# cannot call the signing or verification scripts because this hook blocks access.
 
 COMMAND="${TOOL_INPUT_COMMAND:-}"
 MARKER_FILE="$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
 
-# Check if calling scripts in subagent-only directories
-if [[ "$COMMAND" == *"scripts/code-reviewer-agent/"* ]] || \
-   [[ "$COMMAND" == *"scripts/pusher-agent/"* ]]; then
+# Check if calling scripts in subagent-only directory
+if [[ "$COMMAND" == *"scripts/subagent/"* ]]; then
 
   # Read the marker file
   if [[ -f "$MARKER_FILE" ]]; then
@@ -27,8 +26,8 @@ if [[ "$COMMAND" == *"scripts/code-reviewer-agent/"* ]] || \
 ║  🛑 BLOCKED — Script requires subagent context                                ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-Scripts in code-reviewer-agent/ and pusher-agent/ directories can only be
-called by subagents (code-reviewer, pusher).
+Scripts in subagent/ directory can only be called by subagents
+(code-reviewer, pusher).
 
 Main task agents must spawn the appropriate subagent to use these scripts.
 BLOCKED

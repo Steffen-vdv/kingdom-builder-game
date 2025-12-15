@@ -4,7 +4,7 @@
 #
 # Security model:
 #   - ALL agents are blocked from running `git push` directly
-#   - Agents MUST use `scripts/pusher-agent/verified-push.sh` which:
+#   - Agents MUST use `scripts/subagent/verified-push.sh` which:
 #     1. Verifies signature via crypto-gate binary
 #     2. Validates HEAD is in approved commits
 #     3. Then executes git push

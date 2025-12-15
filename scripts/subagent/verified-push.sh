@@ -25,7 +25,7 @@ set -euo pipefail
 # DETERMINE PROJECT ROOT
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Derive project root from script location (scripts/pusher-agent/verified-push.sh)
+# Derive project root from script location (scripts/subagent/verified-push.sh)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 

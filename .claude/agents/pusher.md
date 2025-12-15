@@ -48,15 +48,15 @@ The main agent provides ONE of two modes:
 ### For QA approval mode:
 
 ```bash
-scripts/pusher-agent/verified-push.sh '<payload>' '<signature>'
-scripts/pusher-agent/verified-push.sh '<payload>' '<signature>' 'branch-name'
+scripts/subagent/verified-push.sh '<payload>' '<signature>'
+scripts/subagent/verified-push.sh '<payload>' '<signature>' 'branch-name'
 ```
 
 ### For override mode:
 
 ```bash
-scripts/pusher-agent/verified-push.sh --override '<token>'
-scripts/pusher-agent/verified-push.sh --override '<token>' 'branch-name'
+scripts/subagent/verified-push.sh --override '<token>'
+scripts/subagent/verified-push.sh --override '<token>' 'branch-name'
 ```
 
 **IMPORTANT:**
