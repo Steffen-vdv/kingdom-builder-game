@@ -148,7 +148,27 @@ pnpm generate:snapshots
 
 Then check if any snapshots changed unexpectedly.
 
-### Strategy 6: Full Verification
+### Strategy 6: Infrastructure Tests
+
+**When:** Changes affect builder infrastructure, content validation, or test factories.
+
+**Indicators:**
+
+- Changes to `packages/contents/src/infrastructure/**`
+- Changes to builder validation logic
+- Changes to `packages/testing/src/factories/**`
+- Changes to content definition patterns
+
+**Action:** Run infrastructure tests specifically:
+
+```bash
+pnpm test:infrastructure
+```
+
+These tests verify that builders produce correct output for any valid input,
+catching infrastructure bugs that unit tests miss.
+
+### Strategy 7: Full Verification
 
 **When:** Major changes, pre-push verification, or uncertain scope.
 
@@ -157,6 +177,7 @@ Then check if any snapshots changed unexpectedly.
 - Hypervisor explicitly requests full verification
 - Changes span multiple packages
 - Architectural or infrastructure changes
+- Pre-push final check
 
 **Action:** Run complete verification:
 
@@ -164,7 +185,8 @@ Then check if any snapshots changed unexpectedly.
 pnpm verify
 ```
 
-This runs: typecheck, lint, lint:deps, and test:parallel.
+This runs in parallel: typecheck, lint, lint:deps, and test:parallel (which
+includes coverage for engine, protocol, integration, web, and server).
 
 ## Analysis Process
 
@@ -296,11 +318,54 @@ These files affect many systems — changes require `pnpm test:parallel`:
 - `packages/contents/src/rules.ts` — Game rules
 - `packages/testing/**` — Test utilities
 
+### Infrastructure Files (Require Infrastructure Tests)
+
+Changes to these require `pnpm test:infrastructure`:
+
+- `packages/contents/src/infrastructure/**` — All builders
+- `packages/contents/src/infrastructure/builders/**` — Effect, evaluator builders
+- `packages/contents/src/infrastructure/resource/**` — Resource system builders
+- `packages/testing/src/factories/**` — Test content factories
+
+## Three-Layer Testing Strategy
+
+This project uses a three-layer testing approach (see `docs/architecture-reference.md`):
+
+1. **Layer 1: Builder Contract Tests** (`packages/contents/tests/`)
+   - Test that builder methods produce correct output for any valid input
+   - Run with: `pnpm test:infrastructure`
+
+2. **Layer 2: Engine Unit Tests** (`packages/engine/tests/`)
+   - Test effects, evaluators, and services in isolation
+   - Run with: `pnpm --filter @kingdom-builder/engine test`
+
+3. **Layer 3: Integration Tests** (`tests/infrastructure/`)
+   - Test full pipelines from content definition to engine execution
+   - Run with: `pnpm test:integration`
+
+**Principle:** Unit tests alone are insufficient. They often bypass builders and
+use hardcoded "correct" values, allowing infrastructure bugs to slip through.
+Always consider whether infrastructure tests are needed.
+
+## Available Test Commands Reference
+
+| Command                       | What it runs                                                       |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `pnpm test:parallel`          | All tests in parallel (engine, protocol, integration, web, server) |
+| `pnpm test:infrastructure`    | Builder and factory validation tests                               |
+| `pnpm test:integration`       | Full pipeline integration tests                                    |
+| `pnpm test:coverage:engine`   | Engine tests with coverage                                         |
+| `pnpm test:coverage:protocol` | Protocol tests with coverage                                       |
+| `pnpm test:coverage:server`   | Server tests with coverage                                         |
+| `pnpm generate:snapshots`     | Regenerate UI snapshots                                            |
+| `pnpm verify`                 | Full verification (typecheck + lint + all tests)                   |
+
 ## Reference
 
 For project principles (fetch if needed):
 
-- `CLAUDE.md` — Testing commands and verification procedures
+- `CLAUDE.md` — Core principles and golden rules
+- `docs/architecture-reference.md` — Three-layer testing strategy details
 
 After outputting your structured response, include this reminder:
 "Reminder: Consult your workflow documentation to confirm the correct next
