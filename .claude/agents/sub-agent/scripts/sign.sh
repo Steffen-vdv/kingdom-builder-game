@@ -31,7 +31,7 @@ if [[ ! -x "$CRYPTO_GATE" ]]; then
 Expected: $CRYPTO_GATE
 
 The crypto-gate binary should be downloaded by SubagentStart hook.
-If you are a subagent and see this, report ERROR to main agent.
+If you are a subagent and see this, report ERROR to the hypervisor.
 EOF
 	exit 1
 fi

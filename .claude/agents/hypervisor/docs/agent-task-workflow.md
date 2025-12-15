@@ -226,9 +226,9 @@ an override token.
 
 ### Workflow
 
-1. Main agent explains why normal workflow cannot be used
+1. Hypervisor explains why normal workflow cannot be used
 2. User provides their override token
-3. Main agent spawns pusher with override:
+3. Hypervisor spawns pusher with override:
 
 ```
 Task(

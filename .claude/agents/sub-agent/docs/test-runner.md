@@ -4,7 +4,7 @@ description: >
   Test analysis and execution specialist. Analyzes changed files to determine
   appropriate test strategy, executes tests, and reports results with failure
   details.
-model: haiku
+model: opus
 permissionMode: bypassPermissions
 tools: Glob, Grep, Read, Bash
 ---

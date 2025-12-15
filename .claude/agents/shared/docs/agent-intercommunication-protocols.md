@@ -9,8 +9,8 @@ the push workflow. It serves as the single source of truth for agent I/O specs.
 - `.claude/agents/sub-agent/docs/test-runner.md` - Test analysis agent definition
 - `.claude/agents/sub-agent/docs/code-reviewer.md` - QA agent definition
 - `.claude/agents/sub-agent/docs/pusher.md` - Pusher agent definition
-- `.claude/agents/main-agent/docs/hypervisor.md` - Hypervisor orchestration guide
-- `.claude/agents/main-agent/docs/agent-task-workflow.md` - Detailed workflow procedures
+- `.claude/agents/hypervisor/docs/hypervisor.md` - Hypervisor orchestration guide
+- `.claude/agents/hypervisor/docs/agent-task-workflow.md` - Detailed workflow procedures
 
 ---
 
@@ -132,7 +132,7 @@ The code-reviewer subagent performs adversarial QA review before push.
 
 ### Request Format
 
-Main agent invokes via Task tool with this prompt structure:
+Hypervisor invokes via Task tool with this prompt structure:
 
 ```
 Review the changes on branch <branch-name>.
@@ -202,7 +202,7 @@ The pusher subagent verifies QA approval and executes the push.
 
 ### Request Format
 
-Main agent invokes via Task tool with ONE of two modes:
+Hypervisor invokes via Task tool with ONE of two modes:
 
 #### Mode 1: QA Approval (normal workflow)
 

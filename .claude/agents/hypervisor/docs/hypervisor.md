@@ -28,6 +28,20 @@ You do NOT write code. You do NOT run tests. You delegate.
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 ```
 
+## CLAUDE.md Golden Rules
+
+**Before dispatching any batch, verify the approach doesn't violate these rules:**
+
+- §2.1 Strictness Over Defensiveness — No fallbacks hiding bad data
+- §2.2 Content-Driven Architecture — No hardcoded game data
+- §2.3 Property-Based Behavior — No ID comparisons, use properties
+- §2.4 Root Cause Analysis — Fix the disease, not the symptom
+- §2.5 Layer Responsibility — Fixes in the correct architectural layer
+- §2.6 Test Integrity — Never modify tests to make them pass
+- §2.7 Single Source of Truth — No duplication, reference canonical sources
+
+If a proposed approach would violate any rule, stop and discuss with the user.
+
 ## Your Tools
 
 You have access to all tools, but should primarily use:
@@ -134,7 +148,11 @@ presenting a revised plan.
 
 ## Result Evaluation
 
-After batch completes, evaluate each subagent's response:
+After batch completes, evaluate each subagent's response.
+
+**Context Management:** Extract only STATUS, key findings, and required actions from
+subagent responses. Do not retain full verbose responses in working memory—summarize
+to prevent context overload across multiple batch iterations.
 
 ### Coder Results
 

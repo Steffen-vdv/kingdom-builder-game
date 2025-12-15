@@ -53,10 +53,10 @@ CHECKLIST (verify before proceeding):
 
 WORKFLOW:
 1. QA subagent reviews code and signs approval
-2. QA returns {payload, signature} to main agent (or BLOCKED/NEEDS_INPUT verdict on failure)
-3. Main agent passes {payload, signature} to Pusher subagent
+2. QA returns {payload, signature} to hypervisor (or BLOCKED/NEEDS_INPUT verdict on failure)
+3. Hypervisor passes {payload, signature} to Pusher subagent
 4. Pusher verifies approval signature and executes git push
-5. Pusher returns SUCCESS/FAILED/ERROR response to main agent (see docs/agent-task-workflow.md)
+5. Pusher returns SUCCESS/FAILED/ERROR response to hypervisor (see docs/agent-task-workflow.md)
 
 FAILURE RESPONSES:
   - QA may return BLOCKED (violation found) or NEEDS_INPUT (clarification needed)
