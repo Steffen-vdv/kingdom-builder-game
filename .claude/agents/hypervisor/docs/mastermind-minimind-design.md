@@ -47,11 +47,26 @@ gate.
 - Cannot spawn subagents - works alone
 
 **Return structure** (similar to code-reviewer):
-| Status | Meaning |
-|--------|---------|
-| `approved` | Request is clear and complete. Returns detailed decomposition. |
-| `user-info-needed` | Ambiguous or uncertain. Returns specific questions. |
-| `blocked` | Request is fundamentally flawed. Returns reasoning. |
+
+| Status             | Meaning                                                        |
+| ------------------ | -------------------------------------------------------------- |
+| `APPROVED`         | Request is clear and complete. Returns detailed decomposition. |
+| `USER_INFO_NEEDED` | Ambiguous or uncertain. Returns specific questions.            |
+| `BLOCKED`          | Request is fundamentally flawed. Returns reasoning.            |
+
+**Response format:**
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+MASTERMIND_RESPONSE_START
+═══════════════════════════════════════════════════════════════════════════════
+STATUS: APPROVED|USER_INFO_NEEDED|BLOCKED
+MESSAGE:
+<Multi-line analysis, decomposition, questions, or rejection reasoning>
+═══════════════════════════════════════════════════════════════════════════════
+MASTERMIND_RESPONSE_END
+═══════════════════════════════════════════════════════════════════════════════
+```
 
 **Identity**: Similar to code-reviewer - skeptical, critical, no-nonsense. Must:
 
@@ -497,32 +512,125 @@ scope, use mastermind instead.
 
 ### P1-B: Hook Enforcement
 
-#### New Hook: block-hypervisor-implementation.sh
+#### New Hooks for Tool Blocking
 
-Block hypervisor from using Bash and Edit tools for implementation.
+PreToolUse hooks support matching ANY tool, not just Bash. Per Claude Code docs,
+valid matchers include: `Bash`, `Edit`, `Write`, `Read`, `Glob`, `Grep`, `Task`,
+`WebFetch`, `WebSearch`, etc. Regex patterns also work: `"matcher": "Edit|Write"`.
 
-**Logic:**
+**Required hooks:**
+
+1. **block-hypervisor-bash.sh** - Block hypervisor from implementation Bash commands
+2. **block-hypervisor-edit.sh** - Block hypervisor from Edit tool entirely
+3. **block-hypervisor-write.sh** - Block hypervisor from Write tool entirely
+
+Or combine Edit/Write into one hook with `"matcher": "Edit|Write"`.
+
+#### Hook: block-hypervisor-bash.sh
 
 ```bash
+#!/bin/bash
 MARKER_FILE="$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
 AGENT_TYPE=$(cat "$MARKER_FILE" 2>/dev/null)
 
-# If hypervisor (m_7x9) is trying to use Bash or Edit
-# Check if it's an implementation action vs. allowed action
+# Only restrict hypervisor (m_7x9), not subagents
+if [[ "$AGENT_TYPE" != "m_7x9" ]]; then
+  exit 0
+fi
 
-# Allowed for hypervisor:
-# - git status, git log, git diff (read-only git)
-# - ls, pwd, echo (basic shell)
-# - Reading files
+# Parse command from tool input
+JSON_INPUT=$(cat)
+COMMAND=$(echo "$JSON_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 
-# Blocked for hypervisor:
-# - git commit, git push (delegate to coder/pusher)
-# - Any file modification
-# - Running tests (delegate to test-runner)
+# Whitelist: read-only commands hypervisor MAY use
+ALLOWED_PATTERNS=(
+  "^git (status|log|diff|branch|show)"
+  "^ls "
+  "^pwd$"
+  "^echo "
+  "^cat "  # Reading files
+)
+
+for pattern in "${ALLOWED_PATTERNS[@]}"; do
+  if [[ "$COMMAND" =~ $pattern ]]; then
+    exit 0
+  fi
+done
+
+# Block everything else
+cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 BLOCKED — Hypervisor cannot execute implementation commands               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+As hypervisor, you orchestrate — you do not implement.
+
+Delegate to appropriate subagent:
+  • Code changes → coder
+  • Running tests → test-runner
+  • Pushing → pusher
+  • Deep analysis → mastermind
+  • Quick lookups → minimind
+
+Re-read: .claude/agents/hypervisor/docs/hypervisor.md
+BLOCKED
+exit 2
 ```
 
-**Note:** This requires careful design to allow legitimate hypervisor actions
-while blocking implementation. May need whitelist approach.
+#### Hook: block-hypervisor-edit-write.sh
+
+```bash
+#!/bin/bash
+MARKER_FILE="$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
+AGENT_TYPE=$(cat "$MARKER_FILE" 2>/dev/null)
+
+# Only restrict hypervisor (m_7x9), not subagents
+if [[ "$AGENT_TYPE" != "m_7x9" ]]; then
+  exit 0
+fi
+
+# Hypervisor cannot use Edit or Write tools AT ALL
+cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 BLOCKED — Hypervisor cannot edit or write files                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+As hypervisor, you orchestrate — you do not implement.
+
+Delegate file modifications to the coder subagent.
+
+Re-read: .claude/agents/hypervisor/docs/hypervisor.md
+BLOCKED
+exit 2
+```
+
+#### settings.json Updates
+
+Add these entries to the PreToolUse hooks array:
+
+```json
+{
+  "matcher": "Bash",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-hypervisor-bash.sh"
+    }
+  ]
+},
+{
+  "matcher": "Edit|Write",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-hypervisor-edit-write.sh"
+    }
+  ]
+}
+```
+
+**Note:** The Bash hook uses whitelist approach (allow specific read-only
+commands). The Edit/Write hook is a complete block for hypervisor.
 
 #### Update: msh.sh
 
@@ -566,16 +674,17 @@ Create directory structure for plan persistence:
 **Execute in this order:**
 
 1. **P0-A: Write new hypervisor.md** (most critical)
-2. **P0-B: Update all subagent footers** (context refresh)
-3. **P0-B: Update msh.sh** (session handover)
-4. **P1-A: Create mastermind.md** (with strong footer)
-5. **P1-A: Create minimind.md** (with footer)
-6. **P1-B: Create block-hypervisor-implementation.sh hook**
-7. **P1-B: Update settings.json to include new hook**
-8. **P2: coder.md model change** (quick win)
-9. **P2: Protocol updates** (intercommunication doc)
-10. **P2: Create /docs/projects/ template**
-11. **P2: Deprecation cleanup**
+2. **P0-B: Update all subagent footers** (context refresh in code-reviewer, coder, test-runner, pusher)
+3. **P0-B: Update msh.sh** (session handover - add hypervisor.md + plan docs reminder)
+4. **P1-A: Create mastermind.md** (with strong footer baked in)
+5. **P1-A: Create minimind.md** (with footer baked in)
+6. **P1-B: Create block-hypervisor-bash.sh** (whitelist read-only commands)
+7. **P1-B: Create block-hypervisor-edit-write.sh** (complete block)
+8. **P1-B: Update settings.json** (add Bash and Edit|Write matchers for new hooks)
+9. **P2: coder.md model change** (sonnet → opus)
+10. **P2: Protocol updates** (add mastermind/minimind to agent-intercommunication-protocols.md)
+11. **P2: Create /docs/projects/\_template/** (pre-production.md, production.md, post-production.md)
+12. **P2: Deprecation cleanup** (remove Explore/Plan references)
 
 ---
 
@@ -888,3 +997,45 @@ apply session/context details, do research, be a (currently missing)
 in 30 seconds and be back on mission. Current 311-line doc fails this test.
 
 **Status**: Implementation plan rewritten. Ready to commit.
+
+### Entry 10: Final Assessment and Handover Preparation
+
+**User instruction**: Assess doc for completeness, find gaps, determine if ready
+for handover to new session.
+
+**Assessment performed**:
+
+1. **Interview contents**: ✓ Complete (9 entries capturing full decision trail)
+2. **Implementation plan**: Gaps found
+
+**Critical gap identified**: Edit/Write tool blocking mechanism was undefined.
+Doc said "Bash, Edit, Write blocked via hook" but only Bash had hook
+infrastructure. Edit and Write are separate tool types.
+
+**Resolution**: Consulted Claude Code docs via claude-code-guide agent.
+Confirmed PreToolUse hooks support ANY tool matcher including `Edit`, `Write`,
+and regex patterns like `"matcher": "Edit|Write"`.
+
+**Updates made**:
+
+1. Added `MASTERMIND_RESPONSE_START/END` format to Section 2.1
+2. Expanded P1-B with:
+   - Explicit hook code for `block-hypervisor-bash.sh` (whitelist approach)
+   - Explicit hook code for `block-hypervisor-edit-write.sh` (complete block)
+   - Exact settings.json syntax for new matchers
+3. Updated implementation sequence from 11 to 12 steps with specific hook names
+
+**Minor gaps noted (non-blocking)**:
+
+- Mastermind response format: Resolved with MASTERMIND_RESPONSE_START/END
+- Existing hypervisor.md content fate: Non-issue - implementing session merges
+  old+new intelligently
+
+**Final verdict**: ✅ ALL CLEAR for handover.
+
+**Recommended handover instruction**:
+
+> Read `.claude/agents/hypervisor/docs/mastermind-minimind-design.md` completely.
+> Execute the Implementation Sequence in Section 8. Big-bang rollout - all 12 steps.
+
+**Status**: Document complete. Ready for commit and push.
