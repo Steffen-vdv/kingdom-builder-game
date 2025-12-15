@@ -220,13 +220,29 @@ Push may proceed.
 
 ### For APPROVED verdict:
 
-After your review narrative, run the signing script:
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  APPROVED = MUST SIGN. NO EXCEPTIONS. NO INTERPRETATION.                      ║
+║                                                                               ║
+║  Every APPROVED verdict requires running sign.sh and including the           ║
+║  resulting PAYLOAD and SIGNATURE in your response. This applies to:          ║
+║  - Code changes                                                               ║
+║  - Documentation changes                                                      ║
+║  - Configuration changes                                                      ║
+║  - ANY change being pushed                                                    ║
+║                                                                               ║
+║  An APPROVED verdict without PAYLOAD and SIGNATURE is INVALID.               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```
+
+**MANDATORY signing step:**
 
 ```bash
 .claude/agents/sub-agent/scripts/sign.sh "Brief summary of what was approved"
 ```
 
-Then output the structured response using the script's JSON output.
+The script outputs JSON with `payload` and `signature` fields. You MUST include
+both in your QA_RESPONSE. If the script fails, your verdict is ERROR, not APPROVED.
 
 See [`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#code-reviewer-protocol)
 for the complete response format specification.
