@@ -97,7 +97,7 @@ If verify-and-push.sh fails, report the error clearly:
 
 Error: Invalid signature
 
-MAIN AGENT FOLLOW-UP:
+HYPERVISOR FOLLOW-UP:
 → The signature verification failed
 → Re-run QA review to get a fresh payload and signature
 → Ensure the payload is passed exactly as QA returned it

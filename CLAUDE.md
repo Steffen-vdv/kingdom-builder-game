@@ -254,7 +254,7 @@ tasks and delegates execution to specialized subagents.
 
 | Agent         | Primary Doc                                      | Purpose                  |
 | ------------- | ------------------------------------------------ | ------------------------ |
-| Hypervisor    | `.claude/agents/main-agent/docs/hypervisor.md`   | Orchestration rules      |
+| Hypervisor    | `.claude/agents/hypervisor/docs/hypervisor.md`   | Orchestration rules      |
 | Coder         | `.claude/agents/sub-agent/docs/coder.md`         | Implementation standards |
 | Test-runner   | `.claude/agents/sub-agent/docs/test-runner.md`   | Test analysis strategy   |
 | Code-reviewer | `.claude/agents/sub-agent/docs/code-reviewer.md` | QA criteria              |

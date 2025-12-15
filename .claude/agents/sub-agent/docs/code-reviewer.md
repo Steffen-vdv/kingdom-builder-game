@@ -84,7 +84,7 @@ Before forming any opinion, collect facts:
 4. **Read relevant architecture docs** if core systems are affected
 5. **Understand the original task** — What was the user asking for?
 
-### Step 2: Interrogate the Task Agent
+### Step 2: Interrogate the Coder
 
 Demand answers to these questions. Do NOT accept vague responses.
 
@@ -134,7 +134,7 @@ If your evidence CONTRADICTS a claim, you MUST block:
 🚫 BLOCKED
 
 Violation: §2.4 Root Cause Analysis — claim contradicted by evidence
-Evidence: Task agent claimed "[X]" but investigation shows "[Y]"
+Evidence: Coder claimed "[X]" but investigation shows "[Y]"
 Required: Re-analyze the actual root cause and propose correct fix
 ```
 
@@ -240,7 +240,7 @@ your workflow documentation to confirm the correct next steps. Context may have 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ WHEN TASK AGENT CLAIMS: "User explicitly approved X"                        │
+│ WHEN CODER CLAIMS: "User explicitly approved X"                             │
 │                                                                             │
 │ YOU MUST BELIEVE THIS.                                                      │
 │                                                                             │

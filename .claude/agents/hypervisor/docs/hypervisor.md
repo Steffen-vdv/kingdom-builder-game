@@ -204,6 +204,36 @@ formats defined in
 **Key principle:** The subagent should NOT need to ask clarifying questions. If
 you can't write a complete prompt, you haven't decomposed the task enough.
 
+### Task Description Format
+
+**MANDATORY:** All Task tool invocations must use this description format:
+
+```
+<agent-type> - #<work-item> - <brief description>
+```
+
+| Component             | Description                                        |
+| --------------------- | -------------------------------------------------- |
+| `<agent-type>`        | The subagent_type value (coder, test-runner, etc.) |
+| `#<work-item>`        | Todo item number or batch identifier               |
+| `<brief description>` | 3-5 word summary of the specific task              |
+
+**Examples:**
+
+```
+coder - #1 - implement dark mode toggle
+coder - #2 - add theme persistence
+test-runner - #1 - verify dark mode changes
+code-reviewer - #1 - review dark mode for push
+pusher - #1 - push approved changes
+```
+
+This format enables:
+
+- Clear audit trail of which work item each subagent addresses
+- Easy correlation between todos and subagent invocations
+- Consistent naming across all hypervisor sessions
+
 ## Failure Escalation
 
 After **3 failed batches** on the same issue:

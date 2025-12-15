@@ -19,10 +19,10 @@ const pathExists = (relativePath: string): boolean => {
 
 describe('Infrastructure: Agent Path Validation', () => {
 	describe('Agent Directory Structure', () => {
-		it('should have main-agent directory with required subdirectories', () => {
-			expect(pathExists('.claude/agents/main-agent')).toBe(true);
-			expect(pathExists('.claude/agents/main-agent/docs')).toBe(true);
-			expect(pathExists('.claude/agents/main-agent/scripts')).toBe(true);
+		it('should have hypervisor directory with required subdirectories', () => {
+			expect(pathExists('.claude/agents/hypervisor')).toBe(true);
+			expect(pathExists('.claude/agents/hypervisor/docs')).toBe(true);
+			expect(pathExists('.claude/agents/hypervisor/scripts')).toBe(true);
 		});
 
 		it('should have sub-agent directory with required subdirectories', () => {
@@ -37,16 +37,16 @@ describe('Infrastructure: Agent Path Validation', () => {
 		});
 	});
 
-	describe('Main Agent Files', () => {
-		it('should have main agent documentation', () => {
+	describe('Hypervisor Files', () => {
+		it('should have hypervisor documentation', () => {
 			expect(
-				pathExists('.claude/agents/main-agent/docs/agent-task-workflow.md'),
+				pathExists('.claude/agents/hypervisor/docs/agent-task-workflow.md'),
 			).toBe(true);
 		});
 
-		it('should have main agent scripts', () => {
-			expect(pathExists('.claude/agents/main-agent/scripts/msh.sh')).toBe(true);
-			expect(pathExists('.claude/agents/main-agent/scripts/mss.sh')).toBe(true);
+		it('should have hypervisor scripts', () => {
+			expect(pathExists('.claude/agents/hypervisor/scripts/msh.sh')).toBe(true);
+			expect(pathExists('.claude/agents/hypervisor/scripts/mss.sh')).toBe(true);
 		});
 	});
 
@@ -112,8 +112,8 @@ describe('Infrastructure: Agent Path Validation', () => {
 			const subagentStartCommand =
 				settings.hooks.SubagentStart[0].hooks[0].command;
 
-			expect(sessionStartupCommand).toContain('main-agent/scripts/mss.sh');
-			expect(sessionResumeCommand).toContain('main-agent/scripts/msh.sh');
+			expect(sessionStartupCommand).toContain('hypervisor/scripts/mss.sh');
+			expect(sessionResumeCommand).toContain('hypervisor/scripts/msh.sh');
 			expect(subagentStartCommand).toContain('sub-agent/scripts/sss.sh');
 		});
 	});
