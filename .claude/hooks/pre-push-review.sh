@@ -44,16 +44,16 @@ cat >&2 << 'BLOCKED'
 Direct git push is not allowed. You must use the verified push workflow.
 
 WORKFLOW:
-1. QA subagent reviews code and signs approval via crypto-gate
-2. QA returns {payload, signature} to main agent
+1. QA subagent reviews code and signs approval
+2. QA returns {payload, signature} to main agent (or BLOCKED/NEEDS_INPUT verdict on failure)
 3. Main agent passes {payload, signature} to Pusher subagent
-4. Pusher runs: scripts/pusher-agent/verified-push.sh '<payload>' '<signature>'
+4. Pusher verifies approval signature and executes git push
+5. Pusher returns SUCCESS/FAILED/ERROR response to main agent (see docs/agent-task-workflow.md)
 
-The verified-push.sh script will:
-  ✓ Verify signature via crypto-gate
-  ✓ Check HEAD is in approved commits
-  ✓ Execute git push if all checks pass
+FAILURE RESPONSES:
+  - QA may return BLOCKED (violation found) or NEEDS_INPUT (clarification needed)
+  - Pusher may return FAILED (invalid signature, HEAD mismatch) or ERROR (script/system failure)
 
-REFERENCE: See docs/agent-task-workflow.md
+REFERENCE: See docs/agent-task-workflow.md for complete workflow details.
 BLOCKED
 exit 2
