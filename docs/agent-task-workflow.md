@@ -87,17 +87,6 @@ Before requesting QA review:
 **See [`docs/subagent-protocols.md`](subagent-protocols.md#request-format) for
 the complete request format specification.**
 
-```
-ORIGINAL REQUEST:
-[The user's original request that led to these changes]
-
-TASK AGENT CLAIMS:
-- Solution: [What was implemented and why]
-- Layer: [content | engine | web | server | docs]
-- Tests: [test coverage details, or "N/A" for non-code changes]
-- User approval: [what the user explicitly approved, or "N/A"]
-```
-
 ---
 
 ## Step 2: QA Review
@@ -111,16 +100,7 @@ Task(
   subagent_type: "code-reviewer",
   description: "QA review for push",
   prompt: """
-    Review the changes on branch <branch-name>.
-
-    ORIGINAL REQUEST:
-    <The user's original request that led to these changes>
-
-    TASK AGENT CLAIMS:
-    - Solution: <What was implemented and why>
-    - Layer: <which layer owns this change>
-    - Tests: <test coverage, or N/A>
-    - User approval: <what user approved, or N/A>
+    [Use format from docs/subagent-protocols.md#request-format]
   """
 )
 ```
