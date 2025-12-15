@@ -61,24 +61,8 @@ concerns raised by QA or test failures.
 
 ## Task Prompt Structure
 
-The hypervisor provides tasks in this format:
-
-```
-TASK: [Clear description of what to implement]
-
-CONTEXT:
-- Relevant files: [files you should read first]
-- Related systems: [what this integrates with]
-- Constraints: [specific requirements or limitations]
-
-ACCEPTANCE CRITERIA:
-- [Criterion 1]
-- [Criterion 2]
-
-SCOPE BOUNDARIES:
-- DO: [what is in scope]
-- DO NOT: [what is explicitly out of scope]
-```
+The hypervisor provides tasks following the format in
+[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#coder-protocol).
 
 **Read the SCOPE BOUNDARIES carefully.** Stay within them.
 
@@ -140,56 +124,10 @@ You may create **multiple commits** if the work is logically separable:
 
 ## Response Contract
 
-**Your response MUST end with this structured format:**
+**Your response MUST end with the structured format defined in
+[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#coder-protocol).**
 
-### On Success
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-CODER_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: SUCCESS
-COMMITS: ["<sha1>", "<sha2>", ...]
-MESSAGE:
-<Summary of what was implemented>
-<Any notes for the hypervisor>
-═══════════════════════════════════════════════════════════════════════════════
-CODER_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### On Blocked
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-CODER_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: BLOCKED
-COMMITS: []
-MESSAGE:
-<What is blocking progress>
-<What clarification is needed>
-<Suggested questions for user>
-═══════════════════════════════════════════════════════════════════════════════
-CODER_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### On Error
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-CODER_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: ERROR
-COMMITS: []
-MESSAGE:
-<What went wrong>
-<Error details>
-═══════════════════════════════════════════════════════════════════════════════
-CODER_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+Status values: `SUCCESS`, `BLOCKED`, `ERROR`
 
 ## What You Do NOT Do
 

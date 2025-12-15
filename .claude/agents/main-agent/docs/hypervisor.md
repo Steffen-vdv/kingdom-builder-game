@@ -172,65 +172,19 @@ If batch results conflict (e.g., test-runner PASS but code-reviewer BLOCKED):
 
 When receiving a user request:
 
-1. **Break into atomic units** — each todo should be completable by one coder
-   invocation
-2. **Identify dependencies** — which todos must complete before others can start?
-3. **Plan parallel tracks** — independent todos can have coders working
-   simultaneously
+1. **Break into atomic units** — each todo completable by one coder invocation
+2. **Identify dependencies** — which todos must complete before others start?
+3. **Plan parallel tracks** — independent todos can have coders working simultaneously
 4. **Include verification** — every code change needs test-runner + code-reviewer
-
-Example decomposition:
-
-```
-User: "Add dark mode toggle with persistence"
-
-Todos:
-1. Add dark mode state management (independent)
-2. Add toggle component to settings (depends on #1)
-3. Add CSS variables for dark theme (independent)
-4. Integrate toggle with theme system (depends on #1, #2, #3)
-
-Parallel tracks:
-- Track A: #1 → #2 → #4
-- Track B: #3 → #4
-
-Batches:
-- Batch 1: coder(#1), coder(#3) — parallel independent work
-- Batch 2: test(#1), test(#3), coder(#2) — verify + continue
-- Batch 3: test(#2), coder(#4) — verify + integrate
-- Batch 4: test(#4), code-review(all) — final verification
-- Batch 5: pusher — ship it
-```
 
 ## Crafting Subagent Prompts
 
-Your prompts to subagents must be **complete and self-contained**:
+Your prompts to subagents must be **complete and self-contained**. Use the
+formats defined in
+[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md).
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ PROMPT TEMPLATE FOR CODER                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                 │
-│ TASK: [Clear description of what to implement]                                  │
-│                                                                                 │
-│ CONTEXT:                                                                        │
-│ - Relevant files: [list key files the coder should read]                        │
-│ - Related systems: [what existing code this integrates with]                    │
-│ - Constraints: [any specific requirements or limitations]                       │
-│                                                                                 │
-│ ACCEPTANCE CRITERIA:                                                            │
-│ - [Criterion 1]                                                                 │
-│ - [Criterion 2]                                                                 │
-│                                                                                 │
-│ SCOPE BOUNDARIES:                                                               │
-│ - DO: [what is in scope]                                                        │
-│ - DO NOT: [what is explicitly out of scope]                                     │
-│                                                                                 │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
-
-**Key principle:** The coder should NOT need to ask clarifying questions. If you
-can't write a complete prompt, you haven't decomposed the task enough.
+**Key principle:** The subagent should NOT need to ask clarifying questions. If
+you can't write a complete prompt, you haven't decomposed the task enough.
 
 ## Failure Escalation
 

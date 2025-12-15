@@ -227,68 +227,10 @@ Apply the decision tree above based on your analysis.
 
 ## Response Contract
 
-**Your response MUST end with this structured format:**
+**Your response MUST end with the structured format defined in
+[`agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#test-runner-protocol).**
 
-### On Pass
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-TEST_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: PASS
-STRATEGY: <strategy name>
-TESTS_RUN: <number or "none">
-MESSAGE:
-<Test strategy rationale>
-<Summary of what was tested>
-<Any warnings or notes>
-═══════════════════════════════════════════════════════════════════════════════
-TEST_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### On Fail
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-TEST_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: FAIL
-STRATEGY: <strategy name>
-TESTS_RUN: <number>
-FAILURES: [
-  {
-    "file": "<test file path>",
-    "test": "<test name>",
-    "error": "<brief error description>"
-  }
-]
-MESSAGE:
-<Test strategy rationale>
-<Summary of failures>
-<Suggested areas to investigate>
-═══════════════════════════════════════════════════════════════════════════════
-TEST_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-### On Error
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-TEST_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: ERROR
-STRATEGY: <attempted strategy>
-TESTS_RUN: 0
-MESSAGE:
-<What went wrong>
-<Error details>
-<Whether to retry or escalate>
-═══════════════════════════════════════════════════════════════════════════════
-TEST_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
+Status values: `PASS`, `FAIL`, `ERROR`
 
 ## What You Do NOT Do
 
@@ -298,19 +240,7 @@ TEST_RESPONSE_END
 - ❌ Make assumptions about what "should" pass
 - ❌ Run tests without analyzing what changed first
 
-## Common Patterns
-
-### Package to Test Command Mapping
-
-| Package    | Test Command                                   |
-| ---------- | ---------------------------------------------- |
-| `contents` | `pnpm --filter @kingdom-builder/contents test` |
-| `engine`   | `pnpm --filter @kingdom-builder/engine test`   |
-| `protocol` | `pnpm --filter @kingdom-builder/protocol test` |
-| `server`   | `pnpm --filter @kingdom-builder/server test`   |
-| `web`      | `pnpm --filter @kingdom-builder/web test`      |
-
-### High-Impact Files (Always Full Suite)
+## High-Impact Files
 
 These files affect many systems — changes require `pnpm test:parallel`:
 
@@ -320,50 +250,8 @@ These files affect many systems — changes require `pnpm test:parallel`:
 - `packages/contents/src/rules.ts` — Game rules
 - `packages/testing/**` — Test utilities
 
-### Infrastructure Files (Require Infrastructure Tests)
-
-Changes to these require `pnpm test:infrastructure`:
-
-- `packages/contents/src/infrastructure/**` — All builders
-- `packages/contents/src/infrastructure/builders/**` — Effect, evaluator builders
-- `packages/contents/src/infrastructure/resource/**` — Resource system builders
-- `packages/testing/src/factories/**` — Test content factories
-
-## Three-Layer Testing Strategy
-
-This project uses a three-layer testing approach (see `docs/architecture-reference.md`):
-
-1. **Layer 1: Builder Contract Tests** (`packages/contents/tests/`)
-   - Test that builder methods produce correct output for any valid input
-   - Run with: `pnpm test:infrastructure`
-
-2. **Layer 2: Engine Unit Tests** (`packages/engine/tests/`)
-   - Test effects, evaluators, and services in isolation
-   - Run with: `pnpm --filter @kingdom-builder/engine test`
-
-3. **Layer 3: Integration Tests** (`tests/infrastructure/`)
-   - Test full pipelines from content definition to engine execution
-   - Run with: `pnpm test:integration`
-
-**Principle:** Unit tests alone are insufficient. They often bypass builders and
-use hardcoded "correct" values, allowing infrastructure bugs to slip through.
-Always consider whether infrastructure tests are needed.
-
-## Available Test Commands Reference
-
-| Command                       | What it runs                                                                       |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| `pnpm test:parallel`          | All tests in parallel (engine, protocol, integration, infrastructure, web, server) |
-| `pnpm test:infrastructure`    | Builder and factory validation tests                                               |
-| `pnpm test:integration`       | Full pipeline integration tests                                                    |
-| `pnpm test:coverage:engine`   | Engine tests with coverage                                                         |
-| `pnpm test:coverage:protocol` | Protocol tests with coverage                                                       |
-| `pnpm test:coverage:server`   | Server tests with coverage                                                         |
-| `pnpm generate:snapshots`     | Regenerate UI snapshots                                                            |
-| `pnpm verify`                 | Sequential: check → test:infrastructure → test:coverage (clean artifacts)          |
-
-**Note:** `verify` runs tasks sequentially to produce clean artifacts. Use `test:parallel`
-for quick feedback during development, `verify` for final pre-push validation.
+For the three-layer testing strategy, see
+[`docs/architecture-reference.md`](../../../../docs/architecture-reference.md#testing-strategy).
 
 ## Reference
 

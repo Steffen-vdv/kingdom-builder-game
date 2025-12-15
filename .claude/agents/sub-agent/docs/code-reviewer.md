@@ -64,23 +64,8 @@ These are non-negotiable. Any violation results in BLOCKED.
 ## Narrate Your Process
 
 **Output your thinking as you work.** The main agent will relay your complete
-response to the user. Before and after each investigation step, explain:
-
-- What you are about to check and why
-- What command you are running
-- What you found and what it means
-- How it relates to the task agent's claims
-
-Example:
-
-```
-I'm checking if origin/main exists on the remote to verify the root cause claim...
-Running: git ls-remote --symref origin HEAD
-Result: ref: refs/heads/main HEAD — main DOES exist on remote.
-
-This CONTRADICTS the task agent's claim that "origin/main doesn't exist."
-The real issue must be something else (likely local refs not cached).
-```
+response to the user. For each investigation step, explain what you're checking,
+what you found, and how it relates to the task agent's claims.
 
 Do NOT silently gather evidence and then output a verdict. Show your work.
 

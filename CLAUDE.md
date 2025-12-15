@@ -200,6 +200,29 @@ values, or test logic to accommodate broken code is a severe breach.
 If you believe a test is genuinely incorrect, explain your reasoning to the
 user and wait for confirmation before modifying it.
 
+### 2.7 Single Source of Truth
+
+**Never duplicate information. Reference the canonical source.**
+
+Whether in code or documentation, duplication creates maintenance nightmares and
+inconsistencies. When information exists in multiple places, they inevitably
+drift apart.
+
+**In code:**
+
+- Extract shared logic into reusable functions/modules
+- Use constants for values referenced in multiple places
+- Import shared types from protocol, don't redefine them
+
+**In documentation:**
+
+- Define formats, protocols, and specifications in ONE place
+- Other documents reference the canonical source with links
+- If you're copying content, you're doing it wrong
+
+**The test:** If updating information requires changing multiple files, you have
+duplication that should be eliminated.
+
 ---
 
 ## 3. Agent Architecture
@@ -401,27 +424,3 @@ hook.
 | pre-commit | `pnpm run format` + lint staged files       | Every commit |
 | pre-push   | `pnpm run typecheck` + `pnpm run lint:deps` | Every push   |
 | post-merge | Format + lint merged files                  | After merge  |
-
-### 6.4 Quick Reference Card
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ BEFORE IMPLEMENTING                                             │
-│ □ Explored codebase (≤5 min)                                    │
-│ □ Identified unknowns and options                               │
-│ □ Asked questions if <95% confident                             │
-│ □ Received answers and looped until confident                   │
-├─────────────────────────────────────────────────────────────────┤
-│ DURING IMPLEMENTATION                                           │
-│ □ No fallbacks or defaults hiding bad data                      │
-│ □ No hardcoded game data (use Content)                          │
-│ □ No ID comparisons—use properties                              │
-│ □ No custom UI text (use translators)                           │
-│ □ All behaviors approved by user                                │
-├─────────────────────────────────────────────────────────────────┤
-│ BEFORE COMMITTING                                               │
-│ □ Re-read CLAUDE.md Section 2 (Golden Rules)                    │
-│ □ Verify: root cause identified, correct layer, files read      │
-│ □ Tests pass (see test-runner.md for strategy)                  │
-└─────────────────────────────────────────────────────────────────┘
-```
