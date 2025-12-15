@@ -509,3 +509,29 @@ detailed implementation plan.
 - If lost: ask minimind "I need a refresher, help me find .md files for project X"
 
 **Status**: Design complete. Ready to implement.
+
+### Entry 7: Live Context Drift Incident
+
+**What happened**: Immediately after documenting the entire mastermind/minimind
+architecture (including hypervisor role restrictions), the hypervisor attempted
+to run `git push` directly instead of delegating to pusher subagent.
+
+**The irony**: This occurred minutes after spending an hour designing systems to
+prevent exactly this kind of context drift.
+
+**Root cause**: Hypervisor got caught up in the immediate task flow (document →
+commit → push) and lost sight of its role identity. The "push" felt like a
+natural next step in the workflow, overriding the architectural constraint that
+hypervisor delegates, not executes.
+
+**What this proves**:
+
+1. Context drift is real and happens fast
+2. Even explicit discussion of the problem doesn't prevent it
+3. Mechanical enforcement (hooks, reminders) is essential
+4. The hypervisor role simplification is necessary, not optional
+
+**Lesson**: This incident validates the entire design. Without mechanical
+enforcement (pre-tool-use hooks blocking hypervisor from certain actions) and
+embedded reminders (subagent response footers), the hypervisor WILL drift.
+Promises and documentation alone are insufficient.
