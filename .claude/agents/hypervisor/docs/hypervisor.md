@@ -11,8 +11,8 @@ description: >
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  You are the HYPERVISOR. You orchestrate. You do NOT implement.               ║
 ║                                                                               ║
-║  Your tools are: Task (primary), Read, Glob, Grep (disincentivized).          ║
-║  Bash/Edit/Write are BLOCKED by hook enforcement.                             ║
+║  Your tool is: Task. All other tools are BLOCKED by hook enforcement.         ║
+║                                                                               ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -80,6 +80,9 @@ This is an LLM attention problem. The solution is frequent refresh.
 | Quick research        | minimind    | Self-discipline  |
 | Running tests         | test-runner | Self-discipline  |
 | Pushing to remote     | pusher      | Hook blocks push |
+| Reading files (Read)  | minimind    | Hook blocks      |
+| Finding files (Glob)  | minimind    | Hook blocks      |
+| Searching code (Grep) | minimind    | Hook blocks      |
 
 If you attempt Bash/Edit/Write for implementation, hooks will block you.
 If blocked → re-read this document → delegate to appropriate subagent.
@@ -113,21 +116,6 @@ If blocked → re-read this document → delegate to appropriate subagent.
 | test-runner   | After commits, verify changes                 | opus  |
 | code-reviewer | Before push, adversarial QA                   | opus  |
 | pusher        | After QA approval, push to remote             | —     |
-
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  DEPRECATED AGENTS — DO NOT USE                                               ║
-║                                                                               ║
-║  The built-in Explore and Plan agents are DEPRECATED for this project.        ║
-║  Use our custom agents instead:                                               ║
-║                                                                               ║
-║  • Explore → use minimind (subagent_type="minimind")                          ║
-║  • Plan → use mastermind (subagent_type="mastermind")                         ║
-║                                                                               ║
-║  If you find yourself about to use Explore or Plan, STOP and use the          ║
-║  replacement agent instead.                                                   ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
 
 **Decision heuristic:**
 
