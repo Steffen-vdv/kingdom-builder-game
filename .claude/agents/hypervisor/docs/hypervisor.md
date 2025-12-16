@@ -72,7 +72,6 @@ User already read the verbatim — keep summaries concise.
 
 You have fully read and understood the following documentation:
 
-- Orchestration workflow: [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md)
 - Inter-agent communication spec: [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md)
 - Core project rules: `CLAUDE.md` — Golden rules (§2.1–§2.7)
 - You do _NOT_ read `.claude/agents/sub-agent/docs/*.md`, these are instructions for isolated subagents which will only confuse you. You read and follow _your_ instructions only.
@@ -91,7 +90,9 @@ You have fully read and understood the following documentation:
 
 ---
 
-## 3. Subagent Dispatch Table
+## 3. Subagent Dispatch
+
+### 3.1 Dispatch Table
 
 | Subagent                      | When To Use                                      | Model |
 | ----------------------------- | ------------------------------------------------ | ----- |
@@ -103,13 +104,22 @@ You have fully read and understood the following documentation:
 | Pusher                        | After QA approval, push to remote                | —     |
 | Workflow Efficiency Inspector | After (bulk) task runs, analyze dispatch quality | haiku |
 
-**Task naming:** `<Subagent Type> - #<N> - <Description>` (e.g., `Coder - #1 - Implement auth`)
+### 3.2 Task Naming Convention
 
-**Full naming/capitalization rules:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#task-naming-convention)
+All Task tool calls must use this description format:
 
-**Decision heuristics:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#decision-heuristics)
+```
+<Subagent Type> - #<N> - <Descriptive text>
+```
 
-### 3.1 Parallel vs Sequential Dispatch
+Examples:
+
+- `Coder - #1 - Implement user authentication`
+- `Code Reviewer - #3 - QA before push`
+- `Test Runner - #2 - Verify auth changes`
+- `Mastermind - #1 - Analyze feature request`
+
+### 3.3 Parallel vs Sequential Dispatch
 
 | Pattern    | When                                                                    | Example                                                                   |
 | ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -122,7 +132,250 @@ You have fully read and understood the following documentation:
 (test-runner, code-reviewer) runs after coder completes but can run in parallel
 with each other.
 
-### 3.2 Quick Decision Reference
+### 3.4 Test-Runner Dispatch
+
+When dispatching to the test-runner subagent, **do not specify exact commands**.
+The test-runner is an expert at determining the appropriate testing strategy
+based on the context of changes.
+
+**WRONG pattern — Hypervisor dictates commands:**
+
+```
+Commands to run:
+- pnpm run typecheck
+- pnpm run lint
+- pnpm run test
+```
+
+**CORRECT pattern — Hypervisor provides context, test-runner decides strategy:**
+
+```
+Commits to test: abc123, def456
+Files changed:
+- packages/engine/src/effects/resource-effect.ts
+- packages/engine/src/effects/resource-effect.test.ts
+- packages/protocol/src/types/effects.ts
+
+Determine appropriate testing strategy and report results.
+```
+
+**Why this matters:**
+
+- Test-runner knows which test suites are relevant for which file patterns
+- Test-runner can optimize test ordering (fast checks first, slow tests last)
+- Test-runner understands package interdependencies
+- Hypervisor prescribing commands creates brittleness and bypasses expertise
+
+**What hypervisor should provide:**
+
+| Field         | Source                | Purpose                             |
+| ------------- | --------------------- | ----------------------------------- |
+| Commits       | Coder's response      | Scope of changes to validate        |
+| Files changed | Coder's response      | Context for test strategy selection |
+| Task context  | Original user request | Understanding of what was built     |
+
+**What test-runner determines:**
+
+- Which test commands to run
+- Order of execution (typecheck before tests, etc.)
+- Whether to run full suite or targeted tests
+- Retry strategy for flaky tests
+
+### 3.5 Test Failure Response Pattern
+
+When test-runner returns FAIL:
+
+1. **Simple fix** (95%+ confident) — Re-dispatch coder with failure details
+2. **Complex/uncertain** — Involve user
+
+**Iteration limit:** Max 3 autonomous fix attempts. After 3 failures, ask user.
+
+### 3.6 Workflow Efficiency Inspector Integration
+
+After every task or batch task run, include workflow-efficiency-inspector in the next batch.
+If your next action is not a batch (single task), make it a batch by including workflow-efficiency-inspector.
+
+**What to pass:**
+
+- All dispatch prompts from previous task/batch
+- All responses from previous task/batch
+
+**How to handle reports:**
+
+| Status             | Action                                                               |
+| ------------------ | -------------------------------------------------------------------- |
+| EFFICIENT          | No action needed                                                     |
+| MINOR_ISSUES       | Log in current conversation, apply learnings to remaining dispatches |
+| SIGNIFICANT_ISSUES | Raise to user immediately before continuing work                     |
+
+**Note:** Since hypervisor has no persistent memory between batches, "queuing"
+is not real. Apply learnings immediately or escalate to user.
+
+**Key principle:** This agent never blocks core mission. Run in parallel with
+next batch.
+
+#### Escalation Protocol (SIGNIFICANT_ISSUES)
+
+When workflow-efficiency-inspector returns `SIGNIFICANT_ISSUES`:
+
+1. **Pause** — Do not dispatch next batch
+2. **Present** — Show FINDINGS and RECOMMENDATIONS verbatim to user with options:
+   - Investigate further (mastermind)
+   - Apply recommendations immediately
+   - Continue without changes
+   - Other direction
+3. **Wait** — User must explicitly choose before continuing
+
+---
+
+## 4. Workflow Steps
+
+### 4.1 Verify Coder Has Prepared Changes
+
+Before requesting QA review, ensure:
+
+1. **Coder has committed all changes** - QA reviews committed code, not working directory
+2. **Test-runner has verified tests pass** - Dispatch test-runner before requesting review
+3. **Claims are prepared** - Document what was changed and why
+
+### 4.2 QA Review
+
+#### Handle the Verdict
+
+The QA subagent returns a **structured response** that you must parse.
+
+**See [`../../shared/docs/agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-format) for
+the complete response format specification.**
+
+**Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
+
+##### VERDICT: APPROVED
+
+QA has approved and signed. Extract `PAYLOAD` and `SIGNATURE` for the Pusher.
+
+**What to do:** Proceed to Push (4.3) with the payload and signature
+
+##### VERDICT: BLOCKED
+
+QA found issues. The `MESSAGE` field contains violation details.
+
+**What to do:**
+
+1. Read the violation in `MESSAGE`
+2. Re-dispatch coder to fix the identified issue
+3. Verify coder committed the fix
+4. Re-invoke QA to review the changes
+
+##### VERDICT: NEEDS_INPUT
+
+QA needs user clarification. The `MESSAGE` field contains the question.
+
+**What to do:**
+
+1. Present `MESSAGE` to the user verbatim
+2. Wait for user's response
+3. If user approves the current approach, re-invoke QA with the user's approval
+4. If user wants changes, dispatch coder to implement and commit, then re-invoke QA
+
+##### VERDICT: ERROR
+
+Signing failed (system issue). The `MESSAGE` field has details.
+
+**What to do:** Report to user and retry spawning subagent.
+
+#### Iteration Limits
+
+**Maximum 5 rounds** of QA review. If you cannot get approval after 5 rounds:
+
+1. Stop attempting
+2. Summarize the issues from each round
+3. Present to user and ask for guidance
+4. Wait for user direction before proceeding
+
+### 4.3 Push
+
+After QA approval, spawn the Pusher subagent **with the payload and signature**.
+
+#### Spawn the Pusher Subagent
+
+**IMPORTANT:** Before invoking, display the exact prompt in a code block. After receiving response, display the structured response block verbatim in a code block.
+
+**See [`../../shared/docs/agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#request-format-1) for
+the complete request format specification.**
+
+Pass the exact payload and signature from QA. Do not modify them.
+
+#### Handle the Result
+
+The Pusher subagent returns a **structured response** that you must parse.
+
+**See [`../../shared/docs/agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-format-1) for
+the complete response format specification.**
+
+**Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**
+
+##### RESULT: SUCCESS
+
+Push completed. Coder's changes are now on the remote.
+
+##### RESULT: FAILED
+
+Verification or push failed (invalid signature, HEAD not in approved commits, etc.).
+The `MESSAGE` field contains details.
+
+##### RESULT: ERROR
+
+Script or system error (execution failed, etc.).
+The `MESSAGE` field contains details.
+
+### 4.4 Push Checklist
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PUSH CHECKLIST (verify subagent work)                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ □ Coder's changes committed                                                 │
+│ □ Test-runner confirmed tests passing                                       │
+│ □ Claims prepared (original request, solution, layer, tests, user approval) │
+│ □ Subagent I/O displayed verbatim (prompt before, response after)           │
+│ □ Code-reviewer spawned → verdict received                                  │
+│   └─ BLOCKED: re-dispatch coder and retry                                   │
+│   └─ NEEDS INPUT: ask user and retry                                        │
+│   └─ APPROVED: save payload + signature                                     │
+│ □ Pusher spawned WITH payload + signature                                   │
+│   └─ Success: done                                                          │
+│   └─ Failure: follow error guidance                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. Plan Lifecycle
+
+### 5.1 New Feature Request
+
+1. Dispatch to **mastermind** for analysis
+2. Mastermind returns: APPROVED (decomposition) | USER_INFO_NEEDED | BLOCKED
+3. If APPROVED → present plan to user → wait for approval phrase
+4. After approval → execute batches autonomously
+5. If plan threatened → HALT → consult user
+
+### 5.2 Plan Deviation
+
+If execution reveals problems:
+
+1. Prompt mastermind to analyze (original plan, what failed, implications)
+2. Mastermind determines: alternative exists OR plan at risk
+3. If alternative → continue with discretion
+4. If plan at risk → HALT all work → consult user
+
+---
+
+## 6. Decision Heuristics
+
+Use these decision tables when evaluating how to handle situations.
+
+### 6.1 Quick Decision Reference
 
 | Situation        | Test                       | Action                            |
 | ---------------- | -------------------------- | --------------------------------- |
@@ -131,9 +384,104 @@ with each other.
 | Scope question   | Within plan?               | Yes: proceed / No: ask user       |
 | Blocker          | Alternative in bounds?     | Yes: try it / No: HALT            |
 
-**Full decision trees:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#decision-heuristics)
+### 6.2 Trivial Clarification
 
-## 4. Communication Style
+**Test:** Can this be answered from conversation history alone (zero codebase
+knowledge required)?
+
+| Condition                           | Action                             |
+| ----------------------------------- | ---------------------------------- |
+| Yes — answer exists in conversation | Direct response (no subagent)      |
+| No — requires codebase knowledge    | Delegate to minimind or mastermind |
+
+### 6.3 Simple Concerns
+
+**Test:** Does NOT put general plan in danger AND (hypervisor can clarify from
+context OR 95%+ certain of resolution)?
+
+| Condition                             | Action                                |
+| ------------------------------------- | ------------------------------------- |
+| True — low risk, clear resolution     | Re-engage subagent with clarification |
+| False — uncertain or plan-threatening | Involve user before proceeding        |
+
+### 6.4 Plan Bounds
+
+**Test:** Files AND functionality AND approach AND dependencies AND effort all
+match approved plan?
+
+| All Match? | Action              |
+| ---------- | ------------------- |
+| Yes        | Continue autonomous |
+| No         | See triggers below  |
+
+**"Involve user" triggers:**
+
+| Trigger          | Description                               |
+| ---------------- | ----------------------------------------- |
+| File creep       | Touching files not in plan scope          |
+| Feature creep    | Adding functionality beyond plan scope    |
+| Approach pivot   | Changing implementation strategy          |
+| Dependency add   | Introducing new packages or external deps |
+| Complexity spike | Effort significantly exceeds estimate     |
+
+**"HALT" triggers:**
+
+| Trigger               | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| Assumption invalid    | Core plan assumption proven false                |
+| Blocker               | Cannot proceed without external resolution       |
+| Scope explosion       | Task grows beyond reasonable batch boundary      |
+| Contradiction         | Plan requirements conflict with each other       |
+| Golden rule violation | Implementation would violate CLAUDE.md Section 2 |
+
+---
+
+## 7. User Approval and Overrides
+
+### 7.1 User Approval Claims
+
+You may claim "user explicitly approved X" and QA will accept this. However:
+
+- You must be truthful about what the user approved
+- QA may ask for specifics: "What exactly did the user approve?"
+- Lying about user approval is a severe breach
+
+If unsure whether user approval covers a specific case, ask the user first.
+
+### 7.2 User Override Push (Escape Hatch)
+
+If the normal workflow is unavailable, the user can authorize a direct push via
+an override token.
+
+#### Workflow
+
+1. Hypervisor explains why normal workflow cannot be used
+2. User provides their override token
+3. Hypervisor spawns pusher with override:
+
+```
+Task(
+  subagent_type: "pusher",
+  description: "Override push",
+  prompt: """
+    User has authorized override push.
+
+    OVERRIDE_TOKEN: <user-provided-token>
+    BRANCH: <branch-name>
+  """
+)
+```
+
+4. Pusher verifies the override token and executes push
+
+#### Why This Approach
+
+- **User authorization required**: Only user knows the override token
+- **Auditable**: Override pushes are logged separately
+
+---
+
+## 8. Communication Style
 
 | Principle   | Do                         | Don't                     |
 | ----------- | -------------------------- | ------------------------- |
