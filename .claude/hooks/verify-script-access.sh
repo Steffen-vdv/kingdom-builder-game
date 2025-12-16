@@ -3,28 +3,29 @@
 # Verify agent type before allowing access to agent-specific scripts
 #
 # Directory-based permission model:
-#   - .claude/agents/hypervisor/scripts/* → Only hypervisor (marker != s_3k2)
-#   - .claude/agents/sub-agent/scripts/*  → Only subagents (marker == s_3k2)
-#   - .claude/agents/shared/scripts/*     → Both (if this directory exists)
+#   - .claude/agents/hypervisor/scripts/* → Only hypervisor (context=hypervisor)
+#   - .claude/agents/sub-agent/scripts/*  → Only subagents (context=subagent)
+#   - .claude/agents/shared/scripts/*     → Both (always allowed)
 #
 # Security: Even if the hypervisor somehow gets crypto-gate, it still
 # cannot call the signing or verification scripts because this hook blocks access.
 
 COMMAND="${TOOL_INPUT_COMMAND:-}"
-MARKER_FILE="$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
 
-# Read agent type from marker file
-if [[ -f "$MARKER_FILE" ]]; then
-  AGENT_TYPE=$(cat "$MARKER_FILE" 2>/dev/null)
-else
-  AGENT_TYPE=""
+# Get context from the atomic context manager
+CTX_MGR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager"
+CONTEXT=$("$CTX_MGR/get-context.sh" 2>/dev/null)
+
+# Default to hypervisor if context manager not available
+if [[ -z "$CONTEXT" ]]; then
+	CONTEXT="hypervisor"
 fi
 
 # Check if calling subagent-specific scripts
 if [[ "$COMMAND" == *".claude/agents/sub-agent/scripts/"* ]]; then
-  # Only subagents can call these scripts (s_3k2 = subagent marker)
-  if [[ "$AGENT_TYPE" != "s_3k2" ]]; then
-    cat << 'BLOCKED'
+	# Only subagents can call these scripts
+	if [[ "$CONTEXT" != "subagent" ]]; then
+		cat << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  🛑 BLOCKED — Script requires subagent context                                ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
@@ -40,9 +41,9 @@ fi
 
 # Check if calling hypervisor scripts from subagent context
 if [[ "$COMMAND" == *".claude/agents/hypervisor/scripts/"* ]]; then
-  # Only hypervisor can call these scripts
-  if [[ "$AGENT_TYPE" == "s_3k2" ]]; then
-    cat << 'BLOCKED'
+	# Only hypervisor can call these scripts
+	if [[ "$CONTEXT" == "subagent" ]]; then
+		cat << 'BLOCKED'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  🛑 BLOCKED — Script requires hypervisor context                              ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝

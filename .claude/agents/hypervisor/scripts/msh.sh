@@ -20,6 +20,10 @@ fi
 
 echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 
+# Register hypervisor context (uses atomic counter-based context manager)
+# This ensures context is correctly set on resume/compact
+"$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-hypervisor.sh"
+
 # Output identity refresh, plan doc reminder, and HALT instruction
 # This overrides any "continue without asking" instructions from the handover summary
 cat << 'HANDOVER_INSTRUCTION'

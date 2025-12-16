@@ -24,8 +24,8 @@ fi
 # This is a security measure to prevent the hypervisor from signing approvals.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Set agent type marker (hypervisor)
-echo "m_7x9" > "$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
+# Register hypervisor context (uses atomic counter-based context manager)
+"$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-hypervisor.sh"
 
 # Copy settings to root location
 cp "$CLAUDE_PROJECT_DIR/.claude/settings.json" /root/.claude/settings.json 2>/dev/null
