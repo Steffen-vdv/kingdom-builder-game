@@ -59,25 +59,8 @@ Monitor subagent output. Determine appropriate followup:
 
 **Every subagent exchange must be shown verbatim to the user in code blocks.**
 
-**At dispatch** — show the prompt you're sending:
-
-```
-**Dispatching [Subagent Type]:**
-
-\`\`\`
-[Your full prompt to the subagent]
-\`\`\`
-```
-
-**At completion** — show the response you received:
-
-```
-**[Subagent Type] response:**
-
-\`\`\`
-[Complete response, unedited]
-\`\`\`
-```
+- **At dispatch:** Show `**Dispatching [Type]:** [full prompt]`
+- **At completion:** Show `**[Type] response:** [complete response, unedited]`
 
 Both input AND output must be visible. Only after showing both may you summarize.
 
@@ -136,44 +119,11 @@ If blocked → re-read this document → delegate to appropriate subagent.
 | Code Reviewer | Before push, adversarial QA                   | opus  |
 | Pusher        | After QA approval, push to remote             | —     |
 
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  DEPRECATED AGENTS — DO NOT USE                                               ║
-║                                                                               ║
-║  The built-in Explore and Plan agents are DEPRECATED for this project.        ║
-║  Use our custom agents instead:                                               ║
-║                                                                               ║
-║  • Explore → use minimind (subagent_type="minimind")                          ║
-║  • Plan → use mastermind (subagent_type="mastermind")                         ║
-║                                                                               ║
-║  If you find yourself about to use Explore or Plan, STOP and use the          ║
-║  replacement agent instead.                                                   ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
+**DEPRECATED:** Do NOT use built-in Explore/Plan agents. Use minimind/mastermind instead.
 
-**Task naming convention:**
+**Task naming:** `<Subagent Type> - #<N> - <description>` (e.g., `Coder - #1 - implement auth`)
 
-All Task tool calls must use this description format:
-
-```
-<Subagent Type> - #<N> - <descriptive text>
-```
-
-Examples:
-
-- `Coder - #1 - implement user authentication`
-- `Code Reviewer - #3 - QA before push`
-- `Test Runner - #2 - verify auth changes`
-- `Mastermind - #1 - analyze feature request`
-
-Use proper capitalization:
-
-- Coder (not "coder")
-- Code Reviewer (not "code-reviewer")
-- Test Runner (not "test-runner")
-- Mastermind (not "mastermind")
-- Minimind (not "minimind")
-- Pusher (not "pusher")
+**Full naming/capitalization rules:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#task-naming-convention)
 
 **Quick routing heuristic:**
 
@@ -181,94 +131,19 @@ Use proper capitalization:
 - <95% confident or non-trivial → mastermind
 - Code changes needed → coder
 
----
-
-## 4.5 Decision Heuristics
-
-Use these decision tables when evaluating how to handle situations.
-
-### Trivial Clarification
-
-**Test:** Can this be answered from conversation history alone (zero codebase
-knowledge required)?
-
-| Condition                           | Action                             |
-| ----------------------------------- | ---------------------------------- |
-| Yes — answer exists in conversation | Direct response (no subagent)      |
-| No — requires codebase knowledge    | Delegate to minimind or mastermind |
-
-### Simple Concerns
-
-**Test:** Does NOT put general plan in danger AND (hypervisor can clarify from
-context OR 95%+ certain of resolution)?
-
-| Condition                             | Action                                |
-| ------------------------------------- | ------------------------------------- |
-| True — low risk, clear resolution     | Re-engage subagent with clarification |
-| False — uncertain or plan-threatening | Involve user before proceeding        |
-
-### Plan Bounds
-
-**Test:** Files AND functionality AND approach AND dependencies AND effort all
-match approved plan?
-
-| All Match? | Action              |
-| ---------- | ------------------- |
-| Yes        | Continue autonomous |
-| No         | See triggers below  |
-
-**"Involve user" triggers:**
-
-| Trigger          | Description                               |
-| ---------------- | ----------------------------------------- |
-| File creep       | Touching files not in plan scope          |
-| Feature creep    | Adding functionality beyond plan scope    |
-| Approach pivot   | Changing implementation strategy          |
-| Dependency add   | Introducing new packages or external deps |
-| Complexity spike | Effort significantly exceeds estimate     |
-
-**"HALT" triggers:**
-
-| Trigger               | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| Assumption invalid    | Core plan assumption proven false                |
-| Blocker               | Cannot proceed without external resolution       |
-| Scope explosion       | Task grows beyond reasonable batch boundary      |
-| Contradiction         | Plan requirements conflict with each other       |
-| Golden rule violation | Implementation would violate CLAUDE.md Section 2 |
+**Decision heuristics:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#decision-heuristics)
 
 ---
 
 ## 5. Plan Lifecycle
 
-### 5.1 New Feature Request
+**Full details:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#plan-lifecycle)
 
-1. Dispatch to **mastermind** for analysis
-2. Mastermind returns: APPROVED (decomposition) | USER_INFO_NEEDED | BLOCKED
-3. If APPROVED → present plan to user → wait for approval phrase
-4. After approval → execute batches autonomously
-5. If plan threatened → HALT → consult user
+**Quick reference:**
 
-### 5.2 Plan Persistence
-
-Approved plans are written to: `/docs/projects/<project-name>/`
-
-Structure:
-
-- `pre-production.md` — Research, design decisions
-- `production.md` — Active implementation tracking
-- `post-production.md` — Retrospective
-
-First coder task after approval = write plan to repo.
-
-### 5.3 Plan Deviation
-
-If execution reveals problems:
-
-1. Prompt mastermind to analyze (original plan, what failed, implications)
-2. Mastermind determines: alternative exists OR plan at risk
-3. If alternative → continue with discretion
-4. If plan at risk → HALT all work → consult user
+- New feature → mastermind analysis → user approval → autonomous execution
+- Plans persist to `/docs/projects/<project-name>/`
+- Plan deviation → mastermind analysis → continue or HALT
 
 ---
 
@@ -277,7 +152,7 @@ If execution reveals problems:
 For detailed protocols, see:
 
 - [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md)
-- [`agent-task-workflow.md`](./agent-task-workflow.md)
+- [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md)
 
 For project rules:
 

@@ -12,7 +12,7 @@ the push workflow. It serves as the single source of truth for agent I/O specs.
 - `.claude/agents/sub-agent/docs/mastermind.md` - Conceptual QA agent definition
 - `.claude/agents/sub-agent/docs/minimind.md` - Fast research agent definition
 - `.claude/agents/hypervisor/docs/hypervisor.md` - Hypervisor orchestration guide
-- `.claude/agents/hypervisor/docs/agent-task-workflow.md` - Detailed workflow procedures
+- `.claude/agents/hypervisor/docs/hypervisor-agent-workflow.md` - Detailed workflow procedures
 
 ---
 
