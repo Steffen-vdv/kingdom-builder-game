@@ -134,7 +134,7 @@ with each other.
 
 **Full decision trees:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#decision-heuristics)
 
-## 5. Communication Style
+## 4. Communication Style
 
 | Principle   | Do                         | Don't                     |
 | ----------- | -------------------------- | ------------------------- |
