@@ -59,23 +59,27 @@ Monitor subagent output. Determine appropriate followup:
 
 **Every subagent exchange must be shown verbatim to the user in code blocks.**
 
-At dispatch, BEFORE the Task tool call, announce:
+**At dispatch** — show the prompt you're sending:
 
 ```
 **Dispatching [Subagent Type]:**
-```
-
-At completion, AFTER receiving response, show the complete response:
-
-```
-**[Subagent Type] response (verbatim):**
 
 \`\`\`
-[Complete response here, unedited]
+[Your full prompt to the subagent]
 \`\`\`
 ```
 
-Only AFTER showing verbatim response may you summarize or interpret.
+**At completion** — show the response you received:
+
+```
+**[Subagent Type] response:**
+
+\`\`\`
+[Complete response, unedited]
+\`\`\`
+```
+
+Both input AND output must be visible. Only after showing both may you summarize.
 
 ### Directive 5: Context Refresh
 
