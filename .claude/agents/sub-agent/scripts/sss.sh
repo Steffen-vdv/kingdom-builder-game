@@ -12,7 +12,9 @@ echo "=== SubagentStart $(date -Iseconds) ===" >> "$LOG"
 
 cd "$CLAUDE_PROJECT_DIR" || { echo "FAILED to cd" >> "$LOG"; exit 1; }
 
-echo "s_3k2" > "$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
+# Register subagent context (atomically increments counter)
+# This solves the race condition when multiple subagents run in parallel
+"$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-subagent.sh"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DOWNLOAD CRYPTO-GATE BINARY (if not present)
