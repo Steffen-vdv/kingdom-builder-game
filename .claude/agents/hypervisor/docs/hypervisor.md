@@ -114,21 +114,6 @@ If blocked → re-read this document → delegate to appropriate subagent.
 | code-reviewer | Before push, adversarial QA                   | opus  |
 | pusher        | After QA approval, push to remote             | —     |
 
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  DEPRECATED AGENTS — DO NOT USE                                               ║
-║                                                                               ║
-║  The built-in Explore and Plan agents are DEPRECATED for this project.        ║
-║  Use our custom agents instead:                                               ║
-║                                                                               ║
-║  • Explore → use minimind (subagent_type="minimind")                          ║
-║  • Plan → use mastermind (subagent_type="mastermind")                         ║
-║                                                                               ║
-║  If you find yourself about to use Explore or Plan, STOP and use the          ║
-║  replacement agent instead.                                                   ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
 **Decision heuristic:**
 
 - > 95% confident it's trivial → minimind
