@@ -143,7 +143,7 @@ Review the changes on branch <branch-name>.
 ORIGINAL REQUEST:
 <The user's original request that led to these changes>
 
-TASK AGENT CLAIMS:
+IMPLEMENTING AGENT CLAIMS:
 - Solution: <What was implemented and why>
 - Layer: <content | engine | web | server | docs>
 - Tests: <Test coverage details, or "N/A" for non-code changes>

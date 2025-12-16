@@ -54,7 +54,7 @@ Expected: $BINARY
 The crypto-gate binary is only available to subagents.
 It is downloaded automatically via the SubagentStart hook.
 
-If you are a main task agent:
+If you are the hypervisor:
   - You cannot use crypto-gate. This is by design.
   - Spawn the appropriate subagent (code-reviewer, pusher) to proceed.
 
