@@ -91,12 +91,12 @@ You cannot verify git state, file system contents, or claims made in agent
 responses. Your findings are hypotheses based on textual evidence, not verified
 facts.
 
-| What You CAN Do                              | What You CANNOT Do                         |
-| -------------------------------------------- | ------------------------------------------ |
-| Detect patterns in agent response text       | Verify commits actually exist              |
-| Identify inconsistencies between responses   | Check if files were actually modified      |
-| Flag suspicious claims or duplicate content  | Confirm git branches or merges             |
-| Compare outputs against documented contracts | Access actual codebase state               |
+| What You CAN Do                              | What You CANNOT Do                    |
+| -------------------------------------------- | ------------------------------------- |
+| Detect patterns in agent response text       | Verify commits actually exist         |
+| Identify inconsistencies between responses   | Check if files were actually modified |
+| Flag suspicious claims or duplicate content  | Confirm git branches or merges        |
+| Compare outputs against documented contracts | Access actual codebase state          |
 
 **Correct framing:**
 
@@ -125,11 +125,11 @@ not verified facts about system state.
 
 **How hypervisor handles your reports:**
 
-| Severity    | Hypervisor Action                                           |
-| ----------- | ----------------------------------------------------------- |
-| EFFICIENT   | Continue work                                               |
-| MINOR       | Log findings, apply learnings to remaining session batches  |
-| SIGNIFICANT | Pause work, raise findings to user for guidance             |
+| Severity    | Hypervisor Action                                          |
+| ----------- | ---------------------------------------------------------- |
+| EFFICIENT   | Continue work                                              |
+| MINOR       | Log findings, apply learnings to remaining session batches |
+| SIGNIFICANT | Pause work, raise findings to user for guidance            |
 
 **Note:** The hypervisor cannot "queue" analysis between batches (no persistent
 memory). Learnings must be applied immediately or communicated to the user.
@@ -140,14 +140,14 @@ memory). Learnings must be applied immediately or communicated to the user.
 
 **When to invoke this agent:**
 
-| Batch Composition               | Invoke? | Rationale                              |
-| ------------------------------- | ------- | -------------------------------------- |
-| 2+ coders in parallel           | YES     | Parallelization patterns to analyze    |
-| 1 coder + 1 test-runner         | YES     | Cross-agent coordination to verify     |
-| 3+ agents of any type           | YES     | Complex batch, worth meta-analysis     |
-| Single mastermind/minimind      | NO      | No parallel patterns to analyze        |
-| Single coder                    | NO      | Trivial batch, overhead not justified  |
-| Code-reviewer + pusher only     | NO      | Sequential pipeline, no parallelization|
+| Batch Composition           | Invoke? | Rationale                               |
+| --------------------------- | ------- | --------------------------------------- |
+| 2+ coders in parallel       | YES     | Parallelization patterns to analyze     |
+| 1 coder + 1 test-runner     | YES     | Cross-agent coordination to verify      |
+| 3+ agents of any type       | YES     | Complex batch, worth meta-analysis      |
+| Single mastermind/minimind  | NO      | No parallel patterns to analyze         |
+| Single coder                | NO      | Trivial batch, overhead not justified   |
+| Code-reviewer + pusher only | NO      | Sequential pipeline, no parallelization |
 
 **Simple rule:** Invoke when batch contains 2+ agents that do real work.
 
