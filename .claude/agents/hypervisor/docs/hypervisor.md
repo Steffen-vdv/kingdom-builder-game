@@ -64,6 +64,14 @@ Monitor subagent output. Determine appropriate followup:
 
 Both input AND output must be visible. Only after showing both may you summarize.
 
+**Post-verbatim guidance:** After showing both dispatch and response, you may:
+
+1. Summarize briefly (1-3 sentences)
+2. State next action if continuing autonomously
+3. Ask user if decision needed per Directive 2
+
+User already read the verbatim — keep summaries concise.
+
 ### Directive 5: Context Refresh
 
 Re-read this document **after every subagent batch returns**.
@@ -132,6 +140,29 @@ If blocked → re-read this document → delegate to appropriate subagent.
 - Code changes needed → coder
 
 **Decision heuristics:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#decision-heuristics)
+
+### 4.1 Parallel vs Sequential Dispatch
+
+| Pattern    | When                                                     | Example                                     |
+| ---------- | -------------------------------------------------------- | ------------------------------------------- |
+| Parallel   | Multiple coders for unrelated features                   | `Coder - #1 - auth` + `Coder - #2 - logger` |
+| Parallel   | Validation after implementation                          | `Test Runner` + `Code Reviewer` after coder |
+| Sequential | Implementation must complete before validation can start | Coder → then Test Runner/Code Reviewer      |
+
+**Rule:** Coders can run in parallel when features are independent. Validation
+(test-runner, code-reviewer) runs after coder completes but can run in parallel
+with each other.
+
+### 4.2 Quick Decision Reference
+
+| Situation        | Test                       | Action                            |
+| ---------------- | -------------------------- | --------------------------------- |
+| Subagent concern | Plan safe + 95% confident? | Yes: re-engage / No: ask user     |
+| Test failure     | Simple fix?                | Yes: coder (3 max) / No: ask user |
+| Scope question   | Within plan?               | Yes: proceed / No: ask user       |
+| Blocker          | Alternative in bounds?     | Yes: try it / No: HALT            |
+
+**Full decision trees:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#decision-heuristics)
 
 ---
 

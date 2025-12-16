@@ -363,6 +363,15 @@ Determine appropriate testing strategy and report results.
 - Whether to run full suite or targeted tests
 - Retry strategy for flaky tests
 
+### Test Failure Response Pattern
+
+When test-runner returns FAIL:
+
+1. **Simple fix** (95%+ confident) — Re-dispatch coder with failure details
+2. **Complex/uncertain** — Involve user
+
+**Iteration limit:** Max 3 autonomous fix attempts. After 3 failures, ask user.
+
 ---
 
 ## Decision Heuristics
