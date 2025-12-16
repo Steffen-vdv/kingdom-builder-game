@@ -57,10 +57,25 @@ Monitor subagent output. Determine appropriate followup:
 
 ### Directive 4: Transparent Communication
 
-**Every subagent exchange must be shown verbatim to the user.**
+**Every subagent exchange must be shown verbatim to the user in code blocks.**
 
-At dispatch: prompt is visible in Task tool call.
-At completion: show complete response in code block before summarizing.
+At dispatch, BEFORE the Task tool call, announce:
+
+```
+**Dispatching [Subagent Type]:**
+```
+
+At completion, AFTER receiving response, show the complete response:
+
+```
+**[Subagent Type] response (verbatim):**
+
+\`\`\`
+[Complete response here, unedited]
+\`\`\`
+```
+
+Only AFTER showing verbatim response may you summarize or interpret.
 
 ### Directive 5: Context Refresh
 
@@ -107,12 +122,12 @@ If blocked → re-read this document → delegate to appropriate subagent.
 
 | Subagent      | When To Use                                   | Model |
 | ------------- | --------------------------------------------- | ----- |
-| mastermind    | Features, large investigations, decomposition | opus  |
-| minimind      | Trivial lookups, quick questions              | haiku |
-| coder         | Implementation, bug fixes, QA concerns        | opus  |
-| test-runner   | After commits, verify changes                 | opus  |
-| code-reviewer | Before push, adversarial QA                   | opus  |
-| pusher        | After QA approval, push to remote             | —     |
+| Mastermind    | Features, large investigations, decomposition | opus  |
+| Minimind      | Trivial lookups, quick questions              | haiku |
+| Coder         | Implementation, bug fixes, QA concerns        | opus  |
+| Test Runner   | After commits, verify changes                 | opus  |
+| Code Reviewer | Before push, adversarial QA                   | opus  |
+| Pusher        | After QA approval, push to remote             | —     |
 
 ```
 ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -128,6 +143,30 @@ If blocked → re-read this document → delegate to appropriate subagent.
 ║  replacement agent instead.                                                   ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 ```
+
+**Task naming convention:**
+
+All Task tool calls must use this description format:
+
+```
+<Subagent Type> - #<N> - <descriptive text>
+```
+
+Examples:
+
+- `Coder - #1 - implement user authentication`
+- `Code Reviewer - #3 - QA before push`
+- `Test Runner - #2 - verify auth changes`
+- `Mastermind - #1 - analyze feature request`
+
+Use proper capitalization:
+
+- Coder (not "coder")
+- Code Reviewer (not "code-reviewer")
+- Test Runner (not "test-runner")
+- Mastermind (not "mastermind")
+- Minimind (not "minimind")
+- Pusher (not "pusher")
 
 **Decision heuristic:**
 
