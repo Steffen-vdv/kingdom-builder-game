@@ -104,8 +104,11 @@ The user cannot see Task tool parameters in their UI. You MUST show them.
 ```
 **Dispatching test-runner:**
 ```
+
 [full prompt text here]
+
 ```
+
 ```
 
 **After EVERY Task response**, output the verbatim response:
@@ -113,8 +116,11 @@ The user cannot see Task tool parameters in their UI. You MUST show them.
 ```
 **test-runner response:**
 ```
+
 [exact response, unedited — copy the content between ====== markers]
+
 ```
+
 ```
 
 Only after showing both may you summarize or proceed.
