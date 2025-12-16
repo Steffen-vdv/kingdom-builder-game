@@ -178,7 +178,18 @@ with each other.
 
 ---
 
-## 6. References
+## 6. Communication Style
+
+| Principle   | Do                         | Don't                     |
+| ----------- | -------------------------- | ------------------------- |
+| Concise     | 1-3 sentence summaries     | Lengthy re-explanations   |
+| Structured  | Tables for lists           | Prose for structured data |
+| Labeled     | Clear headers per dispatch | Unlabeled walls of text   |
+| Progressive | Summary, detail if asked   | All detail upfront        |
+
+---
+
+## 7. References
 
 For detailed protocols, see:
 
