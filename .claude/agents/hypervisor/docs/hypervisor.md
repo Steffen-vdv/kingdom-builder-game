@@ -118,14 +118,15 @@ If blocked → re-read this document → delegate to appropriate subagent.
 
 ## 4. Subagent Dispatch Table
 
-| Subagent      | When To Use                                   | Model |
-| ------------- | --------------------------------------------- | ----- |
-| Mastermind    | Features, large investigations, decomposition | opus  |
-| Minimind      | Trivial lookups, quick questions              | haiku |
-| Coder         | Implementation, bug fixes, QA concerns        | opus  |
-| Test Runner   | After commits, verify changes                 | opus  |
-| Code Reviewer | Before push, adversarial QA                   | opus  |
-| Pusher        | After QA approval, push to remote             | —     |
+| Subagent                      | When To Use                                    | Model |
+| ----------------------------- | ---------------------------------------------- | ----- |
+| Mastermind                    | Features, large investigations, decomposition  | opus  |
+| Minimind                      | Trivial lookups, quick questions               | haiku |
+| Coder                         | Implementation, bug fixes, QA concerns         | opus  |
+| Test Runner                   | After commits, verify changes                  | opus  |
+| Code Reviewer                 | Before push, adversarial QA                    | opus  |
+| Pusher                        | After QA approval, push to remote              | —     |
+| Workflow Efficiency Inspector | After bulk task runs, analyze dispatch quality | haiku |
 
 **DEPRECATED:** Do NOT use built-in Explore/Plan agents. Use minimind/mastermind instead.
 

@@ -33,6 +33,9 @@ This document serves all agent types:
 3. **Test-runner subagent**: Core principles for test analysis
 4. **Code-reviewer subagent**: Fundamental rules to enforce
 5. **Pusher subagent**: Core principles (minimal interaction with this doc)
+6. **Mastermind subagent**: Deep analysis, planning, critical review
+7. **Minimind subagent**: Quick lookups, light analysis, simple tasks
+8. **Workflow Efficiency Inspector subagent**: Workflow meta-analysis
 
 Each agent type has specialized documentation in `.claude/agents/`. This
 document provides the shared foundation all agents must understand.
@@ -252,13 +255,16 @@ tasks and delegates execution to specialized subagents.
 
 **Documentation by agent type:**
 
-| Agent         | Primary Doc                                      | Purpose                  |
-| ------------- | ------------------------------------------------ | ------------------------ |
-| Hypervisor    | `.claude/agents/hypervisor/docs/hypervisor.md`   | Orchestration rules      |
-| Coder         | `.claude/agents/sub-agent/docs/coder.md`         | Implementation standards |
-| Test-runner   | `.claude/agents/sub-agent/docs/test-runner.md`   | Test analysis strategy   |
-| Code-reviewer | `.claude/agents/sub-agent/docs/code-reviewer.md` | QA criteria              |
-| Pusher        | `.claude/agents/sub-agent/docs/pusher.md`        | Push verification        |
+| Agent                         | Primary Doc                                                      | Purpose                  |
+| ----------------------------- | ---------------------------------------------------------------- | ------------------------ |
+| Hypervisor                    | `.claude/agents/hypervisor/docs/hypervisor.md`                   | Orchestration rules      |
+| Coder                         | `.claude/agents/sub-agent/docs/coder.md`                         | Implementation standards |
+| Test-runner                   | `.claude/agents/sub-agent/docs/test-runner.md`                   | Test analysis strategy   |
+| Code-reviewer                 | `.claude/agents/sub-agent/docs/code-reviewer.md`                 | QA criteria              |
+| Pusher                        | `.claude/agents/sub-agent/docs/pusher.md`                        | Push verification        |
+| Mastermind                    | `.claude/agents/sub-agent/docs/mastermind.md`                    | Deep analysis, planning  |
+| Minimind                      | `.claude/agents/sub-agent/docs/minimind.md`                      | Quick lookups, research  |
+| Workflow Efficiency Inspector | `.claude/agents/sub-agent/docs/workflow-efficiency-inspector.md` | Workflow meta-analysis   |
 
 ### 3.2 Request Verification Protocol
 
