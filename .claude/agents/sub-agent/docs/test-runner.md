@@ -55,17 +55,18 @@ you report them for the coder to address.
 
 Analyze the changes and choose the appropriate strategy:
 
-| Strategy | When to Use | Indicators | Command |
-|----------|-------------|------------|---------|
-| **1. No Tests** | Docs/comments/config only | Only `.md` files; only comments changed; only formatting/whitespace | Report PASS (no execution) |
-| **2. Targeted Package** | Single package changes | All files in `packages/<name>/`; no cross-package imports | `pnpm --filter @kingdom-builder/<pkg> test` |
-| **3. Related Test Files** | Specific module changes | `src/foo/bar.ts` has `tests/foo/bar.test.ts`; localized changes | `pnpm vitest run packages/<pkg>/tests/path/to/specific.test.ts` |
-| **4. Full Test Suite** | Shared/cross-package code | `packages/protocol/`; `engine/src/context.ts`; multi-package; test utilities | `pnpm test:parallel` |
-| **5. Snapshot Regen** | UI or content changes | `web/src/components/`; `contents/src/`; displayed text/visual output | `pnpm generate:snapshots` then verify |
-| **6. Infrastructure** | Builder/validation changes | `contents/src/infrastructure/**`; builder logic; `testing/src/factories/**` | `pnpm test:infrastructure` |
-| **7. Full Verification** | Major changes or pre-push | Explicit request; multi-package; architectural; pre-push final check | `pnpm verify` |
+| Strategy                  | When to Use                | Indicators                                                                   | Command                                                         |
+| ------------------------- | -------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **1. No Tests**           | Docs/comments/config only  | Only `.md` files; only comments changed; only formatting/whitespace          | Report PASS (no execution)                                      |
+| **2. Targeted Package**   | Single package changes     | All files in `packages/<name>/`; no cross-package imports                    | `pnpm --filter @kingdom-builder/<pkg> test`                     |
+| **3. Related Test Files** | Specific module changes    | `src/foo/bar.ts` has `tests/foo/bar.test.ts`; localized changes              | `pnpm vitest run packages/<pkg>/tests/path/to/specific.test.ts` |
+| **4. Full Test Suite**    | Shared/cross-package code  | `packages/protocol/`; `engine/src/context.ts`; multi-package; test utilities | `pnpm test:parallel`                                            |
+| **5. Snapshot Regen**     | UI or content changes      | `web/src/components/`; `contents/src/`; displayed text/visual output         | `pnpm generate:snapshots` then verify                           |
+| **6. Infrastructure**     | Builder/validation changes | `contents/src/infrastructure/**`; builder logic; `testing/src/factories/**`  | `pnpm test:infrastructure`                                      |
+| **7. Full Verification**  | Major changes or pre-push  | Explicit request; multi-package; architectural; pre-push final check         | `pnpm verify`                                                   |
 
 **Notes:**
+
 - Strategy 6 catches infrastructure bugs that unit tests miss (validates builder output)
 - Strategy 7 runs sequentially: check (format+typecheck+lint) then test:infrastructure then test:coverage
 
