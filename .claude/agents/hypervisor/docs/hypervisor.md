@@ -153,15 +153,15 @@ If blocked → re-read this document → delegate to appropriate subagent.
 All Task tool calls must use this description format:
 
 ```
-<Subagent Type> - #<N> - <descriptive text>
+<Subagent Type> - #<N> - <Descriptive text>
 ```
 
 Examples:
 
-- `Coder - #1 - implement user authentication`
+- `Coder - #1 - Implement user authentication`
 - `Code Reviewer - #3 - QA before push`
-- `Test Runner - #2 - verify auth changes`
-- `Mastermind - #1 - analyze feature request`
+- `Test Runner - #2 - Verify auth changes`
+- `Mastermind - #1 - Analyze feature request`
 
 Use proper capitalization:
 
@@ -171,6 +171,8 @@ Use proper capitalization:
 - Mastermind (not "mastermind")
 - Minimind (not "minimind")
 - Pusher (not "pusher")
+
+The same applies to the <Descriptive text>.
 
 **Decision heuristic:**
 
