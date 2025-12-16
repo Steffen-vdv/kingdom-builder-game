@@ -1,7 +1,12 @@
-# Agent Task Workflow
+# Hypervisor Agent Workflow
 
 This document describes the complete workflow for completing and submitting code
-changes. All pushes require QA review with cryptographic signing.
+changes, including plan lifecycle management. All pushes require QA review with
+cryptographic signing.
+
+**Canonical protocol definitions:** See
+[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md)
+for all subagent request/response formats.
 
 ---
 
@@ -271,3 +276,180 @@ Task(
 │   └─ Failure: follow error guidance                                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Plan Lifecycle
+
+### New Feature Request
+
+1. Dispatch to **mastermind** for analysis
+2. Mastermind returns: APPROVED (decomposition) | USER_INFO_NEEDED | BLOCKED
+3. If APPROVED → present plan to user → wait for approval phrase
+4. After approval → execute batches autonomously
+5. If plan threatened → HALT → consult user
+
+### Plan Persistence
+
+Approved plans are written to: `/docs/projects/<project-name>/`
+
+Structure:
+
+- `pre-production.md` — Research, design decisions
+- `production.md` — Active implementation tracking
+- `post-production.md` — Retrospective
+
+First coder task after approval = write plan to repo.
+
+### Plan Deviation
+
+If execution reveals problems:
+
+1. Prompt mastermind to analyze (original plan, what failed, implications)
+2. Mastermind determines: alternative exists OR plan at risk
+3. If alternative → continue with discretion
+4. If plan at risk → HALT all work → consult user
+
+---
+
+## Subagent Dispatch Patterns
+
+### Test-Runner Dispatch
+
+When dispatching to the test-runner subagent, **do not specify exact commands**.
+The test-runner is an expert at determining the appropriate testing strategy
+based on the context of changes.
+
+**WRONG pattern — Hypervisor dictates commands:**
+
+```
+Commands to run:
+- pnpm run typecheck
+- pnpm run lint
+- pnpm run test
+```
+
+**CORRECT pattern — Hypervisor provides context, test-runner decides strategy:**
+
+```
+Commits to test: abc123, def456
+Files changed:
+- packages/engine/src/effects/resource-effect.ts
+- packages/engine/src/effects/resource-effect.test.ts
+- packages/protocol/src/types/effects.ts
+
+Determine appropriate testing strategy and report results.
+```
+
+**Why this matters:**
+
+- Test-runner knows which test suites are relevant for which file patterns
+- Test-runner can optimize test ordering (fast checks first, slow tests last)
+- Test-runner understands package interdependencies
+- Hypervisor prescribing commands creates brittleness and bypasses expertise
+
+**What hypervisor should provide:**
+
+| Field         | Source                | Purpose                             |
+| ------------- | --------------------- | ----------------------------------- |
+| Commits       | Coder's response      | Scope of changes to validate        |
+| Files changed | Coder's response      | Context for test strategy selection |
+| Task context  | Original user request | Understanding of what was built     |
+
+**What test-runner determines:**
+
+- Which test commands to run
+- Order of execution (typecheck before tests, etc.)
+- Whether to run full suite or targeted tests
+- Retry strategy for flaky tests
+
+### Test Failure Response Pattern
+
+When test-runner returns FAIL:
+
+1. **Simple fix** (95%+ confident) — Re-dispatch coder with failure details
+2. **Complex/uncertain** — Involve user
+
+**Iteration limit:** Max 3 autonomous fix attempts. After 3 failures, ask user.
+
+---
+
+## Decision Heuristics
+
+Use these decision tables when evaluating how to handle situations.
+
+### Trivial Clarification
+
+**Test:** Can this be answered from conversation history alone (zero codebase
+knowledge required)?
+
+| Condition                           | Action                             |
+| ----------------------------------- | ---------------------------------- |
+| Yes — answer exists in conversation | Direct response (no subagent)      |
+| No — requires codebase knowledge    | Delegate to minimind or mastermind |
+
+### Simple Concerns
+
+**Test:** Does NOT put general plan in danger AND (hypervisor can clarify from
+context OR 95%+ certain of resolution)?
+
+| Condition                             | Action                                |
+| ------------------------------------- | ------------------------------------- |
+| True — low risk, clear resolution     | Re-engage subagent with clarification |
+| False — uncertain or plan-threatening | Involve user before proceeding        |
+
+### Plan Bounds
+
+**Test:** Files AND functionality AND approach AND dependencies AND effort all
+match approved plan?
+
+| All Match? | Action              |
+| ---------- | ------------------- |
+| Yes        | Continue autonomous |
+| No         | See triggers below  |
+
+**"Involve user" triggers:**
+
+| Trigger          | Description                               |
+| ---------------- | ----------------------------------------- |
+| File creep       | Touching files not in plan scope          |
+| Feature creep    | Adding functionality beyond plan scope    |
+| Approach pivot   | Changing implementation strategy          |
+| Dependency add   | Introducing new packages or external deps |
+| Complexity spike | Effort significantly exceeds estimate     |
+
+**"HALT" triggers:**
+
+| Trigger               | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| Assumption invalid    | Core plan assumption proven false                |
+| Blocker               | Cannot proceed without external resolution       |
+| Scope explosion       | Task grows beyond reasonable batch boundary      |
+| Contradiction         | Plan requirements conflict with each other       |
+| Golden rule violation | Implementation would violate CLAUDE.md Section 2 |
+
+---
+
+## Task Naming Convention
+
+All Task tool calls must use this description format:
+
+```
+<Subagent Type> - #<N> - <descriptive text>
+```
+
+Examples:
+
+- `Coder - #1 - implement user authentication`
+- `Code Reviewer - #3 - QA before push`
+- `Test Runner - #2 - verify auth changes`
+- `Mastermind - #1 - analyze feature request`
+
+Use proper capitalization:
+
+- Coder (not "coder")
+- Code Reviewer (not "code-reviewer")
+- Test Runner (not "test-runner")
+- Mastermind (not "mastermind")
+- Minimind (not "minimind")
+- Pusher (not "pusher")

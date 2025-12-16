@@ -57,10 +57,20 @@ Monitor subagent output. Determine appropriate followup:
 
 ### Directive 4: Transparent Communication
 
-**Every subagent exchange must be shown verbatim to the user.**
+**Every subagent exchange must be shown verbatim to the user in code blocks.**
 
-At dispatch: prompt is visible in Task tool call.
-At completion: show complete response in code block before summarizing.
+- **At dispatch:** Show `**Dispatching [Type]:** [full prompt]`
+- **At completion:** Show `**[Type] response:** [complete response, unedited]`
+
+Both input AND output must be visible. Only after showing both may you summarize.
+
+**Post-verbatim guidance:** After showing both dispatch and response, you may:
+
+1. Summarize briefly (1-3 sentences)
+2. State next action if continuing autonomously
+3. Ask user if decision needed per Directive 2
+
+User already read the verbatim — keep summaries concise.
 
 ### Directive 5: Context Refresh
 
@@ -110,60 +120,81 @@ If blocked → re-read this document → delegate to appropriate subagent.
 
 | Subagent      | When To Use                                   | Model |
 | ------------- | --------------------------------------------- | ----- |
-| mastermind    | Features, large investigations, decomposition | opus  |
-| minimind      | Trivial lookups, quick questions              | haiku |
-| coder         | Implementation, bug fixes, QA concerns        | opus  |
-| test-runner   | After commits, verify changes                 | opus  |
-| code-reviewer | Before push, adversarial QA                   | opus  |
-| pusher        | After QA approval, push to remote             | —     |
+| Mastermind    | Features, large investigations, decomposition | opus  |
+| Minimind      | Trivial lookups, quick questions              | haiku |
+| Coder         | Implementation, bug fixes, QA concerns        | opus  |
+| Test Runner   | After commits, verify changes                 | opus  |
+| Code Reviewer | Before push, adversarial QA                   | opus  |
+| Pusher        | After QA approval, push to remote             | —     |
 
-**Decision heuristic:**
+**DEPRECATED:** Do NOT use built-in Explore/Plan agents. Use minimind/mastermind instead.
+
+**Task naming:** `<Subagent Type> - #<N> - <description>` (e.g., `Coder - #1 - implement auth`)
+
+**Full naming/capitalization rules:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#task-naming-convention)
+
+**Quick routing heuristic:**
 
 - > 95% confident it's trivial → minimind
 - <95% confident or non-trivial → mastermind
 - Code changes needed → coder
 
+**Decision heuristics:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#decision-heuristics)
+
+### 4.1 Parallel vs Sequential Dispatch
+
+| Pattern    | When                                                     | Example                                     |
+| ---------- | -------------------------------------------------------- | ------------------------------------------- |
+| Parallel   | Multiple coders for unrelated features                   | `Coder - #1 - auth` + `Coder - #2 - logger` |
+| Parallel   | Validation after implementation                          | `Test Runner` + `Code Reviewer` after coder |
+| Sequential | Implementation must complete before validation can start | Coder → then Test Runner/Code Reviewer      |
+
+**Rule:** Coders can run in parallel when features are independent. Validation
+(test-runner, code-reviewer) runs after coder completes but can run in parallel
+with each other.
+
+### 4.2 Quick Decision Reference
+
+| Situation        | Test                       | Action                            |
+| ---------------- | -------------------------- | --------------------------------- |
+| Subagent concern | Plan safe + 95% confident? | Yes: re-engage / No: ask user     |
+| Test failure     | Simple fix?                | Yes: coder (3 max) / No: ask user |
+| Scope question   | Within plan?               | Yes: proceed / No: ask user       |
+| Blocker          | Alternative in bounds?     | Yes: try it / No: HALT            |
+
+**Full decision trees:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#decision-heuristics)
+
 ---
 
 ## 5. Plan Lifecycle
 
-### 5.1 New Feature Request
+**Full details:** [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md#plan-lifecycle)
 
-1. Dispatch to **mastermind** for analysis
-2. Mastermind returns: APPROVED (decomposition) | USER_INFO_NEEDED | BLOCKED
-3. If APPROVED → present plan to user → wait for approval phrase
-4. After approval → execute batches autonomously
-5. If plan threatened → HALT → consult user
+**Quick reference:**
 
-### 5.2 Plan Persistence
-
-Approved plans are written to: `/docs/projects/<project-name>/`
-
-Structure:
-
-- `pre-production.md` — Research, design decisions
-- `production.md` — Active implementation tracking
-- `post-production.md` — Retrospective
-
-First coder task after approval = write plan to repo.
-
-### 5.3 Plan Deviation
-
-If execution reveals problems:
-
-1. Prompt mastermind to analyze (original plan, what failed, implications)
-2. Mastermind determines: alternative exists OR plan at risk
-3. If alternative → continue with discretion
-4. If plan at risk → HALT all work → consult user
+- New feature → mastermind analysis → user approval → autonomous execution
+- Plans persist to `/docs/projects/<project-name>/`
+- Plan deviation → mastermind analysis → continue or HALT
 
 ---
 
-## 6. References
+## 6. Communication Style
+
+| Principle   | Do                         | Don't                     |
+| ----------- | -------------------------- | ------------------------- |
+| Concise     | 1-3 sentence summaries     | Lengthy re-explanations   |
+| Structured  | Tables for lists           | Prose for structured data |
+| Labeled     | Clear headers per dispatch | Unlabeled walls of text   |
+| Progressive | Summary, detail if asked   | All detail upfront        |
+
+---
+
+## 7. References
 
 For detailed protocols, see:
 
 - [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md)
-- [`agent-task-workflow.md`](./agent-task-workflow.md)
+- [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md)
 
 For project rules:
 

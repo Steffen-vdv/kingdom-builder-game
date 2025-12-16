@@ -40,7 +40,9 @@ describe('Infrastructure: Agent Path Validation', () => {
 	describe('Hypervisor Files', () => {
 		it('should have hypervisor documentation', () => {
 			expect(
-				pathExists('.claude/agents/hypervisor/docs/agent-task-workflow.md'),
+				pathExists(
+					'.claude/agents/hypervisor/docs/hypervisor-agent-workflow.md',
+				),
 			).toBe(true);
 		});
 
