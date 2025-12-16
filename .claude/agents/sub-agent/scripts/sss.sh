@@ -88,7 +88,7 @@ download_crypto_gate() {
 download_crypto_gate
 
 # Set agent type marker (subagent)
-echo "s_3k2" > "$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
+echo -n "s_3k2" > "$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
 
 echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 exit 0
