@@ -416,6 +416,32 @@ However, you CAN and SHOULD ask:
 - "WHAT specifically did the user approve?"
 - "Does their approval cover THIS specific behavior?"
 
+## Lessons Learned
+
+### December 2025: Parallel Subagent Race Condition
+
+In December 2025, a race condition in subagent marker management passed QA review
+and required post-commit fixes. The issue: when multiple subagents ran in parallel,
+the first to complete would reset the hypervisor marker via binary state flipping,
+even though other subagents were still running and legitimately needed context
+restrictions.
+
+**What was missed:** Simple binary state (marker exists / doesn't exist) is
+incompatible with parallel execution. The fix required atomic reference counting
+([commit 41f0288](https://github.com/kingdom-builder-game/commits/41f0288)).
+
+**The correct implementation:** See `.claude/agents/shared/scripts/context-manager/`
+for reference counting patterns:
+
+- `register-subagent.sh` — Atomically increments counter when subagent starts
+- `unregister-subagent.sh` — Atomically decrements counter when subagent completes
+- Context only returns to hypervisor when counter reaches 0
+- All operations use `flock` for atomic read-modify-write
+
+**Prevention:** When reviewing any code that uses lifecycle hooks (start/stop,
+acquire/release), apply the "Concurrency & Lifecycle Safety" checklist above.
+Always ask: "What happens when N instances run in parallel?"
+
 ## Your Attitude
 
 - Be skeptical, not hostile
