@@ -10,31 +10,6 @@ for all subagent request/response formats.
 
 ---
 
-## Workflow Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PUSH WORKFLOW                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  1. PREPARE                                                                 │
-│     └─→ Commit your changes                                                 │
-│     └─→ Prepare your claims (root cause, layer, tests, user approval)       │
-│                                                                             │
-│  2. QA REVIEW                                                               │
-│     └─→ Spawn code-reviewer subagent                                        │
-│     └─→ Handle verdict: BLOCKED → fix, NEEDS INPUT → ask user               │
-│     └─→ If APPROVED: receive {payload, signature} from QA                   │
-│                                                                             │
-│  3. PUSH                                                                    │
-│     └─→ Spawn pusher subagent WITH {payload, signature}                     │
-│     └─→ Pusher runs verify-and-push.sh to verify and push                     │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## Step 1: Prepare Your Changes
 
 Before requesting QA review:
@@ -374,12 +349,13 @@ When test-runner returns FAIL:
 
 ### Workflow Efficiency Inspector Integration
 
-After every bulk task run, include workflow-efficiency-inspector in the next batch.
+After every task or batch task run, include workflow-efficiency-inspector in the next batch.
+If your next action is not a batch (single task), make it a batch by including workflow-efficiency-inspector.
 
 **What to pass:**
 
-- All dispatch prompts from previous batch
-- All responses from previous batch
+- All dispatch prompts from previous task/batch
+- All responses from previous task/batch
 
 **How to handle reports:**
 
@@ -499,22 +475,12 @@ match approved plan?
 All Task tool calls must use this description format:
 
 ```
-<Subagent Type> - #<N> - <descriptive text>
+<Subagent Type> - #<N> - <Descriptive text>
 ```
 
 Examples:
 
-- `Coder - #1 - implement user authentication`
+- `Coder - #1 - Implement user authentication`
 - `Code Reviewer - #3 - QA before push`
-- `Test Runner - #2 - verify auth changes`
-- `Mastermind - #1 - analyze feature request`
-
-Use proper capitalization:
-
-- Coder (not "coder")
-- Code Reviewer (not "code-reviewer")
-- Test Runner (not "test-runner")
-- Mastermind (not "mastermind")
-- Minimind (not "minimind")
-- Pusher (not "pusher")
-- Workflow Efficiency Inspector (not "workflow-efficiency-inspector")
+- `Test Runner - #2 - Verify auth changes`
+- `Mastermind - #1 - Analyze feature request`
