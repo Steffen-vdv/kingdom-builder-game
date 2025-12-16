@@ -383,14 +383,58 @@ After every bulk task run, include workflow-efficiency-inspector in the next bat
 
 **How to handle reports:**
 
-| Status             | Action                                               |
-| ------------------ | ---------------------------------------------------- |
-| EFFICIENT          | No action needed                                     |
-| MINOR_ISSUES       | Queue for minimind/mastermind analysis in next batch |
-| SIGNIFICANT_ISSUES | Raise to user immediately with improvement proposal  |
+| Status             | Action                                                               |
+| ------------------ | -------------------------------------------------------------------- |
+| EFFICIENT          | No action needed                                                     |
+| MINOR_ISSUES       | Log in current conversation, apply learnings to remaining dispatches |
+| SIGNIFICANT_ISSUES | Raise to user immediately before continuing work                     |
+
+**Note:** Since hypervisor has no persistent memory between batches, "queuing"
+is not real. Apply learnings immediately or escalate to user.
 
 **Key principle:** This agent never blocks core mission. Run in parallel with
 next batch.
+
+### Escalation Protocol (SIGNIFICANT_ISSUES)
+
+When the workflow-efficiency-inspector returns `SIGNIFICANT_ISSUES`:
+
+**Step 1: Pause current work**
+
+Do not dispatch the next batch. The efficiency issues require user attention.
+
+**Step 2: Present findings to user**
+
+Use this exact format:
+
+```
+## Workflow Efficiency Alert
+
+**Findings:**
+[FINDINGS from inspector response verbatim]
+
+**Recommendations:**
+[RECOMMENDATIONS from inspector response verbatim]
+
+**Options:**
+1. Investigate further (spawn mastermind for deeper analysis)
+2. Apply recommendations immediately
+3. Continue without changes (acknowledged inefficiency)
+4. Other direction
+```
+
+**Step 3: Wait for user direction**
+
+Do NOT continue autonomously. The user must explicitly choose an option.
+
+**Step 4: Resume based on user decision**
+
+| User Choice                  | Hypervisor Action                                          |
+| ---------------------------- | ---------------------------------------------------------- |
+| 1 - Investigate              | Spawn mastermind with findings for root cause analysis     |
+| 2 - Apply recommendations    | Integrate recommendations into remaining dispatch strategy |
+| 3 - Continue without changes | Resume normal workflow, log acknowledged inefficiency      |
+| 4 - Other                    | Follow user's explicit instructions                        |
 
 ---
 
@@ -473,3 +517,4 @@ Use proper capitalization:
 - Mastermind (not "mastermind")
 - Minimind (not "minimind")
 - Pusher (not "pusher")
+- Workflow Efficiency Inspector (not "workflow-efficiency-inspector")
