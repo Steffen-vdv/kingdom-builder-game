@@ -1,39 +1,66 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'child_process';
-import * as fs from 'fs';
 import * as path from 'path';
 
 /**
  * Infrastructure Test: Verify Script Access Control
  *
- * Tests the marker-based access control system that prevents:
- * - Main agents from accessing subagent scripts
- * - Subagents from accessing main agent scripts
+ * Tests the context-manager-based access control system that prevents:
+ * - Hypervisor from accessing subagent scripts
+ * - Subagents from accessing hypervisor scripts
  *
  * This verifies the security model implemented in
- * .claude/hooks/verify-script-access.sh
+ * .claude/hooks/verify-script-access.sh by managing agent context via
+ * the context-manager scripts (.claude/agents/shared/scripts/).
  *
- * Note: "main-agent" was renamed to "hypervisor" but the marker system
- * still uses 'main' vs 'sub' terminology for the agent types.
+ * Context state: XDG_RUNTIME_DIR/claude/context-manager/state.json
+ * with atomic access via file locking.
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
-const MARKER_FILE = path.join(PROJECT_ROOT, '.claude/.__ctx_9f8e7d__');
 const HOOK_SCRIPT = path.join(
 	PROJECT_ROOT,
 	'.claude/hooks/verify-script-access.sh',
 );
+const REGISTER_HYPERVISOR_SCRIPT = path.join(
+	PROJECT_ROOT,
+	'.claude/agents/shared/scripts/context-manager/register-hypervisor.sh',
+);
+const REGISTER_SUBAGENT_SCRIPT = path.join(
+	PROJECT_ROOT,
+	'.claude/agents/shared/scripts/context-manager/register-subagent.sh',
+);
 
 describe('Infrastructure: Script Access Control', () => {
-	// Helper to set agent marker
+	// Helper to set agent context via context-manager scripts
 	const setAgentMarker = (type: 'main' | 'sub' | 'none') => {
-		if (type === 'none') {
-			if (fs.existsSync(MARKER_FILE)) {
-				fs.unlinkSync(MARKER_FILE);
+		try {
+			if (type === 'none' || type === 'main') {
+				// Reset to hypervisor context with subagent_count = 0
+				execSync(`bash "${REGISTER_HYPERVISOR_SCRIPT}"`, {
+					encoding: 'utf-8',
+					stdio: 'pipe',
+				});
 			}
-		} else {
-			const marker = type === 'sub' ? 's_3k2' : 'm_1a8';
-			fs.writeFileSync(MARKER_FILE, marker, 'utf-8');
+
+			if (type === 'sub') {
+				// First ensure we start from hypervisor
+				execSync(`bash "${REGISTER_HYPERVISOR_SCRIPT}"`, {
+					encoding: 'utf-8',
+					stdio: 'pipe',
+				});
+				// Then increment to subagent context
+				execSync(`bash "${REGISTER_SUBAGENT_SCRIPT}"`, {
+					encoding: 'utf-8',
+					stdio: 'pipe',
+				});
+			}
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			throw new Error(
+				`Failed to set agent marker to '${type}': ${errorMessage}`,
+			);
 		}
 	};
 
@@ -65,16 +92,26 @@ describe('Infrastructure: Script Access Control', () => {
 	};
 
 	beforeEach(() => {
-		// Clean up marker file before each test
-		if (fs.existsSync(MARKER_FILE)) {
-			fs.unlinkSync(MARKER_FILE);
+		// Reset context to hypervisor before each test for clean state
+		try {
+			execSync(`bash "${REGISTER_HYPERVISOR_SCRIPT}"`, {
+				encoding: 'utf-8',
+				stdio: 'pipe',
+			});
+		} catch {
+			// Initialization may fail on first run, that's ok
 		}
 	});
 
 	afterEach(() => {
-		// Clean up marker file after each test
-		if (fs.existsSync(MARKER_FILE)) {
-			fs.unlinkSync(MARKER_FILE);
+		// Reset context to hypervisor after each test for clean state
+		try {
+			execSync(`bash "${REGISTER_HYPERVISOR_SCRIPT}"`, {
+				encoding: 'utf-8',
+				stdio: 'pipe',
+			});
+		} catch {
+			// Cleanup errors are non-fatal
 		}
 	});
 

@@ -19,6 +19,11 @@
 CTX_MGR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager"
 CONTEXT=$("$CTX_MGR/get-context.sh" 2>/dev/null)
 
+# Default to hypervisor if context manager fails (fail-closed)
+if [[ -z "$CONTEXT" ]]; then
+	CONTEXT="hypervisor"
+fi
+
 # Subagents are not restricted
 if [[ "$CONTEXT" != "hypervisor" ]]; then
 	exit 0
