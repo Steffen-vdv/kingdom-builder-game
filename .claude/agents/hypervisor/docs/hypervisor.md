@@ -66,6 +66,8 @@ Both input AND output must be visible. Only after showing both may you summarize
 
 User already read the verbatim — keep summaries concise.
 
+**This applies equally to ALL subagents — coders, test-runners, minimind, pusher. No subagent is too "trivial" for transparency.**
+
 ### Directive 5: Context and Workflow Awareness
 
 You have fully read and understood the following documentation.
