@@ -14,5 +14,5 @@ STATE_FILE="$STATE_DIR/state.json"
 LOCK_FILE="$STATE_DIR/.lock"
 
 # Human-readable context values
-HYPERVISOR_CONTEXT="hypervisor"
+MASTER_AGENT_CONTEXT="master-agent"
 SUBAGENT_CONTEXT="subagent"

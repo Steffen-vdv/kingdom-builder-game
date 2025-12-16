@@ -1,73 +1,14 @@
 # Agent Intercommunication Protocols
 
-This document defines the request and response formats for all subagents used in
-the push workflow. It serves as the single source of truth for agent I/O specs.
+This document defines the request and response formats for subagents used in
+the QA and push workflow. It serves as the single source of truth for agent I/O specs.
 
 **Referenced by:**
 
-- `.claude/agents/sub-agent/docs/coder.md` - Implementation agent definition
-- `.claude/agents/sub-agent/docs/test-runner.md` - Test analysis agent definition
-- `.claude/agents/sub-agent/docs/code-reviewer.md` - QA agent definition
-- `.claude/agents/sub-agent/docs/pusher.md` - Pusher agent definition
-- `.claude/agents/sub-agent/docs/mastermind.md` - Conceptual QA agent definition
-- `.claude/agents/sub-agent/docs/minimind.md` - Fast research agent definition
-- `.claude/agents/hypervisor/docs/hypervisor.md` - Hypervisor orchestration guide
-
----
-
-## Coder Protocol
-
-The coder subagent implements features, fixes bugs, and addresses concerns.
-
-### Request Format
-
-Hypervisor invokes via Task tool with this prompt structure:
-
-```
-TASK: <Clear description of what to implement>
-
-CONTEXT:
-- Relevant files: <files the coder should read first>
-- Related systems: <what this integrates with>
-- Constraints: <specific requirements or limitations>
-
-ACCEPTANCE CRITERIA:
-- <Criterion 1>
-- <Criterion 2>
-
-SCOPE BOUNDARIES:
-- DO: <what is in scope>
-- DO NOT: <what is explicitly out of scope>
-```
-
-### Response Format
-
-Coder returns a structured response:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-CODER_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: SUCCESS|BLOCKED|ERROR
-COMMITS: ["<sha1>", "<sha2>", ...]
-MESSAGE:
-<Summary of implementation or explanation of blocker>
-═══════════════════════════════════════════════════════════════════════════════
-CODER_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-**Field descriptions:**
-
-- **STATUS**: Outcome (SUCCESS/BLOCKED/ERROR)
-- **COMMITS**: Array of commit SHAs created (empty if BLOCKED/ERROR)
-- **MESSAGE**: Human-readable summary or blocker explanation
-
-**Status meanings:**
-
-- `SUCCESS`: Implementation complete, commits created
-- `BLOCKED`: Cannot proceed, needs clarification or guidance
-- `ERROR`: System failure during implementation
+- `.claude/agents/sub-agent/docs/test-runner.md` - Test analysis agent
+- `.claude/agents/sub-agent/docs/code-reviewer.md` - QA agent
+- `.claude/agents/sub-agent/docs/pusher.md` - Push agent
+- `.claude/agents/master-agent/docs/master-agent.md` - Main agent
 
 ---
 
@@ -77,47 +18,26 @@ The test-runner subagent analyzes changes and executes appropriate tests.
 
 ### Request Format
 
-Hypervisor invokes via Task tool with this prompt structure:
+Master-agent invokes via Task tool:
 
 ```
 Analyze and test the changes in commit(s): <sha1>, <sha2>, ...
 
 BRANCH: <branch-name>
-SCOPE: <targeted | full | verify>
+FILES_CHANGED:
+- <file1>
+- <file2>
 ```
-
-**Scope options:**
-
-- `targeted`: Analyze changes and run only relevant tests
-- `full`: Run full test suite (pnpm test:parallel)
-- `verify`: Run complete verification (pnpm verify)
 
 ### Response Format
 
-Test-runner returns a structured response:
-
 ```
-═══════════════════════════════════════════════════════════════════════════════
-TEST_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: PASS|FAIL|ERROR
+TEST_STATUS: PASS|FAIL|ERROR
 STRATEGY: <strategy name>
 TESTS_RUN: <number or "none">
 FAILURES: [{"file": "...", "test": "...", "error": "..."}]
-MESSAGE:
-<Strategy rationale and summary>
-═══════════════════════════════════════════════════════════════════════════════
-TEST_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
+MESSAGE: <summary>
 ```
-
-**Field descriptions:**
-
-- **STATUS**: Test outcome (PASS/FAIL/ERROR)
-- **STRATEGY**: Which test strategy was chosen and why
-- **TESTS_RUN**: Number of tests executed, or "none" if no tests needed
-- **FAILURES**: Array of failure objects (empty if PASS)
-- **MESSAGE**: Human-readable summary of test run
 
 **Status meanings:**
 
@@ -129,71 +49,46 @@ TEST_RESPONSE_END
 
 ## Code Reviewer Protocol
 
-The code-reviewer subagent performs adversarial QA review before push.
+The code-reviewer subagent performs QA review before push.
 
 ### Request Format
 
-Hypervisor invokes via Task tool with this prompt structure:
+Master-agent invokes via Task tool:
 
 ```
 Review the changes on branch <branch-name>.
 
 ORIGINAL REQUEST:
-<The user's original request that led to these changes>
+<The user's original request>
 
-IMPLEMENTING AGENT CLAIMS:
-- Solution: <What was implemented and why>
-- Layer: <content | engine | web | server | docs>
-- Tests: <Test coverage details, or "N/A" for non-code changes>
-- User approval: <What the user explicitly approved, or "N/A">
+CHANGES MADE:
+- <summary of implementation>
 
-SPECIFIC QA FOCUS (optional):
-<Any specific aspects to pay attention to>
+USER APPROVAL: <what the user explicitly approved, or "N/A">
 ```
-
-**Field descriptions:**
-
-- **ORIGINAL REQUEST**: The user's original request/requirements. This gives QA
-  context about intent, not just implementation.
-- **Solution**: What was implemented. For bugs, explain the fix. For features,
-  explain what was added. For refactoring, explain the improvement.
-- **Layer**: Which architectural layer owns the change
-- **Tests**: Test coverage or "N/A" if not applicable
-- **User approval**: What the user explicitly approved, or "N/A"
-- **SPECIFIC QA FOCUS**: Optional additional guidance for QA
 
 ### Response Format
 
-QA agent returns a structured response:
-
 ```
-═══════════════════════════════════════════════════════════════════════════════
+===============================================================================
 QA_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
+===============================================================================
 VERDICT: APPROVED|BLOCKED|NEEDS_INPUT|ERROR
 PAYLOAD: <json for APPROVED, empty otherwise>
 SIGNATURE: <signature for APPROVED, empty otherwise>
 MESSAGE:
-<Multi-line details - use line breaks and numbered lists for readability>
-═══════════════════════════════════════════════════════════════════════════════
+<details>
+===============================================================================
 QA_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
+===============================================================================
 ```
-
-**Field descriptions:**
-
-- **VERDICT**: Review outcome (APPROVED/BLOCKED/NEEDS_INPUT/ERROR)
-- **PAYLOAD**: JSON string for APPROVED (contains commit list, diff hash, etc.),
-  empty otherwise
-- **SIGNATURE**: Cryptographic signature for APPROVED, empty otherwise
-- **MESSAGE**: Human-readable details (violations, questions, approval summary)
 
 **Verdict meanings:**
 
-- `APPROVED`: Changes are approved, proceed to push
+- `APPROVED`: Changes approved, proceed to push (includes payload + signature)
 - `BLOCKED`: Violations found, must fix and retry
 - `NEEDS_INPUT`: Unclear requirements, user must clarify
-- `ERROR`: Signing failed, retry subagent invocation
+- `ERROR`: Signing failed, retry subagent
 
 ---
 
@@ -203,18 +98,16 @@ The pusher subagent verifies QA approval and executes the push.
 
 ### Request Format
 
-Hypervisor invokes via Task tool with ONE of two modes:
+Master-agent invokes via Task tool with ONE of two modes:
 
 #### Mode 1: QA Approval (normal workflow)
 
 ```
 Push the approved changes.
 
-PAYLOAD:
-<json string from QA - do not modify>
-
-SIGNATURE:
-<hex string from QA - do not modify>
+PAYLOAD: <json string from QA>
+SIGNATURE: <hex string from QA>
+BRANCH: <branch-name>
 ```
 
 #### Mode 2: User Override (escape hatch)
@@ -228,150 +121,29 @@ BRANCH: <branch-name>
 
 ### Response Format
 
-Pusher agent returns a structured response:
-
 ```
-═══════════════════════════════════════════════════════════════════════════════
+===============================================================================
 PUSH_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
+===============================================================================
 RESULT: SUCCESS|FAILED|ERROR
 BRANCH: <branch-name or empty>
 COMMIT: <commit-sha or empty>
-MESSAGE:
-<Human-readable details - use line breaks and numbered lists for readability>
-═══════════════════════════════════════════════════════════════════════════════
+MESSAGE: <details>
+===============================================================================
 PUSH_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
+===============================================================================
 ```
-
-**Field descriptions:**
-
-- **RESULT**: Push outcome (SUCCESS/FAILED/ERROR)
-- **BRANCH**: Branch name on success, empty on failure
-- **COMMIT**: Commit SHA on success, empty on failure
-- **MESSAGE**: Human-readable details (success confirmation, error details)
 
 **Result meanings:**
 
 - `SUCCESS`: Push completed successfully
-- `FAILED`: Verification or push failed (invalid signature, HEAD mismatch, etc.)
-- `ERROR`: Script or system error (crypto-gate not found, execution failed, etc.)
-
----
-
-## Mastermind Protocol
-
-The mastermind subagent performs deep analysis and conceptual QA before implementation.
-
-### Request Format
-
-Hypervisor invokes via Task tool with this prompt structure:
-
-```
-Analyze this request:
-<description of feature, investigation, or task>
-
-CONTEXT:
-- Current state: <relevant background>
-- Related systems: <what this might touch>
-- User's goal: <what they're trying to achieve>
-
-SPECIFIC CONCERNS (optional):
-<Any aspects to pay special attention to>
-```
-
-### Response Format
-
-Mastermind returns a structured response:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-MASTERMIND_RESPONSE_START
-═══════════════════════════════════════════════════════════════════════════════
-STATUS: APPROVED|USER_INFO_NEEDED|BLOCKED
-MESSAGE:
-<Multi-line analysis, decomposition, questions, or rejection reasoning>
-═══════════════════════════════════════════════════════════════════════════════
-MASTERMIND_RESPONSE_END
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-**Field descriptions:**
-
-- **STATUS**: Analysis outcome (APPROVED/USER_INFO_NEEDED/BLOCKED)
-- **MESSAGE**: Detailed analysis including decomposition (for APPROVED), specific
-  questions (for USER_INFO_NEEDED), or rejection reasoning (for BLOCKED)
-
-**Status meanings:**
-
-- `APPROVED`: Concept clear, returns detailed implementation decomposition
-- `USER_INFO_NEEDED`: Ambiguous request, returns specific questions to clarify
-- `BLOCKED`: Request is fundamentally flawed, returns reasoning
-
----
-
-## Minimind Protocol
-
-The minimind subagent performs fast lookups and trivial research.
-
-### Request Format
-
-Hypervisor invokes via Task tool with simple queries:
-
-```
-<Simple question or lookup request>
-
-Examples:
-- "What's in settings.json?"
-- "Do we have any golang files in the repo?"
-- "Where is the resource system defined?"
-```
-
-### Response Format
-
-Minimind returns a simple, unstructured response:
-
-```
-Searched for: <what was searched>
-Found: <what was found>
-```
-
-No formal START/END markers. Minimind is for trivial tasks only.
+- `FAILED`: Verification failed (invalid signature, HEAD mismatch)
+- `ERROR`: System error (crypto-gate not found, etc.)
 
 ---
 
 ## Protocol Design Principles
 
-1. **Structured parsing**: All responses use START/END markers for reliable
-   extraction (except minimind, which handles trivial lookups only)
-2. **Multi-line messages**: MESSAGE fields encourage line breaks and formatting
-3. **Consistent vocabulary**: Similar field names and structure across protocols
-4. **Empty vs missing**: Empty string for optional fields, not omitted
-5. **Single source of truth**: This document is referenced, not duplicated
-
----
-
-## Hypervisor Context Refresh
-
-Subagent responses should end with this block to prompt hypervisor context refresh:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-HYPERVISOR: MANDATORY CONTEXT REFRESH — DO THIS NOW
-═══════════════════════════════════════════════════════════════════════════════
-STOP. Before processing this response, you MUST:
-
-1. RE-READ: .claude/agents/hypervisor/docs/hypervisor.md (Section 1: Directives)
-   Your identity and constraints are defined there. Refresh them NOW.
-
-2. VERIFY COMPLIANCE — Check each box or HALT:
-   [ ] I will show this COMPLETE exchange verbatim to user (Directive 4)
-   [ ] I have checked if user involvement is needed (Directive 2)
-   [ ] My next action aligns with the approved plan
-   [ ] I am orchestrating, NOT implementing (hypervisor role)
-
-FAILURE TO COMPLY = PROTOCOL VIOLATION. Do NOT proceed without verification.
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-This is the single source of truth for this block. Subagent docs reference this location.
+1. **Structured parsing**: Responses use START/END markers for reliable extraction
+2. **Consistent vocabulary**: Similar field names across protocols
+3. **Single source of truth**: This document is referenced, not duplicated

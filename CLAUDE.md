@@ -220,40 +220,37 @@ duplication that should be eliminated.
 
 ## 3. Agent Architecture
 
-### 3.1 Hypervisor Model
+### 3.1 Master Agent Model
 
-The main agent operates as a **hypervisor** — an orchestrator that decomposes
-tasks and delegates execution to specialized subagents.
+The main agent (master-agent) has full system access and implements tasks
+directly. Subagents are used only for QA review and push operations.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│  HYPERVISOR (Main Agent)                                                        │
-│  • Receives user requests                                                       │
-│  • Decomposes into atomic tasks                                                 │
-│  • Dispatches parallel subagent batches                                         │
-│  • Evaluates results, plans next batch                                          │
-│  • Checkpoints with user before each batch                                      │
+│  MASTER AGENT                                                                   │
+│  • Full system access (read, write, edit, bash)                                 │
+│  • Implements features, fixes bugs, runs tests                                  │
+│  • Only restriction: git push must go through QA flow                           │
 └─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    When ready to push:
                                     │
             ┌───────────────────────┼───────────────────────┐
             ↓                       ↓                       ↓
     ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
-    │    coder      │       │  test-runner  │       │ code-reviewer │
-    │ (implements)  │       │ (validates)   │       │ (QA gate)     │
+    │  test-runner  │       │ code-reviewer │       │    pusher     │
+    │  (validates)  │       │  (QA gate)    │       │ (push w/sig)  │
     └───────────────┘       └───────────────┘       └───────────────┘
 ```
 
 **Documentation by agent type:**
 
-| Agent         | Primary Doc                                      | Purpose                  |
-| ------------- | ------------------------------------------------ | ------------------------ |
-| Hypervisor    | `.claude/agents/hypervisor/docs/hypervisor.md`   | Orchestration rules      |
-| Coder         | `.claude/agents/sub-agent/docs/coder.md`         | Implementation standards |
-| Test-runner   | `.claude/agents/sub-agent/docs/test-runner.md`   | Test analysis strategy   |
-| Code-reviewer | `.claude/agents/sub-agent/docs/code-reviewer.md` | QA criteria              |
-| Pusher        | `.claude/agents/sub-agent/docs/pusher.md`        | Push verification        |
-| Mastermind    | `.claude/agents/sub-agent/docs/mastermind.md`    | Deep analysis, planning  |
-| Minimind      | `.claude/agents/sub-agent/docs/minimind.md`      | Quick lookups, research  |
+| Agent         | Primary Doc                                        | Purpose                |
+| ------------- | -------------------------------------------------- | ---------------------- |
+| Master-agent  | `.claude/agents/master-agent/docs/master-agent.md` | Main agent identity    |
+| Test-runner   | `.claude/agents/sub-agent/docs/test-runner.md`     | Test analysis strategy |
+| Code-reviewer | `.claude/agents/sub-agent/docs/code-reviewer.md`   | QA criteria            |
+| Pusher        | `.claude/agents/sub-agent/docs/pusher.md`          | Push verification      |
 
 ### 3.2 Request Verification Protocol
 

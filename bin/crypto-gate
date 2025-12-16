@@ -44,25 +44,7 @@ else
 fi
 
 if [[ ! -x "$BINARY" ]]; then
-  cat >&2 << EOF
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║  ❌ CRYPTO-GATE BINARY NOT FOUND                                              ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-
-Expected: $BINARY
-
-The crypto-gate binary is only available to subagents.
-It is downloaded automatically via the SubagentStart hook.
-
-If you are the hypervisor:
-  - You cannot use crypto-gate. This is by design.
-  - Spawn the appropriate subagent (code-reviewer, pusher) to proceed.
-
-If you are a subagent and see this error:
-  - The SubagentStart hook may have failed.
-  - Report this error to the main agent.
-
-EOF
+  echo "Binary not found: $BINARY" >&2
   exit 1
 fi
 
