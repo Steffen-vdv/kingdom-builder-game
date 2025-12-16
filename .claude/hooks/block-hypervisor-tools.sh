@@ -18,7 +18,7 @@ JSON_INPUT=$(cat)
 TOOL_NAME=$(echo "$JSON_INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 
 # Whitelist of allowed tools for hypervisor
-ALLOWED_TOOLS=("Task" "Read" "Glob")
+ALLOWED_TOOLS=("Task" "Read" "Glob" "Grep" "TodoWrite")
 
 # Check if tool is allowed
 TOOL_ALLOWED=false
@@ -43,7 +43,6 @@ Delegate implementation work to appropriate subagent:
   - Pushing → pusher
   - Deep analysis → mastermind
   - Quick lookups → minimind
-  - Workflow analysis → workflow-efficiency-inspector
 
 Re-read: .claude/agents/hypervisor/docs/hypervisor.md
 BLOCKED
@@ -55,7 +54,7 @@ if [[ "$TOOL_NAME" == "Task" ]]; then
   SUBAGENT_TYPE=$(echo "$JSON_INPUT" | jq -r '.tool_input.subagent_type // empty' 2>/dev/null)
 
   # Allowlist of valid subagent_types
-  ALLOWED_SUBAGENTS=("mastermind" "minimind" "coder" "test-runner" "code-reviewer" "pusher" "workflow-efficiency-inspector")
+  ALLOWED_SUBAGENTS=("mastermind" "minimind" "coder" "test-runner" "code-reviewer" "pusher")
 
   SUBAGENT_ALLOWED=false
   for allowed in "${ALLOWED_SUBAGENTS[@]}"; do
@@ -72,13 +71,12 @@ if [[ "$TOOL_NAME" == "Task" ]]; then
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 Valid subagent_types are:
-  - mastermind                    (deep analysis, planning)
-  - minimind                      (quick lookups, exploration)
-  - coder                         (code implementation)
-  - test-runner                   (running and analyzing tests)
-  - code-reviewer                 (QA review)
-  - pusher                        (push verification)
-  - workflow-efficiency-inspector (meta-analysis of agent workflows)
+  - mastermind    (deep analysis, planning)
+  - minimind      (quick lookups, exploration)
+  - coder         (code implementation)
+  - test-runner   (running and analyzing tests)
+  - code-reviewer (QA review)
+  - pusher        (push verification)
 
 Re-read: .claude/agents/hypervisor/docs/hypervisor.md (Section 4)
 BLOCKED
