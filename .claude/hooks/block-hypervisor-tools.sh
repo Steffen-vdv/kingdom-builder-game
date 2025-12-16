@@ -35,7 +35,7 @@ if [[ "$TOOL_ALLOWED" == "false" ]]; then
 ║  BLOCKED — Hypervisor cannot use tool: $TOOL_NAME
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-As hypervisor, you may only use: Task
+As hypervisor, you may only use: ${ALLOWED_TOOLS}
 
 Delegate implementation work to appropriate subagent:
   - Code changes → coder
