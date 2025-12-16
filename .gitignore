@@ -26,3 +26,4 @@ bin/crypto-gate.exe
 
 # Claude context files
 .claude/.__ctx*
+/nul
