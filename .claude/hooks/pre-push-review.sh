@@ -44,11 +44,9 @@ cat >&2 << 'BLOCKED'
 Direct git push is not allowed. You must use the verified push workflow.
 
 WORKFLOW:
-1. QA subagent reviews code and signs approval
-2. QA returns {payload, signature} to hypervisor (or BLOCKED/NEEDS_INPUT verdict on failure)
-3. Hypervisor passes {payload, signature} to Pusher subagent
-4. Pusher verifies approval signature and executes git push
-5. Pusher returns SUCCESS/FAILED/ERROR response to hypervisor (see `.claude/agents/shared/docs/agent-intercommunication-protocols.md`)
+1. Run test-runner to verify tests pass
+2. Run code-reviewer to get QA approval (returns payload + signature)
+3. Run pusher with payload + signature to push
 
 BLOCKED
 exit 2

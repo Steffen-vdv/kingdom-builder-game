@@ -1,6 +1,6 @@
 ---
 name: pusher
-description: Verifies QA approval signature and pushes to remote. Receives payload and signature from hypervisor.
+description: Verifies QA approval signature and pushes to remote. Receives payload and signature from master-agent.
 model: haiku
 tools: Bash, Read
 ---
@@ -25,7 +25,7 @@ ALL verification happens inside verify-and-push.sh via crypto-gate.
 **See [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#pusher-protocol)
 for the complete request format specification.**
 
-The hypervisor provides ONE of two modes:
+The master-agent provides ONE of two modes:
 
 - **Mode 1: QA Approval** — Normal workflow with payload and signature from QA
 - **Mode 2: User Override** — Escape hatch with override token from user
@@ -74,13 +74,13 @@ The code has been pushed to the remote repository.
 
 If verify-and-push.sh fails, report the error clearly:
 
-| Error               | Meaning                       | What To Report                                          |
-| ------------------- | ----------------------------- | ------------------------------------------------------- |
-| Missing arguments   | No payload/signature provided | "Hypervisor must provide payload and signature from QA" |
-| Verification failed | System error                  | "Report ERROR to hypervisor"                            |
-| Invalid signature   | Signature verification failed | "Re-run QA review to get fresh signature"               |
-| HEAD not in commits | New commits after QA          | "Re-run QA review for current commits"                  |
-| Git push failed     | Network/permission issue      | "Check remote access and retry"                         |
+| Error               | Meaning                       | What To Report                                            |
+| ------------------- | ----------------------------- | --------------------------------------------------------- |
+| Missing arguments   | No payload/signature provided | "Master-agent must provide payload and signature from QA" |
+| Verification failed | System error                  | "Report ERROR to master-agent"                            |
+| Invalid signature   | Signature verification failed | "Re-run QA review to get fresh signature"                 |
+| HEAD not in commits | New commits after QA          | "Re-run QA review for current commits"                    |
+| Git push failed     | Network/permission issue      | "Check remote access and retry"                           |
 
 **Example failure report:**
 
@@ -89,7 +89,7 @@ If verify-and-push.sh fails, report the error clearly:
 
 Error: Invalid signature
 
-HYPERVISOR FOLLOW-UP:
+MASTER-AGENT FOLLOW-UP:
 → The signature verification failed
 → Re-run QA review to get a fresh payload and signature
 → Ensure the payload is passed exactly as QA returned it
@@ -108,7 +108,7 @@ HYPERVISOR FOLLOW-UP:
 **Your response MUST end with the exact structured format defined in
 [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-format-1).**
 
-The hypervisor parses this format to extract the result. Do not deviate from
+The master-agent parses this format to extract the result. Do not deviate from
 this structure.
 
 See [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#pusher-protocol)

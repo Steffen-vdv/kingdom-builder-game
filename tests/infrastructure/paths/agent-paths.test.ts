@@ -19,10 +19,10 @@ const pathExists = (relativePath: string): boolean => {
 
 describe('Infrastructure: Agent Path Validation', () => {
 	describe('Agent Directory Structure', () => {
-		it('should have hypervisor directory with required subdirectories', () => {
-			expect(pathExists('.claude/agents/hypervisor')).toBe(true);
-			expect(pathExists('.claude/agents/hypervisor/docs')).toBe(true);
-			expect(pathExists('.claude/agents/hypervisor/scripts')).toBe(true);
+		it('should have master-agent directory with required subdirectories', () => {
+			expect(pathExists('.claude/agents/master-agent')).toBe(true);
+			expect(pathExists('.claude/agents/master-agent/docs')).toBe(true);
+			expect(pathExists('.claude/agents/master-agent/scripts')).toBe(true);
 		});
 
 		it('should have sub-agent directory with required subdirectories', () => {
@@ -37,10 +37,14 @@ describe('Infrastructure: Agent Path Validation', () => {
 		});
 	});
 
-	describe('Hypervisor Files', () => {
-		it('should have hypervisor scripts', () => {
-			expect(pathExists('.claude/agents/hypervisor/scripts/msh.sh')).toBe(true);
-			expect(pathExists('.claude/agents/hypervisor/scripts/mss.sh')).toBe(true);
+	describe('Master-Agent Files', () => {
+		it('should have master-agent scripts', () => {
+			expect(pathExists('.claude/agents/master-agent/scripts/msh.sh')).toBe(
+				true,
+			);
+			expect(pathExists('.claude/agents/master-agent/scripts/mss.sh')).toBe(
+				true,
+			);
 		});
 	});
 
@@ -83,11 +87,8 @@ describe('Infrastructure: Agent Path Validation', () => {
 
 	describe('Hook Files', () => {
 		it('should have security hooks', () => {
-			expect(pathExists('.claude/hooks/verify-script-access.sh')).toBe(true);
 			expect(pathExists('.claude/hooks/pre-push-review.sh')).toBe(true);
-			expect(pathExists('.claude/hooks/block-marker-access.sh')).toBe(true);
-			expect(pathExists('.claude/hooks/block-setup-scripts.sh')).toBe(true);
-			expect(pathExists('.claude/hooks/block-direct-downloads.sh')).toBe(true);
+			expect(pathExists('.claude/hooks/block-bin-access.sh')).toBe(true);
 		});
 	});
 
@@ -106,8 +107,8 @@ describe('Infrastructure: Agent Path Validation', () => {
 			const subagentStartCommand =
 				settings.hooks.SubagentStart[0].hooks[0].command;
 
-			expect(sessionStartupCommand).toContain('hypervisor/scripts/mss.sh');
-			expect(sessionResumeCommand).toContain('hypervisor/scripts/msh.sh');
+			expect(sessionStartupCommand).toContain('master-agent/scripts/mss.sh');
+			expect(sessionResumeCommand).toContain('master-agent/scripts/msh.sh');
 			expect(subagentStartCommand).toContain('sub-agent/scripts/sss.sh');
 		});
 	});

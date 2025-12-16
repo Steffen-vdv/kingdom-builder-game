@@ -1,12 +1,12 @@
 #!/bin/bash
-# Decrement subagent count and restore hypervisor context if count hits 0
+# Decrement subagent count and restore master-agent context if count hits 0
 #
 # Called by subagent-cleanup.sh (SubagentStop hook).
 # Atomically decrements the subagent counter. When count goes to 0,
-# switches context back to hypervisor.
+# switches context back to master-agent.
 #
 # This solves the race condition: only the LAST subagent to complete
-# (the one that decrements count to 0) will restore hypervisor context.
+# (the one that decrements count to 0) will restore master-agent context.
 # Earlier completions just decrement the counter.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,7 +37,7 @@ fi
 
 # Determine new context based on count
 if [[ $NEW_COUNT -eq 0 ]]; then
-	NEW_CONTEXT="$HYPERVISOR_CONTEXT"
+	NEW_CONTEXT="$MASTER_AGENT_CONTEXT"
 else
 	NEW_CONTEXT="$SUBAGENT_CONTEXT"
 fi

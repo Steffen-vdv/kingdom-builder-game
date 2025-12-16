@@ -1,11 +1,7 @@
 #!/bin/bash
 
 # Subagent setup hook for Kingdom Builder
-# Runs when subagents spawn (SubagentStart hook)
 # Downloads crypto-gate binary so subagents can sign QA approvals
-#
-# SECURITY: This script should ONLY be invoked via the SubagentStart hook.
-# Direct execution by agents is blocked by PreToolUse hook.
 
 LOG="/tmp/claude-subagent-setup-hook.log"
 echo "=== SubagentStart $(date -Iseconds) ===" >> "$LOG"
@@ -13,7 +9,6 @@ echo "=== SubagentStart $(date -Iseconds) ===" >> "$LOG"
 cd "$CLAUDE_PROJECT_DIR" || { echo "FAILED to cd" >> "$LOG"; exit 1; }
 
 # Register subagent context (atomically increments counter)
-# This solves the race condition when multiple subagents run in parallel
 "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-subagent.sh"
 
 # ═══════════════════════════════════════════════════════════════════════════════

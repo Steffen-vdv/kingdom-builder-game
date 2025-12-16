@@ -1,5 +1,5 @@
 #!/bin/bash
-# Read current context (outputs "hypervisor" or "subagent")
+# Read current context (outputs "master-agent" or "subagent")
 #
 # Uses flock for atomic read to prevent race conditions when
 # multiple subagents are running in parallel.
@@ -16,12 +16,12 @@ flock -s 200
 
 # Read context from state file
 if [[ -f "$STATE_FILE" ]]; then
-	CONTEXT=$(jq -r '.context // "hypervisor"' "$STATE_FILE" 2>/dev/null)
+	CONTEXT=$(jq -r '.context // "master-agent"' "$STATE_FILE" 2>/dev/null)
 	if [[ -z "$CONTEXT" || "$CONTEXT" == "null" ]]; then
-		CONTEXT="$HYPERVISOR_CONTEXT"
+		CONTEXT="$MASTER_AGENT_CONTEXT"
 	fi
 else
-	CONTEXT="$HYPERVISOR_CONTEXT"
+	CONTEXT="$MASTER_AGENT_CONTEXT"
 fi
 
 flock -u 200

@@ -3,11 +3,11 @@
 #
 # Called by sss.sh (SubagentStart hook).
 # Atomically increments the subagent counter. When count goes from 0 to 1,
-# switches context from hypervisor to subagent.
+# switches context from master-agent to subagent.
 #
 # This solves the race condition: multiple parallel subagents each increment
 # the counter, and only the LAST one to finish (count goes to 0) will
-# restore the hypervisor context.
+# restore the master-agent context.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/state.sh"

@@ -22,7 +22,7 @@ fi
 if [[ ! -f "$STATE_FILE" ]]; then
 	cat > "$STATE_FILE" << EOF
 {
-  "context": "$HYPERVISOR_CONTEXT",
+  "context": "$MASTER_AGENT_CONTEXT",
   "subagent_count": 0,
   "last_updated": "$(date -Iseconds)"
 }
