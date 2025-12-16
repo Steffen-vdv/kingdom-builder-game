@@ -2,7 +2,7 @@
 
 # Block hypervisor from using unauthorized tools
 # Allowed tools: Task
-# For Task tool: block deprecated subagent_types (Explore, Plan)
+# For Task tool: enforce allowlist of valid subagent_types
 # Subagents are not restricted by this hook
 
 MARKER_FILE="$CLAUDE_PROJECT_DIR/.claude/.__ctx_9f8e7d__"
@@ -49,21 +49,34 @@ BLOCKED
   exit 2
 fi
 
-# For Task tool, check for deprecated subagent_types
+# For Task tool, enforce allowlist of valid subagent_types
 if [[ "$TOOL_NAME" == "Task" ]]; then
   SUBAGENT_TYPE=$(echo "$JSON_INPUT" | jq -r '.tool_input.subagent_type // empty' 2>/dev/null)
 
-  if [[ "$SUBAGENT_TYPE" == "Explore" || "$SUBAGENT_TYPE" == "Plan" ]]; then
+  # Allowlist of valid subagent_types
+  ALLOWED_SUBAGENTS=("mastermind" "minimind" "coder" "test-runner" "code-reviewer" "pusher")
+
+  SUBAGENT_ALLOWED=false
+  for allowed in "${ALLOWED_SUBAGENTS[@]}"; do
+    if [[ "$SUBAGENT_TYPE" == "$allowed" ]]; then
+      SUBAGENT_ALLOWED=true
+      break
+    fi
+  done
+
+  if [[ "$SUBAGENT_ALLOWED" == "false" ]]; then
     cat >&2 << BLOCKED
 ╔═══════════════════════════════════════════════════════════════════════════════╗
-║  BLOCKED — Deprecated subagent_type: $SUBAGENT_TYPE
+║  BLOCKED — Invalid subagent_type: $SUBAGENT_TYPE
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-The built-in Explore and Plan agents are DEPRECATED for this project.
-Use our custom agents instead:
-
-  - Explore → use minimind (subagent_type="minimind")
-  - Plan → use mastermind (subagent_type="mastermind")
+Valid subagent_types are:
+  - mastermind    (deep analysis, planning)
+  - minimind      (quick lookups, exploration)
+  - coder         (code implementation)
+  - test-runner   (running and analyzing tests)
+  - code-reviewer (QA review)
+  - pusher        (push verification)
 
 Re-read: .claude/agents/hypervisor/docs/hypervisor.md (Section 4)
 BLOCKED
