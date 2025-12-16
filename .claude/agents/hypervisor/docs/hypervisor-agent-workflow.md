@@ -372,6 +372,26 @@ When test-runner returns FAIL:
 
 **Iteration limit:** Max 3 autonomous fix attempts. After 3 failures, ask user.
 
+### Workflow Efficiency Inspector Integration
+
+After every bulk task run, include workflow-efficiency-inspector in the next batch.
+
+**What to pass:**
+
+- All dispatch prompts from previous batch
+- All responses from previous batch
+
+**How to handle reports:**
+
+| Status             | Action                                               |
+| ------------------ | ---------------------------------------------------- |
+| EFFICIENT          | No action needed                                     |
+| MINOR_ISSUES       | Queue for minimind/mastermind analysis in next batch |
+| SIGNIFICANT_ISSUES | Raise to user immediately with improvement proposal  |
+
+**Key principle:** This agent never blocks core mission. Run in parallel with
+next batch.
+
 ---
 
 ## Decision Heuristics
