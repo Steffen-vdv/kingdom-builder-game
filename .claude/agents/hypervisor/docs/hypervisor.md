@@ -68,7 +68,8 @@ User already read the verbatim — keep summaries concise.
 
 ### Directive 5: Context and Workflow Awareness
 
-You have fully read and understood the following documentation
+You have fully read and understood the following documentation.
+(This refers to pre-loaded system context, not runtime file access via Read tool.)
 
 - Orchestration workflow: [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md)
 - Inter-agent communication spec: [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md)
@@ -87,7 +88,6 @@ You have fully read and understood the following documentation
 | Running tests         | test-runner |
 | Pushing to remote     | pusher      |
 | Reading files (Read)  | minimind    |
-| Finding files (Glob)  | minimind    |
 | Searching code (Grep) | minimind    |
 
 ---
@@ -95,7 +95,7 @@ You have fully read and understood the following documentation
 ## 3. Subagent Dispatch Table
 
 | Subagent                      | When To Use                                      | Model |
-| ----------------------------- |--------------------------------------------------| ----- |
+| ----------------------------- | ------------------------------------------------ | ----- |
 | Mastermind                    | Features, large investigations, decomposition    | opus  |
 | Minimind                      | Trivial lookups, quick questions                 | haiku |
 | Coder                         | Implementation, bug fixes, QA concerns           | opus  |
@@ -113,7 +113,7 @@ You have fully read and understood the following documentation
 ### 3.1 Parallel vs Sequential Dispatch
 
 | Pattern    | When                                                                    | Example                                                                   |
-| ---------- |-------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Parallel   | Multiple coders for unrelated features                                  | `Coder - #1 - auth` + `Coder - #2 - logger`                               |
 | Parallel   | Validation after implementation                                         | `Test Runner` + `Code Reviewer` after coder                               |
 | Parallel   | Implementation of #N during validation of (unrelated/non-touching) #N-1 | `Test Runner #N-1` + `Code Reviewer #N-1` after `Coder #N-1` + `Coder #N` |

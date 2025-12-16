@@ -18,7 +18,7 @@ JSON_INPUT=$(cat)
 TOOL_NAME=$(echo "$JSON_INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 
 # Whitelist of allowed tools for hypervisor
-ALLOWED_TOOLS=("Task" "Read")
+ALLOWED_TOOLS=("Task" "Read" "Glob")
 
 # Check if tool is allowed
 TOOL_ALLOWED=false

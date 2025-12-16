@@ -26,19 +26,9 @@ This is a long-term project. Technical debt compounds. Do it right.
 
 ### 1.2 Purpose of This Document
 
-This document serves all agent types:
-
-1. **Hypervisor (main agent)**: Orchestration principles and user interaction
-2. **Coder subagent**: Implementation standards and golden rules
-3. **Test-runner subagent**: Core principles for test analysis
-4. **Code-reviewer subagent**: Fundamental rules to enforce
-5. **Pusher subagent**: Core principles (minimal interaction with this doc)
-6. **Mastermind subagent**: Deep analysis, planning, critical review
-7. **Minimind subagent**: Quick lookups, light analysis, simple tasks
-8. **Workflow Efficiency Inspector subagent**: Workflow meta-analysis
-
-Each agent type has specialized documentation in `.claude/agents/`. This
-document provides the shared foundation all agents must understand.
+This document serves all agent types. Each has specialized documentation in
+`.claude/agents/` (see section 3.1 for the full listing). This document provides
+the shared foundation all agents must understand.
 
 ### 1.3 When You Are About to Break a Rule
 

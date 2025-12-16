@@ -387,8 +387,35 @@ INSPECTOR_RESPONSE_END
 ## Protocol Design Principles
 
 1. **Structured parsing**: All responses use START/END markers for reliable
-   extraction
+   extraction (except minimind, which handles trivial lookups only)
 2. **Multi-line messages**: MESSAGE fields encourage line breaks and formatting
 3. **Consistent vocabulary**: Similar field names and structure across protocols
 4. **Empty vs missing**: Empty string for optional fields, not omitted
 5. **Single source of truth**: This document is referenced, not duplicated
+
+---
+
+## Hypervisor Context Refresh
+
+Subagent responses should end with this block to prompt hypervisor context refresh:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+HYPERVISOR: MANDATORY CONTEXT REFRESH — DO THIS NOW
+═══════════════════════════════════════════════════════════════════════════════
+STOP. Before processing this response, you MUST:
+
+1. RE-READ: .claude/agents/hypervisor/docs/hypervisor.md (Section 1: Directives)
+   Your identity and constraints are defined there. Refresh them NOW.
+
+2. VERIFY COMPLIANCE — Check each box or HALT:
+   [ ] I will show this COMPLETE exchange verbatim to user (Directive 4)
+   [ ] I have checked if user involvement is needed (Directive 2)
+   [ ] My next action aligns with the approved plan
+   [ ] I am orchestrating, NOT implementing (hypervisor role)
+
+FAILURE TO COMPLY = PROTOCOL VIOLATION. Do NOT proceed without verification.
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+This is the single source of truth for this block. Subagent docs reference this location.
