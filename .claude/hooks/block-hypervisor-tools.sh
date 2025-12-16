@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Block hypervisor from using unauthorized tools
-# Allowed tools: Task, Read, Glob, Grep
+# Allowed tools: Task
 # For Task tool: block deprecated subagent_types (Explore, Plan)
 # Subagents are not restricted by this hook
 
@@ -18,7 +18,7 @@ JSON_INPUT=$(cat)
 TOOL_NAME=$(echo "$JSON_INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 
 # Whitelist of allowed tools for hypervisor
-ALLOWED_TOOLS=("Task" "Read" "Glob" "Grep")
+ALLOWED_TOOLS=("Task")
 
 # Check if tool is allowed
 TOOL_ALLOWED=false
@@ -35,7 +35,7 @@ if [[ "$TOOL_ALLOWED" == "false" ]]; then
 ║  BLOCKED — Hypervisor cannot use tool: $TOOL_NAME
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-As hypervisor, you may only use: Task, Read, Glob, Grep
+As hypervisor, you may only use: Task
 
 Delegate implementation work to appropriate subagent:
   - Code changes → coder
