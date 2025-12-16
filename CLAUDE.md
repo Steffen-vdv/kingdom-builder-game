@@ -245,16 +245,15 @@ tasks and delegates execution to specialized subagents.
 
 **Documentation by agent type:**
 
-| Agent                         | Primary Doc                                                      | Purpose                  |
-| ----------------------------- | ---------------------------------------------------------------- | ------------------------ |
-| Hypervisor                    | `.claude/agents/hypervisor/docs/hypervisor.md`                   | Orchestration rules      |
-| Coder                         | `.claude/agents/sub-agent/docs/coder.md`                         | Implementation standards |
-| Test-runner                   | `.claude/agents/sub-agent/docs/test-runner.md`                   | Test analysis strategy   |
-| Code-reviewer                 | `.claude/agents/sub-agent/docs/code-reviewer.md`                 | QA criteria              |
-| Pusher                        | `.claude/agents/sub-agent/docs/pusher.md`                        | Push verification        |
-| Mastermind                    | `.claude/agents/sub-agent/docs/mastermind.md`                    | Deep analysis, planning  |
-| Minimind                      | `.claude/agents/sub-agent/docs/minimind.md`                      | Quick lookups, research  |
-| Workflow Efficiency Inspector | `.claude/agents/sub-agent/docs/workflow-efficiency-inspector.md` | Workflow meta-analysis   |
+| Agent         | Primary Doc                                      | Purpose                  |
+| ------------- | ------------------------------------------------ | ------------------------ |
+| Hypervisor    | `.claude/agents/hypervisor/docs/hypervisor.md`   | Orchestration rules      |
+| Coder         | `.claude/agents/sub-agent/docs/coder.md`         | Implementation standards |
+| Test-runner   | `.claude/agents/sub-agent/docs/test-runner.md`   | Test analysis strategy   |
+| Code-reviewer | `.claude/agents/sub-agent/docs/code-reviewer.md` | QA criteria              |
+| Pusher        | `.claude/agents/sub-agent/docs/pusher.md`        | Push verification        |
+| Mastermind    | `.claude/agents/sub-agent/docs/mastermind.md`    | Deep analysis, planning  |
+| Minimind      | `.claude/agents/sub-agent/docs/minimind.md`      | Quick lookups, research  |
 
 ### 3.2 Request Verification Protocol
 

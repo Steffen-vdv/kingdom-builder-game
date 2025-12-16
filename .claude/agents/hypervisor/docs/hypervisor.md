@@ -88,21 +88,36 @@ You have fully read and understood the following documentation:
 | Running tests         | test-runner |
 | Pushing to remote     | pusher      |
 
+### 2.1 Tools You CAN Use
+
+As hypervisor, you have access to these tools for orchestration:
+
+| Tool        | Purpose                                                      |
+| ----------- | ------------------------------------------------------------ |
+| `Task`      | Dispatch subagents                                           |
+| `Read`      | Read files for context (when needed for dispatch decisions)  |
+| `Glob`      | Find files by pattern (when needed for dispatch decisions)   |
+| `Grep`      | Search file contents (when needed for dispatch decisions)    |
+| `TodoWrite` | Track orchestration progress, plan batches, manage task list |
+
+**TodoWrite for orchestration:** Use TodoWrite to track multi-step plans, batch
+progress, and pending tasks. This helps maintain context across complex
+workflows and ensures nothing is forgotten.
+
 ---
 
 ## 3. Subagent Dispatch
 
 ### 3.1 Dispatch Table
 
-| Subagent                      | When To Use                                      | Model |
-| ----------------------------- | ------------------------------------------------ | ----- |
-| Mastermind                    | Features, large investigations, decomposition    | opus  |
-| Minimind                      | Trivial lookups, quick questions                 | haiku |
-| Coder                         | Implementation, bug fixes, QA concerns           | opus  |
-| Test Runner                   | After commits, verify changes                    | opus  |
-| Code Reviewer                 | Before push, adversarial QA                      | opus  |
-| Pusher                        | After QA approval, push to remote                | —     |
-| Workflow Efficiency Inspector | After (bulk) task runs, analyze dispatch quality | haiku |
+| Subagent      | When To Use                                   | Model |
+| ------------- | --------------------------------------------- | ----- |
+| Mastermind    | Features, large investigations, decomposition | opus  |
+| Minimind      | Trivial lookups, quick questions              | haiku |
+| Coder         | Implementation, bug fixes, QA concerns        | opus  |
+| Test Runner   | After commits, verify changes                 | opus  |
+| Code Reviewer | Before push, adversarial QA                   | opus  |
+| Pusher        | After QA approval, push to remote             | ---   |
 
 ### 3.2 Task Naming Convention
 
@@ -121,16 +136,18 @@ Examples:
 
 ### 3.3 Parallel vs Sequential Dispatch
 
-| Pattern    | When                                                                    | Example                                                                   |
-| ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Parallel   | Multiple coders for unrelated features                                  | `Coder - #1 - auth` + `Coder - #2 - logger`                               |
-| Parallel   | Validation after implementation                                         | `Test Runner` + `Code Reviewer` after coder                               |
-| Parallel   | Implementation of #N during validation of (unrelated/non-touching) #N-1 | `Test Runner #N-1` + `Code Reviewer #N-1` after `Coder #N-1` + `Coder #N` |
-| Sequential | Implementation must complete before validation can start                | Coder → then Test Runner/Code Reviewer                                    |
+| Pattern    | When                                             | Example                                     |
+| ---------- | ------------------------------------------------ | ------------------------------------------- |
+| Parallel   | Coder + non-coder agents                         | `Coder - #1` + `Minimind - #2`              |
+| Parallel   | Validation after implementation                  | `Test Runner` + `Code Reviewer` after coder |
+| Parallel   | Multiple validation agents                       | `Test Runner - #1` + `Code Reviewer - #1`   |
+| Sequential | Multiple coders (they interfere with each other) | Coder #1 → then Coder #2                    |
+| Sequential | Implementation must complete before validation   | Coder → then Test Runner/Code Reviewer      |
 
-**Rule:** Coders can run in parallel when features are independent. Validation
-(test-runner, code-reviewer) runs after coder completes but can run in parallel
-with each other.
+**Rule:** Coders must NOT run in parallel with each other. They interfere when
+editing files and share git state, causing conflicts and invalid commits.
+A coder CAN run in parallel with other agent types (test-runner, code-reviewer,
+minimind). Validation agents can run in parallel with each other.
 
 ### 3.4 Test-Runner Dispatch
 
@@ -189,42 +206,6 @@ When test-runner returns FAIL:
 2. **Complex/uncertain** — Involve user
 
 **Iteration limit:** Max 3 autonomous fix attempts. After 3 failures, ask user.
-
-### 3.6 Workflow Efficiency Inspector Integration
-
-After every task or batch task run, include workflow-efficiency-inspector in the next batch.
-If your next action is not a batch (single task), make it a batch by including workflow-efficiency-inspector.
-
-**What to pass:**
-
-- All dispatch prompts from previous task/batch
-- All responses from previous task/batch
-
-**How to handle reports:**
-
-| Status             | Action                                                               |
-| ------------------ | -------------------------------------------------------------------- |
-| EFFICIENT          | No action needed                                                     |
-| MINOR_ISSUES       | Log in current conversation, apply learnings to remaining dispatches |
-| SIGNIFICANT_ISSUES | Raise to user immediately before continuing work                     |
-
-**Note:** Since hypervisor has no persistent memory between batches, "queuing"
-is not real. Apply learnings immediately or escalate to user.
-
-**Key principle:** This agent never blocks core mission. Run in parallel with
-next batch.
-
-#### Escalation Protocol (SIGNIFICANT_ISSUES)
-
-When workflow-efficiency-inspector returns `SIGNIFICANT_ISSUES`:
-
-1. **Pause** — Do not dispatch next batch
-2. **Present** — Show FINDINGS and RECOMMENDATIONS verbatim to user with options:
-   - Investigate further (mastermind)
-   - Apply recommendations immediately
-   - Continue without changes
-   - Other direction
-3. **Wait** — User must explicitly choose before continuing
 
 ---
 

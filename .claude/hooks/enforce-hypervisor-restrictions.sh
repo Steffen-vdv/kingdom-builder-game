@@ -139,7 +139,6 @@ if [[ "$TOOL_NAME" == "Task" ]]; then
 		"test-runner"
 		"code-reviewer"
 		"pusher"
-		"workflow-efficiency-inspector"
 	)
 
 	for allowed in "${ALLOWED_SUBAGENTS[@]}"; do
@@ -160,7 +159,6 @@ Valid subagent_types are:
   - test-runner                   (running and analyzing tests)
   - code-reviewer                 (QA review)
   - pusher                        (push verification)
-  - workflow-efficiency-inspector (meta-analysis of agent workflows)
 
 Re-read: .claude/agents/hypervisor/docs/hypervisor.md (Section 4)
 BLOCKED
@@ -170,7 +168,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # OTHER TOOLS: Block unless in allowed list
 # ─────────────────────────────────────────────────────────────────────────────
-ALLOWED_TOOLS=("Task" "Read" "Glob" "Grep")
+ALLOWED_TOOLS=("Task" "Read" "Glob" "Grep" "TodoWrite")
 
 for allowed in "${ALLOWED_TOOLS[@]}"; do
 	if [[ "$TOOL_NAME" == "$allowed" ]]; then
@@ -184,7 +182,7 @@ cat >&2 << BLOCKED
 ║  BLOCKED — Hypervisor cannot use tool: $TOOL_NAME
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
-As hypervisor, you may only use: Task, Read, Glob, Grep
+As hypervisor, you may only use: Task, Read, Glob, Grep, TodoWrite
 
 Delegate implementation work to appropriate subagent:
   - Code changes      -> coder
