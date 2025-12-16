@@ -1,5 +1,7 @@
 # Hypervisor Agent Workflow
 
+**Core principle:** Hypervisor orchestrates subagents. It never implements, commits, or runs tests directly.
+
 This document describes the complete workflow for completing and submitting code
 changes, including plan lifecycle management. All pushes require QA review with
 cryptographic signing.
@@ -10,49 +12,40 @@ for all subagent request/response formats.
 
 ---
 
-## Step 1: Prepare Your Changes
+## Task Naming Convention
 
-Before requesting QA review:
+All Task tool calls must use this description format:
 
-1. **Commit all changes** - QA reviews committed code, not working directory
-2. **Run tests** - Ensure tests pass before requesting review
-3. **Prepare your claims** - Articulate what you changed and why
+```
+<Subagent Type> - #<N> - <Descriptive text>
+```
 
-### Claims Template
+Examples:
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#request-format) for
-the complete request format specification.**
+- `Coder - #1 - Implement user authentication`
+- `Code Reviewer - #3 - QA before push`
+- `Test Runner - #2 - Verify auth changes`
+- `Mastermind - #1 - Analyze feature request`
+
+---
+
+## Step 1: Verify Coder Has Prepared Changes
+
+Before requesting QA review, ensure:
+
+1. **Coder has committed all changes** - QA reviews committed code, not working directory
+2. **Test-runner has verified tests pass** - Dispatch test-runner before requesting review
+3. **Claims are prepared** - Document what was changed and why
 
 ---
 
 ## Step 2: QA Review
 
-### Display Requirements for Subagent Communication
-
-**For every subagent invocation (code-reviewer, pusher), you must:**
-
-1. **Before invoking:** Display the exact prompt in a code block
-2. **After receiving response:** Display the structured response block verbatim in a code block
-
-This is for traceability. Extract only the content between START/END markers (`QA_RESPONSE_START`/`QA_RESPONSE_END` or `PUSH_RESPONSE_START`/`PUSH_RESPONSE_END`) and display it without modifications.
-
-### Spawn the QA Subagent
-
-```
-Task(
-  subagent_type: "code-reviewer",
-  description: "QA review for push",
-  prompt: """
-    [Use format from ../shared/docs/agent-intercommunication-protocols.md#request-format]
-  """
-)
-```
-
 ### Handle the Verdict
 
 The QA subagent returns a **structured response** that you must parse.
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#response-format) for
+**See [`../../shared/docs/agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-format) for
 the complete response format specification.**
 
 **Parse the fields between `QA_RESPONSE_START` and `QA_RESPONSE_END`.**
@@ -70,8 +63,8 @@ QA found issues. The `MESSAGE` field contains violation details.
 **What to do:**
 
 1. Read the violation in `MESSAGE`
-2. Fix the identified issue
-3. Commit the fix
+2. Re-dispatch coder to fix the identified issue
+3. Verify coder committed the fix
 4. Re-invoke QA to review the changes
 
 #### VERDICT: NEEDS_INPUT
@@ -83,7 +76,7 @@ QA needs user clarification. The `MESSAGE` field contains the question.
 1. Present `MESSAGE` to the user verbatim
 2. Wait for user's response
 3. If user approves the current approach, re-invoke QA with the user's approval
-4. If user wants changes, implement them, commit, and re-invoke QA
+4. If user wants changes, dispatch coder to implement and commit, then re-invoke QA
 
 #### VERDICT: ERROR
 
@@ -110,7 +103,7 @@ After QA approval, spawn the Pusher subagent **with the payload and signature**.
 
 **IMPORTANT:** Before invoking, display the exact prompt in a code block. After receiving response, display the structured response block verbatim in a code block.
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#request-format-1) for
+**See [`../../shared/docs/agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#request-format-1) for
 the complete request format specification.**
 
 Pass the exact payload and signature from QA. Do not modify them.
@@ -119,14 +112,14 @@ Pass the exact payload and signature from QA. Do not modify them.
 
 The Pusher subagent returns a **structured response** that you must parse.
 
-**See [`../shared/docs/agent-intercommunication-protocols.md`](../shared/docs/agent-intercommunication-protocols.md#response-format-1) for
+**See [`../../shared/docs/agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-format-1) for
 the complete response format specification.**
 
 **Parse the fields between `PUSH_RESPONSE_START` and `PUSH_RESPONSE_END`.**
 
 #### RESULT: SUCCESS
 
-Push completed. Your changes are now on the remote.
+Push completed. Coder's changes are now on the remote.
 
 #### RESULT: FAILED
 
@@ -137,53 +130,6 @@ The `MESSAGE` field contains details.
 
 Script or system error (execution failed, etc.).
 The `MESSAGE` field contains details.
-
-### Common Failures
-
-| Error                        | Meaning                       | What To Do                  |
-| ---------------------------- | ----------------------------- | --------------------------- |
-| Missing payload/signature    | Data not passed to pusher     | Re-spawn pusher with data   |
-| Invalid signature            | Signature verification failed | Re-run QA review            |
-| HEAD not in approved commits | New commits after approval    | Re-run QA review            |
-| Git push failed              | Network or permission issue   | Retry push, or check remote |
-
----
-
-## Troubleshooting
-
-### Push Blocked - "Use verify-and-push.sh instead"
-
-You tried to run `git push` directly. All agents must use verify-and-push.sh.
-
-**Solution:** Use the pusher subagent as described in Step 3.
-
-### Push Failed - "Invalid signature"
-
-The signature verification failed. The payload may have been modified.
-
-**Solution:** Re-run QA review to get a fresh payload and signature.
-
-### Push Failed - "HEAD not in approved commits"
-
-You made new commits after QA approved.
-
-**Solution:** Re-run QA review to approve the new commits.
-
----
-
-## What QA Reviews
-
-The QA reviewer verifies your changes against these criteria:
-
-| Check                   | What It Means                             |
-| ----------------------- | ----------------------------------------- |
-| Root cause identified   | Fix addresses actual problem, not symptom |
-| Correct layer           | Fix is in appropriate package             |
-| No defensive fallbacks  | Web layer trusts protocol contracts       |
-| No hardcoded IDs        | No entity-specific conditionals           |
-| Tests exist             | New functionality has test coverage       |
-| User approved behaviors | Edge cases explicitly approved by user    |
-| Documentation current   | Docs updated if needed                    |
 
 ---
 
@@ -236,17 +182,17 @@ Task(
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ PUSH CHECKLIST                                                              │
+│ PUSH CHECKLIST (verify subagent work)                                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ □ Changes committed                                                         │
-│ □ Tests passing                                                             │
+│ □ Coder's changes committed                                                 │
+│ □ Test-runner confirmed tests passing                                       │
 │ □ Claims prepared (original request, solution, layer, tests, user approval) │
 │ □ Subagent I/O displayed verbatim (prompt before, response after)           │
-│ □ QA subagent spawned → verdict received                                    │
-│   └─ BLOCKED: fix and retry                                                 │
+│ □ Code-reviewer spawned → verdict received                                  │
+│   └─ BLOCKED: re-dispatch coder and retry                                   │
 │   └─ NEEDS INPUT: ask user and retry                                        │
 │   └─ APPROVED: save payload + signature                                     │
-│ □ Pusher subagent spawned WITH payload + signature                          │
+│ □ Pusher spawned WITH payload + signature                                   │
 │   └─ Success: done                                                          │
 │   └─ Failure: follow error guidance                                         │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -263,18 +209,6 @@ Task(
 3. If APPROVED → present plan to user → wait for approval phrase
 4. After approval → execute batches autonomously
 5. If plan threatened → HALT → consult user
-
-### Plan Persistence
-
-Approved plans are written to: `/docs/projects/<project-name>/`
-
-Structure:
-
-- `pre-production.md` — Research, design decisions
-- `production.md` — Active implementation tracking
-- `post-production.md` — Retrospective
-
-First coder task after approval = write plan to repo.
 
 ### Plan Deviation
 
@@ -373,44 +307,15 @@ next batch.
 
 ### Escalation Protocol (SIGNIFICANT_ISSUES)
 
-When the workflow-efficiency-inspector returns `SIGNIFICANT_ISSUES`:
+When workflow-efficiency-inspector returns `SIGNIFICANT_ISSUES`:
 
-**Step 1: Pause current work**
-
-Do not dispatch the next batch. The efficiency issues require user attention.
-
-**Step 2: Present findings to user**
-
-Use this exact format:
-
-```
-## Workflow Efficiency Alert
-
-**Findings:**
-[FINDINGS from inspector response verbatim]
-
-**Recommendations:**
-[RECOMMENDATIONS from inspector response verbatim]
-
-**Options:**
-1. Investigate further (spawn mastermind for deeper analysis)
-2. Apply recommendations immediately
-3. Continue without changes (acknowledged inefficiency)
-4. Other direction
-```
-
-**Step 3: Wait for user direction**
-
-Do NOT continue autonomously. The user must explicitly choose an option.
-
-**Step 4: Resume based on user decision**
-
-| User Choice                  | Hypervisor Action                                          |
-| ---------------------------- | ---------------------------------------------------------- |
-| 1 - Investigate              | Spawn mastermind with findings for root cause analysis     |
-| 2 - Apply recommendations    | Integrate recommendations into remaining dispatch strategy |
-| 3 - Continue without changes | Resume normal workflow, log acknowledged inefficiency      |
-| 4 - Other                    | Follow user's explicit instructions                        |
+1. **Pause** — Do not dispatch next batch
+2. **Present** — Show FINDINGS and RECOMMENDATIONS verbatim to user with options:
+   - Investigate further (mastermind)
+   - Apply recommendations immediately
+   - Continue without changes
+   - Other direction
+3. **Wait** — User must explicitly choose before continuing
 
 ---
 
@@ -467,20 +372,3 @@ match approved plan?
 | Scope explosion       | Task grows beyond reasonable batch boundary      |
 | Contradiction         | Plan requirements conflict with each other       |
 | Golden rule violation | Implementation would violate CLAUDE.md Section 2 |
-
----
-
-## Task Naming Convention
-
-All Task tool calls must use this description format:
-
-```
-<Subagent Type> - #<N> - <Descriptive text>
-```
-
-Examples:
-
-- `Coder - #1 - Implement user authentication`
-- `Code Reviewer - #3 - QA before push`
-- `Test Runner - #2 - Verify auth changes`
-- `Mastermind - #1 - Analyze feature request`
