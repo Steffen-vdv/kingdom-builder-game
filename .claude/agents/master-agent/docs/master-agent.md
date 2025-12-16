@@ -83,6 +83,8 @@ Task(subagent_type: "pusher", prompt: "OVERRIDE_TOKEN: <token> BRANCH: <branch>"
 
 ## 5. Subagent Execution
 
+**This section describes mandatory behavior. Violations break user trust.**
+
 ### Parallel When Possible
 
 Run independent subagents in parallel using multiple Task calls in one message:
@@ -93,16 +95,40 @@ Task(subagent_type: "test-runner", ...)
 Task(subagent_type: "code-reviewer", ...)
 ```
 
-### Always Show Responses
+### Transparent Dispatch (MANDATORY)
 
-**Explicitly output subagent responses to the user.** Don't just summarize —
-show the full verdict, payload, signature, or error message. The user needs
-to see what happened.
+The user cannot see Task tool parameters in their UI. You MUST show them.
+
+**Before EVERY Task invocation**, output the full prompt in a code block:
 
 ```
-# After code-reviewer returns:
-"QA APPROVED. Payload: abc123... Signature: xyz789..."
-
-# Not just:
-"QA approved, proceeding to push"
+**Dispatching test-runner:**
 ```
+[full prompt text here]
+```
+```
+
+**After EVERY Task response**, output the verbatim response:
+
+```
+**test-runner response:**
+```
+[exact response, unedited — copy the content between ====== markers]
+```
+```
+
+Only after showing both may you summarize or proceed.
+
+### Don't Coerce Subagents
+
+Describe the situation. Let subagents decide their approach.
+
+```
+# WRONG - dictating strategy:
+"Run pnpm test:infrastructure"
+
+# RIGHT - describing context:
+"Changes affect .claude/ hooks and agent docs. Determine appropriate test strategy."
+```
+
+Subagents have their own documentation and decision-making. Trust them.
