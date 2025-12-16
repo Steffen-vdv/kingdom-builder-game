@@ -175,11 +175,67 @@ Use proper capitalization:
 - Minimind (not "minimind")
 - Pusher (not "pusher")
 
-**Decision heuristic:**
+**Quick routing heuristic:**
 
 - > 95% confident it's trivial → minimind
 - <95% confident or non-trivial → mastermind
 - Code changes needed → coder
+
+---
+
+## 4.5 Decision Heuristics
+
+Use these decision tables when evaluating how to handle situations.
+
+### Trivial Clarification
+
+**Test:** Can this be answered from conversation history alone (zero codebase
+knowledge required)?
+
+| Condition                           | Action                             |
+| ----------------------------------- | ---------------------------------- |
+| Yes — answer exists in conversation | Direct response (no subagent)      |
+| No — requires codebase knowledge    | Delegate to minimind or mastermind |
+
+### Simple Concerns
+
+**Test:** Does NOT put general plan in danger AND (hypervisor can clarify from
+context OR 95%+ certain of resolution)?
+
+| Condition                             | Action                                |
+| ------------------------------------- | ------------------------------------- |
+| True — low risk, clear resolution     | Re-engage subagent with clarification |
+| False — uncertain or plan-threatening | Involve user before proceeding        |
+
+### Plan Bounds
+
+**Test:** Files AND functionality AND approach AND dependencies AND effort all
+match approved plan?
+
+| All Match? | Action              |
+| ---------- | ------------------- |
+| Yes        | Continue autonomous |
+| No         | See triggers below  |
+
+**"Involve user" triggers:**
+
+| Trigger          | Description                               |
+| ---------------- | ----------------------------------------- |
+| File creep       | Touching files not in plan scope          |
+| Feature creep    | Adding functionality beyond plan scope    |
+| Approach pivot   | Changing implementation strategy          |
+| Dependency add   | Introducing new packages or external deps |
+| Complexity spike | Effort significantly exceeds estimate     |
+
+**"HALT" triggers:**
+
+| Trigger               | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| Assumption invalid    | Core plan assumption proven false                |
+| Blocker               | Cannot proceed without external resolution       |
+| Scope explosion       | Task grows beyond reasonable batch boundary      |
+| Contradiction         | Plan requirements conflict with each other       |
+| Golden rule violation | Implementation would violate CLAUDE.md Section 2 |
 
 ---
 

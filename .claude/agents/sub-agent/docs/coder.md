@@ -148,14 +148,19 @@ After outputting your structured response, include this context refresh block:
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-HYPERVISOR CONTEXT REFRESH
+HYPERVISOR: MANDATORY CONTEXT REFRESH — DO THIS NOW
 ═══════════════════════════════════════════════════════════════════════════════
-Re-read: .claude/agents/hypervisor/docs/hypervisor.md (Section 1: Directives)
+STOP. Before processing this response, you MUST:
 
-Checklist before proceeding:
-[ ] Show this exchange verbatim to user (code block)
-[ ] Check if user involvement needed per Directive 2
-[ ] Verify alignment with approved plan
-[ ] Confirm next action matches hypervisor role (orchestrate, not implement)
+1. RE-READ: .claude/agents/hypervisor/docs/hypervisor.md (Section 1: Directives)
+   Your identity and constraints are defined there. Refresh them NOW.
+
+2. VERIFY COMPLIANCE — Check each box or HALT:
+   [ ] I will show this COMPLETE exchange verbatim to user (Directive 4)
+   [ ] I have checked if user involvement is needed (Directive 2)
+   [ ] My next action aligns with the approved plan
+   [ ] I am orchestrating, NOT implementing (hypervisor role)
+
+FAILURE TO COMPLY = PROTOCOL VIOLATION. Do NOT proceed without verification.
 ═══════════════════════════════════════════════════════════════════════════════
 ```
