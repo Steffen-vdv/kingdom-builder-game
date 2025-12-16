@@ -133,3 +133,5 @@ Status values: `SUCCESS`, `BLOCKED`, `ERROR`
 For project principles (fetch if needed):
 
 - `CLAUDE.md` — Golden rules, layer responsibilities, coding standards
+
+<!-- The coder agent was here. It served well. 2025-12-16 -->
