@@ -69,6 +69,39 @@ Before forming any opinion, collect facts:
 4. **Read relevant architecture docs** if core systems are affected
 5. **Understand the original task** — What was the user asking for?
 
+### Step 1.5: Verify Claimed Changes Exist
+
+**PREREQUISITE GATE: Before analyzing logic, verify the changes exist.**
+
+Run `git diff main` and confirm that the coder's claimed modifications are
+actually present in the diff. This catches cases where coders claim they made
+changes that do not actually exist.
+
+**Verification process:**
+
+1. List all files the coder claims to have modified
+2. Verify each file appears in `git diff main`
+3. For each claimed change, verify the specific modification is visible
+
+**Automatic BLOCK if:**
+
+- Coder claims "fixed the auth logic in auth.ts" but no changes to auth.ts
+  appear in the diff
+- Coder claims "added error handling" but no try/catch or error checks visible
+- Coder claims "updated the config" but config files are unchanged
+- Any claimed file modification is not visible in `git diff`
+
+```
+🚫 BLOCKED
+
+Violation: Claimed changes do not exist
+Evidence: Coder claimed "[X]" but `git diff main` shows no changes to [file/area]
+Required: Either implement the claimed changes or clarify what was actually done
+```
+
+**This gate must pass before proceeding to Step 2.** Do not analyze whether code
+is correct until you have verified the code actually exists.
+
 ### Step 2: Review Checklist
 
 Work through these questions during your review. The coder has finished and
@@ -104,15 +137,55 @@ examining the code and commit history.
 - Is this a new feature/system? Is there documentation?
 - Can a future agent understand this from the docs?
 
-**Concurrency & Lifecycle Safety:**
+**Hook/Lifecycle System Review:**
 
-When reviewing lifecycle hooks (start/stop, acquire/release patterns):
+For changes involving hooks, lifecycle systems, or state machines, require
+explicit state transition analysis:
 
-- Does this code use binary state flipping for resource lifecycle?
-- If YES: What happens when N instances execute concurrently?
-- Are markers/state designed as reference-counted or idempotent?
-- Can stop/cleanup code execute for one instance while others still running?
-- Does the fix assume sequential execution, or is it truly concurrent-safe?
+- What states can this system be in? (Draw the state machine mentally or
+  describe it explicitly)
+- What transitions are valid? What triggers each transition?
+- For marker files: What does presence vs. absence mean? What creates it?
+  What removes it? What happens if it exists unexpectedly?
+- Are state transitions atomic, or can they be interrupted mid-transition?
+- What is the recovery path if a transition fails halfway?
+
+Questions to answer for any marker file changes:
+
+```
+MARKER FILE: [filename]
+STATES: [list all possible states]
+TRANSITIONS:
+  [state A] --[trigger]--> [state B]
+  [state B] --[trigger]--> [state C]
+INVARIANTS: [what must always be true]
+```
+
+If you cannot articulate the state machine, the code is insufficiently
+documented. BLOCK until state machine is documented in code comments or docs.
+
+**Concurrency Analysis:**
+
+For systems that may run in parallel (hooks, background tasks, event handlers):
+
+- What happens if agent A finishes before agent B starts?
+- What happens if agent A and agent B run simultaneously?
+- What happens if SubagentStop runs while SubagentStart is still executing?
+- Are there race conditions where order of execution changes behavior?
+- Do file operations (read/write/delete) have atomic guarantees?
+
+Construct a parallel execution timeline:
+
+```
+TIME →
+Agent A: [start]----[write marker]----[finish]
+Agent B:      [start]----[read marker]----[finish]
+                         ↑ What value does B see here?
+```
+
+If the code assumes sequential execution but runs in a parallel context,
+this is a bug. BLOCK until concurrency is explicitly handled or documented
+as single-threaded by design.
 
 ### Step 3: Verify Claims
 
@@ -150,9 +223,11 @@ root cause. The coder may have misdiagnosed the problem.
 - Existing tests were modified to pass
 - No tests for new functionality
 - Documentation missing for new features
-- Binary state transitions in concurrent contexts (e.g., start→stop marker flips)
-- No reference counting where lifecycle is shared across parallel instances
-- Cleanup hooks that don't account for parallel execution
+- Claimed file modifications not visible in `git diff`
+- Cleanup hooks that unconditionally restore state (without checking what
+  state they are restoring FROM)
+- Marker file operations without clear state machine documentation
+- Hook logic that assumes sequential execution without concurrency guards
 
 ### Step 4: Render Verdict
 
@@ -210,6 +285,94 @@ Verification:
 Push may proceed.
 ─────────────────────────────────────────
 ```
+
+---
+
+## Infrastructure Change Protocol
+
+**When reviewing changes to `.claude/` directory (hooks, agent configs,
+scripts, documentation), elevated scrutiny is required.**
+
+Infrastructure mistakes propagate to ALL future sessions. A bug in a hook
+affects every subsequent agent interaction. The blast radius is unlimited.
+
+### Mandatory Requirements for Infrastructure Changes
+
+**1. State Machine Documentation (MANDATORY for marker files)**
+
+Any change that creates, reads, modifies, or deletes marker files MUST include
+or reference a state machine description:
+
+```
+MARKER: .claude/markers/example.marker
+PURPOSE: Track whether X is in progress
+
+STATE MACHINE:
+  [absent] --SubagentStart creates--> [present]
+  [present] --SubagentStop deletes--> [absent]
+  [present] --SessionStart cleans--> [absent] (stale marker recovery)
+
+INVARIANT: Marker should only exist during active subagent execution
+FAILURE MODE: If marker persists after crash, next SessionStart cleans it
+```
+
+**BLOCK if marker file changes lack this documentation.**
+
+**2. Concurrency Analysis (MANDATORY for hooks)**
+
+Any hook that may run in parallel with other hooks or agents MUST include
+concurrency analysis:
+
+- What other hooks/agents might run simultaneously?
+- What shared state (files, environment) do they access?
+- What happens if execution order varies?
+- Are there atomic operation requirements?
+
+```
+HOOK: SubagentStop
+PARALLEL RISK: May run while SubagentStart is still executing for another agent
+SHARED STATE: .claude/markers/hypervisor.marker
+MITIGATION: Check marker ownership before deletion (not just existence)
+```
+
+**BLOCK if hook changes lack concurrency analysis for parallel scenarios.**
+
+**3. Failure Mode Analysis**
+
+Infrastructure must handle partial failures gracefully:
+
+- What happens if the hook crashes halfway through?
+- What state is left behind?
+- How does the system recover on next session?
+- Are cleanup operations idempotent?
+
+**4. Rollback Path**
+
+- Can this change be reverted safely?
+- Are there migration considerations?
+- Does reverting leave orphaned state?
+
+### Red Flags Specific to Infrastructure
+
+- Unconditional state restoration (restore X without checking current state)
+- Marker file deletion without ownership verification
+- Hooks that assume they are the only writer to shared state
+- Missing error handling for file operations
+- No consideration of what happens if hook runs twice
+- Changes to hook execution order without impact analysis
+
+### Approval Criteria for Infrastructure
+
+Infrastructure changes require ALL of the following:
+
+- [ ] State machine documented for any marker files
+- [ ] Concurrency analysis for parallel execution scenarios
+- [ ] Failure mode analysis with recovery path
+- [ ] Idempotency verified (safe to run twice)
+- [ ] No assumptions about execution order
+- [ ] Explicit handling of partial failure states
+
+**When in doubt, BLOCK.** Infrastructure bugs are expensive.
 
 ---
 

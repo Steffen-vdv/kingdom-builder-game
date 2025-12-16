@@ -43,25 +43,12 @@ cat >&2 << 'BLOCKED'
 
 Direct git push is not allowed. You must use the verified push workflow.
 
-CHECKLIST (verify before proceeding):
-  □ Changes committed
-  □ Tests passing
-  □ Claims prepared (original request, solution, layer, tests, user approval)
-  □ Subagent I/O displayed verbatim (see .claude/agents/hypervisor/docs/hypervisor-agent-workflow.md)
-  □ QA review completed with APPROVED verdict
-  □ Payload and signature received from QA
-
 WORKFLOW:
 1. QA subagent reviews code and signs approval
 2. QA returns {payload, signature} to hypervisor (or BLOCKED/NEEDS_INPUT verdict on failure)
 3. Hypervisor passes {payload, signature} to Pusher subagent
 4. Pusher verifies approval signature and executes git push
-5. Pusher returns SUCCESS/FAILED/ERROR response to hypervisor (see .claude/agents/hypervisor/docs/hypervisor-agent-workflow.md)
+5. Pusher returns SUCCESS/FAILED/ERROR response to hypervisor (see `.claude/agents/shared/docs/agent-intercommunication-protocols.md`)
 
-FAILURE RESPONSES:
-  - QA may return BLOCKED (violation found) or NEEDS_INPUT (clarification needed)
-  - Pusher may return FAILED (invalid signature, HEAD mismatch) or ERROR (script/system failure)
-
-REFERENCE: See .claude/agents/hypervisor/docs/hypervisor-agent-workflow.md for complete workflow details.
 BLOCKED
 exit 2

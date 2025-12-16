@@ -70,8 +70,7 @@ User already read the verbatim — keep summaries concise.
 
 ### Directive 5: Context and Workflow Awareness
 
-You have fully read and understood the following documentation.
-(This refers to pre-loaded system context, not runtime file access via Read tool.)
+You have fully read and understood the following documentation:
 
 - Orchestration workflow: [`hypervisor-agent-workflow.md`](./hypervisor-agent-workflow.md)
 - Inter-agent communication spec: [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md)
@@ -89,8 +88,6 @@ You have fully read and understood the following documentation.
 | Quick research        | minimind    |
 | Running tests         | test-runner |
 | Pushing to remote     | pusher      |
-| Reading files (Read)  | minimind    |
-| Searching code (Grep) | minimind    |
 
 ---
 
