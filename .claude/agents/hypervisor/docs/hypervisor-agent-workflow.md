@@ -312,6 +312,59 @@ If execution reveals problems:
 
 ---
 
+## Subagent Dispatch Patterns
+
+### Test-Runner Dispatch
+
+When dispatching to the test-runner subagent, **do not specify exact commands**.
+The test-runner is an expert at determining the appropriate testing strategy
+based on the context of changes.
+
+**WRONG pattern — Hypervisor dictates commands:**
+
+```
+Commands to run:
+- pnpm run typecheck
+- pnpm run lint
+- pnpm run test
+```
+
+**CORRECT pattern — Hypervisor provides context, test-runner decides strategy:**
+
+```
+Commits to test: abc123, def456
+Files changed:
+- packages/engine/src/effects/resource-effect.ts
+- packages/engine/src/effects/resource-effect.test.ts
+- packages/protocol/src/types/effects.ts
+
+Determine appropriate testing strategy and report results.
+```
+
+**Why this matters:**
+
+- Test-runner knows which test suites are relevant for which file patterns
+- Test-runner can optimize test ordering (fast checks first, slow tests last)
+- Test-runner understands package interdependencies
+- Hypervisor prescribing commands creates brittleness and bypasses expertise
+
+**What hypervisor should provide:**
+
+| Field         | Source                | Purpose                             |
+| ------------- | --------------------- | ----------------------------------- |
+| Commits       | Coder's response      | Scope of changes to validate        |
+| Files changed | Coder's response      | Context for test strategy selection |
+| Task context  | Original user request | Understanding of what was built     |
+
+**What test-runner determines:**
+
+- Which test commands to run
+- Order of execution (typecheck before tests, etc.)
+- Whether to run full suite or targeted tests
+- Retry strategy for flaky tests
+
+---
+
 ## Decision Heuristics
 
 Use these decision tables when evaluating how to handle situations.
