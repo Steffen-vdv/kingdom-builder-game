@@ -104,6 +104,16 @@ examining the code and commit history.
 - Is this a new feature/system? Is there documentation?
 - Can a future agent understand this from the docs?
 
+**Concurrency & Lifecycle Safety:**
+
+When reviewing lifecycle hooks (start/stop, acquire/release patterns):
+
+- Does this code use binary state flipping for resource lifecycle?
+- If YES: What happens when N instances execute concurrently?
+- Are markers/state designed as reference-counted or idempotent?
+- Can stop/cleanup code execute for one instance while others still running?
+- Does the fix assume sequential execution, or is it truly concurrent-safe?
+
 ### Step 3: Verify Claims
 
 **Trust but verify — and CROSS-CHECK:**
@@ -140,6 +150,9 @@ root cause. The coder may have misdiagnosed the problem.
 - Existing tests were modified to pass
 - No tests for new functionality
 - Documentation missing for new features
+- Binary state transitions in concurrent contexts (e.g., start→stop marker flips)
+- No reference counting where lifecycle is shared across parallel instances
+- Cleanup hooks that don't account for parallel execution
 
 ### Step 4: Render Verdict
 
@@ -239,6 +252,32 @@ However, you CAN and SHOULD ask:
 
 - "WHAT specifically did the user approve?"
 - "Does their approval cover THIS specific behavior?"
+
+## Lessons Learned
+
+### December 2025: Parallel Subagent Race Condition
+
+In December 2025, a race condition in subagent marker management passed QA review
+and required post-commit fixes. The issue: when multiple subagents ran in parallel,
+the first to complete would reset the hypervisor marker via binary state flipping,
+even though other subagents were still running and legitimately needed context
+restrictions.
+
+**What was missed:** Simple binary state (marker exists / doesn't exist) is
+incompatible with parallel execution. The fix required atomic reference counting
+([commit 41f0288](https://github.com/kingdom-builder-game/commits/41f0288)).
+
+**The correct implementation:** See `.claude/agents/shared/scripts/context-manager/`
+for reference counting patterns:
+
+- `register-subagent.sh` — Atomically increments counter when subagent starts
+- `unregister-subagent.sh` — Atomically decrements counter when subagent completes
+- Context only returns to hypervisor when counter reaches 0
+- All operations use `flock` for atomic read-modify-write
+
+**Prevention:** When reviewing any code that uses lifecycle hooks (start/stop,
+acquire/release), apply the "Concurrency & Lifecycle Safety" checklist above.
+Always ask: "What happens when N instances run in parallel?"
 
 ## Your Attitude
 
