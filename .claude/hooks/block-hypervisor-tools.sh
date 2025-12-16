@@ -43,6 +43,7 @@ Delegate implementation work to appropriate subagent:
   - Pushing → pusher
   - Deep analysis → mastermind
   - Quick lookups → minimind
+  - Workflow analysis → workflow-efficiency-inspector
 
 Re-read: .claude/agents/hypervisor/docs/hypervisor.md
 BLOCKED
