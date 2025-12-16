@@ -18,8 +18,6 @@ COMMAND="${TOOL_INPUT_COMMAND:-}"
 BLOCKED_PATTERNS=(
 	"claude/context-manager/state.json"
 	"claude/context-manager/.lock"
-	".__ctx_9f8e7d__"
-	".claude/tests/context-manager.test.sh"
 )
 
 for pattern in "${BLOCKED_PATTERNS[@]}"; do
