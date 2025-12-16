@@ -11,6 +11,7 @@ the push workflow. It serves as the single source of truth for agent I/O specs.
 - `.claude/agents/sub-agent/docs/pusher.md` - Pusher agent definition
 - `.claude/agents/sub-agent/docs/mastermind.md` - Conceptual QA agent definition
 - `.claude/agents/sub-agent/docs/minimind.md` - Fast research agent definition
+- `.claude/agents/sub-agent/docs/workflow-efficiency-inspector.md` - Workflow analysis agent definition
 - `.claude/agents/hypervisor/docs/hypervisor.md` - Hypervisor orchestration guide
 - `.claude/agents/hypervisor/docs/hypervisor-agent-workflow.md` - Detailed workflow procedures
 
@@ -338,6 +339,48 @@ Found: <what was found>
 ```
 
 No formal START/END markers. Minimind is for trivial tasks only.
+
+---
+
+## Workflow Efficiency Inspector Protocol
+
+The workflow-efficiency-inspector subagent analyzes dispatch patterns for efficiency issues.
+
+### Request Format
+
+Hypervisor invokes via Task tool with this structure:
+
+```
+Analyze the following batch dispatch for workflow efficiency.
+
+BATCH_ID: <sequential batch number this session>
+DISPATCH_COUNT: <number of subagents in this batch>
+
+=== DISPATCH #1 ===
+SUBAGENT_TYPE: <coder|test-runner|code-reviewer|mastermind|minimind>
+PROMPT:
+<full prompt text>
+
+RESPONSE:
+<full response text>
+
+=== DISPATCH #2 ===
+[repeat...]
+```
+
+### Response Format
+
+```
+INSPECTOR_RESPONSE_START
+STATUS: EFFICIENT|MINOR_ISSUES|SIGNIFICANT_ISSUES
+FINDINGS:
+- [severity: minor|significant] [category] <description>
+RECOMMENDATIONS:
+- <specific actionable improvement>
+INSPECTOR_RESPONSE_END
+```
+
+**Categories:** parallelization, isolation, instruction-clarity, input-structure, output-structure, behavioral-drift
 
 ---
 
