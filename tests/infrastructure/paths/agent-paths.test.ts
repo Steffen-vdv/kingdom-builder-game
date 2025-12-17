@@ -76,11 +76,13 @@ describe('Infrastructure: Agent Path Validation', () => {
 			).toBe(true);
 		});
 
-		it('should have pusher and test-runner documentation', () => {
-			expect(pathExists('.claude/agents/sub-agent/docs/pusher.md')).toBe(true);
-			expect(pathExists('.claude/agents/sub-agent/docs/test-runner.md')).toBe(
-				true,
-			);
+		it('should have safe-deployment-gate and review-ci-tests-required documentation', () => {
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/safe-deployment-gate.md'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-ci-tests-required.md'),
+			).toBe(true);
 		});
 
 		it('should have subagent scripts', () => {
@@ -90,6 +92,9 @@ describe('Infrastructure: Agent Path Validation', () => {
 			).toBe(true);
 			expect(
 				pathExists('.claude/agents/sub-agent/scripts/verify-bulk-and-push.sh'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/verify-bulk.sh'),
 			).toBe(true);
 			expect(
 				pathExists(
@@ -160,6 +165,13 @@ describe('Infrastructure: Agent Path Validation', () => {
 		it('should NOT have old agent definition locations', () => {
 			expect(pathExists('.claude/agents/code-reviewer.md')).toBe(false);
 			expect(pathExists('.claude/agents/pusher.md')).toBe(false);
+		});
+
+		it('should NOT have old renamed docs (pusher → safe-deployment-gate, test-runner → review-ci-tests-required)', () => {
+			expect(pathExists('.claude/agents/sub-agent/docs/pusher.md')).toBe(false);
+			expect(pathExists('.claude/agents/sub-agent/docs/test-runner.md')).toBe(
+				false,
+			);
 		});
 
 		it('should NOT have legacy single code-reviewer', () => {

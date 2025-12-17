@@ -5,7 +5,7 @@
 # Usage: sign.sh '<summary>' '<signature_type>'
 #
 # Gathers commit info, creates payload, signs via crypto-gate,
-# and outputs structured JSON for the pusher subagent.
+# and outputs structured JSON for downstream verification.
 #
 # Called by QA reviewers after APPROVED verdict.
 # Each reviewer must use their assigned signature type.

@@ -238,24 +238,25 @@ directly. Subagents are used only for QA review and push operations.
             ┌───────────────────────┼───────────────────────┐
             ↓                       ↓                       ↓
     ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
-    │  test-runner  │       │  6 QA agents  │       │    pusher     │
-    │  (validates)  │       │  (parallel)   │       │ (push w/sig)  │
+    │    PHASE 1    │       │    PHASE 2    │       │    PHASE 3    │
+    │  6 reviewers  │  ───► │  review-lead  │  ───► │ safe-deploy-  │
+    │  (parallel)   │       │  (aggregate)  │       │     gate      │
     └───────────────┘       └───────────────┘       └───────────────┘
 ```
 
 **Documentation by agent type:**
 
-| Agent                       | Primary Doc                                                    | Purpose                     |
-| --------------------------- | -------------------------------------------------------------- | --------------------------- |
-| Master-agent                | `.claude/agents/master-agent/docs/master-agent.md`             | Main agent identity         |
-| Test-runner                 | `.claude/agents/sub-agent/docs/test-runner.md`                 | Test analysis strategy      |
-| review-lead                 | `.claude/agents/sub-agent/docs/review-lead.md`                 | Final QA gate, root cause   |
-| review-claims-auditor       | `.claude/agents/sub-agent/docs/review-claims-auditor.md`       | Diff/claims verification    |
-| review-contracts-boundaries | `.claude/agents/sub-agent/docs/review-contracts-boundaries.md` | Contracts, boundaries       |
-| review-mechanics-content    | `.claude/agents/sub-agent/docs/review-mechanics-content.md`    | Mechanics, content-driven   |
-| review-infra-concurrency    | `.claude/agents/sub-agent/docs/review-infra-concurrency.md`    | Infrastructure, concurrency |
-| review-tests-docs-dry       | `.claude/agents/sub-agent/docs/review-tests-docs-dry.md`       | Tests, docs, DRY            |
-| Pusher                      | `.claude/agents/sub-agent/docs/pusher.md`                      | Bulk signature verification |
+| Agent                       | Phase | Primary Doc                                                    | Purpose                      |
+| --------------------------- | ----- | -------------------------------------------------------------- | ---------------------------- |
+| Master-agent                | —     | `.claude/agents/master-agent/docs/master-agent.md`             | Main agent identity          |
+| review-ci-tests-required    | 1     | `.claude/agents/sub-agent/docs/review-ci-tests-required.md`    | Run tests, sign if passing   |
+| review-claims-auditor       | 1     | `.claude/agents/sub-agent/docs/review-claims-auditor.md`       | Diff/claims verification     |
+| review-contracts-boundaries | 1     | `.claude/agents/sub-agent/docs/review-contracts-boundaries.md` | Contracts, boundaries        |
+| review-mechanics-content    | 1     | `.claude/agents/sub-agent/docs/review-mechanics-content.md`    | Mechanics, content-driven    |
+| review-infra-concurrency    | 1     | `.claude/agents/sub-agent/docs/review-infra-concurrency.md`    | Infrastructure, concurrency  |
+| review-tests-docs-dry       | 1     | `.claude/agents/sub-agent/docs/review-tests-docs-dry.md`       | Tests, docs, DRY             |
+| review-lead                 | 2     | `.claude/agents/sub-agent/docs/review-lead.md`                 | Aggregate, produce final sig |
+| safe-deployment-gate        | 3     | `.claude/agents/sub-agent/docs/safe-deployment-gate.md`        | Verify final sig, push       |
 
 ### 3.2 Request Verification Protocol
 

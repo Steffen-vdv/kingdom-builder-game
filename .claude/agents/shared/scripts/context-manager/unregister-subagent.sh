@@ -5,7 +5,7 @@
 # Atomically decrements the subagent counter. When count goes to 0,
 # switches context back to master-agent.
 #
-# Only acts on custom subagents: test-runner, 6 QA reviewers, pusher.
+# Only acts on custom subagents: 6 Phase 1 reviewers, review-lead, safe-deployment-gate.
 # Other subagent types (Explore, general-purpose, etc.) are ignored.
 #
 # Usage: unregister-subagent.sh <subagent_type>

@@ -190,7 +190,7 @@ Used by: **safe-deployment-gate** (Phase 3)
 
 Each signature type is bound to a specific agent role. This ensures:
 
-- A test-runner approval cannot masquerade as a code review approval
+- A review-ci-tests-required approval cannot masquerade as a code review approval
 - Only review-lead can produce the final deployment signature
 - Signature types are verified by crypto-gate, not just the payload
 
