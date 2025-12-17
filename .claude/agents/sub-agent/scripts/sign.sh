@@ -18,8 +18,9 @@ SIG_TYPE="${2:-}"
 
 if [[ -z "$SIG_TYPE" ]]; then
 	echo "ERROR: Signature type is required. Usage: sign.sh '<summary>' '<type>'" >&2
-	echo "Valid types: QA_FINAL_SIGNATORY, QA_CLAIMS_AUDITOR, QA_CONTRACTS_BOUNDARIES," >&2
-	echo "             QA_MECHANICS_CONTENT, QA_INFRA_CONCURRENCY, QA_TESTS_DOCS_DRY" >&2
+	echo "Valid types: QA_FINAL_SIGNATORY, QA_CI_REQUIRED_TESTS, QA_CLAIMS_AUDITOR," >&2
+	echo "             QA_CONTRACTS_BOUNDARIES, QA_MECHANICS_CONTENT," >&2
+	echo "             QA_INFRA_CONCURRENCY, QA_TESTS_DOCS_DRY" >&2
 	exit 1
 fi
 

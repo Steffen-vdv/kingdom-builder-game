@@ -1,6 +1,10 @@
 #!/bin/bash
 # PreToolUse hook for Task - validates subagent INPUT format
-# Only validates QA reviewers, test-runner, and pusher subagents
+# Only validates QA reviewers and safe-deployment-gate subagents
+#
+# Phase 1 reviewers: review-ci-tests-required + 5 specialist reviewers
+# Phase 2 reviewer: review-lead (aggregates Phase 1)
+# Phase 3: safe-deployment-gate (pushes with review-lead's signature)
 
 INPUT=$(cat)
 
@@ -9,7 +13,7 @@ PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
 
 # Only validate specific subagent types
 case "$SUBAGENT" in
-	review-lead|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|test-runner|pusher)
+	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
 		;;
 	*)
 		# Not a tracked subagent, allow silently
@@ -38,15 +42,15 @@ fi
 
 # Subagent-specific validation
 case "$SUBAGENT" in
-	test-runner)
+	review-ci-tests-required)
 		if ! echo "$PARSED" | jq -e '.files_changed' >/dev/null 2>&1; then
 			cat << 'EOF'
-{"decision":"block","reason":"test-runner INPUT missing 'files_changed' field. Required: { branch, commits, files_changed }"}
+{"decision":"block","reason":"review-ci-tests-required INPUT missing 'files_changed' field. Required: { branch, commits, files_changed }"}
 EOF
 			exit 0
 		fi
 		;;
-	review-lead|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
+	review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
 		if ! echo "$PARSED" | jq -e '.original_request' >/dev/null 2>&1; then
 			cat << 'EOF'
 {"decision":"block","reason":"QA reviewer INPUT missing 'original_request' field. Required: { branch, commits, original_request, changes_summary, user_approval, files_changed }"}
@@ -54,10 +58,20 @@ EOF
 			exit 0
 		fi
 		;;
-	pusher)
-		if ! echo "$PARSED" | jq -e '.approvals // .override_token' >/dev/null 2>&1; then
+	review-lead)
+		# Phase 2: review-lead needs approvals_json from Phase 1 reviewers
+		if ! echo "$PARSED" | jq -e '.approvals_json' >/dev/null 2>&1; then
 			cat << 'EOF'
-{"decision":"block","reason":"pusher INPUT missing 'approvals' or 'override_token' field. Required: { branch, approvals } OR { branch, override_token }"}
+{"decision":"block","reason":"review-lead INPUT missing 'approvals_json' field. Required: { branch, commits, approvals_json, original_request, changes_summary }"}
+EOF
+			exit 0
+		fi
+		;;
+	safe-deployment-gate)
+		# Phase 3: safe-deployment-gate needs single approval or override token
+		if ! echo "$PARSED" | jq -e '.approval // .override_token' >/dev/null 2>&1; then
+			cat << 'EOF'
+{"decision":"block","reason":"safe-deployment-gate INPUT missing 'approval' or 'override_token' field. Required: { branch, approval } OR { branch, override_token }"}
 EOF
 			exit 0
 		fi

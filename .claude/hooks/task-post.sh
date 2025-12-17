@@ -1,10 +1,10 @@
 #!/bin/bash
 # PostToolUse hook for Task - validates subagent JSON output
-# Only processes QA reviewers, test-runner, and pusher subagents
+# Only processes QA reviewers and safe-deployment-gate subagents
 #
 # Subagents write their structured output to {agent}.json via write-output.sh.
 # This hook validates that file exists and contains valid JSON.
-# Master-agent reads the .json file directly.
+# Master-agent reads the .json file directly (only review-lead.json in new workflow).
 
 INPUT=$(cat)
 
@@ -12,7 +12,7 @@ SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 
 # Only process specific subagent types
 case "$SUBAGENT" in
-	review-lead|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|test-runner|pusher)
+	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
 		;;
 	*)
 		exit 0

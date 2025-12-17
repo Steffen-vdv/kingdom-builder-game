@@ -14,7 +14,7 @@ SUBAGENT_TYPE="${1:-}"
 
 # Only act on our custom subagents
 case "$SUBAGENT_TYPE" in
-	test-runner|review-lead|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|pusher)
+	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
 		# Continue with unregistration
 		;;
 	*)

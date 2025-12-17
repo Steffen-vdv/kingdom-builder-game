@@ -22,6 +22,16 @@ IMPORTANT:
 
 ---
 
+## Three-Phase Workflow Overview
+
+```
+Phase 1 (parallel):  6 reviewers → 6 signatures
+Phase 2 (sequential): review-lead → 1 final signature
+Phase 3 (sequential): safe-deployment-gate → push
+```
+
+---
+
 ## Input Format (master → subagent)
 
 Master-agent prompt MUST be a pure JSON string — nothing else.
@@ -54,14 +64,22 @@ File path:
 
 Where `{agent}` is the subagent identifier:
 
-- review-lead
+**Phase 1 Reviewers:**
+
+- review-ci-tests-required
 - review-claims-auditor
 - review-contracts-boundaries
 - review-mechanics-content
 - review-infra-concurrency
 - review-tests-docs-dry
-- test-runner
-- pusher
+
+**Phase 2 Aggregator:**
+
+- review-lead
+
+**Phase 3 Deployment:**
+
+- safe-deployment-gate
 
 How to write the file:
 
@@ -96,13 +114,13 @@ Rules:
 
 ---
 
-## QA Reviewers (6-Agent Family)
+## Phase 1 Reviewers (6-Agent Family)
 
-All QA reviewers share the SAME input schema and the SAME output schema.
+All Phase 1 reviewers share the SAME input schema and the SAME output schema.
 
-### QA Agent Identifiers
+### Phase 1 Agent Identifiers
 
-- review-lead (final signatory)
+- review-ci-tests-required (CI/test runner)
 - review-claims-auditor
 - review-contracts-boundaries
 - review-mechanics-content
@@ -111,7 +129,7 @@ All QA reviewers share the SAME input schema and the SAME output schema.
 
 ---
 
-## QA Input Schema (shared by all 6 QA agents)
+## Phase 1 Input Schema (shared by all 6 Phase 1 agents)
 
 ```json
 {
@@ -129,15 +147,18 @@ Rules:
 - `files_changed` is REQUIRED
 - Agents may ignore fields but must not require additional ones
 
+**Exception:** review-ci-tests-required only requires `branch`, `commits`, and
+`files_changed`. Other fields are optional for it.
+
 ---
 
-## QA Output Schema (shared by all 6 QA agents)
+## Phase 1 Output Schema (shared by all 6 Phase 1 agents)
 
-Each QA agent MUST write the following structure to `{agent}.json`:
+Each Phase 1 agent MUST write the following structure to `{agent}.json`:
 
 ```json
 {
-	"agent": "review-lead | review-claims-auditor | review-contracts-boundaries | review-mechanics-content | review-infra-concurrency | review-tests-docs-dry",
+	"agent": "review-ci-tests-required | review-claims-auditor | review-contracts-boundaries | review-mechanics-content | review-infra-concurrency | review-tests-docs-dry",
 	"verdict": "APPROVED | BLOCKED | NEEDS_INPUT | ERROR",
 	"summary": "Human-readable summary",
 
@@ -184,21 +205,31 @@ NEEDS_INPUT rules:
 
 ---
 
-## QA Signature Type Registry (required set)
+## Signature Type Registry
 
-Each QA agent MUST sign with a unique signature type.
-All 6 types are REQUIRED for workflow continuation (bulk verification).
+### Phase 1 (6 signatures required for Phase 2)
 
-- review-lead → QA_FINAL_SIGNATORY
-- review-claims-auditor → QA_CLAIMS_AUDITOR
-- review-contracts-boundaries → QA_CONTRACTS_BOUNDARIES
-- review-mechanics-content → QA_MECHANICS_CONTENT
-- review-infra-concurrency → QA_INFRA_CONCURRENCY
-- review-tests-docs-dry → QA_TESTS_DOCS_DRY
+| Agent                       | Signature Type            |
+| --------------------------- | ------------------------- |
+| review-ci-tests-required    | `QA_CI_REQUIRED_TESTS`    |
+| review-claims-auditor       | `QA_CLAIMS_AUDITOR`       |
+| review-contracts-boundaries | `QA_CONTRACTS_BOUNDARIES` |
+| review-mechanics-content    | `QA_MECHANICS_CONTENT`    |
+| review-infra-concurrency    | `QA_INFRA_CONCURRENCY`    |
+| review-tests-docs-dry       | `QA_TESTS_DOCS_DRY`       |
+
+### Phase 2 (1 signature required for Phase 3)
+
+| Agent       | Signature Type       |
+| ----------- | -------------------- |
+| review-lead | `QA_FINAL_SIGNATORY` |
+
+For signing/verification details, see:
+`.claude/agents/sub-agent/docs/cryptographic-signing.md`
 
 ---
 
-## test-runner
+## review-lead (Phase 2)
 
 ### Input Schema
 
@@ -206,57 +237,50 @@ All 6 types are REQUIRED for workflow continuation (bulk verification).
 {
 	"branch": "branch-name",
 	"commits": ["sha1", "sha2"],
-	"files_changed": ["path/to/file1.ts"]
-}
-```
-
-### Output Schema
-
-```json
-{
-	"agent": "test-runner",
-	"status": "PASS | FAIL | ERROR",
-	"strategy": "full-suite | targeted | no-tests",
-	"summary": "Human-readable summary",
-	"tests_run": 0,
-	"failures": null
-}
-```
-
-Failure entry shape:
-
-```json
-{
-	"test": "path/to/test.ts::testName",
-	"error": "Error message"
-}
-```
-
----
-
-## pusher
-
-### Input Schema
-
-**Mode 1: Bulk QA Approval (normal workflow)**
-
-```json
-{
-	"branch": "branch-name",
-	"approvals": [
-		{ "payload": "...", "signature": "...", "type": "QA_FINAL_SIGNATORY" },
+	"approvals_json": [
+		{ "payload": "...", "signature": "...", "type": "QA_CI_REQUIRED_TESTS" },
 		{ "payload": "...", "signature": "...", "type": "QA_CLAIMS_AUDITOR" },
 		{ "payload": "...", "signature": "...", "type": "QA_CONTRACTS_BOUNDARIES" },
 		{ "payload": "...", "signature": "...", "type": "QA_MECHANICS_CONTENT" },
 		{ "payload": "...", "signature": "...", "type": "QA_INFRA_CONCURRENCY" },
 		{ "payload": "...", "signature": "...", "type": "QA_TESTS_DOCS_DRY" }
-	]
+	],
+	"original_request": "What the user originally asked for",
+	"changes_summary": "What the coder implemented"
 }
 ```
 
-The `approvals` array must contain exactly 6 objects (one per reviewer).
-Each object includes `payload`, `signature`, and `type` (signature type).
-Pusher uses `crypto-gate verify-bulk` to verify all signatures in one call.
+The `approvals_json` array must contain exactly 6 objects (one per Phase 1
+reviewer). Review-lead verifies all 6 signatures before producing its own.
+
+### Output Schema
+
+Same as Phase 1 Output Schema, with:
+
+- `agent`: "review-lead"
+- `signature_type`: "QA_FINAL_SIGNATORY" (when APPROVED)
+
+---
+
+## safe-deployment-gate (Phase 3)
+
+### Input Schema
+
+**Mode 1: QA Approval (normal workflow)**
+
+```json
+{
+	"branch": "branch-name",
+	"approval": {
+		"payload": "...",
+		"signature": "...",
+		"type": "QA_FINAL_SIGNATORY"
+	}
+}
+```
+
+The `approval` object contains the single signature from review-lead.
+Only `QA_FINAL_SIGNATORY` type is accepted.
 
 **Mode 2: User Override (escape hatch)**
 
@@ -271,7 +295,7 @@ Pusher uses `crypto-gate verify-bulk` to verify all signatures in one call.
 
 ```json
 {
-	"agent": "pusher",
+	"agent": "safe-deployment-gate",
 	"status": "SUCCESS | FAILED | ERROR",
 	"branch": "branch-name",
 	"commit": "sha-or-null",
@@ -282,20 +306,33 @@ Pusher uses `crypto-gate verify-bulk` to verify all signatures in one call.
 Status meanings:
 
 - SUCCESS: Push completed, `commit` contains the pushed SHA
-- FAILED: Verification failed (invalid signature, HEAD mismatch, missing approvals)
+- FAILED: Verification failed (invalid signature, HEAD mismatch)
 - ERROR: System error (network, permissions)
 
 ---
 
 ## Master-Agent Responsibilities
 
-Once ready to push, master-agent MUST:
+The three-phase workflow requires master-agent to:
 
-1. Dispatch all 6 reviewers + test-runner in parallel (single message with 7 Task calls)
-2. Read `{agent}.json` files after completion
-3. Display JSON contents verbatim to user
-4. Collect all 6 signatures before dispatching pusher
-5. Pass approvals array to pusher for bulk verification
+### Phase 1
+
+1. Dispatch all 6 Phase 1 reviewers in parallel (single message with 6 Task calls)
+2. Wait for all to complete
+3. Collect 6 approvals (payload, signature, type) from each
+
+### Phase 2
+
+4. Dispatch review-lead with the 6 approvals in `approvals_json`
+5. Wait for completion
+6. Read `/tmp/claude/sub-agents/output/review-lead.json`
+7. Display JSON contents verbatim to user
+8. Extract review-lead's approval (payload, signature, type)
+
+### Phase 3
+
+9. Dispatch safe-deployment-gate with review-lead's single approval
+10. Report result to user
 
 ---
 
@@ -321,29 +358,14 @@ Master-agent reads the JSON file directly for structured data.
 
 ---
 
-## Subagent Final Step: Remind Master-Agent (MANDATORY)
+## Subagent Final Step: Remind Master-Agent
 
-**Every subagent MUST end their chat response with this reminder block.**
+**Only review-lead (Phase 2) includes this reminder block.**
 
-The user is in Claude Code Web UI and cannot see subagent outputs. Master-agent
-must read and display the JSON file verbatim. This reminder ensures it happens.
+Phase 1 agents do not need it because master-agent only displays review-lead's
+output (which aggregates all Phase 1 verdicts).
 
-**Template (replace `{agent}` with your agent name):**
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-MASTER-AGENT: READ THIS
-═══════════════════════════════════════════════════════════════════════════════
-You MUST now:
-1. Read: /tmp/claude/sub-agents/output/{agent}.json
-2. Output the COMPLETE JSON verbatim to the user
-
-The user is in Web UI and cannot see subagent outputs.
-If you do not show them, they are blind.
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-**Example for review-lead:**
+Review-lead MUST end its chat response with:
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
@@ -358,4 +380,4 @@ If you do not show them, they are blind.
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
-This goes at the VERY END of your chat response, after all analysis and narrative.
+This goes at the VERY END of review-lead's chat response, after all analysis.

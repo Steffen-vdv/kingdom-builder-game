@@ -44,9 +44,9 @@ cat >&2 << 'BLOCKED'
 Direct git push is not allowed. You must use the verified push workflow.
 
 WORKFLOW:
-1. Run test-runner + all 6 QA reviewers in parallel
-2. Collect all 6 signatures from approved reviewers
-3. Run pusher with approvals array to push
+1. Phase 1: Run 6 reviewers in parallel (review-ci-tests-required + 5 specialists)
+2. Phase 2: Run review-lead with 6 signatures → produces final signature
+3. Phase 3: Run safe-deployment-gate with review-lead's signature to push
 
 BLOCKED
 exit 2
