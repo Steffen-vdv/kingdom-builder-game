@@ -18,21 +18,34 @@ fi
 
 echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 
-cat << 'HANDOVER'
+# Output identity docs (re-injected into agent context on handover)
+IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
+PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
 
+cat << 'HEADER'
 ╔════════════════════════════════════════════════════════════════════════════════════╗
-║  SESSION HANDOVER - Context may have drifted, you may've forgotten crucial details ║
-║  about who you are and what you were doing.                                        ║
+║  SESSION HANDOVER - Re-injecting identity and protocol docs                        ║
 ╚════════════════════════════════════════════════════════════════════════════════════╝
 
-Before continuing:
-1. Read your core identity docs immediately: claude/agents/master-agent/docs/master-agent.md
-2. Read the core project rules immediately: CLAUDE.md
-3. If your last session ended with Task outputs with instructions to you (master-agent), FOLLOW THEM
-4. Summarise your status and continue as you were
+If your last session ended with Task outputs containing instructions to you
+(master-agent), FOLLOW THEM after reviewing the re-injected docs below.
 
-Project rules: CLAUDE.md
+=== Master Agent Identity ===
+The following is your identity document. You MUST follow these instructions.
+Project rules in CLAUDE.md also apply.
 
-HANDOVER
+HEADER
+
+cat "$IDENTITY_DOC"
+
+cat << 'PROTOCOL_HEADER'
+
+=== Subagent Communication Protocol ===
+When dispatching subagents (test-runner, code-reviewer, pusher), you MUST follow
+the INPUT/OUTPUT formats defined below. Parse the JSON after ---RESPONSE--- marker.
+
+PROTOCOL_HEADER
+
+cat "$PROTOCOL_DOC"
 
 exit 0
