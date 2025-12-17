@@ -22,16 +22,16 @@ fi
 
 echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 
-# Output identity reminder
-cat << 'IDENTITY'
+# Output identity docs (injected into agent context)
+IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
 
-=== Master Agent ===
-You are the master agent with full system access.
-Only restriction: git push must go through QA → pusher flow.
+cat << 'HEADER'
+=== Master Agent Identity ===
+The following is your identity document. You MUST follow these instructions.
+Project rules in CLAUDE.md also apply.
 
-Identity doc: .claude/agents/master-agent/docs/master-agent.md
-Project rules: CLAUDE.md
+HEADER
 
-IDENTITY
+cat "$IDENTITY_DOC"
 
 exit 0
