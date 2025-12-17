@@ -178,7 +178,8 @@ CRYPTO_GATE=$(find_crypto_gate) || exit 1
 
 echo "Verifying signature via crypto-gate..." >&2
 
-if ! "$CRYPTO_GATE" verify "$PAYLOAD" "$SIGNATURE"; then
+# Note: Signatures are type-specific. QA_FINAL_SIGNATORY is required for deployment.
+if ! "$CRYPTO_GATE" verify "$PAYLOAD" "$SIGNATURE" --type QA_FINAL_SIGNATORY; then
 	cat >&2 << 'INVALID_SIG'
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  ❌ PUSH BLOCKED — Invalid signature                                          ║
