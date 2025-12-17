@@ -203,7 +203,7 @@ NEEDS_INPUT rules:
 
 ### Concrete Example (APPROVED verdict)
 
-**This is what your output file MUST look like when approving:**
+**Your output file MUST follow this structure** (values are examples — use your own):
 
 ```json
 {
@@ -353,14 +353,11 @@ The three-phase workflow requires master-agent to:
 
 1. Dispatch all 6 Phase 1 reviewers in parallel (single message with 6 Task calls)
 2. Wait for all to complete
-3. Collect approvals using the helper script:
+3. Collect approvals:
 
 ```bash
 APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
 ```
-
-The script reads all 6 output files, validates them, and returns the
-`approvals_json` array. If any file is missing or invalid, it exits with error.
 
 ### Phase 2
 

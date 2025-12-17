@@ -76,20 +76,13 @@ Wait for all 6 to complete. Each produces a signed approval.
 
 ### Phase 2: Dispatch review-lead
 
-**Step 1:** Collect the 6 approvals using the helper script:
+**Step 1:** Collect approvals:
 
 ```bash
 APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
 ```
 
-The script:
-
-- Reads all 6 Phase 1 output files
-- Validates each has `verdict: "APPROVED"` and signature fields
-- Returns the `approvals_json` array ready for review-lead
-- Exits with error if any file is missing or invalid
-
-**Step 2:** Dispatch review-lead with the collected approvals:
+**Step 2:** Dispatch review-lead:
 
 ```
 Task(subagent_type: "review-lead", prompt: "{
