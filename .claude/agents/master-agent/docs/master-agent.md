@@ -144,3 +144,32 @@ Describe the situation. Let subagents decide their approach.
 ```
 
 Subagents have their own documentation and decision-making. Trust them.
+
+### Handle FORMAT_ERROR (Retry Protocol)
+
+**If you see `---SUBAGENT_FORMAT_ERROR---` in a subagent response:**
+
+1. **DO NOT** proceed with the response — it's malformed
+2. **RE-DISPATCH** the same subagent with the same INPUT
+3. **ADD** a format reminder to the prompt
+4. **MAX 1 RETRY** — if retry also fails, report ERROR to user
+
+Example retry:
+
+````
+Task(subagent_type: "test-runner", prompt: "
+RETRY - Your previous response was malformed (missing ---RESPONSE--- delimiter).
+
+You MUST follow the response structure:
+1. TOP: MASTER-AGENT reminder block
+2. MIDDLE: ---NARRATIVE--- with analysis
+3. BOTTOM: ---RESPONSE--- with JSON
+
+INPUT:
+```json
+{ ... same input as before ... }
+```
+")
+````
+
+See `agent-intercommunication-protocols.md` for full error handling details.

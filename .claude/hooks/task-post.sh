@@ -83,10 +83,25 @@ echo "────────────────────────�
 FULL_TEXT=$(echo "$RESPONSE" | jq -r '.content[].text // ""' 2>/dev/null | tr -d '\n')
 
 if ! echo "$FULL_TEXT" | grep -q '\-\-\-RESPONSE\-\-\-'; then
+	# Write warning to file
 	echo "" >> "$OUTPUT_FILE"
 	echo "⚠️  FORMAT WARNING: Response missing ---RESPONSE--- delimiter" >> "$OUTPUT_FILE"
 	echo "    Subagent should end with: ---RESPONSE--- followed by JSON block" >> "$OUTPUT_FILE"
 	echo "    See: agent-intercommunication-protocols.md" >> "$OUTPUT_FILE"
+
+	# Output structured error to stdout for master-agent to see and act on
+	cat << EOF
+
+---SUBAGENT_FORMAT_ERROR---
+{
+  "agent": "${SUBAGENT}",
+  "error": "Response missing ---RESPONSE--- delimiter",
+  "action": "RETRY",
+  "instruction": "Re-dispatch this subagent. Remind it to follow the response structure in agent-intercommunication-protocols.md: TOP reminder block, ---NARRATIVE---, then ---RESPONSE--- with JSON."
+}
+---END_FORMAT_ERROR---
+
+EOF
 fi
 
 exit 0

@@ -209,11 +209,62 @@ When receiving subagent responses, master-agent MUST:
 
 ---
 
-## Validation
+## Validation & Error Handling
 
-Hooks enforce format compliance:
+Hooks enforce format compliance with blocking and retry mechanisms.
 
-- **Pre-hook (task-pre.sh)**: Validates INPUT JSON is present in prompt
-- **Post-hook (task-post.sh)**: Validates OUTPUT contains `---RESPONSE---` + valid JSON
+### Pre-hook Validation (task-pre.sh)
 
-Malformed messages are rejected with format reminder.
+**Blocks** dispatch if INPUT is malformed:
+
+- Missing ````json` block in prompt → BLOCKED
+- Missing required fields (branch, etc.) → BLOCKED
+
+Master-agent sees the block reason and can fix the INPUT before retrying.
+
+### Post-hook Validation (task-post.sh)
+
+**Cannot block** (subagent already finished), but signals errors to master-agent.
+
+When `---RESPONSE---` delimiter is missing, outputs:
+
+```
+---SUBAGENT_FORMAT_ERROR---
+{
+  "agent": "<agent-name>",
+  "error": "Response missing ---RESPONSE--- delimiter",
+  "action": "RETRY",
+  "instruction": "Re-dispatch with format reminder"
+}
+---END_FORMAT_ERROR---
+```
+
+### Master-Agent Retry Protocol
+
+**When master-agent sees `---SUBAGENT_FORMAT_ERROR---` in response:**
+
+1. **DO NOT** proceed with the malformed response
+2. **RE-DISPATCH** the same subagent with the same INPUT
+3. **ADD** to the prompt: "IMPORTANT: Your previous response was malformed. You MUST include `---RESPONSE---` delimiter followed by JSON. See agent-intercommunication-protocols.md."
+4. **MAX 1 RETRY** — if second attempt also fails, report ERROR to user
+
+Example retry dispatch:
+
+````
+Task(subagent_type: "test-runner", prompt: "
+RETRY - Previous response was malformed.
+IMPORTANT: You MUST follow the response structure:
+1. TOP: MASTER-AGENT reminder block
+2. MIDDLE: ---NARRATIVE--- with analysis
+3. BOTTOM: ---RESPONSE--- with JSON
+
+INPUT:
+```json
+{ ... same input as before ... }
+````
+
+")
+
+```
+
+```
