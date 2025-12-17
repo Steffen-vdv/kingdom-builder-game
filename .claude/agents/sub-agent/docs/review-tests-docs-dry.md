@@ -58,12 +58,19 @@ BLOCK if:
 - Core changes lack architecture updates
 - Data or rules are duplicated
 
+## Signing Rules
+
+- You sign only if approving
+- Your signature type must be:
+  `QA_TESTS_DOCS_DRY`
+- Call `sign.sh '<summary>'` where summary describes verification performed
+
 ## Output
 
 - Write structured output to:
   `/tmp/claude/sub-agents/output/review-tests-docs-dry.json`
 - Follow the QA Output Schema in:
-  `agent-intercommunication-protocols.md`
+  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
 Chat output is explanatory only.
 JSON file is decisive.

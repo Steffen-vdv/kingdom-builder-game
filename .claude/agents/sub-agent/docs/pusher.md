@@ -9,7 +9,7 @@ tools: Bash, Read
 
 You push code to remote after verifying all 6 QA approval signatures.
 
-**Before completing, write your structured output to the JSON file specified in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#output-format-subagent--file).**
+**Before completing, write your structured output to the JSON file specified in [`agent-intercommunication-protocols.md`](.claude/agents/shared/docs/agent-intercommunication-protocols.md#output-format-subagent--file).**
 
 ---
 
@@ -26,7 +26,7 @@ ALL verification happens inside verify-bulk-and-push.sh via crypto-gate.
 
 ## Expected Input
 
-**See [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#pusher-protocol)
+**See [`agent-intercommunication-protocols.md`](.claude/agents/shared/docs/agent-intercommunication-protocols.md#pusher-protocol)
 for the complete request format specification.**
 
 The master-agent provides ONE of two modes:

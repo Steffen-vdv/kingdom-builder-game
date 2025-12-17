@@ -66,12 +66,19 @@ BLOCK if:
 - Player-facing strings bypass translation systems
 - Ad-hoc formatting replaces canonical translators
 
+## Signing Rules
+
+- You sign only if approving
+- Your signature type must be:
+  `QA_CONTRACTS_BOUNDARIES`
+- Call `sign.sh '<summary>'` where summary describes contracts verified
+
 ## Output
 
 - Write structured output to:
   `/tmp/claude/sub-agents/output/review-contracts-boundaries.json`
 - Follow the QA Output Schema in:
-  `agent-intercommunication-protocols.md`
+  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
 Narrative chat output is allowed.
 Only the JSON file is used for decisions.

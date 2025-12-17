@@ -47,15 +47,15 @@ You do NOT OWN:
 
 - You sign only if approving
 - Your signature type must be:
-  QA_FINAL_SIGNATORY
-- Payload must summarize what is approved
+  `QA_FINAL_SIGNATORY`
+- Call `sign.sh '<summary>'` where summary describes what was approved
 
 ## Output
 
 - Write structured output to:
   `/tmp/claude/sub-agents/output/review-lead.json`
 - Follow the QA Output Schema in:
-  `agent-intercommunication-protocols.md`
+  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
 Your chat output may explain reasoning.
 Only the JSON file authorizes progression.

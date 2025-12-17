@@ -63,12 +63,19 @@ BLOCK if:
 
 - Mechanics changed but architecture docs were not updated
 
+## Signing Rules
+
+- You sign only if approving
+- Your signature type must be:
+  `QA_MECHANICS_CONTENT`
+- Call `sign.sh '<summary>'` where summary describes mechanics verified
+
 ## Output
 
 - Write structured output to:
   `/tmp/claude/sub-agents/output/review-mechanics-content.json`
 - Follow the QA Output Schema in:
-  `agent-intercommunication-protocols.md`
+  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
 Chat output may explain reasoning.
 JSON file is authoritative.

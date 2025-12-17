@@ -39,29 +39,66 @@ describe('Infrastructure: Agent Path Validation', () => {
 
 	describe('Master-Agent Files', () => {
 		it('should have master-agent scripts', () => {
-			expect(pathExists('.claude/agents/master-agent/scripts/msh.sh')).toBe(
-				true,
-			);
-			expect(pathExists('.claude/agents/master-agent/scripts/mss.sh')).toBe(
-				true,
-			);
+			expect(
+				pathExists(
+					'.claude/agents/master-agent/scripts/master-session-handover.sh',
+				),
+			).toBe(true);
+			expect(
+				pathExists(
+					'.claude/agents/master-agent/scripts/master-session-start.sh',
+				),
+			).toBe(true);
 		});
 	});
 
 	describe('Sub-Agent Files', () => {
-		it('should have subagent documentation', () => {
-			expect(pathExists('.claude/agents/sub-agent/docs/code-reviewer.md')).toBe(
+		it('should have all 6 QA reviewer documentation files', () => {
+			expect(pathExists('.claude/agents/sub-agent/docs/review-lead.md')).toBe(
 				true,
 			);
-			expect(pathExists('.claude/agents/sub-agent/docs/pusher.md')).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-claims-auditor.md'),
+			).toBe(true);
+			expect(
+				pathExists(
+					'.claude/agents/sub-agent/docs/review-contracts-boundaries.md',
+				),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-mechanics-content.md'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-infra-concurrency.md'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-tests-docs-dry.md'),
+			).toBe(true);
 		});
 
-		it('should have subagent scripts with new names', () => {
+		it('should have pusher and test-runner documentation', () => {
+			expect(pathExists('.claude/agents/sub-agent/docs/pusher.md')).toBe(true);
+			expect(pathExists('.claude/agents/sub-agent/docs/test-runner.md')).toBe(
+				true,
+			);
+		});
+
+		it('should have subagent scripts', () => {
 			expect(pathExists('.claude/agents/sub-agent/scripts/sign.sh')).toBe(true);
 			expect(
 				pathExists('.claude/agents/sub-agent/scripts/verify-and-push.sh'),
 			).toBe(true);
-			expect(pathExists('.claude/agents/sub-agent/scripts/sss.sh')).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/verify-bulk-and-push.sh'),
+			).toBe(true);
+			expect(
+				pathExists(
+					'.claude/agents/sub-agent/scripts/subagent-session-start.sh',
+				),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/subagent-cleanup.sh'),
+			).toBe(true);
 		});
 
 		it('should NOT have old script names', () => {
@@ -107,9 +144,15 @@ describe('Infrastructure: Agent Path Validation', () => {
 			const subagentStartCommand =
 				settings.hooks.SubagentStart[0].hooks[0].command;
 
-			expect(sessionStartupCommand).toContain('master-agent/scripts/mss.sh');
-			expect(sessionResumeCommand).toContain('master-agent/scripts/msh.sh');
-			expect(subagentStartCommand).toContain('sub-agent/scripts/sss.sh');
+			expect(sessionStartupCommand).toContain(
+				'master-agent/scripts/master-session-start.sh',
+			);
+			expect(sessionResumeCommand).toContain(
+				'master-agent/scripts/master-session-handover.sh',
+			);
+			expect(subagentStartCommand).toContain(
+				'sub-agent/scripts/subagent-session-start.sh',
+			);
 		});
 	});
 
@@ -117,6 +160,12 @@ describe('Infrastructure: Agent Path Validation', () => {
 		it('should NOT have old agent definition locations', () => {
 			expect(pathExists('.claude/agents/code-reviewer.md')).toBe(false);
 			expect(pathExists('.claude/agents/pusher.md')).toBe(false);
+		});
+
+		it('should NOT have legacy single code-reviewer', () => {
+			expect(pathExists('.claude/agents/sub-agent/docs/code-reviewer.md')).toBe(
+				false,
+			);
 		});
 
 		it('should NOT have old script locations', () => {

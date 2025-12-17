@@ -61,12 +61,19 @@ You do NOT OWN:
 - Summary omits high-impact changes
 - Diff contradicts stated intent
 
+## Signing Rules
+
+- You sign only if approving
+- Your signature type must be:
+  `QA_CLAIMS_AUDITOR`
+- Call `sign.sh '<summary>'` where summary describes claims verified
+
 ## Output
 
 - Write structured output to:
   `/tmp/claude/sub-agents/output/review-claims-auditor.json`
 - Follow the QA Output Schema defined in:
-  `agent-intercommunication-protocols.md`
+  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
-Chat output may be narrative.  
+Chat output may be narrative.
 Only the JSON file is authoritative.

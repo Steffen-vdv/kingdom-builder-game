@@ -47,12 +47,19 @@ BLOCK if you see:
 - Unconditional cleanup
 - No crash-recovery strategy
 
+## Signing Rules
+
+- You sign only if approving
+- Your signature type must be:
+  `QA_INFRA_CONCURRENCY`
+- Call `sign.sh '<summary>'` where summary describes infra verified
+
 ## Output
 
 - Write structured output to:
   `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
 - Follow the QA Output Schema in:
-  `agent-intercommunication-protocols.md`
+  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
 Narrative chat is allowed.
 JSON file governs workflow.

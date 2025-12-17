@@ -238,19 +238,24 @@ directly. Subagents are used only for QA review and push operations.
             ┌───────────────────────┼───────────────────────┐
             ↓                       ↓                       ↓
     ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
-    │  test-runner  │       │ code-reviewer │       │    pusher     │
-    │  (validates)  │       │  (QA gate)    │       │ (push w/sig)  │
+    │  test-runner  │       │  6 QA agents  │       │    pusher     │
+    │  (validates)  │       │  (parallel)   │       │ (push w/sig)  │
     └───────────────┘       └───────────────┘       └───────────────┘
 ```
 
 **Documentation by agent type:**
 
-| Agent         | Primary Doc                                        | Purpose                |
-| ------------- | -------------------------------------------------- | ---------------------- |
-| Master-agent  | `.claude/agents/master-agent/docs/master-agent.md` | Main agent identity    |
-| Test-runner   | `.claude/agents/sub-agent/docs/test-runner.md`     | Test analysis strategy |
-| Code-reviewer | `.claude/agents/sub-agent/docs/code-reviewer.md`   | QA criteria            |
-| Pusher        | `.claude/agents/sub-agent/docs/pusher.md`          | Push verification      |
+| Agent                       | Primary Doc                                                    | Purpose                     |
+| --------------------------- | -------------------------------------------------------------- | --------------------------- |
+| Master-agent                | `.claude/agents/master-agent/docs/master-agent.md`             | Main agent identity         |
+| Test-runner                 | `.claude/agents/sub-agent/docs/test-runner.md`                 | Test analysis strategy      |
+| review-lead                 | `.claude/agents/sub-agent/docs/review-lead.md`                 | Final QA gate, root cause   |
+| review-claims-auditor       | `.claude/agents/sub-agent/docs/review-claims-auditor.md`       | Diff/claims verification    |
+| review-contracts-boundaries | `.claude/agents/sub-agent/docs/review-contracts-boundaries.md` | Contracts, boundaries       |
+| review-mechanics-content    | `.claude/agents/sub-agent/docs/review-mechanics-content.md`    | Mechanics, content-driven   |
+| review-infra-concurrency    | `.claude/agents/sub-agent/docs/review-infra-concurrency.md`    | Infrastructure, concurrency |
+| review-tests-docs-dry       | `.claude/agents/sub-agent/docs/review-tests-docs-dry.md`       | Tests, docs, DRY            |
+| Pusher                      | `.claude/agents/sub-agent/docs/pusher.md`                      | Bulk signature verification |
 
 ### 3.2 Request Verification Protocol
 

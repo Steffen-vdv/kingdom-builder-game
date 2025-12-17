@@ -11,7 +11,7 @@ tools: Glob, Grep, Read, Bash
 
 # Test Runner — Test Analysis & Execution Specialist
 
-**Before completing, write your structured output to the JSON file specified in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#output-format-subagent--file).**
+**Before completing, write your structured output to the JSON file specified in [`agent-intercommunication-protocols.md`](.claude/agents/shared/docs/agent-intercommunication-protocols.md#output-format-subagent--file).**
 
 ---
 
@@ -130,7 +130,7 @@ These files affect many systems — changes require `pnpm test:parallel`:
 - `packages/testing/**` — Test utilities
 
 For the three-layer testing strategy, see
-[`docs/architecture-reference.md`](../../../../docs/architecture-reference.md#testing-strategy).
+[`docs/architecture-reference.md`](docs/architecture-reference.md#testing-strategy).
 
 ## Reference
 
