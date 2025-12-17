@@ -12,10 +12,6 @@ import {
 	DEVELOPMENTS_INFO,
 	BUILDING_INFO,
 	SECTION_INFO,
-	OVERVIEW_CONTENT,
-	type OverviewContentTemplate,
-} from '@kingdom-builder/contents';
-import {
 	RESOURCE_CATEGORY_REGISTRY,
 	RESOURCE_GROUP_REGISTRY,
 	RESOURCE_REGISTRY,
@@ -27,6 +23,7 @@ import type {
 	SessionActionCategoryRegistry,
 } from '@kingdom-builder/protocol';
 import type {
+	SessionOverviewMetadata,
 	SessionSnapshotMetadata,
 	SessionMetadataDescriptor,
 	SessionPhaseMetadata,
@@ -50,7 +47,7 @@ type StaticSessionMetadata = Pick<
 export interface SessionMetadataBuildResult {
 	readonly registries: SessionRegistriesPayload;
 	readonly metadata: StaticSessionMetadata;
-	readonly overviewContent: OverviewContentTemplate;
+	readonly overviewContent: SessionOverviewMetadata;
 }
 
 const deepFreeze = <T>(value: T): T => {
@@ -295,8 +292,14 @@ const buildAssetMetadata = () =>
 		['section:combat', { label: SECTION_INFO.combat.label }],
 	]);
 
-const cloneOverviewContent = () =>
-	deepFreeze(structuredClone(OVERVIEW_CONTENT));
+const DEFAULT_OVERVIEW_CONTENT: SessionOverviewMetadata = {
+	hero: { tokens: {} },
+	sections: [],
+	tokens: {},
+};
+
+const cloneOverviewContent = (): SessionOverviewMetadata =>
+	deepFreeze(structuredClone(DEFAULT_OVERVIEW_CONTENT));
 
 export const buildSessionMetadata = (): SessionMetadataBuildResult => {
 	const registries: SessionRegistriesPayload = {

@@ -286,9 +286,6 @@ export const useSlotMetadata = (): AssetMetadataSelector =>
 export const usePassiveAssetMetadata = (): AssetMetadataSelector =>
 	useRegistryMetadata().passiveMetadata;
 
-export const useOverviewContent = (): SessionOverviewMetadata =>
-	useRegistryMetadata().overviewContent;
-
 export type {
 	RegistryMetadataDescriptor,
 	TriggerMetadata,

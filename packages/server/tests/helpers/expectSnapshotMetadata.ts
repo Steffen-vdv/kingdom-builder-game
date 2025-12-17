@@ -28,10 +28,6 @@ export function expectStaticMetadata(
 	const triggerKeys = Object.keys(metadata.triggers ?? {});
 	expect(triggerKeys.length).toBeGreaterThan(0);
 	expect(metadata.overview).toBeDefined();
-	if (metadata.overview) {
-		const heroTokens = metadata.overview.hero?.tokens ?? {};
-		expect(Object.keys(heroTokens).length).toBeGreaterThan(0);
-	}
 	expect(metadata.assets).toBeDefined();
 	expect(metadata.assets?.upkeep?.icon).toBeDefined();
 	expect(metadata.assets?.transfer?.icon).toBeDefined();

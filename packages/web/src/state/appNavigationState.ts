@@ -15,7 +15,6 @@ export interface AppNavigationState {
 	startStandardGame: () => void;
 	startDeveloperGame: () => void;
 	continueSavedGame: () => void;
-	openOverview: () => void;
 	openTutorial: () => void;
 	returnToMenu: () => void;
 	toggleDarkMode: () => void;

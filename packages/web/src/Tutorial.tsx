@@ -7,7 +7,24 @@ import {
 	SHOWCASE_BADGE_CLASS,
 	SHOWCASE_INTRO_CLASS,
 } from './components/layouts/ShowcasePage';
-import { renderTokens } from './components/overview/OverviewLayout';
+
+function renderTokens(
+	text: string,
+	tokens: Record<string, React.ReactNode>,
+): React.ReactNode {
+	const parts = text.split(/(\{[^}]+\})/g);
+	return parts.map((part, index) => {
+		const match = part.match(/^\{([^}]+)\}$/);
+		if (match && match[1] !== undefined) {
+			const tokenKey = match[1];
+			const tokenValue = tokens[tokenKey];
+			if (tokenValue !== undefined) {
+				return <React.Fragment key={index}>{tokenValue}</React.Fragment>;
+			}
+		}
+		return part;
+	});
+}
 
 interface TutorialProps {
 	onBack: () => void;
