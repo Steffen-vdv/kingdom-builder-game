@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
 	ACTIONS,
 	TRIGGER_META,
-	OVERVIEW_CONTENT,
 	BUILDINGS,
 	DEVELOPMENTS,
 	PHASES,
@@ -54,19 +53,13 @@ describe('buildSessionMetadata', () => {
 		}
 	});
 
-	it('clones overview content including hero tokens', () => {
+	it('provides minimal overview content structure', () => {
 		const { overviewContent } = buildSessionMetadata();
-		const [tokenKey, tokenValue] =
-			Object.entries(OVERVIEW_CONTENT.hero.tokens)[0] ?? [];
-		expect(overviewContent).not.toBe(OVERVIEW_CONTENT);
 		expect(Object.isFrozen(overviewContent)).toBe(true);
-		if (tokenKey && tokenValue) {
-			expect(overviewContent.hero.tokens[tokenKey]).toBe(tokenValue);
-		} else {
-			expect(Object.keys(overviewContent.hero.tokens).length).toBeGreaterThan(
-				0,
-			);
-		}
+		expect(overviewContent.hero).toBeDefined();
+		expect(overviewContent.hero?.tokens).toBeDefined();
+		expect(overviewContent.sections).toBeDefined();
+		expect(overviewContent.tokens).toBeDefined();
 	});
 
 	it('builds resource metadata with icons and descriptions', () => {

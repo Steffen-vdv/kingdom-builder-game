@@ -5,7 +5,6 @@ import {
 	KEYWORD_LABELS,
 	LAND_INFO,
 	MODIFIER_INFO,
-	OVERVIEW_CONTENT,
 	PASSIVE_INFO,
 	POPULATION_INFO,
 	SECTION_INFO,
@@ -79,8 +78,11 @@ export function buildSessionMetadata(
 	if (hasEntries(assetMetadata)) {
 		metadata.assets = assetMetadata;
 	}
-	const overviewMetadata = structuredClone(OVERVIEW_CONTENT);
-	metadata.overview = overviewMetadata;
+	metadata.overview = {
+		hero: { tokens: {} },
+		sections: [],
+		tokens: {},
+	};
 	return metadata;
 }
 

@@ -17,7 +17,6 @@ export { POPULATION_INFO, POPULATION_ARCHETYPE_INFO } from './population';
 export { PASSIVE_INFO } from './passive';
 export { MODIFIER_INFO } from './modifiers';
 export { RULES } from './rules';
-export { OVERVIEW_CONTENT, type OverviewContentTemplate, type OverviewHeroTemplate, type OverviewSectionTemplate, type OverviewTokenCandidates, type OverviewTokenCategoryName } from './overview';
 export { TIER_SUMMARY_STORE, type TierSummaryStore, type TierSummaryGroup } from './infrastructure/tieredResources';
 export { PRIMARY_ICON_ID } from './startup';
 export { type ActionDef } from './actions';
