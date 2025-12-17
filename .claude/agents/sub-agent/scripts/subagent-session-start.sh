@@ -99,8 +99,9 @@ PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunic
 
 cat << 'PROTOCOL_HEADER'
 === Subagent Communication Protocol ===
-Your ENTIRE response MUST be a single valid JSON object — no preamble, no markdown.
-Follow the OUTPUT format defined below exactly.
+Before completing your session, you MUST write your structured output to a JSON file.
+Your chat output can be free-form narrative — only the JSON file matters for data exchange.
+See the OUTPUT format section below for file path and schema.
 
 PROTOCOL_HEADER
 
