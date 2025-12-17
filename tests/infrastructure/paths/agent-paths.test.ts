@@ -88,7 +88,7 @@ describe('Infrastructure: Agent Path Validation', () => {
 	describe('Hook Files', () => {
 		it('should have security hooks', () => {
 			expect(pathExists('.claude/hooks/pre-push-review.sh')).toBe(true);
-			expect(pathExists('.claude/hooks/block-bin-access.sh')).toBe(true);
+			expect(pathExists('.claude/hooks/block-agent-access.sh')).toBe(true);
 		});
 	});
 
