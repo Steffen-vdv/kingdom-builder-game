@@ -43,16 +43,16 @@ The master-agent provides ONE of two modes:
 .claude/agents/sub-agent/scripts/verify-bulk-and-push.sh '<approvals_json>' 'branch-name'
 ```
 
-The `approvals_json` is an array of 6 objects, each with `payload` and `signature`:
+The `approvals_json` is an array of 6 objects, each with `payload`, `signature`, and `type`:
 
 ```json
 [
-	{ "payload": "...", "signature": "..." },
-	{ "payload": "...", "signature": "..." },
-	{ "payload": "...", "signature": "..." },
-	{ "payload": "...", "signature": "..." },
-	{ "payload": "...", "signature": "..." },
-	{ "payload": "...", "signature": "..." }
+	{ "payload": "...", "signature": "...", "type": "QA_FINAL_SIGNATORY" },
+	{ "payload": "...", "signature": "...", "type": "QA_CLAIMS_AUDITOR" },
+	{ "payload": "...", "signature": "...", "type": "QA_CONTRACTS_BOUNDARIES" },
+	{ "payload": "...", "signature": "...", "type": "QA_MECHANICS_CONTENT" },
+	{ "payload": "...", "signature": "...", "type": "QA_INFRA_CONCURRENCY" },
+	{ "payload": "...", "signature": "...", "type": "QA_TESTS_DOCS_DRY" }
 ]
 ```
 
@@ -76,9 +76,19 @@ The token is provided by the user via the `override_token` field in the input JS
 The script handles ALL verification using crypto-gate 0.5.0+ `verify-bulk`:
 
 1. Validates that exactly 6 approvals are provided
-2. Calls `crypto-gate verify-bulk` to verify all signatures in one call
-3. Checks HEAD commit is in at least one approved payload
-4. Executes `git push -u origin <branch>` if all checks pass
+2. **Validates all 6 required signature types are present:**
+   - QA_FINAL_SIGNATORY (review-lead)
+   - QA_CLAIMS_AUDITOR (review-claims-auditor)
+   - QA_CONTRACTS_BOUNDARIES (review-contracts-boundaries)
+   - QA_MECHANICS_CONTENT (review-mechanics-content)
+   - QA_INFRA_CONCURRENCY (review-infra-concurrency)
+   - QA_TESTS_DOCS_DRY (review-tests-docs-dry)
+3. Calls `crypto-gate verify-bulk` to verify all signatures in one call
+4. Checks HEAD commit is in at least one approved payload
+5. Executes `git push -u origin <branch>` if all checks pass
+
+**CRITICAL:** If any signature type is missing, the script FAILS immediately
+without attempting crypto verification. All 6 types are mandatory.
 
 You do NOT need to verify anything manually. Just run the script.
 
@@ -97,14 +107,15 @@ The code has been pushed to the remote repository.
 
 If verify-bulk-and-push.sh fails, report the error clearly:
 
-| Error                | Meaning                        | What To Report                                |
-| -------------------- | ------------------------------ | --------------------------------------------- |
-| Missing arguments    | No approvals provided          | "Master-agent must provide approvals from QA" |
-| Wrong approval count | Not exactly 6 approvals        | "Expected 6 approvals, received N"            |
-| Verification failed  | System error                   | "Report ERROR to master-agent"                |
-| Invalid signature(s) | One or more signatures invalid | "Re-run QA review to get fresh signatures"    |
-| HEAD not in commits  | New commits after QA           | "Re-run QA review for current commits"        |
-| Git push failed      | Network/permission issue       | "Check remote access and retry"               |
+| Error                  | Meaning                        | What To Report                                |
+| ---------------------- | ------------------------------ | --------------------------------------------- |
+| Missing arguments      | No approvals provided          | "Master-agent must provide approvals from QA" |
+| Wrong approval count   | Not exactly 6 approvals        | "Expected 6 approvals, received N"            |
+| Missing signature type | One or more types not present  | "Missing type(s): [list]. All 6 are required" |
+| Verification failed    | System error                   | "Report ERROR to master-agent"                |
+| Invalid signature(s)   | One or more signatures invalid | "Re-run QA review to get fresh signatures"    |
+| HEAD not in commits    | New commits after QA           | "Re-run QA review for current commits"        |
+| Git push failed        | Network/permission issue       | "Check remote access and retry"               |
 
 **Example failure report:**
 

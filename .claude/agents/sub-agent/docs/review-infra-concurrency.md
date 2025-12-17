@@ -19,12 +19,14 @@ Default stance: BLOCK.
 ## Scope (What You Own)
 
 You OWN:
+
 - .claude hooks and scripts
 - Marker files and lifecycle management
 - Concurrency safety and idempotency
 - Failure modes and recovery paths
 
 You do NOT OWN:
+
 - Gameplay logic
 - Protocol semantics
 - UI behavior
@@ -39,6 +41,7 @@ You do NOT OWN:
 ## Red Flags
 
 BLOCK if you see:
+
 - Binary markers with parallel agents
 - Assumed execution order
 - Unconditional cleanup
@@ -47,9 +50,9 @@ BLOCK if you see:
 ## Output
 
 - Write structured output to:
-  ```/tmp/claude/sub-agents/output/review-infra-concurrency.json```
+  `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
 - Follow the QA Output Schema in:
-  ```agent-intercommunication-protocols.md```
+  `agent-intercommunication-protocols.md`
 
 Narrative chat is allowed.
 JSON file governs workflow.

@@ -5,7 +5,7 @@
 # Atomically increments the subagent counter. When count goes from 0 to 1,
 # switches context from master-agent to subagent.
 #
-# Only acts on custom subagents: test-runner, code-reviewer, pusher.
+# Only acts on custom subagents: test-runner, 6 QA reviewers, pusher.
 # Other subagent types (Explore, general-purpose, etc.) are ignored.
 #
 # Usage: register-subagent.sh <subagent_type>
@@ -14,7 +14,7 @@ SUBAGENT_TYPE="${1:-}"
 
 # Only act on our custom subagents
 case "$SUBAGENT_TYPE" in
-	test-runner|code-reviewer|pusher)
+	test-runner|review-lead|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|pusher)
 		# Continue with registration
 		;;
 	*)

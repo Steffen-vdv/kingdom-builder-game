@@ -1,6 +1,6 @@
 #!/bin/bash
 # PreToolUse hook for Task - validates subagent INPUT format
-# Only validates code-reviewer, test-runner, and pusher subagents
+# Only validates QA reviewers, test-runner, and pusher subagents
 
 INPUT=$(cat)
 
@@ -9,7 +9,7 @@ PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
 
 # Only validate specific subagent types
 case "$SUBAGENT" in
-	code-reviewer|test-runner|pusher)
+	review-lead|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|test-runner|pusher)
 		;;
 	*)
 		# Not a tracked subagent, allow silently
@@ -46,18 +46,18 @@ EOF
 			exit 0
 		fi
 		;;
-	code-reviewer)
+	review-lead|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
 		if ! echo "$PARSED" | jq -e '.original_request' >/dev/null 2>&1; then
 			cat << 'EOF'
-{"decision":"block","reason":"code-reviewer INPUT missing 'original_request' field. Required: { branch, commits, original_request, changes_summary, user_approval }"}
+{"decision":"block","reason":"QA reviewer INPUT missing 'original_request' field. Required: { branch, commits, original_request, changes_summary, user_approval, files_changed }"}
 EOF
 			exit 0
 		fi
 		;;
 	pusher)
-		if ! echo "$PARSED" | jq -e '.payload // .override_token' >/dev/null 2>&1; then
+		if ! echo "$PARSED" | jq -e '.approvals // .override_token' >/dev/null 2>&1; then
 			cat << 'EOF'
-{"decision":"block","reason":"pusher INPUT missing 'payload' or 'override_token' field. Required: { branch, payload, signature } OR { branch, override_token }"}
+{"decision":"block","reason":"pusher INPUT missing 'approvals' or 'override_token' field. Required: { branch, approvals } OR { branch, override_token }"}
 EOF
 			exit 0
 		fi

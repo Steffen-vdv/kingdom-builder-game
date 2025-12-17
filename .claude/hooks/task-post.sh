@@ -1,6 +1,6 @@
 #!/bin/bash
 # PostToolUse hook for Task - assembles subagent output file for master-agent
-# Only processes code-reviewer, test-runner, and pusher subagents
+# Only processes QA reviewers, test-runner, and pusher subagents
 #
 # Subagents write their structured output to {agent}.json via the Write tool.
 # This hook reads that file, validates it, and creates the final -output.txt
@@ -13,7 +13,7 @@ PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
 
 # Only process specific subagent types
 case "$SUBAGENT" in
-	code-reviewer|test-runner|pusher)
+	review-lead|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|test-runner|pusher)
 		;;
 	*)
 		exit 0

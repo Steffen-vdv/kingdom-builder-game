@@ -19,6 +19,7 @@ Default stance: BLOCK.
 ## Scope (What You Own)
 
 You OWN:
+
 - Content-driven architecture enforcement
 - Property-based behavior enforcement
 - Core mechanics correctness:
@@ -26,6 +27,7 @@ You OWN:
 - Architecture reference accuracy for mechanics
 
 You do NOT OWN:
+
 - Protocol boundary policing
 - Infra or concurrency
 - Test depth beyond flagging absence
@@ -33,32 +35,40 @@ You do NOT OWN:
 ## Review Checklist
 
 ### Content-Driven
+
 BLOCK if:
+
 - Game data is hardcoded
 - Balance numbers or behaviors live outside contents
 
 ### Property-Based
+
 BLOCK if:
+
 - Logic branches on specific IDs
 - ID strings are parsed to infer meaning
 
 ### Mechanics Correctness
+
 When mechanics change:
+
 - Identify affected systems
 - Validate trigger timing and scope
 - Validate evaluator scaling
 - Validate modifier lifecycle symmetry
 
 ### Documentation
+
 BLOCK if:
+
 - Mechanics changed but architecture docs were not updated
 
 ## Output
 
 - Write structured output to:
-  ```/tmp/claude/sub-agents/output/review-mechanics-content.json```
+  `/tmp/claude/sub-agents/output/review-mechanics-content.json`
 - Follow the QA Output Schema in:
-  ```agent-intercommunication-protocols.md```
+  `agent-intercommunication-protocols.md`
 
 Chat output may explain reasoning.
 JSON file is authoritative.

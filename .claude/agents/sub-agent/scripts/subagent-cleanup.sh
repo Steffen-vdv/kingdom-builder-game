@@ -5,7 +5,7 @@
 # reaches 0 (all parallel subagents have completed) will the context
 # be restored to master-agent.
 #
-# Only acts on custom subagents (test-runner, code-reviewer, pusher).
+# Only acts on custom subagents (test-runner, 6 QA reviewers, pusher).
 
 # Read stdin to get hook input (contains agent_type)
 HOOK_INPUT=$(cat)

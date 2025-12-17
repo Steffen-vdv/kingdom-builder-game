@@ -7,7 +7,7 @@
 # Gathers commit info, creates payload, signs via crypto-gate,
 # and outputs structured JSON for the pusher subagent.
 #
-# Called by code-reviewer after APPROVED verdict.
+# Called by QA reviewers after APPROVED verdict.
 #
 
 set -euo pipefail
