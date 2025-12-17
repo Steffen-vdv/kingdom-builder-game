@@ -2,17 +2,27 @@
 #
 # sign.sh — Sign QA approval for verified push
 #
-# Usage: sign.sh '<summary>'
+# Usage: sign.sh '<summary>' '<signature_type>'
 #
 # Gathers commit info, creates payload, signs via crypto-gate,
-# and outputs structured JSON for the pusher subagent.
+# and outputs structured JSON for downstream verification.
 #
-# Called by code-reviewer after APPROVED verdict.
+# Called by QA reviewers after APPROVED verdict.
+# Each reviewer must use their assigned signature type.
 #
 
 set -euo pipefail
 
 SUMMARY="${1:-QA approved}"
+SIG_TYPE="${2:-}"
+
+if [[ -z "$SIG_TYPE" ]]; then
+	echo "ERROR: Signature type is required. Usage: sign.sh '<summary>' '<type>'" >&2
+	echo "Valid types: QA_FINAL_SIGNATORY, QA_CI_REQUIRED_TESTS, QA_CLAIMS_AUDITOR," >&2
+	echo "             QA_CONTRACTS_BOUNDARIES, QA_MECHANICS_CONTENT," >&2
+	echo "             QA_INFRA_CONCURRENCY, QA_TESTS_DOCS_DRY" >&2
+	exit 1
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # LOCATE CRYPTO-GATE
@@ -67,9 +77,9 @@ ESCAPED_SUMMARY=$(echo "$SUMMARY" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g')
 
 PAYLOAD="{\"commits\":[\"$HEAD_SHA\"],\"diffHash\":\"$DIFF_HASH\",\"verdict\":\"APPROVED\",\"summary\":\"$ESCAPED_SUMMARY\",\"timestamp\":\"$TIMESTAMP\"}"
 
-# Sign via crypto-gate CLI
+# Sign via crypto-gate CLI with signature type
 # crypto-gate sign outputs just the hex signature
-SIGNATURE=$("$CRYPTO_GATE" sign "$PAYLOAD" 2>&1)
+SIGNATURE=$("$CRYPTO_GATE" sign "$PAYLOAD" --type "$SIG_TYPE" 2>&1)
 
 if [[ $? -ne 0 ]]; then
 	echo "ERROR: crypto-gate signing failed: $SIGNATURE" >&2
@@ -82,7 +92,7 @@ if [[ ! "$SIGNATURE" =~ ^[a-f0-9]{64}$ ]]; then
 	exit 1
 fi
 
-# Output JSON with both payload and signature
+# Output JSON with payload, signature, and type (for verify-bulk)
 # Escape payload for JSON embedding (it's already JSON, so escape quotes)
 ESCAPED_PAYLOAD=$(echo "$PAYLOAD" | sed 's/"/\\"/g')
-echo "{\"payload\":\"$ESCAPED_PAYLOAD\",\"signature\":\"$SIGNATURE\"}"
+echo "{\"payload\":\"$ESCAPED_PAYLOAD\",\"signature\":\"$SIGNATURE\",\"type\":\"$SIG_TYPE\"}"

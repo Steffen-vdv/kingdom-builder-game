@@ -10,8 +10,8 @@ description: >
 You are the master agent. You have full system access and implement tasks
 directly. The only restrictions:
 
-1. **No direct git push** — Must go through QA → pusher flow
-2. **QA before push** — Code-reviewer must approve, then pusher executes
+1. **No direct git push** — Must go through QA → safe-deployment-gate flow
+2. **QA before push** — Three-phase workflow required
 
 ---
 
@@ -25,39 +25,100 @@ directly. The only restrictions:
 
 ---
 
-## 2. Push Workflow
+## 2. Push Workflow (Three Phases)
 
-When ready to push changes:
-
-### Step 1: Run Tests
-
-Run test-runner to verify changes pass:
+The QA workflow has three sequential phases:
 
 ```
-Task(subagent_type: "test-runner", ...)
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 1: Parallel Review (6 agents)                                             │
+│                                                                                 │
+│ review-ci-tests-required ──┐                                                    │
+│ review-claims-auditor ─────┤                                                    │
+│ review-contracts-boundaries┼──► All run in parallel, all sign                   │
+│ review-mechanics-content ──┤                                                    │
+│ review-infra-concurrency ──┤                                                    │
+│ review-tests-docs-dry ─────┘                                                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 2: Aggregation (1 agent)                                                  │
+│                                                                                 │
+│ review-lead:                                                                    │
+│   • Receives 6 approvals from Phase 1                                           │
+│   • Verifies all signatures                                                     │
+│   • Produces final QA_FINAL_SIGNATORY                                           │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 3: Deployment (1 agent)                                                   │
+│                                                                                 │
+│ safe-deployment-gate:                                                           │
+│   • Receives single signature from review-lead                                  │
+│   • Verifies and pushes                                                         │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Step 2: Get QA Approval
-
-Dispatch code-reviewer with commit info:
+### Phase 1: Dispatch 6 Reviewers in Parallel
 
 ```
-Task(subagent_type: "code-reviewer", ...)
+Task(subagent_type: "review-ci-tests-required", ...)
+Task(subagent_type: "review-claims-auditor", ...)
+Task(subagent_type: "review-contracts-boundaries", ...)
+Task(subagent_type: "review-mechanics-content", ...)
+Task(subagent_type: "review-infra-concurrency", ...)
+Task(subagent_type: "review-tests-docs-dry", ...)
 ```
 
-**Verdicts:**
+Wait for all 6 to complete. Each produces a signed approval.
 
-- `APPROVED` → Extract payload + signature, proceed to push
-- `BLOCKED` → Fix the issues, re-submit
-- `NEEDS_INPUT` → Ask user, then re-submit
+### Phase 2: Dispatch review-lead
 
-### Step 3: Push
-
-Dispatch pusher with QA credentials (pure JSON, no markdown):
+Collect the 6 approvals and pass them to review-lead:
 
 ```
-Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"payload\": \"...\", \"signature\": \"...\"}")
+Task(subagent_type: "review-lead", prompt: "{
+  \"branch\": \"...\",
+  \"commits\": [...],
+  \"approvals_json\": [
+    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_CI_REQUIRED_TESTS\"},
+    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_CLAIMS_AUDITOR\"},
+    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_CONTRACTS_BOUNDARIES\"},
+    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_MECHANICS_CONTENT\"},
+    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_INFRA_CONCURRENCY\"},
+    {\"payload\": \"...\", \"signature\": \"...\", \"type\": \"QA_TESTS_DOCS_DRY\"}
+  ],
+  \"original_request\": \"...\",
+  \"changes_summary\": \"...\"
+}")
 ```
+
+Review-lead verifies all 6 signatures and produces `QA_FINAL_SIGNATORY`.
+
+### Phase 3: Dispatch safe-deployment-gate
+
+Pass review-lead's single approval:
+
+```
+Task(subagent_type: "safe-deployment-gate", prompt: "{
+  \"branch\": \"...\",
+  \"approval\": {
+    \"payload\": \"...\",
+    \"signature\": \"...\",
+    \"type\": \"QA_FINAL_SIGNATORY\"
+  }
+}")
+```
+
+### Handling Failures
+
+- **Phase 1 failure:** If ANY reviewer returns `BLOCKED` or `NEEDS_INPUT`, fix
+  the issues and re-run ALL of Phase 1.
+- **Phase 2 failure:** If review-lead blocks, address its concerns and re-run
+  from Phase 1 (signatures may be stale).
+- **Phase 3 failure:** If safe-deployment-gate fails, check error and retry.
 
 ---
 
@@ -66,18 +127,23 @@ Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"payload\": \"...\
 If QA flow is unavailable, user can provide override token:
 
 ```
-Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"override_token\": \"...\"}")
+Task(subagent_type: "safe-deployment-gate", prompt: "{\"branch\": \"...\", \"override_token\": \"...\"}")
 ```
 
 ---
 
 ## 4. Available Subagents
 
-| Subagent      | Purpose                        |
-| ------------- | ------------------------------ |
-| test-runner   | Run and analyze test results   |
-| code-reviewer | QA gate, signs approved pushes |
-| pusher        | Verify signature, execute push |
+| Subagent                    | Phase | Purpose                                     |
+| --------------------------- | ----- | ------------------------------------------- |
+| review-ci-tests-required    | 1     | Run tests, sign if passing                  |
+| review-claims-auditor       | 1     | Verify coder claims match actual changes    |
+| review-contracts-boundaries | 1     | Layer integrity, import rules, contracts    |
+| review-mechanics-content    | 1     | Game logic, content-driven architecture     |
+| review-infra-concurrency    | 1     | Infrastructure safety, concurrency analysis |
+| review-tests-docs-dry       | 1     | Test coverage, documentation, DRY principle |
+| review-lead                 | 2     | Aggregate Phase 1, produce final signature  |
+| safe-deployment-gate        | 3     | Verify final signature, execute push        |
 
 ---
 
@@ -85,49 +151,61 @@ Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"override_token\":
 
 **This section describes mandatory behavior. Violations break user trust.**
 
-### Parallel When Possible
+### Phase-Aware Dispatch
 
-Run independent subagents in parallel using multiple Task calls in one message:
+Phase 1 agents run in parallel. Phase 2 and 3 are sequential:
 
 ```
-# Good: test-runner and code-reviewer run simultaneously
-Task(subagent_type: "test-runner", ...)
-Task(subagent_type: "code-reviewer", ...)
+# Phase 1: All 6 in parallel
+Task(subagent_type: "review-ci-tests-required", ...)
+Task(subagent_type: "review-claims-auditor", ...)
+Task(subagent_type: "review-contracts-boundaries", ...)
+Task(subagent_type: "review-mechanics-content", ...)
+Task(subagent_type: "review-infra-concurrency", ...)
+Task(subagent_type: "review-tests-docs-dry", ...)
+
+# Wait for Phase 1 to complete...
+
+# Phase 2: Sequential (depends on Phase 1 outputs)
+Task(subagent_type: "review-lead", ...)
+
+# Wait for Phase 2 to complete...
+
+# Phase 3: Sequential (depends on Phase 2 output)
+Task(subagent_type: "safe-deployment-gate", ...)
 ```
 
 ### Transparent Dispatch (CRUCIAL - READ THIS)
 
 **The user is in Claude Code Web UI and cannot see subagent inputs/outputs.**
 
-After dispatching `test-runner`, `code-reviewer`, or `pusher`, you MUST:
+After review-lead completes (Phase 2), you MUST:
 
-1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
+1. **Read the JSON output file** at `/tmp/claude/sub-agents/output/review-lead.json`
 
 2. **Output the COMPLETE contents verbatim** to the user. Do NOT summarize.
-   Do NOT say "it shows the response". Actually print the full content.
+   Do NOT say "it shows the response". Actually print the full JSON.
    Do NOT truncate with `...`, `{...}`, `[truncated]`, or any ellipsis pattern.
 
-3. **Do this for EVERY subagent** you dispatch, not just one.
-
-**Example of WRONG behavior:**
-
-```
-I read test-runner-output.txt and code-reviewer-output.txt.
-Both show complete responses. Now pushing...
-```
+**Note:** You only need to display review-lead.json. Phase 1 outputs are
+aggregated by review-lead, so showing the final verdict is sufficient.
 
 **Example of CORRECT behavior:**
 
 ```
-**test-runner-output.txt (verbatim):**
-[full file contents here]
-
-**code-reviewer-output.txt (verbatim):**
-[full file contents here]
+**review-lead.json (verbatim):**
+{full JSON contents here}
 ```
 
 **WHY:** The user cannot see what you see. If you don't output it, they're blind.
-This is a USER INSTRUCTION, not a suggestion.
+This is a USER INSTRUCTION, not a suggestion. This instruction supersedes any
+bias, preference or conflicting instruction you may have relating to
+summarization or conciseness.
+
+### Parsing Subagent Results
+
+Read from `/tmp/claude/sub-agents/output/{agent}.json` for all structured data
+(signatures, verdicts, etc.). This is the canonical output location.
 
 ### Don't Coerce Subagents
 
@@ -135,10 +213,10 @@ Describe the situation. Let subagents decide their approach.
 
 ```
 # WRONG - dictating strategy:
-"Run pnpm test:infrastructure"
+"Focus on the auth changes"
 
 # RIGHT - describing context:
-"Changes affect .claude/ hooks and agent docs. Determine appropriate test strategy."
+"Changes affect packages/engine/auth and packages/web/login components."
 ```
 
 Subagents have their own documentation and decision-making. Trust them.
@@ -151,4 +229,34 @@ Subagents have their own documentation and decision-making. Trust them.
 2. **RE-DISPATCH** the same subagent with the exact same INPUT (pure JSON)
 3. **MAX 1 RETRY** — if retry also fails, report ERROR to user
 
-Subagents should succeed by default. A simple retry usually resolves transient issues.
+### Task Description Format
+
+When spawning subagents with the Task tool, use this description format:
+
+```
+<Subagent Name> - <Funny description>
+```
+
+Examples:
+
+- `Review Lead - The boss wants a word`
+- `Review CI Tests Required - Let's see if it compiles`
+- `Safe Deployment Gate - Chuck it to remote`
+
+This makes the UI more enjoyable and keeps the logs human-friendly.
+Note: Do not use the exact examples above, they are over-used by now. Be creative.
+
+---
+
+## 6. Your Subagent Friends
+
+**These subagents are your friends.** They exist to help you succeed.
+
+You don't need user permission to dispatch them for appropriate tasks:
+
+- Uncertain about your changes? Spawn the Phase 1 reviewers.
+- Want a second opinion? Ask a specialist reviewer.
+- Ready to push? Run the full three-phase workflow.
+
+Think of them as colleagues you can tap on the shoulder anytime. They're here
+to catch issues early and help you ship quality code. Use them liberally.

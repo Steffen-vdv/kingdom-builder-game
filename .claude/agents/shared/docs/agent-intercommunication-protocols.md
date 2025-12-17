@@ -2,58 +2,232 @@
 
 Single source of truth for all master↔subagent communication formats.
 
-**Injected into:** master-agent (master-session-start.sh), all subagents (subagent-session-start.sh)
+Injected into:
+
+- master-agent (master-session-start.sh)
+- all subagents (subagent-session-start.sh)
 
 ---
 
 ## Protocol Rules
 
-1. **Master-agent** dispatches subagents with structured INPUT (pure JSON prompt)
-2. **Subagents** write structured OUTPUT to a JSON file before completing
-3. **Hooks** validate JSON and assemble the final output file for master-agent
+1. Master-agent dispatches subagents with structured INPUT (pure JSON prompt)
+2. Subagents write structured OUTPUT to a JSON file before completing
+3. Post-hook validates JSON format; master-agent reads directly
+
+IMPORTANT:
+
+- Subagent chat output may be verbose and narrative
+- Only the JSON output file is used for structured decisions
+
+---
+
+## Three-Phase Workflow Overview
+
+```
+Phase 1 (parallel):  6 reviewers → 6 signatures
+Phase 2 (sequential): review-lead → 1 final signature
+Phase 3 (sequential): safe-deployment-gate → push
+```
 
 ---
 
 ## Input Format (master → subagent)
 
-Master-agent prompt MUST be a **pure JSON string** — nothing else:
+Master-agent prompt MUST be a pure JSON string — nothing else.
 
 ```json
 {
-  "branch": "branch-name",
-  "commits": ["sha1", "sha2"],
-  ...agent-specific fields...
+	"branch": "branch-name",
+	"commits": ["sha1", "sha2"],
+	"...": "agent-specific fields"
 }
 ```
 
-**NOTE:** The backticks above are for documentation readability only. The actual
-prompt contains raw JSON with no markdown fences, no "INPUT:" prefix, no extra text.
+Notes:
+
+- The backticks above are documentation-only
+- The actual prompt contains raw JSON
+- No markdown, no prefixes, no surrounding text
 
 ---
 
 ## Output Format (subagent → file)
 
-Before completing, subagents MUST write their structured output to a JSON file:
+Before completing, subagents MUST write structured output to a JSON file.
 
-**File path:** `/tmp/claude/sub-agents/output/{agent}.json`
+File path:
 
-Where `{agent}` is one of: `test-runner`, `code-reviewer`, `pusher`
-
-**File contents:** Pure JSON matching the agent's output schema (defined below).
-
-**How to write:** Use the `Write` tool at the end of your session:
-
-```
-Write(file_path="/tmp/claude/sub-agents/output/test-runner.json", content="{...}")
+```text
+/tmp/claude/sub-agents/output/{agent}.json
 ```
 
-The hook system reads this file, validates it, and assembles the final output
-for master-agent. Your chat output can be free-form narrative — only the JSON
-file matters for structured data exchange.
+Where `{agent}` is the subagent identifier:
+
+**Phase 1 Reviewers:**
+
+- review-ci-tests-required
+- review-claims-auditor
+- review-contracts-boundaries
+- review-mechanics-content
+- review-infra-concurrency
+- review-tests-docs-dry
+
+**Phase 2 Aggregator:**
+
+- review-lead
+
+**Phase 3 Deployment:**
+
+- safe-deployment-gate
+
+How to write the file:
+
+**USE THE HELPER SCRIPT:**
+
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh '<agent-name>' '<json-content>'
+```
+
+Example:
+
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'review-lead' '{"agent":"review-lead","verdict":"APPROVED",...}'
+```
+
+The script handles directory creation and overwrites any existing file.
+
+**Why use the script (not Write tool or bash)?**
+
+- Ensures correct path `/tmp/claude/sub-agents/output/{agent}.json`
+- Creates directory if missing
+- Validates arguments
+- Consistent across all agents
+
+Rules:
+
+- Chat output may be free-form
+- Only the JSON file is parsed by hooks
+- Missing or invalid JSON causes downstream failure
 
 ---
 
-## test-runner
+## Phase 1 Reviewers (6-Agent Family)
+
+All Phase 1 reviewers share the SAME input schema and the SAME output schema.
+
+### Phase 1 Agent Identifiers
+
+- review-ci-tests-required (CI/test runner)
+- review-claims-auditor
+- review-contracts-boundaries
+- review-mechanics-content
+- review-infra-concurrency
+- review-tests-docs-dry
+
+---
+
+## Phase 1 Input Schema (shared by all 6 Phase 1 agents)
+
+```json
+{
+	"branch": "branch-name",
+	"commits": ["sha1", "sha2"],
+	"original_request": "What the user originally asked for",
+	"changes_summary": "What the coder implemented",
+	"user_approval": "What user explicitly approved, or null",
+	"files_changed": ["path/to/file1.ts", "path/to/file2.ts"]
+}
+```
+
+Rules:
+
+- `files_changed` is REQUIRED
+- Agents may ignore fields but must not require additional ones
+
+**Exception:** review-ci-tests-required only requires `branch`, `commits`, and
+`files_changed`. Other fields are optional for it.
+
+---
+
+## Phase 1 Output Schema (shared by all 6 Phase 1 agents)
+
+Each Phase 1 agent MUST write the following structure to `{agent}.json`:
+
+```json
+{
+	"agent": "review-ci-tests-required | review-claims-auditor | review-contracts-boundaries | review-mechanics-content | review-infra-concurrency | review-tests-docs-dry",
+	"verdict": "APPROVED | BLOCKED | NEEDS_INPUT | ERROR",
+	"summary": "Human-readable summary",
+
+	"signature_type": null,
+	"payload": null,
+	"signature": null,
+
+	"blockers": null,
+	"questions": null,
+	"details": {}
+}
+```
+
+### Field Requirements
+
+- `agent`: constant identifier for the agent
+- `verdict`: required
+- `summary`: required
+
+Signing rules:
+
+- If verdict == APPROVED:
+  - `signature_type` MUST be a non-empty string
+  - `payload` MUST be a non-empty string
+  - `signature` MUST be a non-empty string
+- Otherwise:
+  - `signature_type`, `payload`, `signature` MUST be null
+
+BLOCKED rules:
+
+- verdict == BLOCKED → `blockers` MUST be a non-empty array
+- otherwise `blockers` MUST be null
+
+NEEDS_INPUT rules:
+
+- verdict == NEEDS_INPUT → `questions` MUST be a non-empty array
+- otherwise `questions` MUST be null
+
+`details`:
+
+- Always present
+- Agent-specific structured metadata goes here
+  (risk tier, files examined, systems touched, etc.)
+
+---
+
+## Signature Type Registry
+
+### Phase 1 (6 signatures required for Phase 2)
+
+| Agent                       | Signature Type            |
+| --------------------------- | ------------------------- |
+| review-ci-tests-required    | `QA_CI_REQUIRED_TESTS`    |
+| review-claims-auditor       | `QA_CLAIMS_AUDITOR`       |
+| review-contracts-boundaries | `QA_CONTRACTS_BOUNDARIES` |
+| review-mechanics-content    | `QA_MECHANICS_CONTENT`    |
+| review-infra-concurrency    | `QA_INFRA_CONCURRENCY`    |
+| review-tests-docs-dry       | `QA_TESTS_DOCS_DRY`       |
+
+### Phase 2 (1 signature required for Phase 3)
+
+| Agent       | Signature Type       |
+| ----------- | -------------------- |
+| review-lead | `QA_FINAL_SIGNATORY` |
+
+For signing/verification details, see:
+`.claude/agents/sub-agent/docs/cryptographic-signing.md`
+
+---
+
+## review-lead (Phase 2)
 
 ### Input Schema
 
@@ -61,101 +235,57 @@ file matters for structured data exchange.
 {
 	"branch": "branch-name",
 	"commits": ["sha1", "sha2"],
-	"files_changed": ["path/to/file1.ts", "path/to/file2.ts"]
-}
-```
-
-### Output Schema
-
-```json
-{
-	"agent": "test-runner",
-	"status": "PASS | FAIL | ERROR",
-	"strategy": "full-suite | targeted | no-tests",
-	"summary": "Human-readable summary of what was tested",
-	"tests_run": 0,
-	"failures": null
-}
-```
-
-**Fields:**
-
-| Field       | Type                                           | Description                             |
-| ----------- | ---------------------------------------------- | --------------------------------------- |
-| `agent`     | `"test-runner"`                                | Agent identifier (constant)             |
-| `status`    | `"PASS"` \| `"FAIL"` \| `"ERROR"`              | Overall result                          |
-| `strategy`  | `"full-suite"` \| `"targeted"` \| `"no-tests"` | Test strategy applied                   |
-| `summary`   | string                                         | Human-readable explanation              |
-| `tests_run` | number                                         | Count of tests executed                 |
-| `failures`  | `null` \| array                                | Null if PASS, array of failures if FAIL |
-
-**Failure object:**
-
-```json
-{
-	"test": "path/to/test.ts::testName",
-	"error": "Error message"
-}
-```
-
----
-
-## code-reviewer
-
-### Input Schema
-
-```json
-{
-	"branch": "branch-name",
-	"commits": ["sha1"],
+	"approvals_json": [
+		{ "payload": "...", "signature": "...", "type": "QA_CI_REQUIRED_TESTS" },
+		{ "payload": "...", "signature": "...", "type": "QA_CLAIMS_AUDITOR" },
+		{ "payload": "...", "signature": "...", "type": "QA_CONTRACTS_BOUNDARIES" },
+		{ "payload": "...", "signature": "...", "type": "QA_MECHANICS_CONTENT" },
+		{ "payload": "...", "signature": "...", "type": "QA_INFRA_CONCURRENCY" },
+		{ "payload": "...", "signature": "...", "type": "QA_TESTS_DOCS_DRY" }
+	],
 	"original_request": "What the user originally asked for",
-	"changes_summary": "What the coder implemented",
-	"user_approval": "What user explicitly approved, or null"
+	"changes_summary": "What the coder implemented"
 }
 ```
+
+The `approvals_json` array must contain exactly 6 objects (one per Phase 1
+reviewer). Review-lead verifies all 6 signatures before producing its own.
 
 ### Output Schema
 
-```json
-{
-	"agent": "code-reviewer",
-	"verdict": "APPROVED | BLOCKED | NEEDS_INPUT | ERROR",
-	"summary": "Human-readable summary of the review",
-	"payload": "JSON string from sign.sh, or null",
-	"signature": "Hex string from sign.sh, or null",
-	"blockers": null
-}
-```
+Same as Phase 1 Output Schema, with:
 
-**Fields:**
-
-| Field       | Type                                                        | Description                             |
-| ----------- | ----------------------------------------------------------- | --------------------------------------- |
-| `agent`     | `"code-reviewer"`                                           | Agent identifier (constant)             |
-| `verdict`   | `"APPROVED"` \| `"BLOCKED"` \| `"NEEDS_INPUT"` \| `"ERROR"` | Review decision                         |
-| `summary`   | string                                                      | Human-readable explanation              |
-| `payload`   | string \| null                                              | Required if APPROVED, else null         |
-| `signature` | string \| null                                              | Required if APPROVED, else null         |
-| `blockers`  | `null` \| array of strings                                  | Required if BLOCKED, list of violations |
-
-**Verdict meanings:**
-
-- `APPROVED`: Code passes QA, includes valid payload+signature for pusher
-- `BLOCKED`: Violations found, `blockers` array lists what must be fixed
-- `NEEDS_INPUT`: Cannot decide without user clarification
-- `ERROR`: System error (e.g., sign.sh failed)
+- `agent`: "review-lead"
+- `signature_type`: "QA_FINAL_SIGNATORY" (when APPROVED)
 
 ---
 
-## pusher
+## safe-deployment-gate (Phase 3)
 
 ### Input Schema
+
+**Mode 1: QA Approval (normal workflow)**
 
 ```json
 {
 	"branch": "branch-name",
-	"payload": "JSON string from code-reviewer",
-	"signature": "Hex string from code-reviewer"
+	"approval": {
+		"payload": "...",
+		"signature": "...",
+		"type": "QA_FINAL_SIGNATORY"
+	}
+}
+```
+
+The `approval` object contains the single signature from review-lead.
+Only `QA_FINAL_SIGNATORY` type is accepted.
+
+**Mode 2: User Override (escape hatch)**
+
+```json
+{
+	"branch": "branch-name",
+	"override_token": "token-from-user"
 }
 ```
 
@@ -163,78 +293,89 @@ file matters for structured data exchange.
 
 ```json
 {
-	"agent": "pusher",
+	"agent": "safe-deployment-gate",
 	"status": "SUCCESS | FAILED | ERROR",
 	"branch": "branch-name",
-	"commit": "sha or null",
-	"message": "Human-readable result message"
+	"commit": "sha-or-null",
+	"message": "Human-readable result"
 }
 ```
 
-**Fields:**
+Status meanings:
 
-| Field     | Type                                   | Description                      |
-| --------- | -------------------------------------- | -------------------------------- |
-| `agent`   | `"pusher"`                             | Agent identifier (constant)      |
-| `status`  | `"SUCCESS"` \| `"FAILED"` \| `"ERROR"` | Push result                      |
-| `branch`  | string                                 | Branch that was pushed           |
-| `commit`  | string \| null                         | Commit SHA if SUCCESS, else null |
-| `message` | string                                 | Human-readable explanation       |
-
-**Status meanings:**
-
-- `SUCCESS`: Push completed, `commit` contains the pushed SHA
-- `FAILED`: Verification failed (invalid signature, HEAD mismatch)
-- `ERROR`: System error (network, permissions)
+- SUCCESS: Push completed, `commit` contains the pushed SHA
+- FAILED: Verification failed (invalid signature, HEAD mismatch)
+- ERROR: System error (network, permissions)
 
 ---
 
 ## Master-Agent Responsibilities
 
-When dispatching subagents, master-agent MUST:
+The three-phase workflow requires master-agent to:
 
-1. **Send pure JSON** — Prompt is ONLY the JSON object, no extra text
-2. **Include all required fields** — Per agent's Input Schema above
+### Phase 1
 
-When receiving subagent responses, master-agent MUST:
+1. Dispatch all 6 Phase 1 reviewers in parallel (single message with 6 Task calls)
+2. Wait for all to complete
+3. Collect 6 approvals (payload, signature, type) from each
 
-1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
-2. **Display contents verbatim** to user — no truncation, no `...`, no summaries
-3. **Parse the OUTPUT section** for programmatic decisions
-4. **Act on structured data** — Use `verdict`/`status` fields, not prose
+### Phase 2
+
+4. Dispatch review-lead with the 6 approvals in `approvals_json`
+5. Wait for completion
+6. Read `/tmp/claude/sub-agents/output/review-lead.json`
+7. Display JSON contents verbatim to user (CRUCIAL)
+8. Extract review-lead's approval (payload, signature, type)
+
+### Phase 3
+
+9. Dispatch safe-deployment-gate with review-lead's single approval
+10. Report result to user
 
 ---
 
 ## Validation & Error Handling
 
-Hooks enforce JSON validity at every layer.
+### Pre-hook (task-pre.sh)
 
-### Pre-hook Validation (task-pre.sh)
+Blocks execution if:
 
-**Blocks** dispatch if INPUT is invalid:
+- Input is not valid JSON
+- Required fields are missing
 
-- Prompt is not valid JSON → BLOCKED
-- Missing required fields (branch, etc.) → BLOCKED
+### Post-hook (task-post.sh)
 
-Master-agent sees the block reason and can fix the INPUT before retrying.
+Validates JSON output file exists and is valid. Cannot block execution.
 
-### Post-hook Validation (task-post.sh)
+Emits warnings to stderr if:
 
-**Cannot block** (subagent already finished), but signals errors to master-agent.
+- Output file does not exist
+- Output file is not valid JSON
 
-Validation steps:
+Master-agent reads the JSON file directly for structured data.
 
-1. Read `{agent}.json` file written by subagent
-2. Parse contents as JSON → fail if invalid or missing
-3. Assemble final `-output.txt` with markdown template
+---
 
-On any failure, outputs error to the OUTPUT section:
+## Subagent Final Step: Remind Master-Agent
 
-```json
-{
-	"error": "description of what failed",
-	"agent": "agent-name",
-	"action": "RETRY",
-	"expected_file": "/tmp/claude/sub-agents/output/{agent}.json"
-}
+**Only review-lead (Phase 2) includes this reminder block.**
+
+Phase 1 agents do not need it because master-agent only displays review-lead's
+output (which aggregates all Phase 1 verdicts).
+
+Review-lead MUST end its chat response with:
+
 ```
+═══════════════════════════════════════════════════════════════════════════════
+MASTER-AGENT: READ THIS
+═══════════════════════════════════════════════════════════════════════════════
+You MUST now:
+1. Read: /tmp/claude/sub-agents/output/review-lead.json
+2. Output the COMPLETE JSON verbatim to the user
+
+The user is in Web UI and cannot see subagent outputs.
+If you do not show them, they are blind.
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+This goes at the VERY END of review-lead's chat response, after all analysis.

@@ -38,8 +38,8 @@ cat "$IDENTITY_DOC"
 cat << 'PROTOCOL_HEADER'
 
 === Subagent Communication Protocol ===
-When dispatching subagents (test-runner, code-reviewer, pusher), you MUST follow
-the INPUT/OUTPUT formats defined below. All communication is pure JSON — no markdown.
+When dispatching subagents (6 Phase 1 reviewers, review-lead, safe-deployment-gate),
+you MUST follow the INPUT/OUTPUT formats defined below. All communication is pure JSON.
 
 PROTOCOL_HEADER
 

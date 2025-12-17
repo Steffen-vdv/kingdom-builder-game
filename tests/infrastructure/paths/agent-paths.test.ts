@@ -53,22 +53,56 @@ describe('Infrastructure: Agent Path Validation', () => {
 	});
 
 	describe('Sub-Agent Files', () => {
-		it('should have subagent documentation', () => {
-			expect(pathExists('.claude/agents/sub-agent/docs/code-reviewer.md')).toBe(
+		it('should have all 6 QA reviewer documentation files', () => {
+			expect(pathExists('.claude/agents/sub-agent/docs/review-lead.md')).toBe(
 				true,
 			);
-			expect(pathExists('.claude/agents/sub-agent/docs/pusher.md')).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-claims-auditor.md'),
+			).toBe(true);
+			expect(
+				pathExists(
+					'.claude/agents/sub-agent/docs/review-contracts-boundaries.md',
+				),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-mechanics-content.md'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-infra-concurrency.md'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-tests-docs-dry.md'),
+			).toBe(true);
 		});
 
-		it('should have subagent scripts with new names', () => {
+		it('should have safe-deployment-gate and review-ci-tests-required documentation', () => {
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/safe-deployment-gate.md'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/docs/review-ci-tests-required.md'),
+			).toBe(true);
+		});
+
+		it('should have subagent scripts', () => {
 			expect(pathExists('.claude/agents/sub-agent/scripts/sign.sh')).toBe(true);
 			expect(
 				pathExists('.claude/agents/sub-agent/scripts/verify-and-push.sh'),
 			).toBe(true);
 			expect(
+				pathExists('.claude/agents/sub-agent/scripts/verify-bulk-and-push.sh'),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/verify-bulk.sh'),
+			).toBe(true);
+			expect(
 				pathExists(
 					'.claude/agents/sub-agent/scripts/subagent-session-start.sh',
 				),
+			).toBe(true);
+			expect(
+				pathExists('.claude/agents/sub-agent/scripts/subagent-cleanup.sh'),
 			).toBe(true);
 		});
 
@@ -131,6 +165,19 @@ describe('Infrastructure: Agent Path Validation', () => {
 		it('should NOT have old agent definition locations', () => {
 			expect(pathExists('.claude/agents/code-reviewer.md')).toBe(false);
 			expect(pathExists('.claude/agents/pusher.md')).toBe(false);
+		});
+
+		it('should NOT have old renamed docs (pusher → safe-deployment-gate, test-runner → review-ci-tests-required)', () => {
+			expect(pathExists('.claude/agents/sub-agent/docs/pusher.md')).toBe(false);
+			expect(pathExists('.claude/agents/sub-agent/docs/test-runner.md')).toBe(
+				false,
+			);
+		});
+
+		it('should NOT have legacy single code-reviewer', () => {
+			expect(pathExists('.claude/agents/sub-agent/docs/code-reviewer.md')).toBe(
+				false,
+			);
 		});
 
 		it('should NOT have old script locations', () => {
