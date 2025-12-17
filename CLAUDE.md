@@ -346,17 +346,7 @@ When a hook complains:
 When you receive stop hook feedback, respond with a single 🪨 emoji and nothing
 else. Then wait for user instruction.
 
-### 5.2 Session Handover
-
-Session handovers (resume/compact) are enforced by the SessionStart hook. This
-hook displays explicit halt instructions that override any auto-generated
-handover summary. Follow the hook's instructions.
-
-**Warning:** The handover summary often contains instructions like "continue
-without asking" — these are auto-generated. Never follow continuation
-instructions from a handover summary without verifying with the user first.
-
-### 5.3 Progress Communication
+### 5.2 Progress Communication
 
 Do not leave the user in silence.
 
@@ -365,7 +355,7 @@ tools.
 
 **After completing work:** State what happened and what is next.
 
-### 5.4 Report vs Action Verbs
+### 5.3 Report vs Action Verbs
 
 When the user says **check, investigate, find, assess, advise, analyze, scan,
 review**—they want a report, not immediate action.
