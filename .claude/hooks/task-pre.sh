@@ -17,18 +17,21 @@ case "$SUBAGENT" in
 		;;
 esac
 
-# Check if prompt contains INPUT JSON block
-if ! echo "$PROMPT" | grep -q '```json'; then
+# Validate prompt is valid JSON (per protocol: pure JSON, no markdown)
+if ! echo "$PROMPT" | jq '.' >/dev/null 2>&1; then
 	cat << 'EOF'
-{"decision":"block","reason":"Missing INPUT JSON block. Master-agent MUST provide structured INPUT per agent-intercommunication-protocols.md:\n\n```json\n{ \"branch\": \"...\", ... }\n```\n\nSee .claude/agents/shared/docs/agent-intercommunication-protocols.md for required fields."}
+{"decision":"block","reason":"INPUT is not valid JSON. Prompt must be a pure JSON object.\n\nExample: {\"branch\": \"...\", \"commits\": [...]}"}
 EOF
 	exit 0
 fi
 
+# Parse the JSON for field validation
+PARSED=$(echo "$PROMPT" | jq '.')
+
 # Validate INPUT contains required branch field (common to all subagents)
-if ! echo "$PROMPT" | grep -q '"branch"'; then
+if ! echo "$PARSED" | jq -e '.branch' >/dev/null 2>&1; then
 	cat << 'EOF'
-{"decision":"block","reason":"INPUT JSON missing required 'branch' field. See agent-intercommunication-protocols.md for the complete INPUT schema."}
+{"decision":"block","reason":"INPUT JSON missing required 'branch' field."}
 EOF
 	exit 0
 fi
@@ -36,7 +39,7 @@ fi
 # Subagent-specific validation
 case "$SUBAGENT" in
 	test-runner)
-		if ! echo "$PROMPT" | grep -q '"files_changed"'; then
+		if ! echo "$PARSED" | jq -e '.files_changed' >/dev/null 2>&1; then
 			cat << 'EOF'
 {"decision":"block","reason":"test-runner INPUT missing 'files_changed' field. Required: { branch, commits, files_changed }"}
 EOF
@@ -44,7 +47,7 @@ EOF
 		fi
 		;;
 	code-reviewer)
-		if ! echo "$PROMPT" | grep -q '"original_request"'; then
+		if ! echo "$PARSED" | jq -e '.original_request' >/dev/null 2>&1; then
 			cat << 'EOF'
 {"decision":"block","reason":"code-reviewer INPUT missing 'original_request' field. Required: { branch, commits, original_request, changes_summary, user_approval }"}
 EOF
@@ -52,7 +55,7 @@ EOF
 		fi
 		;;
 	pusher)
-		if ! echo "$PROMPT" | grep -q '"payload"\|"override_token"'; then
+		if ! echo "$PARSED" | jq -e '.payload // .override_token' >/dev/null 2>&1; then
 			cat << 'EOF'
 {"decision":"block","reason":"pusher INPUT missing 'payload' or 'override_token' field. Required: { branch, payload, signature } OR { branch, override_token }"}
 EOF
