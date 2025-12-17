@@ -95,12 +95,10 @@ Task(subagent_type: "test-runner", ...)
 Task(subagent_type: "code-reviewer", ...)
 ```
 
-### Transparent Dispatch (AUTOMATED)
-
-Task transparency is enforced by the PostToolUse hook for Task.
+### Transparent Dispatch (CRUCIAL)
 
 After each Task completes, the hook outputs the dispatch prompt and response
-directly. **Output this content to the user before summarizing or proceeding.**
+directly to main-agent. **Main-agent MUST output this content to the user before summarizing or proceeding.**
 
 ### Don't Coerce Subagents
 
