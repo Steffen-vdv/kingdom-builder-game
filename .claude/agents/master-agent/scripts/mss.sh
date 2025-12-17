@@ -39,7 +39,7 @@ cat << 'PROTOCOL_HEADER'
 
 === Subagent Communication Protocol ===
 When dispatching subagents (test-runner, code-reviewer, pusher), you MUST follow
-the INPUT/OUTPUT formats defined below. Parse the JSON after ---RESPONSE--- marker.
+the INPUT/OUTPUT formats defined below. All communication is pure JSON — no markdown.
 
 PROTOCOL_HEADER
 

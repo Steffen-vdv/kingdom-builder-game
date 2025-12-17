@@ -93,8 +93,8 @@ PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunic
 
 cat << 'PROTOCOL_HEADER'
 === Subagent Communication Protocol ===
-You MUST end your response with the structured OUTPUT format defined below.
-Use the ---RESPONSE--- delimiter followed by a JSON block.
+Your ENTIRE response MUST be a single valid JSON object — no preamble, no markdown.
+Follow the OUTPUT format defined below exactly.
 
 PROTOCOL_HEADER
 
