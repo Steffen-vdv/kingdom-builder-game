@@ -64,6 +64,50 @@ response is raw JSON with no markdown fences.
 4. `response-formal-json` schema is defined per agent below
 5. **Output ONLY the JSON object** — no preamble, no trailing text
 
+### ❌ WRONG Output Examples
+
+**WRONG — Markdown with embedded JSON:**
+
+````
+## Analysis Complete
+
+I analyzed the changes and found no issues.
+
+```json
+{"response-formal-json": {...}}
+````
+
+```
+
+**WRONG — Explanatory preamble:**
+```
+
+Here is my analysis of the code changes:
+
+{"master-agent-system-instructions": [...], ...}
+
+```
+
+**WRONG — Trailing commentary:**
+```
+
+{"master-agent-system-instructions": [...], ...}
+
+Let me know if you need anything else!
+
+```
+
+### ✅ RIGHT Output Example
+
+Your response must look EXACTLY like this (one JSON object, nothing else):
+```
+
+{"master-agent-system-instructions":["MASTER-AGENT: READ THIS FIRST","..."],"response-verbose":"I analyzed commit abc123. The changes affect...","response-formal-json":{"agent":"test-runner","status":"PASS","strategy":"no-tests","summary":"Infrastructure only","tests_run":0,"failures":null}}
+
+````
+
+The first character is `{`. The last character is `}`. Nothing before. Nothing after.
+
 ---
 
 ## test-runner
@@ -76,7 +120,7 @@ response is raw JSON with no markdown fences.
 	"commits": ["sha1", "sha2"],
 	"files_changed": ["path/to/file1.ts", "path/to/file2.ts"]
 }
-```
+````
 
 ### Output Schema (`response-formal-json`)
 
@@ -252,3 +296,20 @@ On any failure, outputs error to file:
 	"instruction": "Re-dispatch subagent with format reminder"
 }
 ```
+
+---
+
+## ⚠️ FINAL REMINDER: OUTPUT FORMAT
+
+**Before you respond, verify:**
+
+- [ ] First character of response is `{`
+- [ ] Last character of response is `}`
+- [ ] No markdown anywhere in response
+- [ ] No explanatory text before or after JSON
+- [ ] No code fences (```)
+- [ ] Response is parseable by `jq`
+
+**Your narrative goes INSIDE `response-verbose`, not outside the JSON.**
+
+If you output markdown, the hooks WILL fail and you WILL be re-dispatched.

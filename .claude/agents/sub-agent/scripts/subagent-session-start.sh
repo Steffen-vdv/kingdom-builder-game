@@ -98,9 +98,24 @@ echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
 
 cat << 'PROTOCOL_HEADER'
-=== Subagent Communication Protocol ===
-Your ENTIRE response MUST be a single valid JSON object — no preamble, no markdown.
-Follow the OUTPUT format defined below exactly.
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ⚠️  CRITICAL: YOUR OUTPUT FORMAT IS NON-NEGOTIABLE                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  Your ENTIRE response must be a SINGLE VALID JSON OBJECT.                    ║
+║                                                                              ║
+║  ❌ WRONG: Markdown with embedded JSON                                       ║
+║  ❌ WRONG: Explanatory text before/after JSON                                ║
+║  ❌ WRONG: ```json code fences                                               ║
+║  ❌ WRONG: "Here is my analysis..." followed by JSON                         ║
+║                                                                              ║
+║  ✅ RIGHT: {"master-agent-system-instructions":[...],"response-verbose":...} ║
+║                                                                              ║
+║  The FIRST character of your response must be {                              ║
+║  The LAST character of your response must be }                               ║
+║  NOTHING ELSE. Raw JSON only. Hooks use jq and WILL fail on markdown.        ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
 PROTOCOL_HEADER
 
