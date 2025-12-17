@@ -105,6 +105,7 @@ After dispatching `test-runner`, `code-reviewer`, or `pusher`, you MUST:
 
 2. **Output the COMPLETE contents verbatim** to the user. Do NOT summarize.
    Do NOT say "it shows the response". Actually print the full content.
+   Do NOT truncate with `...`, `{...}`, `[truncated]`, or any ellipsis pattern.
 
 3. **Do this for EVERY subagent** you dispatch, not just one.
 
