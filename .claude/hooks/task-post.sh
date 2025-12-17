@@ -30,7 +30,7 @@ OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 # 2. Strip from LAST "MANDATORY MASTER-AGENT STEP" to end (instruction block, not content)
 #    Uses tac to reverse, delete first match (was last), reverse back
 clean_text() {
-	sed 's/```//g' | tac | sed '/^MANDATORY MASTER-AGENT STEP$/,$d' | tac
+	sed 's/```//g' | tac | sed '1,/^MANDATORY MASTER-AGENT STEP$/d' | tac
 }
 
 # Write header and prompt (overwrites existing content)
