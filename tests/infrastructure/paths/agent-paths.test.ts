@@ -39,12 +39,16 @@ describe('Infrastructure: Agent Path Validation', () => {
 
 	describe('Master-Agent Files', () => {
 		it('should have master-agent scripts', () => {
-			expect(pathExists('.claude/agents/master-agent/scripts/msh.sh')).toBe(
-				true,
-			);
-			expect(pathExists('.claude/agents/master-agent/scripts/mss.sh')).toBe(
-				true,
-			);
+			expect(
+				pathExists(
+					'.claude/agents/master-agent/scripts/master-session-handover.sh',
+				),
+			).toBe(true);
+			expect(
+				pathExists(
+					'.claude/agents/master-agent/scripts/master-session-start.sh',
+				),
+			).toBe(true);
 		});
 	});
 
@@ -61,7 +65,11 @@ describe('Infrastructure: Agent Path Validation', () => {
 			expect(
 				pathExists('.claude/agents/sub-agent/scripts/verify-and-push.sh'),
 			).toBe(true);
-			expect(pathExists('.claude/agents/sub-agent/scripts/sss.sh')).toBe(true);
+			expect(
+				pathExists(
+					'.claude/agents/sub-agent/scripts/subagent-session-start.sh',
+				),
+			).toBe(true);
 		});
 
 		it('should NOT have old script names', () => {
@@ -107,9 +115,15 @@ describe('Infrastructure: Agent Path Validation', () => {
 			const subagentStartCommand =
 				settings.hooks.SubagentStart[0].hooks[0].command;
 
-			expect(sessionStartupCommand).toContain('master-agent/scripts/mss.sh');
-			expect(sessionResumeCommand).toContain('master-agent/scripts/msh.sh');
-			expect(subagentStartCommand).toContain('sub-agent/scripts/sss.sh');
+			expect(sessionStartupCommand).toContain(
+				'master-agent/scripts/master-session-start.sh',
+			);
+			expect(sessionResumeCommand).toContain(
+				'master-agent/scripts/master-session-handover.sh',
+			);
+			expect(subagentStartCommand).toContain(
+				'sub-agent/scripts/subagent-session-start.sh',
+			);
 		});
 	});
 
