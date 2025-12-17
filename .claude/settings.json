@@ -55,15 +55,6 @@
 		],
 		"PreToolUse": [
 			{
-				"matcher": "Task",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/task-pre.sh"
-					}
-				]
-			},
-			{
 				"matcher": "Bash",
 				"hooks": [
 					{
