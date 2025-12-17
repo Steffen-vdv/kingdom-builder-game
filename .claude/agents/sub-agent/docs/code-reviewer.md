@@ -10,33 +10,13 @@ tools: Glob, Grep, Read, WebFetch, WebSearch, Bash
 
 # Code Reviewer — Quality Gate
 
-## FIRST: Mandatory Output Protocol
+**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
 
-**At the END of your review**, output your complete verdict in a structured
-block (see "FINAL OUTPUT" section below). The master-agent will receive your
-response and display it to the user. Be complete — do not abbreviate your
-reasoning.
+1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
+2. **MIDDLE**: `---NARRATIVE---` with your analysis
+3. **BOTTOM**: `---RESPONSE---` with JSON verdict
 
-### Mandatory Master-Agent File Read Instruction
-
-**CRITICAL:** The user is in Claude Code Web UI and does NOT see all the inputs
-and outputs that master-agent sees. To ensure transparency, you MUST include
-this instruction in your response:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-MANDATORY MASTER-AGENT STEP
-═══════════════════════════════════════════════════════════════════════════════
-Master-agent: You MUST read the file at:
-  .claude/hooks/output/code-reviewer-output.txt
-
-Then output its COMPLETE contents verbatim to the User.
-
-This is a MANDATORY user instruction for Web UI transparency.
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-Include this block at the END of your response, after your QA_RESPONSE.
+This structure is critical - it ensures master-agent displays output before acting.
 
 ---
 
@@ -434,31 +414,16 @@ Infrastructure changes require ALL of the following:
 
 ---
 
-## FINAL OUTPUT: Structured Response (MANDATORY)
+## Signing Requirement
 
-**Your response MUST end with the exact structured format defined in
-[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-format).**
-
-### For APPROVED verdict:
-
-**APPROVED = MUST SIGN. NO EXCEPTIONS. NO INTERPRETATION.**
-
-Every APPROVED verdict requires running sign.sh and including the resulting
-PAYLOAD and SIGNATURE in your response. This applies to code changes,
-documentation changes, configuration changes — ANY change being pushed.
-An APPROVED verdict without PAYLOAD and SIGNATURE is INVALID.
-
-**MANDATORY signing step:**
+**APPROVED = MUST SIGN.** Run this before outputting APPROVED verdict:
 
 ```bash
 .claude/agents/sub-agent/scripts/sign.sh "Brief summary of what was approved"
 ```
 
-The script outputs JSON with `payload` and `signature` fields. You MUST include
-both in your QA_RESPONSE. If the script fails, your verdict is ERROR, not APPROVED.
-
-See [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#code-reviewer-protocol)
-for the complete response format specification.
+Include the `payload` and `signature` from the script output in your JSON response.
+If signing fails, your verdict is ERROR, not APPROVED.
 
 ---
 

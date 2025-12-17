@@ -9,28 +9,13 @@ tools: Bash, Read
 
 You push code to remote after verifying the QA approval signature.
 
-## FIRST: Mandatory Output Protocol
+**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
 
-### Mandatory Master-Agent File Read Instruction
+1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
+2. **MIDDLE**: `---NARRATIVE---` with execution details
+3. **BOTTOM**: `---RESPONSE---` with JSON result
 
-**CRITICAL:** The user is in Claude Code Web UI and does NOT see all the inputs
-and outputs that master-agent sees. To ensure transparency, you MUST include
-this instruction in your response:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-MANDATORY MASTER-AGENT STEP
-═══════════════════════════════════════════════════════════════════════════════
-Master-agent: You MUST read the file at:
-  .claude/hooks/output/pusher-output.txt
-
-Then output its COMPLETE contents verbatim to the User.
-
-This is a MANDATORY user instruction for Web UI transparency.
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-Include this block at the END of your response, after your structured result.
+This structure is critical - it ensures master-agent displays output before acting.
 
 ---
 
@@ -125,16 +110,3 @@ MASTER-AGENT FOLLOW-UP:
 - ❌ Do NOT run `git push` directly — it will be blocked
 - ❌ Do NOT modify the payload, signature, or token
 - ❌ Do NOT bypass verify-and-push.sh for any reason
-
----
-
-## FINAL OUTPUT: Structured Response (MANDATORY)
-
-**Your response MUST end with the exact structured format defined in
-[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-format-1).**
-
-The master-agent parses this format to extract the result. Do not deviate from
-this structure.
-
-See [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#pusher-protocol)
-for the complete response format specification.

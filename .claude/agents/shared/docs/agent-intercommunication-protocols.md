@@ -1,149 +1,220 @@
 # Agent Intercommunication Protocols
 
-This document defines the request and response formats for subagents used in
-the QA and push workflow. It serves as the single source of truth for agent I/O specs.
+Single source of truth for all master↔subagent communication formats.
 
-**Referenced by:**
-
-- `.claude/agents/sub-agent/docs/test-runner.md` - Test analysis agent
-- `.claude/agents/sub-agent/docs/code-reviewer.md` - QA agent
-- `.claude/agents/sub-agent/docs/pusher.md` - Push agent
-- `.claude/agents/master-agent/docs/master-agent.md` - Main agent
+**Injected into:** master-agent (mss.sh), all subagents (sss.sh)
 
 ---
 
-## Test Runner Protocol
+## Protocol Rules
 
-The test-runner subagent analyzes changes and executes appropriate tests.
-
-### Request Format
-
-Master-agent invokes via Task tool:
-
-```
-Analyze and test the changes in commit(s): <sha1>, <sha2>, ...
-
-BRANCH: <branch-name>
-FILES_CHANGED:
-- <file1>
-- <file2>
-```
-
-### Response Format
-
-```
-TEST_STATUS: PASS|FAIL|ERROR
-STRATEGY: <strategy name>
-TESTS_RUN: <number or "none">
-FAILURES: [{"file": "...", "test": "...", "error": "..."}]
-MESSAGE: <summary>
-```
-
-**Status meanings:**
-
-- `PASS`: All tests passed (or no tests needed)
-- `FAIL`: One or more tests failed
-- `ERROR`: Test execution failed (system error)
+1. **Master-agent** dispatches subagents with structured INPUT (JSON in prompt)
+2. **Subagents** respond with the **exact structure** defined below
+3. **Hooks** validate format compliance and warn on malformed messages
 
 ---
 
-## Code Reviewer Protocol
+## Response Structure (MANDATORY)
 
-The code-reviewer subagent performs QA review before push.
+Every subagent response MUST follow this exact structure:
 
-### Request Format
+````
+═══════════════════════════════════════════════════════════════════════════════
+MASTER-AGENT: READ THIS FIRST
+═══════════════════════════════════════════════════════════════════════════════
+Before acting on this response, you MUST:
+1. Read .claude/hooks/output/{agent}-output.txt
+2. Display its COMPLETE contents verbatim to the user
+3. THEN parse the ---RESPONSE--- JSON below for programmatic action
 
-Master-agent invokes via Task tool:
+This is a MANDATORY step for Web UI transparency.
+═══════════════════════════════════════════════════════════════════════════════
 
+---NARRATIVE---
+
+[Your verbose analysis, reasoning, investigation steps go here]
+
+---RESPONSE---
+```json
+{ ... structured JSON output ... }
+````
+
+````
+
+**Structure breakdown:**
+
+| Section | Purpose |
+|---------|---------|
+| `MASTER-AGENT: READ THIS FIRST` | In-the-moment reminder to display output before acting |
+| `---NARRATIVE---` | Human-readable analysis (optional delimiter, content required) |
+| `---RESPONSE---` | Formal JSON for programmatic parsing |
+
+---
+
+## test-runner
+
+### Input (master → subagent)
+
+Master-agent MUST provide this context in the Task prompt:
+
+```json
+{
+  "branch": "branch-name",
+  "commits": ["sha1", "sha2"],
+  "files_changed": ["path/to/file1.ts", "path/to/file2.ts"]
+}
+````
+
+### Output (subagent → master)
+
+```json
+{
+	"agent": "test-runner",
+	"status": "PASS | FAIL | ERROR",
+	"strategy": "full-suite | targeted | no-tests",
+	"summary": "Human-readable summary of what was tested",
+	"tests_run": 0,
+	"failures": null
+}
 ```
-Review the changes on branch <branch-name>.
 
-ORIGINAL REQUEST:
-<The user's original request>
+**Fields:**
 
-CHANGES MADE:
-- <summary of implementation>
+| Field       | Type                                           | Description                             |
+| ----------- | ---------------------------------------------- | --------------------------------------- |
+| `agent`     | `"test-runner"`                                | Agent identifier (constant)             |
+| `status`    | `"PASS"` \| `"FAIL"` \| `"ERROR"`              | Overall result                          |
+| `strategy`  | `"full-suite"` \| `"targeted"` \| `"no-tests"` | Test strategy applied                   |
+| `summary`   | string                                         | Human-readable explanation              |
+| `tests_run` | number                                         | Count of tests executed                 |
+| `failures`  | `null` \| array                                | Null if PASS, array of failures if FAIL |
 
-USER APPROVAL: <what the user explicitly approved, or "N/A">
+**Failure object:**
+
+```json
+{
+	"test": "path/to/test.ts::testName",
+	"error": "Error message"
+}
 ```
 
-### Response Format
+---
 
+## code-reviewer
+
+### Input (master → subagent)
+
+Master-agent MUST provide this context in the Task prompt:
+
+```json
+{
+	"branch": "branch-name",
+	"commits": ["sha1"],
+	"original_request": "What the user originally asked for",
+	"changes_summary": "What the coder implemented",
+	"user_approval": "What user explicitly approved, or null"
+}
 ```
-===============================================================================
-QA_RESPONSE_START
-===============================================================================
-VERDICT: APPROVED|BLOCKED|NEEDS_INPUT|ERROR
-PAYLOAD: <json for APPROVED, empty otherwise>
-SIGNATURE: <signature for APPROVED, empty otherwise>
-MESSAGE:
-<details>
-===============================================================================
-QA_RESPONSE_END
-===============================================================================
+
+### Output (subagent → master)
+
+```json
+{
+	"agent": "code-reviewer",
+	"verdict": "APPROVED | BLOCKED | NEEDS_INPUT | ERROR",
+	"summary": "Human-readable summary of the review",
+	"payload": "JSON string from sign.sh, or null",
+	"signature": "Hex string from sign.sh, or null",
+	"blockers": null
+}
 ```
+
+**Fields:**
+
+| Field       | Type                                                        | Description                             |
+| ----------- | ----------------------------------------------------------- | --------------------------------------- |
+| `agent`     | `"code-reviewer"`                                           | Agent identifier (constant)             |
+| `verdict`   | `"APPROVED"` \| `"BLOCKED"` \| `"NEEDS_INPUT"` \| `"ERROR"` | Review decision                         |
+| `summary`   | string                                                      | Human-readable explanation              |
+| `payload`   | string \| null                                              | Required if APPROVED, else null         |
+| `signature` | string \| null                                              | Required if APPROVED, else null         |
+| `blockers`  | `null` \| array of strings                                  | Required if BLOCKED, list of violations |
 
 **Verdict meanings:**
 
-- `APPROVED`: Changes approved, proceed to push (includes payload + signature)
-- `BLOCKED`: Violations found, must fix and retry
-- `NEEDS_INPUT`: Unclear requirements, user must clarify
-- `ERROR`: Signing failed, retry subagent
+- `APPROVED`: Code passes QA, includes valid payload+signature for pusher
+- `BLOCKED`: Violations found, `blockers` array lists what must be fixed
+- `NEEDS_INPUT`: Cannot decide without user clarification
+- `ERROR`: System error (e.g., sign.sh failed)
 
 ---
 
-## Pusher Protocol
+## pusher
 
-The pusher subagent verifies QA approval and executes the push.
+### Input (master → subagent)
 
-### Request Format
+Master-agent MUST provide this context in the Task prompt:
 
-Master-agent invokes via Task tool with ONE of two modes:
-
-#### Mode 1: QA Approval (normal workflow)
-
-```
-Push the approved changes.
-
-PAYLOAD: <json string from QA>
-SIGNATURE: <hex string from QA>
-BRANCH: <branch-name>
+```json
+{
+	"branch": "branch-name",
+	"payload": "JSON string from code-reviewer",
+	"signature": "Hex string from code-reviewer"
+}
 ```
 
-#### Mode 2: User Override (escape hatch)
+### Output (subagent → master)
 
-```
-User has authorized override push.
-
-OVERRIDE_TOKEN: <user-provided-token>
-BRANCH: <branch-name>
-```
-
-### Response Format
-
-```
-===============================================================================
-PUSH_RESPONSE_START
-===============================================================================
-RESULT: SUCCESS|FAILED|ERROR
-BRANCH: <branch-name or empty>
-COMMIT: <commit-sha or empty>
-MESSAGE: <details>
-===============================================================================
-PUSH_RESPONSE_END
-===============================================================================
+```json
+{
+	"agent": "pusher",
+	"status": "SUCCESS | FAILED | ERROR",
+	"branch": "branch-name",
+	"commit": "sha or null",
+	"message": "Human-readable result message"
+}
 ```
 
-**Result meanings:**
+**Fields:**
 
-- `SUCCESS`: Push completed successfully
+| Field     | Type                                   | Description                      |
+| --------- | -------------------------------------- | -------------------------------- |
+| `agent`   | `"pusher"`                             | Agent identifier (constant)      |
+| `status`  | `"SUCCESS"` \| `"FAILED"` \| `"ERROR"` | Push result                      |
+| `branch`  | string                                 | Branch that was pushed           |
+| `commit`  | string \| null                         | Commit SHA if SUCCESS, else null |
+| `message` | string                                 | Human-readable explanation       |
+
+**Status meanings:**
+
+- `SUCCESS`: Push completed, `commit` contains the pushed SHA
 - `FAILED`: Verification failed (invalid signature, HEAD mismatch)
-- `ERROR`: System error (crypto-gate not found, etc.)
+- `ERROR`: System error (network, permissions)
 
 ---
 
-## Protocol Design Principles
+## Master-Agent Responsibilities
 
-1. **Structured parsing**: Responses use START/END markers for reliable extraction
-2. **Consistent vocabulary**: Similar field names across protocols
-3. **Single source of truth**: This document is referenced, not duplicated
+When dispatching subagents, master-agent MUST:
+
+1. **Provide complete INPUT** — All required fields in JSON format
+2. **Parse OUTPUT JSON** — Extract the block after `---RESPONSE---`
+3. **Act on structured data** — Use `verdict`/`status` fields, not prose
+4. **Display to user** — Show narrative + structured result for transparency
+
+When receiving subagent responses, master-agent MUST:
+
+1. **Read the output file** at `.claude/hooks/output/{agent}-output.txt`
+2. **Display contents verbatim** to user (Web UI transparency requirement)
+3. **Parse the JSON block** after `---RESPONSE---` for programmatic decisions
+
+---
+
+## Validation
+
+Hooks enforce format compliance:
+
+- **Pre-hook (task-pre.sh)**: Validates INPUT JSON is present in prompt
+- **Post-hook (task-post.sh)**: Validates OUTPUT contains `---RESPONSE---` + valid JSON
+
+Malformed messages are rejected with format reminder.

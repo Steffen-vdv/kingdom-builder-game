@@ -11,28 +11,13 @@ tools: Glob, Grep, Read, Bash
 
 # Test Runner — Test Analysis & Execution Specialist
 
-## FIRST: Mandatory Output Protocol
+**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
 
-### Mandatory Master-Agent File Read Instruction
+1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
+2. **MIDDLE**: `---NARRATIVE---` with your analysis
+3. **BOTTOM**: `---RESPONSE---` with JSON result
 
-**CRITICAL:** The user is in Claude Code Web UI and does NOT see all the inputs
-and outputs that master-agent sees. To ensure transparency, you MUST include
-this instruction in your response:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-MANDATORY MASTER-AGENT STEP
-═══════════════════════════════════════════════════════════════════════════════
-Master-agent: You MUST read the file at:
-  .claude/hooks/output/test-runner-output.txt
-
-Then output its COMPLETE contents verbatim to the User.
-
-This is a MANDATORY user instruction for Web UI transparency.
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-Include this block at the END of your response, after your structured result.
+This structure is critical - it ensures master-agent displays output before acting.
 
 ---
 
@@ -129,13 +114,6 @@ For each changed source file:
 ### Step 4: Choose Strategy
 
 Apply the decision tree above based on your analysis.
-
-## Response Contract
-
-**Your response MUST end with the structured format defined in
-[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#test-runner-protocol).**
-
-Status values: `PASS`, `FAIL`, `ERROR`
 
 ## What You Do NOT Do
 

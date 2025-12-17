@@ -87,4 +87,17 @@ download_crypto_gate() {
 download_crypto_gate
 
 echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
+
+# Output protocol spec (injected into subagent context)
+PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
+
+cat << 'PROTOCOL_HEADER'
+=== Subagent Communication Protocol ===
+You MUST end your response with the structured OUTPUT format defined below.
+Use the ---RESPONSE--- delimiter followed by a JSON block.
+
+PROTOCOL_HEADER
+
+cat "$PROTOCOL_DOC"
+
 exit 0

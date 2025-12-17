@@ -24,6 +24,7 @@ echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 
 # Output identity docs (injected into agent context)
 IDENTITY_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/master-agent/docs/master-agent.md"
+PROTOCOL_DOC="$CLAUDE_PROJECT_DIR/.claude/agents/shared/docs/agent-intercommunication-protocols.md"
 
 cat << 'HEADER'
 === Master Agent Identity ===
@@ -33,5 +34,15 @@ Project rules in CLAUDE.md also apply.
 HEADER
 
 cat "$IDENTITY_DOC"
+
+cat << 'PROTOCOL_HEADER'
+
+=== Subagent Communication Protocol ===
+When dispatching subagents (test-runner, code-reviewer, pusher), you MUST follow
+the INPUT/OUTPUT formats defined below. Parse the JSON after ---RESPONSE--- marker.
+
+PROTOCOL_HEADER
+
+cat "$PROTOCOL_DOC"
 
 exit 0

@@ -27,12 +27,13 @@ OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 
 # Function to clean text content:
 # 1. Strip triple backticks (prevents markdown interpretation)
-# 2. Strip from LAST "MANDATORY MASTER-AGENT STEP" to end of content
-# 3. Strip trailing noise lines (lines without alphanumeric chars: ---, ═══, blanks)
+# 2. Strip TOP reminder block (from start to "This is a MANDATORY step" line)
+# 3. Strip trailing noise lines (keep lines with alphanumeric or JSON chars {})
 clean_text() {
 	sed 's/```//g' \
-		| tac | sed '1,/^MANDATORY MASTER-AGENT STEP$/d' | tac \
-		| tac | sed -n '/[A-Za-z0-9]/,$p' | tac
+		| sed '1,/^This is a MANDATORY step/d' \
+		| sed '1{/^═/d}' \
+		| tac | sed -n '/[A-Za-z0-9{}]/,$p' | tac
 }
 
 # Write header and prompt (overwrites existing content)
@@ -77,5 +78,15 @@ fi
 
 echo "" >> "$OUTPUT_FILE"
 echo "────────────────────────────────────────────────────────────────────────────────" >> "$OUTPUT_FILE"
+
+# Validate response format: check for ---RESPONSE--- delimiter
+FULL_TEXT=$(echo "$RESPONSE" | jq -r '.content[].text // ""' 2>/dev/null | tr -d '\n')
+
+if ! echo "$FULL_TEXT" | grep -q '\-\-\-RESPONSE\-\-\-'; then
+	echo "" >> "$OUTPUT_FILE"
+	echo "⚠️  FORMAT WARNING: Response missing ---RESPONSE--- delimiter" >> "$OUTPUT_FILE"
+	echo "    Subagent should end with: ---RESPONSE--- followed by JSON block" >> "$OUTPUT_FILE"
+	echo "    See: agent-intercommunication-protocols.md" >> "$OUTPUT_FILE"
+fi
 
 exit 0
