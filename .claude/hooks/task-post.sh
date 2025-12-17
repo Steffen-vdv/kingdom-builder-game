@@ -17,8 +17,8 @@ case "$SUBAGENT" in
 		;;
 esac
 
-# Output directory and file
-OUTPUT_DIR="$CLAUDE_PROJECT_DIR/.claude/hooks/output"
+# Output directory and file (XDG_RUNTIME_DIR for context manager alignment)
+OUTPUT_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude/sub-agents/output"
 mkdir -p "$OUTPUT_DIR"
 OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 

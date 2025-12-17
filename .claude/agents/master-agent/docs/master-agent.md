@@ -101,12 +101,9 @@ Task(subagent_type: "code-reviewer", ...)
 
 After dispatching `test-runner`, `code-reviewer`, or `pusher`, you MUST:
 
-1. **Read the output file** for that subagent:
-   - `.claude/hooks/output/test-runner-output.txt`
-   - `.claude/hooks/output/code-reviewer-output.txt`
-   - `.claude/hooks/output/pusher-output.txt`
+1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
 
-2. **Output the COMPLETE file contents verbatim** to the user. Do NOT summarize.
+2. **Output the COMPLETE contents verbatim** to the user. Do NOT summarize.
    Do NOT say "it shows the response". Actually print the full content.
 
 3. **Do this for EVERY subagent** you dispatch, not just one.
