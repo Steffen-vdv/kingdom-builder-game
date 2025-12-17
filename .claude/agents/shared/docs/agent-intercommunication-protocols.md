@@ -23,7 +23,7 @@ Every subagent response MUST follow this exact structure:
 MASTER-AGENT: READ THIS FIRST
 ═══════════════════════════════════════════════════════════════════════════════
 Before acting on this response, you MUST:
-1. Read the output file at .claude/hooks/output/{agent}-output.txt
+1. Read the output file at /tmp/claude/sub-agents/output/{agent}-output.txt
 2. Output those contents verbatim to the user
 3. THEN parse the ---RESPONSE--- JSON below for programmatic action
 
@@ -200,7 +200,7 @@ When dispatching subagents, master-agent MUST:
 
 When receiving subagent responses, master-agent MUST:
 
-1. **Read the output file** at `.claude/hooks/output/{agent}-output.txt`
+1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
 2. **Display contents verbatim** to user (Web UI transparency requirement)
 3. **Parse the JSON block** after `---RESPONSE---` for programmatic decisions
 
