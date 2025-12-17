@@ -6,20 +6,24 @@ interface CompareParams extends Record<string, unknown> {
 	operator: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'ne';
 }
 
-function compare(a: number, b: number, op: CompareParams['operator']) {
+function compare(
+	leftValue: number,
+	rightValue: number,
+	op: CompareParams['operator'],
+) {
 	switch (op) {
 		case 'lt':
-			return a < b;
+			return leftValue < rightValue;
 		case 'lte':
-			return a <= b;
+			return leftValue <= rightValue;
 		case 'gt':
-			return a > b;
+			return leftValue > rightValue;
 		case 'gte':
-			return a >= b;
+			return leftValue >= rightValue;
 		case 'eq':
-			return a === b;
+			return leftValue === rightValue;
 		case 'ne':
-			return a !== b;
+			return leftValue !== rightValue;
 		default:
 			return false;
 	}
