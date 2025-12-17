@@ -95,10 +95,41 @@ Task(subagent_type: "test-runner", ...)
 Task(subagent_type: "code-reviewer", ...)
 ```
 
-### Transparent Dispatch (CRUCIAL)
+### Transparent Dispatch (CRUCIAL - READ THIS)
 
-After each Task completes, the hook outputs the dispatch prompt and response
-directly to main-agent. **Main-agent MUST output this content to the user before summarizing or proceeding.**
+**The user is in Claude Code Web UI and cannot see subagent inputs/outputs.**
+
+After dispatching `test-runner`, `code-reviewer`, or `pusher`, you MUST:
+
+1. **Read the output file** for that subagent:
+   - `.claude/hooks/output/test-runner-output.txt`
+   - `.claude/hooks/output/code-reviewer-output.txt`
+   - `.claude/hooks/output/pusher-output.txt`
+
+2. **Output the COMPLETE file contents verbatim** to the user. Do NOT summarize.
+   Do NOT say "it shows the response". Actually print the full content.
+
+3. **Do this for EVERY subagent** you dispatch, not just one.
+
+**Example of WRONG behavior:**
+
+```
+I read test-runner-output.txt and code-reviewer-output.txt.
+Both show complete responses. Now pushing...
+```
+
+**Example of CORRECT behavior:**
+
+```
+**test-runner-output.txt (verbatim):**
+[full file contents here]
+
+**code-reviewer-output.txt (verbatim):**
+[full file contents here]
+```
+
+**WHY:** The user cannot see what you see. If you don't output it, they're blind.
+This is a USER INSTRUCTION, not a suggestion.
 
 ### Don't Coerce Subagents
 
