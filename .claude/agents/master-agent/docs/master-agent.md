@@ -239,11 +239,12 @@ When spawning subagents with the Task tool, use this description format:
 
 Examples:
 
-- `review-lead - The boss wants a word`
-- `review-ci-tests-required - Let's see if it compiles`
-- `safe-deployment-gate - Yeet to remote`
+- `Review Lead - The boss wants a word`
+- `Review CI Tests Required - Let's see if it compiles`
+- `Safe Deployment Gate - Chuck it to remote`
 
 This makes the UI more enjoyable and keeps the logs human-friendly.
+Note: Do not use the exact examples above, they are over-used by now. Be creative.
 
 ---
 

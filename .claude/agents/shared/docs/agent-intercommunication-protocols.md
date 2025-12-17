@@ -324,7 +324,7 @@ The three-phase workflow requires master-agent to:
 4. Dispatch review-lead with the 6 approvals in `approvals_json`
 5. Wait for completion
 6. Read `/tmp/claude/sub-agents/output/review-lead.json`
-7. Display JSON contents verbatim to user
+7. Display JSON contents verbatim to user (CRUCIAL)
 8. Extract review-lead's approval (payload, signature, type)
 
 ### Phase 3
