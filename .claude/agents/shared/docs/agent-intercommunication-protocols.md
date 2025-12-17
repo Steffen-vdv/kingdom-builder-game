@@ -23,7 +23,7 @@ Every subagent response MUST follow this exact structure:
 MASTER-AGENT: READ THIS FIRST
 ═══════════════════════════════════════════════════════════════════════════════
 Before acting on this response, you MUST:
-1. Find the system-reminder for {agent}-output.txt in your current context
+1. Read the output file at .claude/hooks/output/{agent}-output.txt
 2. Output those contents verbatim to the user
 3. THEN parse the ---RESPONSE--- JSON below for programmatic action
 
