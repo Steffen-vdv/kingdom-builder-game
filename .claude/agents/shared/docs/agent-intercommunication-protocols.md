@@ -13,7 +13,7 @@ Injected into:
 
 1. Master-agent dispatches subagents with structured INPUT (pure JSON prompt)
 2. Subagents write structured OUTPUT to a JSON file before completing
-3. Hooks validate JSON and assemble the final output for master-agent
+3. Post-hook validates JSON format; master-agent reads directly
 
 IMPORTANT:
 
@@ -292,8 +292,8 @@ Status meanings:
 Master-agent MUST:
 
 1. Dispatch all 6 reviewers + test-runner in parallel (single message with 7 Task calls)
-2. Read `{agent}-output.txt` files after completion
-3. Display contents verbatim to user
+2. Read `{agent}.json` files after completion
+3. Display JSON contents verbatim to user
 4. Collect all 6 signatures before dispatching pusher
 5. Pass approvals array to pusher for bulk verification
 
@@ -310,15 +310,11 @@ Blocks execution if:
 
 ### Post-hook (task-post.sh)
 
-Cannot block execution, but reports failures.
+Validates JSON output file exists and is valid. Cannot block execution.
 
-On failure, hooks emit error JSON:
+Emits warnings to stderr if:
 
-```json
-{
-	"error": "description",
-	"agent": "agent-name",
-	"action": "RETRY",
-	"expected_file": "/tmp/claude/sub-agents/output/{agent}.json"
-}
-```
+- Output file does not exist
+- Output file is not valid JSON
+
+Master-agent reads the JSON file directly for structured data.

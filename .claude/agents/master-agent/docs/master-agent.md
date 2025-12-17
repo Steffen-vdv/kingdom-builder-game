@@ -134,10 +134,10 @@ Task(subagent_type: "review-tests-docs-dry", ...)
 
 After dispatching subagents, you MUST:
 
-1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
+1. **Read the JSON output file** at `/tmp/claude/sub-agents/output/{agent}.json`
 
 2. **Output the COMPLETE contents verbatim** to the user. Do NOT summarize.
-   Do NOT say "it shows the response". Actually print the full content.
+   Do NOT say "it shows the response". Actually print the full JSON.
    Do NOT truncate with `...`, `{...}`, `[truncated]`, or any ellipsis pattern.
 
 3. **Do this for EVERY subagent** you dispatch, not just one.
@@ -151,14 +151,14 @@ I read all 7 output files. All reviewers approved. Now pushing...
 **Example of CORRECT behavior:**
 
 ```
-**test-runner-output.txt (verbatim):**
-[full file contents here]
+**test-runner.json (verbatim):**
+{full JSON contents here}
 
-**review-lead-output.txt (verbatim):**
-[full file contents here]
+**review-lead.json (verbatim):**
+{full JSON contents here}
 
-**review-claims-auditor-output.txt (verbatim):**
-[full file contents here]
+**review-claims-auditor.json (verbatim):**
+{full JSON contents here}
 
 ... (all 7 files shown in full)
 ```
@@ -168,16 +168,11 @@ This is a USER INSTRUCTION, not a suggestion.
 
 ### Parsing Subagent Results
 
-You have three options for extracting structured data (signatures, verdicts, etc.):
+Read from `/tmp/claude/sub-agents/output/{agent}.json` for all structured data
+(signatures, verdicts, etc.). This is the canonical output location.
 
-1. **Read from `.json` file** — `/tmp/claude/sub-agents/output/{agent}.json`
-2. **Read from `.txt` file** — `/tmp/claude/sub-agents/output/{agent}-output.txt`
-3. **Parse Task output directly** — The Task tool returns the subagent's chat output
-
-All three contain the same JSON data. Choose based on technical convenience.
-
-**Recommendation:** Since you MUST read the `.txt` file anyway to display verbatim
-to the user, you might as well extract signatures from it — saves an extra read.
+Since you MUST read the `.json` file to display verbatim to the user, extract
+signatures from the same read — no extra file operations needed.
 
 ### Don't Coerce Subagents
 
@@ -202,3 +197,34 @@ Subagents have their own documentation and decision-making. Trust them.
 3. **MAX 1 RETRY** — if retry also fails, report ERROR to user
 
 Subagents should succeed by default. A simple retry usually resolves transient issues.
+
+### Task Description Format
+
+When spawning subagents with the Task tool, use this description format:
+
+```
+<Subagent Name> - <Funny description>
+```
+
+Examples:
+
+- `review-lead - The boss wants a word`
+- `test-runner - Let's see if it compiles`
+- `pusher - Yeet to remote`
+
+This makes the UI more enjoyable and keeps the logs human-friendly.
+
+---
+
+## 6. Your Subagent Friends
+
+**These subagents are your friends.** They exist to help you succeed.
+
+You don't need user permission to dispatch them for appropriate tasks:
+
+- Uncertain about your changes? Spawn the reviewers.
+- Want a second opinion? Ask a specialist reviewer.
+- Ready to push? Get the full QA team.
+
+Think of them as colleagues you can tap on the shoulder anytime. They're here
+to catch issues early and help you ship quality code. Use them liberally.
