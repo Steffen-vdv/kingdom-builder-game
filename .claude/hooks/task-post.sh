@@ -5,7 +5,7 @@
 INPUT=$(cat)
 
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
-PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // "N/A"')
+PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
 RESPONSE=$(echo "$INPUT" | jq -c '.tool_response // {}')
 
 # Only process specific subagent types
@@ -25,31 +25,56 @@ OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 # Extract full text from response
 FULL_TEXT=$(echo "$RESPONSE" | jq -r '.content[].text // ""' 2>/dev/null)
 
-# Extract everything after ---RESPONSE--- (should be ONLY the JSON block)
-# Strip the ```json and ``` fences
-RESPONSE_JSON=$(echo "$FULL_TEXT" | sed -n '/^---RESPONSE---$/,$ p' | tail -n +2 | sed '/^```json$/d; /^```$/d')
-
-# If nothing found, use placeholder
-if [ -z "$RESPONSE_JSON" ]; then
-	RESPONSE_JSON='{"error": "No ---RESPONSE--- block found in subagent output"}'
+# === INPUT VALIDATION ===
+# Prompt should be pure JSON (per protocol spec)
+INPUT_JSON=$(echo "$PROMPT" | jq '.' 2>/dev/null)
+if [ $? -ne 0 ] || [ -z "$INPUT_JSON" ]; then
+	INPUT_JSON='{"parse_error": "Input prompt is not valid JSON"}'
 fi
 
-# Write output file: header + input + response JSON
-cat > "$OUTPUT_FILE" << EOF
+# === OUTPUT VALIDATION ===
+# Response should be pure JSON with response-formal-json field
+OUTPUT_JSON=$(echo "$FULL_TEXT" | jq '.' 2>/dev/null)
+if [ $? -ne 0 ] || [ -z "$OUTPUT_JSON" ]; then
+	FORMAL_JSON='{"error": "Response is not valid JSON", "agent": "'"$SUBAGENT"'", "action": "RETRY"}'
+else
+	# Extract response-formal-json
+	FORMAL_JSON=$(echo "$OUTPUT_JSON" | jq '.["response-formal-json"] // null' 2>/dev/null)
+	if [ "$FORMAL_JSON" = "null" ] || [ -z "$FORMAL_JSON" ]; then
+		FORMAL_JSON='{"error": "Missing response-formal-json field", "agent": "'"$SUBAGENT"'", "action": "RETRY"}'
+	fi
+fi
+
+# Pretty-print for readability
+INPUT_PRETTY=$(echo "$INPUT_JSON" | jq '.' 2>/dev/null || echo "$INPUT_JSON")
+FORMAL_PRETTY=$(echo "$FORMAL_JSON" | jq '.' 2>/dev/null || echo "$FORMAL_JSON")
+
+# Write output file with 5 backticks to handle nested code blocks
+cat > "$OUTPUT_FILE" << 'HEADER'
 ═══════════════════════════════════════════════════════════════════════════════
-SUBAGENT: ${SUBAGENT}
-TIMESTAMP: $(date -Iseconds)
+HEADER
+echo "SUBAGENT: ${SUBAGENT}" >> "$OUTPUT_FILE"
+echo "TIMESTAMP: $(date -Iseconds)" >> "$OUTPUT_FILE"
+cat >> "$OUTPUT_FILE" << 'DIVIDER'
 ═══════════════════════════════════════════════════════════════════════════════
 
 INPUT:
 ────────────────────────────────────────────────────────────────────────────────
-${PROMPT}
+`````json
+DIVIDER
+echo "$INPUT_PRETTY" >> "$OUTPUT_FILE"
+cat >> "$OUTPUT_FILE" << 'MIDDLE'
+`````
 ────────────────────────────────────────────────────────────────────────────────
 
-RESPONSE:
+RESPONSE (response-formal-json):
 ────────────────────────────────────────────────────────────────────────────────
-${RESPONSE_JSON}
+`````json
+MIDDLE
+echo "$FORMAL_PRETTY" >> "$OUTPUT_FILE"
+cat >> "$OUTPUT_FILE" << 'FOOTER'
+`````
 ────────────────────────────────────────────────────────────────────────────────
-EOF
+FOOTER
 
 exit 0

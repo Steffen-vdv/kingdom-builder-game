@@ -9,7 +9,7 @@ tools: Bash, Read
 
 You push code to remote after verifying the QA approval signature.
 
-**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-structure-mandatory). Follow it exactly.**
+**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#output-format-subagent--master). Follow it exactly — output ONLY valid JSON.**
 
 ---
 
@@ -45,7 +45,12 @@ The master-agent provides ONE of two modes:
 
 ### For override mode:
 
-For override mode, see [agent-intercommunication-protocols.md](../../shared/docs/agent-intercommunication-protocols.md#pusher-protocol).
+```bash
+.claude/agents/sub-agent/scripts/verify-and-push.sh --override '<token>'
+.claude/agents/sub-agent/scripts/verify-and-push.sh --override '<token>' 'branch-name'
+```
+
+The token is provided by the user via the `override_token` field in the input JSON.
 
 **IMPORTANT:**
 
