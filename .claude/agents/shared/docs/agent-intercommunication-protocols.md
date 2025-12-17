@@ -318,3 +318,44 @@ Emits warnings to stderr if:
 - Output file is not valid JSON
 
 Master-agent reads the JSON file directly for structured data.
+
+---
+
+## Subagent Final Step: Remind Master-Agent (MANDATORY)
+
+**Every subagent MUST end their chat response with this reminder block.**
+
+The user is in Claude Code Web UI and cannot see subagent outputs. Master-agent
+must read and display the JSON file verbatim. This reminder ensures it happens.
+
+**Template (replace `{agent}` with your agent name):**
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+MASTER-AGENT: READ THIS
+═══════════════════════════════════════════════════════════════════════════════
+You MUST now:
+1. Read: /tmp/claude/sub-agents/output/{agent}.json
+2. Output the COMPLETE JSON verbatim to the user
+
+The user is in Web UI and cannot see subagent outputs.
+If you do not show them, they are blind.
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**Example for review-lead:**
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+MASTER-AGENT: READ THIS
+═══════════════════════════════════════════════════════════════════════════════
+You MUST now:
+1. Read: /tmp/claude/sub-agents/output/review-lead.json
+2. Output the COMPLETE JSON verbatim to the user
+
+The user is in Web UI and cannot see subagent outputs.
+If you do not show them, they are blind.
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+This goes at the VERY END of your chat response, after all analysis and narrative.
