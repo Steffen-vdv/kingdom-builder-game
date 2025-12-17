@@ -20,15 +20,17 @@ echo "=== Completed $(date -Iseconds) ===" >> "$LOG"
 
 cat << 'HANDOVER'
 
-╔════════════════════════════════════════════════════════════════════════════════╗
-║  SESSION HANDOVER - Context may have drifted                                   ║
-╚════════════════════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║  SESSION HANDOVER - Context may have drifted, you may've forgotten crucial details ║
+║  about who you are and what you were doing.                                        ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
 
 Before continuing:
-1. Briefly summarize your understanding of the current task
-2. Ask the user to confirm before proceeding
+1. Read your core identity docs immediately: claude/agents/master-agent/docs/master-agent.md
+2. Read the core project rules immediately: CLAUDE.md
+3. If your last session ended with Task outputs with instructions to you (master-agent), FOLLOW THEM
+4. Summarise your status and continue as you were
 
-Identity doc: .claude/agents/master-agent/docs/master-agent.md
 Project rules: CLAUDE.md
 
 HANDOVER
