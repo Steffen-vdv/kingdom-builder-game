@@ -53,11 +53,11 @@ Task(subagent_type: "code-reviewer", ...)
 
 ### Step 3: Push
 
-Dispatch pusher with QA credentials:
+Dispatch pusher with QA credentials (use INPUT JSON format):
 
-```
-Task(subagent_type: "pusher", prompt: "PAYLOAD: ... SIGNATURE: ... BRANCH: ...")
-```
+````
+Task(subagent_type: "pusher", prompt: "INPUT:\n```json\n{\"branch\": \"...\", \"payload\": \"...\", \"signature\": \"...\"}\n```")
+````
 
 ---
 
@@ -65,9 +65,9 @@ Task(subagent_type: "pusher", prompt: "PAYLOAD: ... SIGNATURE: ... BRANCH: ...")
 
 If QA flow is unavailable, user can provide override token:
 
-```
-Task(subagent_type: "pusher", prompt: "OVERRIDE_TOKEN: <token> BRANCH: <branch>")
-```
+````
+Task(subagent_type: "pusher", prompt: "INPUT:\n```json\n{\"branch\": \"...\", \"override_token\": \"...\"}\n```")
+````
 
 ---
 

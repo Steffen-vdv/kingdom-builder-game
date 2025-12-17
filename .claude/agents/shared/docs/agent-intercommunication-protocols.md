@@ -37,17 +37,16 @@ This is a MANDATORY step for Web UI transparency.
 ---RESPONSE---
 ```json
 { ... structured JSON output ... }
-````
-
+```
 ````
 
 **Structure breakdown:**
 
-| Section | Purpose |
-|---------|---------|
-| `MASTER-AGENT: READ THIS FIRST` | In-the-moment reminder to display output before acting |
-| `---NARRATIVE---` | Human-readable analysis (optional delimiter, content required) |
-| `---RESPONSE---` | Formal JSON for programmatic parsing |
+| Section                         | Purpose                                                        |
+| ------------------------------- | -------------------------------------------------------------- |
+| `MASTER-AGENT: READ THIS FIRST` | In-the-moment reminder to display output before acting         |
+| `---NARRATIVE---`               | Human-readable analysis (optional delimiter, content required) |
+| `---RESPONSE---`                | Formal JSON for programmatic parsing                           |
 
 ---
 
@@ -59,11 +58,11 @@ Master-agent MUST provide this context in the Task prompt:
 
 ```json
 {
-  "branch": "branch-name",
-  "commits": ["sha1", "sha2"],
-  "files_changed": ["path/to/file1.ts", "path/to/file2.ts"]
+	"branch": "branch-name",
+	"commits": ["sha1", "sha2"],
+	"files_changed": ["path/to/file1.ts", "path/to/file2.ts"]
 }
-````
+```
 
 ### Output (subagent → master)
 
