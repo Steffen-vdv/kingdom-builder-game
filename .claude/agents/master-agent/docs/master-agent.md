@@ -144,9 +144,9 @@ Subagents have their own documentation and decision-making. Trust them.
 
 ### Handle JSON Errors (Retry Protocol)
 
-**If `response-formal-json` contains an `error` field:**
+**If the OUTPUT section contains an `error` field:**
 
-1. **DO NOT** proceed — the subagent response was invalid
+1. **DO NOT** proceed — the subagent did not write its output file correctly
 2. **RE-DISPATCH** the same subagent with the exact same INPUT (pure JSON)
 3. **MAX 1 RETRY** — if retry also fails, report ERROR to user
 

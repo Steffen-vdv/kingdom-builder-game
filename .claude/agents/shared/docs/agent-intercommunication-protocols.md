@@ -2,18 +2,15 @@
 
 Single source of truth for all master↔subagent communication formats.
 
-**Injected into:** master-agent (mss.sh), all subagents (sss.sh)
+**Injected into:** master-agent (master-session-start.sh), all subagents (subagent-session-start.sh)
 
 ---
 
 ## Protocol Rules
 
-1. **Master-agent** dispatches subagents with structured INPUT (pure JSON string)
-2. **Subagents** respond with structured OUTPUT (pure JSON string)
-3. **Hooks** validate JSON and reject malformed messages
-
-**IMPORTANT:** All communication is valid, parseable JSON. No markdown, no delimiters,
-no extra text. Hooks use `jq` to parse — invalid JSON = immediate failure.
+1. **Master-agent** dispatches subagents with structured INPUT (pure JSON prompt)
+2. **Subagents** write structured OUTPUT to a JSON file before completing
+3. **Hooks** validate JSON and assemble the final output file for master-agent
 
 ---
 
@@ -34,35 +31,25 @@ prompt contains raw JSON with no markdown fences, no "INPUT:" prefix, no extra t
 
 ---
 
-## Output Format (subagent → master)
+## Output Format (subagent → file)
 
-Every subagent response MUST be a **pure JSON string** with this exact schema:
+Before completing, subagents MUST write their structured output to a JSON file:
 
-```json
-{
-  "master-agent-system-instructions": [
-    "MASTER-AGENT: READ THIS FIRST",
-    "Before acting on this response, you MUST:",
-    "1. Read output file at /tmp/claude/sub-agents/output/{agent}-output.txt",
-    "2. Output those contents VERBATIM to the user (Web UI transparency)",
-    "3. THEN parse response-formal-json for programmatic action",
-    "MANDATORY: Do not skip these steps. User cannot see subagent output directly."
-  ],
-  "response-verbose": "Your narrative analysis here. Markdown allowed inside this string.",
-  "response-formal-json": { ...agent-specific schema... }
-}
+**File path:** `/tmp/claude/sub-agents/output/{agent}.json`
+
+Where `{agent}` is one of: `test-runner`, `code-reviewer`, `pusher`
+
+**File contents:** Pure JSON matching the agent's output schema (defined below).
+
+**How to write:** Use the `Write` tool at the end of your session:
+
+```
+Write(file_path="/tmp/claude/sub-agents/output/test-runner.json", content="{...}")
 ```
 
-**NOTE:** The backticks above are for documentation readability only. The actual
-response is raw JSON with no markdown fences.
-
-**CRITICAL RULES:**
-
-1. Response MUST be valid JSON (parseable by `jq`)
-2. Response MUST contain all three top-level fields
-3. `response-verbose` may contain any text (properly JSON-escaped)
-4. `response-formal-json` schema is defined per agent below
-5. **Output ONLY the JSON object** — no preamble, no trailing text
+The hook system reads this file, validates it, and assembles the final output
+for master-agent. Your chat output can be free-form narrative — only the JSON
+file matters for structured data exchange.
 
 ---
 
@@ -78,7 +65,7 @@ response is raw JSON with no markdown fences.
 }
 ```
 
-### Output Schema (`response-formal-json`)
+### Output Schema
 
 ```json
 {
@@ -127,7 +114,7 @@ response is raw JSON with no markdown fences.
 }
 ```
 
-### Output Schema (`response-formal-json`)
+### Output Schema
 
 ```json
 {
@@ -172,7 +159,7 @@ response is raw JSON with no markdown fences.
 }
 ```
 
-### Output Schema (`response-formal-json`)
+### Output Schema
 
 ```json
 {
@@ -211,11 +198,10 @@ When dispatching subagents, master-agent MUST:
 
 When receiving subagent responses, master-agent MUST:
 
-1. **FIRST: Follow `master-agent-system-instructions`** — These are critical directives
-2. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
-3. **Display contents verbatim** to user (Web UI transparency requirement)
-4. **THEN: Parse `response-formal-json`** for programmatic decisions
-5. **Act on structured data** — Use `verdict`/`status` fields, not prose
+1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
+2. **Display contents verbatim** to user (Web UI transparency requirement)
+3. **Parse the OUTPUT section** for programmatic decisions
+4. **Act on structured data** — Use `verdict`/`status` fields, not prose
 
 ---
 
@@ -238,17 +224,17 @@ Master-agent sees the block reason and can fix the INPUT before retrying.
 
 Validation steps:
 
-1. Parse response as JSON → fail if invalid
-2. Extract `response-formal-json` → fail if missing
-3. Validate `response-formal-json` is object → fail if not
+1. Read `{agent}.json` file written by subagent
+2. Parse contents as JSON → fail if invalid or missing
+3. Assemble final `-output.txt` with markdown template
 
-On any failure, outputs error to file:
+On any failure, outputs error to the OUTPUT section:
 
 ```json
 {
 	"error": "description of what failed",
 	"agent": "agent-name",
 	"action": "RETRY",
-	"instruction": "Re-dispatch subagent with format reminder"
+	"expected_file": "/tmp/claude/sub-agents/output/{agent}.json"
 }
 ```

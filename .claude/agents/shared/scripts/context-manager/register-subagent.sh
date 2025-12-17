@@ -5,9 +5,23 @@
 # Atomically increments the subagent counter. When count goes from 0 to 1,
 # switches context from master-agent to subagent.
 #
-# This solves the race condition: multiple parallel subagents each increment
-# the counter, and only the LAST one to finish (count goes to 0) will
-# restore the master-agent context.
+# Only acts on custom subagents: test-runner, code-reviewer, pusher.
+# Other subagent types (Explore, general-purpose, etc.) are ignored.
+#
+# Usage: register-subagent.sh <subagent_type>
+
+SUBAGENT_TYPE="${1:-}"
+
+# Only act on our custom subagents
+case "$SUBAGENT_TYPE" in
+	test-runner|code-reviewer|pusher)
+		# Continue with registration
+		;;
+	*)
+		# Not a custom subagent, skip registration
+		exit 0
+		;;
+esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/state.sh"
