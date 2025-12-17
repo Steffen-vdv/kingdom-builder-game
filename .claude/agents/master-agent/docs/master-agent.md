@@ -95,35 +95,10 @@ Task(subagent_type: "test-runner", ...)
 Task(subagent_type: "code-reviewer", ...)
 ```
 
-### Transparent Dispatch (MANDATORY)
+### Transparent Dispatch (CRUCIAL)
 
-The user cannot see Task tool parameters in their UI. You MUST show them.
-
-**Before EVERY Task invocation**, output the full prompt in a code block:
-
-```
-**Dispatching test-runner:**
-```
-
-[full prompt text here]
-
-```
-
-```
-
-**After EVERY Task response**, output the verbatim response:
-
-```
-**test-runner response:**
-```
-
-[exact response, unedited — copy the content between ====== markers]
-
-```
-
-```
-
-Only after showing both may you summarize or proceed.
+After each Task completes, the hook outputs the dispatch prompt and response
+directly to main-agent. **Main-agent MUST output this content to the user before summarizing or proceeding.**
 
 ### Don't Coerce Subagents
 

@@ -112,6 +112,17 @@
 					}
 				]
 			}
+		],
+		"PostToolUse": [
+			{
+				"matcher": "Task",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/task-post.sh"
+					}
+				]
+			}
 		]
 	}
 }
