@@ -244,14 +244,6 @@ export function useAppNavigation(): AppNavigationState {
 		updateResumeHistory,
 	]);
 
-	const openOverview = useCallback(() => {
-		setCurrentScreen(Screen.Overview);
-		const overviewState = buildHistoryState({
-			screen: Screen.Overview,
-		});
-		pushHistoryState(overviewState);
-	}, [buildHistoryState, pushHistoryState]);
-
 	const openTutorial = useCallback(() => {
 		setCurrentScreen(Screen.Tutorial);
 		const tutorialState = buildHistoryState({
@@ -315,7 +307,6 @@ export function useAppNavigation(): AppNavigationState {
 		startStandardGame,
 		startDeveloperGame,
 		continueSavedGame,
-		openOverview,
 		openTutorial,
 		returnToMenu,
 		toggleDarkMode,

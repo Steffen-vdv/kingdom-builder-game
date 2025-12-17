@@ -95,9 +95,9 @@ describe('SessionManager', () => {
 		// Resources now contain all resource types including former stats
 		const resourceKeys = Object.keys(baseline.resources ?? {});
 		expect(resourceKeys.length).toBeGreaterThan(0);
-		const heroTokens = baseline.overview?.hero?.tokens ?? {};
-		const overviewTokenKeys = Object.keys(heroTokens);
-		expect(overviewTokenKeys.length).toBeGreaterThan(0);
+		// Overview content has minimal structure
+		expect(baseline.overview).toBeDefined();
+		expect(baseline.overview?.hero).toBeDefined();
 		const mutated = manager.getMetadata();
 		expect(mutated).not.toBe(baseline);
 		expect(mutated).toEqual(baseline);
@@ -123,10 +123,6 @@ describe('SessionManager', () => {
 			};
 			mutated.resources[resourceKey] = descriptor;
 		}
-		const [overviewTokenKey] = overviewTokenKeys;
-		if (mutated.overview?.hero?.tokens && overviewTokenKey) {
-			mutated.overview.hero.tokens[overviewTokenKey] = 'changed';
-		}
 		const next = manager.getMetadata();
 		expect(next).toEqual(baseline);
 		expect(next.resources?.[costResourceId]?.label).not.toBe('changed');
@@ -135,11 +131,6 @@ describe('SessionManager', () => {
 		}
 		if (resourceKey) {
 			expect(next.resources?.[resourceKey]?.label).not.toBe('changed');
-		}
-		if (overviewTokenKey) {
-			expect(next.overview?.hero?.tokens?.[overviewTokenKey]).not.toBe(
-				'changed',
-			);
 		}
 		buildSpy.mockRestore();
 	});
