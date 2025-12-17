@@ -166,6 +166,19 @@ I read all 7 output files. All reviewers approved. Now pushing...
 **WHY:** The user cannot see what you see. If you don't output it, they're blind.
 This is a USER INSTRUCTION, not a suggestion.
 
+### Parsing Subagent Results
+
+You have three options for extracting structured data (signatures, verdicts, etc.):
+
+1. **Read from `.json` file** — `/tmp/claude/sub-agents/output/{agent}.json`
+2. **Read from `.txt` file** — `/tmp/claude/sub-agents/output/{agent}-output.txt`
+3. **Parse Task output directly** — The Task tool returns the subagent's chat output
+
+All three contain the same JSON data. Choose based on technical convenience.
+
+**Recommendation:** Since you MUST read the `.txt` file anyway to display verbatim
+to the user, you might as well extract signatures from it — saves an extra read.
+
 ### Don't Coerce Subagents
 
 Describe the situation. Let subagents decide their approach.

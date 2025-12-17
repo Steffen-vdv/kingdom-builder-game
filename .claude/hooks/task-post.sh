@@ -71,7 +71,4 @@ cat >> "$FINAL_OUTPUT_FILE" << 'FOOTER'
 ────────────────────────────────────────────────────────────────────────────────
 FOOTER
 
-# Clean up the subagent's JSON file after processing
-rm -f "$SUBAGENT_JSON_FILE"
-
 exit 0

@@ -63,7 +63,23 @@ Where `{agent}` is the subagent identifier:
 - test-runner
 - pusher
 
-How to write the file (example):
+How to write the file:
+
+**Option 1: Use the helper script (recommended)**
+
+```bash
+write-output.sh '<agent-name>' '<json-content>'
+```
+
+Example:
+
+```bash
+write-output.sh 'review-lead' '{"agent":"review-lead","verdict":"APPROVED",...}'
+```
+
+The script handles directory creation and overwrites any existing file.
+
+**Option 2: Use the Write tool directly**
 
 ```text
 Write(
