@@ -50,9 +50,8 @@ BLOCK if you see:
 ## Signing Rules
 
 - You sign only if approving
-- Your signature type must be:
-  `QA_INFRA_CONCURRENCY`
-- Call `sign.sh '<summary>'` where summary describes infra verified
+- Your signature type must be: `QA_INFRA_CONCURRENCY`
+- Call: `sign.sh '<summary>' 'QA_INFRA_CONCURRENCY'`
 
 ## Output
 

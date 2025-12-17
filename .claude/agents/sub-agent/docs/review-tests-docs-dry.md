@@ -61,9 +61,8 @@ BLOCK if:
 ## Signing Rules
 
 - You sign only if approving
-- Your signature type must be:
-  `QA_TESTS_DOCS_DRY`
-- Call `sign.sh '<summary>'` where summary describes verification performed
+- Your signature type must be: `QA_TESTS_DOCS_DRY`
+- Call: `sign.sh '<summary>' 'QA_TESTS_DOCS_DRY'`
 
 ## Output
 

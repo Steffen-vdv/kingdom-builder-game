@@ -46,9 +46,8 @@ You do NOT OWN:
 ## Signing Rules
 
 - You sign only if approving
-- Your signature type must be:
-  `QA_FINAL_SIGNATORY`
-- Call `sign.sh '<summary>'` where summary describes what was approved
+- Your signature type must be: `QA_FINAL_SIGNATORY`
+- Call: `sign.sh '<summary>' 'QA_FINAL_SIGNATORY'`
 
 ## Output
 

@@ -69,9 +69,8 @@ BLOCK if:
 ## Signing Rules
 
 - You sign only if approving
-- Your signature type must be:
-  `QA_CONTRACTS_BOUNDARIES`
-- Call `sign.sh '<summary>'` where summary describes contracts verified
+- Your signature type must be: `QA_CONTRACTS_BOUNDARIES`
+- Call: `sign.sh '<summary>' 'QA_CONTRACTS_BOUNDARIES'`
 
 ## Output
 

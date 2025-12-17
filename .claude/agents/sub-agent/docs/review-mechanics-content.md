@@ -66,9 +66,8 @@ BLOCK if:
 ## Signing Rules
 
 - You sign only if approving
-- Your signature type must be:
-  `QA_MECHANICS_CONTENT`
-- Call `sign.sh '<summary>'` where summary describes mechanics verified
+- Your signature type must be: `QA_MECHANICS_CONTENT`
+- Call: `sign.sh '<summary>' 'QA_MECHANICS_CONTENT'`
 
 ## Output
 

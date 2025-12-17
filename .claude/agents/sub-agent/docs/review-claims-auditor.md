@@ -64,9 +64,8 @@ You do NOT OWN:
 ## Signing Rules
 
 - You sign only if approving
-- Your signature type must be:
-  `QA_CLAIMS_AUDITOR`
-- Call `sign.sh '<summary>'` where summary describes claims verified
+- Your signature type must be: `QA_CLAIMS_AUDITOR`
+- Call: `sign.sh '<summary>' 'QA_CLAIMS_AUDITOR'`
 
 ## Output
 

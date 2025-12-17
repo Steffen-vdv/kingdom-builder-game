@@ -21,7 +21,7 @@ AGENT_TYPE=$(echo "$HOOK_INPUT" | jq -r '.agent_type // empty' 2>/dev/null)
 # DOWNLOAD CRYPTO-GATE BINARY (if not present)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-CRYPTO_GATE_VERSION="0.4.0"
+CRYPTO_GATE_VERSION="0.5.0"
 CRYPTO_GATE_REPO="Steffen-vdv/crypto-gate-releases"
 
 download_crypto_gate() {

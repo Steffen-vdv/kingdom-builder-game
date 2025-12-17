@@ -21,6 +21,7 @@ config/server-auth.tokens.local.json
 .husky/_/
 
 # crypto-gate binaries (downloaded on-demand, not committed)
+bin/crypto-gate
 bin/crypto-gate-*
 bin/crypto-gate.exe
 
