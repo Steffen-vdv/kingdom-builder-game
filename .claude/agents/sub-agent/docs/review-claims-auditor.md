@@ -79,3 +79,16 @@ Follow the QA Output Schema in:
 `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
 Chat output may be narrative. Only the JSON file is authoritative.
+
+---
+
+## BEFORE YOU FINISH (MANDATORY)
+
+Before ending your response, verify:
+
+1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
+2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_CLAIMS_AUDITOR'`
+3. ☐ Called `write-output.sh 'review-claims-auditor' '<json>'`
+4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-claims-auditor.json`
+
+**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.

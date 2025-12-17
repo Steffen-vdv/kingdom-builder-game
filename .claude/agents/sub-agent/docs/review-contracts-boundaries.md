@@ -84,3 +84,16 @@ Follow the QA Output Schema in:
 `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
 Narrative chat output is allowed. Only the JSON file is used for decisions.
+
+---
+
+## BEFORE YOU FINISH (MANDATORY)
+
+Before ending your response, verify:
+
+1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
+2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_CONTRACTS_BOUNDARIES'`
+3. ☐ Called `write-output.sh 'review-contracts-boundaries' '<json>'`
+4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-contracts-boundaries.json`
+
+**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.

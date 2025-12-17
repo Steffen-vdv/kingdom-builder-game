@@ -19,7 +19,10 @@ const SCRIPT_PATH = path.join(
 	PROJECT_ROOT,
 	'.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh',
 );
-const OUTPUT_DIR = '/tmp/claude/sub-agents/output';
+// Use PID-namespaced directory to isolate tests from production path.
+// This prevents test cleanup from deleting other agents' output files
+// when CI agent runs tests in parallel with other Phase 1 reviewers.
+const OUTPUT_DIR = `/tmp/claude/test-${process.pid}/output`;
 
 const AGENTS = [
 	'review-ci-tests-required',
@@ -69,6 +72,7 @@ function runScript(): { success: boolean; stdout: string; stderr: string } {
 			encoding: 'utf-8',
 			stdio: 'pipe',
 			cwd: PROJECT_ROOT,
+			env: { ...process.env, PHASE1_OUTPUT_DIR: OUTPUT_DIR },
 		});
 		return { success: true, stdout, stderr: '' };
 	} catch (error: unknown) {

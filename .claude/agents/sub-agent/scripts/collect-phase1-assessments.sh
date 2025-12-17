@@ -8,11 +8,15 @@
 # Reads all 6 Phase 1 reviewer output files, validates them, and outputs
 # a JSON array suitable for the review-lead `approvals_json` input field.
 #
+# Environment:
+#   PHASE1_OUTPUT_DIR - Override output directory (for testing)
+#                       Default: /tmp/claude/sub-agents/output
+#
 # Exit codes:
 #   0 - Success, JSON array written to stdout
 #   1 - One or more files missing or invalid
 #
-# Expected file locations:
+# Expected file locations (default):
 #   /tmp/claude/sub-agents/output/review-ci-tests-required.json
 #   /tmp/claude/sub-agents/output/review-claims-auditor.json
 #   /tmp/claude/sub-agents/output/review-contracts-boundaries.json
@@ -23,7 +27,7 @@
 
 set -euo pipefail
 
-OUTPUT_DIR="/tmp/claude/sub-agents/output"
+OUTPUT_DIR="${PHASE1_OUTPUT_DIR:-/tmp/claude/sub-agents/output}"
 
 # Phase 1 agent identifiers (in order)
 AGENTS=(

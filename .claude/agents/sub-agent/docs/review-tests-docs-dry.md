@@ -76,3 +76,16 @@ Follow the QA Output Schema in:
 `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
 
 Chat output is explanatory only. JSON file is decisive.
+
+---
+
+## BEFORE YOU FINISH (MANDATORY)
+
+Before ending your response, verify:
+
+1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
+2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_TESTS_DOCS_DRY'`
+3. ☐ Called `write-output.sh 'review-tests-docs-dry' '<json>'`
+4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-tests-docs-dry.json`
+
+**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
