@@ -44,6 +44,7 @@ You should never attempt to make a final decision with partial information.
 You OWN:
 
 - Aggregating all QA reviewer verdicts into one final verdict
+- Verifying all QA reviewer signatures 
 - Enforcing conservative aggregation logic
 - Root-cause correctness (is the real problem addressed?)
 - Layer responsibility correctness (is the fix in the correct layer?)
@@ -82,6 +83,38 @@ If ANY required output is missing, unreadable, or stale:
 - Do NOT sign
 
 Missing evidence is not neutral. It is a blocker.
+
+You also require a set of unique approval json objects in `approvals_json`, which;
+1. Together cover all reviewers' unique types
+     - QA_CLAIMS_AUDITOR
+     - QA_CONTRACTS_BOUNDARIES
+     - QA_MECHANICS_CONTENT
+     - QA_INFRA_CONCURRENCY
+     - QA_TESTS_DOCS_DRY
+2. All verify via the security gate (see below)
+
+---
+
+## Signature Verification
+
+- Call: `verify-bulk-and-push.sh '<approvals_json>' '<branch>'`
+
+```bash
+.claude/agents/sub-agent/scripts/verify-bulk-and-push.sh '<approvals_json>'
+.claude/agents/sub-agent/scripts/verify-bulk-and-push.sh '<approvals_json>' 'branch-name'
+```
+
+The `approvals_json` is an array of 5 objects, each with `payload`, `signature`, and `type`:
+
+```json
+[
+	{ "payload": "...", "signature": "...", "type": "QA_CLAIMS_AUDITOR" },
+	{ "payload": "...", "signature": "...", "type": "QA_CONTRACTS_BOUNDARIES" },
+	{ "payload": "...", "signature": "...", "type": "QA_MECHANICS_CONTENT" },
+	{ "payload": "...", "signature": "...", "type": "QA_INFRA_CONCURRENCY" },
+	{ "payload": "...", "signature": "...", "type": "QA_TESTS_DOCS_DRY" }
+]
+```
 
 ---
 
