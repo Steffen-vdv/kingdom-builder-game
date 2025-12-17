@@ -5,5 +5,8 @@
 # reaches 0 (all parallel subagents have completed) will the context
 # be restored to master-agent.
 
+# Debug: confirm hook fired
+echo "SubagentStop fired at $(date -Iseconds)" >> /tmp/claude/subagent-cleanup-hello.txt
+
 CTX_MGR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager"
 "$CTX_MGR/unregister-subagent.sh"
