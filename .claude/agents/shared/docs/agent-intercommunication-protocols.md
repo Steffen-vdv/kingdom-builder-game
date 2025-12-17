@@ -289,7 +289,7 @@ Status meanings:
 
 ## Master-Agent Responsibilities
 
-Master-agent MUST:
+Once ready to push, master-agent MUST:
 
 1. Dispatch all 6 reviewers + test-runner in parallel (single message with 7 Task calls)
 2. Read `{agent}.json` files after completion
