@@ -27,11 +27,11 @@ OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 
 # Function to clean text content:
 # 1. Strip triple backticks (prevents markdown interpretation)
-# 2. Strip TOP reminder block (unique text: "step for Web UI" vs BOTTOM's "user instruction")
+# 2. Strip TOP reminder block (from start to "This is a MANDATORY step" line)
 # 3. Strip trailing noise lines (keep lines with alphanumeric or JSON chars {})
 clean_text() {
 	sed 's/```//g' \
-		| sed '1,/^This is a MANDATORY step for Web UI/d' \
+		| sed '1,/^This is a MANDATORY step/d' \
 		| sed '1{/^═/d}' \
 		| tac | sed -n '/[A-Za-z0-9{}]/,$p' | tac
 }
