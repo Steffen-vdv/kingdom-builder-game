@@ -25,10 +25,11 @@ OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 # Extract full text from response
 FULL_TEXT=$(echo "$RESPONSE" | jq -r '.content[].text // ""' 2>/dev/null)
 
-# Extract JSON after ---RESPONSE--- delimiter (strip ```json and ``` markers)
-RESPONSE_JSON=$(echo "$FULL_TEXT" | sed -n '/^---RESPONSE---$/,$ p' | tail -n +2 | sed 's/^```json$//' | sed 's/^```$//' | grep -v '^$')
+# Extract everything after ---RESPONSE--- (should be ONLY the JSON block)
+# Strip the ```json and ``` fences
+RESPONSE_JSON=$(echo "$FULL_TEXT" | sed -n '/^---RESPONSE---$/,$ p' | tail -n +2 | sed '/^```json$/d; /^```$/d')
 
-# If no ---RESPONSE--- found, use placeholder
+# If nothing found, use placeholder
 if [ -z "$RESPONSE_JSON" ]; then
 	RESPONSE_JSON='{"error": "No ---RESPONSE--- block found in subagent output"}'
 fi

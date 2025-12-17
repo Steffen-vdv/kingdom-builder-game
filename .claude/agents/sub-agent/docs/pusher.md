@@ -9,13 +9,7 @@ tools: Bash, Read
 
 You push code to remote after verifying the QA approval signature.
 
-**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
-
-1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
-2. **MIDDLE**: `---NARRATIVE---` with execution details
-3. **BOTTOM**: `---RESPONSE---` with JSON result
-
-This structure is critical - it ensures master-agent displays output before acting.
+**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-structure-mandatory). Follow it exactly.**
 
 ---
 
