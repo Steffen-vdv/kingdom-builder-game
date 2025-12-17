@@ -192,8 +192,11 @@ You are not allowed to guess.
 
 ## Output
 
-Write structured output to:
-`/tmp/claude/sub-agents/output/review-lead.json`
+Write structured output using the helper script:
+
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'review-lead' '<json>'
+```
 
 Follow the QA Output Schema in:
 `.claude/agents/shared/docs/agent-intercommunication-protocols.md`

@@ -74,10 +74,13 @@ BLOCK if:
 
 ## Output
 
-- Write structured output to:
-  `/tmp/claude/sub-agents/output/review-contracts-boundaries.json`
-- Follow the QA Output Schema in:
-  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
+Write structured output using the helper script:
 
-Narrative chat output is allowed.
-Only the JSON file is used for decisions.
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'review-contracts-boundaries' '<json>'
+```
+
+Follow the QA Output Schema in:
+`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
+
+Narrative chat output is allowed. Only the JSON file is used for decisions.

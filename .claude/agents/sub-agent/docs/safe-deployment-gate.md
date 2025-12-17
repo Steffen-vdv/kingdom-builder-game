@@ -128,8 +128,13 @@ MASTER-AGENT FOLLOW-UP:
 
 ## Output
 
-Write structured output to:
-`/tmp/claude/sub-agents/output/safe-deployment-gate.json`
+Write structured output using the helper script:
+
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'safe-deployment-gate' '<json>'
+```
+
+Schema:
 
 ```json
 {

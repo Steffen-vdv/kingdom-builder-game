@@ -69,10 +69,13 @@ You do NOT OWN:
 
 ## Output
 
-- Write structured output to:
-  `/tmp/claude/sub-agents/output/review-claims-auditor.json`
-- Follow the QA Output Schema defined in:
-  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
+Write structured output using the helper script:
 
-Chat output may be narrative.
-Only the JSON file is authoritative.
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'review-claims-auditor' '<json>'
+```
+
+Follow the QA Output Schema in:
+`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
+
+Chat output may be narrative. Only the JSON file is authoritative.

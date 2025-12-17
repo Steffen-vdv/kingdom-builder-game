@@ -83,28 +83,26 @@ Where `{agent}` is the subagent identifier:
 
 How to write the file:
 
-**Option 1: Use the helper script (recommended)**
+**USE THE HELPER SCRIPT:**
 
 ```bash
-write-output.sh '<agent-name>' '<json-content>'
+.claude/agents/sub-agent/scripts/write-output.sh '<agent-name>' '<json-content>'
 ```
 
 Example:
 
 ```bash
-write-output.sh 'review-lead' '{"agent":"review-lead","verdict":"APPROVED",...}'
+.claude/agents/sub-agent/scripts/write-output.sh 'review-lead' '{"agent":"review-lead","verdict":"APPROVED",...}'
 ```
 
 The script handles directory creation and overwrites any existing file.
 
-**Option 2: Use the Write tool directly**
+**Why use the script (not Write tool or bash)?**
 
-```text
-Write(
-  file_path="/tmp/claude/sub-agents/output/{agent}.json",
-  content="{...pure json...}"
-)
-```
+- Ensures correct path `/tmp/claude/sub-agents/output/{agent}.json`
+- Creates directory if missing
+- Validates arguments
+- Consistent across all agents
 
 Rules:
 

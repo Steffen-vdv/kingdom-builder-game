@@ -55,10 +55,13 @@ BLOCK if you see:
 
 ## Output
 
-- Write structured output to:
-  `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
-- Follow the QA Output Schema in:
-  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
+Write structured output using the helper script:
 
-Narrative chat is allowed.
-JSON file governs workflow.
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'review-infra-concurrency' '<json>'
+```
+
+Follow the QA Output Schema in:
+`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
+
+Narrative chat is allowed. JSON file governs workflow.

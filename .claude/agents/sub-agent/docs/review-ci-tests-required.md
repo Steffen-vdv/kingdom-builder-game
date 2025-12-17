@@ -141,8 +141,11 @@ SIGN_OUTPUT=$(.claude/agents/sub-agent/scripts/sign.sh 'All 47 tests passed' 'QA
 
 ## Output
 
-Write structured output to:
-`/tmp/claude/sub-agents/output/review-ci-tests-required.json`
+Write structured output using the helper script:
+
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'review-ci-tests-required' '<json>'
+```
 
 Follow the QA Output Schema in:
 `.claude/agents/shared/docs/agent-intercommunication-protocols.md`

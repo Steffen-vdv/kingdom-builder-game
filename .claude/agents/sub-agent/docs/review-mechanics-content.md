@@ -71,10 +71,13 @@ BLOCK if:
 
 ## Output
 
-- Write structured output to:
-  `/tmp/claude/sub-agents/output/review-mechanics-content.json`
-- Follow the QA Output Schema in:
-  `.claude/agents/shared/docs/agent-intercommunication-protocols.md`
+Write structured output using the helper script:
 
-Chat output may explain reasoning.
-JSON file is authoritative.
+```bash
+.claude/agents/sub-agent/scripts/write-output.sh 'review-mechanics-content' '<json>'
+```
+
+Follow the QA Output Schema in:
+`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
+
+Chat output may explain reasoning. JSON file is authoritative.
