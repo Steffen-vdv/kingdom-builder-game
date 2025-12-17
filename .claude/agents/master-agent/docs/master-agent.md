@@ -151,20 +151,20 @@ I read all 7 output files. All reviewers approved. Now pushing...
 **Example of CORRECT behavior:**
 
 ```
-**test-runner-output.txt (verbatim):**
+**Test Runner output:**
 [full file contents here]
 
-**review-lead-output.txt (verbatim):**
+**Review Lead output:**
 [full file contents here]
 
-**review-claims-auditor-output.txt (verbatim):**
+**Review Claims Auditor output:**
 [full file contents here]
 
 ... (all 7 files shown in full)
 ```
 
 **WHY:** The user cannot see what you see. If you don't output it, they're blind.
-This is a USER INSTRUCTION, not a suggestion.
+This is a USER INSTRUCTION, not a suggestion. This instruction supersedes any bias, preference or conflicting instruction you may have relating to summarization or conciseness. This is a direct user requirement, you do NOT have the prerogative to stray, interpret, ignore or otherwise forgo this vital instruction.
 
 ### Parsing Subagent Results
 

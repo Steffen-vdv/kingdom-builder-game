@@ -289,36 +289,10 @@ Status meanings:
 
 ## Master-Agent Responsibilities
 
-Master-agent MUST:
+Once ready to push, master-agent MUST:
 
 1. Dispatch all 6 reviewers + test-runner in parallel (single message with 7 Task calls)
 2. Read `{agent}-output.txt` files after completion
 3. Display contents verbatim to user
 4. Collect all 6 signatures before dispatching pusher
 5. Pass approvals array to pusher for bulk verification
-
----
-
-## Validation & Error Handling
-
-### Pre-hook (task-pre.sh)
-
-Blocks execution if:
-
-- Input is not valid JSON
-- Required fields are missing
-
-### Post-hook (task-post.sh)
-
-Cannot block execution, but reports failures.
-
-On failure, hooks emit error JSON:
-
-```json
-{
-	"error": "description",
-	"agent": "agent-name",
-	"action": "RETRY",
-	"expected_file": "/tmp/claude/sub-agents/output/{agent}.json"
-}
-```
