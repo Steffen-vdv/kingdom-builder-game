@@ -51,9 +51,14 @@ download_crypto_gate() {
 
   local BINARY_PATH="$BIN_DIR/$BINARY_NAME"
 
-  # Skip if already exists
+  # Skip download if already exists, but ensure symlink exists
   if [[ -x "$BINARY_PATH" ]]; then
     echo "crypto-gate binary already exists: $BINARY_NAME" >> "$LOG"
+    # Ensure symlink exists (idempotent)
+    if [[ ! -L "$BIN_DIR/crypto-gate" ]]; then
+      ln -sf "$BINARY_NAME" "$BIN_DIR/crypto-gate"
+      echo "Created missing symlink bin/crypto-gate -> $BINARY_NAME" >> "$LOG"
+    fi
     return 0
   fi
 
@@ -69,7 +74,8 @@ download_crypto_gate() {
         --pattern "$BINARY_NAME" \
         --dir "$BIN_DIR" >> "$LOG" 2>&1; then
       chmod +x "$BINARY_PATH"
-      echo "Successfully downloaded crypto-gate" >> "$LOG"
+      ln -sf "$BINARY_NAME" "$BIN_DIR/crypto-gate"
+      echo "Successfully downloaded crypto-gate (symlinked to bin/crypto-gate)" >> "$LOG"
       return 0
     else
       echo "Failed to download crypto-gate via gh" >> "$LOG"
@@ -82,7 +88,8 @@ download_crypto_gate() {
   local DOWNLOAD_URL="https://github.com/$CRYPTO_GATE_REPO/releases/download/$CRYPTO_GATE_VERSION/$BINARY_NAME"
   if curl -fsSL "$DOWNLOAD_URL" -o "$BINARY_PATH" >> "$LOG" 2>&1; then
     chmod +x "$BINARY_PATH"
-    echo "Successfully downloaded crypto-gate via curl" >> "$LOG"
+    ln -sf "$BINARY_NAME" "$BIN_DIR/crypto-gate"
+    echo "Successfully downloaded crypto-gate via curl (symlinked to bin/crypto-gate)" >> "$LOG"
     return 0
   fi
 

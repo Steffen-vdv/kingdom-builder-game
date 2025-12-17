@@ -57,17 +57,17 @@ Task(subagent_type: "review-tests-docs-dry", ...)
 
 ### Step 3: Collect Signatures
 
-Extract payload + signature from each reviewer's output:
+Extract `payload`, `signature`, and `type` from each reviewer's JSON output:
 
 ```json
-{
-	"review-lead": { "payload": "...", "signature": "..." },
-	"review-claims-auditor": { "payload": "...", "signature": "..." },
-	"review-contracts-boundaries": { "payload": "...", "signature": "..." },
-	"review-mechanics-content": { "payload": "...", "signature": "..." },
-	"review-infra-concurrency": { "payload": "...", "signature": "..." },
-	"review-tests-docs-dry": { "payload": "...", "signature": "..." }
-}
+[
+	{ "payload": "...", "signature": "...", "type": "QA_FINAL_SIGNATORY" },
+	{ "payload": "...", "signature": "...", "type": "QA_CLAIMS_AUDITOR" },
+	{ "payload": "...", "signature": "...", "type": "QA_CONTRACTS_BOUNDARIES" },
+	{ "payload": "...", "signature": "...", "type": "QA_MECHANICS_CONTENT" },
+	{ "payload": "...", "signature": "...", "type": "QA_INFRA_CONCURRENCY" },
+	{ "payload": "...", "signature": "...", "type": "QA_TESTS_DOCS_DRY" }
+]
 ```
 
 ### Step 4: Push with Bulk Verification
@@ -78,8 +78,8 @@ Dispatch pusher with all 6 signatures (pure JSON, no markdown):
 Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"approvals\": [...]}")
 ```
 
-The `approvals` array contains objects with `payload` and `signature` from each
-reviewer. Pusher uses `crypto-gate verify-bulk` to verify all 6 in one call.
+The `approvals` array contains objects with `payload`, `signature`, and `type`
+from each reviewer. Pusher uses `crypto-gate verify-bulk` to verify all 6 in one call.
 
 ---
 

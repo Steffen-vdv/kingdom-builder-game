@@ -38,6 +38,8 @@ The master-agent provides ONE of two modes:
 
 ### For bulk QA approval mode:
 
+- Call: `verify-bulk-and-push.sh '<approvals_json>' '<branch>'`
+
 ```bash
 .claude/agents/sub-agent/scripts/verify-bulk-and-push.sh '<approvals_json>'
 .claude/agents/sub-agent/scripts/verify-bulk-and-push.sh '<approvals_json>' 'branch-name'
@@ -57,6 +59,8 @@ The `approvals_json` is an array of 6 objects, each with `payload`, `signature`,
 ```
 
 ### For override mode:
+
+- Call: `verify-bulk-and-push.sh --override '<token>' '<branch>'`
 
 ```bash
 .claude/agents/sub-agent/scripts/verify-bulk-and-push.sh --override '<token>'
