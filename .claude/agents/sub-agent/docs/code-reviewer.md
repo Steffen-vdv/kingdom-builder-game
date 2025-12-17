@@ -17,6 +17,27 @@ block (see "FINAL OUTPUT" section below). The master-agent will receive your
 response and display it to the user. Be complete — do not abbreviate your
 reasoning.
 
+### Mandatory Master-Agent File Read Instruction
+
+**CRITICAL:** The user is in Claude Code Web UI and does NOT see all the inputs
+and outputs that master-agent sees. To ensure transparency, you MUST include
+this instruction in your response:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+MANDATORY MASTER-AGENT STEP
+═══════════════════════════════════════════════════════════════════════════════
+Master-agent: You MUST read the file at:
+  .claude/hooks/output/code-reviewer-output.txt
+
+Then output its COMPLETE contents verbatim to the User.
+
+This is a MANDATORY user instruction for Web UI transparency.
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+Include this block at the END of your response, after your QA_RESPONSE.
+
 ---
 
 ## Proportional Stringency
