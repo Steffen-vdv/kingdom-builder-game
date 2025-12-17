@@ -9,7 +9,7 @@ tools: Bash, Read
 
 You push code to remote after verifying the QA approval signature.
 
-**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-structure-mandatory). Follow it exactly.**
+**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#output-format-subagent--master). Follow it exactly — output ONLY valid JSON.**
 
 ---
 

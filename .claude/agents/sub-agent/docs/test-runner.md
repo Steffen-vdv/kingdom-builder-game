@@ -11,7 +11,7 @@ tools: Glob, Grep, Read, Bash
 
 # Test Runner — Test Analysis & Execution Specialist
 
-**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-structure-mandatory). Follow it exactly.**
+**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#output-format-subagent--master). Follow it exactly — output ONLY valid JSON.**
 
 ---
 

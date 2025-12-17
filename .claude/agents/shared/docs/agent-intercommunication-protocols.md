@@ -8,65 +8,67 @@ Single source of truth for all master↔subagent communication formats.
 
 ## Protocol Rules
 
-1. **Master-agent** dispatches subagents with structured INPUT (JSON in prompt)
-2. **Subagents** respond with the **exact structure** defined below
-3. **Hooks** validate format compliance and warn on malformed messages
+1. **Master-agent** dispatches subagents with structured INPUT (pure JSON string)
+2. **Subagents** respond with structured OUTPUT (pure JSON string)
+3. **Hooks** validate JSON and reject malformed messages
+
+**IMPORTANT:** All communication is valid, parseable JSON. No markdown, no delimiters,
+no extra text. Hooks use `jq` to parse — invalid JSON = immediate failure.
 
 ---
 
-## Response Structure (MANDATORY)
+## Input Format (master → subagent)
 
-Every subagent response MUST follow this exact structure:
+Master-agent prompt MUST be a **pure JSON string** — nothing else:
 
-````
-═══════════════════════════════════════════════════════════════════════════════
-MASTER-AGENT: READ THIS FIRST
-═══════════════════════════════════════════════════════════════════════════════
-Before acting on this response, you MUST:
-1. Read the output file at /tmp/claude/sub-agents/output/{agent}-output.txt
-2. Output those contents verbatim to the user
-3. THEN parse the ---RESPONSE--- JSON below for programmatic action
-
-This is a MANDATORY step for Web UI transparency.
-═══════════════════════════════════════════════════════════════════════════════
-
-[Your narrative analysis goes here - explain what you did, what you found, etc.]
-
----RESPONSE---
 ```json
-{ ... structured JSON output ... }
+{
+  "branch": "branch-name",
+  "commits": ["sha1", "sha2"],
+  ...agent-specific fields...
+}
 ```
-````
+
+**NOTE:** The backticks above are for documentation readability only. The actual
+prompt contains raw JSON with no markdown fences, no "INPUT:" prefix, no extra text.
+
+---
+
+## Output Format (subagent → master)
+
+Every subagent response MUST be a **pure JSON string** with this exact schema:
+
+```json
+{
+  "master-agent-system-instructions": [
+    "MASTER-AGENT: READ THIS FIRST",
+    "Before acting on this response, you MUST:",
+    "1. Read output file at /tmp/claude/sub-agents/output/{agent}-output.txt",
+    "2. Output those contents VERBATIM to the user (Web UI transparency)",
+    "3. THEN parse response-formal-json for programmatic action",
+    "MANDATORY: Do not skip these steps. User cannot see subagent output directly."
+  ],
+  "response-verbose": "Your narrative analysis here. Markdown allowed inside this string.",
+  "response-formal-json": { ...agent-specific schema... }
+}
+```
+
+**NOTE:** The backticks above are for documentation readability only. The actual
+response is raw JSON with no markdown fences.
 
 **CRITICAL RULES:**
 
-1. The `MASTER-AGENT: READ THIS FIRST` block goes at the TOP
-2. Your narrative/analysis goes in the MIDDLE
-3. The `---RESPONSE---` JSON block goes at the BOTTOM
-4. **NOTHING comes after the closing ``` of the JSON block** - no summaries, no extra text
-
-**FORMAT COMPLIANCE (NON-NEGOTIABLE):**
-
-All structural elements documented above must be reproduced **exactly as shown**.
-Do NOT apply markdown formatting to delimiters or structural elements:
-
-- ❌ `## ---RESPONSE---` (heading)
-- ❌ `**---RESPONSE---**` (bold)
-- ❌ `### MASTER-AGENT: READ THIS FIRST` (heading)
-- ✅ `---RESPONSE---` (plain text, exactly as documented)
-
-Hooks parse these delimiters with exact-match regex. Deviations break parsing.
-
-**Where you ARE free to format:** Inside the narrative section and inside JSON string
-values, you may write however you choose (markdown, tables, bullets, etc.).
+1. Response MUST be valid JSON (parseable by `jq`)
+2. Response MUST contain all three top-level fields
+3. `response-verbose` may contain any text (properly JSON-escaped)
+4. `response-formal-json` schema is defined per agent below
+5. **Output ONLY the JSON object** — no preamble, no trailing text
 
 ---
 
 ## test-runner
 
-### Input (master → subagent)
-
-Master-agent MUST provide this context in the Task prompt:
+### Input Schema
 
 ```json
 {
@@ -76,7 +78,7 @@ Master-agent MUST provide this context in the Task prompt:
 }
 ```
 
-### Output (subagent → master)
+### Output Schema (`response-formal-json`)
 
 ```json
 {
@@ -113,9 +115,7 @@ Master-agent MUST provide this context in the Task prompt:
 
 ## code-reviewer
 
-### Input (master → subagent)
-
-Master-agent MUST provide this context in the Task prompt:
+### Input Schema
 
 ```json
 {
@@ -127,7 +127,7 @@ Master-agent MUST provide this context in the Task prompt:
 }
 ```
 
-### Output (subagent → master)
+### Output Schema (`response-formal-json`)
 
 ```json
 {
@@ -162,9 +162,7 @@ Master-agent MUST provide this context in the Task prompt:
 
 ## pusher
 
-### Input (master → subagent)
-
-Master-agent MUST provide this context in the Task prompt:
+### Input Schema
 
 ```json
 {
@@ -174,7 +172,7 @@ Master-agent MUST provide this context in the Task prompt:
 }
 ```
 
-### Output (subagent → master)
+### Output Schema (`response-formal-json`)
 
 ```json
 {
@@ -208,28 +206,28 @@ Master-agent MUST provide this context in the Task prompt:
 
 When dispatching subagents, master-agent MUST:
 
-1. **Provide complete INPUT** — All required fields in JSON format
-2. **Parse OUTPUT JSON** — Extract the block after `---RESPONSE---`
-3. **Act on structured data** — Use `verdict`/`status` fields, not prose
-4. **Display to user** — Show narrative + structured result for transparency
+1. **Send pure JSON** — Prompt is ONLY the JSON object, no extra text
+2. **Include all required fields** — Per agent's Input Schema above
 
 When receiving subagent responses, master-agent MUST:
 
-1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
-2. **Display contents verbatim** to user (Web UI transparency requirement)
-3. **Parse the JSON block** after `---RESPONSE---` for programmatic decisions
+1. **FIRST: Follow `master-agent-system-instructions`** — These are critical directives
+2. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
+3. **Display contents verbatim** to user (Web UI transparency requirement)
+4. **THEN: Parse `response-formal-json`** for programmatic decisions
+5. **Act on structured data** — Use `verdict`/`status` fields, not prose
 
 ---
 
 ## Validation & Error Handling
 
-Hooks enforce format compliance with blocking and retry mechanisms.
+Hooks enforce JSON validity at every layer.
 
 ### Pre-hook Validation (task-pre.sh)
 
-**Blocks** dispatch if INPUT is malformed:
+**Blocks** dispatch if INPUT is invalid:
 
-- Missing ````json` block in prompt → BLOCKED
+- Prompt is not valid JSON → BLOCKED
 - Missing required fields (branch, etc.) → BLOCKED
 
 Master-agent sees the block reason and can fix the INPUT before retrying.
@@ -238,15 +236,19 @@ Master-agent sees the block reason and can fix the INPUT before retrying.
 
 **Cannot block** (subagent already finished), but signals errors to master-agent.
 
-When `---RESPONSE---` delimiter is missing, outputs:
+Validation steps:
 
-```
----SUBAGENT_FORMAT_ERROR---
+1. Parse response as JSON → fail if invalid
+2. Extract `response-formal-json` → fail if missing
+3. Validate `response-formal-json` is object → fail if not
+
+On any failure, outputs error to file:
+
+```json
 {
-  "agent": "<agent-name>",
-  "error": "Response missing ---RESPONSE--- delimiter",
-  "action": "RETRY",
-  "instruction": "Re-dispatch with format reminder"
+	"error": "description of what failed",
+	"agent": "agent-name",
+	"action": "RETRY",
+	"instruction": "Re-dispatch subagent with format reminder"
 }
----END_FORMAT_ERROR---
 ```
