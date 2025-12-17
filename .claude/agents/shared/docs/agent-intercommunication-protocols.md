@@ -45,6 +45,21 @@ This is a MANDATORY step for Web UI transparency.
 3. The `---RESPONSE---` JSON block goes at the BOTTOM
 4. **NOTHING comes after the closing ``` of the JSON block** - no summaries, no extra text
 
+**FORMAT COMPLIANCE (NON-NEGOTIABLE):**
+
+All structural elements documented above must be reproduced **exactly as shown**.
+Do NOT apply markdown formatting to delimiters or structural elements:
+
+- ❌ `## ---RESPONSE---` (heading)
+- ❌ `**---RESPONSE---**` (bold)
+- ❌ `### MASTER-AGENT: READ THIS FIRST` (heading)
+- ✅ `---RESPONSE---` (plain text, exactly as documented)
+
+Hooks parse these delimiters with exact-match regex. Deviations break parsing.
+
+**Where you ARE free to format:** Inside the narrative section and inside JSON string
+values, you may write however you choose (markdown, tables, bullets, etc.).
+
 ---
 
 ## test-runner
