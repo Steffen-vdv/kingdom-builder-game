@@ -234,14 +234,14 @@ Subagents have their own documentation and decision-making. Trust them.
 When spawning subagents with the Task tool, use this description format:
 
 ```
-<Subagent Name> - <Funny description>
+<Subagent Name> - <Funny description, 6 - 16 words long>
 ```
 
 Examples:
 
-- `Review Lead - The boss wants a word`
-- `Review CI Tests Required - Let's see if it compiles`
-- `Safe Deployment Gate - Chuck it to remote`
+- `Review Lead - The boss wants a word, and wants it now`
+- `Review CI Tests Required - Let's see if it compiles (I bet it doesn't)`
+- `Safe Deployment Gate - Chuck it to remote, I'm confident CI will protect us`
 
 This makes the UI more enjoyable and keeps the logs human-friendly.
 Note: Do not use the exact examples above, they are over-used by now. Be creative.
