@@ -7,8 +7,10 @@ import * as path from 'path';
  *
  * Verifies that the pre-push-review hook correctly:
  * - Blocks direct git push commands
- * - Allows verify-and-push.sh script
+ * - Allows verify-and-push.sh script (Phase 3 single signature)
+ * - Allows verify-bulk-and-push.sh script (legacy/alternative)
  * - Allows git push --dry-run for testing
+ * - Provides helpful three-phase workflow guidance
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
@@ -69,7 +71,17 @@ describe('Infrastructure: Pre-Push Hook', () => {
 			const { blocked, output } = testCommand('git push');
 			expect(blocked).toBe(true);
 			expect(output).toContain('PUSH BLOCKED');
-			expect(output).toContain('verify-and-push.sh');
+			expect(output).toContain('verify-bulk-and-push.sh');
+		});
+
+		it('should describe three-phase workflow in error message', () => {
+			const { blocked, output } = testCommand('git push origin main');
+			expect(blocked).toBe(true);
+			expect(output).toContain('Phase 1');
+			expect(output).toContain('Phase 2');
+			expect(output).toContain('Phase 3');
+			expect(output).toContain('review-lead');
+			expect(output).toContain('safe-deployment-gate');
 		});
 	});
 
@@ -77,6 +89,13 @@ describe('Infrastructure: Pre-Push Hook', () => {
 		it('should allow verify-and-push.sh script', () => {
 			const { blocked } = testCommand(
 				'.claude/agents/sub-agent/scripts/verify-and-push.sh payload signature',
+			);
+			expect(blocked).toBe(false);
+		});
+
+		it('should allow verify-bulk-and-push.sh script', () => {
+			const { blocked } = testCommand(
+				'.claude/agents/sub-agent/scripts/verify-bulk-and-push.sh approvals 6',
 			);
 			expect(blocked).toBe(false);
 		});
