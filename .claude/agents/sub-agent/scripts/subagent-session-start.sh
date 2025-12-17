@@ -8,8 +8,14 @@ echo "=== SubagentStart $(date -Iseconds) ===" >> "$LOG"
 
 cd "$CLAUDE_PROJECT_DIR" || { echo "FAILED to cd" >> "$LOG"; exit 1; }
 
-# Register subagent context (atomically increments counter)
-"$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-subagent.sh"
+# Read stdin to get hook input (contains agent_type)
+HOOK_INPUT=$(cat)
+
+# Extract agent_type from hook input
+AGENT_TYPE=$(echo "$HOOK_INPUT" | jq -r '.agent_type // empty' 2>/dev/null)
+
+# Register subagent context (only for custom agents)
+"$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager/register-subagent.sh" "$AGENT_TYPE"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DOWNLOAD CRYPTO-GATE BINARY (if not present)

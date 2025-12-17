@@ -4,9 +4,14 @@
 # Atomically decrements the subagent counter. Only when the counter
 # reaches 0 (all parallel subagents have completed) will the context
 # be restored to master-agent.
+#
+# Only acts on custom subagents (test-runner, code-reviewer, pusher).
 
-# Debug: confirm hook fired
-echo "SubagentStop fired at $(date -Iseconds)" >> /tmp/claude/subagent-cleanup-hello.txt
+# Read stdin to get hook input (contains agent_type)
+HOOK_INPUT=$(cat)
+
+# Extract agent_type from hook input
+AGENT_TYPE=$(echo "$HOOK_INPUT" | jq -r '.agent_type // empty' 2>/dev/null)
 
 CTX_MGR="$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/context-manager"
-"$CTX_MGR/unregister-subagent.sh"
+"$CTX_MGR/unregister-subagent.sh" "$AGENT_TYPE"

@@ -5,9 +5,23 @@
 # Atomically decrements the subagent counter. When count goes to 0,
 # switches context back to master-agent.
 #
-# This solves the race condition: only the LAST subagent to complete
-# (the one that decrements count to 0) will restore master-agent context.
-# Earlier completions just decrement the counter.
+# Only acts on custom subagents: test-runner, code-reviewer, pusher.
+# Other subagent types (Explore, general-purpose, etc.) are ignored.
+#
+# Usage: unregister-subagent.sh <subagent_type>
+
+SUBAGENT_TYPE="${1:-}"
+
+# Only act on our custom subagents
+case "$SUBAGENT_TYPE" in
+	test-runner|code-reviewer|pusher)
+		# Continue with unregistration
+		;;
+	*)
+		# Not a custom subagent, skip unregistration
+		exit 0
+		;;
+esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/state.sh"
