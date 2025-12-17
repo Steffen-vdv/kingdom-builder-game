@@ -199,7 +199,7 @@ When dispatching subagents, master-agent MUST:
 When receiving subagent responses, master-agent MUST:
 
 1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
-2. **Display contents verbatim** to user (Web UI transparency requirement)
+2. **Display contents verbatim** to user — no truncation, no `...`, no summaries
 3. **Parse the OUTPUT section** for programmatic decisions
 4. **Act on structured data** — Use `verdict`/`status` fields, not prose
 
