@@ -9,13 +9,17 @@ tools: Bash, Read
 
 You push code to remote after verifying the QA approval signature.
 
-**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
+**Your response MUST end with the exact structure from Agent Intercommunication Protocols:**
 
-1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
-2. **MIDDLE**: `---NARRATIVE---` with execution details
-3. **BOTTOM**: `---RESPONSE---` with JSON result
+````
+---RESPONSE---
+```json
+{ ... your JSON result ... }
+````
 
-This structure is critical - it ensures master-agent displays output before acting.
+````
+
+**CRITICAL: Nothing after the JSON block. No summaries, no extra text. The JSON block is the ABSOLUTE END of your response.**
 
 ---
 
@@ -47,7 +51,7 @@ The master-agent provides ONE of two modes:
 ```bash
 .claude/agents/sub-agent/scripts/verify-and-push.sh '<payload>' '<signature>'
 .claude/agents/sub-agent/scripts/verify-and-push.sh '<payload>' '<signature>' 'branch-name'
-```
+````
 
 ### For override mode:
 

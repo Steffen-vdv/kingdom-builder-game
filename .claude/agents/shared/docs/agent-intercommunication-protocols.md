@@ -30,9 +30,7 @@ Before acting on this response, you MUST:
 This is a MANDATORY step for Web UI transparency.
 ═══════════════════════════════════════════════════════════════════════════════
 
----NARRATIVE---
-
-[Your verbose analysis, reasoning, investigation steps go here]
+[Your narrative analysis goes here - explain what you did, what you found, etc.]
 
 ---RESPONSE---
 ```json
@@ -40,13 +38,14 @@ This is a MANDATORY step for Web UI transparency.
 ```
 ````
 
-**Structure breakdown:**
+**CRITICAL RULES:**
 
-| Section                         | Purpose                                                        |
-| ------------------------------- | -------------------------------------------------------------- |
-| `MASTER-AGENT: READ THIS FIRST` | In-the-moment reminder to display output before acting         |
-| `---NARRATIVE---`               | Human-readable analysis (optional delimiter, content required) |
-| `---RESPONSE---`                | Formal JSON for programmatic parsing                           |
+1. The `MASTER-AGENT: READ THIS FIRST` block goes at the TOP
+2. Your narrative/analysis goes in the MIDDLE
+3. The `---RESPONSE---` JSON block goes at the BOTTOM
+4. **NOTHING comes after the closing ``` of the JSON block** - no summaries, no extra text
+
+The output file will contain ONLY the JSON block. Master-agent reads it from the system-reminder.
 
 ---
 

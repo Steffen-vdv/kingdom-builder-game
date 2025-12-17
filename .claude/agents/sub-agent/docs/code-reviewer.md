@@ -10,13 +10,17 @@ tools: Glob, Grep, Read, WebFetch, WebSearch, Bash
 
 # Code Reviewer — Quality Gate
 
-**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
+**Your response MUST end with the exact structure from Agent Intercommunication Protocols:**
 
-1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
-2. **MIDDLE**: `---NARRATIVE---` with your analysis
-3. **BOTTOM**: `---RESPONSE---` with JSON verdict
+````
+---RESPONSE---
+```json
+{ ... your JSON verdict ... }
+````
 
-This structure is critical - it ensures master-agent displays output before acting.
+```
+
+**CRITICAL: Nothing after the JSON block. No summaries, no extra text. The JSON block is the ABSOLUTE END of your response.**
 
 ---
 
@@ -130,11 +134,13 @@ changes that do not actually exist.
 - Any claimed file modification is not visible in `git diff`
 
 ```
+
 🚫 BLOCKED
 
 Violation: Claimed changes do not exist
 Evidence: Coder claimed "[X]" but `git diff main` shows no changes to [file/area]
 Required: Either implement the claimed changes or clarify what was actually done
+
 ```
 
 **This gate must pass before proceeding to Step 2.** Do not analyze whether code
@@ -191,12 +197,14 @@ explicit state transition analysis:
 Questions to answer for any marker file changes:
 
 ```
+
 MARKER FILE: [filename]
 STATES: [list all possible states]
 TRANSITIONS:
-  [state A] --[trigger]--> [state B]
-  [state B] --[trigger]--> [state C]
+[state A] --[trigger]--> [state B]
+[state B] --[trigger]--> [state C]
 INVARIANTS: [what must always be true]
+
 ```
 
 If you cannot articulate the state machine, the code is insufficiently
@@ -215,10 +223,12 @@ For systems that may run in parallel (hooks, background tasks, event handlers):
 Construct a parallel execution timeline:
 
 ```
+
 TIME →
 Agent A: [start]----[write marker]----[finish]
-Agent B:      [start]----[read marker]----[finish]
-                         ↑ What value does B see here?
+Agent B: [start]----[read marker]----[finish]
+↑ What value does B see here?
+
 ```
 
 If the code assumes sequential execution but runs in a parallel context,
@@ -239,11 +249,13 @@ as single-threaded by design.
 If your evidence CONTRADICTS a claim, you MUST block:
 
 ```
+
 🚫 BLOCKED
 
 Violation: §2.4 Root Cause Analysis — claim contradicted by evidence
 Evidence: Coder claimed "[X]" but investigation shows "[Y]"
 Required: Re-analyze the actual root cause and propose correct fix
+
 ```
 
 Do NOT approve changes where your gathered evidence disproves the stated
@@ -276,6 +288,7 @@ After thorough review, output ONE of:
 #### BLOCKED (Default)
 
 ```
+
 🚫 BLOCKED
 
 Violation: [specific CLAUDE.md section violated]
@@ -286,6 +299,7 @@ Required: [what must change before approval]
 The coder must address this violation
 and request re-review.
 ─────────────────────────────────────────
+
 ```
 
 ---
@@ -293,6 +307,7 @@ and request re-review.
 #### NEEDS USER INPUT
 
 ```
+
 ⚠️ NEEDS USER INPUT
 
 Issue: [what is uncertain]
@@ -302,6 +317,7 @@ Question for user: [specific question]
 Neither approve nor reject. The coder
 must escalate to user for clarification.
 ─────────────────────────────────────────
+
 ```
 
 ---
@@ -309,9 +325,11 @@ must escalate to user for clarification.
 #### APPROVED
 
 ```
+
 ✅ APPROVED
 
 Verification:
+
 - Root cause: [articulated correctly]
 - Layer: [correct layer for this fix]
 - Tests: [adequate coverage including edge cases]
@@ -322,6 +340,7 @@ Verification:
 ─────────────────────────────────────────
 Push may proceed.
 ─────────────────────────────────────────
+
 ```
 
 ---
@@ -342,16 +361,18 @@ Any change that creates, reads, modifies, or deletes marker files MUST include
 or reference a state machine description:
 
 ```
+
 MARKER: .claude/markers/example.marker
 PURPOSE: Track whether X is in progress
 
 STATE MACHINE:
-  [absent] --SubagentStart creates--> [present]
-  [present] --SubagentStop deletes--> [absent]
-  [present] --SessionStart cleans--> [absent] (stale marker recovery)
+[absent] --SubagentStart creates--> [present]
+[present] --SubagentStop deletes--> [absent]
+[present] --SessionStart cleans--> [absent] (stale marker recovery)
 
 INVARIANT: Marker should only exist during active subagent execution
 FAILURE MODE: If marker persists after crash, next SessionStart cleans it
+
 ```
 
 **BLOCK if marker file changes lack this documentation.**
@@ -367,11 +388,13 @@ concurrency analysis:
 - Are there atomic operation requirements?
 
 ```
+
 HOOK: SubagentStop
 PARALLEL RISK: May run while SubagentStart is still executing for another agent
 SHARED STATE: .claude/agents/shared/scripts/context-manager/state.json
 MITIGATION: Use atomic counter with flock (not binary marker existence)
-```
+
+````
 
 **BLOCK if hook changes lack concurrency analysis for parallel scenarios.**
 
@@ -420,7 +443,7 @@ Infrastructure changes require ALL of the following:
 
 ```bash
 .claude/agents/sub-agent/scripts/sign.sh "Brief summary of what was approved"
-```
+````
 
 Include the `payload` and `signature` from the script output in your JSON response.
 If signing fails, your verdict is ERROR, not APPROVED.

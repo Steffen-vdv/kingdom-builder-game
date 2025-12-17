@@ -11,13 +11,17 @@ tools: Glob, Grep, Read, Bash
 
 # Test Runner — Test Analysis & Execution Specialist
 
-**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
+**Your response MUST end with the exact structure from Agent Intercommunication Protocols:**
 
-1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
-2. **MIDDLE**: `---NARRATIVE---` with your analysis
-3. **BOTTOM**: `---RESPONSE---` with JSON result
+````
+---RESPONSE---
+```json
+{ ... your JSON result ... }
+````
 
-This structure is critical - it ensures master-agent displays output before acting.
+```
+
+**CRITICAL: Nothing after the JSON block. No summaries, no extra text. The JSON block is the ABSOLUTE END of your response.**
 
 ---
 
@@ -44,22 +48,24 @@ you report them for the master-agent to address.
 ## Workflow
 
 ```
+
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                        TEST RUNNER WORKFLOW                                     │
+│ TEST RUNNER WORKFLOW │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                 │
-│  1. RECEIVE commit(s) or branch reference from master-agent                     │
-│       ↓                                                                         │
-│  2. ANALYZE what changed (git diff, file inspection)                            │
-│       ↓                                                                         │
-│  3. DETERMINE test strategy based on change scope                               │
-│       ↓                                                                         │
-│  4. EXECUTE chosen test commands                                                │
-│       ↓                                                                         │
-│  5. REPORT results via structured response                                      │
-│                                                                                 │
+│ │
+│ 1. RECEIVE commit(s) or branch reference from master-agent │
+│ ↓ │
+│ 2. ANALYZE what changed (git diff, file inspection) │
+│ ↓ │
+│ 3. DETERMINE test strategy based on change scope │
+│ ↓ │
+│ 4. EXECUTE chosen test commands │
+│ ↓ │
+│ 5. REPORT results via structured response │
+│ │
 └─────────────────────────────────────────────────────────────────────────────────┘
-```
+
+````
 
 ## Test Strategy Decision Tree
 
@@ -93,7 +99,7 @@ git diff --name-only HEAD
 
 # For branch comparison
 git diff --name-only origin/main...HEAD
-```
+````
 
 ### Step 2: Categorize Changes
 
