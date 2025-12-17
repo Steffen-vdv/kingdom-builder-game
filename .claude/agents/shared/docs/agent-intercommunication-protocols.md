@@ -23,8 +23,8 @@ Every subagent response MUST follow this exact structure:
 MASTER-AGENT: READ THIS FIRST
 ═══════════════════════════════════════════════════════════════════════════════
 Before acting on this response, you MUST:
-1. Read .claude/hooks/output/{agent}-output.txt
-2. Display its COMPLETE contents verbatim to the user
+1. Find the system-reminder for {agent}-output.txt in your current context
+2. Output those contents verbatim to the user
 3. THEN parse the ---RESPONSE--- JSON below for programmatic action
 
 This is a MANDATORY step for Web UI transparency.
@@ -237,34 +237,4 @@ When `---RESPONSE---` delimiter is missing, outputs:
   "instruction": "Re-dispatch with format reminder"
 }
 ---END_FORMAT_ERROR---
-```
-
-### Master-Agent Retry Protocol
-
-**When master-agent sees `---SUBAGENT_FORMAT_ERROR---` in response:**
-
-1. **DO NOT** proceed with the malformed response
-2. **RE-DISPATCH** the same subagent with the same INPUT
-3. **ADD** to the prompt: "IMPORTANT: Your previous response was malformed. You MUST include `---RESPONSE---` delimiter followed by JSON. See agent-intercommunication-protocols.md."
-4. **MAX 1 RETRY** — if second attempt also fails, report ERROR to user
-
-Example retry dispatch:
-
-````
-Task(subagent_type: "test-runner", prompt: "
-RETRY - Previous response was malformed.
-IMPORTANT: You MUST follow the response structure:
-1. TOP: MASTER-AGENT reminder block
-2. MIDDLE: ---NARRATIVE--- with analysis
-3. BOTTOM: ---RESPONSE--- with JSON
-
-INPUT:
-```json
-{ ... same input as before ... }
-````
-
-")
-
-```
-
 ```
