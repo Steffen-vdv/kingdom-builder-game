@@ -27,10 +27,11 @@ OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 
 # Function to clean text content:
 # 1. Strip triple backticks (prevents markdown interpretation)
-# 2. Strip from LAST "MANDATORY MASTER-AGENT STEP" to end (instruction block, not content)
-#    Uses tac to reverse, delete first match (was last), reverse back
+# 2. Strip from LAST "MANDATORY MASTER-AGENT STEP" block to end
+#    Uses tac to reverse, delete from line 1 to MANDATORY line, then delete
+#    the decorator line (═══) that preceded it, then reverse back
 clean_text() {
-	sed 's/```//g' | tac | sed '1,/^MANDATORY MASTER-AGENT STEP$/d' | tac
+	sed 's/```//g' | tac | sed '1,/^MANDATORY MASTER-AGENT STEP$/d' | sed '1{/^═/d}' | tac
 }
 
 # Write header and prompt (overwrites existing content)
