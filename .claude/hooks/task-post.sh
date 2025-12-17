@@ -6,7 +6,7 @@ INPUT=$(cat)
 
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // "N/A"')
-RESPONSE=$(echo "$INPUT" | jq -r '.tool_response // "N/A"')
+RESPONSE=$(echo "$INPUT" | jq -c '.tool_response // {}')
 
 # Only process specific subagent types
 case "$SUBAGENT" in
@@ -25,7 +25,7 @@ mkdir -p "$OUTPUT_DIR"
 # Output file (wiped on each run via >)
 OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 
-# Write output (overwrites existing content)
+# Write header and prompt (overwrites existing content)
 cat > "$OUTPUT_FILE" << EOF
 ═══════════════════════════════════════════════════════════════════════════════
 SUBAGENT: ${SUBAGENT}
@@ -39,8 +39,33 @@ ${PROMPT}
 
 SUBAGENT RESPONSE:
 ────────────────────────────────────────────────────────────────────────────────
-${RESPONSE}
-────────────────────────────────────────────────────────────────────────────────
 EOF
+
+# Parse and format content array
+CONTENT_LENGTH=$(echo "$RESPONSE" | jq '.content | length // 0')
+
+if [ "$CONTENT_LENGTH" -eq 0 ]; then
+	echo "(no content)" >> "$OUTPUT_FILE"
+else
+	for i in $(seq 0 $((CONTENT_LENGTH - 1))); do
+		INDEX=$((i + 1))
+		CONTENT_TYPE=$(echo "$RESPONSE" | jq -r ".content[$i].type // \"unknown\"")
+
+		echo "" >> "$OUTPUT_FILE"
+		echo "===Output ${INDEX}===" >> "$OUTPUT_FILE"
+		echo "" >> "$OUTPUT_FILE"
+
+		if [ "$CONTENT_TYPE" = "text" ]; then
+			# For text type: extract .text and interpret escape sequences
+			echo "$RESPONSE" | jq -r ".content[$i].text // \"\"" >> "$OUTPUT_FILE"
+		else
+			# For non-text type: output full JSON of that content entry
+			echo "$RESPONSE" | jq ".content[$i]" >> "$OUTPUT_FILE"
+		fi
+	done
+fi
+
+echo "" >> "$OUTPUT_FILE"
+echo "────────────────────────────────────────────────────────────────────────────────" >> "$OUTPUT_FILE"
 
 exit 0
