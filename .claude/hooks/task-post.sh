@@ -25,6 +25,14 @@ mkdir -p "$OUTPUT_DIR"
 # Output file (wiped on each run via >)
 OUTPUT_FILE="$OUTPUT_DIR/${SUBAGENT}-output.txt"
 
+# Function to clean text content:
+# 1. Strip triple backticks (prevents markdown interpretation)
+# 2. Strip from LAST "MANDATORY MASTER-AGENT STEP" to end (instruction block, not content)
+#    Uses tac to reverse, delete first match (was last), reverse back
+clean_text() {
+	sed 's/```//g' | tac | sed '/^MANDATORY MASTER-AGENT STEP$/,$d' | tac
+}
+
 # Write header and prompt (overwrites existing content)
 cat > "$OUTPUT_FILE" << EOF
 ═══════════════════════════════════════════════════════════════════════════════
@@ -56,8 +64,8 @@ else
 		echo "" >> "$OUTPUT_FILE"
 
 		if [ "$CONTENT_TYPE" = "text" ]; then
-			# For text type: extract .text and interpret escape sequences
-			echo "$RESPONSE" | jq -r ".content[$i].text // \"\"" >> "$OUTPUT_FILE"
+			# For text type: extract .text, interpret escapes, then clean
+			echo "$RESPONSE" | jq -r ".content[$i].text // \"\"" | clean_text >> "$OUTPUT_FILE"
 		else
 			# For non-text type: output full JSON of that content entry
 			echo "$RESPONSE" | jq ".content[$i]" >> "$OUTPUT_FILE"
