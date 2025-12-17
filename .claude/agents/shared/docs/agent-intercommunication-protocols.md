@@ -37,14 +37,23 @@ Before completing, subagents MUST write their structured output to a JSON file:
 
 **File path:** `/tmp/claude/sub-agents/output/{agent}.json`
 
-Where `{agent}` is one of: `test-runner`, `code-reviewer`, `pusher`
+Where `{agent}` is one of:
+
+- `test-runner`
+- `review-lead`
+- `review-claims-auditor`
+- `review-contracts-boundaries`
+- `review-mechanics-content`
+- `review-infra-concurrency`
+- `review-tests-docs-dry`
+- `pusher`
 
 **File contents:** Pure JSON matching the agent's output schema (defined below).
 
 **How to write:** Use the `Write` tool at the end of your session:
 
 ```
-Write(file_path="/tmp/claude/sub-agents/output/test-runner.json", content="{...}")
+Write(file_path="/tmp/claude/sub-agents/output/review-lead.json", content="{...}")
 ```
 
 The hook system reads this file, validates it, and assembles the final output
@@ -100,9 +109,23 @@ file matters for structured data exchange.
 
 ---
 
-## code-reviewer
+## Reviewers (Shared Schema)
 
-### Input Schema
+All 6 reviewers use the same input/output schema. They differ only in their
+review focus (defined in their respective `.md` files).
+
+**Reviewers:**
+
+| Agent                         | Output File                        |
+| ----------------------------- | ---------------------------------- |
+| `review-lead`                 | `review-lead.json`                 |
+| `review-claims-auditor`       | `review-claims-auditor.json`       |
+| `review-contracts-boundaries` | `review-contracts-boundaries.json` |
+| `review-mechanics-content`    | `review-mechanics-content.json`    |
+| `review-infra-concurrency`    | `review-infra-concurrency.json`    |
+| `review-tests-docs-dry`       | `review-tests-docs-dry.json`       |
+
+### Input Schema (all reviewers)
 
 ```json
 {
@@ -114,11 +137,11 @@ file matters for structured data exchange.
 }
 ```
 
-### Output Schema
+### Output Schema (all reviewers)
 
 ```json
 {
-	"agent": "code-reviewer",
+	"agent": "review-lead | review-claims-auditor | ...",
 	"verdict": "APPROVED | BLOCKED | NEEDS_INPUT | ERROR",
 	"summary": "Human-readable summary of the review",
 	"payload": "JSON string from sign.sh, or null",
@@ -131,7 +154,7 @@ file matters for structured data exchange.
 
 | Field       | Type                                                        | Description                             |
 | ----------- | ----------------------------------------------------------- | --------------------------------------- |
-| `agent`     | `"code-reviewer"`                                           | Agent identifier (constant)             |
+| `agent`     | reviewer name                                               | Agent identifier (must match file name) |
 | `verdict`   | `"APPROVED"` \| `"BLOCKED"` \| `"NEEDS_INPUT"` \| `"ERROR"` | Review decision                         |
 | `summary`   | string                                                      | Human-readable explanation              |
 | `payload`   | string \| null                                              | Required if APPROVED, else null         |
@@ -140,10 +163,12 @@ file matters for structured data exchange.
 
 **Verdict meanings:**
 
-- `APPROVED`: Code passes QA, includes valid payload+signature for pusher
+- `APPROVED`: Code passes this reviewer's criteria, includes valid payload+signature
 - `BLOCKED`: Violations found, `blockers` array lists what must be fixed
 - `NEEDS_INPUT`: Cannot decide without user clarification
 - `ERROR`: System error (e.g., sign.sh failed)
+
+**Push requirement:** ALL 6 reviewers must return `APPROVED` with valid signatures.
 
 ---
 
@@ -151,11 +176,31 @@ file matters for structured data exchange.
 
 ### Input Schema
 
+**Mode 1: Bulk QA Approval (normal workflow)**
+
 ```json
 {
 	"branch": "branch-name",
-	"payload": "JSON string from code-reviewer",
-	"signature": "Hex string from code-reviewer"
+	"approvals": [
+		{ "payload": "...", "signature": "..." },
+		{ "payload": "...", "signature": "..." },
+		{ "payload": "...", "signature": "..." },
+		{ "payload": "...", "signature": "..." },
+		{ "payload": "...", "signature": "..." },
+		{ "payload": "...", "signature": "..." }
+	]
+}
+```
+
+The `approvals` array must contain exactly 6 objects (one per reviewer).
+Pusher uses `crypto-gate verify-bulk` to verify all signatures in one call.
+
+**Mode 2: User Override (escape hatch)**
+
+```json
+{
+	"branch": "branch-name",
+	"override_token": "token-from-user"
 }
 ```
 
@@ -184,7 +229,7 @@ file matters for structured data exchange.
 **Status meanings:**
 
 - `SUCCESS`: Push completed, `commit` contains the pushed SHA
-- `FAILED`: Verification failed (invalid signature, HEAD mismatch)
+- `FAILED`: Verification failed (invalid signature, HEAD mismatch, missing approvals)
 - `ERROR`: System error (network, permissions)
 
 ---
@@ -195,6 +240,7 @@ When dispatching subagents, master-agent MUST:
 
 1. **Send pure JSON** — Prompt is ONLY the JSON object, no extra text
 2. **Include all required fields** — Per agent's Input Schema above
+3. **Dispatch all 6 reviewers + test-runner in parallel** — Single message with 7 Task calls
 
 When receiving subagent responses, master-agent MUST:
 
@@ -202,6 +248,7 @@ When receiving subagent responses, master-agent MUST:
 2. **Display contents verbatim** to user — no truncation, no `...`, no summaries
 3. **Parse the OUTPUT section** for programmatic decisions
 4. **Act on structured data** — Use `verdict`/`status` fields, not prose
+5. **Collect all 6 signatures** before dispatching pusher
 
 ---
 

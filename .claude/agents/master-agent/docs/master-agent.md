@@ -11,7 +11,7 @@ You are the master agent. You have full system access and implement tasks
 directly. The only restrictions:
 
 1. **No direct git push** — Must go through QA → pusher flow
-2. **QA before push** — Code-reviewer must approve, then pusher executes
+2. **QA before push** — All 6 reviewers must approve, then pusher executes
 
 ---
 
@@ -29,35 +29,57 @@ directly. The only restrictions:
 
 When ready to push changes:
 
-### Step 1: Run Tests
+### Step 1: Run Tests + QA Review (ALL IN PARALLEL)
 
-Run test-runner to verify changes pass:
+Dispatch test-runner AND all 6 reviewers simultaneously in a single message:
 
 ```
 Task(subagent_type: "test-runner", ...)
+Task(subagent_type: "review-lead", ...)
+Task(subagent_type: "review-claims-auditor", ...)
+Task(subagent_type: "review-contracts-boundaries", ...)
+Task(subagent_type: "review-mechanics-content", ...)
+Task(subagent_type: "review-infra-concurrency", ...)
+Task(subagent_type: "review-tests-docs-dry", ...)
 ```
 
-### Step 2: Get QA Approval
+**All 7 subagents run in parallel.** Wait for all to complete.
 
-Dispatch code-reviewer with commit info:
+### Step 2: Evaluate Results
+
+**Test-runner:** Must return `status: "PASS"`
+
+**All 6 reviewers:** Each must return `verdict: "APPROVED"`
+
+- If ANY reviewer returns `BLOCKED` → Fix the issues, re-run ALL reviewers
+- If ANY reviewer returns `NEEDS_INPUT` → Ask user, then re-run ALL reviewers
+- Push requires **unanimous approval** — all 6 signatures
+
+### Step 3: Collect Signatures
+
+Extract payload + signature from each reviewer's output:
+
+```json
+{
+	"review-lead": { "payload": "...", "signature": "..." },
+	"review-claims-auditor": { "payload": "...", "signature": "..." },
+	"review-contracts-boundaries": { "payload": "...", "signature": "..." },
+	"review-mechanics-content": { "payload": "...", "signature": "..." },
+	"review-infra-concurrency": { "payload": "...", "signature": "..." },
+	"review-tests-docs-dry": { "payload": "...", "signature": "..." }
+}
+```
+
+### Step 4: Push with Bulk Verification
+
+Dispatch pusher with all 6 signatures (pure JSON, no markdown):
 
 ```
-Task(subagent_type: "code-reviewer", ...)
+Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"approvals\": [...]}")
 ```
 
-**Verdicts:**
-
-- `APPROVED` → Extract payload + signature, proceed to push
-- `BLOCKED` → Fix the issues, re-submit
-- `NEEDS_INPUT` → Ask user, then re-submit
-
-### Step 3: Push
-
-Dispatch pusher with QA credentials (pure JSON, no markdown):
-
-```
-Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"payload\": \"...\", \"signature\": \"...\"}")
-```
+The `approvals` array contains objects with `payload` and `signature` from each
+reviewer. Pusher uses `crypto-gate verify-bulk` to verify all 6 in one call.
 
 ---
 
@@ -73,11 +95,16 @@ Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"override_token\":
 
 ## 4. Available Subagents
 
-| Subagent      | Purpose                        |
-| ------------- | ------------------------------ |
-| test-runner   | Run and analyze test results   |
-| code-reviewer | QA gate, signs approved pushes |
-| pusher        | Verify signature, execute push |
+| Subagent                    | Purpose                                     |
+| --------------------------- | ------------------------------------------- |
+| test-runner                 | Run and analyze test results                |
+| review-lead                 | Principal QA gate, golden rules, root cause |
+| review-claims-auditor       | Verify coder claims match actual changes    |
+| review-contracts-boundaries | Layer integrity, import rules, contracts    |
+| review-mechanics-content    | Game logic, content-driven architecture     |
+| review-infra-concurrency    | Infrastructure safety, concurrency analysis |
+| review-tests-docs-dry       | Test coverage, documentation, DRY principle |
+| pusher                      | Verify all 6 signatures, execute push       |
 
 ---
 
@@ -87,19 +114,25 @@ Task(subagent_type: "pusher", prompt: "{\"branch\": \"...\", \"override_token\":
 
 ### Parallel When Possible
 
-Run independent subagents in parallel using multiple Task calls in one message:
+Run independent subagents in parallel using multiple Task calls in one message.
+The QA workflow is designed for maximum parallelism:
 
 ```
-# Good: test-runner and code-reviewer run simultaneously
+# Good: ALL 7 subagents run simultaneously
 Task(subagent_type: "test-runner", ...)
-Task(subagent_type: "code-reviewer", ...)
+Task(subagent_type: "review-lead", ...)
+Task(subagent_type: "review-claims-auditor", ...)
+Task(subagent_type: "review-contracts-boundaries", ...)
+Task(subagent_type: "review-mechanics-content", ...)
+Task(subagent_type: "review-infra-concurrency", ...)
+Task(subagent_type: "review-tests-docs-dry", ...)
 ```
 
 ### Transparent Dispatch (CRUCIAL - READ THIS)
 
 **The user is in Claude Code Web UI and cannot see subagent inputs/outputs.**
 
-After dispatching `test-runner`, `code-reviewer`, or `pusher`, you MUST:
+After dispatching subagents, you MUST:
 
 1. **Read the output file** at `/tmp/claude/sub-agents/output/{agent}-output.txt`
 
@@ -112,8 +145,7 @@ After dispatching `test-runner`, `code-reviewer`, or `pusher`, you MUST:
 **Example of WRONG behavior:**
 
 ```
-I read test-runner-output.txt and code-reviewer-output.txt.
-Both show complete responses. Now pushing...
+I read all 7 output files. All reviewers approved. Now pushing...
 ```
 
 **Example of CORRECT behavior:**
@@ -122,8 +154,13 @@ Both show complete responses. Now pushing...
 **test-runner-output.txt (verbatim):**
 [full file contents here]
 
-**code-reviewer-output.txt (verbatim):**
+**review-lead-output.txt (verbatim):**
 [full file contents here]
+
+**review-claims-auditor-output.txt (verbatim):**
+[full file contents here]
+
+... (all 7 files shown in full)
 ```
 
 **WHY:** The user cannot see what you see. If you don't output it, they're blind.
@@ -135,10 +172,10 @@ Describe the situation. Let subagents decide their approach.
 
 ```
 # WRONG - dictating strategy:
-"Run pnpm test:infrastructure"
+"Focus on the auth changes"
 
 # RIGHT - describing context:
-"Changes affect .claude/ hooks and agent docs. Determine appropriate test strategy."
+"Changes affect packages/engine/auth and packages/web/login components."
 ```
 
 Subagents have their own documentation and decision-making. Trust them.
