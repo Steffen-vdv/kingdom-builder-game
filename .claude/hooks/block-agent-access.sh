@@ -4,6 +4,7 @@
 # - bin/                         → subagent only (crypto tools)
 # - sub-agent/scripts/           → subagent only (pusher, verify scripts)
 # - master-agent/scripts/        → master-agent only (session hooks)
+# - .claude/hooks/               → NOBODY (system-invoked only)
 
 # Read tool input from stdin
 JSON_INPUT=$(cat)
@@ -19,6 +20,7 @@ PATTERN=$(echo "$JSON_INPUT" | jq -r '.tool_input.pattern // empty' 2>/dev/null)
 ACCESSES_BIN=false
 ACCESSES_SUBAGENT_SCRIPTS=false
 ACCESSES_MASTER_SCRIPTS=false
+ACCESSES_HOOKS=false
 
 # For file operations (Read/Write/Edit/Glob/Grep), check the actual path
 FILE_PATHS="$FILE_PATH $PATH_ARG"
@@ -53,10 +55,22 @@ if [[ "$EXEC_PATH" == *"/master-agent/scripts/"* ]] || \
 	ACCESSES_MASTER_SCRIPTS=true
 fi
 
+# Check .claude/hooks/ EXECUTION - hooks are system-invoked, never agent-invoked
+# Only block direct execution, not git operations or file operations
+# Direct execution patterns: ./hooks/foo.sh, bash .claude/hooks/foo.sh, .claude/hooks/foo.sh
+if [[ "$EXEC_PATH" == *"/.claude/hooks/"* ]] || \
+   [[ "$EXEC_PATH" == *".claude/hooks/"* ]] || \
+   [[ "$COMMAND" == .claude/hooks/* ]] || \
+   [[ "$COMMAND" == bash\ *".claude/hooks/"* ]] || \
+   [[ "$COMMAND" == sh\ *".claude/hooks/"* ]]; then
+	ACCESSES_HOOKS=true
+fi
+
 # If not accessing any restricted path, allow
 if [[ "$ACCESSES_BIN" != "true" ]] && \
    [[ "$ACCESSES_SUBAGENT_SCRIPTS" != "true" ]] && \
-   [[ "$ACCESSES_MASTER_SCRIPTS" != "true" ]]; then
+   [[ "$ACCESSES_MASTER_SCRIPTS" != "true" ]] && \
+   [[ "$ACCESSES_HOOKS" != "true" ]]; then
 	exit 0
 fi
 
@@ -85,6 +99,11 @@ fi
 # master-agent/scripts/ → master-agent only
 if [[ "$ACCESSES_MASTER_SCRIPTS" == "true" ]] && [[ "$CONTEXT" != "master-agent" ]]; then
 	BLOCKED_REASON="master-agent/scripts/ is restricted to master-agent"
+fi
+
+# .claude/hooks/ → NOBODY (system-invoked only, never agent-invoked)
+if [[ "$ACCESSES_HOOKS" == "true" ]]; then
+	BLOCKED_REASON=".claude/hooks/ scripts are system-invoked only"
 fi
 
 # Block if violation detected

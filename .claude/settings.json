@@ -82,7 +82,7 @@
 					},
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-bin-access.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-agent-access.sh"
 					}
 				]
 			},
@@ -91,7 +91,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-bin-access.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-agent-access.sh"
 					}
 				]
 			},
@@ -100,7 +100,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-bin-access.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-agent-access.sh"
 					}
 				]
 			},
@@ -109,7 +109,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-bin-access.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-agent-access.sh"
 					}
 				]
 			},
@@ -118,7 +118,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-bin-access.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-agent-access.sh"
 					}
 				]
 			},
@@ -127,7 +127,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-bin-access.sh"
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-agent-access.sh"
 					}
 				]
 			},
