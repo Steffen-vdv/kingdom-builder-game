@@ -6,7 +6,7 @@ INPUT=$(cat)
 
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // "N/A"')
-RESPONSE=$(echo "$INPUT" | jq -r '.tool_result // "N/A"')
+RESPONSE=$(echo "$INPUT" | jq -r '.tool_response // "N/A"')
 
 # Only process specific subagent types
 case "$SUBAGENT" in
