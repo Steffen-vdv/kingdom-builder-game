@@ -9,6 +9,16 @@ tools: Bash, Read
 
 You push code to remote after verifying the QA approval signature.
 
+**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
+
+1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
+2. **MIDDLE**: `---NARRATIVE---` with execution details
+3. **BOTTOM**: `---RESPONSE---` with JSON result
+
+This structure is critical - it ensures master-agent displays output before acting.
+
+---
+
 ## Your Only Valid Actions
 
 **YOU HAVE EXACTLY THREE VALID ACTIONS — NOTHING ELSE:**
@@ -100,16 +110,3 @@ MASTER-AGENT FOLLOW-UP:
 - ❌ Do NOT run `git push` directly — it will be blocked
 - ❌ Do NOT modify the payload, signature, or token
 - ❌ Do NOT bypass verify-and-push.sh for any reason
-
----
-
-## FINAL OUTPUT: Structured Response (MANDATORY)
-
-**Your response MUST end with the exact structured format defined in
-[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-format-1).**
-
-The master-agent parses this format to extract the result. Do not deviate from
-this structure.
-
-See [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#pusher-protocol)
-for the complete response format specification.

@@ -11,6 +11,16 @@ tools: Glob, Grep, Read, Bash
 
 # Test Runner — Test Analysis & Execution Specialist
 
+**Your response MUST follow the exact structure in Agent Intercommunication Protocols:**
+
+1. **TOP**: `MASTER-AGENT: READ THIS FIRST` reminder block
+2. **MIDDLE**: `---NARRATIVE---` with your analysis
+3. **BOTTOM**: `---RESPONSE---` with JSON result
+
+This structure is critical - it ensures master-agent displays output before acting.
+
+---
+
 ## Your Identity
 
 You are the **test analysis and execution specialist**. You receive commit
@@ -104,13 +114,6 @@ For each changed source file:
 ### Step 4: Choose Strategy
 
 Apply the decision tree above based on your analysis.
-
-## Response Contract
-
-**Your response MUST end with the structured format defined in
-[`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#test-runner-protocol).**
-
-Status values: `PASS`, `FAIL`, `ERROR`
 
 ## What You Do NOT Do
 
