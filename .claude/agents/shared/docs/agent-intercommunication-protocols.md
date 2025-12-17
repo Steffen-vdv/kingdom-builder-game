@@ -45,8 +45,6 @@ This is a MANDATORY step for Web UI transparency.
 3. The `---RESPONSE---` JSON block goes at the BOTTOM
 4. **NOTHING comes after the closing ``` of the JSON block** - no summaries, no extra text
 
-The output file will contain ONLY the JSON block. Master-agent reads it from the system-reminder.
-
 ---
 
 ## test-runner

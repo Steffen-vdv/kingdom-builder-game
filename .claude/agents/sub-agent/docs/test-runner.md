@@ -11,17 +11,7 @@ tools: Glob, Grep, Read, Bash
 
 # Test Runner — Test Analysis & Execution Specialist
 
-**Your response MUST end with the exact structure from Agent Intercommunication Protocols:**
-
-````
----RESPONSE---
-```json
-{ ... your JSON result ... }
-````
-
-```
-
-**CRITICAL: Nothing after the JSON block. No summaries, no extra text. The JSON block is the ABSOLUTE END of your response.**
+**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-structure-mandatory). Follow it exactly.**
 
 ---
 
@@ -65,7 +55,7 @@ you report them for the master-agent to address.
 │ │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
-````
+```
 
 ## Test Strategy Decision Tree
 
@@ -99,7 +89,7 @@ git diff --name-only HEAD
 
 # For branch comparison
 git diff --name-only origin/main...HEAD
-````
+```
 
 ### Step 2: Categorize Changes
 

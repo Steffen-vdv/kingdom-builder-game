@@ -10,17 +10,7 @@ tools: Glob, Grep, Read, WebFetch, WebSearch, Bash
 
 # Code Reviewer — Quality Gate
 
-**Your response MUST end with the exact structure from Agent Intercommunication Protocols:**
-
-````
----RESPONSE---
-```json
-{ ... your JSON verdict ... }
-````
-
-```
-
-**CRITICAL: Nothing after the JSON block. No summaries, no extra text. The JSON block is the ABSOLUTE END of your response.**
+**Your response format is defined in [`agent-intercommunication-protocols.md`](../../shared/docs/agent-intercommunication-protocols.md#response-structure-mandatory). Follow it exactly.**
 
 ---
 
@@ -394,7 +384,7 @@ PARALLEL RISK: May run while SubagentStart is still executing for another agent
 SHARED STATE: .claude/agents/shared/scripts/context-manager/state.json
 MITIGATION: Use atomic counter with flock (not binary marker existence)
 
-````
+```
 
 **BLOCK if hook changes lack concurrency analysis for parallel scenarios.**
 
@@ -443,7 +433,7 @@ Infrastructure changes require ALL of the following:
 
 ```bash
 .claude/agents/sub-agent/scripts/sign.sh "Brief summary of what was approved"
-````
+```
 
 Include the `payload` and `signature` from the script output in your JSON response.
 If signing fails, your verdict is ERROR, not APPROVED.
