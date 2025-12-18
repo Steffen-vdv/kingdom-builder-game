@@ -129,6 +129,45 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# VALIDATE AGENT IDENTIFIER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Valid agent identifiers and their required signature types
+declare -A AGENT_SIG_TYPES=(
+	["review-ci-tests-required"]="QA_CI_REQUIRED_TESTS"
+	["review-claims-auditor"]="QA_CLAIMS_AUDITOR"
+	["review-contracts-boundaries"]="QA_CONTRACTS_BOUNDARIES"
+	["review-mechanics-content"]="QA_MECHANICS_CONTENT"
+	["review-infra-concurrency"]="QA_INFRA_CONCURRENCY"
+	["review-tests-docs-dry"]="QA_TESTS_DOCS_DRY"
+	["review-lead"]="QA_FINAL_SIGNATORY"
+)
+
+VALID_AGENTS="review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead"
+if [[ ! "$AGENT" =~ ^($VALID_AGENTS)$ ]]; then
+	cat >&2 << EOF
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ INVALID AGENT IDENTIFIER                                                  ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Provided: $AGENT
+
+Valid agent identifiers:
+  • review-ci-tests-required
+  • review-claims-auditor
+  • review-contracts-boundaries
+  • review-mechanics-content
+  • review-infra-concurrency
+  • review-tests-docs-dry
+  • review-lead
+
+Note: safe-deployment-gate does not write JSON output (communicates via exit code).
+The agent identifier must match exactly — check for typos.
+EOF
+	exit 1
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # VALIDATE REQUIRED FIELDS
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -160,6 +199,19 @@ if [[ -z "$PAYLOAD" ]]; then
 fi
 if [[ -z "$SIGNATURE" ]]; then
 	ERRORS+=("--signature (hex signature) is required for all verdicts")
+fi
+
+# Cross-validate agent identifier matches signature type (prevents copy/paste errors)
+if [[ -n "$SIG_TYPE" ]]; then
+	EXPECTED_SIG_TYPE="${AGENT_SIG_TYPES[$AGENT]}"
+	if [[ "$SIG_TYPE" != "$EXPECTED_SIG_TYPE" ]]; then
+		ERRORS+=("Agent '$AGENT' must use signature type '$EXPECTED_SIG_TYPE', not '$SIG_TYPE'")
+	fi
+fi
+
+# Validate signature format (64 hex characters)
+if [[ -n "$SIGNATURE" && ! "$SIGNATURE" =~ ^[a-f0-9]{64}$ ]]; then
+	ERRORS+=("--signature must be 64 hex characters (got ${#SIGNATURE} chars)")
 fi
 
 # Verdict-specific field requirements

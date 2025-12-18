@@ -43,6 +43,26 @@ EOF
 	exit 0
 fi
 
+# Validate commits field for agents that require it (all except safe-deployment-gate)
+# safe-deployment-gate uses approval.payload which contains commits internally
+if [[ "$SUBAGENT" != "safe-deployment-gate" ]]; then
+	if ! echo "$PARSED" | jq -e '.commits | type == "array"' >/dev/null 2>&1; then
+		cat << EOF
+{"decision":"block","reason":"INPUT JSON missing or invalid 'commits' field. Must be a JSON array of commit SHAs.\n\nExample: {\"branch\": \"...\", \"commits\": [\"abc123\", \"def456\"], ...}"}
+EOF
+		exit 0
+	fi
+
+	# Validate commits array is non-empty
+	COMMITS_COUNT=$(echo "$PARSED" | jq '.commits | length' 2>/dev/null)
+	if [[ "$COMMITS_COUNT" == "0" ]]; then
+		cat << 'EOF'
+{"decision":"block","reason":"INPUT JSON 'commits' array is empty. At least one commit SHA is required."}
+EOF
+		exit 0
+	fi
+fi
+
 # Subagent-specific validation
 case "$SUBAGENT" in
 	review-ci-tests-required)

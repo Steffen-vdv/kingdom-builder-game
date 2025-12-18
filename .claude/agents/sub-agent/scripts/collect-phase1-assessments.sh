@@ -113,8 +113,39 @@ ERROR_HEADER
 	for err in "${ERRORS[@]}"; do
 		echo "  • $err" >&2
 	done
+
+	# Show what files DO exist for debugging
 	echo "" >&2
-	echo "Fix the issues and re-run Phase 1 reviewers." >&2
+	echo "Directory contents ($OUTPUT_DIR):" >&2
+	if [[ -d "$OUTPUT_DIR" ]]; then
+		EXISTING=$(ls -la "$OUTPUT_DIR"/*.json 2>/dev/null | awk '{print "  " $NF " (" $5 " bytes)"}')
+		if [[ -n "$EXISTING" ]]; then
+			echo "$EXISTING" >&2
+		else
+			echo "  (no .json files found)" >&2
+		fi
+	else
+		echo "  (directory does not exist)" >&2
+	fi
+
+	# Show verdict summary for quick diagnosis
+	echo "" >&2
+	echo "Verdict summary:" >&2
+	for agent in "${AGENTS[@]}"; do
+		FILE="$OUTPUT_DIR/${agent}.json"
+		if [[ -f "$FILE" ]]; then
+			VERDICT=$(jq -r '.verdict // "PARSE_ERROR"' "$FILE" 2>/dev/null)
+			echo "  • $agent: $VERDICT" >&2
+		else
+			echo "  • $agent: (file missing)" >&2
+		fi
+	done
+
+	echo "" >&2
+	echo "NEXT STEPS:" >&2
+	echo "  • If files are missing: Re-run the missing Phase 1 reviewers" >&2
+	echo "  • If verdict is BLOCKED: Address blockers, then re-run that reviewer" >&2
+	echo "  • If verdict is NEEDS_INPUT: Provide answers, then re-run that reviewer" >&2
 	exit 1
 fi
 
