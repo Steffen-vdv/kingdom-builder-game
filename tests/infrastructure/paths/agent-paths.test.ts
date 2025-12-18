@@ -155,11 +155,15 @@ describe('Infrastructure: Agent Path Validation', () => {
 			const settingsPath = path.join(PROJECT_ROOT, '.claude/settings.json');
 			const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
 
-			// Verify hook paths reference new structure
+			// Verify all 4 SessionStart matchers exist and reference correct scripts
 			const sessionStartupCommand =
 				settings.hooks.SessionStart[0].hooks[0].command;
 			const sessionResumeCommand =
 				settings.hooks.SessionStart[1].hooks[0].command;
+			const sessionCompactCommand =
+				settings.hooks.SessionStart[2].hooks[0].command;
+			const sessionClearCommand =
+				settings.hooks.SessionStart[3].hooks[0].command;
 			const subagentStartCommand =
 				settings.hooks.SubagentStart[0].hooks[0].command;
 
@@ -169,9 +173,30 @@ describe('Infrastructure: Agent Path Validation', () => {
 			expect(sessionResumeCommand).toContain(
 				'master-agent/scripts/master-session-handover.sh',
 			);
+			expect(sessionCompactCommand).toContain(
+				'master-agent/scripts/master-session-handover.sh',
+			);
+			expect(sessionClearCommand).toContain(
+				'master-agent/scripts/master-session-handover.sh',
+			);
 			expect(subagentStartCommand).toContain(
 				'sub-agent/scripts/subagent-session-start.sh',
 			);
+		});
+
+		it('should have all 4 SessionStart matchers for complete session restoration', () => {
+			const settingsPath = path.join(PROJECT_ROOT, '.claude/settings.json');
+			const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+
+			const matchers = settings.hooks.SessionStart.map(
+				(entry: { matcher: string }) => entry.matcher,
+			);
+
+			expect(matchers).toContain('startup');
+			expect(matchers).toContain('resume');
+			expect(matchers).toContain('compact');
+			expect(matchers).toContain('clear');
+			expect(matchers).toHaveLength(4);
 		});
 	});
 

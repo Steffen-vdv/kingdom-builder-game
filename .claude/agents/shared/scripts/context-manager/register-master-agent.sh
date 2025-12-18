@@ -1,7 +1,7 @@
 #!/bin/bash
 # Set context to master-agent and reset subagent count to 0
 #
-# Called by mss.sh (session start) and msh.sh (session handover).
+# Called by master-session-start.sh and master-session-handover.sh.
 # Atomically resets the context to master-agent mode.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
