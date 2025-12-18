@@ -39,6 +39,30 @@ if [[ ! "$COMMAND" == *"git"* ]]; then
 	exit 0
 fi
 
+# Security pre-check: catch "git push" in chained commands (e.g., "git status && git push")
+# The parser only returns the first command, so we need string matching for chains
+if [[ "$COMMAND" =~ git[[:space:]]+push($|[[:space:]]|[;&\|]) ]]; then
+	# Verify it's not an allowed command
+	if [[ ! "$COMMAND" == *"verify-bulk-and-push"* ]] && \
+	   [[ ! "$COMMAND" == *"verify-and-push"* ]] && \
+	   [[ ! "$COMMAND" == *"--dry-run"* ]]; then
+		cat >&2 << 'BLOCKED'
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  🛑 BLOCKED — git push requires QA workflow                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Direct git push is not allowed. You must use the verified push workflow.
+
+WORKFLOW:
+1. Phase 1: Run 6 reviewers in parallel
+2. Phase 2: Run review-lead with 6 signatures → produces final signature
+3. Phase 3: Run safe-deployment-gate with review-lead's signature to push
+
+BLOCKED
+		exit 2
+	fi
+fi
+
 # Parse the command using the command package
 PARSED=$(echo "$COMMAND" | PYTHONPATH="$SCRIPTS_DIR" python3 -m command 2>/dev/null)
 
