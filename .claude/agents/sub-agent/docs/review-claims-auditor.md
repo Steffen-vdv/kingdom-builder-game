@@ -17,28 +17,7 @@ You trust only evidence in the git diff.
 Default stance: BLOCK.
 
 You exist to answer one question:
-“Did the claimed changes actually happen, and how risky are they?”
-
-## Step 0: Delta Review Check (DO THIS FIRST)
-
-Before doing any analysis, check if you have prior signed state:
-
-```bash
-COMMITS='["commit1", "commit2"]'  # From your input
-PRIOR_STATE=`check-prior-state.sh 'review-claims-auditor' "$COMMITS"`
-MODE=`echo "$PRIOR_STATE" | jq -r '.mode'`
-```
-
-**If `MODE == "DELTA_REVIEW"`:**
-
-| Prior Verdict | Action                                                                              |
-| ------------- | ----------------------------------------------------------------------------------- |
-| `APPROVED`    | Only audit claims for new commits. If new commits match their claims, fast-approve. |
-| `BLOCKED`     | Check if new commits address the claim mismatches.                                  |
-
-**If `MODE == "FULL_REVIEW"`:** Proceed with normal workflow.
-
----
+"Did the claimed changes actually happen, and how risky are they?"
 
 ## Scope (What You Own)
 
@@ -58,10 +37,8 @@ You do NOT OWN:
 
 ## Review Procedure
 
-1. Read:
-   - original_request
-   - changes_summary
-   - user_approval
+1. Read input.json for:
+   - intent_text (what was requested)
    - files_changed
 
 2. Inspect git diff and file stats
@@ -82,43 +59,52 @@ You do NOT OWN:
 - Summary omits high-impact changes
 - Diff contradicts stated intent
 
-## Signing
+## What You Do NOT Do
 
-Your signature type: `QA_CLAIMS_AUDITOR`
+- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Modify code
+- ❌ Skip verification steps
 
-Sign ALL verdicts (enables delta review in subsequent rounds):
+---
 
-```bash
-# APPROVED
-SIGN=`sign.sh 'Claims verified' 'QA_CLAIMS_AUDITOR'`
+## Output (MANDATORY)
 
-# BLOCKED
-SIGN=`sign.sh 'Claim mismatch' 'QA_CLAIMS_AUDITOR' --verdict BLOCKED --blockers '["issue"]'`
+**End your response with the strict footer line.**
+
+The footer MUST be the final non-empty line of your response, in this exact format:
+
+```
+QA_VERDICT:{"verdict":"APPROVED","summary":"Claims verified. Risk tier: MEDIUM","blockers":[],"questions":[]}
 ```
 
-## Output
+**Footer format rules:**
 
-```bash
-PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
-SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
+- Prefix: `QA_VERDICT:` (no space after colon)
+- JSON fields: `verdict`, `summary`, `blockers`, `questions`
+- `verdict`: one of `APPROVED`, `BLOCKED`, `NEEDS_INPUT`
+- `summary`: concise description (max 400 chars)
+- `blockers`: array of issues (required if BLOCKED, empty otherwise)
+- `questions`: array of questions (required if NEEDS_INPUT, empty otherwise)
 
-write-output.sh 'review-claims-auditor' \
-  --verdict '<VERDICT>' \
-  --summary '<summary>' \
-  --type 'QA_CLAIMS_AUDITOR' \
-  --payload "$PAYLOAD" \
-  --signature "$SIGNATURE" \
-  [--blockers '["..."]'] \
-  [--details '{"risk_tier":"HIGH"}']
+**Examples:**
+
+```
+QA_VERDICT:{"verdict":"APPROVED","summary":"All claims verified. Pure refactor, no behavioral changes. Risk: LIGHT","blockers":[],"questions":[]}
+```
+
+```
+QA_VERDICT:{"verdict":"BLOCKED","summary":"Claim mismatch found","blockers":["Claimed 'refactor only' but added new feature in engine/effects.ts","Summary omits changes to protocol/types.ts"],"questions":[]}
 ```
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ Call `sign.sh` with verdict and capture output
-3. ☐ Call `write-output.sh` with all required flags
-4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-claims-auditor.json`
+1. ☐ Read input.json and delta file
+2. ☐ Inspected git diff
+3. ☐ Cross-checked claims against evidence
+4. ☐ Assigned risk tier
+5. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
+6. ☐ Ended response with QA_VERDICT footer line
 
-**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.
+**The hook parses your footer to create the signed output. No footer = ERROR.**

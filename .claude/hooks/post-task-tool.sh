@@ -1,39 +1,137 @@
 #!/bin/bash
-# PostToolUse hook for Task - validates subagent JSON output
-# Only processes QA reviewers and safe-deployment-gate subagents
+# PostToolUse hook for Task - parses QA verdict footer and writes signed output
 #
-# Subagents write their structured output to {agent}.json via write-output.sh.
-# This hook validates that file exists and contains valid JSON.
-# Master-agent reads the .json file directly (only review-lead.json in new workflow).
+# Phase 1 reviewers: review-ci-tests-required + 5 specialist reviewers
+# Phase 2 reviewer: review-lead (aggregates Phase 1)
+#
+# This hook:
+#   1. Extracts response text from tool_response.content[].text
+#   2. Parses the strict QA_VERDICT: footer from the final line
+#   3. Loads canonical input and delta info
+#   4. Builds and signs the payload
+#   5. Writes the signed output JSON file
+#
+# Note: safe-deployment-gate removed from QA pipeline (script-only now)
 
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
+source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
 
 INPUT=$(cat)
 
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 
-# Only process specific subagent types
-case "$SUBAGENT" in
-	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
-		log_hook "$SUBAGENT" "Stopped"
-		;;
-	*)
-		exit 0
-		;;
-esac
+# =============================================================================
+# CHECK IF THIS IS A QA SUBAGENT
+# =============================================================================
 
-# Check JSON output file
-OUTPUT_DIR="/tmp/claude/sub-agents/output"
-SUBAGENT_JSON_FILE="$OUTPUT_DIR/${SUBAGENT}.json"
-
-if [ ! -f "$SUBAGENT_JSON_FILE" ]; then
-	echo "Warning: Subagent $SUBAGENT did not write output file: $SUBAGENT_JSON_FILE" >&2
+if ! qa_is_qa_agent "$SUBAGENT"; then
+	# Not a tracked subagent, exit silently
 	exit 0
 fi
 
-# Validate JSON format
-if ! jq '.' "$SUBAGENT_JSON_FILE" > /dev/null 2>&1; then
-	echo "Warning: Subagent $SUBAGENT output is not valid JSON: $SUBAGENT_JSON_FILE" >&2
+log_hook "$SUBAGENT" "Processing (post-task)"
+
+# =============================================================================
+# EXTRACT RESPONSE TEXT
+# =============================================================================
+
+# Join all content[].text elements with newlines
+RESPONSE_TEXT=$(echo "$INPUT" | jq -r '
+	.tool_response.content // [] |
+	map(select(.type == "text") | .text) |
+	join("\n")
+' 2>/dev/null)
+
+if [[ -z "$RESPONSE_TEXT" ]]; then
+	log_hook "$SUBAGENT" "ERROR: No response text found"
+	qa_write_error_output "$SUBAGENT" "no_response_text"
+	exit 0
 fi
+
+# =============================================================================
+# PARSE QA_VERDICT FOOTER
+# =============================================================================
+
+FOOTER_JSON=""
+if ! FOOTER_JSON=$(qa_parse_footer_from_text "$RESPONSE_TEXT" 2>&1); then
+	log_hook "$SUBAGENT" "ERROR: Footer parsing failed - $FOOTER_JSON"
+	qa_write_error_output "$SUBAGENT" "invalid_footer"
+	exit 0
+fi
+
+log_hook "$SUBAGENT" "Footer parsed: $(echo "$FOOTER_JSON" | jq -c '.verdict')"
+
+# =============================================================================
+# LOAD CANONICAL INPUT AND HASH
+# =============================================================================
+
+INPUT_JSON=""
+INPUT_HASH=""
+
+if [[ -f "$QA_CURRENT_DIR/input.json" ]]; then
+	INPUT_JSON=$(cat "$QA_CURRENT_DIR/input.json")
+else
+	log_hook "$SUBAGENT" "ERROR: Missing input.json"
+	qa_write_error_output "$SUBAGENT" "missing_input_json"
+	exit 0
+fi
+
+if [[ -f "$QA_CURRENT_DIR/input.sha256" ]]; then
+	INPUT_HASH=$(cat "$QA_CURRENT_DIR/input.sha256")
+else
+	log_hook "$SUBAGENT" "ERROR: Missing input.sha256"
+	qa_write_error_output "$SUBAGENT" "missing_input_hash"
+	exit 0
+fi
+
+# =============================================================================
+# LOAD DELTA INFO
+# =============================================================================
+
+DELTA_JSON='{"mode":"FULL_REVIEW"}'
+DELTA_FILE="$QA_DELTA_DIR/${SUBAGENT}.json"
+
+if [[ -f "$DELTA_FILE" ]]; then
+	DELTA_JSON=$(cat "$DELTA_FILE")
+fi
+
+# =============================================================================
+# BUILD PAYLOAD
+# =============================================================================
+
+PAYLOAD=$(qa_build_payload "$INPUT_JSON" "$INPUT_HASH" "$SUBAGENT" "$FOOTER_JSON" "$DELTA_JSON")
+
+if [[ -z "$PAYLOAD" ]]; then
+	log_hook "$SUBAGENT" "ERROR: Failed to build payload"
+	qa_write_error_output "$SUBAGENT" "payload_build_failed"
+	exit 0
+fi
+
+# =============================================================================
+# SIGN PAYLOAD
+# =============================================================================
+
+SIG_TYPE=$(qa_sig_type_for_subagent "$SUBAGENT")
+
+if [[ -z "$SIG_TYPE" ]]; then
+	log_hook "$SUBAGENT" "ERROR: Unknown signature type for $SUBAGENT"
+	qa_write_error_output "$SUBAGENT" "unknown_sig_type"
+	exit 0
+fi
+
+SIGNATURE=""
+if ! SIGNATURE=$(qa_sign_payload "$PAYLOAD" "$SIG_TYPE" 2>&1); then
+	log_hook "$SUBAGENT" "ERROR: Signing failed - $SIGNATURE"
+	qa_write_error_output "$SUBAGENT" "signing_failed"
+	exit 0
+fi
+
+# =============================================================================
+# WRITE SIGNED OUTPUT
+# =============================================================================
+
+qa_write_signed_output "$SUBAGENT" "$FOOTER_JSON" "$PAYLOAD" "$SIGNATURE" "$SIG_TYPE" "$DELTA_JSON" "$INPUT_HASH"
+
+log_hook "$SUBAGENT" "Output written: $QA_OUTPUT_DIR/${SUBAGENT}.json"
 
 exit 0

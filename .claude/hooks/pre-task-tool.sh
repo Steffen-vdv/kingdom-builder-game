@@ -1,18 +1,26 @@
 #!/bin/bash
-# PreToolUse hook for Task - validates subagent INPUT format
-# Only validates QA reviewers and safe-deployment-gate subagents
+# PreToolUse hook for Task - validates and prepares QA workflow
 #
 # Phase 1 reviewers: review-ci-tests-required + 5 specialist reviewers
 # Phase 2 reviewer: review-lead (aggregates Phase 1)
-# Phase 3: safe-deployment-gate (pushes with review-lead's signature)
+#
+# This hook:
+#   1. Blocks model overrides for QA subagents
+#   2. Writes canonical input to /tmp/claude/qa/current/input.json
+#   3. Computes delta review info for Phase 1 reviewers
+#   4. Gates review-lead by verifying all 6 Phase 1 outputs
+#
+# Note: safe-deployment-gate removed from QA pipeline (script-only now)
 
 source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/log.sh"
+source "$CLAUDE_PROJECT_DIR/.claude/agents/shared/scripts/qa-hook-lib.sh"
 
 INPUT=$(cat)
 
 SUBAGENT=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // ""')
 PROMPT=$(echo "$INPUT" | jq -r '.tool_input.prompt // ""')
 MODEL_OVERRIDE=$(echo "$INPUT" | jq -r '.tool_input.model // ""')
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 
 # =============================================================================
 # BLOCK MODEL OVERRIDES for QA subagents
@@ -21,7 +29,7 @@ MODEL_OVERRIDE=$(echo "$INPUT" | jq -r '.tool_input.model // ""')
 # reliability (e.g., haiku may skip tool invocations and output narrative).
 
 case "$SUBAGENT" in
-	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
+	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead)
 		if [[ -n "$MODEL_OVERRIDE" ]]; then
 			cat << EOF
 {"decision":"block","reason":"Model override '$MODEL_OVERRIDE' not allowed for $SUBAGENT. These subagents have model configured in frontmatter. Remove the 'model' parameter from your Task invocation."}
@@ -31,93 +39,58 @@ EOF
 		;;
 esac
 
-# Only validate specific subagent types
-case "$SUBAGENT" in
-	review-ci-tests-required|review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry|review-lead|safe-deployment-gate)
-		log_hook "$SUBAGENT" "Starting"
-		;;
-	*)
-		# Not a tracked subagent, allow silently
-		exit 0
-		;;
-esac
+# =============================================================================
+# CHECK IF THIS IS A QA SUBAGENT
+# =============================================================================
 
-# Validate prompt is valid JSON (per protocol: pure JSON, no markdown)
-if ! echo "$PROMPT" | jq '.' >/dev/null 2>&1; then
-	cat << 'EOF'
-{"decision":"block","reason":"INPUT is not valid JSON. Prompt must be a pure JSON object.\n\nExample: {\"branch\": \"...\", \"commits\": [...]}"}
-EOF
-	exit 1
+if ! qa_is_qa_agent "$SUBAGENT"; then
+	# Not a tracked subagent, allow silently
+	exit 0
 fi
 
-# Parse the JSON for field validation
-PARSED=$(echo "$PROMPT" | jq '.')
+log_hook "$SUBAGENT" "Starting (pre-task)"
 
-# Validate INPUT contains required branch field (common to all subagents)
-if ! echo "$PARSED" | jq -e '.branch' >/dev/null 2>&1; then
-	cat << 'EOF'
-{"decision":"block","reason":"INPUT JSON missing required 'branch' field."}
-EOF
-	exit 1
+# =============================================================================
+# INITIALIZE PATHS AND WRITE CANONICAL INPUT
+# =============================================================================
+
+qa_paths_init
+
+# Write canonical input (this becomes the source of truth for what's being reviewed)
+qa_write_canonical_input "$SESSION_ID" "$PROMPT" "$SUBAGENT"
+
+# =============================================================================
+# DELTA LOGIC FOR PHASE 1 REVIEWERS
+# =============================================================================
+
+if qa_is_phase1_reviewer "$SUBAGENT"; then
+	# Read commits from canonical input
+	CURRENT_COMMITS=$(jq -c '.commits' "$QA_CURRENT_DIR/input.json" 2>/dev/null || echo '[]')
+
+	# Compute delta and write to delta file
+	MODE=$(qa_compute_delta "$SUBAGENT" "$CURRENT_COMMITS")
+
+	log_hook "$SUBAGENT" "Delta mode: $MODE"
 fi
 
-# Validate commits field for agents that require it (all except safe-deployment-gate)
-# safe-deployment-gate uses approval.payload which contains commits internally
-if [[ "$SUBAGENT" != "safe-deployment-gate" ]]; then
-	if ! echo "$PARSED" | jq -e '.commits | type == "array"' >/dev/null 2>&1; then
+# =============================================================================
+# GATING FOR REVIEW-LEAD (PHASE 2)
+# =============================================================================
+
+if qa_is_review_lead "$SUBAGENT"; then
+	log_hook "review-lead" "Validating Phase 1 outputs"
+
+	# Validate all 6 Phase 1 output files
+	ERROR_MSG=""
+	if ! ERROR_MSG=$(qa_validate_phase1_outputs 2>&1); then
 		cat << EOF
-{"decision":"block","reason":"INPUT JSON missing or invalid 'commits' field. Must be a JSON array of commit SHAs.\n\nExample: {\"branch\": \"...\", \"commits\": [\"abc123\", \"def456\"], ...}"}
+{"decision":"block","reason":"Phase 1 validation failed: $ERROR_MSG"}
 EOF
 		exit 1
 	fi
 
-	# Validate commits array is non-empty
-	COMMITS_COUNT=$(echo "$PARSED" | jq '.commits | length' 2>/dev/null)
-	if [[ "$COMMITS_COUNT" == "0" ]]; then
-		cat << 'EOF'
-{"decision":"block","reason":"INPUT JSON 'commits' array is empty. At least one commit SHA is required."}
-EOF
-		exit 1
-	fi
+	log_hook "review-lead" "Phase 1 validation passed"
 fi
-
-# Subagent-specific validation
-case "$SUBAGENT" in
-	review-ci-tests-required)
-		if ! echo "$PARSED" | jq -e '.files_changed' >/dev/null 2>&1; then
-			cat << 'EOF'
-{"decision":"block","reason":"review-ci-tests-required INPUT missing 'files_changed' field. Required: { branch, commits, files_changed }"}
-EOF
-			exit 1
-		fi
-		;;
-	review-claims-auditor|review-contracts-boundaries|review-mechanics-content|review-infra-concurrency|review-tests-docs-dry)
-		if ! echo "$PARSED" | jq -e '.original_request' >/dev/null 2>&1; then
-			cat << 'EOF'
-{"decision":"block","reason":"QA reviewer INPUT missing 'original_request' field. Required: { branch, commits, original_request, changes_summary, user_approval, files_changed }"}
-EOF
-			exit 1
-		fi
-		;;
-	review-lead)
-		# Phase 2: review-lead needs approvals_json from Phase 1 reviewers
-		if ! echo "$PARSED" | jq -e '.approvals_json' >/dev/null 2>&1; then
-			cat << 'EOF'
-{"decision":"block","reason":"review-lead INPUT missing 'approvals_json' field. Required: { branch, commits, approvals_json, original_request, changes_summary }"}
-EOF
-			exit 1
-		fi
-		;;
-	safe-deployment-gate)
-		# Phase 3: safe-deployment-gate needs single approval or override token
-		if ! echo "$PARSED" | jq -e '.approval // .override_token' >/dev/null 2>&1; then
-			cat << 'EOF'
-{"decision":"block","reason":"safe-deployment-gate INPUT missing 'approval' or 'override_token' field. Required: { branch, approval } OR { branch, override_token }"}
-EOF
-			exit 1
-		fi
-		;;
-esac
 
 # All checks passed
 exit 0

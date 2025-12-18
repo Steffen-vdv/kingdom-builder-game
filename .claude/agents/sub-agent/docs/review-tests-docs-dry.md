@@ -16,27 +16,6 @@ You BLOCK on insufficient evidence.
 
 Default stance: BLOCK.
 
-## Step 0: Delta Review Check (DO THIS FIRST)
-
-Before doing any analysis, check if you have prior signed state:
-
-```bash
-COMMITS='["commit1", "commit2"]'  # From your input
-PRIOR_STATE=`check-prior-state.sh 'review-tests-docs-dry' "$COMMITS"`
-MODE=`echo "$PRIOR_STATE" | jq -r '.mode'`
-```
-
-**If `MODE == "DELTA_REVIEW"`:**
-
-| Prior Verdict | Action                                                                         |
-| ------------- | ------------------------------------------------------------------------------ |
-| `APPROVED`    | Only check tests/docs in new commits. If no test or doc changes, fast-approve. |
-| `BLOCKED`     | Check if new commits address the test/doc gaps.                                |
-
-**If `MODE == "FULL_REVIEW"`:** Proceed with normal workflow.
-
----
-
 ## Scope (What You Own)
 
 You OWN:
@@ -79,43 +58,52 @@ BLOCK if:
 - Core changes lack architecture updates
 - Data or rules are duplicated
 
-## Signing
+## What You Do NOT Do
 
-Your signature type: `QA_TESTS_DOCS_DRY`
+- ❌ Call sign.sh or write-output.sh (hooks handle signing)
+- ❌ Modify code
+- ❌ Skip verification steps
 
-Sign ALL verdicts (enables delta review in subsequent rounds):
+---
 
-```bash
-# APPROVED
-SIGN=`sign.sh 'Tests adequate' 'QA_TESTS_DOCS_DRY'`
+## Output (MANDATORY)
 
-# BLOCKED
-SIGN=`sign.sh 'Test gap' 'QA_TESTS_DOCS_DRY' --verdict BLOCKED --blockers '["issue"]'`
+**End your response with the strict footer line.**
+
+The footer MUST be the final non-empty line of your response, in this exact format:
+
+```
+QA_VERDICT:{"verdict":"APPROVED","summary":"Tests adequate. Documentation current. No DRY violations.","blockers":[],"questions":[]}
 ```
 
-## Output
+**Footer format rules:**
 
-```bash
-PAYLOAD=`echo "$SIGN" | jq -r '.payload'`
-SIGNATURE=`echo "$SIGN" | jq -r '.signature'`
+- Prefix: `QA_VERDICT:` (no space after colon)
+- JSON fields: `verdict`, `summary`, `blockers`, `questions`
+- `verdict`: one of `APPROVED`, `BLOCKED`, `NEEDS_INPUT`
+- `summary`: concise description (max 400 chars)
+- `blockers`: array of issues (required if BLOCKED, empty otherwise)
+- `questions`: array of questions (required if NEEDS_INPUT, empty otherwise)
 
-write-output.sh 'review-tests-docs-dry' \
-  --verdict '<VERDICT>' \
-  --summary '<summary>' \
-  --type 'QA_TESTS_DOCS_DRY' \
-  --payload "$PAYLOAD" \
-  --signature "$SIGNATURE" \
-  [--blockers '["..."]'] \
-  [--details '{"test_coverage":"adequate"}']
+**Examples:**
+
+```
+QA_VERDICT:{"verdict":"APPROVED","summary":"No behavioral changes requiring new tests. Docs unchanged.","blockers":[],"questions":[]}
+```
+
+```
+QA_VERDICT:{"verdict":"BLOCKED","summary":"Test gaps found","blockers":["New engine feature lacks tests","Test in effects.test.ts was modified to make it pass (changed expected value)"],"questions":[]}
 ```
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ Call `sign.sh` with verdict and capture output
-3. ☐ Call `write-output.sh` with all required flags
-4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-tests-docs-dry.json`
+1. ☐ Read input.json and delta file
+2. ☐ Checked test integrity
+3. ☐ Verified test strategy
+4. ☐ Checked documentation and DRY
+5. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
+6. ☐ Ended response with QA_VERDICT footer line
 
-**If you skip steps 2-4, the workflow breaks.** Master-agent cannot proceed.
+**The hook parses your footer to create the signed output. No footer = ERROR.**
