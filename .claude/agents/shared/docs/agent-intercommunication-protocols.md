@@ -452,7 +452,7 @@ Delta review is conservative. Full review happens if:
 After successful push, `safe-deployment-gate` clears all QA output files:
 
 ```bash
-cleanup-qa-outputs.sh
+.claude/agents/shared/scripts/cleanup-qa-outputs.sh
 ```
 
 This ensures the next QA workflow starts fresh.
