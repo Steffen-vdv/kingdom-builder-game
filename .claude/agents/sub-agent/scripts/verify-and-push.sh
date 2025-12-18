@@ -82,6 +82,7 @@ cleanup_qa_outputs() {
 	rm -f "$QA_CURRENT_DIR/input.sha256" 2>/dev/null || true
 	rm -rf "$QA_CURRENT_DIR/delta" 2>/dev/null || true
 	rm -f "$QA_CURRENT_DIR/.lock" 2>/dev/null || true
+	rm -f "$QA_CURRENT_DIR/override-token" 2>/dev/null || true
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════

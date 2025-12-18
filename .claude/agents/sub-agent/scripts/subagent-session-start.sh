@@ -164,6 +164,58 @@ DO NOT call sign.sh or write-output.sh - the post-task hook handles signing.
 ===
 QA_REVIEW_LEAD_FOOTER
 		;;
+
+	safe-deployment-gate)
+		# Check if override token file exists
+		OVERRIDE_TOKEN_FILE="$QA_CURRENT_DIR/override-token"
+
+		if [[ -f "$OVERRIDE_TOKEN_FILE" ]]; then
+			# OVERRIDE MODE: Inject token and skip normal QA context
+			echo "=== OVERRIDE MODE ACTIVE ==="
+			echo ""
+			echo "A verified override token has been provided by the user."
+			echo "The pre-task hook has already verified the token via crypto-gate."
+			echo ""
+			echo "## Your ONLY Action"
+			echo ""
+			echo "Run verify-and-push.sh with --override mode:"
+			echo ""
+			echo '```bash'
+			echo ".claude/agents/sub-agent/scripts/verify-and-push.sh --override '\$(cat /tmp/claude/qa/current/override-token)'"
+			echo '```'
+			echo ""
+			echo "The script will:"
+			echo "- Re-verify the token (defense in depth)"
+			echo "- Execute git push"
+			echo "- Clean up all QA files including the token file"
+			echo ""
+			echo "DO NOT run the normal --from-disk mode. Override mode bypasses QA workflow."
+			echo ""
+			echo "==="
+		else
+			# NORMAL QA MODE: Inject review-lead.json context
+			echo "=== QA Phase 3: Safe Deployment Gate ==="
+			echo ""
+			echo "The pre-task hook has verified review-lead.json signature."
+			echo ""
+			echo "## Your ONLY Action"
+			echo ""
+			echo "Run verify-and-push.sh with --from-disk mode:"
+			echo ""
+			echo '```bash'
+			echo '.claude/agents/sub-agent/scripts/verify-and-push.sh --from-disk'
+			echo '```'
+			echo ""
+			echo "The script will:"
+			echo "- Read review-lead.json from disk"
+			echo "- Verify the QA_FINAL_SIGNATORY signature"
+			echo "- Validate input hash and HEAD commit"
+			echo "- Execute git push"
+			echo "- Clean up all QA files on success"
+			echo ""
+			echo "==="
+		fi
+		;;
 esac
 
 # Output protocol spec (injected into subagent context)

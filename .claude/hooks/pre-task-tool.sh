@@ -44,19 +44,24 @@ esac
 # =============================================================================
 # Verify review-lead signature before allowing safe-deployment-gate to run.
 # The actual push is performed by the subagent via verify-and-push.sh.
-# Override mode: verify token via crypto-gate before allowing subagent.
+#
+# Override mode: If override token file exists, verify via crypto-gate.
+# Token file: /tmp/claude/qa/current/override-token
+# Set by master-agent via: .claude/agents/master-agent/scripts/set-override-token.sh
+
+OVERRIDE_TOKEN_FILE="$QA_CURRENT_DIR/override-token"
 
 if [[ "$SUBAGENT" == "safe-deployment-gate" ]]; then
 	log_hook "safe-deployment-gate" "Gating check started"
 
-	# Check for override mode - if override_token present, verify via crypto-gate
+	# Check for override mode - read token from file (not from prompt)
 	OVERRIDE_TOKEN=""
-	if echo "$PROMPT" | jq -e '.' >/dev/null 2>&1; then
-		OVERRIDE_TOKEN=$(echo "$PROMPT" | jq -r '.override_token // ""' 2>/dev/null || echo "")
+	if [[ -f "$OVERRIDE_TOKEN_FILE" ]]; then
+		OVERRIDE_TOKEN=$(cat "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
 	fi
 
 	if [[ -n "$OVERRIDE_TOKEN" ]]; then
-		log_hook "safe-deployment-gate" "Override mode detected, verifying token"
+		log_hook "safe-deployment-gate" "Override token file found, verifying token"
 
 		# Verify override token via crypto-gate
 		CRYPTO_GATE=$(qa_crypto_gate_path 2>/dev/null) || CRYPTO_GATE=""

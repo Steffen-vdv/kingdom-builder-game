@@ -153,13 +153,53 @@ needs full re-analysis.
 
 ---
 
-## 3. Override Push
+## 3. Override Push (Expedited Workflow)
 
-If QA flow is unavailable, user can provide override token:
+If the full QA workflow is unavailable or user wants to bypass it, they can
+provide an override token. This is a two-step process:
+
+### Step 1: Store the Override Token
+
+When the user provides an override token, call the helper script:
+
+```bash
+.claude/agents/master-agent/scripts/set-override-token.sh '<token>'
+```
+
+The script:
+
+- Verifies the token via crypto-gate (rejects invalid tokens)
+- Stores the verified token at `/tmp/claude/qa/current/override-token`
+- Outputs success/failure message
+
+**If verification fails**, report the error to the user and do not proceed.
+
+### Step 2: Dispatch safe-deployment-gate
+
+After the token is stored, dispatch safe-deployment-gate with a minimal prompt:
 
 ```
-Task(subagent_type: "safe-deployment-gate", prompt: "{\"branch\": \"...\", \"override_token\": \"...\"}")
+Task(subagent_type: "safe-deployment-gate", prompt: "{\"branch\": \"...\"}")
 ```
+
+**Do NOT include the token in the prompt.** The pre-task hook reads the token
+from the file and verifies it before allowing the subagent to run. The subagent
+then runs verify-and-push.sh in override mode.
+
+### Cleanup
+
+After a successful push (via override or normal QA), the token file is
+automatically deleted by verify-and-push.sh. To manually clear the token:
+
+```bash
+.claude/agents/master-agent/scripts/set-override-token.sh --clear
+```
+
+### Security Notes
+
+- Tokens are verified in BOTH the pre-task hook AND verify-and-push.sh (defense in depth)
+- Token file has 600 permissions (owner-only read/write)
+- Only subagents can execute crypto-gate and git push (trust boundary)
 
 ---
 

@@ -46,12 +46,26 @@ Or simply: `"Push to claude/feature-branch"` or even just `{}`.
 
 ### Mode 2: User Override (escape hatch)
 
+When the user provides an override token, master-agent stores it via
+`set-override-token.sh` before dispatching you. The token is stored at:
+
+```
+/tmp/claude/qa/current/override-token
+```
+
+The prompt will NOT contain the token. The pre-task hook reads the token from
+the file, verifies it via crypto-gate, and allows you to run if valid.
+
+**Your input for override mode is the same as normal mode:**
+
 ```json
 {
-	"branch": "branch-name",
-	"override_token": "token-from-user"
+	"branch": "branch-name"
 }
 ```
+
+The SubagentStart hook detects the override token file and injects instructions
+telling you to run in override mode.
 
 ## How To Execute
 
@@ -74,10 +88,11 @@ The script automatically:
 ### For override mode:
 
 ```bash
-.claude/agents/sub-agent/scripts/verify-and-push.sh --override '<token>'
+.claude/agents/sub-agent/scripts/verify-and-push.sh --override "$(cat /tmp/claude/qa/current/override-token)"
 ```
 
-The token is provided by the user via the `override_token` field.
+The token is read from the file stored by master-agent. The SubagentStart hook
+provides you with the exact command to run.
 
 ## What verify-and-push.sh Does
 
