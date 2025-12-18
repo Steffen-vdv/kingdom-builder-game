@@ -6,13 +6,15 @@
 #   set-override-token.sh '<token>'
 #   set-override-token.sh --clear
 #
-# This script stores the override token in a file that the pre-task hook and
-# safe-deployment-gate will read. This allows the master agent to receive an
-# override token from the user once and use it for the push without including
-# it in the Task prompt.
+# This script stores the override token BOUND TO THE CURRENT HEAD in a file
+# that the pre-task hook and safe-deployment-gate will read. This ensures the
+# override is only valid for the specific commit it was authorized for.
 #
 # Token file location:
 #   /tmp/claude/qa/current/override-token
+#
+# File format (JSON):
+#   {"head":"<sha>","branch":"<branch>","token":"<token>"}
 #
 # The token is verified via crypto-gate before being stored to ensure only
 # valid tokens are accepted.
@@ -65,9 +67,13 @@ Usage: set-override-token.sh '<token>'
        set-override-token.sh --clear
 
 Stores a user-provided override token for expedited push workflow.
-The token is verified via crypto-gate before being stored.
+The token is verified via crypto-gate and bound to the current HEAD.
 
 Token file: /tmp/claude/qa/current/override-token
+Format: {"head":"<sha>","branch":"<branch>","token":"<token>"}
+
+The override is only valid for the HEAD commit at the time of storage.
+If HEAD changes after storing, the override will be rejected.
 
 Examples:
   set-override-token.sh 'MySecretToken123'
@@ -96,22 +102,42 @@ INVALID
 	exit 1
 fi
 
+# Get current HEAD and branch for binding
+HEAD_SHA=$(git rev-parse HEAD 2>/dev/null) || {
+	echo "ERROR: Cannot determine HEAD. Are you in a git repository?" >&2
+	exit 1
+}
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || BRANCH=""
+if [[ "$BRANCH" == "HEAD" ]]; then
+	# Detached HEAD, use empty string
+	BRANCH=""
+fi
+
 # Ensure directory exists
 mkdir -p "$QA_CURRENT_DIR"
 
-# Store token (readable only by owner)
-echo "$TOKEN" > "$TOKEN_FILE"
+# Store token as JSON with HEAD binding (readable only by owner)
+jq -n -c \
+	--arg head "$HEAD_SHA" \
+	--arg branch "$BRANCH" \
+	--arg token "$TOKEN" \
+	'{head: $head, branch: $branch, token: $token}' > "$TOKEN_FILE"
 chmod 600 "$TOKEN_FILE"
 
-cat << 'SUCCESS'
+cat << SUCCESS
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║  ✅ OVERRIDE TOKEN STORED                                                     ║
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 Token verified and stored at: /tmp/claude/qa/current/override-token
 
-You can now run safe-deployment-gate without including the token in the prompt.
-The pre-task hook will automatically read the token from the file.
+Bound to:
+  HEAD:   $HEAD_SHA
+  Branch: ${BRANCH:-<detached>}
+
+IMPORTANT: This override is only valid for this specific commit.
+If you make new commits, you must re-run this script with a new token.
 
 To clear: set-override-token.sh --clear
 SUCCESS

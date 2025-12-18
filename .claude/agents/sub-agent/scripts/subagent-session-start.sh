@@ -167,25 +167,33 @@ QA_REVIEW_LEAD_FOOTER
 
 	safe-deployment-gate)
 		# Check if override token file exists
+		# File format: {"head":"<sha>","branch":"<branch>","token":"<token>"}
 		OVERRIDE_TOKEN_FILE="$QA_CURRENT_DIR/override-token"
 
 		if [[ -f "$OVERRIDE_TOKEN_FILE" ]]; then
+			# Extract token from JSON file
+			OVERRIDE_TOKEN=$(jq -r '.token // ""' "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
+			STORED_HEAD=$(jq -r '.head // ""' "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
+
 			# OVERRIDE MODE: Inject token and skip normal QA context
 			echo "=== OVERRIDE MODE ACTIVE ==="
 			echo ""
 			echo "A verified override token has been provided by the user."
-			echo "The pre-task hook has already verified the token via crypto-gate."
+			echo "The pre-task hook has verified the token and HEAD binding."
+			echo ""
+			echo "Authorized HEAD: $STORED_HEAD"
 			echo ""
 			echo "## Your ONLY Action"
 			echo ""
 			echo "Run verify-and-push.sh with --override mode:"
 			echo ""
 			echo '```bash'
-			echo ".claude/agents/sub-agent/scripts/verify-and-push.sh --override '\$(cat /tmp/claude/qa/current/override-token)'"
+			echo ".claude/agents/sub-agent/scripts/verify-and-push.sh --override '\$(jq -r .token /tmp/claude/qa/current/override-token)'"
 			echo '```'
 			echo ""
 			echo "The script will:"
 			echo "- Re-verify the token (defense in depth)"
+			echo "- Verify HEAD matches authorized commit"
 			echo "- Execute git push"
 			echo "- Clean up all QA files including the token file"
 			echo ""

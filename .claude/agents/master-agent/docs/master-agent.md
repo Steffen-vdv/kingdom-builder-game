@@ -169,10 +169,15 @@ When the user provides an override token, call the helper script:
 The script:
 
 - Verifies the token via crypto-gate (rejects invalid tokens)
-- Stores the verified token at `/tmp/claude/qa/current/override-token`
-- Outputs success/failure message
+- Binds the token to the current HEAD commit
+- Stores as JSON: `{"head":"<sha>","branch":"<branch>","token":"<token>"}`
+- Outputs success/failure message with the bound HEAD
 
 **If verification fails**, report the error to the user and do not proceed.
+
+**IMPORTANT:** The override is only valid for the HEAD at the time of storage.
+If you make new commits after storing the token, the override will be rejected.
+Request a new token from the user if this happens.
 
 ### Step 2: Dispatch safe-deployment-gate
 
@@ -197,7 +202,9 @@ automatically deleted by verify-and-push.sh. To manually clear the token:
 
 ### Security Notes
 
-- Tokens are verified in BOTH the pre-task hook AND verify-and-push.sh (defense in depth)
+- Tokens are bound to HEAD at storage time (prevents accidental misuse)
+- HEAD is verified in BOTH the pre-task hook AND verify-and-push.sh (defense in depth)
+- Tokens are also verified via crypto-gate at both checkpoints
 - Token file has 600 permissions (owner-only read/write)
 - Only subagents can execute crypto-gate and git push (trust boundary)
 

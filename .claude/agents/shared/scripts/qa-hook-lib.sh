@@ -376,8 +376,8 @@ qa_parse_footer_from_text() {
 		return 1
 	fi
 
-	# Cap summary to 400 chars
-	summary="${summary:0:400}"
+	# NOTE: No truncation here. Size limits are enforced in post-task-tool.sh
+	# to keep this function pure (parse only, don't modify data).
 
 	# Extract blockers and questions (default to empty arrays)
 	local blockers
@@ -533,18 +533,20 @@ qa_compute_delta() {
 					reason="prior state has no commits"
 				else
 					# Check if prior commits are subset of current
+					# Use order-preserving approach: check all prior commits exist in current
 					local is_subset
 					is_subset=$(jq -n \
 						--argjson prior "$prior_commits" \
 						--argjson current "$current_commits" \
-						'($prior | sort) as $p | ($current | sort) as $c | ($p - $c | length) == 0')
+						'[$prior[] | . as $p | $current | index($p) != null] | all')
 
 					if [[ "$is_subset" == "true" ]]; then
 						mode="DELTA_REVIEW"
+						# Order-preserving: select from current those not in prior
 						new_commits=$(jq -n -c \
 							--argjson prior "$prior_commits" \
 							--argjson current "$current_commits" \
-							'$current - $prior')
+							'$current | map(select(. as $c | $prior | index($c) | not))')
 					else
 						reason="prior commits not subset of current"
 					fi

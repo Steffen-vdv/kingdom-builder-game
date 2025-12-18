@@ -53,8 +53,19 @@ When the user provides an override token, master-agent stores it via
 /tmp/claude/qa/current/override-token
 ```
 
-The prompt will NOT contain the token. The pre-task hook reads the token from
-the file, verifies it via crypto-gate, and allows you to run if valid.
+**File format (JSON with HEAD binding):**
+
+```json
+{ "head": "<sha>", "branch": "<branch>", "token": "<token>" }
+```
+
+The override is bound to the HEAD commit at the time of storage. If HEAD changes
+after the override was authorized, both the pre-task hook and verify-and-push.sh
+will reject the push (defense in depth).
+
+The prompt will NOT contain the token. The pre-task hook reads the JSON file,
+verifies the token via crypto-gate, and verifies HEAD matches before allowing
+you to run.
 
 **Your input for override mode is the same as normal mode:**
 
@@ -88,10 +99,11 @@ The script automatically:
 ### For override mode:
 
 ```bash
-.claude/agents/sub-agent/scripts/verify-and-push.sh --override "$(cat /tmp/claude/qa/current/override-token)"
+.claude/agents/sub-agent/scripts/verify-and-push.sh --override "$(jq -r .token /tmp/claude/qa/current/override-token)"
 ```
 
-The token is read from the file stored by master-agent. The SubagentStart hook
+The token is extracted from the JSON file stored by master-agent. The script
+also verifies HEAD matches the authorized commit. The SubagentStart hook
 provides you with the exact command to run.
 
 ## What verify-and-push.sh Does
@@ -124,15 +136,16 @@ The code has been pushed to the remote repository.
 
 If verify-and-push.sh fails, report the error clearly:
 
-| Error                | Meaning                   | What To Report                            |
-| -------------------- | ------------------------- | ----------------------------------------- |
-| Missing review-lead  | No Phase 2 output         | "Run review-lead first"                   |
-| Wrong signature type | Not QA_FINAL_SIGNATORY    | "Only review-lead signatures accepted"    |
-| Invalid signature    | Signature verification    | "Re-run QA review to get fresh signature" |
-| Verdict not APPROVED | Payload has wrong verdict | "Approval payload must have APPROVED"     |
-| Input hash mismatch  | Review may be stale       | "Re-run QA workflow from Phase 1"         |
-| HEAD not in commits  | New commits after QA      | "Re-run QA review for current commits"    |
-| Git push failed      | Network/permission issue  | "Check remote access and retry"           |
+| Error                  | Meaning                     | What To Report                            |
+| ---------------------- | --------------------------- | ----------------------------------------- |
+| Missing review-lead    | No Phase 2 output           | "Run review-lead first"                   |
+| Wrong signature type   | Not QA_FINAL_SIGNATORY      | "Only review-lead signatures accepted"    |
+| Invalid signature      | Signature verification      | "Re-run QA review to get fresh signature" |
+| Verdict not APPROVED   | Payload has wrong verdict   | "Approval payload must have APPROVED"     |
+| Input hash mismatch    | Review may be stale         | "Re-run QA workflow from Phase 1"         |
+| HEAD not in commits    | New commits after QA        | "Re-run QA review for current commits"    |
+| Override HEAD mismatch | HEAD changed since override | "Request new override token for current"  |
+| Git push failed        | Network/permission issue    | "Check remote access and retry"           |
 
 **Example failure report:**
 

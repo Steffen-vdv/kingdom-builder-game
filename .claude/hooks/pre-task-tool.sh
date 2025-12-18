@@ -55,32 +55,44 @@ if [[ "$SUBAGENT" == "safe-deployment-gate" ]]; then
 	log_hook "safe-deployment-gate" "Gating check started"
 
 	# Check for override mode - read token from file (not from prompt)
-	OVERRIDE_TOKEN=""
+	# File format: {"head":"<sha>","branch":"<branch>","token":"<token>"}
 	if [[ -f "$OVERRIDE_TOKEN_FILE" ]]; then
-		OVERRIDE_TOKEN=$(cat "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "")
-	fi
+		log_hook "safe-deployment-gate" "Override token file found, verifying"
 
-	if [[ -n "$OVERRIDE_TOKEN" ]]; then
-		log_hook "safe-deployment-gate" "Override token file found, verifying token"
+		# Parse JSON file
+		OVERRIDE_JSON=$(cat "$OVERRIDE_TOKEN_FILE" 2>/dev/null || echo "{}")
+		OVERRIDE_TOKEN=$(echo "$OVERRIDE_JSON" | jq -r '.token // ""' 2>/dev/null || echo "")
+		STORED_HEAD=$(echo "$OVERRIDE_JSON" | jq -r '.head // ""' 2>/dev/null || echo "")
 
-		# Verify override token via crypto-gate
-		CRYPTO_GATE=$(qa_crypto_gate_path 2>/dev/null) || CRYPTO_GATE=""
-		if [[ -z "$CRYPTO_GATE" || ! -x "$CRYPTO_GATE" ]]; then
-			cat << EOF
+		if [[ -n "$OVERRIDE_TOKEN" ]]; then
+			# Verify HEAD matches what was stored (binding check)
+			CURRENT_HEAD=$(git rev-parse HEAD 2>/dev/null || echo "")
+			if [[ -n "$STORED_HEAD" && "$STORED_HEAD" != "$CURRENT_HEAD" ]]; then
+				cat << EOF
+{"decision":"block","reason":"Override HEAD mismatch. Stored: '$STORED_HEAD', current: '$CURRENT_HEAD'. New commits added since override was authorized."}
+EOF
+				exit 1
+			fi
+
+			# Verify override token via crypto-gate
+			CRYPTO_GATE=$(qa_crypto_gate_path 2>/dev/null) || CRYPTO_GATE=""
+			if [[ -z "$CRYPTO_GATE" || ! -x "$CRYPTO_GATE" ]]; then
+				cat << EOF
 {"decision":"block","reason":"crypto-gate binary not found. Cannot verify override token."}
 EOF
-			exit 1
-		fi
+				exit 1
+			fi
 
-		if ! "$CRYPTO_GATE" verify-override "$OVERRIDE_TOKEN" >/dev/null 2>&1; then
-			cat << EOF
+			if ! "$CRYPTO_GATE" verify-override "$OVERRIDE_TOKEN" >/dev/null 2>&1; then
+				cat << EOF
 {"decision":"block","reason":"Invalid override token. Token verification failed via crypto-gate."}
 EOF
-			exit 1
-		fi
+				exit 1
+			fi
 
-		log_hook "safe-deployment-gate" "Override token verified, allowing subagent"
-		exit 0
+			log_hook "safe-deployment-gate" "Override token and HEAD verified, allowing subagent"
+			exit 0
+		fi
 	fi
 
 	# Normal QA mode - verify review-lead.json

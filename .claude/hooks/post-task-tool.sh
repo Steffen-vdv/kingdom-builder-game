@@ -64,10 +64,11 @@ log_hook "$SUBAGENT" "Footer parsed: $(echo "$FOOTER_JSON" | jq -c '.verdict')"
 # =============================================================================
 # FOOTER HARDENING (size limits)
 # =============================================================================
-# Prevent accidental large payload signing by enforcing limits
+# Single source of truth for footer size limits. qa_parse_footer_from_text()
+# does NOT truncate - enforcement happens here only.
 
 MAX_FOOTER_SIZE=4096
-MAX_SUMMARY_LENGTH=500
+MAX_SUMMARY_LENGTH=400
 MAX_BLOCKERS_COUNT=20
 MAX_QUESTIONS_COUNT=10
 

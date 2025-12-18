@@ -287,6 +287,8 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════════
 # OVERRIDE MODE
 # ═══════════════════════════════════════════════════════════════════════════════
+# Token file format: {"head":"<sha>","branch":"<branch>","token":"<token>"}
+# We verify both the token AND that HEAD matches what was authorized.
 
 if [[ "${1:-}" == "--override" ]]; then
 	TOKEN="${2:-}"
@@ -326,12 +328,37 @@ INVALID_TOKEN
 
 	echo "✓ Override token valid" >&2
 
+	# Verify HEAD matches stored HEAD (defense in depth - also checked in pre-task hook)
+	HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
+	OVERRIDE_FILE="$QA_CURRENT_DIR/override-token"
+
+	if [[ -f "$OVERRIDE_FILE" ]]; then
+		STORED_HEAD=$(jq -r '.head // ""' "$OVERRIDE_FILE" 2>/dev/null || echo "")
+		if [[ -n "$STORED_HEAD" && "$STORED_HEAD" != "$HEAD_SHA" ]]; then
+			cat >&2 << HEAD_MISMATCH
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ❌ PUSH BLOCKED — Override HEAD mismatch                                     ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Override was authorized for: $STORED_HEAD
+Current HEAD:               $HEAD_SHA
+
+New commits were added after the override was authorized.
+
+WHAT TO DO:
+→ Request a new override token for the current HEAD
+→ Or revert to the authorized commit
+HEAD_MISMATCH
+			exit 1
+		fi
+		echo "✓ HEAD matches authorized commit" >&2
+	fi
+
 	# Determine branch
 	if [[ -z "$BRANCH" ]]; then
 		BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 	fi
 
-	HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
 	echo "Pushing to origin/$BRANCH (OVERRIDE)..." >&2
 
 	if git push -u origin "$BRANCH"; then
