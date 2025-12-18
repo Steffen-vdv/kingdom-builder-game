@@ -26,13 +26,24 @@ const SCRIPT_PATH = path.join(
 	'.claude/agents/sub-agent/scripts/sign.sh',
 );
 const CRYPTO_GATE_PATH = path.join(PROJECT_ROOT, 'bin/crypto-gate');
+const MOCK_MARKER_PATH = path.join(PROJECT_ROOT, 'bin/.crypto-gate-is-mock');
 const MOCK_CRYPTO_GATE_PATH = path.join(
 	PROJECT_ROOT,
 	'tests/infrastructure/mocks/crypto-gate-mock.sh',
 );
 
-// Track if we installed the mock (for cleanup)
-let installedMock = false;
+/**
+ * Cleans up any stale mock from crashed test runs.
+ * If marker exists, the binary is a mock and should be removed.
+ */
+function cleanupStaleMock(): void {
+	if (fs.existsSync(MOCK_MARKER_PATH)) {
+		if (fs.existsSync(CRYPTO_GATE_PATH)) {
+			fs.unlinkSync(CRYPTO_GATE_PATH);
+		}
+		fs.unlinkSync(MOCK_MARKER_PATH);
+	}
+}
 
 interface SignResult {
 	payload: string;
@@ -73,6 +84,9 @@ function runScript(args: string[]): RunResult {
 
 describe('Infrastructure: sign.sh', () => {
 	beforeAll(() => {
+		// Clean up any stale mock from previous crashed runs
+		cleanupStaleMock();
+
 		// If real crypto-gate doesn't exist, install the mock
 		if (!fs.existsSync(CRYPTO_GATE_PATH)) {
 			// Ensure bin directory exists
@@ -83,15 +97,18 @@ describe('Infrastructure: sign.sh', () => {
 			// Copy mock to bin/crypto-gate
 			fs.copyFileSync(MOCK_CRYPTO_GATE_PATH, CRYPTO_GATE_PATH);
 			fs.chmodSync(CRYPTO_GATE_PATH, 0o755);
-			installedMock = true;
+			// Create marker file to indicate this is a mock (for crash recovery)
+			fs.writeFileSync(MOCK_MARKER_PATH, `installed-by-pid-${process.pid}\n`);
 		}
 	});
 
 	afterAll(() => {
-		// Clean up mock if we installed it
-		if (installedMock && fs.existsSync(CRYPTO_GATE_PATH)) {
-			fs.unlinkSync(CRYPTO_GATE_PATH);
-			installedMock = false;
+		// Clean up mock if marker exists (we installed it)
+		if (fs.existsSync(MOCK_MARKER_PATH)) {
+			if (fs.existsSync(CRYPTO_GATE_PATH)) {
+				fs.unlinkSync(CRYPTO_GATE_PATH);
+			}
+			fs.unlinkSync(MOCK_MARKER_PATH);
 		}
 	});
 
