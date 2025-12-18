@@ -55,26 +55,34 @@ BLOCK if you see:
 
 ## Output
 
-Write structured output using the helper script:
+Write structured output using field-based arguments:
 
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-infra-concurrency' '<json>'
+# For APPROVED (after calling sign.sh):
+write-output.sh 'review-infra-concurrency' \
+  --verdict 'APPROVED' \
+  --summary 'Infrastructure safe, no concurrency issues' \
+  --type 'QA_INFRA_CONCURRENCY' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  --details '{"hooks_checked":true,"race_conditions":"none"}'
+
+# For BLOCKED:
+write-output.sh 'review-infra-concurrency' \
+  --verdict 'BLOCKED' \
+  --summary 'Race condition detected' \
+  --blockers '["Shared state modified without lock"]'
 ```
 
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-Narrative chat is allowed. JSON file governs workflow.
+The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_INFRA_CONCURRENCY'`
-3. ☐ Called `write-output.sh 'review-infra-concurrency' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
+2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
+3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-infra-concurrency.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.

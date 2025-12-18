@@ -141,63 +141,26 @@ SIGN_OUTPUT=$(.claude/agents/sub-agent/scripts/sign.sh 'All 47 tests passed' 'QA
 
 ## Output
 
-Write structured output using the helper script:
+Write structured output using field-based arguments:
 
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-ci-tests-required' '<json>'
+# For APPROVED (after calling sign.sh):
+write-output.sh 'review-ci-tests-required' \
+  --verdict 'APPROVED' \
+  --summary 'All 47 tests passed (targeted: engine)' \
+  --type 'QA_CI_REQUIRED_TESTS' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  --details '{"strategy":"targeted","tests_run":47,"tests_passed":47}'
+
+# For BLOCKED:
+write-output.sh 'review-ci-tests-required' \
+  --verdict 'BLOCKED' \
+  --summary '3 tests failed in engine package' \
+  --blockers '["test:engine/tests/foo.test.ts::should handle edge case"]'
 ```
 
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-**When tests PASS:**
-
-```json
-{
-	"agent": "review-ci-tests-required",
-	"verdict": "APPROVED",
-	"summary": "All 47 tests passed (targeted: engine package)",
-	"signature_type": "QA_CI_REQUIRED_TESTS",
-	"payload": "{...}",
-	"signature": "abc123...",
-	"blockers": null,
-	"questions": null,
-	"details": {
-		"strategy": "targeted",
-		"tests_run": 47,
-		"tests_passed": 47,
-		"tests_failed": 0,
-		"duration_ms": 12340
-	}
-}
-```
-
-**When tests FAIL:**
-
-```json
-{
-	"agent": "review-ci-tests-required",
-	"verdict": "BLOCKED",
-	"summary": "3 tests failed in engine package",
-	"signature_type": null,
-	"payload": null,
-	"signature": null,
-	"blockers": ["test:engine/tests/foo.test.ts::should handle edge case"],
-	"questions": null,
-	"details": {
-		"strategy": "targeted",
-		"tests_run": 47,
-		"tests_passed": 44,
-		"tests_failed": 3,
-		"failures": [
-			{
-				"test": "engine/tests/foo.test.ts::should handle edge case",
-				"error": "Expected 5, got 6"
-			}
-		]
-	}
-}
-```
+The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 
@@ -236,11 +199,9 @@ For project principles (fetch if needed):
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_CI_REQUIRED_TESTS'`
-3. ☐ Called `write-output.sh 'review-ci-tests-required' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-ci-tests-required.json`
+2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
+3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-ci-tests-required.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.

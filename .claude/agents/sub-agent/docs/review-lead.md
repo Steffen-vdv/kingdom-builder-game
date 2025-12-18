@@ -192,17 +192,26 @@ You are not allowed to guess.
 
 ## Output
 
-Write structured output using the helper script:
+Write structured output using field-based arguments:
 
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-lead' '<json>'
+# For APPROVED (after calling sign.sh):
+write-output.sh 'review-lead' \
+  --verdict 'APPROVED' \
+  --summary 'Final QA passed. 6/6 reviewers APPROVED.' \
+  --type 'QA_FINAL_SIGNATORY' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  --details '{"phase1_verdicts":{...},"signatures_verified":6}'
+
+# For BLOCKED:
+write-output.sh 'review-lead' \
+  --verdict 'BLOCKED' \
+  --summary 'QA blocked by review-claims-auditor' \
+  --blockers '["Claims auditor: Claimed X but diff shows Y"]'
 ```
 
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-Your chat output may explain reasoning for humans.
-Only the JSON file authorizes workflow progression.
+The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 

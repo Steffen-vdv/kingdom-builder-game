@@ -83,26 +83,34 @@ Where `{agent}` is the subagent identifier:
 
 How to write the file:
 
-**USE THE HELPER SCRIPT:**
+**USE THE HELPER SCRIPT WITH FIELD-BASED ARGUMENTS:**
 
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh '<agent-name>' '<json-content>'
+# For APPROVED verdict (after calling sign.sh):
+write-output.sh '<agent>' \
+  --verdict 'APPROVED' \
+  --summary '<summary>' \
+  --type '<signature_type>' \
+  --payload '<payload_from_sign.sh>' \
+  --signature '<signature_from_sign.sh>' \
+  --details '<agent_specific_json>'
+
+# For BLOCKED verdict:
+write-output.sh '<agent>' \
+  --verdict 'BLOCKED' \
+  --summary '<summary>' \
+  --blockers '["blocker1","blocker2"]' \
+  --details '<agent_specific_json>'
 ```
 
-Example:
+Run `write-output.sh` without arguments to see full usage and validation rules.
 
-```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-lead' '{"agent":"review-lead","verdict":"APPROVED",...}'
-```
+**Why use this script?**
 
-The script handles directory creation and overwrites any existing file.
-
-**Why use the script (not Write tool or bash)?**
-
-- Ensures correct path `/tmp/claude/sub-agents/output/{agent}.json`
-- Creates directory if missing
-- Validates arguments
-- Consistent across all agents
+- Constructs valid JSON schema automatically
+- Validates fields based on verdict (APPROVED requires signature fields, etc.)
+- Maps `--type` to `signature_type` in output (matches sign.sh output)
+- Prevents schema drift that caused downstream failures
 
 Rules:
 
@@ -234,7 +242,13 @@ NEEDS_INPUT rules:
 **Use `write-output.sh` to write this file:**
 
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-claims-auditor' '{"agent":"review-claims-auditor",...}'
+write-output.sh 'review-claims-auditor' \
+  --verdict 'APPROVED' \
+  --summary 'All claims verified against diff. Pure refactor, no behavioral changes.' \
+  --type 'QA_CLAIMS_AUDITOR' \
+  --payload '{"commits":["abc123"],...}' \
+  --signature 'a1b2c3d4e5f6...' \
+  --details '{"risk_tier":"LIGHT","files_audited":["packages/engine/src/foo.ts"]}'
 ```
 
 ---
@@ -325,23 +339,14 @@ Only `QA_FINAL_SIGNATORY` type is accepted.
 }
 ```
 
-### Output Schema
+### Output
 
-```json
-{
-	"agent": "safe-deployment-gate",
-	"status": "SUCCESS | FAILED | ERROR",
-	"branch": "branch-name",
-	"commit": "sha-or-null",
-	"message": "Human-readable result"
-}
-```
+Phase 3 does not write JSON output. It communicates results via:
 
-Status meanings:
+- Exit code (0 = success, non-zero = failure)
+- stdout/stderr messages
 
-- SUCCESS: Push completed, `commit` contains the pushed SHA
-- FAILED: Verification failed (invalid signature, HEAD mismatch)
-- ERROR: System error (network, permissions)
+There is no Phase 4, so no downstream consumer needs structured output.
 
 ---
 

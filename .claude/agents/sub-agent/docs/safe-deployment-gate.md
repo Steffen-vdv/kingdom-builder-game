@@ -126,32 +126,6 @@ MASTER-AGENT FOLLOW-UP:
 → Ensure approval is passed exactly as review-lead returned it
 ```
 
-## Output
-
-Write structured output using the helper script:
-
-```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'safe-deployment-gate' '<json>'
-```
-
-Schema:
-
-```json
-{
-	"agent": "safe-deployment-gate",
-	"status": "SUCCESS | FAILED | ERROR",
-	"branch": "branch-name",
-	"commit": "sha-or-null",
-	"message": "Human-readable result"
-}
-```
-
-Status meanings:
-
-- SUCCESS: Push completed, `commit` contains the pushed SHA
-- FAILED: Verification failed (invalid signature, HEAD mismatch)
-- ERROR: System error (network, permissions)
-
 ## What NOT To Do
 
 - ❌ Do NOT run `git push` directly — it will be blocked

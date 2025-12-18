@@ -39,6 +39,16 @@ AGENTS=(
 	"review-tests-docs-dry"
 )
 
+# Expected signature type for each agent (security: prevents copying one approval to all slots)
+declare -A EXPECTED_TYPES=(
+	["review-ci-tests-required"]="QA_CI_REQUIRED_TESTS"
+	["review-claims-auditor"]="QA_CLAIMS_AUDITOR"
+	["review-contracts-boundaries"]="QA_CONTRACTS_BOUNDARIES"
+	["review-mechanics-content"]="QA_MECHANICS_CONTENT"
+	["review-infra-concurrency"]="QA_INFRA_CONCURRENCY"
+	["review-tests-docs-dry"]="QA_TESTS_DOCS_DRY"
+)
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # VALIDATION
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -80,6 +90,13 @@ for agent in "${AGENTS[@]}"; do
 	fi
 	if [[ -z "$SIG_TYPE" ]]; then
 		ERRORS+=("$agent: missing 'signature_type' field")
+	fi
+
+	# Security: Validate signature type matches expected type for this agent
+	# This prevents copying one approval file to all 6 slots
+	EXPECTED="${EXPECTED_TYPES[$agent]}"
+	if [[ -n "$SIG_TYPE" && "$SIG_TYPE" != "$EXPECTED" ]]; then
+		ERRORS+=("$agent: signature_type is '$SIG_TYPE', expected '$EXPECTED'")
 	fi
 done
 

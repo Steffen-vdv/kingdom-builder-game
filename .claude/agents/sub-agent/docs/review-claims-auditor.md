@@ -69,26 +69,34 @@ You do NOT OWN:
 
 ## Output
 
-Write structured output using the helper script:
+Write structured output using field-based arguments:
 
 ```bash
-.claude/agents/sub-agent/scripts/write-output.sh 'review-claims-auditor' '<json>'
+# For APPROVED (after calling sign.sh):
+write-output.sh 'review-claims-auditor' \
+  --verdict 'APPROVED' \
+  --summary 'Claims verified against diff' \
+  --type 'QA_CLAIMS_AUDITOR' \
+  --payload "$PAYLOAD" \
+  --signature "$SIGNATURE" \
+  --details '{"risk_tier":"HIGH","findings":[...]}'
+
+# For BLOCKED:
+write-output.sh 'review-claims-auditor' \
+  --verdict 'BLOCKED' \
+  --summary 'Claim mismatch found' \
+  --blockers '["Claimed X but diff shows Y"]'
 ```
 
-Follow the QA Output Schema in:
-`.claude/agents/shared/docs/agent-intercommunication-protocols.md`
-
-Chat output may be narrative. Only the JSON file is authoritative.
+The script validates fields based on verdict. Run `write-output.sh` without arguments for full usage.
 
 ---
 
 ## BEFORE YOU FINISH (MANDATORY)
 
-Before ending your response, verify:
-
 1. ☐ Determined verdict (APPROVED / BLOCKED / NEEDS_INPUT)
-2. ☐ If APPROVED: Called `sign.sh '<summary>' 'QA_CLAIMS_AUDITOR'`
-3. ☐ Called `write-output.sh 'review-claims-auditor' '<json>'`
-4. ☐ Verified file exists: `/tmp/claude/sub-agents/output/review-claims-auditor.json`
+2. ☐ If APPROVED: Call `sign.sh` and capture payload + signature
+3. ☐ Call `write-output.sh` with appropriate flags for your verdict
+4. ☐ Verify output: `/tmp/claude/sub-agents/output/review-claims-auditor.json`
 
-**If you skip step 3 or 4, the workflow breaks.** Master-agent cannot proceed.
+**If you skip steps 3-4, the workflow breaks.** Master-agent cannot proceed.
