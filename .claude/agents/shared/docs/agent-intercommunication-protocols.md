@@ -364,35 +364,13 @@ APPROVALS=$(.claude/agents/sub-agent/scripts/collect-phase1-assessments.sh)
 4. Dispatch review-lead with the collected approvals in `approvals_json`
 5. Wait for completion
 6. Read `/tmp/claude/sub-agents/output/review-lead.json`
-7. **Display JSON contents verbatim to user (CRUCIAL)**
+7. **Display JSON contents verbatim to user (CRUCIAL) (Review Lead should send master agent a reminder about this)**
 8. Extract review-lead's approval (payload, signature, type)
 
 ### Phase 3
 
 9. Dispatch safe-deployment-gate with review-lead's single approval
 10. Report result to user
-
----
-
-## Validation & Error Handling
-
-### Pre-hook (pre-task-tool.sh)
-
-Blocks execution if:
-
-- Input is not valid JSON
-- Required fields are missing
-
-### Post-hook (post-task-tool.sh)
-
-Validates JSON output file exists and is valid. Cannot block execution.
-
-Emits warnings to stderr if:
-
-- Output file does not exist
-- Output file is not valid JSON
-
-Master-agent reads the JSON file directly for structured data.
 
 ---
 
@@ -446,39 +424,3 @@ Delta review is conservative. Full review happens if:
 - Signature verification fails
 - Prior commits not subset of current (rebase, etc.)
 - Agent uncertain if delta affects its domain
-
-### Cleanup
-
-After successful push, `safe-deployment-gate` clears all QA output files:
-
-```bash
-.claude/agents/shared/scripts/cleanup-qa-outputs.sh
-```
-
-This ensures the next QA workflow starts fresh.
-
----
-
-## Subagent Final Step: Remind Master-Agent
-
-**Only review-lead (Phase 2) includes this reminder block.**
-
-Phase 1 agents do not need it because master-agent only displays review-lead's
-output (which aggregates all Phase 1 verdicts).
-
-Review-lead MUST end its chat response with:
-
-```
-═══════════════════════════════════════════════════════════════════════════════
-MASTER-AGENT: READ THIS
-═══════════════════════════════════════════════════════════════════════════════
-You MUST now:
-1. Read: /tmp/claude/sub-agents/output/review-lead.json
-2. Output the COMPLETE JSON verbatim to the user
-
-The user is in Web UI and cannot see subagent outputs.
-If you do not show them, they are blind.
-═══════════════════════════════════════════════════════════════════════════════
-```
-
-This goes at the VERY END of review-lead's chat response, after all analysis.
