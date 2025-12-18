@@ -20,6 +20,19 @@ import * as fs from 'fs';
  * depending on the actual binary.
  *
  * Concurrency safety: Uses flock for exclusive access during mock installation.
+ *
+ * Mock Installation State Machine:
+ *
+ *   State       | Binary | Marker | PID Live | Action
+ *   ------------|--------|--------|----------|---------------------------
+ *   ABSENT      | No     | No     | -        | Install mock
+ *   REAL        | Yes    | No     | -        | Skip (real binary exists)
+ *   ORPHAN      | Mock   | No     | -        | Cleanup orphan, install
+ *   OWNED       | Yes    | Yes    | Yes      | Skip (another process owns)
+ *   STALE       | Yes    | Yes    | No       | Cleanup stale, install
+ *
+ * Orphan detection: Compares binary content with mock source to distinguish
+ * orphaned mocks (crash between cp and mv) from real binaries.
  */
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
@@ -57,34 +70,45 @@ function withFlockSync(lockPath: string, callback: () => string): string {
 
 /**
  * Installs mock crypto-gate with flock serialization.
- * Returns 'installed' if we installed, 'skipped' if already exists,
+ * Returns 'installed' if we installed, 'skipped' if real binary exists,
  * 'owned' if another process owns it.
+ *
+ * Handles orphan recovery: if binary exists without marker, compares content
+ * with mock source to determine if it's an orphaned mock or a real binary.
  */
-function installMockWithLock(): 'installed' | 'skipped' | 'owned' {
+function installMockWithLock(): 'installed' | 'skipped' | 'owned' | 'error' {
 	const installScript = `
+		set -euo pipefail
 		MARKER="${MOCK_MARKER_PATH}"
 		BINARY="${CRYPTO_GATE_PATH}"
 		MOCK_SRC="${MOCK_CRYPTO_GATE_PATH}"
-		PID=$$
 
-		# Check if marker exists
+		# State: OWNED or STALE (marker exists)
 		if [ -f "$MARKER" ]; then
 			OWNER_PID=$(grep -o 'installed-by-pid-[0-9]*' "$MARKER" | grep -o '[0-9]*')
 			if [ -n "$OWNER_PID" ] && kill -0 "$OWNER_PID" 2>/dev/null; then
+				# OWNED: another live process owns it
 				echo "owned"
 				exit 0
 			fi
-			# Stale marker - clean up
+			# STALE: marker with dead PID - clean up both
 			rm -f "$BINARY" "$MARKER"
 		fi
 
-		# If real binary exists, skip
+		# State: REAL, ORPHAN, or ABSENT (no marker)
 		if [ -x "$BINARY" ]; then
-			echo "skipped"
-			exit 0
+			# Binary exists without marker - check if orphaned mock or real
+			if cmp -s "$MOCK_SRC" "$BINARY"; then
+				# ORPHAN: content matches mock, crashed between cp and mv
+				rm -f "$BINARY"
+			else
+				# REAL: different content, assume real binary
+				echo "skipped"
+				exit 0
+			fi
 		fi
 
-		# Install mock atomically: write to temp, rename
+		# State: ABSENT - install mock
 		TEMP_MARKER=$(mktemp "$MARKER.XXXXXX")
 		echo "installed-by-pid-${process.pid}" > "$TEMP_MARKER"
 		cp "$MOCK_SRC" "$BINARY"
@@ -96,32 +120,47 @@ function installMockWithLock(): 'installed' | 'skipped' | 'owned' {
 	try {
 		const result = withFlockSync(MOCK_LOCK_PATH, () => installScript);
 		return result.trim() as 'installed' | 'skipped' | 'owned';
-	} catch {
-		return 'skipped';
+	} catch (err: unknown) {
+		const msg = err instanceof Error ? err.message : String(err);
+		process.stderr.write(`[sign.test.ts] Mock install failed: ${msg}\n`);
+		return 'error';
 	}
 }
 
 /**
  * Cleans up mock with flock serialization.
+ * Only cleans if this process owns the mock (marker shows our PID).
+ * Also cleans orphaned mocks (binary without marker that matches mock source).
  */
 function cleanupMockWithLock(): void {
 	const cleanupScript = `
+		set -euo pipefail
 		MARKER="${MOCK_MARKER_PATH}"
 		BINARY="${CRYPTO_GATE_PATH}"
+		MOCK_SRC="${MOCK_CRYPTO_GATE_PATH}"
 
-		# Only clean up if marker indicates we own it
+		# Clean up if marker indicates we own it
 		if [ -f "$MARKER" ]; then
 			OWNER_PID=$(grep -o 'installed-by-pid-[0-9]*' "$MARKER" | grep -o '[0-9]*')
 			if [ "$OWNER_PID" = "${process.pid}" ]; then
 				rm -f "$BINARY" "$MARKER"
+				exit 0
+			fi
+		fi
+
+		# Also clean orphaned mocks (binary without marker matching our mock)
+		if [ -x "$BINARY" ] && [ ! -f "$MARKER" ]; then
+			if cmp -s "$MOCK_SRC" "$BINARY"; then
+				rm -f "$BINARY"
 			fi
 		fi
 	`;
 
 	try {
 		withFlockSync(MOCK_LOCK_PATH, () => cleanupScript);
-	} catch {
-		// Ignore cleanup errors
+	} catch (err: unknown) {
+		const msg = err instanceof Error ? err.message : String(err);
+		process.stderr.write(`[sign.test.ts] Mock cleanup failed: ${msg}\n`);
 	}
 }
 
@@ -169,6 +208,9 @@ describe('Infrastructure: sign.sh', () => {
 	beforeAll(() => {
 		// Install mock with flock serialization to prevent races
 		const result = installMockWithLock();
+		if (result === 'error') {
+			throw new Error('Failed to install mock crypto-gate - check stderr');
+		}
 		weInstalledMock = result === 'installed';
 	});
 
